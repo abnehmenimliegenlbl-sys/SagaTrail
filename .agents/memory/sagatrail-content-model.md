@@ -1,16 +1,25 @@
 ---
 name: SagaTrail content model
-description: What it takes to add a new saga/route so it works in every language without silent German fallback.
+description: How curated public-domain sagas are structured and matched to routes; what it takes to add one without silent German fallback.
 ---
 
-# Adding a saga/route to SagaTrail
+# Adding a curated saga to SagaTrail
 
-Adding one legend correctly means touching three places:
+The app reads sagas ONLY from a curated, verifiably public-domain dataset. There is NO runtime AI saga generation anymore — do not reintroduce it. Each saga carries a structured `quelle` (public-domain citation: autor/werk/jahr/fundstelleUrl) and a `koordinatenSicherheit` (`exakt` | `ungefaehr` | `nicht_lokalisierbar`).
 
-1. `constants/sagas.ts` — the German `Saga` (id, title, canton, coreMotif, mood, summary, source, optional coordinates, isAnchorPlace).
-2. `constants/routes.ts` — a `HikingRoute` whose `sagaId` must resolve to that saga (1:1). Cantons with >1 route just get >1 route entry pointing at different sagas.
-3. `lib/storyContent.ts` `SAGA_SUMMARIES` — a translated summary for the new saga id in **all 7 non-German blocks** (gsw, fr, it, en, zh, es, pt).
+Saga data is intentionally duplicated in two leaf packages (they cannot import each other):
+1. Server: `artifacts/api-server/src/lib/curatedSagas.ts` (`CURATED_SAGAS`) — the authoritative catalog seed.
+2. Mobile: `artifacts/mobile/constants/sagas.ts` — the offline bundled fallback.
 
-**Why:** `localizedSummary(lang, id, fallback)` returns `SAGA_SUMMARIES[lang]?.[id] ?? fallback`, and the fallback is the German `saga.summary`. A missing key does not error — it silently serves German inside an otherwise-localized narration. Only the *summary sentence* is per-saga; the chapter bodies (ch1..chFinal) are generic per-language templates parameterized by canton/title/summary/archetype, so they need no per-saga work.
+Both must stay in sync. Each saga needs per-language `summaries` (all 8 languages) inline on the saga object — NOT in a separate storyContent map anymore.
 
-**How to apply:** whenever you add or rename a saga id, update all 7 non-German summary maps in lockstep and confirm every `route.sagaId` still resolves. German needs no SAGA_SUMMARIES entry by design.
+**Why:** `storyEngine` reads `saga.summaries[lang]?.text ?? saga.summary`; a missing language key silently serves the German summary inside an otherwise-localized narration. So fill all 8 language summaries in lockstep.
+
+## Route -> saga matching (nearest, not 1:1 ownership)
+- Routes no longer "own" a specific saga. Each route resolves to the NEAREST curated saga.
+- Server: `catalogSeed` remaps every seed route's `sagaId` to the nearest curated saga (`naechsteKuratierteSagenId`, canton-first then haversine) at seed time, so the `/catalog` contract never returns a dangling `sagaId`. `routeService.getRouteSaga` -> `findNearestCuratedSaga` for dynamic OSM routes.
+- Mobile: `lib/sagaMatch.ts` `nearestSaga(...)` (canton-first haversine, `EXAKT_RADIUS_M = 3500`). `getSagaForRoute` tries `sagas.find(id === route.sagaId)` then falls back to `nearestSaga`. `sagaLokalisierung` marks a route-assignment as `exakt` only when same canton AND <= 3.5 km; otherwise "nicht exakt lokalisierbar".
+- **Why:** with only a handful of curated sagas, most routes have no exact local legend; nearest-match with an honest "nicht exakt lokalisierbar" note is the product rule. This route-assignment certainty is SEPARATE from the saga's intrinsic `koordinatenSicherheit`.
+
+## Seeding integrity
+- `catalogSeed` deletes `catalog_sagas` rows whose id is not in `CURATED_SAGAS` (purges old AI/placeholder rows), then upserts the curated set. The catalog always contains exactly the curated sagas.

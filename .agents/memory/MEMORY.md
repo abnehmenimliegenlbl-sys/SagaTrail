@@ -1,3 +1,3 @@
-- [SagaTrail content model](sagatrail-content-model.md) — adding a saga touches sagas.ts + a 1:1 route + 7 non-German summaries; missing summaries silently fall back to German.
+- [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no runtime AI gen); routes resolve to NEAREST saga; missing per-lang summary silently falls back to German.
 - [SagaTrail map & live GPS](sagatrail-map-gps.md) — swisstopo Leaflet in WebView/iframe + real GPS narration; simulated timer only in fallback states, decision/narration must be de-duped.
-- [SagaTrail online catalog + offline download](sagatrail-offline-download.md) — three-tier offline-first catalog, dynamic per-canton OSM routes + lazy cached AI sagas, native-only offline tiles.
+- [SagaTrail online catalog + offline download](sagatrail-offline-download.md) — three-tier offline-first catalog, dynamic per-canton OSM routes matched to nearest curated saga (no AI gen), native-only offline tiles.

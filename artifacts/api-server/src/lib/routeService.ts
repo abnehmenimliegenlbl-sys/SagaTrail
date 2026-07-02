@@ -3,10 +3,10 @@ import { eq, sql } from "drizzle-orm";
 import {
   db,
   externalRoutesTable,
-  routeSagasTable,
+  catalogSagasTable,
   cantonFetchesTable,
   type ExternalRouteRow,
-  type RouteSagaRow,
+  type CatalogSagaRow,
 } from "@workspace/db";
 import { isoForCanton } from "./cantonIso";
 import { fetchCantonHikingRoutes } from "./overpass";
@@ -14,15 +14,16 @@ import { computeAscentM } from "./elevation";
 import {
   downsample,
   estimateMinutes,
+  haversineM,
   pathDistanceKm,
   type LatLng,
 } from "./geo";
-import { generateSagaForRoute } from "./sagaGenerator";
 
 /**
  * Orchestriert die dynamischen Routen: laedt reale Wanderrouten je Kanton aus
  * OpenStreetMap, reichert sie mit swisstopo-Hoehenmetern an und cacht sie in
- * Postgres. Erzeugt zudem 1:1 eine KI-Sage pro Route (lazy, beim Oeffnen).
+ * Postgres. Einer Route wird die naechstgelegene kuratierte, gemeinfrei belegte
+ * Sage zugeordnet — es werden keine Sagen mehr frei erzeugt.
  */
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
@@ -158,54 +159,45 @@ export async function getCantonRoutes(
   return stored.length > 0 ? stored : (rows as ExternalRouteRow[]);
 }
 
-/** Liefert (oder erzeugt) die KI-Sage zu einer dynamischen Route. */
+/**
+ * Findet die naechstgelegene kuratierte Sage zu einer Position. Sagen im
+ * gleichen Kanton werden bevorzugt; sonst wird schweizweit die naechste mit
+ * bekannten Koordinaten gewaehlt.
+ */
+async function findNearestCuratedSaga(
+  canton: string,
+  lat: number,
+  lng: number,
+): Promise<CatalogSagaRow | null> {
+  const sagas = await db.select().from(catalogSagasTable);
+  const located = sagas.filter((s) => s.lat != null && s.lng != null);
+  if (located.length === 0) return null;
+  const sameCanton = located.filter((s) => s.canton === canton);
+  const pool = sameCanton.length > 0 ? sameCanton : located;
+  let best: CatalogSagaRow | null = null;
+  let bestD = Infinity;
+  for (const s of pool) {
+    const d = haversineM({ lat, lng }, { lat: s.lat as number, lng: s.lng as number });
+    if (d < bestD) {
+      bestD = d;
+      best = s;
+    }
+  }
+  return best;
+}
+
+/**
+ * Liefert die kuratierte Sage zu einer dynamischen (OSM-)Route: die
+ * naechstgelegene belegte Regionalsage. Es werden keine Sagen mehr erzeugt.
+ */
 export async function getRouteSaga(
   routeId: string,
-  log: Logger,
-): Promise<RouteSagaRow | null> {
-  const [existing] = await db
-    .select()
-    .from(routeSagasTable)
-    .where(eq(routeSagasTable.id, routeId));
-  if (existing) return existing;
-
+  _log: Logger,
+): Promise<CatalogSagaRow | null> {
   const [route] = await db
     .select()
     .from(externalRoutesTable)
     .where(eq(externalRoutesTable.id, routeId));
   if (!route) return null;
-
-  const generated = await generateSagaForRoute(route, log);
-  const values = {
-    id: route.id,
-    title: generated.title,
-    canton: route.canton,
-    coreMotif: generated.coreMotif,
-    mood: generated.mood,
-    summary: generated.summary,
-    source: `KI-Sage · ${route.name}`,
-    lat: route.lat,
-    lng: route.lng,
-    isAnchorPlace: true,
-  };
-  await db.insert(routeSagasTable).values(values).onConflictDoNothing({
-    target: routeSagasTable.id,
-  });
-
-  const [saved] = await db
-    .select()
-    .from(routeSagasTable)
-    .where(eq(routeSagasTable.id, routeId));
-  return saved ?? null;
-}
-
-/** Findet eine dynamisch erzeugte Route-Sage per Id (Katalog prueft der Aufrufer separat). */
-export async function findRouteSagaById(
-  sagaId: string,
-): Promise<RouteSagaRow | undefined> {
-  const [row] = await db
-    .select()
-    .from(routeSagasTable)
-    .where(eq(routeSagasTable.id, sagaId));
-  return row;
+  return findNearestCuratedSaga(route.canton, route.lat, route.lng);
 }

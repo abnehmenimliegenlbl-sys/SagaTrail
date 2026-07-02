@@ -37,6 +37,29 @@ export interface CatalogRoute {
   featured: boolean;
 }
 
+export interface LocalizedSummary {
+  text: string;
+  reviewEmpfohlen: boolean;
+}
+
+export interface SagaQuelle {
+  autor: string;
+  werk: string;
+  jahr: string;
+  fundstelleUrl: string;
+}
+
+export type CatalogSagaSummaries = {[key: string]: LocalizedSummary};
+
+export type CatalogSagaKoordinatenSicherheit = typeof CatalogSagaKoordinatenSicherheit[keyof typeof CatalogSagaKoordinatenSicherheit];
+
+
+export const CatalogSagaKoordinatenSicherheit = {
+  exakt: 'exakt',
+  ungefaehr: 'ungefaehr',
+  nicht_lokalisierbar: 'nicht_lokalisierbar',
+} as const;
+
 export interface CatalogSaga {
   id: string;
   title: string;
@@ -44,8 +67,12 @@ export interface CatalogSaga {
   coreMotif: string;
   mood: string;
   summary: string;
+  summaries: CatalogSagaSummaries;
+  altersstufenHinweis?: string;
+  quelle?: SagaQuelle;
   source: string;
   coordinates?: CatalogCoordinates;
+  koordinatenSicherheit: CatalogSagaKoordinatenSicherheit;
   isAnchorPlace: boolean;
 }
 

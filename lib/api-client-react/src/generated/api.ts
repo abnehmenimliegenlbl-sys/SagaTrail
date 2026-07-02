@@ -370,8 +370,8 @@ export const getGetRouteSagaUrl = (routeId: string,) => {
 }
 
 /**
- * Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch keine, wird sie via Anthropic erzeugt und gecacht.
- * @summary KI-Sage zu einer realen Route
+ * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
+ * @summary Naechstgelegene kuratierte Sage zu einer Route
  */
 export const getRouteSaga = async (routeId: string, options?: RequestInit): Promise<CatalogSaga> => {
 
@@ -418,7 +418,7 @@ export type GetRouteSagaQueryError = ErrorType<ErrorResponse>
 
 
 /**
- * @summary KI-Sage zu einer realen Route
+ * @summary Naechstgelegene kuratierte Sage zu einer Route
  */
 
 export function useGetRouteSaga<TData = Awaited<ReturnType<typeof getRouteSaga>>, TError = ErrorType<ErrorResponse>>(

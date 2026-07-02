@@ -1,7 +1,33 @@
 import { db, catalogRoutesTable, catalogSagasTable } from "@workspace/db";
-import type { InsertCatalogRoute, InsertCatalogSaga } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import type { InsertCatalogRoute } from "@workspace/db";
+import { CURATED_SAGAS } from "./curatedSagas";
+import { haversineM } from "./geo";
+import { notInArray, sql } from "drizzle-orm";
 import { logger } from "./logger";
+
+/**
+ * Ordnet einer Route die naechstgelegene kuratierte Sage zu (kantonsweise Naehe,
+ * sonst schweizweit naechste). So verweist jede Katalog-Route auf eine real
+ * existierende, gemeinfrei belegte Sage statt auf eine geloeschte Alt-Sage.
+ */
+function naechsteKuratierteSagenId(route: InsertCatalogRoute): string {
+  const verortet = CURATED_SAGAS.filter((s) => s.lat != null && s.lng != null);
+  const imKanton = verortet.filter((s) => s.canton === route.region);
+  const auswahl = imKanton.length > 0 ? imKanton : verortet;
+  let beste = auswahl[0];
+  let besteDistanz = Number.POSITIVE_INFINITY;
+  for (const sage of auswahl) {
+    const distanz = haversineM(
+      { lat: route.lat, lng: route.lng },
+      { lat: sage.lat as number, lng: sage.lng as number },
+    );
+    if (distanz < besteDistanz) {
+      besteDistanz = distanz;
+      beste = sage;
+    }
+  }
+  return beste.id as string;
+}
 
 /**
  * Kuratierte Ausgangsdaten des Online-Katalogs. Der Server ist die verbindliche
@@ -41,38 +67,6 @@ const SEED_ROUTES: InsertCatalogRoute[] = [
   { id: "fraumuenster", sagaId: "fraumuenster", name: "Zürichberg-Waldweg", region: "Zürich", distanceKm: 6.2, ascentM: 280, minutes: 140, sac: "T1", terrain: "Stadtnaher Höhenweg über Wald und See", lat: 47.39, lng: 8.57, featured: false },
 ];
 
-const SEED_SAGAS: InsertCatalogSaga[] = [
-  { id: "teufelsbrucke", title: "Der Geist der Teufelsbrücke", canton: "Uri", coreMotif: "Pakt mit dem Teufel", mood: "Düster und stürmisch", summary: "Die Schöllenenschlucht war unpassierbar, bis die Urner einen Pakt schlossen: Der Teufel baut die Brücke, fordert aber die erste Seele, die sie überquert. Ein listiger Bauer schickte einen Geißbock hinüber.", source: "Müller, Sagen aus Uri (gemeinfrei)", lat: 46.6529, lng: 8.5837, isAnchorPlace: true },
-  { id: "rossberg", title: "Der Schatten vom Rossberg", canton: "Schwyz", coreMotif: "Naturkatastrophe", mood: "Erdrückend", summary: "Bevor der Berg in Goldau niederging, sahen die Sennen Omen am Himmel. Der Berg grollte, doch die Warnungen der alten Hirten wurden in den Tälern ignoriert.", source: "Meinrad Lienert, Schweizer Sagen (gemeinfrei)", lat: 47.0543, lng: 8.5519, isAnchorPlace: true },
-  { id: "tschaggatta", title: "Die Rache der Tschäggättä", canton: "Wallis", coreMotif: "Verborgene Talgemeinschaften", mood: "Wild und geheimnisvoll", summary: "Im Lötschental lebten einst Diebe, die sich in Felle hüllten und Holzmasken trugen, um die Talgemeinschaften zu erschrecken und Vorräte zu stehlen. Ihre wilden Schreie hallen noch heute durch die Nächte.", source: "Volksüberlieferung Lötschental (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "blausee", title: "Das Mädchen vom Blausee", canton: "Bern", coreMotif: "Unglückliche Liebe", mood: "Melancholisch, traurig", summary: "Ein junges Mädchen verlor ihren Liebsten in den Bergen. Sie weinte so viele Tränen, dass daraus ein See von tiefblauer Farbe entstand, der bis heute ihre Trauer widerspiegelt.", source: "Berner Oberland Sagensammlung (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "viamala", title: "Die Hexen der Viamala", canton: "Graubünden", coreMotif: "Gefährliche Reisewege", mood: "Gefährlich, klaustrophobisch", summary: "In den tiefsten Schluchten des Hinterrheins, wo kaum Sonnenlicht hinfällt, sollen einst Hexen den Reisenden aufgelauert haben. Nur wer ein reines Gewissen hatte, passierte die Viamala unbeschadet.", source: "Bündner Sagen (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "monte-san-salvatore", title: "Der Einsiedler vom Salvatore", canton: "Tessin", coreMotif: "Einsamkeit und Erleuchtung", mood: "Friedlich, erhaben", summary: "Auf dem Gipfel hoch über dem See lebte ein Einsiedler, der Stürme besänftigen konnte, indem er ein einfaches Lied sang. Sein Geist wacht noch heute über den See.", source: "Ticino Leggende (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "pilatus", title: "Der schlafende Drache", canton: "Luzern", coreMotif: "Magische Kreaturen", mood: "Mystisch, bedrohlich", summary: "Im Pilatussee auf dem Berg soll ein gewaltiger Drache ruhen. Wirft man einen Stein in das dunkle Wasser, erwacht der Drache und schickt furchtbare Unwetter über das Land.", source: "Luzerner Chronik (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "martinsloch", title: "Der Wurf des Martinsloch", canton: "Glarus", coreMotif: "Heiligenlegende", mood: "Kraftvoll, ehrfürchtig", summary: "Als der Heilige Martin von einem riesigen Schafhirten angegriffen wurde, warf er seinen Wanderstab durch den Berg, was ein riesiges Loch hinterließ. Zweimal im Jahr scheint die Sonne genau hindurch.", source: "Glarner Sagen (gemeinfrei)", lat: 46.9142, lng: 9.1764, isAnchorPlace: true },
-  { id: "tell", title: "Tells Sprung", canton: "Uri", coreMotif: "Freiheit und Auflehnung", mood: "Trotzig, entschlossen", summary: "Der Landvogt Gessler zwang Wilhelm Tell, einen Apfel vom Kopf seines Sohnes zu schießen. Als Gefangener auf dem sturmgepeitschten Urnersee entkam Tell mit einem Sprung auf einen Felsen und läutete den Aufstand ein.", source: "Weisses Buch von Sarnen (gemeinfrei)", lat: 46.9573, lng: 8.6083, isAnchorPlace: true },
-  { id: "matterhorn", title: "Die versunkene Stadt am Matterhorn", canton: "Wallis", coreMotif: "Hochmut und Strafe", mood: "Erhaben, warnend", summary: "Wo heute das Matterhorn kahl in den Himmel ragt, sollen einst fruchtbare Weiden und eine reiche Stadt gelegen haben. Als ihre Bewohner in Übermut und Geiz verfielen, ließ der Himmel das Land zu Fels und Eis erstarren.", source: "Walliser Sagen (gemeinfrei)", lat: 45.9763, lng: 7.6586, isAnchorPlace: true },
-  { id: "flims", title: "Das Nachtvolk vom Flimserstein", canton: "Graubünden", coreMotif: "Geisterzug", mood: "Unheimlich, ruhelos", summary: "Über dem gewaltigen Bergsturz von Flims zieht in dunklen Nächten das Nachtvolk seine Bahn: eine stumme Schar Verstorbener, die keine Ruhe fand. Wer ihnen begegnet, soll den Weg freigeben und schweigen, sonst wird er selbst Teil des Zuges.", source: "Bündner Sagen (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "rigi", title: "Die weisse Gämse der Rigi", canton: "Luzern", coreMotif: "Jägerprüfung", mood: "Sagenhaft, mahnend", summary: "Auf der Rigi lebte eine weiße Gämse, die kein Jäger je erlegen konnte. Wen die Gier packte und dennoch auf sie anlegte, den verschluckte der Nebel, denn sie war die Hüterin des Berges, nicht seine Beute.", source: "Innerschweizer Sagen (gemeinfrei)", lat: null, lng: null, isAnchorPlace: false },
-  { id: "habsburg", title: "Der Habicht von Habsburg", canton: "Aargau", coreMotif: "Gründungslegende", mood: "Sagenhaft, schicksalhaft", summary: "Als die Grafen ihre neue Burg im Aaretal errichteten, ließ sich ein Habicht auf der frischen Mauer nieder und wich nicht. Die Bauleute deuteten es als Zeichen und nannten die Burg nach dem Vogel Habsburg - von ihr stieg ein Geschlecht zu Kaisern auf.", source: "Aargauer Sagen (gemeinfrei)", lat: 47.4617, lng: 8.1836, isAnchorPlace: true },
-  { id: "gaebris", title: "Der versteinerte Geizhals vom Gäbris", canton: "Appenzell Ausserrhoden", coreMotif: "Hochmut und Strafe", mood: "Mahnend, streng", summary: "Ein reicher Bauer auf dem Gäbris wies jeden Bettler ab und verfluchte die Armen. Zur Strafe erstarrte er mitten im Hochmut zu einem grauen Felsblock, der noch heute mahnend über dem Land steht.", source: "Appenzeller Sagen (gemeinfrei)", lat: 47.375, lng: 9.47, isAnchorPlace: true },
-  { id: "wildkirchli", title: "Der Einsiedler vom Wildkirchli", canton: "Appenzell Innerrhoden", coreMotif: "Einsamkeit und Frömmigkeit", mood: "Andächtig, geheimnisvoll", summary: "Hoch in den Felsen des Alpsteins hausten Einsiedler in den Höhlen des Wildkirchli. Der Geist des letzten Klausners soll noch immer über die Felsenkapelle wachen und Wanderer in stürmischen Nächten sicher am Abgrund vorbeiführen.", source: "Innerrhoder Sagen (gemeinfrei)", lat: 47.285, lng: 9.41, isAnchorPlace: true },
-  { id: "reichenstein", title: "Die Schlangenkönigin von Reichenstein", canton: "Basel-Landschaft", coreMotif: "Verborgener Schatz", mood: "Geheimnisvoll, verlockend", summary: "In den Ruinen von Reichenstein bewacht eine weiße Schlange mit goldener Krone einen Schatz. Wer ihr die Krone nimmt, während sie in der Quelle badet, wird reich - doch die Gier hat noch jeden ins Verderben geführt.", source: "Baselbieter Sagen (gemeinfrei)", lat: 47.48, lng: 7.62, isAnchorPlace: true },
-  { id: "basilisk", title: "Der Basilisk von Basel", canton: "Basel-Stadt", coreMotif: "Ungeheuer und Bann", mood: "Unheimlich, bedrohlich", summary: "Aus einem Hahnenei kroch in einem Basler Keller ein Basilisk, dessen Blick tötete. Erst als man ihm einen Spiegel vorhielt und er sein eigenes Antlitz erblickte, fiel das Ungeheuer tot zu Boden.", source: "Basler Sagen (gemeinfrei)", lat: 47.5596, lng: 7.5886, isAnchorPlace: true },
-  { id: "moleson", title: "Der Teufel vom Moléson", canton: "Freiburg", coreMotif: "Pakt mit dem Teufel", mood: "Wild, trotzig", summary: "Ein Senn wollte seine Herde in einer einzigen Nacht über den Moléson bringen. Der Teufel bot Hilfe gegen die Seele des Sennen - doch der überlistete ihn, als beim ersten Hahnenschrei das Werk noch unvollendet war.", source: "Freiburger Sagen (gemeinfrei)", lat: 46.55, lng: 7.02, isAnchorPlace: true },
-  { id: "leman", title: "Die Fee des Genfersees", canton: "Genf", coreMotif: "Wassergeist", mood: "Melancholisch, verträumt", summary: "In stillen Nächten steigt eine Fee über der Bucht von Genf aus dem See. Ihr Gesang ist schöner als jeder irdische - doch wer ihr antwortet, den zieht der See für immer zu sich hinab.", source: "Genfer Sagen (gemeinfrei)", lat: 46.207, lng: 6.155, isAnchorPlace: true },
-  { id: "vouivre", title: "Die Vouivre vom Doubs", canton: "Jura", coreMotif: "Verborgener Schatz", mood: "Gefährlich, schillernd", summary: "Die Vouivre, eine fliegende Schlange, trägt einen einzigen glühenden Karfunkel als Auge. Nur wenn sie sich zum Trinken an den Doubs senkt und den Stein ablegt, kann ein Kühner das Kleinod rauben.", source: "Jurassische Sagen (gemeinfrei)", lat: 47.36, lng: 7.15, isAnchorPlace: true },
-  { id: "creux-du-van", title: "Die Feen des Creux du Van", canton: "Neuenburg", coreMotif: "Naturgeister", mood: "Erhaben, geheimnisvoll", summary: "Im gewaltigen Felskessel des Creux du Van wohnen Feen. Wanderern, die den Fels achten, schenken sie klare Quellen; wer die Wände verspottet, den führen sie in die Irre, bis der Nebel ihn verschluckt.", source: "Neuenburger Sagen (gemeinfrei)", lat: 46.933, lng: 6.73, isAnchorPlace: true },
-  { id: "buochserhorn", title: "Der wilde Jäger am Buochserhorn", canton: "Nidwalden", coreMotif: "Wilde Jagd", mood: "Stürmisch, ruhelos", summary: "In Sturmnächten jagt der wilde Jäger mit seiner geisterhaften Meute über das Buochserhorn. Wer ihn verhöhnt, wird bis zum Morgengrauen durch die tosende Luft mitgerissen.", source: "Nidwaldner Sagen (gemeinfrei)", lat: 46.94, lng: 8.42, isAnchorPlace: true },
-  { id: "ranft", title: "Die Vision im Ranft", canton: "Obwalden", coreMotif: "Heiligenlegende", mood: "Friedlich, erhaben", summary: "In der Schlucht des Ranft lebte der Einsiedler Niklaus von Flüe, der - so erzählt man - jahrelang ohne Speise auskam. Noch heute spüren Pilger an seiner Zelle eine tiefe, unerklärliche Ruhe.", source: "Obwaldner Sagen (gemeinfrei)", lat: 46.87, lng: 8.25, isAnchorPlace: true },
-  { id: "rheinfall", title: "Die Nixe vom Rheinfall", canton: "Schaffhausen", coreMotif: "Wassergeist", mood: "Tosend, verlockend", summary: "Unter dem tosenden Rheinfall wohnt eine Nixe. Die Gierigen lockt sie an den Rand des Sturzes, die Gutherzigen aber geleitet sie sicher über die Fluten.", source: "Schaffhauser Sagen (gemeinfrei)", lat: 47.677, lng: 8.615, isAnchorPlace: true },
-  { id: "verena", title: "Die heilige Verena der Verenaschlucht", canton: "Solothurn", coreMotif: "Heiligenlegende", mood: "Still, andächtig", summary: "Die fromme Verena zog sich in die Schlucht bei Solothurn zurück, um Kranke zu pflegen. Ihre Quelle in der Einsiedelei soll noch heute jeden Kummer lindern, der sich ihr anvertraut.", source: "Solothurner Sagen (gemeinfrei)", lat: 47.22, lng: 7.53, isAnchorPlace: true },
-  { id: "gallus", title: "Gallus und der Bär", canton: "St. Gallen", coreMotif: "Gründungslegende", mood: "Ehrfürchtig, kraftvoll", summary: "Der wandernde Mönch Gallus traf im wilden Steinachtal auf einen Bären. Als das Tier ihm Holz ans Feuer trug, wusste Gallus: Hier soll seine Zelle stehen - der Keim des großen Klosters.", source: "St. Galler Sagen (gemeinfrei)", lat: 47.42, lng: 9.38, isAnchorPlace: true },
-  { id: "nollen", title: "Der Drache vom Nollen", canton: "Thurgau", coreMotif: "Magische Kreaturen", mood: "Mystisch, schwelend", summary: "Im bewaldeten Nollen schlief ein Drache. Als die Bauern den Wald zu gierig rodeten, erwachte er, und sein feuriger Atem versengte einen Sommer lang die Felder ringsum.", source: "Thurgauer Sagen (gemeinfrei)", lat: 47.5, lng: 9.03, isAnchorPlace: true },
-  { id: "grotte-aux-fees", title: "Die Feen der Grotte aux Fées", canton: "Waadt", coreMotif: "Naturgeister", mood: "Kühl, geheimnisvoll", summary: "Tief in den Grotten über Vallorbe spinnen Feen ihre Fäden aus Wasser. Wer an der Quelle eine kleine Gabe hinterlässt, dem leuchten sie den Weg; den Undankbaren aber führen sie in die Irre.", source: "Waadtländer Sagen (gemeinfrei)", lat: 46.71, lng: 6.38, isAnchorPlace: true },
-  { id: "zugersee", title: "Der Untergang der Zuger Vorstadt", canton: "Zug", coreMotif: "Naturkatastrophe", mood: "Erdrückend, warnend", summary: "An einem stillen Abend glitt eine ganze Häuserzeile von Zug lautlos in den See. Die Alten hatten vor dem weichen Grund gewarnt, doch niemand hörte, bis das Wasser über den Dächern zusammenschlug.", source: "Zuger Sagen (gemeinfrei)", lat: 47.168, lng: 8.516, isAnchorPlace: true },
-  { id: "fraumuenster", title: "Der leuchtende Hirsch vom Zürichberg", canton: "Zürich", coreMotif: "Gründungslegende", mood: "Erhaben, sagenhaft", summary: "Ein Hirsch mit leuchtendem Geweih führte die Töchter des Kaisers durch den Wald an jene Stelle, wo sie das Fraumünster gründeten. In heiligen Nächten, so heißt es, kehrt das Leuchten zurück.", source: "Zürcher Sagen (gemeinfrei)", lat: 47.39, lng: 8.57, isAnchorPlace: true },
-];
 
 /**
  * Befuellt den Katalog idempotent beim Serverstart. Bereits vorhandene
@@ -81,7 +75,7 @@ const SEED_SAGAS: InsertCatalogSaga[] = [
 export async function seedCatalog(): Promise<void> {
   await db
     .insert(catalogSagasTable)
-    .values(SEED_SAGAS)
+    .values(CURATED_SAGAS)
     .onConflictDoUpdate({
       target: catalogSagasTable.id,
       set: {
@@ -90,16 +84,35 @@ export async function seedCatalog(): Promise<void> {
         coreMotif: sql`excluded.core_motif`,
         mood: sql`excluded.mood`,
         summary: sql`excluded.summary`,
+        summaries: sql`excluded.summaries`,
+        altersstufenHinweis: sql`excluded.altersstufen_hinweis`,
+        quelle: sql`excluded.quelle`,
         source: sql`excluded.source`,
+        koordinatenSicherheit: sql`excluded.koordinaten_sicherheit`,
         lat: sql`excluded.lat`,
         lng: sql`excluded.lng`,
         isAnchorPlace: sql`excluded.is_anchor_place`,
       },
     });
 
+  // Verwaiste Alt-Sagen entfernen: Der Katalog enthaelt ausschliesslich
+  // kuratierte, gemeinfrei belegte Sagen (frueher frei erfundene Eintraege
+  // werden geloescht).
+  await db.delete(catalogSagasTable).where(
+    notInArray(
+      catalogSagasTable.id,
+      CURATED_SAGAS.map((s) => s.id),
+    ),
+  );
+
+  const routenMitSage = SEED_ROUTES.map((route) => ({
+    ...route,
+    sagaId: naechsteKuratierteSagenId(route),
+  }));
+
   await db
     .insert(catalogRoutesTable)
-    .values(SEED_ROUTES)
+    .values(routenMitSage)
     .onConflictDoUpdate({
       target: catalogRoutesTable.id,
       set: {
@@ -118,7 +131,7 @@ export async function seedCatalog(): Promise<void> {
     });
 
   logger.info(
-    { routes: SEED_ROUTES.length, sagas: SEED_SAGAS.length },
+    { routes: SEED_ROUTES.length, sagas: CURATED_SAGAS.length },
     "Katalog geseedet",
   );
 }

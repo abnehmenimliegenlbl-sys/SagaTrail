@@ -22,6 +22,7 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
+import { resolveLang } from "@/lib/storyContent";
 
 const heroImg = require("@/assets/images/hero-valley.png");
 const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
@@ -91,6 +92,24 @@ export default function SagaDetail() {
   const image = saga.id === "teufelsbrucke" ? teufelImg : heroImg;
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
+  // Zusammenfassung in der gewaehlten Sprache; Deutsch als Fallback.
+  const lang = resolveLang(profile?.language);
+  const summaryText = saga.summaries[lang]?.text ?? saga.summary;
+  const reviewPending = saga.summaries[lang]?.reviewEmpfohlen ?? false;
+
+  // Ehrliche Kennzeichnung der Ortsgenauigkeit der ueberlieferten Sage.
+  const sicherheitLabel: Record<string, string> = {
+    exakt: "Exakt belegter Ort",
+    ungefaehr: "Region belegt, nicht punktgenau",
+    nicht_lokalisierbar: "Nicht exakt lokalisierbar",
+  };
+  const sicherheit =
+    sicherheitLabel[saga.koordinatenSicherheit] ??
+    sicherheitLabel.nicht_lokalisierbar;
+
+  const showKinderHinweis =
+    profile?.ageTier === "kinder" && !!saga.altersstufenHinweis;
+
   return (
     <Background>
       <ScrollView
@@ -128,8 +147,13 @@ export default function SagaDetail() {
 
         <Animated.View entering={FadeInDown.delay(80)} style={styles.body}>
           <Text style={[styles.summary, { color: colors.foreground }]}>
-            {saga.summary}
+            {summaryText}
           </Text>
+          {reviewPending ? (
+            <Text style={[styles.reviewNote, { color: colors.mutedForeground }]}>
+              Diese Übersetzung wird noch redaktionell geprüft.
+            </Text>
+          ) : null}
 
           <SparkDivider style={{ marginVertical: 22 }} />
 
@@ -144,17 +168,40 @@ export default function SagaDetail() {
                   ? `${saga.coordinates.lat.toFixed(4)}, ${saga.coordinates.lng.toFixed(4)}`
                   : "Ortsungebunden"}
               </Text>
+              <Text style={[styles.metaNote, { color: colors.mutedForeground }]}>
+                {sicherheit}
+              </Text>
             </View>
           </View>
 
           <View style={[styles.sourceBox, { borderColor: colors.glassBorder }]}>
             <Text style={[styles.sourceLabel, { color: colors.mutedForeground }]}>
-              QUELLE
+              QUELLE (GEMEINFREI)
             </Text>
-            <Text style={[styles.sourceText, { color: colors.foreground }]}>
-              {saga.source}
-            </Text>
+            {saga.quelle ? (
+              <>
+                <Text style={[styles.sourceText, { color: colors.foreground }]}>
+                  {saga.quelle.autor}: {saga.quelle.werk} ({saga.quelle.jahr})
+                </Text>
+                <Text style={[styles.sourceUrl, { color: colors.mutedForeground }]}>
+                  {saga.quelle.fundstelleUrl}
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.sourceText, { color: colors.foreground }]}>
+                {saga.source}
+              </Text>
+            )}
           </View>
+
+          {showKinderHinweis ? (
+            <View style={[styles.kinderBox, { borderColor: colors.glassBorder }]}>
+              <Feather name="info" size={15} color={colors.accent} />
+              <Text style={[styles.kinderText, { color: colors.foreground }]}>
+                {saga.altersstufenHinweis}
+              </Text>
+            </View>
+          ) : null}
 
           {locked ? (
             <View
@@ -208,10 +255,18 @@ const styles = StyleSheet.create({
   mood: { fontFamily: fonts.story, fontSize: 15, marginTop: 6 },
   body: { paddingHorizontal: 20, marginTop: 20 },
   summary: { fontFamily: fonts.story, fontSize: 18, lineHeight: 30 },
+  reviewNote: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+    fontStyle: "italic",
+  },
   metaRow: { flexDirection: "row" },
   metaItem: { flex: 1 },
   metaLabel: { fontFamily: fonts.body, fontSize: 12, marginTop: 6 },
   metaValue: { fontFamily: fonts.mono, fontSize: 15, marginTop: 2 },
+  metaNote: { fontFamily: fonts.body, fontSize: 12, marginTop: 4, fontStyle: "italic" },
   sourceBox: {
     borderWidth: 1,
     borderRadius: 14,
@@ -220,6 +275,17 @@ const styles = StyleSheet.create({
   },
   sourceLabel: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   sourceText: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
+  sourceUrl: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6, lineHeight: 16 },
+  kinderBox: {
+    flexDirection: "row",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+    alignItems: "flex-start",
+  },
+  kinderText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 20, flex: 1 },
   lockedBox: {
     borderWidth: 1,
     borderRadius: 16,

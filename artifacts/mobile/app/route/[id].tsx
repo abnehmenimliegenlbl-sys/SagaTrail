@@ -26,6 +26,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 
 const WEB_TOP = 67;
@@ -60,7 +61,7 @@ export default function Routenplanung() {
     }
     setSagaLoading(true);
     (async () => {
-      const result = await ensureRouteSaga(route.sagaId);
+      const result = await ensureRouteSaga(route.id);
       if (cancelled) return;
       setSaga(result);
       setSagaLoading(false);
@@ -273,8 +274,8 @@ export default function Routenplanung() {
         </Text>
         <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
           {sagaLoading
-            ? "Zu dieser Route wird eine ortsverankerte Sage erzeugt …"
-            : "Diese Legende begleitet dich auf der Route. Tippe an, um sie zu wählen."}
+            ? "Die passende Regionalsage wird gesucht …"
+            : "Diese überlieferte Legende begleitet dich auf der Route. Tippe an, um sie zu lesen."}
         </Text>
 
         {sagaLoading ? (
@@ -331,6 +332,15 @@ export default function Routenplanung() {
             )}
           </Pressable>
         )}
+
+        {saga &&
+        !sagaLoading &&
+        sagaLokalisierung(route, saga) === "nicht_exakt_lokalisierbar" ? (
+          <Text style={[styles.localisationNote, { color: colors.mutedForeground }]}>
+            Für diese Route ist keine punktgenau belegte Sage überliefert. Gezeigt
+            wird die nächstgelegene dokumentierte Regionalsage.
+          </Text>
+        ) : null}
 
         {saga && !sagaLoading ? (
           <PrimaryButton
@@ -459,4 +469,11 @@ const styles = StyleSheet.create({
   sagaTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 4 },
   sagaMood: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
   sagaLoadingText: { fontFamily: fonts.mono, fontSize: 13 },
+  localisationNote: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
+    fontStyle: "italic",
+  },
 });

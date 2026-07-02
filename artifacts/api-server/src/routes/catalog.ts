@@ -29,11 +29,15 @@ function toSaga(row: CatalogSagaRow) {
     coreMotif: row.coreMotif,
     mood: row.mood,
     summary: row.summary,
+    summaries: row.summaries,
+    altersstufenHinweis: row.altersstufenHinweis ?? undefined,
+    quelle: row.quelle ?? undefined,
     source: row.source,
     coordinates:
       row.lat != null && row.lng != null
         ? { lat: row.lat, lng: row.lng }
         : undefined,
+    koordinatenSicherheit: row.koordinatenSicherheit,
     isAnchorPlace: row.isAnchorPlace,
   };
 }

@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CatalogCoordinates } from './catalogCoordinates';
+import type { CatalogSagaKoordinatenSicherheit } from './catalogSagaKoordinatenSicherheit';
+import type { CatalogSagaSummaries } from './catalogSagaSummaries';
+import type { SagaQuelle } from './sagaQuelle';
 
 export interface CatalogSaga {
   id: string;
@@ -14,7 +17,11 @@ export interface CatalogSaga {
   coreMotif: string;
   mood: string;
   summary: string;
+  summaries: CatalogSagaSummaries;
+  altersstufenHinweis?: string;
+  quelle?: SagaQuelle;
   source: string;
   coordinates?: CatalogCoordinates;
+  koordinatenSicherheit: CatalogSagaKoordinatenSicherheit;
   isAnchorPlace: boolean;
 }

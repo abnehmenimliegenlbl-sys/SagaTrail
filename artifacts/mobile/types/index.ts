@@ -15,15 +15,43 @@ export interface Profile {
   ageTier: AgeTier;
 }
 
+export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar";
+
+// Je Zielsprache eigenstaendig verfasste Zusammenfassung. `reviewEmpfohlen`
+// markiert Sprachen, deren Qualitaet noch geprueft werden sollte.
+export interface LocalizedSummary {
+  text: string;
+  reviewEmpfohlen: boolean;
+}
+
+// Vollstaendige, nachvollziehbare Quellenangabe (gemeinfreie historische
+// Sammlung). `fundstelleUrl` darf auf eine Sammelseite verweisen.
+export interface SagaQuelle {
+  autor: string;
+  werk: string;
+  jahr: string;
+  fundstelleUrl: string;
+}
+
 export interface Saga {
   id: string;
   title: string;
   canton: string;
   coreMotif: string;
   mood: string;
+  // Deutsche Kurzfassung; dient als Anzeige-Default und Fallback.
   summary: string;
+  // Pro Sprache eigenstaendig verfasste Zusammenfassungen (inkl. Deutsch).
+  summaries: Record<string, LocalizedSummary>;
+  // Kurze Regieanweisung, welche Stellen fuer juengeres Publikum abgemildert
+  // werden sollten (keine drei separaten Textversionen).
+  altersstufenHinweis?: string;
+  // Strukturierte Quellenangabe.
+  quelle?: SagaQuelle;
+  // Menschlich lesbare Kurz-Quelle (aus `quelle` abgeleitet).
   source: string;
   coordinates?: LatLng;
+  koordinatenSicherheit: KoordinatenSicherheit;
   isAnchorPlace: boolean;
 }
 

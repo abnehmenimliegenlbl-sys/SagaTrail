@@ -24,6 +24,7 @@ import {
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
 import { configureApiClient } from "@/lib/apiConfig";
+import { nearestSaga } from "@/lib/sagaMatch";
 
 /**
  * Katalog-Datenschicht: Routen, Sagen und Kantone kommen bevorzugt vom Server,
@@ -31,8 +32,9 @@ import { configureApiClient } from "@/lib/apiConfig";
  * auf die im Build hinterlegten Seed-Daten zurueck (Offline-First).
  *
  * Zusaetzlich lassen sich pro Kanton echte Wanderrouten (OpenStreetMap, mit
- * swisstopo-Hoehenmetern) nachladen und dazu je Route eine ortsverankerte Sage
- * per KI erzeugen. Beides wird dynamisch gecacht; ohne Verbindung greift der
+ * swisstopo-Hoehenmetern) nachladen; jeder Route wird die naechstgelegene
+ * kuratierte, gemeinfrei belegte Sage zugeordnet (keine frei erzeugten Sagen).
+ * Die Kantonsrouten werden dynamisch gecacht; ohne Verbindung greift der
  * kuratierte Seed.
  *
  * `source` macht die Herkunft transparent:
@@ -74,7 +76,7 @@ interface CatalogContextValue {
   getRoutesByCanton: (canton?: string) => HikingRoute[];
   /** Laedt echte Routen des Kantons (Server) mit kuratiertem Offline-Fallback. */
   loadCantonRoutes: (canton: string) => Promise<CantonRoutesResult>;
-  /** Stellt die (ggf. KI-erzeugte) Sage zu einer Route sicher. */
+  /** Liefert die naechstgelegene kuratierte Sage zu einer Route. */
   ensureRouteSaga: (routeId: string) => Promise<Saga | undefined>;
 }
 
@@ -112,8 +114,8 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   dataRef.current = data;
   dynamicRef.current = dynamic;
 
-  // Laufende Sagen-Anfragen bündeln, damit parallel geöffnete Screens
-  // (Route + Sage) nicht dieselbe KI-Erzeugung doppelt anstoßen.
+  // Laufende Server-Anfragen bündeln, damit parallel geöffnete Screens
+  // (Route + Sage) nicht dieselbe Abfrage doppelt anstoßen.
   const sagaInFlight = useRef<Map<string, Promise<Saga | undefined>>>(new Map());
 
   const persistDynamic = useCallback(() => {
@@ -223,27 +225,39 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
   const ensureRouteSaga = useCallback(
     async (routeId: string): Promise<Saga | undefined> => {
-      const existing = dynamicRef.current.routeSagas[routeId];
-      if (existing) return existing;
+      // Direkter Katalogtreffer (Sage-Id == Route-Id bei Seed-Ankern).
       const inCatalog = dataRef.current.sagas.find((s) => s.id === routeId);
       if (inCatalog) return inCatalog;
 
+      // Route lokal finden und die naechstgelegene kuratierte Sage bestimmen —
+      // funktioniert offline, da der Sagen-Katalog immer gebuendelt vorliegt.
+      const findRoute = (id: string): HikingRoute | undefined => {
+        for (const list of Object.values(dynamicRef.current.cantonRoutes)) {
+          const hit = list.find((r) => r.id === id);
+          if (hit) return hit;
+        }
+        return dataRef.current.routes.find((r) => r.id === id);
+      };
+      const route = findRoute(routeId);
+      if (route) {
+        const match = nearestSaga(
+          route.coordinates,
+          route.region,
+          dataRef.current.sagas,
+        );
+        if (match) return match;
+      }
+
+      // Fallback: Server nach der naechstgelegenen Sage fragen (Route lokal
+      // unbekannt, z. B. direkt geöffnete Route-Id ohne geladenen Kanton).
       const pending = sagaInFlight.current.get(routeId);
       if (pending) return pending;
 
       const request = (async (): Promise<Saga | undefined> => {
         try {
-          const saga = (await getRouteSaga(routeId)) as Saga;
-          const next: DynamicData = {
-            ...dynamicRef.current,
-            routeSagas: { ...dynamicRef.current.routeSagas, [routeId]: saga },
-          };
-          dynamicRef.current = next;
-          setDynamic(next);
-          persistDynamic();
-          return saga;
+          return (await getRouteSaga(routeId)) as Saga;
         } catch {
-          return dataRef.current.sagas.find((s) => s.id === routeId);
+          return undefined;
         } finally {
           sagaInFlight.current.delete(routeId);
         }
@@ -252,12 +266,12 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       sagaInFlight.current.set(routeId, request);
       return request;
     },
-    [persistDynamic],
+    [],
   );
 
   const value = useMemo<CatalogContextValue>(() => {
     const { routes, sagas } = data;
-    const { cantonRoutes, routeSagas } = dynamic;
+    const { cantonRoutes } = dynamic;
     const dynRouteLists = Object.values(cantonRoutes);
 
     const findDynRoute = (predicate: (r: HikingRoute) => boolean) => {
@@ -278,11 +292,10 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         id
           ? findDynRoute((r) => r.id === id) ?? routes.find((r) => r.id === id)
           : undefined,
-      getSaga: (id) =>
-        id ? routeSagas[id] ?? sagas.find((s) => s.id === id) : undefined,
+      getSaga: (id) => (id ? sagas.find((s) => s.id === id) : undefined),
       getSagaForRoute: (route) =>
-        routeSagas[route.sagaId] ??
-        sagas.find((s) => s.id === route.sagaId),
+        sagas.find((s) => s.id === route.sagaId) ??
+        nearestSaga(route.coordinates, route.region, sagas),
       getRouteBySaga: (sagaId) =>
         sagaId
           ? findDynRoute((r) => r.sagaId === sagaId) ??

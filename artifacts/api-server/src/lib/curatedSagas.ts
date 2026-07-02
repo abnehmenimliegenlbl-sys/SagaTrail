@@ -1,10 +1,14 @@
-import { Saga } from "../types";
+import type { InsertCatalogSaga } from "@workspace/db";
 
-// Kuratierte, gemeinfrei belegte Sagen (Offline-Fallback). Verbindliche Quelle
-// ist der Server-Katalog; diese Liste muss inhaltlich damit uebereinstimmen.
-// Jede Sage stammt aus einer gemeinfreien historischen Sammlung; Koordinaten
-// sind nur gesetzt, wenn die Quelle die Sage einem realen Ort zuordnet.
-export const SAGAS: Saga[] = [
+  /**
+   * Kuratierte, gemeinfrei belegte Sagen als verbindliche Katalog-Ausgangsdaten.
+   * Jede Sage stammt aus einer gemeinfreien historischen Sammlung mit
+   * nachvollziehbarer Quelle. Koordinaten sind nur gesetzt, wenn die Quelle die
+   * Sage einem realen Ort zuordnet (sonst koordinatenSicherheit
+   * "nicht_lokalisierbar"). Zusammenfassungen sind je Zielsprache eigenstaendig
+   * verfasst; unsichere Sprachqualitaet ist mit reviewEmpfohlen markiert.
+   */
+  export const CURATED_SAGAS: InsertCatalogSaga[] = [
 {
   "id": "teufelsbrucke",
   "title": "Die Teufelsbrücke in der Schöllenen",
@@ -54,10 +58,8 @@ export const SAGAS: Saga[] = [
     "fundstelleUrl": "https://reader.digitale-sammlungen.de/resolve/display/bsb10453839.html"
   },
   "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
-  "coordinates": {
-    "lat": 46.6529,
-    "lng": 8.5837
-  },
+  "lat": 46.6529,
+  "lng": 8.5837,
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
@@ -110,10 +112,8 @@ export const SAGAS: Saga[] = [
     "fundstelleUrl": "https://de.wikipedia.org/wiki/Weisses_Buch_von_Sarnen"
   },
   "source": "Hans Schriber: Das Weisse Buch von Sarnen (um 1470)",
-  "coordinates": {
-    "lat": 46.9726,
-    "lng": 8.6112
-  },
+  "lat": 46.9726,
+  "lng": 8.6112,
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
@@ -166,10 +166,8 @@ export const SAGAS: Saga[] = [
     "fundstelleUrl": "https://www.geschichtsquellen.de/werk/4712"
   },
   "source": "Walahfrid Strabo: Vita Sancti Galli (um 833)",
-  "coordinates": {
-    "lat": 47.4239,
-    "lng": 9.3767
-  },
+  "lat": 47.4239,
+  "lng": 9.3767,
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
@@ -222,10 +220,8 @@ export const SAGAS: Saga[] = [
     "fundstelleUrl": "https://archive.org/details/bub_gb_YVmp4GlhYdUC"
   },
   "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau (1856)",
-  "coordinates": {
-    "lat": 47.4626,
-    "lng": 8.2847
-  },
+  "lat": 47.4626,
+  "lng": 8.2847,
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
@@ -278,10 +274,8 @@ export const SAGAS: Saga[] = [
     "fundstelleUrl": "https://ebooks-bnr.com/ceresole-alfred-legendes-des-alpes-vaudoises/"
   },
   "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
-  "coordinates": {
-    "lat": 46.3167,
-    "lng": 7.21
-  },
+  "lat": 46.3167,
+  "lng": 7.21,
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },

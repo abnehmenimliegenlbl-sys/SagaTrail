@@ -1,5 +1,5 @@
 import { AgeTier, Archetype, Saga, StoryChapter } from "../types";
-import { localizedSummary, resolveLang, STORY_PACKS } from "./storyContent";
+import { resolveLang, STORY_PACKS } from "./storyContent";
 
 /**
  * Deterministische Story-Engine (ohne KI in diesem Build).
@@ -21,7 +21,9 @@ export function generateStory(
   const lang = resolveLang(languageCode);
   const pack = STORY_PACKS[lang];
   const isKinder = ageTier === "kinder";
-  const summary = localizedSummary(lang, saga.id, saga.summary);
+  // Zusammenfassung in Zielsprache direkt aus der kuratierten Sage; Deutsch
+  // dient als Fallback, falls eine Sprache noch fehlt.
+  const summary = saga.summaries[lang]?.text ?? saga.summary;
   const chapters: StoryChapter[] = [];
 
   // Kapitel 1 — Ankunft

@@ -49,11 +49,23 @@ export const GetCatalogResponse = zod.object({
   "coreMotif": zod.string(),
   "mood": zod.string(),
   "summary": zod.string(),
+  "summaries": zod.record(zod.string(), zod.object({
+  "text": zod.string(),
+  "reviewEmpfohlen": zod.boolean()
+})),
+  "altersstufenHinweis": zod.string().optional(),
+  "quelle": zod.object({
+  "autor": zod.string(),
+  "werk": zod.string(),
+  "jahr": zod.string(),
+  "fundstelleUrl": zod.string()
+}).optional(),
   "source": zod.string(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }).optional(),
+  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
   "isAnchorPlace": zod.boolean()
 }))
 })
@@ -120,8 +132,8 @@ export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
 
 /**
- * Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch keine, wird sie via Anthropic erzeugt und gecacht.
- * @summary KI-Sage zu einer realen Route
+ * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
+ * @summary Naechstgelegene kuratierte Sage zu einer Route
  */
 export const GetRouteSagaParams = zod.object({
   "routeId": zod.coerce.string()
@@ -134,11 +146,23 @@ export const GetRouteSagaResponse = zod.object({
   "coreMotif": zod.string(),
   "mood": zod.string(),
   "summary": zod.string(),
+  "summaries": zod.record(zod.string(), zod.object({
+  "text": zod.string(),
+  "reviewEmpfohlen": zod.boolean()
+})),
+  "altersstufenHinweis": zod.string().optional(),
+  "quelle": zod.object({
+  "autor": zod.string(),
+  "werk": zod.string(),
+  "jahr": zod.string(),
+  "fundstelleUrl": zod.string()
+}).optional(),
   "source": zod.string(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }).optional(),
+  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
   "isAnchorPlace": zod.boolean()
 })
 

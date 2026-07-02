@@ -116,10 +116,11 @@ paths:
     get:
       operationId: getRouteSaga
       tags: [routes]
-      summary: KI-Sage zu einer realen Route
+      summary: Naechstgelegene kuratierte Sage zu einer Route
       description: >
-        Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch
-        keine, wird sie via Anthropic erzeugt und gecacht.
+        Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route
+        (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte
+        Katalogdaten werden gelesen.
       parameters:
         - name: routeId
           in: path
@@ -140,7 +141,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: KI-Erzeugung fehlgeschlagen
+          description: Sage konnte nicht ermittelt werden
           content:
             application/json:
               schema:
@@ -218,6 +219,32 @@ components:
         - terrain
         - coordinates
         - featured
+    LocalizedSummary:
+      type: object
+      properties:
+        text:
+          type: string
+        reviewEmpfohlen:
+          type: boolean
+      required:
+        - text
+        - reviewEmpfohlen
+    SagaQuelle:
+      type: object
+      properties:
+        autor:
+          type: string
+        werk:
+          type: string
+        jahr:
+          type: string
+        fundstelleUrl:
+          type: string
+      required:
+        - autor
+        - werk
+        - jahr
+        - fundstelleUrl
     CatalogSaga:
       type: object
       properties:
@@ -233,10 +260,24 @@ components:
           type: string
         summary:
           type: string
+        summaries:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/LocalizedSummary"
+        altersstufenHinweis:
+          type: string
+        quelle:
+          $ref: "#/components/schemas/SagaQuelle"
         source:
           type: string
         coordinates:
           $ref: "#/components/schemas/CatalogCoordinates"
+        koordinatenSicherheit:
+          type: string
+          enum:
+            - exakt
+            - ungefaehr
+            - nicht_lokalisierbar
         isAnchorPlace:
           type: boolean
       required:
@@ -246,7 +287,9 @@ components:
         - coreMotif
         - mood
         - summary
+        - summaries
         - source
+        - koordinatenSicherheit
         - isAnchorPlace
     CatalogResponse:
       type: object
