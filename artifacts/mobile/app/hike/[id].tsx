@@ -336,7 +336,7 @@ export default function LiveHike() {
   const simPos: LatLng | null =
     geo && geo.length > 1
       ? (() => {
-          const f = Math.max(0, Math.min(1, distance / totalKm));
+          const f = totalKm > 0 ? Math.max(0, Math.min(1, distance / totalKm)) : 0;
           const p = geo[Math.round(f * (geo.length - 1))];
           return { lat: p[0], lng: p[1] };
         })()

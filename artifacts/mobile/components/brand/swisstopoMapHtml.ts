@@ -53,6 +53,20 @@ export function buildSwisstopoHtml(
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<script>
+  // Positionsfunktion frueh definieren (vor Leaflet), damit ein per
+  // injectJavaScript/contentWindow gesetzter Standort auch dann gepuffert wird,
+  // wenn er eintrifft, bevor die Karte fertig aufgebaut ist (iOS-WebView-Race).
+  (function () {
+    var pending = null;
+    window.sttSetPosition = function (plat, plng) {
+      if (plat == null || plng == null) return;
+      pending = [plat, plng];
+      if (window.__sttApply) window.__sttApply(pending);
+    };
+    window.__sttGetPending = function () { return pending; };
+  })();
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #10181A; }
@@ -107,13 +121,17 @@ export function buildSwisstopoHtml(
 
     var liveIcon = L.divIcon({ className: '', html: '<div class="stt-live"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
     var liveMarker = null;
-    window.sttSetPosition = function (plat, plng) {
-      if (plat == null || plng == null) return;
-      var ll = [plat, plng];
+    // Wird von der frueh definierten sttSetPosition aufgerufen, sobald die Karte
+    // steht; setzt bzw. verschiebt den Positionsmarker.
+    window.__sttApply = function (ll) {
+      if (!ll) return;
       if (!liveMarker) { liveMarker = L.marker(ll, { icon: liveIcon }).addTo(map); }
       else { liveMarker.setLatLng(ll); }
       map.panTo(ll, { animate: true });
     };
+    // Eine bereits vor dem Kartenaufbau gepufferte Position jetzt anwenden.
+    var early = window.__sttGetPending && window.__sttGetPending();
+    if (early) window.__sttApply(early);
     setTimeout(function () { map.invalidateSize(); }, 200);
   })();
 </script>
