@@ -1,6 +1,11 @@
 export type Archetype = "reisende" | "hueterin" | "gewitzte" | "senn";
 export type AgeTier = "kinder" | "jugendliche" | "erwachsene";
 
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -18,7 +23,7 @@ export interface Saga {
   mood: string;
   summary: string;
   source: string;
-  coordinates?: { lat: number; lng: number };
+  coordinates?: LatLng;
   isAnchorPlace: boolean;
 }
 

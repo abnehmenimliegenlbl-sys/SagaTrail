@@ -1,11 +1,12 @@
 import { SAGAS } from "./sagas";
-import { Saga } from "../types";
+import { LatLng, Saga } from "../types";
 
 /**
  * Wanderrouten sind der Einstieg in SagaTrail: Zuerst waehlt man eine Route,
  * danach die dazu passende Sage. Jede Route ist (in diesem Build) fest einer
- * Sage zugeordnet. Kennwerte sind statische Richtwerte, klar gekennzeichnet;
- * Live-Daten (swisstopo, Wetter) folgen in einer spaeteren Ausbaustufe.
+ * Sage zugeordnet. Kennwerte sind statische Richtwerte, klar gekennzeichnet.
+ * `coordinates` markiert den Ausgangspunkt und dient als Kartenmittelpunkt der
+ * swisstopo-Karte; Live-Wetterdaten folgen in einer spaeteren Ausbaustufe.
  */
 export interface HikingRoute {
   id: string;
@@ -18,6 +19,8 @@ export interface HikingRoute {
   sac: string;
   /** Landschaftlicher Kurzcharakter der Route */
   terrain: string;
+  /** Ausgangspunkt der Route (Kartenmittelpunkt) */
+  coordinates: LatLng;
   /** Wird als grosse Ankerroute auf der Startseite hervorgehoben */
   featured: boolean;
 }
@@ -33,6 +36,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 165,
     sac: "T3",
     terrain: "Schluchtsteig entlang der tosenden Reuss",
+    coordinates: { lat: 46.6529, lng: 8.5837 },
     featured: true,
   },
   {
@@ -45,6 +49,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 210,
     sac: "T2",
     terrain: "Bergsturzgelände mit weiten Ausblicken",
+    coordinates: { lat: 47.0489, lng: 8.547 },
     featured: true,
   },
   {
@@ -57,6 +62,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 290,
     sac: "T4",
     terrain: "Anspruchsvoller Höhenweg mit Felspassagen",
+    coordinates: { lat: 46.9142, lng: 9.1764 },
     featured: true,
   },
   {
@@ -69,6 +75,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 240,
     sac: "T3",
     terrain: "Sonnenhang hoch über dem Lötschental",
+    coordinates: { lat: 46.406, lng: 7.774 },
     featured: false,
   },
   {
@@ -81,6 +88,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 95,
     sac: "T1",
     terrain: "Sanfter Wald- und Uferweg am See",
+    coordinates: { lat: 46.5686, lng: 7.6489 },
     featured: false,
   },
   {
@@ -93,6 +101,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 175,
     sac: "T3",
     terrain: "Enge Schlucht mit steilen Treppen am Hinterrhein",
+    coordinates: { lat: 46.6994, lng: 9.4519 },
     featured: false,
   },
   {
@@ -105,6 +114,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 160,
     sac: "T2",
     terrain: "Sonniger Gipfelaufstieg über dem Luganersee",
+    coordinates: { lat: 45.9967, lng: 8.9469 },
     featured: false,
   },
   {
@@ -117,6 +127,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 330,
     sac: "T3",
     terrain: "Langer Gipfelweg mit Blick über die Zentralschweiz",
+    coordinates: { lat: 46.979, lng: 8.2554 },
     featured: false,
   },
   {
@@ -129,6 +140,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 300,
     sac: "T2",
     terrain: "Uferweg hoch über dem Urnersee zur Tellskapelle",
+    coordinates: { lat: 46.9573, lng: 8.6083 },
     featured: false,
   },
   {
@@ -141,6 +153,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 285,
     sac: "T3",
     terrain: "Höhenweg mit stetem Blick auf das Matterhorn",
+    coordinates: { lat: 45.9876, lng: 7.7043 },
     featured: false,
   },
   {
@@ -153,6 +166,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 150,
     sac: "T2",
     terrain: "Waldweg rund um den türkisblauen Caumasee",
+    coordinates: { lat: 46.8331, lng: 9.2807 },
     featured: false,
   },
   {
@@ -165,6 +179,7 @@ export const ROUTES: HikingRoute[] = [
     minutes: 240,
     sac: "T2",
     terrain: "Panoramaweg zur Königin der Berge",
+    coordinates: { lat: 47.0576, lng: 8.4852 },
     featured: false,
   },
 ];
@@ -175,6 +190,11 @@ export function getRoute(id?: string): HikingRoute | undefined {
 
 export function getSagaForRoute(route: HikingRoute): Saga | undefined {
   return SAGAS.find((s) => s.id === route.sagaId);
+}
+
+/** Findet die Route zu einer Sage (fuer den Live-Hike, der nach sagaId startet). */
+export function getRouteBySaga(sagaId?: string): HikingRoute | undefined {
+  return ROUTES.find((r) => r.sagaId === sagaId);
 }
 
 export interface CantonWithRoutes {

@@ -18,6 +18,7 @@ import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { getRoute, getSagaForRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
@@ -76,7 +77,11 @@ export default function Routenplanung() {
         </Text>
 
         <View style={{ marginTop: 18 }}>
-          <RouteMap progress={0.15} height={200} />
+          {route.coordinates ? (
+            <SwisstopoMap center={route.coordinates} label={route.name} height={200} />
+          ) : (
+            <RouteMap progress={0.15} height={200} />
+          )}
         </View>
 
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>
