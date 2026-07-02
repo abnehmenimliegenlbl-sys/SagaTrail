@@ -4,19 +4,25 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LatLng } from "@/types";
 
 /**
- * Offline-Kartenkacheln (swisstopo) fuer eine Wanderung.
+ * Offline-Kartenkacheln (Carto Voyager) fuer eine Wanderung.
  *
- * Es werden amtliche swisstopo-WMTS-Kacheln (EPSG:3857, Standard-XYZ, kein
- * API-Schluessel) fuer einen begrenzten Korridor rund um den Startpunkt in
- * wenigen Zoomstufen heruntergeladen und lokal via expo-file-system abgelegt.
- * Der Umfang ist bewusst eng begrenzt, damit der Speicherbedarf klein bleibt.
+ * Es werden dieselben hellen Carto-Voyager-Basiskacheln (EPSG:3857,
+ * Standard-XYZ, kein API-Schluessel) wie in der Live-Kartenansicht fuer
+ * einen begrenzten Korridor rund um den Startpunkt in wenigen Zoomstufen
+ * heruntergeladen und lokal via expo-file-system abgelegt. Der Umfang ist
+ * bewusst eng begrenzt, damit der Speicherbedarf klein bleibt. Das
+ * Wanderwege-Overlay (Waymarked Trails) wird bewusst NICHT offline
+ * gesichert — es ist eine reine Zusatzebene, die offline einfach fehlt und
+ * online nachlaedt, sobald wieder Empfang besteht.
  *
  * Web hat kein Dateisystem — dort sind alle Operationen bewusste No-Ops und die
  * Karte bleibt online.
  */
 
+// Feste Subdomain fuer deterministische, cachebare Download-URLs (die
+// Live-Karte rotiert 'abcd' fuer Parallelitaet, das ist hier nicht noetig).
 const TILE_URL = (z: number, x: number, y: number) =>
-  `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/${z}/${x}/${y}.jpeg`;
+  `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
 
 // Zoomstufen und jeweiliger Radius (in Kacheln) rund um den Startpunkt.
 // Eng gehalten fuer einen kleinen, vorhersehbaren Speicherbedarf.
@@ -69,7 +75,7 @@ function tilesDir(sagaId: string): string {
 }
 
 function tileFile(sagaId: string, t: TileCoord): string {
-  return `${tilesDir(sagaId)}${t.z}_${t.x}_${t.y}.jpeg`;
+  return `${tilesDir(sagaId)}${t.z}_${t.x}_${t.y}.png`;
 }
 
 function tileKey(t: TileCoord): string {
@@ -135,14 +141,15 @@ export async function loadTilesBase64(sagaId: string): Promise<Record<string, st
   const files = await FileSystem.readDirectoryAsync(dir).catch(() => [] as string[]);
   const out: Record<string, string> = {};
   for (const name of files) {
-    const match = name.match(/^(\d+)_(\d+)_(\d+)\.jpeg$/);
+    const match = name.match(/^(\d+)_(\d+)_(\d+)\.(png|jpeg)$/);
     if (!match) continue;
     const key = `${match[1]}/${match[2]}/${match[3]}`;
+    const mime = match[4] === "jpeg" ? "image/jpeg" : "image/png";
     try {
       const b64 = await FileSystem.readAsStringAsync(`${dir}${name}`, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      out[key] = `data:image/jpeg;base64,${b64}`;
+      out[key] = `data:${mime};base64,${b64}`;
     } catch {
       // defekte Kachel ueberspringen
     }
