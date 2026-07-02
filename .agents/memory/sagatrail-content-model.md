@@ -15,11 +15,17 @@ Both must stay in sync. Each saga needs per-language `summaries` (all 8 language
 
 **Why:** `storyEngine` reads `saga.summaries[lang]?.text ?? saga.summary`; a missing language key silently serves the German summary inside an otherwise-localized narration. So fill all 8 language summaries in lockstep.
 
+## Routes are online-only (NO route seed)
+- Sagas have a bundled offline seed; ROUTES DO NOT. There is no route seed in the mobile bundle and no offline route fallback — routes come exclusively live per canton from the connected sources (OSM + swisstopo). `constants/routes.ts` is types-only (`HikingRoute`, `CantonWithRoutes`).
+- `CatalogContext.loadCantonRoutes` returns `source: "error"` with an empty list when the server/OSM is unreachable (`CatalogSource` includes `"error"`); the Kanton screen shows a "Server nicht erreichbar." hint instead of faking offline routes.
+- Server `/catalog` returns `routes: []`; `catalogSeed` purges the entire `catalog_routes` table on every start and seeds only sagas. The mobile cache-freshness gate keys on `sagas.length` (routes are always empty).
+- **Why:** the user explicitly wants only real routes from the connected databases — no curated/seed route data anywhere. Do NOT reintroduce a `SEED_ROUTES` array or a route seed fallback.
+
 ## Route -> saga matching (nearest, not 1:1 ownership)
-- Routes no longer "own" a specific saga. Each route resolves to the NEAREST curated saga.
-- Server: `catalogSeed` remaps every seed route's `sagaId` to the nearest curated saga (`naechsteKuratierteSagenId`, canton-first then haversine) at seed time, so the `/catalog` contract never returns a dangling `sagaId`. `routeService.getRouteSaga` -> `findNearestCuratedSaga` for dynamic OSM routes.
+- Routes no longer "own" a specific saga. Each dynamic OSM route resolves to the NEAREST curated saga.
+- Server: `routeService.getRouteSaga` -> `findNearestCuratedSaga` for dynamic OSM routes (canton-first then haversine).
 - Mobile: `lib/sagaMatch.ts` `nearestSaga(...)` (canton-first haversine, `EXAKT_RADIUS_M = 3500`). `getSagaForRoute` tries `sagas.find(id === route.sagaId)` then falls back to `nearestSaga`. `sagaLokalisierung` marks a route-assignment as `exakt` only when same canton AND <= 3.5 km; otherwise "nicht exakt lokalisierbar".
 - **Why:** with only a handful of curated sagas, most routes have no exact local legend; nearest-match with an honest "nicht exakt lokalisierbar" note is the product rule. This route-assignment certainty is SEPARATE from the saga's intrinsic `koordinatenSicherheit`.
 
 ## Seeding integrity
-- `catalogSeed` deletes `catalog_sagas` rows whose id is not in `CURATED_SAGAS` (purges old AI/placeholder rows), then upserts the curated set. The catalog always contains exactly the curated sagas.
+- `catalogSeed` deletes `catalog_sagas` rows whose id is not in `CURATED_SAGAS` (purges old AI/placeholder rows), then upserts the curated set, AND purges `catalog_routes` entirely. The catalog always contains exactly the curated sagas and zero routes.

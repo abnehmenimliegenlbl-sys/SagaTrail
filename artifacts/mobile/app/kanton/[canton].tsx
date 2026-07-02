@@ -100,7 +100,7 @@ export default function KantonRouten() {
     setSearching(false);
   }, [cantonName, loadCantonRoutes, buildFilter]);
 
-  const offline = routeSource === "seed";
+  const loadError = routeSource === "error";
 
   return (
     <Background>
@@ -190,18 +190,21 @@ export default function KantonRouten() {
           ) : routes.length === 0 ? (
             <View style={styles.hint}>
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                Keine passende Route gefunden.
+                {loadError
+                  ? "Server nicht erreichbar."
+                  : "Keine passende Route gefunden."}
               </Text>
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-                Erweitere die Filter und suche erneut.
+                {loadError
+                  ? "Routen kommen live aus OpenStreetMap und swisstopo. Prüfe deine Verbindung und suche erneut."
+                  : "Erweitere die Filter und suche erneut."}
               </Text>
             </View>
           ) : (
             <>
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {routes.length} {routes.length === 1 ? "Route" : "Routen"} gefunden
-                {offline ? " · offline, kuratierter Bestand" : ""}. Danach folgt
-                die passende Sage.
+                {routes.length} {routes.length === 1 ? "Route" : "Routen"} gefunden.
+                Danach folgt die passende Sage.
               </Text>
               {routes.map((route, i) => {
                 const locked = !premium && route.region !== profile?.homeCanton;

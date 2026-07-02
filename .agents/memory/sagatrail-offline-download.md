@@ -6,19 +6,19 @@ description: How the server catalog, offline-first story resolution, and offline
 # Online catalog + offline download
 
 ## Catalog data flow (CatalogContext)
-- Routes/sagas/cantons come from the API `getCatalog()` (baked `/api` prefix; only the host is set once via `configureApiClient()` from `EXPO_PUBLIC_DOMAIN`).
-- Three-tier offline-first source, surfaced as `source`: `server` -> cache to AsyncStorage -> `cache` -> bundled `seed` (constants/routes+sagas). Screens consume `useCatalog()` helpers (getRoute, getSagaForRoute, getRouteBySaga, getRoutesByCanton, getSaga, cantons) — same signatures the old `constants/*` helpers had, so screen churn is minimal.
-- **Why:** server DTOs (CatalogRoute/CatalogSaga/StoryChapter) are structurally identical to the app types, so mapping is an identity cast — do not re-model.
+- Sagas/cantons come from the API `getCatalog()` (baked `/api` prefix; only the host is set once via `configureApiClient()` from `EXPO_PUBLIC_DOMAIN`). `/catalog` returns `routes: []` — routes are NOT part of the catalog anymore.
+- SAGAS are three-tier offline-first, surfaced as `source`: `server` -> cache to AsyncStorage -> `cache` -> bundled `seed` (constants/sagas only). The cache-freshness gate keys on `sagas.length`. ROUTES have no seed and no offline fallback (see the content-model memory). Screens consume `useCatalog()` helpers (getRoute, getSagaForRoute, getRouteBySaga, getRoutesByCanton, getSaga, cantons); the route helpers now read from the dynamic per-canton cache, not a bundled route seed.
+- **Why:** server DTOs (CatalogSaga/StoryChapter) are structurally identical to the app types, so mapping is an identity cast — do not re-model.
 
 ## Dynamic per-canton catalog (real OSM routes + nearest curated saga)
-- All 26 cantons are selectable; picking one calls `loadCantonRoutes(canton)` which fetches REAL OSM routes (swisstopo ascent) from the server, else falls back to the curated seed. Result carries its own `source` so the screen can show an offline hint. Missing SAC difficulty renders as "unbekannt".
+- All 26 cantons are selectable; picking one calls `loadCantonRoutes(canton)` which fetches REAL OSM routes (swisstopo ascent) from the server. On failure it returns `{ routes: [], source: "error" }` — there is NO curated route seed fallback; the screen shows a "Server nicht erreichbar." hint. Missing SAC difficulty renders as "unbekannt". Server Overpass candidate cap is 30.
 - Sagas are NOT generated. A route resolves to the nearest curated saga (`ensureRouteSaga(routeId)` -> `nearestSaga`). No Anthropic call, no per-route caching of invented sagas.
 - **Gotchas:** dynamic route maps live in BOTH a ref (for async loaders) and state (to trigger re-render) — screens self-recover after AsyncStorage hydration because `dynamic` is state. `ensureRouteSaga` must dedupe in-flight requests (route + saga screens can both trigger it). A cold deep-link to a route never loaded into any canton cache cannot be recovered (no route-by-id endpoint) — acceptable, flow is always canton -> route -> saga.
 - Server upsert of `external_routes` on TTL refresh must use `excluded.*` (incoming) values, not `table.column` (self-assignment silently keeps stale rows).
 - Route-list difficulty filter: many real OSM routes have SAC "unbekannt". The canton screen's difficulty range slider (T1–T6) INTENTIONALLY hides "unbekannt" routes whenever the range is narrowed from full T1–T6, so narrowing difficulty in an unbekannt-heavy canton can drop to 0 results (empty state guides the user to widen). **Why:** an unknown grade cannot honestly be placed in a T-band; showing it only at full range keeps the filter meaningful without silently mis-classifying.
 
 ## Story resolution (DownloadContext.resolveStory)
-- Offline-first order: locally saved story (AsyncStorage key `sagatrail:story:<sagaId>:<archetype>:<ageTier>:<lang>`) -> server `createStory()` (cached on success) -> local `generateStory()` seed. The live hike calls this instead of generating directly.
+- Offline-first order: locally saved story (AsyncStorage key `sagatrail:story:<sagaId>:<archetype>:<ageTier>:<lang>`) -> server `createStory()` (cached on success) -> local `generateStory()`. The live hike calls this instead of generating directly. (Stories still have a local fallback; only ROUTES lost their seed.)
 
 ## Offline map tiles (lib/offlineTiles.ts + swisstopoMapHtml.ts)
 - Tiles are the same swisstopo WMTS XYZ scheme the online map uses (`.../3857/{z}/{x}/{y}.jpeg`, EPSG:3857 / standard slippy). Downloaded for a bounded corridor around the start point over a few zoom levels; stored via `expo-file-system/legacy` under `<documentDirectory>tiles/<sagaId>/`.

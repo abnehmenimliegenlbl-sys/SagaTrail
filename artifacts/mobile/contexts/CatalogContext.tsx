@@ -16,34 +16,31 @@ import React, {
 } from "react";
 
 import { CANTONS } from "@/constants/onboarding";
-import {
-  ROUTES,
-  HikingRoute,
-  CantonWithRoutes,
-  getRoutesByCanton as curatedRoutesByCanton,
-} from "@/constants/routes";
+import { HikingRoute, CantonWithRoutes } from "@/constants/routes";
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
 import { configureApiClient } from "@/lib/apiConfig";
 import { nearestSaga } from "@/lib/sagaMatch";
 
 /**
- * Katalog-Datenschicht: Routen, Sagen und Kantone kommen bevorzugt vom Server,
- * werden lokal zwischengespeichert und fallen bei fehlender Verbindung sauber
- * auf die im Build hinterlegten Seed-Daten zurueck (Offline-First).
+ * Katalog-Datenschicht: Sagen kommen vom Server, werden lokal
+ * zwischengespeichert und fallen bei fehlender Verbindung auf die gebuendelten
+ * Seed-Sagen zurueck. Routen gibt es NICHT mehr als Seed — sie kommen
+ * ausschliesslich live pro Kanton aus den verbundenen Quellen (OSM + swisstopo).
  *
  * Zusaetzlich lassen sich pro Kanton echte Wanderrouten (OpenStreetMap, mit
  * swisstopo-Hoehenmetern) nachladen; jeder Route wird die naechstgelegene
  * kuratierte, gemeinfrei belegte Sage zugeordnet (keine frei erzeugten Sagen).
- * Die Kantonsrouten werden dynamisch gecacht; ohne Verbindung greift der
- * kuratierte Seed.
+ * Die Kantonsrouten werden dynamisch gecacht; ohne Verbindung gibt es fuer
+ * Routen KEINEN Seed-Rueckfall — die Suche liefert dann Quelle "error".
  *
  * `source` macht die Herkunft transparent:
  * - "server": frisch vom API-Server geladen
  * - "cache":  aus dem lokalen Zwischenspeicher (Server nicht erreichbar)
- * - "seed":   aus den gebuendelten Seed-Daten (weder Server noch Cache)
+ * - "seed":   aus den gebuendelten Seed-Sagen (weder Server noch Cache)
+ * - "error":  Server/OSM nicht erreichbar; es gibt keinen Routen-Seed als Ersatz
  */
-export type CatalogSource = "server" | "cache" | "seed";
+export type CatalogSource = "server" | "cache" | "seed" | "error";
 
 const CACHE_KEY = "sagatrail:catalogCache";
 const DYNAMIC_KEY = "sagatrail:dynamicCache";
@@ -79,32 +76,6 @@ export interface RouteSearchFilter {
   diffMax?: number;
 }
 
-/** Liest den SAC-Grad (T1–T6) aus einem Routen-Feld; null bei "unbekannt". */
-function sacStufe(sac: string): number | null {
-  const m = /T\s*([1-6])/i.exec(sac);
-  return m ? Number(m[1]) : null;
-}
-
-/**
- * Spiegelt die serverseitige Filterlogik fuer den Offline-Fall (Seed-Routen):
- * Distanz-/Hoehenmeter-Grenzen sind bei fehlendem Feld offen; sobald eine
- * Schwierigkeitsgrenze gesetzt ist, fallen Routen mit unbekanntem Grad heraus.
- */
-function matchesFilter(r: HikingRoute, f?: RouteSearchFilter): boolean {
-  if (!f) return true;
-  if (f.distMin != null && r.distanceKm < f.distMin) return false;
-  if (f.distMax != null && r.distanceKm > f.distMax) return false;
-  if (f.ascMin != null && r.ascentM < f.ascMin) return false;
-  if (f.ascMax != null && r.ascentM > f.ascMax) return false;
-  if (f.diffMin != null || f.diffMax != null) {
-    const stufe = sacStufe(r.sac);
-    if (stufe === null) return false;
-    if (f.diffMin != null && stufe < f.diffMin) return false;
-    if (f.diffMax != null && stufe > f.diffMax) return false;
-  }
-  return true;
-}
-
 interface CatalogContextValue {
   ready: boolean;
   source: CatalogSource;
@@ -119,7 +90,8 @@ interface CatalogContextValue {
   /**
    * Sucht passende Routen des Kantons direkt an der externen Quelle (Server/OSM,
    * mit swisstopo-Hoehenmetern); der optionale Filter grenzt die Suche ein.
-   * Ohne Verbindung greift der gefilterte kuratierte Seed.
+   * Ohne Verbindung liefert die Suche eine leere Liste mit Quelle "error" —
+   * es gibt keinen Routen-Seed als Rueckfall mehr.
    */
   loadCantonRoutes: (
     canton: string,
@@ -131,7 +103,10 @@ interface CatalogContextValue {
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
-const SEED: CatalogData = { routes: ROUTES, sagas: SAGAS };
+// Routen kommen ausschliesslich live pro Kanton (OSM/swisstopo); es gibt keinen
+// gebuendelten Routen-Seed mehr. Nur die kuratierten Sagen bleiben als
+// Offline-Rueckfall erhalten.
+const SEED: CatalogData = { routes: [], sagas: SAGAS };
 const EMPTY_DYNAMIC: DynamicData = { cantonRoutes: {}, routeSagas: {} };
 
 /**
@@ -218,7 +193,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         if (raw) {
           const parsed = JSON.parse(raw) as CatalogData;
-          if (parsed.routes?.length) {
+          if (parsed.sagas?.length) {
             setData(parsed);
             setSource("cache");
             setReady(true);
@@ -280,12 +255,11 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         persistDynamic();
         return { routes, source: "server" };
       } catch {
-        // Server/OSM nicht erreichbar — kuratierten Seed clientseitig filtern.
+        // Server/OSM nicht erreichbar. Es gibt keinen Routen-Seed als Rueckfall
+        // mehr — eine leere Liste mit Quelle "error" signalisiert der UI, dass
+        // sie einen Verbindungshinweis anzeigen soll.
+        return { routes: [], source: "error" };
       }
-      const seed = curatedRoutesByCanton(canton).filter((r) =>
-        matchesFilter(r, filter),
-      );
-      return { routes: seed, source: "seed" };
     },
     [persistDynamic],
   );

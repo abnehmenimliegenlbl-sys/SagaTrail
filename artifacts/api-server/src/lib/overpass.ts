@@ -121,7 +121,7 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
 export async function fetchCantonHikingRoutes(
   iso: string,
   log: Logger,
-  limit = 16,
+  limit = 30,
 ): Promise<RawHikingRoute[]> {
   // Phase 1: benannte Wanderrouten-Relationen (nur Tags).
   const tagsQuery = [
