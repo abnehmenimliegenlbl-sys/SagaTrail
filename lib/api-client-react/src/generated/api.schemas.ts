@@ -137,3 +137,38 @@ export interface StoryResponse {
   chapters: StoryChapter[];
 }
 
+export type GetCantonRoutesParams = {
+/**
+ * Minimale Distanz in Kilometern.
+ * @minimum 0
+ */
+distMin?: number;
+/**
+ * Maximale Distanz in Kilometern (weglassen = keine Obergrenze).
+ * @minimum 0
+ */
+distMax?: number;
+/**
+ * Minimale Hoehenmeter im Aufstieg.
+ * @minimum 0
+ */
+ascMin?: number;
+/**
+ * Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).
+ * @minimum 0
+ */
+ascMax?: number;
+/**
+ * Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.
+ * @minimum 1
+ * @maximum 6
+ */
+diffMin?: number;
+/**
+ * Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.
+ * @minimum 1
+ * @maximum 6
+ */
+diffMax?: number;
+};
+

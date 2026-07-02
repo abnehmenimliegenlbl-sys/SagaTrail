@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -16,12 +16,17 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
-import { useCatalog, CatalogSource } from "@/contexts/CatalogContext";
+import {
+  useCatalog,
+  CatalogSource,
+  RouteSearchFilter,
+} from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 
 const DIST_MIN = 0;
@@ -30,12 +35,6 @@ const ASC_MIN = 0;
 const ASC_MAX = 3000;
 const DIFF_MIN = 1;
 const DIFF_MAX = 6;
-
-/** Liest den SAC-Grad (T1–T6) aus einem Routen-Feld; null bei "unbekannt". */
-function sacStufe(sac: string): number | null {
-  const m = /T\s*([1-6])/i.exec(sac);
-  return m ? Number(m[1]) : null;
-}
 
 const heroImg = require("@/assets/images/hero-valley.png");
 const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
@@ -54,85 +53,52 @@ export default function KantonRouten() {
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [routes, setRoutes] = useState<HikingRoute[]>([]);
-  const [routeSource, setRouteSource] = useState<CatalogSource>("seed");
-  const [loading, setLoading] = useState(true);
+  const [routeSource, setRouteSource] = useState<CatalogSource>("server");
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
 
   const [distFilter, setDistFilter] = useState<[number, number]>([DIST_MIN, DIST_MAX]);
   const [ascFilter, setAscFilter] = useState<[number, number]>([ASC_MIN, ASC_MAX]);
   const [diffFilter, setDiffFilter] = useState<[number, number]>([DIFF_MIN, DIFF_MAX]);
 
+  // Beim Kantonswechsel Filter und Ergebnisse zuruecksetzen — erst suchen,
+  // wenn der Nutzer die Filter gesetzt und die Suche gestartet hat.
   useEffect(() => {
-    let cancelled = false;
-    if (!cantonName) return;
-    setLoading(true);
-    // Filter beim Kantonswechsel zuruecksetzen.
     setDistFilter([DIST_MIN, DIST_MAX]);
     setAscFilter([ASC_MIN, ASC_MAX]);
     setDiffFilter([DIFF_MIN, DIFF_MAX]);
-    (async () => {
-      const res = await loadCantonRoutes(cantonName);
-      if (cancelled) return;
-      setRoutes(res.routes);
-      setRouteSource(res.source);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [cantonName, loadCantonRoutes]);
+    setRoutes([]);
+    setSearched(false);
+    setSearching(false);
+  }, [cantonName]);
 
-  const [distMin, distMax] = distFilter;
-  const [ascMin, ascMax] = ascFilter;
-  const [diffMin, diffMax] = diffFilter;
-  const diffAll = diffMin === DIFF_MIN && diffMax === DIFF_MAX;
+  // Slider-Anschlaege in einen Filter uebersetzen: obere Anschlaege sind nach
+  // oben offen (weglassen), volle Schwierigkeit bedeutet "kein Grad-Filter".
+  const buildFilter = useCallback((): RouteSearchFilter => {
+    const [distMin, distMax] = distFilter;
+    const [ascMin, ascMax] = ascFilter;
+    const [diffMin, diffMax] = diffFilter;
+    const filter: RouteSearchFilter = {};
+    if (distMin > DIST_MIN) filter.distMin = distMin;
+    if (distMax < DIST_MAX) filter.distMax = distMax;
+    if (ascMin > ASC_MIN) filter.ascMin = ascMin;
+    if (ascMax < ASC_MAX) filter.ascMax = ascMax;
+    if (diffMin > DIFF_MIN || diffMax < DIFF_MAX) {
+      filter.diffMin = diffMin;
+      filter.diffMax = diffMax;
+    }
+    return filter;
+  }, [distFilter, ascFilter, diffFilter]);
 
-  // Obere Zugpunkte am Anschlag sind nach oben offen (z. B. "50 km" = 50+),
-  // damit lange Routen bei Maximalstellung nicht unbemerkt verschwinden.
-  const filtered = routes.filter((r) => {
-    if (r.distanceKm < distMin) return false;
-    if (distMax < DIST_MAX && r.distanceKm > distMax) return false;
-    if (r.ascentM < ascMin) return false;
-    if (ascMax < ASC_MAX && r.ascentM > ascMax) return false;
-    const stufe = sacStufe(r.sac);
-    if (stufe === null) return diffAll; // "unbekannt" nur bei vollem Bereich
-    return stufe >= diffMin && stufe <= diffMax;
-  });
-
-  if (loading) {
-    return (
-      <Background>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-            Echte Wanderrouten für {cantonName || "diesen Kanton"} werden aus
-            swisstopo und OpenStreetMap geladen …
-          </Text>
-        </View>
-      </Background>
-    );
-  }
-
-  if (routes.length === 0) {
-    return (
-      <Background>
-        <View style={styles.center}>
-          <Text
-            style={{
-              color: colors.foreground,
-              fontFamily: fonts.titleBold,
-              textAlign: "center",
-            }}
-          >
-            Für {cantonName || "diesen Kanton"} konnten keine Routen geladen
-            werden.
-          </Text>
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-            Bitte prüfe deine Verbindung und versuche es erneut.
-          </Text>
-        </View>
-      </Background>
-    );
-  }
+  const onSearch = useCallback(async () => {
+    if (!cantonName) return;
+    setSearching(true);
+    const res = await loadCantonRoutes(cantonName, buildFilter());
+    setRoutes(res.routes);
+    setRouteSource(res.source);
+    setSearched(true);
+    setSearching(false);
+  }, [cantonName, loadCantonRoutes, buildFilter]);
 
   const offline = routeSource === "seed";
 
@@ -146,12 +112,12 @@ export default function KantonRouten() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader eyebrow="Schritt 2 · Route" title={cantonName} onBack />
+        <ScreenHeader eyebrow="Schritt 2 · Filter & Suche" title={cantonName} onBack />
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          {offline
-            ? `Ohne Verbindung: kuratierte Routen in ${cantonName}. Danach folgt die passende Sage.`
-            : `Echte Wanderrouten in ${cantonName}, angereichert mit swisstopo-Höhenmetern. Danach folgt die passende Sage.`}
+          Lege Distanz, Höhenmeter und Schwierigkeit fest. Die App durchsucht
+          dann eine externe Wanderdatenbank (OpenStreetMap, angereichert mit
+          swisstopo-Höhenmetern) nach passenden Routen in {cantonName || "diesem Kanton"}.
         </Text>
 
         <View
@@ -164,9 +130,6 @@ export default function KantonRouten() {
             <Feather name="sliders" size={14} color={colors.accent} />
             <Text style={[styles.filterTitle, { color: colors.foreground }]}>
               Filter
-            </Text>
-            <Text style={[styles.filterCount, { color: colors.mutedForeground }]}>
-              {filtered.length} von {routes.length}
             </Text>
           </View>
 
@@ -199,32 +162,63 @@ export default function KantonRouten() {
           />
         </View>
 
-        {filtered.length === 0 ? (
-          <View style={styles.emptyFilter}>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              Keine Route im gewählten Bereich.
-            </Text>
-            <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-              Erweitere die Filter, um wieder mehr Routen zu sehen.
-            </Text>
-          </View>
-        ) : (
-          <View style={{ marginTop: 8 }}>
-            {filtered.map((route, i) => {
-              const locked = !premium && route.region !== profile?.homeCanton;
-              return (
-                <RouteCard
-                  key={route.id}
-                  route={route}
-                  index={i}
-                  locked={locked}
-                  image={route.id === "teufelsbrucke" ? teufelImg : heroImg}
-                  onPress={() => router.push(`/route/${route.id}`)}
-                />
-              );
-            })}
-          </View>
-        )}
+        <PrimaryButton
+          label={searching ? "Suche läuft …" : "Passende Routen suchen"}
+          onPress={onSearch}
+          variant="gold"
+          loading={searching}
+          disabled={searching}
+        />
+
+        <View style={styles.results}>
+          {searching ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={colors.accent} />
+              <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
+                Echte Wanderrouten für {cantonName || "diesen Kanton"} werden aus
+                OpenStreetMap und swisstopo gesucht …
+              </Text>
+            </View>
+          ) : !searched ? (
+            <View style={styles.hint}>
+              <Feather name="search" size={22} color={colors.mutedForeground} />
+              <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
+                Setze deine Filter und starte die Suche, um passende Routen zu
+                finden.
+              </Text>
+            </View>
+          ) : routes.length === 0 ? (
+            <View style={styles.hint}>
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+                Keine passende Route gefunden.
+              </Text>
+              <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
+                Erweitere die Filter und suche erneut.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
+                {routes.length} {routes.length === 1 ? "Route" : "Routen"} gefunden
+                {offline ? " · offline, kuratierter Bestand" : ""}. Danach folgt
+                die passende Sage.
+              </Text>
+              {routes.map((route, i) => {
+                const locked = !premium && route.region !== profile?.homeCanton;
+                return (
+                  <RouteCard
+                    key={route.id}
+                    route={route}
+                    index={i}
+                    locked={locked}
+                    image={route.id === "teufelsbrucke" ? teufelImg : heroImg}
+                    onPress={() => router.push(`/route/${route.id}`)}
+                  />
+                );
+              })}
+            </>
+          )}
+        </View>
       </ScrollView>
     </Background>
   );
@@ -280,7 +274,7 @@ function RouteCard({
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 30, gap: 14 },
+  center: { alignItems: "center", justifyContent: "center", padding: 30, gap: 14 },
   loadingText: {
     fontFamily: fonts.body,
     fontSize: 13,
@@ -297,8 +291,22 @@ const styles = StyleSheet.create({
   },
   filterHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 18 },
   filterTitle: { fontFamily: fonts.titleBold, fontSize: 16, flex: 1 },
-  filterCount: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 0.5 },
-  emptyFilter: { alignItems: "center", paddingVertical: 40, gap: 10 },
+  results: { marginTop: 18 },
+  hint: { alignItems: "center", paddingVertical: 40, gap: 12 },
+  hintText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+    maxWidth: 280,
+  },
+  resultCount: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
   emptyTitle: { fontFamily: fonts.titleBold, fontSize: 18, textAlign: "center" },
   cardWrap: { marginBottom: 14 },
   card: { height: 200, borderRadius: 18, overflow: "hidden" },

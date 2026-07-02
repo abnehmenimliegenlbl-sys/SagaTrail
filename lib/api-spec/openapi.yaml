@@ -91,12 +91,59 @@ paths:
       description: >
         Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit
         amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+        Optionale Filter (Distanz, Hoehenmeter, SAC-Schwierigkeit) grenzen die
+        Suche direkt an der Datenquelle ein. Werden Schwierigkeitsgrenzen gesetzt,
+        entfallen Routen mit unbekanntem SAC-Grad.
       parameters:
         - name: canton
           in: path
           required: true
           schema:
             type: string
+        - name: distMin
+          in: query
+          required: false
+          description: Minimale Distanz in Kilometern.
+          schema:
+            type: number
+            minimum: 0
+        - name: distMax
+          in: query
+          required: false
+          description: Maximale Distanz in Kilometern (weglassen = keine Obergrenze).
+          schema:
+            type: number
+            minimum: 0
+        - name: ascMin
+          in: query
+          required: false
+          description: Minimale Hoehenmeter im Aufstieg.
+          schema:
+            type: number
+            minimum: 0
+        - name: ascMax
+          in: query
+          required: false
+          description: Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).
+          schema:
+            type: number
+            minimum: 0
+        - name: diffMin
+          in: query
+          required: false
+          description: Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 6
+        - name: diffMax
+          in: query
+          required: false
+          description: Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 6
       responses:
         "200":
           description: Routen

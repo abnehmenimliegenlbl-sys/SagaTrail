@@ -14,6 +14,7 @@ export * from './catalogSaga';
 export * from './catalogSagaKoordinatenSicherheit';
 export * from './catalogSagaSummaries';
 export * from './errorResponse';
+export * from './getCantonRoutesParams';
 export * from './healthStatus';
 export * from './localizedSummary';
 export * from './sagaQuelle';

@@ -3,6 +3,7 @@ import {
   getCatalog,
   getCantonRoutes,
   getRouteSaga,
+  type GetCantonRoutesParams,
 } from "@workspace/api-client-react";
 import React, {
   createContext,
@@ -63,6 +64,47 @@ export interface CantonRoutesResult {
   source: CatalogSource;
 }
 
+/**
+ * Suchfilter fuer die Kantonsrouten. Fehlende Felder bedeuten "keine Grenze":
+ * Der Aufrufer laesst eine Grenze weg, wenn der Schieberegler am Anschlag steht
+ * (nach oben offen). Werden Schwierigkeitsgrenzen gesetzt, entfallen Routen mit
+ * unbekanntem SAC-Grad.
+ */
+export interface RouteSearchFilter {
+  distMin?: number;
+  distMax?: number;
+  ascMin?: number;
+  ascMax?: number;
+  diffMin?: number;
+  diffMax?: number;
+}
+
+/** Liest den SAC-Grad (T1–T6) aus einem Routen-Feld; null bei "unbekannt". */
+function sacStufe(sac: string): number | null {
+  const m = /T\s*([1-6])/i.exec(sac);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Spiegelt die serverseitige Filterlogik fuer den Offline-Fall (Seed-Routen):
+ * Distanz-/Hoehenmeter-Grenzen sind bei fehlendem Feld offen; sobald eine
+ * Schwierigkeitsgrenze gesetzt ist, fallen Routen mit unbekanntem Grad heraus.
+ */
+function matchesFilter(r: HikingRoute, f?: RouteSearchFilter): boolean {
+  if (!f) return true;
+  if (f.distMin != null && r.distanceKm < f.distMin) return false;
+  if (f.distMax != null && r.distanceKm > f.distMax) return false;
+  if (f.ascMin != null && r.ascentM < f.ascMin) return false;
+  if (f.ascMax != null && r.ascentM > f.ascMax) return false;
+  if (f.diffMin != null || f.diffMax != null) {
+    const stufe = sacStufe(r.sac);
+    if (stufe === null) return false;
+    if (f.diffMin != null && stufe < f.diffMin) return false;
+    if (f.diffMax != null && stufe > f.diffMax) return false;
+  }
+  return true;
+}
+
 interface CatalogContextValue {
   ready: boolean;
   source: CatalogSource;
@@ -74,8 +116,15 @@ interface CatalogContextValue {
   getSagaForRoute: (route: HikingRoute) => Saga | undefined;
   getRouteBySaga: (sagaId?: string) => HikingRoute | undefined;
   getRoutesByCanton: (canton?: string) => HikingRoute[];
-  /** Laedt echte Routen des Kantons (Server) mit kuratiertem Offline-Fallback. */
-  loadCantonRoutes: (canton: string) => Promise<CantonRoutesResult>;
+  /**
+   * Sucht passende Routen des Kantons direkt an der externen Quelle (Server/OSM,
+   * mit swisstopo-Hoehenmetern); der optionale Filter grenzt die Suche ein.
+   * Ohne Verbindung greift der gefilterte kuratierte Seed.
+   */
+  loadCantonRoutes: (
+    canton: string,
+    filter?: RouteSearchFilter,
+  ) => Promise<CantonRoutesResult>;
   /** Liefert die naechstgelegene kuratierte Sage zu einer Route. */
   ensureRouteSaga: (routeId: string) => Promise<Saga | undefined>;
 }
@@ -194,31 +243,49 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadCantonRoutes = useCallback(
-    async (canton: string): Promise<CantonRoutesResult> => {
-      const cached = dynamicRef.current.cantonRoutes[canton];
-      if (cached?.length) {
-        return { routes: cached, source: "cache" };
-      }
+    async (
+      canton: string,
+      filter?: RouteSearchFilter,
+    ): Promise<CantonRoutesResult> => {
+      // Nur gesetzte Grenzen als Query-Parameter senden; fehlende bleiben offen.
+      const params: GetCantonRoutesParams = {};
+      if (filter?.distMin != null) params.distMin = filter.distMin;
+      if (filter?.distMax != null) params.distMax = filter.distMax;
+      if (filter?.ascMin != null) params.ascMin = filter.ascMin;
+      if (filter?.ascMax != null) params.ascMax = filter.ascMax;
+      if (filter?.diffMin != null) params.diffMin = filter.diffMin;
+      if (filter?.diffMax != null) params.diffMax = filter.diffMax;
+
       try {
-        const res = await getCantonRoutes(canton);
+        // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
+        const res = await getCantonRoutes(canton, params);
         const routes = res as HikingRoute[];
-        if (routes.length) {
-          const next: DynamicData = {
-            ...dynamicRef.current,
-            cantonRoutes: {
-              ...dynamicRef.current.cantonRoutes,
-              [canton]: routes,
-            },
-          };
-          dynamicRef.current = next;
-          setDynamic(next);
-          persistDynamic();
-          return { routes, source: "server" };
-        }
+        // Fuer die spaetere Id-Suche (getRoute/ensureRouteSaga) einen Index ueber
+        // ALLE bisher gesehenen Routen des Kantons pflegen (Vereinigung nach Id),
+        // damit ein frueher gefundenes Ziel nach einer engeren Suche auffindbar
+        // bleibt. Angezeigt wird weiterhin nur das aktuelle Suchergebnis.
+        const byId = new Map<string, HikingRoute>(
+          (dynamicRef.current.cantonRoutes[canton] ?? []).map((r) => [r.id, r]),
+        );
+        for (const r of routes) byId.set(r.id, r);
+        const next: DynamicData = {
+          ...dynamicRef.current,
+          cantonRoutes: {
+            ...dynamicRef.current.cantonRoutes,
+            [canton]: Array.from(byId.values()),
+          },
+        };
+        dynamicRef.current = next;
+        setDynamic(next);
+        persistDynamic();
+        return { routes, source: "server" };
       } catch {
-        // Server/OSM nicht erreichbar — kuratierten Seed nutzen.
+        // Server/OSM nicht erreichbar — kuratierten Seed clientseitig filtern.
       }
-      return { routes: curatedRoutesByCanton(canton), source: "seed" };
+      const seed = curatedRoutesByCanton(canton).filter((r) =>
+        matchesFilter(r, filter),
+      );
+      return { routes: seed, source: "seed" };
     },
     [persistDynamic],
   );

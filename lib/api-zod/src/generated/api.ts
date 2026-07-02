@@ -106,11 +106,34 @@ export const CreateStoryResponse = zod.object({
 
 
 /**
- * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+ * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht. Optionale Filter (Distanz, Hoehenmeter, SAC-Schwierigkeit) grenzen die Suche direkt an der Datenquelle ein. Werden Schwierigkeitsgrenzen gesetzt, entfallen Routen mit unbekanntem SAC-Grad.
  * @summary Reale Wanderrouten eines Kantons
  */
 export const GetCantonRoutesParams = zod.object({
   "canton": zod.coerce.string()
+})
+
+export const getCantonRoutesQueryDistMinMin = 0;
+
+export const getCantonRoutesQueryDistMaxMin = 0;
+
+export const getCantonRoutesQueryAscMinMin = 0;
+
+export const getCantonRoutesQueryAscMaxMin = 0;
+
+export const getCantonRoutesQueryDiffMinMax = 6;
+
+export const getCantonRoutesQueryDiffMaxMax = 6;
+
+
+
+export const GetCantonRoutesQueryParams = zod.object({
+  "distMin": zod.coerce.number().min(getCantonRoutesQueryDistMinMin).optional().describe('Minimale Distanz in Kilometern.'),
+  "distMax": zod.coerce.number().min(getCantonRoutesQueryDistMaxMin).optional().describe('Maximale Distanz in Kilometern (weglassen = keine Obergrenze).'),
+  "ascMin": zod.coerce.number().min(getCantonRoutesQueryAscMinMin).optional().describe('Minimale Hoehenmeter im Aufstieg.'),
+  "ascMax": zod.coerce.number().min(getCantonRoutesQueryAscMaxMin).optional().describe('Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).'),
+  "diffMin": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMinMax).optional().describe('Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.'),
+  "diffMax": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMaxMax).optional().describe('Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.')
 })
 
 export const GetCantonRoutesResponseItem = zod.object({

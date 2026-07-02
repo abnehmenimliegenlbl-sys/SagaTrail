@@ -1,3 +1,4 @@
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no runtime AI gen); routes resolve to NEAREST saga; missing per-lang summary silently falls back to German.
 - [SagaTrail map & live GPS](sagatrail-map-gps.md) — swisstopo Leaflet in WebView/iframe + real GPS narration; simulated timer only in fallback states, decision/narration must be de-duped.
+- [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.
 - [SagaTrail online catalog + offline download](sagatrail-offline-download.md) — three-tier offline-first catalog, dynamic per-canton OSM routes matched to nearest curated saga (no AI gen), native-only offline tiles.

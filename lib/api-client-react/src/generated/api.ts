@@ -24,6 +24,7 @@ import type {
   CatalogRoute,
   CatalogSaga,
   ErrorResponse,
+  GetCantonRoutesParams,
   HealthStatus,
   StoryRequest,
   StoryResponse
@@ -283,21 +284,30 @@ export const useCreateStory = <TError = ErrorType<ErrorResponse>,
       return useMutation(getCreateStoryMutationOptions(options));
     }
 
-export const getGetCantonRoutesUrl = (canton: string,) => {
+export const getGetCantonRoutesUrl = (canton: string,
+    params?: GetCantonRoutesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/cantons/${canton}/routes`
+  return stringifiedParams.length > 0 ? `/api/cantons/${canton}/routes?${stringifiedParams}` : `/api/cantons/${canton}/routes`
 }
 
 /**
- * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+ * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht. Optionale Filter (Distanz, Hoehenmeter, SAC-Schwierigkeit) grenzen die Suche direkt an der Datenquelle ein. Werden Schwierigkeitsgrenzen gesetzt, entfallen Routen mit unbekanntem SAC-Grad.
  * @summary Reale Wanderrouten eines Kantons
  */
-export const getCantonRoutes = async (canton: string, options?: RequestInit): Promise<CatalogRoute[]> => {
+export const getCantonRoutes = async (canton: string,
+    params?: GetCantonRoutesParams, options?: RequestInit): Promise<CatalogRoute[]> => {
 
-  return customFetch<CatalogRoute[]>(getGetCantonRoutesUrl(canton),
+  return customFetch<CatalogRoute[]>(getGetCantonRoutesUrl(canton,params),
   {
     ...options,
     method: 'GET'
@@ -310,23 +320,25 @@ export const getCantonRoutes = async (canton: string, options?: RequestInit): Pr
 
 
 
-export const getGetCantonRoutesQueryKey = (canton: string,) => {
+export const getGetCantonRoutesQueryKey = (canton: string,
+    params?: GetCantonRoutesParams,) => {
     return [
-    `/api/cantons/${canton}/routes`
+    `/api/cantons/${canton}/routes`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetCantonRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getCantonRoutes>>, TError = ErrorType<ErrorResponse>>(canton: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetCantonRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getCantonRoutes>>, TError = ErrorType<ErrorResponse>>(canton: string,
+    params?: GetCantonRoutesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCantonRoutesQueryKey(canton);
+  const queryKey =  queryOptions?.queryKey ?? getGetCantonRoutesQueryKey(canton,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCantonRoutes>>> = ({ signal }) => getCantonRoutes(canton, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCantonRoutes>>> = ({ signal }) => getCantonRoutes(canton,params, { signal, ...requestOptions });
 
 
 
@@ -344,11 +356,12 @@ export type GetCantonRoutesQueryError = ErrorType<ErrorResponse>
  */
 
 export function useGetCantonRoutes<TData = Awaited<ReturnType<typeof getCantonRoutes>>, TError = ErrorType<ErrorResponse>>(
- canton: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ canton: string,
+    params?: GetCantonRoutesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetCantonRoutesQueryOptions(canton,options)
+  const queryOptions = getGetCantonRoutesQueryOptions(canton,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
