@@ -35,3 +35,27 @@ id = "HEpxG4_cxVmZeek-pd6Vv"
 uri = "file://.local/tmp_map_preview/3_swisstlm3d-karte-grau.png"
 type = "image"
 title = "Alternative 2: swissTLM3D-Karte grau (deutlich reduziert)"
+
+[[outputs]]
+id = "jN0ia9Vb-Cyaf-mSKsC6m"
+uri = "file://.local/tmp_map_preview2/1_osm_standard.png"
+type = "image"
+title = "OSM Standard (Wege/Pfade klar sichtbar, viele Labels)"
+
+[[outputs]]
+id = "_q5yOecpyf1y4GJtsEm72"
+uri = "file://.local/tmp_map_preview2/2_carto_positron.png"
+type = "image"
+title = "Carto Positron (sehr clean, minimal, Wege dezent)"
+
+[[outputs]]
+id = "DOIS-heIHjgLQlSqFJXpC"
+uri = "file://.local/tmp_map_preview2/3_carto_voyager.png"
+type = "image"
+title = "Carto Voyager (clean + etwas mehr Kontext/Farbe)"
+
+[[outputs]]
+id = "cIb5rzwTjOlNcYEQhXntQ"
+uri = "file://.local/tmp_map_preview2/4_waymarked_hiking_overlay.png"
+type = "image"
+title = "Waymarked Trails Overlay (offizielle Wanderrouten farbig, transparent — wird UEBER einer Basiskarte gelegt)"
