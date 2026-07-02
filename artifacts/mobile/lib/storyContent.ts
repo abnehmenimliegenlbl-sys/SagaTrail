@@ -360,6 +360,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "Im Pilatussee obe am Bärg söll en gwaltige Drach ruehe. Wirft mer en Stei is dunkle Wasser, erwachet de Drach und schickt schüüchi Unwätter überes Land.",
     martinsloch:
       "Wo de heilig Martin vo eme riese Schafhirt aagriffe worde isch, hät er sin Wanderstab dur de Bärg gschmisse, was es riesigs Loch hinderlah hät. Zweimal im Jahr schiint d Sunne genau dedure.",
+    tell:
+      "De Landvogt Gessler hät de Wilhelm Tell zwunge, en Öpfel vom Chopf vo sim Sohn abezschüsse. Als Gfangene uf em stürmische Urnersee isch de Tell mit eme Sprung uf en Felse entcho und hät de Ufstand agfange.",
+    matterhorn:
+      "Wo hüt s Matterhorn kahl in Himmel raagt, sölled einisch fruchtbari Weide und e riichi Stadt gsii sii. Wo d Lüt hochmüetig und giizig worde sind, hät de Himmel s Land zu Fels und Iis erstarre lah.",
+    flims:
+      "Über em groosse Bärgsturz vo Flims zieht i dunkle Nächt s Nachtvolk sini Bahn: e stummi Schar Verstorbeni, wo kei Rueh gfunde hät. Wär ne begegnet, sött de Wäg freigäh und schwiige, susch wird er sälber Teil vom Zug.",
+    rigi:
+      "Uf de Rigi hät e wiissi Gäms gläbt, wo kei Jäger je hät chöne erlege. Wän d Gier packt hät und trotzdem aagleit hät, dä hät de Näbel verschluckt, denn si isch d Hüterin vom Bärg gsii, nöd sini Büüti.",
   },
   fr: {
     teufelsbrucke:
@@ -378,6 +386,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "Dans le lac du Pilate, sur la montagne, reposerait un dragon gigantesque. Si l'on jette une pierre dans l'eau sombre, le dragon s'éveille et envoie de terribles orages sur le pays.",
     martinsloch:
       "Lorsque saint Martin fut attaqué par un berger géant, il lança son bâton de marche à travers la montagne, y laissant un trou immense. Deux fois par an, le soleil brille exactement au travers.",
+    tell:
+      "Le bailli Gessler força Guillaume Tell à tirer une pomme posée sur la tête de son fils. Prisonnier sur le lac d'Uri déchaîné par la tempête, Tell s'échappa d'un bond sur un rocher et déclencha la révolte.",
+    matterhorn:
+      "Là où le Cervin dresse aujourd'hui sa cime nue, s'étendaient jadis, dit-on, de riches pâturages et une ville prospère. Quand ses habitants sombrèrent dans l'orgueil et l'avarice, le ciel figea le pays en roc et en glace.",
+    flims:
+      "Au-dessus de l'immense éboulement de Flims, par les nuits sombres, le peuple de la nuit suit sa route : une cohorte muette de défunts sans repos. Qui les croise doit céder le passage et se taire, sinon il rejoint lui-même le cortège.",
+    rigi:
+      "Sur le Rigi vivait un chamois blanc qu'aucun chasseur ne put jamais abattre. Celui que la cupidité saisissait et qui le mettait tout de même en joue, la brume l'engloutissait, car il était le gardien de la montagne, non sa proie.",
   },
   it: {
     teufelsbrucke:
@@ -396,6 +412,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "Nel lago del Pilatus, sul monte, riposerebbe un drago immane. Se si getta una pietra nell'acqua scura, il drago si sveglia e scatena terribili tempeste sulla regione.",
     martinsloch:
       "Quando san Martino fu attaccato da un pastore gigante, scagliò il suo bastone da viandante attraverso la montagna, lasciandovi un foro enorme. Due volte l'anno il sole splende esattamente attraverso di esso.",
+    tell:
+      "Il balivo Gessler costrinse Guglielmo Tell a colpire una mela posata sul capo del figlio. Prigioniero sul lago di Uri sferzato dalla tempesta, Tell fuggì con un balzo su una roccia e diede inizio alla rivolta.",
+    matterhorn:
+      "Dove oggi il Cervino si erge spoglio verso il cielo, si dice sorgessero un tempo pascoli fertili e una città ricca. Quando i suoi abitanti caddero nella superbia e nell'avarizia, il cielo tramutò la terra in roccia e ghiaccio.",
+    flims:
+      "Sopra l'immensa frana di Flims, nelle notti buie, il popolo della notte segue il suo cammino: una schiera muta di defunti senza pace. Chi li incontra deve cedere il passo e tacere, altrimenti diventa lui stesso parte del corteo.",
+    rigi:
+      "Sul Rigi viveva un camoscio bianco che nessun cacciatore riuscì mai ad abbattere. Chi era preso dall'avidità e nondimeno prendeva la mira, veniva inghiottito dalla nebbia, perché esso era il custode del monte, non la sua preda.",
   },
   en: {
     teufelsbrucke:
@@ -414,6 +438,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "In the lake atop Mount Pilatus a mighty dragon is said to rest. Throw a stone into the dark water and the dragon awakens, sending terrible storms across the land.",
     martinsloch:
       "When Saint Martin was attacked by a giant shepherd, he hurled his walking staff through the mountain, leaving an enormous hole. Twice a year the sun shines exactly through it.",
+    tell:
+      "Bailiff Gessler forced William Tell to shoot an apple from his own son's head. A prisoner on the storm-lashed Lake Uri, Tell escaped with a leap onto a rock and set the uprising in motion.",
+    matterhorn:
+      "Where the Matterhorn now rises bare into the sky, fertile pastures and a wealthy town are said to have once lain. When its people fell into arrogance and greed, heaven froze the land into rock and ice.",
+    flims:
+      "Above the vast Flims rockslide, on dark nights, the night folk make their way: a silent host of the dead who found no rest. Whoever meets them must give way and stay silent, or become part of the procession themselves.",
+    rigi:
+      "On the Rigi lived a white chamois that no hunter could ever bring down. Whoever was seized by greed and took aim all the same was swallowed by the mist, for it was the guardian of the mountain, not its quarry.",
   },
   zh: {
     teufelsbrucke:
@@ -432,6 +464,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "据说在皮拉图斯山顶的湖中，沉睡着一条巨龙。若把石头投入那幽暗的湖水，巨龙便会苏醒，向大地降下可怖的风暴。",
     martinsloch:
       "圣马丁遭一名巨人牧羊人袭击时，将手中的行杖掷穿了山峰，留下一个巨大的洞。每年有两次，太阳恰好从洞中穿照而过。",
+    tell:
+      "总督盖斯勒逼迫威廉·退尔射落放在他亲生儿子头上的一个苹果。作为俘虏被押过风暴肆虐的乌里湖时，退尔纵身跳上一块岩石逃脱，就此点燃了起义。",
+    matterhorn:
+      "如今马特洪峰光秃地耸入云天，据说那里曾是丰美的牧场和一座富庶的城镇。当居民陷入傲慢与贪婪，上天便让这片土地凝固成岩石与坚冰。",
+    flims:
+      "在弗利姆斯那片巨大的山崩之上，每逢黑夜，夜之队伍便循路而行：那是一群沉默的亡者，始终不得安息。遇见他们的人须让路并保持缄默，否则自己也会成为队伍的一员。",
+    rigi:
+      "里吉山上住着一只白色羚羊，没有猎人能够猎获它。凡是被贪念攫住、仍向它举枪的人，都被浓雾吞没，因为它是这座山的守护者，而非猎物。",
   },
   es: {
     teufelsbrucke:
@@ -450,6 +490,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "En el lago del Pilatus, en la montaña, reposaría un dragón colosal. Si se arroja una piedra al agua oscura, el dragón despierta y envía terribles tormentas sobre la tierra.",
     martinsloch:
       "Cuando san Martín fue atacado por un pastor gigante, arrojó su bastón de caminante a través de la montaña, dejando un enorme agujero. Dos veces al año el sol brilla justo a través de él.",
+    tell:
+      "El baile Gessler obligó a Guillermo Tell a disparar a una manzana colocada sobre la cabeza de su propio hijo. Prisionero en el lago de Uri azotado por la tormenta, Tell escapó de un salto sobre una roca y dio comienzo a la rebelión.",
+    matterhorn:
+      "Donde hoy el Cervino se alza desnudo hacia el cielo, se dice que antaño había pastos fértiles y una ciudad próspera. Cuando sus habitantes cayeron en la soberbia y la avaricia, el cielo congeló la tierra en roca y hielo.",
+    flims:
+      "Sobre el inmenso desprendimiento de Flims, en las noches oscuras, el pueblo de la noche sigue su marcha: una hueste muda de difuntos que no hallaron descanso. Quien los encuentra debe ceder el paso y callar, o se vuelve él mismo parte del cortejo.",
+    rigi:
+      "En el Rigi vivía un rebeco blanco que ningún cazador logró jamás abatir. A quien lo dominaba la codicia y aun así le apuntaba, la niebla lo engullía, pues era el guardián de la montaña, no su presa.",
   },
   pt: {
     teufelsbrucke:
@@ -468,6 +516,14 @@ export const SAGA_SUMMARIES: Partial<Record<Lang, Record<string, string>>> = {
       "No lago do Pilatus, na montanha, repousaria um dragão descomunal. Se atirarem uma pedra na água escura, o dragão desperta e envia tempestades terríveis sobre a terra.",
     martinsloch:
       "Quando são Martinho foi atacado por um pastor gigante, arremessou seu cajado através da montanha, deixando um enorme buraco. Duas vezes por ano o sol brilha exatamente através dele.",
+    tell:
+      "O bailio Gessler obrigou Guilherme Tell a acertar uma maçã sobre a cabeça do próprio filho. Prisioneiro no lago de Uri açoitado pela tempestade, Tell escapou com um salto sobre um rochedo e deu início à revolta.",
+    matterhorn:
+      "Onde hoje o Matterhorn se ergue nu contra o céu, dizem que outrora havia pastos férteis e uma cidade próspera. Quando seus habitantes caíram na soberba e na ganância, o céu congelou a terra em rocha e gelo.",
+    flims:
+      "Sobre o imenso desmoronamento de Flims, nas noites escuras, o povo da noite segue seu caminho: uma hoste muda de mortos que não encontraram descanso. Quem os encontra deve ceder passagem e calar-se, ou torna-se ele próprio parte do cortejo.",
+    rigi:
+      "No Rigi vivia um camurça branca que nenhum caçador jamais conseguiu abater. Quem era tomado pela ganância e ainda assim mirava, a névoa o engolia, pois ela era a guardiã da montanha, não a sua presa.",
   },
 };
 
