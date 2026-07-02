@@ -154,6 +154,18 @@ export default function LiveHike() {
           return;
         }
         setLocState("granted");
+        // Sofort einen ersten Fix holen, damit auch ein stillstehendes Geraet
+        // (z. B. zuhause beim Testen) direkt einen Positionsmarker zeigt — der
+        // watchPositionAsync-distanceInterval liefert sonst erst nach Bewegung.
+        try {
+          const first = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          if (!cancelled) handleFix(first.coords.latitude, first.coords.longitude);
+        } catch {
+          // Kein Sofort-Fix moeglich — watchPositionAsync uebernimmt.
+        }
+        if (cancelled) return;
         sub = await Location.watchPositionAsync(
           { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
           (p) => handleFix(p.coords.latitude, p.coords.longitude)
