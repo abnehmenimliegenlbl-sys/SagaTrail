@@ -16,9 +16,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
-import { HikingRoute, getRoutesByCanton, getSagaForRoute } from "@/constants/routes";
+import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -32,6 +33,7 @@ export default function KantonRouten() {
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
   const { profile, premium } = useApp();
+  const { getRoutesByCanton, getSagaForRoute } = useCatalog();
 
   const cantonName = decodeURIComponent(canton ?? "");
   const routes = getRoutesByCanton(cantonName);

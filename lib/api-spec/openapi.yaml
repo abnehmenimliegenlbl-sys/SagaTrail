@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: catalog
+    description: SagaTrail Online-Katalog (Kantone, Routen, Sagen)
+  - name: stories
+    description: KI-generierte Sagen-Erzaehlungen (Anthropic, in Postgres gecacht)
 paths:
   /healthz:
     get:
@@ -24,6 +28,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /catalog:
+    get:
+      operationId: getCatalog
+      tags: [catalog]
+      summary: Vollstaendiger Online-Katalog
+      description: Liefert alle Kantone, Wanderrouten und Sagen-Metadaten fuer den Katalog.
+      responses:
+        "200":
+          description: Katalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogResponse"
+  /stories:
+    post:
+      operationId: createStory
+      tags: [stories]
+      summary: Sagen-Erzaehlung erzeugen oder aus dem Cache liefern
+      description: >
+        Liefert die kapitelweise Erzaehlung fuer eine Sage, abgestimmt auf
+        Archetyp, Alterstufe und Sprache. Bereits erzeugte Erzaehlungen kommen
+        aus dem Postgres-Cache, sonst werden sie via Anthropic generiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoryRequest"
+      responses:
+        "200":
+          description: Erzaehlung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryResponse"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Sage nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: KI-Erzeugung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +90,198 @@ components:
           type: string
       required:
         - status
-
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    CatalogCoordinates:
+      type: object
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+      required:
+        - lat
+        - lng
+    CatalogCanton:
+      type: object
+      properties:
+        canton:
+          type: string
+        routeCount:
+          type: integer
+      required:
+        - canton
+        - routeCount
+    CatalogRoute:
+      type: object
+      properties:
+        id:
+          type: string
+        sagaId:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        distanceKm:
+          type: number
+        ascentM:
+          type: number
+        minutes:
+          type: number
+        sac:
+          type: string
+        terrain:
+          type: string
+        coordinates:
+          $ref: "#/components/schemas/CatalogCoordinates"
+        featured:
+          type: boolean
+      required:
+        - id
+        - sagaId
+        - name
+        - region
+        - distanceKm
+        - ascentM
+        - minutes
+        - sac
+        - terrain
+        - coordinates
+        - featured
+    CatalogSaga:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        canton:
+          type: string
+        coreMotif:
+          type: string
+        mood:
+          type: string
+        summary:
+          type: string
+        source:
+          type: string
+        coordinates:
+          $ref: "#/components/schemas/CatalogCoordinates"
+        isAnchorPlace:
+          type: boolean
+      required:
+        - id
+        - title
+        - canton
+        - coreMotif
+        - mood
+        - summary
+        - source
+        - isAnchorPlace
+    CatalogResponse:
+      type: object
+      properties:
+        cantons:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogCanton"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogRoute"
+        sagas:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogSaga"
+      required:
+        - cantons
+        - routes
+        - sagas
+    StoryDecisionOption:
+      type: object
+      properties:
+        label:
+          type: string
+        archetypeHint:
+          type: string
+        tone:
+          type: string
+      required:
+        - label
+        - archetypeHint
+        - tone
+    StoryDecision:
+      type: object
+      properties:
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryDecisionOption"
+      required:
+        - question
+        - options
+    StoryChapter:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        isDecisionPoint:
+          type: boolean
+        decision:
+          $ref: "#/components/schemas/StoryDecision"
+      required:
+        - id
+        - text
+        - isDecisionPoint
+    StoryRequest:
+      type: object
+      properties:
+        sagaId:
+          type: string
+        archetype:
+          type: string
+          enum: [reisende, hueterin, gewitzte, senn]
+        ageTier:
+          type: string
+          enum: [kinder, jugendliche, erwachsene]
+        language:
+          type: string
+      required:
+        - sagaId
+        - archetype
+        - ageTier
+        - language
+    StoryResponse:
+      type: object
+      properties:
+        sagaId:
+          type: string
+        archetype:
+          type: string
+        ageTier:
+          type: string
+        language:
+          type: string
+        source:
+          type: string
+        chapters:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryChapter"
+      required:
+        - sagaId
+        - archetype
+        - ageTier
+        - language
+        - source
+        - chapters

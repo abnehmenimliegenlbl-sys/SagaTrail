@@ -16,10 +16,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { CantonWithRoutes, getCantonsWithRoutes } from "@/constants/routes";
+import { CantonWithRoutes } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { ARCHETYPES } from "@/constants/onboarding";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -36,7 +37,7 @@ export default function Entdecken() {
   const archetypeTitle =
     ARCHETYPES.find((a) => a.id === profile?.archetype)?.title ?? "";
 
-  const cantons = getCantonsWithRoutes();
+  const { cantons } = useCatalog();
   const homeCanton = profile?.homeCanton;
   const homeEntry = cantons.find((c) => c.canton === homeCanton);
   const others = cantons.filter((c) => c.canton !== homeCanton);

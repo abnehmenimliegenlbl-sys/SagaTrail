@@ -26,6 +26,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import colors from "@/constants/colors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
+import { CatalogProvider } from "@/contexts/CatalogContext";
+import { DownloadProvider } from "@/contexts/DownloadContext";
 
 SystemUI.setBackgroundColorAsync(colors.dark.nachthimmel);
 
@@ -100,7 +102,11 @@ export default function RootLayout() {
           <GestureHandlerRootView>
             <KeyboardProvider>
               <AppProvider>
-                <RootLayoutNav />
+                <CatalogProvider>
+                  <DownloadProvider>
+                    <RootLayoutNav />
+                  </DownloadProvider>
+                </CatalogProvider>
               </AppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>

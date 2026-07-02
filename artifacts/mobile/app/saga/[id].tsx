@@ -17,9 +17,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { SAGAS } from "@/constants/sagas";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -31,8 +31,9 @@ export default function SagaDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, premium } = useApp();
+  const { getSaga } = useCatalog();
 
-  const saga = SAGAS.find((s) => s.id === id);
+  const saga = getSaga(id);
 
   if (!saga) {
     return (

@@ -20,9 +20,10 @@ import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { getRoute, getSagaForRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
+import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 
 const WEB_TOP = 67;
@@ -33,12 +34,15 @@ export default function Routenplanung() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium } = useApp();
+  const { getRoute, getSagaForRoute } = useCatalog();
+  const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
   const route = getRoute(id);
   const saga = route ? getSagaForRoute(route) : undefined;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [lowBattery] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   if (!route || !saga) {
     return (
@@ -56,6 +60,45 @@ export default function Routenplanung() {
   const locked = !premium && route.region !== profile?.homeCanton;
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
+
+  const downloaded = isDownloaded(saga.id);
+  const record = getRecord(saga.id);
+  const downloading = progress?.sagaId === saga.id;
+  const progressText = downloading
+    ? progress?.phase === "tiles"
+      ? `Karte wird gesichert … ${progress.done}/${progress.total}`
+      : "Sage wird geladen …"
+    : "";
+
+  const onDownload = async () => {
+    if (!profile || downloading || busy) return;
+    setBusy(true);
+    try {
+      await download(saga, route, profile);
+    } catch {
+      Alert.alert(
+        "Download fehlgeschlagen",
+        "Die Wanderung konnte nicht vollstaendig geladen werden. Bitte pruefe deine Verbindung und versuche es erneut."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDelete = async () => {
+    setBusy(true);
+    try {
+      await remove(saga.id);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sizeLabel = record
+    ? record.sizeBytes >= 1024 * 1024
+      ? `${(record.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+      : `${Math.max(1, Math.round(record.sizeBytes / 1024))} KB`
+    : "";
 
   return (
     <Background>
@@ -90,6 +133,55 @@ export default function Routenplanung() {
           <Stat label="Dauer" value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
           <Stat label="SAC-Skala" value={meta.sac} unit="" />
         </Animated.View>
+
+        <View
+          style={[
+            styles.downloadCard,
+            {
+              borderColor: downloaded ? colors.accent : colors.glassBorder,
+              backgroundColor: colors.glassBg,
+            },
+          ]}
+        >
+          <View style={styles.downloadHead}>
+            <Feather
+              name={downloaded ? "check-circle" : "download-cloud"}
+              size={18}
+              color={downloaded ? colors.accent : colors.foreground}
+            />
+            <Text style={[styles.downloadTitle, { color: colors.foreground }]}>
+              {downloaded ? "Offline verfügbar" : "Für offline sichern"}
+            </Text>
+          </View>
+          <Text style={[styles.downloadHint, { color: colors.mutedForeground }]}>
+            {downloaded
+              ? `Sage und Karte liegen auf dem Gerät${sizeLabel ? ` · ${sizeLabel}` : ""}. Die Wanderung startet ohne Empfang.`
+              : "Lädt die Sage und den Kartenausschnitt herunter, damit die Tour auch ohne Empfang funktioniert."}
+          </Text>
+
+          {downloading ? (
+            <View style={styles.downloadProgress}>
+              <Feather name="loader" size={15} color={colors.accent} />
+              <Text style={[styles.downloadProgressText, { color: colors.accent }]}>
+                {progressText}
+              </Text>
+            </View>
+          ) : downloaded ? (
+            <PrimaryButton
+              label="Download entfernen"
+              variant="ghost"
+              onPress={onDelete}
+              style={{ marginTop: 14 }}
+            />
+          ) : (
+            <PrimaryButton
+              label="Herunterladen"
+              variant="ghost"
+              onPress={onDownload}
+              style={{ marginTop: 14 }}
+            />
+          )}
+        </View>
 
         <SparkDivider style={{ marginVertical: 22 }} />
 
@@ -264,6 +356,22 @@ const styles = StyleSheet.create({
   statVal: { fontFamily: fonts.monoBold, fontSize: 26 },
   statUnit: { fontFamily: fonts.mono, fontSize: 13 },
   blockTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginBottom: 12 },
+  downloadCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+  },
+  downloadHead: { flexDirection: "row", alignItems: "center", gap: 8 },
+  downloadTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  downloadHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 6 },
+  downloadProgress: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+  },
+  downloadProgressText: { fontFamily: fonts.mono, fontSize: 13 },
   checkCard: { borderWidth: 1, borderRadius: 16, padding: 16 },
   checkRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
   checkLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },

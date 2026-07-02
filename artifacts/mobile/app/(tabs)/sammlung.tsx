@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
-import { SAGAS } from "@/constants/sagas";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 
 const WEB_TOP = 67;
@@ -18,10 +18,11 @@ export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { achievements } = useApp();
+  const { sagas } = useCatalog();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
-  const cantons = Array.from(new Set(SAGAS.map((s) => s.canton)));
+  const cantons = Array.from(new Set(sagas.map((s) => s.canton)));
 
   return (
     <Background>
@@ -47,7 +48,7 @@ export default function Sammlung() {
           <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
           <View style={styles.stat}>
             <Text style={[styles.statNum, { color: colors.accent }]}>
-              {SAGAS.length}
+              {sagas.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
               Insgesamt
@@ -77,7 +78,7 @@ export default function Sammlung() {
         )}
 
         <View style={styles.grid}>
-          {SAGAS.map((saga, i) => {
+          {sagas.map((saga, i) => {
             const unlocked = unlockedIds.has(saga.id);
             return (
               <Animated.View

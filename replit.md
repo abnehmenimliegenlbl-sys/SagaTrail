@@ -29,7 +29,10 @@ SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates re
 
 ## Architecture decisions
 
-- Frontend-only first build: local seed data + AsyncStorage + expo-speech. Server-side (Anthropic story generation, swisstopo maps, WebSocket group sync, RevenueCat, Clerk, Postgres) is staged for later.
+- Online catalog + offline-first: routes/sagas load from the API server (`contexts/CatalogContext.tsx`) with a three-tier source — server, then AsyncStorage cache, then bundled seed (`constants/routes` + `constants/sagas`). Sagas are generated server-side via Anthropic/Claude and cached in Postgres; the mobile client only sets the API host once (`lib/apiConfig.ts`, from `EXPO_PUBLIC_DOMAIN`).
+- Per-hike offline download (`contexts/DownloadContext.tsx`): downloads the story (server `createStory`, else local `generateStory`) plus a bounded corridor of swisstopo tiles (`lib/offlineTiles.ts`, native only). Live hike resolves stories offline-first via `resolveStory` (local -> server -> seed) and passes local tiles to the map.
+- Offline map render: `swisstopoMapHtml.ts` accepts optional `offlineTiles`; a Leaflet `getTileUrl` override prefers local data-URI tiles and falls back to online swisstopo. Web has no filesystem, so tile download/render is native-only and the web map stays online.
+- Still staged for later: WebSocket group sync, RevenueCat, Clerk.
 - Custom SVG `RouteMap` instead of react-native-maps — cross-platform and web-preview stable.
 - App is always dark; `useColors` ignores the OS color scheme.
 - Sharing uses React Native's built-in `Share` API (no expo-file-system dependency).

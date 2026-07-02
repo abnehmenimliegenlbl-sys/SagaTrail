@@ -23,13 +23,12 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
-import { getRouteBySaga } from "@/constants/routes";
-import { SAGAS } from "@/constants/sagas";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
+import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { haversineKm } from "@/lib/geo";
-import { generateStory } from "@/lib/storyEngine";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
@@ -44,8 +43,10 @@ export default function LiveHike() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, saveHike, addAchievement } = useApp();
+  const { getSaga, getRouteBySaga } = useCatalog();
+  const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
-  const saga = SAGAS.find((s) => s.id === id);
+  const saga = getSaga(id);
   const route = getRouteBySaga(id);
 
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
@@ -65,6 +66,7 @@ export default function LiveHike() {
   const [distance, setDistance] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [finished, setFinished] = useState(false);
+  const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -72,17 +74,34 @@ export default function LiveHike() {
   const lastFixRef = useRef<LatLng | null>(null);
   const lastNarratedRef = useRef<number>(-1);
 
-  // Story vorbereiten
+  // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   useEffect(() => {
     if (!saga || !profile) return;
-    const t = setTimeout(() => {
-      const story = generateStory(saga, profile.archetype, profile.ageTier, profile.language);
+    let cancelled = false;
+    setPreparing(true);
+    (async () => {
+      const { chapters: story } = await resolveStory(saga, profile);
+      if (cancelled) return;
       setChapters(story);
       decisionsRef.current = story;
       setPreparing(false);
-    }, 1600);
-    return () => clearTimeout(t);
-  }, [saga, profile]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [saga, profile, resolveStory]);
+
+  // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
+  useEffect(() => {
+    if (!saga || !isDownloaded(saga.id)) return;
+    let cancelled = false;
+    loadOfflineTiles(saga.id).then((t) => {
+      if (!cancelled) setOfflineTiles(t);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [saga, isDownloaded, loadOfflineTiles]);
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren
   const handleFix = useCallback((lat: number, lng: number) => {
@@ -339,6 +358,7 @@ export default function LiveHike() {
               position={locState === "granted" ? livePos : null}
               label={saga.title}
               height={200}
+              offlineTiles={offlineTiles}
             />
           ) : (
             <RouteMap progress={progress} height={200} />

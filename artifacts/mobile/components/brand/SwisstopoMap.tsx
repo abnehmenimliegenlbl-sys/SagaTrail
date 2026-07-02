@@ -15,12 +15,13 @@ export function SwisstopoMap({
   position,
   label = "Start",
   height = 220,
+  offlineTiles,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const html = useMemo(
-    () => buildSwisstopoHtml(center, label),
-    [center.lat, center.lng, label]
+    () => buildSwisstopoHtml(center, label, offlineTiles),
+    [center.lat, center.lng, label, offlineTiles]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

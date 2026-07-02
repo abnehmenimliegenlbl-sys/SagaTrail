@@ -12,6 +12,11 @@ export interface SwisstopoMapProps {
   /** Beschriftung des Startpunkt-Markers */
   label?: string;
   height?: number;
+  /**
+   * Optionale Offline-Kacheln als Data-URIs, Schluessel `z/x/y`. Sind sie
+   * gesetzt, werden lokale Kacheln bevorzugt und fehlende online nachgeladen.
+   */
+  offlineTiles?: Record<string, string> | null;
 }
 
 /**
@@ -20,10 +25,18 @@ export interface SwisstopoMapProps {
  * nachtraeglich ueber das global gesetzte `window.sttSetPosition` aktualisiert,
  * damit keine Kacheln neu geladen werden.
  */
-export function buildSwisstopoHtml(center: LatLng, label: string): string {
+export function buildSwisstopoHtml(
+  center: LatLng,
+  label: string,
+  offlineTiles?: Record<string, string> | null
+): string {
   const lat = center.lat;
   const lng = center.lng;
   const title = JSON.stringify(label ?? "Start");
+  const offlineJson =
+    offlineTiles && Object.keys(offlineTiles).length > 0
+      ? JSON.stringify(offlineTiles)
+      : "null";
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -46,7 +59,19 @@ export function buildSwisstopoHtml(center: LatLng, label: string): string {
 <script>
   (function () {
     var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([${lat}, ${lng}], 14);
-    L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg', {
+    var offline = ${offlineJson};
+    var tileUrl = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+    // Kachel-Layer, der lokale Offline-Kacheln bevorzugt und fehlende online nachlaedt.
+    var OfflineLayer = L.TileLayer.extend({
+      getTileUrl: function (coords) {
+        if (offline) {
+          var key = coords.z + '/' + coords.x + '/' + coords.y;
+          if (offline[key]) return offline[key];
+        }
+        return L.TileLayer.prototype.getTileUrl.call(this, coords);
+      }
+    });
+    new OfflineLayer(tileUrl, {
       maxZoom: 18,
       attribution: '&copy; swisstopo'
     }).addTo(map);
