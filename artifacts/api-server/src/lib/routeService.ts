@@ -11,6 +11,7 @@ import {
 import { isoForCanton } from "./cantonIso";
 import { fetchCantonHikingRoutes } from "./overpass";
 import { computeAscentM } from "./elevation";
+import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import {
   downsample,
   estimateMinutes,
@@ -103,7 +104,10 @@ export async function getCantonRoutes(
   const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm }) => {
     const ascent = await computeAscentM(r.points, log);
     const ascentM = ascent ?? 0;
-    const sac = r.sac ?? "unbekannt";
+    // Schwierigkeit: OSM-`sac_scale` normalisieren; fehlt sie, aus dem amtlichen
+    // swissTLM3D-Wanderwegnetz ableiten; sonst bleibt sie unbekannt.
+    const sac =
+      sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
     const start = r.points[0];
     const geometry: [number, number][] = downsample(r.points, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
