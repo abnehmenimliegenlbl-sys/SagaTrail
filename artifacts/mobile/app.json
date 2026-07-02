@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "SagaTrail",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "mobile",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10181A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "SagaTrail nutzt deinen Standort während der Wanderung, um Story-Momente an den richtigen Wegpunkten auszulösen — auch wenn der Bildschirm gesperrt ist.",
+        "UIBackgroundModes": ["audio", "location"]
+      }
+    },
+    "android": {
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

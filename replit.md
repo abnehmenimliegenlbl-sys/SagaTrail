@@ -1,45 +1,57 @@
-# [Project name]
+# SagaTrail
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates regional Swiss legends (Sagen) live, synced to your route, so the myth of a valley unfolds as you walk it.
 
 ## Run & Operate
 
+- Mobile app runs via the `artifacts/mobile: expo` workflow (Expo, port 18115)
+- `pnpm --filter @workspace/mobile run typecheck` — typecheck the mobile app
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env (server, staged for later): `DATABASE_URL`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Mobile: Expo (expo-router), React Native, react-native-reanimated, react-native-svg
+- TTS: expo-speech (de-DE). Storage: @react-native-async-storage/async-storage
+- API (staged): Express 5, PostgreSQL + Drizzle, Zod, Orval codegen
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/mobile/app/` — expo-router screens: `onboarding.tsx`, `(tabs)/` (index, sammlung, gruppe, einstellungen), `saga/[id]`, `route/[id]`, `hike/[id]` (live GPS narration), `summary.tsx`, `paywall.tsx`, `legal/[doc]`
+- `artifacts/mobile/constants/` — `colors.ts` (brand palette), `typography.ts` (fonts), `sagas.ts` (8 seed sagas), `onboarding.ts` (cantons, languages, archetypes, age tiers)
+- `artifacts/mobile/lib/storyEngine.ts` — generates 4-6 chapters per hike with archetype/age variation and 1-2 decision points
+- `artifacts/mobile/contexts/AppContext.tsx` — AsyncStorage-backed app state (profile, premium, achievements, emergency contact, energiesparmodus, last hike, group session)
+- `artifacts/mobile/components/brand/` — SparkMountain, AchievementMarker, SparkDivider, Glass, Background, PrimaryButton, ScreenHeader, RouteMap
+- `artifacts/mobile/hooks/useColors.ts` — always returns the dark brand palette
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Frontend-only first build: local seed data + AsyncStorage + expo-speech. Server-side (Anthropic story generation, swisstopo maps, WebSocket group sync, RevenueCat, Clerk, Postgres) is staged for later.
+- Custom SVG `RouteMap` instead of react-native-maps — cross-platform and web-preview stable.
+- App is always dark; `useColors` ignores the OS color scheme.
+- Sharing uses React Native's built-in `Share` API (no expo-file-system dependency).
+- SOS button in the live hike is intentionally opaque almrausch (never glass) and always visible; calls Rega 1414 / Euro 112 and can SMS a location to an emergency contact.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Onboarding collects name, home canton, language, narrative archetype, and age tier to personalise stories.
+- Live hike narrates a saga chapter-by-chapter as simulated progress advances along the route, with occasional perception decisions that shade the story.
+- Collection (Sammlung) tracks discovered sagas and achievements; Group (Gruppe) is a staged shared-session view.
+- Summary recaps the route, decisions, and unlocked achievement, shareable via the OS share sheet.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Code and comments for app-specific logic are written in German.
+- Never use emojis anywhere in the app or code.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The mobile workflow name is `artifacts/mobile: expo` (not `mobile`).
+- expo-speech / expo-sharing show Expo version-mismatch warnings; they run fine — do not "fix" by downgrading blindly.
 
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See the `expo` skill for mobile UI and native permission patterns

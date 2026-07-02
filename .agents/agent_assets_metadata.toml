@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "ZijdubUJDPoHtvzWRSz_C"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "S-ulTrjSliUfjOhdyLa4K"
+uri = "file://artifacts/mobile/assets/images/hero-valley.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "zpCo_5qT5kXmDh8q08hyd"
+uri = "file://artifacts/mobile/assets/images/saga-teufelsbruecke.png"
+type = "image"
+title = "generated_image"

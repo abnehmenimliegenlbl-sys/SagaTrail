@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlpSaga — Style Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Karla:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --talschatten:#1B2E28;
+    --nachthimmel:#10181A;
+    --gletscherweiss:#F5F3EC;
+    --almrausch:#C4462F;
+    --altgold:#B8935A;
+    --moosgrau:#6B7568;
+
+    --glass-bg: rgba(245,243,236,0.08);
+    --glass-bg-strong: rgba(245,243,236,0.14);
+    --glass-border: rgba(245,243,236,0.20);
+    --glass-shadow: 0 12px 40px rgba(8,12,13,0.45);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--nachthimmel);
+    color:var(--gletscherweiss);
+    font-family:'Karla', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- decorative fixed backdrop (gives the glass something to refract) ---------- */
+  .backdrop{
+    position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 500px at 78% 8%, rgba(184,147,90,0.35), transparent 60%),
+      linear-gradient(180deg, var(--nachthimmel) 0%, var(--nachthimmel) 45%, var(--talschatten) 100%);
+  }
+  .backdrop svg{ position:absolute; bottom:-4%; left:0; width:100%; height:60%; opacity:0.9; }
+
+  section{ padding:88px 8vw; position:relative; }
+  h2.section-title{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,3.4vw,44px);
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    margin:0 0 8px;
+    color:var(--gletscherweiss);
+  }
+  p.section-sub{
+    color:var(--moosgrau);
+    font-size:15px;
+    max-width:640px;
+    margin:0 0 48px;
+    line-height:1.6;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--altgold);
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:""; width:14px; height:1px; background:var(--altgold); display:inline-block;
+  }
+
+  /* ================= HERO ================= */
+  .hero{
+    min-height:92vh;
+    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    padding-top:64px;
+  }
+  .hero-icon{
+    width:84px; height:84px; border-radius:20px; overflow:hidden;
+    box-shadow:0 18px 48px rgba(0,0,0,0.5);
+    margin-bottom:36px;
+  }
+  .hero-icon img{ width:100%; height:100%; display:block; }
+  .hero h1{
+    font-family:'Big Shoulders Display', sans-serif;
+    font-weight:900;
+    font-size:clamp(56px, 10vw, 128px);
+    line-height:0.9;
+    margin:0;
+    letter-spacing:0.01em;
+  }
+  .hero h1 span{ color:var(--altgold); }
+  .hero .tag{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--moosgrau);
+    font-size:14px;
+    margin-top:22px;
+    letter-spacing:0.04em;
+  }
+  .hero .desc{
+    max-width:560px;
+    color:var(--gletscherweiss);
+    opacity:0.82;
+    line-height:1.7;
+    margin-top:20px;
+    font-size:16px;
+  }
+
+  /* ================= FARBEN ================= */
+  .swatch-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:2px;
+    border-radius:16px; overflow:hidden; border:1px solid rgba(245,243,236,0.08);
+  }
+  .swatch{
+    height:180px; padding:18px; display:flex; flex-direction:column; justify-content:flex-end;
+    position:relative;
+  }
+  .swatch .name{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:20px; text-transform:uppercase; }
+  .swatch .hex{ font-family:'JetBrains Mono',monospace; font-size:12px; opacity:0.85; margin-top:2px; }
+  .swatch .use{ font-size:12px; opacity:0.75; margin-top:8px; line-height:1.5; max-width:22ch; }
+  .on-dark{ color:var(--gletscherweiss); }
+  .on-light{ color:var(--nachthimmel); }
+
+  /* ================= TYPOGRAFIE ================= */
+  .type-row{
+    display:flex; align-items:baseline; gap:28px; padding:26px 0; border-top:1px solid rgba(245,243,236,0.1);
+  }
+  .type-row:last-child{ border-bottom:1px solid rgba(245,243,236,0.1); }
+  .type-role{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--altgold);
+    width:150px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.08em; padding-top:8px;
+  }
+  .type-sample-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:46px; line-height:1; }
+  .type-sample-body{ font-family:'Karla',sans-serif; font-size:19px; line-height:1.6; max-width:60ch; }
+  .type-sample-body em{ font-style:italic; color:var(--gletscherweiss); opacity:0.9; }
+  .type-sample-mono{ font-family:'JetBrains Mono',monospace; font-size:26px; letter-spacing:0.02em; }
+  .type-meta{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--moosgrau); margin-top:8px; }
+
+  /* ================= ZWEI STIMMEN ================= */
+  .voices{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media(max-width:820px){ .voices{ grid-template-columns:1fr; } }
+  .voice-card{
+    border-radius:18px; padding:32px;
+    background:var(--glass-bg); backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);
+  }
+  .voice-card .voice-label{
+    font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.1em;
+    display:flex; align-items:center; gap:8px; margin-bottom:18px;
+  }
+  .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
+  .voice-card.story .dot{ background:var(--altgold); }
+  .voice-card.ui .dot{ background:var(--gletscherweiss); }
+  .voice-card.story p{ font-family:'Karla',sans-serif; font-style:italic; font-size:18px; line-height:1.75; color:var(--gletscherweiss); }
+  .voice-card.ui p{ font-family:'Karla',sans-serif; font-size:16px; line-height:1.6; color:var(--gletscherweiss); opacity:0.92; }
+  .voice-card.ui .ui-example{
+    margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;
+  }
+
+  /* ================= SIGNATUR-ELEMENT ================= */
+  .signature-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  @media(max-width:820px){ .signature-row{ grid-template-columns:1fr; } }
+  .sig-card{
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:18px;
+    backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%);
+    box-shadow:var(--glass-shadow); padding:28px; text-align:center;
+  }
+  .sig-card svg{ width:100%; height:120px; margin-bottom:18px; }
+  .sig-card .sig-title{ font-family:'Big Shoulders Display',sans-serif; font-weight:700; font-size:18px; text-transform:uppercase; }
+  .sig-card .sig-desc{ font-size:13px; color:var(--moosgrau); margin-top:6px; line-height:1.5; }
+
+  @keyframes pulseSpark{
+    0%,100%{ opacity:0.55; transform:scale(0.9); }
+    50%{ opacity:1; transform:scale(1.08); }
+  }
+  .spark-anim{ animation:pulseSpark 1.8s ease-in-out infinite; transform-origin:center; }
+
+  /* ================= FROZEN GLASS KOMPONENTEN ================= */
+  .component-stage{
+    border-radius:24px; padding:56px 44px; position:relative; overflow:hidden;
+    background:
+      radial-gradient(ellipse 600px 320px at 82% 10%, rgba(184,147,90,0.30), transparent 60%),
+      linear-gradient(160deg, var(--talschatten) 0%, var(--nachthimmel) 78%);
+    border:1px solid rgba(245,243,236,0.08);
+  }
+  .component-stage .peaks{ position:absolute; bottom:0; left:0; width:100%; opacity:0.5; }
+
+  .glass{
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .btn{
+    font-family:'Karla',sans-serif; font-weight:700; font-size:15px;
+    padding:15px 28px; border-radius:14px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{ background:var(--almrausch); color:var(--gletscherweiss); box-shadow:0 10px 26px rgba(196,70,47,0.4); }
+  .btn-glass{ color:var(--gletscherweiss); }
+  .btn-glass:hover{ background:rgba(245,243,236,0.2); }
+
+  .row-demo{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:56px; position:relative; z-index:1; }
+
+  .card-glass{
+    border-radius:20px; padding:26px; width:300px; position:relative; z-index:1;
+  }
+  .card-glass .card-eyebrow{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--altgold); text-transform:uppercase; letter-spacing:0.08em; }
+  .card-glass h3{ font-family:'Big Shoulders Display',sans-serif; font-size:26px; margin:8px 0 10px; text-transform:uppercase; }
+  .card-glass p{ font-size:14px; line-height:1.6; color:var(--gletscherweiss); opacity:0.85; margin:0 0 16px; }
+  .card-glass .card-meta{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--moosgrau); display:flex; gap:14px; }
+
+  .decision-panel{
+    border-radius:22px; padding:32px; max-width:640px; margin:0 auto 56px; position:relative; z-index:1;
+  }
+  .decision-panel .q-eyebrow{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--altgold); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:14px; }
+  .decision-panel .q{ font-family:'Karla',sans-serif; font-style:italic; font-size:20px; line-height:1.6; margin-bottom:26px; }
+  .decision-choices{ display:flex; gap:14px; flex-wrap:wrap; }
+  .choice-btn{
+    flex:1; min-width:200px; text-align:left; padding:16px 18px; border-radius:14px;
+    background:rgba(245,243,236,0.06); border:1px solid var(--glass-border);
+    color:var(--gletscherweiss); font-family:'Karla',sans-serif; font-size:15px; cursor:pointer;
+  }
+  .choice-btn:hover{ background:rgba(245,243,236,0.16); }
+  .choice-btn .choice-label{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--altgold); display:block; margin-bottom:6px; letter-spacing:0.08em; }
+
+  .stat-bar{
+    display:inline-flex; gap:0; border-radius:999px; overflow:hidden; position:relative; z-index:1; margin-bottom:56px;
+  }
+  .stat-bar .stat{ padding:16px 26px; text-align:center; border-right:1px solid var(--glass-border); }
+  .stat-bar .stat:last-child{ border-right:none; }
+  .stat-bar .stat .val{ font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:600; }
+  .stat-bar .stat .lbl{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--moosgrau); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+
+  .badge-row{ display:flex; gap:20px; flex-wrap:wrap; position:relative; z-index:1; margin-bottom:56px; }
+  .badge{
+    width:96px; height:96px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; text-align:center;
+  }
+  .badge svg{ width:32px; height:32px; margin-bottom:4px; }
+  .badge .badge-lbl{ font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--altgold); text-transform:uppercase; }
+
+  .sos-row{ display:flex; align-items:center; gap:18px; position:relative; z-index:1; }
+  .sos-btn{
+    width:64px; height:64px; border-radius:50%; background:var(--almrausch); color:var(--gletscherweiss);
+    border:3px solid rgba(245,243,236,0.35); font-family:'Big Shoulders Display',sans-serif; font-weight:700;
+    font-size:15px; box-shadow:0 12px 30px rgba(196,70,47,0.55); cursor:pointer;
+  }
+  .sos-note{ font-size:13px; color:var(--moosgrau); max-width:340px; line-height:1.6; }
+
+  .rule-list{ list-style:none; padding:0; margin:0; display:grid; gap:14px; }
+  .rule-list li{
+    display:flex; gap:14px; align-items:flex-start; font-size:14px; line-height:1.6; color:var(--gletscherweiss); opacity:0.9;
+  }
+  .rule-list li::before{ content:"—"; color:var(--altgold); flex-shrink:0; }
+
+  footer{ padding:60px 8vw 100px; border-top:1px solid rgba(245,243,236,0.08); }
+  footer .foot-title{ font-family:'Big Shoulders Display',sans-serif; font-size:20px; text-transform:uppercase; margin-bottom:16px; }
+  footer .foot-meta{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--moosgrau); }
+</style>
+</head>
+<body>
+
+<div class="backdrop">
+  <svg viewBox="0 0 1200 500" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="-40,420 160,320 320,370 520,240 720,340 900,280 1240,360 1240,520 -40,520" fill="#1B2E28" opacity="0.9"/>
+    <polygon points="180,420 380,260 520,340 720,180 920,330 1100,260 1240,340 1240,520 180,520" fill="#10181A"/>
+  </svg>
+</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-icon"><img src="icon-1024.png" alt="AlpSaga Icon"></div>
+  <h1>Alp<span>Saga</span></h1>
+  <div class="tag">STYLE GUIDE — V1.0 — WANDER-BEGLEITER-APP SCHWEIZ</div>
+  <p class="desc">Design-Grundlage für alle Screens von AlpSaga: Farben, Typografie, die zwei Erzählstimmen der App und die Frozen-Glass-Bedienelemente, die sich über Karten- und Landschaftsansichten legen.</p>
+</header>
+
+<!-- ================= FARBEN ================= -->
+<section id="farben">
+  <div class="eyebrow">Farben</div>
+  <h2 class="section-title">Palette</h2>
+  <p class="section-sub">Sechs Farben, jede mit fester Aufgabe. Almrausch ist reserviert für Primäraktion, SOS und Entscheidungsmomente — nie dekorativ eingesetzt.</p>
+  <div class="swatch-grid">
+    <div class="swatch on-dark" style="background:#10181A;">
+      <div class="name">Nachthimmel</div><div class="hex">#10181A</div>
+      <div class="use">Tiefster Kontrast — Splash, Onboarding, Live-Ansicht bei Nacht</div>
+    </div>
+    <div class="swatch on-dark" style="background:#1B2E28;">
+      <div class="name">Talschatten</div><div class="hex">#1B2E28</div>
+      <div class="use">Primärer App-Hintergrund</div>
+    </div>
+    <div class="swatch on-light" style="background:#F5F3EC;">
+      <div class="name">Gletscherweiss</div><div class="hex">#F5F3EC</div>
+      <div class="use">Text auf dunklem Grund, Icons, Glas-Highlights</div>
+    </div>
+    <div class="swatch on-dark" style="background:#C4462F;">
+      <div class="name">Almrausch</div><div class="hex">#C4462F</div>
+      <div class="use">Primäraktion, SOS, Entscheidungsmomente — reserviert</div>
+    </div>
+    <div class="swatch on-dark" style="background:#B8935A;">
+      <div class="name">Altgold</div><div class="hex">#B8935A</div>
+      <div class="use">Akzente, Icons, Achievements, der Funke</div>
+    </div>
+    <div class="swatch on-dark" style="background:#6B7568;">
+      <div class="name">Moosgrau</div><div class="hex">#6B7568</div>
+      <div class="use">Gedämpfter Text, Trennlinien, Metadaten</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TYPOGRAFIE ================= -->
+<section id="typografie">
+  <div class="eyebrow">Typografie</div>
+  <h2 class="section-title">Drei Rollen, drei Schriften</h2>
+  <p class="section-sub">Jede Schrift hat genau eine Aufgabe. Messwerte stehen nie in Karla, Erzähltext nie in JetBrains Mono.</p>
+
+  <div class="type-row">
+    <div class="type-role">Sagen-Titel<br>Big Shoulders Display</div>
+    <div>
+      <div class="type-sample-title">Der Geist der Teufelsbrücke</div>
+      <div class="type-meta">700–900 · gemeisselt, kräftig, ausschliesslich Titel &amp; Kapitelmarken</div>
+    </div>
+  </div>
+  <div class="type-row">
+    <div class="type-role">Fliesstext<br>Karla</div>
+    <div>
+      <div class="type-sample-body">Der Nebel zieht sich über die Schlucht zurück, und für einen Atemzug hörst du <em>etwas</em>, das kein Wasserrauschen ist. <em>Rufst du zurück, oder gehst du schweigend weiter?</em></div>
+      <div class="type-meta">400 regular · 700 bold für Betonung · hohe x-Höhe, gute Lesbarkeit bei Sonnenlicht</div>
+    </div>
+  </div>
+  <div class="type-row">
+    <div class="type-role">Messwerte<br>JetBrains Mono</div>
+    <div>
+      <div class="type-sample-mono">7,4 KM · 612 HM · 1:48 H</div>
+      <div class="type-meta">Ausschliesslich Distanz, Höhenmeter, Zeit, Koordinaten — nie Erzähltext</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ZWEI STIMMEN ================= -->
+<section id="stimmen">
+  <div class="eyebrow">Zwei Stimmen</div>
+  <h2 class="section-title">Sage vs. Bedienung</h2>
+  <p class="section-sub">Nutzer dürfen nie rätseln, ob ein Text Teil der Geschichte oder der App-Bedienung ist. Erzähl-Präsens und UI-Sprache bleiben strikt getrennt.</p>
+  <div class="voices">
+    <div class="voice-card story">
+      <div class="voice-label"><span class="dot"></span>Erzählstimme — atmosphärisch, Präsens</div>
+      <p>Der alte Senn hebt den Kopf nicht, als du dich näherst. „Der Bock kommt jede Nacht zur gleichen Stunde", sagt er, ohne dich anzusehen. Über dem Rossberg zieht ein Schatten, der keinem Vogel gehört.</p>
+    </div>
+    <div class="voice-card ui">
+      <div class="voice-label"><span class="dot"></span>UI-Stimme — klar, aktiv, unmystisch</div>
+      <p>Standortzugriff erforderlich. AlpSaga braucht deinen Standort, um die Geschichte an deine Position auf dem Weg anzupassen.</p>
+      <div class="ui-example">
+        <button class="btn btn-primary">Zugriff erlauben</button>
+        <button class="btn btn-glass glass">Später</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SIGNATUR-ELEMENT ================= -->
+<section id="signatur">
+  <div class="eyebrow">Signatur-Element</div>
+  <h2 class="section-title">Bergsilhouette mit Funke</h2>
+  <p class="section-sub">Aus dem App-Icon abgeleitet, in drei Ausprägungen durch die App wiederkehrend.</p>
+  <div class="signature-row">
+    <div class="sig-card">
+      <svg viewBox="0 0 200 120"><g class="spark-anim"><path d="M100,20 L108,46 L134,54 L108,62 L100,88 L92,62 L66,54 L92,46 Z" fill="#B8935A"/></g><polygon points="0,110 60,70 100,95 140,60 200,90 200,120 0,120" fill="#1B2E28"/></svg>
+      <div class="sig-title">Ladeanimation</div>
+      <div class="sig-desc">Pulsierender Funke über der Bergsilhouette während Story-Generierung.</div>
+    </div>
+    <div class="sig-card">
+      <svg viewBox="0 0 200 120"><polygon points="0,60 200,60 200,66 0,66" fill="none"/><line x1="10" y1="63" x2="90" y2="63" stroke="#6B7568" stroke-width="1"/><line x1="112" y1="63" x2="190" y2="63" stroke="#6B7568" stroke-width="1"/><path d="M100,45 L106,60 L121,63 L106,66 L100,81 L94,66 L79,63 L94,60 Z" fill="#B8935A"/></svg>
+      <div class="sig-title">Abschnitts-Trenner</div>
+      <div class="sig-desc">Feiner Funke zwischen zwei Story-Kapiteln oder Listenblöcken.</div>
+    </div>
+    <div class="sig-card">
+      <svg viewBox="0 0 200 120"><circle cx="100" cy="60" r="46" fill="#1B2E28" stroke="#B8935A" stroke-width="2"/><path d="M100,34 L107,54 L128,60 L107,66 L100,86 L93,66 L72,60 L93,54 Z" fill="#F5F3EC"/></svg>
+      <div class="sig-title">Achievement-Marker</div>
+      <div class="sig-desc">Funke im Kreis für besuchte Sagen-Orte und freigeschaltete Kapitel.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FROZEN GLASS KOMPONENTEN ================= -->
+<section id="komponenten">
+  <div class="eyebrow">Frozen Glass</div>
+  <h2 class="section-title">Bedienelemente</h2>
+  <p class="section-sub">Alle interaktiven Flächen, die über Karte, Landschaft oder Story-Hintergrund schweben, nutzen durchgehend das Frozen-Glass-Muster: mattierte Transparenz, feiner heller Rand, weicher Schlagschatten. Ausnahme: der SOS-Button bleibt vollflächig deckend, da er in jeder Lichtsituation sofort erkennbar sein muss.</p>
+
+  <div class="component-stage">
+    <svg class="peaks" viewBox="0 0 1200 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="-40,260 200,150 380,210 620,90 860,200 1040,140 1240,220 1240,300 -40,300" fill="#1B2E28"/>
+    </svg>
+
+    <!-- Buttons -->
+    <div class="row-demo">
+      <button class="btn btn-primary">Wanderung starten</button>
+      <button class="btn btn-glass glass">Route ändern</button>
+      <button class="btn btn-glass glass">Als Karte anzeigen</button>
+    </div>
+
+    <!-- Stat bar -->
+    <div class="stat-bar glass">
+      <div class="stat"><div class="val">7,4 KM</div><div class="lbl">Distanz</div></div>
+      <div class="stat"><div class="val">612 HM</div><div class="lbl">Höhenmeter</div></div>
+      <div class="stat"><div class="val">1:48 H</div><div class="lbl">Restzeit</div></div>
+      <div class="stat"><div class="val">T3</div><div class="lbl">SAC-Skala</div></div>
+    </div>
+
+    <!-- Decision moment -->
+    <div class="decision-panel glass">
+      <div class="q-eyebrow">Wahrnehmungs-Entscheidung</div>
+      <div class="q">Eine Stimme ruft von der Brücke herüber. Rufst du zurück, oder gehst du schweigend weiter?</div>
+      <div class="decision-choices">
+        <button class="choice-btn"><span class="choice-label">Reisende — mutig</span>Ich rufe zurück und trete näher.</button>
+        <button class="choice-btn"><span class="choice-label">Sennin — bedacht</span>Ich gehe schweigend weiter und behalte die Brücke im Blick.</button>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="row-demo">
+      <div class="card-glass glass">
+        <div class="card-eyebrow">Uri · Kanton</div>
+        <h3>Teufelsbrücke</h3>
+        <p>Vertiefter Story-Moment an bekanntem Sagen-Ort. Wird ausgelöst, sobald der reale Standort den Wegpunkt erreicht.</p>
+        <div class="card-meta"><span>46.6529° N</span><span>8.5837° O</span></div>
+      </div>
+      <div class="card-glass glass">
+        <div class="card-eyebrow">Graubünden · Kanton</div>
+        <h3>Rossberg</h3>
+        <p>Regional verankerte Sage, originalgetreu erzählt, mit alters- und archetypgerechtem Ton.</p>
+        <div class="card-meta"><span>46.8182° N</span><span>9.5228° O</span></div>
+      </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="badge-row">
+      <div class="badge glass"><svg viewBox="0 0 40 40"><path d="M20,8 L23,18 L33,20 L23,22 L20,32 L17,22 L7,20 L17,18 Z" fill="#B8935A"/></svg><div class="badge-lbl">Teufelsbrücke</div></div>
+      <div class="badge glass"><svg viewBox="0 0 40 40"><path d="M20,8 L23,18 L33,20 L23,22 L20,32 L17,22 L7,20 L17,18 Z" fill="#B8935A"/></svg><div class="badge-lbl">Rossberg</div></div>
+      <div class="badge glass" style="opacity:0.45;"><svg viewBox="0 0 40 40"><path d="M20,8 L23,18 L33,20 L23,22 L20,32 L17,22 L7,20 L17,18 Z" fill="#6B7568"/></svg><div class="badge-lbl">Gesperrt</div></div>
+    </div>
+
+    <!-- SOS: bewusste Ausnahme vom Glass-Muster -->
+    <div class="sos-row">
+      <button class="sos-btn">SOS</button>
+      <div class="sos-note">Immer sichtbar, immer deckend — kein Frozen Glass. Direkter Zugriff auf Rega 1414 / Notruf 112, auch offline nutzbar.</div>
+    </div>
+  </div>
+
+  <ul class="rule-list" style="margin-top:40px;">
+    <li>Blur-Radius 18–24 px, Sättigung leicht erhöht (140–160 %), damit die Landschaft dahinter erkennbar, aber der Text sicher lesbar bleibt.</li>
+    <li>Fläche mindestens 8–14 % Deckkraft in Gletscherweiss-Ton, nie vollständig transparent — Grundvoraussetzung für Lesbarkeit bei direktem Sonnenlicht.</li>
+    <li>Ein feiner 1px-Rand (Gletscherweiss, ~20 % Deckkraft) trennt jede Glasfläche von ihrem Hintergrund.</li>
+    <li>Text auf Glas ausschliesslich in Gletscherweiss; Moosgrau nur für sekundäre Metadaten, nie als Fliesstext auf Glas.</li>
+    <li>SOS-Button, Notfall-Banner und Fehlermeldungen mit Handlungsbedarf sind von Frozen Glass ausgenommen — sie bleiben vollflächig deckend.</li>
+    <li>Glas nie auf Glas stapeln (z. B. Karte innerhalb eines Glas-Panels): maximal eine Ebene Unschärfe gleichzeitig.</li>
+  </ul>
+</section>
+
+<footer>
+  <div class="foot-title">AlpSaga Design-System</div>
+  <div class="foot-meta">FARBEN · TYPOGRAFIE · ZWEI STIMMEN · SIGNATUR-ELEMENT · FROZEN GLASS — V1.0</div>
+</footer>
+
+</body>
+</html>

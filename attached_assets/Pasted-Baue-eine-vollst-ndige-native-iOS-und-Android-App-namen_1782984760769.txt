@@ -1,0 +1,173 @@
+Baue eine vollständige, native iOS- und Android-App namens "SagaTrail" – eine Wander-Begleiter-App, die während echter Wanderungen in der Schweiz live Geschichten basierend auf regionalen Schweizer Sagen erzählt, synchron zur Bewegung des Nutzers über das ganze Land.
+
+Grundprinzip der Erzählung (wichtig für alle folgenden Funktionen)
+
+Die App erzählt die überlieferte Sage so, wie sie ist — sie wird nicht umgeschrieben oder in ihrem Ausgang verändert. Der Wanderer ist Zeuge und Nebenfigur innerhalb der feststehenden Geschichte, nicht ihr Held, der den Ausgang bestimmt. Interaktivität entsteht nicht dadurch, dass der Nutzer den Lauf der Sage ändert, sondern dadurch, dass er seine eigene Haltung und Wahrnehmung innerhalb der Geschichte gestaltet: wie er auf das Erzählte reagiert, wem er vertraut, was er genauer betrachtet. Der reale Wanderweg ist vorgegeben — es gibt deshalb keine Navigations-Entscheidungen ("links oder rechts"), da der Nutzer den tatsächlichen Pfad ohnehin nicht ändern kann. Alle Entscheidungen sind Wahrnehmungs- und Haltungs-Entscheidungen (z.B. "Rufst du der Stimme zurück oder gehst du schweigend weiter?", "Glaubst du dem alten Mann oder bleibst du skeptisch?").
+
+Tech-Stack
+
+
+Frontend: Expo / React Native, damit eine einzige Codebasis native iOS- und Android-Apps liefert
+Styling: NativeWind (Tailwind-Syntax für React Native), konsequent mobile-first, große Touch-Ziele, hoher Kontrast für Sonnenlicht im Freien, durchgängiges Design-System (Farben, Typografie, Icons) statt Einzel-Screens
+Barrierefreiheit: Onboarding, Menüs und Paywall sind vollständig mit VoiceOver (iOS) und TalkBack (Android) bedienbar (korrekte Accessibility-Labels, Fokus-Reihenfolge), auch wenn die App im Kernerlebnis audio-first ist
+Backend: Node.js/Express als eigener Service, mit einer echten Datenbank (PostgreSQL, z.B. via Replits eigener DB oder Neon) statt In-Memory-Speicherung — die App muss Fortschritt dauerhaft über Sessions und Geräte hinweg speichern
+Echtzeit-Synchronisation für Gruppen: WebSocket-Verbindung (z.B. Socket.io), damit mehrere Geräte in derselben Wanderungs-Session dieselben Story-Abschnitte gleichzeitig empfangen
+Nutzerkonten: E-Mail- oder Social-Login (z.B. über Supabase Auth oder Clerk), damit Fortschritt geräteübergreifend erhalten bleibt
+Standort- und Kartendaten: expo-location für GPS, react-native-maps für die Kartendarstellung
+Geodaten-Integration: Anbindung an die swisstopo STAC-API (data.geo.admin.ch) für Wegtyp, Höhenprofil und Points of Interest entlang der Route — nicht nur eine grobe Distanzschätzung, sondern echte Ableitung von Schwierigkeit und Umgebungstyp aus den offiziellen Geodaten
+Sprachausgabe: expo-speech für native Text-to-Speech auf iOS und Android, mit Sprachauswahl. Neben den Landessprachen (Hochdeutsch, Französisch, Italienisch; Schweizerdeutsch-Einfärbung soweit die verfügbaren Stimmen das zulassen) auch Englisch, Mandarin-Chinesisch, Spanisch und brasilianisches Portugiesisch, um die grossen internationalen Wandergruppen in der Schweiz abzudecken (US-amerikanische, chinesische und lateinamerikanische Touristen inkl. Brasilianer). Die Verfügbarkeit einzelner Stimmqualitäten hängt vom jeweiligen Betriebssystem ab — der Agent prüft pro Sprache, welche nativen expo-speech-Stimmen auf iOS/Android tatsächlich vorhanden sind, und baut einen sinnvollen Fallback (z.B. nächstbeste verfügbare Stimme derselben Sprache) statt eines stummen Fehlers; jedes Gerät gibt die Story über die eigenen Kopfhörer aus (siehe Gruppenmodus)
+Audio Ducking gegen Musik-Apps: Viele Wanderer hören Spotify oder andere Musik-Apps über Kopfhörer. Die Story-Sprachausgabe muss deshalb per Audio-Session-Konfiguration (expo-audio, interruptionMode: 'duckOthers', plattformübergreifend für iOS und Android) laufende Musik automatisch leiser drehen, solange gesprochen wird, statt sie zu pausieren oder zu überlagern — nach dem Story-Segment kehrt die Musik wieder auf ursprüngliche Lautstärke zurück. mixWithOthers ist hierfür ungeeignet, da gesprochener Text bei gleicher Lautstärke wie Musik meist unverständlich wird
+KI-Textgenerierung: Anthropic API (claude-sonnet-4-6), ausschliesslich serverseitig aufgerufen
+Zahlungen/Abos: RevenueCat (react-native-purchases), inklusive vollständig konfigurierter Angebote, Entitlements und Paywall
+Offline-Fähigkeit: Kartenkacheln und bereits generierte Story-Abschnitte werden lokal zwischengespeichert, damit die App auch in Funklöchern in den Bergen nicht abbricht
+
+
+Plattform-Strategie: iOS und Android
+
+
+Volle Feature-Parität auf beiden Plattformen von Anfang an, keine "kommt später für Android"-Kompromisse
+Native Anpassungen, wo sie das Nutzererlebnis merklich verbessern (Haptic Feedback bei Story-Momenten, native Navigationsmuster, Systembenachrichtigungen für Wander-Erinnerungen)
+Vorbereitung auf die tatsächliche Veröffentlichung: App-Icons, Splash-Screens, Store-Beschreibungstexte und Screenshots sind Teil der Aufgabe, nicht nachträgliches Polishing
+Ziel ist ein Build, der über Expo Application Services (EAS) direkt für TestFlight bzw. den internen Google-Play-Test eingereicht werden kann
+
+
+Design-System (verbindlich für den Agenten)
+
+Ein fertiges Icon (icon-1024.png, 1024×1024, ohne Transparenz/Ecken-Radius) und ein vollständiger Style Guide (style-guide.html) liegen bereits vor und sind als Design-Grundlage 1:1 zu übernehmen, nicht neu zu erfinden. Lade beide Dateien zu Beginn von Stufe 1 in Replit hoch. Kernwerte daraus, die der Agent direkt in NativeWind/Tailwind-Konfiguration überträgt:
+
+
+Farben: Talschatten #1B2E28 (primärer Hintergrund), Nachthimmel #10181A (tiefster Kontrast, Splash/Onboarding), Gletscherweiss #F5F3EC (Text auf Dunkel), Almrausch #C4462F (Primäraktion, SOS, Entscheidungsmomente — reserviert, nicht dekorativ), Altgold #B8935A (Akzente, Icons, Achievements), Moosgrau #6B7568 (gedämpfter Text, Trennlinien)
+Typografie: Big Shoulders Display für Titel/Sagen-Titel (kräftig, gemeisselt wirkend), Karla für Fliesstext (hohe x-Höhe, bei Sonnenlicht gut lesbar), JetBrains Mono ausschliesslich für Messwerte (Distanz, Höhenmeter, Zeit) — nie für Erzähltext
+Zwei getrennte Stimmen: Die Sage erzählt atmosphärisch im Erzähl-Präsens; UI-Texte (Buttons, Fehlermeldungen, Einstellungen) sind klar, aktiv und unmystisch, damit Nutzer nie rätseln, ob ein Text Teil der Geschichte oder der Bedienung ist — Details und Beispiele dazu im Style Guide
+Signatur-Element: Bergsilhouette mit Funke (aus dem Icon abgeleitet) als wiederkehrendes Motiv für Ladeanimation, Abschnitts-Trenner und Achievement-Marker
+
+
+1. Onboarding und Nutzerkonto
+
+
+Registrierung/Login
+Archetyp-Wahl statt Fantasy-Klasse: Der Wanderer wählt eine narrative Rolle, die zur Schweizer Sagenwelt passt, keine generischen RPG-Klassen. Lege mindestens folgende Archetypen an:
+
+Die/der Reisende — kommt von aussen, hilft mit Wissen und Mut
+Die/der Hüterin — naturverbunden, vermittelt zwischen Mensch und Geisterwelt
+Die/der Gewitzte — löst Situationen durch Klugheit statt Konfrontation
+Die/der Sennin/Senn — bodenständig, bergerfahren, eher beobachtende Erzählperspektive
+Der gewählte Archetyp beeinflusst den Erzählton und wie die Figur des Wanderers innerhalb der Sage gezeichnet wird — nicht den Ausgang der Geschichte selbst
+
+
+
+Auswahl der Heimatregion, aber Zugriff auf alle Schweizer Kantone, nicht nur eine Auswahl
+Sprachwahl (Deutsch, Französisch, Italienisch, Englisch, Mandarin-Chinesisch, Spanisch, brasilianisches Portugiesisch), die konsistent durch die ganze App und alle generierten Inhalte trägt — inklusive UI-Texte, Story-Generierung und Sprachausgabe, nicht nur die gesprochene Story
+Altersangabe pro Profil, die den Erzählton und die Intensität der Geschichten steuert — siehe eigener Abschnitt "Altersgerechte Inhalte" unten
+
+
+2. Routenplanung
+
+
+Eigene Routenauswahl auf Basis der swisstopo-Wanderweg-Layer (inkl. SAC-Schwierigkeitsskala T1-T6)
+GPX-Import, um bestehende Routen aus anderen Apps (z.B. SchweizMobil) zu übernehmen
+Wetter- und aktueller Wegzustand-Check vor Tourstart (Anbindung an eine Wetter-API)
+
+
+3. Live-Wanderungserlebnis
+
+
+Kontinuierliches GPS-Tracking mit Kartenansicht und Fortschrittsanzeige (Distanz, Höhenmeter, verbleibende Zeit laut SAC-Standard)
+Bei jedem relevanten Wegpunkt Abfrage der swisstopo-Geodaten (Wegtyp, Höhe, nahegelegene POIs) als Kontext für die Story-Generierung
+Persistenter Story-State pro Nutzer über die gesamte App-Lebenszeit (nicht nur pro Session) — die Geschichte entwickelt sich über viele Wanderungen hinweg weiter
+Regionale Verankerung: An bekannten Sagen-Orten (z.B. Teufelsbrücke, Rossberg) werden vertiefte, vorbereitete Story-Momente ausgelöst statt rein generischer KI-Texte, und die Sage wird originalgetreu erzählt (siehe Grundprinzip oben)
+Ausschliesslich Wahrnehmungs- und Haltungs-Entscheidungen per Sprachbefehl, nie Navigations-Entscheidungen — der Nutzer muss nie aufs Display schauen und der Weg bleibt immer der real vorgegebene
+Automatische Anpassung an Tageszeit, Jahreszeit und Wetter in der erzählten Geschichte
+Notfall-Funktion: Jederzeit erreichbarer, unaufdringlicher SOS-Button in der Live-Ansicht mit direktem Zugriff auf die Rega-Notrufnummer 1414 (bzw. die europäische Notrufnummer 112) sowie eine Funktion, um den aktuellen Standort per Nachricht an einen zuvor hinterlegten Notfallkontakt zu teilen. Muss auch bei schlechter oder fehlender Netzverbindung nutzbar bleiben (z.B. Anruf-Funktion, die auch ohne Datenverbindung funktioniert)
+Akkumanagement: Da GPS-Tracking, Sprachausgabe und WebSocket-Verbindung über Stunden laufen, zeigt die App den geschätzten zusätzlichen Akkuverbrauch vor Tourstart an und bietet einen Energiesparmodus (reduzierte GPS-Abfragefrequenz, weniger häufige Story-Trigger), der sich automatisch vorschlägt, sobald der Akkustand einen kritischen Wert unterschreitet — damit weder Story noch Standort-Tracking mitten in der Wanderung ausfallen
+Audio Ducking beim Abspielen jedes Story-Segments: Läuft im Hintergrund eine Musik-App (z.B. Spotify), wird deren Lautstärke für die Dauer der Sprachausgabe automatisch abgesenkt und danach wieder auf den ursprünglichen Pegel angehoben — die Musik pausiert nicht, sie wird nur kurz leiser. Dies muss auf echten Geräten (nicht nur im Simulator) getestet werden, insbesondere ob die Lautstärke nach jedem Segment zuverlässig wiederhergestellt wird; falls nicht, ist ein expliziter Workaround zum sauberen Zurücksetzen der Audio-Session einzubauen
+
+
+4. Sagen- und Content-Datenbank
+
+
+Strukturierte Datenbank mit Sagen aus möglichst vielen Kantonen als narrative Grundlage (nicht nur 3-5 Beispiele — baue eine erweiterbare Struktur, die sich mit weiteren Einträgen befüllen lässt, und befülle sie initial mit einer sinnvollen Bandbreite pro Sprachregion)
+Jede Sage mit Kanton, Kernmotiv, Stimmung, Originaltext-Zusammenfassung und optional realen Koordinaten, an denen sie traditionell verortet ist — dies ist die verbindliche Quelle, an die sich die KI-Generierung hält
+Urheberrechtliche Herkunft prüfen: Die Originaltext-Zusammenfassung jeder Sage muss auf gemeinfreien Quellen beruhen (z.B. historische Sagensammlungen, deren Schutzfrist abgelaufen ist), nicht auf einer wörtlich abgeschriebenen, noch geschützten modernen Nacherzählung oder Buchausgabe. Der Agent dokumentiert pro Sage kurz die Quelle
+Mehrsprachige verbindliche Quelle statt Nachträglicher Übersetzung: Für die regional verankerten Kern-Sagen (siehe Punkt 3, "vertiefte, vorbereitete Story-Momente") wird die Originaltext-Zusammenfassung in allen unterstützten Sprachen (Deutsch, Französisch, Italienisch, Englisch, Mandarin-Chinesisch, Spanisch, brasilianisches Portugiesisch) als eigener, redigierter Eintrag hinterlegt, nicht als maschinelle Übersetzung der deutschen Fassung zur Laufzeit. Die KI generiert den finalen Story-Text dann direkt in der Zielsprache aus der jeweiligen sprachspezifischen Quelle. Für die dynamischen, generischen Zwischen-Passagen (Wetter-/Tageszeit-Flavor, Reaktionen auf Wahrnehmungs-Entscheidungen), die ohnehin bei jeder Wanderung neu generiert werden, reicht es, die Alters- und Archetyp-Regeln direkt in der jeweiligen Zielsprache in die Systemanweisung an Claude zu geben — auch hier wird nicht zuerst Deutsch generiert und dann übersetzt, sondern direkt in der Zielsprache erzeugt, um Qualitätsverlust und doppelte Tokenkosten zu vermeiden
+
+
+5. Altersgerechte Inhalte
+
+
+Altersstufe (aus dem Profil übernommen, in den Einstellungen anpassbar) steuert Wortwahl und Spannungsintensität, sowie ob beängstigende/gewalthaltige Motive (z.B. die blutige Rache in der Sennentuntschi-Sage) abgemildert oder altersgerecht umgedeutet werden, ohne den Kern der Sage zu verändern
+Definiere intern mindestens drei Stufen, z.B. "Kinder" (ca. 6-11), "Jugendliche" (ca. 12-15) und "Erwachsene" (16+), mit klaren, in der Systemanweisung an die Claude-API verankerten Regeln pro Stufe
+Baue die Prompt-Konstruktion so, dass die Altersstufe über den gesamten Story-Verlauf konsistent angewendet wird, nicht nur beim ersten Textabschnitt
+
+
+6. Familien- und Gruppenmodus
+
+
+Eine Person erstellt eine gemeinsame Wanderungs-Session mit einem Beitritts-Code ("Leitung"); alle weiteren Mitglieder treten mit ihrem eigenen Profil (eigener Archetyp, eigenes Alter) über den Code bei
+Code-Sicherheit: Der Beitritts-Code ist zeitlich begrenzt gültig (z.B. für die Dauer der Session plus kurze Pufferzeit) und wird nach Sessionende ungültig, damit ein weitergeleiteter oder erratener Code nicht nachträglich fremden Zugriff erlaubt; die Leitung sieht jederzeit, wer der Session beigetreten ist, und kann Mitglieder entfernen
+Altersstufe der Gruppe: Es gilt das jüngste Mitglied der Gruppe — die gesamte gemeinsame Erzählung richtet sich nach dieser Altersstufe, damit alle dieselbe, altersgerechte Geschichte hören
+Standort: Das Gerät der Leitung liefert die massgebliche GPS-Position für die Session; alle anderen Geräte folgen dieser Position
+Audio: Jedes Gerät gibt die Story über die eigenen Kopfhörer aus. Der Backend-Server generiert den Story-Abschnitt einmal pro Wegpunkt und verteilt den Text per WebSocket gleichzeitig an alle Geräte der Session; jedes Gerät spielt den Text dann über expo-speech lokal auf den eigenen Kopfhörern ab, inklusive der oben beschriebenen Audio-Ducking-Logik gegen eventuell laufende Musik auf dem jeweiligen Gerät. Eine exakte Millisekunden-Synchronität ist nicht nötig — die gemeinsame Verteilung des Textes über die WebSocket-Verbindung reicht aus, damit alle etwa gleichzeitig dieselbe Geschichte hören
+Unterschiedliche Sprachen innerhalb einer Gruppe: Da international zusammengesetzte Wandergruppen üblich sind (z.B. eine amerikanische und eine Schweizer Familie gemeinsam unterwegs), generiert der Server den Story-Abschnitt pro Wegpunkt je benötigter Sprache einmal (nicht nur einmal pro Session) und verteilt jedem Gerät über WebSocket die Fassung in dessen eingestellter Sprache; inhaltlich bleibt es exakt dieselbe Sage und Entscheidung, nur sprachlich angepasst. Für den ersten Ausbau reicht die einfachere Regel, dass alle Mitglieder einer Session dieselbe, von der Leitung vorgegebene Sprache hören — Mehrsprachigkeit pro Gruppe kann als Ausbaustufe ergänzt werden
+Story-Inhalt: Die Erzählung bezieht alle in der Session vorhandenen Archetypen ein (z.B. "Der Reisende und die kleine Hüterin nähern sich gemeinsam der Brücke") statt nur eine einzelne Hauptfigur zu haben
+Gemeinsame Entscheidungen: Bei Wahrnehmungs-Entscheidungen zeigen alle Geräte gleichzeitig dieselbe Frage; jedes Mitglied stimmt auf dem eigenen Gerät ab, die Mehrheit entscheidet den weiteren Erzählton, bei Gleichstand entscheidet die Leitung
+Baue diesen Modus als Erweiterung des Solo-Modus, nicht als komplett separate Codepfade — dieselbe Story-Engine und Datenbank, nur mit Mehrgeräte-Verteilung über WebSocket
+
+
+7. Nach der Wanderung
+
+
+Vollständige Zusammenfassung mit Karte der gelaufenen Route, Story-Kapitel-Rückblick, Charakterfortschritt
+Bei Gruppen-Wanderungen: gemeinsame Zusammenfassung für alle Mitglieder der Session
+Teilen-Funktion (Bild/Zusammenfassung, die sich in Messenger/Social Media exportieren lässt)
+Achievements/Sammlung besuchter Sagen-Orte als Langzeit-Motivation
+
+
+8. Monetarisierung mit RevenueCat
+
+
+Vollständig konfiguriertes Entitlement plus mit Monats- und Jahresabo
+Kostenlose Stufe mit klar begrenztem, aber nicht frustrierendem Umfang (z.B. eine Region kostenlos, Rest mit Abo); bezahlte Stufe mit allen Kantonen, unbegrenzten Wanderungen, erweiterten Charakteranpassungen
+Vollständige Paywall-UI, Restore-Purchases-Funktion, Berücksichtigung von Ablauf/Verlängerung des Abos in der App-Logik
+Serverseitige Webhook-Anbindung von RevenueCat, um Entitlement-Änderungen zuverlässig mit der eigenen Datenbank zu synchronisieren, statt sich nur auf den Client-Status zu verlassen
+Regel für den Gruppenmodus: klären, ob ein einzelnes Abo der Leitung für die ganze Session reicht oder jedes Mitglied ein eigenes Abo braucht — für den ersten Ausbau reicht die einfachere Regel, dass das Abo der Leitung die Session freischaltet
+
+
+9. Rechtliches, Datenschutz und Store-Compliance
+Diese App geht direkt in den Store — die folgenden Punkte sind keine Kür, sondern Voraussetzung für die Freigabe durch Apple/Google und müssen fertig sein, bevor Stufe 6 abgeschlossen wird:
+
+
+Datenschutzerklärung und Impressum: als eigene, in der App verlinkte und öffentlich per URL erreichbare Seiten (Pflichtangabe in App Store Connect und Google Play Console), mit klarer Beschreibung, welche Daten erhoben werden (Standort, Account, Story-Fortschritt) und wozu
+Berechtigungsbegründungen: Die Klartexte, die iOS/Android beim Anfragen von Standort-, Mikrofon- (Sprachbefehle) und Benachrichtigungszugriff anzeigen (NSLocationWhenInUseUsageDescription etc.), werden konkret und verständlich formuliert, nicht mit Platzhaltertext — Apple lehnt vage Begründungen bei der Review ab
+Einwilligung bei Kinderprofilen: Wird ein Profil mit Altersstufe "Kinder" angelegt, muss ein Erwachsener (z.B. der Account-Inhaber) das explizit bestätigen; das Kinderprofil selbst meldet sich nicht eigenständig mit eigener E-Mail an
+Lösch- und Exportfunktion in der App: Nutzer können ihr Konto samt Daten direkt in der App löschen (nicht nur per Support-Anfrage) sowie ihre gespeicherten Daten (Story-Fortschritt, Route) exportieren — beides ist inzwischen Voraussetzung für die App-Store-Freigabe
+Standortdaten-Minimierung: Präzise GPS-Tracks werden nur so lange serverseitig gespeichert, wie sie für Story-Fortschritt und Zusammenfassung nötig sind; in der Datenschutzerklärung wird die Aufbewahrungsdauer konkret benannt
+
+
+Wichtige technische Hinweise für den Agenten
+
+
+Alle API-Keys (Anthropic, RevenueCat, Datenbank, Auth) ausschliesslich serverseitig bzw. als Secrets, nie im Client-Code
+Fehlerbehandlung durchgängig: fehlender Standortzugriff, fehlende Netzverbindung, fehlgeschlagene Story-Generierung, abgebrochene WebSocket-Verbindung eines Gruppenmitglieds müssen alle einen sinnvollen Fallback haben, nie einen Absturz
+Code und Kommentare auf Deutsch, wo es um App-spezifische Logik geht; Bibliotheks-/Frameworkcode darf englisch bleiben
+Baue mit Blick auf Performance: Story-Generierung darf die Kartenansicht oder das GPS-Tracking nie blockieren (asynchrone Verarbeitung, Ladezustände statt Einfrieren der UI)
+Audio-Session-Verhalten explizit testen: expo-speech nutzt auf iOS standardmässig eine eigene Audio-Session unabhängig von der über expo-audio konfigurierten. Der Agent muss sicherstellen, dass die App-Audio-Session tatsächlich geteilt wird, sonst greift das Ducking gegen Spotify & Co. nicht, obwohl der Code dafür vorhanden ist. Dieser Punkt ist Teil der Abnahme von Stufe 3 (siehe Vorgehen unten)
+Rate-Limiting/Missbrauchsschutz: Die Claude-API-Aufrufe pro Nutzer und Zeiteinheit werden serverseitig begrenzt (insbesondere für die kostenlose Stufe), damit Skript-Missbrauch nicht unkontrolliert Kosten verursacht
+Crash- und Fehler-Monitoring: Einbindung eines zentralen Monitoring-Diensts (z.B. Sentry) für Client und Backend, damit Abstürze und Fehler nach dem Launch tatsächlich sichtbar werden statt nur lokal in Logs zu verschwinden
+Support-Kanal in der App: Einfache Feedback-/Fehlermeldefunktion direkt im Menü (z.B. Formular oder Mail-Link mit automatisch angehängten Debug-Infos), damit Nutzer Probleme melden können, ohne den Store-Review-Kanal nutzen zu müssen
+
+
+Vorgehen
+
+Gehe in klar abgegrenzten, funktionsfähigen Baustufen vor, damit jede Stufe test- und korrigierbar ist, bevor die nächste beginnt — aber baue am Ende den vollen oben beschriebenen Funktionsumfang, nicht eine dauerhaft reduzierte Version:
+
+
+Grundgerüst: Navigation, Design-System, Nutzerkonto/Login, Datenbank-Anbindung
+Routenplanung, Live-GPS-Tracking, Kartenansicht, swisstopo-Anbindung
+Story-Engine mit Claude-API, Sagen-Datenbank, Archetypen, Altersstufen, Sprachausgabe inkl. Audio Ducking gegen Musik-Apps (Solo-Modus)
+Familien- und Gruppenmodus mit WebSocket-Synchronisation
+RevenueCat-Integration mit vollständiger Paywall und Webhook-Sync
+Politur und Store-Compliance: Onboarding-Flow, Nach-der-Tour-Screens, Achievements, App-Icons/Splash-Screens, Notfall-Funktion, Akkumanagement, Datenschutzerklärung/Impressum, Berechtigungsbegründungen, Lösch-/Exportfunktion, Barrierefreiheit, Crash-Monitoring, Rate-Limiting, Support-Kanal, Store-Vorbereitung
+
+
+Zeig mir nach jeder Stufe das Ergebnis, bevor die nächste beginnt.
