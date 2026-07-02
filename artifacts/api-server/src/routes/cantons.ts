@@ -95,7 +95,7 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     diffMax: numParam(req.query.diffMax),
   };
   try {
-    const rows = await getCantonRoutes(canton, req.log);
+    const rows = await getCantonRoutes(canton, req.log, filter.distMax ?? undefined);
     const matched = rows
       .filter((row) => applyFilter(row, filter))
       .sort(byRelevance)

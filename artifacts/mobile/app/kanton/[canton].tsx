@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -19,6 +18,7 @@ import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { SearchProgress } from "@/components/brand/SearchProgress";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -172,13 +172,7 @@ export default function KantonRouten() {
 
         <View style={styles.results}>
           {searching ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={colors.accent} />
-              <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-                Echte Wanderrouten für {cantonName || "diesen Kanton"} werden aus
-                OpenStreetMap und swisstopo gesucht …
-              </Text>
-            </View>
+            <SearchProgress cantonName={cantonName} />
           ) : !searched ? (
             <View style={styles.hint}>
               <Feather name="search" size={22} color={colors.mutedForeground} />
@@ -277,7 +271,6 @@ function RouteCard({
 }
 
 const styles = StyleSheet.create({
-  center: { alignItems: "center", justifyContent: "center", padding: 30, gap: 14 },
   loadingText: {
     fontFamily: fonts.body,
     fontSize: 13,

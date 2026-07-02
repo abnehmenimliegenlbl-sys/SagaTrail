@@ -1,14 +1,22 @@
 import type { Logger } from "pino";
-import type { LatLng } from "./geo";
+import { haversineM, type LatLng } from "./geo";
 
 /**
  * Laedt reale Wanderrouten je Kanton aus OpenStreetMap ueber die Overpass-API.
  *
- * Vorgehen zweiphasig, um Last und Antwortgroesse zu begrenzen:
- *  1. Nur Tags aller benannten Wanderrouten-Relationen im Kanton holen und die
- *     relevantesten auswaehlen (amtliches Wanderwegnetz zuerst: iwn/nwn/rwn/lwn,
- *     bevorzugt mit Nummer/ref).
- *  2. Fuer die Auswahl die Geometrie (out geom) nachladen.
+ * Zweistufiges, distanzbewusstes Vorgehen, um Last und Antwortgroesse gering zu
+ * halten und trotzdem auch KURZE lokale Routen in routendichten Kantonen zu
+ * finden:
+ *
+ *  1. Index (`out tags bb;`): fuer ALLE benannten Wanderrouten-Relationen des
+ *     Kantons nur Tags und die Bounding Box holen. Das ist selbst fuer grosse
+ *     Kantone (>1000 Relationen) klein und schnell. Aus der Bounding-Box-
+ *     Diagonale ergibt sich eine UNTERE Schranke der echten Routenlaenge: eine
+ *     Route ist nie kuerzer als ihre Bounding-Box-Diagonale. Damit lassen sich
+ *     bei einer Obergrenze (distMax) alle sicher zu langen Routen vorab
+ *     aussortieren, BEVOR die teure Geometrie geladen wird.
+ *  2. Geometrie (`out geom;`): nur fuer die ausgewaehlten Kandidaten die
+ *     Wegpunkte nachladen, um die exakte Laenge zu berechnen.
  *
  * Overpass verlangt einen aussagekraeftigen User-Agent, sonst 406.
  */
@@ -23,10 +31,15 @@ const OVERPASS_MIRRORS = [
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const REQUEST_TIMEOUT_MS = 60000;
 
+// Geometrie wird in Bloecken nachgeladen, damit die Antwort auch bei vielen
+// Kandidaten nicht das Overpass-Zeit-/Groessenlimit sprengt.
+const GEOMETRY_BATCH = 80;
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Angereicherte Route mit voller Geometrie (nach Phase 2). */
 export interface RawHikingRoute {
   id: string;
   osmId: number;
@@ -37,9 +50,31 @@ export interface RawHikingRoute {
   points: LatLng[];
 }
 
+/**
+ * Leichter Index-Eintrag (nach Phase 1): Tags plus die aus der Bounding Box
+ * abgeleitete Diagonale als untere Schranke der Routenlaenge.
+ */
+export interface RouteIndexEntry {
+  osmId: number;
+  name: string;
+  ref: string | null;
+  sac: string | null;
+  network: string | null;
+  bboxDiagKm: number;
+  rank: number;
+}
+
+interface OverpassBounds {
+  minlat: number;
+  minlon: number;
+  maxlat: number;
+  maxlon: number;
+}
+
 interface OverpassTagsElement {
   type: string;
   id: number;
+  bounds?: OverpassBounds;
   tags?: Record<string, string>;
 }
 
@@ -99,9 +134,18 @@ const NETWORK_RANK: Record<string, number> = {
   lwn: 3,
 };
 
-function rankOf(tags: Record<string, string>): number {
-  const net = tags.network ?? "";
-  return NETWORK_RANK[net] ?? 4;
+function rankOf(network: string | null): number {
+  return NETWORK_RANK[network ?? ""] ?? 4;
+}
+
+/** Diagonale der Bounding Box in km (untere Schranke der Routenlaenge). */
+function bboxDiagonalKm(b: OverpassBounds): number {
+  return (
+    haversineM(
+      { lat: b.minlat, lng: b.minlon },
+      { lat: b.maxlat, lng: b.maxlon },
+    ) / 1000
+  );
 }
 
 /** Verkettet die Wegstuecke einer Relation zu einer Punktliste (ohne Duplikate). */
@@ -118,66 +162,79 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
   return points;
 }
 
-export async function fetchCantonHikingRoutes(
+/**
+ * Phase 1: leichter Index aller benannten Wanderrouten-Relationen eines Kantons
+ * (nur Tags + Bounding Box). Klein und schnell, auch fuer >1000 Relationen.
+ */
+export async function fetchCantonRouteIndex(
   iso: string,
   log: Logger,
-  // Bewusst groesser als der spaetere Ergebnis-Deckel (RESULT_LIMIT): je mehr
-  // Kandidaten wir anreichern und cachen, desto besser kann der Distanzfilter
-  // spaeter auch kurze Routen finden, statt nur die ranghoechsten Fernwege.
-  // Overpass/Anreicherung setzen die praktische Obergrenze.
-  limit = 50,
-): Promise<RawHikingRoute[]> {
-  // Phase 1: benannte Wanderrouten-Relationen (nur Tags).
-  const tagsQuery = [
+): Promise<RouteIndexEntry[]> {
+  const query = [
     "[out:json][timeout:90];",
     `area["ISO3166-2"="${iso}"]->.a;`,
     'relation["route"="hiking"]["name"](area.a);',
-    "out tags;",
+    "out tags bb;",
   ].join("");
-  const tagged = await runOverpass<OverpassTagsElement>(tagsQuery);
-  log.info({ iso, found: tagged.length }, "Overpass: benannte Routen gefunden");
-
-  const candidates = tagged
-    .filter((e) => e.tags?.name)
-    .sort((a, b) => {
-      const ra = rankOf(a.tags ?? {});
-      const rb = rankOf(b.tags ?? {});
-      if (ra !== rb) return ra - rb;
-      const refA = a.tags?.ref ? 0 : 1;
-      const refB = b.tags?.ref ? 0 : 1;
-      if (refA !== refB) return refA - refB;
-      return (a.tags?.name ?? "").localeCompare(b.tags?.name ?? "", "de");
-    })
-    .slice(0, limit);
-
-  if (candidates.length === 0) return [];
-
-  // Phase 2: Geometrie fuer die Auswahl nachladen.
-  const ids = candidates.map((c) => c.id).join(",");
-  const geomQuery = [
-    "[out:json][timeout:90];",
-    `relation(id:${ids});`,
-    "out geom;",
-  ].join("");
-  const geom = await runOverpass<OverpassGeomElement>(geomQuery);
-  const byId = new Map(geom.map((g) => [g.id, g]));
-
-  const routes: RawHikingRoute[] = [];
-  for (const c of candidates) {
-    const g = byId.get(c.id);
-    if (!g?.members) continue;
-    const points = stitchGeometry(g.members);
-    if (points.length < 2) continue;
-    const tags = c.tags ?? {};
-    routes.push({
-      id: `osm-${c.id}`,
-      osmId: c.id,
-      name: tags.name ?? `Wanderroute ${c.id}`,
+  const elements = await runOverpass<OverpassTagsElement>(query);
+  const index: RouteIndexEntry[] = [];
+  for (const e of elements) {
+    const tags = e.tags ?? {};
+    if (!tags.name || !e.bounds) continue;
+    const network = tags.network ?? null;
+    index.push({
+      osmId: e.id,
+      name: tags.name,
       ref: tags.ref ?? null,
       sac: tags.sac_scale ?? null,
-      network: tags.network ?? null,
-      points,
+      network,
+      bboxDiagKm: bboxDiagonalKm(e.bounds),
+      rank: rankOf(network),
     });
   }
+  log.info({ iso, indexed: index.length }, "Overpass: Kanton-Index geladen");
+  return index;
+}
+
+/**
+ * Phase 2: Geometrie fuer eine Kandidatenauswahl nachladen und zu Punktlisten
+ * verketten. Die Abfrage wird blockweise gestellt, damit sie das Overpass-Limit
+ * nicht sprengt. Relationen, deren Geometrie sich nicht verketten laesst
+ * (points.length < 2), entfallen.
+ */
+export async function fetchRouteGeometries(
+  osmIds: number[],
+  log: Logger,
+): Promise<RawHikingRoute[]> {
+  if (osmIds.length === 0) return [];
+  const routes: RawHikingRoute[] = [];
+  for (let i = 0; i < osmIds.length; i += GEOMETRY_BATCH) {
+    const batch = osmIds.slice(i, i + GEOMETRY_BATCH);
+    const query = [
+      "[out:json][timeout:90];",
+      `relation(id:${batch.join(",")});`,
+      "out geom;",
+    ].join("");
+    const geom = await runOverpass<OverpassGeomElement>(query);
+    for (const g of geom) {
+      if (!g.members) continue;
+      const points = stitchGeometry(g.members);
+      if (points.length < 2) continue;
+      const tags = g.tags ?? {};
+      routes.push({
+        id: `osm-${g.id}`,
+        osmId: g.id,
+        name: tags.name ?? `Wanderroute ${g.id}`,
+        ref: tags.ref ?? null,
+        sac: tags.sac_scale ?? null,
+        network: tags.network ?? null,
+        points,
+      });
+    }
+  }
+  log.info(
+    { requested: osmIds.length, stitched: routes.length },
+    "Overpass: Geometrie geladen",
+  );
   return routes;
 }

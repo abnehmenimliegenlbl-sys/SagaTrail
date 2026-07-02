@@ -9,7 +9,11 @@ import {
   type CatalogSagaRow,
 } from "@workspace/db";
 import { isoForCanton } from "./cantonIso";
-import { fetchCantonHikingRoutes } from "./overpass";
+import {
+  fetchCantonRouteIndex,
+  fetchRouteGeometries,
+  type RouteIndexEntry,
+} from "./overpass";
 import { computeAscentM } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import {
@@ -32,6 +36,65 @@ const MIN_KM = 1;
 const MAX_KM = 45;
 const STORED_GEOMETRY_POINTS = 80;
 const ELEVATION_CONCURRENCY = 8;
+
+// Wie viele Kandidaten (nach Bounding-Box-Vorfilter + Rang) pro Suche die teure
+// Geometrie-/Hoehen-Anreicherung durchlaufen. Bei aktiver Distanz-Obergrenze
+// etwas grosszuegiger, weil manche Kandidaten die exakte Laengenpruefung noch
+// verfehlen (Bounding-Box-Diagonale ist nur eine untere Schranke).
+const GEOMETRY_POOL_DEFAULT = 40;
+const GEOMETRY_POOL_FILTERED = 60;
+
+// Sicherheitszuschlag auf die Bounding-Box-Diagonale beim Vorfilter, damit die
+// haversine-Naeherung keine knapp passenden Kurzrouten faelschlich verwirft.
+const BBOX_SLACK = 1.1;
+
+/**
+ * In-Memory-Index je Kanton (Tags + Bounding Box aller benannten Routen).
+ * Er wird pro Suche wiederverwendet, damit nur die erste Suche eines Kantons
+ * den (kleinen, aber langsamen) Overpass-Indexlauf bezahlt.
+ */
+const INDEX_TTL_MS = 6 * 60 * 60 * 1000; // 6 Stunden
+const indexCache = new Map<string, { at: number; entries: RouteIndexEntry[] }>();
+
+async function getCantonIndex(
+  canton: string,
+  iso: string,
+  log: Logger,
+): Promise<RouteIndexEntry[]> {
+  const hit = indexCache.get(canton);
+  if (hit && Date.now() - hit.at < INDEX_TTL_MS) return hit.entries;
+  const entries = await fetchCantonRouteIndex(iso, log);
+  indexCache.set(canton, { at: Date.now(), entries });
+  return entries;
+}
+
+/**
+ * Waehlt die anzureichernden Kandidaten aus dem Kanton-Index: bei aktiver
+ * Distanz-Obergrenze werden zunaechst alle sicher zu langen Routen verworfen
+ * (Bounding-Box-Diagonale > distMax), erst danach nach Netz-Rang priorisiert und
+ * gedeckelt. So gelangen auch kurze lokale Routen in die Auswahl, statt nur die
+ * ranghoechsten Fernwege.
+ */
+function selectCandidates(
+  index: RouteIndexEntry[],
+  distMax: number | undefined,
+): RouteIndexEntry[] {
+  const filtered =
+    distMax != null
+      ? index.filter((e) => e.bboxDiagKm <= distMax * BBOX_SLACK)
+      : index;
+  const pool = distMax != null ? GEOMETRY_POOL_FILTERED : GEOMETRY_POOL_DEFAULT;
+  return filtered
+    .slice()
+    .sort((a, b) => {
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      const refA = a.ref ? 0 : 1;
+      const refB = b.ref ? 0 : 1;
+      if (refA !== refB) return refA - refB;
+      return a.name.localeCompare(b.name, "de");
+    })
+    .slice(0, pool);
+}
 
 /** Fuehrt einen async-Mapper mit begrenzter Parallelitaet aus. */
 async function mapPool<T, R>(
@@ -71,34 +134,20 @@ async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow[]> {
     .where(eq(externalRoutesTable.canton, canton));
 }
 
-/** Laedt (oder cacht) die realen Wanderrouten eines Kantons. */
-export async function getCantonRoutes(
+/**
+ * Laedt die Geometrie der ausgewaehlten Kandidaten nach, berechnet die exakte
+ * Laenge, reichert mit swisstopo-Hoehen + SAC-Grad an und schreibt die Treffer
+ * in den Cache. Kandidaten ausserhalb des plausiblen Laengenfensters
+ * (MIN_KM..MAX_KM) entfallen.
+ */
+async function enrichAndStore(
   canton: string,
+  osmIds: number[],
   log: Logger,
-): Promise<ExternalRouteRow[]> {
-  const iso = isoForCanton(canton);
-  if (!iso) {
-    log.warn({ canton }, "Kein ISO-Code fuer Kanton bekannt");
-    return [];
-  }
-
-  const [fetchMark] = await db
-    .select()
-    .from(cantonFetchesTable)
-    .where(eq(cantonFetchesTable.canton, canton));
-
-  if (fetchMark && isFresh(fetchMark.fetchedAt)) {
-    const cached = await loadCachedRoutes(canton);
-    if (cached.length > 0) return cached;
-  }
-
-  // Frisch aus OpenStreetMap laden und mit swisstopo-Hoehen anreichern.
-  const raw = await fetchCantonHikingRoutes(iso, log);
+): Promise<void> {
+  const raw = await fetchRouteGeometries(osmIds, log);
   const prepared = raw
-    .map((r) => {
-      const distanceKm = pathDistanceKm(r.points);
-      return { r, distanceKm };
-    })
+    .map((r) => ({ r, distanceKm: pathDistanceKm(r.points) }))
     .filter(({ distanceKm }) => distanceKm >= MIN_KM && distanceKm <= MAX_KM);
 
   const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm }) => {
@@ -112,7 +161,7 @@ export async function getCantonRoutes(
     const geometry: [number, number][] = downsample(r.points, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
     );
-    const row = {
+    return {
       id: r.id,
       sagaId: r.id,
       canton,
@@ -129,7 +178,6 @@ export async function getCantonRoutes(
       source: "OpenStreetMap · swisstopo",
       featured: false,
     };
-    return row;
   });
 
   if (rows.length > 0) {
@@ -158,9 +206,70 @@ export async function getCantonRoutes(
       target: cantonFetchesTable.canton,
       set: { routeCount: rows.length, fetchedAt: new Date() },
     });
+}
+
+/**
+ * Liefert die realen Wanderrouten eines Kantons, distanzbewusst.
+ *
+ * Ablauf: leichten Kanton-Index holen (gecacht), daraus per Bounding-Box-
+ * Vorfilter + Rang die Kandidaten waehlen, fuer noch nicht (frisch) gecachte
+ * Kandidaten die Geometrie nachladen und anreichern, dann die frischen Treffer
+ * des Kantons zurueckgeben. Der exakte Filter und der Ergebnis-Deckel folgen im
+ * Router (`cantons.ts`). `distMax` steuert den Vorfilter, damit in dichten
+ * Kantonen auch kurze lokale Routen in die Auswahl gelangen.
+ */
+export async function getCantonRoutes(
+  canton: string,
+  log: Logger,
+  distMax?: number,
+): Promise<ExternalRouteRow[]> {
+  const iso = isoForCanton(canton);
+  if (!iso) {
+    log.warn({ canton }, "Kein ISO-Code fuer Kanton bekannt");
+    return [];
+  }
+
+  let index: RouteIndexEntry[];
+  try {
+    index = await getCantonIndex(canton, iso, log);
+  } catch (err) {
+    // Index nicht ladbar: auf bereits FRISCH gecachte Routen ausweichen, sonst
+    // Fehler durchreichen (der Router meldet dann 502 -> UI "Server nicht
+    // erreichbar"). Nur veraltete Cache-Zeilen zaehlen nicht als Treffer, sonst
+    // wuerde ein Serverausfall faelschlich als "keine Routen" erscheinen.
+    const cached = await loadCachedRoutes(canton);
+    const fresh = cached.filter((row) => isFresh(row.fetchedAt));
+    if (fresh.length > 0) {
+      log.warn({ canton, err }, "Kanton-Index nicht ladbar, nutze Cache");
+      return fresh;
+    }
+    throw err;
+  }
+
+  const candidates = selectCandidates(index, distMax);
+  const cached = await loadCachedRoutes(canton);
+  const freshIds = new Set(
+    cached.filter((row) => isFresh(row.fetchedAt)).map((row) => row.id),
+  );
+  const missing = candidates
+    .filter((c) => !freshIds.has(`osm-${c.osmId}`))
+    .map((c) => c.osmId);
+
+  if (missing.length > 0) {
+    try {
+      await enrichAndStore(canton, missing, log);
+    } catch (err) {
+      // Anreicherung fehlgeschlagen: vorhandene frische Treffer trotzdem liefern.
+      if (freshIds.size > 0) {
+        log.warn({ canton, err }, "Geometrie-Anreicherung fehlgeschlagen, nutze Cache");
+        return cached.filter((row) => isFresh(row.fetchedAt));
+      }
+      throw err;
+    }
+  }
 
   const stored = await loadCachedRoutes(canton);
-  return stored.length > 0 ? stored : (rows as ExternalRouteRow[]);
+  return stored.filter((row) => isFresh(row.fetchedAt));
 }
 
 /**
