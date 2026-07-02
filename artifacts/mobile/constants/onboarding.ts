@@ -36,6 +36,7 @@ export interface LanguageOption {
 }
 
 export const LANGUAGES: LanguageOption[] = [
+  { code: "gsw", label: "Schweizerdeutsch", native: "Schwiizerdütsch" },
   { code: "de", label: "Deutsch", native: "Deutsch" },
   { code: "fr", label: "Französisch", native: "Français" },
   { code: "it", label: "Italienisch", native: "Italiano" },
