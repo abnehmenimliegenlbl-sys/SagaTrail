@@ -310,7 +310,7 @@ export default function Routenplanung() {
           </View>
         ) : (
           <Pressable
-            onPress={() => router.push(`/saga/${saga.id}`)}
+            onPress={() => router.push(`/saga/${saga.id}?routeId=${route.id}`)}
             style={[
               styles.sagaCard,
               { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
@@ -352,7 +352,9 @@ export default function Routenplanung() {
             label={locked ? "Premium freischalten" : "Zur Sage weiter"}
             variant={locked ? "gold" : "primary"}
             onPress={() =>
-              router.push(locked ? "/paywall" : `/saga/${saga.id}`)
+              router.push(
+                locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
+              )
             }
             style={{ marginTop: 16 }}
           />

@@ -31,7 +31,7 @@ export default function SagaDetail() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
   const { profile, premium } = useApp();
   const { getSaga, ensureRouteSaga } = useCatalog();
 
@@ -225,7 +225,13 @@ export default function SagaDetail() {
           ) : (
             <PrimaryButton
               label="Wanderung starten"
-              onPress={() => router.replace(`/hike/${saga.id}`)}
+              onPress={() =>
+                router.replace(
+                  routeId
+                    ? `/hike/${saga.id}?routeId=${routeId}`
+                    : `/hike/${saga.id}`,
+                )
+              }
               style={{ marginTop: 26 }}
             />
           )}

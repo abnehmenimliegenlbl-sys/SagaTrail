@@ -41,13 +41,16 @@ export default function LiveHike() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
   const { profile, saveHike, addAchievement } = useApp();
-  const { getSaga, getRouteBySaga } = useCatalog();
+  const { getSaga, getRoute, getRouteBySaga } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
   const saga = getSaga(id);
-  const route = getRouteBySaga(id);
+  // Die konkret gewaehlte Route (mit Wegverlauf) hat Vorrang; nur wenn keine
+  // Route-Id durchgereicht wurde (z. B. Start aus der Sammlung), wird ueber die
+  // Sage die naechste bekannte Route gesucht.
+  const route = getRoute(routeId) ?? getRouteBySaga(id);
 
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
   const totalKm = route?.distanceKm ?? 6.4;
@@ -314,6 +317,20 @@ export default function LiveHike() {
   const progress = chapters.length > 1 ? currentIndex / (chapters.length - 1) : 0;
   const currentChapter = chapters[currentIndex];
 
+  // Angezeigte Position auf der Karte: bei echtem GPS die Live-Position, sonst
+  // (Simulation/kein Zugriff, z. B. Web-Vorschau) ein entlang des Wegverlaufs
+  // interpolierter Punkt, damit der Fortschritt sichtbar wird.
+  const geo = route?.geometry;
+  const simPos: LatLng | null =
+    geo && geo.length > 1
+      ? (() => {
+          const f = Math.max(0, Math.min(1, distance / totalKm));
+          const p = geo[Math.round(f * (geo.length - 1))];
+          return { lat: p[0], lng: p[1] };
+        })()
+      : null;
+  const shownPos = locState === "granted" ? livePos : simPos;
+
   return (
     <Background>
       {/* Standort-Banner */}
@@ -355,7 +372,7 @@ export default function LiveHike() {
           {mapCenter ? (
             <SwisstopoMap
               center={mapCenter}
-              position={locState === "granted" ? livePos : null}
+              position={shownPos}
               label={saga.title}
               height={200}
               geometry={route?.geometry}
