@@ -1,0 +1,32 @@
+Du baust die inhaltliche Grundlage der Sagen-Datenbank für SagaTrail, eine Wander-Begleiter-App, die während echter Wanderungen in der Schweiz Geschichten basierend auf regionalen Sagen erzählt. Die App erzählt die überlieferte Sage originalgetreu, ohne den Ausgang zu verändern — deine Aufgabe ist es, dafür die verbindliche, urheberrechtlich saubere Textgrundlage zu recherchieren und zu strukturieren.
+
+Verbindliche Quellenregel — nicht verhandelbar
+
+Nutze ausschliesslich gemeinfreie historische Sagensammlungen als Quelle, keine modernen Nacherzählungen, Buchausgaben oder Websites mit eigenem Urheberrecht. Als gemeinfrei gilt in der Schweiz ein Werk 70 Jahre nach dem Tod des Urhebers.
+
+Bevorzugte Quellen (alle Sammler seit weit über 70 Jahren verstorben, damit gesichert gemeinfrei):
+
+
+Ernst Ludwig Rochholz (1809–1892) — "Schweizersagen aus dem Aargau" (2 Bde., 1856), "Naturmythen. Neue Schweizersagen" (1862)
+Otto Sutermeister (1832–1901) — "Kinder- und Hausmärchen aus der Schweiz" und weitere volkskundliche Sammlungen
+Alfred Lütolf — "Sagen, Bräuche und Legenden aus den fünf Orten Luzern, Uri, Schwyz, Unterwalden und Zug" (1862)
+Daniel Kohlrusch — "Schweizerisches Sagenbuch"
+Otto Henne-Am Rhyn — volkskundliche Sagensammlungen zur deutschen Schweiz
+Für die Romandie und das Tessin: gleichwertige historische Sammler dieser Sprachregionen recherchieren (z. B. im Umfeld der "Bibliothèque bleue" bzw. lokaler volkskundlicher Zeitschriften) — nenne die gefundenen Autoren und Werke explizit, erfinde keine
+
+
+Digitalisate dieser Werke findest du u. a. auf:
+
+
+Wikisource (de.wikisource.org) — Autorenseiten mit Werkverzeichnis und Digitalisat-Links
+e-rara.ch — Digitalisierungsplattform der Schweizer Bibliotheken
+Internet Archive und HathiTrust — Volltext-Scans
+e-periodica.ch — digitalisierte Schweizer Zeitschriften (z. B. "Argovia", kantonale volkskundliche Publikationen)
+Google Books — Volltext für ältere Ausgaben
+
+
+Ausdrücklich verboten als Quelle: aktuelle Sagen-Bücher, Verlags-Nacherzählungen (z. B. moderne Kinderbuch-Adaptionen), Tourismus-Websites, Blogs, oder jede Zusammenfassung, die selbst erkennbar aus einer geschützten modernen Quelle übernommen wurde. Solche Quellen darfst du höchstens nutzen, um herauszufinden, welche Sage an einem Ort existiert — danach gehst du für den Text immer auf die historische Originalquelle zurück.
+
+Deine Aufgabe pro Sage
+
+Recherchiere für jede Sage die historische Originalquelle und erstelle daraus einen eigenen, redigierten Eintrag — keine wörtliche Abschrift, sondern eine sorgfältige, in eigenen Worten verfasste Zusammenfassung, die Kernmotiv, Handlung und Stimmung der Originalsage originalgetreu wiedergibt.

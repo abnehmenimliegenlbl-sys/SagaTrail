@@ -92,3 +92,54 @@ export const CreateStoryResponse = zod.object({
 })
 
 
+/**
+ * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+ * @summary Reale Wanderrouten eines Kantons
+ */
+export const GetCantonRoutesParams = zod.object({
+  "canton": zod.coerce.string()
+})
+
+export const GetCantonRoutesResponseItem = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number(),
+  "ascentM": zod.number(),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "terrain": zod.string(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "featured": zod.boolean()
+})
+export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
+
+
+/**
+ * Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch keine, wird sie via Anthropic erzeugt und gecacht.
+ * @summary KI-Sage zu einer realen Route
+ */
+export const GetRouteSagaParams = zod.object({
+  "routeId": zod.coerce.string()
+})
+
+export const GetRouteSagaResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "canton": zod.string(),
+  "coreMotif": zod.string(),
+  "mood": zod.string(),
+  "summary": zod.string(),
+  "source": zod.string(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}).optional(),
+  "isAnchorPlace": zod.boolean()
+})
+
+

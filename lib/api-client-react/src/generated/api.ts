@@ -21,6 +21,8 @@ import type {
 
 import type {
   CatalogResponse,
+  CatalogRoute,
+  CatalogSaga,
   ErrorResponse,
   HealthStatus,
   StoryRequest,
@@ -280,4 +282,160 @@ export const useCreateStory = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getCreateStoryMutationOptions(options));
     }
+
+export const getGetCantonRoutesUrl = (canton: string,) => {
+
+
+
+
+  return `/api/cantons/${canton}/routes`
+}
+
+/**
+ * Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+ * @summary Reale Wanderrouten eines Kantons
+ */
+export const getCantonRoutes = async (canton: string, options?: RequestInit): Promise<CatalogRoute[]> => {
+
+  return customFetch<CatalogRoute[]>(getGetCantonRoutesUrl(canton),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCantonRoutesQueryKey = (canton: string,) => {
+    return [
+    `/api/cantons/${canton}/routes`
+    ] as const;
+    }
+
+
+export const getGetCantonRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getCantonRoutes>>, TError = ErrorType<ErrorResponse>>(canton: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCantonRoutesQueryKey(canton);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCantonRoutes>>> = ({ signal }) => getCantonRoutes(canton, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: canton !== null && canton !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCantonRoutesQueryResult = NonNullable<Awaited<ReturnType<typeof getCantonRoutes>>>
+export type GetCantonRoutesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Reale Wanderrouten eines Kantons
+ */
+
+export function useGetCantonRoutes<TData = Awaited<ReturnType<typeof getCantonRoutes>>, TError = ErrorType<ErrorResponse>>(
+ canton: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCantonRoutes>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCantonRoutesQueryOptions(canton,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRouteSagaUrl = (routeId: string,) => {
+
+
+
+
+  return `/api/routes/${routeId}/saga`
+}
+
+/**
+ * Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch keine, wird sie via Anthropic erzeugt und gecacht.
+ * @summary KI-Sage zu einer realen Route
+ */
+export const getRouteSaga = async (routeId: string, options?: RequestInit): Promise<CatalogSaga> => {
+
+  return customFetch<CatalogSaga>(getGetRouteSagaUrl(routeId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRouteSagaQueryKey = (routeId: string,) => {
+    return [
+    `/api/routes/${routeId}/saga`
+    ] as const;
+    }
+
+
+export const getGetRouteSagaQueryOptions = <TData = Awaited<ReturnType<typeof getRouteSaga>>, TError = ErrorType<ErrorResponse>>(routeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteSaga>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRouteSagaQueryKey(routeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRouteSaga>>> = ({ signal }) => getRouteSaga(routeId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: routeId !== null && routeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRouteSaga>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRouteSagaQueryResult = NonNullable<Awaited<ReturnType<typeof getRouteSaga>>>
+export type GetRouteSagaQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary KI-Sage zu einer realen Route
+ */
+
+export function useGetRouteSaga<TData = Awaited<ReturnType<typeof getRouteSaga>>, TError = ErrorType<ErrorResponse>>(
+ routeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteSaga>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRouteSagaQueryOptions(routeId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

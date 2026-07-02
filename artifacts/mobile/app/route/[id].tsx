@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -25,6 +26,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { Saga } from "@/types";
 
 const WEB_TOP = 67;
 
@@ -34,17 +36,41 @@ export default function Routenplanung() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium } = useApp();
-  const { getRoute, getSagaForRoute } = useCatalog();
+  const { getRoute, getSagaForRoute, ensureRouteSaga } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
   const route = getRoute(id);
-  const saga = route ? getSagaForRoute(route) : undefined;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
+  const [saga, setSaga] = useState<Saga | undefined>(
+    route ? getSagaForRoute(route) : undefined,
+  );
+  const [sagaLoading, setSagaLoading] = useState(!saga);
   const [lowBattery] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  if (!route || !saga) {
+  useEffect(() => {
+    let cancelled = false;
+    if (!route) return;
+    const known = getSagaForRoute(route);
+    if (known) {
+      setSaga(known);
+      setSagaLoading(false);
+      return;
+    }
+    setSagaLoading(true);
+    (async () => {
+      const result = await ensureRouteSaga(route.sagaId);
+      if (cancelled) return;
+      setSaga(result);
+      setSagaLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [route, ensureRouteSaga, getSagaForRoute]);
+
+  if (!route) {
     return (
       <Background>
         <View style={styles.center}>
@@ -61,9 +87,10 @@ export default function Routenplanung() {
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 
-  const downloaded = isDownloaded(saga.id);
-  const record = getRecord(saga.id);
-  const downloading = progress?.sagaId === saga.id;
+  const sagaId = route.sagaId;
+  const downloaded = isDownloaded(sagaId);
+  const record = getRecord(sagaId);
+  const downloading = progress?.sagaId === sagaId;
   const progressText = downloading
     ? progress?.phase === "tiles"
       ? `Karte wird gesichert … ${progress.done}/${progress.total}`
@@ -71,7 +98,7 @@ export default function Routenplanung() {
     : "";
 
   const onDownload = async () => {
-    if (!profile || downloading || busy) return;
+    if (!profile || !saga || downloading || busy) return;
     setBusy(true);
     try {
       await download(saga, route, profile);
@@ -88,7 +115,7 @@ export default function Routenplanung() {
   const onDelete = async () => {
     setBusy(true);
     try {
-      await remove(saga.id);
+      await remove(sagaId);
     } finally {
       setBusy(false);
     }
@@ -245,45 +272,76 @@ export default function Routenplanung() {
           Passende Sage
         </Text>
         <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
-          Diese Legende begleitet dich auf der Route. Tippe an, um sie zu wählen.
+          {sagaLoading
+            ? "Zu dieser Route wird eine ortsverankerte Sage erzeugt …"
+            : "Diese Legende begleitet dich auf der Route. Tippe an, um sie zu wählen."}
         </Text>
 
-        <Pressable
-          onPress={() => router.push(`/saga/${saga.id}`)}
-          style={[
-            styles.sagaCard,
-            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-          ]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.sagaCanton, { color: colors.accent }]}>
-              {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
-            </Text>
-            <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-              {saga.title}
-            </Text>
+        {sagaLoading ? (
+          <View
+            style={[
+              styles.sagaCard,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <ActivityIndicator color={colors.accent} />
             <Text
-              style={[styles.sagaMood, { color: colors.mutedForeground }]}
-              numberOfLines={1}
+              style={[styles.sagaLoadingText, { color: colors.mutedForeground }]}
             >
-              {saga.mood}
+              Sage wird geschrieben …
             </Text>
           </View>
-          {locked ? (
-            <Feather name="lock" size={18} color={colors.mutedForeground} />
-          ) : (
-            <Feather name="chevron-right" size={20} color={colors.accent} />
-          )}
-        </Pressable>
+        ) : !saga ? (
+          <View
+            style={[
+              styles.sagaCard,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <Text style={[styles.sagaMood, { color: colors.mutedForeground }]}>
+              Die Sage konnte nicht geladen werden. Bitte prüfe deine Verbindung.
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => router.push(`/saga/${saga.id}`)}
+            style={[
+              styles.sagaCard,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.sagaCanton, { color: colors.accent }]}>
+                {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
+              </Text>
+              <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
+                {saga.title}
+              </Text>
+              <Text
+                style={[styles.sagaMood, { color: colors.mutedForeground }]}
+                numberOfLines={1}
+              >
+                {saga.mood}
+              </Text>
+            </View>
+            {locked ? (
+              <Feather name="lock" size={18} color={colors.mutedForeground} />
+            ) : (
+              <Feather name="chevron-right" size={20} color={colors.accent} />
+            )}
+          </Pressable>
+        )}
 
-        <PrimaryButton
-          label={locked ? "Premium freischalten" : "Zur Sage weiter"}
-          variant={locked ? "gold" : "primary"}
-          onPress={() =>
-            router.push(locked ? "/paywall" : `/saga/${saga.id}`)
-          }
-          style={{ marginTop: 16 }}
-        />
+        {saga && !sagaLoading ? (
+          <PrimaryButton
+            label={locked ? "Premium freischalten" : "Zur Sage weiter"}
+            variant={locked ? "gold" : "primary"}
+            onPress={() =>
+              router.push(locked ? "/paywall" : `/saga/${saga.id}`)
+            }
+            style={{ marginTop: 16 }}
+          />
+        ) : null}
       </ScrollView>
     </Background>
   );
@@ -400,4 +458,5 @@ const styles = StyleSheet.create({
   sagaCanton: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
   sagaTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 4 },
   sagaMood: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
+  sagaLoadingText: { fontFamily: fonts.mono, fontSize: 13 },
 });

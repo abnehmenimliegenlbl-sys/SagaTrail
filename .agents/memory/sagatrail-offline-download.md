@@ -10,6 +10,13 @@ description: How the server catalog, offline-first story resolution, and offline
 - Three-tier offline-first source, surfaced as `source`: `server` -> cache to AsyncStorage -> `cache` -> bundled `seed` (constants/routes+sagas). Screens consume `useCatalog()` helpers (getRoute, getSagaForRoute, getRouteBySaga, getRoutesByCanton, getSaga, cantons) — same signatures the old `constants/*` helpers had, so screen churn is minimal.
 - **Why:** server DTOs (CatalogRoute/CatalogSaga/StoryChapter) are structurally identical to the app types, so mapping is an identity cast — do not re-model.
 
+## Dynamic per-canton catalog (real OSM routes + lazy AI saga)
+- All 26 cantons are selectable; picking one calls `loadCantonRoutes(canton)` which fetches REAL OSM routes (swisstopo ascent) from the server, else falls back to the curated seed. Result carries its own `source` so the screen can show an offline hint. Missing SAC difficulty renders as "unbekannt".
+- Sagas are generated lazily, one per route, only when a route/saga screen opens (`ensureRouteSaga(routeId)`; saga id == route id, 1:1). First generation is slow (~10s, Anthropic), cached in Postgres + AsyncStorage `sagatrail:dynamicCache` thereafter.
+- **Why lazy:** generating a saga for every OSM route up front would be far too slow/costly; generate on demand and cache.
+- **Gotchas:** dynamic maps live in BOTH a ref (for async loaders) and state (to trigger re-render) — screens self-recover after AsyncStorage hydration because `dynamic` is state. `ensureRouteSaga` must dedupe in-flight requests (route + saga screens can both trigger it) or you double-generate. A cold deep-link to a route never loaded into any canton cache cannot be recovered (no route-by-id endpoint) — acceptable, flow is always canton -> route -> saga.
+- Server upsert of `external_routes` on TTL refresh must use `excluded.*` (incoming) values, not `table.column` (self-assignment silently keeps stale rows).
+
 ## Story resolution (DownloadContext.resolveStory)
 - Offline-first order: locally saved story (AsyncStorage key `sagatrail:story:<sagaId>:<archetype>:<ageTier>:<lang>`) -> server `createStory()` (cached on success) -> local `generateStory()` seed. The live hike calls this instead of generating directly.
 

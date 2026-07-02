@@ -1,14 +1,26 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getCatalog } from "@workspace/api-client-react";
+import {
+  getCatalog,
+  getCantonRoutes,
+  getRouteSaga,
+} from "@workspace/api-client-react";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
-import { ROUTES, HikingRoute, CantonWithRoutes } from "@/constants/routes";
+import { CANTONS } from "@/constants/onboarding";
+import {
+  ROUTES,
+  HikingRoute,
+  CantonWithRoutes,
+  getRoutesByCanton as curatedRoutesByCanton,
+} from "@/constants/routes";
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
 import { configureApiClient } from "@/lib/apiConfig";
@@ -18,6 +30,11 @@ import { configureApiClient } from "@/lib/apiConfig";
  * werden lokal zwischengespeichert und fallen bei fehlender Verbindung sauber
  * auf die im Build hinterlegten Seed-Daten zurueck (Offline-First).
  *
+ * Zusaetzlich lassen sich pro Kanton echte Wanderrouten (OpenStreetMap, mit
+ * swisstopo-Hoehenmetern) nachladen und dazu je Route eine ortsverankerte Sage
+ * per KI erzeugen. Beides wird dynamisch gecacht; ohne Verbindung greift der
+ * kuratierte Seed.
+ *
  * `source` macht die Herkunft transparent:
  * - "server": frisch vom API-Server geladen
  * - "cache":  aus dem lokalen Zwischenspeicher (Server nicht erreichbar)
@@ -26,10 +43,22 @@ import { configureApiClient } from "@/lib/apiConfig";
 export type CatalogSource = "server" | "cache" | "seed";
 
 const CACHE_KEY = "sagatrail:catalogCache";
+const DYNAMIC_KEY = "sagatrail:dynamicCache";
 
 interface CatalogData {
   routes: HikingRoute[];
   sagas: Saga[];
+}
+
+interface DynamicData {
+  cantonRoutes: Record<string, HikingRoute[]>;
+  routeSagas: Record<string, Saga>;
+}
+
+/** Ergebnis eines Kanton-Ladevorgangs samt Herkunft der Routen. */
+export interface CantonRoutesResult {
+  routes: HikingRoute[];
+  source: CatalogSource;
 }
 
 interface CatalogContextValue {
@@ -43,32 +72,78 @@ interface CatalogContextValue {
   getSagaForRoute: (route: HikingRoute) => Saga | undefined;
   getRouteBySaga: (sagaId?: string) => HikingRoute | undefined;
   getRoutesByCanton: (canton?: string) => HikingRoute[];
+  /** Laedt echte Routen des Kantons (Server) mit kuratiertem Offline-Fallback. */
+  loadCantonRoutes: (canton: string) => Promise<CantonRoutesResult>;
+  /** Stellt die (ggf. KI-erzeugte) Sage zu einer Route sicher. */
+  ensureRouteSaga: (routeId: string) => Promise<Saga | undefined>;
 }
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
 const SEED: CatalogData = { routes: ROUTES, sagas: SAGAS };
+const EMPTY_DYNAMIC: DynamicData = { cantonRoutes: {}, routeSagas: {} };
 
+/**
+ * Kantonsliste fuer den Einstieg: alle 26 Kantone sind waehlbar. Die Zahl der
+ * kuratierten Routen dient nur als Vorschau; echte Routen werden beim Oeffnen
+ * des Kantons live geladen.
+ */
 function cantonsFrom(routes: HikingRoute[]): CantonWithRoutes[] {
   const counts = new Map<string, number>();
   for (const r of routes) {
     counts.set(r.region, (counts.get(r.region) ?? 0) + 1);
   }
-  return Array.from(counts.entries())
-    .map(([canton, routeCount]) => ({ canton, routeCount }))
-    .sort((a, b) => a.canton.localeCompare(b.canton, "de"));
+  return CANTONS.map((canton) => ({
+    canton,
+    routeCount: counts.get(canton) ?? 0,
+  })).sort((a, b) => a.canton.localeCompare(b.canton, "de"));
 }
 
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [source, setSource] = useState<CatalogSource>("seed");
   const [data, setData] = useState<CatalogData>(SEED);
+  const [dynamic, setDynamic] = useState<DynamicData>(EMPTY_DYNAMIC);
+
+  // Refs spiegeln den aktuellen Stand, damit asynchrone Loader nicht auf
+  // veralteten Closures arbeiten.
+  const dataRef = useRef<CatalogData>(SEED);
+  const dynamicRef = useRef<DynamicData>(EMPTY_DYNAMIC);
+  dataRef.current = data;
+  dynamicRef.current = dynamic;
+
+  // Laufende Sagen-Anfragen bündeln, damit parallel geöffnete Screens
+  // (Route + Sage) nicht dieselbe KI-Erzeugung doppelt anstoßen.
+  const sagaInFlight = useRef<Map<string, Promise<Saga | undefined>>>(new Map());
+
+  const persistDynamic = useCallback(() => {
+    AsyncStorage.setItem(
+      DYNAMIC_KEY,
+      JSON.stringify(dynamicRef.current),
+    ).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     configureApiClient();
 
     (async () => {
+      // Dynamischen Cache (Kanton-Routen + Route-Sagen) hydrieren.
+      try {
+        const rawDyn = await AsyncStorage.getItem(DYNAMIC_KEY);
+        if (!cancelled && rawDyn) {
+          const parsed = JSON.parse(rawDyn) as DynamicData;
+          const next: DynamicData = {
+            cantonRoutes: parsed.cantonRoutes ?? {},
+            routeSagas: parsed.routeSagas ?? {},
+          };
+          dynamicRef.current = next;
+          setDynamic(next);
+        }
+      } catch {
+        // Defekter Cache — ignorieren.
+      }
+
       // 1. Server versuchen — die verlaesslichste Quelle.
       try {
         const res = await getCatalog();
@@ -116,22 +191,111 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const loadCantonRoutes = useCallback(
+    async (canton: string): Promise<CantonRoutesResult> => {
+      const cached = dynamicRef.current.cantonRoutes[canton];
+      if (cached?.length) {
+        return { routes: cached, source: "cache" };
+      }
+      try {
+        const res = await getCantonRoutes(canton);
+        const routes = res as HikingRoute[];
+        if (routes.length) {
+          const next: DynamicData = {
+            ...dynamicRef.current,
+            cantonRoutes: {
+              ...dynamicRef.current.cantonRoutes,
+              [canton]: routes,
+            },
+          };
+          dynamicRef.current = next;
+          setDynamic(next);
+          persistDynamic();
+          return { routes, source: "server" };
+        }
+      } catch {
+        // Server/OSM nicht erreichbar — kuratierten Seed nutzen.
+      }
+      return { routes: curatedRoutesByCanton(canton), source: "seed" };
+    },
+    [persistDynamic],
+  );
+
+  const ensureRouteSaga = useCallback(
+    async (routeId: string): Promise<Saga | undefined> => {
+      const existing = dynamicRef.current.routeSagas[routeId];
+      if (existing) return existing;
+      const inCatalog = dataRef.current.sagas.find((s) => s.id === routeId);
+      if (inCatalog) return inCatalog;
+
+      const pending = sagaInFlight.current.get(routeId);
+      if (pending) return pending;
+
+      const request = (async (): Promise<Saga | undefined> => {
+        try {
+          const saga = (await getRouteSaga(routeId)) as Saga;
+          const next: DynamicData = {
+            ...dynamicRef.current,
+            routeSagas: { ...dynamicRef.current.routeSagas, [routeId]: saga },
+          };
+          dynamicRef.current = next;
+          setDynamic(next);
+          persistDynamic();
+          return saga;
+        } catch {
+          return dataRef.current.sagas.find((s) => s.id === routeId);
+        } finally {
+          sagaInFlight.current.delete(routeId);
+        }
+      })();
+
+      sagaInFlight.current.set(routeId, request);
+      return request;
+    },
+    [persistDynamic],
+  );
+
   const value = useMemo<CatalogContextValue>(() => {
     const { routes, sagas } = data;
+    const { cantonRoutes, routeSagas } = dynamic;
+    const dynRouteLists = Object.values(cantonRoutes);
+
+    const findDynRoute = (predicate: (r: HikingRoute) => boolean) => {
+      for (const list of dynRouteLists) {
+        const hit = list.find(predicate);
+        if (hit) return hit;
+      }
+      return undefined;
+    };
+
     return {
       ready,
       source,
       routes,
       sagas,
       cantons: cantonsFrom(routes),
-      getRoute: (id) => routes.find((r) => r.id === id),
-      getSaga: (id) => sagas.find((s) => s.id === id),
-      getSagaForRoute: (route) => sagas.find((s) => s.id === route.sagaId),
-      getRouteBySaga: (sagaId) => routes.find((r) => r.sagaId === sagaId),
-      getRoutesByCanton: (canton) =>
-        canton ? routes.filter((r) => r.region === canton) : [],
+      getRoute: (id) =>
+        id
+          ? findDynRoute((r) => r.id === id) ?? routes.find((r) => r.id === id)
+          : undefined,
+      getSaga: (id) =>
+        id ? routeSagas[id] ?? sagas.find((s) => s.id === id) : undefined,
+      getSagaForRoute: (route) =>
+        routeSagas[route.sagaId] ??
+        sagas.find((s) => s.id === route.sagaId),
+      getRouteBySaga: (sagaId) =>
+        sagaId
+          ? findDynRoute((r) => r.sagaId === sagaId) ??
+            routes.find((r) => r.sagaId === sagaId)
+          : undefined,
+      getRoutesByCanton: (canton) => {
+        if (!canton) return [];
+        return cantonRoutes[canton] ?? routes.filter((r) => r.region === canton);
+      },
+      loadCantonRoutes,
+      ensureRouteSaga,
     };
-  }, [data, ready, source]);
+  }, [data, dynamic, ready, source, loadCantonRoutes, ensureRouteSaga]);
 
   return (
     <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>

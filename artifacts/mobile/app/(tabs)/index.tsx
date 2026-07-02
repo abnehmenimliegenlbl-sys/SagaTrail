@@ -112,7 +112,7 @@ export default function Entdecken() {
             {homeEntry ? "Weitere Kantone" : "Kantone"}
           </Text>
           <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-            {cantons.length} Kantone mit Wanderrouten
+            Alle {cantons.length} Kantone · Routen live aus swisstopo
           </Text>
         </View>
 
@@ -166,8 +166,11 @@ function CantonCard({
             {entry.canton}
           </Text>
           <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
-            {entry.routeCount}{" "}
-            {entry.routeCount === 1 ? "Wanderroute" : "Wanderrouten"}
+            {entry.routeCount > 0
+              ? `${entry.routeCount} ${
+                  entry.routeCount === 1 ? "Wanderroute" : "Wanderrouten"
+                }`
+              : "Routen live aus swisstopo"}
           </Text>
         </View>
         <Feather name="chevron-right" size={20} color={colors.mutedForeground} />

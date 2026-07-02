@@ -1,6 +1,19 @@
 import { anthropic } from "@workspace/integrations-anthropic-ai";
-import type { CatalogSagaRow } from "@workspace/db";
 import type { Logger } from "pino";
+
+/**
+ * Strukturelle Sagen-Eingabe fuer die Erzeugung. Bewusst nicht an eine konkrete
+ * Tabelle gebunden, damit sowohl Katalog-Sagen (catalog_sagas) als auch
+ * dynamisch erzeugte Routen-Sagen (route_sagas) verwendet werden koennen.
+ */
+export interface StorySagaInput {
+  id: string;
+  title: string;
+  canton: string;
+  coreMotif: string;
+  mood: string;
+  summary: string;
+}
 
 /**
  * KI-gestuetzte Erzeugung der kapitelweisen Sagen-Erzaehlung via Anthropic.
@@ -54,7 +67,7 @@ const LANGUAGE_LABEL: Record<string, string> = {
 };
 
 function buildPrompt(
-  saga: CatalogSagaRow,
+  saga: StorySagaInput,
   archetype: string,
   ageTier: string,
   language: string,
@@ -142,7 +155,7 @@ function normalizeChapters(parsed: unknown): GeneratedChapter[] {
 }
 
 export async function generateStory(
-  saga: CatalogSagaRow,
+  saga: StorySagaInput,
   archetype: string,
   ageTier: string,
   language: string,

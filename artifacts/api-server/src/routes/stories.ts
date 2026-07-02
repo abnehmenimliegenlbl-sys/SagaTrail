@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db, catalogSagasTable, storiesTable } from "@workspace/db";
 import { CreateStoryBody, CreateStoryResponse } from "@workspace/api-zod";
 import { generateStory } from "../lib/storyGenerator";
+import { findRouteSagaById } from "../lib/routeService";
 
 const router: IRouter = Router();
 
@@ -41,11 +42,12 @@ router.post("/stories", async (req, res): Promise<void> => {
     return;
   }
 
-  // 2. Sage aus dem Katalog laden (Grundlage der Erzeugung).
-  const [saga] = await db
+  // 2. Sage laden: zuerst Katalog, dann dynamische Route-Sagen (OSM-Routen).
+  const [catalogSaga] = await db
     .select()
     .from(catalogSagasTable)
     .where(eq(catalogSagasTable.id, sagaId));
+  const saga = catalogSaga ?? (await findRouteSagaById(sagaId));
 
   if (!saga) {
     res.status(404).json({ error: `Sage "${sagaId}" nicht gefunden` });

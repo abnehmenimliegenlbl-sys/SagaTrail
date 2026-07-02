@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -31,9 +32,47 @@ export default function SagaDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, premium } = useApp();
-  const { getSaga } = useCatalog();
+  const { getSaga, ensureRouteSaga } = useCatalog();
 
-  const saga = getSaga(id);
+  const [saga, setSaga] = useState(() => getSaga(id));
+  const [loading, setLoading] = useState(!saga);
+
+  useEffect(() => {
+    let cancelled = false;
+    const known = getSaga(id);
+    if (known) {
+      setSaga(known);
+      setLoading(false);
+      return;
+    }
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    (async () => {
+      const result = await ensureRouteSaga(id);
+      if (cancelled) return;
+      setSaga(result);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, getSaga, ensureRouteSaga]);
+
+  if (loading) {
+    return (
+      <Background>
+        <View style={styles.notFound}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={[styles.notFoundText, { color: colors.foreground }]}>
+            Die Sage wird erzeugt …
+          </Text>
+        </View>
+      </Background>
+    );
+  }
 
   if (!saga) {
     return (

@@ -14,6 +14,8 @@ tags:
     description: SagaTrail Online-Katalog (Kantone, Routen, Sagen)
   - name: stories
     description: KI-generierte Sagen-Erzaehlungen (Anthropic, in Postgres gecacht)
+  - name: routes
+    description: Dynamische Routen aus OpenStreetMap/swisstopo und ihre KI-Sagen
 paths:
   /healthz:
     get:
@@ -71,6 +73,68 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Sage nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: KI-Erzeugung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cantons/{canton}/routes:
+    get:
+      operationId: getCantonRoutes
+      tags: [routes]
+      summary: Reale Wanderrouten eines Kantons
+      description: >
+        Laedt reale Wanderrouten des Kantons aus OpenStreetMap, angereichert mit
+        amtlichen swisstopo-Hoehenmetern. Ergebnisse werden serverseitig gecacht.
+      parameters:
+        - name: canton
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Routen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CatalogRoute"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/{routeId}/saga:
+    get:
+      operationId: getRouteSaga
+      tags: [routes]
+      summary: KI-Sage zu einer realen Route
+      description: >
+        Liefert die 1:1 zur Route gehoerende, ortsverankerte Sage. Existiert noch
+        keine, wird sie via Anthropic erzeugt und gecacht.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogSaga"
+        "404":
+          description: Route nicht gefunden
           content:
             application/json:
               schema:
