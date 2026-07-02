@@ -27,6 +27,7 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { generateStory } from "@/lib/storyEngine";
+import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { HikeSession, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
@@ -61,7 +62,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (!saga || !profile) return;
     const t = setTimeout(() => {
-      const story = generateStory(saga, profile.archetype, profile.ageTier);
+      const story = generateStory(saga, profile.archetype, profile.ageTier, profile.language);
       setChapters(story);
       decisionsRef.current = story;
       setPreparing(false);
@@ -89,7 +90,7 @@ export default function LiveHike() {
     (text: string) => {
       Speech.stop();
       Speech.speak(text, {
-        language: "de-DE",
+        language: SPEECH_LOCALE[resolveLang(profile?.language)],
         rate: 0.92,
         pitch: 1.0,
         onStart: () => setSpeaking(true),
@@ -97,7 +98,7 @@ export default function LiveHike() {
         onStopped: () => setSpeaking(false),
       });
     },
-    []
+    [profile?.language]
   );
 
   // Kapitel automatisch erzaehlen, wenn es erscheint
