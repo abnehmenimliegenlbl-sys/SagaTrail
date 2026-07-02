@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "ZijdubUJDPoHtvzWRSz_C"
@@ -18,3 +17,21 @@ id = "zpCo_5qT5kXmDh8q08hyd"
 uri = "file://artifacts/mobile/assets/images/saga-teufelsbruecke.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "o-PK8_4dt13VcbC4pK3RD"
+uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"
+type = "image"
+title = "Aktuell: Landeskarte farbig (Höhenlinien, viele Details)"
+
+[[outputs]]
+id = "rUeEUIIox5Dn_JfzUvZYx"
+uri = "file://.local/tmp_map_preview/2_pixelkarte-grau.jpeg"
+type = "image"
+title = "Alternative 1: Landeskarte grau (gleiche Details, entsättigt)"
+
+[[outputs]]
+id = "HEpxG4_cxVmZeek-pd6Vv"
+uri = "file://.local/tmp_map_preview/3_swisstlm3d-karte-grau.png"
+type = "image"
+title = "Alternative 2: swissTLM3D-Karte grau (deutlich reduziert)"
