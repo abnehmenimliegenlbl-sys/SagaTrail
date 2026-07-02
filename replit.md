@@ -19,9 +19,10 @@ SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates re
 
 ## Where things live
 
-- `artifacts/mobile/app/` — expo-router screens: `onboarding.tsx`, `(tabs)/` (index, sammlung, gruppe, einstellungen), `saga/[id]`, `route/[id]`, `hike/[id]` (live GPS narration), `summary.tsx`, `paywall.tsx`, `legal/[doc]`
-- `artifacts/mobile/constants/` — `colors.ts` (brand palette), `typography.ts` (fonts), `sagas.ts` (8 seed sagas), `onboarding.ts` (cantons, languages, archetypes, age tiers)
-- `artifacts/mobile/lib/storyEngine.ts` — generates 4-6 chapters per hike with archetype/age variation and 1-2 decision points
+- `artifacts/mobile/app/` — expo-router screens: `onboarding.tsx`, `(tabs)/` (index = Kanton-Auswahl, sammlung, gruppe, einstellungen), `kanton/[canton]` (Routen des Kantons), `saga/[id]`, `route/[id]`, `hike/[id]` (live GPS narration), `summary.tsx`, `paywall.tsx`, `legal/[doc]`
+- `artifacts/mobile/constants/` — `colors.ts` (brand palette), `typography.ts` (fonts), `sagas.ts` (8 seed sagas), `routes.ts` (8 Wanderrouten, 1:1 zu einer Sage, plus Kanton-Helfer), `onboarding.ts` (cantons, languages, archetypes, age tiers)
+- `artifacts/mobile/lib/storyEngine.ts` — generates 4-6 chapters per hike with archetype/age variation and 1-2 decision points; language-aware (pulls text + TTS locale from `storyContent.ts`)
+- `artifacts/mobile/lib/storyContent.ts` — multilingual narration source (8 languages), `SPEECH_LOCALE` map, `resolveLang` fallback, per-saga summaries
 - `artifacts/mobile/contexts/AppContext.tsx` — AsyncStorage-backed app state (profile, premium, achievements, emergency contact, energiesparmodus, last hike, group session)
 - `artifacts/mobile/components/brand/` — SparkMountain, AchievementMarker, SparkDivider, Glass, Background, PrimaryButton, ScreenHeader, RouteMap
 - `artifacts/mobile/hooks/useColors.ts` — always returns the dark brand palette
@@ -37,6 +38,8 @@ SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates re
 ## Product
 
 - Onboarding collects name, home canton, language, narrative archetype, and age tier to personalise stories.
+- Entry flow is location-first: pick the canton (home tab), then a hiking route in that canton (`kanton/[canton]`), then the matching saga (`route/[id]` -> `saga/[id]`), then start the live hike. The home canton is highlighted and free; other cantons are premium-gated.
+- Narration follows the selected language (text + TTS voice); the app chrome stays German.
 - Live hike narrates a saga chapter-by-chapter as simulated progress advances along the route, with occasional perception decisions that shade the story.
 - Collection (Sammlung) tracks discovered sagas and achievements; Group (Gruppe) is a staged shared-session view.
 - Summary recaps the route, decisions, and unlocked achievement, shareable via the OS share sheet.

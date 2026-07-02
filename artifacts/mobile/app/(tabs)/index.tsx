@@ -16,15 +16,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { SAGAS } from "@/constants/sagas";
+import { CantonWithRoutes, getCantonsWithRoutes } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { ARCHETYPES } from "@/constants/onboarding";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { Saga } from "@/types";
 
 const heroImg = require("@/assets/images/hero-valley.png");
-const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
 
 const WEB_TOP = 67;
 
@@ -32,14 +30,16 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, premium } = useApp();
+  const { profile } = useApp();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const archetypeTitle =
     ARCHETYPES.find((a) => a.id === profile?.archetype)?.title ?? "";
 
-  const anchors = SAGAS.filter((s) => s.isAnchorPlace);
-  const rest = SAGAS.filter((s) => !s.isAnchorPlace);
+  const cantons = getCantonsWithRoutes();
+  const homeCanton = profile?.homeCanton;
+  const homeEntry = cantons.find((c) => c.canton === homeCanton);
+  const others = cantons.filter((c) => c.canton !== homeCanton);
 
   return (
     <Background>
@@ -59,15 +59,6 @@ export default function Entdecken() {
               {archetypeTitle}
             </Text>
           </View>
-          {!premium && (
-            <Pressable
-              onPress={() => router.push("/paywall")}
-              style={[styles.proBadge, { borderColor: colors.accent }]}
-            >
-              <Feather name="star" size={13} color={colors.accent} />
-              <Text style={[styles.proText, { color: colors.accent }]}>Premium</Text>
-            </Pressable>
-          )}
         </View>
 
         {/* Hero */}
@@ -79,55 +70,60 @@ export default function Entdecken() {
           />
           <View style={styles.heroContent}>
             <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
-              DEINE HEIMAT · {profile?.homeCanton?.toUpperCase()}
+              SCHRITT 1 · KANTON WÄHLEN
             </Text>
             <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-              Die Berge flüstern Geschichten
+              Wo startest du?
             </Text>
             <Text style={[styles.heroBody, { color: colors.foreground }]}>
-              Wähle eine Sage und lass sie dich auf deiner Wanderung begleiten.
+              Wähle den Kanton deiner Wanderung. Danach suchst du die Route und
+              zuletzt die passende Sage.
             </Text>
           </View>
         </Animated.View>
 
+        {homeEntry && (
+          <>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                Dein Heimatkanton
+              </Text>
+              <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
+                Ohne Premium hier frei begehbar
+              </Text>
+            </View>
+            <View style={{ paddingHorizontal: 20 }}>
+              <CantonCard
+                entry={homeEntry}
+                index={0}
+                highlight
+                onPress={() =>
+                  router.push(`/kanton/${encodeURIComponent(homeEntry.canton)}`)
+                }
+              />
+            </View>
+            <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
+          </>
+        )}
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Ankerorte
+            {homeEntry ? "Weitere Kantone" : "Kantone"}
           </Text>
           <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-            Legendäre Schauplätze mit fester Verortung
+            {cantons.length} Kantone mit Wanderrouten
           </Text>
         </View>
 
-        {anchors.map((saga, i) => (
-          <AnchorCard
-            key={saga.id}
-            saga={saga}
-            index={i}
-            image={saga.id === "teufelsbrucke" ? teufelImg : heroImg}
-            onPress={() => router.push(`/saga/${saga.id}`)}
-          />
-        ))}
-
-        <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Sagenbibliothek
-          </Text>
-          <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-            {SAGAS.length} Legenden aus der ganzen Schweiz
-          </Text>
-        </View>
-
-        <View style={styles.grid}>
-          {rest.map((saga, i) => (
-            <LibraryCard
-              key={saga.id}
-              saga={saga}
+        <View style={{ paddingHorizontal: 20 }}>
+          {others.map((entry, i) => (
+            <CantonCard
+              key={entry.canton}
+              entry={entry}
               index={i}
-              locked={!premium && saga.canton !== profile?.homeCanton}
-              onPress={() => router.push(`/saga/${saga.id}`)}
+              onPress={() =>
+                router.push(`/kanton/${encodeURIComponent(entry.canton)}`)
+              }
             />
           ))}
         </View>
@@ -136,85 +132,44 @@ export default function Entdecken() {
   );
 }
 
-function AnchorCard({
-  saga,
+function CantonCard({
+  entry,
   index,
-  image,
+  highlight,
   onPress,
 }: {
-  saga: Saga;
+  entry: CantonWithRoutes;
   index: number;
-  image: number;
+  highlight?: boolean;
   onPress: () => void;
 }) {
   const colors = useColors();
   return (
-    <Animated.View entering={FadeInDown.delay(index * 90)} style={styles.anchorWrap}>
-      <Pressable onPress={onPress} style={styles.anchorCard}>
-        <Image source={image} style={styles.anchorImg} resizeMode="cover" />
-        <LinearGradient
-          colors={["rgba(16,24,26,0.15)", "rgba(16,24,26,0.92)"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.anchorContent}>
-          <Text style={[styles.cardCanton, { color: colors.accent }]}>
-            {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
-          </Text>
-          <Text style={[styles.anchorTitle, { color: colors.foreground }]}>
-            {saga.title}
-          </Text>
-          <Text style={[styles.cardMood, { color: colors.mutedForeground }]}>
-            {saga.mood}
-          </Text>
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function LibraryCard({
-  saga,
-  index,
-  locked,
-  onPress,
-}: {
-  saga: Saga;
-  index: number;
-  locked: boolean;
-  onPress: () => void;
-}) {
-  const colors = useColors();
-  return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 60)}
-      style={styles.libCardWrap}
-    >
+    <Animated.View entering={FadeInDown.delay(index * 60)}>
       <Pressable
         onPress={onPress}
         style={[
-          styles.libCard,
+          styles.cantonCard,
           {
             backgroundColor: colors.glassBg,
-            borderColor: colors.glassBorder,
+            borderColor: highlight ? colors.accent : colors.glassBorder,
             borderRadius: colors.radius,
           },
         ]}
       >
-        <View style={styles.libHead}>
-          <Text style={[styles.cardCanton, { color: colors.accent }]}>
-            {saga.canton.toUpperCase()}
-          </Text>
-          {locked && <Feather name="lock" size={13} color={colors.mutedForeground} />}
+        <View style={styles.cantonIcon}>
+          <Feather name="map-pin" size={18} color={colors.accent} />
         </View>
-        <Text style={[styles.libTitle, { color: colors.foreground }]}>
-          {saga.title}
-        </Text>
-        <Text
-          style={[styles.cardMood, { color: colors.mutedForeground }]}
-          numberOfLines={1}
-        >
-          {saga.mood}
-        </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.cantonName, { color: colors.foreground }]}>
+            {entry.canton}
+          </Text>
+          <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
+            {entry.routeCount}{" "}
+            {entry.routeCount === 1 ? "Wanderroute" : "Wanderrouten"}
+          </Text>
+        </View>
+        <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
       </Pressable>
     </Animated.View>
   );
@@ -230,16 +185,6 @@ const styles = StyleSheet.create({
   greeting: { fontFamily: fonts.body, fontSize: 14 },
   name: { fontFamily: fonts.titleBold, fontSize: 30, marginTop: 2 },
   archetype: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
-  proBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  proText: { fontFamily: fonts.monoBold, fontSize: 11, letterSpacing: 0.5 },
   hero: {
     marginHorizontal: 20,
     height: 230,
@@ -254,25 +199,22 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
-  anchorWrap: { paddingHorizontal: 20, marginBottom: 14 },
-  anchorCard: { height: 180, borderRadius: 18, overflow: "hidden" },
-  anchorImg: { width: "100%", height: "100%" },
-  anchorContent: { position: "absolute", left: 16, right: 16, bottom: 16 },
-  anchorTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 4 },
-  cardCanton: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
-  cardMood: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
-  grid: {
+  cantonCard: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 14,
-    gap: 12,
-  },
-  libCardWrap: { width: "47%", marginHorizontal: "1.5%" },
-  libCard: { borderWidth: 1, padding: 14, minHeight: 120, marginBottom: 4 },
-  libHead: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 12,
   },
-  libTitle: { fontFamily: fonts.titleBold, fontSize: 18, marginTop: 8 },
+  cantonIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  cantonName: { fontFamily: fonts.titleBold, fontSize: 19 },
+  cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },
 });

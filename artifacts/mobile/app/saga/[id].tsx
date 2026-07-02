@@ -138,7 +138,7 @@ export default function SagaDetail() {
           ) : (
             <PrimaryButton
               label="Wanderung starten"
-              onPress={() => router.push(`/route/${saga.id}`)}
+              onPress={() => router.replace(`/hike/${saga.id}`)}
               style={{ marginTop: 26 }}
             />
           )}

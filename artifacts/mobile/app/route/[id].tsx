@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   Alert,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -18,45 +19,27 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { SAGAS } from "@/constants/sagas";
+import { getRoute, getSagaForRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 const WEB_TOP = 67;
 
-// Plausible Routenkennwerte je Sage (Erststart-Build: statisch, klar gekennzeichnet)
-const ROUTE_META: Record<
-  string,
-  { name: string; distanceKm: number; ascentM: number; minutes: number; sac: string }
-> = {
-  teufelsbrucke: { name: "Schöllenen-Schlucht", distanceKm: 6.4, ascentM: 480, minutes: 165, sac: "T3" },
-  rossberg: { name: "Bergsturz-Weg Goldau", distanceKm: 8.1, ascentM: 620, minutes: 210, sac: "T2" },
-  martinsloch: { name: "Martinsloch-Panorama", distanceKm: 10.2, ascentM: 910, minutes: 290, sac: "T4" },
-};
-
-const DEFAULT_META = {
-  name: "Sagenweg",
-  distanceKm: 7.5,
-  ascentM: 540,
-  minutes: 190,
-  sac: "T2",
-};
-
 export default function Routenplanung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium } = useApp();
 
-  const saga = SAGAS.find((s) => s.id === id);
-  const meta = (id && ROUTE_META[id]) || DEFAULT_META;
+  const route = getRoute(id);
+  const saga = route ? getSagaForRoute(route) : undefined;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const [lowBattery] = useState(false);
 
-  if (!saga) {
+  if (!route || !saga) {
     return (
       <Background>
         <View style={styles.center}>
@@ -68,6 +51,8 @@ export default function Routenplanung() {
     );
   }
 
+  const meta = route;
+  const locked = !premium && route.region !== profile?.homeCanton;
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 
@@ -81,13 +66,13 @@ export default function Routenplanung() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader eyebrow={saga.canton} title="Routenplanung" onBack />
+        <ScreenHeader eyebrow={route.region} title="Routenplanung" onBack />
 
         <Text style={[styles.routeName, { color: colors.foreground }]}>
           {meta.name}
         </Text>
         <Text style={[styles.forSaga, { color: colors.accent }]}>
-          Für: {saga.title}
+          {route.terrain}
         </Text>
 
         <View style={{ marginTop: 18 }}>
@@ -157,10 +142,50 @@ export default function Routenplanung() {
           style={{ marginTop: 20 }}
         />
 
+        <SparkDivider style={{ marginVertical: 22 }} />
+
+        <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+          Passende Sage
+        </Text>
+        <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
+          Diese Legende begleitet dich auf der Route. Tippe an, um sie zu wählen.
+        </Text>
+
+        <Pressable
+          onPress={() => router.push(`/saga/${saga.id}`)}
+          style={[
+            styles.sagaCard,
+            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.sagaCanton, { color: colors.accent }]}>
+              {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
+            </Text>
+            <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
+              {saga.title}
+            </Text>
+            <Text
+              style={[styles.sagaMood, { color: colors.mutedForeground }]}
+              numberOfLines={1}
+            >
+              {saga.mood}
+            </Text>
+          </View>
+          {locked ? (
+            <Feather name="lock" size={18} color={colors.mutedForeground} />
+          ) : (
+            <Feather name="chevron-right" size={20} color={colors.accent} />
+          )}
+        </Pressable>
+
         <PrimaryButton
-          label="Wanderung jetzt beginnen"
-          onPress={() => router.replace(`/hike/${saga.id}`)}
-          style={{ marginTop: 12 }}
+          label={locked ? "Premium freischalten" : "Zur Sage weiter"}
+          variant={locked ? "gold" : "primary"}
+          onPress={() =>
+            router.push(locked ? "/paywall" : `/saga/${saga.id}`)
+          }
+          style={{ marginTop: 16 }}
         />
       </ScrollView>
     </Background>
@@ -250,4 +275,16 @@ const styles = StyleSheet.create({
   },
   energyTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
   energyHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 2 },
+  sagaHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginBottom: 12 },
+  sagaCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+  },
+  sagaCanton: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
+  sagaTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 4 },
+  sagaMood: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
 });
