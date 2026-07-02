@@ -121,7 +121,11 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
 export async function fetchCantonHikingRoutes(
   iso: string,
   log: Logger,
-  limit = 30,
+  // Bewusst groesser als der spaetere Ergebnis-Deckel (RESULT_LIMIT): je mehr
+  // Kandidaten wir anreichern und cachen, desto besser kann der Distanzfilter
+  // spaeter auch kurze Routen finden, statt nur die ranghoechsten Fernwege.
+  // Overpass/Anreicherung setzen die praktische Obergrenze.
+  limit = 50,
 ): Promise<RawHikingRoute[]> {
   // Phase 1: benannte Wanderrouten-Relationen (nur Tags).
   const tagsQuery = [

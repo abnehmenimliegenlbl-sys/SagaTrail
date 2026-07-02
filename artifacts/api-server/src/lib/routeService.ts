@@ -31,7 +31,7 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
 const MIN_KM = 1;
 const MAX_KM = 45;
 const STORED_GEOMETRY_POINTS = 80;
-const ELEVATION_CONCURRENCY = 6;
+const ELEVATION_CONCURRENCY = 8;
 
 /** Fuehrt einen async-Mapper mit begrenzter Parallelitaet aus. */
 async function mapPool<T, R>(

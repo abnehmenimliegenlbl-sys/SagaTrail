@@ -5,6 +5,24 @@ import { getCantonRoutes } from "../lib/routeService";
 
 const router: IRouter = Router();
 
+// Deckel fuer die Trefferliste. Er greift bewusst NACH dem Filter: eine
+// 0-5-km-Suche liefert damit die besten Kurzrouten unter 5 km und nicht die
+// besten 16 Routen des Kantons, von denen dann zufaellig nur wenige kurz sind.
+const RESULT_LIMIT = 16;
+
+/**
+ * Sortiert Treffer nach Relevanz, damit der RESULT_LIMIT-Deckel die
+ * aussagekraeftigsten Routen behaelt: amtlich nummerierte Wanderland-Routen
+ * (mit `ref`) zuerst, danach alphabetisch.
+ */
+function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {
+  if (a.featured !== b.featured) return a.featured ? -1 : 1;
+  const refA = a.ref ? 0 : 1;
+  const refB = b.ref ? 0 : 1;
+  if (refA !== refB) return refA - refB;
+  return a.name.localeCompare(b.name, "de");
+}
+
 function toRoute(row: ExternalRouteRow) {
   return {
     id: row.id,
@@ -78,7 +96,10 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
   };
   try {
     const rows = await getCantonRoutes(canton, req.log);
-    const matched = rows.filter((row) => applyFilter(row, filter));
+    const matched = rows
+      .filter((row) => applyFilter(row, filter))
+      .sort(byRelevance)
+      .slice(0, RESULT_LIMIT);
     res.json(GetCantonRoutesResponse.parse(matched.map(toRoute)));
   } catch (err) {
     req.log.error({ err, canton }, "Kanton-Routen konnten nicht geladen werden");
