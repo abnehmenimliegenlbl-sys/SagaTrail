@@ -159,6 +159,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/aerialways:
+    get:
+      operationId: getAerialways
+      tags: [routes]
+      summary: Seilbahnen und Standseilbahnen in einem Kartenausschnitt
+      description: >
+        Liefert Luftseilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen
+        (typische alpine Wander-Verkehrsmittel) aus OpenStreetMap innerhalb
+        einer Bounding Box, zur Darstellung auf der Wanderkarte.
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Seilbahnen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Aerialway"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/saga:
     get:
       operationId: getRouteSaga
@@ -273,6 +318,26 @@ components:
         - terrain
         - coordinates
         - featured
+    Aerialway:
+      type: object
+      description: >
+        Seilbahn, Gondelbahn, Sessellift oder Standseilbahn aus OpenStreetMap.
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          description: "cable_car | gondola | chair_lift | funicular"
+        geometry:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+      required:
+        - id
+        - kind
+        - geometry
     LocalizedSummary:
       type: object
       properties:

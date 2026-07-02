@@ -157,6 +157,25 @@ export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
 
 /**
+ * Liefert Luftseilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen (typische alpine Wander-Verkehrsmittel) aus OpenStreetMap innerhalb einer Bounding Box, zur Darstellung auf der Wanderkarte.
+ * @summary Seilbahnen und Standseilbahnen in einem Kartenausschnitt
+ */
+export const GetAerialwaysQueryParams = zod.object({
+  "south": zod.coerce.number(),
+  "west": zod.coerce.number(),
+  "north": zod.coerce.number(),
+  "east": zod.coerce.number()
+})
+
+export const GetAerialwaysResponseItem = zod.object({
+  "id": zod.string(),
+  "kind": zod.string().describe('cable_car | gondola | chair_lift | funicular'),
+  "geometry": zod.array(zod.array(zod.number()))
+}).describe('Seilbahn, Gondelbahn, Sessellift oder Standseilbahn aus OpenStreetMap.\n')
+export const GetAerialwaysResponse = zod.array(GetAerialwaysResponseItem)
+
+
+/**
  * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
  * @summary Naechstgelegene kuratierte Sage zu einer Route
  */

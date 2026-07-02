@@ -18,12 +18,13 @@ export function SwisstopoMap({
   height = 220,
   geometry,
   offlineTiles,
+  aerialways,
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const html = useMemo(
-    () => buildSwisstopoHtml(center, label, geometry, offlineTiles),
-    [center.lat, center.lng, label, geometry, offlineTiles]
+    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways),
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

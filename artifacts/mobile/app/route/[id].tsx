@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { getAerialways } from "@workspace/api-client-react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -26,6 +27,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { bboxAroundGeometry } from "@/lib/geo";
 import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 
@@ -49,6 +51,27 @@ export default function Routenplanung() {
   const [sagaLoading, setSagaLoading] = useState(!saga);
   const [lowBattery] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [aerialways, setAerialways] = useState<
+    { id: string; geometry: number[][] }[] | null
+  >(null);
+
+  // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
+  // Wander-Verkehrsmittel) — nur mit Wegverlauf sinnvoll, best effort.
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates);
+    getAerialways(bbox)
+      .then((result) => {
+        if (!cancelled) setAerialways(result);
+      })
+      .catch(() => {
+        if (!cancelled) setAerialways(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +177,7 @@ export default function Routenplanung() {
               label={route.name}
               height={200}
               geometry={route.geometry}
+              aerialways={aerialways}
             />
           ) : (
             <RouteMap progress={0.15} height={200} />

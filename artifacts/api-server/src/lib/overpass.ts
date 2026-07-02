@@ -162,6 +162,55 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
   return points;
 }
 
+/** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */
+export interface RawAerialway {
+  id: string;
+  kind: string;
+  points: LatLng[];
+}
+
+interface OverpassWayGeomElement {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  geometry?: { lat: number; lon: number }[];
+}
+
+/**
+ * Laedt Seilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen (typische
+ * alpine Wander-Verkehrsmittel) innerhalb einer Bounding Box. Bewusst eng
+ * begrenzt auf einen Kartenausschnitt, damit die Abfrage klein und schnell
+ * bleibt (kein flaechendeckender Import wie bei den Wanderrouten).
+ */
+export async function fetchAerialways(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<RawAerialway[]> {
+  const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
+  const query = [
+    "[out:json][timeout:25];",
+    "(",
+    `way["aerialway"~"^(cable_car|gondola|chair_lift)$"](${b});`,
+    `way["railway"="funicular"](${b});`,
+    ");",
+    "out geom;",
+  ].join("");
+  const elements = await runOverpass<OverpassWayGeomElement>(query);
+  const result: RawAerialway[] = [];
+  for (const e of elements) {
+    if (!e.geometry || e.geometry.length < 2) continue;
+    const tags = e.tags ?? {};
+    const kind = tags.aerialway ?? "funicular";
+    result.push({
+      id: `aerialway-${e.id}`,
+      kind,
+      points: e.geometry.map((g) => ({ lat: g.lat, lng: g.lon })),
+    });
+  }
+  log.info({ bbox, count: result.length }, "Overpass: Seilbahnen geladen");
+  return result;
+}
+
 /**
  * Phase 1: leichter Index aller benannten Wanderrouten-Relationen eines Kantons
  * (nur Tags + Bounding Box). Klein und schnell, auch fuer >1000 Relationen.

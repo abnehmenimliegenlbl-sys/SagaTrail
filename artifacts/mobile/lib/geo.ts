@@ -20,3 +20,42 @@ export function haversineKm(a: LatLng, b: LatLng): number {
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
+
+export interface BoundingBox {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
+/**
+ * Bounding Box rund um einen Wegverlauf (oder, ohne Geometrie, um einen
+ * Mittelpunkt), mit Rand in km. Dient dazu, den Kartenausschnitt fuer
+ * Zusatzdaten (z. B. Seilbahnen) einzugrenzen — bewusst grosszuegig genug,
+ * damit nahegelegene Bergbahnen nicht am Rand abgeschnitten werden.
+ */
+export function bboxAroundGeometry(
+  geometry: number[][] | null | undefined,
+  center: LatLng,
+  paddingKm = 3
+): BoundingBox {
+  const points = geometry && geometry.length > 1 ? geometry.map((p) => ({ lat: p[0], lng: p[1] })) : [center];
+  let south = points[0].lat;
+  let north = points[0].lat;
+  let west = points[0].lng;
+  let east = points[0].lng;
+  for (const p of points) {
+    south = Math.min(south, p.lat);
+    north = Math.max(north, p.lat);
+    west = Math.min(west, p.lng);
+    east = Math.max(east, p.lng);
+  }
+  const latPad = paddingKm / 111;
+  const lngPad = paddingKm / (111 * Math.cos(toRad((south + north) / 2)) || 1);
+  return {
+    south: south - latPad,
+    west: west - lngPad,
+    north: north + latPad,
+    east: east + lngPad,
+  };
+}

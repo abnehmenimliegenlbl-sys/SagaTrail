@@ -39,6 +39,16 @@ export interface CatalogRoute {
   featured: boolean;
 }
 
+/**
+ * Seilbahn, Gondelbahn, Sessellift oder Standseilbahn aus OpenStreetMap.
+ */
+export interface Aerialway {
+  id: string;
+  /** cable_car | gondola | chair_lift | funicular */
+  kind: string;
+  geometry: number[][];
+}
+
 export interface LocalizedSummary {
   text: string;
   reviewEmpfohlen: boolean;
@@ -170,5 +180,12 @@ diffMin?: number;
  * @maximum 6
  */
 diffMax?: number;
+};
+
+export type GetAerialwaysParams = {
+south: number;
+west: number;
+north: number;
+east: number;
 };
 

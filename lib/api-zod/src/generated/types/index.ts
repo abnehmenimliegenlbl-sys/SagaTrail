@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './aerialway';
 export * from './catalogCanton';
 export * from './catalogCoordinates';
 export * from './catalogResponse';
@@ -14,6 +15,7 @@ export * from './catalogSaga';
 export * from './catalogSagaKoordinatenSicherheit';
 export * from './catalogSagaSummaries';
 export * from './errorResponse';
+export * from './getAerialwaysParams';
 export * from './getCantonRoutesParams';
 export * from './healthStatus';
 export * from './localizedSummary';

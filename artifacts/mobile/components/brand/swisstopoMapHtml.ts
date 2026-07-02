@@ -24,20 +24,30 @@ export interface SwisstopoMapProps {
    * gesetzt, werden lokale Kacheln bevorzugt und fehlende online nachgeladen.
    */
   offlineTiles?: Record<string, string> | null;
+  /**
+   * Seilbahnen/Standseilbahnen im Kartenausschnitt (typische alpine
+   * Wander-Verkehrsmittel), je Eintrag ein Wegverlauf als [lat, lng]-Paare.
+   */
+  aerialways?: { id: string; geometry: number[][] }[] | null;
 }
 
 /**
- * Baut ein eigenstaendiges Leaflet-Dokument mit amtlichen swisstopo-Kacheln
- * (Landeskarte, WMTS, kein API-Schluessel noetig). Der Wegverlauf wird als
- * Linie gezeichnet; die Live-Position wird nachtraeglich ueber das global
- * gesetzte `window.sttSetPosition` aktualisiert, damit keine Kacheln neu
- * geladen werden.
+ * Baut ein eigenstaendiges Leaflet-Dokument. Basiskarte ist Carto Voyager
+ * (helle, reduzierte Strassenkarte ohne Hoehenlinien/Relief), darueber liegt
+ * das Waymarked-Trails-Wanderwege-Overlay (offizielle OSM-Wanderrouten farbig
+ * hervorgehoben) — zusammen deutlich weniger "ueberladen" als die amtliche
+ * swisstopo-Landeskarte, aber mit klar erkennbaren Wegen. Der Wegverlauf der
+ * eigenen Route wird zusaetzlich als eigene Linie gezeichnet; die
+ * Live-Position wird nachtraeglich ueber das global gesetzte
+ * `window.sttSetPosition` aktualisiert, damit keine Kacheln neu geladen
+ * werden.
  */
 export function buildSwisstopoHtml(
   center: LatLng,
   label: string,
   geometry?: number[][] | null,
-  offlineTiles?: Record<string, string> | null
+  offlineTiles?: Record<string, string> | null,
+  aerialways?: { id: string; geometry: number[][] }[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -48,6 +58,8 @@ export function buildSwisstopoHtml(
     offlineTiles && Object.keys(offlineTiles).length > 0
       ? JSON.stringify(offlineTiles)
       : "null";
+  const aerialwaysJson =
+    aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -75,6 +87,7 @@ export function buildSwisstopoHtml(
   .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #B8935A; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(184,147,90,0.25); }
   .stt-ziel { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #B8935A; box-shadow: 0 0 0 4px rgba(184,147,90,0.25); }
   .stt-live { width: 16px; height: 16px; border-radius: 50%; background: #C4462F; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(196,70,47,0.30); }
+  .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; }
   .leaflet-control-attribution a { color: #B8935A; }
 </style>
@@ -87,7 +100,9 @@ export function buildSwisstopoHtml(
     var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([${lat}, ${lng}], 14);
     var offline = ${offlineJson};
     var geometry = ${geometryJson};
-    var tileUrl = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+    var aerialways = ${aerialwaysJson};
+    // Basiskarte: helle, reduzierte Strassenkarte (kein Relief/Hoehenlinien).
+    var tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
     // Kachel-Layer, der lokale Offline-Kacheln bevorzugt und fehlende online nachlaedt.
     var OfflineLayer = L.TileLayer.extend({
       getTileUrl: function (coords) {
@@ -99,9 +114,32 @@ export function buildSwisstopoHtml(
       }
     });
     new OfflineLayer(tileUrl, {
-      maxZoom: 18,
-      attribution: '&copy; swisstopo'
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap'
     }).addTo(map);
+
+    // Wanderwege-Overlay: offizielle OSM-Wanderrouten farbig hervorgehoben,
+    // damit Wege trotz reduzierter Basiskarte klar erkennbar bleiben.
+    L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      opacity: 0.85,
+      attribution: 'Wanderwege: &copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
+    }).addTo(map);
+
+    if (aerialways) {
+      // Seilbahnen/Standseilbahnen: gestrichelte Linie plus kleine
+      // Stationsmarker an den Enden, farblich klar von der Routen-Linie
+      // unterschieden.
+      var seilbahnIcon = L.divIcon({ className: '', html: '<div class="stt-seilbahn-station"></div>', iconSize: [9, 9], iconAnchor: [5, 5] });
+      aerialways.forEach(function (a) {
+        var g = a.geometry;
+        if (!g || g.length < 2) return;
+        L.polyline(g, { color: '#5B6B78', weight: 2.5, opacity: 0.9, dashArray: '1,7', lineCap: 'round' }).addTo(map);
+        L.marker(g[0], { icon: seilbahnIcon }).addTo(map);
+        L.marker(g[g.length - 1], { icon: seilbahnIcon }).addTo(map);
+      });
+    }
 
     var startIcon = L.divIcon({ className: '', html: '<div class="stt-start"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
     var zielIcon = L.divIcon({ className: '', html: '<div class="stt-ziel"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });

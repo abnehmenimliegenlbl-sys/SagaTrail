@@ -1,5 +1,5 @@
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.
-- [SagaTrail map & live GPS](sagatrail-map-gps.md) — swisstopo Leaflet in WebView/iframe + real GPS narration; simulated timer only in fallback states, decision/narration must be de-duped.
+- [SagaTrail map & live GPS](sagatrail-map-gps.md) — Carto Voyager + Waymarked Trails Leaflet map (not swisstopo) in WebView/iframe + real GPS narration; OSM overlays must be fetched server-side, not from the client.
 - [SagaTrail route fetching](sagatrail-route-fetching.md) — per-canton OSM routes use a bbox pre-scan (lower-bound length) to surface short routes; cap goes AFTER the distance filter, never before.
 - [SagaTrail Swiss geo/hiking data](sagatrail-swiss-geo-data.md) — SAC difficulty from swissTLM3D identify (hikingtype), tolerance is in pixels, ASTRA Wanderland is WMS-only (not identifiable).
 - [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.

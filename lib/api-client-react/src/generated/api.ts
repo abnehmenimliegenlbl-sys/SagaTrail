@@ -20,10 +20,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  Aerialway,
   CatalogResponse,
   CatalogRoute,
   CatalogSaga,
   ErrorResponse,
+  GetAerialwaysParams,
   GetCantonRoutesParams,
   HealthStatus,
   StoryRequest,
@@ -362,6 +364,91 @@ export function useGetCantonRoutes<TData = Awaited<ReturnType<typeof getCantonRo
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCantonRoutesQueryOptions(canton,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAerialwaysUrl = (params: GetAerialwaysParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/aerialways?${stringifiedParams}` : `/api/routes/aerialways`
+}
+
+/**
+ * Liefert Luftseilbahnen, Gondelbahnen, Sessellifte und Standseilbahnen (typische alpine Wander-Verkehrsmittel) aus OpenStreetMap innerhalb einer Bounding Box, zur Darstellung auf der Wanderkarte.
+ * @summary Seilbahnen und Standseilbahnen in einem Kartenausschnitt
+ */
+export const getAerialways = async (params: GetAerialwaysParams, options?: RequestInit): Promise<Aerialway[]> => {
+
+  return customFetch<Aerialway[]>(getGetAerialwaysUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAerialwaysQueryKey = (params?: GetAerialwaysParams,) => {
+    return [
+    `/api/routes/aerialways`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAerialwaysQueryOptions = <TData = Awaited<ReturnType<typeof getAerialways>>, TError = ErrorType<ErrorResponse>>(params: GetAerialwaysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAerialways>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAerialwaysQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAerialways>>> = ({ signal }) => getAerialways(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAerialways>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAerialwaysQueryResult = NonNullable<Awaited<ReturnType<typeof getAerialways>>>
+export type GetAerialwaysQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Seilbahnen und Standseilbahnen in einem Kartenausschnitt
+ */
+
+export function useGetAerialways<TData = Awaited<ReturnType<typeof getAerialways>>, TError = ErrorType<ErrorResponse>>(
+ params: GetAerialwaysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAerialways>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAerialwaysQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

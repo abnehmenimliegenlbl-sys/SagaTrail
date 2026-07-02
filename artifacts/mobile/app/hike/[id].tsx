@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { getAerialways } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -28,7 +29,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
-import { haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
@@ -70,6 +71,9 @@ export default function LiveHike() {
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
+  const [aerialways, setAerialways] = useState<
+    { id: string; geometry: number[][] }[] | null
+  >(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -93,6 +97,24 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [saga, profile, resolveStory]);
+
+  // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
+  // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
+  useEffect(() => {
+    if (!mapCenter) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    getAerialways(bbox)
+      .then((result) => {
+        if (!cancelled) setAerialways(result);
+      })
+      .catch(() => {
+        if (!cancelled) setAerialways(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, mapCenter?.lat, mapCenter?.lng]);
 
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {
@@ -392,6 +414,7 @@ export default function LiveHike() {
               height={200}
               geometry={route?.geometry}
               offlineTiles={offlineTiles}
+              aerialways={aerialways}
             />
           ) : (
             <RouteMap progress={progress} height={200} />

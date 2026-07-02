@@ -12,7 +12,9 @@ import { isoForCanton } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
+  fetchAerialways,
   type RouteIndexEntry,
+  type RawAerialway,
 } from "./overpass";
 import { computeAscentM } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
@@ -65,6 +67,35 @@ async function getCantonIndex(
   if (hit && Date.now() - hit.at < INDEX_TTL_MS) return hit.entries;
   const entries = await fetchCantonRouteIndex(iso, log);
   indexCache.set(canton, { at: Date.now(), entries });
+  return entries;
+}
+
+/**
+ * In-Memory-Cache der Seilbahn-Abfragen je (grob gerasterte) Bounding Box.
+ * Seilbahnen aendern sich praktisch nie, daher eine grosszuegige TTL. Der
+ * Raster (2 Nachkommastellen, ~1 km) buendelt nahe beieinanderliegende
+ * Kartenausschnitte auf denselben Cache-Eintrag.
+ */
+const AERIALWAY_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const aerialwayCache = new Map<string, { at: number; entries: RawAerialway[] }>();
+
+function bboxCacheKey(bbox: { south: number; west: number; north: number; east: number }): string {
+  const r = (n: number) => Math.round(n * 100) / 100;
+  return `${r(bbox.south)},${r(bbox.west)},${r(bbox.north)},${r(bbox.east)}`;
+}
+
+/**
+ * Liefert Seilbahnen/Standseilbahnen innerhalb einer Bounding Box (gecacht).
+ */
+export async function getAerialways(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<RawAerialway[]> {
+  const key = bboxCacheKey(bbox);
+  const hit = aerialwayCache.get(key);
+  if (hit && Date.now() - hit.at < AERIALWAY_TTL_MS) return hit.entries;
+  const entries = await fetchAerialways(bbox, log);
+  aerialwayCache.set(key, { at: Date.now(), entries });
   return entries;
 }
 
