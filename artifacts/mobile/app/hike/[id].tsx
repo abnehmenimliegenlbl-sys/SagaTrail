@@ -329,7 +329,10 @@ export default function LiveHike() {
           return { lat: p[0], lng: p[1] };
         })()
       : null;
-  const shownPos = locState === "granted" ? livePos : simPos;
+  // Es soll immer ein Positionsmarker sichtbar sein: bevorzugt die echte
+  // GPS-Position; solange noch kein Fix vorliegt (oder GPS nicht verfuegbar
+  // ist, z. B. Web-Vorschau) der entlang des Weges interpolierte Punkt.
+  const shownPos = livePos ?? simPos;
 
   return (
     <Background>
