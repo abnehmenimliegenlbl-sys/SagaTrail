@@ -7,6 +7,11 @@ description: How the swisstopo map + real-GPS narration is wired in the Expo app
 
 ## Map rendering
 - Amtliche swisstopo WMTS tiles (`ch.swisstopo.pixelkarte-farbe`) via Leaflet inside a **WebView on native** and an **iframe `srcDoc` on web** — platform split via `SwisstopoMap.tsx` / `SwisstopoMap.web.tsx`, shared HTML from `swisstopoMapHtml.ts`. No API key needed. This is the deliberate alternative to `react-native-maps` (which the project avoids) and to the SVG `RouteMap` (kept only as a coordinate-less fallback).
+
+## Route line (the drawn track)
+- The real route path lives ONLY in `external_routes.geometry` (server, ~80-pt downsampled OSM track). It is NOT in the curated seed (`constants/routes.ts` seed routes carry only a single `coordinates` start point). To show a route line you must plumb geometry end-to-end: OpenAPI `CatalogRoute.geometry` (optional) -> codegen -> mobile `HikingRoute.geometry?: number[][]` -> `SwisstopoMap` props -> `buildSwisstopoHtml` `L.polyline` + start/Ziel markers + `fitBounds`.
+- **Why:** the server already computed geometry, but `cantons.ts`/`catalog.ts` `toRoute()` silently dropped it and the map only drew a start marker, so users saw no route and asked "how am I navigated?". Keep geometry OPTIONAL in the contract so seed/catalog routes without it still validate (they fall back to a single start marker).
+- There is intentionally **no turn-by-turn navigation**: the app draws the full route line + your live GPS dot and advances narration by distance — it is route visualization, not a navigator.
 - Live position is pushed **without reloading tiles**: the HTML exposes `window.sttSetPosition(lat,lng)`; native calls it via `injectJavaScript`, web via `iframe.contentWindow.sttSetPosition`.
 - **Reset `ready=false` whenever the HTML string changes** (center/label), otherwise a reloaded document silently drops the initial position injection until the next GPS fix.
 

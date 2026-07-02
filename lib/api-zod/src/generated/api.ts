@@ -40,6 +40,7 @@ export const GetCatalogResponse = zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean()
 })),
   "sagas": zod.array(zod.object({
@@ -126,6 +127,7 @@ export const GetCantonRoutesResponseItem = zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean()
 })
 export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)

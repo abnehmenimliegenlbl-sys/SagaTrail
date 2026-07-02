@@ -17,6 +17,7 @@ function toRoute(row: ExternalRouteRow) {
     sac: row.sac,
     terrain: row.terrain,
     coordinates: { lat: row.lat, lng: row.lng },
+    geometry: row.geometry,
     featured: row.featured,
   };
 }

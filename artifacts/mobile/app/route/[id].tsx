@@ -149,7 +149,12 @@ export default function Routenplanung() {
 
         <View style={{ marginTop: 18 }}>
           {route.coordinates ? (
-            <SwisstopoMap center={route.coordinates} label={route.name} height={200} />
+            <SwisstopoMap
+              center={route.coordinates}
+              label={route.name}
+              height={200}
+              geometry={route.geometry}
+            />
           ) : (
             <RouteMap progress={0.15} height={200} />
           )}

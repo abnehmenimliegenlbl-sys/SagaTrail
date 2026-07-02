@@ -34,6 +34,8 @@ export interface CatalogRoute {
   sac: string;
   terrain: string;
   coordinates: CatalogCoordinates;
+  /** Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden). */
+  geometry?: number[][];
   featured: boolean;
 }
 

@@ -358,6 +358,7 @@ export default function LiveHike() {
               position={locState === "granted" ? livePos : null}
               label={saga.title}
               height={200}
+              geometry={route?.geometry}
               offlineTiles={offlineTiles}
             />
           ) : (

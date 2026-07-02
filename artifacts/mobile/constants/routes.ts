@@ -21,6 +21,11 @@ export interface HikingRoute {
   terrain: string;
   /** Ausgangspunkt der Route (Kartenmittelpunkt) */
   coordinates: LatLng;
+  /**
+   * Ausgeduennter Wegverlauf als [lat, lng]-Paare. Nur bei realen OSM-Routen
+   * vorhanden; die kuratierten Seed-Routen kennen nur den Ausgangspunkt.
+   */
+  geometry?: number[][];
   /** Wird als grosse Ankerroute auf der Startseite hervorgehoben */
   featured: boolean;
 }
