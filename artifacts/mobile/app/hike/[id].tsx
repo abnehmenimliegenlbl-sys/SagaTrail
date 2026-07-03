@@ -288,16 +288,24 @@ export default function LiveHike() {
     };
   }, [handleFix, energiesparmodus]);
 
+  // UI-Status wird optimistisch sofort auf "spricht" gesetzt, statt auf das
+  // native onStart-Event zu warten: auf manchen Geraeten (v. a. Android mit
+  // QUEUE_ADD-Warteschlange) feuert onStart verzoegert oder gar nicht, wenn
+  // stop() und speak() ohne await direkt hintereinander aufgerufen werden —
+  // der Button wirkte dann wie "tot", obwohl die Sprachausgabe lief oder kurz
+  // darauf startete. await stop() vor speak() vermeidet zudem, dass die
+  // vorherige Aeusserung noch in der nativen Warteschlange haengt.
   const speak = useCallback(
-    (text: string) => {
-      Speech.stop();
+    async (text: string) => {
+      await Speech.stop();
+      setSpeaking(true);
       Speech.speak(text, {
         language: SPEECH_LOCALE[resolveLang(profile?.language)],
         rate: 0.92,
         pitch: 1.0,
-        onStart: () => setSpeaking(true),
         onDone: () => setSpeaking(false),
         onStopped: () => setSpeaking(false),
+        onError: () => setSpeaking(false),
       });
     },
     [profile?.language]
