@@ -20,6 +20,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { useAuthStrings } from "@/lib/i18n/screens/auth";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,6 +32,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const t = useAuthStrings();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,6 +41,7 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (Platform.OS === "web") return;
     void WebBrowser.warmUpAsync();
     return () => {
       void WebBrowser.coolDownAsync();
@@ -60,11 +63,11 @@ export default function SignInScreen() {
         await setActive({ session: attempt.createdSessionId });
         router.replace("/onboarding");
       } else {
-        setError("Anmeldung nicht abgeschlossen. Bitte erneut versuchen.");
+        setError(t.errorSignInIncomplete);
       }
     } catch (err: any) {
       setError(
-        err?.errors?.[0]?.message ?? "Anmeldung fehlgeschlagen. Bitte prüfen."
+        err?.errors?.[0]?.message ?? t.errorSignInFailed
       );
     } finally {
       setLoading(false);
@@ -83,7 +86,7 @@ export default function SignInScreen() {
         router.replace("/onboarding");
       }
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Google-Anmeldung fehlgeschlagen.");
+      setError(err?.errors?.[0]?.message ?? t.errorGoogleFailed);
     } finally {
       setGoogleLoading(false);
     }
@@ -104,17 +107,17 @@ export default function SignInScreen() {
         <View style={styles.header}>
           <SparkMountain size={56} />
           <Text style={[styles.title, { color: colors.foreground }]}>
-            Willkommen zurück
+            {t.signInTitle}
           </Text>
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-            Melde dich an, um deine Sagen weiterzuerzählen.
+            {t.signInSubtitle}
           </Text>
         </View>
 
         <TextInput
           value={email}
           onChangeText={setEmail}
-          placeholder="E-Mail-Adresse"
+          placeholder={t.emailPlaceholder}
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           autoComplete="email"
@@ -127,7 +130,7 @@ export default function SignInScreen() {
         <TextInput
           value={password}
           onChangeText={setPassword}
-          placeholder="Passwort"
+          placeholder={t.passwordPlaceholder}
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           autoComplete="password"
@@ -144,7 +147,7 @@ export default function SignInScreen() {
         )}
 
         <PrimaryButton
-          label="Anmelden"
+          label={t.signInButton}
           onPress={onSignInPress}
           loading={loading}
           disabled={!email.trim() || !password || loading}
@@ -154,7 +157,7 @@ export default function SignInScreen() {
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
           <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>
-            oder
+            {t.or}
           </Text>
           <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
         </View>
@@ -166,17 +169,17 @@ export default function SignInScreen() {
         >
           <Feather name="chrome" size={18} color={colors.foreground} />
           <Text style={[styles.googleLabel, { color: colors.foreground }]}>
-            Mit Google anmelden
+            {t.continueWithGoogleSignIn}
           </Text>
         </Pressable>
 
         <View style={styles.footerRow}>
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-            Noch kein Konto?
+            {t.noAccountYet}
           </Text>
           <Link href="/(auth)/sign-up" replace>
             <Text style={[styles.footerLink, { color: colors.accent }]}>
-              Registrieren
+              {t.registerLink}
             </Text>
           </Link>
         </View>

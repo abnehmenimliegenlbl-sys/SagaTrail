@@ -22,12 +22,14 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
+import { useSagaStrings } from "@/lib/i18n/screens/saga";
 import { resolveLang } from "@/lib/storyContent";
 
 const heroImg = require("@/assets/images/hero-valley.png");
 const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
 
 export default function SagaDetail() {
+  const t = useSagaStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -68,7 +70,7 @@ export default function SagaDetail() {
         <View style={styles.notFound}>
           <ActivityIndicator color={colors.accent} />
           <Text style={[styles.notFoundText, { color: colors.foreground }]}>
-            Die Sage wird erzeugt …
+            {t.generating}
           </Text>
         </View>
       </Background>
@@ -80,9 +82,9 @@ export default function SagaDetail() {
       <Background>
         <View style={styles.notFound}>
           <Text style={[styles.notFoundText, { color: colors.foreground }]}>
-            Diese Sage wurde nicht gefunden.
+            {t.notFound}
           </Text>
-          <PrimaryButton label="Zurück" variant="ghost" onPress={() => router.back()} />
+          <PrimaryButton label={t.back} variant="ghost" onPress={() => router.back()} />
         </View>
       </Background>
     );
@@ -98,14 +100,9 @@ export default function SagaDetail() {
   const reviewPending = saga.summaries[lang]?.reviewEmpfohlen ?? false;
 
   // Ehrliche Kennzeichnung der Ortsgenauigkeit der ueberlieferten Sage.
-  const sicherheitLabel: Record<string, string> = {
-    exakt: "Exakt belegter Ort",
-    ungefaehr: "Region belegt, nicht punktgenau",
-    nicht_lokalisierbar: "Nicht exakt lokalisierbar",
-  };
   const sicherheit =
-    sicherheitLabel[saga.koordinatenSicherheit] ??
-    sicherheitLabel.nicht_lokalisierbar;
+    t.accuracy[saga.koordinatenSicherheit as keyof typeof t.accuracy] ??
+    t.accuracy.nicht_lokalisierbar;
 
   const showKinderHinweis =
     profile?.ageTier === "kinder" && !!saga.altersstufenHinweis;
@@ -151,7 +148,7 @@ export default function SagaDetail() {
           </Text>
           {reviewPending ? (
             <Text style={[styles.reviewNote, { color: colors.mutedForeground }]}>
-              Diese Übersetzung wird noch redaktionell geprüft.
+              {t.reviewPending}
             </Text>
           ) : null}
 
@@ -161,12 +158,12 @@ export default function SagaDetail() {
             <View style={styles.metaItem}>
               <Feather name="map-pin" size={15} color={colors.accent} />
               <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>
-                Koordinaten
+                {t.coordinates}
               </Text>
               <Text style={[styles.metaValue, { color: colors.foreground }]}>
                 {saga.coordinates
                   ? `${saga.coordinates.lat.toFixed(4)}, ${saga.coordinates.lng.toFixed(4)}`
-                  : "Ortsungebunden"}
+                  : t.locationUnbound}
               </Text>
               <Text style={[styles.metaNote, { color: colors.mutedForeground }]}>
                 {sicherheit}
@@ -176,7 +173,7 @@ export default function SagaDetail() {
 
           <View style={[styles.sourceBox, { borderColor: colors.glassBorder }]}>
             <Text style={[styles.sourceLabel, { color: colors.mutedForeground }]}>
-              QUELLE (GEMEINFREI)
+              {t.sourceLabel}
             </Text>
             {saga.quelle ? (
               <>
@@ -212,11 +209,10 @@ export default function SagaDetail() {
             >
               <Feather name="lock" size={20} color={colors.accent} />
               <Text style={[styles.lockedText, { color: colors.foreground }]}>
-                Diese Region ist Teil von SagaTrail Premium. Schalte alle Kantone
-                frei, um diese Wanderung zu starten.
+                {t.lockedText}
               </Text>
               <PrimaryButton
-                label="Premium freischalten"
+                label={t.premiumButton}
                 variant="gold"
                 onPress={() => router.push("/paywall")}
                 style={{ marginTop: 12, alignSelf: "stretch" }}
@@ -224,7 +220,7 @@ export default function SagaDetail() {
             </View>
           ) : (
             <PrimaryButton
-              label="Wanderung starten"
+              label={t.startHike}
               onPress={() =>
                 router.replace(
                   routeId

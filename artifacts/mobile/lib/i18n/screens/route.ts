@@ -1,0 +1,470 @@
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface RouteStrings {
+  notFound: string;
+  title: string;
+  distance: string;
+  ascent: string;
+  duration: string;
+  sacScale: string;
+  offlineAvailable: string;
+  saveForOffline: string;
+  offlineStatusActive: (size: string) => string;
+  offlineStatusInactive: string;
+  loadingMap: (done: number, total: number) => string;
+  loadingSaga: string;
+  removeDownload: string;
+  download: string;
+  downloadFailed: string;
+  downloadFailedText: string;
+  checkBeforeTour: string;
+  weatherLoading: string;
+  weather: string;
+  weatherNotAvailable: string;
+  wind: string;
+  trailCondition: string;
+  weatherNote: string;
+  energySavingTitle: string;
+  energySavingHint: string;
+  importGpx: string;
+  importGpxTitle: string;
+  importGpxText: string;
+  matchingSaga: string;
+  matchingSagaHintLoading: string;
+  matchingSagaHintLoaded: string;
+  sagaWriting: string;
+  sagaLoadError: string;
+  localisationNote: string;
+  premiumButton: string;
+  continueToSaga: string;
+  windValues: (speed: number, gusts: number) => string;
+  weatherValues: (label: string, temp: number) => string;
+  trailConditions: {
+    gut: string;
+    vorsicht: string;
+    kritisch: string;
+  };
+}
+
+const ROUTE_STRINGS: StringsDict<RouteStrings> = {
+  de: {
+    notFound: "Route nicht gefunden.",
+    title: "Routenplanung",
+    distance: "Distanz",
+    ascent: "Aufstieg",
+    duration: "Dauer",
+    sacScale: "SAC-Skala",
+    offlineAvailable: "Offline verfügbar",
+    saveForOffline: "Für offline sichern",
+    offlineStatusActive: (size) =>
+      `Sage und Karte liegen auf dem Gerät${size ? ` · ${size}` : ""}. Die Wanderung startet ohne Empfang.`,
+    offlineStatusInactive:
+      "Lädt die Sage und den Kartenausschnitt herunter, damit die Tour auch ohne Empfang funktioniert.",
+    loadingMap: (done, total) => `Karte wird gesichert … ${done}/${total}`,
+    loadingSaga: "Sage wird geladen …",
+    removeDownload: "Download entfernen",
+    download: "Herunterladen",
+    downloadFailed: "Download fehlgeschlagen",
+    downloadFailedText:
+      "Die Wanderung konnte nicht vollstaendig geladen werden. Bitte pruefe deine Verbindung und versuche es erneut.",
+    checkBeforeTour: "Vor der Tour prüfen",
+    weatherLoading: "Wetter wird geladen …",
+    weather: "Wetter",
+    weatherNotAvailable: "Nicht verfügbar",
+    wind: "Wind",
+    trailCondition: "Wegzustand",
+    weatherNote:
+      "Live-Wetter via Open-Meteo, kein offizieller Sperr- oder Lawinenstatus — Richtwerte zur eigenen Prüfung.",
+    energySavingTitle: "Energiesparmodus",
+    energySavingHint:
+      "Diese Tour verbraucht durch GPS und Audio spürbar Akku. Der Sparmodus schont die Batterie.",
+    importGpx: "GPX importieren",
+    importGpxTitle: "GPX-Import",
+    importGpxText:
+      "Der Import eigener GPX-Routen ist noch nicht verfügbar und folgt in einer späteren Ausbaustufe.",
+    matchingSaga: "Passende Sage",
+    matchingSagaHintLoading: "Die passende Regionalsage wird gesucht …",
+    matchingSagaHintLoaded:
+      "Diese überlieferte Legende begleitet dich auf der Route. Tippe an, um sie zu lesen.",
+    sagaWriting: "Sage wird geschrieben …",
+    sagaLoadError: "Die Sage konnte nicht geladen werden. Bitte prüfe deine Verbindung.",
+    localisationNote:
+      "Für diese Route ist keine punktgenau belegte Sage überliefert. Gezeigt wird die nächstgelegene dokumentierte Regionalsage.",
+    premiumButton: "Premium freischalten",
+    continueToSaga: "Zur Sage weiter",
+    windValues: (speed, gusts) => `${speed} km/h, Böen ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Gute Bedingungen",
+      vorsicht: "Mit Vorsicht begehbar",
+      kritisch: "Erschwerte Bedingungen",
+    },
+  },
+  gsw: {
+    notFound: "Route nid gfunde.",
+    title: "Roteplanig",
+    distance: "Distanz",
+    ascent: "Ufstieg",
+    duration: "Duur",
+    sacScale: "SAC-Skala",
+    offlineAvailable: "Offline verfügbär",
+    saveForOffline: "Für offline sichere",
+    offlineStatusActive: (size) =>
+      `Sag und Karte ligged ufem Grät${size ? ` · ${size}` : ""}. D'Wanderig startet ohni Empfang.`,
+    offlineStatusInactive:
+      "Ladet d'Sag und de Kartenuusschnitt abe, damit d'Tour au ohni Empfang funktioniert.",
+    loadingMap: (done, total) => `Karte wird gsicheret … ${done}/${total}`,
+    loadingSaga: "Sag wird glade …",
+    removeDownload: "Download entferne",
+    download: "Abelade",
+    downloadFailed: "Download fählgschlage",
+    downloadFailedText:
+      "D'Wanderig hät nid ganz chönne glade wärde. Bitte prüef dini Verbindig und probiers nomal.",
+    checkBeforeTour: "Vor de Tour prüefe",
+    weatherLoading: "Wätter wird glade …",
+    weather: "Wätter",
+    weatherNotAvailable: "Nid verfügbär",
+    wind: "Wind",
+    trailCondition: "Wegzuestand",
+    weatherNote:
+      "Live-Wätter via Open-Meteo, kei offizielle Sperr- oder Lawinestatus — Richtwärt zur eigene Prüfig.",
+    energySavingTitle: "Energiesparmodus",
+    energySavingHint:
+      "Die Tour verbruucht dur GPS und Audio spürbar Akku. De Sparmodus schont d'Batterie.",
+    importGpx: "GPX importiere",
+    importGpxTitle: "GPX-Import",
+    importGpxText:
+      "De Import vo eigene GPX-Rote isch no nid verfügbär und chunt spöter.",
+    matchingSaga: "Passendi Sag",
+    matchingSagaHintLoading: "Die passendi Regionalsag wird gsuecht …",
+    matchingSagaHintLoaded:
+      "Die überliifereti Legände begleitet dich uf de Rote. Tipp a, zum si läse.",
+    sagaWriting: "Sag wird gschribe …",
+    sagaLoadError: "D'Sag hät nid chönne glade wärde. Bitte prüef dini Verbindig.",
+    localisationNote:
+      "Für die Rote isch kei punktgnaui Sag überliiferet. Zeigt wird die nächschti dokumentierti Regionalsag.",
+    premiumButton: "Premium freischalte",
+    continueToSaga: "Wiiter zur Sag",
+    windValues: (speed, gusts) => `${speed} km/h, Böe ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Gueti Bedingige",
+      vorsicht: "Mit Vorsicht begehbar",
+      kritisch: "Erschwirti Bedingige",
+    },
+  },
+  en: {
+    notFound: "Route not found.",
+    title: "Route Planning",
+    distance: "Distance",
+    ascent: "Ascent",
+    duration: "Duration",
+    sacScale: "SAC Scale",
+    offlineAvailable: "Available offline",
+    saveForOffline: "Save for offline",
+    offlineStatusActive: (size) =>
+      `Legend and map are on the device${size ? ` · ${size}` : ""}. The hike starts without reception.`,
+    offlineStatusInactive:
+      "Downloads the legend and map section so the tour works even without reception.",
+    loadingMap: (done, total) => `Saving map … ${done}/${total}`,
+    loadingSaga: "Loading legend …",
+    removeDownload: "Remove download",
+    download: "Download",
+    downloadFailed: "Download failed",
+    downloadFailedText:
+      "The hike could not be fully loaded. Please check your connection and try again.",
+    checkBeforeTour: "Check before tour",
+    weatherLoading: "Loading weather …",
+    weather: "Weather",
+    weatherNotAvailable: "Not available",
+    wind: "Wind",
+    trailCondition: "Trail condition",
+    weatherNote:
+      "Live weather via Open-Meteo, no official closure or avalanche status — guide values for your own check.",
+    energySavingTitle: "Energy Saving Mode",
+    energySavingHint:
+      "This tour consumes noticeable battery due to GPS and audio. Energy saving mode conserves the battery.",
+    importGpx: "Import GPX",
+    importGpxTitle: "GPX Import",
+    importGpxText:
+      "Importing your own GPX routes is not yet available and will follow in a later stage.",
+    matchingSaga: "Matching Legend",
+    matchingSagaHintLoading: "Searching for matching regional legend …",
+    matchingSagaHintLoaded:
+      "This traditional legend accompanies you on the route. Tap to read it.",
+    sagaWriting: "Legend is being written …",
+    sagaLoadError: "The legend could not be loaded. Please check your connection.",
+    localisationNote:
+      "No pinpointed legend is documented for this route. The nearest documented regional legend is shown.",
+    premiumButton: "Unlock Premium",
+    continueToSaga: "Continue to legend",
+    windValues: (speed, gusts) => `${speed} km/h, gusts ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Good conditions",
+      vorsicht: "Walk with caution",
+      kritisch: "Difficult conditions",
+    },
+  },
+  fr: {
+    notFound: "Itinéraire non trouvé.",
+    title: "Planification",
+    distance: "Distance",
+    ascent: "Montée",
+    duration: "Durée",
+    sacScale: "Échelle SAC",
+    offlineAvailable: "Disponible hors ligne",
+    saveForOffline: "Enregistrer hors ligne",
+    offlineStatusActive: (size) =>
+      `La légende et la carte sont sur l'appareil${size ? ` · ${size}` : ""}. La randonnée commence sans réseau.`,
+    offlineStatusInactive:
+      "Télécharge la légende et la section de carte pour que le tour fonctionne même sans réseau.",
+    loadingMap: (done, total) => `Enregistrement de la carte … ${done}/${total}`,
+    loadingSaga: "Chargement de la légende …",
+    removeDownload: "Supprimer le téléchargement",
+    download: "Télécharger",
+    downloadFailed: "Échec du téléchargement",
+    downloadFailedText:
+      "La randonnée n'a pas pu être entièrement chargée. Veuillez vérifier votre connexion et réessayer.",
+    checkBeforeTour: "À vérifier avant le tour",
+    weatherLoading: "Chargement de la météo …",
+    weather: "Météo",
+    weatherNotAvailable: "Non disponible",
+    wind: "Vent",
+    trailCondition: "État du sentier",
+    weatherNote:
+      "Météo en direct via Open-Meteo, pas de statut officiel de fermeture ou d'avalanche — valeurs indicatives pour votre propre vérification.",
+    energySavingTitle: "Mode économie d'énergie",
+    energySavingHint:
+      "Ce tour consomme beaucoup de batterie à cause du GPS et de l'audio. Le mode économie préserve la batterie.",
+    importGpx: "Importer GPX",
+    importGpxTitle: "Import GPX",
+    importGpxText:
+      "L'importation de vos propres itinéraires GPX n'est pas encore disponible et suivra ultérieurement.",
+    matchingSaga: "Légende correspondante",
+    matchingSagaHintLoading: "Recherche de la légende régionale correspondante …",
+    matchingSagaHintLoaded:
+      "Cette légende traditionnelle vous accompagne sur l'itinéraire. Appuyez pour la lire.",
+    sagaWriting: "La légende s'écrit …",
+    sagaLoadError: "La légende n'a pas pu être chargée. Veuillez vérifier votre connexion.",
+    localisationNote:
+      "Aucune légende précise n'est documentée pour cet itinéraire. La légende régionale documentée la plus proche est affichée.",
+    premiumButton: "Débloquer Premium",
+    continueToSaga: "Continuer vers la légende",
+    windValues: (speed, gusts) => `${speed} km/h, rafales ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Bonnes conditions",
+      vorsicht: "Marcher avec prudence",
+      kritisch: "Conditions difficiles",
+    },
+  },
+  it: {
+    notFound: "Percorso non trovato.",
+    title: "Pianificazione",
+    distance: "Distanza",
+    ascent: "Salita",
+    duration: "Durata",
+    sacScale: "Scala SAC",
+    offlineAvailable: "Disponibile offline",
+    saveForOffline: "Salva per offline",
+    offlineStatusActive: (size) =>
+      `Leggenda e mappa sono sul dispositivo${size ? ` · ${size}` : ""}. L'escursione inizia senza ricezione.`,
+    offlineStatusInactive:
+      "Scarica la leggenda e la sezione della mappa in modo che il tour funzioni anche senza ricezione.",
+    loadingMap: (done, total) => `Salvataggio mappa … ${done}/${total}`,
+    loadingSaga: "Caricamento leggenda …",
+    removeDownload: "Rimuovi download",
+    download: "Scarica",
+    downloadFailed: "Download fallito",
+    downloadFailedText:
+      "L'escursione non può essere caricata completamente. Controlla la tua connessione e riprova.",
+    checkBeforeTour: "Controllare prima del tour",
+    weatherLoading: "Caricamento meteo …",
+    weather: "Meteo",
+    weatherNotAvailable: "Non disponibile",
+    wind: "Vento",
+    trailCondition: "Condizioni del sentiero",
+    weatherNote:
+      "Meteo in diretta via Open-Meteo, nessun stato ufficiale di chiusura o valanghe — valori indicativi per il proprio controllo.",
+    energySavingTitle: "Modalità risparmio energetico",
+    energySavingHint:
+      "Questo tour consuma molta batteria a causa del GPS e dell'audio. La modalità risparmio preserva la batteria.",
+    importGpx: "Importa GPX",
+    importGpxTitle: "Importazione GPX",
+    importGpxText:
+      "L'importazione dei propri percorsi GPX non è ancora disponibile e seguirà in una fase successiva.",
+    matchingSaga: "Leggenda corrispondente",
+    matchingSagaHintLoading: "Ricerca della leggenda regionale corrispondente …",
+    matchingSagaHintLoaded:
+      "Questa leggenda tradizionale ti accompagna lungo il percorso. Tocca per leggerla.",
+    sagaWriting: "La leggenda viene scritta …",
+    sagaLoadError: "Impossibile caricare la leggenda. Controlla la tua connessione.",
+    localisationNote:
+      "Non è documentata alcuna leggenda precisa per questo percorso. Viene mostrata la leggenda regionale documentata più vicina.",
+    premiumButton: "Sblocca Premium",
+    continueToSaga: "Continua alla leggenda",
+    windValues: (speed, gusts) => `${speed} km/h, raffiche ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Buone condizioni",
+      vorsicht: "Camminare con cautela",
+      kritisch: "Condizioni difficili",
+    },
+  },
+  es: {
+    notFound: "Ruta no encontrada.",
+    title: "Planificación",
+    distance: "Distancia",
+    ascent: "Ascenso",
+    duration: "Duración",
+    sacScale: "Escala SAC",
+    offlineAvailable: "Disponible sin conexión",
+    saveForOffline: "Guardar sin conexión",
+    offlineStatusActive: (size) =>
+      `La leyenda y el mapa están en el dispositivo${size ? ` · ${size}` : ""}. La caminata comienza sin recepción.`,
+    offlineStatusInactive:
+      "Descarga la leyenda y la sección del mapa para que el recorrido funcione incluso sin recepción.",
+    loadingMap: (done, total) => `Guardando mapa … ${done}/${total}`,
+    loadingSaga: "Cargando leyenda …",
+    removeDownload: "Eliminar descarga",
+    download: "Descargar",
+    downloadFailed: "Descarga fallida",
+    downloadFailedText:
+      "La caminata no se pudo cargar completamente. Por favor, comprueba tu conexión e inténtalo de nuevo.",
+    checkBeforeTour: "Comprobar antes del recorrido",
+    weatherLoading: "Cargando clima …",
+    weather: "Clima",
+    weatherNotAvailable: "No disponible",
+    wind: "Viento",
+    trailCondition: "Estado del sendero",
+    weatherNote:
+      "Clima en vivo a través de Open-Meteo, sin estado oficial de cierre o avalanchas — valores orientativos para su propia comprobación.",
+    energySavingTitle: "Modo ahorro de energía",
+    energySavingHint:
+      "Este recorrido consume mucha batería debido al GPS y al audio. El modo de ahorro conserva la batería.",
+    importGpx: "Importar GPX",
+    importGpxTitle: "Importación GPX",
+    importGpxText:
+      "La importación de rutas GPX propias aún no está disponible y seguirá en una etapa posterior.",
+    matchingSaga: "Leyenda correspondiente",
+    matchingSagaHintLoading: "Buscando leyenda regional correspondiente …",
+    matchingSagaHintLoaded:
+      "Esta leyenda tradicional te acompaña en la ruta. Toca para leerla.",
+    sagaWriting: "Se está escribiendo la leyenda …",
+    sagaLoadError: "No se pudo cargar la leyenda. Por favor, comprueba tu conexión.",
+    localisationNote:
+      "No hay ninguna leyenda documentada con precisión para esta ruta. Se muestra la leyenda regional documentada más cercana.",
+    premiumButton: "Desbloquear Premium",
+    continueToSaga: "Continuar a la leyenda",
+    windValues: (speed, gusts) => `${speed} km/h, ráfagas ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Buenas condiciones",
+      vorsicht: "Caminar con precaución",
+      kritisch: "Condiciones difíciles",
+    },
+  },
+  pt: {
+    notFound: "Rota não encontrada.",
+    title: "Planejamento",
+    distance: "Distância",
+    ascent: "Subida",
+    duration: "Duração",
+    sacScale: "Escala SAC",
+    offlineAvailable: "Disponível offline",
+    saveForOffline: "Salvar offline",
+    offlineStatusActive: (size) =>
+      `A lenda e o mapa estão no dispositivo${size ? ` · ${size}` : ""}. A caminhada começa sem recepção.`,
+    offlineStatusInactive:
+      "Baixa a lenda e a seção do mapa para que o passeio funcione mesmo sem recepção.",
+    loadingMap: (done, total) => `Salvando mapa … ${done}/${total}`,
+    loadingSaga: "Carregando lenda …",
+    removeDownload: "Remover download",
+    download: "Baixar",
+    downloadFailed: "Download falhou",
+    downloadFailedText:
+      "A caminhada não pôde ser totalmente carregada. Verifique sua conexão e tente novamente.",
+    checkBeforeTour: "Verificar antes do passeio",
+    weatherLoading: "Carregando clima …",
+    weather: "Clima",
+    weatherNotAvailable: "Não disponível",
+    wind: "Vento",
+    trailCondition: "Condição da trilha",
+    weatherNote:
+      "Clima ao vivo via Open-Meteo, sem status oficial de fechamento ou avalanche — valores orientativos para sua própria verificação.",
+    energySavingTitle: "Modo economia de energia",
+    energySavingHint:
+      "Este passeio consome muita bateria devido ao GPS e áudio. O modo de economia preserva a bateria.",
+    importGpx: "Importar GPX",
+    importGpxTitle: "Importação GPX",
+    importGpxText:
+      "A importação de suas próprias rotas GPX ainda não está disponível e seguirá em uma fase posterior.",
+    matchingSaga: "Lenda Correspondente",
+    matchingSagaHintLoading: "Procurando por lenda regional correspondente …",
+    matchingSagaHintLoaded:
+      "Esta lenda tradicional acompanha você na rota. Toque para ler.",
+    sagaWriting: "A lenda está sendo escrita …",
+    sagaLoadError: "A lenda não pôde ser carregada. Verifique sua conexão.",
+    localisationNote:
+      "Nenhuma lenda precisa está documentada para esta rota. A lenda regional documentada mais próxima é mostrada.",
+    premiumButton: "Desbloquear Premium",
+    continueToSaga: "Continuar para a lenda",
+    windValues: (speed, gusts) => `${speed} km/h, rajadas ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Boas condições",
+      vorsicht: "Caminhar com cautela",
+      kritisch: "Condições difíceis",
+    },
+  },
+  zh: {
+    notFound: "未找到路线。",
+    title: "路线规划",
+    distance: "距离",
+    ascent: "爬升",
+    duration: "时长",
+    sacScale: "SAC 分级",
+    offlineAvailable: "可离线使用",
+    saveForOffline: "保存至离线",
+    offlineStatusActive: (size) =>
+      `传说和地图已保存在设备上${size ? ` · ${size}` : ""}。徒步可在无信号时开始。`,
+    offlineStatusInactive: "下载传说和地图区域，以便在无信号时也能正常游览。",
+    loadingMap: (done, total) => `正在保存地图 … ${done}/${total}`,
+    loadingSaga: "正在加载传说 …",
+    removeDownload: "移除下载",
+    download: "下载",
+    downloadFailed: "下载失败",
+    downloadFailedText: "徒步行程未能完整加载。请检查网络连接并重试。",
+    checkBeforeTour: "行程前检查",
+    weatherLoading: "正在加载天气 …",
+    weather: "天气",
+    weatherNotAvailable: "不可用",
+    wind: "风力",
+    trailCondition: "路况",
+    weatherNote:
+      "天气数据来自 Open-Meteo，非官方封路或雪崩状态——仅供参考，请自行核实。",
+    energySavingTitle: "省电模式",
+    energySavingHint: "由于使用 GPS 和音频，此次行程较耗电。省电模式可延长续航。",
+    importGpx: "导入 GPX",
+    importGpxTitle: "GPX 导入",
+    importGpxText: "目前尚不支持导入自定义 GPX 路线，该功能将在后续版本中推出。",
+    matchingSaga: "匹配的传说",
+    matchingSagaHintLoading: "正在寻找匹配的地区传说 …",
+    matchingSagaHintLoaded: "这个古老的传说将伴随你的旅程。点击开始阅读。",
+    sagaWriting: "传说正在编写中 …",
+    sagaLoadError: "无法加载传说。请检查网络连接。",
+    localisationNote: "此路线暂无精确匹配的传说记录。显示的是最近的地区传说。",
+    premiumButton: "解锁 Premium",
+    continueToSaga: "前往传说",
+    windValues: (speed, gusts) => `${speed} km/h，阵风 ${gusts} km/h`,
+    weatherValues: (label, temp) => `${label}，${temp}°C`,
+    trailConditions: {
+      gut: "路况良好",
+      vorsicht: "谨慎通行",
+      kritisch: "路况复杂",
+    },
+  },
+};
+
+export const useRouteStrings = createUseStrings(ROUTE_STRINGS);

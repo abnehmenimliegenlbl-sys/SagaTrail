@@ -16,10 +16,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
-import { ARCHETYPES } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import { useSummaryStrings } from "@/lib/i18n/screens/summary";
 
 const WEB_TOP = 67;
 
@@ -30,16 +31,20 @@ export default function Summary() {
   const { lastHike, profile } = useApp();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
-  const archetype = ARCHETYPES.find((a) => a.id === profile?.archetype)?.title;
+  const onboardingStrings = useOnboardingStrings();
+  const t = useSummaryStrings();
+  const archetype = profile?.archetype
+    ? onboardingStrings.archetypes[profile.archetype].title
+    : undefined;
 
   if (!lastHike) {
     return (
       <Background>
         <View style={styles.center}>
           <Text style={{ color: colors.foreground, fontFamily: fonts.titleBold }}>
-            Keine Wanderung gefunden.
+            {t.noHikeFound}
           </Text>
-          <PrimaryButton label="Zur Übersicht" onPress={() => router.replace("/")} />
+          <PrimaryButton label={t.backToOverview} onPress={() => router.replace("/")} />
         </View>
       </Background>
     );
@@ -48,7 +53,7 @@ export default function Summary() {
   const decisions = lastHike.chapters.filter((c) => c.isDecisionPoint);
 
   const share = async () => {
-    const text = `Ich habe auf SagaTrail die Sage "${lastHike.routeName}" erwandert — ${lastHike.distanceKm} km durch die Berge, begleitet von einer alten Legende.`;
+    const text = t.shareTextTemplate(lastHike.routeName, lastHike.distanceKm);
     if (Platform.OS === "web") {
       return;
     }
@@ -71,29 +76,29 @@ export default function Summary() {
         <Animated.View entering={FadeIn} style={styles.hero}>
           <AchievementMarker size={100} unlocked />
           <Text style={[styles.unlocked, { color: colors.accent }]}>
-            ACHIEVEMENT FREIGESCHALTET
+            {t.achievementUnlocked}
           </Text>
           <Text style={[styles.title, { color: colors.foreground }]}>
             {lastHike.routeName}
           </Text>
           <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-            Als {archetype} durch die Sage gewandert
+            {t.archetypeSub(archetype ?? "")}
           </Text>
         </Animated.View>
 
         <SparkDivider style={{ marginVertical: 26 }} />
 
         <Animated.View entering={FadeInDown} style={styles.statsRow}>
-          <Stat value={`${lastHike.distanceKm}`} unit="km" label="Distanz" />
-          <Stat value={`${lastHike.ascentM}`} unit="hm" label="Aufstieg" />
-          <Stat value={lastHike.sacScale} unit="" label="SAC" />
-          <Stat value={`${lastHike.chapters.length}`} unit="" label="Kapitel" />
+          <Stat value={`${lastHike.distanceKm}`} unit="km" label={t.stats.distance} />
+          <Stat value={`${lastHike.ascentM}`} unit="hm" label={t.stats.ascent} />
+          <Stat value={lastHike.sacScale} unit="" label={t.stats.sac} />
+          <Stat value={`${lastHike.chapters.length}`} unit="" label={t.stats.chapters} />
         </Animated.View>
 
         {decisions.length > 0 && (
           <View style={{ marginTop: 30 }}>
             <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-              Deine Wahrnehmungen
+              {t.blockTitle}
             </Text>
             {decisions.map((d) => {
               const chosen =
@@ -112,7 +117,7 @@ export default function Summary() {
                     {d.decision?.question}
                   </Text>
                   <Text style={[styles.decisionA, { color: colors.foreground }]}>
-                    {chosen ? chosen.label : "Keine Wahl getroffen"}
+                    {chosen ? chosen.label : t.noChoiceMade}
                   </Text>
                   {chosen && (
                     <Text style={[styles.decisionTone, { color: colors.accent }]}>
@@ -131,12 +136,12 @@ export default function Summary() {
         >
           <Feather name="share-2" size={18} color={colors.foreground} />
           <Text style={[styles.shareText, { color: colors.foreground }]}>
-            Wanderung teilen
+            {t.shareBtn}
           </Text>
         </Pressable>
 
         <PrimaryButton
-          label="Zurück zur Übersicht"
+          label={t.backButton}
           onPress={() => router.replace("/")}
           style={{ marginTop: 12 }}
         />

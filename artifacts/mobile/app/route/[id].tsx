@@ -28,6 +28,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { bboxAroundGeometry } from "@/lib/geo";
 import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
@@ -35,6 +36,7 @@ import { Saga } from "@/types";
 const WEB_TOP = 67;
 
 export default function Routenplanung() {
+  const t = useRouteStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -129,7 +131,7 @@ export default function Routenplanung() {
       <Background>
         <View style={styles.center}>
           <Text style={{ color: colors.foreground, fontFamily: fonts.titleBold }}>
-            Route nicht gefunden.
+            {t.notFound}
           </Text>
         </View>
       </Background>
@@ -147,8 +149,8 @@ export default function Routenplanung() {
   const downloading = progress?.sagaId === sagaId;
   const progressText = downloading
     ? progress?.phase === "tiles"
-      ? `Karte wird gesichert … ${progress.done}/${progress.total}`
-      : "Sage wird geladen …"
+      ? t.loadingMap(progress.done, progress.total)
+      : t.loadingSaga
     : "";
 
   const onDownload = async () => {
@@ -158,8 +160,8 @@ export default function Routenplanung() {
       await download(saga, route, profile);
     } catch {
       Alert.alert(
-        "Download fehlgeschlagen",
-        "Die Wanderung konnte nicht vollstaendig geladen werden. Bitte pruefe deine Verbindung und versuche es erneut."
+        t.downloadFailed,
+        t.downloadFailedText
       );
     } finally {
       setBusy(false);
@@ -191,7 +193,7 @@ export default function Routenplanung() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader eyebrow={route.region} title="Routenplanung" onBack />
+        <ScreenHeader eyebrow={route.region} title={t.title} onBack />
 
         <Text style={[styles.routeName, { color: colors.foreground }]}>
           {meta.name}
@@ -215,10 +217,10 @@ export default function Routenplanung() {
         </View>
 
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>
-          <Stat label="Distanz" value={`${meta.distanceKm}`} unit="km" />
-          <Stat label="Aufstieg" value={`${meta.ascentM}`} unit="hm" />
-          <Stat label="Dauer" value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
-          <Stat label="SAC-Skala" value={meta.sac} unit="" />
+          <Stat label={t.distance} value={`${meta.distanceKm}`} unit="km" />
+          <Stat label={t.ascent} value={`${meta.ascentM}`} unit="hm" />
+          <Stat label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
+          <Stat label={t.sacScale} value={meta.sac} unit="" />
         </Animated.View>
 
         <View
@@ -237,13 +239,13 @@ export default function Routenplanung() {
               color={downloaded ? colors.accent : colors.foreground}
             />
             <Text style={[styles.downloadTitle, { color: colors.foreground }]}>
-              {downloaded ? "Offline verfügbar" : "Für offline sichern"}
+              {downloaded ? t.offlineAvailable : t.saveForOffline}
             </Text>
           </View>
           <Text style={[styles.downloadHint, { color: colors.mutedForeground }]}>
             {downloaded
-              ? `Sage und Karte liegen auf dem Gerät${sizeLabel ? ` · ${sizeLabel}` : ""}. Die Wanderung startet ohne Empfang.`
-              : "Lädt die Sage und den Kartenausschnitt herunter, damit die Tour auch ohne Empfang funktioniert."}
+              ? t.offlineStatusActive(sizeLabel)
+              : t.offlineStatusInactive}
           </Text>
 
           {downloading ? (
@@ -255,14 +257,14 @@ export default function Routenplanung() {
             </View>
           ) : downloaded ? (
             <PrimaryButton
-              label="Download entfernen"
+              label={t.removeDownload}
               variant="ghost"
               onPress={onDelete}
               style={{ marginTop: 14 }}
             />
           ) : (
             <PrimaryButton
-              label="Herunterladen"
+              label={t.download}
               variant="ghost"
               onPress={onDownload}
               style={{ marginTop: 14 }}
@@ -273,7 +275,7 @@ export default function Routenplanung() {
         <SparkDivider style={{ marginVertical: 22 }} />
 
         <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-          Vor der Tour prüfen
+          {t.checkBeforeTour}
         </Text>
         <View
           style={[
@@ -285,41 +287,44 @@ export default function Routenplanung() {
             <View style={styles.checkRow}>
               <ActivityIndicator size="small" color={colors.mutedForeground} />
               <Text style={[styles.checkLabel, { color: colors.mutedForeground }]}>
-                Wetter wird geladen …
+                {t.weatherLoading}
               </Text>
             </View>
           ) : weatherError || !weather ? (
             <View style={styles.checkRow}>
               <Feather name="cloud-off" size={16} color={colors.mutedForeground} />
-              <Text style={[styles.checkLabel, { color: colors.foreground }]}>Wetter</Text>
+              <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.weather}</Text>
               <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
-                Nicht verfügbar
+                {t.weatherNotAvailable}
               </Text>
             </View>
           ) : (
             <>
               <CheckRow
                 icon="cloud"
-                label="Wetter"
-                value={`${weather.conditionLabel}, ${Math.round(weather.temperatureC)}°C`}
+                label={t.weather}
+                value={t.weatherValues(weather.conditionLabel, Math.round(weather.temperatureC))}
                 ok
               />
               <CheckRow
                 icon="wind"
-                label="Wind"
-                value={`${Math.round(weather.windKmh)} km/h, Böen ${Math.round(weather.windGustsKmh)} km/h`}
+                label={t.wind}
+                value={t.windValues(Math.round(weather.windKmh), Math.round(weather.windGustsKmh))}
                 ok
               />
               <CheckRow
                 icon="alert-triangle"
-                label="Wegzustand"
-                value={weather.trailConditionLabel}
+                label={t.trailCondition}
+                value={
+                  t.trailConditions[
+                    weather.trailConditionLevel as keyof typeof t.trailConditions
+                  ] ?? weather.trailConditionLabel
+                }
                 ok={weather.trailConditionLevel === "gut"}
                 warn={weather.trailConditionLevel !== "gut"}
               />
               <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
-                {weather.trailConditionNote} Live-Wetter via Open-Meteo, kein offizieller
-                Sperr- oder Lawinenstatus — Richtwerte zur eigenen Prüfung.
+                {weather.trailConditionNote} {t.weatherNote}
               </Text>
             </>
           )}
@@ -334,11 +339,10 @@ export default function Routenplanung() {
         >
           <View style={{ flex: 1 }}>
             <Text style={[styles.energyTitle, { color: colors.foreground }]}>
-              Energiesparmodus
+              {t.energySavingTitle}
             </Text>
             <Text style={[styles.energyHint, { color: colors.mutedForeground }]}>
-              Diese Tour verbraucht durch GPS und Audio spürbar Akku. Der Sparmodus
-              schont die Batterie.
+              {t.energySavingHint}
             </Text>
           </View>
           <Switch
@@ -350,12 +354,12 @@ export default function Routenplanung() {
         </View>
 
         <PrimaryButton
-          label="GPX importieren"
+          label={t.importGpx}
           variant="ghost"
           onPress={() =>
             Alert.alert(
-              "GPX-Import",
-              "Der Import eigener GPX-Routen ist noch nicht verfügbar und folgt in einer späteren Ausbaustufe."
+              t.importGpxTitle,
+              t.importGpxText
             )
           }
           style={{ marginTop: 20 }}
@@ -364,12 +368,12 @@ export default function Routenplanung() {
         <SparkDivider style={{ marginVertical: 22 }} />
 
         <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-          Passende Sage
+          {t.matchingSaga}
         </Text>
         <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
           {sagaLoading
-            ? "Die passende Regionalsage wird gesucht …"
-            : "Diese überlieferte Legende begleitet dich auf der Route. Tippe an, um sie zu lesen."}
+            ? t.matchingSagaHintLoading
+            : t.matchingSagaHintLoaded}
         </Text>
 
         {sagaLoading ? (
@@ -383,7 +387,7 @@ export default function Routenplanung() {
             <Text
               style={[styles.sagaLoadingText, { color: colors.mutedForeground }]}
             >
-              Sage wird geschrieben …
+              {t.sagaWriting}
             </Text>
           </View>
         ) : !saga ? (
@@ -394,7 +398,7 @@ export default function Routenplanung() {
             ]}
           >
             <Text style={[styles.sagaMood, { color: colors.mutedForeground }]}>
-              Die Sage konnte nicht geladen werden. Bitte prüfe deine Verbindung.
+              {t.sagaLoadError}
             </Text>
           </View>
         ) : (
@@ -431,14 +435,13 @@ export default function Routenplanung() {
         !sagaLoading &&
         sagaLokalisierung(route, saga) === "nicht_exakt_lokalisierbar" ? (
           <Text style={[styles.localisationNote, { color: colors.mutedForeground }]}>
-            Für diese Route ist keine punktgenau belegte Sage überliefert. Gezeigt
-            wird die nächstgelegene dokumentierte Regionalsage.
+            {t.localisationNote}
           </Text>
         ) : null}
 
         {saga && !sagaLoading ? (
           <PrimaryButton
-            label={locked ? "Premium freischalten" : "Zur Sage weiter"}
+            label={locked ? t.premiumButton : t.continueToSaga}
             variant={locked ? "gold" : "primary"}
             onPress={() =>
               router.push(

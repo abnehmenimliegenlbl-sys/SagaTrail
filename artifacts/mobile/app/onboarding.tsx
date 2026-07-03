@@ -15,15 +15,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
-import {
-  AGE_TIERS,
-  ARCHETYPES,
-  CANTONS,
-  LANGUAGES,
-} from "@/constants/onboarding";
+import { AGE_TIERS, ARCHETYPES, CANTONS } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import {
+  LanguageCode,
+  NATIVE_LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from "@/lib/i18n/languageCode";
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
@@ -31,13 +32,14 @@ const WEB_TOP = 67;
 export default function Onboarding() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { saveProfile } = useApp();
+  const { saveProfile, language: activeLanguage, setPendingLanguage } = useApp();
+  const t = useOnboardingStrings();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [canton, setCanton] = useState<string | null>(null);
-  const [language, setLanguage] = useState("de");
+  const [language, setLanguage] = useState<LanguageCode>(activeLanguage);
   const [ageTier, setAgeTier] = useState<AgeTier | null>(null);
   const [consent, setConsent] = useState(false);
 
@@ -83,7 +85,7 @@ export default function Onboarding() {
           ageTier,
         });
       } catch {
-        setSaveError("Profil konnte nicht gespeichert werden. Bitte erneut versuchen.");
+        setSaveError(t.saveError);
       } finally {
         setSaving(false);
       }
@@ -123,20 +125,19 @@ export default function Onboarding() {
               SAGATRAIL
             </Text>
             <Text style={[styles.tagline, { color: colors.accent }]}>
-              Die Sagen der Alpen, lebendig auf deinem Weg
+              {t.brandTagline}
             </Text>
             <SparkDivider style={{ marginVertical: 24 }} />
             <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-              Du wanderst als Zeug:in durch uralte Schweizer Legenden. Sie werden
-              dir erzählt, während du gehst — Schritt für Schritt, Ort für Ort.
+              {t.intro}
             </Text>
             <Text style={[styles.label, { color: colors.foreground }]}>
-              Wie dürfen wir dich nennen?
+              {t.nameLabel}
             </Text>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Dein Name"
+              placeholder={t.namePlaceholder}
               placeholderTextColor={colors.mutedForeground}
               style={[
                 styles.input,
@@ -151,13 +152,13 @@ export default function Onboarding() {
         )}
 
         {step === 1 && (
-          <StepFrame title="Dein Archetyp" eyebrow="Schritt 2 von 5">
+          <StepFrame title={t.archetypeTitle} eyebrow={t.stepOf(2, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              Dein Archetyp verändert den Ton der Erzählung und wie du dargestellt
-              wirst — nie den Ausgang der Sage.
+              {t.archetypeHint}
             </Text>
             {ARCHETYPES.map((a, i) => {
               const active = archetype === a.id;
+              const strings = t.archetypes[a.id];
               return (
                 <Animated.View key={a.id} entering={FadeInDown.delay(i * 70)}>
                   <Pressable
@@ -174,15 +175,15 @@ export default function Onboarding() {
                     ]}
                   >
                     <Text style={[styles.cardEyebrow, { color: colors.accent }]}>
-                      {a.tagline.toUpperCase()}
+                      {strings.tagline.toUpperCase()}
                     </Text>
                     <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                      {a.title}
+                      {strings.title}
                     </Text>
                     <Text
                       style={[styles.cardBody, { color: colors.mutedForeground }]}
                     >
-                      {a.description}
+                      {strings.description}
                     </Text>
                   </Pressable>
                 </Animated.View>
@@ -192,10 +193,9 @@ export default function Onboarding() {
         )}
 
         {step === 2 && (
-          <StepFrame title="Deine Heimatregion" eyebrow="Schritt 3 von 5">
+          <StepFrame title={t.cantonTitle} eyebrow={t.stepOf(3, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              Wähle deinen Heimatkanton. Von hier aus beginnt deine Reise durch
-              die Sagenwelt.
+              {t.cantonHint}
             </Text>
             <View style={styles.chipWrap}>
               {CANTONS.map((cn) => {
@@ -230,16 +230,19 @@ export default function Onboarding() {
         )}
 
         {step === 3 && (
-          <StepFrame title="Deine Sprache" eyebrow="Schritt 4 von 5">
+          <StepFrame title={t.languageStepTitle} eyebrow={t.stepOf(4, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              In welcher Sprache sollen dir die Sagen erzählt werden?
+              {t.languageHint}
             </Text>
-            {LANGUAGES.map((l) => {
-              const active = language === l.code;
+            {SUPPORTED_LANGUAGES.map((code) => {
+              const active = language === code;
               return (
                 <Pressable
-                  key={l.code}
-                  onPress={() => setLanguage(l.code)}
+                  key={code}
+                  onPress={() => {
+                    setLanguage(code);
+                    setPendingLanguage(code);
+                  }}
                   style={[
                     styles.langRow,
                     {
@@ -251,10 +254,10 @@ export default function Onboarding() {
                 >
                   <View>
                     <Text style={[styles.langNative, { color: colors.foreground }]}>
-                      {l.native}
+                      {NATIVE_LANGUAGE_NAMES[code]}
                     </Text>
                     <Text style={[styles.langLabel, { color: colors.mutedForeground }]}>
-                      {l.label}
+                      {t.languageNames[code]}
                     </Text>
                   </View>
                   <View
@@ -273,18 +276,19 @@ export default function Onboarding() {
         )}
 
         {step === 4 && (
-          <StepFrame title="Alterstufe" eyebrow="Schritt 5 von 5">
+          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(5, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              Sie bestimmt, wie intensiv die Sagen erzählt werden.
+              {t.ageTierHint}
             </Text>
-            {AGE_TIERS.map((t) => {
-              const active = ageTier === t.id;
+            {AGE_TIERS.map((tier) => {
+              const active = ageTier === tier.id;
+              const strings = t.ageTiers[tier.id];
               return (
                 <Pressable
-                  key={t.id}
+                  key={tier.id}
                   onPress={() => {
-                    setAgeTier(t.id);
-                    if (t.id !== "kinder") setConsent(false);
+                    setAgeTier(tier.id);
+                    if (tier.id !== "kinder") setConsent(false);
                   }}
                   style={[
                     styles.card,
@@ -296,13 +300,13 @@ export default function Onboarding() {
                   ]}
                 >
                   <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                    {t.title}
+                    {strings.title}
                   </Text>
                   <Text style={[styles.tierRange, { color: colors.accent }]}>
-                    {t.range}
+                    {strings.range}
                   </Text>
                   <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
-                    {t.description}
+                    {strings.description}
                   </Text>
                 </Pressable>
               );
@@ -328,8 +332,7 @@ export default function Onboarding() {
                   ]}
                 />
                 <Text style={[styles.consentText, { color: colors.foreground }]}>
-                  Ich bin ein Elternteil oder erziehungsberechtigt und stimme der
-                  Nutzung durch ein Kind zu.
+                  {t.consentText}
                 </Text>
               </Pressable>
             )}
@@ -346,12 +349,12 @@ export default function Onboarding() {
         {step > 0 && (
           <Pressable onPress={() => setStep((s) => s - 1)} style={styles.backLink}>
             <Text style={[styles.backText, { color: colors.mutedForeground }]}>
-              Zurück
+              {t.back}
             </Text>
           </Pressable>
         )}
         <PrimaryButton
-          label={step === totalSteps - 1 ? "Reise beginnen" : "Weiter"}
+          label={step === totalSteps - 1 ? t.start : t.next}
           onPress={next}
           disabled={!canAdvance() || saving}
           loading={saving}

@@ -11,6 +11,7 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
+import { useCollectionStrings } from "@/lib/i18n/screens/collection";
 
 const WEB_TOP = 67;
 
@@ -19,6 +20,7 @@ export default function Sammlung() {
   const insets = useSafeAreaInsets();
   const { achievements } = useApp();
   const { sagas } = useCatalog();
+  const t = useCollectionStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
@@ -34,7 +36,7 @@ export default function Sammlung() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader eyebrow="Deine Reise" title="Sammlung" />
+        <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
         <View style={[styles.statRow]}>
           <View style={styles.stat}>
@@ -42,7 +44,7 @@ export default function Sammlung() {
               {achievements.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Sagen erlebt
+              {t.sagasExperienced}
             </Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
@@ -51,7 +53,7 @@ export default function Sammlung() {
               {sagas.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Insgesamt
+              {t.total}
             </Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
@@ -60,7 +62,7 @@ export default function Sammlung() {
               {cantons.length}
             </Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Kantone
+              {t.cantons}
             </Text>
           </View>
         </View>
@@ -71,8 +73,7 @@ export default function Sammlung() {
           <View style={styles.empty}>
             <Feather name="award" size={30} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              Noch keine Sage erlebt. Starte deine erste Wanderung, um Funken zu
-              sammeln.
+              {t.emptyState}
             </Text>
           </View>
         )}

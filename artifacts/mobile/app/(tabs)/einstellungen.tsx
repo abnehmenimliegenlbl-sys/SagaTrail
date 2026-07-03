@@ -21,9 +21,15 @@ import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
-import { AGE_TIERS, ARCHETYPES, LANGUAGES } from "@/constants/onboarding";
+import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import { useEinstellungenStrings } from "@/lib/i18n/screens/einstellungen";
+import {
+  NATIVE_LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { AgeTier, Archetype } from "@/types";
 
@@ -34,6 +40,8 @@ export default function Einstellungen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signOut } = useAuth();
+  const t = useEinstellungenStrings();
+  const onboardingStrings = useOnboardingStrings();
   const {
     profile,
     premium,
@@ -65,15 +73,15 @@ export default function Einstellungen() {
   };
 
   const cycleLang = () => {
-    const idx = LANGUAGES.findIndex((l) => l.code === profile?.language);
-    const nextLang = LANGUAGES[(idx + 1) % LANGUAGES.length];
-    updateProfile({ language: nextLang.code });
+    const idx = SUPPORTED_LANGUAGES.findIndex((c) => c === profile?.language);
+    const nextLang = SUPPORTED_LANGUAGES[(idx + 1) % SUPPORTED_LANGUAGES.length];
+    updateProfile({ language: nextLang });
   };
 
   const handleExport = async () => {
     const json = await exportData();
     if (Platform.OS === "web") {
-      Alert.alert("Datenexport", json.slice(0, 500));
+      Alert.alert(t.exportTitle, json.slice(0, 500));
       return;
     }
     try {
@@ -85,12 +93,12 @@ export default function Einstellungen() {
 
   const handleReset = () => {
     Alert.alert(
-      "Konto & Daten löschen",
-      "Alle lokalen Daten werden unwiderruflich gelöscht. Fortfahren?",
+      t.deleteAlertTitle,
+      t.deleteAlertMessage,
       [
-        { text: "Abbrechen", style: "cancel" },
+        { text: t.cancel, style: "cancel" },
         {
-          text: "Löschen",
+          text: t.delete,
           style: "destructive",
           onPress: () => resetAll(),
         },
@@ -99,10 +107,10 @@ export default function Einstellungen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Abmelden", "Möchtest du dich wirklich abmelden?", [
-      { text: "Abbrechen", style: "cancel" },
+    Alert.alert(t.logoutAlertTitle, t.logoutAlertMessage, [
+      { text: t.cancel, style: "cancel" },
       {
-        text: "Abmelden",
+        text: t.logout,
         style: "destructive",
         onPress: async () => {
           await signOut();
@@ -112,9 +120,15 @@ export default function Einstellungen() {
     ]);
   };
 
-  const archLabel = ARCHETYPES.find((a) => a.id === profile?.archetype)?.title;
-  const ageLabel = AGE_TIERS.find((a) => a.id === profile?.ageTier)?.title;
-  const langLabel = LANGUAGES.find((l) => l.code === profile?.language)?.native;
+  const archLabel = profile?.archetype
+    ? onboardingStrings.archetypes[profile.archetype].title
+    : undefined;
+  const ageLabel = profile?.ageTier
+    ? onboardingStrings.ageTiers[profile.ageTier].title
+    : undefined;
+  const langLabel = profile?.language
+    ? NATIVE_LANGUAGE_NAMES[profile.language as keyof typeof NATIVE_LANGUAGE_NAMES]
+    : undefined;
 
   return (
     <Background>
@@ -126,24 +140,24 @@ export default function Einstellungen() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <ScreenHeader eyebrow="Dein Profil" title="Einstellungen" />
+        <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
-        <Section title="Profil">
-          <RowButton label="Name" value={profile?.name ?? "-"} />
-          <RowButton label="Heimatkanton" value={profile?.homeCanton ?? "-"} />
-          <RowButton label="Archetyp" value={archLabel ?? "-"} onPress={cycleArchetype} />
-          <RowButton label="Alterstufe" value={ageLabel ?? "-"} onPress={cycleAge} />
-          <RowButton label="Sprache" value={langLabel ?? "-"} onPress={cycleLang} />
+        <Section title={t.sectionProfil}>
+          <RowButton label={t.nameLabel} value={profile?.name ?? "-"} />
+          <RowButton label={t.homeCantonLabel} value={profile?.homeCanton ?? "-"} />
+          <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
+          <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
+          <RowButton label={t.languageLabel} value={langLabel ?? "-"} onPress={cycleLang} />
         </Section>
 
-        <Section title="Wanderung">
+        <Section title={t.sectionWanderung}>
           <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>
-                Energiesparmodus
+                {t.powerSaveLabel}
               </Text>
               <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
-                Reduziert GPS-Genauigkeit und Kartenaktualisierung
+                {t.powerSaveHint}
               </Text>
             </View>
             <Switch
@@ -155,44 +169,44 @@ export default function Einstellungen() {
           </View>
         </Section>
 
-        <Section title="Notfallkontakt">
+        <Section title={t.sectionNotfallkontakt}>
           <TextInput
             value={contactName}
             onChangeText={setContactName}
-            placeholder="Name"
+            placeholder={t.contactNamePlaceholder}
             placeholderTextColor={colors.mutedForeground}
             style={[styles.input, inputStyle(colors)]}
           />
           <TextInput
             value={contactPhone}
             onChangeText={setContactPhone}
-            placeholder="Telefonnummer"
+            placeholder={t.contactPhonePlaceholder}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="phone-pad"
             style={[styles.input, inputStyle(colors)]}
           />
           <PrimaryButton
-            label="Kontakt speichern"
+            label={t.saveContactButton}
             variant="ghost"
             onPress={() => {
               if (contactName && contactPhone) {
                 saveEmergencyContact({ name: contactName, phone: contactPhone });
-                Alert.alert("Gespeichert", "Notfallkontakt wurde gesichert.");
+                Alert.alert(t.contactSavedTitle, t.contactSavedMessage);
               }
             }}
             style={{ marginTop: 4 }}
           />
         </Section>
 
-        <Section title="Abonnement">
+        <Section title={t.sectionAbonnement}>
           <RowButton
-            label="Status"
-            value={premium ? "Premium aktiv" : "Kostenlos"}
+            label={t.subscriptionStatusLabel}
+            value={premium ? t.subscriptionActive : t.subscriptionFree}
             onPress={() => router.push("/paywall")}
           />
           {premium && (
             <PrimaryButton
-              label="Premium zurücksetzen (Demo)"
+              label={t.resetPremiumButton}
               variant="ghost"
               onPress={lockPremium}
               style={{ marginTop: 8 }}
@@ -202,27 +216,27 @@ export default function Einstellungen() {
 
         <SparkDivider style={{ marginVertical: 22 }} />
 
-        <Section title="Recht & Daten">
+        <Section title={t.sectionRechtDaten}>
           <RowButton
-            label="Datenschutz"
+            label={t.privacyLabel}
             value=""
             icon="chevron-right"
             onPress={() => router.push("/legal/datenschutz")}
           />
           <RowButton
-            label="Impressum"
+            label={t.legalLabel}
             value=""
             icon="chevron-right"
             onPress={() => router.push("/legal/impressum")}
           />
           <RowButton
-            label="Daten exportieren"
+            label={t.exportDataLabel}
             value=""
             icon="download"
             onPress={handleExport}
           />
           <RowButton
-            label="Support kontaktieren"
+            label={t.supportLabel}
             value=""
             icon="mail"
             onPress={async () => {
@@ -231,30 +245,30 @@ export default function Einstellungen() {
                 if (await Linking.canOpenURL(url)) {
                   await Linking.openURL(url);
                 } else {
-                  Alert.alert("E-Mail", "support@sagatrail.ch");
+                  Alert.alert(t.emailAlertTitle, "support@sagatrail.ch");
                 }
               } catch {
-                Alert.alert("E-Mail", "support@sagatrail.ch");
+                Alert.alert(t.emailAlertTitle, "support@sagatrail.ch");
               }
             }}
           />
         </Section>
 
         <PrimaryButton
-          label="Abmelden"
+          label={t.logoutButton}
           variant="ghost"
           onPress={handleLogout}
           style={{ marginTop: 10 }}
         />
 
         <PrimaryButton
-          label="Konto & Daten löschen"
+          label={t.deleteAccountButton}
           onPress={handleReset}
           style={{ marginTop: 10 }}
         />
 
         <Text style={[styles.version, { color: colors.mutedForeground }]}>
-          SagaTrail · Version 1.0.0 · Erststart-Build
+          {t.versionFooter("1.0.0", "Erststart-Build")}
         </Text>
       </ScrollView>
     </Background>

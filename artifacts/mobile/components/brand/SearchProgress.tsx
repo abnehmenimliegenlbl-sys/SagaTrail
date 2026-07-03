@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { fonts } from "@/constants/typography";
+import { useSearchProgressStrings } from "@/lib/i18n/screens/searchProgress";
 import { useColors } from "@/hooks/useColors";
 
 /**
@@ -25,15 +26,16 @@ import { useColors } from "@/hooks/useColors";
 const STEP_MS = 2400;
 
 export function SearchProgress({ cantonName }: { cantonName?: string }) {
+  const t = useSearchProgressStrings();
   const colors = useColors();
   const [trackWidth, setTrackWidth] = useState(0);
   const [step, setStep] = useState(0);
 
   const steps = [
-    `${cantonName || "Kanton"} wird durchsucht …`,
-    "Passende Routen werden herausgefiltert …",
-    "Höhenprofile von swisstopo werden geladen …",
-    "Routen werden zusammengestellt …",
+    t.stepSearching(cantonName || ""),
+    t.stepFiltering,
+    t.stepLoadingElevation,
+    t.stepCompiling,
   ];
 
   // Statuszeile schrittweise weiterschalten und auf der letzten Zeile halten.
@@ -79,7 +81,7 @@ export function SearchProgress({ cantonName }: { cantonName?: string }) {
       ]}
     >
       <Text style={[styles.title, { color: colors.foreground }]}>
-        Echte Wanderrouten werden gesucht
+        {t.title}
       </Text>
 
       <View
@@ -101,7 +103,7 @@ export function SearchProgress({ cantonName }: { cantonName?: string }) {
         {steps[step]}
       </Text>
       <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-        Die erste Suche eines Kantons dauert einen Moment, danach geht es schnell.
+        {t.hint}
       </Text>
     </View>
   );

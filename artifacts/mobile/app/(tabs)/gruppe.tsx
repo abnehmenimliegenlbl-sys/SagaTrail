@@ -20,23 +20,14 @@ import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useGruppeStrings } from "@/lib/i18n/screens/gruppe";
+import { AgeTier } from "@/types";
 
 const WEB_TOP = 67;
 
-const TIER_LABEL: Record<string, string> = {
-  kinder: "Kinder",
-  jugendliche: "Jugendliche",
-  erwachsene: "Erwachsene",
-};
-
-const ERROR_LABEL: Record<string, string> = {
-  not_found: "Kein aktiver Beitritts-Code mit dieser Nummer gefunden.",
-  network: "Server nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
-  unbekannt: "Unerwarteter Fehler. Bitte versuche es erneut.",
-};
-
 export default function Gruppe() {
   const colors = useColors();
+  const t = useGruppeStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const {
@@ -80,15 +71,23 @@ export default function Gruppe() {
 
   const statusLabel =
     groupConnectionStatus === "verbindet"
-      ? "Verbinde …"
+      ? t.connecting
       : groupConnectionStatus === "verbunden"
-        ? "Live verbunden"
-        : "Getrennt";
+        ? t.statusLive
+        : t.statusDisconnected;
 
   const statusColor =
     groupConnectionStatus === "verbunden"
       ? colors.accent
       : colors.mutedForeground;
+
+  const errorLabel = groupError
+    ? groupError === "not_found"
+      ? t.errorNotFound
+      : groupError === "network"
+        ? t.errorNetwork
+        : t.errorUnknown
+    : null;
 
   return (
     <Background>
@@ -100,11 +99,10 @@ export default function Gruppe() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <ScreenHeader eyebrow="Gemeinsam wandern" title="Gruppe" />
+        <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          Erlebt eine Sage zusammen. Die Alterstufe des jüngsten Mitglieds bestimmt
-          die Erzählung, das Gerät der Leitung führt per GPS.
+          {t.intro}
         </Text>
 
         {groupError && groupError !== "premium_required" && (
@@ -116,7 +114,7 @@ export default function Gruppe() {
           >
             <Feather name="alert-triangle" size={18} color={colors.accent} />
             <Text style={[styles.errorText, { color: colors.foreground }]}>
-              {ERROR_LABEL[groupError] ?? ERROR_LABEL.unbekannt}
+              {errorLabel}
             </Text>
           </View>
         )}
@@ -131,15 +129,13 @@ export default function Gruppe() {
             >
               <Feather name="plus-circle" size={22} color={colors.accent} />
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Session erstellen
+                {t.createSessionTitle}
               </Text>
               <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
-                Erzeuge einen Beitritts-Code, den deine Gruppe eingeben kann. Der
-                Code gilt nur für diese Wanderung.
-                {!premium ? " Erfordert Premium." : ""}
+                {t.createSessionBody(premium)}
               </Text>
               <PrimaryButton
-                label="Session erstellen"
+                label={t.createSessionButton}
                 variant="gold"
                 onPress={handleCreate}
                 style={{ marginTop: 14 }}
@@ -156,12 +152,12 @@ export default function Gruppe() {
             >
               <Feather name="log-in" size={22} color={colors.accent} />
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Session beitreten
+                {t.joinSessionTitle}
               </Text>
               <TextInput
                 value={joinCode}
-                onChangeText={(t) => setJoinCode(t.toUpperCase())}
-                placeholder="6-stelliger Code"
+                onChangeText={(text) => setJoinCode(text.toUpperCase())}
+                placeholder={t.joinCodePlaceholder}
                 placeholderTextColor={colors.mutedForeground}
                 autoCapitalize="characters"
                 maxLength={6}
@@ -176,7 +172,7 @@ export default function Gruppe() {
               />
               <PrimaryButton
                 label={
-                  groupConnectionStatus === "verbindet" ? "Verbinde …" : "Beitreten"
+                  groupConnectionStatus === "verbindet" ? t.connecting : t.joinSessionButton
                 }
                 onPress={() => {
                   if (joinCode.length === 6) {
@@ -204,18 +200,18 @@ export default function Gruppe() {
                 </Text>
               </View>
               <Text style={[styles.codeLabel, { color: colors.mutedForeground }]}>
-                {groupSession.isLeader ? "DEIN BEITRITTS-CODE" : "AKTIVE SESSION"}
+                {groupSession.isLeader ? t.codeLabelLeader : t.codeLabelMember}
               </Text>
               <Text style={[styles.code, { color: colors.foreground }]}>
                 {groupSession.code}
               </Text>
               <Text style={[styles.tierNote, { color: colors.accent }]}>
-                Erzählstufe: {TIER_LABEL[youngest ?? "erwachsene"]} (jüngstes Mitglied)
+                {t.tierNote(t.ageTiers[youngest as AgeTier] ?? t.ageTiers.erwachsene)}
               </Text>
             </View>
 
             <Text style={[styles.membersTitle, { color: colors.foreground }]}>
-              Mitglieder ({groupSession.members.length})
+              {t.membersTitle(groupSession.members.length)}
             </Text>
 
             {groupSession.members.map((m) => (
@@ -236,13 +232,13 @@ export default function Gruppe() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.memberName, { color: colors.foreground }]}>
                     {m.name}
-                    {m.isLeader ? "  ·  Leitung" : ""}
+                    {m.isLeader ? `  ·  ${t.leaderLabel}` : ""}
                   </Text>
                   <Text style={[styles.memberTier, { color: colors.mutedForeground }]}>
-                    {TIER_LABEL[m.ageTier]}
+                    {t.ageTiers[m.ageTier as AgeTier]}
                     {m.activity.type === "wandert"
-                      ? `  ·  wandert: ${m.activity.sagaTitle}`
-                      : "  ·  bereit"}
+                      ? `  ·  ${t.activityWandering(m.activity.sagaTitle)}`
+                      : `  ·  ${t.activityReady}`}
                   </Text>
                 </View>
                 {groupSession.isLeader && !m.isLeader && (
@@ -254,12 +250,11 @@ export default function Gruppe() {
             ))}
 
             <Text style={[styles.syncNote, { color: colors.mutedForeground }]}>
-              Live verbunden: Beitritte, Austritte und Wander-Status der Gruppe
-              werden in Echtzeit synchronisiert.
+              {t.syncNote}
             </Text>
 
             <PrimaryButton
-              label="Session verlassen"
+              label={t.leaveSessionButton}
               variant="ghost"
               onPress={() => {
                 buzz();

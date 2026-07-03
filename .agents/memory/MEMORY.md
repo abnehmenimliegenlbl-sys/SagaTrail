@@ -7,4 +7,5 @@
 - [Clerk Expo hook API](clerk-expo-hook-api.md) — `@clerk/expo`'s default `useSignIn`/`useSignUp` are the new signals API; classic imperative hooks live at `@clerk/expo/legacy`.
 - [react-native-web Alert.alert is a no-op](rn-web-alert-noop.md) — confirm dialogs (logout/delete/reset) silently do nothing on web; expected, not a regression.
 - [WebSocket testing hits HTTP/2 proxy quirk](websocket-proxy-http2.md) — browser e2e WS tests can fail via the shared proxy even when server WS auth is correct; verify with curl --http1.1 + a minted token before assuming an app bug.
+- [SagaTrail UI-chrome i18n](sagatrail-ui-chrome-i18n.md) — app chrome (all 8 langs) is separate from narration i18n; per-screen strings dict pattern, permanent language override once user picks one.
 - [SagaTrail navigation cues](sagatrail-navigation-cues.md) — turn cues are woven client-side from real route geometry at hike-start, after story resolution, not baked into stored/AI-generated chapters.

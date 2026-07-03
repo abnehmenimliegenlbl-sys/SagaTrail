@@ -19,16 +19,9 @@ import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { usePaywallStrings } from "@/lib/i18n/screens/paywall";
 
 const WEB_TOP = 67;
-
-const FEATURES = [
-  "Alle 26 Kantone und ihre Sagen",
-  "Unbegrenzte Wanderungen",
-  "Erweiterte Charakter-Anpassung",
-  "Alle Archetypen und Erzählstimmen",
-  "Gruppenmodus ohne Limit",
-];
 
 type Plan = "monat" | "jahr";
 
@@ -37,6 +30,7 @@ export default function Paywall() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { unlockPremium, premium } = useApp();
+  const t = usePaywallStrings();
 
   const [plan, setPlan] = useState<Plan>("jahr");
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -46,11 +40,9 @@ export default function Paywall() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     unlockPremium();
-    Alert.alert(
-      "Willkommen bei Premium",
-      "Alle Kantone und Sagen sind jetzt freigeschaltet.",
-      [{ text: "Los geht's", onPress: () => router.back() }]
-    );
+    Alert.alert(t.successAlertTitle, t.successAlertMsg, [
+      { text: t.successAlertBtn, onPress: () => router.back() },
+    ]);
   };
 
   return (
@@ -70,19 +62,15 @@ export default function Paywall() {
 
         <View style={styles.hero}>
           <SparkMountain size={90} pulsing />
-          <Text style={[styles.title, { color: colors.foreground }]}>
-            SAGATRAIL PREMIUM
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.accent }]}>
-            Die ganze Schweiz und all ihre Legenden
-          </Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>{t.title}</Text>
+          <Text style={[styles.subtitle, { color: colors.accent }]}>{t.subtitle}</Text>
         </View>
 
         {premium ? (
           <View style={[styles.activeBox, { borderColor: colors.accent }]}>
             <Feather name="check-circle" size={22} color={colors.accent} />
             <Text style={[styles.activeText, { color: colors.foreground }]}>
-              Premium ist bereits aktiv. Viel Freude auf allen Wegen.
+              {t.activeBox}
             </Text>
           </View>
         ) : (
@@ -90,7 +78,7 @@ export default function Paywall() {
             <SparkDivider style={{ marginVertical: 24 }} />
 
             <View style={styles.features}>
-              {FEATURES.map((f) => (
+              {t.features.map((f) => (
                 <View key={f} style={styles.featureRow}>
                   <Feather name="check" size={18} color={colors.accent} />
                   <Text style={[styles.featureText, { color: colors.foreground }]}>
@@ -104,42 +92,36 @@ export default function Paywall() {
               <PlanCard
                 active={plan === "jahr"}
                 onPress={() => setPlan("jahr")}
-                title="Jahresabo"
+                title={t.plans.yearTitle}
                 price="CHF 59.–"
-                per="/ Jahr"
-                badge="2 Monate gratis"
+                per={t.plans.yearPer}
+                badge={t.plans.yearBadge}
               />
               <PlanCard
                 active={plan === "monat"}
                 onPress={() => setPlan("monat")}
-                title="Monatsabo"
+                title={t.plans.monthTitle}
                 price="CHF 6.90"
-                per="/ Monat"
+                per={t.plans.monthPer}
               />
             </View>
 
             <PrimaryButton
-              label={plan === "jahr" ? "Jahresabo starten" : "Monatsabo starten"}
+              label={plan === "jahr" ? t.buyYearBtn : t.buyMonthBtn}
               onPress={buy}
               style={{ marginTop: 22 }}
             />
             <Pressable
-              onPress={() =>
-                Alert.alert(
-                  "Kauf wiederherstellen",
-                  "In diesem Erststart-Build sind noch keine echten Käufe hinterlegt."
-                )
-              }
+              onPress={() => Alert.alert(t.restoreAlertTitle, t.restoreAlertMsg)}
               style={styles.restore}
             >
               <Text style={[styles.restoreText, { color: colors.mutedForeground }]}>
-                Kauf wiederherstellen
+                {t.restoreBtn}
               </Text>
             </Pressable>
 
             <Text style={[styles.legal, { color: colors.mutedForeground }]}>
-              Abonnement verlängert sich automatisch, bis es gekündigt wird. In
-              diesem Build werden keine echten Zahlungen ausgelöst.
+              {t.legalText}
             </Text>
           </>
         )}

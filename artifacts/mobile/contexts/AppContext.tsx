@@ -24,6 +24,8 @@ import {
   type GroupMember,
   type GroupSocketError,
 } from "@/lib/groupSocket";
+import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
+import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
 // seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
@@ -34,6 +36,7 @@ const KEYS = {
   emergency: "sagatrail:emergencyContact",
   energysave: "sagatrail:energiesparmodus",
   lastHike: "sagatrail:lastHike",
+  uiLanguage: "sagatrail:uiLanguage",
 } as const;
 
 export interface EmergencyContact {
@@ -52,6 +55,12 @@ export interface GroupSession {
 interface AppContextValue {
   hydrated: boolean;
   profile: Profile | null;
+  /**
+   * Aktive UI-/Erzaehlsprache: `profile.language`, falls ein Profil
+   * existiert, sonst die einmalig erkannte Systemsprache (Fallback
+   * Englisch). Nutzt dies fuer alle UI-Texte (siehe `lib/i18n`).
+   */
+  language: LanguageCode;
   premium: boolean;
   achievements: Achievement[];
   emergencyContact: EmergencyContact | null;
@@ -63,6 +72,14 @@ interface AppContextValue {
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
+  /**
+   * Setzt die Sprache VOR Abschluss des Onboardings (kein Profil
+   * vorhanden). Wird von der Sprachauswahl im Onboarding aufgerufen, damit
+   * sich die UI live umstellt und die Wahl auch bei Abbruch erhalten
+   * bleibt. Hat, sobald ein Profil existiert, keine Wirkung mehr — dann
+   * gilt ausschliesslich `profile.language`.
+   */
+  setPendingLanguage: (code: LanguageCode) => Promise<void>;
   unlockPremium: () => Promise<void>;
   lockPremium: () => Promise<void>;
   addAchievement: (sagaTitle: string, sagaId: string) => Promise<void>;
@@ -93,6 +110,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     useState<EmergencyContact | null>(null);
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
+  const [pendingLanguage, setPendingLanguageState] =
+    useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
   const [groupConnectionStatus, setGroupConnectionStatus] =
     useState<GroupConnectionStatus>("getrennt");
@@ -166,6 +185,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.emergency,
           KEYS.energysave,
           KEYS.lastHike,
+          KEYS.uiLanguage,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
@@ -177,6 +197,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (map[KEYS.energysave])
           setEnergiesparmodusState(map[KEYS.energysave] === "true");
         if (map[KEYS.lastHike]) setLastHike(JSON.parse(map[KEYS.lastHike]!));
+        if (map[KEYS.uiLanguage]) {
+          // Sprache wurde schon einmal festgelegt (System-Erkennung oder
+          // explizite Wahl) — diese hat fuer immer Vorrang.
+          setPendingLanguageState(map[KEYS.uiLanguage] as LanguageCode);
+        } else {
+          // Allererster Start: Systemsprache erkennen, auf unterstuetzte
+          // Sprachen abbilden (sonst Englisch) und dauerhaft merken.
+          const detected = detectSystemLanguage();
+          setPendingLanguageState(detected);
+          AsyncStorage.setItem(KEYS.uiLanguage, detected);
+        }
       } catch {
         // Bei defekten Daten starten wir mit leerem Zustand
       } finally {
@@ -372,6 +403,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(KEYS.energysave, value ? "true" : "false");
   }, []);
 
+  const setPendingLanguage = useCallback(async (code: LanguageCode) => {
+    setPendingLanguageState(code);
+    await AsyncStorage.setItem(KEYS.uiLanguage, code);
+  }, []);
+
   const saveHike = useCallback(async (hike: HikeSession) => {
     setLastHike(hike);
     await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
@@ -438,10 +474,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const clearGroupError = useCallback(() => setGroupError(null), []);
 
+  const language = (profile?.language as LanguageCode | undefined) ?? pendingLanguage;
+
   const value = useMemo<AppContextValue>(
     () => ({
       hydrated,
       profile,
+      language,
       premium,
       achievements,
       emergencyContact,
@@ -452,6 +491,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupError,
       saveProfile,
       updateProfile,
+      setPendingLanguage,
       unlockPremium,
       lockPremium,
       addAchievement,
@@ -470,6 +510,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [
       hydrated,
       profile,
+      language,
       premium,
       achievements,
       emergencyContact,
@@ -480,6 +521,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupError,
       saveProfile,
       updateProfile,
+      setPendingLanguage,
       unlockPremium,
       lockPremium,
       addAchievement,

@@ -18,9 +18,10 @@ import { Background } from "@/components/brand/Background";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
-import { ARCHETYPES } from "@/constants/onboarding";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
+import { useHomeStrings } from "@/lib/i18n/screens/home";
+import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useColors } from "@/hooks/useColors";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -32,10 +33,13 @@ export default function Entdecken() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useApp();
+  const t = useHomeStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
-  const archetypeTitle =
-    ARCHETYPES.find((a) => a.id === profile?.archetype)?.title ?? "";
+  const onboardingStrings = useOnboardingStrings();
+  const archetypeTitle = profile?.archetype
+    ? onboardingStrings.archetypes[profile.archetype].title
+    : "";
 
   const { cantons } = useCatalog();
   const homeCanton = profile?.homeCanton;
@@ -51,10 +55,10 @@ export default function Entdecken() {
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
-              Willkommen zurück
+              {t.welcomeBack}
             </Text>
             <Text style={[styles.name, { color: colors.foreground }]}>
-              {profile?.name ?? "Wander:in"}
+              {profile?.name ?? t.defaultName}
             </Text>
             <Text style={[styles.archetype, { color: colors.accent }]}>
               {archetypeTitle}
@@ -71,14 +75,13 @@ export default function Entdecken() {
           />
           <View style={styles.heroContent}>
             <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
-              SCHRITT 1 · KANTON WÄHLEN
+              {t.step1Title}
             </Text>
             <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-              Wo startest du?
+              {t.whereStart}
             </Text>
             <Text style={[styles.heroBody, { color: colors.foreground }]}>
-              Wähle den Kanton deiner Wanderung. Danach suchst du die Route und
-              zuletzt die passende Sage.
+              {t.heroBody}
             </Text>
           </View>
         </Animated.View>
@@ -87,10 +90,10 @@ export default function Entdecken() {
           <>
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                Dein Heimatkanton
+                {t.homeCantonTitle}
               </Text>
               <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-                Ohne Premium hier frei begehbar
+                {t.homeCantonHint}
               </Text>
             </View>
             <View style={{ paddingHorizontal: 20 }}>
@@ -109,10 +112,10 @@ export default function Entdecken() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {homeEntry ? "Weitere Kantone" : "Kantone"}
+            {homeEntry ? t.otherCantonsTitle : t.cantonsTitle}
           </Text>
           <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-            Alle {cantons.length} Kantone · Routen live aus swisstopo
+            {t.allCantonsHint(cantons.length)}
           </Text>
         </View>
 
@@ -145,6 +148,7 @@ function CantonCard({
   onPress: () => void;
 }) {
   const colors = useColors();
+  const t = useHomeStrings();
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
       <Pressable
@@ -167,10 +171,8 @@ function CantonCard({
           </Text>
           <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
             {entry.routeCount > 0
-              ? `${entry.routeCount} ${
-                  entry.routeCount === 1 ? "Wanderroute" : "Wanderrouten"
-                }`
-              : "Routen live aus swisstopo"}
+              ? t.routeCount(entry.routeCount)
+              : t.liveFromSwisstopo}
           </Text>
         </View>
         <Feather name="chevron-right" size={20} color={colors.mutedForeground} />

@@ -27,6 +27,7 @@ import {
   CatalogSource,
   RouteSearchFilter,
 } from "@/contexts/CatalogContext";
+import { useKantonStrings } from "@/lib/i18n/screens/kanton";
 import { useColors } from "@/hooks/useColors";
 
 const DIST_MIN = 0;
@@ -42,6 +43,7 @@ const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
 const WEB_TOP = 67;
 
 export default function KantonRouten() {
+  const t = useKantonStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -112,12 +114,10 @@ export default function KantonRouten() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader eyebrow="Schritt 2 · Filter & Suche" title={cantonName} onBack />
+        <ScreenHeader eyebrow={t.eyebrow} title={cantonName} onBack />
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          Lege Distanz, Höhenmeter und Schwierigkeit fest. Die App durchsucht
-          dann eine externe Wanderdatenbank (OpenStreetMap, angereichert mit
-          swisstopo-Höhenmetern) nach passenden Routen in {cantonName || "diesem Kanton"}.
+          {t.intro(cantonName)}
         </Text>
 
         <View
@@ -129,41 +129,41 @@ export default function KantonRouten() {
           <View style={styles.filterHead}>
             <Feather name="sliders" size={14} color={colors.accent} />
             <Text style={[styles.filterTitle, { color: colors.foreground }]}>
-              Filter
+              {t.filterTitle}
             </Text>
           </View>
 
           <RangeSlider
-            label="Distanz"
+            label={t.distanceLabel}
             min={DIST_MIN}
             max={DIST_MAX}
             step={1}
             values={distFilter}
             onChange={setDistFilter}
-            formatValue={(v) => `${v}${v === DIST_MAX ? "+" : ""} km`}
+            formatValue={(v) => t.distanceUnit(v, v === DIST_MAX)}
           />
           <RangeSlider
-            label="Höhenmeter"
+            label={t.elevationLabel}
             min={ASC_MIN}
             max={ASC_MAX}
             step={50}
             values={ascFilter}
             onChange={setAscFilter}
-            formatValue={(v) => `${v}${v === ASC_MAX ? "+" : ""} hm`}
+            formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
           />
           <RangeSlider
-            label="Schwierigkeit"
+            label={t.difficultyLabel}
             min={DIFF_MIN}
             max={DIFF_MAX}
             step={1}
             values={diffFilter}
             onChange={setDiffFilter}
-            formatValue={(v) => `T${v}`}
+            formatValue={(v) => t.difficultyUnit(v)}
           />
         </View>
 
         <PrimaryButton
-          label={searching ? "Suche läuft …" : "Passende Routen suchen"}
+          label={searching ? t.searchingButton : t.searchButton}
           onPress={onSearch}
           variant="gold"
           loading={searching}
@@ -177,28 +177,23 @@ export default function KantonRouten() {
             <View style={styles.hint}>
               <Feather name="search" size={22} color={colors.mutedForeground} />
               <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
-                Setze deine Filter und starte die Suche, um passende Routen zu
-                finden.
+                {t.searchHint}
               </Text>
             </View>
           ) : routes.length === 0 ? (
             <View style={styles.hint}>
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                {loadError
-                  ? "Server nicht erreichbar."
-                  : "Keine passende Route gefunden."}
+                {loadError ? t.serverError : t.noRoutesFound}
               </Text>
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-                {loadError
-                  ? "Routen kommen live aus OpenStreetMap und swisstopo. Prüfe deine Verbindung und suche erneut."
-                  : "Erweitere die Filter und suche erneut."}
+                {loadError ? t.errorDetail : t.emptyDetail}
               </Text>
             </View>
           ) : (
             <>
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {routes.length} {routes.length === 1 ? "Route" : "Routen"} gefunden.
-                Danach folgt die passende Sage.
+                {routes.length === 1 ? t.routeFound : t.routesFound(routes.length)}
+                {" "}{t.nextStepSaga}
               </Text>
               {routes.map((route, i) => {
                 const locked = !premium && route.region !== profile?.homeCanton;
@@ -234,6 +229,7 @@ function RouteCard({
   image: number;
   onPress: () => void;
 }) {
+  const t = useKantonStrings();
   const colors = useColors();
   const h = Math.floor(route.minutes / 60);
   const m = route.minutes % 60;
@@ -248,7 +244,7 @@ function RouteCard({
         <View style={styles.cardContent}>
           <View style={styles.cardTopRow}>
             <Text style={[styles.cardEyebrow, { color: colors.accent }]}>
-              SAC {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
+              {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
               {h}:{String(m).padStart(2, "0")} h
             </Text>
             {locked && (

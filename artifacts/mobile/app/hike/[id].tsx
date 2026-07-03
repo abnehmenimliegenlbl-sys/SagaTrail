@@ -30,6 +30,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { useHikeStrings } from "@/lib/i18n/screens/hike";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { weaveNavigationCues } from "@/lib/storyEngine";
@@ -42,6 +43,7 @@ type LocState = "idle" | "granted" | "denied" | "simulated";
 
 export default function LiveHike() {
   const colors = useColors();
+  const t = useHikeStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
@@ -385,10 +387,10 @@ export default function LiveHike() {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert("Nicht verfügbar", fallback);
+        Alert.alert(t.notAvailable, fallback);
       }
     } catch {
-      Alert.alert("Nicht verfügbar", fallback);
+      Alert.alert(t.notAvailable, fallback);
     }
   };
 
@@ -396,7 +398,7 @@ export default function LiveHike() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
-    openUrlSafely(`tel:${num}`, `Bitte wähle den Notruf ${num} manuell.`);
+    openUrlSafely(`tel:${num}`, t.callSosManually(num));
   };
 
   if (!saga || !profile) {
@@ -404,9 +406,9 @@ export default function LiveHike() {
       <Background>
         <View style={styles.center}>
           <Text style={{ color: colors.foreground, fontFamily: fonts.titleBold }}>
-            Wanderung nicht gefunden.
+            {t.hikeNotFound}
           </Text>
-          <PrimaryButton label="Zurück" variant="ghost" onPress={() => router.back()} />
+          <PrimaryButton label={t.back} variant="ghost" onPress={() => router.back()} />
         </View>
       </Background>
     );
@@ -440,10 +442,10 @@ export default function LiveHike() {
         <View style={[styles.banner, { top: topPad, backgroundColor: colors.card }]}>
           <Feather name="map-pin" size={16} color={colors.accent} />
           <Text style={[styles.bannerText, { color: colors.foreground }]}>
-            Kein Standortzugriff — die Route wird simuliert.
+            {t.noLocationAccess}
           </Text>
           <Pressable onPress={() => Linking.openSettings?.()}>
-            <Text style={[styles.bannerAction, { color: colors.accent }]}>Erlauben</Text>
+            <Text style={[styles.bannerAction, { color: colors.accent }]}>{t.allow}</Text>
           </Pressable>
         </View>
       )}
@@ -459,7 +461,7 @@ export default function LiveHike() {
         <View style={styles.headRow}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.eyebrow, { color: colors.accent }]}>
-              {saga.canton.toUpperCase()} · LIVE
+              {saga.canton.toUpperCase()} · {t.live}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>
               {saga.title}
@@ -494,7 +496,7 @@ export default function LiveHike() {
                 <Feather name="map-pin" size={18} color={colors.accent} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                    ENTDECKT IN DER NÄHE
+                    {t.discoveredNearby}
                   </Text>
                   <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                     {nearbyPoi.name}
@@ -519,14 +521,14 @@ export default function LiveHike() {
         {/* Statusleiste in Frozen Glass */}
         <Glass style={{ marginTop: 14 }}>
           <View style={styles.statBar}>
-            <Metric label="DISTANZ" value={distance.toFixed(1)} unit="km" />
-            <Metric label="HÖHE" value={`${Math.round(progress * ascentM)}`} unit="hm" />
+            <Metric label={t.metricDistance} value={distance.toFixed(1)} unit={t.unitKm} />
+            <Metric label={t.metricHeight} value={`${Math.round(progress * ascentM)}`} unit={t.unitHm} />
             <Metric
-              label="RESTZEIT"
+              label={t.metricTimeLeft}
               value={`${Math.max(0, Math.round((1 - progress) * totalMin))}`}
-              unit="min"
+              unit={t.unitMin}
             />
-            <Metric label="SAC" value={sac} unit="" />
+            <Metric label={t.metricSac} value={sac} unit="" />
           </View>
         </Glass>
 
@@ -535,14 +537,14 @@ export default function LiveHike() {
           <View style={styles.preparing}>
             <SparkMountain size={90} pulsing />
             <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
-              Die Sage erwacht …
+              {t.preparingText}
             </Text>
           </View>
         ) : (
           <Animated.View entering={FadeIn} style={styles.storyWrap}>
             <View style={styles.chapterHead}>
               <Text style={[styles.chapterMark, { color: colors.accent }]}>
-                KAPITEL {currentIndex + 1} / {chapters.length}
+                {t.chapterMark(currentIndex + 1, chapters.length)}
               </Text>
               <Pressable
                 onPress={() => {
@@ -561,7 +563,7 @@ export default function LiveHike() {
                   color={colors.foreground}
                 />
                 <Text style={[styles.playText, { color: colors.foreground }]}>
-                  {speaking ? "Pause" : "Vorlesen"}
+                  {speaking ? t.pause : t.readAloud}
                 </Text>
               </Pressable>
             </View>
@@ -580,7 +582,7 @@ export default function LiveHike() {
                   ]}
                 >
                   <Text style={[styles.decisionLabel, { color: colors.primary }]}>
-                    WAHRNEHMUNG
+                    {t.perception}
                   </Text>
                   <Text style={[styles.decisionQuestion, { color: colors.foreground }]}>
                     {currentChapter.decision.question}
@@ -608,7 +610,7 @@ export default function LiveHike() {
 
             {finished && (
               <PrimaryButton
-                label="Wanderung abschliessen"
+                label={t.finishHike}
                 onPress={finishHike}
                 style={{ marginTop: 24 }}
               />
@@ -622,7 +624,7 @@ export default function LiveHike() {
         onPress={() => setSosOpen(true)}
         style={[styles.sosBtn, { bottom: insets.bottom + 20, backgroundColor: colors.primary }]}
       >
-        <Text style={styles.sosText}>SOS</Text>
+        <Text style={styles.sosText}>{t.sos}</Text>
       </Pressable>
 
       {sosOpen && (
@@ -636,9 +638,9 @@ export default function LiveHike() {
             ]}
           >
             <View style={[styles.sosHandle, { backgroundColor: colors.glassBorder }]} />
-            <Text style={[styles.sosTitle, { color: colors.foreground }]}>Notfall</Text>
+            <Text style={[styles.sosTitle, { color: colors.foreground }]}>{t.emergency}</Text>
             <Text style={[styles.sosSub, { color: colors.mutedForeground }]}>
-              Wähle den passenden Notruf. Bleib ruhig, nenne Standort und Lage.
+              {t.emergencySub}
             </Text>
 
             <Pressable
@@ -647,8 +649,8 @@ export default function LiveHike() {
             >
               <Feather name="phone" size={20} color={colors.primaryForeground} />
               <View>
-                <Text style={styles.sosCallTitle}>Rega 1414</Text>
-                <Text style={styles.sosCallSub}>Schweizerische Rettungsflugwacht</Text>
+                <Text style={styles.sosCallTitle}>{t.regaTitle}</Text>
+                <Text style={styles.sosCallSub}>{t.regaSub}</Text>
               </View>
             </Pressable>
 
@@ -658,8 +660,8 @@ export default function LiveHike() {
             >
               <Feather name="phone" size={20} color={colors.primaryForeground} />
               <View>
-                <Text style={styles.sosCallTitle}>Euro-Notruf 112</Text>
-                <Text style={styles.sosCallSub}>Allgemeiner Notruf</Text>
+                <Text style={styles.sosCallTitle}>{t.euroEmergencyTitle}</Text>
+                <Text style={styles.sosCallSub}>{t.euroEmergencySub}</Text>
               </View>
             </Pressable>
 
@@ -668,24 +670,24 @@ export default function LiveHike() {
                 const point = livePos ?? route?.coordinates ?? saga.coordinates;
                 const coords = point
                   ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
-                  : "unbekannt";
-                const body = `Notfall auf Wanderung. Mein ungefährer Standort: ${coords}`;
+                  : t.unknown;
+                const body = t.emergencySmsBody(coords);
                 openUrlSafely(
                   `sms:&body=${encodeURIComponent(body)}`,
-                  "SMS ist auf diesem Gerät nicht verfügbar."
+                  t.smsNotAvailable
                 );
               }}
               style={[styles.sosSecondary, { borderColor: colors.glassBorder }]}
             >
               <Feather name="share-2" size={18} color={colors.foreground} />
               <Text style={[styles.sosSecondaryText, { color: colors.foreground }]}>
-                Standort an Notfallkontakt senden
+                {t.sendLocationToContact}
               </Text>
             </Pressable>
 
             <Pressable onPress={() => setSosOpen(false)} style={styles.sosClose}>
               <Text style={[styles.sosCloseText, { color: colors.mutedForeground }]}>
-                Schliessen
+                {t.close}
               </Text>
             </Pressable>
           </Animated.View>

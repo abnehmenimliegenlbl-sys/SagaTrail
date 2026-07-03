@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 
 interface ScreenHeaderProps {
   eyebrow?: string;
@@ -16,11 +17,12 @@ interface ScreenHeaderProps {
 export function ScreenHeader({ eyebrow, title, onBack, right }: ScreenHeaderProps) {
   const colors = useColors();
   const router = useRouter();
+  const t = useSharedStrings();
   return (
     <View style={styles.row}>
       {onBack ? (
         <Pressable
-          accessibilityLabel="Zurück"
+          accessibilityLabel={t.back}
           onPress={() => router.back()}
           hitSlop={12}
           style={[styles.backBtn, { borderColor: colors.glassBorder }]}
