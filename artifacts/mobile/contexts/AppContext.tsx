@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  ApiError,
   getGetMyProfileQueryKey,
   useGetMyProfile,
   useSaveMyProfile,
@@ -191,13 +192,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPremium(serverProfile.premium);
       AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       AsyncStorage.setItem(KEYS.premium, serverProfile.premium ? "true" : "false");
-    } else if (profileError) {
-      // 404: noch kein Profil auf dem Server — Onboarding erforderlich.
+    } else if (
+      profileError instanceof ApiError &&
+      profileError.status === 404
+    ) {
+      // Echtes 404: noch kein Profil auf dem Server — Onboarding erforderlich.
       setProfile(null);
       setPremium(false);
       AsyncStorage.removeItem(KEYS.profile);
       AsyncStorage.removeItem(KEYS.premium);
     }
+    // Andere Fehler (401 waehrend Token noch nicht bereit, 5xx, Netzwerk):
+    // bewusst NICHT als "kein Profil" behandeln — lokaler Cache/Zustand
+    // bleibt erhalten, damit angemeldete Nutzer nicht faelschlich ins
+    // Onboarding geschickt werden oder ihr Offline-Cache geloescht wird.
   }, [authLoaded, isSignedIn, profileFetched, serverProfile, profileError]);
 
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();

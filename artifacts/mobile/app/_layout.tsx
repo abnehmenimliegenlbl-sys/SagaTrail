@@ -48,15 +48,23 @@ const queryClient = new QueryClient();
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
 const CLERK_PROXY_URL = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
+// Registriert den Clerk-Token-Getter SYNCHRON waehrend des Renderns (nicht
+// in einem useEffect) und liegt ausserhalb von AppProvider. So ist der
+// Getter garantiert gesetzt, bevor AppProvider ueberhaupt zu rendern
+// beginnt — ein useEffect in einem Kind von AppProvider wuerde erst NACH
+// AppProviders erstem Commit (und damit potenziell nach dem ersten
+// /api/me-Request) feuern.
+function AuthTokenBridge({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
+  setAuthTokenGetter(() => getToken());
+  return <>{children}</>;
+}
+
 function RootLayoutNav() {
   const { hydrated, profile } = useApp();
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-
-  useEffect(() => {
-    setAuthTokenGetter(() => getToken());
-  }, [getToken]);
 
   useEffect(() => {
     if (!hydrated || !isLoaded) return;
@@ -135,13 +143,15 @@ export default function RootLayout() {
             <QueryClientProvider client={queryClient}>
               <GestureHandlerRootView>
                 <KeyboardProvider>
-                  <AppProvider>
-                    <CatalogProvider>
-                      <DownloadProvider>
-                        <RootLayoutNav />
-                      </DownloadProvider>
-                    </CatalogProvider>
-                  </AppProvider>
+                  <AuthTokenBridge>
+                    <AppProvider>
+                      <CatalogProvider>
+                        <DownloadProvider>
+                          <RootLayoutNav />
+                        </DownloadProvider>
+                      </CatalogProvider>
+                    </AppProvider>
+                  </AuthTokenBridge>
                 </KeyboardProvider>
               </GestureHandlerRootView>
             </QueryClientProvider>
