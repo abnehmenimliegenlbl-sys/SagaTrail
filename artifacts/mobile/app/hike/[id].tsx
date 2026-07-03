@@ -50,6 +50,9 @@ export default function LiveHike() {
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
   const {
     profile,
+    premium,
+    freeHikeUsed,
+    markFreeHikeUsed,
     saveHike,
     addAchievement,
     groupSession,
@@ -131,6 +134,18 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [saga, profile, resolveStory, route]);
+
+  // Die einmalige kostenlose Wanderung wird genau dann verbraucht, wenn ein
+  // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
+  // bereit). markFreeHikeUsed ist selbst ein No-op, falls bereits verbraucht.
+  useEffect(() => {
+    if (preparing || premium || freeHikeUsed) return;
+    markFreeHikeUsed().catch(() => {
+      // Best effort — schlaegt der Serveraufruf fehl, bleibt die Wanderung
+      // trotzdem nutzbar; ein erneuter Versuch erfolgt bei der naechsten
+      // Wanderung.
+    });
+  }, [preparing, premium, freeHikeUsed, markFreeHikeUsed]);
 
   // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.

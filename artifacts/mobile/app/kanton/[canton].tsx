@@ -48,7 +48,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium } = useApp();
+  const { profile, premium, freeHikeUsed } = useApp();
   const { loadCantonRoutes } = useCatalog();
 
   const cantonName = decodeURIComponent(canton ?? "");

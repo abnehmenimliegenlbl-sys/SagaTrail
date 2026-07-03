@@ -41,7 +41,7 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed } = useApp();
   const { getRoute, getSagaForRoute, ensureRouteSaga } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 

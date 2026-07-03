@@ -34,7 +34,7 @@ export default function SagaDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
-  const { profile, premium } = useApp();
+  const { profile, premium, freeHikeUsed } = useApp();
   const { getSaga, ensureRouteSaga } = useCatalog();
 
   const [saga, setSaga] = useState(() => getSaga(id));

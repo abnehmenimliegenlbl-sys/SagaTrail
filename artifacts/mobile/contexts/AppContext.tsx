@@ -6,6 +6,7 @@ import {
   useGetMyProfile,
   useSaveMyProfile,
   useUpdateMyPremium,
+  useConsumeMyFreeHike,
 } from "@workspace/api-client-react";
 import React, {
   createContext,
@@ -32,6 +33,7 @@ import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 const KEYS = {
   profile: "sagatrail:profile",
   premium: "sagatrail:premium",
+  freeHikeUsed: "sagatrail:freeHikeUsed",
   achievements: "sagatrail:achievements",
   emergency: "sagatrail:emergencyContact",
   energysave: "sagatrail:energiesparmodus",
@@ -62,6 +64,12 @@ interface AppContextValue {
    */
   language: LanguageCode;
   premium: boolean;
+  /**
+   * Ob die einmalige kostenlose Wanderung (unabhaengig vom Kanton) bereits
+   * verbraucht wurde. Solange false, ist genau eine Wanderung auch ohne
+   * Premium freigeschaltet — siehe `markFreeHikeUsed`.
+   */
+  freeHikeUsed: boolean;
   achievements: Achievement[];
   emergencyContact: EmergencyContact | null;
   energiesparmodus: boolean;
@@ -82,6 +90,12 @@ interface AppContextValue {
   setPendingLanguage: (code: LanguageCode) => Promise<void>;
   unlockPremium: () => Promise<void>;
   lockPremium: () => Promise<void>;
+  /**
+   * Verbraucht die einmalige kostenlose Wanderung serverseitig. Wird beim
+   * Start der ersten Wanderung eines nicht-Premium-Nutzers aufgerufen.
+   * No-op, falls bereits verbraucht.
+   */
+  markFreeHikeUsed: () => Promise<void>;
   addAchievement: (sagaTitle: string, sagaId: string) => Promise<void>;
   saveEmergencyContact: (contact: EmergencyContact | null) => Promise<void>;
   setEnergiesparmodus: (value: boolean) => Promise<void>;
@@ -105,6 +119,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [premium, setPremium] = useState(false);
+  const [freeHikeUsed, setFreeHikeUsed] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [emergencyContact, setEmergencyContact] =
     useState<EmergencyContact | null>(null);
@@ -181,6 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const entries = await AsyncStorage.multiGet([
           KEYS.profile,
           KEYS.premium,
+          KEYS.freeHikeUsed,
           KEYS.achievements,
           KEYS.emergency,
           KEYS.energysave,
@@ -190,6 +206,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
         if (map[KEYS.premium]) setPremium(map[KEYS.premium] === "true");
+        if (map[KEYS.freeHikeUsed])
+          setFreeHikeUsed(map[KEYS.freeHikeUsed] === "true");
         if (map[KEYS.achievements])
           setAchievements(JSON.parse(map[KEYS.achievements]!));
         if (map[KEYS.emergency])
@@ -252,8 +270,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLastUserId(currentUserId);
       setProfile(null);
       setPremium(false);
+      setFreeHikeUsed(false);
       AsyncStorage.removeItem(KEYS.profile);
       AsyncStorage.removeItem(KEYS.premium);
+      AsyncStorage.removeItem(KEYS.freeHikeUsed);
     }
   }, [authLoaded, userId, lastUserId]);
 
@@ -278,8 +298,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       setProfile(next);
       setPremium(serverProfile.premium);
+      setFreeHikeUsed(serverProfile.freeHikeUsed);
       AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       AsyncStorage.setItem(KEYS.premium, serverProfile.premium ? "true" : "false");
+      AsyncStorage.setItem(
+        KEYS.freeHikeUsed,
+        serverProfile.freeHikeUsed ? "true" : "false"
+      );
     } else if (
       profileError instanceof ApiError &&
       profileError.status === 404
@@ -287,8 +312,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Echtes 404: noch kein Profil auf dem Server — Onboarding erforderlich.
       setProfile(null);
       setPremium(false);
+      setFreeHikeUsed(false);
       AsyncStorage.removeItem(KEYS.profile);
       AsyncStorage.removeItem(KEYS.premium);
+      AsyncStorage.removeItem(KEYS.freeHikeUsed);
     }
     // Andere Fehler (401 waehrend Token noch nicht bereit, 5xx, Netzwerk):
     // bewusst NICHT als "kein Profil" behandeln — lokaler Cache/Zustand
@@ -308,6 +335,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       language: string;
       ageTier: string;
       premium: boolean;
+      freeHikeUsed: boolean;
     }) => {
       const next = {
         id: result.id,
@@ -319,8 +347,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } as Profile;
       setProfile(next);
       setPremium(result.premium);
+      setFreeHikeUsed(result.freeHikeUsed);
       await AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       await AsyncStorage.setItem(KEYS.premium, result.premium ? "true" : "false");
+      await AsyncStorage.setItem(
+        KEYS.freeHikeUsed,
+        result.freeHikeUsed ? "true" : "false"
+      );
     },
     []
   );
@@ -371,6 +404,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(KEYS.premium, "false");
   }, [updateMyPremiumMutation]);
 
+  const { mutateAsync: consumeMyFreeHikeMutation } = useConsumeMyFreeHike();
+
+  const markFreeHikeUsed = useCallback(async () => {
+    if (freeHikeUsed) return;
+    const result = await consumeMyFreeHikeMutation();
+    setFreeHikeUsed(result.freeHikeUsed);
+    await AsyncStorage.setItem(
+      KEYS.freeHikeUsed,
+      result.freeHikeUsed ? "true" : "false"
+    );
+  }, [freeHikeUsed, consumeMyFreeHikeMutation]);
+
   const addAchievement = useCallback(
     async (sagaTitle: string, sagaId: string) => {
       setAchievements((prev) => {
@@ -417,6 +462,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const data = {
       profile,
       premium,
+      freeHikeUsed,
       achievements,
       emergencyContact,
       energiesparmodus,
@@ -427,6 +473,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [
     profile,
     premium,
+    freeHikeUsed,
     achievements,
     emergencyContact,
     energiesparmodus,
@@ -437,6 +484,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.multiRemove(Object.values(KEYS));
     setProfile(null);
     setPremium(false);
+    setFreeHikeUsed(false);
     setAchievements([]);
     setEmergencyContact(null);
     setEnergiesparmodusState(false);
@@ -482,6 +530,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       profile,
       language,
       premium,
+      freeHikeUsed,
       achievements,
       emergencyContact,
       energiesparmodus,
@@ -494,6 +543,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPendingLanguage,
       unlockPremium,
       lockPremium,
+      markFreeHikeUsed,
       addAchievement,
       saveEmergencyContact,
       setEnergiesparmodus,
@@ -512,6 +562,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       profile,
       language,
       premium,
+      freeHikeUsed,
       achievements,
       emergencyContact,
       energiesparmodus,
@@ -524,6 +575,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPendingLanguage,
       unlockPremium,
       lockPremium,
+      markFreeHikeUsed,
       addAchievement,
       saveEmergencyContact,
       setEnergiesparmodus,
