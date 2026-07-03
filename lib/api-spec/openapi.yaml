@@ -204,6 +204,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/pois:
+    get:
+      operationId: getPois
+      tags: [routes]
+      summary: Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
+      description: >
+        Liefert historische und touristische Orte (OpenStreetMap
+        historic=*/tourism=attraction|viewpoint) innerhalb einer Bounding Box.
+        Orte mit einer verknuepften Wikipedia-/Wikidata-Referenz werden live
+        mit einer kurzen Zusammenfassung angereichert (CC BY-SA, mit
+        Quellenangabe).
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Points of Interest
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Poi"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/saga:
     get:
       operationId: getRouteSaga
@@ -338,6 +385,48 @@ components:
         - id
         - kind
         - geometry
+    Poi:
+      type: object
+      description: >
+        Historischer oder touristischer Ort aus OpenStreetMap, optional live mit
+        einer Wikipedia-Zusammenfassung angereichert.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          description: "OSM-Tag, z.B. historic=ruins oder tourism=attraction"
+        lat:
+          type: number
+        lng:
+          type: number
+        wiki:
+          $ref: "#/components/schemas/WikiSummary"
+      required:
+        - id
+        - name
+        - kind
+        - lat
+        - lng
+    WikiSummary:
+      type: object
+      description: Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
+      properties:
+        title:
+          type: string
+        extract:
+          type: string
+        url:
+          type: string
+        lang:
+          type: string
+      required:
+        - title
+        - extract
+        - url
+        - lang
     LocalizedSummary:
       type: object
       properties:

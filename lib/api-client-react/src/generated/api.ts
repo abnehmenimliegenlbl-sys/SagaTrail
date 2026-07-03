@@ -27,7 +27,9 @@ import type {
   ErrorResponse,
   GetAerialwaysParams,
   GetCantonRoutesParams,
+  GetPoisParams,
   HealthStatus,
+  Poi,
   StoryRequest,
   StoryResponse
 } from './api.schemas';
@@ -449,6 +451,91 @@ export function useGetAerialways<TData = Awaited<ReturnType<typeof getAerialways
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAerialwaysQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPoisUrl = (params: GetPoisParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/pois?${stringifiedParams}` : `/api/routes/pois`
+}
+
+/**
+ * Liefert historische und touristische Orte (OpenStreetMap historic=*\/tourism=attraction|viewpoint) innerhalb einer Bounding Box. Orte mit einer verknuepften Wikipedia-/Wikidata-Referenz werden live mit einer kurzen Zusammenfassung angereichert (CC BY-SA, mit Quellenangabe).
+ * @summary Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
+ */
+export const getPois = async (params: GetPoisParams, options?: RequestInit): Promise<Poi[]> => {
+
+  return customFetch<Poi[]>(getGetPoisUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPoisQueryKey = (params?: GetPoisParams,) => {
+    return [
+    `/api/routes/pois`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPoisQueryOptions = <TData = Awaited<ReturnType<typeof getPois>>, TError = ErrorType<ErrorResponse>>(params: GetPoisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPois>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPoisQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPois>>> = ({ signal }) => getPois(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPois>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPoisQueryResult = NonNullable<Awaited<ReturnType<typeof getPois>>>
+export type GetPoisQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
+ */
+
+export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError = ErrorType<ErrorResponse>>(
+ params: GetPoisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPois>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPoisQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

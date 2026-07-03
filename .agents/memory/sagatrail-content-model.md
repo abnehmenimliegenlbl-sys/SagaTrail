@@ -21,11 +21,15 @@ Both must stay in sync. Each saga needs per-language `summaries` (all 8 language
 - Server `/catalog` returns `routes: []`; `catalogSeed` purges the entire `catalog_routes` table on every start and seeds only sagas. The mobile cache-freshness gate keys on `sagas.length` (routes are always empty).
 - **Why:** the user explicitly wants only real routes from the connected databases — no curated/seed route data anywhere. Do NOT reintroduce a `SEED_ROUTES` array or a route seed fallback.
 
-## Route -> saga matching (nearest, not 1:1 ownership)
-- Routes no longer "own" a specific saga. Each dynamic OSM route resolves to the NEAREST curated saga.
-- Server: `routeService.getRouteSaga` -> `findNearestCuratedSaga` for dynamic OSM routes (canton-first then haversine).
-- Mobile: `lib/sagaMatch.ts` `nearestSaga(...)` (canton-first haversine, `EXAKT_RADIUS_M = 3500`). `getSagaForRoute` tries `sagas.find(id === route.sagaId)` then falls back to `nearestSaga`. `sagaLokalisierung` marks a route-assignment as `exakt` only when same canton AND <= 3.5 km; otherwise "nicht exakt lokalisierbar".
-- **Why:** with only a handful of curated sagas, most routes have no exact local legend; nearest-match with an honest "nicht exakt lokalisierbar" note is the product rule. This route-assignment certainty is SEPARATE from the saga's intrinsic `koordinatenSicherheit`.
+## Route -> saga matching (3-stage resolver, not 1:1 ownership)
+- Routes no longer "own" a specific saga. Server `routeService.getRouteSaga` resolves in this ranked order: (1) same-canton curated saga (nearest within canton), (2) a synthetic saga live-built from a Wikipedia canton-legend search (`wikipedia.ts` `searchCantonLegend` -> `sagaFromWikiSummary`, id prefix `wiki-<canton-slug>`, source "Wikipedia (CC BY-SA)", non-persisted), (3) nearest curated saga fallback regardless of canton.
+- Mobile mirrors only the curated-only fallback path: `lib/sagaMatch.ts` `nearestSaga(...)` (canton-first haversine, `EXAKT_RADIUS_M = 3500`) — it has no Wikipedia stage, so server and mobile can disagree on which saga a route gets when offline vs online.
+- **Why:** with only 27 curated sagas across 26 cantons, most routes still have no exact local legend; the Wikipedia stage gives a live, canton-relevant story before falling back to a nearest curated saga from a different canton. This route-assignment certainty is SEPARATE from a saga's intrinsic `koordinatenSicherheit`.
 
 ## Seeding integrity
 - `catalogSeed` deletes `catalog_sagas` rows whose id is not in `CURATED_SAGAS` (purges old AI/placeholder rows), then upserts the curated set, AND purges `catalog_routes` entirely. The catalog always contains exactly the curated sagas and zero routes.
+
+## Live Wikipedia/OSM POI enrichment layer
+- `GET /routes/pois` (bbox query) returns OSM historic=*/tourism=attraction|viewpoint nodes/ways (`overpass.ts` `fetchHistoricPois`) enriched with a live Wikipedia summary where an OSM `wikidata`/`wikipedia` tag resolves (`routeService.ts` `getPois`, cached; `wikipedia.ts` `fetchWikipediaSummary`/`resolveWikidataTitle`/`resolveOsmWikipediaTag`).
+- This is display-only enrichment along the route (mobile `hike/[id].tsx` shows a "nearby" card when the live/simulated position comes within ~350 m of a fetched POI) — it does NOT feed into saga selection; that only uses `searchCantonLegend` (a separate, canton-level Wikipedia search, not tied to individual POIs).
+- All Wikipedia/Wikidata access is via public unauthenticated REST endpoints (no API key).

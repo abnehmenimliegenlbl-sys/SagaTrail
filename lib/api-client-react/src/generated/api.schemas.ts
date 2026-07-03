@@ -49,6 +49,29 @@ export interface Aerialway {
   geometry: number[][];
 }
 
+/**
+ * Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
+ */
+export interface WikiSummary {
+  title: string;
+  extract: string;
+  url: string;
+  lang: string;
+}
+
+/**
+ * Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.
+ */
+export interface Poi {
+  id: string;
+  name: string;
+  /** OSM-Tag, z.B. historic=ruins oder tourism=attraction */
+  kind: string;
+  lat: number;
+  lng: number;
+  wiki?: WikiSummary;
+}
+
 export interface LocalizedSummary {
   text: string;
   reviewEmpfohlen: boolean;
@@ -183,6 +206,13 @@ diffMax?: number;
 };
 
 export type GetAerialwaysParams = {
+south: number;
+west: number;
+north: number;
+east: number;
+};
+
+export type GetPoisParams = {
 south: number;
 west: number;
 north: number;

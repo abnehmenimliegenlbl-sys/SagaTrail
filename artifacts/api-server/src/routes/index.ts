@@ -5,6 +5,7 @@ import storiesRouter from "./stories";
 import cantonsRouter from "./cantons";
 import routeSagasRouter from "./routeSagas";
 import aerialwaysRouter from "./aerialways";
+import poisRouter from "./pois";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(storiesRouter);
 router.use(cantonsRouter);
 router.use(routeSagasRouter);
 router.use(aerialwaysRouter);
+router.use(poisRouter);
 
 export default router;

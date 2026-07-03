@@ -13,8 +13,10 @@ import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
   fetchAerialways,
+  fetchHistoricPois,
   type RouteIndexEntry,
   type RawAerialway,
+  type RawPoi,
 } from "./overpass";
 import { computeAscentM } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
@@ -25,6 +27,13 @@ import {
   pathDistanceKm,
   type LatLng,
 } from "./geo";
+import {
+  fetchWikipediaSummary,
+  resolveOsmWikipediaTag,
+  resolveWikidataTitle,
+  searchCantonLegend,
+  type WikiSummary,
+} from "./wikipedia";
 
 /**
  * Orchestriert die dynamischen Routen: laedt reale Wanderrouten je Kanton aus
@@ -96,6 +105,63 @@ export async function getAerialways(
   if (hit && Date.now() - hit.at < AERIALWAY_TTL_MS) return hit.entries;
   const entries = await fetchAerialways(bbox, log);
   aerialwayCache.set(key, { at: Date.now(), entries });
+  return entries;
+}
+
+/** Angereicherter POI (fuer die API-Antwort). */
+export interface EnrichedPoi extends RawPoi {
+  wiki: WikiSummary | null;
+}
+
+/**
+ * In-Memory-Cache der POI-Abfragen je (grob gerasterte) Bounding Box.
+ * Historische Orte aendern sich praktisch nie, Wikipedia-Inhalte gelegentlich —
+ * eine grosszuegige TTL haelt die Live-Anreicherung dennoch aktuell genug.
+ */
+const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const POI_WIKI_CONCURRENCY = 4;
+const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
+
+/**
+ * Loest die Wikipedia-Referenz eines POI auf: zuerst der OSM-`wikipedia`-Tag
+ * (enthaelt bereits Sprache + Titel), sonst der `wikidata`-Tag (Q-ID -> Titel
+ * der Zielsprache), sonst kein Treffer.
+ */
+async function enrichPoiWithWikipedia(poi: RawPoi, log: Logger): Promise<EnrichedPoi> {
+  try {
+    if (poi.wikipediaTag) {
+      const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag);
+      if (wiki) return { ...poi, wiki };
+    }
+    if (poi.wikidataTag) {
+      const title = await resolveWikidataTitle(poi.wikidataTag);
+      if (title) {
+        const wiki = await fetchWikipediaSummary(title);
+        if (wiki) return { ...poi, wiki };
+      }
+    }
+  } catch (err) {
+    log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
+  }
+  return { ...poi, wiki: null };
+}
+
+/**
+ * Liefert historische/touristische Orte in einer Bounding Box, live mit
+ * Wikipedia-Zusammenfassungen angereichert (gecacht).
+ */
+export async function getPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<EnrichedPoi[]> {
+  const key = bboxCacheKey(bbox);
+  const hit = poiCache.get(key);
+  if (hit && Date.now() - hit.at < POI_TTL_MS) return hit.entries;
+  const raw = await fetchHistoricPois(bbox, log);
+  const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
+    enrichPoiWithWikipedia(poi, log),
+  );
+  poiCache.set(key, { at: Date.now(), entries });
   return entries;
 }
 
@@ -303,21 +369,11 @@ export async function getCantonRoutes(
   return stored.filter((row) => isFresh(row.fetchedAt));
 }
 
-/**
- * Findet die naechstgelegene kuratierte Sage zu einer Position. Sagen im
- * gleichen Kanton werden bevorzugt; sonst wird schweizweit die naechste mit
- * bekannten Koordinaten gewaehlt.
- */
-async function findNearestCuratedSaga(
-  canton: string,
+function nearestOf(
+  pool: CatalogSagaRow[],
   lat: number,
   lng: number,
-): Promise<CatalogSagaRow | null> {
-  const sagas = await db.select().from(catalogSagasTable);
-  const located = sagas.filter((s) => s.lat != null && s.lng != null);
-  if (located.length === 0) return null;
-  const sameCanton = located.filter((s) => s.canton === canton);
-  const pool = sameCanton.length > 0 ? sameCanton : located;
+): CatalogSagaRow | null {
   let best: CatalogSagaRow | null = null;
   let bestD = Infinity;
   for (const s of pool) {
@@ -331,17 +387,76 @@ async function findNearestCuratedSaga(
 }
 
 /**
+ * Baut aus einer live geladenen Wikipedia-Zusammenfassung eine
+ * katalogkompatible Sage (nicht persistiert). Dient als Zwischenstufe der
+ * Zuordnung, wenn im Kanton der Route keine kuratierte Sage liegt.
+ */
+function sagaFromWikiSummary(
+  canton: string,
+  wiki: WikiSummary,
+  lat: number,
+  lng: number,
+): CatalogSagaRow {
+  return {
+    id: `wiki-${canton.toLowerCase().replace(/[^a-z]+/g, "-")}`,
+    title: wiki.title,
+    canton,
+    coreMotif: "Regionale Ueberlieferung",
+    mood: "unbekannt",
+    summary: wiki.extract,
+    summaries: { de: { text: wiki.extract, reviewEmpfohlen: false } },
+    altersstufenHinweis: null,
+    quelle: {
+      autor: "Wikipedia-Autoren",
+      werk: wiki.title,
+      jahr: String(new Date().getFullYear()),
+      fundstelleUrl: wiki.url,
+    },
+    source: "Wikipedia (CC BY-SA)",
+    lat,
+    lng,
+    koordinatenSicherheit: "ungefaehr",
+    isAnchorPlace: false,
+  } as CatalogSagaRow;
+}
+
+/**
+ * Findet die Sage zu einer Position in drei Stufen (bestaetigte Reihenfolge):
+ * (1) kuratierte Sage im gleichen Kanton, (2) live von Wikipedia geladene
+ * Kantonssage, falls im Kanton keine kuratierte Sage liegt, (3) kantons-
+ * uebergreifend die naechstgelegene kuratierte Sage als letzter Rueckfall.
+ */
+async function findNearestCuratedSaga(
+  canton: string,
+  lat: number,
+  lng: number,
+  log: Logger,
+): Promise<CatalogSagaRow | null> {
+  const sagas = await db.select().from(catalogSagasTable);
+  const located = sagas.filter((s) => s.lat != null && s.lng != null);
+  if (located.length === 0) return null;
+
+  const sameCanton = located.filter((s) => s.canton === canton);
+  if (sameCanton.length > 0) return nearestOf(sameCanton, lat, lng);
+
+  const wiki = await searchCantonLegend(canton, log);
+  if (wiki) return sagaFromWikiSummary(canton, wiki, lat, lng);
+
+  return nearestOf(located, lat, lng);
+}
+
+/**
  * Liefert die kuratierte Sage zu einer dynamischen (OSM-)Route: die
  * naechstgelegene belegte Regionalsage. Es werden keine Sagen mehr erzeugt.
  */
 export async function getRouteSaga(
   routeId: string,
-  _log: Logger,
+  log: Logger,
 ): Promise<CatalogSagaRow | null> {
   const [route] = await db
     .select()
     .from(externalRoutesTable)
     .where(eq(externalRoutesTable.id, routeId));
   if (!route) return null;
-  return findNearestCuratedSaga(route.canton, route.lat, route.lng);
+  return findNearestCuratedSaga(route.canton, route.lat, route.lng, log);
 }

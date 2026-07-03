@@ -176,6 +176,33 @@ export const GetAerialwaysResponse = zod.array(GetAerialwaysResponseItem)
 
 
 /**
+ * Liefert historische und touristische Orte (OpenStreetMap historic=*\/tourism=attraction|viewpoint) innerhalb einer Bounding Box. Orte mit einer verknuepften Wikipedia-/Wikidata-Referenz werden live mit einer kurzen Zusammenfassung angereichert (CC BY-SA, mit Quellenangabe).
+ * @summary Points of Interest mit Wikipedia-Anreicherung in einem Kartenausschnitt
+ */
+export const GetPoisQueryParams = zod.object({
+  "south": zod.coerce.number(),
+  "west": zod.coerce.number(),
+  "north": zod.coerce.number(),
+  "east": zod.coerce.number()
+})
+
+export const GetPoisResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string().describe('OSM-Tag, z.B. historic=ruins oder tourism=attraction'),
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "wiki": zod.object({
+  "title": zod.string(),
+  "extract": zod.string(),
+  "url": zod.string(),
+  "lang": zod.string()
+}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).')
+}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
+export const GetPoisResponse = zod.array(GetPoisResponseItem)
+
+
+/**
  * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
  * @summary Naechstgelegene kuratierte Sage zu einer Route
  */

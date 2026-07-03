@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { getAerialways } from "@workspace/api-client-react";
+import { getAerialways, getPois } from "@workspace/api-client-react";
+import type { Poi } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -74,12 +75,15 @@ export default function LiveHike() {
   const [aerialways, setAerialways] = useState<
     { id: string; geometry: number[][] }[] | null
   >(null);
+  const [pois, setPois] = useState<Poi[]>([]);
+  const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const lastFixRef = useRef<LatLng | null>(null);
   const lastNarratedRef = useRef<number>(-1);
+  const announcedPoiIdsRef = useRef<Set<string>>(new Set());
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   useEffect(() => {
@@ -116,6 +120,24 @@ export default function LiveHike() {
     };
   }, [route?.id, mapCenter?.lat, mapCenter?.lng]);
 
+  // Historische/touristische Orte im Kartenausschnitt laden, live mit
+  // Wikipedia-Zusammenfassungen angereichert — best effort, kein Blocker.
+  useEffect(() => {
+    if (!mapCenter) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    getPois(bbox)
+      .then((result) => {
+        if (!cancelled) setPois(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPois([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, mapCenter?.lat, mapCenter?.lng]);
+
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {
     if (!saga || !isDownloaded(saga.id)) return;
@@ -142,6 +164,34 @@ export default function LiveHike() {
     }
     lastFixRef.current = cur;
   }, []);
+
+  // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
+  // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
+  // einmal je Wanderung als Karte an ("live entlang der Route entdeckt").
+  useEffect(() => {
+    if (pois.length === 0) return;
+    const geo = route?.geometry;
+    const current: LatLng | null =
+      livePos ??
+      (geo && geo.length > 1 && totalKm > 0
+        ? (() => {
+            const f = Math.max(0, Math.min(1, distance / totalKm));
+            const p = geo[Math.round(f * (geo.length - 1))];
+            return { lat: p[0], lng: p[1] };
+          })()
+        : null);
+    if (!current) return;
+    const NEARBY_KM = 0.35;
+    const hit = pois.find(
+      (poi) =>
+        !announcedPoiIdsRef.current.has(poi.id) &&
+        haversineKm(current, { lat: poi.lat, lng: poi.lng }) <= NEARBY_KM
+    );
+    if (hit) {
+      announcedPoiIdsRef.current.add(hit.id);
+      setNearbyPoi(hit);
+    }
+  }, [livePos, distance, totalKm, route?.geometry, pois]);
 
   // Standort verfolgen: nativ ueber expo-location, im Web ueber die Geolocation-API
   useEffect(() => {
@@ -421,6 +471,36 @@ export default function LiveHike() {
           )}
         </View>
 
+        {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
+        {nearbyPoi && (
+          <Animated.View entering={FadeIn}>
+            <Glass style={{ marginTop: 14 }}>
+              <View style={styles.poiRow}>
+                <Feather name="map-pin" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                    ENTDECKT IN DER NÄHE
+                  </Text>
+                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                    {nearbyPoi.name}
+                  </Text>
+                  {nearbyPoi.wiki && (
+                    <Text
+                      style={[styles.poiSummary, { color: colors.mutedForeground }]}
+                      numberOfLines={4}
+                    >
+                      {nearbyPoi.wiki.extract}
+                    </Text>
+                  )}
+                </View>
+                <Pressable onPress={() => setNearbyPoi(null)} hitSlop={10}>
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+            </Glass>
+          </Animated.View>
+        )}
+
         {/* Statusleiste in Frozen Glass */}
         <Glass style={{ marginTop: 14 }}>
           <View style={styles.statBar}>
@@ -642,6 +722,10 @@ const styles = StyleSheet.create({
   metricUnit: { fontFamily: fonts.mono, fontSize: 11 },
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
+  poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  poiEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
+  poiTitle: { fontFamily: fonts.titleBold, fontSize: 16, marginTop: 2 },
+  poiSummary: { fontFamily: fonts.story, fontSize: 13, marginTop: 4, lineHeight: 18 },
   storyWrap: { marginTop: 24 },
   chapterHead: {
     flexDirection: "row",

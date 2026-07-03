@@ -211,6 +211,69 @@ export async function fetchAerialways(
   return result;
 }
 
+/** Historischer/touristischer Ort aus OpenStreetMap, roh vor Wikipedia-Anreicherung. */
+export interface RawPoi {
+  id: string;
+  name: string;
+  kind: string;
+  lat: number;
+  lng: number;
+  wikipediaTag: string | null;
+  wikidataTag: string | null;
+}
+
+interface OverpassPoiElement {
+  type: string;
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
+/**
+ * Laedt historische und touristische Orte (historic=*, tourism=attraction|
+ * viewpoint) innerhalb einer Bounding Box. Bewusst auf benannte Orte begrenzt,
+ * damit nur POIs geliefert werden, die sich sinnvoll erzaehlen lassen.
+ */
+export async function fetchHistoricPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+): Promise<RawPoi[]> {
+  const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
+  const query = [
+    "[out:json][timeout:25];",
+    "(",
+    `node["historic"]["name"](${b});`,
+    `way["historic"]["name"](${b});`,
+    `node["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
+    `way["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
+    ");",
+    "out center tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query);
+  const result: RawPoi[] = [];
+  for (const e of elements) {
+    const tags = e.tags ?? {};
+    if (!tags.name) continue;
+    const lat = e.lat ?? e.center?.lat;
+    const lng = e.lon ?? e.center?.lon;
+    if (lat == null || lng == null) continue;
+    const kind = tags.historic ? `historic=${tags.historic}` : `tourism=${tags.tourism}`;
+    result.push({
+      id: `${e.type}-${e.id}`,
+      name: tags.name,
+      kind,
+      lat,
+      lng,
+      wikipediaTag: tags.wikipedia ?? null,
+      wikidataTag: tags.wikidata ?? null,
+    });
+  }
+  log.info({ bbox, count: result.length }, "Overpass: POIs geladen");
+  return result;
+}
+
 /**
  * Phase 1: leichter Index aller benannten Wanderrouten-Relationen eines Kantons
  * (nur Tags + Bounding Box). Klein und schnell, auch fuer >1000 Relationen.
