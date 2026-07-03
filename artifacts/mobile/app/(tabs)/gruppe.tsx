@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -28,19 +29,37 @@ const TIER_LABEL: Record<string, string> = {
   erwachsene: "Erwachsene",
 };
 
+const ERROR_LABEL: Record<string, string> = {
+  not_found: "Kein aktiver Beitritts-Code mit dieser Nummer gefunden.",
+  network: "Server nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+  unbekannt: "Unerwarteter Fehler. Bitte versuche es erneut.",
+};
+
 export default function Gruppe() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
+    premium,
     groupSession,
+    groupConnectionStatus,
+    groupError,
     createGroupSession,
     joinGroupSession,
     leaveGroupSession,
-    removeMember,
+    kickMember,
+    clearGroupError,
   } = useApp();
 
   const [joinCode, setJoinCode] = useState("");
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
+
+  useEffect(() => {
+    if (groupError === "premium_required") {
+      clearGroupError();
+      router.push("/paywall");
+    }
+  }, [groupError, clearGroupError, router]);
 
   const youngest = groupSession?.members.reduce((acc, m) => {
     const order = { kinder: 0, jugendliche: 1, erwachsene: 2 } as Record<string, number>;
@@ -49,6 +68,27 @@ export default function Gruppe() {
 
   const buzz = () =>
     Platform.OS !== "web" && Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+  const handleCreate = () => {
+    buzz();
+    if (!premium) {
+      router.push("/paywall");
+      return;
+    }
+    createGroupSession();
+  };
+
+  const statusLabel =
+    groupConnectionStatus === "verbindet"
+      ? "Verbinde …"
+      : groupConnectionStatus === "verbunden"
+        ? "Live verbunden"
+        : "Getrennt";
+
+  const statusColor =
+    groupConnectionStatus === "verbunden"
+      ? colors.accent
+      : colors.mutedForeground;
 
   return (
     <Background>
@@ -67,6 +107,20 @@ export default function Gruppe() {
           die Erzählung, das Gerät der Leitung führt per GPS.
         </Text>
 
+        {groupError && groupError !== "premium_required" && (
+          <View
+            style={[
+              styles.errorBanner,
+              { borderColor: colors.accent, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <Feather name="alert-triangle" size={18} color={colors.accent} />
+            <Text style={[styles.errorText, { color: colors.foreground }]}>
+              {ERROR_LABEL[groupError] ?? ERROR_LABEL.unbekannt}
+            </Text>
+          </View>
+        )}
+
         {!groupSession ? (
           <>
             <View
@@ -82,14 +136,12 @@ export default function Gruppe() {
               <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
                 Erzeuge einen Beitritts-Code, den deine Gruppe eingeben kann. Der
                 Code gilt nur für diese Wanderung.
+                {!premium ? " Erfordert Premium." : ""}
               </Text>
               <PrimaryButton
                 label="Session erstellen"
                 variant="gold"
-                onPress={() => {
-                  buzz();
-                  createGroupSession();
-                }}
+                onPress={handleCreate}
                 style={{ marginTop: 14 }}
               />
             </View>
@@ -123,14 +175,16 @@ export default function Gruppe() {
                 ]}
               />
               <PrimaryButton
-                label="Beitreten"
+                label={
+                  groupConnectionStatus === "verbindet" ? "Verbinde …" : "Beitreten"
+                }
                 onPress={() => {
                   if (joinCode.length === 6) {
                     buzz();
                     joinGroupSession(joinCode);
                   }
                 }}
-                disabled={joinCode.length !== 6}
+                disabled={joinCode.length !== 6 || groupConnectionStatus === "verbindet"}
                 style={{ marginTop: 4 }}
               />
             </View>
@@ -143,6 +197,12 @@ export default function Gruppe() {
                 { borderColor: colors.accent, backgroundColor: colors.glassBgStrong },
               ]}
             >
+              <View style={styles.statusRow}>
+                <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                <Text style={[styles.statusText, { color: statusColor }]}>
+                  {statusLabel}
+                </Text>
+              </View>
               <Text style={[styles.codeLabel, { color: colors.mutedForeground }]}>
                 {groupSession.isLeader ? "DEIN BEITRITTS-CODE" : "AKTIVE SESSION"}
               </Text>
@@ -180,10 +240,13 @@ export default function Gruppe() {
                   </Text>
                   <Text style={[styles.memberTier, { color: colors.mutedForeground }]}>
                     {TIER_LABEL[m.ageTier]}
+                    {m.activity.type === "wandert"
+                      ? `  ·  wandert: ${m.activity.sagaTitle}`
+                      : "  ·  bereit"}
                   </Text>
                 </View>
                 {groupSession.isLeader && !m.isLeader && (
-                  <Pressable onPress={() => removeMember(m.id)} hitSlop={10}>
+                  <Pressable onPress={() => kickMember(m.id)} hitSlop={10}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </Pressable>
                 )}
@@ -191,8 +254,8 @@ export default function Gruppe() {
             ))}
 
             <Text style={[styles.syncNote, { color: colors.mutedForeground }]}>
-              Hinweis: Die geräteübergreifende Live-Synchronisation folgt in einer
-              späteren Ausbaustufe. Diese Ansicht zeigt die Gruppen-Zentrale.
+              Live verbunden: Beitritte, Austritte und Wander-Status der Gruppe
+              werden in Echtzeit synchronisiert.
             </Text>
 
             <PrimaryButton
@@ -219,6 +282,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+  },
+  errorText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, flex: 1 },
   card: { borderWidth: 1, borderRadius: 16, padding: 18 },
   cardTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 10 },
   cardBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginTop: 6 },
@@ -233,6 +306,14 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
   codeBox: { borderWidth: 1, borderRadius: 16, padding: 22, alignItems: "center" },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1 },
   codeLabel: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   code: {
     fontFamily: fonts.monoBold,

@@ -44,7 +44,7 @@ export default function LiveHike() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
-  const { profile, saveHike, addAchievement } = useApp();
+  const { profile, saveHike, addAchievement, groupSession, setGroupActivity } = useApp();
   const { getSaga, getRoute, getRouteBySaga } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
@@ -101,6 +101,16 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [saga, profile, resolveStory]);
+
+  // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
+  // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.
+  useEffect(() => {
+    if (!groupSession || !saga || preparing) return;
+    setGroupActivity({ type: "wandert", sagaTitle: saga.title, startedAt: Date.now() });
+    return () => {
+      setGroupActivity({ type: "idle" });
+    };
+  }, [groupSession?.code, saga, preparing, setGroupActivity]);
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.

@@ -17,6 +17,13 @@ import React, {
 } from "react";
 
 import { Achievement, HikeSession, Profile } from "@/types";
+import {
+  GroupSocket,
+  type GroupActivity,
+  type GroupConnectionStatus,
+  type GroupMember,
+  type GroupSocketError,
+} from "@/lib/groupSocket";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
 // seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
@@ -34,16 +41,10 @@ export interface EmergencyContact {
   phone: string;
 }
 
-export interface GroupMember {
-  id: string;
-  name: string;
-  ageTier: string;
-  isLeader: boolean;
-}
+export type { GroupActivity, GroupMember };
 
 export interface GroupSession {
   code: string;
-  createdAt: number;
   members: GroupMember[];
   isLeader: boolean;
 }
@@ -57,6 +58,8 @@ interface AppContextValue {
   energiesparmodus: boolean;
   lastHike: HikeSession | null;
   groupSession: GroupSession | null;
+  groupConnectionStatus: GroupConnectionStatus;
+  groupError: GroupSocketError | null;
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
@@ -72,22 +75,15 @@ interface AppContextValue {
   createGroupSession: () => void;
   joinGroupSession: (code: string) => void;
   leaveGroupSession: () => void;
-  removeMember: (memberId: string) => void;
+  kickMember: (memberId: string) => void;
+  setGroupActivity: (activity: GroupActivity) => void;
+  clearGroupError: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function randomCode(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return code;
-}
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { isLoaded: authLoaded, isSignedIn, userId } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn, userId, getToken } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -98,6 +94,67 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
+  const [groupConnectionStatus, setGroupConnectionStatus] =
+    useState<GroupConnectionStatus>("getrennt");
+  const [groupError, setGroupError] = useState<GroupSocketError | null>(null);
+
+  // Der Socket-Client lebt ausserhalb des React-State (eine Instanz pro
+  // App-Laufzeit) und meldet Ereignisse ueber Callbacks zurueck, die den
+  // React-Zustand aktualisieren. So bleibt Reconnect-Logik unabhaengig vom
+  // Render-Zyklus.
+  const groupSocketRef = React.useRef<GroupSocket | null>(null);
+  const selfIdRef = React.useRef<string | null>(null);
+  selfIdRef.current = userId ?? null;
+
+  const getGroupToken = useCallback(async () => {
+    try {
+      return await getToken();
+    } catch {
+      return null;
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    const socket = new GroupSocket(getGroupToken, {
+      onStatusChange: setGroupConnectionStatus,
+      onJoined: (code, members) => {
+        setGroupError(null);
+        setGroupSession({
+          code,
+          members,
+          isLeader: members.some(
+            (m) => m.id === selfIdRef.current && m.isLeader
+          ),
+        });
+      },
+      onMembers: (members) => {
+        setGroupSession((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            members,
+            isLeader: members.some(
+              (m) => m.id === selfIdRef.current && m.isLeader
+            ),
+          };
+        });
+      },
+      onClosedByLeader: () => {
+        setGroupSession(null);
+      },
+      onKicked: () => {
+        setGroupSession(null);
+      },
+      onError: (error) => {
+        setGroupError(error);
+      },
+    });
+    groupSocketRef.current = socket;
+    return () => {
+      socket.disconnect();
+      groupSocketRef.current = null;
+    };
+  }, [getGroupToken]);
 
   useEffect(() => {
     (async () => {
@@ -351,70 +408,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGroupSession(null);
   }, []);
 
+  // Client-seitig wird Premium bereits hier geprueft (schnelle Ruecksicht auf
+  // die UI, siehe gruppe.tsx). Der Server prueft unabhaengig davon erneut
+  // (`premium_required`-Fehler) und bleibt die eigentliche Quelle der
+  // Wahrheit — ein manipulierter Client kann die Pruefung nicht umgehen.
   const createGroupSession = useCallback(() => {
-    setGroupSession({
-      code: randomCode(),
-      createdAt: Date.now(),
-      isLeader: true,
-      members: [
-        {
-          id: "self",
-          name: profile?.name ?? "Du",
-          ageTier: profile?.ageTier ?? "erwachsene",
-          isLeader: true,
-        },
-        {
-          id: "m2",
-          name: "Lena",
-          ageTier: "jugendliche",
-          isLeader: false,
-        },
-        {
-          id: "m3",
-          name: "Tim",
-          ageTier: "kinder",
-          isLeader: false,
-        },
-      ],
-    });
-  }, [profile]);
-
-  const joinGroupSession = useCallback(
-    (code: string) => {
-      setGroupSession({
-        code: code.toUpperCase(),
-        createdAt: Date.now(),
-        isLeader: false,
-        members: [
-          {
-            id: "leader",
-            name: "Gruppenleitung",
-            ageTier: "erwachsene",
-            isLeader: true,
-          },
-          {
-            id: "self",
-            name: profile?.name ?? "Du",
-            ageTier: profile?.ageTier ?? "erwachsene",
-            isLeader: false,
-          },
-        ],
-      });
-    },
-    [profile]
-  );
-
-  const leaveGroupSession = useCallback(() => setGroupSession(null), []);
-
-  const removeMember = useCallback((memberId: string) => {
-    setGroupSession((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        members: prev.members.filter((m) => m.id !== memberId),
-      };
-    });
+    setGroupError(null);
+    groupSocketRef.current?.create();
   }, []);
+
+  const joinGroupSession = useCallback((code: string) => {
+    setGroupError(null);
+    groupSocketRef.current?.join(code);
+  }, []);
+
+  const leaveGroupSession = useCallback(() => {
+    groupSocketRef.current?.leave();
+    setGroupSession(null);
+    setGroupError(null);
+  }, []);
+
+  const kickMember = useCallback((memberId: string) => {
+    groupSocketRef.current?.kick(memberId);
+  }, []);
+
+  const setGroupActivity = useCallback((activity: GroupActivity) => {
+    groupSocketRef.current?.setActivity(activity);
+  }, []);
+
+  const clearGroupError = useCallback(() => setGroupError(null), []);
 
   const value = useMemo<AppContextValue>(
     () => ({
@@ -426,6 +448,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       energiesparmodus,
       lastHike,
       groupSession,
+      groupConnectionStatus,
+      groupError,
       saveProfile,
       updateProfile,
       unlockPremium,
@@ -439,7 +463,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createGroupSession,
       joinGroupSession,
       leaveGroupSession,
-      removeMember,
+      kickMember,
+      setGroupActivity,
+      clearGroupError,
     }),
     [
       hydrated,
@@ -450,6 +476,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       energiesparmodus,
       lastHike,
       groupSession,
+      groupConnectionStatus,
+      groupError,
       saveProfile,
       updateProfile,
       unlockPremium,
@@ -463,7 +491,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createGroupSession,
       joinGroupSession,
       leaveGroupSession,
-      removeMember,
+      kickMember,
+      setGroupActivity,
+      clearGroupError,
     ]
   );
 
