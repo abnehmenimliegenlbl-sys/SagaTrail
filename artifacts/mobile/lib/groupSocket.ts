@@ -40,7 +40,27 @@ type PendingAction =
   | { type: "create" }
   | { type: "join"; code: string };
 
+interface WireMember {
+  userId: string;
+  name: string;
+  ageTier: string;
+  isLeader: boolean;
+  activity: GroupActivity;
+}
+
+function normalizeMembers(raw: unknown): GroupMember[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as WireMember[]).map((m) => ({
+    id: m.userId,
+    name: m.name,
+    ageTier: m.ageTier,
+    isLeader: m.isLeader,
+    activity: m.activity,
+  }));
+}
+
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
+const NETWORK_ERROR_THRESHOLD = 2;
 
 function wsBaseUrl(): string | null {
   const apiBase = getApiBaseUrl();
@@ -120,7 +140,12 @@ export class GroupSocket {
         this.setStatus("getrennt");
         return;
       }
-      this.setStatus("verbindet");
+      if (this.reconnectAttempt >= NETWORK_ERROR_THRESHOLD) {
+        this.setStatus("fehler");
+        this.events.onError("network");
+      } else {
+        this.setStatus("verbindet");
+      }
       this.scheduleReconnect();
     };
   }
@@ -147,14 +172,14 @@ export class GroupSocket {
     switch (data.type) {
       case "joined": {
         this.setStatus("verbunden");
-        const members = (data.members as GroupMember[] | undefined) ?? [];
+        const members = normalizeMembers(data.members);
         const code = data.code as string;
         this.lastAction = { type: "join", code };
         this.events.onJoined(code, members);
         return;
       }
       case "members": {
-        const members = (data.members as GroupMember[] | undefined) ?? [];
+        const members = normalizeMembers(data.members);
         this.events.onMembers(members);
         return;
       }

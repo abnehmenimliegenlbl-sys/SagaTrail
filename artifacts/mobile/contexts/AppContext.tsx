@@ -508,6 +508,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   const resetAll = useCallback(async () => {
+    groupSocketRef.current?.disconnect();
     await AsyncStorage.multiRemove(Object.values(KEYS));
     setProfile(null);
     setPremium(false);
@@ -517,6 +518,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setEnergiesparmodusState(false);
     setLastHike(null);
     setGroupSession(null);
+    setGroupError(null);
   }, []);
 
   // Client-seitig wird Premium bereits hier geprueft (schnelle Ruecksicht auf
