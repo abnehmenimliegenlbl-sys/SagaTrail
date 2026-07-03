@@ -278,7 +278,8 @@ export const GetMyProfileResponse = zod.object({
   "homeCanton": zod.string(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "premium": zod.boolean()
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
 })
 
 
@@ -308,7 +309,8 @@ export const SaveMyProfileResponse = zod.object({
   "homeCanton": zod.string(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "premium": zod.boolean()
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
 })
 
 
@@ -327,7 +329,24 @@ export const UpdateMyPremiumResponse = zod.object({
   "homeCanton": zod.string(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "premium": zod.boolean()
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
+})
+
+
+/**
+ * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
+ * @summary Kostenlose Wanderung verbrauchen
+ */
+export const ConsumeMyFreeHikeResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
 })
 
 

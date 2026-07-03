@@ -90,7 +90,7 @@ export default function SagaDetail() {
     );
   }
 
-  const locked = !premium && saga.canton !== profile?.homeCanton;
+  const locked = !premium && freeHikeUsed;
   const image = saga.id === "teufelsbrucke" ? teufelImg : heroImg;
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 

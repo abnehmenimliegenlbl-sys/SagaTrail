@@ -28,6 +28,7 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     language: row.language,
     ageTier: row.ageTier,
     premium: row.premium,
+    freeHikeUsed: row.freeHikeUsed,
   });
 }
 
@@ -97,6 +98,23 @@ router.patch("/me/premium", async (req, res): Promise<void> => {
   const [row] = await db
     .update(profilesTable)
     .set({ premium: parsed.data.premium, updatedAt: new Date() })
+    .where(eq(profilesTable.id, userId))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+  res.json(toProfile(row));
+});
+
+router.patch("/me/free-hike", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const [row] = await db
+    .update(profilesTable)
+    .set({ freeHikeUsed: true, updatedAt: new Date() })
     .where(eq(profilesTable.id, userId))
     .returning();
 

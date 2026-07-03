@@ -15,6 +15,7 @@ export const profilesTable = pgTable("profiles", {
   language: text("language").notNull(),
   ageTier: text("age_tier").notNull(),
   premium: boolean("premium").notNull().default(false),
+  freeHikeUsed: boolean("free_hike_used").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

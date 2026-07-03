@@ -196,7 +196,7 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {routes.map((route, i) => {
-                const locked = !premium && route.region !== profile?.homeCanton;
+                const locked = !premium && freeHikeUsed;
                 return (
                   <RouteCard
                     key={route.id}

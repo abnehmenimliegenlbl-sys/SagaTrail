@@ -409,6 +409,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/free-hike:
+    patch:
+      operationId: consumeMyFreeHike
+      tags: [profile]
+      summary: Kostenlose Wanderung verbrauchen
+      description: >-
+        Markiert die einmalige kostenlose Wanderung des authentifizierten
+        Nutzers als verbraucht. Wird beim Start der ersten Wanderung
+        aufgerufen (nicht-Premium-Nutzer).
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -445,6 +473,12 @@ components:
           enum: [kinder, jugendliche, erwachsene]
         premium:
           type: boolean
+        freeHikeUsed:
+          type: boolean
+          description: >-
+            Ob die einmalige kostenlose Wanderung bereits verbraucht wurde.
+            Solange false, ist genau eine Wanderung (egal welcher Kanton)
+            auch ohne Premium freigeschaltet.
       required:
         - id
         - name
@@ -453,6 +487,7 @@ components:
         - language
         - ageTier
         - premium
+        - freeHikeUsed
     ProfileInput:
       type: object
       properties:

@@ -41,6 +41,8 @@ export interface Profile {
   language: string;
   ageTier: ProfileAgeTier;
   premium: boolean;
+  /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */
+  freeHikeUsed: boolean;
 }
 
 export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];

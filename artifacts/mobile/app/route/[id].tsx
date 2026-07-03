@@ -139,7 +139,7 @@ export default function Routenplanung() {
   }
 
   const meta = route;
-  const locked = !premium && route.region !== profile?.homeCanton;
+  const locked = !premium && freeHikeUsed;
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 

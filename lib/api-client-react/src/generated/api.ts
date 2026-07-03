@@ -936,3 +936,74 @@ export const useUpdateMyPremium = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateMyPremiumMutationOptions(options));
     }
 
+export const getConsumeMyFreeHikeUrl = () => {
+
+
+
+
+  return `/api/me/free-hike`
+}
+
+/**
+ * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
+ * @summary Kostenlose Wanderung verbrauchen
+ */
+export const consumeMyFreeHike = async ( options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getConsumeMyFreeHikeUrl(),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getConsumeMyFreeHikeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof consumeMyFreeHike>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof consumeMyFreeHike>>, TError,void, TContext> => {
+
+const mutationKey = ['consumeMyFreeHike'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof consumeMyFreeHike>>, void> = () => {
+
+
+          return  consumeMyFreeHike(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConsumeMyFreeHikeMutationResult = NonNullable<Awaited<ReturnType<typeof consumeMyFreeHike>>>
+
+    export type ConsumeMyFreeHikeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Kostenlose Wanderung verbrauchen
+ */
+export const useConsumeMyFreeHike = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof consumeMyFreeHike>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof consumeMyFreeHike>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getConsumeMyFreeHikeMutationOptions(options));
+    }
+
