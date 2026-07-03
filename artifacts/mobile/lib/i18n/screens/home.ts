@@ -13,6 +13,8 @@ export interface HomeStrings {
   routeCount: (count: number) => string;
   liveFromSwisstopo: string;
   allCantonsHint: (count: number) => string;
+  customRouteTitle: string;
+  customRouteHint: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -29,6 +31,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderrouten"}`,
     liveFromSwisstopo: "Routen live aus swisstopo",
     allCantonsHint: (n) => `Alle ${n} Kantone · Routen live aus swisstopo`,
+    customRouteTitle: "Eigene Route",
+    customRouteHint: "Start und Ziel selbst festlegen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -43,6 +47,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderroute"}`,
     liveFromSwisstopo: "Route live us swisstopo",
     allCantonsHint: (n) => `Alli ${n} Kantön · Route live us swisstopo`,
+    customRouteTitle: "Eigeni Route",
+    customRouteHint: "Start und Ziel sälber aagäh",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -57,6 +63,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "hiking route" : "hiking routes"}`,
     liveFromSwisstopo: "Routes live from swisstopo",
     allCantonsHint: (n) => `All ${n} cantons · Routes live from swisstopo`,
+    customRouteTitle: "Custom route",
+    customRouteHint: "Set your own start and destination",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -71,6 +79,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n <= 1 ? "itinéraire" : "itinéraires"}`,
     liveFromSwisstopo: "Itinéraires en direct de swisstopo",
     allCantonsHint: (n) => `Les ${n} cantons · Itinéraires en direct de swisstopo`,
+    customRouteTitle: "Itinéraire personnalisé",
+    customRouteHint: "Définis toi-même départ et arrivée",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -85,6 +95,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "sentiero" : "sentieri"}`,
     liveFromSwisstopo: "Percorsi live da swisstopo",
     allCantonsHint: (n) => `Tutti i ${n} cantoni · Percorsi live da swisstopo`,
+    customRouteTitle: "Itinerario personalizzato",
+    customRouteHint: "Imposta tu partenza e arrivo",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -99,6 +111,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "ruta de senderismo" : "rutas de senderismo"}`,
     liveFromSwisstopo: "Rutas en vivo desde swisstopo",
     allCantonsHint: (n) => `Los ${n} cantones · Rutas en vivo desde swisstopo`,
+    customRouteTitle: "Ruta personalizada",
+    customRouteHint: "Define tú mismo/a el inicio y el destino",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -113,6 +127,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} ${n === 1 ? "rota de caminhada" : "rotas de caminhada"}`,
     liveFromSwisstopo: "Rotas ao vivo do swisstopo",
     allCantonsHint: (n) => `Todos os ${n} cantões · Rotas ao vivo do swisstopo`,
+    customRouteTitle: "Rota personalizada",
+    customRouteHint: "Defina você mesmo/a a partida e o destino",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -127,6 +143,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     routeCount: (n) => `${n} 条徒步路线`,
     liveFromSwisstopo: "来自 swisstopo 的实时路线",
     allCantonsHint: (n) => `全部 ${n} 个联邦州 · 来自 swisstopo 的实时路线`,
+    customRouteTitle: "自定义路线",
+    customRouteHint: "自行设定起点和终点",
   },
 };
 

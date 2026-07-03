@@ -131,6 +131,37 @@ export default function Entdecken() {
             />
           ))}
         </View>
+
+        <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
+
+        <View style={{ paddingHorizontal: 20 }}>
+          <Animated.View entering={FadeInDown.delay(others.length * 60)}>
+            <Pressable
+              onPress={() => router.push("/eigene-route")}
+              style={[
+                styles.cantonCard,
+                {
+                  backgroundColor: colors.glassBg,
+                  borderColor: colors.glassBorder,
+                  borderRadius: colors.radius,
+                },
+              ]}
+            >
+              <View style={styles.cantonIcon}>
+                <Feather name="navigation" size={18} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.cantonName, { color: colors.foreground }]}>
+                  {t.customRouteTitle}
+                </Text>
+                <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
+                  {t.customRouteHint}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+            </Pressable>
+          </Animated.View>
+        </View>
       </ScrollView>
     </Background>
   );

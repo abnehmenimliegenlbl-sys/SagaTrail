@@ -160,6 +160,15 @@ export interface WeatherReport {
 }
 
 /**
+ * Ein Orts-/Adressvorschlag (OpenStreetMap Nominatim).
+ */
+export interface GeocodePlace {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+/**
  * Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
  */
 export interface WikiSummary {
@@ -332,5 +341,21 @@ east: number;
 export type GetWeatherParams = {
 lat: number;
 lng: number;
+};
+
+export type SearchPlacesParams = {
+/**
+ * @minLength 2
+ */
+q: string;
+};
+
+export type GetCustomRouteParams = {
+startLat: number;
+startLng: number;
+endLat: number;
+endLng: number;
+startLabel?: string;
+endLabel?: string;
 };
 

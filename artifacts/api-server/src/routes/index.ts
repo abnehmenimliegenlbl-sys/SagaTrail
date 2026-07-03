@@ -9,6 +9,8 @@ import poisRouter from "./pois";
 import weatherRouter from "./weather";
 import profileRouter from "./profile";
 import narrationRouter from "./narration";
+import geocodeRouter from "./geocode";
+import customRouteRouter from "./customRoute";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use(poisRouter);
 router.use(weatherRouter);
 router.use(profileRouter);
 router.use(narrationRouter);
+router.use(geocodeRouter);
+router.use(customRouteRouter);
 
 export default router;

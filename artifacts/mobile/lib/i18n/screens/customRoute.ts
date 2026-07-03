@@ -1,0 +1,169 @@
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface CustomRouteStrings {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  startLabel: string;
+  startPlaceholder: string;
+  useCurrentLocation: string;
+  locatingLabel: string;
+  locationDeniedLabel: string;
+  endLabel: string;
+  endPlaceholder: string;
+  searchingLabel: string;
+  noResultsLabel: string;
+  submit: string;
+  calculatingLabel: string;
+  errorMissingPoints: string;
+  errorGeneric: (message: string) => string;
+}
+
+const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
+  de: {
+    eyebrow: "EIGENE ROUTE",
+    title: "Start und Ziel wählen",
+    intro: "Gib Start und Ziel ein — die Wanderroute wird live berechnet und mit einer Sage verbunden.",
+    startLabel: "Start",
+    startPlaceholder: "Ort oder Adresse eingeben …",
+    useCurrentLocation: "Aktuellen Standort verwenden",
+    locatingLabel: "Standort wird ermittelt …",
+    locationDeniedLabel: "Standortzugriff nicht erlaubt",
+    endLabel: "Ziel",
+    endPlaceholder: "Ort oder Adresse eingeben …",
+    searchingLabel: "Suche läuft …",
+    noResultsLabel: "Keine Treffer",
+    submit: "Route berechnen",
+    calculatingLabel: "Route wird berechnet …",
+    errorMissingPoints: "Bitte Start und Ziel aus der Vorschlagsliste wählen.",
+    errorGeneric: (m) => m,
+  },
+  gsw: {
+    eyebrow: "EIGENI ROUTE",
+    title: "Start und Ziel wähle",
+    intro: "Gib Start und Ziel ii — d Wanderroute wird live berechnet und mit ere Sag verbunde.",
+    startLabel: "Start",
+    startPlaceholder: "Ort oder Adrässe iigäh …",
+    useCurrentLocation: "Aktuelle Standort bruuche",
+    locatingLabel: "Standort wird gsuecht …",
+    locationDeniedLabel: "Standortzuegriff nöd erlaubt",
+    endLabel: "Ziel",
+    endPlaceholder: "Ort oder Adrässe iigäh …",
+    searchingLabel: "Sueche läuft …",
+    noResultsLabel: "Kei Träffer",
+    submit: "Route berechne",
+    calculatingLabel: "Route wird berechnet …",
+    errorMissingPoints: "Bitte Start und Ziel us dr Vorschlagslischt wähle.",
+    errorGeneric: (m) => m,
+  },
+  en: {
+    eyebrow: "CUSTOM ROUTE",
+    title: "Choose start and destination",
+    intro: "Enter a start and destination — the hiking route is calculated live and linked to a saga.",
+    startLabel: "Start",
+    startPlaceholder: "Enter a place or address …",
+    useCurrentLocation: "Use current location",
+    locatingLabel: "Finding location …",
+    locationDeniedLabel: "Location access not granted",
+    endLabel: "Destination",
+    endPlaceholder: "Enter a place or address …",
+    searchingLabel: "Searching …",
+    noResultsLabel: "No results",
+    submit: "Calculate route",
+    calculatingLabel: "Calculating route …",
+    errorMissingPoints: "Please choose start and destination from the suggestion list.",
+    errorGeneric: (m) => m,
+  },
+  fr: {
+    eyebrow: "ITINÉRAIRE PERSONNALISÉ",
+    title: "Choisir départ et arrivée",
+    intro: "Indique un départ et une arrivée — l'itinéraire est calculé en direct et relié à une légende.",
+    startLabel: "Départ",
+    startPlaceholder: "Saisir un lieu ou une adresse …",
+    useCurrentLocation: "Utiliser la position actuelle",
+    locatingLabel: "Localisation en cours …",
+    locationDeniedLabel: "Accès à la position refusé",
+    endLabel: "Arrivée",
+    endPlaceholder: "Saisir un lieu ou une adresse …",
+    searchingLabel: "Recherche en cours …",
+    noResultsLabel: "Aucun résultat",
+    submit: "Calculer l'itinéraire",
+    calculatingLabel: "Calcul de l'itinéraire …",
+    errorMissingPoints: "Merci de choisir le départ et l'arrivée dans la liste de suggestions.",
+    errorGeneric: (m) => m,
+  },
+  it: {
+    eyebrow: "ITINERARIO PERSONALIZZATO",
+    title: "Scegli partenza e arrivo",
+    intro: "Inserisci partenza e arrivo — l'itinerario viene calcolato in diretta e collegato a una leggenda.",
+    startLabel: "Partenza",
+    startPlaceholder: "Inserisci un luogo o un indirizzo …",
+    useCurrentLocation: "Usa la posizione attuale",
+    locatingLabel: "Ricerca della posizione …",
+    locationDeniedLabel: "Accesso alla posizione non consentito",
+    endLabel: "Arrivo",
+    endPlaceholder: "Inserisci un luogo o un indirizzo …",
+    searchingLabel: "Ricerca in corso …",
+    noResultsLabel: "Nessun risultato",
+    submit: "Calcola itinerario",
+    calculatingLabel: "Calcolo dell'itinerario …",
+    errorMissingPoints: "Seleziona partenza e arrivo dall'elenco dei suggerimenti.",
+    errorGeneric: (m) => m,
+  },
+  es: {
+    eyebrow: "RUTA PERSONALIZADA",
+    title: "Elige salida y destino",
+    intro: "Introduce una salida y un destino — la ruta se calcula en directo y se vincula a una leyenda.",
+    startLabel: "Salida",
+    startPlaceholder: "Introduce un lugar o dirección …",
+    useCurrentLocation: "Usar ubicación actual",
+    locatingLabel: "Buscando ubicación …",
+    locationDeniedLabel: "Acceso a la ubicación no concedido",
+    endLabel: "Destino",
+    endPlaceholder: "Introduce un lugar o dirección …",
+    searchingLabel: "Buscando …",
+    noResultsLabel: "Sin resultados",
+    submit: "Calcular ruta",
+    calculatingLabel: "Calculando ruta …",
+    errorMissingPoints: "Elige la salida y el destino de la lista de sugerencias.",
+    errorGeneric: (m) => m,
+  },
+  pt: {
+    eyebrow: "ROTA PERSONALIZADA",
+    title: "Escolha partida e destino",
+    intro: "Indique uma partida e um destino — a rota é calculada em tempo real e associada a uma lenda.",
+    startLabel: "Partida",
+    startPlaceholder: "Digite um local ou endereço …",
+    useCurrentLocation: "Usar localização atual",
+    locatingLabel: "Localizando …",
+    locationDeniedLabel: "Acesso à localização não concedido",
+    endLabel: "Destino",
+    endPlaceholder: "Digite um local ou endereço …",
+    searchingLabel: "Pesquisando …",
+    noResultsLabel: "Nenhum resultado",
+    submit: "Calcular rota",
+    calculatingLabel: "Calculando rota …",
+    errorMissingPoints: "Escolha a partida e o destino na lista de sugestões.",
+    errorGeneric: (m) => m,
+  },
+  zh: {
+    eyebrow: "自定义路线",
+    title: "选择起点和终点",
+    intro: "输入起点和终点——徒步路线将实时计算并关联一个传说。",
+    startLabel: "起点",
+    startPlaceholder: "输入地点或地址……",
+    useCurrentLocation: "使用当前位置",
+    locatingLabel: "正在定位……",
+    locationDeniedLabel: "未获得位置访问权限",
+    endLabel: "终点",
+    endPlaceholder: "输入地点或地址……",
+    searchingLabel: "搜索中……",
+    noResultsLabel: "无结果",
+    submit: "计算路线",
+    calculatingLabel: "正在计算路线……",
+    errorMissingPoints: "请从建议列表中选择起点和终点。",
+    errorGeneric: (m) => m,
+  },
+};
+
+export const useCustomRouteStrings = createUseStrings(CUSTOM_ROUTE_STRINGS);

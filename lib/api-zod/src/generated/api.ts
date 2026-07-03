@@ -232,6 +232,60 @@ export const GetWeatherResponse = zod.object({
 
 
 /**
+ * Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen Route.
+ * @summary Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
+ */
+export const searchPlacesQueryQMin = 2;
+
+
+
+export const SearchPlacesQueryParams = zod.object({
+  "q": zod.coerce.string().min(searchPlacesQueryQMin)
+})
+
+export const SearchPlacesResponseItem = zod.object({
+  "label": zod.string(),
+  "lat": zod.number(),
+  "lng": zod.number()
+}).describe('Ein Orts-\/Adressvorschlag (OpenStreetMap Nominatim).')
+export const SearchPlacesResponse = zod.array(SearchPlacesResponseItem)
+
+
+/**
+ * Berechnet eine Fussweg-Route zwischen Start- und Zielpunkt (OSRM, ohne API-Key) und reichert sie mit swisstopo-Hoehenmetern, SAC-Grad und Saison-Heuristik an (dieselbe Anreicherung wie bei Kantonsrouten). Die Route wird nicht persistiert, sondern bei jeder Anfrage neu berechnet.
+ * @summary Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+ */
+export const GetCustomRouteQueryParams = zod.object({
+  "startLat": zod.coerce.number(),
+  "startLng": zod.coerce.number(),
+  "endLat": zod.coerce.number(),
+  "endLng": zod.coerce.number(),
+  "startLabel": zod.coerce.string().optional(),
+  "endLabel": zod.coerce.string().optional()
+})
+
+export const GetCustomRouteResponse = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number(),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "terrain": zod.string(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean()
+})
+
+
+/**
  * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
  * @summary Naechstgelegene kuratierte Sage zu einer Route
  */

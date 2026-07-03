@@ -287,6 +287,99 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/geocode:
+    get:
+      operationId: searchPlaces
+      tags: [routes]
+      summary: Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
+      description: >
+        Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz
+        (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient
+        als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen
+        Route.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        "200":
+          description: Ortsvorschlaege
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeocodePlace"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /routes/custom:
+    get:
+      operationId: getCustomRoute
+      tags: [routes]
+      summary: Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+      description: >
+        Berechnet eine Fussweg-Route zwischen Start- und Zielpunkt (OSRM,
+        ohne API-Key) und reichert sie mit swisstopo-Hoehenmetern, SAC-Grad
+        und Saison-Heuristik an (dieselbe Anreicherung wie bei Kantonsrouten).
+        Die Route wird nicht persistiert, sondern bei jeder Anfrage neu
+        berechnet.
+      parameters:
+        - name: startLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: startLng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: endLng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: startLabel
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: endLabel
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Berechnete Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Keine Route zwischen den Punkten gefunden oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/saga:
     get:
       operationId: getRouteSaga
@@ -728,6 +821,20 @@ components:
         - trailConditionNote
         - source
         - fetchedAt
+    GeocodePlace:
+      type: object
+      description: Ein Orts-/Adressvorschlag (OpenStreetMap Nominatim).
+      properties:
+        label:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+      required:
+        - label
+        - lat
+        - lng
     Poi:
       type: object
       description: >

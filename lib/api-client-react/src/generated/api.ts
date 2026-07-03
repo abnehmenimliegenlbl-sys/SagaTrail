@@ -25,8 +25,10 @@ import type {
   CatalogRoute,
   CatalogSaga,
   ErrorResponse,
+  GeocodePlace,
   GetAerialwaysParams,
   GetCantonRoutesParams,
+  GetCustomRouteParams,
   GetPoisParams,
   GetWeatherParams,
   HealthStatus,
@@ -35,6 +37,7 @@ import type {
   PremiumUpdate,
   Profile,
   ProfileInput,
+  SearchPlacesParams,
   StoryRequest,
   StoryResponse,
   WeatherReport
@@ -627,6 +630,176 @@ export function useGetWeather<TData = Awaited<ReturnType<typeof getWeather>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWeatherQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSearchPlacesUrl = (params: SearchPlacesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/geocode?${stringifiedParams}` : `/api/routes/geocode`
+}
+
+/**
+ * Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen Route.
+ * @summary Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
+ */
+export const searchPlaces = async (params: SearchPlacesParams, options?: RequestInit): Promise<GeocodePlace[]> => {
+
+  return customFetch<GeocodePlace[]>(getSearchPlacesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchPlacesQueryKey = (params?: SearchPlacesParams,) => {
+    return [
+    `/api/routes/geocode`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchPlacesQueryOptions = <TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ErrorType<ErrorResponse>>(params: SearchPlacesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchPlacesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchPlaces>>> = ({ signal }) => searchPlaces(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof searchPlaces>>>
+export type SearchPlacesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
+ */
+
+export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ErrorType<ErrorResponse>>(
+ params: SearchPlacesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchPlacesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCustomRouteUrl = (params: GetCustomRouteParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/custom?${stringifiedParams}` : `/api/routes/custom`
+}
+
+/**
+ * Berechnet eine Fussweg-Route zwischen Start- und Zielpunkt (OSRM, ohne API-Key) und reichert sie mit swisstopo-Hoehenmetern, SAC-Grad und Saison-Heuristik an (dieselbe Anreicherung wie bei Kantonsrouten). Die Route wird nicht persistiert, sondern bei jeder Anfrage neu berechnet.
+ * @summary Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+ */
+export const getCustomRoute = async (params: GetCustomRouteParams, options?: RequestInit): Promise<CatalogRoute> => {
+
+  return customFetch<CatalogRoute>(getGetCustomRouteUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomRouteQueryKey = (params?: GetCustomRouteParams,) => {
+    return [
+    `/api/routes/custom`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCustomRouteQueryOptions = <TData = Awaited<ReturnType<typeof getCustomRoute>>, TError = ErrorType<ErrorResponse>>(params: GetCustomRouteParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomRoute>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomRouteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomRoute>>> = ({ signal }) => getCustomRoute(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomRoute>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomRouteQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomRoute>>>
+export type GetCustomRouteQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+ */
+
+export function useGetCustomRoute<TData = Awaited<ReturnType<typeof getCustomRoute>>, TError = ErrorType<ErrorResponse>>(
+ params: GetCustomRouteParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomRoute>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomRouteQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

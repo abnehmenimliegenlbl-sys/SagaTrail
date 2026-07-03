@@ -52,6 +52,12 @@ interface CatalogData {
 interface DynamicData {
   cantonRoutes: Record<string, HikingRoute[]>;
   routeSagas: Record<string, Saga>;
+  /**
+   * Selbst per Start/Ziel angegebene Routen (server-seitig live berechnet,
+   * NICHT auf einen Kanton-Katalog persistiert). Nur im Speicher gehalten
+   * (nicht Teil des AsyncStorage-Caches), da sie pro Anfrage neu entstehen.
+   */
+  customRoutes: Record<string, HikingRoute>;
 }
 
 /** Ergebnis eines Kanton-Ladevorgangs samt Herkunft der Routen. */
@@ -98,6 +104,11 @@ interface CatalogContextValue {
   ) => Promise<CantonRoutesResult>;
   /** Liefert die naechstgelegene kuratierte Sage zu einer Route. */
   ensureRouteSaga: (routeId: string) => Promise<Saga | undefined>;
+  /**
+   * Merkt eine selbst per Start/Ziel berechnete Route vor, damit `getRoute`
+   * sie danach ueber `route/[id]` -> `saga/[id]` wie jede andere Route findet.
+   */
+  addCustomRoute: (route: HikingRoute) => void;
 }
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
@@ -106,7 +117,7 @@ const CatalogContext = createContext<CatalogContextValue | null>(null);
 // gebuendelten Routen-Seed mehr. Nur die kuratierten Sagen bleiben als
 // Offline-Rueckfall erhalten.
 const SEED: CatalogData = { routes: [], sagas: SAGAS };
-const EMPTY_DYNAMIC: DynamicData = { cantonRoutes: {}, routeSagas: {} };
+const EMPTY_DYNAMIC: DynamicData = { cantonRoutes: {}, routeSagas: {}, customRoutes: {} };
 
 /**
  * Kantonsliste fuer den Einstieg: alle 26 Kantone sind waehlbar. Die Zahl der
@@ -142,9 +153,12 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   const sagaInFlight = useRef<Map<string, Promise<Saga | undefined>>>(new Map());
 
   const persistDynamic = useCallback(() => {
+    // customRoutes bewusst NICHT persistieren: sie sind pro Sitzung ephemer
+    // und werden bei Bedarf neu vom Server berechnet.
+    const { cantonRoutes, routeSagas } = dynamicRef.current;
     AsyncStorage.setItem(
       DYNAMIC_KEY,
-      JSON.stringify(dynamicRef.current),
+      JSON.stringify({ cantonRoutes, routeSagas }),
     ).catch(() => {});
   }, []);
 
@@ -160,6 +174,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
           const next: DynamicData = {
             cantonRoutes: parsed.cantonRoutes ?? {},
             routeSagas: parsed.routeSagas ?? {},
+            customRoutes: {},
           };
           dynamicRef.current = next;
           setDynamic(next);
@@ -271,6 +286,8 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       // Route lokal finden und die naechstgelegene kuratierte Sage bestimmen —
       // funktioniert offline, da der Sagen-Katalog immer gebuendelt vorliegt.
       const findRoute = (id: string): HikingRoute | undefined => {
+        const custom = dynamicRef.current.customRoutes[id];
+        if (custom) return custom;
         for (const list of Object.values(dynamicRef.current.cantonRoutes)) {
           const hit = list.find((r) => r.id === id);
           if (hit) return hit;
@@ -308,12 +325,23 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const addCustomRoute = useCallback((route: HikingRoute) => {
+    const next: DynamicData = {
+      ...dynamicRef.current,
+      customRoutes: { ...dynamicRef.current.customRoutes, [route.id]: route },
+    };
+    dynamicRef.current = next;
+    setDynamic(next);
+  }, []);
+
   const value = useMemo<CatalogContextValue>(() => {
     const { routes, sagas } = data;
-    const { cantonRoutes } = dynamic;
+    const { cantonRoutes, customRoutes } = dynamic;
     const dynRouteLists = Object.values(cantonRoutes);
 
     const findDynRoute = (predicate: (r: HikingRoute) => boolean) => {
+      const custom = Object.values(customRoutes).find(predicate);
+      if (custom) return custom;
       for (const list of dynRouteLists) {
         const hit = list.find(predicate);
         if (hit) return hit;
@@ -346,8 +374,9 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       },
       loadCantonRoutes,
       ensureRouteSaga,
+      addCustomRoute,
     };
-  }, [data, dynamic, ready, source, loadCantonRoutes, ensureRouteSaga]);
+  }, [data, dynamic, ready, source, loadCantonRoutes, ensureRouteSaga, addCustomRoute]);
 
   return (
     <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>
