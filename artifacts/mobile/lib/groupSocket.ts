@@ -100,6 +100,11 @@ export class GroupSocket {
   }
 
   private async openConnection(): Promise<void> {
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.close();
+      this.ws = null;
+    }
     const base = wsBaseUrl();
     if (!base) {
       this.setStatus("fehler");
@@ -195,6 +200,14 @@ export class GroupSocket {
       }
       case "error": {
         const code = data.code as string;
+        this.closedByUser = true;
+        this.clearReconnectTimer();
+        this.lastAction = null;
+        this.ws?.close();
+        this.ws = null;
+        this.closedByUser = false;
+        this.reconnectAttempt = 0;
+        this.setStatus("fehler");
         if (code === "premium_required" || code === "not_found") {
           this.events.onError(code);
         } else {
