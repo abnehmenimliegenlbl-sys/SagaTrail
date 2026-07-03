@@ -203,6 +203,31 @@ export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
 /**
+ * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
+ * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
+ */
+export const GetWeatherQueryParams = zod.object({
+  "lat": zod.coerce.number(),
+  "lng": zod.coerce.number()
+})
+
+export const GetWeatherResponse = zod.object({
+  "temperatureC": zod.number(),
+  "windKmh": zod.number(),
+  "windGustsKmh": zod.number(),
+  "precipitationMm": zod.number(),
+  "snowDepthCm": zod.number(),
+  "weatherCode": zod.number().describe('WMO-Wettercode von Open-Meteo'),
+  "conditionLabel": zod.string().describe('Deutschsprachige Kurzbeschreibung des Wettercodes'),
+  "trailConditionLevel": zod.string().describe('gut | vorsicht | kritisch'),
+  "trailConditionLabel": zod.string(),
+  "trailConditionNote": zod.string(),
+  "source": zod.string(),
+  "fetchedAt": zod.coerce.date()
+}).describe('Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter Wegzustand-Hinweis. Kein offizieller Sperr-\/Lawinenstatus.\n')
+
+
+/**
  * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
  * @summary Naechstgelegene kuratierte Sage zu einer Route
  */

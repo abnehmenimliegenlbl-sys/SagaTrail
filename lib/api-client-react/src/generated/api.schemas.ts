@@ -114,6 +114,27 @@ export interface Aerialway {
 }
 
 /**
+ * Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter Wegzustand-Hinweis. Kein offizieller Sperr-/Lawinenstatus.
+ */
+export interface WeatherReport {
+  temperatureC: number;
+  windKmh: number;
+  windGustsKmh: number;
+  precipitationMm: number;
+  snowDepthCm: number;
+  /** WMO-Wettercode von Open-Meteo */
+  weatherCode: number;
+  /** Deutschsprachige Kurzbeschreibung des Wettercodes */
+  conditionLabel: string;
+  /** gut | vorsicht | kritisch */
+  trailConditionLevel: string;
+  trailConditionLabel: string;
+  trailConditionNote: string;
+  source: string;
+  fetchedAt: string;
+}
+
+/**
  * Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).
  */
 export interface WikiSummary {
@@ -281,5 +302,10 @@ south: number;
 west: number;
 north: number;
 east: number;
+};
+
+export type GetWeatherParams = {
+lat: number;
+lng: number;
 };
 

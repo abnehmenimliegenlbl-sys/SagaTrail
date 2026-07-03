@@ -253,6 +253,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/weather:
+    get:
+      operationId: getWeather
+      tags: [routes]
+      summary: Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
+      description: >
+        Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den
+        Ausgangspunkt einer Route sowie einen daraus abgeleiteten
+        Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine
+        Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Wetter und Wegzustand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherReport"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/saga:
     get:
       operationId: getRouteSaga
@@ -534,6 +568,53 @@ components:
         - id
         - kind
         - geometry
+    WeatherReport:
+      type: object
+      description: >
+        Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter
+        Wegzustand-Hinweis. Kein offizieller Sperr-/Lawinenstatus.
+      properties:
+        temperatureC:
+          type: number
+        windKmh:
+          type: number
+        windGustsKmh:
+          type: number
+        precipitationMm:
+          type: number
+        snowDepthCm:
+          type: number
+        weatherCode:
+          type: integer
+          description: WMO-Wettercode von Open-Meteo
+        conditionLabel:
+          type: string
+          description: Deutschsprachige Kurzbeschreibung des Wettercodes
+        trailConditionLevel:
+          type: string
+          description: "gut | vorsicht | kritisch"
+        trailConditionLabel:
+          type: string
+        trailConditionNote:
+          type: string
+        source:
+          type: string
+        fetchedAt:
+          type: string
+          format: date-time
+      required:
+        - temperatureC
+        - windKmh
+        - windGustsKmh
+        - precipitationMm
+        - snowDepthCm
+        - weatherCode
+        - conditionLabel
+        - trailConditionLevel
+        - trailConditionLabel
+        - trailConditionNote
+        - source
+        - fetchedAt
     Poi:
       type: object
       description: >

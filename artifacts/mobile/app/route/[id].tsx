@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { getAerialways } from "@workspace/api-client-react";
+import { getAerialways, getWeather } from "@workspace/api-client-react";
+import type { WeatherReport } from "@workspace/api-client-react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -54,6 +55,9 @@ export default function Routenplanung() {
   const [aerialways, setAerialways] = useState<
     { id: string; geometry: number[][] }[] | null
   >(null);
+  const [weather, setWeather] = useState<WeatherReport | null>(null);
+  const [weatherError, setWeatherError] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(true);
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Wegverlauf sinnvoll, best effort.
@@ -67,6 +71,32 @@ export default function Routenplanung() {
       })
       .catch(() => {
         if (!cancelled) setAerialways(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id]);
+
+  // Live-Wetter + abgeleiteter Wegzustand fuer den Ausgangspunkt der Route.
+  useEffect(() => {
+    if (!route?.coordinates) {
+      setWeatherLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setWeatherLoading(true);
+    setWeatherError(false);
+    getWeather({ lat: route.coordinates.lat, lng: route.coordinates.lng })
+      .then((result) => {
+        if (cancelled) return;
+        setWeather(result);
+        setWeatherLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setWeather(null);
+        setWeatherError(true);
+        setWeatherLoading(false);
       });
     return () => {
       cancelled = true;
@@ -251,13 +281,48 @@ export default function Routenplanung() {
             { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
           ]}
         >
-          <CheckRow icon="cloud" label="Wetter" value="Wechselnd, 8-14°C" ok />
-          <CheckRow icon="wind" label="Wind" value="Mässig, Böen 35 km/h" ok />
-          <CheckRow icon="alert-triangle" label="Wegzustand" value="Teils feucht" warn />
-          <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
-            Richtwerte zur eigenen Prüfung. Live-Wetterdaten folgen in einer
-            späteren Ausbaustufe.
-          </Text>
+          {weatherLoading ? (
+            <View style={styles.checkRow}>
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+              <Text style={[styles.checkLabel, { color: colors.mutedForeground }]}>
+                Wetter wird geladen …
+              </Text>
+            </View>
+          ) : weatherError || !weather ? (
+            <View style={styles.checkRow}>
+              <Feather name="cloud-off" size={16} color={colors.mutedForeground} />
+              <Text style={[styles.checkLabel, { color: colors.foreground }]}>Wetter</Text>
+              <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
+                Nicht verfügbar
+              </Text>
+            </View>
+          ) : (
+            <>
+              <CheckRow
+                icon="cloud"
+                label="Wetter"
+                value={`${weather.conditionLabel}, ${Math.round(weather.temperatureC)}°C`}
+                ok
+              />
+              <CheckRow
+                icon="wind"
+                label="Wind"
+                value={`${Math.round(weather.windKmh)} km/h, Böen ${Math.round(weather.windGustsKmh)} km/h`}
+                ok
+              />
+              <CheckRow
+                icon="alert-triangle"
+                label="Wegzustand"
+                value={weather.trailConditionLabel}
+                ok={weather.trailConditionLevel === "gut"}
+                warn={weather.trailConditionLevel !== "gut"}
+              />
+              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
+                {weather.trailConditionNote} Live-Wetter via Open-Meteo, kein offizieller
+                Sperr- oder Lawinenstatus — Richtwerte zur eigenen Prüfung.
+              </Text>
+            </>
+          )}
         </View>
 
         <View

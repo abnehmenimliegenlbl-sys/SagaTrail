@@ -28,13 +28,15 @@ import type {
   GetAerialwaysParams,
   GetCantonRoutesParams,
   GetPoisParams,
+  GetWeatherParams,
   HealthStatus,
   Poi,
   PremiumUpdate,
   Profile,
   ProfileInput,
   StoryRequest,
-  StoryResponse
+  StoryResponse,
+  WeatherReport
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -539,6 +541,91 @@ export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetWeatherUrl = (params: GetWeatherParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/weather?${stringifiedParams}` : `/api/routes/weather`
+}
+
+/**
+ * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
+ * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
+ */
+export const getWeather = async (params: GetWeatherParams, options?: RequestInit): Promise<WeatherReport> => {
+
+  return customFetch<WeatherReport>(getGetWeatherUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWeatherQueryKey = (params?: GetWeatherParams,) => {
+    return [
+    `/api/routes/weather`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetWeatherQueryOptions = <TData = Awaited<ReturnType<typeof getWeather>>, TError = ErrorType<ErrorResponse>>(params: GetWeatherParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeather>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWeatherQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeather>>> = ({ signal }) => getWeather(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWeather>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWeatherQueryResult = NonNullable<Awaited<ReturnType<typeof getWeather>>>
+export type GetWeatherQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
+ */
+
+export function useGetWeather<TData = Awaited<ReturnType<typeof getWeather>>, TError = ErrorType<ErrorResponse>>(
+ params: GetWeatherParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWeather>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWeatherQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
