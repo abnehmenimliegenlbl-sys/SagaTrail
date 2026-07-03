@@ -30,7 +30,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
   de: {
     brandTagline: "Die Sagen der Alpen, lebendig auf deinem Weg",
     intro:
-      "Du wanderst als Zeug:in durch uralte Schweizer Legenden. Sie werden dir erzählt, während du gehst — Schritt für Schritt, Ort für Ort.",
+      "Du wanderst als Zeuge durch uralte Schweizer Legenden. Sie werden dir erzählt, während du gehst — Schritt für Schritt, Ort für Ort.",
     nameLabel: "Wie dürfen wir dich nennen?",
     namePlaceholder: "Dein Name",
     stepOf: (step, total) => `Schritt ${step} von ${total}`,
@@ -39,25 +39,25 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Dein Archetyp verändert den Ton der Erzählung und wie du dargestellt wirst — nie den Ausgang der Sage.",
     archetypes: {
       reisende: {
-        title: "Die/der Reisende",
+        title: "Reisende",
         tagline: "Von aussen ins Tal",
         description:
-          "Du kommst von weit her und hilfst mit Wissen und Mut. Dein Blick ist der einer neugierigen Beobachterin.",
+          "Du kommst von weit her und hilfst mit Wissen und Mut. Dein Blick ist der einer neugierigen Beobachtung.",
       },
       hueterin: {
-        title: "Die/der Hüter:in",
+        title: "Hüter",
         tagline: "Der Natur verbunden",
         description:
           "Du vermittelst zwischen Menschen und Geisterwelt. Du hörst, was zwischen den Steinen flüstert.",
       },
       gewitzte: {
-        title: "Die/der Gewitzte",
+        title: "Gewitzte",
         tagline: "Klugheit statt Kampf",
         description:
           "Du löst mit List, was andere mit Gewalt versuchen. Wo Gefahr droht, suchst du die Lücke.",
       },
       senn: {
-        title: "Die/der Senn:in",
+        title: "Senn",
         tagline: "Am Berg verwurzelt",
         description:
           "Du kennst die Alp seit jeher. Ruhig und erfahren liest du die Zeichen des Gebirges.",
@@ -107,7 +107,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
   gsw: {
     brandTagline: "D Sage vo de Alpe, läbändig uf dim Wäg",
     intro:
-      "Du wanderisch als Zügin dur uralti Schwiizer Sage. Si wärdet dir verzelt, während du gasch — Schritt für Schritt, Ort für Ort.",
+      "Du wanderisch als Züüge dur uralti Schwiizer Sage. Si wärdet dir verzelt, während du gasch — Schritt für Schritt, Ort für Ort.",
     nameLabel: "Wie dörfemer dich nenne?",
     namePlaceholder: "Dis Name",
     stepOf: (step, total) => `Schritt ${step} vo ${total}`,
@@ -116,25 +116,25 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       "Dis Archetyp veränderet de Ton vo de Erzählig und wie du dargstellt wirsch — nie s Änd vode Sag.",
     archetypes: {
       reisende: {
-        title: "Die/de Reisendi",
+        title: "Reisendi",
         tagline: "Vo usse is Tal",
         description:
-          "Du chunnsch vo wiit här und hilfsch mit Wüsse und Muet. Din Blick isch de vonere nüügierige Beobachterin.",
+          "Du chunnsch vo wiit här und hilfsch mit Wüsse und Muet. Din Blick isch de vonere nüügierige Beobachtig.",
       },
       hueterin: {
-        title: "Die/de Hüeter:in",
+        title: "Hüeter",
         tagline: "De Natur verbunde",
         description:
           "Du vermittlisch zwüsche Mensch und Geischterwält. Du hörsch, was zwüsche de Stei flüschteret.",
       },
       gewitzte: {
-        title: "Die/de Gwitzti",
+        title: "Gwitzti",
         tagline: "Gschiidheit statt Kampf",
         description:
           "Du lösisch mit Lischt, was anderi mit Gwalt probiered. Wo Gfahr droht, suechsch du d Lugg.",
       },
       senn: {
-        title: "Die/de Senn:in",
+        title: "Senn",
         tagline: "Am Bärg verwurzlet",
         description:
           "Du kennsch d Alp scho lang. Ruehig und erfahre liesisch du d Zeiche vom Gebirg.",

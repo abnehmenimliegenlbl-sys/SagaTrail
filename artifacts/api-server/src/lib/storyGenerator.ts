@@ -18,7 +18,7 @@ export interface StorySagaInput {
 /**
  * KI-gestuetzte Erzeugung der kapitelweisen Sagen-Erzaehlung via Anthropic.
  *
- * Der/die Wandernde ist stets Zeug:in, nie Held:in — der Ausgang der Sage
+ * Die wandernde Person ist stets Zeuge, nie Held — der Ausgang der Sage
  * bleibt unveraenderlich. Entscheidungen betreffen nur Haltung und Blick.
  * Sprache, Archetyp und Alterstufe steuern Ton und Wortwahl.
  */
@@ -43,10 +43,10 @@ export interface GeneratedChapter {
 }
 
 const ARCHETYPE_LABEL: Record<string, string> = {
-  reisende: "die/der Reisende (kommt von aussen, wacher, neugieriger Blick)",
-  hueterin: "die/der Hüter:in (dem Land verbunden, hört das Flüstern zwischen den Steinen)",
-  gewitzte: "die/der Gewitzte (sucht die Lücke in jeder Drohung, List statt Gewalt)",
-  senn: "die/der Senn:in (kennt den Berg, liest die Zeichen ruhig und erfahren)",
+  reisende: "Reisende (kommt von aussen, wacher, neugieriger Blick)",
+  hueterin: "Hüter (dem Land verbunden, hört das Flüstern zwischen den Steinen)",
+  gewitzte: "Gewitzte (sucht die Lücke in jeder Drohung, List statt Gewalt)",
+  senn: "Senn (kennt den Berg, liest die Zeichen ruhig und erfahren)",
 };
 
 const AGE_LABEL: Record<string, string> = {
@@ -88,8 +88,9 @@ function buildPrompt(
     `Zielgruppe (Alterstufe): ${AGE_LABEL[ageTier] ?? ageTier}.`,
     "",
     "Strikte Regeln:",
-    "- Die wandernde Person ist stets ZEUG:IN, nie Held:in. Der Ausgang der Sage bleibt unveränderlich.",
+    "- Die wandernde Person ist stets Zeuge, nie Held. Der Ausgang der Sage bleibt unveränderlich.",
     "- Schreibe im Präsens, in der Du-Anrede.",
+    "- Verwende KEIN Gendern (keine Formen wie 'Leser:innen', 'Wanderer*innen', 'Held/in'); nutze durchgehend neutrale oder generische Formen.",
     `- Erzeuge 4 bis 6 Kapitel, davon genau ${decisionCount} Entscheidungspunkt(e).`,
     "- Entscheidungen betreffen nur Haltung und Blick der wandernden Person, niemals den Ausgang der Sage.",
     "- Jeder Entscheidungspunkt hat eine kurze Frage und 2 bis 3 Optionen.",

@@ -73,17 +73,17 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
   de: {
     archetypeLens: {
       reisende:
-        "Als Reisende:r kommst du von aussen. Dein wacher Blick misst jede Bewegung im Nebel.",
+        "Als Reisende kommst du von aussen. Dein wacher Blick misst jede Bewegung im Nebel.",
       hueterin:
-        "Als Hüter:in bist du dem Land verbunden. Du vernimmst das Flüstern zwischen den Steinen.",
+        "Als Hüter bist du dem Land verbunden. Du vernimmst das Flüstern zwischen den Steinen.",
       gewitzte:
-        "Als Gewitzte:r suchst du die Lücke in jeder Drohung. Wo andere Angst spüren, suchst du den Ausweg.",
-      senn: "Als Senn:in kennst du den Berg. Du liest die Zeichen ruhig, so wie du es seit jeher tust.",
+        "Als Gewitzte suchst du die Lücke in jeder Drohung. Wo andere Angst spüren, suchst du den Ausweg.",
+      senn: "Als Senn kennst du den Berg. Du liest die Zeichen ruhig, so wie du es seit jeher tust.",
     },
     ch1: (canton, title, lens) =>
       `Der Pfad windet sich ins Herz von ${canton}. Kalte Luft streicht dir über das Gesicht, und du spürst, wie alt dieser Ort ist. ${lens} Die Sage von ${title} liegt greifbar in der Luft.`,
     ch2: (summary) =>
-      `Vor dir öffnet sich die Szenerie. ${summary} Du bist nur Zeug:in dieses uralten Geschehens — und doch zieht es dich hinein.`,
+      `Vor dir öffnet sich die Szenerie. ${summary} Du bist nur Zeuge dieses uralten Geschehens — und doch zieht es dich hinein.`,
     ch3Adult:
       "Ein tiefer Schatten fällt über den Weg, und ein dumpfes Grollen steigt aus dem Fels. Etwas bewegt sich am Rand deines Blicks.",
     ch3Kinder:
@@ -91,7 +91,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ch3Question: "Wie begegnest du dem, was sich nähert?",
     ch3Options: [
       { label: "Ich trete einen Schritt vor und halte stand.", archetypeHint: "Mut der Reisenden", tone: "mutig" },
-      { label: "Ich bleibe still und beobachte.", archetypeHint: "Ruhe der Senn:in", tone: "bedacht" },
+      { label: "Ich bleibe still und beobachte.", archetypeHint: "Ruhe des Sennen", tone: "bedacht" },
       { label: "Ich suche im Schatten nach einem Zeichen.", archetypeHint: "List der Gewitzten", tone: "wachsam" },
     ],
     ch4: "Das Grollen verstummt. Was hier einst geschah, entfaltet sich vor deinen Augen, unabänderlich wie der Lauf des Wassers. Du erkennst: Die Legende ist mehr als ein Märchen — sie atmet noch immer in diesem Tal.",
@@ -111,17 +111,17 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
   gsw: {
     archetypeLens: {
       reisende:
-        "Als Reisende:r chunnsch vo usse. Din wach Blick misst jedi Bewegig im Näbel.",
+        "Als Reisende chunnsch vo usse. Din wach Blick misst jedi Bewegig im Näbel.",
       hueterin:
-        "Als Hüter:in bisch em Land verbunde. Du ghörsch s Flüschtere zwüschet de Stei.",
+        "Als Hüter bisch em Land verbunde. Du ghörsch s Flüschtere zwüschet de Stei.",
       gewitzte:
-        "Als Gwitzte:r suechsch d Lugge i jedere Drohig. Wo anderi Angst händ, suechsch du de Uswäg.",
-      senn: "Als Senn:in kennsch de Bärg. Du liesisch d Zeiche rueig, so wie du s scho immer machsch.",
+        "Als Gwitzte suechsch d Lugge i jedere Drohig. Wo anderi Angst händ, suechsch du de Uswäg.",
+      senn: "Als Senn kennsch de Bärg. Du liesisch d Zeiche rueig, so wie du s scho immer machsch.",
     },
     ch1: (canton, title, lens) =>
       `De Pfad windet sich is Härz vo ${canton}. Chalti Luft striicht dir übers Gsicht, und du gspürsch, wie alt dä Ort isch. ${lens} D Sage vo ${title} liit greifbar i de Luft.`,
     ch2: (summary) =>
-      `Vor dir gaht d Szenerie uf. ${summary} Du bisch nur Züüg:in vo dem uralte Gscheh — und trotzdem ziehts di ine.`,
+      `Vor dir gaht d Szenerie uf. ${summary} Du bisch nur Züüge vo dem uralte Gscheh — und trotzdem ziehts di ine.`,
     ch3Adult:
       "En tüüfe Schatte fallt über de Wäg, und es dumpfs Grolle stiigt us em Fels. Öppis bewegt sich am Rand vo dim Blick.",
     ch3Kinder:
@@ -129,7 +129,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ch3Question: "Wie begegnisch dem, wo sich nöcheret?",
     ch3Options: [
       { label: "Ich tritte en Schritt vor und halt stand.", archetypeHint: "Muet vo de Reisende", tone: "mutig" },
-      { label: "Ich bliib still und lueg zue.", archetypeHint: "Rueh vo de Senn:in", tone: "bedacht" },
+      { label: "Ich bliib still und lueg zue.", archetypeHint: "Rueh vom Senn", tone: "bedacht" },
       { label: "Ich sueche im Schatte nach eme Zeiche.", archetypeHint: "List vo de Gwitzte", tone: "wachsam" },
     ],
     ch4: "S Grolle verstummt. Was da einisch passiert isch, entfaltet sich vor dine Auge, unabänderlich wie de Lauf vom Wasser. Du merksch: D Legände isch meh als es Märli — si atmet immer no i dem Tal.",

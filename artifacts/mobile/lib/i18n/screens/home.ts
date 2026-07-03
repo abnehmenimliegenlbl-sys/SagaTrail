@@ -18,7 +18,7 @@ export interface HomeStrings {
 const HOME_STRINGS: StringsDict<HomeStrings> = {
   de: {
     welcomeBack: "Willkommen zurück",
-    defaultName: "Wander:in",
+    defaultName: "Wanderer",
     step1Title: "SCHRITT 1 · KANTON WÄHLEN",
     whereStart: "Wo startest du?",
     heroBody: "Wähle den Kanton deiner Wanderung. Danach suchst du die Route und zuletzt die passende Sage.",
@@ -32,7 +32,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
-    defaultName: "Wanderer:in",
+    defaultName: "Wanderer",
     step1Title: "SCHRITT 1 · KANTON WÄHLE",
     whereStart: "Wo startisch du?",
     heroBody: "Wähl de Kanton vo dinere Wanderig. Danach suechsch d Route und am Schluss die passendi Sag.",

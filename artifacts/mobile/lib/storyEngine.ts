@@ -7,7 +7,7 @@ import { resolveLang, STORY_PACKS } from "./storyContent";
  *
  * Baut aus einer Sage + Archetyp + Alterstufe + Sprache 4-6 atmosphaerische
  * Kapitel im Praesens zusammen, mit ein bis zwei Wahrnehmungs-Entscheidungen.
- * Der/die Wandernde ist stets Zeug:in, nie Held:in — der Ausgang der Sage
+ * Die wandernde Person ist stets Zeuge, nie Held — der Ausgang der Sage
  * bleibt unveraenderlich. Entscheidungen betreffen nur Haltung und Blick.
  *
  * Die erzaehlten Texte folgen der gewaehlten Sprache; der App-Rahmen bleibt
