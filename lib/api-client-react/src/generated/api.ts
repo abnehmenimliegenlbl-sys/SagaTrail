@@ -30,6 +30,7 @@ import type {
   GetPoisParams,
   GetWeatherParams,
   HealthStatus,
+  NarrationInput,
   Poi,
   PremiumUpdate,
   Profile,
@@ -1005,5 +1006,76 @@ export const useConsumeMyFreeHike = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getConsumeMyFreeHikeMutationOptions(options));
+    }
+
+export const getCreateNarrationUrl = () => {
+
+
+
+
+  return `/api/narration`
+}
+
+/**
+ * Synthetisiert den uebergebenen Erzaehltext als natuerlich klingende Audio-Erzaehlung via ElevenLabs (Premium-Feature, online-only, kein Offline-Fallback). Fuer Schweizerdeutsch (gsw) muss bereits der Hochdeutsch-Text uebergeben werden -- die Schweizer Faerbung kommt ausschliesslich ueber die Stimme, nie ueber Dialekt-Text. Ergebnisse werden serverseitig nach Textinhalt gecacht. Nur fuer Premium-Nutzer: die kostenlose erste Wanderung nutzt die on-device Stimme und ruft diesen Endpunkt nie auf.
+ * @summary Kapitel-Erzaehlung als KI-Audio synthetisieren
+ */
+export const createNarration = async (narrationInput: NarrationInput, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getCreateNarrationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(narrationInput)
+  }
+);}
+
+
+
+
+export const getCreateNarrationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNarration>>, TError,{data: BodyType<NarrationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createNarration>>, TError,{data: BodyType<NarrationInput>}, TContext> => {
+
+const mutationKey = ['createNarration'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createNarration>>, {data: BodyType<NarrationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createNarration(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateNarrationMutationResult = NonNullable<Awaited<ReturnType<typeof createNarration>>>
+    export type CreateNarrationMutationBody = BodyType<NarrationInput>
+    export type CreateNarrationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Kapitel-Erzaehlung als KI-Audio synthetisieren
+ */
+export const useCreateNarration = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNarration>>, TError,{data: BodyType<NarrationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createNarration>>,
+        TError,
+        {data: BodyType<NarrationInput>},
+        TContext
+      > => {
+      return useMutation(getCreateNarrationMutationOptions(options));
     }
 

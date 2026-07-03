@@ -79,6 +79,13 @@ export interface PremiumUpdate {
   premium: boolean;
 }
 
+export interface NarrationInput {
+  /** @minLength 1 */
+  text: string;
+  /** Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine Schweizer Faerbung fuer "gsw"). Der uebergebene Text muss fuer "gsw" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS geschickt. */
+  language?: string;
+}
+
 export interface CatalogCoordinates {
   lat: number;
   lng: number;

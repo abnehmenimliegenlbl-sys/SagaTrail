@@ -15,6 +15,7 @@ import React, {
 
 import { HikingRoute } from "@/constants/routes";
 import { generateStory } from "@/lib/storyEngine";
+import { effectiveStoryLanguage } from "@/lib/storyContent";
 import {
   deleteTiles,
   downloadTiles,
@@ -67,12 +68,13 @@ interface DownloadContextValue {
   progress: DownloadProgress | null;
   isDownloaded: (sagaId?: string) => boolean;
   getRecord: (sagaId?: string) => DownloadRecord | undefined;
-  download: (saga: Saga, route: HikingRoute, profile: Profile) => Promise<void>;
+  download: (saga: Saga, route: HikingRoute, profile: Profile, premium: boolean) => Promise<void>;
   remove: (sagaId: string) => Promise<void>;
   loadOfflineTiles: (sagaId: string) => Promise<Record<string, string>>;
   resolveStory: (
     saga: Saga,
-    profile: Profile
+    profile: Profile,
+    premium: boolean
   ) => Promise<{ chapters: StoryChapter[]; source: "download" | "server" | "seed" }>;
 }
 
@@ -122,7 +124,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const download = useCallback(
-    async (saga: Saga, route: HikingRoute, profile: Profile) => {
+    async (saga: Saga, route: HikingRoute, profile: Profile, premium: boolean) => {
+      // Fuer Premium (KI-Erzaehlstimme) wird gsw nie als Dialekt-Text
+      // heruntergeladen — siehe effectiveStoryLanguage.
+      const lang = effectiveStoryLanguage(profile.language, premium);
+
       // 1. Sage besorgen — bevorzugt vom Server, sonst lokal erzeugen.
       setProgress({ sagaId: saga.id, phase: "story", done: 0, total: 1 });
       let chapters: StoryChapter[];
@@ -132,16 +138,16 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           sagaId: saga.id,
           archetype: profile.archetype as StoryRequestArchetype,
           ageTier: profile.ageTier as StoryRequestAgeTier,
-          language: profile.language,
+          language: lang,
         });
         chapters = res.chapters as StoryChapter[];
         storySource = res.source ?? "server";
       } catch {
-        chapters = generateStory(saga, profile.archetype, profile.ageTier, profile.language);
+        chapters = generateStory(saga, profile.archetype, profile.ageTier, lang);
         storySource = "seed";
       }
       await AsyncStorage.setItem(
-        storyKey(saga.id, profile.archetype, profile.ageTier, profile.language),
+        storyKey(saga.id, profile.archetype, profile.ageTier, lang),
         JSON.stringify(chapters)
       ).catch(() => {});
       setProgress({ sagaId: saga.id, phase: "story", done: 1, total: 1 });
@@ -165,7 +171,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         sagaTitle: saga.title,
         archetype: profile.archetype,
         ageTier: profile.ageTier,
-        language: profile.language,
+        language: lang,
         chapterCount: chapters.length,
         tileCount,
         sizeBytes,
@@ -195,9 +201,14 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resolveStory = useCallback(
-    async (saga: Saga, profile: Profile) => {
+    async (saga: Saga, profile: Profile, premium: boolean) => {
+      // Fuer Premium (KI-Erzaehlstimme) wird gsw nie als Dialekt-Text
+      // angefordert/angezeigt — siehe effectiveStoryLanguage.
+      const lang = effectiveStoryLanguage(profile.language, premium);
+      const storyProfile = lang === profile.language ? profile : { ...profile, language: lang };
+
       // Offline-First: zuerst heruntergeladene/gespeicherte Sage nutzen.
-      const local = await readStory(saga.id, profile);
+      const local = await readStory(saga.id, storyProfile);
       if (local) return { chapters: local, source: "download" as const };
 
       // Sonst vom Server holen und fuer spaeter zwischenspeichern.
@@ -206,22 +217,17 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           sagaId: saga.id,
           archetype: profile.archetype as StoryRequestArchetype,
           ageTier: profile.ageTier as StoryRequestAgeTier,
-          language: profile.language,
+          language: lang,
         });
         const chapters = res.chapters as StoryChapter[];
         AsyncStorage.setItem(
-          storyKey(saga.id, profile.archetype, profile.ageTier, profile.language),
+          storyKey(saga.id, profile.archetype, profile.ageTier, lang),
           JSON.stringify(chapters)
         ).catch(() => {});
         return { chapters, source: "server" as const };
       } catch {
         // Weder lokal noch Server — auf Seed-Erzeugung zurueckfallen.
-        const chapters = generateStory(
-          saga,
-          profile.archetype,
-          profile.ageTier,
-          profile.language
-        );
+        const chapters = generateStory(saga, profile.archetype, profile.ageTier, lang);
         return { chapters, source: "seed" as const };
       }
     },

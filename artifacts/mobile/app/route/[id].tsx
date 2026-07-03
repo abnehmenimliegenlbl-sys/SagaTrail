@@ -157,7 +157,7 @@ export default function Routenplanung() {
     if (!profile || !saga || downloading || busy) return;
     setBusy(true);
     try {
-      await download(saga, route, profile);
+      await download(saga, route, profile, premium);
     } catch {
       Alert.alert(
         t.downloadFailed,

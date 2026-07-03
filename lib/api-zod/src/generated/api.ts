@@ -350,3 +350,18 @@ export const ConsumeMyFreeHikeResponse = zod.object({
 })
 
 
+/**
+ * Synthetisiert den uebergebenen Erzaehltext als natuerlich klingende Audio-Erzaehlung via ElevenLabs (Premium-Feature, online-only, kein Offline-Fallback). Fuer Schweizerdeutsch (gsw) muss bereits der Hochdeutsch-Text uebergeben werden -- die Schweizer Faerbung kommt ausschliesslich ueber die Stimme, nie ueber Dialekt-Text. Ergebnisse werden serverseitig nach Textinhalt gecacht. Nur fuer Premium-Nutzer: die kostenlose erste Wanderung nutzt die on-device Stimme und ruft diesen Endpunkt nie auf.
+ * @summary Kapitel-Erzaehlung als KI-Audio synthetisieren
+ */
+
+
+
+export const CreateNarrationBody = zod.object({
+  "text": zod.string().min(1),
+  "language": zod.string().optional().describe('Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine Schweizer Faerbung fuer \"gsw\"). Der uebergebene Text muss fuer \"gsw\" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS geschickt.')
+})
+
+export const CreateNarrationResponse = zod.unknown()
+
+

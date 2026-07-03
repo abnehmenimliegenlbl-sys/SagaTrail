@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -20,29 +21,59 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { usePaywallStrings } from "@/lib/i18n/screens/paywall";
+import { useSubscription } from "@/lib/revenuecat";
 
 const WEB_TOP = 67;
-
-type Plan = "monat" | "jahr";
 
 export default function Paywall() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { unlockPremium, premium } = useApp();
+  const { premium } = useApp();
+  const { offerings, isLoading, purchase, restore, isPurchasing, isRestoring } =
+    useSubscription();
   const t = usePaywallStrings();
 
-  const [plan, setPlan] = useState<Plan>("jahr");
+  const [busy, setBusy] = useState(false);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
-  const buy = () => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const packageToBuy = offerings?.current?.availablePackages[0];
+
+  const buy = async () => {
+    if (!packageToBuy) return;
+    setBusy(true);
+    try {
+      await purchase(packageToBuy);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert(t.successAlertTitle, t.successAlertMsg, [
+        { text: t.successAlertBtn, onPress: () => router.back() },
+      ]);
+    } catch (err: any) {
+      if (!err?.userCancelled) {
+        Alert.alert(t.purchaseErrorTitle, err?.message ?? String(err));
+      }
+    } finally {
+      setBusy(false);
     }
-    unlockPremium();
-    Alert.alert(t.successAlertTitle, t.successAlertMsg, [
-      { text: t.successAlertBtn, onPress: () => router.back() },
-    ]);
+  };
+
+  const onRestore = async () => {
+    setBusy(true);
+    try {
+      const customerInfo = await restore();
+      const hasActive = !!customerInfo.entitlements.active["premium"];
+      if (hasActive) {
+        Alert.alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
+      } else {
+        Alert.alert(t.restoreNoneTitle, t.restoreNoneMsg);
+      }
+    } catch (err: any) {
+      Alert.alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -88,31 +119,44 @@ export default function Paywall() {
               ))}
             </View>
 
-            <View style={styles.plans}>
-              <PlanCard
-                active={plan === "jahr"}
-                onPress={() => setPlan("jahr")}
-                title={t.plans.yearTitle}
-                price="CHF 59.–"
-                per={t.plans.yearPer}
-                badge={t.plans.yearBadge}
-              />
-              <PlanCard
-                active={plan === "monat"}
-                onPress={() => setPlan("monat")}
-                title={t.plans.monthTitle}
-                price="CHF 6.90"
-                per={t.plans.monthPer}
-              />
-            </View>
+            {isLoading ? (
+              <ActivityIndicator color={colors.accent} style={{ marginTop: 12 }} />
+            ) : packageToBuy ? (
+              <View
+                style={[
+                  styles.planCard,
+                  {
+                    borderColor: colors.accent,
+                    backgroundColor: colors.glassBgStrong,
+                    borderRadius: colors.radius,
+                  },
+                ]}
+              >
+                <Text style={[styles.planTitle, { color: colors.foreground }]}>
+                  {packageToBuy.product.title}
+                </Text>
+                <Text style={[styles.planPrice, { color: colors.foreground }]}>
+                  {packageToBuy.product.priceString}
+                </Text>
+                <Text style={[styles.planPer, { color: colors.mutedForeground }]}>
+                  {t.planPer}
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.legal, { color: colors.mutedForeground }]}>
+                {t.unavailableMsg}
+              </Text>
+            )}
 
             <PrimaryButton
-              label={plan === "jahr" ? t.buyYearBtn : t.buyMonthBtn}
+              label={busy || isPurchasing ? t.loadingOffering : t.buyBtn}
               onPress={buy}
+              disabled={!packageToBuy || busy || isPurchasing}
               style={{ marginTop: 22 }}
             />
             <Pressable
-              onPress={() => Alert.alert(t.restoreAlertTitle, t.restoreAlertMsg)}
+              onPress={onRestore}
+              disabled={busy || isRestoring}
               style={styles.restore}
             >
               <Text style={[styles.restoreText, { color: colors.mutedForeground }]}>
@@ -130,57 +174,6 @@ export default function Paywall() {
   );
 }
 
-function PlanCard({
-  active,
-  onPress,
-  title,
-  price,
-  per,
-  badge,
-}: {
-  active: boolean;
-  onPress: () => void;
-  title: string;
-  price: string;
-  per: string;
-  badge?: string;
-}) {
-  const colors = useColors();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.planCard,
-        {
-          borderColor: active ? colors.accent : colors.glassBorder,
-          backgroundColor: active ? colors.glassBgStrong : colors.glassBg,
-          borderRadius: colors.radius,
-        },
-      ]}
-    >
-      {badge ? (
-        <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-          <Text style={[styles.badgeText, { color: colors.accentForeground }]}>
-            {badge.toUpperCase()}
-          </Text>
-        </View>
-      ) : null}
-      <Text style={[styles.planTitle, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.planPrice, { color: colors.foreground }]}>{price}</Text>
-      <Text style={[styles.planPer, { color: colors.mutedForeground }]}>{per}</Text>
-      <View
-        style={[
-          styles.radio,
-          {
-            borderColor: active ? colors.accent : colors.glassBorder,
-            backgroundColor: active ? colors.accent : "transparent",
-          },
-        ]}
-      />
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   closeRow: { alignItems: "flex-end", marginBottom: 6 },
   hero: { alignItems: "center", marginTop: 6 },
@@ -195,26 +188,10 @@ const styles = StyleSheet.create({
   features: { gap: 14, marginBottom: 24 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   featureText: { fontFamily: fonts.bodyMedium, fontSize: 15, flex: 1 },
-  plans: { flexDirection: "row", gap: 12 },
-  planCard: { flex: 1, borderWidth: 1, padding: 18, minHeight: 140 },
-  badge: {
-    alignSelf: "flex-start",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 8,
-  },
-  badgeText: { fontFamily: fonts.monoBold, fontSize: 9, letterSpacing: 0.5 },
+  planCard: { borderWidth: 1, padding: 18, alignItems: "center" },
   planTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
-  planPrice: { fontFamily: fonts.monoBold, fontSize: 24, marginTop: 10 },
+  planPrice: { fontFamily: fonts.monoBold, fontSize: 28, marginTop: 10 },
   planPer: { fontFamily: fonts.mono, fontSize: 12, marginTop: 2 },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    marginTop: 14,
-  },
   restore: { alignItems: "center", paddingVertical: 16 },
   restoreText: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   legal: {

@@ -30,6 +30,20 @@ export function resolveLang(code: string | undefined): Lang {
   return KNOWN_LANGS.includes(code as Lang) ? (code as Lang) : "de";
 }
 
+/**
+ * Sprache, in der Story-Text tatsaechlich angefordert/angezeigt werden soll.
+ *
+ * Fuer Premium-Nutzer:innen (KI-Erzaehlstimme via ElevenLabs) wird
+ * Schweizerdeutsch (gsw) NIE als Dialekt-Text verwendet: die Schweizer
+ * Faerbung kommt dort ausschliesslich ueber die Stimmwahl, der Text bleibt
+ * Hochdeutsch (siehe api-server/src/lib/elevenlabs.ts). Fuer die kostenlose
+ * erste Wanderung (on-device expo-speech, kein ElevenLabs) bleibt die
+ * bisherige Dialekt-Text-Darstellung mit de-CH-Annaeherung unveraendert.
+ */
+export function effectiveStoryLanguage(language: string, premium: boolean): string {
+  return premium && language === "gsw" ? "de" : language;
+}
+
 export interface DecisionOptionText {
   label: string;
   archetypeHint: string;

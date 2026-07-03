@@ -22,6 +22,7 @@ export * from './getPoisParams';
 export * from './getWeatherParams';
 export * from './healthStatus';
 export * from './localizedSummary';
+export * from './narrationInput';
 export * from './poi';
 export * from './premiumUpdate';
 export * from './profile';

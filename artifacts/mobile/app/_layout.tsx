@@ -31,6 +31,7 @@ import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
 import { configureApiClient } from "@/lib/apiConfig";
+import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 // Muss vor jeder ersten Anfrage (z.B. AppContext-Profilabfrage beim Start)
@@ -38,6 +39,12 @@ import { setAuthTokenGetter } from "@workspace/api-client-react";
 configureApiClient();
 
 SystemUI.setBackgroundColorAsync(colors.dark.nachthimmel);
+
+try {
+  initializeRevenueCat();
+} catch (err) {
+  console.warn("RevenueCat konnte nicht initialisiert werden:", err);
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -144,13 +151,15 @@ export default function RootLayout() {
               <GestureHandlerRootView>
                 <KeyboardProvider>
                   <AuthTokenBridge>
-                    <AppProvider>
-                      <CatalogProvider>
-                        <DownloadProvider>
-                          <RootLayoutNav />
-                        </DownloadProvider>
-                      </CatalogProvider>
-                    </AppProvider>
+                    <SubscriptionProvider>
+                      <AppProvider>
+                        <CatalogProvider>
+                          <DownloadProvider>
+                            <RootLayoutNav />
+                          </DownloadProvider>
+                        </CatalogProvider>
+                      </AppProvider>
+                    </SubscriptionProvider>
                   </AuthTokenBridge>
                 </KeyboardProvider>
               </GestureHandlerRootView>

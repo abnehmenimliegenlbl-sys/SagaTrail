@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { getAerialways, getPois } from "@workspace/api-client-react";
+import { createNarration, getAerialways, getPois } from "@workspace/api-client-react";
 import type { Poi } from "@workspace/api-client-react";
 import { Audio, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
@@ -33,7 +33,8 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
-import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
+import { effectiveStoryLanguage, resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
+import { blobToDataUri } from "@/lib/narrationAudio";
 import { weaveNavigationCues } from "@/lib/storyEngine";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
@@ -91,6 +92,7 @@ export default function LiveHike() {
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
+  const [narrationUnavailable, setNarrationUnavailable] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -98,6 +100,13 @@ export default function LiveHike() {
   const lastFixRef = useRef<LatLng | null>(null);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
+  const narrationSoundRef = useRef<Audio.Sound | null>(null);
+
+  // KI-Erzaehlstimme (ElevenLabs) ist online-only und ausschliesslich fuer
+  // Premium — kein Offline-Fallback. Fuer "gsw" wird dabei NIE Dialekt-Text
+  // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
+  // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
+  const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", premium);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
@@ -115,17 +124,21 @@ export default function LiveHike() {
   }, []);
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
+  // resolveStory wendet effectiveStoryLanguage intern selbst an — hier wird
+  // bewusst das UNveraenderte Profil uebergeben, storyProfile dient nur dazu,
+  // die tatsaechlich verwendete Sprache lokal (z. B. fuer weaveNavigationCues)
+  // zu kennen.
   useEffect(() => {
     if (!saga || !profile) return;
     let cancelled = false;
     setPreparing(true);
     (async () => {
-      const { chapters: story } = await resolveStory(saga, profile);
+      const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
       // Navigationshinweise werden erst hier, mit der konkret gewaehlten Route,
       // eingeflochten — unabhaengig davon, ob die Kapitel lokal, vom Server
       // oder als Download geladen wurden.
-      const woven = weaveNavigationCues(story, saga, route, profile.language);
+      const woven = weaveNavigationCues(story, saga, route, storyLanguage);
       setChapters(woven);
       decisionsRef.current = woven;
       setPreparing(false);
@@ -133,7 +146,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [saga, profile, resolveStory, route]);
+  }, [saga, profile, premium, storyLanguage, resolveStory, route]);
 
   // Die einmalige kostenlose Wanderung wird genau dann verbraucht, wenn ein
   // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
@@ -319,6 +332,23 @@ export default function LiveHike() {
     };
   }, [handleFix, energiesparmodus]);
 
+  // Laufende Wiedergabe stoppen — egal ob on-device Sprachausgabe (kostenlose
+  // erste Wanderung) oder KI-Erzaehlstimme (Premium, expo-av) gerade aktiv ist.
+  const stopNarration = useCallback(async () => {
+    await Speech.stop();
+    const sound = narrationSoundRef.current;
+    narrationSoundRef.current = null;
+    if (sound) {
+      try {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      } catch {
+        // Best effort — Sound koennte bereits entladen sein.
+      }
+    }
+    setSpeaking(false);
+  }, []);
+
   // UI-Status wird optimistisch sofort auf "spricht" gesetzt, statt auf das
   // native onStart-Event zu warten: auf manchen Geraeten (v. a. Android mit
   // QUEUE_ADD-Warteschlange) feuert onStart verzoegert oder gar nicht, wenn
@@ -326,10 +356,37 @@ export default function LiveHike() {
   // der Button wirkte dann wie "tot", obwohl die Sprachausgabe lief oder kurz
   // darauf startete. await stop() vor speak() vermeidet zudem, dass die
   // vorherige Aeusserung noch in der nativen Warteschlange haengt.
+  //
+  // Premium: KI-Erzaehlstimme (ElevenLabs, ueber den Server) — online-only,
+  // OHNE Fallback auf die on-device Stimme bei Fehlschlag (kein stiller
+  // Ersatz; stattdessen ein expliziter "nicht verfuegbar"-Hinweis). Die
+  // kostenlose erste Wanderung nutzt bewusst weiterhin ausschliesslich die
+  // alte on-device Stimme (expo-speech) und ruft die KI-Stimme nie auf.
   const speak = useCallback(
     async (text: string) => {
-      await Speech.stop();
+      await stopNarration();
+      setNarrationUnavailable(false);
       setSpeaking(true);
+
+      if (premium) {
+        try {
+          const blob = await createNarration({ text, language: profile?.language });
+          const uri = await blobToDataUri(blob);
+          const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+          narrationSoundRef.current = sound;
+          sound.setOnPlaybackStatusUpdate((status) => {
+            if (!status.isLoaded) return;
+            if (status.didJustFinish) {
+              setSpeaking(false);
+            }
+          });
+        } catch {
+          setNarrationUnavailable(true);
+          setSpeaking(false);
+        }
+        return;
+      }
+
       Speech.speak(text, {
         language: SPEECH_LOCALE[resolveLang(profile?.language)],
         rate: 0.92,
@@ -339,7 +396,7 @@ export default function LiveHike() {
         onError: () => setSpeaking(false),
       });
     },
-    [profile?.language]
+    [premium, profile?.language, stopNarration]
   );
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
@@ -397,9 +454,9 @@ export default function LiveHike() {
   // Sprachausgabe beim Verlassen stoppen
   useEffect(() => {
     return () => {
-      Speech.stop();
+      stopNarration();
     };
-  }, []);
+  }, [stopNarration]);
 
   const chooseOption = (optionIndex: number) => {
     if (Platform.OS !== "web") {
@@ -415,7 +472,7 @@ export default function LiveHike() {
   };
 
   const finishHike = useCallback(async () => {
-    Speech.stop();
+    await stopNarration();
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -433,7 +490,7 @@ export default function LiveHike() {
     };
     await Promise.all([saveHike(session), addAchievement(saga.title, saga.id)]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, router]);
+  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, router, stopNarration]);
 
   const openUrlSafely = async (url: string, fallback: string) => {
     try {
@@ -603,8 +660,7 @@ export default function LiveHike() {
               <Pressable
                 onPress={() => {
                   if (speaking) {
-                    Speech.stop();
-                    setSpeaking(false);
+                    stopNarration();
                   } else if (currentChapter) {
                     speak(currentChapter.text);
                   }
@@ -625,6 +681,12 @@ export default function LiveHike() {
             <Text style={[styles.storyText, { color: colors.foreground }]}>
               {currentChapter?.text}
             </Text>
+
+            {narrationUnavailable && (
+              <Text style={[styles.narrationUnavailable, { color: colors.accent }]}>
+                {t.narrationUnavailable}
+              </Text>
+            )}
 
             {/* Entscheidungspanel */}
             {awaitingDecision && currentChapter?.decision && (
@@ -816,6 +878,7 @@ const styles = StyleSheet.create({
   },
   playText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
   storyText: { fontFamily: fonts.story, fontSize: 20, lineHeight: 32 },
+  narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
   decisionPanel: { borderWidth: 1, borderRadius: 16, padding: 18 },
   decisionLabel: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },

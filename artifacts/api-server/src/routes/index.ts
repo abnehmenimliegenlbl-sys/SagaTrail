@@ -8,6 +8,7 @@ import aerialwaysRouter from "./aerialways";
 import poisRouter from "./pois";
 import weatherRouter from "./weather";
 import profileRouter from "./profile";
+import narrationRouter from "./narration";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(aerialwaysRouter);
 router.use(poisRouter);
 router.use(weatherRouter);
 router.use(profileRouter);
+router.use(narrationRouter);
 
 export default router;

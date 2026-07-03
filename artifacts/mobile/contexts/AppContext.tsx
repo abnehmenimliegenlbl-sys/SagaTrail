@@ -27,6 +27,7 @@ import {
 } from "@/lib/groupSocket";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
+import { useSubscription } from "@/lib/revenuecat";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
 // seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
@@ -325,6 +326,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
   const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();
+  const { isSubscribed, isLoading: subscriptionLoading } = useSubscription();
 
   const applyServerProfile = useCallback(
     async (result: {
@@ -403,6 +405,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setPremium(result.premium);
     await AsyncStorage.setItem(KEYS.premium, "false");
   }, [updateMyPremiumMutation]);
+
+  // Gleicht den RevenueCat-Kaufstatus (Quelle der Wahrheit fuer aktive
+  // Abos) mit dem serverseitigen `premium`-Flag ab. Deckt Faelle ab, die
+  // ein direkter unlockPremium()-Aufruf im Kauf-Flow nicht abdeckt: Ablauf,
+  // Kuendigung, Rueckerstattung oder Wiederherstellung auf einem neuen
+  // Geraet. Der Server bleibt die eigentliche Durchsetzungsinstanz (siehe
+  // `premium_required`-Pruefung), dies haelt sie nur synchron.
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || !profile) return;
+    if (subscriptionLoading) return;
+    if (isSubscribed && !premium) {
+      unlockPremium().catch(() => {});
+    } else if (!isSubscribed && premium) {
+      lockPremium().catch(() => {});
+    }
+  }, [
+    authLoaded,
+    isSignedIn,
+    profile,
+    subscriptionLoading,
+    isSubscribed,
+    premium,
+    unlockPremium,
+    lockPremium,
+  ]);
 
   const { mutateAsync: consumeMyFreeHikeMutation } = useConsumeMyFreeHike();
 

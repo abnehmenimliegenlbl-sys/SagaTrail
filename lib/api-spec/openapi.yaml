@@ -437,6 +437,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /narration:
+    post:
+      operationId: createNarration
+      tags: [narration]
+      summary: Kapitel-Erzaehlung als KI-Audio synthetisieren
+      description: >-
+        Synthetisiert den uebergebenen Erzaehltext als natuerlich klingende
+        Audio-Erzaehlung via ElevenLabs (Premium-Feature, online-only, kein
+        Offline-Fallback). Fuer Schweizerdeutsch (gsw) muss bereits der
+        Hochdeutsch-Text uebergeben werden -- die Schweizer Faerbung kommt
+        ausschliesslich ueber die Stimme, nie ueber Dialekt-Text. Ergebnisse
+        werden serverseitig nach Textinhalt gecacht. Nur fuer Premium-Nutzer:
+        die kostenlose erste Wanderung nutzt die on-device Stimme und ruft
+        diesen Endpunkt nie auf.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NarrationInput"
+      responses:
+        "200":
+          description: MP3-Audiodaten der Erzaehlung
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Premium erforderlich
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Sprachsynthese fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -519,6 +571,21 @@ components:
           type: boolean
       required:
         - premium
+    NarrationInput:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+        language:
+          type: string
+          description: >-
+            Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine
+            Schweizer Faerbung fuer "gsw"). Der uebergebene Text muss fuer
+            "gsw" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS
+            geschickt.
+      required:
+        - text
     CatalogCoordinates:
       type: object
       properties:
