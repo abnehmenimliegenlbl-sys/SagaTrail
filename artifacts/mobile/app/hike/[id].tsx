@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { getAerialways, getPois } from "@workspace/api-client-react";
 import type { Poi } from "@workspace/api-client-react";
+import { Audio, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -94,6 +95,21 @@ export default function LiveHike() {
   const lastFixRef = useRef<LatLng | null>(null);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
+
+  // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
+  // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
+  // bleibt AVSpeechSynthesizer auf manchen Geraeten komplett lautlos, obwohl
+  // die Wiedergabe technisch laeuft (Button/Status wirken dann funktionslos).
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+    }).catch(() => {
+      // Best effort — falls die Audiosession nicht gesetzt werden kann, wird
+      // trotzdem versucht, ganz normal ueber die Standard-Session vorzulesen.
+    });
+  }, []);
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   useEffect(() => {
