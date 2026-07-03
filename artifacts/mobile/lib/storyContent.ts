@@ -49,6 +49,9 @@ export interface StoryPack {
   ch5Question: string;
   ch5Options: DecisionOptionText[];
   chFinal: string;
+  // Naht­loser Navigationshinweis, aus echter Routen-Geometrie abgeleitet
+  // (siehe navigationCues.ts) und in den laufenden Erzaehltext eingeflochten.
+  navCue: (direction: "links" | "rechts", landmark: string) => string;
 }
 
 // Die tone-Werte bleiben ueber alle Sprachen als stabile Kennungen deutsch.
@@ -87,6 +90,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "Der Moment vergeht. Die Natur nimmt ihren gewohnten Lauf wieder auf, der Wind legt sich. Du ziehst weiter, gezeichnet von dieser Begegnung, und das Tal behält sein Geheimnis — bis zur nächsten, die vorbeikommt.",
+    navCue: (direction, landmark) =>
+      `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
   },
 
   gsw: {
@@ -123,6 +128,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "De Momänt vergaht. D Natur nimmt ihre gwöhnti Lauf wieder uf, de Wind leit sich. Du ziehsch witer, zeichnet vo dere Begägnig, und s Tal behaltet sis Gheimnis — bis zur nächschte, wo verbicho chunnt.",
+    navCue: (direction, landmark) =>
+      `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
   },
 
   fr: {
@@ -159,6 +166,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "L'instant passe. La nature reprend son cours habituel, le vent retombe. Tu poursuis ta route, marqué·e par cette rencontre, et la vallée garde son secret — jusqu'à la prochaine personne qui passera.",
+    navCue: (direction, landmark) =>
+      `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
   },
 
   it: {
@@ -195,6 +204,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "L'attimo passa. La natura riprende il suo corso consueto, il vento si placa. Prosegui il cammino, segnato·a da questo incontro, e la valle custodisce il suo segreto — fino alla prossima persona che passerà.",
+    navCue: (direction, landmark) =>
+      `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
   },
 
   en: {
@@ -231,6 +242,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "The moment passes. Nature resumes its usual course, the wind settles. You move on, marked by this encounter, and the valley keeps its secret — until the next person who passes by.",
+    navCue: (direction, landmark) =>
+      `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
   },
 
   zh: {
@@ -263,6 +276,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "这一刻过去了。自然重新回到它惯常的轨迹，风也平息下来。你继续前行，被这次相遇留下印记，而山谷守着它的秘密——直到下一个路过的人到来。",
+    navCue: (direction, landmark) =>
+      `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
   },
 
   es: {
@@ -299,6 +314,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "El instante pasa. La naturaleza retoma su curso habitual, el viento amaina. Sigues tu camino, marcado·a por este encuentro, y el valle guarda su secreto — hasta la próxima persona que pase.",
+    navCue: (direction, landmark) =>
+      `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
   },
 
   pt: {
@@ -335,6 +352,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     ],
     chFinal:
       "O instante passa. A natureza retoma seu curso habitual, o vento se acalma. Você segue em frente, marcado·a por este encontro, e o vale guarda seu segredo — até a próxima pessoa que passar.",
+    navCue: (direction, landmark) =>
+      `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
   },
 };
 

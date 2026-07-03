@@ -32,6 +32,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
+import { weaveNavigationCues } from "@/lib/storyEngine";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
@@ -93,14 +94,18 @@ export default function LiveHike() {
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile);
       if (cancelled) return;
-      setChapters(story);
-      decisionsRef.current = story;
+      // Navigationshinweise werden erst hier, mit der konkret gewaehlten Route,
+      // eingeflochten — unabhaengig davon, ob die Kapitel lokal, vom Server
+      // oder als Download geladen wurden.
+      const woven = weaveNavigationCues(story, saga, route, profile.language);
+      setChapters(woven);
+      decisionsRef.current = woven;
       setPreparing(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [saga, profile, resolveStory]);
+  }, [saga, profile, resolveStory, route]);
 
   // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.

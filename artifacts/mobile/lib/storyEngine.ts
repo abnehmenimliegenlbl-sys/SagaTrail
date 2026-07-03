@@ -1,4 +1,5 @@
 import { AgeTier, Archetype, Saga, StoryChapter } from "../types";
+import { detectNavigationCues } from "./navigationCues";
 import { resolveLang, STORY_PACKS } from "./storyContent";
 
 /**
@@ -79,4 +80,48 @@ export function generateStory(
   });
 
   return chapters;
+}
+
+/**
+ * Flechtet Navigationshinweise ("an der naechsten Weggabelung links/rechts")
+ * nahtlos in bereits erzeugte Kapitel ein — egal ob diese lokal, vom Server
+ * oder als Download geladen wurden. Die Hinweise stammen ausschliesslich aus
+ * echter Routen-Geometrie (siehe navigationCues.ts); ohne Geometrie bleiben
+ * die Kapitel unveraendert. Ankunfts- und Schlusskapitel bleiben frei davon.
+ */
+export function weaveNavigationCues(
+  chapters: StoryChapter[],
+  saga: Saga,
+  route: { geometry?: number[][] } | null | undefined,
+  languageCode?: string
+): StoryChapter[] {
+  if (!route?.geometry || chapters.length < 3) return chapters;
+
+  const eligible = chapters
+    .map((_, i) => i)
+    .filter((i) => i > 0 && i < chapters.length - 1);
+  if (eligible.length === 0) return chapters;
+
+  const cues = detectNavigationCues(route.geometry, eligible.length);
+  if (cues.length === 0) return chapters;
+
+  const lang = resolveLang(languageCode);
+  const pack = STORY_PACKS[lang];
+  const landmark = saga.title;
+
+  const result = [...chapters];
+  const used = new Set<number>();
+  for (const cue of cues) {
+    let pos = Math.round(cue.distanceFraction * (eligible.length - 1));
+    pos = Math.max(0, Math.min(eligible.length - 1, pos));
+    while (used.has(pos) && pos < eligible.length - 1) pos++;
+    if (used.has(pos)) continue;
+    used.add(pos);
+    const targetIdx = eligible[pos];
+    result[targetIdx] = {
+      ...result[targetIdx],
+      text: `${result[targetIdx].text} ${pack.navCue(cue.direction, landmark)}`,
+    };
+  }
+  return result;
 }
