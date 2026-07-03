@@ -47,7 +47,14 @@ export default function LiveHike() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
-  const { profile, saveHike, addAchievement, groupSession, setGroupActivity } = useApp();
+  const {
+    profile,
+    saveHike,
+    addAchievement,
+    groupSession,
+    setGroupActivity,
+    energiesparmodus,
+  } = useApp();
   const { getSaga, getRoute, getRouteBySaga } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
@@ -255,8 +262,16 @@ export default function LiveHike() {
           // Kein Sofort-Fix moeglich — watchPositionAsync uebernimmt.
         }
         if (cancelled) return;
+        // Energiesparmodus: groebere GPS-Genauigkeit und seltenere Fixes
+        // schonen den Akku spuerbar auf langen Touren.
         sub = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
+          energiesparmodus
+            ? {
+                accuracy: Location.Accuracy.Low,
+                distanceInterval: 20,
+                timeInterval: 10000,
+              }
+            : { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
           (p) => handleFix(p.coords.latitude, p.coords.longitude)
         );
       } catch {
@@ -271,7 +286,7 @@ export default function LiveHike() {
         navigator.geolocation.clearWatch(webId);
       }
     };
-  }, [handleFix]);
+  }, [handleFix, energiesparmodus]);
 
   const speak = useCallback(
     (text: string) => {
