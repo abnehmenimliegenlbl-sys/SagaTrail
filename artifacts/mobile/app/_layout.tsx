@@ -30,7 +30,12 @@ import colors from "@/constants/colors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
+import { configureApiClient } from "@/lib/apiConfig";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+
+// Muss vor jeder ersten Anfrage (z.B. AppContext-Profilabfrage beim Start)
+// stehen, deshalb hier auf Modulebene und nicht erst in einem Effect.
+configureApiClient();
 
 SystemUI.setBackgroundColorAsync(colors.dark.nachthimmel);
 

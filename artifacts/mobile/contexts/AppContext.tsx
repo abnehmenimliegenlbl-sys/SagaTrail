@@ -129,17 +129,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Serverseitiges Profil ist die Wahrheitsquelle, sobald ein Clerk-Benutzer
   // angemeldet ist. Der AsyncStorage-Cache bleibt fuer Offline-Start bestehen.
+  // Der Query-Key wird um die Clerk-`userId` erweitert: so bleibt der
+  // React-Query-Cache pro Benutzerkonto getrennt und beim Kontowechsel auf
+  // demselben Geraet kann nie kurzzeitig das Profil des vorherigen Nutzers
+  // aus dem Cache aufscheinen.
   const {
     data: serverProfile,
     error: profileError,
     isFetched: profileFetched,
   } = useGetMyProfile({
     query: {
-      queryKey: getGetMyProfileQueryKey(),
-      enabled: authLoaded && !!isSignedIn,
+      queryKey: [...getGetMyProfileQueryKey(), userId],
+      enabled: authLoaded && !!isSignedIn && !!userId,
       retry: false,
     },
   });
+
+  // Sobald sich die angemeldete `userId` aendert (Kontowechsel auf demselben
+  // Geraet), lokalen Profil-/Premium-Zustand sofort verwerfen, damit nie
+  // Daten des vorherigen Kontos angezeigt werden, bis das neue Profil vom
+  // Server geladen ist.
+  const [lastUserId, setLastUserId] = useState<string | null | undefined>(
+    undefined
+  );
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (lastUserId === undefined) {
+      setLastUserId(userId ?? null);
+      return;
+    }
+    const currentUserId = userId ?? null;
+    if (currentUserId !== lastUserId) {
+      setLastUserId(currentUserId);
+      setProfile(null);
+      setPremium(false);
+      AsyncStorage.removeItem(KEYS.profile);
+      AsyncStorage.removeItem(KEYS.premium);
+    }
+  }, [authLoaded, userId, lastUserId]);
 
   useEffect(() => {
     if (!authLoaded) return;

@@ -19,7 +19,6 @@ import { CANTONS } from "@/constants/onboarding";
 import { HikingRoute, CantonWithRoutes } from "@/constants/routes";
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
-import { configureApiClient } from "@/lib/apiConfig";
 import { nearestSaga } from "@/lib/sagaMatch";
 
 /**
@@ -151,7 +150,6 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    configureApiClient();
 
     (async () => {
       // Dynamischen Cache (Kanton-Routen + Route-Sagen) hydrieren.
