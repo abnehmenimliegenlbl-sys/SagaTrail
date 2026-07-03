@@ -62,21 +62,31 @@ export default function Onboarding() {
     }
   };
 
-  const next = () => {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const next = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (step < totalSteps - 1) {
       setStep((s) => s + 1);
     } else if (archetype && canton && ageTier) {
-      saveProfile({
-        id: `p_${Date.now()}`,
-        name: name.trim(),
-        archetype,
-        homeCanton: canton,
-        language,
-        ageTier,
-      });
+      setSaveError(null);
+      setSaving(true);
+      try {
+        await saveProfile({
+          name: name.trim(),
+          archetype,
+          homeCanton: canton,
+          language,
+          ageTier,
+        });
+      } catch {
+        setSaveError("Profil konnte nicht gespeichert werden. Bitte erneut versuchen.");
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -343,10 +353,21 @@ export default function Onboarding() {
         <PrimaryButton
           label={step === totalSteps - 1 ? "Reise beginnen" : "Weiter"}
           onPress={next}
-          disabled={!canAdvance()}
+          disabled={!canAdvance() || saving}
+          loading={saving}
           style={{ flex: 1 }}
         />
       </View>
+      {saveError && (
+        <Text
+          style={[
+            styles.backText,
+            { color: colors.destructive, textAlign: "center", marginBottom: insets.bottom + 8 },
+          ]}
+        >
+          {saveError}
+        </Text>
+      )}
     </Background>
   );
 }

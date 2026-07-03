@@ -30,6 +30,9 @@ import type {
   GetPoisParams,
   HealthStatus,
   Poi,
+  PremiumUpdate,
+  Profile,
+  ProfileInput,
   StoryRequest,
   StoryResponse
 } from './api.schemas';
@@ -625,4 +628,224 @@ export function useGetRouteSaga<TData = Awaited<ReturnType<typeof getRouteSaga>>
 
 
 
+
+export const getGetMyProfileUrl = () => {
+
+
+
+
+  return `/api/me`
+}
+
+/**
+ * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
+ * @summary Eigenes Profil laden
+ */
+export const getMyProfile = async ( options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getGetMyProfileUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyProfileQueryKey = () => {
+    return [
+    `/api/me`
+    ] as const;
+    }
+
+
+export const getGetMyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyProfileQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfile>>> = ({ signal }) => getMyProfile({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>
+export type GetMyProfileQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Eigenes Profil laden
+ */
+
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveMyProfileUrl = () => {
+
+
+
+
+  return `/api/me`
+}
+
+/**
+ * Legt das Profil des authentifizierten Nutzers an (Onboarding) oder aktualisiert es.
+ * @summary Eigenes Profil anlegen oder aktualisieren
+ */
+export const saveMyProfile = async (profileInput: ProfileInput, options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getSaveMyProfileUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(profileInput)
+  }
+);}
+
+
+
+
+export const getSaveMyProfileMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMyProfile>>, TError,{data: BodyType<ProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveMyProfile>>, TError,{data: BodyType<ProfileInput>}, TContext> => {
+
+const mutationKey = ['saveMyProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveMyProfile>>, {data: BodyType<ProfileInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveMyProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof saveMyProfile>>>
+    export type SaveMyProfileMutationBody = BodyType<ProfileInput>
+    export type SaveMyProfileMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Eigenes Profil anlegen oder aktualisieren
+ */
+export const useSaveMyProfile = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMyProfile>>, TError,{data: BodyType<ProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveMyProfile>>,
+        TError,
+        {data: BodyType<ProfileInput>},
+        TContext
+      > => {
+      return useMutation(getSaveMyProfileMutationOptions(options));
+    }
+
+export const getUpdateMyPremiumUrl = () => {
+
+
+
+
+  return `/api/me/premium`
+}
+
+/**
+ * Aktiviert oder deaktiviert Premium fuer den authentifizierten Nutzer.
+ * @summary Premium-Status setzen
+ */
+export const updateMyPremium = async (premiumUpdate: PremiumUpdate, options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getUpdateMyPremiumUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(premiumUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateMyPremiumMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPremium>>, TError,{data: BodyType<PremiumUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyPremium>>, TError,{data: BodyType<PremiumUpdate>}, TContext> => {
+
+const mutationKey = ['updateMyPremium'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyPremium>>, {data: BodyType<PremiumUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyPremium(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyPremiumMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyPremium>>>
+    export type UpdateMyPremiumMutationBody = BodyType<PremiumUpdate>
+    export type UpdateMyPremiumMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Premium-Status setzen
+ */
+export const useUpdateMyPremium = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPremium>>, TError,{data: BodyType<PremiumUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyPremium>>,
+        TError,
+        {data: BodyType<PremiumUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyPremiumMutationOptions(options));
+    }
 

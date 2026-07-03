@@ -16,6 +16,8 @@ tags:
     description: KI-generierte Sagen-Erzaehlungen (Anthropic, in Postgres gecacht)
   - name: routes
     description: Dynamische Routen aus OpenStreetMap/swisstopo und ihre KI-Sagen
+  - name: profile
+    description: Nutzerkonto (Clerk-authentifiziert) - Profil und Premium-Status
 paths:
   /healthz:
     get:
@@ -285,6 +287,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me:
+    get:
+      operationId: getMyProfile
+      tags: [profile]
+      summary: Eigenes Profil laden
+      description: >
+        Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem
+        Onboarding noch kein Profil angelegt wurde.
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: saveMyProfile
+      tags: [profile]
+      summary: Eigenes Profil anlegen oder aktualisieren
+      description: Legt das Profil des authentifizierten Nutzers an (Onboarding) oder aktualisiert es.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Gespeichertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Ungueltige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/premium:
+    patch:
+      operationId: updateMyPremium
+      tags: [profile]
+      summary: Premium-Status setzen
+      description: Aktiviert oder deaktiviert Premium fuer den authentifizierten Nutzer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PremiumUpdate"
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -301,6 +391,65 @@ components:
           type: string
       required:
         - error
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Clerk-Benutzer-ID
+        name:
+          type: string
+        archetype:
+          type: string
+          enum: [reisende, hueterin, gewitzte, senn]
+        homeCanton:
+          type: string
+        language:
+          type: string
+        ageTier:
+          type: string
+          enum: [kinder, jugendliche, erwachsene]
+        premium:
+          type: boolean
+      required:
+        - id
+        - name
+        - archetype
+        - homeCanton
+        - language
+        - ageTier
+        - premium
+    ProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+        archetype:
+          type: string
+          enum: [reisende, hueterin, gewitzte, senn]
+        homeCanton:
+          type: string
+          minLength: 1
+        language:
+          type: string
+          minLength: 2
+        ageTier:
+          type: string
+          enum: [kinder, jugendliche, erwachsene]
+      required:
+        - name
+        - archetype
+        - homeCanton
+        - language
+        - ageTier
+    PremiumUpdate:
+      type: object
+      properties:
+        premium:
+          type: boolean
+      required:
+        - premium
     CatalogCoordinates:
       type: object
       properties:

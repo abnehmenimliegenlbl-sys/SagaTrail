@@ -238,3 +238,67 @@ export const GetRouteSagaResponse = zod.object({
 })
 
 
+/**
+ * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
+ * @summary Eigenes Profil laden
+ */
+export const GetMyProfileResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean()
+})
+
+
+/**
+ * Legt das Profil des authentifizierten Nutzers an (Onboarding) oder aktualisiert es.
+ * @summary Eigenes Profil anlegen oder aktualisieren
+ */
+export const saveMyProfileBodyNameMin = 2;
+
+
+export const saveMyProfileBodyLanguageMin = 2;
+
+
+
+export const SaveMyProfileBody = zod.object({
+  "name": zod.string().min(saveMyProfileBodyNameMin),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string().min(1),
+  "language": zod.string().min(saveMyProfileBodyLanguageMin),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene'])
+})
+
+export const SaveMyProfileResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean()
+})
+
+
+/**
+ * Aktiviert oder deaktiviert Premium fuer den authentifizierten Nutzer.
+ * @summary Premium-Status setzen
+ */
+export const UpdateMyPremiumBody = zod.object({
+  "premium": zod.boolean()
+})
+
+export const UpdateMyPremiumResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean()
+})
+
+

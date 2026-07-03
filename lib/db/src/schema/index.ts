@@ -6,3 +6,4 @@ export * from "./stories";
 export * from "./externalRoutes";
 export * from "./routeSagas";
 export * from "./cantonFetches";
+export * from "./profiles";

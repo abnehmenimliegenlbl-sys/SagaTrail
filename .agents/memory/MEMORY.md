@@ -4,3 +4,5 @@
 - [SagaTrail Swiss geo/hiking data](sagatrail-swiss-geo-data.md) — SAC difficulty from swissTLM3D identify (hikingtype), tolerance is in pixels, ASTRA Wanderland is WMS-only (not identifiable).
 - [Orval query params -> api-zod barrel clash](orval-query-params-barrel.md) — first endpoint with query params breaks the api-zod barrel (TS2308); fix by `export * as types` in its index.ts.
 - [SagaTrail online catalog + offline download](sagatrail-offline-download.md) — SAGAS are three-tier offline-first; ROUTES are online-only per-canton OSM/swisstopo (no seed, `source:"error"` on failure) matched to nearest curated saga; native-only offline tiles.
+- [Clerk Expo hook API](clerk-expo-hook-api.md) — `@clerk/expo`'s default `useSignIn`/`useSignUp` are the new signals API; classic imperative hooks live at `@clerk/expo/legacy`.
+- [react-native-web Alert.alert is a no-op](rn-web-alert-noop.md) — confirm dialogs (logout/delete/reset) silently do nothing on web; expected, not a regression.

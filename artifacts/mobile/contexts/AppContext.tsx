@@ -1,4 +1,11 @@
+import { useAuth } from "@clerk/expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  getGetMyProfileQueryKey,
+  useGetMyProfile,
+  useSaveMyProfile,
+  useUpdateMyPremium,
+} from "@workspace/api-client-react";
 import React, {
   createContext,
   useCallback,
@@ -10,7 +17,8 @@ import React, {
 
 import { Achievement, HikeSession, Profile } from "@/types";
 
-// Persistente Schluessel im AsyncStorage
+// Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
+// seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
 const KEYS = {
   profile: "sagatrail:profile",
   premium: "sagatrail:premium",
@@ -49,8 +57,8 @@ interface AppContextValue {
   lastHike: HikeSession | null;
   groupSession: GroupSession | null;
 
-  saveProfile: (profile: Profile) => Promise<void>;
-  updateProfile: (patch: Partial<Profile>) => Promise<void>;
+  saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
+  updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
   unlockPremium: () => Promise<void>;
   lockPremium: () => Promise<void>;
   addAchievement: (sagaTitle: string, sagaId: string) => Promise<void>;
@@ -78,6 +86,8 @@ function randomCode(): string {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { isLoaded: authLoaded, isSignedIn, userId } = useAuth();
+
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [premium, setPremium] = useState(false);
@@ -117,32 +127,126 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const saveProfile = useCallback(async (next: Profile) => {
-    setProfile(next);
-    await AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
-  }, []);
+  // Serverseitiges Profil ist die Wahrheitsquelle, sobald ein Clerk-Benutzer
+  // angemeldet ist. Der AsyncStorage-Cache bleibt fuer Offline-Start bestehen.
+  const {
+    data: serverProfile,
+    error: profileError,
+    isFetched: profileFetched,
+  } = useGetMyProfile({
+    query: {
+      queryKey: getGetMyProfileQueryKey(),
+      enabled: authLoaded && !!isSignedIn,
+      retry: false,
+    },
+  });
 
-  const updateProfile = useCallback(
-    async (patch: Partial<Profile>) => {
-      setProfile((prev) => {
-        if (!prev) return prev;
-        const next = { ...prev, ...patch };
-        AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
-        return next;
-      });
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (!isSignedIn) {
+      // Abgemeldet: lokalen Zustand nicht loeschen (bleibt als Cache fuer
+      // erneute Anmeldung desselben Geraets), aber nicht als "eingeloggt"
+      // fuehren — resetAll() bei explizitem Logout uebernimmt das Aufraeumen.
+      return;
+    }
+    if (!profileFetched) return;
+
+    if (serverProfile) {
+      const next: Profile = {
+        id: serverProfile.id,
+        name: serverProfile.name,
+        archetype: serverProfile.archetype,
+        homeCanton: serverProfile.homeCanton,
+        language: serverProfile.language,
+        ageTier: serverProfile.ageTier,
+      };
+      setProfile(next);
+      setPremium(serverProfile.premium);
+      AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
+      AsyncStorage.setItem(KEYS.premium, serverProfile.premium ? "true" : "false");
+    } else if (profileError) {
+      // 404: noch kein Profil auf dem Server — Onboarding erforderlich.
+      setProfile(null);
+      setPremium(false);
+      AsyncStorage.removeItem(KEYS.profile);
+      AsyncStorage.removeItem(KEYS.premium);
+    }
+  }, [authLoaded, isSignedIn, profileFetched, serverProfile, profileError]);
+
+  const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
+  const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();
+
+  const applyServerProfile = useCallback(
+    async (result: {
+      id: string;
+      name: string;
+      archetype: string;
+      homeCanton: string;
+      language: string;
+      ageTier: string;
+      premium: boolean;
+    }) => {
+      const next = {
+        id: result.id,
+        name: result.name,
+        archetype: result.archetype,
+        homeCanton: result.homeCanton,
+        language: result.language,
+        ageTier: result.ageTier,
+      } as Profile;
+      setProfile(next);
+      setPremium(result.premium);
+      await AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
+      await AsyncStorage.setItem(KEYS.premium, result.premium ? "true" : "false");
     },
     []
   );
 
+  const saveProfile = useCallback(
+    async (next: Omit<Profile, "id">) => {
+      const result = await saveMyProfileMutation({
+        data: {
+          name: next.name,
+          archetype: next.archetype,
+          homeCanton: next.homeCanton,
+          language: next.language,
+          ageTier: next.ageTier,
+        },
+      });
+      await applyServerProfile(result);
+    },
+    [saveMyProfileMutation, applyServerProfile]
+  );
+
+  const updateProfile = useCallback(
+    async (patch: Partial<Omit<Profile, "id">>) => {
+      if (!profile) return;
+      const merged = { ...profile, ...patch };
+      const result = await saveMyProfileMutation({
+        data: {
+          name: merged.name,
+          archetype: merged.archetype,
+          homeCanton: merged.homeCanton,
+          language: merged.language,
+          ageTier: merged.ageTier,
+        },
+      });
+      await applyServerProfile(result);
+    },
+    [profile, saveMyProfileMutation, applyServerProfile]
+  );
+
   const unlockPremium = useCallback(async () => {
-    setPremium(true);
+    const result = await updateMyPremiumMutation({ data: { premium: true } });
+    setPremium(result.premium);
     await AsyncStorage.setItem(KEYS.premium, "true");
-  }, []);
+  }, [updateMyPremiumMutation]);
 
   const lockPremium = useCallback(async () => {
-    setPremium(false);
+    const result = await updateMyPremiumMutation({ data: { premium: false } });
+    setPremium(result.premium);
     await AsyncStorage.setItem(KEYS.premium, "false");
-  }, []);
+  }, [updateMyPremiumMutation]);
 
   const addAchievement = useCallback(
     async (sagaTitle: string, sagaId: string) => {

@@ -6,6 +6,7 @@ import cantonsRouter from "./cantons";
 import routeSagasRouter from "./routeSagas";
 import aerialwaysRouter from "./aerialways";
 import poisRouter from "./pois";
+import profileRouter from "./profile";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(cantonsRouter);
 router.use(routeSagasRouter);
 router.use(aerialwaysRouter);
 router.use(poisRouter);
+router.use(profileRouter);
 
 export default router;

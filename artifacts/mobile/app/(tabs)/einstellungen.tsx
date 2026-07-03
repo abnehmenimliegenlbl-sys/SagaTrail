@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -32,6 +33,7 @@ export default function Einstellungen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { signOut } = useAuth();
   const {
     profile,
     premium,
@@ -94,6 +96,20 @@ export default function Einstellungen() {
         },
       ]
     );
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Abmelden", "Möchtest du dich wirklich abmelden?", [
+      { text: "Abbrechen", style: "cancel" },
+      {
+        text: "Abmelden",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          await resetAll();
+        },
+      },
+    ]);
   };
 
   const archLabel = ARCHETYPES.find((a) => a.id === profile?.archetype)?.title;
@@ -223,6 +239,13 @@ export default function Einstellungen() {
             }}
           />
         </Section>
+
+        <PrimaryButton
+          label="Abmelden"
+          variant="ghost"
+          onPress={handleLogout}
+          style={{ marginTop: 10 }}
+        />
 
         <PrimaryButton
           label="Konto & Daten löschen"

@@ -13,6 +13,70 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type ProfileArchetype = typeof ProfileArchetype[keyof typeof ProfileArchetype];
+
+
+export const ProfileArchetype = {
+  reisende: 'reisende',
+  hueterin: 'hueterin',
+  gewitzte: 'gewitzte',
+  senn: 'senn',
+} as const;
+
+export type ProfileAgeTier = typeof ProfileAgeTier[keyof typeof ProfileAgeTier];
+
+
+export const ProfileAgeTier = {
+  kinder: 'kinder',
+  jugendliche: 'jugendliche',
+  erwachsene: 'erwachsene',
+} as const;
+
+export interface Profile {
+  /** Clerk-Benutzer-ID */
+  id: string;
+  name: string;
+  archetype: ProfileArchetype;
+  homeCanton: string;
+  language: string;
+  ageTier: ProfileAgeTier;
+  premium: boolean;
+}
+
+export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];
+
+
+export const ProfileInputArchetype = {
+  reisende: 'reisende',
+  hueterin: 'hueterin',
+  gewitzte: 'gewitzte',
+  senn: 'senn',
+} as const;
+
+export type ProfileInputAgeTier = typeof ProfileInputAgeTier[keyof typeof ProfileInputAgeTier];
+
+
+export const ProfileInputAgeTier = {
+  kinder: 'kinder',
+  jugendliche: 'jugendliche',
+  erwachsene: 'erwachsene',
+} as const;
+
+export interface ProfileInput {
+  /** @minLength 2 */
+  name: string;
+  archetype: ProfileInputArchetype;
+  /** @minLength 1 */
+  homeCanton: string;
+  /** @minLength 2 */
+  language: string;
+  ageTier: ProfileInputAgeTier;
+}
+
+export interface PremiumUpdate {
+  premium: boolean;
+}
+
 export interface CatalogCoordinates {
   lat: number;
   lng: number;
