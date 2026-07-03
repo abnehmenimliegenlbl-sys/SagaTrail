@@ -21,6 +21,11 @@ export interface KantonStrings {
   routeFound: string;
   nextStepSaga: string;
   sacLabel: string;
+  season: {
+    ganzjaehrig: string;
+    eherSommer: string;
+    nurSommer: string;
+  };
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -49,6 +54,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 Route gefunden.",
     nextStepSaga: "Danach folgt die passende Sage.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Ganzjährig",
+      eherSommer: "Eher Sommer/Herbst",
+      nurSommer: "Nur Sommer",
+    },
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -75,6 +85,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 Route gfunde.",
     nextStepSaga: "Dernah chunt die passendi Sag.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "S'ganz Jahr",
+      eherSommer: "Eher Summer/Herbscht",
+      nurSommer: "Nume Summer",
+    },
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -101,6 +116,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 itinéraire trouvé.",
     nextStepSaga: "Ensuite, la légende correspondante suivra.",
     sacLabel: "CAS",
+    season: {
+      ganzjaehrig: "Toute l'année",
+      eherSommer: "Plutôt été/automne",
+      nurSommer: "Été uniquement",
+    },
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -127,6 +147,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 percorso trovato.",
     nextStepSaga: "Seguirà la leggenda corrispondente.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Tutto l'anno",
+      eherSommer: "Preferibilmente estate/autunno",
+      nurSommer: "Solo estate",
+    },
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -153,6 +178,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 route found.",
     nextStepSaga: "The matching legend will follow.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Year-round",
+      eherSommer: "Best in summer/autumn",
+      nurSommer: "Summer only",
+    },
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -178,6 +208,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "找到 1 条路线。",
     nextStepSaga: "随后将显示匹配的传说故事。",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "全年可行",
+      eherSommer: "建议夏秋季",
+      nurSommer: "仅限夏季",
+    },
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -204,6 +239,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 ruta encontrada.",
     nextStepSaga: "A continuación, seguirá la leyenda correspondiente.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Todo el año",
+      eherSommer: "Mejor en verano/otoño",
+      nurSommer: "Solo verano",
+    },
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -230,6 +270,11 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     routeFound: "1 rota encontrada.",
     nextStepSaga: "Em seguida, a lenda correspondente seguirá.",
     sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Ano todo",
+      eherSommer: "Melhor no verão/outono",
+      nurSommer: "Somente verão",
+    },
   },
 };
 

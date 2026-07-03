@@ -519,6 +519,15 @@ components:
           type: number
         ascentM:
           type: number
+        maxElevationM:
+          type: number
+          description: Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).
+        season:
+          type: string
+          enum: [ganzjaehrig, eher_sommer, nur_sommer]
+          description: >
+            Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit
+            (Heuristik, keine amtliche Aussage zum aktuellen Zustand).
         minutes:
           type: number
         sac:
@@ -543,6 +552,8 @@ components:
         - region
         - distanceKm
         - ascentM
+        - maxElevationM
+        - season
         - minutes
         - sac
         - terrain

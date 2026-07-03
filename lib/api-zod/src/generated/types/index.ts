@@ -11,6 +11,7 @@ export * from './catalogCanton';
 export * from './catalogCoordinates';
 export * from './catalogResponse';
 export * from './catalogRoute';
+export * from './catalogRouteSeason';
 export * from './catalogSaga';
 export * from './catalogSagaKoordinatenSicherheit';
 export * from './catalogSagaSummaries';

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CatalogCoordinates } from './catalogCoordinates';
+import type { CatalogRouteSeason } from './catalogRouteSeason';
 
 export interface CatalogRoute {
   id: string;
@@ -14,6 +15,10 @@ export interface CatalogRoute {
   region: string;
   distanceKm: number;
   ascentM: number;
+  /** Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil). */
+  maxElevationM: number;
+  /** Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand). */
+  season: CatalogRouteSeason;
   minutes: number;
   sac: string;
   terrain: string;

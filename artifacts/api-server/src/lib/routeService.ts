@@ -18,8 +18,9 @@ import {
   type RawAerialway,
   type RawPoi,
 } from "./overpass";
-import { computeAscentM } from "./elevation";
+import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
+import { deriveSeason } from "./season";
 import {
   downsample,
   estimateMinutes,
@@ -248,8 +249,9 @@ async function enrichAndStore(
     .filter(({ distanceKm }) => distanceKm >= MIN_KM && distanceKm <= MAX_KM);
 
   const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm }) => {
-    const ascent = await computeAscentM(r.points, log);
-    const ascentM = ascent ?? 0;
+    const elevation = await computeElevationStats(r.points, log);
+    const ascentM = elevation?.ascentM ?? 0;
+    const maxElevationM = elevation?.maxElevationM ?? 0;
     // Schwierigkeit: OSM-`sac_scale` normalisieren; fehlt sie, aus dem amtlichen
     // swissTLM3D-Wanderwegnetz ableiten; sonst bleibt sie unbekannt.
     const sac =
@@ -266,6 +268,7 @@ async function enrichAndStore(
       ref: r.ref,
       distanceKm: Math.round(distanceKm * 10) / 10,
       ascentM,
+      maxElevationM,
       minutes: estimateMinutes(distanceKm, ascentM),
       sac,
       terrain: terrainLabel(r.ref, r.network, sac),
@@ -287,6 +290,7 @@ async function enrichAndStore(
           name: sql`excluded.name`,
           distanceKm: sql`excluded.distance_km`,
           ascentM: sql`excluded.ascent_m`,
+          maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
           sac: sql`excluded.sac`,
           terrain: sql`excluded.terrain`,

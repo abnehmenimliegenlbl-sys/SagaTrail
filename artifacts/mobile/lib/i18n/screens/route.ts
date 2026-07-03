@@ -44,6 +44,13 @@ export interface RouteStrings {
     vorsicht: string;
     kritisch: string;
   };
+  seasonLabel: string;
+  season: {
+    ganzjaehrig: string;
+    eherSommer: string;
+    nurSommer: string;
+  };
+  seasonNote: string;
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -99,6 +106,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Mit Vorsicht begehbar",
       kritisch: "Erschwerte Bedingungen",
     },
+    seasonLabel: "Saison",
+    season: {
+      ganzjaehrig: "Ganzjährig",
+      eherSommer: "Eher Sommer/Herbst",
+      nurSommer: "Nur Sommer",
+    },
+    seasonNote:
+      "Einschätzung aus Höhe und Schwierigkeit — keine amtliche Aussage zum aktuellen Zustand.",
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -152,6 +167,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Mit Vorsicht begehbar",
       kritisch: "Erschwirti Bedingige",
     },
+    seasonLabel: "Saison",
+    season: {
+      ganzjaehrig: "S'ganz Jahr",
+      eherSommer: "Eher Summer/Herbscht",
+      nurSommer: "Nume Summer",
+    },
+    seasonNote:
+      "Yschätzig us Höchi und Schwierigkeit — kei amtlichi Uussag zum aktuelle Zuestand.",
   },
   en: {
     notFound: "Route not found.",
@@ -205,6 +228,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Walk with caution",
       kritisch: "Difficult conditions",
     },
+    seasonLabel: "Season",
+    season: {
+      ganzjaehrig: "Year-round",
+      eherSommer: "Best in summer/autumn",
+      nurSommer: "Summer only",
+    },
+    seasonNote:
+      "Estimate based on elevation and difficulty — not an official statement about current conditions.",
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -258,6 +289,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Marcher avec prudence",
       kritisch: "Conditions difficiles",
     },
+    seasonLabel: "Saison",
+    season: {
+      ganzjaehrig: "Toute l'année",
+      eherSommer: "Plutôt été/automne",
+      nurSommer: "Été uniquement",
+    },
+    seasonNote:
+      "Estimation basée sur l'altitude et la difficulté — pas une déclaration officielle sur l'état actuel.",
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -311,6 +350,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Camminare con cautela",
       kritisch: "Condizioni difficili",
     },
+    seasonLabel: "Stagione",
+    season: {
+      ganzjaehrig: "Tutto l'anno",
+      eherSommer: "Preferibilmente estate/autunno",
+      nurSommer: "Solo estate",
+    },
+    seasonNote:
+      "Stima basata su altitudine e difficoltà — non è una dichiarazione ufficiale sullo stato attuale.",
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -364,6 +411,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Caminar con precaución",
       kritisch: "Condiciones difíciles",
     },
+    seasonLabel: "Temporada",
+    season: {
+      ganzjaehrig: "Todo el año",
+      eherSommer: "Mejor en verano/otoño",
+      nurSommer: "Solo verano",
+    },
+    seasonNote:
+      "Estimación basada en la altitud y la dificultad — no es una declaración oficial sobre el estado actual.",
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -417,6 +472,14 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "Caminhar com cautela",
       kritisch: "Condições difíceis",
     },
+    seasonLabel: "Estação",
+    season: {
+      ganzjaehrig: "Ano todo",
+      eherSommer: "Melhor no verão/outono",
+      nurSommer: "Somente verão",
+    },
+    seasonNote:
+      "Estimativa baseada na altitude e dificuldade — não é uma declaração oficial sobre o estado atual.",
   },
   zh: {
     notFound: "未找到路线。",
@@ -464,6 +527,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       vorsicht: "谨慎通行",
       kritisch: "路况复杂",
     },
+    seasonLabel: "季节",
+    season: {
+      ganzjaehrig: "全年可行",
+      eherSommer: "建议夏秋季",
+      nurSommer: "仅限夏季",
+    },
+    seasonNote: "基于海拔和难度的估算——并非官方的当前路况声明。",
   },
 };
 

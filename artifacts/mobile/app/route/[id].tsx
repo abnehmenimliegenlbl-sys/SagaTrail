@@ -223,6 +223,25 @@ export default function Routenplanung() {
           <Stat label={t.sacScale} value={meta.sac} unit="" />
         </Animated.View>
 
+        <View style={styles.checkRow}>
+          <Feather
+            name={meta.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
+            size={16}
+            color={colors.mutedForeground}
+          />
+          <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.seasonLabel}</Text>
+          <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
+            {t.season[
+              meta.season === "ganzjaehrig"
+                ? "ganzjaehrig"
+                : meta.season === "nur_sommer"
+                  ? "nurSommer"
+                  : "eherSommer"
+            ]}
+          </Text>
+        </View>
+        <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.seasonNote}</Text>
+
         <View
           style={[
             styles.downloadCard,

@@ -87,6 +87,18 @@ export interface CatalogCanton {
   routeCount: number;
 }
 
+/**
+ * Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).
+ */
+export type CatalogRouteSeason = typeof CatalogRouteSeason[keyof typeof CatalogRouteSeason];
+
+
+export const CatalogRouteSeason = {
+  ganzjaehrig: 'ganzjaehrig',
+  eher_sommer: 'eher_sommer',
+  nur_sommer: 'nur_sommer',
+} as const;
+
 export interface CatalogRoute {
   id: string;
   sagaId: string;
@@ -94,6 +106,10 @@ export interface CatalogRoute {
   region: string;
   distanceKm: number;
   ascentM: number;
+  /** Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil). */
+  maxElevationM: number;
+  /** Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand). */
+  season: CatalogRouteSeason;
   minutes: number;
   sac: string;
   terrain: string;

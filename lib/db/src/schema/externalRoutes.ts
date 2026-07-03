@@ -24,6 +24,7 @@ export const externalRoutesTable = pgTable("external_routes", {
   ref: text("ref"),
   distanceKm: doublePrecision("distance_km").notNull(),
   ascentM: doublePrecision("ascent_m").notNull(),
+  maxElevationM: doublePrecision("max_elevation_m").notNull().default(0),
   minutes: doublePrecision("minutes").notNull(),
   sac: text("sac").notNull().default("unbekannt"),
   terrain: text("terrain").notNull(),

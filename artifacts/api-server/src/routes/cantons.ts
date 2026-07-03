@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import type { ExternalRouteRow } from "@workspace/db";
 import { getCantonRoutes } from "../lib/routeService";
+import { deriveSeason } from "../lib/season";
 
 const router: IRouter = Router();
 
@@ -31,6 +32,8 @@ function toRoute(row: ExternalRouteRow) {
     region: row.canton,
     distanceKm: row.distanceKm,
     ascentM: row.ascentM,
+    maxElevationM: row.maxElevationM,
+    season: deriveSeason(row.maxElevationM, row.sac),
     minutes: row.minutes,
     sac: row.sac,
     terrain: row.terrain,

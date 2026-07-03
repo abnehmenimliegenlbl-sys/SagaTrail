@@ -260,6 +260,22 @@ function RouteCard({
           >
             {route.terrain}
           </Text>
+          <View style={styles.cardSeasonRow}>
+            <Feather
+              name={route.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
+              size={12}
+              color={colors.mutedForeground}
+            />
+            <Text style={[styles.cardSeasonText, { color: colors.mutedForeground }]}>
+              {t.season[
+                route.season === "ganzjaehrig"
+                  ? "ganzjaehrig"
+                  : route.season === "nur_sommer"
+                    ? "nurSommer"
+                    : "eherSommer"
+              ]}
+            </Text>
+          </View>
         </View>
       </Pressable>
     </Animated.View>
@@ -308,4 +324,6 @@ const styles = StyleSheet.create({
   cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1, flex: 1 },
   cardTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 6 },
   cardTerrain: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
+  cardSeasonRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
+  cardSeasonText: { fontFamily: fonts.body, fontSize: 11 },
 });
