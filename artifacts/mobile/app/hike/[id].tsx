@@ -407,8 +407,14 @@ export default function LiveHike() {
   // Ersatz; stattdessen ein expliziter "nicht verfuegbar"-Hinweis). Die
   // kostenlose erste Wanderung nutzt bewusst weiterhin ausschliesslich die
   // alte on-device Stimme (expo-speech) und ruft die KI-Stimme nie auf.
+  // onFinished feuert NUR bei natuerlichem Ende (onDone/didJustFinish), nie
+  // bei manuellem Stopp oder wenn eine andere speak()-Aeusserung dazwischen-
+  // funkt (stopNarration loest dann onStopped/onError aus). So kann man
+  // z. B. nach einem POI-Einschub die unterbrochene Kapitel-Erzaehlung
+  // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
+  // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string) => {
+    async (text: string, onFinished?: () => void) => {
       await stopNarration();
       setNarrationUnavailable(false);
       setSpeaking(true);
@@ -423,6 +429,7 @@ export default function LiveHike() {
             if (!status.isLoaded) return;
             if (status.didJustFinish) {
               setSpeaking(false);
+              onFinished?.();
             }
           });
         } catch {
@@ -436,7 +443,10 @@ export default function LiveHike() {
         language: SPEECH_LOCALE[resolveLang(profile?.language)],
         rate: 0.92,
         pitch: 1.0,
-        onDone: () => setSpeaking(false),
+        onDone: () => {
+          setSpeaking(false);
+          onFinished?.();
+        },
         onStopped: () => setSpeaking(false),
         onError: () => setSpeaking(false),
       });
@@ -463,16 +473,23 @@ export default function LiveHike() {
   // Sobald unterwegs ein realer Ort in der Naehe entdeckt wird (nearbyPoi,
   // siehe oben), erzaehlt der Erzaehler kurz davon — mit dem bereits
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
-  // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; der Kapiteltext
-  // bleibt danach unveraendert ueber den Abspiel-Button erneut hoerbar.
+  // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; sobald der
+  // POI-Einschub natuerlich zu Ende ist, wird das aktuelle Kapitel
+  // automatisch weitererzaehlt — ganz ohne Beruehrung, damit die Wanderung
+  // ab dem Start durchgehend freihaendig bleibt.
   useEffect(() => {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
     narratedPoiIdRef.current = nearbyPoi.id;
+    const wasChapterPlaying = speaking;
+    const chapterToResume = chapters[currentIndex]?.text;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
     const extract = nearbyPoi.wiki?.extract ? trimForNarration(nearbyPoi.wiki.extract) : null;
-    speak(pack.poiAside(nearbyPoi.name, extract));
-  }, [nearbyPoi, storyLanguage, speak]);
+    speak(
+      pack.poiAside(nearbyPoi.name, extract),
+      wasChapterPlaying && chapterToResume ? () => speak(chapterToResume) : undefined
+    );
+  }, [nearbyPoi, storyLanguage, speak, speaking, chapters, currentIndex]);
 
   // Echtes GPS steuert den Kapitelfortschritt entlang der Routenlaenge
   useEffect(() => {
