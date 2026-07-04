@@ -66,6 +66,10 @@ export interface StoryPack {
   // Naht­loser Navigationshinweis, aus echter Routen-Geometrie abgeleitet
   // (siehe navigationCues.ts) und in den laufenden Erzaehltext eingeflochten.
   navCue: (direction: "links" | "rechts", landmark: string) => string;
+  // Kurzer, gesprochener Einschub, wenn unterwegs ein realer Ort (OSM/Wikipedia)
+  // in der Naehe entdeckt wird — nutzt den bereits geladenen Wikipedia-Auszug,
+  // keine KI-Generierung. extract ist null, wenn kein Wikipedia-Artikel vorliegt.
+  poiAside: (name: string, extract: string | null) => string;
 }
 
 // Die tone-Werte bleiben ueber alle Sprachen als stabile Kennungen deutsch.
@@ -106,6 +110,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "Der Moment vergeht. Die Natur nimmt ihren gewohnten Lauf wieder auf, der Wind legt sich. Du ziehst weiter, gezeichnet von dieser Begegnung, und das Tal behält sein Geheimnis — bis zur nächsten, die vorbeikommt.",
     navCue: (direction, landmark) =>
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Kurz hältst du inne: Direkt am Weg liegt ${name}. ${extract}`
+        : `Kurz hältst du inne: Direkt am Weg liegt ${name} — ein stiller Zeuge vergangener Zeiten.`,
   },
 
   gsw: {
@@ -144,6 +152,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "De Momänt vergaht. D Natur nimmt ihre gwöhnti Lauf wieder uf, de Wind leit sich. Du ziehsch witer, zeichnet vo dere Begägnig, und s Tal behaltet sis Gheimnis — bis zur nächschte, wo verbicho chunnt.",
     navCue: (direction, landmark) =>
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Churz haltsch inne: Diräkt am Wäg liit ${name}. ${extract}`
+        : `Churz haltsch inne: Diräkt am Wäg liit ${name} — en stille Züügä vo vergangene Zyte.`,
   },
 
   fr: {
@@ -182,6 +194,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "L'instant passe. La nature reprend son cours habituel, le vent retombe. Tu poursuis ta route, marqué·e par cette rencontre, et la vallée garde son secret — jusqu'à la prochaine personne qui passera.",
     navCue: (direction, landmark) =>
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Tu marques une pause : juste au bord du chemin se trouve ${name}. ${extract}`
+        : `Tu marques une pause : juste au bord du chemin se trouve ${name} — un témoin silencieux du passé.`,
   },
 
   it: {
@@ -220,6 +236,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "L'attimo passa. La natura riprende il suo corso consueto, il vento si placa. Prosegui il cammino, segnato·a da questo incontro, e la valle custodisce il suo segreto — fino alla prossima persona che passerà.",
     navCue: (direction, landmark) =>
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Ti fermi un istante: proprio lungo il sentiero si trova ${name}. ${extract}`
+        : `Ti fermi un istante: proprio lungo il sentiero si trova ${name} — un testimone silenzioso del passato.`,
   },
 
   en: {
@@ -258,6 +278,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "The moment passes. Nature resumes its usual course, the wind settles. You move on, marked by this encounter, and the valley keeps its secret — until the next person who passes by.",
     navCue: (direction, landmark) =>
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `You pause for a moment: right by the path stands ${name}. ${extract}`
+        : `You pause for a moment: right by the path stands ${name} — a quiet witness to times past.`,
   },
 
   zh: {
@@ -292,6 +316,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "这一刻过去了。自然重新回到它惯常的轨迹，风也平息下来。你继续前行，被这次相遇留下印记，而山谷守着它的秘密——直到下一个路过的人到来。",
     navCue: (direction, landmark) =>
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
+    poiAside: (name, extract) =>
+      extract
+        ? `你稍作停留：路边就是${name}。${extract}`
+        : `你稍作停留：路边就是${name}——一段往昔岁月的沉默见证。`,
   },
 
   es: {
@@ -330,6 +358,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "El instante pasa. La naturaleza retoma su curso habitual, el viento amaina. Sigues tu camino, marcado·a por este encuentro, y el valle guarda su secreto — hasta la próxima persona que pase.",
     navCue: (direction, landmark) =>
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Te detienes un momento: justo junto al camino está ${name}. ${extract}`
+        : `Te detienes un momento: justo junto al camino está ${name} — un testigo silencioso de tiempos pasados.`,
   },
 
   pt: {
@@ -368,8 +400,26 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "O instante passa. A natureza retoma seu curso habitual, o vento se acalma. Você segue em frente, marcado·a por este encontro, e o vale guarda seu segredo — até a próxima pessoa que passar.",
     navCue: (direction, landmark) =>
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Você pausa por um instante: bem à beira do caminho está ${name}. ${extract}`
+        : `Você pausa por um instante: bem à beira do caminho está ${name} — uma testemunha silenciosa de tempos passados.`,
   },
 };
+
+/**
+ * Kuerzt einen (potenziell langen) Wikipedia-Auszug fuer die gesprochene
+ * Erzaehlung auf eine sprechbare Laenge, moeglichst an einer Satzgrenze.
+ */
+export function trimForNarration(text: string, maxLen = 240): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLen) return trimmed;
+  const cut = trimmed.slice(0, maxLen);
+  const lastSentenceEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf(".\n"));
+  if (lastSentenceEnd > maxLen * 0.4) return cut.slice(0, lastSentenceEnd + 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 0 ? lastSpace : cut.length)}…`;
+}
 
 /**
  * Uebersetzte Sagen-Zusammenfassungen je Sprache und Saga-ID.

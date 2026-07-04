@@ -38,7 +38,13 @@ import {
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
-import { effectiveStoryLanguage, resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
+import {
+  effectiveStoryLanguage,
+  resolveLang,
+  SPEECH_LOCALE,
+  STORY_PACKS,
+  trimForNarration,
+} from "@/lib/storyContent";
 import { blobToDataUri } from "@/lib/narrationAudio";
 import { weaveNavigationCues } from "@/lib/storyEngine";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
@@ -105,6 +111,7 @@ export default function LiveHike() {
   const lastFixRef = useRef<LatLng | null>(null);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
+  const narratedPoiIdRef = useRef<string | null>(null);
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
 
   // KI-Erzaehlstimme (ElevenLabs) ist online-only und ausschliesslich fuer
@@ -452,6 +459,20 @@ export default function LiveHike() {
       setAwaitingDecision(true);
     }
   }, [currentIndex, preparing, chapters, speak]);
+
+  // Sobald unterwegs ein realer Ort in der Naehe entdeckt wird (nearbyPoi,
+  // siehe oben), erzaehlt der Erzaehler kurz davon — mit dem bereits
+  // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
+  // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; der Kapiteltext
+  // bleibt danach unveraendert ueber den Abspiel-Button erneut hoerbar.
+  useEffect(() => {
+    if (!nearbyPoi) return;
+    if (narratedPoiIdRef.current === nearbyPoi.id) return;
+    narratedPoiIdRef.current = nearbyPoi.id;
+    const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    const extract = nearbyPoi.wiki?.extract ? trimForNarration(nearbyPoi.wiki.extract) : null;
+    speak(pack.poiAside(nearbyPoi.name, extract));
+  }, [nearbyPoi, storyLanguage, speak]);
 
   // Echtes GPS steuert den Kapitelfortschritt entlang der Routenlaenge
   useEffect(() => {
