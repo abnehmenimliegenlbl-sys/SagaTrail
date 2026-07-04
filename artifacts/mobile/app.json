@@ -24,7 +24,10 @@
     "android": {
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -42,7 +45,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen."
+          "locationWhenInUsePermission": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen.",
+          "locationAlwaysAndWhenInUsePermission": "SagaTrail nutzt deinen Standort während der Wanderung, um Story-Momente an den richtigen Wegpunkten auszulösen — auch wenn der Bildschirm gesperrt ist.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ]
     ],

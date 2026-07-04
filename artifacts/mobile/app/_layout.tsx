@@ -31,6 +31,11 @@ import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
 import { configureApiClient } from "@/lib/apiConfig";
+// Reiner Seiteneffekt-Import: registriert den Hintergrund-Standort-Task
+// (TaskManager.defineTask) so frueh wie moeglich beim App-Start — nur so
+// kann das Betriebssystem die App bei einem Standort-Fix im Hintergrund
+// ueberhaupt wieder aufwecken.
+import "@/lib/backgroundLocation";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 

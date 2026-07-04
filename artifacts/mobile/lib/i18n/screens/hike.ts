@@ -35,6 +35,8 @@ export interface HikeStrings {
   unknown: string;
   close: string;
   narrationUnavailable: string;
+  backgroundNotificationTitle: string;
+  backgroundNotificationBody: string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -73,6 +75,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "unbekannt",
     close: "Schliessen",
     narrationUnavailable: "KI-Erzählstimme gerade nicht verfügbar (Internet prüfen).",
+    backgroundNotificationTitle: "SagaTrail wandert mit",
+    backgroundNotificationBody: "Die Geschichte läuft weiter, auch wenn der Bildschirm gesperrt ist.",
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -109,6 +113,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "unbekannt",
     close: "Schliesse",
     narrationUnavailable: "KI-Erzählstimm grad nid verfügbär (Internet prüefe).",
+    backgroundNotificationTitle: "SagaTrail wanderet mit",
+    backgroundNotificationBody: "D Gschicht laufft wiiter, au wenn de Bildschirm gsperrt isch.",
   },
   en: {
     notAvailable: "Not available",
@@ -145,6 +151,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "unknown",
     close: "Close",
     narrationUnavailable: "AI narration voice unavailable right now (check your connection).",
+    backgroundNotificationTitle: "SagaTrail is hiking along",
+    backgroundNotificationBody: "The story keeps going even with the screen locked.",
   },
   fr: {
     notAvailable: "Non disponible",
@@ -181,6 +189,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "inconnu",
     close: "Fermer",
     narrationUnavailable: "Voix narrative IA indisponible pour le moment (vérifiez votre connexion).",
+    backgroundNotificationTitle: "SagaTrail vous accompagne",
+    backgroundNotificationBody: "L'histoire continue même écran verrouillé.",
   },
   it: {
     notAvailable: "Non disponibile",
@@ -217,6 +227,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "sconosciuto",
     close: "Chiudi",
     narrationUnavailable: "Voce narrante IA non disponibile al momento (controlla la connessione).",
+    backgroundNotificationTitle: "SagaTrail ti accompagna",
+    backgroundNotificationBody: "La storia continua anche a schermo bloccato.",
   },
   es: {
     notAvailable: "No disponible",
@@ -253,6 +265,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "desconocido",
     close: "Cerrar",
     narrationUnavailable: "Voz narrativa IA no disponible en este momento (revisa tu conexión).",
+    backgroundNotificationTitle: "SagaTrail te acompaña",
+    backgroundNotificationBody: "La historia sigue aunque la pantalla esté bloqueada.",
   },
   pt: {
     notAvailable: "Não disponível",
@@ -289,6 +303,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "desconhecido",
     close: "Fechar",
     narrationUnavailable: "Voz narrativa por IA indisponível no momento (verifique sua conexão).",
+    backgroundNotificationTitle: "SagaTrail continua com você",
+    backgroundNotificationBody: "A história continua mesmo com a tela bloqueada.",
   },
   zh: {
     notAvailable: "不可用",
@@ -325,6 +341,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     unknown: "位置不明",
     close: "关闭",
     narrationUnavailable: "AI 讲述语音暂时不可用（请检查网络连接）。",
+    backgroundNotificationTitle: "SagaTrail 仍在陪伴你徒步",
+    backgroundNotificationBody: "即使锁屏，故事也会继续播放。",
   },
 };
 

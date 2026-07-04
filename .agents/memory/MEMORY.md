@@ -10,3 +10,4 @@
 - [SagaTrail UI-chrome i18n](sagatrail-ui-chrome-i18n.md) — app chrome (all 8 langs) is separate from narration i18n; per-screen strings dict pattern, permanent language override once user picks one.
 - [SagaTrail navigation cues](sagatrail-navigation-cues.md) — turn cues are woven client-side from real route geometry at hike-start, after story resolution, not baked into stored/AI-generated chapters.
 - [Clerk OAuth testing block](clerk-oauth-testing-block.md) — `runTest` refuses to proceed past a Clerk login screen with a visible Google/SSO button, even for a programmatic Clerk-auth-only flow; fall back to typecheck + curl + code review.
+- [SagaTrail background narration/GPS](sagatrail-background-audio.md) — audio needs `staysActiveInBackground`, GPS needs expo-task-manager foreground-service task; both require a dev/EAS build, NOT Expo Go.

@@ -32,6 +32,11 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
+import {
+  startBackgroundLocationTracking,
+  stopBackgroundLocationTracking,
+  subscribeToBackgroundLocation,
+} from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { effectiveStoryLanguage, resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { blobToDataUri } from "@/lib/narrationAudio";
@@ -112,10 +117,16 @@ export default function LiveHike() {
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
   // bleibt AVSpeechSynthesizer auf manchen Geraeten komplett lautlos, obwohl
   // die Wiedergabe technisch laeuft (Button/Status wirken dann funktionslos).
+  // staysActiveInBackground: true ist die eigentliche Voraussetzung dafuer,
+  // dass die Erzaehlung (KI-Stimme via expo-av UND die on-device Stimme via
+  // expo-speech, die dieselbe iOS-Audiosession nutzt) weiterlaeuft, wenn die
+  // App in den Hintergrund geht oder das Display gesperrt wird — zusammen
+  // mit UIBackgroundModes "audio" (app.json) und, fuer echte GPS-Fortschritte
+  // im Hintergrund, dem Standort-Foreground-Service (siehe unten).
   useEffect(() => {
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
+      staysActiveInBackground: true,
       interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
     }).catch(() => {
       // Best effort — falls die Audiosession nicht gesetzt werden kann, wird
@@ -265,6 +276,7 @@ export default function LiveHike() {
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
     let webId: number | null = null;
+    let unsubscribeBackground: (() => void) | null = null;
     let cancelled = false;
 
     (async () => {
@@ -306,18 +318,42 @@ export default function LiveHike() {
           // Kein Sofort-Fix moeglich — watchPositionAsync uebernimmt.
         }
         if (cancelled) return;
+
         // Energiesparmodus: groebere GPS-Genauigkeit und seltenere Fixes
         // schonen den Akku spuerbar auf langen Touren.
-        sub = await Location.watchPositionAsync(
-          energiesparmodus
-            ? {
-                accuracy: Location.Accuracy.Low,
-                distanceInterval: 20,
-                timeInterval: 10000,
-              }
-            : { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
-          (p) => handleFix(p.coords.latitude, p.coords.longitude)
-        );
+        const trackingOptions: Location.LocationOptions = energiesparmodus
+          ? { accuracy: Location.Accuracy.Low, distanceInterval: 20, timeInterval: 10000 }
+          : { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 };
+
+        // "Immer"-Freigabe ist optional (nur fuer echten Hintergrundbetrieb
+        // noetig) — ohne sie funktioniert die Wanderung weiterhin normal,
+        // nur eben nur im Vordergrund. Kein Fehler, kein Blockieren.
+        let backgroundStarted = false;
+        try {
+          const bg = await Location.requestBackgroundPermissionsAsync();
+          if (!cancelled && bg.status === "granted") {
+            backgroundStarted = await startBackgroundLocationTracking(trackingOptions, {
+              title: t.backgroundNotificationTitle,
+              body: t.backgroundNotificationBody,
+            });
+          }
+        } catch {
+          // Best effort — z. B. auf Web/Expo Go nicht unterstuetzt.
+        }
+
+        if (cancelled) return;
+
+        if (backgroundStarted) {
+          // TaskManager liefert Fixes ueber ein modulweites Pub/Sub, auch
+          // wenn die App im Hintergrund ist oder der Bildschirm gesperrt ist.
+          unsubscribeBackground = subscribeToBackgroundLocation(handleFix);
+        } else {
+          // Rueckfall: normale Vordergrund-Verfolgung (stoppt beim
+          // Backgrounding, aber besser als gar kein Live-Tracking).
+          sub = await Location.watchPositionAsync(trackingOptions, (p) =>
+            handleFix(p.coords.latitude, p.coords.longitude)
+          );
+        }
       } catch {
         if (!cancelled) setLocState("denied");
       }
@@ -326,11 +362,13 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
       sub?.remove();
+      unsubscribeBackground?.();
+      stopBackgroundLocationTracking();
       if (webId != null && typeof navigator !== "undefined" && navigator.geolocation) {
         navigator.geolocation.clearWatch(webId);
       }
     };
-  }, [handleFix, energiesparmodus]);
+  }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
 
   // Laufende Wiedergabe stoppen — egal ob on-device Sprachausgabe (kostenlose
   // erste Wanderung) oder KI-Erzaehlstimme (Premium, expo-av) gerade aktiv ist.
