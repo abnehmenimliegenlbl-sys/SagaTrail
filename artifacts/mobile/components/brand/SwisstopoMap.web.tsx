@@ -19,12 +19,14 @@ export function SwisstopoMap({
   geometry,
   offlineTiles,
   aerialways,
+  pois,
+  onPoiPress,
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const html = useMemo(
-    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways]
+    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways, pois),
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
@@ -40,6 +42,25 @@ export function SwisstopoMap({
       win.sttSetPosition(position.lat, position.lng);
     }
   }, [ready, position?.lat, position?.lng]);
+
+  // Der iframe teilt sich denselben Ursprung (srcDoc), Klicks auf POI-Marker
+  // kommen daher per window.postMessage von seinem contentWindow zurueck.
+  useEffect(() => {
+    if (!onPoiPress) return;
+    const handler = (event: MessageEvent) => {
+      if (event.source !== ref.current?.contentWindow) return;
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "stt-poi-press" && typeof data.id === "string") {
+          onPoiPress(data.id);
+        }
+      } catch {
+        // Ignoriere Nachrichten, die kein gueltiges JSON sind.
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [onPoiPress]);
 
   return (
     <View style={[styles.wrap, { height }]}>

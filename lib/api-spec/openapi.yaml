@@ -872,6 +872,10 @@ components:
           type: string
         lang:
           type: string
+        image:
+          type: string
+          nullable: true
+          description: Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.
       required:
         - title
         - extract

@@ -176,6 +176,8 @@ export interface WikiSummary {
   extract: string;
   url: string;
   lang: string;
+  /** Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden. */
+  image?: string | null;
 }
 
 /**

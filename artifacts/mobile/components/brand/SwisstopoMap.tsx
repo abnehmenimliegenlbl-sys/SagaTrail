@@ -18,12 +18,14 @@ export function SwisstopoMap({
   geometry,
   offlineTiles,
   aerialways,
+  pois,
+  onPoiPress,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const html = useMemo(
-    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways]
+    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways, pois),
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
@@ -46,6 +48,16 @@ export function SwisstopoMap({
         originWhitelist={["*"]}
         source={{ html }}
         onLoadEnd={() => setReady(true)}
+        onMessage={(event) => {
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data?.type === "stt-poi-press" && typeof data.id === "string") {
+              onPoiPress?.(data.id);
+            }
+          } catch {
+            // Ignoriere Nachrichten, die kein gueltiges JSON sind.
+          }
+        }}
         style={styles.web}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}

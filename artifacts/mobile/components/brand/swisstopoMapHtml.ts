@@ -1,5 +1,13 @@
 import { LatLng } from "@/types";
 
+/** Minimale Marker-Daten fuer einen Point of Interest auf der Karte. */
+export interface MapPoi {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 /**
  * Gemeinsame Props der plattformspezifischen SwisstopoMap-Varianten
  * (SwisstopoMap.tsx nutzt eine WebView, SwisstopoMap.web.tsx ein iframe).
@@ -29,6 +37,15 @@ export interface SwisstopoMapProps {
    * Wander-Verkehrsmittel), je Eintrag ein Wegverlauf als [lat, lng]-Paare.
    */
   aerialways?: { id: string; geometry: number[][] }[] | null;
+  /**
+   * Points of Interest im Kartenausschnitt. Antippen eines Markers meldet
+   * dessen `id` an die Host-App zurueck (WebView-postMessage bzw.
+   * window.postMessage im Web), damit dort ein Detailausschnitt (Text +
+   * Bild) angezeigt werden kann.
+   */
+  pois?: MapPoi[] | null;
+  /** Wird mit der `id` des angetippten POI-Markers aufgerufen. */
+  onPoiPress?: (id: string) => void;
 }
 
 /**
@@ -47,7 +64,8 @@ export function buildSwisstopoHtml(
   label: string,
   geometry?: number[][] | null,
   offlineTiles?: Record<string, string> | null,
-  aerialways?: { id: string; geometry: number[][] }[] | null
+  aerialways?: { id: string; geometry: number[][] }[] | null,
+  pois?: MapPoi[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -60,6 +78,7 @@ export function buildSwisstopoHtml(
       : "null";
   const aerialwaysJson =
     aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
+  const poisJson = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -88,6 +107,7 @@ export function buildSwisstopoHtml(
   .stt-ziel { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #B8935A; box-shadow: 0 0 0 4px rgba(184,147,90,0.25); }
   .stt-live { width: 16px; height: 16px; border-radius: 50%; background: #C4462F; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(196,70,47,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
+  .stt-poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); cursor: pointer; }
   .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; }
   .leaflet-control-attribution a { color: #B8935A; }
 </style>
@@ -155,6 +175,25 @@ export function buildSwisstopoHtml(
       map.fitBounds(line.getBounds(), { padding: [26, 26] });
     } else {
       L.marker([${lat}, ${lng}], { icon: startIcon }).addTo(map).bindPopup(${title});
+    }
+
+    var pois = ${poisJson};
+    if (pois) {
+      // Points of Interest: eigener Marker-Stil, Antippen meldet die POI-ID
+      // an die Host-App zurueck (WebView oder Web-iframe), damit dort ein
+      // Detailausschnitt (Text + Bild) angezeigt werden kann.
+      var poiIcon = L.divIcon({ className: '', html: '<div class="stt-poi"></div>', iconSize: [13, 13], iconAnchor: [7, 12] });
+      pois.forEach(function (p) {
+        var marker = L.marker([p.lat, p.lng], { icon: poiIcon }).addTo(map);
+        marker.on('click', function () {
+          var payload = JSON.stringify({ type: 'stt-poi-press', id: p.id });
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(payload);
+          } else if (window.parent) {
+            window.parent.postMessage(payload, '*');
+          }
+        });
+      });
     }
 
     var liveIcon = L.divIcon({ className: '', html: '<div class="stt-live"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });

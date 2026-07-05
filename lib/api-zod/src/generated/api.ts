@@ -200,7 +200,8 @@ export const GetPoisResponseItem = zod.object({
   "title": zod.string(),
   "extract": zod.string(),
   "url": zod.string(),
-  "lang": zod.string()
+  "lang": zod.string(),
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)

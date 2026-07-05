@@ -9,7 +9,9 @@ import * as Speech from "expo-speech";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Image,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -103,6 +105,7 @@ export default function LiveHike() {
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [narrationUnavailable, setNarrationUnavailable] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -669,6 +672,11 @@ export default function LiveHike() {
               geometry={route?.geometry}
               offlineTiles={offlineTiles}
               aerialways={aerialways}
+              pois={pois}
+              onPoiPress={(id) => {
+                const poi = pois.find((p) => p.id === id);
+                if (poi) setSelectedPoi(poi);
+              }}
             />
           ) : (
             <RouteMap progress={progress} height={200} />
@@ -704,6 +712,64 @@ export default function LiveHike() {
             </Glass>
           </Animated.View>
         )}
+
+        {/* Detailansicht eines angetippten Point of Interest auf der Karte */}
+        <Modal
+          visible={!!selectedPoi}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setSelectedPoi(null)}
+        >
+          <Pressable
+            style={styles.poiModalBackdrop}
+            onPress={() => setSelectedPoi(null)}
+          >
+            <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+              <Glass>
+                {selectedPoi?.wiki?.image && (
+                  <Image
+                    source={{ uri: selectedPoi.wiki.image }}
+                    style={styles.poiModalImage}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={styles.poiRow}>
+                  <Feather name="map-pin" size={18} color={colors.accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                      {t.poiDetailEyebrow}
+                    </Text>
+                    <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                      {selectedPoi?.name}
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => setSelectedPoi(null)} hitSlop={10}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </Pressable>
+                </View>
+                {selectedPoi?.wiki ? (
+                  <Text
+                    style={[
+                      styles.poiSummary,
+                      { color: colors.mutedForeground, marginTop: 10 },
+                    ]}
+                  >
+                    {selectedPoi.wiki.extract}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[
+                      styles.poiSummary,
+                      { color: colors.mutedForeground, marginTop: 10 },
+                    ]}
+                  >
+                    {t.notAvailable}
+                  </Text>
+                )}
+              </Glass>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         {/* Statusleiste in Frozen Glass */}
         <Glass style={{ marginTop: 14 }}>
@@ -935,6 +1001,13 @@ const styles = StyleSheet.create({
   poiEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
   poiTitle: { fontFamily: fonts.titleBold, fontSize: 16, marginTop: 2 },
   poiSummary: { fontFamily: fonts.story, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  poiModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(16,24,26,0.7)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  poiModalImage: { width: "100%", height: 150, borderRadius: 10, marginBottom: 12 },
   storyWrap: { marginTop: 24 },
   chapterHead: {
     flexDirection: "row",

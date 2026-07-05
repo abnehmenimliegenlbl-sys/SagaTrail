@@ -18,6 +18,7 @@ export interface WikiSummary {
   extract: string;
   url: string;
   lang: string;
+  image: string | null;
 }
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -42,6 +43,8 @@ interface WikiRestSummary {
   extract?: string;
   content_urls?: { desktop?: { page?: string } };
   type?: string;
+  thumbnail?: { source?: string };
+  originalimage?: { source?: string };
 }
 
 /** Laedt die Kurzzusammenfassung eines konkreten Wikipedia-Artikeltitels. */
@@ -57,6 +60,7 @@ export async function fetchWikipediaSummary(
     extract: json.extract,
     url: json.content_urls?.desktop?.page ?? `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title)}`,
     lang,
+    image: json.thumbnail?.source ?? json.originalimage?.source ?? null,
   };
 }
 
