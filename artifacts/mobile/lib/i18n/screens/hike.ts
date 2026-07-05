@@ -39,6 +39,8 @@ export interface HikeStrings {
   backgroundNotificationBody: string;
   poiDetailEyebrow: string;
   poiStoryLoading: string;
+  voiceListening: string;
+  voiceOrTap: string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -81,6 +83,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "Die Geschichte läuft weiter, auch wenn der Bildschirm gesperrt ist.",
     poiDetailEyebrow: "MEHR INFOS",
     poiStoryLoading: "Die Geschichte wird erzählt …",
+    voiceListening: "Ich höre zu … sag deine Antwort",
+    voiceOrTap: "Sprich deine Antwort oder tippe eine Option an",
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -121,6 +125,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "D Gschicht laufft wiiter, au wenn de Bildschirm gsperrt isch.",
     poiDetailEyebrow: "MEH INFOS",
     poiStoryLoading: "D Gschicht wird verzellt …",
+    voiceListening: "Ich lose … sag dini Antwort",
+    voiceOrTap: "Sprich dini Antwort oder tipp e Option a",
   },
   en: {
     notAvailable: "Not available",
@@ -161,6 +167,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "The story keeps going even with the screen locked.",
     poiDetailEyebrow: "MORE INFO",
     poiStoryLoading: "The story is being told …",
+    voiceListening: "Listening … say your answer",
+    voiceOrTap: "Speak your answer or tap an option",
   },
   fr: {
     notAvailable: "Non disponible",
@@ -201,6 +209,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "L'histoire continue même écran verrouillé.",
     poiDetailEyebrow: "PLUS D'INFOS",
     poiStoryLoading: "L'histoire est en train d'être racontée …",
+    voiceListening: "J'écoute … dis ta réponse",
+    voiceOrTap: "Dis ta réponse ou touche une option",
   },
   it: {
     notAvailable: "Non disponibile",
@@ -241,6 +251,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "La storia continua anche a schermo bloccato.",
     poiDetailEyebrow: "ALTRE INFO",
     poiStoryLoading: "La storia sta per essere raccontata …",
+    voiceListening: "Sto ascoltando … di' la tua risposta",
+    voiceOrTap: "Pronuncia la tua risposta o tocca un'opzione",
   },
   es: {
     notAvailable: "No disponible",
@@ -281,6 +293,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "La historia sigue aunque la pantalla esté bloqueada.",
     poiDetailEyebrow: "MÁS INFORMACIÓN",
     poiStoryLoading: "La historia está siendo contada …",
+    voiceListening: "Escuchando … di tu respuesta",
+    voiceOrTap: "Di tu respuesta o toca una opción",
   },
   pt: {
     notAvailable: "Não disponível",
@@ -321,6 +335,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "A história continua mesmo com a tela bloqueada.",
     poiDetailEyebrow: "MAIS INFORMAÇÕES",
     poiStoryLoading: "A história está sendo contada …",
+    voiceListening: "Ouvindo … diga sua resposta",
+    voiceOrTap: "Diga sua resposta ou toque em uma opção",
   },
   zh: {
     notAvailable: "不可用",
@@ -361,6 +377,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationBody: "即使锁屏，故事也会继续播放。",
     poiDetailEyebrow: "更多信息",
     poiStoryLoading: "故事正在讲述中 …",
+    voiceListening: "正在聆听 … 请说出你的答案",
+    voiceOrTap: "说出你的答案，或点击一个选项",
   },
 };
 

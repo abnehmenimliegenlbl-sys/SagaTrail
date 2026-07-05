@@ -54,6 +54,7 @@ import {
 } from "@/lib/storyContent";
 import { blobToDataUri } from "@/lib/narrationAudio";
 import { weaveNavigationCues } from "@/lib/storyEngine";
+import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
@@ -588,6 +589,20 @@ export default function LiveHike() {
     setAwaitingDecision(false);
   };
 
+  // Freihaendige Sprachsteuerung: sobald ein Entscheidungspunkt aktiv ist,
+  // hoert die App automatisch zu und waehlt bei einem klaren Treffer die
+  // passende Option — ganz ohne Tastendruck. Erst NACH der Vorlesung von
+  // Frage + Optionen (speaking === false), sonst wuerde die eigene
+  // Erzaehlstimme das Mikrofon stoeren. Faellt still auf die Buttons zurueck,
+  // wenn Spracherkennung nicht verfuegbar/erlaubt ist (z. B. Expo Go, Web).
+  const decisionOptions = chapters[currentIndex]?.decision?.options ?? [];
+  const { listening: voiceListening, supported: voiceSupported } = useVoiceDecision(
+    awaitingDecision && !speaking && decisionOptions.length > 0,
+    resolveLang(storyLanguage),
+    decisionOptions,
+    chooseOption
+  );
+
   const finishHike = useCallback(async () => {
     await stopNarration();
     if (Platform.OS !== "web") {
@@ -885,6 +900,18 @@ export default function LiveHike() {
                   <Text style={[styles.decisionQuestion, { color: colors.foreground }]}>
                     {currentChapter.decision.question}
                   </Text>
+                  {voiceSupported && (
+                    <View style={styles.voiceHintRow}>
+                      <Feather
+                        name="mic"
+                        size={14}
+                        color={voiceListening ? colors.primary : colors.accent}
+                      />
+                      <Text style={[styles.voiceHintText, { color: colors.accent }]}>
+                        {voiceListening ? t.voiceListening : t.voiceOrTap}
+                      </Text>
+                    </View>
+                  )}
                   {currentChapter.decision.options.map((opt, i) => (
                     <Pressable
                       key={i}
@@ -1072,6 +1099,8 @@ const styles = StyleSheet.create({
   decisionPanel: { borderWidth: 1, borderRadius: 16, padding: 18 },
   decisionLabel: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   decisionQuestion: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 6, marginBottom: 14 },
+  voiceHintRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+  voiceHintText: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1 },
   optionBtn: { borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },

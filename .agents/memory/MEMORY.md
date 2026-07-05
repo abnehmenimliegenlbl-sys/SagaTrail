@@ -12,3 +12,4 @@
 - [Clerk OAuth testing block](clerk-oauth-testing-block.md) — `runTest` refuses to proceed past a Clerk login screen with a visible Google/SSO button, even for a programmatic Clerk-auth-only flow; fall back to typecheck + curl + code review.
 - [SagaTrail background narration/GPS](sagatrail-background-audio.md) — audio needs `staysActiveInBackground`, GPS needs expo-task-manager foreground-service task; both require a dev/EAS build, NOT Expo Go.
 - [On-demand AI text rewrite pattern](ai-rewrite-on-demand-cache.md) — rewrite-on-tap (not eager/bulk) + in-memory cache keyed by source-text hash; avoids AI cost for content that's cheap to fetch but expensive to restyle.
+- [SagaTrail hands-free voice decisions](sagatrail-voice-decision.md) — decision points answered by speech (expo-speech-recognition), needs dev/EAS build, gracefully falls back to tap buttons.
