@@ -253,6 +253,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/poi-story:
+    get:
+      operationId: getPoiStory
+      tags: [routes]
+      summary: Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+      description: >
+        Formt den rohen Wikipedia-Auszug eines Point of Interest (Name +
+        Extract) per KI in einen kurzen, atmosphaerischen Text im
+        Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein
+        Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache
+        gecacht, da der Ausgangstext stabil ist.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: extract
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sagen-stilisierter Erzaehltext
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoiStory"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: KI-Umschreibung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/weather:
     get:
       operationId: getWeather
@@ -881,6 +927,14 @@ components:
         - extract
         - url
         - lang
+    PoiStory:
+      type: object
+      description: Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
+      properties:
+        text:
+          type: string
+      required:
+        - text
     LocalizedSummary:
       type: object
       properties:

@@ -193,6 +193,13 @@ export interface Poi {
   wiki?: WikiSummary;
 }
 
+/**
+ * Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
+ */
+export interface PoiStory {
+  text: string;
+}
+
 export interface LocalizedSummary {
   text: string;
   reviewEmpfohlen: boolean;
@@ -338,6 +345,12 @@ south: number;
 west: number;
 north: number;
 east: number;
+};
+
+export type GetPoiStoryParams = {
+name: string;
+extract: string;
+lang: string;
 };
 
 export type GetWeatherParams = {

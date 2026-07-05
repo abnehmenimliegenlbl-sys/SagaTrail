@@ -1,5 +1,10 @@
 import { Feather } from "@expo/vector-icons";
-import { createNarration, getAerialways, getPois } from "@workspace/api-client-react";
+import {
+  createNarration,
+  getAerialways,
+  getPois,
+  getPoiStory,
+} from "@workspace/api-client-react";
 import type { Poi } from "@workspace/api-client-react";
 import { Audio, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
@@ -106,6 +111,8 @@ export default function LiveHike() {
   const [pois, setPois] = useState<Poi[]>([]);
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [poiStory, setPoiStory] = useState<string | null>(null);
+  const [poiStoryLoading, setPoiStoryLoading] = useState(false);
   const [narrationUnavailable, setNarrationUnavailable] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -253,6 +260,37 @@ export default function LiveHike() {
     }
     lastFixRef.current = cur;
   }, []);
+
+  // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per
+  // KI in denselben Erzaehlton wie die Sagen umgeschrieben. Schlaegt das
+  // fehl oder laedt es noch, zeigt das Modal den rohen Auszug als Fallback.
+  useEffect(() => {
+    if (!selectedPoi?.wiki) {
+      setPoiStory(null);
+      setPoiStoryLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setPoiStory(null);
+    setPoiStoryLoading(true);
+    getPoiStory({
+      name: selectedPoi.name,
+      extract: selectedPoi.wiki.extract,
+      lang: storyLanguage,
+    })
+      .then((result) => {
+        if (!cancelled) setPoiStory(result.text);
+      })
+      .catch(() => {
+        // Fallback bleibt der rohe Wikipedia-Auszug (siehe Rendering unten).
+      })
+      .finally(() => {
+        if (!cancelled) setPoiStoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPoi, storyLanguage]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
@@ -754,7 +792,9 @@ export default function LiveHike() {
                       { color: colors.mutedForeground, marginTop: 10 },
                     ]}
                   >
-                    {selectedPoi.wiki.extract}
+                    {poiStoryLoading && !poiStory
+                      ? t.poiStoryLoading
+                      : (poiStory ?? selectedPoi.wiki.extract)}
                   </Text>
                 ) : (
                   <Text

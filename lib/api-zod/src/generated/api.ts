@@ -208,6 +208,21 @@ export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
 /**
+ * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ */
+export const GetPoiStoryQueryParams = zod.object({
+  "name": zod.coerce.string(),
+  "extract": zod.coerce.string(),
+  "lang": zod.coerce.string()
+})
+
+export const GetPoiStoryResponse = zod.object({
+  "text": zod.string()
+}).describe('Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.')
+
+
+/**
  * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
  * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
  */

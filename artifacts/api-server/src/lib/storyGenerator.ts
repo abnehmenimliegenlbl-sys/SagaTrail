@@ -55,7 +55,7 @@ const AGE_LABEL: Record<string, string> = {
   erwachsene: "Erwachsene (ab 16): die Sage in ihrer ganzen düsteren Tiefe",
 };
 
-const LANGUAGE_LABEL: Record<string, string> = {
+export const LANGUAGE_LABEL: Record<string, string> = {
   de: "Hochdeutsch",
   gsw: "Schweizerdeutsch (Mundart, Zürcher Prägung)",
   fr: "Französisch",

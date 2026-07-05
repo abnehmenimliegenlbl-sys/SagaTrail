@@ -38,6 +38,7 @@ export interface HikeStrings {
   backgroundNotificationTitle: string;
   backgroundNotificationBody: string;
   poiDetailEyebrow: string;
+  poiStoryLoading: string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -79,6 +80,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail wandert mit",
     backgroundNotificationBody: "Die Geschichte läuft weiter, auch wenn der Bildschirm gesperrt ist.",
     poiDetailEyebrow: "MEHR INFOS",
+    poiStoryLoading: "Die Geschichte wird erzählt …",
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -118,6 +120,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail wanderet mit",
     backgroundNotificationBody: "D Gschicht laufft wiiter, au wenn de Bildschirm gsperrt isch.",
     poiDetailEyebrow: "MEH INFOS",
+    poiStoryLoading: "D Gschicht wird verzellt …",
   },
   en: {
     notAvailable: "Not available",
@@ -157,6 +160,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail is hiking along",
     backgroundNotificationBody: "The story keeps going even with the screen locked.",
     poiDetailEyebrow: "MORE INFO",
+    poiStoryLoading: "The story is being told …",
   },
   fr: {
     notAvailable: "Non disponible",
@@ -196,6 +200,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail vous accompagne",
     backgroundNotificationBody: "L'histoire continue même écran verrouillé.",
     poiDetailEyebrow: "PLUS D'INFOS",
+    poiStoryLoading: "L'histoire est en train d'être racontée …",
   },
   it: {
     notAvailable: "Non disponibile",
@@ -235,6 +240,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail ti accompagna",
     backgroundNotificationBody: "La storia continua anche a schermo bloccato.",
     poiDetailEyebrow: "ALTRE INFO",
+    poiStoryLoading: "La storia sta per essere raccontata …",
   },
   es: {
     notAvailable: "No disponible",
@@ -274,6 +280,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail te acompaña",
     backgroundNotificationBody: "La historia sigue aunque la pantalla esté bloqueada.",
     poiDetailEyebrow: "MÁS INFORMACIÓN",
+    poiStoryLoading: "La historia está siendo contada …",
   },
   pt: {
     notAvailable: "Não disponível",
@@ -313,6 +320,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail continua com você",
     backgroundNotificationBody: "A história continua mesmo com a tela bloqueada.",
     poiDetailEyebrow: "MAIS INFORMAÇÕES",
+    poiStoryLoading: "A história está sendo contada …",
   },
   zh: {
     notAvailable: "不可用",
@@ -352,6 +360,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     backgroundNotificationTitle: "SagaTrail 仍在陪伴你徒步",
     backgroundNotificationBody: "即使锁屏，故事也会继续播放。",
     poiDetailEyebrow: "更多信息",
+    poiStoryLoading: "故事正在讲述中 …",
   },
 };
 

@@ -29,11 +29,13 @@ import type {
   GetAerialwaysParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
+  GetPoiStoryParams,
   GetPoisParams,
   GetWeatherParams,
   HealthStatus,
   NarrationInput,
   Poi,
+  PoiStory,
   PremiumUpdate,
   Profile,
   ProfileInput,
@@ -545,6 +547,91 @@ export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPoiStoryUrl = (params: GetPoiStoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/poi-story?${stringifiedParams}` : `/api/routes/poi-story`
+}
+
+/**
+ * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ */
+export const getPoiStory = async (params: GetPoiStoryParams, options?: RequestInit): Promise<PoiStory> => {
+
+  return customFetch<PoiStory>(getGetPoiStoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPoiStoryQueryKey = (params?: GetPoiStoryParams,) => {
+    return [
+    `/api/routes/poi-story`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPoiStoryQueryOptions = <TData = Awaited<ReturnType<typeof getPoiStory>>, TError = ErrorType<ErrorResponse>>(params: GetPoiStoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPoiStory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPoiStoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPoiStory>>> = ({ signal }) => getPoiStory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPoiStory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPoiStoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPoiStory>>>
+export type GetPoiStoryQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ */
+
+export function useGetPoiStory<TData = Awaited<ReturnType<typeof getPoiStory>>, TError = ErrorType<ErrorResponse>>(
+ params: GetPoiStoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPoiStory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPoiStoryQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
