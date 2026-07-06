@@ -20,8 +20,14 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "SagaTrail nutzt deinen Standort während der Wanderung, um Story-Momente an den richtigen Wegpunkten auszulösen — auch wenn der Bildschirm gesperrt ist.",
         "NSMicrophoneUsageDescription": "SagaTrail hört bei Entscheidungspunkten kurz zu, damit du die Wanderung freihändig per Sprache steuern kannst.",
         "NSSpeechRecognitionUsageDescription": "SagaTrail erkennt deine gesprochene Antwort bei Entscheidungspunkten, damit du unterwegs keine Taste drücken musst.",
-        "UIBackgroundModes": ["audio", "location"]
-      }
+        "UIBackgroundModes": [
+          "audio",
+          "location",
+          "audio",
+          "location"
+        ]
+      },
+      "bundleIdentifier": "com.anonymous.mobile"
     },
     "android": {
       "permissions": [
@@ -30,7 +36,13 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -46,6 +58,7 @@
           }
         }
       ],
+      "./plugins/withStaticFrameworksFix.js",
       [
         "expo-router",
         {
@@ -68,7 +81,9 @@
         {
           "microphonePermission": "SagaTrail hört bei Entscheidungspunkten kurz zu, damit du die Wanderung freihändig per Sprache steuern kannst.",
           "speechRecognitionPermission": "SagaTrail erkennt deine gesprochene Antwort bei Entscheidungspunkten, damit du unterwegs keine Taste drücken musst.",
-          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
         }
       ]
     ],
