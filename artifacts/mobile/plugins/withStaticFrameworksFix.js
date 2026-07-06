@@ -17,7 +17,7 @@
 // Since this project uses Expo's managed workflow (no committed `ios/`
 // folder — the Podfile is regenerated on every prebuild/native build), this
 // must be injected via a config plugin rather than hand-edited.
-const { withDangerousMod } = require("@expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
