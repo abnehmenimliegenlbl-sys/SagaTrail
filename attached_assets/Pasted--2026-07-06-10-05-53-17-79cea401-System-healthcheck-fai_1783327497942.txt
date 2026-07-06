@@ -1,0 +1,204 @@
+
+2026-07-06 10:05:53.17
+79cea401
+System
+healthcheck failed error=healthcheck /api returned status 500
+
+2026-07-06 10:05:53.41
+79cea401
+System
+artifact port detected port=8080 detected=1 expected=2
+
+2026-07-06 10:05:53.41
+79cea401
+User
+{"level":30,"time":1783325153417,"pid":18,"hostname":"localhost","port":8080,"msg":"Server listening"}
+
+2026-07-06 10:05:53.85
+79cea401
+User
+> node server/serve.js
+
+2026-07-06 10:05:53.93
+79cea401
+System
+artifact processes running, waiting for signal or process exit
+
+2026-07-06 10:05:53.93
+79cea401
+System
+artifact port detected port=18115 detected=2 expected=2
+
+2026-07-06 10:05:53.93
+79cea401
+User
+Serving static Expo build on port 18115
+
+2026-07-06 10:06:24.92
+79cea401
+User
+{"level":30,"time":1783325184929,"pid":18,"hostname":"localhost","req":{"id":3,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+
+2026-07-06 10:07:05.48
+79cea401
+User
+{"level":30,"time":1783325225483,"pid":18,"hostname":"localhost","req":{"id":4,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+
+2026-07-06 10:07:59.39
+79cea401
+User
+{"level":30,"time":1783325279392,"pid":18,"hostname":"localhost","req":{"id":5,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":404},"responseTime":2,"msg":"request completed"}
+
+2026-07-06 10:09:01.39
+79cea401
+User
+{"level":30,"time":1783325341396,"pid":18,"hostname":"localhost","req":{"id":6,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":404},"responseTime":0,"msg":"request completed"}
+
+2026-07-06 10:10:28.25
+79cea401
+User
+{"level":30,"time":1783325428251,"pid":18,"hostname":"localhost","req":{"id":7,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+starting up user application
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+artifact mode enabled static=0 runnable=2
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+starting artifact processes for monorepo deployment
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+forwarding local port 0 to external port 80 (mapped as 1104)
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+waiting for runnable artifact ports ports=[8080 18115]
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+healthcheck failed error=healthcheck /api/groups/ws returned status 500
+
+2026-07-06 10:11:48.21
+fd7085d0
+System
+baseline ports snapshot before artifact start ports=[1104]
+
+2026-07-06 10:11:48.22
+fd7085d0
+System
+healthcheck failed error=healthcheck / returned status 500
+
+2026-07-06 10:11:48.22
+fd7085d0
+System
+starting artifact process artifact=artifacts/mobile args=[pnpm --filter @workspace/mobile run serve] port=18115
+
+2026-07-06 10:11:48.22
+fd7085d0
+System
+starting artifact processes count=2
+
+2026-07-06 10:11:48.22
+fd7085d0
+System
+starting artifact process args=[node --enable-source-maps artifacts/api-server/dist/index.mjs] port=8080 artifact=artifacts/api-server
+
+2026-07-06 10:11:48.23
+fd7085d0
+System
+healthcheck failed error=healthcheck /api returned status 500
+
+2026-07-06 10:11:48.25
+fd7085d0
+System
+artifact process started artifact=artifacts/api-server pid=19
+
+2026-07-06 10:11:48.29
+fd7085d0
+System
+healthcheck failed error=healthcheck / returned status 500
+
+2026-07-06 10:11:48.40
+fd7085d0
+System
+healthcheck failed error=healthcheck / returned status 500
+
+2026-07-06 10:11:48.44
+fd7085d0
+System
+healthcheck failed error=healthcheck /api returned status 500
+
+2026-07-06 10:11:48.87
+fd7085d0
+System
+healthcheck failed error=healthcheck /api returned status 500
+
+2026-07-06 10:11:49.58
+fd7085d0
+System
+healthcheck failed error=healthcheck /api/groups/ws returned status 500
+
+2026-07-06 10:11:49.87
+fd7085d0
+User
+> @workspace/mobile@0.0.0 serve /home/runner/workspace/artifacts/mobile
+
+2026-07-06 10:11:54.65
+79cea401
+System
+received signal, shutting down artifact processes signal=terminated
+
+2026-07-06 10:11:54.65
+79cea401
+System
+sending SIGTERM to artifact process artifact=artifacts/api-server
+
+2026-07-06 10:11:54.65
+79cea401
+System
+sending SIGTERM to artifact process artifact=artifacts/mobile
+
+2026-07-06 10:11:54.66
+79cea401
+System
+artifact process exited with error error=signal: terminated artifact=artifacts/api-server
+
+2026-07-06 10:11:54.67
+79cea401
+User
+Command failed with signal "SIGTERM"
+
+2026-07-06 10:11:54.67
+79cea401
+User
+/home/runner/workspace/artifacts/mobile:
+
+2026-07-06 10:11:54.67
+79cea401
+User
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mobile@0.0.0 serve: `node server/serve.js`
+
+2026-07-06 10:12:21.38
+fd7085d0
+User
+{"level":30,"time":1783325541388,"pid":19,"hostname":"localhost","req":{"id":3,"method":"GET","url":"/api/__clerk/v1/proxy-health"},"res":{"statusCode":200},"responseTime":186,"msg":"request completed"}
+
+Wrap
+
+Colors
