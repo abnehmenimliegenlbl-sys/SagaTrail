@@ -65,6 +65,7 @@
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/karla": "^0.4.2",
     "expo-av": "^16.0.8",
+    "expo-build-properties": "^1.0.10",
     "expo-file-system": "~19.0.23",
     "expo-localization": "^57.0.0",
     "expo-sharing": "^57.0.1",

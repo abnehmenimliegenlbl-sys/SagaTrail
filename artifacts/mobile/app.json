@@ -38,6 +38,14 @@
     },
     "plugins": [
       [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "dynamic"
+          }
+        }
+      ],
+      [
         "expo-router",
         {
           "origin": "https://replit.com/"
