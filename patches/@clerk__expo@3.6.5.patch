@@ -1,0 +1,19 @@
+diff --git a/ios/ClerkExpo.podspec b/ios/ClerkExpo.podspec
+index c62c9526844f463790caafd964bf2a9fbc851605..c572f30df6e218dfa478e8d77af19bd4fc3d9d21 100644
+--- a/ios/ClerkExpo.podspec
++++ b/ios/ClerkExpo.podspec
+@@ -31,7 +31,13 @@ Pod::Spec.new do |s|
+   s.platforms      = { :ios => '17.0' }  # Clerk iOS SDK requires iOS 17
+   s.swift_version  = '5.10'
+   s.source         = { git: 'https://github.com/clerk/javascript' }
+-  s.static_framework = true
++  # NOTE: static_framework was removed here (Replit patch). Forcing this pod to a
++  # static framework while the rest of the project links dynamically
++  # (`use_frameworks! :linkage => :dynamic`, required for Clerk's SPM dependency)
++  # causes CocoaPods/React Native's SPM bridge to lose track of this pod's Xcode
++  # target during `pod install`, crashing in react-native's spm.rb with
++  # "undefined method `package_product_dependencies' for nil:NilClass".
++  # Letting the pod inherit the project's dynamic linkage keeps its target visible.
+ 
+   s.dependency 'ExpoModulesCore'
+ 

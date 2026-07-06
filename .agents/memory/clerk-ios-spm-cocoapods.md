@@ -11,4 +11,8 @@ description: Native iOS build (EAS/Expo Launch) fails with "undefined method pac
 ```json
 ["expo-build-properties", { "ios": { "useFrameworks": "dynamic" } }]
 ```
-This emits the required `use_frameworks! :linkage => :dynamic` in the generated Podfile automatically on the next native build. Applies to any other RN/Expo dependency that ships a native SDK via SPM (not CocoaPods-only), not just Clerk.
+This emits the required `use_frameworks! :linkage => :dynamic` in the generated Podfile.
+
+**This alone is NOT sufficient for `@clerk/expo` specifically.** `ClerkExpo.podspec` also sets `s.static_framework = true` on itself, which overrides/conflicts with the project-wide dynamic linkage for that one pod and causes CocoaPods/RN's SPM bridge to lose track of the `ClerkExpo` pod's own Xcode target (it never appears in the `pod install` target list at all) — same crash, same `spm.rb:80` site, even with dynamic linkage already active project-wide. Confirmed root cause via a full `pod install` log: "Adding SPM dependency on product" fires right before the nil crash, and grepping the entire log shows no `ClerkExpo` line in the installed-pods list.
+
+Fix: patch out `s.static_framework = true` from `@clerk/expo`'s `ios/ClerkExpo.podspec` so it inherits the project's dynamic linkage like every other pod. Since this lives in `node_modules` (not the repo), use pnpm's native patch feature — `pnpm patch @clerk/expo@<version>`, edit the podspec in the temp checkout, `pnpm patch-commit <path>` — which records the patch under `patches/` and `patchedDependencies` in `pnpm-workspace.yaml` so it reapplies on every `pnpm install`, including in Expo Launch's remote build. Do not guard-clause `spm.rb` itself (`return unless target`) as an alternative — that just silently skips linking `ClerkKit`/`ClerkKitUI`, likely trading the install crash for a later missing-symbol crash.
