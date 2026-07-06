@@ -8,11 +8,20 @@
 //   "The 'Pods-<Target>' target has transitive dependencies that include
 //    statically linked binaries: (ExpoModulesCore)"
 //
-// The documented CocoaPods/React Native workaround is to force those pods'
-// `build_type` to `:static_library` (a plain static library, not a
-// "static framework") via a `pre_install` hook in the Podfile, so CocoaPods
-// treats them consistently instead of trying to fold them into the dynamic
-// framework graph.
+// Expo's own disabling only downgrades them to a plain STATIC LIBRARY
+// (".a"), which is exactly what CocoaPods' validation rejects when mixed
+// into a dynamic-framework-linked aggregate target — a plain static
+// library cannot be folded into a `use_frameworks! :linkage => :dynamic`
+// dependency graph. A STATIC FRAMEWORK (".framework" bundle, still
+// statically linked, but framework-shaped) CAN be folded in safely. The
+// documented CocoaPods/React Native workaround is therefore to force those
+// pods' `build_type` to `:static_framework` (not `:static_library`) via a
+// `pre_install` hook. CocoaPods runs multiple `pre_install` blocks in Podfile
+// registration order, and Expo's own disabling hook is registered by
+// `use_expo_modules!` inside the `target` block — so our hook MUST be
+// appended after the entire `target` block (end of file), not before it,
+// or Expo's hook (registered later) runs after ours and silently reverts
+// our override back to a plain static library.
 //
 // Since this project uses Expo's managed workflow (no committed `ios/`
 // folder — the Podfile is regenerated on every prebuild/native build), this
@@ -51,7 +60,7 @@ pre_install do |installer|
   installer.pod_targets.each do |pod|
     if static_pods.include?(pod.name)
       def pod.build_type
-        Pod::BuildType.static_library
+        Pod::BuildType.static_framework
       end
     end
   end
@@ -60,13 +69,7 @@ ${MARKER_END}
 
 `;
 
-      const targetMatch = contents.match(/^target\s+['"][^'"]+['"]\s+do/m);
-      if (targetMatch) {
-        const idx = contents.indexOf(targetMatch[0]);
-        contents = contents.slice(0, idx) + snippet + contents.slice(idx);
-      } else {
-        contents += `\n${snippet}`;
-      }
+      contents = `${contents.trimEnd()}\n\n${snippet}`;
 
       fs.writeFileSync(podfilePath, contents);
       return config;
