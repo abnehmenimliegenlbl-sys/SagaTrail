@@ -6,6 +6,7 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
+    "kantonspack-umbau": "tsx ./src/kantonspackUmbau.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

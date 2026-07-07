@@ -20,6 +20,9 @@ export const REVENUECAT_ELITE_ENTITLEMENT = "elite";
 // Offering mit den Kantons-Sagen-Packs (ein Paket pro Kanton,
 // lookup_key = pack_<kantonSlug>).
 export const REVENUECAT_PACKS_OFFERING = "packs";
+// Ein einziges Kantonspack-Paket fuer alle Kantone; die Zuordnung zum
+// gewaehlten Kanton macht der Server nach dem Kauf (POST /me/packs/claim).
+export const KANTONSPACK_PACKAGE = "kantonspack";
 
 function getRevenueCatApiKey() {
   if (!REVENUECAT_TEST_API_KEY || !REVENUECAT_IOS_API_KEY || !REVENUECAT_ANDROID_API_KEY) {
@@ -141,6 +144,7 @@ function useSubscriptionContext() {
     isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
     purchase: purchaseMutation.mutateAsync,
     restore: restoreMutation.mutateAsync,
+    refreshCustomerInfo: customerInfoQuery.refetch,
     isPurchasing: purchaseMutation.isPending,
     isRestoring: restoreMutation.isPending,
   };

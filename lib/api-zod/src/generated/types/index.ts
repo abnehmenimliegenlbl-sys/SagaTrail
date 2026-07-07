@@ -15,6 +15,8 @@ export * from './catalogRouteSeason';
 export * from './catalogSaga';
 export * from './catalogSagaKoordinatenSicherheit';
 export * from './catalogSagaSummaries';
+export * from './claimKantonspackBody';
+export * from './claimKantonspackResponse';
 export * from './errorResponse';
 export * from './geocodePlace';
 export * from './getAerialwaysParams';

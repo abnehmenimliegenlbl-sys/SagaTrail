@@ -24,6 +24,8 @@ import type {
   CatalogResponse,
   CatalogRoute,
   CatalogSaga,
+  ClaimKantonspackBody,
+  ClaimKantonspackResponse,
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
@@ -1353,6 +1355,77 @@ export const useSyncMyPremium = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getSyncMyPremiumMutationOptions(options));
+    }
+
+export const getClaimKantonspackUrl = () => {
+
+
+
+
+  return `/api/me/packs/claim`
+}
+
+/**
+ * Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt "sagatrail_kantonspack") dem gewaehlten Kanton zu. Der Server prueft bei RevenueCat, dass der Customer mehr gueltige Kantonspack-Kaeufe als bereits vergebene pack_<kanton>-Entitlements hat, und vergibt dann das Entitlement des Kantons per Grant. Idempotent, falls der Kanton bereits freigeschaltet ist.
+ * @summary Kantonspack-Kauf einem Kanton zuordnen
+ */
+export const claimKantonspack = async (claimKantonspackBody: ClaimKantonspackBody, options?: RequestInit): Promise<ClaimKantonspackResponse> => {
+
+  return customFetch<ClaimKantonspackResponse>(getClaimKantonspackUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(claimKantonspackBody)
+  }
+);}
+
+
+
+
+export const getClaimKantonspackMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimKantonspack>>, TError,{data: BodyType<ClaimKantonspackBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimKantonspack>>, TError,{data: BodyType<ClaimKantonspackBody>}, TContext> => {
+
+const mutationKey = ['claimKantonspack'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimKantonspack>>, {data: BodyType<ClaimKantonspackBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  claimKantonspack(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimKantonspackMutationResult = NonNullable<Awaited<ReturnType<typeof claimKantonspack>>>
+    export type ClaimKantonspackMutationBody = BodyType<ClaimKantonspackBody>
+    export type ClaimKantonspackMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Kantonspack-Kauf einem Kanton zuordnen
+ */
+export const useClaimKantonspack = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimKantonspack>>, TError,{data: BodyType<ClaimKantonspackBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimKantonspack>>,
+        TError,
+        {data: BodyType<ClaimKantonspackBody>},
+        TContext
+      > => {
+      return useMutation(getClaimKantonspackMutationOptions(options));
     }
 
 export const getConsumeMyFreeHikeUrl = () => {

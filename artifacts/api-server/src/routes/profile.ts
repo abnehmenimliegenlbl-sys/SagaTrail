@@ -6,9 +6,12 @@ import {
   GetMyProfileResponse,
   SaveMyProfileBody,
   UpdateMyPremiumBody,
+  ClaimKantonspackBody,
+  ClaimKantonspackResponse,
 } from "@workspace/api-zod";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { hatAktivesPremiumEntitlement } from "../lib/revenuecatSync";
+import { claimKantonspack, KANTON_SLUGS } from "../lib/kantonspackClaim";
 
 const router: IRouter = Router();
 
@@ -163,6 +166,45 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
     return;
   }
   res.json(toProfile(row));
+});
+
+router.post("/me/packs/claim", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsed = ClaimKantonspackBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const slug = parsed.data.kanton;
+  if (!KANTON_SLUGS.includes(slug)) {
+    res.status(400).json({ error: "Unbekannter Kanton" });
+    return;
+  }
+
+  // Verifizierter Freischalt-Pfad: Der Server prueft bei RevenueCat, ob der
+  // Customer mehr gueltige Kantonspack-Kaeufe als bereits vergebene
+  // pack_<kanton>-Entitlements hat, und vergibt erst dann das Entitlement.
+  let ergebnis;
+  try {
+    ergebnis = await claimKantonspack(userId, slug);
+  } catch (err) {
+    req.log.error({ err }, "Kantonspack-Zuordnung fehlgeschlagen");
+    res.status(502).json({ error: "RevenueCat nicht erreichbar" });
+    return;
+  }
+
+  if (ergebnis.status === "kein_offener_kauf") {
+    res.status(409).json({ error: "Kein offener Kantonspack-Kauf vorhanden" });
+    return;
+  }
+  res.json(
+    ClaimKantonspackResponse.parse({
+      entitlement: ergebnis.entitlement,
+      bereitsFreigeschaltet: ergebnis.status === "bereits_freigeschaltet",
+    })
+  );
 });
 
 router.patch("/me/free-hike", async (req, res): Promise<void> => {

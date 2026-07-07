@@ -13,6 +13,18 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface ClaimKantonspackBody {
+  /** Kanton-Slug (z. B. "zuerich", wie kantonSlug(name)) */
+  kanton: string;
+}
+
+export interface ClaimKantonspackResponse {
+  /** Vergebenes Entitlement (pack_<kanton>) */
+  entitlement: string;
+  /** True, wenn der Kanton schon vorher freigeschaltet war */
+  bereitsFreigeschaltet: boolean;
+}
+
 export type ProfileArchetype = typeof ProfileArchetype[keyof typeof ProfileArchetype];
 
 

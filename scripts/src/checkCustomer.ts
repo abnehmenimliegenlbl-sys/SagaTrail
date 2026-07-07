@@ -51,8 +51,8 @@ async function main() {
 
   const { data: subs } = await listSubscriptions({
     client,
-    path: { project_id: PROJECT_ID },
-    query: { customer_id: customerId, limit: 20 },
+    path: { project_id: PROJECT_ID, customer_id: customerId },
+    query: { limit: 20 },
   });
   for (const s of subs?.items ?? []) {
     console.log(
@@ -62,8 +62,8 @@ async function main() {
 
   const { data: purchases } = await listPurchases({
     client,
-    path: { project_id: PROJECT_ID },
-    query: { customer_id: customerId, limit: 20 },
+    path: { project_id: PROJECT_ID, customer_id: customerId },
+    query: { limit: 20 },
   });
   for (const p of purchases?.items ?? []) {
     console.log(

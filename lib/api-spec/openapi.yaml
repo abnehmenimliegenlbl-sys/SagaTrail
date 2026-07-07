@@ -617,6 +617,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/packs/claim:
+    post:
+      operationId: claimKantonspack
+      tags: [profile]
+      summary: Kantonspack-Kauf einem Kanton zuordnen
+      description: >-
+        Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt
+        "sagatrail_kantonspack") dem gewaehlten Kanton zu. Der Server prueft
+        bei RevenueCat, dass der Customer mehr gueltige Kantonspack-Kaeufe
+        als bereits vergebene pack_<kanton>-Entitlements hat, und vergibt
+        dann das Entitlement des Kantons per Grant. Idempotent, falls der
+        Kanton bereits freigeschaltet ist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimKantonspackBody"
+      responses:
+        "200":
+          description: Ergebnis der Zuordnung
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimKantonspackResponse"
+        "400":
+          description: Unbekannter Kanton
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Kein offener Kantonspack-Kauf vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: RevenueCat nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /me/free-hike:
     patch:
       operationId: consumeMyFreeHike
@@ -713,6 +762,26 @@ components:
           type: string
       required:
         - error
+    ClaimKantonspackBody:
+      type: object
+      properties:
+        kanton:
+          type: string
+          description: Kanton-Slug (z. B. "zuerich", wie kantonSlug(name))
+      required:
+        - kanton
+    ClaimKantonspackResponse:
+      type: object
+      properties:
+        entitlement:
+          type: string
+          description: Vergebenes Entitlement (pack_<kanton>)
+        bereitsFreigeschaltet:
+          type: boolean
+          description: True, wenn der Kanton schon vorher freigeschaltet war
+      required:
+        - entitlement
+        - bereitsFreigeschaltet
     Profile:
       type: object
       properties:

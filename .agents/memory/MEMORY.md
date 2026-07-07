@@ -17,3 +17,4 @@
 - [Clerk iOS SPM + CocoaPods build crash](clerk-ios-spm-cocoapods.md) — iOS EAS build with Clerk's SPM-linked SDK only works with `expo-build-properties` `useFrameworks: "static"` (dynamic triggers validator crashes).
 - [Prod premium admin endpoint](prod-premium-admin.md) — prod DB is read-only from workspace; grant premium via ADMIN_TOKEN-protected /admin/premium after publish; self-upgrade deliberately blocked.
 - [SagaTrail group hike sync](sagatrail-group-hike-sync.md) — leader-only enforced server-side; non-fatal WS errors must not close the socket; late joiners resync via member-count rebroadcast.
+- [Kantonspack claim pattern](sagatrail-kantonspack-claim.md) — one consumable product + server-side grant; serialize claims per customer (check-then-act race) and try claiming an open purchase BEFORE any new buy.

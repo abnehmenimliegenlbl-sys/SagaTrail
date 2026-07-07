@@ -436,6 +436,20 @@ export const SyncMyPremiumResponse = zod.object({
 
 
 /**
+ * Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt "sagatrail_kantonspack") dem gewaehlten Kanton zu. Der Server prueft bei RevenueCat, dass der Customer mehr gueltige Kantonspack-Kaeufe als bereits vergebene pack_<kanton>-Entitlements hat, und vergibt dann das Entitlement des Kantons per Grant. Idempotent, falls der Kanton bereits freigeschaltet ist.
+ * @summary Kantonspack-Kauf einem Kanton zuordnen
+ */
+export const ClaimKantonspackBody = zod.object({
+  "kanton": zod.string().describe('Kanton-Slug (z. B. \"zuerich\", wie kantonSlug(name))')
+})
+
+export const ClaimKantonspackResponse = zod.object({
+  "entitlement": zod.string().describe('Vergebenes Entitlement (pack_<kanton>)'),
+  "bereitsFreigeschaltet": zod.boolean().describe('True, wenn der Kanton schon vorher freigeschaltet war')
+})
+
+
+/**
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */

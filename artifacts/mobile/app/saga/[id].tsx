@@ -25,8 +25,13 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { packEntitlementFuerKanton } from "@/lib/kantonSlug";
-import { REVENUECAT_PACKS_OFFERING, useSubscription } from "@/lib/revenuecat";
+import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import {
+  KANTONSPACK_PACKAGE,
+  REVENUECAT_PACKS_OFFERING,
+  useSubscription,
+} from "@/lib/revenuecat";
+import { ApiError, claimKantonspack } from "@workspace/api-client-react";
 import { resolveLang } from "@/lib/storyContent";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -41,8 +46,14 @@ export default function SagaDetail() {
   const { profile, premium, freeHikeUsed, istSageInklusive, registriereSagenEntdeckung } =
     useApp();
   const { getSaga, ensureRouteSaga } = useCatalog();
-  const { isElite, hatEntitlement, offerings, purchase, isPurchasing } =
-    useSubscription();
+  const {
+    isElite,
+    hatEntitlement,
+    offerings,
+    purchase,
+    isPurchasing,
+    refreshCustomerInfo,
+  } = useSubscription();
   const [packBusy, setPackBusy] = useState(false);
 
   const [saga, setSaga] = useState(() => getSaga(id));
@@ -109,15 +120,33 @@ export default function SagaDetail() {
     !isElite &&
     !hatEntitlement(packKey) &&
     !istSageInklusive(saga.canton, saga.id);
+  // Ein einziges Kantonspack-Produkt fuer alle Kantone: nach dem Kauf ordnet
+  // der Server den Kauf verifiziert dem gewaehlten Kanton zu (Entitlement-
+  // Grant pack_<kanton>). Der Client darf sich das Pack nicht selbst geben.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
-    (p) => p.identifier === packKey
+    (p) => p.identifier === KANTONSPACK_PACKAGE
   );
+
+  const ordnePackZu = async () => {
+    await claimKantonspack({ kanton: kantonSlug(saga.canton) });
+    await refreshCustomerInfo();
+  };
 
   const kaufePack = async () => {
     if (!packPaket) return;
     setPackBusy(true);
     try {
+      // Zuerst versuchen, einen bereits bezahlten, aber noch nicht
+      // zugeordneten Kauf zu verwenden (z. B. wenn die Zuordnung nach dem
+      // letzten Kauf fehlschlug) — verhindert eine Doppelbelastung.
+      try {
+        await ordnePackZu();
+        return;
+      } catch (err: any) {
+        if (!(err instanceof ApiError && err.status === 409)) throw err;
+      }
       await purchase(packPaket);
+      await ordnePackZu();
     } catch (err: any) {
       if (!err?.userCancelled) {
         Alert.alert(t.packErrorTitle, err?.message ?? String(err));
