@@ -17,6 +17,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
@@ -537,7 +538,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
   },
-  stat: {
+  stat: { ...GLAS_3D,
     width: "47.5%",
     borderWidth: 1,
     borderRadius: 14,
@@ -548,7 +549,7 @@ const styles = StyleSheet.create({
   statVal: { fontFamily: fonts.monoBold, fontSize: 26 },
   statUnit: { fontFamily: fonts.mono, fontSize: 13 },
   blockTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginBottom: 12 },
-  downloadCard: {
+  downloadCard: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
@@ -564,12 +565,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   downloadProgressText: { fontFamily: fonts.mono, fontSize: 13 },
-  checkCard: { borderWidth: 1, borderRadius: 16, padding: 16 },
+  checkCard: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 16 },
   checkRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
   checkLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
   checkValue: { fontFamily: fonts.mono, fontSize: 13 },
   checkNote: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 8, fontStyle: "italic" },
-  energyCard: {
+  energyCard: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -581,7 +582,7 @@ const styles = StyleSheet.create({
   energyTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
   energyHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 2 },
   sagaHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginBottom: 12 },
-  sagaCard: {
+  sagaCard: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

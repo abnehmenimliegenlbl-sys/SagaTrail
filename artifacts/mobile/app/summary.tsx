@@ -15,6 +15,7 @@ import {
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ShareCard } from "@/components/brand/ShareCard";
@@ -219,11 +220,11 @@ const styles = StyleSheet.create({
   statUnit: { fontFamily: fonts.mono, fontSize: 12 },
   statLabel: { fontFamily: fonts.body, fontSize: 12, marginTop: 4 },
   blockTitle: { fontFamily: fonts.titleBold, fontSize: 22, marginBottom: 14 },
-  decisionCard: { borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 12 },
+  decisionCard: { ...GLAS_3D, borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 12 },
   decisionQ: { fontFamily: fonts.body, fontSize: 13 },
   decisionA: { fontFamily: fonts.story, fontSize: 17, marginTop: 6, lineHeight: 24 },
   decisionTone: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6 },
-  shareBtn: {
+  shareBtn: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
@@ -82,10 +83,11 @@ export function PrimaryButton({
           {
             backgroundColor: bg,
             borderRadius: colors.radius,
-            borderWidth: variant === "ghost" ? 1 : 0,
-            borderColor: colors.glassBorder,
+            borderWidth: 1,
+            borderColor: variant === "ghost" ? colors.glassBorder : bg,
             opacity: disabled ? 0.5 : 1,
           },
+          GLAS_3D_STARK,
         ]}
       >
         {loading ? (

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
-  errorBanner: {
+  errorBanner: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, flex: 1 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 18 },
+  card: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 18 },
   cardTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 10 },
   cardBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginTop: 6 },
   codeInput: {
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 14,
   },
-  codeBox: { borderWidth: 1, borderRadius: 16, padding: 22, alignItems: "center" },
+  codeBox: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 22, alignItems: "center" },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   },
   tierNote: { fontFamily: fonts.story, fontSize: 13, marginTop: 8 },
   membersTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 26, marginBottom: 12 },
-  memberRow: {
+  memberRow: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

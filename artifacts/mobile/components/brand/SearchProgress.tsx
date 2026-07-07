@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { GLAS_3D } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useSearchProgressStrings } from "@/lib/i18n/screens/searchProgress";
 import { useColors } from "@/hooks/useColors";
@@ -110,7 +111,7 @@ export function SearchProgress({ cantonName }: { cantonName?: string }) {
 }
 
 const styles = StyleSheet.create({
-  card: {
+  card: { ...GLAS_3D,
     borderRadius: 16,
     borderWidth: 1,
     padding: 18,

@@ -27,6 +27,7 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
@@ -1185,7 +1186,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chapterMark: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  playBtn: {
+  playBtn: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1199,7 +1200,7 @@ const styles = StyleSheet.create({
   narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
   choiceFeedbackWrap: { marginTop: 16 },
-  choiceFeedbackPanel: {
+  choiceFeedbackPanel: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 14,
     paddingVertical: 12,
@@ -1209,12 +1210,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   choiceFeedbackText: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
-  decisionPanel: { borderWidth: 1, borderRadius: 16, padding: 18 },
+  decisionPanel: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 18 },
   decisionLabel: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   decisionQuestion: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 6, marginBottom: 14 },
   voiceHintRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
   voiceHintText: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1 },
-  optionBtn: { borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
+  optionBtn: { ...GLAS_3D, borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
   sosBtn: {
@@ -1267,7 +1268,7 @@ const styles = StyleSheet.create({
   },
   sosCallTitle: { fontFamily: fonts.titleBold, fontSize: 18, color: "#F5F3EC" },
   sosCallSub: { fontFamily: fonts.body, fontSize: 12, color: "rgba(245,243,236,0.8)" },
-  sosSecondary: {
+  sosSecondary: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

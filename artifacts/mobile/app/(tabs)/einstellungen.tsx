@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
   rowValue: { fontFamily: fonts.body, fontSize: 14 },
   langBlock: { paddingVertical: 15, borderBottomWidth: 1 },
   langChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
-  langChip: {
+  langChip: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 14,

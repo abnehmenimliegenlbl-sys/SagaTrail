@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import React from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 
+import { GLAS_3D } from "@/constants/depth";
 import { useColors } from "@/hooks/useColors";
 
 /**
@@ -36,6 +37,7 @@ export function Glass({ children, style, strong = false, intensity = 20 }: Glass
             borderWidth: 1,
             borderColor: colors.glassBorder,
           },
+          GLAS_3D,
         ]}
       />
       <View style={styles.content}>{children}</View>

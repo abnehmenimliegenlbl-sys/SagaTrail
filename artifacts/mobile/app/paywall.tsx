@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   features: { gap: 14, marginBottom: 24 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   featureText: { fontFamily: fonts.bodyMedium, fontSize: 15, flex: 1 },
-  planCard: { borderWidth: 1, padding: 18, alignItems: "center" },
+  planCard: { ...GLAS_3D, borderWidth: 1, padding: 18, alignItems: "center" },
   planTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
   planPrice: { fontFamily: fonts.monoBold, fontSize: 28, marginTop: 10 },
   planPer: { fontFamily: fonts.mono, fontSize: 12, marginTop: 2 },
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-  activeBox: {
+  activeBox: { ...GLAS_3D,
     flexDirection: "row",
     gap: 12,
     alignItems: "center",

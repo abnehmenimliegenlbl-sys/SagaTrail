@@ -5,6 +5,7 @@ import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { kantonsKuerzel } from "@/constants/cantonKuerzel";
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   albumTitle: { fontFamily: fonts.titleBold, fontSize: 22, marginBottom: 14 },
-  cantonCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 },
+  cantonCard: { ...GLAS_3D, borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 },
   cantonHead: { flexDirection: "row", alignItems: "center", gap: 12 },
   wappen: {
     width: 44,

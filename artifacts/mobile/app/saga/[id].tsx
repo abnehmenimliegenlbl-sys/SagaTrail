@@ -15,6 +15,7 @@ import {
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
   metaLabel: { fontFamily: fonts.body, fontSize: 12, marginTop: 6 },
   metaValue: { fontFamily: fonts.mono, fontSize: 15, marginTop: 2 },
   metaNote: { fontFamily: fonts.body, fontSize: 12, marginTop: 4, fontStyle: "italic" },
-  sourceBox: {
+  sourceBox: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 14,
     padding: 14,
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   sourceLabel: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   sourceText: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
   sourceUrl: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6, lineHeight: 16 },
-  kinderBox: {
+  kinderBox: { ...GLAS_3D,
     flexDirection: "row",
     gap: 10,
     borderWidth: 1,
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   kinderText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 20, flex: 1 },
-  lockedBox: {
+  lockedBox: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 16,
     padding: 18,

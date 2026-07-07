@@ -12,6 +12,7 @@ import {
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
@@ -437,20 +438,20 @@ const styles = StyleSheet.create({
   stepEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   stepTitle: { fontFamily: fonts.titleBold, fontSize: 34, marginTop: 4 },
   hint: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginBottom: 18 },
-  card: { borderWidth: 1, padding: 18, marginBottom: 12 },
+  card: { ...GLAS_3D, borderWidth: 1, padding: 18, marginBottom: 12 },
   cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
   cardTitle: { fontFamily: fonts.titleBold, fontSize: 22, marginTop: 4 },
   cardBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginTop: 6 },
   tierRange: { fontFamily: fonts.mono, fontSize: 12, marginTop: 2 },
   chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
+  chip: { ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   chipText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
-  langRow: {
+  langRow: { ...GLAS_3D,
     borderWidth: 1,
     padding: 16,
     marginBottom: 10,
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
   langNative: { fontFamily: fonts.bodyBold, fontSize: 17 },
   langLabel: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
-  consent: {
+  consent: { ...GLAS_3D,
     flexDirection: "row",
     gap: 12,
     borderWidth: 1,

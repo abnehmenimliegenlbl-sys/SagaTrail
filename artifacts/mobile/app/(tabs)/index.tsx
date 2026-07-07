@@ -14,6 +14,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 20, marginTop: 28, marginBottom: 14 },
   sectionTitle: { fontFamily: fonts.titleBold, fontSize: 22 },
   sectionHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
-  cantonCard: {
+  cantonCard: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
