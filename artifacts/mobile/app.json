@@ -53,12 +53,11 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "dynamic",
+            "useFrameworks": "static",
             "deploymentTarget": "17.0"
           }
         }
       ],
-      "./plugins/withStaticFrameworksFix.js",
       [
         "expo-router",
         {
