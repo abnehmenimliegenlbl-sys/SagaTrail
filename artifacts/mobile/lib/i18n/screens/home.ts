@@ -15,6 +15,10 @@ export interface HomeStrings {
   allCantonsHint: (count: number) => string;
   customRouteTitle: string;
   customRouteHint: string;
+  resumeTitle: string;
+  resumeHint: (chapter: number, total: number) => string;
+  resumeCta: string;
+  resumeDismiss: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -33,6 +37,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Alle ${n} Kantone · Routen live aus swisstopo`,
     customRouteTitle: "Eigene Route",
     customRouteHint: "Start und Ziel selbst festlegen",
+    resumeTitle: "Unterbrochene Wanderung",
+    resumeHint: (c, n) => `Kapitel ${c} von ${n} — die Sage wartet auf dich`,
+    resumeCta: "Weiter wandern",
+    resumeDismiss: "Verwerfen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -49,6 +57,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Alli ${n} Kantön · Route live us swisstopo`,
     customRouteTitle: "Eigeni Route",
     customRouteHint: "Start und Ziel sälber aagäh",
+    resumeTitle: "Ungerbrochni Wanderig",
+    resumeHint: (c, n) => `Kapitel ${c} vo ${n} — d Sag wartet uf di`,
+    resumeCta: "Wiiter wandere",
+    resumeDismiss: "Verwerfe",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -65,6 +77,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `All ${n} cantons · Routes live from swisstopo`,
     customRouteTitle: "Custom route",
     customRouteHint: "Set your own start and destination",
+    resumeTitle: "Interrupted hike",
+    resumeHint: (c, n) => `Chapter ${c} of ${n} — the legend awaits you`,
+    resumeCta: "Continue hiking",
+    resumeDismiss: "Dismiss",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -81,6 +97,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Les ${n} cantons · Itinéraires en direct de swisstopo`,
     customRouteTitle: "Itinéraire personnalisé",
     customRouteHint: "Définis toi-même départ et arrivée",
+    resumeTitle: "Randonnée interrompue",
+    resumeHint: (c, n) => `Chapitre ${c} sur ${n} — la légende t'attend`,
+    resumeCta: "Reprendre la randonnée",
+    resumeDismiss: "Ignorer",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -97,6 +117,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Tutti i ${n} cantoni · Percorsi live da swisstopo`,
     customRouteTitle: "Itinerario personalizzato",
     customRouteHint: "Imposta tu partenza e arrivo",
+    resumeTitle: "Escursione interrotta",
+    resumeHint: (c, n) => `Capitolo ${c} di ${n} — la leggenda ti aspetta`,
+    resumeCta: "Riprendi l'escursione",
+    resumeDismiss: "Ignora",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -113,6 +137,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Los ${n} cantones · Rutas en vivo desde swisstopo`,
     customRouteTitle: "Ruta personalizada",
     customRouteHint: "Define tú mismo/a el inicio y el destino",
+    resumeTitle: "Caminata interrumpida",
+    resumeHint: (c, n) => `Capítulo ${c} de ${n} — la leyenda te espera`,
+    resumeCta: "Continuar caminata",
+    resumeDismiss: "Descartar",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -129,6 +157,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `Todos os ${n} cantões · Rotas ao vivo do swisstopo`,
     customRouteTitle: "Rota personalizada",
     customRouteHint: "Defina você mesmo/a a partida e o destino",
+    resumeTitle: "Caminhada interrompida",
+    resumeHint: (c, n) => `Capítulo ${c} de ${n} — a lenda espera por você`,
+    resumeCta: "Continuar caminhada",
+    resumeDismiss: "Descartar",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -145,6 +177,10 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     allCantonsHint: (n) => `全部 ${n} 个联邦州 · 来自 swisstopo 的实时路线`,
     customRouteTitle: "自定义路线",
     customRouteHint: "自行设定起点和终点",
+    resumeTitle: "未完成的徒步",
+    resumeHint: (c, n) => `第 ${c} 章，共 ${n} 章 — 传说在等你`,
+    resumeCta: "继续徒步",
+    resumeDismiss: "忽略",
   },
 };
 

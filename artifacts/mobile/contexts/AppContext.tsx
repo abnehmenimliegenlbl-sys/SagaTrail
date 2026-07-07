@@ -39,6 +39,7 @@ const KEYS = {
   emergency: "sagatrail:emergencyContact",
   energysave: "sagatrail:energiesparmodus",
   lastHike: "sagatrail:lastHike",
+  activeHike: "sagatrail:activeHike",
   uiLanguage: "sagatrail:uiLanguage",
 } as const;
 
@@ -48,6 +49,20 @@ export interface EmergencyContact {
 }
 
 export type { GroupActivity, GroupMember };
+
+/**
+ * Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab.
+ * Wird waehrend der Wanderung bei jedem Kapitelwechsel aktualisiert und beim
+ * Abschluss (Gipfel erreicht) wieder geloescht.
+ */
+export interface ActiveHike {
+  routeId: string;
+  sagaId: string;
+  routeName: string;
+  chapterIndex: number;
+  chapterCount: number;
+  updatedAt: number;
+}
 
 export interface GroupSession {
   code: string;
@@ -75,6 +90,7 @@ interface AppContextValue {
   emergencyContact: EmergencyContact | null;
   energiesparmodus: boolean;
   lastHike: HikeSession | null;
+  activeHike: ActiveHike | null;
   groupSession: GroupSession | null;
   groupConnectionStatus: GroupConnectionStatus;
   groupError: GroupSocketError | null;
@@ -101,6 +117,8 @@ interface AppContextValue {
   saveEmergencyContact: (contact: EmergencyContact | null) => Promise<void>;
   setEnergiesparmodus: (value: boolean) => Promise<void>;
   saveHike: (hike: HikeSession) => Promise<void>;
+  saveActiveHike: (hike: ActiveHike) => Promise<void>;
+  clearActiveHike: () => Promise<void>;
   exportData: () => Promise<string>;
   resetAll: () => Promise<void>;
 
@@ -126,6 +144,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     useState<EmergencyContact | null>(null);
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
+  const [activeHike, setActiveHike] = useState<ActiveHike | null>(null);
   const [pendingLanguage, setPendingLanguageState] =
     useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
@@ -202,6 +221,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.emergency,
           KEYS.energysave,
           KEYS.lastHike,
+          KEYS.activeHike,
           KEYS.uiLanguage,
         ]);
         const map = Object.fromEntries(entries);
@@ -216,6 +236,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (map[KEYS.energysave])
           setEnergiesparmodusState(map[KEYS.energysave] === "true");
         if (map[KEYS.lastHike]) setLastHike(JSON.parse(map[KEYS.lastHike]!));
+        if (map[KEYS.activeHike])
+          setActiveHike(JSON.parse(map[KEYS.activeHike]!));
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
           // explizite Wahl) — diese hat fuer immer Vorrang.
@@ -485,6 +507,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
   }, []);
 
+  const saveActiveHike = useCallback(async (hike: ActiveHike) => {
+    setActiveHike(hike);
+    await AsyncStorage.setItem(KEYS.activeHike, JSON.stringify(hike));
+  }, []);
+
+  const clearActiveHike = useCallback(async () => {
+    setActiveHike(null);
+    await AsyncStorage.removeItem(KEYS.activeHike);
+  }, []);
+
   const exportData = useCallback(async () => {
     const data = {
       profile,
@@ -517,6 +549,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setEmergencyContact(null);
     setEnergiesparmodusState(false);
     setLastHike(null);
+    setActiveHike(null);
     setGroupSession(null);
     setGroupError(null);
   }, []);
@@ -564,6 +597,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       emergencyContact,
       energiesparmodus,
       lastHike,
+      activeHike,
       groupSession,
       groupConnectionStatus,
       groupError,
@@ -577,6 +611,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveEmergencyContact,
       setEnergiesparmodus,
       saveHike,
+      saveActiveHike,
+      clearActiveHike,
       exportData,
       resetAll,
       createGroupSession,
@@ -596,6 +632,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       emergencyContact,
       energiesparmodus,
       lastHike,
+      activeHike,
       groupSession,
       groupConnectionStatus,
       groupError,
@@ -609,6 +646,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveEmergencyContact,
       setEnergiesparmodus,
       saveHike,
+      saveActiveHike,
+      clearActiveHike,
       exportData,
       resetAll,
       createGroupSession,

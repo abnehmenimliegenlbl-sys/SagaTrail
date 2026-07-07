@@ -20,6 +20,7 @@ export interface HikeStrings {
   chapterMark: (current: number, total: number) => string;
   pause: string;
   readAloud: string;
+  repeatChapter: string;
   perception: string;
   finishHike: string;
   sos: string;
@@ -65,6 +66,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `KAPITEL ${current} / ${total}`,
     pause: "Pause",
     readAloud: "Vorlesen",
+    repeatChapter: "Wiederholen",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
     sos: "SOS",
@@ -108,6 +110,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `KAPITEL ${current} / ${total}`,
     pause: "Pause",
     readAloud: "Vorläse",
+    repeatChapter: "Nomal",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
     sos: "SOS",
@@ -151,6 +154,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `CHAPTER ${current} / ${total}`,
     pause: "Pause",
     readAloud: "Read aloud",
+    repeatChapter: "Repeat",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
     sos: "SOS",
@@ -194,6 +198,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `CHAPITRE ${current} / ${total}`,
     pause: "Pause",
     readAloud: "Lire à voix haute",
+    repeatChapter: "Répéter",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
     sos: "SOS",
@@ -237,6 +242,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `CAPITOLO ${current} / ${total}`,
     pause: "Pausa",
     readAloud: "Leggi a voce alta",
+    repeatChapter: "Ripeti",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
     sos: "SOS",
@@ -280,6 +286,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `CAPÍTULO ${current} / ${total}`,
     pause: "Pausa",
     readAloud: "Leer en voz alta",
+    repeatChapter: "Repetir",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
     sos: "SOS",
@@ -323,6 +330,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `CAPÍTULO ${current} / ${total}`,
     pause: "Pausa",
     readAloud: "Ler em voz alta",
+    repeatChapter: "Repetir",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
     sos: "SOS",
@@ -366,6 +374,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterMark: (current, total) => `第 ${current} / ${total} 章`,
     pause: "暂停",
     readAloud: "朗读",
+    repeatChapter: "重听",
     perception: "感知",
     finishHike: "完成徒步",
     sos: "紧急求救",

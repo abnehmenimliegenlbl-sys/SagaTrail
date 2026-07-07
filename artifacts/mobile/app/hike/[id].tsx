@@ -80,7 +80,17 @@ export default function LiveHike() {
     groupSession,
     setGroupActivity,
     energiesparmodus,
+    activeHike,
+    saveActiveHike,
+    clearActiveHike,
   } = useApp();
+
+  // Beim ersten Aufbau der Story einmalig pruefen, ob eine unterbrochene
+  // Wanderung derselben Sage fortgesetzt wird — dann ab dem gespeicherten
+  // Kapitel weitererzaehlen statt wieder bei Kapitel 1 zu beginnen.
+  const resumeIndexRef = useRef<number | null>(
+    activeHike && activeHike.sagaId === id ? activeHike.chapterIndex : null,
+  );
   const { getSaga, getRoute, getRouteBySaga } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
@@ -179,6 +189,11 @@ export default function LiveHike() {
       const woven = weaveNavigationCues(story, saga, route, storyLanguage);
       setChapters(woven);
       decisionsRef.current = woven;
+      const resumeAt = resumeIndexRef.current;
+      resumeIndexRef.current = null;
+      if (resumeAt != null && resumeAt > 0 && resumeAt < woven.length) {
+        setCurrentIndex(resumeAt);
+      }
       setPreparing(false);
     })();
     return () => {
@@ -545,6 +560,21 @@ export default function LiveHike() {
     }
   }, [currentIndex, preparing, chapters, speak]);
 
+  // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
+  // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
+  // Abschluss (finishHike) wird der Eintrag wieder geloescht.
+  useEffect(() => {
+    if (preparing || finished || chapters.length === 0 || !saga) return;
+    saveActiveHike({
+      routeId: route?.id ?? "",
+      sagaId: saga.id,
+      routeName: route?.name ?? saga.title,
+      chapterIndex: currentIndex,
+      chapterCount: chapters.length,
+      updatedAt: Date.now(),
+    });
+  }, [currentIndex, preparing, finished, chapters.length, saga, route, saveActiveHike]);
+
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei
   // eine laufende POI-Erzaehlung abbrechen wuerde).
@@ -702,9 +732,13 @@ export default function LiveHike() {
       chapters: decisionsRef.current,
       visitedPlaceIds: [saga.id],
     };
-    await Promise.all([saveHike(session), addAchievement(saga.title, saga.id)]);
+    await Promise.all([
+      saveHike(session),
+      addAchievement(saga.title, saga.id),
+      clearActiveHike(),
+    ]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, router, stopNarration]);
+  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, clearActiveHike, router, stopNarration]);
 
   const openUrlSafely = async (url: string, fallback: string) => {
     try {
@@ -941,25 +975,41 @@ export default function LiveHike() {
               <Text style={[styles.chapterMark, { color: colors.accent }]}>
                 {t.chapterMark(currentIndex + 1, chapters.length)}
               </Text>
-              <Pressable
-                onPress={() => {
-                  if (speaking) {
-                    stopNarration();
-                  } else if (currentChapter) {
-                    speak(currentChapter.text);
-                  }
-                }}
-                style={[styles.playBtn, { borderColor: colors.glassBorder }]}
-              >
-                <Feather
-                  name={speaking ? "pause" : "play"}
-                  size={16}
-                  color={colors.foreground}
-                />
-                <Text style={[styles.playText, { color: colors.foreground }]}>
-                  {speaking ? t.pause : t.readAloud}
-                </Text>
-              </Pressable>
+              <View style={styles.chapterActions}>
+                <Pressable
+                  onPress={() => {
+                    if (currentChapter) {
+                      speak(currentChapter.text);
+                    }
+                  }}
+                  style={[styles.playBtn, { borderColor: colors.glassBorder }]}
+                  accessibilityLabel={t.repeatChapter}
+                >
+                  <Feather name="rotate-ccw" size={16} color={colors.foreground} />
+                  <Text style={[styles.playText, { color: colors.foreground }]}>
+                    {t.repeatChapter}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    if (speaking) {
+                      stopNarration();
+                    } else if (currentChapter) {
+                      speak(currentChapter.text);
+                    }
+                  }}
+                  style={[styles.playBtn, { borderColor: colors.glassBorder }]}
+                >
+                  <Feather
+                    name={speaking ? "pause" : "play"}
+                    size={16}
+                    color={colors.foreground}
+                  />
+                  <Text style={[styles.playText, { color: colors.foreground }]}>
+                    {speaking ? t.pause : t.readAloud}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             <Text style={[styles.storyText, { color: colors.foreground }]}>
@@ -1179,6 +1229,7 @@ const styles = StyleSheet.create({
   },
   poiModalImage: { width: "100%", height: 150, borderRadius: 10, marginBottom: 12 },
   storyWrap: { marginTop: 24 },
+  chapterActions: { flexDirection: "row", gap: 8 },
   chapterHead: {
     flexDirection: "row",
     alignItems: "center",

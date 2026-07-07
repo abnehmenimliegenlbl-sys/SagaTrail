@@ -14,7 +14,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { GLAS_3D } from "@/constants/depth";
+import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -33,7 +33,7 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile } = useApp();
+  const { profile, activeHike, clearActiveHike } = useApp();
   const t = useHomeStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -86,6 +86,49 @@ export default function Entdecken() {
             </Text>
           </View>
         </Animated.View>
+
+        {activeHike && (
+          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <Pressable
+              onPress={() =>
+                router.push(
+                  `/hike/${encodeURIComponent(activeHike.sagaId)}?routeId=${encodeURIComponent(activeHike.routeId)}`,
+                )
+              }
+              style={[
+                styles.resumeCard,
+                { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>
+                  {t.resumeTitle.toUpperCase()}
+                </Text>
+                <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
+                  {activeHike.routeName}
+                </Text>
+                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
+                  {t.resumeHint(activeHike.chapterIndex + 1, activeHike.chapterCount)}
+                </Text>
+                <View style={styles.resumeCtaRow}>
+                  <Feather name="play" size={14} color={colors.accent} />
+                  <Text style={[styles.resumeCta, { color: colors.accent }]}>{t.resumeCta}</Text>
+                </View>
+              </View>
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  clearActiveHike();
+                }}
+                hitSlop={12}
+                accessibilityLabel={t.resumeDismiss}
+                style={styles.resumeClose}
+              >
+                <Feather name="x" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            </Pressable>
+          </Animated.View>
+        )}
 
         {homeEntry && (
           <>
@@ -214,6 +257,19 @@ function CantonCard({
 }
 
 const styles = StyleSheet.create({
+  resumeCard: {
+    ...GLAS_3D_STARK,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderWidth: 1,
+    padding: 16,
+  },
+  resumeEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.5 },
+  resumeName: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 4 },
+  resumeHint: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
+  resumeCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  resumeClose: { padding: 2 },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
