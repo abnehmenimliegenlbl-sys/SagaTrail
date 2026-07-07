@@ -1,34 +1,41 @@
 // Expo Config Plugin: withStaticFrameworksFix
 //
-// Expo hardcodes a handful of "core" modules to always build as static
-// libraries (never as dynamic frameworks), even when the project as a whole
-// uses `use_frameworks! :linkage => :dynamic` (required for Clerk's iOS SPM
-// dependency, see expo-build-properties config in app.json). This mismatch
-// makes CocoaPods refuse to install with:
-//   "The 'Pods-<Target>' target has transitive dependencies that include
-//    statically linked binaries: (ExpoModulesCore)"
+// Expo 54 + Clerk iOS SDK conflict:
+// - Clerk requires `use_frameworks! :linkage => :dynamic` (via expo-build-properties)
+// - With prebuilt RN Core (RCT_USE_PREBUILT_RNCORE=1, the EAS default for Expo 54),
+//   expo-modules-autolinking's installer.rb overrides
+//   `Pod::Installer#run_podfile_pre_install_hooks` to downgrade ExpoModulesCore,
+//   Expo, ReactAppDependencyProvider and expo-dev-menu from static_framework to
+//   static_library AFTER all Podfile pre_install blocks have run.
+//   A static_library inside a use_frameworks! :linkage => :dynamic project is
+//   what CocoaPods rejects with:
+//     "The 'Pods-SagaTrail' target has transitive dependencies that include
+//      statically linked binaries: (ExpoModulesCore)"
 //
-// Expo's own disabling only downgrades them to a plain STATIC LIBRARY
-// (".a"), which is exactly what CocoaPods' validation rejects when mixed
-// into a dynamic-framework-linked aggregate target — a plain static
-// library cannot be folded into a `use_frameworks! :linkage => :dynamic`
-// dependency graph. A STATIC FRAMEWORK (".framework" bundle, still
-// statically linked, but framework-shaped) CAN be folded in safely. The
-// documented CocoaPods/React Native workaround is therefore to force those
-// pods' `build_type` to `:static_framework` (not `:static_library`) via a
-// `pre_install` hook. CocoaPods runs multiple `pre_install` blocks in Podfile
-// registration order, and Expo's own disabling hook is registered by
-// `use_expo_modules!` inside the `target` block — so our hook MUST be
-// appended after the entire `target` block (end of file), not before it,
-// or Expo's hook (registered later) runs after ours and silently reverts
-// our override back to a plain static library.
+// Root cause (from installer.rb line 111-131):
+//   define_method(:run_podfile_pre_install_hooks) do
+//     _original_run_podfile_pre_install_hooks.bind(self).()  # runs ALL pre_install blocks
+//     ...
+//     # THEN downgrades to static_library — after every pre_install hook
+//     def t.build_type; Pod::BuildType.static_library; end
+//   end
 //
-// Since this project uses Expo's managed workflow (no committed `ios/`
-// folder — the Podfile is regenerated on every prebuild/native build), this
-// must be injected via a config plugin rather than hand-edited.
+// Fix: Override run_podfile_pre_install_hooks AGAIN (our injection runs after
+// installer.rb is required, so we capture Expo's version as our "original") and
+// add a final step that upgrades the affected pods from static_library to
+// static_framework. A static_framework is statically linked but framework-shaped,
+// which CocoaPods allows alongside use_frameworks! :linkage => :dynamic.
+//
+// This injection must be evaluated AFTER use_expo_modules! (which triggers the
+// require of installer.rb) and AFTER any pre_install blocks — i.e. at the end
+// of the generated Podfile. The withDangerousMod callback runs after the
+// Podfile is written by Expo's own prebuild, so we append to the end.
 const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
+
+const MARKER_BEGIN = "# @generated begin static-frameworks-fix";
+const MARKER_END = "# @generated end static-frameworks-fix";
 
 const STATIC_PODS = [
   "ExpoModulesCore",
@@ -36,9 +43,6 @@ const STATIC_PODS = [
   "ReactAppDependencyProvider",
   "expo-dev-menu",
 ];
-
-const MARKER_BEGIN = "# @generated begin static-frameworks-fix";
-const MARKER_END = "# @generated end static-frameworks-fix";
 
 function withStaticFrameworksFix(config) {
   return withDangerousMod(config, [
@@ -54,23 +58,41 @@ function withStaticFrameworksFix(config) {
         return config;
       }
 
+      // Ruby injection: override Pod::Installer#run_podfile_pre_install_hooks
+      // to add a post-Expo step that upgrades the affected pods from
+      // static_library back to static_framework.
+      //
+      // By the time this Podfile code is evaluated, installer.rb has already
+      // been required (by use_expo_modules! inside the target block). So
+      // instance_method(:run_podfile_pre_install_hooks) captures Expo's
+      // override, and our define_method replaces it — then our version calls
+      // Expo's version first (which itself calls CocoaPods' original + applies
+      // the static_library downgrade), and afterwards overrides back to
+      // static_framework.
+      const podNames = JSON.stringify(STATIC_PODS);
       const snippet = `${MARKER_BEGIN}
-pre_install do |installer|
-  static_pods = ${JSON.stringify(STATIC_PODS)}
-  installer.pod_targets.each do |pod|
-    if static_pods.include?(pod.name)
-      def pod.build_type
-        Pod::BuildType.static_framework
+module Pod
+  class Installer
+    _expo_run_pre_install = instance_method(:run_podfile_pre_install_hooks)
+    define_method(:run_podfile_pre_install_hooks) do
+      _expo_run_pre_install.bind(self).call
+      # Re-apply static_framework after Expo downgrades to static_library.
+      # static_framework is compatible with use_frameworks! :linkage => :dynamic;
+      # static_library is not.
+      pod_names = ${podNames}
+      self.pod_targets.each do |t|
+        next unless pod_names.include?(t.name)
+        def t.build_type
+          Pod::BuildType.static_framework
+        end
       end
     end
   end
 end
 ${MARKER_END}
-
 `;
 
       contents = `${contents.trimEnd()}\n\n${snippet}`;
-
       fs.writeFileSync(podfilePath, contents);
       return config;
     },
