@@ -62,6 +62,9 @@ export default function KantonRouten() {
   const [distFilter, setDistFilter] = useState<[number, number]>([DIST_MIN, DIST_MAX]);
   const [ascFilter, setAscFilter] = useState<[number, number]>([ASC_MIN, ASC_MAX]);
   const [diffFilter, setDiffFilter] = useState<[number, number]>([DIFF_MIN, DIFF_MAX]);
+  // Waehrend ein Schieberegler gezogen wird, pausiert das Scrollen der Seite,
+  // damit die Geste nicht von der Liste uebernommen wird und haengen bleibt.
+  const [sliderAktiv, setSliderAktiv] = useState(false);
 
   // Beim Kantonswechsel Filter und Ergebnisse zuruecksetzen — erst suchen,
   // wenn der Nutzer die Filter gesetzt und die Suche gestartet hat.
@@ -113,6 +116,7 @@ export default function KantonRouten() {
           paddingBottom: insets.bottom + 120,
         }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!sliderAktiv}
       >
         <ScreenHeader eyebrow={t.eyebrow} title={cantonName} onBack />
 
@@ -141,6 +145,7 @@ export default function KantonRouten() {
             values={distFilter}
             onChange={setDistFilter}
             formatValue={(v) => t.distanceUnit(v, v === DIST_MAX)}
+            onDraggingChange={setSliderAktiv}
           />
           <RangeSlider
             label={t.elevationLabel}
@@ -150,6 +155,7 @@ export default function KantonRouten() {
             values={ascFilter}
             onChange={setAscFilter}
             formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
+            onDraggingChange={setSliderAktiv}
           />
           <RangeSlider
             label={t.difficultyLabel}
@@ -159,6 +165,7 @@ export default function KantonRouten() {
             values={diffFilter}
             onChange={setDiffFilter}
             formatValue={(v) => t.difficultyUnit(v)}
+            onDraggingChange={setSliderAktiv}
           />
         </View>
 

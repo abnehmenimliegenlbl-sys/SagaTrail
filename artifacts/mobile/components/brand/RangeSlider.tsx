@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   LayoutChangeEvent,
   PanResponder,
@@ -11,8 +11,8 @@ import {
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
-const THUMB = 26;
-const HIT = { top: 16, bottom: 16, left: 16, right: 16 };
+const THUMB = 30;
+const HIT = { top: 22, bottom: 22, left: 22, right: 22 };
 
 /**
  * Zwei-Punkt-Schieberegler (Bereichsauswahl) fuer die Routenfilter.
@@ -29,6 +29,7 @@ export function RangeSlider({
   values,
   onChange,
   formatValue,
+  onDraggingChange,
 }: {
   label: string;
   min: number;
@@ -37,6 +38,8 @@ export function RangeSlider({
   values: [number, number];
   onChange: (next: [number, number]) => void;
   formatValue?: (value: number) => string;
+  /** Meldet Beginn/Ende des Ziehens, damit die umgebende Liste das Scrollen pausieren kann. */
+  onDraggingChange?: (dragging: boolean) => void;
 }) {
   const colors = useColors();
   const [trackWidth, setTrackWidth] = useState(0);
@@ -52,7 +55,15 @@ export function RangeSlider({
   valuesRef.current = values;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onDraggingChangeRef = useRef(onDraggingChange);
+  onDraggingChangeRef.current = onDraggingChange;
   const startRef = useRef<[number, number]>(values);
+
+  // Beim Unmount defensiv "kein Ziehen mehr" melden, damit die umgebende
+  // Liste nie mit deaktiviertem Scrollen zurueckbleibt.
+  useEffect(() => {
+    return () => onDraggingChangeRef.current?.(false);
+  }, []);
 
   const toX = useCallback(
     (value: number) => ((value - min) / span) * usable,
@@ -68,8 +79,14 @@ export function RangeSlider({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
+        // Die Geste gehoert dem Zugpunkt: umgebende ScrollViews duerfen sie
+        // waehrend des Ziehens NICHT uebernehmen (sonst bleibt der Regler
+        // haengen, sobald der Finger leicht vertikal abrutscht).
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
           startRef.current = [...valuesRef.current] as [number, number];
+          onDraggingChangeRef.current?.(true);
         },
         onPanResponderMove: (_evt, gesture) => {
           const g = geomRef.current;
@@ -86,6 +103,12 @@ export function RangeSlider({
             const next = Math.max(snap(hi + delta), lo + g.step);
             onChangeRef.current([lo, Math.min(g.max, next)]);
           }
+        },
+        onPanResponderRelease: () => {
+          onDraggingChangeRef.current?.(false);
+        },
+        onPanResponderTerminate: () => {
+          onDraggingChangeRef.current?.(false);
         },
       });
     respondersRef.current = { lo: make(0), hi: make(1) };

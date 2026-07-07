@@ -10,3 +10,5 @@ Prod DB is READ-ONLY from the workspace (executeSql environment:"production" all
 **Why:** no direct prod write path exists; the endpoint resolves the email via prod Clerk at runtime and sets `profiles.premium_bis` (timed premium; effective status = premium flag OR premium_bis > now).
 
 **How to apply:** self-upgrade via PATCH /me/premium is deliberately blocked (403 on premium=true) until a server-verified RevenueCat flow exists — do not "fix" that by re-allowing it.
+
+Gotcha: the deployment snapshots secrets at publish time. If the prod endpoint returns "Ungueltiges Admin-Token" although the workspace `ADMIN_TOKEN` is set, prod is running an older token — a republish syncs it; retry the curl after publishing.
