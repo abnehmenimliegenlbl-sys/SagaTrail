@@ -6,25 +6,60 @@ import { reverseGeocode } from "./geocoding";
 import { downsample, estimateMinutes, pathDistanceKm, type LatLng } from "./geo";
 
 /**
- * Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten (OSRM,
- * ohne API-Key, Profil "foot") und reichert sie mit denselben Quellen wie die
- * Kantonsrouten an (swisstopo-Hoehenmetern, SAC-Grad, Saison-Heuristik). Die
- * Route wird NICHT persistiert — jede Anfrage berechnet sie neu, denn Start/
- * Ziel sind frei waehlbar und nicht auf einen Kanton-Katalog begrenzt.
+ * Berechnet eine Wanderroute zwischen zwei selbst gewaehlten Punkten
+ * (Valhalla-Router der FOSSGIS, ohne API-Key, Costing "pedestrian") und
+ * reichert sie mit denselben Quellen wie die Kantonsrouten an
+ * (swisstopo-Hoehenmetern, SAC-Grad, Saison-Heuristik). Die Route wird
+ * NICHT persistiert — jede Anfrage berechnet sie neu, denn Start/Ziel sind
+ * frei waehlbar und nicht auf einen Kanton-Katalog begrenzt.
+ *
+ * Wichtig: Frueher lief das Routing ueber den oeffentlichen OSRM-Demo-Server
+ * mit Profil "foot" — der bedient aber unabhaengig vom Profil in der URL nur
+ * Autodaten, weshalb "Wanderrouten" ueber Autobahnen/Schnellstrassen fuehrten.
+ * Das Valhalla-Fussgaengerprofil schliesst Autobahnen und fuer Fussgaenger
+ * gesperrte Strassen grundsaetzlich aus und bevorzugt Wege/Trails.
  */
 
-const OSRM_URL = "https://router.project-osrm.org/route/v1/foot";
+const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const STORED_GEOMETRY_POINTS = 80;
 const MIN_KM = 0.3;
 const MAX_KM = 60;
 
-interface OsrmResponse {
-  code?: string;
-  routes?: {
-    distance: number;
-    geometry: { coordinates: [number, number][] };
-  }[];
+interface ValhallaResponse {
+  trip?: {
+    legs?: { shape?: string }[];
+    summary?: { length?: number };
+  };
+  error?: string;
+}
+
+/**
+ * Dekodiert eine Valhalla-Polyline (Precision 1e6) in Koordinaten.
+ * Gleiches Format wie Google-Encoded-Polyline, nur mit Faktor 1e6.
+ */
+function decodePolyline6(encoded: string): LatLng[] {
+  const points: LatLng[] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  while (index < encoded.length) {
+    for (const which of ["lat", "lng"] as const) {
+      let result = 0;
+      let shift = 0;
+      let byte = 0x20;
+      while (byte >= 0x20) {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      }
+      const delta = result & 1 ? ~(result >> 1) : result >> 1;
+      if (which === "lat") lat += delta;
+      else lng += delta;
+    }
+    points.push({ lat: lat / 1e6, lng: lng / 1e6 });
+  }
+  return points;
 }
 
 export class CustomRouteError extends Error {}
@@ -64,23 +99,35 @@ export async function buildCustomRoute(
   endLabel: string | undefined,
   log: Logger,
 ): Promise<CustomRoute> {
-  const url = `${OSRM_URL}/${start.lng},${start.lat};${end.lng},${end.lat}?geometries=geojson&overview=full`;
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-  if (!res.ok) {
-    throw new Error(`OSRM-Routing: HTTP-Fehler ${res.status}`);
+  const res = await fetch(VALHALLA_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
+    body: JSON.stringify({
+      locations: [
+        { lat: start.lat, lon: start.lng },
+        { lat: end.lat, lon: end.lng },
+      ],
+      // Fussgaengerprofil: Autobahnen/Schnellstrassen sind ausgeschlossen,
+      // Wanderwege und Trails werden bevorzugt.
+      costing: "pedestrian",
+      costing_options: { pedestrian: { use_hills: 0.5 } },
+      units: "kilometers",
+    }),
+  });
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Valhalla-Routing: HTTP-Fehler ${res.status}`);
   }
-  const data = (await res.json()) as OsrmResponse;
-  const route = data.routes?.[0];
-  if (data.code !== "Ok" || !route) {
+  const data = (await res.json()) as ValhallaResponse;
+  const shapes = (data.trip?.legs ?? [])
+    .map((leg) => leg.shape)
+    .filter((s): s is string => Boolean(s));
+  if (!data.trip || shapes.length === 0) {
     throw new CustomRouteError(
-      "Zwischen den gewaehlten Punkten wurde keine Route gefunden.",
+      "Zwischen den gewaehlten Punkten wurde keine Fusswegroute gefunden.",
     );
   }
 
-  const points: LatLng[] = route.geometry.coordinates.map(([lng, lat]) => ({
-    lat,
-    lng,
-  }));
+  const points: LatLng[] = shapes.flatMap((shape) => decodePolyline6(shape));
   const distanceKm = pathDistanceKm(points);
   if (distanceKm < MIN_KM || distanceKm > MAX_KM) {
     throw new CustomRouteError(
