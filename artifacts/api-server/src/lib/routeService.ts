@@ -236,8 +236,16 @@ function terrainLabel(ref: string | null, network: string | null, sac: string): 
   return parts.join(" · ");
 }
 
-function isFresh(fetchedAt: Date): boolean {
-  return Date.now() - fetchedAt.getTime() < CACHE_TTL_MS;
+// Version des Geometrie-Verkettungs-Algorithmus (siehe overpass.ts
+// stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
+// Zickzack-Verkettung erzeugt und gelten als abgelaufen.
+const GEOMETRY_VERSION = 2;
+
+function isFresh(row: ExternalRouteRow): boolean {
+  return (
+    row.geometryVersion >= GEOMETRY_VERSION &&
+    Date.now() - row.fetchedAt.getTime() < CACHE_TTL_MS
+  );
 }
 
 async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow[]> {
@@ -290,6 +298,7 @@ async function enrichAndStore(
       lat: start.lat,
       lng: start.lng,
       geometry,
+      geometryVersion: GEOMETRY_VERSION,
       source: "OpenStreetMap · swisstopo",
       featured: false,
     };
@@ -310,6 +319,7 @@ async function enrichAndStore(
           sac: sql`excluded.sac`,
           terrain: sql`excluded.terrain`,
           geometry: sql`excluded.geometry`,
+          geometryVersion: sql`excluded.geometry_version`,
           fetchedAt: new Date(),
         },
       });
@@ -354,7 +364,7 @@ export async function getCantonRoutes(
     // erreichbar"). Nur veraltete Cache-Zeilen zaehlen nicht als Treffer, sonst
     // wuerde ein Serverausfall faelschlich als "keine Routen" erscheinen.
     const cached = await loadCachedRoutes(canton);
-    const fresh = cached.filter((row) => isFresh(row.fetchedAt));
+    const fresh = cached.filter((row) => isFresh(row));
     if (fresh.length > 0) {
       log.warn({ canton, err }, "Kanton-Index nicht ladbar, nutze Cache");
       return fresh;
@@ -365,7 +375,7 @@ export async function getCantonRoutes(
   const candidates = selectCandidates(index, distMax);
   const cached = await loadCachedRoutes(canton);
   const freshIds = new Set(
-    cached.filter((row) => isFresh(row.fetchedAt)).map((row) => row.id),
+    cached.filter((row) => isFresh(row)).map((row) => row.id),
   );
   const missing = candidates
     .filter((c) => !freshIds.has(`osm-${c.osmId}`))
@@ -378,14 +388,14 @@ export async function getCantonRoutes(
       // Anreicherung fehlgeschlagen: vorhandene frische Treffer trotzdem liefern.
       if (freshIds.size > 0) {
         log.warn({ canton, err }, "Geometrie-Anreicherung fehlgeschlagen, nutze Cache");
-        return cached.filter((row) => isFresh(row.fetchedAt));
+        return cached.filter((row) => isFresh(row));
       }
       throw err;
     }
   }
 
   const stored = await loadCachedRoutes(canton);
-  return stored.filter((row) => isFresh(row.fetchedAt));
+  return stored.filter((row) => isFresh(row));
 }
 
 function nearestOf(

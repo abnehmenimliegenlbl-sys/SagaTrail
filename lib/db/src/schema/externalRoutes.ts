@@ -31,6 +31,10 @@ export const externalRoutesTable = pgTable("external_routes", {
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   geometry: jsonb("geometry").notNull(),
+  // Version des Verkettungs-Algorithmus, mit dem `geometry` erzeugt wurde.
+  // Aeltere Versionen gelten als abgelaufen und werden neu geladen (z.B. nach
+  // der Korrektur der Zickzack-Verkettung).
+  geometryVersion: doublePrecision("geometry_version").notNull().default(1),
   source: text("source").notNull(),
   featured: boolean("featured").notNull().default(false),
   fetchedAt: timestamp("fetched_at", { withTimezone: true })

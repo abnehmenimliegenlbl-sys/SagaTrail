@@ -80,6 +80,7 @@ interface OverpassTagsElement {
 
 interface OverpassGeomMember {
   type: string;
+  role?: string;
   geometry?: { lat: number; lon: number }[];
 }
 
@@ -148,18 +149,110 @@ function bboxDiagonalKm(b: OverpassBounds): number {
   );
 }
 
-/** Verkettet die Wegstuecke einer Relation zu einer Punktliste (ohne Duplikate). */
+// Rollen, die NICHT zum Hauptverlauf einer Route gehoeren (Varianten,
+// Zubringer, Abstecher) — sie wuerden den Verlauf mit Zickzack verfaelschen.
+const NEBENROLLEN = new Set([
+  "alternative",
+  "alternate",
+  "excursion",
+  "approach",
+  "connection",
+  "shortcut",
+  "detour",
+  "link",
+]);
+
+// Endpunkte gelten als "verbunden", wenn sie hoechstens so weit auseinander
+// liegen (OSM-Wegstuecke teilen sich meist exakt einen Knoten, kleine Luecken
+// kommen aber vor, z.B. an Faehren oder Strassenquerungen).
+const VERBINDUNGS_TOLERANZ_M = 150;
+
+/**
+ * Verkettet die Wegstuecke einer Relation zu einer Punktliste.
+ *
+ * OSM-Relationen garantieren WEDER die Reihenfolge NOCH die Ausrichtung ihrer
+ * Wegstuecke. Naives Aneinanderhaengen erzeugt deshalb Zickzack-Linien quer
+ * durchs Gelaende. Stattdessen: gierige Verkettung ueber die Endpunkte — es
+ * wird stets das Wegstueck angefuegt (vorne oder hinten, bei Bedarf
+ * umgedreht), dessen Endpunkt dem aktuellen Kettenende am naechsten liegt.
+ * Liegt kein Stueck mehr innerhalb der Toleranz, wird das naechstgelegene
+ * Reststueck mit sichtbarer Luecke angefuegt (besser eine kleine Luecke als
+ * ein Sprung quer ueber das Tal).
+ */
 function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
-  const points: LatLng[] = [];
+  const segmente: LatLng[][] = [];
   for (const m of members) {
-    if (m.type !== "way" || !m.geometry) continue;
-    for (const g of m.geometry) {
-      const last = points[points.length - 1];
-      if (last && last.lat === g.lat && last.lng === g.lon) continue;
-      points.push({ lat: g.lat, lng: g.lon });
+    if (m.type !== "way" || !m.geometry || m.geometry.length < 2) continue;
+    if (m.role && NEBENROLLEN.has(m.role.trim().toLowerCase())) continue;
+    segmente.push(m.geometry.map((g) => ({ lat: g.lat, lng: g.lon })));
+  }
+  if (segmente.length === 0) return [];
+
+  const offen = new Set(segmente.map((_, i) => i));
+  const erste = segmente[0];
+  offen.delete(0);
+  let kette: LatLng[] = [...erste];
+
+  const anhaengen = (ziel: LatLng[], stueck: LatLng[]) => {
+    const start = ziel[ziel.length - 1];
+    const naechster = stueck[0];
+    // Doppelten Nahtpunkt vermeiden
+    const ohneDuplikat =
+      start.lat === naechster.lat && start.lng === naechster.lng
+        ? stueck.slice(1)
+        : stueck;
+    ziel.push(...ohneDuplikat);
+  };
+
+  while (offen.size > 0) {
+    const kettenEnde = kette[kette.length - 1];
+    const kettenStart = kette[0];
+    let bester = -1;
+    let besteDistanz = Infinity;
+    let umdrehen = false;
+    let vorne = false;
+    for (const i of offen) {
+      const s = segmente[i];
+      const kandidaten: [number, boolean, boolean][] = [
+        [haversineM(kettenEnde, s[0]), false, false], // hinten anfuegen
+        [haversineM(kettenEnde, s[s.length - 1]), true, false], // hinten, umgedreht
+        [haversineM(kettenStart, s[s.length - 1]), false, true], // vorne anfuegen
+        [haversineM(kettenStart, s[0]), true, true], // vorne, umgedreht
+      ];
+      for (const [d, rev, front] of kandidaten) {
+        if (d < besteDistanz) {
+          besteDistanz = d;
+          bester = i;
+          umdrehen = rev;
+          vorne = front;
+        }
+      }
+    }
+    if (bester < 0) break;
+    offen.delete(bester);
+    // Ausserhalb der Toleranz: Stueck trotzdem hinten anfuegen (Luecke),
+    // aber nie vorne einschieben — das wuerde den Verlauf verdrehen. Die
+    // Ausrichtung folgt dem naeher liegenden Endpunkt, damit der kuenstliche
+    // Verbindungssprung so kurz wie moeglich bleibt.
+    if (besteDistanz > VERBINDUNGS_TOLERANZ_M) {
+      const rest = segmente[bester];
+      const ende = kette[kette.length - 1];
+      const gedreht =
+        haversineM(ende, rest[rest.length - 1]) < haversineM(ende, rest[0]);
+      kette.push(...(gedreht ? [...rest].reverse() : rest));
+      continue;
+    }
+    const stueck = umdrehen ? [...segmente[bester]].reverse() : segmente[bester];
+    if (vorne) {
+      const neu = [...stueck];
+      anhaengen(neu, kette);
+      kette = neu;
+    } else {
+      anhaengen(kette, stueck);
     }
   }
-  return points;
+
+  return kette;
 }
 
 /** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */
