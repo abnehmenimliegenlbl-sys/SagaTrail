@@ -31,6 +31,7 @@ import type {
   GetCustomRouteParams,
   GetPoiStoryParams,
   GetPoisParams,
+  GetRoutePhotoParams,
   GetWeatherParams,
   HealthStatus,
   NarrationInput,
@@ -39,6 +40,7 @@ import type {
   PremiumUpdate,
   Profile,
   ProfileInput,
+  RoutePhoto,
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
@@ -717,6 +719,91 @@ export function useGetWeather<TData = Awaited<ReturnType<typeof getWeather>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWeatherQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRoutePhotoUrl = (params: GetRoutePhotoParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/photo?${stringifiedParams}` : `/api/routes/photo`
+}
+
+/**
+ * Sucht ein echtes Foto in der Naehe des Routenstartpunkts ueber die Wikimedia-Commons-Geosuche. Liefert null, wenn kein passendes Foto gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+ * @summary Repraesentatives Foto fuer eine Route (Wikimedia Commons)
+ */
+export const getRoutePhoto = async (params: GetRoutePhotoParams, options?: RequestInit): Promise<RoutePhoto> => {
+
+  return customFetch<RoutePhoto>(getGetRoutePhotoUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoutePhotoQueryKey = (params?: GetRoutePhotoParams,) => {
+    return [
+    `/api/routes/photo`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRoutePhotoQueryOptions = <TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<unknown>>(params: GetRoutePhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoutePhotoQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutePhoto>>> = ({ signal }) => getRoutePhoto(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRoutePhotoQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutePhoto>>>
+export type GetRoutePhotoQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Repraesentatives Foto fuer eine Route (Wikimedia Commons)
+ */
+
+export function useGetRoutePhoto<TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<unknown>>(
+ params: GetRoutePhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRoutePhotoQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

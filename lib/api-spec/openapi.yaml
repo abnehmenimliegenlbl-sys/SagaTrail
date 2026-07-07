@@ -333,6 +333,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/photo:
+    get:
+      operationId: getRoutePhoto
+      tags: [routes]
+      summary: Repraesentatives Foto fuer eine Route (Wikimedia Commons)
+      description: >
+        Sucht ein echtes Foto in der Naehe des Routenstartpunkts ueber die
+        Wikimedia-Commons-Geosuche. Liefert null, wenn kein passendes Foto
+        gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Foto-URL oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutePhoto"
   /routes/geocode:
     get:
       operationId: searchPlaces
@@ -820,6 +847,21 @@ components:
         - id
         - kind
         - geometry
+    RoutePhoto:
+      type: object
+      description: >
+        Repraesentatives Foto aus Wikimedia Commons nahe dem Routenstart.
+        photoUrl ist null, wenn nichts Passendes gefunden wurde.
+      properties:
+        photoUrl:
+          type: string
+          nullable: true
+        attribution:
+          type: string
+          nullable: true
+      required:
+        - photoUrl
+        - attribution
     WeatherReport:
       type: object
       description: >

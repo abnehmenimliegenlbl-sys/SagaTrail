@@ -248,6 +248,21 @@ export const GetWeatherResponse = zod.object({
 
 
 /**
+ * Sucht ein echtes Foto in der Naehe des Routenstartpunkts ueber die Wikimedia-Commons-Geosuche. Liefert null, wenn kein passendes Foto gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+ * @summary Repraesentatives Foto fuer eine Route (Wikimedia Commons)
+ */
+export const GetRoutePhotoQueryParams = zod.object({
+  "lat": zod.coerce.number(),
+  "lng": zod.coerce.number()
+})
+
+export const GetRoutePhotoResponse = zod.object({
+  "photoUrl": zod.string().nullable(),
+  "attribution": zod.string().nullable()
+}).describe('Repraesentatives Foto aus Wikimedia Commons nahe dem Routenstart. photoUrl ist null, wenn nichts Passendes gefunden wurde.\n')
+
+
+/**
  * Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen Route.
  * @summary Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
  */

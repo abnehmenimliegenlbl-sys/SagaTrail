@@ -139,6 +139,14 @@ export interface Aerialway {
 }
 
 /**
+ * Repraesentatives Foto aus Wikimedia Commons nahe dem Routenstart. photoUrl ist null, wenn nichts Passendes gefunden wurde.
+ */
+export interface RoutePhoto {
+  photoUrl: string | null;
+  attribution: string | null;
+}
+
+/**
  * Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter Wegzustand-Hinweis. Kein offizieller Sperr-/Lawinenstatus.
  */
 export interface WeatherReport {
@@ -354,6 +362,11 @@ lang: string;
 };
 
 export type GetWeatherParams = {
+lat: number;
+lng: number;
+};
+
+export type GetRoutePhotoParams = {
 lat: number;
 lng: number;
 };
