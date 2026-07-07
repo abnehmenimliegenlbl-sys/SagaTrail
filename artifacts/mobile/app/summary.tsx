@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import * as Sharing from "expo-sharing";
+import React, { useRef } from "react";
+import { captureRef } from "react-native-view-shot";
 import {
   Platform,
   Pressable,
@@ -15,9 +17,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { ShareCard } from "@/components/brand/ShareCard";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useSummaryStrings } from "@/lib/i18n/screens/summary";
@@ -29,6 +33,8 @@ export default function Summary() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { lastHike, profile } = useApp();
+  const { sagas } = useCatalog();
+  const shareCardRef = useRef<View>(null);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const onboardingStrings = useOnboardingStrings();
@@ -52,10 +58,32 @@ export default function Summary() {
 
   const decisions = lastHike.chapters.filter((c) => c.isDecisionPoint);
 
+  const sagaTitle =
+    sagas.find((s) => s.id === lastHike.sagaId)?.title ?? lastHike.routeName;
+
   const share = async () => {
     const text = t.shareTextTemplate(lastHike.routeName, lastHike.distanceKm);
     if (Platform.OS === "web") {
       return;
+    }
+    // Zuerst die Share-Grafik versuchen (deutlich attraktiver auf Social
+    // Media); wenn das Abfotografieren fehlschlaegt, faellt der Flow auf
+    // den bisherigen reinen Text zurueck.
+    try {
+      const uri = await captureRef(shareCardRef, {
+        format: "png",
+        quality: 1,
+        result: "tmpfile",
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "image/png",
+          dialogTitle: t.shareBtn,
+        });
+        return;
+      }
+    } catch {
+      // Grafik nicht verfuegbar — Text-Fallback unten
     }
     try {
       await Share.share({ message: text });
@@ -146,6 +174,21 @@ export default function Summary() {
           style={{ marginTop: 12 }}
         />
       </ScrollView>
+
+      {Platform.OS !== "web" && (
+        <View style={styles.shareCardOffscreen} pointerEvents="none">
+          <ShareCard
+            ref={shareCardRef}
+            sagaTitle={sagaTitle}
+            routeName={lastHike.routeName}
+            distanceKm={lastHike.distanceKm}
+            ascentM={lastHike.ascentM}
+            sacScale={lastHike.sacScale}
+            distanceLabel={t.stats.distance}
+            ascentLabel={t.stats.ascent}
+          />
+        </View>
+      )}
     </Background>
   );
 }
@@ -191,4 +234,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   shareText: { fontFamily: fonts.bodyMedium, fontSize: 15 },
+  // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
+  // damit react-native-view-shot die Karte abfotografieren kann.
+  shareCardOffscreen: { position: "absolute", left: -1000, top: 0 },
 });

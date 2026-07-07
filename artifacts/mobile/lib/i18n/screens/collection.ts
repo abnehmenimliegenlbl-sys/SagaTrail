@@ -7,6 +7,8 @@ export interface CollectionStrings {
   total: string;
   cantons: string;
   emptyState: string;
+  albumTitle: string;
+  cantonProgress: (discovered: number, total: number, canton: string) => string;
 }
 
 const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
@@ -17,6 +19,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Insgesamt",
     cantons: "Kantone",
     emptyState: "Noch keine Sage erlebt. Starte deine erste Wanderung, um Funken zu sammeln.",
+    albumTitle: "Sagen-Album",
+    cantonProgress: (d, t, c) => `${d} von ${t} Sagen in ${c} entdeckt`,
   },
   gsw: {
     eyebrow: "Dini Reis",
@@ -25,6 +29,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Insgsamt",
     cantons: "Kantön",
     emptyState: "No kei Sag erläbt. Start dini erschti Wanderig, zum Funke sammle.",
+    albumTitle: "Sage-Album",
+    cantonProgress: (d, t, c) => `${d} vo ${t} Sage in ${c} entdeckt`,
   },
   en: {
     eyebrow: "Your Journey",
@@ -33,6 +39,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Total",
     cantons: "Cantons",
     emptyState: "No sagas experienced yet. Start your first hike to collect sparks.",
+    albumTitle: "Saga Album",
+    cantonProgress: (d, t, c) => `${d} of ${t} sagas discovered in ${c}`,
   },
   fr: {
     eyebrow: "Ton voyage",
@@ -41,6 +49,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Total",
     cantons: "Cantons",
     emptyState: "Aucune légende vécue pour l'instant. Commence ta première randonnée pour collecter des étincelles.",
+    albumTitle: "Album des légendes",
+    cantonProgress: (d, t, c) => `${d} légende(s) sur ${t} découverte(s) en ${c}`,
   },
   it: {
     eyebrow: "Il tuo viaggio",
@@ -49,6 +59,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Totale",
     cantons: "Cantoni",
     emptyState: "Ancora nessuna leggenda vissuta. Inizia la tua prima escursione per raccogliere scintille.",
+    albumTitle: "Album delle leggende",
+    cantonProgress: (d, t, c) => `${d} leggende su ${t} scoperte in ${c}`,
   },
   es: {
     eyebrow: "Tu viaje",
@@ -57,6 +69,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Total",
     cantons: "Cantones",
     emptyState: "Aún no has vivido ninguna leyenda. Comienza tu primera caminata para recolectar chispas.",
+    albumTitle: "Álbum de leyendas",
+    cantonProgress: (d, t, c) => `${d} de ${t} leyendas descubiertas en ${c}`,
   },
   pt: {
     eyebrow: "Sua jornada",
@@ -65,6 +79,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "Total",
     cantons: "Cantões",
     emptyState: "Nenhuma lenda vivida ainda. Comece sua primeira caminhada para coletar faíscas.",
+    albumTitle: "Álbum de lendas",
+    cantonProgress: (d, t, c) => `${d} de ${t} lendas descobertas em ${c}`,
   },
   zh: {
     eyebrow: "你的旅程",
@@ -73,6 +89,8 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     total: "总计",
     cantons: "联邦州",
     emptyState: "尚未经历任何传说。开始你的第一次徒步，收集火花吧。",
+    albumTitle: "传说图鉴",
+    cantonProgress: (d, t, c) => `${c}：已发现 ${d}/${t} 个传说`,
   },
 };
 

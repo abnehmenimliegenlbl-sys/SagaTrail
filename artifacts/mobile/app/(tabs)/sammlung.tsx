@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -78,32 +79,101 @@ export default function Sammlung() {
           </View>
         )}
 
-        <View style={styles.grid}>
-          {sagas.map((saga, i) => {
-            const unlocked = unlockedIds.has(saga.id);
-            return (
-              <Animated.View
-                key={saga.id}
-                entering={FadeInDown.delay(i * 50)}
-                style={styles.markerCell}
-              >
-                <AchievementMarker size={72} unlocked={unlocked} />
-                <Text
+        <Text style={[styles.albumTitle, { color: colors.foreground }]}>
+          {t.albumTitle}
+        </Text>
+
+        {cantons.map((canton, ci) => {
+          const cantonSagas = sagas.filter((s) => s.canton === canton);
+          const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
+          const complete = discovered === cantonSagas.length && discovered > 0;
+          return (
+            <Animated.View
+              key={canton}
+              entering={FadeInDown.delay(ci * 60)}
+              style={[
+                styles.cantonCard,
+                { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+              ]}
+            >
+              <View style={styles.cantonHead}>
+                <View
                   style={[
-                    styles.markerTitle,
-                    { color: unlocked ? colors.foreground : colors.mutedForeground },
+                    styles.wappen,
+                    {
+                      borderColor: complete ? colors.accent : colors.glassBorder,
+                      backgroundColor: complete
+                        ? colors.accent + "22"
+                        : "transparent",
+                    },
                   ]}
-                  numberOfLines={2}
                 >
-                  {saga.title}
-                </Text>
-                <Text style={[styles.markerCanton, { color: colors.mutedForeground }]}>
-                  {saga.canton}
-                </Text>
-              </Animated.View>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.wappenText,
+                      { color: complete ? colors.accent : colors.mutedForeground },
+                    ]}
+                  >
+                    {kantonsKuerzel(canton)}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cantonName, { color: colors.foreground }]}>
+                    {canton}
+                  </Text>
+                  <Text
+                    style={[styles.cantonProgress, { color: colors.mutedForeground }]}
+                  >
+                    {t.cantonProgress(discovered, cantonSagas.length, canton)}
+                  </Text>
+                </View>
+                {complete && (
+                  <Feather name="check-circle" size={18} color={colors.accent} />
+                )}
+              </View>
+
+              <View style={[styles.progressTrack, { backgroundColor: colors.glassBorder }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      backgroundColor: colors.accent,
+                      width: `${
+                        cantonSagas.length > 0
+                          ? Math.round((discovered / cantonSagas.length) * 100)
+                          : 0
+                      }%`,
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.grid}>
+                {cantonSagas.map((saga) => {
+                  const unlocked = unlockedIds.has(saga.id);
+                  return (
+                    <View key={saga.id} style={styles.markerCell}>
+                      <AchievementMarker size={64} unlocked={unlocked} />
+                      <Text
+                        style={[
+                          styles.markerTitle,
+                          {
+                            color: unlocked
+                              ? colors.foreground
+                              : colors.mutedForeground,
+                          },
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {saga.title}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </Animated.View>
+          );
+        })}
       </ScrollView>
     </Background>
   );
@@ -128,8 +198,33 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 20,
   },
+  albumTitle: { fontFamily: fonts.titleBold, fontSize: 22, marginBottom: 14 },
+  cantonCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 14 },
+  cantonHead: { flexDirection: "row", alignItems: "center", gap: 12 },
+  wappen: {
+    width: 44,
+    height: 48,
+    borderWidth: 1.5,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wappenText: { fontFamily: fonts.monoBold, fontSize: 14, letterSpacing: 1 },
+  cantonName: { fontFamily: fonts.bodyBold, fontSize: 16 },
+  cantonProgress: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: 12,
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  progressFill: { height: 4, borderRadius: 2 },
   grid: { flexDirection: "row", flexWrap: "wrap" },
-  markerCell: { width: "33.33%", alignItems: "center", marginBottom: 24 },
+  markerCell: { width: "33.33%", alignItems: "center", marginBottom: 14 },
   markerTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
