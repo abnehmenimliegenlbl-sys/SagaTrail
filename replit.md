@@ -68,7 +68,7 @@ SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates re
 ## Gotchas
 
 - The mobile workflow name is `artifacts/mobile: expo` (not `mobile`).
-- expo-speech / expo-sharing show Expo version-mismatch warnings; they run fine — do not "fix" by downgrading blindly.
+- expo-sharing/expo-speech/expo-localization MUST stay on the SDK-54-expected versions (~14.0.8 / ~14.0.8 / ~17.0.9): newer (SDK 55) versions run fine in dev/web but their Swift code fails to compile in the real iOS EAS build.
 - UI-chrome language selection has permanent priority once set (onboarding step 4 or Einstellungen); before that, the app uses the detected system language, falling back to English if unsupported. This UI language is independent from narration language, though they are initialized from the same source.
 
 ## Pointers

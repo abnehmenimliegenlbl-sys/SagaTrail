@@ -270,14 +270,14 @@ importers:
         specifier: ~19.0.23
         version: 19.0.23(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))
       expo-localization:
-        specifier: ^57.0.0
-        version: 57.0.0(expo@54.0.35)(react@19.1.0)
+        specifier: ^17.0.9
+        version: 17.0.9(expo@54.0.35)(react@19.1.0)
       expo-sharing:
-        specifier: ^57.0.1
-        version: 57.0.1(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
+        specifier: ^14.0.8
+        version: 14.0.8(expo@54.0.35)
       expo-speech:
-        specifier: ^57.0.0
-        version: 57.0.0(expo@54.0.35)
+        specifier: ^14.0.8
+        version: 14.0.8(expo@54.0.35)
       expo-speech-recognition:
         specifier: ^56.0.1
         version: 56.0.1(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -1360,14 +1360,8 @@ packages:
   '@expo/config-plugins@54.0.4':
     resolution: {integrity: sha512-g2yXGICdoOw5i3LkQSDxl2Q5AlQCrG7oniu0pCPPO+UxGb7He4AFqSvPSy8HpRUj55io17hT62FTjYRD+d6j3Q==}
 
-  '@expo/config-plugins@57.0.1':
-    resolution: {integrity: sha512-X8qOqWAhTWBEyxiSWV7jdXvV3R2rCBd2/GKK+crh31H/KzOGwV0ddHTQwgP3WjvdFzU4f8jQIoym7mHnz5eP1w==}
-
   '@expo/config-types@54.0.10':
     resolution: {integrity: sha512-/J16SC2an1LdtCZ67xhSkGXpALYUVUNyZws7v+PVsFZxClYehDSoKLqyRaGkpHlYrCc08bS0RF5E0JV6g50psA==}
-
-  '@expo/config-types@57.0.1':
-    resolution: {integrity: sha512-fo7d/Ym28uwGzdTV2leEvpsb9t+7i8YHjy471m31+cmDt4BRd/l7e94JHyrXAq4SWOBVus16S0JLqm89SRCCdw==}
 
   '@expo/config@12.0.13':
     resolution: {integrity: sha512-Cu52arBa4vSaupIWsF0h7F/Cg//N374nYb7HAxV0I4KceKA7x2UXpYaHOL7EEYYvp7tZdThBjvGpVmr8ScIvaQ==}
@@ -1450,9 +1444,6 @@ packages:
   '@expo/plist@0.4.9':
     resolution: {integrity: sha512-MPVpmKGfnQEnrCzgxuXcmPP/y/t6AVm+DcSb2Myp21LKWv1N3l8uFxMggesfF4ixAxkRlGmMMx9GyDC9M+XklQ==}
 
-  '@expo/plist@0.8.0':
-    resolution: {integrity: sha512-24JlUJI4PwHN4PLydlzFEzCdiqybfaV5t04QBkOg8em3AjvHKbMgBGlKreiuOoc0rNa3DZ21ZqL+xLGMBLQNKQ==}
-
   '@expo/prebuild-config@54.0.8':
     resolution: {integrity: sha512-EA7N4dloty2t5Rde+HP0IEE+nkAQiu4A/+QGZGT9mFnZ5KKjPPkqSyYcRvP5bhQE10D+tvz6X0ngZpulbMdbsg==}
     peerDependencies:
@@ -1462,14 +1453,6 @@ packages:
     resolution: {integrity: sha512-U4K/CQ2VpXuwfNGsN+daKmYOt15hCP8v/pXaYH6eut7kdYZo6SfJ1yr67BIcJ+1Gzzs+QzTxswAZChKpXmceyw==}
     peerDependencies:
       typescript: ^5.0.0 || ^5.0.0-0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@expo/require-utils@57.0.0':
-    resolution: {integrity: sha512-6PPvmqdAz7ikxJUwg+g/JV1KKQJS1xkkh/r+z4tucvBelrM0vMnENV2QVVn4qDWS0FfSIcwuSYvvx+4od/Sa9w==}
-    peerDependencies:
-      typescript: ^5.0.0 || ^5.0.0-0 || ^6.0.0
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -4334,8 +4317,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  expo-localization@57.0.0:
-    resolution: {integrity: sha512-6/o4SE4p1K8f0vXrm5oqt7SxyRPLomdhsANsZOwAqduTC/rzkLsqh5FidgppoTR6lPKT58z+jfk5R3grmbjQtA==}
+  expo-localization@17.0.9:
+    resolution: {integrity: sha512-k5eYHr7iLMob3M8cHH6bgDrDRmqnZG8xKGLhpx8ST+LsFXmSgYpJ/t0VwWm0gz64C/K669XhObdG3D6QwCGqhw==}
     peerDependencies:
       expo: '*'
       react: '*'
@@ -4397,12 +4380,10 @@ packages:
     resolution: {integrity: sha512-mcmyML3oXcqFUXUxtdtCL1O00ztNI2v76d+MdniXRUgHNxIcHZ05zo+DqBaOOT6LQnPk4vA4YHqQl7iGUfRb3g==}
     engines: {node: '>=20.16.0'}
 
-  expo-sharing@57.0.1:
-    resolution: {integrity: sha512-774cPMxxgPk5VUqAQxkZOTy/Mr/iqP1EONahDZ/BqSfTexXsK0JI2VKhcZN3skEigrxJd97C/C6e/Ksd5CkB6g==}
+  expo-sharing@14.0.8:
+    resolution: {integrity: sha512-A1pPr2iBrxypFDCWVAESk532HK+db7MFXbvO2sCV9ienaFXAk7lIBm6bkqgE6vzRd9O3RGdEGzYx80cYlc089Q==}
     peerDependencies:
       expo: '*'
-      react: '*'
-      react-native: '*'
 
   expo-speech-recognition@56.0.1:
     resolution: {integrity: sha512-TpP1KCiq3vYfSQF0XpUkWLXp4mTw6MLuyMGPzVVKwqzs7oiKlJ/e0q3PNNjfqs058X47ftqT+31lTaWRWRbmPg==}
@@ -4411,8 +4392,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  expo-speech@57.0.0:
-    resolution: {integrity: sha512-AOTdEkrFEq6t7ilQLOOZbrLkQrLYDSBC8aqcbhQMHgxe89yKqAAJ+r1hE0HqkNeK9YyV0mQ1+XizEmIX/djh5Q==}
+  expo-speech@14.0.8:
+    resolution: {integrity: sha512-UjBFCFv58nutlLw92L7kUS0ZjbOOfaTdiEv/HbjvMrT6BfldoOLLBZbaEcEhDdZK36NY/kass0Kzxk+co6vxSQ==}
     peerDependencies:
       expo: '*'
 
@@ -7893,28 +7874,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@expo/config-plugins@57.0.1(typescript@5.9.3)':
-    dependencies:
-      '@expo/config-types': 57.0.1
-      '@expo/json-file': 11.0.0
-      '@expo/plist': 0.8.0
-      '@expo/require-utils': 57.0.0(typescript@5.9.3)
-      '@expo/sdk-runtime-versions': 1.0.0
-      chalk: 4.1.2
-      debug: 4.4.3
-      getenv: 2.0.0
-      glob: 13.0.6
-      semver: 7.8.5
-      slugify: 1.6.9
-      xcode: 3.0.1
-      xml2js: 0.6.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   '@expo/config-types@54.0.10': {}
-
-  '@expo/config-types@57.0.1': {}
 
   '@expo/config@12.0.13':
     dependencies:
@@ -8098,12 +8058,6 @@ snapshots:
       base64-js: 1.5.1
       xmlbuilder: 15.1.1
 
-  '@expo/plist@0.8.0':
-    dependencies:
-      '@xmldom/xmldom': 0.8.13
-      base64-js: 1.5.1
-      xmlbuilder: 15.1.1
-
   '@expo/prebuild-config@54.0.8(expo@54.0.35)(typescript@5.9.3)':
     dependencies:
       '@expo/config': 12.0.13
@@ -8122,16 +8076,6 @@ snapshots:
       - typescript
 
   '@expo/require-utils@55.0.5(typescript@5.9.3)':
-    dependencies:
-      '@babel/code-frame': 7.29.7
-      '@babel/core': 7.29.7
-      '@babel/plugin-transform-modules-commonjs': 7.29.7(@babel/core@7.29.7)
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
-  '@expo/require-utils@57.0.0(typescript@5.9.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@babel/core': 7.29.7
@@ -11535,7 +11479,7 @@ snapshots:
       - expo
       - supports-color
 
-  expo-localization@57.0.0(expo@54.0.35)(react@19.1.0):
+  expo-localization@17.0.9(expo@54.0.35)(react@19.1.0):
     dependencies:
       expo: 54.0.35(@babel/core@7.29.7)(@expo/metro-runtime@6.1.2)(expo-router@6.0.24)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       react: 19.1.0
@@ -11608,17 +11552,9 @@ snapshots:
 
   expo-server@1.0.7: {}
 
-  expo-sharing@57.0.1(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3):
+  expo-sharing@14.0.8(expo@54.0.35):
     dependencies:
-      '@expo/config-plugins': 57.0.1(typescript@5.9.3)
-      '@expo/config-types': 57.0.1
-      '@expo/plist': 0.8.0
       expo: 54.0.35(@babel/core@7.29.7)(@expo/metro-runtime@6.1.2)(expo-router@6.0.24)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
-      react: 19.1.0
-      react-native: 0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   expo-speech-recognition@56.0.1(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -11626,7 +11562,7 @@ snapshots:
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0)
 
-  expo-speech@57.0.0(expo@54.0.35):
+  expo-speech@14.0.8(expo@54.0.35):
     dependencies:
       expo: 54.0.35(@babel/core@7.29.7)(@expo/metro-runtime@6.1.2)(expo-router@6.0.24)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
 
