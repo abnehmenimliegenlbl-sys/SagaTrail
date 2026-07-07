@@ -1,0 +1,237 @@
+import type { Logger } from "pino";
+
+/**
+ * Repraesentatives Foto fuer eine Route ueber die Wikimedia-Commons-Geosuche
+ * (kostenlos, kein API-Key). Bevorzugt Fotos, deren Aufnahmemonat zur
+ * aktuellen Jahreszeit passt (aus den EXIF-/Extmetadata-Angaben von Commons);
+ * gibt es keins, faellt die Auswahl auf das bestplatzierte Foto ueberhaupt.
+ * Findet sich gar nichts, liefert der Endpunkt null und der Client zeigt
+ * sein eigenes Fallback-Bild.
+ */
+
+const COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php";
+const REQUEST_TIMEOUT_MS = 10000;
+const SUCH_RADIUS_M = 3000;
+const MAX_KANDIDATEN = 20;
+const THUMB_BREITE_PX = 800;
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h — Fotos aendern sich kaum
+const NEGATIV_TTL_MS = 30 * 60 * 1000; // 30 min bei "nichts gefunden"
+
+export interface RoutePhoto {
+  photoUrl: string | null;
+  attribution: string | null;
+}
+
+interface CacheEintrag {
+  wert: RoutePhoto;
+  bisMs: number;
+}
+
+const cache = new Map<string, CacheEintrag>();
+
+type Jahreszeit = "fruehling" | "sommer" | "herbst" | "winter";
+
+function jahreszeitVonMonat(monat: number): Jahreszeit {
+  if (monat >= 3 && monat <= 5) return "fruehling";
+  if (monat >= 6 && monat <= 8) return "sommer";
+  if (monat >= 9 && monat <= 11) return "herbst";
+  return "winter";
+}
+
+interface CommonsPage {
+  title?: string;
+  imageinfo?: Array<{
+    thumburl?: string;
+    url?: string;
+    extmetadata?: {
+      DateTimeOriginal?: { value?: string };
+      Artist?: { value?: string };
+      LicenseShortName?: { value?: string };
+    };
+  }>;
+}
+
+interface CommonsResponse {
+  query?: {
+    pages?: Record<string, CommonsPage>;
+  };
+}
+
+/** Aufnahmemonat aus dem Commons-Datumsfeld ziehen (z. B. "2019-07-14 …"). */
+function aufnahmeMonat(roh: string | undefined): number | null {
+  if (!roh) return null;
+  const treffer = roh.match(/(\d{4})-(\d{2})/);
+  if (!treffer) return null;
+  const monat = Number(treffer[2]);
+  return monat >= 1 && monat <= 12 ? monat : null;
+}
+
+function htmlZuText(roh: string | undefined): string | null {
+  if (!roh) return null;
+  const text = roh.replace(/<[^>]*>/g, "").trim();
+  return text.length > 0 ? text : null;
+}
+
+/** Offensichtlich ungeeignete Dateien (Karten, Wappen, Diagramme) aussieben. */
+function wirktWieFoto(titel: string): boolean {
+  const klein = titel.toLowerCase();
+  if (!/\.(jpe?g)$/.test(klein)) return false;
+  const verboten = [
+    "map",
+    "karte",
+    "wappen",
+    "coat_of_arms",
+    "logo",
+    "diagram",
+    "plan_",
+    "timetable",
+    "fahrplan",
+    "schild",
+    "sign",
+    "tafel",
+    "plaque",
+    "interior",
+    "innen",
+    "bahnhof",
+    "station",
+    "parkplatz",
+    "parking",
+    "lok",
+    "train",
+    "zug_",
+    "railcar",
+    "tram",
+    "bus_",
+    "wagen",
+  ];
+  return !verboten.some((wort) => klein.includes(wort));
+}
+
+async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[]> {
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    formatversion: "1",
+    generator: "geosearch",
+    ggscoord: `${lat}|${lng}`,
+    ggsradius: String(SUCH_RADIUS_M),
+    ggslimit: String(MAX_KANDIDATEN),
+    ggsnamespace: "6",
+    prop: "imageinfo",
+    iiprop: "url|extmetadata",
+    iiurlwidth: String(THUMB_BREITE_PX),
+    iiextmetadatafilter: "DateTimeOriginal|Artist|LicenseShortName",
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${COMMONS_API_URL}?${params}`, {
+      signal: controller.signal,
+      headers: { "User-Agent": "SagaTrail/1.0 (Routenfoto-Suche)" },
+    });
+    if (!res.ok) throw new Error(`Commons-API-Status ${res.status}`);
+    const data = (await res.json()) as CommonsResponse;
+    return Object.values(data.query?.pages ?? {});
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Hinweise im Dateititel, dass ein Foto Landschaft/Ort statt Objekt zeigt.
+ * Rein heuristisch — Commons-Titel sind frei vergeben.
+ */
+const LANDSCHAFTS_HINWEISE = [
+  "panorama",
+  "view",
+  "aussicht",
+  "blick",
+  "landschaft",
+  "landscape",
+  "tal",
+  "valley",
+  "berg",
+  "mountain",
+  "alp",
+  "see",
+  "lake",
+  "wasserfall",
+  "fall",
+  "gletscher",
+  "glacier",
+  "pass",
+  "schlucht",
+  "gorge",
+  "bruecke",
+  "brücke",
+  "bridge",
+  "dorf",
+  "village",
+  "switzerland",
+  "schweiz",
+];
+
+function landschaftsBonus(titel: string): number {
+  const klein = titel.toLowerCase();
+  return LANDSCHAFTS_HINWEISE.some((wort) => klein.includes(wort)) ? 1 : 0;
+}
+
+function wähleFoto(seiten: CommonsPage[], jetzt: Date): RoutePhoto | null {
+  const zielJahreszeit = jahreszeitVonMonat(jetzt.getMonth() + 1);
+  const kandidaten = seiten
+    .filter((s) => s.title && wirktWieFoto(s.title) && s.imageinfo?.[0]?.thumburl)
+    .map((s, index) => {
+      const info = s.imageinfo![0]!;
+      const monat = aufnahmeMonat(info.extmetadata?.DateTimeOriginal?.value);
+      return {
+        url: info.thumburl ?? info.url ?? null,
+        passtZurSaison: monat != null && jahreszeitVonMonat(monat) === zielJahreszeit,
+        landschaft: landschaftsBonus(s.title!),
+        index,
+        autor: htmlZuText(info.extmetadata?.Artist?.value),
+        lizenz: htmlZuText(info.extmetadata?.LicenseShortName?.value),
+      };
+    })
+    .filter((k) => k.url != null);
+  if (kandidaten.length === 0) return null;
+  // Reihung: erst Landschafts-Hinweis im Titel, dann Saisonpassung, dann die
+  // urspruengliche Geosuche-Reihung (naechstgelegen zuerst).
+  kandidaten.sort(
+    (a, b) =>
+      b.landschaft - a.landschaft ||
+      Number(b.passtZurSaison) - Number(a.passtZurSaison) ||
+      a.index - b.index,
+  );
+  const gewaehlt = kandidaten[0]!;
+  const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
+    .filter((teil): teil is string => teil != null)
+    .join(" · ");
+  return { photoUrl: gewaehlt.url, attribution };
+}
+
+export async function getCachedRoutePhoto(
+  lat: number,
+  lng: number,
+  log: Logger,
+): Promise<RoutePhoto> {
+  // Rasterung auf ~100 m, damit nahe Startpunkte denselben Cache-Schluessel teilen
+  const schluessel = `${lat.toFixed(3)}|${lng.toFixed(3)}`;
+  const jetztMs = Date.now();
+  const vorhanden = cache.get(schluessel);
+  if (vorhanden && vorhanden.bisMs > jetztMs) return vorhanden.wert;
+  try {
+    const seiten = await sucheCommonsFotos(lat, lng);
+    const foto = wähleFoto(seiten, new Date());
+    const wert: RoutePhoto = foto ?? { photoUrl: null, attribution: null };
+    cache.set(schluessel, {
+      wert,
+      bisMs: jetztMs + (foto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
+    });
+    return wert;
+  } catch (err) {
+    log.warn({ lat, lng, err }, "Commons-Routenfoto konnte nicht geladen werden");
+    const wert: RoutePhoto = { photoUrl: null, attribution: null };
+    cache.set(schluessel, { wert, bisMs: jetztMs + NEGATIV_TTL_MS });
+    return wert;
+  }
+}

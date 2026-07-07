@@ -772,7 +772,7 @@ export const getGetRoutePhotoQueryKey = (params?: GetRoutePhotoParams,) => {
     }
 
 
-export const getGetRoutePhotoQueryOptions = <TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<unknown>>(params: GetRoutePhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetRoutePhotoQueryOptions = <TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<ErrorResponse>>(params: GetRoutePhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -791,14 +791,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRoutePhotoQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutePhoto>>>
-export type GetRoutePhotoQueryError = ErrorType<unknown>
+export type GetRoutePhotoQueryError = ErrorType<ErrorResponse>
 
 
 /**
  * @summary Repraesentatives Foto fuer eine Route (Wikimedia Commons)
  */
 
-export function useGetRoutePhoto<TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<unknown>>(
+export function useGetRoutePhoto<TData = Awaited<ReturnType<typeof getRoutePhoto>>, TError = ErrorType<ErrorResponse>>(
  params: GetRoutePhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoutePhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {

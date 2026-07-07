@@ -28,7 +28,7 @@ import {
   RouteSearchFilter,
 } from "@/contexts/CatalogContext";
 import { useKantonStrings } from "@/lib/i18n/screens/kanton";
-import { panoramaFuerRoute } from "@/lib/panorama";
+import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 
 const DIST_MIN = 0;
@@ -202,7 +202,6 @@ export default function KantonRouten() {
                     route={route}
                     index={i}
                     locked={locked}
-                    image={panoramaFuerRoute(route.maxElevationM)}
                     onPress={() => router.push(`/route/${route.id}`)}
                   />
                 );
@@ -219,27 +218,36 @@ function RouteCard({
   route,
   index,
   locked,
-  image,
   onPress,
 }: {
   route: HikingRoute;
   index: number;
   locked: boolean;
-  image: number;
   onPress: () => void;
 }) {
   const t = useKantonStrings();
   const colors = useColors();
+  // Echtes, moeglichst saisonpassendes Foto aus Routennaehe; solange keins
+  // geladen ist, zeigt der Hook das gebuendelte Saison-Panorama.
+  const foto = useRouteFoto(route);
   const h = Math.floor(route.minutes / 60);
   const m = route.minutes % 60;
   return (
     <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
       <Pressable onPress={onPress} style={styles.card}>
-        <Image source={image} style={styles.cardImg} resizeMode="cover" />
+        <Image source={foto.source} style={styles.cardImg} resizeMode="cover" />
         <LinearGradient
           colors={["rgba(16,24,26,0.2)", "rgba(16,24,26,0.94)"]}
           style={StyleSheet.absoluteFill}
         />
+        {foto.attribution && (
+          <Text
+            style={[styles.cardAttribution, { color: colors.mutedForeground }]}
+            numberOfLines={1}
+          >
+            {foto.attribution}
+          </Text>
+        )}
         <View style={styles.cardContent}>
           <View style={styles.cardTopRow}>
             <Text style={[styles.cardEyebrow, { color: colors.accent }]}>
@@ -289,6 +297,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   intro: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginTop: 4, marginBottom: 18 },
+  cardAttribution: {
+    position: "absolute",
+    top: 8,
+    right: 10,
+    maxWidth: "70%",
+    fontFamily: fonts.body,
+    fontSize: 9,
+    opacity: 0.85,
+  },
   filterPanel: {
     borderRadius: 18,
     borderWidth: 1,
