@@ -631,6 +631,18 @@ export default function LiveHike() {
     };
   }, [currentIndex, preparing, awaitingDecision, finished, chapters.length, locState, totalKm]);
 
+  // Konsistente Haptik: jedes abgeschlossene Kapitel gibt ein leichtes
+  // Vibrationsfeedback — unabhaengig davon, ob GPS oder Simulation den
+  // Fortschritt treibt.
+  const lastHapticIndexRef = useRef(0);
+  useEffect(() => {
+    if (preparing || currentIndex <= lastHapticIndexRef.current) return;
+    lastHapticIndexRef.current = currentIndex;
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }, [currentIndex, preparing]);
+
   // Sprachausgabe beim Verlassen stoppen
   useEffect(() => {
     return () => {

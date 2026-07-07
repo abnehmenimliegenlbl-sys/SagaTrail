@@ -1,10 +1,12 @@
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
@@ -19,6 +21,7 @@ const WEB_TOP = 67;
 export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { achievements } = useApp();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
@@ -76,6 +79,11 @@ export default function Sammlung() {
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               {t.emptyState}
             </Text>
+            <PrimaryButton
+              label={t.emptyCta}
+              onPress={() => router.push("/")}
+              style={{ marginTop: 18, alignSelf: "stretch" }}
+            />
           </View>
         )}
 

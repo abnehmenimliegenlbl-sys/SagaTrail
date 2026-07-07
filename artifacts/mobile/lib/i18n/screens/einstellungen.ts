@@ -13,6 +13,7 @@ export interface EinstellungenStrings {
   archetypeLabel: string;
   ageTierLabel: string;
   languageLabel: string;
+  voicePreviewLabel: string;
   powerSaveLabel: string;
   powerSaveHint: string;
   contactNamePlaceholder: string;
@@ -56,6 +57,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Archetyp",
     ageTierLabel: "Alterstufe",
     languageLabel: "Sprache",
+    voicePreviewLabel: "Stimme anhören",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert GPS-Genauigkeit und Kartenaktualisierung",
     contactNamePlaceholder: "Name",
@@ -97,6 +99,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Archetyp",
     ageTierLabel: "Alterstuefe",
     languageLabel: "Sprach",
+    voicePreviewLabel: "Stimm alose",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert d'GPS-Gnauigkeit und Chartenuupassig",
     contactNamePlaceholder: "Name",
@@ -138,6 +141,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Archétype",
     ageTierLabel: "Tranche d'âge",
     languageLabel: "Langue",
+    voicePreviewLabel: "Écouter la voix",
     powerSaveLabel: "Mode économie d'énergie",
     powerSaveHint: "Réduit la précision GPS et la mise à jour de la carte",
     contactNamePlaceholder: "Nom",
@@ -179,6 +183,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Archetipo",
     ageTierLabel: "Fascia d'età",
     languageLabel: "Lingua",
+    voicePreviewLabel: "Ascolta la voce",
     powerSaveLabel: "Risparmio energetico",
     powerSaveHint: "Riduce la precisione del GPS e l'aggiornamento della mappa",
     contactNamePlaceholder: "Nome",
@@ -220,6 +225,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Archetype",
     ageTierLabel: "Age Tier",
     languageLabel: "Language",
+    voicePreviewLabel: "Preview voice",
     powerSaveLabel: "Power Saving Mode",
     powerSaveHint: "Reduces GPS accuracy and map updates",
     contactNamePlaceholder: "Name",
@@ -261,6 +267,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "原型",
     ageTierLabel: "年龄段",
     languageLabel: "语言",
+    voicePreviewLabel: "试听语音",
     powerSaveLabel: "省电模式",
     powerSaveHint: "降低 GPS 精度和地图更新频率",
     contactNamePlaceholder: "姓名",
@@ -302,6 +309,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Arquetipo",
     ageTierLabel: "Grupo de edad",
     languageLabel: "Idioma",
+    voicePreviewLabel: "Escuchar la voz",
     powerSaveLabel: "Modo ahorro de energía",
     powerSaveHint: "Reduce la precisión del GPS y la actualización del mapa",
     contactNamePlaceholder: "Nombre",
@@ -343,6 +351,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     archetypeLabel: "Arquétipo",
     ageTierLabel: "Faixa etária",
     languageLabel: "Idioma",
+    voicePreviewLabel: "Ouvir a voz",
     powerSaveLabel: "Modo de economia de energia",
     powerSaveHint: "Reduz a precisão do GPS e a atualização do mapa",
     contactNamePlaceholder: "Nome",

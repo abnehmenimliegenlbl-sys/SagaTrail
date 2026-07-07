@@ -1,6 +1,8 @@
 import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import * as Speech from "expo-speech";
 import React, { useState } from "react";
 import {
   Alert,
@@ -31,9 +33,23 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
+import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
+
+// Kurzer Vorhoer-Satz pro Erzaehlsprache — bewusst in der Zielsprache,
+// damit man die Erzaehlstimme direkt beurteilen kann.
+const VOICE_SAMPLES: Record<string, string> = {
+  de: "So klingt deine Erzählstimme auf dem Wanderweg.",
+  gsw: "So tönt dini Verzellstimm uf em Wanderwäg.",
+  fr: "Voici la voix qui racontera tes légendes en chemin.",
+  it: "Questa è la voce che racconterà le tue leggende.",
+  en: "This is the voice that will tell your sagas on the trail.",
+  zh: "这就是徒步时为你讲述传说的声音。",
+  es: "Esta es la voz que narrará tus leyendas en el camino.",
+  pt: "Esta é a voz que narrará suas lendas na trilha.",
+};
 
 export default function Einstellungen() {
   const colors = useColors();
@@ -72,10 +88,19 @@ export default function Einstellungen() {
     updateProfile({ ageTier: order[(idx + 1) % order.length] });
   };
 
-  const cycleLang = () => {
-    const idx = SUPPORTED_LANGUAGES.findIndex((c) => c === profile?.language);
-    const nextLang = SUPPORTED_LANGUAGES[(idx + 1) % SUPPORTED_LANGUAGES.length];
-    updateProfile({ language: nextLang });
+  const selectLang = (code: (typeof SUPPORTED_LANGUAGES)[number]) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    updateProfile({ language: code });
+  };
+
+  const previewVoice = () => {
+    const lang = resolveLang(profile?.language);
+    Speech.stop();
+    Speech.speak(VOICE_SAMPLES[lang] ?? VOICE_SAMPLES.de, {
+      language: SPEECH_LOCALE[lang],
+    });
   };
 
   const handleExport = async () => {
@@ -126,10 +151,6 @@ export default function Einstellungen() {
   const ageLabel = profile?.ageTier
     ? onboardingStrings.ageTiers[profile.ageTier].title
     : undefined;
-  const langLabel = profile?.language
-    ? NATIVE_LANGUAGE_NAMES[profile.language as keyof typeof NATIVE_LANGUAGE_NAMES]
-    : undefined;
-
   return (
     <Background>
       <ScrollView
@@ -147,7 +168,44 @@ export default function Einstellungen() {
           <RowButton label={t.homeCantonLabel} value={profile?.homeCanton ?? "-"} />
           <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
           <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
-          <RowButton label={t.languageLabel} value={langLabel ?? "-"} onPress={cycleLang} />
+          <View style={[styles.langBlock, { borderColor: colors.glassBorder }]}>
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+              {t.languageLabel}
+            </Text>
+            <View style={styles.langChips}>
+              {SUPPORTED_LANGUAGES.map((code) => {
+                const active = profile?.language === code;
+                return (
+                  <Pressable
+                    key={code}
+                    onPress={() => selectLang(code)}
+                    style={[
+                      styles.langChip,
+                      {
+                        borderColor: active ? colors.accent : colors.glassBorder,
+                        backgroundColor: active ? colors.accent + "22" : "transparent",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.langChipText,
+                        { color: active ? colors.accent : colors.mutedForeground },
+                      ]}
+                    >
+                      {NATIVE_LANGUAGE_NAMES[code]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable onPress={previewVoice} style={styles.voicePreview}>
+              <Feather name="volume-2" size={16} color={colors.accent} />
+              <Text style={[styles.voicePreviewText, { color: colors.accent }]}>
+                {t.voicePreviewLabel}
+              </Text>
+            </Pressable>
+          </View>
         </Section>
 
         <Section title={t.sectionWanderung}>
@@ -345,6 +403,23 @@ const styles = StyleSheet.create({
   rowLabel: { fontFamily: fonts.bodyMedium, fontSize: 15 },
   rowHint: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
   rowValue: { fontFamily: fonts.body, fontSize: 14 },
+  langBlock: { paddingVertical: 15, borderBottomWidth: 1 },
+  langChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+  langChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  langChipText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
+  voicePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+    alignSelf: "flex-start",
+  },
+  voicePreviewText: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",
