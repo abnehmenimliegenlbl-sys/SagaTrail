@@ -11,6 +11,7 @@ export interface HomeStrings {
   otherCantonsTitle: string;
   cantonsTitle: string;
   routeCount: (count: number) => string;
+  sagaProgress: (d: number, total: number) => string;
   liveFromSwisstopo: string;
   allCantonsHint: (count: number) => string;
   customRouteTitle: string;
@@ -33,6 +34,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Weitere Kantone",
     cantonsTitle: "Kantone",
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderrouten"}`,
+    sagaProgress: (d, t) => `${d} von ${t} Sagen entdeckt`,
     liveFromSwisstopo: "Routen live aus swisstopo",
     allCantonsHint: (n) => `Alle ${n} Kantone · Routen live aus swisstopo`,
     customRouteTitle: "Eigene Route",
@@ -53,6 +55,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Wiiteri Kantön",
     cantonsTitle: "Kantön",
     routeCount: (n) => `${n} ${n === 1 ? "Wanderroute" : "Wanderroute"}`,
+    sagaProgress: (d, t) => `${d} vo ${t} Sage entdeckt`,
     liveFromSwisstopo: "Route live us swisstopo",
     allCantonsHint: (n) => `Alli ${n} Kantön · Route live us swisstopo`,
     customRouteTitle: "Eigeni Route",
@@ -73,6 +76,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Other cantons",
     cantonsTitle: "Cantons",
     routeCount: (n) => `${n} ${n === 1 ? "hiking route" : "hiking routes"}`,
+    sagaProgress: (d, t) => `${d} of ${t} sagas discovered`,
     liveFromSwisstopo: "Routes live from swisstopo",
     allCantonsHint: (n) => `All ${n} cantons · Routes live from swisstopo`,
     customRouteTitle: "Custom route",
@@ -93,6 +97,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Autres cantons",
     cantonsTitle: "Cantons",
     routeCount: (n) => `${n} ${n <= 1 ? "itinéraire" : "itinéraires"}`,
+    sagaProgress: (d, t) => `${d} légende(s) sur ${t} découverte(s)`,
     liveFromSwisstopo: "Itinéraires en direct de swisstopo",
     allCantonsHint: (n) => `Les ${n} cantons · Itinéraires en direct de swisstopo`,
     customRouteTitle: "Itinéraire personnalisé",
@@ -113,6 +118,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Altri cantoni",
     cantonsTitle: "Cantoni",
     routeCount: (n) => `${n} ${n === 1 ? "sentiero" : "sentieri"}`,
+    sagaProgress: (d, t) => `${d} leggende su ${t} scoperte`,
     liveFromSwisstopo: "Percorsi live da swisstopo",
     allCantonsHint: (n) => `Tutti i ${n} cantoni · Percorsi live da swisstopo`,
     customRouteTitle: "Itinerario personalizzato",
@@ -133,6 +139,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Otros cantones",
     cantonsTitle: "Cantones",
     routeCount: (n) => `${n} ${n === 1 ? "ruta de senderismo" : "rutas de senderismo"}`,
+    sagaProgress: (d, t) => `${d} de ${t} leyendas descubiertas`,
     liveFromSwisstopo: "Rutas en vivo desde swisstopo",
     allCantonsHint: (n) => `Los ${n} cantones · Rutas en vivo desde swisstopo`,
     customRouteTitle: "Ruta personalizada",
@@ -153,6 +160,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "Outros cantões",
     cantonsTitle: "Cantões",
     routeCount: (n) => `${n} ${n === 1 ? "rota de caminhada" : "rotas de caminhada"}`,
+    sagaProgress: (d, t) => `${d} de ${t} lendas descobertas`,
     liveFromSwisstopo: "Rotas ao vivo do swisstopo",
     allCantonsHint: (n) => `Todos os ${n} cantões · Rotas ao vivo do swisstopo`,
     customRouteTitle: "Rota personalizada",
@@ -173,6 +181,7 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     otherCantonsTitle: "其他联邦州",
     cantonsTitle: "联邦州",
     routeCount: (n) => `${n} 条徒步路线`,
+    sagaProgress: (d, t) => `已发现 ${d}/${t} 个传说`,
     liveFromSwisstopo: "来自 swisstopo 的实时路线",
     allCantonsHint: (n) => `全部 ${n} 个联邦州 · 来自 swisstopo 的实时路线`,
     customRouteTitle: "自定义路线",

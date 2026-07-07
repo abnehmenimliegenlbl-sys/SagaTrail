@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -23,13 +23,17 @@ export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { achievements } = useApp();
+  const { achievements, hikeHistory } = useApp();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
   const cantons = Array.from(new Set(sagas.map((s) => s.canton)));
+
+  // Wanderstatistik aus dem Tagebuch (alle abgeschlossenen Wanderungen)
+  const totalKm = hikeHistory.reduce((sum, h) => sum + (h.distanceKm || 0), 0);
+  const totalAscent = hikeHistory.reduce((sum, h) => sum + (h.ascentM || 0), 0);
 
   return (
     <Background>
@@ -71,6 +75,45 @@ export default function Sammlung() {
             </Text>
           </View>
         </View>
+
+        {hikeHistory.length > 0 && (
+          <View
+            style={[
+              styles.wanderStats,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <Text style={[styles.wanderStatsTitle, { color: colors.foreground }]}>
+              {t.statsTitle}
+            </Text>
+            <View style={styles.wanderStatsRow}>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.accent }]}>
+                  {totalKm.toFixed(totalKm >= 100 ? 0 : 1)}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsKm}
+                </Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.accent }]}>
+                  {Math.round(totalAscent)}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsAscent}
+                </Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.accent }]}>
+                  {hikeHistory.length}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsHikes}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         <SparkDivider style={{ marginVertical: 24 }} />
 
@@ -183,6 +226,48 @@ export default function Sammlung() {
             </Animated.View>
           );
         })}
+
+        {hikeHistory.length > 0 && (
+          <>
+            <Text
+              style={[
+                styles.albumTitle,
+                { color: colors.foreground, marginTop: 20 },
+              ]}
+            >
+              {t.diaryTitle}
+            </Text>
+            {hikeHistory.map((hike, hi) => (
+              <Animated.View
+                key={hike.id}
+                entering={FadeInDown.delay(hi * 60)}
+                style={[
+                  styles.diaryCard,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                {hike.photoUri && (
+                  <Image
+                    source={{ uri: hike.photoUri }}
+                    style={styles.diaryPhoto}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={styles.diaryBody}>
+                  <Text
+                    style={[styles.diaryName, { color: colors.foreground }]}
+                    numberOfLines={2}
+                  >
+                    {hike.routeName}
+                  </Text>
+                  <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
+                    {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
+                  </Text>
+                </View>
+              </Animated.View>
+            ))}
+          </>
+        )}
       </ScrollView>
     </Background>
   );
@@ -242,4 +327,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   markerCanton: { fontFamily: fonts.mono, fontSize: 10, marginTop: 2 },
+  wanderStats: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 22,
+  },
+  wanderStatsTitle: { fontFamily: fonts.bodyBold, fontSize: 15, marginBottom: 12 },
+  wanderStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  wanderStatNum: { fontFamily: fonts.monoBold, fontSize: 22 },
+  diaryCard: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: "hidden",
+    marginBottom: 14,
+  },
+  diaryPhoto: { width: "100%", height: 160 },
+  diaryBody: { padding: 14 },
+  diaryName: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  diaryMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 4 },
 });

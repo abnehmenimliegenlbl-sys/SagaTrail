@@ -15,3 +15,4 @@
 - [SagaTrail hands-free voice decisions](sagatrail-voice-decision.md) — decision points answered by speech (expo-speech-recognition), needs dev/EAS build, gracefully falls back to tap buttons.
 - [Clerk iOS SPM + CocoaPods build crash](clerk-ios-spm-cocoapods.md) — iOS EAS build with Clerk's SPM-linked SDK only works with `expo-build-properties` `useFrameworks: "static"` (dynamic triggers validator crashes).
 - [Prod premium admin endpoint](prod-premium-admin.md) — prod DB is read-only from workspace; grant premium via ADMIN_TOKEN-protected /admin/premium after publish; self-upgrade deliberately blocked.
+- [SagaTrail group hike sync](sagatrail-group-hike-sync.md) — leader-only enforced server-side; non-fatal WS errors must not close the socket; late joiners resync via member-count rebroadcast.

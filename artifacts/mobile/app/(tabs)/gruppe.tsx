@@ -242,6 +242,40 @@ export default function Gruppe() {
                       : `  ·  ${t.activityReady}`}
                   </Text>
                 </View>
+                {!groupSession.isLeader &&
+                  m.isLeader &&
+                  m.activity.type === "wandert" &&
+                  m.activity.sagaId != null && (
+                    <Pressable
+                      onPress={() => {
+                        // Mitwandern: dieselbe Sage/Route wie die Leitung
+                        // oeffnen — Kapitel und Entscheidungen folgen dann
+                        // live der Gruppenleitung.
+                        const a = m.activity as {
+                          sagaId?: string;
+                          routeId?: string;
+                        };
+                        if (!a.sagaId) return;
+                        const routeParam = a.routeId
+                          ? `?routeId=${encodeURIComponent(a.routeId)}`
+                          : "";
+                        router.push(
+                          `/hike/${encodeURIComponent(a.sagaId)}${routeParam}`,
+                        );
+                      }}
+                      hitSlop={10}
+                      style={[
+                        styles.joinHikeBtn,
+                        { borderColor: colors.primary },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.joinHikeText, { color: colors.primary }]}
+                      >
+                        {t.joinHikeButton}
+                      </Text>
+                    </Pressable>
+                  )}
                 {groupSession.isLeader && !m.isLeader && (
                   <Pressable onPress={() => kickMember(m.id)} hitSlop={10}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
@@ -332,6 +366,13 @@ const styles = StyleSheet.create({
   avatarText: { fontFamily: fonts.titleBold, fontSize: 18 },
   memberName: { fontFamily: fonts.bodyBold, fontSize: 15 },
   memberTier: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
+  joinHikeBtn: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  joinHikeText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   syncNote: {
     fontFamily: fonts.body,
     fontSize: 12,

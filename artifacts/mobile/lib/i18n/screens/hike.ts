@@ -22,6 +22,7 @@ export interface HikeStrings {
   readAloud: string;
   repeatChapter: string;
   turnNotifTitle: string;
+  chapterNotif: (n: number) => string;
   turnNotifLeft: string;
   turnNotifRight: string;
   poiNotifBody: string;
@@ -47,6 +48,8 @@ export interface HikeStrings {
   voiceListening: string;
   voiceOrTap: string;
   yourChoice: (option: string) => string;
+  leaderDecides: string;
+  leaderChose: (option: string) => string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -72,6 +75,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Vorlesen",
     repeatChapter: "Wiederholen",
     turnNotifTitle: "Abzweigung voraus",
+    chapterNotif: (n) => `Kapitel ${n} beginnt`,
     turnNotifLeft: "Gleich links halten",
     turnNotifRight: "Gleich rechts halten",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
@@ -97,6 +101,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Ich höre zu … sag deine Antwort",
     voiceOrTap: "Sprich deine Antwort oder tippe eine Option an",
     yourChoice: (option) => `Du hast gewählt: ${option}`,
+    leaderDecides: "Die Gruppenleitung entscheidet für die Gruppe …",
+    leaderChose: (option) => `Die Gruppenleitung hat gewählt: ${option}`,
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -120,6 +126,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Vorläse",
     repeatChapter: "Nomal",
     turnNotifTitle: "Abzwiigig voruus",
+    chapterNotif: (n) => `Kapitel ${n} faht aa`,
     turnNotifLeft: "Grad links halte",
     turnNotifRight: "Grad rächts halte",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
@@ -145,6 +152,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Ich lose … sag dini Antwort",
     voiceOrTap: "Sprich dini Antwort oder tipp e Option a",
     yourChoice: (option) => `Du hesch gwählt: ${option}`,
+    leaderDecides: "D Gruppäleitig entscheidet für d Gruppä …",
+    leaderChose: (option) => `D Gruppäleitig het gwählt: ${option}`,
   },
   en: {
     notAvailable: "Not available",
@@ -168,6 +177,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Read aloud",
     repeatChapter: "Repeat",
     turnNotifTitle: "Turn ahead",
+    chapterNotif: (n) => `Chapter ${n} begins`,
     turnNotifLeft: "Keep left shortly",
     turnNotifRight: "Keep right shortly",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
@@ -193,6 +203,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Listening … say your answer",
     voiceOrTap: "Speak your answer or tap an option",
     yourChoice: (option) => `You chose: ${option}`,
+    leaderDecides: "The group leader decides for the group …",
+    leaderChose: (option) => `The group leader chose: ${option}`,
   },
   fr: {
     notAvailable: "Non disponible",
@@ -216,6 +228,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Lire à voix haute",
     repeatChapter: "Répéter",
     turnNotifTitle: "Bifurcation en vue",
+    chapterNotif: (n) => `Le chapitre ${n} commence`,
     turnNotifLeft: "Serrez à gauche",
     turnNotifRight: "Serrez à droite",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
@@ -241,6 +254,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "J'écoute … dis ta réponse",
     voiceOrTap: "Dis ta réponse ou touche une option",
     yourChoice: (option) => `Tu as choisi : ${option}`,
+    leaderDecides: "Le chef de groupe décide pour le groupe …",
+    leaderChose: (option) => `Le chef de groupe a choisi : ${option}`,
   },
   it: {
     notAvailable: "Non disponibile",
@@ -264,6 +279,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Leggi a voce alta",
     repeatChapter: "Ripeti",
     turnNotifTitle: "Bivio in arrivo",
+    chapterNotif: (n) => `Inizia il capitolo ${n}`,
     turnNotifLeft: "Tieni la sinistra",
     turnNotifRight: "Tieni la destra",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
@@ -289,6 +305,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Sto ascoltando … di' la tua risposta",
     voiceOrTap: "Pronuncia la tua risposta o tocca un'opzione",
     yourChoice: (option) => `Hai scelto: ${option}`,
+    leaderDecides: "Il capogruppo decide per il gruppo …",
+    leaderChose: (option) => `Il capogruppo ha scelto: ${option}`,
   },
   es: {
     notAvailable: "No disponible",
@@ -312,6 +330,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Leer en voz alta",
     repeatChapter: "Repetir",
     turnNotifTitle: "Curva próxima",
+    chapterNotif: (n) => `Comienza el capítulo ${n}`,
     turnNotifLeft: "Mantente a la izquierda",
     turnNotifRight: "Mantente a la derecha",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
@@ -337,6 +356,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Escuchando … di tu respuesta",
     voiceOrTap: "Di tu respuesta o toca una opción",
     yourChoice: (option) => `Has elegido: ${option}`,
+    leaderDecides: "El líder del grupo decide por el grupo …",
+    leaderChose: (option) => `El líder del grupo eligió: ${option}`,
   },
   pt: {
     notAvailable: "Não disponível",
@@ -360,6 +381,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "Ler em voz alta",
     repeatChapter: "Repetir",
     turnNotifTitle: "Curva à frente",
+    chapterNotif: (n) => `Começa o capítulo ${n}`,
     turnNotifLeft: "Mantenha-se à esquerda",
     turnNotifRight: "Mantenha-se à direita",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
@@ -385,6 +407,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "Ouvindo … diga sua resposta",
     voiceOrTap: "Diga sua resposta ou toque em uma opção",
     yourChoice: (option) => `Você escolheu: ${option}`,
+    leaderDecides: "O líder do grupo decide pelo grupo …",
+    leaderChose: (option) => `O líder do grupo escolheu: ${option}`,
   },
   zh: {
     notAvailable: "不可用",
@@ -408,6 +432,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     readAloud: "朗读",
     repeatChapter: "重听",
     turnNotifTitle: "前方转弯",
+    chapterNotif: (n) => `第 ${n} 章开始`,
     turnNotifLeft: "即将靠左",
     turnNotifRight: "即将靠右",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
@@ -433,6 +458,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceListening: "正在聆听 … 请说出你的答案",
     voiceOrTap: "说出你的答案，或点击一个选项",
     yourChoice: (option) => `你的选择：${option}`,
+    leaderDecides: "由队长为团队做出选择……",
+    leaderChose: (option) => `队长选择了：${option}`,
   },
 };
 

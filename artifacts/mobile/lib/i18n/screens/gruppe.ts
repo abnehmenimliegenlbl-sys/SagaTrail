@@ -23,6 +23,7 @@ export interface GruppeStrings {
   membersTitle: (count: number) => string;
   leaderLabel: string;
   activityWandering: (sagaTitle: string) => string;
+  joinHikeButton: string;
   activityReady: string;
   syncNote: string;
   leaveSessionButton: string;
@@ -52,6 +53,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Mitglieder (${count})`,
     leaderLabel: "Leitung",
     activityWandering: (sagaTitle) => `wandert: ${sagaTitle}`,
+    joinHikeButton: "Mitwandern",
     activityReady: "bereit",
     syncNote: "Live verbunden: Beitritte, Austritte und Wander-Status der Gruppe werden in Echtzeit synchronisiert.",
     leaveSessionButton: "Session verlassen",
@@ -83,6 +85,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Mitgliider (${count})`,
     leaderLabel: "Leitig",
     activityWandering: (sagaTitle) => `wanderet: ${sagaTitle}`,
+    joinHikeButton: "Mitwanderä",
     activityReady: "bereit",
     syncNote: "Live verbunde: Biitritt, Uustritt und Wander-Status vode Gruppe wärdet in Ächtziit synchronisiert.",
     leaveSessionButton: "Session verlaa",
@@ -114,6 +117,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Membres (${count})`,
     leaderLabel: "Responsable",
     activityWandering: (sagaTitle) => `en marche : ${sagaTitle}`,
+    joinHikeButton: "Marcher ensemble",
     activityReady: "prêt",
     syncNote: "Connecté en direct : les adhésions, les départs et le statut de randonnée du groupe sont synchronisés en temps réel.",
     leaveSessionButton: "Quitter la session",
@@ -145,6 +149,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Membri (${count})`,
     leaderLabel: "Guida",
     activityWandering: (sagaTitle) => `in cammino: ${sagaTitle}`,
+    joinHikeButton: "Cammina insieme",
     activityReady: "pronto",
     syncNote: "Connesso live: entrate, uscite e stato dell'escursione del gruppo sono sincronizzati in tempo reale.",
     leaveSessionButton: "Lascia sessione",
@@ -176,6 +181,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Members (${count})`,
     leaderLabel: "Leader",
     activityWandering: (sagaTitle) => `hiking: ${sagaTitle}`,
+    joinHikeButton: "Join hike",
     activityReady: "ready",
     syncNote: "Live connected: joins, leaves, and hiking status of the group are synchronized in real time.",
     leaveSessionButton: "Leave session",
@@ -207,6 +213,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `成员 (${count})`,
     leaderLabel: "领队",
     activityWandering: (sagaTitle) => `正在徒步：${sagaTitle}`,
+    joinHikeButton: "一起徒步",
     activityReady: "就绪",
     syncNote: "实时连接：小组的加入、退出和徒步状态将实时同步。",
     leaveSessionButton: "离开会话",
@@ -238,6 +245,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Miembros (${count})`,
     leaderLabel: "Guía",
     activityWandering: (sagaTitle) => `caminando: ${sagaTitle}`,
+    joinHikeButton: "Caminar juntos",
     activityReady: "listo",
     syncNote: "Conectado en vivo: las incorporaciones, salidas y el estado de la caminata del grupo se sincronizan en tiempo real.",
     leaveSessionButton: "Abandonar sesión",
@@ -269,6 +277,7 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     membersTitle: (count) => `Membros (${count})`,
     leaderLabel: "Líder",
     activityWandering: (sagaTitle) => `caminhando: ${sagaTitle}`,
+    joinHikeButton: "Caminhar juntos",
     activityReady: "pronto",
     syncNote: "Conectado ao vivo: entradas, saídas e status de caminhada do grupo são sincronizados em tempo real.",
     leaveSessionButton: "Sair da sessão",

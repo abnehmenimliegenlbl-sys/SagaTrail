@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useRef } from "react";
 import { captureRef } from "react-native-view-shot";
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -33,7 +35,7 @@ export default function Summary() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { lastHike, profile } = useApp();
+  const { lastHike, profile, attachHikePhoto } = useApp();
   const { sagas } = useCatalog();
   const shareCardRef = useRef<View>(null);
 
@@ -61,6 +63,23 @@ export default function Summary() {
 
   const sagaTitle =
     sagas.find((s) => s.id === lastHike.sagaId)?.title ?? lastHike.routeName;
+
+  // Erinnerungsfoto aus der Galerie waehlen und im Tagebuch ablegen.
+  const pickPhoto = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [4, 3],
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        await attachHikePhoto(lastHike.id, result.assets[0].uri);
+      }
+    } catch {
+      // Auswahl abgebrochen oder nicht verfuegbar — kein Fehlerzustand noetig
+    }
+  };
 
   const share = async () => {
     const text = t.shareTextTemplate(lastHike.routeName, lastHike.distanceKm);
@@ -159,6 +178,31 @@ export default function Summary() {
           </View>
         )}
 
+        <View style={{ marginTop: 30 }}>
+          <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+            {t.photoTitle}
+          </Text>
+          {lastHike.photoUri && (
+            <Image
+              source={{ uri: lastHike.photoUri }}
+              style={[styles.diaryPhoto, { borderColor: colors.glassBorder }]}
+              resizeMode="cover"
+            />
+          )}
+          <Pressable
+            onPress={pickPhoto}
+            style={[
+              styles.photoBtn,
+              { borderColor: colors.glassBorder },
+            ]}
+          >
+            <Feather name="camera" size={18} color={colors.foreground} />
+            <Text style={[styles.shareText, { color: colors.foreground }]}>
+              {lastHike.photoUri ? t.changePhoto : t.addPhoto}
+            </Text>
+          </Pressable>
+        </View>
+
         <Pressable
           onPress={share}
           style={[styles.shareBtn, { borderColor: colors.glassBorder }]}
@@ -235,6 +279,22 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   shareText: { fontFamily: fonts.bodyMedium, fontSize: 15 },
+  diaryPhoto: {
+    width: "100%",
+    height: 200,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  photoBtn: { ...GLAS_3D,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+  },
   // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
   // damit react-native-view-shot die Karte abfotografieren kann.
   shareCardOffscreen: { position: "absolute", left: -1000, top: 0 },

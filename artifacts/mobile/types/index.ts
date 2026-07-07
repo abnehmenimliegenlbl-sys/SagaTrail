@@ -76,6 +76,8 @@ export interface HikeSession {
   startedAt: number;
   chapters: StoryChapter[];
   visitedPlaceIds: string[];
+  /** Erinnerungsfoto aus dem Wander-Tagebuch (lokale Datei-URI, optional) */
+  photoUri?: string;
 }
 
 export interface Achievement {

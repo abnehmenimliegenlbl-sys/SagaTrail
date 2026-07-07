@@ -16,6 +16,9 @@ export interface SummaryStrings {
   noChoiceMade: string;
   shareBtn: string;
   backButton: string;
+  photoTitle: string;
+  addPhoto: string;
+  changePhoto: string;
 }
 
 const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
@@ -36,6 +39,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "Keine Wahl getroffen",
     shareBtn: "Wanderung teilen",
     backButton: "Zurück zur Übersicht",
+    photoTitle: "Erinnerungsfoto",
+    addPhoto: "Foto hinzufügen",
+    changePhoto: "Foto ändern",
   },
   gsw: {
     noHikeFound: "Kei Wanderig gfunde.",
@@ -54,6 +60,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "Kei Wahl troffe",
     shareBtn: "Wanderig teile",
     backButton: "Zrugg zur Übersicht",
+    photoTitle: "Erinnerigsfoto",
+    addPhoto: "Foto dezuefüege",
+    changePhoto: "Foto ändere",
   },
   en: {
     noHikeFound: "No hike found.",
@@ -72,6 +81,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "No choice made",
     shareBtn: "Share hike",
     backButton: "Back to overview",
+    photoTitle: "Memory photo",
+    addPhoto: "Add photo",
+    changePhoto: "Change photo",
   },
   fr: {
     noHikeFound: "Aucune randonnée trouvée.",
@@ -90,6 +102,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "Aucun choix fait",
     shareBtn: "Partager la randonnée",
     backButton: "Retour à l'aperçu",
+    photoTitle: "Photo souvenir",
+    addPhoto: "Ajouter une photo",
+    changePhoto: "Changer la photo",
   },
   it: {
     noHikeFound: "Nessuna escursione trovata.",
@@ -108,6 +123,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "Nessuna scelta effettuata",
     shareBtn: "Condividi escursione",
     backButton: "Torna alla panoramica",
+    photoTitle: "Foto ricordo",
+    addPhoto: "Aggiungi foto",
+    changePhoto: "Cambia foto",
   },
   es: {
     noHikeFound: "No se encontró ninguna caminata.",
@@ -126,6 +144,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "No se tomó ninguna decisión",
     shareBtn: "Compartir caminata",
     backButton: "Volver a la vista general",
+    photoTitle: "Foto de recuerdo",
+    addPhoto: "Añadir foto",
+    changePhoto: "Cambiar foto",
   },
   pt: {
     noHikeFound: "Nenhuma caminhada encontrada.",
@@ -144,6 +165,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "Nenhuma escolha feita",
     shareBtn: "Compartilhar caminhada",
     backButton: "Voltar à visão geral",
+    photoTitle: "Foto de lembrança",
+    addPhoto: "Adicionar foto",
+    changePhoto: "Trocar foto",
   },
   zh: {
     noHikeFound: "未找到徒步记录。",
@@ -162,6 +186,9 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     noChoiceMade: "未做出选择",
     shareBtn: "分享徒步",
     backButton: "返回概览",
+    photoTitle: "纪念照片",
+    addPhoto: "添加照片",
+    changePhoto: "更换照片",
   },
 };
 

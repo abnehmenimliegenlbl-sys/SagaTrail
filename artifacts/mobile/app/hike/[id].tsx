@@ -85,6 +85,8 @@ export default function LiveHike() {
     addAchievement,
     groupSession,
     setGroupActivity,
+    sendGroupHikeEvent,
+    groupHikeEvent,
     energiesparmodus,
     activeHike,
     saveActiveHike,
@@ -122,6 +124,13 @@ export default function LiveHike() {
   const [sosOpen, setSosOpen] = useState(false);
   const [choiceFeedback, setChoiceFeedback] = useState<string | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Rollen in einer Gruppenwanderung: die Leitung sendet Kapitel- und
+  // Entscheidungs-Ereignisse, Mitglieder folgen ihnen und entscheiden nicht
+  // selbst.
+  const inGruppe = !!groupSession;
+  const istGruppenleitung = groupSession?.isLeader ?? false;
+  const folgtGruppenleitung = inGruppe && !istGruppenleitung;
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
@@ -223,11 +232,80 @@ export default function LiveHike() {
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.
   useEffect(() => {
     if (!groupSession || !saga || preparing) return;
-    setGroupActivity({ type: "wandert", sagaTitle: saga.title, startedAt: Date.now() });
+    setGroupActivity({
+      type: "wandert",
+      sagaTitle: saga.title,
+      startedAt: Date.now(),
+      sagaId: saga.id,
+      ...(route ? { routeId: route.id } : {}),
+    });
+    // Die Leitung kuendigt den Start der gemeinsamen Wanderung an, damit
+    // Mitglieder direkt auf dieselbe Route einsteigen koennen.
+    if (groupSession.isLeader && route) {
+      sendGroupHikeEvent({
+        kind: "start",
+        sagaId: saga.id,
+        routeId: route.id,
+        routeName: route.name,
+      });
+    }
     return () => {
       setGroupActivity({ type: "idle" });
     };
-  }, [groupSession?.code, saga, preparing, setGroupActivity]);
+  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, setGroupActivity, sendGroupHikeEvent]);
+
+  // Leitung: Kapitelwechsel an die Gruppe senden, damit Mitglieder synchron
+  // dieselbe Stelle der Sage hoeren. Aendert sich die Mitgliederliste
+  // (spaeter Beitritt), wird der aktuelle Stand erneut gesendet, damit auch
+  // Nachzuegler sofort auf dem richtigen Kapitel stehen.
+  const mitgliederAnzahl = groupSession?.members.length ?? 0;
+  useEffect(() => {
+    if (!istGruppenleitung || preparing || chapters.length === 0) return;
+    sendGroupHikeEvent({ kind: "chapter", index: currentIndex });
+  }, [istGruppenleitung, preparing, chapters.length, currentIndex, mitgliederAnzahl, sendGroupHikeEvent]);
+
+  // Mitglied: Ereignissen der Gruppenleitung folgen (Kapitel und
+  // Entscheidungen). Entscheidungen trifft ausschliesslich die Leitung.
+  // Jedes Ereignis wird genau einmal verarbeitet (receivedAt als Marke).
+  const verarbeitetesEreignisRef = useRef<number>(0);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+  useEffect(() => {
+    if (!folgtGruppenleitung || !groupHikeEvent || preparing) return;
+    if (groupHikeEvent.receivedAt === verarbeitetesEreignisRef.current) return;
+    verarbeitetesEreignisRef.current = groupHikeEvent.receivedAt;
+    const { event } = groupHikeEvent;
+    if (event.kind === "chapter") {
+      setCurrentIndex((prev) => {
+        if (event.index <= prev || event.index >= chapters.length) return prev;
+        return event.index;
+      });
+      return;
+    }
+    if (event.kind === "decision") {
+      const gewaehlt =
+        chapters[event.chapterIndex]?.decision?.options[event.optionIndex]?.label;
+      if (!gewaehlt) return;
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      setChoiceFeedback(t.leaderChose(gewaehlt));
+      feedbackTimerRef.current = setTimeout(() => setChoiceFeedback(null), 3000);
+      setChapters((prev) => {
+        if (!prev[event.chapterIndex]?.decision) return prev;
+        const next = [...prev];
+        next[event.chapterIndex] = {
+          ...next[event.chapterIndex],
+          chosenOptionIndex: event.optionIndex,
+        };
+        decisionsRef.current = next;
+        return next;
+      });
+      // Der offene Entscheidungspunkt wird nur geschlossen, wenn die
+      // Entscheidung tatsaechlich das aktuell angezeigte Kapitel betrifft.
+      if (event.chapterIndex === currentIndexRef.current) {
+        setAwaitingDecision(false);
+      }
+    }
+  }, [folgtGruppenleitung, groupHikeEvent, preparing, chapters, t]);
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
@@ -614,11 +692,19 @@ export default function LiveHike() {
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
       speak(ch.text);
+      // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
+      // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
+      if (currentIndex > 0 && turnNotifsReady) {
+        sendeAbbiegeMitteilung(
+          t.chapterNotif(currentIndex + 1),
+          route?.name ?? saga?.title ?? ""
+        );
+      }
     }
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, chapters, speak]);
+  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -753,6 +839,9 @@ export default function LiveHike() {
   }, [stopNarration]);
 
   const chooseOption = (optionIndex: number) => {
+    // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
+    // warten auf die Entscheidung der Gruppenleitung.
+    if (folgtGruppenleitung) return;
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -760,7 +849,7 @@ export default function LiveHike() {
     if (gewaehlt) {
       // Kurze sichtbare Bestaetigung der Wahl, bevor die Geschichte weitergeht
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-      setChoiceFeedback(gewaehlt);
+      setChoiceFeedback(t.yourChoice(gewaehlt));
       feedbackTimerRef.current = setTimeout(() => setChoiceFeedback(null), 2500);
     }
     setChapters((prev) => {
@@ -770,6 +859,14 @@ export default function LiveHike() {
       return next;
     });
     setAwaitingDecision(false);
+    // Leitung: Entscheidung an alle Mitglieder verteilen.
+    if (istGruppenleitung) {
+      sendGroupHikeEvent({
+        kind: "decision",
+        chapterIndex: currentIndex,
+        optionIndex,
+      });
+    }
   };
 
   // Freihaendige Sprachsteuerung: sobald ein Entscheidungspunkt aktiv ist,
@@ -780,7 +877,7 @@ export default function LiveHike() {
   // wenn Spracherkennung nicht verfuegbar/erlaubt ist (z. B. Expo Go, Web).
   const decisionOptions = chapters[currentIndex]?.decision?.options ?? [];
   const { listening: voiceListening, supported: voiceSupported } = useVoiceDecision(
-    awaitingDecision && !speaking && decisionOptions.length > 0,
+    awaitingDecision && !speaking && decisionOptions.length > 0 && !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
     chooseOption
@@ -1108,7 +1205,15 @@ export default function LiveHike() {
                   <Text style={[styles.decisionQuestion, { color: colors.foreground }]}>
                     {currentChapter.decision.question}
                   </Text>
-                  {voiceSupported && (
+                  {folgtGruppenleitung && (
+                    <View style={styles.voiceHintRow}>
+                      <Feather name="users" size={14} color={colors.accent} />
+                      <Text style={[styles.voiceHintText, { color: colors.accent }]}>
+                        {t.leaderDecides}
+                      </Text>
+                    </View>
+                  )}
+                  {!folgtGruppenleitung && voiceSupported && (
                     <View style={styles.voiceHintRow}>
                       <Feather
                         name="mic"
@@ -1124,9 +1229,11 @@ export default function LiveHike() {
                     <Pressable
                       key={i}
                       onPress={() => chooseOption(i)}
+                      disabled={folgtGruppenleitung}
                       style={[
                         styles.optionBtn,
                         { borderColor: colors.glassBorder },
+                        folgtGruppenleitung && { opacity: 0.45 },
                       ]}
                     >
                       <Text style={[styles.optionLabel, { color: colors.foreground }]}>
@@ -1151,7 +1258,7 @@ export default function LiveHike() {
                 >
                   <Feather name="check-circle" size={16} color={colors.primary} />
                   <Text style={[styles.choiceFeedbackText, { color: colors.foreground }]}>
-                    {t.yourChoice(choiceFeedback)}
+                    {choiceFeedback}
                   </Text>
                 </View>
               </Animated.View>

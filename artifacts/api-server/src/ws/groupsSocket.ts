@@ -6,6 +6,7 @@ import { db, profilesTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import {
+  broadcastHikeEvent,
   createRoom,
   joinRoom,
   kickMember,
@@ -13,6 +14,7 @@ import {
   notifyJoined,
   setActivity,
   type GroupActivity,
+  type HikeSyncEvent,
 } from "../lib/groupSessions";
 
 export const GROUPS_WS_PATH = "/api/groups/ws";
@@ -71,7 +73,50 @@ type ClientMessage =
   | { type: "join"; code: string }
   | { type: "leave" }
   | { type: "kick"; targetUserId: string }
-  | { type: "activity"; activity: GroupActivity };
+  | { type: "activity"; activity: GroupActivity }
+  | { type: "hike"; event: HikeSyncEvent };
+
+function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const e = raw as Record<string, unknown>;
+  switch (e.kind) {
+    case "start":
+      if (
+        typeof e.sagaId !== "string" ||
+        typeof e.routeId !== "string" ||
+        typeof e.routeName !== "string"
+      ) {
+        return null;
+      }
+      return {
+        kind: "start",
+        sagaId: e.sagaId,
+        routeId: e.routeId,
+        routeName: e.routeName,
+      };
+    case "chapter":
+      if (typeof e.index !== "number" || !Number.isInteger(e.index) || e.index < 0) {
+        return null;
+      }
+      return { kind: "chapter", index: e.index };
+    case "decision":
+      if (
+        typeof e.chapterIndex !== "number" ||
+        !Number.isInteger(e.chapterIndex) ||
+        e.chapterIndex < 0 ||
+        typeof e.optionIndex !== "number" ||
+        !Number.isInteger(e.optionIndex) ||
+        e.optionIndex < 0
+      ) {
+        return null;
+      }
+      return { kind: "decision", chapterIndex: e.chapterIndex, optionIndex: e.optionIndex };
+    case "finish":
+      return { kind: "finish" };
+    default:
+      return null;
+  }
+}
 
 function parseClientMessage(raw: unknown): ClientMessage | null {
   if (typeof raw !== "object" || raw === null) return null;
@@ -99,10 +144,17 @@ function parseClientMessage(raw: unknown): ClientMessage | null {
             type: "wandert",
             sagaTitle: a.sagaTitle,
             startedAt: Date.now(),
+            ...(typeof a.sagaId === "string" ? { sagaId: a.sagaId } : {}),
+            ...(typeof a.routeId === "string" ? { routeId: a.routeId } : {}),
           },
         };
       }
       return null;
+    }
+    case "hike": {
+      const event = parseHikeEvent(data.event);
+      if (!event) return null;
+      return { type: "hike", event };
     }
     default:
       return null;
@@ -190,6 +242,15 @@ export function attachGroupsSocket(server: HttpServer): void {
             }
             case "activity": {
               setActivity(profile.userId, message.activity);
+              return;
+            }
+            case "hike": {
+              // Nur die Gruppenleitung darf Wander-Sync-Ereignisse (inkl.
+              // Entscheidungen) senden — wird in broadcastHikeEvent erzwungen.
+              const result = broadcastHikeEvent(profile.userId, message.event);
+              if (!result.ok) {
+                send(ws, { type: "error", code: result.reason });
+              }
               return;
             }
           }

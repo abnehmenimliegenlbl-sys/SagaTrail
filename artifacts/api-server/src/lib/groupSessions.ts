@@ -12,7 +12,26 @@ import { logger } from "./logger";
 
 export type GroupActivity =
   | { type: "idle" }
-  | { type: "wandert"; sagaTitle: string; startedAt: number };
+  | {
+      type: "wandert";
+      sagaTitle: string;
+      startedAt: number;
+      /** Saga/Route der Wanderung — erlaubt Mitgliedern das Mitwandern. */
+      sagaId?: string;
+      routeId?: string;
+    };
+
+/**
+ * Live-Sync-Ereignisse einer Gruppenwanderung. Nur die Gruppenleitung darf
+ * sie senden; der Server verteilt sie an alle uebrigen Mitglieder. So ist
+ * serverseitig garantiert, dass Entscheidungen ausschliesslich von der
+ * Leitung getroffen werden.
+ */
+export type HikeSyncEvent =
+  | { kind: "start"; sagaId: string; routeId: string; routeName: string }
+  | { kind: "chapter"; index: number }
+  | { kind: "decision"; chapterIndex: number; optionIndex: number }
+  | { kind: "finish" };
 
 export interface GroupMemberInfo {
   userId: string;
@@ -211,6 +230,28 @@ export function setActivity(userId: string, activity: GroupActivity): void {
   if (!member) return;
   member.activity = activity;
   broadcastMembers(room);
+}
+
+export type HikeEventResult =
+  | { ok: true }
+  | { ok: false; reason: "not_leader" | "not_found" };
+
+/**
+ * Verteilt ein Wander-Sync-Ereignis der Leitung an alle uebrigen Mitglieder.
+ * Nicht-Leiter werden abgewiesen — Entscheidungen trifft nur die Leitung.
+ */
+export function broadcastHikeEvent(
+  senderId: string,
+  event: HikeSyncEvent
+): HikeEventResult {
+  const room = findRoomByUser(senderId);
+  if (!room) return { ok: false, reason: "not_found" };
+  if (room.leaderId !== senderId) return { ok: false, reason: "not_leader" };
+  for (const member of room.members.values()) {
+    if (member.userId === senderId) continue;
+    send(member.ws, { type: "hike", code: room.code, event });
+  }
+  return { ok: true };
 }
 
 export function notifyJoined(room: Room, ws: WebSocket): void {

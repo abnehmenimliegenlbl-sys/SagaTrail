@@ -224,6 +224,16 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
+  const { achievements } = useApp();
+  const { sagas } = useCatalog();
+
+  // Sagen-Fortschritt des Kantons ("2 von 3 Sagen entdeckt") — nur wenn der
+  // Kanton ueberhaupt kuratierte Sagen hat.
+  const cantonSagas = sagas.filter((s) => s.canton === entry.canton);
+  const discovered = cantonSagas.filter((s) =>
+    achievements.some((a) => a.id === s.id)
+  ).length;
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
       <Pressable
@@ -249,6 +259,16 @@ function CantonCard({
               ? t.routeCount(entry.routeCount)
               : t.liveFromSwisstopo}
           </Text>
+          {cantonSagas.length > 0 && (
+            <Text
+              style={[
+                styles.cantonMeta,
+                { color: discovered > 0 ? colors.accent : colors.mutedForeground },
+              ]}
+            >
+              {t.sagaProgress(discovered, cantonSagas.length)}
+            </Text>
+          )}
         </View>
         <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
       </Pressable>

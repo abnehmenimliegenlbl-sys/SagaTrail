@@ -9,7 +9,26 @@ import { getApiBaseUrl } from "@/lib/apiConfig";
 
 export type GroupActivity =
   | { type: "idle" }
-  | { type: "wandert"; sagaTitle: string; startedAt: number };
+  | {
+      type: "wandert";
+      sagaTitle: string;
+      startedAt: number;
+      // Saga/Route der laufenden Wanderung — erlaubt anderen Mitgliedern
+      // das Mitwandern auf derselben Route.
+      sagaId?: string;
+      routeId?: string;
+    };
+
+/**
+ * Live-Sync-Ereignisse einer Gruppenwanderung. Nur die Gruppenleitung darf
+ * sie senden (serverseitig erzwungen); Mitglieder empfangen sie und folgen
+ * Kapiteln und Entscheidungen der Leitung.
+ */
+export type HikeSyncEvent =
+  | { kind: "start"; sagaId: string; routeId: string; routeName: string }
+  | { kind: "chapter"; index: number }
+  | { kind: "decision"; chapterIndex: number; optionIndex: number }
+  | { kind: "finish" };
 
 export interface GroupMember {
   id: string;
@@ -34,6 +53,7 @@ export interface GroupSocketEvents {
   onClosedByLeader: () => void;
   onKicked: () => void;
   onError: (error: GroupSocketError) => void;
+  onHikeEvent?: (event: HikeSyncEvent) => void;
 }
 
 type PendingAction =
@@ -198,8 +218,21 @@ export class GroupSocket {
         this.events.onKicked();
         return;
       }
+      case "hike": {
+        const event = data.event as HikeSyncEvent | undefined;
+        if (event && typeof event.kind === "string") {
+          this.events.onHikeEvent?.(event);
+        }
+        return;
+      }
       case "error": {
         const code = data.code as string;
+        // Nicht-fatale Protokollfehler (z.B. ein abgewiesenes Wander-Sync-
+        // Ereignis eines Nicht-Leiters) beenden die Sitzung NICHT — das
+        // Ereignis wird einfach verworfen, die Verbindung bleibt bestehen.
+        if (code === "not_leader" || code === "invalid_message") {
+          return;
+        }
         this.closedByUser = true;
         this.clearReconnectTimer();
         this.lastAction = null;
@@ -220,7 +253,7 @@ export class GroupSocket {
     }
   }
 
-  private send(action: PendingAction | { type: "leave" | "kick"; targetUserId?: string } | { type: "activity"; activity: GroupActivity }): void {
+  private send(action: PendingAction | { type: "leave" | "kick"; targetUserId?: string } | { type: "activity"; activity: GroupActivity } | { type: "hike"; event: HikeSyncEvent }): void {
     if (!this.ws || this.ws.readyState !== this.ws.OPEN) return;
     this.ws.send(JSON.stringify(action));
   }
@@ -239,6 +272,10 @@ export class GroupSocket {
 
   setActivity(activity: GroupActivity): void {
     this.send({ type: "activity", activity });
+  }
+
+  sendHikeEvent(event: HikeSyncEvent): void {
+    this.send({ type: "hike", event });
   }
 
   kick(targetUserId: string): void {

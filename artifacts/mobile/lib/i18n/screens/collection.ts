@@ -10,6 +10,11 @@ export interface CollectionStrings {
   albumTitle: string;
   cantonProgress: (discovered: number, total: number, canton: string) => string;
   emptyCta: string;
+  statsTitle: string;
+  statsKm: string;
+  statsAscent: string;
+  statsHikes: string;
+  diaryTitle: string;
 }
 
 const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
@@ -23,6 +28,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Sagen-Album",
     cantonProgress: (d, t, c) => `${d} von ${t} Sagen in ${c} entdeckt`,
     emptyCta: "Erste Wanderung starten",
+    statsTitle: "Wanderstatistik",
+    statsKm: "Kilometer",
+    statsAscent: "Höhenmeter",
+    statsHikes: "Wanderungen",
+    diaryTitle: "Wander-Tagebuch",
   },
   gsw: {
     eyebrow: "Dini Reis",
@@ -34,6 +44,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Sage-Album",
     cantonProgress: (d, t, c) => `${d} vo ${t} Sage in ${c} entdeckt`,
     emptyCta: "Erschti Wanderig starte",
+    statsTitle: "Wanderstatistik",
+    statsKm: "Kilometer",
+    statsAscent: "Höhemeter",
+    statsHikes: "Wanderige",
+    diaryTitle: "Wander-Tagebuech",
   },
   en: {
     eyebrow: "Your Journey",
@@ -45,6 +60,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Saga Album",
     cantonProgress: (d, t, c) => `${d} of ${t} sagas discovered in ${c}`,
     emptyCta: "Start your first hike",
+    statsTitle: "Hiking stats",
+    statsKm: "Kilometres",
+    statsAscent: "Metres of ascent",
+    statsHikes: "Hikes",
+    diaryTitle: "Hiking diary",
   },
   fr: {
     eyebrow: "Ton voyage",
@@ -56,6 +76,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Album des légendes",
     cantonProgress: (d, t, c) => `${d} légende(s) sur ${t} découverte(s) en ${c}`,
     emptyCta: "Commencer ta première randonnée",
+    statsTitle: "Statistiques de randonnée",
+    statsKm: "Kilomètres",
+    statsAscent: "Dénivelé (m)",
+    statsHikes: "Randonnées",
+    diaryTitle: "Journal de randonnée",
   },
   it: {
     eyebrow: "Il tuo viaggio",
@@ -67,6 +92,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Album delle leggende",
     cantonProgress: (d, t, c) => `${d} leggende su ${t} scoperte in ${c}`,
     emptyCta: "Inizia la tua prima escursione",
+    statsTitle: "Statistiche escursioni",
+    statsKm: "Chilometri",
+    statsAscent: "Dislivello (m)",
+    statsHikes: "Escursioni",
+    diaryTitle: "Diario delle escursioni",
   },
   es: {
     eyebrow: "Tu viaje",
@@ -78,6 +108,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Álbum de leyendas",
     cantonProgress: (d, t, c) => `${d} de ${t} leyendas descubiertas en ${c}`,
     emptyCta: "Comienza tu primera caminata",
+    statsTitle: "Estadísticas de caminatas",
+    statsKm: "Kilómetros",
+    statsAscent: "Desnivel (m)",
+    statsHikes: "Caminatas",
+    diaryTitle: "Diario de caminatas",
   },
   pt: {
     eyebrow: "Sua jornada",
@@ -89,6 +124,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "Álbum de lendas",
     cantonProgress: (d, t, c) => `${d} de ${t} lendas descobertas em ${c}`,
     emptyCta: "Comece sua primeira caminhada",
+    statsTitle: "Estatísticas de caminhadas",
+    statsKm: "Quilômetros",
+    statsAscent: "Desnível (m)",
+    statsHikes: "Caminhadas",
+    diaryTitle: "Diário de caminhadas",
   },
   zh: {
     eyebrow: "你的旅程",
@@ -100,6 +140,11 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     albumTitle: "传说图鉴",
     cantonProgress: (d, t, c) => `${c}：已发现 ${d}/${t} 个传说`,
     emptyCta: "开始你的第一次徒步",
+    statsTitle: "徒步统计",
+    statsKm: "公里",
+    statsAscent: "爬升（米）",
+    statsHikes: "徒步次数",
+    diaryTitle: "徒步日记",
   },
 };
 

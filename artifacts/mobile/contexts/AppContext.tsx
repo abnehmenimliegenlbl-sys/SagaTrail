@@ -24,6 +24,7 @@ import {
   type GroupConnectionStatus,
   type GroupMember,
   type GroupSocketError,
+  type HikeSyncEvent,
 } from "@/lib/groupSocket";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
@@ -39,6 +40,7 @@ const KEYS = {
   emergency: "sagatrail:emergencyContact",
   energysave: "sagatrail:energiesparmodus",
   lastHike: "sagatrail:lastHike",
+  hikeHistory: "sagatrail:hikeHistory",
   activeHike: "sagatrail:activeHike",
   uiLanguage: "sagatrail:uiLanguage",
 } as const;
@@ -90,10 +92,22 @@ interface AppContextValue {
   emergencyContact: EmergencyContact | null;
   energiesparmodus: boolean;
   lastHike: HikeSession | null;
+  /**
+   * Wander-Tagebuch: alle abgeschlossenen Wanderungen (neueste zuerst,
+   * begrenzt auf die letzten 200). Grundlage fuer die Statistik im Profil
+   * und die Tagebuch-Ansicht in der Sammlung.
+   */
+  hikeHistory: HikeSession[];
   activeHike: ActiveHike | null;
   groupSession: GroupSession | null;
   groupConnectionStatus: GroupConnectionStatus;
   groupError: GroupSocketError | null;
+  /**
+   * Letztes empfangenes Wander-Sync-Ereignis der Gruppenleitung (nur bei
+   * Mitgliedern gesetzt). `receivedAt` erzwingt neue Objekt-Identitaet,
+   * damit Effekte auch bei identischen Ereignissen feuern.
+   */
+  groupHikeEvent: { event: HikeSyncEvent; receivedAt: number } | null;
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
@@ -117,6 +131,8 @@ interface AppContextValue {
   saveEmergencyContact: (contact: EmergencyContact | null) => Promise<void>;
   setEnergiesparmodus: (value: boolean) => Promise<void>;
   saveHike: (hike: HikeSession) => Promise<void>;
+  /** Haengt nachtraeglich ein Erinnerungsfoto an eine Wanderung an. */
+  attachHikePhoto: (hikeId: string, photoUri: string) => Promise<void>;
   saveActiveHike: (hike: ActiveHike) => Promise<void>;
   clearActiveHike: () => Promise<void>;
   exportData: () => Promise<string>;
@@ -127,6 +143,8 @@ interface AppContextValue {
   leaveGroupSession: () => void;
   kickMember: (memberId: string) => void;
   setGroupActivity: (activity: GroupActivity) => void;
+  /** Sendet ein Wander-Sync-Ereignis an die Gruppe (nur als Leitung wirksam). */
+  sendGroupHikeEvent: (event: HikeSyncEvent) => void;
   clearGroupError: () => void;
 }
 
@@ -144,6 +162,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     useState<EmergencyContact | null>(null);
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
+  const [hikeHistory, setHikeHistory] = useState<HikeSession[]>([]);
   const [activeHike, setActiveHike] = useState<ActiveHike | null>(null);
   const [pendingLanguage, setPendingLanguageState] =
     useState<LanguageCode>(DEFAULT_LANGUAGE);
@@ -151,6 +170,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [groupConnectionStatus, setGroupConnectionStatus] =
     useState<GroupConnectionStatus>("getrennt");
   const [groupError, setGroupError] = useState<GroupSocketError | null>(null);
+  const [groupHikeEvent, setGroupHikeEvent] = useState<{
+    event: HikeSyncEvent;
+    receivedAt: number;
+  } | null>(null);
 
   // Der Socket-Client lebt ausserhalb des React-State (eine Instanz pro
   // App-Laufzeit) und meldet Ereignisse ueber Callbacks zurueck, die den
@@ -195,12 +218,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       onClosedByLeader: () => {
         setGroupSession(null);
+        setGroupHikeEvent(null);
       },
       onKicked: () => {
         setGroupSession(null);
+        setGroupHikeEvent(null);
       },
       onError: (error) => {
         setGroupError(error);
+      },
+      onHikeEvent: (event) => {
+        // Zeitstempel erzwingt ein neues State-Objekt, damit auch identische
+        // aufeinanderfolgende Ereignisse (z.B. zweimal "chapter 2") Effekte
+        // ausloesen.
+        setGroupHikeEvent({ event, receivedAt: Date.now() });
       },
     });
     groupSocketRef.current = socket;
@@ -221,6 +252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.emergency,
           KEYS.energysave,
           KEYS.lastHike,
+          KEYS.hikeHistory,
           KEYS.activeHike,
           KEYS.uiLanguage,
         ]);
@@ -236,6 +268,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (map[KEYS.energysave])
           setEnergiesparmodusState(map[KEYS.energysave] === "true");
         if (map[KEYS.lastHike]) setLastHike(JSON.parse(map[KEYS.lastHike]!));
+        if (map[KEYS.hikeHistory])
+          setHikeHistory(JSON.parse(map[KEYS.hikeHistory]!));
         if (map[KEYS.activeHike])
           setActiveHike(JSON.parse(map[KEYS.activeHike]!));
         if (map[KEYS.uiLanguage]) {
@@ -505,6 +539,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveHike = useCallback(async (hike: HikeSession) => {
     setLastHike(hike);
     await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
+    // Zusaetzlich ins Tagebuch schreiben (neueste zuerst, max. 200).
+    setHikeHistory((prev) => {
+      const next = [hike, ...prev.filter((h) => h.id !== hike.id)].slice(0, 200);
+      AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const attachHikePhoto = useCallback(async (hikeId: string, photoUri: string) => {
+    setLastHike((prev) => {
+      if (prev && prev.id === hikeId) {
+        const next = { ...prev, photoUri };
+        AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(next)).catch(() => {});
+        return next;
+      }
+      return prev;
+    });
+    setHikeHistory((prev) => {
+      const next = prev.map((h) => (h.id === hikeId ? { ...h, photoUri } : h));
+      AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
   }, []);
 
   const saveActiveHike = useCallback(async (hike: ActiveHike) => {
@@ -549,6 +605,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setEmergencyContact(null);
     setEnergiesparmodusState(false);
     setLastHike(null);
+    setHikeHistory([]);
     setActiveHike(null);
     setGroupSession(null);
     setGroupError(null);
@@ -572,6 +629,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     groupSocketRef.current?.leave();
     setGroupSession(null);
     setGroupError(null);
+    setGroupHikeEvent(null);
   }, []);
 
   const kickMember = useCallback((memberId: string) => {
@@ -580,6 +638,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setGroupActivity = useCallback((activity: GroupActivity) => {
     groupSocketRef.current?.setActivity(activity);
+  }, []);
+
+  // Wander-Sync-Ereignis an die Gruppe senden — nur sinnvoll als Leitung;
+  // der Server weist Ereignisse von Nicht-Leitern ohnehin ab.
+  const sendGroupHikeEvent = useCallback((event: HikeSyncEvent) => {
+    groupSocketRef.current?.sendHikeEvent(event);
   }, []);
 
   const clearGroupError = useCallback(() => setGroupError(null), []);
@@ -597,10 +661,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       emergencyContact,
       energiesparmodus,
       lastHike,
+      hikeHistory,
       activeHike,
       groupSession,
       groupConnectionStatus,
       groupError,
+      groupHikeEvent,
       saveProfile,
       updateProfile,
       setPendingLanguage,
@@ -611,6 +677,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveEmergencyContact,
       setEnergiesparmodus,
       saveHike,
+      attachHikePhoto,
       saveActiveHike,
       clearActiveHike,
       exportData,
@@ -620,6 +687,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leaveGroupSession,
       kickMember,
       setGroupActivity,
+      sendGroupHikeEvent,
       clearGroupError,
     }),
     [
@@ -632,10 +700,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       emergencyContact,
       energiesparmodus,
       lastHike,
+      hikeHistory,
       activeHike,
       groupSession,
       groupConnectionStatus,
       groupError,
+      groupHikeEvent,
       saveProfile,
       updateProfile,
       setPendingLanguage,
@@ -646,6 +716,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveEmergencyContact,
       setEnergiesparmodus,
       saveHike,
+      attachHikePhoto,
       saveActiveHike,
       clearActiveHike,
       exportData,
@@ -655,6 +726,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leaveGroupSession,
       kickMember,
       setGroupActivity,
+      sendGroupHikeEvent,
       clearGroupError,
     ]
   );
