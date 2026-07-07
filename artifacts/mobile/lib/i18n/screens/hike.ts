@@ -24,6 +24,7 @@ export interface HikeStrings {
   turnNotifTitle: string;
   turnNotifLeft: string;
   turnNotifRight: string;
+  poiNotifBody: string;
   perception: string;
   finishHike: string;
   sos: string;
@@ -73,6 +74,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Abzweigung voraus",
     turnNotifLeft: "Gleich links halten",
     turnNotifRight: "Gleich rechts halten",
+    poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
     sos: "SOS",
@@ -120,6 +122,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Abzwiigig voruus",
     turnNotifLeft: "Grad links halte",
     turnNotifRight: "Grad rächts halte",
+    poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
     sos: "SOS",
@@ -167,6 +170,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Turn ahead",
     turnNotifLeft: "Keep left shortly",
     turnNotifRight: "Keep right shortly",
+    poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
     sos: "SOS",
@@ -214,6 +218,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Bifurcation en vue",
     turnNotifLeft: "Serrez à gauche",
     turnNotifRight: "Serrez à droite",
+    poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
     sos: "SOS",
@@ -261,6 +266,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Bivio in arrivo",
     turnNotifLeft: "Tieni la sinistra",
     turnNotifRight: "Tieni la destra",
+    poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
     sos: "SOS",
@@ -308,6 +314,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Curva próxima",
     turnNotifLeft: "Mantente a la izquierda",
     turnNotifRight: "Mantente a la derecha",
+    poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
     sos: "SOS",
@@ -355,6 +362,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "Curva à frente",
     turnNotifLeft: "Mantenha-se à esquerda",
     turnNotifRight: "Mantenha-se à direita",
+    poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
     sos: "SOS",
@@ -402,6 +410,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifTitle: "前方转弯",
     turnNotifLeft: "即将靠左",
     turnNotifRight: "即将靠右",
+    poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
     finishHike: "完成徒步",
     sos: "紧急求救",

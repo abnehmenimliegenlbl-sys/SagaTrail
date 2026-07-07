@@ -59,6 +59,7 @@ import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
   bereiteAbbiegeMitteilungenVor,
   sendeAbbiegeMitteilung,
+  sendePoiMitteilung,
 } from "@/lib/turnNotifications";
 import { weaveNavigationCues } from "@/lib/storyEngine";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
@@ -658,6 +659,17 @@ export default function LiveHike() {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+    // Parallel zur Erzaehlung eine Mitteilung mit dem Wikipedia-Bild des Ortes
+    // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
+    // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
+    const poiName = nearbyPoi.name;
+    const poiBild = nearbyPoi.wiki?.image ?? null;
+    const poiText = nearbyPoi.wiki?.extract
+      ? trimForNarration(nearbyPoi.wiki.extract)
+      : t.poiNotifBody;
+    bereiteAbbiegeMitteilungenVor().then((ok) => {
+      if (ok) sendePoiMitteilung(poiName, poiText, poiBild);
+    });
     // Zustand im Moment der Entdeckung einfrieren: nur wenn JETZT ein Kapitel
     // laeuft, wird es nach dem POI-Einschub weitererzaehlt.
     const wasChapterPlaying = speakingRef.current;
@@ -683,7 +695,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [nearbyPoi, storyLanguage, speak]);
+  }, [nearbyPoi, storyLanguage, speak, t]);
 
   // Echtes GPS steuert den Kapitelfortschritt entlang der Routenlaenge
   useEffect(() => {

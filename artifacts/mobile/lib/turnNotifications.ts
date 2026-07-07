@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Notifications from "expo-notifications";
 
 /**
@@ -41,6 +42,53 @@ export async function bereiteAbbiegeMitteilungenVor(): Promise<boolean> {
   } catch {
     // Best effort — ohne Berechtigung bleiben die Hinweise Teil der Erzaehlung.
     return false;
+  }
+}
+
+/**
+ * Loest eine POI-Mitteilung aus, waehrend der Erzaehler ueber den Ort spricht —
+ * wenn moeglich MIT Bild: Das Wikipedia-Bild wird kurz in den Cache geladen und
+ * als Anhang mitgegeben. iOS zeigt den Anhang auch auf einer gekoppelten Watch
+ * (Bild in der gespiegelten Mitteilung). Schlaegt der Bild-Download fehl, geht
+ * die Mitteilung ohne Bild raus — nie gar nicht.
+ */
+export async function sendePoiMitteilung(
+  titel: string,
+  text: string,
+  bildUrl?: string | null
+): Promise<void> {
+  if (Platform.OS === "web") return;
+  let lokalesBild: string | null = null;
+  if (bildUrl) {
+    try {
+      // Dateiendung aus der URL uebernehmen, damit iOS den Anhangstyp erkennt.
+      const endung = /\.(png|gif)(\?|$)/i.test(bildUrl)
+        ? bildUrl.toLowerCase().includes(".png")
+          ? "png"
+          : "gif"
+        : "jpg";
+      const ziel = `${FileSystem.cacheDirectory}poi-notif-${Date.now()}.${endung}`;
+      const res = await FileSystem.downloadAsync(bildUrl, ziel);
+      if (res.status === 200) lokalesBild = res.uri;
+    } catch {
+      // Ohne Bild weitermachen.
+    }
+  }
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: titel,
+        body: text,
+        sound: false,
+        // Anhaenge sind ein iOS-Konzept; Android ignoriert das Feld einfach.
+        attachments: lokalesBild
+          ? [{ identifier: "poi-bild", url: lokalesBild, type: null }]
+          : undefined,
+      },
+      trigger: null,
+    });
+  } catch {
+    // Best effort — eine fehlgeschlagene Mitteilung darf die Wanderung nie stoeren.
   }
 }
 
