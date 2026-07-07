@@ -33,6 +33,7 @@ import {
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
   searchCantonLegend,
+  searchNearbyWikipedia,
   type WikiSummary,
 } from "./wikipedia";
 
@@ -120,6 +121,10 @@ export interface EnrichedPoi extends RawPoi {
  * eine grosszuegige TTL haelt die Live-Anreicherung dennoch aktuell genug.
  */
 const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+// Kurze TTL, wenn KEIN einziger POI angereichert werden konnte: das deutet auf
+// eine voruebergehende Wikipedia-Drosselung hin und darf nicht 24 h als
+// "keine Infos vorhanden" im Cache haengen bleiben.
+const POI_NEGATIVE_TTL_MS = 10 * 60 * 1000; // 10 Minuten
 const POI_WIKI_CONCURRENCY = 4;
 const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 
@@ -141,6 +146,11 @@ async function enrichPoiWithWikipedia(poi: RawPoi, log: Logger): Promise<Enriche
         if (wiki) return { ...poi, wiki };
       }
     }
+    // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
+    // Geo-Suche im Umkreis mit unscharfem Namensabgleich (z.B. findet
+    // "Basiliskbrunnen" so den Artikel "Basiliskenbrunnen").
+    const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
+    if (wiki) return { ...poi, wiki };
   } catch (err) {
     log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
   }
@@ -157,7 +167,12 @@ export async function getPois(
 ): Promise<EnrichedPoi[]> {
   const key = bboxCacheKey(bbox);
   const hit = poiCache.get(key);
-  if (hit && Date.now() - hit.at < POI_TTL_MS) return hit.entries;
+  if (hit) {
+    const keineAnreicherung =
+      hit.entries.length > 0 && hit.entries.every((e) => e.wiki === null);
+    const ttl = keineAnreicherung ? POI_NEGATIVE_TTL_MS : POI_TTL_MS;
+    if (Date.now() - hit.at < ttl) return hit.entries;
+  }
   const raw = await fetchHistoricPois(bbox, log);
   const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
     enrichPoiWithWikipedia(poi, log),

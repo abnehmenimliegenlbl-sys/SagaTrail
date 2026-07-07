@@ -93,6 +93,80 @@ export async function resolveOsmWikipediaTag(
   return fetchWikipediaSummary(title, lang);
 }
 
+/** Normalisiert einen Namen fuer den unscharfen Vergleich (Kleinbuchstaben, nur Buchstaben/Ziffern). */
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Laenge des gemeinsamen Praefixes zweier Strings. */
+function commonPrefixLength(a: string, b: string): number {
+  const n = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < n && a[i] === b[i]) i++;
+  return i;
+}
+
+/**
+ * Prueft, ob zwei Ortsnamen plausibel denselben Ort bezeichnen — tolerant
+ * gegenueber kleinen Schreibvarianten (z.B. "Basiliskbrunnen" vs.
+ * "Basiliskenbrunnen"): Enthaltensein nach Normalisierung oder ein
+ * gemeinsames Praefix von mindestens 60 % des kuerzeren Namens.
+ */
+function namesRoughlyMatch(a: string, b: string): boolean {
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
+  if (na.length < 4 || nb.length < 4) return na === nb;
+  if (na.includes(nb) || nb.includes(na)) return true;
+  const prefix = commonPrefixLength(na, nb);
+  return prefix >= Math.ceil(Math.min(na.length, nb.length) * 0.6);
+}
+
+interface GeoSearchResponse {
+  query?: { geosearch?: { title: string; dist: number }[] };
+}
+
+/**
+ * Sucht einen Wikipedia-Artikel fuer einen benannten Ort ueber die
+ * Geo-Suche (Artikel mit Koordinaten im Umkreis) und gleicht die Titel
+ * unscharf mit dem OSM-Namen ab. Dritte Stufe der POI-Anreicherung, wenn
+ * das OSM-Objekt weder wikipedia- noch wikidata-Tag traegt.
+ */
+export async function searchNearbyWikipedia(
+  name: string,
+  lat: number,
+  lng: number,
+  lang: string = DEFAULT_LANG,
+): Promise<WikiSummary | null> {
+  const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=300&gslimit=10&format=json&origin=*`;
+  const json = await fetchJson<GeoSearchResponse>(url);
+  const hits = (json?.query?.geosearch ?? [])
+    .filter((h) => namesRoughlyMatch(h.title, name))
+    .sort((a, b) => a.dist - b.dist);
+  for (const hit of hits) {
+    const summary = await fetchWikipediaSummary(hit.title, lang);
+    if (summary) return summary;
+  }
+  // Vierte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
+  // Koordinaten in der Naehe traegt (z.B. beschreibt "Basiliskenbrunnen" alle
+  // Basler Basilisken-Brunnen gemeinsam, ohne Einzelkoordinaten).
+  const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&format=json&srlimit=5&origin=*`;
+  const searchJson = await fetchJson<{ query?: { search?: { title: string }[] } }>(searchUrl);
+  const titleHits = (searchJson?.query?.search ?? []).filter((h) =>
+    namesRoughlyMatch(h.title, name),
+  );
+  for (const hit of titleHits) {
+    const summary = await fetchWikipediaSummary(hit.title, lang);
+    if (summary) return summary;
+  }
+  return null;
+}
+
 /**
  * Sucht eine Sagen-/Legenden-bezogene Wikipedia-Seite fuer einen Kanton. Dient
  * als zweite Stufe der Sagen-Zuordnung (nach kuratierten Sagen im selben

@@ -44,7 +44,7 @@ import {
   stopBackgroundLocationTracking,
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, distanzZuSegmentKm, haversineKm } from "@/lib/geo";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -223,9 +223,33 @@ export default function LiveHike() {
     if (!mapCenter) return;
     let cancelled = false;
     const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    // Nur POIs im 100-m-Korridor um die Strecke behalten — Orte weiter weg
+    // liegen nicht am Weg und wuerden die Karte und Ansagen verwaessern.
+    // Gemessen wird gegen die Liniensegmente (nicht nur Stuetzpunkte), da die
+    // gespeicherte Geometrie ausgeduennt ist und Segmente >100 m lang sein koennen.
+    const KORRIDOR_KM = 0.1;
+    const geo = route?.geometry;
     getPois(bbox)
       .then((result) => {
-        if (!cancelled) setPois(result);
+        const gefiltert =
+          geo && geo.length > 1
+            ? result.filter((p) => {
+                const punkt = { lat: p.lat, lng: p.lng };
+                for (let i = 0; i < geo.length - 1; i++) {
+                  if (
+                    distanzZuSegmentKm(
+                      punkt,
+                      { lat: geo[i][0], lng: geo[i][1] },
+                      { lat: geo[i + 1][0], lng: geo[i + 1][1] }
+                    ) <= KORRIDOR_KM
+                  ) {
+                    return true;
+                  }
+                }
+                return false;
+              })
+            : result;
+        if (!cancelled) setPois(gefiltert);
       })
       .catch(() => {
         if (!cancelled) setPois([]);
