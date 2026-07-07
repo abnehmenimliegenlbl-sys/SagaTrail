@@ -18,6 +18,54 @@ uri = "file://artifacts/mobile/assets/images/saga-teufelsbruecke.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "Bbcq4qS7H119ARrq2oiAG"
+uri = "file://artifacts/mobile/assets/images/panorama/fruehling-tal.png"
+type = "image"
+title = "spring valley panorama"
+
+[[generated]]
+id = "NM65jF7_zXD9LcK5PIr9Z"
+uri = "file://artifacts/mobile/assets/images/panorama/fruehling-alpin.png"
+type = "image"
+title = "spring alpine panorama"
+
+[[generated]]
+id = "YzovOoXZvnr7Czsiey9mE"
+uri = "file://artifacts/mobile/assets/images/panorama/sommer-tal.png"
+type = "image"
+title = "summer valley panorama"
+
+[[generated]]
+id = "8784Y7XdesPDVmAKmXWIP"
+uri = "file://artifacts/mobile/assets/images/panorama/sommer-alpin.png"
+type = "image"
+title = "summer alpine panorama"
+
+[[generated]]
+id = "h9ZEKqB1DKh5AjtmWklvI"
+uri = "file://artifacts/mobile/assets/images/panorama/herbst-tal.png"
+type = "image"
+title = "autumn valley panorama"
+
+[[generated]]
+id = "qCIlzJHsc3TwYeTF98hjJ"
+uri = "file://artifacts/mobile/assets/images/panorama/herbst-alpin.png"
+type = "image"
+title = "autumn alpine panorama"
+
+[[generated]]
+id = "WtQ8YVYUoMU76KWt1ieQW"
+uri = "file://artifacts/mobile/assets/images/panorama/winter-tal.png"
+type = "image"
+title = "winter valley panorama"
+
+[[generated]]
+id = "8fru4lmKQIE3H9oLW2eo4"
+uri = "file://artifacts/mobile/assets/images/panorama/winter-alpin.png"
+type = "image"
+title = "winter alpine panorama"
+
 [[outputs]]
 id = "o-PK8_4dt13VcbC4pK3RD"
 uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"

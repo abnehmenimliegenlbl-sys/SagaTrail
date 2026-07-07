@@ -41,6 +41,7 @@ export interface HikeStrings {
   poiStoryLoading: string;
   voiceListening: string;
   voiceOrTap: string;
+  yourChoice: (option: string) => string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -85,6 +86,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "Die Geschichte wird erzählt …",
     voiceListening: "Ich höre zu … sag deine Antwort",
     voiceOrTap: "Sprich deine Antwort oder tippe eine Option an",
+    yourChoice: (option) => `Du hast gewählt: ${option}`,
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -127,6 +129,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "D Gschicht wird verzellt …",
     voiceListening: "Ich lose … sag dini Antwort",
     voiceOrTap: "Sprich dini Antwort oder tipp e Option a",
+    yourChoice: (option) => `Du hesch gwählt: ${option}`,
   },
   en: {
     notAvailable: "Not available",
@@ -169,6 +172,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "The story is being told …",
     voiceListening: "Listening … say your answer",
     voiceOrTap: "Speak your answer or tap an option",
+    yourChoice: (option) => `You chose: ${option}`,
   },
   fr: {
     notAvailable: "Non disponible",
@@ -211,6 +215,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "L'histoire est en train d'être racontée …",
     voiceListening: "J'écoute … dis ta réponse",
     voiceOrTap: "Dis ta réponse ou touche une option",
+    yourChoice: (option) => `Tu as choisi : ${option}`,
   },
   it: {
     notAvailable: "Non disponibile",
@@ -253,6 +258,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "La storia sta per essere raccontata …",
     voiceListening: "Sto ascoltando … di' la tua risposta",
     voiceOrTap: "Pronuncia la tua risposta o tocca un'opzione",
+    yourChoice: (option) => `Hai scelto: ${option}`,
   },
   es: {
     notAvailable: "No disponible",
@@ -295,6 +301,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "La historia está siendo contada …",
     voiceListening: "Escuchando … di tu respuesta",
     voiceOrTap: "Di tu respuesta o toca una opción",
+    yourChoice: (option) => `Has elegido: ${option}`,
   },
   pt: {
     notAvailable: "Não disponível",
@@ -337,6 +344,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "A história está sendo contada …",
     voiceListening: "Ouvindo … diga sua resposta",
     voiceOrTap: "Diga sua resposta ou toque em uma opção",
+    yourChoice: (option) => `Você escolheu: ${option}`,
   },
   zh: {
     notAvailable: "不可用",
@@ -379,6 +387,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     poiStoryLoading: "故事正在讲述中 …",
     voiceListening: "正在聆听 … 请说出你的答案",
     voiceOrTap: "说出你的答案，或点击一个选项",
+    yourChoice: (option) => `你的选择：${option}`,
   },
 };
 

@@ -28,6 +28,7 @@ import {
   RouteSearchFilter,
 } from "@/contexts/CatalogContext";
 import { useKantonStrings } from "@/lib/i18n/screens/kanton";
+import { panoramaFuerRoute } from "@/lib/panorama";
 import { useColors } from "@/hooks/useColors";
 
 const DIST_MIN = 0;
@@ -37,8 +38,6 @@ const ASC_MAX = 3000;
 const DIFF_MIN = 1;
 const DIFF_MAX = 6;
 
-const heroImg = require("@/assets/images/hero-valley.png");
-const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
 
 const WEB_TOP = 67;
 
@@ -203,7 +202,7 @@ export default function KantonRouten() {
                     route={route}
                     index={i}
                     locked={locked}
-                    image={route.id === "teufelsbrucke" ? teufelImg : heroImg}
+                    image={panoramaFuerRoute(route.maxElevationM)}
                     onPress={() => router.push(`/route/${route.id}`)}
                   />
                 );

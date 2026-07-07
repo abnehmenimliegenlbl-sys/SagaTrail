@@ -103,6 +103,13 @@ export default function LiveHike() {
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
+  const [choiceFeedback, setChoiceFeedback] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
   const [distance, setDistance] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [finished, setFinished] = useState(false);
@@ -537,6 +544,14 @@ export default function LiveHike() {
     }
   }, [currentIndex, preparing, chapters, speak]);
 
+  // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
+  // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei
+  // eine laufende POI-Erzaehlung abbrechen wuerde).
+  const speakingRef = useRef(speaking);
+  speakingRef.current = speaking;
+  const chapterTextRef = useRef<string | undefined>(undefined);
+  chapterTextRef.current = chapters[currentIndex]?.text;
+
   // Sobald unterwegs ein realer Ort in der Naehe entdeckt wird (nearbyPoi,
   // siehe oben), erzaehlt der Erzaehler kurz davon — mit dem bereits
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
@@ -548,15 +563,37 @@ export default function LiveHike() {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
     narratedPoiIdRef.current = nearbyPoi.id;
-    const wasChapterPlaying = speaking;
-    const chapterToResume = chapters[currentIndex]?.text;
+    // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
+    // Panorama schaut statt aufs Handy, merkt es trotzdem.
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    // Zustand im Moment der Entdeckung einfrieren: nur wenn JETZT ein Kapitel
+    // laeuft, wird es nach dem POI-Einschub weitererzaehlt.
+    const wasChapterPlaying = speakingRef.current;
+    const chapterToResume = chapterTextRef.current;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
-    const extract = nearbyPoi.wiki?.extract ? trimForNarration(nearbyPoi.wiki.extract) : null;
-    speak(
-      pack.poiAside(nearbyPoi.name, extract),
-      wasChapterPlaying && chapterToResume ? () => speak(chapterToResume) : undefined
-    );
-  }, [nearbyPoi, storyLanguage, speak, speaking, chapters, currentIndex]);
+    const resume =
+      wasChapterPlaying && chapterToResume ? () => speak(chapterToResume) : undefined;
+    const rawExtract = nearbyPoi.wiki?.extract ?? null;
+    let cancelled = false;
+    const erzaehle = (text: string) => {
+      if (!cancelled) speak(text, resume);
+    };
+    // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
+    // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
+    // wird der rohe Wikipedia-Auszug erzaehlt; ohne Auszug nur der Name.
+    if (rawExtract) {
+      getPoiStory({ name: nearbyPoi.name, extract: rawExtract, lang: storyLanguage })
+        .then((r) => erzaehle(pack.poiAside(nearbyPoi.name, r.text)))
+        .catch(() => erzaehle(pack.poiAside(nearbyPoi.name, trimForNarration(rawExtract))));
+    } else {
+      erzaehle(pack.poiAside(nearbyPoi.name, null));
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [nearbyPoi, storyLanguage, speak]);
 
   // Echtes GPS steuert den Kapitelfortschritt entlang der Routenlaenge
   useEffect(() => {
@@ -604,6 +641,13 @@ export default function LiveHike() {
   const chooseOption = (optionIndex: number) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const gewaehlt = chapters[currentIndex]?.decision?.options[optionIndex]?.label;
+    if (gewaehlt) {
+      // Kurze sichtbare Bestaetigung der Wahl, bevor die Geschichte weitergeht
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      setChoiceFeedback(gewaehlt);
+      feedbackTimerRef.current = setTimeout(() => setChoiceFeedback(null), 2500);
     }
     setChapters((prev) => {
       const next = [...prev];
@@ -963,6 +1007,22 @@ export default function LiveHike() {
               </Animated.View>
             )}
 
+            {choiceFeedback && (
+              <Animated.View entering={FadeInUp} style={styles.choiceFeedbackWrap}>
+                <View
+                  style={[
+                    styles.choiceFeedbackPanel,
+                    { borderColor: colors.primary, backgroundColor: colors.glassBgStrong },
+                  ]}
+                >
+                  <Feather name="check-circle" size={16} color={colors.primary} />
+                  <Text style={[styles.choiceFeedbackText, { color: colors.foreground }]}>
+                    {t.yourChoice(choiceFeedback)}
+                  </Text>
+                </View>
+              </Animated.View>
+            )}
+
             {finished && (
               <PrimaryButton
                 label={t.finishHike}
@@ -1126,6 +1186,17 @@ const styles = StyleSheet.create({
   storyText: { fontFamily: fonts.story, fontSize: 20, lineHeight: 32 },
   narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
+  choiceFeedbackWrap: { marginTop: 16 },
+  choiceFeedbackPanel: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  choiceFeedbackText: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
   decisionPanel: { borderWidth: 1, borderRadius: 16, padding: 18 },
   decisionLabel: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2 },
   decisionQuestion: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 6, marginBottom: 14 },
