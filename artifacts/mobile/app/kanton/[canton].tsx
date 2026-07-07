@@ -14,7 +14,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { GLAS_3D } from "@/constants/depth";
+import { GLAS_3D, SCHATTEN_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   emptyTitle: { fontFamily: fonts.titleBold, fontSize: 18, textAlign: "center" },
-  cardWrap: { marginBottom: 14 },
+  cardWrap: { ...SCHATTEN_3D, marginBottom: 14 },
   card: { ...GLAS_3D, height: 200, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   cardImg: { width: "100%", height: "100%" },
   cardContent: { position: "absolute", left: 16, right: 16, bottom: 16 },

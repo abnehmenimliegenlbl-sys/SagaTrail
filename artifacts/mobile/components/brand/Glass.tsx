@@ -10,6 +10,10 @@ import { useColors } from "@/hooks/useColors";
  * Milchglas ueber Karte/Landschaft/Story: leichte gletscherweiss-Fuellung,
  * feine 1px-Kante, weicher Schatten. Nie Glas auf Glas stapeln.
  * Ausnahme (SOS/Notfall) wird bewusst NICHT hier umgesetzt.
+ *
+ * Zweischichtiger Aufbau: Der aeussere Rahmen traegt 3D-Kanten und Schatten
+ * (KEIN overflow:"hidden", sonst wird der Schatten abgeschnitten); die innere
+ * Schicht clippt Blur und Inhalt auf den Radius.
  */
 
 interface GlassProps {
@@ -22,36 +26,38 @@ interface GlassProps {
 export function Glass({ children, style, strong = false, intensity = 20 }: GlassProps) {
   const colors = useColors();
   return (
-    <View style={[styles.wrap, { borderRadius: colors.radius }, style]}>
-      <BlurView
-        intensity={intensity}
-        tint="dark"
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor: strong ? colors.glassBgStrong : colors.glassBg,
-            borderRadius: colors.radius,
-            borderWidth: 1,
-            borderColor: colors.glassBorder,
-          },
-          GLAS_3D,
-        ]}
-      />
-      <View style={styles.content}>{children}</View>
+    <View
+      style={[
+        styles.wrap,
+        {
+          borderRadius: colors.radius,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+        },
+        GLAS_3D,
+        style,
+      ]}
+    >
+      <View style={[styles.clip, { borderRadius: colors.radius - 1 }]}>
+        <BlurView
+          intensity={intensity}
+          tint="dark"
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: strong ? colors.glassBgStrong : colors.glassBg },
+          ]}
+        />
+        <View style={styles.content}>{children}</View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-  },
+  wrap: {},
+  clip: { overflow: "hidden" },
   content: { padding: 16 },
 });
