@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Platform,
   Pressable,
@@ -24,6 +25,8 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
+import { packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import { REVENUECAT_PACKS_OFFERING, useSubscription } from "@/lib/revenuecat";
 import { resolveLang } from "@/lib/storyContent";
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -35,8 +38,12 @@ export default function SagaDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
-  const { profile, premium, freeHikeUsed } = useApp();
+  const { profile, premium, freeHikeUsed, istSageInklusive, registriereSagenEntdeckung } =
+    useApp();
   const { getSaga, ensureRouteSaga } = useCatalog();
+  const { isElite, hatEntitlement, offerings, purchase, isPurchasing } =
+    useSubscription();
+  const [packBusy, setPackBusy] = useState(false);
 
   const [saga, setSaga] = useState(() => getSaga(id));
   const [loading, setLoading] = useState(!saga);
@@ -92,6 +99,43 @@ export default function SagaDetail() {
   }
 
   const locked = !premium && freeHikeUsed;
+
+  // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
+  // Kanton ist inklusive; weitere Sagen des Kantons brauchen das Pack des
+  // Kantons oder Elite (alle Packs inklusive).
+  const packKey = packEntitlementFuerKanton(saga.canton);
+  const packLocked =
+    premium &&
+    !isElite &&
+    !hatEntitlement(packKey) &&
+    !istSageInklusive(saga.canton, saga.id);
+  const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
+    (p) => p.identifier === packKey
+  );
+
+  const kaufePack = async () => {
+    if (!packPaket) return;
+    setPackBusy(true);
+    try {
+      await purchase(packPaket);
+    } catch (err: any) {
+      if (!err?.userCancelled) {
+        Alert.alert(t.packErrorTitle, err?.message ?? String(err));
+      }
+    } finally {
+      setPackBusy(false);
+    }
+  };
+
+  const starteWanderung = () => {
+    // Erste entdeckte Sage des Kantons registrieren (No-op, falls schon
+    // eine registriert ist) — Grundlage der Inklusiv-Regel.
+    registriereSagenEntdeckung(saga.canton, saga.id).catch(() => {});
+    router.replace(
+      routeId ? `/hike/${saga.id}?routeId=${routeId}` : `/hike/${saga.id}`
+    );
+  };
+
   const image = saga.id === "teufelsbrucke" ? teufelImg : heroImg;
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
@@ -219,16 +263,44 @@ export default function SagaDetail() {
                 style={{ marginTop: 12, alignSelf: "stretch" }}
               />
             </View>
+          ) : packLocked ? (
+            <View
+              style={[
+                styles.lockedBox,
+                { borderColor: colors.accent, backgroundColor: colors.glassBg },
+              ]}
+            >
+              <Feather name="lock" size={20} color={colors.accent} />
+              <Text style={[styles.lockedText, { color: colors.foreground }]}>
+                {t.packLockedText}
+              </Text>
+              {packPaket ? (
+                <PrimaryButton
+                  label={`${t.packBuyBtn} · ${packPaket.product.priceString}`}
+                  variant="gold"
+                  onPress={kaufePack}
+                  disabled={packBusy || isPurchasing}
+                  style={{ marginTop: 12, alignSelf: "stretch" }}
+                />
+              ) : (
+                <Text style={[styles.lockedText, { color: colors.mutedForeground }]}>
+                  {t.packUnavailable}
+                </Text>
+              )}
+              <Text style={[styles.lockedText, { color: colors.mutedForeground }]}>
+                {t.eliteUpsell}
+              </Text>
+              <PrimaryButton
+                label={t.eliteBtn}
+                variant="ghost"
+                onPress={() => router.push("/paywall")}
+                style={{ marginTop: 4, alignSelf: "stretch" }}
+              />
+            </View>
           ) : (
             <PrimaryButton
               label={t.startHike}
-              onPress={() =>
-                router.replace(
-                  routeId
-                    ? `/hike/${saga.id}?routeId=${routeId}`
-                    : `/hike/${saga.id}`,
-                )
-              }
+              onPress={starteWanderung}
               style={{ marginTop: 26 }}
             />
           )}

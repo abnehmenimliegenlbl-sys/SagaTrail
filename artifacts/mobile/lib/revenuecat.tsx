@@ -2,19 +2,24 @@
 // Deckt die ElevenLabs-Erzaehlkosten (~$0.30-0.70/Hike) ueber ein
 // Abo-Modell. Siehe scripts/src/seedRevenueCat.ts fuer die
 // Projekt-/Produkt-Konfiguration in RevenueCat.
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { Platform } from "react-native";
 import Purchases, { type PurchasesPackage } from "react-native-purchases";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
+import { useAuth } from "@clerk/expo";
 
 const REVENUECAT_TEST_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
 const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
 const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY;
 
-// Muss mit dem "lookup_key" des Entitlements in scripts/src/seedRevenueCat.ts
+// Muss mit den "lookup_key"s der Entitlements in scripts/src/portfolio2026.ts
 // uebereinstimmen.
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "premium";
+export const REVENUECAT_ELITE_ENTITLEMENT = "elite";
+// Offering mit den Kantons-Sagen-Packs (ein Paket pro Kanton,
+// lookup_key = pack_<kantonSlug>).
+export const REVENUECAT_PACKS_OFFERING = "packs";
 
 function getRevenueCatApiKey() {
   if (!REVENUECAT_TEST_API_KEY || !REVENUECAT_IOS_API_KEY || !REVENUECAT_ANDROID_API_KEY) {
@@ -45,6 +50,48 @@ export function initializeRevenueCat() {
 }
 
 function useSubscriptionContext() {
+  const { isLoaded: authLoaded, isSignedIn, userId } = useAuth();
+  const queryClient = useQueryClient();
+  // Aktuelle RevenueCat-Customer-ID. Der AppContext wartet mit dem
+  // verifizierten Server-Sync, bis diese ID der Clerk-Nutzer-ID entspricht
+  // (sonst prueft der Server einen Customer, dem der anonyme Kauf noch
+  // nicht zugeordnet wurde).
+  const [rcAppUserId, setRcAppUserId] = React.useState<string | null>(null);
+
+  // Meldet den RevenueCat-Customer mit der Clerk-Nutzer-ID an, damit der
+  // Server Kaeufe verifiziert abgleichen kann (POST /me/premium/sync prueft
+  // den Customer mit genau dieser ID). Beim Abmelden zurueck zur anonymen ID.
+  useEffect(() => {
+    if (!authLoaded) return;
+    let abgebrochen = false;
+    (async () => {
+      try {
+        const aktuelleId = await Purchases.getAppUserID();
+        if (isSignedIn && userId && aktuelleId !== userId) {
+          // logIn transferiert anonym getaetigte Kaeufe auf den Nutzer.
+          const { customerInfo } = await Purchases.logIn(userId);
+          void customerInfo;
+        } else if (!isSignedIn && !aktuelleId.startsWith("$RCAnonymousID:")) {
+          await Purchases.logOut();
+        } else {
+          if (!abgebrochen) setRcAppUserId(aktuelleId);
+          return;
+        }
+        const neueId = await Purchases.getAppUserID();
+        if (!abgebrochen) {
+          setRcAppUserId(neueId);
+          queryClient.invalidateQueries({ queryKey: ["revenuecat"] });
+        }
+      } catch {
+        // Nicht fatal: ohne Login bleibt der Kauf anonym; der naechste
+        // App-Start versucht es erneut.
+      }
+    })();
+    return () => {
+      abgebrochen = true;
+    };
+  }, [authLoaded, isSignedIn, userId, queryClient]);
+
   const customerInfoQuery = useQuery({
     queryKey: ["revenuecat", "customer-info"],
     queryFn: async () => {
@@ -78,13 +125,19 @@ function useSubscriptionContext() {
     onSuccess: () => customerInfoQuery.refetch(),
   });
 
+  const aktiveEntitlements = customerInfoQuery.data?.entitlements.active ?? {};
   const isSubscribed =
-    customerInfoQuery.data?.entitlements.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+    aktiveEntitlements[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+  const isElite = aktiveEntitlements[REVENUECAT_ELITE_ENTITLEMENT] !== undefined;
+  const hatEntitlement = (key: string) => aktiveEntitlements[key] !== undefined;
 
   return {
     customerInfo: customerInfoQuery.data,
+    rcAppUserId,
     offerings: offeringsQuery.data,
     isSubscribed,
+    isElite,
+    hatEntitlement,
     isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
     purchase: purchaseMutation.mutateAsync,
     restore: restoreMutation.mutateAsync,

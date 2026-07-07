@@ -420,6 +420,22 @@ export const UpdateMyPremiumResponse = zod.object({
 
 
 /**
+ * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
+ * @summary Premium-Status verifiziert mit RevenueCat abgleichen
+ */
+export const SyncMyPremiumResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
+})
+
+
+/**
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */

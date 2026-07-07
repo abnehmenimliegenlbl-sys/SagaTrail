@@ -581,6 +581,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/premium/sync:
+    post:
+      operationId: syncMyPremium
+      tags: [profile]
+      summary: Premium-Status verifiziert mit RevenueCat abgleichen
+      description: >-
+        Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer
+        (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt,
+        und setzt das Premium-Flag entsprechend. Nur Upgrades werden
+        uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug
+        (Downgrade bleibt Self-Service ueber PATCH /me/premium).
+      responses:
+        "200":
+          description: Aktualisiertes Profil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: RevenueCat nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /me/free-hike:
     patch:
       operationId: consumeMyFreeHike

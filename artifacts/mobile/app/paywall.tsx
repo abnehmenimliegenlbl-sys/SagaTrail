@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -36,9 +36,41 @@ export default function Paywall() {
   const t = usePaywallStrings();
 
   const [busy, setBusy] = useState(false);
+  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
-  const packageToBuy = offerings?.current?.availablePackages[0];
+  // Ordnet die Pakete des aktuellen Offerings den fuenf Plaenen zu.
+  // Preise kommen immer aus RevenueCat — nie hart codiert.
+  type PlanKey = keyof typeof t.planNames;
+  const PAKET_ZU_PLAN: Record<string, PlanKey> = {
+    $rc_monthly: "monthly",
+    $rc_annual: "yearly",
+    family: "family",
+    elite: "elite",
+    elite_family: "eliteFamily",
+  };
+  const PLAN_REIHENFOLGE: PlanKey[] = [
+    "monthly",
+    "yearly",
+    "family",
+    "elite",
+    "eliteFamily",
+  ];
+
+  const plaene = useMemo(() => {
+    const pakete = offerings?.current?.availablePackages ?? [];
+    return PLAN_REIHENFOLGE.flatMap((key) => {
+      const paket = pakete.find((p) => PAKET_ZU_PLAN[p.identifier] === key);
+      return paket ? [{ key, paket }] : [];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offerings]);
+
+  const gewaehlterPlan =
+    plaene.find((p) => p.key === gewaehlt) ??
+    plaene.find((p) => p.key === "yearly") ??
+    plaene[0];
+  const packageToBuy = gewaehlterPlan?.paket;
 
   const buy = async () => {
     if (!packageToBuy) return;
@@ -122,26 +154,46 @@ export default function Paywall() {
 
             {isLoading ? (
               <ActivityIndicator color={colors.accent} style={{ marginTop: 12 }} />
-            ) : packageToBuy ? (
-              <View
-                style={[
-                  styles.planCard,
-                  {
-                    borderColor: colors.accent,
-                    backgroundColor: colors.glassBgStrong,
-                    borderRadius: colors.radius,
-                  },
-                ]}
-              >
-                <Text style={[styles.planTitle, { color: colors.foreground }]}>
-                  {packageToBuy.product.title}
-                </Text>
-                <Text style={[styles.planPrice, { color: colors.foreground }]}>
-                  {packageToBuy.product.priceString}
-                </Text>
-                <Text style={[styles.planPer, { color: colors.mutedForeground }]}>
-                  {t.planPer}
-                </Text>
+            ) : plaene.length > 0 ? (
+              <View style={{ gap: 10 }}>
+                {plaene.map(({ key, paket }) => {
+                  const aktiv = gewaehlterPlan?.key === key;
+                  return (
+                    <Pressable
+                      key={key}
+                      onPress={() => setGewaehlt(key)}
+                      style={[
+                        styles.planCard,
+                        {
+                          borderColor: aktiv ? colors.accent : colors.glassBorder,
+                          backgroundColor: aktiv
+                            ? colors.glassBgStrong
+                            : colors.glassBg,
+                          borderRadius: colors.radius,
+                        },
+                      ]}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.planTitle, { color: colors.foreground }]}>
+                          {t.planNames[key]}
+                        </Text>
+                        <Text
+                          style={[styles.planTagline, { color: colors.mutedForeground }]}
+                        >
+                          {t.planTaglines[key]}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Text style={[styles.planPrice, { color: colors.foreground }]}>
+                          {paket.product.priceString}
+                        </Text>
+                        <Text style={[styles.planPer, { color: colors.mutedForeground }]}>
+                          {key === "monthly" ? t.planPer : t.perYear}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <Text style={[styles.legal, { color: colors.mutedForeground }]}>
@@ -189,10 +241,18 @@ const styles = StyleSheet.create({
   features: { gap: 14, marginBottom: 24 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   featureText: { fontFamily: fonts.bodyMedium, fontSize: 15, flex: 1 },
-  planCard: { ...GLAS_3D, borderWidth: 1, padding: 18, alignItems: "center" },
+  planCard: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   planTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
-  planPrice: { fontFamily: fonts.monoBold, fontSize: 28, marginTop: 10 },
-  planPer: { fontFamily: fonts.mono, fontSize: 12, marginTop: 2 },
+  planTagline: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  planPrice: { fontFamily: fonts.monoBold, fontSize: 18 },
+  planPer: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
   restore: { alignItems: "center", paddingVertical: 16 },
   restoreText: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   legal: {

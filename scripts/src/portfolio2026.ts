@@ -200,7 +200,7 @@ async function main() {
   async function ensureProdukt(
     app: App,
     storeId: string,
-    typ: "subscription" | "one_time",
+    typ: "subscription" | "one_time" | "non_consumable",
     display: string,
     titel: string,
     dauer?: "P1M" | "P1Y",
@@ -232,7 +232,7 @@ async function main() {
     return data;
   }
 
-  async function setzeTestPreise(produkt: Product, preise: Preis[]) {
+  async function setzeTestPreise(produkt: Product, preise: Preis[], versuch = 0) {
     const { error } = await client.post<TestStorePricesResponse>({
       url: "/projects/{project_id}/products/{product_id}/test_store_prices",
       path: { project_id: PROJECT_ID, product_id: produkt.id },
@@ -240,6 +240,12 @@ async function main() {
     });
     if (error) {
       const typ = (error as Record<string, unknown>)["type"];
+      if (typ === "rate_limit_error" && versuch < 5) {
+        const backoff = Number((error as Record<string, unknown>)["backoff_ms"] ?? 4000);
+        console.log(`Rate-Limit, warte ${backoff}ms: ${produkt.store_identifier}`);
+        await new Promise((r) => setTimeout(r, backoff + 500));
+        return setzeTestPreise(produkt, preise, versuch + 1);
+      }
       if (typ === "resource_already_exists") {
         console.log(`Testpreise existieren bereits: ${produkt.store_identifier}`);
       } else {
@@ -309,7 +315,7 @@ async function main() {
     const slug = kantonSlug(kanton);
     const storeId = `sagatrail_pack_${slug}`;
     const display = `Sagen-Pack ${kanton}`;
-    const test = await ensureProdukt(testApp, storeId, "one_time", display, display);
+    const test = await ensureProdukt(testApp, storeId, "non_consumable", display, display);
     const ios = await ensureProdukt(iosApp, storeId, "one_time", display, display);
     const play = await ensureProdukt(playApp, storeId, "one_time", display, display);
     await setzeTestPreise(test, PACK_PREISE);

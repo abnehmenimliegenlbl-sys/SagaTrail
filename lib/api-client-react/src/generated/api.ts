@@ -1284,6 +1284,77 @@ export const useUpdateMyPremium = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateMyPremiumMutationOptions(options));
     }
 
+export const getSyncMyPremiumUrl = () => {
+
+
+
+
+  return `/api/me/premium/sync`
+}
+
+/**
+ * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
+ * @summary Premium-Status verifiziert mit RevenueCat abgleichen
+ */
+export const syncMyPremium = async ( options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getSyncMyPremiumUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSyncMyPremiumMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMyPremium>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof syncMyPremium>>, TError,void, TContext> => {
+
+const mutationKey = ['syncMyPremium'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMyPremium>>, void> = () => {
+
+
+          return  syncMyPremium(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMyPremiumMutationResult = NonNullable<Awaited<ReturnType<typeof syncMyPremium>>>
+
+    export type SyncMyPremiumMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Premium-Status verifiziert mit RevenueCat abgleichen
+ */
+export const useSyncMyPremium = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMyPremium>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof syncMyPremium>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSyncMyPremiumMutationOptions(options));
+    }
+
 export const getConsumeMyFreeHikeUrl = () => {
 
 

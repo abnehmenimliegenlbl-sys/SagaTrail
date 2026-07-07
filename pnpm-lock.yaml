@@ -184,6 +184,12 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.21.0
         version: 7.21.0
+      '@replit/connectors-sdk':
+        specifier: ^0.4.1
+        version: 0.4.1
+      '@replit/revenuecat-sdk':
+        specifier: ^5.0.0
+        version: 5.0.0(typescript@5.9.3)
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod

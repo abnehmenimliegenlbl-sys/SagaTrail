@@ -8,6 +8,7 @@ import {
   UpdateMyPremiumBody,
 } from "@workspace/api-zod";
 import { istPremiumAktiv } from "../lib/premiumStatus";
+import { hatAktivesPremiumEntitlement } from "../lib/revenuecatSync";
 
 const router: IRouter = Router();
 
@@ -113,6 +114,50 @@ router.patch("/me/premium", async (req, res): Promise<void> => {
     .where(eq(profilesTable.id, userId))
     .returning();
 
+  if (!row) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+  res.json(toProfile(row));
+});
+
+router.post("/me/premium/sync", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  // Verifizierter Upgrade-Pfad: Der Server prueft direkt bei RevenueCat,
+  // ob der Nutzer (Customer-ID = Nutzer-ID via Purchases.logIn) ein
+  // aktives "premium"-Entitlement hat. Nur dann wird upgegradet.
+  // Fehlendes Entitlement fuehrt bewusst NICHT zum Entzug — Downgrade
+  // bleibt Self-Service (PATCH /me/premium) bzw. Admin-Sache, damit
+  // admin-gewaehrtes Premium nicht ueberschrieben wird.
+  let premiumAktiv: boolean;
+  try {
+    premiumAktiv = await hatAktivesPremiumEntitlement(userId);
+  } catch (err) {
+    req.log.error({ err }, "RevenueCat-Premium-Abgleich fehlgeschlagen");
+    res.status(502).json({ error: "RevenueCat nicht erreichbar" });
+    return;
+  }
+
+  if (premiumAktiv) {
+    const [row] = await db
+      .update(profilesTable)
+      .set({ premium: true, updatedAt: new Date() })
+      .where(eq(profilesTable.id, userId))
+      .returning();
+    if (!row) {
+      res.status(404).json({ error: "Kein Profil vorhanden" });
+      return;
+    }
+    res.json(toProfile(row));
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
   if (!row) {
     res.status(404).json({ error: "Kein Profil vorhanden" });
     return;

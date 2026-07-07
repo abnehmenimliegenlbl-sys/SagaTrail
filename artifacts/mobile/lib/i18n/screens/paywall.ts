@@ -6,6 +6,21 @@ export interface PaywallStrings {
   subtitle: string;
   activeBox: string;
   planPer: string;
+  perYear: string;
+  planNames: {
+    monthly: string;
+    yearly: string;
+    family: string;
+    elite: string;
+    eliteFamily: string;
+  };
+  planTaglines: {
+    monthly: string;
+    yearly: string;
+    family: string;
+    elite: string;
+    eliteFamily: string;
+  };
   buyBtn: string;
   restoreBtn: string;
   restoreSuccessTitle: string;
@@ -37,6 +52,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Die ganze Schweiz und all ihre Legenden",
     activeBox: "Premium ist bereits aktiv. Viel Freude auf allen Wegen.",
     planPer: "/ Monat",
+    perYear: "/ Jahr",
+    planNames: {
+      monthly: "Premium Monat",
+      yearly: "Premium Jahr",
+      family: "Familie",
+      elite: "Elite",
+      eliteFamily: "Elite Familie",
+    },
+    planTaglines: {
+      monthly: "Alle Kantone, monatlich kündbar",
+      yearly: "Alle Kantone, bester Einstieg",
+      family: "Premium für die ganze Familie",
+      elite: "Alle Sagen-Packs inklusive",
+      eliteFamily: "Elite für die ganze Familie",
+    },
     buyBtn: "Abo starten",
     restoreBtn: "Kauf wiederherstellen",
     restoreSuccessTitle: "Wiederhergestellt",
@@ -67,6 +97,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Die ganzi Schwiiz und all ihri Legände",
     activeBox: "Premium isch bereits aktiv. Viel Freud uf allne Wäg.",
     planPer: "/ Monet",
+    perYear: "/ Johr",
+    planNames: {
+      monthly: "Premium Monet",
+      yearly: "Premium Johr",
+      family: "Familie",
+      elite: "Elite",
+      eliteFamily: "Elite Familie",
+    },
+    planTaglines: {
+      monthly: "Alli Kantön, monetlich kündbar",
+      yearly: "Alli Kantön, bester Iistiig",
+      family: "Premium für die ganzi Familie",
+      elite: "Alli Sage-Packs inklusive",
+      eliteFamily: "Elite für die ganzi Familie",
+    },
     buyBtn: "Abo starte",
     restoreBtn: "Chauf wiederhärstelle",
     restoreSuccessTitle: "Wiederhärgstellt",
@@ -97,6 +142,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "All of Switzerland and all its legends",
     activeBox: "Premium is already active. Enjoy your journeys.",
     planPer: "/ month",
+    perYear: "/ year",
+    planNames: {
+      monthly: "Premium Monthly",
+      yearly: "Premium Yearly",
+      family: "Family",
+      elite: "Elite",
+      eliteFamily: "Elite Family",
+    },
+    planTaglines: {
+      monthly: "All cantons, cancel monthly",
+      yearly: "All cantons, best way to start",
+      family: "Premium for the whole family",
+      elite: "All legend packs included",
+      eliteFamily: "Elite for the whole family",
+    },
     buyBtn: "Start subscription",
     restoreBtn: "Restore purchase",
     restoreSuccessTitle: "Restored",
@@ -127,6 +187,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toute la Suisse et toutes ses légendes",
     activeBox: "Premium est déjà actif. Profitez bien de vos chemins.",
     planPer: "/ mois",
+    perYear: "/ an",
+    planNames: {
+      monthly: "Premium Mensuel",
+      yearly: "Premium Annuel",
+      family: "Famille",
+      elite: "Elite",
+      eliteFamily: "Elite Famille",
+    },
+    planTaglines: {
+      monthly: "Tous les cantons, résiliable chaque mois",
+      yearly: "Tous les cantons, le meilleur départ",
+      family: "Premium pour toute la famille",
+      elite: "Tous les packs de légendes inclus",
+      eliteFamily: "Elite pour toute la famille",
+    },
     buyBtn: "Démarrer l'abonnement",
     restoreBtn: "Restaurer l'achat",
     restoreSuccessTitle: "Restauré",
@@ -157,6 +232,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Tutta la Svizzera e tutte le sue leggende",
     activeBox: "Premium è già attivo. Buon divertimento su tutti i percorsi.",
     planPer: "/ mese",
+    perYear: "/ anno",
+    planNames: {
+      monthly: "Premium Mensile",
+      yearly: "Premium Annuale",
+      family: "Famiglia",
+      elite: "Elite",
+      eliteFamily: "Elite Famiglia",
+    },
+    planTaglines: {
+      monthly: "Tutti i cantoni, disdetta mensile",
+      yearly: "Tutti i cantoni, il modo migliore per iniziare",
+      family: "Premium per tutta la famiglia",
+      elite: "Tutti i pacchetti di leggende inclusi",
+      eliteFamily: "Elite per tutta la famiglia",
+    },
     buyBtn: "Avvia abbonamento",
     restoreBtn: "Ripristina acquisto",
     restoreSuccessTitle: "Ripristinato",
@@ -187,6 +277,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toda Suiza y todas sus leyendas",
     activeBox: "Premium ya está activo. Que disfrutes de todos los caminos.",
     planPer: "/ mes",
+    perYear: "/ año",
+    planNames: {
+      monthly: "Premium Mensual",
+      yearly: "Premium Anual",
+      family: "Familia",
+      elite: "Elite",
+      eliteFamily: "Elite Familia",
+    },
+    planTaglines: {
+      monthly: "Todos los cantones, cancelable cada mes",
+      yearly: "Todos los cantones, la mejor forma de empezar",
+      family: "Premium para toda la familia",
+      elite: "Todos los packs de leyendas incluidos",
+      eliteFamily: "Elite para toda la familia",
+    },
     buyBtn: "Iniciar suscripción",
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
@@ -217,6 +322,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toda a Suíça e todas as suas lendas",
     activeBox: "O Premium já está ativo. Divirta-se em todos os caminhos.",
     planPer: "/ mês",
+    perYear: "/ ano",
+    planNames: {
+      monthly: "Premium Mensal",
+      yearly: "Premium Anual",
+      family: "Família",
+      elite: "Elite",
+      eliteFamily: "Elite Família",
+    },
+    planTaglines: {
+      monthly: "Todos os cantões, cancelável mensalmente",
+      yearly: "Todos os cantões, a melhor forma de começar",
+      family: "Premium para toda a família",
+      elite: "Todos os pacotes de lendas incluídos",
+      eliteFamily: "Elite para toda a família",
+    },
     buyBtn: "Iniciar assinatura",
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
@@ -247,6 +367,21 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "整个瑞士及其所有传说",
     activeBox: "Premium 已激活。祝您旅途愉快。",
     planPer: "/ 月",
+    perYear: "/ 年",
+    planNames: {
+      monthly: "Premium 月度",
+      yearly: "Premium 年度",
+      family: "家庭版",
+      elite: "Elite",
+      eliteFamily: "Elite 家庭版",
+    },
+    planTaglines: {
+      monthly: "全部州，按月可取消",
+      yearly: "全部州，最佳入门选择",
+      family: "全家共享 Premium",
+      elite: "包含所有传说包",
+      eliteFamily: "全家共享 Elite",
+    },
     buyBtn: "开始订阅",
     restoreBtn: "恢复购买",
     restoreSuccessTitle: "已恢复",

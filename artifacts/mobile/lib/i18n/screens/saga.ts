@@ -11,6 +11,12 @@ export interface SagaStrings {
   lockedText: string;
   premiumButton: string;
   startHike: string;
+  packLockedText: string;
+  packBuyBtn: string;
+  packUnavailable: string;
+  packErrorTitle: string;
+  eliteUpsell: string;
+  eliteBtn: string;
   accuracy: {
     exakt: string;
     ungefaehr: string;
@@ -30,6 +36,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Diese Region ist Teil von SagaTrail Premium. Schalte alle Kantone frei, um diese Wanderung zu starten.",
     premiumButton: "Premium freischalten",
     startHike: "Wanderung starten",
+    packLockedText: "Deine erste entdeckte Sage in diesem Kanton war inklusive. Alle weiteren Sagen dieses Kantons schaltest du mit dem Sagen-Pack frei.",
+    packBuyBtn: "Sagen-Pack kaufen",
+    packUnavailable: "Das Sagen-Pack ist derzeit nicht verfügbar.",
+    packErrorTitle: "Kauf fehlgeschlagen",
+    eliteUpsell: "Mit Elite sind alle Sagen-Packs aller Kantone inklusive.",
+    eliteBtn: "Elite entdecken",
     accuracy: {
       exakt: "Exakt belegter Ort",
       ungefaehr: "Region belegt, nicht punktgenau",
@@ -47,6 +59,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Die Region isch Teil vo SagaTrail Premium. Schalt alli Kantön frei, zum die Wanderig z'starte.",
     premiumButton: "Premium freischalte",
     startHike: "Wanderig starte",
+    packLockedText: "Dini ersti entdeckti Sag i dem Kanton isch inklusive gsi. Alli wiitere Sage vo dem Kanton schaltisch mit em Sage-Pack frei.",
+    packBuyBtn: "Sage-Pack chaufe",
+    packUnavailable: "S Sage-Pack isch zurzit nid verfüegbar.",
+    packErrorTitle: "Chauf fehlgschlage",
+    eliteUpsell: "Mit Elite sind alli Sage-Packs vo allne Kantön inklusive.",
+    eliteBtn: "Elite entdecke",
     accuracy: {
       exakt: "Exakt beleite Ort",
       ungefaehr: "Region beleit, nid punktgnau",
@@ -64,6 +82,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "This region is part of SagaTrail Premium. Unlock all cantons to start this hike.",
     premiumButton: "Unlock Premium",
     startHike: "Start hike",
+    packLockedText: "Your first discovered legend in this canton was included. Unlock all further legends of this canton with the legend pack.",
+    packBuyBtn: "Buy legend pack",
+    packUnavailable: "The legend pack is currently unavailable.",
+    packErrorTitle: "Purchase failed",
+    eliteUpsell: "With Elite, all legend packs of all cantons are included.",
+    eliteBtn: "Discover Elite",
     accuracy: {
       exakt: "Exactly documented location",
       ungefaehr: "Region documented, not pinpointed",
@@ -81,6 +105,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Cette région fait partie de SagaTrail Premium. Débloquez tous les cantons pour commencer cette randonnée.",
     premiumButton: "Débloquer Premium",
     startHike: "Commencer la randonnée",
+    packLockedText: "Votre première légende découverte dans ce canton était incluse. Débloquez toutes les autres légendes de ce canton avec le pack de légendes.",
+    packBuyBtn: "Acheter le pack de légendes",
+    packUnavailable: "Le pack de légendes n'est pas disponible actuellement.",
+    packErrorTitle: "Échec de l'achat",
+    eliteUpsell: "Avec Elite, tous les packs de légendes de tous les cantons sont inclus.",
+    eliteBtn: "Découvrir Elite",
     accuracy: {
       exakt: "Lieu exactement documenté",
       ungefaehr: "Région documentée, pas de point précis",
@@ -98,6 +128,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Questa regione fa parte di SagaTrail Premium. Sblocca tutti i cantoni per iniziare questa escursione.",
     premiumButton: "Sblocca Premium",
     startHike: "Inizia l'escursione",
+    packLockedText: "La tua prima leggenda scoperta in questo cantone era inclusa. Sblocca tutte le altre leggende di questo cantone con il pacchetto di leggende.",
+    packBuyBtn: "Acquista il pacchetto di leggende",
+    packUnavailable: "Il pacchetto di leggende non è attualmente disponibile.",
+    packErrorTitle: "Acquisto non riuscito",
+    eliteUpsell: "Con Elite, tutti i pacchetti di leggende di tutti i cantoni sono inclusi.",
+    eliteBtn: "Scopri Elite",
     accuracy: {
       exakt: "Luogo esattamente documentato",
       ungefaehr: "Regione documentata, non precisa",
@@ -115,6 +151,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Esta región es parte de SagaTrail Premium. Desbloquea todos los cantones para comenzar esta caminata.",
     premiumButton: "Desbloquear Premium",
     startHike: "Iniciar caminata",
+    packLockedText: "Tu primera leyenda descubierta en este cantón estaba incluida. Desbloquea todas las demás leyendas de este cantón con el pack de leyendas.",
+    packBuyBtn: "Comprar pack de leyendas",
+    packUnavailable: "El pack de leyendas no está disponible actualmente.",
+    packErrorTitle: "Compra fallida",
+    eliteUpsell: "Con Elite, todos los packs de leyendas de todos los cantones están incluidos.",
+    eliteBtn: "Descubrir Elite",
     accuracy: {
       exakt: "Ubicación documentada exactamente",
       ungefaehr: "Región documentada, no puntual",
@@ -132,6 +174,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "Esta região faz parte do SagaTrail Premium. Desbloqueie todos os cantões para começar esta caminhada.",
     premiumButton: "Desbloquear Premium",
     startHike: "Iniciar caminhada",
+    packLockedText: "A sua primeira lenda descoberta neste cantão estava incluída. Desbloqueie todas as outras lendas deste cantão com o pacote de lendas.",
+    packBuyBtn: "Comprar pacote de lendas",
+    packUnavailable: "O pacote de lendas não está disponível no momento.",
+    packErrorTitle: "Falha na compra",
+    eliteUpsell: "Com o Elite, todos os pacotes de lendas de todos os cantões estão incluídos.",
+    eliteBtn: "Descobrir Elite",
     accuracy: {
       exakt: "Localização documentada exatamente",
       ungefaehr: "Região documentada, não pontual",
@@ -149,6 +197,12 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
     lockedText: "此区域属于 SagaTrail Premium。解锁所有州以开始此次徒步。",
     premiumButton: "解锁 Premium",
     startHike: "开始徒步",
+    packLockedText: "你在该州发现的第一个传说已包含在内。购买传说包即可解锁该州的所有其他传说。",
+    packBuyBtn: "购买传说包",
+    packUnavailable: "传说包目前不可用。",
+    packErrorTitle: "购买失败",
+    eliteUpsell: "订阅 Elite 即可包含所有州的全部传说包。",
+    eliteBtn: "了解 Elite",
     accuracy: {
       exakt: "确切记录的地点",
       ungefaehr: "有记录的区域，非精确地点",

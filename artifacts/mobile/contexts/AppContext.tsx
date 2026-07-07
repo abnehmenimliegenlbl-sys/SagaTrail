@@ -6,6 +6,7 @@ import {
   useGetMyProfile,
   useSaveMyProfile,
   useUpdateMyPremium,
+  useSyncMyPremium,
   useConsumeMyFreeHike,
 } from "@workspace/api-client-react";
 import React, {
@@ -43,6 +44,7 @@ const KEYS = {
   hikeHistory: "sagatrail:hikeHistory",
   activeHike: "sagatrail:activeHike",
   uiLanguage: "sagatrail:uiLanguage",
+  freieSagen: "sagatrail:freieSagen",
 } as const;
 
 export interface EmergencyContact {
@@ -108,6 +110,19 @@ interface AppContextValue {
    * damit Effekte auch bei identischen Ereignissen feuern.
    */
   groupHikeEvent: { event: HikeSyncEvent; receivedAt: number } | null;
+  /**
+   * Erste entdeckte Sage pro Kanton (Kanton -> Saga-ID). Im Premium-Abo ist
+   * genau diese eine Sage pro Kanton inklusive; alle weiteren Sagen des
+   * Kantons brauchen das Sagen-Pack des Kantons oder Elite.
+   */
+  freieSagen: Record<string, string>;
+  /**
+   * Registriert beim Wanderstart die Sage als "erste entdeckte" des Kantons,
+   * falls fuer diesen Kanton noch keine registriert ist. No-op sonst.
+   */
+  registriereSagenEntdeckung: (kanton: string, sagaId: string) => Promise<void>;
+  /** Ob die Sage die inkludierte Gratis-Sage ihres Kantons ist (oder es wuerde). */
+  istSageInklusive: (kanton: string, sagaId: string) => boolean;
 
   saveProfile: (profile: Omit<Profile, "id">) => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, "id">>) => Promise<void>;
@@ -174,6 +189,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     event: HikeSyncEvent;
     receivedAt: number;
   } | null>(null);
+  const [freieSagen, setFreieSagen] = useState<Record<string, string>>({});
 
   // Der Socket-Client lebt ausserhalb des React-State (eine Instanz pro
   // App-Laufzeit) und meldet Ereignisse ueber Callbacks zurueck, die den
@@ -255,6 +271,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.hikeHistory,
           KEYS.activeHike,
           KEYS.uiLanguage,
+          KEYS.freieSagen,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
@@ -272,6 +289,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setHikeHistory(JSON.parse(map[KEYS.hikeHistory]!));
         if (map[KEYS.activeHike])
           setActiveHike(JSON.parse(map[KEYS.activeHike]!));
+        if (map[KEYS.freieSagen])
+          setFreieSagen(JSON.parse(map[KEYS.freieSagen]!));
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
           // explizite Wahl) — diese hat fuer immer Vorrang.
@@ -382,7 +401,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
   const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();
-  const { isSubscribed, isLoading: subscriptionLoading } = useSubscription();
+  const { mutateAsync: syncMyPremiumMutation } = useSyncMyPremium();
+  const {
+    isSubscribed,
+    isLoading: subscriptionLoading,
+    rcAppUserId,
+  } = useSubscription();
 
   const applyServerProfile = useCallback(
     async (result: {
@@ -450,11 +474,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [profile, saveMyProfileMutation, applyServerProfile]
   );
 
+  // Verifizierter Upgrade-Pfad: Der Server prueft selbst bei RevenueCat,
+  // ob ein aktives "premium"-Entitlement vorliegt (der Client darf sich
+  // Premium nicht per Self-Service geben — PATCH /me/premium lehnt
+  // premium=true mit 403 ab).
   const unlockPremium = useCallback(async () => {
-    const result = await updateMyPremiumMutation({ data: { premium: true } });
+    const result = await syncMyPremiumMutation();
     setPremium(result.premium);
-    await AsyncStorage.setItem(KEYS.premium, "true");
-  }, [updateMyPremiumMutation]);
+    await AsyncStorage.setItem(
+      KEYS.premium,
+      result.premium ? "true" : "false"
+    );
+  }, [syncMyPremiumMutation]);
 
   const lockPremium = useCallback(async () => {
     const result = await updateMyPremiumMutation({ data: { premium: false } });
@@ -471,6 +502,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!authLoaded || !isSignedIn || !profile) return;
     if (subscriptionLoading) return;
+    // Erst synchronisieren, wenn RevenueCat mit der Clerk-Nutzer-ID
+    // angemeldet ist: vorher wuerde der Server einen Customer pruefen,
+    // dem ein anonym getaetigter Kauf noch nicht zugeordnet wurde.
+    if (!rcAppUserId || rcAppUserId !== profile.id) return;
     if (isSubscribed && !premium) {
       unlockPremium().catch(() => {});
     } else if (!isSubscribed && premium) {
@@ -481,6 +516,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     isSignedIn,
     profile,
     subscriptionLoading,
+    rcAppUserId,
     isSubscribed,
     premium,
     unlockPremium,
@@ -512,6 +548,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     },
     []
+  );
+
+  const registriereSagenEntdeckung = useCallback(
+    async (kanton: string, sagaId: string) => {
+      setFreieSagen((prev) => {
+        if (prev[kanton]) return prev;
+        const next = { ...prev, [kanton]: sagaId };
+        AsyncStorage.setItem(KEYS.freieSagen, JSON.stringify(next)).catch(
+          () => {}
+        );
+        return next;
+      });
+    },
+    []
+  );
+
+  const istSageInklusive = useCallback(
+    (kanton: string, sagaId: string) => {
+      const registriert = freieSagen[kanton];
+      // Noch keine Sage im Kanton entdeckt: die naechste gestartete waere
+      // die inkludierte — also gilt jede als zugaenglich.
+      if (!registriert) return true;
+      return registriert === sagaId;
+    },
+    [freieSagen]
   );
 
   const saveEmergencyContact = useCallback(
@@ -667,6 +728,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupConnectionStatus,
       groupError,
       groupHikeEvent,
+      freieSagen,
+      registriereSagenEntdeckung,
+      istSageInklusive,
       saveProfile,
       updateProfile,
       setPendingLanguage,
@@ -706,6 +770,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupConnectionStatus,
       groupError,
       groupHikeEvent,
+      freieSagen,
+      registriereSagenEntdeckung,
+      istSageInklusive,
       saveProfile,
       updateProfile,
       setPendingLanguage,
