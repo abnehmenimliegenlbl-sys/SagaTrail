@@ -330,7 +330,10 @@ export default function LiveHike() {
   useEffect(() => {
     if (!mapCenter) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    // Enger Rand (0.5 km statt 3 km): behalten werden ohnehin nur POIs im
+    // 100-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
+    // dichten Staedten (z. B. Basel) so teuer, dass sie in ein Timeout laeuft.
+    const bbox = bboxAroundGeometry(route?.geometry, mapCenter, 0.5);
     // Nur POIs im 100-m-Korridor um die Strecke behalten — Orte weiter weg
     // liegen nicht am Weg und wuerden die Karte und Ansagen verwaessern.
     // Gemessen wird gegen die Liniensegmente (nicht nur Stuetzpunkte), da die

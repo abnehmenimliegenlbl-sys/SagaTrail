@@ -126,6 +126,11 @@ const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 // "keine Infos vorhanden" im Cache haengen bleiben.
 const POI_NEGATIVE_TTL_MS = 10 * 60 * 1000; // 10 Minuten
 const POI_WIKI_CONCURRENCY = 4;
+// Die unscharfe Wikipedia-Geo-Suche (Stufe 3, fuer POIs OHNE OSM-Verweis) ist
+// die teuerste Anreicherungsstufe. In dichten Staedten (z. B. Basel) liefert
+// Overpass leicht 100+ POIs — ohne Budget dauert die Antwort dann 20 s+ und
+// laeuft mobil in Timeouts. POIs MIT OSM-Verweis werden immer aufgeloest.
+const POI_GEO_SEARCH_BUDGET = 30;
 const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 
 /**
@@ -133,7 +138,11 @@ const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
  * (enthaelt bereits Sprache + Titel), sonst der `wikidata`-Tag (Q-ID -> Titel
  * der Zielsprache), sonst kein Treffer.
  */
-async function enrichPoiWithWikipedia(poi: RawPoi, log: Logger): Promise<EnrichedPoi> {
+async function enrichPoiWithWikipedia(
+  poi: RawPoi,
+  log: Logger,
+  geoSearchBudget: { rest: number },
+): Promise<EnrichedPoi> {
   try {
     if (poi.wikipediaTag) {
       const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag);
@@ -148,9 +157,13 @@ async function enrichPoiWithWikipedia(poi: RawPoi, log: Logger): Promise<Enriche
     }
     // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
     // Geo-Suche im Umkreis mit unscharfem Namensabgleich (z.B. findet
-    // "Basiliskbrunnen" so den Artikel "Basiliskenbrunnen").
-    const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
-    if (wiki) return { ...poi, wiki };
+    // "Basiliskbrunnen" so den Artikel "Basiliskenbrunnen"). Bewusst mit
+    // Budget gedeckelt, damit dichte Stadtgebiete nicht in Timeouts laufen.
+    if (geoSearchBudget.rest > 0) {
+      geoSearchBudget.rest--;
+      const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
+      if (wiki) return { ...poi, wiki };
+    }
   } catch (err) {
     log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
   }
@@ -174,8 +187,9 @@ export async function getPois(
     if (Date.now() - hit.at < ttl) return hit.entries;
   }
   const raw = await fetchHistoricPois(bbox, log);
+  const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
   const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
-    enrichPoiWithWikipedia(poi, log),
+    enrichPoiWithWikipedia(poi, log, geoSearchBudget),
   );
   poiCache.set(key, { at: Date.now(), entries });
   return entries;
