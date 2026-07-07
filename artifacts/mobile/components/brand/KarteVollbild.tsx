@@ -1,0 +1,101 @@
+import { Feather } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { useColors } from "@/hooks/useColors";
+
+interface KarteVollbildProps {
+  /** Hoehe der eingebetteten (nicht-Vollbild-)Karte. */
+  height?: number;
+  /** Rendert die Karte fuer eine gegebene Hoehe (einmal klein, einmal Vollbild). */
+  renderKarte: (hoehe: number) => React.ReactNode;
+}
+
+/**
+ * Macht eine eingebettete Karte per Antippen zum Vollbild. Im eingebetteten
+ * Zustand faengt eine transparente Flaeche den Tipp ab (die kleine Karte ist
+ * ohnehin kaum sinnvoll bedienbar); rechts oben zeigt ein Symbol die
+ * Vergroesserbarkeit an. Im Vollbild ist die Karte voll interaktiv, ein
+ * kleiner Knopf rechts oben bringt sie in die Ursprungsgroesse zurueck.
+ */
+export function KarteVollbild({ height = 200, renderKarte }: KarteVollbildProps) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { height: fensterHoehe } = useWindowDimensions();
+  const [vollbild, setVollbild] = useState(false);
+
+  return (
+    <>
+      <View style={{ height }}>
+        {/* Im Vollbild laeuft nur EINE Karteninstanz (WebView/iframe ist
+            teuer) — die eingebettete Karte pausiert solange als leere Flaeche. */}
+        {!vollbild && renderKarte(height)}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Karte im Vollbild anzeigen"
+          onPress={() => setVollbild(true)}
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          pointerEvents="none"
+          style={[styles.hinweis, { backgroundColor: colors.background + "CC" }]}
+        >
+          <Feather name="maximize-2" size={14} color={colors.foreground} />
+        </View>
+      </View>
+
+      <Modal
+        visible={vollbild}
+        animationType="fade"
+        onRequestClose={() => setVollbild(false)}
+      >
+        <View style={[styles.vollbild, { backgroundColor: colors.background }]}>
+          {renderKarte(fensterHoehe)}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Vollbild schliessen"
+            onPress={() => setVollbild(false)}
+            hitSlop={10}
+            style={[
+              styles.schliessen,
+              {
+                top: insets.top + 12,
+                backgroundColor: colors.background + "E6",
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Feather name="minimize-2" size={18} color={colors.foreground} />
+          </Pressable>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  hinweis: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    borderRadius: 8,
+    padding: 6,
+  },
+  vollbild: {
+    flex: 1,
+  },
+  schliessen: {
+    position: "absolute",
+    right: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+  },
+});

@@ -18,6 +18,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
@@ -203,17 +204,22 @@ export default function Routenplanung() {
         </Text>
 
         <View style={{ marginTop: 18 }}>
-          {route.coordinates ? (
-            <SwisstopoMap
-              center={route.coordinates}
-              label={route.name}
-              height={200}
-              geometry={route.geometry}
-              aerialways={aerialways}
-            />
-          ) : (
-            <RouteMap progress={0.15} height={200} />
-          )}
+          <KarteVollbild
+            height={200}
+            renderKarte={(hoehe) =>
+              route.coordinates ? (
+                <SwisstopoMap
+                  center={route.coordinates}
+                  label={route.name}
+                  height={hoehe}
+                  geometry={route.geometry}
+                  aerialways={aerialways}
+                />
+              ) : (
+                <RouteMap progress={0.15} height={hoehe} />
+              )
+            }
+          />
         </View>
 
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>

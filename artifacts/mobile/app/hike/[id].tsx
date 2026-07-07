@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
+import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { SparkMountain } from "@/components/brand/SparkMountain";
@@ -740,24 +741,29 @@ export default function LiveHike() {
         </View>
 
         <View style={{ marginTop: 14 }}>
-          {mapCenter ? (
-            <SwisstopoMap
-              center={mapCenter}
-              position={shownPos}
-              label={saga.title}
-              height={200}
-              geometry={route?.geometry}
-              offlineTiles={offlineTiles}
-              aerialways={aerialways}
-              pois={pois}
-              onPoiPress={(id) => {
-                const poi = pois.find((p) => p.id === id);
-                if (poi) setSelectedPoi(poi);
-              }}
-            />
-          ) : (
-            <RouteMap progress={progress} height={200} />
-          )}
+          <KarteVollbild
+            height={200}
+            renderKarte={(hoehe) =>
+              mapCenter ? (
+                <SwisstopoMap
+                  center={mapCenter}
+                  position={shownPos}
+                  label={saga.title}
+                  height={hoehe}
+                  geometry={route?.geometry}
+                  offlineTiles={offlineTiles}
+                  aerialways={aerialways}
+                  pois={pois}
+                  onPoiPress={(id) => {
+                    const poi = pois.find((p) => p.id === id);
+                    if (poi) setSelectedPoi(poi);
+                  }}
+                />
+              ) : (
+                <RouteMap progress={progress} height={hoehe} />
+              )
+            }
+          />
         </View>
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
