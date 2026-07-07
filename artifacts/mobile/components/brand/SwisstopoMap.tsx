@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 
 import colors from "@/constants/colors";
+import { useMapStrings } from "@/lib/i18n/screens/map";
 import { buildSwisstopoHtml, SwisstopoMapProps } from "./swisstopoMapHtml";
 
 /**
@@ -23,9 +24,20 @@ export function SwisstopoMap({
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
+  const t = useMapStrings();
   const html = useMemo(
-    () => buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways, pois),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois]
+    () =>
+      buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways, pois, {
+        title: t.legendTitle,
+        route: t.legendRoute,
+        start: t.legendStart,
+        ziel: t.legendZiel,
+        position: t.legendPosition,
+        wanderwege: t.legendWanderwege,
+        seilbahn: t.legendSeilbahn,
+        poi: t.legendPoi,
+      }),
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

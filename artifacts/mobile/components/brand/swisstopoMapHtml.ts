@@ -46,6 +46,23 @@ export interface SwisstopoMapProps {
   pois?: MapPoi[] | null;
   /** Wird mit der `id` des angetippten POI-Markers aufgerufen. */
   onPoiPress?: (id: string) => void;
+  /**
+   * Lokalisierte Beschriftungen der auf-/zuklappbaren Kartenlegende
+   * (lib/i18n/screens/map.ts). Fehlen sie, wird keine Legende gezeigt.
+   */
+  legend?: MapLegendLabels | null;
+}
+
+/** Beschriftungen der Kartenlegende (bereits lokalisiert vom Host). */
+export interface MapLegendLabels {
+  title: string;
+  route: string;
+  start: string;
+  ziel: string;
+  position: string;
+  wanderwege: string;
+  seilbahn: string;
+  poi: string;
 }
 
 /**
@@ -65,7 +82,8 @@ export function buildSwisstopoHtml(
   geometry?: number[][] | null,
   offlineTiles?: Record<string, string> | null,
   aerialways?: { id: string; geometry: number[][] }[] | null,
-  pois?: MapPoi[] | null
+  pois?: MapPoi[] | null,
+  legend?: MapLegendLabels | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -79,6 +97,7 @@ export function buildSwisstopoHtml(
   const aerialwaysJson =
     aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
   const poisJson = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
+  const legendJson = legend ? JSON.stringify(legend) : "null";
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -110,6 +129,20 @@ export function buildSwisstopoHtml(
   .stt-poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); cursor: pointer; }
   .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; }
   .leaflet-control-attribution a { color: #B8935A; }
+  /* Auf-/zuklappbare Legende (unten links, ueber der Attribution). */
+  .stt-legende { background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35; overflow: hidden; }
+  .stt-legende-kopf { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; user-select: none; -webkit-user-select: none; font-weight: 600; color: #B8935A; }
+  .stt-legende-pfeil { display: inline-block; transition: transform 0.15s ease; font-size: 10px; color: #F5F3EC; }
+  .stt-legende.zu .stt-legende-pfeil { transform: rotate(-90deg); }
+  .stt-legende-inhalt { padding: 0 10px 8px 10px; }
+  .stt-legende.zu .stt-legende-inhalt { display: none; }
+  .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
+  .stt-linie-route { width: 18px; height: 4px; border-radius: 2px; background: #B8935A; }
+  .stt-linie-wanderweg { width: 18px; height: 3px; border-radius: 2px; background: #C4462F; opacity: 0.75; }
+  .stt-linie-seilbahn { width: 18px; height: 0; border-top: 2.5px dashed #5B6B78; }
+  .stt-legende .stt-start, .stt-legende .stt-ziel, .stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
+  .stt-legende .stt-poi { box-shadow: none; cursor: default; }
 </style>
 </head>
 <body>
@@ -194,6 +227,46 @@ export function buildSwisstopoHtml(
           }
         });
       });
+    }
+
+    var legende = ${legendJson};
+    if (legende) {
+      // Auf-/zuklappbare Legende als eigenes Leaflet-Control unten links.
+      // Eintraege fuer Seilbahn und Sehenswuerdigkeiten erscheinen nur, wenn
+      // die Karte solche Elemente tatsaechlich zeigt; Start/Ziel/Route nur
+      // bei vorhandenem Wegverlauf.
+      var LegendeControl = L.Control.extend({
+        options: { position: 'bottomleft' },
+        onAdd: function () {
+          var box = L.DomUtil.create('div', 'stt-legende zu');
+          var zeilen = [];
+          function zeile(symbolHtml, text) {
+            zeilen.push('<div class="stt-legende-zeile"><span class="stt-legende-symbol">' + symbolHtml + '</span><span>' + text + '</span></div>');
+          }
+          if (geometry && geometry.length > 1) {
+            zeile('<span class="stt-linie-route"></span>', legende.route);
+            zeile('<div class="stt-start"></div>', legende.start);
+            zeile('<div class="stt-ziel"></div>', legende.ziel);
+          } else {
+            zeile('<div class="stt-start"></div>', legende.start);
+          }
+          zeile('<div class="stt-live"></div>', legende.position);
+          zeile('<span class="stt-linie-wanderweg"></span>', legende.wanderwege);
+          if (aerialways) zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
+          if (pois) zeile('<div class="stt-poi"></div>', legende.poi);
+          box.innerHTML =
+            '<div class="stt-legende-kopf"><span class="stt-legende-pfeil">\\u25BE</span>' + legende.title + '</div>' +
+            '<div class="stt-legende-inhalt">' + zeilen.join('') + '</div>';
+          var kopf = box.querySelector('.stt-legende-kopf');
+          L.DomEvent.disableClickPropagation(box);
+          L.DomEvent.disableScrollPropagation(box);
+          L.DomEvent.on(kopf, 'click', function () {
+            box.classList.toggle('zu');
+          });
+          return box;
+        }
+      });
+      map.addControl(new LegendeControl());
     }
 
     var liveIcon = L.divIcon({ className: '', html: '<div class="stt-live"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
