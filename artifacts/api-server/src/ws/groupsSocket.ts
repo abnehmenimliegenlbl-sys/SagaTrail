@@ -4,6 +4,7 @@ import { verifyToken } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db, profilesTable } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { istPremiumAktiv } from "../lib/premiumStatus";
 import {
   createRoom,
   joinRoom,
@@ -56,7 +57,7 @@ async function authenticate(token: string | null): Promise<AuthedProfile | null>
     userId,
     name: row.name,
     ageTier: row.ageTier,
-    premium: row.premium,
+    premium: istPremiumAktiv(row),
   };
 }
 

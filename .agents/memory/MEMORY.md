@@ -14,3 +14,4 @@
 - [On-demand AI text rewrite pattern](ai-rewrite-on-demand-cache.md) — rewrite-on-tap (not eager/bulk) + in-memory cache keyed by source-text hash; avoids AI cost for content that's cheap to fetch but expensive to restyle.
 - [SagaTrail hands-free voice decisions](sagatrail-voice-decision.md) — decision points answered by speech (expo-speech-recognition), needs dev/EAS build, gracefully falls back to tap buttons.
 - [Clerk iOS SPM + CocoaPods build crash](clerk-ios-spm-cocoapods.md) — iOS EAS build with Clerk's SPM-linked SDK only works with `expo-build-properties` `useFrameworks: "static"` (dynamic triggers validator crashes).
+- [Prod premium admin endpoint](prod-premium-admin.md) — prod DB is read-only from workspace; grant premium via ADMIN_TOKEN-protected /admin/premium after publish; self-upgrade deliberately blocked.

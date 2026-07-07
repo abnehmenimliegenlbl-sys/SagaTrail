@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, profilesTable } from "@workspace/db";
 import { CreateNarrationBody } from "@workspace/api-zod";
 import { getOrCreateNarrationAudio } from "../lib/narrationCache";
+import { istPremiumAktiv } from "../lib/premiumStatus";
 
 const router: IRouter = Router();
 
@@ -34,7 +35,7 @@ router.post("/narration", async (req, res): Promise<void> => {
     .from(profilesTable)
     .where(eq(profilesTable.id, userId));
 
-  if (!profile?.premium) {
+  if (!profile || !istPremiumAktiv(profile)) {
     res.status(403).json({ error: "Premium erforderlich fuer KI-Erzaehlstimme" });
     return;
   }

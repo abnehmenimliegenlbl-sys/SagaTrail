@@ -13,6 +13,7 @@ import profileRouter from "./profile";
 import narrationRouter from "./narration";
 import geocodeRouter from "./geocode";
 import customRouteRouter from "./customRoute";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(profileRouter);
 router.use(narrationRouter);
 router.use(geocodeRouter);
 router.use(customRouteRouter);
+router.use(adminRouter);
 
 export default router;

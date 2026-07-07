@@ -7,6 +7,7 @@ import {
   SaveMyProfileBody,
   UpdateMyPremiumBody,
 } from "@workspace/api-zod";
+import { istPremiumAktiv } from "../lib/premiumStatus";
 
 const router: IRouter = Router();
 
@@ -27,7 +28,7 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     homeCanton: row.homeCanton,
     language: row.language,
     ageTier: row.ageTier,
-    premium: row.premium,
+    premium: istPremiumAktiv(row),
     freeHikeUsed: row.freeHikeUsed,
   });
 }
@@ -92,6 +93,17 @@ router.patch("/me/premium", async (req, res): Promise<void> => {
   const parsed = UpdateMyPremiumBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  // Sicherheitsgrenze: Nutzer duerfen sich Premium NICHT selbst geben.
+  // Upgrades laufen ausschliesslich ueber vertrauenswuerdige Server-Pfade
+  // (Admin-Endpunkt heute, verifizierter RevenueCat-Abgleich spaeter).
+  // Nur das Zuruecksetzen (premium=false) bleibt als Self-Service erlaubt.
+  if (parsed.data.premium) {
+    res.status(403).json({
+      error: "Premium kann nicht selbst gesetzt werden",
+    });
     return;
   }
 
