@@ -1,48 +1,36 @@
 // Expo Config Plugin: withStaticFrameworksFix
 //
-// Expo 54 + Clerk iOS SDK conflict:
-// - Clerk requires `use_frameworks! :linkage => :dynamic` (via expo-build-properties)
-// - With prebuilt RN Core (RCT_USE_PREBUILT_RNCORE=1, the EAS default for Expo 54),
-//   expo-modules-autolinking's installer.rb overrides
-//   `Pod::Installer#run_podfile_pre_install_hooks` to downgrade ExpoModulesCore,
-//   Expo, ReactAppDependencyProvider and expo-dev-menu from static_framework to
-//   static_library AFTER all Podfile pre_install blocks have run.
-//   A static_library inside a use_frameworks! :linkage => :dynamic project is
-//   what CocoaPods rejects with:
-//     "The 'Pods-SagaTrail' target has transitive dependencies that include
-//      statically linked binaries: (ExpoModulesCore)"
+// Expo 54 + Clerk iOS SDK Konflikt:
+// - Clerk erfordert `use_frameworks! :linkage => :dynamic` (via expo-build-properties)
+// - Mit prebuilt RN Core (RCT_USE_PREBUILT_RNCORE=1, EAS-Default fuer Expo 54)
+//   stuft expo-modules-autolinking (installer.rb) ExpoModulesCore, Expo,
+//   ReactAppDependencyProvider und expo-dev-menu zwingend auf static_library
+//   herab (run_podfile_pre_install_hooks-Monkey-Patch, laeuft NACH allen
+//   Podfile-Hooks — nicht ueberschreibbar per pre_install).
+// - CocoaPods' TargetValidator (verify_no_static_framework_transitive_dependencies)
+//   lehnt JEDES statische Target ab, von dem ein dynamisches Pod abhaengt:
+//     static_deps = dynamic_pod_targets.flat_map(&:recursive_dependent_targets)
+//                     .uniq.select(&:build_as_static?)
+//   => auch static_framework schlaegt fehl. Ein nachtraegliches "Upgrade" der
+//   herabgestuften Pods kann diese Validierung prinzipiell nie bestehen.
 //
-// Root cause (from installer.rb line 111-131):
-//   define_method(:run_podfile_pre_install_hooks) do
-//     _original_run_podfile_pre_install_hooks.bind(self).()  # runs ALL pre_install blocks
-//     ...
-//     # THEN downgrades to static_library — after every pre_install hook
-//     def t.build_type; Pod::BuildType.static_library; end
-//   end
+// Einzige saubere Loesung: Expos Downgrade gar nicht ausloesen.
+// installer.rb prueft: should_disable_use_frameworks_for_core_expo_pods?
+//   return false if ENV['RCT_USE_PREBUILT_RNCORE'] != '1'
+// => RCT_USE_PREBUILT_RNCORE=0 setzen (React Native aus dem Quellcode bauen,
+//    wie vor Expo 54 Standard). Dann bleibt alles dynamisch verlinkt, die
+//    CocoaPods-Validierung besteht, und Clerks SPM-Abhaengigkeit funktioniert.
+//    Kosten: laengere native Buildzeit (RN wird kompiliert statt als Tarball
+//    geladen) — aber ein funktionierender Build.
 //
-// Fix: Override run_podfile_pre_install_hooks AGAIN (our injection runs after
-// installer.rb is required, so we capture Expo's version as our "original") and
-// add a final step that upgrades the affected pods from static_library to
-// static_framework. A static_framework is statically linked but framework-shaped,
-// which CocoaPods allows alongside use_frameworks! :linkage => :dynamic.
-//
-// This injection must be evaluated AFTER use_expo_modules! (which triggers the
-// require of installer.rb) and AFTER any pre_install blocks — i.e. at the end
-// of the generated Podfile. The withDangerousMod callback runs after the
-// Podfile is written by Expo's own prebuild, so we append to the end.
+// Die ENV-Zuweisung muss VOR use_react_native!/use_expo_modules! ausgewertet
+// werden, deshalb wird sie an den ANFANG der generierten Podfile gestellt.
 const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
 const MARKER_BEGIN = "# @generated begin static-frameworks-fix";
 const MARKER_END = "# @generated end static-frameworks-fix";
-
-const STATIC_PODS = [
-  "ExpoModulesCore",
-  "Expo",
-  "ReactAppDependencyProvider",
-  "expo-dev-menu",
-];
 
 function withStaticFrameworksFix(config) {
   return withDangerousMod(config, [
@@ -58,44 +46,16 @@ function withStaticFrameworksFix(config) {
         return config;
       }
 
-      // Ruby injection: override Pod::Installer#run_podfile_pre_install_hooks
-      // to add a post-Expo step that upgrades the affected pods from
-      // static_library back to static_framework.
-      //
-      // By the time this Podfile code is evaluated, installer.rb has already
-      // been required (by use_expo_modules! inside the target block). So
-      // instance_method(:run_podfile_pre_install_hooks) captures Expo's
-      // override, and our define_method replaces it — then our version calls
-      // Expo's version first (which itself calls CocoaPods' original + applies
-      // the static_library downgrade), and afterwards overrides back to
-      // static_framework.
-      // WICHTIG: Die Podfile wird in einem DSL-Kontext (Pod::Podfile) evaluiert.
-      // "module Pod; class Installer" wuerde dort eine NEUE leere Klasse
-      // Pod::Podfile::Pod::Installer anlegen (=> "undefined method
-      // 'run_podfile_pre_install_hooks'"). Deshalb absoluter Pfad mit
-      // ::Pod::Installer.class_eval, der die echte Installer-Klasse oeffnet.
-      const podNames = JSON.stringify(STATIC_PODS);
       const snippet = `${MARKER_BEGIN}
-::Pod::Installer.class_eval do
-  _expo_run_pre_install = instance_method(:run_podfile_pre_install_hooks)
-  define_method(:run_podfile_pre_install_hooks) do
-    _expo_run_pre_install.bind(self).call
-    # Re-apply static_framework after Expo downgrades to static_library.
-    # static_framework is compatible with use_frameworks! :linkage => :dynamic;
-    # static_library is not.
-    pod_names = ${podNames}
-    self.pod_targets.each do |t|
-      next unless pod_names.include?(t.name)
-      def t.build_type
-        ::Pod::BuildType.static_framework
-      end
-    end
-  end
-end
+# React Native aus dem Quellcode bauen statt prebuilt Core zu verwenden.
+# Verhindert, dass expo-modules-autolinking ExpoModulesCore & Co. auf
+# static_library herabstuft — was mit use_frameworks! :linkage => :dynamic
+# (Clerk-Anforderung) von CocoaPods' TargetValidator abgelehnt wuerde.
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
 ${MARKER_END}
 `;
 
-      contents = `${contents.trimEnd()}\n\n${snippet}`;
+      contents = `${snippet}\n${contents}`;
       fs.writeFileSync(podfilePath, contents);
       return config;
     },
