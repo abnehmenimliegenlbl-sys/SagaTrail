@@ -16,6 +16,8 @@ export interface AuthStrings {
   or: string;
   continueWithGoogleSignIn: string;
   continueWithGoogleSignUp: string;
+  continueWithAppleSignIn: string;
+  continueWithAppleSignUp: string;
   noAccountYet: string;
   registerLink: string;
   alreadyHaveAccount: string;
@@ -26,6 +28,7 @@ export interface AuthStrings {
   errorVerifyIncomplete: string;
   errorCodeInvalid: string;
   errorGoogleFailed: string;
+  errorAppleFailed: string;
 }
 
 const AUTH_STRINGS: StringsDict<AuthStrings> = {
@@ -45,6 +48,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "oder",
     continueWithGoogleSignIn: "Mit Google anmelden",
     continueWithGoogleSignUp: "Mit Google registrieren",
+    continueWithAppleSignIn: "Mit Apple anmelden",
+    continueWithAppleSignUp: "Mit Apple registrieren",
     noAccountYet: "Noch kein Konto?",
     registerLink: "Registrieren",
     alreadyHaveAccount: "Schon ein Konto?",
@@ -55,6 +60,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Bestätigung nicht abgeschlossen. Bitte erneut versuchen.",
     errorCodeInvalid: "Code ungültig. Bitte prüfen.",
     errorGoogleFailed: "Google-Anmeldung fehlgeschlagen.",
+    errorAppleFailed: "Apple-Anmeldung fehlgeschlagen.",
   },
   gsw: {
     signInTitle: "Willkomme zrugg",
@@ -72,6 +78,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "oder",
     continueWithGoogleSignIn: "Mit Google amälde",
     continueWithGoogleSignUp: "Mit Google registriere",
+    continueWithAppleSignIn: "Mit Apple amälde",
+    continueWithAppleSignUp: "Mit Apple registriere",
     noAccountYet: "No kes Konto?",
     registerLink: "Registriere",
     alreadyHaveAccount: "Scho es Konto?",
@@ -82,6 +90,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Bestätigung nid fertig gmacht. Bitte nomol probiere.",
     errorCodeInvalid: "Code ungültig. Bitte checke.",
     errorGoogleFailed: "Google-Amäldig fehlgschlage.",
+    errorAppleFailed: "Apple-Amäldig fehlgschlage.",
   },
   en: {
     signInTitle: "Welcome back",
@@ -99,6 +108,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "or",
     continueWithGoogleSignIn: "Continue with Google",
     continueWithGoogleSignUp: "Sign up with Google",
+    continueWithAppleSignIn: "Continue with Apple",
+    continueWithAppleSignUp: "Sign up with Apple",
     noAccountYet: "No account yet?",
     registerLink: "Sign up",
     alreadyHaveAccount: "Already have an account?",
@@ -109,6 +120,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Verification not completed. Please try again.",
     errorCodeInvalid: "Invalid code. Please check.",
     errorGoogleFailed: "Google sign-in failed.",
+    errorAppleFailed: "Apple sign-in failed.",
   },
   fr: {
     signInTitle: "Bon retour",
@@ -126,6 +138,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "ou",
     continueWithGoogleSignIn: "Continuer avec Google",
     continueWithGoogleSignUp: "S'inscrire avec Google",
+    continueWithAppleSignIn: "Continuer avec Apple",
+    continueWithAppleSignUp: "S'inscrire avec Apple",
     noAccountYet: "Pas encore de compte ?",
     registerLink: "S'inscrire",
     alreadyHaveAccount: "Déjà un compte ?",
@@ -136,6 +150,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Vérification non terminée. Veuillez réessayer.",
     errorCodeInvalid: "Code invalide. Veuillez vérifier.",
     errorGoogleFailed: "Échec de la connexion Google.",
+    errorAppleFailed: "Échec de la connexion Apple.",
   },
   it: {
     signInTitle: "Bentornato",
@@ -153,6 +168,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "oppure",
     continueWithGoogleSignIn: "Continua con Google",
     continueWithGoogleSignUp: "Registrati con Google",
+    continueWithAppleSignIn: "Continua con Apple",
+    continueWithAppleSignUp: "Registrati con Apple",
     noAccountYet: "Non hai un account?",
     registerLink: "Registrati",
     alreadyHaveAccount: "Hai già un account?",
@@ -163,6 +180,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Verifica non completata. Riprova.",
     errorCodeInvalid: "Codice non valido. Controlla.",
     errorGoogleFailed: "Accesso con Google non riuscito.",
+    errorAppleFailed: "Accesso con Apple non riuscito.",
   },
   es: {
     signInTitle: "Bienvenido de nuevo",
@@ -180,6 +198,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "o",
     continueWithGoogleSignIn: "Continuar con Google",
     continueWithGoogleSignUp: "Registrarse con Google",
+    continueWithAppleSignIn: "Continuar con Apple",
+    continueWithAppleSignUp: "Registrarse con Apple",
     noAccountYet: "¿Aún no tienes cuenta?",
     registerLink: "Registrarse",
     alreadyHaveAccount: "¿Ya tienes cuenta?",
@@ -190,6 +210,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Verificación no completada. Inténtalo de nuevo.",
     errorCodeInvalid: "Código inválido. Verifica.",
     errorGoogleFailed: "Error al iniciar sesión con Google.",
+    errorAppleFailed: "Error al iniciar sesión con Apple.",
   },
   pt: {
     signInTitle: "Bem-vindo de volta",
@@ -207,6 +228,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "ou",
     continueWithGoogleSignIn: "Continuar com o Google",
     continueWithGoogleSignUp: "Cadastrar com o Google",
+    continueWithAppleSignIn: "Continuar com a Apple",
+    continueWithAppleSignUp: "Cadastrar com a Apple",
     noAccountYet: "Ainda não tem conta?",
     registerLink: "Cadastrar",
     alreadyHaveAccount: "Já tem uma conta?",
@@ -217,6 +240,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "Verificação não concluída. Tente novamente.",
     errorCodeInvalid: "Código inválido. Verifique.",
     errorGoogleFailed: "Falha no login com o Google.",
+    errorAppleFailed: "Falha no login com a Apple.",
   },
   zh: {
     signInTitle: "欢迎回来",
@@ -234,6 +258,8 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     or: "或",
     continueWithGoogleSignIn: "使用 Google 登录",
     continueWithGoogleSignUp: "使用 Google 注册",
+    continueWithAppleSignIn: "使用 Apple 登录",
+    continueWithAppleSignUp: "使用 Apple 注册",
     noAccountYet: "还没有账户？",
     registerLink: "注册",
     alreadyHaveAccount: "已有账户？",
@@ -244,6 +270,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorVerifyIncomplete: "验证未完成，请重试。",
     errorCodeInvalid: "验证码无效，请检查。",
     errorGoogleFailed: "Google 登录失败。",
+    errorAppleFailed: "Apple 登录失败。",
   },
 };
 

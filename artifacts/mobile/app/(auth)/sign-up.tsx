@@ -1,6 +1,6 @@
 import { useSSO } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
@@ -40,6 +40,7 @@ export default function SignUpScreen() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,6 +106,24 @@ export default function SignUpScreen() {
       setGoogleLoading(false);
     }
   }, [startSSOFlow, router]);
+
+  const onApplePress = useCallback(async () => {
+    setError(null);
+    setAppleLoading(true);
+    try {
+      const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow(
+        { strategy: "oauth_apple" }
+      );
+      if (createdSessionId && setActiveSSO) {
+        await setActiveSSO({ session: createdSessionId });
+        router.replace("/onboarding");
+      }
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
+    } finally {
+      setAppleLoading(false);
+    }
+  }, [startSSOFlow, router, t]);
 
   return (
     <Background deep>
@@ -181,9 +200,23 @@ export default function SignUpScreen() {
             </View>
 
             <Pressable
+              onPress={onApplePress}
+              disabled={appleLoading}
+              style={[styles.googleButton, { borderColor: colors.glassBorder }]}
+            >
+              <Ionicons name="logo-apple" size={18} color={colors.foreground} />
+              <Text style={[styles.googleLabel, { color: colors.foreground }]}>
+                {t.continueWithAppleSignUp}
+              </Text>
+            </Pressable>
+
+            <Pressable
               onPress={onGooglePress}
               disabled={googleLoading}
-              style={[styles.googleButton, { borderColor: colors.glassBorder }]}
+              style={[
+                styles.googleButton,
+                { borderColor: colors.glassBorder, marginTop: 12 },
+              ]}
             >
               <Feather name="chrome" size={18} color={colors.foreground} />
               <Text style={[styles.googleLabel, { color: colors.foreground }]}>
