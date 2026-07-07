@@ -21,6 +21,9 @@ export interface HikeStrings {
   pause: string;
   readAloud: string;
   repeatChapter: string;
+  turnNotifTitle: string;
+  turnNotifLeft: string;
+  turnNotifRight: string;
   perception: string;
   finishHike: string;
   sos: string;
@@ -67,6 +70,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pause",
     readAloud: "Vorlesen",
     repeatChapter: "Wiederholen",
+    turnNotifTitle: "Abzweigung voraus",
+    turnNotifLeft: "Gleich links halten",
+    turnNotifRight: "Gleich rechts halten",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
     sos: "SOS",
@@ -111,6 +117,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pause",
     readAloud: "Vorläse",
     repeatChapter: "Nomal",
+    turnNotifTitle: "Abzwiigig voruus",
+    turnNotifLeft: "Grad links halte",
+    turnNotifRight: "Grad rächts halte",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
     sos: "SOS",
@@ -155,6 +164,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pause",
     readAloud: "Read aloud",
     repeatChapter: "Repeat",
+    turnNotifTitle: "Turn ahead",
+    turnNotifLeft: "Keep left shortly",
+    turnNotifRight: "Keep right shortly",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
     sos: "SOS",
@@ -199,6 +211,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pause",
     readAloud: "Lire à voix haute",
     repeatChapter: "Répéter",
+    turnNotifTitle: "Bifurcation en vue",
+    turnNotifLeft: "Serrez à gauche",
+    turnNotifRight: "Serrez à droite",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
     sos: "SOS",
@@ -243,6 +258,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pausa",
     readAloud: "Leggi a voce alta",
     repeatChapter: "Ripeti",
+    turnNotifTitle: "Bivio in arrivo",
+    turnNotifLeft: "Tieni la sinistra",
+    turnNotifRight: "Tieni la destra",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
     sos: "SOS",
@@ -287,6 +305,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pausa",
     readAloud: "Leer en voz alta",
     repeatChapter: "Repetir",
+    turnNotifTitle: "Curva próxima",
+    turnNotifLeft: "Mantente a la izquierda",
+    turnNotifRight: "Mantente a la derecha",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
     sos: "SOS",
@@ -331,6 +352,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "Pausa",
     readAloud: "Ler em voz alta",
     repeatChapter: "Repetir",
+    turnNotifTitle: "Curva à frente",
+    turnNotifLeft: "Mantenha-se à esquerda",
+    turnNotifRight: "Mantenha-se à direita",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
     sos: "SOS",
@@ -375,6 +399,9 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     pause: "暂停",
     readAloud: "朗读",
     repeatChapter: "重听",
+    turnNotifTitle: "前方转弯",
+    turnNotifLeft: "即将靠左",
+    turnNotifRight: "即将靠右",
     perception: "感知",
     finishHike: "完成徒步",
     sos: "紧急求救",

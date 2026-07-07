@@ -14,6 +14,8 @@ export interface NavigationCue {
   /** Streckenanteil (0..1) entlang der Route, an dem die Abzweigung liegt. */
   distanceFraction: number;
   direction: TurnDirection;
+  /** Reale Koordinate der Abzweigung — Grundlage fuer Naeherungs-Mitteilungen. */
+  point: LatLng;
 }
 
 const MIN_SEGMENT_M = 60; // GPS-Rauschen/Mikrosegmente ignorieren
@@ -82,7 +84,11 @@ export function detectNavigationCues(
         fraction > EDGE_MARGIN &&
         fraction < 1 - EDGE_MARGIN
       ) {
-        raw.push({ distanceFraction: fraction, direction: diff > 0 ? "rechts" : "links" });
+        raw.push({
+          distanceFraction: fraction,
+          direction: diff > 0 ? "rechts" : "links",
+          point: points[segStart],
+        });
       }
     }
     prevBearing = b;

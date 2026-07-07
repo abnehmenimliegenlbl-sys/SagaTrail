@@ -60,6 +60,7 @@ SagaTrail is a native iOS/Android (Expo) Swiss hiking companion that narrates re
 - Collection (Sammlung) tracks discovered sagas and achievements; Group (Gruppe) is a staged shared-session view.
 - Summary recaps the route, decisions, and unlocked achievement, shareable via the OS share sheet.
 - Interrupted hikes persist as `activeHike` in AppContext (saved on every chapter change, cleared on finish); the home tab shows a dismissible "Weiter wandern" resume card that reopens the hike at the saved chapter (`resumeIndexRef` in `hike/[id].tsx`). The live hike also has a "Wiederholen" button to re-speak the current chapter.
+- Turn notifications for smartwatches: `lib/turnNotifications.ts` (expo-notifications) fires a localized local notification ~100 m before each significant turn (`detectNavigationCues` now carries the turn's `point: LatLng`); at most one per position update, once per cue. iOS mirrors these to a paired watch when the iPhone is locked. Web is a no-op; reliable testing needs a dev/EAS build (not Expo Go).
 
 ## User preferences
 

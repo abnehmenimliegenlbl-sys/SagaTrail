@@ -11,7 +11,7 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -55,6 +55,11 @@ import {
   trimForNarration,
 } from "@/lib/storyContent";
 import { blobToDataUri } from "@/lib/narrationAudio";
+import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
+import {
+  bereiteAbbiegeMitteilungenVor,
+  sendeAbbiegeMitteilung,
+} from "@/lib/turnNotifications";
 import { weaveNavigationCues } from "@/lib/storyEngine";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
@@ -340,6 +345,60 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [selectedPoi, storyLanguage]);
+
+  // Abbiege-Mitteilungen: markante Abzweigungen der Route (echte Geometrie,
+  // siehe navigationCues.ts) loesen bei Annaeherung genau einmal eine lokale
+  // Mitteilung aus. iOS spiegelt diese auf eine gekoppelte Smartwatch (inkl.
+  // Vibration), sobald das iPhone gesperrt ist. Web: No-op.
+  const turnCues = useMemo<NavigationCue[]>(
+    () => detectNavigationCues(route?.geometry, 8),
+    [route?.geometry]
+  );
+  const notifiedTurnsRef = useRef<Set<number>>(new Set());
+  const [turnNotifsReady, setTurnNotifsReady] = useState(false);
+  useEffect(() => {
+    if (turnCues.length === 0) return;
+    let cancelled = false;
+    bereiteAbbiegeMitteilungenVor().then((ok) => {
+      if (!cancelled) setTurnNotifsReady(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [turnCues.length]);
+  useEffect(() => {
+    if (!turnNotifsReady || turnCues.length === 0) return;
+    const geo = route?.geometry;
+    const current: LatLng | null =
+      livePos ??
+      (geo && geo.length > 1 && totalKm > 0
+        ? (() => {
+            const f = Math.max(0, Math.min(1, distance / totalKm));
+            const p = geo[Math.round(f * (geo.length - 1))];
+            return { lat: p[0], lng: p[1] };
+          })()
+        : null);
+    if (!current) return;
+    const TURN_NEARBY_KM = 0.1; // ~100 m vor der Abzweigung ans Handgelenk tippen
+    // Hoechstens EINE Mitteilung pro Positionsupdate (die naechstgelegene) —
+    // in engen Serpentinen koennen sonst mehrere Cues gleichzeitig ausloesen.
+    let bester: { index: number; cue: NavigationCue; distKm: number } | null = null;
+    turnCues.forEach((cue, i) => {
+      if (notifiedTurnsRef.current.has(i)) return;
+      const d = haversineKm(current, cue.point);
+      if (d <= TURN_NEARBY_KM && (!bester || d < bester.distKm)) {
+        bester = { index: i, cue, distKm: d };
+      }
+    });
+    if (bester) {
+      const treffer: { index: number; cue: NavigationCue } = bester;
+      notifiedTurnsRef.current.add(treffer.index);
+      sendeAbbiegeMitteilung(
+        t.turnNotifTitle,
+        treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
+      );
+    }
+  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
