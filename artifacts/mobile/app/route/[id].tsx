@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -31,7 +32,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
-import { bboxAroundGeometry } from "@/lib/geo";
+import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 
@@ -49,6 +50,35 @@ export default function Routenplanung() {
 
   const route = getRoute(id);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
+
+  // Routentyp aus der Geometrie ableiten: liegen Start und Ziel nahe
+  // beieinander (unter 500 m oder unter 5 % der Streckenlaenge), ist es ein
+  // Rundweg — sonst eine Streckenwanderung, bei der die Rueckreise in der
+  // Schweiz ueblicherweise mit Bahn oder Postauto erfolgt.
+  const routentyp = React.useMemo<"rundweg" | "strecke" | null>(() => {
+    const g = route?.geometry;
+    if (!g || g.length < 2) return null;
+    const start = { lat: g[0][0], lng: g[0][1] };
+    const ende = { lat: g[g.length - 1][0], lng: g[g.length - 1][1] };
+    const lueckeKm = haversineKm(start, ende);
+    const schwelleKm = Math.max(0.5, (route?.distanceKm ?? 0) * 0.05);
+    return lueckeKm <= schwelleKm ? "rundweg" : "strecke";
+  }, [route?.geometry, route?.distanceKm]);
+
+  // Oeffnet die OeV-Rueckreise vom Routenende zurueck zum Startpunkt
+  // (Google-Maps-Transit-Link funktioniert auf iOS, Android und Web).
+  const oeffneRueckreise = React.useCallback(() => {
+    const g = route?.geometry;
+    if (!g || g.length < 2) return;
+    const start = g[0];
+    const ende = g[g.length - 1];
+    const url =
+      "https://www.google.com/maps/dir/?api=1" +
+      `&origin=${ende[0]},${ende[1]}` +
+      `&destination=${start[0]},${start[1]}` +
+      "&travelmode=transit";
+    Linking.openURL(url).catch(() => {});
+  }, [route?.geometry]);
 
   const [saga, setSaga] = useState<Saga | undefined>(
     route ? getSagaForRoute(route) : undefined,
@@ -248,6 +278,43 @@ export default function Routenplanung() {
           </Text>
         </View>
         <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.seasonNote}</Text>
+
+        {routentyp && (
+          <>
+            <View style={styles.checkRow}>
+              <Feather
+                name={routentyp === "rundweg" ? "rotate-cw" : "arrow-right"}
+                size={16}
+                color={colors.mutedForeground}
+              />
+              <Text style={[styles.checkLabel, { color: colors.foreground }]}>
+                {t.routeTypeLabel}
+              </Text>
+              <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
+                {routentyp === "rundweg" ? t.routeTypeRundweg : t.routeTypeStrecke}
+              </Text>
+            </View>
+            {routentyp === "strecke" && (
+              <>
+                <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
+                  {t.streckeHint}
+                </Text>
+                <Pressable
+                  onPress={oeffneRueckreise}
+                  style={[
+                    styles.rueckreiseButton,
+                    { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                  ]}
+                >
+                  <Feather name="navigation" size={15} color={colors.accent} />
+                  <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
+                    {t.planReturn}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </>
+        )}
 
         <View
           style={[
@@ -570,6 +637,18 @@ const styles = StyleSheet.create({
   checkLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
   checkValue: { fontFamily: fonts.mono, fontSize: 13 },
   checkNote: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 8, fontStyle: "italic" },
+  rueckreiseButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  rueckreiseText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   energyCard: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",

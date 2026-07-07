@@ -51,6 +51,11 @@ export interface RouteStrings {
     nurSommer: string;
   };
   seasonNote: string;
+  routeTypeLabel: string;
+  routeTypeRundweg: string;
+  routeTypeStrecke: string;
+  streckeHint: string;
+  planReturn: string;
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -114,6 +119,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Einschätzung aus Höhe und Schwierigkeit — keine amtliche Aussage zum aktuellen Zustand.",
+    routeTypeLabel: "Routentyp",
+    routeTypeRundweg: "Rundweg",
+    routeTypeStrecke: "Streckenwanderung",
+    streckeHint:
+      "Start und Ziel liegen auseinander — in der Schweiz üblich: Die Rückreise erfolgt meist mit Bahn oder Postauto.",
+    planReturn: "Rückreise mit ÖV planen",
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -175,6 +186,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Yschätzig us Höchi und Schwierigkeit — kei amtlichi Uussag zum aktuelle Zuestand.",
+    routeTypeLabel: "Routetyp",
+    routeTypeRundweg: "Rundwäg",
+    routeTypeStrecke: "Streckewanderig",
+    streckeHint:
+      "Start und Ziil liged usenand — i de Schwiiz üeblich: Zrugg gahts meischtens mit Bahn oder Poschtauto.",
+    planReturn: "Rückreis mit ÖV plane",
   },
   en: {
     notFound: "Route not found.",
@@ -236,6 +253,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Estimate based on elevation and difficulty — not an official statement about current conditions.",
+    routeTypeLabel: "Route type",
+    routeTypeRundweg: "Loop trail",
+    routeTypeStrecke: "Point-to-point hike",
+    streckeHint:
+      "Start and finish are in different places — common in Switzerland: the return trip is usually by train or PostBus.",
+    planReturn: "Plan return by public transport",
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -297,6 +320,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Estimation basée sur l'altitude et la difficulté — pas une déclaration officielle sur l'état actuel.",
+    routeTypeLabel: "Type d'itinéraire",
+    routeTypeRundweg: "Boucle",
+    routeTypeStrecke: "Randonnée en ligne",
+    streckeHint:
+      "Le départ et l'arrivée sont éloignés — courant en Suisse : le retour se fait généralement en train ou en car postal.",
+    planReturn: "Planifier le retour en transports publics",
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -358,6 +387,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Stima basata su altitudine e difficoltà — non è una dichiarazione ufficiale sullo stato attuale.",
+    routeTypeLabel: "Tipo di percorso",
+    routeTypeRundweg: "Percorso circolare",
+    routeTypeStrecke: "Escursione lineare",
+    streckeHint:
+      "Partenza e arrivo sono distanti — comune in Svizzera: il ritorno avviene di solito in treno o autopostale.",
+    planReturn: "Pianifica il ritorno con i mezzi pubblici",
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -419,6 +454,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Estimación basada en la altitud y la dificultad — no es una declaración oficial sobre el estado actual.",
+    routeTypeLabel: "Tipo de ruta",
+    routeTypeRundweg: "Ruta circular",
+    routeTypeStrecke: "Ruta lineal",
+    streckeHint:
+      "El inicio y el final están separados — habitual en Suiza: el regreso suele hacerse en tren o autobús postal.",
+    planReturn: "Planificar el regreso en transporte público",
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -480,6 +521,12 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     },
     seasonNote:
       "Estimativa baseada na altitude e dificuldade — não é uma declaração oficial sobre o estado atual.",
+    routeTypeLabel: "Tipo de rota",
+    routeTypeRundweg: "Rota circular",
+    routeTypeStrecke: "Rota linear",
+    streckeHint:
+      "Início e fim ficam distantes — comum na Suíça: o retorno geralmente é de trem ou ônibus postal.",
+    planReturn: "Planejar o retorno de transporte público",
   },
   zh: {
     notFound: "未找到路线。",
@@ -534,6 +581,11 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       nurSommer: "仅限夏季",
     },
     seasonNote: "基于海拔和难度的估算——并非官方的当前路况声明。",
+    routeTypeLabel: "路线类型",
+    routeTypeRundweg: "环线",
+    routeTypeStrecke: "单程徒步",
+    streckeHint: "起点和终点不在同一处——这在瑞士很常见：通常乘火车或邮政巴士返回。",
+    planReturn: "规划公共交通返程",
   },
 };
 
