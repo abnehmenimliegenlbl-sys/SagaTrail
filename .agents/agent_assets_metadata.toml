@@ -59,3 +59,9 @@ id = "cIb5rzwTjOlNcYEQhXntQ"
 uri = "file://.local/tmp_map_preview2/4_waymarked_hiking_overlay.png"
 type = "image"
 title = "Waymarked Trails Overlay (offizielle Wanderrouten farbig, transparent — wird UEBER einer Basiskarte gelegt)"
+
+[[outputs]]
+id = "5BWEUkb5w66AwWNdIYC6y"
+uri = "file://artifacts/mobile/store/app-store-texte.md"
+type = "text"
+title = "App-Store-Texte DE/EN"
