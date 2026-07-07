@@ -69,22 +69,25 @@ function withStaticFrameworksFix(config) {
       // Expo's version first (which itself calls CocoaPods' original + applies
       // the static_library downgrade), and afterwards overrides back to
       // static_framework.
+      // WICHTIG: Die Podfile wird in einem DSL-Kontext (Pod::Podfile) evaluiert.
+      // "module Pod; class Installer" wuerde dort eine NEUE leere Klasse
+      // Pod::Podfile::Pod::Installer anlegen (=> "undefined method
+      // 'run_podfile_pre_install_hooks'"). Deshalb absoluter Pfad mit
+      // ::Pod::Installer.class_eval, der die echte Installer-Klasse oeffnet.
       const podNames = JSON.stringify(STATIC_PODS);
       const snippet = `${MARKER_BEGIN}
-module Pod
-  class Installer
-    _expo_run_pre_install = instance_method(:run_podfile_pre_install_hooks)
-    define_method(:run_podfile_pre_install_hooks) do
-      _expo_run_pre_install.bind(self).call
-      # Re-apply static_framework after Expo downgrades to static_library.
-      # static_framework is compatible with use_frameworks! :linkage => :dynamic;
-      # static_library is not.
-      pod_names = ${podNames}
-      self.pod_targets.each do |t|
-        next unless pod_names.include?(t.name)
-        def t.build_type
-          Pod::BuildType.static_framework
-        end
+::Pod::Installer.class_eval do
+  _expo_run_pre_install = instance_method(:run_podfile_pre_install_hooks)
+  define_method(:run_podfile_pre_install_hooks) do
+    _expo_run_pre_install.bind(self).call
+    # Re-apply static_framework after Expo downgrades to static_library.
+    # static_framework is compatible with use_frameworks! :linkage => :dynamic;
+    # static_library is not.
+    pod_names = ${podNames}
+    self.pod_targets.each do |t|
+      next unless pod_names.include?(t.name)
+      def t.build_type
+        ::Pod::BuildType.static_framework
       end
     end
   end
