@@ -288,7 +288,7 @@ export function buildSwisstopoHtml(
           zeile('<span class="stt-linie-lwn"></span>', legende.wegLokal);
           zeile('<span class="stt-linie-mehrfach"></span>', legende.wegMehrfach);
           zeile('<span class="stt-schild stt-schild-gruen">2</span>', legende.nummerWanderland);
-          zeile('<span class="stt-schild stt-schild-weiss">7</span>', legende.nummerLokal);
+          zeile('<span class="stt-schild stt-schild-weiss">HW</span>', legende.nummerLokal);
           if (aerialways) {
             zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
             zeile('<div class="stt-seilbahn-station"></div>', legende.seilbahnStation);
