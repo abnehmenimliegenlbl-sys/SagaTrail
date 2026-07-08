@@ -2,6 +2,7 @@
   "expo": {
     "name": "SagaTrail",
     "slug": "mobile",
+    "owner": "inster",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -59,11 +60,22 @@
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://saga-trail.replit.app"
         }
       ],
       "expo-font",
       "expo-web-browser",
+      "expo-av",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#10181A",
+          "iosDisplayInForeground": true
+        }
+      ],
+      "expo-document-picker",
+      "expo-image-picker",
       [
         "expo-location",
         {
