@@ -113,3 +113,15 @@ id = "5BWEUkb5w66AwWNdIYC6y"
 uri = "file://artifacts/mobile/store/app-store-texte.md"
 type = "text"
 title = "App-Store-Texte DE/EN"
+
+[[outputs]]
+id = "7-jZUmL-H52nBsutoXZYH"
+uri = "file://attached_assets/samples/probe_dialekttext.mp3"
+type = "audio"
+title = "Hörprobe NEU: Stimme liest echten Dialekttext"
+
+[[outputs]]
+id = "mirbfr0CxtNJ0244XC-Vj"
+uri = "file://attached_assets/samples/probe_aktuell_hochdeutsch.mp3"
+type = "audio"
+title = "Hörprobe AKTUELL: Stimme liest Hochdeutsch"
