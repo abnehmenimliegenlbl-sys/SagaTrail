@@ -1,7 +1,11 @@
 import { createHash } from "crypto";
 import type { Logger } from "pino";
 import { objectStorageClient } from "./objectStorage";
-import { synthesizeNarration } from "./elevenlabs";
+import {
+  DEFAULT_NARRATOR_VOICE_ID,
+  synthesizeNarration,
+  voiceCandidatesForLanguage,
+} from "./elevenlabs";
 
 /**
  * Persistenter GCS-Cache fuer ElevenLabs-Audiodateien. Gecacht wird nach
@@ -11,6 +15,14 @@ import { synthesizeNarration } from "./elevenlabs";
  * niedrig, da jedes Kapitel pro Sage/Archetyp/Alterstufe/Sprache nur einmal
  * je synthetisiert wird (die Story selbst ist bereits ueber `stories`
  * gecacht, siehe storyGenerator.ts).
+ *
+ * Der Schluessel ist stimmen-bewusst: Nicht-Standard-Stimmen (z.B. die
+ * Schweizer-Akzent-Stimme fuer gsw) haengen ihre Voice-ID an den Hash an.
+ * Die Standardstimme behaelt das alte Hash-Format, damit der bestehende
+ * Cache-Bestand gueltig bleibt. Beim Lesen werden die Stimmen-Kandidaten
+ * in Wunsch-Reihenfolge geprueft; gespeichert wird unter der TATSAECHLICH
+ * verwendeten Stimme. So liefert ein Plan-Upgrade bei ElevenLabs sofort
+ * frisches Schweizer-Akzent-Audio statt alter Standardstimmen-Dateien.
  */
 
 function parsePrivateDir(): { bucketName: string; prefix: string } {
@@ -33,9 +45,16 @@ function narrationObjectName(hash: string): string {
   return `${base}/${hash}.mp3`;
 }
 
-export function hashNarrationText(text: string, language: string | undefined): string {
+export function hashNarrationText(
+  text: string,
+  language: string | undefined,
+  voiceId: string = DEFAULT_NARRATOR_VOICE_ID,
+): string {
+  // Standardstimme = Legacy-Format ohne Voice-Anteil, damit der bestehende
+  // Cache-Bestand nicht neu synthetisiert werden muss.
+  const voicePart = voiceId === DEFAULT_NARRATOR_VOICE_ID ? "" : `|${voiceId}`;
   return createHash("sha256")
-    .update(`${language ?? "de"}|${text.trim()}`)
+    .update(`${language ?? "de"}|${text.trim()}${voicePart}`)
     .digest("hex");
 }
 
@@ -45,20 +64,25 @@ export async function getOrCreateNarrationAudio(
   log: Logger,
 ): Promise<Buffer> {
   const { bucketName } = parsePrivateDir();
-  const hash = hashNarrationText(text, language);
-  const objectName = narrationObjectName(hash);
   const bucket = objectStorageClient.bucket(bucketName);
-  const file = bucket.file(objectName);
 
-  const [exists] = await file.exists();
-  if (exists) {
-    log.info({ hash }, "Narration-Cache-Treffer");
-    const [buffer] = await file.download();
-    return buffer;
+  // Cache-Suche in Wunsch-Reihenfolge der Stimmen: erst die bevorzugte
+  // Stimme der Sprache (z.B. Schweizer Akzent fuer gsw), dann der Rueckfall.
+  for (const voiceId of voiceCandidatesForLanguage(language)) {
+    const hash = hashNarrationText(text, language, voiceId);
+    const file = bucket.file(narrationObjectName(hash));
+    const [exists] = await file.exists();
+    if (exists) {
+      log.info({ hash, voiceId }, "Narration-Cache-Treffer");
+      const [buffer] = await file.download();
+      return buffer;
+    }
   }
 
-  const audio = await synthesizeNarration(text, language, log);
+  const { audio, voiceId } = await synthesizeNarration(text, language, log);
+  const hash = hashNarrationText(text, language, voiceId);
+  const file = bucket.file(narrationObjectName(hash));
   await file.save(audio, { contentType: "audio/mpeg" });
-  log.info({ hash, bytes: audio.length }, "Narration erzeugt und gecacht");
+  log.info({ hash, voiceId, bytes: audio.length }, "Narration erzeugt und gecacht");
   return audio;
 }

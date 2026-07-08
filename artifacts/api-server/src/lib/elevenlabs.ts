@@ -20,20 +20,31 @@ const ELEVEN_LABS_API_BASE = "https://api.elevenlabs.io/v1";
 // voices_read-Berechtigung (Voice-Liste nicht abrufbar); Stimmen-ID ist
 // eine oeffentlich bekannte ElevenLabs-Premade-Stimme, die im Test mit
 // diesem Key funktioniert.
-const DEFAULT_NARRATOR_VOICE_ID = "ErXwobaYiN019PkySvjV";
-// Fuer "gsw" wird bewusst dieselbe Stimme mit ggf. ueberschriebener
-// Stimmen-ID verwendet, um eine Schweizer Faerbung zu erzielen — der Text
-// selbst bleibt Hochdeutsch (siehe Modul-Kommentar oben). Ohne
-// voices_read-Zugriff kann keine Stimme aus der Bibliothek kuratiert werden;
-// NARRATOR_VOICE_ID_GSW erlaubt es, spaeter eine besser passende
-// Schweizer-Stimme per Env-Variable zu setzen, ohne Codeaenderung.
+export const DEFAULT_NARRATOR_VOICE_ID = "ErXwobaYiN019PkySvjV";
+// Fuer "gsw" ist die Wunschstimme "Heidi factual" (kMdYHZK2wkocJnpZxE08):
+// Hochdeutsch mit deutlichem Schweizer Akzent, aus der ElevenLabs
+// Community-Bibliothek. Bibliotheks-Stimmen sind per API erst ab einem
+// Bezahlplan nutzbar (Gratis-Plan: 402 payment_required) — darum probiert
+// synthesizeNarration diese Stimme zuerst und faellt bei einem
+// Berechtigungs-/Planfehler automatisch auf die Standardstimme zurueck.
+// Sobald der ElevenLabs-Plan Bibliotheks-Stimmen erlaubt, greift die
+// Schweizer Stimme ohne Codeaenderung. NARRATOR_VOICE_ID_GSW kann sie
+// weiterhin per Env-Variable ueberschreiben.
 const GSW_NARRATOR_VOICE_ID =
-  process.env.NARRATOR_VOICE_ID_GSW || DEFAULT_NARRATOR_VOICE_ID;
+  process.env.NARRATOR_VOICE_ID_GSW || "kMdYHZK2wkocJnpZxE08";
 const MODEL_ID = "eleven_multilingual_v2";
 
-function voiceIdForLanguage(language: string | undefined): string {
-  return language === "gsw" ? GSW_NARRATOR_VOICE_ID : DEFAULT_NARRATOR_VOICE_ID;
+export function voiceCandidatesForLanguage(language: string | undefined): string[] {
+  if (language === "gsw" && GSW_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
+    return [GSW_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
+  }
+  return [DEFAULT_NARRATOR_VOICE_ID];
 }
+
+// Fehlercodes, bei denen ein Rueckfall auf die Standardstimme sinnvoll ist:
+// 402 = Planbeschraenkung (Bibliotheks-Stimme im Gratis-Plan),
+// 401/403 = fehlende Berechtigung, 404 = Stimme nicht (mehr) verfuegbar.
+const VOICE_FALLBACK_STATUS = new Set([401, 402, 403, 404]);
 
 export class ElevenLabsError extends Error {
   constructor(
@@ -45,19 +56,11 @@ export class ElevenLabsError extends Error {
   }
 }
 
-export async function synthesizeNarration(
+async function requestTts(
+  voiceId: string,
   text: string,
-  language: string | undefined,
-  log: Logger,
+  apiKey: string,
 ): Promise<Buffer> {
-  const apiKey = process.env.ELEVEN_LABS_API_KEY;
-  if (!apiKey) {
-    throw new ElevenLabsError("ELEVEN_LABS_API_KEY nicht gesetzt");
-  }
-
-  const voiceId = voiceIdForLanguage(language);
-  log.info({ chars: text.length, language, voiceId }, "ElevenLabs Sprachsynthese startet");
-
   const response = await fetch(
     `${ELEVEN_LABS_API_BASE}/text-to-speech/${voiceId}`,
     {
@@ -89,4 +92,52 @@ export async function synthesizeNarration(
 
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
+}
+
+export interface NarrationResult {
+  audio: Buffer;
+  // Tatsaechlich verwendete Stimme — bei Rueckfall die Standardstimme.
+  voiceId: string;
+}
+
+export async function synthesizeNarration(
+  text: string,
+  language: string | undefined,
+  log: Logger,
+): Promise<NarrationResult> {
+  const apiKey = process.env.ELEVEN_LABS_API_KEY;
+  if (!apiKey) {
+    throw new ElevenLabsError("ELEVEN_LABS_API_KEY nicht gesetzt");
+  }
+
+  const candidates = voiceCandidatesForLanguage(language);
+  let lastError: unknown;
+  for (let i = 0; i < candidates.length; i++) {
+    const voiceId = candidates[i];
+    log.info(
+      { chars: text.length, language, voiceId, versuch: i + 1 },
+      "ElevenLabs Sprachsynthese startet",
+    );
+    try {
+      const audio = await requestTts(voiceId, text, apiKey);
+      return { audio, voiceId };
+    } catch (err) {
+      lastError = err;
+      const status = err instanceof ElevenLabsError ? err.status : undefined;
+      const hatFallback = i < candidates.length - 1;
+      if (hatFallback && status !== undefined && VOICE_FALLBACK_STATUS.has(status)) {
+        // Wunschstimme (z.B. Schweizer Akzent) ist mit dem aktuellen Plan/Key
+        // nicht nutzbar — Standardstimme uebernimmt, Narration bleibt hoerbar.
+        log.warn(
+          { voiceId, status },
+          "Stimme nicht verfuegbar, Rueckfall auf Standardstimme",
+        );
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new ElevenLabsError("ElevenLabs TTS fehlgeschlagen");
 }
