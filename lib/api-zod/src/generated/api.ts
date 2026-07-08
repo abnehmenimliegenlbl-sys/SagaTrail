@@ -208,12 +208,13 @@ export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
 /**
- * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
- * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */
 export const GetPoiStoryQueryParams = zod.object({
   "name": zod.coerce.string(),
-  "extract": zod.coerce.string(),
+  "extract": zod.coerce.string().optional(),
+  "kind": zod.coerce.string().optional(),
   "lang": zod.coerce.string()
 })
 

@@ -37,3 +37,7 @@ REVENUECAT_GOOGLE_PLAY_STORE_APP_ID = "app1b4dc05830"
 [userenv.development]
 
 [userenv.production]
+
+[[ports]]
+localPort = 8080
+externalPort = 80

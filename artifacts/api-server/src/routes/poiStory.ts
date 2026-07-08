@@ -5,15 +5,16 @@ import { narratePoi } from "../lib/poiNarrator";
 const router: IRouter = Router();
 
 // Wikipedia-Auszug eines POI live per KI in Sagen-Erzaehlton umschreiben.
+// Ohne Auszug entsteht ein zurueckhaltender Kontext aus Name + OSM-Kategorie.
 router.get("/routes/poi-story", async (req, res): Promise<void> => {
   const parsed = GetPoiStoryQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Ungueltige Anfrage" });
     return;
   }
-  const { name, extract, lang } = parsed.data;
+  const { name, extract, kind, lang } = parsed.data;
   try {
-    const text = await narratePoi({ name, extract, lang }, req.log);
+    const text = await narratePoi({ name, extract, kind, lang }, req.log);
     res.json(GetPoiStoryResponse.parse({ text }));
   } catch (err) {
     req.log.error({ err }, "POI-Erzaehltext konnte nicht umgeschrieben werden");

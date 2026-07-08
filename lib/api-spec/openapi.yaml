@@ -257,13 +257,15 @@ paths:
     get:
       operationId: getPoiStory
       tags: [routes]
-      summary: Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+      summary: Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
       description: >
         Formt den rohen Wikipedia-Auszug eines Point of Interest (Name +
         Extract) per KI in einen kurzen, atmosphaerischen Text im
         Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein
-        Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache
-        gecacht, da der Ausgangstext stabil ist.
+        Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein
+        kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie
+        (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig
+        nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
       parameters:
         - name: name
           in: query
@@ -272,7 +274,12 @@ paths:
             type: string
         - name: extract
           in: query
-          required: true
+          required: false
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: false
           schema:
             type: string
         - name: lang

@@ -579,8 +579,8 @@ export const getGetPoiStoryUrl = (params: GetPoiStoryParams,) => {
 }
 
 /**
- * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
- * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
+ * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */
 export const getPoiStory = async (params: GetPoiStoryParams, options?: RequestInit): Promise<PoiStory> => {
 
@@ -627,7 +627,7 @@ export type GetPoiStoryQueryError = ErrorType<ErrorResponse>
 
 
 /**
- * @summary Wikipedia-Auszug eines Point of Interest in Sagen-Erzaehlton umschreiben
+ * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */
 
 export function useGetPoiStory<TData = Awaited<ReturnType<typeof getPoiStory>>, TError = ErrorType<ErrorResponse>>(

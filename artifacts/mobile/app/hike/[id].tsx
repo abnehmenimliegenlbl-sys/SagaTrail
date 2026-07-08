@@ -156,6 +156,9 @@ export default function LiveHike() {
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [poiStory, setPoiStory] = useState<string | null>(null);
   const [poiStoryLoading, setPoiStoryLoading] = useState(false);
+  // KI-Kontext fuer die "Entdeckt"-Karte, wenn der POI keinen
+  // Wikipedia-Auszug hat (wird im Erzaehl-Effekt mitbefuellt).
+  const [nearbyPoiKontext, setNearbyPoiKontext] = useState<string | null>(null);
   const [narrationUnavailable, setNarrationUnavailable] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -415,8 +418,10 @@ export default function LiveHike() {
   // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per
   // KI in denselben Erzaehlton wie die Sagen umgeschrieben. Schlaegt das
   // fehl oder laedt es noch, zeigt das Modal den rohen Auszug als Fallback.
+  // Ohne Wikipedia-Auszug liefert der Server stattdessen einen kurzen,
+  // zurueckhaltenden Kontext aus Name + OSM-Kategorie (kind).
   useEffect(() => {
-    if (!selectedPoi?.wiki) {
+    if (!selectedPoi) {
       setPoiStory(null);
       setPoiStoryLoading(false);
       return;
@@ -426,7 +431,8 @@ export default function LiveHike() {
     setPoiStoryLoading(true);
     getPoiStory({
       name: selectedPoi.name,
-      extract: selectedPoi.wiki.extract,
+      extract: selectedPoi.wiki?.extract,
+      kind: selectedPoi.kind,
       lang: storyLanguage,
     })
       .then((result) => {
@@ -788,6 +794,8 @@ export default function LiveHike() {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
     narratedPoiIdRef.current = nearbyPoi.id;
+    // Kontext des vorherigen POI darf nicht an der neuen Karte kleben.
+    setNearbyPoiKontext(null);
     // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
     // Panorama schaut statt aufs Handy, merkt es trotzdem.
     if (Platform.OS !== "web") {
@@ -818,14 +826,26 @@ export default function LiveHike() {
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
-    // wird der rohe Wikipedia-Auszug erzaehlt; ohne Auszug nur der Name.
-    if (rawExtract) {
-      getPoiStory({ name: nearbyPoi.name, extract: rawExtract, lang: storyLanguage })
-        .then((r) => erzaehle(pack.poiAside(nearbyPoi.name, r.text)))
-        .catch(() => erzaehle(pack.poiAside(nearbyPoi.name, trimForNarration(rawExtract))));
-    } else {
-      erzaehle(pack.poiAside(nearbyPoi.name, null));
-    }
+    // wird der rohe Wikipedia-Auszug erzaehlt; ohne Auszug erzeugt der Server
+    // einen kurzen Kontext aus Name + OSM-Kategorie (Fallback: nur der Name).
+    getPoiStory({
+      name: nearbyPoi.name,
+      extract: rawExtract ?? undefined,
+      kind: nearbyPoi.kind,
+      lang: storyLanguage,
+    })
+      .then((r) => {
+        if (!cancelled && !nearbyPoi.wiki?.extract) setNearbyPoiKontext(r.text);
+        erzaehle(pack.poiAside(nearbyPoi.name, r.text));
+      })
+      .catch(() =>
+        erzaehle(
+          pack.poiAside(
+            nearbyPoi.name,
+            rawExtract ? trimForNarration(rawExtract) : null,
+          ),
+        ),
+      );
     return () => {
       cancelled = true;
     };
@@ -1102,12 +1122,12 @@ export default function LiveHike() {
                   <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                     {nearbyPoi.name}
                   </Text>
-                  {nearbyPoi.wiki && (
+                  {(nearbyPoi.wiki?.extract || nearbyPoiKontext) && (
                     <Text
                       style={[styles.poiSummary, { color: colors.mutedForeground }]}
                       numberOfLines={4}
                     >
-                      {nearbyPoi.wiki.extract}
+                      {nearbyPoi.wiki?.extract ?? nearbyPoiKontext}
                     </Text>
                   )}
                 </View>
@@ -1163,27 +1183,16 @@ export default function LiveHike() {
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </Pressable>
                 </View>
-                {selectedPoi?.wiki ? (
-                  <Text
-                    style={[
-                      styles.poiSummary,
-                      { color: colors.mutedForeground, marginTop: 10 },
-                    ]}
-                  >
-                    {poiStoryLoading && !poiStory
-                      ? t.poiStoryLoading
-                      : (poiStory ?? selectedPoi.wiki.extract)}
-                  </Text>
-                ) : (
-                  <Text
-                    style={[
-                      styles.poiSummary,
-                      { color: colors.mutedForeground, marginTop: 10 },
-                    ]}
-                  >
-                    {t.notAvailable}
-                  </Text>
-                )}
+                <Text
+                  style={[
+                    styles.poiSummary,
+                    { color: colors.mutedForeground, marginTop: 10 },
+                  ]}
+                >
+                  {poiStoryLoading && !poiStory
+                    ? t.poiStoryLoading
+                    : (poiStory ?? selectedPoi?.wiki?.extract ?? t.notAvailable)}
+                </Text>
               </Glass>
             </Pressable>
           </Pressable>

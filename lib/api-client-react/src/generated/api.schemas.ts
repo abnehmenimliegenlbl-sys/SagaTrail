@@ -369,7 +369,8 @@ east: number;
 
 export type GetPoiStoryParams = {
 name: string;
-extract: string;
+extract?: string;
+kind?: string;
 lang: string;
 };
 
