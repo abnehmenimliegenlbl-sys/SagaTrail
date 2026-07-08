@@ -29,6 +29,7 @@ import {
   RouteSearchFilter,
 } from "@/contexts/CatalogContext";
 import { useKantonStrings } from "@/lib/i18n/screens/kanton";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 
@@ -44,6 +45,7 @@ const WEB_TOP = 67;
 
 export default function KantonRouten() {
   const t = useKantonStrings();
+  const ts = useSharedStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -195,6 +197,19 @@ export default function KantonRouten() {
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
                 {loadError ? t.errorDetail : t.emptyDetail}
               </Text>
+              {loadError && (
+                <Pressable
+                  onPress={onSearch}
+                  accessibilityRole="button"
+                  accessibilityLabel={ts.retry}
+                  style={[styles.retryBtn, { borderColor: colors.accent }]}
+                >
+                  <Feather name="refresh-cw" size={14} color={colors.accent} />
+                  <Text style={[styles.retryBtnText, { color: colors.accent }]}>
+                    {ts.retry}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           ) : (
             <>
@@ -340,6 +355,17 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   emptyTitle: { fontFamily: fonts.titleBold, fontSize: 18, textAlign: "center" },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  retryBtnText: { fontFamily: fonts.bodyBold, fontSize: 14 },
   cardWrap: { ...SCHATTEN_3D, marginBottom: 14 },
   card: { ...GLAS_3D, height: 200, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   cardImg: { width: "100%", height: "100%" },

@@ -16,20 +16,56 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
+import { HikeSession } from "@/types";
 
 const WEB_TOP = 67;
+
+// Monatsnamen folgen der gewaehlten UI-Sprache, nicht dem OS-Gebietsschema.
+const MONATS_LOCALE: Record<string, string> = {
+  de: "de-CH",
+  gsw: "de-CH",
+  en: "en-GB",
+  fr: "fr-CH",
+  it: "it-CH",
+  es: "es-ES",
+  pt: "pt-PT",
+  zh: "zh-CN",
+};
 
 export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { achievements, hikeHistory } = useApp();
+  const { achievements, hikeHistory, language } = useApp();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
   const cantons = Array.from(new Set(sagas.map((s) => s.canton)));
+
+  // Tagebuch nach Monaten gruppieren (neueste zuerst) — bei vielen
+  // Wanderungen bleibt die Liste so ueberschaubar.
+  const tagebuchMonate = React.useMemo(() => {
+    const locale = MONATS_LOCALE[language] ?? "de-CH";
+    const sortiert = [...hikeHistory].sort((a, b) => b.startedAt - a.startedAt);
+    const gruppen: { schluessel: string; titel: string; eintraege: HikeSession[] }[] = [];
+    for (const hike of sortiert) {
+      const d = new Date(hike.startedAt);
+      const schluessel = `${d.getFullYear()}-${d.getMonth()}`;
+      let gruppe = gruppen.find((g) => g.schluessel === schluessel);
+      if (!gruppe) {
+        gruppe = {
+          schluessel,
+          titel: d.toLocaleDateString(locale, { month: "long", year: "numeric" }),
+          eintraege: [],
+        };
+        gruppen.push(gruppe);
+      }
+      gruppe.eintraege.push(hike);
+    }
+    return gruppen;
+  }, [hikeHistory, language]);
 
   // Wanderstatistik aus dem Tagebuch (alle abgeschlossenen Wanderungen)
   const totalKm = hikeHistory.reduce((sum, h) => sum + (h.distanceKm || 0), 0);
@@ -237,34 +273,41 @@ export default function Sammlung() {
             >
               {t.diaryTitle}
             </Text>
-            {hikeHistory.map((hike, hi) => (
-              <Animated.View
-                key={hike.id}
-                entering={FadeInDown.delay(hi * 60)}
-                style={[
-                  styles.diaryCard,
-                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-                ]}
-              >
-                {hike.photoUri && (
-                  <Image
-                    source={{ uri: hike.photoUri }}
-                    style={styles.diaryPhoto}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={styles.diaryBody}>
-                  <Text
-                    style={[styles.diaryName, { color: colors.foreground }]}
-                    numberOfLines={2}
+            {tagebuchMonate.map((monat) => (
+              <View key={monat.schluessel}>
+                <Text style={[styles.diaryMonth, { color: colors.mutedForeground }]}>
+                  {monat.titel}
+                </Text>
+                {monat.eintraege.map((hike, hi) => (
+                  <Animated.View
+                    key={hike.id}
+                    entering={FadeInDown.delay(hi * 60)}
+                    style={[
+                      styles.diaryCard,
+                      { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                    ]}
                   >
-                    {hike.routeName}
-                  </Text>
-                  <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
-                    {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
-                  </Text>
-                </View>
-              </Animated.View>
+                    {hike.photoUri && (
+                      <Image
+                        source={{ uri: hike.photoUri }}
+                        style={styles.diaryPhoto}
+                        resizeMode="cover"
+                      />
+                    )}
+                    <View style={styles.diaryBody}>
+                      <Text
+                        style={[styles.diaryName, { color: colors.foreground }]}
+                        numberOfLines={2}
+                      >
+                        {hike.routeName}
+                      </Text>
+                      <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
+                        {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
+                      </Text>
+                    </View>
+                  </Animated.View>
+                ))}
+              </View>
             ))}
           </>
         )}
@@ -341,6 +384,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   wanderStatNum: { fontFamily: fonts.monoBold, fontSize: 22 },
+  diaryMonth: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 10,
+    marginTop: 6,
+  },
   diaryCard: {
     ...GLAS_3D,
     borderWidth: 1,

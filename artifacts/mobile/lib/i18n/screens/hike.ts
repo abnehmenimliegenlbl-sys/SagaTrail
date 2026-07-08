@@ -6,6 +6,7 @@ export interface HikeStrings {
   hikeNotFound: string;
   back: string;
   noLocationAccess: string;
+  locationDeniedHint: string;
   allow: string;
   live: string;
   discoveredNearby: string;
@@ -59,6 +60,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Wanderung nicht gefunden.",
     back: "Zurück",
     noLocationAccess: "Kein Standortzugriff — die Route wird simuliert.",
+    locationDeniedHint: "Ohne GPS wird dein Fortschritt nur geschätzt. Aktiviere den Standortzugriff in den Systemeinstellungen, damit die Sage deinem echten Weg folgt.",
     allow: "Erlauben",
     live: "LIVE",
     discoveredNearby: "ENTDECKT IN DER NÄHE",
@@ -110,6 +112,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Wanderig nid gfunde.",
     back: "Zrugg",
     noLocationAccess: "Kei Standortzuegriff — d Route wird simuliert.",
+    locationDeniedHint: "Ohni GPS wird di Fortschritt nur gschätzt. Aktivier de Standortzuegriff i de Systemiistellige, dass d Sag dim ächte Wäg folgt.",
     allow: "Erlaube",
     live: "LIVE",
     discoveredNearby: "I DE NÄCHI ENTDECKT",
@@ -161,6 +164,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Hike not found.",
     back: "Back",
     noLocationAccess: "No location access — route is being simulated.",
+    locationDeniedHint: "Without GPS your progress is only estimated. Enable location access in the system settings so the saga follows your real path.",
     allow: "Allow",
     live: "LIVE",
     discoveredNearby: "DISCOVERED NEARBY",
@@ -212,6 +216,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Randonnée non trouvée.",
     back: "Retour",
     noLocationAccess: "Pas d'accès à la localisation — la route est simulée.",
+    locationDeniedHint: "Sans GPS, ta progression n'est qu'estimée. Active l'accès à la position dans les réglages du système pour que la légende suive ton vrai chemin.",
     allow: "Autoriser",
     live: "LIVE",
     discoveredNearby: "DÉCOUVERT À PROXIMITÉ",
@@ -263,6 +268,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Escursione non trovata.",
     back: "Indietro",
     noLocationAccess: "Nessun accesso alla posizione — il percorso è simulato.",
+    locationDeniedHint: "Senza GPS i tuoi progressi sono solo stimati. Attiva l'accesso alla posizione nelle impostazioni di sistema perché la saga segua il tuo vero percorso.",
     allow: "Consenti",
     live: "LIVE",
     discoveredNearby: "SCOPERTO NELLE VICINANZE",
@@ -314,6 +320,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Excursión no encontrada.",
     back: "Atrás",
     noLocationAccess: "Sin acceso a la ubicación — la ruta está siendo simulada.",
+    locationDeniedHint: "Sin GPS tu progreso solo se estima. Activa el acceso a la ubicación en los ajustes del sistema para que la saga siga tu camino real.",
     allow: "Permitir",
     live: "LIVE",
     discoveredNearby: "DESCUBIERTO CERCA",
@@ -365,6 +372,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "Caminhada não encontrada.",
     back: "Voltar",
     noLocationAccess: "Sem acesso à localização — a rota está sendo simulada.",
+    locationDeniedHint: "Sem GPS o teu progresso é apenas estimado. Ativa o acesso à localização nas definições do sistema para que a saga siga o teu caminho real.",
     allow: "Permitir",
     live: "LIVE",
     discoveredNearby: "DESCOBERTO NAS PROXIMIDADES",
@@ -416,6 +424,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     hikeNotFound: "未找到徒步路线。",
     back: "返回",
     noLocationAccess: "无法获取位置 — 正在模拟路线。",
+    locationDeniedHint: "没有 GPS 时只能估算你的进度。请在系统设置中开启位置权限，让传说跟随你的真实路线。",
     allow: "允许",
     live: "实时",
     discoveredNearby: "在附近发现",

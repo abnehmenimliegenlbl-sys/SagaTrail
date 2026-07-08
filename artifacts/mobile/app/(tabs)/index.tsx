@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
@@ -42,7 +43,7 @@ export default function Entdecken() {
     ? onboardingStrings.archetypes[profile.archetype].title
     : "";
 
-  const { cantons } = useCatalog();
+  const { cantons, ready } = useCatalog();
   const homeCanton = profile?.homeCanton;
   const homeEntry = cantons.find((c) => c.canton === homeCanton);
   const others = cantons.filter((c) => c.canton !== homeCanton);
@@ -121,6 +122,7 @@ export default function Entdecken() {
                   clearActiveHike();
                 }}
                 hitSlop={12}
+                accessibilityRole="button"
                 accessibilityLabel={t.resumeDismiss}
                 style={styles.resumeClose}
               >
@@ -164,16 +166,22 @@ export default function Entdecken() {
         </View>
 
         <View style={{ paddingHorizontal: 20 }}>
-          {others.map((entry, i) => (
-            <CantonCard
-              key={entry.canton}
-              entry={entry}
-              index={i}
-              onPress={() =>
-                router.push(`/kanton/${encodeURIComponent(entry.canton)}`)
-              }
-            />
-          ))}
+          {!ready
+            ? /* Kantonsliste laedt noch aus dem Speicher/Server — Skeleton-Karten
+                 in Kartengroesse statt leerer Flaeche. */
+              [0, 1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} height={76} radius={colors.radius} style={{ marginBottom: 12 }} />
+              ))
+            : others.map((entry, i) => (
+                <CantonCard
+                  key={entry.canton}
+                  entry={entry}
+                  index={i}
+                  onPress={() =>
+                    router.push(`/kanton/${encodeURIComponent(entry.canton)}`)
+                  }
+                />
+              ))}
         </View>
 
         <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />

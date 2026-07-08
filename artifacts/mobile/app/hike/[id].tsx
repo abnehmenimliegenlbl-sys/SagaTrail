@@ -1015,11 +1015,22 @@ export default function LiveHike() {
       {/* Standort-Banner */}
       {locState === "denied" && (
         <View style={[styles.banner, { top: topPad, backgroundColor: colors.card }]}>
-          <Feather name="map-pin" size={16} color={colors.accent} />
-          <Text style={[styles.bannerText, { color: colors.foreground }]}>
-            {t.noLocationAccess}
+          <View style={styles.bannerHead}>
+            <Feather name="map-pin" size={16} color={colors.accent} />
+            <Text style={[styles.bannerText, { color: colors.foreground }]}>
+              {t.noLocationAccess}
+            </Text>
+          </View>
+          <Text style={[styles.bannerHint, { color: colors.mutedForeground }]}>
+            {t.locationDeniedHint}
           </Text>
-          <Pressable onPress={() => Linking.openSettings?.()}>
+          <Pressable
+            onPress={() => Linking.openSettings?.()}
+            accessibilityRole="button"
+            accessibilityLabel={t.allow}
+            style={[styles.bannerBtn, { borderColor: colors.glassBorder }]}
+          >
+            <Feather name="settings" size={14} color={colors.accent} />
             <Text style={[styles.bannerAction, { color: colors.accent }]}>{t.allow}</Text>
           </Pressable>
         </View>
@@ -1027,7 +1038,7 @@ export default function LiveHike() {
 
       <ScrollView
         contentContainerStyle={{
-          paddingTop: locState === "denied" ? topPad + 56 : topPad,
+          paddingTop: locState === "denied" ? topPad + 148 : topPad,
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 120,
         }}
@@ -1042,7 +1053,12 @@ export default function LiveHike() {
               {saga.title}
             </Text>
           </View>
-          <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t.back}
+          >
             <Feather name="minimize-2" size={22} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -1095,7 +1111,12 @@ export default function LiveHike() {
                     </Text>
                   )}
                 </View>
-                <Pressable onPress={() => setNearbyPoi(null)} hitSlop={10}>
+                <Pressable
+                  onPress={() => setNearbyPoi(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.close}
+                >
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -1133,7 +1154,12 @@ export default function LiveHike() {
                       {selectedPoi?.name}
                     </Text>
                   </View>
-                  <Pressable onPress={() => setSelectedPoi(null)} hitSlop={10}>
+                  <Pressable
+                    onPress={() => setSelectedPoi(null)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.close}
+                  >
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </Pressable>
                 </View>
@@ -1199,6 +1225,7 @@ export default function LiveHike() {
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
+                  accessibilityRole="button"
                   accessibilityLabel={t.repeatChapter}
                 >
                   <Feather name="rotate-ccw" size={16} color={colors.foreground} />
@@ -1215,6 +1242,8 @@ export default function LiveHike() {
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={speaking ? t.pause : t.readAloud}
                 >
                   <Feather
                     name={speaking ? "pause" : "play"}
@@ -1278,6 +1307,9 @@ export default function LiveHike() {
                       key={i}
                       onPress={() => chooseOption(i)}
                       disabled={folgtGruppenleitung}
+                      accessibilityRole="button"
+                      accessibilityLabel={opt.label}
+                      accessibilityHint={opt.archetypeHint}
                       style={[
                         styles.optionBtn,
                         { borderColor: colors.glassBorder },
@@ -1326,6 +1358,8 @@ export default function LiveHike() {
       {/* SOS — bewusst KEIN Glas, immer sichtbar und deckend */}
       <Pressable
         onPress={() => setSosOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${t.sos} — ${t.emergency}`}
         style={[styles.sosBtn, { bottom: insets.bottom + 20, backgroundColor: colors.primary }]}
       >
         <Text style={styles.sosText}>{t.sos}</Text>
@@ -1349,6 +1383,8 @@ export default function LiveHike() {
 
             <Pressable
               onPress={() => callNumber("1414")}
+              accessibilityRole="button"
+              accessibilityLabel={`${t.regaTitle} — ${t.regaSub}`}
               style={[styles.sosCall, { backgroundColor: colors.primary }]}
             >
               <Feather name="phone" size={20} color={colors.primaryForeground} />
@@ -1360,6 +1396,8 @@ export default function LiveHike() {
 
             <Pressable
               onPress={() => callNumber("112")}
+              accessibilityRole="button"
+              accessibilityLabel={`${t.euroEmergencyTitle} — ${t.euroEmergencySub}`}
               style={[styles.sosCall, { backgroundColor: colors.primary }]}
             >
               <Feather name="phone" size={20} color={colors.primaryForeground} />
@@ -1382,6 +1420,8 @@ export default function LiveHike() {
                 );
               }}
               style={[styles.sosSecondary, { borderColor: colors.glassBorder }]}
+              accessibilityRole="button"
+              accessibilityLabel={t.sendLocationToContact}
             >
               <Feather name="share-2" size={18} color={colors.foreground} />
               <Text style={[styles.sosSecondaryText, { color: colors.foreground }]}>
@@ -1389,7 +1429,12 @@ export default function LiveHike() {
               </Text>
             </Pressable>
 
-            <Pressable onPress={() => setSosOpen(false)} style={styles.sosClose}>
+            <Pressable
+              onPress={() => setSosOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel={t.close}
+              style={styles.sosClose}
+            >
               <Text style={[styles.sosCloseText, { color: colors.mutedForeground }]}>
                 {t.close}
               </Text>
@@ -1423,14 +1468,23 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     zIndex: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  bannerText: { flex: 1, fontFamily: fonts.body, fontSize: 13 },
+  bannerHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+  bannerText: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13 },
+  bannerHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 6 },
+  bannerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 9,
+    marginTop: 10,
+  },
   bannerAction: { fontFamily: fonts.bodyBold, fontSize: 13 },
   headRow: { flexDirection: "row", alignItems: "flex-start" },
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },

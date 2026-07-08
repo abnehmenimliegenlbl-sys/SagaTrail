@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -17,11 +16,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { usePaywallStrings } from "@/lib/i18n/screens/paywall";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { useSubscription } from "@/lib/revenuecat";
 
 const WEB_TOP = 67;
@@ -34,6 +35,7 @@ export default function Paywall() {
   const { offerings, isLoading, purchase, restore, isPurchasing, isRestoring } =
     useSubscription();
   const t = usePaywallStrings();
+  const ts = useSharedStrings();
 
   const [busy, setBusy] = useState(false);
   const [gewaehlt, setGewaehlt] = useState<string | null>(null);
@@ -119,7 +121,12 @@ export default function Paywall() {
         }}
       >
         <View style={styles.closeRow}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={ts.close}
+          >
             <Feather name="x" size={26} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -153,7 +160,13 @@ export default function Paywall() {
             </View>
 
             {isLoading ? (
-              <ActivityIndicator color={colors.accent} style={{ marginTop: 12 }} />
+              /* Skeleton-Karten in Plangroesse — kein Layout-Sprung, wenn die
+                 echten Preiskarten von RevenueCat eintreffen. */
+              <View style={{ gap: 10 }}>
+                {PLAN_REIHENFOLGE.map((key) => (
+                  <Skeleton key={key} height={74} radius={colors.radius} />
+                ))}
+              </View>
             ) : plaene.length > 0 ? (
               <View style={{ gap: 10 }}>
                 {plaene.map(({ key, paket }) => {

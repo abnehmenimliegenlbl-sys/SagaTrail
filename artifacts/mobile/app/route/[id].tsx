@@ -24,6 +24,7 @@ import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { Skeleton } from "@/components/brand/Skeleton";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -32,6 +33,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
+import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
@@ -40,6 +42,7 @@ const WEB_TOP = 67;
 
 export default function Routenplanung() {
   const t = useRouteStrings();
+  const ts = useSharedStrings();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -92,6 +95,8 @@ export default function Routenplanung() {
   const [weather, setWeather] = useState<WeatherReport | null>(null);
   const [weatherError, setWeatherError] = useState(false);
   const [weatherLoading, setWeatherLoading] = useState(true);
+  // Zaehler fuer manuelle Wetter-Neuversuche (Retry-Knopf im Fehlerzustand).
+  const [weatherVersuch, setWeatherVersuch] = useState(0);
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Wegverlauf sinnvoll, best effort.
@@ -135,7 +140,7 @@ export default function Routenplanung() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id]);
+  }, [route?.id, weatherVersuch]);
 
   useEffect(() => {
     let cancelled = false;
@@ -390,6 +395,18 @@ export default function Routenplanung() {
               <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
                 {t.weatherNotAvailable}
               </Text>
+              <Pressable
+                onPress={() => setWeatherVersuch((v) => v + 1)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={ts.retry}
+                style={[styles.retryChip, { borderColor: colors.glassBorder }]}
+              >
+                <Feather name="refresh-cw" size={12} color={colors.accent} />
+                <Text style={[styles.retryChipText, { color: colors.accent }]}>
+                  {ts.retry}
+                </Text>
+              </Pressable>
             </View>
           ) : (
             <>
@@ -476,12 +493,17 @@ export default function Routenplanung() {
               { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
             ]}
           >
-            <ActivityIndicator color={colors.accent} />
-            <Text
-              style={[styles.sagaLoadingText, { color: colors.mutedForeground }]}
-            >
-              {t.sagaWriting}
-            </Text>
+            {/* Skeleton in Sagakarten-Form — Titel, zwei Textzeilen, Meta. */}
+            <View style={{ flex: 1 }}>
+              <Skeleton height={20} width="55%" radius={8} />
+              <Skeleton height={13} radius={7} style={{ marginTop: 10 }} />
+              <Skeleton height={13} width="80%" radius={7} style={{ marginTop: 7 }} />
+              <Text
+                style={[styles.sagaLoadingText, { color: colors.mutedForeground, marginTop: 12 }]}
+              >
+                {t.sagaWriting}
+              </Text>
+            </View>
           </View>
         ) : !saga ? (
           <View
@@ -597,6 +619,17 @@ function CheckRow({
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  retryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginLeft: 8,
+  },
+  retryChipText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   routeName: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 18 },
   forSaga: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
   statsGrid: {
