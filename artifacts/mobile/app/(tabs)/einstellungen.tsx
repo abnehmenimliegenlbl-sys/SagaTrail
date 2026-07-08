@@ -1,9 +1,11 @@
 import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
+import { createNarration } from "@workspace/api-client-react";
+import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as Speech from "expo-speech";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Linking,
@@ -34,6 +36,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
+import { blobToDataUri } from "@/lib/narrationAudio";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
 
@@ -43,7 +46,9 @@ const WEB_TOP = 67;
 // damit man die Erzaehlstimme direkt beurteilen kann.
 const VOICE_SAMPLES: Record<string, string> = {
   de: "So klingt deine Erzählstimme auf dem Wanderweg.",
-  gsw: "So tönt dini Verzellstimm uf em Wanderwäg.",
+  // Bewusst Hochdeutsch: gsw-Erzaehltext bleibt Hochdeutsch (nur die Stimme
+  // hat Schweizer Faerbung) — die Vorschau soll dem echten Verhalten entsprechen.
+  gsw: "So klingt deine Erzählstimme auf dem Wanderweg.",
   fr: "Voici la voix qui racontera tes légendes en chemin.",
   it: "Questa è la voce che racconterà le tue leggende.",
   en: "This is the voice that will tell your sagas on the trail.",
@@ -74,6 +79,38 @@ export default function Einstellungen() {
 
   const [contactName, setContactName] = useState(emergencyContact?.name ?? "");
   const [contactPhone, setContactPhone] = useState(emergencyContact?.phone ?? "");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewUnavailable, setPreviewUnavailable] = useState(false);
+
+  // Vorschau-Sound (KI-Stimme via expo-av); Generation-Zaehler verhindert,
+  // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
+  const previewSoundRef = useRef<Audio.Sound | null>(null);
+  const previewGenRef = useRef(0);
+
+  const stopPreview = useCallback(async () => {
+    Speech.stop();
+    const sound = previewSoundRef.current;
+    previewSoundRef.current = null;
+    if (sound) {
+      try {
+        await sound.stopAsync();
+      } catch {
+        // Sound war evtl. schon fertig — egal
+      }
+      try {
+        await sound.unloadAsync();
+      } catch {
+        // bereits entladen
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      previewGenRef.current++;
+      void stopPreview();
+    };
+  }, [stopPreview]);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
@@ -96,13 +133,47 @@ export default function Einstellungen() {
     updateProfile({ language: code });
   };
 
-  const previewVoice = () => {
+  // Premium: gleiche KI-Erzaehlstimme (ElevenLabs via Server) wie auf der
+  // Wanderung; Fallback auf die Geraetestimme mit sichtbarem Hinweis.
+  // Ohne Premium direkt die Geraetestimme (wie waehrend der Wanderung).
+  const previewVoice = useCallback(async () => {
     const lang = resolveLang(profile?.language);
-    Speech.stop();
-    Speech.speak(VOICE_SAMPLES[lang] ?? VOICE_SAMPLES.de, {
-      language: SPEECH_LOCALE[lang],
-    });
-  };
+    const sample = VOICE_SAMPLES[lang] ?? VOICE_SAMPLES.de;
+    const gen = ++previewGenRef.current;
+    await stopPreview();
+    if (gen !== previewGenRef.current) return;
+    setPreviewUnavailable(false);
+
+    if (premium) {
+      setPreviewLoading(true);
+      try {
+        const blob = await createNarration({ text: sample, language: profile?.language });
+        const uri = await blobToDataUri(blob);
+        if (gen !== previewGenRef.current) return;
+        const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+        if (gen !== previewGenRef.current) {
+          void sound.unloadAsync();
+          return;
+        }
+        previewSoundRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish && previewSoundRef.current === sound) {
+            previewSoundRef.current = null;
+            void sound.unloadAsync();
+          }
+        });
+        return;
+      } catch {
+        if (gen !== previewGenRef.current) return;
+        setPreviewUnavailable(true);
+        // weiter zum Geraetestimmen-Fallback
+      } finally {
+        if (gen === previewGenRef.current) setPreviewLoading(false);
+      }
+    }
+
+    Speech.speak(sample, { language: SPEECH_LOCALE[lang] });
+  }, [premium, profile?.language, stopPreview]);
 
   const handleExport = async () => {
     const json = await exportData();
@@ -200,12 +271,21 @@ export default function Einstellungen() {
                 );
               })}
             </View>
-            <Pressable onPress={previewVoice} style={styles.voicePreview}>
-              <Feather name="volume-2" size={16} color={colors.accent} />
+            <Pressable onPress={previewVoice} disabled={previewLoading} style={styles.voicePreview}>
+              <Feather
+                name={previewLoading ? "loader" : "volume-2"}
+                size={16}
+                color={colors.accent}
+              />
               <Text style={[styles.voicePreviewText, { color: colors.accent }]}>
                 {t.voicePreviewLabel}
               </Text>
             </Pressable>
+            {previewUnavailable && (
+              <Text style={[styles.voicePreviewHint, { color: colors.mutedForeground }]}>
+                {t.voicePreviewUnavailableLabel}
+              </Text>
+            )}
           </View>
         </Section>
 
@@ -421,6 +501,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   voicePreviewText: { fontFamily: fonts.bodyMedium, fontSize: 14 },
+  voicePreviewHint: { fontFamily: fonts.body, fontSize: 12, marginTop: 6 },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",

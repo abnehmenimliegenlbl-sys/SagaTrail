@@ -14,6 +14,7 @@ export interface EinstellungenStrings {
   ageTierLabel: string;
   languageLabel: string;
   voicePreviewLabel: string;
+  voicePreviewUnavailableLabel: string;
   powerSaveLabel: string;
   powerSaveHint: string;
   contactNamePlaceholder: string;
@@ -58,6 +59,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Alterstufe",
     languageLabel: "Sprache",
     voicePreviewLabel: "Stimme anhören",
+    voicePreviewUnavailableLabel: "KI-Stimme nicht verfügbar — Gerätestimme wird verwendet.",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert GPS-Genauigkeit und Kartenaktualisierung",
     contactNamePlaceholder: "Name",
@@ -100,6 +102,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Alterstuefe",
     languageLabel: "Sprach",
     voicePreviewLabel: "Stimm alose",
+    voicePreviewUnavailableLabel: "KI-Stimm nöd verfüegbar — d Grätstimm wird gnoh.",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert d'GPS-Gnauigkeit und Chartenuupassig",
     contactNamePlaceholder: "Name",
@@ -142,6 +145,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Tranche d'âge",
     languageLabel: "Langue",
     voicePreviewLabel: "Écouter la voix",
+    voicePreviewUnavailableLabel: "Voix IA indisponible — la voix de l'appareil est utilisée.",
     powerSaveLabel: "Mode économie d'énergie",
     powerSaveHint: "Réduit la précision GPS et la mise à jour de la carte",
     contactNamePlaceholder: "Nom",
@@ -184,6 +188,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Fascia d'età",
     languageLabel: "Lingua",
     voicePreviewLabel: "Ascolta la voce",
+    voicePreviewUnavailableLabel: "Voce IA non disponibile — viene usata la voce del dispositivo.",
     powerSaveLabel: "Risparmio energetico",
     powerSaveHint: "Riduce la precisione del GPS e l'aggiornamento della mappa",
     contactNamePlaceholder: "Nome",
@@ -226,6 +231,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Age Tier",
     languageLabel: "Language",
     voicePreviewLabel: "Preview voice",
+    voicePreviewUnavailableLabel: "AI voice unavailable — using the device voice.",
     powerSaveLabel: "Power Saving Mode",
     powerSaveHint: "Reduces GPS accuracy and map updates",
     contactNamePlaceholder: "Name",
@@ -268,6 +274,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "年龄段",
     languageLabel: "语言",
     voicePreviewLabel: "试听语音",
+    voicePreviewUnavailableLabel: "AI 语音不可用——将使用设备语音。",
     powerSaveLabel: "省电模式",
     powerSaveHint: "降低 GPS 精度和地图更新频率",
     contactNamePlaceholder: "姓名",
@@ -310,6 +317,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Grupo de edad",
     languageLabel: "Idioma",
     voicePreviewLabel: "Escuchar la voz",
+    voicePreviewUnavailableLabel: "Voz de IA no disponible — se usa la voz del dispositivo.",
     powerSaveLabel: "Modo ahorro de energía",
     powerSaveHint: "Reduce la precisión del GPS y la actualización del mapa",
     contactNamePlaceholder: "Nombre",
@@ -352,6 +360,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     ageTierLabel: "Faixa etária",
     languageLabel: "Idioma",
     voicePreviewLabel: "Ouvir a voz",
+    voicePreviewUnavailableLabel: "Voz de IA indisponível — é usada a voz do dispositivo.",
     powerSaveLabel: "Modo de economia de energia",
     powerSaveHint: "Reduz a precisão do GPS e a atualização do mapa",
     contactNamePlaceholder: "Nome",
