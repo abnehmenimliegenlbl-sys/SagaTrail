@@ -22,8 +22,6 @@
         "NSSpeechRecognitionUsageDescription": "SagaTrail erkennt deine gesprochene Antwort bei Entscheidungspunkten, damit du unterwegs keine Taste drücken musst.",
         "UIBackgroundModes": [
           "audio",
-          "location",
-          "audio",
           "location"
         ]
       },
