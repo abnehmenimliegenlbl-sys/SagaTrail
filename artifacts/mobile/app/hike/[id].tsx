@@ -166,6 +166,12 @@ export default function LiveHike() {
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
   const narratedPoiIdRef = useRef<string | null>(null);
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
+  // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
+  // erhoeht ihn; nach jedem await prueft der Aufruf, ob er noch die aktuelle
+  // Generation ist. Ein schneller Doppel-Tipp auf "Wiederholen" startet sonst
+  // zwei parallele KI-Anfragen, die BEIDE abspielen (die erste hatte beim
+  // stopNarration() der zweiten noch keinen Sound zum Stoppen).
+  const narrationGenRef = useRef(0);
 
   // KI-Erzaehlstimme (ElevenLabs) ist online-only und ausschliesslich fuer
   // Premium — kein Offline-Fallback. Fuer "gsw" wird dabei NIE Dialekt-Text
@@ -634,6 +640,15 @@ export default function LiveHike() {
     setSpeaking(false);
   }, []);
 
+  // Manueller Stopp (Pause-Button, Abschluss, Verlassen des Screens):
+  // erhoeht zusaetzlich die Generation, damit auch noch in-flight laufende
+  // speak()-Aufrufe (z. B. eine KI-Anfrage, die gerade laedt) verfallen und
+  // nach dem Stopp nicht doch noch zu sprechen beginnen.
+  const cancelNarration = useCallback(async () => {
+    narrationGenRef.current++;
+    await stopNarration();
+  }, [stopNarration]);
+
   // UI-Status wird optimistisch sofort auf "spricht" gesetzt, statt auf das
   // native onStart-Event zu warten: auf manchen Geraeten (v. a. Android mit
   // QUEUE_ADD-Warteschlange) feuert onStart verzoegert oder gar nicht, wenn
@@ -657,7 +672,12 @@ export default function LiveHike() {
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
     async (text: string, onFinished?: () => void) => {
+      // Neue Generation SOFORT beanspruchen, damit noch laufende speak()-
+      // Aufrufe (z. B. nach schnellem Doppel-Tipp auf "Wiederholen") sich
+      // nach ihren awaits als veraltet erkennen und nichts mehr abspielen.
+      const gen = ++narrationGenRef.current;
       await stopNarration();
+      if (gen !== narrationGenRef.current) return;
       setNarrationUnavailable(false);
       setSpeaking(true);
 
@@ -665,7 +685,14 @@ export default function LiveHike() {
         try {
           const blob = await createNarration({ text, language: profile?.language });
           const uri = await blobToDataUri(blob);
+          if (gen !== narrationGenRef.current) return;
           const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+          if (gen !== narrationGenRef.current) {
+            // Ein neuerer Aufruf hat uebernommen — diesen Sound sofort wieder
+            // entsorgen, sonst spraechen zwei Sprecher uebereinander.
+            sound.unloadAsync().catch(() => {});
+            return;
+          }
           narrationSoundRef.current = sound;
           sound.setOnPlaybackStatusUpdate((status) => {
             if (!status.isLoaded) return;
@@ -679,10 +706,12 @@ export default function LiveHike() {
           // KI-Stimme nicht erreichbar (offline, Serverfehler): Hinweis zeigen,
           // aber die Erzaehlung NICHT abbrechen — die on-device Stimme
           // uebernimmt, damit die Wanderung freihaendig weiterlaeuft.
+          if (gen !== narrationGenRef.current) return;
           setNarrationUnavailable(true);
         }
       }
 
+      if (gen !== narrationGenRef.current) return;
       Speech.speak(text, {
         language: SPEECH_LOCALE[resolveLang(profile?.language)],
         rate: 0.92,
@@ -853,9 +882,9 @@ export default function LiveHike() {
   // Sprachausgabe beim Verlassen stoppen
   useEffect(() => {
     return () => {
-      stopNarration();
+      cancelNarration();
     };
-  }, [stopNarration]);
+  }, [cancelNarration]);
 
   const chooseOption = (optionIndex: number) => {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
@@ -903,7 +932,7 @@ export default function LiveHike() {
   );
 
   const finishHike = useCallback(async () => {
-    await stopNarration();
+    await cancelNarration();
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -925,7 +954,7 @@ export default function LiveHike() {
       clearActiveHike(),
     ]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, clearActiveHike, router, stopNarration]);
+  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   const openUrlSafely = async (url: string, fallback: string) => {
     try {
@@ -1180,7 +1209,7 @@ export default function LiveHike() {
                 <Pressable
                   onPress={() => {
                     if (speaking) {
-                      stopNarration();
+                      cancelNarration();
                     } else if (currentChapter) {
                       speak(currentChapter.text);
                     }
