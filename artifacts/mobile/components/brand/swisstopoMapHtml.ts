@@ -60,8 +60,15 @@ export interface MapLegendLabels {
   start: string;
   ziel: string;
   position: string;
-  wanderwege: string;
+  wegInternational: string;
+  wegNational: string;
+  wegRegional: string;
+  wegLokal: string;
+  wegMehrfach: string;
+  nummerWanderland: string;
+  nummerLokal: string;
   seilbahn: string;
+  seilbahnStation: string;
   poi: string;
 }
 
@@ -147,9 +154,23 @@ export function buildSwisstopoHtml(
   .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
   .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
   .stt-linie-route { width: 18px; height: 4px; border-radius: 2px; background: #B8935A; }
-  .stt-linie-wanderweg { width: 18px; height: 3px; border-radius: 2px; background: #C4462F; opacity: 0.75; }
+  /* Wanderweg-Farben des Waymarked-Trails-Overlays nach OSM-Netzwerkstufe:
+     violett = international, rot = national, blau = regional, gelb = lokal.
+     Verlaufen mehrere Routen auf demselben Weg, wechseln sich die Farben
+     abschnittsweise ab (gestreifte Linie). */
+  .stt-linie-iwn { width: 18px; height: 3px; border-radius: 2px; background: #9C5AC8; }
+  .stt-linie-nwn { width: 18px; height: 3px; border-radius: 2px; background: #D9442E; }
+  .stt-linie-rwn { width: 18px; height: 3px; border-radius: 2px; background: #4A63D0; }
+  .stt-linie-lwn { width: 18px; height: 3px; border-radius: 2px; background: #E0C33B; }
+  .stt-linie-mehrfach { width: 18px; height: 3px; border-radius: 2px; background: repeating-linear-gradient(90deg, #D9442E 0 4px, #4A63D0 4px 8px); }
+  /* Routennummern-Schilder: gruen = Schweizer Wanderland (national/regional),
+     weiss = uebrige/lokale Routen. */
+  .stt-schild { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 13px; padding: 0 2px; border-radius: 2px; font-size: 9px; font-weight: 700; box-sizing: border-box; }
+  .stt-schild-gruen { background: #3E7D3A; color: #FFFFFF; border: 1px solid #FFFFFF; }
+  .stt-schild-weiss { background: #FFFFFF; color: #10181A; border: 1px solid #5B6B78; }
   .stt-linie-seilbahn { width: 18px; height: 0; border-top: 2.5px dashed #5B6B78; }
   .stt-legende .stt-start, .stt-legende .stt-ziel, .stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
+  .stt-legende .stt-seilbahn-station { box-shadow: none; }
   .stt-legende .stt-poi { box-shadow: none; cursor: default; }
 </style>
 </head>
@@ -261,8 +282,17 @@ export function buildSwisstopoHtml(
             zeile('<div class="stt-start"></div>', legende.start);
           }
           zeile('<div class="stt-live"></div>', legende.position);
-          zeile('<span class="stt-linie-wanderweg"></span>', legende.wanderwege);
-          if (aerialways) zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
+          zeile('<span class="stt-linie-iwn"></span>', legende.wegInternational);
+          zeile('<span class="stt-linie-nwn"></span>', legende.wegNational);
+          zeile('<span class="stt-linie-rwn"></span>', legende.wegRegional);
+          zeile('<span class="stt-linie-lwn"></span>', legende.wegLokal);
+          zeile('<span class="stt-linie-mehrfach"></span>', legende.wegMehrfach);
+          zeile('<span class="stt-schild stt-schild-gruen">2</span>', legende.nummerWanderland);
+          zeile('<span class="stt-schild stt-schild-weiss">7</span>', legende.nummerLokal);
+          if (aerialways) {
+            zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
+            zeile('<div class="stt-seilbahn-station"></div>', legende.seilbahnStation);
+          }
           if (pois) zeile('<div class="stt-poi"></div>', legende.poi);
           box.innerHTML =
             '<div class="stt-legende-kopf"><span class="stt-legende-pfeil">\\u25BE</span>' + legende.title + '</div>' +
