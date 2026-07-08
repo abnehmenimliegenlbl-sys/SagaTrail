@@ -27,7 +27,7 @@
           "location"
         ]
       },
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.sagatrail2.app"
     },
     "android": {
       "permissions": [
