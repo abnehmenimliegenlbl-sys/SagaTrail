@@ -13,6 +13,16 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface GpxImportBody {
+  /**
+     * Kompletter Inhalt der GPX-Datei (XML als Text)
+     * @minLength 1
+     */
+  gpx: string;
+  /** Optionaler Anzeigename (z. B. Dateiname ohne Endung) */
+  name?: string;
+}
+
 export interface ClaimKantonspackBody {
   /** Kanton-Slug (z. B. "zuerich", wie kantonSlug(name)) */
   kanton: string;

@@ -466,6 +466,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/gpx:
+    post:
+      operationId: importGpxRoute
+      tags: [routes]
+      summary: Importiert eine GPX-Datei als Wanderroute
+      description: >
+        Liest den Track aus einer GPX-Datei (trkpt, ersatzweise rtept),
+        prueft, ob er in der Schweiz liegt, und reichert ihn mit denselben
+        Quellen wie eigene Routen an (swisstopo-Hoehenmeter, SAC-Grad,
+        Saison-Heuristik, Ortsnamen). Die Route wird nicht persistiert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GpxImportBody"
+      responses:
+        "200":
+          description: Importierte und angereicherte Route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogRoute"
+        "400":
+          description: Ungueltige GPX-Datei, Track ausserhalb der Schweiz oder Distanz ausserhalb des sinnvollen Bereichs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Externe Datenquelle nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/saga:
     get:
       operationId: getRouteSaga
@@ -769,6 +804,18 @@ components:
           type: string
       required:
         - error
+    GpxImportBody:
+      type: object
+      properties:
+        gpx:
+          type: string
+          description: Kompletter Inhalt der GPX-Datei (XML als Text)
+          minLength: 1
+        name:
+          type: string
+          description: Optionaler Anzeigename (z. B. Dateiname ohne Endung)
+      required:
+        - gpx
     ClaimKantonspackBody:
       type: object
       properties:

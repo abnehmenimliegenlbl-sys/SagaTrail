@@ -318,6 +318,39 @@ export const GetCustomRouteResponse = zod.object({
 
 
 /**
+ * Liest den Track aus einer GPX-Datei (trkpt, ersatzweise rtept), prueft, ob er in der Schweiz liegt, und reichert ihn mit denselben Quellen wie eigene Routen an (swisstopo-Hoehenmeter, SAC-Grad, Saison-Heuristik, Ortsnamen). Die Route wird nicht persistiert.
+ * @summary Importiert eine GPX-Datei als Wanderroute
+ */
+
+
+
+export const ImportGpxRouteBody = zod.object({
+  "gpx": zod.string().min(1).describe('Kompletter Inhalt der GPX-Datei (XML als Text)'),
+  "name": zod.string().optional().describe('Optionaler Anzeigename (z. B. Dateiname ohne Endung)')
+})
+
+export const ImportGpxRouteResponse = zod.object({
+  "id": zod.string(),
+  "sagaId": zod.string(),
+  "name": zod.string(),
+  "region": zod.string(),
+  "distanceKm": zod.number(),
+  "ascentM": zod.number(),
+  "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
+  "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
+  "minutes": zod.number(),
+  "sac": zod.string(),
+  "terrain": zod.string(),
+  "coordinates": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
+  "featured": zod.boolean()
+})
+
+
+/**
  * Liefert die naechstgelegene kuratierte, gemeinfrei belegte Sage zur Route (kantonsweise Naehe). Es wird nichts erzeugt; ausschliesslich kuratierte Katalogdaten werden gelesen.
  * @summary Naechstgelegene kuratierte Sage zu einer Route
  */

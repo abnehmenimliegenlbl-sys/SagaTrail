@@ -35,6 +35,7 @@ import type {
   GetPoisParams,
   GetRoutePhotoParams,
   GetWeatherParams,
+  GpxImportBody,
   HealthStatus,
   NarrationInput,
   Poi,
@@ -987,6 +988,77 @@ export function useGetCustomRoute<TData = Awaited<ReturnType<typeof getCustomRou
 
 
 
+
+export const getImportGpxRouteUrl = () => {
+
+
+
+
+  return `/api/routes/gpx`
+}
+
+/**
+ * Liest den Track aus einer GPX-Datei (trkpt, ersatzweise rtept), prueft, ob er in der Schweiz liegt, und reichert ihn mit denselben Quellen wie eigene Routen an (swisstopo-Hoehenmeter, SAC-Grad, Saison-Heuristik, Ortsnamen). Die Route wird nicht persistiert.
+ * @summary Importiert eine GPX-Datei als Wanderroute
+ */
+export const importGpxRoute = async (gpxImportBody: GpxImportBody, options?: RequestInit): Promise<CatalogRoute> => {
+
+  return customFetch<CatalogRoute>(getImportGpxRouteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(gpxImportBody)
+  }
+);}
+
+
+
+
+export const getImportGpxRouteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGpxRoute>>, TError,{data: BodyType<GpxImportBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importGpxRoute>>, TError,{data: BodyType<GpxImportBody>}, TContext> => {
+
+const mutationKey = ['importGpxRoute'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importGpxRoute>>, {data: BodyType<GpxImportBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importGpxRoute(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportGpxRouteMutationResult = NonNullable<Awaited<ReturnType<typeof importGpxRoute>>>
+    export type ImportGpxRouteMutationBody = BodyType<GpxImportBody>
+    export type ImportGpxRouteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Importiert eine GPX-Datei als Wanderroute
+ */
+export const useImportGpxRoute = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importGpxRoute>>, TError,{data: BodyType<GpxImportBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importGpxRoute>>,
+        TError,
+        {data: BodyType<GpxImportBody>},
+        TContext
+      > => {
+      return useMutation(getImportGpxRouteMutationOptions(options));
+    }
 
 export const getGetRouteSagaUrl = (routeId: string,) => {
 

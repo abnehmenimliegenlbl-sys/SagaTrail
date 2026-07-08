@@ -26,6 +26,7 @@ export * from './getPoisParams';
 export * from './getPoiStoryParams';
 export * from './getRoutePhotoParams';
 export * from './getWeatherParams';
+export * from './gpxImportBody';
 export * from './healthStatus';
 export * from './localizedSummary';
 export * from './narrationInput';

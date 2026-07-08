@@ -36,7 +36,9 @@ app.use(
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
+// Limit erhoeht: der GPX-Import (/api/routes/gpx) sendet komplette
+// GPX-Dateien als JSON-Text; typische Tracks liegen bei 0.1-5 MB.
+app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Loest den Publishable Key anhand des eingehenden Hosts auf, damit derselbe

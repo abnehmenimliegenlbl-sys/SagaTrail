@@ -17,6 +17,10 @@ export interface CustomRouteStrings {
   calculatingLabel: string;
   errorMissingPoints: string;
   errorGeneric: (message: string) => string;
+  gpxDividerLabel: string;
+  gpxImportLabel: string;
+  gpxImportingLabel: string;
+  gpxReadErrorLabel: string;
 }
 
 const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
@@ -37,6 +41,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Route wird berechnet …",
     errorMissingPoints: "Bitte Start und Ziel aus der Vorschlagsliste wählen.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Oder",
+    gpxImportLabel: "GPX-Datei importieren",
+    gpxImportingLabel: "GPX wird importiert …",
+    gpxReadErrorLabel: "Die Datei konnte nicht gelesen werden.",
   },
   gsw: {
     eyebrow: "EIGENI ROUTE",
@@ -55,6 +63,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Route wird berechnet …",
     errorMissingPoints: "Bitte Start und Ziel us dr Vorschlagslischt wähle.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Oder",
+    gpxImportLabel: "GPX-Datei importiere",
+    gpxImportingLabel: "GPX wird importiert …",
+    gpxReadErrorLabel: "D Datei het nöd chöne gläse wärde.",
   },
   en: {
     eyebrow: "CUSTOM ROUTE",
@@ -73,6 +85,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Calculating route …",
     errorMissingPoints: "Please choose start and destination from the suggestion list.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Or",
+    gpxImportLabel: "Import GPX file",
+    gpxImportingLabel: "Importing GPX …",
+    gpxReadErrorLabel: "The file could not be read.",
   },
   fr: {
     eyebrow: "ITINÉRAIRE PERSONNALISÉ",
@@ -91,6 +107,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Calcul de l'itinéraire …",
     errorMissingPoints: "Merci de choisir le départ et l'arrivée dans la liste de suggestions.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Ou",
+    gpxImportLabel: "Importer un fichier GPX",
+    gpxImportingLabel: "Importation du GPX …",
+    gpxReadErrorLabel: "Le fichier n'a pas pu être lu.",
   },
   it: {
     eyebrow: "ITINERARIO PERSONALIZZATO",
@@ -109,6 +129,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Calcolo dell'itinerario …",
     errorMissingPoints: "Seleziona partenza e arrivo dall'elenco dei suggerimenti.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Oppure",
+    gpxImportLabel: "Importa file GPX",
+    gpxImportingLabel: "Importazione GPX …",
+    gpxReadErrorLabel: "Impossibile leggere il file.",
   },
   es: {
     eyebrow: "RUTA PERSONALIZADA",
@@ -127,6 +151,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Calculando ruta …",
     errorMissingPoints: "Elige la salida y el destino de la lista de sugerencias.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "O",
+    gpxImportLabel: "Importar archivo GPX",
+    gpxImportingLabel: "Importando GPX …",
+    gpxReadErrorLabel: "No se pudo leer el archivo.",
   },
   pt: {
     eyebrow: "ROTA PERSONALIZADA",
@@ -145,6 +173,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "Calculando rota …",
     errorMissingPoints: "Escolha a partida e o destino na lista de sugestões.",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "Ou",
+    gpxImportLabel: "Importar ficheiro GPX",
+    gpxImportingLabel: "Importando GPX …",
+    gpxReadErrorLabel: "Não foi possível ler o ficheiro.",
   },
   zh: {
     eyebrow: "自定义路线",
@@ -163,6 +195,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     calculatingLabel: "正在计算路线……",
     errorMissingPoints: "请从建议列表中选择起点和终点。",
     errorGeneric: (m) => m,
+    gpxDividerLabel: "或",
+    gpxImportLabel: "导入 GPX 文件",
+    gpxImportingLabel: "正在导入 GPX……",
+    gpxReadErrorLabel: "无法读取该文件。",
   },
 };
 

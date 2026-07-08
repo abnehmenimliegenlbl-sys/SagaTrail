@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { getCustomRoute, searchPlaces } from "@workspace/api-client-react";
+import { getCustomRoute, importGpxRoute, searchPlaces } from "@workspace/api-client-react";
 import type { GeocodePlace } from "@workspace/api-client-react";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -49,6 +51,7 @@ export default function EigeneRoute() {
   const [end, setEnd] = useState<Point | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
@@ -77,6 +80,42 @@ export default function EigeneRoute() {
       setSubmitting(false);
     }
   }, [start, end, addCustomRoute, router, t]);
+
+  const onImportGpx = useCallback(async () => {
+    setImporting(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        // GPX hat je nach App unterschiedliche MIME-Typen; auf iOS greift
+        // sonst oft "application/octet-stream" — darum bewusst breit.
+        type: ["application/gpx+xml", "application/octet-stream", "text/xml", "application/xml", "*/*"],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (picked.canceled || !picked.assets[0]) return;
+      const asset = picked.assets[0];
+
+      let gpx: string;
+      try {
+        gpx =
+          Platform.OS === "web"
+            ? await (await fetch(asset.uri)).text()
+            : await FileSystem.readAsStringAsync(asset.uri);
+      } catch {
+        Alert.alert(t.title, t.gpxReadErrorLabel);
+        return;
+      }
+
+      const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
+      const route = (await importGpxRoute({ gpx, name })) as HikingRoute;
+      addCustomRoute(route);
+      router.push(`/route/${route.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      Alert.alert(t.title, t.errorGeneric(message));
+    } finally {
+      setImporting(false);
+    }
+  }, [addCustomRoute, router, t]);
 
   const useLocation = useCallback(async () => {
     setLocating(true);
@@ -149,6 +188,32 @@ export default function EigeneRoute() {
           loading={submitting}
           style={{ marginTop: 28 }}
         />
+
+        <View style={styles.dividerRow}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
+          <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>
+            {t.gpxDividerLabel}
+          </Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
+        </View>
+
+        <Pressable
+          onPress={onImportGpx}
+          disabled={importing}
+          accessibilityRole="button"
+          accessibilityLabel={t.gpxImportLabel}
+        >
+          <Glass style={styles.gpxButton}>
+            {importing ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <Feather name="upload" size={16} color={colors.accent} />
+            )}
+            <Text style={[styles.gpxButtonLabel, { color: colors.foreground }]}>
+              {importing ? t.gpxImportingLabel : t.gpxImportLabel}
+            </Text>
+          </Glass>
+        </Pressable>
       </ScrollView>
     </Background>
   );
@@ -270,6 +335,11 @@ const styles = StyleSheet.create({
   input: { fontFamily: fonts.body, fontSize: 15, minHeight: 40 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, paddingVertical: 4 },
   locationLabel: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.5 },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24, marginBottom: 16 },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerText: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1 },
+  gpxButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 14 },
+  gpxButtonLabel: { fontFamily: fonts.titleBold, fontSize: 14 },
   suggestions: { marginTop: 8, padding: 0 },
   suggestionRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
   suggestionText: { fontFamily: fonts.body, fontSize: 13, flexShrink: 1 },

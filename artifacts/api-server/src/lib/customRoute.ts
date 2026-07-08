@@ -87,6 +87,75 @@ export interface CustomRoute {
   featured: boolean;
 }
 
+export interface RouteFromPointsMeta {
+  /** Deterministischer Bezeichner der Route (dient auch als sagaId). */
+  id: string;
+  /** Fester Anzeigename; ohne Angabe wird "Start → Ziel" per Geocoding gebaut. */
+  name?: string;
+  startLabel?: string;
+  endLabel?: string;
+  /** Anzeige-Terrain, z. B. "Eigene Route" oder "GPX-Import". */
+  terrain: string;
+}
+
+/**
+ * Gemeinsame Anreicherung fuer alle Routen, die als nackte Punktfolge
+ * hereinkommen (eigene Routen via Valhalla, GPX-Import): Distanz-Pruefung,
+ * swisstopo-Hoehenmeter, SAC-Grad, Saison-Heuristik, Geocoding fuer Namen
+ * und Kanton. Wirft `CustomRouteError` bei unplausibler Laenge.
+ */
+export async function buildRouteFromPoints(
+  points: LatLng[],
+  meta: RouteFromPointsMeta,
+  log: Logger,
+): Promise<CustomRoute> {
+  const start = points[0]!;
+  const end = points[points.length - 1]!;
+  const distanceKm = pathDistanceKm(points);
+  if (distanceKm < MIN_KM || distanceKm > MAX_KM) {
+    throw new CustomRouteError(
+      `Die Route ist mit ${distanceKm.toFixed(1)} km ausserhalb des sinnvollen Bereichs (${MIN_KM}-${MAX_KM} km).`,
+    );
+  }
+
+  const [elevation, sac, startPlace, endPlace] = await Promise.all([
+    computeElevationStats(points, log),
+    deriveSacFromSwissTlm3d(points, log),
+    meta.startLabel
+      ? Promise.resolve({ label: meta.startLabel, canton: null })
+      : reverseGeocode(start.lat, start.lng, log),
+    meta.endLabel
+      ? Promise.resolve({ label: meta.endLabel })
+      : reverseGeocode(end.lat, end.lng, log),
+  ]);
+
+  const ascentM = elevation?.ascentM ?? 0;
+  const maxElevationM = elevation?.maxElevationM ?? 0;
+  const sacGrade = sac ?? "unbekannt";
+  const region = startPlace.canton ?? "";
+  const geometry: [number, number][] = downsample(points, STORED_GEOMETRY_POINTS).map(
+    (p) => [p.lat, p.lng],
+  );
+  const shortLabel = (label: string) => label.split(",")[0]?.trim() || label;
+
+  return {
+    id: meta.id,
+    sagaId: meta.id,
+    name: meta.name ?? `${shortLabel(startPlace.label)} → ${shortLabel(endPlace.label)}`,
+    region,
+    distanceKm: Math.round(distanceKm * 10) / 10,
+    ascentM,
+    maxElevationM,
+    season: deriveSeason(maxElevationM, sacGrade),
+    minutes: estimateMinutes(distanceKm, ascentM),
+    sac: sacGrade,
+    terrain: meta.terrain,
+    coordinates: start,
+    geometry,
+    featured: false,
+  };
+}
+
 /**
  * Berechnet die Fussweg-Route zwischen `start` und `end` und reichert sie an.
  * Wirft `CustomRouteError`, wenn OSRM keine Route findet oder die Laenge
@@ -128,43 +197,14 @@ export async function buildCustomRoute(
   }
 
   const points: LatLng[] = shapes.flatMap((shape) => decodePolyline6(shape));
-  const distanceKm = pathDistanceKm(points);
-  if (distanceKm < MIN_KM || distanceKm > MAX_KM) {
-    throw new CustomRouteError(
-      `Die Route ist mit ${distanceKm.toFixed(1)} km ausserhalb des sinnvollen Bereichs (${MIN_KM}-${MAX_KM} km).`,
-    );
-  }
-
-  const [elevation, sac, startPlace, endPlace] = await Promise.all([
-    computeElevationStats(points, log),
-    deriveSacFromSwissTlm3d(points, log),
-    startLabel ? Promise.resolve({ label: startLabel, canton: null }) : reverseGeocode(start.lat, start.lng, log),
-    endLabel ? Promise.resolve({ label: endLabel }) : reverseGeocode(end.lat, end.lng, log),
-  ]);
-
-  const ascentM = elevation?.ascentM ?? 0;
-  const maxElevationM = elevation?.maxElevationM ?? 0;
-  const sacGrade = sac ?? "unbekannt";
-  const region = startPlace.canton ?? "";
-  const geometry: [number, number][] = downsample(points, STORED_GEOMETRY_POINTS).map(
-    (p) => [p.lat, p.lng],
+  return buildRouteFromPoints(
+    points,
+    {
+      id: customRouteId(start, end),
+      startLabel,
+      endLabel,
+      terrain: "Eigene Route",
+    },
+    log,
   );
-  const shortLabel = (label: string) => label.split(",")[0]?.trim() || label;
-
-  return {
-    id: customRouteId(start, end),
-    sagaId: customRouteId(start, end),
-    name: `${shortLabel(startPlace.label)} → ${shortLabel(endPlace.label)}`,
-    region,
-    distanceKm: Math.round(distanceKm * 10) / 10,
-    ascentM,
-    maxElevationM,
-    season: deriveSeason(maxElevationM, sacGrade),
-    minutes: estimateMinutes(distanceKm, ascentM),
-    sac: sacGrade,
-    terrain: "Eigene Route",
-    coordinates: start,
-    geometry,
-    featured: false,
-  };
 }
