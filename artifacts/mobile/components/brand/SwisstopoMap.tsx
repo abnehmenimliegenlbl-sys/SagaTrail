@@ -40,6 +40,8 @@ export function SwisstopoMap({
         wegMehrfach: t.legendWegMehrfach,
         nummerWanderland: t.legendNummerWanderland,
         nummerLokal: t.legendNummerLokal,
+        wegzeichen: t.legendWegzeichen,
+        wegweiser: t.legendWegweiser,
         seilbahn: t.legendSeilbahn,
         seilbahnStation: t.legendSeilbahnStation,
         poi: t.legendPoi,

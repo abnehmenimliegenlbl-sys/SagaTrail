@@ -67,6 +67,8 @@ export interface MapLegendLabels {
   wegMehrfach: string;
   nummerWanderland: string;
   nummerLokal: string;
+  wegzeichen: string;
+  wegweiser: string;
   seilbahn: string;
   seilbahnStation: string;
   poi: string;
@@ -168,6 +170,10 @@ export function buildSwisstopoHtml(
   .stt-schild { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 13px; padding: 0 2px; border-radius: 2px; font-size: 9px; font-weight: 700; box-sizing: border-box; }
   .stt-schild-gruen { background: #3E7D3A; color: #FFFFFF; border: 1px solid #FFFFFF; }
   .stt-schild-weiss { background: #FFFFFF; color: #10181A; border: 1px solid #5B6B78; }
+  /* Wegzeichen: Markierungssymbol einer Route (z. B. rote Raute auf weissem
+     Schild); Wegweiser: kleiner Punkt mit Name + Hoehe (m) auf der Karte. */
+  .stt-raute { display: inline-block; width: 7px; height: 7px; background: #C4462F; transform: rotate(45deg); }
+  .stt-wegweiser { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #F5F3EC; }
   .stt-linie-seilbahn { width: 18px; height: 0; border-top: 2.5px dashed #5B6B78; }
   .stt-legende .stt-start, .stt-legende .stt-ziel, .stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   .stt-legende .stt-seilbahn-station { box-shadow: none; }
@@ -289,6 +295,8 @@ export function buildSwisstopoHtml(
           zeile('<span class="stt-linie-mehrfach"></span>', legende.wegMehrfach);
           zeile('<span class="stt-schild stt-schild-gruen">2</span>', legende.nummerWanderland);
           zeile('<span class="stt-schild stt-schild-weiss">HW</span>', legende.nummerLokal);
+          zeile('<span class="stt-schild stt-schild-weiss"><span class="stt-raute"></span></span>', legende.wegzeichen);
+          zeile('<span class="stt-wegweiser"></span>', legende.wegweiser);
           if (aerialways) {
             zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
             zeile('<div class="stt-seilbahn-station"></div>', legende.seilbahnStation);

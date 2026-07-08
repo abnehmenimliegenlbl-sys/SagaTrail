@@ -26,6 +26,8 @@ export interface MapStrings {
   legendWegMehrfach: string;
   legendNummerWanderland: string;
   legendNummerLokal: string;
+  legendWegzeichen: string;
+  legendWegweiser: string;
   legendSeilbahn: string;
   legendSeilbahnStation: string;
   legendPoi: string;
@@ -45,6 +47,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Mehrere Routen überlagert",
     legendNummerWanderland: "Routennummer national/regional",
     legendNummerLokal: "Nummer/Kürzel übriger Routen",
+    legendWegzeichen: "Wegzeichen einer Route",
+    legendWegweiser: "Wegweiser (Name, Höhe in m)",
     legendSeilbahn: "Seilbahn",
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
@@ -62,6 +66,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Mehreri Route übernand",
     legendNummerWanderland: "Routenummere national/regional",
     legendNummerLokal: "Nummere/Kürzel vo de andere Route",
+    legendWegzeichen: "Wägzeiche vonere Route",
+    legendWegweiser: "Wägwiiser (Name, Höchi in m)",
     legendSeilbahn: "Seilbahn",
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
@@ -79,6 +85,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Itinéraires superposés",
     legendNummerWanderland: "Numéro d'itinéraire national/régional",
     legendNummerLokal: "Numéro/sigle des autres itinéraires",
+    legendWegzeichen: "Balisage d'un itinéraire",
+    legendWegweiser: "Panneau indicateur (nom, altitude en m)",
     legendSeilbahn: "Téléphérique",
     legendSeilbahnStation: "Station de téléphérique",
     legendPoi: "Curiosité",
@@ -96,6 +104,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Itinerari sovrapposti",
     legendNummerWanderland: "Numero di itinerario nazionale/regionale",
     legendNummerLokal: "Numero/sigla degli altri itinerari",
+    legendWegzeichen: "Segnavia di un itinerario",
+    legendWegweiser: "Indicatore di direzione (nome, quota in m)",
     legendSeilbahn: "Funivia",
     legendSeilbahnStation: "Stazione della funivia",
     legendPoi: "Punto d'interesse",
@@ -113,6 +123,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Overlapping routes",
     legendNummerWanderland: "Route number, national/regional",
     legendNummerLokal: "Number/code of other routes",
+    legendWegzeichen: "Route waymark",
+    legendWegweiser: "Guidepost (name, elevation in m)",
     legendSeilbahn: "Cable car",
     legendSeilbahnStation: "Cable car station",
     legendPoi: "Point of interest",
@@ -130,6 +142,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "多条路线重叠",
     legendNummerWanderland: "路线编号（国家/区域）",
     legendNummerLokal: "其他路线的编号/代号",
+    legendWegzeichen: "路线标记符号",
+    legendWegweiser: "路标（名称、海拔米）",
     legendSeilbahn: "缆车",
     legendSeilbahnStation: "缆车站",
     legendPoi: "景点",
@@ -147,6 +161,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Rutas superpuestas",
     legendNummerWanderland: "Número de ruta nacional/regional",
     legendNummerLokal: "Número/sigla de otras rutas",
+    legendWegzeichen: "Señal de ruta",
+    legendWegweiser: "Poste indicador (nombre, altitud en m)",
     legendSeilbahn: "Teleférico",
     legendSeilbahnStation: "Estación del teleférico",
     legendPoi: "Punto de interés",
@@ -164,6 +180,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendWegMehrfach: "Rotas sobrepostas",
     legendNummerWanderland: "Número de rota nacional/regional",
     legendNummerLokal: "Número/sigla de outras rotas",
+    legendWegzeichen: "Marca de rota",
+    legendWegweiser: "Placa indicadora (nome, altitude em m)",
     legendSeilbahn: "Teleférico",
     legendSeilbahnStation: "Estação do teleférico",
     legendPoi: "Ponto de interesse",
