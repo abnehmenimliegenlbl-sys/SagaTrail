@@ -28,6 +28,7 @@ import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
+import type { HikingRoute } from "@/constants/routes";
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
@@ -99,14 +100,21 @@ export default function LiveHike() {
   const resumeIndexRef = useRef<number | null>(
     activeHike && activeHike.sagaId === id ? activeHike.chapterIndex : null,
   );
+  // Beim Fortsetzen nach Absturz/Neustart: die mitpersistierte Route aus dem
+  // gespeicherten Wanderstand — Routen sind online-only, der Katalog ist nach
+  // einem Kaltstart also oft (noch) leer.
+  const resumeRouteRef = useRef<HikingRoute | null>(
+    activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
+  );
   const { getSaga, getRoute, getRouteBySaga } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
   const saga = getSaga(id);
   // Die konkret gewaehlte Route (mit Wegverlauf) hat Vorrang; nur wenn keine
   // Route-Id durchgereicht wurde (z. B. Start aus der Sammlung), wird ueber die
-  // Sage die naechste bekannte Route gesucht.
-  const route = getRoute(routeId) ?? getRouteBySaga(id);
+  // Sage die naechste bekannte Route gesucht. Als letzter Rueckhalt dient die
+  // im unterbrochenen Wanderstand mitgespeicherte Route.
+  const route = getRoute(routeId) ?? getRouteBySaga(id) ?? resumeRouteRef.current ?? undefined;
 
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
   const totalKm = route?.distanceKm ?? 6.4;
@@ -331,14 +339,15 @@ export default function LiveHike() {
     if (!mapCenter) return;
     let cancelled = false;
     // Enger Rand (0.5 km statt 3 km): behalten werden ohnehin nur POIs im
-    // 100-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
+    // 300-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
     // dichten Staedten (z. B. Basel) so teuer, dass sie in ein Timeout laeuft.
     const bbox = bboxAroundGeometry(route?.geometry, mapCenter, 0.5);
-    // Nur POIs im 100-m-Korridor um die Strecke behalten — Orte weiter weg
+    // Nur POIs im 300-m-Korridor um die Strecke behalten — Orte weiter weg
     // liegen nicht am Weg und wuerden die Karte und Ansagen verwaessern.
+    // (100 m erwies sich im Feldtest als zu eng: auf 7 km nur 2 POIs.)
     // Gemessen wird gegen die Liniensegmente (nicht nur Stuetzpunkte), da die
     // gespeicherte Geometrie ausgeduennt ist und Segmente >100 m lang sein koennen.
-    const KORRIDOR_KM = 0.1;
+    const KORRIDOR_KM = 0.3;
     const geo = route?.geometry;
     getPois(bbox)
       .then((result) => {
@@ -633,11 +642,13 @@ export default function LiveHike() {
   // darauf startete. await stop() vor speak() vermeidet zudem, dass die
   // vorherige Aeusserung noch in der nativen Warteschlange haengt.
   //
-  // Premium: KI-Erzaehlstimme (ElevenLabs, ueber den Server) — online-only,
-  // OHNE Fallback auf die on-device Stimme bei Fehlschlag (kein stiller
-  // Ersatz; stattdessen ein expliziter "nicht verfuegbar"-Hinweis). Die
-  // kostenlose erste Wanderung nutzt bewusst weiterhin ausschliesslich die
-  // alte on-device Stimme (expo-speech) und ruft die KI-Stimme nie auf.
+  // Premium: KI-Erzaehlstimme (ElevenLabs, ueber den Server) — online-only.
+  // Schlaegt sie fehl (offline, Serverfehler), uebernimmt die on-device
+  // Stimme (expo-speech), damit die Erzaehlung unterwegs nie verstummt;
+  // zusaetzlich erscheint ein sichtbarer "KI-Stimme nicht verfuegbar"-Hinweis
+  // (kein stiller Ersatz). Die kostenlose erste Wanderung nutzt bewusst
+  // weiterhin ausschliesslich die on-device Stimme und ruft die KI-Stimme
+  // nie auf.
   // onFinished feuert NUR bei natuerlichem Ende (onDone/didJustFinish), nie
   // bei manuellem Stopp oder wenn eine andere speak()-Aeusserung dazwischen-
   // funkt (stopNarration loest dann onStopped/onError aus). So kann man
@@ -663,11 +674,13 @@ export default function LiveHike() {
               onFinished?.();
             }
           });
+          return;
         } catch {
+          // KI-Stimme nicht erreichbar (offline, Serverfehler): Hinweis zeigen,
+          // aber die Erzaehlung NICHT abbrechen — die on-device Stimme
+          // uebernimmt, damit die Wanderung freihaendig weiterlaeuft.
           setNarrationUnavailable(true);
-          setSpeaking(false);
         }
-        return;
       }
 
       Speech.speak(text, {
@@ -721,6 +734,9 @@ export default function LiveHike() {
       chapterIndex: currentIndex,
       chapterCount: chapters.length,
       updatedAt: Date.now(),
+      // Route komplett mitspeichern, damit die Wanderung nach einem Absturz
+      // auch ohne (erneut) geladenen Katalog fortgesetzt werden kann.
+      route: route ?? undefined,
     });
   }, [currentIndex, preparing, finished, chapters.length, saga, route, saveActiveHike]);
 

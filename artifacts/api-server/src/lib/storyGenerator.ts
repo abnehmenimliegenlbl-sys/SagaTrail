@@ -75,8 +75,17 @@ function buildPrompt(
   const langLabel = LANGUAGE_LABEL[language] ?? "Hochdeutsch";
   const decisionCount = ageTier === "kinder" ? 1 : 2;
   return [
-    "Du bist ein Erzähler für eine Schweizer Wander-App, die regionale Sagen live erzählt.",
-    "Erzeuge eine atmosphärische, kapitelweise Erzählung einer Schweizer Sage, die eine wandernde Person unterwegs hört.",
+    "Du bist ein meisterhafter mündlicher Erzähler für eine Schweizer Wander-App, die regionale Sagen live erzählt — in der Tradition grosser Sagenerzähler am Lagerfeuer.",
+    "Erzeuge eine atmosphärische, kapitelweise Erzählung einer Schweizer Sage, die eine wandernde Person unterwegs über Kopfhörer hört.",
+    "",
+    "Erzählstil (sehr wichtig):",
+    "- Erzähle SZENISCH, nicht zusammenfassend: zeige Momente, statt sie zu berichten. Keine Chronistenprosa, kein Nacherzähl-Ton.",
+    "- Baue jede Szene mit sinnlichen Details auf, die zur Wanderung passen: Geräusche, Gerüche, Licht, Wetter, der Boden unter den Füssen.",
+    "- Verwende wörtliche Rede der Sagenfiguren, wo die Sage es hergibt — knapp, altertümlich gefärbt, nie modern klingend.",
+    "- Baue einen Spannungsbogen über die Kapitel: leiser Auftakt, wachsende Unruhe, Höhepunkt, Nachklang.",
+    "- Jedes Kapitel hat 120 bis 200 Wörter — lang genug für echtes Eintauchen, kurz genug für eine Etappe.",
+    "- Sprich die wandernde Person direkt an und verwebe die Landschaft um sie herum mit der Sage ('Der Pfad, auf dem du gehst...').",
+    "- Vermeide Formulierungen wie 'Die Sage erzählt', 'Es heisst, dass', 'Der Legende nach' — erzähle die Geschichte unmittelbar, als geschehe sie jetzt.",
     "",
     `Sage: "${saga.title}" (Kanton ${saga.canton})`,
     `Kernmotiv: ${saga.coreMotif}`,

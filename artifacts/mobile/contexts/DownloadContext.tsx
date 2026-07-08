@@ -36,7 +36,10 @@ import { Profile, Saga, StoryChapter } from "@/types";
  */
 
 const INDEX_KEY = "sagatrail:downloads";
-const storyKeyPrefix = "sagatrail:story:";
+// Versionierter Prefix: muss mitbumpen, wenn der Server-Erzaehlstil (STORY_SOURCE
+// in routes/stories.ts) wechselt — sonst bleiben alte, im Stil ueberholte
+// Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
+const storyKeyPrefix = "sagatrail:story:v2:";
 
 export interface DownloadRecord {
   sagaId: string;

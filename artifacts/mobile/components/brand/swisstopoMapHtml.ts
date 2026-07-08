@@ -127,9 +127,17 @@ export function buildSwisstopoHtml(
   .stt-live { width: 16px; height: 16px; border-radius: 50%; background: #C4462F; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(196,70,47,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); cursor: pointer; }
-  .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; }
+  /* Unsichtbare, grosszuegige Tipp-Flaeche um den kleinen POI-Punkt — 13 px
+     waren am Handy praktisch nicht treffbar. */
+  .stt-poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
+  .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; max-width: 55vw; }
   .leaflet-control-attribution a { color: #B8935A; }
-  /* Auf-/zuklappbare Legende (unten links, ueber der Attribution). */
+  /* Auf-/zuklappbare Legende (unten links). Die Ecke wird ueber die
+     Attribution (unten rechts) gehoben und die Legende leicht angehoben,
+     damit lange Attributionstexte den Legenden-Kopf nicht ueberdecken
+     und er antippbar bleibt. */
+  .leaflet-bottom.leaflet-left { z-index: 1001; }
+  .stt-legende { margin-bottom: 26px !important; }
   .stt-legende { background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35; overflow: hidden; }
   .stt-legende-kopf { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; user-select: none; -webkit-user-select: none; font-weight: 600; color: #B8935A; }
   .stt-legende-pfeil { display: inline-block; transition: transform 0.15s ease; font-size: 10px; color: #F5F3EC; }
@@ -215,7 +223,9 @@ export function buildSwisstopoHtml(
       // Points of Interest: eigener Marker-Stil, Antippen meldet die POI-ID
       // an die Host-App zurueck (WebView oder Web-iframe), damit dort ein
       // Detailausschnitt (Text + Bild) angezeigt werden kann.
-      var poiIcon = L.divIcon({ className: '', html: '<div class="stt-poi"></div>', iconSize: [13, 13], iconAnchor: [7, 12] });
+      // Grosse unsichtbare Tipp-Flaeche (36 px) um den kleinen Punkt, der
+      // Anker haelt die Spitze des Punkts weiterhin auf der Koordinate.
+      var poiIcon = L.divIcon({ className: '', html: '<div class="stt-poi-tipp"><div class="stt-poi"></div></div>', iconSize: [36, 36], iconAnchor: [18, 33] });
       pois.forEach(function (p) {
         var marker = L.marker([p.lat, p.lng], { icon: poiIcon }).addTo(map);
         marker.on('click', function () {

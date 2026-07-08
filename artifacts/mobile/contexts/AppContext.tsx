@@ -19,6 +19,7 @@ import React, {
 } from "react";
 
 import { Achievement, HikeSession, Profile } from "@/types";
+import type { HikingRoute } from "@/constants/routes";
 import {
   GroupSocket,
   type GroupActivity,
@@ -66,6 +67,10 @@ export interface ActiveHike {
   chapterIndex: number;
   chapterCount: number;
   updatedAt: number;
+  // Vollstaendige Route (mit Wegverlauf) mitpersistieren: Routen sind
+  // online-only ohne Seed — stuerzt die App unterwegs ab, waere die Route
+  // beim Fortsetzen sonst weg, wenn der Katalog (noch) nicht geladen ist.
+  route?: HikingRoute;
 }
 
 export interface GroupSession {

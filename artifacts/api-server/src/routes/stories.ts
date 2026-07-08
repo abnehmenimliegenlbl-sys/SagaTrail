@@ -6,6 +6,12 @@ import { generateStory } from "../lib/storyGenerator";
 
 const router: IRouter = Router();
 
+// Versionierte Quelle: Aenderungen am Erzaehl-Prompt (storyGenerator.ts)
+// muessen diese Kennung mitbumpen, damit alte, im Stil ueberholte Kapitel
+// nicht ewig aus dem Cache bedient werden. Alte Zeilen werden beim naechsten
+// Abruf lazy ueberschrieben.
+const STORY_SOURCE = "ai-v2";
+
 router.post("/stories", async (req, res): Promise<void> => {
   const parsed = CreateStoryBody.safeParse(req.body);
   if (!parsed.success) {
@@ -24,6 +30,7 @@ router.post("/stories", async (req, res): Promise<void> => {
         eq(storiesTable.archetype, archetype),
         eq(storiesTable.ageTier, ageTier),
         eq(storiesTable.lang, language),
+        eq(storiesTable.source, STORY_SOURCE),
       ),
     );
 
@@ -64,8 +71,11 @@ router.post("/stories", async (req, res): Promise<void> => {
 
   await db
     .insert(storiesTable)
-    .values({ sagaId, archetype, ageTier, lang: language, chapters, source: "ai" })
-    .onConflictDoNothing({ target: [storiesTable.sagaId, storiesTable.archetype, storiesTable.ageTier, storiesTable.lang] });
+    .values({ sagaId, archetype, ageTier, lang: language, chapters, source: STORY_SOURCE })
+    .onConflictDoUpdate({
+      target: [storiesTable.sagaId, storiesTable.archetype, storiesTable.ageTier, storiesTable.lang],
+      set: { chapters, source: STORY_SOURCE },
+    });
 
   res.json(
     CreateStoryResponse.parse({
