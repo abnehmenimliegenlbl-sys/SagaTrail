@@ -131,16 +131,16 @@ export function buildSwisstopoHtml(
   html, body { margin: 0; padding: 0; height: 100%; background: #10181A; }
   #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #10181A; }
   .leaflet-container { background: #10181A; font-family: -apple-system, system-ui, sans-serif; }
-  .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #B8935A; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(184,147,90,0.25); }
-  .stt-ziel { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #B8935A; box-shadow: 0 0 0 4px rgba(184,147,90,0.25); }
-  .stt-live { width: 16px; height: 16px; border-radius: 50%; background: #C4462F; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(196,70,47,0.30); }
+  .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
+  .stt-ziel { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
+  .stt-live { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(47,111,237,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); cursor: pointer; }
   /* Unsichtbare, grosszuegige Tipp-Flaeche um den kleinen POI-Punkt — 13 px
      waren am Handy praktisch nicht treffbar. */
   .stt-poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; max-width: 55vw; }
-  .leaflet-control-attribution a { color: #B8935A; }
+  .leaflet-control-attribution a { color: #DA291C; }
   /* Auf-/zuklappbare Legende (unten links). Die Ecke wird ueber die
      Attribution (unten rechts) gehoben und die Legende leicht angehoben,
      damit lange Attributionstexte den Legenden-Kopf nicht ueberdecken
@@ -148,14 +148,14 @@ export function buildSwisstopoHtml(
   .leaflet-bottom.leaflet-left { z-index: 1001; }
   .stt-legende { margin-bottom: 26px !important; }
   .stt-legende { background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35; overflow: hidden; }
-  .stt-legende-kopf { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; user-select: none; -webkit-user-select: none; font-weight: 600; color: #B8935A; }
+  .stt-legende-kopf { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; user-select: none; -webkit-user-select: none; font-weight: 600; color: #DA291C; }
   .stt-legende-pfeil { display: inline-block; transition: transform 0.15s ease; font-size: 10px; color: #F5F3EC; }
   .stt-legende.zu .stt-legende-pfeil { transform: rotate(-90deg); }
   .stt-legende-inhalt { padding: 0 10px 8px 10px; }
   .stt-legende.zu .stt-legende-inhalt { display: none; }
   .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
   .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
-  .stt-linie-route { width: 18px; height: 4px; border-radius: 2px; background: #B8935A; }
+  .stt-linie-route { width: 18px; height: 4px; border-radius: 2px; background: #DA291C; }
   /* Wanderweg-Farben des Waymarked-Trails-Overlays nach OSM-Netzwerkstufe:
      violett = international, rot = national, blau = regional, gelb = lokal.
      Verlaufen mehrere Routen auf demselben Weg, wechseln sich die Farben
@@ -235,7 +235,7 @@ export function buildSwisstopoHtml(
     if (geometry && geometry.length > 1) {
       // Wegverlauf mit dunkler Kontur fuer Lesbarkeit auf beliebigen Kacheln.
       L.polyline(geometry, { color: '#10181A', weight: 7, opacity: 0.55, lineJoin: 'round', lineCap: 'round' }).addTo(map);
-      var line = L.polyline(geometry, { color: '#B8935A', weight: 4, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }).addTo(map);
+      var line = L.polyline(geometry, { color: '#DA291C', weight: 4, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }).addTo(map);
       var startPt = geometry[0];
       var endPt = geometry[geometry.length - 1];
       L.marker([startPt[0], startPt[1]], { icon: startIcon }).addTo(map).bindPopup(${title});
