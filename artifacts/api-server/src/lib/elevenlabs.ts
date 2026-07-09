@@ -1,5 +1,5 @@
 import type { Logger } from "pino";
-import { synthesizeOpenAiNarrationWithPacing } from "./narrationPacing";
+import { synthesizeOpenAiNarrationWithPacing, splitIntoSentences } from "./narrationPacing";
 
 /**
  * ElevenLabs Text-to-Speech Client fuer die kostenpflichtige, natuerlich
@@ -79,6 +79,23 @@ export class ElevenLabsError extends Error {
   }
 }
 
+// Fuegt <break/>-SSML-Tags zwischen Saetzen ein, analog zur OpenAI-Pacing-
+// Logik (narrationPacing.ts): dramatische Saetze (Ausrufe, Ellipsen)
+// bekommen eine laengere Pause als normale Satzuebergaenge. ElevenLabs'
+// eleven_multilingual_v2 unterstuetzt <break time="Xs" />-Tags direkt im
+// Text.
+function mitPausenAnreichern(text: string): string {
+  const saetze = splitIntoSentences(text);
+  if (saetze.length <= 1) return text;
+  return saetze
+    .map(({ text: satzText, dramatic }, i) => {
+      const istLetzter = i === saetze.length - 1;
+      const pause = istLetzter ? "" : dramatic ? ' <break time="0.9s" />' : ' <break time="0.25s" />';
+      return satzText + pause;
+    })
+    .join(" ");
+}
+
 async function requestTts(
   voiceId: string,
   text: string,
@@ -94,11 +111,15 @@ async function requestTts(
         Accept: "audio/mpeg",
       },
       body: JSON.stringify({
-        text,
+        text: mitPausenAnreichern(text),
         model_id: MODEL_ID,
         voice_settings: {
-          stability: 0.5,
+          // Leicht hochgeschraubt (0.5 -> 0.65) fuer eine ruhigere, weniger
+          // schwankende Stimme -- auf Nutzerwunsch.
+          stability: 0.65,
           similarity_boost: 0.75,
+          // 0.95x Tempo, analog zum OpenAI-Rueckfall.
+          speed: 0.95,
         },
       }),
       signal: AbortSignal.timeout(60_000),
