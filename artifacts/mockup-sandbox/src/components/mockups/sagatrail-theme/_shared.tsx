@@ -144,13 +144,18 @@ export function ScreenMock({
       {/* CTA */}
       <div className="px-6 mt-auto pb-10">
         <button
-          className="w-full rounded-2xl py-4 flex items-center justify-center gap-2 font-bold text-base"
+          className="relative w-full rounded-2xl py-4 flex items-center justify-center gap-2 font-bold text-base overflow-hidden"
           style={{
-            backgroundColor: tokens.primary,
+            background: `linear-gradient(180deg, ${tokens.primary}F2 0%, ${tokens.primary} 55%, ${tokens.primary}CC 100%)`,
             color: tokens.primaryText,
-            boxShadow: `0 10px 24px -6px ${tokens.primary}66, 0 2px 6px -2px rgba(0,0,0,0.2)`,
+            boxShadow: `0 16px 32px -8px ${tokens.primary}80, 0 6px 12px -3px rgba(0,0,0,0.35), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.25)`,
+            border: "1px solid rgba(255,255,255,0.15)",
           }}
         >
+          <span
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-2xl"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%)" }}
+          />
           <Play size={18} fill={tokens.primaryText} />
           Wanderung starten
         </button>
