@@ -532,7 +532,7 @@ export default function Routenplanung() {
 
         <PrimaryButton
           label={importing ? t.importGpxImporting : t.importGpx}
-          variant="ghost"
+          variant="secondary"
           onPress={onImportGpx}
           disabled={importing}
           style={{ marginTop: 20 }}
@@ -541,7 +541,7 @@ export default function Routenplanung() {
         {route?.geometry && route.geometry.length > 0 && (
           <PrimaryButton
             label={t.exportGpx}
-            variant="ghost"
+            variant="secondary"
             onPress={onExportGpx}
             style={{ marginTop: 8 }}
           />

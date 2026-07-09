@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
+import { GLAS_3D } from "@/constants/depth";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { HikingRoute } from "@/constants/routes";
@@ -202,17 +203,24 @@ export default function EigeneRoute() {
           disabled={importing}
           accessibilityRole="button"
           accessibilityLabel={t.gpxImportLabel}
+          style={[
+            styles.gpxButton,
+            GLAS_3D,
+            {
+              borderColor: colors.accent,
+              backgroundColor: colors.glassBgStrong,
+              opacity: importing ? 0.6 : 1,
+            },
+          ]}
         >
-          <Glass style={styles.gpxButton}>
-            {importing ? (
-              <ActivityIndicator size="small" color={colors.accent} />
-            ) : (
-              <Feather name="upload" size={16} color={colors.accent} />
-            )}
-            <Text style={[styles.gpxButtonLabel, { color: colors.foreground }]}>
-              {importing ? t.gpxImportingLabel : t.gpxImportLabel}
-            </Text>
-          </Glass>
+          {importing ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <Feather name="upload" size={16} color={colors.accent} />
+          )}
+          <Text style={[styles.gpxButtonLabel, { color: colors.accent }]}>
+            {importing ? t.gpxImportingLabel : t.gpxImportLabel}
+          </Text>
         </Pressable>
       </ScrollView>
     </Background>
@@ -338,7 +346,15 @@ const styles = StyleSheet.create({
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24, marginBottom: 16 },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
   dividerText: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1 },
-  gpxButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 14 },
+  gpxButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
   gpxButtonLabel: { fontFamily: fonts.titleBold, fontSize: 14 },
   suggestions: { marginTop: 8, padding: 0 },
   suggestionRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },

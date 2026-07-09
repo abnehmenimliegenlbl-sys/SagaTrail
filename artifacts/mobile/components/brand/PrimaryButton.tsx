@@ -16,11 +16,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { GLAS_3D_STARK } from "@/constants/depth";
+import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
-type Variant = "primary" | "ghost" | "gold";
+type Variant = "primary" | "ghost" | "gold" | "secondary";
 
 interface PrimaryButtonProps {
   label: string;
@@ -58,12 +58,15 @@ export function PrimaryButton({
       ? "#10181A"
       : variant === "ghost"
         ? colors.foreground
-        : colors.primaryForeground;
+        : variant === "secondary"
+          ? colors.accent
+          : colors.primaryForeground;
 
-  const gradientColors: [string, string, string] =
-    variant === "ghost"
-      ? ["transparent", "transparent", "transparent"]
-      : [withAlpha(baseColor, 0.95), baseColor, withAlpha(baseColor, 0.78)];
+  const flat = variant === "ghost" || variant === "secondary";
+
+  const gradientColors: [string, string, string] = flat
+    ? ["transparent", "transparent", "transparent"]
+    : [withAlpha(baseColor, 0.95), baseColor, withAlpha(baseColor, 0.78)];
 
   return (
     <Animated.View style={[animStyle, style]}>
@@ -88,16 +91,23 @@ export function PrimaryButton({
             borderRadius: colors.radius,
             borderWidth: 1,
             borderColor:
-              variant === "ghost" ? colors.glassBorder : "rgba(255,255,255,0.18)",
+              variant === "ghost"
+                ? colors.glassBorder
+                : variant === "secondary"
+                  ? colors.accent
+                  : "rgba(255,255,255,0.18)",
             opacity: disabled ? 0.5 : 1,
             overflow: "hidden",
           },
           variant === "ghost" ? { backgroundColor: "transparent" } : null,
-          GLAS_3D_STARK,
-          variant !== "ghost" ? { shadowColor: baseColor, shadowOpacity: 0.55 } : null,
+          variant === "secondary" ? { backgroundColor: colors.glassBgStrong } : null,
+          variant === "secondary" ? GLAS_3D : GLAS_3D_STARK,
+          variant === "primary" || variant === "gold"
+            ? { shadowColor: baseColor, shadowOpacity: 0.55 }
+            : null,
         ]}
       >
-        {variant !== "ghost" && (
+        {!flat && (
           <LinearGradient
             colors={gradientColors}
             start={{ x: 0, y: 0 }}
@@ -105,7 +115,7 @@ export function PrimaryButton({
             style={StyleSheet.absoluteFill}
           />
         )}
-        {variant !== "ghost" && (
+        {!flat && (
           <View
             pointerEvents="none"
             style={[
@@ -118,7 +128,7 @@ export function PrimaryButton({
             ]}
           />
         )}
-        {variant !== "ghost" && (
+        {!flat && (
           <LinearGradient
             pointerEvents="none"
             colors={["rgba(255,255,255,0.32)", "rgba(255,255,255,0)"]}
