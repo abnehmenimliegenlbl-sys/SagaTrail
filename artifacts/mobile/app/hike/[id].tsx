@@ -1065,6 +1065,12 @@ export default function LiveHike() {
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const progress = chapters.length > 1 ? currentIndex / (chapters.length - 1) : 0;
+  // Fuer die Restzeit-Anzeige den kontinuierlichen Routen-Fortschritt nutzen
+  // (echte GPS-Position projiziert auf die Route), statt den groben, nur an
+  // Kapitelgrenzen springenden Story-Fortschritt — sonst zeigt die Restzeit
+  // direkt nach einem Start mitten auf der Route faelschlich die volle
+  // Wanderdauer an, bis das erste Kapitel erreicht ist.
+  const timeProgress = routeProgress ?? (totalKm > 0 ? Math.min(1, distance / totalKm) : progress);
   const currentChapter = chapters[currentIndex];
 
   // Angezeigte Position auf der Karte: bei echtem GPS die Live-Position, sonst
@@ -1274,10 +1280,10 @@ export default function LiveHike() {
         <Glass style={{ marginTop: 14 }}>
           <View style={styles.statBar}>
             <Metric label={t.metricDistance} value={distance.toFixed(1)} unit={t.unitKm} />
-            <Metric label={t.metricHeight} value={`${Math.round(progress * ascentM)}`} unit={t.unitHm} />
+            <Metric label={t.metricHeight} value={`${Math.round(timeProgress * ascentM)}`} unit={t.unitHm} />
             <Metric
               label={t.metricTimeLeft}
-              value={`${Math.max(0, Math.round((1 - progress) * totalMin))}`}
+              value={`${Math.max(0, Math.round((1 - timeProgress) * totalMin))}`}
               unit={t.unitMin}
             />
             <Metric label={t.metricSac} value={sac} unit="" />
