@@ -13,6 +13,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { GLAS_3D_STARK } from "@/constants/depth";
+import { fonts } from "@/constants/typography";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -67,11 +69,11 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         </Pressable>
 
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.foreground }]}>
+        <Text style={[styles.title, { color: colors.foreground, fontFamily: fonts.titleBold }]}>
           Something went wrong
         </Text>
 
-        <Text style={[styles.message, { color: colors.mutedForeground }]}>
+        <Text style={[styles.message, { color: colors.mutedForeground, fontFamily: fonts.body }]}>
           Please reload the app to continue.
         </Text>
 
@@ -79,17 +81,32 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           onPress={handleRestart}
           style={({ pressed }) => [
             styles.button,
+            GLAS_3D_STARK,
             {
-              backgroundColor: colors.primary,
+              backgroundColor: colors.accent,
+              borderRadius: colors.radius,
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.18)",
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
           ]}
         >
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderTopWidth: 1.5,
+                borderColor: "rgba(255,255,255,0.4)",
+                borderRadius: colors.radius,
+              },
+            ]}
+          />
           <Text
             style={[
               styles.buttonText,
-              { color: colors.primaryForeground },
+              { color: colors.accentForeground, fontFamily: fonts.titleBold },
             ]}
           >
             Try Again

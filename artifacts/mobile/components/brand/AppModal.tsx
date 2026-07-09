@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
-import { GLAS_3D_STARK } from "@/constants/depth";
+import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
@@ -103,8 +103,13 @@ export function AppModal({
                       onPress={btn.onPress}
                       style={({ pressed }) => [
                         styles.button,
+                        cancel ? null : GLAS_3D,
                         {
-                          borderColor: destructive ? colors.destructive : colors.glassBorder,
+                          borderColor: destructive
+                            ? colors.destructive
+                            : cancel
+                              ? colors.glassBorder
+                              : colors.accent,
                           backgroundColor: cancel
                             ? "transparent"
                             : destructive
@@ -114,6 +119,19 @@ export function AppModal({
                         },
                       ]}
                     >
+                      {!cancel && !destructive && (
+                        <View
+                          pointerEvents="none"
+                          style={[
+                            StyleSheet.absoluteFill,
+                            {
+                              borderTopWidth: 1.5,
+                              borderColor: "rgba(255,255,255,0.4)",
+                              borderRadius: 12,
+                            },
+                          ]}
+                        />
+                      )}
                       <Text
                         style={[
                           styles.buttonText,
