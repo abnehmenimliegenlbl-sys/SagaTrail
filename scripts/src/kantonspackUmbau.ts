@@ -29,9 +29,9 @@ const PROJECT_ID = process.env.REVENUECAT_PROJECT_ID!;
 const KANTONSPACK_STORE_ID = "sagatrail_kantonspack";
 const KANTONSPACK_PAKET = "kantonspack";
 const PREISE = [
-  { amount_micros: 6_900_000, currency: "CHF" },
-  { amount_micros: 6_900_000, currency: "USD" },
-  { amount_micros: 6_900_000, currency: "EUR" },
+  { amount_micros: 6_950_000, currency: "CHF" },
+  { amount_micros: 6_950_000, currency: "USD" },
+  { amount_micros: 6_950_000, currency: "EUR" },
 ];
 
 type TestStorePricesResponse = { object: string; prices: typeof PREISE };

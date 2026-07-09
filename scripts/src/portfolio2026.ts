@@ -1,10 +1,10 @@
 // Baut das SagaTrail-Monetarisierungs-Portfolio in RevenueCat um:
 //   Abos (Entitlement "premium"):
-//     - sagatrail_premium_monthly_1499   P1M  CHF 14.99
-//     - sagatrail_premium_yearly         P1Y  CHF 89.99
+//     - sagatrail_premium_monthly_1499   P1M  CHF 14.95
+//     - sagatrail_premium_yearly         P1Y  CHF 99.95
 //     - sagatrail_family_yearly          P1Y  CHF 119.00
-//     - sagatrail_elite_yearly           P1Y  CHF 199.99  (+ Entitlement "elite")
-//     - sagatrail_elite_family_yearly    P1Y  CHF 299.99  (+ Entitlement "elite")
+//     - sagatrail_elite_yearly           P1Y  CHF 199.00  (+ Entitlement "elite")
+//     - sagatrail_elite_family_yearly    P1Y  CHF 219.00  (+ Entitlement "elite")
 //   Einmalkaeufe (nur fuer Premium-Kunden kaufbar, App-seitig erzwungen):
 //     - sagatrail_pack_<kanton>          CHF 6.90, Entitlement "pack_<kanton>"
 //   Offerings:
@@ -110,7 +110,7 @@ const ABOS: AboDef[] = [
     display: "SagaTrail Premium (Monat)",
     titel: "SagaTrail Premium",
     dauer: "P1M",
-    preise: chf(14.99),
+    preise: chf(14.95),
     paket: "$rc_monthly",
     paketName: "Premium Monat",
     elite: false,
@@ -121,7 +121,7 @@ const ABOS: AboDef[] = [
     display: "SagaTrail Premium (Jahr)",
     titel: "SagaTrail Premium Jahr",
     dauer: "P1Y",
-    preise: chf(89.99),
+    preise: chf(99.95),
     paket: "$rc_annual",
     paketName: "Premium Jahr",
     elite: false,
@@ -143,7 +143,7 @@ const ABOS: AboDef[] = [
     display: "SagaTrail Elite (Jahr)",
     titel: "SagaTrail Elite",
     dauer: "P1Y",
-    preise: chf(199.99),
+    preise: chf(199.0),
     paket: "elite",
     paketName: "Elite Jahr",
     elite: true,
@@ -154,7 +154,7 @@ const ABOS: AboDef[] = [
     display: "SagaTrail Elite Familie (Jahr)",
     titel: "SagaTrail Elite Familie",
     dauer: "P1Y",
-    preise: chf(299.99),
+    preise: chf(219.0),
     paket: "elite_family",
     paketName: "Elite Familien-Abo Jahr",
     elite: true,
