@@ -78,6 +78,8 @@ export interface HikeSession {
   visitedPlaceIds: string[];
   /** Erinnerungsfoto aus dem Wander-Tagebuch (lokale Datei-URI, optional) */
   photoUri?: string;
+  /** Schritte laut Pedometer, 0 falls Sensor nicht verfuegbar war */
+  steps?: number;
 }
 
 export interface Achievement {

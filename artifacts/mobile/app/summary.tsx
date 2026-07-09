@@ -141,6 +141,9 @@ export default function Summary() {
           <Stat value={`${lastHike.ascentM}`} unit="hm" label={t.stats.ascent} />
           <Stat value={lastHike.sacScale} unit="" label={t.stats.sac} />
           <Stat value={`${lastHike.chapters.length}`} unit="" label={t.stats.chapters} />
+          {typeof lastHike.steps === "number" && lastHike.steps > 0 && (
+            <Stat value={`${lastHike.steps}`} unit="" label={t.stats.steps} />
+          )}
         </Animated.View>
 
         {decisions.length > 0 && (

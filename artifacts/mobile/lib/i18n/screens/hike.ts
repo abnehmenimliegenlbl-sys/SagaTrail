@@ -14,6 +14,7 @@ export interface HikeStrings {
   metricHeight: string;
   metricTimeLeft: string;
   metricSac: string;
+  metricSteps: string;
   unitKm: string;
   unitHm: string;
   unitMin: string;
@@ -73,6 +74,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "HÖHE",
     metricTimeLeft: "RESTZEIT",
     metricSac: "SAC",
+    metricSteps: "SCHRITTE",
     unitKm: "km",
     unitHm: "hm",
     unitMin: "min",
@@ -131,6 +133,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "HÖCHI",
     metricTimeLeft: "RÄSCHTZYT",
     metricSac: "SAC",
+    metricSteps: "SCHRITT",
     unitKm: "km",
     unitHm: "hm",
     unitMin: "min",
@@ -189,6 +192,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "ASCENT",
     metricTimeLeft: "REMAINING",
     metricSac: "SAC",
+    metricSteps: "STEPS",
     unitKm: "km",
     unitHm: "m",
     unitMin: "min",
@@ -247,6 +251,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "DÉNIVELÉ",
     metricTimeLeft: "TEMPS RESTANT",
     metricSac: "SAC",
+    metricSteps: "PAS",
     unitKm: "km",
     unitHm: "m",
     unitMin: "min",
@@ -305,6 +310,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "DISLIVELLO",
     metricTimeLeft: "TEMPO RIMASTO",
     metricSac: "SAC",
+    metricSteps: "PASSI",
     unitKm: "km",
     unitHm: "m",
     unitMin: "min",
@@ -363,6 +369,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "ASCENSO",
     metricTimeLeft: "TIEMPO RESTANTE",
     metricSac: "SAC",
+    metricSteps: "PASOS",
     unitKm: "km",
     unitHm: "m",
     unitMin: "min",
@@ -421,6 +428,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "ASCENSÃO",
     metricTimeLeft: "TEMPO RESTANTE",
     metricSac: "SAC",
+    metricSteps: "PASSOS",
     unitKm: "km",
     unitHm: "m",
     unitMin: "min",
@@ -479,6 +487,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "爬升",
     metricTimeLeft: "剩余时间",
     metricSac: "SAC等级",
+    metricSteps: "步数",
     unitKm: "公里",
     unitHm: "米",
     unitMin: "分钟",
@@ -537,6 +546,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     metricHeight: "НАБОР ВЫСОТЫ",
     metricTimeLeft: "ОСТАЛОСЬ",
     metricSac: "SAC",
+    metricSteps: "ШАГИ",
     unitKm: "км",
     unitHm: "м",
     unitMin: "мин",

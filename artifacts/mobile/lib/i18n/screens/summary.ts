@@ -11,6 +11,7 @@ export interface SummaryStrings {
     ascent: string;
     sac: string;
     chapters: string;
+    steps: string;
   };
   blockTitle: string;
   noChoiceMade: string;
@@ -34,6 +35,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Aufstieg",
       sac: "SAC",
       chapters: "Kapitel",
+      steps: "Schritte",
     },
     blockTitle: "Deine Wahrnehmungen",
     noChoiceMade: "Keine Wahl getroffen",
@@ -55,6 +57,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Ufstieg",
       sac: "SAC",
       chapters: "Kapitel",
+      steps: "Schritt",
     },
     blockTitle: "Dini Wahrnehmige",
     noChoiceMade: "Kei Wahl troffe",
@@ -76,6 +79,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Ascent",
       sac: "SAC",
       chapters: "Chapters",
+      steps: "Steps",
     },
     blockTitle: "Your perceptions",
     noChoiceMade: "No choice made",
@@ -97,6 +101,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Montée",
       sac: "SAC",
       chapters: "Chapitres",
+      steps: "Pas",
     },
     blockTitle: "Tes perceptions",
     noChoiceMade: "Aucun choix fait",
@@ -118,6 +123,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Salita",
       sac: "SAC",
       chapters: "Capitoli",
+      steps: "Passi",
     },
     blockTitle: "Le tue percezioni",
     noChoiceMade: "Nessuna scelta effettuata",
@@ -139,6 +145,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Ascenso",
       sac: "SAC",
       chapters: "Capítulos",
+      steps: "Pasos",
     },
     blockTitle: "Tus percepciones",
     noChoiceMade: "No se tomó ninguna decisión",
@@ -160,6 +167,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Subida",
       sac: "SAC",
       chapters: "Capítulos",
+      steps: "Passos",
     },
     blockTitle: "Suas percepções",
     noChoiceMade: "Nenhuma escolha feita",
@@ -181,6 +189,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "爬升",
       sac: "难度",
       chapters: "章节",
+      steps: "步数",
     },
     blockTitle: "你的感悟",
     noChoiceMade: "未做出选择",
@@ -202,6 +211,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       ascent: "Подъём",
       sac: "SAC",
       chapters: "Главы",
+      steps: "Шаги",
     },
     blockTitle: "Твои впечатления",
     noChoiceMade: "Выбор не сделан",

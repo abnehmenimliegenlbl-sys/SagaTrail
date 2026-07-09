@@ -10,6 +10,7 @@ import { Audio, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Pedometer } from "expo-sensors";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -161,6 +162,7 @@ export default function LiveHike() {
     };
   }, []);
   const [distance, setDistance] = useState(0);
+  const [steps, setSteps] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
@@ -901,6 +903,30 @@ export default function LiveHike() {
     };
   }, [cancelNarration]);
 
+  // Schrittzaehler: laeuft parallel zur GPS-Distanz und liefert eine
+  // zusaetzliche, vom Standort unabhaengige Kennzahl. Faellt still aus,
+  // wenn der Sensor auf dem Geraet/in Expo Go nicht verfuegbar ist.
+  useEffect(() => {
+    if (preparing || finished) return;
+    let subscription: { remove: () => void } | null = null;
+    let cancelled = false;
+    Pedometer.isAvailableAsync()
+      .then((available) => {
+        if (!available || cancelled) return;
+        subscription = Pedometer.watchStepCount((result) => {
+          setSteps((prev) => prev + result.steps);
+        });
+      })
+      .catch(() => {
+        // Kein Pedometer verfuegbar (z. B. Web/Emulator) — Schritte
+        // bleiben dann einfach bei 0, ohne die Wanderung zu stoeren.
+      });
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
+  }, [preparing, finished]);
+
   const chooseOption = (optionIndex: number) => {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
@@ -962,6 +988,7 @@ export default function LiveHike() {
       startedAt: startTimeRef.current,
       chapters: decisionsRef.current,
       visitedPlaceIds: [saga.id],
+      steps,
     };
     await Promise.all([
       saveHike(session),
@@ -969,7 +996,7 @@ export default function LiveHike() {
       clearActiveHike(),
     ]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, distance, ascentM, sac, steps, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
@@ -1232,6 +1259,9 @@ export default function LiveHike() {
               unit={t.unitMin}
             />
             <Metric label={t.metricSac} value={sac} unit="" />
+            {steps > 0 && (
+              <Metric label={t.metricSteps} value={`${steps}`} unit="" />
+            )}
           </View>
         </Glass>
 
