@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
@@ -122,7 +121,7 @@ export default function Summary() {
         }}
       >
         <Animated.View entering={FadeIn} style={styles.hero}>
-          <AchievementMarker size={100} unlocked />
+          <AchievementMarker size={100} unlocked color={colors.accent} />
           <Text style={[styles.unlocked, { color: colors.accent }]}>
             {t.achievementUnlocked}
           </Text>
@@ -192,29 +191,20 @@ export default function Summary() {
               resizeMode="cover"
             />
           )}
-          <Pressable
+          <PrimaryButton
+            variant="secondary"
+            label={lastHike.photoUri ? t.changePhoto : t.addPhoto}
             onPress={pickPhoto}
-            style={[
-              styles.photoBtn,
-              { borderColor: colors.glassBorder },
-            ]}
-          >
-            <Feather name="camera" size={18} color={colors.foreground} />
-            <Text style={[styles.shareText, { color: colors.foreground }]}>
-              {lastHike.photoUri ? t.changePhoto : t.addPhoto}
-            </Text>
-          </Pressable>
+            style={{ marginTop: 10 }}
+          />
         </View>
 
-        <Pressable
+        <PrimaryButton
+          variant="secondary"
+          label={t.shareBtn}
           onPress={share}
-          style={[styles.shareBtn, { borderColor: colors.glassBorder }]}
-        >
-          <Feather name="share-2" size={18} color={colors.foreground} />
-          <Text style={[styles.shareText, { color: colors.foreground }]}>
-            {t.shareBtn}
-          </Text>
-        </Pressable>
+          style={{ marginTop: 30 }}
+        />
 
         <PrimaryButton
           label={t.backButton}
@@ -271,32 +261,12 @@ const styles = StyleSheet.create({
   decisionQ: { fontFamily: fonts.body, fontSize: 13 },
   decisionA: { fontFamily: fonts.story, fontSize: 17, marginTop: 6, lineHeight: 24 },
   decisionTone: { fontFamily: fonts.mono, fontSize: 11, marginTop: 6 },
-  shareBtn: { ...GLAS_3D,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: 30,
-  },
-  shareText: { fontFamily: fonts.bodyMedium, fontSize: 15 },
   diaryPhoto: {
     width: "100%",
     height: 200,
     borderRadius: 14,
     borderWidth: 1,
     marginBottom: 12,
-  },
-  photoBtn: { ...GLAS_3D,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
   },
   // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
   // damit react-native-view-shot die Karte abfotografieren kann.

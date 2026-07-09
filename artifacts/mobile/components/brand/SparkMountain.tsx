@@ -119,13 +119,19 @@ export function SparkMountain({
 interface MarkerProps {
   size?: number;
   unlocked?: boolean;
+  color?: string;
 }
 
-/** Achievement-Marke: Funke in goldenem Ring (gesperrt = gedaempft). */
-export function AchievementMarker({ size = 64, unlocked = false }: MarkerProps) {
+/**
+ * Achievement-Marke: Funke im Ring (gesperrt = gedaempft).
+ * Standardfarbe ist Gold; ueber `color` kann z. B. auf Schweizer Rot
+ * (colors.accent) umgeschaltet werden.
+ */
+export function AchievementMarker({ size = 64, unlocked = false, color }: MarkerProps) {
   const colors = useColors();
-  const ring = unlocked ? colors.altgold : colors.moosgrau;
-  const spark = unlocked ? colors.altgold : colors.moosgrau;
+  const unlockedColor = color ?? colors.altgold;
+  const ring = unlocked ? unlockedColor : colors.moosgrau;
+  const spark = unlocked ? unlockedColor : colors.moosgrau;
   return (
     <View
       style={[
