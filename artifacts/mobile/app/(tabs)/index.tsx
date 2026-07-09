@@ -94,7 +94,7 @@ export default function Entdecken() {
             <Pressable
               onPress={() =>
                 router.push(
-                  `/hike/${encodeURIComponent(activeHike.sagaId)}?routeId=${encodeURIComponent(activeHike.routeId)}`,
+                  `/hike/${encodeURIComponent(activeHike.sagaId)}?routeId=${encodeURIComponent(activeHike.routeId)}&resume=1`,
                 )
               }
               style={[

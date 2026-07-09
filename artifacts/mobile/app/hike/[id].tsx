@@ -77,7 +77,12 @@ export default function LiveHike() {
   const t = useHikeStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
+  const { id, routeId, resume } = useLocalSearchParams<{
+    id: string;
+    routeId?: string;
+    resume?: string;
+  }>();
+  const isResume = resume === "1";
   const {
     profile,
     emergencyContact,
@@ -100,13 +105,13 @@ export default function LiveHike() {
   // Wanderung derselben Sage fortgesetzt wird — dann ab dem gespeicherten
   // Kapitel weitererzaehlen statt wieder bei Kapitel 1 zu beginnen.
   const resumeIndexRef = useRef<number | null>(
-    activeHike && activeHike.sagaId === id ? activeHike.chapterIndex : null,
+    isResume && activeHike && activeHike.sagaId === id ? activeHike.chapterIndex : null,
   );
   // Beim Fortsetzen nach Absturz/Neustart: die mitpersistierte Route aus dem
   // gespeicherten Wanderstand — Routen sind online-only, der Katalog ist nach
   // einem Kaltstart also oft (noch) leer.
   const resumeRouteRef = useRef<HikingRoute | null>(
-    activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
+    isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
   const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
