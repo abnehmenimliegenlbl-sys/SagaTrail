@@ -26,6 +26,14 @@ interface KarteVollbildProps {
    * ueberlagert erscheinen liess.
    */
   onVollbildChange?: (vollbild: boolean) => void;
+  /**
+   * Erzwingt das Schliessen der Vollbild-Karte von aussen (z. B. beim
+   * Antippen eines POI-Markers). `onVollbildChange` allein reicht dafuer
+   * NICHT: es ist nur eine Benachrichtigung nach aussen, keine Steuerung
+   * von aussen -- der interne Vollbild-State reagiert sonst nicht darauf.
+   * Jede Aenderung dieses Werts (Zaehler hochzaehlen) schliesst die Karte.
+   */
+  closeSignal?: number;
 }
 
 /**
@@ -35,7 +43,12 @@ interface KarteVollbildProps {
  * Vergroesserbarkeit an. Im Vollbild ist die Karte voll interaktiv, ein
  * kleiner Knopf rechts oben bringt sie in die Ursprungsgroesse zurueck.
  */
-export function KarteVollbild({ height = 200, renderKarte, onVollbildChange }: KarteVollbildProps) {
+export function KarteVollbild({
+  height = 200,
+  renderKarte,
+  onVollbildChange,
+  closeSignal,
+}: KarteVollbildProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { height: fensterHoehe } = useWindowDimensions();
@@ -44,6 +57,13 @@ export function KarteVollbild({ height = 200, renderKarte, onVollbildChange }: K
     setVollbildState(v);
     onVollbildChange?.(v);
   };
+  const letzterCloseSignal = React.useRef(closeSignal);
+  React.useEffect(() => {
+    if (closeSignal !== undefined && closeSignal !== letzterCloseSignal.current) {
+      letzterCloseSignal.current = closeSignal;
+      setVollbildState(false);
+    }
+  }, [closeSignal]);
 
   return (
     <>
