@@ -125,3 +125,9 @@ id = "mirbfr0CxtNJ0244XC-Vj"
 uri = "file://attached_assets/samples/probe_aktuell_hochdeutsch.mp3"
 type = "audio"
 title = "Hörprobe AKTUELL: Stimme liest Hochdeutsch"
+
+[[outputs]]
+id = "xov9phHWrkgUCWci2DjKW"
+uri = "file://attached_assets/expo-qr.png"
+type = "image"
+title = "Expo Go QR Code"
