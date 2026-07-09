@@ -90,6 +90,12 @@ uri = "file://artifacts/mobile/assets/images/splash_swiss_hell.png"
 type = "image"
 title = "swiss red splash mountain hell"
 
+[[generated]]
+id = "mtJ1nTaBgHkHMZ3BF0GMR"
+uri = "file://artifacts/mobile/assets/images/icon_v2.png"
+type = "image"
+title = "swiss red gold star icon"
+
 [[outputs]]
 id = "o-PK8_4dt13VcbC4pK3RD"
 uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"
