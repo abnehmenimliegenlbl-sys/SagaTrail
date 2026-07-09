@@ -10,12 +10,40 @@ import type { Logger } from "pino";
  */
 
 const COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php";
-const REQUEST_TIMEOUT_MS = 10000;
+const REQUEST_TIMEOUT_MS = 20000;
 const SUCH_RADIUS_M = 3000;
 const MAX_KANDIDATEN = 20;
 const THUMB_BREITE_PX = 800;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h — Fotos aendern sich kaum
 const NEGATIV_TTL_MS = 30 * 60 * 1000; // 30 min bei "nichts gefunden"
+// Commons drosselt bei vielen gleichzeitigen Anfragen (429) — wenn z.B. eine
+// ganze Routenliste auf einmal Fotos laedt. Zwei Gegenmassnahmen:
+// 1) nur wenige Anfragen gleichzeitig rausschicken (Warteschlange),
+// 2) bei 429 mit kurzer Pause automatisch erneut versuchen.
+const MAX_GLEICHZEITIG = 3;
+const RETRY_VERSUCHE = 3;
+const RETRY_PAUSE_MS = 1500;
+
+let aktiveAnfragen = 0;
+const warteschlange: Array<() => void> = [];
+
+async function mitDrosselung<T>(aufgabe: () => Promise<T>): Promise<T> {
+  if (aktiveAnfragen >= MAX_GLEICHZEITIG) {
+    await new Promise<void>((resolve) => warteschlange.push(resolve));
+  }
+  aktiveAnfragen += 1;
+  try {
+    return await aufgabe();
+  } finally {
+    aktiveAnfragen -= 1;
+    const naechste = warteschlange.shift();
+    if (naechste) naechste();
+  }
+}
+
+function verzoegern(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export interface RoutePhoto {
   photoUrl: string | null;
@@ -107,6 +135,47 @@ function wirktWieFoto(titel: string): boolean {
   return !verboten.some((wort) => klein.includes(wort));
 }
 
+/**
+ * Fuehrt einen Commons-Request gedrosselt (max. MAX_GLEICHZEITIG parallel) und
+ * mit automatischem Retry bei 429 (Rate-Limit) aus. Ein 429 fuehrt NICHT
+ * sofort zum Aufgeben, sondern zu einer kurzen Pause und einem neuen Versuch —
+ * genau das war die Ursache dafuer, dass in langen Listen die zuletzt
+ * geladenen Karten oft kein Foto bekamen.
+ */
+async function commonsFetch(params: URLSearchParams, userAgent: string): Promise<CommonsPage[]> {
+  return mitDrosselung(async () => {
+    let letzterFehler: unknown;
+    for (let versuch = 1; versuch <= RETRY_VERSUCHE; versuch += 1) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        const res = await fetch(`${COMMONS_API_URL}?${params}`, {
+          signal: controller.signal,
+          headers: { "User-Agent": userAgent },
+        });
+        if (res.status === 429) {
+          throw new Error("Commons-API-Status 429");
+        }
+        if (!res.ok) throw new Error(`Commons-API-Status ${res.status}`);
+        const data = (await res.json()) as CommonsResponse;
+        return Object.values(data.query?.pages ?? {});
+      } catch (err) {
+        letzterFehler = err;
+        const istRateLimit = err instanceof Error && err.message.includes("429");
+        const weitereVersucheUebrig = versuch < RETRY_VERSUCHE;
+        if (istRateLimit && weitereVersucheUebrig) {
+          await verzoegern(RETRY_PAUSE_MS * versuch);
+          continue;
+        }
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    throw letzterFehler;
+  });
+}
+
 async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> {
   const params = new URLSearchParams({
     action: "query",
@@ -121,19 +190,7 @@ async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> 
     iiurlwidth: String(THUMB_BREITE_PX),
     iiextmetadatafilter: "DateTimeOriginal|Artist|LicenseShortName",
   });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${COMMONS_API_URL}?${params}`, {
-      signal: controller.signal,
-      headers: { "User-Agent": "SagaTrail/1.0 (Sagenfoto-Suche)" },
-    });
-    if (!res.ok) throw new Error(`Commons-API-Status ${res.status}`);
-    const data = (await res.json()) as CommonsResponse;
-    return Object.values(data.query?.pages ?? {});
-  } finally {
-    clearTimeout(timer);
-  }
+  return commonsFetch(params, "SagaTrail/1.0 (Sagenfoto-Suche)");
 }
 
 async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[]> {
@@ -151,19 +208,7 @@ async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[
     iiurlwidth: String(THUMB_BREITE_PX),
     iiextmetadatafilter: "DateTimeOriginal|Artist|LicenseShortName",
   });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${COMMONS_API_URL}?${params}`, {
-      signal: controller.signal,
-      headers: { "User-Agent": "SagaTrail/1.0 (Routenfoto-Suche)" },
-    });
-    if (!res.ok) throw new Error(`Commons-API-Status ${res.status}`);
-    const data = (await res.json()) as CommonsResponse;
-    return Object.values(data.query?.pages ?? {});
-  } finally {
-    clearTimeout(timer);
-  }
+  return commonsFetch(params, "SagaTrail/1.0 (Routenfoto-Suche)");
 }
 
 /**
