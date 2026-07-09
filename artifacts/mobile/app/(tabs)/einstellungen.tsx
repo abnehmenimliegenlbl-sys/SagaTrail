@@ -360,7 +360,7 @@ export default function Einstellungen() {
           />
           <PrimaryButton
             label={t.saveContactButton}
-            variant="ghost"
+            variant="secondary"
             onPress={() => {
               if (contactName && contactPhone) {
                 saveEmergencyContact({ name: contactName, phone: contactPhone });
@@ -411,12 +411,6 @@ export default function Einstellungen() {
             onPress={() => router.push("/legal/impressum")}
           />
           <RowButton
-            label={t.exportDataLabel}
-            value=""
-            icon="download"
-            onPress={handleExport}
-          />
-          <RowButton
             label={t.supportLabel}
             value=""
             icon="mail"
@@ -436,8 +430,14 @@ export default function Einstellungen() {
         </Section>
 
         <PrimaryButton
+          label={t.exportDataLabel}
+          variant="secondary"
+          onPress={handleExport}
+          style={{ marginTop: 22 }}
+        />
+
+        <PrimaryButton
           label={t.logoutButton}
-          variant="ghost"
           onPress={handleLogout}
           style={{ marginTop: 10 }}
         />
