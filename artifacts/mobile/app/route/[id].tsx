@@ -3,6 +3,7 @@ import { getAerialways, getWeather, importGpxRoute } from "@workspace/api-client
 import type { WeatherReport } from "@workspace/api-client-react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -85,6 +86,37 @@ export default function Routenplanung() {
       "&travelmode=transit";
     Linking.openURL(url).catch(() => {});
   }, [route?.geometry]);
+
+  const onExportGpx = useCallback(async () => {
+    const g = route?.geometry;
+    if (!g || g.length === 0) return;
+    try {
+      const name = route?.name ?? "SagaTrail-Route";
+      const now = new Date().toISOString();
+      const trkpts = g
+        .map(([lat, lng]) => `    <trkpt lat="${lat}" lon="${lng}"></trkpt>`)
+        .join("\n");
+      const gpx = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<gpx version="1.1" creator="SagaTrail" xmlns="http://www.topografix.com/GPX/1/1">',
+        `  <metadata><name>${name}</name><time>${now}</time></metadata>`,
+        "  <trk>",
+        `    <name>${name}</name>`,
+        "    <trkseg>",
+        trkpts,
+        "    </trkseg>",
+        "  </trk>",
+        "</gpx>",
+      ].join("\n");
+
+      const fileName = name.replace(/[^a-zA-Z0-9_\-]/g, "_") + ".gpx";
+      const uri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(uri, gpx, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(uri, { mimeType: "application/gpx+xml", UTI: "com.topografix.gpx" });
+    } catch {
+      Alert.alert("GPX", t.exportGpxError);
+    }
+  }, [route?.geometry, route?.name, t]);
 
   const onImportGpx = useCallback(async () => {
     setImporting(true);
@@ -505,6 +537,15 @@ export default function Routenplanung() {
           disabled={importing}
           style={{ marginTop: 20 }}
         />
+
+        {route?.geometry && route.geometry.length > 0 && (
+          <PrimaryButton
+            label={t.exportGpx}
+            variant="ghost"
+            onPress={onExportGpx}
+            style={{ marginTop: 8 }}
+          />
+        )}
 
         <SparkDivider style={{ marginVertical: 22 }} />
 

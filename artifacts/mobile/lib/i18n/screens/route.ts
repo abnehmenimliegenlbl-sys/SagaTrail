@@ -31,6 +31,8 @@ export interface RouteStrings {
   importGpxTitle: string;
   importGpxText: string;
   importGpxReadError: string;
+  exportGpx: string;
+  exportGpxError: string;
   matchingSaga: string;
   matchingSagaHintLoading: string;
   matchingSagaHintLoaded: string;
@@ -97,6 +99,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "GPX-Import",
     importGpxText: "Die GPX-Datei konnte nicht verarbeitet werden.",
     importGpxReadError: "Die Datei konnte nicht gelesen werden.",
+    exportGpx: "GPX exportieren",
+    exportGpxError: "GPX-Export fehlgeschlagen.",
     matchingSaga: "Passende Sage",
     matchingSagaHintLoading: "Die passende Regionalsage wird gesucht …",
     matchingSagaHintLoaded:
@@ -165,6 +169,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "GPX-Import",
     importGpxText: "D'GPX-Datei het nid chöne verarbeitet wärde.",
     importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
+    exportGpx: "GPX exportiere",
+    exportGpxError: "GPX-Export isch fehlgschlage.",
     matchingSaga: "Passendi Sag",
     matchingSagaHintLoading: "Die passendi Regionalsag wird gsuecht …",
     matchingSagaHintLoaded:
@@ -233,6 +239,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "GPX Import",
     importGpxText: "The GPX file could not be processed.",
     importGpxReadError: "The file could not be read.",
+    exportGpx: "Export GPX",
+    exportGpxError: "GPX export failed.",
     matchingSaga: "Matching Legend",
     matchingSagaHintLoading: "Searching for matching regional legend …",
     matchingSagaHintLoaded:
@@ -301,6 +309,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "Import GPX",
     importGpxText: "Le fichier GPX n'a pas pu être traité.",
     importGpxReadError: "Le fichier n'a pas pu être lu.",
+    exportGpx: "Exporter GPX",
+    exportGpxError: "L'export GPX a échoué.",
     matchingSaga: "Légende correspondante",
     matchingSagaHintLoading: "Recherche de la légende régionale correspondante …",
     matchingSagaHintLoaded:
@@ -369,6 +379,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "Importazione GPX",
     importGpxText: "Il file GPX non ha potuto essere elaborato.",
     importGpxReadError: "Il file non ha potuto essere letto.",
+    exportGpx: "Esporta GPX",
+    exportGpxError: "Esportazione GPX fallita.",
     matchingSaga: "Leggenda corrispondente",
     matchingSagaHintLoading: "Ricerca della leggenda regionale corrispondente …",
     matchingSagaHintLoaded:
@@ -437,6 +449,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "Importación GPX",
     importGpxText: "El archivo GPX no pudo ser procesado.",
     importGpxReadError: "El archivo no pudo ser leído.",
+    exportGpx: "Exportar GPX",
+    exportGpxError: "Error al exportar GPX.",
     matchingSaga: "Leyenda correspondiente",
     matchingSagaHintLoading: "Buscando leyenda regional correspondiente …",
     matchingSagaHintLoaded:
@@ -505,6 +519,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "Importação GPX",
     importGpxText: "O arquivo GPX não pôde ser processado.",
     importGpxReadError: "O arquivo não pôde ser lido.",
+    exportGpx: "Exportar GPX",
+    exportGpxError: "Falha ao exportar GPX.",
     matchingSaga: "Lenda Correspondente",
     matchingSagaHintLoading: "Procurando por lenda regional correspondente …",
     matchingSagaHintLoaded:
@@ -570,6 +586,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     importGpxTitle: "GPX 导入",
     importGpxText: "GPX 文件无法处理。",
     importGpxReadError: "文件无法读取。",
+    exportGpx: "导出 GPX",
+    exportGpxError: "GPX 导出失败。",
     matchingSaga: "匹配的传说",
     matchingSagaHintLoading: "正在寻找匹配的地区传说 …",
     matchingSagaHintLoaded: "这个古老的传说将伴随你的旅程。点击开始阅读。",
