@@ -1,5 +1,6 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React, { forwardRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, Stop } from "react-native-svg";
 
 import { SparkMountain } from "@/components/brand/SparkMountain";
@@ -21,6 +22,7 @@ interface ShareCardProps {
   durationMin?: number;
   steps?: number;
   geometry?: number[][];
+  photoUri?: string;
   distanceLabel: string;
   ascentLabel: string;
   timeLabel: string;
@@ -80,6 +82,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
     durationMin,
     steps,
     geometry,
+    photoUri,
     distanceLabel,
     ascentLabel,
     timeLabel,
@@ -92,8 +95,18 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
   return (
     <View ref={ref} collapsable={false} style={styles.card}>
       <View style={styles.inner}>
-        {/* Obere Haelfte: Titel + Kennzahlen */}
+        {/* Obere Haelfte: Titel + Kennzahlen, optional mit Erinnerungsfoto als Hintergrund */}
         <View style={styles.top}>
+          {photoUri && (
+            <>
+              <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              <LinearGradient
+                colors={["rgba(16,24,26,0.55)", "rgba(16,24,26,0.88)", colors.backgroundDeep]}
+                locations={[0, 0.6, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            </>
+          )}
           <View style={styles.mark}>
             <SparkMountain size={56} />
           </View>
@@ -187,6 +200,7 @@ const styles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 22,
     paddingHorizontal: 24,
+    overflow: "hidden",
   },
   mark: { marginBottom: 4 },
   brand: {

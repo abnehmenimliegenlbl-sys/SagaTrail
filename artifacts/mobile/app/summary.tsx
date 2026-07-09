@@ -225,6 +225,7 @@ export default function Summary() {
             durationMin={lastHike.durationMin}
             steps={lastHike.steps}
             geometry={lastHike.geometry}
+            photoUri={lastHike.photoUri}
             distanceLabel={t.stats.distance}
             ascentLabel={t.stats.ascent}
             timeLabel={t.stats.time}
