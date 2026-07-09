@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
-import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 
 /**
  * Stilisierte Routenkarte auf Basis von react-native-svg.
@@ -40,9 +40,15 @@ function pointAt(progress: number) {
 }
 
 export function RouteMap({ progress = 0, height = 220 }: RouteMapProps) {
+  const colors = useColors();
   const pos = pointAt(progress);
   return (
-    <View style={[styles.wrap, { height, borderRadius: colors.radius }]}>
+    <View
+      style={[
+        styles.wrap,
+        { height, borderRadius: colors.radius, borderColor: colors.glassBorder },
+      ]}
+    >
       <Svg width="100%" height="100%" viewBox="0 0 340 220">
         <Defs>
           <LinearGradient id="terrain" x1="0" y1="0" x2="0" y2="1">
@@ -57,7 +63,7 @@ export function RouteMap({ progress = 0, height = 220 }: RouteMapProps) {
           <Path
             key={y}
             d={`M0,${y} C80,${y - 20} 160,${y + 10} 340,${y - 15}`}
-            stroke={colors.dark.moosgrau}
+            stroke={colors.moosgrau}
             strokeOpacity={0.18}
             strokeWidth={1}
             fill="none"
@@ -66,7 +72,7 @@ export function RouteMap({ progress = 0, height = 220 }: RouteMapProps) {
         {/* zurueckgelegte Route */}
         <Path
           d={PATH}
-          stroke={colors.dark.altgold}
+          stroke={colors.accent}
           strokeWidth={3}
           fill="none"
           strokeLinecap="round"
@@ -76,7 +82,7 @@ export function RouteMap({ progress = 0, height = 220 }: RouteMapProps) {
         {/* verbleibende Route */}
         <Path
           d={PATH}
-          stroke={colors.dark.gletscherweiss}
+          stroke={colors.gletscherweiss}
           strokeOpacity={0.25}
           strokeWidth={2}
           fill="none"
@@ -84,11 +90,11 @@ export function RouteMap({ progress = 0, height = 220 }: RouteMapProps) {
           strokeDasharray="6 8"
         />
         {/* Start / Ziel */}
-        <Circle cx={20} cy={180} r={5} fill={colors.dark.moosgrau} />
-        <Circle cx={320} cy={40} r={6} fill={colors.dark.almrausch} />
+        <Circle cx={20} cy={180} r={5} fill={colors.moosgrau} />
+        <Circle cx={320} cy={40} r={6} fill={colors.almrausch} />
         {/* aktuelle Position */}
-        <Circle cx={pos.x} cy={pos.y} r={9} fill={colors.dark.altgold} opacity={0.25} />
-        <Circle cx={pos.x} cy={pos.y} r={5} fill={colors.dark.altgold} />
+        <Circle cx={pos.x} cy={pos.y} r={9} fill={colors.accent} opacity={0.25} />
+        <Circle cx={pos.x} cy={pos.y} r={5} fill={colors.accent} />
       </Svg>
     </View>
   );
@@ -98,6 +104,5 @@ const styles = StyleSheet.create({
   wrap: {
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.dark.glassBorder,
   },
 });

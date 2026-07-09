@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 
-import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 import { useMapStrings } from "@/lib/i18n/screens/map";
 import { buildSwisstopoHtml, SwisstopoMapProps } from "./swisstopoMapHtml";
 
@@ -62,8 +62,19 @@ export function SwisstopoMap({
     );
   }, [ready, position?.lat, position?.lng]);
 
+  const colors = useColors();
   return (
-    <View style={[styles.wrap, { height }]}>
+    <View
+      style={[
+        styles.wrap,
+        {
+          height,
+          borderRadius: colors.radius,
+          borderColor: colors.glassBorder,
+          backgroundColor: colors.backgroundDeep,
+        },
+      ]}
+    >
       <WebView
         ref={ref}
         originWhitelist={["*"]}
@@ -91,10 +102,7 @@ export function SwisstopoMap({
 const styles = StyleSheet.create({
   wrap: {
     overflow: "hidden",
-    borderRadius: colors.radius,
     borderWidth: 1,
-    borderColor: colors.dark.glassBorder,
-    backgroundColor: colors.dark.backgroundDeep,
   },
   web: { flex: 1, backgroundColor: "transparent" },
 });

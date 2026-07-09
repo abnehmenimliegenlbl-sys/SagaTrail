@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Path, Polygon } from "react-native-svg";
 
-import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 
 /**
  * Signaturelement "Bergsilhouette mit Funke".
@@ -49,9 +49,12 @@ function Spark({ size, color }: { size: number; color: string }) {
 export function SparkMountain({
   size = 72,
   pulsing = false,
-  mountainColor = colors.dark.talschatten,
-  sparkColor = colors.dark.altgold,
+  mountainColor,
+  sparkColor,
 }: SparkMountainProps) {
+  const colors = useColors();
+  const finalMountainColor = mountainColor ?? colors.talschatten;
+  const finalSparkColor = sparkColor ?? colors.accent;
   const scale = useSharedValue(1);
   const glow = useSharedValue(0.6);
 
@@ -82,7 +85,7 @@ export function SparkMountain({
   return (
     <View style={{ width: size, height: size, alignItems: "center" }}>
       <Animated.View style={[styles.spark, sparkStyle]}>
-        <Spark size={sparkSize} color={sparkColor} />
+        <Spark size={sparkSize} color={finalSparkColor} />
       </Animated.View>
       <View style={styles.mountain}>
         <Svg
@@ -96,7 +99,7 @@ export function SparkMountain({
             },${mountainH * 0.45} ${mountainW * 0.68},${mountainH * 0.05} ${
               mountainW
             },${mountainH}`}
-            fill={mountainColor}
+            fill={finalMountainColor}
           />
           <Path
             d={`M${mountainW * 0.68},${mountainH * 0.05} L${
@@ -104,7 +107,7 @@ export function SparkMountain({
             },${mountainH * 0.32} L${mountainW * 0.76},${
               mountainH * 0.32
             } Z`}
-            fill={colors.dark.gletscherweiss}
+            fill={colors.gletscherweiss}
             opacity={0.85}
           />
         </Svg>
@@ -120,8 +123,9 @@ interface MarkerProps {
 
 /** Achievement-Marke: Funke in goldenem Ring (gesperrt = gedaempft). */
 export function AchievementMarker({ size = 64, unlocked = false }: MarkerProps) {
-  const ring = unlocked ? colors.dark.altgold : colors.dark.moosgrau;
-  const spark = unlocked ? colors.dark.altgold : colors.dark.moosgrau;
+  const colors = useColors();
+  const ring = unlocked ? colors.altgold : colors.moosgrau;
+  const spark = unlocked ? colors.altgold : colors.moosgrau;
   return (
     <View
       style={[
@@ -146,19 +150,22 @@ interface DividerProps {
   style?: ViewStyle;
 }
 
-/** Feiner Abschnittstrenner: Funke zwischen zwei duennen Linien. */
+/** Feiner Abschnittstrenner: Funke zwischen zwei duennen roten Linien. */
 export function SparkDivider({
-  color = colors.dark.moosgrau,
-  sparkColor = colors.dark.altgold,
+  color,
+  sparkColor,
   style,
 }: DividerProps) {
+  const colors = useColors();
+  const finalColor = color ?? colors.accent;
+  const finalSparkColor = sparkColor ?? colors.accent;
   return (
     <View style={[dividerStyles.row, style]}>
-      <View style={[dividerStyles.line, { backgroundColor: color }]} />
+      <View style={[dividerStyles.line, { backgroundColor: finalColor }]} />
       <View style={dividerStyles.spark}>
-        <Spark size={12} color={sparkColor} />
+        <Spark size={12} color={finalSparkColor} />
       </View>
-      <View style={[dividerStyles.line, { backgroundColor: color }]} />
+      <View style={[dividerStyles.line, { backgroundColor: finalColor }]} />
     </View>
   );
 }

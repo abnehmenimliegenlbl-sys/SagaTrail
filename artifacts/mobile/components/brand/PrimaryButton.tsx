@@ -52,10 +52,10 @@ export function PrimaryButton({
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const baseColor = variant === "gold" ? colors.accent : colors.primary;
+  const baseColor = variant === "gold" ? colors.altgold : colors.primary;
   const fg =
     variant === "gold"
-      ? colors.accentForeground
+      ? "#10181A"
       : variant === "ghost"
         ? colors.foreground
         : colors.primaryForeground;

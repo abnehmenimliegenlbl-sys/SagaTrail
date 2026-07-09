@@ -7,10 +7,8 @@
  */
 
 const shared = {
-  altgold: "#B8935A", // Akzente, Premium, Sagenpakete — modiuebergreifend fix
+  altgold: "#B8935A", // NUR fuer Premium-/Sagenpaket-Aktionen (PrimaryButton variant="gold", Achievement-Marken) — modiuebergreifend fix
   moosgrau: "#6B7568", // gedaempfter Text, Trennlinien, Metadaten (Dunkel-Basis)
-  accent: "#B8935A",
-  accentForeground: "#10181A",
 };
 
 const hell = {
@@ -21,6 +19,8 @@ const hell = {
   gletscherweiss: "#181A1E",
   almrausch: "#DA291C", // Schweizer Rot — Primäraktion
   moosgrau: "#6B7280",
+  accent: "#DA291C", // Schweizer Rot — Raender, Trennlinien, Akzenttext/-icons
+  accentForeground: "#FFFFFF",
 
   // Frosted-Glass-Werte (helles Glas)
   glassBg: "rgba(255,255,255,0.55)",
@@ -54,6 +54,8 @@ const dunkel = {
   talschatten: "#1B1D22",
   gletscherweiss: "#F5F3EC",
   almrausch: "#E8362A", // Schweizer Rot (dunkel-optimiert) — Primäraktion
+  accent: "#E8362A", // Schweizer Rot (dunkel-optimiert) — Raender, Trennlinien, Akzenttext/-icons
+  accentForeground: "#FFFFFF",
 
   // Frosted-Glass-Werte (dunkles Glas)
   glassBg: "rgba(245,243,236,0.08)",
