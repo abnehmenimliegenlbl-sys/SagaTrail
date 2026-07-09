@@ -333,6 +333,14 @@ export default function Einstellungen() {
             value={premium ? t.subscriptionActive : t.subscriptionFree}
             onPress={() => router.push("/paywall")}
           />
+          {!premium && (
+            <PrimaryButton
+              label={t.unlockPremiumButton}
+              variant="gold"
+              onPress={() => router.push("/paywall")}
+              style={{ marginTop: 12 }}
+            />
+          )}
           {premium && (
             <PrimaryButton
               label={t.resetPremiumButton}

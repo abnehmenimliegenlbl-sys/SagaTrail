@@ -26,6 +26,7 @@ export interface EinstellungenStrings {
   subscriptionActive: string;
   subscriptionFree: string;
   resetPremiumButton: string;
+  unlockPremiumButton: string;
   privacyLabel: string;
   legalLabel: string;
   exportDataLabel: string;
@@ -71,6 +72,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium aktiv",
     subscriptionFree: "Kostenlos",
     resetPremiumButton: "Premium zurücksetzen (Demo)",
+    unlockPremiumButton: "Premium freischalten",
     privacyLabel: "Datenschutz",
     legalLabel: "Impressum",
     exportDataLabel: "Daten exportieren",
@@ -114,6 +116,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium aktiv",
     subscriptionFree: "Gratis",
     resetPremiumButton: "Premium zruggsetze (Demo)",
+    unlockPremiumButton: "Premium freischalte",
     privacyLabel: "Dateschutz",
     legalLabel: "Impressum",
     exportDataLabel: "Date exportiere",
@@ -157,6 +160,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium actif",
     subscriptionFree: "Gratuit",
     resetPremiumButton: "Réinitialiser Premium (Démo)",
+    unlockPremiumButton: "Débloquer Premium",
     privacyLabel: "Protection des données",
     legalLabel: "Mentions légales",
     exportDataLabel: "Exporter les données",
@@ -200,6 +204,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium attivo",
     subscriptionFree: "Gratuito",
     resetPremiumButton: "Ripristina Premium (Demo)",
+    unlockPremiumButton: "Sblocca Premium",
     privacyLabel: "Protezione dei dati",
     legalLabel: "Note legali",
     exportDataLabel: "Esporta dati",
@@ -243,6 +248,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium active",
     subscriptionFree: "Free",
     resetPremiumButton: "Reset Premium (Demo)",
+    unlockPremiumButton: "Unlock Premium",
     privacyLabel: "Privacy Policy",
     legalLabel: "Legal Notice",
     exportDataLabel: "Export Data",
@@ -286,6 +292,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "高级版已激活",
     subscriptionFree: "免费版",
     resetPremiumButton: "重置高级版（演示）",
+    unlockPremiumButton: "解锁高级版",
     privacyLabel: "隐私政策",
     legalLabel: "法律声明",
     exportDataLabel: "导出数据",
@@ -329,6 +336,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium activo",
     subscriptionFree: "Gratis",
     resetPremiumButton: "Restablecer Premium (Demo)",
+    unlockPremiumButton: "Desbloquear Premium",
     privacyLabel: "Protección de datos",
     legalLabel: "Aviso legal",
     exportDataLabel: "Exportar datos",
@@ -372,6 +380,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium ativo",
     subscriptionFree: "Gratuito",
     resetPremiumButton: "Redefinir Premium (Demo)",
+    unlockPremiumButton: "Desbloquear Premium",
     privacyLabel: "Proteção de dados",
     legalLabel: "Aviso legal",
     exportDataLabel: "Exportar dados",
@@ -415,6 +424,7 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     subscriptionActive: "Premium активен",
     subscriptionFree: "Бесплатно",
     resetPremiumButton: "Сбросить Premium (Демо)",
+    unlockPremiumButton: "Разблокировать Premium",
     privacyLabel: "Конфиденциальность",
     legalLabel: "Выходные данные",
     exportDataLabel: "Экспортировать данные",

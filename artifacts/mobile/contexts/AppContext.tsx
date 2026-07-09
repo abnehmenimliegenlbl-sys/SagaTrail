@@ -204,13 +204,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const selfIdRef = React.useRef<string | null>(null);
   selfIdRef.current = userId ?? null;
 
+  // `getToken` von Clerk kann sich bei jedem Render neu referenzieren.
+  // Wuerde die Socket-Erstellung direkt davon abhaengen, wuerde bei jedem
+  // Render eine neue GroupSocket-Instanz erzeugt und die alte (samt gerade
+  // aufgebauter Verbindung) sofort wieder getrennt — sichtbar als
+  // "Session erstellen"/"Beitreten" muss mehrfach gedrueckt werden bzw.
+  // reagiert gar nicht. Der aktuelle `getToken` wird daher per Ref gehalten;
+  // die Socket-Instanz selbst wird nur einmal pro App-Laufzeit erzeugt.
+  const getTokenRef = React.useRef(getToken);
+  getTokenRef.current = getToken;
+
   const getGroupToken = useCallback(async () => {
     try {
-      return await getToken();
+      return await getTokenRef.current();
     } catch {
       return null;
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     const socket = new GroupSocket(getGroupToken, {

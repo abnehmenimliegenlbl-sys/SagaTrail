@@ -63,10 +63,14 @@ export default function Gruppe() {
 
   const handleCreate = () => {
     buzz();
-    if (!premium) {
-      router.push("/paywall");
-      return;
-    }
+    // Kein client-seitiges Premium-Gating hier: der `premium`-Status wird
+    // erst nach dem Mount asynchron mit RevenueCat/Server abgeglichen
+    // (siehe AppContext). Ein Check hier koennte kurz nach App-Start noch
+    // veraltet (false) sein und faelschlich zum Paywall umleiten, obwohl
+    // der Nutzer bereits Premium hat — daher fuehrte "Session erstellen"
+    // erst beim 2./3. Tastendruck zum Erfolg. Der Server ist die
+    // verbindliche Quelle: liefert er "premium_required", leitet der
+    // bestehende Effekt oben ohnehin zur Paywall weiter.
     createGroupSession();
   };
 
