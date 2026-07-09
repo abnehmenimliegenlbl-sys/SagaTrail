@@ -971,6 +971,16 @@ export default function LiveHike() {
     router.replace("/summary");
   }, [saga, route, distance, ascentM, sac, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
+  // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
+  // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
+  // gelangen, ohne die Wanderung komplett zu Ende laufen zu muessen.
+  const finishHikeEarly = useCallback(() => {
+    Alert.alert(t.finishEarlyConfirmTitle, t.finishEarlyConfirmMessage, [
+      { text: t.finishEarlyCancelAction, style: "cancel" },
+      { text: t.finishEarlyConfirmAction, style: "destructive", onPress: finishHike },
+    ]);
+  }, [t, finishHike]);
+
   const openUrlSafely = async (url: string, fallback: string) => {
     try {
       const supported = await Linking.canOpenURL(url);
@@ -1371,6 +1381,15 @@ export default function LiveHike() {
                 label={t.finishHike}
                 onPress={finishHike}
                 style={{ marginTop: 24 }}
+              />
+            )}
+
+            {!finished && !preparing && (
+              <PrimaryButton
+                label={t.finishEarlyButton}
+                variant="ghost"
+                onPress={finishHikeEarly}
+                style={{ marginTop: 12 }}
               />
             )}
           </Animated.View>
