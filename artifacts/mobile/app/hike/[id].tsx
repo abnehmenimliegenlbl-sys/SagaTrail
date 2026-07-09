@@ -48,7 +48,7 @@ import {
   stopBackgroundLocationTracking,
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { bboxAroundGeometry, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, bearingDeg, compassIndex, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -857,6 +857,31 @@ export default function LiveHike() {
     return fortschrittAufRoute(livePos, route.geometry)?.fraction ?? null;
   }, [livePos, route?.geometry]);
 
+  // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
+  // dessen Naehe ist (z. B. beim Start ab Bahnhof/Parkplatz statt direkt am
+  // Trailhead). Bewusst einfach: keine echte Fusswegroute dorthin, nur
+  // Distanz + grobe Himmelsrichtung als Orientierung.
+  const START_NEARBY_KM = 0.05;
+  const walkToStart = useMemo(() => {
+    if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
+    const start: LatLng = { lat: route.geometry[0][0], lng: route.geometry[0][1] };
+    const distKm = haversineKm(livePos, start);
+    if (distKm <= START_NEARBY_KM) return null;
+    const dir = t.compassDirections[compassIndex(bearingDeg(livePos, start))];
+    const distText =
+      distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} ${t.unitKm}`;
+    return { distKm, distText, dir };
+  }, [livePos, route?.geometry, t]);
+
+  const walkToStartAnnouncedRef = useRef(false);
+  useEffect(() => {
+    if (!walkToStart) return;
+    if (walkToStartAnnouncedRef.current) return;
+    if (preparing || locState !== "granted") return;
+    walkToStartAnnouncedRef.current = true;
+    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir));
+  }, [walkToStart, preparing, locState, speak, t]);
+
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
   // (routeProgress); ohne GPS-Fix oder Geometrie faellt es auf die reine
   // zurueckgelegte Distanz zurueck (bisheriges Verhalten).
@@ -1116,9 +1141,27 @@ export default function LiveHike() {
         </View>
       )}
 
+      {locState !== "denied" && walkToStart && !preparing && (
+        <Animated.View
+          entering={FadeIn}
+          style={[styles.banner, { top: topPad, backgroundColor: colors.card, paddingVertical: 12 }]}
+        >
+          <View style={styles.bannerHead}>
+            <Feather name="navigation" size={16} color={colors.accent} />
+            <Text style={[styles.bannerText, { color: colors.foreground }]}>
+              {t.walkToStartTitle}
+            </Text>
+          </View>
+          <Text style={[styles.bannerHint, { color: colors.mutedForeground }]}>
+            {t.walkToStartHint(walkToStart.distText, walkToStart.dir)}
+          </Text>
+        </Animated.View>
+      )}
+
       <ScrollView
         contentContainerStyle={{
-          paddingTop: locState === "denied" ? topPad + 148 : topPad,
+          paddingTop:
+            locState === "denied" ? topPad + 148 : walkToStart && !preparing ? topPad + 92 : topPad,
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 120,
         }}

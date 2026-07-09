@@ -8,6 +8,10 @@ export interface HikeStrings {
   noLocationAccess: string;
   locationDeniedHint: string;
   allow: string;
+  walkToStartTitle: string;
+  walkToStartHint: (distance: string, direction: string) => string;
+  walkToStartSpoken: (distance: string, direction: string) => string;
+  compassDirections: [string, string, string, string, string, string, string, string];
   live: string;
   discoveredNearby: string;
   metricDistance: string;
@@ -69,6 +73,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Kein Standortzugriff — die Route wird simuliert.",
     locationDeniedHint: "Ohne GPS wird dein Fortschritt nur geschätzt. Aktiviere den Standortzugriff in den Systemeinstellungen, damit die Sage deinem echten Weg folgt.",
     allow: "Erlauben",
+    walkToStartTitle: "Noch nicht auf der Route",
+    walkToStartHint: (distance, direction) =>
+      `Noch ${distance} Richtung ${direction} bis zum Wegstart.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
+    compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
     live: "LIVE",
     discoveredNearby: "ENTDECKT IN DER NÄHE",
     metricDistance: "DISTANZ",
@@ -129,6 +139,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Kei Standortzuegriff — d Route wird simuliert.",
     locationDeniedHint: "Ohni GPS wird di Fortschritt nur gschätzt. Aktivier de Standortzuegriff i de Systemiistellige, dass d Sag dim ächte Wäg folgt.",
     allow: "Erlaube",
+    walkToStartTitle: "No nid uf de Route",
+    walkToStartHint: (distance, direction) =>
+      `No ${distance} Richtig ${direction} bis zum Wägstart.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Du bisch no ${distance} vom Wägstart wäg, Richtig ${direction}.`,
+    compassDirections: ["Norde", "Nordoschte", "Oschte", "Südoschte", "Süde", "Südwäschte", "Wäschte", "Nordwäschte"],
     live: "LIVE",
     discoveredNearby: "I DE NÄCHI ENTDECKT",
     metricDistance: "DISTANZ",
@@ -189,6 +205,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "No location access — route is being simulated.",
     locationDeniedHint: "Without GPS your progress is only estimated. Enable location access in the system settings so the saga follows your real path.",
     allow: "Allow",
+    walkToStartTitle: "Not on the route yet",
+    walkToStartHint: (distance, direction) =>
+      `${distance} to go, heading ${direction}, to reach the trailhead.`,
+    walkToStartSpoken: (distance, direction) =>
+      `You're still ${distance} from the trailhead, heading ${direction}.`,
+    compassDirections: ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"],
     live: "LIVE",
     discoveredNearby: "DISCOVERED NEARBY",
     metricDistance: "DISTANCE",
@@ -249,6 +271,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Pas d'accès à la localisation — la route est simulée.",
     locationDeniedHint: "Sans GPS, ta progression n'est qu'estimée. Active l'accès à la position dans les réglages du système pour que la légende suive ton vrai chemin.",
     allow: "Autoriser",
+    walkToStartTitle: "Pas encore sur l'itinéraire",
+    walkToStartHint: (distance, direction) =>
+      `Encore ${distance} vers le ${direction} pour atteindre le départ.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Il te reste ${distance} vers le ${direction} pour atteindre le départ.`,
+    compassDirections: ["nord", "nord-est", "est", "sud-est", "sud", "sud-ouest", "ouest", "nord-ouest"],
     live: "LIVE",
     discoveredNearby: "DÉCOUVERT À PROXIMITÉ",
     metricDistance: "DISTANCE",
@@ -309,6 +337,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Nessun accesso alla posizione — il percorso è simulato.",
     locationDeniedHint: "Senza GPS i tuoi progressi sono solo stimati. Attiva l'accesso alla posizione nelle impostazioni di sistema perché la saga segua il tuo vero percorso.",
     allow: "Consenti",
+    walkToStartTitle: "Non sei ancora sul percorso",
+    walkToStartHint: (distance, direction) =>
+      `Ancora ${distance} verso ${direction} per raggiungere la partenza.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Sei ancora a ${distance} dalla partenza, verso ${direction}.`,
+    compassDirections: ["nord", "nord-est", "est", "sud-est", "sud", "sud-ovest", "ovest", "nord-ovest"],
     live: "LIVE",
     discoveredNearby: "SCOPERTO NELLE VICINANZE",
     metricDistance: "DISTANZA",
@@ -369,6 +403,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Sin acceso a la ubicación — la ruta está siendo simulada.",
     locationDeniedHint: "Sin GPS tu progreso solo se estima. Activa el acceso a la ubicación en los ajustes del sistema para que la saga siga tu camino real.",
     allow: "Permitir",
+    walkToStartTitle: "Aún no estás en la ruta",
+    walkToStartHint: (distance, direction) =>
+      `Faltan ${distance} hacia el ${direction} para llegar al inicio.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Todavía estás a ${distance} del inicio, hacia el ${direction}.`,
+    compassDirections: ["norte", "noreste", "este", "sureste", "sur", "suroeste", "oeste", "noroeste"],
     live: "LIVE",
     discoveredNearby: "DESCUBIERTO CERCA",
     metricDistance: "DISTANCIA",
@@ -429,6 +469,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Sem acesso à localização — a rota está sendo simulada.",
     locationDeniedHint: "Sem GPS o teu progresso é apenas estimado. Ativa o acesso à localização nas definições do sistema para que a saga siga o teu caminho real.",
     allow: "Permitir",
+    walkToStartTitle: "Ainda não estás na rota",
+    walkToStartHint: (distance, direction) =>
+      `Faltam ${distance} rumo a ${direction} para chegar ao início.`,
+    walkToStartSpoken: (distance, direction) =>
+      `Ainda estás a ${distance} do início, rumo a ${direction}.`,
+    compassDirections: ["norte", "nordeste", "leste", "sudeste", "sul", "sudoeste", "oeste", "noroeste"],
     live: "LIVE",
     discoveredNearby: "DESCOBERTO NAS PROXIMIDADES",
     metricDistance: "DISTÂNCIA",
@@ -489,6 +535,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "无法获取位置 — 正在模拟路线。",
     locationDeniedHint: "没有 GPS 时只能估算你的进度。请在系统设置中开启位置权限，让传说跟随你的真实路线。",
     allow: "允许",
+    walkToStartTitle: "尚未到达路线",
+    walkToStartHint: (distance, direction) =>
+      `还需向${direction}方向走 ${distance} 才能到达起点。`,
+    walkToStartSpoken: (distance, direction) =>
+      `你距离起点还有 ${distance}，方向是${direction}。`,
+    compassDirections: ["北", "东北", "东", "东南", "南", "西南", "西", "西北"],
     live: "实时",
     discoveredNearby: "在附近发现",
     metricDistance: "距离",
@@ -549,6 +601,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     noLocationAccess: "Нет доступа к геолокации — маршрут симулируется.",
     locationDeniedHint: "Без GPS твой прогресс лишь оценивается. Включи доступ к геолокации в системных настройках, чтобы легенда следовала твоему настоящему пути.",
     allow: "Разрешить",
+    walkToStartTitle: "Вы ещё не на маршруте",
+    walkToStartHint: (distance, direction) =>
+      `Ещё ${distance} в направлении ${direction} до начала маршрута.`,
+    walkToStartSpoken: (distance, direction) =>
+      `До начала маршрута ещё ${distance}, направление ${direction}.`,
+    compassDirections: ["север", "северо-восток", "восток", "юго-восток", "юг", "юго-запад", "запад", "северо-запад"],
     live: "LIVE",
     discoveredNearby: "ОБНАРУЖЕНО РЯДОМ",
     metricDistance: "ДИСТАНЦИЯ",

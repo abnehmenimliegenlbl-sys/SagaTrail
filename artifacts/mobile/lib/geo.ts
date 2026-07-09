@@ -82,6 +82,29 @@ export function fortschrittAufRoute(
   return { fraction: Math.max(0, Math.min(1, bestAlongKm / cumKm)), distKm: bestDistKm };
 }
 
+/**
+ * Peilung (0-360°, 0 = Norden) von Punkt a zu Punkt b. Dient dazu, dem
+ * Nutzer die grobe Richtung zum Routenstart anzuzeigen, wenn er abseits
+ * davon losläuft — bewusst einfach (kein Geräte-Kompass/Magnetometer
+ * involviert), nur "wo liegt der Start relativ zu mir".
+ */
+export function bearingDeg(a: LatLng, b: LatLng): number {
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const deg = (Math.atan2(y, x) * 180) / Math.PI;
+  return (deg + 360) % 360;
+}
+
+/** Index 0-7 (N, NO, O, SO, S, SW, W, NW) aus einer Peilung in Grad. */
+export function compassIndex(deg: number): number {
+  return Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+}
+
 export interface BoundingBox {
   south: number;
   west: number;
