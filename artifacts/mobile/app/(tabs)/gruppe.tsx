@@ -141,7 +141,6 @@ export default function Gruppe() {
               </Text>
               <PrimaryButton
                 label={t.createSessionButton}
-                variant="gold"
                 onPress={handleCreate}
                 style={{ marginTop: 14 }}
               />
