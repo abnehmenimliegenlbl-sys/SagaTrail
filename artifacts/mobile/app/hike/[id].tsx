@@ -48,7 +48,7 @@ import {
   stopBackgroundLocationTracking,
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { bboxAroundGeometry, distanzZuSegmentKm, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -848,7 +848,18 @@ export default function LiveHike() {
     };
   }, [nearbyPoi, storyLanguage, speak, t]);
 
-  // Echtes GPS steuert den Kapitelfortschritt entlang der Routenlaenge
+  // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
+  // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
+  // Story-Fortschritt auch dann stimmt, wenn die Wanderung abseits des
+  // offiziellen Startpunkts oder mitten auf der Route begonnen wird.
+  const routeProgress = useMemo(() => {
+    if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
+    return fortschrittAufRoute(livePos, route.geometry)?.fraction ?? null;
+  }, [livePos, route?.geometry]);
+
+  // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
+  // (routeProgress); ohne GPS-Fix oder Geometrie faellt es auf die reine
+  // zurueckgelegte Distanz zurueck (bisheriges Verhalten).
   useEffect(() => {
     if (locState !== "granted") return;
     if (preparing || awaitingDecision || finished || chapters.length === 0) return;
@@ -857,12 +868,23 @@ export default function LiveHike() {
       setFinished(true);
       return;
     }
-    const reached = Math.min(steps, Math.floor((distance / totalKm) * steps + 1e-6));
+    const ratio = routeProgress ?? (totalKm > 0 ? distance / totalKm : 0);
+    const reached = Math.min(steps, Math.floor(ratio * steps + 1e-6));
     if (reached > currentIndex) {
       setCurrentIndex(reached);
       if (reached >= steps) setFinished(true);
     }
-  }, [distance, locState, preparing, awaitingDecision, finished, chapters.length, currentIndex, totalKm]);
+  }, [
+    distance,
+    routeProgress,
+    locState,
+    preparing,
+    awaitingDecision,
+    finished,
+    chapters.length,
+    currentIndex,
+    totalKm,
+  ]);
 
   // Simulierter Fortschritt als Rueckfall — nur in den ausdruecklichen
   // Ersatzzustaenden, damit die Erlaubnisabfrage keinen Fortschritt vortaeuscht.
