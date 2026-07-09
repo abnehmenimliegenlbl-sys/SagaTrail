@@ -78,6 +78,7 @@ export default function LiveHike() {
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
   const {
     profile,
+    emergencyContact,
     premium,
     freeHikeUsed,
     markFreeHikeUsed,
@@ -1398,9 +1399,11 @@ export default function LiveHike() {
                 const coords = point
                   ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
                   : t.unknown;
-                const body = t.emergencySmsBody(coords);
+                const senderName = profile?.name?.trim() || undefined;
+                const body = t.emergencySmsBody(coords, senderName);
+                const phone = emergencyContact?.phone?.replace(/\s+/g, "") ?? "";
                 openUrlSafely(
-                  `sms:&body=${encodeURIComponent(body)}`,
+                  `sms:${phone}&body=${encodeURIComponent(body)}`,
                   t.smsNotAvailable
                 );
               }}

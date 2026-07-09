@@ -38,7 +38,7 @@ export interface HikeStrings {
   euroEmergencySub: string;
   sendLocationToContact: string;
   smsNotAvailable: string;
-  emergencySmsBody: (coords: string) => string;
+  emergencySmsBody: (coords: string, name?: string) => string;
   unknown: string;
   close: string;
   narrationUnavailable: string;
@@ -92,7 +92,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Allgemeiner Notruf",
     sendLocationToContact: "Standort an Notfallkontakt senden",
     smsNotAvailable: "SMS ist auf diesem Gerät nicht verfügbar.",
-    emergencySmsBody: (coords) => `Notfall auf Wanderung. Mein ungefährer Standort: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Notfall auf Wanderung. Ungefährer Standort: ${coords}`,
     unknown: "unbekannt",
     close: "Schliessen",
     narrationUnavailable: "KI-Erzählstimme gerade nicht verfügbar (Internet prüfen).",
@@ -144,7 +145,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Allgemeine Notruef",
     sendLocationToContact: "Standort am Notfallkontakt schicke",
     smsNotAvailable: "SMS isch uf dem Grät nid verfügbär.",
-    emergencySmsBody: (coords) => `Notfall uf de Wanderig. Min ungefähr Standort: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Notfall uf de Wanderig. Ungefähr Standort: ${coords}`,
     unknown: "unbekannt",
     close: "Schliesse",
     narrationUnavailable: "KI-Erzählstimm grad nid verfügbär (Internet prüefe).",
@@ -196,7 +198,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "General emergency number",
     sendLocationToContact: "Send location to emergency contact",
     smsNotAvailable: "SMS is not available on this device.",
-    emergencySmsBody: (coords) => `Emergency during hike. My approximate location: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Emergency during hike. Approximate location: ${coords}`,
     unknown: "unknown",
     close: "Close",
     narrationUnavailable: "AI narration voice unavailable right now (check your connection).",
@@ -248,7 +251,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Numéro d'urgence général",
     sendLocationToContact: "Envoyer ma position au contact d'urgence",
     smsNotAvailable: "Les SMS ne sont pas disponibles sur cet appareil.",
-    emergencySmsBody: (coords) => `Urgence pendant la randonnée. Ma position approximative : ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name} : ` : ""}Urgence pendant la randonnée. Position approximative : ${coords}`,
     unknown: "inconnu",
     close: "Fermer",
     narrationUnavailable: "Voix narrative IA indisponible pour le moment (vérifiez votre connexion).",
@@ -300,7 +304,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Numero di emergenza generale",
     sendLocationToContact: "Invia posizione al contatto di emergenza",
     smsNotAvailable: "Gli SMS non sono disponibili su questo dispositivo.",
-    emergencySmsBody: (coords) => `Emergenza durante l'escursione. La mia posizione approssimativa: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Emergenza durante l'escursione. Posizione approssimativa: ${coords}`,
     unknown: "sconosciuto",
     close: "Chiudi",
     narrationUnavailable: "Voce narrante IA non disponibile al momento (controlla la connessione).",
@@ -352,7 +357,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Número de emergencia general",
     sendLocationToContact: "Enviar ubicación al contacto de emergencia",
     smsNotAvailable: "SMS no disponible en este dispositivo.",
-    emergencySmsBody: (coords) => `Emergencia durante la excursión. Mi ubicación aproximada: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Emergencia durante la excursión. Ubicación aproximada: ${coords}`,
     unknown: "desconocido",
     close: "Cerrar",
     narrationUnavailable: "Voz narrativa IA no disponible en este momento (revisa tu conexión).",
@@ -404,7 +410,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "Número de emergência geral",
     sendLocationToContact: "Enviar localização para contato de emergência",
     smsNotAvailable: "SMS não disponível neste dispositivo.",
-    emergencySmsBody: (coords) => `Emergência durante a caminhada. Minha localização aproximada: ${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}: ` : ""}Emergência durante a caminhada. Localização aproximada: ${coords}`,
     unknown: "desconhecido",
     close: "Fechar",
     narrationUnavailable: "Voz narrativa por IA indisponível no momento (verifique sua conexão).",
@@ -456,7 +463,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     euroEmergencySub: "通用急救电话",
     sendLocationToContact: "发送位置给紧急联系人",
     smsNotAvailable: "此设备不支持短信。",
-    emergencySmsBody: (coords) => `徒步过程中发生紧急情况。我的大致位置：${coords}`,
+    emergencySmsBody: (coords, name) =>
+      `${name ? `${name}：` : ""}徒步途中发生紧急情况。大致位置：${coords}`,
     unknown: "位置不明",
     close: "关闭",
     narrationUnavailable: "AI 讲述语音暂时不可用（请检查网络连接）。",
