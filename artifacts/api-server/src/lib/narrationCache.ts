@@ -58,6 +58,55 @@ export function hashNarrationText(
     .digest("hex");
 }
 
+/**
+ * Cache-Lesezugriff ist best effort: schlaegt Object Storage fehl (z.B.
+ * Sidecar-/Auth-Problem der Umgebung), soll die Erzaehlstimme trotzdem
+ * funktionieren, nur eben ungecacht. Vorher liess ein GCS-Fehler die
+ * gesamte Anfrage scheitern, was der Nutzerin faelschlich als "KI-
+ * Erzaehlstimme nicht verfuegbar (Internet pruefen)" angezeigt wurde,
+ * obwohl weder Internet noch ElevenLabs das Problem waren.
+ */
+async function readFromCache(
+  bucket: ReturnType<typeof objectStorageClient.bucket>,
+  text: string,
+  language: string | undefined,
+  log: Logger,
+): Promise<Buffer | null> {
+  try {
+    for (const voiceId of voiceCandidatesForLanguage(language)) {
+      const hash = hashNarrationText(text, language, voiceId);
+      const file = bucket.file(narrationObjectName(hash));
+      const [exists] = await file.exists();
+      if (exists) {
+        log.info({ hash, voiceId }, "Narration-Cache-Treffer");
+        const [buffer] = await file.download();
+        return buffer;
+      }
+    }
+  } catch (err) {
+    log.warn({ err }, "Narration-Cache-Lesezugriff fehlgeschlagen, synthetisiere ohne Cache");
+  }
+  return null;
+}
+
+async function writeToCache(
+  bucket: ReturnType<typeof objectStorageClient.bucket>,
+  text: string,
+  language: string | undefined,
+  voiceId: string,
+  audio: Buffer,
+  log: Logger,
+): Promise<void> {
+  try {
+    const hash = hashNarrationText(text, language, voiceId);
+    const file = bucket.file(narrationObjectName(hash));
+    await file.save(audio, { contentType: "audio/mpeg" });
+    log.info({ hash, voiceId, bytes: audio.length }, "Narration erzeugt und gecacht");
+  } catch (err) {
+    log.warn({ err }, "Narration-Cache-Schreibzugriff fehlgeschlagen, Audio bleibt ungecacht");
+  }
+}
+
 export async function getOrCreateNarrationAudio(
   text: string,
   language: string | undefined,
@@ -66,23 +115,10 @@ export async function getOrCreateNarrationAudio(
   const { bucketName } = parsePrivateDir();
   const bucket = objectStorageClient.bucket(bucketName);
 
-  // Cache-Suche in Wunsch-Reihenfolge der Stimmen: erst die bevorzugte
-  // Stimme der Sprache (z.B. Schweizer Akzent fuer gsw), dann der Rueckfall.
-  for (const voiceId of voiceCandidatesForLanguage(language)) {
-    const hash = hashNarrationText(text, language, voiceId);
-    const file = bucket.file(narrationObjectName(hash));
-    const [exists] = await file.exists();
-    if (exists) {
-      log.info({ hash, voiceId }, "Narration-Cache-Treffer");
-      const [buffer] = await file.download();
-      return buffer;
-    }
-  }
+  const cached = await readFromCache(bucket, text, language, log);
+  if (cached) return cached;
 
   const { audio, voiceId } = await synthesizeNarration(text, language, log);
-  const hash = hashNarrationText(text, language, voiceId);
-  const file = bucket.file(narrationObjectName(hash));
-  await file.save(audio, { contentType: "audio/mpeg" });
-  log.info({ hash, voiceId, bytes: audio.length }, "Narration erzeugt und gecacht");
+  await writeToCache(bucket, text, language, voiceId, audio, log);
   return audio;
 }
