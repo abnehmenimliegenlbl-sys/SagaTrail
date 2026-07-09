@@ -423,14 +423,14 @@ export default function Routenplanung() {
           ) : downloaded ? (
             <PrimaryButton
               label={t.removeDownload}
-              variant="ghost"
+              variant="secondary"
               onPress={onDelete}
               style={{ marginTop: 14 }}
             />
           ) : (
             <PrimaryButton
               label={t.download}
-              variant="ghost"
+              variant="secondary"
               onPress={onDownload}
               style={{ marginTop: 14 }}
             />
