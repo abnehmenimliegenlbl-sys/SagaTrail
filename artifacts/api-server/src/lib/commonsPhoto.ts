@@ -15,16 +15,23 @@ const SUCH_RADIUS_M = 3000;
 const MAX_KANDIDATEN = 20;
 const THUMB_BREITE_PX = 800;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h — Fotos aendern sich kaum
-const NEGATIV_TTL_MS = 30 * 60 * 1000; // 30 min bei "nichts gefunden"
+const NEGATIV_TTL_MS = 30 * 60 * 1000; // 30 min bei echtem "nichts gefunden"
+// Ein technischer Fehlschlag (Timeout, 429 trotz Retries) ist etwas anderes
+// als "kein Foto vorhanden" — den nur kurz cachen, damit die naechste Anzeige
+// (Bildschirm neu geoeffnet, erneuter Scroll) es bald wieder versucht.
+const FEHLER_TTL_MS = 90 * 1000; // 90 s
 // Commons drosselt bei vielen gleichzeitigen Anfragen (429) — wenn z.B. eine
-// ganze Routenliste auf einmal Fotos laedt. Zwei Gegenmassnahmen:
+// ganze Routenliste auf einmal Fotos laedt. Drei Gegenmassnahmen:
 // 1) nur wenige Anfragen gleichzeitig rausschicken (Warteschlange),
-// 2) bei 429 mit kurzer Pause automatisch erneut versuchen.
-const MAX_GLEICHZEITIG = 3;
-const RETRY_VERSUCHE = 3;
+// 2) zwischen dem Start je zweier Anfragen mindestens eine Mindestpause,
+// 3) bei 429 mit kurzer Pause automatisch erneut versuchen.
+const MAX_GLEICHZEITIG = 2;
+const MIN_ABSTAND_MS = 350;
+const RETRY_VERSUCHE = 4;
 const RETRY_PAUSE_MS = 1500;
 
 let aktiveAnfragen = 0;
+let letzterStartMs = 0;
 const warteschlange: Array<() => void> = [];
 
 async function mitDrosselung<T>(aufgabe: () => Promise<T>): Promise<T> {
@@ -33,6 +40,9 @@ async function mitDrosselung<T>(aufgabe: () => Promise<T>): Promise<T> {
   }
   aktiveAnfragen += 1;
   try {
+    const wartenBisMs = letzterStartMs + MIN_ABSTAND_MS - Date.now();
+    if (wartenBisMs > 0) await verzoegern(wartenBisMs);
+    letzterStartMs = Date.now();
     return await aufgabe();
   } finally {
     aktiveAnfragen -= 1;
@@ -323,7 +333,7 @@ export async function getCachedSagaPhoto(query: string, log: Logger): Promise<Ro
   } catch (err) {
     log.warn({ query, err }, "Commons-Sagenfoto (Textsuche) konnte nicht geladen werden");
     const wert: RoutePhoto = { photoUrl: null, attribution: null };
-    cache.set(schluessel, { wert, bisMs: jetztMs + NEGATIV_TTL_MS });
+    cache.set(schluessel, { wert, bisMs: jetztMs + FEHLER_TTL_MS });
     return wert;
   }
 }
@@ -350,7 +360,7 @@ export async function getCachedRoutePhoto(
   } catch (err) {
     log.warn({ lat, lng, err }, "Commons-Routenfoto konnte nicht geladen werden");
     const wert: RoutePhoto = { photoUrl: null, attribution: null };
-    cache.set(schluessel, { wert, bisMs: jetztMs + NEGATIV_TTL_MS });
+    cache.set(schluessel, { wert, bisMs: jetztMs + FEHLER_TTL_MS });
     return wert;
   }
 }
