@@ -26,6 +26,10 @@ const hell = {
   glassBg: "rgba(255,255,255,0.55)",
   glassBgStrong: "rgba(255,255,255,0.75)",
   glassBorder: "rgba(218,41,28,0.35)",
+  glassHighlight: "rgba(255,255,255,0.6)",
+  trackGroove: "rgba(24,26,30,0.12)",
+  photoScrimText: "#FFFFFF",
+  photoScrimMuted: "rgba(255,255,255,0.78)",
 
   // Semantische Aliase
   text: "#181A1E",
@@ -61,6 +65,10 @@ const dunkel = {
   glassBg: "rgba(245,243,236,0.08)",
   glassBgStrong: "rgba(245,243,236,0.14)",
   glassBorder: "rgba(232,54,42,0.35)",
+  glassHighlight: "rgba(255,255,255,0.12)",
+  trackGroove: "rgba(0,0,0,0.35)",
+  photoScrimText: "#FFFFFF",
+  photoScrimMuted: "rgba(255,255,255,0.78)",
 
   // Semantische Aliase
   text: "#F5F3EC",

@@ -197,14 +197,24 @@ export default function KantonRouten() {
           />
         )}
 
+        <View style={SCHATTEN_3D}>
         <View
           style={[
             styles.filterPanel,
-            { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+            { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
           ]}
         >
-          <View style={styles.filterHead}>
-            <Feather name="sliders" size={14} color={colors.accent} />
+          <LinearGradient
+            colors={[colors.glassHighlight, "transparent"]}
+            style={styles.filterHighlight}
+            pointerEvents="none"
+          />
+          <View
+            style={[styles.filterHead, { borderBottomColor: colors.glassBorder }]}
+          >
+            <View style={[styles.filterIconBadge, { backgroundColor: colors.accent }]}>
+              <Feather name="sliders" size={13} color={colors.accentForeground} />
+            </View>
             <Text style={[styles.filterTitle, { color: colors.foreground }]}>
               {t.filterTitle}
             </Text>
@@ -241,11 +251,11 @@ export default function KantonRouten() {
             onDraggingChange={setSliderAktiv}
           />
         </View>
+        </View>
 
         <PrimaryButton
           label={searching ? t.searchingButton : t.searchButton}
           onPress={onSearch}
-          variant="gold"
           loading={searching}
           disabled={searching}
         />
@@ -331,12 +341,13 @@ function RouteCard({
       <Pressable onPress={onPress} style={styles.card}>
         <Image source={foto.source} style={styles.cardImg} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(16,24,26,0.2)", "rgba(16,24,26,0.94)"]}
+          colors={["rgba(8,10,12,0.05)", "rgba(8,10,12,0.55)", "rgba(8,10,12,0.96)"]}
+          locations={[0, 0.55, 1]}
           style={StyleSheet.absoluteFill}
         />
         {foto.attribution && (
           <Text
-            style={[styles.cardAttribution, { color: colors.mutedForeground }]}
+            style={[styles.cardAttribution, { color: colors.photoScrimMuted }]}
             numberOfLines={1}
           >
             {foto.attribution}
@@ -344,19 +355,21 @@ function RouteCard({
         )}
         <View style={styles.cardContent}>
           <View style={styles.cardTopRow}>
-            <Text style={[styles.cardEyebrow, { color: colors.accent }]}>
-              {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
-              {h}:{String(m).padStart(2, "0")} h
-            </Text>
+            <View style={[styles.cardEyebrowChip, { backgroundColor: colors.accent }]}>
+              <Text style={[styles.cardEyebrow, { color: colors.accentForeground }]}>
+                {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
+                {h}:{String(m).padStart(2, "0")} h
+              </Text>
+            </View>
             {locked && (
-              <Feather name="lock" size={14} color={colors.mutedForeground} />
+              <Feather name="lock" size={14} color={colors.photoScrimText} />
             )}
           </View>
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+          <Text style={[styles.cardTitle, { color: colors.photoScrimText }]}>
             {route.name}
           </Text>
           <Text
-            style={[styles.cardTerrain, { color: colors.mutedForeground }]}
+            style={[styles.cardTerrain, { color: colors.photoScrimMuted }]}
             numberOfLines={1}
           >
             {route.terrain}
@@ -365,9 +378,9 @@ function RouteCard({
             <Feather
               name={route.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
               size={12}
-              color={colors.mutedForeground}
+              color={colors.photoScrimMuted}
             />
-            <Text style={[styles.cardSeasonText, { color: colors.mutedForeground }]}>
+            <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}>
               {t.season[
                 route.season === "ganzjaehrig"
                   ? "ganzjaehrig"
@@ -400,14 +413,40 @@ const styles = StyleSheet.create({
     fontSize: 9,
     opacity: 0.85,
   },
-  filterPanel: { ...GLAS_3D,
+  filterPanel: {
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 18,
     paddingBottom: 4,
     marginBottom: 18,
+    overflow: "hidden",
   },
-  filterHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 18 },
+  filterHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+  },
+  filterHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+  },
+  filterIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
   filterTitle: { fontFamily: fonts.titleBold, fontSize: 16, flex: 1 },
   results: { marginTop: 18 },
   hint: { alignItems: "center", paddingVertical: 40, gap: 12 },
@@ -442,7 +481,13 @@ const styles = StyleSheet.create({
   cardImg: { width: "100%", height: "100%" },
   cardContent: { position: "absolute", left: 16, right: 16, bottom: 16 },
   cardTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1, flex: 1 },
+  cardEyebrowChip: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+  },
+  cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1 },
   cardTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 6 },
   cardTerrain: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
   cardSeasonRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },

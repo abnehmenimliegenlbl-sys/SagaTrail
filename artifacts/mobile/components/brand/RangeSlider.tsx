@@ -132,7 +132,12 @@ export function RangeSlider({
       </View>
 
       <View style={styles.trackArea} onLayout={onLayout}>
-        <View style={[styles.track, { backgroundColor: colors.glassBorder }]} />
+        <View
+          style={[
+            styles.track,
+            { backgroundColor: colors.trackGroove, borderColor: colors.glassBorder },
+          ]}
+        />
         <View
           style={[
             styles.trackActive,
@@ -148,18 +153,24 @@ export function RangeSlider({
           hitSlop={HIT}
           style={[
             styles.thumb,
+            styles.thumbShadow,
             { left: loX, borderColor: colors.accent, backgroundColor: colors.card },
           ]}
-        />
+        >
+          <View style={[styles.thumbCore, { backgroundColor: colors.accent }]} />
+        </View>
         <View
           {...respondersRef.current.hi.panHandlers}
           hitSlop={HIT}
           style={[
             styles.thumb,
+            styles.thumbShadow,
             styles.thumbTop,
             { left: hiX, borderColor: colors.accent, backgroundColor: colors.card },
           ]}
-        />
+        >
+          <View style={[styles.thumbCore, { backgroundColor: colors.accent }]} />
+        </View>
       </View>
     </View>
   );
@@ -176,14 +187,37 @@ const styles = StyleSheet.create({
   label: { fontFamily: fonts.bodyMedium, fontSize: 13 },
   value: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.5 },
   trackArea: { height: THUMB, justifyContent: "center" },
-  track: { height: 4, borderRadius: 2, marginHorizontal: THUMB / 2 },
-  trackActive: { position: "absolute", height: 4, borderRadius: 2 },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: THUMB / 2,
+    borderWidth: 1,
+  },
+  trackActive: {
+    position: "absolute",
+    height: 8,
+    borderRadius: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+  },
   thumb: {
     position: "absolute",
     width: THUMB,
     height: THUMB,
     borderRadius: THUMB / 2,
     borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  thumbShadow: {
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
+  thumbCore: { width: 8, height: 8, borderRadius: 4 },
   thumbTop: { zIndex: 2 },
 });
