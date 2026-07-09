@@ -7,8 +7,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { CantonWappen } from "@/components/brand/CantonWappen";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
-import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -242,14 +242,7 @@ export default function Sammlung() {
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.wappenText,
-                      { color: complete ? colors.accent : colors.mutedForeground },
-                    ]}
-                  >
-                    {kantonsKuerzel(canton)}
-                  </Text>
+                  <CantonWappen canton={canton} size={30} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.cantonName, { color: colors.foreground }]}>

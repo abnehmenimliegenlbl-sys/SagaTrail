@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { CantonWappen } from "@/components/brand/CantonWappen";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -256,7 +257,7 @@ function CantonCard({
         ]}
       >
         <View style={styles.cantonIcon}>
-          <Feather name="map-pin" size={18} color={colors.accent} />
+          <CantonWappen canton={entry.canton} size={26} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.cantonName, { color: colors.foreground }]}>
