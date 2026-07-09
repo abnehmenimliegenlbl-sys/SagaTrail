@@ -203,10 +203,10 @@ export default function SagaDetail() {
           </View>
           <Animated.View entering={FadeIn} style={styles.heroText}>
             <View style={styles.heroTextScrim}>
-              <Text style={[styles.title, { color: colors.foreground }]}>
+              <Text style={[styles.title, { color: colors.photoScrimText }]}>
                 {saga.title}
               </Text>
-              <Text style={[styles.mood, { color: colors.mutedForeground }]}>
+              <Text style={[styles.mood, { color: colors.photoScrimMuted }]}>
                 {saga.mood}
               </Text>
             </View>
