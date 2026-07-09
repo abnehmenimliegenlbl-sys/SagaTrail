@@ -27,4 +27,5 @@
 - [SagaTrail Kantonswappen-Assets](sagatrail-canton-wappen.md) — Wikimedia blockiert diese Sandbox komplett (429 überall); echte Wappen-SVGs kommen von GitHub `nzzdev/ch-canton-symbols`.
 - [SagaTrail step counter](sagatrail-step-counter.md) — expo-sensors Pedometer, per-hike only, silent no-op fallback when sensor unavailable (mirrors GPS-unavailable pattern).
 - [SagaTrail TTS OpenAI-Rueckfall](sagatrail-tts-openai-fallback.md) — wenn ALLE ElevenLabs-Stimmen scheitern (Kontingent/Key), springt OpenAI (gpt-audio, neutral, kein Akzent) automatisch ein.
+- [SagaTrail hardcoded colors.dark.*](sagatrail-theme-hardcoded-dark.md) — pre-theme files bypass Hell/Dunkel by referencing colors.dark.* directly; grep for it if a screen ignores the theme toggle.
 - [SagaTrail App-Design-Dialoge statt native Alerts](sagatrail-app-dialogs.md) — `Alert.alert` app-weit durch gestyltes `AppModal`/`appAlert`-Singleton ersetzt; Permission-Priming ebenfalls im App-Design vor dem echten OS-Dialog.
