@@ -12,6 +12,7 @@ export interface SummaryStrings {
     sac: string;
     chapters: string;
     steps: string;
+    time: string;
   };
   blockTitle: string;
   noChoiceMade: string;
@@ -36,6 +37,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Kapitel",
       steps: "Schritte",
+      time: "Zeit",
     },
     blockTitle: "Deine Wahrnehmungen",
     noChoiceMade: "Keine Wahl getroffen",
@@ -58,6 +60,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Kapitel",
       steps: "Schritt",
+      time: "Zit",
     },
     blockTitle: "Dini Wahrnehmige",
     noChoiceMade: "Kei Wahl troffe",
@@ -80,6 +83,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Chapters",
       steps: "Steps",
+      time: "Time",
     },
     blockTitle: "Your perceptions",
     noChoiceMade: "No choice made",
@@ -102,6 +106,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Chapitres",
       steps: "Pas",
+      time: "Temps",
     },
     blockTitle: "Tes perceptions",
     noChoiceMade: "Aucun choix fait",
@@ -124,6 +129,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Capitoli",
       steps: "Passi",
+      time: "Tempo",
     },
     blockTitle: "Le tue percezioni",
     noChoiceMade: "Nessuna scelta effettuata",
@@ -146,6 +152,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Capítulos",
       steps: "Pasos",
+      time: "Tiempo",
     },
     blockTitle: "Tus percepciones",
     noChoiceMade: "No se tomó ninguna decisión",
@@ -168,6 +175,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Capítulos",
       steps: "Passos",
+      time: "Tempo",
     },
     blockTitle: "Suas percepções",
     noChoiceMade: "Nenhuma escolha feita",
@@ -190,6 +198,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "难度",
       chapters: "章节",
       steps: "步数",
+      time: "时间",
     },
     blockTitle: "你的感悟",
     noChoiceMade: "未做出选择",
@@ -212,6 +221,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
       sac: "SAC",
       chapters: "Главы",
       steps: "Шаги",
+      time: "Время",
     },
     blockTitle: "Твои впечатления",
     noChoiceMade: "Выбор не сделан",

@@ -222,8 +222,13 @@ export default function Summary() {
             distanceKm={lastHike.distanceKm}
             ascentM={lastHike.ascentM}
             sacScale={lastHike.sacScale}
+            durationMin={lastHike.durationMin}
+            steps={lastHike.steps}
+            geometry={lastHike.geometry}
             distanceLabel={t.stats.distance}
             ascentLabel={t.stats.ascent}
+            timeLabel={t.stats.time}
+            stepsLabel={t.stats.steps}
           />
         </View>
       )}

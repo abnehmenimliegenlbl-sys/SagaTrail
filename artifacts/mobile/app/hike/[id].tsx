@@ -1040,6 +1040,8 @@ export default function LiveHike() {
       chapters: decisionsRef.current,
       visitedPlaceIds: [saga.id],
       steps,
+      durationMin: Math.round((Date.now() - startTimeRef.current) / 60000),
+      geometry: route?.geometry,
     };
     await Promise.all([
       saveHike(session),

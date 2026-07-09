@@ -83,6 +83,10 @@ export interface HikeSession {
   photoUri?: string;
   /** Schritte laut Pedometer, 0 falls Sensor nicht verfuegbar war */
   steps?: number;
+  /** Effektiv verstrichene Wanderzeit in Minuten (seit Start bis Abschluss) */
+  durationMin?: number;
+  /** Ausgeduennter Wegverlauf als [lat, lng]-Paare, fuer die Share-Grafik */
+  geometry?: number[][];
 }
 
 export interface Achievement {
