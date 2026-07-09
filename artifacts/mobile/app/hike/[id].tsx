@@ -6,7 +6,7 @@ import {
   getPoiStory,
 } from "@workspace/api-client-react";
 import type { Poi } from "@workspace/api-client-react";
-import { Audio, InterruptionModeIOS } from "expo-av";
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -213,11 +213,16 @@ export default function LiveHike() {
   // App in den Hintergrund geht oder das Display gesperrt wird — zusammen
   // mit UIBackgroundModes "audio" (app.json) und, fuer echte GPS-Fortschritte
   // im Hintergrund, dem Standort-Foreground-Service (siehe unten).
+  // DuckOthers statt MixWithOthers: laeuft im Hintergrund z. B. Musik/ein
+  // Podcast, wird diese waehrend der Erzaehlung leiser gedreht statt in
+  // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
   useEffect(() => {
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      shouldDuckAndroid: true,
     }).catch(() => {
       // Best effort — falls die Audiosession nicht gesetzt werden kann, wird
       // trotzdem versucht, ganz normal ueber die Standard-Session vorzulesen.
