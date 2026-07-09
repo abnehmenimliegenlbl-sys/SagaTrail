@@ -1,5 +1,5 @@
 import type { Logger } from "pino";
-import { textToSpeech as openaiTextToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import { synthesizeOpenAiNarrationWithPacing } from "./narrationPacing";
 
 /**
  * ElevenLabs Text-to-Speech Client fuer die kostenpflichtige, natuerlich
@@ -63,7 +63,11 @@ const VOICE_FALLBACK_STATUS = new Set([401, 402, 403, 404]);
 // Letzte Rueckfallstufe, wenn ElevenLabs komplett ausfaellt (z.B. Kontingent
 // erschoepft). Kein echtes ElevenLabs-Voice-ID-Format, dient hier als
 // eindeutiger Cache-Schluessel-Anteil (siehe narrationCache.ts).
-export const OPENAI_FALLBACK_VOICE_ID = "openai:alloy";
+// "onyx" = tiefere, ruhige maennliche OpenAI-Stimme; 0.95x Tempo und
+// verlaengerte Pausen hinter dramatischen Saetzen sollen den fehlenden
+// ElevenLabs-Feinschliff etwas kompensieren.
+export const OPENAI_FALLBACK_VOICE_ID = "openai:onyx";
+const OPENAI_FALLBACK_SPEED = 0.95;
 
 export class ElevenLabsError extends Error {
   constructor(
@@ -124,7 +128,7 @@ async function requestOpenAiFallback(text: string, log: Logger): Promise<Buffer>
     { chars: text.length },
     "ElevenLabs komplett nicht verfuegbar, Rueckfall auf OpenAI-Stimme",
   );
-  return openaiTextToSpeech(text, "alloy", "mp3");
+  return synthesizeOpenAiNarrationWithPacing(text, "onyx", OPENAI_FALLBACK_SPEED, log);
 }
 
 export async function synthesizeNarration(
