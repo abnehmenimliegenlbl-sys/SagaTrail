@@ -1,7 +1,6 @@
-import { LinearGradient } from "expo-linear-gradient";
 import React, { forwardRef } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, Stop } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
 
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import colorTokens from "@/constants/colors";
@@ -9,9 +8,16 @@ import { fonts } from "@/constants/typography";
 
 const colors = colorTokens.dark;
 
+const CARD_W = 360;
+const PHOTO_H = 200;
 const MAP_W = 328;
 const MAP_H = 200;
 const MAP_PAD = 18;
+const TILE_SIZE = 256;
+const MAX_TILES = 12;
+
+const tileUrl = (z: number, x: number, y: number) =>
+  `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
 
 interface ShareCardProps {
   sagaTitle: string;
@@ -29,48 +35,91 @@ interface ShareCardProps {
   stepsLabel: string;
 }
 
-/** Projiziert [lat, lng]-Paare in SVG-Koordinaten (gleichmaessig skaliert, zentriert). */
-function projectGeometry(geometry: number[][], width: number, height: number, padding: number) {
-  if (!geometry || geometry.length < 2) return null;
-  let south = geometry[0][0];
-  let north = geometry[0][0];
-  let west = geometry[0][1];
-  let east = geometry[0][1];
-  for (const [lat, lng] of geometry) {
-    south = Math.min(south, lat);
-    north = Math.max(north, lat);
-    west = Math.min(west, lng);
-    east = Math.max(east, lng);
-  }
-  const latSpan = Math.max(north - south, 0.0005);
-  // Laengengrad wird mit dem Kosinus des Breitengrads gestaucht, damit die
-  // Route nicht verzerrt wirkt.
-  const lngScale = Math.cos(((south + north) / 2) * (Math.PI / 180)) || 1;
-  const lngSpan = Math.max((east - west) * lngScale, 0.0005);
-  const innerW = width - padding * 2;
-  const innerH = height - padding * 2;
-  const scale = Math.min(innerW / lngSpan, innerH / latSpan);
-  const usedW = lngSpan * scale;
-  const usedH = latSpan * scale;
-  const offsetX = padding + (innerW - usedW) / 2;
-  const offsetY = padding + (innerH - usedH) / 2;
-
-  const points = geometry.map(([lat, lng]) => {
-    const x = offsetX + (lng - west) * lngScale * scale;
-    const y = offsetY + (north - lat) * scale;
-    return { x, y };
-  });
-  const d = points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-    .join(" ");
-  return { d, start: points[0], end: points[points.length - 1] };
+/** Web-Mercator: [lat, lng] -> globale Pixelkoordinate bei gegebenem Zoom. */
+function latLngToPixel(lat: number, lng: number, zoom: number) {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const x = ((lng + 180) / 360) * scale;
+  const sinLat = Math.sin((lat * Math.PI) / 180);
+  const y = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale;
+  return { x, y };
 }
 
 /**
- * Markierte Share-Grafik fuer den OS-Share-Sheet: obere Haelfte mit
- * Sagentitel und Kennzahlen (Schritte, Distanz, Hoehenmeter, Zeit), untere
- * Haelfte mit der tatsaechlich gegangenen Route als Karte. Wird unsichtbar
- * gerendert und per react-native-view-shot als Bild abfotografiert.
+ * Waehlt den hoechsten Zoom, bei dem die Route noch mit einer ueberschaubaren
+ * Anzahl Kartenkacheln abgedeckt werden kann (Kachelbudget), und projiziert
+ * Route + Kacheln in dasselbe Pixelkoordinatensystem, damit beides exakt
+ * uebereinander liegt.
+ */
+function buildRouteMap(geometry: number[][], width: number, height: number, padding: number) {
+  if (!geometry || geometry.length < 2) return null;
+
+  let zoom = 11;
+  for (let z = 11; z <= 17; z++) {
+    const pts = geometry.map(([lat, lng]) => latLngToPixel(lat, lng, z));
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const h = Math.max(...ys) - Math.min(...ys);
+    const tilesX = Math.ceil(w / TILE_SIZE) + 2;
+    const tilesY = Math.ceil(h / TILE_SIZE) + 2;
+    if (tilesX * tilesY <= MAX_TILES) {
+      zoom = z;
+    } else {
+      break;
+    }
+  }
+
+  const rawPts = geometry.map(([lat, lng]) => latLngToPixel(lat, lng, zoom));
+  const minX = Math.min(...rawPts.map((p) => p.x));
+  const maxX = Math.max(...rawPts.map((p) => p.x));
+  const minY = Math.min(...rawPts.map((p) => p.y));
+  const maxY = Math.max(...rawPts.map((p) => p.y));
+  const spanX = Math.max(maxX - minX, 1);
+  const spanY = Math.max(maxY - minY, 1);
+
+  const innerW = width - padding * 2;
+  const innerH = height - padding * 2;
+  const scale = Math.min(innerW / spanX, innerH / spanY, 3);
+  const usedW = spanX * scale;
+  const usedH = spanY * scale;
+  const offsetX = padding + (innerW - usedW) / 2 - minX * scale;
+  const offsetY = padding + (innerH - usedH) / 2 - minY * scale;
+
+  const points = rawPts.map((p) => ({ x: p.x * scale + offsetX, y: p.y * scale + offsetY }));
+  const d = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ");
+
+  const tileMinX = Math.floor(minX / TILE_SIZE) - 1;
+  const tileMaxX = Math.floor(maxX / TILE_SIZE) + 1;
+  const tileMinY = Math.floor(minY / TILE_SIZE) - 1;
+  const tileMaxY = Math.floor(maxY / TILE_SIZE) + 1;
+  const tileCount = 2 ** zoom;
+
+  const tiles: { key: string; uri: string; left: number; top: number; size: number }[] = [];
+  for (let ty = tileMinY; ty <= tileMaxY; ty++) {
+    if (ty < 0 || ty >= tileCount) continue;
+    for (let tx = tileMinX; tx <= tileMaxX; tx++) {
+      const wrappedX = ((tx % tileCount) + tileCount) % tileCount;
+      tiles.push({
+        key: `${zoom}_${wrappedX}_${ty}`,
+        uri: tileUrl(zoom, wrappedX, ty),
+        left: tx * TILE_SIZE * scale + offsetX,
+        top: ty * TILE_SIZE * scale + offsetY,
+        size: TILE_SIZE * scale,
+      });
+    }
+  }
+
+  return { d, start: points[0], end: points[points.length - 1], tiles };
+}
+
+/**
+ * Markierte Share-Grafik fuer den OS-Share-Sheet: Erinnerungsfoto ganz oben
+ * (unbearbeitet), in der Mitte Logo, Sagentitel, Streckenname und Kennzahlen,
+ * unten die tatsaechlich gegangene Route ueber einer echten Kartenkachel-
+ * Mosaik. Wird unsichtbar gerendert und per react-native-view-shot als Bild
+ * abfotografiert.
  */
 export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
   {
@@ -90,23 +139,20 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
   },
   ref,
 ) {
-  const route = geometry ? projectGeometry(geometry, MAP_W, MAP_H, MAP_PAD) : null;
+  const route = geometry ? buildRouteMap(geometry, MAP_W, MAP_H, MAP_PAD) : null;
 
   return (
     <View ref={ref} collapsable={false} style={styles.card}>
       <View style={styles.inner}>
-        {/* Obere Haelfte: Titel + Kennzahlen, optional mit Erinnerungsfoto als Hintergrund */}
-        <View style={styles.top}>
-          {photoUri && (
-            <>
-              <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              <LinearGradient
-                colors={["rgba(16,24,26,0.55)", "rgba(16,24,26,0.88)", colors.backgroundDeep]}
-                locations={[0, 0.6, 1]}
-                style={StyleSheet.absoluteFill}
-              />
-            </>
-          )}
+        {/* Foto ganz oben, unbearbeitet */}
+        {photoUri && (
+          <View style={styles.photoWrap}>
+            <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
+          </View>
+        )}
+
+        {/* Mitte: Logo, Sage, Streckenname, Kennzahlen */}
+        <View style={styles.mid}>
           <View style={styles.mark}>
             <SparkMountain size={56} />
           </View>
@@ -129,22 +175,34 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
           </View>
         </View>
 
-        {/* Untere Haelfte: gegangene Route */}
+        {/* Unten: gegangene Route ueber echter Karte */}
         <View style={styles.mapWrap}>
-          <Svg width="100%" height="100%" viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
-            <Defs>
-              <SvgGradient id="shareTerrain" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#20302A" />
-                <Stop offset="1" stopColor="#10181A" />
-              </SvgGradient>
-            </Defs>
-            <Path d={`M0,0 H${MAP_W} V${MAP_H} H0 Z`} fill="url(#shareTerrain)" />
-            {route ? (
-              <>
+          {route ? (
+            <>
+              {route.tiles.map((tile) => (
+                <Image
+                  key={tile.key}
+                  source={{ uri: tile.uri }}
+                  style={{
+                    position: "absolute",
+                    left: tile.left,
+                    top: tile.top,
+                    width: tile.size,
+                    height: tile.size,
+                  }}
+                />
+              ))}
+              <View style={styles.mapDim} />
+              <Svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${MAP_W} ${MAP_H}`}
+                style={StyleSheet.absoluteFill}
+              >
                 <Path
                   d={route.d}
                   stroke={colors.gletscherweiss}
-                  strokeOpacity={0.25}
+                  strokeOpacity={0.35}
                   strokeWidth={7}
                   fill="none"
                   strokeLinecap="round"
@@ -160,11 +218,13 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
                 />
                 <Circle cx={route.start.x} cy={route.start.y} r={5} fill={colors.moosgrau} />
                 <Circle cx={route.end.x} cy={route.end.y} r={6} fill={colors.almrausch} />
-              </>
-            ) : (
+              </Svg>
+            </>
+          ) : (
+            <View style={styles.mapFallbackWrap}>
               <Text style={styles.mapFallback}>{sacScale}</Text>
-            )}
-          </Svg>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -182,25 +242,32 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 360,
-    height: 640,
+    width: CARD_W,
     backgroundColor: colors.backgroundDeep,
     padding: 16,
   },
   inner: {
-    flex: 1,
     borderWidth: 1,
     borderColor: colors.glassBorder,
     borderRadius: 18,
     overflow: "hidden",
   },
-  top: {
+  photoWrap: {
+    width: "100%",
+    height: PHOTO_H,
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+  },
+  mid: {
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 28,
     paddingBottom: 22,
     paddingHorizontal: 24,
-    overflow: "hidden",
+    borderTopWidth: 1,
+    borderTopColor: colors.glassBorder,
   },
   mark: { marginBottom: 4 },
   brand: {
@@ -241,9 +308,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   mapWrap: {
-    flex: 1,
+    width: "100%",
+    height: MAP_H,
     borderTopWidth: 1,
     borderTopColor: colors.glassBorder,
+    backgroundColor: "#10181A",
+    overflow: "hidden",
+  },
+  mapDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(16,24,26,0.18)",
+  },
+  mapFallbackWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   mapFallback: {
     fontFamily: fonts.mono,
