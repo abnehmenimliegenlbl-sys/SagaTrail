@@ -66,6 +66,30 @@ uri = "file://artifacts/mobile/assets/images/panorama/winter-alpin.png"
 type = "image"
 title = "winter alpine panorama"
 
+[[generated]]
+id = "FdLMxHzNZufipW67D-cbt"
+uri = "file://artifacts/mobile/assets/images/icon_swiss.png"
+type = "image"
+title = "swiss red mountain icon v3"
+
+[[generated]]
+id = "SUAnYbsKU4g_4J_zGTh-b"
+uri = "file://artifacts/mobile/assets/images/splash_swiss.png"
+type = "image"
+title = "swiss red splash mountain"
+
+[[generated]]
+id = "hbWcfqe3V9H4QwKlasDO0"
+uri = "file://artifacts/mobile/assets/images/icon_swiss_hell.png"
+type = "image"
+title = "swiss red mountain icon hell"
+
+[[generated]]
+id = "s9LOzAHOqsb6yidFnOMgH"
+uri = "file://artifacts/mobile/assets/images/splash_swiss_hell.png"
+type = "image"
+title = "swiss red splash mountain hell"
+
 [[outputs]]
 id = "o-PK8_4dt13VcbC4pK3RD"
 uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"

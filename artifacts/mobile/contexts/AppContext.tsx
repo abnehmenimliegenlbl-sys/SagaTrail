@@ -101,7 +101,7 @@ interface AppContextValue {
   achievements: Achievement[];
   emergencyContact: EmergencyContact | null;
   energiesparmodus: boolean;
-  /** Hell/Dunkel-Anzeigemodus (Schweizer Rot-Weiss-Design). Standard: "dunkel". */
+  /** Hell/Dunkel-Anzeigemodus (Schweizer Rot-Weiss-Design). Standard: "hell". */
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   lastHike: HikeSession | null;
@@ -183,7 +183,7 @@ const AppContext = createContext<AppContextValue | null>(null);
  */
 export function useThemeModeSafe(): ThemeMode {
   const ctx = useContext(AppContext);
-  return ctx?.themeMode ?? "dunkel";
+  return ctx?.themeMode ?? "hell";
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -197,7 +197,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [emergencyContact, setEmergencyContact] =
     useState<EmergencyContact | null>(null);
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
-  const [themeMode, setThemeModeState] = useState<ThemeMode>("dunkel");
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("hell");
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
   const [hikeHistory, setHikeHistory] = useState<HikeSession[]>([]);
   const [activeHike, setActiveHike] = useState<ActiveHike | null>(null);
