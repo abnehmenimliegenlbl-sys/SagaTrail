@@ -261,15 +261,15 @@ const styles = StyleSheet.create({
   },
   puckCrossBarV: {
     position: "absolute",
-    width: 3,
+    width: 5,
     height: "100%",
-    borderRadius: 1.5,
+    borderRadius: 2,
   },
   puckCrossBarH: {
     position: "absolute",
     width: "100%",
-    height: 3,
-    borderRadius: 1.5,
+    height: 5,
+    borderRadius: 2,
   },
   thumbTop: { zIndex: 2 },
 });
