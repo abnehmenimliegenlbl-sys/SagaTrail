@@ -106,7 +106,7 @@ export default function LiveHike() {
   const resumeRouteRef = useRef<HikingRoute | null>(
     activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
-  const { getSaga, getRoute, getRouteBySaga } = useCatalog();
+  const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
   const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
 
   const saga = getSaga(id);
@@ -115,6 +115,22 @@ export default function LiveHike() {
   // Sage die naechste bekannte Route gesucht. Als letzter Rueckhalt dient die
   // im unterbrochenen Wanderstand mitgespeicherte Route.
   const route = getRoute(routeId) ?? getRouteBySaga(id) ?? resumeRouteRef.current ?? undefined;
+
+  // Wurde eine konkrete routeId uebergeben, ist die Route aber (noch) nicht im
+  // Katalog-Cache (z. B. Direktstart ohne vorherige Kantonssuche, oder nach
+  // App-Neustart), fehlt der eigentliche Wegverlauf komplett. Der
+  // Kartenmittelpunkt faellt dann auf die Sagen-Koordinate zurueck, die vom
+  // tatsaechlichen Wegverlauf oft mehrere hundert Meter entfernt liegt — die
+  // enge 0,5-km-Box fuer POIs faende dort faelschlich nichts. Deshalb wird die
+  // Route bei Bedarf einmalig ueber die Kantonssuche nachgeladen.
+  useEffect(() => {
+    if (!routeId || getRoute(routeId) || !saga) return;
+    loadCantonRoutes(saga.canton).catch(() => {
+      // Best effort — schlaegt das Nachladen fehl, bleibt der bisherige
+      // Rueckfall (Sagen-Koordinate) bestehen.
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeId, saga?.canton]);
 
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
   const totalKm = route?.distanceKm ?? 6.4;
@@ -340,7 +356,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
 
   // Historische/touristische Orte im Kartenausschnitt laden, live mit
   // Wikipedia-Zusammenfassungen angereichert — best effort, kein Blocker.
@@ -386,7 +402,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
 
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {

@@ -20,3 +20,4 @@
 - [SagaTrail group hike sync](sagatrail-group-hike-sync.md) — leader-only enforced server-side; non-fatal WS errors must not close the socket; late joiners resync via member-count rebroadcast.
 - [Kantonspack claim pattern](sagatrail-kantonspack-claim.md) — one consumable product + server-side grant; serialize claims per customer (check-then-act race) and try claiming an open purchase BEFORE any new buy.
 - [Env vars land im Klartext in .replit](replit-env-plaintext.md) — setEnvVars schreibt ALLE Scopes versioniert in .replit; Tokens/Keys nur als Secret (requestEnvVar), nie als Env-Variable.
+- [SagaTrail "keine POI gefunden"](sagatrail-poi-not-found.md) — zwei Ursachen: Kartenmitte faellt auf Sagen-Koordinate falls Route nicht vorab gecacht ist; Overpass-Timeouts waren bis zu 6 Min statt ~12s.

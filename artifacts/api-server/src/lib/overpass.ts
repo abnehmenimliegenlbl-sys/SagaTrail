@@ -29,7 +29,14 @@ const OVERPASS_MIRRORS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
-const REQUEST_TIMEOUT_MS = 60000;
+// 60 s pro Versuch war zu grosszuegig: bei zwei Versuchen je Spiegel und drei
+// Spiegeln konnte ein einzelner Aufruf im Worst Case bis zu 6 Minuten haengen,
+// bevor er fehlschlug — auf der Wanderungs-Seite sieht das wie "keine POI
+// gefunden" aus, obwohl der Server nur extrem lange auf eine tote Quelle
+// gewartet hat. Kuerzere Versuche + weniger Wiederholungen scheitern schneller
+// und geben so den naechsten Spiegeln (bzw. dem 502 an den Client) frueher eine
+// Chance.
+const REQUEST_TIMEOUT_MS = 12000;
 
 // Geometrie wird in Bloecken nachgeladen, damit die Antwort auch bei vielen
 // Kandidaten nicht das Overpass-Zeit-/Groessenlimit sprengt.
