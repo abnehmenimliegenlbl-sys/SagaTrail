@@ -59,22 +59,11 @@
       [
         "expo-router",
         {
-          "origin": "https://saga-trail.replit.app"
+          "origin": "https://replit.com/"
         }
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-av",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#10181A",
-          "iosDisplayInForeground": true
-        }
-      ],
-      "expo-document-picker",
-      "expo-image-picker",
       [
         "expo-location",
         {
