@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   heroText: { position: "absolute", left: 20, right: 20, bottom: 20 },
   heroTextScrim: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(16,24,26,0.7)",
+    backgroundColor: "rgba(16,24,26,0.42)",
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
