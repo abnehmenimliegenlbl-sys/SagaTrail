@@ -1,4 +1,4 @@
-import { Mountain, Cloud, MapPin, Play, Sun, Snowflake } from "lucide-react";
+import { Mountain, Cloud, MapPin, Play, Sun, Moon } from "lucide-react";
 
 export type ThemeTokens = {
   bgTop: string;
@@ -17,21 +17,24 @@ export type ThemeTokens = {
   accentText: string;
   pillBg: string;
   pillText: string;
-  seasonIcon: "sun" | "snow";
+  modeIcon: "sun" | "moon";
   mountainColor: string;
   cloudColor: string;
+  glassBg: string;
+  glassBorder: string;
 };
 
 export function ScreenMock({
   tokens,
-  seasonLabel,
+  modeLabel,
   weatherLabel,
 }: {
   tokens: ThemeTokens;
-  seasonLabel: string;
+  modeLabel: string;
   weatherLabel: string;
 }) {
-  const SeasonIcon = tokens.seasonIcon === "sun" ? Sun : Snowflake;
+  const ModeIcon = tokens.modeIcon === "sun" ? Sun : Moon;
+  const cardShadow = "0 8px 24px -8px rgba(0,0,0,0.18), 0 2px 6px -2px rgba(0,0,0,0.12)";
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -54,16 +57,20 @@ export function ScreenMock({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
           style={{ backgroundColor: tokens.pillBg, color: tokens.pillText }}
         >
-          <SeasonIcon size={14} />
-          {seasonLabel}
+          <ModeIcon size={14} />
+          {modeLabel}
         </div>
       </div>
 
-      {/* Weather / conditions banner */}
+      {/* Weather / conditions banner (frosted glass) */}
       <div className="px-6 mb-5">
         <div
-          className="rounded-2xl p-4 flex items-center gap-3 border"
-          style={{ backgroundColor: "#FFFFFF", borderColor: tokens.cardBorder }}
+          className="rounded-2xl p-4 flex items-center gap-3 border backdrop-blur-md"
+          style={{
+            backgroundColor: tokens.glassBg,
+            borderColor: tokens.glassBorder,
+            boxShadow: cardShadow,
+          }}
         >
           <Cloud size={22} color={tokens.cloudColor} />
           <div>
@@ -77,11 +84,11 @@ export function ScreenMock({
         </div>
       </div>
 
-      {/* Saga card */}
+      {/* Saga card (frosted glass, 3D depth) */}
       <div className="px-6 mb-5">
         <div
-          className="rounded-3xl overflow-hidden border"
-          style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
+          className="rounded-3xl overflow-hidden border backdrop-blur-md"
+          style={{ backgroundColor: tokens.glassBg, borderColor: tokens.cardBorder, boxShadow: cardShadow }}
         >
           <div
             className="h-32 w-full flex items-end p-4"
@@ -108,11 +115,11 @@ export function ScreenMock({
         </div>
       </div>
 
-      {/* Second saga chip row */}
+      {/* Second saga chip row (frosted glass tiles) */}
       <div className="px-6 flex gap-3 mb-6">
         <div
-          className="flex-1 rounded-2xl p-3 border"
-          style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
+          className="flex-1 rounded-2xl p-3 border backdrop-blur-md"
+          style={{ backgroundColor: tokens.glassBg, borderColor: tokens.cardBorder, boxShadow: cardShadow }}
         >
           <p className="text-xs font-semibold" style={{ color: tokens.cardSub }}>
             Fortschritt
@@ -122,8 +129,8 @@ export function ScreenMock({
           </p>
         </div>
         <div
-          className="flex-1 rounded-2xl p-3 border"
-          style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
+          className="flex-1 rounded-2xl p-3 border backdrop-blur-md"
+          style={{ backgroundColor: tokens.glassBg, borderColor: tokens.cardBorder, boxShadow: cardShadow }}
         >
           <p className="text-xs font-semibold" style={{ color: tokens.cardSub }}>
             Distanz
@@ -137,8 +144,12 @@ export function ScreenMock({
       {/* CTA */}
       <div className="px-6 mt-auto pb-10">
         <button
-          className="w-full rounded-2xl py-4 flex items-center justify-center gap-2 font-bold text-base shadow-lg"
-          style={{ backgroundColor: tokens.primary, color: tokens.primaryText }}
+          className="w-full rounded-2xl py-4 flex items-center justify-center gap-2 font-bold text-base"
+          style={{
+            backgroundColor: tokens.primary,
+            color: tokens.primaryText,
+            boxShadow: `0 10px 24px -6px ${tokens.primary}66, 0 2px 6px -2px rgba(0,0,0,0.2)`,
+          }}
         >
           <Play size={18} fill={tokens.primaryText} />
           Wanderung starten

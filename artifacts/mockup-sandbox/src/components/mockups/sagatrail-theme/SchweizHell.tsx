@@ -17,11 +17,13 @@ const tokens: ThemeTokens = {
   accentText: "#FFFFFF",
   pillBg: "#DA291C",
   pillText: "#FFFFFF",
-  seasonIcon: "snow",
+  modeIcon: "sun",
   mountainColor: "#9AA7B2",
   cloudColor: "#5B87A8",
+  glassBg: "rgba(255,255,255,0.65)",
+  glassBorder: "rgba(218,41,28,0.35)",
 };
 
-export function SchweizWinter() {
-  return <ScreenMock tokens={tokens} seasonLabel="Winter" weatherLabel="-2° · Frisch & Klar" />;
+export function SchweizHell() {
+  return <ScreenMock tokens={tokens} modeLabel="Hell" weatherLabel="12° · Frisch & Klar" />;
 }
