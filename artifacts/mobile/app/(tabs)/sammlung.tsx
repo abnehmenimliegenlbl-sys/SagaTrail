@@ -16,6 +16,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
+import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
 
 const WEB_TOP = 67;
@@ -43,6 +44,13 @@ export default function Sammlung() {
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
   const cantons = Array.from(new Set(sagas.map((s) => s.canton)));
+
+  // Gamification: Rang steigt durch gehörte Sagen + abgeschlossene
+  // Wanderungen — komplett lokal berechnet, kein Server-Roundtrip nötig.
+  const sparkPoints = computeSparkPoints(achievements.length, hikeHistory.length);
+  const rankStatus = computeRankStatus(sparkPoints);
+  const rankName = t.ranks[rankStatus.index] ?? t.ranks[0];
+  const nextRankName = t.ranks[rankStatus.index + 1];
 
   // Tagebuch nach Monaten gruppieren (neueste zuerst) — bei vielen
   // Wanderungen bleibt die Liste so ueberschaubar.
@@ -82,6 +90,44 @@ export default function Sammlung() {
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
+
+        <View
+          style={[
+            styles.rankCard,
+            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+          ]}
+        >
+          <View style={styles.rankHead}>
+            <Feather name="award" size={20} color={colors.accent} />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={[styles.rankSectionTitle, { color: colors.mutedForeground }]}>
+                {t.rankSectionTitle}
+              </Text>
+              <Text style={[styles.rankName, { color: colors.foreground }]}>{rankName}</Text>
+            </View>
+            <Text style={[styles.rankPoints, { color: colors.accent }]}>
+              {sparkPoints} {t.pointsLabel}
+            </Text>
+          </View>
+
+          <View style={[styles.progressTrack, { backgroundColor: colors.glassBorder, marginTop: 12, marginBottom: 0 }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: colors.accent,
+                  width: `${Math.round(rankStatus.progress * 100)}%`,
+                },
+              ]}
+            />
+          </View>
+
+          <Text style={[styles.rankHint, { color: colors.mutedForeground }]}>
+            {rankStatus.isMaxRank || !nextRankName
+              ? t.maxRankReached
+              : t.nextRankProgress(rankStatus.pointsToNext, nextRankName)}
+          </Text>
+        </View>
 
         <View style={[styles.statRow]}>
           <View style={styles.stat}>
@@ -317,6 +363,23 @@ export default function Sammlung() {
 }
 
 const styles = StyleSheet.create({
+  rankCard: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 20,
+  },
+  rankHead: { flexDirection: "row", alignItems: "center" },
+  rankSectionTitle: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  rankName: { fontFamily: fonts.titleBold, fontSize: 18, marginTop: 2 },
+  rankPoints: { fontFamily: fonts.monoBold, fontSize: 14 },
+  rankHint: { fontFamily: fonts.body, fontSize: 12, marginTop: 8 },
   statRow: {
     flexDirection: "row",
     alignItems: "center",
