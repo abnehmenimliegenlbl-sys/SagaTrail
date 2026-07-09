@@ -256,8 +256,16 @@ function CantonCard({
           },
         ]}
       >
-        <View style={styles.cantonIcon}>
-          <CantonWappen canton={entry.canton} size={26} />
+        <View
+          style={[
+            styles.cantonIcon,
+            {
+              borderColor: colors.glassBorder,
+              backgroundColor: "transparent",
+            },
+          ]}
+        >
+          <CantonWappen canton={entry.canton} size={38} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.cantonName, { color: colors.foreground }]}>
@@ -331,12 +339,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cantonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 48,
+    borderWidth: 1.5,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
   },
   cantonName: { fontFamily: fonts.titleBold, fontSize: 19 },
   cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },

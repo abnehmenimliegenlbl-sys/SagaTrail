@@ -242,7 +242,7 @@ export default function Sammlung() {
                     },
                   ]}
                 >
-                  <CantonWappen canton={canton} size={30} />
+                  <CantonWappen canton={canton} size={38} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.cantonName, { color: colors.foreground }]}>
