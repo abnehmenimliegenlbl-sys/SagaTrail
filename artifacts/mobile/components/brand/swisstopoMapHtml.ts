@@ -185,7 +185,7 @@ export function buildSwisstopoHtml(
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   (function () {
-    var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([${lat}, ${lng}], 14);
+    var map = L.map('map', { zoomControl: true, attributionControl: true, tap: false }).setView([${lat}, ${lng}], 14);
     var offline = ${offlineJson};
     var geometry = ${geometryJson};
     var aerialways = ${aerialwaysJson};
