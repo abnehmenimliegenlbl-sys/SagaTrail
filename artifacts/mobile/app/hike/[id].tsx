@@ -1192,7 +1192,7 @@ export default function LiveHike() {
                 <Text
                   style={[
                     styles.poiSummary,
-                    { color: colors.mutedForeground, marginTop: 10 },
+                    { color: colors.foreground, marginTop: 10 },
                   ]}
                 >
                   {poiStoryLoading && !poiStory
@@ -1515,9 +1515,9 @@ const styles = StyleSheet.create({
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  poiEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
-  poiTitle: { fontFamily: fonts.titleBold, fontSize: 16, marginTop: 2 },
-  poiSummary: { fontFamily: fonts.story, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  poiEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.2 },
+  poiTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 2 },
+  poiSummary: { fontFamily: fonts.story, fontSize: 16, marginTop: 4, lineHeight: 23 },
   poiModalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(16,24,26,0.7)",
