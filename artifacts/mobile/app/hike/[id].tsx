@@ -33,6 +33,7 @@ import type { HikingRoute } from "@/constants/routes";
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
+import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { SparkMountain } from "@/components/brand/SparkMountain";
@@ -1351,6 +1352,7 @@ export default function LiveHike() {
             <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
               {t.preparingText}
             </Text>
+            <LoadingBar width={160} height={4} />
           </View>
         ) : (
           <Animated.View entering={FadeIn} style={styles.storyWrap}>
