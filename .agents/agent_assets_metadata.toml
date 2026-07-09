@@ -131,3 +131,9 @@ id = "xov9phHWrkgUCWci2DjKW"
 uri = "file://attached_assets/expo-qr.png"
 type = "image"
 title = "Expo Go QR Code"
+
+[[outputs]]
+id = "zkUAAnXzfqSXGkSlz9YmL"
+uri = "file://attached_assets/IMG_7232_1783608256538.png"
+type = "image"
+title = "SagaTrail Premium Paywall Screenshot"
