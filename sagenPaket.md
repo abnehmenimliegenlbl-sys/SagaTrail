@@ -35,6 +35,12 @@ Dieses Dokument beschreibt das Format, in dem neue Schweizer Sagen geliefert wer
   // Beispiel: "Düster und stürmisch", "Ehrfürchtig, wundersam"
   "mood": "string",
 
+  // Konkreter Bildsuchbegriff für Wikimedia Commons, um ein passendes Titelfoto
+  // zu finden. NICHT das abstrakte Motiv/Thema (coreMotif), sondern ein
+  // greifbares, fotografierbares Objekt/Ort (z. B. "Teufelsbrücke Schöllenen",
+  // "Braunbär", "Wilhelm Tell Denkmal"). Auf Deutsch, kurz und präzise.
+  "bildmotiv": "string",
+
   // Deutsche Kurzfassung der Sage (Fliesstext, 3-6 Sätze).
   // Dient als Anzeige-Standard und Fallback für alle Sprachen.
   "summary": "string",
@@ -108,6 +114,7 @@ Dieses Dokument beschreibt das Format, in dem neue Schweizer Sagen geliefert wer
     "canton": "Uri",
     "coreMotif": "Pakt mit dem Teufel",
     "mood": "Düster und stürmisch",
+    "bildmotiv": "Teufelsbrücke Schöllenen",
     "summary": "Die Schöllenenschlucht war unpassierbar, bis die verzweifelten Urner riefen, da solle doch der Teufel eine Brücke bauen. Der Teufel erschien und baute sie – zum Preis der ersten Seele, die hinüberginge. Die listigen Urner jagten einen Geissbock über die Brücke; ergrimmt wollte der Teufel sie mit einem Felsblock zerschmettern, doch das Zeichen eines Kreuzes lenkte den Stein ab.",
     "summaries": {
       "de": { "text": "Die Schöllenenschlucht war unpassierbar, bis die verzweifelten Urner riefen, da solle doch der Teufel eine Brücke bauen. ...", "reviewEmpfohlen": false },
@@ -139,6 +146,7 @@ Dieses Dokument beschreibt das Format, in dem neue Schweizer Sagen geliefert wer
 - [ ] JSON ist syntaktisch valide und ein Array von Sagen-Objekten.
 - [ ] Jede `id` ist eindeutig innerhalb des Pakets (und kollidiert nach Möglichkeit nicht mit bereits vorhandenen SagaTrail-IDs).
 - [ ] `canton` entspricht exakt einem der 26 offiziellen Kantonsnamen (siehe Liste oben).
+- [ ] `bildmotiv` ist ein konkretes, fotografierbares Objekt/Ort (nicht das abstrakte `coreMotif`).
 - [ ] `summaries` enthält mindestens `de, en, fr, it, es, pt, zh`; `de` deckt sich inhaltlich mit `summary`.
 - [ ] `quelle` verweist auf eine echte, gemeinfreie Quelle (kein Wikipedia-Zusammenfassungstext als alleinige Quelle, sondern das zugrundeliegende historische Werk).
 - [ ] `coordinates` nur gesetzt, wenn die Quelle einen realen, auffindbaren Ort nennt; sonst `koordinatenSicherheit: "nicht_lokalisierbar"` und `coordinates` weglassen.
