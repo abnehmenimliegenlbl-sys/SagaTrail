@@ -15,6 +15,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -502,7 +503,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   }, [syncMyPremiumMutation]);
 
+  // Verhindert, dass der Auto-Sync-Effekt einen manuellen Reset sofort
+  // wieder rueckgaengig macht, solange RevenueCat noch ein aktives Abo
+  // meldet (z.B. Sandbox-Abo laeuft weiter). Der manuelle Reset hat fuer
+  // ein paar Sekunden Vorrang, danach greift der Abgleich wieder normal.
+  const manualLockUntilRef = useRef<number>(0);
+
   const lockPremium = useCallback(async () => {
+    manualLockUntilRef.current = Date.now() + 8000;
     const result = await updateMyPremiumMutation({ data: { premium: false } });
     setPremium(result.premium);
     await AsyncStorage.setItem(KEYS.premium, "false");
@@ -521,6 +529,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // angemeldet ist: vorher wuerde der Server einen Customer pruefen,
     // dem ein anonym getaetigter Kauf noch nicht zugeordnet wurde.
     if (!rcAppUserId || rcAppUserId !== profile.id) return;
+    // Manueller Reset (Demo-Button) hat kurz Vorrang: sonst wuerde dieser
+    // Effekt ein noch aktives RevenueCat-Abo sofort wieder hochsynchronisieren.
+    if (Date.now() < manualLockUntilRef.current) return;
     if (isSubscribed && !premium) {
       unlockPremium().catch(() => {});
     } else if (!isSubscribed && premium) {
