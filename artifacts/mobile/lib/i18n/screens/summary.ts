@@ -190,6 +190,27 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     addPhoto: "添加照片",
     changePhoto: "更换照片",
   },
+  ru: {
+    noHikeFound: "Поход не найден.",
+    backToOverview: "К обзору",
+    shareTextTemplate: (routeName, distanceKm) =>
+      `Я прошёл легенду "${routeName}" в SagaTrail — ${distanceKm} км через горы в сопровождении древней легенды.`,
+    achievementUnlocked: "ДОСТИЖЕНИЕ ОТКРЫТО",
+    archetypeSub: (archetype) => `Прошёл легенду как ${archetype}`,
+    stats: {
+      distance: "Дистанция",
+      ascent: "Подъём",
+      sac: "SAC",
+      chapters: "Главы",
+    },
+    blockTitle: "Твои впечатления",
+    noChoiceMade: "Выбор не сделан",
+    shareBtn: "Поделиться походом",
+    backButton: "Назад к обзору",
+    photoTitle: "Памятное фото",
+    addPhoto: "Добавить фото",
+    changePhoto: "Изменить фото",
+  },
 };
 
 export const useSummaryStrings = createUseStrings(SUMMARY_STRINGS);

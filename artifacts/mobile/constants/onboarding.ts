@@ -48,6 +48,7 @@ export const LANGUAGES: LanguageOption[] = [
   { code: "zh" },
   { code: "es" },
   { code: "pt" },
+  { code: "ru" },
 ];
 
 export interface ArchetypeOption {

@@ -146,6 +146,22 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsHikes: "徒步次数",
     diaryTitle: "徒步日记",
   },
+  ru: {
+    eyebrow: "Твоё путешествие",
+    title: "Коллекция",
+    sagasExperienced: "Легенды пройдены",
+    total: "Всего",
+    cantons: "Кантоны",
+    emptyState: "Пока ни одной легенды не пройдено. Начни свой первый поход, чтобы собрать искры.",
+    albumTitle: "Альбом легенд",
+    cantonProgress: (d, t, c) => `Открыто ${d} из ${t} легенд в ${c}`,
+    emptyCta: "Начать первый поход",
+    statsTitle: "Статистика походов",
+    statsKm: "Километры",
+    statsAscent: "Набор высоты (м)",
+    statsHikes: "Походы",
+    diaryTitle: "Дневник походов",
+  },
 };
 
 export const useCollectionStrings = createUseStrings(COLLECTION_STRINGS);

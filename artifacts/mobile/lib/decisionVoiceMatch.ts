@@ -55,6 +55,11 @@ const ORDINAL_WORDS: Record<Lang, string[][]> = {
     ["dois", "duas", "segundo", "segunda", "2"],
     ["três", "terceiro", "terceira", "3"],
   ],
+  ru: [
+    ["один", "первый", "первое", "1"],
+    ["два", "второй", "второе", "2"],
+    ["три", "третий", "третье", "3"],
+  ],
 };
 
 /** Entfernt Satzzeichen/Akzente und normalisiert Gross-/Kleinschreibung. */

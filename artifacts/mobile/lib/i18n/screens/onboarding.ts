@@ -77,6 +77,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarin",
       es: "Spanisch",
       pt: "Portugiesisch",
+      ru: "Russisch",
     },
     ageTierTitle: "Alterstufe",
     ageTierHint: "Sie bestimmt, wie intensiv die Sagen erzählt werden.",
@@ -154,6 +155,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarin",
       es: "Spanisch",
       pt: "Portugiesisch",
+      ru: "Russisch",
     },
     ageTierTitle: "Alterstufe",
     ageTierHint: "Si bestimmt, wie fescht d Sage verzelt wärde.",
@@ -231,6 +233,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarin",
       es: "Espagnol",
       pt: "Portugais",
+      ru: "Russe",
     },
     ageTierTitle: "Tranche d'âge",
     ageTierHint: "Elle détermine l'intensité avec laquelle les légendes sont racontées.",
@@ -308,6 +311,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarino",
       es: "Spagnolo",
       pt: "Portoghese",
+      ru: "Russo",
     },
     ageTierTitle: "Fascia d'età",
     ageTierHint: "Determina quanto intensamente vengono raccontate le leggende.",
@@ -385,6 +389,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarin",
       es: "Spanish",
       pt: "Portuguese",
+      ru: "Russian",
     },
     ageTierTitle: "Age tier",
     ageTierHint: "It determines how intensely the legends are told.",
@@ -456,6 +461,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "中文",
       es: "西班牙语",
       pt: "葡萄牙语",
+      ru: "俄语",
     },
     ageTierTitle: "年龄段",
     ageTierHint: "它决定了传说讲述的强度。",
@@ -532,6 +538,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarín",
       es: "Español",
       pt: "Portugués",
+      ru: "Ruso",
     },
     ageTierTitle: "Grupo de edad",
     ageTierHint: "Determina la intensidad con la que se narran las leyendas.",
@@ -609,6 +616,7 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
       zh: "Mandarim",
       es: "Espanhol",
       pt: "Português",
+      ru: "Russo",
     },
     ageTierTitle: "Faixa etária",
     ageTierHint: "Ela determina a intensidade com que as lendas são contadas.",
@@ -635,6 +643,84 @@ const ONBOARDING_STRINGS: StringsDict<OnboardingStrings> = {
     start: "Começar a jornada",
     next: "Avançar",
     saveError: "Não foi possível salvar o perfil. Tente novamente.",
+  },
+  ru: {
+    brandTagline: "Легенды Альп, оживающие на твоём пути",
+    intro:
+      "Ты идёшь свидетелем сквозь древние швейцарские легенды. Они рассказываются по мере твоего продвижения — шаг за шагом, место за местом.",
+    nameLabel: "Как нам к тебе обращаться?",
+    namePlaceholder: "Твоё имя",
+    stepOf: (step, total) => `Шаг ${step} из ${total}`,
+    archetypeTitle: "Твой архетип",
+    archetypeHint:
+      "Архетип меняет тон повествования и то, как тебя изображают — но никогда не меняет исход легенды.",
+    archetypes: {
+      reisende: {
+        title: "Путешественник(-ца)",
+        tagline: "Издалека в долину",
+        description:
+          "Ты приходишь издалека и помогаешь знаниями и смелостью. Твой взгляд — взгляд любопытного наблюдателя.",
+      },
+      hueterin: {
+        title: "Хранитель(-ница)",
+        tagline: "Связан(а) с природой",
+        description:
+          "Ты соединяешь людей и духовный мир. Ты слышишь то, что шепчут камни.",
+      },
+      gewitzte: {
+        title: "Хитрец(-ица)",
+        tagline: "Смекалка вместо борьбы",
+        description:
+          "Ты решаешь хитростью то, с чем другие пытаются справиться силой. Там, где таится опасность, ты ищешь лазейку.",
+      },
+      senn: {
+        title: "Альпийский(-ая) пастух(-шка)",
+        tagline: "Укоренён(а) в горах",
+        description:
+          "Ты знаешь альпийские пастбища с давних пор. Спокойный(ая) и опытный(ая), ты читаешь знаки горы.",
+      },
+    },
+    cantonTitle: "Твой родной регион",
+    cantonHint:
+      "Выбери свой родной кантон. Здесь начинается твоё путешествие по миру легенд.",
+    languageStepTitle: "Твой язык",
+    languageHint: "На каком языке рассказывать тебе легенды?",
+    languageNames: {
+      gsw: "Швейцарский немецкий",
+      de: "Немецкий",
+      fr: "Французский",
+      it: "Итальянский",
+      en: "Английский",
+      zh: "Китайский",
+      es: "Испанский",
+      pt: "Португальский",
+      ru: "Русский",
+    },
+    ageTierTitle: "Возрастная группа",
+    ageTierHint: "Она определяет, насколько интенсивно рассказываются легенды.",
+    ageTiers: {
+      kinder: {
+        title: "Дети",
+        range: "примерно 6–11 лет",
+        description: "Мягкое повествование, тревожные мотивы смягчены.",
+      },
+      jugendliche: {
+        title: "Подростки",
+        range: "примерно 12–15 лет",
+        description: "Захватывающе, но без явного насилия.",
+      },
+      erwachsene: {
+        title: "Взрослые",
+        range: "от 16 лет",
+        description: "Легенды во всей их мрачной глубине.",
+      },
+    },
+    consentText:
+      "Я являюсь родителем или законным опекуном и разрешаю использование ребёнком.",
+    back: "Назад",
+    start: "Начать путешествие",
+    next: "Далее",
+    saveError: "Не удалось сохранить профиль. Попробуйте снова.",
   },
 };
 

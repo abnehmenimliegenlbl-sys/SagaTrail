@@ -9,9 +9,9 @@ import { Archetype } from "../types";
  * nur die live erzaehlte Sage folgt der gewaehlten Sprache.
  */
 
-export type Lang = "de" | "gsw" | "fr" | "it" | "en" | "zh" | "es" | "pt";
+export type Lang = "de" | "gsw" | "fr" | "it" | "en" | "zh" | "es" | "pt" | "ru";
 
-const KNOWN_LANGS: Lang[] = ["de", "gsw", "fr", "it", "en", "zh", "es", "pt"];
+const KNOWN_LANGS: Lang[] = ["de", "gsw", "fr", "it", "en", "zh", "es", "pt", "ru"];
 
 /** Ordnet den Sprachcode einer BCP-47-Stimme fuer expo-speech zu. */
 export const SPEECH_LOCALE: Record<Lang, string> = {
@@ -23,6 +23,7 @@ export const SPEECH_LOCALE: Record<Lang, string> = {
   zh: "zh-CN",
   es: "es-ES",
   pt: "pt-BR",
+  ru: "ru-RU",
 };
 
 /** Faellt bei unbekannten Codes sauber auf Deutsch zurueck. */
@@ -404,6 +405,48 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Você pausa por um instante: bem à beira do caminho está ${name}. ${extract}`
         : `Você pausa por um instante: bem à beira do caminho está ${name} — uma testemunha silenciosa de tempos passados.`,
+  },
+
+  ru: {
+    archetypeLens: {
+      reisende:
+        "Как Путешественник ты приходишь издалека. Твой зоркий взгляд улавливает каждое движение в тумане.",
+      hueterin:
+        "Как Хранитель ты связан с этой землёй. Ты слышишь шёпот между камнями.",
+      gewitzte:
+        "Как Хитрец ты ищешь брешь в любой угрозе. Там, где другие чувствуют страх, ты ищешь выход.",
+      senn: "Как Пастух ты знаешь эту гору. Ты спокойно читаешь знаки, как делал это всегда.",
+    },
+    ch1: (canton, title, lens) =>
+      `Тропа ведёт в самое сердце ${canton}. Холодный воздух касается твоего лица, и ты чувствуешь, насколько древне это место. ${lens} Легенда о ${title} словно витает в воздухе.`,
+    ch2: (summary) =>
+      `Перед тобой открывается картина. ${summary} Ты всего лишь свидетель этого древнего события — и всё же оно затягивает тебя.`,
+    ch3Adult:
+      "Глубокая тень падает на тропу, и глухой гул поднимается из скалы. Что-то движется на краю твоего зрения.",
+    ch3Kinder:
+      "Тень скользит по тропе. Она кажется странной, но не злой. Что-то движется на краю твоего зрения.",
+    ch3Question: "Как ты встречаешь то, что приближается?",
+    ch3Options: [
+      { label: "Я делаю шаг вперёд и стою на месте.", archetypeHint: "Смелость Путешественника", tone: "mutig" },
+      { label: "Я остаюсь неподвижным и наблюдаю.", archetypeHint: "Спокойствие Пастуха", tone: "bedacht" },
+      { label: "Я ищу в тени какой-нибудь знак.", archetypeHint: "Хитрость Хитреца", tone: "wachsam" },
+    ],
+    ch4: "Гул стихает. То, что когда-то здесь произошло, разворачивается перед твоими глазами, неотвратимо, как течение воды. Ты понимаешь: легенда — это больше, чем сказка, она всё ещё живёт в этой долине.",
+    ch5Text:
+      "В последний раз событие обращается к тебе, будто спрашивая, что ты уносишь с собой из этого места.",
+    ch5Question: "Что ты уносишь из этой встречи?",
+    ch5Options: [
+      { label: "Благоговение перед тем, что больше меня.", archetypeHint: "Смирение", tone: "ehrfuerchtig" },
+      { label: "Уверенность в том, что истории могут быть правдой.", archetypeHint: "Прозрение", tone: "nachdenklich" },
+    ],
+    chFinal:
+      "Момент проходит. Природа возвращается к своему привычному ходу, ветер стихает. Ты идёшь дальше, отмеченный этой встречей, а долина хранит свою тайну — до следующего путника.",
+    navCue: (direction, landmark) =>
+      `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
+    poiAside: (name, extract) =>
+      extract
+        ? `Ты ненадолго останавливаешься: прямо у тропы находится ${name}. ${extract}`
+        : `Ты ненадолго останавливаешься: прямо у тропы находится ${name} — тихий свидетель ушедших времён.`,
   },
 };
 

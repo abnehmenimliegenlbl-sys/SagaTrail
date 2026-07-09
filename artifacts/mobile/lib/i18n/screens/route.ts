@@ -616,6 +616,76 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint: "起点和终点不在同一处——这在瑞士很常见：通常乘火车或邮政巴士返回。",
     planReturn: "规划公共交通返程",
   },
+  ru: {
+    notFound: "Маршрут не найден.",
+    title: "Планирование маршрута",
+    distance: "Дистанция",
+    ascent: "Подъём",
+    duration: "Длительность",
+    sacScale: "Шкала SAC",
+    offlineAvailable: "Доступно офлайн",
+    saveForOffline: "Сохранить для офлайн",
+    offlineStatusActive: (size) =>
+      `Легенда и карта сохранены на устройстве${size ? ` · ${size}` : ""}. Поход начнётся без сети.`,
+    offlineStatusInactive:
+      "Загружает легенду и участок карты, чтобы поход работал даже без сети.",
+    loadingMap: (done, total) => `Сохранение карты … ${done}/${total}`,
+    loadingSaga: "Загрузка легенды …",
+    removeDownload: "Удалить загрузку",
+    download: "Скачать",
+    downloadFailed: "Загрузка не удалась",
+    downloadFailedText:
+      "Поход не удалось загрузить полностью. Проверьте соединение и попробуйте снова.",
+    checkBeforeTour: "Проверить перед походом",
+    weatherLoading: "Загрузка погоды …",
+    weather: "Погода",
+    weatherNotAvailable: "Недоступно",
+    wind: "Ветер",
+    trailCondition: "Состояние тропы",
+    weatherNote:
+      "Погода в реальном времени через Open-Meteo, без официального статуса закрытия или лавинной опасности — ориентировочные значения для собственной проверки.",
+    energySavingTitle: "Режим энергосбережения",
+    energySavingHint:
+      "Этот поход заметно расходует заряд из-за GPS и звука. Режим энергосбережения бережёт батарею.",
+    importGpx: "Импортировать GPX",
+    importGpxImporting: "Импорт GPX …",
+    importGpxTitle: "Импорт GPX",
+    importGpxText: "Файл GPX не удалось обработать.",
+    importGpxReadError: "Файл не удалось прочитать.",
+    exportGpx: "Экспортировать GPX",
+    exportGpxError: "Экспорт GPX не удался.",
+    matchingSaga: "Подходящая легенда",
+    matchingSagaHintLoading: "Поиск подходящей региональной легенды …",
+    matchingSagaHintLoaded:
+      "Эта традиционная легенда сопровождает тебя на маршруте. Нажми, чтобы прочитать.",
+    sagaWriting: "Легенда пишется …",
+    sagaLoadError: "Легенду не удалось загрузить. Проверьте соединение.",
+    localisationNote:
+      "Для этого маршрута точная привязанная легенда не задокументирована. Показана ближайшая задокументированная региональная легенда.",
+    premiumButton: "Разблокировать Premium",
+    continueToSaga: "Перейти к легенде",
+    windValues: (speed, gusts) => `${speed} км/ч, порывы ${gusts} км/ч`,
+    weatherValues: (label, temp) => `${label}, ${temp}°C`,
+    trailConditions: {
+      gut: "Хорошие условия",
+      vorsicht: "Проходимо с осторожностью",
+      kritisch: "Сложные условия",
+    },
+    seasonLabel: "Сезон",
+    season: {
+      ganzjaehrig: "Круглый год",
+      eherSommer: "Лучше летом/осенью",
+      nurSommer: "Только летом",
+    },
+    seasonNote:
+      "Оценка на основе высоты и сложности — не официальное заявление о текущем состоянии.",
+    routeTypeLabel: "Тип маршрута",
+    routeTypeRundweg: "Кольцевой маршрут",
+    routeTypeStrecke: "Линейный маршрут",
+    streckeHint:
+      "Начало и конец находятся в разных местах — обычное дело в Швейцарии: обратный путь чаще всего на поезде или почтовом автобусе.",
+    planReturn: "Спланировать обратный путь на общественном транспорте",
+  },
 };
 
 export const useRouteStrings = createUseStrings(ROUTE_STRINGS);

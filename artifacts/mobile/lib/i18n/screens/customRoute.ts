@@ -200,6 +200,28 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "正在导入 GPX……",
     gpxReadErrorLabel: "无法读取该文件。",
   },
+  ru: {
+    eyebrow: "СВОЙ МАРШРУТ",
+    title: "Выбери старт и финиш",
+    intro: "Укажи старт и финиш — маршрут будет рассчитан в реальном времени и связан с легендой.",
+    startLabel: "Старт",
+    startPlaceholder: "Введите место или адрес …",
+    useCurrentLocation: "Использовать текущее местоположение",
+    locatingLabel: "Определение местоположения …",
+    locationDeniedLabel: "Доступ к местоположению не разрешён",
+    endLabel: "Финиш",
+    endPlaceholder: "Введите место или адрес …",
+    searchingLabel: "Идёт поиск …",
+    noResultsLabel: "Нет результатов",
+    submit: "Рассчитать маршрут",
+    calculatingLabel: "Расчёт маршрута …",
+    errorMissingPoints: "Пожалуйста, выберите старт и финиш из списка предложений.",
+    errorGeneric: (m) => m,
+    gpxDividerLabel: "Или",
+    gpxImportLabel: "Импортировать файл GPX",
+    gpxImportingLabel: "Импорт GPX …",
+    gpxReadErrorLabel: "Не удалось прочитать файл.",
+  },
 };
 
 export const useCustomRouteStrings = createUseStrings(CUSTOM_ROUTE_STRINGS);

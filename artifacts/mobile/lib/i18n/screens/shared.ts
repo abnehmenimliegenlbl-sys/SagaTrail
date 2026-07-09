@@ -15,6 +15,7 @@ const SHARED_STRINGS: StringsDict<SharedStrings> = {
   es: { back: "Atrás", close: "Cerrar", retry: "Reintentar" },
   pt: { back: "Voltar", close: "Fechar", retry: "Tentar novamente" },
   zh: { back: "返回", close: "关闭", retry: "重试" },
+  ru: { back: "Назад", close: "Закрыть", retry: "Повторить" },
 };
 
 export const useSharedStrings = createUseStrings(SHARED_STRINGS);

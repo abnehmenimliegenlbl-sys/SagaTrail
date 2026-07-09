@@ -186,6 +186,25 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Estação do teleférico",
     legendPoi: "Ponto de interesse",
   },
+  ru: {
+    legendTitle: "Легенда",
+    legendRoute: "Линия маршрута",
+    legendStart: "Начальная точка",
+    legendZiel: "Цель",
+    legendPosition: "Твоё местоположение",
+    legendWegInternational: "Международный маршрут",
+    legendWegNational: "Национальный маршрут",
+    legendWegRegional: "Региональный маршрут",
+    legendWegLokal: "Местный маршрут",
+    legendWegMehrfach: "Наложение нескольких маршрутов",
+    legendNummerWanderland: "Номер маршрута национальный/региональный",
+    legendNummerLokal: "Номер/код прочих маршрутов",
+    legendWegzeichen: "Маркировка маршрута",
+    legendWegweiser: "Указатель (название, высота в м)",
+    legendSeilbahn: "Канатная дорога",
+    legendSeilbahnStation: "Станция канатной дороги",
+    legendPoi: "Достопримечательность",
+  },
 };
 
 export const useMapStrings = createUseStrings(MAP_STRINGS);

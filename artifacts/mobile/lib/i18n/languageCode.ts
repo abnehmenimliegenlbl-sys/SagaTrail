@@ -11,7 +11,8 @@ export type LanguageCode =
   | "en"
   | "zh"
   | "es"
-  | "pt";
+  | "pt"
+  | "ru";
 
 export const SUPPORTED_LANGUAGES: LanguageCode[] = [
   "de",
@@ -22,6 +23,7 @@ export const SUPPORTED_LANGUAGES: LanguageCode[] = [
   "zh",
   "es",
   "pt",
+  "ru",
 ];
 
 export const DEFAULT_LANGUAGE: LanguageCode = "en";
@@ -47,4 +49,5 @@ export const NATIVE_LANGUAGE_NAMES: Record<LanguageCode, string> = {
   zh: "中文",
   es: "Español",
   pt: "Português (BR)",
+  ru: "Русский",
 };

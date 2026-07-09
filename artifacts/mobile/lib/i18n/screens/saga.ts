@@ -209,6 +209,29 @@ const SAGA_STRINGS: StringsDict<SagaStrings> = {
       nicht_lokalisierbar: "无法精确定位",
     },
   },
+  ru: {
+    generating: "Легенда создаётся …",
+    notFound: "Эта легенда не найдена.",
+    back: "Назад",
+    reviewPending: "Этот перевод пока проходит редакторскую проверку.",
+    coordinates: "Координаты",
+    locationUnbound: "Место не привязано",
+    sourceLabel: "ИСТОЧНИК (ОБЩЕСТВЕННОЕ ДОСТОЯНИЕ)",
+    lockedText: "Этот регион входит в SagaTrail Premium. Разблокируй все кантоны, чтобы начать этот поход.",
+    premiumButton: "Разблокировать Premium",
+    startHike: "Начать поход",
+    packLockedText: "Твоя первая обнаруженная легенда в этом кантоне была включена бесплатно. Разблокируй все остальные легенды этого кантона с помощью пакета легенд.",
+    packBuyBtn: "Купить пакет легенд",
+    packUnavailable: "Пакет легенд сейчас недоступен.",
+    packErrorTitle: "Покупка не удалась",
+    eliteUpsell: "С Elite все пакеты легенд всех кантонов включены.",
+    eliteBtn: "Узнать про Elite",
+    accuracy: {
+      exakt: "Точно задокументированное место",
+      ungefaehr: "Регион задокументирован, без точной привязки",
+      nicht_lokalisierbar: "Невозможно точно локализовать",
+    },
+  },
 };
 
 export const useSagaStrings = createUseStrings(SAGA_STRINGS);

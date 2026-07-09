@@ -191,6 +191,27 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeCta: "继续徒步",
     resumeDismiss: "忽略",
   },
+  ru: {
+    welcomeBack: "С возвращением",
+    defaultName: "Путник",
+    step1Title: "ШАГ 1 · ВЫБОР КАНТОНА",
+    whereStart: "Откуда начнёшь?",
+    heroBody: "Выбери кантон для похода. Затем найди маршрут и, наконец, подходящую легенду.",
+    homeCantonTitle: "Твой родной кантон",
+    homeCantonHint: "Доступен здесь бесплатно, без Premium",
+    otherCantonsTitle: "Другие кантоны",
+    cantonsTitle: "Кантоны",
+    routeCount: (n) => `${n} ${n === 1 ? "маршрут" : "маршрутов"}`,
+    sagaProgress: (d, t) => `Открыто ${d} из ${t} легенд`,
+    liveFromSwisstopo: "Маршруты в реальном времени из swisstopo",
+    allCantonsHint: (n) => `Все ${n} кантонов · Маршруты в реальном времени из swisstopo`,
+    customRouteTitle: "Свой маршрут",
+    customRouteHint: "Задай старт и финиш сам",
+    resumeTitle: "Прерванный поход",
+    resumeHint: (c, n) => `Глава ${c} из ${n} — легенда ждёт тебя`,
+    resumeCta: "Продолжить поход",
+    resumeDismiss: "Отклонить",
+  },
 };
 
 export const useHomeStrings = createUseStrings(HOME_STRINGS);

@@ -55,6 +55,7 @@ const VOICE_SAMPLES: Record<string, string> = {
   zh: "这就是徒步时为你讲述传说的声音。",
   es: "Esta es la voz que narrará tus leyendas en el camino.",
   pt: "Esta é a voz que narrará suas lendas na trilha.",
+  ru: "Так звучит голос, который расскажет тебе легенды в пути.",
 };
 
 export default function Einstellungen() {

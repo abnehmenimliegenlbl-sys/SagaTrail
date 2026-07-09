@@ -74,6 +74,14 @@ const SEARCH_PROGRESS_STRINGS: StringsDict<SearchProgressStrings> = {
     stepCompiling: "Compilando rotas…",
     hint: "A primeira busca de um cantão leva um momento, depois será rápida.",
   },
+  ru: {
+    title: "Поиск настоящих пеших маршрутов",
+    stepSearching: (cantonName) => `Поиск в кантоне ${cantonName || "Kanton"}…`,
+    stepFiltering: "Отбор подходящих маршрутов…",
+    stepLoadingElevation: "Загрузка профилей высот swisstopo…",
+    stepCompiling: "Составление маршрутов…",
+    hint: "Первый поиск по кантону занимает немного времени, потом всё будет быстро.",
+  },
 };
 
 export const useSearchProgressStrings = createUseStrings(SEARCH_PROGRESS_STRINGS);

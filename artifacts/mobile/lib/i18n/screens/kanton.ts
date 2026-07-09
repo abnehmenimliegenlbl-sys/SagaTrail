@@ -214,6 +214,37 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       nurSommer: "仅限夏季",
     },
   },
+  ru: {
+    eyebrow: "Шаг 2 · Фильтр и поиск",
+    intro: (cantonName) =>
+      `Задай дистанцию, набор высоты и сложность. Приложение выполнит поиск подходящих маршрутов во внешней базе данных походов (OpenStreetMap, дополненной данными высот swisstopo) в ${
+        cantonName || "этом кантоне"
+      }.`,
+    filterTitle: "Фильтры",
+    distanceLabel: "Дистанция",
+    elevationLabel: "Набор высоты",
+    difficultyLabel: "Сложность",
+    distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} км`,
+    elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} м`,
+    difficultyUnit: (v) => `T${v}`,
+    searchButton: "Найти подходящие маршруты",
+    searchingButton: "Идёт поиск…",
+    searchHint: "Настрой фильтры и запусти поиск, чтобы найти подходящие маршруты.",
+    serverError: "Сервер недоступен.",
+    noRoutesFound: "Подходящих маршрутов не найдено.",
+    errorDetail:
+      "Маршруты берутся в реальном времени из OpenStreetMap и swisstopo. Проверь соединение и попробуй снова.",
+    emptyDetail: "Расширь фильтры и попробуй снова.",
+    routesFound: (count) => `Найдено маршрутов: ${count}.`,
+    routeFound: "Найден 1 маршрут.",
+    nextStepSaga: "Далее последует подходящая легенда.",
+    sacLabel: "SAC",
+    season: {
+      ganzjaehrig: "Круглый год",
+      eherSommer: "Лучше летом/осенью",
+      nurSommer: "Только летом",
+    },
+  },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
     intro: (cantonName) =>
