@@ -14,6 +14,7 @@ import {
   Karla_700Bold,
   useFonts,
 } from "@expo-google-fonts/karla";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -21,6 +22,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect } from "react";
+import { Alert } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -31,16 +33,34 @@ import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
 import { configureApiClient } from "@/lib/apiConfig";
-// Reiner Seiteneffekt-Import: registriert den Hintergrund-Standort-Task
-// (TaskManager.defineTask) so frueh wie moeglich beim App-Start — nur so
-// kann das Betriebssystem die App bei einem Standort-Fix im Hintergrund
-// ueberhaupt wieder aufwecken.
 import "@/lib/backgroundLocation";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
-// Muss vor jeder ersten Anfrage (z.B. AppContext-Profilabfrage beim Start)
-// stehen, deshalb hier auf Modulebene und nicht erst in einem Effect.
+const CRASH_KEY = "__sagatrail_last_crash__";
+
+async function checkPreviousCrash() {
+  try {
+    const stored = await AsyncStorage.getItem(CRASH_KEY);
+    if (stored) {
+      await AsyncStorage.removeItem(CRASH_KEY);
+      Alert.alert("Crash-Info (Debug)", stored.substring(0, 800));
+    }
+  } catch {}
+}
+
+if (typeof ErrorUtils !== "undefined") {
+  const prev = ErrorUtils.getGlobalHandler();
+  ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
+    AsyncStorage.setItem(
+      CRASH_KEY,
+      `[${isFatal ? "FATAL" : "non-fatal"}] ${error?.message ?? String(error)}\n\n${error?.stack ?? ""}`.substring(0, 1500)
+    ).finally(() => {
+      prev?.(error, isFatal);
+    });
+  });
+}
+
 configureApiClient();
 
 SystemUI.setBackgroundColorAsync(colors.dark.nachthimmel);
@@ -51,21 +71,13 @@ try {
   console.warn("RevenueCat konnte nicht initialisiert werden:", err);
 }
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-// In den Dev-/Build-Skripten immer gesetzt (siehe package.json/scripts/build.js).
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
 const CLERK_PROXY_URL = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
-// Registriert den Clerk-Token-Getter SYNCHRON waehrend des Renderns (nicht
-// in einem useEffect) und liegt ausserhalb von AppProvider. So ist der
-// Getter garantiert gesetzt, bevor AppProvider ueberhaupt zu rendern
-// beginnt — ein useEffect in einem Kind von AppProvider wuerde erst NACH
-// AppProviders erstem Commit (und damit potenziell nach dem ersten
-// /api/me-Request) feuern.
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
   setAuthTokenGetter(() => getToken());
@@ -136,6 +148,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    checkPreviousCrash();
+  }, []);
+
+  useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
@@ -144,34 +160,36 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <ClerkProvider
-      publishableKey={CLERK_PUBLISHABLE_KEY}
-      proxyUrl={CLERK_PROXY_URL}
-      tokenCache={tokenCache}
-    >
-      <ClerkLoaded>
-        <SafeAreaProvider>
-          <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-              <GestureHandlerRootView>
-                <KeyboardProvider>
-                  <AuthTokenBridge>
-                    <SubscriptionProvider>
-                      <AppProvider>
-                        <CatalogProvider>
-                          <DownloadProvider>
-                            <RootLayoutNav />
-                          </DownloadProvider>
-                        </CatalogProvider>
-                      </AppProvider>
-                    </SubscriptionProvider>
-                  </AuthTokenBridge>
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </QueryClientProvider>
-          </ErrorBoundary>
-        </SafeAreaProvider>
-      </ClerkLoaded>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        proxyUrl={CLERK_PROXY_URL}
+        tokenCache={tokenCache}
+      >
+        <ClerkLoaded>
+          <SafeAreaProvider>
+            <ErrorBoundary>
+              <QueryClientProvider client={queryClient}>
+                <GestureHandlerRootView>
+                  <KeyboardProvider>
+                    <AuthTokenBridge>
+                      <SubscriptionProvider>
+                        <AppProvider>
+                          <CatalogProvider>
+                            <DownloadProvider>
+                              <RootLayoutNav />
+                            </DownloadProvider>
+                          </CatalogProvider>
+                        </AppProvider>
+                      </SubscriptionProvider>
+                    </AuthTokenBridge>
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </SafeAreaProvider>
+        </ClerkLoaded>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }
