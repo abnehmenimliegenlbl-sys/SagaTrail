@@ -22,7 +22,6 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect } from "react";
-import { Alert } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -34,6 +33,7 @@ import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
 import { configureApiClient } from "@/lib/apiConfig";
 import "@/lib/backgroundLocation";
+import { alert, AppAlertProvider } from "@/lib/appAlert";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
@@ -44,7 +44,7 @@ async function checkPreviousCrash() {
     const stored = await AsyncStorage.getItem(CRASH_KEY);
     if (stored) {
       await AsyncStorage.removeItem(CRASH_KEY);
-      Alert.alert("Crash-Info (Debug)", stored.substring(0, 800));
+      alert("Crash-Info (Debug)", stored.substring(0, 800));
     }
   } catch {}
 }
@@ -172,17 +172,19 @@ export default function RootLayout() {
               <QueryClientProvider client={queryClient}>
                 <GestureHandlerRootView>
                   <KeyboardProvider>
-                    <AuthTokenBridge>
-                      <SubscriptionProvider>
-                        <AppProvider>
-                          <CatalogProvider>
-                            <DownloadProvider>
-                              <RootLayoutNav />
-                            </DownloadProvider>
-                          </CatalogProvider>
-                        </AppProvider>
-                      </SubscriptionProvider>
-                    </AuthTokenBridge>
+                    <AppAlertProvider>
+                      <AuthTokenBridge>
+                        <SubscriptionProvider>
+                          <AppProvider>
+                            <CatalogProvider>
+                              <DownloadProvider>
+                                <RootLayoutNav />
+                              </DownloadProvider>
+                            </CatalogProvider>
+                          </AppProvider>
+                        </SubscriptionProvider>
+                      </AuthTokenBridge>
+                    </AppAlertProvider>
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </QueryClientProvider>

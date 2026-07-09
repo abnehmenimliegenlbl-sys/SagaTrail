@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
-import Constants, { ExecutionEnvironment } from "expo-constants";
 
 import { matchDecisionOption, VoiceMatchOption } from "./decisionVoiceMatch";
+import { NATIVE_MODULES_AVAILABLE } from "./nativeEnv";
 import { Lang, SPEECH_LOCALE } from "./storyContent";
 
 /**
@@ -30,9 +29,7 @@ import { Lang, SPEECH_LOCALE } from "./storyContent";
  * zuhoeren" sich fuer die Wandernden ununterbrochen anfuehlt.
  */
 
-const IS_EXPO_GO =
-  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-const NATIVE_SPEECH_AVAILABLE = Platform.OS !== "web" && !IS_EXPO_GO;
+const NATIVE_SPEECH_AVAILABLE = NATIVE_MODULES_AVAILABLE;
 
 type SpeechModule = typeof import("expo-speech-recognition");
 

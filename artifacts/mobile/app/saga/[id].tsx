@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Platform,
   Pressable,
@@ -13,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -149,7 +149,7 @@ export default function SagaDetail() {
       await ordnePackZu();
     } catch (err: any) {
       if (!err?.userCancelled) {
-        Alert.alert(t.packErrorTitle, err?.message ?? String(err));
+        alert(t.packErrorTitle, err?.message ?? String(err));
       }
     } finally {
       setPackBusy(false);

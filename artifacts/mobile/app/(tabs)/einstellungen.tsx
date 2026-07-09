@@ -7,7 +7,6 @@ import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -19,6 +18,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -168,7 +168,7 @@ export default function Einstellungen() {
   const handleExport = async () => {
     const json = await exportData();
     if (Platform.OS === "web") {
-      Alert.alert(t.exportTitle, json.slice(0, 500));
+      alert(t.exportTitle, json.slice(0, 500));
       return;
     }
     try {
@@ -179,7 +179,7 @@ export default function Einstellungen() {
   };
 
   const handleReset = () => {
-    Alert.alert(
+    alert(
       t.deleteAlertTitle,
       t.deleteAlertMessage,
       [
@@ -194,7 +194,7 @@ export default function Einstellungen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(t.logoutAlertTitle, t.logoutAlertMessage, [
+    alert(t.logoutAlertTitle, t.logoutAlertMessage, [
       { text: t.cancel, style: "cancel" },
       {
         text: t.logout,
@@ -320,7 +320,7 @@ export default function Einstellungen() {
             onPress={() => {
               if (contactName && contactPhone) {
                 saveEmergencyContact({ name: contactName, phone: contactPhone });
-                Alert.alert(t.contactSavedTitle, t.contactSavedMessage);
+                alert(t.contactSavedTitle, t.contactSavedMessage);
               }
             }}
             style={{ marginTop: 4 }}
@@ -382,10 +382,10 @@ export default function Einstellungen() {
                 if (await Linking.canOpenURL(url)) {
                   await Linking.openURL(url);
                 } else {
-                  Alert.alert(t.emailAlertTitle, "support@sagatrail.ch");
+                  alert(t.emailAlertTitle, "support@sagatrail.ch");
                 }
               } catch {
-                Alert.alert(t.emailAlertTitle, "support@sagatrail.ch");
+                alert(t.emailAlertTitle, "support@sagatrail.ch");
               }
             }}
           />

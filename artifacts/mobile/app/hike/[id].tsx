@@ -14,7 +14,6 @@ import { Pedometer } from "expo-sensors";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   Image,
   Linking,
   Modal,
@@ -25,6 +24,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -1052,7 +1052,7 @@ export default function LiveHike() {
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
   // gelangen, ohne die Wanderung komplett zu Ende laufen zu muessen.
   const finishHikeEarly = useCallback(() => {
-    Alert.alert(t.finishEarlyConfirmTitle, t.finishEarlyConfirmMessage, [
+    alert(t.finishEarlyConfirmTitle, t.finishEarlyConfirmMessage, [
       { text: t.finishEarlyCancelAction, style: "cancel" },
       { text: t.finishEarlyConfirmAction, style: "destructive", onPress: finishHike },
     ]);
@@ -1064,10 +1064,10 @@ export default function LiveHike() {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert(t.notAvailable, fallback);
+        alert(t.notAvailable, fallback);
       }
     } catch {
-      Alert.alert(t.notAvailable, fallback);
+      alert(t.notAvailable, fallback);
     }
   };
 

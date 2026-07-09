@@ -8,7 +8,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -114,7 +114,7 @@ export default function Routenplanung() {
       await FileSystem.writeAsStringAsync(uri, gpx, { encoding: FileSystem.EncodingType.UTF8 });
       await Sharing.shareAsync(uri, { mimeType: "application/gpx+xml", UTI: "com.topografix.gpx" });
     } catch {
-      Alert.alert("GPX", t.exportGpxError);
+      alert("GPX", t.exportGpxError);
     }
   }, [route?.geometry, route?.name, t]);
 
@@ -135,7 +135,7 @@ export default function Routenplanung() {
             ? await (await fetch(asset.uri)).text()
             : await FileSystem.readAsStringAsync(asset.uri);
       } catch {
-        Alert.alert(t.importGpxTitle, t.importGpxReadError);
+        alert(t.importGpxTitle, t.importGpxReadError);
         return;
       }
       const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
@@ -144,7 +144,7 @@ export default function Routenplanung() {
       router.replace(`/route/${imported.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      Alert.alert(t.importGpxTitle, message || t.importGpxText);
+      alert(t.importGpxTitle, message || t.importGpxText);
     } finally {
       setImporting(false);
     }
@@ -263,7 +263,7 @@ export default function Routenplanung() {
     try {
       await download(saga, route, profile, premium);
     } catch {
-      Alert.alert(
+      alert(
         t.downloadFailed,
         t.downloadFailedText
       );

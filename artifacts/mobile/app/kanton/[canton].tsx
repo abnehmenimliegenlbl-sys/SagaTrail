@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   Image,
   Platform,
   Pressable,
@@ -12,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -105,7 +105,7 @@ export default function KantonRouten() {
       await ordnePackZu();
     } catch (err: any) {
       if (!err?.userCancelled) {
-        Alert.alert(t.packBuyErrorTitle, err?.message ?? String(err));
+        alert(t.packBuyErrorTitle, err?.message ?? String(err));
       }
     } finally {
       setPackBusy(false);

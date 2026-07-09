@@ -8,7 +8,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -57,7 +57,7 @@ export default function EigeneRoute() {
 
   const onSubmit = useCallback(async () => {
     if (!start || !end) {
-      Alert.alert(t.errorMissingPoints);
+      alert(t.errorMissingPoints);
       return;
     }
     setSubmitting(true);
@@ -75,7 +75,7 @@ export default function EigeneRoute() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t.errorGeneric("");
-      Alert.alert(t.title, t.errorGeneric(message));
+      alert(t.title, t.errorGeneric(message));
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +101,7 @@ export default function EigeneRoute() {
             ? await (await fetch(asset.uri)).text()
             : await FileSystem.readAsStringAsync(asset.uri);
       } catch {
-        Alert.alert(t.title, t.gpxReadErrorLabel);
+        alert(t.title, t.gpxReadErrorLabel);
         return;
       }
 
@@ -111,7 +111,7 @@ export default function EigeneRoute() {
       router.push(`/route/${route.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      Alert.alert(t.title, t.errorGeneric(message));
+      alert(t.title, t.errorGeneric(message));
     } finally {
       setImporting(false);
     }
@@ -122,7 +122,7 @@ export default function EigeneRoute() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(t.locationDeniedLabel);
+        alert(t.locationDeniedLabel);
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
@@ -134,7 +134,7 @@ export default function EigeneRoute() {
         lng: pos.coords.longitude,
       });
     } catch {
-      Alert.alert(t.locationDeniedLabel);
+      alert(t.locationDeniedLabel);
     } finally {
       setLocating(false);
     }

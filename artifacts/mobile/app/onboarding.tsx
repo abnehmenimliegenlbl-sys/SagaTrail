@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { PermissionsStep } from "@/components/brand/PermissionsStep";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
 import { AGE_TIERS, ARCHETYPES, CANTONS } from "@/constants/onboarding";
@@ -46,7 +47,7 @@ export default function Onboarding() {
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 12;
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const canAdvance = () => {
     switch (step) {
@@ -60,6 +61,8 @@ export default function Onboarding() {
         return true;
       case 4:
         return ageTier !== null && (ageTier !== "kinder" || consent);
+      case 5:
+        return true;
       default:
         return false;
     }
@@ -337,6 +340,12 @@ export default function Onboarding() {
                 </Text>
               </Pressable>
             )}
+          </StepFrame>
+        )}
+
+        {step === 5 && (
+          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(6, totalSteps)}>
+            <PermissionsStep />
           </StepFrame>
         )}
       </ScrollView>

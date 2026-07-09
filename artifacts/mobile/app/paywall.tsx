@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { alert } from "@/lib/appAlert";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -82,12 +82,12 @@ export default function Paywall() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert(t.successAlertTitle, t.successAlertMsg, [
+      alert(t.successAlertTitle, t.successAlertMsg, [
         { text: t.successAlertBtn, onPress: () => router.back() },
       ]);
     } catch (err: any) {
       if (!err?.userCancelled) {
-        Alert.alert(t.purchaseErrorTitle, err?.message ?? String(err));
+        alert(t.purchaseErrorTitle, err?.message ?? String(err));
       }
     } finally {
       setBusy(false);
@@ -100,12 +100,12 @@ export default function Paywall() {
       const customerInfo = await restore();
       const hasActive = !!customerInfo.entitlements.active["premium"];
       if (hasActive) {
-        Alert.alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
+        alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
       } else {
-        Alert.alert(t.restoreNoneTitle, t.restoreNoneMsg);
+        alert(t.restoreNoneTitle, t.restoreNoneMsg);
       }
     } catch (err: any) {
-      Alert.alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
+      alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
     } finally {
       setBusy(false);
     }
