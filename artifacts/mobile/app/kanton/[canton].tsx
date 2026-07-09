@@ -341,8 +341,8 @@ function RouteCard({
       <Pressable onPress={onPress} style={styles.card}>
         <Image source={foto.source} style={styles.cardImg} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(8,10,12,0.05)", "rgba(8,10,12,0.55)", "rgba(8,10,12,0.96)"]}
-          locations={[0, 0.55, 1]}
+          colors={["rgba(8,10,12,0)", "rgba(8,10,12,0.25)", "rgba(8,10,12,0.85)"]}
+          locations={[0, 0.65, 1]}
           style={StyleSheet.absoluteFill}
         />
         {foto.attribution && (
