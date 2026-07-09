@@ -340,18 +340,15 @@ function RouteCard({
     <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
       <Pressable onPress={onPress} style={styles.card}>
         <Image source={foto.source} style={styles.cardImg} resizeMode="cover" />
-        <LinearGradient
-          colors={["rgba(8,10,12,0)", "rgba(8,10,12,0.25)", "rgba(8,10,12,0.85)"]}
-          locations={[0, 0.65, 1]}
-          style={StyleSheet.absoluteFill}
-        />
         {foto.attribution && (
-          <Text
-            style={[styles.cardAttribution, { color: colors.photoScrimMuted }]}
-            numberOfLines={1}
-          >
-            {foto.attribution}
-          </Text>
+          <View style={styles.cardAttributionScrim}>
+            <Text
+              style={[styles.cardAttribution, { color: colors.photoScrimMuted }]}
+              numberOfLines={1}
+            >
+              {foto.attribution}
+            </Text>
+          </View>
         )}
         <View style={styles.cardContent}>
           <View style={styles.cardTopRow}>
@@ -362,33 +359,37 @@ function RouteCard({
               </Text>
             </View>
             {locked && (
-              <Feather name="lock" size={14} color={colors.photoScrimText} />
+              <View style={styles.cardLockBadge}>
+                <Feather name="lock" size={14} color={colors.photoScrimText} />
+              </View>
             )}
           </View>
-          <Text style={[styles.cardTitle, { color: colors.photoScrimText }]}>
-            {route.name}
-          </Text>
-          <Text
-            style={[styles.cardTerrain, { color: colors.photoScrimMuted }]}
-            numberOfLines={1}
-          >
-            {route.terrain}
-          </Text>
-          <View style={styles.cardSeasonRow}>
-            <Feather
-              name={route.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
-              size={12}
-              color={colors.photoScrimMuted}
-            />
-            <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}>
-              {t.season[
-                route.season === "ganzjaehrig"
-                  ? "ganzjaehrig"
-                  : route.season === "nur_sommer"
-                    ? "nurSommer"
-                    : "eherSommer"
-              ]}
+          <View style={styles.cardTextScrim}>
+            <Text style={[styles.cardTitle, { color: colors.photoScrimText }]}>
+              {route.name}
             </Text>
+            <Text
+              style={[styles.cardTerrain, { color: colors.photoScrimMuted }]}
+              numberOfLines={1}
+            >
+              {route.terrain}
+            </Text>
+            <View style={styles.cardSeasonRow}>
+              <Feather
+                name={route.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
+                size={12}
+                color={colors.photoScrimMuted}
+              />
+              <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}>
+                {t.season[
+                  route.season === "ganzjaehrig"
+                    ? "ganzjaehrig"
+                    : route.season === "nur_sommer"
+                      ? "nurSommer"
+                      : "eherSommer"
+                ]}
+              </Text>
+            </View>
           </View>
         </View>
       </Pressable>
@@ -404,14 +405,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   intro: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, marginTop: 4, marginBottom: 18 },
-  cardAttribution: {
+  cardAttributionScrim: {
     position: "absolute",
     top: 8,
     right: 10,
     maxWidth: "70%",
+    backgroundColor: "rgba(8,10,12,0.55)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  cardAttribution: {
     fontFamily: fonts.body,
     fontSize: 9,
-    opacity: 0.85,
+    opacity: 0.9,
   },
   filterPanel: {
     borderRadius: 18,
@@ -488,7 +495,24 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1 },
-  cardTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 6 },
+  cardLockBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(8,10,12,0.55)",
+  },
+  cardTextScrim: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(8,10,12,0.65)",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+    maxWidth: "100%",
+  },
+  cardTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 0 },
   cardTerrain: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
   cardSeasonRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
   cardSeasonText: { fontFamily: fonts.body, fontSize: 11 },

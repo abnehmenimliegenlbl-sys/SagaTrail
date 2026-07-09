@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -187,15 +186,6 @@ export default function SagaDetail() {
       >
         <View style={styles.heroWrap}>
           <Image source={sagaFoto.source} style={styles.hero} resizeMode="cover" />
-          <LinearGradient
-            colors={[
-              "rgba(16,24,26,0.15)",
-              "rgba(16,24,26,0.55)",
-              "rgba(16,24,26,0.98)",
-            ]}
-            locations={[0, 0.55, 1]}
-            style={StyleSheet.absoluteFill}
-          />
           <Pressable
             onPress={() => router.back()}
             style={[
@@ -206,16 +196,20 @@ export default function SagaDetail() {
           >
             <Feather name="chevron-left" size={22} color={colors.foreground} />
           </Pressable>
-          <Animated.View entering={FadeIn} style={styles.heroText}>
-            <Text style={[styles.canton, { color: colors.accent }]}>
+          <View style={[styles.cantonChip, { backgroundColor: colors.accent, top: topInset + 6 }]}>
+            <Text style={[styles.canton, { color: colors.accentForeground }]}>
               {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
             </Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>
-              {saga.title}
-            </Text>
-            <Text style={[styles.mood, { color: colors.mutedForeground }]}>
-              {saga.mood}
-            </Text>
+          </View>
+          <Animated.View entering={FadeIn} style={styles.heroText}>
+            <View style={styles.heroTextScrim}>
+              <Text style={[styles.title, { color: colors.foreground }]}>
+                {saga.title}
+              </Text>
+              <Text style={[styles.mood, { color: colors.mutedForeground }]}>
+                {saga.mood}
+              </Text>
+            </View>
           </Animated.View>
         </View>
 
@@ -356,31 +350,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(16,24,26,0.4)",
   },
+  cantonChip: {
+    position: "absolute",
+    left: 68,
+    right: 20,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: "flex-start",
+  },
   heroText: { position: "absolute", left: 20, right: 20, bottom: 20 },
+  heroTextScrim: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(16,24,26,0.7)",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    maxWidth: "100%",
+  },
   canton: {
     fontFamily: fonts.mono,
     fontSize: 11,
     letterSpacing: 1.5,
-    textShadowColor: "rgba(0,0,0,0.85)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
   },
   title: {
     fontFamily: fonts.titleBlack,
     fontSize: 36,
-    marginTop: 6,
+    marginTop: 0,
     lineHeight: 38,
-    textShadowColor: "rgba(0,0,0,0.85)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
   },
   mood: {
     fontFamily: fonts.story,
     fontSize: 15,
     marginTop: 6,
-    textShadowColor: "rgba(0,0,0,0.85)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
   },
   body: { paddingHorizontal: 20, marginTop: 20 },
   summary: { fontFamily: fonts.story, fontSize: 18, lineHeight: 30 },
