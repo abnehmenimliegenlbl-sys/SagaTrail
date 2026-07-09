@@ -31,6 +31,11 @@ const hell = {
   photoScrimText: "#FFFFFF",
   photoScrimMuted: "rgba(255,255,255,0.78)",
 
+  // Puck-Schieberegler (Eishockey-Look): dunkler Rand, glaenzendes Oben, dunkler Rand unten
+  puckRim: "#22201E",
+  puckHighlight: "#FF7A6E",
+  puckShade: "#8C1710",
+
   // Semantische Aliase
   text: "#181A1E",
   tint: "#B8935A",
@@ -69,6 +74,11 @@ const dunkel = {
   trackGroove: "rgba(0,0,0,0.35)",
   photoScrimText: "#FFFFFF",
   photoScrimMuted: "rgba(255,255,255,0.78)",
+
+  // Puck-Schieberegler (Eishockey-Look): dunkler Rand, glaenzendes Oben, dunkler Rand unten
+  puckRim: "#0B0C0E",
+  puckHighlight: "#FF9188",
+  puckShade: "#7A140E",
 
   // Semantische Aliase
   text: "#F5F3EC",

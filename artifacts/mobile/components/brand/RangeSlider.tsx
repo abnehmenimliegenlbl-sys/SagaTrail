@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   LayoutChangeEvent,
@@ -11,7 +12,7 @@ import {
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 
-const THUMB = 30;
+const THUMB = 34;
 const HIT = { top: 22, bottom: 22, left: 22, right: 22 };
 
 /**
@@ -151,13 +152,16 @@ export function RangeSlider({
         <View
           {...respondersRef.current.lo.panHandlers}
           hitSlop={HIT}
-          style={[
-            styles.thumb,
-            styles.thumbShadow,
-            { left: loX, borderColor: colors.accent, backgroundColor: colors.card },
-          ]}
+          style={[styles.thumb, styles.thumbShadow, { left: loX, backgroundColor: colors.puckRim }]}
         >
-          <View style={[styles.thumbCore, { backgroundColor: colors.accent }]} />
+          <LinearGradient
+            colors={[colors.puckHighlight, colors.accent, colors.puckShade]}
+            locations={[0, 0.45, 1]}
+            style={styles.puckBody}
+          >
+            <View style={[styles.puckGloss, { backgroundColor: colors.puckHighlight }]} />
+            <View style={[styles.puckHub, { backgroundColor: colors.puckRim }]} />
+          </LinearGradient>
         </View>
         <View
           {...respondersRef.current.hi.panHandlers}
@@ -166,10 +170,17 @@ export function RangeSlider({
             styles.thumb,
             styles.thumbShadow,
             styles.thumbTop,
-            { left: hiX, borderColor: colors.accent, backgroundColor: colors.card },
+            { left: hiX, backgroundColor: colors.puckRim },
           ]}
         >
-          <View style={[styles.thumbCore, { backgroundColor: colors.accent }]} />
+          <LinearGradient
+            colors={[colors.puckHighlight, colors.accent, colors.puckShade]}
+            locations={[0, 0.45, 1]}
+            style={styles.puckBody}
+          >
+            <View style={[styles.puckGloss, { backgroundColor: colors.puckHighlight }]} />
+            <View style={[styles.puckHub, { backgroundColor: colors.puckRim }]} />
+          </LinearGradient>
         </View>
       </View>
     </View>
@@ -188,15 +199,15 @@ const styles = StyleSheet.create({
   value: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.5 },
   trackArea: { height: THUMB, justifyContent: "center" },
   track: {
-    height: 8,
-    borderRadius: 4,
+    height: 4,
+    borderRadius: 2,
     marginHorizontal: THUMB / 2,
     borderWidth: 1,
   },
   trackActive: {
     position: "absolute",
-    height: 8,
-    borderRadius: 4,
+    height: 4,
+    borderRadius: 2,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 3,
@@ -207,17 +218,34 @@ const styles = StyleSheet.create({
     width: THUMB,
     height: THUMB,
     borderRadius: THUMB / 2,
-    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
+    padding: 2.5,
   },
   thumbShadow: {
     shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
+    shadowOpacity: 0.55,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  thumbCore: { width: 8, height: 8, borderRadius: 4 },
+  puckBody: {
+    width: "100%",
+    height: "100%",
+    borderRadius: THUMB / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  puckGloss: {
+    position: "absolute",
+    top: 2,
+    left: THUMB * 0.22,
+    width: THUMB * 0.4,
+    height: THUMB * 0.22,
+    borderRadius: THUMB * 0.2,
+    opacity: 0.55,
+  },
+  puckHub: { width: 7, height: 7, borderRadius: 3.5, opacity: 0.9 },
   thumbTop: { zIndex: 2 },
 });
