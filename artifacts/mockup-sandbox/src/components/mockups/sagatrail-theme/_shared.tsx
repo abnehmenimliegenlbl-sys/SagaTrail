@@ -62,8 +62,8 @@ export function ScreenMock({
       {/* Weather / conditions banner */}
       <div className="px-6 mb-5">
         <div
-          className="rounded-2xl p-4 flex items-center gap-3"
-          style={{ backgroundColor: tokens.chipBg }}
+          className="rounded-2xl p-4 flex items-center gap-3 border-2"
+          style={{ backgroundColor: "#FFFFFF", borderColor: tokens.cardBorder }}
         >
           <Cloud size={22} color={tokens.cloudColor} />
           <div>
@@ -80,7 +80,7 @@ export function ScreenMock({
       {/* Saga card */}
       <div className="px-6 mb-5">
         <div
-          className="rounded-3xl overflow-hidden border"
+          className="rounded-3xl overflow-hidden border-2"
           style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
         >
           <div
@@ -111,7 +111,7 @@ export function ScreenMock({
       {/* Second saga chip row */}
       <div className="px-6 flex gap-3 mb-6">
         <div
-          className="flex-1 rounded-2xl p-3 border"
+          className="flex-1 rounded-2xl p-3 border-2"
           style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
         >
           <p className="text-xs font-semibold" style={{ color: tokens.cardSub }}>
@@ -122,7 +122,7 @@ export function ScreenMock({
           </p>
         </div>
         <div
-          className="flex-1 rounded-2xl p-3 border"
+          className="flex-1 rounded-2xl p-3 border-2"
           style={{ backgroundColor: tokens.cardBg, borderColor: tokens.cardBorder }}
         >
           <p className="text-xs font-semibold" style={{ color: tokens.cardSub }}>

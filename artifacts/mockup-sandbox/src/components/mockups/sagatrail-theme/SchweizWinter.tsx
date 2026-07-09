@@ -6,7 +6,7 @@ const tokens: ThemeTokens = {
   headerText: "#1A1A1A",
   headerSub: "#8A8A8A",
   cardBg: "#FFFFFF",
-  cardBorder: "#E7ECEF",
+  cardBorder: "#DA291C",
   cardText: "#1A1A1A",
   cardSub: "#7A8590",
   chipBg: "#EAF0F5",
