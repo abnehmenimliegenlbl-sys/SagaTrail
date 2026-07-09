@@ -26,6 +26,9 @@ export interface KantonStrings {
     eherSommer: string;
     nurSommer: string;
   };
+  buyPackButton: string;
+  packBuyErrorTitle: string;
+  packUnavailable: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -59,6 +62,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Eher Sommer/Herbst",
       nurSommer: "Nur Sommer",
     },
+    buyPackButton: "Sagenpaket für diesen Kanton kaufen",
+    packBuyErrorTitle: "Kauf fehlgeschlagen",
+    packUnavailable: "Sagen-Pack aktuell nicht verfügbar.",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -90,6 +96,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Eher Summer/Herbscht",
       nurSommer: "Nume Summer",
     },
+    buyPackButton: "Sage-Pack für dä Kanton chaufe",
+    packBuyErrorTitle: "Chauf fehlgschlage",
+    packUnavailable: "Sage-Pack grad nid verfüegbar.",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -121,6 +130,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Plutôt été/automne",
       nurSommer: "Été uniquement",
     },
+    buyPackButton: "Acheter le pack de légendes pour ce canton",
+    packBuyErrorTitle: "Échec de l'achat",
+    packUnavailable: "Pack de légendes actuellement indisponible.",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -152,6 +164,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Preferibilmente estate/autunno",
       nurSommer: "Solo estate",
     },
+    buyPackButton: "Acquista il pacchetto di leggende per questo cantone",
+    packBuyErrorTitle: "Acquisto non riuscito",
+    packUnavailable: "Pacchetto di leggende attualmente non disponibile.",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -183,6 +198,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Best in summer/autumn",
       nurSommer: "Summer only",
     },
+    buyPackButton: "Buy the legend pack for this canton",
+    packBuyErrorTitle: "Purchase failed",
+    packUnavailable: "Legend pack currently unavailable.",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -213,6 +231,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "建议夏秋季",
       nurSommer: "仅限夏季",
     },
+    buyPackButton: "购买该州的传说包",
+    packBuyErrorTitle: "购买失败",
+    packUnavailable: "传说包当前不可用。",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -244,6 +265,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Лучше летом/осенью",
       nurSommer: "Только летом",
     },
+    buyPackButton: "Купить пакет легенд для этого кантона",
+    packBuyErrorTitle: "Покупка не удалась",
+    packUnavailable: "Пакет легенд сейчас недоступен.",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -275,6 +299,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Mejor en verano/otoño",
       nurSommer: "Solo verano",
     },
+    buyPackButton: "Comprar el pack de leyendas de este cantón",
+    packBuyErrorTitle: "Compra fallida",
+    packUnavailable: "Pack de leyendas no disponible en este momento.",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -306,6 +333,9 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
       eherSommer: "Melhor no verão/outono",
       nurSommer: "Somente verão",
     },
+    buyPackButton: "Comprar o pacote de lendas para este cantão",
+    packBuyErrorTitle: "Falha na compra",
+    packUnavailable: "Pacote de lendas indisponível no momento.",
   },
 };
 

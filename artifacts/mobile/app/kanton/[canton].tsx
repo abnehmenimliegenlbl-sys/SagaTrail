@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   Platform,
   Pressable,
@@ -32,6 +33,13 @@ import { useKantonStrings } from "@/lib/i18n/screens/kanton";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
+import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import {
+  KANTONSPACK_PACKAGE,
+  REVENUECAT_PACKS_OFFERING,
+  useSubscription,
+} from "@/lib/revenuecat";
+import { ApiError, claimKantonspack } from "@workspace/api-client-react";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -52,9 +60,57 @@ export default function KantonRouten() {
   const { canton } = useLocalSearchParams<{ canton: string }>();
   const { profile, premium, freeHikeUsed } = useApp();
   const { loadCantonRoutes } = useCatalog();
+  const {
+    isElite,
+    hatEntitlement,
+    offerings,
+    purchase,
+    isPurchasing,
+    refreshCustomerInfo,
+  } = useSubscription();
+  const [packBusy, setPackBusy] = useState(false);
 
   const cantonName = decodeURIComponent(canton ?? "");
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
+
+  // Sagen-Pack-Regel: Premium-Kundschaft bekommt pro Kanton die erste
+  // entdeckte Sage inklusive; fuer weitere Sagen des Kantons braucht es das
+  // Pack dieses Kantons (oder Elite, das alle Packs einschliesst). Ohne
+  // Premium ist der Kauf noch nicht relevant (erst die Basis-Freischaltung).
+  const packKey = cantonName ? packEntitlementFuerKanton(cantonName) : "";
+  const packLocked =
+    premium && !!cantonName && !isElite && !hatEntitlement(packKey);
+  const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
+    (p) => p.identifier === KANTONSPACK_PACKAGE
+  );
+
+  const ordnePackZu = async () => {
+    await claimKantonspack({ kanton: kantonSlug(cantonName) });
+    await refreshCustomerInfo();
+  };
+
+  const kaufePack = async () => {
+    if (!packPaket) return;
+    setPackBusy(true);
+    try {
+      // Zuerst versuchen, einen bereits bezahlten, aber noch nicht
+      // zugeordneten Kauf zu verwenden — verhindert eine Doppelbelastung.
+      try {
+        await ordnePackZu();
+        return;
+      } catch (err: any) {
+        if (!(err instanceof ApiError && err.status === 409)) throw err;
+      }
+      await purchase(packPaket);
+      await ordnePackZu();
+    } catch (err: any) {
+      if (!err?.userCancelled) {
+        Alert.alert(t.packBuyErrorTitle, err?.message ?? String(err));
+      }
+    } finally {
+      setPackBusy(false);
+    }
+  };
 
   const [routes, setRoutes] = useState<HikingRoute[]>([]);
   const [routeSource, setRouteSource] = useState<CatalogSource>("server");
@@ -125,6 +181,21 @@ export default function KantonRouten() {
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
           {t.intro(cantonName)}
         </Text>
+
+        {packLocked && (
+          <PrimaryButton
+            label={
+              packPaket
+                ? `${t.buyPackButton} · ${packPaket.product.priceString}`
+                : t.buyPackButton
+            }
+            variant="gold"
+            onPress={kaufePack}
+            disabled={packBusy || isPurchasing || !packPaket}
+            loading={packBusy || isPurchasing}
+            style={{ marginBottom: 18 }}
+          />
+        )}
 
         <View
           style={[
