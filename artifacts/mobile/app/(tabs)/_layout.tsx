@@ -4,14 +4,15 @@ import { Tabs } from "expo-router";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
-import colors from "@/constants/colors";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { useThemeModeSafe } from "@/contexts/AppContext";
 
 type FeatherName = React.ComponentProps<typeof Feather>["name"];
 
 export default function TabLayout() {
   const c = useColors();
+  const themeMode = useThemeModeSafe();
   const isWeb = Platform.OS === "web";
 
   const icon =
@@ -31,7 +32,7 @@ export default function TabLayout() {
         },
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isWeb ? colors.dark.nachthimmel : "transparent",
+          backgroundColor: isWeb ? c.nachthimmel : "transparent",
           borderTopWidth: 1,
           borderTopColor: c.glassBorder,
           elevation: 0,
@@ -42,13 +43,13 @@ export default function TabLayout() {
             <View
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: colors.dark.nachthimmel },
+                { backgroundColor: c.nachthimmel },
               ]}
             />
           ) : (
             <BlurView
               intensity={30}
-              tint="dark"
+              tint={themeMode === "hell" ? "light" : "dark"}
               style={StyleSheet.absoluteFill}
             />
           ),

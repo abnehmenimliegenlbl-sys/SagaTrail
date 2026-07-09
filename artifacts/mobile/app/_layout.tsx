@@ -28,6 +28,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
@@ -63,7 +64,7 @@ if (typeof ErrorUtils !== "undefined") {
 
 configureApiClient();
 
-SystemUI.setBackgroundColorAsync(colors.dark.nachthimmel);
+SystemUI.setBackgroundColorAsync(colors.hell.nachthimmel);
 
 try {
   initializeRevenueCat();
@@ -89,6 +90,7 @@ function RootLayoutNav() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const c = useColors();
 
   useEffect(() => {
     if (!hydrated || !isLoaded) return;
@@ -114,7 +116,7 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.dark.talschatten },
+        contentStyle: { backgroundColor: c.talschatten },
         animation: "fade",
       }}
     >

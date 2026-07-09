@@ -2,10 +2,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 
-import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 
 /**
- * Durchgaengiger dunkler Verlauf (Berg bei Daemmerung).
+ * Durchgaengiger Hintergrund-Verlauf, folgt dem aktiven Hell/Dunkel-Modus.
  * `deep` fuer Splash/Onboarding (nachthimmel), sonst talschatten.
  */
 export function Background({
@@ -17,13 +17,14 @@ export function Background({
   deep?: boolean;
   style?: ViewStyle;
 }) {
+  const colors = useColors();
   return (
-    <View style={[styles.root, style]}>
+    <View style={[styles.root, { backgroundColor: colors.talschatten }, style]}>
       <LinearGradient
         colors={
           deep
-            ? [colors.dark.nachthimmel, "#0C1416", colors.dark.nachthimmel]
-            : [colors.dark.talschatten, colors.dark.nachthimmel]
+            ? [colors.nachthimmel, colors.talschatten, colors.nachthimmel]
+            : [colors.talschatten, colors.nachthimmel]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0.6, y: 1 }}
@@ -35,5 +36,5 @@ export function Background({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.dark.talschatten },
+  root: { flex: 1 },
 });
