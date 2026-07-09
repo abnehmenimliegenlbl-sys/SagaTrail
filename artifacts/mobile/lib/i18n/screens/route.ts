@@ -27,8 +27,10 @@ export interface RouteStrings {
   energySavingTitle: string;
   energySavingHint: string;
   importGpx: string;
+  importGpxImporting: string;
   importGpxTitle: string;
   importGpxText: string;
+  importGpxReadError: string;
   matchingSaga: string;
   matchingSagaHintLoading: string;
   matchingSagaHintLoaded: string;
@@ -91,9 +93,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Diese Tour verbraucht durch GPS und Audio spürbar Akku. Der Sparmodus schont die Batterie.",
     importGpx: "GPX importieren",
+    importGpxImporting: "GPX wird importiert …",
     importGpxTitle: "GPX-Import",
-    importGpxText:
-      "Der Import eigener GPX-Routen ist noch nicht verfügbar und folgt in einer späteren Ausbaustufe.",
+    importGpxText: "Die GPX-Datei konnte nicht verarbeitet werden.",
+    importGpxReadError: "Die Datei konnte nicht gelesen werden.",
     matchingSaga: "Passende Sage",
     matchingSagaHintLoading: "Die passende Regionalsage wird gesucht …",
     matchingSagaHintLoaded:
@@ -158,9 +161,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Die Tour verbruucht dur GPS und Audio spürbar Akku. De Sparmodus schont d'Batterie.",
     importGpx: "GPX importiere",
+    importGpxImporting: "GPX wird importiert …",
     importGpxTitle: "GPX-Import",
-    importGpxText:
-      "De Import vo eigene GPX-Rote isch no nid verfügbär und chunt spöter.",
+    importGpxText: "D'GPX-Datei het nid chöne verarbeitet wärde.",
+    importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
     matchingSaga: "Passendi Sag",
     matchingSagaHintLoading: "Die passendi Regionalsag wird gsuecht …",
     matchingSagaHintLoaded:
@@ -225,9 +229,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "This tour consumes noticeable battery due to GPS and audio. Energy saving mode conserves the battery.",
     importGpx: "Import GPX",
+    importGpxImporting: "Importing GPX …",
     importGpxTitle: "GPX Import",
-    importGpxText:
-      "Importing your own GPX routes is not yet available and will follow in a later stage.",
+    importGpxText: "The GPX file could not be processed.",
+    importGpxReadError: "The file could not be read.",
     matchingSaga: "Matching Legend",
     matchingSagaHintLoading: "Searching for matching regional legend …",
     matchingSagaHintLoaded:
@@ -292,9 +297,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Ce tour consomme beaucoup de batterie à cause du GPS et de l'audio. Le mode économie préserve la batterie.",
     importGpx: "Importer GPX",
+    importGpxImporting: "Importation du GPX …",
     importGpxTitle: "Import GPX",
-    importGpxText:
-      "L'importation de vos propres itinéraires GPX n'est pas encore disponible et suivra ultérieurement.",
+    importGpxText: "Le fichier GPX n'a pas pu être traité.",
+    importGpxReadError: "Le fichier n'a pas pu être lu.",
     matchingSaga: "Légende correspondante",
     matchingSagaHintLoading: "Recherche de la légende régionale correspondante …",
     matchingSagaHintLoaded:
@@ -359,9 +365,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Questo tour consuma molta batteria a causa del GPS e dell'audio. La modalità risparmio preserva la batteria.",
     importGpx: "Importa GPX",
+    importGpxImporting: "Importazione GPX …",
     importGpxTitle: "Importazione GPX",
-    importGpxText:
-      "L'importazione dei propri percorsi GPX non è ancora disponibile e seguirà in una fase successiva.",
+    importGpxText: "Il file GPX non ha potuto essere elaborato.",
+    importGpxReadError: "Il file non ha potuto essere letto.",
     matchingSaga: "Leggenda corrispondente",
     matchingSagaHintLoading: "Ricerca della leggenda regionale corrispondente …",
     matchingSagaHintLoaded:
@@ -426,9 +433,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Este recorrido consume mucha batería debido al GPS y al audio. El modo de ahorro conserva la batería.",
     importGpx: "Importar GPX",
+    importGpxImporting: "Importando GPX …",
     importGpxTitle: "Importación GPX",
-    importGpxText:
-      "La importación de rutas GPX propias aún no está disponible y seguirá en una etapa posterior.",
+    importGpxText: "El archivo GPX no pudo ser procesado.",
+    importGpxReadError: "El archivo no pudo ser leído.",
     matchingSaga: "Leyenda correspondiente",
     matchingSagaHintLoading: "Buscando leyenda regional correspondiente …",
     matchingSagaHintLoaded:
@@ -493,9 +501,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingHint:
       "Este passeio consome muita bateria devido ao GPS e áudio. O modo de economia preserva a bateria.",
     importGpx: "Importar GPX",
+    importGpxImporting: "Importando GPX …",
     importGpxTitle: "Importação GPX",
-    importGpxText:
-      "A importação de suas próprias rotas GPX ainda não está disponível e seguirá em uma fase posterior.",
+    importGpxText: "O arquivo GPX não pôde ser processado.",
+    importGpxReadError: "O arquivo não pôde ser lido.",
     matchingSaga: "Lenda Correspondente",
     matchingSagaHintLoading: "Procurando por lenda regional correspondente …",
     matchingSagaHintLoaded:
@@ -557,8 +566,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     energySavingTitle: "省电模式",
     energySavingHint: "由于使用 GPS 和音频，此次行程较耗电。省电模式可延长续航。",
     importGpx: "导入 GPX",
+    importGpxImporting: "正在导入 GPX …",
     importGpxTitle: "GPX 导入",
-    importGpxText: "目前尚不支持导入自定义 GPX 路线，该功能将在后续版本中推出。",
+    importGpxText: "GPX 文件无法处理。",
+    importGpxReadError: "文件无法读取。",
     matchingSaga: "匹配的传说",
     matchingSagaHintLoading: "正在寻找匹配的地区传说 …",
     matchingSagaHintLoaded: "这个古老的传说将伴随你的旅程。点击开始阅读。",
