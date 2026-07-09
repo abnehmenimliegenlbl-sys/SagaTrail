@@ -44,6 +44,9 @@ export const catalogSagasTable = pgTable("catalog_sagas", {
   title: text("title").notNull(),
   canton: text("canton").notNull(),
   coreMotif: text("core_motif").notNull(),
+  // Konkreter, fotografierbarer Suchbegriff fuer das Sagenbild (z. B.
+  // "Vogel Gryff Basel", "Braunbär"), unabhaengig vom Handlungsort.
+  bildmotiv: text("bildmotiv"),
   mood: text("mood").notNull(),
   // Deutsche Kurzfassung; dient als Anzeige-Default und Fallback.
   summary: text("summary").notNull(),

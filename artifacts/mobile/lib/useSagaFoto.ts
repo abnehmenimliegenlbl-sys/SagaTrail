@@ -1,14 +1,16 @@
-import { getRoutePhoto } from "@workspace/api-client-react";
+import { getRoutePhoto, getSagaPhoto } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 
 import { Saga } from "@/types";
 
 /**
- * Laedt fuer eine Sage ein echtes, ortsnahes Foto (Wikimedia Commons, ueber
- * den eigenen API-Server) — dieselbe Quelle, die auch fuer Routenfotos
- * verwendet wird. Nur moeglich, wenn die Sage Koordinaten hat; sonst (und
- * solange nichts geladen ist) wird das gebuendelte Fallback-Bild gezeigt.
+ * Laedt fuer eine Sage ein echtes Foto (Wikimedia Commons, ueber den eigenen
+ * API-Server). Zuerst wird nach dem Kernmotiv der Sage gesucht (z. B.
+ * "Vogel Gryff", "Baer") — das Bild soll zeigen, WORUM es in der Sage geht,
+ * nicht bloss den Ort der Handlung. Nur wenn das nichts liefert, wird auf ein
+ * ortsnahes Foto (Koordinaten) zurueckgegriffen; sonst (und solange nichts
+ * geladen ist) zeigt sich das gebuendelte Fallback-Bild.
  */
 
 const heroImg = require("@/assets/images/hero-valley.png");
@@ -31,26 +33,57 @@ function fallbackBild(saga: Saga | null): number {
   return saga?.id === "teufelsbrucke" ? teufelImg : heroImg;
 }
 
-function cacheSchluessel(saga: Saga | null): string | null {
-  if (!saga?.coordinates) return null;
-  return `${saga.coordinates.lat.toFixed(3)}|${saga.coordinates.lng.toFixed(3)}`;
+function motivSuchbegriff(saga: Saga): string | null {
+  return saga.bildmotiv ?? null;
 }
 
-async function ladeFoto(lat: number, lng: number, schluessel: string): Promise<GecachtesFoto> {
+function cacheSchluessel(saga: Saga | null): string | null {
+  if (!saga) return null;
+  return saga.id;
+}
+
+async function ladeMotivFoto(saga: Saga, schluessel: string): Promise<GecachtesFoto> {
   const vorhanden = fotoCache.get(schluessel);
   if (vorhanden) return vorhanden;
   const bereits = laufend.get(schluessel);
   if (bereits) return bereits;
-  const anfrage = getRoutePhoto({ lat, lng })
-    .then((antwort) => {
-      const foto: GecachtesFoto = {
-        url: antwort.photoUrl ?? null,
-        attribution: antwort.attribution ?? null,
-      };
+  const anfrage = (async (): Promise<GecachtesFoto> => {
+    // 1. Versuch: Foto passend zum konkreten Bildmotiv der Sage (worum es
+    // inhaltlich geht, z. B. "Vogel Gryff" statt Rheinufer).
+    const suchbegriff = motivSuchbegriff(saga);
+    if (suchbegriff) {
+      try {
+        const motivAntwort = await getSagaPhoto({ query: suchbegriff });
+        if (motivAntwort.photoUrl) {
+          return {
+            url: motivAntwort.photoUrl,
+            attribution: motivAntwort.attribution ?? null,
+          };
+        }
+      } catch {
+        // ignorieren, weiter mit Orts-Fallback
+      }
+    }
+    // 2. Fallback: ortsnahes Foto ueber die Koordinaten, falls vorhanden.
+    if (saga.coordinates) {
+      try {
+        const ortAntwort = await getRoutePhoto({
+          lat: saga.coordinates.lat,
+          lng: saga.coordinates.lng,
+        });
+        if (ortAntwort.photoUrl) {
+          return { url: ortAntwort.photoUrl, attribution: ortAntwort.attribution ?? null };
+        }
+      } catch {
+        // ignorieren, Client zeigt gebuendeltes Fallback-Bild
+      }
+    }
+    return { url: null, attribution: null };
+  })()
+    .then((foto) => {
       fotoCache.set(schluessel, foto);
       return foto;
     })
-    .catch((): GecachtesFoto => ({ url: null, attribution: null }))
     .finally(() => {
       laufend.delete(schluessel);
     });
@@ -66,12 +99,12 @@ export function useSagaFoto(saga: Saga | null): SagaFoto {
   );
 
   useEffect(() => {
-    if (!schluessel || !saga?.coordinates) {
+    if (!schluessel || !saga) {
       setFoto(null);
       return;
     }
     let aktiv = true;
-    ladeFoto(saga.coordinates.lat, saga.coordinates.lng, schluessel).then((geladen) => {
+    ladeMotivFoto(saga, schluessel).then((geladen) => {
       if (aktiv) setFoto(geladen);
     });
     return () => {

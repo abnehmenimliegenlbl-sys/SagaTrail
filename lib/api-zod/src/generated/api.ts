@@ -50,6 +50,7 @@ export const GetCatalogResponse = zod.object({
   "title": zod.string(),
   "canton": zod.string(),
   "coreMotif": zod.string(),
+  "bildmotiv": zod.string().optional().describe('Konkreter, fotografierbarer Suchbegriff fuer das Sagenbild (z. B. \"Vogel Gryff Basel\", \"Braunbär\"), unabhaengig vom Handlungsort.\n'),
   "mood": zod.string(),
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({
@@ -264,6 +265,20 @@ export const GetRoutePhotoResponse = zod.object({
 
 
 /**
+ * Sucht ein echtes Foto ueber die Wikimedia-Commons-Volltextsuche nach dem Kernmotiv der Sage (z. B. "Vogel Gryff", "Baer"), statt nach dem Ort der Handlung. Liefert null, wenn kein passendes Foto gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+ * @summary Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
+ */
+export const GetSagaPhotoQueryParams = zod.object({
+  "query": zod.coerce.string()
+})
+
+export const GetSagaPhotoResponse = zod.object({
+  "photoUrl": zod.string().nullable(),
+  "attribution": zod.string().nullable()
+}).describe('Repraesentatives Foto aus Wikimedia Commons nahe dem Routenstart. photoUrl ist null, wenn nichts Passendes gefunden wurde.\n')
+
+
+/**
  * Liefert bis zu sechs Orts-/Adressvorschlaege in der Schweiz (OpenStreetMap Nominatim, ohne API-Key) fuer eine Sucheingabe. Dient als Vorschlagsliste bei der Eingabe von Start und Ziel einer eigenen Route.
  * @summary Orts-/Adresssuche in der Schweiz fuer die Eigene-Route-Eingabe
  */
@@ -363,6 +378,7 @@ export const GetRouteSagaResponse = zod.object({
   "title": zod.string(),
   "canton": zod.string(),
   "coreMotif": zod.string(),
+  "bildmotiv": zod.string().optional().describe('Konkreter, fotografierbarer Suchbegriff fuer das Sagenbild (z. B. \"Vogel Gryff Basel\", \"Braunbär\"), unabhaengig vom Handlungsort.\n'),
   "mood": zod.string(),
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({

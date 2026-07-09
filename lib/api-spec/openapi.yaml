@@ -373,6 +373,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /sagas/photo:
+    get:
+      operationId: getSagaPhoto
+      tags: [routes]
+      summary: Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
+      description: >
+        Sucht ein echtes Foto ueber die Wikimedia-Commons-Volltextsuche nach
+        dem Kernmotiv der Sage (z. B. "Vogel Gryff", "Baer"), statt nach dem
+        Ort der Handlung. Liefert null, wenn kein passendes Foto gefunden
+        wird — der Client zeigt dann sein eigenes Fallback-Bild.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Foto-URL oder null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutePhoto"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/geocode:
     get:
       operationId: searchPlaces
@@ -1179,6 +1208,11 @@ components:
           type: string
         coreMotif:
           type: string
+        bildmotiv:
+          type: string
+          description: >
+            Konkreter, fotografierbarer Suchbegriff fuer das Sagenbild (z. B.
+            "Vogel Gryff Basel", "Braunbär"), unabhaengig vom Handlungsort.
         mood:
           type: string
         summary:

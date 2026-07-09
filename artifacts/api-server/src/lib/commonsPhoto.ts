@@ -107,6 +107,35 @@ function wirktWieFoto(titel: string): boolean {
   return !verboten.some((wort) => klein.includes(wort));
 }
 
+async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> {
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    formatversion: "1",
+    generator: "search",
+    gsrsearch: `${query} filetype:bitmap`,
+    gsrnamespace: "6",
+    gsrlimit: String(MAX_KANDIDATEN),
+    prop: "imageinfo",
+    iiprop: "url|extmetadata",
+    iiurlwidth: String(THUMB_BREITE_PX),
+    iiextmetadatafilter: "DateTimeOriginal|Artist|LicenseShortName",
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${COMMONS_API_URL}?${params}`, {
+      signal: controller.signal,
+      headers: { "User-Agent": "SagaTrail/1.0 (Sagenfoto-Suche)" },
+    });
+    if (!res.ok) throw new Error(`Commons-API-Status ${res.status}`);
+    const data = (await res.json()) as CommonsResponse;
+    return Object.values(data.query?.pages ?? {});
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[]> {
   const params = new URLSearchParams({
     action: "query",
@@ -207,6 +236,51 @@ function wähleFoto(seiten: CommonsPage[], jetzt: Date): RoutePhoto | null {
     .filter((teil): teil is string => teil != null)
     .join(" · ");
   return { photoUrl: gewaehlt.url, attribution };
+}
+
+/** Bestplatziertes brauchbares Foto aus einer Volltextsuche waehlen (keine Orts-/Saisonlogik). */
+function wähleTextFoto(seiten: CommonsPage[]): RoutePhoto | null {
+  const kandidaten = seiten
+    .filter((s) => s.title && wirktWieFoto(s.title) && s.imageinfo?.[0]?.thumburl)
+    .map((s, index) => {
+      const info = s.imageinfo![0]!;
+      return {
+        url: info.thumburl ?? info.url ?? null,
+        index,
+        autor: htmlZuText(info.extmetadata?.Artist?.value),
+        lizenz: htmlZuText(info.extmetadata?.LicenseShortName?.value),
+      };
+    })
+    .filter((k) => k.url != null);
+  if (kandidaten.length === 0) return null;
+  // Volltextsuche liefert bereits relevanzsortiert — Reihenfolge beibehalten.
+  const gewaehlt = kandidaten[0]!;
+  const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
+    .filter((teil): teil is string => teil != null)
+    .join(" · ");
+  return { photoUrl: gewaehlt.url, attribution };
+}
+
+export async function getCachedSagaPhoto(query: string, log: Logger): Promise<RoutePhoto> {
+  const schluessel = `text:${query.trim().toLowerCase()}`;
+  const jetztMs = Date.now();
+  const vorhanden = cache.get(schluessel);
+  if (vorhanden && vorhanden.bisMs > jetztMs) return vorhanden.wert;
+  try {
+    const seiten = await sucheCommonsFotosNachText(query);
+    const foto = wähleTextFoto(seiten);
+    const wert: RoutePhoto = foto ?? { photoUrl: null, attribution: null };
+    cache.set(schluessel, {
+      wert,
+      bisMs: jetztMs + (foto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
+    });
+    return wert;
+  } catch (err) {
+    log.warn({ query, err }, "Commons-Sagenfoto (Textsuche) konnte nicht geladen werden");
+    const wert: RoutePhoto = { photoUrl: null, attribution: null };
+    cache.set(schluessel, { wert, bisMs: jetztMs + NEGATIV_TTL_MS });
+    return wert;
+  }
 }
 
 export async function getCachedRoutePhoto(

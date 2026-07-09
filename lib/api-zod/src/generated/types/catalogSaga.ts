@@ -15,6 +15,8 @@ export interface CatalogSaga {
   title: string;
   canton: string;
   coreMotif: string;
+  /** Konkreter, fotografierbarer Suchbegriff fuer das Sagenbild (z. B. "Vogel Gryff Basel", "Braunbär"), unabhaengig vom Handlungsort. */
+  bildmotiv?: string;
   mood: string;
   summary: string;
   summaries: CatalogSagaSummaries;

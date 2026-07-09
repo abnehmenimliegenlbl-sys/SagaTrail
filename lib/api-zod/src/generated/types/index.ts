@@ -25,6 +25,7 @@ export * from './getCustomRouteParams';
 export * from './getPoisParams';
 export * from './getPoiStoryParams';
 export * from './getRoutePhotoParams';
+export * from './getSagaPhotoParams';
 export * from './getWeatherParams';
 export * from './gpxImportBody';
 export * from './healthStatus';

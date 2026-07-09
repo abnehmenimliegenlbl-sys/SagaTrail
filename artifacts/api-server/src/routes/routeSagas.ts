@@ -13,6 +13,7 @@ function toSaga(row: CatalogSagaRow) {
     title: row.title,
     canton: row.canton,
     coreMotif: row.coreMotif,
+    bildmotiv: row.bildmotiv ?? undefined,
     mood: row.mood,
     summary: row.summary,
     summaries: row.summaries,

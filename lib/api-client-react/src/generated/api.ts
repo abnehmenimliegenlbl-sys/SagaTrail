@@ -34,6 +34,7 @@ import type {
   GetPoiStoryParams,
   GetPoisParams,
   GetRoutePhotoParams,
+  GetSagaPhotoParams,
   GetWeatherParams,
   GpxImportBody,
   HealthStatus,
@@ -807,6 +808,91 @@ export function useGetRoutePhoto<TData = Awaited<ReturnType<typeof getRoutePhoto
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRoutePhotoQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSagaPhotoUrl = (params: GetSagaPhotoParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sagas/photo?${stringifiedParams}` : `/api/sagas/photo`
+}
+
+/**
+ * Sucht ein echtes Foto ueber die Wikimedia-Commons-Volltextsuche nach dem Kernmotiv der Sage (z. B. "Vogel Gryff", "Baer"), statt nach dem Ort der Handlung. Liefert null, wenn kein passendes Foto gefunden wird — der Client zeigt dann sein eigenes Fallback-Bild.
+ * @summary Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
+ */
+export const getSagaPhoto = async (params: GetSagaPhotoParams, options?: RequestInit): Promise<RoutePhoto> => {
+
+  return customFetch<RoutePhoto>(getGetSagaPhotoUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSagaPhotoQueryKey = (params?: GetSagaPhotoParams,) => {
+    return [
+    `/api/sagas/photo`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSagaPhotoQueryOptions = <TData = Awaited<ReturnType<typeof getSagaPhoto>>, TError = ErrorType<ErrorResponse>>(params: GetSagaPhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSagaPhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSagaPhotoQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSagaPhoto>>> = ({ signal }) => getSagaPhoto(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSagaPhoto>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSagaPhotoQueryResult = NonNullable<Awaited<ReturnType<typeof getSagaPhoto>>>
+export type GetSagaPhotoQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
+ */
+
+export function useGetSagaPhoto<TData = Awaited<ReturnType<typeof getSagaPhoto>>, TError = ErrorType<ErrorResponse>>(
+ params: GetSagaPhotoParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSagaPhoto>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSagaPhotoQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -445,6 +445,7 @@ function sagaFromWikiSummary(
     title: wiki.title,
     canton,
     coreMotif: "Regionale Ueberlieferung",
+    bildmotiv: null,
     mood: "unbekannt",
     summary: wiki.extract,
     summaries: { de: { text: wiki.extract, reviewEmpfohlen: false } },

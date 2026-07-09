@@ -19,6 +19,7 @@ export async function seedCatalog(): Promise<void> {
         title: sql`excluded.title`,
         canton: sql`excluded.canton`,
         coreMotif: sql`excluded.core_motif`,
+        bildmotiv: sql`excluded.bildmotiv`,
         mood: sql`excluded.mood`,
         summary: sql`excluded.summary`,
         summaries: sql`excluded.summaries`,
