@@ -1,9 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -26,8 +24,6 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useColors } from "@/hooks/useColors";
-
-const heroImg = require("@/assets/images/hero-valley.png");
 
 const WEB_TOP = 67;
 
@@ -70,23 +66,27 @@ export default function Entdecken() {
         </View>
 
         {/* Hero */}
-        <Animated.View entering={FadeInDown.duration(500)} style={styles.hero}>
-          <Image source={heroImg} style={styles.heroImg} resizeMode="cover" />
-          <LinearGradient
-            colors={["transparent", "rgba(16,24,26,0.95)"]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.heroContent}>
-            <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
-              {t.step1Title}
-            </Text>
-            <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-              {t.whereStart}
-            </Text>
-            <Text style={[styles.heroBody, { color: colors.foreground }]}>
-              {t.heroBody}
-            </Text>
-          </View>
+        <Animated.View
+          entering={FadeInDown.duration(500)}
+          style={[
+            styles.hero,
+            GLAS_3D,
+            {
+              backgroundColor: colors.glassBg,
+              borderColor: colors.glassBorder,
+              borderRadius: colors.radius,
+            },
+          ]}
+        >
+          <Text style={[styles.heroEyebrow, { color: colors.accent }]}>
+            {t.step1Title}
+          </Text>
+          <Text style={[styles.heroTitle, { color: colors.foreground }]}>
+            {t.whereStart}
+          </Text>
+          <Text style={[styles.heroBody, { color: colors.mutedForeground }]}>
+            {t.heroBody}
+          </Text>
         </Animated.View>
 
         {activeHike && (
@@ -318,12 +318,9 @@ const styles = StyleSheet.create({
   archetype: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
   hero: {
     marginHorizontal: 20,
-    height: 230,
-    borderRadius: 18,
-    overflow: "hidden",
+    padding: 18,
+    borderWidth: 1,
   },
-  heroImg: { width: "100%", height: "100%" },
-  heroContent: { position: "absolute", left: 18, right: 18, bottom: 18 },
   heroEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 6 },
   heroBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
