@@ -960,8 +960,11 @@ export default function LiveHike() {
     Pedometer.isAvailableAsync()
       .then((available) => {
         if (!available || cancelled) return;
+        // WICHTIG: result.steps ist die kumulierte Schrittzahl seit Beginn
+        // dieses Abos (nicht das Delta seit dem letzten Event) — direkt
+        // uebernehmen statt aufzuaddieren, sonst wird vielfach gezaehlt.
         subscription = Pedometer.watchStepCount((result) => {
-          setSteps((prev) => prev + result.steps);
+          setSteps(result.steps);
         });
       })
       .catch(() => {
