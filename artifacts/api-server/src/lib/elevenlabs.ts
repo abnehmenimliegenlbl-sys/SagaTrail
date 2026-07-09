@@ -32,11 +32,18 @@ export const DEFAULT_NARRATOR_VOICE_ID = "ErXwobaYiN019PkySvjV";
 // weiterhin per Env-Variable ueberschreiben.
 const GSW_NARRATOR_VOICE_ID =
   process.env.NARRATOR_VOICE_ID_GSW || "kMdYHZK2wkocJnpZxE08";
+// Fuer Hochdeutsch (de) eine eigene, vom Auftraggeber ausgewaehlte Stimme.
+// Ueberschreibbar per Env-Variable, gleiches Rueckfallprinzip wie bei gsw.
+const DE_NARRATOR_VOICE_ID =
+  process.env.NARRATOR_VOICE_ID_DE || "g1jpii0iyvtRs8fqXsd1";
 const MODEL_ID = "eleven_multilingual_v2";
 
 export function voiceCandidatesForLanguage(language: string | undefined): string[] {
   if (language === "gsw" && GSW_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
     return [GSW_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
+  }
+  if (language === "de" && DE_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
+    return [DE_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
   }
   return [DEFAULT_NARRATOR_VOICE_ID];
 }
