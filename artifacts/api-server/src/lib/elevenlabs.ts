@@ -1,4 +1,5 @@
 import type { Logger } from "pino";
+import { textToSpeech as openaiTextToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 
 /**
  * ElevenLabs Text-to-Speech Client fuer die kostenpflichtige, natuerlich
@@ -10,6 +11,12 @@ import type { Logger } from "pino";
  * der Aufrufer muss fuer gsw bereits den Hochdeutsch-Text uebergeben. Die
  * "Schweizer Faerbung" kommt ausschliesslich ueber die Stimmwahl, nicht
  * ueber den Text.
+ *
+ * Wenn ELEVEN_LABS_API_KEY fehlt oder ALLE ElevenLabs-Stimmen scheitern
+ * (z.B. Kontingent auf 0, Konto-Sperre), springt als letzte Stufe OpenAI
+ * (gpt-audio ueber die Replit-AI-Integration, keine eigene Rechnung) ein.
+ * Klingt neutraler/ohne Schweizer Akzent, haelt die Erzaehlung aber
+ * hoerbar statt komplett auszufallen.
  */
 
 const ELEVEN_LABS_API_BASE = "https://api.elevenlabs.io/v1";
@@ -52,6 +59,11 @@ export function voiceCandidatesForLanguage(language: string | undefined): string
 // 402 = Planbeschraenkung (Bibliotheks-Stimme im Gratis-Plan),
 // 401/403 = fehlende Berechtigung, 404 = Stimme nicht (mehr) verfuegbar.
 const VOICE_FALLBACK_STATUS = new Set([401, 402, 403, 404]);
+
+// Letzte Rueckfallstufe, wenn ElevenLabs komplett ausfaellt (z.B. Kontingent
+// erschoepft). Kein echtes ElevenLabs-Voice-ID-Format, dient hier als
+// eindeutiger Cache-Schluessel-Anteil (siehe narrationCache.ts).
+export const OPENAI_FALLBACK_VOICE_ID = "openai:alloy";
 
 export class ElevenLabsError extends Error {
   constructor(
@@ -107,44 +119,68 @@ export interface NarrationResult {
   voiceId: string;
 }
 
+async function requestOpenAiFallback(text: string, log: Logger): Promise<Buffer> {
+  log.warn(
+    { chars: text.length },
+    "ElevenLabs komplett nicht verfuegbar, Rueckfall auf OpenAI-Stimme",
+  );
+  return openaiTextToSpeech(text, "alloy", "mp3");
+}
+
 export async function synthesizeNarration(
   text: string,
   language: string | undefined,
   log: Logger,
 ): Promise<NarrationResult> {
   const apiKey = process.env.ELEVEN_LABS_API_KEY;
-  if (!apiKey) {
-    throw new ElevenLabsError("ELEVEN_LABS_API_KEY nicht gesetzt");
+
+  if (apiKey) {
+    const candidates = voiceCandidatesForLanguage(language);
+    let lastStatus: number | undefined;
+    let lastError: unknown;
+    for (let i = 0; i < candidates.length; i++) {
+      const voiceId = candidates[i];
+      log.info(
+        { chars: text.length, language, voiceId, versuch: i + 1 },
+        "ElevenLabs Sprachsynthese startet",
+      );
+      try {
+        const audio = await requestTts(voiceId, text, apiKey);
+        return { audio, voiceId };
+      } catch (err) {
+        lastError = err;
+        const status = err instanceof ElevenLabsError ? err.status : undefined;
+        lastStatus = status;
+        const hatFallback = i < candidates.length - 1;
+        if (hatFallback && status !== undefined && VOICE_FALLBACK_STATUS.has(status)) {
+          // Wunschstimme (z.B. Schweizer Akzent) ist mit dem aktuellen Plan/Key
+          // nicht nutzbar — Standardstimme uebernimmt, Narration bleibt hoerbar.
+          log.warn(
+            { voiceId, status },
+            "Stimme nicht verfuegbar, Rueckfall auf Standardstimme",
+          );
+          continue;
+        }
+        break;
+      }
+    }
+    // Auch die Standardstimme ist gescheitert (z.B. Kontingent = 0, Status
+    // 401/402) — statt die Erzaehlung komplett ausfallen zu lassen, springt
+    // OpenAI als letzte Stufe ein.
+    if (lastStatus !== undefined && VOICE_FALLBACK_STATUS.has(lastStatus)) {
+      try {
+        const audio = await requestOpenAiFallback(text, log);
+        return { audio, voiceId: OPENAI_FALLBACK_VOICE_ID };
+      } catch (openaiErr) {
+        log.error({ err: openaiErr }, "OpenAI-Rueckfall ebenfalls fehlgeschlagen");
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new ElevenLabsError("ElevenLabs TTS fehlgeschlagen");
   }
 
-  const candidates = voiceCandidatesForLanguage(language);
-  let lastError: unknown;
-  for (let i = 0; i < candidates.length; i++) {
-    const voiceId = candidates[i];
-    log.info(
-      { chars: text.length, language, voiceId, versuch: i + 1 },
-      "ElevenLabs Sprachsynthese startet",
-    );
-    try {
-      const audio = await requestTts(voiceId, text, apiKey);
-      return { audio, voiceId };
-    } catch (err) {
-      lastError = err;
-      const status = err instanceof ElevenLabsError ? err.status : undefined;
-      const hatFallback = i < candidates.length - 1;
-      if (hatFallback && status !== undefined && VOICE_FALLBACK_STATUS.has(status)) {
-        // Wunschstimme (z.B. Schweizer Akzent) ist mit dem aktuellen Plan/Key
-        // nicht nutzbar — Standardstimme uebernimmt, Narration bleibt hoerbar.
-        log.warn(
-          { voiceId, status },
-          "Stimme nicht verfuegbar, Rueckfall auf Standardstimme",
-        );
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastError instanceof Error
-    ? lastError
-    : new ElevenLabsError("ElevenLabs TTS fehlgeschlagen");
+  // Kein ElevenLabs-Key gesetzt: direkt OpenAI verwenden.
+  const audio = await requestOpenAiFallback(text, log);
+  return { audio, voiceId: OPENAI_FALLBACK_VOICE_ID };
 }

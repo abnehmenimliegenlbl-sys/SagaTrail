@@ -3,6 +3,7 @@ import type { Logger } from "pino";
 import { objectStorageClient } from "./objectStorage";
 import {
   DEFAULT_NARRATOR_VOICE_ID,
+  OPENAI_FALLBACK_VOICE_ID,
   synthesizeNarration,
   voiceCandidatesForLanguage,
 } from "./elevenlabs";
@@ -73,7 +74,8 @@ async function readFromCache(
   log: Logger,
 ): Promise<Buffer | null> {
   try {
-    for (const voiceId of voiceCandidatesForLanguage(language)) {
+    const candidates = [...voiceCandidatesForLanguage(language), OPENAI_FALLBACK_VOICE_ID];
+    for (const voiceId of candidates) {
       const hash = hashNarrationText(text, language, voiceId);
       const file = bucket.file(narrationObjectName(hash));
       const [exists] = await file.exists();
