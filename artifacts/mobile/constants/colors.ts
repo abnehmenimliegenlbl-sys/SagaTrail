@@ -31,8 +31,8 @@ const hell = {
   photoScrimText: "#FFFFFF",
   photoScrimMuted: "rgba(255,255,255,0.78)",
 
-  // Puck-Schieberegler (Eishockey-Look): dunkler Rand, glaenzendes Oben, dunkler Rand unten
-  puckRim: "#22201E",
+  // Puck-Schieberegler (Eishockey-Look): weisser Rand wie Schweizer Kreuz, glaenzendes Oben, dunkler Rand unten
+  puckRim: "#FFFFFF",
   puckHighlight: "#FF7A6E",
   puckShade: "#8C1710",
 
@@ -75,8 +75,8 @@ const dunkel = {
   photoScrimText: "#FFFFFF",
   photoScrimMuted: "rgba(255,255,255,0.78)",
 
-  // Puck-Schieberegler (Eishockey-Look): dunkler Rand, glaenzendes Oben, dunkler Rand unten
-  puckRim: "#0B0C0E",
+  // Puck-Schieberegler (Eishockey-Look): weisser Rand wie Schweizer Kreuz, glaenzendes Oben, dunkler Rand unten
+  puckRim: "#FFFFFF",
   puckHighlight: "#FF9188",
   puckShade: "#7A140E",
 

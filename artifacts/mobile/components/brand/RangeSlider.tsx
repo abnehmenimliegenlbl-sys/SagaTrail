@@ -159,8 +159,11 @@ export function RangeSlider({
             locations={[0, 0.45, 1]}
             style={styles.puckBody}
           >
-            <View style={[styles.puckGloss, { backgroundColor: colors.puckHighlight }]} />
-            <View style={[styles.puckHub, { backgroundColor: colors.puckRim }]} />
+            <View style={[styles.puckGloss, { backgroundColor: "#FFFFFF" }]} />
+            <View style={styles.puckCross}>
+              <View style={[styles.puckCrossBarV, { backgroundColor: "#FFFFFF" }]} />
+              <View style={[styles.puckCrossBarH, { backgroundColor: "#FFFFFF" }]} />
+            </View>
           </LinearGradient>
         </View>
         <View
@@ -178,8 +181,11 @@ export function RangeSlider({
             locations={[0, 0.45, 1]}
             style={styles.puckBody}
           >
-            <View style={[styles.puckGloss, { backgroundColor: colors.puckHighlight }]} />
-            <View style={[styles.puckHub, { backgroundColor: colors.puckRim }]} />
+            <View style={[styles.puckGloss, { backgroundColor: "#FFFFFF" }]} />
+            <View style={styles.puckCross}>
+              <View style={[styles.puckCrossBarV, { backgroundColor: "#FFFFFF" }]} />
+              <View style={[styles.puckCrossBarH, { backgroundColor: "#FFFFFF" }]} />
+            </View>
           </LinearGradient>
         </View>
       </View>
@@ -246,6 +252,24 @@ const styles = StyleSheet.create({
     borderRadius: THUMB * 0.2,
     opacity: 0.55,
   },
-  puckHub: { width: 7, height: 7, borderRadius: 3.5, opacity: 0.9 },
+  puckCross: {
+    position: "absolute",
+    width: THUMB * 0.4,
+    height: THUMB * 0.4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  puckCrossBarV: {
+    position: "absolute",
+    width: 3,
+    height: "100%",
+    borderRadius: 1.5,
+  },
+  puckCrossBarH: {
+    position: "absolute",
+    width: "100%",
+    height: 3,
+    borderRadius: 1.5,
+  },
   thumbTop: { zIndex: 2 },
 });
