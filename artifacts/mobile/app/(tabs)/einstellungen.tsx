@@ -4,7 +4,7 @@ import { createNarration } from "@workspace/api-client-react";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import * as Speech from "expo-speech";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -88,7 +88,6 @@ export default function Einstellungen() {
   const previewGenRef = useRef(0);
 
   const stopPreview = useCallback(async () => {
-    Speech.stop();
     const sound = previewSoundRef.current;
     previewSoundRef.current = null;
     if (sound) {
@@ -133,9 +132,6 @@ export default function Einstellungen() {
     updateProfile({ language: code });
   };
 
-  // Premium: gleiche KI-Erzaehlstimme (ElevenLabs via Server) wie auf der
-  // Wanderung; Fallback auf die Geraetestimme mit sichtbarem Hinweis.
-  // Ohne Premium direkt die Geraetestimme (wie waehrend der Wanderung).
   const previewVoice = useCallback(async () => {
     const lang = resolveLang(profile?.language);
     const sample = VOICE_SAMPLES[lang] ?? VOICE_SAMPLES.de;
@@ -143,37 +139,30 @@ export default function Einstellungen() {
     await stopPreview();
     if (gen !== previewGenRef.current) return;
     setPreviewUnavailable(false);
-
-    if (premium) {
-      setPreviewLoading(true);
-      try {
-        const blob = await createNarration({ text: sample, language: profile?.language });
-        const uri = await blobToDataUri(blob);
-        if (gen !== previewGenRef.current) return;
-        const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
-        if (gen !== previewGenRef.current) {
-          void sound.unloadAsync();
-          return;
-        }
-        previewSoundRef.current = sound;
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish && previewSoundRef.current === sound) {
-            previewSoundRef.current = null;
-            void sound.unloadAsync();
-          }
-        });
+    setPreviewLoading(true);
+    try {
+      const blob = await createNarration({ text: sample, language: profile?.language });
+      const uri = await blobToDataUri(blob);
+      if (gen !== previewGenRef.current) return;
+      const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+      if (gen !== previewGenRef.current) {
+        void sound.unloadAsync();
         return;
-      } catch {
-        if (gen !== previewGenRef.current) return;
-        setPreviewUnavailable(true);
-        // weiter zum Geraetestimmen-Fallback
-      } finally {
-        if (gen === previewGenRef.current) setPreviewLoading(false);
       }
+      previewSoundRef.current = sound;
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish && previewSoundRef.current === sound) {
+          previewSoundRef.current = null;
+          void sound.unloadAsync();
+        }
+      });
+    } catch {
+      if (gen !== previewGenRef.current) return;
+      setPreviewUnavailable(true);
+    } finally {
+      if (gen === previewGenRef.current) setPreviewLoading(false);
     }
-
-    Speech.speak(sample, { language: SPEECH_LOCALE[lang] });
-  }, [premium, profile?.language, stopPreview]);
+  }, [profile?.language, stopPreview]);
 
   const handleExport = async () => {
     const json = await exportData();

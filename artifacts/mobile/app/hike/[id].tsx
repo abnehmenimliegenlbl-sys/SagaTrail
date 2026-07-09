@@ -10,7 +10,7 @@ import { Audio, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Speech from "expo-speech";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -51,7 +51,6 @@ import { bboxAroundGeometry, distanzZuSegmentKm, haversineKm } from "@/lib/geo";
 import {
   effectiveStoryLanguage,
   resolveLang,
-  SPEECH_LOCALE,
   STORY_PACKS,
   trimForNarration,
 } from "@/lib/storyContent";
@@ -180,7 +179,7 @@ export default function LiveHike() {
   // Premium — kein Offline-Fallback. Fuer "gsw" wird dabei NIE Dialekt-Text
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
   // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
-  const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", premium);
+  const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", true);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
@@ -629,10 +628,7 @@ export default function LiveHike() {
     };
   }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
 
-  // Laufende Wiedergabe stoppen — egal ob on-device Sprachausgabe (kostenlose
-  // erste Wanderung) oder KI-Erzaehlstimme (Premium, expo-av) gerade aktiv ist.
   const stopNarration = useCallback(async () => {
-    await Speech.stop();
     const sound = narrationSoundRef.current;
     narrationSoundRef.current = null;
     if (sound) {
@@ -687,50 +683,30 @@ export default function LiveHike() {
       setNarrationUnavailable(false);
       setSpeaking(true);
 
-      if (premium) {
-        try {
-          const blob = await createNarration({ text, language: profile?.language });
-          const uri = await blobToDataUri(blob);
-          if (gen !== narrationGenRef.current) return;
-          const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
-          if (gen !== narrationGenRef.current) {
-            // Ein neuerer Aufruf hat uebernommen — diesen Sound sofort wieder
-            // entsorgen, sonst spraechen zwei Sprecher uebereinander.
-            sound.unloadAsync().catch(() => {});
-            return;
-          }
-          narrationSoundRef.current = sound;
-          sound.setOnPlaybackStatusUpdate((status) => {
-            if (!status.isLoaded) return;
-            if (status.didJustFinish) {
-              setSpeaking(false);
-              onFinished?.();
-            }
-          });
+      try {
+        const blob = await createNarration({ text, language: profile?.language });
+        const uri = await blobToDataUri(blob);
+        if (gen !== narrationGenRef.current) return;
+        const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+        if (gen !== narrationGenRef.current) {
+          sound.unloadAsync().catch(() => {});
           return;
-        } catch {
-          // KI-Stimme nicht erreichbar (offline, Serverfehler): Hinweis zeigen,
-          // aber die Erzaehlung NICHT abbrechen — die on-device Stimme
-          // uebernimmt, damit die Wanderung freihaendig weiterlaeuft.
-          if (gen !== narrationGenRef.current) return;
-          setNarrationUnavailable(true);
         }
+        narrationSoundRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (!status.isLoaded) return;
+          if (status.didJustFinish) {
+            setSpeaking(false);
+            onFinished?.();
+          }
+        });
+      } catch {
+        if (gen !== narrationGenRef.current) return;
+        setNarrationUnavailable(true);
+        setSpeaking(false);
       }
-
-      if (gen !== narrationGenRef.current) return;
-      Speech.speak(text, {
-        language: SPEECH_LOCALE[resolveLang(profile?.language)],
-        rate: 0.92,
-        pitch: 1.0,
-        onDone: () => {
-          setSpeaking(false);
-          onFinished?.();
-        },
-        onStopped: () => setSpeaking(false),
-        onError: () => setSpeaking(false),
-      });
     },
-    [premium, profile?.language, stopNarration]
+    [profile?.language, stopNarration]
   );
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,

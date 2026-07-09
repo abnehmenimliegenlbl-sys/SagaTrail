@@ -1,10 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
-import { eq } from "drizzle-orm";
-import { db, profilesTable } from "@workspace/db";
 import { CreateNarrationBody } from "@workspace/api-zod";
 import { getOrCreateNarrationAudio } from "../lib/narrationCache";
-import { istPremiumAktiv } from "../lib/premiumStatus";
 
 const router: IRouter = Router();
 
@@ -24,19 +21,6 @@ router.post("/narration", async (req, res): Promise<void> => {
   const parsed = CreateNarrationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  // Nur Premium-Nutzer:innen erhalten ElevenLabs-Erzaehlung. Die kostenlose
-  // erste Wanderung nutzt die on-device Stimme (expo-speech) und ruft
-  // diesen Endpunkt gar nie auf, aber wir erzwingen das auch serverseitig.
-  const [profile] = await db
-    .select()
-    .from(profilesTable)
-    .where(eq(profilesTable.id, userId));
-
-  if (!profile || !istPremiumAktiv(profile)) {
-    res.status(403).json({ error: "Premium erforderlich fuer KI-Erzaehlstimme" });
     return;
   }
 
