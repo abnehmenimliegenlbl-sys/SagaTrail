@@ -33,9 +33,7 @@ import {
 } from "@/lib/revenuecat";
 import { ApiError, claimKantonspack } from "@workspace/api-client-react";
 import { resolveLang } from "@/lib/storyContent";
-
-const heroImg = require("@/assets/images/hero-valley.png");
-const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
+import { useSagaFoto } from "@/lib/useSagaFoto";
 
 export default function SagaDetail() {
   const t = useSagaStrings();
@@ -58,6 +56,7 @@ export default function SagaDetail() {
 
   const [saga, setSaga] = useState(() => getSaga(id));
   const [loading, setLoading] = useState(!saga);
+  const sagaFoto = useSagaFoto(saga ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +164,6 @@ export default function SagaDetail() {
     );
   };
 
-  const image = saga.id === "teufelsbrucke" ? teufelImg : heroImg;
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
   // Zusammenfassung in der gewaehlten Sprache; Deutsch als Fallback.
@@ -188,9 +186,14 @@ export default function SagaDetail() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroWrap}>
-          <Image source={image} style={styles.hero} resizeMode="cover" />
+          <Image source={sagaFoto.source} style={styles.hero} resizeMode="cover" />
           <LinearGradient
-            colors={["rgba(16,24,26,0.4)", "rgba(16,24,26,0.98)"]}
+            colors={[
+              "rgba(16,24,26,0.15)",
+              "rgba(16,24,26,0.55)",
+              "rgba(16,24,26,0.98)",
+            ]}
+            locations={[0, 0.55, 1]}
             style={StyleSheet.absoluteFill}
           />
           <Pressable
@@ -354,9 +357,31 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(16,24,26,0.4)",
   },
   heroText: { position: "absolute", left: 20, right: 20, bottom: 20 },
-  canton: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  title: { fontFamily: fonts.titleBlack, fontSize: 36, marginTop: 6, lineHeight: 38 },
-  mood: { fontFamily: fonts.story, fontSize: 15, marginTop: 6 },
+  canton: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textShadowColor: "rgba(0,0,0,0.85)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  title: {
+    fontFamily: fonts.titleBlack,
+    fontSize: 36,
+    marginTop: 6,
+    lineHeight: 38,
+    textShadowColor: "rgba(0,0,0,0.85)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
+  },
+  mood: {
+    fontFamily: fonts.story,
+    fontSize: 15,
+    marginTop: 6,
+    textShadowColor: "rgba(0,0,0,0.85)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
   body: { paddingHorizontal: 20, marginTop: 20 },
   summary: { fontFamily: fonts.story, fontSize: 18, lineHeight: 30 },
   reviewNote: {

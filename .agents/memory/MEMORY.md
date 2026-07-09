@@ -30,3 +30,4 @@
 - [RN border-color precedence](rn-border-color-precedence.md) — per-side border*Color in a shared glass/3D mixin always beats a call site's borderColor; caused app-wide "black border" bug despite correct theme color.
 - [SagaTrail hardcoded colors.dark.*](sagatrail-theme-hardcoded-dark.md) — pre-theme files bypass Hell/Dunkel by referencing colors.dark.* directly; grep for it if a screen ignores the theme toggle.
 - [SagaTrail App-Design-Dialoge statt native Alerts](sagatrail-app-dialogs.md) — `Alert.alert` app-weit durch gestyltes `AppModal`/`appAlert`-Singleton ersetzt; Permission-Priming ebenfalls im App-Design vor dem echten OS-Dialog.
+- [SagaTrail per-saga hero photo](sagatrail-saga-photo.md) — saga detail hero image reuses the route Commons-photo endpoint keyed by saga coordinates, not a new AI-generated image per saga.
