@@ -113,8 +113,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
     poiAside: (name, extract) =>
       extract
-        ? `Kurz hältst du inne: Direkt am Weg liegt ${name}. ${extract}`
-        : `Kurz hältst du inne: Direkt am Weg liegt ${name} — ein stiller Zeuge vergangener Zeiten.`,
+        ? `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name}. ${extract}`
+        : `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name} — ein stiller Zeuge vergangener Zeiten.`,
   },
 
   gsw: {
@@ -155,8 +155,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
     poiAside: (name, extract) =>
       extract
-        ? `Churz haltsch inne: Diräkt am Wäg liit ${name}. ${extract}`
-        : `Churz haltsch inne: Diräkt am Wäg liit ${name} — en stille Züügä vo vergangene Zyte.`,
+        ? `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name}. ${extract}`
+        : `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name} — en stille Züügä vo vergangene Zyte.`,
   },
 
   fr: {
@@ -197,8 +197,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
     poiAside: (name, extract) =>
       extract
-        ? `Tu marques une pause : juste au bord du chemin se trouve ${name}. ${extract}`
-        : `Tu marques une pause : juste au bord du chemin se trouve ${name} — un témoin silencieux du passé.`,
+        ? `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name}. ${extract}`
+        : `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name} — un témoin silencieux du passé.`,
   },
 
   it: {
@@ -239,8 +239,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
     poiAside: (name, extract) =>
       extract
-        ? `Ti fermi un istante: proprio lungo il sentiero si trova ${name}. ${extract}`
-        : `Ti fermi un istante: proprio lungo il sentiero si trova ${name} — un testimone silenzioso del passato.`,
+        ? `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name}. ${extract}`
+        : `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name} — un testimone silenzioso del passato.`,
   },
 
   en: {
@@ -281,8 +281,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
     poiAside: (name, extract) =>
       extract
-        ? `You pause for a moment: right by the path stands ${name}. ${extract}`
-        : `You pause for a moment: right by the path stands ${name} — a quiet witness to times past.`,
+        ? `A brief break from the saga — a real place right near you: ${name}. ${extract}`
+        : `A brief break from the saga — a real place right near you: ${name} — a quiet witness to times past.`,
   },
 
   zh: {
@@ -319,8 +319,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
     poiAside: (name, extract) =>
       extract
-        ? `你稍作停留：路边就是${name}。${extract}`
-        : `你稍作停留：路边就是${name}——一段往昔岁月的沉默见证。`,
+        ? `传说暂停一下，你身边有一个真实的地方：${name}。${extract}`
+        : `传说暂停一下，你身边有一个真实的地方：${name}——一段往昔岁月的沉默见证。`,
   },
 
   es: {
@@ -361,8 +361,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
     poiAside: (name, extract) =>
       extract
-        ? `Te detienes un momento: justo junto al camino está ${name}. ${extract}`
-        : `Te detienes un momento: justo junto al camino está ${name} — un testigo silencioso de tiempos pasados.`,
+        ? `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name}. ${extract}`
+        : `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name} — un testigo silencioso de tiempos pasados.`,
   },
 
   pt: {
@@ -403,8 +403,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
     poiAside: (name, extract) =>
       extract
-        ? `Você pausa por um instante: bem à beira do caminho está ${name}. ${extract}`
-        : `Você pausa por um instante: bem à beira do caminho está ${name} — uma testemunha silenciosa de tempos passados.`,
+        ? `Pequena pausa na lenda, um lugar real bem perto de você: ${name}. ${extract}`
+        : `Pequena pausa na lenda, um lugar real bem perto de você: ${name} — uma testemunha silenciosa de tempos passados.`,
   },
 
   ru: {
@@ -445,8 +445,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
     poiAside: (name, extract) =>
       extract
-        ? `Ты ненадолго останавливаешься: прямо у тропы находится ${name}. ${extract}`
-        : `Ты ненадолго останавливаешься: прямо у тропы находится ${name} — тихий свидетель ушедших времён.`,
+        ? `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name}. ${extract}`
+        : `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name} — тихий свидетель ушедших времён.`,
   },
 };
 

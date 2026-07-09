@@ -537,7 +537,7 @@ export default function LiveHike() {
           })()
         : null);
     if (!current) return;
-    const NEARBY_KM = 0.35;
+    const NEARBY_KM = 0.1;
     const hit = pois.find(
       (poi) =>
         !announcedPoiIdsRef.current.has(poi.id) &&
@@ -1120,7 +1120,14 @@ export default function LiveHike() {
           <Animated.View entering={FadeIn}>
             <Glass style={{ marginTop: 14 }}>
               <View style={styles.poiRow}>
-                <Feather name="map-pin" size={18} color={colors.accent} />
+                {nearbyPoi.wiki?.image ? (
+                  <Image
+                    source={{ uri: nearbyPoi.wiki.image }}
+                    style={styles.poiThumb}
+                  />
+                ) : (
+                  <Feather name="map-pin" size={18} color={colors.accent} />
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
                     {t.discoveredNearby}
@@ -1130,7 +1137,7 @@ export default function LiveHike() {
                   </Text>
                   {(nearbyPoi.wiki?.extract || nearbyPoiKontext) && (
                     <Text
-                      style={[styles.poiSummary, { color: colors.mutedForeground }]}
+                      style={[styles.poiSummary, { color: colors.foreground }]}
                       numberOfLines={4}
                     >
                       {nearbyPoi.wiki?.extract ?? nearbyPoiKontext}
@@ -1515,6 +1522,7 @@ const styles = StyleSheet.create({
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  poiThumb: { width: 40, height: 40, borderRadius: 8 },
   poiEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.2 },
   poiTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 2 },
   poiSummary: { fontFamily: fonts.story, fontSize: 16, marginTop: 4, lineHeight: 23 },
