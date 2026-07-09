@@ -16,6 +16,16 @@ interface KarteVollbildProps {
   height?: number;
   /** Rendert die Karte fuer eine gegebene Hoehe (einmal klein, einmal Vollbild). */
   renderKarte: (hoehe: number) => React.ReactNode;
+  /**
+   * Wird aufgerufen, sobald der Vollbild-Zustand sich aendert. Erlaubt es der
+   * aufrufenden Seite, z. B. bei Antippen eines POI die Vollbild-Karte VOR
+   * dem Oeffnen des POI-Detail-Modals zu schliessen — zwei gleichzeitig
+   * sichtbare RN-`Modal`e stapeln sich plattformabhaengig unzuverlaessig
+   * (auf Android/Web landet das zuletzt geoeffnete Modal teils hinter dem
+   * ersten), was das POI-Detail von der noch offenen Vollbild-Karte
+   * ueberlagert erscheinen liess.
+   */
+  onVollbildChange?: (vollbild: boolean) => void;
 }
 
 /**
@@ -25,11 +35,15 @@ interface KarteVollbildProps {
  * Vergroesserbarkeit an. Im Vollbild ist die Karte voll interaktiv, ein
  * kleiner Knopf rechts oben bringt sie in die Ursprungsgroesse zurueck.
  */
-export function KarteVollbild({ height = 200, renderKarte }: KarteVollbildProps) {
+export function KarteVollbild({ height = 200, renderKarte, onVollbildChange }: KarteVollbildProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { height: fensterHoehe } = useWindowDimensions();
-  const [vollbild, setVollbild] = useState(false);
+  const [vollbild, setVollbildState] = useState(false);
+  const setVollbild = (v: boolean) => {
+    setVollbildState(v);
+    onVollbildChange?.(v);
+  };
 
   return (
     <>

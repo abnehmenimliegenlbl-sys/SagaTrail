@@ -170,6 +170,7 @@ export default function LiveHike() {
   const [pois, setPois] = useState<Poi[]>([]);
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [, setKarteVollbild] = useState(false);
   const [poiStory, setPoiStory] = useState<string | null>(null);
   const [poiStoryLoading, setPoiStoryLoading] = useState(false);
   // KI-Kontext fuer die "Entdeckt"-Karte, wenn der POI keinen
@@ -1079,6 +1080,7 @@ export default function LiveHike() {
         <View style={{ marginTop: 14 }}>
           <KarteVollbild
             height={200}
+            onVollbildChange={setKarteVollbild}
             renderKarte={(hoehe) =>
               mapCenter ? (
                 <SwisstopoMap
@@ -1092,7 +1094,14 @@ export default function LiveHike() {
                   pois={pois}
                   onPoiPress={(id) => {
                     const poi = pois.find((p) => p.id === id);
-                    if (poi) setSelectedPoi(poi);
+                    if (poi) {
+                      // Vollbild-Karte VOR dem POI-Detail schliessen: zwei
+                      // gleichzeitig offene Modals stapeln sich sonst
+                      // plattformabhaengig falsch und die Karte ueberlagert
+                      // das Detail.
+                      setKarteVollbild(false);
+                      setSelectedPoi(poi);
+                    }
                   }}
                 />
               ) : (
