@@ -24,3 +24,19 @@ already handsfree via TTS.
   native-module load failure just turns `supported` off); tap buttons remain
   visible and functional at all times as the permanent fallback, so this is
   never a hard requirement to progress the hike.
+
+**Pitfall (fixed 2026-07-09):** `ExpoSpeechRecognitionModule.js` calls
+`requireNativeModule("ExpoSpeechRecognition")` at module top level, which
+throws IMMEDIATELY on import in Expo Go — not just when a function is called.
+A plain top-level `import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent }
+from "expo-speech-recognition"` crashed the *entire route* that imported it
+(`hike/[id].tsx`), breaking hiking/group-join completely in Expo Go —
+surfaced as "Route is missing the required default export" + "Cannot find
+native module", easily misdiagnosed as an unrelated feature bug (e.g. a
+"join session" button doing nothing). Fix: detect Expo Go via
+`expo-constants`'s `Constants.executionEnvironment === ExecutionEnvironment.StoreClient`
+(not just `Platform.OS`, since Expo Go is still ios/android), and only
+`require()` the native-module package when NOT in Expo Go and NOT web; keep a
+no-op fallback for the hook itself so call order stays stable across renders.
+Apply the same guard pattern to any Expo native module lacking a web/Expo-Go
+JS fallback that's imported from a route file.

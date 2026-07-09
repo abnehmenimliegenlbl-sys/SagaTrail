@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 
 import { matchDecisionOption, VoiceMatchOption } from "./decisionVoiceMatch";
 import { Lang, SPEECH_LOCALE } from "./storyContent";
@@ -18,11 +15,43 @@ import { Lang, SPEECH_LOCALE } from "./storyContent";
  * die App still auf die bestehenden Antwort-Buttons zurueck — kein Fehler,
  * kein Blockieren der Wanderung.
  *
+ * WICHTIG: `expo-speech-recognition` ruft beim Modul-Import intern
+ * `requireNativeModule("ExpoSpeechRecognition")` auf, was in Expo Go SOFORT
+ * wirft (kein natives Modul vorhanden) — nicht erst beim Aufruf einer
+ * Funktion. Ein normaler Top-Level-Import wuerde daher die gesamte
+ * `hike/[id]`-Route zum Absturz bringen, sobald sie in Expo Go geladen wird
+ * (sichtbar als "missing required default export"). Deshalb wird das Modul
+ * hier nur dynamisch per `require()` geladen, und nur dann, wenn wir NICHT
+ * in Expo Go laufen.
+ *
  * Der native Spracherkenner beendet eine Session oft schon nach kurzer
  * Stille (v. a. Android). Solange der Entscheidungspunkt noch aktiv ist und
  * keine Option erkannt wurde, wird automatisch neu gestartet, damit "freihaendig
  * zuhoeren" sich fuer die Wandernden ununterbrochen anfuehlt.
  */
+
+const IS_EXPO_GO =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const NATIVE_SPEECH_AVAILABLE = Platform.OS !== "web" && !IS_EXPO_GO;
+
+type SpeechModule = typeof import("expo-speech-recognition");
+
+let ExpoSpeechRecognitionModule: SpeechModule["ExpoSpeechRecognitionModule"] | null =
+  null;
+let useSpeechRecognitionEvent: SpeechModule["useSpeechRecognitionEvent"] = () => {
+  // Kein natives Modul verfuegbar (Web oder Expo Go) -- No-op.
+};
+
+if (NATIVE_SPEECH_AVAILABLE) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require("expo-speech-recognition") as SpeechModule;
+    ExpoSpeechRecognitionModule = mod.ExpoSpeechRecognitionModule;
+    useSpeechRecognitionEvent = mod.useSpeechRecognitionEvent;
+  } catch {
+    // Natives Modul konnte nicht geladen werden -- bleibt bei den Fallbacks.
+  }
+}
 
 const MAX_LISTEN_RESTARTS = 6;
 
@@ -33,7 +62,9 @@ export function useVoiceDecision(
   onMatch: (index: number) => void
 ): { listening: boolean; supported: boolean } {
   const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(Platform.OS !== "web");
+  const [supported, setSupported] = useState(
+    NATIVE_SPEECH_AVAILABLE && ExpoSpeechRecognitionModule != null
+  );
   const restartsRef = useRef(0);
   const matchedRef = useRef(false);
   const onMatchRef = useRef(onMatch);
@@ -45,7 +76,7 @@ export function useVoiceDecision(
 
   const stopListening = useCallback(() => {
     try {
-      ExpoSpeechRecognitionModule.stop();
+      ExpoSpeechRecognitionModule?.stop();
     } catch {
       // Best effort — Erkennung koennte bereits beendet sein.
     }
@@ -53,7 +84,7 @@ export function useVoiceDecision(
   }, []);
 
   useEffect(() => {
-    if (!active || !supported) {
+    if (!active || !supported || !ExpoSpeechRecognitionModule) {
       stopListening();
       return;
     }
@@ -64,13 +95,13 @@ export function useVoiceDecision(
 
     (async () => {
       try {
-        const perm = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+        const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
         if (cancelled) return;
         if (!perm.granted) {
           setSupported(false);
           return;
         }
-        ExpoSpeechRecognitionModule.start({
+        ExpoSpeechRecognitionModule!.start({
           lang: SPEECH_LOCALE[langRef.current],
           interimResults: false,
           continuous: true,
@@ -110,7 +141,7 @@ export function useVoiceDecision(
     }
     restartsRef.current += 1;
     try {
-      ExpoSpeechRecognitionModule.start({
+      ExpoSpeechRecognitionModule?.start({
         lang: SPEECH_LOCALE[langRef.current],
         interimResults: false,
         continuous: true,
