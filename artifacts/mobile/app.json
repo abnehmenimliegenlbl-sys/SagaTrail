@@ -25,9 +25,10 @@
           "location"
         ]
       },
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.sagatrail2.app"
     },
     "android": {
+      "package": "com.sagatrail2.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",

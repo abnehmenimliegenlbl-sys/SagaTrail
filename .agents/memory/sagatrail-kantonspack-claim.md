@@ -13,3 +13,4 @@ Regel: Der Client darf sich Kanton-Packs nie selbst geben. Er kauft nur das eine
 - Der Claim ist Check-then-act gegen RevenueCat → pro Customer strikt serialisieren (In-Process-Promise-Kette reicht bei einprozessigem Server), sonst schaltet EIN Kauf bei parallelen Requests MEHRERE Kantone frei.
 - Doppelbelastungs-Schutz im Client: vor jedem Neukauf zuerst versuchen, einen offenen Kauf zuzuordnen (409 = keiner da); erst dann kaufen.
 - Consumables muessen in App Store Connect / Play Console als Verbrauchsprodukt angelegt werden, damit Mehrfachkauf funktioniert (Test Store: consumable).
+- NIE pro Kanton ein eigenes kaeufliches RC-Produkt anlegen (`sagatrail_pack_<kanton>`) — nur die `pack_<kanton>`-Entitlements existieren pro Kanton, das Kauf-Produkt bleibt immer das eine `sagatrail_kantonspack`. App-Store-/Play-Store-Eintraege daher auch nur 1x, nicht 26x.
