@@ -1287,6 +1287,11 @@ export default function LiveHike() {
               unit={t.unitMin}
             />
             <Metric label={t.metricSac} value={sac} unit="" />
+            <Metric
+              label={t.metricRemaining}
+              value={Math.max(0, totalKm * (1 - timeProgress)).toFixed(1)}
+              unit={t.unitKm}
+            />
             {steps > 0 && (
               <Metric label={t.metricSteps} value={`${steps}`} unit="" />
             )}
