@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
   ActivityIndicator,
@@ -32,8 +33,11 @@ interface PrimaryButtonProps {
 }
 
 /**
- * Primaeraktion (almrausch) laut Style Guide. Reserviert fuer echte Aktionen.
- * `ghost` und `gold` fuer sekundaere/hervorgehobene Aktionen.
+ * Primaeraktion (almrausch/Schweizer Rot) laut Style Guide, mit starkem
+ * 3D-Effekt (Farbverlauf + Glanzkante + tiefer Schatten). `gold` bleibt
+ * fest fuer Premium-/Sagenpaket-Aktionen reserviert — mit eigenem
+ * diagonalem Glanzstreifen statt des roten Farbverlaufs. `ghost` fuer
+ * sekundaere Aktionen.
  */
 export function PrimaryButton({
   label,
@@ -48,18 +52,18 @@ export function PrimaryButton({
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const bg =
-    variant === "primary"
-      ? colors.primary
-      : variant === "gold"
-        ? colors.accent
-        : "transparent";
+  const baseColor = variant === "gold" ? colors.accent : colors.primary;
   const fg =
     variant === "gold"
       ? colors.accentForeground
       : variant === "ghost"
         ? colors.foreground
         : colors.primaryForeground;
+
+  const gradientColors: [string, string, string] =
+    variant === "ghost"
+      ? ["transparent", "transparent", "transparent"]
+      : [withAlpha(baseColor, 0.95), baseColor, withAlpha(baseColor, 0.78)];
 
   return (
     <Animated.View style={[animStyle, style]}>
@@ -81,15 +85,62 @@ export function PrimaryButton({
         style={[
           styles.button,
           {
-            backgroundColor: bg,
             borderRadius: colors.radius,
             borderWidth: 1,
-            borderColor: variant === "ghost" ? colors.glassBorder : bg,
+            borderColor:
+              variant === "ghost" ? colors.glassBorder : "rgba(255,255,255,0.18)",
             opacity: disabled ? 0.5 : 1,
+            overflow: "hidden",
           },
+          variant === "ghost" ? { backgroundColor: "transparent" } : null,
           GLAS_3D_STARK,
+          variant !== "ghost" ? { shadowColor: baseColor, shadowOpacity: 0.55 } : null,
         ]}
       >
+        {variant !== "ghost" && (
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        {variant !== "ghost" && (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderTopWidth: 1.5,
+                borderColor: "rgba(255,255,255,0.4)",
+                borderRadius: colors.radius,
+              },
+            ]}
+          />
+        )}
+        {variant !== "ghost" && (
+          <LinearGradient
+            pointerEvents="none"
+            colors={["rgba(255,255,255,0.32)", "rgba(255,255,255,0)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 0.55 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        {variant === "gold" && (
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              "rgba(255,255,255,0)",
+              "rgba(255,255,255,0.55)",
+              "rgba(255,255,255,0)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            locations={[0.35, 0.5, 0.65]}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         {loading ? (
           <ActivityIndicator color={fg} />
         ) : (
@@ -100,6 +151,15 @@ export function PrimaryButton({
       </Pressable>
     </Animated.View>
   );
+}
+
+/** Haengt eine Alpha-Komponente an einen #RRGGBB-Hex-Farbwert an. */
+function withAlpha(hex: string, alpha: number): string {
+  if (!hex.startsWith("#") || hex.length !== 7) return hex;
+  const a = Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `${hex}${a}`;
 }
 
 const styles = StyleSheet.create({

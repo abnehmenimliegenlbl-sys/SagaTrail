@@ -1,52 +1,93 @@
 /**
  * SagaTrail Design-System-Tokens.
  *
- * Farbwerte 1:1 aus dem verbindlichen Style Guide (AlpSaga/SagaTrail).
- * Die App ist durchgehend dunkel — daher tragen `light` und `dark`
- * dieselben Werte, damit useColors() unabhängig vom Systemschema
- * immer die Markenpalette liefert.
+ * Schweizer Rot-Weiss-Design mit zwei Modi: `hell` und `dunkel`.
+ * Gold (`altgold`) bleibt in beiden Modi unveraendert reserviert fuer
+ * Premium-/Sagenpaket-Aktionen (siehe PrimaryButton `variant="gold"`).
  */
 
-const brand = {
-  // Kernpalette (fixe Aufgaben laut Style Guide)
-  nachthimmel: "#10181A", // tiefster Kontrast — Splash, Onboarding, Nacht
-  talschatten: "#1B2E28", // primärer App-Hintergrund
-  gletscherweiss: "#F5F3EC", // Text auf Dunkel, Icons, Glas-Highlights
-  almrausch: "#C4462F", // Primäraktion, SOS, Entscheidungsmomente — reserviert
-  altgold: "#B8935A", // Akzente, Icons, Achievements, der Funke
-  moosgrau: "#6B7568", // gedämpfter Text, Trennlinien, Metadaten
-
-  // Frozen-Glass-Werte
-  glassBg: "rgba(245,243,236,0.08)",
-  glassBgStrong: "rgba(245,243,236,0.14)",
-  glassBorder: "rgba(245,243,236,0.20)",
-
-  // Semantische Aliase (mobile-ui Konvention)
-  text: "#F5F3EC",
-  tint: "#B8935A",
-  background: "#1B2E28",
-  backgroundDeep: "#10181A",
-  foreground: "#F5F3EC",
-  card: "#22362F",
-  cardForeground: "#F5F3EC",
-  primary: "#C4462F",
-  primaryForeground: "#F5F3EC",
-  secondary: "#22362F",
-  secondaryForeground: "#F5F3EC",
-  muted: "#22362F",
-  mutedForeground: "#6B7568",
+const shared = {
+  altgold: "#B8935A", // Akzente, Premium, Sagenpakete — modiuebergreifend fix
+  moosgrau: "#6B7568", // gedaempfter Text, Trennlinien, Metadaten (Dunkel-Basis)
   accent: "#B8935A",
   accentForeground: "#10181A",
-  destructive: "#C4462F",
-  destructiveForeground: "#F5F3EC",
-  border: "rgba(245,243,236,0.14)",
+};
+
+const hell = {
+  ...shared,
+  // Kernpalette
+  nachthimmel: "#FFFFFF",
+  talschatten: "#F4F5F7",
+  gletscherweiss: "#181A1E",
+  almrausch: "#DA291C", // Schweizer Rot — Primäraktion
+  moosgrau: "#6B7280",
+
+  // Frosted-Glass-Werte (helles Glas)
+  glassBg: "rgba(255,255,255,0.55)",
+  glassBgStrong: "rgba(255,255,255,0.75)",
+  glassBorder: "rgba(218,41,28,0.35)",
+
+  // Semantische Aliase
+  text: "#181A1E",
+  tint: "#B8935A",
+  background: "#F4F5F7",
+  backgroundDeep: "#FFFFFF",
+  foreground: "#181A1E",
+  card: "#FFFFFF",
+  cardForeground: "#181A1E",
+  primary: "#DA291C",
+  primaryForeground: "#FFFFFF",
+  secondary: "#FFFFFF",
+  secondaryForeground: "#181A1E",
+  muted: "#EDEEF1",
+  mutedForeground: "#6B7280",
+  destructive: "#DA291C",
+  destructiveForeground: "#FFFFFF",
+  border: "rgba(218,41,28,0.35)",
+  input: "rgba(218,41,28,0.2)",
+};
+
+const dunkel = {
+  ...shared,
+  // Kernpalette
+  nachthimmel: "#101216",
+  talschatten: "#1B1D22",
+  gletscherweiss: "#F5F3EC",
+  almrausch: "#E8362A", // Schweizer Rot (dunkel-optimiert) — Primäraktion
+
+  // Frosted-Glass-Werte (dunkles Glas)
+  glassBg: "rgba(245,243,236,0.08)",
+  glassBgStrong: "rgba(245,243,236,0.14)",
+  glassBorder: "rgba(232,54,42,0.35)",
+
+  // Semantische Aliase
+  text: "#F5F3EC",
+  tint: "#B8935A",
+  background: "#1B1D22",
+  backgroundDeep: "#101216",
+  foreground: "#F5F3EC",
+  card: "#1F2127",
+  cardForeground: "#F5F3EC",
+  primary: "#E8362A",
+  primaryForeground: "#FFFFFF",
+  secondary: "#1F2127",
+  secondaryForeground: "#F5F3EC",
+  muted: "#1F2127",
+  mutedForeground: "#8A8D95",
+  destructive: "#E8362A",
+  destructiveForeground: "#FFFFFF",
+  border: "rgba(232,54,42,0.35)",
   input: "rgba(245,243,236,0.14)",
 };
 
 const colors = {
-  light: { ...brand },
-  dark: { ...brand },
+  light: hell,
+  dark: dunkel,
+  hell,
+  dunkel,
   radius: 14,
 };
+
+export type ThemeMode = "hell" | "dunkel";
 
 export default colors;

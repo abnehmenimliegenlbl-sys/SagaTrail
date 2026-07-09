@@ -1,21 +1,14 @@
-import { useColorScheme } from "react-native";
-
 import colors from "@/constants/colors";
+import { useThemeModeSafe } from "@/contexts/AppContext";
 
 /**
- * Returns the design tokens for the current color scheme.
+ * Returns the design tokens for the active display mode.
  *
- * The returned object contains all color tokens for the active palette
- * plus scheme-independent values like `radius`.
- *
- * Falls back to the light palette when no dark key is defined in
- * constants/colors.ts (the scaffold ships light-only by default).
- * When a sibling web artifact's dark tokens are synced into a `dark`
- * key, this hook will automatically switch palettes based on the
- * device's appearance setting.
+ * SagaTrail nutzt ein Schweizer Rot-Weiss-Design mit zwei Modi ("hell" /
+ * "dunkel"), die der Nutzer in den Einstellungen umschaltet — unabhaengig
+ * vom Systemschema des Geraets (siehe `AppContext.themeMode`).
  */
 export function useColors() {
-  // SagaTrail ist durchgehend dunkel; wir liefern immer die Markenpalette.
-  useColorScheme();
-  return { ...colors.dark, radius: colors.radius };
+  const themeMode = useThemeModeSafe();
+  return { ...colors[themeMode], radius: colors.radius };
 }

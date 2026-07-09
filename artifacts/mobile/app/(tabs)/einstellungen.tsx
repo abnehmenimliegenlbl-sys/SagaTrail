@@ -69,6 +69,8 @@ export default function Einstellungen() {
     profile,
     premium,
     energiesparmodus,
+    themeMode,
+    setThemeMode,
     emergencyContact,
     updateProfile,
     setEnergiesparmodus,
@@ -280,6 +282,48 @@ export default function Einstellungen() {
         </Section>
 
         <Section title={t.sectionWanderung}>
+          <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+                {t.themeModeLabel}
+              </Text>
+              <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+                {t.themeModeHint}
+              </Text>
+            </View>
+            <View style={styles.themeToggle}>
+              {(["hell", "dunkel"] as const).map((mode) => {
+                const active = themeMode === mode;
+                return (
+                  <Pressable
+                    key={mode}
+                    onPress={() => setThemeMode(mode)}
+                    style={[
+                      styles.themeToggleOption,
+                      {
+                        backgroundColor: active ? colors.primary : "transparent",
+                        borderColor: colors.glassBorder,
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={mode === "hell" ? "sun" : "moon"}
+                      size={14}
+                      color={active ? colors.primaryForeground : colors.mutedForeground}
+                    />
+                    <Text
+                      style={[
+                        styles.themeToggleLabel,
+                        { color: active ? colors.primaryForeground : colors.mutedForeground },
+                      ]}
+                    >
+                      {mode === "hell" ? t.themeModeHell : t.themeModeDunkel}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
           <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>
@@ -506,6 +550,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     gap: 12,
+  },
+  themeToggle: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  themeToggleOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  themeToggleLabel: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
   },
   input: {
     borderWidth: 1,

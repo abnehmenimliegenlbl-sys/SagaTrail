@@ -29,6 +29,7 @@ import {
   type GroupSocketError,
   type HikeSyncEvent,
 } from "@/lib/groupSocket";
+import type { ThemeMode } from "@/constants/colors";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { useSubscription } from "@/lib/revenuecat";
@@ -47,6 +48,7 @@ const KEYS = {
   activeHike: "sagatrail:activeHike",
   uiLanguage: "sagatrail:uiLanguage",
   freieSagen: "sagatrail:freieSagen",
+  themeMode: "sagatrail:themeMode",
 } as const;
 
 export interface EmergencyContact {
@@ -99,6 +101,9 @@ interface AppContextValue {
   achievements: Achievement[];
   emergencyContact: EmergencyContact | null;
   energiesparmodus: boolean;
+  /** Hell/Dunkel-Anzeigemodus (Schweizer Rot-Weiss-Design). Standard: "dunkel". */
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
   lastHike: HikeSession | null;
   /**
    * Wander-Tagebuch: alle abgeschlossenen Wanderungen (neueste zuerst,
@@ -171,6 +176,16 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+/**
+ * Fuer Konsumenten ausserhalb des Providers (z.B. ErrorFallback, der auch
+ * Fehler waehrend der AppProvider-Initialisierung abfangen muss). Liefert
+ * nur den read-only Anzeigemodus, ohne die volle Context-Pflicht.
+ */
+export function useThemeModeSafe(): ThemeMode {
+  const ctx = useContext(AppContext);
+  return ctx?.themeMode ?? "dunkel";
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded: authLoaded, isSignedIn, userId, getToken } = useAuth();
 
@@ -182,6 +197,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [emergencyContact, setEmergencyContact] =
     useState<EmergencyContact | null>(null);
   const [energiesparmodus, setEnergiesparmodusState] = useState(false);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("dunkel");
   const [lastHike, setLastHike] = useState<HikeSession | null>(null);
   const [hikeHistory, setHikeHistory] = useState<HikeSession[]>([]);
   const [activeHike, setActiveHike] = useState<ActiveHike | null>(null);
@@ -288,6 +304,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.activeHike,
           KEYS.uiLanguage,
           KEYS.freieSagen,
+          KEYS.themeMode,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
@@ -307,6 +324,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setActiveHike(JSON.parse(map[KEYS.activeHike]!));
         if (map[KEYS.freieSagen])
           setFreieSagen(JSON.parse(map[KEYS.freieSagen]!));
+        if (map[KEYS.themeMode] === "hell" || map[KEYS.themeMode] === "dunkel") {
+          setThemeModeState(map[KEYS.themeMode] as ThemeMode);
+        }
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
           // explizite Wahl) — diese hat fuer immer Vorrang.
@@ -618,6 +638,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(KEYS.energysave, value ? "true" : "false");
   }, []);
 
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    await AsyncStorage.setItem(KEYS.themeMode, mode);
+  }, []);
+
   const setPendingLanguage = useCallback(async (code: LanguageCode) => {
     setPendingLanguageState(code);
     await AsyncStorage.setItem(KEYS.uiLanguage, code);
@@ -747,6 +772,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       achievements,
       emergencyContact,
       energiesparmodus,
+      themeMode,
       lastHike,
       hikeHistory,
       activeHike,
@@ -766,6 +792,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addAchievement,
       saveEmergencyContact,
       setEnergiesparmodus,
+      setThemeMode,
       saveHike,
       attachHikePhoto,
       saveActiveHike,
@@ -789,6 +816,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       achievements,
       emergencyContact,
       energiesparmodus,
+      themeMode,
       lastHike,
       hikeHistory,
       activeHike,
@@ -808,6 +836,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addAchievement,
       saveEmergencyContact,
       setEnergiesparmodus,
+      setThemeMode,
       saveHike,
       attachHikePhoto,
       saveActiveHike,
