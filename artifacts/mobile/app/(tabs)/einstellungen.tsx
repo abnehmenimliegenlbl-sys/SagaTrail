@@ -406,15 +406,15 @@ export default function Einstellungen() {
             value=""
             icon="mail"
             onPress={async () => {
-              const url = "mailto:support@sagatrail.ch";
+              const url = "mailto:info@inster.abb";
               try {
                 if (await Linking.canOpenURL(url)) {
                   await Linking.openURL(url);
                 } else {
-                  alert(t.emailAlertTitle, "support@sagatrail.ch");
+                  alert(t.emailAlertTitle, "info@inster.abb");
                 }
               } catch {
-                alert(t.emailAlertTitle, "support@sagatrail.ch");
+                alert(t.emailAlertTitle, "info@inster.abb");
               }
             }}
           />

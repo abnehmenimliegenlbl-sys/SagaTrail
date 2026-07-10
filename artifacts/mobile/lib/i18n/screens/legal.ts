@@ -49,7 +49,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Notfall",
       a3: "SagaTrail ersetzt keine offizielle Notfall- oder Bergrettungs-App. Im Notfall gilt: Rega 1414 oder Euro-Notruf 112.",
       q4: "Kontakt",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   gsw: {
@@ -74,7 +74,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Notfall",
       a3: "SagaTrail ersetzt kei offizielli Notfall- oder Bärgrettigs-App. Im Notfall gilt: Rega 1414 oder Euro-Notruef 112.",
       q4: "Kontakt",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   en: {
@@ -99,7 +99,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Emergency",
       a3: "SagaTrail does not replace any official emergency or mountain rescue app. In case of emergency: Rega 1414 or Euro emergency 112.",
       q4: "Contact",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   fr: {
@@ -124,7 +124,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Urgence",
       a3: "SagaTrail ne remplace aucune application officielle de secours ou de sauvetage en montagne. En cas d'urgence : Rega 1414 ou numéro d'urgence européen 112.",
       q4: "Contact",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   it: {
@@ -149,7 +149,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Emergenza",
       a3: "SagaTrail non sostituisce alcuna app ufficiale di emergenza o soccorso alpino. In caso di emergenza: Rega 1414 o numero di emergenza europeo 112.",
       q4: "Contatto",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   es: {
@@ -174,7 +174,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Emergencia",
       a3: "SagaTrail no reemplaza ninguna aplicación oficial de emergencia o rescate de montaña. En caso de emergencia: Rega 1414 o número de emergencia europeo 112.",
       q4: "Contacto",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   pt: {
@@ -199,7 +199,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Emergência",
       a3: "SagaTrail não substitui nenhum aplicativo oficial de emergência ou resgate de montanha. Em caso de emergência: Rega 1414 ou número de emergência europeu 112.",
       q4: "Contato",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   zh: {
@@ -224,7 +224,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "紧急情况",
       a3: "SagaTrail 不能替代任何官方紧急或山地救援应用程序。在紧急情况下：Rega 1414 或欧洲紧急电话 112。",
       q4: "联系方式",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
   ru: {
@@ -249,7 +249,7 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
       q3: "Экстренная помощь",
       a3: "SagaTrail не заменяет официальное приложение экстренной помощи или горноспасательной службы. В экстренной ситуации: Rega 1414 или европейский номер экстренной помощи 112.",
       q4: "Контакт",
-      a4: "support@sagatrail.ch",
+      a4: "info@inster.abb",
     },
   },
 };
