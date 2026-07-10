@@ -146,6 +146,74 @@ router.post("/admin/premium/reset", async (req, res): Promise<void> => {
   });
 });
 
+const AppleTestUserBody = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  premium: z.boolean().default(false),
+});
+
+router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = AppleTestUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { email, password, premium } = parsed.data;
+
+  const bestehende = await clerkClient.users.getUserList({ emailAddress: [email] });
+  let userId: string;
+  if (bestehende.data.length > 0) {
+    userId = bestehende.data[0].id;
+    req.log.info({ userId, email }, "Apple-Test-User existiert bereits in Clerk, wiederverwendet");
+  } else {
+    const neuerNutzer = await clerkClient.users.createUser({
+      emailAddress: [email],
+      password,
+      skipPasswordChecks: true,
+      skipPasswordRequirement: false,
+    });
+    userId = neuerNutzer.id;
+    req.log.info({ userId, email }, "Apple-Test-User in Clerk angelegt");
+  }
+
+  const premiumBis = premium ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650) : null;
+
+  const [row] = await db
+    .insert(profilesTable)
+    .values({
+      id: userId,
+      name: "Apple Review",
+      archetype: "reisende",
+      homeCanton: "ZH",
+      language: "de",
+      ageTier: "erwachsene",
+      premium: false,
+      premiumBis,
+      // Dauerhaft gegen RevenueCat-Resync gesperrt: dieser Account hat nie
+      // ein echtes Abo, das Premium kommt ausschliesslich aus premiumBis.
+      premiumSyncLockedUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650),
+    })
+    .onConflictDoUpdate({
+      target: profilesTable.id,
+      set: {
+        premiumBis,
+        premiumSyncLockedUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650),
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+
+  req.log.info({ userId, email, premium }, "Apple-Test-Profil angelegt/aktualisiert");
+  res.json({
+    userId,
+    email,
+    premiumAktiv: istPremiumAktiv(row),
+    premiumBis: row.premiumBis,
+  });
+});
+
 const PARTNER_KATEGORIEN = [
   "restaurant",
   "cafe",
