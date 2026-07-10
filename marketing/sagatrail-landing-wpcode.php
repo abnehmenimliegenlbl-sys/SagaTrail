@@ -305,6 +305,16 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                 .st-final p { color: rgba(255,255,255,0.9); margin: 0 0 32px; }
                 .st-final .st-cta-row { justify-content: center; }
 
+                /* Legal */
+                .st-legal {
+                    padding: 60px 24px;
+                    background: var(--st-cream, #fdf8f0);
+                }
+                .st-legal h2 { font-size: 26px; font-weight: 800; margin: 0 0 20px; color: var(--st-ink); }
+                .st-legal h3 { font-size: 16px; font-weight: 700; margin: 22px 0 6px; color: var(--st-red); }
+                .st-legal p { margin: 0 0 4px; color: var(--st-ink); opacity: .9; line-height: 1.6; }
+                .st-legal a { color: var(--st-red); }
+
                 /* Footer */
                 .st-footer {
                     background: #101216;
@@ -481,8 +491,32 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                 </div>
             </section>
 
+            <!-- DATENSCHUTZ -->
+            <section class="st-legal" id="datenschutz">
+                <div class="st-wrap">
+                    <h2>Datenschutz</h2>
+
+                    <h3>Welche Daten wir erheben</h3>
+                    <p>SagaTrail verarbeitet Standortdaten (nur waehrend einer aktiven Wanderung), dein Profil (Name, Archetyp, Heimatkanton, Sprache, Altersstufe) sowie deinen Story-Fortschritt und freigeschaltete Sammlungen.</p>
+
+                    <h3>Wo die Daten liegen</h3>
+                    <p>Alle Daten werden ausschliesslich lokal auf deinem Geraet gespeichert bzw. sicher mit deinem Konto synchronisiert, wenn du eingeloggt bist. Du kannst deine Daten jederzeit in den Einstellungen exportieren oder vollstaendig loeschen.</p>
+
+                    <h3>Standort</h3>
+                    <p>Der Standort wird nur genutzt, um Erzaehlmomente an den passenden Wegpunkten auszuloesen. Du kannst die Berechtigung jederzeit im Betriebssystem widerrufen; die App funktioniert dann mit eingeschraenkter Funktionalitaet weiter.</p>
+
+                    <h3>Kinder</h3>
+                    <p>Fuer die Altersstufe Kinder ist die Bestaetigung einer erziehungsberechtigten Person erforderlich. Inhalte werden altersgerecht entschaerft.</p>
+
+                    <h3>Kontakt</h3>
+                    <p>Bei Fragen zum Datenschutz erreichst du uns unter <a href="mailto:info@inster.abb">info@inster.abb</a>.</p>
+
+                    <p style="opacity:.7;font-size:.9em;margin-top:24px;">Hinweis: Dieser Text wird demnaechst ueberarbeitet und aktualisiert.</p>
+                </div>
+            </section>
+
             <footer class="st-footer">
-                &copy; <?php echo esc_html(date('Y')); ?> SagaTrail &middot; <a href="mailto:info@inster.abb">info@inster.abb</a>
+                &copy; <?php echo esc_html(date('Y')); ?> SagaTrail &middot; <a href="#datenschutz">Datenschutz</a> &middot; <a href="mailto:info@inster.abb">info@inster.abb</a>
             </footer>
         </div>
         <?php
