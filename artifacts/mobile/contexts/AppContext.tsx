@@ -190,6 +190,10 @@ export function useThemeModeSafe(): ThemeMode {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { isLoaded: authLoaded, isSignedIn, userId, getToken } = useAuth();
 
+  // TEMP-DEBUG: markiert Render-Start/-Ende von AppProvider, um zu sehen ob
+  // ein Freeze VOR, WAEHREND oder NACH dem Render-Durchlauf passiert.
+  console.log("[RENDER] AppProvider start", new Date().toISOString());
+
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [premium, setPremium] = useState(false);

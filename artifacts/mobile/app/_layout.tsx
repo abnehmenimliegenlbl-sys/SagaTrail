@@ -92,6 +92,16 @@ function RootLayoutNav() {
   const router = useRouter();
   const c = useColors();
 
+  // TEMP-DEBUG: Herzschlag um exakten Freeze-Zeitpunkt zu bestimmen (JS-Thread
+  // blockiert vs. haengt in einem Effekt). Lokales console.log, kein Fetch,
+  // damit es auch funktioniert wenn das Netzwerk selbst der Blocker waere.
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.log("[HEARTBEAT]", new Date().toISOString());
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!hydrated || !isLoaded) return;
     const inAuth = segments[0] === "(auth)";
