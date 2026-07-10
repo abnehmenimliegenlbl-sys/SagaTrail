@@ -146,6 +146,14 @@ paths:
             type: integer
             minimum: 1
             maximum: 6
+        - name: ganzjaehrigNur
+          in: query
+          required: false
+          description: >
+            Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage,
+            einfacher Schwierigkeitsgrad) liefern.
+          schema:
+            type: boolean
       responses:
         "200":
           description: Routen

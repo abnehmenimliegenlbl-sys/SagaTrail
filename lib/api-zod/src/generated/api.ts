@@ -136,7 +136,8 @@ export const GetCantonRoutesQueryParams = zod.object({
   "ascMin": zod.coerce.number().min(getCantonRoutesQueryAscMinMin).optional().describe('Minimale Hoehenmeter im Aufstieg.'),
   "ascMax": zod.coerce.number().min(getCantonRoutesQueryAscMaxMin).optional().describe('Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).'),
   "diffMin": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMinMax).optional().describe('Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.'),
-  "diffMax": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMaxMax).optional().describe('Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.')
+  "diffMax": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMaxMax).optional().describe('Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.'),
+  "ganzjaehrigNur": zod.coerce.boolean().optional().describe('Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.\n')
 })
 
 export const GetCantonRoutesResponseItem = zod.object({

@@ -7,6 +7,7 @@ export interface KantonStrings {
   distanceLabel: string;
   elevationLabel: string;
   difficultyLabel: string;
+  yearRoundLabel: string;
   distanceUnit: (v: number, isMax: boolean) => string;
   elevationUnit: (v: number, isMax: boolean) => string;
   difficultyUnit: (v: number) => string;
@@ -42,6 +43,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distanz",
     elevationLabel: "Höhenmeter",
     difficultyLabel: "Schwierigkeit",
+    yearRoundLabel: "Nur ganzjährige Routen",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} hm`,
     difficultyUnit: (v) => `T${v}`,
@@ -76,6 +78,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distanz",
     elevationLabel: "Höhemeter",
     difficultyLabel: "Schwierigkeit",
+    yearRoundLabel: "Nur ganzjährigi Route",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} hm`,
     difficultyUnit: (v) => `T${v}`,
@@ -110,6 +113,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distance",
     elevationLabel: "Dénivelé",
     difficultyLabel: "Difficulté",
+    yearRoundLabel: "Uniquement les itinéraires toute l'année",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} m`,
     difficultyUnit: (v) => `T${v}`,
@@ -144,6 +148,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distanza",
     elevationLabel: "Dislivello",
     difficultyLabel: "Difficoltà",
+    yearRoundLabel: "Solo percorsi tutto l'anno",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} m`,
     difficultyUnit: (v) => `T${v}`,
@@ -178,6 +183,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distance",
     elevationLabel: "Elevation",
     difficultyLabel: "Difficulty",
+    yearRoundLabel: "Year-round routes only",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} m`,
     difficultyUnit: (v) => `T${v}`,
@@ -212,6 +218,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "距离",
     elevationLabel: "海拔高度",
     difficultyLabel: "难度",
+    yearRoundLabel: "仅显示全年可行路线",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} 公里`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} 米`,
     difficultyUnit: (v) => `T${v}`,
@@ -245,6 +252,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Дистанция",
     elevationLabel: "Набор высоты",
     difficultyLabel: "Сложность",
+    yearRoundLabel: "Только круглогодичные маршруты",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} км`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} м`,
     difficultyUnit: (v) => `T${v}`,
@@ -279,6 +287,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distancia",
     elevationLabel: "Desnivel",
     difficultyLabel: "Dificultad",
+    yearRoundLabel: "Solo rutas todo el año",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} m`,
     difficultyUnit: (v) => `T${v}`,
@@ -313,6 +322,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     distanceLabel: "Distância",
     elevationLabel: "Desnível",
     difficultyLabel: "Dificuldade",
+    yearRoundLabel: "Somente rotas o ano todo",
     distanceUnit: (v, isMax) => `${v}${isMax ? "+" : ""} km`,
     elevationUnit: (v, isMax) => `${v}${isMax ? "+" : ""} m`,
     difficultyUnit: (v) => `T${v}`,

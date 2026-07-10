@@ -57,6 +57,13 @@ function numParam(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Liest einen optionalen Boolean-Query-Parameter; null bei fehlend/ungueltig. */
+function boolParam(value: unknown): boolean | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === undefined || raw === null || raw === "") return null;
+  return raw === "true" || raw === "1";
+}
+
 interface RouteFilter {
   distMin: number | null;
   distMax: number | null;
@@ -64,6 +71,7 @@ interface RouteFilter {
   ascMax: number | null;
   diffMin: number | null;
   diffMax: number | null;
+  ganzjaehrigNur: boolean | null;
 }
 
 /**
@@ -82,6 +90,10 @@ function applyFilter(row: ExternalRouteRow, f: RouteFilter): boolean {
     if (f.diffMin !== null && stufe < f.diffMin) return false;
     if (f.diffMax !== null && stufe > f.diffMax) return false;
   }
+  if (f.ganzjaehrigNur === true) {
+    const season = deriveSeason(row.maxElevationM, row.sac);
+    if (season !== "ganzjaehrig") return false;
+  }
   return true;
 }
 
@@ -96,6 +108,7 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     ascMax: numParam(req.query.ascMax),
     diffMin: numParam(req.query.diffMin),
     diffMax: numParam(req.query.diffMax),
+    ganzjaehrigNur: boolParam(req.query.ganzjaehrigNur),
   };
   try {
     const rows = await getCantonRoutes(canton, req.log, filter.distMax ?? undefined);

@@ -390,6 +390,10 @@ diffMin?: number;
  * @maximum 6
  */
 diffMax?: number;
+/**
+ * Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.
+ */
+ganzjaehrigNur?: boolean;
 };
 
 export type GetAerialwaysParams = {

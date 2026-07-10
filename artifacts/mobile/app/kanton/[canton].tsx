@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
@@ -120,6 +121,7 @@ export default function KantonRouten() {
   const [distFilter, setDistFilter] = useState<[number, number]>([DIST_MIN, DIST_MAX]);
   const [ascFilter, setAscFilter] = useState<[number, number]>([ASC_MIN, ASC_MAX]);
   const [diffFilter, setDiffFilter] = useState<[number, number]>([DIFF_MIN, DIFF_MAX]);
+  const [ganzjaehrigFilter, setGanzjaehrigFilter] = useState(false);
   // Waehrend ein Schieberegler gezogen wird, pausiert das Scrollen der Seite,
   // damit die Geste nicht von der Liste uebernommen wird und haengen bleibt.
   const [sliderAktiv, setSliderAktiv] = useState(false);
@@ -130,6 +132,7 @@ export default function KantonRouten() {
     setDistFilter([DIST_MIN, DIST_MAX]);
     setAscFilter([ASC_MIN, ASC_MAX]);
     setDiffFilter([DIFF_MIN, DIFF_MAX]);
+    setGanzjaehrigFilter(false);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
@@ -150,8 +153,9 @@ export default function KantonRouten() {
       filter.diffMin = diffMin;
       filter.diffMax = diffMax;
     }
+    if (ganzjaehrigFilter) filter.ganzjaehrigNur = true;
     return filter;
-  }, [distFilter, ascFilter, diffFilter]);
+  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter]);
 
   const onSearch = useCallback(async () => {
     if (!cantonName) return;
@@ -250,6 +254,18 @@ export default function KantonRouten() {
             formatValue={(v) => t.difficultyUnit(v)}
             onDraggingChange={setSliderAktiv}
           />
+
+          <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+            <Text style={[styles.switchLabel, { color: colors.foreground }]}>
+              {t.yearRoundLabel}
+            </Text>
+            <Switch
+              value={ganzjaehrigFilter}
+              onValueChange={setGanzjaehrigFilter}
+              trackColor={{ true: colors.accent, false: colors.card }}
+              thumbColor={colors.foreground}
+            />
+          </View>
         </View>
         </View>
 
@@ -455,6 +471,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   filterTitle: { fontFamily: fonts.titleBold, fontSize: 16, flex: 1 },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingTop: 14,
+    marginTop: 4,
+    borderTopWidth: 1,
+    paddingBottom: 14,
+  },
+  switchLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
   results: { marginTop: 18 },
   hint: { alignItems: "center", paddingVertical: 40, gap: 12 },
   hintText: {

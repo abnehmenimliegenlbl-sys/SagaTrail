@@ -79,6 +79,8 @@ export interface RouteSearchFilter {
   ascMax?: number;
   diffMin?: number;
   diffMax?: number;
+  /** Nur Routen, die als ganzjaehrig begehbar gelten (tiefe Lage, einfacher Grad). */
+  ganzjaehrigNur?: boolean;
 }
 
 interface CatalogContextValue {
@@ -243,6 +245,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       if (filter?.ascMax != null) params.ascMax = filter.ascMax;
       if (filter?.diffMin != null) params.diffMin = filter.diffMin;
       if (filter?.diffMax != null) params.diffMax = filter.diffMax;
+      if (filter?.ganzjaehrigNur != null) params.ganzjaehrigNur = filter.ganzjaehrigNur;
 
       try {
         // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
