@@ -83,6 +83,69 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
   });
 });
 
+const PremiumZuruecksetzenBody = z.object({
+  email: z.string().email().optional(),
+  userId: z.string().optional(),
+  // Wie lange /me/premium/sync ein weiterhin aktives RevenueCat-Test-Abo
+  // ignorieren soll. Default 3650 Tage (praktisch dauerhaft fuer Dev-Zwecke).
+  sperrtageAnzahl: z.number().int().min(0).max(3650).default(3650),
+});
+
+router.post("/admin/premium/reset", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = PremiumZuruecksetzenBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { email, userId: userIdBody, sperrtageAnzahl } = parsed.data;
+  if (!email && !userIdBody) {
+    res.status(400).json({ error: "email oder userId erforderlich" });
+    return;
+  }
+
+  let userId = userIdBody ?? null;
+  if (!userId && email) {
+    const nutzer = await clerkClient.users.getUserList({ emailAddress: [email] });
+    if (nutzer.data.length === 0) {
+      res.status(404).json({ error: `Kein Clerk-Nutzer mit E-Mail ${email}` });
+      return;
+    }
+    userId = nutzer.data[0].id;
+  }
+
+  const sperreBis = new Date();
+  sperreBis.setDate(sperreBis.getDate() + sperrtageAnzahl);
+
+  const [row] = await db
+    .update(profilesTable)
+    .set({
+      premium: false,
+      premiumBis: null,
+      // Bei sperrtageAnzahl=0 sofort wieder synchronisierbar lassen.
+      premiumSyncLockedUntil: sperrtageAnzahl > 0 ? sperreBis : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(profilesTable.id, userId as string))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: `Profil ${userId} nicht gefunden` });
+    return;
+  }
+
+  req.log.info(
+    { userId, sperrtageAnzahl, premiumSyncLockedUntil: row.premiumSyncLockedUntil },
+    "Premium per Admin zurueckgesetzt (RevenueCat-Sync gesperrt)",
+  );
+  res.json({
+    userId,
+    premium: row.premium,
+    premiumSyncLockedUntil: row.premiumSyncLockedUntil,
+  });
+});
+
 const PARTNER_KATEGORIEN = [
   "restaurant",
   "cafe",

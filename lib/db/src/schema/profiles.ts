@@ -17,6 +17,10 @@ export const profilesTable = pgTable("profiles", {
   premium: boolean("premium").notNull().default(false),
   // Befristetes Premium (z. B. manuell freigeschaltet): aktiv solange in der Zukunft.
   premiumBis: timestamp("premium_bis", { withTimezone: true }),
+  // Admin-Reset-Sperre: solange in der Zukunft, ignoriert /me/premium/sync ein
+  // aktives RevenueCat-Abo bewusst, damit ein manueller Dev-Reset (premium=false)
+  // nicht sofort durch den naechsten Client-Sync wieder ueberschrieben wird.
+  premiumSyncLockedUntil: timestamp("premium_sync_locked_until", { withTimezone: true }),
   freeHikeUsed: boolean("free_hike_used").notNull().default(false),
   // Serverseitiger Abgleich des lokal auf dem Geraet gefuehrten Wanderverlaufs
   // und der Errungenschaften (siehe /me/progress/sync). Verhindert Datenverlust

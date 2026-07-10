@@ -136,6 +136,26 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
   // Fehlendes Entitlement fuehrt bewusst NICHT zum Entzug — Downgrade
   // bleibt Self-Service (PATCH /me/premium) bzw. Admin-Sache, damit
   // admin-gewaehrtes Premium nicht ueberschrieben wird.
+  const [bestehend] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  if (!bestehend) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+
+  // Admin-Reset-Sperre: solange aktiv, wird ein weiterhin aktives
+  // RevenueCat-Test-Abo bewusst NICHT hochsynchronisiert (siehe Schema-Kommentar).
+  if (bestehend.premiumSyncLockedUntil && bestehend.premiumSyncLockedUntil > new Date()) {
+    req.log.info(
+      { userId, premiumSyncLockedUntil: bestehend.premiumSyncLockedUntil },
+      "[IAP] /me/premium/sync uebersprungen (Admin-Reset-Sperre aktiv)",
+    );
+    res.json(toProfile(bestehend));
+    return;
+  }
+
   let premiumAktiv: boolean;
   try {
     premiumAktiv = await hatAktivesPremiumEntitlement(userId);
