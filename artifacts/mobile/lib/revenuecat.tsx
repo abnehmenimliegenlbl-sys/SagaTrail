@@ -3,7 +3,7 @@
 // Abo-Modell. Siehe scripts/src/seedRevenueCat.ts fuer die
 // Projekt-/Produkt-Konfiguration in RevenueCat.
 import React, { createContext, useContext, useEffect } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import Purchases, { type PurchasesPackage } from "react-native-purchases";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
@@ -60,6 +60,14 @@ function useSubscriptionContext() {
   // (sonst prueft der Server einen Customer, dem der anonyme Kauf noch
   // nicht zugeordnet wurde).
   const [rcAppUserId, setRcAppUserId] = React.useState<string | null>(null);
+  // Merkt sich, ob die letzte Identitaets-Verknuepfung fehlgeschlagen ist
+  // (z.B. kurzer Netzwerk-Aussetzer beim kalten App-Start). Ohne erneuten
+  // Versuch bleibt RevenueCat sonst bis zum naechsten vollstaendigen
+  // App-Neustart auf der anonymen ID haengen — und der Server-Sync
+  // (POST /me/premium/sync) prueft dann nie den richtigen Customer, obwohl
+  // der Kauf laengst bestaetigt ist.
+  const letzterVersuchFehlgeschlagenRef = React.useRef(false);
+  const [wiederholungsTick, setWiederholungsTick] = React.useState(0);
 
   // Meldet den RevenueCat-Customer mit der Clerk-Nutzer-ID an, damit der
   // Server Kaeufe verifiziert abgleichen kann (POST /me/premium/sync prueft
@@ -68,32 +76,61 @@ function useSubscriptionContext() {
     if (!authLoaded) return;
     let abgebrochen = false;
     (async () => {
-      try {
-        const aktuelleId = await Purchases.getAppUserID();
-        if (isSignedIn && userId && aktuelleId !== userId) {
-          // logIn transferiert anonym getaetigte Kaeufe auf den Nutzer.
-          const { customerInfo } = await Purchases.logIn(userId);
-          void customerInfo;
-        } else if (!isSignedIn && !aktuelleId.startsWith("$RCAnonymousID:")) {
-          await Purchases.logOut();
-        } else {
-          if (!abgebrochen) setRcAppUserId(aktuelleId);
+      // Bis zu 3 Versuche mit kurzer Pause: deckt voruebergehende
+      // Netzwerkfehler beim App-Start ab, ohne den Nutzer auf einen
+      // kompletten Neustart warten zu lassen.
+      for (let versuch = 0; versuch < 3; versuch++) {
+        if (abgebrochen) return;
+        try {
+          const aktuelleId = await Purchases.getAppUserID();
+          if (isSignedIn && userId && aktuelleId !== userId) {
+            // logIn transferiert anonym getaetigte Kaeufe auf den Nutzer.
+            const { customerInfo } = await Purchases.logIn(userId);
+            void customerInfo;
+          } else if (!isSignedIn && !aktuelleId.startsWith("$RCAnonymousID:")) {
+            await Purchases.logOut();
+          } else {
+            if (!abgebrochen) {
+              setRcAppUserId(aktuelleId);
+              letzterVersuchFehlgeschlagenRef.current = false;
+            }
+            return;
+          }
+          const neueId = await Purchases.getAppUserID();
+          if (!abgebrochen) {
+            setRcAppUserId(neueId);
+            letzterVersuchFehlgeschlagenRef.current = false;
+            queryClient.invalidateQueries({ queryKey: ["revenuecat"] });
+          }
           return;
+        } catch {
+          if (versuch < 2) {
+            await new Promise((r) => setTimeout(r, 1500 * (versuch + 1)));
+            continue;
+          }
+          // Alle Versuche fehlgeschlagen: beim naechsten App-Vordergrund
+          // (AppState "active") wird es erneut versucht.
+          letzterVersuchFehlgeschlagenRef.current = true;
         }
-        const neueId = await Purchases.getAppUserID();
-        if (!abgebrochen) {
-          setRcAppUserId(neueId);
-          queryClient.invalidateQueries({ queryKey: ["revenuecat"] });
-        }
-      } catch {
-        // Nicht fatal: ohne Login bleibt der Kauf anonym; der naechste
-        // App-Start versucht es erneut.
       }
     })();
     return () => {
       abgebrochen = true;
     };
-  }, [authLoaded, isSignedIn, userId, queryClient]);
+  }, [authLoaded, isSignedIn, userId, queryClient, wiederholungsTick]);
+
+  // Sicherheitsnetz: kommt die App in den Vordergrund und die letzte
+  // Identitaets-Verknuepfung ist fehlgeschlagen, erneut versuchen — statt
+  // dauerhaft mit einer nicht verknuepften (anonymen) RevenueCat-ID zu
+  // bleiben, was den Premium-Sync unbemerkt verhindern wuerde.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active" && letzterVersuchFehlgeschlagenRef.current) {
+        setWiederholungsTick((n) => n + 1);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const customerInfoQuery = useQuery({
     queryKey: ["revenuecat", "customer-info"],

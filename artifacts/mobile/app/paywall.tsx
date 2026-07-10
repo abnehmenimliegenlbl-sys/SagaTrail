@@ -32,8 +32,15 @@ export default function Paywall() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { premium } = useApp();
-  const { offerings, isLoading, purchase, restore, isPurchasing, isRestoring } =
-    useSubscription();
+  const {
+    offerings,
+    isLoading,
+    purchase,
+    restore,
+    isPurchasing,
+    isRestoring,
+    refreshCustomerInfo,
+  } = useSubscription();
   const t = usePaywallStrings();
   const ts = useSharedStrings();
 
@@ -117,7 +124,31 @@ export default function Paywall() {
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (timedOut) return;
-      if (!err?.userCancelled) {
+      // StoreKit/Play meldet manchmal "bereits abonniert" statt den Kauf
+      // erfolgreich zurueckzugeben (z.B. nach Neuinstallation, oder wenn
+      // unser lokaler Sync das aktive Abo noch nicht mitbekommen hat — vgl.
+      // Screenshot-Bug: natives "You are currently subscribed"-Sheet ueber
+      // "Angebot wird geladen"). Das ist kein Fehler, sondern ein Erfolg,
+      // den wir sonst faelschlich als Kauf-Fehler anzeigen wuerden UND der
+      // ohne den Refetch hier nie zu einem premium-Sync fuehrt.
+      const bereitsAbonniert =
+        err?.code === "2" ||
+        err?.code === 2 ||
+        /already\s+(subscribed|purchased|owns|active)/i.test(
+          String(err?.message ?? err?.underlyingErrorMessage ?? "")
+        );
+      if (bereitsAbonniert) {
+        try {
+          await refreshCustomerInfo();
+        } catch {
+          // Nicht fatal: der naechste automatische Abgleich (AppContext)
+          // oder ein manueller "Kauf wiederherstellen" greift spaeter.
+        }
+        setTimeout(() => {
+          if (!mountedRef.current) return;
+          alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
+        }, 600);
+      } else if (!err?.userCancelled) {
         setTimeout(() => {
           if (!mountedRef.current) return;
           alert(t.purchaseErrorTitle, err?.message ?? String(err));
