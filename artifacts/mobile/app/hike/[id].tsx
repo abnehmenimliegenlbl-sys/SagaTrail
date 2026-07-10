@@ -894,11 +894,19 @@ export default function LiveHike() {
   // springen. Deshalb wird die Routen-Projektion erst ab einer
   // Mindestgenauigkeit vertraut; ohne verlaessliche Genauigkeit faellt der
   // Fortschritt auf die reine zurueckgelegte Distanz zurueck (startet bei 0).
+  // Zusaetzlich: Ist man weit von der Route entfernt (z. B. Anreise ueber
+  // 100 km), liefert die naechstgelegene Stelle auf der gesamten Route
+  // faktisch einen Zufallswert entlang der Strecke — auch das wuerde
+  // Kapitel ueberspringen. Deshalb nur vertrauen, wenn man tatsaechlich
+  // in der Naehe der Route ist.
   const ROUTE_PROGRESS_MAX_ACCURACY_M = 30;
+  const ROUTE_PROGRESS_MAX_DIST_KM = 1;
   const routeProgress = useMemo(() => {
     if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
     if (livePosAccuracy != null && livePosAccuracy > ROUTE_PROGRESS_MAX_ACCURACY_M) return null;
-    return fortschrittAufRoute(livePos, route.geometry)?.fraction ?? null;
+    const match = fortschrittAufRoute(livePos, route.geometry);
+    if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
+    return match.fraction;
   }, [livePos, livePosAccuracy, route?.geometry]);
 
   // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
