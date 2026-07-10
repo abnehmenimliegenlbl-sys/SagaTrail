@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -40,6 +40,19 @@ export default function Paywall() {
   const [busy, setBusy] = useState(false);
   const [gewaehlt, setGewaehlt] = useState<string | null>(null);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
+
+  // Verhindert, dass ein verzoegert geplanter Dialog (siehe buy()/onRestore())
+  // noch praesentiert wird, nachdem der Nutzer diesen Screen bereits manuell
+  // verlassen hat — ein natives Modal ausserhalb des noch aktiven Screens
+  // praesentieren kann auf iOS zu einem UI-Deadlock (kompletter App-Freeze)
+  // fuehren, wenn es mit einer laufenden Navigations-Transition kollidiert.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Ordnet die Pakete des aktuellen Offerings den fuenf Plaenen zu.
   // Preise kommen immer aus RevenueCat — nie hart codiert.
@@ -96,6 +109,7 @@ export default function Paywall() {
       // UIKit-Praesentationen und die App friert komplett ein. Eine kurze
       // Verzoegerung laesst StoreKit die Uebergabe sauber abschliessen.
       setTimeout(() => {
+        if (!mountedRef.current) return;
         alert(t.successAlertTitle, t.successAlertMsg, [
           { text: t.successAlertBtn, onPress: () => router.back() },
         ]);
@@ -105,6 +119,7 @@ export default function Paywall() {
       if (timedOut) return;
       if (!err?.userCancelled) {
         setTimeout(() => {
+          if (!mountedRef.current) return;
           alert(t.purchaseErrorTitle, err?.message ?? String(err));
         }, 600);
       }
@@ -120,6 +135,7 @@ export default function Paywall() {
       const customerInfo = await restore();
       const hasActive = !!customerInfo.entitlements.active["premium"];
       setTimeout(() => {
+        if (!mountedRef.current) return;
         if (hasActive) {
           alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
         } else {
@@ -128,6 +144,7 @@ export default function Paywall() {
       }, 600);
     } catch (err: any) {
       setTimeout(() => {
+        if (!mountedRef.current) return;
         alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
       }, 600);
     } finally {
