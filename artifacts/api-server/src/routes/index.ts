@@ -17,6 +17,7 @@ import geocodeRouter from "./geocode";
 import customRouteRouter from "./customRoute";
 import gpxRouter from "./gpx";
 import adminRouter from "./admin";
+import debugLogRouter from "./debugLog";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(geocodeRouter);
 router.use(customRouteRouter);
 router.use(gpxRouter);
 router.use(adminRouter);
+router.use(debugLogRouter);
 
 export default router;

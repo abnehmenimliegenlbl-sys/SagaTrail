@@ -8,6 +8,7 @@ import Purchases, { type PurchasesPackage } from "react-native-purchases";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { useAuth } from "@clerk/expo";
+import { getApiBaseUrl } from "./apiConfig";
 
 const REVENUECAT_TEST_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
 const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
@@ -49,6 +50,29 @@ function getRevenueCatApiKey() {
 // danach filtern, um einen Kauf von Anfang bis Ende zu verfolgen.
 export function iapLog(...args: unknown[]) {
   console.log("[IAP]", new Date().toISOString(), ...args);
+  sendRemoteLog(args);
+}
+
+// Leitet [IAP]-Logs zusaetzlich an den Server weiter (fire-and-forget).
+// Noetig, weil console.log in einem TestFlight-/App-Store-Build nur lokal
+// auf dem Geraet landet — ohne diese Weiterleitung waeren Kauf-Probleme auf
+// einem echten Geraet nur per Mac/Xcode-Konsole sichtbar. Absichtlich
+// best-effort: Fehler beim Log-Versand duerfen den Kaufablauf nie stoeren.
+function sendRemoteLog(args: unknown[]) {
+  try {
+    const base = getApiBaseUrl();
+    if (!base) return;
+    const [message, ...rest] = args;
+    fetch(`${base}/api/debug/log`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tag: "iap",
+        message: typeof message === "string" ? message : JSON.stringify(message),
+        data: rest,
+      }),
+    }).catch(() => {});
+  } catch {}
 }
 
 export function initializeRevenueCat() {
