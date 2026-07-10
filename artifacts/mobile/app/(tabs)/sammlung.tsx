@@ -43,7 +43,17 @@ export default function Sammlung() {
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
-  const cantons = Array.from(new Set(sagas.map((s) => s.canton)));
+  const cantons = React.useMemo(() => {
+    const namen = Array.from(new Set(sagas.map((s) => s.canton)));
+    const discoveredCount = (canton: string) =>
+      sagas.filter((s) => s.canton === canton && unlockedIds.has(s.id)).length;
+    return namen.sort((a, b) => {
+      const diff = discoveredCount(b) - discoveredCount(a);
+      if (diff !== 0) return diff;
+      return a.localeCompare(b, "de");
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sagas, achievements]);
 
   // Gamification: Rang steigt durch gehörte Sagen + abgeschlossene
   // Wanderungen — komplett lokal berechnet, kein Server-Roundtrip nötig.
