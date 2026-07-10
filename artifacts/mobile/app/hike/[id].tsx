@@ -171,6 +171,7 @@ export default function LiveHike() {
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
+  const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
   const [aerialways, setAerialways] = useState<
@@ -454,9 +455,10 @@ export default function LiveHike() {
   }, [saga, isDownloaded, loadOfflineTiles]);
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren
-  const handleFix = useCallback((lat: number, lng: number) => {
+  const handleFix = useCallback((lat: number, lng: number, accuracy: number | null = null) => {
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
+    setLivePosAccuracy(accuracy);
     const prev = lastFixRef.current;
     if (prev) {
       const d = haversineKm(prev, cur);
@@ -598,7 +600,7 @@ export default function LiveHike() {
             (p) => {
               if (cancelled) return;
               setLocState("granted");
-              handleFix(p.coords.latitude, p.coords.longitude);
+              handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null);
             },
             () => {
               if (!cancelled) setLocState("simulated");
@@ -625,7 +627,8 @@ export default function LiveHike() {
           const first = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
           });
-          if (!cancelled) handleFix(first.coords.latitude, first.coords.longitude);
+          if (!cancelled)
+            handleFix(first.coords.latitude, first.coords.longitude, first.coords.accuracy ?? null);
         } catch {
           // Kein Sofort-Fix moeglich — watchPositionAsync uebernimmt.
         }
@@ -663,7 +666,7 @@ export default function LiveHike() {
           // Rueckfall: normale Vordergrund-Verfolgung (stoppt beim
           // Backgrounding, aber besser als gar kein Live-Tracking).
           sub = await Location.watchPositionAsync(trackingOptions, (p) =>
-            handleFix(p.coords.latitude, p.coords.longitude)
+            handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null)
           );
         }
       } catch {
@@ -885,10 +888,18 @@ export default function LiveHike() {
   // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
   // Story-Fortschritt auch dann stimmt, wenn die Wanderung abseits des
   // offiziellen Startpunkts oder mitten auf der Route begonnen wird.
+  // Ein ungenauer erster Fix (z. B. Balanced-Genauigkeit direkt beim Start,
+  // oder ein grober Hintergrund-Fix) kann faelschlich auf einen weit
+  // entfernten Punkt der Route projiziert werden und so Kapitel ueber-
+  // springen. Deshalb wird die Routen-Projektion erst ab einer
+  // Mindestgenauigkeit vertraut; ohne verlaessliche Genauigkeit faellt der
+  // Fortschritt auf die reine zurueckgelegte Distanz zurueck (startet bei 0).
+  const ROUTE_PROGRESS_MAX_ACCURACY_M = 30;
   const routeProgress = useMemo(() => {
     if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
+    if (livePosAccuracy != null && livePosAccuracy > ROUTE_PROGRESS_MAX_ACCURACY_M) return null;
     return fortschrittAufRoute(livePos, route.geometry)?.fraction ?? null;
-  }, [livePos, route?.geometry]);
+  }, [livePos, livePosAccuracy, route?.geometry]);
 
   // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
   // dessen Naehe ist (z. B. beim Start ab Bahnhof/Parkplatz statt direkt am
