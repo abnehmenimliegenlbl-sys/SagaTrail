@@ -77,8 +77,16 @@ export default function Paywall() {
   const buy = async () => {
     if (!packageToBuy) return;
     setBusy(true);
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      setBusy(false);
+      alert(t.purchaseErrorTitle, t.purchaseTimeoutMsg);
+    }, 45000);
     try {
       await purchase(packageToBuy);
+      clearTimeout(timeoutId);
+      if (timedOut) return;
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -86,11 +94,14 @@ export default function Paywall() {
         { text: t.successAlertBtn, onPress: () => router.back() },
       ]);
     } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (timedOut) return;
       if (!err?.userCancelled) {
         alert(t.purchaseErrorTitle, err?.message ?? String(err));
       }
     } finally {
-      setBusy(false);
+      clearTimeout(timeoutId);
+      if (!timedOut) setBusy(false);
     }
   };
 

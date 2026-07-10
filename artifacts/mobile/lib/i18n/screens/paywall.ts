@@ -30,6 +30,7 @@ export interface PaywallStrings {
   restoreErrorTitle: string;
   restoreErrorMsg: string;
   purchaseErrorTitle: string;
+  purchaseTimeoutMsg: string;
   legalText: string;
   successAlertTitle: string;
   successAlertMsg: string;
@@ -76,6 +77,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Wiederherstellung fehlgeschlagen",
     restoreErrorMsg: "Bitte versuche es später erneut.",
     purchaseErrorTitle: "Kauf fehlgeschlagen",
+    purchaseTimeoutMsg:
+      "Der Kauf dauert ungewöhnlich lange. Bitte prüfe deine Internetverbindung und versuche es erneut, oder nutze \"Kauf wiederherstellen\", falls die Zahlung bereits durchgegangen ist.",
     legalText:
       "Abonnement verlängert sich automatisch, bis es gekündigt wird. Abrechnung über dein App-Store- bzw. Google-Play-Konto.",
     successAlertTitle: "Willkommen bei Premium",
@@ -121,6 +124,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Wiederhärstellig fählgschlage",
     restoreErrorMsg: "Bitte versuech's spöter nomol.",
     purchaseErrorTitle: "Chauf fählgschlage",
+    purchaseTimeoutMsg:
+      "Dr Chauf duurt ungewöhnlich lang. Bitte prüef dini Internetverbindig und versuech's nomol, oder nutz \"Chauf wiederhärstelle\", falls d'Zahlig scho durgange isch.",
     legalText:
       "Abonnement verlängeret sich automatisch, bis es kündet wird. Abrächnig über dis App-Store- oder Google-Play-Konto.",
     successAlertTitle: "Willkomme bi Premium",
@@ -166,6 +171,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Restore failed",
     restoreErrorMsg: "Please try again later.",
     purchaseErrorTitle: "Purchase failed",
+    purchaseTimeoutMsg:
+      "The purchase is taking unusually long. Please check your internet connection and try again, or use \"Restore purchase\" if the payment already went through.",
     legalText:
       "Subscription renews automatically until cancelled. Billed through your App Store or Google Play account.",
     successAlertTitle: "Welcome to Premium",
@@ -211,6 +218,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Échec de la restauration",
     restoreErrorMsg: "Veuillez réessayer plus tard.",
     purchaseErrorTitle: "Échec de l'achat",
+    purchaseTimeoutMsg:
+      "L'achat prend un temps inhabituel. Vérifiez votre connexion internet et réessayez, ou utilisez \"Restaurer l'achat\" si le paiement a déjà été effectué.",
     legalText:
       "L'abonnement se renouvelle automatiquement jusqu'à sa résiliation. Facturé via votre compte App Store ou Google Play.",
     successAlertTitle: "Bienvenue sur Premium",
@@ -256,6 +265,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Ripristino non riuscito",
     restoreErrorMsg: "Riprova più tardi.",
     purchaseErrorTitle: "Acquisto non riuscito",
+    purchaseTimeoutMsg:
+      "L'acquisto sta impiegando un tempo insolito. Controlla la tua connessione internet e riprova, oppure usa \"Ripristina acquisto\" se il pagamento è già andato a buon fine.",
     legalText:
       "L'abbonamento si rinnova automaticamente fino alla disdetta. Addebitato tramite il tuo account App Store o Google Play.",
     successAlertTitle: "Benvenuti in Premium",
@@ -301,6 +312,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Error al restaurar",
     restoreErrorMsg: "Inténtalo de nuevo más tarde.",
     purchaseErrorTitle: "Error en la compra",
+    purchaseTimeoutMsg:
+      "La compra está tardando más de lo normal. Comprueba tu conexión a internet e inténtalo de nuevo, o usa \"Restaurar compra\" si el pago ya se ha realizado.",
     legalText:
       "La suscripción se renueva automáticamente hasta que se cancele. Facturado a través de tu cuenta de App Store o Google Play.",
     successAlertTitle: "Bienvenido a Premium",
@@ -346,6 +359,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Falha ao restaurar",
     restoreErrorMsg: "Tente novamente mais tarde.",
     purchaseErrorTitle: "Falha na compra",
+    purchaseTimeoutMsg:
+      "A compra está demorando mais que o normal. Verifique sua conexão com a internet e tente novamente, ou use \"Restaurar compra\" caso o pagamento já tenha sido concluído.",
     legalText:
       "A assinatura é renovada automaticamente até ser cancelada. Cobrado através da sua conta App Store ou Google Play.",
     successAlertTitle: "Bem-vindo ao Premium",
@@ -391,6 +406,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "恢复失败",
     restoreErrorMsg: "请稍后重试。",
     purchaseErrorTitle: "购买失败",
+    purchaseTimeoutMsg: "购买耗时异常长。请检查网络连接并重试，如果付款已经完成，请使用\"恢复购买\"。",
     legalText: "订阅会自动续订，直至取消。费用通过您的 App Store 或 Google Play 账户结算。",
     successAlertTitle: "欢迎使用 Premium",
     successAlertMsg: "所有州和传说现已解锁。",
@@ -435,6 +451,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreErrorTitle: "Восстановление не удалось",
     restoreErrorMsg: "Пожалуйста, попробуйте позже.",
     purchaseErrorTitle: "Покупка не удалась",
+    purchaseTimeoutMsg:
+      "Покупка выполняется необычно долго. Проверьте подключение к интернету и попробуйте снова, либо используйте «Восстановить покупку», если оплата уже прошла.",
     legalText:
       "Подписка продлевается автоматически до отмены. Оплата через ваш аккаунт App Store или Google Play.",
     successAlertTitle: "Добро пожаловать в Premium",
