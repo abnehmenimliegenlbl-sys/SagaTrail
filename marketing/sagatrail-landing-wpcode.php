@@ -314,6 +314,18 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                 .st-legal h3 { font-size: 16px; font-weight: 700; margin: 22px 0 6px; color: var(--st-red); }
                 .st-legal p { margin: 0 0 4px; color: var(--st-ink); opacity: .9; line-height: 1.6; }
                 .st-legal a { color: var(--st-red); }
+                .st-legal-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+                .st-legal-tab {
+                    display: inline-block;
+                    padding: 6px 16px;
+                    border-radius: 999px;
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    background: rgba(0,0,0,0.06);
+                    color: var(--st-ink);
+                    text-decoration: none;
+                }
+                .st-legal-tab.is-active { background: var(--st-red); color: #fff; }
 
                 /* Footer */
                 .st-footer {
@@ -494,6 +506,11 @@ if (!function_exists('sagatrail_landing_shortcode')) {
             <!-- DATENSCHUTZ -->
             <section class="st-legal" id="datenschutz">
                 <div class="st-wrap">
+                    <div class="st-legal-tabs">
+                        <a href="#datenschutz" class="st-legal-tab is-active">Deutsch</a>
+                        <a href="#privacy" class="st-legal-tab">English</a>
+                    </div>
+
                     <h2>Datenschutz</h2>
 
                     <h3>Welche Daten wir erheben</h3>
@@ -512,6 +529,35 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                     <p>Bei Fragen zum Datenschutz erreichst du uns unter <a href="mailto:info@inster.abb">info@inster.abb</a>.</p>
 
                     <p style="opacity:.7;font-size:.9em;margin-top:24px;">Hinweis: Dieser Text wird demnaechst ueberarbeitet und aktualisiert.</p>
+                </div>
+            </section>
+
+            <!-- PRIVACY (EN) -->
+            <section class="st-legal" id="privacy">
+                <div class="st-wrap">
+                    <div class="st-legal-tabs">
+                        <a href="#datenschutz" class="st-legal-tab">Deutsch</a>
+                        <a href="#privacy" class="st-legal-tab is-active">English</a>
+                    </div>
+
+                    <h2>Privacy Policy</h2>
+
+                    <h3>What data we collect</h3>
+                    <p>SagaTrail processes location data (only during an active hike), your profile (name, archetype, home canton, language, age tier), as well as your story progress and unlocked collections.</p>
+
+                    <h3>Where the data is stored</h3>
+                    <p>All data is stored exclusively on your device, or securely synced with your account if you are logged in. You can export or completely delete your data at any time in the settings.</p>
+
+                    <h3>Location</h3>
+                    <p>Location is only used to trigger story moments at the appropriate waypoints. You can revoke this permission at any time in the operating system; the app will then continue to function with limited features.</p>
+
+                    <h3>Children</h3>
+                    <p>For the children's age tier, confirmation from a parent or legal guardian is required. Content is adapted to be age-appropriate.</p>
+
+                    <h3>Contact</h3>
+                    <p>For privacy-related questions, reach us at <a href="mailto:info@inster.abb">info@inster.abb</a>.</p>
+
+                    <p style="opacity:.7;font-size:.9em;margin-top:24px;">Note: This text will be reviewed and updated soon.</p>
                 </div>
             </section>
 
