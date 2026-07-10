@@ -19,7 +19,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { InteractionManager } from "react-native";
 
 import { Achievement, HikeSession, Profile } from "@/types";
 import type { HikingRoute } from "@/constants/routes";
@@ -593,16 +592,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const result = await syncMyPremiumMutation();
     iapLog("unlockPremium: Server-Antwort", { premium: result.premium });
     // `setPremium` loest ueber den globalen Context ein Re-Render praktisch
-    // des gesamten Bildschirms aus. Kommt die Server-Antwort waehrend eine
+    // des gesamten Bildschirms aus (u.a. schaltet paywall.tsx auf einen
+    // komplett anderen JSX-Zweig um). Kommt die Server-Antwort waehrend eine
     // native Modal-Uebergangsanimation laeuft (z.B. der Erfolgs-Dialog nach
     // dem Kauf), kollidiert dieser schwere Re-Render mit der laufenden
-    // UIKit-Animation und kann die App komplett einfrieren. Mit
-    // InteractionManager auf das Ende laufender Animationen/Interaktionen
-    // warten, statt den State sofort zu setzen.
-    InteractionManager.runAfterInteractions(() => {
-      iapLog("unlockPremium: setPremium nach Interactions");
+    // Animation und kann die App komplett einfrieren.
+    // InteractionManager.runAfterInteractions greift hier NICHT, weil
+    // Reanimated-Animationen (FadeInDown/FadeOut in AppModal) keinen
+    // Interaction-Handle registrieren und daher sofort feuert. Stattdessen
+    // ein expliziter Timeout, deutlich laenger als AppModal's 220ms
+    // Eintritts-Animation.
+    setTimeout(() => {
+      iapLog("unlockPremium: setPremium nach Verzoegerung");
       setPremium(result.premium);
-    });
+    }, 400);
     await AsyncStorage.setItem(
       KEYS.premium,
       result.premium ? "true" : "false"
@@ -619,10 +622,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     manualLockUntilRef.current = Date.now() + 8000;
     const result = await updateMyPremiumMutation({ data: { premium: false } });
     // Gleicher Grund wie in unlockPremium: den schweren Context-Re-Render
-    // von einer eventuell laufenden Modal-Animation entkoppeln.
-    InteractionManager.runAfterInteractions(() => {
+    // von einer eventuell laufenden Modal-Animation entkoppeln. Expliziter
+    // Timeout statt InteractionManager, siehe Kommentar in unlockPremium.
+    setTimeout(() => {
       setPremium(result.premium);
-    });
+    }, 400);
     await AsyncStorage.setItem(KEYS.premium, "false");
   }, [updateMyPremiumMutation]);
 
