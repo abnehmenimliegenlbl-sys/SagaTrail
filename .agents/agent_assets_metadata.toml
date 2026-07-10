@@ -167,3 +167,9 @@ id = "zkUAAnXzfqSXGkSlz9YmL"
 uri = "file://attached_assets/IMG_7232_1783608256538.png"
 type = "image"
 title = "SagaTrail Premium Paywall Screenshot"
+
+[[outputs]]
+id = "4f27mu4VLFrp1MQ4L_XX4"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "SagaTrail App-Icon (1024x1024)"
