@@ -23,7 +23,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { usePaywallStrings } from "@/lib/i18n/screens/paywall";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
-import { useSubscription } from "@/lib/revenuecat";
+import { iapLog, useSubscription } from "@/lib/revenuecat";
 
 const WEB_TOP = 67;
 
@@ -96,17 +96,26 @@ export default function Paywall() {
 
   const buy = async () => {
     if (!packageToBuy) return;
+    iapLog("paywall.buy: Tippe auf Kaufen", {
+      identifier: packageToBuy.identifier,
+      productId: packageToBuy.product.identifier,
+    });
     setBusy(true);
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
       setBusy(false);
+      iapLog("paywall.buy: 45s-Timeout ausgeloest — Kauf haengt");
       alert(t.purchaseErrorTitle, t.purchaseTimeoutMsg);
     }, 45000);
     try {
       await purchase(packageToBuy);
       clearTimeout(timeoutId);
-      if (timedOut) return;
+      if (timedOut) {
+        iapLog("paywall.buy: Kauf kam nach Timeout noch durch");
+        return;
+      }
+      iapLog("paywall.buy: Kauf-Promise aufgeloest, zeige Erfolg");
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -124,6 +133,11 @@ export default function Paywall() {
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (timedOut) return;
+      iapLog("paywall.buy: Kauf-Promise abgelehnt", {
+        code: err?.code,
+        message: err?.message,
+        userCancelled: err?.userCancelled,
+      });
       // StoreKit/Play meldet manchmal "bereits abonniert" statt den Kauf
       // erfolgreich zurueckzugeben (z.B. nach Neuinstallation, oder wenn
       // unser lokaler Sync das aktive Abo noch nicht mitbekommen hat — vgl.
@@ -138,11 +152,18 @@ export default function Paywall() {
           String(err?.message ?? err?.underlyingErrorMessage ?? "")
         );
       if (bereitsAbonniert) {
+        iapLog("paywall.buy: als 'bereits abonniert' erkannt, refetch customerInfo");
         try {
           await refreshCustomerInfo();
-        } catch {
+        } catch (refreshErr) {
           // Nicht fatal: der naechste automatische Abgleich (AppContext)
           // oder ein manueller "Kauf wiederherstellen" greift spaeter.
+          iapLog("paywall.buy: refreshCustomerInfo fehlgeschlagen", {
+            message:
+              refreshErr instanceof Error
+                ? refreshErr.message
+                : String(refreshErr),
+          });
         }
         setTimeout(() => {
           if (!mountedRef.current) return;

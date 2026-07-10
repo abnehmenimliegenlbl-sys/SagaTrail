@@ -33,7 +33,7 @@ import {
 import type { ThemeMode } from "@/constants/colors";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
-import { useSubscription } from "@/lib/revenuecat";
+import { iapLog, useSubscription } from "@/lib/revenuecat";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
 // seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
@@ -588,7 +588,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Premium nicht per Self-Service geben — PATCH /me/premium lehnt
   // premium=true mit 403 ab).
   const unlockPremium = useCallback(async () => {
+    iapLog("unlockPremium: rufe POST /me/premium/sync auf");
     const result = await syncMyPremiumMutation();
+    iapLog("unlockPremium: Server-Antwort", { premium: result.premium });
     setPremium(result.premium);
     await AsyncStorage.setItem(
       KEYS.premium,
@@ -621,14 +623,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Erst synchronisieren, wenn RevenueCat mit der Clerk-Nutzer-ID
     // angemeldet ist: vorher wuerde der Server einen Customer pruefen,
     // dem ein anonym getaetigter Kauf noch nicht zugeordnet wurde.
-    if (!rcAppUserId || rcAppUserId !== profile.id) return;
+    if (!rcAppUserId || rcAppUserId !== profile.id) {
+      iapLog("premium-sync-effect: warte auf Identitaets-Verknuepfung", {
+        rcAppUserId,
+        profileId: profile.id,
+      });
+      return;
+    }
     // Manueller Reset (Demo-Button) hat kurz Vorrang: sonst wuerde dieser
     // Effekt ein noch aktives RevenueCat-Abo sofort wieder hochsynchronisieren.
     if (Date.now() < manualLockUntilRef.current) return;
+    iapLog("premium-sync-effect: geprueft", { isSubscribed, premium });
     if (isSubscribed && !premium) {
-      unlockPremium().catch(() => {});
+      unlockPremium().catch((err) =>
+        iapLog("premium-sync-effect: unlockPremium fehlgeschlagen", {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      );
     } else if (!isSubscribed && premium) {
-      lockPremium().catch(() => {});
+      lockPremium().catch((err) =>
+        iapLog("premium-sync-effect: lockPremium fehlgeschlagen", {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      );
     }
   }, [
     authLoaded,

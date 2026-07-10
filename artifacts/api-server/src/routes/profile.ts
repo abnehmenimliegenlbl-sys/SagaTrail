@@ -139,8 +139,9 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
   let premiumAktiv: boolean;
   try {
     premiumAktiv = await hatAktivesPremiumEntitlement(userId);
+    req.log.info({ userId, premiumAktiv }, "[IAP] /me/premium/sync geprueft");
   } catch (err) {
-    req.log.error({ err }, "RevenueCat-Premium-Abgleich fehlgeschlagen");
+    req.log.error({ err, userId }, "[IAP] RevenueCat-Premium-Abgleich fehlgeschlagen");
     res.status(502).json({ error: "RevenueCat nicht erreichbar" });
     return;
   }

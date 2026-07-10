@@ -44,12 +44,20 @@ function getRevenueCatApiKey() {
   return REVENUECAT_TEST_API_KEY;
 }
 
+// Zentrales Debug-Log fuer den gesamten Kauf-/Sync-Pfad. Alle Zeilen mit
+// dem Praefix "[IAP]" gehoeren zusammen — im Metro-/Geraete-Log gezielt
+// danach filtern, um einen Kauf von Anfang bis Ende zu verfolgen.
+export function iapLog(...args: unknown[]) {
+  console.log("[IAP]", new Date().toISOString(), ...args);
+}
+
 export function initializeRevenueCat() {
   const apiKey = getRevenueCatApiKey();
   if (!apiKey) throw new Error("RevenueCat Public API Key not found");
 
   Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
   Purchases.configure({ apiKey });
+  iapLog("initializeRevenueCat", { platform: Platform.OS, dev: __DEV__ });
 }
 
 function useSubscriptionContext() {
@@ -83,12 +91,25 @@ function useSubscriptionContext() {
         if (abgebrochen) return;
         try {
           const aktuelleId = await Purchases.getAppUserID();
+          iapLog("identity: aktuelleId", {
+            aktuelleId,
+            isSignedIn,
+            userId,
+            versuch,
+          });
           if (isSignedIn && userId && aktuelleId !== userId) {
             // logIn transferiert anonym getaetigte Kaeufe auf den Nutzer.
-            const { customerInfo } = await Purchases.logIn(userId);
-            void customerInfo;
+            const { customerInfo, created } = await Purchases.logIn(userId);
+            iapLog("identity: logIn ok", {
+              userId,
+              created,
+              activeEntitlements: Object.keys(
+                customerInfo.entitlements.active
+              ),
+            });
           } else if (!isSignedIn && !aktuelleId.startsWith("$RCAnonymousID:")) {
             await Purchases.logOut();
+            iapLog("identity: logOut ok");
           } else {
             if (!abgebrochen) {
               setRcAppUserId(aktuelleId);
@@ -102,8 +123,13 @@ function useSubscriptionContext() {
             letzterVersuchFehlgeschlagenRef.current = false;
             queryClient.invalidateQueries({ queryKey: ["revenuecat"] });
           }
+          iapLog("identity: rcAppUserId gesetzt", { neueId });
           return;
-        } catch {
+        } catch (err) {
+          iapLog("identity: Versuch fehlgeschlagen", {
+            versuch,
+            err: err instanceof Error ? err.message : String(err),
+          });
           if (versuch < 2) {
             await new Promise((r) => setTimeout(r, 1500 * (versuch + 1)));
             continue;
@@ -111,6 +137,7 @@ function useSubscriptionContext() {
           // Alle Versuche fehlgeschlagen: beim naechsten App-Vordergrund
           // (AppState "active") wird es erneut versucht.
           letzterVersuchFehlgeschlagenRef.current = true;
+          iapLog("identity: alle Versuche fehlgeschlagen, warte auf Foreground-Retry");
         }
       }
     })();
@@ -126,6 +153,7 @@ function useSubscriptionContext() {
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active" && letzterVersuchFehlgeschlagenRef.current) {
+        iapLog("identity: Foreground-Retry ausgeloest");
         setWiederholungsTick((n) => n + 1);
       }
     });
@@ -136,6 +164,10 @@ function useSubscriptionContext() {
     queryKey: ["revenuecat", "customer-info"],
     queryFn: async () => {
       const info = await Purchases.getCustomerInfo();
+      iapLog("customerInfo geladen", {
+        appUserId: info.originalAppUserId,
+        activeEntitlements: Object.keys(info.entitlements.active),
+      });
       return info;
     },
     staleTime: 60 * 1000,
@@ -152,15 +184,40 @@ function useSubscriptionContext() {
 
   const purchaseMutation = useMutation({
     mutationFn: async (packageToPurchase: PurchasesPackage) => {
+      iapLog("purchase: start", {
+        identifier: packageToPurchase.identifier,
+        productId: packageToPurchase.product.identifier,
+      });
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+      iapLog("purchase: erfolgreich", {
+        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+      });
       return customerInfo;
+    },
+    onError: (err: any) => {
+      iapLog("purchase: Fehler", {
+        code: err?.code,
+        message: err?.message,
+        userCancelled: err?.userCancelled,
+      });
     },
     onSuccess: () => customerInfoQuery.refetch(),
   });
 
   const restoreMutation = useMutation({
     mutationFn: async () => {
-      return Purchases.restorePurchases();
+      iapLog("restore: start");
+      const result = await Purchases.restorePurchases();
+      iapLog("restore: erfolgreich", {
+        activeEntitlements: Object.keys(result.entitlements.active),
+      });
+      return result;
+    },
+    onError: (err: any) => {
+      iapLog("restore: Fehler", {
+        code: err?.code,
+        message: err?.message,
+      });
     },
     onSuccess: () => customerInfoQuery.refetch(),
   });
