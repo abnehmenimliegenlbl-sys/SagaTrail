@@ -1,10 +1,11 @@
-import { timingSafeEqual } from "crypto";
+import { randomUUID, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { db, profilesTable } from "@workspace/db";
+import { db, profilesTable, partnersTable, type PartnerKategorie } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
+import { PARTNER_ADMIN_HTML } from "../lib/partnerAdminHtml";
 
 /**
  * Interne Admin-Endpunkte, geschuetzt ueber das Header-Token `x-admin-token`
@@ -80,6 +81,109 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
     premiumBis: bis.toISOString(),
     premiumAktiv: istPremiumAktiv(row),
   });
+});
+
+const PARTNER_KATEGORIEN = [
+  "restaurant",
+  "cafe",
+  "souvenir",
+  "uebernachtung",
+  "sonstiges",
+] as const satisfies readonly PartnerKategorie[];
+
+const PartnerBody = z.object({
+  name: z.string().min(1),
+  kategorie: z.enum(PARTNER_KATEGORIEN),
+  canton: z.string().min(1),
+  beschreibung: z.string().optional(),
+  angebot: z.string().optional(),
+  lat: z.number(),
+  lng: z.number(),
+  aktivVon: z.string().datetime().optional(),
+  aktivBis: z.string().datetime().optional(),
+  isActive: z.boolean().default(true),
+});
+
+router.get("/admin/partner", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const rows = await db
+    .select()
+    .from(partnersTable)
+    .orderBy(desc(partnersTable.createdAt));
+  res.json(rows);
+});
+
+router.post("/admin/partner", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = PartnerBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { aktivVon, aktivBis, ...rest } = parsed.data;
+
+  const [row] = await db
+    .insert(partnersTable)
+    .values({
+      id: randomUUID(),
+      ...rest,
+      aktivVon: aktivVon ? new Date(aktivVon) : null,
+      aktivBis: aktivBis ? new Date(aktivBis) : null,
+    })
+    .returning();
+
+  req.log.info({ partnerId: row.id, name: row.name }, "Partner angelegt");
+  res.status(201).json(row);
+});
+
+router.patch("/admin/partner/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = PartnerBody.partial().safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { aktivVon, aktivBis, ...rest } = parsed.data;
+
+  const [row] = await db
+    .update(partnersTable)
+    .set({
+      ...rest,
+      ...(aktivVon !== undefined && { aktivVon: aktivVon ? new Date(aktivVon) : null }),
+      ...(aktivBis !== undefined && { aktivBis: aktivBis ? new Date(aktivBis) : null }),
+      updatedAt: new Date(),
+    })
+    .where(eq(partnersTable.id, req.params.id as string))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: `Partner ${req.params.id} nicht gefunden` });
+    return;
+  }
+  req.log.info({ partnerId: row.id }, "Partner aktualisiert");
+  res.json(row);
+});
+
+router.delete("/admin/partner/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const [row] = await db
+    .delete(partnersTable)
+    .where(eq(partnersTable.id, req.params.id as string))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: `Partner ${req.params.id} nicht gefunden` });
+    return;
+  }
+  req.log.info({ partnerId: row.id }, "Partner geloescht");
+  res.status(204).end();
+});
+
+router.get("/admin/partner-ui", (_req, res): void => {
+  res.type("html").send(PARTNER_ADMIN_HTML);
 });
 
 export default router;

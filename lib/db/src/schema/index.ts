@@ -7,3 +7,4 @@ export * from "./externalRoutes";
 export * from "./routeSagas";
 export * from "./cantonFetches";
 export * from "./profiles";
+export * from "./partners";
