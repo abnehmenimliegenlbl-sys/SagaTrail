@@ -8,7 +8,7 @@ import {
   type ExternalRouteRow,
   type CatalogSagaRow,
 } from "@workspace/db";
-import { isoForCanton } from "./cantonIso";
+import { isoForCanton, CANTON_ISO } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
@@ -410,6 +410,35 @@ export async function getCantonRoutes(
 
   const stored = await loadCachedRoutes(canton);
   return stored.filter((row) => isFresh(row));
+}
+
+const WARM_STAGGER_MS = 4000;
+
+/**
+ * Waermt den Routen-Cache aller Kantone im Hintergrund vor (nach Serverstart).
+ *
+ * Die erste Routensuche eines Nutzers in einem noch nicht gecachten Kanton
+ * dauert ueber Overpass typischerweise 15-25s (Index + Geometrie), was am
+ * Client wie "Server nicht erreichbar" wirkt, wenn eine zwischengeschaltete
+ * Verbindung frueher abbricht. Indem wir alle Kantone der Reihe nach (nicht
+ * parallel, um Overpass nicht zu ueberlasten) direkt nach dem Start
+ * durchlaufen, landen die Ergebnisse im DB-Cache, bevor echte Nutzer suchen -
+ * spaetere Anfragen sind dann Cache-Treffer (Millisekunden statt Sekunden).
+ * Laeuft komplett im Hintergrund; Fehler pro Kanton werden nur geloggt, damit
+ * ein einzelner haengender Kanton den Start nicht blockiert oder die anderen
+ * verhindert.
+ */
+export async function warmAllCantonCaches(log: Logger): Promise<void> {
+  const cantons = Object.keys(CANTON_ISO);
+  for (const canton of cantons) {
+    try {
+      const routes = await getCantonRoutes(canton, log);
+      log.info({ canton, count: routes.length }, "Kanton-Cache vorgewaermt");
+    } catch (err) {
+      log.warn({ canton, err }, "Kanton-Cache-Vorwaermung fehlgeschlagen");
+    }
+    await new Promise((resolve) => setTimeout(resolve, WARM_STAGGER_MS));
+  }
 }
 
 function nearestOf(

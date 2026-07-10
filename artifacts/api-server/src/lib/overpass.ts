@@ -99,9 +99,13 @@ interface OverpassGeomElement {
 }
 
 async function runOverpass<T>(query: string): Promise<T[]> {
+  // Ein Versuch je Spiegel: mit Cache-Vorwaermung (siehe routeService.warmAllCantonCaches)
+  // treffen echte Nutzer selten den kalten Pfad, daher zaehlt hier vor allem,
+  // schnell zum naechsten Spiegel (bzw. zum DB-Cache-Fallback) zu wechseln,
+  // statt denselben lahmen Spiegel zweimal zu befragen.
   let lastError: Error | null = null;
   for (const url of OVERPASS_MIRRORS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 1; attempt++) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {

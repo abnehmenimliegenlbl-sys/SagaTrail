@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
+import { warmAllCantonCaches } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 
 const rawPort = process.env["PORT"];
@@ -31,6 +32,12 @@ const server = app.listen(port, async (err) => {
   } catch (seedErr) {
     logger.error({ err: seedErr }, "Katalog-Seeding fehlgeschlagen");
   }
+
+  // Kanton-Routen-Cache im Hintergrund vorwaermen (nicht awaiten): reduziert
+  // die haeufige Kaltstart-Wartezeit von 15-25s pro Kanton auf Cache-Treffer.
+  warmAllCantonCaches(logger).catch((err) => {
+    logger.error({ err }, "Cache-Vorwaermung fehlgeschlagen");
+  });
 });
 
 attachGroupsSocket(server);
