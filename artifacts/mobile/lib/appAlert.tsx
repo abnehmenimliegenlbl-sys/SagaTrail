@@ -55,7 +55,16 @@ export function AppAlertProvider({ children }: { children: React.ReactNode }) {
           ...b,
           onPress: () => {
             close();
-            b.onPress?.();
+            // Das native `Modal` schliesst sich mit einer eigenen
+            // UIKit-Uebergangsanimation (FadeOut, ~150ms). Feuert der
+            // Button-Callback (z.B. router.back()) im selben Tick, laufen
+            // zwei native Uebergaenge gleichzeitig — das kann auf iOS zum
+            // kompletten UI-Deadlock/Freeze fuehren (gleiches Muster wie die
+            // StoreKit-Sheet-Kollision beim Kauf). Erst nach der
+            // Dismiss-Animation feuern.
+            if (b.onPress) {
+              setTimeout(() => b.onPress?.(), 250);
+            }
           },
         })),
       });
