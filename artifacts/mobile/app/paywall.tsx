@@ -182,10 +182,12 @@ export default function Paywall() {
   };
 
   const onRestore = async () => {
+    iapLog("paywall.onRestore: Tippe auf Wiederherstellen");
     setBusy(true);
     try {
       const customerInfo = await restore();
       const hasActive = !!customerInfo.entitlements.active["premium"];
+      iapLog("paywall.onRestore: Ergebnis", { hasActive });
       setTimeout(() => {
         if (!mountedRef.current) return;
         if (hasActive) {
@@ -195,6 +197,10 @@ export default function Paywall() {
         }
       }, 600);
     } catch (err: any) {
+      iapLog("paywall.onRestore: Fehler", {
+        code: err?.code,
+        message: err?.message,
+      });
       setTimeout(() => {
         if (!mountedRef.current) return;
         alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);

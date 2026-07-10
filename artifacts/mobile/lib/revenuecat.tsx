@@ -52,12 +52,19 @@ export function iapLog(...args: unknown[]) {
 }
 
 export function initializeRevenueCat() {
-  const apiKey = getRevenueCatApiKey();
-  if (!apiKey) throw new Error("RevenueCat Public API Key not found");
+  try {
+    const apiKey = getRevenueCatApiKey();
+    if (!apiKey) throw new Error("RevenueCat Public API Key not found");
 
-  Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
-  Purchases.configure({ apiKey });
-  iapLog("initializeRevenueCat", { platform: Platform.OS, dev: __DEV__ });
+    Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+    Purchases.configure({ apiKey });
+    iapLog("initializeRevenueCat: ok", { platform: Platform.OS, dev: __DEV__ });
+  } catch (err) {
+    iapLog("initializeRevenueCat: FEHLER", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
 }
 
 function useSubscriptionContext() {
@@ -176,8 +183,19 @@ function useSubscriptionContext() {
   const offeringsQuery = useQuery({
     queryKey: ["revenuecat", "offerings"],
     queryFn: async () => {
-      const offerings = await Purchases.getOfferings();
-      return offerings;
+      try {
+        const offerings = await Purchases.getOfferings();
+        iapLog("offerings geladen", {
+          current: offerings.current?.identifier ?? null,
+          packages: offerings.current?.availablePackages.map((p) => p.identifier) ?? [],
+        });
+        return offerings;
+      } catch (err) {
+        iapLog("offerings: FEHLER", {
+          message: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
     },
     staleTime: 300 * 1000,
   });
