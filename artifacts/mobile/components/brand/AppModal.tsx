@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import React, { useEffect } from "react";
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
@@ -48,15 +48,15 @@ export function AppModal({
     }
   }, [visible]);
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onRequestClose}
-      statusBarTranslucent
-    >
-      <View style={styles.backdrop}>
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+      <Animated.View
+        entering={FadeIn.duration(150)}
+        exiting={FadeOut.duration(150)}
+        style={[StyleSheet.absoluteFillObject, styles.backdrop]}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onRequestClose} />
         <Animated.View
           entering={FadeInDown.duration(220)}
@@ -153,8 +153,8 @@ export function AppModal({
             </View>
           </View>
         </Animated.View>
-      </View>
-    </Modal>
+      </Animated.View>
+    </View>
   );
 }
 
