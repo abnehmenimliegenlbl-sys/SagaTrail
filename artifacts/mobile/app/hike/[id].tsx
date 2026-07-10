@@ -2,10 +2,11 @@ import { Feather } from "@expo/vector-icons";
 import {
   createNarration,
   getAerialways,
+  getPartners,
   getPois,
   getPoiStory,
 } from "@workspace/api-client-react";
-import type { Poi } from "@workspace/api-client-react";
+import type { Partner, Poi } from "@workspace/api-client-react";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -176,8 +177,10 @@ export default function LiveHike() {
     { id: string; geometry: number[][] }[] | null
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
   const [poiStory, setPoiStory] = useState<string | null>(null);
@@ -413,6 +416,25 @@ export default function LiveHike() {
       })
       .catch(() => {
         if (!cancelled) setPois([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
+
+  // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im Kartenausschnitt
+  // laden — gleiche Bounding Box wie die Seilbahnen, kein Korridorfilter noetig,
+  // da Partner ohnehin nur vereinzelt gepflegt werden.
+  useEffect(() => {
+    if (!mapCenter) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    getPartners(bbox)
+      .then((result) => {
+        if (!cancelled) setPartners(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPartners([]);
       });
     return () => {
       cancelled = true;
@@ -1231,6 +1253,15 @@ export default function LiveHike() {
                       setSelectedPoi(poi);
                     }
                   }}
+                  partners={partners}
+                  onPartnerPress={(id) => {
+                    const partner = partners.find((p) => p.id === id);
+                    if (partner) {
+                      setKarteVollbild(false);
+                      setKarteCloseSignal((n) => n + 1);
+                      setSelectedPartner(partner);
+                    }
+                  }}
                 />
               ) : (
                 <RouteMap progress={progress} height={hoehe} />
@@ -1330,6 +1361,63 @@ export default function LiveHike() {
                     ? t.poiStoryLoading
                     : (poiStory ?? selectedPoi?.wiki?.extract ?? t.notAvailable)}
                 </Text>
+              </Glass>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* Detailansicht eines angetippten Partnerbetriebs auf der Karte */}
+        <Modal
+          visible={!!selectedPartner}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setSelectedPartner(null)}
+        >
+          <Pressable
+            style={styles.poiModalBackdrop}
+            onPress={() => setSelectedPartner(null)}
+          >
+            <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+              <Glass>
+                <View style={styles.poiRow}>
+                  <Feather name="coffee" size={18} color={colors.accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                      {t.partnerDetailEyebrow}
+                    </Text>
+                    <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                      {selectedPartner?.name}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => setSelectedPartner(null)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.close}
+                  >
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </Pressable>
+                </View>
+                {selectedPartner?.beschreibung && (
+                  <Text
+                    style={[
+                      styles.poiSummary,
+                      { color: colors.foreground, marginTop: 10 },
+                    ]}
+                  >
+                    {selectedPartner.beschreibung}
+                  </Text>
+                )}
+                {selectedPartner?.angebot && (
+                  <Text
+                    style={[
+                      styles.poiSummary,
+                      { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
+                    ]}
+                  >
+                    {t.partnerOffer}: {selectedPartner.angebot}
+                  </Text>
+                )}
               </Glass>
             </Pressable>
           </Pressable>

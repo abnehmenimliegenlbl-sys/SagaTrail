@@ -210,6 +210,30 @@ export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
 /**
+ * Liefert aktive, ueber die Admin-Oberflaeche gepflegte Partnerbetriebe innerhalb einer Bounding Box.
+ * @summary Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) in einem Kartenausschnitt
+ */
+export const GetPartnersQueryParams = zod.object({
+  "south": zod.coerce.number(),
+  "west": zod.coerce.number(),
+  "north": zod.coerce.number(),
+  "east": zod.coerce.number()
+})
+
+export const GetPartnersResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kategorie": zod.enum(['restaurant', 'cafe', 'souvenir', 'uebernachtung', 'sonstiges']),
+  "canton": zod.string(),
+  "beschreibung": zod.string().nullish(),
+  "angebot": zod.string().nullish(),
+  "lat": zod.number(),
+  "lng": zod.number()
+}).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')
+export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
+
+
+/**
  * Formt den rohen Wikipedia-Auszug eines Point of Interest (Name + Extract) per KI in einen kurzen, atmosphaerischen Text im Erzaehlstil der App-Sagen um -- Du-Anrede, Praesens, kein Gendern. Fehlt der Wikipedia-Auszug, entsteht stattdessen ein kurzer, zurueckhaltender Kontext aus Name und OSM-Kategorie (kind), ohne erfundene Fakten. Ergebnisse werden serverseitig nach Titel/Extract/Sprache gecacht, da der Ausgangstext stabil ist.
  * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */

@@ -261,6 +261,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/partners:
+    get:
+      operationId: getPartners
+      tags: [routes]
+      summary: Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) in einem Kartenausschnitt
+      description: >
+        Liefert aktive, ueber die Admin-Oberflaeche gepflegte Partnerbetriebe
+        innerhalb einer Bounding Box.
+      parameters:
+        - name: south
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: west
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: north
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: east
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Partnerbetriebe
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Partner"
   /routes/poi-story:
     get:
       operationId: getPoiStory
@@ -1242,6 +1280,38 @@ components:
         - id
         - name
         - kind
+        - lat
+        - lng
+    Partner:
+      type: object
+      description: >
+        Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer
+        Route, gepflegt ueber die interne Admin-Oberflaeche.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kategorie:
+          type: string
+          enum: [restaurant, cafe, souvenir, uebernachtung, sonstiges]
+        canton:
+          type: string
+        beschreibung:
+          type: string
+          nullable: true
+        angebot:
+          type: string
+          nullable: true
+        lat:
+          type: number
+        lng:
+          type: number
+      required:
+        - id
+        - name
+        - kategorie
+        - canton
         - lat
         - lng
     WikiSummary:

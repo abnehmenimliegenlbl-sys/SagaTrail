@@ -31,6 +31,7 @@ export interface MapStrings {
   legendSeilbahn: string;
   legendSeilbahnStation: string;
   legendPoi: string;
+  legendPartner: string;
 }
 
 const MAP_STRINGS: StringsDict<MapStrings> = {
@@ -52,6 +53,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Seilbahn",
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
+    legendPartner: "Partnerbetrieb",
   },
   gsw: {
     legendTitle: "Legände",
@@ -71,6 +73,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Seilbahn",
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
+    legendPartner: "Partnerbetrieb",
   },
   fr: {
     legendTitle: "Légende",
@@ -90,6 +93,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Téléphérique",
     legendSeilbahnStation: "Station de téléphérique",
     legendPoi: "Curiosité",
+    legendPartner: "Partenaire",
   },
   it: {
     legendTitle: "Legenda",
@@ -109,6 +113,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Funivia",
     legendSeilbahnStation: "Stazione della funivia",
     legendPoi: "Punto d'interesse",
+    legendPartner: "Partner convenzionato",
   },
   en: {
     legendTitle: "Legend",
@@ -128,6 +133,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Cable car",
     legendSeilbahnStation: "Cable car station",
     legendPoi: "Point of interest",
+    legendPartner: "Partner business",
   },
   zh: {
     legendTitle: "图例",
@@ -147,6 +153,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "缆车",
     legendSeilbahnStation: "缆车站",
     legendPoi: "景点",
+    legendPartner: "合作商家",
   },
   es: {
     legendTitle: "Leyenda",
@@ -166,6 +173,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Teleférico",
     legendSeilbahnStation: "Estación del teleférico",
     legendPoi: "Punto de interés",
+    legendPartner: "Comercio asociado",
   },
   pt: {
     legendTitle: "Legenda",
@@ -185,6 +193,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Teleférico",
     legendSeilbahnStation: "Estação do teleférico",
     legendPoi: "Ponto de interesse",
+    legendPartner: "Estabelecimento parceiro",
   },
   ru: {
     legendTitle: "Легенда",
@@ -204,6 +213,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahn: "Канатная дорога",
     legendSeilbahnStation: "Станция канатной дороги",
     legendPoi: "Достопримечательность",
+    legendPartner: "Партнёрское заведение",
   },
 };
 

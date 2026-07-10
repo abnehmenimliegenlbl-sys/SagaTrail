@@ -250,6 +250,31 @@ export interface Poi {
   wiki?: WikiSummary;
 }
 
+export type PartnerKategorie = typeof PartnerKategorie[keyof typeof PartnerKategorie];
+
+
+export const PartnerKategorie = {
+  restaurant: 'restaurant',
+  cafe: 'cafe',
+  souvenir: 'souvenir',
+  uebernachtung: 'uebernachtung',
+  sonstiges: 'sonstiges',
+} as const;
+
+/**
+ * Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.
+ */
+export interface Partner {
+  id: string;
+  name: string;
+  kategorie: PartnerKategorie;
+  canton: string;
+  beschreibung?: string | null;
+  angebot?: string | null;
+  lat: number;
+  lng: number;
+}
+
 /**
  * Sagen-stilisierte Umschreibung eines Wikipedia-Auszugs.
  */
@@ -404,6 +429,13 @@ east: number;
 };
 
 export type GetPoisParams = {
+south: number;
+west: number;
+north: number;
+east: number;
+};
+
+export type GetPartnersParams = {
 south: number;
 west: number;
 north: number;

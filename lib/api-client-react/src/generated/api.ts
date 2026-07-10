@@ -31,6 +31,7 @@ import type {
   GetAerialwaysParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
+  GetPartnersParams,
   GetPoiStoryParams,
   GetPoisParams,
   GetRoutePhotoParams,
@@ -39,6 +40,7 @@ import type {
   GpxImportBody,
   HealthStatus,
   NarrationInput,
+  Partner,
   Poi,
   PoiStory,
   PremiumUpdate,
@@ -555,6 +557,91 @@ export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPartnersUrl = (params: GetPartnersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/partners?${stringifiedParams}` : `/api/routes/partners`
+}
+
+/**
+ * Liefert aktive, ueber die Admin-Oberflaeche gepflegte Partnerbetriebe innerhalb einer Bounding Box.
+ * @summary Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) in einem Kartenausschnitt
+ */
+export const getPartners = async (params: GetPartnersParams, options?: RequestInit): Promise<Partner[]> => {
+
+  return customFetch<Partner[]>(getGetPartnersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPartnersQueryKey = (params?: GetPartnersParams,) => {
+    return [
+    `/api/routes/partners`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPartnersQueryOptions = <TData = Awaited<ReturnType<typeof getPartners>>, TError = ErrorType<unknown>>(params: GetPartnersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPartners>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPartnersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPartners>>> = ({ signal }) => getPartners(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPartners>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPartnersQueryResult = NonNullable<Awaited<ReturnType<typeof getPartners>>>
+export type GetPartnersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) in einem Kartenausschnitt
+ */
+
+export function useGetPartners<TData = Awaited<ReturnType<typeof getPartners>>, TError = ErrorType<unknown>>(
+ params: GetPartnersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPartners>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPartnersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

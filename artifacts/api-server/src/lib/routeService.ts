@@ -5,9 +5,12 @@ import {
   externalRoutesTable,
   catalogSagasTable,
   cantonFetchesTable,
+  partnersTable,
   type ExternalRouteRow,
   type CatalogSagaRow,
+  type PartnerRow,
 } from "@workspace/db";
+import { and, gte, lte, isNull, or } from "drizzle-orm";
 import { isoForCanton, CANTON_ISO } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
@@ -113,6 +116,33 @@ export async function getAerialways(
 /** Angereicherter POI (fuer die API-Antwort). */
 export interface EnrichedPoi extends RawPoi {
   wiki: WikiSummary | null;
+}
+
+/**
+ * Liefert aktive Partnerbetriebe innerhalb einer Bounding Box. Direkt aus
+ * Postgres (kein externer Fetch/Cache noetig, da Datenmenge klein und selten
+ * geaendert). "Aktiv" heisst: isActive = true UND (kein Zeitraum gesetzt ODER
+ * aktuelles Datum liegt darin).
+ */
+export async function getPartners(
+  bbox: { south: number; west: number; north: number; east: number },
+  _log: Logger,
+): Promise<PartnerRow[]> {
+  const now = new Date();
+  return db
+    .select()
+    .from(partnersTable)
+    .where(
+      and(
+        eq(partnersTable.isActive, true),
+        gte(partnersTable.lat, bbox.south),
+        lte(partnersTable.lat, bbox.north),
+        gte(partnersTable.lng, bbox.west),
+        lte(partnersTable.lng, bbox.east),
+        or(isNull(partnersTable.aktivVon), lte(partnersTable.aktivVon, now)),
+        or(isNull(partnersTable.aktivBis), gte(partnersTable.aktivBis, now)),
+      ),
+    );
 }
 
 /**

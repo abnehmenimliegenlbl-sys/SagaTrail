@@ -47,6 +47,14 @@ export interface SwisstopoMapProps {
   /** Wird mit der `id` des angetippten POI-Markers aufgerufen. */
   onPoiPress?: (id: string) => void;
   /**
+   * Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im
+   * Kartenausschnitt, eigener Marker-Stil getrennt von den POIs. Antippen
+   * meldet die `id` genauso wie bei POIs zurueck (eigener Nachrichtentyp).
+   */
+  partners?: MapPoi[] | null;
+  /** Wird mit der `id` des angetippten Partner-Markers aufgerufen. */
+  onPartnerPress?: (id: string) => void;
+  /**
    * Lokalisierte Beschriftungen der auf-/zuklappbaren Kartenlegende
    * (lib/i18n/screens/map.ts). Fehlen sie, wird keine Legende gezeigt.
    */
@@ -72,6 +80,7 @@ export interface MapLegendLabels {
   seilbahn: string;
   seilbahnStation: string;
   poi: string;
+  partner: string;
 }
 
 /**
@@ -92,7 +101,8 @@ export function buildSwisstopoHtml(
   offlineTiles?: Record<string, string> | null,
   aerialways?: { id: string; geometry: number[][] }[] | null,
   pois?: MapPoi[] | null,
-  legend?: MapLegendLabels | null
+  legend?: MapLegendLabels | null,
+  partners?: MapPoi[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -106,6 +116,8 @@ export function buildSwisstopoHtml(
   const aerialwaysJson =
     aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
   const poisJson = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
+  const partnersJson =
+    partners && partners.length > 0 ? JSON.stringify(partners) : "null";
   const legendJson = legend ? JSON.stringify(legend) : "null";
   return `<!DOCTYPE html>
 <html lang="de">
@@ -139,6 +151,10 @@ export function buildSwisstopoHtml(
   /* Unsichtbare, grosszuegige Tipp-Flaeche um den kleinen POI-Punkt — 13 px
      waren am Handy praktisch nicht treffbar. */
   .stt-poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
+  /* Partnerbetriebe (Restaurants, Souvenirlaeden, ...): eigene Farbe (Gold),
+     damit sie sich klar von historischen POIs unterscheiden. */
+  .stt-partner { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C8932E; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(200,147,46,0.28); cursor: pointer; }
+  .stt-partner-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .leaflet-control-attribution { background: rgba(16,24,26,0.7); color: #6B7568; max-width: 55vw; }
   .leaflet-control-attribution a { color: #DA291C; }
   /* Auf-/zuklappbare Legende (unten links). Die Ecke wird ueber die
@@ -178,6 +194,7 @@ export function buildSwisstopoHtml(
   .stt-legende .stt-start, .stt-legende .stt-ziel, .stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   .stt-legende .stt-seilbahn-station { box-shadow: none; }
   .stt-legende .stt-poi { box-shadow: none; cursor: default; }
+  .stt-legende .stt-partner { box-shadow: none; cursor: default; }
 </style>
 </head>
 <body>
@@ -245,6 +262,24 @@ export function buildSwisstopoHtml(
       L.marker([${lat}, ${lng}], { icon: startIcon }).addTo(map).bindPopup(${title});
     }
 
+    var partners = ${partnersJson};
+    if (partners) {
+      // Partnerbetriebe: eigener Marker-Stil, Antippen meldet die Partner-ID
+      // an die Host-App zurueck (eigener Nachrichtentyp, getrennt von POIs).
+      var partnerIcon = L.divIcon({ className: '', html: '<div class="stt-partner-tipp"><div class="stt-partner"></div></div>', iconSize: [36, 36], iconAnchor: [18, 33] });
+      partners.forEach(function (p) {
+        var marker = L.marker([p.lat, p.lng], { icon: partnerIcon }).addTo(map);
+        marker.on('click', function () {
+          var payload = JSON.stringify({ type: 'stt-partner-press', id: p.id });
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(payload);
+          } else if (window.parent) {
+            window.parent.postMessage(payload, '*');
+          }
+        });
+      });
+    }
+
     var pois = ${poisJson};
     if (pois) {
       // Points of Interest: eigener Marker-Stil, Antippen meldet die POI-ID
@@ -302,6 +337,7 @@ export function buildSwisstopoHtml(
             zeile('<div class="stt-seilbahn-station"></div>', legende.seilbahnStation);
           }
           if (pois) zeile('<div class="stt-poi"></div>', legende.poi);
+          if (partners) zeile('<div class="stt-partner"></div>', legende.partner);
           box.innerHTML =
             '<div class="stt-legende-kopf"><span class="stt-legende-pfeil">\\u25BE</span>' + legende.title + '</div>' +
             '<div class="stt-legende-inhalt">' + zeilen.join('') + '</div>';

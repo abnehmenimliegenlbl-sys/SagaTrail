@@ -21,32 +21,44 @@ export function SwisstopoMap({
   aerialways,
   pois,
   onPoiPress,
+  partners,
+  onPartnerPress,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const t = useMapStrings();
   const html = useMemo(
     () =>
-      buildSwisstopoHtml(center, label, geometry, offlineTiles, aerialways, pois, {
-        title: t.legendTitle,
-        route: t.legendRoute,
-        start: t.legendStart,
-        ziel: t.legendZiel,
-        position: t.legendPosition,
-        wegInternational: t.legendWegInternational,
-        wegNational: t.legendWegNational,
-        wegRegional: t.legendWegRegional,
-        wegLokal: t.legendWegLokal,
-        wegMehrfach: t.legendWegMehrfach,
-        nummerWanderland: t.legendNummerWanderland,
-        nummerLokal: t.legendNummerLokal,
-        wegzeichen: t.legendWegzeichen,
-        wegweiser: t.legendWegweiser,
-        seilbahn: t.legendSeilbahn,
-        seilbahnStation: t.legendSeilbahnStation,
-        poi: t.legendPoi,
-      }),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, t]
+      buildSwisstopoHtml(
+        center,
+        label,
+        geometry,
+        offlineTiles,
+        aerialways,
+        pois,
+        {
+          title: t.legendTitle,
+          route: t.legendRoute,
+          start: t.legendStart,
+          ziel: t.legendZiel,
+          position: t.legendPosition,
+          wegInternational: t.legendWegInternational,
+          wegNational: t.legendWegNational,
+          wegRegional: t.legendWegRegional,
+          wegLokal: t.legendWegLokal,
+          wegMehrfach: t.legendWegMehrfach,
+          nummerWanderland: t.legendNummerWanderland,
+          nummerLokal: t.legendNummerLokal,
+          wegzeichen: t.legendWegzeichen,
+          wegweiser: t.legendWegweiser,
+          seilbahn: t.legendSeilbahn,
+          seilbahnStation: t.legendSeilbahnStation,
+          poi: t.legendPoi,
+          partner: t.legendPartner,
+        },
+        partners
+      ),
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
@@ -85,6 +97,9 @@ export function SwisstopoMap({
             const data = JSON.parse(event.nativeEvent.data);
             if (data?.type === "stt-poi-press" && typeof data.id === "string") {
               onPoiPress?.(data.id);
+            }
+            if (data?.type === "stt-partner-press" && typeof data.id === "string") {
+              onPartnerPress?.(data.id);
             }
           } catch {
             // Ignoriere Nachrichten, die kein gueltiges JSON sind.

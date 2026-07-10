@@ -1,6 +1,11 @@
 import { Feather } from "@expo/vector-icons";
-import { getAerialways, getWeather, importGpxRoute } from "@workspace/api-client-react";
-import type { WeatherReport } from "@workspace/api-client-react";
+import {
+  getAerialways,
+  getPartners,
+  getWeather,
+  importGpxRoute,
+} from "@workspace/api-client-react";
+import type { Partner, WeatherReport } from "@workspace/api-client-react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -159,6 +164,7 @@ export default function Routenplanung() {
   const [aerialways, setAerialways] = useState<
     { id: string; geometry: number[][] }[] | null
   >(null);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [weather, setWeather] = useState<WeatherReport | null>(null);
   const [weatherError, setWeatherError] = useState(false);
   const [weatherLoading, setWeatherLoading] = useState(true);
@@ -177,6 +183,24 @@ export default function Routenplanung() {
       })
       .catch(() => {
         if (!cancelled) setAerialways(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id]);
+
+  // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
+  // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates);
+    getPartners(bbox)
+      .then((result) => {
+        if (!cancelled) setPartners(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPartners([]);
       });
     return () => {
       cancelled = true;
@@ -317,6 +341,7 @@ export default function Routenplanung() {
                   height={hoehe}
                   geometry={route.geometry}
                   aerialways={aerialways}
+                  partners={partners}
                 />
               ) : (
                 <RouteMap progress={0.15} height={hoehe} />
