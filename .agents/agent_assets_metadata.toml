@@ -173,3 +173,9 @@ id = "4f27mu4VLFrp1MQ4L_XX4"
 uri = "file://artifacts/mobile/assets/images/icon.png"
 type = "image"
 title = "SagaTrail App-Icon (1024x1024)"
+
+[[outputs]]
+id = "uvSzS-gJjeVZjVjN4smrr"
+uri = "file://SagaTrail-Features.md"
+type = "text"
+title = "SagaTrail – Features & Mehrwert"
