@@ -77,7 +77,6 @@ export default function Einstellungen() {
     saveEmergencyContact,
     exportData,
     resetAll,
-    lockPremium,
   } = useApp();
 
   const [contactName, setContactName] = useState(emergencyContact?.name ?? "");
@@ -383,14 +382,6 @@ export default function Einstellungen() {
               variant="gold"
               onPress={() => router.push("/paywall")}
               style={{ marginTop: 12 }}
-            />
-          )}
-          {premium && (
-            <PrimaryButton
-              label={t.resetPremiumButton}
-              variant="ghost"
-              onPress={lockPremium}
-              style={{ marginTop: 8 }}
             />
           )}
         </Section>
