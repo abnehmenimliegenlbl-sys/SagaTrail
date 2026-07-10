@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -18,6 +18,11 @@ export const profilesTable = pgTable("profiles", {
   // Befristetes Premium (z. B. manuell freigeschaltet): aktiv solange in der Zukunft.
   premiumBis: timestamp("premium_bis", { withTimezone: true }),
   freeHikeUsed: boolean("free_hike_used").notNull().default(false),
+  // Serverseitiger Abgleich des lokal auf dem Geraet gefuehrten Wanderverlaufs
+  // und der Errungenschaften (siehe /me/progress/sync). Verhindert Datenverlust
+  // bei Ab-/Anmelden oder Geraetewechsel, da AsyncStorage sonst die einzige Quelle war.
+  hikeHistory: jsonb("hike_history").notNull().default([]),
+  achievements: jsonb("achievements").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

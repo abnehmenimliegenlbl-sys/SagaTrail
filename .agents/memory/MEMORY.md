@@ -33,3 +33,4 @@
 - [SagaTrail per-saga hero photo](sagatrail-saga-photo.md) — saga detail hero image reuses the route Commons-photo endpoint keyed by saga coordinates, not a new AI-generated image per saga.
 - [SagaTrail saga image = motif not place](sagatrail-image-motif.md) — saga hero photos search by curated `bildmotiv` text (e.g. "Vogel Gryff Basel", "Braunbär"), not saga coordinates; coreMotif itself is too abstract to search Commons with.
 - [SagaTrail native Modal after IAP freeze](sagatrail-iap-modal-freeze.md) — presenting our own native Modal right after StoreKit purchase sheet closes, or after screen unmount, can deadlock iOS UIKit into a full app freeze (no crash log).
+- [SagaTrail hike history/achievements server sync](sagatrail-progress-sync.md) — was AsyncStorage-only (lost on logout/resetAll); now merged (never-deleting union by id) to profiles.hikeHistory/achievements jsonb via POST /me/progress/sync.

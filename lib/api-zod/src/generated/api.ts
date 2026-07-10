@@ -486,6 +486,33 @@ export const SyncMyPremiumResponse = zod.object({
 
 
 /**
+ * Gleicht den lokal auf dem Geraet gefuehrten Wanderverlauf (hikeHistory) und die Errungenschaften (achievements) mit dem serverseitig gespeicherten Stand des authentifizierten Nutzers ab. Die Vereinigung beider Mengen (per id) wird serverseitig persistiert und zurueckgegeben, sodass ein An-/Abmelden oder ein Geraetewechsel keine bereits abgeschlossenen Wanderungen verliert.
+ * @summary Wanderverlauf und Errungenschaften mit dem Server abgleichen
+ */
+export const SyncMyProgressBody = zod.object({
+  "hikeHistory": zod.array(zod.object({
+  "id": zod.string()
+}).describe('Ein abgeschlossenes Wander-Erlebnis. Die genaue Feldstruktur wird clientseitig verwaltet (Kapitel, Geometrie, Fotos etc.); der Server speichert und merged Eintraege nur ueber ihre id, ohne den Inhalt zu interpretieren.')),
+  "achievements": zod.array(zod.object({
+  "id": zod.string().describe('Sagen-ID'),
+  "sagaTitle": zod.string(),
+  "unlockedAt": zod.number().describe('Unix-Timestamp (ms)')
+}))
+})
+
+export const SyncMyProgressResponse = zod.object({
+  "hikeHistory": zod.array(zod.object({
+  "id": zod.string()
+}).describe('Ein abgeschlossenes Wander-Erlebnis. Die genaue Feldstruktur wird clientseitig verwaltet (Kapitel, Geometrie, Fotos etc.); der Server speichert und merged Eintraege nur ueber ihre id, ohne den Inhalt zu interpretieren.')),
+  "achievements": zod.array(zod.object({
+  "id": zod.string().describe('Sagen-ID'),
+  "sagaTitle": zod.string(),
+  "unlockedAt": zod.number().describe('Unix-Timestamp (ms)')
+}))
+})
+
+
+/**
  * Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt "sagatrail_kantonspack") dem gewaehlten Kanton zu. Der Server prueft bei RevenueCat, dass der Customer mehr gueltige Kantonspack-Kaeufe als bereits vergebene pack_<kanton>-Entitlements hat, und vergibt dann das Entitlement des Kantons per Grant. Idempotent, falls der Kanton bereits freigeschaltet ist.
  * @summary Kantonspack-Kauf einem Kanton zuordnen
  */

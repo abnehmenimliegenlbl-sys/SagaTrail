@@ -8,6 +8,7 @@ import {
   useUpdateMyPremium,
   useSyncMyPremium,
   useConsumeMyFreeHike,
+  useSyncMyProgress,
 } from "@workspace/api-client-react";
 import React, {
   createContext,
@@ -438,6 +439,78 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
   const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();
   const { mutateAsync: syncMyPremiumMutation } = useSyncMyPremium();
+  const { mutateAsync: syncMyProgressMutation } = useSyncMyProgress();
+
+  // Wanderverlauf/Errungenschaften waren bisher NUR in AsyncStorage abgelegt
+  // und gingen bei Abmelden+Neuanmelden (resetAll loescht AsyncStorage) oder
+  // Geraetewechsel verloren. Server-Sync gleicht per Vereinigung (nie
+  // loeschend) ab; hikeHistoryRef/achievementsRef vermeiden veraltete
+  // Closures beim Push aus useCallback-Handlern.
+  const hikeHistoryRef = useRef<HikeSession[]>([]);
+  const achievementsRef = useRef<Achievement[]>([]);
+  useEffect(() => {
+    hikeHistoryRef.current = hikeHistory;
+  }, [hikeHistory]);
+  useEffect(() => {
+    achievementsRef.current = achievements;
+  }, [achievements]);
+
+  const pushProgressSync = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      // hikeHistoryRef/achievementsRef werden synchron in saveHike/
+      // addAchievement/attachHikePhoto aktualisiert, damit dieser Push nie
+      // mit veralteten Daten (Race gegen den ref-Sync-useEffect) sendet.
+      const result = await syncMyProgressMutation({
+        data: {
+          hikeHistory: hikeHistoryRef.current as unknown as {
+            id: string;
+            [key: string]: unknown;
+          }[],
+          achievements: achievementsRef.current as unknown as {
+            id: string;
+            sagaTitle: string;
+            unlockedAt: number;
+            [key: string]: unknown;
+          }[],
+        },
+      });
+      setHikeHistory(result.hikeHistory as unknown as HikeSession[]);
+      setAchievements(result.achievements as unknown as Achievement[]);
+      AsyncStorage.setItem(
+        KEYS.hikeHistory,
+        JSON.stringify(result.hikeHistory)
+      ).catch(() => {});
+      AsyncStorage.setItem(
+        KEYS.achievements,
+        JSON.stringify(result.achievements)
+      ).catch(() => {});
+    } catch {
+      // Offline oder Server nicht erreichbar: lokaler Zustand bleibt
+      // massgeblich, naechster erfolgreicher Sync holt es nach.
+    }
+  }, [isSignedIn, syncMyProgressMutation]);
+
+  // Einmaliger Abgleich pro Anmeldung: fuehrt den lokalen Stand des
+  // Geraets mit dem serverseitigen zusammen, sobald der Nutzer angemeldet
+  // ist und geladen wurde. Das behebt den Datenverlust, wenn ein Nutzer
+  // sich ab- und wieder anmeldet (AsyncStorage wird bei Abmelden geleert).
+  const progressSyncedForUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || !userId || !hydrated) return;
+    if (!profileFetched || !serverProfile) return;
+    if (progressSyncedForUserRef.current === userId) return;
+    progressSyncedForUserRef.current = userId;
+    pushProgressSync();
+  }, [
+    authLoaded,
+    isSignedIn,
+    userId,
+    hydrated,
+    profileFetched,
+    serverProfile,
+    pushProgressSync,
+  ]);
   const {
     isSubscribed,
     isLoading: subscriptionLoading,
@@ -583,17 +656,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addAchievement = useCallback(
     async (sagaTitle: string, sagaId: string) => {
+      let changed = false;
       setAchievements((prev) => {
         if (prev.some((a) => a.id === sagaId)) return prev;
+        changed = true;
         const next = [
           ...prev,
           { id: sagaId, sagaTitle, unlockedAt: Date.now() },
         ];
+        achievementsRef.current = next;
         AsyncStorage.setItem(KEYS.achievements, JSON.stringify(next));
         return next;
       });
+      if (changed) pushProgressSync();
     },
-    []
+    [pushProgressSync]
   );
 
   const registriereSagenEntdeckung = useCallback(
@@ -648,32 +725,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(KEYS.uiLanguage, code);
   }, []);
 
-  const saveHike = useCallback(async (hike: HikeSession) => {
-    setLastHike(hike);
-    await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
-    // Zusaetzlich ins Tagebuch schreiben (neueste zuerst, max. 200).
-    setHikeHistory((prev) => {
-      const next = [hike, ...prev.filter((h) => h.id !== hike.id)].slice(0, 200);
-      AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  }, []);
-
-  const attachHikePhoto = useCallback(async (hikeId: string, photoUri: string) => {
-    setLastHike((prev) => {
-      if (prev && prev.id === hikeId) {
-        const next = { ...prev, photoUri };
-        AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(next)).catch(() => {});
+  const saveHike = useCallback(
+    async (hike: HikeSession) => {
+      setLastHike(hike);
+      await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
+      // Zusaetzlich ins Tagebuch schreiben (neueste zuerst, max. 200).
+      setHikeHistory((prev) => {
+        const next = [hike, ...prev.filter((h) => h.id !== hike.id)].slice(
+          0,
+          200
+        );
+        hikeHistoryRef.current = next;
+        AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(
+          () => {}
+        );
         return next;
-      }
-      return prev;
-    });
-    setHikeHistory((prev) => {
-      const next = prev.map((h) => (h.id === hikeId ? { ...h, photoUri } : h));
-      AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  }, []);
+      });
+      pushProgressSync();
+    },
+    [pushProgressSync]
+  );
+
+  const attachHikePhoto = useCallback(
+    async (hikeId: string, photoUri: string) => {
+      setLastHike((prev) => {
+        if (prev && prev.id === hikeId) {
+          const next = { ...prev, photoUri };
+          AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(next)).catch(
+            () => {}
+          );
+          return next;
+        }
+        return prev;
+      });
+      setHikeHistory((prev) => {
+        const next = prev.map((h) => (h.id === hikeId ? { ...h, photoUri } : h));
+        hikeHistoryRef.current = next;
+        AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(
+          () => {}
+        );
+        return next;
+      });
+      pushProgressSync();
+    },
+    [pushProgressSync]
+  );
 
   const saveActiveHike = useCallback(async (hike: ActiveHike) => {
     setActiveHike(hike);

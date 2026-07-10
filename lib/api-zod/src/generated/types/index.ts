@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './achievement';
 export * from './aerialway';
 export * from './catalogCanton';
 export * from './catalogCoordinates';
@@ -29,6 +30,7 @@ export * from './getSagaPhotoParams';
 export * from './getWeatherParams';
 export * from './gpxImportBody';
 export * from './healthStatus';
+export * from './hikeSession';
 export * from './localizedSummary';
 export * from './narrationInput';
 export * from './poi';
@@ -40,6 +42,8 @@ export * from './profileArchetype';
 export * from './profileInput';
 export * from './profileInputAgeTier';
 export * from './profileInputArchetype';
+export * from './progressSyncInput';
+export * from './progressSyncResponse';
 export * from './routePhoto';
 export * from './sagaQuelle';
 export * from './searchPlacesParams';

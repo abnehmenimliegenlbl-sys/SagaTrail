@@ -44,6 +44,8 @@ import type {
   PremiumUpdate,
   Profile,
   ProfileInput,
+  ProgressSyncInput,
+  ProgressSyncResponse,
   RoutePhoto,
   SearchPlacesParams,
   StoryRequest,
@@ -1513,6 +1515,77 @@ export const useSyncMyPremium = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getSyncMyPremiumMutationOptions(options));
+    }
+
+export const getSyncMyProgressUrl = () => {
+
+
+
+
+  return `/api/me/progress/sync`
+}
+
+/**
+ * Gleicht den lokal auf dem Geraet gefuehrten Wanderverlauf (hikeHistory) und die Errungenschaften (achievements) mit dem serverseitig gespeicherten Stand des authentifizierten Nutzers ab. Die Vereinigung beider Mengen (per id) wird serverseitig persistiert und zurueckgegeben, sodass ein An-/Abmelden oder ein Geraetewechsel keine bereits abgeschlossenen Wanderungen verliert.
+ * @summary Wanderverlauf und Errungenschaften mit dem Server abgleichen
+ */
+export const syncMyProgress = async (progressSyncInput: ProgressSyncInput, options?: RequestInit): Promise<ProgressSyncResponse> => {
+
+  return customFetch<ProgressSyncResponse>(getSyncMyProgressUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(progressSyncInput)
+  }
+);}
+
+
+
+
+export const getSyncMyProgressMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMyProgress>>, TError,{data: BodyType<ProgressSyncInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof syncMyProgress>>, TError,{data: BodyType<ProgressSyncInput>}, TContext> => {
+
+const mutationKey = ['syncMyProgress'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncMyProgress>>, {data: BodyType<ProgressSyncInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncMyProgress(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncMyProgressMutationResult = NonNullable<Awaited<ReturnType<typeof syncMyProgress>>>
+    export type SyncMyProgressMutationBody = BodyType<ProgressSyncInput>
+    export type SyncMyProgressMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Wanderverlauf und Errungenschaften mit dem Server abgleichen
+ */
+export const useSyncMyProgress = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncMyProgress>>, TError,{data: BodyType<ProgressSyncInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof syncMyProgress>>,
+        TError,
+        {data: BodyType<ProgressSyncInput>},
+        TContext
+      > => {
+      return useMutation(getSyncMyProgressMutationOptions(options));
     }
 
 export const getClaimKantonspackUrl = () => {

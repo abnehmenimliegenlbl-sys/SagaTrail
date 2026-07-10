@@ -688,6 +688,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/progress/sync:
+    post:
+      operationId: syncMyProgress
+      tags: [profile]
+      summary: Wanderverlauf und Errungenschaften mit dem Server abgleichen
+      description: >-
+        Gleicht den lokal auf dem Geraet gefuehrten Wanderverlauf
+        (hikeHistory) und die Errungenschaften (achievements) mit dem
+        serverseitig gespeicherten Stand des authentifizierten Nutzers ab.
+        Die Vereinigung beider Mengen (per id) wird serverseitig persistiert
+        und zurueckgegeben, sodass ein An-/Abmelden oder ein Geraetewechsel
+        keine bereits abgeschlossenen Wanderungen verliert.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressSyncInput"
+      responses:
+        "200":
+          description: Zusammengefuehrter Fortschritt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSyncResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /me/packs/claim:
     post:
       operationId: claimKantonspack
@@ -931,6 +968,63 @@ components:
           type: boolean
       required:
         - premium
+    HikeSession:
+      type: object
+      description: >-
+        Ein abgeschlossenes Wander-Erlebnis. Die genaue Feldstruktur wird
+        clientseitig verwaltet (Kapitel, Geometrie, Fotos etc.); der Server
+        speichert und merged Eintraege nur ueber ihre id, ohne den Inhalt zu
+        interpretieren.
+      properties:
+        id:
+          type: string
+      required:
+        - id
+      additionalProperties: true
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Sagen-ID
+        sagaTitle:
+          type: string
+        unlockedAt:
+          type: number
+          description: Unix-Timestamp (ms)
+      required:
+        - id
+        - sagaTitle
+        - unlockedAt
+      additionalProperties: true
+    ProgressSyncInput:
+      type: object
+      properties:
+        hikeHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/HikeSession"
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+      required:
+        - hikeHistory
+        - achievements
+    ProgressSyncResponse:
+      type: object
+      properties:
+        hikeHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/HikeSession"
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+      required:
+        - hikeHistory
+        - achievements
     NarrationInput:
       type: object
       properties:

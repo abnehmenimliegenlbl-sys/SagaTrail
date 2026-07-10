@@ -101,6 +101,33 @@ export interface PremiumUpdate {
   premium: boolean;
 }
 
+/**
+ * Ein abgeschlossenes Wander-Erlebnis. Die genaue Feldstruktur wird clientseitig verwaltet (Kapitel, Geometrie, Fotos etc.); der Server speichert und merged Eintraege nur ueber ihre id, ohne den Inhalt zu interpretieren.
+ */
+export interface HikeSession {
+  id: string;
+  [key: string]: unknown;
+ }
+
+export interface Achievement {
+  /** Sagen-ID */
+  id: string;
+  sagaTitle: string;
+  /** Unix-Timestamp (ms) */
+  unlockedAt: number;
+  [key: string]: unknown;
+ }
+
+export interface ProgressSyncInput {
+  hikeHistory: HikeSession[];
+  achievements: Achievement[];
+}
+
+export interface ProgressSyncResponse {
+  hikeHistory: HikeSession[];
+  achievements: Achievement[];
+}
+
 export interface NarrationInput {
   /** @minLength 1 */
   text: string;

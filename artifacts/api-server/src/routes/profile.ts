@@ -8,6 +8,8 @@ import {
   UpdateMyPremiumBody,
   ClaimKantonspackBody,
   ClaimKantonspackResponse,
+  SyncMyProgressBody,
+  SyncMyProgressResponse,
 } from "@workspace/api-zod";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { hatAktivesPremiumEntitlement } from "../lib/revenuecatSync";
@@ -203,6 +205,63 @@ router.post("/me/packs/claim", async (req, res): Promise<void> => {
     ClaimKantonspackResponse.parse({
       entitlement: ergebnis.entitlement,
       bereitsFreigeschaltet: ergebnis.status === "bereits_freigeschaltet",
+    })
+  );
+});
+
+function mergeById<T extends { id: string }>(
+  serverItems: unknown,
+  clientItems: T[]
+): T[] {
+  const serverArr = Array.isArray(serverItems) ? (serverItems as T[]) : [];
+  const merged = new Map<string, T>();
+  for (const item of serverArr) merged.set(item.id, item);
+  for (const item of clientItems) merged.set(item.id, item);
+  return Array.from(merged.values());
+}
+
+router.post("/me/progress/sync", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsed = SyncMyProgressBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  if (!existing) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+
+  // Vereinigung statt Ueberschreiben: ein Geraet, das nach einem Ab-/Anmelden
+  // (oder auf einem anderen Geraet) mit leerem oder aelterem lokalen Zustand
+  // synct, darf bereits serverseitig bekannte Wanderungen/Errungenschaften
+  // nie loeschen. Merge erfolgt ausschliesslich ueber die id.
+  const mergedHikeHistory = mergeById(existing.hikeHistory, parsed.data.hikeHistory)
+    .sort((a: any, b: any) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
+    .slice(0, 200);
+  const mergedAchievements = mergeById(existing.achievements, parsed.data.achievements);
+
+  const [row] = await db
+    .update(profilesTable)
+    .set({
+      hikeHistory: mergedHikeHistory,
+      achievements: mergedAchievements,
+      updatedAt: new Date(),
+    })
+    .where(eq(profilesTable.id, userId))
+    .returning();
+
+  res.json(
+    SyncMyProgressResponse.parse({
+      hikeHistory: row.hikeHistory,
+      achievements: row.achievements,
     })
   );
 });
