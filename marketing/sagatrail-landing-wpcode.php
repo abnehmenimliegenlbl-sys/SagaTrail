@@ -159,8 +159,8 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 30px;
                 }
+                .st-phone-icon svg { width: 32px; height: 32px; }
                 .st-phone-screen strong { color: var(--st-ink); font-size: 15px; }
                 .st-phone-screen span { color: var(--st-muted); font-size: 12.5px; }
 
@@ -212,9 +212,9 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 22px;
                     margin-bottom: 16px;
                 }
+                .st-card-icon svg { width: 22px; height: 22px; fill: var(--st-red); }
                 .st-card h3 { font-size: 17px; font-weight: 700; margin: 0 0 8px; }
                 .st-card p { font-size: 14.5px; color: var(--st-muted); margin: 0; }
 
@@ -340,7 +340,9 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                     <div class="st-hero-visual">
                         <div class="st-phone">
                             <div class="st-phone-screen">
-                                <div class="st-phone-icon">&#127956;</div>
+                                <div class="st-phone-icon">
+                                    <svg viewBox="0 0 24 24" fill="none"><path d="M3 18l6-10 4 6 3-4 5 8H3z" fill="#FFFFFF"/></svg>
+                                </div>
                                 <strong>SagaTrail</strong>
                                 <span>Sagen. Wege. Schweiz.</span>
                             </div>
@@ -357,32 +359,44 @@ if (!function_exists('sagatrail_landing_shortcode')) {
                     <p class="st-lead st-center">Kuratierte, historisch verbuergte Sagen treffen auf echte GPS-gefuehrte Wanderrouten &mdash; keine KI-erfundenen Geschichten, sondern echtes Schweizer Kulturerbe.</p>
                     <div class="st-grid">
                         <div class="st-card">
-                            <div class="st-card-icon">&#127917;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 3l9 8h-2v9H5v-9H3l9-8z"/></svg>
+                            </div>
                             <h3>Sagen live erzaehlt</h3>
                             <p>Professionell vertonte Sagen starten automatisch, sobald du den passenden Ort auf der Route erreichst.</p>
                         </div>
                         <div class="st-card">
-                            <div class="st-card-icon">&#128506;&#65039;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M3 18l6-10 4 6 3-4 5 8H3z"/></svg>
+                            </div>
                             <h3>Echte Wanderwege</h3>
                             <p>Routen basieren auf echten Schweizer Wanderwegen &mdash; mit Karte, Hoehenprofil und Schwierigkeitsgrad.</p>
                         </div>
                         <div class="st-card">
-                            <div class="st-card-icon">&#128205;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+                            </div>
                             <h3>GPS-gesteuerte Navigation</h3>
                             <p>Live-Standort und Sprachhinweise fuehren dich sicher entlang der Route &mdash; auch unterwegs ohne Blick aufs Handy.</p>
                         </div>
                         <div class="st-card">
-                            <div class="st-card-icon">&#128229;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 011 1v9.59l2.3-2.3a1 1 0 111.4 1.42l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.42l2.3 2.3V4a1 1 0 011-1zM5 18a1 1 0 011 1v1h12v-1a1 1 0 112 0v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a1 1 0 011-1z"/></svg>
+                            </div>
                             <h3>Offline verfuegbar</h3>
                             <p>Sagen, Karten und Audio lassen sich vorab herunterladen &mdash; perfekt fuer Regionen ohne Empfang.</p>
                         </div>
                         <div class="st-card">
-                            <div class="st-card-icon">&#127760;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.4 6h-3.2a15.8 15.8 0 00-1.6-4.1A8.03 8.03 0 0119.4 8zM12 4c.8 1.1 1.5 2.5 2 4h-4c.5-1.5 1.2-2.9 2-4zM4.3 14a8.1 8.1 0 010-4h3.6a16.6 16.6 0 000 4H4.3zm.9 2h3.2a15.8 15.8 0 001.6 4.1A8.03 8.03 0 015.2 16zm3.2-8H5.2a8.03 8.03 0 014.8-4.1A15.8 15.8 0 008.4 8zM12 20c-.8-1.1-1.5-2.5-2-4h4c-.5 1.5-1.2 2.9-2 4zm2.4-6H9.6a14.6 14.6 0 010-4h4.8a14.6 14.6 0 010 4zm.2 5.9c.7-1.2 1.2-2.6 1.6-4.1h3.2a8.03 8.03 0 01-4.8 4.1zM16.1 14a16.6 16.6 0 000-4h3.6a8.1 8.1 0 010 4h-3.6z"/></svg>
+                            </div>
                             <h3>Mehrsprachig</h3>
                             <p>Erlebe die Schweizer Sagenwelt in acht Sprachen &mdash; inklusive Schweizerdeutsch.</p>
                         </div>
                         <div class="st-card">
-                            <div class="st-card-icon">&#127942;</div>
+                            <div class="st-card-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.6L21 9l-5 4.5L17.4 21 12 17.3 6.6 21 8 13.5 3 9l6.6-.4z"/></svg>
+                            </div>
                             <h3>Fortschritt &amp; Erfolge</h3>
                             <p>Sammle Wanderungen, Schrittzahlen und Abzeichen &mdash; dein persoenliches Sagenbuch der Schweiz.</p>
                         </div>
