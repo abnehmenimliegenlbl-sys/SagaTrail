@@ -1,6 +1,9 @@
 import React, { useCallback, useState } from "react";
 
 import { AppModal, AppModalButton } from "@/components/brand/AppModal";
+import { makeLogger } from "./debugLog";
+
+const modalLog = makeLogger("[MODAL]", "modal");
 
 /**
  * Ersatz fuer `Alert.alert`, damit App-eigene Dialoge (Fehler, Bestaetigungen,
@@ -29,6 +32,7 @@ let showImpl: ((title: string, message?: string, buttons?: AppModalButton[]) => 
   null;
 
 export function alert(title: string, message?: string, buttons?: AppModalButton[]) {
+  modalLog("alert() aufgerufen", { title, hatShowImpl: !!showImpl });
   if (showImpl) {
     showImpl(title, message, buttons);
   } else if (__DEV__) {
@@ -47,6 +51,7 @@ export function AppAlertProvider({ children }: { children: React.ReactNode }) {
     (title: string, message?: string, buttons?: AppModalButton[]) => {
       const finalButtons: AppModalButton[] =
         buttons && buttons.length > 0 ? buttons : [{ text: "OK" }];
+      modalLog("praesentiere Modal", { title, buttons: finalButtons.map((b) => b.text) });
       setState({
         visible: true,
         title,
@@ -54,6 +59,7 @@ export function AppAlertProvider({ children }: { children: React.ReactNode }) {
         buttons: finalButtons.map((b) => ({
           ...b,
           onPress: () => {
+            modalLog("Button getippt, schliesse Modal", { text: b.text, hatCallback: !!b.onPress });
             close();
             // Das native `Modal` schliesst sich mit einer eigenen
             // UIKit-Uebergangsanimation (FadeOut, ~150ms). Feuert der
@@ -63,7 +69,11 @@ export function AppAlertProvider({ children }: { children: React.ReactNode }) {
             // StoreKit-Sheet-Kollision beim Kauf). Erst nach der
             // Dismiss-Animation feuern.
             if (b.onPress) {
-              setTimeout(() => b.onPress?.(), 250);
+              setTimeout(() => {
+                modalLog("verzoegerter Button-Callback feuert jetzt", { text: b.text });
+                b.onPress?.();
+                modalLog("verzoegerter Button-Callback abgeschlossen", { text: b.text });
+              }, 250);
             }
           },
         })),
