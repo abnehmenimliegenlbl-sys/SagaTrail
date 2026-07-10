@@ -90,14 +90,23 @@ export default function Paywall() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      alert(t.successAlertTitle, t.successAlertMsg, [
-        { text: t.successAlertBtn, onPress: () => router.back() },
-      ]);
+      // Apples nativer Kauf-Dialog (StoreKit-Sheet) ist zu diesem Zeitpunkt
+      // oft noch nicht vollstaendig ausgeblendet. Praesentiert man sofort
+      // danach unser eigenes natives Modal (AppModal), kollidieren zwei
+      // UIKit-Praesentationen und die App friert komplett ein. Eine kurze
+      // Verzoegerung laesst StoreKit die Uebergabe sauber abschliessen.
+      setTimeout(() => {
+        alert(t.successAlertTitle, t.successAlertMsg, [
+          { text: t.successAlertBtn, onPress: () => router.back() },
+        ]);
+      }, 600);
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (timedOut) return;
       if (!err?.userCancelled) {
-        alert(t.purchaseErrorTitle, err?.message ?? String(err));
+        setTimeout(() => {
+          alert(t.purchaseErrorTitle, err?.message ?? String(err));
+        }, 600);
       }
     } finally {
       clearTimeout(timeoutId);
@@ -110,13 +119,17 @@ export default function Paywall() {
     try {
       const customerInfo = await restore();
       const hasActive = !!customerInfo.entitlements.active["premium"];
-      if (hasActive) {
-        alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
-      } else {
-        alert(t.restoreNoneTitle, t.restoreNoneMsg);
-      }
+      setTimeout(() => {
+        if (hasActive) {
+          alert(t.restoreSuccessTitle, t.restoreSuccessMsg);
+        } else {
+          alert(t.restoreNoneTitle, t.restoreNoneMsg);
+        }
+      }, 600);
     } catch (err: any) {
-      alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
+      setTimeout(() => {
+        alert(t.restoreErrorTitle, err?.message ?? t.restoreErrorMsg);
+      }, 600);
     } finally {
       setBusy(false);
     }
