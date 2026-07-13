@@ -5,6 +5,8 @@ export interface PaywallStrings {
   title: string;
   subtitle: string;
   activeBox: string;
+  upgradeBox: string;
+  upgradeBtn: string;
   planPer: string;
   perYear: string;
   planNames: {
@@ -51,7 +53,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Die ganze Schweiz und all ihre Legenden",
-    activeBox: "Premium ist bereits aktiv. Viel Freude auf allen Wegen.",
+    activeBox: "Elite ist aktiv – alle Kantons-Packs und Sagen inklusive.",
+    upgradeBox: "Du bist bereits Premium. Upgrade zu Elite und erhalte alle Kantons-Packs ohne Aufpreis.",
+    upgradeBtn: "Zu Elite upgraden",
     planPer: "/ Monat",
     perYear: "/ Jahr",
     planNames: {
@@ -98,7 +102,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Die ganzi Schwiiz und all ihri Legände",
-    activeBox: "Premium isch bereits aktiv. Viel Freud uf allne Wäg.",
+    activeBox: "Elite isch aktiv – alli Kantöns-Packs und Sage inklusive.",
+    upgradeBox: "Du bisch scho Premium. Upgrade zu Elite und überchunsch alli Kantöns-Packs ohni Ufpriis.",
+    upgradeBtn: "Zu Elite upgraade",
     planPer: "/ Monet",
     perYear: "/ Johr",
     planNames: {
@@ -145,7 +151,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "All of Switzerland and all its legends",
-    activeBox: "Premium is already active. Enjoy your journeys.",
+    activeBox: "Elite is active – all canton packs and legends included.",
+    upgradeBox: "You're already Premium. Upgrade to Elite and get all canton packs at no extra cost.",
+    upgradeBtn: "Upgrade to Elite",
     planPer: "/ month",
     perYear: "/ year",
     planNames: {
@@ -192,7 +200,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Toute la Suisse et toutes ses légendes",
-    activeBox: "Premium est déjà actif. Profitez bien de vos chemins.",
+    activeBox: "Elite est actif – tous les packs de cantons et légendes inclus.",
+    upgradeBox: "Vous êtes déjà Premium. Passez à Elite et obtenez tous les packs de cantons sans supplément.",
+    upgradeBtn: "Passer à Elite",
     planPer: "/ mois",
     perYear: "/ an",
     planNames: {
@@ -239,7 +249,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Tutta la Svizzera e tutte le sue leggende",
-    activeBox: "Premium è già attivo. Buon divertimento su tutti i percorsi.",
+    activeBox: "Elite è attivo – tutti i pacchetti di cantoni e leggende inclusi.",
+    upgradeBox: "Sei già Premium. Passa a Elite e ottieni tutti i pacchetti di cantoni senza costi aggiuntivi.",
+    upgradeBtn: "Passa a Elite",
     planPer: "/ mese",
     perYear: "/ anno",
     planNames: {
@@ -286,7 +298,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Toda Suiza y todas sus leyendas",
-    activeBox: "Premium ya está activo. Que disfrutes de todos los caminos.",
+    activeBox: "Elite está activo – todos los packs de cantones y leyendas incluidos.",
+    upgradeBox: "Ya eres Premium. Actualiza a Elite y obtén todos los packs de cantones sin coste adicional.",
+    upgradeBtn: "Actualizar a Elite",
     planPer: "/ mes",
     perYear: "/ año",
     planNames: {
@@ -333,7 +347,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Toda a Suíça e todas as suas lendas",
-    activeBox: "O Premium já está ativo. Divirta-se em todos os caminhos.",
+    activeBox: "Elite está ativo – todos os pacotes de cantões e lendas incluídos.",
+    upgradeBox: "Você já é Premium. Atualize para Elite e obtenha todos os pacotes de cantões sem custo adicional.",
+    upgradeBtn: "Atualizar para Elite",
     planPer: "/ mês",
     perYear: "/ ano",
     planNames: {
@@ -380,7 +396,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "整个瑞士及其所有传说",
-    activeBox: "Premium 已激活。祝您旅途愉快。",
+    activeBox: "Elite 已激活 – 所有州传说包均已包含。",
+    upgradeBox: "您已是 Premium 会员。升级到 Elite，免费获取所有州传说包。",
+    upgradeBtn: "升级到 Elite",
     planPer: "/ 月",
     perYear: "/ 年",
     planNames: {
@@ -425,7 +443,9 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     ],
     title: "SAGATRAIL PREMIUM",
     subtitle: "Вся Швейцария и все её легенды",
-    activeBox: "Premium уже активен. Приятных походов.",
+    activeBox: "Elite активен – все пакеты кантонов и легенды включены.",
+    upgradeBox: "Вы уже Premium. Перейдите на Elite и получите все пакеты кантонов без доплаты.",
+    upgradeBtn: "Перейти на Elite",
     planPer: "/ месяц",
     perYear: "/ год",
     planNames: {

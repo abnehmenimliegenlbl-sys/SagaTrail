@@ -34,6 +34,7 @@ export default function Paywall() {
   const { premium } = useApp();
   const {
     offerings,
+    isElite,
     isLoading,
     purchase,
     restore,
@@ -79,14 +80,21 @@ export default function Paywall() {
     "eliteFamily",
   ];
 
+  // Premium-Upgrade-Modus: bereits Premium, aber noch kein Elite — nur
+  // Elite-Pläne anzeigen, damit der Nutzer direkt upgraden kann.
+  const upgradeMode = premium && !isElite;
+
   const plaene = useMemo(() => {
     const pakete = offerings?.current?.availablePackages ?? [];
-    return PLAN_REIHENFOLGE.flatMap((key) => {
+    const reihenfolge = upgradeMode
+      ? (["elite", "eliteFamily"] as PlanKey[])
+      : PLAN_REIHENFOLGE;
+    return reihenfolge.flatMap((key) => {
       const paket = pakete.find((p) => PAKET_ZU_PLAN[p.identifier] === key);
       return paket ? [{ key, paket }] : [];
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offerings]);
+  }, [offerings, upgradeMode]);
 
   const gewaehlterPlan =
     plaene.find((p) => p.key === gewaehlt) ??
@@ -236,7 +244,8 @@ export default function Paywall() {
           <Text style={[styles.subtitle, { color: colors.accent }]}>{t.subtitle}</Text>
         </View>
 
-        {premium ? (
+        {isElite ? (
+          // Bereits Elite — nichts mehr zu kaufen
           <View style={[styles.activeBox, { borderColor: colors.accent }]}>
             <Feather name="check-circle" size={22} color={colors.accent} />
             <Text style={[styles.activeText, { color: colors.foreground }]}>
@@ -247,22 +256,32 @@ export default function Paywall() {
           <>
             <SparkDivider style={{ marginVertical: 24 }} />
 
-            <View style={styles.features}>
-              {t.features.map((f) => (
-                <View key={f} style={styles.featureRow}>
-                  <Feather name="check" size={18} color={colors.accent} />
-                  <Text style={[styles.featureText, { color: colors.foreground }]}>
-                    {f}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            {upgradeMode ? (
+              // Upgrade-Banner: Premium vorhanden, Elite fehlt noch
+              <View style={[styles.activeBox, { borderColor: colors.glassBorder, marginBottom: 20 }]}>
+                <Feather name="zap" size={22} color={colors.accent} />
+                <Text style={[styles.activeText, { color: colors.foreground }]}>
+                  {t.upgradeBox}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.features}>
+                {t.features.map((f) => (
+                  <View key={f} style={styles.featureRow}>
+                    <Feather name="check" size={18} color={colors.accent} />
+                    <Text style={[styles.featureText, { color: colors.foreground }]}>
+                      {f}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {isLoading ? (
               /* Skeleton-Karten in Plangroesse — kein Layout-Sprung, wenn die
                  echten Preiskarten von RevenueCat eintreffen. */
               <View style={{ gap: 10 }}>
-                {PLAN_REIHENFOLGE.map((key) => (
+                {(upgradeMode ? ["elite", "eliteFamily"] : PLAN_REIHENFOLGE).map((key) => (
                   <Skeleton key={key} height={74} radius={colors.radius} />
                 ))}
               </View>
@@ -314,7 +333,8 @@ export default function Paywall() {
             )}
 
             <PrimaryButton
-              label={busy || isPurchasing ? t.loadingOffering : t.buyBtn}
+              label={busy || isPurchasing ? t.loadingOffering : upgradeMode ? t.upgradeBtn : t.buyBtn}
+              variant={upgradeMode ? "gold" : "primary"}
               onPress={buy}
               disabled={!packageToBuy || busy || isPurchasing}
               style={{ marginTop: 22 }}
