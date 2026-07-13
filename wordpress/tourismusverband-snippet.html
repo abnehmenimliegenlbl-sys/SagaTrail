@@ -2,10 +2,8 @@
   SagaTrail – Tourismusverband-Seite  |  WPCode HTML-Snippet
   Typ: HTML Snippet
   Seite: z.B. https://sagatrail.ch/tourismusverband
-  Einbetten: Diesen Block in einen "HTML-Block" (WordPress / WPCode) kopieren.
 -->
 <style>
-/* ===== RESET & BASIS ===== */
 .st-tv *,
 .st-tv *::before,
 .st-tv *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,8 +12,6 @@
   color: #1a1a1a;
   line-height: 1.6;
 }
-
-/* ===== VOLLBREITE-SEKTIONEN ===== */
 .st-tv .st-section {
   width: 100vw;
   position: relative;
@@ -29,14 +25,11 @@
   margin: 0 auto;
   padding: 0 24px;
 }
-
-/* ===== FARBEN ===== */
 .st-tv .st-red   { background: #CC0000; color: #fff; }
 .st-tv .st-white { background: #fff; color: #1a1a1a; }
 .st-tv .st-light { background: #f7f7f5; color: #1a1a1a; }
-.st-tv .st-dark  { background: #1a1a1a; color: #fff; }
 
-/* ===== HERO ===== */
+/* HERO */
 .st-tv .st-hero { padding: 80px 0 64px; }
 .st-tv .st-hero-badge {
   display: inline-block;
@@ -58,7 +51,7 @@
 .st-tv .st-hero h1 em { font-style: normal; opacity: 0.85; }
 .st-tv .st-hero-lead {
   font-size: 1.1rem;
-  max-width: 620px;
+  max-width: 640px;
   opacity: 0.88;
   margin-bottom: 40px;
   line-height: 1.65;
@@ -74,12 +67,9 @@
   font-weight: 800;
   line-height: 1;
 }
-.st-tv .st-hero-stat span {
-  font-size: 0.85rem;
-  opacity: 0.78;
-}
+.st-tv .st-hero-stat span { font-size: 0.85rem; opacity: 0.78; }
 
-/* ===== SECTION HEADER ===== */
+/* SECTION HEADER */
 .st-tv .st-section-label {
   font-size: 0.75rem;
   font-weight: 700;
@@ -88,9 +78,7 @@
   color: #CC0000;
   margin-bottom: 10px;
 }
-.st-tv .st-light .st-section-label,
-.st-tv .st-white .st-section-label { color: #CC0000; }
-.st-tv .st-dark  .st-section-label { color: rgba(255,255,255,0.55); }
+.st-tv .st-red .st-section-label { color: rgba(255,255,255,0.65); }
 .st-tv .st-section-title {
   font-size: clamp(1.6rem, 3.5vw, 2.4rem);
   font-weight: 800;
@@ -100,20 +88,61 @@
 .st-tv .st-section-sub {
   font-size: 1rem;
   color: #555;
-  max-width: 560px;
+  max-width: 600px;
   margin-bottom: 48px;
+  line-height: 1.65;
 }
-.st-tv .st-dark .st-section-sub { color: rgba(255,255,255,0.65); }
+.st-tv .st-red .st-section-sub { color: rgba(255,255,255,0.75); }
 
-/* ===== KARTEN ===== */
+/* AUSTAUSCH-BOX (Was ihr gebt / Was ihr kriegt) */
+.st-tv .st-exchange { padding: 72px 0; }
+.st-tv .st-exchange-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 32px;
+  align-items: start;
+}
+@media(max-width:680px){
+  .st-tv .st-exchange-grid { grid-template-columns: 1fr; }
+  .st-tv .st-exchange-arrow { transform: rotate(90deg); }
+}
+.st-tv .st-exchange-col { background: #fff; border: 1.5px solid #ebebeb; border-radius: 14px; padding: 28px 24px; }
+.st-tv .st-exchange-col.give { border-color: #ebebeb; }
+.st-tv .st-exchange-col.get  { border-color: #CC0000; box-shadow: 0 4px 24px rgba(204,0,0,0.1); }
+.st-tv .st-exchange-col h3 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 16px;
+}
+.st-tv .st-exchange-col.get h3 { color: #CC0000; }
+.st-tv .st-exchange-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.st-tv .st-exchange-col li {
+  font-size: 0.95rem;
+  color: #444;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.st-tv .st-exchange-col li span.ico { flex-shrink: 0; font-size: 1.1rem; }
+.st-tv .st-exchange-col.get li { color: #1a1a1a; font-weight: 500; }
+.st-tv .st-exchange-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #CC0000;
+  margin-top: 60px;
+}
+
+/* VORTEILE-KARTEN */
+.st-tv .st-benefits { padding: 72px 0; }
 .st-tv .st-grid-3 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-.st-tv .st-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
 }
 .st-tv .st-card {
@@ -122,113 +151,60 @@
   border-radius: 14px;
   padding: 28px 24px;
 }
-.st-tv .st-card-icon {
-  font-size: 2rem;
-  margin-bottom: 14px;
-  line-height: 1;
-}
-.st-tv .st-card h3 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.st-tv .st-card p {
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.55;
-}
+.st-tv .st-card-icon { font-size: 2rem; margin-bottom: 14px; line-height: 1; }
+.st-tv .st-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.st-tv .st-card p { font-size: 0.9rem; color: #555; line-height: 1.55; }
 
-/* ===== ZITAT ===== */
-.st-tv .st-quote-wrap { padding: 64px 0; }
-.st-tv .st-quote {
-  max-width: 760px;
-  margin: 0 auto;
-  text-align: center;
+/* SO FUNKTIONIERTS */
+.st-tv .st-how { padding: 72px 0; }
+.st-tv .st-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  counter-reset: step;
 }
+.st-tv .st-step-num {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: #CC0000;
+  color: #fff;
+  font-size: 1rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.st-tv .st-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.st-tv .st-step p { font-size: 0.88rem; color: #555; line-height: 1.55; }
+
+/* ZITAT */
+.st-tv .st-quote-wrap { padding: 64px 0; }
+.st-tv .st-quote { max-width: 760px; margin: 0 auto; text-align: center; }
 .st-tv .st-quote-mark {
-  font-size: 4rem;
-  line-height: 1;
+  font-size: 4rem; line-height: 1;
   color: rgba(255,255,255,0.3);
   font-family: Georgia, serif;
   margin-bottom: 8px;
 }
 .st-tv .st-quote blockquote {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  font-weight: 500;
-  line-height: 1.7;
-  font-style: italic;
-  margin-bottom: 20px;
-  color: rgba(255,255,255,0.92);
+  font-weight: 500; line-height: 1.7; font-style: italic;
+  margin-bottom: 20px; color: rgba(255,255,255,0.92);
 }
-.st-tv .st-quote cite {
-  font-size: 0.85rem;
-  font-style: normal;
-  color: rgba(255,255,255,0.55);
-  font-weight: 600;
-}
+.st-tv .st-quote cite { font-size: 0.85rem; font-style: normal; color: rgba(255,255,255,0.55); font-weight: 600; }
 
-/* ===== PROZESS ===== */
-.st-tv .st-steps { padding: 72px 0; }
-.st-tv .st-steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 32px;
-  counter-reset: step;
-}
-.st-tv .st-step { position: relative; }
-.st-tv .st-step-num {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #CC0000;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
-}
-.st-tv .st-step h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.st-tv .st-step p {
-  font-size: 0.88rem;
-  color: #555;
-  line-height: 1.55;
-}
-
-/* ===== CTA ===== */
+/* CTA */
 .st-tv .st-cta { padding: 80px 0; text-align: center; }
-.st-tv .st-cta h2 {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800;
-  margin-bottom: 16px;
-}
-.st-tv .st-cta p {
-  font-size: 1.05rem;
-  opacity: 0.82;
-  max-width: 520px;
-  margin: 0 auto 32px;
-  line-height: 1.6;
-}
+.st-tv .st-cta h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; margin-bottom: 16px; }
+.st-tv .st-cta p { font-size: 1.05rem; color: #555; max-width: 520px; margin: 0 auto 32px; line-height: 1.6; }
 .st-tv .st-btn-group { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .st-tv .st-btn {
-  display: inline-block;
-  padding: 14px 30px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block; padding: 14px 30px;
+  border-radius: 8px; font-size: 0.95rem; font-weight: 700;
+  text-decoration: none; transition: opacity 0.15s, transform 0.15s;
   border: 2px solid transparent;
 }
 .st-tv .st-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-.st-tv .st-btn-white  { background: #fff; color: #CC0000; }
-.st-tv .st-btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,0.55); }
 .st-tv .st-btn-red     { background: #CC0000; color: #fff; }
+.st-tv .st-btn-outline { background: transparent; color: #CC0000; border-color: #CC0000; }
 </style>
 
 <div class="st-tv">
@@ -236,9 +212,11 @@
   <!-- ① HERO (rot) -->
   <div class="st-section st-red">
     <div class="st-inner st-hero">
-      <div class="st-hero-badge">Für Tourismusverbände &amp; Destinationen</div>
-      <h1>Die Schweizer Sagenwelt —<br><em>erlebbar auf dem Wanderweg.</em></h1>
-      <p class="st-hero-lead">SagaTrail verbindet klassische Sagenüberlieferungen mit GPS-geführten Wanderrouten. Wanderinnen und Wanderer hören die Sagen Ihrer Region an authentischen Orten — als lebendiges Klangerlebnis direkt im Ohr.</p>
+      <div class="st-hero-badge">Partnerschaft für Tourismusverbände &amp; Destinationen</div>
+      <h1>Ihr empfehlt SagaTrail.<br><em>Eure Gäste erleben mehr.</em></h1>
+      <p class="st-hero-lead">
+        SagaTrail ist die Schweizer Wander-App mit GPS-geführten Sagenrouten. Wenn ihr uns euren Gästen empfehlt, gewinnt eure Region mehr Sichtbarkeit, eure Wanderwege werden belebt — und ihr habt keinen Aufwand damit.
+      </p>
       <div class="st-hero-stats">
         <div class="st-hero-stat">
           <strong>210+</strong>
@@ -249,104 +227,135 @@
           <span>Sprachen</span>
         </div>
         <div class="st-hero-stat">
-          <strong>GPS</strong>
-          <span>Echtzeit-Navigation</span>
+          <strong>kostenlos</strong>
+          <span>für Verbände</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ② VORTEILE (hell) -->
+  <!-- ② DER AUSTAUSCH (weiss) -->
+  <div class="st-section st-white">
+    <div class="st-inner st-exchange">
+      <div class="st-section-label">Das Angebot</div>
+      <div class="st-section-title">Eine einfache Partnerschaft.</div>
+      <p class="st-section-sub">Kein Aufwand eurer Seits, kein Budget. Ihr empfehlt SagaTrail — und eure Region profitiert direkt davon.</p>
+
+      <div class="st-exchange-grid">
+        <!-- Was ihr gebt -->
+        <div class="st-exchange-col give">
+          <h3>Was ihr beitragt</h3>
+          <ul>
+            <li><span class="ico">📢</span> SagaTrail in euren Kanälen erwähnen (Newsletter, Social, Website)</li>
+            <li><span class="ico">🗺️</span> App-Link oder QR-Code an Infostellen und Wanderkarten</li>
+            <li><span class="ico">🤝</span> Uns als Empfehlung gegenüber euren lokalen Partnern nennen</li>
+          </ul>
+        </div>
+
+        <!-- Pfeil -->
+        <div class="st-exchange-arrow">→</div>
+
+        <!-- Was ihr kriegt -->
+        <div class="st-exchange-col get">
+          <h3>Was eure Region gewinnt</h3>
+          <ul>
+            <li><span class="ico">📍</span> <strong>Prominente Platzierung</strong> eurer Sagen und Routen in der App</li>
+            <li><span class="ico">🥾</span> <strong>Mehr Wanderer</strong> auf euren Wegen — mit längeren Aufenthalten</li>
+            <li><span class="ico">📊</span> <strong>Nutzungsdaten</strong> zu euren Routen (welche Sagen, welche Wege)</li>
+            <li><span class="ico">🌍</span> <strong>Internationale Reichweite</strong> durch 8 Sprachen</li>
+            <li><span class="ico">🏠</span> <strong>Stärkung lokaler Betriebe</strong> via SagaTrail-Partnerprogramm</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ KONKRETE VORTEILE (hell) -->
   <div class="st-section st-light">
-    <div class="st-inner" style="padding-top:72px;padding-bottom:72px">
-      <div class="st-section-label">Vorteile für Ihre Destination</div>
-      <div class="st-section-title">Mehr Erlebnis.<br>Mehr Aufmerksamkeit.</div>
-      <p class="st-section-sub">SagaTrail macht Ihre Region für Wanderinnen und Wanderer unvergesslich — und stärkt gleichzeitig die lokale Wertschöpfung.</p>
+    <div class="st-inner st-benefits">
+      <div class="st-section-label">Im Detail</div>
+      <div class="st-section-title">Was euer Verband konkret davon hat</div>
+      <p class="st-section-sub">SagaTrail schafft Mehrwert für eure Destination — ohne dass ihr etwas entwickeln oder finanzieren müsst.</p>
       <div class="st-grid-3">
         <div class="st-card">
           <div class="st-card-icon">📍</div>
-          <h3>Regionale Sichtbarkeit</h3>
-          <p>Ihre Sagen und Routen werden direkt in der App erlebbar — für Nutzerinnen aus der ganzen Schweiz und dem Ausland.</p>
+          <h3>Eure Sagen, in der App</h3>
+          <p>Sagen und Routen aus eurer Region werden bereits kuratiert in SagaTrail eingetragen — als Partnerverband bekommt ihr eine Übersichtsseite eurer Inhalte.</p>
         </div>
         <div class="st-card">
-          <div class="st-card-icon">🎙️</div>
-          <h3>Digitales Kulturerbe</h3>
-          <p>Lokale Überlieferungen werden professionell aufbereitet und für neue Generationen zugänglich gemacht.</p>
+          <div class="st-card-icon">⏱️</div>
+          <h3>Kein Aufwand</h3>
+          <p>Ihr müsst nichts programmieren, nichts pflegen, kein Budget bereitstellen. Wir kümmern uns um Inhalte, Technik und Updates.</p>
         </div>
         <div class="st-card">
-          <div class="st-card-icon">🥾</div>
+          <div class="st-card-icon">💬</div>
+          <h3>Gesprächsstoff für Gäste</h3>
+          <p>Eine Empfehlung für SagaTrail ist gleichzeitig eine Empfehlung für eure Wanderwege und euer kulturelles Erbe — ein Mehrwert, den Gäste schätzen.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">🏨</div>
           <h3>Längere Aufenthalte</h3>
-          <p>Routen mit Sagenerzählung motivieren zu ausgedehnteren Touren — mehr Übernachtungen und Konsum vor Ort.</p>
+          <p>Gäste, die eine Sagenroute erleben, planen die Tour bewusster — das führt zu mehr Übernachtungen und mehr Ausgaben vor Ort.</p>
         </div>
         <div class="st-card">
           <div class="st-card-icon">📊</div>
-          <h3>Daten &amp; Insights</h3>
-          <p>Erfahren Sie, welche Routen und Sagen in Ihrer Region besonders beliebt sind — wertvolle Grundlage für Ihre Kommunikation.</p>
+          <h3>Nutzungsreports</h3>
+          <p>Auf Wunsch erhaltet ihr Auswertungen: welche Routen und Sagen eurer Region am häufigsten aufgerufen werden — nützlich für eure Planung.</p>
         </div>
         <div class="st-card">
           <div class="st-card-icon">🤝</div>
-          <h3>Lokales Partnernetz</h3>
-          <p>Restaurants, Berghütten und Anbieter entlang der Routen werden als SagaTrail-Partner sichtbar — ein starkes Netzwerk für die Destination.</p>
-        </div>
-        <div class="st-card">
-          <div class="st-card-icon">🌍</div>
-          <h3>Internationales Publikum</h3>
-          <p>Die App ist in 8 Sprachen verfügbar — Ihre Sagen erreichen auch Gäste aus Deutschland, Frankreich, Italien und darüber hinaus.</p>
+          <h3>Lokale Betriebe stärken</h3>
+          <p>Restaurants, Berghütten und Anbieter entlang der Routen können sich als SagaTrail-Partner eintragen — davon profitiert die gesamte Destination.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ③ SO FUNKTIONIERT ES (weiss) -->
+  <!-- ④ SO FUNKTIONIERTS (weiss) -->
   <div class="st-section st-white">
-    <div class="st-inner st-steps">
-      <div class="st-section-label">Zusammenarbeit</div>
-      <div class="st-section-title">Einfach starten</div>
-      <p class="st-section-sub">Von der ersten Anfrage bis zum fertigen Erlebnis in Ihrer Region — unkompliziert und ohne technischen Aufwand für Sie.</p>
-      <div class="st-steps-grid">
+    <div class="st-inner st-how">
+      <div class="st-section-label">Ablauf</div>
+      <div class="st-section-title">In drei Schritten Partner werden</div>
+      <p class="st-section-sub">Von der ersten Kontaktaufnahme bis zur aktiven Empfehlung — unkompliziert und schnell.</p>
+      <div class="st-steps">
         <div class="st-step">
           <div class="st-step-num">1</div>
-          <h3>Erstgespräch</h3>
-          <p>Wir zeigen Ihnen in einem unverbindlichen Gespräch, welche Sagen und Routen in Ihrer Region bereits verfügbar sind.</p>
+          <h3>Kontakt aufnehmen</h3>
+          <p>Ihr schreibt uns kurz per Mail. Wir zeigen euch in einem 30-minütigen Gespräch, welche Inhalte aus eurer Region bereits in der App sind.</p>
         </div>
         <div class="st-step">
           <div class="st-step-num">2</div>
-          <h3>Inhalte kuratieren</h3>
-          <p>Gemeinsam wählen wir die passenden Sagen und Wanderrouten für Ihre Destination — basierend auf historischen Quellen.</p>
+          <h3>Inhalte abstimmen</h3>
+          <p>Wir stellen sicher, dass Sagen und Routen eurer Region korrekt und vollständig eingetragen sind. Falls gewünscht, ergänzen wir gemeinsam.</p>
         </div>
         <div class="st-step">
           <div class="st-step-num">3</div>
-          <h3>App-Integration</h3>
-          <p>Ihre Region erscheint in der SagaTrail-App mit eigenen Routen, Sagen und optionalem Partnerbereich.</p>
-        </div>
-        <div class="st-step">
-          <div class="st-step-num">4</div>
-          <h3>Live &amp; messbar</h3>
-          <p>Die Inhalte sind sofort für alle Nutzerinnen und Nutzer verfügbar — inklusive Nutzungsdaten für Ihre Auswertung.</p>
+          <h3>Empfehlung aussprechen</h3>
+          <p>Ihr empfehlt SagaTrail in euren Kanälen — wir liefern euch dafür fertige Texte, Bilder und QR-Codes, die ihr direkt verwenden könnt.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ④ ZITAT (rot) -->
+  <!-- ⑤ ZITAT (rot) -->
   <div class="st-section st-red">
     <div class="st-inner st-quote-wrap">
       <div class="st-quote">
         <div class="st-quote-mark">"</div>
-        <blockquote>SagaTrail macht unsere Wanderwege zu Bühnen — die Natur als Kulisse, die Sage als Geschichte. Das ist Schweizer Tourismus im 21. Jahrhundert.</blockquote>
+        <blockquote>Tourismusverbände können uns empfehlen, ohne einen Rappen auszugeben — und eure Gäste erleben eure Region auf eine Art, die kein Flyer je leisten kann.</blockquote>
         <cite>— Rolf Koch, Gründer SagaTrail</cite>
       </div>
     </div>
   </div>
 
-  <!-- ⑤ CTA (weiss) -->
+  <!-- ⑥ CTA (weiss) -->
   <div class="st-section st-white">
     <div class="st-inner st-cta">
-      <h2>Ihre Destination auf SagaTrail</h2>
-      <p style="color:#555">Interesse an einer Zusammenarbeit? Wir zeigen Ihnen gerne, wie SagaTrail für Ihre Region funktioniert.</p>
+      <h2>Jetzt Partnerschaft anfragen</h2>
+      <p>Unverbindliches Erstgespräch — 30 Minuten, keine Kosten, kein Commitment.</p>
       <div class="st-btn-group">
-        <a href="mailto:info@sagatrail.ch" class="st-btn st-btn-red">Kontakt aufnehmen</a>
-        <a href="https://sagatrail.ch" class="st-btn" style="background:transparent;color:#CC0000;border:2px solid #CC0000">Mehr erfahren</a>
+        <a href="mailto:info@sagatrail.ch?subject=Partnerschaft%20Tourismusverband" class="st-btn st-btn-red">Gespräch anfragen</a>
+        <a href="https://sagatrail.ch" class="st-btn st-btn-outline">App ansehen</a>
       </div>
     </div>
   </div>
