@@ -55,6 +55,7 @@ export const GetCatalogResponse = zod.object({
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({
   "text": zod.string(),
+  "title": zod.string().optional(),
   "reviewEmpfohlen": zod.boolean()
 })),
   "altersstufenHinweis": zod.string().optional(),
@@ -408,6 +409,7 @@ export const GetRouteSagaResponse = zod.object({
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({
   "text": zod.string(),
+  "title": zod.string().optional(),
   "reviewEmpfohlen": zod.boolean()
 })),
   "altersstufenHinweis": zod.string().optional(),

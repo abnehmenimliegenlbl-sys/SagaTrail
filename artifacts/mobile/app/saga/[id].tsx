@@ -168,6 +168,7 @@ export default function SagaDetail() {
   // Zusammenfassung in der gewaehlten Sprache; Deutsch als Fallback.
   const lang = resolveLang(profile?.language);
   const summaryText = saga.summaries[lang]?.text ?? saga.summary;
+  const sagaTitle = saga.summaries[lang]?.title ?? saga.title;
   const reviewPending = saga.summaries[lang]?.reviewEmpfohlen ?? false;
 
   // Ehrliche Kennzeichnung der Ortsgenauigkeit der ueberlieferten Sage.
@@ -204,7 +205,7 @@ export default function SagaDetail() {
           <Animated.View entering={FadeIn} style={styles.heroText}>
             <View style={styles.heroTextScrim}>
               <Text style={[styles.title, { color: colors.photoScrimText }]}>
-                {saga.title}
+                {sagaTitle}
               </Text>
               <Text style={[styles.mood, { color: colors.photoScrimMuted }]}>
                 {saga.mood}

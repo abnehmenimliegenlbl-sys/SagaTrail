@@ -652,7 +652,7 @@ export default function Routenplanung() {
                 {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
               </Text>
               <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                {saga.title}
+                {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
               </Text>
               <Text
                 style={[styles.sagaMood, { color: colors.mutedForeground }]}

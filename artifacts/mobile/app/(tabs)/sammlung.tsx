@@ -16,6 +16,8 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
+import { translateCanton } from "@/lib/i18n/cantonNames";
+import { LanguageCode } from "@/lib/i18n/languageCode";
 import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
 
@@ -256,7 +258,7 @@ export default function Sammlung() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.cantonName, { color: colors.foreground }]}>
-                    {canton}
+                    {translateCanton(canton, language as LanguageCode)}
                   </Text>
                   <Text
                     style={[styles.cantonProgress, { color: colors.mutedForeground }]}
@@ -302,7 +304,7 @@ export default function Sammlung() {
                         ]}
                         numberOfLines={2}
                       >
-                        {saga.title}
+                        {saga.summaries?.[language as LanguageCode]?.title ?? saga.title}
                       </Text>
                     </View>
                   );

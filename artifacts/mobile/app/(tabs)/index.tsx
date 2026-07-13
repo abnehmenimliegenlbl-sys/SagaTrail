@@ -23,6 +23,8 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useHomeStrings } from "@/lib/i18n/screens/home";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
+import { translateCanton } from "@/lib/i18n/cantonNames";
+import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 
 const WEB_TOP = 67;
@@ -31,7 +33,7 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, activeHike, clearActiveHike } = useApp();
+  const { profile, language, activeHike, clearActiveHike } = useApp();
   const t = useHomeStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -233,7 +235,7 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
-  const { achievements } = useApp();
+  const { achievements, language } = useApp();
   const { sagas } = useCatalog();
 
   // Sagen-Fortschritt des Kantons ("2 von 3 Sagen entdeckt") — nur wenn der
@@ -269,7 +271,7 @@ function CantonCard({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.cantonName, { color: colors.foreground }]}>
-            {entry.canton}
+            {translateCanton(entry.canton, language as LanguageCode)}
           </Text>
           <Text style={[styles.cantonMeta, { color: colors.mutedForeground }]}>
             {entry.routeCount > 0

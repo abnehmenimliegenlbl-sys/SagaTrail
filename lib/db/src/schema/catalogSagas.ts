@@ -16,6 +16,7 @@ export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar
  */
 export interface LocalizedSummary {
   text: string;
+  title?: string;
   reviewEmpfohlen: boolean;
 }
 

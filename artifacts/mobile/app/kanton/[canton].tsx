@@ -32,6 +32,8 @@ import {
 } from "@/contexts/CatalogContext";
 import { useKantonStrings } from "@/lib/i18n/screens/kanton";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
+import { translateCanton } from "@/lib/i18n/cantonNames";
+import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
@@ -59,7 +61,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, freeHikeUsed } = useApp();
+  const { profile, premium, freeHikeUsed, language } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const {
     isElite,
@@ -72,6 +74,7 @@ export default function KantonRouten() {
   const [packBusy, setPackBusy] = useState(false);
 
   const cantonName = decodeURIComponent(canton ?? "");
+  const displayCantonName = translateCanton(cantonName, language as LanguageCode);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   // Sagen-Pack-Regel: Premium-Kundschaft bekommt pro Kanton die erste
@@ -180,10 +183,10 @@ export default function KantonRouten() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={!sliderAktiv}
       >
-        <ScreenHeader eyebrow={t.eyebrow} title={cantonName} onBack />
+        <ScreenHeader eyebrow={t.eyebrow} title={displayCantonName} onBack />
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          {t.intro(cantonName)}
+          {t.intro(displayCantonName)}
         </Text>
 
         {packLocked && (

@@ -1306,7 +1306,7 @@ export default function LiveHike() {
               {saga.canton.toUpperCase()} · {t.live}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>
-              {saga.title}
+              {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
             </Text>
           </View>
           <Pressable

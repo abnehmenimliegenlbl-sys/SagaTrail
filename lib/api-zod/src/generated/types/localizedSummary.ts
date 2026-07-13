@@ -8,5 +8,6 @@
 
 export interface LocalizedSummary {
   text: string;
+  title?: string;
   reviewEmpfohlen: boolean;
 }

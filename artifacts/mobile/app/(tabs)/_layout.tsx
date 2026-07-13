@@ -7,6 +7,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useThemeModeSafe } from "@/contexts/AppContext";
+import { useTabsStrings } from "@/lib/i18n/screens/tabs";
 
 type FeatherName = React.ComponentProps<typeof Feather>["name"];
 
@@ -14,6 +15,7 @@ export default function TabLayout() {
   const c = useColors();
   const themeMode = useThemeModeSafe();
   const isWeb = Platform.OS === "web";
+  const t = useTabsStrings();
 
   const icon =
     (name: FeatherName) =>
@@ -57,19 +59,19 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: "Entdecken", tabBarIcon: icon("compass") }}
+        options={{ title: t.entdecken, tabBarIcon: icon("compass") }}
       />
       <Tabs.Screen
         name="sammlung"
-        options={{ title: "Sammlung", tabBarIcon: icon("award") }}
+        options={{ title: t.sammlung, tabBarIcon: icon("award") }}
       />
       <Tabs.Screen
         name="gruppe"
-        options={{ title: "Gruppe", tabBarIcon: icon("users") }}
+        options={{ title: t.gruppe, tabBarIcon: icon("users") }}
       />
       <Tabs.Screen
         name="einstellungen"
-        options={{ title: "Einstellungen", tabBarIcon: icon("settings") }}
+        options={{ title: t.einstellungen, tabBarIcon: icon("settings") }}
       />
     </Tabs>
   );
