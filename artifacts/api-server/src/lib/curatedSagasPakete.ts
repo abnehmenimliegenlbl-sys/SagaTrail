@@ -3481,5 +3481,200 @@ export const PACKAGE_SAGAS: InsertCatalogSaga[] = [
     "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   }
+,
+
+  // ── Appenzell Innerrhoden (8 Sagen) ──
+  {
+    "id": "wildmannli-ebenalp",
+    "title": "Das Wildmannli von der Ebenalp",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Haariger Waldgeist hilft Verirrten und bestraft Spötter",
+    "bildmotiv": "Ebenalp Fels Wildmann Alpstein Appenzellerland",
+    "mood": "Geheimnisvoll, gutartig",
+    "summary": "An den schroffen Kalkfelsen der Ebenalp im Alpstein lebte nach Appenzeller Überlieferung ein kleines, von Kopf bis Fuss behaartes Wildmannli in Felsspalten. Verirrten Sennen, die sich im Nebel verliefen, ging es schweigend voran und verschwand spurlos im Fels. Wer es verspottete oder Steine warf, dem liess es Felsen über den Weg rollen und trieb das Vieh in die Irre; wer es achtete und dem Fels ein Stück Brot hinterliess, fand die Kühe wohlbehalten.",
+    "summaries": {
+      "de": {"text": "An den Kalkfelsen der Ebenalp lebte ein kleines behaartes Wildmannli in Felsspalten. Es führte verirrte Sennen schweigend aus dem Nebel und verschwand spurlos. Spötter liefen auf umgewälzte Felsbrocken und verloren das Vieh; wer es achtete, fand die Kühe am Abend wohlbehalten.", "reviewEmpfohlen": false},
+      "gsw": {"title": "S Wildmannli vo dr Äbealp", "text": "A de Felse vo dr Äbealp hät en chlyses, behaartes Wildmannli ghuset. Verloufeni Sennä hät es schwygend usgfüehrt und isch denn im Fels verschwunde. Wär gspotet hät, hät Stei im Weg gfunde; wär es achtet hät, hät s Veeh wohlghalte gfunde.", "reviewEmpfohlen": true},
+      "fr": {"title": "Le Petit Homme Sauvage de l'Ebenalp", "text": "Sur les falaises de l'Ebenalp vivait un petit homme sauvage tout velu dans les fissures rocheuses. Il guidait en silence les pâtres égarés et disparaissait sans trace. Qui le raillait trouvait des pierres en chemin et son bétail dispersé; qui le respectait retrouvait ses vaches saines.", "reviewEmpfohlen": true},
+      "it": {"title": "Il Piccolo Uomo Selvatico dell'Ebenalp", "text": "Sulle scoscese pareti dell'Ebenalp viveva un piccolo uomo selvatico tutto peloso nelle fessure rocciose. Guidava in silenzio i pastori smarriti e spariva senza traccia. Chi lo derideva trovava pietre sul sentiero; chi lo rispettava trovava le vacche sane e salve.", "reviewEmpfohlen": true},
+      "en": {"title": "The Little Wild Man of the Ebenalp", "text": "On the limestone cliffs of the Ebenalp in the Alpstein range, a small hairy wild man lived in rock crevices. He silently guided lost herdsmen out of the fog and vanished without trace. Whoever mocked him found stones blocking his path and cattle scattered; whoever respected him found his cows safe at nightfall.", "reviewEmpfohlen": false},
+      "zh": {"title": "艾本阿尔普的小野人", "text": "在阿尔普施泰因的艾本阿尔普峭壁岩缝中，住着一个浑身是毛的小野人。他无声地引导迷路的牧人走出浓雾，随后消失无踪。嘲笑他的人会发现道路上滚来石块、牲畜四散；尊重他的人傍晚总能找到安然无恙的奶牛。", "reviewEmpfohlen": true},
+      "es": {"title": "El Pequeño Hombre Salvaje del Ebenalp", "text": "En las escarpadas paredes del Ebenalp vivía un pequeño hombre salvaje peludo en las grietas rocosas. Guiaba en silencio a pastores extraviados y desaparecía sin rastro. Quien lo ridiculizaba hallaba piedras en el camino y el ganado disperso; quien lo respetaba encontraba sus vacas sanas.", "reviewEmpfohlen": true},
+      "pt": {"title": "O Pequeno Homem Selvagem do Ebenalp", "text": "Nas falésias calcárias do Ebenalp, um pequeno homem selvagem peludo vivia nas fendas da rocha. Guiava em silêncio pastores perdidos para fora da névoa e desaparecia sem deixar rastro. Quem o ridicularizava encontrava pedras no caminho; quem o respeitava encontrava as vacas são e salvas.", "reviewEmpfohlen": true},
+      "ru": {"title": "Маленький дикий человек с Эбеналп", "text": "На известняковых скалах Эбеналп в расщелинах жил маленький покрытый шерстью дикий человечек. Он молча выводил заблудившихся пастухов из тумана и бесследно исчезал. Тот, кто насмехался, находил камни на дороге и разбредшийся скот; уважавший его находил коров невредимыми.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; schützenden Charakter betonen.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Appenzell_Innerrhoden"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852); Überlieferung Appenzell Innerrhoden",
+    "lat": 47.2675, "lng": 9.3614, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "nixe-saemtisersee",
+    "title": "Die Nixe im Sämtisersee",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Bergsee-Nixe belohnt Ehrfurcht und macht Kinder zu Wetterkundigen",
+    "bildmotiv": "Sämtisersee Alpstein Nixe Bergsee Nebel",
+    "mood": "Verlockend, melancholisch",
+    "summary": "Im einsamen Sämtisersee im Alpstein soll eine Nixe hausen. An Sommerabenden kämmt sie am Ufer ihr langes Haar. Kinder, die zu nah ans Ufer liefen, zog sie in ihre Unterwasserwelt – nicht um sie zu ertränken, sondern um ihnen das Schwimmen beizubringen. Wer zurückkam, konnte von da an Regen und Sturm voraussagen.",
+    "summaries": {
+      "de": {"text": "Im Sämtisersee soll eine Nixe hausen. An Sommerabenden erscheint sie am Ufer und kämmt ihr Haar. Kinder zog sie in ihre Unterwasserwelt um ihnen das Schwimmen beizubringen. Wer zurückkam, konnte Regen und Sturm voraussagen.", "reviewEmpfohlen": false},
+      "gsw": {"title": "D Nixe im Sämtisersee", "text": "Im Sämtisersee soll e Nixe huse, wo a Summerobige am Ufär ir Hoor chämmt. Chind, wo z nöch cho sind, hät si is Wasser zoge, um ne s Schwümme z lehrä. Wär zrugcho isch, hät chöne Wätter vorussage.", "reviewEmpfohlen": true},
+      "fr": {"title": "La Nixe du Lac Sämtis", "text": "Dans le lac Sämtis de l'Alpstein une nixe habiterait. Les soirs d'été elle peigne ses cheveux sur la rive. Elle entraînait les enfants dans son monde sous-marin pour leur apprendre à nager. Qui revenait pouvait désormais prévoir la pluie et la tempête.", "reviewEmpfohlen": true},
+      "it": {"title": "La Nixe nel Lago Sämtis", "text": "Nel lago Sämtis abiterebbe una nixe che pettina i capelli sulla riva nelle serate estive. Attirava i bambini nel suo mondo sottomarino per insegnare loro a nuotare. Chi tornava poteva da allora prevedere la pioggia e la tempesta.", "reviewEmpfohlen": true},
+      "en": {"title": "The Nixie of the Sämtiser Lake", "text": "In the lonely Sämtiser Lake a water sprite is said to dwell, combing her hair on the shore on summer evenings. She drew children who came too close into her underwater world to teach them to swim. Whoever returned could from that day foretell rain and storms.", "reviewEmpfohlen": false},
+      "zh": {"title": "萨姆蒂斯湖的水精", "text": "在孤寂的萨姆蒂斯湖中据说栖居着一位水精，夏日傍晚在湖岸梳理长发。靠得太近的孩子会被她带入水下世界教他们游泳。回来的孩子从此能预知风雨。", "reviewEmpfohlen": true},
+      "es": {"title": "La Nixe del Lago Sämtis", "text": "En el solitario lago Sämtis habita una nixe que peina sus cabellos en la orilla las tardes de verano. Atraía a los niños que se acercaban demasiado a su mundo submarino para enseñarles a nadar. Quien volvía podía desde entonces predecir lluvia y tormenta.", "reviewEmpfohlen": true},
+      "pt": {"title": "A Nixe do Lago Sämtis", "text": "No solitário Lago Sämtis habitaria uma nixe que penteia os cabelos na margem nas tardes de verão. Atraía as crianças que chegavam perto demais para seu mundo subaquático e ensinava-as a nadar. Quem voltava podia daí em diante prever chuva e tempestade.", "reviewEmpfohlen": true},
+      "ru": {"title": "Русалка озера Зэмтис", "text": "В уединённом озере Зэмтис якобы живёт русалка, расчёсывающая волосы на берегу летними вечерами. Детей, подходивших слишком близко, она уводила в свой подводный мир учить плавать. Вернувшийся с тех пор умел предсказывать дождь и бурю.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Das Ertrinken-Motiv als Schwimmen-Lehre umdeuten; für Kinder geeignet.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/S%C3%A4mtisersee"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2833, "lng": 9.3667, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "teufel-bruecke-bruelisau",
+    "title": "Der Teufel und die Brücke von Brülisau",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Teufel baut Brücke für erste Seele und wird überlistet",
+    "bildmotiv": "Brülisau Brücke Teufel Bach Alpstein Wald",
+    "mood": "Humorvoll, ländlich",
+    "summary": "Als die Bewohner von Brülisau eine Brücke über den Wildbach brauchten, erschien ein Fremder und bot an, sie in einer Nacht zu bauen – gegen die erste Seele, die darüber gehe. Die Dörfler ahnten, wer das war, nahmen aber an. Am Morgen stand die Brücke; doch der Pfarrer liess seinen Hund als erstes hinübergehen. Der Teufel, der eine Menschenseele erwartet hatte, fuhr wütend in die Erde und riss mit dem Schweif einen Graben in den Hang, der noch heute zu sehen ist.",
+    "summaries": {
+      "de": {"text": "Als Brülisau eine Brücke brauchte, bot ein Fremder sie in einer Nacht zu bauen – gegen die erste Seele, die drübergeht. Der Pfarrer schickte seinen Hund zuerst. Der Teufel fuhr wütend in die Erde; sein Schweif riss einen Graben in den Hang, der noch heute sichtbar ist.", "reviewEmpfohlen": false},
+      "gsw": {"title": "Dr Tüfel und d Brüggi vo Brülisau", "text": "Wo Brülisau e Brüggi brucht hät, hät en Frömde aabote, si i-ere Nacht z baue – für d erschti Seel. Dr Pfarrer hät syne Hund als erschtes drübergschickt. Dr Tüüfel isch wüetend i d Erde gfahre und sym Schwanz hät en Grabe i de Hang grisse.", "reviewEmpfohlen": true},
+      "fr": {"title": "Le Diable et le Pont de Brülisau", "text": "Quand Brülisau avait besoin d'un pont, un étranger offrit de le construire en une nuit pour la première âme qui le traverserait. Le curé fit passer son chien en premier. Le diable s'enfonça furieux dans la terre, sa queue creusant une tranchée encore visible aujourd'hui.", "reviewEmpfohlen": true},
+      "it": {"title": "Il Diavolo e il Ponte di Brülisau", "text": "Quando Brülisau aveva bisogno di un ponte, uno straniero offrì di costruirlo in una notte per la prima anima che vi transitasse. Il parroco mandò per primo il suo cane. Il diavolo sprofondò furioso nella terra, la sua coda scavando un fossato ancora visibile oggi.", "reviewEmpfohlen": true},
+      "en": {"title": "The Devil and the Bridge of Brülisau", "text": "When Brülisau needed a bridge over the mountain stream, a stranger offered to build it in one night for the first soul to cross. The priest let his dog cross first. The devil plunged into the earth in fury, his tail carving a trench in the hillside still visible today.", "reviewEmpfohlen": false},
+      "zh": {"title": "魔鬼与布吕利绍的桥", "text": "当布吕利绍需要一座桥时，一个陌生人提出一夜之内建好，条件是第一个过桥的灵魂。神父让他的狗率先通过。魔鬼愤怒地钻入地底，尾巴在山坡上划出一道至今可见的深沟。", "reviewEmpfohlen": true},
+      "es": {"title": "El Diablo y el Puente de Brülisau", "text": "Cuando Brülisau necesitaba un puente, un extraño ofreció construirlo en una noche por la primera alma que lo cruzara. El párroco envió primero a su perro. El diablo se hundió furioso en la tierra, su cola cavando una zanja en la ladera aún visible hoy.", "reviewEmpfohlen": true},
+      "pt": {"title": "O Diabo e a Ponte de Brülisau", "text": "Quando Brülisau precisava de uma ponte, um estranho ofereceu construí-la em uma noite pela primeira alma que a cruzasse. O pároco mandou primeiro seu cão. O diabo mergulhou furioso na terra, sua cauda abrindo uma vala na encosta ainda visível hoje.", "reviewEmpfohlen": true},
+      "ru": {"title": "Дьявол и мост Брюлизау", "text": "Когда Брюлизау понадобился мост, незнакомец предложил построить его за ночь за первую душу, что по нему перейдёт. Священник пустил вперёд своего пса. Дьявол в ярости провалился в землю, хвостом прорезав в склоне борозду, видную по сей день.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; den listigen Pfarrer als Helden betonen.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Br%C3%BClisau"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2819, "lng": 9.3631, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "berggeist-kamor",
+    "title": "Der Berggeist vom Kamor",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Leuchtendes Zeichen auf Berggipfel prophezeit Unheil",
+    "bildmotiv": "Kamor Alpstein Appenzell Licht Geist Gipfel Nacht",
+    "mood": "Unheimlich, prophetisch",
+    "summary": "Auf dem Kamor, dem nördlichsten Gipfel des Alpsteins, erschien an Abenden vor Unwettern ein Lichtschein, der wie eine Flamme über den Felsen tanzte. Dreimaliges Aufleuchten und Erlöschen bedeutete: in der kommenden Woche trifft ein Unglück das Dorf. Man sagte, es sei der Geist eines einst vom Blitz erschlagenen Hirten, der nun die Lebenden warnte.",
+    "summaries": {
+      "de": {"text": "Auf dem Kamor erschien vor Unwettern ein Lichtschein wie eine tanzende Flamme. Dreimaliges Aufleuchten und Erlöschen bedeutete: diese Woche trifft Unglück das Dorf. Es soll der Geist eines einst vom Blitz erschlagenen Hirten sein, der die Lebenden warnt.", "reviewEmpfohlen": false},
+      "gsw": {"title": "Dr Berggeischt vom Kamor", "text": "Ufem Kamor isch vor Unwetter en Liechtschyn wie e tanzendes Flamme erschynt. Drümal uflyychte und verlyschte hät bedeutet: dä Wuche chunnt Unglück. Es syg dr Geischt vo-me Hirt, wo vo Blitz erschlage worde isch.", "reviewEmpfohlen": true},
+      "fr": {"title": "L'Esprit de la Montagne du Kamor", "text": "Sur le Kamor une lueur apparaissait les soirs avant les tempêtes, dansant comme une flamme. Trois éclairs puis l'extinction signifiaient qu'un malheur frapperait le village dans la semaine. On disait que c'était l'esprit d'un berger jadis foudroyé.", "reviewEmpfohlen": true},
+      "it": {"title": "Lo Spirito della Montagna del Kamor", "text": "Sul Kamor nelle serate prima delle tempeste appariva un chiarore come una fiamma danzante. Tre lampi poi l'oscurità significavano che un disgrazia si sarebbe abbattuta in settimana. Si diceva fosse lo spirito di un pastore colpito dal fulmine.", "reviewEmpfohlen": true},
+      "en": {"title": "The Mountain Spirit of the Kamor", "text": "On the Kamor, the northernmost peak of the Alpstein, a dancing flame-like light appeared on evenings before storms. Three flashes followed by darkness meant a misfortune would strike the village within the week. It was said to be the spirit of a herdsman once struck by lightning.", "reviewEmpfohlen": false},
+      "zh": {"title": "卡莫尔山的山灵", "text": "在暴风雨前的傍晚，卡莫尔山顶会出现像跳舞火焰般的光芒。三次闪光后熄灭意味着：这周村庄将遭遇不幸。人们说那是曾在此被雷击身亡的牧人之灵在警示生者。", "reviewEmpfohlen": true},
+      "es": {"title": "El Espíritu de la Montaña del Kamor", "text": "En el Kamor aparecía una luz danzante como una llama en las tardes previas a tempestades. Tres destellos seguidos de oscuridad significaban que una desgracia golpearía el pueblo en la semana. Se decía que era el espíritu de un pastor fulminado.", "reviewEmpfohlen": true},
+      "pt": {"title": "O Espírito da Montanha do Kamor", "text": "No Kamor aparecia uma luz dançante como uma chama nas tardes antes das tempestades. Três clarões seguidos de escuridão significavam que uma desgraça atingiria a aldeia em breve. Dizia-se ser o espírito de um pastor outrora fulminado.", "reviewEmpfohlen": true},
+      "ru": {"title": "Горный дух Камора", "text": "На Каморе в вечера перед бурями появлялось свечение, танцующее как пламя. Три вспышки с угасанием означали: на этой неделе деревню постигнет несчастье. Говорили, что это дух пастуха, некогда убитого молнией.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Das Unheil-Motiv für Kinder abstrahieren; als Naturzeichengeschichte erzählen.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Kamor_(Berg)"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2956, "lng": 9.4197, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "hexen-gonten-johannisnacht",
+    "title": "Die Hexen von Gonten in der Johannisnacht",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Hexentanz auf Alp in der Johannisnacht",
+    "bildmotiv": "Gonten Appenzell Hexentanz Johannisnacht Alp Feuer",
+    "mood": "Schaurig, geheimnisvoll",
+    "summary": "In der Johannisnacht versammelten sich laut Gontner Überlieferung die Hexen auf einer Alp oberhalb des Dorfes, tanzten bis zum ersten Hahnenschrei um ein Feuer und kamen auf Besen und Stöcken herbeigeflogen. Wer zufällig vorbeiging, musste die Augen schliessen und drei Kreuze schlagen – sonst verlor er für eine Saison den Verstand. Am Morgen fand man schwarze Aschefiguren auf dem Alpboden.",
+    "summaries": {
+      "de": {"text": "In der Johannisnacht versammelten sich die Hexen von Gonten auf einer Alp und tanzten bis zum Hahnenschrei. Wer vorbeiging, musste Augen schliessen und drei Kreuze schlagen – sonst verlor er den Verstand. Am Morgen lagen schwarze Aschefiguren auf dem Boden.", "reviewEmpfohlen": false},
+      "gsw": {"title": "D Hexe vo Gonte i dr Johannisnacht", "text": "I dr Johannisnacht sind d Hexe vo Gonte uf-ere Alp zämecho und hend tanzt. Wär vorbi isch, hät d Auge müese schliesse und drü Chrüüz mache – suscht hät er de Verstand verlore. Am Morge hend schwarzi Aschefigrli uf em Bode glägge.", "reviewEmpfohlen": true},
+      "fr": {"title": "Les Sorcières de Gonten dans la Nuit de la Saint-Jean", "text": "La nuit de la Saint-Jean les sorcières de Gonten se rassemblaient sur un alpage et dansaient jusqu'au premier chant du coq. Qui passait devait fermer les yeux et faire trois signes de croix — sinon il perdait la raison pour une saison. Le matin on trouvait des silhouettes de cendres noires.", "reviewEmpfohlen": true},
+      "it": {"title": "Le Streghe di Gonten nella Notte di San Giovanni", "text": "Nella notte di San Giovanni le streghe di Gonten si radunavan su un alpeggio e danzavano fino al primo canto del gallo. Chi passava doveva chiudere gli occhi e fare tre segni di croce — altrimenti perdeva il senno per una stagione. Al mattino si trovavano figure di cenere nera.", "reviewEmpfohlen": true},
+      "en": {"title": "The Witches of Gonten on Midsummer Night", "text": "On Midsummer Night the witches of Gonten gathered on an alp above the village and danced until the first cock-crow. Anyone who happened by had to close their eyes and make three signs of the cross — or lose their mind for the season. In the morning, black ash figures were found on the alpine ground.", "reviewEmpfohlen": false},
+      "zh": {"title": "贡滕的女巫与圣约翰之夜", "text": "圣约翰之夜，贡滕的女巫聚集在村庄上方的牧场起舞直至鸡鸣。路过者必须闭眼画三个十字——否则将丧失理智整整一季。清晨，人们会在草地上发现黑色灰烬人形。", "reviewEmpfohlen": true},
+      "es": {"title": "Las Brujas de Gonten en la Noche de San Juan", "text": "La noche de San Juan las brujas de Gonten se reunían en un alpe y danzaban hasta el primer canto del gallo. Quien pasaba debía cerrar los ojos y hacer tres cruces — de lo contrario perdería el juicio por una temporada. Por la mañana había figuras de ceniza negra.", "reviewEmpfohlen": true},
+      "pt": {"title": "As Bruxas de Gonten na Noite de São João", "text": "Na noite de São João as bruxas de Gonten reuniam-se num alpe e dançavam até o primeiro canto do galo. Quem passasse tinha de fechar os olhos e fazer três cruzes — caso contrário perderia o juízo por toda uma temporada. De manhã encontravam-se figuras de cinza negra.", "reviewEmpfohlen": true},
+      "ru": {"title": "Ведьмы Гонтена в Иванову ночь", "text": "В Иванову ночь ведьмы Гонтена собирались на альпийском лугу над деревней и плясали до первого петуха. Тот, кто случайно проходил мимо, должен был закрыть глаза и трижды перекреститься — иначе терял рассудок на целый сезон. Утром находили чёрные пепельные фигуры.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für Kinder als nächtliches Fest ohne Bedrohungsaspekt erzählen.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Gonten"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.3319, "lng": 9.4183, "koordinatenSicherheit": "ungefaehr", "isAnchorPlace": false
+  },
+  {
+    "id": "goldschatz-hoher-kasten",
+    "title": "Der Goldschatz unter dem Hohen Kasten",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Verborgener Ritterschatz bewacht von goldenem Tier",
+    "bildmotiv": "Hoher Kasten Rheintal Appenzell Schatz Fels Gold",
+    "mood": "Sagenhaft, verlockend",
+    "summary": "Unter dem Hohen Kasten, dem Felsklotz über dem Rheintal, soll in einem verborgenen Keller ein Ritterschatz liegen, den ein goldenes Rind bewacht. Man kann es nur am Dreikönigsfest bei Vollmond sehen. Wer allein und schweigend hinaufsteigt, dem öffnet sich ein Spalt im Fels – doch wer spricht oder zurückblickt, bevor er den Wald verlassen hat, verliert die Erinnerung.",
+    "summaries": {
+      "de": {"text": "Unter dem Hohen Kasten soll ein Ritterschatz liegen, bewacht von einem goldenen Rind. Nur am Dreikönigsfest bei Vollmond öffnet sich ein Spalt im Fels für jenen, der allein und schweigend hinaufsteigt. Wer spricht oder zurückblickt, verliert die Erinnerung.", "reviewEmpfohlen": false},
+      "gsw": {"title": "Dr Goldschatz unterm Hohe Chaste", "text": "Unterm Hohe Chaste soll e Riterschatz läge, wo es goldigs Rind bewacht. Nur am Drychönigsfäscht bi Vollmond öffnet sich en Spalt für den, wo allei und schwygend ufstygt. Wär redt oder zrugluegt, verlierd d Erinnerig.", "reviewEmpfohlen": true},
+      "fr": {"title": "Le Trésor sous le Hohe Kasten", "text": "Sous le Hohe Kasten serait enfoui un trésor de chevalier gardé par un bœuf d'or. Seulement à l'Épiphanie sous la pleine lune une fissure s'ouvre pour qui monte seul et en silence. Qui parle ou se retourne perd le souvenir.", "reviewEmpfohlen": true},
+      "it": {"title": "Il Tesoro sotto il Hohe Kasten", "text": "Sotto il Hohe Kasten giacerebbe un tesoro di cavalieri custodito da un bue d'oro. Solo all'Epifania con la luna piena si apre una fessura per chi sale solo e in silenzio. Chi parla o si volta perde il ricordo.", "reviewEmpfohlen": true},
+      "en": {"title": "The Gold Treasure beneath the Hohe Kasten", "text": "Beneath the Hohe Kasten a knight's treasure is said to lie, guarded by a golden bull. Only on Epiphany at full moon a crack opens in the rock for whoever climbs alone and in silence. Whoever speaks or looks back loses all memory of what they saw.", "reviewEmpfohlen": false},
+      "zh": {"title": "霍赫卡斯滕山下的黄金宝藏", "text": "霍赫卡斯滕山下据说藏有由金牛守护的骑士宝藏。只有在主显节满月时，独自默默攀登者才能看见岩石裂开。但凡开口说话或回头张望者将失去所有记忆。", "reviewEmpfohlen": true},
+      "es": {"title": "El Tesoro bajo el Hohe Kasten", "text": "Bajo el Hohe Kasten yaciería un tesoro de caballero custodiado por un toro de oro. Solo en Epifanía con luna llena se abre una grieta para quien sube solo y en silencio. Quien habla o se vuelve pierde el recuerdo.", "reviewEmpfohlen": true},
+      "pt": {"title": "O Tesouro sob o Hohe Kasten", "text": "Sob o Hohe Kasten jazeria um tesouro de cavaleiro guardado por um touro de ouro. Apenas na Epifania com lua cheia uma fenda se abre para quem sobe sozinho e em silêncio. Quem fala ou olha para trás perde toda a memória.", "reviewEmpfohlen": true},
+      "ru": {"title": "Золотой клад под Хохем Кастеном", "text": "Под Хохем Кастеном якобы лежит рыцарский клад, которого охраняет золотой бык. Лишь в Богоявление при полной луне скала открывается для того, кто поднимается один и молча. Кто заговорит или оглянется — теряет всякую память.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; das Schweigegebot als spannendes Element.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Hoher_Kasten"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2833, "lng": 9.4667, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "seealpsee-alpgeist",
+    "title": "Der Alpgeist des Seealpsees",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Alter Seegeist hütet die Stille und belohnt Ehrfurcht",
+    "bildmotiv": "Seealpsee Alpstein See Stille Fels Licht",
+    "mood": "Stimmungsvoll, mahnend",
+    "summary": "Im Seealpsee unterhalb der Meglisalp wohnt nach Appenzeller Glauben ein alter Geist, der die Stille des Sees hütet. Lärm und Steinwerfen bestraft er mit einem plötzlichen Aufwallen des Wassers. Wer schweigend am Ufer sitzt, dem erscheint manchmal ein zartes Licht im Wasser – das «Auge des Sees» –, das Glück für die kommende Alpzeit bedeutet.",
+    "summaries": {
+      "de": {"text": "Im Seealpsee hütet ein alter Geist die Stille. Lärm bestraft er mit Aufwallen des Wassers; wer schweigend sitzt, dem erscheint das «Auge des Sees» – ein zartes Licht, das Glück für die Alpzeit bedeutet.", "reviewEmpfohlen": false},
+      "gsw": {"title": "Dr Alpgeischt vom Seealpsee", "text": "Im Seealpsee wohnt en auter Geischt, wo d Stilli hüetet. Lärm bestraft er mit Uufwalle vom Wasser; wär schwygend sitzt, dem erschynt s «Aug vom See» – en zartes Licht, wo Glück für d Alpzyt bedeutet.", "reviewEmpfohlen": true},
+      "fr": {"title": "L'Esprit du Lac de Seealp", "text": "Dans le lac de Seealp un esprit ancien garde le silence. Le bruit est puni par un bouillonnement des eaux; qui s'assoit silencieusement voit parfois l'oeil du lac — une douce lumière annonçant chance pour la saison d'alpage.", "reviewEmpfohlen": true},
+      "it": {"title": "Lo Spirito del Lago Seealp", "text": "Nel lago Seealp un antico spirito custodisce il silenzio. Il rumore è punito con un ribollire delle acque; chi siede in silenzio vede a volte l'occhio del lago — una luce tenue che annuncia fortuna per la stagione alpina.", "reviewEmpfohlen": true},
+      "en": {"title": "The Alpine Spirit of the Seealpsee", "text": "In the Seealpsee an ancient spirit guards the lake's silence. Noise is punished by a sudden swelling of the waters; whoever sits quietly sometimes sees a gentle light in the water — the locals called it the eye of the lake — foretelling good luck for the alpine season.", "reviewEmpfohlen": false},
+      "zh": {"title": "泽阿尔普湖的阿尔卑斯精灵", "text": "泽阿尔普湖中居住着一位守护湖之宁静的古老精灵。喧嚣会被突然涌起的水浪所惩罚；静静坐着的人有时会看见水中的"湖之眼"——一道柔和的光芒，预示牧场好运。", "reviewEmpfohlen": true},
+      "es": {"title": "El Espíritu Alpino del Seealpsee", "text": "En el Seealpsee un antiguo espíritu guarda el silencio del lago. El ruido es castigado con un repentino oleaje; quien se sienta en silencio ve a veces el ojo del lago — una suave luz que anuncia buena suerte para la temporada alpina.", "reviewEmpfohlen": true},
+      "pt": {"title": "O Espírito Alpino do Seealpsee", "text": "No Seealpsee um antigo espírito guarda o silêncio do lago. O barulho é punido por um súbito agitar das águas; quem senta em silêncio às vezes vê o olho do lago — uma luz suave que pressagia boa sorte para a temporada alpina.", "reviewEmpfohlen": true},
+      "ru": {"title": "Альпийский дух озера Зеальпзее", "text": "В озере Зеальпзее обитает древний дух, охраняющий тишину. Шум карается внезапным вздыманием воды; тот, кто сидит молча, иногда видит «око озера» — нежный свет, предвещающий удачу на альпийский сезон.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; Respekt vor der Natur betonen.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Seealpsee_(Appenzell)"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2744, "lng": 9.3972, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
+  },
+  {
+    "id": "rotstein-verschwundene-sennerin",
+    "title": "Die verschwundene Sennerin vom Rotsteinpass",
+    "canton": "Appenzell Innerrhoden",
+    "coreMotif": "Berggeist entführt Sennerin in zeitlose Felskammer",
+    "bildmotiv": "Rotstein Alpstein Sennerin Geist Bergpass Nebel",
+    "mood": "Märchenhaft, melancholisch",
+    "summary": "Auf der Rotsteinpasshütte verschwand einst eine junge Sennerin spurlos in der Nebelnacht. Drei Jahre später kehrte sie zurück – gesund und frisch, als ob keine Zeit vergangen wäre. Ein freundlicher alter Mann habe sie in eine warme Felsenstube geführt, sie bewirtet und ihr Geschichten aus der Entstehung der Alpen erzählt. Sie glaubte, nur eine Nacht fort gewesen zu sein, und brachte als einzigen Beweis einen Stein mit, der bei Regen warm wurde.",
+    "summaries": {
+      "de": {"text": "Auf der Rotsteinpasshütte verschwand eine Sennerin und kehrte drei Jahre später zurück, als ob keine Zeit vergangen wäre. Ein freundlicher alter Mann hatte sie in eine warme Felsenstube geführt. Sie meinte, nur eine Nacht fort gewesen zu sein, und brachte einen Stein mit, der bei Regen warm wurde.", "reviewEmpfohlen": false},
+      "gsw": {"title": "D verschwundäni Sennerin vom Rotstein", "text": "Uf dr Rotsteinpasshüttä isch e Sennerin verschwunde und drü Jahr spöter gsund züruggcho – als ob kei Zyt vergange wär. En alter Maa hät si in e warmi Felsestube gfüehrt. Si hät glaubt, nur e Nacht weg gsi z sy, und hät en Stei mit, wo bi Räge warm wird.", "reviewEmpfohlen": true},
+      "fr": {"title": "La Bergère Disparue du Col du Rotstein", "text": "Sur le refuge du col du Rotstein, une bergère disparut et revint trois ans plus tard fraîche et en bonne santé. Un aimable vieillard l'avait emmenée dans une chambre de roc chaude. Elle croyait n'avoir été absente qu'une nuit et rapportait une pierre qui chauffait sous la pluie.", "reviewEmpfohlen": true},
+      "it": {"title": "La Pastora Scomparsa del Passo Rotstein", "text": "Al rifugio del passo Rotstein una pastora scomparve e tornò tre anni dopo sana e fresca. Un amichevole vecchio l'aveva portata in una stanza di roccia calda. Credeva di essere stata via solo una notte e portò una pietra che si scaldava sotto la pioggia.", "reviewEmpfohlen": true},
+      "en": {"title": "The Vanished Dairymaid of the Rotstein Pass", "text": "At the Rotstein Pass hut a young dairymaid vanished and returned three years later, healthy and fresh as if no time had passed. A kindly old man had led her into a warm rocky chamber and told her stories of the Alps' creation. She believed she had only been away one night, bringing back a stone that grew warm in the rain.", "reviewEmpfohlen": false},
+      "zh": {"title": "罗特施泰因山口失踪的女牧人", "text": "在罗特施泰因山口小屋，一位女牧人失踪，三年后健康如初地归来，仿佛时光未曾流逝。一位和蔼的老人将她带入温暖的岩石房间讲述阿尔卑斯山故事。她以为只离开了一个晚上，带回一块下雨时会变热的石头。", "reviewEmpfohlen": true},
+      "es": {"title": "La Pastora Desaparecida del Paso Rotstein", "text": "En el refugio del paso Rotstein una pastora desapareció y regresó tres años después sana y fresca. Un amable anciano la había llevado a una cámara de roca cálida. Creía haber estado ausente solo una noche y trajo una piedra que se calentaba bajo la lluvia.", "reviewEmpfohlen": true},
+      "pt": {"title": "A Pastora Desaparecida do Passo Rotstein", "text": "No refúgio do passo Rotstein uma pastora desapareceu e voltou três anos depois saudável e radiante. Um amável ancião a levara a uma câmara de rocha quente. Ela acreditava ter ficado fora apenas uma noite e trouxe uma pedra que esquentava com a chuva.", "reviewEmpfohlen": true},
+      "ru": {"title": "Пропавшая пастушка с перевала Ротштайн", "text": "На приюте перевала Ротштайн молодая пастушка исчезла и вернулась три года спустя здоровой, словно время не шло. Приветливый старик отвёл её в тёплую скальную комнату и рассказывал о рождении Альп. Она думала, что отсутствовала одну ночь, и принесла камень, теплеющий под дождём.", "reviewEmpfohlen": true}
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; das Märchenmotiv des Zeitsprungs kindgerecht.",
+    "quelle": {"autor": "Albert Schott", "werk": "Beiträge zur deutschen Mythologie", "jahr": "1852", "fundstelleUrl": "https://de.wikipedia.org/wiki/Rotstein_(Appenzell)"},
+    "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
+    "lat": 47.2358, "lng": 9.3814, "koordinatenSicherheit": "ungefaehr", "isAnchorPlace": false
+  }
 
 ];
