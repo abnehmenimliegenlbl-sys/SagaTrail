@@ -2,12 +2,15 @@ import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { createNarration } from "@workspace/api-client-react";
 import { Audio } from "expo-av";
+import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  FlatList,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -31,6 +34,7 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useEinstellungenStrings } from "@/lib/i18n/screens/einstellungen";
+import { translateCanton } from "@/lib/i18n/cantonNames";
 import {
   NATIVE_LANGUAGE_NAMES,
   SUPPORTED_LANGUAGES,
@@ -83,6 +87,9 @@ export default function Einstellungen() {
   const [contactPhone, setContactPhone] = useState(emergencyContact?.phone ?? "");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(profile?.name ?? "");
+  const [editingCanton, setEditingCanton] = useState(false);
 
   // Vorschau-Sound (KI-Stimme via expo-av); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
@@ -227,8 +234,23 @@ export default function Einstellungen() {
         <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
         <Section title={t.sectionProfil}>
-          <RowButton label={t.nameLabel} value={profile?.name ?? "-"} />
-          <RowButton label={t.homeCantonLabel} value={profile?.homeCanton ?? "-"} />
+          <RowButton
+            label={t.nameLabel}
+            value={profile?.name ?? "-"}
+            icon="edit-2"
+            onPress={() => {
+              setNameInput(profile?.name ?? "");
+              setEditingName(true);
+            }}
+          />
+          <RowButton
+            label={t.homeCantonLabel}
+            value={profile?.homeCanton
+              ? translateCanton(profile.homeCanton, resolveLang(profile.language))
+              : "-"}
+            icon="chevron-right"
+            onPress={() => setEditingCanton(true)}
+          />
           <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
           <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
           <View style={[styles.langBlock, { borderColor: colors.glassBorder }]}>
@@ -406,15 +428,15 @@ export default function Einstellungen() {
             value=""
             icon="mail"
             onPress={async () => {
-              const url = "mailto:info@inster.abb";
+              const url = "mailto:support@sagatrail.app";
               try {
                 if (await Linking.canOpenURL(url)) {
                   await Linking.openURL(url);
                 } else {
-                  alert(t.emailAlertTitle, "info@inster.abb");
+                  alert(t.emailAlertTitle, "support@sagatrail.app");
                 }
               } catch {
-                alert(t.emailAlertTitle, "info@inster.abb");
+                alert(t.emailAlertTitle, "support@sagatrail.app");
               }
             }}
           />
@@ -440,12 +462,112 @@ export default function Einstellungen() {
         />
 
         <Text style={[styles.version, { color: colors.mutedForeground }]}>
-          {t.versionFooter("1.0.0", "Erststart-Build")}
+          {t.versionFooter(
+            Constants.expoConfig?.version ?? "1.0.0",
+            Constants.expoConfig?.ios?.buildNumber
+              ?? Constants.expoConfig?.android?.versionCode?.toString()
+              ?? "dev"
+          )}
         </Text>
       </ScrollView>
+
+      {/* ── Name-Bearbeitungs-Modal ─────────────────────────────────── */}
+      <Modal
+        visible={editingName}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingName(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.editNameTitle}</Text>
+            <TextInput
+              value={nameInput}
+              onChangeText={setNameInput}
+              autoFocus
+              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.glassBorder }]}
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                if (nameInput.trim()) {
+                  updateProfile({ name: nameInput.trim() });
+                }
+                setEditingName(false);
+              }}
+            />
+            <View style={styles.modalButtons}>
+              <Pressable onPress={() => setEditingName(false)} style={styles.modalCancelBtn}>
+                <Text style={[styles.modalBtnText, { color: colors.mutedForeground }]}>{t.cancel}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (nameInput.trim()) {
+                    updateProfile({ name: nameInput.trim() });
+                  }
+                  setEditingName(false);
+                }}
+                style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]}
+              >
+                <Text style={[styles.modalBtnText, { color: colors.primaryForeground }]}>{t.saveLabel}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Kanton-Auswahl-Modal ────────────────────────────────────── */}
+      <Modal
+        visible={editingCanton}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditingCanton(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, styles.cantonCard, { backgroundColor: colors.card, borderColor: colors.glassBorder }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.editCantonTitle}</Text>
+              <Pressable onPress={() => setEditingCanton(false)} hitSlop={12}>
+                <Feather name="x" size={20} color={colors.foreground} />
+              </Pressable>
+            </View>
+            <FlatList
+              data={SWISS_CANTONS}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => {
+                const active = profile?.homeCanton === item;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      updateProfile({ homeCanton: item });
+                      setEditingCanton(false);
+                    }}
+                    style={[
+                      styles.cantonRow,
+                      { borderBottomColor: colors.glassBorder },
+                      active && { backgroundColor: colors.accent + "18" },
+                    ]}
+                  >
+                    <Text style={[styles.cantonRowText, { color: active ? colors.accent : colors.foreground }]}>
+                      {translateCanton(item, resolveLang(profile?.language))}
+                    </Text>
+                    {active && <Feather name="check" size={16} color={colors.accent} />}
+                  </Pressable>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </Background>
   );
 }
+
+const SWISS_CANTONS: string[] = [
+  "Aargau", "Appenzell Ausserrhoden", "Appenzell Innerrhoden",
+  "Basel-Landschaft", "Basel-Stadt", "Bern", "Freiburg", "Genf",
+  "Glarus", "Graubünden", "Jura", "Luzern", "Neuenburg", "Nidwalden",
+  "Obwalden", "Schaffhausen", "Schwyz", "Solothurn", "St. Gallen",
+  "Tessin", "Thurgau", "Uri", "Waadt", "Wallis", "Zug", "Zürich",
+];
 
 function inputStyle(colors: ReturnType<typeof useColors>) {
   return {
@@ -572,5 +694,75 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: "center",
     marginTop: 30,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: "100%",
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+  },
+  cantonCard: {
+    maxHeight: "70%",
+    padding: 0,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  modalTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 18,
+  },
+  modalInput: {
+    fontFamily: fonts.body,
+    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "flex-end",
+  },
+  modalCancelBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  modalSaveBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  modalBtnText: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 15,
+  },
+  cantonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  cantonRowText: {
+    fontFamily: fonts.body,
+    fontSize: 15,
   },
 });

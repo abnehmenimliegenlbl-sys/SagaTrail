@@ -219,6 +219,7 @@ export default function EigeneRoute() {
           placeholder={t.startPlaceholder}
           value={start}
           onSelect={setStart}
+          onClear={() => setStart(null)}
           extra={
             <View style={styles.locationButtons}>
               <Pressable onPress={useLocation} style={styles.locationRow} hitSlop={8}>
@@ -241,11 +242,26 @@ export default function EigeneRoute() {
           }
         />
 
+        {/* ── Tausch-Button ── */}
+        <Pressable
+          onPress={() => {
+            const tmp = start;
+            setStart(end);
+            setEnd(tmp);
+          }}
+          disabled={!start && !end}
+          hitSlop={8}
+          style={[styles.swapButton, { opacity: start || end ? 1 : 0.3 }]}
+        >
+          <Feather name="repeat" size={18} color={colors.accent} />
+        </Pressable>
+
         <PlaceField
           label={t.endLabel}
           placeholder={t.endPlaceholder}
           value={end}
           onSelect={setEnd}
+          onClear={() => setEnd(null)}
           extra={
             <Pressable onPress={() => openPicker("end")} style={styles.locationRow} hitSlop={8}>
               <Feather name="map" size={14} color={colors.accent} />
@@ -354,12 +370,14 @@ function PlaceField({
   placeholder,
   value,
   onSelect,
+  onClear,
   extra,
 }: {
   label: string;
   placeholder: string;
   value: Point | null;
   onSelect: (point: Point) => void;
+  onClear?: () => void;
   extra?: React.ReactNode;
 }) {
   const t = useCustomRouteStrings();
@@ -401,7 +419,22 @@ function PlaceField({
 
   return (
     <Animated.View entering={FadeInDown.duration(400)} style={styles.field}>
-      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
+      <View style={styles.fieldHeader}>
+        <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
+        {value && onClear && (
+          <Pressable
+            onPress={() => {
+              onClear();
+              setQuery("");
+              setSuggestions([]);
+            }}
+            hitSlop={8}
+            style={styles.clearBtn}
+          >
+            <Feather name="x-circle" size={16} color={colors.mutedForeground} />
+          </Pressable>
+        )}
+      </View>
       <Glass style={styles.inputWrap}>
         <TextInput
           value={query}
@@ -460,7 +493,15 @@ function PlaceField({
 const styles = StyleSheet.create({
   intro: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 16, marginBottom: 24 },
   field: { marginBottom: 20 },
-  fieldLabel: { fontFamily: fonts.titleBold, fontSize: 14, marginBottom: 8 },
+  fieldHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+  fieldLabel: { fontFamily: fonts.titleBold, fontSize: 14 },
+  clearBtn: { padding: 2 },
+  swapButton: {
+    alignSelf: "center",
+    marginVertical: -8,
+    padding: 10,
+    zIndex: 1,
+  },
   inputWrap: { paddingVertical: 4 },
   input: { fontFamily: fonts.body, fontSize: 15, minHeight: 40 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, paddingVertical: 4 },

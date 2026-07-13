@@ -3,6 +3,9 @@ import { createUseStrings, StringsDict } from "../createStrings";
 export interface EinstellungenStrings {
   eyebrow: string;
   title: string;
+  editNameTitle: string;
+  editCantonTitle: string;
+  saveLabel: string;
   sectionProfil: string;
   sectionWanderung: string;
   sectionNotfallkontakt: string;
@@ -52,6 +55,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   de: {
     eyebrow: "Dein Profil",
     title: "Einstellungen",
+    editNameTitle: "Name bearbeiten",
+    editCantonTitle: "Heimatkanton wählen",
+    saveLabel: "Speichern",
     sectionProfil: "Profil",
     sectionWanderung: "Wanderung",
     sectionNotfallkontakt: "Notfallkontakt",
@@ -99,6 +105,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   gsw: {
     eyebrow: "Dis Profil",
     title: "Iistellige",
+    editNameTitle: "Name bearbeite",
+    editCantonTitle: "Heimetkanton wähle",
+    saveLabel: "Spichere",
     sectionProfil: "Profil",
     sectionWanderung: "Wandere",
     sectionNotfallkontakt: "Notfallkontakt",
@@ -146,6 +155,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   fr: {
     eyebrow: "Ton profil",
     title: "Paramètres",
+    editNameTitle: "Modifier le nom",
+    editCantonTitle: "Choisir le canton d'origine",
+    saveLabel: "Enregistrer",
     sectionProfil: "Profil",
     sectionWanderung: "Randonnée",
     sectionNotfallkontakt: "Contact d'urgence",
@@ -193,6 +205,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   it: {
     eyebrow: "Il tuo profilo",
     title: "Impostazioni",
+    editNameTitle: "Modifica nome",
+    editCantonTitle: "Scegli il cantone d'origine",
+    saveLabel: "Salva",
     sectionProfil: "Profilo",
     sectionWanderung: "Escursione",
     sectionNotfallkontakt: "Contatto d'emergenza",
@@ -240,6 +255,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   en: {
     eyebrow: "Your Profile",
     title: "Settings",
+    editNameTitle: "Edit Name",
+    editCantonTitle: "Choose Home Canton",
+    saveLabel: "Save",
     sectionProfil: "Profile",
     sectionWanderung: "Hike",
     sectionNotfallkontakt: "Emergency Contact",
@@ -287,6 +305,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   zh: {
     eyebrow: "个人资料",
     title: "设置",
+    editNameTitle: "编辑姓名",
+    editCantonTitle: "选择家乡州",
+    saveLabel: "保存",
     sectionProfil: "个人资料",
     sectionWanderung: "徒步",
     sectionNotfallkontakt: "紧急联系人",
@@ -334,6 +355,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   es: {
     eyebrow: "Tu perfil",
     title: "Ajustes",
+    editNameTitle: "Editar nombre",
+    editCantonTitle: "Elegir cantón de origen",
+    saveLabel: "Guardar",
     sectionProfil: "Perfil",
     sectionWanderung: "Senderismo",
     sectionNotfallkontakt: "Contacto de emergencia",
@@ -381,6 +405,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   pt: {
     eyebrow: "Seu Perfil",
     title: "Configurações",
+    editNameTitle: "Editar nome",
+    editCantonTitle: "Escolher cantão de origem",
+    saveLabel: "Salvar",
     sectionProfil: "Perfil",
     sectionWanderung: "Caminhada",
     sectionNotfallkontakt: "Contato de Emergência",
@@ -428,6 +455,9 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
   ru: {
     eyebrow: "Твой профиль",
     title: "Настройки",
+    editNameTitle: "Изменить имя",
+    editCantonTitle: "Выбрать родной кантон",
+    saveLabel: "Сохранить",
     sectionProfil: "Профиль",
     sectionWanderung: "Поход",
     sectionNotfallkontakt: "Экстренный контакт",
