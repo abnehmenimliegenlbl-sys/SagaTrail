@@ -22,6 +22,22 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 // ===================================================================
+// UNTERSCHRIFT – Pfad-Auflösung
+// ===================================================================
+// Legen Sie signature.png (aus diesem ZIP) in einen dieser Ordner:
+//   wp-content/uploads/sagatrail/signature.png  (Standard, empfohlen)
+//   oder: define('SAGATRAIL_SIGNATURE_PATH', '/absoluter/pfad/signature.png');
+
+function sagatrail_sig_pfad() {
+    if ( defined( 'SAGATRAIL_SIGNATURE_PATH' ) && file_exists( SAGATRAIL_SIGNATURE_PATH ) ) {
+        return SAGATRAIL_SIGNATURE_PATH;
+    }
+    $upload = wp_upload_dir();
+    $pfad   = trailingslashit( $upload['basedir'] ) . 'sagatrail/signature.png';
+    return file_exists( $pfad ) ? $pfad : null;
+}
+
+// ===================================================================
 // FPDF laden
 // ===================================================================
 
@@ -202,14 +218,29 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetFont( 'Helvetica', '', 9 );
     $pdf->Cell( 85, 5, 'SagaTrail GmbH', 0, 0 );
     $pdf->Cell( 0,  5, $data['betriebs_name'], 0, 1 );
-    $pdf->Ln( 12 );
+    $pdf->Ln( 3 );
+
+    // Unterschrift SagaTrail (linke Spalte)
+    $sig_pfad = sagatrail_sig_pfad();
+    if ( $sig_pfad ) {
+        $pdf->Image( $sig_pfad, 20, $pdf->GetY(), 55 ); // 55 mm breit, Seitenverhältnis auto
+        $pdf->Ln( 22 );
+    } else {
+        $pdf->Ln( 14 );
+    }
+
     $pdf->SetDrawColor( 120, 120, 120 );
     $pdf->SetLineWidth( 0.3 );
     $pdf->Line( 20, $pdf->GetY(), 100, $pdf->GetY() );
     $pdf->Line( 110, $pdf->GetY(), 190, $pdf->GetY() );
-    $pdf->Ln( 4 );
-    $pdf->Cell( 85, 5, 'Ort, Datum', 0, 0 );
+    $pdf->Ln( 3 );
+    $pdf->SetFont( 'Helvetica', 'B', 9 );
+    $pdf->Cell( 85, 5, 'Rolf Koch für SagaTrail', 0, 0 );
+    $pdf->SetFont( 'Helvetica', '', 9 );
     $pdf->Cell( 0,  5, 'Ort, Datum, Unterschrift', 0, 1 );
+    $pdf->SetFont( 'Helvetica', '', 8 );
+    $pdf->SetTextColor( 100, 100, 100 );
+    $pdf->Cell( 85, 4, $datum, 0, 1 );
 
     // ----- FUSSZEILE -----
     $pdf->SetY( -20 );
@@ -275,9 +306,22 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
     $html .= '<li>Rechnungsstellung jährlich im Voraus. Zahlungsfrist 30 Tage.</li>';
     $html .= '<li>Preise exkl. Schweizer MWST (8,1 %).</li></ul>';
     $html .= '<h2>Unterschriften</h2>';
-    $html .= '<table style="width:100%;margin-top:16px"><tr>';
-    $html .= '<td style="width:45%"><div class="sig">SagaTrail GmbH</div></td>';
-    $html .= '<td><div class="sig">' . esc_html( $data['betriebs_name'] ) . ' – Ort, Datum, Unterschrift</div></td>';
+    $html .= '<table style="width:100%;margin-top:16px"><tr valign="bottom">';
+
+    // Linke Spalte: SagaTrail-Unterschrift mit Bild
+    $html .= '<td style="width:45%">';
+    $sig_pfad = sagatrail_sig_pfad();
+    if ( $sig_pfad ) {
+        $sig_b64 = base64_encode( file_get_contents( $sig_pfad ) );
+        $html .= '<img src="data:image/png;base64,' . $sig_b64 . '" style="max-width:180px;height:auto;display:block;margin-bottom:2px">';
+    } else {
+        $html .= '<div style="height:50px"></div>';
+    }
+    $html .= '<div class="sig"><strong>Rolf Koch für SagaTrail</strong><br><span style="color:#999;font-size:10px">' . esc_html( $datum ) . '</span></div>';
+    $html .= '</td>';
+
+    // Rechte Spalte: Partner-Unterschrift (leer zum Ausfüllen)
+    $html .= '<td><div style="height:50px"></div><div class="sig">' . esc_html( $data['betriebs_name'] ) . '<br><span style="color:#999;font-size:10px">Ort, Datum, Unterschrift</span></div></td>';
     $html .= '</tr></table>';
     $html .= '<div class="footer">SagaTrail – www.sagatrail.ch – ' . esc_html( $ref ) . '</div>';
     $html .= '</body></html>';
