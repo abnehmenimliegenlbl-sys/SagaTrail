@@ -504,6 +504,25 @@ export default function LiveHike() {
     };
   }, [selectedPoi, storyLanguage]);
 
+  // POI-Panel automatisch schliessen, wenn der Nutzer mindestens 500 m vom
+  // gewaehlten POI entfernt ist, oder wenn ein neuer POI in der Naehe auftaucht.
+  const POI_AUTO_CLOSE_KM = 0.5;
+  useEffect(() => {
+    if (!selectedPoi) return;
+    // Neuer nearby-POI erschienen (nicht derselbe) → Panel schliessen
+    if (nearbyPoi && nearbyPoi.id !== selectedPoi.id) {
+      setSelectedPoi(null);
+      return;
+    }
+    // Nutzer ist 500 m+ vom gewaehlten POI entfernt → Panel schliessen
+    if (livePos) {
+      const dist = haversineKm(livePos, { lat: selectedPoi.lat, lng: selectedPoi.lng });
+      if (dist >= POI_AUTO_CLOSE_KM) {
+        setSelectedPoi(null);
+      }
+    }
+  }, [livePos, nearbyPoi, selectedPoi]);
+
   // Abbiege-Mitteilungen: markante Abzweigungen der Route (echte Geometrie,
   // siehe navigationCues.ts) loesen bei Annaeherung genau einmal eine lokale
   // Mitteilung aus. iOS spiegelt diese auf eine gekoppelte Smartwatch (inkl.
