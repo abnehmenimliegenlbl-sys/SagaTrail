@@ -937,9 +937,14 @@ export default function LiveHike() {
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
   // (routeProgress); ohne GPS-Fix oder Geometrie faellt es auf die reine
   // zurueckgelegte Distanz zurueck (bisheriges Verhalten).
+  // Kapitelfortschritt laeuft unabhaengig davon, ob gerade eine Entscheidung
+  // offen ist. Entscheidungen sind freiwillig — wer nicht antwortet, gehoert
+  // trotzdem das naechste Kapitel, sobald GPS oder Distanz es vorgibt.
+  // Wird ein Entscheidungs-Kapitel durch den Fortschritt verlassen, schliesst
+  // sich das Panel automatisch (setAwaitingDecision(false)).
   useEffect(() => {
     if (locState !== "granted") return;
-    if (preparing || awaitingDecision || finished || chapters.length === 0) return;
+    if (preparing || finished || chapters.length === 0) return;
     const steps = chapters.length - 1;
     if (steps <= 0) {
       setFinished(true);
@@ -949,6 +954,7 @@ export default function LiveHike() {
     const reached = Math.min(steps, Math.floor(ratio * steps + 1e-6));
     if (reached > currentIndex) {
       setCurrentIndex(reached);
+      setAwaitingDecision(false);
       if (reached >= steps) setFinished(true);
     }
   }, [
@@ -956,7 +962,6 @@ export default function LiveHike() {
     routeProgress,
     locState,
     preparing,
-    awaitingDecision,
     finished,
     chapters.length,
     currentIndex,
@@ -967,8 +972,9 @@ export default function LiveHike() {
   // Ersatzzustaenden, damit die Erlaubnisabfrage keinen Fortschritt vortaeuscht.
   useEffect(() => {
     if (locState !== "denied" && locState !== "simulated") return;
-    if (preparing || awaitingDecision || finished) return;
+    if (preparing || finished) return;
     timerRef.current = setTimeout(() => {
+      setAwaitingDecision(false);
       setDistance((d) => Math.min(totalKm, d + totalKm / Math.max(1, chapters.length)));
       setCurrentIndex((i) => {
         if (i + 1 >= chapters.length) {
@@ -981,7 +987,7 @@ export default function LiveHike() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [currentIndex, preparing, awaitingDecision, finished, chapters.length, locState, totalKm]);
+  }, [currentIndex, preparing, finished, chapters.length, locState, totalKm]);
 
   // Konsistente Haptik: jedes abgeschlossene Kapitel gibt ein leichtes
   // Vibrationsfeedback — unabhaengig davon, ob GPS oder Simulation den
