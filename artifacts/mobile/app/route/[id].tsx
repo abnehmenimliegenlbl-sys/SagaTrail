@@ -283,7 +283,10 @@ export default function Routenplanung() {
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 
-  const sagaId = route.sagaId;
+  // saga?.id hat Vorrang vor route.sagaId: Routen aus der OSM-Suche haben
+  // sagaId erst nach dem asynchronen ensureRouteSaga-Abgleich gesetzt; der
+  // Download wird aber unter saga.id gespeichert — also dieselbe ID verwenden.
+  const sagaId = saga?.id ?? route.sagaId;
   const downloaded = isDownloaded(sagaId);
   const record = getRecord(sagaId);
   const downloading = progress?.sagaId === sagaId;
@@ -462,6 +465,8 @@ export default function Routenplanung() {
               label={t.removeDownload}
               variant="secondary"
               onPress={onDelete}
+              disabled={busy}
+              loading={busy}
               style={{ marginTop: 14 }}
             />
           ) : (
@@ -469,6 +474,8 @@ export default function Routenplanung() {
               label={t.download}
               variant="secondary"
               onPress={onDownload}
+              disabled={!saga || sagaLoading || downloading || busy}
+              loading={downloading || busy}
               style={{ marginTop: 14 }}
             />
           )}
