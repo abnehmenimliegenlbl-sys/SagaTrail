@@ -51,7 +51,7 @@ export function AppModal({
   if (!visible) return null;
 
   return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+    <View style={[StyleSheet.absoluteFillObject, styles.root]} pointerEvents="box-none">
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
@@ -159,6 +159,7 @@ export function AppModal({
 }
 
 const styles = StyleSheet.create({
+  root: { zIndex: 9999, elevation: 9999 },
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(6,10,11,0.62)",
