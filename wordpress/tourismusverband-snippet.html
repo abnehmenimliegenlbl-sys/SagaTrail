@@ -1,0 +1,132 @@
+<!--
+  SagaTrail – Tourismus-Partner Snippet
+  Einbetten: Diesen Block in einen "HTML-Block" (WordPress/Elementor) kopieren.
+  Breite: passt sich automatisch an (max 900px, zentriert).
+-->
+<style>
+.st-tv{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:0 16px;color:#1a1a1a;box-sizing:border-box}
+.st-tv *{box-sizing:border-box}
+.st-tv-hero{background:linear-gradient(135deg,#1a1a1a 60%,#2d1010);border-radius:16px;padding:48px 40px;margin-bottom:28px;position:relative;overflow:hidden}
+.st-tv-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;background:rgba(204,0,0,.12);border-radius:50%}
+.st-tv-hero::after{content:'';position:absolute;right:40px;top:30px;width:120px;height:120px;background:rgba(204,0,0,.08);border-radius:50%}
+.st-tv-badge{display:inline-block;background:#CC0000;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:20px}
+.st-tv-hero h2{color:#fff;font-size:clamp(22px,4vw,36px);font-weight:800;line-height:1.15;margin:0 0 16px;position:relative}
+.st-tv-hero h2 span{color:#CC0000}
+.st-tv-hero p{color:rgba(255,255,255,.75);font-size:clamp(14px,2vw,17px);line-height:1.65;margin:0;max-width:560px;position:relative}
+.st-tv-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+@media(max-width:560px){.st-tv-kpi{grid-template-columns:1fr 1fr}.st-tv-kpi .st-tv-kpi-3{grid-column:1/-1}}
+.st-tv-kpi-card{background:#fff;border:1px solid #e8e6e3;border-radius:12px;padding:22px 18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.st-tv-kpi-num{font-size:clamp(28px,4vw,38px);font-weight:800;color:#CC0000;line-height:1}
+.st-tv-kpi-lbl{font-size:12px;color:#777;margin-top:6px;line-height:1.4}
+.st-tv-benefits{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+@media(max-width:600px){.st-tv-benefits{grid-template-columns:1fr}}
+.st-tv-benefit{background:#fff;border:1px solid #e8e6e3;border-radius:12px;padding:22px 20px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.st-tv-benefit-icon{width:42px;height:42px;border-radius:10px;background:#fce8e8;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.st-tv-benefit h3{font-size:15px;font-weight:700;margin:0 0 8px;color:#1a1a1a}
+.st-tv-benefit p{font-size:13px;color:#666;line-height:1.6;margin:0}
+.st-tv-quote{background:#fafaf8;border-left:4px solid #CC0000;border-radius:0 12px 12px 0;padding:22px 24px;margin-bottom:28px}
+.st-tv-quote p{font-size:15px;font-style:italic;color:#444;line-height:1.7;margin:0 0 10px}
+.st-tv-quote cite{font-size:12px;color:#999;font-style:normal;font-weight:600}
+.st-tv-cta{background:linear-gradient(135deg,#CC0000,#aa0000);border-radius:12px;padding:32px 36px;text-align:center}
+.st-tv-cta h3{color:#fff;font-size:clamp(17px,3vw,24px);font-weight:700;margin:0 0 10px}
+.st-tv-cta p{color:rgba(255,255,255,.82);font-size:14px;margin:0 0 22px;line-height:1.6}
+.st-tv-cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.st-tv-btn{display:inline-block;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;transition:opacity .15s}
+.st-tv-btn:hover{opacity:.88}
+.st-tv-btn-white{background:#fff;color:#CC0000}
+.st-tv-btn-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.6)}
+.st-tv-logo{display:flex;align-items:center;gap:8px;margin-bottom:28px}
+.st-tv-logo-mark{width:36px;height:36px;background:#CC0000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0}
+.st-tv-logo-text{font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:-.3px}
+.st-tv-logo-text span{color:#CC0000}
+</style>
+
+<div class="st-tv">
+
+  <!-- LOGO -->
+  <div class="st-tv-logo">
+    <div class="st-tv-logo-mark">S</div>
+    <div class="st-tv-logo-text">Saga<span>Trail</span></div>
+  </div>
+
+  <!-- HERO -->
+  <div class="st-tv-hero">
+    <div class="st-tv-badge">Für Tourismusverbände &amp; Destinationen</div>
+    <h2>Die Schweizer Sagenwelt —<br><span>erlebbar auf dem Wanderweg.</span></h2>
+    <p>SagaTrail verbindet klassische Sagenüberlieferungen mit GPS-geführten Wanderrouten. Wanderinnen und Wanderer hören die Sagen aus Ihrer Region an authentischen Orten — als lebendiges Klangerlebnis direkt im Ohr.</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="st-tv-kpi">
+    <div class="st-tv-kpi-card">
+      <div class="st-tv-kpi-num">210+</div>
+      <div class="st-tv-kpi-lbl">kuratierte Sagen aus allen 26 Kantonen</div>
+    </div>
+    <div class="st-tv-kpi-card">
+      <div class="st-tv-kpi-num">8</div>
+      <div class="st-tv-kpi-lbl">Sprachen inkl. Dialekte</div>
+    </div>
+    <div class="st-tv-kpi-card st-tv-kpi-3">
+      <div class="st-tv-kpi-num">GPS</div>
+      <div class="st-tv-kpi-lbl">Echtzeit-Navigation auf Schweizer Wanderwegen</div>
+    </div>
+  </div>
+
+  <!-- VORTEILE -->
+  <div class="st-tv-benefits">
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">📍</div>
+      <h3>Regionale Sichtbarkeit</h3>
+      <p>Ihre Region und ihre Sagen werden direkt in der App erlebbar — für Nutzerinnen und Nutzer aus der Schweiz und dem Ausland.</p>
+    </div>
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">🎙️</div>
+      <h3>Digitales Kulturerbe</h3>
+      <p>Lokale Überlieferungen werden als professionell aufbereitete Audio-Narration konserviert und für neue Generationen zugänglich gemacht.</p>
+    </div>
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">🥾</div>
+      <h3>Längere Aufenthalte</h3>
+      <p>Wanderrouten mit Sagenerzählung steigern das Erlebnis und motivieren zu ausgedehnteren Touren — und damit zu mehr Übernachtungen und Konsum vor Ort.</p>
+    </div>
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">📊</div>
+      <h3>Daten &amp; Reichweite</h3>
+      <p>Erfahren Sie, welche Routen und Sagen in Ihrer Destination besonders beliebt sind — wertvolle Insights für Ihre Kommunikation und Angebotsentwicklung.</p>
+    </div>
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">🤝</div>
+      <h3>Partner-Ökosystem</h3>
+      <p>Restaurants, Berghütten und lokale Anbieter entlang der Routen profitieren als SagaTrail-Partner — ein starkes Netzwerk für die gesamte Destination.</p>
+    </div>
+
+    <div class="st-tv-benefit">
+      <div class="st-tv-benefit-icon">🌍</div>
+      <h3>Internationales Publikum</h3>
+      <p>Die App ist in 8 Sprachen verfügbar. Sagen und Routen aus Ihrer Region erreichen so auch Gäste aus Deutschland, Frankreich, Italien und darüber hinaus.</p>
+    </div>
+
+  </div>
+
+  <!-- ZITAT -->
+  <div class="st-tv-quote">
+    <p>«SagaTrail macht unsere Wanderwege zu Bühnen — die Natur als Kulisse, die Sage als Geschichte. Das ist Schweizer Tourismus im 21. Jahrhundert.»</p>
+    <cite>— Rolf Koch, Gründer SagaTrail</cite>
+  </div>
+
+  <!-- CTA -->
+  <div class="st-tv-cta">
+    <h3>Ihre Destination auf SagaTrail</h3>
+    <p>Interesse an einer Zusammenarbeit? Wir zeigen Ihnen in einem unverbindlichen Gespräch, wie SagaTrail für Ihre Region funktioniert.</p>
+    <div class="st-tv-cta-btns">
+      <a href="mailto:info@sagatrail.ch" class="st-tv-btn st-tv-btn-white">Kontakt aufnehmen</a>
+      <a href="https://sagatrail.ch" class="st-tv-btn st-tv-btn-outline">Mehr erfahren</a>
+    </div>
+  </div>
+
+</div>
