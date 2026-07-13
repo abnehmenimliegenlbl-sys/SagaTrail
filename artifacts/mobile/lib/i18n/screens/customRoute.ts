@@ -22,6 +22,10 @@ export interface CustomRouteStrings {
   gpxImportingLabel: string;
   gpxReadErrorLabel: string;
   gpxFormatErrorLabel: string;
+  pickOnMapLabel: string;
+  pickerTitle: string;
+  pickerConfirm: string;
+  pickerHint: string;
 }
 
 const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
@@ -47,6 +51,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "GPX wird importiert …",
     gpxReadErrorLabel: "Die Datei konnte nicht gelesen werden.",
     gpxFormatErrorLabel: "Ungültiges GPX-Format. Bitte eine Datei mit Wegpunkten oder einem Track importieren.",
+    pickOnMapLabel: "Auf Karte wählen",
+    pickerTitle: "Punkt auf Karte setzen",
+    pickerConfirm: "Übernehmen",
+    pickerHint: "Auf die Karte tippen, um einen Punkt zu setzen.",
   },
   gsw: {
     eyebrow: "EIGENI ROUTE",
@@ -70,6 +78,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "GPX wird importiert …",
     gpxReadErrorLabel: "D Datei het nöd chöne gläse wärde.",
     gpxFormatErrorLabel: "Ungültigs GPX-Format. Bitte en Datei mit Wegpünkt oder emne Track importiere.",
+    pickOnMapLabel: "Uf Charte wähle",
+    pickerTitle: "Punkt setze",
+    pickerConfirm: "Überchoo",
+    pickerHint: "Uf d Charte tippe, um en Punkt z setze.",
   },
   en: {
     eyebrow: "CUSTOM ROUTE",
@@ -93,6 +105,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Importing GPX …",
     gpxReadErrorLabel: "The file could not be read.",
     gpxFormatErrorLabel: "Invalid GPX format. Please import a file with waypoints or a track.",
+    pickOnMapLabel: "Pick on map",
+    pickerTitle: "Set point on map",
+    pickerConfirm: "Confirm",
+    pickerHint: "Tap the map to place a point.",
   },
   fr: {
     eyebrow: "ITINÉRAIRE PERSONNALISÉ",
@@ -116,6 +132,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Importation du GPX …",
     gpxReadErrorLabel: "Le fichier n'a pas pu être lu.",
     gpxFormatErrorLabel: "Format GPX invalide. Veuillez importer un fichier avec des points de passage ou un tracé.",
+    pickOnMapLabel: "Choisir sur la carte",
+    pickerTitle: "Placer un point sur la carte",
+    pickerConfirm: "Valider",
+    pickerHint: "Appuie sur la carte pour placer un point.",
   },
   it: {
     eyebrow: "ITINERARIO PERSONALIZZATO",
@@ -139,6 +159,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Importazione GPX …",
     gpxReadErrorLabel: "Impossibile leggere il file.",
     gpxFormatErrorLabel: "Formato GPX non valido. Importa un file con waypoint o un tracciato.",
+    pickOnMapLabel: "Scegli sulla mappa",
+    pickerTitle: "Imposta punto sulla mappa",
+    pickerConfirm: "Conferma",
+    pickerHint: "Tocca la mappa per posizionare un punto.",
   },
   es: {
     eyebrow: "RUTA PERSONALIZADA",
@@ -162,6 +186,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Importando GPX …",
     gpxReadErrorLabel: "No se pudo leer el archivo.",
     gpxFormatErrorLabel: "Formato GPX inválido. Por favor, importa un archivo con puntos de referencia o un recorrido.",
+    pickOnMapLabel: "Elegir en el mapa",
+    pickerTitle: "Colocar punto en el mapa",
+    pickerConfirm: "Aceptar",
+    pickerHint: "Toca el mapa para colocar un punto.",
   },
   pt: {
     eyebrow: "ROTA PERSONALIZADA",
@@ -185,6 +213,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Importando GPX …",
     gpxReadErrorLabel: "Não foi possível ler o ficheiro.",
     gpxFormatErrorLabel: "Formato GPX inválido. Por favor, importe um ficheiro com waypoints ou um percurso.",
+    pickOnMapLabel: "Escolher no mapa",
+    pickerTitle: "Colocar ponto no mapa",
+    pickerConfirm: "Confirmar",
+    pickerHint: "Toca no mapa para colocar um ponto.",
   },
   zh: {
     eyebrow: "自定义路线",
@@ -208,6 +240,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "正在导入 GPX……",
     gpxReadErrorLabel: "无法读取该文件。",
     gpxFormatErrorLabel: "GPX 格式无效。请导入包含航点或路径的文件。",
+    pickOnMapLabel: "在地图上选择",
+    pickerTitle: "在地图上设置点",
+    pickerConfirm: "确认",
+    pickerHint: "点击地图以放置一个点。",
   },
   ru: {
     eyebrow: "СВОЙ МАРШРУТ",
@@ -231,6 +267,10 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportingLabel: "Импорт GPX …",
     gpxReadErrorLabel: "Не удалось прочитать файл.",
     gpxFormatErrorLabel: "Неверный формат GPX. Пожалуйста, импортируй файл с путевыми точками или треком.",
+    pickOnMapLabel: "Выбрать на карте",
+    pickerTitle: "Установить точку на карте",
+    pickerConfirm: "Подтвердить",
+    pickerHint: "Нажмите на карту, чтобы установить точку.",
   },
 };
 

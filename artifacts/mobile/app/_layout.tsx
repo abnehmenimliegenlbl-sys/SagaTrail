@@ -29,6 +29,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import colors from "@/constants/colors";
 import { useColors } from "@/hooks/useColors";
+import { usePushToken } from "@/hooks/usePushToken";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { CatalogProvider } from "@/contexts/CatalogContext";
 import { DownloadProvider } from "@/contexts/DownloadContext";
@@ -88,6 +89,7 @@ function AuthTokenBridge({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   const { hydrated, profile } = useApp();
   const { isLoaded, isSignedIn } = useAuth();
+  usePushToken();
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();

@@ -63,6 +63,29 @@ async function authenticate(token: string | null): Promise<AuthedProfile | null>
   };
 }
 
+async function sendJoinPush(leaderId: string, memberName: string): Promise<void> {
+  try {
+    const [row] = await db
+      .select({ pushToken: profilesTable.pushToken })
+      .from(profilesTable)
+      .where(eq(profilesTable.id, leaderId));
+    const token = row?.pushToken;
+    if (!token) return;
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        to: token,
+        title: "Neue Mitglied",
+        body: `${memberName} ist deiner Gruppe beigetreten`,
+        sound: "default",
+      }),
+    });
+  } catch {
+    // Push-Fehler sind nicht kritisch
+  }
+}
+
 function send(ws: WebSocket, message: unknown): void {
   if (ws.readyState !== ws.OPEN) return;
   ws.send(JSON.stringify(message));
@@ -224,6 +247,8 @@ export function attachGroupsSocket(server: HttpServer): void {
                 return;
               }
               notifyJoined(result.room, ws);
+              // Push-Benachrichtigung an Gruppenleitung (nicht-blockierend)
+              void sendJoinPush(result.room.leaderId, profile.name);
               return;
             }
             case "leave": {

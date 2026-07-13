@@ -27,6 +27,9 @@ export const profilesTable = pgTable("profiles", {
   // bei Ab-/Anmelden oder Geraetewechsel, da AsyncStorage sonst die einzige Quelle war.
   hikeHistory: jsonb("hike_history").notNull().default([]),
   achievements: jsonb("achievements").notNull().default([]),
+  // Expo-Push-Token des Geraets (null = nicht registriert oder widerrufen).
+  // Wird beim App-Start gesetzt und fuer Gruppen-Push-Benachrichtigungen verwendet.
+  pushToken: text("push_token"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

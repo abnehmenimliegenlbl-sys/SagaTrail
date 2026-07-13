@@ -304,4 +304,19 @@ router.patch("/me/free-hike", async (req, res): Promise<void> => {
   res.json(toProfile(row));
 });
 
+router.post("/me/push-token", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const { token } = req.body as { token?: unknown };
+  if (typeof token !== "string" && token !== null) {
+    res.status(400).json({ error: "token muss ein String oder null sein" });
+    return;
+  }
+  await db
+    .update(profilesTable)
+    .set({ pushToken: (token as string | null) ?? null })
+    .where(eq(profilesTable.id, userId));
+  res.json({ ok: true });
+});
+
 export default router;

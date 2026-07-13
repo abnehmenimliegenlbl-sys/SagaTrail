@@ -55,6 +55,13 @@ export interface SwisstopoMapProps {
   /** Wird mit der `id` des angetippten Partner-Markers aufgerufen. */
   onPartnerPress?: (id: string) => void;
   /**
+   * Picker-Modus: Die Karte reagiert auf Tippen und meldet die gewaehlten
+   * Koordinaten per postMessage (`type: "stt-mapclick"`) zurueck.
+   */
+  pickerMode?: boolean;
+  /** Callback fuer Picker-Modus: wird mit den angetippten Koordinaten aufgerufen. */
+  onMapClick?: (lat: number, lng: number) => void;
+  /**
    * Lokalisierte Beschriftungen der auf-/zuklappbaren Kartenlegende
    * (lib/i18n/screens/map.ts). Fehlen sie, wird keine Legende gezeigt.
    */
@@ -102,7 +109,8 @@ export function buildSwisstopoHtml(
   aerialways?: { id: string; geometry: number[][] }[] | null,
   pois?: MapPoi[] | null,
   legend?: MapLegendLabels | null,
-  partners?: MapPoi[] | null
+  partners?: MapPoi[] | null,
+  pickerMode?: boolean
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -195,6 +203,7 @@ export function buildSwisstopoHtml(
   .stt-legende .stt-seilbahn-station { box-shadow: none; }
   .stt-legende .stt-poi { box-shadow: none; cursor: default; }
   .stt-legende .stt-partner { box-shadow: none; cursor: default; }
+  .stt-picker { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
 </style>
 </head>
 <body>
@@ -366,6 +375,23 @@ export function buildSwisstopoHtml(
     // Eine bereits vor dem Kartenaufbau gepufferte Position jetzt anwenden.
     var early = window.__sttGetPending && window.__sttGetPending();
     if (early) window.__sttApply(early);
+    if (${pickerMode ? "true" : "false"}) {
+      map.getContainer().style.cursor = 'crosshair';
+      var pickerMarker = null;
+      var pickerIcon = L.divIcon({ className: '', html: '<div class="stt-picker"></div>', iconSize: [22, 22], iconAnchor: [11, 22] });
+      map.on('click', function (e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        if (!pickerMarker) { pickerMarker = L.marker([lat, lng], { icon: pickerIcon }).addTo(map); }
+        else { pickerMarker.setLatLng([lat, lng]); }
+        var payload = JSON.stringify({ type: 'stt-mapclick', lat: lat, lng: lng });
+        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+          window.ReactNativeWebView.postMessage(payload);
+        } else if (window.parent) {
+          window.parent.postMessage(payload, '*');
+        }
+      });
+    }
     setTimeout(function () { map.invalidateSize(); }, 200);
   })();
 </script>

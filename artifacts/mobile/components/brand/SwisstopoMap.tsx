@@ -23,6 +23,8 @@ export function SwisstopoMap({
   onPoiPress,
   partners,
   onPartnerPress,
+  pickerMode,
+  onMapClick,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -56,9 +58,10 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
         },
-        partners
+        partners,
+        pickerMode
       ),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, t]
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, pickerMode, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
@@ -100,6 +103,13 @@ export function SwisstopoMap({
             }
             if (data?.type === "stt-partner-press" && typeof data.id === "string") {
               onPartnerPress?.(data.id);
+            }
+            if (
+              data?.type === "stt-mapclick" &&
+              typeof data.lat === "number" &&
+              typeof data.lng === "number"
+            ) {
+              onMapClick?.(data.lat, data.lng);
             }
           } catch {
             // Ignoriere Nachrichten, die kein gueltiges JSON sind.

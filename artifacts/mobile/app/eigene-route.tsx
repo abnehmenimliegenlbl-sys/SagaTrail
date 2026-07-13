@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -25,6 +27,7 @@ import { Glass } from "@/components/brand/Glass";
 import { GLAS_3D } from "@/constants/depth";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -53,6 +56,11 @@ export default function EigeneRoute() {
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<"start" | "end" | null>(null);
+  const [pickerPending, setPickerPending] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickerCenter, setPickerCenter] = useState<{ lat: number; lng: number }>({ lat: 46.9479, lng: 7.4446 });
+  const [pickerMapHeight, setPickerMapHeight] = useState(0);
+  const [reversing, setReversing] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
@@ -153,6 +161,44 @@ export default function EigeneRoute() {
     }
   }, [t]);
 
+  const openPicker = useCallback(
+    (target: "start" | "end") => {
+      const center =
+        target === "start"
+          ? { lat: start?.lat ?? end?.lat ?? 46.9479, lng: start?.lng ?? end?.lng ?? 7.4446 }
+          : { lat: end?.lat ?? start?.lat ?? 46.9479, lng: end?.lng ?? start?.lng ?? 7.4446 };
+      setPickerCenter(center);
+      setPickerPending(null);
+      setPickerTarget(target);
+    },
+    [start, end]
+  );
+
+  const onPickerConfirm = useCallback(async () => {
+    if (!pickerPending || !pickerTarget) return;
+    setReversing(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${pickerPending.lat}&lon=${pickerPending.lng}&format=json&accept-language=de&zoom=16`,
+        { headers: { "User-Agent": "SagaTrail/1.0" } }
+      );
+      const data: { display_name?: string } = await res.json();
+      const label = data?.display_name ?? `${pickerPending.lat.toFixed(5)}, ${pickerPending.lng.toFixed(5)}`;
+      const point = { label, ...pickerPending };
+      if (pickerTarget === "start") setStart(point);
+      else setEnd(point);
+    } catch {
+      const label = `${pickerPending.lat.toFixed(5)}, ${pickerPending.lng.toFixed(5)}`;
+      const point = { label, ...pickerPending };
+      if (pickerTarget === "start") setStart(point);
+      else setEnd(point);
+    } finally {
+      setReversing(false);
+      setPickerTarget(null);
+      setPickerPending(null);
+    }
+  }, [pickerPending, pickerTarget]);
+
   useEffect(() => {
     useLocation();
     // Nur beim ersten Betreten des Screens automatisch versuchen.
@@ -174,16 +220,24 @@ export default function EigeneRoute() {
           value={start}
           onSelect={setStart}
           extra={
-            <Pressable onPress={useLocation} style={styles.locationRow} hitSlop={8}>
-              {locating ? (
-                <ActivityIndicator size="small" color={colors.accent} />
-              ) : (
-                <Feather name="crosshair" size={14} color={colors.accent} />
-              )}
-              <Text style={[styles.locationLabel, { color: colors.accent }]}>
-                {locating ? t.locatingLabel : t.useCurrentLocation}
-              </Text>
-            </Pressable>
+            <View style={styles.locationButtons}>
+              <Pressable onPress={useLocation} style={styles.locationRow} hitSlop={8}>
+                {locating ? (
+                  <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                  <Feather name="crosshair" size={14} color={colors.accent} />
+                )}
+                <Text style={[styles.locationLabel, { color: colors.accent }]}>
+                  {locating ? t.locatingLabel : t.useCurrentLocation}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => openPicker("start")} style={styles.locationRow} hitSlop={8}>
+                <Feather name="map" size={14} color={colors.accent} />
+                <Text style={[styles.locationLabel, { color: colors.accent }]}>
+                  {t.pickOnMapLabel}
+                </Text>
+              </Pressable>
+            </View>
           }
         />
 
@@ -192,6 +246,14 @@ export default function EigeneRoute() {
           placeholder={t.endPlaceholder}
           value={end}
           onSelect={setEnd}
+          extra={
+            <Pressable onPress={() => openPicker("end")} style={styles.locationRow} hitSlop={8}>
+              <Feather name="map" size={14} color={colors.accent} />
+              <Text style={[styles.locationLabel, { color: colors.accent }]}>
+                {t.pickOnMapLabel}
+              </Text>
+            </Pressable>
+          }
         />
 
         <PrimaryButton
@@ -235,6 +297,54 @@ export default function EigeneRoute() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      {/* ── Karten-Picker-Modal ─────────────────────────────────────── */}
+      <Modal
+        visible={pickerTarget !== null}
+        onRequestClose={() => setPickerTarget(null)}
+        animationType="slide"
+        statusBarTranslucent
+      >
+        <Background>
+          <View style={{ flex: 1, paddingTop: topPad }}>
+            {/* Header */}
+            <View style={[styles.pickerHeader, { paddingHorizontal: 20 }]}>
+              <Text style={[styles.pickerTitle, { color: colors.foreground }]}>
+                {t.pickerTitle}
+              </Text>
+              <Pressable onPress={() => setPickerTarget(null)} hitSlop={12}>
+                <Feather name="x" size={22} color={colors.foreground} />
+              </Pressable>
+            </View>
+            <Text style={[styles.pickerHint, { color: colors.mutedForeground, paddingHorizontal: 20 }]}>
+              {t.pickerHint}
+            </Text>
+            {/* Karte */}
+            <View
+              style={styles.pickerMapWrap}
+              onLayout={(e) => setPickerMapHeight(e.nativeEvent.layout.height)}
+            >
+              {pickerMapHeight > 0 && (
+                <SwisstopoMap
+                  center={pickerCenter}
+                  height={pickerMapHeight}
+                  pickerMode
+                  onMapClick={(lat, lng) => setPickerPending({ lat, lng })}
+                />
+              )}
+            </View>
+            {/* Bestätigungs-Button */}
+            <View style={{ paddingHorizontal: 20, paddingBottom: 24 }}>
+              <PrimaryButton
+                label={reversing ? "…" : t.pickerConfirm}
+                onPress={onPickerConfirm}
+                disabled={!pickerPending || reversing}
+                loading={reversing}
+              />
+            </View>
+          </View>
+        </Background>
+      </Modal>
     </Background>
   );
 }
@@ -371,4 +481,14 @@ const styles = StyleSheet.create({
   suggestions: { marginTop: 8, padding: 0 },
   suggestionRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
   suggestionText: { fontFamily: fonts.body, fontSize: 13, flexShrink: 1 },
+  locationButtons: { gap: 2 },
+  pickerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  pickerTitle: { fontFamily: fonts.titleBold, fontSize: 18 },
+  pickerHint: { fontFamily: fonts.body, fontSize: 13, marginBottom: 12 },
+  pickerMapWrap: { flex: 1, marginHorizontal: 16, marginBottom: 16, borderRadius: 12, overflow: "hidden" },
 });
