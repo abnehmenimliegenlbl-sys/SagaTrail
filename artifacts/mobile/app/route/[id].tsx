@@ -159,6 +159,7 @@ export default function Routenplanung() {
     route ? getSagaForRoute(route) : undefined,
   );
   const [sagaLoading, setSagaLoading] = useState(!saga);
+  const [sagaRetryCount, setSagaRetryCount] = useState(0);
   const [lowBattery] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aerialways, setAerialways] = useState<
@@ -252,7 +253,7 @@ export default function Routenplanung() {
     return () => {
       cancelled = true;
     };
-  }, [route, ensureRouteSaga, getSagaForRoute]);
+  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount]);
 
   if (!route) {
     return (
@@ -482,7 +483,7 @@ export default function Routenplanung() {
             </View>
           ) : weatherError || !weather ? (
             <View style={styles.checkRow}>
-              <Feather name="cloud-off" size={16} color={colors.mutedForeground} />
+              <Feather name="cloud-off" size={16} color={colors.destructive} />
               <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.weather}</Text>
               <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
                 {t.weatherNotAvailable}
@@ -612,6 +613,20 @@ export default function Routenplanung() {
             <Text style={[styles.sagaMood, { color: colors.mutedForeground }]}>
               {t.sagaLoadError}
             </Text>
+            <Pressable
+              onPress={() => {
+                setSagaLoading(true);
+                setSagaRetryCount((c) => c + 1);
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              style={[styles.retryChip, { borderColor: colors.glassBorder, marginTop: 10 }]}
+            >
+              <Feather name="refresh-cw" size={12} color={colors.accent} />
+              <Text style={[styles.retryChipText, { color: colors.accent }]}>
+                {ts.retry}
+              </Text>
+            </Pressable>
           </View>
         ) : (
           <Pressable

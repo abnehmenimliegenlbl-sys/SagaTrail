@@ -21,6 +21,7 @@ export interface CustomRouteStrings {
   gpxImportLabel: string;
   gpxImportingLabel: string;
   gpxReadErrorLabel: string;
+  gpxFormatErrorLabel: string;
 }
 
 const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
@@ -45,6 +46,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "GPX-Datei importieren",
     gpxImportingLabel: "GPX wird importiert …",
     gpxReadErrorLabel: "Die Datei konnte nicht gelesen werden.",
+    gpxFormatErrorLabel: "Ungültiges GPX-Format. Bitte eine Datei mit Wegpunkten oder einem Track importieren.",
   },
   gsw: {
     eyebrow: "EIGENI ROUTE",
@@ -67,6 +69,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "GPX-Datei importiere",
     gpxImportingLabel: "GPX wird importiert …",
     gpxReadErrorLabel: "D Datei het nöd chöne gläse wärde.",
+    gpxFormatErrorLabel: "Ungültigs GPX-Format. Bitte en Datei mit Wegpünkt oder emne Track importiere.",
   },
   en: {
     eyebrow: "CUSTOM ROUTE",
@@ -89,6 +92,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Import GPX file",
     gpxImportingLabel: "Importing GPX …",
     gpxReadErrorLabel: "The file could not be read.",
+    gpxFormatErrorLabel: "Invalid GPX format. Please import a file with waypoints or a track.",
   },
   fr: {
     eyebrow: "ITINÉRAIRE PERSONNALISÉ",
@@ -111,6 +115,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Importer un fichier GPX",
     gpxImportingLabel: "Importation du GPX …",
     gpxReadErrorLabel: "Le fichier n'a pas pu être lu.",
+    gpxFormatErrorLabel: "Format GPX invalide. Veuillez importer un fichier avec des points de passage ou un tracé.",
   },
   it: {
     eyebrow: "ITINERARIO PERSONALIZZATO",
@@ -133,6 +138,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Importa file GPX",
     gpxImportingLabel: "Importazione GPX …",
     gpxReadErrorLabel: "Impossibile leggere il file.",
+    gpxFormatErrorLabel: "Formato GPX non valido. Importa un file con waypoint o un tracciato.",
   },
   es: {
     eyebrow: "RUTA PERSONALIZADA",
@@ -155,6 +161,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Importar archivo GPX",
     gpxImportingLabel: "Importando GPX …",
     gpxReadErrorLabel: "No se pudo leer el archivo.",
+    gpxFormatErrorLabel: "Formato GPX inválido. Por favor, importa un archivo con puntos de referencia o un recorrido.",
   },
   pt: {
     eyebrow: "ROTA PERSONALIZADA",
@@ -177,6 +184,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Importar ficheiro GPX",
     gpxImportingLabel: "Importando GPX …",
     gpxReadErrorLabel: "Não foi possível ler o ficheiro.",
+    gpxFormatErrorLabel: "Formato GPX inválido. Por favor, importe um ficheiro com waypoints ou um percurso.",
   },
   zh: {
     eyebrow: "自定义路线",
@@ -199,6 +207,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "导入 GPX 文件",
     gpxImportingLabel: "正在导入 GPX……",
     gpxReadErrorLabel: "无法读取该文件。",
+    gpxFormatErrorLabel: "GPX 格式无效。请导入包含航点或路径的文件。",
   },
   ru: {
     eyebrow: "СВОЙ МАРШРУТ",
@@ -221,6 +230,7 @@ const CUSTOM_ROUTE_STRINGS: StringsDict<CustomRouteStrings> = {
     gpxImportLabel: "Импортировать файл GPX",
     gpxImportingLabel: "Импорт GPX …",
     gpxReadErrorLabel: "Не удалось прочитать файл.",
+    gpxFormatErrorLabel: "Неверный формат GPX. Пожалуйста, импортируй файл с путевыми точками или треком.",
   },
 };
 

@@ -294,7 +294,7 @@ export default function KantonRouten() {
               <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
                 {loadError ? t.errorDetail : t.emptyDetail}
               </Text>
-              {loadError && (
+              {loadError ? (
                 <Pressable
                   onPress={onSearch}
                   accessibilityRole="button"
@@ -304,6 +304,23 @@ export default function KantonRouten() {
                   <Feather name="refresh-cw" size={14} color={colors.accent} />
                   <Text style={[styles.retryBtnText, { color: colors.accent }]}>
                     {ts.retry}
+                  </Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => {
+                    setDistFilter([DIST_MIN, DIST_MAX]);
+                    setAscFilter([ASC_MIN, ASC_MAX]);
+                    setDiffFilter([DIFF_MIN, DIFF_MAX]);
+                    setGanzjaehrigFilter(false);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.resetFilters}
+                  style={[styles.retryBtn, { borderColor: colors.glassBorder }]}
+                >
+                  <Feather name="sliders" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.retryBtnText, { color: colors.mutedForeground }]}>
+                    {t.resetFilters}
                   </Text>
                 </Pressable>
               )}

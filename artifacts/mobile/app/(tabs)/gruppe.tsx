@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -84,7 +84,40 @@ export default function Gruppe() {
   const statusColor =
     groupConnectionStatus === "verbunden"
       ? colors.accent
-      : colors.mutedForeground;
+      : groupConnectionStatus === "getrennt" && groupSession
+        ? colors.destructive
+        : colors.mutedForeground;
+
+  // Letzter Zeitpunkt, zu dem jedes Mitglied seine Aktivitaet geaendert hat —
+  // clientseitig getrackt, um veraltete Synchronisation sichtbar zu machen.
+  const memberActivitySnapshotRef = useRef<Record<string, string>>({});
+  const memberLastSeenRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!groupSession) {
+      memberActivitySnapshotRef.current = {};
+      memberLastSeenRef.current = {};
+      return;
+    }
+    const now = Date.now();
+    for (const m of groupSession.members) {
+      const snapshot = JSON.stringify(m.activity);
+      if (memberActivitySnapshotRef.current[m.id] !== snapshot) {
+        memberActivitySnapshotRef.current[m.id] = snapshot;
+        memberLastSeenRef.current[m.id] = now;
+      } else if (memberLastSeenRef.current[m.id] == null) {
+        memberLastSeenRef.current[m.id] = now;
+      }
+    }
+  }, [groupSession]);
+
+  // Pruefen, ob Mitglieder laenger als 90s keine Aktivitaets-Aenderung hatten
+  // (moegliches Verbindungsproblem) — nur wenn die Session aktiv ist.
+  const memberOutOfSync = (memberId: string): boolean => {
+    const lastSeen = memberLastSeenRef.current[memberId];
+    if (!lastSeen) return false;
+    return Date.now() - lastSeen > 90_000;
+  };
 
   const errorLabel = groupError
     ? groupError === "not_found"
@@ -279,6 +312,14 @@ export default function Gruppe() {
                       </Text>
                     </Pressable>
                   )}
+                {memberOutOfSync(m.id) && (
+                  <Feather
+                    name="wifi-off"
+                    size={14}
+                    color={colors.mutedForeground}
+                    style={{ marginRight: 6 }}
+                  />
+                )}
                 {groupSession.isLeader && !m.isLeader && (
                   <Pressable onPress={() => kickMember(m.id)} hitSlop={10}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />

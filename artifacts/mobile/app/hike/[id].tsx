@@ -108,6 +108,22 @@ export default function LiveHike() {
   const resumeIndexRef = useRef<number | null>(
     isResume && activeHike && activeHike.sagaId === id ? activeHike.chapterIndex : null,
   );
+
+  // Wenn dieselbe Sage auf einer anderen Route neu gestartet wird (kein Resume),
+  // den alten activeHike-Eintrag loeschen — er wuerde sonst eine veraltete Route
+  // im "Weiter wandern"-Banner anzeigen.
+  useEffect(() => {
+    if (
+      !isResume &&
+      activeHike?.sagaId === id &&
+      routeId != null &&
+      activeHike.routeId !== routeId
+    ) {
+      clearActiveHike();
+    }
+    // Nur einmalig beim Mount ausfuehren.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Beim Fortsetzen nach Absturz/Neustart: die mitpersistierte Route aus dem
   // gespeicherten Wanderstand — Routen sind online-only, der Katalog ist nach
   // einem Kaltstart also oft (noch) leer.
@@ -145,7 +161,12 @@ export default function LiveHike() {
   const ascentM = route?.ascentM ?? 480;
   const totalMin = route?.minutes ?? 165;
   const sac = route?.sac ?? "T3";
-  const mapCenter: LatLng | null = route?.coordinates ?? saga?.coordinates ?? null;
+  // Einmalig beim Mount gesetzt — aendert sich danach nicht mehr, um einen
+  // sichtbaren Kartensprung zu vermeiden, wenn die Route kurz nach der Saga
+  // asynchron aus dem Katalog nachgeladen wird.
+  const [mapCenter] = useState<LatLng | null>(
+    () => route?.coordinates ?? saga?.coordinates ?? null,
+  );
 
   const [chapters, setChapters] = useState<StoryChapter[]>([]);
   const [preparing, setPreparing] = useState(true);

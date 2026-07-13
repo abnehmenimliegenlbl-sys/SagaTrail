@@ -112,7 +112,19 @@ export default function EigeneRoute() {
       router.push(`/route/${route.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      alert(t.title, t.errorGeneric(message));
+      const lower = message.toLowerCase();
+      if (
+        lower.includes("gpx") ||
+        lower.includes("waypoint") ||
+        lower.includes("track") ||
+        lower.includes("xml") ||
+        lower.includes("parse") ||
+        lower.includes("invalid")
+      ) {
+        alert(t.title, t.gpxFormatErrorLabel);
+      } else {
+        alert(t.title, t.errorGeneric(message || t.gpxReadErrorLabel));
+      }
     } finally {
       setImporting(false);
     }
