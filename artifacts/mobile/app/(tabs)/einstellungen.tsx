@@ -428,15 +428,15 @@ export default function Einstellungen() {
             value=""
             icon="mail"
             onPress={async () => {
-              const url = "mailto:support@sagatrail.app";
+              const url = "mailto:info@sagatrail.ch";
               try {
                 if (await Linking.canOpenURL(url)) {
                   await Linking.openURL(url);
                 } else {
-                  alert(t.emailAlertTitle, "support@sagatrail.app");
+                  alert(t.emailAlertTitle, "info@sagatrail.ch");
                 }
               } catch {
-                alert(t.emailAlertTitle, "support@sagatrail.app");
+                alert(t.emailAlertTitle, "info@sagatrail.ch");
               }
             }}
           />
