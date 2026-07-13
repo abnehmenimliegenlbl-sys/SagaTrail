@@ -38,11 +38,9 @@ import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
 import {
-  KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
   useSubscription,
 } from "@/lib/revenuecat";
-import { ApiError, claimKantonspack } from "@workspace/api-client-react";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -84,29 +82,23 @@ export default function KantonRouten() {
   const packKey = cantonName ? packEntitlementFuerKanton(cantonName) : "";
   const packLocked =
     premium && !!cantonName && !isElite && !hatEntitlement(packKey);
-  const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
-    (p) => p.identifier === KANTONSPACK_PACKAGE
-  );
-
-  const ordnePackZu = async () => {
-    await claimKantonspack({ kanton: kantonSlug(cantonName) });
-    await refreshCustomerInfo();
-  };
+  // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.
+  // RC vergibt das pack_<kanton>-Entitlement automatisch nach dem Kauf.
+  const packSlug = cantonName ? kantonSlug(cantonName) : "";
+  const packPaket = packSlug
+    ? offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
+        (p) => p.identifier === `pack_${packSlug}`
+      )
+    : undefined;
 
   const kaufePack = async () => {
     if (!packPaket) return;
     setPackBusy(true);
     try {
-      // Zuerst versuchen, einen bereits bezahlten, aber noch nicht
-      // zugeordneten Kauf zu verwenden — verhindert eine Doppelbelastung.
-      try {
-        await ordnePackZu();
-        return;
-      } catch (err: any) {
-        if (!(err instanceof ApiError && err.status === 409)) throw err;
-      }
+      // RC vergibt pack_<kanton>-Entitlement nach dem Kauf automatisch —
+      // kein serverseitiger Grant noetig.
       await purchase(packPaket);
-      await ordnePackZu();
+      await refreshCustomerInfo();
     } catch (err: any) {
       if (!err?.userCancelled) {
         alert(t.packBuyErrorTitle, err?.message ?? String(err));

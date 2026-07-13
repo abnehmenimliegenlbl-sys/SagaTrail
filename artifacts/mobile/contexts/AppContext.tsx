@@ -659,13 +659,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           message: err instanceof Error ? err.message : String(err),
         })
       );
-    } else if (!isSubscribed && premium) {
-      lockPremium().catch((err) =>
-        iapLog("premium-sync-effect: lockPremium fehlgeschlagen", {
-          message: err instanceof Error ? err.message : String(err),
-        })
-      );
     }
+    // Kein automatisches lockPremium() mehr: RC-Ablauf/Kuendigung entzieht
+    // Premium serverseitig (POST /me/premium/sync setzt bei naechster
+    // Erneuerung premium: false). Admin-gewaehrtes Premium wuerde sonst
+    // bei fehlendem RC-Abo faelschlich entzogen.
   }, [
     authLoaded,
     isSignedIn,
@@ -675,7 +673,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     isSubscribed,
     premium,
     unlockPremium,
-    lockPremium,
   ]);
 
   const { mutateAsync: consumeMyFreeHikeMutation } = useConsumeMyFreeHike();
