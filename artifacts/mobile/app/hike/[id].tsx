@@ -1339,40 +1339,43 @@ export default function LiveHike() {
         {nearbyPoi && (
           <Animated.View entering={FadeIn}>
             <Glass style={{ marginTop: 14 }}>
-              <View style={styles.poiRow}>
-                {nearbyPoi.wiki?.image ? (
-                  <Image
-                    source={{ uri: nearbyPoi.wiki.image }}
-                    style={styles.poiThumb}
-                  />
-                ) : (
-                  <Feather name="map-pin" size={18} color={colors.accent} />
-                )}
-                <View style={{ flex: 1 }}>
+              {/* Vollbild-Bild: negative Margins brechen aus dem Glass-Padding (16px) heraus */}
+              {nearbyPoi.wiki?.image && (
+                <Image
+                  source={{ uri: nearbyPoi.wiki.image }}
+                  style={styles.poiCardImage}
+                  resizeMode="cover"
+                />
+              )}
+              <View style={styles.poiCardHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                  {!nearbyPoi.wiki?.image && (
+                    <Feather name="map-pin" size={22} color={colors.accent} />
+                  )}
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
                     {t.discoveredNearby}
                   </Text>
-                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                    {nearbyPoi.name}
-                  </Text>
-                  {(nearbyPoi.wiki?.extract || nearbyPoiKontext) && (
-                    <Text
-                      style={[styles.poiSummary, { color: colors.foreground }]}
-                      numberOfLines={4}
-                    >
-                      {nearbyPoi.wiki?.extract ?? nearbyPoiKontext}
-                    </Text>
-                  )}
                 </View>
                 <Pressable
                   onPress={() => setNearbyPoi(null)}
-                  hitSlop={10}
+                  hitSlop={12}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
                 >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                  <Feather name="x" size={22} color={colors.mutedForeground} />
                 </Pressable>
               </View>
+              <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                {nearbyPoi.name}
+              </Text>
+              {(nearbyPoi.wiki?.extract || nearbyPoiKontext) && (
+                <Text
+                  style={[styles.poiSummary, { color: colors.foreground }]}
+                  numberOfLines={10}
+                >
+                  {nearbyPoi.wiki?.extract ?? nearbyPoiKontext}
+                </Text>
+              )}
             </Glass>
           </Animated.View>
         )}
@@ -1818,16 +1821,28 @@ const styles = StyleSheet.create({
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   poiThumb: { width: 40, height: 40, borderRadius: 8 },
-  poiEyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.2 },
-  poiTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 2 },
-  poiSummary: { fontFamily: fonts.story, fontSize: 16, marginTop: 4, lineHeight: 23 },
+  poiCardImage: {
+    marginHorizontal: -16,
+    marginTop: -16,
+    marginBottom: 14,
+    height: 220,
+  },
+  poiCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  poiEyebrow: { fontFamily: fonts.mono, fontSize: 13, letterSpacing: 1.2 },
+  poiTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
+  poiSummary: { fontFamily: fonts.story, fontSize: 18, marginTop: 8, lineHeight: 28 },
   poiModalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(16,24,26,0.7)",
     justifyContent: "center",
-    padding: 20,
+    padding: 16,
   },
-  poiModalImage: { width: "100%", height: 150, borderRadius: 10, marginBottom: 12 },
+  poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   storyWrap: { marginTop: 24 },
   chapterActions: { flexDirection: "row", gap: 8 },
   chapterHead: {
