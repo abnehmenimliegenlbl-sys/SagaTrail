@@ -325,7 +325,7 @@ function renderPartner(list) {
 
 function renderPartnerRow(p) {
   var foto = p.fotoUrl
-    ? '<img class="partner-foto" src="' + esc(p.fotoUrl) + '" onerror="this.style.display=\'none\'">'
+    ? '<img class="partner-foto" src="' + esc(p.fotoUrl) + '" onerror="this.style.display=&quot;none&quot;">'
     : '<div class="partner-foto-ph">' + katEmoji(p.kategorie) + '</div>';
   var preis = currentPreis(p);
   var laufzeit = p.laufzeitStart ? (fmtDate(p.laufzeitStart) + ' – ' + (p.laufzeitEnde ? fmtDate(p.laufzeitEnde) : '∞')) : '–';
