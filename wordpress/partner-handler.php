@@ -176,6 +176,9 @@ function sagatrail_handle_partner_anfrage() {
     // --- Optional: E-Mail-Benachrichtigung an Admin ---
     sagatrail_partner_notify_admin( $data, $row_id );
 
+    // --- Optional: Vertrag als PDF per Mail an Interessenten ---
+    do_action( 'sagatrail_partner_anfrage_gespeichert', $data, $row_id );
+
     // --- Optional: Weiterleitung an SagaTrail-API ---
     $api_id = sagatrail_partner_forward_to_api( $data );
     if ( $api_id ) {
@@ -295,7 +298,8 @@ function sagatrail_partner_admin_page() {
     if ( ! current_user_can( 'manage_options' ) ) { wp_die( 'Keine Berechtigung.' ); }
 
     global $wpdb;
-    $table = $wpdb->prefix . 'sagatrail_partner_anfragen';
+    $table  = $wpdb->prefix . 'sagatrail_partner_anfragen';
+    $notice = '';
 
     // Status-Update
     if ( isset( $_POST['st_action'], $_POST['st_nonce'], $_POST['st_id'] )
@@ -321,6 +325,70 @@ function sagatrail_partner_admin_page() {
         }
     }
 
+    // ===== PARTNER IN APP ANLEGEN =====
+    // Benötigt SAGATRAIL_API_BASE und SAGATRAIL_ADMIN_TOKEN in wp-config.php
+    // define('SAGATRAIL_ADMIN_TOKEN', 'dein-admin-token');
+    if ( isset( $_POST['st_api_anlegen'], $_POST['st_api_nonce'] )
+         && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['st_api_nonce'] ) ), 'st_admin_action' )
+         && current_user_can( 'manage_options' ) ) {
+
+        if ( ! defined( 'SAGATRAIL_API_BASE' ) || ! defined( 'SAGATRAIL_ADMIN_TOKEN' ) ) {
+            $notice = array( 'error', 'SAGATRAIL_API_BASE oder SAGATRAIL_ADMIN_TOKEN fehlt in wp-config.php.' );
+        } else {
+            $lat = floatval( str_replace( ',', '.', sanitize_text_field( wp_unslash( $_POST['st_lat'] ?? '' ) ) ) );
+            $lng = floatval( str_replace( ',', '.', sanitize_text_field( wp_unslash( $_POST['st_lng'] ?? '' ) ) ) );
+
+            if ( ! $lat || ! $lng ) {
+                $notice = array( 'error', 'Bitte gültige Koordinaten (Lat / Lng) eingeben.' );
+            } else {
+                $payload = array(
+                    'name'        => sanitize_text_field( wp_unslash( $_POST['st_api_name'] ?? '' ) ),
+                    'kategorie'   => sanitize_text_field( wp_unslash( $_POST['st_api_kat'] ?? 'sonstiges' ) ),
+                    'canton'      => strtoupper( sanitize_text_field( wp_unslash( $_POST['st_api_canton'] ?? '' ) ) ),
+                    'lat'         => $lat,
+                    'lng'         => $lng,
+                    'beschreibung'=> sanitize_text_field( wp_unslash( $_POST['st_api_beschr'] ?? '' ) ) ?: null,
+                    'angebot'     => sanitize_text_field( wp_unslash( $_POST['st_api_angebot'] ?? '' ) ) ?: null,
+                    'fotoUrl'     => esc_url_raw( sanitize_text_field( wp_unslash( $_POST['st_api_foto'] ?? '' ) ) ) ?: null,
+                    'isActive'    => true,
+                );
+
+                $resp = wp_remote_post(
+                    rtrim( SAGATRAIL_API_BASE, '/' ) . '/admin/partner',
+                    array(
+                        'timeout' => 10,
+                        'headers' => array(
+                            'Content-Type'  => 'application/json',
+                            'x-admin-token' => SAGATRAIL_ADMIN_TOKEN,
+                        ),
+                        'body' => wp_json_encode( $payload ),
+                    )
+                );
+
+                if ( is_wp_error( $resp ) ) {
+                    $notice = array( 'error', 'API-Fehler: ' . $resp->get_error_message() );
+                } else {
+                    $code = wp_remote_retrieve_response_code( $resp );
+                    if ( $code === 201 ) {
+                        $body   = json_decode( wp_remote_retrieve_body( $resp ), true );
+                        $api_id = isset( $body['id'] ) ? sanitize_text_field( $body['id'] ) : '';
+                        // Anfrage-Zeile aktualisieren, falls eine ID übergeben wurde
+                        $anfrage_id = absint( $_POST['st_anfrage_id'] ?? 0 );
+                        if ( $anfrage_id > 0 ) {
+                            $wpdb->update( $table,
+                                array( 'status' => 'aktiv', 'api_id' => $api_id ),
+                                array( 'id' => $anfrage_id )
+                            );
+                        }
+                        $notice = array( 'success', 'Partner in der App angelegt. API-ID: ' . $api_id );
+                    } else {
+                        $notice = array( 'error', 'API HTTP ' . $code . ': ' . wp_remote_retrieve_body( $resp ) );
+                    }
+                }
+            }
+        }
+    }
+
     // Filter
     $filter_status = isset( $_GET['st_status'] ) ? sanitize_text_field( wp_unslash( $_GET['st_status'] ) ) : 'neu';
     $where = $filter_status !== 'alle' ? $wpdb->prepare( 'WHERE status = %s', $filter_status ) : '';
@@ -336,6 +404,12 @@ function sagatrail_partner_admin_page() {
     ?>
     <div class="wrap">
     <h1>SagaTrail Partner-Anfragen</h1>
+
+    <?php if ( ! empty( $notice ) ) : ?>
+        <div class="notice notice-<?php echo $notice[0] === 'success' ? 'success' : 'error'; ?> is-dismissible">
+            <p><?php echo esc_html( $notice[1] ); ?></p>
+        </div>
+    <?php endif; ?>
 
     <ul class="subsubsub">
         <?php foreach ( array_merge( array( 'alle' => '📋 Alle' ), $status_labels ) as $slug => $label ) : ?>
@@ -413,6 +487,64 @@ function sagatrail_partner_admin_page() {
                         </form>
                     </div>
                 </details>
+
+                <?php if ( empty( $row->api_id ) ) : ?>
+                <details style="margin-top:6px;border-top:1px solid #2271b1;padding-top:6px;">
+                    <summary style="cursor:pointer;font-size:12px;color:#2271b1;font-weight:600;">&#43; In App anlegen (API)</summary>
+                    <div style="padding:8px 0;font-size:12px;">
+                        <p style="color:#666;margin-top:0">Legt den Partner direkt in der SagaTrail-App an.<br>
+                        Benötigt <code>SAGATRAIL_API_BASE</code> und <code>SAGATRAIL_ADMIN_TOKEN</code> in wp-config.php.</p>
+                        <form method="post">
+                            <?php wp_nonce_field( 'st_admin_action', 'st_api_nonce' ); ?>
+                            <input type="hidden" name="st_api_anlegen" value="1">
+                            <input type="hidden" name="st_anfrage_id" value="<?php echo absint( $row->id ); ?>">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0;white-space:nowrap"><b>Name</b></td>
+                                    <td><input type="text" name="st_api_name" value="<?php echo esc_attr( $row->betriebs_name ); ?>" style="width:100%;font-size:12px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Kategorie</b></td>
+                                    <td>
+                                        <select name="st_api_kat" style="font-size:12px;">
+                                            <?php foreach ( array( 'restaurant','cafe','uebernachtung','souvenir','sonstiges' ) as $k ) : ?>
+                                                <option value="<?php echo esc_attr( $k ); ?>" <?php selected( $row->kategorie, $k ); ?>><?php echo esc_html( ucfirst( $k ) ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Kanton</b></td>
+                                    <td><input type="text" name="st_api_canton" value="<?php echo esc_attr( $row->canton ); ?>" maxlength="2" style="width:60px;font-size:12px;text-transform:uppercase;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Lat</b></td>
+                                    <td><input type="text" name="st_lat" placeholder="47.3769" style="width:110px;font-size:12px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Lng</b></td>
+                                    <td><input type="text" name="st_lng" placeholder="8.5417" style="width:110px;font-size:12px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Angebot</b></td>
+                                    <td><input type="text" name="st_api_angebot" value="<?php echo esc_attr( $row->angebot ?? '' ); ?>" style="width:100%;font-size:12px;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Beschreibung</b></td>
+                                    <td><textarea name="st_api_beschr" rows="2" style="width:100%;font-size:12px;"><?php echo esc_textarea( $row->beschreibung ?? '' ); ?></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:3px 6px 3px 0"><b>Foto-URL</b></td>
+                                    <td><input type="url" name="st_api_foto" placeholder="https://…" style="width:100%;font-size:12px;"></td>
+                                </tr>
+                            </table>
+                            <button type="submit" class="button button-primary button-small" style="margin-top:8px;">In App anlegen</button>
+                        </form>
+                    </div>
+                </details>
+                <?php else : ?>
+                <p style="font-size:11px;color:#2271b1;margin:4px 0 0">&#10003; In App aktiv (ID: <?php echo esc_html( $row->api_id ); ?>)</p>
+                <?php endif; ?>
             </td>
         </tr>
     <?php endforeach; ?>

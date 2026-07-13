@@ -228,6 +228,7 @@ const PartnerBody = z.object({
   canton: z.string().min(1),
   beschreibung: z.string().optional(),
   angebot: z.string().optional(),
+  fotoUrl: z.string().url().optional(),
   lat: z.number(),
   lng: z.number(),
   aktivVon: z.string().datetime().optional(),

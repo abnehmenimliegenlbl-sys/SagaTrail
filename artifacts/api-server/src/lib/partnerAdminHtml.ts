@@ -80,6 +80,8 @@ export const PARTNER_ADMIN_HTML = `<!DOCTYPE html>
     <textarea id="f-beschreibung"></textarea>
     <label>Angebot / Rabatt</label>
     <textarea id="f-angebot" placeholder="z.B. 10% Rabatt für SagaTrail-Nutzer"></textarea>
+    <label>Foto-URL (optional, öffentlich zugängliche Bild-URL)</label>
+    <input id="f-fotoUrl" type="url" placeholder="https://upload.wikimedia.org/…/bild.jpg" />
     <div style="margin-top:12px"><button class="primary" onclick="erstellePartner()">Partner anlegen</button></div>
   </div>
 
@@ -124,11 +126,13 @@ function renderListe(partner) {
   if (!partner.length) { el.innerHTML = '<p class="hint">Noch keine Partner angelegt.</p>'; return; }
   el.innerHTML = partner.map(p => \`
     <div class="partner">
-      <div>
+      \${p.fotoUrl ? '<img src="' + escapeHtml(p.fotoUrl) + '" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display=\'none\'" />' : ''}
+      <div style="flex:1">
         <strong>\${escapeHtml(p.name)}</strong>
         <span class="badge\${p.isActive ? '' : ' inactive'}">\${p.isActive ? 'aktiv' : 'inaktiv'}</span>
         <div class="meta">\${escapeHtml(p.kategorie)} · \${escapeHtml(p.canton)} · \${p.lat.toFixed(4)}, \${p.lng.toFixed(4)}</div>
         \${p.angebot ? '<div class="meta">' + escapeHtml(p.angebot) + '</div>' : ''}
+        <div class="meta" style="margin-top:4px">&#128065; \${p.views ?? 0} Aufrufe &nbsp;·&nbsp; &#128722; \${p.offersTapped ?? 0} Angebot-Tipps</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="ghost" onclick="toggleAktiv('\${p.id}', \${!p.isActive})">\${p.isActive ? 'Deaktivieren' : 'Aktivieren'}</button>
@@ -144,6 +148,7 @@ function escapeHtml(str) {
 
 async function erstellePartner() {
   try {
+    const fotoUrl = document.getElementById('f-fotoUrl').value.trim();
     const body = {
       name: document.getElementById('f-name').value.trim(),
       kategorie: document.getElementById('f-kategorie').value,
@@ -152,6 +157,7 @@ async function erstellePartner() {
       lng: parseFloat(document.getElementById('f-lng').value),
       beschreibung: document.getElementById('f-beschreibung').value.trim() || undefined,
       angebot: document.getElementById('f-angebot').value.trim() || undefined,
+      fotoUrl: fotoUrl || undefined,
       isActive: true,
     };
     if (!body.name || !body.canton || Number.isNaN(body.lat) || Number.isNaN(body.lng)) {
@@ -160,7 +166,7 @@ async function erstellePartner() {
     }
     await api('/api/admin/partner', { method: 'POST', body: JSON.stringify(body) });
     setStatus('Partner angelegt.', true);
-    ['f-name','f-canton','f-lat','f-lng','f-beschreibung','f-angebot'].forEach(id => document.getElementById(id).value = '');
+    ['f-name','f-canton','f-lat','f-lng','f-beschreibung','f-angebot','f-fotoUrl'].forEach(id => document.getElementById(id).value = '');
     await ladePartner();
   } catch (err) {
     setStatus(err.message, false);

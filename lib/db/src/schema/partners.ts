@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -32,9 +33,12 @@ export const partnersTable = pgTable("partners", {
   angebot: text("angebot"),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
+  fotoUrl: text("foto_url"),
   aktivVon: timestamp("aktiv_von", { withTimezone: true }),
   aktivBis: timestamp("aktiv_bis", { withTimezone: true }),
   isActive: boolean("is_active").notNull().default(true),
+  views: integer("views").notNull().default(0),
+  offersTapped: integer("offers_tapped").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -228,6 +228,7 @@ export const GetPartnersResponseItem = zod.object({
   "canton": zod.string(),
   "beschreibung": zod.string().nullish(),
   "angebot": zod.string().nullish(),
+  "fotoUrl": zod.string().nullish(),
   "lat": zod.number(),
   "lng": zod.number()
 }).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')

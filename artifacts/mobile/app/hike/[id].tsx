@@ -7,6 +7,7 @@ import {
   getPoiStory,
 } from "@workspace/api-client-react";
 import type { Partner, Poi } from "@workspace/api-client-react";
+import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -1470,6 +1471,13 @@ export default function LiveHike() {
           animationType="fade"
           transparent
           onRequestClose={() => setSelectedPartner(null)}
+          onShow={() => {
+            // View-Tracking: fire-and-forget, kein await
+            if (selectedPartner?.id) {
+              const base = getApiBaseUrl() ?? "";
+              fetch(`${base}/partners/${selectedPartner.id}/view`, { method: "POST" }).catch(() => {});
+            }
+          }}
         >
           <Pressable
             style={styles.poiModalBackdrop}
@@ -1477,6 +1485,18 @@ export default function LiveHike() {
           >
             <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
               <Glass>
+                {selectedPartner?.fotoUrl && (
+                  <Image
+                    source={{ uri: selectedPartner.fotoUrl }}
+                    style={{
+                      width: "100%",
+                      height: 140,
+                      borderRadius: 10,
+                      marginBottom: 10,
+                    }}
+                    resizeMode="cover"
+                  />
+                )}
                 <View style={styles.poiRow}>
                   <Feather name="coffee" size={18} color={colors.accent} />
                   <View style={{ flex: 1 }}>
@@ -1507,14 +1527,24 @@ export default function LiveHike() {
                   </Text>
                 )}
                 {selectedPartner?.angebot && (
-                  <Text
-                    style={[
-                      styles.poiSummary,
-                      { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
-                    ]}
+                  <Pressable
+                    onPress={() => {
+                      // Tap-Tracking: fire-and-forget
+                      if (selectedPartner.id) {
+                        const base = getApiBaseUrl() ?? "";
+                        fetch(`${base}/partners/${selectedPartner.id}/tap`, { method: "POST" }).catch(() => {});
+                      }
+                    }}
                   >
-                    {t.partnerOffer}: {selectedPartner.angebot}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.poiSummary,
+                        { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
+                      ]}
+                    >
+                      {t.partnerOffer}: {selectedPartner.angebot}
+                    </Text>
+                  </Pressable>
                 )}
               </Glass>
             </Pressable>

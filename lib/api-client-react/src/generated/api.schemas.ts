@@ -271,6 +271,7 @@ export interface Partner {
   canton: string;
   beschreibung?: string | null;
   angebot?: string | null;
+  fotoUrl?: string | null;
   lat: number;
   lng: number;
 }
