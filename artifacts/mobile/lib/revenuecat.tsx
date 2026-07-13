@@ -245,12 +245,20 @@ function useSubscriptionContext() {
   const isElite = aktiveEntitlements[REVENUECAT_ELITE_ENTITLEMENT] !== undefined;
   const hatEntitlement = (key: string) => aktiveEntitlements[key] !== undefined;
 
+  // Familien-Abo: aktives Produkt enthaelt "family" aber kein "elite"
+  // (Elite-Familie ist schon via isElite abgedeckt).
+  const aktiveProdukte = customerInfoQuery.data?.activeSubscriptions ?? [];
+  const isFamily = aktiveProdukte.some(
+    (id) => id.toLowerCase().includes("family") && !id.toLowerCase().includes("elite")
+  );
+
   return {
     customerInfo: customerInfoQuery.data,
     rcAppUserId,
     offerings: offeringsQuery.data,
     isSubscribed,
     isElite,
+    isFamily,
     hatEntitlement,
     isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
     purchase: purchaseMutation.mutateAsync,

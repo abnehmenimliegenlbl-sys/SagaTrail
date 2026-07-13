@@ -35,6 +35,7 @@ export default function Paywall() {
   const {
     offerings,
     isElite,
+    isFamily,
     isLoading,
     purchase,
     restore,
@@ -83,6 +84,8 @@ export default function Paywall() {
   // Premium-Upgrade-Modus: bereits Premium, aber noch kein Elite — nur
   // Elite-Pläne anzeigen, damit der Nutzer direkt upgraden kann.
   const upgradeMode = premium && !isElite;
+  // Familien-Upgrade: Familien-Abo aktiv → Elite Familie vorauswählen.
+  const defaultUpgradePlan: PlanKey = isFamily ? "eliteFamily" : "elite";
 
   const plaene = useMemo(() => {
     const pakete = offerings?.current?.availablePackages ?? [];
@@ -98,7 +101,9 @@ export default function Paywall() {
 
   const gewaehlterPlan =
     plaene.find((p) => p.key === gewaehlt) ??
-    plaene.find((p) => p.key === "yearly") ??
+    (upgradeMode
+      ? plaene.find((p) => p.key === defaultUpgradePlan)
+      : plaene.find((p) => p.key === "yearly")) ??
     plaene[0];
   const packageToBuy = gewaehlterPlan?.paket;
 
@@ -261,7 +266,7 @@ export default function Paywall() {
               <View style={[styles.activeBox, { borderColor: colors.glassBorder, marginBottom: 20 }]}>
                 <Feather name="zap" size={22} color={colors.accent} />
                 <Text style={[styles.activeText, { color: colors.foreground }]}>
-                  {t.upgradeBox}
+                  {isFamily ? t.upgradeFamilyBox : t.upgradeBox}
                 </Text>
               </View>
             ) : (

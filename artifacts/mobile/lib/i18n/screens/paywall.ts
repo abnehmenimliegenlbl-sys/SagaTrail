@@ -6,6 +6,7 @@ export interface PaywallStrings {
   subtitle: string;
   activeBox: string;
   upgradeBox: string;
+  upgradeFamilyBox: string;
   upgradeBtn: string;
   planPer: string;
   perYear: string;
@@ -55,6 +56,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Die ganze Schweiz und all ihre Legenden",
     activeBox: "Elite ist aktiv – alle Kantons-Packs und Sagen inklusive.",
     upgradeBox: "Du bist bereits Premium. Upgrade zu Elite und erhalte alle Kantons-Packs ohne Aufpreis.",
+    upgradeFamilyBox: "Du hast bereits das Familien-Abo. Upgrade zu Elite Familie und erhalte alle Kantons-Packs für die ganze Familie.",
     upgradeBtn: "Zu Elite upgraden",
     planPer: "/ Monat",
     perYear: "/ Jahr",
@@ -104,6 +106,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Die ganzi Schwiiz und all ihri Legände",
     activeBox: "Elite isch aktiv – alli Kantöns-Packs und Sage inklusive.",
     upgradeBox: "Du bisch scho Premium. Upgrade zu Elite und überchunsch alli Kantöns-Packs ohni Ufpriis.",
+    upgradeFamilyBox: "Du häsch scho s'Familien-Abo. Upgrade zu Elite Familie und überchunsch alli Kantöns-Packs für d'ganzi Familie.",
     upgradeBtn: "Zu Elite upgraade",
     planPer: "/ Monet",
     perYear: "/ Johr",
@@ -153,6 +156,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "All of Switzerland and all its legends",
     activeBox: "Elite is active – all canton packs and legends included.",
     upgradeBox: "You're already Premium. Upgrade to Elite and get all canton packs at no extra cost.",
+    upgradeFamilyBox: "You already have the Family plan. Upgrade to Elite Family and get all canton packs for the whole family.",
     upgradeBtn: "Upgrade to Elite",
     planPer: "/ month",
     perYear: "/ year",
@@ -202,6 +206,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toute la Suisse et toutes ses légendes",
     activeBox: "Elite est actif – tous les packs de cantons et légendes inclus.",
     upgradeBox: "Vous êtes déjà Premium. Passez à Elite et obtenez tous les packs de cantons sans supplément.",
+    upgradeFamilyBox: "Vous avez déjà l'abonnement Famille. Passez à Elite Famille et obtenez tous les packs de cantons pour toute la famille.",
     upgradeBtn: "Passer à Elite",
     planPer: "/ mois",
     perYear: "/ an",
@@ -251,6 +256,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Tutta la Svizzera e tutte le sue leggende",
     activeBox: "Elite è attivo – tutti i pacchetti di cantoni e leggende inclusi.",
     upgradeBox: "Sei già Premium. Passa a Elite e ottieni tutti i pacchetti di cantoni senza costi aggiuntivi.",
+    upgradeFamilyBox: "Hai già l'abbonamento Famiglia. Passa a Elite Famiglia e ottieni tutti i pacchetti di cantoni per tutta la famiglia.",
     upgradeBtn: "Passa a Elite",
     planPer: "/ mese",
     perYear: "/ anno",
@@ -300,6 +306,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toda Suiza y todas sus leyendas",
     activeBox: "Elite está activo – todos los packs de cantones y leyendas incluidos.",
     upgradeBox: "Ya eres Premium. Actualiza a Elite y obtén todos los packs de cantones sin coste adicional.",
+    upgradeFamilyBox: "Ya tienes el plan Familia. Actualiza a Elite Familia y obtén todos los packs de cantones para toda la familia.",
     upgradeBtn: "Actualizar a Elite",
     planPer: "/ mes",
     perYear: "/ año",
@@ -349,6 +356,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Toda a Suíça e todas as suas lendas",
     activeBox: "Elite está ativo – todos os pacotes de cantões e lendas incluídos.",
     upgradeBox: "Você já é Premium. Atualize para Elite e obtenha todos os pacotes de cantões sem custo adicional.",
+    upgradeFamilyBox: "Você já tem o plano Família. Atualize para Elite Família e obtenha todos os pacotes de cantões para toda a família.",
     upgradeBtn: "Atualizar para Elite",
     planPer: "/ mês",
     perYear: "/ ano",
@@ -398,6 +406,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "整个瑞士及其所有传说",
     activeBox: "Elite 已激活 – 所有州传说包均已包含。",
     upgradeBox: "您已是 Premium 会员。升级到 Elite，免费获取所有州传说包。",
+    upgradeFamilyBox: "您已订阅家庭计划。升级到 Elite 家庭版，让全家免费获取所有州传说包。",
     upgradeBtn: "升级到 Elite",
     planPer: "/ 月",
     perYear: "/ 年",
@@ -445,6 +454,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     subtitle: "Вся Швейцария и все её легенды",
     activeBox: "Elite активен – все пакеты кантонов и легенды включены.",
     upgradeBox: "Вы уже Premium. Перейдите на Elite и получите все пакеты кантонов без доплаты.",
+    upgradeFamilyBox: "У вас уже есть семейный план. Перейдите на Elite Семья и получите все пакеты кантонов для всей семьи.",
     upgradeBtn: "Перейти на Elite",
     planPer: "/ месяц",
     perYear: "/ год",
