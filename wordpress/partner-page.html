@@ -419,6 +419,49 @@
 .st-paket-radio label .price-tag { font-size: 0.75rem; color: #888; }
 .st-paket-radio input[type="radio"]:checked + label .price-tag { color: #CC0000; }
 
+/* Foto-Upload */
+.st-foto-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.st-foto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.st-foto-btn:hover { background: #CC0000; }
+.st-foto-name {
+  font-size: 0.82rem;
+  color: #999;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#st-foto-preview {
+  display: none;
+  max-width: 110px;
+  max-height: 70px;
+  border-radius: 8px;
+  border: 1.5px solid #ebebeb;
+  object-fit: cover;
+  margin-top: 8px;
+}
+
 /* Datenschutz */
 .st-consent {
   display: flex;
@@ -816,6 +859,17 @@
               <div class="st-field-hint">Optional &#8211; kann auch später im Gespräch festgelegt werden</div>
             </div>
 
+            <div class="st-field">
+              <label>Foto Ihres Betriebs</label>
+              <div class="st-foto-upload">
+                <input type="file" id="st-foto" name="foto" accept="image/jpeg,image/png,image/webp" style="display:none">
+                <button type="button" class="st-foto-btn" id="st-foto-btn">&#128247; Bild ausw&#228;hlen</button>
+                <span class="st-foto-name" id="st-foto-name">Kein Bild ausgew&#228;hlt</span>
+              </div>
+              <img id="st-foto-preview" alt="Vorschau">
+              <div class="st-field-hint">Optional &#8211; JPG, PNG oder WebP, max. 5 MB. Erscheint im App-Profil.</div>
+            </div>
+
             <hr class="st-paket-divider" style="margin: 20px 0;">
 
             <!-- Kontaktperson -->
@@ -925,6 +979,35 @@
       on ? 'Wird gesendet...' : 'Anfrage kostenlos senden';
   }
 
+  // Foto-Button verdrahten
+  var fotoBtn     = document.getElementById('st-foto-btn');
+  var fotoInput   = document.getElementById('st-foto');
+  var fotoName    = document.getElementById('st-foto-name');
+  var fotoPreview = document.getElementById('st-foto-preview');
+
+  if (fotoBtn && fotoInput) {
+    fotoBtn.addEventListener('click', function() { fotoInput.click(); });
+    fotoInput.addEventListener('change', function() {
+      var file = fotoInput.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        fotoName.textContent = 'Datei zu gross (max. 5 MB)';
+        fotoName.style.color = '#CC0000';
+        fotoInput.value = '';
+        fotoPreview.style.display = 'none';
+        return;
+      }
+      fotoName.textContent = file.name;
+      fotoName.style.color = '#333';
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        fotoPreview.src = ev.target.result;
+        fotoPreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     feedback.className = 'st-form-feedback';
@@ -970,6 +1053,10 @@
     Object.keys(data).forEach(function(k) {
       if (data[k] !== undefined) wpFormData.append(k, data[k]);
     });
+    // Foto anhängen falls vorhanden
+    if (fotoInput && fotoInput.files[0]) {
+      wpFormData.append('foto', fotoInput.files[0]);
+    }
 
     var wpUrl = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
 

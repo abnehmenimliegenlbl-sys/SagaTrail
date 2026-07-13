@@ -43,6 +43,7 @@ function sagatrail_partner_create_table() {
         status         ENUM('neu','in_bearbeitung','abgelehnt','aktiv') NOT NULL DEFAULT 'neu',
         notizen        TEXT,
         api_id         VARCHAR(100),
+        foto_url       VARCHAR(500),
         created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
@@ -56,9 +57,9 @@ function sagatrail_partner_create_table() {
 }
 
 // Bei erstem Aufruf anlegen (idempotent dank IF NOT EXISTS + dbDelta)
-if ( get_option( 'sagatrail_partner_db_version' ) !== '1.1' ) {
+if ( get_option( 'sagatrail_partner_db_version' ) !== '1.2' ) {
     sagatrail_partner_create_table();
-    update_option( 'sagatrail_partner_db_version', '1.1' );
+    update_option( 'sagatrail_partner_db_version', '1.2' );
 }
 
 // ===================================================================
@@ -158,6 +159,39 @@ function sagatrail_handle_partner_anfrage() {
     $allowed_paket = array( 'basic', 'standard', 'premium' );
     if ( empty( $data['paket'] ) || ! in_array( $data['paket'], $allowed_paket, true ) ) {
         $data['paket'] = 'standard';
+    }
+
+    // --- Foto hochladen (optional) ---
+    if ( ! empty( $_FILES['foto']['name'] ) && $_FILES['foto']['error'] === UPLOAD_ERR_OK ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $allowed_mime = array( 'image/jpeg', 'image/png', 'image/webp' );
+        $finfo        = finfo_open( FILEINFO_MIME_TYPE );
+        $mime         = finfo_file( $finfo, $_FILES['foto']['tmp_name'] );
+        finfo_close( $finfo );
+
+        if ( in_array( $mime, $allowed_mime, true ) && $_FILES['foto']['size'] <= 5 * 1024 * 1024 ) {
+            $upload = wp_handle_upload( $_FILES['foto'], array( 'test_form' => false, 'mimes' => array(
+                'jpg|jpeg' => 'image/jpeg',
+                'png'      => 'image/png',
+                'webp'     => 'image/webp',
+            ) ) );
+            if ( ! empty( $upload['url'] ) ) {
+                $data['foto_url'] = esc_url_raw( $upload['url'] );
+                // Als WordPress-Medien-Attachment registrieren
+                $attach_id = wp_insert_attachment( array(
+                    'guid'           => $upload['url'],
+                    'post_mime_type' => $upload['type'],
+                    'post_title'     => sanitize_text_field( $data['betriebs_name'] ) . ' – Partnerfoto',
+                    'post_status'    => 'inherit',
+                ), $upload['file'] );
+                if ( ! is_wp_error( $attach_id ) ) {
+                    wp_update_attachment_metadata( $attach_id, wp_generate_attachment_metadata( $attach_id, $upload['file'] ) );
+                }
+            }
+        }
     }
 
     // --- In WordPress-DB speichern ---
@@ -479,6 +513,10 @@ function sagatrail_partner_admin_page() {
                         <?php if ( $row->website )      echo '<b>Website:</b> <a href="' . esc_url( $row->website ) . '" target="_blank">' . esc_html( $row->website ) . '</a><br>'; ?>
                         <?php if ( $row->beschreibung ) echo '<b>Beschreibung:</b> ' . esc_html( $row->beschreibung ) . '<br>'; ?>
                         <?php if ( $row->api_id )       echo '<b>API-ID:</b> ' . esc_html( $row->api_id ) . '<br>'; ?>
+                        <?php if ( $row->foto_url ) : ?>
+                            <b>Foto:</b> <a href="<?php echo esc_url( $row->foto_url ); ?>" target="_blank">Ansehen</a>
+                            <img src="<?php echo esc_url( $row->foto_url ); ?>" style="display:block;margin-top:4px;max-width:160px;max-height:100px;border-radius:6px;border:1px solid #ddd;object-fit:cover;"><br>
+                        <?php endif; ?>
                         <form method="post" style="margin-top:6px;">
                             <?php wp_nonce_field( 'st_admin_action', 'st_notiz_nonce' ); ?>
                             <input type="hidden" name="st_id" value="<?php echo absint( $row->id ); ?>">
@@ -535,7 +573,12 @@ function sagatrail_partner_admin_page() {
                                 </tr>
                                 <tr>
                                     <td style="padding:3px 6px 3px 0"><b>Foto-URL</b></td>
-                                    <td><input type="url" name="st_api_foto" placeholder="https://…" style="width:100%;font-size:12px;"></td>
+                                    <td>
+                                        <input type="url" name="st_api_foto" value="<?php echo esc_attr( $row->foto_url ?? '' ); ?>" placeholder="https://…" style="width:100%;font-size:12px;">
+                                        <?php if ( $row->foto_url ) : ?>
+                                            <img src="<?php echo esc_url( $row->foto_url ); ?>" style="margin-top:4px;max-width:80px;max-height:50px;border-radius:4px;border:1px solid #ddd;object-fit:cover;display:block;">
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             </table>
                             <button type="submit" class="button button-primary button-small" style="margin-top:8px;">In App anlegen</button>
