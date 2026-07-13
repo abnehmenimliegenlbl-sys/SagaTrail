@@ -1,0 +1,247 @@
+<!--
+  SAGATRAIL PARTNER-PORTAL | WPCode HTML Snippet
+  Typ: HTML Snippet | Einbetten auf der Seite "Partner-Portal" (Slug: partner-portal)
+  Funktionsweise:
+    1. Partner gibt E-Mail ein → Magic-Link kommt per Mail (24h gültig)
+    2. Link führt zu dieser Seite mit ?token=... → Dashboard erscheint
+  Benötigt: partner-portal-handler.php als separates PHP-Snippet (Run Everywhere)
+-->
+
+<style>
+.spp-wrap{max-width:680px;margin:0 auto;padding:24px 16px 60px;font-family:-apple-system,system-ui,sans-serif;color:#1a1a1a}
+.spp-logo{font-size:22px;font-weight:800;color:#CC0000;margin-bottom:24px;letter-spacing:.3px}
+.spp-card{background:#fff;border:1.5px solid #e5e5e5;border-radius:14px;padding:28px 24px;margin-bottom:20px}
+.spp-card h2{font-size:16px;margin-bottom:16px;color:#1a1a1a}
+.spp-field{margin-bottom:14px}
+.spp-field label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
+.spp-field input,.spp-field textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s}
+.spp-field input:focus,.spp-field textarea:focus{border-color:#CC0000}
+.spp-field textarea{min-height:80px;resize:vertical}
+.spp-field .hint{font-size:11px;color:#aaa;margin-top:3px}
+.spp-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:#CC0000;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.spp-btn:hover{background:#a80000}
+.spp-btn:disabled{opacity:.6;cursor:not-allowed}
+.spp-msg{display:none;padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px}
+.spp-msg.ok{background:#f0faf0;border:1px solid #98d898;color:#2d6b2d;display:block}
+.spp-msg.err{background:#fff4f4;border:1px solid #f0a0a0;color:#8b0000;display:block}
+/* Stats */
+.spp-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.spp-stat{background:#f7f6f4;border-radius:10px;padding:16px;text-align:center}
+.spp-stat .num{font-size:28px;font-weight:700;color:#CC0000;line-height:1}
+.spp-stat .lbl{font-size:12px;color:#777;margin-top:4px}
+.spp-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.spp-badge-green{background:#e6f4ec;color:#2e7d52}
+.spp-badge-gray{background:#f0eeeb;color:#666}
+.spp-laufzeit{font-size:12px;color:#777;margin-top:6px}
+.spp-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spp-btn.loading .spp-spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<div class="spp-wrap">
+  <div class="spp-logo">SagaTrail</div>
+
+  <!-- LOGIN FORM (sichtbar wenn kein Token) -->
+  <div id="spp-login" class="spp-card">
+    <h2>Partner-Portal</h2>
+    <p style="font-size:13px;color:#555;margin-bottom:18px">
+      Geben Sie Ihre E-Mail-Adresse ein. Wenn Sie als Partner registriert sind,
+      erhalten Sie einen Anmeldelink — gültig für 24 Stunden.
+    </p>
+    <div class="spp-field">
+      <label for="spp-email">E-Mail-Adresse</label>
+      <input type="email" id="spp-email" placeholder="name@betrieb.ch" autocomplete="email" />
+    </div>
+    <button class="spp-btn" id="spp-login-btn" onclick="sppRequestLink()">
+      <span class="spp-spinner"></span>
+      <span class="spp-btn-txt">Link anfordern</span>
+    </button>
+    <div id="spp-login-msg" class="spp-msg"></div>
+  </div>
+
+  <!-- DASHBOARD (sichtbar nach Token-Validierung) -->
+  <div id="spp-dashboard" style="display:none">
+    <!-- Übersicht -->
+    <div class="spp-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <div>
+          <h2 style="margin:0" id="spp-name">–</h2>
+          <div style="margin-top:4px" id="spp-meta"></div>
+        </div>
+        <span id="spp-status-badge"></span>
+      </div>
+      <div class="spp-stat-row">
+        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl">&#128065; Profil-Aufrufe</div></div>
+        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl">&#128722; Angebot-Tipps</div></div>
+      </div>
+      <div class="spp-laufzeit" id="spp-laufzeit"></div>
+    </div>
+
+    <!-- Profil bearbeiten -->
+    <div class="spp-card">
+      <h2>Profil bearbeiten</h2>
+      <div class="spp-field">
+        <label>Beschreibung <span style="color:#aaa;font-weight:400">(max. 500 Zeichen)</span></label>
+        <textarea id="spp-beschr" maxlength="500" placeholder="Was macht Ihren Betrieb besonders?"></textarea>
+        <div class="hint"><span id="spp-beschr-count">0</span>/500</div>
+      </div>
+      <div class="spp-field">
+        <label>Angebot für SagaTrail-Nutzer <span style="color:#aaa;font-weight:400">(max. 300 Zeichen)</span></label>
+        <input type="text" id="spp-angebot" maxlength="300" placeholder="z.B. Gratis Kaffee auf Vorzeigen der App" />
+      </div>
+      <div class="spp-field">
+        <label>Foto-URL</label>
+        <input type="url" id="spp-foto" placeholder="https://…" />
+        <div class="hint">Öffentlich zugängliche Bild-URL (JPG/PNG/WebP)</div>
+      </div>
+      <div style="margin-top:4px;display:flex;align-items:center;gap:10px">
+        <button class="spp-btn" id="spp-save-btn" onclick="sppSave()">
+          <span class="spp-spinner"></span>
+          <span class="spp-btn-txt">Änderungen speichern</span>
+        </button>
+        <div id="spp-save-msg" class="spp-msg" style="margin-top:0"></div>
+      </div>
+    </div>
+
+    <p style="font-size:11px;color:#aaa;text-align:center">
+      Fragen? <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a>
+    </p>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var API_BASE = (window.stPartnerData && window.stPartnerData.apiBase) || '';
+  var AJAX_URL = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
+  var PORTAL_NONCE = (window.stPartnerData && window.stPartnerData.portalNonce) || '';
+
+  function getToken() {
+    var p = new URLSearchParams(window.location.search);
+    return p.get('token') || sessionStorage.getItem('spp_token');
+  }
+
+  function setBtn(id, loading) {
+    var btn = document.getElementById(id);
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
+  function showMsg(id, msg, ok) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'spp-msg ' + (ok ? 'ok' : 'err');
+  }
+
+  function fmt(n) { return n == null ? '–' : Number(n).toLocaleString('de-CH'); }
+  function fmtDate(s) { if (!s) return ''; return new Date(s).toLocaleDateString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric'}); }
+
+  // Zeichenzähler
+  var beschrEl = document.getElementById('spp-beschr');
+  if (beschrEl) {
+    beschrEl.addEventListener('input', function() {
+      document.getElementById('spp-beschr-count').textContent = beschrEl.value.length;
+    });
+  }
+
+  // Bei Seitenload: Token aus URL → in sessionStorage + Dashboard laden
+  var tok = getToken();
+  if (tok) {
+    sessionStorage.setItem('spp_token', tok);
+    // Token aus URL entfernen (saubere URL)
+    if (history.replaceState) {
+      var url = window.location.pathname + window.location.hash;
+      history.replaceState(null, '', url);
+    }
+    loadDashboard(tok);
+  }
+
+  window.sppRequestLink = function() {
+    var email = document.getElementById('spp-email').value.trim();
+    if (!email) { showMsg('spp-login-msg', 'Bitte E-Mail-Adresse eingeben.', false); return; }
+    setBtn('spp-login-btn', true);
+    var fd = new FormData();
+    fd.append('action', 'spp_request_token');
+    fd.append('nonce', PORTAL_NONCE);
+    fd.append('email', email);
+    fetch(AJAX_URL, { method:'POST', body:fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j) {
+        setBtn('spp-login-btn', false);
+        if (j.success) {
+          showMsg('spp-login-msg', 'Falls diese E-Mail registriert ist, haben Sie einen Link erhalten. Bitte prüfen Sie Ihren Posteingang.', true);
+        } else {
+          showMsg('spp-login-msg', j.data || 'Fehler. Bitte versuchen Sie es erneut.', false);
+        }
+      })
+      .catch(function() {
+        setBtn('spp-login-btn', false);
+        showMsg('spp-login-msg', 'Verbindungsfehler.', false);
+      });
+  };
+
+  function loadDashboard(token) {
+    fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(token))
+      .then(function(r) {
+        if (!r.ok) throw new Error('Ungültiger oder abgelaufener Link.');
+        return r.json();
+      })
+      .then(function(p) {
+        document.getElementById('spp-login').style.display = 'none';
+        document.getElementById('spp-dashboard').style.display = 'block';
+        document.getElementById('spp-name').textContent = p.name;
+        document.getElementById('spp-meta').innerHTML =
+          '<span style="font-size:13px;color:#777">' +
+          katLabel(p.kategorie) + ' &middot; ' + (p.canton || '') +
+          (p.paket ? ' &middot; Paket <strong>' + p.paket + '</strong>' : '') + '</span>';
+        document.getElementById('spp-views').textContent = fmt(p.views);
+        document.getElementById('spp-taps').textContent = fmt(p.offersTapped);
+        document.getElementById('spp-status-badge').innerHTML =
+          p.isActive ? '<span class="spp-badge spp-badge-green">&#10003; Aktiv in der App</span>'
+                     : '<span class="spp-badge spp-badge-gray">Inaktiv</span>';
+        var lauf = '';
+        if (p.laufzeitStart) lauf = 'Laufzeit: ' + fmtDate(p.laufzeitStart) + (p.laufzeitEnde ? ' – ' + fmtDate(p.laufzeitEnde) : '');
+        document.getElementById('spp-laufzeit').textContent = lauf;
+        // Formular vorfüllen
+        document.getElementById('spp-beschr').value = p.beschreibung || '';
+        document.getElementById('spp-beschr-count').textContent = (p.beschreibung || '').length;
+        document.getElementById('spp-angebot').value = p.angebot || '';
+        document.getElementById('spp-foto').value = p.fotoUrl || '';
+      })
+      .catch(function(e) {
+        sessionStorage.removeItem('spp_token');
+        showMsg('spp-login-msg', e.message || 'Link ungültig.', false);
+      });
+  }
+
+  window.sppSave = function() {
+    var tok = getToken();
+    if (!tok) { showMsg('spp-save-msg', 'Sitzung abgelaufen. Bitte neu einloggen.', false); return; }
+    setBtn('spp-save-btn', true);
+    var body = {
+      beschreibung: document.getElementById('spp-beschr').value.trim(),
+      angebot:      document.getElementById('spp-angebot').value.trim(),
+      fotoUrl:      document.getElementById('spp-foto').value.trim(),
+    };
+    fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('Speichern fehlgeschlagen.'); return r.json(); })
+      .then(function() {
+        setBtn('spp-save-btn', false);
+        showMsg('spp-save-msg', 'Gespeichert! Änderungen sind sofort in der App sichtbar.', true);
+      })
+      .catch(function(e) {
+        setBtn('spp-save-btn', false);
+        showMsg('spp-save-msg', e.message, false);
+      });
+  };
+
+  function katLabel(k) {
+    return {restaurant:'🍽 Restaurant',cafe:'☕ Café',souvenir:'🎁 Souvenir',uebernachtung:'🏨 Übernachtung',sonstiges:'📌 Sonstiges'}[k] || k;
+  }
+})();
+</script>

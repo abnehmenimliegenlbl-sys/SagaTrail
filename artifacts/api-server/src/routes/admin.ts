@@ -3,15 +3,17 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { db, profilesTable, partnersTable, type PartnerKategorie } from "@workspace/db";
+import {
+  db,
+  profilesTable,
+  partnersTable,
+  catalogRoutesTable,
+  catalogSagasTable,
+  type PartnerKategorie,
+} from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
-import { PARTNER_ADMIN_HTML } from "../lib/partnerAdminHtml";
+import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 
-/**
- * Interne Admin-Endpunkte, geschuetzt ueber das Header-Token `x-admin-token`
- * (env `ADMIN_TOKEN`). Nicht Teil der oeffentlichen OpenAPI-Spezifikation,
- * da sie nie von der App aufgerufen werden.
- */
 const router: IRouter = Router();
 
 const PremiumFreischaltenBody = z.object({
@@ -22,7 +24,6 @@ const PremiumFreischaltenBody = z.object({
 function requireAdminToken(req: Request, res: Response): boolean {
   const erwartet = process.env.ADMIN_TOKEN;
   const geliefert = req.header("x-admin-token");
-  // Zeitkonstanter Vergleich, damit das Token nicht ueber Timing erratbar ist.
   const a = Buffer.from(geliefert ?? "");
   const b = Buffer.from(erwartet ?? "");
   const gueltig =
@@ -45,10 +46,7 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
   }
   const { email, monate } = parsed.data;
 
-  // Clerk-Nutzer zur E-Mail aufloesen (Profile sind ueber die Clerk-ID verknuepft)
-  const nutzer = await clerkClient.users.getUserList({
-    emailAddress: [email],
-  });
+  const nutzer = await clerkClient.users.getUserList({ emailAddress: [email] });
   if (nutzer.data.length === 0) {
     res.status(404).json({ error: `Kein Clerk-Nutzer mit E-Mail ${email}` });
     return;
@@ -65,29 +63,17 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
     .returning();
 
   if (!row) {
-    res.status(404).json({
-      error: `Clerk-Nutzer ${userId} hat noch kein Profil (Onboarding nicht abgeschlossen)`,
-    });
+    res.status(404).json({ error: `Clerk-Nutzer ${userId} hat noch kein Profil` });
     return;
   }
 
-  req.log.info(
-    { userId, email, premiumBis: bis.toISOString() },
-    "Premium manuell freigeschaltet",
-  );
-  res.json({
-    userId,
-    email,
-    premiumBis: bis.toISOString(),
-    premiumAktiv: istPremiumAktiv(row),
-  });
+  req.log.info({ userId, email, premiumBis: bis.toISOString() }, "Premium manuell freigeschaltet");
+  res.json({ userId, email, premiumBis: bis.toISOString(), premiumAktiv: istPremiumAktiv(row) });
 });
 
 const PremiumZuruecksetzenBody = z.object({
   email: z.string().email().optional(),
   userId: z.string().optional(),
-  // Wie lange /me/premium/sync ein weiterhin aktives RevenueCat-Test-Abo
-  // ignorieren soll. Default 3650 Tage (praktisch dauerhaft fuer Dev-Zwecke).
   sperrtageAnzahl: z.number().int().min(0).max(3650).default(3650),
 });
 
@@ -123,7 +109,6 @@ router.post("/admin/premium/reset", async (req, res): Promise<void> => {
     .set({
       premium: false,
       premiumBis: null,
-      // Bei sperrtageAnzahl=0 sofort wieder synchronisierbar lassen.
       premiumSyncLockedUntil: sperrtageAnzahl > 0 ? sperreBis : null,
       updatedAt: new Date(),
     })
@@ -135,15 +120,8 @@ router.post("/admin/premium/reset", async (req, res): Promise<void> => {
     return;
   }
 
-  req.log.info(
-    { userId, sperrtageAnzahl, premiumSyncLockedUntil: row.premiumSyncLockedUntil },
-    "Premium per Admin zurueckgesetzt (RevenueCat-Sync gesperrt)",
-  );
-  res.json({
-    userId,
-    premium: row.premium,
-    premiumSyncLockedUntil: row.premiumSyncLockedUntil,
-  });
+  req.log.info({ userId, sperrtageAnzahl }, "Premium per Admin zurueckgesetzt");
+  res.json({ userId, premium: row.premium, premiumSyncLockedUntil: row.premiumSyncLockedUntil });
 });
 
 const AppleTestUserBody = z.object({
@@ -166,7 +144,6 @@ router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
   let userId: string;
   if (bestehende.data.length > 0) {
     userId = bestehende.data[0].id;
-    req.log.info({ userId, email }, "Apple-Test-User existiert bereits in Clerk, wiederverwendet");
   } else {
     const neuerNutzer = await clerkClient.users.createUser({
       emailAddress: [email],
@@ -175,7 +152,6 @@ router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
       skipPasswordRequirement: false,
     });
     userId = neuerNutzer.id;
-    req.log.info({ userId, email }, "Apple-Test-User in Clerk angelegt");
   }
 
   const premiumBis = premium ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650) : null;
@@ -191,8 +167,6 @@ router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
       ageTier: "erwachsene",
       premium: false,
       premiumBis,
-      // Dauerhaft gegen RevenueCat-Resync gesperrt: dieser Account hat nie
-      // ein echtes Abo, das Premium kommt ausschliesslich aus premiumBis.
       premiumSyncLockedUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650),
     })
     .onConflictDoUpdate({
@@ -206,20 +180,124 @@ router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
     .returning();
 
   req.log.info({ userId, email, premium }, "Apple-Test-Profil angelegt/aktualisiert");
+  res.json({ userId, email, premiumAktiv: istPremiumAktiv(row), premiumBis: row.premiumBis });
+});
+
+// ===================================================================
+// ADMIN STATS / USERS / USAGE
+// ===================================================================
+
+router.get("/admin/stats", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const allProfiles = await db.select().from(profilesTable);
+  const allPartners = await db.select().from(partnersTable);
+
+  const totalHikes = allProfiles.reduce((sum, p) => {
+    const hist = Array.isArray(p.hikeHistory) ? (p.hikeHistory as unknown[]) : [];
+    return sum + hist.length;
+  }, 0);
+
+  const byStatus: Record<string, number> = {};
+  allPartners.forEach((p) => {
+    const s = (p.zahlungsstatus as string) ?? "ausstehend";
+    byStatus[s] = (byStatus[s] ?? 0) + 1;
+  });
+
   res.json({
-    userId,
-    email,
-    premiumAktiv: istPremiumAktiv(row),
-    premiumBis: row.premiumBis,
+    users: {
+      total: allProfiles.length,
+      premium: allProfiles.filter((p) => istPremiumAktiv(p)).length,
+      freeHikeUsed: allProfiles.filter((p) => p.freeHikeUsed).length,
+    },
+    partners: {
+      total: allPartners.length,
+      active: allPartners.filter((p) => p.isActive).length,
+      byStatus,
+    },
+    hikes: { total: totalHikes },
   });
 });
 
+router.get("/admin/users", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const profiles = await db
+    .select()
+    .from(profilesTable)
+    .orderBy(desc(profilesTable.createdAt));
+
+  res.json(
+    profiles.map((p) => ({
+      id: p.id,
+      name: p.name,
+      homeCanton: p.homeCanton,
+      language: p.language,
+      ageTier: p.ageTier,
+      archetype: p.archetype,
+      premium: istPremiumAktiv(p),
+      premiumBis: p.premiumBis,
+      freeHikeUsed: p.freeHikeUsed,
+      hikeCount: Array.isArray(p.hikeHistory) ? (p.hikeHistory as unknown[]).length : 0,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    })),
+  );
+});
+
+router.get("/admin/usage", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const profiles = await db
+    .select({ hikeHistory: profilesTable.hikeHistory })
+    .from(profilesTable);
+
+  const routeCounts: Record<string, number> = {};
+  const sagaCounts: Record<string, number> = {};
+
+  for (const p of profiles) {
+    const hist = Array.isArray(p.hikeHistory)
+      ? (p.hikeHistory as Array<Record<string, unknown>>)
+      : [];
+    for (const h of hist) {
+      if (h["routeId"] && typeof h["routeId"] === "string") {
+        routeCounts[h["routeId"]] = (routeCounts[h["routeId"]] ?? 0) + 1;
+      }
+      if (h["sagaId"] && typeof h["sagaId"] === "string") {
+        sagaCounts[h["sagaId"]] = (sagaCounts[h["sagaId"]] ?? 0) + 1;
+      }
+    }
+  }
+
+  const allRoutes = await db
+    .select({ id: catalogRoutesTable.id, name: catalogRoutesTable.name, region: catalogRoutesTable.region })
+    .from(catalogRoutesTable);
+  const allSagas = await db
+    .select({ id: catalogSagasTable.id, title: catalogSagasTable.title, canton: catalogSagasTable.canton })
+    .from(catalogSagasTable);
+
+  const routeMap = Object.fromEntries(allRoutes.map((r) => [r.id, r]));
+  const sagaMap = Object.fromEntries(allSagas.map((s) => [s.id, s]));
+
+  const routes = Object.entries(routeCounts)
+    .map(([id, count]) => ({ id, count, name: routeMap[id]?.name ?? id, region: routeMap[id]?.region ?? "" }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 30);
+
+  const sagas = Object.entries(sagaCounts)
+    .map(([id, count]) => ({ id, count, name: sagaMap[id]?.title ?? id, canton: sagaMap[id]?.canton ?? "" }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 30);
+
+  res.json({ routes, sagas });
+});
+
+// ===================================================================
+// PARTNER CRUD
+// ===================================================================
+
 const PARTNER_KATEGORIEN = [
-  "restaurant",
-  "cafe",
-  "souvenir",
-  "uebernachtung",
-  "sonstiges",
+  "restaurant", "cafe", "souvenir", "uebernachtung", "sonstiges",
 ] as const satisfies readonly PartnerKategorie[];
 
 const PartnerBody = z.object({
@@ -229,19 +307,25 @@ const PartnerBody = z.object({
   beschreibung: z.string().optional(),
   angebot: z.string().optional(),
   fotoUrl: z.string().url().optional(),
+  email: z.string().email().optional(),
   lat: z.number(),
   lng: z.number(),
   aktivVon: z.string().datetime().optional(),
   aktivBis: z.string().datetime().optional(),
   isActive: z.boolean().default(true),
+  paket: z.string().optional(),
+  preisChf: z.number().int().min(0).optional(),
+  einfuehrungspreisChf: z.number().int().min(0).optional(),
+  einfuehrungspreisGueltigBis: z.string().datetime().optional(),
+  zahlungsstatus: z.enum(["ausstehend", "bezahlt", "mahnung1", "mahnung2", "gesperrt"]).optional(),
+  laufzeitStart: z.string().datetime().optional(),
+  laufzeitEnde: z.string().datetime().optional(),
+  notizenIntern: z.string().optional(),
 });
 
 router.get("/admin/partner", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const rows = await db
-    .select()
-    .from(partnersTable)
-    .orderBy(desc(partnersTable.createdAt));
+  const rows = await db.select().from(partnersTable).orderBy(desc(partnersTable.createdAt));
   res.json(rows);
 });
 
@@ -253,7 +337,11 @@ router.post("/admin/partner", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { aktivVon, aktivBis, ...rest } = parsed.data;
+  const {
+    aktivVon, aktivBis,
+    einfuehrungspreisGueltigBis, laufzeitStart, laufzeitEnde,
+    ...rest
+  } = parsed.data;
 
   const [row] = await db
     .insert(partnersTable)
@@ -262,6 +350,9 @@ router.post("/admin/partner", async (req, res): Promise<void> => {
       ...rest,
       aktivVon: aktivVon ? new Date(aktivVon) : null,
       aktivBis: aktivBis ? new Date(aktivBis) : null,
+      einfuehrungspreisGueltigBis: einfuehrungspreisGueltigBis ? new Date(einfuehrungspreisGueltigBis) : null,
+      laufzeitStart: laufzeitStart ? new Date(laufzeitStart) : null,
+      laufzeitEnde: laufzeitEnde ? new Date(laufzeitEnde) : null,
     })
     .returning();
 
@@ -277,7 +368,11 @@ router.patch("/admin/partner/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { aktivVon, aktivBis, ...rest } = parsed.data;
+  const {
+    aktivVon, aktivBis,
+    einfuehrungspreisGueltigBis, laufzeitStart, laufzeitEnde,
+    ...rest
+  } = parsed.data;
 
   const [row] = await db
     .update(partnersTable)
@@ -285,6 +380,11 @@ router.patch("/admin/partner/:id", async (req, res): Promise<void> => {
       ...rest,
       ...(aktivVon !== undefined && { aktivVon: aktivVon ? new Date(aktivVon) : null }),
       ...(aktivBis !== undefined && { aktivBis: aktivBis ? new Date(aktivBis) : null }),
+      ...(einfuehrungspreisGueltigBis !== undefined && {
+        einfuehrungspreisGueltigBis: einfuehrungspreisGueltigBis ? new Date(einfuehrungspreisGueltigBis) : null,
+      }),
+      ...(laufzeitStart !== undefined && { laufzeitStart: laufzeitStart ? new Date(laufzeitStart) : null }),
+      ...(laufzeitEnde !== undefined && { laufzeitEnde: laufzeitEnde ? new Date(laufzeitEnde) : null }),
       updatedAt: new Date(),
     })
     .where(eq(partnersTable.id, req.params.id as string))
@@ -314,8 +414,12 @@ router.delete("/admin/partner/:id", async (req, res): Promise<void> => {
   res.status(204).end();
 });
 
+router.get("/admin/dashboard", (_req, res): void => {
+  res.type("html").send(ADMIN_DASHBOARD_HTML);
+});
+
 router.get("/admin/partner-ui", (_req, res): void => {
-  res.type("html").send(PARTNER_ADMIN_HTML);
+  res.redirect("/api/admin/dashboard");
 });
 
 export default router;

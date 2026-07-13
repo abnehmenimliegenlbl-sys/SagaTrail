@@ -9,9 +9,6 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-/**
- * Kategorie eines Partnerbetriebs entlang einer Route.
- */
 export type PartnerKategorie =
   | "restaurant"
   | "cafe"
@@ -19,11 +16,19 @@ export type PartnerKategorie =
   | "uebernachtung"
   | "sonstiges";
 
-/**
- * Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Routen, die
- * als Empfehlung/Anzeige in der App erscheinen. Werden ausschliesslich ueber
- * die Admin-Oberflaeche (/admin/partner) gepflegt, nie automatisch generiert.
- */
+export type Zahlungsstatus =
+  | "ausstehend"
+  | "bezahlt"
+  | "mahnung1"
+  | "mahnung2"
+  | "gesperrt";
+
+export const PAKET_PREISE: Record<string, number> = {
+  basic: 490,
+  standard: 990,
+  premium: 1990,
+};
+
 export const partnersTable = pgTable("partners", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -34,17 +39,22 @@ export const partnersTable = pgTable("partners", {
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   fotoUrl: text("foto_url"),
+  email: text("email"),
+  paket: text("paket"),
+  preisChf: integer("preis_chf"),
+  einfuehrungspreisChf: integer("einfuehrungspreis_chf"),
+  einfuehrungspreisGueltigBis: timestamp("einfuehrungspreis_gueltig_bis", { withTimezone: true }),
+  zahlungsstatus: text("zahlungsstatus").$type<Zahlungsstatus>().default("ausstehend"),
+  laufzeitStart: timestamp("laufzeit_start", { withTimezone: true }),
+  laufzeitEnde: timestamp("laufzeit_ende", { withTimezone: true }),
+  notizenIntern: text("notizen_intern"),
   aktivVon: timestamp("aktiv_von", { withTimezone: true }),
   aktivBis: timestamp("aktiv_bis", { withTimezone: true }),
   isActive: boolean("is_active").notNull().default(true),
   views: integer("views").notNull().default(0),
   offersTapped: integer("offers_tapped").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const insertPartnerSchema = createInsertSchema(partnersTable).omit({

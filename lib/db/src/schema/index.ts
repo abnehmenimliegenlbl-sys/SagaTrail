@@ -9,3 +9,4 @@ export * from "./cantonFetches";
 export * from "./profiles";
 export * from "./partners";
 export * from "./partnerAnfragen";
+export * from "./partnerTokens";

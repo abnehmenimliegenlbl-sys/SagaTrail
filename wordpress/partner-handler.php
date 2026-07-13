@@ -284,6 +284,7 @@ function sagatrail_partner_forward_to_api( $data ) {
         'kontaktEmail'   => $data['kontakt_email'],
         'kontaktTelefon' => $data['kontakt_telefon'] ?: null,
         'paket'          => $data['paket'],
+        'email'          => $data['kontakt_email'],
     );
 
     $response = wp_remote_post(
@@ -377,6 +378,7 @@ function sagatrail_partner_admin_page() {
             } else {
                 $payload = array(
                     'name'        => sanitize_text_field( wp_unslash( $_POST['st_api_name'] ?? '' ) ),
+                    'email'       => sanitize_email( wp_unslash( $_POST['st_api_email'] ?? '' ) ) ?: null,
                     'kategorie'   => sanitize_text_field( wp_unslash( $_POST['st_api_kat'] ?? 'sonstiges' ) ),
                     'canton'      => strtoupper( sanitize_text_field( wp_unslash( $_POST['st_api_canton'] ?? '' ) ) ),
                     'lat'         => $lat,
@@ -384,6 +386,7 @@ function sagatrail_partner_admin_page() {
                     'beschreibung'=> sanitize_text_field( wp_unslash( $_POST['st_api_beschr'] ?? '' ) ) ?: null,
                     'angebot'     => sanitize_text_field( wp_unslash( $_POST['st_api_angebot'] ?? '' ) ) ?: null,
                     'fotoUrl'     => esc_url_raw( sanitize_text_field( wp_unslash( $_POST['st_api_foto'] ?? '' ) ) ) ?: null,
+                    'paket'       => sanitize_text_field( wp_unslash( $_POST['st_api_paket'] ?? '' ) ) ?: null,
                     'isActive'    => true,
                 );
 
