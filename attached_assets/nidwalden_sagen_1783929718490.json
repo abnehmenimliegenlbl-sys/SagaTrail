@@ -1,0 +1,426 @@
+[
+  {
+    "id": "arnold-winkelried-sempach",
+    "title": "Arnold von Winkelried und die Gasse zum Sieg",
+    "canton": "Nidwalden",
+    "coreMotif": "Opfertod für die Gemeinschaft",
+    "mood": "Heroisch, tragisch",
+    "bildmotiv": "Winkelried-Denkmal Stans",
+    "summary": "Am 9. Juli 1386 stiessen die Eidgenossen bei Sempach auf ein Ritterheer Herzog Leopolds III. von Habsburg, dessen dicht geschlossene Speerreihen zunächst jeden Angriff abwehrten. In dieser höchsten Not soll ein Mann aus Stans namens Arnold von Winkelried gerufen haben, man solle seiner Frau und seinen Kindern Sorge tragen, und dann mit ausgebreiteten Armen eine ganze Anzahl gegnerischer Spiesse gepackt und sich diese in die eigene Brust gerammt haben. Durch sein Opfer riss er eine Lücke in die verschlossene Front der Ritter, durch die seine Landsleute mit ihren Hellebarden eindringen und die schwer gerüsteten Habsburger in die Flucht schlagen konnten. Seither gilt Winkelrieds selbstgewählter Tod als der Schlüssel zum eidgenössischen Sieg bei Sempach, und in seiner Heimatstadt Stans erinnert bis heute ein Denkmal an seine Tat.",
+    "summaries": {
+      "de": {
+        "text": "Am 9. Juli 1386 stiessen die Eidgenossen bei Sempach auf ein Ritterheer Herzog Leopolds III. von Habsburg, dessen dicht geschlossene Speerreihen zunächst jeden Angriff abwehrten. In dieser höchsten Not soll ein Mann aus Stans namens Arnold von Winkelried gerufen haben, man solle seiner Frau und seinen Kindern Sorge tragen, und dann mit ausgebreiteten Armen eine ganze Anzahl gegnerischer Spiesse gepackt und sich diese in die eigene Brust gerammt haben. Durch sein Opfer riss er eine Lücke in die verschlossene Front der Ritter, durch die seine Landsleute mit ihren Hellebarden eindringen und die schwer gerüsteten Habsburger in die Flucht schlagen konnten. Seither gilt Winkelrieds selbstgewählter Tod als der Schlüssel zum eidgenössischen Sieg bei Sempach, und in seiner Heimatstadt Stans erinnert bis heute ein Denkmal an seine Tat.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "On 9 July 1386, the Confederates met an army of knights under Duke Leopold III of Habsburg at Sempach, whose tightly closed rows of spears at first repelled every attack. In this moment of utmost need, a man from Stans named Arnold von Winkelried is said to have called out that his wife and children should be cared for, then spread his arms, seized a number of the enemy's spears, and driven them into his own chest. Through his sacrifice he tore open a gap in the closed ranks of knights, through which his countrymen could break in with their halberds and put the heavily armoured Habsburg forces to flight. Ever since, Winkelried's self-chosen death has been regarded as the key to the Confederate victory at Sempach, and a monument in his home town of Stans still commemorates his deed today.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Le 9 juillet 1386, les Confédérés affrontèrent à Sempach une armée de chevaliers du duc Léopold III de Habsbourg, dont les rangs de lances serrés repoussaient d'abord toute attaque. Dans cette extrême détresse, un homme de Stans nommé Arnold von Winkelried aurait crié qu'on prenne soin de sa femme et de ses enfants, puis, écartant les bras, aurait saisi plusieurs lances ennemies et se les serait plantées dans la poitrine. Par ce sacrifice, il ouvrit une brèche dans les rangs fermés des chevaliers, par laquelle ses compatriotes purent s'engouffrer avec leurs hallebardes et mettre en fuite les troupes habsbourgeoises lourdement armées. Depuis lors, la mort volontaire de Winkelried est considérée comme la clé de la victoire confédérée à Sempach, et un monument dans sa ville natale de Stans commémore encore aujourd'hui son acte.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Il 9 luglio 1386, i Confederati incontrarono a Sempach un esercito di cavalieri del duca Leopoldo III d'Asburgo, le cui file di lance serrate respingevano dapprima ogni assalto. In questo estremo pericolo, un uomo di Stans di nome Arnold von Winkelried avrebbe gridato che ci si prendesse cura di sua moglie e dei suoi figli, quindi, allargando le braccia, avrebbe afferrato diverse lance nemiche e se le sarebbe conficcate nel petto. Con questo sacrificio aprì una breccia nelle file serrate dei cavalieri, attraverso la quale i suoi connazionali poterono irrompere con le loro alabarde e mettere in fuga le truppe asburgiche pesantemente armate. Da allora la morte volontaria di Winkelried è considerata la chiave della vittoria confederata a Sempach, e un monumento nella sua città natale di Stans ricorda ancora oggi la sua impresa.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "El 9 de julio de 1386, los Confederados se enfrentaron en Sempach a un ejército de caballeros del duque Leopoldo III de Habsburgo, cuyas filas de lanzas cerradas rechazaban al principio todo ataque. En esa extrema necesidad, un hombre de Stans llamado Arnold von Winkelried habría gritado que cuidaran de su esposa e hijos, y luego, abriendo los brazos, habría agarrado varias lanzas enemigas y se las habría clavado en el pecho. Con su sacrificio abrió una brecha en las filas cerradas de los caballeros, por la que sus compatriotas pudieron irrumpir con sus alabardas y poner en fuga a las tropas habsbúrgicas fuertemente armadas. Desde entonces, la muerte voluntaria de Winkelried se considera la clave de la victoria confederada en Sempach, y un monumento en su ciudad natal, Stans, conmemora todavía hoy su hazaña.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Em 9 de julho de 1386, os Confederados encontraram em Sempach um exército de cavaleiros do duque Leopoldo III de Habsburgo, cujas fileiras de lanças cerradas repeliam a princípio todo ataque. Nessa extrema necessidade, um homem de Stans chamado Arnold von Winkelried teria gritado que cuidassem de sua esposa e filhos, e então, abrindo os braços, teria agarrado várias lanças inimigas e as cravado em seu próprio peito. Com esse sacrifício, abriu uma brecha nas fileiras cerradas dos cavaleiros, pela qual seus compatriotas puderam irromper com suas alabardas e pôr em fuga as tropas habsburgas pesadamente armadas. Desde então, a morte voluntária de Winkelried é considerada a chave da vitória confederada em Sempach, e um monumento em sua cidade natal, Stans, ainda hoje comemora seu feito.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "1386年7月9日，联邦军队在森帕赫与哈布斯堡的利奥波德三世公爵率领的骑士军队交锋，敌军密集的长矛方阵起初挡住了每一次进攻。危急关头，一位来自施坦斯、名叫阿诺德·冯·温克尔里德的人据说高呼，请众人照顾他的妻儿，随即张开双臂，抓住数支敌军长矛，将它们刺入自己胸膛。他以自我牺牲在骑士的密集队形中撕开一道缺口，联邦同胞得以持戟冲入，击溃全副武装的哈布斯堡军队。从那时起，温克尔里德自愿赴死之举被视为联邦在森帕赫取胜的关键，他的家乡施坦斯至今仍立有纪念他事迹的雕像。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Den Opfertod behutsam erzählen, den Fokus auf Mut und Fürsorge für die Gemeinschaft legen statt auf die Verletzung selbst.",
+    "quelle": {
+      "autor": "Aegidius Tschudi",
+      "werk": "Chronicon Helveticum (samt dem gedruckten Halbsuterlied)",
+      "jahr": "um 1564 / 1533",
+      "fundstelleUrl": "https://hls-dhs-dss.ch/de/articles/024437/"
+    },
+    "source": "Aegidius Tschudi: Chronicon Helveticum (samt dem gedruckten Halbsuterlied) (um 1564 / 1533)",
+    "coordinates": {
+      "lat": 46.9581,
+      "lng": 8.3661
+    },
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "edelmuetige-nidwaldner-luzern-brand",
+    "title": "Die edelmütigen Nidwaldner",
+    "canton": "Nidwalden",
+    "coreMotif": "Nachbarschaftshilfe überwindet alten Streit",
+    "mood": "Versöhnlich, ergreifend",
+    "bildmotiv": "Vierwaldstättersee Nauen historisch",
+    "summary": "Einst lag den Bürgern der Stadt Luzern und den Landleuten von Unterwalden nid dem Kernwald ein böser Streit um eine Rechtsame am Bürgenberg im Magen, der die beiden Nachbarn immer weiter auseinandertrieb. Da brach im Jahr 1340 in Luzern eine furchtbare Feuersbrunst aus, deren Feuerschein die Nidwaldner Hirten zunächst für ein Alpenglühen hielten, bis eilig herbeifahrende Fischer die Wahrheit meldeten. Rasch bewaffneten sich die Nidwaldner und fuhren mit ihren Nauen zur brennenden Stadt, doch die erschrockenen Luzerner schlossen zunächst misstrauisch ihre Tore vor den anrückenden Nachbarn. Da erhob sich der Landammann der Nidwaldner in seinem Schiff und rief den Luzernern zu, ihr Leid sei auch das ihre und man komme nur, um zu helfen, worauf man die Tore öffnete und gemeinsam die Flammen bezwang.",
+    "summaries": {
+      "de": {
+        "text": "Einst lag den Bürgern der Stadt Luzern und den Landleuten von Unterwalden nid dem Kernwald ein böser Streit um eine Rechtsame am Bürgenberg im Magen, der die beiden Nachbarn immer weiter auseinandertrieb. Da brach im Jahr 1340 in Luzern eine furchtbare Feuersbrunst aus, deren Feuerschein die Nidwaldner Hirten zunächst für ein Alpenglühen hielten, bis eilig herbeifahrende Fischer die Wahrheit meldeten. Rasch bewaffneten sich die Nidwaldner und fuhren mit ihren Nauen zur brennenden Stadt, doch die erschrockenen Luzerner schlossen zunächst misstrauisch ihre Tore vor den anrückenden Nachbarn. Da erhob sich der Landammann der Nidwaldner in seinem Schiff und rief den Luzernern zu, ihr Leid sei auch das ihre und man komme nur, um zu helfen, worauf man die Tore öffnete und gemeinsam die Flammen bezwang.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "Once a bitter dispute over rights on the Bürgenberg lay heavy between the citizens of Lucerne and the country folk of Unterwalden nid dem Kernwald, driving the two neighbours ever further apart. Then in the year 1340 a terrible fire broke out in Lucerne, whose glow the shepherds of Nidwalden at first mistook for an alpenglow, until fishermen rowing in hastily reported the truth. The people of Nidwalden quickly armed themselves and rowed their boats to the burning city, but the frightened people of Lucerne at first suspiciously closed their gates against the approaching neighbours. Then the Landammann of Nidwalden rose in his boat and called out to the people of Lucerne that their suffering was shared, and that the Nidwaldners had come only to help, whereupon the gates were opened and together they overcame the flames.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Autrefois, un amer différend sur des droits au Bürgenberg pesait entre les bourgeois de Lucerne et les gens de la campagne d'Unterwalden nid dem Kernwald, éloignant toujours plus les deux voisins. Puis, en l'an 1340, un terrible incendie éclata à Lucerne, dont les bergers de Nidwald prirent d'abord la lueur pour un embrasement alpin, jusqu'à ce que des pêcheurs accourus en rapportent la vérité. Les Nidwaldois s'armèrent rapidement et ramèrent vers la ville en flammes, mais les Lucernois effrayés fermèrent d'abord leurs portes avec méfiance devant les voisins qui approchaient. Alors le landamman des Nidwaldois se leva dans sa barque et cria aux Lucernois que leur malheur était aussi le leur, et qu'ils venaient seulement pour aider, sur quoi les portes s'ouvrirent et l'on maîtrisa ensemble les flammes.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Un tempo, un'aspra contesa su alcuni diritti sul Bürgenberg pesava fra i cittadini di Lucerna e la gente di campagna dell'Unterwalden nid dem Kernwald, allontanando sempre più i due vicini. Poi, nell'anno 1340, scoppiò a Lucerna un terribile incendio, il cui bagliore i pastori di Nidwaldo scambiarono dapprima per un tramonto alpino, finché alcuni pescatori accorsi in fretta non riferirono la verità. I nidwaldesi si armarono rapidamente e remarono verso la città in fiamme, ma gli spaventati lucernesi chiusero dapprima con diffidenza le porte davanti ai vicini che si avvicinavano. Allora il landamano dei nidwaldesi si alzò sulla sua barca e gridò ai lucernesi che la loro sventura era anche la propria, e che erano venuti solo per aiutare, al che le porte si aprirono e insieme domarono le fiamme.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Antaño, una amarga disputa por unos derechos en el Bürgenberg pesaba entre los ciudadanos de Lucerna y las gentes del campo de Unterwalden nid dem Kernwald, alejando cada vez más a los dos vecinos. Luego, en el año 1340, estalló en Lucerna un terrible incendio, cuyo resplandor los pastores de Nidwalden confundieron al principio con un arrebol alpino, hasta que unos pescadores que llegaron a toda prisa relataron la verdad. Los de Nidwalden se armaron rápidamente y remaron hacia la ciudad en llamas, pero los asustados lucerneses cerraron al principio con desconfianza sus puertas ante los vecinos que se acercaban. Entonces el landamán de los de Nidwalden se levantó en su barca y gritó a los lucerneses que su desgracia también era la suya, y que solo venían a ayudar, tras lo cual se abrieron las puertas y juntos vencieron las llamas.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Outrora, uma amarga disputa por direitos no Bürgenberg pesava entre os cidadãos de Lucerna e os habitantes rurais de Unterwalden nid dem Kernwald, afastando cada vez mais os dois vizinhos. Depois, no ano de 1340, irrompeu em Lucerna um terrível incêndio, cujo brilho os pastores de Nidwalden confundiram a princípio com um poente alpino, até que pescadores que chegaram às pressas relataram a verdade. Os de Nidwalden armaram-se rapidamente e remaram até a cidade em chamas, mas os assustados lucerneses fecharam a princípio, desconfiados, seus portões diante dos vizinhos que se aproximavam. Então o landamano dos de Nidwalden ergueu-se em seu barco e gritou aos lucerneses que a desgraça deles também era sua, e que vinham apenas para ajudar, ao que os portões se abriram e juntos venceram as chamas.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "从前，卢塞恩市民与下森林州（尼德瓦尔登）乡民之间，为比尔根山的一项权利争执不下，积怨日深，令两邻日渐疏远。1340年，卢塞恩城中突发大火，尼德瓦尔登的牧人起初还以为那火光是美丽的高山晚霞，直到匆忙赶回的渔夫带来实情。尼德瓦尔登人迅速武装起来，划着他们的木船驶向燃烧的城市，然而惊恐的卢塞恩人起初却疑虑地紧闭城门，不让邻人靠近。这时尼德瓦尔登的州长在船上挺身而起，向卢塞恩人喊道：你们的苦难也是我们的苦难，我们此来只为相助——城门这才敞开，两地人齐心协力扑灭了大火。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; die Erzählung betont Versöhnung statt Konflikt.",
+    "quelle": {
+      "autor": "Meinrad Lienert",
+      "werk": "Schweizer Sagen und Heldengeschichten",
+      "jahr": "1915",
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/allgemein/nidwaldner.html"
+    },
+    "source": "Meinrad Lienert: Schweizer Sagen und Heldengeschichten (1915)",
+    "coordinates": {
+      "lat": 46.9928,
+      "lng": 8.4302
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "teufel-dallenwiler-bruecke",
+    "title": "Der Teufel an der Dallenwiler Brücke",
+    "canton": "Nidwalden",
+    "coreMotif": "Gottvertrauen bezwingt das Böse",
+    "mood": "Unheimlich, mahnend",
+    "bildmotiv": "Alte Steinbrücke Dallenwil Aawasser",
+    "summary": "Dort, wo heute die Brücke von Dallenwil über das Aawasser führt, soll beim Einnachten manches Mal eine unheimliche, schwarz gekleidete Gestalt gestanden haben, sodass sich lange Zeit niemand über die Brücke traute. Ein paar beherzte Dallenwiler Burschen wollten der Sache auf den Grund gehen und dem seltsamen Fremden mit Prügeln zuleibe rücken, doch als der Stärkste von ihnen, Loränz, auf die Gestalt losging, geriet er an den Falschen und wurde übel zugerichtet. Erst als seine erschrockenen Kameraden ihm zu Hilfe eilen wollten, rief Loränz aus, dagegen helfe nur noch Gottes Beistand, und in dem Moment, da er \"Gottes Hilfe\" aussprach, heulte die schwarze Gestalt entsetzt auf und sprang von der Brücke hinunter ins Wasser. Die Burschen trugen den erschöpften Loränz heim, und seither traute sich der unheimliche Fremde nicht mehr an die Brücke.",
+    "summaries": {
+      "de": {
+        "text": "Dort, wo heute die Brücke von Dallenwil über das Aawasser führt, soll beim Einnachten manches Mal eine unheimliche, schwarz gekleidete Gestalt gestanden haben, sodass sich lange Zeit niemand über die Brücke traute. Ein paar beherzte Dallenwiler Burschen wollten der Sache auf den Grund gehen und dem seltsamen Fremden mit Prügeln zuleibe rücken, doch als der Stärkste von ihnen, Loränz, auf die Gestalt losging, geriet er an den Falschen und wurde übel zugerichtet. Erst als seine erschrockenen Kameraden ihm zu Hilfe eilen wollten, rief Loränz aus, dagegen helfe nur noch Gottes Beistand, und in dem Moment, da er \"Gottes Hilfe\" aussprach, heulte die schwarze Gestalt entsetzt auf und sprang von der Brücke hinunter ins Wasser. Die Burschen trugen den erschöpften Loränz heim, und seither traute sich der unheimliche Fremde nicht mehr an die Brücke.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "At the spot where the bridge of Dallenwil now crosses the Aa stream, an eerie figure dressed in black is said to have stood at nightfall on several occasions, so that for a long time no one dared cross the bridge. A few brave young men from Dallenwil wanted to get to the bottom of the matter and set upon the strange stranger with cudgels, but when the strongest of them, Loränz, attacked the figure, he met his match and was badly beaten. Only when his frightened companions rushed to help him did Loränz cry out that only God's help could aid them now, and at the very moment he spoke the words \"God's help,\" the black figure howled in terror and leapt from the bridge into the water below. The young men carried the exhausted Loränz home, and from then on the eerie stranger no longer dared approach the bridge.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "À l'endroit où le pont de Dallenwil enjambe aujourd'hui le ruisseau de l'Aa, une inquiétante silhouette vêtue de noir se serait tenue plusieurs fois à la tombée de la nuit, si bien que pendant longtemps personne n'osait traverser le pont. Quelques jeunes gens courageux de Dallenwil voulurent tirer l'affaire au clair et s'en prendre au bâton à l'étrange inconnu, mais lorsque le plus fort d'entre eux, Loränz, attaqua la silhouette, il tomba sur plus fort que lui et fut sévèrement malmené. Ce n'est que lorsque ses compagnons effrayés voulurent lui venir en aide que Loränz s'écria que seule l'aide de Dieu pouvait encore les secourir, et au moment même où il prononça ces mots, la silhouette noire poussa un hurlement d'effroi et sauta du pont dans l'eau en contrebas. Les jeunes gens ramenèrent chez lui le Loränz épuisé, et depuis lors l'inquiétant inconnu n'osa plus s'approcher du pont.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Nel luogo dove oggi il ponte di Dallenwil attraversa il ruscello dell'Aa, una inquietante figura vestita di nero si sarebbe fermata più volte al calar della notte, tanto che per lungo tempo nessuno osava attraversare il ponte. Alcuni coraggiosi giovani di Dallenwil vollero vederci chiaro e affrontare a bastonate lo strano straniero, ma quando il più forte di loro, Loränz, attaccò la figura, si imbatté in chi era più forte di lui e fu malmenato. Solo quando i suoi spaventati compagni vollero accorrere in suo aiuto, Loränz gridò che ormai poteva soccorrerli solo l'aiuto di Dio, e proprio nell'istante in cui pronunciò quelle parole, la figura nera ululò di terrore e saltò dal ponte nell'acqua sottostante. I giovani portarono a casa lo sfinito Loränz, e da allora l'inquietante straniero non osò più avvicinarsi al ponte.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En el lugar donde hoy el puente de Dallenwil cruza el arroyo Aa, una inquietante figura vestida de negro se habría plantado varias veces al anochecer, de modo que durante mucho tiempo nadie se atrevía a cruzar el puente. Unos valientes jóvenes de Dallenwil quisieron aclarar el asunto y atacar a garrotazos al extraño desconocido, pero cuando el más fuerte de ellos, Loränz, arremetió contra la figura, se topó con alguien más fuerte y quedó malherido. Solo cuando sus asustados compañeros quisieron acudir en su ayuda, Loränz gritó que ya solo la ayuda de Dios podía socorrerles, y en el mismo instante en que pronunció esas palabras, la figura negra aulló de terror y saltó del puente al agua de abajo. Los jóvenes llevaron a casa al exhausto Loränz, y desde entonces el inquietante desconocido no volvió a acercarse al puente.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "No local onde hoje a ponte de Dallenwil atravessa o riacho Aa, uma inquietante figura vestida de negro teria se postado várias vezes ao anoitecer, de modo que por muito tempo ninguém ousava atravessar a ponte. Alguns corajosos jovens de Dallenwil quiseram esclarecer o assunto e atacar a pauladas o estranho forasteiro, mas quando o mais forte deles, Loränz, avançou contra a figura, encontrou alguém mais forte e foi malferido. Só quando seus assustados companheiros quiseram correr em seu auxílio, Loränz gritou que só a ajuda de Deus poderia socorrê-los, e no mesmo instante em que pronunciou essas palavras, a figura negra uivou de terror e saltou da ponte para a água abaixo. Os jovens levaram para casa o exausto Loränz, e desde então o inquietante forasteiro nunca mais ousou se aproximar da ponte.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "在如今达伦维尔大桥横跨阿河之处，据说曾多次在夜幕降临时出现一个身着黑衣、令人不安的身影，以至于长久以来无人敢过桥。几个胆大的达伦维尔小伙子想弄个究竟，打算用棍棒教训这个古怪的陌生人，可当他们中最强壮的洛伦茨扑向那身影时，却遇上了强中更强手，被打得狼狈不堪。直到惊慌的同伴们想上前救他时，洛伦茨才喊道，如今唯有上帝的帮助才能救他们——就在他说出\"上帝之助\"这几个字的瞬间，那黑色身影发出一声惊恐的嚎叫，跳下桥去，坠入水中。小伙子们把筋疲力尽的洛伦茨抬回家，从此那个诡异的陌生人再也不敢靠近这座桥。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Prügelszene für jüngere Kinder abmildern; den Fokus auf das rettende Gottvertrauen legen.",
+    "quelle": {
+      "autor": "Franz Niderberger",
+      "werk": "Sagen und Gebräuche aus Unterwalden",
+      "jahr": "1909-1924",
+      "fundstelleUrl": "https://de.wikipedia.org/wiki/Sagen_und_Gebr%C3%A4uche_aus_Unterwalden"
+    },
+    "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
+    "coordinates": {
+      "lat": 46.9235,
+      "lng": 8.4029
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "hexenstein-emmetten",
+    "title": "Der Hexenstein von Emmetten",
+    "canton": "Nidwalden",
+    "coreMotif": "Heilige Glocken bannen die bösen Mächte",
+    "mood": "Unheimlich, wundersam",
+    "bildmotiv": "Kohltal Emmetten Felsblock",
+    "summary": "Mitten im engen Kohltal oberhalb von Emmetten liegt ein gewaltiger, loser Felsblock von der Grösse eines kleinen Berghauses, den man den Hexenstein nennt. Der Überlieferung nach lag dieser Stein ursprünglich hoch oben auf der Alp Oberbauen, wo einst Hexen in Höhlen und Felsen hausten, die durch das friedliche Glöcklein der neuerbauten Heiligkreuz-Kapelle im Tal aus ihrer Ruhe aufgeschreckt wurden. Voller Zorn beschlossen die Hexen, die Kapelle durch eine List zu zerstören, und eine von ihnen lud sich den mächtigen Stein auf die Schulter, um mit ihm den Bach so zu stauen, dass die Fundamente der Kapelle unterspült würden. Doch als die Hexe mit ihrer schweren Last endlich das Tal erreichte, läutete gerade das Ave-Glöcklein der Kapelle, und bei diesem heiligen Klang verlor sie all ihre Zauberkraft, sodass sie unter dem Gewicht des Steins zu Boden sank und dort bis heute gebannt liegt.",
+    "summaries": {
+      "de": {
+        "text": "Mitten im engen Kohltal oberhalb von Emmetten liegt ein gewaltiger, loser Felsblock von der Grösse eines kleinen Berghauses, den man den Hexenstein nennt. Der Überlieferung nach lag dieser Stein ursprünglich hoch oben auf der Alp Oberbauen, wo einst Hexen in Höhlen und Felsen hausten, die durch das friedliche Glöcklein der neuerbauten Heiligkreuz-Kapelle im Tal aus ihrer Ruhe aufgeschreckt wurden. Voller Zorn beschlossen die Hexen, die Kapelle durch eine List zu zerstören, und eine von ihnen lud sich den mächtigen Stein auf die Schulter, um mit ihm den Bach so zu stauen, dass die Fundamente der Kapelle unterspült würden. Doch als die Hexe mit ihrer schweren Last endlich das Tal erreichte, läutete gerade das Ave-Glöcklein der Kapelle, und bei diesem heiligen Klang verlor sie all ihre Zauberkraft, sodass sie unter dem Gewicht des Steins zu Boden sank und dort bis heute gebannt liegt.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "In the middle of the narrow Kohltal valley above Emmetten lies a massive, loose boulder the size of a small mountain hut, known as the Witch's Stone. According to tradition, this stone originally lay high up on the Oberbauen alp, where witches once dwelt in caves and crags, roused from their peace by the peaceful bell of the newly built Chapel of the Holy Cross in the valley below. Furious, the witches decided to destroy the chapel by a trick, and one of them loaded the massive stone onto her shoulder, intending to use it to dam the stream so that it would undermine the chapel's foundations. But when the witch finally reached the valley with her heavy burden, the chapel's Ave-bell happened to ring, and at that sacred sound she lost all her magic power, sinking to the ground beneath the weight of the stone, where she remains trapped to this day.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Au milieu de l'étroite vallée du Kohltal, au-dessus d'Emmetten, se trouve un énorme bloc de pierre isolé, de la taille d'une petite maison de montagne, que l'on appelle la Pierre des Sorcières. Selon la tradition, cette pierre se trouvait à l'origine tout en haut de l'alpage d'Oberbauen, où vivaient jadis des sorcières dans des grottes et des rochers, tirées de leur tranquillité par la paisible cloche de la chapelle Sainte-Croix nouvellement construite dans la vallée en contrebas. Furieuses, les sorcières décidèrent de détruire la chapelle par une ruse, et l'une d'elles chargea l'énorme pierre sur son épaule, avec l'intention de s'en servir pour endiguer le ruisseau afin de saper les fondations de la chapelle. Mais lorsque la sorcière atteignit enfin la vallée avec son lourd fardeau, la cloche de l'Ave de la chapelle se mit justement à sonner, et à ce son sacré, elle perdit tout son pouvoir magique, s'affaissant sous le poids de la pierre, où elle demeure prisonnière jusqu'à aujourd'hui.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "In mezzo alla stretta valle del Kohltal sopra Emmetten si trova un enorme masso isolato, grande quanto una piccola baita di montagna, chiamato la Pietra delle Streghe. Secondo la tradizione, questa pietra si trovava originariamente in alto sull'alpe di Oberbauen, dove un tempo vivevano streghe in grotte e rocce, destate dalla loro quiete dalla pacifica campana della cappella della Santa Croce appena costruita nella valle sottostante. Furiose, le streghe decisero di distruggere la cappella con uno stratagemma, e una di loro si caricò l'enorme pietra sulla spalla, con l'intenzione di usarla per arginare il ruscello così da minare le fondamenta della cappella. Ma quando la strega raggiunse finalmente la valle con il suo pesante fardello, proprio in quel momento suonò la campana dell'Ave della cappella, e a quel suono sacro perse ogni suo potere magico, sprofondando sotto il peso della pietra, dove rimane intrappolata ancora oggi.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En medio del estrecho valle de Kohltal, sobre Emmetten, se encuentra un enorme peñasco suelto, del tamaño de una pequeña cabaña de montaña, llamado la Piedra de las Brujas. Según la tradición, esta piedra se encontraba originalmente en lo alto del alpe de Oberbauen, donde antaño vivían brujas en cuevas y rocas, sacadas de su tranquilidad por la apacible campana de la recién construida capilla de la Santa Cruz en el valle de abajo. Furiosas, las brujas decidieron destruir la capilla mediante una artimaña, y una de ellas cargó la enorme piedra sobre su hombro, con la intención de usarla para represar el arroyo de modo que socavara los cimientos de la capilla. Pero cuando la bruja llegó por fin al valle con su pesada carga, justo entonces sonó la campana del Ave de la capilla, y con ese sonido sagrado perdió todo su poder mágico, hundiéndose bajo el peso de la piedra, donde permanece atrapada hasta hoy.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "No meio do estreito vale de Kohltal, acima de Emmetten, encontra-se um enorme rochedo solto, do tamanho de uma pequena cabana de montanha, chamado a Pedra das Bruxas. Segundo a tradição, essa pedra ficava originalmente no alto do alpe de Oberbauen, onde outrora viviam bruxas em cavernas e rochas, tiradas de sua tranquilidade pelo pacífico sino da recém-construída capela da Santa Cruz no vale abaixo. Furiosas, as bruxas decidiram destruir a capela por um ardil, e uma delas carregou a enorme pedra no ombro, com a intenção de usá-la para represar o riacho de modo a minar os alicerces da capela. Mas quando a bruxa finalmente chegou ao vale com sua pesada carga, justamente nesse momento tocou o sino do Ave-Maria da capela, e com aquele som sagrado ela perdeu todo o seu poder mágico, afundando sob o peso da pedra, onde permanece presa até hoje.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "在埃梅滕上方狭窄的科尔山谷中央，矗立着一块巨大而松动的岩石，大小如同一间小山间木屋，人称\"女巫石\"。相传这块石头本在上博恩高山牧场高处，那里曾住着栖身洞穴与岩缝间的女巫，山谷中新建的圣十字小堂那平和的钟声惊扰了她们的安宁。女巫们怒不可遏，决意用计毁掉小堂，其中一人把这块巨石扛上肩头，打算用它堵住溪流，冲垮小堂的地基。可是当这女巫终于扛着沉重的负担抵达山谷时，恰逢小堂的晚祷钟声响起，这神圣的钟声令她瞬间失去全部法力，她便在石头的重压下瘫倒在地，至今仍被镇压在那石下。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; keine Gewaltdarstellung.",
+    "quelle": {
+      "autor": "Franz Niderberger",
+      "werk": "Sagen und Gebräuche aus Unterwalden",
+      "jahr": "1909-1924",
+      "fundstelleUrl": "https://de.wikipedia.org/wiki/Sagen_und_Gebr%C3%A4uche_aus_Unterwalden"
+    },
+    "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
+    "coordinates": {
+      "lat": 46.9556,
+      "lng": 8.5119
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "friedhoefler-buergenberg",
+    "title": "Der Friedhöfler am Bürgenberg",
+    "canton": "Nidwalden",
+    "coreMotif": "Übermut gegenüber Naturgeistern wird bestraft",
+    "mood": "Unheimlich, warnend",
+    "bildmotiv": "St. Antons Kapelle Bürgenstock Höhle",
+    "summary": "Am südlichen Fuss des Bürgenbergs, einige hundert Schritte oberhalb des Sees bei der St. Antons-Kapelle, befindet sich in einer haldigen Wiese eine kleine Höhle aus zerklüftetem Kalkstein. Einst kam eine Zigeunerin, die sich vieler Zauberkünste rühmte, vor diese Höhle und forderte mit kreischender Stimme das Wasser heraus, das ihr, falls es sie packen könne, mit ihrem Kopf bezahlen dürfe. Als sie ihre höhnische Herausforderung wiederholte und trotzig zum See hinunterschritt, schwoll das Wasser plötzlich gewaltig an, riss sie in einer Flut über Stock und Stein mit sich fort und spülte sie schliesslich furchtbar zerschellt in den See hinab, wo sie noch heute begraben liegen soll. Bis heute will man aus der Höhle bisweilen ihre gespenstische Stimme vernehmen, die manche als \"Tropf, Tropf, Tropf\" und andere als \"Kopf, Kopf, Kopf\" deuten, weil das Weib nach dem Kopf schreie, mit dem es seinen Frevel bezahlen musste.",
+    "summaries": {
+      "de": {
+        "text": "Am südlichen Fuss des Bürgenbergs, einige hundert Schritte oberhalb des Sees bei der St. Antons-Kapelle, befindet sich in einer haldigen Wiese eine kleine Höhle aus zerklüftetem Kalkstein. Einst kam eine Zigeunerin, die sich vieler Zauberkünste rühmte, vor diese Höhle und forderte mit kreischender Stimme das Wasser heraus, das ihr, falls es sie packen könne, mit ihrem Kopf bezahlen dürfe. Als sie ihre höhnische Herausforderung wiederholte und trotzig zum See hinunterschritt, schwoll das Wasser plötzlich gewaltig an, riss sie in einer Flut über Stock und Stein mit sich fort und spülte sie schliesslich furchtbar zerschellt in den See hinab, wo sie noch heute begraben liegen soll. Bis heute will man aus der Höhle bisweilen ihre gespenstische Stimme vernehmen, die manche als \"Tropf, Tropf, Tropf\" und andere als \"Kopf, Kopf, Kopf\" deuten, weil das Weib nach dem Kopf schreie, mit dem es seinen Frevel bezahlen musste.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "On the southern foot of the Bürgenberg, a few hundred paces above the lake near St. Anton's Chapel, a small cave of jagged limestone lies in a sloping meadow. Once a gypsy woman, who boasted of many magical powers, stood before this cave and shrieked out a challenge to the water, daring it to seize her if it could, and that she would pay with her head if it did. As she repeated her mocking challenge and defiantly strode down toward the lake, the water suddenly swelled tremendously, swept her away over rocks and stones in a great flood, and finally washed her, terribly shattered, down into the lake, where she is said to lie buried to this day. Even now, people claim to sometimes hear her ghostly voice from the cave, which some interpret as \"Drip, drip, drip\" and others as \"Head, head, head,\" because the woman is said to be crying out for the head with which she had to pay for her insolence.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Au pied sud du Bürgenberg, à quelques centaines de pas au-dessus du lac près de la chapelle Saint-Antoine, se trouve dans une prairie en pente une petite grotte de calcaire déchiqueté. Un jour, une bohémienne, qui se vantait de nombreux tours de magie, se tint devant cette grotte et lança d'une voix criarde un défi à l'eau, la mettant au défi de la saisir si elle le pouvait, sous peine qu'elle-même en paierait le prix de sa tête. Comme elle répéta son défi moqueur et descendit avec défi vers le lac, l'eau enfla soudain prodigieusement, l'emporta sur les rochers et les pierres dans un grand flot, et finit par la précipiter, terriblement disloquée, au fond du lac, où elle serait encore ensevelie aujourd'hui. Aujourd'hui encore, on prétend entendre parfois sa voix spectrale sortir de la grotte, que certains interprètent comme « Goutte, goutte, goutte » et d'autres comme « Tête, tête, tête », car la femme réclamerait, dit-on, la tête dont elle a dû payer son forfait.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Ai piedi meridionali del Bürgenberg, a poche centinaia di passi sopra il lago presso la cappella di Sant'Antonio, si trova in un prato in pendio una piccola grotta di calcare frastagliato. Un tempo una zingara, che si vantava di molte arti magiche, si mise davanti a questa grotta e lanciò con voce stridula una sfida all'acqua, sfidandola ad afferrarla se ne fosse stata capace, pena la propria testa. Mentre ripeteva la sua beffarda sfida e scendeva con aria di sfida verso il lago, l'acqua si gonfiò improvvisamente in modo impressionante, la travolse tra rocce e pietre in una grande piena, e infine la spinse, terribilmente sfracellata, giù nel lago, dove si dice giaccia sepolta ancora oggi. Ancora oggi si racconta di udire talvolta la sua voce spettrale uscire dalla grotta, che alcuni interpretano come \"Goccia, goccia, goccia\" e altri come \"Testa, testa, testa\", poiché la donna griderebbe, si dice, per la testa con cui dovette pagare la sua tracotanza.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En el pie meridional del Bürgenberg, a pocos centenares de pasos sobre el lago cerca de la capilla de San Antón, se encuentra en un prado en pendiente una pequeña cueva de piedra caliza escarpada. Una vez, una gitana que se jactaba de muchas artes mágicas se plantó ante esta cueva y lanzó con voz chillona un desafío al agua, retándola a atraparla si podía, so pena de pagar con su propia cabeza. Mientras repetía su burlón desafío y bajaba desafiante hacia el lago, el agua se hinchó de pronto tremendamente, la arrastró sobre rocas y piedras en una gran crecida, y finalmente la arrojó, terriblemente destrozada, al fondo del lago, donde se dice que yace enterrada hasta hoy. Todavía hoy se dice oír a veces su voz espectral salir de la cueva, que algunos interpretan como «Gota, gota, gota» y otros como «Cabeza, cabeza, cabeza», porque la mujer clamaría, según se cuenta, por la cabeza con la que tuvo que pagar su insolencia.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "No sopé meridional do Bürgenberg, algumas centenas de passos acima do lago perto da capela de Santo Antão, encontra-se num prado inclinado uma pequena caverna de calcário recortado. Certa vez, uma cigana que se gabava de muitas artes mágicas postou-se diante dessa caverna e lançou, com voz estridente, um desafio à água, desafiando-a a agarrá-la se pudesse, sob pena de pagar com a própria cabeça. Enquanto repetia seu desafio zombeteiro e descia desafiadoramente em direção ao lago, a água de repente inchou tremendamente, arrastando-a sobre rochas e pedras numa grande enxurrada, e por fim lançou-a, terrivelmente despedaçada, ao fundo do lago, onde se diz que permanece enterrada até hoje. Ainda hoje se conta ouvir às vezes sua voz espectral vindo da caverna, que alguns interpretam como \"Pingo, pingo, pingo\" e outros como \"Cabeça, cabeça, cabeça\", pois a mulher estaria, segundo dizem, clamando pela cabeça com que teve de pagar sua insolência.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "在比尔根山南麓，圣安东小堂上方几百步处的斜坡草地上，有一个由嶙峋石灰岩构成的小洞穴。相传曾有一名自诩精通巫术的吉普赛女子站在洞穴前，尖声向洞中的水发出挑战，说若水能抓住她，便可以她的头颅作为代价。她一再重复这轻蔑的挑衅，傲然朝湖边走去，忽然水势暴涨，将她卷入激流，冲过乱石，最终把她冲入湖中，摔得粉碎——据说她的尸骨至今仍埋在湖底。直至今日，人们仍称偶尔能从洞穴中听到她那幽灵般的声音，有人听作\"滴、滴、滴\"，也有人听作\"头、头、头\"，因为传说这女子正是在为自己那份狂妄付出头颅的代价而哭喊。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Das gewaltsame Ende für jüngere Kinder abmildern; den Übermut der Frau als warnendes Beispiel betonen statt die Details ihres Todes.",
+    "quelle": {
+      "autor": "Franz Niderberger",
+      "werk": "Sagen und Gebräuche aus Unterwalden",
+      "jahr": "1909-1924",
+      "fundstelleUrl": "https://de.wikipedia.org/wiki/Sagen_und_Gebr%C3%A4uche_aus_Unterwalden"
+    },
+    "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
+    "coordinates": {
+      "lat": 46.9803,
+      "lng": 8.4381
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "schuetz-christen-1798",
+    "title": "Schütz Christen und der Franzoseneinfall",
+    "canton": "Nidwalden",
+    "coreMotif": "Unbeugsamer Widerstand bis zum Letzten",
+    "mood": "Tragisch, heroisch",
+    "bildmotiv": "Bürgenberg Kehrsiten Vierwaldstättersee",
+    "summary": "Am 9. September 1798 griff ein französisches Heer von mehreren tausend Mann das kleine Nidwalden an, das sich als einziger Ort der Schweiz geweigert hatte, der neuen helvetischen Einheitsverfassung den Eid zu leisten. Am Bürgenberg oberhalb von Kehrsiten gelang es einer kleinen Schar von Nidwaldner Scharfschützen, die zahlenmässig weit überlegenen Franzosen stundenlang aufzuhalten, unter ihnen der als Meisterschütze bekannte Schütz Christen. Im Gefecht am Bein verwundet, liess sich Christen von einem Kameraden auf den Grat tragen und schoss von dort, auf dem Boden sitzend, unbeirrt weiter, bis ihm die Munition ausging und er seine letzte Waffe einem Mitkämpfer schenkte, damit dieser sich retten könne. Als die Franzosen ihn schliesslich fanden, verstümmelten sie den bereits Wehrlosen aufs Grausamste, doch sein unbeugsamer Widerstand blieb den Nidwaldnern als Sinnbild ihres verzweifelten und heldenhaften Kampfes an jenem \"Tag des Jammers\" in Erinnerung.",
+    "summaries": {
+      "de": {
+        "text": "Am 9. September 1798 griff ein französisches Heer von mehreren tausend Mann das kleine Nidwalden an, das sich als einziger Ort der Schweiz geweigert hatte, der neuen helvetischen Einheitsverfassung den Eid zu leisten. Am Bürgenberg oberhalb von Kehrsiten gelang es einer kleinen Schar von Nidwaldner Scharfschützen, die zahlenmässig weit überlegenen Franzosen stundenlang aufzuhalten, unter ihnen der als Meisterschütze bekannte Schütz Christen. Im Gefecht am Bein verwundet, liess sich Christen von einem Kameraden auf den Grat tragen und schoss von dort, auf dem Boden sitzend, unbeirrt weiter, bis ihm die Munition ausging und er seine letzte Waffe einem Mitkämpfer schenkte, damit dieser sich retten könne. Als die Franzosen ihn schliesslich fanden, verstümmelten sie den bereits Wehrlosen aufs Grausamste, doch sein unbeugsamer Widerstand blieb den Nidwaldnern als Sinnbild ihres verzweifelten und heldenhaften Kampfes an jenem \"Tag des Jammers\" in Erinnerung.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "On 9 September 1798, a French army of several thousand men attacked the small canton of Nidwalden, the only place in Switzerland that had refused to swear the oath to the new unified Helvetic constitution. On the Bürgenberg above Kehrsiten, a small band of Nidwalden sharpshooters managed to hold off the vastly superior French forces for hours, among them the marksman known as Schütz Christen. Wounded in the leg during the fighting, Christen had a comrade carry him to the ridge and continued shooting from there, sitting on the ground, until his ammunition ran out, whereupon he gave his last weapon to a fellow fighter so that he might escape. When the French finally found him, they mutilated the already defenceless man in the cruellest way, but his unyielding resistance remained in the memory of the people of Nidwalden as a symbol of their desperate and heroic struggle on that \"day of sorrow.\"",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Le 9 septembre 1798, une armée française de plusieurs milliers d'hommes attaqua le petit canton de Nidwald, seul lieu de Suisse à avoir refusé de prêter serment à la nouvelle constitution helvétique unitaire. Sur le Bürgenberg au-dessus de Kehrsiten, une petite troupe de tireurs d'élite nidwaldois parvint à retenir pendant des heures les forces françaises largement supérieures en nombre, parmi eux le tireur connu sous le nom de Schütz Christen. Blessé à la jambe pendant les combats, Christen se fit porter par un camarade jusqu'à la crête et continua à tirer de là, assis à terre, jusqu'à épuisement de ses munitions, après quoi il donna sa dernière arme à un compagnon d'armes pour que celui-ci puisse s'échapper. Lorsque les Français le trouvèrent enfin, ils mutilèrent avec la plus grande cruauté cet homme déjà sans défense, mais sa résistance inébranlable resta dans la mémoire des Nidwaldois comme le symbole de leur combat désespéré et héroïque en ce « jour de deuil ».",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Il 9 settembre 1798, un esercito francese di diverse migliaia di uomini attaccò il piccolo cantone di Nidvaldo, unico luogo in Svizzera ad essersi rifiutato di prestare giuramento alla nuova costituzione elvetica unitaria. Sul Bürgenberg sopra Kehrsiten, una piccola schiera di tiratori scelti nidvaldesi riuscì a trattenere per ore le forze francesi di gran lunga superiori, tra loro il tiratore noto come Schütz Christen. Ferito a una gamba durante i combattimenti, Christen si fece portare da un compagno sulla cresta e continuò a sparare da lì, seduto a terra, finché non gli finirono le munizioni, dopodiché donò la sua ultima arma a un commilitone affinché potesse mettersi in salvo. Quando i francesi lo trovarono infine, mutilarono nel modo più crudele quell'uomo ormai indifeso, ma la sua resistenza indomita rimase nella memoria dei nidvaldesi come simbolo della loro disperata ed eroica lotta in quel \"giorno del lutto\".",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "El 9 de septiembre de 1798, un ejército francés de varios miles de hombres atacó el pequeño cantón de Nidwalden, el único lugar de Suiza que se había negado a prestar juramento a la nueva constitución helvética unitaria. En el Bürgenberg, sobre Kehrsiten, un pequeño grupo de tiradores de Nidwalden logró contener durante horas a las fuerzas francesas muy superiores en número, entre ellos el tirador conocido como Schütz Christen. Herido en una pierna durante los combates, Christen se hizo llevar por un camarada hasta la cresta y siguió disparando desde allí, sentado en el suelo, hasta quedarse sin munición, tras lo cual entregó su última arma a un compañero de armas para que pudiera escapar. Cuando los franceses finalmente lo encontraron, mutilaron de la manera más cruel a aquel hombre ya indefenso, pero su resistencia inquebrantable quedó en la memoria de los de Nidwalden como símbolo de su lucha desesperada y heroica en aquel \"día del luto\".",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Em 9 de setembro de 1798, um exército francês de vários milhares de homens atacou o pequeno cantão de Nidwalden, o único lugar da Suíça que se havia recusado a prestar juramento à nova constituição helvética unitária. No Bürgenberg, acima de Kehrsiten, um pequeno grupo de atiradores de Nidwalden conseguiu conter por horas as forças francesas muito superiores em número, entre eles o atirador conhecido como Schütz Christen. Ferido numa perna durante os combates, Christen fez-se levar por um camarada até a crista e continuou a atirar dali, sentado no chão, até ficar sem munição, entregando então sua última arma a um companheiro de armas para que este pudesse escapar. Quando os franceses finalmente o encontraram, mutilaram da forma mais cruel aquele homem já indefeso, mas sua resistência inabalável permaneceu na memória dos habitantes de Nidwalden como símbolo de sua luta desesperada e heroica naquele \"dia do pranto\".",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "1798年9月14日，一支数千人的法国军队进攻尼德瓦尔登这个小州——它是瑞士唯一拒绝向新的赫尔维蒂统一宪法宣誓效忠的地方。在克尔西滕上方的比尔根山，一小队尼德瓦尔登神射手成功阻挡了数量远超己方的法军数小时之久，其中就有人称\"神枪手克里斯滕\"的射手。他在战斗中腿部受伤，让一名战友把他抬到山脊上，仍坐在地上继续射击，直到弹尽粮绝，随后把自己最后的武器送给一名战友，好让对方得以逃生。当法军最终找到他时，对这个已毫无还手之力的人施以最残忍的凌迟，但他不屈的抵抗，成为尼德瓦尔登人在那\"悲怆之日\"绝望而英勇抗争的象征，长留人们记忆之中。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Verstümmelung am Ende auslassen oder stark abmildern; den Fokus auf Christens Tapferkeit und Kameradschaft legen.",
+    "quelle": {
+      "autor": "Franz Joseph Gut",
+      "werk": "Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen",
+      "jahr": "1862",
+      "fundstelleUrl": "https://franzoseneinfall.ch/orte/6/"
+    },
+    "source": "Franz Joseph Gut: Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen (1862)",
+    "coordinates": {
+      "lat": 46.9928,
+      "lng": 8.4302
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "drachenkampf-ennetmoos-struth-winkelried",
+    "title": "Der Drachenkampf von Ennetmoos",
+    "canton": "Nidwalden",
+    "coreMotif": "Heldentat mit tödlichem Preis",
+    "mood": "Düster, heroisch",
+    "bildmotiv": "Drachenried Ennetmoos Felshöhle",
+    "summary": "Vor Zeiten hauste in einer Höhle über dem kleinen Dorf Wil im Land Unterwalden ein gewaltiger Drache, der Mensch und Tier vernichtete, sodass die Bewohner ihr Dorf verlassen mussten und es fortan Ödwil genannt wurde. Auch die nahegelegene Landstrasse und Weide konnte niemand mehr benutzen, denn der Wurm versteckte sich in den Pfützen und Winkeln und tötete, wen er erwischte, während er jedem bewaffneten Aufgebot geschickt in seine Höhle entkam. Da erbot sich der tapfere Ritter Struth von Winkelried, der wegen eines Totschlags aus dem Land verbannt war, den Drachen zu erlegen, falls man ihn dafür wieder heimkehren liesse, und ging allein mit einem dornenumwickelten Spiess auf das Untier los. Als der Drache mit aufgerissenem Rachen auf ihn losstürzte, stiess Struth ihm den Spiess tief in den Schlund und tötete ihn mit dem Schwert, doch das Drachenblut, das ihm dabei auf den blossen Leib rann, vergiftete ihn so sehr, dass der Held wenige Tage nach seinem Sieg selbst starb.",
+    "summaries": {
+      "de": {
+        "text": "Vor Zeiten hauste in einer Höhle über dem kleinen Dorf Wil im Land Unterwalden ein gewaltiger Drache, der Mensch und Tier vernichtete, sodass die Bewohner ihr Dorf verlassen mussten und es fortan Ödwil genannt wurde. Auch die nahegelegene Landstrasse und Weide konnte niemand mehr benutzen, denn der Wurm versteckte sich in den Pfützen und Winkeln und tötete, wen er erwischte, während er jedem bewaffneten Aufgebot geschickt in seine Höhle entkam. Da erbot sich der tapfere Ritter Struth von Winkelried, der wegen eines Totschlags aus dem Land verbannt war, den Drachen zu erlegen, falls man ihn dafür wieder heimkehren liesse, und ging allein mit einem dornenumwickelten Spiess auf das Untier los. Als der Drache mit aufgerissenem Rachen auf ihn losstürzte, stiess Struth ihm den Spiess tief in den Schlund und tötete ihn mit dem Schwert, doch das Drachenblut, das ihm dabei auf den blossen Leib rann, vergiftete ihn so sehr, dass der Held wenige Tage nach seinem Sieg selbst starb.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "Long ago, a mighty dragon lived in a cave above the small village of Wil in the land of Unterwalden, destroying man and beast alike, so that the inhabitants had to abandon their village, which was thereafter called Ödwil, the deserted Wil. Even the nearby road and pasture could no longer be used by anyone, for the beast hid in puddles and hollows and killed whomever it caught, while cleverly escaping into its cave whenever an armed party approached. Then the brave knight Struth von Winkelried, who had been banished from the land for a killing, offered to slay the dragon if he might be allowed to return home in exchange, and went alone against the beast armed with a spear wrapped in thorns. When the dragon lunged at him with jaws wide open, Struth drove the spear deep into its throat and finished it off with his sword, but the dragon's blood, which ran onto his bare skin as he did so, poisoned him so badly that the hero himself died only a few days after his victory.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Il y a longtemps, un puissant dragon vivait dans une grotte au-dessus du petit village de Wil, au pays d'Unterwald, détruisant hommes et bêtes, si bien que les habitants durent abandonner leur village, appelé dès lors Ödwil, le Wil désert. Même la route et le pâturage voisins ne pouvaient plus être utilisés par personne, car la bête se cachait dans les flaques et les recoins et tuait quiconque elle attrapait, tout en s'échappant habilement dans sa grotte à chaque approche d'une troupe armée. Alors le brave chevalier Struth von Winkelried, banni du pays pour un homicide, proposa de tuer le dragon si on le laissait en échange rentrer chez lui, et affronta seul la bête avec une lance entourée d'épines. Lorsque le dragon se jeta sur lui gueule grande ouverte, Struth lui enfonça profondément la lance dans la gorge et l'acheva à l'épée, mais le sang du dragon, qui coula alors sur sa peau nue, l'empoisonna si gravement que le héros mourut lui-même quelques jours après sa victoire.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Molto tempo fa, un potente drago viveva in una grotta sopra il piccolo villaggio di Wil, nella terra di Unterwaldo, distruggendo uomini e animali, tanto che gli abitanti dovettero abbandonare il loro villaggio, chiamato da allora Ödwil, il Wil deserto. Nemmeno la strada e il pascolo vicini potevano più essere usati da nessuno, poiché la bestia si nascondeva nelle pozzanghere e negli anfratti e uccideva chiunque catturasse, sfuggendo abilmente nella sua grotta ogni volta che si avvicinava una schiera armata. Allora il coraggioso cavaliere Struth von Winkelried, bandito dal paese per un omicidio, si offrì di uccidere il drago se in cambio gli fosse stato permesso di tornare in patria, e affrontò da solo la bestia con una lancia avvolta di spine. Quando il drago si scagliò su di lui a fauci spalancate, Struth gli conficcò la lancia in profondità nella gola e lo finì con la spada, ma il sangue del drago, che gli colò sulla pelle nuda, lo avvelenò così gravemente che l'eroe stesso morì pochi giorni dopo la sua vittoria.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Hace mucho tiempo, un poderoso dragón vivía en una cueva sobre el pequeño pueblo de Wil, en la tierra de Unterwalden, destruyendo hombres y animales, de modo que los habitantes tuvieron que abandonar su pueblo, llamado desde entonces Ödwil, el Wil desierto. Ni siquiera el camino y el pasto cercanos podían ya ser usados por nadie, pues la bestia se escondía en charcos y rincones y mataba a quien atrapara, escapando hábilmente a su cueva cada vez que se acercaba una partida armada. Entonces el valiente caballero Struth von Winkelried, desterrado del país por un homicidio, se ofreció a matar al dragón si a cambio se le permitía regresar a casa, y se enfrentó solo a la bestia con una lanza envuelta en espinas. Cuando el dragón se abalanzó sobre él con las fauces abiertas, Struth le clavó la lanza profundamente en la garganta y lo remató con la espada, pero la sangre del dragón, que le corrió por la piel desnuda, lo envenenó tan gravemente que el propio héroe murió pocos días después de su victoria.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Há muito tempo, um poderoso dragão vivia numa caverna acima da pequena aldeia de Wil, na terra de Unterwalden, destruindo homens e animais, de modo que os habitantes tiveram de abandonar sua aldeia, chamada desde então Ödwil, a Wil deserta. Nem mesmo a estrada e o pasto vizinhos podiam mais ser usados por ninguém, pois a fera se escondia em poças e recantos e matava quem quer que apanhasse, escapando habilmente para sua caverna sempre que uma tropa armada se aproximava. Então o corajoso cavaleiro Struth von Winkelried, banido do país por um homicídio, ofereceu-se para matar o dragão se, em troca, lhe permitissem voltar para casa, e enfrentou sozinho a fera com uma lança envolta em espinhos. Quando o dragão avançou sobre ele com as mandíbulas escancaradas, Struth cravou-lhe a lança fundo na garganta e o liquidou com a espada, mas o sangue do dragão, que lhe escorreu pela pele nua, envenenou-o tão gravemente que o próprio herói morreu poucos dias após sua vitória.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "很久以前，在下瓦尔登地区威尔小村上方的一处洞穴中，栖息着一条凶猛的巨龙，它残害人畜，村民被迫弃村而逃，此地从此得名\"厄德威尔\"（荒废的威尔）。就连附近的大路与牧场也无人再敢使用，因为这怪物潜伏在水洼与角落中，逮住谁便杀死谁，每当有武装队伍前来，它总能狡猾地逃回洞穴。此时，因杀人而被逐出本地的勇敢骑士施特鲁特·冯·温克尔里德挺身而出，表示若能屠龙，便请求准许他重返家园，随后独自持一支缠满荆棘的长矛前去迎战怪兽。巨龙张开血盆大口扑向他时，施特鲁特将长矛深深刺入龙喉，又用剑将其了结，然而龙血溅到他赤裸的皮肤上，毒性剧烈，这位英雄竟在获胜后仅仅数日便因中毒而死。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Vergiftungsszene für jüngere Kinder abmildern; den Fokus auf Mut und Opferbereitschaft legen.",
+    "quelle": {
+      "autor": "Aegidius Tschudi",
+      "werk": "Chronicon Helveticum",
+      "jahr": "um 1570",
+      "fundstelleUrl": "https://www.ennetmoos.ch/geschichtefs"
+    },
+    "source": "Aegidius Tschudi: Chronicon Helveticum (um 1570)",
+    "coordinates": {
+      "lat": 46.9578,
+      "lng": 8.3661
+    },
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "kampf-am-allweg-1798",
+    "title": "Der Kampf am Allweg",
+    "canton": "Nidwalden",
+    "coreMotif": "Verzweifelte Verteidigung gegen erdrückende Übermacht",
+    "mood": "Dramatisch, tragisch",
+    "bildmotiv": "Allweg Denkmal Ennetmoos",
+    "summary": "Als am 9. September 1798 rund zehntausend französische Soldaten gegen das kaum zweitausend Mann starke Nidwalden anrückten, glaubte der Feind auf der Anhöhe von Allweg bereits gesiegt zu haben und in kurzer Zeit nach Stans einmarschieren zu können. Doch die Nidwaldner Schützen hatten sich rechtzeitig auf der Anhöhe verschanzt und schlugen gleich zwei anstürmende Kolonnen der Franzosen unter grossen Verlusten zurück, sodass diese schweres Geschütz auffahren liessen, um die Verteidiger von den Kanonen zu vertreiben. Als auch dieser Angriff misslang, versuchten die Franzosen, den rechten Flügel am Rotzberg zu umgehen, gerieten dabei aber in einen Hinterhalt versteckter Scharfschützen und wurden fast vollständig aufgerieben, während gleichzeitig sogar Frauen an der Seite ihrer Männer kämpften. Erst als von der Seeseite und über das Ächerli weitere feindliche Kolonnen heranrückten und Stans selbst in Flammen stand, mussten die erschöpften Verteidiger nach acht bis neun Stunden ununterbrochenen Kampfes der erdrückenden Übermacht weichen.",
+    "summaries": {
+      "de": {
+        "text": "Als am 9. September 1798 rund zehntausend französische Soldaten gegen das kaum zweitausend Mann starke Nidwalden anrückten, glaubte der Feind auf der Anhöhe von Allweg bereits gesiegt zu haben und in kurzer Zeit nach Stans einmarschieren zu können. Doch die Nidwaldner Schützen hatten sich rechtzeitig auf der Anhöhe verschanzt und schlugen gleich zwei anstürmende Kolonnen der Franzosen unter grossen Verlusten zurück, sodass diese schweres Geschütz auffahren liessen, um die Verteidiger von den Kanonen zu vertreiben. Als auch dieser Angriff misslang, versuchten die Franzosen, den rechten Flügel am Rotzberg zu umgehen, gerieten dabei aber in einen Hinterhalt versteckter Scharfschützen und wurden fast vollständig aufgerieben, während gleichzeitig sogar Frauen an der Seite ihrer Männer kämpften. Erst als von der Seeseite und über das Ächerli weitere feindliche Kolonnen heranrückten und Stans selbst in Flammen stand, mussten die erschöpften Verteidiger nach acht bis neun Stunden ununterbrochenen Kampfes der erdrückenden Übermacht weichen.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "When around ten thousand French soldiers advanced against Nidwalden, which numbered barely two thousand men, on 9 September 1798, the enemy already believed they had won on the heights of Allweg and could march into Stans within a short time. But the Nidwalden marksmen had entrenched themselves on the heights in time and repelled two charging French columns with heavy losses, forcing the French to bring up heavy artillery to drive the defenders from their guns. When this attack also failed, the French tried to outflank the right wing at the Rotzberg, but ran into an ambush of hidden sharpshooters and were almost completely wiped out, while at the same time even women fought alongside their men. Only when further enemy columns advanced from the lake side and via the Ächerli, and Stans itself was in flames, did the exhausted defenders finally have to yield to the crushing superiority after eight to nine hours of uninterrupted fighting.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Lorsque environ dix mille soldats français avancèrent contre Nidwald, qui ne comptait guère plus de deux mille hommes, le 9 septembre 1798, l'ennemi croyait déjà avoir vaincu sur les hauteurs d'Allweg et pouvoir entrer dans Stans en peu de temps. Mais les tireurs nidwaldois s'étaient retranchés à temps sur les hauteurs et repoussèrent deux colonnes françaises à l'assaut avec de lourdes pertes, obligeant les Français à faire venir de l'artillerie lourde pour chasser les défenseurs de leurs canons. Lorsque cette attaque échoua également, les Français tentèrent de contourner l'aile droite au Rotzberg, mais tombèrent dans une embuscade de tireurs d'élite cachés et furent presque entièrement anéantis, tandis qu'au même moment des femmes combattaient même aux côtés de leurs maris. Ce n'est que lorsque d'autres colonnes ennemies avancèrent depuis le lac et par l'Ächerli, et que Stans elle-même était en flammes, que les défenseurs épuisés durent enfin céder à l'écrasante supériorité après huit à neuf heures de combat ininterrompu.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Quando circa diecimila soldati francesi avanzarono contro Nidvaldo, che contava a malapena duemila uomini, il 9 settembre 1798, il nemico credeva già di aver vinto sulle alture di Allweg e di poter marciare su Stans in breve tempo. Ma i tiratori nidvaldesi si erano trincerati in tempo sulle alture e respinsero due colonne francesi all'assalto con pesanti perdite, costringendo i francesi a portare artiglieria pesante per scacciare i difensori dai loro cannoni. Quando anche questo attacco fallì, i francesi tentarono di aggirare l'ala destra al Rotzberg, ma caddero in un'imboscata di tiratori scelti nascosti e furono quasi completamente annientati, mentre allo stesso tempo perfino le donne combattevano al fianco dei loro uomini. Solo quando altre colonne nemiche avanzarono dal lato del lago e attraverso l'Ächerli, e Stans stessa era in fiamme, gli esausti difensori dovettero infine cedere alla schiacciante superiorità dopo otto o nove ore di combattimento ininterrotto.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Cuando unos diez mil soldados franceses avanzaron contra Nidwalden, que apenas contaba con dos mil hombres, el 9 de septiembre de 1798, el enemigo ya creía haber vencido en las alturas de Allweg y poder entrar en Stans en poco tiempo. Pero los tiradores de Nidwalden se habían atrincherado a tiempo en las alturas y rechazaron dos columnas francesas al asalto con grandes pérdidas, obligando a los franceses a traer artillería pesada para expulsar a los defensores de sus cañones. Cuando este ataque también fracasó, los franceses intentaron flanquear el ala derecha en el Rotzberg, pero cayeron en una emboscada de tiradores ocultos y quedaron casi completamente aniquilados, mientras al mismo tiempo hasta las mujeres luchaban junto a sus hombres. Solo cuando más columnas enemigas avanzaron desde el lado del lago y por el Ächerli, y la propia Stans estaba en llamas, los exhaustos defensores finalmente tuvieron que ceder ante la aplastante superioridad tras ocho o nueve horas de combate ininterrumpido.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Quando cerca de dez mil soldados franceses avançaram contra Nidwalden, que contava com apenas dois mil homens, em 9 de setembro de 1798, o inimigo já acreditava ter vencido nas alturas de Allweg e poder marchar sobre Stans em pouco tempo. Mas os atiradores de Nidwalden haviam se entrincheirado a tempo nas alturas e repeliram duas colunas francesas em ataque com pesadas perdas, obrigando os franceses a trazer artilharia pesada para expulsar os defensores de seus canhões. Quando esse ataque também falhou, os franceses tentaram flanquear a ala direita no Rotzberg, mas caíram numa emboscada de atiradores ocultos e foram quase completamente aniquilados, enquanto ao mesmo tempo até mulheres lutavam ao lado de seus homens. Somente quando mais colunas inimigas avançaram do lado do lago e pelo Ächerli, e a própria Stans estava em chamas, os exaustos defensores finalmente tiveram de ceder à esmagadora superioridade após oito a nove horas de combate ininterrupto.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "1798年9月9日，约一万名法军向尼德瓦尔登发起进攻，而对方兵力尚不足两千人，敌军一度以为已在阿尔韦格高地获胜，很快便可攻入施坦斯。然而尼德瓦尔登的射手们已及时在高地据守，两次击退法军的冲锋纵队，令其损失惨重，法军不得不调来重炮，企图把守军从炮位上轰走。这次进攻也告失败后，法军又试图绕过罗茨山迂回右翼，却中了隐蔽神射手的埋伏，几乎全军覆没，与此同时，甚至有妇女也并肩与丈夫作战。直到更多敌军纵队从湖面和阿赫利方向逼近、施坦斯本身也已陷入火海时，力竭的守军在连续鏖战八九个小时后，才终于在压倒性优势兵力面前败退。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Kampf- und Verlustdetails für jüngere Kinder abmildern; den Mut der Verteidiger und Verteidigerinnen betonen.",
+    "quelle": {
+      "autor": "Franz Joseph Gut (nach dem Bericht von Kaplan Jakob Kaiser)",
+      "werk": "Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen",
+      "jahr": "1862",
+      "fundstelleUrl": "https://www.ennetmoos.ch/geschichtefs"
+    },
+    "source": "Franz Joseph Gut (nach dem Bericht von Kaplan Jakob Kaiser): Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen (1862)",
+    "coordinates": {
+      "lat": 46.9614,
+      "lng": 8.3733
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  }
+]

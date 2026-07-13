@@ -1,0 +1,426 @@
+[
+  {
+    "id": "meinrad-raben-einsiedeln",
+    "title": "St. Meinrad und die treuen Raben",
+    "canton": "Schwyz",
+    "coreMotif": "Treue Tiere entlarven einen Mord",
+    "mood": "Ehrfürchtig, tragisch",
+    "bildmotiv": "Kloster Einsiedeln Rabenwappen",
+    "summary": "Im finstern Wald, wo heute das Kloster Einsiedeln steht, lebte im 9. Jahrhundert der fromme Einsiedler Meinrad in einer kleinen Klause und hatte zwei Raben aufgezogen, die ihm treu zur Seite blieben. Am 21. Januar 861 kehrten zwei Landstreicher bei ihm ein, die von den Schätzen gehört hatten, welche fromme Pilger am Schrein niederlegten, und erschlugen den wehrlosen Klausner mit Keulen. Als die Mörder flohen, stürzten sich Meinrads beide Raben krächzend auf sie und verfolgten sie unablässig bis in die Stadt Zürich, wo ihr auffälliges Verhalten die Leute misstrauisch machte. Die Mörder wurden gefasst, gestanden ihre Tat und wurden zum Tod verurteilt, und zum Andenken an die treuen Vögel tragen Kloster und Dorf Einsiedeln bis heute zwei Raben in ihrem Wappen.",
+    "summaries": {
+      "de": {
+        "text": "Im finstern Wald, wo heute das Kloster Einsiedeln steht, lebte im 9. Jahrhundert der fromme Einsiedler Meinrad in einer kleinen Klause und hatte zwei Raben aufgezogen, die ihm treu zur Seite blieben. Am 21. Januar 861 kehrten zwei Landstreicher bei ihm ein, die von den Schätzen gehört hatten, welche fromme Pilger am Schrein niederlegten, und erschlugen den wehrlosen Klausner mit Keulen. Als die Mörder flohen, stürzten sich Meinrads beide Raben krächzend auf sie und verfolgten sie unablässig bis in die Stadt Zürich, wo ihr auffälliges Verhalten die Leute misstrauisch machte. Die Mörder wurden gefasst, gestanden ihre Tat und wurden zum Tod verurteilt, und zum Andenken an die treuen Vögel tragen Kloster und Dorf Einsiedeln bis heute zwei Raben in ihrem Wappen.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "Deep in the dark forest where the monastery of Einsiedeln now stands, the pious hermit Meinrad lived in a small cell in the 9th century, raising two ravens who stayed loyally at his side. On 21 January 861, two vagrants who had heard of the treasures pilgrims left at his shrine came to his door and beat the defenceless hermit to death with clubs. As the murderers fled, Meinrad's two ravens swooped shrieking after them and pursued them relentlessly all the way to the city of Zurich, where their strange behaviour aroused suspicion among the townsfolk. The murderers were caught, confessed their crime, and were sentenced to death, and in memory of the faithful birds the monastery and village of Einsiedeln still carry two ravens on their coat of arms to this day.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Au fond de la forêt sombre où se dresse aujourd'hui le monastère d'Einsiedeln, le pieux ermite Meinrad vivait au IXe siècle dans une petite cellule et avait élevé deux corbeaux qui lui restaient fidèlement attachés. Le 21 janvier 861, deux vagabonds qui avaient entendu parler des trésors déposés par les pèlerins à son sanctuaire vinrent chez lui et assommèrent l'ermite sans défense à coups de gourdin. Comme les meurtriers s'enfuyaient, les deux corbeaux de Meinrad fondirent sur eux en croassant et les poursuivirent sans relâche jusqu'à la ville de Zurich, où leur comportement étrange éveilla les soupçons des habitants. Les meurtriers furent capturés, avouèrent leur crime et furent condamnés à mort, et en souvenir de ces fidèles oiseaux, le monastère et le village d'Einsiedeln portent encore aujourd'hui deux corbeaux sur leurs armoiries.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Nel profondo della foresta oscura dove oggi sorge il monastero di Einsiedeln, il pio eremita Meinrad viveva nel IX secolo in una piccola cella e aveva allevato due corvi che gli rimanevano fedelmente accanto. Il 21 gennaio 861, due vagabondi che avevano sentito parlare dei tesori lasciati dai pellegrini al suo santuario si presentarono da lui e uccisero a bastonate l'indifeso eremita. Mentre gli assassini fuggivano, i due corvi di Meinrad si avventarono su di loro gracchiando e li inseguirono senza sosta fino alla città di Zurigo, dove il loro strano comportamento destò i sospetti degli abitanti. Gli assassini furono catturati, confessarono il delitto e vennero condannati a morte, e in memoria dei fedeli uccelli il monastero e il villaggio di Einsiedeln portano ancora oggi due corvi nel loro stemma.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En lo profundo del bosque oscuro donde hoy se alza el monasterio de Einsiedeln, el piadoso ermitaño Meinrad vivía en el siglo IX en una pequeña celda y había criado a dos cuervos que permanecían fielmente a su lado. El 21 de enero de 861, dos vagabundos que habían oído hablar de los tesoros que los peregrinos dejaban en su santuario llegaron hasta él y mataron a golpes de garrote al indefenso ermitaño. Cuando los asesinos huyeron, los dos cuervos de Meinrad se lanzaron graznando sobre ellos y los persiguieron sin descanso hasta la ciudad de Zúrich, donde su extraño comportamiento despertó las sospechas de los habitantes. Los asesinos fueron capturados, confesaron su crimen y fueron condenados a muerte, y en memoria de las fieles aves el monasterio y el pueblo de Einsiedeln llevan hasta hoy dos cuervos en su escudo.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "No fundo da floresta escura onde hoje se ergue o mosteiro de Einsiedeln, o piedoso eremita Meinrad vivia no século IX numa pequena cela e havia criado dois corvos que permaneciam fielmente ao seu lado. Em 21 de janeiro de 861, dois vagabundos que tinham ouvido falar dos tesouros que os peregrinos deixavam em seu santuário vieram até ele e mataram a paulada o indefeso eremita. Quando os assassinos fugiram, os dois corvos de Meinrad lançaram-se grasnando sobre eles e perseguiram-nos sem descanso até a cidade de Zurique, onde seu estranho comportamento despertou suspeitas entre os habitantes. Os assassinos foram capturados, confessaram o crime e foram condenados à morte, e em memória das fiéis aves o mosteiro e a aldeia de Einsiedeln ainda hoje trazem dois corvos em seu brasão.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "在如今建有艾因西德伦修道院的幽暗森林深处，虔诚的隐修士迈因拉德于九世纪住在一间小屋里，养育了两只忠诚地陪伴在他身边的乌鸦。861年1月21日，两个听闻朝圣者在他圣龛前留下财宝的流浪汉登门，用棍棒打死了这位手无寸铁的隐士。凶手逃跑时，迈因拉德的两只乌鸦嘎嘎叫着扑向他们，一路穷追不舍，直至苏黎世城，它们异常的举动引起了市民的怀疑。凶手被捕并供认罪行，最终被判处死刑；为纪念这两只忠诚的乌鸦，艾因西德伦修道院与村庄至今仍在徽章上绘有两只乌鸦。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Tötung mit Keulen für jüngere Kinder abmildern; den Fokus auf die treuen Raben legen.",
+    "quelle": {
+      "autor": "Alois Lütolf",
+      "werk": "Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug",
+      "jahr": "1862",
+      "fundstelleUrl": "https://www.digitale-sammlungen.de/de/view/bsb10453839"
+    },
+    "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
+    "coordinates": {
+      "lat": 47.1274,
+      "lng": 8.7481
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "engelweihe-einsiedeln",
+    "title": "Die Engelweihe von Einsiedeln",
+    "canton": "Schwyz",
+    "coreMotif": "Himmlische Weihe eines Gotteshauses",
+    "mood": "Ehrfürchtig, wundersam",
+    "bildmotiv": "Gnadenkapelle Kloster Einsiedeln",
+    "summary": "Im Jahr 948 baten die Mönche des jungen Klosters Einsiedeln den Bischof Konrad von Konstanz, ihre neu erbaute Kapelle feierlich einzuweihen. In der Nacht vor der geplanten Weihe zog sich der Bischof zum Gebet in die kleine Kapelle zurück und erblickte dort in einer Vision, wie Christus selbst, begleitet von Scharen von Engeln und Heiligen, vom Himmel herabstieg. Vor seinen Augen weihte der Herr die Kapelle zu Ehren seiner Mutter Maria, so dass am nächsten Morgen, als der Bischof mit der eigentlichen Weihe beginnen wollte, eine Stimme rief, er solle innehalten, denn die Kapelle sei bereits von Gott selbst geweiht worden. Seither feiert Einsiedeln alljährlich am 14. September die Engelweihe, und die wundersame Erzählung machte den Ort in kurzer Zeit zu einem der bedeutendsten Wallfahrtsziele Europas.",
+    "summaries": {
+      "de": {
+        "text": "Im Jahr 948 baten die Mönche des jungen Klosters Einsiedeln den Bischof Konrad von Konstanz, ihre neu erbaute Kapelle feierlich einzuweihen. In der Nacht vor der geplanten Weihe zog sich der Bischof zum Gebet in die kleine Kapelle zurück und erblickte dort in einer Vision, wie Christus selbst, begleitet von Scharen von Engeln und Heiligen, vom Himmel herabstieg. Vor seinen Augen weihte der Herr die Kapelle zu Ehren seiner Mutter Maria, so dass am nächsten Morgen, als der Bischof mit der eigentlichen Weihe beginnen wollte, eine Stimme rief, er solle innehalten, denn die Kapelle sei bereits von Gott selbst geweiht worden. Seither feiert Einsiedeln alljährlich am 14. September die Engelweihe, und die wundersame Erzählung machte den Ort in kurzer Zeit zu einem der bedeutendsten Wallfahrtsziele Europas.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "In the year 948, the monks of the young monastery of Einsiedeln asked Bishop Conrad of Constance to solemnly consecrate their newly built chapel. On the night before the planned consecration, the bishop withdrew into the small chapel to pray, and there beheld a vision of Christ himself descending from heaven, accompanied by hosts of angels and saints. Before his eyes the Lord consecrated the chapel in honour of his mother Mary, so that the next morning, as the bishop was about to begin the actual consecration, a voice called out telling him to stop, for the chapel had already been consecrated by God himself. Ever since, Einsiedeln has celebrated the Feast of the Angelic Consecration every year on 14 September, and the wondrous tale soon made the place one of the most important pilgrimage destinations in Europe.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "En l'an 948, les moines du jeune monastère d'Einsiedeln demandèrent à l'évêque Conrad de Constance de consacrer solennellement leur chapelle nouvellement construite. La nuit précédant la consécration prévue, l'évêque se retira dans la petite chapelle pour prier, et y eut la vision du Christ lui-même descendant du ciel, accompagné de multitudes d'anges et de saints. Sous ses yeux, le Seigneur consacra la chapelle en l'honneur de sa mère Marie, si bien que le lendemain matin, alors que l'évêque s'apprêtait à procéder à la consécration proprement dite, une voix l'appela à s'arrêter, car la chapelle avait déjà été consacrée par Dieu lui-même. Depuis lors, Einsiedeln célèbre chaque année le 14 septembre la Consécration des Anges, et ce récit merveilleux fit rapidement de ce lieu l'un des plus importants sites de pèlerinage d'Europe.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Nell'anno 948, i monaci del giovane monastero di Einsiedeln chiesero al vescovo Corrado di Costanza di consacrare solennemente la loro cappella appena costruita. Nella notte precedente la consacrazione prevista, il vescovo si ritirò a pregare nella piccola cappella e vi ebbe la visione di Cristo stesso che scendeva dal cielo, accompagnato da schiere di angeli e santi. Sotto i suoi occhi il Signore consacrò la cappella in onore di sua madre Maria, cosicché la mattina seguente, quando il vescovo stava per procedere alla consacrazione vera e propria, una voce lo chiamò a fermarsi, poiché la cappella era già stata consacrata da Dio stesso. Da allora Einsiedeln celebra ogni anno, il 14 settembre, la Consacrazione degli Angeli, e il racconto meraviglioso rese presto questo luogo uno dei più importanti santuari di pellegrinaggio d'Europa.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En el año 948, los monjes del joven monasterio de Einsiedeln pidieron al obispo Conrado de Constanza que consagrara solemnemente su capilla recién construida. En la noche anterior a la consagración prevista, el obispo se retiró a orar en la pequeña capilla y allí tuvo la visión de Cristo mismo descendiendo del cielo, acompañado de huestes de ángeles y santos. Ante sus ojos, el Señor consagró la capilla en honor de su madre María, de modo que a la mañana siguiente, cuando el obispo se disponía a proceder a la consagración propiamente dicha, una voz lo llamó a detenerse, pues la capilla ya había sido consagrada por Dios mismo. Desde entonces, Einsiedeln celebra cada año, el 14 de septiembre, la Consagración de los Ángeles, y el maravilloso relato convirtió pronto este lugar en uno de los destinos de peregrinación más importantes de Europa.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "No ano de 948, os monges do jovem mosteiro de Einsiedeln pediram ao bispo Conrado de Constança que consagrasse solenemente sua capela recém-construída. Na noite anterior à consagração prevista, o bispo retirou-se para rezar na pequena capela e ali teve a visão do próprio Cristo descendo do céu, acompanhado de hostes de anjos e santos. Diante de seus olhos, o Senhor consagrou a capela em honra de sua mãe Maria, de modo que na manhã seguinte, quando o bispo estava prestes a proceder à consagração propriamente dita, uma voz o chamou para parar, pois a capela já havia sido consagrada por Deus mesmo. Desde então, Einsiedeln celebra todos os anos, em 14 de setembro, a Consagração dos Anjos, e o relato maravilhoso logo tornou o local um dos mais importantes destinos de peregrinação da Europa.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "948年，年轻的艾因西德伦修道院的修士们请求康斯坦茨主教康拉德为他们新建的小堂举行隆重的祝圣仪式。在预定祝圣的前一夜，主教退入小堂祈祷，忽见异象：基督本人在天使与圣徒的簇拥下从天而降。主在他眼前将小堂祝圣，以敬奉圣母玛利亚；次日清晨，正当主教准备正式举行祝圣仪式时，忽有声音传来，叫他停下，因为小堂已由上帝亲自祝圣过了。此后，艾因西德伦每年9月14日都会庆祝\"天使祝圣节\"，这个奇妙的故事很快使此地成为欧洲最重要的朝圣地之一。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; die Erzählung ist bereits kindgerecht.",
+    "quelle": {
+      "autor": "Alois Lütolf",
+      "werk": "Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug",
+      "jahr": "1862",
+      "fundstelleUrl": "https://www.digitale-sammlungen.de/de/view/bsb10453839"
+    },
+    "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
+    "coordinates": {
+      "lat": 47.1274,
+      "lng": 8.7481
+    },
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "strudeli-straetteli-brunnen",
+    "title": "Strudeli und Strätteli, die Waldfrauen von Brunnen",
+    "canton": "Schwyz",
+    "coreMotif": "Geisterhafte Waldfrauen und nächtlicher Lärmumzug",
+    "mood": "Unheimlich, schalkhaft",
+    "bildmotiv": "Wasiwald Brunnen Vierwaldstättersee",
+    "summary": "Im Wasiwald oberhalb von Brunnen sollen der Überlieferung nach einst zwei geheimnisvolle Waldfrauen gehaust haben, Strudeli und Strätteli genannt, deren Name an die alten Schrätlein und Waldgeister erinnert. In den Rauhnächten rund um das Dreikönigsfest, so erzählte man sich, zogen die beiden Gestalten aus ihrem Waldversteck herab ins Dorf und trieben dort mit Lärm und Schabernack ihr Unwesen unter den Bewohnern. Um sie zu vertreiben oder ihnen zugleich zu huldigen, zogen die jungen Männer von Brunnen am Dreikönigsabend mit knallenden Geisseln und schellenden Kuhglocken lärmend durchs Dorf, ein Brauch, den man Greiflet nannte. Bis heute erinnert dieser eigenwillige Lärmumzug an die beiden sagenhaften Waldfrauen aus dem Wasiwald, auch wenn ihre genaue Gestalt im Dunkel der Überlieferung verborgen bleibt.",
+    "summaries": {
+      "de": {
+        "text": "Im Wasiwald oberhalb von Brunnen sollen der Überlieferung nach einst zwei geheimnisvolle Waldfrauen gehaust haben, Strudeli und Strätteli genannt, deren Name an die alten Schrätlein und Waldgeister erinnert. In den Rauhnächten rund um das Dreikönigsfest, so erzählte man sich, zogen die beiden Gestalten aus ihrem Waldversteck herab ins Dorf und trieben dort mit Lärm und Schabernack ihr Unwesen unter den Bewohnern. Um sie zu vertreiben oder ihnen zugleich zu huldigen, zogen die jungen Männer von Brunnen am Dreikönigsabend mit knallenden Geisseln und schellenden Kuhglocken lärmend durchs Dorf, ein Brauch, den man Greiflet nannte. Bis heute erinnert dieser eigenwillige Lärmumzug an die beiden sagenhaften Waldfrauen aus dem Wasiwald, auch wenn ihre genaue Gestalt im Dunkel der Überlieferung verborgen bleibt.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "In the Wasiwald forest above Brunnen, tradition holds that two mysterious forest women once dwelt, called Strudeli and Strätteli, names that recall the old wood-sprites and forest spirits. During the Rough Nights around the feast of the Three Kings, so the story goes, the two figures would descend from their forest hideaway into the village and cause noisy mischief among the inhabitants. To drive them away, or perhaps to honour them at the same time, the young men of Brunnen would parade noisily through the village on Twelfth Night, cracking whips and ringing cowbells, a custom known as the Greiflet. To this day this peculiar noisy procession recalls the two legendary forest women of the Wasiwald, even though their exact form remains hidden in the darkness of tradition.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Dans la forêt du Wasiwald au-dessus de Brunnen, la tradition veut que deux mystérieuses femmes des bois aient jadis vécu, nommées Strudeli et Strätteli, des noms qui rappellent les anciens esprits sylvestres. Durant les Nuits rudes autour de la fête des Rois, racontait-on, les deux figures descendaient de leur repaire forestier jusqu'au village et y semaient bruit et espièglerie parmi les habitants. Pour les chasser, ou peut-être aussi pour leur rendre hommage, les jeunes hommes de Brunnen défilaient bruyamment dans le village le soir de l'Épiphanie, faisant claquer des fouets et sonner des cloches à vaches, une coutume appelée le Greiflet. Aujourd'hui encore, cet étrange cortège bruyant rappelle les deux légendaires femmes des bois du Wasiwald, même si leur forme exacte demeure enfouie dans l'obscurité de la tradition.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Nella foresta del Wasiwald sopra Brunnen, la tradizione vuole che un tempo vivessero due misteriose donne dei boschi, chiamate Strudeli e Strätteli, nomi che richiamano gli antichi spiriti silvani. Durante le Notti Ruvide attorno alla festa dei Re Magi, si raccontava, le due figure scendevano dal loro rifugio nel bosco fino al villaggio e vi seminavano rumore e dispetti tra gli abitanti. Per scacciarle, o forse anche per onorarle, i giovani di Brunnen sfilavano rumorosamente per il villaggio la sera dell'Epifania, schioccando fruste e suonando campanacci da mucca, un'usanza chiamata Greiflet. Ancora oggi questo singolare corteo rumoroso ricorda le due leggendarie donne dei boschi del Wasiwald, anche se la loro forma esatta resta celata nell'oscurità della tradizione.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "En el bosque de Wasiwald sobre Brunnen, la tradición cuenta que antaño vivían dos misteriosas mujeres del bosque, llamadas Strudeli y Strätteli, nombres que recuerdan a los antiguos espíritus silvestres. Durante las Noches Ásperas en torno a la fiesta de Reyes, se contaba, las dos figuras bajaban desde su escondite en el bosque hasta el pueblo y sembraban ruido y travesuras entre los habitantes. Para ahuyentarlas, o quizás también para honrarlas, los jóvenes de Brunnen desfilaban ruidosamente por el pueblo la noche de Reyes, haciendo restallar látigos y sonar cencerros, una costumbre llamada Greiflet. Todavía hoy este peculiar desfile ruidoso recuerda a las dos legendarias mujeres del bosque de Wasiwald, aunque su forma exacta permanece oculta en la oscuridad de la tradición.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Na floresta de Wasiwald acima de Brunnen, a tradição conta que outrora viviam duas misteriosas mulheres da floresta, chamadas Strudeli e Strätteli, nomes que remetem aos antigos espíritos silvestres. Durante as Noites Ásperas em torno da festa dos Reis Magos, contava-se, as duas figuras desciam de seu esconderijo na floresta até a aldeia e semeavam barulho e travessuras entre os moradores. Para afugentá-las, ou talvez também para homenageá-las, os jovens de Brunnen desfilavam ruidosamente pela aldeia na noite de Reis, estalando chicotes e tocando chocalhos de vaca, um costume chamado Greiflet. Até hoje esse peculiar desfile barulhento recorda as duas lendárias mulheres da floresta de Wasiwald, ainda que sua forma exata permaneça oculta na escuridão da tradição.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "相传布鲁嫩上方的瓦西森林里，曾住着两个神秘的林中女子，名叫斯特鲁德利与斯特雷特利，这名字让人联想到古老的林中精灵。据说在主显节前后的\"粗暴之夜\"，这两个身影会从林中藏身处下到村里，在居民中制造喧闹与恶作剧。为了驱赶她们，或许也是为了向她们致敬，布鲁嫩的年轻人会在主显节前夜甩响皮鞭、摇响牛铃，喧闹地游行穿过村庄，这一习俗被称为\"Greiflet\"。直至今日，这奇特的喧闹游行仍在纪念瓦西森林里那两位传说中的林中女子，尽管她们确切的形象依然隐没在传说的迷雾之中。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; keine Gewaltdarstellung.",
+    "quelle": {
+      "autor": "Alois Lütolf",
+      "werk": "Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug",
+      "jahr": "1862",
+      "fundstelleUrl": "https://www.digitale-sammlungen.de/de/view/bsb10453839"
+    },
+    "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
+    "coordinates": {
+      "lat": 46.9967,
+      "lng": 8.6072
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "koenig-hakon-mythen",
+    "title": "Das versteinerte Königspaar der Mythen",
+    "canton": "Schwyz",
+    "coreMotif": "Versteinerung aus Kummer und Trauer",
+    "mood": "Melancholisch, geheimnisvoll",
+    "bildmotiv": "Grosser Mythen Felswand Wiss Wändli",
+    "summary": "Der Sage nach zog sich einst ein König aus dem hohen Norden namens Hakon mit seiner Gemahlin auf den Grossen Mythen zurück, gequält von Gram und Trauer über eine Hungersnot, die ihr Volk heimgesucht hatte. Am Fusse des Berges, unterhalb der sogenannten Mythenmatt, sollen die beiden schliesslich vor Kummer im nackten Felsen des Wiss Wändli erstarrt und zu Stein geworden sein. Je nach Sonnenstand, besonders beim Abendlicht, lässt sich das gekrönte Königspaar der Überlieferung nach in den Umrissen der Felswand noch deutlich erkennen, gleich gegenüber der Stelle, wo einst der Flecken Schwyz gegründet wurde. Nur wenn ein Unwetter aufzieht, so erzählt man sich weiter, soll sich König Hakon aus seinem steinernen Schlaf erheben und als drohender Geist in Donner und Blitz über den Bergen erscheinen.",
+    "summaries": {
+      "de": {
+        "text": "Der Sage nach zog sich einst ein König aus dem hohen Norden namens Hakon mit seiner Gemahlin auf den Grossen Mythen zurück, gequält von Gram und Trauer über eine Hungersnot, die ihr Volk heimgesucht hatte. Am Fusse des Berges, unterhalb der sogenannten Mythenmatt, sollen die beiden schliesslich vor Kummer im nackten Felsen des Wiss Wändli erstarrt und zu Stein geworden sein. Je nach Sonnenstand, besonders beim Abendlicht, lässt sich das gekrönte Königspaar der Überlieferung nach in den Umrissen der Felswand noch deutlich erkennen, gleich gegenüber der Stelle, wo einst der Flecken Schwyz gegründet wurde. Nur wenn ein Unwetter aufzieht, so erzählt man sich weiter, soll sich König Hakon aus seinem steinernen Schlaf erheben und als drohender Geist in Donner und Blitz über den Bergen erscheinen.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "According to legend, a king from the far north named Hakon once withdrew with his queen to the Grosser Mythen, tormented by grief over a famine that had struck their people. At the foot of the mountain, below the so-called Mythenmatt, the two are said to have finally turned to stone from sorrow in the bare rock face of the Wiss Wändli. Depending on the angle of the sun, especially in the evening light, the crowned royal couple can supposedly still be clearly made out in the outlines of the rock face, directly opposite the spot where the settlement of Schwyz was once founded. Only when a storm is brewing, so the tale continues, does King Hakon rise from his stony sleep and appear as a menacing spirit in thunder and lightning over the mountains.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Selon la légende, un roi venu du grand nord nommé Hakon se serait autrefois retiré avec sa reine sur le Grand Mythen, tourmenté par le chagrin d'une famine qui avait frappé son peuple. Au pied de la montagne, en contrebas du lieu-dit Mythenmatt, les deux souverains se seraient finalement pétrifiés de douleur dans la roche nue du Wiss Wändli. Selon l'angle du soleil, surtout à la lumière du soir, le couple royal couronné se distinguerait encore nettement dans les contours de la paroi rocheuse, juste en face de l'endroit où fut jadis fondée la bourgade de Schwyz. Ce n'est que lorsqu'un orage se prépare, raconte-t-on encore, que le roi Hakon sortirait de son sommeil de pierre pour apparaître, esprit menaçant, dans le tonnerre et les éclairs au-dessus des montagnes.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Secondo la leggenda, un re venuto dal lontano nord di nome Hakon si sarebbe un tempo ritirato con la sua regina sul Grande Mythen, tormentato dal dolore per una carestia che aveva colpito il suo popolo. Ai piedi della montagna, sotto il cosiddetto Mythenmatt, i due si sarebbero infine pietrificati per il dolore nella roccia nuda del Wiss Wändli. A seconda della posizione del sole, specialmente alla luce della sera, la coppia reale coronata si distinguerebbe ancora chiaramente nei contorni della parete rocciosa, proprio di fronte al luogo dove un tempo fu fondato il borgo di Schwyz. Solo quando si avvicina un temporale, si racconta ancora, il re Hakon si risveglierebbe dal suo sonno di pietra per apparire come spirito minaccioso tra tuoni e fulmini sopra le montagne.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Según la leyenda, un rey venido del lejano norte llamado Hakon se retiró antaño con su reina al Gran Mythen, atormentado por el dolor de una hambruna que había azotado a su pueblo. Al pie de la montaña, bajo el llamado Mythenmatt, ambos se habrían petrificado finalmente de pena en la roca desnuda del Wiss Wändli. Según la posición del sol, especialmente con la luz del atardecer, la pareja real coronada aún puede distinguirse claramente en los contornos de la pared rocosa, justo frente al lugar donde antaño se fundó la localidad de Schwyz. Solo cuando se avecina una tormenta, se cuenta además, el rey Hakon despertaría de su sueño de piedra para aparecer como espíritu amenazante entre truenos y relámpagos sobre las montañas.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Segundo a lenda, um rei vindo do extremo norte chamado Hakon retirou-se outrora com sua rainha para o Grande Mythen, atormentado pela dor de uma fome que havia atingido seu povo. Ao pé da montanha, abaixo do chamado Mythenmatt, os dois teriam finalmente se petrificado de tristeza na rocha nua do Wiss Wändli. Dependendo da posição do sol, especialmente à luz da tarde, o casal real coroado ainda pode ser claramente distinguido nos contornos da parede rochosa, bem em frente ao local onde outrora foi fundada a localidade de Schwyz. Somente quando se aproxima uma tempestade, conta-se ainda, o rei Hakon desperta de seu sono de pedra e aparece como espírito ameaçador em trovões e relâmpagos sobre as montanhas.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "传说一位来自遥远北方、名叫哈康的国王，曾因一场降临于其子民的饥荒而悲痛不已，携王后一同隐居于大米滕山。在山脚下、所谓\"米滕草甸\"之下，两人最终因悲伤而在维斯万德利的裸岩中化为石头。据传说，随着阳光角度的变化，尤其是在傍晚的光线下，仍可清晰辨认出这对戴着王冠的王室夫妇的轮廓，其位置正对着施维茨镇最初建立的地方。据说唯有当风暴将至时，哈康国王才会从他的石头沉睡中苏醒，化作雷电中令人生畏的幽灵，出现在群山之上。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; keine Gewaltdarstellung.",
+    "quelle": {
+      "autor": "Renward Cysat",
+      "werk": "Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae",
+      "jahr": "um 1600",
+      "fundstelleUrl": "https://www.zentralbibliothek.ch/sammlungen/handschriften/cysat/"
+    },
+    "source": "Renward Cysat: Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae (um 1600)",
+    "coordinates": {
+      "lat": 47.0189,
+      "lng": 8.7369
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "drache-mythen-degen",
+    "title": "Der Drache auf dem Mythen",
+    "canton": "Schwyz",
+    "coreMotif": "Kampf gegen ein Ungeheuer",
+    "mood": "Spannend, gefährlich",
+    "bildmotiv": "Grosser Mythen Gipfel Felsen",
+    "summary": "Um das Jahr 1550 soll der Schwyzer Ratsherr Johannes Degen bei der Jagd auf der Spitze des Berges oberhalb des Fleckens Schwyz unversehens auf ein furchterregendes Ungeheuer gestossen sein, das man als gleichartig einem Lindwurm beschrieb. Aus Notwehr griff Degen das Untier sogleich mit seiner Handbüchse an, doch der Schuss traf nicht tödlich und verwundete den Drachen nur, worauf dieser sich erst recht auf den Jäger stürzte. Es folgte ein langer und gefährlicher Kampf, den der tapfere Ratsherr mit dem Gewehr in der Hand ausfocht, bis es ihm schliesslich unter grosser Mühe und Gefahr gelang, das Untier zu erledigen und zu töten. Die Geschichte von Degens Drachenkampf auf dem Mythen wurde noch Jahrhunderte später in alten Schriften und Kalendern der Innerschweiz weitererzählt.",
+    "summaries": {
+      "de": {
+        "text": "Um das Jahr 1550 soll der Schwyzer Ratsherr Johannes Degen bei der Jagd auf der Spitze des Berges oberhalb des Fleckens Schwyz unversehens auf ein furchterregendes Ungeheuer gestossen sein, das man als gleichartig einem Lindwurm beschrieb. Aus Notwehr griff Degen das Untier sogleich mit seiner Handbüchse an, doch der Schuss traf nicht tödlich und verwundete den Drachen nur, worauf dieser sich erst recht auf den Jäger stürzte. Es folgte ein langer und gefährlicher Kampf, den der tapfere Ratsherr mit dem Gewehr in der Hand ausfocht, bis es ihm schliesslich unter grosser Mühe und Gefahr gelang, das Untier zu erledigen und zu töten. Die Geschichte von Degens Drachenkampf auf dem Mythen wurde noch Jahrhunderte später in alten Schriften und Kalendern der Innerschweiz weitererzählt.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "Around the year 1550, the Schwyz councilman Johannes Degen is said to have unexpectedly come across a terrifying monster, described as resembling a dragon, while hunting on the peak of the mountain above the town of Schwyz. In self-defence, Degen immediately attacked the beast with his handgun, but the shot was not fatal and only wounded the dragon, which then hurled itself at the hunter all the more fiercely. A long and dangerous fight followed, which the brave councilman fought with his weapon in hand, until at last, with great effort and at great risk, he managed to finish off and kill the creature. The story of Degen's fight with the dragon on the Mythen was still retold centuries later in old writings and almanacs of central Switzerland.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Vers l'an 1550, le conseiller de Schwyz Johannes Degen serait tombé, à la chasse, sur un monstre terrifiant, décrit comme semblable à un dragon, au sommet de la montagne au-dessus de la bourgade de Schwyz. Par légitime défense, Degen attaqua aussitôt la bête avec son arquebuse, mais le coup ne fut pas mortel et ne fit que blesser le dragon, qui se jeta alors avec d'autant plus de fureur sur le chasseur. S'ensuivit un combat long et dangereux, que le brave conseiller mena l'arme au poing, jusqu'à ce qu'il parvienne enfin, au prix de grands efforts et de grands risques, à achever et à tuer la créature. L'histoire du combat de Degen contre le dragon du Mythen fut encore racontée des siècles plus tard dans d'anciens écrits et almanachs de Suisse centrale.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Verso l'anno 1550, il consigliere di Schwyz Johannes Degen si sarebbe imbattuto, durante una battuta di caccia, in un mostro spaventoso, descritto come simile a un drago, sulla cima del monte sopra il borgo di Schwyz. Per legittima difesa, Degen attaccò subito la belva con il suo archibugio, ma il colpo non fu mortale e ferì soltanto il drago, che si avventò allora ancora più furiosamente sul cacciatore. Seguì una lotta lunga e pericolosa, che il coraggioso consigliere condusse con l'arma in pugno, finché non riuscì infine, con grande fatica e grande pericolo, a finire e uccidere la creatura. La storia della lotta di Degen contro il drago sul Mythen fu ancora raccontata secoli dopo negli antichi scritti e almanacchi della Svizzera centrale.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Hacia el año 1550, el concejal de Schwyz Johannes Degen se habría topado, cazando, con un monstruo aterrador, descrito como semejante a un dragón, en la cima de la montaña sobre la localidad de Schwyz. En defensa propia, Degen atacó de inmediato a la bestia con su arcabuz, pero el disparo no fue mortal y solo hirió al dragón, que se lanzó entonces con más furia aún sobre el cazador. Siguió una lucha larga y peligrosa, que el valiente concejal libró con el arma en la mano, hasta que finalmente, con gran esfuerzo y gran peligro, logró acabar con la criatura y matarla. La historia de la lucha de Degen contra el dragón del Mythen todavía se contaba siglos después en antiguos escritos y almanaques de la Suiza central.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Por volta do ano de 1550, o conselheiro de Schwyz Johannes Degen teria se deparado, durante uma caçada, com um monstro aterrorizante, descrito como semelhante a um dragão, no topo da montanha acima da vila de Schwyz. Em legítima defesa, Degen atacou imediatamente a fera com sua arcabuz, mas o tiro não foi fatal e apenas feriu o dragão, que então se lançou com ainda mais fúria sobre o caçador. Seguiu-se uma luta longa e perigosa, que o corajoso conselheiro travou com a arma em punho, até que finalmente, com grande esforço e grande perigo, conseguiu acabar com a criatura e matá-la. A história da luta de Degen contra o dragão no Mythen ainda era contada séculos depois em antigos escritos e almanaques da Suíça central.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "约1550年，施维茨市议员约翰内斯·德根据说在施维茨镇上方的山顶打猎时，意外遇到一只令人生畏的怪物，据描述形似巨龙。出于自卫，德根立即用他的手铳攻击这头怪兽，但这一枪未能致命，只伤了巨龙，龙反而更加凶猛地扑向猎人。随之而来的是一场旷日持久、凶险万分的搏斗，这位勇敢的议员手持武器奋力周旋，最终历经千辛万苦、冒着极大危险，才将这头怪兽了结、杀死。德根在米滕山上屠龙的故事，几个世纪后仍在瑞士中部的古老文献与历书中流传。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Kampfszene für jüngere Kinder abmildern; den Mut Degens betonen statt der Details des Kampfes.",
+    "quelle": {
+      "autor": "Renward Cysat",
+      "werk": "Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae",
+      "jahr": "um 1600",
+      "fundstelleUrl": "https://www.zentralbibliothek.ch/sammlungen/handschriften/cysat/"
+    },
+    "source": "Renward Cysat: Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae (um 1600)",
+    "coordinates": {
+      "lat": 47.0189,
+      "lng": 8.7369
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "morgarten-narrensage",
+    "title": "Der weise Narr von Morgarten",
+    "canton": "Schwyz",
+    "coreMotif": "Der Narr durchschaut, was die Klugen übersehen",
+    "mood": "Warnend, ironisch",
+    "bildmotiv": "Morgarten Denkmal Ägerisee",
+    "summary": "Am Abend vor der Schlacht bei Morgarten im November 1315 versammelte sich Herzog Leopold von Habsburg mit seinen adligen Gefolgsleuten auf der Burg zu Zug, um den Feldzug gegen die Schwyzer zu besprechen. Die versammelten Herren waren sich ihres Sieges bereits so sicher, dass einer von ihnen zum Spass den Hofnarren des Herzogs, Kuony von Stocken, nach seiner Meinung zum geplanten Einmarsch fragte. Der Narr aber gab zur Antwort, alle hätten wohl beraten, wie man in das Land der Schwyzer hineinkomme, doch keiner habe bedacht, wie man da wieder herauskomme. Am folgenden Tag, nachdem das habsburgische Heer bei Morgarten eine vernichtende Niederlage erlitten hatte und der Herzog nur mit knapper Not entkommen war, erinnerte sich Leopold an die Worte seines Narren und gewährte ihm zum Dank die Erlaubnis, fortan alljährlich in seiner Heimatstadt Stockach ein eigenes Narrengericht abzuhalten.",
+    "summaries": {
+      "de": {
+        "text": "Am Abend vor der Schlacht bei Morgarten im November 1315 versammelte sich Herzog Leopold von Habsburg mit seinen adligen Gefolgsleuten auf der Burg zu Zug, um den Feldzug gegen die Schwyzer zu besprechen. Die versammelten Herren waren sich ihres Sieges bereits so sicher, dass einer von ihnen zum Spass den Hofnarren des Herzogs, Kuony von Stocken, nach seiner Meinung zum geplanten Einmarsch fragte. Der Narr aber gab zur Antwort, alle hätten wohl beraten, wie man in das Land der Schwyzer hineinkomme, doch keiner habe bedacht, wie man da wieder herauskomme. Am folgenden Tag, nachdem das habsburgische Heer bei Morgarten eine vernichtende Niederlage erlitten hatte und der Herzog nur mit knapper Not entkommen war, erinnerte sich Leopold an die Worte seines Narren und gewährte ihm zum Dank die Erlaubnis, fortan alljährlich in seiner Heimatstadt Stockach ein eigenes Narrengericht abzuhalten.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "On the evening before the Battle of Morgarten in November 1315, Duke Leopold of Habsburg gathered with his noble followers at the castle of Zug to discuss the campaign against the people of Schwyz. The assembled lords were already so confident of victory that one of them jokingly asked the duke's court jester, Kuony von Stocken, what he thought of the planned invasion. But the jester replied that everyone had given good advice on how to get into the land of the Schwyz, yet no one had considered how to get out again. The following day, after the Habsburg army had suffered a crushing defeat at Morgarten and the duke had barely escaped with his life, Leopold remembered his jester's words and, in gratitude, granted him permission to hold his own jesters' court every year from then on in his home town of Stockach.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Le soir avant la bataille de Morgarten, en novembre 1315, le duc Léopold de Habsbourg se réunit avec ses nobles compagnons au château de Zoug pour discuter de la campagne contre les Schwyzois. Les seigneurs rassemblés étaient déjà si sûrs de la victoire que l'un d'eux demanda, en plaisantant, au bouffon du duc, Kuony von Stocken, ce qu'il pensait de l'invasion prévue. Mais le bouffon répondit que tous avaient bien conseillé comment entrer au pays des Schwyzois, mais qu'aucun n'avait songé à la manière d'en ressortir. Le lendemain, après que l'armée des Habsbourg eut essuyé une défaite écrasante à Morgarten et que le duc n'eut échappé que de justesse, Léopold se souvint des paroles de son bouffon et lui accorda, en remerciement, le droit de tenir désormais chaque année sa propre cour des fous dans sa ville natale de Stockach.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "La sera prima della battaglia di Morgarten, nel novembre 1315, il duca Leopoldo d'Asburgo si riunì con i suoi nobili seguaci nel castello di Zugo per discutere la campagna contro gli Svittesi. I signori radunati erano già così sicuri della vittoria che uno di loro chiese per scherzo al buffone di corte del duca, Kuony von Stocken, cosa ne pensasse dell'invasione progettata. Ma il buffone rispose che tutti avevano ben consigliato come entrare nella terra degli Svittesi, ma nessuno aveva pensato a come uscirne. Il giorno seguente, dopo che l'esercito asburgico subì una schiacciante sconfitta a Morgarten e il duca riuscì a fuggire per un pelo, Leopoldo si ricordò delle parole del suo buffone e, per gratitudine, gli concesse il permesso di tenere ogni anno, da allora in poi, la propria corte dei folli nella sua città natale di Stockach.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "La noche anterior a la batalla de Morgarten, en noviembre de 1315, el duque Leopoldo de Habsburgo se reunió con sus nobles seguidores en el castillo de Zug para discutir la campaña contra los habitantes de Schwyz. Los señores reunidos estaban ya tan seguros de la victoria que uno de ellos preguntó en broma al bufón de la corte del duque, Kuony von Stocken, qué opinaba de la invasión planeada. Pero el bufón respondió que todos habían aconsejado bien cómo entrar en la tierra de los de Schwyz, pero que nadie había pensado en cómo volver a salir. Al día siguiente, después de que el ejército de los Habsburgo sufriera una aplastante derrota en Morgarten y el duque escapara por poco, Leopoldo recordó las palabras de su bufón y, en agradecimiento, le concedió el permiso de celebrar en adelante cada año su propia corte de bufones en su ciudad natal de Stockach.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Na noite anterior à batalha de Morgarten, em novembro de 1315, o duque Leopoldo de Habsburgo reuniu-se com seus nobres seguidores no castelo de Zug para discutir a campanha contra os habitantes de Schwyz. Os senhores reunidos já estavam tão confiantes na vitória que um deles perguntou, de brincadeira, ao bobo da corte do duque, Kuony von Stocken, o que ele achava da invasão planejada. Mas o bobo respondeu que todos haviam dado bons conselhos sobre como entrar na terra dos de Schwyz, mas ninguém havia pensado em como sair de novo. No dia seguinte, depois que o exército dos Habsburgo sofreu uma derrota esmagadora em Morgarten e o duque escapou por pouco, Leopoldo lembrou-se das palavras de seu bobo e, em agradecimento, concedeu-lhe permissão para realizar, dali em diante, todos os anos, sua própria corte de bobos em sua cidade natal, Stockach.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "1315年11月摩尔加登战役前夜，哈布斯堡的利奥波德公爵与他的贵族随从们齐聚楚格城堡，商议对施维茨人的战事。在座的领主们对胜利已是志在必得，以至于有人开玩笑地问公爵的宫廷弄臣库奥尼·冯·斯托肯对这次进军有何看法。弄臣答道，众人都商量好了如何进入施维茨人的土地，却无人想过该如何再出来。次日，哈布斯堡军队在摩尔加登遭遇惨败，公爵本人也仅以身免，利奥波德想起弄臣的话，心怀感激，准许他从此每年都可在家乡施托卡赫举办属于自己的\"愚人法庭\"。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Kriegerische Elemente für jüngere Kinder abmildern; den Fokus auf die Weisheit des Narren legen.",
+    "quelle": {
+      "autor": "Hans Tschachtlan (u.a. Chronisten)",
+      "werk": "Tschachtlanchronik",
+      "jahr": "1483",
+      "fundstelleUrl": "https://www.e-codices.unifr.ch/de/list/one/bbb/Mss-hh-I0016"
+    },
+    "source": "Hans Tschachtlan (u.a. Chronisten): Tschachtlanchronik (1483)",
+    "coordinates": {
+      "lat": 47.128,
+      "lng": 8.615
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "morgarten-pfeil-huenenberg",
+    "title": "Der warnende Pfeil des Heinrich von Hünenberg",
+    "canton": "Schwyz",
+    "coreMotif": "Heimliche Warnung rettet die Bedrängten",
+    "mood": "Spannend, heldenhaft",
+    "bildmotiv": "Letzimauer Arth Ägerisee",
+    "summary": "Als Herzog Leopold von Habsburg im November 1315 mit einem stattlichen Heer gegen die Schwyzer zog, soll der Edelmann Heinrich von Hünenberg heimlich von den Plänen des Herzogs erfahren haben, das Land über den Morgarten anzugreifen. Obwohl er selbst dem Adel angehörte, wollte Hünenberg seine Landsleute in den Waldstätten nicht ahnungslos ins Verderben rennen lassen und beschloss, sie im Geheimen zu warnen. Er band eine Nachricht an einen Pfeil, auf der geschrieben stand, man solle sich am Morgarten in Acht nehmen, am Tag vor Sankt Otmar, und schoss ihn über die schwyzerische Letzimauer bei Arth. Dank dieser Warnung konnten die Schwyzer rechtzeitig Verstärkung an den gefährdeten Ort schicken, und als das habsburgische Heer in die Enge des Passes geriet, war der Hinterhalt bereits vorbereitet, der zum entscheidenden Sieg der Eidgenossen führte.",
+    "summaries": {
+      "de": {
+        "text": "Als Herzog Leopold von Habsburg im November 1315 mit einem stattlichen Heer gegen die Schwyzer zog, soll der Edelmann Heinrich von Hünenberg heimlich von den Plänen des Herzogs erfahren haben, das Land über den Morgarten anzugreifen. Obwohl er selbst dem Adel angehörte, wollte Hünenberg seine Landsleute in den Waldstätten nicht ahnungslos ins Verderben rennen lassen und beschloss, sie im Geheimen zu warnen. Er band eine Nachricht an einen Pfeil, auf der geschrieben stand, man solle sich am Morgarten in Acht nehmen, am Tag vor Sankt Otmar, und schoss ihn über die schwyzerische Letzimauer bei Arth. Dank dieser Warnung konnten die Schwyzer rechtzeitig Verstärkung an den gefährdeten Ort schicken, und als das habsburgische Heer in die Enge des Passes geriet, war der Hinterhalt bereits vorbereitet, der zum entscheidenden Sieg der Eidgenossen führte.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "When Duke Leopold of Habsburg marched against the people of Schwyz in November 1315 with a formidable army, the nobleman Heinrich von Hünenberg is said to have secretly learned of the duke's plan to attack the land by way of Morgarten. Although he himself belonged to the nobility, Hünenberg did not want his countrymen in the forest cantons to run unknowingly into disaster, and decided to warn them in secret. He tied a message to an arrow reading that they should be on their guard at Morgarten on the day before Saint Otmar, and shot it over the Schwyz defensive wall at Arth. Thanks to this warning, the people of Schwyz were able to send reinforcements to the threatened spot in time, and when the Habsburg army was forced into the narrow pass, the ambush that led to the decisive Confederate victory was already prepared.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Lorsque le duc Léopold de Habsbourg marcha contre les Schwyzois en novembre 1315 avec une puissante armée, le noble Heinrich von Hünenberg aurait secrètement appris le projet du duc d'attaquer le pays par Morgarten. Bien qu'il appartînt lui-même à la noblesse, Hünenberg ne voulait pas que ses compatriotes des cantons forestiers courent sans le savoir à leur perte, et décida de les avertir en secret. Il attacha à une flèche un message disant qu'il fallait se méfier à Morgarten, la veille de la Saint-Otmar, et la tira par-dessus le mur défensif schwyzois d'Arth. Grâce à cet avertissement, les Schwyzois purent envoyer à temps des renforts à l'endroit menacé, et lorsque l'armée des Habsbourg fut acculée dans l'étroit défilé, l'embuscade qui mena à la victoire décisive des Confédérés était déjà prête.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Quando il duca Leopoldo d'Asburgo marciò contro gli Svittesi nel novembre 1315 con un potente esercito, il nobile Heinrich von Hünenberg avrebbe segretamente appreso il piano del duca di attaccare il paese passando per Morgarten. Sebbene appartenesse egli stesso alla nobiltà, Hünenberg non volle che i suoi connazionali dei cantoni forestali corressero ignari verso la rovina, e decise di avvertirli in segreto. Legò a una freccia un messaggio in cui si diceva di stare in guardia a Morgarten, il giorno prima di Sant'Otmaro, e la scoccò oltre il muro difensivo svittese di Arth. Grazie a questo avvertimento, gli Svittesi poterono inviare in tempo rinforzi al luogo minacciato, e quando l'esercito asburgico fu costretto nello stretto passo, l'imboscata che portò alla vittoria decisiva dei Confederati era già pronta.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Cuando el duque Leopoldo de Habsburgo marchó contra los de Schwyz en noviembre de 1315 con un poderoso ejército, el noble Heinrich von Hünenberg se habría enterado en secreto del plan del duque de atacar el país por Morgarten. Aunque él mismo pertenecía a la nobleza, Hünenberg no quiso que sus compatriotas de los cantones forestales corrieran sin saberlo hacia la ruina, y decidió advertirles en secreto. Ató a una flecha un mensaje que decía que debían estar alerta en Morgarten, la víspera de San Otmar, y la disparó por encima de la muralla defensiva de Schwyz en Arth. Gracias a esta advertencia, los de Schwyz pudieron enviar refuerzos a tiempo al lugar amenazado, y cuando el ejército de los Habsburgo quedó atrapado en el estrecho paso, la emboscada que condujo a la victoria decisiva de los Confederados ya estaba preparada.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Quando o duque Leopoldo de Habsburgo marchou contra os de Schwyz em novembro de 1315 com um poderoso exército, o nobre Heinrich von Hünenberg teria descoberto secretamente o plano do duque de atacar o país passando por Morgarten. Embora ele mesmo pertencesse à nobreza, Hünenberg não quis que seus compatriotas dos cantões florestais corressem sem saber para a ruína, e decidiu avisá-los em segredo. Amarrou a uma flecha uma mensagem dizendo que deveriam ficar em alerta em Morgarten, na véspera de Santo Otmar, e disparou-a por cima da muralha defensiva de Schwyz em Arth. Graças a esse aviso, os de Schwyz puderam enviar reforços a tempo ao local ameaçado, e quando o exército dos Habsburgo ficou preso no estreito desfiladeiro, a emboscada que levou à vitória decisiva dos Confederados já estava preparada.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "1315年11月，哈布斯堡的利奥波德公爵率领一支强大的军队进攻施维茨人，据说贵族海因里希·冯·许嫩贝格秘密获悉了公爵欲经摩尔加登进攻该地的计划。尽管他本人出身贵族，许嫩贝格却不愿让森林诸州的同胞们浑然不知地走向毁灭，于是决定暗中示警。他将一条消息绑在箭上，写道人们应在圣奥特马尔日前夕在摩尔加登提高警惕，并将箭射过阿尔特的施维茨防御墙。多亏这一警告，施维茨人得以及时向受威胁之地增派援军，待哈布斯堡军队被逼入狭窄的山口时，那场导致联邦决定性胜利的伏击早已布置就绪。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Keine Anpassung nötig; betont Mut und List statt Gewalt.",
+    "quelle": {
+      "autor": "Hans Tschachtlan (u.a. Chronisten)",
+      "werk": "Tschachtlanchronik",
+      "jahr": "1483",
+      "fundstelleUrl": "https://www.e-codices.unifr.ch/de/list/one/bbb/Mss-hh-I0016"
+    },
+    "source": "Hans Tschachtlan (u.a. Chronisten): Tschachtlanchronik (1483)",
+    "coordinates": {
+      "lat": 47.068,
+      "lng": 8.545
+    },
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": true
+  },
+  {
+    "id": "gessler-hohle-gasse-kuessnacht",
+    "title": "Gesslers Tod in der Hohlen Gasse",
+    "canton": "Schwyz",
+    "coreMotif": "Tyrannenmord als Vergeltung",
+    "mood": "Dramatisch, schicksalhaft",
+    "bildmotiv": "Hohle Gasse Küssnacht am Rigi",
+    "summary": "Nachdem der habsburgische Landvogt Gessler den Urner Wilhelm Tell gezwungen hatte, einen Apfel vom Kopf seines eigenen Sohnes zu schiessen, liess er den unbequemen Mann dennoch gefesselt auf ein Schiff bringen, um ihn in seiner Burg gefangen zu setzen. Bei einem plötzlichen Sturm auf dem Vierwaldstättersee, so erzählt die Sage, musste man den kundigen Steuermann Tell von seinen Fesseln befreien, damit er das Schiff sicher an Land bringe, doch dieser nutzte die Gelegenheit, sprang an Land und entkam. Wissend, dass Gessler auf dem Landweg nach Küssnacht reiten musste, um in seine Burg zu gelangen, versteckte sich Tell in der engen und dunklen Hohlen Gasse bei Küssnacht und lauerte dem Landvogt mit gespannter Armbrust auf. Als Gessler des Weges kam, schoss ihn Tell mit einem zweiten Pfeil nieder, jenem Pfeil, den er zuvor für den Fall bereitgehalten hatte, dass er seinen Sohn mit dem ersten Schuss getroffen hätte.",
+    "summaries": {
+      "de": {
+        "text": "Nachdem der habsburgische Landvogt Gessler den Urner Wilhelm Tell gezwungen hatte, einen Apfel vom Kopf seines eigenen Sohnes zu schiessen, liess er den unbequemen Mann dennoch gefesselt auf ein Schiff bringen, um ihn in seiner Burg gefangen zu setzen. Bei einem plötzlichen Sturm auf dem Vierwaldstättersee, so erzählt die Sage, musste man den kundigen Steuermann Tell von seinen Fesseln befreien, damit er das Schiff sicher an Land bringe, doch dieser nutzte die Gelegenheit, sprang an Land und entkam. Wissend, dass Gessler auf dem Landweg nach Küssnacht reiten musste, um in seine Burg zu gelangen, versteckte sich Tell in der engen und dunklen Hohlen Gasse bei Küssnacht und lauerte dem Landvogt mit gespannter Armbrust auf. Als Gessler des Weges kam, schoss ihn Tell mit einem zweiten Pfeil nieder, jenem Pfeil, den er zuvor für den Fall bereitgehalten hatte, dass er seinen Sohn mit dem ersten Schuss getroffen hätte.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "text": "After the Habsburg governor Gessler had forced the Uri man William Tell to shoot an apple off his own son's head, he nevertheless had the troublesome man bound and put on a ship to be imprisoned in his castle. During a sudden storm on Lake Lucerne, so the legend goes, the skilled helmsman Tell had to be freed from his bonds so that he could bring the ship safely to shore, but he used the opportunity to leap onto land and escape. Knowing that Gessler had to ride by land to Küssnacht to reach his castle, Tell hid in the narrow, dark Hohle Gasse near Küssnacht and lay in wait for the governor with his crossbow drawn. When Gessler came along the road, Tell shot him down with a second arrow, the very arrow he had kept ready earlier in case his first shot had struck his son.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "text": "Après que le bailli habsbourgeois Gessler eut forcé l'Urnois Guillaume Tell à tirer une pomme sur la tête de son propre fils, il fit néanmoins ligoter cet homme gênant et le fit embarquer pour l'emprisonner dans son château. Lors d'une tempête soudaine sur le lac des Quatre-Cantons, raconte la légende, il fallut libérer de ses liens l'habile timonier Tell afin qu'il ramène le bateau sain et sauf à terre, mais celui-ci profita de l'occasion pour sauter à terre et s'échapper. Sachant que Gessler devait chevaucher par voie terrestre jusqu'à Küssnacht pour rejoindre son château, Tell se cacha dans l'étroit et sombre Hohle Gasse près de Küssnacht et guetta le bailli, arbalète bandée. Lorsque Gessler arriva sur le chemin, Tell l'abattit d'une seconde flèche, celle-là même qu'il avait auparavant tenue prête au cas où son premier tir aurait touché son fils.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "text": "Dopo che il balivo asburgico Gessler ebbe costretto l'urano Guglielmo Tell a colpire con una freccia una mela posta sulla testa del proprio figlio, fece comunque legare l'uomo scomodo e lo fece imbarcare per farlo imprigionare nel proprio castello. Durante un'improvvisa tempesta sul lago dei Quattro Cantoni, narra la leggenda, si dovette liberare dai legami l'abile timoniere Tell affinché portasse la nave sana e salva a riva, ma egli approfittò dell'occasione per balzare a terra e fuggire. Sapendo che Gessler doveva percorrere la via di terra fino a Küssnacht per raggiungere il proprio castello, Tell si nascose nella stretta e buia Hohle Gasse presso Küssnacht e attese il balivo con la balestra tesa. Quando Gessler giunse lungo la strada, Tell lo abbatté con una seconda freccia, proprio quella che in precedenza aveva tenuto pronta nel caso in cui il primo colpo avesse ferito il figlio.",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "text": "Después de que el gobernador habsbúrgico Gessler obligara al hombre de Uri Guillermo Tell a disparar una manzana de la cabeza de su propio hijo, hizo igualmente atar a este hombre incómodo y embarcarlo para encarcelarlo en su castillo. Durante una repentina tormenta en el lago de Lucerna, cuenta la leyenda, hubo que liberar de sus ataduras al hábil timonel Tell para que llevara el barco a salvo a tierra, pero él aprovechó la ocasión para saltar a tierra y escapar. Sabiendo que Gessler debía cabalgar por tierra hasta Küssnacht para llegar a su castillo, Tell se escondió en el estrecho y oscuro Hohle Gasse cerca de Küssnacht y aguardó al gobernador con la ballesta tensada. Cuando Gessler pasó por el camino, Tell lo abatió con una segunda flecha, la misma que había mantenido preparada antes por si su primer disparo hubiera herido a su hijo.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "text": "Depois que o governador habsburgo Gessler obrigou o homem de Uri Guilherme Tell a atirar numa maçã sobre a cabeça do próprio filho, ainda assim mandou amarrar o incômodo homem e embarcá-lo para prendê-lo em seu castelo. Durante uma tempestade repentina no lago de Lucerna, conta a lenda, foi preciso libertar das amarras o hábil timoneiro Tell para que conduzisse o barco em segurança até a margem, mas ele aproveitou a oportunidade para saltar em terra e fugir. Sabendo que Gessler precisava cavalgar por terra até Küssnacht para chegar a seu castelo, Tell escondeu-se na estreita e escura Hohle Gasse perto de Küssnacht e esperou o governador com a besta armada. Quando Gessler passou pelo caminho, Tell o abateu com uma segunda flecha, aquela mesma que antes mantivera pronta para o caso de seu primeiro tiro ter atingido o filho.",
+        "reviewEmpfohlen": true
+      },
+      "zh": {
+        "text": "哈布斯堡总督格斯勒逼迫乌里人威廉·退尔射箭击落自己儿子头顶上的苹果之后，仍下令将这个麻烦人物捆绑上船，欲押往城堡囚禁。传说途中维尔瓦德施泰特湖上突起风暴，人们不得不为熟谙船技的退尔松绑，好让他将船安全驶向岸边，退尔却趁机跃上岸逃走。他料到格斯勒必须由陆路骑马前往屈斯纳赫特才能抵达城堡，于是躲藏在屈斯纳赫特附近狭窄阴暗的\"空巷\"（Hohle Gasse）中，张弩以待。格斯勒行至此处时，退尔用第二支箭将他射杀——那正是他此前留着以防万一第一箭伤到儿子时所准备的那支箭。",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Tötung Gesslers für jüngere Kinder als gerechte Befreiung von einem Tyrannen einordnen, nicht als reine Gewalttat.",
+    "quelle": {
+      "autor": "Unbekannt (Weisses Buch von Sarnen)",
+      "werk": "Das Weisse Buch von Sarnen",
+      "jahr": "um 1470",
+      "fundstelleUrl": "https://www.e-codices.unifr.ch/de/list/one/csa/Sarnen-1013"
+    },
+    "source": "Unbekannt (Weisses Buch von Sarnen): Das Weisse Buch von Sarnen (um 1470)",
+    "coordinates": {
+      "lat": 47.0847,
+      "lng": 8.4319
+    },
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": true
+  }
+]
