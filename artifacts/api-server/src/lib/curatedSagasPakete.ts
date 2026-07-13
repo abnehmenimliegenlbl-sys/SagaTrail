@@ -2942,5 +2942,544 @@ export const PACKAGE_SAGAS: InsertCatalogSaga[] = [
     "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   }
+,
+
+  // ── Graubünden (8 Sagen) ──
+  {
+    "id": "drache-tamins-rheinschlucht",
+    "title": "Der Drache von Tamins in der Rheinschlucht",
+    "canton": "Graubünden",
+    "coreMotif": "Drache haust in Rheinschlucht und fordert Opfer",
+    "bildmotiv": "Rheinschlucht Tamins Drache Fels Rhein Graubünden",
+    "mood": "Unheimlich, grossartig",
+    "summary": "In der wilden Rheinschlucht zwischen Tamins und Valendas, wo der Vorderrhein sich tosend durch enge Felsschlünde zwängt und die Wände senkrecht aufragen, soll einst ein gewaltiger Drache gehaust haben, der von den Bauern des Tales jährlich ein Opfer verlangte: ein Rind, das an einem bestimmten Felsvorsprung angebunden und in der Nacht vom Ungetüm geholt wurde. Als ein junger Hirt aus Tamins beschloss, dem Treiben ein Ende zu setzen, fertigte er einen Strohmann an, der ein gespaltenes Stück Kastanienholz mit eingebundenen Eisenspitzen um den Hals trug. Der Drache verschlang den Strohmann, das Holz sperrte ihm den Schlund auf, und die Eisenspitzen verwundeten ihn von innen. Das Tier stürzte sich in den Rhein, trug das Wasser blutrot und wurde nie mehr gesehen.",
+    "summaries": {
+      "de": {
+        "text": "In der wilden Rheinschlucht zwischen Tamins und Valendas soll einst ein gewaltiger Drache gehaust haben, der jährlich ein Rind als Opfer verlangte. Als ein junger Hirt aus Tamins dem Treiben ein Ende setzen wollte, fertigte er einen Strohmann mit eingebundenen Eisenspitzen an. Der Drache verschlang den Strohmann, das gespaltene Holz sperrte ihm den Schlund auf und die Eisenspitzen verwundeten ihn von innen. Das Tier stürzte sich in den Rhein, trug das Wasser blutrot und wurde nie mehr gesehen.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Drache vo Tamins i dr Rhynschlucht",
+        "text": "I dr wilde Rhynschlucht zwische Tamins und Valendas soll emol en gewaltiger Drache ghuset ha, wo jedes Jahr es Rind als Opfer verlangt hät. En junger Hirt us Tamins hät em en Strohmaa mit Isespitze gfertigt. Dr Drache hät de Strohmaa verschluckt, d Isespitze hend ne vonyne verlezt, und er isch blutend i de Rhyn gstürzt und nie meh gsehe worde.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Dragon de Tamins dans les Gorges du Rhin",
+        "text": "Dans les gorges sauvages du Rhin entre Tamins et Valendas, où le Rhin antérieur se fraye en mugissant un chemin à travers d'étroits défilés rocheux, un terrible dragon aurait jadis habité les lieux, exigeant chaque année en tribut un bœuf que les villageois attachaient à un rocher et qui était emporté dans la nuit. Quand un jeune berger de Tamins résolut d'y mettre fin, il confectionna un épouvantail avec à son cou un morceau fendu de bois de châtaignier garni de pointes de fer. Le dragon avala l'épouvantail, le bois lui bloqua le gosier et les pointes le blessèrent de l'intérieur. La bête se jeta dans le Rhin, teinta les eaux de rouge sang et ne fut plus jamais revue.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Drago di Tamins nella Gola del Reno",
+        "text": "Nelle selvagge gole del Reno tra Tamins e Valendas, dove il Reno Anteriore si apre mugghiando attraverso stretti anfratti rocciosi, abitava un tempo un terribile drago che esigeva ogni anno come tributo un bue che i contadini legavano a uno spuntone di roccia e che veniva portato via nella notte. Quando un giovane pastore di Tamins decise di porre fine alla cosa, fabbricò uno spaventapasseri con al collo un pezzo di castagno spaccato guarnito di punte di ferro. Il drago inghiottì lo spaventapasseri, il legno gli bloccò la gola e le punte lo ferirono dall'interno. La bestia si gettò nel Reno, ne tinsero le acque di rosso sangue e non fu mai più vista.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Dragon of Tamins in the Rhine Gorge",
+        "text": "In the wild Rhine Gorge between Tamins and Valendas, where the Anterior Rhine forces its way roaring through narrow rocky chasms with sheer walls rising on either side, a mighty dragon is said to have dwelt, demanding each year a tribute of one ox. The villagers would tether the animal to a certain ledge at night, and the beast would take it away. When a young herdsman from Tamins resolved to put a stop to it, he fashioned a scarecrow wearing around its neck a split piece of chestnut wood fitted with iron spikes. The dragon swallowed the scarecrow, the wood wedged his throat open and the iron spikes wounded him from within. The creature plunged into the Rhine, turned the water blood-red, and was never seen again.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "莱茵峡谷塔明斯的巨龙",
+        "text": "在塔明斯与瓦伦达斯之间狂野的莱茵峡谷中，前莱茵河咆哮着穿过陡峭的岩石裂缝，据说曾有一头巨大的蛟龙盘踞于此，每年向谷中农民索取一头牛作为贡品。农民们将牛拴在特定的岩礁上，入夜便被怪兽掠走。一位来自塔明斯的年轻牧人决定终结这一切，他制作了一个稻草人，脖子上套着一块劈开的栗木，其中嵌入铁尖。蛟龙吞下稻草人，木块撑开了它的喉咙，铁尖从内部将它刺伤。那头怪兽跳入莱茵河，将河水染成血红，从此再未现身。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Dragón de Tamins en el Desfiladero del Rin",
+        "text": "En el salvaje desfiladero del Rin entre Tamins y Valendas, donde el Rin Anterior se abre paso rugiendo entre estrechos desfiladeros rocosos con paredes verticales, se dice que habitaba antaño un terrible dragón que exigía cada año como tributo un buey. Los aldeanos lo ataban a una saliente rocosa por la noche y la bestia se lo llevaba. Cuando un joven pastor de Tamins decidió acabar con ello, fabricó un espantapájaros con un trozo de madera de castaño partido con puntas de hierro atadas alrededor del cuello. El dragón se tragó el espantapájaros, la madera le bloqueó la garganta y las puntas lo hirieron desde dentro. La bestia se arrojó al Rin, tiñó el agua de rojo sangre y nunca más volvió a verse.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Dragão de Tamins na Garganta do Reno",
+        "text": "Na selvagem garganta do Reno entre Tamins e Valendas, onde o Reno Anterior abre caminho rugindo por estreitas fendas rochosas, habitava outrora um terrível dragão que exigia anualmente um boi como tributo. Os aldões o amarravam a uma saliência rochosa à noite e a besta o levava. Quando um jovem pastor de Tamins decidiu pôr fim a isso, fabricou um espantalho com um pedaço de madeira de castanheiro rachada com pontas de ferro amarradas no pescoço. O dragão engoliu o espantalho, a madeira bloqueou sua garganta e as pontas o feriram por dentro. A besta mergulhou no Reno, tingiu a água de vermelho sangue e nunca mais foi vista.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Дракон из Таминса в Рейнском ущелье",
+        "text": "В диком Рейнском ущелье между Таминсом и Валендасом, где Передний Рейн с рёвом прорывается сквозь узкие скальные теснины с отвесными стенами, некогда обитал огромный дракон, требовавший ежегодной жертвы — одного быка, которого крестьяне привязывали к скальному уступу, и чудовище уносило его ночью. Когда юный пастух из Таминса решил положить этому конец, он смастерил чучело, на шее у которого была расщеплённая каштановая чурка с железными шипами. Дракон проглотил чучело, дерево распёрло ему глотку, а шипы ранили изнутри. Зверь бросился в Рейн, окрасив воду кровью, и с тех пор его никто больше не видел.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Blutfärbung des Rheins abstrahieren; den listigen Hirten als Helden betonen. Für alle Altersstufen geeignet.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.8358,
+    "lng": 9.2417,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "fanggen-engadin",
+    "title": "Die Fanggen – Geisterfrauen des Engadins",
+    "canton": "Graubünden",
+    "coreMotif": "Rätselhafte Berggeistfrauen entführen Sennen und Kinder",
+    "bildmotiv": "Engadin Alp Frau Geist Fels Berggeistin",
+    "mood": "Geheimnisvoll, schaurig",
+    "summary": "Im Engadin und in den Seitentälern Graubündens erzählt man von den Fanggen, weiblichen Geistwesen, die halb Frau, halb Berggeist sind. Sie erscheinen als schöne Frauen mit langen Haaren und einem hohlen Rücken wie ein gefällter Baumstamm – wer sie von vorne sieht, erblickt Schönheit, wer sie von hinten sieht, erkennt die leere Schale. Sie locken junge Sennen auf die Alpen, betteln um etwas Milch oder Brot, und wer ihnen gibt, gewinnt ihre Gunst für eine Saison: das Vieh bleibt gesund, der Käse gelingt. Wer sie aber abweist oder verspottet, dem lassen sie die Kühe keine Milch mehr geben, und wer ihrem Blick zu tief begegnet, dem verwirren sie den Sinn, sodass er die Heimat vergisst und mit ihnen in die Felsenwände geht.",
+    "summaries": {
+      "de": {
+        "text": "Im Engadin erzählt man von den Fanggen, weiblichen Geistwesen, die halb Frau, halb Berggeist sind. Sie erscheinen als schöne Frauen mit einem hohlen Rücken – von vorne schön, von hinten die leere Schale. Sie locken junge Sennen auf die Alpen und betteln um Milch oder Brot. Wer gibt, dem gelingt der Käse und dem bleibt das Vieh gesund. Wer abweist, dem versiegt die Milch; wer ihrem Blick zu tief begegnet, vergisst die Heimat und zieht mit ihnen in die Felsenwände.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Fangge – Geischterfroue vom Engadin",
+        "text": "Im Engadin verzellt me vo de Fangge, wibliche Geischtwäse, wo halbi Frau, halbi Berggeischt sind. Si erschyne als schöni Froue mit-eme houle Rucke – vo vorne schön, vo hinte d leeri Schale. Si locke jungi Sennä uf d Alp und bättle um Milch oder Brot. Wär git, dem glückt dr Chäs; wär abwyyst, dem git s Veeh kei Milch meh, und wär ine z tüüf i d Auge luegt, der vergrüsslet d Heimat.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Les Fanggen – Femmes Esprits de l'Engadine",
+        "text": "En Engadine et dans les vallées latérales des Grisons, on parle des Fanggen, des êtres féminins mi-femmes mi-esprits des montagnes. Elles apparaissent comme de belles femmes aux longs cheveux, mais avec un dos creux comme un tronc abattu : vu de face, c'est la beauté, vu de dos, c'est l'écorce vide. Elles attirent les jeunes pâtres sur les alpages, mendient un peu de lait ou de pain, et qui donne gagne leur faveur pour la saison : le bétail reste en bonne santé, le fromage réussit. Qui les repousse ou les raille perd le lait de ses vaches ; qui croise leur regard trop profondément perd la raison, oublie sa patrie et part avec elles dans les parois rocheuses.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Le Fanggen – Donne Spirito dell'Engadina",
+        "text": "In Engadina e nelle valli laterali dei Grigioni si parla delle Fanggen, esseri femminili metà donna metà spirito della montagna. Appaiono come belle donne dai lunghi capelli, ma con la schiena cava come un tronco abbattuto: viste di fronte sono bellezza, viste di spalle mostrano il guscio vuoto. Attirano i giovani mandriani sugli alpeggi, chiedono un po' di latte o pane, e chi dà ottiene il loro favore per la stagione: il bestiame rimane sano, il formaggio riesce. Chi le rifiuta o le deride perde il latte delle sue vacche; chi si perde nel loro sguardo troppo a fondo perde il senno, dimentica la patria e va con loro nella roccia.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Fanggen – Spirit Women of the Engadin",
+        "text": "In the Engadin and the side valleys of Graubünden, people tell of the Fanggen, female spirit beings who are half woman, half mountain spirit. They appear as beautiful women with long hair, but with a hollow back like a felled tree trunk: seen from the front they are beautiful, seen from behind they show only the empty shell. They lure young herdsmen up to the alpine pastures, begging for a little milk or bread. Whoever gives gains their favour for the season: the cattle stay healthy and the cheese turns out well. Whoever refuses or mocks them loses their cows' milk; whoever looks too deeply into their eyes loses their mind, forgets their homeland and goes with them into the rock face.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "芬根——恩加丁的女性精灵",
+        "text": "在恩加丁和格劳宾登的支谷中，人们流传着芬根的故事，她们是半人半山灵的女性存在。她们以美丽长发的女子姿态出现，但背后却如同中空的倒木——从正面看是美貌，从背后看是空壳。她们将年轻的牧人引上高山牧场，乞讨一些牛奶或面包。施与者将获得她们一整个夏季的庇护：牲畜保持健康，奶酪制作顺利。拒绝或嘲弄她们的人，奶牛便不再产奶；凡深深凝视她们眼睛的人，都会失去理智，忘记故乡，随她们走入岩壁之中。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "Las Fanggen – Mujeres Espíritu del Engadino",
+        "text": "En el Engadino y los valles laterales de los Grisones se habla de las Fanggen, seres femeninos mitad mujer, mitad espíritu de la montaña. Aparecen como hermosas mujeres de largos cabellos, pero con la espalda hueca como un tronco talado: vistas de frente son belleza pura, vistas de espaldas muestran sólo la cáscara vacía. Atraen a los jóvenes vaqueros a los pastos alpinos, pidiendo un poco de leche o pan. Quien da gana su favor para toda la temporada: el ganado se mantiene sano y el queso sale bien. Quien las rechaza o se burla de ellas pierde la leche de sus vacas; quien se pierde demasiado en su mirada pierde el juicio, olvida su hogar y se va con ellas hacia la pared de roca.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "As Fanggen – Mulheres Espírito do Engadino",
+        "text": "No Engadino e nos vales laterais dos Grisões, fala-se das Fanggen, seres femininos metade mulher, metade espírito da montanha. Aparecem como belas mulheres de longos cabelos, mas com as costas ocas como um tronco abatido: vistas de frente são beleza, vistas de costas mostram apenas a casca vazia. Atraem jovens pastores para os pastos alpinos, pedindo um pouco de leite ou pão. Quem dá ganha seu favor por toda a temporada: o gado permanece saudável e o queijo sai bem. Quem as recusa ou zomba delas perde o leite de suas vacas; quem se perde demais em seu olhar perde o juízo, esquece a pátria e vai com elas para dentro da parede de rocha.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Фангген — духи-женщины Энгадина",
+        "text": "В Энгадине и боковых долинах Граубюндена рассказывают о Фангген — женских духах, наполовину женщина, наполовину горный дух. Они являются в образе красивых женщин с длинными волосами, но с полой спиной, как у срубленного дерева: спереди — красота, сзади — пустая скорлупа. Они заманивают молодых пастухов на альпийские пастбища, прося немного молока или хлеба. Тот, кто даёт, получает их покровительство на сезон: скот остаётся здоровым и сыр удаётся. Кто отказывает или насмехается — лишается молока у коров; кто слишком глубоко смотрит им в глаза — теряет рассудок, забывает родину и уходит с ними в скальную стену.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die hohle Rücken-Beschreibung kann Kinder erschrecken; als Warnung vor dem tiefen Blick in Fremdes erzählen.",
+    "quelle": {
+      "autor": "Caspar Decurtins",
+      "werk": "Rätoromanische Chrestomathie, Band III",
+      "jahr": "1901",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/1256936"
+    },
+    "source": "Caspar Decurtins: Rätoromanische Chrestomathie, Bd. III (1901)",
+    "lat": 46.5958,
+    "lng": 9.9600,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "tatzeluirm-spluegenpass",
+    "title": "Der Tatzeluirm am Splügenpass",
+    "canton": "Graubünden",
+    "coreMotif": "Schlangenartiges Bergmonster bewacht den Passübergang",
+    "bildmotiv": "Splügenpass Gebirgspass Schlange Monster Fels Alpen",
+    "mood": "Bedrohlich, unheimlich",
+    "summary": "Am Splügenpass, der schon seit der Römerzeit als Übergang vom Rheintal nach Italien diente, lebte nach Volksüberlieferung ein furchterregendes Wesen namens Tatzeluirm: halb Schlange, halb Katze, mit kurzen Stummelfüssen, kleinem Katzenkopf und einem langen, sich windenden Leib. Es lag auf dem Passweg in der Sonne und liess niemanden unbehelligt hindurch. Wer ihm zu nahe kam, wurde mit seinem Gifthauch betäubt oder von seinen Tatzen in den Abgrund gerissen. Säumer und Kaufleute, die den Pass überqueren mussten, rüsteten sich mit Lavendelsträussen und Gebeten, da das Untier angeblich den Geruch von Lavendel scheute. Wer es doch einmal schlafend überschlich, fand auf der anderen Seite Glück und Reichtum – doch die meisten machten lieber einen grossen Bogen.",
+    "summaries": {
+      "de": {
+        "text": "Am Splügenpass lebte nach Volksüberlieferung ein furchterregendes Wesen namens Tatzeluirm: halb Schlange, halb Katze, mit kleinem Katzenkopf und langem, sich windendem Leib. Es lag auf dem Passweg in der Sonne und liess niemanden unbehelligt hindurch. Wer ihm zu nahe kam, wurde von seinem Gifthauch betäubt oder in den Abgrund gerissen. Säumer und Kaufleute rüsteten sich mit Lavendelsträussen, da das Untier den Geruch von Lavendel scheute.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Tatzeluirm am Splügepass",
+        "text": "Am Splügepass hät lut Volksüberlieferig es schröckliche Wäse ghebt, dr Tatzeluirm: halbi Schlange, halbi Chatze, mit-eme chryne Chatzechopf und-eme lange gwunde Lyb. Er hät uf em Passweg i dr Sunne gläge und niemer unbehelligt i Fried glo. Wär z nöch cho isch, isch vom Gifthauch betäubt oder i de Abgrund grisse worde. D Süümer hend Lavendelsträuss mitgnoh, wil dr Tatzeluirm de Lavendelgschtank gschwuche hät.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Tatzeluirm au Col du Splügen",
+        "text": "Au col du Splügen, qui sert depuis l'époque romaine de passage du Rhin vers l'Italie, habitait selon la tradition populaire un être terrifiant nommé Tatzeluirm : mi-serpent, mi-chat, avec de courtes pattes rudimentaires, une petite tête de chat et un long corps sinueux. Il se couchait sur le chemin du col au soleil et ne laissait personne passer sans l'importuner. Qui s'approchait trop près était étourdi par son souffle venimeux ou précipité dans l'abîme par ses griffes. Les muletiers et les marchands qui devaient traverser le col s'armaient de bouquets de lavande et de prières, car la créature aurait fui l'odeur de la lavande.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Tatzeluirm al Passo dello Spluga",
+        "text": "Al Passo dello Spluga, che fin dall'epoca romana serviva come valico dal Reno verso l'Italia, abitava secondo la tradizione popolare un essere terrificante chiamato Tatzeluirm: metà serpente, metà gatto, con corte zampe rudimentali, una piccola testa di gatto e un lungo corpo sinuoso. Si sdraiava al sole sul sentiero del passo senza lasciare passare nessuno indisturbato. Chi si avvicinava troppo veniva stordito dal suo alito velenoso o trascinato nell'abisso. I mulattieri e i mercanti che dovevano attraversare il passo si armavano di mazzetti di lavanda e preghiere, poiché la creatura avrebbe fuggito l'odore della lavanda.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Tatzeluirm at the Splügen Pass",
+        "text": "At the Splügen Pass, which has served as a crossing from the Rhine valley into Italy since Roman times, there lived according to popular tradition a terrifying creature called the Tatzeluirm: half snake, half cat, with short stumpy legs, a small cat's head and a long, winding body. It lay sunning itself on the pass path and let no one through unmolested. Whoever came too close was stunned by its poisonous breath or dragged into the abyss by its claws. Pack-horse drivers and merchants who had to cross the pass armed themselves with lavender bouquets and prayers, as the creature was said to shun the smell of lavender.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "斯普吕根山口的塔策路伊尔姆怪兽",
+        "text": "在斯普吕根山口——自罗马时代起就作为从莱茵河谷通往意大利的要道——据民间传说栖居着一头令人生畏的生物，名叫塔策路伊尔姆：半蛇半猫，有着短小的残肢、小小的猫头和一条长长的蜿蜒身躯。它在山口道路上晒太阳，不放任何人安然通过。靠得太近的人会被它的毒气熏晕，或被它的爪子拖入深渊。不得不过山口的挑夫和商人随身携带薰衣草束和祈祷，因为据说这头怪物惧怕薰衣草的气味。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Tatzeluirm en el Puerto de Splügen",
+        "text": "En el puerto de Splügen, que desde época romana ha servido de paso del Rin hacia Italia, habitaba según la tradición popular una criatura aterradora llamada Tatzeluirm: mitad serpiente, mitad gato, con cortas patas rudimentarias, una pequeña cabeza de gato y un largo cuerpo sinuoso. Se tumbaba al sol en el camino del puerto sin dejar pasar a nadie sin molestarle. Quien se acercaba demasiado era aturdido por su aliento venenoso o arrastrado al abismo. Los arrieros y mercaderes que debían cruzar el puerto se armaban con ramos de lavanda y oraciones, pues la criatura rehuiría el olor de la lavanda.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Tatzeluirm no Passo do Splügen",
+        "text": "No Passo do Splügen, que desde a época romana serve como travessia do vale do Reno para a Itália, habitava segundo a tradição popular uma criatura aterrorizante chamada Tatzeluirm: metade serpente, metade gato, com curtas pernas rudimentares, uma pequena cabeça de gato e um longo corpo sinuoso. Ela ficava tomando sol no caminho do passo sem deixar ninguém passar sem importunar. Quem se aproximava demais era atordoado por seu bafo venenoso ou arrastado ao abismo. Arrieiros e mercadores que precisavam cruzar o passo armavam-se com buquês de lavanda e orações, pois a criatura fugiria do cheiro de lavanda.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Татцелурм на перевале Шплюген",
+        "text": "На перевале Шплюген, служившем переходом из долины Рейна в Италию ещё со времён Рима, по народному преданию обитало устрашающее существо по имени Татцелурм: полузмея, полукошка, с короткими обрубками лапок, маленькой кошачьей головой и длинным извивающимся телом. Оно лежало на перевальной тропе и грелось на солнце, не давая никому пройти без помех. Тот, кто подходил слишком близко, падал замертво от ядовитого дыхания или срывался в пропасть. Погонщики мулов и купцы, которым нужно было перейти перевал, вооружались пучками лаванды и молитвами, ибо тварь якобы бежала запаха лаванды.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Das Monster als phantastisches Fabeltier erzählen; den Trick mit dem Lavendel als kindgerechte Lösung betonen.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.5044,
+    "lng": 9.2378,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "versunkenes-dorf-sagogn",
+    "title": "Das versunkene Dorf von Sagogn",
+    "canton": "Graubünden",
+    "coreMotif": "Sündiges Dorf wird zur Strafe in den Erdboden versenkt",
+    "bildmotiv": "Sagogn Surselva Fels Versunken Kirche Glocke",
+    "mood": "Mahnend, melancholisch",
+    "summary": "Auf einem Felsplateau oberhalb des heutigen Dorfes Sagogn in der Surselva lag einst ein Dorf, das für seinen Hochmut und seine Göttesferne berüchtigt war. Die Bewohner verhöhnten die Priester, weigerten sich, in die Kirche zu gehen, und trieben am Sonntag ausgelassen Scherze, wenn andere beteten. Als Warnung sandte Gott zunächst Zeichen: Der Brunnen im Dorfkern versiegte, das Getreide auf den Feldern wurde brandig, und die Brunnstuben versanden. Doch die Dörfler lachten und kehrten sich nicht daran. Eines Nachts erbebte die Erde, der Fels spaltete sich, und das gesamte Dorf versank in einem einzigen Erdschlund. An stillen Abenden, sagt man, höre man aus der Tiefe das Läuten der Kirchenglocke, die mit dem Dorf versunken ist und die Stunde zum Abendgebet schlägt.",
+    "summaries": {
+      "de": {
+        "text": "Auf einem Felsplateau oberhalb des heutigen Sagogns lag einst ein stolzes Dorf, dessen Bewohner Priester verhöhnten und den Sonntag nicht achteten. Als Gott Zeichen sandte – versiegende Brunnen, brandiges Getreide – lachten sie. Eines Nachts spaltete sich der Fels und das ganze Dorf versank in einem Erdschlund. An stillen Abenden hört man noch das Läuten der mitversunkenen Kirchenglocke, die zur Abendandacht ruft.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "S versunki Dorf vo Sagogn",
+        "text": "Ufem Felsplateau über em hütige Sagogn hät emol es stolze Dorf gläge, wo d Lüüt Prieschter verhöhnt und de Sunntig nöd gachtet hend. Wo Gott Zeiche gschickt hät – versiegendi Brunne, brandig Getreide – hend si glacht. Einichi Nacht isch dr Fels usgsprunge und s ganze Dorf isch in e Erdschlund versunke. A stille Obe ghört me no s Lüüte vo dr mitversunke Chilcheglogg.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Village Englouti de Sagogn",
+        "text": "Sur un plateau rocheux au-dessus du village actuel de Sagogn, dans la Surselva, se trouvait jadis un village réputé pour son orgueil et son éloignement de Dieu. Ses habitants raillaient les prêtres, refusaient d'aller à l'église et se livraient joyeusement aux plaisirs du dimanche pendant que d'autres priaient. Dieu envoya d'abord des signes avertisseurs : la fontaine centrale se dessécha, les récoltes brûlèrent et les sources s'ensablèrent. Mais les villageois rirent et n'en tinrent aucun compte. Une nuit la terre trembla, le rocher se fendit et le village entier s'engouffra dans une crevasse. Les soirs calmes, dit-on, on entend depuis les profondeurs sonner la cloche de l'église engloutie avec le village, qui sonne l'heure de la prière du soir.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Villaggio Inabissato di Sagogn",
+        "text": "Su un altopiano roccioso sopra l'attuale villaggio di Sagogn, nella Surselva, sorgeva una volta un villaggio famoso per il suo orgoglio e il suo distacco da Dio. I suoi abitanti deridevano i sacerdoti, rifiutavano di andare in chiesa e si abbandonavano allegramente agli svaghi domenicali mentre altri pregavano. Dio mandò dapprima dei segni ammonitori: la fontana centrale si seccò, i raccolti bruciarono e le sorgenti si insabbiarono. Ma i villageois risero e non ne tennero conto. Una notte la terra tremò, la roccia si spaccò e l'intero villaggio sprofondò in una voragine. Nelle sere tranquille, si dice, si sente dalle profondità suonare la campana della chiesa inabissata col villaggio, che batte l'ora della preghiera serale.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Sunken Village of Sagogn",
+        "text": "On a rocky plateau above the present-day village of Sagogn in the Surselva, there once stood a proud village whose inhabitants mocked priests, refused to go to church and made merry on Sundays while others prayed. God first sent warning signs: the village fountain dried up, the crops were blighted, and the springs silted over. But the villagers laughed and paid no heed. One night the earth shook, the rock split apart and the entire village sank into a chasm in the ground. On quiet evenings, it is said, one can still hear from the depths the tolling of the church bell that sank with the village, striking the hour of evening prayer.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "萨郭恩沉没的村庄",
+        "text": "在苏尔塞尔瓦地区现今萨郭恩村上方的岩石高台上，曾经有一座骄傲的村庄，以傲慢自大和疏离上帝而臭名昭著。村民们嘲笑神父，拒绝上教堂，在别人祈祷时欢快地在周日嬉闹。上帝首先降下警示：村中央的水井干涸，庄稼腐烂，泉水淤塞。但村民们哈哈大笑，全然不顾。一夜之间大地震动，岩石裂开，整座村庄沉入了地底的深渊。据说在宁静的傍晚，人们仍能从深处听到随村沉没的教堂钟声，那钟声在敲响晚祷的时刻。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Pueblo Hundido de Sagogn",
+        "text": "En una meseta rocosa sobre el actual pueblo de Sagogn, en la Surselva, existía antaño un orgulloso pueblo conocido por su soberbia y su alejamiento de Dios. Sus habitantes se burlaban de los sacerdotes, se negaban a ir a la iglesia y se entregaban alegremente a los placeres del domingo mientras otros rezaban. Dios envió primero señales de advertencia: la fuente central se secó, las cosechas ardieron y los manantiales se colmataron. Pero los aldeanos se rieron y no hicieron caso. Una noche la tierra tembló, la roca se partió y el pueblo entero se hundió en un abismo. En las tardes tranquilas, se dice, se puede oír desde las profundidades el tañido de la campana de la iglesia que se hundió con el pueblo, que marca la hora de la oración vespertina.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "A Aldeia Afundada de Sagogn",
+        "text": "Num planalto rochoso acima da atual aldeia de Sagogn, na Surselva, existia outrora um orgulhoso vilarejo famoso por sua soberba e distância de Deus. Seus habitantes zombavam dos padres, recusavam-se a ir à igreja e divertiam-se alegremente aos domingos enquanto outros rezavam. Deus enviou primeiro sinais de aviso: a fonte central secou, as colheitas queimaram e as nascentes assorearam. Mas os aldeões riram e não ligaram. Uma noite a terra tremeu, a rocha se abriu e toda a aldeia afundou num abismo no chão. Nas tardes tranquilas, diz-se, ainda se pode ouvir das profundezas o repique do sino da igreja que afundou com a aldeia, marcando a hora da oração da tarde.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Провалившаяся деревня Загонь",
+        "text": "На скальном плато над нынешней деревней Загонь в Зурзельве некогда стояла гордая деревня, прославившаяся своей надменностью и богохульством. Жители насмехались над священниками, отказывались ходить в церковь и предавались безудержному веселью по воскресеньям, когда другие молились. Бог сначала послал предупреждения: иссякли деревенские колодцы, зерно побурело, родники занесло илом. Но жители смеялись и ни во что это не ставили. Однажды ночью земля содрогнулась, скала раскололась, и вся деревня провалилась в земную пасть. В тихие вечера, говорят, из глубины ещё слышится звон провалившегося вместе с деревней церковного колокола, отбивающего час вечерней молитвы.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Moralische Sage; für Kinder den Mahncharakter betonen, nicht das Strafgericht. Das Glockenläuten als poetisches Bild eignet sich gut.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.8022,
+    "lng": 9.2386,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "weisses-maennlein-calanda",
+    "title": "Das weisse Männlein vom Calanda",
+    "canton": "Graubünden",
+    "coreMotif": "Berggeist warnt Sennen vor dem Unwetter",
+    "bildmotiv": "Calanda Chur Berggeist Männlein Alp Gewitter",
+    "mood": "Geheimnisvoll, schützend",
+    "summary": "Auf den Alpen am Calanda, dem markanten Bergmassiv östlich von Chur, erschien nach altem Bündner Glauben zuweilen ein kleines weisses Männlein, das aus dem Nebel trat und schweigend auf die Senner und ihr Vieh zeigte. War es gut gesonnen, setzte es sich an den Rand des Weges und schaute zu, wie die Kühe grasten; erschien es aber plötzlich, rannte es umher und fuhr mit den Armen, dann wussten alle: ein schweres Gewitter ist im Anzug, und die Herde muss sofort in den Stall. Missachtete ein Senn das Zeichen und liess das Vieh draussen, schlug der Blitz in die Herde. Doch wer das Männlein achtete und dankbar ein Stück Brot an die Wegkapelle legte, dem erschien es auch in ruhigen Nächten und wachte über den Schlaf des Stalls.",
+    "summaries": {
+      "de": {
+        "text": "Auf den Alpen am Calanda erschien nach Bündner Überlieferung zuweilen ein kleines weisses Männlein, das aus dem Nebel trat. War es ruhig und setzte sich, grasten die Kühe in Sicherheit. Rannte es aber umher und fuhr mit den Armen, musste die Herde sofort in den Stall: ein Gewitter war im Anzug. Missachtete ein Senn das Zeichen, schlug der Blitz in die Herde. Wer das Männlein achtete und dankbar ein Stück Brot an die Wegkapelle legte, dem wachte es über den Schlaf des Stalls.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "S wysse Männli vom Calanda",
+        "text": "Uf de Alpe am Calanda isch lut Bündner Überlieferig manchmol es chlyses wysses Männli us em Nabel usgstäge. War es rüehig, hend d Chüeh sicher gweidet. Isch es aber umeggrümpelt und hät mit de Arm fuuchtlet, hät d Herd sofort in de Stall gmüest: es Gwütter isch im Aazug gsi. Wär s Männli achtet und dankbar es Brötli a d Wegchaple gleit hät, dem hät es über de Schlaf vom Stall gwacht.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Petit Homme Blanc du Calanda",
+        "text": "Sur les alpages du Calanda, le massif montagneux marquant à l'est de Coire, apparaissait selon l'ancienne croyance grisonne un petit homme blanc qui sortait du brouillard. S'il s'assouplissait paisiblement au bord du chemin et regardait paître les vaches, tout allait bien. Mais s'il surgissait soudain, courait en tous sens et agitait les bras, tous savaient : un orage violent approche, le troupeau doit rentrer immédiatement à l'étable. Qui ignorait le signe et laissait le bétail dehors voyait la foudre frapper son troupeau. Qui respectait le petit homme et déposait en signe de gratitude un morceau de pain à la chapelle du chemin le voyait veiller la nuit sur le sommeil de l'étable.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Piccolo Uomo Bianco del Calanda",
+        "text": "Sugli alpeggi del Calanda, il massiccio montagnoso a est di Coira, appariva secondo l'antica credenza grigionese un piccolo uomo bianco che emergeva dalla nebbia. Se si sedeva tranquillo ai margini del sentiero a guardare pascolare le vacche, tutto andava bene. Ma se appariva all'improvviso, correva in giro e agitava le braccia, tutti sapevano: si avvicina un temporale violento, il gregge deve rientrare subito alla stalla. Chi ignorava il segnale e lasciava il bestiame fuori vedeva il fulmine colpire il gregge. Chi rispettava il piccolo uomo e deponeva per gratitudine un pezzo di pane alla cappella del sentiero lo vedeva vegliare di notte sul sonno della stalla.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Little White Man of the Calanda",
+        "text": "On the alpine pastures of the Calanda, the distinctive mountain massif east of Chur, there would sometimes appear, according to old Graubünden belief, a small white figure stepping out of the mist. If it sat quietly at the edge of the path and watched the cows graze, all was well. But if it suddenly appeared and ran about waving its arms, everyone knew: a severe storm was on its way and the herd had to be brought in at once. Any herdsman who ignored the sign and left the cattle outside had lightning strike his herd. But whoever heeded the little man and gratefully left a piece of bread at the wayside chapel found that it came and watched over the stable through the quiet nights.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "卡兰达山的白色小人",
+        "text": "在库尔以东的卡兰达山Alps牧场上，按照格劳宾登古老的信仰，有时会出现一个从雾中走出的白色小人。若它静静地坐在路边望着奶牛吃草，一切便相安无事。但若它突然出现、四处奔跑、挥舞双臂，所有人都明白：一场猛烈的暴风雨即将来临，牛群必须立即赶回牛棚。哪个牧人无视这个信号、把牲畜留在户外，就会遭到雷击。而那些尊重小人、感激地在路旁小礼拜堂留下一块面包的人，在安静的夜晚便会看到它守护着牛棚的睡眠。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Hombrecillo Blanco del Calanda",
+        "text": "En los pastos alpinos del Calanda, el macizo montañoso al este de Coira, aparecía según la antigua creencia grísona un pequeño hombre blanco que salía de la niebla. Si se sentaba tranquilamente a la orilla del camino mirando pacer a las vacas, todo iba bien. Pero si aparecía de repente, corría de un lado a otro y agitaba los brazos, todos sabían: se acerca una tormenta severa, el rebaño debe volver de inmediato al establo. El pastor que ignoraba la señal y dejaba el ganado fuera veía el rayo golpear su rebaño. Quien respetaba al hombrecillo y dejaba agradecido un trozo de pan en la capilla del camino lo veía velar de noche sobre el sueño del establo.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Homenzinho Branco do Calanda",
+        "text": "Nos pastos alpinos do Calanda, o marcante maciço montanhoso a leste de Chur, aparecia às vezes, segundo a antiga crença dos Grisões, um pequeno homem branco que saía da névoa. Se se sentava tranquilamente à beira do caminho observando as vacas pastarem, tudo ia bem. Mas se aparecia de repente, corria de um lado para outro e agitava os braços, todos sabiam: uma tempestade severa estava chegando e o rebanho devia ser recolhido imediatamente. O pastor que ignorava o sinal e deixava o gado do lado de fora via o raio atingir seu rebanho. Quem respeitava o homenzinho e deixava grato um pedaço de pão na capela à beira do caminho o via velar à noite sobre o sono do estábulo.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Белый человечек с горы Каланда",
+        "text": "На альпийских пастбищах Каланды, характерного горного массива к востоку от Кура, по старинным граубюнденским поверьям иногда появлялся маленький белый человечек, выходивший из тумана. Если он спокойно садился у тропы и смотрел, как пасутся коровы, всё было хорошо. Но если он вдруг появлялся, бегал туда-сюда и размахивал руками, все знали: надвигается сильная гроза, стадо нужно немедленно загонять в хлев. Кто игнорировал знак и оставлял скот снаружи, в того бил гром. А тот, кто уважал человечка и с благодарностью клал кусочек хлеба у придорожной часовни, находил его ночью стерегущим сон стойла.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; den schützenden Charakter des Berggeists betonen. Dankbarkeitsmotiv kindgerecht.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.8950,
+    "lng": 9.5600,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "hexe-heinzenberg-thusis",
+    "title": "Die Hexe vom Heinzenberg und der Richter von Thusis",
+    "canton": "Graubünden",
+    "coreMotif": "Hexenprozess und Volksaberglaube im Bündnerland",
+    "bildmotiv": "Heinzenberg Thusis Viamala Schlucht Fels Richterstab Hexe",
+    "mood": "Bedrohlich, düster",
+    "summary": "Am Heinzenberg, der breiten Hangterrasse oberhalb der Viamala-Schlucht zwischen Thusis und Zillis, lebte nach der Sage eine alte Frau, die das Wetter machen konnte. Geriet eine Kuh krank, rief man die Frau, und sie murmelte Formeln, die halfen oder nicht halfen. Als eines Jahres das Getreide auf ganzer Linie faulte und das Vieh in Scharen starb, wies das Misstrauen der Dörfler auf sie. Man führte sie zum Richter nach Thusis, der sie befragte, ob sie mit dem Teufel im Bunde stehe. Die alte Frau schwieg. Man liess sie in die Schlucht der Viamala hinabschauen und drohte ihr mit dem Tod. Sie gestand. Ob es Wahrheit war oder ob die Angst sie reden liess, weiss niemand – doch ihr Name steht noch im alten Gerichtsbuch von Thusis.",
+    "summaries": {
+      "de": {
+        "text": "Am Heinzenberg über der Viamala lebte nach der Sage eine alte Frau, die das Wetter machen konnte. Als eines Jahres das Getreide faulte und das Vieh starb, wies das Misstrauen der Dörfler auf sie. Man führte sie zum Richter nach Thusis, der sie fragte, ob sie mit dem Teufel im Bunde stehe. Die alte Frau schwieg. Man liess sie in die Viamala-Schlucht hinabschauen und drohte ihr mit dem Tod. Sie gestand. Ob Wahrheit oder Angst – ihr Name steht noch im alten Gerichtsbuch von Thusis.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Hexe vom Heinzeberg und dr Richter vo Thusis",
+        "text": "Am Heinzeberg über dr Viamala hät lut dr Sage e auti Frau gläbt, wo s Wätter ha cha mache. Wo einisch ds Getreide verfaulet und s Veeh gschorbe isch, hend d Dörfler d Frau im Verdacht gha. Me hät si zum Richter uf Thusis gfüehrt, wo si gfrogt hät, ob si mit em Tüüfel im Bund stäh. D Frau hät gschwige. Me hät sie i d Viamala abe luege lo und ire dänkt. Si hät gstande. Ob Wahrheit oder Angscht – ir Name stoht no im aute Gerichtsbuch vo Thusis.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "La Sorcière du Heinzenberg et le Juge de Thusis",
+        "text": "Sur le Heinzenberg, la large terrasse au-dessus des gorges de la Viamala entre Thusis et Zillis, habitait selon la légende une vieille femme qui pouvait faire le temps. Quand une vache tombait malade, on l'appelait et elle murmurait des formules qui aidaient ou pas. Mais un an où les céréales pourrirent en masse et le bétail mourut en nombre, la méfiance des villageois se porta sur elle. On la conduisit chez le juge à Thusis, qui lui demanda si elle était liée au diable. La vieille femme se tut. On la fit regarder dans le précipice de la Viamala et on la menaça de mort. Elle avoua. Si c'était la vérité ou si c'est la peur qui lui fit parler, nul ne le sait — mais son nom se trouve encore dans l'ancien registre judiciaire de Thusis.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "La Strega del Heinzenberg e il Giudice di Thusis",
+        "text": "Sul Heinzenberg, l'ampia terrazza sopra le gorge della Viamala tra Thusis e Zillis, viveva secondo la leggenda una vecchia donna che sapeva fare il tempo. Quando una vacca si ammalava, la chiamavano e lei mormorava formule che aiutavano o no. Ma un anno in cui i cereali marcirono tutti e il bestiame morì in massa, la diffidenza degli abitanti cadde su di lei. La condussero dal giudice a Thusis, che le chiese se fosse legata al diavolo. La vecchia donna tacque. La fecero guardare nel precipizio della Viamala e la minacciarono di morte. Confessò. Se fosse la verità o se fosse la paura a farla parlare, nessuno lo sa — ma il suo nome si trova ancora nell'antico registro giudiziario di Thusis.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Witch of Heinzenberg and the Judge of Thusis",
+        "text": "On the Heinzenberg, the broad terrace above the Via Mala gorge between Thusis and Zillis, an old woman was said to live who could make the weather. When a cow fell ill, people called her and she murmured formulas that helped or did not help. But one year when the grain rotted on all sides and cattle died in droves, the villagers' suspicion fell on her. She was taken to the judge at Thusis, who asked her whether she was in league with the devil. The old woman was silent. She was made to look down into the Viamala gorge and threatened with death. She confessed. Whether it was the truth or whether fear made her speak, no one knows — but her name still stands in the old court register of Thusis.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "海因岑贝格的女巫与图西斯的法官",
+        "text": "在图西斯与齐利斯之间维亚马拉峡谷上方的海因岑贝格宽阔台地上，据说住着一个能呼风唤雨的老妇人。每当一头奶牛生病，人们便叫她来，她低声念着咒语，有时管用，有时不管用。但有一年，庄稼全线腐烂，牲畜成片倒毙，村民的怀疑便指向了她。人们把她押送到图西斯的法官面前，法官问她是否与魔鬼有约。老妇人沉默不言。人们让她俯视维亚马拉峡谷的深渊，威胁她以死。她招认了。那是真相，还是恐惧迫使她开口，无人知晓——但她的名字至今仍留在图西斯古老的法庭档案中。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "La Bruja del Heinzenberg y el Juez de Thusis",
+        "text": "En el Heinzenberg, la amplia terraza sobre el desfiladero de la Viamala entre Thusis y Zillis, vivía según la leyenda una anciana que podía hacer el tiempo. Cuando una vaca enfermaba, la llamaban y ella murmuraba fórmulas que ayudaban o no. Pero un año en que los cereales se pudrieron en toda la línea y el ganado murió en masa, la desconfianza de los aldeanos cayó sobre ella. La llevaron ante el juez en Thusis, quien le preguntó si estaba en pacto con el diablo. La anciana guardó silencio. La hicieron mirar al abismo de la Viamala y la amenazaron con la muerte. Confesó. Si era la verdad o si el miedo la hizo hablar, nadie lo sabe — pero su nombre aún figura en el antiguo registro judicial de Thusis.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "A Bruxa do Heinzenberg e o Juiz de Thusis",
+        "text": "No Heinzenberg, a ampla terraça acima do desfiladeiro da Viamala entre Thusis e Zillis, vivia segundo a lenda uma velha mulher que podia fazer o tempo. Quando uma vaca adoecia, as pessoas a chamavam e ela murmurava fórmulas que ajudavam ou não. Mas um ano em que os cereais apodreceram em toda a linha e o gado morreu em massa, a desconfiança dos aldeões caiu sobre ela. Foi levada ao juiz em Thusis, que lhe perguntou se estava em aliança com o diabo. A velha mulher ficou em silêncio. Fizeram-na olhar para o abismo da Viamala e a ameaçaram de morte. Ela confessou. Se era a verdade ou se o medo a fez falar, ninguém sabe — mas seu nome ainda consta no antigo registro judicial de Thusis.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Ведьма с Хайнценберга и судья Тузиса",
+        "text": "На Хайнценберге, широкой террасе над ущельем Виамала между Тузисом и Циллисом, по преданию жила старуха, умевшая управлять погодой. Когда корова заболевала, её звали, и она бормотала формулы, которые помогали или нет. Но в год, когда зерно повсеместно сгнило, а скот падал сотнями, подозрение деревенских жителей обратилось на неё. Её привели к судье в Тузис, который спросил, состоит ли она в сговоре с дьяволом. Старуха молчала. Её заставили смотреть в пропасть Виамалы и угрожали смертью. Она призналась. Была ли это правда или страх заставил её говорить — неизвестно, но её имя по сей день стоит в старой судебной книге Тузиса.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Hexenprozess-Kontext: für Erwachsene und Jugendliche. Für Kinder den historischen Kontext weglassen; als Wetter-Weise erzählen.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.6833,
+    "lng": 9.4333,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "goldene-esel-churwalden",
+    "title": "Der goldene Esel von Churwalden",
+    "canton": "Graubünden",
+    "coreMotif": "Verborgener Schatz mit Tierhüter verzaubert Gierigen",
+    "bildmotiv": "Churwalden Kloster Plessur Esel Gold Schatz Wald",
+    "mood": "Humorvoll, nachdenklich",
+    "summary": "Im Walde bei Churwalden, wo einst ein Kloster der Prämonstratenser stand, soll nach der Überlieferung ein verzauberter goldener Esel an einer dicken Kette angebunden stehen, der einen ungeheuren Schatz bewacht. Viele haben ihn gesehen – ein glänzendes Tier mit goldglitzerndem Fell, das geduldig kaut und so tut, als ob es schliefe. Wer sich dem Esel nähert und seinen Hals berührt, spürt, dass er kalt und hart ist wie Metall; wer die Kette losмacht will, findet kein Ende; und wer versucht, dem Tier eins der goldenen Haare auszureissen, erlebt, wie der Esel einen Schlag austeilt, der ihn aus dem Wald hinausschleudert. Kein Mensch hat den Schatz je gehoben. Das Tier steht noch, sagen die Alten, und wartet auf einen, der rein genug ist, ihn zu nehmen – ohne Gier.",
+    "summaries": {
+      "de": {
+        "text": "Im Walde bei Churwalden soll nach der Überlieferung ein verzauberter goldener Esel an einer dicken Kette stehen und einen Schatz bewachen. Viele haben ihn gesehen – kalt und hart wie Metall, geduldig kauend. Wer die Kette losmachen will, findet kein Ende; wer dem Tier ein goldenes Haar ausreissen will, wird aus dem Wald geschleudert. Kein Mensch hat den Schatz je gehoben. Das Tier wartet auf einen, der rein genug ist, ihn zu nehmen – ohne Gier.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr goldige Esel vo Churwalden",
+        "text": "Im Wald bi Churwalden soll lut dr Überlieferig en verzouberter goldige Esel a-ere dicke Chetti stoh und en Schatz bewache. Vieli hend ne gseh – chalt und hart wie Metall, geduldig chauend. Wär d Chetti losmache will, findt kei End; wär em Tier es goldigs Haar usrysse will, wird us em Wald usgschlüüderet. Kei Mensch hät de Schatz je ghoben. S Tier wartet uf eine, wo ryni gnueg isch, ne ohni Gier z neh.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "L'Âne d'Or de Churwalden",
+        "text": "Dans la forêt près de Churwalden, où s'élevait jadis un monastère de Prémontrés, se trouverait selon la tradition un âne d'or enchanté attaché par une grosse chaîne, gardant un trésor immense. Beaucoup l'ont vu — un animal brillant au pelage doré qui rumine patiemment comme s'il dormait. Qui s'approche et touche son cou sent qu'il est froid et dur comme du métal ; qui veut défaire la chaîne n'en trouve jamais le bout ; et qui tente d'arracher l'un des poils dorés de la bête reçoit un coup qui le projette hors de la forêt. Personne n'a jamais levé le trésor. La bête est encore là, disent les anciens, attendant quelqu'un d'assez pur pour le prendre — sans convoitise.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "L'Asino d'Oro di Churwalden",
+        "text": "Nel bosco presso Churwalden, dove sorgeva un tempo un monastero dei Premonstratensi, starebbe secondo la tradizione un asino d'oro incantato legato con una grossa catena a guardia di un immenso tesoro. Molti lo hanno visto — un animale splendente dal pelo dorato che rumina pazientemente come se dormisse. Chi si avvicina e tocca il suo collo sente che è freddo e duro come metallo; chi vuole sciogliere la catena non ne trova mai il capo; e chi cerca di strappare uno dei peli dorati della bestia riceve un calcio che lo scaraventa fuori dal bosco. Nessuno ha mai trovato il tesoro. La bestia è ancora lì, dicono gli anziani, ad aspettare qualcuno abbastanza puro da prenderlo — senza avidità.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Golden Donkey of Churwalden",
+        "text": "In the forest near Churwalden, where a Premonstratensian monastery once stood, there is said to stand, according to tradition, an enchanted golden donkey tied with a heavy chain, guarding an immense treasure. Many have seen it — a gleaming animal with glittering golden fur, patiently chewing as though asleep. Whoever approaches and touches its neck feels that it is cold and hard as metal; whoever tries to undo the chain finds no end to it; and whoever attempts to pluck one of the animal's golden hairs is dealt a blow that sends them flying out of the forest. No one has ever lifted the treasure. The animal is still there, say the elders, waiting for someone pure enough to take it — without greed.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "库尔瓦尔登的金驴",
+        "text": "在库尔瓦尔登附近的森林里，曾经有一座普雷蒙特雷修道院，据传说，那里站着一头被施了魔法的金驴，用一条粗链拴着，守护着一笔巨大的宝藏。很多人见过它——一头毛发金光闪闪的动物，耐心地咀嚼，仿佛在假寐。靠近它摸摸它脖子的人，会发现它冷硬如金属；想解开那条链子的人，找不到链子的尽头；而试图从这头动物身上拔下一根金毛的人，会挨上一蹄，直接被踢出森林。从未有人取得那笔宝藏。老人们说，那头驴还在那里，等待着一个足够纯洁、能够不带贪婪地取走它的人。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Burro de Oro de Churwalden",
+        "text": "En el bosque cerca de Churwalden, donde antaño existía un monasterio de Premonstratenses, estaría según la tradición un burro de oro encantado atado con una gruesa cadena, guardando un inmenso tesoro. Muchos lo han visto — un animal brillante de pelaje dorado que rumia pacientemente como si durmiera. Quien se acerca y toca su cuello siente que está frío y duro como el metal; quien intenta desatar la cadena no encuentra su extremo; y quien trata de arrancar uno de los pelos dorados del animal recibe un golpe que lo catapulta fuera del bosque. Nadie ha conseguido jamás el tesoro. La bestia sigue ahí, dicen los ancianos, esperando a alguien suficientemente puro para tomarlo — sin codicia.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Burro de Ouro de Churwalden",
+        "text": "Na floresta perto de Churwalden, onde outrora existia um mosteiro premonstratense, estaria segundo a tradição um burro de ouro encantado preso com uma corrente grossa, guardando um imenso tesouro. Muitos o viram — um animal reluzente com pelo dourado brilhante, mastigando pacientemente como se dormisse. Quem se aproxima e toca seu pescoço sente que está frio e duro como metal; quem tenta soltar a corrente não encontra seu fim; e quem tenta arrancar um dos pelos dourados do animal recebe um coice que o arremessa para fora da floresta. Ninguém jamais encontrou o tesouro. A besta ainda está lá, dizem os mais velhos, esperando alguém puro o suficiente para pegá-lo — sem cobiça.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Золотой осёл из Хурвальдена",
+        "text": "В лесу близ Хурвальдена, где некогда стоял монастырь премонстрантов, по преданию, стоит на цепи заколдованный золотой осёл, охраняющий огромное сокровище. Многие его видели — сверкающее животное с золотистой шерстью, терпеливо жующее, словно дремлющее. Тот, кто подходит и касается его шеи, чувствует, что она холодная и твёрдая, как металл; тот, кто пытается снять цепь, не может найти её конца; а тот, кто пробует вырвать один из золотых волосков, получает удар, выбрасывающий его из леса. Никто и никогда не поднял этого сокровища. Зверь всё ещё там, говорят старики, и ждёт того, кто окажется достаточно чист, чтобы взять его — без жадности.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Für alle Altersstufen; das Motiv «nur ohne Gier» kindgerecht als Lerngeschichte erzählen.",
+    "quelle": {
+      "autor": "Otto Carisch",
+      "werk": "Sagen und Märchen aus Graubünden",
+      "jahr": "1875",
+      "fundstelleUrl": "https://www.e-rara.ch/zuz/content/titleinfo/3278234"
+    },
+    "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
+    "lat": 46.7833,
+    "lng": 9.5667,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "sennerin-piz-err",
+    "title": "Die Sennerin vom Piz Err und der Zauberkäse",
+    "canton": "Graubünden",
+    "coreMotif": "Sennerin erhält von Berggeist Zauberkräfte und verliert sie durch Verrat",
+    "bildmotiv": "Piz Err Bergüner Steine Engadin Sennerin Käse Alp",
+    "mood": "Märchenhaft, nachdenklich",
+    "summary": "In der Bergunerschafalpe am Fuss des Piz Err, einem der zackigen Bergüner Steine im Albulatal, soll eine Sennerin gelebt haben, die jedes Jahr auf die Alp stieg und wegen ihrer Freundlichkeit und ihres Fleisses von einem Berggeist besucht wurde. Der Geist, der die Gestalt eines alten weissbärtigen Mannes hatte, lehrte sie eine Formel, mit der sie die Milch dreimal so viel Käse liefern liess wie jede andere. Ihr Käse war berühmt bis ins Unterland; Händler zahlten dreifachen Preis. Doch als ihre Schwester sie auf der Alp besuchte und die Formel erschlich, indem sie sich schlafend stellte, versiegte die Gabe. Von da an war der Käse vom Piz Err wie jeder andere auch – und der alte Mann mit dem weissen Bart kam nie wieder.",
+    "summaries": {
+      "de": {
+        "text": "Auf der Bergunerschafalpe am Fuss des Piz Err lebte eine Sennerin, die wegen ihrer Freundlichkeit von einem Berggeist besucht wurde. Der Geist – ein alter Mann mit weissem Bart – lehrte ihr eine Formel, mit der die Milch dreimal so viel Käse lieferte wie sonst. Ihr Käse war bis ins Unterland berühmt. Als ihre Schwester die Formel erschlich, indem sie sich schlafend stellte, versiegte die Gabe. Der alte Mann kam nie wieder.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Sennerin vom Piz Err und dr Zauberchäs",
+        "text": "Uf dr Bergüner Schafalp am Fuess vom Piz Err hät e Sennerin gläbt, wo vom Berggeischt bsuecht worde isch, wil si so fründlich gsi isch. Dr Geischt – en aute Maa mit wysem Bart – hät ihr e Formel glernt, wo d Milch drimal so vill Chäs gäh hät wie suscht. Irä Chäs isch bis ins Unterland berühmt gsi. Wo i Schwöschter d Formel erschliche hät, isch d Gaab versieget. Dr aut Maa isch nie meh cho.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "La Bergère du Piz Err et le Fromage Magique",
+        "text": "Sur l'alpage des moutons de Bergün au pied du Piz Err, l'une des dentelures des Pierres de Bergün dans la vallée de l'Albula, vivait une fromavière que visitait chaque année un esprit des montagnes en raison de sa gentillesse et de son diligence. L'esprit, qui prenait la forme d'un vieux homme à barbe blanche, lui apprit une formule qui faisait donner au lait trois fois plus de fromage que d'habitude. Son fromage était réputé jusqu'en plaine ; les marchands payaient le triple du prix. Mais quand sa sœur vint lui rendre visite à l'alpage et lui déroba la formule en faisant semblant de dormir, le don se tarit. Dès lors le fromage du Piz Err était comme les autres — et le vieil homme à la barbe blanche ne revint plus jamais.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "La Pastora del Piz Err e il Formaggio Magico",
+        "text": "Sull'alpe delle pecore di Bergün ai piedi del Piz Err, uno dei dentellati Sassi di Bergün nella valle dell'Albula, viveva una pastora che ogni anno veniva visitata da uno spirito della montagna per la sua gentilezza e la sua diligenza. Lo spirito, che prendeva le sembianze di un vecchio dalla barba bianca, le insegnò una formula che faceva rendere al latte tre volte più formaggio del normale. Il suo formaggio era famoso fino in pianura; i commercianti pagavano il triplo del prezzo. Ma quando sua sorella venne a trovarla sull'alpe e le rubò la formula fingendo di dormire, il dono si esaurì. Da allora il formaggio del Piz Err era come tutti gli altri — e il vecchio dalla barba bianca non tornò mai più.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Dairymaid of the Piz Err and the Magic Cheese",
+        "text": "On the sheep alp of Bergün at the foot of the Piz Err, one of the jagged Bergün Stones in the Albula Valley, there lived a dairymaid who was visited each year by a mountain spirit on account of her kindness and diligence. The spirit, who took the form of an old man with a white beard, taught her a formula that made the milk yield three times as much cheese as usual. Her cheese was famous as far as the lowlands; merchants paid triple the price. But when her sister visited her on the alp and stole the formula by pretending to sleep, the gift dried up. From that day on the cheese from the Piz Err was like any other — and the old man with the white beard never came again.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "埃尔峰的女牧人与魔法奶酪",
+        "text": "在阿尔布拉山谷贝尔根石峰之一的埃尔峰山脚，贝尔根绵羊牧场上住着一位女牧人，因为她的善良和勤劳，每年都有一位山灵来看望她。这位山灵以一个留着白胡子的老人面目出现，教给她一个咒语，能让牛奶产出比平时多三倍的奶酪。她的奶酪在平原地区远近闻名，商人们愿意付三倍的价钱。但当她的姐妹来牧场探望时，假装睡着偷学了那个咒语，她的天赋随之枯竭。从此，埃尔峰的奶酪便和其他地方一样普通——那位白胡子老人也再未出现。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "La Pastora del Piz Err y el Queso Mágico",
+        "text": "En el alpe de ovejas de Bergün al pie del Piz Err, una de las dentadas Piedras de Bergün en el Valle del Albula, vivía una pastora que cada año recibía la visita de un espíritu de la montaña por su amabilidad y diligencia. El espíritu, que tomaba la forma de un anciano de barba blanca, le enseñó una fórmula que hacía rendir a la leche tres veces más queso que de costumbre. Su queso era famoso hasta en las tierras bajas; los comerciantes pagaban el triple del precio. Pero cuando su hermana la visitó en el alpe y le robó la fórmula fingiendo dormir, el don se agotó. A partir de entonces el queso del Piz Err era como cualquier otro — y el anciano de barba blanca no volvió jamás.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "A Pastora do Piz Err e o Queijo Mágico",
+        "text": "No alpe de ovelhas de Bergün ao pé do Piz Err, uma das pontiagudas Pedras de Bergün no Vale do Albula, vivia uma pastora que cada ano recebia a visita de um espírito da montanha por causa de sua bondade e diligência. O espírito, que tomava a forma de um velho de barba branca, ensinou-lhe uma fórmula que fazia o leite render três vezes mais queijo que o normal. Seu queijo era famoso até nas terras baixas; os comerciantes pagavam o triplo do preço. Mas quando sua irmã a visitou no alpe e roubou a fórmula fingindo dormir, o dom desapareceu. A partir daí o queijo do Piz Err era como qualquer outro — e o velho de barba branca nunca mais voltou.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Пастушка с Пиц-Эрр и волшебный сыр",
+        "text": "На овечьем альпе Бергюна у подножия Пиц-Эрр, одного из зубчатых Бергюнских камней в долине Альбула, жила пастушка, которую каждый год навещал горный дух — за её доброту и усердие. Дух, принимавший облик старика с белой бородой, научил её формуле, от которой молоко давало в три раза больше сыра, чем обычно. Её сыр был знаменит вплоть до равнин; торговцы платили тройную цену. Но когда её сестра приехала к ней на альп и, притворившись спящей, подслушала формулу, дар иссяк. С тех пор сыр с Пиц-Эрр был таким же, как у всех, — а старик с белой бородой так больше и не пришёл.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Für alle Altersstufen geeignet; das Verrat-Motiv kindgerecht als Warnung vor Heimlichtuerei erzählen.",
+    "quelle": {
+      "autor": "Caspar Decurtins",
+      "werk": "Rätoromanische Chrestomathie, Band IV",
+      "jahr": "1903",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/1256937"
+    },
+    "source": "Caspar Decurtins: Rätoromanische Chrestomathie, Bd. IV (1903)",
+    "lat": 46.5703,
+    "lng": 9.7228,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  }
 
 ];
