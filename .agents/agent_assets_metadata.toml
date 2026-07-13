@@ -102,6 +102,12 @@ uri = "file://attached_assets/icon_alps_v1.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "ZI8DyXJmYnvf8Ol4MfV9X"
+uri = "file://attached_assets/icon_alps_v2.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "o-PK8_4dt13VcbC4pK3RD"
 uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"
