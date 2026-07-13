@@ -18,6 +18,7 @@ import customRouteRouter from "./customRoute";
 import gpxRouter from "./gpx";
 import adminRouter from "./admin";
 import debugLogRouter from "./debugLog";
+import partnerAnfragenRouter from "./partnerAnfragen";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(customRouteRouter);
 router.use(gpxRouter);
 router.use(adminRouter);
 router.use(debugLogRouter);
+router.use(partnerAnfragenRouter);
 
 export default router;

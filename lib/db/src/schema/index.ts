@@ -8,3 +8,4 @@ export * from "./routeSagas";
 export * from "./cantonFetches";
 export * from "./profiles";
 export * from "./partners";
+export * from "./partnerAnfragen";
