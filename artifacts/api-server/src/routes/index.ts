@@ -20,6 +20,7 @@ import adminRouter from "./admin";
 import debugLogRouter from "./debugLog";
 import partnerAnfragenRouter from "./partnerAnfragen";
 import partnerPortalRouter from "./partnerPortal";
+import flyerRouter from "./flyer";
 
 const router: IRouter = Router();
 
@@ -44,5 +45,6 @@ router.use(adminRouter);
 router.use(debugLogRouter);
 router.use(partnerAnfragenRouter);
 router.use(partnerPortalRouter);
+router.use(flyerRouter);
 
 export default router;

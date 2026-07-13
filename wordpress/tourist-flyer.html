@@ -15,7 +15,6 @@
     --white: #ffffff;
     --off-white: #faf9f7;
     --text: #1a1a1a;
-    --muted: #666;
   }
 
   html, body {
@@ -28,7 +27,6 @@
     print-color-adjust: exact;
   }
 
-  /* ── PRINT ─────────────────────────────── */
   @page {
     size: A4 portrait;
     margin: 0;
@@ -38,7 +36,6 @@
     .no-print { display: none !important; }
   }
 
-  /* ── LAYOUT ─────────────────────────────── */
   .page {
     width: 210mm;
     min-height: 297mm;
@@ -46,178 +43,174 @@
     flex-direction: column;
   }
 
-  /* ── HEADER ─────────────────────────────── */
+  /* HEADER */
   .header {
     background: var(--red);
     color: #fff;
-    padding: 28px 36px 24px;
+    padding: 24px 32px 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px;
   }
-  .header-text {}
   .logo-word {
-    font-size: 2.8rem;
+    font-size: 2.6rem;
     font-weight: 900;
     letter-spacing: -0.03em;
     line-height: 1;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
-  .logo-word span { opacity: 0.55; }
+  .logo-word span { opacity: 0.5; }
   .tagline {
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    opacity: 0.75;
+    opacity: 0.72;
   }
   .header-qr {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
   }
   .header-qr img {
-    width: 88px;
-    height: 88px;
+    width: 84px; height: 84px;
     border-radius: 8px;
     background: #fff;
     padding: 4px;
     display: block;
   }
   .header-qr-label {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    opacity: 0.65;
+    opacity: 0.6;
     text-align: center;
   }
   .header-qr-url {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    opacity: 0.9;
+    opacity: 0.88;
     text-align: center;
-    letter-spacing: -0.01em;
   }
 
-  /* ── VISUAL BAND ─────────────────────────── */
+  /* STATS BAND */
   .band {
     background: var(--red-dark);
-    padding: 12px 36px;
+    padding: 10px 32px;
     display: flex;
-    gap: 28px;
+    gap: 24px;
     align-items: center;
   }
   .band-stat {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
     color: #fff;
   }
-  .band-stat strong { font-size: 1.3rem; font-weight: 900; }
-  .band-stat span { font-size: 0.72rem; opacity: 0.7; font-weight: 500; }
+  .band-stat strong { font-size: 1.2rem; font-weight: 900; }
+  .band-stat span { font-size: 0.68rem; opacity: 0.68; font-weight: 500; }
   .band-dot {
-    width: 4px; height: 4px;
+    width: 3px; height: 3px;
     border-radius: 50%;
     background: rgba(255,255,255,0.3);
     flex-shrink: 0;
   }
   .band-icons {
     margin-left: auto;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     display: flex;
-    gap: 8px;
-    opacity: 0.75;
+    gap: 7px;
+    opacity: 0.72;
   }
 
-  /* ── LANGUAGES GRID ─────────────────────── */
+  /* LANGUAGE GRID — 3 columns for 9 languages */
   .langs {
     flex: 1;
-    padding: 20px 36px 16px;
+    padding: 16px 32px 12px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px 28px;
+    gap: 11px 22px;
   }
   .lang-card {
     border-left: 3px solid var(--red);
-    padding: 10px 0 10px 14px;
+    padding: 8px 0 8px 12px;
   }
   .lang-name {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--red);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .lang-headline {
-    font-size: 0.92rem;
+    font-size: 0.82rem;
     font-weight: 800;
-    line-height: 1.25;
-    margin-bottom: 5px;
+    line-height: 1.2;
+    margin-bottom: 4px;
     color: var(--text);
   }
   .lang-body {
-    font-size: 0.77rem;
-    line-height: 1.5;
+    font-size: 0.71rem;
+    line-height: 1.48;
     color: #444;
   }
   .lang-body b { color: var(--text); font-weight: 700; }
 
-  /* ── HOW TO ─────────────────────────────── */
+  /* HOW TO */
   .howto {
     background: var(--off-white);
     border-top: 1.5px solid #ebebeb;
-    padding: 14px 36px;
+    padding: 12px 32px;
   }
   .howto-inner {
     display: flex;
     align-items: center;
-    gap: 22px;
+    gap: 18px;
     flex-wrap: nowrap;
   }
   .howto-step {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.75rem;
+    gap: 9px;
+    font-size: 0.72rem;
     color: #444;
     flex-shrink: 0;
   }
   .howto-num {
-    width: 22px; height: 22px;
+    width: 20px; height: 20px;
     background: var(--red);
     color: #fff;
     border-radius: 50%;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 800;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .howto-step-text { line-height: 1.35; }
-  .howto-step-text strong { display: block; color: var(--text); font-weight: 700; font-size: 0.78rem; }
-  .howto-arrow { color: #ccc; font-size: 1rem; flex-shrink: 0; }
+  .howto-step-text { line-height: 1.3; }
+  .howto-step-text strong { display: block; color: var(--text); font-weight: 700; font-size: 0.75rem; }
+  .howto-arrow { color: #ccc; font-size: 0.9rem; flex-shrink: 0; }
 
-  /* ── FOOTER ─────────────────────────────── */
+  /* FOOTER */
   .footer {
     background: var(--red);
-    color: rgba(255,255,255,0.7);
-    padding: 10px 36px;
+    color: rgba(255,255,255,0.68);
+    padding: 9px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
   }
   .footer a { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 600; }
-  .footer-flags { font-size: 0.85rem; letter-spacing: 2px; }
+  .footer-flags { font-size: 0.8rem; letter-spacing: 1px; }
 
-  /* ── PRINT HELPER ───────────────────────── */
   .print-hint {
     text-align: center;
-    padding: 16px;
-    font-size: 0.8rem;
+    padding: 14px;
+    font-size: 0.78rem;
     color: #888;
     border-top: 1px solid #eee;
   }
@@ -232,7 +225,7 @@
   <div class="header">
     <div class="header-text">
       <div class="logo-word">Saga<span>Trail</span></div>
-      <div class="tagline">Schweizer Sagen · Swiss Legends · Légendes suisses</div>
+      <div class="tagline">Schweizer Sagen · Swiss Legends · Légendes suisses · 瑞士传说</div>
     </div>
     <div class="header-qr">
       <img
@@ -251,41 +244,34 @@
     <div class="band-dot"></div>
     <div class="band-stat"><strong>26</strong><span>Kantone / Cantons</span></div>
     <div class="band-dot"></div>
-    <div class="band-stat"><strong>8</strong><span>Sprachen / Langues</span></div>
+    <div class="band-stat"><strong>8</strong><span>Sprachen / Languages</span></div>
     <div class="band-dot"></div>
     <div class="band-stat"><strong>GPS</strong><span>geführt / guided</span></div>
     <div class="band-icons">🏔️ 🧭 🎙️ 🐉</div>
   </div>
 
-  <!-- 8 LANGUAGES -->
+  <!-- 9 LANGUAGES (3 × 3) -->
   <div class="langs">
 
     <!-- DE -->
     <div class="lang-card">
       <div class="lang-name">🇩🇪 Deutsch</div>
       <div class="lang-headline">Wandere durch Schweizer Legenden</div>
-      <div class="lang-body">SagaTrail führt dich per <b>GPS</b> auf historischen Wanderwegen und erzählt dir dabei die Sagen der Region — dramatisch, authentisch, auf Schweizerdeutsch.</div>
+      <div class="lang-body">SagaTrail führt dich per <b>GPS</b> auf historischen Wanderwegen und erzählt dir die Sagen der Region — dramatisch und authentisch.</div>
     </div>
 
     <!-- FR -->
     <div class="lang-card">
       <div class="lang-name">🇫🇷 Français</div>
-      <div class="lang-headline">Randonnez au cœur des légendes suisses</div>
-      <div class="lang-body">SagaTrail vous guide <b>par GPS</b> sur des sentiers historiques tout en vous racontant les légendes de la région — vivantes, authentiques, en français.</div>
+      <div class="lang-headline">Randonnez au cœur des légendes</div>
+      <div class="lang-body">SagaTrail vous guide <b>par GPS</b> sur des sentiers historiques en vous racontant les légendes de la région — vivantes et authentiques.</div>
     </div>
 
     <!-- IT -->
     <div class="lang-card">
       <div class="lang-name">🇮🇹 Italiano</div>
       <div class="lang-headline">Cammina tra le leggende svizzere</div>
-      <div class="lang-body">SagaTrail ti guida <b>tramite GPS</b> su sentieri storici raccontandoti le leggende locali — avvincenti, autentiche, in italiano.</div>
-    </div>
-
-    <!-- RM -->
-    <div class="lang-card">
-      <div class="lang-name">🇨🇭 Rumantsch</div>
-      <div class="lang-headline">Cammina tranter las legends svizras</div>
-      <div class="lang-body">SagaTrail ta guide cun <b>GPS</b> sin vias istoricas e ta raconta las legends da la regiun — vivas, autentichas, en rumantsch.</div>
+      <div class="lang-body">SagaTrail ti guida <b>via GPS</b> su sentieri storici raccontandoti le leggende locali — coinvolgenti e autentiche.</div>
     </div>
 
     <!-- EN -->
@@ -295,25 +281,32 @@
       <div class="lang-body">SagaTrail guides you <b>via GPS</b> along historic trails while narrating the legends of each region — dramatic, authentic, in your language.</div>
     </div>
 
-    <!-- NL -->
+    <!-- ZH -->
     <div class="lang-card">
-      <div class="lang-name">🇳🇱 Nederlands</div>
-      <div class="lang-headline">Wandel door Zwitserse legenden</div>
-      <div class="lang-body">SagaTrail begeleidt je <b>via GPS</b> over historische wandelroutes en vertelt de legenden van de streek — spannend, authentiek, in het Nederlands.</div>
+      <div class="lang-name">🇨🇳 中文</div>
+      <div class="lang-headline">徒步探索瑞士传说</div>
+      <div class="lang-body">SagaTrail通过<b>GPS</b>引导您走过历史悠久的山间小径，同时讲述当地流传数百年的传说故事，身临其境，真实感人。</div>
     </div>
 
     <!-- ES -->
     <div class="lang-card">
       <div class="lang-name">🇪🇸 Español</div>
       <div class="lang-headline">Senderismo por las leyendas suizas</div>
-      <div class="lang-body">SagaTrail te guía <b>por GPS</b> por senderos históricos narrándote las leyendas de cada región — dramáticas, auténticas, en español.</div>
+      <div class="lang-body">SagaTrail te guía <b>por GPS</b> por senderos históricos narrando las leyendas de cada región — dramáticas y auténticas.</div>
     </div>
 
-    <!-- JA -->
+    <!-- PT -->
     <div class="lang-card">
-      <div class="lang-name">🇯🇵 日本語</div>
-      <div class="lang-headline">スイスの伝説をハイキングで体験</div>
-      <div class="lang-body">SagaTrailは<b>GPS</b>で歴史的なトレイルをナビしながら、その土地に伝わる伝説を語ります — 臨場感あふれる、本格的な体験を日本語で。</div>
+      <div class="lang-name">🇧🇷 Português</div>
+      <div class="lang-headline">Trilhas pelas lendas suíças</div>
+      <div class="lang-body">SagaTrail guia você <b>via GPS</b> por trilhas históricas narrando as lendas de cada região — dramáticas, autênticas, no seu idioma.</div>
+    </div>
+
+    <!-- RU -->
+    <div class="lang-card">
+      <div class="lang-name">🇷🇺 Русский</div>
+      <div class="lang-headline">Походы сквозь швейцарские легенды</div>
+      <div class="lang-body">SagaTrail ведёт вас по <b>GPS</b> историческими тропами, рассказывая легенды каждого региона — захватывающие и подлинные.</div>
     </div>
 
   </div>
@@ -324,8 +317,8 @@
       <div class="howto-step">
         <div class="howto-num">1</div>
         <div class="howto-step-text">
-          <strong>App herunterladen</strong>
-          QR-Code scannen → sagatrail.ch
+          <strong>App laden</strong>
+          QR scannen → sagatrail.ch
         </div>
       </div>
       <div class="howto-arrow">›</div>
@@ -333,7 +326,7 @@
         <div class="howto-num">2</div>
         <div class="howto-step-text">
           <strong>Region wählen</strong>
-          Kanton oder Standort öffnen
+          Kanton / Canton
         </div>
       </div>
       <div class="howto-arrow">›</div>
@@ -358,14 +351,14 @@
   <!-- FOOTER -->
   <div class="footer">
     <div>© 2025 SagaTrail GmbH · <a href="https://sagatrail.ch">sagatrail.ch</a> · <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a></div>
-    <div class="footer-flags">🇩🇪 🇫🇷 🇮🇹 🇨🇭 🇬🇧 🇳🇱 🇪🇸 🇯🇵</div>
+    <div class="footer-flags">🇩🇪 🇫🇷 🇮🇹 🇬🇧 🇨🇳 🇪🇸 🇧🇷 🇷🇺</div>
   </div>
 
 </div>
 
 <!-- SCREEN-ONLY PRINT HINT -->
 <div class="print-hint no-print">
-  <strong>Als PDF speichern:</strong> Strg+P (Win) oder Cmd+P (Mac) → Drucker: «Als PDF speichern» → Ränder: Keine → Drucken
+  <strong>Als PDF speichern:</strong> Cmd+P (Mac) / Strg+P (Win) → Drucker: «Als PDF speichern» → Ränder: <em>Keine</em> → Drucken
 </div>
 
 </body>
