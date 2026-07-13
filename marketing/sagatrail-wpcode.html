@@ -1,0 +1,447 @@
+<!-- SagaTrail Marketing Page — WPCode Snippet -->
+<!-- Einfügen via WPCode > Snippets > + Snippet > HTML Snippet -->
+<!-- Platzhalter ersetzen: #APP-STORE-LINK# und #PLAY-STORE-LINK# -->
+
+<style>
+.st-wrap * { box-sizing: border-box; margin: 0; padding: 0; }
+.st-wrap {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background: #000;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.st-hero {
+  background: #c00;
+  color: #fff;
+  text-align: center;
+  padding: 80px 24px 64px;
+  position: relative;
+  overflow: hidden;
+}
+.st-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(0,0,0,0.06) 0px,
+    rgba(0,0,0,0.06) 1px,
+    transparent 1px,
+    transparent 24px
+  );
+}
+.st-hero-inner { position: relative; max-width: 760px; margin: 0 auto; }
+.st-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.st-logo-icon {
+  width: 56px; height: 56px;
+  background: #fff;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.st-logo-text {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+.st-hero h1 {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+.st-hero h1 span { color: #000; }
+.st-hero p {
+  font-size: clamp(17px, 2.5vw, 21px);
+  opacity: 0.92;
+  max-width: 580px;
+  margin: 0 auto 40px;
+  line-height: 1.5;
+}
+.st-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+}
+.st-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #000;
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 2px solid rgba(255,255,255,0.15);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  min-width: 180px;
+}
+.st-badge:hover {
+  background: #1a1a1a;
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-2px);
+  color: #fff;
+  text-decoration: none;
+}
+.st-badge svg { flex-shrink: 0; }
+.st-badge-sub { font-size: 11px; font-weight: 400; opacity: 0.7; display: block; margin-top: 1px; }
+.st-badge-main { font-size: 16px; font-weight: 700; display: block; }
+
+/* ── FEATURES ── */
+.st-features {
+  background: #111;
+  padding: 72px 24px;
+}
+.st-section-title {
+  text-align: center;
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.st-section-sub {
+  text-align: center;
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 52px;
+}
+.st-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.st-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 32px 24px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.st-card:hover {
+  border-color: #c00;
+  transform: translateY(-3px);
+}
+.st-card-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+  display: block;
+}
+.st-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.st-card p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+}
+
+/* ── STATS ── */
+.st-stats {
+  background: #c00;
+  padding: 56px 24px;
+}
+.st-stats-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 32px;
+  text-align: center;
+}
+.st-stat-num {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  display: block;
+}
+.st-stat-label {
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  margin-top: 6px;
+  display: block;
+  font-weight: 500;
+}
+
+/* ── HOW IT WORKS ── */
+.st-how {
+  background: #000;
+  padding: 72px 24px;
+}
+.st-steps {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.st-step {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 32px 0;
+  border-bottom: 1px solid #222;
+}
+.st-step:last-child { border-bottom: none; }
+.st-step-num {
+  flex-shrink: 0;
+  width: 48px; height: 48px;
+  background: #c00;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+}
+.st-step-body h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.st-step-body p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+}
+
+/* ── TESTIMONIAL ── */
+.st-quote {
+  background: #111;
+  padding: 72px 24px;
+  text-align: center;
+}
+.st-quote-text {
+  font-size: clamp(20px, 3vw, 30px);
+  font-weight: 700;
+  color: #fff;
+  max-width: 700px;
+  margin: 0 auto 20px;
+  line-height: 1.4;
+}
+.st-quote-text::before { content: '\201E'; color: #c00; }
+.st-quote-text::after  { content: '\201C'; color: #c00; }
+.st-quote-author {
+  font-size: 14px;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── CTA ── */
+.st-cta {
+  background: #fff;
+  color: #000;
+  text-align: center;
+  padding: 80px 24px;
+}
+.st-cta h2 {
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 12px;
+}
+.st-cta p {
+  font-size: 17px;
+  color: rgba(0,0,0,0.55);
+  margin-bottom: 40px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.st-cta .st-badge {
+  background: #000;
+  border-color: transparent;
+}
+.st-cta .st-badge:hover { background: #c00; }
+
+/* ── FOOTER ── */
+.st-footer {
+  background: #000;
+  border-top: 1px solid #222;
+  padding: 32px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+}
+.st-footer a { color: rgba(255,255,255,0.45); text-decoration: none; }
+.st-footer a:hover { color: #c00; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .st-hero { padding: 56px 16px 48px; }
+  .st-badge { min-width: 100%; justify-content: center; }
+  .st-step { flex-direction: column; gap: 12px; }
+}
+</style>
+
+<div class="st-wrap">
+
+  <!-- HERO -->
+  <section class="st-hero">
+    <div class="st-hero-inner">
+      <div class="st-logo">
+        <div class="st-logo-icon">🥾</div>
+        <span class="st-logo-text">SagaTrail</span>
+      </div>
+      <h1>Wandern. Erleben.<br><span>Sagenhaft.</span></h1>
+      <p>Entdecke die Schweiz durch ihre alten Mythen und Sagen — direkt auf dem Wanderweg. GPS-geführte Touren mit lebendigen Erzählungen in 9 Sprachen.</p>
+      <div class="st-hero-badges">
+        <a href="#APP-STORE-LINK#" class="st-badge">
+          <!-- Apple Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.18zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span>
+            <span class="st-badge-sub">Laden im</span>
+            <span class="st-badge-main">App Store</span>
+          </span>
+        </a>
+        <a href="#PLAY-STORE-LINK#" class="st-badge">
+          <!-- Google Play Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.37.2.8.22 1.19.04l12.15-6.99-2.64-2.64-10.7 9.59zM.34 1.42C.13 1.74 0 2.16 0 2.66v18.68c0 .5.13.92.35 1.24l.07.06 10.46-10.46v-.25L.41 1.36l-.07.06zM20.33 10.53l-2.93-1.69-2.96 2.96 2.96 2.96 2.94-1.7c.84-.48.84-1.26-.01-1.53zM4.37.24L16.52 7.22l-2.64 2.64L3.18.27C3.57.09 4 .1 4.37.24z"/></svg>
+          <span>
+            <span class="st-badge-sub">Jetzt bei</span>
+            <span class="st-badge-main">Google Play</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="st-features">
+    <h2 class="st-section-title">Alles, was du auf dem Weg brauchst</h2>
+    <p class="st-section-sub">GPS, Sagen und Natur — in einer App vereint</p>
+    <div class="st-grid">
+      <div class="st-card">
+        <span class="st-card-icon">🗺️</span>
+        <h3>GPS-Navigation</h3>
+        <p>Echtzeit-Positionierung auf offiziellen Wanderwegen. Die Route führt dich — die Sagen begleiten dich.</p>
+      </div>
+      <div class="st-card">
+        <span class="st-card-icon">📖</span>
+        <h3>Über 200 Sagen</h3>
+        <p>Kuratierte Originalquellen aus allen 26 Kantonen — von Drachen über Kobolde bis hin zu versunkenen Städten.</p>
+      </div>
+      <div class="st-card">
+        <span class="st-card-icon">🎧</span>
+        <h3>Audio-Narration</h3>
+        <p>Lass dir die Sagen vorlesen während du gehst. Hände frei, Kopf in der Geschichte.</p>
+      </div>
+      <div class="st-card">
+        <span class="st-card-icon">🌍</span>
+        <h3>9 Sprachen</h3>
+        <p>Deutsch, Schweizerdeutsch, Französisch, Italienisch, Englisch, Chinesisch, Spanisch, Portugiesisch, Russisch.</p>
+      </div>
+      <div class="st-card">
+        <span class="st-card-icon">👥</span>
+        <h3>Gruppen-Wanderungen</h3>
+        <p>Synchronisiertes Erleben für alle. Ein Leader, eine Route — alle hören dieselbe Geschichte zur selben Zeit.</p>
+      </div>
+      <div class="st-card">
+        <span class="st-card-icon">🏆</span>
+        <h3>Achievements</h3>
+        <p>Sammle Kantone, schalte Sagen-Pakete frei und dokumentiere deine Abenteuer im persönlichen Tagebuch.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="st-stats">
+    <div class="st-stats-inner">
+      <div>
+        <span class="st-stat-num">26</span>
+        <span class="st-stat-label">Kantone</span>
+      </div>
+      <div>
+        <span class="st-stat-num">200+</span>
+        <span class="st-stat-label">Sagenrouten</span>
+      </div>
+      <div>
+        <span class="st-stat-num">9</span>
+        <span class="st-stat-label">Sprachen</span>
+      </div>
+      <div>
+        <span class="st-stat-num">∞</span>
+        <span class="st-stat-label">Abenteuer</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="st-how">
+    <h2 class="st-section-title">So funktioniert's</h2>
+    <p class="st-section-sub">In drei Schritten zu deiner Sagenwanderung</p>
+    <div class="st-steps">
+      <div class="st-step">
+        <div class="st-step-num">1</div>
+        <div class="st-step-body">
+          <h3>App herunterladen</h3>
+          <p>SagaTrail kostenlos im App Store oder Google Play installieren. Die erste Kanton-Saga ist gratis enthalten.</p>
+        </div>
+      </div>
+      <div class="st-step">
+        <div class="st-step-num">2</div>
+        <div class="st-step-body">
+          <h3>Kanton & Route wählen</h3>
+          <p>Wähle deinen Kanton, stöbere in den Sagen-Paketen und starte die Navigation direkt zum Wegbeginn.</p>
+        </div>
+      </div>
+      <div class="st-step">
+        <div class="st-step-num">3</div>
+        <div class="st-step-body">
+          <h3>Wandern & Erleben</h3>
+          <p>GPS führt dich auf dem Weg — an den richtigen Stellen erwachen die Sagen zum Leben. Einfach geniessen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <section class="st-quote">
+    <p class="st-quote-text">Die Schweiz hat so viele Geheimnisse. SagaTrail zeigt sie dir genau dort, wo sie entstanden sind.</p>
+    <p class="st-quote-author">— Erste Wanderer-Stimmen aus dem Beta-Test</p>
+  </section>
+
+  <!-- CTA -->
+  <section class="st-cta">
+    <h2>Bereit für dein Abenteuer?</h2>
+    <p>Kostenlos starten. Keine Anmeldung nötig für die erste Tour.</p>
+    <div class="st-hero-badges">
+      <a href="#APP-STORE-LINK#" class="st-badge">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.18zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <span>
+          <span class="st-badge-sub">Laden im</span>
+          <span class="st-badge-main">App Store</span>
+        </span>
+      </a>
+      <a href="#PLAY-STORE-LINK#" class="st-badge">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.37.2.8.22 1.19.04l12.15-6.99-2.64-2.64-10.7 9.59zM.34 1.42C.13 1.74 0 2.16 0 2.66v18.68c0 .5.13.92.35 1.24l.07.06 10.46-10.46v-.25L.41 1.36l-.07.06zM20.33 10.53l-2.93-1.69-2.96 2.96 2.96 2.96 2.94-1.7c.84-.48.84-1.26-.01-1.53zM4.37.24L16.52 7.22l-2.64 2.64L3.18.27C3.57.09 4 .1 4.37.24z"/></svg>
+        <span>
+          <span class="st-badge-sub">Jetzt bei</span>
+          <span class="st-badge-main">Google Play</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="st-footer">
+    <p>© 2026 SagaTrail &nbsp;·&nbsp; <a href="#">Datenschutz</a> &nbsp;·&nbsp; <a href="#">Impressum</a> &nbsp;·&nbsp; <a href="#">Kontakt</a></p>
+  </footer>
+
+</div>

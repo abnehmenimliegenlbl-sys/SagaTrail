@@ -179,3 +179,9 @@ id = "uvSzS-gJjeVZjVjN4smrr"
 uri = "file://SagaTrail-Features.md"
 type = "text"
 title = "SagaTrail – Features & Mehrwert"
+
+[[outputs]]
+id = "ytKqJh2hgKOk8C8odlWhp"
+uri = "file://marketing/sagatrail-wpcode.zip"
+type = "unspecified"
+title = "SagaTrail WPCode Snippet"
