@@ -10,7 +10,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -56,7 +56,7 @@ export default function Routenplanung() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed } = useApp();
-  const { getRoute, getSagaForRoute, ensureRouteSaga, addCustomRoute } = useCatalog();
+  const { getRoute, getSagaForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
   const [importing, setImporting] = useState(false);
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
@@ -158,6 +158,17 @@ export default function Routenplanung() {
   const [saga, setSaga] = useState<Saga | undefined>(
     route ? getSagaForRoute(route) : undefined,
   );
+  const similarRoutes = useMemo(() => {
+    if (!saga?.canton || route?.distanceKm == null || !route?.id) return [];
+    return getRoutesByCanton(saga.canton)
+      .filter((r) => r.id !== route.id)
+      .sort(
+        (a, b) =>
+          Math.abs(a.distanceKm - route.distanceKm) -
+          Math.abs(b.distanceKm - route.distanceKm),
+      )
+      .slice(0, 3);
+  }, [route?.id, route?.distanceKm, saga?.canton, getRoutesByCanton]);
   const [sagaLoading, setSagaLoading] = useState(!saga);
   const [sagaRetryCount, setSagaRetryCount] = useState(0);
   const [lowBattery] = useState(false);
@@ -678,6 +689,38 @@ export default function Routenplanung() {
             style={{ marginTop: 16 }}
           />
         ) : null}
+
+        {similarRoutes.length > 0 && (
+          <>
+            <SparkDivider style={{ marginVertical: 22 }} />
+            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+              {t.similarRoutes}
+            </Text>
+            {similarRoutes.map((r) => (
+              <Pressable
+                key={r.id}
+                onPress={() => router.push(`/route/${encodeURIComponent(r.id)}`)}
+                style={[
+                  styles.similarRouteCard,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.similarRouteName, { color: colors.foreground }]}
+                    numberOfLines={2}
+                  >
+                    {r.name}
+                  </Text>
+                  <Text style={[styles.similarRouteMeta, { color: colors.mutedForeground }]}>
+                    {r.distanceKm.toFixed(1)} km · {r.region}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={colors.accent} />
+              </Pressable>
+            ))}
+          </>
+        )}
       </ScrollView>
     </Background>
   );
@@ -825,4 +868,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontStyle: "italic",
   },
+  similarRouteCard: { ...GLAS_3D,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+  },
+  similarRouteName: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  similarRouteMeta: { fontFamily: fonts.mono, fontSize: 11, marginTop: 3 },
 });

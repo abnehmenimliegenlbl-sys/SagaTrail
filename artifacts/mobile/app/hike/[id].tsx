@@ -26,7 +26,7 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/lib/appAlert";
-import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInUp, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -172,6 +172,21 @@ export default function LiveHike() {
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
+  const [isOffline, setIsOffline] = useState<boolean>(
+    () => typeof navigator !== "undefined" && !navigator.onLine,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
@@ -1270,6 +1285,21 @@ export default function LiveHike() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {isOffline && (
+          <Animated.View
+            entering={FadeIn}
+            exiting={FadeOut}
+            style={[
+              styles.offlineBannerInline,
+              { backgroundColor: colors.card, borderColor: colors.destructive },
+            ]}
+          >
+            <Feather name="wifi-off" size={15} color={colors.destructive} />
+            <Text style={[styles.bannerText, { color: colors.foreground }]}>
+              {t.offlineHikeBanner}
+            </Text>
+          </Animated.View>
+        )}
         <View style={styles.headRow}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.eyebrow, { color: colors.accent }]}>
@@ -1797,6 +1827,15 @@ const styles = StyleSheet.create({
   bannerHead: { flexDirection: "row", alignItems: "center", gap: 10 },
   bannerText: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13 },
   bannerHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 6 },
+  offlineBannerInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
   bannerBtn: {
     flexDirection: "row",
     alignItems: "center",

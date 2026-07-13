@@ -63,6 +63,7 @@ export interface HikeStrings {
   voiceOrTap: string;
   yourChoice: (option: string) => string;
   leaderDecides: string;
+  offlineHikeBanner: string;
   leaderChose: (option: string) => string;
 }
 
@@ -133,6 +134,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Sprich deine Antwort oder tippe eine Option an",
     yourChoice: (option) => `Du hast gewählt: ${option}`,
     leaderDecides: "Die Gruppenleitung entscheidet für die Gruppe …",
+    offlineHikeBanner: "Kein Empfang — Narration pausiert.",
     leaderChose: (option) => `Die Gruppenleitung hat gewählt: ${option}`,
   },
   gsw: {
@@ -201,6 +203,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Sprich dini Antwort oder tipp e Option a",
     yourChoice: (option) => `Du hesch gwählt: ${option}`,
     leaderDecides: "D Gruppäleitig entscheidet für d Gruppä …",
+    offlineHikeBanner: "Kei Empfang — Erzählig pausiert.",
     leaderChose: (option) => `D Gruppäleitig het gwählt: ${option}`,
   },
   en: {
@@ -269,6 +272,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Speak your answer or tap an option",
     yourChoice: (option) => `You chose: ${option}`,
     leaderDecides: "The group leader decides for the group …",
+    offlineHikeBanner: "No signal — narration paused.",
     leaderChose: (option) => `The group leader chose: ${option}`,
   },
   fr: {
@@ -337,6 +341,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Dis ta réponse ou touche une option",
     yourChoice: (option) => `Tu as choisi : ${option}`,
     leaderDecides: "Le chef de groupe décide pour le groupe …",
+    offlineHikeBanner: "Pas de réseau — narration en pause.",
     leaderChose: (option) => `Le chef de groupe a choisi : ${option}`,
   },
   it: {
@@ -405,6 +410,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Pronuncia la tua risposta o tocca un'opzione",
     yourChoice: (option) => `Hai scelto: ${option}`,
     leaderDecides: "Il capogruppo decide per il gruppo …",
+    offlineHikeBanner: "Nessun segnale — narrazione in pausa.",
     leaderChose: (option) => `Il capogruppo ha scelto: ${option}`,
   },
   es: {
@@ -473,6 +479,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Di tu respuesta o toca una opción",
     yourChoice: (option) => `Has elegido: ${option}`,
     leaderDecides: "El líder del grupo decide por el grupo …",
+    offlineHikeBanner: "Sin señal — narración pausada.",
     leaderChose: (option) => `El líder del grupo eligió: ${option}`,
   },
   pt: {
@@ -541,6 +548,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Diga sua resposta ou toque em uma opção",
     yourChoice: (option) => `Você escolheu: ${option}`,
     leaderDecides: "O líder do grupo decide pelo grupo …",
+    offlineHikeBanner: "Sem sinal — narração pausada.",
     leaderChose: (option) => `O líder do grupo escolheu: ${option}`,
   },
   zh: {
@@ -609,6 +617,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "说出你的答案，或点击一个选项",
     yourChoice: (option) => `你的选择：${option}`,
     leaderDecides: "由队长为团队做出选择……",
+    offlineHikeBanner: "无信号 — 叙述已暂停。",
     leaderChose: (option) => `队长选择了：${option}`,
   },
   ru: {
@@ -677,6 +686,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     voiceOrTap: "Произнеси свой ответ или нажми на вариант",
     yourChoice: (option) => `Ты выбрал: ${option}`,
     leaderDecides: "Лидер группы принимает решение за группу …",
+    offlineHikeBanner: "Нет сигнала — повествование приостановлено.",
     leaderChose: (option) => `Лидер группы выбрал: ${option}`,
   },
 };
