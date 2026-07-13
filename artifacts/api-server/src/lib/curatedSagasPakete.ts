@@ -2336,5 +2336,611 @@ export const PACKAGE_SAGAS: InsertCatalogSaga[] = [
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": false
   }
+,
+
+  // ── Bern (9 Sagen) ──
+  {
+    "id": "drachenhoehl-beatus",
+    "title": "Der Drache des heiligen Beatus in der Höhle am Thunersee",
+    "canton": "Bern",
+    "coreMotif": "Heiliger bezwingt Drachen und heiligt eine Höhle",
+    "bildmotiv": "Beatushöhlen Thunersee Drache Heiliger Fels",
+    "mood": "Feierlich, erlösend",
+    "summary": "Am steilen Nordufer des Thunersees hausten einst in einer tiefen Höhle ein schrecklicher Drache und böse Geister, die das ganze Tal in Angst und Schrecken versetzten. Gegen Ende des ersten Jahrhunderts soll der irische Mönch Beatus über die Alpen gezogen sein und sich vor der Höhle dem Untier entgegengestellt haben. Mit dem Zeichen des Kreuzes und dem Gebet trieb er den Drachen in den See und die Geister aus der Höhle, die er fortan als Klause bewohnte. Die Höhle trägt seit damals seinen Namen und das Kloster Einigen am Südufer des Sees bewahrte seine Gebeine; Pilger strömten jahrhundertelang an diesen Ort, und noch heute heissen die Tropfsteinhöhlen bei Sundlauenen «Beatushöhlen».",
+    "summaries": {
+      "de": {
+        "text": "Am steilen Nordufer des Thunersees hausten einst in einer tiefen Höhle ein schrecklicher Drache und böse Geister, die das ganze Tal in Angst und Schrecken versetzten. Gegen Ende des ersten Jahrhunderts soll der irische Mönch Beatus über die Alpen gezogen sein und sich vor der Höhle dem Untier entgegengestellt haben. Mit dem Zeichen des Kreuzes und dem Gebet trieb er den Drachen in den See und die Geister aus der Höhle, die er fortan als Klause bewohnte. Die Höhle trägt seit damals seinen Namen, und noch heute heissen die Tropfsteinhöhlen bei Sundlauenen «Beatushöhlen».",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Drache vom heilige Beatus",
+        "text": "Am stile Nordufer vom Thunersee hät emol en grüsige Drache i-ere tüüfe Höhli ghuset und bösi Geischter, wo s ganze Tal i Angscht versetzt hend. Dr irische Mönch Beatus soll dä Drache mit em Kreuzzeiche in de See tribe ha und d Höhli zur Klause gmacht ha. Hüt no heisst si «Beatushöhle».",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Dragon de Saint-Beatus dans la Grotte du Lac de Thoune",
+        "text": "Sur la rive nord escarpée du lac de Thoune, un terrible dragon et des esprits malfaisants habitaient jadis une profonde caverne, semant la terreur dans toute la vallée. Vers la fin du premier siècle, le moine irlandais Beatus franchit les Alpes et se dressa devant le monstre à l'entrée de la grotte. Par le signe de la croix et la prière, il chassa le dragon dans le lac et les esprits hors de la caverne, qu'il habita désormais comme ermitage. Depuis lors la grotte porte son nom, et les grottes de stalactites près de Sundlauenen s'appellent encore aujourd'hui les «Grottes de Beatus».",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Drago di San Beato nella Grotta del Lago di Thun",
+        "text": "Sulla ripida riva nord del lago di Thun, un terribile drago e spiriti maligni abitavano un tempo in una profonda caverna, gettando nel terrore l'intera vallata. Verso la fine del primo secolo, il monaco irlandese Beato attraversò le Alpi e si presentò davanti alla bestia all'ingresso della grotta. Con il segno della croce e la preghiera scacciò il drago nel lago e gli spiriti fuori dalla caverna, che d'allora abitò come eremo. Da quel giorno la grotta porta il suo nome, e le grotte di stalattiti presso Sundlauenen sono ancora oggi chiamate le «Grotte di Beato».",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Dragon of Saint Beatus in the Cave by Lake Thun",
+        "text": "On the steep northern shore of Lake Thun, a terrible dragon and evil spirits once dwelt in a deep cave, spreading fear throughout the entire valley. Towards the end of the first century, the Irish monk Beatus is said to have crossed the Alps and confronted the beast at the cave entrance. With the sign of the cross and prayer he drove the dragon into the lake and the spirits out of the cave, which he then inhabited as a hermitage. Since that day the cave has borne his name, and the stalactite caverns near Sundlauenen are still called the «Beatushöhlen» (Beatus Caves) today.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "图恩湖畔贝亚图斯洞穴中的巨龙",
+        "text": "在图恩湖陡峭的北岸，一头可怕的巨龙和邪恶的幽灵曾栖居于一个深邃的洞穴中，让整个山谷陷入恐惧。据说在第一世纪末，爱尔兰修道士贝亚图斯翻越阿尔卑斯山，在洞口与巨兽对峙。他以十字圣号和祈祷将巨龙驱入湖中，将幽灵逐出洞穴，并从此在洞穴中隐居。自那时起，这个洞穴便以他的名字命名，桑德劳嫩附近的钟乳石洞至今仍被称为\"贝亚图斯洞穴\"。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Dragón de San Beato en la Cueva del Lago de Thun",
+        "text": "En la empinada orilla norte del lago de Thun, un terrible dragón y espíritus malignos habitaban antaño en una profunda cueva, sembrando el terror en todo el valle. Hacia finales del primer siglo, se dice que el monje irlandés Beato cruzó los Alpes y se enfrentó a la bestia a la entrada de la cueva. Con la señal de la cruz y la oración expulsó el dragón al lago y a los espíritus de la cueva, que habitó desde entonces como ermita. Desde ese día la cueva lleva su nombre, y las cuevas de estalactitas cerca de Sundlauenen aún se llaman hoy las «Beatushöhlen».",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Dragão de São Beato na Caverna do Lago Thun",
+        "text": "Na íngreme margem norte do lago de Thun, um terrível dragão e espíritos malignos habitavam outrora uma caverna profunda, espalhando o terror por todo o vale. Diz-se que por volta do final do primeiro século, o monge irlandês Beato atravessou os Alpes e enfrentou a besta na entrada da caverna. Com o sinal da cruz e a oração expulsou o dragão para o lago e os espíritos para fora da caverna, que passou a habitar como ermida. Desde esse dia a caverna carrega seu nome, e as grutas de estalactites perto de Sundlauenen ainda hoje se chamam as «Beatushöhlen».",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Дракон святого Беата в пещере на Тунском озере",
+        "text": "На крутом северном берегу Тунского озера в глубокой пещере некогда обитали страшный дракон и злые духи, наводившие ужас на всю долину. По преданию, в конце первого века ирландский монах Беат перешёл через Альпы и встал перед чудовищем у входа в пещеру. Знамением крестным и молитвой он прогнал дракона в озеро, а духов — из пещеры, которую с тех пор избрал своей обителью. С того дня пещера носит его имя, и сталактитовые гроты близ Зундлауэнена по сей день называются «пещерами Беата».",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Den Drachen als märchenhaftes Wesen erzählen, die religiöse Dimension zurückhalten; das Höhlenerlebnis als Abenteuer betonen.",
+    "quelle": {
+      "autor": "Franciscus Guillimann",
+      "werk": "De Episcopis Constantiensibus",
+      "jahr": "1605",
+      "fundstelleUrl": "https://de.wikipedia.org/wiki/Beatush%C3%B6hlen"
+    },
+    "source": "Franciscus Guillimann: De Episcopis Constantiensibus (1605); vgl. Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.6793,
+    "lng": 7.7303,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "erdleutchen-langnau-emmental",
+    "title": "Die Erdleutchen von Langnau im Emmental",
+    "canton": "Bern",
+    "coreMotif": "Hilfreiche Erdgeister bestrafen Undankbarkeit",
+    "bildmotiv": "Erdmännli Bauernhof Emmental Scheune Wald",
+    "mood": "Warmherzig, mahnend",
+    "summary": "Im Emmental, besonders um Langnau, erzählte man sich von kleinen unterirdischen Wesen, den Erdleutchen oder Erdmännlern, die auf Bauernhöfen mithalfen: sie dreschen das Getreide, hüten das Vieh und reinigen den Stall, solange die Bauersleute ihnen pünktlich ein Schüsselchen Brei vor die Tür stellen und sie nicht beobachten. Als einst eine neugierige Bäuerin durch einen Spalt in der Scheunenwand spähte und die kleinen Wesen nackt beim Dreschen sah, nähte sie ihnen in der Nacht kleine Hemdlein. Die Erdleutchen zogen die Kleider an, tanzten vor Freude, riefen «Jetzt sind wir fein!» – und kamen nie wieder. Denn wer mit Kleidern bedacht wird, hat seinen Lohn empfangen und ist der Arbeit ledig.",
+    "summaries": {
+      "de": {
+        "text": "Im Emmental, besonders um Langnau, erzählte man sich von kleinen unterirdischen Wesen, den Erdleutchen, die auf Bauernhöfen mithalfen: sie dreschen das Getreide und hüten das Vieh, solange die Bauersleute ihnen pünktlich ein Schüsselchen Brei vor die Tür stellen und sie nicht beobachten. Als einst eine neugierige Bäuerin durch einen Spalt in der Scheunenwand spähte und die kleinen Wesen nackt beim Dreschen sah, nähte sie ihnen in der Nacht kleine Hemdlein. Die Erdleutchen zogen die Kleider an, tanzten vor Freude – und kamen nie wieder. Denn wer mit Kleidern bedacht wird, hat seinen Lohn empfangen und ist der Arbeit ledig.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Erdlüütli vo Langnau im Emmental",
+        "text": "Im Emmental, vo allem um Langnau, hät me vo chlyne Erdlüütli verzellt, wo uf Buurehöf gholfe hend: si hend drosched und s Veeh ghüetet, solang d Bure-lüüt ine es Schüsseli Brei vor d Tür gstellt und si nöd agluegt hend. Wo einisch e neugierige Buurefrou durche Spalt i de Schüür ggluegt hät, hät si denen nackte Chlynen in de Nacht Hemdli gnäit. D Erdlüütli hend d Chleider aazoge, hend getanzt vor Freud – und sind nie meh cho. Wär Chleider übercho hät, hät sin Lohn empfange.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Les Lutins Souterrains de Langnau dans l'Emmental",
+        "text": "Dans l'Emmental, surtout autour de Langnau, on se racontait que de petits êtres souterrains, les lutins de terre, aidaient aux travaux des fermes : ils battaient le grain et gardaient le bétail, pourvu qu'on leur déposât chaque soir un bol de bouillie devant la porte et qu'on ne les observât pas. Un jour, une paysanne curieuse regarda par une fente dans la grange et vit les petits êtres nus en train de battre le grain. La nuit, elle leur cousit de petites chemises. Les lutins enfilèrent les vêtements, dansèrent de joie – et ne revinrent jamais. Car celui qui reçoit des habits a touché son salaire et se trouve libéré du travail.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "I Folletti di Terra di Langnau nell'Emmental",
+        "text": "Nell'Emmental, specialmente attorno a Langnau, si raccontava di piccoli esseri sotterranei, i folletti di terra, che aiutavano nelle fattorie: trebbiavano il grano e custodivano il bestiame, finché i contadini mettevano ogni sera una ciotolina di pappa davanti alla porta e non li spiavano. Una volta una curiosa contadina sbirciò attraverso una fessura nel fienile e vide i piccoli esseri nudi mentre trebbiavano. Di notte cucì loro delle camiciole. I folletti indossarono i vestiti, danzarono di gioia – e non tornarono mai più. Perché chi riceve dei vestiti ha ricevuto la sua ricompensa ed è libero dal lavoro.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Earth Sprites of Langnau in the Emmental",
+        "text": "In the Emmental, especially around Langnau, people told of small underground beings called earth sprites who helped on farms: they threshed grain and tended cattle, as long as the farmers set out a small bowl of porridge at their door each evening and did not spy on them. One day a curious farmwife peeped through a crack in the barn wall and saw the little creatures naked, threshing away. That night she sewed them tiny little shirts. The earth sprites put on the clothes, danced for joy – and never came back. For whoever receives clothing has received their wages and is freed from work.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "朗瑙恩塔尔的地精",
+        "text": "在恩塔尔，尤其是朗瑙一带，人们流传着关于小地精的故事：这些小地下精灵会在农场里帮忙，他们脱粒粮食、看管牲畜，只要农民每天傍晚在门口放一碗粥，并且不偷看他们。有一天，一个好奇的农妇透过谷仓墙上的缝隙偷看，看见这些小精灵赤身露体地脱粒。当夜她给他们缝制了小衬衫。地精们穿上衣服，欢快地跳起舞来——此后再也没有回来。因为谁收到了衣物，就是拿到了工钱，从此不再受劳役之苦。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "Los Duendes de la Tierra de Langnau en el Emmental",
+        "text": "En el Emmental, especialmente alrededor de Langnau, se contaba que unos pequeños seres subterráneos, los duendes de la tierra, ayudaban en las granjas: trillaban el grano y cuidaban el ganado, siempre que los granjeros les dejaran cada tarde un cuenco de gachas a la puerta y no los espiaran. Un día, una curiosa campesina miró por una grieta en el granero y vio a las pequeñas criaturas desnudas trillando. Por la noche les cosió unas pequeñas camisitas. Los duendes se pusieron la ropa, bailaron de alegría – y nunca volvieron. Pues quien recibe ropa ha recibido su paga y queda libre del trabajo.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "Os Gnomos da Terra de Langnau no Emmental",
+        "text": "No Emmental, especialmente nos arredores de Langnau, contava-se de pequenos seres subterrâneos que ajudavam nas fazendas: debulhavam o grão e guardavam o gado, desde que os agricultores lhes deixassem cada tarde uma tigela de mingau à porta e não os espiassem. Certa vez, uma camponesa curiosa espiou por uma fenda no celeiro e viu as pequenas criaturas nuas a debulhar. À noite costurou-lhes pequenas camisinhas. Os gnomos vestiram as roupas, dançaram de alegria – e nunca mais voltaram. Pois quem recebe roupas recebeu seu salário e está livre do trabalho.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Земляные карлики Лангнау в Эмментале",
+        "text": "В Эмментале, особенно в окрестностях Лангнау, рассказывали о маленьких подземных существах — земляных карликах, помогавших на фермах: они молотили зерно и пасли скот, пока хозяева ставили им каждый вечер у порога мисочку каши и не подглядывали за ними. Однажды любопытная крестьянка заглянула в щель амбара и увидела нагих малышей за обмолотом. Ночью она сшила им крошечные рубашки. Карлики надели одежду, радостно пустились в пляс — и больше не появлялись. Ибо тот, кто получает одежду, получает свою плату и освобождается от труда.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Für alle Altersstufen geeignet; das Motiv der verlorenen Hilfe als sanfte Lehre über Neugier und Dankbarkeit erzählen.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.9399,
+    "lng": 7.7841,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "lindwurm-burgdorf",
+    "title": "Der Lindwurm unter dem Burgdorfer Schlossberg",
+    "canton": "Bern",
+    "coreMotif": "Drache bewacht verborgenen Schatz unter altem Schloss",
+    "bildmotiv": "Burgdorf Schloss Lindwurm Schlossberg Emme",
+    "mood": "Unheimlich, sagenhaft",
+    "summary": "Unter dem gewaltigen Schlossberg von Burgdorf, auf dem schon die Zähringer eine mächtige Burg errichteten, soll ein uralter Lindwurm hausen, der einen verborgenen Schatz bewacht. Wer sich des Nachts dem Felsen nähert und horcht, kann das dumpfe Grollen des Wurmes vernehmen, das die Emme in ihrem Bett erzittern lässt. Einst wagte ein Gerber aus der Unterstadt, bei Mondschein in den Felsenkeller einzusteigen, um den Schatz zu heben. Er fand in der Finsternis glitzerndes Gold, doch als er die Hand danach ausstreckte, öffnete sich ein riesiges Auge, und ein feuriger Atem fegte ihn hinaus. Der Gerber kam zwar mit dem Leben davon, aber sein Haar war über Nacht weiss geworden, und er sprach nie mehr von dem, was er gesehen hatte.",
+    "summaries": {
+      "de": {
+        "text": "Unter dem gewaltigen Schlossberg von Burgdorf, auf dem schon die Zähringer eine mächtige Burg errichteten, soll ein uralter Lindwurm hausen, der einen verborgenen Schatz bewacht. Wer sich des Nachts dem Felsen nähert und horcht, kann das dumpfe Grollen des Wurmes vernehmen. Einst wagte ein Gerber aus der Unterstadt, bei Mondschein in den Felsenkeller einzusteigen. Er fand glitzerndes Gold, doch als er die Hand danach ausstreckte, öffnete sich ein riesiges Auge, und ein feuriger Atem fegte ihn hinaus. Sein Haar war über Nacht weiss geworden, und er sprach nie mehr von dem, was er gesehen hatte.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Lindwurm unterm Burgdorfer Schlossberg",
+        "text": "Unterm grosse Schlossberg vo Burgdorf soll e urauter Lindwurm huse, wo en verborgene Schatz bewacht. En Gerber us dr Unterstadt isch einisch bi Mondschii in de Felsekeller abe. Er hät glitzernds Gold gfunde, aber wo er d Hand usgstreckt hät, hät sich es riesigs Aug ufgmacht, und en fürigs Atem hät ne use gfegt. Syni Hoor sind über Nacht wiiss worde.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Lindworm sous le Château de Burgdorf",
+        "text": "Sous le puissant rocher du château de Burgdorf, sur lequel les Zähringen avaient élevé leur forteresse, habiterait un lindworm millénaire gardant un trésor caché. Qui s'approche du rocher la nuit et tend l'oreille peut entendre le grondement sourd du ver, qui fait frémir l'Emme dans son lit. Un tanneur de la basse-ville osa jadis descendre au clair de lune dans la cave rocheuse. Il trouva de l'or scintillant dans l'obscurité, mais au moment où il tendit la main, un œil gigantesque s'ouvrit et un souffle ardent le projeta dehors. Le tanneur en réchappa, mais ses cheveux avaient blanchi en une nuit, et jamais plus il ne parla de ce qu'il avait vu.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Lindworm sotto la Collina del Castello di Burgdorf",
+        "text": "Sotto il poderoso colle del castello di Burgdorf, sul quale gli Zähringen avevano eretto la loro fortezza, dimostrerebbe un lindworm antichissimo che custodisce un tesoro nascosto. Chi si avvicina alla roccia di notte e ascolta può udire il sordo brontolio del serpente, che fa tremare l'Emme nel suo letto. Un conciatore della città bassa osò una volta scendere al chiaro di luna nella cantina scavata nella roccia. Trovò oro scintillante nell'oscurità, ma quando tese la mano, un occhio gigantesco si aprì e un soffio ardente lo scaraventò fuori. Il conciatore uscì vivo, ma i suoi capelli erano diventati bianchi in una notte, e non parlò mai più di ciò che aveva visto.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Lindworm beneath Burgdorf Castle Hill",
+        "text": "Beneath the mighty castle hill of Burgdorf, upon which the Zähringen once built their great fortress, an ancient lindworm is said to dwell, guarding a hidden treasure. Whoever approaches the rock at night and listens can hear the dull rumbling of the worm, which makes the Emme River tremble in its bed. Once a tanner from the lower town dared to descend by moonlight into the rocky vault. He found glittering gold in the darkness, but as he reached out his hand, an enormous eye opened, and a fiery breath swept him back outside. The tanner escaped with his life, but his hair had turned white overnight, and he never spoke again of what he had seen.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "布格多夫城堡山下的林德虫",
+        "text": "在布格多夫巍峨的城堡山下——采林根人曾在那里建造了雄伟的要塞——据说栖居着一条上古林德虫，守护着一处隐藏的宝藏。夜间靠近岩石倾听的人，能听到那条虫发出的沉闷轰鸣，令恩梅河在河床中颤抖。曾经有一位下城区的制革工人趁月色潜入岩石地窖。他在黑暗中发现了闪闪发光的金子，但当他伸手去取时，一双巨大的眼睛猛然睁开，一团烈焰将他扫出洞外。制革工人虽然活着出来，但他的头发一夜之间变白，此后再未提起他所见到的一切。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Lindworm bajo la Colina del Castillo de Burgdorf",
+        "text": "Bajo el poderoso cerro del castillo de Burgdorf, sobre el que los Zähringen levantaron su fortaleza, habitaría un lindworm antiquísimo que custodia un tesoro oculto. Quien se acerque a la roca de noche y escuche puede oír el sordo retumbar del gusano, que hace temblar al Emme en su cauce. Una vez un curtidor de la ciudad baja osó descender a la luz de la luna a la bodega excavada en la roca. Encontró oro reluciente en la oscuridad, pero cuando extendió la mano, un ojo enorme se abrió y un aliento ardiente lo barrió hacia fuera. El curtidor escapó con vida, pero su cabello había encanecido de la noche a la mañana y no volvió a hablar jamás de lo que había visto.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Lindworm sob o Monte do Castelo de Burgdorf",
+        "text": "Sob o poderoso morro do castelo de Burgdorf, no qual os Zähringen ergueram sua fortaleza, habitaria um lindworm antiquíssimo que guarda um tesouro oculto. Quem se aproximar da rocha à noite e escutar pode ouvir o surdo estrondo do verme, que faz tremer o rio Emme em seu leito. Certa vez, um curtidor da cidade baixa ousou descer ao luar para o porão escavado na rocha. Encontrou ouro reluzente na escuridão, mas ao estender a mão, um olho enorme se abriu e um sopro ardente o varrreu para fora. O curtidor escapou com vida, mas seu cabelo havia embranquecido da noite para o dia, e nunca mais falou do que havia visto.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Линдворм под Замковой горой Бургдорфа",
+        "text": "Под исполинской Замковой горой Бургдорфа, на которой Церингены воздвигли свою могучую крепость, якобы обитает древний линдворм, охраняющий скрытое сокровище. Тот, кто приближается к скале ночью и прислушивается, может услышать глухое ворчание червя, от которого дрожит Эмме в своём русле. Однажды кожевник из нижнего города осмелился спуститься при лунном свете в скальный погреб. В темноте он обнаружил сверкающее золото, но когда потянулся к нему, открылся огромный глаз, и огненное дыхание выбросило его наружу. Кожевник остался жив, но за ночь его волосы поседели, и о том, что видел, он не говорил больше никогда.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Den Drachen als Schatzwächter erzählen, nicht als Menschenfresser; die Gier als Auslöser betonen.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 47.0573,
+    "lng": 7.6241,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "wilde-jaeger-niesen",
+    "title": "Der Wilde Jäger über dem Niesen",
+    "canton": "Bern",
+    "coreMotif": "Wilder Jäger und Sturmjagd über Berggipfel",
+    "bildmotiv": "Niesen Berggipfel Sturm Wilde Jagd Thunersee",
+    "mood": "Bedrohlich, grossartig",
+    "summary": "Wenn über dem Niesenstock schwarze Gewitterwolken aufziehen und ein heulender Sturm durch das Kandertal fährt, dann sind es nach altem Bernerglauben nicht Wettergewalten allein, die da toben: der Wilde Jäger reitet durch die Lüfte. Man hört das Gebell der Meute, das Hörnergetön und das Rasen der Hufe über den Himmel hin, und wer unvorsichtig genug ist, bei dem Lärm ins Freie zu treten, dem wirft der Wilde Jäger die blutende Hälfte einer Beute zu – und das bedeutet nichts Gutes. Alten Überlieferungen nach ist er der Geist eines frevelhaften Jägers, der im Leben kein Mass kannte und nun für alle Zeit über die Berge des Berner Oberlandes hetzen muss, ohne Rast und ohne Erlösung.",
+    "summaries": {
+      "de": {
+        "text": "Wenn über dem Niesenstock schwarze Gewitterwolken aufziehen und ein heulender Sturm durch das Kandertal fährt, dann reitet nach altem Bernerglauben der Wilde Jäger durch die Lüfte. Man hört das Gebell der Meute, das Hörnergetön und das Rasen der Hufe über den Himmel. Wer unvorsichtig genug ist, bei dem Lärm ins Freie zu treten, dem wirft der Wilde Jäger die blutende Hälfte einer Beute zu. Alten Überlieferungen nach ist er der Geist eines frevelhaften Jägers, der nun für alle Zeit über die Berge des Berner Oberlandes hetzen muss.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Wyldi Jäger überm Niese",
+        "text": "Wenn über em Niese schwarzi Gwütterchölke ufzünd und en heulende Sturm durs Kandertal fährt, denn reit nach autem Bärnerglauben dr Wylli Jäger durs Lüft. Me ghört s Bälle vo de Hund, s Hörnergton und s Rase vo de Huef über de Himmel abe. Wär use geit, dem wirft dr Wylli Jäger d Hälfte vo syr Bütä zue. Er isch dr Geischt vo-me frevelhaftige Jäger, wo jetzt ewigi durch s Bärner Oberland mues hetze.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Chasseur Sauvage au-dessus du Niesen",
+        "text": "Lorsque des nuages noirs d'orage s'amoncellent au-dessus du Niesen et qu'une tempête hurlante s'engouffre dans le Kandertal, ce ne sont pas seulement les forces de la nature qui se déchaînent selon la vieille croyance bernoise : le Chasseur Sauvage chevauche dans les airs. On entend l'aboiement de la meute, le son des cors et le galop des sabots à travers le ciel. Celui qui est assez imprudent pour sortir au milieu du vacarme se voit jeter par le Chasseur la moitié sanglante d'un gibier — et cela ne présage rien de bon. Selon les anciennes traditions, il est l'esprit d'un chasseur impie qui n'a jamais connu de mesure en sa vie et doit désormais galoper pour l'éternité sur les montagnes de l'Oberland bernois.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Cacciatore Selvaggio sopra il Niesen",
+        "text": "Quando nuvole nere di temporale si addensano sul Niesen e una tempesta ululante spazza la Kandertal, secondo l'antica credenza bernese non sono solo le forze della natura a infuriare: il Cacciatore Selvaggio cavalca nell'aria. Si ode l'abbaiare della muta, il suono dei corni e il fragore degli zoccoli attraverso il cielo. Chi è abbastanza imprudente da uscire nel fragore si vede lanciare dal Cacciatore la metà sanguinante di una preda — e questo non presagisce nulla di buono. Secondo le antiche tradizioni è lo spirito di un cacciatore empio che non conobbe mai misura in vita e deve ora galoppare in eterno sui monti dell'Oberland bernese.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Wild Huntsman above the Niesen",
+        "text": "When black storm clouds gather over the Niesen massif and a howling gale sweeps through the Kandertal, it is not only the forces of nature raging, according to old Bernese belief: the Wild Huntsman rides through the air. One hears the baying of the pack, the blare of the horns and the thundering of hooves across the sky. Whoever is reckless enough to step outside during the uproar has the bleeding half of a quarry flung at him by the Wild Huntsman — and that bodes nothing good. According to old tradition he is the spirit of a wicked hunter who knew no moderation in life, and must now ride for all eternity over the mountains of the Bernese Oberland.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "尼森山上的狂野猎人",
+        "text": "每当尼森山顶乌云翻滚、坎德塔尔狂风呼啸之时，按照古老的伯尔尼人信仰，那不仅仅是自然之力在咆哮：那是狂野猎人在空中策马疾驰。人们能听到猎犬的嗥叫、猎号的呜鸣和马蹄在天际的轰鸣。谁在喧嚣中鲁莽地走出屋外，就会被狂野猎人抛来半截血淋淋的猎物——这绝非吉兆。古老传说中，他是一位亵渎神明的猎人的魂灵，生前肆无忌惮，如今不得不永远驰骋于伯尔尼高地的群山之间，永无歇息，永无解脱。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Cazador Salvaje sobre el Niesen",
+        "text": "Cuando nubes negras de tormenta se acumulan sobre el Niesen y un viento aullador barre el Kandertal, no son sólo las fuerzas de la naturaleza las que se desatan, según la antigua creencia bernesa: el Cazador Salvaje cabalga por los aires. Se oye el ladrar de la jauría, el sonar de los cuernos y el tronar de los cascos a través del cielo. Quien sea lo bastante imprudente para salir al exterior en medio del estruendo, el Cazador le arrojará la mitad ensangrentada de una presa — y eso no augura nada bueno. Según las antiguas tradiciones, es el espíritu de un cazador impío que nunca conoció la mesura en vida y ahora debe galopar por la eternidad sobre las montañas del Oberland bernés.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Caçador Selvagem sobre o Niesen",
+        "text": "Quando nuvens negras de tempestade se acumulam sobre o Niesen e um vento uivante varre o Kandertal, não são apenas as forças da natureza que enfurecem, segundo a antiga crença bernesa: o Caçador Selvagem cavalga pelos ares. Ouve-se o latir da matilha, o soar dos chifres e o troar dos cascos pelo céu. Quem for imprudente o suficiente para sair na algazarra recebe do Caçador a metade sangrenta de uma presa — e isso não augura nada de bom. Segundo as antigas tradições, é o espírito de um caçador ímpio que nunca conheceu a moderação em vida e agora deve cavalgar para toda a eternidade sobre as montanhas do Oberland bernês.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Дикий Охотник над Нийзеном",
+        "text": "Когда над вершиной Нийзена вздымаются чёрные грозовые тучи и вой бури проносится сквозь Кандерталь, по старинным бернским поверьям, это не только природные стихии бушуют: Дикий Охотник скачет по воздуху. Слышны лай своры, звук охотничьих рогов и грохот копыт по небосводу. Тот, кто опрометчиво выйдет наружу в этот шум, получит от Дикого Охотника кровоточащую половину добычи — и это не предвещает ничего хорошего. По старинным преданиям, это дух нечестивого охотника, не знавшего в жизни меры, обречённого теперь вечно мчаться над горами Бернского Оберланда.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Die Blutbeute für jüngere Kinder weglassen; den Sturmritt als dramatisches Naturszenario erzählen.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.6459,
+    "lng": 7.6525,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "versunkene-glocke-brienzersee",
+    "title": "Die versunkene Glocke im Brienzersee",
+    "canton": "Bern",
+    "coreMotif": "Gesunkenes Gottesläuten mahnt die Lebenden",
+    "bildmotiv": "Brienzersee Glocke Wasser Alpenglühen Bergpfad",
+    "mood": "Melancholisch, stimmungsvoll",
+    "summary": "Im Brienzersee, heisst es am Ostufer, ruht auf dem Seeboden eine grosse Kirchenglocke, die beim Transport aus dem Haslital in die Ebene von einem Floss gefallen und in der Tiefe versunken ist. An stillen Herbstabenden, wenn der Nebel vom Wasser aufsteigt und die letzten Alpengipfel im Abendrot leuchten, hören Fischer und Schiffer, die auf dem See rudern, aus der Tiefe das gedämpfte Läuten der versunkenen Glocke aufsteigen. Es ist, als wolle sie die Lebenden an den Sonntag und an das Gebet erinnern, und wer das Läuten vernimmt, legt die Ruder nieder und zieht den Hut, bis das Klingen wieder verstummt.",
+    "summaries": {
+      "de": {
+        "text": "Im Brienzersee ruht auf dem Seeboden eine grosse Kirchenglocke, die beim Transport vom Haslital auf ein Floss gefallen und versunken ist. An stillen Herbstabenden, wenn der Nebel vom Wasser aufsteigt, hören Fischer und Schiffer aus der Tiefe das gedämpfte Läuten der versunkenen Glocke. Es ist, als wolle sie die Lebenden an den Sonntag und das Gebet erinnern, und wer das Läuten vernimmt, legt die Ruder nieder und zieht den Hut.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D versunki Glogg im Brienzersee",
+        "text": "Im Brienzersee lyt ufem Seegrund e grossi Chilcheglogg, wo bim Transport vom Haslital i d Ebeni vom Floss gheit und versunke isch. A stille Herbschtobe ghöred Fischer und Schiffer us dr Tüüfi s dämpfte Lüüte vo dr versunke Glogg. Wär s Lüüte ghört, leit d Rueder us der Hand und zücht dr Hut.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "La Cloche Engloutie dans le Lac de Brienz",
+        "text": "Dans le lac de Brienz, au fond de ses eaux, repose une grande cloche d'église qui est tombée d'un radeau lors de son transport depuis le Haslital vers la plaine et s'est enfoncée dans les profondeurs. Par les calmes soirs d'automne, quand la brume monte de l'eau et que les derniers sommets alpins brillent dans le couchant, les pêcheurs et les bateliers qui rament sur le lac entendent monter des profondeurs le tintement assourdi de la cloche engloutie. C'est comme si elle voulait rappeler aux vivants le dimanche et la prière, et qui entend sonner pose les rames et ôte son chapeau jusqu'à ce que le tintement se taise.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "La Campana Affondata nel Lago di Brienz",
+        "text": "Nel lago di Brienz, sul fondo delle sue acque, riposa una grande campana di chiesa caduta da una zattera durante il trasporto dall'Haslital verso la pianura, inabissandosi nelle profondità. Nelle quiete serate autunnali, quando la nebbia si alza dall'acqua e le ultime cime alpine brillano nel tramonto, pescatori e barcaioli che remano sul lago odono salire dalle profondità il rintocco soffocato della campana affondata. È come se volesse ricordare ai vivi la domenica e la preghiera, e chi sente suonare posa i remi e si toglie il cappello finché il suono tace.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Sunken Bell in Lake Brienz",
+        "text": "In Lake Brienz, it is said along the eastern shore, a great church bell rests on the lake bed, having fallen from a raft during transport from the Haslital valley to the plains and sunk into the depths. On still autumn evenings, when mist rises from the water and the last alpine peaks glow in the sunset, fishermen and boatmen rowing on the lake hear the muffled tolling of the sunken bell rising from the deep. It is as though it wishes to remind the living of Sunday and of prayer, and whoever hears the ringing lays down their oars and removes their hat until the sound falls silent again.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "布里恩茨湖底沉没的大钟",
+        "text": "据布里恩茨湖东岸的人们说，湖底沉睡着一口大教堂钟，当年从哈斯利塔尔运往平原时从木筏上坠落，沉入了深处。在寂静的秋日傍晚，当薄雾从水面升起，最后几座山峰沐浴在夕照中时，在湖上划桨的渔民和船夫会听到从深处传来那口沉没大钟的低沉钟声。仿佛那钟声是在提醒生者记住主日和祷告，听到钟声的人便放下桨，摘下帽子，直到声音重归寂然。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "La Campana Hundida en el Lago de Brienz",
+        "text": "En el lago de Brienz, dicen a lo largo de la orilla oriental, una gran campana de iglesia descansa en el fondo del lago, habiendo caído de una balsa durante su transporte desde el Haslital hacia la llanura y hundido en las profundidades. En las tranquilas tardes de otoño, cuando la niebla asciende del agua y las últimas cimas alpinas brillan con el crepúsculo, los pescadores y barqueros que reman en el lago oyen subir desde las profundidades el tañido amortiguado de la campana hundida. Es como si quisiera recordar a los vivos el domingo y la oración, y quien escucha el repique deja los remos y se quita el sombrero hasta que el sonido se apaga.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Sino Submerso no Lago Brienz",
+        "text": "No Lago Brienz, dizem ao longo da margem oriental, um grande sino de igreja repousa no fundo do lago, tendo caído de uma jangada durante o transporte do Haslital para as planícies e afundado nas profundezas. Nas calmas tardes de outono, quando a névoa sobe da água e os últimos cumes alpinos brilham no poente, pescadores e barqueiros que remam no lago ouvem subir das profundezas o repique abafado do sino submerso. É como se quisesse lembrar os vivos do domingo e da oração, e quem ouve o toque larga os remos e tira o chapéu até o som se calar novamente.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Потонувший колокол в Бринцском озере",
+        "text": "На дне Бринцского озера покоится большой церковный колокол, упавший с плота при перевозке из долины Хасли на равнину и ушедший в глубину. В тихие осенние вечера, когда туман поднимается над водой и последние альпийские вершины светятся в закатном зареве, рыбаки и лодочники, гребущие по озеру, слышат, как из глубины поднимается приглушённый перезвон затонувшего колокола. Словно он хочет напомнить живым о воскресенье и о молитве, и тот, кто слышит этот звон, кладёт вёсла и снимает шляпу, пока звон снова не смолкнет.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Stimmungsreich erzählen; kein Schrecken, nur Ehrfurcht – für alle Altersstufen geeignet.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.7534,
+    "lng": 8.0366,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "hexen-beatenberg",
+    "title": "Die Hexen vom Beatenberg und ihr Tanz auf dem Harder",
+    "canton": "Bern",
+    "coreMotif": "Hexenversammlung auf dem Berg in der Johannisnacht",
+    "bildmotiv": "Beatenberg Harder Thunersee Hexentanz Mondnacht Feuer",
+    "mood": "Schaurig, geheimnisvoll",
+    "summary": "In der Johannisnacht, so hiess es in Beatenberg und Interlaken, versammelten sich die Hexen aus dem ganzen Berner Oberland auf dem Gipfel des Harders hoch über dem Thunersee. Sie kamen auf Besenstielen durch die Luft geritten, salbten sich mit dem Hexenfett aus der kleinen Büchse und tanzten bis zum Morgengrauen um ein loderndes Feuer. Wer in jener Nacht beim Harder vorbeiziehen musste, konnte die Gestalten im Schein der Flammen erkennen – und manche sollen sogar Nachbarinnen oder fromme Frauen aus dem Dorf dabei erkannt haben wollen, was ihnen jedoch kein Mensch glaubte, bis ein Richter die Beschuldigten verhörte. Die Spur dieser Überzeugung führte geradewegs in die Verhörstube des Berner Hexenprozesses.",
+    "summaries": {
+      "de": {
+        "text": "In der Johannisnacht versammelten sich nach dem alten Glauben des Berner Oberlandes die Hexen auf dem Gipfel des Harders über dem Thunersee. Sie kamen auf Besenstielen durch die Luft geritten und tanzten bis zum Morgengrauen um ein loderndes Feuer. Wer jene Nacht am Harder vorbeiziehen musste, erkannte in den Flammen Gestalten – und manche wollten sogar Nachbarinnen oder fromme Frauen aus dem Dorf darunter erkannt haben, was sie geradewegs in die Verhörstube des Berner Hexenprozesses führte.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Hexe vom Beateberg und ir Tanz ufem Harder",
+        "text": "I de Johannisnacht sind lut em aute Glaube vom Bärner Oberland d Hexe ufem Harder zämecho und hend bis zum Morgegraue um es loderndes Füür tanzt. Si sind uf Besestiel durch d Luft gritte. Wär i dere Nacht am Harder vorbi muesch, hät i de Flamme Gstalte gseh – und manche hend sogar Nachbarinne drunder erkennt, was ne nöd guet cho isch.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Les Sorcières de Beatenberg et leur Danse sur le Harder",
+        "text": "Dans la nuit de la Saint-Jean, selon la vieille croyance de l'Oberland bernois, les sorcières de tout le pays se rassemblaient au sommet du Harder, au-dessus du lac de Thoune. Elles arrivaient à cheval sur des balais à travers les airs et dansaient jusqu'à l'aube autour d'un feu ardent. Quiconque devait passer près du Harder cette nuit-là pouvait reconnaître des silhouettes dans la lueur des flammes — et certains prétendirent même avoir reconnu des voisines ou des femmes pieuses du village, ce qui les mena tout droit dans les salles d'interrogatoire des procès de sorcellerie bernois.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Le Streghe di Beatenberg e la loro Danza sull'Harder",
+        "text": "Nella notte di San Giovanni, secondo l'antica credenza dell'Oberland bernese, le streghe di tutto il paese si radunano in cima all'Harder sopra il lago di Thun. Arrivavano a cavallo di scope attraverso l'aria e danzavano fino all'alba attorno a un fuoco ardente. Chi quella notte doveva passare nei pressi dell'Harder poteva riconoscere delle figure nel bagliore delle fiamme — e alcuni dissero addirittura di aver riconosciuto vicine o donne pie del villaggio, il che li portò dritto nelle sale degli interrogatori dei processi per stregoneria bernesi.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Witches of Beatenberg and their Dance on the Harder",
+        "text": "On Midsummer Night, so the old belief of the Bernese Oberland held, the witches from across the land gathered on the summit of the Harder above Lake Thun. They came riding on broomsticks through the air and danced until dawn around a blazing fire. Anyone who had to pass near the Harder that night could make out figures in the light of the flames — and some claimed to have recognised even neighbours or pious women from their village among them, which led them directly into the interrogation rooms of the Bernese witchcraft trials.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "贝亚滕贝格的女巫与她们在哈尔德山上的舞蹈",
+        "text": "在圣约翰之夜，按照伯尔尼高地古老的信仰，来自四方的女巫聚集在图恩湖上方哈尔德山顶。她们骑着扫帚在空中飞来，在熊熊烈火旁起舞直至黎明。那一夜任何不得不路过哈尔德山附近的人，都能在火焰的光芒中辨认出人影——有些人甚至声称认出了邻居或村里的虔诚妇女，这使他们被直接带进了伯尔尼巫术审判的审讯室。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "Las Brujas de Beatenberg y su Danza en el Harder",
+        "text": "En la noche de San Juan, según la antigua creencia del Oberland bernés, las brujas de todo el país se reunían en la cima del Harder sobre el lago de Thun. Llegaban montadas en escobas a través del aire y bailaban hasta el amanecer alrededor de una hoguera ardiente. Quien esa noche tuviera que pasar cerca del Harder podía reconocer siluetas a la luz de las llamas — y algunos dijeron incluso haber reconocido a vecinas o mujeres piadosas del pueblo entre ellas, lo que les llevó directamente a las salas de interrogatorio de los procesos de brujería berneses.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "As Bruxas de Beatenberg e sua Dança no Harder",
+        "text": "Na noite de São João, segundo a antiga crença do Oberland bernês, as bruxas de toda a região se reuniam no cume do Harder acima do lago Thun. Chegavam montadas em vassouras pelo ar e dançavam até o amanhecer em volta de uma fogueira ardente. Quem naquela noite tivesse de passar perto do Harder podia reconhecer figuras à luz das chamas — e alguns disseram até ter reconhecido vizinhas ou mulheres piedosas da aldeia entre elas, o que os levou diretamente às salas de interrogatório dos processos de bruxaria berneses.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Ведьмы Беатенберга и их пляска на Хардере",
+        "text": "В Иванову ночь, по старинному поверью Бернского Оберланда, ведьмы со всей округи собирались на вершине Хардера над Тунским озером. Они прилетали верхом на мётлах по воздуху и плясали до рассвета вокруг пылающего костра. Тот, кому в ту ночь приходилось проходить мимо Хардера, мог разглядеть в отблесках пламени человеческие силуэты — а некоторые даже утверждали, что узнали среди них соседок или набожных женщин из деревни, что прямиком вело их в залы допросов бернского ведьмовского процесса.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Hexenprozess-Kontext für Erwachsene; für Kinder als Feier-/Tanzfest ohne Verfolgung erzählen.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.6908,
+    "lng": 7.7656,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "teufelstein-gurnigel",
+    "title": "Der Teufelstein am Gurnigel",
+    "canton": "Bern",
+    "coreMotif": "Teufel verliert Wette gegen frommen Schmied",
+    "bildmotiv": "Gurnigel Fels Teufel Schmied Gürbetal Wald",
+    "mood": "Humorvoll, drastisch",
+    "summary": "Am Gurnigelpass im Gürbetal liegt ein mächtiger Felsblock, den das Volk den «Teufelstein» nennt. Die Sage berichtet, der Teufel habe einst mit einem frommen Schmied aus Riggisberg gewettet, dass er den Stein schneller von der Bergkuppe ins Dorf hinabrollen könne, als der Schmied ein Hufeisen schmieden und ein Pferd beschlagen könne. Der Schmied – der die List des Bösen kannte – begann schon eine Stunde früher zu hämmern, und als der Teufel mit seinem Felsblock vor der Schmiede anlangte, war das Pferd längst fertig beschlagen. Wütend schleuderte der Teufel den Stein auf die Wiese, wo er noch heute liegt, und fuhr unter Zischen und Schwefelgestank wieder in die Erde.",
+    "summaries": {
+      "de": {
+        "text": "Am Gurnigelpass liegt ein mächtiger Felsblock, den das Volk den «Teufelstein» nennt. Der Teufel hatte einst mit einem frommen Schmied aus Riggisberg gewettet, er könne den Stein schneller ins Dorf rollen, als der Schmied ein Pferd beschlagen kann. Der Schmied begann listig eine Stunde früher zu hämmern, und als der Teufel ankam, war das Pferd längst beschlagen. Wütend schleuderte der Teufel den Stein auf die Wiese, wo er noch heute liegt, und fuhr unter Schwefelgestank in die Erde.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Tüfelstei am Gurnigel",
+        "text": "Am Gurnigelpass lyt e mächtiger Felsbrock, wo me de «Tüfelstei» nennt. Dr Tüfel hät emol mit-eme frumme Schmid us Riggisberg gwettet, er chönn de Stei schnäller is Dorf abeole, als dr Schmid es Pferd beschlaa cha. Dr Schmid hät listigi scho e Stund früener agfange z hämmere, und wo dr Tüfel cho isch, isch s Pferd längst fertig gsi. Wüetend hät dr Tüfel de Stei uf d Weid gschmisse und isch unde Schwäfelgschtank i d Erde gfahre.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "La Pierre du Diable au Gurnigel",
+        "text": "Au col du Gurnigel dans le Gürbetal gît un puissant bloc de rocher que le peuple appelle la «Pierre du Diable». La légende raconte que le diable avait parié avec un pieux forgeron de Riggisberg qu'il pourrait faire rouler la pierre dans le village plus vite que le forgeron ne pourrait ferrer un cheval. Le forgeron — qui connaissait la ruse du Malin — commença à marteler une heure plus tôt en secret, et quand le diable arriva devant la forge avec son bloc, le cheval était ferré depuis longtemps. Furieux, le diable jeta la pierre dans le pré, où elle se trouve encore aujourd'hui, et s'enfonça sous terre dans un sifflement de soufre.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "La Pietra del Diavolo al Gurnigel",
+        "text": "Al passo del Gurnigel nella Gürbetal giace un possente masso che la gente chiama la «Pietra del Diavolo». La leggenda racconta che il diavolo aveva scommesso con un pio fabbro di Riggisberg che avrebbe fatto rotolare il masso nel villaggio più in fretta di quanto il fabbro potesse ferrare un cavallo. Il fabbro — che conosceva l'astuzia del Maligno — cominciò a martellare di nascosto un'ora prima, e quando il diavolo arrivò davanti alla fucina con il suo masso, il cavallo era ferrato da tempo. Furioso, il diavolo lanciò la pietra nel prato, dove si trova ancora oggi, e sprofondò nella terra con un sibilo di zolfo.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Devil's Stone at the Gurnigel",
+        "text": "At the Gurnigel Pass in the Gürbetal lies a mighty boulder that the local people call the «Devil's Stone». The legend tells that the devil once wagered with a pious blacksmith from Riggisberg that he could roll the stone down into the village faster than the blacksmith could shoe a horse. The blacksmith — who knew the Evil One's tricks — secretly started hammering an hour earlier, and when the devil arrived at the smithy with his boulder, the horse had long since been shod. In a fury the devil flung the stone into the meadow, where it lies to this day, and vanished into the earth with a hiss of sulphur.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "古尔尼格尔山口的魔鬼石",
+        "text": "在居尔贝塔尔的古尔尼格尔山口，有一块巨大的岩石，当地人称之为\"魔鬼石\"。传说魔鬼曾与里吉斯贝格一位虔诚的铁匠打赌，说他能比铁匠给马掌钉更快地把石头滚进村子。铁匠深知恶魔的诡计，偷偷提前一小时开始锤打，等魔鬼抱着巨石到达铁匠铺时，马掌早已钉好。魔鬼勃然大怒，将石头砸向草地——石头至今仍躺在那里——然后在硫磺味中钻进了地下。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "La Piedra del Diablo en el Gurnigel",
+        "text": "En el paso del Gurnigel en el Gürbetal yace un poderoso pedrusco que la gente llama la «Piedra del Diablo». La leyenda cuenta que el diablo apostó con un piadoso herrero de Riggisberg que podría hacer rodar la piedra hasta el pueblo más rápido de lo que el herrero podía herrar un caballo. El herrero — que conocía las artimañas del Maligno — comenzó a martillar en secreto una hora antes, y cuando el diablo llegó a la herrería con su pedrusco, el caballo llevaba tiempo herrado. Furioso, el diablo lanzó la piedra al prado, donde yace todavía hoy, y se hundió en la tierra con un silbido de azufre.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "A Pedra do Diabo no Gurnigel",
+        "text": "Na passagem do Gurnigel no Gürbetal jaz um poderoso bloco de pedra que a população chama de «Pedra do Diabo». A lenda conta que o diabo certa vez apostou com um piedoso ferreiro de Riggisberg que conseguiria rolar a pedra até a aldeia mais rápido do que o ferreiro poderia ferrar um cavalo. O ferreiro — que conhecia as artimanhas do Maligno — começou a martelar secretamente uma hora mais cedo, e quando o diabo chegou à ferraria com seu bloco, o cavalo já estava ferrado há muito tempo. Furioso, o diabo arremessou a pedra no prado, onde ela ainda jaz hoje, e sumiu na terra com um silvo de enxofre.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Чёртов камень на Гурнигеле",
+        "text": "На перевале Гурнигель в Гюрбетале лежит огромный валун, который в народе называют «Чёртовым камнем». По преданию, чёрт поспорил с благочестивым кузнецом из Риггисберга: кто быстрее — он скатит камень в деревню или кузнец подкуёт лошадь. Кузнец, знавший хитрости нечистого, тайком начал ковать на час раньше, и когда чёрт явился к кузнице с камнем, лошадь была уже давно подкована. В ярости чёрт швырнул камень на луг — он лежит там и по сей день — и провалился под землю с шипением серы.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Humorvoll erzählen; den Schmied als schlauen Helden betonen. Für alle Altersstufen geeignet.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.7333,
+    "lng": 7.5167,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "nixe-simme-zweisimmen",
+    "title": "Die Nixe der Simme bei Zweisimmen",
+    "canton": "Bern",
+    "coreMotif": "Flussnixe lockt Wanderer in die Tiefe",
+    "bildmotiv": "Simme Fluss Zweisimmen Nixe Wasser Frau Simmental",
+    "mood": "Verlockend, melancholisch",
+    "summary": "Die Simme, die von den Simmenflühen bis ins Simmental hinab stürzt, soll nach uraltem Volksglauben eine Nixe beherbergen, die man an warmen Sommerabenden auf einem Stein mitten im reissenden Wasser sitzen sieht, ihr langes grünes Haar kämmend. Wer ihrer Schönheit verfällt und näher tritt, den lockt sie mit weicher Stimme noch einen Schritt weiter, und noch einen, bis der Fuss ins tiefe Wasser gleitet und der Strudel ihn fortzieht. Ein Senn aus Zweisimmen soll einst ihrer Stimme gefolgt sein und ward nicht mehr gefunden. Man hört sie auch in der Nacht, wenn die Simme nach einem Gewitter anschwillt und tosend durch die Felsen bricht – dann lacht die Nixe, denn das Wasser trägt ihr neue Beute zu.",
+    "summaries": {
+      "de": {
+        "text": "Die Simme soll nach uraltem Volksglauben eine Nixe beherbergen, die man an warmen Sommerabenden auf einem Stein mitten im reissenden Wasser sitzen sieht, ihr langes grünes Haar kämmend. Wer ihrer Schönheit verfällt und näher tritt, den lockt sie mit weicher Stimme noch einen Schritt weiter, bis der Fuss ins tiefe Wasser gleitet und der Strudel ihn fortzieht. Wenn die Simme nach einem Gewitter anschwillt und tosend durch die Felsen bricht, hört man die Nixe lachen – denn das Wasser trägt ihr neue Beute zu.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "D Nixe vo dr Simme bi Zwyssimme",
+        "text": "D Simme soll lut urautem Volksglauben e Nixe beherberge, wo me si a warme Summerobige uf-eme Stei mittem im reissende Wasser sitze gseit, wo si ir langes grüenes Haar chämmt. Wär ihrä Schönheit verfauft und näher tritt, de lockt si mit wychä Stimm no-ne Schritt wyter, bis dr Fuess is tüüfe Wasser gliitet und dr Strudel yne fortreisst. Wänn d Simme nach-eme Gwütter uschwillt und toosend dure Felse bricht, ghört me d Nixe lache.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "La Nixe de la Simme près de Zweisimmen",
+        "text": "La Simme, selon une croyance populaire très ancienne, abrite une nixe qu'on voit par les chaudes soirées d'été assise sur une pierre au milieu du torrent tumultueux, en train de peigner ses longs cheveux verts. Quiconque est séduit par sa beauté et s'approche d'elle, elle l'attire encore d'un pas de plus avec sa voix douce, et encore d'un, jusqu'à ce que le pied glisse dans l'eau profonde et que le tourbillon l'emporte. Un berger de Zweisimmen aurait suivi sa voix un jour et ne fut plus jamais retrouvé. On l'entend aussi la nuit, quand la Simme gonfle après un orage et brise en mugissant contre les rochers — alors la nixe rit, car les eaux lui apportent de nouvelles proies.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "La Nixe della Simme presso Zweisimmen",
+        "text": "La Simme, secondo un'antichissima credenza popolare, ospiterebbe una nixe che si vede nelle calde serate estive seduta su una pietra in mezzo all'acqua impetuosa, mentre pettina i suoi lunghi capelli verdi. Chi cade vittima della sua bellezza e si avvicina, la nixe lo attira ancora di un passo con la sua voce dolce, e ancora di un altro, finché il piede scivola nell'acqua profonda e il vortice lo porta via. Si narra che un malgaro di Zweisimmen abbia un giorno seguito la sua voce e non fu mai più trovato. La si sente anche di notte, quando la Simme si gonfia dopo un temporale e rompe mugghiando contro le rocce — allora la nixe ride, perché le acque le portano nuove prede.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Nixie of the Simme near Zweisimmen",
+        "text": "The Simme River is believed, according to ancient folk tradition, to harbour a water sprite who can be seen on warm summer evenings sitting on a stone in the middle of the rushing current, combing her long green hair. Whoever falls for her beauty and draws nearer, she lures one more step with her soft voice, and then another, until the foot slips into the deep water and the whirlpool carries the person away. A herdsman from Zweisimmen is said to have once followed her voice and was never found again. She is also heard at night when the Simme swells after a storm and crashes roaring through the rocks — then the nixie laughs, for the water brings her new prey.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "茨维西门附近西梅河的水精",
+        "text": "西梅河据古老的民间信仰说，栖居着一位水精，每逢温暖的夏日傍晚，人们能看见她坐在激流中央的岩石上，梳理着她那长长的绿色秀发。谁被她的美貌迷住而走近，她便用柔软的声音再引诱一步，再一步，直至脚踏入深水，旋涡将人席卷而去。据说茨维西门有个牧人曾循声而去，此后再未被人找到。夜里，当西梅河在暴雨后涨水、咆哮着冲过岩石时，也能听见水精的笑声——因为河水为她带来了新的猎物。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "La Nixe del Simme cerca de Zweisimmen",
+        "text": "El Simme, según una antiquísima creencia popular, alberga una nixe que se la ve en las cálidas tardes de verano sentada sobre una piedra en medio de la corriente torrencial, peinando sus largos cabellos verdes. A quien cae rendido ante su belleza y se acerca, ella lo atrae un paso más con su suave voz, y luego otro, hasta que el pie se desliza en el agua profunda y el torbellino lo arrastra. Se cuenta que un vaquero de Zweisimmen siguió su voz un día y nunca más fue hallado. También se la oye de noche, cuando el Simme se desborda tras una tormenta y rompe rugiendo contra las rocas — entonces la nixe ríe, pues las aguas le traen nuevas presas.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "A Nixe do Simme perto de Zweisimmen",
+        "text": "O Simme, segundo uma antiquíssima crença popular, abriga uma nixe que se vê nas quentes tardes de verão sentada em uma pedra no meio da corrente impetuosa, penteando seus longos cabelos verdes. Quem se encanta com sua beleza e se aproxima, ela atrai mais um passo com sua voz suave, e mais outro, até que o pé escorrega na água funda e o redemoinho o arrasta. Conta-se que um vaqueiro de Zweisimmen certa vez seguiu sua voz e nunca mais foi encontrado. Também se a ouve à noite, quando o Simme enche após uma tempestade e rompe rugindo contra as rochas — então a nixe ri, pois as águas lhe trazem novas presas.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Русалка реки Зимме у Цвайзиммена",
+        "text": "В реке Зимме, по древнему народному поверью, живёт русалка, которую в тёплые летние вечера можно увидеть сидящей на камне посреди стремительного течения — она расчёсывает свои длинные зелёные волосы. Кто влюбляется в её красоту и делает шаг навстречу, того она мягким голосом зовёт сделать ещё один шаг, и ещё, пока нога не соскальзывает в глубину и водоворот не уносит человека прочь. Говорят, что пастух из Цвайзиммена однажды последовал за её голосом и больше не был найден. Слышна она и ночью, когда Зимме разливается после грозы и с рёвом рвётся сквозь скалы — тогда русалка смеётся, ибо вода несёт ей новую добычу.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Das Ertrinken-Motiv für Jüngere abstrahieren; als Warnung vor reissenden Gewässern erzählen, nicht als Schreckensbild.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.5508,
+    "lng": 7.4186,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  },
+  {
+    "id": "riese-grauholz",
+    "title": "Der Riese vom Grauholz",
+    "canton": "Bern",
+    "coreMotif": "Riese schützt die Stadt Bern und wird zur Landschaft",
+    "bildmotiv": "Grauholz Wald Bern Riese Nordtor Stadtschutz",
+    "mood": "Feierlich, urgewaltig",
+    "summary": "Im dichten Waldgürtel des Grauholzes, dem alten Nordtor zum bernischen Mittelland, soll in uralter Zeit ein Riese gehaust haben, der den Hügel mit seinem Leib bedeckte. Er war kein feindseliges Wesen: Wenn fremde Heere aus dem Norden nach Bern ziehen wollten, liess er die Baumwipfel so dicht und verwirrt wachsen, dass Reiter und Soldaten sich darin verirrten und umkehrten, ohne die Stadt je zu Gesicht zu bekommen. Die Berner wussten, dass sie dem Riesen ihre Sicherheit verdankten, und stellten ihm jeden Herbst am Waldrand ein Fass Wein und ein Brot aus dem ersten Korn hin. Als eines Tages der Riese starb, verfiel der Wald in langen Winterschlaf – und seitdem wächst er so dicht, dass kein Feind je unbeschadet durch das Grauholz nach Bern gelangte.",
+    "summaries": {
+      "de": {
+        "text": "Im Grauholz, dem alten Nordtor zum bernischen Mittelland, soll in uralter Zeit ein Riese gehaust haben, der den Hügel mit seinem Leib bedeckte. Wenn fremde Heere aus dem Norden nach Bern ziehen wollten, liess er die Baumwipfel so dicht und verwirrt wachsen, dass sich Reiter und Soldaten darin verirrten und umkehrten. Die Berner stellten ihm jeden Herbst am Waldrand ein Fass Wein und ein Brot aus dem ersten Korn hin. Als der Riese starb, wächst der Wald bis heute so dicht, dass kein Feind unbeschadet nach Bern gelangte.",
+        "reviewEmpfohlen": false
+      },
+      "gsw": {
+        "title": "Dr Riese vom Grauholz",
+        "text": "Im Grauholz, em aute Nordtor vom bärnische Mittelland, soll emals e Riese ghuset ha, wo de Hügel mit sym Lyb bedeckt hät. Wänn frömdä Heer vo Norde cho sind, hät er d Baumwipfel so dicht wachse lo, dass si sich verirrt hend. D Bärner hend ihm jedes Herbscht am Waldrand es Fass Wy und Brot usgstellt. Sit dr Riese gschtorbe isch, wachst dr Wald so dicht, dass noch kei Fyynd unbeschadet nach Bärn cho isch.",
+        "reviewEmpfohlen": true
+      },
+      "fr": {
+        "title": "Le Géant du Grauholz",
+        "text": "Dans la dense ceinture forestière du Grauholz, l'ancienne porte nord des Terres bernoise, un géant aurait vécu en des temps très reculés, couvrant la colline de son corps. Ce n'était pas un être hostile : quand des armées étrangères voulaient marcher du nord sur Berne, il faisait pousser les cimes des arbres si serrées et si confuses que cavaliers et soldats s'y perdaient et faisaient demi-tour sans jamais apercevoir la ville. Les Bernois savaient qu'ils devaient leur sécurité au géant et lui déposaient chaque automne au bord de la forêt un tonneau de vin et un pain de la première récolte. Quand le géant mourut un jour, la forêt sombra dans un long sommeil hivernal — et depuis lors elle pousse si dense qu'aucun ennemi n'a jamais traversé le Grauholz sans dommages pour atteindre Berne.",
+        "reviewEmpfohlen": true
+      },
+      "it": {
+        "title": "Il Gigante del Grauholz",
+        "text": "Nella fitta cintura boschiva del Grauholz, l'antica porta nord dell'Altopiano bernese, si dice che in tempi antichissimi abitasse un gigante che copriva la collina con il suo corpo. Non era una creatura ostile: quando eserciti stranieri volevano marciare da nord su Berna, faceva crescere le cime degli alberi così fitte e aggrovigliate che cavalieri e soldati vi si perdevano e tornassero indietro senza mai vedere la città. I bernesi sapevano di dover la loro sicurezza al gigante e gli deponevano ogni autunno al margine del bosco una botte di vino e un pane del primo grano. Quando il gigante morì un giorno, il bosco cadde in un lungo sonno invernale — e da allora cresce così fitto che nessun nemico ha mai attraversato il Grauholz indenne per raggiungere Berna.",
+        "reviewEmpfohlen": true
+      },
+      "en": {
+        "title": "The Giant of the Grauholz",
+        "text": "In the dense forest belt of the Grauholz, the ancient northern gateway to the Bernese Midlands, a giant is said to have dwelt in ancient times, covering the hill with his body. He was not a hostile being: when foreign armies wanted to march southward on Bern, he caused the treetops to grow so thick and confused that horsemen and soldiers lost their way and turned back without ever catching sight of the city. The Bernese knew they owed their safety to the giant, and each autumn they placed a barrel of wine and a loaf of bread from the first grain at the forest's edge for him. When the giant died one day, the forest fell into a long winter sleep — and since then it has grown so dense that no enemy ever passed through the Grauholz to reach Bern unscathed.",
+        "reviewEmpfohlen": false
+      },
+      "zh": {
+        "title": "格劳霍尔茨的巨人",
+        "text": "在格劳霍尔茨茂密的森林带中——那是伯尔尼中部高原古老的北大门——据说上古时代住着一个巨人，用他的身躯覆盖着整座山丘。他并非凶残之物：每当北方的外国军队想要向南进攻伯尔尼时，他就让树梢长得如此茂密混乱，以至于骑兵和士兵在林中迷路，不得不返回，始终未能看见城市。伯尔尼人知道他们的安全要归功于这个巨人，每年秋天都在森林边缘为他摆上一桶葡萄酒和一块用头茬谷物烤制的面包。有一天巨人死去，森林陷入了漫长的冬眠——从那以后，森林长得如此茂密，没有任何敌人能够完好无损地穿过格劳霍尔茨抵达伯尔尼。",
+        "reviewEmpfohlen": true
+      },
+      "es": {
+        "title": "El Gigante del Grauholz",
+        "text": "En la densa franja forestal del Grauholz, la antigua puerta norte de las Tierras Altas bernesas, se dice que en tiempos remotísimos vivió un gigante que cubría la colina con su cuerpo. No era una criatura hostil: cuando ejércitos extranjeros querían marchar desde el norte hacia Berna, hacía crecer las copas de los árboles tan densas y confusas que jinetes y soldados se perdían y daban media vuelta sin llegar a ver la ciudad nunca. Los berneses sabían que debían su seguridad al gigante y le dejaban cada otoño al borde del bosque un barril de vino y un pan del primer grano. Cuando el gigante murió un día, el bosque cayó en un largo sueño invernal — y desde entonces crece tan denso que ningún enemigo ha atravesado jamás el Grauholz ileso para llegar a Berna.",
+        "reviewEmpfohlen": true
+      },
+      "pt": {
+        "title": "O Gigante do Grauholz",
+        "text": "Na densa faixa florestal do Grauholz, o antigo portão norte das Terras Altas bernesas, diz-se que em tempos remotíssimos habitou um gigante que cobria a colina com seu corpo. Não era uma criatura hostil: quando exércitos estrangeiros queriam marchar do norte em direção a Berna, ele fazia as copas das árvores crescerem tão densas e confusas que cavaleiros e soldados se perdiam e voltavam sem jamais avistar a cidade. Os bernenses sabiam que deviam sua segurança ao gigante, e cada outono depositavam na orla da floresta um barril de vinho e um pão do primeiro grão para ele. Quando o gigante morreu um dia, a floresta caiu em um longo sono invernal — e desde então cresce tão densa que nenhum inimigo jamais atravessou o Grauholz ileso para chegar a Berna.",
+        "reviewEmpfohlen": true
+      },
+      "ru": {
+        "title": "Великан из Граухольца",
+        "text": "В густом лесном поясе Граухольца, древних северных воротах Бернского плоскогорья, в незапамятные времена, по преданию, жил великан, тело которого покрывало весь холм. Он не был враждебным существом: когда чужеземные войска пытались двинуться с севера на Берн, он заставлял кроны деревьев расти настолько густо и запутанно, что всадники и солдаты терялись в лесу и поворачивали обратно, так и не увидев города. Бернцы знали, что обязаны своей безопасностью великану, и каждую осень оставляли для него на краю леса бочку вина и хлеб из первого зерна. Когда великан однажды умер, лес погрузился в долгий зимний сон — и с тех пор растёт настолько густо, что ни один враг ещё не прошёл через Граухольц невредимым до самого Берна.",
+        "reviewEmpfohlen": true
+      }
+    },
+    "altersstufenHinweis": "Für alle Altersstufen geeignet; den schützenden Riesen als Freund der Stadt Bern erzählen.",
+    "quelle": {
+      "autor": "Albert Jahn",
+      "werk": "Sagen aus dem Bernbiet",
+      "jahr": "1839",
+      "fundstelleUrl": "https://www.e-rara.ch/bau_1/content/titleinfo/6449131"
+    },
+    "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
+    "lat": 46.9983,
+    "lng": 7.4750,
+    "koordinatenSicherheit": "ungefaehr",
+    "isAnchorPlace": false
+  }
 
 ];
