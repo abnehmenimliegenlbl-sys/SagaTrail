@@ -562,6 +562,20 @@ export default function LiveHike() {
     }
   }, [livePos, nearbyPoi, selectedPoi]);
 
+  // nearbyPoi automatisch ausblenden, sobald der Nutzer sich mehr als 200 m
+  // vom entdeckten POI entfernt hat (doppelte Hysterese zur 100-m-Erkennungs-
+  // zone). Ohne diesen Effekt bleibt die Karte permanent stehen und blockiert
+  // das Erscheinen des naechsten POI, weil narratedPoiIdRef nie zurueckgesetzt
+  // werden kann.
+  const NEARBY_POI_HIDE_KM = 0.2;
+  useEffect(() => {
+    if (!nearbyPoi || !livePos) return;
+    const dist = haversineKm(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
+    if (dist >= NEARBY_POI_HIDE_KM) {
+      setNearbyPoi(null);
+    }
+  }, [livePos, nearbyPoi]);
+
   // Abbiege-Mitteilungen: markante Abzweigungen der Route (echte Geometrie,
   // siehe navigationCues.ts) loesen bei Annaeherung genau einmal eine lokale
   // Mitteilung aus. iOS spiegelt diese auf eine gekoppelte Smartwatch (inkl.
