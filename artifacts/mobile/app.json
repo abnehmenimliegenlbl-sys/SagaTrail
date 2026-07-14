@@ -66,6 +66,12 @@
       "expo-font",
       "expo-web-browser",
       [
+        "expo-notifications",
+        {
+          "iosDisplayInForeground": true
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen.",

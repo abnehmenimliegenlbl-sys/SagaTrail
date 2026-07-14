@@ -27,7 +27,9 @@ export async function bereiteAbbiegeMitteilungenVor(): Promise<boolean> {
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
           shouldShowBanner: true,
-          shouldShowList: false,
+          // Muss true sein: Apple Watch spiegelt nur Mitteilungen,
+          // die im Notification Center (Liste) landen.
+          shouldShowList: true,
           shouldPlaySound: false,
           shouldSetBadge: false,
         }),
