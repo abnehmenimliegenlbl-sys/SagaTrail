@@ -19,7 +19,7 @@ import { CANTONS } from "@/constants/onboarding";
 import { HikingRoute, CantonWithRoutes } from "@/constants/routes";
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
-import { nearestSaga } from "@/lib/sagaMatch";
+import { nearestSaga, nearestNSagas } from "@/lib/sagaMatch";
 
 /**
  * Katalog-Datenschicht: Sagen kommen vom Server, werden lokal
@@ -92,6 +92,7 @@ interface CatalogContextValue {
   getRoute: (id?: string) => HikingRoute | undefined;
   getSaga: (id?: string) => Saga | undefined;
   getSagaForRoute: (route: HikingRoute) => Saga | undefined;
+  getSagasForRoute: (route: HikingRoute, n?: number) => Saga[];
   getRouteBySaga: (sagaId?: string) => HikingRoute | undefined;
   getRoutesByCanton: (canton?: string) => HikingRoute[];
   /**
@@ -366,6 +367,8 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       getSagaForRoute: (route) =>
         sagas.find((s) => s.id === route.sagaId) ??
         nearestSaga(route.coordinates, route.region, sagas),
+      getSagasForRoute: (route, n = 3) =>
+        nearestNSagas(route.coordinates, route.region, sagas, n),
       getRouteBySaga: (sagaId) =>
         sagaId
           ? findDynRoute((r) => r.sagaId === sagaId) ??

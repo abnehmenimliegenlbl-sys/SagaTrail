@@ -57,9 +57,9 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory } = useApp();
   const { isElite, hatEntitlement } = useSubscription();
-  const { getRoute, getSagaForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
+  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
   const [importing, setImporting] = useState(false);
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
@@ -174,6 +174,18 @@ export default function Routenplanung() {
   }, [route?.id, route?.distanceKm, saga?.canton, getRoutesByCanton]);
   const [sagaLoading, setSagaLoading] = useState(!saga);
   const [sagaRetryCount, setSagaRetryCount] = useState(0);
+  const sagaCandidates = useMemo(
+    () => (route ? getSagasForRoute(route, 3) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [route?.id],
+  );
+  const [pickerDismissed, setPickerDismissed] = useState(false);
+  const showPicker = sagaCandidates.length > 1 && !pickerDismissed;
+  function selectFromPicker(s: Saga) {
+    setSaga(s);
+    setSagaLoading(false);
+    setPickerDismissed(true);
+  }
   const [lowBattery] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aerialways, setAerialways] = useState<
@@ -250,7 +262,7 @@ export default function Routenplanung() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!route) return;
+    if (!route || showPicker) return;
     const known = getSagaForRoute(route);
     if (known) {
       setSaga(known);
@@ -267,7 +279,7 @@ export default function Routenplanung() {
     return () => {
       cancelled = true;
     };
-  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount]);
+  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount, showPicker]);
 
   if (!route) {
     return (
@@ -602,106 +614,178 @@ export default function Routenplanung() {
         <Text style={[styles.blockTitle, { color: colors.foreground }]}>
           {t.matchingSaga}
         </Text>
-        <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
-          {sagaLoading
-            ? t.matchingSagaHintLoading
-            : t.matchingSagaHintLoaded}
-        </Text>
 
-        {sagaLoading ? (
-          <View
-            style={[
-              styles.sagaCard,
-              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-            ]}
-          >
-            {/* Skeleton in Sagakarten-Form — Titel, zwei Textzeilen, Meta. */}
-            <View style={{ flex: 1 }}>
-              <Skeleton height={20} width="55%" radius={8} />
-              <Skeleton height={13} radius={7} style={{ marginTop: 10 }} />
-              <Skeleton height={13} width="80%" radius={7} style={{ marginTop: 7 }} />
-              <Text
-                style={[styles.sagaLoadingText, { color: colors.mutedForeground, marginTop: 12 }]}
-              >
-                {t.sagaWriting}
-              </Text>
-            </View>
-          </View>
-        ) : !saga ? (
-          <View
-            style={[
-              styles.sagaCard,
-              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-            ]}
-          >
-            <Text style={[styles.sagaMood, { color: colors.mutedForeground }]}>
-              {t.sagaLoadError}
+        {showPicker ? (
+          <>
+            <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
+              {t.sagaPickerHint}
             </Text>
-            <Pressable
-              onPress={() => {
-                setSagaLoading(true);
-                setSagaRetryCount((c) => c + 1);
-              }}
-              hitSlop={10}
-              accessibilityRole="button"
-              style={[styles.retryChip, { borderColor: colors.glassBorder, marginTop: 10 }]}
-            >
-              <Feather name="refresh-cw" size={12} color={colors.accent} />
-              <Text style={[styles.retryChipText, { color: colors.accent }]}>
-                {ts.retry}
-              </Text>
-            </Pressable>
-          </View>
+            {sagaCandidates.map((s) => {
+              const sessions = hikeHistory.filter((h) => h.sagaId === s.id);
+              const prog =
+                sessions.length === 0 ? 'new'
+                : sessions.some((h) => (h.chapters?.length ?? 0) >= 3) ? 'done'
+                : 'partial';
+              const progLabel = prog === 'done' ? t.progressDone : prog === 'partial' ? t.progressStarted : t.progressNew;
+              const progDot = prog === 'done' ? '#4caf50' : prog === 'partial' ? '#ff9800' : colors.mutedForeground;
+              return (
+                <Pressable
+                  key={s.id}
+                  onPress={() => selectFromPicker(s)}
+                  style={[
+                    styles.sagaCard,
+                    { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                  ]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sagaCanton, { color: colors.accent }]}>
+                      {s.canton.toUpperCase()} · {s.coreMotif.toUpperCase()}
+                    </Text>
+                    <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
+                      {s.summaries?.[(profile?.language ?? 'de') as string]?.title ?? s.title}
+                    </Text>
+                    <Text style={[styles.sagaMood, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {s.mood}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                    <View style={{
+                      backgroundColor: prog === 'done' ? '#4caf5022' : prog === 'partial' ? '#ff980022' : colors.glassBg,
+                      borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+                      borderWidth: 1, borderColor: progDot + '55',
+                    }}>
+                      <Text style={{ color: progDot, fontSize: 11, fontWeight: '600' }}>{progLabel}</Text>
+                    </View>
+                    <Feather name="chevron-right" size={18} color={colors.accent} />
+                  </View>
+                </Pressable>
+              );
+            })}
+          </>
         ) : (
-          <Pressable
-            onPress={() => router.push(`/saga/${saga.id}?routeId=${route.id}`)}
-            style={[
-              styles.sagaCard,
-              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.sagaCanton, { color: colors.accent }]}>
-                {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
-              </Text>
-              <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
-              </Text>
-              <Text
-                style={[styles.sagaMood, { color: colors.mutedForeground }]}
-                numberOfLines={1}
+          <>
+            <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
+              {sagaLoading
+                ? t.matchingSagaHintLoading
+                : t.matchingSagaHintLoaded}
+            </Text>
+
+            {sagaLoading ? (
+              <View
+                style={[
+                  styles.sagaCard,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
               >
-                {saga.mood}
-              </Text>
-            </View>
-            {locked ? (
-              <Feather name="lock" size={18} color={colors.mutedForeground} />
+                {/* Skeleton in Sagakarten-Form — Titel, zwei Textzeilen, Meta. */}
+                <View style={{ flex: 1 }}>
+                  <Skeleton height={20} width="55%" radius={8} />
+                  <Skeleton height={13} radius={7} style={{ marginTop: 10 }} />
+                  <Skeleton height={13} width="80%" radius={7} style={{ marginTop: 7 }} />
+                  <Text
+                    style={[styles.sagaLoadingText, { color: colors.mutedForeground, marginTop: 12 }]}
+                  >
+                    {t.sagaWriting}
+                  </Text>
+                </View>
+              </View>
+            ) : !saga ? (
+              <View
+                style={[
+                  styles.sagaCard,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <Text style={[styles.sagaMood, { color: colors.mutedForeground }]}>
+                  {t.sagaLoadError}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setSagaLoading(true);
+                    setSagaRetryCount((c) => c + 1);
+                  }}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  style={[styles.retryChip, { borderColor: colors.glassBorder, marginTop: 10 }]}
+                >
+                  <Feather name="refresh-cw" size={12} color={colors.accent} />
+                  <Text style={[styles.retryChipText, { color: colors.accent }]}>
+                    {ts.retry}
+                  </Text>
+                </Pressable>
+              </View>
             ) : (
-              <Feather name="chevron-right" size={20} color={colors.accent} />
+              <Pressable
+                onPress={() => router.push(`/saga/${saga.id}?routeId=${route.id}`)}
+                style={[
+                  styles.sagaCard,
+                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.sagaCanton, { color: colors.accent }]}>
+                    {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
+                  </Text>
+                  <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
+                    {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
+                  </Text>
+                  <Text
+                    style={[styles.sagaMood, { color: colors.mutedForeground }]}
+                    numberOfLines={1}
+                  >
+                    {saga.mood}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                  {(() => {
+                    const sessions = hikeHistory.filter((h) => h.sagaId === saga.id);
+                    const prog =
+                      sessions.length === 0 ? 'new'
+                      : sessions.some((h) => (h.chapters?.length ?? 0) >= 3) ? 'done'
+                      : 'partial';
+                    const progLabel = prog === 'done' ? t.progressDone : prog === 'partial' ? t.progressStarted : t.progressNew;
+                    const progDot = prog === 'done' ? '#4caf50' : prog === 'partial' ? '#ff9800' : colors.mutedForeground;
+                    return (
+                      <View style={{
+                        backgroundColor: prog === 'done' ? '#4caf5022' : prog === 'partial' ? '#ff980022' : colors.glassBg,
+                        borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+                        borderWidth: 1, borderColor: progDot + '55',
+                      }}>
+                        <Text style={{ color: progDot, fontSize: 11, fontWeight: '600' }}>{progLabel}</Text>
+                      </View>
+                    );
+                  })()}
+                  {locked ? (
+                    <Feather name="lock" size={18} color={colors.mutedForeground} />
+                  ) : (
+                    <Feather name="chevron-right" size={20} color={colors.accent} />
+                  )}
+                </View>
+              </Pressable>
             )}
-          </Pressable>
+
+            {saga &&
+            !sagaLoading &&
+            sagaLokalisierung(route, saga) === "nicht_exakt_lokalisierbar" ? (
+              <Text style={[styles.localisationNote, { color: colors.mutedForeground }]}>
+                {t.localisationNote}
+              </Text>
+            ) : null}
+
+            {saga && !sagaLoading ? (
+              <PrimaryButton
+                label={locked ? t.premiumButton : t.continueToSaga}
+                variant={locked ? "gold" : "primary"}
+                onPress={() =>
+                  router.push(
+                    locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
+                  )
+                }
+                style={{ marginTop: 16 }}
+              />
+            ) : null}
+          </>
         )}
-
-        {saga &&
-        !sagaLoading &&
-        sagaLokalisierung(route, saga) === "nicht_exakt_lokalisierbar" ? (
-          <Text style={[styles.localisationNote, { color: colors.mutedForeground }]}>
-            {t.localisationNote}
-          </Text>
-        ) : null}
-
-        {saga && !sagaLoading ? (
-          <PrimaryButton
-            label={locked ? t.premiumButton : t.continueToSaga}
-            variant={locked ? "gold" : "primary"}
-            onPress={() =>
-              router.push(
-                locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
-              )
-            }
-            style={{ marginTop: 16 }}
-          />
-        ) : null}
 
         {similarRoutes.length > 0 && (
           <>

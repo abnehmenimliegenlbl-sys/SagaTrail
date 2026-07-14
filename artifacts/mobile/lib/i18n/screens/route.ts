@@ -41,6 +41,10 @@ export interface RouteStrings {
   localisationNote: string;
   premiumButton: string;
   continueToSaga: string;
+  sagaPickerHint: string;
+  progressNew: string;
+  progressStarted: string;
+  progressDone: string;
   windValues: (speed: number, gusts: number) => string;
   weatherValues: (label: string, temp: number) => string;
   trailConditions: {
@@ -112,6 +116,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Für diese Route ist keine punktgenau belegte Sage überliefert. Gezeigt wird die nächstgelegene dokumentierte Regionalsage.",
     premiumButton: "Premium freischalten",
     continueToSaga: "Zur Sage weiter",
+    sagaPickerHint: "Mehrere Sagen in der Nähe – wähle deine für diese Wanderung",
+    progressNew: "Neu",
+    progressStarted: "Angefangen",
+    progressDone: "Gehört",
     windValues: (speed, gusts) => `${speed} km/h, Böen ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -183,6 +191,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Für die Rote isch kei punktgnaui Sag überliiferet. Zeigt wird die nächschti dokumentierti Regionalsag.",
     premiumButton: "Premium freischalte",
     continueToSaga: "Wiiter zur Sag",
+    sagaPickerHint: "Meri Sage i dr Nächi – wähl dyni für die Wanderig",
+    progressNew: "Neu",
+    progressStarted: "Agriffe",
+    progressDone: "Ghört",
     windValues: (speed, gusts) => `${speed} km/h, Böe ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -254,6 +266,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "No pinpointed legend is documented for this route. The nearest documented regional legend is shown.",
     premiumButton: "Unlock Premium",
     continueToSaga: "Continue to legend",
+    sagaPickerHint: "Multiple legends nearby – choose one for your hike",
+    progressNew: "New",
+    progressStarted: "Started",
+    progressDone: "Heard",
     windValues: (speed, gusts) => `${speed} km/h, gusts ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -325,6 +341,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Aucune légende précise n'est documentée pour cet itinéraire. La légende régionale documentée la plus proche est affichée.",
     premiumButton: "Débloquer Premium",
     continueToSaga: "Continuer vers la légende",
+    sagaPickerHint: "Plusieurs légendes à proximité – choisissez celle de votre randonnée",
+    progressNew: "Nouveau",
+    progressStarted: "Commencé",
+    progressDone: "Écouté",
     windValues: (speed, gusts) => `${speed} km/h, rafales ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -396,6 +416,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Non è documentata alcuna leggenda precisa per questo percorso. Viene mostrata la leggenda regionale documentata più vicina.",
     premiumButton: "Sblocca Premium",
     continueToSaga: "Continua alla leggenda",
+    sagaPickerHint: "Più leggende nelle vicinanze – scegli quella per la tua escursione",
+    progressNew: "Nuovo",
+    progressStarted: "Iniziato",
+    progressDone: "Ascoltato",
     windValues: (speed, gusts) => `${speed} km/h, raffiche ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -467,6 +491,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "No hay ninguna leyenda documentada con precisión para esta ruta. Se muestra la leyenda regional documentada más cercana.",
     premiumButton: "Desbloquear Premium",
     continueToSaga: "Continuar a la leyenda",
+    sagaPickerHint: "Varias leyendas cerca – elige la de tu caminata",
+    progressNew: "Nuevo",
+    progressStarted: "Iniciado",
+    progressDone: "Escuchado",
     windValues: (speed, gusts) => `${speed} km/h, ráfagas ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -538,6 +566,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Nenhuma lenda precisa está documentada para esta rota. A lenda regional documentada mais próxima é mostrada.",
     premiumButton: "Desbloquear Premium",
     continueToSaga: "Continuar para a lenda",
+    sagaPickerHint: "Várias lendas nas redondezas – escolha a da sua caminhada",
+    progressNew: "Novo",
+    progressStarted: "Iniciado",
+    progressDone: "Ouvido",
     windValues: (speed, gusts) => `${speed} km/h, rajadas ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -604,6 +636,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     localisationNote: "此路线暂无精确匹配的传说记录。显示的是最近的地区传说。",
     premiumButton: "解锁 Premium",
     continueToSaga: "前往传说",
+    sagaPickerHint: "附近有多个传说 — 选择本次徒步的传说",
+    progressNew: "新",
+    progressStarted: "已开始",
+    progressDone: "已听",
     windValues: (speed, gusts) => `${speed} km/h，阵风 ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}，${temp}°C`,
     trailConditions: {
@@ -673,6 +709,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Для этого маршрута точная привязанная легенда не задокументирована. Показана ближайшая задокументированная региональная легенда.",
     premiumButton: "Разблокировать Premium",
     continueToSaga: "Перейти к легенде",
+    sagaPickerHint: "Несколько легенд рядом – выберите для похода",
+    progressNew: "Новая",
+    progressStarted: "Начата",
+    progressDone: "Прослушана",
     windValues: (speed, gusts) => `${speed} км/ч, порывы ${gusts} км/ч`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {

@@ -60,6 +60,29 @@ export function nearestSaga(
   return best;
 }
 
+/**
+ * Gibt die N naechstgelegenen kuratierten Sagen zur Route zurueck,
+ * sortiert nach Distanz aufsteigend. Sagen im gleichen Kanton werden
+ * bevorzugt; bei 0 Kantonsstreffern wird schweizweit gesucht.
+ */
+export function nearestNSagas(
+  coord: LatLng | undefined,
+  canton: string,
+  sagas: Saga[],
+  n = 3,
+): Saga[] {
+  if (sagas.length === 0) return [];
+  const located = sagas.filter((s) => s.coordinates);
+  const sameCanton = located.filter((s) => s.canton === canton);
+  const pool = sameCanton.length ? sameCanton : located;
+  if (!coord) return pool.slice(0, n);
+  return pool
+    .map((s) => ({ s, d: haversineM(coord, s.coordinates as LatLng) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, n)
+    .map((x) => x.s);
+}
+
 export type SagaLokalisierung = "exakt" | "nicht_exakt_lokalisierbar";
 
 /**
