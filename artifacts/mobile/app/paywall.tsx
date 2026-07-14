@@ -158,24 +158,39 @@ export default function Paywall() {
       // "Angebot wird geladen"). Das ist kein Fehler, sondern ein Erfolg,
       // den wir sonst faelschlich als Kauf-Fehler anzeigen wuerden UND der
       // ohne den Refetch hier nie zu einem premium-Sync fuehrt.
+      //
+      // "The receipt is not valid" tritt ebenfalls auf, wenn Apple dem Nutzer
+      // das "bereits abonniert"-Sheet zeigt und er OK tippt: StoreKit liefert
+      // dann die bestehende Quittung, die RevenueCat bereits kennt oder die
+      // aus einem anderen RC-Projekt stammt (z.B. nach einem API-Key-Wechsel).
+      // Auch das ist kein Fehler — wir erzwingen restorePurchases(), das alle
+      // Quittungen neu validiert und dem aktuellen RC-Customer zuordnet.
+      const errStr = String(err?.message ?? err?.underlyingErrorMessage ?? "");
       const bereitsAbonniert =
         err?.code === "2" ||
         err?.code === 2 ||
-        /already\s+(subscribed|purchased|owns|active)/i.test(
-          String(err?.message ?? err?.underlyingErrorMessage ?? "")
-        );
+        /already\s+(subscribed|purchased|owns|active)/i.test(errStr) ||
+        /receipt.*(not valid|invalid)|invalid.*receipt/i.test(errStr);
       if (bereitsAbonniert) {
-        iapLog("paywall.buy: als 'bereits abonniert' erkannt, refetch customerInfo");
+        iapLog("paywall.buy: als 'bereits abonniert' erkannt, starte restorePurchases", {
+          code: err?.code,
+          errStr,
+        });
         try {
-          await refreshCustomerInfo();
-        } catch (refreshErr) {
+          // restorePurchases() ist gruendlicher als refreshCustomerInfo():
+          // Es schickt alle lokalen StoreKit-Quittungen erneut an RC und
+          // verknuepft sie mit dem aktuellen Customer — deckt auch den Fall
+          // ab, dass ein frueherer Kauf mit einem anderen API-Key gemacht
+          // wurde (dann hilft refreshCustomerInfo nicht).
+          await restore();
+        } catch (restoreErr) {
           // Nicht fatal: der naechste automatische Abgleich (AppContext)
           // oder ein manueller "Kauf wiederherstellen" greift spaeter.
-          iapLog("paywall.buy: refreshCustomerInfo fehlgeschlagen", {
+          iapLog("paywall.buy: restorePurchases fehlgeschlagen", {
             message:
-              refreshErr instanceof Error
-                ? refreshErr.message
-                : String(refreshErr),
+              restoreErr instanceof Error
+                ? restoreErr.message
+                : String(restoreErr),
           });
         }
         setTimeout(() => {
