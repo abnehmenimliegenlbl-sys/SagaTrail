@@ -39,3 +39,4 @@
 - [SagaTrail hike history/achievements server sync](sagatrail-progress-sync.md) — was AsyncStorage-only (lost on logout/resetAll); now merged (never-deleting union by id) to profiles.hikeHistory/achievements jsonb via POST /me/progress/sync.
 - [SagaTrail partner admin](sagatrail-partner-admin.md) — restaurants/shops CRUD lives in `partners` table + `/api/admin/partner*`, reusing existing ADMIN_TOKEN pattern; no public read endpoint yet.
 - [SagaTrail Sagenpakete workflow](sagatrail-sagenpakete-workflow.md) — 10-Schritt-Prozess für neue Kantone: JSON analysieren, Duplikate entfernen, auf 8 auffüllen, bildmotiv motif-focused, Python-Script + write-Tool (kein Heredoc).
+- [Balanced brace JSON extraction](sagatrail-json-multiline-extraction.md) — never use `re.search(r'\{.+\}')` on curatedSagasPakete.ts summaries; some span multiple lines; use balanced-brace tracker or risk erasing all but 2 languages silently.
