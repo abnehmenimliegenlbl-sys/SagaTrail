@@ -652,10 +652,12 @@ export default function LiveHike() {
     if (bester) {
       const treffer: { index: number; cue: NavigationCue } = bester;
       notifiedTurnsRef.current.add(treffer.index);
-      sendeAbbiegeMitteilung(
-        t.turnNotifTitle,
-        treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
-      );
+      if (profile?.navAnnouncementsEnabled !== false) {
+        sendeAbbiegeMitteilung(
+          t.turnNotifTitle,
+          treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
+        );
+      }
       // Sprachansage kurz vor der Abbiegung — GPS-artig, unabhaengig vom
       // laufenden Kapitel. Laeuft gerade ein Kapitel, wird es danach wieder
       // von vorne aufgenommen (gleiche Resume-Logik wie POI-Einschub).
@@ -921,7 +923,7 @@ export default function LiveHike() {
       speak(currentIndex === 0 ? `${greetingPrefix} ${ch.text}` : ch.text);
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
       // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
-      if (currentIndex > 0 && turnNotifsReady) {
+      if (currentIndex > 0 && turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
         sendeAbbiegeMitteilung(
           t.chapterNotif(currentIndex + 1),
           route?.name ?? saga?.title ?? ""
@@ -1202,7 +1204,7 @@ export default function LiveHike() {
       // Watch-Mitteilung bei Interaktion — spiegelt die Wahrnehmungsentscheidung
       // ans Handgelenk, damit Wandernde mit gesperrtem iPhone trotzdem wissen,
       // welche Option fuer sie gewaehlt wurde (z. B. per Voice-Steuerung).
-      if (turnNotifsReady) {
+      if (turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
         sendeAbbiegeMitteilung(t.perception, gewaehlt);
       }
     }

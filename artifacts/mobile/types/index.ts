@@ -13,6 +13,7 @@ export interface Profile {
   homeCanton: string;
   language: string;
   ageTier: AgeTier;
+  navAnnouncementsEnabled?: boolean;
 }
 
 export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar";

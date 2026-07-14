@@ -366,6 +366,22 @@ export default function Einstellungen() {
           <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+                {t.navAnnouncementsLabel}
+              </Text>
+              <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+                {t.navAnnouncementsHint}
+              </Text>
+            </View>
+            <Switch
+              value={profile?.navAnnouncementsEnabled !== false}
+              onValueChange={(v) => updateProfile({ navAnnouncementsEnabled: v })}
+              trackColor={{ true: colors.accent, false: colors.card }}
+              thumbColor={colors.foreground}
+            />
+          </View>
+          <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>
                 {t.powerSaveLabel}
               </Text>
               <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>

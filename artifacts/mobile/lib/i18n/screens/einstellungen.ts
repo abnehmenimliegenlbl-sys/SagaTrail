@@ -18,6 +18,8 @@ export interface EinstellungenStrings {
   languageLabel: string;
   voicePreviewLabel: string;
   voicePreviewUnavailableLabel: string;
+  navAnnouncementsLabel: string;
+  navAnnouncementsHint: string;
   powerSaveLabel: string;
   powerSaveHint: string;
   themeModeLabel: string;
@@ -73,6 +75,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Sprache",
     voicePreviewLabel: "Stimme anhören",
     voicePreviewUnavailableLabel: "KI-Stimme nicht verfügbar — Gerätestimme wird verwendet.",
+    navAnnouncementsLabel: "Navigationsansagen",
+    navAnnouncementsHint: "Abbiegungen und Kapitelwechsel als Benachrichtigung",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert GPS-Genauigkeit und Kartenaktualisierung",
     themeModeLabel: "Anzeigemodus",
@@ -126,6 +130,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Sprach",
     voicePreviewLabel: "Stimm alose",
     voicePreviewUnavailableLabel: "KI-Stimm nöd verfüegbar — d Grätstimm wird gnoh.",
+    navAnnouncementsLabel: "Navigationsaasage",
+    navAnnouncementsHint: "Abzwiigige und Kapitelwächsel als Miiteilig",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert d'GPS-Gnauigkeit und Chartenuupassig",
     themeModeLabel: "Aazeigemodus",
@@ -179,6 +185,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Langue",
     voicePreviewLabel: "Écouter la voix",
     voicePreviewUnavailableLabel: "Voix IA indisponible — la voix de l'appareil est utilisée.",
+    navAnnouncementsLabel: "Annonces de navigation",
+    navAnnouncementsHint: "Virages et changements de chapitre en notification",
     powerSaveLabel: "Mode économie d'énergie",
     powerSaveHint: "Réduit la précision GPS et la mise à jour de la carte",
     themeModeLabel: "Mode d'affichage",
@@ -232,6 +240,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Lingua",
     voicePreviewLabel: "Ascolta la voce",
     voicePreviewUnavailableLabel: "Voce IA non disponibile — viene usata la voce del dispositivo.",
+    navAnnouncementsLabel: "Annunci di navigazione",
+    navAnnouncementsHint: "Svolte e cambi di capitolo come notifica",
     powerSaveLabel: "Risparmio energetico",
     powerSaveHint: "Riduce la precisione del GPS e l'aggiornamento della mappa",
     themeModeLabel: "Modalità di visualizzazione",
@@ -285,6 +295,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Language",
     voicePreviewLabel: "Preview voice",
     voicePreviewUnavailableLabel: "AI voice unavailable — using the device voice.",
+    navAnnouncementsLabel: "Navigation Announcements",
+    navAnnouncementsHint: "Turn cues and chapter changes as notifications",
     powerSaveLabel: "Power Saving Mode",
     powerSaveHint: "Reduces GPS accuracy and map updates",
     themeModeLabel: "Display Mode",
@@ -338,6 +350,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "语言",
     voicePreviewLabel: "试听语音",
     voicePreviewUnavailableLabel: "AI 语音不可用——将使用设备语音。",
+    navAnnouncementsLabel: "导航提示",
+    navAnnouncementsHint: "转弯提示和章节切换通知",
     powerSaveLabel: "省电模式",
     powerSaveHint: "降低 GPS 精度和地图更新频率",
     themeModeLabel: "显示模式",
@@ -391,6 +405,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Idioma",
     voicePreviewLabel: "Escuchar la voz",
     voicePreviewUnavailableLabel: "Voz de IA no disponible — se usa la voz del dispositivo.",
+    navAnnouncementsLabel: "Avisos de navegación",
+    navAnnouncementsHint: "Giros y cambios de capítulo como notificaciones",
     powerSaveLabel: "Modo ahorro de energía",
     powerSaveHint: "Reduce la precisión del GPS y la actualización del mapa",
     themeModeLabel: "Modo de visualización",
@@ -444,6 +460,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Idioma",
     voicePreviewLabel: "Ouvir a voz",
     voicePreviewUnavailableLabel: "Voz de IA indisponível — é usada a voz do dispositivo.",
+    navAnnouncementsLabel: "Avisos de navegação",
+    navAnnouncementsHint: "Curvas e mudanças de capítulo como notificações",
     powerSaveLabel: "Modo de economia de energia",
     powerSaveHint: "Reduz a precisão do GPS e a atualização do mapa",
     themeModeLabel: "Modo de exibição",
@@ -497,6 +515,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     languageLabel: "Язык",
     voicePreviewLabel: "Прослушать голос",
     voicePreviewUnavailableLabel: "ИИ-голос недоступен — используется голос устройства.",
+    navAnnouncementsLabel: "Навигационные объявления",
+    navAnnouncementsHint: "Повороты и смена глав в виде уведомлений",
     powerSaveLabel: "Режим энергосбережения",
     powerSaveHint: "Снижает точность GPS и частоту обновления карты",
     themeModeLabel: "Режим отображения",
