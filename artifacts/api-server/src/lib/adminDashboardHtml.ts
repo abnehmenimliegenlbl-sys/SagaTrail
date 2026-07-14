@@ -93,6 +93,18 @@ a{color:var(--red);text-decoration:none}
 .hint{font-size:12px;color:#aaa}
 .sep{border:none;border-top:1px solid var(--border);margin:16px 0}
 .full{grid-column:1/-1}
+/* --- PARTNER LOOKUP --- */
+#np-lookup-wrap{grid-column:1/-1;background:#f7f5f2;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:4px}
+#np-lookup-wrap label{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block}
+#np-lookup-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box}
+#np-lookup-input:focus{outline:none;border-color:var(--red)}
+#np-lookup-drop{position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:230px;overflow-y:auto;margin-top:3px}
+.lookup-row{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;line-height:1.4}
+.lookup-row:last-child{border-bottom:none}
+.lookup-row:hover{background:#f5f2ef}
+.lookup-row strong{color:var(--dark)}
+.lookup-row span{color:var(--mid);font-size:11px;margin-left:8px}
+#np-lookup-hint{font-size:11px;color:#888;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -133,6 +145,14 @@ a{color:var(--red);text-decoration:none}
     <div class="card">
       <h2>Neuer Partner anlegen</h2>
       <div class="form-grid" id="new-partner-form">
+        <div id="np-lookup-wrap">
+          <label>Vorhandenen Partner suchen &amp; Felder vorausf&#252;llen</label>
+          <div style="position:relative">
+            <input id="np-lookup-input" type="text" placeholder="Name oder E-Mail eingeben&#x2026;" oninput="lookupDebounce(this.value)" autocomplete="off" />
+            <div id="np-lookup-drop" style="display:none"></div>
+          </div>
+          <span id="np-lookup-hint">Tipp: Felder werden vorausgef&#252;llt &#8211; du erstellst aber immer einen <strong>neuen</strong> Eintrag.</span>
+        </div>
         <div class="form-group full"><span class="form-section-title">Basisdaten</span></div>
         <div class="form-group"><label>Name *</label><input id="np-name" type="text" /></div>
         <div class="form-group"><label>E-Mail (Portal-Login)</label><input id="np-email" type="email" /></div>
@@ -336,6 +356,68 @@ async function loadUsage() {
     document.getElementById('usage-body').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
   }
 }
+
+/* ===================== PARTNER LOOKUP ===================== */
+var _lookupResults = [];
+var _lookupTimer = null;
+function lookupDebounce(val) {
+  clearTimeout(_lookupTimer);
+  var drop = document.getElementById('np-lookup-drop');
+  if (val.length < 2) { drop.style.display = 'none'; return; }
+  _lookupTimer = setTimeout(function() { doLookup(val); }, 320);
+}
+async function doLookup(q) {
+  var drop = document.getElementById('np-lookup-drop');
+  drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Suche&#x2026;</div>';
+  drop.style.display = '';
+  try {
+    var rows = await api('/api/admin/partner-lookup?q=' + encodeURIComponent(q), {method:'GET'});
+    _lookupResults = rows;
+    if (!rows.length) {
+      drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Kein Eintrag gefunden</div>';
+      return;
+    }
+    drop.innerHTML = rows.map(function(p, i) {
+      return '<div class="lookup-row" onclick="fillFromPartner(' + i + ')">' +
+        '<strong>' + esc(p.name) + '</strong>' +
+        '<span>' + esc(p.canton) + ' &middot; ' + esc(p.kategorie) + (p.email ? ' &middot; ' + esc(p.email) : '') + '</span>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--red)">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+function fillFromPartner(idx) {
+  var p = _lookupResults[idx];
+  if (!p) return;
+  function sv(id, val) { var el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ''; }
+  function fmtD(dt) { return dt ? new Date(dt).toISOString().split('T')[0] : ''; }
+  sv('np-name', p.name);
+  sv('np-email', p.email);
+  sv('np-canton', p.canton);
+  sv('np-lat', p.lat);
+  sv('np-lng', p.lng);
+  sv('np-beschr', p.beschreibung);
+  sv('np-angebot', p.angebot);
+  sv('np-foto', p.fotoUrl);
+  sv('np-preis', p.preisChf);
+  sv('np-einfpreis', p.einfuehrungspreisChf);
+  sv('np-einfbis', fmtD(p.einfuehrungspreisGueltigBis));
+  sv('np-lstart', fmtD(p.laufzeitStart));
+  sv('np-lende', fmtD(p.laufzeitEnde));
+  sv('np-notizen', p.notizenIntern);
+  var kat = document.getElementById('np-kat'); if (kat) kat.value = p.kategorie || '';
+  var pak = document.getElementById('np-paket'); if (pak) pak.value = p.paket || '';
+  var zs = document.getElementById('np-zstatus'); if (zs) zs.value = p.zahlungsstatus || 'ausstehend';
+  document.getElementById('np-lookup-drop').style.display = 'none';
+  document.getElementById('np-lookup-input').value = p.name;
+  document.getElementById('np-lookup-hint').innerHTML = '&#9989; Felder aus <strong>' + esc(p.name) + '</strong> &#252;bernommen &ndash; wird als <strong>neuer</strong> Eintrag gespeichert.';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#np-lookup-wrap')) {
+    document.getElementById('np-lookup-drop').style.display = 'none';
+  }
+});
 
 /* ===================== PARTNER ===================== */
 async function loadPartner() {

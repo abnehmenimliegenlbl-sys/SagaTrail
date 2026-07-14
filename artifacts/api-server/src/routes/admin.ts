@@ -1,7 +1,7 @@
 import { randomUUID, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or, ilike } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -321,6 +321,19 @@ const PartnerBody = z.object({
   laufzeitStart: z.string().datetime().optional(),
   laufzeitEnde: z.string().datetime().optional(),
   notizenIntern: z.string().optional(),
+});
+
+router.get("/admin/partner-lookup", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const q = String(req.query["q"] ?? "").trim();
+  if (q.length < 2) { res.json([]); return; }
+  const rows = await db
+    .select()
+    .from(partnersTable)
+    .where(or(ilike(partnersTable.name, `%${q}%`), ilike(partnersTable.email, `%${q}%`)))
+    .orderBy(desc(partnersTable.createdAt))
+    .limit(8);
+  res.json(rows);
 });
 
 router.get("/admin/partner", async (req, res): Promise<void> => {
