@@ -128,20 +128,17 @@ export default function Paywall() {
         iapLog("paywall.buy: Kauf kam nach Timeout noch durch");
         return;
       }
-      iapLog("paywall.buy: Kauf-Promise aufgeloest, zeige Erfolg");
+      iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere zurueck");
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       // Apples nativer Kauf-Dialog (StoreKit-Sheet) ist zu diesem Zeitpunkt
-      // oft noch nicht vollstaendig ausgeblendet. Praesentiert man sofort
-      // danach unser eigenes natives Modal (AppModal), kollidieren zwei
-      // UIKit-Praesentationen und die App friert komplett ein. Eine kurze
-      // Verzoegerung laesst StoreKit die Uebergabe sauber abschliessen.
+      // oft noch nicht vollstaendig ausgeblendet. Kurze Verzoegerung laesst
+      // StoreKit die Uebergabe sauber abschliessen, bevor wir navigieren —
+      // sonst kollidieren zwei UIKit-Transitionen und die App friert ein.
       setTimeout(() => {
         if (!mountedRef.current) return;
-        alert(t.successAlertTitle, t.successAlertMsg, [
-          { text: t.successAlertBtn, onPress: () => router.back() },
-        ]);
+        router.back();
       }, 600);
     } catch (err: any) {
       clearTimeout(timeoutId);
