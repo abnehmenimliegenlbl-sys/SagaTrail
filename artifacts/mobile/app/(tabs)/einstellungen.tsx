@@ -32,6 +32,7 @@ import { SparkDivider } from "@/components/brand/SparkMountain";
 import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useSubscription } from "@/lib/revenuecat";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useEinstellungenStrings } from "@/lib/i18n/screens/einstellungen";
 import { translateCanton } from "@/lib/i18n/cantonNames";
@@ -82,6 +83,23 @@ export default function Einstellungen() {
     exportData,
     resetAll,
   } = useApp();
+
+  const { isElite, isFamily } = useSubscription();
+  const tierLabel = !premium
+    ? t.subscriptionFree
+    : isElite
+      ? t.tierElite
+      : isFamily
+        ? t.tierPremiumFamilie
+        : t.tierPremium;
+  const tierBgColor = !premium ? "#6B7280" : isElite ? "#7C3AED" : "#B45309";
+  const tierIcon: React.ComponentProps<typeof Feather>["name"] = !premium
+    ? "user"
+    : isElite
+      ? "zap"
+      : isFamily
+        ? "users"
+        : "star";
 
   const [contactName, setContactName] = useState(emergencyContact?.name ?? "");
   const [contactPhone, setContactPhone] = useState(emergencyContact?.phone ?? "");
@@ -393,11 +411,31 @@ export default function Einstellungen() {
         </Section>
 
         <Section title={t.sectionAbonnement}>
-          <RowButton
-            label={t.subscriptionStatusLabel}
-            value={premium ? t.subscriptionActive : t.subscriptionFree}
+          <Pressable
             onPress={() => router.push("/paywall")}
-          />
+            style={[styles.row, { borderColor: colors.glassBorder }]}
+          >
+            <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+              {t.subscriptionStatusLabel}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 5,
+                backgroundColor: tierBgColor,
+                borderRadius: 999,
+                paddingHorizontal: 11,
+                paddingVertical: 4,
+              }}>
+                <Feather name={tierIcon} size={12} color="#fff" />
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: "#fff" }}>
+                  {tierLabel}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </View>
+          </Pressable>
           {!premium && (
             <PrimaryButton
               label={t.unlockPremiumButton}

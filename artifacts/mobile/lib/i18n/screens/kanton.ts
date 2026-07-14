@@ -31,6 +31,7 @@ export interface KantonStrings {
   packBuyErrorTitle: string;
   packUnavailable: string;
   resetFilters: string;
+  unlockedBadge: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -69,6 +70,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Kauf fehlgeschlagen",
     packUnavailable: "Sagen-Pack aktuell nicht verfügbar.",
     resetFilters: "Filter zurücksetzen",
+    unlockedBadge: "Freigeschaltet",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -105,6 +107,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Chauf fehlgschlage",
     packUnavailable: "Sage-Pack grad nid verfüegbar.",
     resetFilters: "Filter zruggsetze",
+    unlockedBadge: "Freigsclte",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -141,6 +144,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Échec de l'achat",
     packUnavailable: "Pack de légendes actuellement indisponible.",
     resetFilters: "Réinitialiser les filtres",
+    unlockedBadge: "Débloqué",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -177,6 +181,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Acquisto non riuscito",
     packUnavailable: "Pacchetto di leggende attualmente non disponibile.",
     resetFilters: "Reimposta filtri",
+    unlockedBadge: "Sbloccato",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -213,6 +218,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Purchase failed",
     packUnavailable: "Legend pack currently unavailable.",
     resetFilters: "Reset filters",
+    unlockedBadge: "Unlocked",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -248,6 +254,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "购买失败",
     packUnavailable: "传说包当前不可用。",
     resetFilters: "重置过滤器",
+    unlockedBadge: "已解锁",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -284,6 +291,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Покупка не удалась",
     packUnavailable: "Пакет легенд сейчас недоступен.",
     resetFilters: "Сбросить фильтры",
+    unlockedBadge: "Доступно",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -320,6 +328,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Compra fallida",
     packUnavailable: "Pack de leyendas no disponible en este momento.",
     resetFilters: "Restablecer filtros",
+    unlockedBadge: "Desbloqueado",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -356,6 +365,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packBuyErrorTitle: "Falha na compra",
     packUnavailable: "Pacote de lendas indisponível no momento.",
     resetFilters: "Redefinir filtros",
+    unlockedBadge: "Desbloqueado",
   },
 };
 

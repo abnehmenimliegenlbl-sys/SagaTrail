@@ -59,7 +59,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, freeHikeUsed, language } = useApp();
+  const { profile, premium, freeHikeUsed, language, freieSagen } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const {
     isElite,
@@ -82,6 +82,7 @@ export default function KantonRouten() {
   const packKey = cantonName ? packEntitlementFuerKanton(cantonName) : "";
   const packLocked =
     premium && !!cantonName && !isElite && !hatEntitlement(packKey);
+  const packUnlocked = premium && (isElite || hatEntitlement(packKey));
   // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.
   // RC vergibt das pack_<kanton>-Entitlement automatisch nach dem Kauf.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
@@ -328,12 +329,16 @@ export default function KantonRouten() {
               </Text>
               {routes.map((route, i) => {
                 const locked = !premium && freeHikeUsed;
+                const unlocked =
+                  premium &&
+                  (packUnlocked || freieSagen[cantonName] === route.sagaId);
                 return (
                   <RouteCard
                     key={route.id}
                     route={route}
                     index={i}
                     locked={locked}
+                    unlocked={unlocked}
                     onPress={() => router.push(`/route/${route.id}`)}
                   />
                 );
@@ -350,11 +355,13 @@ function RouteCard({
   route,
   index,
   locked,
+  unlocked,
   onPress,
 }: {
   route: HikingRoute;
   index: number;
   locked: boolean;
+  unlocked?: boolean;
   onPress: () => void;
 }) {
   const t = useKantonStrings();
@@ -389,6 +396,11 @@ function RouteCard({
             {locked && (
               <View style={styles.cardLockBadge}>
                 <Feather name="lock" size={14} color={colors.photoScrimText} />
+              </View>
+            )}
+            {!locked && unlocked && (
+              <View style={styles.cardUnlockedBadge}>
+                <Feather name="check-circle" size={14} color="#fff" />
               </View>
             )}
           </View>
@@ -541,6 +553,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(8,10,12,0.55)",
+  },
+  cardUnlockedBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#16A34A",
   },
   cardTextScrim: {
     alignSelf: "flex-start",
