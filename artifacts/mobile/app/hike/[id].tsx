@@ -5,9 +5,10 @@ import {
   getPartners,
   getPois,
   getPoiStory,
+  getRouteSurfaces,
   getWeather,
 } from "@workspace/api-client-react";
-import type { Partner, Poi, WeatherReport } from "@workspace/api-client-react";
+import type { Partner, Poi, RouteSurfacePoint, WeatherReport } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
@@ -235,6 +236,9 @@ export default function LiveHike() {
   const [hikePhotos, setHikePhotos] = useState<string[]>([]);
   const [showPhotoChallenge, setShowPhotoChallenge] = useState(false);
   const photoChallengeShownRef = useRef(false);
+  const [rawSurfacePoints, setRawSurfacePoints] = useState<RouteSurfacePoint[]>([]);
+  const notifiedSurfaceFractionsRef = useRef<Set<number>>(new Set());
+  const notifiedMilestonesRef = useRef<Set<number>>(new Set());
   // Feature: Entscheidungs-Countdown
   const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
   // Live-Wetter am Wanderungsstart — wird einmalig geladen, sobald Route-Koordinaten bekannt sind.
@@ -254,6 +258,19 @@ export default function LiveHike() {
   // zwei parallele KI-Anfragen, die BEIDE abspielen (die erste hatte beim
   // stopNarration() der zweiten noch keinen Sound zum Stoppen).
   const narrationGenRef = useRef(0);
+
+  // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
+  const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
+
+  // Wegoberflaechenkategorie normalisieren (OSM-surface-Tag → 5 Klassen)
+  function normalizeSurface(s: string): string {
+    const v = s.toLowerCase();
+    if (/^(asphalt|paved|concrete|paving_stones|cobblestone|sett)/.test(v)) return "asphalt";
+    if (/^(gravel|compacted|fine_gravel|pebblestone|crushed_limestone)/.test(v)) return "kies";
+    if (/^(rock|stone|bare_rock)/.test(v)) return "fels";
+    if (/^(wood|boardwalk)/.test(v)) return "holz";
+    return "naturweg";
+  }
 
   // Wetter-Klassifizierung: aus WeatherReport wird eine von 8 atmosphaerischen
   // Kategorien abgeleitet, die als stimmungsvoller Einstieg in die Narration dient.
@@ -296,6 +313,33 @@ export default function LiveHike() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [route?.coordinates?.lat, route?.coordinates?.lng]);
+
+  // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
+  // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
+  useEffect(() => {
+    if (!osmId) return;
+    let cancelled = false;
+    getRouteSurfaces({ osmId })
+      .then((r) => { if (!cancelled) setRawSurfacePoints(r.points); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [osmId]);
+
+  // Wegoberflaechenpunkte → fraktionsbasierte Abschnitte (0–1) entlang der Route.
+  // Dedupliziert konsekutive gleiche Kategorien, filtert Startbereich heraus.
+  const surfacePoints = useMemo(() => {
+    if (!route?.geometry || route.geometry.length < 2 || rawSurfacePoints.length === 0) return [];
+    return rawSurfacePoints
+      .map((p) => {
+        const match = fortschrittAufRoute({ lat: p.lat, lng: p.lng }, route.geometry!);
+        if (!match || match.distKm > 0.5) return null;
+        return { fraction: match.fraction, surface: normalizeSurface(p.surface) };
+      })
+      .filter((x): x is { fraction: number; surface: string } => x !== null)
+      .sort((a, b) => a.fraction - b.fraction)
+      .filter((p, i, arr) => i === 0 || p.surface !== arr[i - 1].surface);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawSurfacePoints, route?.geometry]);
 
   // Begruessung (Wetter + Solo-Name + Tageszeit), die dem ersten Kapitel vorangestellt wird.
   const greetingPrefix = useMemo(() => {
@@ -742,6 +786,59 @@ export default function LiveHike() {
       speakRef.current?.(pack.photoChallengePrompt);
     }
   }, [livePos, saga?.coordinates, storyLanguage]);
+
+  // Wegoberflaechenansage: sobald der Wanderer einen neuen Oberflaechenabschnitt betritt,
+  // wird ein saga-atmosphaerischer Satz gesprochen (und optional als Push-Notif gesendet).
+  useEffect(() => {
+    if (surfacePoints.length === 0 || preparing) return;
+    const currentFraction = (() => {
+      if (livePos && route?.geometry && route.geometry.length >= 2) {
+        const match = fortschrittAufRoute(livePos, route.geometry);
+        if (match && match.distKm <= 1) return match.fraction;
+      }
+      return totalKm > 0 ? distance / totalKm : 0;
+    })();
+    for (const sp of surfacePoints) {
+      if (sp.fraction < 0.05) continue; // Startbereich ueberspringen
+      const key = Math.round(sp.fraction * 100);
+      if (notifiedSurfaceFractionsRef.current.has(key)) continue;
+      if (currentFraction >= sp.fraction - 0.02) {
+        notifiedSurfaceFractionsRef.current.add(key);
+        const pack = STORY_PACKS[resolveLang(storyLanguage)];
+        const text = pack.surfaceTransitionPhrase(sp.surface);
+        if (profile?.navAnnouncementsEnabled !== false) {
+          sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
+        }
+        const wasPlaying = speakingRef.current;
+        const chToResume = chapterTextRef.current;
+        const res = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
+        speakRef.current?.(text, res);
+      }
+    }
+  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
+
+  // Meilenstein-Zitat bei 25/50/75 % der Wanderung — motivierend + atmosphaerisch,
+  // mit optionalem Wanderernamen aus dem Profil.
+  useEffect(() => {
+    if (preparing || totalKm <= 0) return;
+    const fraction = Math.min(1, distance / totalKm);
+    const milestones = [25, 50, 75] as const;
+    for (const pct of milestones) {
+      if (fraction * 100 >= pct && !notifiedMilestonesRef.current.has(pct)) {
+        notifiedMilestonesRef.current.add(pct);
+        const pack = STORY_PACKS[resolveLang(storyLanguage)];
+        const name = profile?.name?.trim() || null;
+        const text = pack.milestonePhrase(pct, name);
+        if (profile?.navAnnouncementsEnabled !== false) {
+          sendeAbbiegeMitteilung(t.milestoneTitle, text);
+        }
+        const wasPlaying = speakingRef.current;
+        const chToResume = chapterTextRef.current;
+        const res = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
+        speakRef.current?.(text, res);
+      }
+    }
+  }, [distance, totalKm, storyLanguage, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
 
   const takePhoto = async () => {
     try {

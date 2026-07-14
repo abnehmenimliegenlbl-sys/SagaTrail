@@ -32,6 +32,8 @@ export interface HikeStrings {
   chapterNotif: (n: number) => string;
   turnNotifLeft: string;
   turnNotifRight: string;
+  surfaceChangeTitle: string;
+  milestoneTitle: string;
   poiNotifBody: string;
   perception: string;
   finishHike: string;
@@ -104,6 +106,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Kapitel ${n} beginnt`,
     turnNotifLeft: "Gleich links halten",
     turnNotifRight: "Gleich rechts halten",
+    surfaceChangeTitle: "Wegwechsel",
+    milestoneTitle: "Meilenstein",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
@@ -175,6 +179,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Kapitel ${n} faht aa`,
     turnNotifLeft: "Grad links halte",
     turnNotifRight: "Grad rächts halte",
+    surfaceChangeTitle: "Wägwächsel",
+    milestoneTitle: "Miileschtei",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
@@ -246,6 +252,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Chapter ${n} begins`,
     turnNotifLeft: "Keep left shortly",
     turnNotifRight: "Keep right shortly",
+    surfaceChangeTitle: "Trail surface",
+    milestoneTitle: "Milestone",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
@@ -317,6 +325,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Le chapitre ${n} commence`,
     turnNotifLeft: "Serrez à gauche",
     turnNotifRight: "Serrez à droite",
+    surfaceChangeTitle: "Surface du chemin",
+    milestoneTitle: "Borne",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
@@ -388,6 +398,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Inizia il capitolo ${n}`,
     turnNotifLeft: "Tieni la sinistra",
     turnNotifRight: "Tieni la destra",
+    surfaceChangeTitle: "Cambio di fondo",
+    milestoneTitle: "Traguardo",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
@@ -459,6 +471,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Comienza el capítulo ${n}`,
     turnNotifLeft: "Mantente a la izquierda",
     turnNotifRight: "Mantente a la derecha",
+    surfaceChangeTitle: "Cambio de superficie",
+    milestoneTitle: "Hito",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
@@ -530,6 +544,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Começa o capítulo ${n}`,
     turnNotifLeft: "Mantenha-se à esquerda",
     turnNotifRight: "Mantenha-se à direita",
+    surfaceChangeTitle: "Mudança de piso",
+    milestoneTitle: "Marco",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
@@ -601,6 +617,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `第 ${n} 章开始`,
     turnNotifLeft: "即将靠左",
     turnNotifRight: "即将靠右",
+    surfaceChangeTitle: "路面变换",
+    milestoneTitle: "里程碑",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
     finishHike: "完成徒步",
@@ -672,6 +690,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     chapterNotif: (n) => `Начинается глава ${n}`,
     turnNotifLeft: "Скоро держитесь левее",
     turnNotifRight: "Скоро держитесь правее",
+    surfaceChangeTitle: "Смена покрытия",
+    milestoneTitle: "Веха",
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
     perception: "ВОСПРИЯТИЕ",
     finishHike: "Завершить поход",
