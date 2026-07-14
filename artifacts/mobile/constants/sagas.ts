@@ -447,8 +447,8 @@ export const SAGAS: Saga[] = [
   "summary": "Kleinbasel, das rechtsrheinische Basel, führt seit alter Zeit den Greifen im Wappen und feiert ihn als Vogel Gryff mit einem eigenen Ehrentag. Der Legende nach war es der stolze Greif, der die kleinbasler Seite des Rheins gegen die grossbaslerische Seite verteidigte, als beide Ufer noch getrennte Städte waren – bis heute wirft der Vogel Gryff bei seinem Auftritt einen Blick über den Rhein, ohne ihn je zu überqueren.",
   "summaries": {
     "gsw": {
-      "text": "Chliibasel füehrt scho lang de Griff im Wappe und fiiret en als Vogel Gryff mit eme eigene Ehretag. D Sag verzellt, dr stolz Griff heig d Chliibasler Site vom Rhy verteidigt gäge d Grossbasler Site.",
-      "reviewEmpfohlen": true
+      "text": "Chliibasel füehrt scho lang de Griff im Wappe und fiiret en als Vogel Gryff mit eme eigene Ehretag. D Sag verzellt, dr stolz Griff heig d Chliibasler Site vom Rhy verteidigt gäge d Grossbasler Site, wo dazumal no zwei getrennte Stett gsi sind. Bis hüt luegt dr Vogel Gryff bi sinem Uftritt über de Rhy abe – überquert en aber nie.",
+      "reviewEmpfohlen": false
     },
     "de": {
       "text": "Kleinbasel, das rechtsrheinische Basel, führt seit alter Zeit den Greifen im Wappen und feiert ihn als Vogel Gryff mit einem eigenen Ehrentag. Der Legende nach war es der stolze Greif, der die kleinbasler Seite des Rheins gegen die grossbaslerische Seite verteidigte, als beide Ufer noch getrennte Städte waren – bis heute wirft der Vogel Gryff bei seinem Auftritt einen Blick über den Rhein, ohne ihn je zu überqueren.",

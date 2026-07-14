@@ -489,7 +489,7 @@ import type { InsertCatalogSaga } from "@workspace/db";
   "summaries": {
     "gsw": {
       "title": "Der Vogel Gryff vu Chliibaschl",
-      "text": "Chliibasel füehrt scho lang de Griff im Wappe und fiiret en als Vogel Gryff mit eme eigene Ehretag. D Sag verzellt, dr stolz Griff heig d Chliibasler Site vom Rhy verteidigt gäge d Grossbasler Site.",
+      "text": "Chliibasel füehrt scho lang de Griff im Wappe und fiiret en als Vogel Gryff mit eme eigene Ehretag. D Sag verzellt, dr stolz Griff heig d Chliibasler Site vom Rhy verteidigt gäge d Grossbasler Site, wo dazumal no zwei getrennte Stett gsi sind. Bis hüt luegt dr Vogel Gryff bi sinem Uftritt über de Rhy abe – überquert en aber nie.",
       "reviewEmpfohlen": true
     },
     "de": {
