@@ -30,7 +30,11 @@ function getRevenueCatApiKey() {
     throw new Error("RevenueCat Public API Keys not found");
   }
 
-  if (__DEV__ || Platform.OS === "web" || Constants.executionEnvironment === "storeClient") {
+  // Test-Key nur fuer Web-Billing (Browser/Expo Go) — NICHT fuer native iOS-Builds,
+  // auch nicht im Dev-Modus. Ein nativer StoreKit-Receipt kann nur mit dem
+  // echten iOS-Key validiert werden; der Web-Test-Key lehnt ihn mit
+  // "The receipt is not valid" ab.
+  if (Platform.OS === "web" || Constants.executionEnvironment === "storeClient") {
     return REVENUECAT_TEST_API_KEY;
   }
 
