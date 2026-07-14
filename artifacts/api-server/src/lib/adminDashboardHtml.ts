@@ -345,11 +345,11 @@ function renderPartnerRow(p) {
     (p.notizenIntern ? '<div style="font-size:11px;color:var(--mid);margin-top:2px">&#128172; ' + esc(p.notizenIntern) + '</div>' : '') +
     '</div>' +
     '<div class="partner-actions">' +
-      '<button class="btn btn-ghost btn-sm" onclick="toggleEdit(\'' + p.id + '\')">&#9998; Bearbeiten</button>' +
-      '<button class="btn ' + (p.isActive?'btn-ghost':'btn-green') + ' btn-sm" onclick="toggleAktiv(\'' + p.id + '\',' + !p.isActive + ')">' + (p.isActive?'Deaktivieren':'Aktivieren') + '</button>' +
-      '<button class="btn btn-orange btn-sm" onclick="zeigeMahnung(\'' + p.id + '\')">&#9993; Mahnung</button>' +
-      (p.isActive ? '<button class="btn btn-danger btn-sm" onclick="beendePartnerschaft(\'' + p.id + '\')">Beenden</button>' : '') +
-      '<button class="btn btn-danger btn-sm" onclick="loeschePartner(\'' + p.id + '\')">&#128465;</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="toggleEdit(&#39;' + p.id + '&#39;)">&#9998; Bearbeiten</button>' +
+      '<button class="btn ' + (p.isActive?'btn-ghost':'btn-green') + ' btn-sm" onclick="toggleAktiv(&#39;' + p.id + '\\',' + !p.isActive + ')">' + (p.isActive?'Deaktivieren':'Aktivieren') + '</button>' +
+      '<button class="btn btn-orange btn-sm" onclick="zeigeMahnung(&#39;' + p.id + '&#39;)">&#9993; Mahnung</button>' +
+      (p.isActive ? '<button class="btn btn-danger btn-sm" onclick="beendePartnerschaft(&#39;' + p.id + '&#39;)">Beenden</button>' : '') +
+      '<button class="btn btn-danger btn-sm" onclick="loeschePartner(&#39;' + p.id + '&#39;)">&#128465;</button>' +
     '</div>' +
     '</div>' +
     '<div class="partner-edit-form" id="ef-' + p.id + '">' + editFormHtml(p) + '</div>' +
@@ -384,8 +384,8 @@ function editFormHtml(p) {
     fgFull('Interne Notizen','<textarea id="ef-notizen-'+p.id+'">'+esc(p.notizenIntern||'')+'</textarea>') +
     '</div>' +
     '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">' +
-    '<button class="btn btn-primary" onclick="savePartner(\''+p.id+'\')">Speichern</button>' +
-    '<button class="btn btn-ghost" onclick="toggleEdit(\''+p.id+'\')">Abbrechen</button>' +
+    '<button class="btn btn-primary" onclick="savePartner(&#39;'+p.id+'&#39;)">Speichern</button>' +
+    '<button class="btn btn-ghost" onclick="toggleEdit(&#39;'+p.id+'&#39;)">Abbrechen</button>' +
     '<span id="ef-status-'+p.id+'" class="hint"></span>' +
     '</div>';
 }
@@ -399,7 +399,7 @@ function katOptions(sel) {
   }).join('');
 }
 function paketOptions(sel) {
-  return [['','– wählen –'],['basic','Basic (490/J.)'],['standard','Standard (990/J.)'],['premium','Premium (1\'990/J.)']].map(function(o){
+  return [['','– wählen –'],['basic','Basic (490/J.)'],['standard','Standard (990/J.)'],["premium","Premium (1'990/J.)"]].map(function(o){
     return '<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>';
   }).join('');
 }
