@@ -173,12 +173,10 @@ export default function LiveHike() {
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
-  const [isOffline, setIsOffline] = useState<boolean>(
-    () => typeof navigator !== "undefined" && !navigator.onLine,
-  );
+  const [isOffline, setIsOffline] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
     const goOnline = () => setIsOffline(false);
     const goOffline = () => setIsOffline(true);
     window.addEventListener("online", goOnline);
