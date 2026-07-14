@@ -37,6 +37,8 @@ import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { useSubscription } from "@/lib/revenuecat";
+import { packEntitlementFuerKanton } from "@/lib/kantonSlug";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -55,7 +57,8 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen } = useApp();
+  const { isElite, hatEntitlement } = useSubscription();
   const { getRoute, getSagaForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
   const [importing, setImporting] = useState(false);
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
@@ -279,7 +282,10 @@ export default function Routenplanung() {
   }
 
   const meta = route;
-  const locked = !premium && freeHikeUsed;
+  const routePackKey = saga?.canton ? packEntitlementFuerKanton(saga.canton) : "";
+  const packUnlocked = premium && (isElite || (!!routePackKey && hatEntitlement(routePackKey)));
+  const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && freieSagen[saga.canton] !== route.sagaId;
+  const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 

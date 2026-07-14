@@ -328,7 +328,11 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {routes.map((route, i) => {
-                const locked = !premium && freeHikeUsed;
+                const locked = packUnlocked
+                  ? false
+                  : premium
+                    ? freieSagen[cantonName] !== route.sagaId
+                    : freeHikeUsed;
                 const unlocked =
                   premium &&
                   (packUnlocked || freieSagen[cantonName] === route.sagaId);
