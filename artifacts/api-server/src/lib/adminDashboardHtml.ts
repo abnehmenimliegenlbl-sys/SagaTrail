@@ -286,6 +286,8 @@ window.addEventListener('DOMContentLoaded', function() {
         document.getElementById('tok-forget').style.display = 'none';
         setTokStatus('Gespeichertes Token ungültig: ' + e.message, false);
       });
+  } else {
+    setTokStatus('Getrennt \u2717', false);
   }
 });
 
