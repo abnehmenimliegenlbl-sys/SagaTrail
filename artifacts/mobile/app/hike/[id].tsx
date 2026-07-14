@@ -5,8 +5,9 @@ import {
   getPartners,
   getPois,
   getPoiStory,
+  getWeather,
 } from "@workspace/api-client-react";
-import type { Partner, Poi } from "@workspace/api-client-react";
+import type { Partner, Poi, WeatherReport } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import * as Haptics from "expo-haptics";
@@ -57,6 +58,7 @@ import {
   resolveLang,
   STORY_PACKS,
   trimForNarration,
+  type WetterKlasse,
 } from "@/lib/storyContent";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
@@ -235,6 +237,8 @@ export default function LiveHike() {
   const photoChallengeShownRef = useRef(false);
   // Feature: Entscheidungs-Countdown
   const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
+  // Live-Wetter am Wanderungsstart — wird einmalig geladen, sobald Route-Koordinaten bekannt sind.
+  const [hikeWeather, setHikeWeather] = useState<WeatherReport | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -251,6 +255,20 @@ export default function LiveHike() {
   // stopNarration() der zweiten noch keinen Sound zum Stoppen).
   const narrationGenRef = useRef(0);
 
+  // Wetter-Klassifizierung: aus WeatherReport wird eine von 8 atmosphaerischen
+  // Kategorien abgeleitet, die als stimmungsvoller Einstieg in die Narration dient.
+  function classifyWetter(r: WeatherReport): WetterKlasse {
+    const c = r.weatherCode;
+    if (c >= 95) return "gewitter";
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return "schnee";
+    if (c >= 51 && c <= 82) return "regen";
+    if (c === 45 || c === 48) return "nebel";
+    if (r.temperatureC >= 28) return "heiss";
+    if (r.temperatureC <= 3) return "kalt";
+    if (c <= 1) return "sonnig";
+    return "bewoelkt";
+  }
+
   // KI-Erzaehlstimme (ElevenLabs) ist online-only und ausschliesslich fuer
   // Premium — kein Offline-Fallback. Fuer "gsw" wird dabei NIE Dialekt-Text
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
@@ -266,16 +284,30 @@ export default function LiveHike() {
     return "nacht";
   }, []);
 
-  // Begruessung (Solo-Name + Tageszeit), die dem ersten Kapitel vorangestellt wird.
+  // Wetter einmalig laden, sobald Route-Koordinaten bekannt sind.
+  // Schlägt die Anfrage fehl (offline/Timeout), bleibt hikeWeather null —
+  // die Narration läuft dann ohne Wettereinleitung weiter.
+  useEffect(() => {
+    const coords = route?.coordinates;
+    if (!coords) return;
+    let cancelled = false;
+    getWeather({ lat: coords.lat, lng: coords.lng })
+      .then((r) => { if (!cancelled) setHikeWeather(r); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.coordinates?.lat, route?.coordinates?.lng]);
+
+  // Begruessung (Wetter + Solo-Name + Tageszeit), die dem ersten Kapitel vorangestellt wird.
   const greetingPrefix = useMemo(() => {
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    const wetterSatz = hikeWeather ? pack.weatherPhrase(classifyWetter(hikeWeather)) : "";
     const tod = pack.timeOfDayGreeting(timeOfDay);
-    if (!inGruppe && profile?.name?.trim()) {
-      return `${pack.soloGreeting(profile.name.trim())} ${tod}`;
-    }
-    return tod;
+    const personal = !inGruppe && profile?.name?.trim()
+      ? `${pack.soloGreeting(profile.name.trim())} `
+      : "";
+    return `${wetterSatz} ${personal}${tod}`.trim();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyLanguage, timeOfDay]);
+  }, [storyLanguage, timeOfDay, hikeWeather]);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung

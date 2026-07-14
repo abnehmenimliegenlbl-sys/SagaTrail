@@ -87,7 +87,15 @@ export interface StoryPack {
   timeOfDayGreeting: (tod: "morgen" | "mittag" | "abend" | "nacht") => string;
   /** Gesprochene GPS-Foto-Challenge am Herzort der Sage */
   photoChallengePrompt: string;
+  /** Atmosphärische Wettereinleitung, die dem Greeting vorangestellt wird */
+  weatherPhrase: (klasse: WetterKlasse) => string;
 }
+
+/**
+ * Grobe Wetter-Kategorien, die aus dem WeatherReport abgeleitet werden
+ * und als stimmungsvoller atmosphärischer Einstieg in die Sage dienen.
+ */
+export type WetterKlasse = "heiss" | "sonnig" | "bewoelkt" | "nebel" | "regen" | "schnee" | "kalt" | "gewitter";
 
 // Die tone-Werte bleiben ueber alle Sprachen als stabile Kennungen deutsch.
 export const STORY_PACKS: Record<Lang, StoryPack> = {
@@ -137,6 +145,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Willkommen auf dem Weg, ${name}. Lass die Sage dich begleiten.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Die Berge erwachen noch — ein guter Morgen für alte Geschichten.", mittag: "Die Mittagssonne wirft klare Schatten, doch dieser Weg birgt noch Geheimnisse.", abend: "Das Abendlicht taucht alles in warmes Gold — die richtige Stunde für Sagen.", nacht: "Dunkelheit liegt über dem Pfad. Genau jetzt erwachen die alten Geschichten." } as const)[tod],
     photoChallengePrompt: "Du bist am Herzort dieser Sage. Halte diesen besonderen Ort in einem Foto fest.",
+    weatherPhrase: (k) => ({
+      heiss:    "Die Hitze liegt schwer über dem Tal — als hätte die Sonne heute ein altes Urteil zu sprechen.",
+      sonnig:   "Die Sonne steht klar am Himmel. Ein solcher Tag hat schon immer die richtigen Geschichten angelockt.",
+      bewoelkt: "Graue Wolken ziehen tief über den Weg. Kein Licht ohne Schatten — kein Schatten ohne Geheimnis.",
+      nebel:    "Nebel liegt über dem Pfad. Die Grenze zwischen damals und heute verschwimmt.",
+      regen:    "Der Regen fällt gleichmäßig auf alten Boden. Solche Tage haben schon immer zu alten Geschichten eingeladen.",
+      schnee:   "Schnee liegt still auf dem Weg. Die Stille kennt diese Sage seit Langem.",
+      kalt:     "Die Kälte beißt in die Wangen — genau so muss es sich damals angefühlt haben.",
+      gewitter: "Ein Gewitter liegt in der Luft. Alte Geschichten brauchen keinen besseren Rahmen.",
+    } as const)[k],
   },
 
   gsw: {
@@ -185,6 +203,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Willkomme uf em Wäg, ${name}. Lo d Sage dich bgleite.`,
     timeOfDayGreeting: (tod) => ({ morgen: "D Bärg erwache no — en guete Morge für alti Gschichte.", mittag: "D Miittagssunne wirft klari Schatte, aber dä Wäg verbirgt no Gheimnis.", abend: "S Abelicht taucht alles i warmes Gold — geni Stund für Sage.", nacht: "Dunkelheit liit über em Pfad. Genau jetzt erwache d alte Gschichte." } as const)[tod],
     photoChallengePrompt: "Du bisch am Härzort vo dere Sage. Halte dä bsundere Ort i eme Foto fescht.",
+    weatherPhrase: (k) => ({
+      heiss:    "D Hitzi liit schwer über em Tal — as ob d Sunne hüt es alts Urteil z spreche hätt.",
+      sonnig:   "D Sunne staht klar am Himmel. Sotti Täg händ scho immer d richtigi Gschichte ahzoge.",
+      bewoelkt: "Grauji Wolke zieht tief über de Wäg. Kei Liecht ohni Schatte — kei Schatte ohni Gheimnis.",
+      nebel:    "Näbel liit über em Pfad. D Gränze zwüschet damals und hüt verblurrt.",
+      regen:    "De Räge fallt gmächlich uf alte Bode. Sotti Täg händ scho immer zu alte Gschichte yyglade.",
+      schnee:   "Schnee liit still uf em Wäg. D Stilli kennt dä Sage scho lang.",
+      kalt:     "D Chälti biisst i d Bache — genau so muss sich's damals aaghört ha.",
+      gewitter: "Es Gwitter liit i de Luft. Alti Gschichte bruched kei bessere Rahme.",
+    } as const)[k],
   },
 
   fr: {
@@ -233,6 +261,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bienvenue sur ce chemin, ${name}. Laisse la légende te guider.`,
     timeOfDayGreeting: (tod) => ({ morgen: "La montagne s'éveille encore — un bon matin pour de vieilles histoires.", mittag: "Le soleil de midi projette des ombres nettes, et pourtant ce chemin cache encore des secrets.", abend: "La lumière du soir teinte tout d'un or chaud — l'heure idéale pour les légendes.", nacht: "L'obscurité recouvre le sentier. C'est maintenant que les vieilles histoires s'éveillent." } as const)[tod],
     photoChallengePrompt: "Tu es au cœur de cette légende. Garde ce lieu particulier en photo.",
+    weatherPhrase: (k) => ({
+      heiss:    "La chaleur pèse lourd sur la vallée — comme si le soleil avait aujourd'hui un vieux verdict à rendre.",
+      sonnig:   "Le soleil se dresse clair dans le ciel. De tels jours ont toujours attiré les bonnes histoires.",
+      bewoelkt: "Des nuages gris glissent bas sur le chemin. Pas de lumière sans ombre — pas d'ombre sans mystère.",
+      nebel:    "Le brouillard recouvre le sentier. La frontière entre autrefois et aujourd'hui s'efface.",
+      regen:    "La pluie tombe régulièrement sur une vieille terre. De tels jours ont toujours invité les vieilles histoires.",
+      schnee:   "La neige repose silencieuse sur le chemin. Le silence connaît cette légende depuis longtemps.",
+      kalt:     "Le froid mord les joues — exactement comme cela a dû se passer jadis.",
+      gewitter: "Un orage se prépare. Les vieilles histoires n'ont pas besoin d'un meilleur décor.",
+    } as const)[k],
   },
 
   it: {
@@ -281,6 +319,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Benvenuto·a su questo cammino, ${name}. Lascia che la leggenda ti guidi.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Le montagne si stanno ancora svegliando — un buon mattino per le storie antiche.", mittag: "Il sole a picco proietta ombre nette, eppure questo sentiero cela ancora segreti.", abend: "La luce della sera tinge tutto di un oro caldo — l'ora giusta per le leggende.", nacht: "L'oscurità avvolge il sentiero. È proprio ora che le storie antiche si risvegliano." } as const)[tod],
     photoChallengePrompt: "Sei nel cuore di questa leggenda. Ferma questo luogo speciale in una foto.",
+    weatherPhrase: (k) => ({
+      heiss:    "Il calore pesa sulla valle — come se il sole avesse oggi un antico verdetto da pronunciare.",
+      sonnig:   "Il sole splende chiaro nel cielo. Giornate simili hanno sempre attirato le storie giuste.",
+      bewoelkt: "Nuvole grigie scivolano basse sul sentiero. Nessuna luce senza ombra — nessuna ombra senza mistero.",
+      nebel:    "La nebbia avvolge il sentiero. Il confine tra un tempo e oggi si sfuma.",
+      regen:    "La pioggia cade uniforme su terra antica. Giornate simili hanno sempre invitato le vecchie storie.",
+      schnee:   "La neve giace silenziosa sul sentiero. Il silenzio conosce questa leggenda da tempo.",
+      kalt:     "Il freddo morde le guance — esattamente come doveva sembrare allora.",
+      gewitter: "C'è un temporale nell'aria. Le vecchie storie non hanno bisogno di una cornice migliore.",
+    } as const)[k],
   },
 
   en: {
@@ -329,6 +377,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Welcome to the trail, ${name}. Let the saga guide you.`,
     timeOfDayGreeting: (tod) => ({ morgen: "The mountains are still waking — a good morning for old tales.", mittag: "The midday sun casts sharp shadows, yet this path still hides its secrets.", abend: "Evening light bathes everything in warm gold — the right hour for legends.", nacht: "Darkness lies over the path. This is when old stories stir." } as const)[tod],
     photoChallengePrompt: "You are at the heart of this saga. Capture this special place in a photo.",
+    weatherPhrase: (k) => ({
+      heiss:    "The heat bears down on the valley — as if the sun had an old verdict to deliver today.",
+      sonnig:   "The sun stands clear in the sky. Days like this have always drawn the right stories out.",
+      bewoelkt: "Grey clouds drift low over the path. No light without shadow — no shadow without secret.",
+      nebel:    "Mist lies over the trail. The line between long ago and today grows thin.",
+      regen:    "Rain falls steadily on old ground. Days like this have always kept good company with old tales.",
+      schnee:   "Snow rests still on the path. The silence has known this saga for a long time.",
+      kalt:     "The cold bites at your cheeks — exactly as it must have felt back then.",
+      gewitter: "A storm is gathering. Old stories have never needed a better setting.",
+    } as const)[k],
   },
 
   zh: {
@@ -373,6 +431,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `欢迎踏上这条小路，${name}。让传说引领你前行。`,
     timeOfDayGreeting: (tod) => ({ morgen: "山峦尚在沉睡中苏醒——这是聆听古老故事的好早晨。", mittag: "正午的阳光投下清晰的阴影，然而这条路仍藏着秘密。", abend: "傍晚的光将一切染成温暖的金色——这正是传说最宜讲述的时刻。", nacht: "黑暗笼罩着山径。正是在这样的时刻，古老的故事悄然苏醒。" } as const)[tod],
     photoChallengePrompt: "你正身处这段传说的核心之地。用一张照片记录下这个特别的地方。",
+    weatherPhrase: (k) => ({
+      heiss:    "酷热笼罩山谷，仿佛太阳今日要宣布一个古老的裁决。",
+      sonnig:   "阳光清澈地立于天穹。这样的日子，向来最适合古老的故事。",
+      bewoelkt: "灰色云层低低地掠过山径。有光必有影，有影必有秘密。",
+      nebel:    "雾气笼罩着小径。昨日与今日的界限，悄然模糊。",
+      regen:    "雨水均匀地落在古老的土地上。这样的日子，向来是古老故事的良伴。",
+      schnee:   "积雪静静覆盖着山径。这片寂静，早已认识这段传说。",
+      kalt:     "寒意咬上脸颊——想必当年，也是如此。",
+      gewitter: "雷雨蓄势待发。古老的故事，从不需要更好的舞台。",
+    } as const)[k],
   },
 
   es: {
@@ -421,6 +489,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bienvenido·a al sendero, ${name}. Deja que la leyenda te guíe.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Las montañas aún se despiertan — una buena mañana para historias antiguas.", mittag: "El sol del mediodía proyecta sombras nítidas, y aun así este camino guarda secretos.", abend: "La luz del atardecer lo baña todo en oro cálido — la hora justa para las leyendas.", nacht: "La oscuridad cubre el sendero. Es ahora cuando las viejas historias despiertan." } as const)[tod],
     photoChallengePrompt: "Estás en el corazón de esta leyenda. Inmortaliza este lugar especial en una foto.",
+    weatherPhrase: (k) => ({
+      heiss:    "El calor pesa sobre el valle — como si el sol tuviera hoy un viejo veredicto que dictar.",
+      sonnig:   "El sol luce claro en el cielo. Días así siempre han atraído las historias adecuadas.",
+      bewoelkt: "Nubes grises se deslizan bajas sobre el sendero. No hay luz sin sombra — no hay sombra sin misterio.",
+      nebel:    "La niebla cubre el camino. La línea entre el pasado y el hoy se difumina.",
+      regen:    "La lluvia cae uniforme sobre tierra antigua. Días así siempre han invitado a los viejos relatos.",
+      schnee:   "La nieve descansa silenciosa en el sendero. El silencio conoce esta leyenda desde hace mucho.",
+      kalt:     "El frío muerde las mejillas — exactamente así debió de sentirse entonces.",
+      gewitter: "Se avecina una tormenta. Las viejas historias nunca han necesitado mejor escenario.",
+    } as const)[k],
   },
 
   pt: {
@@ -469,6 +547,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bem-vindo·a à trilha, ${name}. Deixa a lenda te guiar.`,
     timeOfDayGreeting: (tod) => ({ morgen: "As montanhas ainda estão a despertar — uma boa manhã para histórias antigas.", mittag: "O sol do meio-dia projeta sombras nítidas, mas este caminho ainda guarda segredos.", abend: "A luz da tarde banha tudo em ouro quente — a hora certa para as lendas.", nacht: "A escuridão cobre o caminho. É agora que as velhas histórias despertam." } as const)[tod],
     photoChallengePrompt: "Estás no coração desta lenda. Guarda este lugar especial numa foto.",
+    weatherPhrase: (k) => ({
+      heiss:    "O calor pesa sobre o vale — como se o sol tivesse hoje um antigo veredicto a pronunciar.",
+      sonnig:   "O sol brilha claro no céu. Dias assim sempre atraíram as histórias certas.",
+      bewoelkt: "Nuvens cinzentas deslizam baixas sobre o trilho. Não há luz sem sombra — não há sombra sem segredo.",
+      nebel:    "O nevoeiro cobre o caminho. A fronteira entre o ontem e o hoje esfuma-se.",
+      regen:    "A chuva cai uniformemente sobre terra antiga. Dias assim sempre convidaram às histórias de outros tempos.",
+      schnee:   "A neve repousa silenciosa no trilho. O silêncio conhece esta lenda há muito tempo.",
+      kalt:     "O frio morde as bochechas — exatamente como devia ter parecido naquele tempo.",
+      gewitter: "Uma tempestade se aproxima. As velhas histórias nunca precisaram de um cenário melhor.",
+    } as const)[k],
   },
 
   ru: {
@@ -517,6 +605,16 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Добро пожаловать на тропу, ${name}. Пусть легенда ведёт тебя.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Горы ещё просыпаются — хорошее утро для старых историй.", mittag: "Полуденное солнце отбрасывает чёткие тени, и всё же этот путь хранит свои тайны.", abend: "Вечерний свет окрашивает всё в тёплое золото — самое время для легенд.", nacht: "Тьма лежит над тропой. Именно сейчас пробуждаются старые истории." } as const)[tod],
     photoChallengePrompt: "Ты в самом сердце этой легенды. Запечатли это особое место на фото.",
+    weatherPhrase: (k) => ({
+      heiss:    "Зной давит на долину — словно солнце сегодня выносит давний приговор.",
+      sonnig:   "Солнце стоит ясно в небе. Такие дни всегда притягивали нужные истории.",
+      bewoelkt: "Серые тучи ползут низко над тропой. Нет света без тени — нет тени без тайны.",
+      nebel:    "Туман лежит над тропой. Граница между прошлым и сегодняшним днём стирается.",
+      regen:    "Дождь ровно падает на древнюю землю. Такие дни всегда были добрыми попутчиками старых преданий.",
+      schnee:   "Снег лежит тихо на тропе. Эта тишина знает предание уже очень давно.",
+      kalt:     "Холод кусает щёки — наверное, именно так всё и ощущалось тогда.",
+      gewitter: "В воздухе висит гроза. Старые истории никогда не нуждались в лучших декорациях.",
+    } as const)[k],
   },
 };
 
