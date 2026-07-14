@@ -93,6 +93,8 @@ export interface StoryPack {
   surfaceTransitionPhrase: (surface: "asphalt" | "kies" | "naturweg" | "fels" | "holz" | string) => string;
   /** Motivierendes Meilenstein-Zitat (25/50/75 %), mit optionalem Namen */
   milestonePhrase: (pct: 25 | 50 | 75, name: string | null) => string;
+  /** Routen-Einleitung vor Kapitel 1: Distanz, Dauer, Schwierigkeit, Oberfläche, POIs, Ausrüstung */
+  routeBriefing: (p: RouteBriefingParams) => string;
 }
 
 /**
@@ -100,6 +102,19 @@ export interface StoryPack {
  * und als stimmungsvoller atmosphärischer Einstieg in die Sage dienen.
  */
 export type WetterKlasse = "heiss" | "sonnig" | "bewoelkt" | "nebel" | "regen" | "schnee" | "kalt" | "gewitter";
+
+export type RouteDifficulty = "leicht" | "mittel" | "anspruchsvoll";
+
+export type RouteBriefingParams = {
+  name: string | null;
+  distanceKm: number;
+  minutes: number;
+  difficulty: RouteDifficulty;
+  hasSteepSections: boolean;
+  surfaces: string[];
+  poiNames: string[];
+  wetterKlasse: WetterKlasse | null;
+};
 
 // Die tone-Werte bleiben ueber alle Sprachen als stabile Kennungen deutsch.
 export const STORY_PACKS: Record<Lang, StoryPack> = {
@@ -166,6 +181,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Ein Viertel geschafft, ${name}. Die Sage trägt dich weiter.`, 50: `Halbzeit, ${name}. Was hinter dir liegt, ist genauso weit wie das, was noch kommt.`, 75: `Noch ein letztes Stück, ${name}. Drei Viertel hast du bereits hinter dir gelassen.` } as Record<number, string>)
         : ({ 25: "Ein Viertel liegt hinter dir. Die Sage hat dich schon ein Stück in ihr Reich gezogen.", 50: "Die Hälfte. Der Weg hinter dir ist so lang wie der, der noch vor dir liegt.", 75: "Drei Viertel. Dieser Weg wird sich für immer in dein Gedächtnis eingraben." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "eine leichte", mittel: "eine mittelschwere", anspruchsvoll: "eine anspruchsvolle" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `etwa ${Math.round(p.minutes / 5) * 5} Minuten` : p.minutes < 90 ? "etwa eine Stunde" : `etwa ${Math.round(p.minutes / 30) / 2} Stunden`;
+      const n = p.name ? `${p.name}, du hast dir ` : "Du hast dir ";
+      const steep = p.hasSteepSections ? " Ein paar steile Stellen warten auf dich — das Herz wird pumpen." : "";
+      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwege", naturweg: "Naturwege", fels: "Fels", holz: "Holzstege" };
+      const surf = p.surfaces.length ? ` Der Weg führt über ${p.surfaces.map((s) => surfMap[s] ?? s).join(" und ")}.` : "";
+      const poi = p.poiNames.length ? ` Unterwegs könntest du ${p.poiNames.slice(0, 3).join(", ")} begegnen — Orte, die schon die Sage kennt.` : "";
+      const gearMap: Record<string, string> = { heiss: " Trink viel Wasser, schütz deinen Kopf vor der Sonne und vergiss die Sonnencreme nicht.", sonnig: " Feste Schuhe und etwas Sonnenschutz empfehlen sich.", bewoelkt: " Eine leichte Jacke und gutes Schuhwerk genügen.", nebel: " Im Nebel: Schichten, die du ausziehen kannst, und festen Halt unter den Füssen.", regen: " Der Regen meint es ernst — wasserdichte Schuhe und eine Regenjacke.", schnee: " Griffige Sohlen, Handschuhe und warme Schichten sind Pflicht.", kalt: " Gegen die Kälte: warme Kleidung und etwas Heisses im Rucksack.", gewitter: " Gewitter im Anzug — bleib unter der Baumgrenze und halte die Jacke griffbereit." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff} Route ausgesucht: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   gsw: {
@@ -231,6 +258,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Es Viertel gschafft, ${name}. D Sage treit di witer.`, 50: `Halbzyt, ${name}. Was hinder dir liit, isch genau so wit wie das, was no chunt.`, 75: `No es letschts Stück, ${name}. Drü Viertel hesch du scho hinder dir glah.` } as Record<number, string>)
         : ({ 25: "Es Viertel liit hinder dir. D Sage het di scho es Stück in ir Reich gzoge.", 50: "D Helfti. De Wäg hinder dir isch so lang wie de, wo no vor dir liit.", 75: "Drü Viertel. Dä Wäg wird sich für immer in d Erinneriig iifrässe." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "es liechte", mittel: "es mittelschwäre", anspruchsvoll: "es aspruchsvolls" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `öppä ${Math.round(p.minutes / 5) * 5} Minute` : p.minutes < 90 ? "öppä e Stund" : `öppä ${Math.round(p.minutes / 30) / 2} Stunde`;
+      const n = p.name ? `${p.name}, du hesch dir ` : "Du hesch dir ";
+      const steep = p.hasSteepSections ? " Es git es paar steili Stelle — dä Atem wird schnäller werde." : "";
+      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwäg", naturweg: "Naturwäg", fels: "Fels", holz: "Holzstäg" };
+      const surf = p.surfaces.length ? ` Dr Wäg füehrt über ${p.surfaces.map((s) => surfMap[s] ?? s).join(" und ")}.` : "";
+      const poi = p.poiNames.length ? ` Underwegs chöntisch ${p.poiNames.slice(0, 3).join(", ")} begägne — Ort, wo d Sage scho kennt.` : "";
+      const gearMap: Record<string, string> = { heiss: " Trink gnueg Wasser, schütz di vor dr Sunne und tusch Sonneschrem ii.", sonnig: " Feschti Schue und öppis Sonneschutz empfehle sich.", bewoelkt: " E liechti Juppä und gueti Schue reiche.", nebel: " Im Nebel: schichtwise aalegge und sicher ufträtte.", regen: " Dr Räge isch ernst — wasserdichti Schue und en Rägemanntel.", schnee: " Griffigi Sole, Handschu und warmi Schichte sind Pflicht.", kalt: " Gäge d Kälti: warmi Chleider und öppis Heisses im Rucksack.", gewitter: " Gwitter im Azug — bliib unterm Baumgrenz und halt d Juppä parat." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff} Wäg usgsuecht: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   fr: {
@@ -296,6 +335,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Un quart accompli, ${name}. La légende te porte plus loin.`, 50: `Mi-chemin, ${name}. Ce qui est derrière toi est aussi loin que ce qui t'attend encore.`, 75: `Un dernier bout, ${name}. Trois quarts sont déjà derrière toi.` } as Record<number, string>)
         : ({ 25: "Un quart du chemin est derrière toi. La légende t'a déjà tiré un peu dans son domaine.", 50: "La moitié. Le chemin derrière toi est aussi long que celui qui reste à parcourir.", 75: "Trois quarts. Ce chemin va bientôt s'imprimer pour toujours dans ta mémoire." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "un itinéraire facile", mittel: "un itinéraire moyen", anspruchsvoll: "un itinéraire exigeant" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `environ ${Math.round(p.minutes / 5) * 5} minutes` : p.minutes < 90 ? "environ une heure" : `environ ${Math.round(p.minutes / 30) / 2} heures`;
+      const n = p.name ? `${p.name}, tu as choisi ` : "Tu as choisi ";
+      const steep = p.hasSteepSections ? " Quelques passages raides t'attendent — le souffle sera sollicité." : "";
+      const surfMap: Record<string, string> = { asphalt: "asphalte", kies: "graviers", naturweg: "sentiers naturels", fels: "rochers", holz: "passerelles en bois" };
+      const surf = p.surfaces.length ? ` Le chemin passe par ${p.surfaces.map((s) => surfMap[s] ?? s).join(" et ")}.` : "";
+      const poi = p.poiNames.length ? ` En chemin, tu pourrais croiser ${p.poiNames.slice(0, 3).join(", ")} — des lieux que la légende connaît bien.` : "";
+      const gearMap: Record<string, string> = { heiss: " Par cette chaleur : beaucoup d'eau, de la crème solaire et un couvre-chef.", sonnig: " De bonnes chaussures et une protection solaire sont conseillées.", bewoelkt: " Une veste légère et de bonnes chaussures suffiront.", nebel: " Dans le brouillard : habillez-vous en couches et avancez prudemment.", regen: " La pluie est sérieuse — chaussures imperméables et veste de pluie.", schnee: " Semelles crantées, gants et couches chaudes sont indispensables.", kalt: " Contre le froid : vêtements chauds et quelque chose de chaud dans le sac.", gewitter: " Orage en vue — restez sous la limite des arbres et gardez la veste à portée." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff} : ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   it: {
@@ -361,6 +412,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Un quarto completato, ${name}. La leggenda ti porta avanti.`, 50: `Metà strada, ${name}. Ciò che hai percorso è lungo quanto ciò che ti aspetta ancora.`, 75: `Un ultimo tratto, ${name}. Tre quarti sono già alle tue spalle.` } as Record<number, string>)
         : ({ 25: "Un quarto del cammino è alle tue spalle. La leggenda ti ha già trascinato un po' nel suo regno.", 50: "La metà. Il cammino dietro di te è lungo quanto quello davanti.", 75: "Tre quarti. Questo cammino si imprimerà presto per sempre nella tua memoria." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "un percorso facile", mittel: "un percorso medio", anspruchsvoll: "un percorso impegnativo" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `circa ${Math.round(p.minutes / 5) * 5} minuti` : p.minutes < 90 ? "circa un'ora" : `circa ${Math.round(p.minutes / 30) / 2} ore`;
+      const n = p.name ? `${p.name}, hai scelto ` : "Hai scelto ";
+      const steep = p.hasSteepSections ? " Ti aspettano alcuni tratti ripidi — il fiato si farà sentire." : "";
+      const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "ghiaia", naturweg: "sentieri naturali", fels: "roccia", holz: "passerelle in legno" };
+      const surf = p.surfaces.length ? ` Il percorso attraversa ${p.surfaces.map((s) => surfMap[s] ?? s).join(" e ")}.` : "";
+      const poi = p.poiNames.length ? ` Lungo il cammino potresti incontrare ${p.poiNames.slice(0, 3).join(", ")} — luoghi già presenti nella leggenda.` : "";
+      const gearMap: Record<string, string> = { heiss: " Con questo caldo: molta acqua, crema solare e un copricapo.", sonnig: " Scarpe robuste e protezione solare sono consigliate.", bewoelkt: " Una giacca leggera e buone scarpe sono sufficienti.", nebel: " Nella nebbia: vestirsi a strati e procedere con cura.", regen: " La pioggia fa sul serio — scarpe impermeabili e giacca antipioggia.", schnee: " Suole con grip, guanti e strati caldi sono indispensabili.", kalt: " Contro il freddo: vestiti caldi e qualcosa di caldo nello zaino.", gewitter: " Temporale in arrivo — restare sotto la linea degli alberi e tenere la giacca a portata." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   en: {
@@ -426,6 +489,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `A quarter done, ${name}. The saga carries you onward.`, 50: `Halfway, ${name}. What lies behind is as far as what still waits for you.`, 75: `One last stretch, ${name}. Three quarters already lie behind you.` } as Record<number, string>)
         : ({ 25: "A quarter of the way behind you. The saga has drawn you a little deeper into its world.", 50: "Halfway. The path behind you is as long as the path ahead.", 75: "Three quarters. This trail will soon be written permanently into your memory." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "an easy", mittel: "a moderate", anspruchsvoll: "a challenging" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `about ${Math.round(p.minutes / 5) * 5} minutes` : p.minutes < 90 ? "about an hour" : `about ${Math.round(p.minutes / 30) / 2} hours`;
+      const n = p.name ? `${p.name}, you've chosen ` : "You've chosen ";
+      const steep = p.hasSteepSections ? " There are a few steep stretches ahead — your heart will feel it." : "";
+      const surfMap: Record<string, string> = { asphalt: "asphalt", kies: "gravel", naturweg: "natural trail", fels: "rock", holz: "wooden boardwalks" };
+      const surf = p.surfaces.length ? ` The path crosses ${p.surfaces.map((s) => surfMap[s] ?? s).join(" and ")}.` : "";
+      const poi = p.poiNames.length ? ` Along the way you might encounter ${p.poiNames.slice(0, 3).join(", ")} — places the legend already knows.` : "";
+      const gearMap: Record<string, string> = { heiss: " In this heat: plenty of water, sunscreen, and a hat are essential.", sonnig: " Good shoes and some sun protection are recommended.", bewoelkt: " A light jacket and solid footwear will do.", nebel: " In the fog: layer up and tread carefully.", regen: " Rain means business — waterproof shoes and a rain jacket.", schnee: " Grip soles, gloves, and warm layers are a must.", kalt: " Against the cold: warm clothing and something hot in your pack.", gewitter: " Storm approaching — stay below the treeline and keep your jacket handy." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff} route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   zh: {
@@ -487,6 +562,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `完成了四分之一，${name}。传说继续带你前行。`, 50: `到了中点，${name}。走过的路，和前方等待的路一样远。`, 75: `最后一段路了，${name}。四分之三已经在你身后。` } as Record<number, string>)
         : ({ 25: "四分之一的路已在身后。传说已将你引入它的领地一隅。", 50: "走完一半。身后的路，与前方的路一样长。", 75: "四分之三。这段路即将永远刻入你的记忆。" } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "一条轻松的", mittel: "一条中等难度的", anspruchsvoll: "一条富有挑战的" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `约${Math.round(p.minutes / 5) * 5}分钟` : p.minutes < 90 ? "约一小时" : `约${Math.round(p.minutes / 30) / 2}小时`;
+      const n = p.name ? `${p.name}，你选择了` : "你选择了";
+      const steep = p.hasSteepSections ? "路上有几段陡坡，需要一定体力。" : "";
+      const surfMap: Record<string, string> = { asphalt: "沥青路", kies: "碎石路", naturweg: "自然小道", fels: "岩石地带", holz: "木栈道" };
+      const surf = p.surfaces.length ? `道路经过${p.surfaces.map((s) => surfMap[s] ?? s).join("和")}。` : "";
+      const poi = p.poiNames.length ? `途中可能经过${p.poiNames.slice(0, 3).join("、")} — 传说中早已铭刻的地方。` : "";
+      const gearMap: Record<string, string> = { heiss: "天气炎热：多喝水，涂防晒霜，戴帽子。", sonnig: "建议穿好走的鞋，做好防晒。", bewoelkt: "一件轻薄外套加上结实的鞋子就够了。", nebel: "雾中行走：分层穿衣，谨慎迈步。", regen: "雨势不小 — 防水鞋和雨衣必不可少。", schnee: "防滑鞋底、手套和保暖层缺一不可。", kalt: "抵御寒冷：穿暖和点，包里备点热饮。", gewitter: "雷暴将至 — 保持在林线以下，备好外套。" };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff}路线：${p.distanceKm.toFixed(1)}公里，${dur}。${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   es: {
@@ -552,6 +639,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Un cuarto completado, ${name}. La leyenda te lleva más lejos.`, 50: `A mitad de camino, ${name}. Lo que tienes detrás es tan largo como lo que aún te espera.`, 75: `Un último trecho, ${name}. Ya llevas tres cuartos a tus espaldas.` } as Record<number, string>)
         : ({ 25: "Un cuarto del camino queda atrás. La leyenda ya te ha arrastrado un poco hacia su reino.", 50: "La mitad. El camino detrás de ti es tan largo como el que queda por delante.", 75: "Tres cuartos. Este camino pronto quedará grabado para siempre en tu memoria." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "una ruta fácil", mittel: "una ruta moderada", anspruchsvoll: "una ruta exigente" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `unos ${Math.round(p.minutes / 5) * 5} minutos` : p.minutes < 90 ? "aproximadamente una hora" : `unas ${Math.round(p.minutes / 30) / 2} horas`;
+      const n = p.name ? `${p.name}, has elegido ` : "Has elegido ";
+      const steep = p.hasSteepSections ? " Hay algunos tramos empinados por delante — el corazón lo notará." : "";
+      const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "grava", naturweg: "sendero natural", fels: "roca", holz: "pasarelas de madera" };
+      const surf = p.surfaces.length ? ` El camino discurre por ${p.surfaces.map((s) => surfMap[s] ?? s).join(" y ")}.` : "";
+      const poi = p.poiNames.length ? ` Por el camino podrías encontrarte con ${p.poiNames.slice(0, 3).join(", ")} — lugares que la leyenda ya conoce.` : "";
+      const gearMap: Record<string, string> = { heiss: " Con este calor: mucha agua, protector solar y un sombrero.", sonnig: " Se recomiendan botas resistentes y algo de protección solar.", bewoelkt: " Una chaqueta ligera y buenas botas serán suficientes.", nebel: " En la niebla: vístete por capas y avanza con cuidado.", regen: " La lluvia va en serio — botas impermeables y chubasquero.", schnee: " Suela con agarre, guantes y capas cálidas son imprescindibles.", kalt: " Contra el frío: ropa abrigada y algo caliente en la mochila.", gewitter: " Tormenta en camino — mantente bajo la línea de árboles y ten la chaqueta a mano." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   pt: {
@@ -617,6 +716,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Um quarto concluído, ${name}. A lenda leva-te mais longe.`, 50: `A meio caminho, ${name}. O que ficou para trás é tão longo quanto o que ainda te aguarda.`, 75: `Um último trecho, ${name}. Três quartos já ficaram para trás.` } as Record<number, string>)
         : ({ 25: "Um quarto do caminho fica para trás. A lenda já te puxou um pouco para o seu reino.", 50: "A metade. O caminho atrás de ti é tão longo quanto o que está à tua frente.", 75: "Três quartos. Este trilho vai gravar-se em breve para sempre na tua memória." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "uma rota fácil", mittel: "uma rota moderada", anspruchsvoll: "uma rota exigente" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `cerca de ${Math.round(p.minutes / 5) * 5} minutos` : p.minutes < 90 ? "cerca de uma hora" : `cerca de ${Math.round(p.minutes / 30) / 2} horas`;
+      const n = p.name ? `${p.name}, escolheste ` : "Escolheste ";
+      const steep = p.hasSteepSections ? " Há alguns trechos íngremes à frente — o coração vai sentir." : "";
+      const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "cascalho", naturweg: "trilhos naturais", fels: "rocha", holz: "passadeiras de madeira" };
+      const surf = p.surfaces.length ? ` O caminho passa por ${p.surfaces.map((s) => surfMap[s] ?? s).join(" e ")}.` : "";
+      const poi = p.poiNames.length ? ` Ao longo do caminho podes encontrar ${p.poiNames.slice(0, 3).join(", ")} — lugares que a lenda já conhece.` : "";
+      const gearMap: Record<string, string> = { heiss: " Com este calor: muita água, protetor solar e um chapéu.", sonnig: " Boas botas e alguma proteção solar são recomendadas.", bewoelkt: " Uma jaqueta leve e bom calçado chegam.", nebel: " No nevoeiro: veste em camadas e avança com cuidado.", regen: " A chuva é a sério — botas impermeáveis e capa de chuva.", schnee: " Sola antiderrapante, luvas e camadas quentes são essenciais.", kalt: " Contra o frio: roupas quentes e algo quente na mochila.", gewitter: " Trovoada a caminho — fica abaixo da linha das árvores e guarda a jaqueta à mão." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 
   ru: {
@@ -682,6 +793,18 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         ? ({ 25: `Четверть пройдена, ${name}. Предание несёт тебя дальше.`, 50: `Полпути, ${name}. То, что позади, так же далеко, как и то, что ещё ждёт.`, 75: `Последний отрезок, ${name}. Три четверти уже остались позади.` } as Record<number, string>)
         : ({ 25: "Четверть пути позади. Предание уже немного втянуло тебя в своё царство.", 50: "Половина. Путь за тобой так же долог, как и путь впереди.", 75: "Три четверти. Этот путь скоро навсегда врежется в твою память." } as Record<number, string>)
       )[pct] ?? "",
+    routeBriefing: (p) => {
+      const diff = ({ leicht: "лёгкий маршрут", mittel: "маршрут средней сложности", anspruchsvoll: "сложный маршрут" } as const)[p.difficulty];
+      const dur = p.minutes < 70 ? `около ${Math.round(p.minutes / 5) * 5} минут` : p.minutes < 90 ? "около часа" : `около ${Math.round(p.minutes / 30) / 2} часов`;
+      const n = p.name ? `${p.name}, ты выбрал ` : "Ты выбрал ";
+      const steep = p.hasSteepSections ? " Впереди несколько крутых подъёмов — сердце почувствует." : "";
+      const surfMap: Record<string, string> = { asphalt: "асфальт", kies: "гравий", naturweg: "грунтовые тропы", fels: "скалы", holz: "деревянные мостки" };
+      const surf = p.surfaces.length ? ` Путь проходит по ${p.surfaces.map((s) => surfMap[s] ?? s).join(" и ")}.` : "";
+      const poi = p.poiNames.length ? ` По дороге ты можешь встретить ${p.poiNames.slice(0, 3).join(", ")} — места, которые предание уже знает.` : "";
+      const gearMap: Record<string, string> = { heiss: " В такую жару: побольше воды, солнцезащитный крем и головной убор.", sonnig: " Рекомендуются крепкие ботинки и немного солнцезащиты.", bewoelkt: " Лёгкая куртка и хорошая обувь — вполне достаточно.", nebel: " В тумане: одеться слоями и ступать осторожно.", regen: " Дождь не шутит — непромокаемые ботинки и дождевик.", schnee: " Ботинки с протектором, перчатки и тёплые слои обязательны.", kalt: " Против холода: тёплая одежда и что-то горячее в рюкзаке.", gewitter: " Гроза приближается — держись ниже линии деревьев и держи куртку под рукой." };
+      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      return `${n}${diff}: ${p.distanceKm.toFixed(1)} км, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+    },
   },
 };
 

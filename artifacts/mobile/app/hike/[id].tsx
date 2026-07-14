@@ -341,7 +341,8 @@ export default function LiveHike() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawSurfacePoints, route?.geometry]);
 
-  // Begruessung (Wetter + Solo-Name + Tageszeit), die dem ersten Kapitel vorangestellt wird.
+  // Begruessung (Wetter + Solo-Name + Tageszeit + Routen-Einleitung),
+  // die dem ersten Kapitel vorangestellt wird.
   const greetingPrefix = useMemo(() => {
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
     const wetterSatz = hikeWeather ? pack.weatherPhrase(classifyWetter(hikeWeather)) : "";
@@ -349,9 +350,34 @@ export default function LiveHike() {
     const personal = !inGruppe && profile?.name?.trim()
       ? `${pack.soloGreeting(profile.name.trim())} `
       : "";
-    return `${wetterSatz} ${personal}${tod}`.trim();
+    // SAC-Schwierigkeit → vereinfachte Dreistufung
+    const difficulty: "leicht" | "mittel" | "anspruchsvoll" =
+      sac === "T1" || sac === "T2"
+        ? "leicht"
+        : sac === "T4" || sac === "T5" || sac === "T6"
+          ? "anspruchsvoll"
+          : "mittel";
+    const hasSteepSections = totalKm > 0 && ascentM / totalKm > 80;
+    const mainSurfaces = [...new Set(surfacePoints.map((sp) => sp.surface))].slice(0, 2);
+    const poiNamesList = pois
+      .slice(0, 3)
+      .map((poi) => poi.name)
+      .filter((n): n is string => Boolean(n));
+    const briefing = route
+      ? pack.routeBriefing({
+          name: !inGruppe ? (profile?.name?.trim() ?? null) : null,
+          distanceKm: totalKm,
+          minutes: totalMin,
+          difficulty,
+          hasSteepSections,
+          surfaces: mainSurfaces,
+          poiNames: poiNamesList,
+          wetterKlasse: hikeWeather ? classifyWetter(hikeWeather) : null,
+        })
+      : "";
+    return `${wetterSatz} ${personal}${tod} ${briefing}`.trim();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyLanguage, timeOfDay, hikeWeather]);
+  }, [storyLanguage, timeOfDay, hikeWeather, surfacePoints, pois, totalKm, totalMin, sac, ascentM, route, inGruppe]);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
