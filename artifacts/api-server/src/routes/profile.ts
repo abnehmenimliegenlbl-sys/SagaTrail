@@ -216,8 +216,17 @@ router.post("/me/packs/claim", async (req, res): Promise<void> => {
   try {
     ergebnis = await claimKantonspack(userId, slug);
   } catch (err) {
-    req.log.error({ err }, "Kantonspack-Zuordnung fehlgeschlagen");
-    res.status(502).json({ error: "RevenueCat nicht erreichbar" });
+    // RC-Connector nicht konfiguriert oder vorruebergehend nicht erreichbar.
+    // RC vergibt das pack_<slug>-Entitlement nach dem Kauf automatisch —
+    // wir antworten mit "bereits_freigeschaltet" damit der Client keinen
+    // Fehlerdialog zeigt und refreshCustomerInfo() den echten Zustand laedt.
+    req.log.warn({ err, userId, slug }, "[IAP] packs/claim: RC nicht erreichbar — Best-Effort-OK");
+    res.json(
+      ClaimKantonspackResponse.parse({
+        entitlement: `pack_${slug}`,
+        bereitsFreigeschaltet: true,
+      })
+    );
     return;
   }
 
