@@ -88,7 +88,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "Abonnement verlängert sich automatisch, bis es gekündigt wird. Abrechnung über dein App-Store- bzw. Google-Play-Konto.",
     successAlertTitle: "Willkommen bei Premium",
-    successAlertMsg: "Alle Kantone und Sagen sind jetzt freigeschaltet.",
+    successAlertMsg: "Premium ist aktiv. Unbegrenzte Wanderungen durch alle 26 Kantone – die erste Sage pro Kanton inklusive.",
     successAlertBtn: "Los geht's",
     loadingOffering: "Angebot wird geladen …",
     unavailableTitle: "Zurzeit nicht verfügbar",
@@ -138,7 +138,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "Abonnement verlängeret sich automatisch, bis es kündet wird. Abrächnig über dis App-Store- oder Google-Play-Konto.",
     successAlertTitle: "Willkomme bi Premium",
-    successAlertMsg: "Alli Kantön und Sage sind jetzt freigschaltet.",
+    successAlertMsg: "Premium isch aktiv. Unbegrenzti Wanderige durch alli 26 Kantön – d'ersti Sag pro Kanton inklusive.",
     successAlertBtn: "Los goht's",
     loadingOffering: "Aagebot wird glade …",
     unavailableTitle: "Momentan nöd verfüegbar",
@@ -188,7 +188,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "Subscription renews automatically until cancelled. Billed through your App Store or Google Play account.",
     successAlertTitle: "Welcome to Premium",
-    successAlertMsg: "All cantons and legends are now unlocked.",
+    successAlertMsg: "Premium is active. Unlimited hikes through all 26 cantons – the first legend per canton included.",
     successAlertBtn: "Let's go",
     loadingOffering: "Loading offer …",
     unavailableTitle: "Currently unavailable",
@@ -238,7 +238,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "L'abonnement se renouvelle automatiquement jusqu'à sa résiliation. Facturé via votre compte App Store ou Google Play.",
     successAlertTitle: "Bienvenue sur Premium",
-    successAlertMsg: "Tous les cantons et légendes sont maintenant débloqués.",
+    successAlertMsg: "Premium est actif. Randonnées illimitées dans les 26 cantons – la première légende par canton incluse.",
     successAlertBtn: "C'est parti",
     loadingOffering: "Chargement de l'offre …",
     unavailableTitle: "Actuellement indisponible",
@@ -288,7 +288,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "L'abbonamento si rinnova automaticamente fino alla disdetta. Addebitato tramite il tuo account App Store o Google Play.",
     successAlertTitle: "Benvenuti in Premium",
-    successAlertMsg: "Tutti i cantoni e le leggende sono ora sbloccati.",
+    successAlertMsg: "Premium è attivo. Escursioni illimitate in tutti i 26 cantoni – la prima leggenda per cantone inclusa.",
     successAlertBtn: "Si parte",
     loadingOffering: "Caricamento offerta …",
     unavailableTitle: "Al momento non disponibile",
@@ -338,7 +338,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "La suscripción se renueva automáticamente hasta que se cancele. Facturado a través de tu cuenta de App Store o Google Play.",
     successAlertTitle: "Bienvenido a Premium",
-    successAlertMsg: "Todos los cantones y leyendas están ahora desbloqueados.",
+    successAlertMsg: "Premium está activo. Caminatas ilimitadas por los 26 cantones – la primera leyenda por cantón incluida.",
     successAlertBtn: "¡Vamos!",
     loadingOffering: "Cargando oferta …",
     unavailableTitle: "No disponible por el momento",
@@ -388,7 +388,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "A assinatura é renovada automaticamente até ser cancelada. Cobrado através da sua conta App Store ou Google Play.",
     successAlertTitle: "Bem-vindo ao Premium",
-    successAlertMsg: "Todos os cantões e lendas estão agora desbloqueados.",
+    successAlertMsg: "Premium está ativo. Caminhadas ilimitadas pelos 26 cantões – a primeira lenda por cantão incluída.",
     successAlertBtn: "Vamos lá",
     loadingOffering: "Carregando oferta …",
     unavailableTitle: "Indisponível no momento",
@@ -436,7 +436,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     purchaseTimeoutMsg: "购买耗时异常长。请检查网络连接并重试，如果付款已经完成，请使用\"恢复购买\"。",
     legalText: "订阅会自动续订，直至取消。费用通过您的 App Store 或 Google Play 账户结算。",
     successAlertTitle: "欢迎使用 Premium",
-    successAlertMsg: "所有州和传说现已解锁。",
+    successAlertMsg: "Premium 已激活。畅游全部 26 个州，每州首条传说免费包含。",
     successAlertBtn: "开始体验",
     loadingOffering: "正在加载订阅方案 …",
     unavailableTitle: "暂时不可用",
@@ -486,7 +486,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     legalText:
       "Подписка продлевается автоматически до отмены. Оплата через ваш аккаунт App Store или Google Play.",
     successAlertTitle: "Добро пожаловать в Premium",
-    successAlertMsg: "Все кантоны и легенды теперь разблокированы.",
+    successAlertMsg: "Premium активен. Неограниченные походы по всем 26 кантонам – первая легенда в каждом кантоне включена.",
     successAlertBtn: "Начать",
     loadingOffering: "Загрузка предложения …",
     unavailableTitle: "Сейчас недоступно",
