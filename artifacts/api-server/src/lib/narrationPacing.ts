@@ -124,6 +124,8 @@ export async function synthesizeOpenAiNarrationWithPacing(
 }
 
 async function applyTempo(mp3Buffer: Buffer, speed: number): Promise<Buffer> {
+  // Bei vernachlaessigbarer Abweichung (< 1 %) direkt zurueckgeben.
+  if (Math.abs(speed - 1.0) < 0.01) return mp3Buffer;
   // atempo unterstuetzt nur 0.5-2.0 pro Filterstufe; fuer unsere Werte
   // (~0.95) reicht eine einzelne Stufe.
   const clampedSpeed = Math.min(2, Math.max(0.5, speed));
@@ -140,6 +142,12 @@ async function applyTempo(mp3Buffer: Buffer, speed: number): Promise<Buffer> {
       outPath,
     ]);
     return await readFile(outPath);
+  } catch {
+    // ffmpeg nicht verfuegbar (z.B. Production-Container ohne ffmpeg-Binary) —
+    // Originalaudio ohne Tempoaenderung zurueckgeben statt die gesamte
+    // Narration mit 502 fehlschlagen zu lassen. Der Unterschied von 0.95x
+    // ist kaum wahrnehmbar.
+    return mp3Buffer;
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
