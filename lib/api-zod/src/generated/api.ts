@@ -55,7 +55,6 @@ export const GetCatalogResponse = zod.object({
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({
   "text": zod.string(),
-  "title": zod.string().optional(),
   "reviewEmpfohlen": zod.boolean()
 })),
   "altersstufenHinweis": zod.string().optional(),
@@ -228,7 +227,6 @@ export const GetPartnersResponseItem = zod.object({
   "canton": zod.string(),
   "beschreibung": zod.string().nullish(),
   "angebot": zod.string().nullish(),
-  "fotoUrl": zod.string().nullish(),
   "lat": zod.number(),
   "lng": zod.number()
 }).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')
@@ -274,6 +272,23 @@ export const GetWeatherResponse = zod.object({
   "source": zod.string(),
   "fetchedAt": zod.coerce.date()
 }).describe('Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter Wegzustand-Hinweis. Kein offizieller Sperr-\/Lawinenstatus.\n')
+
+
+/**
+ * Liefert die Wegoberflächen-Wechselpunkte einer Route aus OpenStreetMap, abgeleitet aus den surface-Tags der Mitglieds-Ways der Relation. Jeder Eintrag markiert den Startpunkt eines Abschnitts mit neuer Oberfläche. Schlägt die Overpass-Abfrage fehl, wird ein leeres Array zurückgeliefert.
+ * @summary Wegoberflächen einer Route (OSM surface-Tags)
+ */
+export const GetRouteSurfacesQueryParams = zod.object({
+  "osmId": zod.coerce.number()
+})
+
+export const GetRouteSurfacesResponse = zod.object({
+  "points": zod.array(zod.object({
+  "surface": zod.string().describe('OSM-surface-Tag (z.B. asphalt, gravel, unpaved, rock)'),
+  "lat": zod.number(),
+  "lng": zod.number()
+}).describe('Startpunkt eines Wegabschnitts mit einer bestimmten Oberfläche'))
+})
 
 
 /**
@@ -410,7 +425,6 @@ export const GetRouteSagaResponse = zod.object({
   "summary": zod.string(),
   "summaries": zod.record(zod.string(), zod.object({
   "text": zod.string(),
-  "title": zod.string().optional(),
   "reviewEmpfohlen": zod.boolean()
 })),
   "altersstufenHinweis": zod.string().optional(),

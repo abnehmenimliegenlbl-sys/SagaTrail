@@ -89,6 +89,10 @@ export interface StoryPack {
   photoChallengePrompt: string;
   /** Atmosphärische Wettereinleitung, die dem Greeting vorangestellt wird */
   weatherPhrase: (klasse: WetterKlasse) => string;
+  /** Atmosphärische Ansage beim Wechsel der Wegoberfläche */
+  surfaceTransitionPhrase: (surface: "asphalt" | "kies" | "naturweg" | "fels" | "holz" | string) => string;
+  /** Motivierendes Meilenstein-Zitat (25/50/75 %), mit optionalem Namen */
+  milestonePhrase: (pct: 25 | 50 | 75, name: string | null) => string;
 }
 
 /**
@@ -155,6 +159,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Die Kälte beißt in die Wangen — genau so muss es sich damals angefühlt haben.",
       gewitter: "Ein Gewitter liegt in der Luft. Alte Geschichten brauchen keinen besseren Rahmen.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "Der Weg wechselt auf Asphalt. Einst trugen diese Pfade ganz andere Schritte.", kies: "Kies knirscht unter den Sohlen. Der Weg wird rauer — und echter.", naturweg: "Blanke Erde liegt unter den Füssen. Hier bewegten sich Menschen, lange bevor man Wege befestigte.", fels: "Nackter Fels trägt dich jetzt. Uraltes Gestein, das die Sage schon immer kannte.", holz: "Holzplanken führen dich weiter — jeder Schritt hallt, als würde der Weg zurückflüstern." } as Record<string, string>)[surface]) ?? "Die Beschaffenheit des Weges wandelt sich. Die Sage begleitet dich weiter.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Ein Viertel geschafft, ${name}. Die Sage trägt dich weiter.`, 50: `Halbzeit, ${name}. Was hinter dir liegt, ist genauso weit wie das, was noch kommt.`, 75: `Noch ein letztes Stück, ${name}. Drei Viertel hast du bereits hinter dir gelassen.` } as Record<number, string>)
+        : ({ 25: "Ein Viertel liegt hinter dir. Die Sage hat dich schon ein Stück in ihr Reich gezogen.", 50: "Die Hälfte. Der Weg hinter dir ist so lang wie der, der noch vor dir liegt.", 75: "Drei Viertel. Dieser Weg wird sich für immer in dein Gedächtnis eingraben." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   gsw: {
@@ -213,6 +224,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "D Chälti biisst i d Bache — genau so muss sich's damals aaghört ha.",
       gewitter: "Es Gwitter liit i de Luft. Alti Gschichte bruched kei bessere Rahme.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "Dr Wäg wechslet uf Asphalt. Amol händ ganz anderi Schritt dä Pfad treit.", kies: "Kies chnürpst under de Sohle. De Wäg wird rouher — und echter.", naturweg: "Blosi Ärd liit under de Fies. Do händ sich Mänsche bewegt, lang bevor mer Wäg bfestigt het.", fels: "Nackter Fels treit di jetzt. Uralts Gstei, das d Sage scho immer kennt het.", holz: "Holzbrätt führed di witer — jede Schritt hallt, as ob dr Wäg zrugg flüschteret." } as Record<string, string>)[surface]) ?? "D Beschaffenheit vom Wäg wandlet sich. D Sage begleitet di witer.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Es Viertel gschafft, ${name}. D Sage treit di witer.`, 50: `Halbzyt, ${name}. Was hinder dir liit, isch genau so wit wie das, was no chunt.`, 75: `No es letschts Stück, ${name}. Drü Viertel hesch du scho hinder dir glah.` } as Record<number, string>)
+        : ({ 25: "Es Viertel liit hinder dir. D Sage het di scho es Stück in ir Reich gzoge.", 50: "D Helfti. De Wäg hinder dir isch so lang wie de, wo no vor dir liit.", 75: "Drü Viertel. Dä Wäg wird sich für immer in d Erinneriig iifrässe." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   fr: {
@@ -271,6 +289,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Le froid mord les joues — exactement comme cela a dû se passer jadis.",
       gewitter: "Un orage se prépare. Les vieilles histoires n'ont pas besoin d'un meilleur décor.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "Le sentier passe sur l'asphalte. Autrefois, d'autres pas foulaient ces chemins.", kies: "Le gravier crisse sous les semelles. Le chemin devient plus rude — et plus vrai.", naturweg: "La terre nue est sous les pieds. Ici les hommes marchaient bien avant que l'on construise des routes.", fels: "La roche nue te porte à présent. Pierre millénaire que la légende a toujours connue.", holz: "Des planches de bois te guident — chaque pas résonne un peu, comme si le chemin murmurait en retour." } as Record<string, string>)[surface]) ?? "La nature du chemin change. La légende t'accompagne toujours.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Un quart accompli, ${name}. La légende te porte plus loin.`, 50: `Mi-chemin, ${name}. Ce qui est derrière toi est aussi loin que ce qui t'attend encore.`, 75: `Un dernier bout, ${name}. Trois quarts sont déjà derrière toi.` } as Record<number, string>)
+        : ({ 25: "Un quart du chemin est derrière toi. La légende t'a déjà tiré un peu dans son domaine.", 50: "La moitié. Le chemin derrière toi est aussi long que celui qui reste à parcourir.", 75: "Trois quarts. Ce chemin va bientôt s'imprimer pour toujours dans ta mémoire." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   it: {
@@ -329,6 +354,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Il freddo morde le guance — esattamente come doveva sembrare allora.",
       gewitter: "C'è un temporale nell'aria. Le vecchie storie non hanno bisogno di una cornice migliore.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "Il sentiero passa sull'asfalto. Un tempo altri passi battevano questi percorsi.", kies: "La ghiaia scricchiola sotto le suole. Il cammino diventa più aspro — e più vero.", naturweg: "Terra nuda sotto i piedi. Qui la gente camminava ben prima che si costruissero strade.", fels: "Roccia nuda ti sostiene ora. Pietra antichissima che la leggenda ha sempre conosciuto.", holz: "Assi di legno ti guidano — ogni passo risuona un po', come se il sentiero sussurrasse di rimando." } as Record<string, string>)[surface]) ?? "La natura del sentiero cambia. La leggenda ti accompagna ancora.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Un quarto completato, ${name}. La leggenda ti porta avanti.`, 50: `Metà strada, ${name}. Ciò che hai percorso è lungo quanto ciò che ti aspetta ancora.`, 75: `Un ultimo tratto, ${name}. Tre quarti sono già alle tue spalle.` } as Record<number, string>)
+        : ({ 25: "Un quarto del cammino è alle tue spalle. La leggenda ti ha già trascinato un po' nel suo regno.", 50: "La metà. Il cammino dietro di te è lungo quanto quello davanti.", 75: "Tre quarti. Questo cammino si imprimerà presto per sempre nella tua memoria." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   en: {
@@ -387,6 +419,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "The cold bites at your cheeks — exactly as it must have felt back then.",
       gewitter: "A storm is gathering. Old stories have never needed a better setting.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "The path meets asphalt. Once, very different feet walked here.", kies: "Gravel crunches underfoot. The trail grows rougher — and more honest.", naturweg: "Bare earth lies under your feet. People have moved here long before any road was built.", fels: "Bare rock carries you now. Ancient stone the saga has always known.", holz: "Wooden boards guide you forward — each step echoes a little, as if the path whispers back." } as Record<string, string>)[surface]) ?? "The character of the trail changes. The saga walks with you still.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `A quarter done, ${name}. The saga carries you onward.`, 50: `Halfway, ${name}. What lies behind is as far as what still waits for you.`, 75: `One last stretch, ${name}. Three quarters already lie behind you.` } as Record<number, string>)
+        : ({ 25: "A quarter of the way behind you. The saga has drawn you a little deeper into its world.", 50: "Halfway. The path behind you is as long as the path ahead.", 75: "Three quarters. This trail will soon be written permanently into your memory." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   zh: {
@@ -441,6 +480,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "寒意咬上脸颊——想必当年，也是如此。",
       gewitter: "雷雨蓄势待发。古老的故事，从不需要更好的舞台。",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "山径换上了沥青路面。曾经，全然不同的脚步踏过这里。", kies: "砾石在脚底咯吱作响。路变得更粗粝——也更真实。", naturweg: "赤裸的土地在脚下。早在修路之前，人们便已在这里行走。", fels: "裸露的岩石托起你的脚步。这块古老的石头，传说从来都认识它。", holz: "木板引路，每一步都微微回响——仿佛山路在轻声回应。" } as Record<string, string>)[surface]) ?? "路的质地悄然变换。传说依然与你同行。",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `完成了四分之一，${name}。传说继续带你前行。`, 50: `到了中点，${name}。走过的路，和前方等待的路一样远。`, 75: `最后一段路了，${name}。四分之三已经在你身后。` } as Record<number, string>)
+        : ({ 25: "四分之一的路已在身后。传说已将你引入它的领地一隅。", 50: "走完一半。身后的路，与前方的路一样长。", 75: "四分之三。这段路即将永远刻入你的记忆。" } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   es: {
@@ -499,6 +545,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "El frío muerde las mejillas — exactamente así debió de sentirse entonces.",
       gewitter: "Se avecina una tormenta. Las viejas historias nunca han necesitado mejor escenario.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "El sendero llega al asfalto. Antes, pasos muy distintos recorrían estos caminos.", kies: "La grava cruje bajo las suelas. El camino se vuelve más áspero — y más genuino.", naturweg: "Tierra desnuda bajo los pies. Aquí caminaba la gente mucho antes de que se construyeran caminos.", fels: "Roca desnuda te sostiene ahora. Piedra milenaria que la leyenda siempre ha conocido.", holz: "Tablones de madera te guían — cada paso resuena un poco, como si el sendero susurrara de vuelta." } as Record<string, string>)[surface]) ?? "La naturaleza del camino cambia. La leyenda te acompaña todavía.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Un cuarto completado, ${name}. La leyenda te lleva más lejos.`, 50: `A mitad de camino, ${name}. Lo que tienes detrás es tan largo como lo que aún te espera.`, 75: `Un último trecho, ${name}. Ya llevas tres cuartos a tus espaldas.` } as Record<number, string>)
+        : ({ 25: "Un cuarto del camino queda atrás. La leyenda ya te ha arrastrado un poco hacia su reino.", 50: "La mitad. El camino detrás de ti es tan largo como el que queda por delante.", 75: "Tres cuartos. Este camino pronto quedará grabado para siempre en tu memoria." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   pt: {
@@ -557,6 +610,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "O frio morde as bochechas — exatamente como devia ter parecido naquele tempo.",
       gewitter: "Uma tempestade se aproxima. As velhas histórias nunca precisaram de um cenário melhor.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "O trilho encontra o asfalto. Noutros tempos, outros passos percorreram estes caminhos.", kies: "O cascalho range sob as solas. O caminho torna-se mais áspero — e mais genuíno.", naturweg: "Terra nua sob os pés. Aqui as pessoas caminhavam muito antes de se construírem estradas.", fels: "Rocha nua te sustenta agora. Pedra milenar que a lenda sempre conheceu.", holz: "Tábuas de madeira guiam-te — cada passo ressoa um pouco, como se o caminho sussurrasse de volta." } as Record<string, string>)[surface]) ?? "A natureza do trilho muda. A lenda continua a acompanhar-te.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Um quarto concluído, ${name}. A lenda leva-te mais longe.`, 50: `A meio caminho, ${name}. O que ficou para trás é tão longo quanto o que ainda te aguarda.`, 75: `Um último trecho, ${name}. Três quartos já ficaram para trás.` } as Record<number, string>)
+        : ({ 25: "Um quarto do caminho fica para trás. A lenda já te puxou um pouco para o seu reino.", 50: "A metade. O caminho atrás de ti é tão longo quanto o que está à tua frente.", 75: "Três quartos. Este trilho vai gravar-se em breve para sempre na tua memória." } as Record<number, string>)
+      )[pct] ?? "",
   },
 
   ru: {
@@ -615,6 +675,13 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Холод кусает щёки — наверное, именно так всё и ощущалось тогда.",
       gewitter: "В воздухе висит гроза. Старые истории никогда не нуждались в лучших декорациях.",
     } as const)[k],
+    surfaceTransitionPhrase: (surface) =>
+      (({ asphalt: "Тропа переходит на асфальт. Некогда по этим путям ступали совсем другие ноги.", kies: "Гравий хрустит под подошвами. Дорожка становится грубее — и честнее.", naturweg: "Голая земля под ногами. Люди ходили здесь задолго до того, как были проложены дороги.", fels: "Голый камень несёт тебя теперь. Древняя порода, которую предание знало всегда.", holz: "Деревянные доски ведут тебя дальше — каждый шаг чуть гулкий, словно тропа шепчет в ответ." } as Record<string, string>)[surface]) ?? "Характер дороги меняется. Предание идёт рядом.",
+    milestonePhrase: (pct, name) =>
+      (name
+        ? ({ 25: `Четверть пройдена, ${name}. Предание несёт тебя дальше.`, 50: `Полпути, ${name}. То, что позади, так же далеко, как и то, что ещё ждёт.`, 75: `Последний отрезок, ${name}. Три четверти уже остались позади.` } as Record<number, string>)
+        : ({ 25: "Четверть пути позади. Предание уже немного втянуло тебя в своё царство.", 50: "Половина. Путь за тобой так же долог, как и путь впереди.", 75: "Три четверти. Этот путь скоро навсегда врежется в твою память." } as Record<number, string>)
+      )[pct] ?? "",
   },
 };
 

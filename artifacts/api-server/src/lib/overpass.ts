@@ -413,6 +413,56 @@ export async function fetchCantonRouteIndex(
 }
 
 /**
+ * Wegoberflaechenabschnitte (OSM surface-Tags) aller Haupt-Ways einer Route.
+ * Wird einmal pro osmId gecacht (1 h TTL).
+ */
+export interface RouteSurfacePoint {
+  surface: string;
+  lat: number;
+  lng: number;
+}
+
+interface OverpassWayWithTags {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  geometry?: { lat: number; lon: number }[];
+}
+
+const surfaceCache = new Map<number, { at: number; points: RouteSurfacePoint[] }>();
+const SURFACE_TTL_MS = 60 * 60 * 1000; // 1 Stunde
+
+export async function fetchRouteSurfaces(osmId: number): Promise<RouteSurfacePoint[]> {
+  const hit = surfaceCache.get(osmId);
+  if (hit && Date.now() - hit.at < SURFACE_TTL_MS) return hit.points;
+
+  const query = [
+    "[out:json][timeout:15];",
+    `relation(id:${osmId});`,
+    "way(r);",
+    "out tags geom qt;",
+  ].join("");
+
+  let elements: OverpassWayWithTags[];
+  try {
+    elements = await runOverpass<OverpassWayWithTags>(query);
+  } catch {
+    return [];
+  }
+
+  const points: RouteSurfacePoint[] = [];
+  for (const el of elements) {
+    if (el.type !== "way" || !el.tags?.surface || !el.geometry?.length) continue;
+    // Nebenwege (zu kurz oder ohne Bedeutung) ueberspringen
+    const first = el.geometry[0];
+    points.push({ surface: el.tags.surface, lat: first.lat, lng: first.lon });
+  }
+
+  surfaceCache.set(osmId, { at: Date.now(), points });
+  return points;
+}
+
+/**
  * Phase 2: Geometrie fuer eine Kandidatenauswahl nachladen und zu Punktlisten
  * verketten. Die Abfrage wird blockweise gestellt, damit sie das Overpass-Limit
  * nicht sprengt. Relationen, deren Geometrie sich nicht verketten laesst

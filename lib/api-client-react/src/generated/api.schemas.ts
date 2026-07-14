@@ -196,6 +196,20 @@ export interface RoutePhoto {
 }
 
 /**
+ * Startpunkt eines Wegabschnitts mit einer bestimmten Oberfläche
+ */
+export interface RouteSurfacePoint {
+  /** OSM-surface-Tag (z.B. asphalt, gravel, unpaved, rock) */
+  surface: string;
+  lat: number;
+  lng: number;
+}
+
+export interface RouteSurfacesResponse {
+  points: RouteSurfacePoint[];
+}
+
+/**
  * Live-Wetterdaten (Open-Meteo) und ein daraus abgeleiteter Wegzustand-Hinweis. Kein offizieller Sperr-/Lawinenstatus.
  */
 export interface WeatherReport {
@@ -271,7 +285,6 @@ export interface Partner {
   canton: string;
   beschreibung?: string | null;
   angebot?: string | null;
-  fotoUrl?: string | null;
   lat: number;
   lng: number;
 }
@@ -453,6 +466,13 @@ lang: string;
 export type GetWeatherParams = {
 lat: number;
 lng: number;
+};
+
+export type GetRouteSurfacesParams = {
+/**
+ * OSM-Relation-ID der Route
+ */
+osmId: number;
 };
 
 export type GetRoutePhotoParams = {

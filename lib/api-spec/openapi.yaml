@@ -386,6 +386,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/surfaces:
+    get:
+      operationId: getRouteSurfaces
+      tags: [routes]
+      summary: Wegoberflächen einer Route (OSM surface-Tags)
+      description: >
+        Liefert die Wegoberflächen-Wechselpunkte einer Route aus OpenStreetMap,
+        abgeleitet aus den surface-Tags der Mitglieds-Ways der Relation.
+        Jeder Eintrag markiert den Startpunkt eines Abschnitts mit neuer Oberfläche.
+        Schlägt die Overpass-Abfrage fehl, wird ein leeres Array zurückgeliefert.
+      parameters:
+        - name: osmId
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: OSM-Relation-ID der Route
+      responses:
+        "200":
+          description: Oberflächenwechselpunkte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteSurfacesResponse"
+        "400":
+          description: Ungueltige osmId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Overpass nicht erreichbar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/photo:
     get:
       operationId: getRoutePhoto
@@ -1196,6 +1232,26 @@ components:
       required:
         - photoUrl
         - attribution
+    RouteSurfacePoint:
+      type: object
+      description: Startpunkt eines Wegabschnitts mit einer bestimmten Oberfläche
+      properties:
+        surface:
+          type: string
+          description: OSM-surface-Tag (z.B. asphalt, gravel, unpaved, rock)
+        lat:
+          type: number
+        lng:
+          type: number
+      required: [surface, lat, lng]
+    RouteSurfacesResponse:
+      type: object
+      properties:
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteSurfacePoint"
+      required: [points]
     WeatherReport:
       type: object
       description: >

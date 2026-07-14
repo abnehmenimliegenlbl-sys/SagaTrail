@@ -6,7 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface LocalizedSummary {
-  text: string;
-  reviewEmpfohlen: boolean;
-}
+export type GetRouteSurfacesParams = {
+/**
+ * OSM-Relation-ID der Route
+ */
+osmId: number;
+};

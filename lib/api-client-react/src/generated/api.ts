@@ -35,6 +35,7 @@ import type {
   GetPoiStoryParams,
   GetPoisParams,
   GetRoutePhotoParams,
+  GetRouteSurfacesParams,
   GetSagaPhotoParams,
   GetWeatherParams,
   GpxImportBody,
@@ -49,6 +50,7 @@ import type {
   ProgressSyncInput,
   ProgressSyncResponse,
   RoutePhoto,
+  RouteSurfacesResponse,
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
@@ -812,6 +814,91 @@ export function useGetWeather<TData = Awaited<ReturnType<typeof getWeather>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWeatherQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRouteSurfacesUrl = (params: GetRouteSurfacesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/surfaces?${stringifiedParams}` : `/api/routes/surfaces`
+}
+
+/**
+ * Liefert die Wegoberflächen-Wechselpunkte einer Route aus OpenStreetMap, abgeleitet aus den surface-Tags der Mitglieds-Ways der Relation. Jeder Eintrag markiert den Startpunkt eines Abschnitts mit neuer Oberfläche. Schlägt die Overpass-Abfrage fehl, wird ein leeres Array zurückgeliefert.
+ * @summary Wegoberflächen einer Route (OSM surface-Tags)
+ */
+export const getRouteSurfaces = async (params: GetRouteSurfacesParams, options?: RequestInit): Promise<RouteSurfacesResponse> => {
+
+  return customFetch<RouteSurfacesResponse>(getGetRouteSurfacesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRouteSurfacesQueryKey = (params?: GetRouteSurfacesParams,) => {
+    return [
+    `/api/routes/surfaces`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRouteSurfacesQueryOptions = <TData = Awaited<ReturnType<typeof getRouteSurfaces>>, TError = ErrorType<ErrorResponse>>(params: GetRouteSurfacesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteSurfaces>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRouteSurfacesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRouteSurfaces>>> = ({ signal }) => getRouteSurfaces(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRouteSurfaces>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRouteSurfacesQueryResult = NonNullable<Awaited<ReturnType<typeof getRouteSurfaces>>>
+export type GetRouteSurfacesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Wegoberflächen einer Route (OSM surface-Tags)
+ */
+
+export function useGetRouteSurfaces<TData = Awaited<ReturnType<typeof getRouteSurfaces>>, TError = ErrorType<ErrorResponse>>(
+ params: GetRouteSurfacesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteSurfaces>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRouteSurfacesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
