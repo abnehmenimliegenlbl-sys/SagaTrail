@@ -1153,6 +1153,12 @@ export default function LiveHike() {
       return next;
     });
     setAwaitingDecision(false);
+    // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
+    const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
+    if (archetypeHint) {
+      const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      speakRef.current?.(pack.decisionFeedback(archetypeHint));
+    }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {
       sendGroupHikeEvent({
@@ -1162,6 +1168,20 @@ export default function LiveHike() {
       });
     }
   };
+
+  // Gesprochene Aufforderung, sobald ein Entscheidungspunkt aktiv ist und
+  // die Kapitel-Erzaehlung geendet hat: spricht einmalig den decisionVoicePrompt
+  // vor, damit Wandernde auch ohne Blick aufs Display wissen, dass sie jetzt
+  // sprechen koennen. Ein Ref verhindert, dass dieselbe Aufforderung mehrfach
+  // abgespielt wird (z. B. bei kurzem speaking-Flackern).
+  const promptedDecisionRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!awaitingDecision || speaking) return;
+    if (promptedDecisionRef.current === currentIndex) return;
+    promptedDecisionRef.current = currentIndex;
+    const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    speakRef.current?.(pack.decisionVoicePrompt);
+  }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
 
   // Freihaendige Sprachsteuerung: sobald ein Entscheidungspunkt aktiv ist,
   // hoert die App automatisch zu und waehlt bei einem klaren Treffer die

@@ -70,6 +70,13 @@ export interface StoryPack {
   // Kurze GPS-artige Sprachansage ("Links abbiegen!"), die bei Annaeherung
   // an eine Abbiegung live eingeschoben wird — unabhaengig vom Kapitel.
   turnVoice: (direction: "links" | "rechts") => string;
+  // Gesprochene Aufforderung, die nach dem Kapitel-Ende an einem
+  // Entscheidungspunkt vorgelesen wird — fordert den Wanderer explizit auf,
+  // seine Wahl laut auszusprechen oder eine Option anzutippen.
+  decisionVoicePrompt: string;
+  // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der
+  // Entscheidung gesprochen wird ("Das spricht fuer eine Persoenlichkeit mit…").
+  decisionFeedback: (archetypeHint: string) => string;
   // Kurzer, gesprochener Einschub, wenn unterwegs ein realer Ort (OSM/Wikipedia)
   // in der Naehe entdeckt wird — nutzt den bereits geladenen Wikipedia-Auszug,
   // keine KI-Generierung. extract ist null, wenn kein Wikipedia-Artikel vorliegt.
@@ -115,6 +122,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiegen!" : "Jetzt rechts abbiegen!",
+    decisionVoicePrompt: "Was ist deine Wahl? Sprich sie laut aus — oder tippe eine der Optionen an.",
+    decisionFeedback: (hint) => `Das spricht für eine Persönlichkeit mit ${hint}. Eine tiefe Wahrheit über dich, hier draußen in der Stille.`,
     poiAside: (name, extract) =>
       extract
         ? `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name}. ${extract}`
@@ -158,6 +167,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiege!" : "Jetzt rechts abbiege!",
+    decisionVoicePrompt: "Was isch dini Wahl? Sprich si lut us — oder tipp e vo de Optione a.",
+    decisionFeedback: (hint) => `Das spricht für e Persönlichkeit mit ${hint}. En tiefe Wahrhäit über dich, do draußen in de Stilli.`,
     poiAside: (name, extract) =>
       extract
         ? `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name}. ${extract}`
@@ -201,6 +212,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
     turnVoice: (direction) => direction === "links" ? "Tournez à gauche !" : "Tournez à droite !",
+    decisionVoicePrompt: "Quel est ton choix ? Dis-le à voix haute — ou appuie sur l'une des options.",
+    decisionFeedback: (hint) => `Cela révèle une personnalité avec ${hint}. Une vérité profonde sur toi, ici dans le silence de la nature.`,
     poiAside: (name, extract) =>
       extract
         ? `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name}. ${extract}`
@@ -244,6 +257,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
     turnVoice: (direction) => direction === "links" ? "Svoltate a sinistra!" : "Svoltate a destra!",
+    decisionVoicePrompt: "Qual è la tua scelta? Dilla ad alta voce — o tocca una delle opzioni.",
+    decisionFeedback: (hint) => `Questo rivela una personalità con ${hint}. Una verità profonda su di te, qui nel silenzio della natura.`,
     poiAside: (name, extract) =>
       extract
         ? `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name}. ${extract}`
@@ -287,6 +302,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
     turnVoice: (direction) => direction === "links" ? "Turn left!" : "Turn right!",
+    decisionVoicePrompt: "What is your choice? Say it aloud — or tap one of the options.",
+    decisionFeedback: (hint) => `This speaks to a personality shaped by ${hint}. A deep truth about you, out here in the stillness.`,
     poiAside: (name, extract) =>
       extract
         ? `A brief break from the saga — a real place right near you: ${name}. ${extract}`
@@ -326,6 +343,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
     turnVoice: (direction) => direction === "links" ? "向左转。" : "向右转。",
+    decisionVoicePrompt: "你的选择是什么？大声说出来——或者点击其中一个选项。",
+    decisionFeedback: (hint) => `这体现了一种具有${hint}的性格。在这片寂静中，这是关于你自己的深刻真相。`,
     poiAside: (name, extract) =>
       extract
         ? `传说暂停一下，你身边有一个真实的地方：${name}。${extract}`
@@ -369,6 +388,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
     turnVoice: (direction) => direction === "links" ? "¡Gire a la izquierda!" : "¡Gire a la derecha!",
+    decisionVoicePrompt: "¿Cuál es tu elección? Dila en voz alta — o toca una de las opciones.",
+    decisionFeedback: (hint) => `Esto habla de una personalidad definida por ${hint}. Una verdad profunda sobre ti, aquí en el silencio de la naturaleza.`,
     poiAside: (name, extract) =>
       extract
         ? `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name}. ${extract}`
@@ -412,6 +433,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
     turnVoice: (direction) => direction === "links" ? "Vire à esquerda!" : "Vire à direita!",
+    decisionVoicePrompt: "Qual é a sua escolha? Diga em voz alta — ou toque em uma das opções.",
+    decisionFeedback: (hint) => `Isso revela uma personalidade moldada por ${hint}. Uma verdade profunda sobre você, aqui no silêncio da natureza.`,
     poiAside: (name, extract) =>
       extract
         ? `Pequena pausa na lenda, um lugar real bem perto de você: ${name}. ${extract}`
@@ -455,6 +478,8 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
     turnVoice: (direction) => direction === "links" ? "Поверните налево!" : "Поверните направо!",
+    decisionVoicePrompt: "Каков твой выбор? Произнеси его вслух — или нажми на один из вариантов.",
+    decisionFeedback: (hint) => `Это говорит о личности, наделённой ${hint}. Глубокая правда о тебе — здесь, в тишине природы.`,
     poiAside: (name, extract) =>
       extract
         ? `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name}. ${extract}`
