@@ -174,6 +174,10 @@ export default function LiveHike() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [isOffline, setIsOffline] = useState<boolean>(false);
+  // Einmalig true sobald der User den Streckenstart passiert hat —
+  // verhindert, dass das "Zum Start laufen"-Banner nach dem Passieren
+  // wieder auftaucht (User ist dann einfach weiter von geometry[0] weg).
+  const [startReached, setStartReached] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
@@ -983,6 +987,14 @@ export default function LiveHike() {
     return { distKm, distText, dir };
   }, [livePos, route?.geometry, t]);
 
+  // Sobald der User einmal innerhalb des Start-Radius war (walkToStart === null),
+  // als "start reached" markieren — damit das Banner nach dem Passieren nicht
+  // erneut erscheint, wenn der User sich von geometry[0] entfernt.
+  useEffect(() => {
+    if (preparing || startReached) return;
+    if (walkToStart === null) setStartReached(true);
+  }, [walkToStart, preparing, startReached]);
+
   const walkToStartAnnouncedRef = useRef(false);
   useEffect(() => {
     if (!walkToStart) return;
@@ -1268,7 +1280,7 @@ export default function LiveHike() {
         </View>
       )}
 
-      {locState !== "denied" && walkToStart && !preparing && (
+      {!startReached && locState !== "denied" && walkToStart && !preparing && (
         <Animated.View
           entering={FadeIn}
           style={[styles.banner, { top: topPad, backgroundColor: colors.card, paddingVertical: 12 }]}
@@ -1288,7 +1300,7 @@ export default function LiveHike() {
       <ScrollView
         contentContainerStyle={{
           paddingTop:
-            locState === "denied" ? topPad + 148 : walkToStart && !preparing ? topPad + 92 : topPad,
+            locState === "denied" ? topPad + 148 : !startReached && walkToStart && !preparing ? topPad + 92 : topPad,
           paddingHorizontal: 16,
           paddingBottom: insets.bottom + 120,
         }}
