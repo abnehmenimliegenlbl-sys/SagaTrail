@@ -26,6 +26,8 @@ import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
+import { useSubscription } from "@/lib/revenuecat";
+import { packEntitlementFuerKanton } from "@/lib/kantonSlug";
 
 const WEB_TOP = 67;
 
@@ -235,15 +237,23 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
-  const { achievements, language } = useApp();
+  const { achievements, language, premium } = useApp();
+  const { isElite, hatEntitlement } = useSubscription();
   const { sagas } = useCatalog();
 
-  // Sagen-Fortschritt des Kantons ("2 von 3 Sagen entdeckt") — nur wenn der
-  // Kanton ueberhaupt kuratierte Sagen hat.
+  // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
   const cantonSagas = sagas.filter((s) => s.canton === entry.canton);
   const discovered = cantonSagas.filter((s) =>
     achievements.some((a) => a.id === s.id)
   ).length;
+  // Zugaengliche Sagen: Premium ohne Pack/Elite → nur 1 inklusive Sage.
+  const packKey = cantonSagas.length > 0 ? packEntitlementFuerKanton(entry.canton) : "";
+  const packUnlocked = premium && (isElite || hatEntitlement(packKey));
+  const accessibleTotal = packUnlocked
+    ? cantonSagas.length
+    : premium
+      ? Math.min(1, cantonSagas.length)
+      : cantonSagas.length;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
@@ -285,7 +295,7 @@ function CantonCard({
                 { color: discovered > 0 ? colors.accent : colors.mutedForeground },
               ]}
             >
-              {t.sagaProgress(discovered, cantonSagas.length)}
+              {t.sagaProgress(discovered, accessibleTotal)}
             </Text>
           )}
         </View>

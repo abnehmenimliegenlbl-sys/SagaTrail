@@ -38,9 +38,11 @@ import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
 import {
+  KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
   useSubscription,
 } from "@/lib/revenuecat";
+import { useClaimKantonspack } from "@workspace/api-client-react";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -83,22 +85,24 @@ export default function KantonRouten() {
   const packLocked =
     premium && !!cantonName && !isElite && !hatEntitlement(packKey);
   const packUnlocked = premium && (isElite || hatEntitlement(packKey));
-  // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.
-  // RC vergibt das pack_<kanton>-Entitlement automatisch nach dem Kauf.
+  // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
+  // gekauft; der Server weist den Kauf per /me/packs/claim zu.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
   const packPaket = packSlug
     ? offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
-        (p) => p.identifier === `pack_${packSlug}`
+        (p) => p.identifier === KANTONSPACK_PACKAGE
       )
     : undefined;
+  const { mutateAsync: claimKantonspack } = useClaimKantonspack();
 
   const kaufePack = async () => {
     if (!packPaket) return;
     setPackBusy(true);
     try {
-      // RC vergibt pack_<kanton>-Entitlement nach dem Kauf automatisch —
-      // kein serverseitiger Grant noetig.
       await purchase(packPaket);
+      // Server-seitiger Grant: weist den Kauf dem gewaehlten Kanton zu
+      // und vergibt das pack_<kanton>-Entitlement via RevenueCat.
+      await claimKantonspack({ data: { kanton: packSlug } });
       await refreshCustomerInfo();
     } catch (err: any) {
       if (!err?.userCancelled) {

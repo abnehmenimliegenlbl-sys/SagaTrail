@@ -57,7 +57,7 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive } = useApp();
   const { isElite, hatEntitlement } = useSubscription();
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
   const [importing, setImporting] = useState(false);
@@ -296,7 +296,7 @@ export default function Routenplanung() {
   const meta = route;
   const routePackKey = saga?.canton ? packEntitlementFuerKanton(saga.canton) : "";
   const packUnlocked = premium && (isElite || (!!routePackKey && hatEntitlement(routePackKey)));
-  const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && freieSagen[saga.canton] !== route.sagaId;
+  const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id);
   const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
