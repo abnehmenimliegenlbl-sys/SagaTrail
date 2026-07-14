@@ -568,8 +568,12 @@ export default function LiveHike() {
   );
   const notifiedTurnsRef = useRef<Set<number>>(new Set());
   const [turnNotifsReady, setTurnNotifsReady] = useState(false);
+  // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
+  // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
+  // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
+  // Abzweigungen wurde sie nie aufgerufen, turnNotifsReady blieb false,
+  // und weder Kapitel- noch Interaktions-Mitteilungen kamen je an der Watch an.
   useEffect(() => {
-    if (turnCues.length === 0) return;
     let cancelled = false;
     bereiteAbbiegeMitteilungenVor().then((ok) => {
       if (!cancelled) setTurnNotifsReady(ok);
@@ -577,7 +581,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [turnCues.length]);
+  }, []);
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
     const geo = route?.geometry;
@@ -1102,6 +1106,12 @@ export default function LiveHike() {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       setChoiceFeedback(t.yourChoice(gewaehlt));
       feedbackTimerRef.current = setTimeout(() => setChoiceFeedback(null), 2500);
+      // Watch-Mitteilung bei Interaktion — spiegelt die Wahrnehmungsentscheidung
+      // ans Handgelenk, damit Wandernde mit gesperrtem iPhone trotzdem wissen,
+      // welche Option fuer sie gewaehlt wurde (z. B. per Voice-Steuerung).
+      if (turnNotifsReady) {
+        sendeAbbiegeMitteilung(t.perception, gewaehlt);
+      }
     }
     setChapters((prev) => {
       const next = [...prev];
