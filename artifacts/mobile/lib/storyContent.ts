@@ -67,6 +67,9 @@ export interface StoryPack {
   // Naht­loser Navigationshinweis, aus echter Routen-Geometrie abgeleitet
   // (siehe navigationCues.ts) und in den laufenden Erzaehltext eingeflochten.
   navCue: (direction: "links" | "rechts", landmark: string) => string;
+  // Kurze GPS-artige Sprachansage ("Links abbiegen!"), die bei Annaeherung
+  // an eine Abbiegung live eingeschoben wird — unabhaengig vom Kapitel.
+  turnVoice: (direction: "links" | "rechts") => string;
   // Kurzer, gesprochener Einschub, wenn unterwegs ein realer Ort (OSM/Wikipedia)
   // in der Naehe entdeckt wird — nutzt den bereits geladenen Wikipedia-Auszug,
   // keine KI-Generierung. extract ist null, wenn kein Wikipedia-Artikel vorliegt.
@@ -111,6 +114,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "Der Moment vergeht. Die Natur nimmt ihren gewohnten Lauf wieder auf, der Wind legt sich. Du ziehst weiter, gezeichnet von dieser Begegnung, und das Tal behält sein Geheimnis — bis zur nächsten, die vorbeikommt.",
     navCue: (direction, landmark) =>
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
+    turnVoice: (direction) => direction === "links" ? "Jetzt links abbiegen!" : "Jetzt rechts abbiegen!",
     poiAside: (name, extract) =>
       extract
         ? `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name}. ${extract}`
@@ -153,6 +157,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "De Momänt vergaht. D Natur nimmt ihre gwöhnti Lauf wieder uf, de Wind leit sich. Du ziehsch witer, zeichnet vo dere Begägnig, und s Tal behaltet sis Gheimnis — bis zur nächschte, wo verbicho chunnt.",
     navCue: (direction, landmark) =>
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
+    turnVoice: (direction) => direction === "links" ? "Jetzt links abbiege!" : "Jetzt rechts abbiege!",
     poiAside: (name, extract) =>
       extract
         ? `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name}. ${extract}`
@@ -195,6 +200,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "L'instant passe. La nature reprend son cours habituel, le vent retombe. Tu poursuis ta route, marqué·e par cette rencontre, et la vallée garde son secret — jusqu'à la prochaine personne qui passera.",
     navCue: (direction, landmark) =>
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
+    turnVoice: (direction) => direction === "links" ? "Tournez à gauche !" : "Tournez à droite !",
     poiAside: (name, extract) =>
       extract
         ? `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name}. ${extract}`
@@ -237,6 +243,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "L'attimo passa. La natura riprende il suo corso consueto, il vento si placa. Prosegui il cammino, segnato·a da questo incontro, e la valle custodisce il suo segreto — fino alla prossima persona che passerà.",
     navCue: (direction, landmark) =>
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
+    turnVoice: (direction) => direction === "links" ? "Svoltate a sinistra!" : "Svoltate a destra!",
     poiAside: (name, extract) =>
       extract
         ? `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name}. ${extract}`
@@ -279,6 +286,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "The moment passes. Nature resumes its usual course, the wind settles. You move on, marked by this encounter, and the valley keeps its secret — until the next person who passes by.",
     navCue: (direction, landmark) =>
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
+    turnVoice: (direction) => direction === "links" ? "Turn left!" : "Turn right!",
     poiAside: (name, extract) =>
       extract
         ? `A brief break from the saga — a real place right near you: ${name}. ${extract}`
@@ -317,6 +325,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "这一刻过去了。自然重新回到它惯常的轨迹，风也平息下来。你继续前行，被这次相遇留下印记，而山谷守着它的秘密——直到下一个路过的人到来。",
     navCue: (direction, landmark) =>
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
+    turnVoice: (direction) => direction === "links" ? "向左转。" : "向右转。",
     poiAside: (name, extract) =>
       extract
         ? `传说暂停一下，你身边有一个真实的地方：${name}。${extract}`
@@ -359,6 +368,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "El instante pasa. La naturaleza retoma su curso habitual, el viento amaina. Sigues tu camino, marcado·a por este encuentro, y el valle guarda su secreto — hasta la próxima persona que pase.",
     navCue: (direction, landmark) =>
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
+    turnVoice: (direction) => direction === "links" ? "¡Gire a la izquierda!" : "¡Gire a la derecha!",
     poiAside: (name, extract) =>
       extract
         ? `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name}. ${extract}`
@@ -401,6 +411,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "O instante passa. A natureza retoma seu curso habitual, o vento se acalma. Você segue em frente, marcado·a por este encontro, e o vale guarda seu segredo — até a próxima pessoa que passar.",
     navCue: (direction, landmark) =>
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
+    turnVoice: (direction) => direction === "links" ? "Vire à esquerda!" : "Vire à direita!",
     poiAside: (name, extract) =>
       extract
         ? `Pequena pausa na lenda, um lugar real bem perto de você: ${name}. ${extract}`
@@ -443,6 +454,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       "Момент проходит. Природа возвращается к своему привычному ходу, ветер стихает. Ты идёшь дальше, отмеченный этой встречей, а долина хранит свою тайну — до следующего путника.",
     navCue: (direction, landmark) =>
       `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
+    turnVoice: (direction) => direction === "links" ? "Поверните налево!" : "Поверните направо!",
     poiAside: (name, extract) =>
       extract
         ? `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name}. ${extract}`

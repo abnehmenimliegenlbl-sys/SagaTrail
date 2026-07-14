@@ -65,7 +65,6 @@ import {
   sendeAbbiegeMitteilung,
   sendePoiMitteilung,
 } from "@/lib/turnNotifications";
-import { weaveNavigationCues } from "@/lib/storyEngine";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
@@ -289,15 +288,11 @@ export default function LiveHike() {
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
-      // Navigationshinweise werden erst hier, mit der konkret gewaehlten Route,
-      // eingeflochten — unabhaengig davon, ob die Kapitel lokal, vom Server
-      // oder als Download geladen wurden.
-      const woven = weaveNavigationCues(story, saga, route, storyLanguage);
-      setChapters(woven);
-      decisionsRef.current = woven;
+      setChapters(story);
+      decisionsRef.current = story;
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
-      if (resumeAt != null && resumeAt > 0 && resumeAt < woven.length) {
+      if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
         setCurrentIndex(resumeAt);
       }
       setPreparing(false);
@@ -581,11 +576,14 @@ export default function LiveHike() {
   // Mitteilung aus. iOS spiegelt diese auf eine gekoppelte Smartwatch (inkl.
   // Vibration), sobald das iPhone gesperrt ist. Web: No-op.
   const turnCues = useMemo<NavigationCue[]>(
-    () => detectNavigationCues(route?.geometry, 8),
+    () => detectNavigationCues(route?.geometry, 50),
     [route?.geometry]
   );
   const notifiedTurnsRef = useRef<Set<number>>(new Set());
   const [turnNotifsReady, setTurnNotifsReady] = useState(false);
+  // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
+  // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
+  const speakRef = useRef<((text: string, onFinished?: () => void) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -631,8 +629,16 @@ export default function LiveHike() {
         t.turnNotifTitle,
         treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
       );
+      // Sprachansage kurz vor der Abbiegung — GPS-artig, unabhaengig vom
+      // laufenden Kapitel. Laeuft gerade ein Kapitel, wird es danach wieder
+      // von vorne aufgenommen (gleiche Resume-Logik wie POI-Einschub).
+      const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      const wasPlaying = speakingRef.current;
+      const chToResume = chapterTextRef.current;
+      const resume = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
+      speakRef.current?.(pack.turnVoice(treffer.cue.direction), resume);
     }
-  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t]);
+  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
@@ -841,6 +847,7 @@ export default function LiveHike() {
     },
     [profile?.language, stopNarration]
   );
+  speakRef.current = speak;
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
