@@ -65,6 +65,8 @@ export interface HikeStrings {
   leaderDecides: string;
   offlineHikeBanner: string;
   leaderChose: (option: string) => string;
+  photoTake: string;
+  photoSkip: string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -136,6 +138,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "Die Gruppenleitung entscheidet für die Gruppe …",
     offlineHikeBanner: "Kein Empfang — Narration pausiert.",
     leaderChose: (option) => `Die Gruppenleitung hat gewählt: ${option}`,
+    photoTake: "Foto aufnehmen",
+    photoSkip: "Überspringen",
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -205,6 +209,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "D Gruppäleitig entscheidet für d Gruppä …",
     offlineHikeBanner: "Kei Empfang — Erzählig pausiert.",
     leaderChose: (option) => `D Gruppäleitig het gwählt: ${option}`,
+    photoTake: "Foto ufnä",
+    photoSkip: "Überspringe",
   },
   en: {
     notAvailable: "Not available",
@@ -274,6 +280,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "The group leader decides for the group …",
     offlineHikeBanner: "No signal — narration paused.",
     leaderChose: (option) => `The group leader chose: ${option}`,
+    photoTake: "Take photo",
+    photoSkip: "Skip",
   },
   fr: {
     notAvailable: "Non disponible",
@@ -343,6 +351,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "Le chef de groupe décide pour le groupe …",
     offlineHikeBanner: "Pas de réseau — narration en pause.",
     leaderChose: (option) => `Le chef de groupe a choisi : ${option}`,
+    photoTake: "Prendre une photo",
+    photoSkip: "Ignorer",
   },
   it: {
     notAvailable: "Non disponibile",
@@ -412,6 +422,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "Il capogruppo decide per il gruppo …",
     offlineHikeBanner: "Nessun segnale — narrazione in pausa.",
     leaderChose: (option) => `Il capogruppo ha scelto: ${option}`,
+    photoTake: "Scatta foto",
+    photoSkip: "Salta",
   },
   es: {
     notAvailable: "No disponible",
@@ -481,6 +493,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "El líder del grupo decide por el grupo …",
     offlineHikeBanner: "Sin señal — narración pausada.",
     leaderChose: (option) => `El líder del grupo eligió: ${option}`,
+    photoTake: "Tomar foto",
+    photoSkip: "Omitir",
   },
   pt: {
     notAvailable: "Não disponível",
@@ -550,6 +564,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "O líder do grupo decide pelo grupo …",
     offlineHikeBanner: "Sem sinal — narração pausada.",
     leaderChose: (option) => `O líder do grupo escolheu: ${option}`,
+    photoTake: "Tirar foto",
+    photoSkip: "Ignorar",
   },
   zh: {
     notAvailable: "不可用",
@@ -619,6 +635,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "由队长为团队做出选择……",
     offlineHikeBanner: "无信号 — 叙述已暂停。",
     leaderChose: (option) => `队长选择了：${option}`,
+    photoTake: "拍照",
+    photoSkip: "跳过",
   },
   ru: {
     notAvailable: "Недоступно",
@@ -688,6 +706,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderDecides: "Лидер группы принимает решение за группу …",
     offlineHikeBanner: "Нет сигнала — повествование приостановлено.",
     leaderChose: (option) => `Лидер группы выбрал: ${option}`,
+    photoTake: "Сделать фото",
+    photoSkip: "Пропустить",
   },
 };
 

@@ -180,6 +180,24 @@ export default function Summary() {
           </View>
         )}
 
+        {lastHike.photoUris && lastHike.photoUris.length > 0 && (
+          <View style={{ marginTop: 30 }}>
+            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+              {t.hikePhotosTitle}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+              {lastHike.photoUris.map((uri, i) => (
+                <Image
+                  key={i}
+                  source={{ uri }}
+                  style={[styles.hikePhotoThumb, { borderColor: colors.glassBorder }]}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <View style={{ marginTop: 30 }}>
           <Text style={[styles.blockTitle, { color: colors.foreground }]}>
             {t.photoTitle}
@@ -273,6 +291,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     marginBottom: 12,
+  },
+  hikePhotoThumb: {
+    width: 150,
+    height: 150,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginHorizontal: 4,
+    marginBottom: 4,
   },
   // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
   // damit react-native-view-shot die Karte abfotografieren kann.

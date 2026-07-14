@@ -66,6 +66,7 @@ import {
   sendePoiMitteilung,
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
+import * as ImagePicker from "expo-image-picker";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
@@ -228,6 +229,12 @@ export default function LiveHike() {
   // Wikipedia-Auszug hat (wird im Erzaehl-Effekt mitbefuellt).
   const [nearbyPoiKontext, setNearbyPoiKontext] = useState<string | null>(null);
   const [narrationUnavailable, setNarrationUnavailable] = useState(false);
+  // Feature: Foto-Challenge
+  const [hikePhotos, setHikePhotos] = useState<string[]>([]);
+  const [showPhotoChallenge, setShowPhotoChallenge] = useState(false);
+  const photoChallengeShownRef = useRef(false);
+  // Feature: Entscheidungs-Countdown
+  const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -249,6 +256,26 @@ export default function LiveHike() {
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
   // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
   const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", true);
+
+  // Tageszeit beim Wanderungsstart (unveraenderlich fuer die ganze Session).
+  const timeOfDay = useMemo((): "morgen" | "mittag" | "abend" | "nacht" => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 11) return "morgen";
+    if (h >= 11 && h < 17) return "mittag";
+    if (h >= 17 && h < 22) return "abend";
+    return "nacht";
+  }, []);
+
+  // Begruessung (Solo-Name + Tageszeit), die dem ersten Kapitel vorangestellt wird.
+  const greetingPrefix = useMemo(() => {
+    const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    const tod = pack.timeOfDayGreeting(timeOfDay);
+    if (!inGruppe && profile?.name?.trim()) {
+      return `${pack.soloGreeting(profile.name.trim())} ${tod}`;
+    }
+    return tod;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyLanguage, timeOfDay]);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
@@ -668,6 +695,38 @@ export default function LiveHike() {
     }
   }, [livePos, distance, totalKm, route?.geometry, pois]);
 
+  // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
+  // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
+  // Aufforderung, diesen besonderen Ort zu fotografieren.
+  useEffect(() => {
+    if (!livePos || !saga?.coordinates || photoChallengeShownRef.current) return;
+    const dist = haversineKm(livePos, saga.coordinates);
+    if (dist <= 0.15) {
+      photoChallengeShownRef.current = true;
+      setShowPhotoChallenge(true);
+      const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      speakRef.current?.(pack.photoChallengePrompt);
+    }
+  }, [livePos, saga?.coordinates, storyLanguage]);
+
+  const takePhoto = async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.8,
+        allowsEditing: false,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        setHikePhotos((prev) => [...prev, result.assets[0].uri]);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {
+      // Kamera nicht verfuegbar — kein Fehlerzustand noetig
+    } finally {
+      setShowPhotoChallenge(false);
+    }
+  };
+
   // Standort verfolgen: nativ ueber expo-location, im Web ueber die Geolocation-API
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
@@ -858,7 +917,8 @@ export default function LiveHike() {
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
-      speak(ch.text);
+      // Erstes Kapitel: Begruessung (Name + Tageszeit) voranstellen.
+      speak(currentIndex === 0 ? `${greetingPrefix} ${ch.text}` : ch.text);
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
       // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
       if (currentIndex > 0 && turnNotifsReady) {
@@ -871,7 +931,7 @@ export default function LiveHike() {
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title]);
+  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -1183,6 +1243,34 @@ export default function LiveHike() {
     speakRef.current?.(pack.decisionVoicePrompt);
   }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
 
+  // 30-Sekunden-Countdown fuer Entscheidungspunkte: laeuft automatisch an,
+  // sobald der Entscheidungspunkt aktiv und die Erzaehlung fertig ist.
+  // Bei Ablauf wird automatisch die erste mit isTimeoutDefault markierte
+  // Option gewaehlt — oder mangels Markierung Option 0 (die mutigste).
+  const chooseOptionRef = useRef(chooseOption);
+  chooseOptionRef.current = chooseOption;
+  useEffect(() => {
+    if (!awaitingDecision || speaking) {
+      setDecisionCountdown(null);
+      return;
+    }
+    setDecisionCountdown(30);
+    const iv = setInterval(() => {
+      setDecisionCountdown((n) => {
+        if (n === null || n <= 1) { clearInterval(iv); return 0; }
+        return n - 1;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [awaitingDecision, speaking]);
+
+  useEffect(() => {
+    if (decisionCountdown !== 0 || !awaitingDecision) return;
+    const opts = chapters[currentIndex]?.decision?.options ?? [];
+    const defaultIdx = opts.findIndex((o) => o.isTimeoutDefault);
+    chooseOptionRef.current(defaultIdx >= 0 ? defaultIdx : 0);
+  }, [decisionCountdown, awaitingDecision, chapters, currentIndex]);
+
   // Freihaendige Sprachsteuerung: sobald ein Entscheidungspunkt aktiv ist,
   // hoert die App automatisch zu und waehlt bei einem klaren Treffer die
   // passende Option — ganz ohne Tastendruck. Erst NACH der Vorlesung von
@@ -1216,6 +1304,7 @@ export default function LiveHike() {
       steps,
       durationMin: Math.round((Date.now() - startTimeRef.current) / 60000),
       geometry: route?.geometry,
+      photoUris: hikePhotos.length > 0 ? hikePhotos : undefined,
     };
     await Promise.all([
       saveHike(session),
@@ -1223,7 +1312,7 @@ export default function LiveHike() {
       clearActiveHike(),
     ]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, steps, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
@@ -1699,6 +1788,41 @@ export default function LiveHike() {
               </Text>
             )}
 
+            {/* GPS-Foto-Challenge */}
+            {showPhotoChallenge && (
+              <Animated.View entering={FadeInUp} exiting={FadeOut} style={styles.photoChallengeWrap}>
+                <View style={[styles.photoChallengePanel, { borderColor: colors.accent, backgroundColor: colors.glassBgStrong }]}>
+                  <View style={styles.photoChallengeHeader}>
+                    <Feather name="camera" size={18} color={colors.accent} />
+                    <Text style={[styles.photoChallengeTitel, { color: colors.accent }]}>
+                      {STORY_PACKS[resolveLang(storyLanguage)].photoChallengePrompt}
+                    </Text>
+                  </View>
+                  <View style={styles.photoChallengeActions}>
+                    <Pressable
+                      onPress={takePhoto}
+                      style={[styles.photoChallengeBtn, { borderColor: colors.accent, backgroundColor: colors.accent }]}
+                      accessibilityRole="button"
+                    >
+                      <Feather name="camera" size={15} color="#fff" />
+                      <Text style={[styles.photoChallengeBtnText, { color: "#fff" }]}>
+                        {t.photoTake}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setShowPhotoChallenge(false)}
+                      style={[styles.photoChallengeBtn, { borderColor: colors.glassBorder }]}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.photoChallengeBtnText, { color: colors.mutedForeground }]}>
+                        {t.photoSkip}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
             {/* Entscheidungspanel */}
             {awaitingDecision && currentChapter?.decision && (
               <Animated.View entering={FadeInUp} style={styles.decisionWrap}>
@@ -1714,6 +1838,25 @@ export default function LiveHike() {
                   <Text style={[styles.decisionQuestion, { color: colors.foreground }]}>
                     {currentChapter.decision.question}
                   </Text>
+                  {/* Countdown-Balken */}
+                  {decisionCountdown !== null && !folgtGruppenleitung && (
+                    <View style={styles.countdownRow}>
+                      <View style={[styles.countdownBar, { backgroundColor: colors.glassBorder }]}>
+                        <View
+                          style={[
+                            styles.countdownFill,
+                            {
+                              backgroundColor: decisionCountdown <= 5 ? colors.destructive : colors.primary,
+                              width: `${(decisionCountdown / 30) * 100}%`,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[styles.countdownNum, { color: decisionCountdown <= 5 ? colors.destructive : colors.mutedForeground }]}>
+                        {decisionCountdown}
+                      </Text>
+                    </View>
+                  )}
                   {folgtGruppenleitung && (
                     <View style={styles.voiceHintRow}>
                       <Feather name="users" size={14} color={colors.accent} />
@@ -2014,6 +2157,25 @@ const styles = StyleSheet.create({
   optionBtn: { ...GLAS_3D, borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
+  photoChallengeWrap: { marginTop: 24 },
+  photoChallengePanel: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 18 },
+  photoChallengeHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 14 },
+  photoChallengeTitel: { fontFamily: fonts.bodyMedium, fontSize: 15, flex: 1, lineHeight: 22 },
+  photoChallengeActions: { flexDirection: "row", gap: 10 },
+  photoChallengeBtn: { ...GLAS_3D,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  photoChallengeBtnText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
+  countdownRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 },
+  countdownBar: { flex: 1, height: 4, borderRadius: 2, overflow: "hidden" },
+  countdownFill: { height: 4, borderRadius: 2 },
+  countdownNum: { fontFamily: fonts.monoBold, fontSize: 14, minWidth: 22, textAlign: "right" },
   sosBtn: {
     position: "absolute",
     right: 18,

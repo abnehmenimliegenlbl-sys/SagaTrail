@@ -21,6 +21,7 @@ export interface SummaryStrings {
   photoTitle: string;
   addPhoto: string;
   changePhoto: string;
+  hikePhotosTitle: string;
 }
 
 const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
@@ -46,6 +47,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Erinnerungsfoto",
     addPhoto: "Foto hinzufügen",
     changePhoto: "Foto ändern",
+    hikePhotosTitle: "Fotos vom Herzort",
   },
   gsw: {
     noHikeFound: "Kei Wanderig gfunde.",
@@ -69,6 +71,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Erinnerigsfoto",
     addPhoto: "Foto dezuefüege",
     changePhoto: "Foto ändere",
+    hikePhotosTitle: "Fotos vom Herzort",
   },
   en: {
     noHikeFound: "No hike found.",
@@ -92,6 +95,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Memory photo",
     addPhoto: "Add photo",
     changePhoto: "Change photo",
+    hikePhotosTitle: "Photos from the heart of the legend",
   },
   fr: {
     noHikeFound: "Aucune randonnée trouvée.",
@@ -115,6 +119,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Photo souvenir",
     addPhoto: "Ajouter une photo",
     changePhoto: "Changer la photo",
+    hikePhotosTitle: "Photos du cœur de la légende",
   },
   it: {
     noHikeFound: "Nessuna escursione trovata.",
@@ -138,6 +143,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Foto ricordo",
     addPhoto: "Aggiungi foto",
     changePhoto: "Cambia foto",
+    hikePhotosTitle: "Foto dal cuore della leggenda",
   },
   es: {
     noHikeFound: "No se encontró ninguna caminata.",
@@ -161,6 +167,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Foto de recuerdo",
     addPhoto: "Añadir foto",
     changePhoto: "Cambiar foto",
+    hikePhotosTitle: "Fotos del corazón de la leyenda",
   },
   pt: {
     noHikeFound: "Nenhuma caminhada encontrada.",
@@ -184,6 +191,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Foto de lembrança",
     addPhoto: "Adicionar foto",
     changePhoto: "Trocar foto",
+    hikePhotosTitle: "Fotos do coração da lenda",
   },
   zh: {
     noHikeFound: "未找到徒步记录。",
@@ -207,6 +215,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "纪念照片",
     addPhoto: "添加照片",
     changePhoto: "更换照片",
+    hikePhotosTitle: "传说核心地的照片",
   },
   ru: {
     noHikeFound: "Поход не найден.",
@@ -230,6 +239,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     photoTitle: "Памятное фото",
     addPhoto: "Добавить фото",
     changePhoto: "Изменить фото",
+    hikePhotosTitle: "Фото из сердца легенды",
   },
 };
 

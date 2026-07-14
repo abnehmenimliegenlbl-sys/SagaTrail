@@ -65,7 +65,8 @@ export interface StoryChapter {
   isDecisionPoint: boolean;
   decision?: {
     question: string;
-    options: { label: string; archetypeHint: string; tone: string }[];
+    /** isTimeoutDefault markiert die Option, die nach Ablauf des Countdowns automatisch gewaehlt wird */
+    options: { label: string; archetypeHint: string; tone: string; isTimeoutDefault?: boolean }[];
   };
   chosenOptionIndex?: number;
 }
@@ -82,6 +83,8 @@ export interface HikeSession {
   visitedPlaceIds: string[];
   /** Erinnerungsfoto aus dem Wander-Tagebuch (lokale Datei-URI, optional) */
   photoUri?: string;
+  /** Unterwegs aufgenommene Fotos der GPS-Foto-Challenges (lokale Datei-URIs) */
+  photoUris?: string[];
   /** Schritte laut Pedometer, 0 falls Sensor nicht verfuegbar war */
   steps?: number;
   /** Effektiv verstrichene Wanderzeit in Minuten (seit Start bis Abschluss) */
