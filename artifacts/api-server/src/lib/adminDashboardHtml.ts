@@ -101,6 +101,7 @@ a{color:var(--red);text-decoration:none}
   <h1>Saga<span>Trail</span> Admin</h1>
   <input id="tok-input" type="password" placeholder="Admin-Token" autocomplete="off" />
   <button id="tok-btn" onclick="connect()">Verbinden</button>
+  <button id="tok-forget" onclick="forgetToken()" style="display:none;background:#444;color:#ccc;border:1px solid #555;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px">Abmelden</button>
   <span id="tok-status"></span>
 </div>
 
@@ -190,12 +191,22 @@ a{color:var(--red);text-decoration:none}
 <script>
 var _token = '';
 var _partner = [];
+var LS_KEY = 'sagatrail_admin_tok';
 
 function token() { return _token || document.getElementById('tok-input').value; }
 function setTokStatus(msg,ok) {
   var el = document.getElementById('tok-status');
   el.textContent = msg;
   el.style.color = ok === false ? '#f88' : ok === true ? '#8d8' : '#aaa';
+}
+function forgetToken() {
+  localStorage.removeItem(LS_KEY);
+  _token = '';
+  document.getElementById('tok-input').value = '';
+  document.getElementById('tok-input').style.display = '';
+  document.getElementById('tok-btn').style.display = '';
+  document.getElementById('tok-forget').style.display = 'none';
+  setTokStatus('Token gelöscht', undefined);
 }
 
 async function api(path, opts) {
@@ -215,11 +226,37 @@ async function connect() {
   try {
     setTokStatus('Lade...', undefined);
     await Promise.all([loadOverview(), loadPartner()]);
-    setTokStatus('Verbunden', true);
+    localStorage.setItem(LS_KEY, _token);
+    document.getElementById('tok-input').style.display = 'none';
+    document.getElementById('tok-btn').style.display = 'none';
+    document.getElementById('tok-forget').style.display = '';
+    setTokStatus('Verbunden \u2713', true);
   } catch(e) {
     setTokStatus('Fehler: ' + e.message, false);
   }
 }
+
+window.addEventListener('DOMContentLoaded', function() {
+  var saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    _token = saved;
+    document.getElementById('tok-input').value = saved;
+    document.getElementById('tok-input').style.display = 'none';
+    document.getElementById('tok-btn').style.display = 'none';
+    document.getElementById('tok-forget').style.display = '';
+    setTokStatus('Lade...', undefined);
+    Promise.all([loadOverview(), loadPartner()])
+      .then(function() { setTokStatus('Verbunden \u2713', true); })
+      .catch(function(e) {
+        localStorage.removeItem(LS_KEY);
+        _token = '';
+        document.getElementById('tok-input').style.display = '';
+        document.getElementById('tok-btn').style.display = '';
+        document.getElementById('tok-forget').style.display = 'none';
+        setTokStatus('Gespeichertes Token ungültig: ' + e.message, false);
+      });
+  }
+});
 
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(function(el){ el.classList.remove('active'); });
