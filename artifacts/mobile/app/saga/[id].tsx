@@ -131,9 +131,14 @@ export default function SagaDetail() {
     setPackBusy(true);
     try {
       await purchase(packPaket);
-      // Server-seitiger Grant: weist den Kauf dem gewaehlten Kanton zu
-      // und vergibt das pack_<kanton>-Entitlement via RevenueCat.
-      await claimKantonspack({ data: { kanton: packSlug } });
+      // Server-seitiger Grant (Best-Effort): RC vergibt das Entitlement
+      // bereits automatisch; dieser Aufruf schlaegt bei fehlendem Connector
+      // still fehl, ohne den Kauf rueckgaengig zu machen.
+      try {
+        await claimKantonspack({ data: { kanton: packSlug } });
+      } catch {
+        // Nicht fatal: RC hat das Entitlement bereits vergeben.
+      }
       await refreshCustomerInfo();
     } catch (err: any) {
       if (!err?.userCancelled) {

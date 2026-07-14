@@ -161,8 +161,11 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
     premiumAktiv = await hatAktivesPremiumEntitlement(userId);
     req.log.info({ userId, premiumAktiv }, "[IAP] /me/premium/sync geprueft");
   } catch (err) {
-    req.log.error({ err, userId }, "[IAP] RevenueCat-Premium-Abgleich fehlgeschlagen");
-    res.status(502).json({ error: "RevenueCat nicht erreichbar" });
+    // RC-Connector nicht konfiguriert oder vorruebergehend nicht erreichbar:
+    // aktuellen Profilstatus zurueckgeben statt 502 — verhindert, dass ein
+    // RC-Ausfall Admin-vergebenes Premium oder bereits aktive Abos loescht.
+    req.log.warn({ err, userId }, "[IAP] RevenueCat nicht erreichbar — gebe bestehenden Profilstatus zurueck");
+    res.json(toProfile(bestehend));
     return;
   }
 
