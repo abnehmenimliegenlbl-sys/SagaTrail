@@ -58,7 +58,7 @@ import {
   STORY_PACKS,
   trimForNarration,
 } from "@/lib/storyContent";
-import { blobToDataUri } from "@/lib/narrationAudio";
+import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
   bereiteAbbiegeMitteilungenVor,
@@ -804,7 +804,7 @@ export default function LiveHike() {
 
       try {
         const blob = await createNarration({ text, language: profile?.language });
-        const uri = await blobToDataUri(blob);
+        const uri = await blobToTempFileUri(blob);
         if (gen !== narrationGenRef.current) return;
         const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {

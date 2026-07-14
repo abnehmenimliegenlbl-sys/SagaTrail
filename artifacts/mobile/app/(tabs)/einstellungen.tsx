@@ -41,7 +41,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
-import { blobToDataUri } from "@/lib/narrationAudio";
+import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
 
@@ -169,7 +169,7 @@ export default function Einstellungen() {
     setPreviewLoading(true);
     try {
       const blob = await createNarration({ text: sample, language: profile?.language });
-      const uri = await blobToDataUri(blob);
+      const uri = await blobToTempFileUri(blob);
       if (gen !== previewGenRef.current) return;
       const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
       if (gen !== previewGenRef.current) {
