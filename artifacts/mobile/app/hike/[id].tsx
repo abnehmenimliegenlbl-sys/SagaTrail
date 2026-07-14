@@ -425,7 +425,7 @@ export default function LiveHike() {
     // (100 m erwies sich im Feldtest als zu eng: auf 7 km nur 2 POIs.)
     // Gemessen wird gegen die Liniensegmente (nicht nur Stuetzpunkte), da die
     // gespeicherte Geometrie ausgeduennt ist und Segmente >100 m lang sein koennen.
-    const KORRIDOR_KM = 0.3;
+    const KORRIDOR_KM = 0.5;
     const geo = route?.geometry;
     getPois(bbox)
       .then((result) => {
@@ -540,7 +540,7 @@ export default function LiveHike() {
 
   // POI-Panel automatisch schliessen, wenn der Nutzer mindestens 500 m vom
   // gewaehlten POI entfernt ist, oder wenn ein neuer POI in der Naehe auftaucht.
-  const POI_AUTO_CLOSE_KM = 0.5;
+  const POI_AUTO_CLOSE_KM = 0.5; // manuell angetipptes Detail-Panel
   useEffect(() => {
     if (!selectedPoi) return;
     // Neuer nearby-POI erschienen (nicht derselbe) → Panel schliessen
@@ -562,7 +562,7 @@ export default function LiveHike() {
   // zone). Ohne diesen Effekt bleibt die Karte permanent stehen und blockiert
   // das Erscheinen des naechsten POI, weil narratedPoiIdRef nie zurueckgesetzt
   // werden kann.
-  const NEARBY_POI_HIDE_KM = 0.2;
+  const NEARBY_POI_HIDE_KM = 0.5;
   useEffect(() => {
     if (!nearbyPoi || !livePos) return;
     const dist = haversineKm(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
@@ -656,7 +656,7 @@ export default function LiveHike() {
           })()
         : null);
     if (!current) return;
-    const NEARBY_KM = 0.1;
+    const NEARBY_KM = 0.3;
     const hit = pois.find(
       (poi) =>
         !announcedPoiIdsRef.current.has(poi.id) &&
