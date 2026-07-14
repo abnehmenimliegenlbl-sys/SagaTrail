@@ -213,8 +213,13 @@ var _token = '';
 var _partner = [];
 var LS_KEY = 'sagatrail_admin_tok';
 
+var _savedStatus = {msg: '', ok: undefined};
 function token() { return _token || document.getElementById('tok-input').value; }
 function setTokStatus(msg,ok) {
+  _savedStatus = {msg: msg, ok: ok};
+  _applyTokStatus(msg, ok);
+}
+function _applyTokStatus(msg, ok) {
   var el = document.getElementById('tok-status');
   el.textContent = msg;
   el.style.color = ok === false ? '#f88' : ok === true ? '#8d8' : '#aaa';
@@ -257,6 +262,12 @@ async function connect() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+  window.addEventListener('offline', function() {
+    _applyTokStatus('Getrennt \u2717', false);
+  });
+  window.addEventListener('online', function() {
+    _applyTokStatus(_savedStatus.msg || 'Verbunden \u2713', _savedStatus.ok !== undefined ? _savedStatus.ok : true);
+  });
   var saved = localStorage.getItem(LS_KEY);
   if (saved) {
     _token = saved;
