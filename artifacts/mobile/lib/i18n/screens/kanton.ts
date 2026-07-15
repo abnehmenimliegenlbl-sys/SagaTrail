@@ -36,6 +36,10 @@ export interface KantonStrings {
   nearbyLocating: string;
   nearbyDenied: string;
   nearbyDistBadge: (distText: string) => string;
+  sunsetFilterLabel: string;
+  sunsetStartLabel: string;
+  sunsetInfo: (time: string) => string;
+  sunsetNoneInTime: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -79,6 +83,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Standort wird ermittelt …",
     nearbyDenied: "Standort nicht verfügbar",
     nearbyDistBadge: (d) => `≈ ${d} vom Start`,
+    sunsetFilterLabel: "Schaffbar bis Sonnenuntergang",
+    sunsetStartLabel: "Startzeit der Wanderung",
+    sunsetInfo: (t) => `Sonnenuntergang heute ca. ${t} Uhr`,
+    sunsetNoneInTime: "Keine Route bis Sonnenuntergang schaffbar",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -120,6 +128,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Standort wird ermittlet …",
     nearbyDenied: "Standort nid verfüegbar",
     nearbyDistBadge: (d) => `≈ ${d} vom Start`,
+    sunsetFilterLabel: "Bis Sunneundergang schaffbar",
+    sunsetStartLabel: "Startziit vo de Wanderig",
+    sunsetInfo: (t) => `Sunneundergang hüt cha. ${t} Uhr`,
+    sunsetNoneInTime: "Kei Route bis Sunneundergang schaffbar",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -161,6 +173,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Localisation en cours …",
     nearbyDenied: "Position non disponible",
     nearbyDistBadge: (d) => `≈ ${d} du départ`,
+    sunsetFilterLabel: "Réalisable avant le coucher du soleil",
+    sunsetStartLabel: "Heure de départ",
+    sunsetInfo: (t) => `Coucher du soleil aujourd'hui vers ${t}`,
+    sunsetNoneInTime: "Aucun itinéraire réalisable avant le coucher du soleil",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -202,6 +218,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Localizzazione in corso …",
     nearbyDenied: "Posizione non disponibile",
     nearbyDistBadge: (d) => `≈ ${d} dall'inizio`,
+    sunsetFilterLabel: "Fattibile prima del tramonto",
+    sunsetStartLabel: "Orario di partenza",
+    sunsetInfo: (t) => `Tramonto oggi circa ${t}`,
+    sunsetNoneInTime: "Nessun percorso fattibile prima del tramonto",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -243,6 +263,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Getting location …",
     nearbyDenied: "Location unavailable",
     nearbyDistBadge: (d) => `≈ ${d} from start`,
+    sunsetFilterLabel: "Doable before sunset",
+    sunsetStartLabel: "Hike start time",
+    sunsetInfo: (t) => `Sunset today approx. ${t}`,
+    sunsetNoneInTime: "No route doable before sunset",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -283,6 +307,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "正在获取位置 …",
     nearbyDenied: "位置不可用",
     nearbyDistBadge: (d) => `≈ 距起点 ${d}`,
+    sunsetFilterLabel: "日落前可完成",
+    sunsetStartLabel: "出发时间",
+    sunsetInfo: (t) => `今日日落约 ${t}`,
+    sunsetNoneInTime: "没有可在日落前完成的路线",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -324,6 +352,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Определение местоположения …",
     nearbyDenied: "Местоположение недоступно",
     nearbyDistBadge: (d) => `≈ ${d} от старта`,
+    sunsetFilterLabel: "Успеть до заката",
+    sunsetStartLabel: "Время начала похода",
+    sunsetInfo: (t) => `Закат сегодня примерно в ${t}`,
+    sunsetNoneInTime: "До заката ни один маршрут не успеть пройти",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -365,6 +397,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Obteniendo ubicación …",
     nearbyDenied: "Ubicación no disponible",
     nearbyDistBadge: (d) => `≈ ${d} desde el inicio`,
+    sunsetFilterLabel: "Realizable antes del atardecer",
+    sunsetStartLabel: "Hora de inicio de la caminata",
+    sunsetInfo: (t) => `Atardecer hoy aprox. ${t}`,
+    sunsetNoneInTime: "Ninguna ruta realizable antes del atardecer",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -406,6 +442,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     nearbyLocating: "Obtendo localização …",
     nearbyDenied: "Localização indisponível",
     nearbyDistBadge: (d) => `≈ ${d} do início`,
+    sunsetFilterLabel: "Realizável antes do pôr do sol",
+    sunsetStartLabel: "Horário de início da caminhada",
+    sunsetInfo: (t) => `Pôr do sol hoje por volta das ${t}`,
+    sunsetNoneInTime: "Nenhuma rota realizável antes do pôr do sol",
   },
 };
 

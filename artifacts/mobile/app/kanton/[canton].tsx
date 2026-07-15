@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Image,
   Platform,
@@ -54,6 +54,49 @@ const ASC_MAX = 3000;
 const DIFF_MIN = 1;
 const DIFF_MAX = 6;
 
+function getLastSundayOf(year: number, month: number): Date {
+  const d = new Date(year, month + 1, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function isCEST(date: Date): boolean {
+  const y = date.getFullYear();
+  const start = getLastSundayOf(y, 2);
+  const end = getLastSundayOf(y, 9);
+  return date >= start && date < end;
+}
+
+function calcSunsetCH(date: Date): { h: number; m: number } {
+  const dayOfYear = Math.floor(
+    (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const b = (2 * Math.PI * (dayOfYear - 1)) / 365;
+  const decl =
+    0.006918 -
+    0.399912 * Math.cos(b) +
+    0.070257 * Math.sin(b) -
+    0.006758 * Math.cos(2 * b) +
+    0.000907 * Math.sin(2 * b);
+  const lat = (47.0 * Math.PI) / 180;
+  const cosHa = -Math.tan(lat) * Math.tan(decl);
+  const haRad = Math.acos(Math.max(-1, Math.min(1, cosHa)));
+  const haHours = (haRad * 12) / Math.PI;
+  const eot =
+    ((-0.0000075 +
+      0.001868 * Math.cos(b) -
+      0.032077 * Math.sin(b) -
+      0.014615 * Math.cos(2 * b) -
+      0.04089 * Math.sin(2 * b)) *
+      12) /
+    Math.PI;
+  const lngOffset = 8 / 15;
+  const tz = isCEST(date) ? 2 : 1;
+  const sunsetLocal = 12 + haHours + lngOffset + tz + eot;
+  const h = Math.floor(sunsetLocal);
+  const m = Math.round((sunsetLocal - h) * 60) % 60;
+  return { h, m };
+}
 
 const WEB_TOP = 67;
 
@@ -139,9 +182,20 @@ export default function KantonRouten() {
   const [nearbyPos, setNearbyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyLocating, setNearbyLocating] = useState(false);
   const [nearbyDenied, setNearbyDenied] = useState(false);
-  // Waehrend ein Schieberegler gezogen wird, pausiert das Scrollen der Seite,
-  // damit die Geste nicht von der Liste uebernommen wird und haengen bleibt.
+  const [sunsetFilter, setSunsetFilter] = useState(false);
+  const [startH, setStartH] = useState(9);
+  const [startMin, setStartMin] = useState(0);
   const [sliderAktiv, setSliderAktiv] = useState(false);
+
+  const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
+  const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;
+
+  const filteredRoutes = useMemo(() => {
+    if (!sunsetFilter) return routes;
+    const availMin = sunsetTime.h * 60 + sunsetTime.m - (startH * 60 + startMin);
+    if (availMin <= 0) return [];
+    return routes.filter((r) => r.minutes <= availMin);
+  }, [routes, sunsetFilter, startH, startMin, sunsetTime]);
 
   // Beim Kantonswechsel Filter und Ergebnisse zuruecksetzen — erst suchen,
   // wenn der Nutzer die Filter gesetzt und die Suche gestartet hat.
@@ -153,6 +207,9 @@ export default function KantonRouten() {
     setNearbyPos(null);
     setNearbyLocating(false);
     setNearbyDenied(false);
+    setSunsetFilter(false);
+    setStartH(9);
+    setStartMin(0);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
@@ -344,6 +401,59 @@ export default function KantonRouten() {
               thumbColor={colors.foreground}
             />
           </View>
+
+          <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.switchLabel, { color: colors.foreground }]}>
+                {t.sunsetFilterLabel}
+              </Text>
+              <Text style={[styles.switchHint, { color: colors.mutedForeground }]}>
+                {t.sunsetInfo(sunsetTimeStr)}
+              </Text>
+            </View>
+            <Switch
+              value={sunsetFilter}
+              onValueChange={setSunsetFilter}
+              trackColor={{ true: colors.accent, false: colors.card }}
+              thumbColor={colors.foreground}
+            />
+          </View>
+
+          {sunsetFilter && (
+            <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+              <Text style={[styles.switchLabel, { color: colors.foreground }]}>
+                {t.sunsetStartLabel}
+              </Text>
+              <View style={styles.timeRow}>
+                <Pressable
+                  onPress={() => setStartH((h) => (h - 1 + 24) % 24)}
+                  style={[styles.timeBtn, { borderColor: colors.glassBorder }]}
+                  hitSlop={8}
+                >
+                  <Feather name="minus" size={13} color={colors.foreground} />
+                </Pressable>
+                <Text style={[styles.timeDisplay, { color: colors.foreground }]}>
+                  {String(startH).padStart(2, "0")}:{String(startMin).padStart(2, "0")}
+                </Text>
+                <Pressable
+                  onPress={() => setStartH((h) => (h + 1) % 24)}
+                  style={[styles.timeBtn, { borderColor: colors.glassBorder }]}
+                  hitSlop={8}
+                >
+                  <Feather name="plus" size={13} color={colors.foreground} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setStartMin((m) => (m + 15) % 60)}
+                  style={[styles.timeBtnMin, { borderColor: colors.glassBorder }]}
+                  hitSlop={8}
+                >
+                  <Text style={[styles.timeBtnMinLabel, { color: colors.mutedForeground }]}>
+                    +15′
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
         </View>
 
@@ -391,6 +501,9 @@ export default function KantonRouten() {
                     setAscFilter([ASC_MIN, ASC_MAX]);
                     setDiffFilter([DIFF_MIN, DIFF_MAX]);
                     setGanzjaehrigFilter(false);
+                    setSunsetFilter(false);
+                    setStartH(9);
+                    setStartMin(0);
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t.resetFilters}
@@ -403,13 +516,26 @@ export default function KantonRouten() {
                 </Pressable>
               )}
             </View>
+          ) : filteredRoutes.length === 0 && sunsetFilter ? (
+            <View style={styles.hint}>
+              <Feather name="sunset" size={28} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+                {t.sunsetNoneInTime}
+              </Text>
+              <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
+                {t.sunsetInfo(sunsetTimeStr)}
+              </Text>
+            </View>
           ) : (
             <>
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {routes.length === 1 ? t.routeFound : t.routesFound(routes.length)}
+                {sunsetFilter
+                  ? (filteredRoutes.length === 1 ? t.routeFound : t.routesFound(filteredRoutes.length))
+                  : (routes.length === 1 ? t.routeFound : t.routesFound(routes.length))
+                }
                 {" "}{t.nextStepSaga}
               </Text>
-              {routes.map((route, i) => {
+              {filteredRoutes.map((route, i) => {
                 const locked = packUnlocked
                   ? false
                   : premium
@@ -639,6 +765,38 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   retryBtnText: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timeBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timeDisplay: {
+    fontFamily: fonts.mono,
+    fontSize: 18,
+    minWidth: 52,
+    textAlign: "center",
+  },
+  timeBtnMin: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 2,
+  },
+  timeBtnMinLabel: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+  },
   cardWrap: { ...SCHATTEN_3D, marginBottom: 14 },
   card: { ...GLAS_3D, height: 200, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   cardImg: { width: "100%", height: "100%" },

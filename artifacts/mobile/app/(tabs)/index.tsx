@@ -1,13 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -49,21 +48,6 @@ export default function Entdecken() {
   const homeCanton = profile?.homeCanton;
   const homeEntry = cantons.find((c) => c.canton === homeCanton);
   const others = cantons.filter((c) => c.canton !== homeCanton);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const lang = (language ?? "de") as string;
-
-  const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return sagas
-      .filter((s) => {
-        const title = (s.summaries?.[lang]?.title ?? s.title ?? "").toLowerCase();
-        const cantonName = translateCanton(s.canton, lang as LanguageCode).toLowerCase();
-        return title.includes(q) || cantonName.includes(q) || s.canton.toLowerCase().includes(q);
-      })
-      .slice(0, 12);
-  }, [searchQuery, sagas, lang]);
 
   return (
     <Background>
@@ -108,68 +92,6 @@ export default function Entdecken() {
             {t.heroBody}
           </Text>
         </Animated.View>
-
-        {/* ── Globale Sagen-Suche ─────────────────────────────────── */}
-        <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-          <View
-            style={[
-              styles.searchBar,
-              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-            ]}
-          >
-            <Feather name="search" size={16} color={colors.mutedForeground} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.foreground }]}
-              placeholder={t.searchPlaceholder}
-              placeholderTextColor={colors.mutedForeground}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-              clearButtonMode="while-editing"
-              accessibilityLabel={t.searchPlaceholder}
-            />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery("")} hitSlop={10}>
-                <Feather name="x" size={14} color={colors.mutedForeground} />
-              </Pressable>
-            )}
-          </View>
-          {searchQuery.length >= 2 && (
-            <View style={[styles.searchResults, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
-              {searchResults.length === 0 ? (
-                <Text style={[styles.searchNoResults, { color: colors.mutedForeground }]}>{t.searchNoResults}</Text>
-              ) : (
-                searchResults.map((s) => {
-                  const title = s.summaries?.[lang]?.title ?? s.title ?? "";
-                  const cantonDisplay = translateCanton(s.canton, lang as LanguageCode);
-                  return (
-                    <Pressable
-                      key={s.id}
-                      onPress={() => {
-                        setSearchQuery("");
-                        router.push(`/kanton/${encodeURIComponent(s.canton)}`);
-                      }}
-                      style={({ pressed }) => [
-                        styles.searchResultRow,
-                        { borderBottomColor: colors.glassBorder, opacity: pressed ? 0.7 : 1 },
-                      ]}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.searchResultTitle, { color: colors.foreground }]} numberOfLines={1}>
-                          {title}
-                        </Text>
-                        <Text style={[styles.searchResultMeta, { color: colors.mutedForeground }]}>
-                          {t.searchInCanton(cantonDisplay)}
-                        </Text>
-                      </View>
-                      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-                    </Pressable>
-                  );
-                })
-              )}
-            </View>
-          )}
-        </View>
 
         {activeHike && (
           <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
@@ -443,48 +365,4 @@ const styles = StyleSheet.create({
   },
   cantonName: { fontFamily: fonts.titleBold, fontSize: 19 },
   cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    padding: 0,
-  },
-  searchResults: {
-    marginTop: 6,
-    borderWidth: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  searchNoResults: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    padding: 16,
-    textAlign: "center",
-  },
-  searchResultRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  searchResultTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-  },
-  searchResultMeta: {
-    fontFamily: fonts.mono,
-    fontSize: 11,
-    marginTop: 2,
-  },
 });
