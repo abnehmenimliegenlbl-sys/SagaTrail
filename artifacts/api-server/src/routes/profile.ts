@@ -36,6 +36,7 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     ageTier: row.ageTier,
     premium: istPremiumAktiv(row),
     freeHikeUsed: row.freeHikeUsed,
+    purchasedPacks: row.purchasedPacks ?? [],
   });
 }
 

@@ -27,6 +27,10 @@ export const profilesTable = pgTable("profiles", {
   // bei Ab-/Anmelden oder Geraetewechsel, da AsyncStorage sonst die einzige Quelle war.
   hikeHistory: jsonb("hike_history").notNull().default([]),
   achievements: jsonb("achievements").notNull().default([]),
+  // Freigeschaltete Kantonspack-Slugs (z. B. ["uri", "bern"]). Wird vom
+  // Server beim Claim befuellt statt ueber einen RevenueCat-Entitlement-Grant,
+  // da der RC-Connector-Key nur Lesezugriff hat.
+  purchasedPacks: text("purchased_packs").array().notNull().default([]),
   // Expo-Push-Token des Geraets (null = nicht registriert oder widerrufen).
   // Wird beim App-Start gesetzt und fuer Gruppen-Push-Benachrichtigungen verwendet.
   pushToken: text("push_token"),

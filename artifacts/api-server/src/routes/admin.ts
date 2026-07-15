@@ -14,6 +14,7 @@ import {
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
+import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 
 const router: IRouter = Router();
 
@@ -70,6 +71,51 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
 
   req.log.info({ userId, email, premiumBis: bis.toISOString() }, "Premium manuell freigeschaltet");
   res.json({ userId, email, premiumBis: bis.toISOString(), premiumAktiv: istPremiumAktiv(row) });
+});
+
+const PackGrantBody = z.object({
+  userId: z.string().min(1),
+  slug: z.string().min(1),
+});
+
+router.post("/admin/pack-grant", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = PackGrantBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { userId, slug } = parsed.data;
+  if (!KANTON_SLUGS.includes(slug)) {
+    res.status(400).json({ error: `Unbekannter Kanton-Slug: ${slug}` });
+    return;
+  }
+
+  const [row] = await db
+    .select({ purchasedPacks: profilesTable.purchasedPacks })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+
+  if (!row) {
+    res.status(404).json({ error: `Nutzer ${userId} hat noch kein Profil` });
+    return;
+  }
+
+  const current = row.purchasedPacks ?? [];
+  if (current.includes(slug)) {
+    res.json({ ok: true, bereitsVorhanden: true, purchasedPacks: current });
+    return;
+  }
+
+  const updated = [...current, slug];
+  await db
+    .update(profilesTable)
+    .set({ purchasedPacks: updated, updatedAt: new Date() })
+    .where(eq(profilesTable.id, userId));
+
+  req.log.info({ userId, slug }, "Kantonspack manuell freigeschaltet");
+  res.json({ ok: true, bereitsVorhanden: false, purchasedPacks: updated });
 });
 
 const PremiumZuruecksetzenBody = z.object({

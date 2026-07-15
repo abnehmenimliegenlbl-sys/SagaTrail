@@ -30,7 +30,8 @@ import {
   REVENUECAT_PACKS_OFFERING,
   useSubscription,
 } from "@/lib/revenuecat";
-import { useClaimKantonspack } from "@workspace/api-client-react";
+import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { resolveLang } from "@/lib/storyContent";
 import { useSagaFoto } from "@/lib/useSagaFoto";
 
@@ -113,18 +114,24 @@ export default function SagaDetail() {
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das Pack des
   // Kantons oder Elite (alle Packs inklusive).
   const packKey = packEntitlementFuerKanton(saga.canton);
+  // packSlug vor den Pack-Checks benoetigt (DB-seitiger Freischaltungscheck).
+  const packSlug = kantonSlug(saga.canton);
+  // DB-basierter Freischaltungscheck als Fallback fuer den Fall, dass das RC-
+  // Entitlement-Grant wegen fehlender Scope-Berechtigung fehlgeschlagen ist.
+  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
   const packLocked =
     premium &&
     !isElite &&
     !hatEntitlement(packKey) &&
+    !dbPackUnlocked &&
     !istSageInklusive(saga.canton, saga.id);
   // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.
-  // RC vergibt das pack_<kanton>-Entitlement automatisch nach dem Kauf.
-  const packSlug = kantonSlug(saga.canton);
+  // Der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
     (p) => p.identifier === KANTONSPACK_PACKAGE
   );
   const { mutateAsync: claimKantonspack } = useClaimKantonspack();
+  const queryClient = useQueryClient();
 
   const kaufePack = async () => {
     if (!packPaket) return;
@@ -136,8 +143,9 @@ export default function SagaDetail() {
       // still fehl, ohne den Kauf rueckgaengig zu machen.
       try {
         await claimKantonspack({ data: { kanton: packSlug } });
+        await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       } catch {
-        // Nicht fatal: RC hat das Entitlement bereits vergeben.
+        // Nicht fatal.
       }
       await refreshCustomerInfo();
     } catch (err: any) {

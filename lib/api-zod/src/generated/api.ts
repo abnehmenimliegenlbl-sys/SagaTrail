@@ -456,7 +456,8 @@ export const GetMyProfileResponse = zod.object({
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
-  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
+  "purchasedPacks": zod.array(zod.string()).default([]).describe('Freigeschaltete Kantonspack-Slugs (z. B. ["uri", "bern"])'),
 })
 
 

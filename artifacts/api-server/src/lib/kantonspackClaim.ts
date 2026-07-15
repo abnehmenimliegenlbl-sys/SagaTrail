@@ -1,17 +1,18 @@
 // Ordnet einen bezahlten Kantonspack-Kauf (Einzelprodukt
 // "sagatrail_kantonspack", consumable) verifiziert einem Kanton zu:
 // Der Server zaehlt bei RevenueCat die gueltigen Kantonspack-Kaeufe des
-// Customers und die bereits vergebenen pack_<kanton>-Entitlements. Nur wenn
-// mehr Kaeufe als Zuordnungen vorliegen, wird das Entitlement des gewaehlten
-// Kantons per Grant vergeben. Der Client darf sich Packs NICHT selbst geben.
+// Customers und vergleicht sie mit den bereits in der DB gespeicherten
+// freigeschalteten Packs. Nur wenn mehr Kaeufe als Zuordnungen vorliegen,
+// wird der Kanton als freigeschaltet in profiles.purchased_packs geschrieben.
+// Der RC-Connector-Key hat nur Lesezugriff — grantCustomerEntitlement wird
+// bewusst NICHT aufgerufen (wurde mit 403 abgelehnt).
+import { db, profilesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import { createClient } from "@replit/revenuecat-sdk/client";
 import {
-  listCustomerActiveEntitlements,
-  listEntitlements,
   listProducts,
   listPurchases,
-  grantCustomerEntitlement,
   type Purchase,
 } from "@replit/revenuecat-sdk";
 
@@ -48,9 +49,6 @@ export const KANTON_SLUGS: readonly string[] = [
   "zuerich",
 ] as const;
 
-// Packs sind Einmalkaeufe ohne Ablauf: Grant weit in der Zukunft (100 Jahre).
-const GRANT_DAUER_MS = 100 * 365 * 24 * 60 * 60 * 1000;
-
 const connectors = new ReplitConnectors();
 
 // Client nie cachen: der Proxy-Fetch erneuert Auth-Tokens pro Anfrage.
@@ -65,37 +63,6 @@ function getProjectId(): string {
   const projectId = process.env.REVENUECAT_PROJECT_ID;
   if (!projectId) throw new Error("REVENUECAT_PROJECT_ID ist nicht gesetzt");
   return projectId;
-}
-
-// pack_<slug> -> Entitlement-ID; aendert sich nie, daher im Prozess gecacht.
-let packEntitlementIds: Map<string, string> | null = null;
-
-async function getPackEntitlementIds(): Promise<Map<string, string>> {
-  if (packEntitlementIds) return packEntitlementIds;
-  const client = getRevenueCatClient();
-  const map = new Map<string, string>();
-  let startingAfter: string | undefined;
-  for (let seite = 0; seite < 5; seite++) {
-    const { data, error, response } = await listEntitlements({
-      client,
-      path: { project_id: getProjectId() },
-      query: { limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) },
-    });
-    if (error) {
-      throw new Error(
-        `RevenueCat-Entitlements nicht abrufbar (${response?.status ?? "?"}): ${JSON.stringify(error)}`
-      );
-    }
-    const items = data?.items ?? [];
-    for (const e of items) {
-      if (e.lookup_key.startsWith("pack_")) map.set(e.lookup_key, e.id);
-    }
-    if (!data?.next_page || items.length === 0) break;
-    startingAfter = items[items.length - 1]?.id;
-    if (!startingAfter) break;
-  }
-  packEntitlementIds = map;
-  return map;
 }
 
 // Produkt-IDs des Kantonspack-Einzelprodukts (eine je Store-App); gecacht.
@@ -127,7 +94,7 @@ async function getKantonspackProduktIds(): Promise<Set<string>> {
 }
 
 // Claims pro Customer strikt serialisieren: die Kaufbilanz ist ein
-// Check-then-act gegen RevenueCat; zwei parallele Claims desselben Customers
+// Check-then-act gegen die DB; zwei parallele Claims desselben Customers
 // koennten sonst denselben offenen Kauf doppelt zuordnen. Eine In-Process-
 // Kette pro Customer reicht, da der Server einprozessig laeuft.
 const claimKetten = new Map<string, Promise<unknown>>();
@@ -154,9 +121,10 @@ export type ClaimErgebnis =
   | { status: "kein_offener_kauf" };
 
 /**
- * Prueft die Kaufbilanz des Customers und vergibt das pack_<slug>-Entitlement,
- * wenn ein noch nicht zugeordneter Kantonspack-Kauf vorliegt.
- * Der Slug muss vom Aufrufer bereits gegen KANTON_SLUGS validiert sein.
+ * Prueft die Kaufbilanz des Customers und speichert den pack-Slug in
+ * profiles.purchased_packs, wenn ein noch nicht zugeordneter Kantonspack-Kauf
+ * vorliegt. Der Slug muss vom Aufrufer bereits gegen KANTON_SLUGS validiert
+ * sein.
  */
 export function claimKantonspack(
   customerId: string,
@@ -171,53 +139,25 @@ async function claimKantonspackIntern(
   customerId: string,
   slug: string
 ): Promise<ClaimErgebnis> {
-  const projectId = getProjectId();
   const entKey = `pack_${slug}`;
-  const packIds = await getPackEntitlementIds();
-  const entId = packIds.get(entKey);
-  if (!entId) {
-    throw new Error(`Entitlement ${entKey} existiert nicht in RevenueCat`);
-  }
-  const idZuKey = new Map(Array.from(packIds, ([key, id]) => [id, key] as const));
 
-  const client = getRevenueCatClient();
-  const jetzt = Date.now();
+  // 1. DB-Stand laden: bereits freigeschaltete Packs des Nutzers.
+  const [profilRow] = await db
+    .select({ purchasedPacks: profilesTable.purchasedPacks })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, customerId));
 
-  // Aktive pack_*-Entitlements des Customers zaehlen (= bereits zugeordnete
-  // Kaeufe). Ein unbekannter Customer (404) hat schlicht keine.
-  const aktivePacks = new Set<string>();
-  let startingAfter: string | undefined;
-  for (let seite = 0; seite < 10; seite++) {
-    const { data, error, response } = await listCustomerActiveEntitlements({
-      client,
-      path: { project_id: projectId, customer_id: customerId },
-      query: { limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) },
-    });
-    if (error) {
-      if (response?.status === 404) break;
-      throw new Error(
-        `RevenueCat-Abfrage fehlgeschlagen (${response?.status ?? "?"}): ${JSON.stringify(error)}`
-      );
-    }
-    const items = data?.items ?? [];
-    for (const e of items) {
-      if (e.expires_at !== null && e.expires_at <= jetzt) continue;
-      const key = idZuKey.get(e.entitlement_id);
-      if (key) aktivePacks.add(key);
-    }
-    if (!data?.next_page || items.length === 0) break;
-    startingAfter = items[items.length - 1]?.entitlement_id;
-    if (!startingAfter) break;
-  }
-
-  if (aktivePacks.has(entKey)) {
+  const currentPacks = profilRow?.purchasedPacks ?? [];
+  if (currentPacks.includes(slug)) {
     return { status: "bereits_freigeschaltet", entitlement: entKey };
   }
 
-  // Gueltige (nicht erstattete) Kantonspack-Kaeufe zaehlen.
+  // 2. Gueltige (nicht erstattete) Kantonspack-Kaeufe in RC zaehlen.
+  const projectId = getProjectId();
+  const client = getRevenueCatClient();
   const produktIds = await getKantonspackProduktIds();
   let kaeufe = 0;
-  startingAfter = undefined;
+  let startingAfter: string | undefined;
   for (let seite = 0; seite < 10; seite++) {
     const { data, error, response } = await listPurchases({
       client,
@@ -241,19 +181,16 @@ async function claimKantonspackIntern(
     if (!startingAfter) break;
   }
 
-  if (kaeufe <= aktivePacks.size) {
+  // 3. Kaeufe mit bereits zugeordneten DB-Packs vergleichen.
+  if (kaeufe <= currentPacks.length) {
     return { status: "kein_offener_kauf" };
   }
 
-  const { error, response } = await grantCustomerEntitlement({
-    client,
-    path: { project_id: projectId, customer_id: customerId },
-    body: { entitlement_id: entId, expires_at: jetzt + GRANT_DAUER_MS },
-  });
-  if (error) {
-    throw new Error(
-      `Entitlement-Grant ${entKey} fehlgeschlagen (${response?.status ?? "?"}): ${JSON.stringify(error)}`
-    );
-  }
+  // 4. Pack in der DB freischalten.
+  await db
+    .update(profilesTable)
+    .set({ purchasedPacks: [...currentPacks, slug], updatedAt: new Date() })
+    .where(eq(profilesTable.id, customerId));
+
   return { status: "vergeben", entitlement: entKey };
 }

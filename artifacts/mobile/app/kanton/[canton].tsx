@@ -42,7 +42,8 @@ import {
   REVENUECAT_PACKS_OFFERING,
   useSubscription,
 } from "@/lib/revenuecat";
-import { useClaimKantonspack } from "@workspace/api-client-react";
+import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DIST_MIN = 0;
 const DIST_MAX = 50;
@@ -82,18 +83,23 @@ export default function KantonRouten() {
   // Pack dieses Kantons (oder Elite, das alle Packs einschliesst). Ohne
   // Premium ist der Kauf noch nicht relevant (erst die Basis-Freischaltung).
   const packKey = cantonName ? packEntitlementFuerKanton(cantonName) : "";
-  const packLocked =
-    premium && !!cantonName && !isElite && !hatEntitlement(packKey);
-  const packUnlocked = premium && (isElite || hatEntitlement(packKey));
-  // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
-  // gekauft; der Server weist den Kauf per /me/packs/claim zu.
+  // packSlug vor den Pack-Checks benoetigt (DB-seitiger Freischaltungscheck).
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
+  // DB-basierter Freischaltungscheck als Fallback fuer den Fall, dass das RC-
+  // Entitlement-Grant wegen fehlender Scope-Berechtigung fehlgeschlagen ist.
+  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
+  const packLocked =
+    premium && !!cantonName && !isElite && !hatEntitlement(packKey) && !dbPackUnlocked;
+  const packUnlocked = premium && (isElite || hatEntitlement(packKey) || dbPackUnlocked);
+  // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
+  // gekauft; der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = packSlug
     ? offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
         (p) => p.identifier === KANTONSPACK_PACKAGE
       )
     : undefined;
   const { mutateAsync: claimKantonspack } = useClaimKantonspack();
+  const queryClient = useQueryClient();
 
   const kaufePack = async () => {
     if (!packPaket) return;
@@ -105,8 +111,9 @@ export default function KantonRouten() {
       // still fehl, ohne den Kauf rueckgaengig zu machen.
       try {
         await claimKantonspack({ data: { kanton: packSlug } });
+        await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       } catch {
-        // Nicht fatal: RC hat das Entitlement bereits vergeben.
+        // Nicht fatal.
       }
       await refreshCustomerInfo();
     } catch (err: any) {
