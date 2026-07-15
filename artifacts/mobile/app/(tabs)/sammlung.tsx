@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
+import * as Sharing from "expo-sharing";
 import React from "react";
-import { Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,13 +17,61 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
+import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
+import { CollectionStrings } from "@/lib/i18n/screens/collection";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
 
 const WEB_TOP = 67;
+
+/** Generiert einen GPX-String aus dem gespeicherten Wegverlauf einer Wanderung. */
+async function exportHikeGpx(hike: HikeSession, t: CollectionStrings) {
+  if (!hike.geometry || hike.geometry.length < 2) {
+    alert("GPX", t.exportGpxNoData);
+    return;
+  }
+  try {
+    const name = hike.routeName.replace(/[<>&"]/g, " ");
+    const startTime = new Date(hike.startedAt).toISOString();
+    const trkpts = hike.geometry
+      .map(([lat, lng]) => `      <trkpt lat="${lat}" lon="${lng}"></trkpt>`)
+      .join("\n");
+    const desc = `${hike.distanceKm} km · ${hike.ascentM} m ↑ · SagaTrail`;
+    const gpx = [
+      `<?xml version="1.0" encoding="UTF-8"?>`,
+      `<gpx version="1.1" creator="SagaTrail" xmlns="http://www.topografix.com/GPX/1/1">`,
+      `  <metadata>`,
+      `    <name>${name}</name>`,
+      `    <time>${startTime}</time>`,
+      `    <desc>${desc}</desc>`,
+      `  </metadata>`,
+      `  <trk>`,
+      `    <name>${name}</name>`,
+      `    <trkseg>`,
+      trkpts,
+      `    </trkseg>`,
+      `  </trk>`,
+      `</gpx>`,
+    ].join("\n");
+
+    const fileName =
+      hike.routeName.replace(/[^a-zA-Z0-9_\-]/g, "_").slice(0, 50) +
+      `_${new Date(hike.startedAt).toISOString().slice(0, 10)}.gpx`;
+    const uri = (FileSystem.cacheDirectory ?? "") + fileName;
+    await FileSystem.writeAsStringAsync(uri, gpx, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+    await Sharing.shareAsync(uri, {
+      mimeType: "application/gpx+xml",
+      UTI: "com.topografix.gpx",
+    });
+  } catch {
+    alert("GPX", t.exportGpxError);
+  }
+}
 
 // Monatsnamen folgen der gewaehlten UI-Sprache, nicht dem OS-Gebietsschema.
 const MONATS_LOCALE: Record<string, string> = {
@@ -346,15 +396,38 @@ export default function Sammlung() {
                       />
                     )}
                     <View style={styles.diaryBody}>
-                      <Text
-                        style={[styles.diaryName, { color: colors.foreground }]}
-                        numberOfLines={2}
-                      >
-                        {hike.routeName}
-                      </Text>
-                      <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
-                        {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
-                      </Text>
+                      <View style={styles.diaryRow}>
+                        <View style={styles.diaryTextBlock}>
+                          <Text
+                            style={[styles.diaryName, { color: colors.foreground }]}
+                            numberOfLines={2}
+                          >
+                            {hike.routeName}
+                          </Text>
+                          <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
+                            {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
+                          </Text>
+                        </View>
+                        {hike.geometry && hike.geometry.length > 1 && (
+                          <Pressable
+                            onPress={() => exportHikeGpx(hike, t)}
+                            style={({ pressed }) => [
+                              styles.gpxBtn,
+                              {
+                                backgroundColor: colors.glassBg,
+                                borderColor: colors.glassBorder,
+                                opacity: pressed ? 0.6 : 1,
+                              },
+                            ]}
+                            hitSlop={8}
+                          >
+                            <Feather name="download" size={14} color={colors.mutedForeground} />
+                            <Text style={[styles.gpxBtnLabel, { color: colors.mutedForeground }]}>
+                              GPX
+                            </Text>
+                          </Pressable>
+                        )}
+                      </View>
                     </View>
                   </Animated.View>
                 ))}
@@ -469,6 +542,18 @@ const styles = StyleSheet.create({
   },
   diaryPhoto: { width: "100%", height: 160 },
   diaryBody: { padding: 14 },
+  diaryRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  diaryTextBlock: { flex: 1 },
   diaryName: { fontFamily: fonts.bodyBold, fontSize: 15 },
   diaryMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 4 },
+  gpxBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  gpxBtnLabel: { fontFamily: fonts.mono, fontSize: 11 },
 });

@@ -15,6 +15,9 @@ export interface CollectionStrings {
   statsAscent: string;
   statsHikes: string;
   diaryTitle: string;
+  exportGpx: string;
+  exportGpxNoData: string;
+  exportGpxError: string;
   rankSectionTitle: string;
   ranks: string[];
   pointsLabel: string;
@@ -38,6 +41,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Höhenmeter",
     statsHikes: "Wanderungen",
     diaryTitle: "Wander-Tagebuch",
+    exportGpx: "GPX exportieren",
+    exportGpxNoData: "Für diese Wanderung sind keine Koordinaten gespeichert.",
+    exportGpxError: "GPX-Export fehlgeschlagen.",
     rankSectionTitle: "Dein Rang",
     ranks: [
       "Neuling",
@@ -70,6 +76,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Höhemeter",
     statsHikes: "Wanderige",
     diaryTitle: "Wander-Tagebuech",
+    exportGpx: "GPX exportiere",
+    exportGpxNoData: "Für die Wanderig sind kei Koordinate gspichert.",
+    exportGpxError: "GPX-Export fehlgschlage.",
     rankSectionTitle: "Dyn Rang",
     ranks: [
       "Nöilig",
@@ -102,6 +111,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Metres of ascent",
     statsHikes: "Hikes",
     diaryTitle: "Hiking diary",
+    exportGpx: "Export GPX",
+    exportGpxNoData: "No coordinates recorded for this hike.",
+    exportGpxError: "GPX export failed.",
     rankSectionTitle: "Your rank",
     ranks: [
       "Newcomer",
@@ -134,6 +146,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Dénivelé (m)",
     statsHikes: "Randonnées",
     diaryTitle: "Journal de randonnée",
+    exportGpx: "Exporter GPX",
+    exportGpxNoData: "Aucune coordonnée enregistrée pour cette randonnée.",
+    exportGpxError: "L'export GPX a échoué.",
     rankSectionTitle: "Ton rang",
     ranks: [
       "Débutant",
@@ -166,6 +181,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Dislivello (m)",
     statsHikes: "Escursioni",
     diaryTitle: "Diario delle escursioni",
+    exportGpx: "Esporta GPX",
+    exportGpxNoData: "Nessuna coordinata registrata per questa escursione.",
+    exportGpxError: "Esportazione GPX fallita.",
     rankSectionTitle: "Il tuo rango",
     ranks: [
       "Principiante",
@@ -198,6 +216,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Desnivel (m)",
     statsHikes: "Caminatas",
     diaryTitle: "Diario de caminatas",
+    exportGpx: "Exportar GPX",
+    exportGpxNoData: "No hay coordenadas registradas para esta caminata.",
+    exportGpxError: "Error al exportar GPX.",
     rankSectionTitle: "Tu rango",
     ranks: [
       "Principiante",
@@ -230,6 +251,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Desnível (m)",
     statsHikes: "Caminhadas",
     diaryTitle: "Diário de caminhadas",
+    exportGpx: "Exportar GPX",
+    exportGpxNoData: "Nenhuma coordenada registrada para esta caminhada.",
+    exportGpxError: "A exportação GPX falhou.",
     rankSectionTitle: "Seu ranque",
     ranks: [
       "Novato",
@@ -262,6 +286,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "爬升（米）",
     statsHikes: "徒步次数",
     diaryTitle: "徒步日记",
+    exportGpx: "导出 GPX",
+    exportGpxNoData: "此次徒步未记录坐标。",
+    exportGpxError: "GPX 导出失败。",
     rankSectionTitle: "你的等级",
     ranks: [
       "新手",
@@ -294,6 +321,9 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     statsAscent: "Набор высоты (м)",
     statsHikes: "Походы",
     diaryTitle: "Дневник походов",
+    exportGpx: "Экспорт GPX",
+    exportGpxNoData: "Координаты для этого похода не записаны.",
+    exportGpxError: "Ошибка экспорта GPX.",
     rankSectionTitle: "Твой ранг",
     ranks: [
       "Новичок",
