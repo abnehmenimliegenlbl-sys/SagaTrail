@@ -12,6 +12,18 @@ import {
   reportRouteCondition,
 } from "@workspace/api-client-react";
 import type { Partner, TrailConditionReport, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
+
+interface TransportAnreiseResult {
+  station: { id: string; name: string } | null;
+  arrivals: Array<{
+    time: string;
+    from: string;
+    category: string;
+    number: string;
+    delay: number | null;
+    platform: string | null;
+  }>;
+}
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -267,6 +279,9 @@ export default function Routenplanung() {
   // SBB live am Ziel – naechste Abfahrten am Routenendpunkt
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
+  // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart
+  const [transportStart, setTransportStart] = useState<TransportAnreiseResult | null>(null);
+  const [transportStartLoading, setTransportStartLoading] = useState(false);
   // SAC-Hütten in der Nähe der Route
   const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
   const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
@@ -392,6 +407,26 @@ export default function Routenplanung() {
       .catch(() => {
         if (!cancelled) { setSacHuettenError(true); setSacHuettenLoading(false); }
       });
+    return () => { cancelled = true; };
+  }, [route?.id]);
+
+  // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart.
+  useEffect(() => {
+    if (!route) return;
+    const geom = route.geometry ?? [];
+    const startPt = geom.length > 0
+      ? { lat: geom[0][0], lng: geom[0][1] }
+      : route.coordinates;
+    if (!startPt) return;
+    let cancelled = false;
+    setTransportStartLoading(true);
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/transport-anreise?lat=${startPt.lat}&lng=${startPt.lng}`)
+      .then((r) => r.json())
+      .then((data: TransportAnreiseResult) => {
+        if (!cancelled) { setTransportStart(data); setTransportStartLoading(false); }
+      })
+      .catch(() => { if (!cancelled) { setTransportStart(null); setTransportStartLoading(false); } });
     return () => { cancelled = true; };
   }, [route?.id]);
 
@@ -661,6 +696,59 @@ export default function Routenplanung() {
             {t.planOutward}
           </Text>
         </Pressable>
+
+        {/* ── SBB live am Start (Ankünfte am Trailhead) ─────────────── */}
+        <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
+          <View style={[styles.checkRow, { marginBottom: 6 }]}>
+            <Feather name="log-in" size={15} color={colors.accent} />
+            <Text style={[styles.checkLabel, { color: colors.foreground, fontFamily: fonts.bodyBold, flex: 1 }]}>
+              {t.transportAnreiseLive}
+            </Text>
+            {transportStart?.station && (
+              <Text style={[styles.checkValue, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {t.transportArrivingAt(transportStart.station.name)}
+              </Text>
+            )}
+          </View>
+          {transportStartLoading ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportLoading}</Text>
+            </View>
+          ) : !transportStart?.station ? (
+            <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportNoStation}</Text>
+          ) : transportStart.arrivals.length === 0 ? (
+            <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportError}</Text>
+          ) : (
+            transportStart.arrivals.slice(0, 6).map((arr, i) => (
+              <View key={i} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder, gap: 6 }}>
+                <Text style={[styles.checkValue, { color: colors.foreground, fontFamily: fonts.bodyBold, width: 42 }]}>
+                  {arr.time}
+                </Text>
+                <Text style={[styles.checkNote, { color: colors.accent, fontFamily: fonts.bodyBold, width: 36 }]} numberOfLines={1}>
+                  {arr.category}{arr.number}
+                </Text>
+                <Text style={[styles.checkNote, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>
+                  {arr.from}
+                </Text>
+                {arr.platform ? (
+                  <Text style={[styles.checkNote, { color: colors.mutedForeground, width: 36, textAlign: "right" }]} numberOfLines={1}>
+                    {t.transportPlatform(arr.platform)}
+                  </Text>
+                ) : null}
+                {arr.delay != null && arr.delay > 0 ? (
+                  <Text style={[styles.checkNote, { color: "#EF4444", width: 44, textAlign: "right" }]}>
+                    {t.transportDelay(arr.delay)}
+                  </Text>
+                ) : arr.delay === 0 ? (
+                  <Text style={[styles.checkNote, { color: "#78C800", width: 44, textAlign: "right" }]}>
+                    {t.transportOnTime}
+                  </Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </View>
 
         {/* ── SBB live am Ziel ──────────────────────────────────────── */}
         <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>

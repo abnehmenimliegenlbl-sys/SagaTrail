@@ -116,6 +116,8 @@ export interface RouteStrings {
   transportPlatform: (p: string) => string;
   transportDelay: (min: number) => string;
   transportOnTime: string;
+  transportAnreiseLive: string;
+  transportArrivingAt: (name: string) => string;
   sacHuettenTitle: string;
   sacHuettenLoading: string;
   sacHuettenNone: string;
@@ -247,6 +249,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportAnreiseLive: "SBB live am Start",
+    transportArrivingAt: (name) => `Ankunft in ${name}`,
     sacHuettenTitle: "SAC-Hütten in der Nähe",
     sacHuettenLoading: "Hütten werden geladen …",
     sacHuettenNone: "Keine SAC-Hütten in der Nähe gefunden.",
@@ -376,6 +380,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportAnreiseLive: "SBB live am Schtart",
+    transportArrivingAt: (name) => `Aakunft i ${name}`,
     sacHuettenTitle: "SAC-Hütte id Nächi",
     sacHuettenLoading: "Hütte wänd gladä …",
     sacHuettenNone: "Kei SAC-Hütte id Nächi gfunde.",
@@ -505,6 +511,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "on time",
+    transportAnreiseLive: "Live arrivals at trailhead",
+    transportArrivingAt: (name) => `Arriving at ${name}`,
     sacHuettenTitle: "Nearby SAC Huts",
     sacHuettenLoading: "Loading huts …",
     sacHuettenNone: "No SAC huts found nearby.",
@@ -634,6 +642,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Voie ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "à l'heure",
+    transportAnreiseLive: "SBB live au départ",
+    transportArrivingAt: (name) => `Arrivée à ${name}`,
     sacHuettenTitle: "Cabanes SAC à proximité",
     sacHuettenLoading: "Chargement des cabanes …",
     sacHuettenNone: "Aucune cabane SAC trouvée à proximité.",
@@ -763,6 +773,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Bin. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "in orario",
+    transportAnreiseLive: "SBB live alla partenza",
+    transportArrivingAt: (name) => `Arrivo a ${name}`,
     sacHuettenTitle: "Rifugi SAC nelle vicinanze",
     sacHuettenLoading: "Caricamento rifugi …",
     sacHuettenNone: "Nessun rifugio SAC trovato nelle vicinanze.",
@@ -892,6 +904,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Vía ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "puntual",
+    transportAnreiseLive: "SBB live en el inicio",
+    transportArrivingAt: (name) => `Llegada a ${name}`,
     sacHuettenTitle: "Refugios SAC cercanos",
     sacHuettenLoading: "Cargando refugios …",
     sacHuettenNone: "No se encontraron refugios SAC cercanos.",
@@ -1021,6 +1035,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "pontual",
+    transportAnreiseLive: "SBB live na partida",
+    transportArrivingAt: (name) => `Chegada em ${name}`,
     sacHuettenTitle: "Cabanas SAC próximas",
     sacHuettenLoading: "A carregar cabanas …",
     sacHuettenNone: "Nenhuma cabana SAC encontrada nas proximidades.",
@@ -1143,6 +1159,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `${p} 站台`,
     transportDelay: (min) => `+${min} 分钟`,
     transportOnTime: "准时",
+    transportAnreiseLive: "出发站实时到达",
+    transportArrivingAt: (name) => `到达${name}`,
     sacHuettenTitle: "附近SAC山屋",
     sacHuettenLoading: "正在加载山屋 …",
     sacHuettenNone: "附近未找到SAC山屋。",
@@ -1272,6 +1290,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Пл. ${p}`,
     transportDelay: (min) => `+${min} мин`,
     transportOnTime: "вовремя",
+    transportAnreiseLive: "SBB у стартовой точки",
+    transportArrivingAt: (name) => `Прибытие к ${name}`,
     sacHuettenTitle: "Хижины SAC поблизости",
     sacHuettenLoading: "Загрузка хижин …",
     sacHuettenNone: "Хижины SAC рядом не найдены.",

@@ -24,6 +24,23 @@ export interface TransportResult {
   departures: TransportDeparture[];
 }
 
+export interface TransportArrival {
+  time: string;
+  from: string;
+  category: string;
+  number: string;
+  delay: number | null;
+  platform: string | null;
+}
+
+export interface TransportAnreiseResult {
+  station: { id: string; name: string } | null;
+  arrivals: TransportArrival[];
+}
+
+interface AnreiseCacheEntry { data: TransportAnreiseResult; ts: number }
+const cacheAnreise = new Map<string, AnreiseCacheEntry>();
+
 router.get("/transport", async (req, res) => {
   const lat = parseFloat(req.query.lat as string);
   const lng = parseFloat(req.query.lng as string);
@@ -94,6 +111,80 @@ router.get("/transport", async (req, res) => {
     return res.json(result);
   } catch (err) {
     log.warn({ err }, "transport fetch fehlgeschlagen");
+    return res.status(502).json({ error: "Fahrplan nicht verfügbar" });
+  }
+});
+
+router.get("/transport-anreise", async (req, res) => {
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+  if (isNaN(lat) || isNaN(lng)) {
+    return res.status(400).json({ error: "lat und lng sind erforderlich" });
+  }
+
+  const key = `arr:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const hit = cacheAnreise.get(key);
+  if (hit && Date.now() - hit.ts < CACHE_TTL_MS) {
+    return res.json(hit.data);
+  }
+
+  try {
+    const locUrl = `${OPENDATA_BASE}/locations?x=${lat}&y=${lng}&type=station`;
+    const locRes = await fetch(locUrl, { signal: AbortSignal.timeout(8000) });
+    if (!locRes.ok) throw new Error(`locations HTTP ${locRes.status}`);
+
+    const locJson = (await locRes.json()) as {
+      stations: Array<{ id: string | null; name: string; distance: number | null }>;
+    };
+
+    const station = locJson.stations.find(s => s.id && /^\d+$/.test(s.id));
+    if (!station?.id) {
+      const empty: TransportAnreiseResult = { station: null, arrivals: [] };
+      cacheAnreise.set(key, { data: empty, ts: Date.now() });
+      return res.json(empty);
+    }
+
+    const now = new Date().toISOString().slice(0, 16);
+    const sbUrl = `${OPENDATA_BASE}/stationboard?station=${encodeURIComponent(station.id)}&limit=8&datetime=${encodeURIComponent(now)}&type=arrival`;
+    const sbRes = await fetch(sbUrl, { signal: AbortSignal.timeout(8000) });
+    if (!sbRes.ok) throw new Error(`stationboard HTTP ${sbRes.status}`);
+
+    const sbJson = (await sbRes.json()) as {
+      station: { id: string; name: string };
+      stationboard: Array<{
+        stop: {
+          arrival: string | null;
+          arrivalTimestamp: number | null;
+          delay: number | null;
+          platform: string | null;
+        };
+        category: string;
+        number: string;
+        from: string;
+      }>;
+    };
+
+    const arrivals: TransportArrival[] = (sbJson.stationboard ?? [])
+      .filter(e => e.stop.arrivalTimestamp != null)
+      .slice(0, 8)
+      .map(e => ({
+        time: e.stop.arrival ? e.stop.arrival.slice(11, 16) : "",
+        from: e.from ?? "",
+        category: e.category,
+        number: e.number,
+        delay: e.stop.delay ?? null,
+        platform: e.stop.platform ?? null,
+      }));
+
+    const result: TransportAnreiseResult = {
+      station: { id: station.id, name: station.name },
+      arrivals,
+    };
+    cacheAnreise.set(key, { data: result, ts: Date.now() });
+    log.info({ station: station.name, arrivals: arrivals.length }, "transport-anreise geladen");
+    return res.json(result);
+  } catch (err) {
+    log.warn({ err }, "transport-anreise fetch fehlgeschlagen");
     return res.status(502).json({ error: "Fahrplan nicht verfügbar" });
   }
 });
