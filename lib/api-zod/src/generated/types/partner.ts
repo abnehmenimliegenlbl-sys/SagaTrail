@@ -19,4 +19,6 @@ export interface Partner {
   angebot?: string | null;
   lat: number;
   lng: number;
+  fotoUrl?: string | null;
+  websiteUrl?: string | null;
 }

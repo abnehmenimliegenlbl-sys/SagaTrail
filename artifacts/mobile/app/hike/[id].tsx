@@ -62,6 +62,7 @@ import {
   type WetterKlasse,
 } from "@/lib/storyContent";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
+import * as FileSystem from "expo-file-system/legacy";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
   bereiteAbbiegeMitteilungenVor,
@@ -74,6 +75,36 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
 const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
+
+/**
+ * Erzeugt einen 1-Sekunden-Stille-WAV als Base64-String (8-bit, mono, 8 kHz).
+ * Wird als Loop mit volume:0 abgespielt, um die iOS-Audiosession zwischen den
+ * Kapiteln aktiv zu halten — ohne das bleibt der JS-Thread eingeschlaefert und
+ * kein neues Kapitel kann gestartet werden (obwohl UIBackgroundModes["audio"]
+ * gesetzt und staysActiveInBackground:true konfiguriert ist).
+ */
+function buildSilentWavBase64(): string {
+  const sampleRate = 8000;
+  const numSamples = sampleRate; // 1 Sekunde
+  const dataSize = numSamples; // 8-bit mono = 1 Byte/Sample
+  const buf = new Uint8Array(44 + dataSize);
+  const u16 = (off: number, v: number) => {
+    buf[off] = v & 0xff; buf[off + 1] = (v >> 8) & 0xff;
+  };
+  const u32 = (off: number, v: number) => {
+    buf[off] = v & 0xff; buf[off + 1] = (v >> 8) & 0xff;
+    buf[off + 2] = (v >> 16) & 0xff; buf[off + 3] = (v >> 24) & 0xff;
+  };
+  buf.set([82, 73, 70, 70]); u32(4, 36 + dataSize); buf.set([87, 65, 86, 69], 8);
+  buf.set([102, 109, 116, 32], 12); u32(16, 16);
+  u16(20, 1); u16(22, 1); u32(24, sampleRate); u32(28, sampleRate);
+  u16(32, 1); u16(34, 8);
+  buf.set([100, 97, 116, 97], 36); u32(40, dataSize);
+  buf.fill(128, 44); // 128 = Stille bei unsigned 8-bit PCM
+  let s = '';
+  for (let i = 0; i < buf.length; i++) s += String.fromCharCode(buf[i]);
+  return typeof btoa !== 'undefined' ? btoa(s) : Buffer.from(buf).toString('base64');
+}
 
 type LocState = "idle" | "granted" | "denied" | "simulated";
 
@@ -258,6 +289,7 @@ export default function LiveHike() {
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
   const narratedPoiIdRef = useRef<string | null>(null);
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
+  const keepaliveSoundRef = useRef<Audio.Sound | null>(null);
   // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
   // erhoeht ihn; nach jedem await prueft der Aufruf, ob er noch die aktuelle
   // Generation ist. Ein schneller Doppel-Tipp auf "Wiederholen" startet sonst
@@ -415,6 +447,47 @@ export default function LiveHike() {
       // trotzdem versucht, ganz normal ueber die Standard-Session vorzulesen.
     });
   }, []);
+
+  // Stiller Audio-Keepalive — haelt die iOS-Audiosession zwischen zwei Kapiteln
+  // aktiv. Ohne laufendes Audio suspendiert iOS den JS-Thread, selbst wenn
+  // staysActiveInBackground:true gesetzt ist; der naechste GPS-Event aus dem
+  // Background-Task weckt den Thread dann nicht zuverlaessig genug, um das
+  // naechste Kapitel zu starten. Ein unhoerabarer (volume:0) WAV-Loop
+  // signalisiert iOS, dass die App Audio "spielt", und haelt den Thread wach.
+  // Wird gestoppt, sobald die Wanderung endet oder die Komponente ausgehaengt.
+  useEffect(() => {
+    if (Platform.OS === "web" || preparing) return;
+    let mounted = true;
+    let sound: Audio.Sound | null = null;
+    (async () => {
+      try {
+        const base64 = buildSilentWavBase64();
+        const uri = (FileSystem.cacheDirectory ?? "") + "sagatrail_keepalive.wav";
+        await FileSystem.writeAsStringAsync(uri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        if (!mounted) return;
+        const result = await Audio.Sound.createAsync(
+          { uri },
+          { shouldPlay: true, isLooping: true, volume: 0 }
+        );
+        if (!mounted) {
+          result.sound.unloadAsync().catch(() => {});
+          return;
+        }
+        sound = result.sound;
+        keepaliveSoundRef.current = sound;
+      } catch {
+        // Best effort — ohne Keepalive laeuft die Erzaehlung weiter,
+        // aber iOS koennte den JS-Thread zwischen Kapiteln einschlaefern.
+      }
+    })();
+    return () => {
+      mounted = false;
+      sound?.unloadAsync().catch(() => {});
+      keepaliveSoundRef.current = null;
+    };
+  }, [preparing]);
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   // resolveStory wendet effectiveStoryLanguage intern selbst an — hier wird
