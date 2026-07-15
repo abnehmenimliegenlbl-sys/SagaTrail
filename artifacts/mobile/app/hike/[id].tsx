@@ -226,6 +226,12 @@ export default function LiveHike() {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
+  // Aktion, die nach vollstaendigem Schliessen der Vollbild-Karte ausgefuehrt
+  // werden soll (z. B. POI- oder Partner-Detail oeffnen). Wird in onFullyClosed
+  // des KarteVollbild-Modals konsumiert — nie direkt nach closeSignal, da der
+  // Karten-Modal waehrend seiner Fade-Animation noch Touches abfaengt und der
+  // X-Button des Detail-Modals sonst nicht reagiert.
+  const pendingKarteActionRef = React.useRef<(() => void) | null>(null);
   const [poiStory, setPoiStory] = useState<string | null>(null);
   const [poiStoryLoading, setPoiStoryLoading] = useState(false);
   // KI-Kontext fuer die "Entdeckt"-Karte, wenn der POI keinen
@@ -1665,6 +1671,14 @@ export default function LiveHike() {
             height={200}
             onVollbildChange={setKarteVollbild}
             closeSignal={karteCloseSignal}
+            onFullyClosed={() => {
+              // Karten-Modal ist jetzt vollstaendig weg (Fade-Animation
+              // abgeschlossen) — erst jetzt das Detail-Modal oeffnen, damit
+              // keine zwei Modals gleichzeitig offen sind und der X-Button
+              // des Details nicht vom noch-fading Karten-Modal blockiert wird.
+              pendingKarteActionRef.current?.();
+              pendingKarteActionRef.current = null;
+            }}
             renderKarte={(hoehe) =>
               mapCenter ? (
                 <SwisstopoMap
@@ -1679,23 +1693,21 @@ export default function LiveHike() {
                   onPoiPress={(id) => {
                     const poi = pois.find((p) => p.id === id);
                     if (poi) {
-                      // Vollbild-Karte VOR dem POI-Detail schliessen: zwei
-                      // gleichzeitig offene Modals stapeln sich sonst
-                      // plattformabhaengig falsch und die Karte ueberlagert
-                      // das Detail. onVollbildChange allein reicht nicht,
-                      // es benachrichtigt nur -- closeSignal erzwingt es.
+                      // Aktion merken, Vollbild schliessen. Das Detail-Modal
+                      // wird erst in onFullyClosed geoeffnet — nach Abschluss
+                      // der Fade-Animation, nicht schon waehrenddessen.
+                      pendingKarteActionRef.current = () => setSelectedPoi(poi);
                       setKarteVollbild(false);
                       setKarteCloseSignal((n) => n + 1);
-                      setSelectedPoi(poi);
                     }
                   }}
                   partners={partners}
                   onPartnerPress={(id) => {
                     const partner = partners.find((p) => p.id === id);
                     if (partner) {
+                      pendingKarteActionRef.current = () => setSelectedPartner(partner);
                       setKarteVollbild(false);
                       setKarteCloseSignal((n) => n + 1);
-                      setSelectedPartner(partner);
                     }
                   }}
                 />

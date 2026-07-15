@@ -18,12 +18,7 @@ interface KarteVollbildProps {
   renderKarte: (hoehe: number) => React.ReactNode;
   /**
    * Wird aufgerufen, sobald der Vollbild-Zustand sich aendert. Erlaubt es der
-   * aufrufenden Seite, z. B. bei Antippen eines POI die Vollbild-Karte VOR
-   * dem Oeffnen des POI-Detail-Modals zu schliessen — zwei gleichzeitig
-   * sichtbare RN-`Modal`e stapeln sich plattformabhaengig unzuverlaessig
-   * (auf Android/Web landet das zuletzt geoeffnete Modal teils hinter dem
-   * ersten), was das POI-Detail von der noch offenen Vollbild-Karte
-   * ueberlagert erscheinen liess.
+   * aufrufenden Seite, den aktuellen Vollbild-Status mitzuverfolgen.
    */
   onVollbildChange?: (vollbild: boolean) => void;
   /**
@@ -34,6 +29,17 @@ interface KarteVollbildProps {
    * Jede Aenderung dieses Werts (Zaehler hochzaehlen) schliesst die Karte.
    */
   closeSignal?: number;
+  /**
+   * Wird aufgerufen, sobald die Vollbild-Karte VOLLSTAENDIG geschlossen ist
+   * (nach Abschluss der Fade-Animation) — nicht schon, wenn closeSignal
+   * eingeht. Erlaubt es der aufrufenden Seite, ein zweites Modal (z. B.
+   * POI-Detail oder Partner-Detail) erst dann zu oeffnen, wenn der Vollbild-
+   * Modal den Bildschirm vollstaendig freigegeben hat und keine Touch-Events
+   * mehr abfaengt. Ohne diese Sequenzierung lagen beide Modals gleichzeitig
+   * offen; der noch-fading-out Karten-Modal schluckte Touches auf dem
+   * darunter liegenden Detail-Modal (X-Button reagierte nicht).
+   */
+  onFullyClosed?: () => void;
 }
 
 /**
@@ -48,6 +54,7 @@ export function KarteVollbild({
   renderKarte,
   onVollbildChange,
   closeSignal,
+  onFullyClosed,
 }: KarteVollbildProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -62,8 +69,11 @@ export function KarteVollbild({
     if (closeSignal !== undefined && closeSignal !== letzterCloseSignal.current) {
       letzterCloseSignal.current = closeSignal;
       setVollbildState(false);
+      // onVollbildChange explizit benachrichtigen (setVollbild koennte den
+      // State nicht setzen wenn vollbild bereits false ist).
+      onVollbildChange?.(false);
     }
-  }, [closeSignal]);
+  }, [closeSignal, onVollbildChange]);
 
   return (
     <>
@@ -89,6 +99,7 @@ export function KarteVollbild({
         visible={vollbild}
         animationType="fade"
         onRequestClose={() => setVollbild(false)}
+        onDismiss={onFullyClosed}
       >
         <View style={[styles.vollbild, { backgroundColor: colors.background }]}>
           {renderKarte(fensterHoehe)}
