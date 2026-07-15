@@ -777,6 +777,12 @@ export default function LiveHike() {
           treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
         );
       }
+      // Doppelimpuls fuer Navigationsanweisungen — staerker und deutlich
+      // unterscheidbar vom einfachen Kapitel-/POI-Start-Feedback.
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 120);
+      }
       // Sprachansage kurz vor der Abbiegung — reiht sich in die Warteschlange
       // ein, damit eine laufende Kapitel-Erzaehlung nicht unterbrochen wird.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
@@ -1175,7 +1181,7 @@ export default function LiveHike() {
     // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
     // Panorama schaut statt aufs Handy, merkt es trotzdem.
     if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
     // Parallel zur Erzaehlung eine Mitteilung mit dem Wikipedia-Bild des Ortes
     // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
@@ -1344,7 +1350,7 @@ export default function LiveHike() {
     if (preparing || currentIndex <= lastHapticIndexRef.current) return;
     lastHapticIndexRef.current = currentIndex;
     if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
   }, [currentIndex, preparing]);
 
