@@ -130,6 +130,13 @@ export interface RouteStrings {
   sacHuettenClosed: string;
   sacHuettenAltitude: (m: number) => string;
   sacHuettenPartnerBadge: string;
+  shareRoute: string;
+  bookmarkAdd: string;
+  bookmarkRemove: string;
+  sperrungenTitle: string;
+  sperrungenLoading: string;
+  sperrungenNone: string;
+  sperrungenError: string;
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -265,6 +272,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Saisonschluss",
     sacHuettenAltitude: (m) => `${m} m ü. M.`,
     sacHuettenPartnerBadge: "Partner",
+    shareRoute: "Route teilen",
+    bookmarkAdd: "Tour merken",
+    bookmarkRemove: "Gemerkt ✓",
+    sperrungenTitle: "Sperrungen & Wegschäden",
+    sperrungenLoading: "Sperrungen werden geladen …",
+    sperrungenNone: "Keine aktuellen Sperrungen",
+    sperrungenError: "Sperrungen konnten nicht geladen werden",
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -398,6 +412,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Saisonsschluess",
     sacHuettenAltitude: (m) => `${m} m ü. M.`,
     sacHuettenPartnerBadge: "Partner",
+    shareRoute: "Route teile",
+    bookmarkAdd: "Tour merke",
+    bookmarkRemove: "Gmerkt ✓",
+    sperrungenTitle: "Sperrige & Wägschade",
+    sperrungenLoading: "Sperrige wänd gladä …",
+    sperrungenNone: "Kei aktuelle Sperrige",
+    sperrungenError: "Sperrige händ sich nid ladä lah",
   },
   en: {
     notFound: "Route not found.",
@@ -531,6 +552,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Seasonal closure",
     sacHuettenAltitude: (m) => `${m} m a.s.l.`,
     sacHuettenPartnerBadge: "Partner",
+    shareRoute: "Share Route",
+    bookmarkAdd: "Save Tour",
+    bookmarkRemove: "Saved ✓",
+    sperrungenTitle: "Closures & Trail Damage",
+    sperrungenLoading: "Loading closures …",
+    sperrungenNone: "No current closures",
+    sperrungenError: "Could not load closures",
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -664,6 +692,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Fermeture saisonnière",
     sacHuettenAltitude: (m) => `${m} m s.m.`,
     sacHuettenPartnerBadge: "Partenaire",
+    shareRoute: "Partager l'itinéraire",
+    bookmarkAdd: "Enregistrer",
+    bookmarkRemove: "Enregistré ✓",
+    sperrungenTitle: "Fermetures & dégâts",
+    sperrungenLoading: "Chargement des fermetures …",
+    sperrungenNone: "Aucune fermeture en cours",
+    sperrungenError: "Impossible de charger les fermetures",
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -797,6 +832,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Chiusura stagionale",
     sacHuettenAltitude: (m) => `${m} m s.l.m.`,
     sacHuettenPartnerBadge: "Partner",
+    shareRoute: "Condividi percorso",
+    bookmarkAdd: "Salva gita",
+    bookmarkRemove: "Salvato ✓",
+    sperrungenTitle: "Chiusure & danni",
+    sperrungenLoading: "Caricamento chiusure …",
+    sperrungenNone: "Nessuna chiusura attuale",
+    sperrungenError: "Impossibile caricare le chiusure",
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -930,6 +972,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Cierre de temporada",
     sacHuettenAltitude: (m) => `${m} m s.n.m.`,
     sacHuettenPartnerBadge: "Socio",
+    shareRoute: "Compartir ruta",
+    bookmarkAdd: "Guardar excursión",
+    bookmarkRemove: "Guardado ✓",
+    sperrungenTitle: "Cierres & daños",
+    sperrungenLoading: "Cargando cierres …",
+    sperrungenNone: "No hay cierres actuales",
+    sperrungenError: "No se pudieron cargar los cierres",
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -1063,6 +1112,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Encerramento sazonal",
     sacHuettenAltitude: (m) => `${m} m a.n.m.`,
     sacHuettenPartnerBadge: "Parceiro",
+    shareRoute: "Partilhar rota",
+    bookmarkAdd: "Guardar percurso",
+    bookmarkRemove: "Guardado ✓",
+    sperrungenTitle: "Encerramentos & danos",
+    sperrungenLoading: "A carregar encerramentos …",
+    sperrungenNone: "Sem encerramentos actuais",
+    sperrungenError: "Não foi possível carregar os encerramentos",
   },
   zh: {
     notFound: "未找到路线。",
@@ -1189,6 +1245,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "季节性关闭",
     sacHuettenAltitude: (m) => `海拔 ${m} 米`,
     sacHuettenPartnerBadge: "合作伙伴",
+    shareRoute: "分享路线",
+    bookmarkAdd: "收藏徒步路线",
+    bookmarkRemove: "已收藏 ✓",
+    sperrungenTitle: "封路与道路损坏",
+    sperrungenLoading: "正在加载封路信息 …",
+    sperrungenNone: "暂无当前封路信息",
+    sperrungenError: "无法加载封路信息",
   },
   ru: {
     notFound: "Маршрут не найден.",
@@ -1322,6 +1385,13 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Сезонное закрытие",
     sacHuettenAltitude: (m) => `${m} м н.у.м.`,
     sacHuettenPartnerBadge: "Партнёр",
+    shareRoute: "Поделиться маршрутом",
+    bookmarkAdd: "Сохранить маршрут",
+    bookmarkRemove: "Сохранено ✓",
+    sperrungenTitle: "Закрытия троп и повреждения",
+    sperrungenLoading: "Загрузка закрытий …",
+    sperrungenNone: "Нет актуальных закрытий",
+    sperrungenError: "Не удалось загрузить закрытия",
   },
 };
 

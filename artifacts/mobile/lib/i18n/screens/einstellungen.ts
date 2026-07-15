@@ -20,6 +20,8 @@ export interface EinstellungenStrings {
   voicePreviewUnavailableLabel: string;
   navAnnouncementsLabel: string;
   navAnnouncementsHint: string;
+  weatherNotifLabel: string;
+  weatherNotifHint: string;
   powerSaveLabel: string;
   powerSaveHint: string;
   themeModeLabel: string;
@@ -77,6 +79,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "KI-Stimme nicht verfügbar — Gerätestimme wird verwendet.",
     navAnnouncementsLabel: "Navigationsansagen",
     navAnnouncementsHint: "Abbiegungen und Kapitelwechsel als Benachrichtigung",
+    weatherNotifLabel: "Wetterwarnungen für gespeicherte Touren",
+    weatherNotifHint: "Benachrichtigung bei schlechtem Wetter auf deiner gespeicherten Route",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert GPS-Genauigkeit und Kartenaktualisierung",
     themeModeLabel: "Anzeigemodus",
@@ -132,6 +136,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "KI-Stimm nöd verfüegbar — d Grätstimm wird gnoh.",
     navAnnouncementsLabel: "Navigationsaasage",
     navAnnouncementsHint: "Abzwiigige und Kapitelwächsel als Miiteilig",
+    weatherNotifLabel: "Wetterwarning für gspeicherti Toure",
+    weatherNotifHint: "Miiteilig bi schlächtem Wätter uf dynere gspeicherete Route",
     powerSaveLabel: "Energiesparmodus",
     powerSaveHint: "Reduziert d'GPS-Gnauigkeit und Chartenuupassig",
     themeModeLabel: "Aazeigemodus",
@@ -187,6 +193,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "Voix IA indisponible — la voix de l'appareil est utilisée.",
     navAnnouncementsLabel: "Annonces de navigation",
     navAnnouncementsHint: "Virages et changements de chapitre en notification",
+    weatherNotifLabel: "Alertes météo pour vos randonnées",
+    weatherNotifHint: "Notification en cas de mauvais temps sur votre itinéraire sauvegardé",
     powerSaveLabel: "Mode économie d'énergie",
     powerSaveHint: "Réduit la précision GPS et la mise à jour de la carte",
     themeModeLabel: "Mode d'affichage",
@@ -242,6 +250,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "Voce IA non disponibile — viene usata la voce del dispositivo.",
     navAnnouncementsLabel: "Annunci di navigazione",
     navAnnouncementsHint: "Svolte e cambi di capitolo come notifica",
+    weatherNotifLabel: "Avvisi meteo per le tue escursioni",
+    weatherNotifHint: "Notifica in caso di maltempo sul tuo percorso salvato",
     powerSaveLabel: "Risparmio energetico",
     powerSaveHint: "Riduce la precisione del GPS e l'aggiornamento della mappa",
     themeModeLabel: "Modalità di visualizzazione",
@@ -297,6 +307,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "AI voice unavailable — using the device voice.",
     navAnnouncementsLabel: "Navigation Announcements",
     navAnnouncementsHint: "Turn cues and chapter changes as notifications",
+    weatherNotifLabel: "Weather Alerts for Saved Tours",
+    weatherNotifHint: "Get notified before bad weather on your saved hike",
     powerSaveLabel: "Power Saving Mode",
     powerSaveHint: "Reduces GPS accuracy and map updates",
     themeModeLabel: "Display Mode",
@@ -352,6 +364,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "AI 语音不可用——将使用设备语音。",
     navAnnouncementsLabel: "导航提示",
     navAnnouncementsHint: "转弯提示和章节切换通知",
+    weatherNotifLabel: "已保存路线的天气提醒",
+    weatherNotifHint: "当保存路线有恶劣天气时收到通知",
     powerSaveLabel: "省电模式",
     powerSaveHint: "降低 GPS 精度和地图更新频率",
     themeModeLabel: "显示模式",
@@ -407,6 +421,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "Voz de IA no disponible — se usa la voz del dispositivo.",
     navAnnouncementsLabel: "Avisos de navegación",
     navAnnouncementsHint: "Giros y cambios de capítulo como notificaciones",
+    weatherNotifLabel: "Alertas de clima para rutas guardadas",
+    weatherNotifHint: "Notificación ante mal tiempo en tu ruta guardada",
     powerSaveLabel: "Modo ahorro de energía",
     powerSaveHint: "Reduce la precisión del GPS y la actualización del mapa",
     themeModeLabel: "Modo de visualización",
@@ -462,6 +478,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "Voz de IA indisponível — é usada a voz do dispositivo.",
     navAnnouncementsLabel: "Avisos de navegação",
     navAnnouncementsHint: "Curvas e mudanças de capítulo como notificações",
+    weatherNotifLabel: "Alertas de clima para trilhos guardados",
+    weatherNotifHint: "Notificação perante mau tempo no teu percurso guardado",
     powerSaveLabel: "Modo de economia de energia",
     powerSaveHint: "Reduz a precisão do GPS e a atualização do mapa",
     themeModeLabel: "Modo de exibição",
@@ -517,6 +535,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     voicePreviewUnavailableLabel: "ИИ-голос недоступен — используется голос устройства.",
     navAnnouncementsLabel: "Навигационные объявления",
     navAnnouncementsHint: "Повороты и смена глав в виде уведомлений",
+    weatherNotifLabel: "Погодные предупреждения для сохранённых маршрутов",
+    weatherNotifHint: "Уведомление перед непогодой на вашем маршруте",
     powerSaveLabel: "Режим энергосбережения",
     powerSaveHint: "Снижает точность GPS и частоту обновления карты",
     themeModeLabel: "Режим отображения",

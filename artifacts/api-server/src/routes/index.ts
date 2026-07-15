@@ -31,6 +31,7 @@ import sacHuettenRouter from "./sacHuetten";
 import elevationProfileRouter from "./elevationProfile";
 import trinkwasserRouter from "./trinkwasser";
 import waypointAnnounceRouter from "./waypointAnnounce";
+import sperrungenRouter from "./sperrungen";
 
 const router: IRouter = Router();
 
@@ -66,5 +67,6 @@ router.use(sacHuettenRouter);
 router.use(elevationProfileRouter);
 router.use(trinkwasserRouter);
 router.use(waypointAnnounceRouter);
+router.use(sperrungenRouter);
 
 export default router;

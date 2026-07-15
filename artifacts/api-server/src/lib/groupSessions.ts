@@ -266,3 +266,13 @@ export function notifyJoined(room: Room, ws: WebSocket): void {
 export function roomCount(): number {
   return rooms.size;
 }
+
+/**
+ * Gibt alle Mitglieds-UserIDs einer Gruppe zurueck, OHNE die Gruppen-Leitung.
+ * Wird fuer Push-Benachrichtigungen bei Wanderstart verwendet.
+ */
+export function getRoomMemberIds(leaderId: string): string[] {
+  const room = Array.from(rooms.values()).find((r) => r.leaderId === leaderId);
+  if (!room) return [];
+  return Array.from(room.members.keys()).filter((id) => id !== leaderId);
+}

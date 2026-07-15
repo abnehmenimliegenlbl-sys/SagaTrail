@@ -29,8 +29,9 @@ interface TransportAnreiseResult {
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import { captureRef } from "react-native-view-shot";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -57,6 +58,7 @@ import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
+import { ShareCard } from "@/components/brand/ShareCard";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
@@ -87,7 +89,7 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark } = useApp();
   const { isElite } = useSubscription();
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton, sagas } = useCatalog();
   const [importing, setImporting] = useState(false);
@@ -305,6 +307,53 @@ export default function Routenplanung() {
   const [elevProfileLoading, setElevProfileLoading] = useState(false);
   // Trinkwasserquellen entlang der Route (für die Karte)
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
+
+  // ShareCard ref für Native-Share-Export
+  const shareCardRef = useRef<View>(null);
+
+  // Lesezeichen (Bookmark) für die Saga dieser Route
+  const isBookmarked = saga ? savedSagaIds.includes(saga.id) : false;
+
+  // Sperrungen & Wegschäden (Wanderwege Schweiz)
+  interface Sperrung {
+    id: string;
+    title: string;
+    details?: string | null;
+    affectsFrom?: string | null;
+    affectsUntil?: string | null;
+    url?: string | null;
+    canton?: string | null;
+  }
+  const [sperrungen, setSperrungen] = useState<Sperrung[]>([]);
+  const [sperrungenLoading, setSperrungenLoading] = useState(true);
+
+  useEffect(() => {
+    setSperrungenLoading(true);
+    const canton = saga?.canton ? kantonSlug(saga.canton) : "";
+    const url = canton
+      ? `${getApiBaseUrl()}api/sperrungen?canton=${encodeURIComponent(canton)}`
+      : `${getApiBaseUrl()}api/sperrungen`;
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: unknown) => {
+        const arr = Array.isArray(data) ? (data as Sperrung[]) : [];
+        setSperrungen(arr);
+      })
+      .catch(() => setSperrungen([]))
+      .finally(() => setSperrungenLoading(false));
+  }, [saga?.canton]);
+
+  const shareRoute = async () => {
+    if (!route) return;
+    try {
+      if (shareCardRef.current) {
+        const uri = await captureRef(shareCardRef, { format: "png", quality: 0.9 });
+        await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: route.name });
+      }
+    } catch {
+      // Teilen fehlgeschlagen (z.B. Web oder keine Berechtigung)
+    }
+  };
 
   async function submitCondition() {
     if (!selectedCondition || !id) return;
@@ -624,6 +673,31 @@ export default function Routenplanung() {
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader eyebrow={route.region} title={t.title} onBack />
+
+        {/* ── Share + Lesezeichen ────────────────────────────────── */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 2 }}>
+          <Pressable
+            onPress={() => void shareRoute()}
+            style={[styles.actionChip, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+          >
+            <Feather name="share-2" size={14} color={colors.accent} />
+            <Text style={[styles.actionChipText, { color: colors.accent }]}>{t.shareRoute}</Text>
+          </Pressable>
+          {saga && (
+            <Pressable
+              onPress={() => void toggleBookmark(saga.id)}
+              style={[styles.actionChip, {
+                borderColor: isBookmarked ? colors.accent : colors.glassBorder,
+                backgroundColor: isBookmarked ? colors.accent + "22" : colors.glassBg,
+              }]}
+            >
+              <Feather name="bookmark" size={14} color={isBookmarked ? colors.accent : colors.mutedForeground} />
+              <Text style={[styles.actionChipText, { color: isBookmarked ? colors.accent : colors.mutedForeground }]}>
+                {isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+              </Text>
+            </Pressable>
+          )}
+        </View>
 
         <Text style={[styles.routeName, { color: colors.foreground }]}>
           {meta.name}
@@ -1075,6 +1149,37 @@ export default function Routenplanung() {
           </View>
         ) : null}
 
+        {/* ── Sperrungen & Wegschäden ──────────────────────────────── */}
+        {sperrungenLoading ? null : sperrungen.length > 0 ? (
+          <View style={[styles.checkCard, { borderColor: "#EF4444", backgroundColor: colors.glassBg, marginTop: 12 }]}>
+            <View style={[styles.checkRow, { marginBottom: 6 }]}>
+              <Feather name="alert-octagon" size={16} color="#EF4444" />
+              <Text style={[styles.checkLabel, { color: "#EF4444", fontFamily: fonts.bodyBold, flex: 1 }]}>
+                {t.sperrungenTitle}
+              </Text>
+            </View>
+            {sperrungen.map((s) => (
+              <View key={s.id} style={{ paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
+                <Text style={[styles.checkLabel, { color: colors.foreground }]}>{s.title}</Text>
+                {s.details ? (
+                  <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 2 }]} numberOfLines={3}>
+                    {s.details}
+                  </Text>
+                ) : null}
+                {(s.affectsFrom || s.affectsUntil) ? (
+                  <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 2 }]}>
+                    {s.affectsFrom && s.affectsUntil
+                      ? `${new Date(s.affectsFrom).toLocaleDateString()} – ${new Date(s.affectsUntil).toLocaleDateString()}`
+                      : s.affectsFrom
+                        ? `Ab ${new Date(s.affectsFrom).toLocaleDateString()}`
+                        : `Bis ${new Date(s.affectsUntil!).toLocaleDateString()}`}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* ── SOS-Notruf ───────────────────────────────────────────── */}
         <View style={{ marginTop: 16, marginBottom: 4 }}>
           <SosButton lat={route?.coordinates?.lat} lng={route?.coordinates?.lng} />
@@ -1488,6 +1593,28 @@ export default function Routenplanung() {
             ))}
           </>
         )}
+        {/* Verstecktes ShareCard für captureRef (off-screen Export) */}
+        {route && saga && (
+          <View
+            pointerEvents="none"
+            collapsable={false}
+            style={{ position: "absolute", left: -2000, top: 0 }}
+          >
+            <ShareCard
+              ref={shareCardRef}
+              sagaTitle={saga.title}
+              routeName={route.name}
+              distanceKm={meta.distanceKm}
+              ascentM={meta.ascentM}
+              sacScale={meta.sac}
+              geometry={route.geometry ?? []}
+              distanceLabel={t.distance}
+              ascentLabel={t.ascent}
+              timeLabel={t.duration}
+              stepsLabel=""
+            />
+          </View>
+        )}
       </ScrollView>
     </Background>
   );
@@ -1665,4 +1792,14 @@ const styles = StyleSheet.create({
   },
   similarRouteName: { fontFamily: fonts.bodyBold, fontSize: 15 },
   similarRouteMeta: { fontFamily: fonts.mono, fontSize: 11, marginTop: 3 },
+  actionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  actionChipText: { fontFamily: fonts.bodyBold, fontSize: 13 },
 });

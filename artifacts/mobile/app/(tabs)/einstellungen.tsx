@@ -82,6 +82,8 @@ export default function Einstellungen() {
     saveEmergencyContact,
     exportData,
     resetAll,
+    pushWeatherEnabled,
+    setPushWeatherEnabled,
   } = useApp();
 
   const { isElite, isFamily } = useSubscription();
@@ -375,6 +377,22 @@ export default function Einstellungen() {
             <Switch
               value={profile?.navAnnouncementsEnabled !== false}
               onValueChange={(v) => updateProfile({ navAnnouncementsEnabled: v })}
+              trackColor={{ true: colors.accent, false: colors.card }}
+              thumbColor={colors.foreground}
+            />
+          </View>
+          <View style={[styles.switchRow, { borderColor: colors.glassBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+                {t.weatherNotifLabel}
+              </Text>
+              <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+                {t.weatherNotifHint}
+              </Text>
+            </View>
+            <Switch
+              value={pushWeatherEnabled}
+              onValueChange={(v) => void setPushWeatherEnabled(v)}
               trackColor={{ true: colors.accent, false: colors.card }}
               thumbColor={colors.foreground}
             />

@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
 import { warmAllCantonCaches } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
+import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 
 const rawPort = process.env["PORT"];
 
@@ -38,6 +39,9 @@ const server = app.listen(port, async (err) => {
   warmAllCantonCaches(logger).catch((err) => {
     logger.error({ err }, "Cache-Vorwaermung fehlgeschlagen");
   });
+
+  // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
+  startWeatherNotificationCron();
 });
 
 attachGroupsSocket(server);

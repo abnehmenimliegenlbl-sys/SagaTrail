@@ -34,6 +34,10 @@ export const profilesTable = pgTable("profiles", {
   // Expo-Push-Token des Geraets (null = nicht registriert oder widerrufen).
   // Wird beim App-Start gesetzt und fuer Gruppen-Push-Benachrichtigungen verwendet.
   pushToken: text("push_token"),
+  // Gespeicherte Saga-IDs fuer Wetter-Benachrichtigungen.
+  savedSagaIds: text("saved_saga_ids").array().notNull().default([]),
+  // Ob der Nutzer Wetterwarnungen fuer gespeicherte Touren erhalten moechte.
+  pushWeatherEnabled: boolean("push_weather_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

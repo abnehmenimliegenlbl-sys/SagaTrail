@@ -1,13 +1,14 @@
 import type { Server as HttpServer } from "http";
 import { WebSocketServer, type WebSocket } from "ws";
 import { verifyToken } from "@clerk/express";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, profilesTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import {
   broadcastHikeEvent,
   createRoom,
+  getRoomMemberIds,
   joinRoom,
   kickMember,
   leaveRoom,
@@ -61,6 +62,39 @@ async function authenticate(token: string | null): Promise<AuthedProfile | null>
     ageTier: row.ageTier,
     premium: istPremiumAktiv(row),
   };
+}
+
+async function sendStartPushToMembers(
+  leaderId: string,
+  leaderName: string,
+  routeName: string
+): Promise<void> {
+  try {
+    const memberIds = getRoomMemberIds(leaderId);
+    if (memberIds.length === 0) return;
+    const rows = await db
+      .select({ id: profilesTable.id, pushToken: profilesTable.pushToken })
+      .from(profilesTable)
+      .where(inArray(profilesTable.id, memberIds));
+    await Promise.allSettled(
+      rows
+        .filter((r) => r.pushToken)
+        .map((r) =>
+          fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+              to: r.pushToken,
+              title: "🥾 Wanderung startet!",
+              body: `${leaderName} startet jetzt: ${routeName}`,
+              sound: "default",
+            }),
+          })
+        )
+    );
+  } catch {
+    // Push-Fehler sind nicht kritisch
+  }
 }
 
 async function sendJoinPush(leaderId: string, memberName: string): Promise<void> {
@@ -275,6 +309,14 @@ export function attachGroupsSocket(server: HttpServer): void {
               const result = broadcastHikeEvent(profile.userId, message.event);
               if (!result.ok) {
                 send(ws, { type: "error", code: result.reason });
+              }
+              // Beim Wanderstart Push an alle Mitglieder (nicht-blockierend)
+              if (message.event.kind === "start") {
+                void sendStartPushToMembers(
+                  profile.userId,
+                  profile.name,
+                  message.event.routeName
+                );
               }
               return;
             }

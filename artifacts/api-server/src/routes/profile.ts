@@ -332,4 +332,75 @@ router.post("/me/push-token", async (req, res): Promise<void> => {
   res.json({ ok: true });
 });
 
+// GET /me/bookmarks — gibt gespeicherte Saga-IDs + Benachrichtigungseinstellung zurueck
+router.get("/me/bookmarks", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const [row] = await db
+    .select({ savedSagaIds: profilesTable.savedSagaIds, pushWeatherEnabled: profilesTable.pushWeatherEnabled })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  res.json({ sagaIds: row?.savedSagaIds ?? [], pushWeatherEnabled: row?.pushWeatherEnabled ?? true });
+});
+
+// POST /me/bookmarks — fuegt eine Saga-ID hinzu (Idempotent)
+router.post("/me/bookmarks", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const { sagaId } = req.body as { sagaId?: unknown };
+  if (typeof sagaId !== "string" || !sagaId) {
+    res.status(400).json({ error: "sagaId muss ein nicht-leerer String sein" });
+    return;
+  }
+  const [row] = await db
+    .select({ savedSagaIds: profilesTable.savedSagaIds })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  const current = row?.savedSagaIds ?? [];
+  if (!current.includes(sagaId)) {
+    const [updated] = await db
+      .update(profilesTable)
+      .set({ savedSagaIds: [...current, sagaId] })
+      .where(eq(profilesTable.id, userId))
+      .returning({ savedSagaIds: profilesTable.savedSagaIds });
+    res.json({ sagaIds: updated?.savedSagaIds ?? [] });
+  } else {
+    res.json({ sagaIds: current });
+  }
+});
+
+// DELETE /me/bookmarks/:sagaId — entfernt eine Saga-ID
+router.delete("/me/bookmarks/:sagaId", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const { sagaId } = req.params;
+  const [row] = await db
+    .select({ savedSagaIds: profilesTable.savedSagaIds })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+  const current = row?.savedSagaIds ?? [];
+  const [updated] = await db
+    .update(profilesTable)
+    .set({ savedSagaIds: current.filter((id) => id !== sagaId) })
+    .where(eq(profilesTable.id, userId))
+    .returning({ savedSagaIds: profilesTable.savedSagaIds });
+  res.json({ sagaIds: updated?.savedSagaIds ?? [] });
+});
+
+// PATCH /me/notifications — schaltet Wetter-Push ein/aus
+router.patch("/me/notifications", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const { pushWeatherEnabled } = req.body as { pushWeatherEnabled?: unknown };
+  if (typeof pushWeatherEnabled !== "boolean") {
+    res.status(400).json({ error: "pushWeatherEnabled muss ein Boolean sein" });
+    return;
+  }
+  await db
+    .update(profilesTable)
+    .set({ pushWeatherEnabled })
+    .where(eq(profilesTable.id, userId));
+  res.json({ ok: true });
+});
+
 export default router;

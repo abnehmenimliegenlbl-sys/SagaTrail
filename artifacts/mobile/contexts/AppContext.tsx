@@ -34,6 +34,8 @@ import type { ThemeMode } from "@/constants/colors";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { iapLog, useSubscription } from "@/lib/revenuecat";
+import * as Notifications from "expo-notifications";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
 // seit Profil/Premium serverseitig (Clerk-Benutzer) verwaltet werden.
@@ -173,6 +175,15 @@ interface AppContextValue {
   /** Sendet ein Wander-Sync-Ereignis an die Gruppe (nur als Leitung wirksam). */
   sendGroupHikeEvent: (event: HikeSyncEvent) => void;
   clearGroupError: () => void;
+
+  /** Gespeicherte Saga-IDs (Lesezeichen) des Nutzers. */
+  savedSagaIds: string[];
+  /** Ob Wetter-Push-Benachrichtigungen aktiv sind. */
+  pushWeatherEnabled: boolean;
+  /** Saga zu Lesezeichen hinzufuegen oder entfernen (Toggle). */
+  toggleBookmark: (sagaId: string) => Promise<void>;
+  /** Wetter-Push-Einstellung aktualisieren (lokal + Server). */
+  setPushWeatherEnabled: (enabled: boolean) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -213,6 +224,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     receivedAt: number;
   } | null>(null);
   const [freieSagen, setFreieSagen] = useState<Record<string, string>>({});
+  const [savedSagaIds, setSavedSagaIds] = useState<string[]>([]);
+  const [pushWeatherEnabled, setPushWeatherEnabledState] = useState(true);
 
   // Der Socket-Client lebt ausserhalb des React-State (eine Instanz pro
   // App-Laufzeit) und meldet Ereignisse ueber Callbacks zurueck, die den
@@ -512,6 +525,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     serverProfile,
     pushProgressSync,
   ]);
+
+  // Lesezeichen + Benachrichtigungseinstellungen laden + Push-Token registrieren
+  const pushTokenSyncedForUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || !userId || !hydrated) return;
+    if (pushTokenSyncedForUserRef.current === userId) return;
+    pushTokenSyncedForUserRef.current = userId;
+    void (async () => {
+      const base = getApiBaseUrl();
+      const token = await getToken();
+      if (!token) return;
+      // Lesezeichen + Benachrichtigungseinstellung laden
+      try {
+        const res = await fetch(`${base}api/me/bookmarks`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = (await res.json()) as {
+            sagaIds: string[];
+            pushWeatherEnabled?: boolean;
+          };
+          setSavedSagaIds(data.sagaIds ?? []);
+          if (data.pushWeatherEnabled !== undefined) {
+            setPushWeatherEnabledState(data.pushWeatherEnabled);
+          }
+        }
+      } catch { /* nicht kritisch */ }
+      // Push-Token registrieren (nur auf nativen Plattformen)
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") return;
+        const tokenData = await Notifications.getExpoPushTokenAsync();
+        await fetch(`${base}api/me/push-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ token: tokenData.data }),
+        });
+      } catch { /* Push-Token optional */ }
+    })();
+  }, [authLoaded, isSignedIn, userId, hydrated, getToken]);
   const {
     isSubscribed,
     isLoading: subscriptionLoading,
@@ -851,7 +904,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveHike(null);
     setGroupSession(null);
     setGroupError(null);
+    setSavedSagaIds([]);
+    setPushWeatherEnabledState(true);
+    pushTokenSyncedForUserRef.current = null;
   }, []);
+
+  const toggleBookmark = useCallback(
+    async (sagaId: string) => {
+      const isCurrentlyBookmarked = savedSagaIds.includes(sagaId);
+      try {
+        const base = getApiBaseUrl();
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch(
+          isCurrentlyBookmarked
+            ? `${base}api/me/bookmarks/${encodeURIComponent(sagaId)}`
+            : `${base}api/me/bookmarks`,
+          {
+            method: isCurrentlyBookmarked ? "DELETE" : "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            ...(isCurrentlyBookmarked ? {} : { body: JSON.stringify({ sagaId }) }),
+          }
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { sagaIds: string[] };
+          setSavedSagaIds(data.sagaIds ?? []);
+        }
+      } catch { /* nicht kritisch */ }
+    },
+    [savedSagaIds, getToken]
+  );
+
+  const setPushWeatherEnabled = useCallback(
+    async (enabled: boolean) => {
+      setPushWeatherEnabledState(enabled);
+      try {
+        const base = getApiBaseUrl();
+        const token = await getToken();
+        if (!token) return;
+        await fetch(`${base}api/me/notifications`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ pushWeatherEnabled: enabled }),
+        });
+      } catch { /* nicht kritisch */ }
+    },
+    [getToken]
+  );
 
   // Client-seitig wird Premium bereits hier geprueft (schnelle Ruecksicht auf
   // die UI, siehe gruppe.tsx). Der Server prueft unabhaengig davon erneut
@@ -936,6 +1035,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setGroupActivity,
       sendGroupHikeEvent,
       clearGroupError,
+      savedSagaIds,
+      pushWeatherEnabled,
+      toggleBookmark,
+      setPushWeatherEnabled,
     }),
     [
       hydrated,
@@ -980,6 +1083,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setGroupActivity,
       sendGroupHikeEvent,
       clearGroupError,
+      savedSagaIds,
+      pushWeatherEnabled,
+      toggleBookmark,
+      setPushWeatherEnabled,
     ]
   );
 
