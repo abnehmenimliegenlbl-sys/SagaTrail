@@ -524,6 +524,44 @@ export async function fetchRouteSurfaces(osmId: number): Promise<RouteSurfacePoi
  * nicht sprengt. Relationen, deren Geometrie sich nicht verketten laesst
  * (points.length < 2), entfallen.
  */
+/** Minimale Angaben zu einer oeffentlichen Trinkwasserquelle. */
+export interface DrinkingWater {
+  osmId: string;
+  lat: number;
+  lng: number;
+  name: string | null;
+}
+
+/**
+ * Sucht oeffentliche Trinkwasserquellen (amenity=drinking_water) im Umkreis
+ * einer Koordinate via Overpass API.
+ */
+export async function fetchDrinkingWater(
+  center: { lat: number; lng: number },
+  radiusM: number,
+  log: Logger,
+): Promise<DrinkingWater[]> {
+  const query = [
+    "[out:json][timeout:10];",
+    `node["amenity"="drinking_water"](around:${radiusM},${center.lat},${center.lng});`,
+    "out tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query, 12_000);
+  const result: DrinkingWater[] = [];
+  for (const e of elements) {
+    if (e.lat == null || e.lon == null) continue;
+    const tags = e.tags ?? {};
+    result.push({
+      osmId: `node-${e.id}`,
+      lat: e.lat,
+      lng: e.lon,
+      name: tags.name ?? tags.description ?? null,
+    });
+  }
+  log.info({ count: result.length, radiusM }, "Overpass: Trinkwasser geladen");
+  return result;
+}
+
 export async function fetchRouteGeometries(
   osmIds: number[],
   log: Logger,

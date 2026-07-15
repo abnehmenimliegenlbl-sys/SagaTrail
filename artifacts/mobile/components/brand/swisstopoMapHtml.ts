@@ -60,6 +60,11 @@ export interface SwisstopoMapProps {
   /** Wird mit der `id` des angetippten Partner-Markers aufgerufen. */
   onPartnerPress?: (id: string) => void;
   /**
+   * Oeffentliche Trinkwasserquellen (Brunnen) entlang der Route — werden als
+   * kleine cyan-blaue Kreise ohne Klick-Handler auf der Karte angezeigt.
+   */
+  waterSources?: MapPoi[] | null;
+  /**
    * Picker-Modus: Die Karte reagiert auf Tippen und meldet die gewaehlten
    * Koordinaten per postMessage (`type: "stt-mapclick"`) zurueck.
    */
@@ -116,7 +121,8 @@ export function buildSwisstopoHtml(
   legend?: MapLegendLabels | null,
   partners?: MapPoi[] | null,
   pickerMode?: boolean,
-  altGeometry?: number[][] | null
+  altGeometry?: number[][] | null,
+  waterSources?: MapPoi[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -132,6 +138,8 @@ export function buildSwisstopoHtml(
   const poisJson = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
   const partnersJson =
     partners && partners.length > 0 ? JSON.stringify(partners) : "null";
+  const waterSourcesJson =
+    waterSources && waterSources.length > 0 ? JSON.stringify(waterSources) : "null";
   const legendJson = legend ? JSON.stringify(legend) : "null";
   const altGeometryJson =
     altGeometry && altGeometry.length > 1 ? JSON.stringify(altGeometry) : "null";
@@ -212,6 +220,7 @@ export function buildSwisstopoHtml(
   .stt-legende .stt-poi { box-shadow: none; cursor: default; }
   .stt-legende .stt-partner { box-shadow: none; cursor: default; }
   .stt-picker { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
+  .stt-wasser { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
 </style>
 </head>
 <body>
@@ -322,6 +331,17 @@ export function buildSwisstopoHtml(
             window.parent.postMessage(payload, '*');
           }
         });
+      });
+    }
+
+    var waterSources = ${waterSourcesJson};
+    if (waterSources) {
+      // Trinkwasserquellen: kleine cyan-blaue Kreismarker, rein informativ
+      // (kein Klick-Handler). Ein Popup zeigt den Namen oder "Trinkwasser".
+      var wasserIcon = L.divIcon({ className: '', html: '<div class="stt-wasser"></div>', iconSize: [10, 10], iconAnchor: [5, 5] });
+      waterSources.forEach(function (w) {
+        L.marker([w.lat, w.lng], { icon: wasserIcon }).addTo(map)
+          .bindPopup(w.name || 'Trinkwasser');
       });
     }
 

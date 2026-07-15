@@ -1,5 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import SacHuettenSection, { type SacHuette } from "@/components/SacHuettenSection";
+import { ElevationChart, type ElevationPoint } from "@/components/ElevationChart";
+import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 import {
   getAerialways,
@@ -298,6 +300,11 @@ export default function Routenplanung() {
   const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
   const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
   const [sacHuettenError, setSacHuettenError] = useState(false);
+  // Höhenprofil der Route
+  const [elevProfile, setElevProfile] = useState<ElevationPoint[] | null>(null);
+  const [elevProfileLoading, setElevProfileLoading] = useState(false);
+  // Trinkwasserquellen entlang der Route (für die Karte)
+  const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
 
   async function submitCondition() {
     if (!selectedCondition || !id) return;
@@ -398,6 +405,51 @@ export default function Routenplanung() {
       .catch(() => { if (!cancelled) { setAvalanche(null); setAvalancheLoading(false); } });
     return () => { cancelled = true; };
   }, [route?.id, sagas.length]);
+
+  // Höhenprofil via swisstopo-Profildienst (POST /api/elevation-profile).
+  // Wird neu geladen wenn sich die Geometrie durch Umkehren ändert.
+  useEffect(() => {
+    const geom = effectiveGeom.length >= 2 ? effectiveGeom : (route?.geometry ?? []);
+    if (geom.length < 2) return;
+    let cancelled = false;
+    setElevProfileLoading(true);
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/elevation-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geometry: geom }),
+    })
+      .then((r) => r.json())
+      .then((data: { profile: ElevationPoint[] }) => {
+        if (!cancelled && Array.isArray(data?.profile)) {
+          setElevProfile(data.profile);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setElevProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
+
+  // Trinkwasserquellen im Umkreis der Route laden (Routenmittelpunkt).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`)
+      .then((r) => r.json())
+      .then((data: { osmId: string; lat: number; lng: number; name: string | null }[]) => {
+        if (!cancelled && Array.isArray(data)) {
+          setWaterSources(data.map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng })));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id]);
 
   // SAC-Hütten im Umkreis der Route laden (Mittelpunkt der Geometrie).
   useEffect(() => {
@@ -592,6 +644,7 @@ export default function Routenplanung() {
                   geometry={effectiveGeom.length > 0 ? effectiveGeom : route.geometry}
                   aerialways={aerialways}
                   partners={partners}
+                  waterSources={waterSources.length > 0 ? waterSources : null}
                 />
               ) : (
                 <RouteMap progress={0.15} height={hoehe} />
@@ -606,6 +659,27 @@ export default function Routenplanung() {
           <Stat label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
           <Stat label={t.sacScale} value={meta.sac} unit="" />
         </Animated.View>
+
+        {/* ── Höhenprofil ────────────────────────────────────────────── */}
+        {(elevProfile || elevProfileLoading) && (
+          <View
+            style={[
+              styles.elevChartCard,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <Text style={[styles.elevChartTitle, { color: colors.foreground }]}>
+              {t.elevationProfile}
+            </Text>
+            {elevProfileLoading && !elevProfile ? (
+              <View style={{ height: 110, alignItems: "center", justifyContent: "center" }}>
+                <ActivityIndicator size="small" color={colors.accent} />
+              </View>
+            ) : elevProfile ? (
+              <ElevationChart profile={elevProfile} height={110} />
+            ) : null}
+          </View>
+        )}
 
         {/* ── Strecke umkehren ──────────────────────────────────────── */}
         {effectiveGeom.length >= 2 && routentyp === "strecke" && (
@@ -1486,6 +1560,14 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
   },
+  elevChartCard: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 14,
+  },
+  elevChartTitle: { fontFamily: fonts.bodyBold, fontSize: 14, marginBottom: 10 },
   stat: { ...GLAS_3D,
     width: "47.5%",
     borderWidth: 1,

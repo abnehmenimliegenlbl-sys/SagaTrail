@@ -140,6 +140,30 @@ export default function Sammlung() {
   // Wanderstatistik aus dem Tagebuch (alle abgeschlossenen Wanderungen)
   const totalKm = hikeHistory.reduce((sum, h) => sum + (h.distanceKm || 0), 0);
   const totalAscent = hikeHistory.reduce((sum, h) => sum + (h.ascentM || 0), 0);
+  const totalDurationH = Math.round(
+    hikeHistory.reduce((sum, h) => sum + (h.durationMin || 0), 0) / 60
+  );
+  const longestHikeKm = hikeHistory.length > 0
+    ? Math.max(...hikeHistory.map((h) => h.distanceKm || 0))
+    : 0;
+  const highestAscentM = hikeHistory.length > 0
+    ? Math.max(...hikeHistory.map((h) => h.ascentM || 0))
+    : 0;
+
+  // Aktivitaets-Chart: Kilometer pro Monat der letzten 12 Monate.
+  const monthlyKm = React.useMemo(() => {
+    const now = new Date();
+    const months: number[] = Array(12).fill(0);
+    for (const h of hikeHistory) {
+      const d = new Date(h.startedAt);
+      const monthsAgo =
+        (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth();
+      if (monthsAgo >= 0 && monthsAgo < 12) {
+        months[11 - monthsAgo] += h.distanceKm || 0;
+      }
+    }
+    return months;
+  }, [hikeHistory]);
 
   return (
     <Background>
@@ -230,6 +254,8 @@ export default function Sammlung() {
             <Text style={[styles.wanderStatsTitle, { color: colors.foreground }]}>
               {t.statsTitle}
             </Text>
+
+            {/* Zeile 1: Kernzahlen */}
             <View style={styles.wanderStatsRow}>
               <View style={styles.stat}>
                 <Text style={[styles.wanderStatNum, { color: colors.accent }]}>
@@ -255,6 +281,64 @@ export default function Sammlung() {
                   {t.statsHikes}
                 </Text>
               </View>
+            </View>
+
+            {/* Trennlinie */}
+            <View style={[styles.statsDivider, { backgroundColor: colors.glassBorder }]} />
+
+            {/* Zeile 2: Dauer + Rekorde */}
+            <View style={styles.wanderStatsRow}>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.foreground }]}>
+                  {totalDurationH}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsDuration}
+                </Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.foreground }]}>
+                  {longestHikeKm.toFixed(longestHikeKm >= 100 ? 0 : 1)}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsRecordKm}
+                </Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={[styles.wanderStatNum, { color: colors.foreground }]}>
+                  {Math.round(highestAscentM)}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  {t.statsRecordAscent}
+                </Text>
+              </View>
+            </View>
+
+            {/* Trennlinie */}
+            <View style={[styles.statsDivider, { backgroundColor: colors.glassBorder }]} />
+
+            {/* Monats-Aktivitaets-Chart */}
+            <Text style={[styles.monthlyTitle, { color: colors.mutedForeground }]}>
+              {t.statsMonthly}
+            </Text>
+            <View style={styles.monthlyChart}>
+              {(() => {
+                const maxVal = Math.max(...monthlyKm, 1);
+                return monthlyKm.map((km, i) => (
+                  <View key={i} style={styles.monthlyBar}>
+                    <View
+                      style={[
+                        styles.monthlyBarFill,
+                        {
+                          height: `${Math.max(4, (km / maxVal) * 100)}%` as any,
+                          backgroundColor: km > 0 ? colors.accent : colors.glassBorder,
+                          opacity: km > 0 ? (0.4 + 0.6 * (km / maxVal)) : 1,
+                        },
+                      ]}
+                    />
+                  </View>
+                ));
+              })()}
             </View>
           </View>
         )}
@@ -525,6 +609,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   wanderStatNum: { fontFamily: fonts.monoBold, fontSize: 22 },
+  statsDivider: { height: 1, marginVertical: 14, borderRadius: 1 },
+  monthlyTitle: {
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: 8,
+  },
+  monthlyChart: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    height: 40,
+    gap: 3,
+  },
+  monthlyBar: {
+    flex: 1,
+    height: "100%",
+    justifyContent: "flex-end",
+  },
+  monthlyBarFill: {
+    borderRadius: 2,
+    width: "100%",
+  },
   diaryMonth: {
     fontFamily: fonts.mono,
     fontSize: 11,

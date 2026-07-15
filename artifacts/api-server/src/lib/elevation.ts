@@ -17,6 +17,7 @@ const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
 const MAX_INPUT_POINTS = 100;
 
 interface ProfilePoint {
+  dist?: number;
   alts?: { COMB?: number; DTM2?: number; DTM25?: number };
 }
 
@@ -25,6 +26,42 @@ export interface ElevationStats {
   ascentM: number;
   /** Hoechster erreichter Punkt entlang der Route in Metern ue. M. */
   maxElevationM: number;
+}
+
+/**
+ * Liefert das Hoehenprofilfuer eine Route als Array von {distanceKm, altM}-
+ * Paaren, geeignet zum Zeichnen eines Hoehenprofil-Charts. Nutzt denselben
+ * swisstopo-Profildienst wie computeElevationStats, gibt aber die vollstaendige
+ * Profil-Kurve zurueck statt nur Aufstieg + Maximalhoehe.
+ */
+export async function computeElevationProfile(
+  points: LatLng[],
+  log: Logger,
+): Promise<{ distanceKm: number; altM: number }[] | null> {
+  if (points.length < 2) return null;
+  const reduced = downsample(points, MAX_INPUT_POINTS);
+  const coordinates = reduced.map((p) => wgs84ToLV95(p.lat, p.lng));
+  const geom = JSON.stringify({ type: "LineString", coordinates });
+  try {
+    const url = `${PROFILE_URL}?sr=2056&geom=${encodeURIComponent(geom)}`;
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+    if (!res.ok) {
+      log.warn({ status: res.status }, "swisstopo-Profil: HTTP-Fehler");
+      return null;
+    }
+    const data = (await res.json()) as ProfilePoint[];
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const result: { distanceKm: number; altM: number }[] = [];
+    for (const p of data) {
+      const alt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
+      if (typeof alt !== "number" || typeof p.dist !== "number") continue;
+      result.push({ distanceKm: p.dist / 1000, altM: Math.round(alt) });
+    }
+    return result.length >= 2 ? result : null;
+  } catch (err) {
+    log.warn({ err }, "swisstopo-Profil (Kurve): Anfrage fehlgeschlagen");
+    return null;
+  }
 }
 
 /** Aufstieg + maximale Hoehe einer Route, oder null bei Fehler/leerem Profil. */

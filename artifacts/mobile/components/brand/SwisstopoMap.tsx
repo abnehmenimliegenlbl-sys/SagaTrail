@@ -24,6 +24,7 @@ export function SwisstopoMap({
   onPoiPress,
   partners,
   onPartnerPress,
+  waterSources,
   pickerMode,
   onMapClick,
 }: SwisstopoMapProps) {
@@ -61,9 +62,10 @@ export function SwisstopoMap({
         },
         partners,
         pickerMode,
-        altGeometry
+        altGeometry,
+        waterSources
       ),
-    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, pickerMode, t]
+    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, pickerMode, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

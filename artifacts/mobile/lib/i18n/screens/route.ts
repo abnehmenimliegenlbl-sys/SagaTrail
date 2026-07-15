@@ -119,6 +119,7 @@ export interface RouteStrings {
   transportAnreiseLive: string;
   transportArrivingAt: (name: string) => string;
   reverseRoute: string;
+  elevationProfile: string;
   sacHuettenTitle: string;
   sacHuettenLoading: string;
   sacHuettenNone: string;
@@ -253,6 +254,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live am Start",
     transportArrivingAt: (name) => `Ankunft in ${name}`,
     reverseRoute: "Strecke umkehren",
+    elevationProfile: "Höhenprofil",
     sacHuettenTitle: "SAC-Hütten in der Nähe",
     sacHuettenLoading: "Hütten werden geladen …",
     sacHuettenNone: "Keine SAC-Hütten in der Nähe gefunden.",
@@ -385,6 +387,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live am Schtart",
     transportArrivingAt: (name) => `Aakunft i ${name}`,
     reverseRoute: "Strecke umcheere",
+    elevationProfile: "Höheprofil",
     sacHuettenTitle: "SAC-Hütte id Nächi",
     sacHuettenLoading: "Hütte wänd gladä …",
     sacHuettenNone: "Kei SAC-Hütte id Nächi gfunde.",
@@ -517,6 +520,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "Live arrivals at trailhead",
     transportArrivingAt: (name) => `Arriving at ${name}`,
     reverseRoute: "Reverse route",
+    elevationProfile: "Elevation Profile",
     sacHuettenTitle: "Nearby SAC Huts",
     sacHuettenLoading: "Loading huts …",
     sacHuettenNone: "No SAC huts found nearby.",
@@ -649,6 +653,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live au départ",
     transportArrivingAt: (name) => `Arrivée à ${name}`,
     reverseRoute: "Inverser l'itinéraire",
+    elevationProfile: "Profil altimétrique",
     sacHuettenTitle: "Cabanes SAC à proximité",
     sacHuettenLoading: "Chargement des cabanes …",
     sacHuettenNone: "Aucune cabane SAC trouvée à proximité.",
@@ -781,6 +786,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live alla partenza",
     transportArrivingAt: (name) => `Arrivo a ${name}`,
     reverseRoute: "Inverti percorso",
+    elevationProfile: "Profilo altimetrico",
     sacHuettenTitle: "Rifugi SAC nelle vicinanze",
     sacHuettenLoading: "Caricamento rifugi …",
     sacHuettenNone: "Nessun rifugio SAC trovato nelle vicinanze.",
@@ -913,6 +919,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live en el inicio",
     transportArrivingAt: (name) => `Llegada a ${name}`,
     reverseRoute: "Invertir recorrido",
+    elevationProfile: "Perfil de elevación",
     sacHuettenTitle: "Refugios SAC cercanos",
     sacHuettenLoading: "Cargando refugios …",
     sacHuettenNone: "No se encontraron refugios SAC cercanos.",
@@ -1045,6 +1052,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB live na partida",
     transportArrivingAt: (name) => `Chegada em ${name}`,
     reverseRoute: "Inverter rota",
+    elevationProfile: "Perfil de elevação",
     sacHuettenTitle: "Cabanas SAC próximas",
     sacHuettenLoading: "A carregar cabanas …",
     sacHuettenNone: "Nenhuma cabana SAC encontrada nas proximidades.",
@@ -1170,6 +1178,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "出发站实时到达",
     transportArrivingAt: (name) => `到达${name}`,
     reverseRoute: "反转路线",
+    elevationProfile: "海拔剖面",
     sacHuettenTitle: "附近SAC山屋",
     sacHuettenLoading: "正在加载山屋 …",
     sacHuettenNone: "附近未找到SAC山屋。",
@@ -1302,6 +1311,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportAnreiseLive: "SBB у стартовой точки",
     transportArrivingAt: (name) => `Прибытие к ${name}`,
     reverseRoute: "Обратный маршрут",
+    elevationProfile: "Профиль высот",
     sacHuettenTitle: "Хижины SAC поблизости",
     sacHuettenLoading: "Загрузка хижин …",
     sacHuettenNone: "Хижины SAC рядом не найдены.",

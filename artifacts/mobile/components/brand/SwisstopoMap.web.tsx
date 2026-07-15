@@ -24,6 +24,7 @@ export function SwisstopoMap({
   onPoiPress,
   partners,
   onPartnerPress,
+  waterSources,
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
@@ -57,9 +58,12 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
         },
-        partners
+        partners,
+        undefined,
+        undefined,
+        waterSources
       ),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, t]
+    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, waterSources, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
