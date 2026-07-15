@@ -1614,7 +1614,10 @@ export default function LiveHike() {
       setFinished(true);
       return;
     }
-    const ratio = routeProgress ?? (totalKm > 0 ? distance / totalKm : 0);
+    // Kapitelfortschritt immer ueber zurueckgelegte Strecke (nie ueber GPS-
+    // Projektion), damit man unabhaengig vom Startpunkt immer bei Kapitel 0
+    // beginnt — auch wenn man mitten auf der Route einsteigt.
+    const ratio = totalKm > 0 ? distance / totalKm : 0;
     const reached = Math.min(steps, Math.floor(ratio * steps + 1e-6));
     if (reached > currentIndex) {
       setCurrentIndex(reached);
@@ -1623,7 +1626,6 @@ export default function LiveHike() {
     }
   }, [
     distance,
-    routeProgress,
     locState,
     preparing,
     finished,
