@@ -14,28 +14,27 @@ import * as Notifications from "expo-notifications";
  * stille No-ops; die Abbiege-Hinweise bleiben Teil der Erzaehlung.
  */
 
-let handlerGesetzt = false;
+// Handler SOFORT beim Import setzen — nicht lazy in bereiteAbbiegeMitteilungenVor.
+// Surface- und Meilenstein-Mitteilungen koennen feuern, bevor bereite... je
+// aufgerufen wird; ohne fruehzeitig gesetzten Handler erscheinen sie nicht im
+// Notification Center und werden von watchOS nicht gespiegelt.
+if (Platform.OS !== "web") {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      // Muss true sein: Apple Watch spiegelt nur Mitteilungen,
+      // die im Notification Center (Liste) landen.
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 /** Fragt (nativ) die Mitteilungs-Berechtigung an; liefert true bei Erlaubnis. */
 export async function bereiteAbbiegeMitteilungenVor(): Promise<boolean> {
   if (Platform.OS === "web") return false;
   try {
-    if (!handlerGesetzt) {
-      // Auch im Vordergrund anzeigen — wer das Handy in der Hand hat, sieht
-      // den Hinweis als Banner; auf der Watch kommt er ohnehin nur bei
-      // gesperrtem iPhone an.
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowBanner: true,
-          // Muss true sein: Apple Watch spiegelt nur Mitteilungen,
-          // die im Notification Center (Liste) landen.
-          shouldShowList: true,
-          shouldPlaySound: false,
-          shouldSetBadge: false,
-        }),
-      });
-      handlerGesetzt = true;
-    }
     const existing = await Notifications.getPermissionsAsync();
     if (existing.granted) return true;
     if (!existing.canAskAgain) return false;
@@ -99,7 +98,11 @@ export async function sendeAbbiegeMitteilung(titel: string, text: string): Promi
   if (Platform.OS === "web") return;
   try {
     await Notifications.scheduleNotificationAsync({
-      content: { title: titel, body: text, sound: false },
+      content: {
+        title: titel,
+        body: text,
+        sound: false,
+      },
       trigger: null,
     });
   } catch {

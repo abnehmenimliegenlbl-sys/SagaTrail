@@ -714,6 +714,10 @@ export default function LiveHike() {
   );
   const notifiedTurnsRef = useRef<Set<number>>(new Set());
   const [turnNotifsReady, setTurnNotifsReady] = useState(false);
+  // Ref-Spiegel fuer turnNotifsReady: erlaubt Mitteilungs-Effekten (Surface,
+  // Meilenstein, POI) den aktuellen Berechtigungsstatus zu lesen, ohne in
+  // ihren deps-Arrays auf den State angewiesen zu sein.
+  const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
   const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean }) => Promise<void>) | null>(null);
@@ -725,7 +729,10 @@ export default function LiveHike() {
   useEffect(() => {
     let cancelled = false;
     bereiteAbbiegeMitteilungenVor().then((ok) => {
-      if (!cancelled) setTurnNotifsReady(ok);
+      if (!cancelled) {
+        setTurnNotifsReady(ok);
+        turnNotifsReadyRef.current = ok;
+      }
     });
     return () => {
       cancelled = true;
@@ -836,7 +843,7 @@ export default function LiveHike() {
         notifiedSurfaceFractionsRef.current.add(key);
         const pack = STORY_PACKS[resolveLang(storyLanguage)];
         const text = pack.surfaceTransitionPhrase(sp.surface);
-        if (profile?.navAnnouncementsEnabled !== false) {
+        if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
         }
         speakRef.current?.(text);
@@ -856,7 +863,7 @@ export default function LiveHike() {
         const pack = STORY_PACKS[resolveLang(storyLanguage)];
         const name = profile?.name?.trim() || null;
         const text = pack.milestonePhrase(pct, name);
-        if (profile?.navAnnouncementsEnabled !== false) {
+        if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.milestoneTitle, text);
         }
         speakRef.current?.(text);
@@ -1172,9 +1179,9 @@ export default function LiveHike() {
     const poiText = nearbyPoi.wiki?.extract
       ? trimForNarration(nearbyPoi.wiki.extract)
       : t.poiNotifBody;
-    bereiteAbbiegeMitteilungenVor().then((ok) => {
-      if (ok) sendePoiMitteilung(poiName, poiText, poiBild);
-    });
+    if (turnNotifsReadyRef.current) {
+      sendePoiMitteilung(poiName, poiText, poiBild);
+    }
     // POI-Erzaehlung reiht sich in die Warteschlange ein — unterbricht kein
     // laufendes Kapitel, spielt automatisch danach ab.
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
