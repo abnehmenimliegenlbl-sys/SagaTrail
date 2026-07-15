@@ -27,6 +27,7 @@ import avalancheRouter from "./avalanche";
 import transportRouter from "./transport";
 import storageRouter from "./storage";
 import waypointPhotosRouter from "./waypointPhotos";
+import sacHuettenRouter from "./sacHuetten";
 
 const router: IRouter = Router();
 
@@ -58,5 +59,6 @@ router.use(avalancheRouter);
 router.use(transportRouter);
 router.use(storageRouter);
 router.use(waypointPhotosRouter);
+router.use(sacHuettenRouter);
 
 export default router;

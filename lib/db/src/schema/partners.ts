@@ -14,6 +14,7 @@ export type PartnerKategorie =
   | "cafe"
   | "souvenir"
   | "uebernachtung"
+  | "sac_huette"
   | "sonstiges";
 
 export type Zahlungsstatus =
@@ -39,6 +40,8 @@ export const partnersTable = pgTable("partners", {
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   fotoUrl: text("foto_url"),
+  telefon: text("telefon"),
+  websiteUrl: text("website_url"),
   email: text("email"),
   paket: text("paket"),
   preisChf: integer("preis_chf"),

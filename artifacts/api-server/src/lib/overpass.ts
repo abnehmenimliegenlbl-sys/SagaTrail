@@ -383,6 +383,57 @@ export async function fetchHistoricPois(
   return result;
 }
 
+export interface RawAlpineHut {
+  osmId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  telefon: string | null;
+  websiteUrl: string | null;
+  elevation: number | null;
+  openingHours: string | null;
+}
+
+/**
+ * Laedt SAC-Hütten (tourism=alpine_hut) im Umkreis eines Koordinaten-Punktes.
+ * Liefert Phone, Website, Seehoehe und Oeffnungszeiten aus OSM-Tags.
+ */
+export async function fetchAlpineHuts(
+  center: { lat: number; lng: number },
+  radiusM: number,
+  log: Logger,
+): Promise<RawAlpineHut[]> {
+  const query = [
+    "[out:json][timeout:10];",
+    "(",
+    `node["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
+    `way["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
+    ");",
+    "out center tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query, 14_000);
+  const result: RawAlpineHut[] = [];
+  for (const e of elements) {
+    const tags = e.tags ?? {};
+    if (!tags.name) continue;
+    const lat = e.lat ?? e.center?.lat;
+    const lng = e.lon ?? e.center?.lon;
+    if (lat == null || lng == null) continue;
+    result.push({
+      osmId: `${e.type}-${e.id}`,
+      name: tags.name,
+      lat,
+      lng,
+      telefon: tags.phone ?? tags["contact:phone"] ?? null,
+      websiteUrl: tags.website ?? tags["contact:website"] ?? tags.url ?? null,
+      elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
+      openingHours: tags.opening_hours ?? tags.seasonal ?? null,
+    });
+  }
+  log.info({ count: result.length, radiusM }, "Overpass: Alpine Huts geladen");
+  return result;
+}
+
 /**
  * Phase 1: leichter Index aller benannten Wanderrouten-Relationen eines Kantons
  * (nur Tags + Bounding Box). Klein und schnell, auch fuer >1000 Relationen.

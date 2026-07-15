@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import SacHuettenSection, { type SacHuette } from "@/components/SacHuettenSection";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 import {
   getAerialways,
   getPartners,
@@ -265,6 +267,10 @@ export default function Routenplanung() {
   // SBB live am Ziel – naechste Abfahrten am Routenendpunkt
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
+  // SAC-Hütten in der Nähe der Route
+  const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
+  const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
+  const [sacHuettenError, setSacHuettenError] = useState(false);
 
   async function submitCondition() {
     if (!selectedCondition || !id) return;
@@ -365,6 +371,29 @@ export default function Routenplanung() {
       .catch(() => { if (!cancelled) { setAvalanche(null); setAvalancheLoading(false); } });
     return () => { cancelled = true; };
   }, [route?.id, sagas.length]);
+
+  // SAC-Hütten im Umkreis der Route laden (Mittelpunkt der Geometrie).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    setSacHuettenLoading(true);
+    setSacHuettenError(false);
+    const geom = route.geometry ?? [];
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/sac-huetten?lat=${center.lat}&lng=${center.lng}&radius=12000`)
+      .then((r) => r.json())
+      .then((data: SacHuette[]) => {
+        if (!cancelled) { setSacHuetten(data); setSacHuettenLoading(false); }
+      })
+      .catch(() => {
+        if (!cancelled) { setSacHuettenError(true); setSacHuettenLoading(false); }
+      });
+    return () => { cancelled = true; };
+  }, [route?.id]);
 
   // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
   // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
@@ -685,6 +714,13 @@ export default function Routenplanung() {
             ))
           )}
         </View>
+
+        {/* ── SAC-Hütten in der Nähe ──────────────────────────────── */}
+        <SacHuettenSection
+          huetten={sacHuetten}
+          loading={sacHuettenLoading}
+          error={sacHuettenError}
+        />
 
         <View
           style={[

@@ -116,6 +116,16 @@ export interface RouteStrings {
   transportPlatform: (p: string) => string;
   transportDelay: (min: number) => string;
   transportOnTime: string;
+  sacHuettenTitle: string;
+  sacHuettenLoading: string;
+  sacHuettenNone: string;
+  sacHuettenError: string;
+  sacHuettenCall: string;
+  sacHuettenReserve: string;
+  sacHuettenOpen: string;
+  sacHuettenClosed: string;
+  sacHuettenAltitude: (m: number) => string;
+  sacHuettenPartnerBadge: string;
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -237,6 +247,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    sacHuettenTitle: "SAC-Hütten in der Nähe",
+    sacHuettenLoading: "Hütten werden geladen …",
+    sacHuettenNone: "Keine SAC-Hütten in der Nähe gefunden.",
+    sacHuettenError: "Hütten konnten nicht geladen werden.",
+    sacHuettenCall: "Anrufen",
+    sacHuettenReserve: "Reservieren",
+    sacHuettenOpen: "Offen",
+    sacHuettenClosed: "Saisonschluss",
+    sacHuettenAltitude: (m) => `${m} m ü. M.`,
+    sacHuettenPartnerBadge: "Partner",
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -356,6 +376,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    sacHuettenTitle: "SAC-Hütte id Nächi",
+    sacHuettenLoading: "Hütte wänd gladä …",
+    sacHuettenNone: "Kei SAC-Hütte id Nächi gfunde.",
+    sacHuettenError: "Hütte händ sich nid ladä lah.",
+    sacHuettenCall: "Aalüte",
+    sacHuettenReserve: "Reserviere",
+    sacHuettenOpen: "Offe",
+    sacHuettenClosed: "Saisonsschluess",
+    sacHuettenAltitude: (m) => `${m} m ü. M.`,
+    sacHuettenPartnerBadge: "Partner",
   },
   en: {
     notFound: "Route not found.",
@@ -475,6 +505,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "on time",
+    sacHuettenTitle: "Nearby SAC Huts",
+    sacHuettenLoading: "Loading huts …",
+    sacHuettenNone: "No SAC huts found nearby.",
+    sacHuettenError: "Could not load huts.",
+    sacHuettenCall: "Call",
+    sacHuettenReserve: "Reserve",
+    sacHuettenOpen: "Open",
+    sacHuettenClosed: "Seasonal closure",
+    sacHuettenAltitude: (m) => `${m} m a.s.l.`,
+    sacHuettenPartnerBadge: "Partner",
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -594,6 +634,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Voie ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "à l'heure",
+    sacHuettenTitle: "Cabanes SAC à proximité",
+    sacHuettenLoading: "Chargement des cabanes …",
+    sacHuettenNone: "Aucune cabane SAC trouvée à proximité.",
+    sacHuettenError: "Impossible de charger les cabanes.",
+    sacHuettenCall: "Appeler",
+    sacHuettenReserve: "Réserver",
+    sacHuettenOpen: "Ouvert",
+    sacHuettenClosed: "Fermeture saisonnière",
+    sacHuettenAltitude: (m) => `${m} m s.m.`,
+    sacHuettenPartnerBadge: "Partenaire",
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -713,6 +763,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Bin. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "in orario",
+    sacHuettenTitle: "Rifugi SAC nelle vicinanze",
+    sacHuettenLoading: "Caricamento rifugi …",
+    sacHuettenNone: "Nessun rifugio SAC trovato nelle vicinanze.",
+    sacHuettenError: "Impossibile caricare i rifugi.",
+    sacHuettenCall: "Chiama",
+    sacHuettenReserve: "Prenota",
+    sacHuettenOpen: "Aperto",
+    sacHuettenClosed: "Chiusura stagionale",
+    sacHuettenAltitude: (m) => `${m} m s.l.m.`,
+    sacHuettenPartnerBadge: "Partner",
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -832,6 +892,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Vía ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "puntual",
+    sacHuettenTitle: "Refugios SAC cercanos",
+    sacHuettenLoading: "Cargando refugios …",
+    sacHuettenNone: "No se encontraron refugios SAC cercanos.",
+    sacHuettenError: "No se pudieron cargar los refugios.",
+    sacHuettenCall: "Llamar",
+    sacHuettenReserve: "Reservar",
+    sacHuettenOpen: "Abierto",
+    sacHuettenClosed: "Cierre de temporada",
+    sacHuettenAltitude: (m) => `${m} m s.n.m.`,
+    sacHuettenPartnerBadge: "Socio",
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -951,6 +1021,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "pontual",
+    sacHuettenTitle: "Cabanas SAC próximas",
+    sacHuettenLoading: "A carregar cabanas …",
+    sacHuettenNone: "Nenhuma cabana SAC encontrada nas proximidades.",
+    sacHuettenError: "Não foi possível carregar as cabanas.",
+    sacHuettenCall: "Ligar",
+    sacHuettenReserve: "Reservar",
+    sacHuettenOpen: "Aberto",
+    sacHuettenClosed: "Encerramento sazonal",
+    sacHuettenAltitude: (m) => `${m} m a.n.m.`,
+    sacHuettenPartnerBadge: "Parceiro",
   },
   zh: {
     notFound: "未找到路线。",
@@ -1063,6 +1143,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `${p} 站台`,
     transportDelay: (min) => `+${min} 分钟`,
     transportOnTime: "准时",
+    sacHuettenTitle: "附近SAC山屋",
+    sacHuettenLoading: "正在加载山屋 …",
+    sacHuettenNone: "附近未找到SAC山屋。",
+    sacHuettenError: "无法加载山屋信息。",
+    sacHuettenCall: "拨打",
+    sacHuettenReserve: "预订",
+    sacHuettenOpen: "开放",
+    sacHuettenClosed: "季节性关闭",
+    sacHuettenAltitude: (m) => `海拔 ${m} 米`,
+    sacHuettenPartnerBadge: "合作伙伴",
   },
   ru: {
     notFound: "Маршрут не найден.",
@@ -1182,6 +1272,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Пл. ${p}`,
     transportDelay: (min) => `+${min} мин`,
     transportOnTime: "вовремя",
+    sacHuettenTitle: "Хижины SAC поблизости",
+    sacHuettenLoading: "Загрузка хижин …",
+    sacHuettenNone: "Хижины SAC рядом не найдены.",
+    sacHuettenError: "Не удалось загрузить хижины.",
+    sacHuettenCall: "Позвонить",
+    sacHuettenReserve: "Забронировать",
+    sacHuettenOpen: "Открыто",
+    sacHuettenClosed: "Сезонное закрытие",
+    sacHuettenAltitude: (m) => `${m} м н.у.м.`,
+    sacHuettenPartnerBadge: "Партнёр",
   },
 };
 
