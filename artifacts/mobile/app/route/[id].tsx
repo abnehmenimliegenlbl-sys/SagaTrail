@@ -108,31 +108,43 @@ export default function Routenplanung() {
     return lueckeKm <= schwelleKm ? "rundweg" : "strecke";
   }, [route?.geometry, route?.distanceKm]);
 
-  // Oeffnet die SBB-Anreise zum Routenstart (Trailhead).
-  // Universal-Link: oeffnet die SBB-App wenn installiert, sonst den Browser.
-  const oeffneAnreise = React.useCallback(() => {
-    const dest = route?.region ?? "";
-    const encoded = encodeURIComponent(dest);
-    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encoded}`).catch(() => {});
-  }, [route?.region]);
+  // Strecke umkehren – tauscht Start und Ziel lokal aus (kein Server-Request)
+  const [reversed, setReversed] = useState(false);
 
-  // Oeffnet die OeV-Rueckreise vom Routenende zurueck zum Startpunkt
-  // (Google-Maps-Transit-Link funktioniert auf iOS, Android und Web).
+  // Effektive Geometrie: umgekehrt wenn reversed=true (keine Mutation des Originals).
+  const effectiveGeom = useMemo(() => {
+    const g = route?.geometry ?? [];
+    return reversed ? [...g].reverse() : g;
+  }, [route?.geometry, reversed]);
+
+  // Oeffnet die SBB-Anreise zum Routenstart (Trailhead).
+  // Bei umgekehrter Strecke werden die Koordinaten des alten Endpunkts verwendet.
+  const oeffneAnreise = React.useCallback(() => {
+    let dest: string;
+    if (reversed && effectiveGeom.length > 0) {
+      const p = effectiveGeom[0];
+      dest = `${p[0]},${p[1]}`;
+    } else {
+      dest = route?.region ?? "";
+    }
+    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encodeURIComponent(dest)}`).catch(() => {});
+  }, [route?.region, effectiveGeom, reversed]);
+
+  // Oeffnet die OeV-Rueckreise vom Routenende zurueck zum Startpunkt.
   const oeffneRueckreise = React.useCallback(() => {
-    const g = route?.geometry;
-    if (!g || g.length < 2) return;
-    const start = g[0];
-    const ende = g[g.length - 1];
+    if (effectiveGeom.length < 2) return;
+    const start = effectiveGeom[0];
+    const ende = effectiveGeom[effectiveGeom.length - 1];
     const url =
       "https://www.google.com/maps/dir/?api=1" +
       `&origin=${ende[0]},${ende[1]}` +
       `&destination=${start[0]},${start[1]}` +
       "&travelmode=transit";
     Linking.openURL(url).catch(() => {});
-  }, [route?.geometry]);
+  }, [effectiveGeom]);
 
   const onExportGpx = useCallback(async () => {
-    const g = route?.geometry;
+    const g = effectiveGeom;
     if (!g || g.length === 0) return;
     try {
       const name = route?.name ?? "SagaTrail-Route";
@@ -393,7 +405,7 @@ export default function Routenplanung() {
     let cancelled = false;
     setSacHuettenLoading(true);
     setSacHuettenError(false);
-    const geom = route.geometry ?? [];
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
     const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
     const center = midIdx >= 0
       ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
@@ -408,12 +420,12 @@ export default function Routenplanung() {
         if (!cancelled) { setSacHuettenError(true); setSacHuettenLoading(false); }
       });
     return () => { cancelled = true; };
-  }, [route?.id]);
+  }, [route?.id, reversed]);
 
   // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart.
   useEffect(() => {
     if (!route) return;
-    const geom = route.geometry ?? [];
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
     const startPt = geom.length > 0
       ? { lat: geom[0][0], lng: geom[0][1] }
       : route.coordinates;
@@ -428,14 +440,14 @@ export default function Routenplanung() {
       })
       .catch(() => { if (!cancelled) { setTransportStart(null); setTransportStartLoading(false); } });
     return () => { cancelled = true; };
-  }, [route?.id]);
+  }, [route?.id, reversed]);
 
   // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
   // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
   useEffect(() => {
     if (!route) return;
-    const geom = route.geometry;
-    const endPt = geom && geom.length > 0
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+    const endPt = geom.length > 0
       ? { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] }
       : route.coordinates;
     if (!endPt) return;
@@ -445,7 +457,7 @@ export default function Routenplanung() {
       .then((result) => { if (!cancelled) { setTransport(result); setTransportLoading(false); } })
       .catch(() => { if (!cancelled) { setTransport(null); setTransportLoading(false); } });
     return () => { cancelled = true; };
-  }, [route?.id]);
+  }, [route?.id, reversed]);
 
   useEffect(() => {
     let cancelled = false;
@@ -577,7 +589,7 @@ export default function Routenplanung() {
                   center={route.coordinates}
                   label={route.name}
                   height={hoehe}
-                  geometry={route.geometry}
+                  geometry={effectiveGeom.length > 0 ? effectiveGeom : route.geometry}
                   aerialways={aerialways}
                   partners={partners}
                 />
@@ -594,6 +606,26 @@ export default function Routenplanung() {
           <Stat label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
           <Stat label={t.sacScale} value={meta.sac} unit="" />
         </Animated.View>
+
+        {/* ── Strecke umkehren ──────────────────────────────────────── */}
+        {effectiveGeom.length >= 2 && routentyp === "strecke" && (
+          <Pressable
+            onPress={() => setReversed((r) => !r)}
+            style={[
+              styles.rueckreiseButton,
+              {
+                borderColor: reversed ? colors.accent : colors.glassBorder,
+                backgroundColor: reversed ? colors.accent + "22" : colors.glassBg,
+                marginTop: 10,
+              },
+            ]}
+          >
+            <Feather name="repeat" size={15} color={reversed ? colors.accent : colors.mutedForeground} />
+            <Text style={[styles.rueckreiseText, { color: reversed ? colors.accent : colors.mutedForeground }]}>
+              {t.reverseRoute}
+            </Text>
+          </Pressable>
+        )}
 
         {/* ── Höhenwarnung ──────────────────────────────────────────── */}
         {route && (route.maxElevationM ?? 0) >= 2000 && (() => {

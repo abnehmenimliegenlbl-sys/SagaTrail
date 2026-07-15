@@ -118,6 +118,7 @@ export interface RouteStrings {
   transportOnTime: string;
   transportAnreiseLive: string;
   transportArrivingAt: (name: string) => string;
+  reverseRoute: string;
   sacHuettenTitle: string;
   sacHuettenLoading: string;
   sacHuettenNone: string;
@@ -251,6 +252,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "pünktlich",
     transportAnreiseLive: "SBB live am Start",
     transportArrivingAt: (name) => `Ankunft in ${name}`,
+    reverseRoute: "Strecke umkehren",
     sacHuettenTitle: "SAC-Hütten in der Nähe",
     sacHuettenLoading: "Hütten werden geladen …",
     sacHuettenNone: "Keine SAC-Hütten in der Nähe gefunden.",
@@ -382,6 +384,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "pünktlich",
     transportAnreiseLive: "SBB live am Schtart",
     transportArrivingAt: (name) => `Aakunft i ${name}`,
+    reverseRoute: "Strecke umcheere",
     sacHuettenTitle: "SAC-Hütte id Nächi",
     sacHuettenLoading: "Hütte wänd gladä …",
     sacHuettenNone: "Kei SAC-Hütte id Nächi gfunde.",
@@ -513,6 +516,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "on time",
     transportAnreiseLive: "Live arrivals at trailhead",
     transportArrivingAt: (name) => `Arriving at ${name}`,
+    reverseRoute: "Reverse route",
     sacHuettenTitle: "Nearby SAC Huts",
     sacHuettenLoading: "Loading huts …",
     sacHuettenNone: "No SAC huts found nearby.",
@@ -644,6 +648,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "à l'heure",
     transportAnreiseLive: "SBB live au départ",
     transportArrivingAt: (name) => `Arrivée à ${name}`,
+    reverseRoute: "Inverser l'itinéraire",
     sacHuettenTitle: "Cabanes SAC à proximité",
     sacHuettenLoading: "Chargement des cabanes …",
     sacHuettenNone: "Aucune cabane SAC trouvée à proximité.",
@@ -775,6 +780,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "in orario",
     transportAnreiseLive: "SBB live alla partenza",
     transportArrivingAt: (name) => `Arrivo a ${name}`,
+    reverseRoute: "Inverti percorso",
     sacHuettenTitle: "Rifugi SAC nelle vicinanze",
     sacHuettenLoading: "Caricamento rifugi …",
     sacHuettenNone: "Nessun rifugio SAC trovato nelle vicinanze.",
@@ -906,6 +912,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "puntual",
     transportAnreiseLive: "SBB live en el inicio",
     transportArrivingAt: (name) => `Llegada a ${name}`,
+    reverseRoute: "Invertir recorrido",
     sacHuettenTitle: "Refugios SAC cercanos",
     sacHuettenLoading: "Cargando refugios …",
     sacHuettenNone: "No se encontraron refugios SAC cercanos.",
@@ -1037,6 +1044,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "pontual",
     transportAnreiseLive: "SBB live na partida",
     transportArrivingAt: (name) => `Chegada em ${name}`,
+    reverseRoute: "Inverter rota",
     sacHuettenTitle: "Cabanas SAC próximas",
     sacHuettenLoading: "A carregar cabanas …",
     sacHuettenNone: "Nenhuma cabana SAC encontrada nas proximidades.",
@@ -1161,6 +1169,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "准时",
     transportAnreiseLive: "出发站实时到达",
     transportArrivingAt: (name) => `到达${name}`,
+    reverseRoute: "反转路线",
     sacHuettenTitle: "附近SAC山屋",
     sacHuettenLoading: "正在加载山屋 …",
     sacHuettenNone: "附近未找到SAC山屋。",
@@ -1292,6 +1301,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportOnTime: "вовремя",
     transportAnreiseLive: "SBB у стартовой точки",
     transportArrivingAt: (name) => `Прибытие к ${name}`,
+    reverseRoute: "Обратный маршрут",
     sacHuettenTitle: "Хижины SAC поблизости",
     sacHuettenLoading: "Загрузка хижин …",
     sacHuettenNone: "Хижины SAC рядом не найдены.",
