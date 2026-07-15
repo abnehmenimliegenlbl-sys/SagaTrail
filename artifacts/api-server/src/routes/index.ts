@@ -30,6 +30,7 @@ import waypointPhotosRouter from "./waypointPhotos";
 import sacHuettenRouter from "./sacHuetten";
 import elevationProfileRouter from "./elevationProfile";
 import trinkwasserRouter from "./trinkwasser";
+import waypointAnnounceRouter from "./waypointAnnounce";
 
 const router: IRouter = Router();
 
@@ -64,5 +65,6 @@ router.use(waypointPhotosRouter);
 router.use(sacHuettenRouter);
 router.use(elevationProfileRouter);
 router.use(trinkwasserRouter);
+router.use(waypointAnnounceRouter);
 
 export default router;

@@ -55,6 +55,7 @@ import {
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
+import { computeWaypointEtas, nextWaypoint, type WaypointEta } from "@/lib/waypointEta";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -389,6 +390,7 @@ export default function LiveHike() {
   }, []);
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
@@ -1135,8 +1137,17 @@ export default function LiveHike() {
     }
   }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
 
-  // Meilenstein-Zitat bei 25/50/75 % der Wanderung — motivierend + atmosphaerisch,
-  // mit optionalem Wanderernamen aus dem Profil.
+  // Verstrichene Zeit: alle 15 Sekunden aktualisieren (fuer ETA-Berechnung).
+  useEffect(() => {
+    if (preparing || finished) return;
+    const id = setInterval(() => {
+      setElapsedSec(Math.round((Date.now() - startTimeRef.current) / 1000));
+    }, 15_000);
+    return () => clearInterval(id);
+  }, [preparing, finished]);
+
+  // Meilenstein-Ansage bei 25/50/75 % der Wanderung — per KI im Sagen-Stil,
+  // Fallback auf atmosphaerische Standardphrase aus STORY_PACKS.
   useEffect(() => {
     if (preparing || totalKm <= 0) return;
     const fraction = Math.min(1, distance / totalKm);
@@ -1146,14 +1157,49 @@ export default function LiveHike() {
         notifiedMilestonesRef.current.add(pct);
         const pack = STORY_PACKS[resolveLang(storyLanguage)];
         const name = profile?.name?.trim() || null;
-        const text = pack.milestonePhrase(pct, name);
-        if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
-          sendeAbbiegeMitteilung(t.milestoneTitle, text);
+        const fallback = pack.milestonePhrase(pct, name);
+        // KI-Ansage im Sagen-Stil: async, Fallback bei Fehler oder Timeout.
+        if (saga) {
+          const base = getApiBaseUrl() ?? "";
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 6000);
+          fetch(`${base}/api/waypoint-announce`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sagaId: saga.id,
+              sagaTitle: saga.title,
+              coreMotif: saga.coreMotif ?? "",
+              pct,
+              lang: storyLanguage,
+            }),
+            signal: controller.signal,
+          })
+            .then((r) => r.json())
+            .then((data: { text?: string }) => {
+              clearTimeout(timeout);
+              const text = data?.text?.trim() || fallback;
+              if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
+                sendeAbbiegeMitteilung(t.milestoneTitle, text);
+              }
+              speakRef.current?.(text);
+            })
+            .catch(() => {
+              clearTimeout(timeout);
+              if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
+                sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
+              }
+              speakRef.current?.(fallback);
+            });
+        } else {
+          if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
+            sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
+          }
+          speakRef.current?.(fallback);
         }
-        speakRef.current?.(text);
       }
     }
-  }, [distance, totalKm, storyLanguage, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
+  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
 
   const takePhoto = async () => {
     setShowPhotoChallenge(false);
@@ -2366,6 +2412,52 @@ export default function LiveHike() {
               <Metric label={t.metricSteps} value={`${steps}`} unit="" />
             )}
           </View>
+
+          {/* ETA-Zwischenziele — nächster Meilenstein mit geschätzter Ankunftszeit */}
+          {!preparing && !finished && totalKm > 0 && (() => {
+            const etas = computeWaypointEtas(distance, totalKm, elapsedSec, ascentM);
+            const nxt = nextWaypoint(etas);
+            if (!nxt || nxt.pct === 100) return null;
+            const passed = etas.filter((e) => e.passed && e.pct !== 100);
+            return (
+              <View style={[styles.etaRow, { borderTopColor: colors.glassBorder }]}>
+                {/* Bereits erreichte Punkte als abgehakte Punkte */}
+                {([25, 50, 75] as const).map((pct) => {
+                  const e = etas.find((x) => x.pct === pct)!;
+                  const isNext = pct === nxt.pct;
+                  return (
+                    <View key={pct} style={styles.etaDot}>
+                      <View
+                        style={[
+                          styles.etaDotCircle,
+                          {
+                            backgroundColor: e.passed
+                              ? colors.accent
+                              : isNext
+                                ? colors.glassBorder
+                                : "transparent",
+                            borderColor: e.passed || isNext ? colors.accent : colors.glassBorder,
+                          },
+                        ]}
+                      >
+                        {e.passed && (
+                          <Feather name="check" size={8} color="#fff" />
+                        )}
+                      </View>
+                      {isNext && (
+                        <Text style={[styles.etaLabel, { color: colors.accent }]}>
+                          {t.waypointEtaMin(nxt.etaMin)}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+                <Text style={[styles.etaNextLabel, { color: colors.mutedForeground }]}>
+                  {t.nextWaypointLabel} {nxt.pct} %
+                </Text>
+              </View>
+            );
+          })()}
         </Glass>
 
         {/* Story-Bereich */}
@@ -2810,6 +2902,25 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
+  etaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  etaDot: { alignItems: "center", gap: 4 },
+  etaDotCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  etaLabel: { fontFamily: fonts.monoBold, fontSize: 10 },
+  etaNextLabel: { fontFamily: fonts.mono, fontSize: 10, flex: 1, textAlign: "right" },
   metric: { alignItems: "flex-start" },
   metricLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
   metricValRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 },
