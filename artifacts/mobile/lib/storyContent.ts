@@ -199,13 +199,38 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "eine leichte", mittel: "eine mittelschwere", anspruchsvoll: "eine anspruchsvolle" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `etwa ${Math.round(p.minutes / 5) * 5} Minuten` : p.minutes < 90 ? "etwa eine Stunde" : `etwa ${Math.round(p.minutes / 30) / 2} Stunden`;
       const n = p.name ? `${p.name}, du hast dir ` : "Du hast dir ";
-      const steep = p.hasSteepSections ? " Ein paar steile Stellen warten auf dich — das Herz wird pumpen." : "";
-      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwege", naturweg: "Naturwege", fels: "Fels", holz: "Holzstege" };
-      const surf = p.surfaces.length ? ` Der Weg führt über ${p.surfaces.map((s) => surfMap[s] ?? s).join(" und ")}.` : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Ein steiler Anstieg wartet — bei dieser Hitze besonders zehrend. Leg Pausen ein."
+          : wetterHart
+            ? " Steile Abschnitte warten auf dich — bei diesem Wetter anspruchsvoll, tritt sicher auf."
+            : " Ein paar steile Stellen warten auf dich — das Herz wird pumpen."
+        : "";
+      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwegen", naturweg: "Naturwegen", fels: "Fels", holz: "Holzstegen" };
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` Der Weg führt über ${surfParts.join(" und ")} — bei diesem Wetter rutschig, festes Schuhwerk ist entscheidend.`
+          : ` Der Weg führt über ${surfParts.join(" und ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Unterwegs könntest du ${p.poiNames.slice(0, 3).join(", ")} begegnen — Orte, die schon die Sage kennt.` : "";
-      const gearMap: Record<string, string> = { heiss: " Trink viel Wasser, schütz deinen Kopf vor der Sonne und vergiss die Sonnencreme nicht.", sonnig: " Feste Schuhe und etwas Sonnenschutz empfehlen sich.", bewoelkt: " Eine leichte Jacke und gutes Schuhwerk genügen.", nebel: " Im Nebel: Schichten, die du ausziehen kannst, und festen Halt unter den Füssen.", regen: " Der Regen meint es ernst — wasserdichte Schuhe und eine Regenjacke.", schnee: " Griffige Sohlen, Handschuhe und warme Schichten sind Pflicht.", kalt: " Gegen die Kälte: warme Kleidung und etwas Heisses im Rucksack.", gewitter: " Gewitter im Anzug — bleib unter der Baumgrenze und halte die Jacke griffbereit." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
-      return `${n}${diff} Route ausgesucht: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      const gearMap: Record<string, string> = {
+        heiss: ` Trink reichlich Wasser, schütz Kopf und Haut vor der Sonne${long ? " und pack genug Proviant ein" : ""}.`,
+        sonnig: ` Feste Schuhe mit gutem Profil empfehlen sich${long ? " — und genug Wasser sowie Proviant für unterwegs" : " und etwas Sonnenschutz"}.`,
+        bewoelkt: ` Eine leichte Jacke und festes Schuhwerk genügen${long ? " — pack Getränke und einen kleinen Proviant ein" : ""}.`,
+        nebel: ` Im Nebel: schichtweise anziehen, sicherer Halt unter den Füssen${long ? " und Proviant griffbereit" : ""}.`,
+        regen: ` Wasserdichte Schuhe und eine Regenjacke sind Pflicht${long ? " — pack genug Getränke und Proviant ein" : ""}.`,
+        schnee: ` Griffige Sohlen, Handschuhe und warme Schichten${long ? " sowie kalorienreicher Proviant für den Energiebedarf" : ""}.`,
+        kalt: ` Warme Kleidung in Lagen und etwas Heisses im Thermobecher${long ? " — ausreichend Proviant nicht vergessen" : ""}.`,
+        gewitter: ` Gewitter im Anzug — bleib unter der Baumgrenze, Jacke griffbereit${long ? " und Proviant im Rucksack verstaut" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss genug Wasser und Proviant für die Strecke nicht." : "";
+      return `${n}${diff} Route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
 
@@ -288,13 +313,38 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "es liechte", mittel: "es mittelschwäre", anspruchsvoll: "es aspruchsvolls" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `öppä ${Math.round(p.minutes / 5) * 5} Minute` : p.minutes < 90 ? "öppä e Stund" : `öppä ${Math.round(p.minutes / 30) / 2} Stunde`;
       const n = p.name ? `${p.name}, du hesch dir ` : "Du hesch dir ";
-      const steep = p.hasSteepSections ? " Es git es paar steili Stelle — dä Atem wird schnäller werde." : "";
-      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwäg", naturweg: "Naturwäg", fels: "Fels", holz: "Holzstäg" };
-      const surf = p.surfaces.length ? ` Dr Wäg füehrt über ${p.surfaces.map((s) => surfMap[s] ?? s).join(" und ")}.` : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " En steili Uffahrt wartet — bi dere Hitz bsunders strapazios. Mach Puse."
+          : wetterHart
+            ? " Steili Abschnitt warte uf dich — bi däm Wätter aspruchsvoll, tritt sicher uf."
+            : " Es git es paar steili Stelle — dä Atem wird schnäller werde."
+        : "";
+      const surfMap: Record<string, string> = { asphalt: "Asphalt", kies: "Schotterwäge", naturweg: "Naturwäge", fels: "Fels", holz: "Holzstäg" };
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` Dr Wäg füehrt über ${surfParts.join(" und ")} — bi däm Wätter rutschig, feschti Schue sind wichtig.`
+          : ` Dr Wäg füehrt über ${surfParts.join(" und ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Underwegs chöntisch ${p.poiNames.slice(0, 3).join(", ")} begägne — Ort, wo d Sage scho kennt.` : "";
-      const gearMap: Record<string, string> = { heiss: " Trink gnueg Wasser, schütz di vor dr Sunne und tusch Sonneschrem ii.", sonnig: " Feschti Schue und öppis Sonneschutz empfehle sich.", bewoelkt: " E liechti Juppä und gueti Schue reiche.", nebel: " Im Nebel: schichtwise aalegge und sicher ufträtte.", regen: " Dr Räge isch ernst — wasserdichti Schue und en Rägemanntel.", schnee: " Griffigi Sole, Handschu und warmi Schichte sind Pflicht.", kalt: " Gäge d Kälti: warmi Chleider und öppis Heisses im Rucksack.", gewitter: " Gwitter im Azug — bliib unterm Baumgrenz und halt d Juppä parat." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
-      return `${n}${diff} Wäg usgsuecht: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      const gearMap: Record<string, string> = {
+        heiss: ` Trink gnueg Wasser, schütz Chopf und Hut vor dr Sunne${long ? " und pack gnueg Proviant ii" : ""}.`,
+        sonnig: ` Feschti Schue mit guete Profil empfehle sich${long ? " — und gnueg Wasser sowie Proviant für underwegs" : " und öppis Sonneschutz"}.`,
+        bewoelkt: ` E liechti Juppä und feschts Schuhwärk reiche${long ? " — pack Getränk und en chlyne Proviant ii" : ""}.`,
+        nebel: ` Im Nebel: schichtwise aalegge, sicher ufträtte${long ? " und Proviant griffparat hebe" : ""}.`,
+        regen: ` Wasserdichti Schue und en Rägemanntel sind Pflicht${long ? " — pack gnueg Getränk und Proviant" : ""}.`,
+        schnee: ` Griffigi Sole, Handschu und warmi Schichte${long ? " sowie kaloriirychi Proviant für d Energie" : ""}.`,
+        kalt: ` Warmi Chleider in Schichte und öppis Heisses im Thermobecher${long ? " — gnueg Proviant nid vergässe" : ""}.`,
+        gewitter: ` Gwitter im Azug — bliib unterm Baumgrenz, Juppä parat${long ? " und Proviant im Rucksack verstaut" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss gnueg Wasser und Proviant für d Sträck nid." : "";
+      return `${n}${diff} Wäg: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
 
@@ -377,12 +427,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "un itinéraire facile", mittel: "un itinéraire moyen", anspruchsvoll: "un itinéraire exigeant" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `environ ${Math.round(p.minutes / 5) * 5} minutes` : p.minutes < 90 ? "environ une heure" : `environ ${Math.round(p.minutes / 30) / 2} heures`;
       const n = p.name ? `${p.name}, tu as choisi ` : "Tu as choisi ";
-      const steep = p.hasSteepSections ? " Quelques passages raides t'attendent — le souffle sera sollicité." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Une montée raide t'attend — épuisante par cette chaleur. Fais des pauses."
+          : wetterHart
+            ? " Des passages raides t'attendent — exigeants par ce temps, pose chaque pas avec soin."
+            : " Quelques passages raides t'attendent — le souffle sera sollicité."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "asphalte", kies: "graviers", naturweg: "sentiers naturels", fels: "rochers", holz: "passerelles en bois" };
-      const surf = p.surfaces.length ? ` Le chemin passe par ${p.surfaces.map((s) => surfMap[s] ?? s).join(" et ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` Le chemin passe par ${surfParts.join(" et ")} — glissant par ce temps, des chaussures solides sont indispensables.`
+          : ` Le chemin passe par ${surfParts.join(" et ")}.`
+        : "";
       const poi = p.poiNames.length ? ` En chemin, tu pourrais croiser ${p.poiNames.slice(0, 3).join(", ")} — des lieux que la légende connaît bien.` : "";
-      const gearMap: Record<string, string> = { heiss: " Par cette chaleur : beaucoup d'eau, de la crème solaire et un couvre-chef.", sonnig: " De bonnes chaussures et une protection solaire sont conseillées.", bewoelkt: " Une veste légère et de bonnes chaussures suffiront.", nebel: " Dans le brouillard : habillez-vous en couches et avancez prudemment.", regen: " La pluie est sérieuse — chaussures imperméables et veste de pluie.", schnee: " Semelles crantées, gants et couches chaudes sont indispensables.", kalt: " Contre le froid : vêtements chauds et quelque chose de chaud dans le sac.", gewitter: " Orage en vue — restez sous la limite des arbres et gardez la veste à portée." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Bois beaucoup d'eau, protège ta tête et ta peau du soleil${long ? " et emporte suffisamment de provisions" : ""}.`,
+        sonnig: ` De bonnes chaussures à semelles adhérentes sont conseillées${long ? " — ainsi que suffisamment d'eau et de provisions" : " avec un peu de protection solaire"}.`,
+        bewoelkt: ` Une veste légère et de bonnes chaussures suffiront${long ? " — pense aux boissons et à un en-cas" : ""}.`,
+        nebel: ` Dans le brouillard : habillez-vous en couches, avancez prudemment${long ? " et gardez provisions et boissons à portée" : ""}.`,
+        regen: ` Chaussures imperméables et veste de pluie sont indispensables${long ? " — emporte aussi suffisamment de boissons et provisions" : ""}.`,
+        schnee: ` Semelles crantées, gants et couches chaudes${long ? " ainsi que des provisions caloriques pour tenir chaud" : ""}.`,
+        kalt: ` Vêtements chauds en couches et quelque chose de chaud dans le thermos${long ? " — des provisions suffisantes sont essentielles" : ""}.`,
+        gewitter: ` Orage en vue — reste sous la limite des arbres, garde la veste à portée${long ? " et les provisions dans le sac" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " N'oublie pas suffisamment d'eau et de provisions pour le parcours." : "";
       return `${n}${diff} : ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -466,12 +541,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "un percorso facile", mittel: "un percorso medio", anspruchsvoll: "un percorso impegnativo" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `circa ${Math.round(p.minutes / 5) * 5} minuti` : p.minutes < 90 ? "circa un'ora" : `circa ${Math.round(p.minutes / 30) / 2} ore`;
       const n = p.name ? `${p.name}, hai scelto ` : "Hai scelto ";
-      const steep = p.hasSteepSections ? " Ti aspettano alcuni tratti ripidi — il fiato si farà sentire." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Ti aspetta una salita ripida — con questo caldo è particolarmente faticosa. Fai delle pause."
+          : wetterHart
+            ? " Ti aspettano tratti ripidi — impegnativi con questo tempo, cammina con passo sicuro."
+            : " Ti aspettano alcuni tratti ripidi — il fiato si farà sentire."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "ghiaia", naturweg: "sentieri naturali", fels: "roccia", holz: "passerelle in legno" };
-      const surf = p.surfaces.length ? ` Il percorso attraversa ${p.surfaces.map((s) => surfMap[s] ?? s).join(" e ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` Il percorso attraversa ${surfParts.join(" e ")} — scivoloso con questo tempo, scarpe solide sono fondamentali.`
+          : ` Il percorso attraversa ${surfParts.join(" e ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Lungo il cammino potresti incontrare ${p.poiNames.slice(0, 3).join(", ")} — luoghi già presenti nella leggenda.` : "";
-      const gearMap: Record<string, string> = { heiss: " Con questo caldo: molta acqua, crema solare e un copricapo.", sonnig: " Scarpe robuste e protezione solare sono consigliate.", bewoelkt: " Una giacca leggera e buone scarpe sono sufficienti.", nebel: " Nella nebbia: vestirsi a strati e procedere con cura.", regen: " La pioggia fa sul serio — scarpe impermeabili e giacca antipioggia.", schnee: " Suole con grip, guanti e strati caldi sono indispensabili.", kalt: " Contro il freddo: vestiti caldi e qualcosa di caldo nello zaino.", gewitter: " Temporale in arrivo — restare sotto la linea degli alberi e tenere la giacca a portata." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Bevi molta acqua, proteggi testa e pelle dal sole${long ? " e porta con te abbastanza provviste" : ""}.`,
+        sonnig: ` Scarpe robuste con buona suola sono consigliate${long ? " — e abbastanza acqua e provviste per il percorso" : " con un po' di protezione solare"}.`,
+        bewoelkt: ` Una giacca leggera e buone scarpe sono sufficienti${long ? " — ricorda bevande e uno spuntino" : ""}.`,
+        nebel: ` Nella nebbia: vestirsi a strati, procedere con cura${long ? " e tenere provviste e bevande a portata" : ""}.`,
+        regen: ` Scarpe impermeabili e giacca antipioggia sono indispensabili${long ? " — porta anche abbastanza bevande e provviste" : ""}.`,
+        schnee: ` Suole con grip, guanti e strati caldi${long ? " oltre a provviste caloriche per mantenere l'energia" : ""}.`,
+        kalt: ` Abbigliamento caldo a strati e qualcosa di caldo nel thermos${long ? " — le provviste non vanno dimenticate" : ""}.`,
+        gewitter: ` Temporale in arrivo — resta sotto la linea degli alberi, giacca a portata${long ? " e provviste nello zaino" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Non dimenticare acqua e provviste sufficienti per il percorso." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -555,12 +655,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "an easy", mittel: "a moderate", anspruchsvoll: "a challenging" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `about ${Math.round(p.minutes / 5) * 5} minutes` : p.minutes < 90 ? "about an hour" : `about ${Math.round(p.minutes / 30) / 2} hours`;
       const n = p.name ? `${p.name}, you've chosen ` : "You've chosen ";
-      const steep = p.hasSteepSections ? " There are a few steep stretches ahead — your heart will feel it." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " A steep climb lies ahead — draining in this heat. Take your time and rest when needed."
+          : wetterHart
+            ? " Steep sections are ahead — demanding in these conditions, place every step with care."
+            : " There are a few steep stretches ahead — your heart will feel it."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "asphalt", kies: "gravel", naturweg: "natural trail", fels: "rock", holz: "wooden boardwalks" };
-      const surf = p.surfaces.length ? ` The path crosses ${p.surfaces.map((s) => surfMap[s] ?? s).join(" and ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` The path crosses ${surfParts.join(" and ")} — slippery in this weather, sturdy footwear is essential.`
+          : ` The path crosses ${surfParts.join(" and ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Along the way you might encounter ${p.poiNames.slice(0, 3).join(", ")} — places the legend already knows.` : "";
-      const gearMap: Record<string, string> = { heiss: " In this heat: plenty of water, sunscreen, and a hat are essential.", sonnig: " Good shoes and some sun protection are recommended.", bewoelkt: " A light jacket and solid footwear will do.", nebel: " In the fog: layer up and tread carefully.", regen: " Rain means business — waterproof shoes and a rain jacket.", schnee: " Grip soles, gloves, and warm layers are a must.", kalt: " Against the cold: warm clothing and something hot in your pack.", gewitter: " Storm approaching — stay below the treeline and keep your jacket handy." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Drink plenty of water, protect your head and skin from the sun${long ? " and pack enough food and snacks" : ""}.`,
+        sonnig: ` Good shoes with solid grip are recommended${long ? " — and enough water and food for the trail" : " and some sun protection"}.`,
+        bewoelkt: ` A light jacket and solid footwear will do${long ? " — don't forget drinks and a snack" : ""}.`,
+        nebel: ` In the fog: layer up, tread carefully${long ? " and keep food and drinks within easy reach" : ""}.`,
+        regen: ` Waterproof shoes and a rain jacket are a must${long ? " — pack enough drinks and food too" : ""}.`,
+        schnee: ` Grip soles, gloves, and warm layers${long ? " plus high-calorie snacks to keep your energy up" : ""}.`,
+        kalt: ` Warm clothing in layers and something hot in a flask${long ? " — enough food is just as important" : ""}.`,
+        gewitter: ` Storm approaching — stay below the treeline, keep your jacket handy${long ? " and food stowed in your pack" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Don't forget enough water and food for the trail." : "";
       return `${n}${diff} route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -640,12 +765,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "一条轻松的", mittel: "一条中等难度的", anspruchsvoll: "一条富有挑战的" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `约${Math.round(p.minutes / 5) * 5}分钟` : p.minutes < 90 ? "约一小时" : `约${Math.round(p.minutes / 30) / 2}小时`;
       const n = p.name ? `${p.name}，你选择了` : "你选择了";
-      const steep = p.hasSteepSections ? "路上有几段陡坡，需要一定体力。" : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? "前方有陡坡 — 在这种高温下格外消耗体力，注意休息。"
+          : wetterHart
+            ? "前方有陡坡 — 在这种天气下尤为艰难，请稳步前行。"
+            : "路上有几段陡坡，需要一定体力。"
+        : "";
       const surfMap: Record<string, string> = { asphalt: "沥青路", kies: "碎石路", naturweg: "自然小道", fels: "岩石地带", holz: "木栈道" };
-      const surf = p.surfaces.length ? `道路经过${p.surfaces.map((s) => surfMap[s] ?? s).join("和")}。` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? `道路经过${surfParts.join("和")} — 这种天气下容易湿滑，务必穿结实的鞋。`
+          : `道路经过${surfParts.join("和")}。`
+        : "";
       const poi = p.poiNames.length ? `途中可能经过${p.poiNames.slice(0, 3).join("、")} — 传说中早已铭刻的地方。` : "";
-      const gearMap: Record<string, string> = { heiss: "天气炎热：多喝水，涂防晒霜，戴帽子。", sonnig: "建议穿好走的鞋，做好防晒。", bewoelkt: "一件轻薄外套加上结实的鞋子就够了。", nebel: "雾中行走：分层穿衣，谨慎迈步。", regen: "雨势不小 — 防水鞋和雨衣必不可少。", schnee: "防滑鞋底、手套和保暖层缺一不可。", kalt: "抵御寒冷：穿暖和点，包里备点热饮。", gewitter: "雷暴将至 — 保持在林线以下，备好外套。" };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: `多喝水，做好防晒${long ? "，并备足食物和补给" : ""}。`,
+        sonnig: `建议穿防滑性好的鞋子${long ? "，并携带足够的水和食物" : "，做好防晒"} 。`,
+        bewoelkt: `一件轻薄外套加上结实的鞋子就够了${long ? " — 别忘了带饮品和干粮" : ""}。`,
+        nebel: `雾中行走：分层穿衣，谨慎迈步${long ? "，食物和饮品随手可取" : ""}。`,
+        regen: `防水鞋和雨衣必不可少${long ? " — 同时备足饮品和干粮" : ""}。`,
+        schnee: `防滑鞋底、手套和保暖层${long ? "，以及高热量食物补充能量" : ""}。`,
+        kalt: `穿暖和的分层衣物，备好热饮${long ? " — 充足的干粮同样重要" : ""}。`,
+        gewitter: `雷暴将至 — 保持在林线以下，备好外套${long ? "，食物放入背包" : ""}。`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? "别忘了携带足够的水和食物。" : "";
       return `${n}${diff}路线：${p.distanceKm.toFixed(1)}公里，${dur}。${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -729,12 +879,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "una ruta fácil", mittel: "una ruta moderada", anspruchsvoll: "una ruta exigente" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `unos ${Math.round(p.minutes / 5) * 5} minutos` : p.minutes < 90 ? "aproximadamente una hora" : `unas ${Math.round(p.minutes / 30) / 2} horas`;
       const n = p.name ? `${p.name}, has elegido ` : "Has elegido ";
-      const steep = p.hasSteepSections ? " Hay algunos tramos empinados por delante — el corazón lo notará." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Te espera una subida empinada — especialmente agotadora con este calor. Haz pausas."
+          : wetterHart
+            ? " Hay tramos empinados por delante — exigentes con este tiempo, pisa con cuidado."
+            : " Hay algunos tramos empinados por delante — el corazón lo notará."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "grava", naturweg: "sendero natural", fels: "roca", holz: "pasarelas de madera" };
-      const surf = p.surfaces.length ? ` El camino discurre por ${p.surfaces.map((s) => surfMap[s] ?? s).join(" y ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` El camino discurre por ${surfParts.join(" y ")} — resbaladizo con este tiempo, el calzado resistente es clave.`
+          : ` El camino discurre por ${surfParts.join(" y ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Por el camino podrías encontrarte con ${p.poiNames.slice(0, 3).join(", ")} — lugares que la leyenda ya conoce.` : "";
-      const gearMap: Record<string, string> = { heiss: " Con este calor: mucha agua, protector solar y un sombrero.", sonnig: " Se recomiendan botas resistentes y algo de protección solar.", bewoelkt: " Una chaqueta ligera y buenas botas serán suficientes.", nebel: " En la niebla: vístete por capas y avanza con cuidado.", regen: " La lluvia va en serio — botas impermeables y chubasquero.", schnee: " Suela con agarre, guantes y capas cálidas son imprescindibles.", kalt: " Contra el frío: ropa abrigada y algo caliente en la mochila.", gewitter: " Tormenta en camino — mantente bajo la línea de árboles y ten la chaqueta a mano." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Bebe mucha agua, protege cabeza y piel del sol${long ? " y lleva suficientes provisiones" : ""}.`,
+        sonnig: ` Se recomiendan botas con buena suela${long ? " — y suficiente agua y provisiones para el camino" : " y algo de protección solar"}.`,
+        bewoelkt: ` Una chaqueta ligera y buenas botas serán suficientes${long ? " — recuerda llevar bebidas y algo de comida" : ""}.`,
+        nebel: ` En la niebla: vístete por capas, avanza con cuidado${long ? " y ten provisiones y bebidas a mano" : ""}.`,
+        regen: ` Botas imperméables y chubasquero son imprescindibles${long ? " — lleva también suficientes bebidas y provisiones" : ""}.`,
+        schnee: ` Suela con agarre, guantes y capas cálidas${long ? " junto con provisiones calóricas para mantener la energía" : ""}.`,
+        kalt: ` Ropa abrigada en capas y algo caliente en el termo${long ? " — las provisiones son igual de importantes" : ""}.`,
+        gewitter: ` Tormenta en camino — mantente bajo la línea de árboles, chaqueta a mano${long ? " y provisiones en la mochila" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " No olvides suficiente agua y provisiones para el recorrido." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -818,12 +993,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "uma rota fácil", mittel: "uma rota moderada", anspruchsvoll: "uma rota exigente" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `cerca de ${Math.round(p.minutes / 5) * 5} minutos` : p.minutes < 90 ? "cerca de uma hora" : `cerca de ${Math.round(p.minutes / 30) / 2} horas`;
       const n = p.name ? `${p.name}, escolheste ` : "Escolheste ";
-      const steep = p.hasSteepSections ? " Há alguns trechos íngremes à frente — o coração vai sentir." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Uma subida íngreme espera-te — especialmente esgotante com este calor. Faz pausas."
+          : wetterHart
+            ? " Há trechos íngremes à frente — exigentes com este tempo, pisa com firmeza."
+            : " Há alguns trechos íngremes à frente — o coração vai sentir."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "asfalto", kies: "cascalho", naturweg: "trilhos naturais", fels: "rocha", holz: "passadeiras de madeira" };
-      const surf = p.surfaces.length ? ` O caminho passa por ${p.surfaces.map((s) => surfMap[s] ?? s).join(" e ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` O caminho passa por ${surfParts.join(" e ")} — escorregadio com este tempo, calçado resistente é fundamental.`
+          : ` O caminho passa por ${surfParts.join(" e ")}.`
+        : "";
       const poi = p.poiNames.length ? ` Ao longo do caminho podes encontrar ${p.poiNames.slice(0, 3).join(", ")} — lugares que a lenda já conhece.` : "";
-      const gearMap: Record<string, string> = { heiss: " Com este calor: muita água, protetor solar e um chapéu.", sonnig: " Boas botas e alguma proteção solar são recomendadas.", bewoelkt: " Uma jaqueta leve e bom calçado chegam.", nebel: " No nevoeiro: veste em camadas e avança com cuidado.", regen: " A chuva é a sério — botas impermeáveis e capa de chuva.", schnee: " Sola antiderrapante, luvas e camadas quentes são essenciais.", kalt: " Contra o frio: roupas quentes e algo quente na mochila.", gewitter: " Trovoada a caminho — fica abaixo da linha das árvores e guarda a jaqueta à mão." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Bebe muita água, protege cabeça e pele do sol${long ? " e leva provisões suficientes" : ""}.`,
+        sonnig: ` Boas botas com boa aderência são recomendadas${long ? " — e água e comida suficientes para o percurso" : " com alguma proteção solar"}.`,
+        bewoelkt: ` Uma jaqueta leve e bom calçado chegam${long ? " — não te esqueças de bebidas e um lanche" : ""}.`,
+        nebel: ` No nevoeiro: veste em camadas, avança com cuidado${long ? " e mantém provisões e bebidas à mão" : ""}.`,
+        regen: ` Botas impermeáveis e capa de chuva são indispensáveis${long ? " — leva também bebidas e provisões suficientes" : ""}.`,
+        schnee: ` Sola antiderrapante, luvas e camadas quentes${long ? " mais provisões calóricas para manter a energia" : ""}.`,
+        kalt: ` Roupas quentes em camadas e algo quente no termo${long ? " — as provisões são igualmente importantes" : ""}.`,
+        gewitter: ` Trovoada a caminho — fica abaixo da linha das árvores, jaqueta à mão${long ? " e provisões na mochila" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Não te esqueças de água e provisões suficientes para o percurso." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
@@ -907,12 +1107,37 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const diff = ({ leicht: "лёгкий маршрут", mittel: "маршрут средней сложности", anspruchsvoll: "сложный маршрут" } as const)[p.difficulty];
       const dur = p.minutes < 70 ? `около ${Math.round(p.minutes / 5) * 5} минут` : p.minutes < 90 ? "около часа" : `около ${Math.round(p.minutes / 30) / 2} часов`;
       const n = p.name ? `${p.name}, ты выбрал ` : "Ты выбрал ";
-      const steep = p.hasSteepSections ? " Впереди несколько крутых подъёмов — сердце почувствует." : "";
+      const wk = p.wetterKlasse;
+      const wetterHart = wk === "regen" || wk === "schnee" || wk === "gewitter";
+      const wetterHeiss = wk === "heiss";
+      const long = p.minutes >= 90;
+      const steep = p.hasSteepSections
+        ? wetterHeiss
+          ? " Впереди крутой подъём — в такую жару особенно изнурительный. Делай паузы."
+          : wetterHart
+            ? " Впереди крутые участки — при такой погоде непросто, ступай осторожно."
+            : " Впереди несколько крутых подъёмов — сердце почувствует."
+        : "";
       const surfMap: Record<string, string> = { asphalt: "асфальт", kies: "гравий", naturweg: "грунтовые тропы", fels: "скалы", holz: "деревянные мостки" };
-      const surf = p.surfaces.length ? ` Путь проходит по ${p.surfaces.map((s) => surfMap[s] ?? s).join(" и ")}.` : "";
+      const surfParts = p.surfaces.map((s) => surfMap[s] ?? s);
+      const rutschig = wetterHart && p.surfaces.some((s) => ["kies", "naturweg", "fels"].includes(s));
+      const surf = surfParts.length
+        ? rutschig
+          ? ` Путь проходит по ${surfParts.join(" и ")} — в такую погоду скользко, надёжная обувь обязательна.`
+          : ` Путь проходит по ${surfParts.join(" и ")}.`
+        : "";
       const poi = p.poiNames.length ? ` По дороге ты можешь встретить ${p.poiNames.slice(0, 3).join(", ")} — места, которые предание уже знает.` : "";
-      const gearMap: Record<string, string> = { heiss: " В такую жару: побольше воды, солнцезащитный крем и головной убор.", sonnig: " Рекомендуются крепкие ботинки и немного солнцезащиты.", bewoelkt: " Лёгкая куртка и хорошая обувь — вполне достаточно.", nebel: " В тумане: одеться слоями и ступать осторожно.", regen: " Дождь не шутит — непромокаемые ботинки и дождевик.", schnee: " Ботинки с протектором, перчатки и тёплые слои обязательны.", kalt: " Против холода: тёплая одежда и что-то горячее в рюкзаке.", gewitter: " Гроза приближается — держись ниже линии деревьев и держи куртку под рукой." };
-      const gear = p.wetterKlasse ? (gearMap[p.wetterKlasse] ?? "") : "";
+      const gearMap: Record<string, string> = {
+        heiss: ` Пей побольше воды, защити голову и кожу от солнца${long ? " и возьми достаточно еды" : ""}.`,
+        sonnig: ` Рекомендуются крепкие ботинки с хорошей подошвой${long ? " — и достаточно воды и еды в дороге" : " и немного солнцезащиты"}.`,
+        bewoelkt: ` Лёгкая куртка и хорошая обувь — вполне достаточно${long ? " — не забудь напитки и перекус" : ""}.`,
+        nebel: ` В тумане: одеться слоями, ступать осторожно${long ? " и держать еду и напитки под рукой" : ""}.`,
+        regen: ` Непромокаемые ботинки и дождевик обязательны${long ? " — возьми также достаточно напитков и еды" : ""}.`,
+        schnee: ` Ботинки с протектором, перчатки и тёплые слои${long ? " плюс калорийная еда для поддержания сил" : ""}.`,
+        kalt: ` Тёплая одежда в несколько слоёв и что-то горячее в термосе${long ? " — достаточно еды не менее важно" : ""}.`,
+        gewitter: ` Гроза приближается — держись ниже линии деревьев, куртка под рукой${long ? " и еда в рюкзаке" : ""}.`,
+      };
+      const gear = wk ? (gearMap[wk] ?? "") : long ? " Не забудь взять достаточно воды и еды на маршрут." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} км, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
   },
