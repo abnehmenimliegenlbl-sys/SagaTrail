@@ -258,6 +258,10 @@ export default function LiveHike() {
   // zwei parallele KI-Anfragen, die BEIDE abspielen (die erste hatte beim
   // stopNarration() der zweiten noch keinen Sound zum Stoppen).
   const narrationGenRef = useRef(0);
+  // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
+  // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
+  // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
+  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void }>>([]);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -712,7 +716,7 @@ export default function LiveHike() {
   const [turnNotifsReady, setTurnNotifsReady] = useState(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -760,14 +764,10 @@ export default function LiveHike() {
           treffer.cue.direction === "links" ? t.turnNotifLeft : t.turnNotifRight
         );
       }
-      // Sprachansage kurz vor der Abbiegung — GPS-artig, unabhaengig vom
-      // laufenden Kapitel. Laeuft gerade ein Kapitel, wird es danach wieder
-      // von vorne aufgenommen (gleiche Resume-Logik wie POI-Einschub).
+      // Sprachansage kurz vor der Abbiegung — reiht sich in die Warteschlange
+      // ein, damit eine laufende Kapitel-Erzaehlung nicht unterbrochen wird.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      const wasPlaying = speakingRef.current;
-      const chToResume = chapterTextRef.current;
-      const resume = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
-      speakRef.current?.(pack.turnVoice(treffer.cue.direction), resume);
+      speakRef.current?.(pack.turnVoice(treffer.cue.direction));
     }
   }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
 
@@ -839,10 +839,7 @@ export default function LiveHike() {
         if (profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
         }
-        const wasPlaying = speakingRef.current;
-        const chToResume = chapterTextRef.current;
-        const res = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
-        speakRef.current?.(text, res);
+        speakRef.current?.(text);
       }
     }
   }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
@@ -862,10 +859,7 @@ export default function LiveHike() {
         if (profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.milestoneTitle, text);
         }
-        const wasPlaying = speakingRef.current;
-        const chToResume = chapterTextRef.current;
-        const res = wasPlaying && chToResume ? () => speakRef.current?.(chToResume) : undefined;
-        speakRef.current?.(text, res);
+        speakRef.current?.(text);
       }
     }
   }, [distance, totalKm, storyLanguage, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
@@ -1006,6 +1000,7 @@ export default function LiveHike() {
   // speak()-Aufrufe (z. B. eine KI-Anfrage, die gerade laedt) verfallen und
   // nach dem Stopp nicht doch noch zu sprechen beginnen.
   const cancelNarration = useCallback(async () => {
+    narrationQueueRef.current = [];
     narrationGenRef.current++;
     await stopNarration();
   }, [stopNarration]);
@@ -1032,19 +1027,41 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean }) => {
+      // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
+      // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
+      // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
+      if (!opts?.interrupt && speakingRef.current) {
+        narrationQueueRef.current.push({ text, onFinished });
+        return;
+      }
+      // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren.
+      if (opts?.interrupt) {
+        narrationQueueRef.current = [];
+      }
       // Neue Generation SOFORT beanspruchen, damit noch laufende speak()-
       // Aufrufe (z. B. nach schnellem Doppel-Tipp auf "Wiederholen") sich
       // nach ihren awaits als veraltet erkennen und nichts mehr abspielen.
       const gen = ++narrationGenRef.current;
-      await stopNarration();
-      if (gen !== narrationGenRef.current) return;
       setNarrationUnavailable(false);
       setSpeaking(true);
 
       try {
+        // TTS-Anfrage VOR dem Stopp des laufenden Audios: solange der
+        // Netzwerk-Request laeuft, spielt das vorherige Audio weiter —
+        // die iOS-Audiosession bleibt aktiv und der JS-Thread wird im
+        // Hintergrund nicht suspendiert. Erst wenn das neue Audio bereit
+        // ist, wird das alte gestoppt (Luecke < 100 ms statt 1-5 Sekunden).
         const blob = await createNarration({ text, language: profile?.language });
         const uri = await blobToTempFileUri(blob);
+        if (gen !== narrationGenRef.current) return;
+        // Vorheriges Audio direkt stoppen — kein setState, damit speaking=true
+        // fuer den Ladeindikator erhalten bleibt.
+        const prevSound = narrationSoundRef.current;
+        narrationSoundRef.current = null;
+        if (prevSound) {
+          try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
+        }
         if (gen !== narrationGenRef.current) return;
         const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {
@@ -1056,16 +1073,24 @@ export default function LiveHike() {
           if (!status.isLoaded) return;
           if (status.didJustFinish) {
             setSpeaking(false);
+            speakingRef.current = false; // sofort synchronisieren fuer Queue-Check
             onFinished?.();
+            // Naechstes Element aus der Warteschlange abspielen.
+            const next = narrationQueueRef.current.shift();
+            if (next) speakRef.current?.(next.text, next.onFinished);
           }
         });
       } catch {
         if (gen !== narrationGenRef.current) return;
         setNarrationUnavailable(true);
         setSpeaking(false);
+        speakingRef.current = false;
+        onFinished?.();
+        const next = narrationQueueRef.current.shift();
+        if (next) speakRef.current?.(next.text, next.onFinished);
       }
     },
-    [profile?.language, stopNarration]
+    [profile?.language]
   );
   speakRef.current = speak;
 
@@ -1079,7 +1104,8 @@ export default function LiveHike() {
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
       // Erstes Kapitel: Begruessung (Name + Tageszeit) voranstellen.
-      speak(currentIndex === 0 ? `${greetingPrefix} ${ch.text}` : ch.text);
+      // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
+      speak(currentIndex === 0 ? `${greetingPrefix} ${ch.text}` : ch.text, undefined, { interrupt: true });
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
       // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
       if (currentIndex > 0 && turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
@@ -1149,17 +1175,13 @@ export default function LiveHike() {
     bereiteAbbiegeMitteilungenVor().then((ok) => {
       if (ok) sendePoiMitteilung(poiName, poiText, poiBild);
     });
-    // Zustand im Moment der Entdeckung einfrieren: nur wenn JETZT ein Kapitel
-    // laeuft, wird es nach dem POI-Einschub weitererzaehlt.
-    const wasChapterPlaying = speakingRef.current;
-    const chapterToResume = chapterTextRef.current;
+    // POI-Erzaehlung reiht sich in die Warteschlange ein — unterbricht kein
+    // laufendes Kapitel, spielt automatisch danach ab.
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
-    const resume =
-      wasChapterPlaying && chapterToResume ? () => speak(chapterToResume) : undefined;
     const rawExtract = nearbyPoi.wiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
-      if (!cancelled) speak(text, resume);
+      if (!cancelled) speak(text);
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
@@ -1903,7 +1925,7 @@ export default function LiveHike() {
                 <Pressable
                   onPress={() => {
                     if (currentChapter) {
-                      speak(currentChapter.text);
+                      speak(currentChapter.text, undefined, { interrupt: true });
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
@@ -1920,7 +1942,7 @@ export default function LiveHike() {
                     if (speaking) {
                       cancelNarration();
                     } else if (currentChapter) {
-                      speak(currentChapter.text);
+                      speak(currentChapter.text, undefined, { interrupt: true });
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
