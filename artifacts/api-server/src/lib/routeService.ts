@@ -216,7 +216,20 @@ export async function getPois(
     const ttl = keineAnreicherung ? POI_NEGATIVE_TTL_MS : POI_TTL_MS;
     if (Date.now() - hit.at < ttl) return hit.entries;
   }
-  const raw = await fetchHistoricPois(bbox, log);
+  let raw: RawPoi[];
+  try {
+    raw = await fetchHistoricPois(bbox, log);
+  } catch (err) {
+    // Alle Overpass-Mirrors sind ausgefallen oder haben getimet out. Damit der
+    // naechste Request nicht erneut bis zu 75 s haengt, speichern wir ein leeres
+    // Ergebnis fuer POI_NEGATIVE_TTL_MS (10 Min) im Cache. Nach Ablauf der TTL
+    // wird Overpass automatisch erneut probiert. Die Route gibt trotzdem 200 OK
+    // mit leerem Array zurueck statt eines 502 — fuer den Nutzer ist "keine POI"
+    // besser als ein Fehler.
+    log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen, cache leeres Ergebnis");
+    poiCache.set(key, { at: Date.now(), entries: [] });
+    return [];
+  }
   const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
   const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
     enrichPoiWithWikipedia(poi, log, geoSearchBudget),

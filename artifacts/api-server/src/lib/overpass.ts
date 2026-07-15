@@ -346,7 +346,7 @@ export async function fetchHistoricPois(
 ): Promise<RawPoi[]> {
   const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
   const query = [
-    "[out:json][timeout:25];",
+    "[out:json][timeout:10];",
     "(",
     `node["historic"]["name"](${b});`,
     `way["historic"]["name"](${b});`,
@@ -355,10 +355,11 @@ export async function fetchHistoricPois(
     ");",
     "out center tags;",
   ].join("");
-  // POI-Queries brauchen mehr Zeit als der Standard-Timeout: Overpass laeuft
-  // intern 25 s, der HTTP-Timeout muss daher grosszuegiger sein als die
-  // Default-12 s, damit auch bei leicht erhoehter Last alle Antworten ankommen.
-  const POI_HTTP_TIMEOUT_MS = 30_000;
+  // HTTP-Timeout muss etwas ueber dem Overpass-internen Timeout liegen (10 s),
+  // damit die Antwort noch ankommen kann, bevor wir abbrechen. Mit 3 Mirrors
+  // und je 14 s max dauert ein Komplett-Ausfall hoechstens ~42 s statt 75 s —
+  // und dank Fehler-Caching in getPois haengt nur der ERSTE Request so lang.
+  const POI_HTTP_TIMEOUT_MS = 14_000;
   const elements = await runOverpass<OverpassPoiElement>(query, POI_HTTP_TIMEOUT_MS);
   const result: RawPoi[] = [];
   for (const e of elements) {
