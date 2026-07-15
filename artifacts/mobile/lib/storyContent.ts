@@ -71,9 +71,11 @@ export interface StoryPack {
   // an eine Abbiegung live eingeschoben wird — unabhaengig vom Kapitel.
   turnVoice: (direction: "links" | "rechts") => string;
   // Gesprochene Aufforderung, die nach dem Kapitel-Ende an einem
-  // Entscheidungspunkt vorgelesen wird — listet die Optionen namentlich auf,
-  // damit Wandernde auch ohne Blick aufs Display wissen, was zur Wahl steht.
-  buildDecisionPrompt: (options: string[]) => string;
+  // Entscheidungspunkt vorgelesen wird — spricht zuerst die Entscheidungs-
+  // frage (question, aus dem Kapitel) und listet danach die Optionen mit
+  // natuerlichen Konjunktionen auf, damit Wandernde ohne Blick aufs Display
+  // verstehen, was zur Wahl steht.
+  buildDecisionPrompt: (options: string[], question?: string) => string;
   // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der
   // Entscheidung gesprochen wird ("Das spricht fuer eine Persoenlichkeit mit…").
   decisionFeedback: (archetypeHint: string) => string;
@@ -155,10 +157,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiegen!" : "Jetzt rechts abbiegen!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Erstens", "Zweitens", "Drittens", "Viertens"];
-      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
-      return `Was ist deine Wahl? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Triff jetzt deine Wahl.";
+      const list = options.join(". Oder: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -244,10 +246,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiege!" : "Jetzt rechts abbiege!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Erstens", "Zweitens", "Drittens", "Viertens"];
-      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
-      return `Was isch dini Wahl? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Triff jetzt dini Wahl.";
+      const list = options.join(". Oder: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -333,10 +335,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
     turnVoice: (direction) => direction === "links" ? "Tournez à gauche !" : "Tournez à droite !",
-    buildDecisionPrompt: (options) => {
-      const p = ["Premièrement", "Deuxièmement", "Troisièmement", "Quatrièmement"];
-      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`} : ${o}`).join(". ");
-      return `Quel est ton choix ? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Fais ton choix maintenant.";
+      const list = options.join(". Ou bien : ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -422,10 +424,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
     turnVoice: (direction) => direction === "links" ? "Svoltate a sinistra!" : "Svoltate a destra!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Prima opzione", "Seconda opzione", "Terza opzione", "Quarta opzione"];
-      const list = options.map((o, i) => `${p[i] ?? `Opzione ${i + 1}`}: ${o}`).join(". ");
-      return `Qual è la tua scelta? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Fai ora la tua scelta.";
+      const list = options.join(". Oppure: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -511,10 +513,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
     turnVoice: (direction) => direction === "links" ? "Turn left!" : "Turn right!",
-    buildDecisionPrompt: (options) => {
-      const p = ["First", "Second", "Third", "Fourth"];
-      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
-      return `What is your choice? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Make your choice now.";
+      const list = options.join(". Or: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -596,10 +598,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
     turnVoice: (direction) => direction === "links" ? "向左转。" : "向右转。",
-    buildDecisionPrompt: (options) => {
-      const p = ["第一", "第二", "第三", "第四"];
-      const list = options.map((o, i) => `${p[i] ?? `选项${i + 1}`}：${o}`).join("。");
-      return `你的选择是什么？${list}。`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "请做出你的选择。";
+      const list = options.join("。或者：");
+      return `${q} ${list}。`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -685,10 +687,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
     turnVoice: (direction) => direction === "links" ? "¡Gire a la izquierda!" : "¡Gire a la derecha!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Primero", "Segundo", "Tercero", "Cuarto"];
-      const list = options.map((o, i) => `${p[i] ?? `Opción ${i + 1}`}: ${o}`).join(". ");
-      return `¿Cuál es tu elección? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Toma tu decisión ahora.";
+      const list = options.join(". O bien: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -774,10 +776,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
     turnVoice: (direction) => direction === "links" ? "Vire à esquerda!" : "Vire à direita!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Primeiro", "Segundo", "Terceiro", "Quarto"];
-      const list = options.map((o, i) => `${p[i] ?? `Opção ${i + 1}`}: ${o}`).join(". ");
-      return `Qual é a sua escolha? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Faça sua escolha agora.";
+      const list = options.join(". Ou então: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
@@ -863,10 +865,10 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
     turnVoice: (direction) => direction === "links" ? "Поверните налево!" : "Поверните направо!",
-    buildDecisionPrompt: (options) => {
-      const p = ["Первое", "Второе", "Третье", "Четвёртое"];
-      const list = options.map((o, i) => `${p[i] ?? `Вариант ${i + 1}`}: ${o}`).join(". ");
-      return `Каков твой выбор? ${list}.`;
+    buildDecisionPrompt: (options, question) => {
+      const q = question ?? "Сделай свой выбор сейчас.";
+      const list = options.join(". Или: ");
+      return `${q} ${list}.`;
     },
     decisionFeedback: (hint) => {
       const v = [
