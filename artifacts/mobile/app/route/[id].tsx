@@ -179,8 +179,31 @@ export default function Routenplanung() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route?.id],
   );
+
+  // Prueft ob eine bestimmte Sage fuer den aktuellen User gesperrt ist.
+  // Entspricht der bestehenden `locked`-Logik, aber sagen-individuell damit
+  // der Picker gefiltert werden kann.
+  const isSagaLocked = useCallback(
+    (s: Saga): boolean => {
+      if (!premium) return freeHikeUsed;
+      if (isElite) return false;
+      const entKey = packEntitlementFuerKanton(s.canton);
+      if (entKey && hatEntitlement(entKey)) return false;
+      return !istSageInklusive(s.canton, s.id);
+    },
+    [premium, freeHikeUsed, isElite, hatEntitlement, istSageInklusive],
+  );
+
+  // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
+  // gefiltert — stattdessen erscheint ein "Weitere Sagen freischalten"-Button.
+  const unlockedCandidates = useMemo(
+    () => sagaCandidates.filter((s) => !isSagaLocked(s)),
+    [sagaCandidates, isSagaLocked],
+  );
+  const hasLockedCandidates = sagaCandidates.length > unlockedCandidates.length;
+
   const [pickerDismissed, setPickerDismissed] = useState(false);
-  const showPicker = sagaCandidates.length > 1 && !pickerDismissed;
+  const showPicker = unlockedCandidates.length > 1 && !pickerDismissed;
   function selectFromPicker(s: Saga) {
     setSaga(s);
     setSagaLoading(false);
@@ -262,7 +285,11 @@ export default function Routenplanung() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!route || showPicker) return;
+    // Wenn der User bereits aus dem Picker gewaehlt hat, den State NICHT
+    // ueberschreiben — der useEffect laeuft sonst erneut wenn showPicker
+    // nach der Auswahl false wird und wuerde die Picker-Wahl mit der
+    // Standard-Route-Sage ueberschreiben.
+    if (!route || pickerDismissed || showPicker) return;
     const known = getSagaForRoute(route);
     if (known) {
       setSaga(known);
@@ -279,7 +306,7 @@ export default function Routenplanung() {
     return () => {
       cancelled = true;
     };
-  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount, showPicker]);
+  }, [route, ensureRouteSaga, getSagaForRoute, sagaRetryCount, showPicker, pickerDismissed]);
 
   if (!route) {
     return (
@@ -620,7 +647,7 @@ export default function Routenplanung() {
             <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
               {t.sagaPickerHint}
             </Text>
-            {sagaCandidates.map((s) => {
+            {unlockedCandidates.map((s) => {
               const sessions = hikeHistory.filter((h) => h.sagaId === s.id);
               const prog =
                 sessions.length === 0 ? 'new'
@@ -661,6 +688,14 @@ export default function Routenplanung() {
                 </Pressable>
               );
             })}
+            {hasLockedCandidates && (
+              <PrimaryButton
+                label={t.unlockMoreSagas}
+                variant="gold"
+                onPress={() => router.push("/paywall")}
+                style={{ marginTop: 8 }}
+              />
+            )}
           </>
         ) : (
           <>
@@ -772,7 +807,7 @@ export default function Routenplanung() {
               </Text>
             ) : null}
 
-            {saga && !sagaLoading ? (
+            {saga && !sagaLoading && !showPicker ? (
               <PrimaryButton
                 label={locked ? t.premiumButton : t.continueToSaga}
                 variant={locked ? "gold" : "primary"}

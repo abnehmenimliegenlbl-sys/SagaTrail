@@ -42,6 +42,7 @@ export interface RouteStrings {
   premiumButton: string;
   continueToSaga: string;
   sagaPickerHint: string;
+  unlockMoreSagas: string;
   progressNew: string;
   progressStarted: string;
   progressDone: string;
@@ -117,6 +118,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Premium freischalten",
     continueToSaga: "Zur Sage weiter",
     sagaPickerHint: "Mehrere Sagen in der Nähe – wähle deine für diese Wanderung",
+    unlockMoreSagas: "Weitere Sagen freischalten",
     progressNew: "Neu",
     progressStarted: "Angefangen",
     progressDone: "Gehört",
@@ -192,6 +194,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Premium freischalte",
     continueToSaga: "Wiiter zur Sag",
     sagaPickerHint: "Meri Sage i dr Nächi – wähl dyni für die Wanderig",
+    unlockMoreSagas: "Wiiteri Sage freischalte",
     progressNew: "Neu",
     progressStarted: "Agriffe",
     progressDone: "Ghört",
@@ -267,6 +270,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Unlock Premium",
     continueToSaga: "Continue to legend",
     sagaPickerHint: "Multiple legends nearby – choose one for your hike",
+    unlockMoreSagas: "Unlock more legends",
     progressNew: "New",
     progressStarted: "Started",
     progressDone: "Heard",
@@ -342,6 +346,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Débloquer Premium",
     continueToSaga: "Continuer vers la légende",
     sagaPickerHint: "Plusieurs légendes à proximité – choisissez celle de votre randonnée",
+    unlockMoreSagas: "Débloquer plus de légendes",
     progressNew: "Nouveau",
     progressStarted: "Commencé",
     progressDone: "Écouté",
@@ -417,6 +422,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Sblocca Premium",
     continueToSaga: "Continua alla leggenda",
     sagaPickerHint: "Più leggende nelle vicinanze – scegli quella per la tua escursione",
+    unlockMoreSagas: "Sblocca altre leggende",
     progressNew: "Nuovo",
     progressStarted: "Iniziato",
     progressDone: "Ascoltato",
@@ -492,6 +498,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Desbloquear Premium",
     continueToSaga: "Continuar a la leyenda",
     sagaPickerHint: "Varias leyendas cerca – elige la de tu caminata",
+    unlockMoreSagas: "Desbloquear más leyendas",
     progressNew: "Nuevo",
     progressStarted: "Iniciado",
     progressDone: "Escuchado",
@@ -567,6 +574,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Desbloquear Premium",
     continueToSaga: "Continuar para a lenda",
     sagaPickerHint: "Várias lendas nas redondezas – escolha a da sua caminhada",
+    unlockMoreSagas: "Desbloquear mais lendas",
     progressNew: "Novo",
     progressStarted: "Iniciado",
     progressDone: "Ouvido",
@@ -637,6 +645,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "解锁 Premium",
     continueToSaga: "前往传说",
     sagaPickerHint: "附近有多个传说 — 选择本次徒步的传说",
+    unlockMoreSagas: "解锁更多传说",
     progressNew: "新",
     progressStarted: "已开始",
     progressDone: "已听",
@@ -710,6 +719,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     premiumButton: "Разблокировать Premium",
     continueToSaga: "Перейти к легенде",
     sagaPickerHint: "Несколько легенд рядом – выберите для похода",
+    unlockMoreSagas: "Разблокировать больше легенд",
     progressNew: "Новая",
     progressStarted: "Начата",
     progressDone: "Прослушана",
