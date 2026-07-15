@@ -38,7 +38,7 @@ import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import { packEntitlementFuerKanton, kantonSlug } from "@/lib/kantonSlug";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -322,7 +322,9 @@ export default function Routenplanung() {
 
   const meta = route;
   const routePackKey = saga?.canton ? packEntitlementFuerKanton(saga.canton) : "";
-  const packUnlocked = premium && (isElite || (!!routePackKey && hatEntitlement(routePackKey)));
+  const routePackSlug = saga?.canton ? kantonSlug(saga.canton) : "";
+  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routePackSlug);
+  const packUnlocked = premium && (isElite || (!!routePackKey && hatEntitlement(routePackKey)) || dbPackUnlocked);
   const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id);
   const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
