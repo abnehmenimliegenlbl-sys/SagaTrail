@@ -38,7 +38,7 @@ import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { kantonSlug } from "@/lib/kantonSlug";
+import { kantonSlug, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -59,7 +59,7 @@ export default function Routenplanung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive } = useApp();
   const { isElite } = useSubscription();
-  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
+  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton, sagas } = useCatalog();
   const [importing, setImporting] = useState(false);
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
@@ -190,10 +190,16 @@ export default function Routenplanung() {
       if (!premium) return freeHikeUsed;
       if (isElite) return false;
       const slug = kantonSlug(s.canton);
-      if ((profile?.purchasedPacks ?? []).includes(slug)) return false;
+      const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
+      const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);
+      // Nicht im Katalog (dynamisch generierte Sage) → als Pack-1-Sage behandeln
+      const isInPack1 = sagaIdx < 0 || sagaIdx < SAGEN_PRO_PACK;
+      if (!isInPack1) return true; // Pack-2-Sage: noch nicht kaufbar
+      const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
+      if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
       return !istSageInklusive(s.canton, s.id);
     },
-    [premium, freeHikeUsed, isElite, profile, istSageInklusive],
+    [premium, freeHikeUsed, isElite, profile, sagas, istSageInklusive],
   );
 
   // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
@@ -324,9 +330,22 @@ export default function Routenplanung() {
 
   const meta = route;
   const routePackSlug = saga?.canton ? kantonSlug(saga.canton) : "";
-  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routePackSlug);
-  const packUnlocked = premium && (isElite || dbPackUnlocked);
-  const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id);
+  // Position der aktuellen Sage im Kanton bestimmen
+  const routeSagasInCanton = saga?.canton ? sagas.filter((s) => s.canton === saga.canton) : [];
+  const routeSagaIdx = saga ? routeSagasInCanton.findIndex((s) => s.id === saga.id) : -1;
+  const routeSagaIsInPack1 = routeSagaIdx < 0 || routeSagaIdx < SAGEN_PRO_PACK;
+  const routeEffectivePackSlug =
+    routeSagaIdx >= 0 ? sagaPackSlug(routePackSlug, routeSagaIdx) : routePackSlug;
+  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routeEffectivePackSlug);
+  // Pack-2+-Sagen sind nie via Pack 1 entsperrt, auch nicht via Elite entfaellt dies nicht
+  const packUnlocked = premium && (isElite || (routeSagaIsInPack1 && dbPackUnlocked));
+  const sagaPackLocked =
+    premium &&
+    !packUnlocked &&
+    !!saga?.canton &&
+    (routeSagaIsInPack1
+      ? !istSageInklusive(saga.canton, route.sagaId ?? saga.id)
+      : true);
   const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;

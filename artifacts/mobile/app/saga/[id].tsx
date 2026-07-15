@@ -24,7 +24,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { kantonSlug } from "@/lib/kantonSlug";
+import { kantonSlug, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -43,7 +43,7 @@ export default function SagaDetail() {
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
   const { profile, premium, freeHikeUsed, istSageInklusive, registriereSagenEntdeckung } =
     useApp();
-  const { getSaga, ensureRouteSaga } = useCatalog();
+  const { getSaga, ensureRouteSaga, sagas } = useCatalog();
   const {
     isElite,
     offerings,
@@ -110,22 +110,33 @@ export default function SagaDetail() {
   const locked = !premium && freeHikeUsed;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
-  // Kanton ist inklusive; weitere Sagen des Kantons brauchen das Pack des
-  // Kantons oder Elite (alle Packs inklusive).
+  // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder
+  // Elite (alle Packs inklusive).
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
+  //
+  // Jedes Pack deckt SAGEN_PRO_PACK (= 8) Sagen ab:
+  //   Pack 1 (slug "genf")   = Indizes 0-7  im Kanton
+  //   Pack 2 (slug "genf_2") = Indizes 8-15 im Kanton (zukuenftig)
   const packSlug = kantonSlug(saga.canton);
-  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
+  const sagasInCanton = sagas.filter((s) => s.canton === saga.canton);
+  const sagaIdx = sagasInCanton.findIndex((s) => s.id === saga.id);
+  // Nicht im Katalog (dynamisch generierte Route-Sage) → als Pack-1-Sage behandeln
+  const isInPack1 = sagaIdx < 0 || sagaIdx < SAGEN_PRO_PACK;
+  const effectivePackSlug = sagaIdx >= 0 ? sagaPackSlug(packSlug, sagaIdx) : packSlug;
+  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(effectivePackSlug);
   const packLocked =
     premium &&
     !isElite &&
-    !dbPackUnlocked &&
-    !istSageInklusive(saga.canton, saga.id);
+    // Pack-2+-Sagen koennen nicht mit Pack 1 entsperrt werden
+    (!isInPack1 || (!dbPackUnlocked && !istSageInklusive(saga.canton, saga.id)));
+  // Kaufoption nur fuer Pack-1-Sagen anzeigen (Pack 2 noch nicht im Store).
   // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.
-  // Der Server schreibt den Grant in profiles.purchased_packs.
-  const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
-    (p) => p.identifier === KANTONSPACK_PACKAGE
-  );
+  const packPaket = isInPack1
+    ? offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
+        (p) => p.identifier === KANTONSPACK_PACKAGE
+      )
+    : undefined;
   const { mutateAsync: claimKantonspack } = useClaimKantonspack();
   const queryClient = useQueryClient();
 

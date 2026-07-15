@@ -4015,7 +4015,7 @@ export const PACKAGE_SAGAS: InsertCatalogSaga[] = [
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.8505, "lng": 6.8536, "koordinatenSicherheit": "exakt", "isAnchorPlace": false
   },
-  // ── Genf (8 Sagen) ──
+  // ── Genf (9 Sagen; Pack 1: Sagen 1–8, Pack 2: Sage 9) ──
   {
     "id": "heilige-clotilde-genf",
     "title": "Die Königin Klothilde und der Genfersee",

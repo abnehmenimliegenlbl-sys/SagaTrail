@@ -27,7 +27,7 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
-import { kantonSlug } from "@/lib/kantonSlug";
+import { kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
 
 const WEB_TOP = 67;
 
@@ -250,12 +250,15 @@ function CantonCard({
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const packSlug = kantonSlug(entry.canton);
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
-  const packUnlocked = premium && (isElite || dbPackUnlocked);
-  const accessibleTotal = packUnlocked
+  // Pack 1 deckt maximal SAGEN_PRO_PACK Sagen ab; Pack 2+ noch nicht verfuegbar.
+  const pack1Count = Math.min(SAGEN_PRO_PACK, cantonSagas.length);
+  const accessibleTotal = isElite
     ? cantonSagas.length
-    : premium
-      ? Math.min(1, cantonSagas.length)
-      : cantonSagas.length;
+    : dbPackUnlocked
+      ? pack1Count
+      : premium
+        ? Math.min(1, cantonSagas.length)
+        : cantonSagas.length;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
