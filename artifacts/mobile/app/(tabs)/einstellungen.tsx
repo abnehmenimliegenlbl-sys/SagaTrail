@@ -3,7 +3,7 @@ import { Feather } from "@expo/vector-icons";
 import { createNarration } from "@workspace/api-client-react";
 import { Audio } from "expo-av";
 import Constants from "expo-constants";
-import * as Haptics from "expo-haptics";
+import { hapticRigid } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -155,9 +155,7 @@ export default function Einstellungen() {
   };
 
   const selectLang = (code: (typeof SUPPORTED_LANGUAGES)[number]) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    hapticRigid();
     updateProfile({ language: code });
   };
 

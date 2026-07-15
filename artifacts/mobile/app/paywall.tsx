@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticError, hapticSelection, hapticSuccess } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -129,9 +129,7 @@ export default function Paywall() {
         return;
       }
       iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere zurueck");
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      hapticSuccess();
       // Apples nativer Kauf-Dialog (StoreKit-Sheet) ist zu diesem Zeitpunkt
       // oft noch nicht vollstaendig ausgeblendet. Kurze Verzoegerung laesst
       // StoreKit die Uebergabe sauber abschliessen, bevor wir navigieren —
@@ -309,7 +307,10 @@ export default function Paywall() {
                   return (
                     <Pressable
                       key={key}
-                      onPress={() => setGewaehlt(key)}
+                      onPress={() => { hapticSelection(); setGewaehlt(key); }}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${t.planNames[key]} — ${paket.product.priceString}`}
+                      accessibilityState={{ checked: aktiv }}
                       style={[
                         styles.planCard,
                         {
@@ -360,6 +361,8 @@ export default function Paywall() {
               onPress={onRestore}
               disabled={busy || isRestoring}
               style={styles.restore}
+              accessibilityRole="button"
+              accessibilityLabel={t.restoreBtn}
             >
               <Text style={[styles.restoreText, { color: colors.mutedForeground }]}>
                 {t.restoreBtn}

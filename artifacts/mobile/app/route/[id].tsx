@@ -71,6 +71,7 @@ import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
 import { sagaLokalisierung } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
+import { hapticMedium, hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
 
@@ -677,19 +678,24 @@ export default function Routenplanung() {
         {/* ── Share + Lesezeichen ────────────────────────────────── */}
         <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 2 }}>
           <Pressable
-            onPress={() => void shareRoute()}
+            onPress={() => { hapticSelection(); void shareRoute(); }}
             style={[styles.actionChip, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+            accessibilityRole="button"
+            accessibilityLabel={t.shareRoute}
           >
             <Feather name="share-2" size={14} color={colors.accent} />
             <Text style={[styles.actionChipText, { color: colors.accent }]}>{t.shareRoute}</Text>
           </Pressable>
           {saga && (
             <Pressable
-              onPress={() => void toggleBookmark(saga.id)}
+              onPress={() => { hapticMedium(); void toggleBookmark(saga.id); }}
               style={[styles.actionChip, {
                 borderColor: isBookmarked ? colors.accent : colors.glassBorder,
                 backgroundColor: isBookmarked ? colors.accent + "22" : colors.glassBg,
               }]}
+              accessibilityRole="button"
+              accessibilityLabel={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+              accessibilityState={{ selected: isBookmarked }}
             >
               <Feather name="bookmark" size={14} color={isBookmarked ? colors.accent : colors.mutedForeground} />
               <Text style={[styles.actionChipText, { color: isBookmarked ? colors.accent : colors.mutedForeground }]}>

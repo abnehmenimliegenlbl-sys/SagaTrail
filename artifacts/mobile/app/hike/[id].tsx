@@ -11,7 +11,7 @@ import {
 import type { Partner, Poi, RouteSurfacePoint, WeatherReport } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
-import * as Haptics from "expo-haptics";
+import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
@@ -1053,10 +1053,7 @@ export default function LiveHike() {
       }
       // Doppelimpuls fuer Navigationsanweisungen — staerker und deutlich
       // unterscheidbar vom einfachen Kapitel-/POI-Start-Feedback.
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 120);
-      }
+      hapticDoublePulse();
       // Sprachansage kurz vor der Abbiegung — reiht sich in die Warteschlange
       // ein, damit eine laufende Kapitel-Erzaehlung nicht unterbrochen wird.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
@@ -1212,7 +1209,7 @@ export default function LiveHike() {
       if (!result.canceled && result.assets[0]?.uri) {
         const localUri = result.assets[0].uri;
         setHikePhotos((prev) => [...prev, localUri]);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        hapticSuccess();
         setPhotoUploading(true);
         setPhotoUploadFeedback(null);
         try {
@@ -1567,9 +1564,7 @@ export default function LiveHike() {
     setNearbyPoiKontext(null);
     // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
     // Panorama schaut statt aufs Handy, merkt es trotzdem.
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    hapticHeavy();
     // Parallel zur Erzaehlung eine Mitteilung mit dem Wikipedia-Bild des Ortes
     // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
     // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
@@ -1738,9 +1733,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (preparing || currentIndex <= lastHapticIndexRef.current) return;
     lastHapticIndexRef.current = currentIndex;
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    hapticHeavy();
   }, [currentIndex, preparing]);
 
   // Sprachausgabe beim Verlassen stoppen
@@ -1781,9 +1774,7 @@ export default function LiveHike() {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
     if (folgtGruppenleitung) return;
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    hapticMedium();
     const gewaehlt = chapters[currentIndex]?.decision?.options[optionIndex]?.label;
     if (gewaehlt) {
       // Kurze sichtbare Bestaetigung der Wahl, bevor die Geschichte weitergeht
@@ -1901,9 +1892,7 @@ export default function LiveHike() {
 
   const finishHike = useCallback(async () => {
     await cancelNarration();
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    hapticSuccess();
     if (!saga) return;
     const session: HikeSession = {
       id: `h_${Date.now()}`,
@@ -1960,9 +1949,7 @@ export default function LiveHike() {
   };
 
   const callNumber = (num: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    hapticHeavy();
     openUrlSafely(`tel:${num}`, t.callSosManually(num));
   };
 

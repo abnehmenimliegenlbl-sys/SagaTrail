@@ -28,6 +28,7 @@ import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
 import { kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
+import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
 
@@ -194,7 +195,9 @@ export default function Entdecken() {
         <View style={{ paddingHorizontal: 20 }}>
           <Animated.View entering={FadeInDown.delay(others.length * 60)}>
             <Pressable
-              onPress={() => router.push("/eigene-route")}
+              onPress={() => { hapticSelection(); router.push("/eigene-route"); }}
+              accessibilityRole="button"
+              accessibilityLabel={t.customRouteTitle}
               style={[
                 styles.cantonCard,
                 {
@@ -260,10 +263,13 @@ function CantonCard({
         ? Math.min(1, cantonSagas.length)
         : cantonSagas.length;
 
+  const cantonLabel = translateCanton(entry.canton, language as LanguageCode);
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
       <Pressable
-        onPress={onPress}
+        onPress={() => { hapticSelection(); onPress(); }}
+        accessibilityRole="button"
+        accessibilityLabel={`${cantonLabel} — ${entry.routeCount > 0 ? t.routeCount(entry.routeCount) : t.liveFromSwisstopo}`}
         style={[
           styles.cantonCard,
           {

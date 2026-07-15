@@ -24,6 +24,7 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
+import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
 
@@ -494,7 +495,7 @@ export default function Sammlung() {
                         </View>
                         {hike.geometry && hike.geometry.length > 1 && (
                           <Pressable
-                            onPress={() => exportHikeGpx(hike, t)}
+                            onPress={() => { hapticSelection(); exportHikeGpx(hike, t); }}
                             style={({ pressed }) => [
                               styles.gpxBtn,
                               {
@@ -504,6 +505,8 @@ export default function Sammlung() {
                               },
                             ]}
                             hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel="GPX exportieren"
                           >
                             <Feather name="download" size={14} color={colors.mutedForeground} />
                             <Text style={[styles.gpxBtnLabel, { color: colors.mutedForeground }]}>

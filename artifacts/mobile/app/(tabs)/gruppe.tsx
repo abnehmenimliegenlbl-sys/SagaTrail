@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticSelection } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -58,8 +58,7 @@ export default function Gruppe() {
     return order[m.ageTier] < order[acc] ? m.ageTier : acc;
   }, "erwachsene" as string);
 
-  const buzz = () =>
-    Platform.OS !== "web" && Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const buzz = () => hapticSelection();
 
   const handleCreate = () => {
     buzz();
