@@ -144,7 +144,7 @@ function serialisiertProCustomer<T>(
   );
   void ergebnis.finally(() => {
     if (claimKetten.get(customerId) === ergebnis) claimKetten.delete(customerId);
-  });
+  }).catch(() => undefined);
   return ergebnis;
 }
 
