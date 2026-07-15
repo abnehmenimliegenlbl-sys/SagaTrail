@@ -317,7 +317,17 @@ export default function LiveHike() {
     }
     const geom = routeGeomRef.current;
     if (!geom || geom.length < 2) return;
-    const dest = geom[geom.length - 1]; // [lat, lng] des Routenendes
+    // Ziel: naechster sinnvoller Punkt auf der Restroute.
+    // fortschrittAufRoute liefert den naechsten Segment-Index; von dort aus
+    // navigieren wir ein Stueck vorwaerts (mind. 10% der Geometrie), sodass
+    // Valhalla eine echte Strecke plant statt einen trivialen 0-m-Sprung.
+    // Vor dem Trailhead (fraction ≈ 0) zeigt das zum Startpunkt; mitten auf
+    // der Route zeigt es zum naechsten Abschnitt; am Ende zum Schlusspunkt.
+    const proj = fortschrittAufRoute(offRoutePos, geom);
+    const nearestIdx = proj ? Math.floor(proj.fraction * (geom.length - 1)) : 0;
+    const lookahead = Math.max(10, Math.floor(geom.length * 0.1));
+    const destIdx = Math.min(geom.length - 1, nearestIdx + lookahead);
+    const dest = geom[destIdx];
     setIsRecalculating(true);
     setRecalcFailed(false);
     setRecalcGeom(null);
