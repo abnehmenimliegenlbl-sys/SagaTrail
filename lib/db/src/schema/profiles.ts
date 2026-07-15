@@ -31,6 +31,9 @@ export const profilesTable = pgTable("profiles", {
   // Server beim Claim befuellt statt ueber einen RevenueCat-Entitlement-Grant,
   // da der RC-Connector-Key nur Lesezugriff hat.
   purchasedPacks: text("purchased_packs").array().notNull().default([]),
+  // Abo-Stufe: free | premium | premium_family | elite | elite_family.
+  // Wird beim Kauf/Sync gesetzt; Grundlage fuer segmentierte Push-Kampagnen.
+  subscriptionTier: text("subscription_tier").notNull().default("free"),
   // Expo-Push-Token des Geraets (null = nicht registriert oder widerrufen).
   // Wird beim App-Start gesetzt und fuer Gruppen-Push-Benachrichtigungen verwendet.
   pushToken: text("push_token"),

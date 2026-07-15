@@ -1,7 +1,7 @@
 import { randomUUID, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, ne } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
