@@ -118,7 +118,7 @@ export const SAGAS: Saga[] = [
   "title": "Gallus und der Bär an der Steinach",
   "canton": "St. Gallen",
   "coreMotif": "Heiligenlegende und wilde Natur",
-  "bildmotiv": "Braunbär",
+  "bildmotiv": "Kloster St. Gallen",
   "mood": "Ehrfürchtig, wundersam",
   "summary": "Der irische Mönch Gallus folgte der Steinach in die Wildnis und stürzte im Dornengestrüpp – ein Zeichen, hier zu bleiben. In der Nacht trat ein Bär aus dem Wald; Gallus gebot ihm, Holz ans Feuer zu legen, und reichte ihm dafür ein Brot. Der Bär gehorchte und zog sich in die Berge zurück; an dieser Stelle erwuchs später das Kloster St. Gallen.",
   "summaries": {
@@ -172,7 +172,7 @@ export const SAGAS: Saga[] = [
   "title": "Der Teufelskeller bei Baden",
   "canton": "Aargau",
   "coreMotif": "Teufelswerk in der Landschaft",
-  "bildmotiv": "Felsblock Wald Schweiz",
+  "bildmotiv": "Baden Aargau Felsen",
   "mood": "Wild, mahnend",
   "summary": "Bei Baden liegen wild zerklüftete Felsblöcke wirr übereinander – der Teufelskeller. Der Teufel, so erzählt man, trug die gewaltigen Steine herbei, um damit Kirche und Stadt zu verschütten. Doch ehe er sein Werk vollenden konnte, überraschten ihn das Morgengrauen und der Klang der Glocken, sodass er die Felsen fallen liess, wo sie bis heute liegen.",
   "summaries": {
@@ -226,7 +226,7 @@ export const SAGAS: Saga[] = [
   "title": "Die Quille du Diable und der Bergsturz der Diablerets",
   "canton": "Waadt",
   "coreMotif": "Frevel und Bergsturz",
-  "bildmotiv": "Felssturz Berglandschaft",
+  "bildmotiv": "Les Diablerets Gletscher",
   "mood": "Erhaben, warnend",
   "summary": "Auf den Hochweiden der Diablerets sollen des Nachts Teufel mit gewaltigen Felsblöcken Kegel geschoben haben – daher die Quille du Diable, der Kegel des Teufels. Ihr wüstes Spiel und der Frevel der Menschen brachten den Berg ins Rutschen: mächtige Bergstürze begruben die einst grünen Alpen unter Geröll, und seither trägt das Massiv den Namen der Teufel.",
   "summaries": {
@@ -388,7 +388,7 @@ export const SAGAS: Saga[] = [
   "title": "S'Rägemännli von Zunzgen",
   "canton": "Basel-Landschaft",
   "coreMotif": "Warnendes Geisterwesen",
-  "bildmotiv": "Nebelwald Schweiz",
+  "bildmotiv": "Baselland Wald",
   "mood": "Schaurig, ländlich",
   "summary": "Bei Zunzgen im Baselbiet soll nachts das Rägemännli umgehen, ein kleines, tropfnasses Wesen, das an bestimmten Stellen des Weges auftaucht. Kühe und Hunde weigerten sich, so erzählt man, an dieser Stelle vorbeizugehen und sträubten sich mit aller Kraft, sobald sie in die Nähe kamen – als spürten die Tiere etwas, das den Menschen verborgen blieb.",
   "summaries": {
@@ -496,7 +496,7 @@ export const SAGAS: Saga[] = [
   "title": "Die Bärensage von Bern",
   "canton": "Bern",
   "coreMotif": "Stadtgründung und Namensgebung",
-  "bildmotiv": "Braunbär",
+  "bildmotiv": "Bern Bärenpark",
   "mood": "Feierlich, gründungsmythisch",
   "summary": "Als Herzog Berchtold V. von Zähringen 1191 an der Aare eine neue Stadt gründen liess, so berichtet die alte Berner Chronik, wollte er sie nach dem ersten Tier benennen, das man bei der Jagd im umliegenden Wald erlegen würde. Es war ein Bär – und so erhielt die Stadt ihren Namen Bern und ihr Wappentier, dem man bis heute im Bärengraben nahe der Altstadt begegnet.",
   "summaries": {
@@ -604,7 +604,7 @@ export const SAGAS: Saga[] = [
   "title": "Die Marmite der Mère Royaume",
   "canton": "Genf",
   "coreMotif": "Verteidigung und Mutprobe",
-  "bildmotiv": "Escalade Genf Fackelzug",
+  "bildmotiv": "Escalade Genève",
   "mood": "Spannend, patriotisch",
   "summary": "In der Nacht vom 11. auf den 12. Dezember 1602 versuchten savoyische Truppen mit Leitern die Mauern von Genf zu erklimmen, die Stadt zu überfallen. Der Legende nach schüttete eine wache Hausfrau, die Mère Royaume, kochende Gemüsesuppe aus ihrem Kessel über die Angreifer und schlug damit sogar einen Soldaten nieder – ihr Alarmruf weckte die Stadt, die die Escalade zurückschlug.",
   "summaries": {
@@ -658,7 +658,7 @@ export const SAGAS: Saga[] = [
   "title": "Der heilige Fridolin und der tote Bruder",
   "canton": "Glarus",
   "coreMotif": "Wunder und Gerechtigkeit",
-  "bildmotiv": "Heiliger Fridolin Statue",
+  "bildmotiv": "Fridolinsdom Bad Säckingen",
   "mood": "Feierlich, wundersam",
   "summary": "Der heilige Fridolin, so berichtet die alte Legende, habe für ein Kloster Land geschenkt bekommen, doch nach dem Tod des Schenkers bestritt dessen Bruder die Gültigkeit vor Gericht. Da liess Fridolin den Toten aus dem Grab rufen: Der Leichnam erhob sich, bezeugte die Schenkung vor allen Anwesenden und legte sich danach wieder zur Ruhe – bis heute zeigt das Glarner Wappen Fridolin mit einem Skelett an seiner Seite.",
   "summaries": {
@@ -766,7 +766,7 @@ export const SAGAS: Saga[] = [
   "title": "Die Roche d'Or bei Réclère",
   "canton": "Jura",
   "coreMotif": "Verborgener Schatz",
-  "bildmotiv": "Felshöhle Jura",
+  "bildmotiv": "Grottes Réclère Jura",
   "mood": "Geheimnisvoll, lockend",
   "summary": "In den Wäldern bei Réclère im Jura liegt die Roche d'Or, der Goldfelsen, unter dem der Überlieferung nach ein Schatz verborgen liegt. Wer ihn heben will, muss schweigend und ohne Gier handeln – wer aber nach Gold gierte, so warnt die alte Geschichte, fand den Eingang zum Felsen für immer verschlossen.",
   "summaries": {
@@ -820,7 +820,7 @@ export const SAGAS: Saga[] = [
   "title": "Der Drache vom Pilatus",
   "canton": "Luzern",
   "coreMotif": "Naturwunder und Wächterwesen",
-  "bildmotiv": "Pilatus Drachenstein",
+  "bildmotiv": "Pilatus Luzern",
   "mood": "Ehrfürchtig, geheimnisvoll",
   "summary": "Schon im 16. Jahrhundert berichtete der Naturforscher Konrad Gessner von Sichtungen eines feuerspeienden Drachens am Pilatus bei Luzern. Der Sage nach hausen die Drachen in Höhlen tief im Berg und fliegen bei Unwettern über die Grate; einem Hirten soll ein Drache sogar das Leben gerettet haben, indem er ihn aus einer Felsspalte trug, in die er gestürzt war.",
   "summaries": {
@@ -874,7 +874,7 @@ export const SAGAS: Saga[] = [
   "title": "La Vouivre am Neuenburgersee",
   "canton": "Neuenburg",
   "coreMotif": "Wächterschlange und kostbares Auge",
-  "bildmotiv": "Ringelnatter",
+  "bildmotiv": "Neuenburgersee",
   "mood": "Funkelnd, gefährlich",
   "summary": "In den Wäldern rund um den Neuenburgersee soll die Vouivre umherziehen, eine geflügelte Schlange, die statt eines Auges einen leuchtenden Edelstein trägt. Vor dem Baden legt sie den Stein am Ufer ab – wer ihn stehlen könnte, würde reich, doch die Vouivre bemerkt jede Annäherung sofort und verfolgt jeden Dieb ohne Gnade.",
   "summaries": {
@@ -1252,7 +1252,7 @@ export const SAGAS: Saga[] = [
   "title": "Die Sage vom Ottenberg",
   "canton": "Thurgau",
   "coreMotif": "Verwunschenes Schloss",
-  "bildmotiv": "Schlossruine Thurgau",
+  "bildmotiv": "Ottenberg Schlossruine",
   "mood": "Nebelverhangen, geheimnisvoll",
   "summary": "Am Ottenberg bei Weinfelden, wo einst die Burg Alt-Weinfelden stand, so erzählen die alten Thurgauer Sagen, soll in Vollmondnächten das Klirren von Rüstungen und der ferne Klang eines Hifthorns zu hören sein – Überreste eines verwunschenen Rittergeschlechts, das für seinen Hochmut nie zur Ruhe kommt und über die Hänge des Hügels zieht.",
   "summaries": {
@@ -1306,7 +1306,7 @@ export const SAGAS: Saga[] = [
   "title": "Der heilige Theodul und die Glocke",
   "canton": "Wallis",
   "coreMotif": "Überlistung des Teufels",
-  "bildmotiv": "Matterhorn Kirche Glocke",
+  "bildmotiv": "Matterhorn Zermatt",
   "mood": "Feierlich, listig",
   "summary": "Der heilige Theodul, erster Bischof des Wallis, wollte für seine Kirche in Sitten eine Glocke aus Rom holen. Da sich kein Träger fand, so erzählt die Legende, band er kurzerhand den Teufel selbst an die Glocke und liess ihn sie über die Alpen tragen – zur Strafe für seine Bosheit musste der Teufel die schwere Last bis nach Sitten schleppen, wo die Glocke bis heute läutet.",
   "summaries": {

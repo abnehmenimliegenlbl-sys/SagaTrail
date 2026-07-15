@@ -186,13 +186,33 @@ async function commonsFetch(params: URLSearchParams, userAgent: string): Promise
   });
 }
 
+/**
+ * Kürzt einen langen Bildmotiv-Suchbegriff auf die 2 spezifischsten Ortsnamen.
+ * Kurze Beschreibungen (< 5 Wörter) werden unverändert genutzt. Bei langen
+ * Szenen-Beschreibungen (typisch für Paketesagen) werden die letzten 2
+ * grossgeschriebenen Wörter (≥ 4 Buchstaben) extrahiert — das sind im Deutschen
+ * erfahrungsgemäss die ortskonkretesten Nomen/Eigennamen.
+ * Beispiel: "Hexe verwandelt sich Katze Nacht Gais Appenzellerland"
+ *         → "Gais Appenzellerland"
+ */
+function extrahiereSuchbegriff(query: string): string {
+  const wörter = query.trim().split(/\s+/);
+  if (wörter.length < 5) return query;
+  const nomen = wörter.filter(
+    (w, i) => i > 0 && /^[A-ZÄÖÜ]/.test(w) && w.length >= 4,
+  );
+  if (nomen.length < 2) return wörter.slice(-2).join(" ");
+  return nomen.slice(-2).join(" ");
+}
+
 async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> {
+  const effektiverBegriff = extrahiereSuchbegriff(query);
   const params = new URLSearchParams({
     action: "query",
     format: "json",
     formatversion: "1",
     generator: "search",
-    gsrsearch: `${query} filetype:bitmap`,
+    gsrsearch: `${effektiverBegriff} filetype:bitmap`,
     gsrnamespace: "6",
     gsrlimit: String(MAX_KANDIDATEN),
     prop: "imageinfo",
