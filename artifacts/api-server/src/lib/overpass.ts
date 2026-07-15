@@ -98,7 +98,7 @@ interface OverpassGeomElement {
   members?: OverpassGeomMember[];
 }
 
-async function runOverpass<T>(query: string): Promise<T[]> {
+async function runOverpass<T>(query: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T[]> {
   // Ein Versuch je Spiegel: mit Cache-Vorwaermung (siehe routeService.warmAllCantonCaches)
   // treffen echte Nutzer selten den kalten Pfad, daher zaehlt hier vor allem,
   // schnell zum naechsten Spiegel (bzw. zum DB-Cache-Fallback) zu wechseln,
@@ -107,7 +107,7 @@ async function runOverpass<T>(query: string): Promise<T[]> {
   for (const url of OVERPASS_MIRRORS) {
     for (let attempt = 0; attempt < 1; attempt++) {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -355,7 +355,11 @@ export async function fetchHistoricPois(
     ");",
     "out center tags;",
   ].join("");
-  const elements = await runOverpass<OverpassPoiElement>(query);
+  // POI-Queries brauchen mehr Zeit als der Standard-Timeout: Overpass laeuft
+  // intern 25 s, der HTTP-Timeout muss daher grosszuegiger sein als die
+  // Default-12 s, damit auch bei leicht erhoehter Last alle Antworten ankommen.
+  const POI_HTTP_TIMEOUT_MS = 30_000;
+  const elements = await runOverpass<OverpassPoiElement>(query, POI_HTTP_TIMEOUT_MS);
   const result: RawPoi[] = [];
   for (const e of elements) {
     const tags = e.tags ?? {};
