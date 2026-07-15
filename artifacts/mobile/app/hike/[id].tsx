@@ -404,6 +404,7 @@ export default function LiveHike() {
   // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
   useEffect(() => {
     Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
       interruptionModeIOS: InterruptionModeIOS.DuckOthers,
