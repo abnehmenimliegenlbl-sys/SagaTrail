@@ -72,6 +72,8 @@ import {
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import * as ImagePicker from "expo-image-picker";
+import { useAuth } from "@clerk/expo";
+import { uploadWaypointPhoto, waypointPhotoUrl } from "@/lib/waypointPhotoUpload";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
@@ -189,6 +191,9 @@ export default function LiveHike() {
     resume?: string;
   }>();
   const isResume = resume === "1";
+  const { getToken: clerkGetToken } = useAuth();
+  const getTokenRef = React.useRef(clerkGetToken);
+  getTokenRef.current = clerkGetToken;
   const {
     profile,
     emergencyContact,
@@ -410,8 +415,11 @@ export default function LiveHike() {
   // Wikipedia-Auszug hat (wird im Erzaehl-Effekt mitbefuellt).
   const [nearbyPoiKontext, setNearbyPoiKontext] = useState<string | null>(null);
   const [narrationUnavailable, setNarrationUnavailable] = useState(false);
-  // Feature: Foto-Challenge
+  // Feature: Foto-Challenge + Waypoint-Fotos
   const [hikePhotos, setHikePhotos] = useState<string[]>([]);
+  const [photoObjectPaths, setPhotoObjectPaths] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadFeedback, setPhotoUploadFeedback] = useState<"ok" | "error" | null>(null);
   const [showPhotoChallenge, setShowPhotoChallenge] = useState(false);
   const photoChallengeShownRef = useRef(false);
   const [rawSurfacePoints, setRawSurfacePoints] = useState<RouteSurfacePoint[]>([]);
@@ -1148,6 +1156,7 @@ export default function LiveHike() {
   }, [distance, totalKm, storyLanguage, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
 
   const takePhoto = async () => {
+    setShowPhotoChallenge(false);
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
@@ -1155,13 +1164,34 @@ export default function LiveHike() {
         allowsEditing: false,
       });
       if (!result.canceled && result.assets[0]?.uri) {
-        setHikePhotos((prev) => [...prev, result.assets[0].uri]);
+        const localUri = result.assets[0].uri;
+        setHikePhotos((prev) => [...prev, localUri]);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setPhotoUploading(true);
+        setPhotoUploadFeedback(null);
+        try {
+          const uploaded = await uploadWaypointPhoto(
+            localUri,
+            {
+              sagaId: id,
+              routeId: typeof routeId === "string" ? routeId : undefined,
+              chapterIndex: currentIndexRef.current,
+              lat: livePos?.lat,
+              lng: livePos?.lng,
+            },
+            () => getTokenRef.current()
+          );
+          setPhotoObjectPaths((prev) => [...prev, uploaded.objectPath]);
+          setPhotoUploadFeedback("ok");
+        } catch {
+          setPhotoUploadFeedback("error");
+        } finally {
+          setPhotoUploading(false);
+          setTimeout(() => setPhotoUploadFeedback(null), 3000);
+        }
       }
     } catch {
       // Kamera nicht verfuegbar — kein Fehlerzustand noetig
-    } finally {
-      setShowPhotoChallenge(false);
     }
   };
 
@@ -2403,6 +2433,66 @@ export default function LiveHike() {
               </Text>
             )}
 
+            {/* Waypoint-Foto-Button — immer sichtbar */}
+            <View style={styles.photoRow}>
+              <Pressable
+                onPress={takePhoto}
+                disabled={photoUploading}
+                style={[
+                  styles.photoFab,
+                  {
+                    borderColor: photoUploadFeedback === "error" ? colors.accent : colors.glassBorder,
+                    backgroundColor: colors.glassBg,
+                    opacity: photoUploading ? 0.6 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t.photoAddBtn}
+              >
+                {photoUploading ? (
+                  <ActivityIndicator size={14} color={colors.mutedForeground} />
+                ) : (
+                  <Feather
+                    name="camera"
+                    size={15}
+                    color={photoUploadFeedback === "error" ? colors.accent : colors.mutedForeground}
+                  />
+                )}
+                <Text style={[styles.photoFabText, {
+                  color: photoUploadFeedback === "error" ? colors.accent : colors.mutedForeground,
+                }]}>
+                  {photoUploading
+                    ? t.photoUploading
+                    : photoUploadFeedback === "ok"
+                    ? t.photoUploaded
+                    : photoUploadFeedback === "error"
+                    ? t.photoUploadError
+                    : t.photoAddBtn}
+                </Text>
+              </Pressable>
+
+              {/* Thumbnail-Strip der aufgenommenen Fotos */}
+              {hikePhotos.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.photoStrip}
+                  contentContainerStyle={styles.photoStripContent}
+                >
+                  {hikePhotos.map((uri, idx) => (
+                    <View key={idx} style={styles.photoThumbWrap}>
+                      <Image source={{ uri }} style={styles.photoThumb} />
+                      {idx >= hikePhotos.length - photoObjectPaths.length && (
+                        <View style={[styles.photoThumbBadge, { backgroundColor: colors.primary }]}>
+                          <Feather name="check" size={8} color="#fff" />
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
             {/* GPS-Foto-Challenge */}
             {showPhotoChallenge && (
               <Animated.View entering={FadeInUp} exiting={FadeOut} style={styles.photoChallengeWrap}>
@@ -2792,6 +2882,31 @@ const styles = StyleSheet.create({
   optionBtn: { ...GLAS_3D, borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
+  photoRow: { flexDirection: "row", alignItems: "center", marginTop: 20, gap: 10, flexWrap: "wrap" },
+  photoFab: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  photoFabText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
+  photoStrip: { flex: 1, maxHeight: 52 },
+  photoStripContent: { gap: 6 },
+  photoThumbWrap: { position: "relative", width: 48, height: 48 },
+  photoThumb: { width: 48, height: 48, borderRadius: 8 },
+  photoThumbBadge: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   photoChallengeWrap: { marginTop: 24 },
   photoChallengePanel: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 18 },
   photoChallengeHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 14 },

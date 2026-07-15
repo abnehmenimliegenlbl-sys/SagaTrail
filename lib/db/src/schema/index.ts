@@ -11,3 +11,4 @@ export * from "./partners";
 export * from "./partnerAnfragen";
 export * from "./partnerTokens";
 export * from "./trailConditions";
+export * from "./waypointPhotos";

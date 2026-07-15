@@ -25,6 +25,8 @@ import flyerRouter from "./flyer";
 import trailConditionsRouter from "./trailConditions";
 import avalancheRouter from "./avalanche";
 import transportRouter from "./transport";
+import storageRouter from "./storage";
+import waypointPhotosRouter from "./waypointPhotos";
 
 const router: IRouter = Router();
 
@@ -54,5 +56,7 @@ router.use(flyerRouter);
 router.use(trailConditionsRouter);
 router.use(avalancheRouter);
 router.use(transportRouter);
+router.use(storageRouter);
+router.use(waypointPhotosRouter);
 
 export default router;
