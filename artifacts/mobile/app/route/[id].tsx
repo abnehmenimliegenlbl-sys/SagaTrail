@@ -80,6 +80,14 @@ export default function Routenplanung() {
     return lueckeKm <= schwelleKm ? "rundweg" : "strecke";
   }, [route?.geometry, route?.distanceKm]);
 
+  // Oeffnet die SBB-Anreise zum Routenstart (Trailhead).
+  // Universal-Link: oeffnet die SBB-App wenn installiert, sonst den Browser.
+  const oeffneAnreise = React.useCallback(() => {
+    const dest = route?.region ?? "";
+    const encoded = encodeURIComponent(dest);
+    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encoded}`).catch(() => {});
+  }, [route?.region]);
+
   // Oeffnet die OeV-Rueckreise vom Routenende zurueck zum Startpunkt
   // (Google-Maps-Transit-Link funktioniert auf iOS, Android und Web).
   const oeffneRueckreise = React.useCallback(() => {
@@ -494,6 +502,20 @@ export default function Routenplanung() {
             )}
           </>
         )}
+
+        {/* SBB-Anreise-Button — für alle Routentypen sichtbar */}
+        <Pressable
+          onPress={oeffneAnreise}
+          style={[
+            styles.rueckreiseButton,
+            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 14 },
+          ]}
+        >
+          <Feather name="send" size={15} color={colors.accent} />
+          <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
+            {t.planOutward}
+          </Text>
+        </Pressable>
 
         <View
           style={[

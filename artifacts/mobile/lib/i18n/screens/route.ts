@@ -65,6 +65,7 @@ export interface RouteStrings {
   routeTypeStrecke: string;
   streckeHint: string;
   planReturn: string;
+  planOutward: string;
   similarRoutes: string;
 }
 
@@ -143,6 +144,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Start und Ziel liegen auseinander — in der Schweiz üblich: Die Rückreise erfolgt meist mit Bahn oder Postauto.",
     planReturn: "Rückreise mit ÖV planen",
+    planOutward: "Mit SBB anreisen",
     similarRoutes: "Weitere Routen im Kanton",
   },
   gsw: {
@@ -219,6 +221,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Start und Ziil liged usenand — i de Schwiiz üeblich: Zrugg gahts meischtens mit Bahn oder Poschtauto.",
     planReturn: "Rückreis mit ÖV plane",
+    planOutward: "Mit de SBB aareise",
     similarRoutes: "Wiiteri Route im Kanton",
   },
   en: {
@@ -295,6 +298,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Start and finish are in different places — common in Switzerland: the return trip is usually by train or PostBus.",
     planReturn: "Plan return by public transport",
+    planOutward: "Travel by SBB train",
     similarRoutes: "More routes in the canton",
   },
   fr: {
@@ -371,6 +375,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Le départ et l'arrivée sont éloignés — courant en Suisse : le retour se fait généralement en train ou en car postal.",
     planReturn: "Planifier le retour en transports publics",
+    planOutward: "Voyager en train SBB",
     similarRoutes: "Autres itinéraires dans le canton",
   },
   it: {
@@ -447,6 +452,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Partenza e arrivo sono distanti — comune in Svizzera: il ritorno avviene di solito in treno o autopostale.",
     planReturn: "Pianifica il ritorno con i mezzi pubblici",
+    planOutward: "Viaggiare in treno SBB",
     similarRoutes: "Altri percorsi nel cantone",
   },
   es: {
@@ -523,6 +529,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "El inicio y el final están separados — habitual en Suiza: el regreso suele hacerse en tren o autobús postal.",
     planReturn: "Planificar el regreso en transporte público",
+    planOutward: "Viajar en tren SBB",
     similarRoutes: "Más rutas en el cantón",
   },
   pt: {
@@ -599,6 +606,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Início e fim ficam distantes — comum na Suíça: o retorno geralmente é de trem ou ônibus postal.",
     planReturn: "Planejar o retorno de transporte público",
+    planOutward: "Viajar de trem SBB",
     similarRoutes: "Mais rotas no cantão",
   },
   zh: {
@@ -668,6 +676,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     routeTypeStrecke: "单程徒步",
     streckeHint: "起点和终点不在同一处——这在瑞士很常见：通常乘火车或邮政巴士返回。",
     planReturn: "规划公共交通返程",
+    planOutward: "乘SBB火车出发",
     similarRoutes: "该州的更多路线",
   },
   ru: {
@@ -744,6 +753,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     streckeHint:
       "Начало и конец находятся в разных местах — обычное дело в Швейцарии: обратный путь чаще всего на поезде или почтовом автобусе.",
     planReturn: "Спланировать обратный путь на общественном транспорте",
+    planOutward: "Ехать на поезде SBB",
     similarRoutes: "Ещё маршруты в кантоне",
   },
 };
