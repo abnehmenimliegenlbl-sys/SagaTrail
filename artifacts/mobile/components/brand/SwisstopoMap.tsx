@@ -17,6 +17,7 @@ export function SwisstopoMap({
   label = "Start",
   height = 220,
   geometry,
+  altGeometry,
   offlineTiles,
   aerialways,
   pois,
@@ -59,9 +60,10 @@ export function SwisstopoMap({
           partner: t.legendPartner,
         },
         partners,
-        pickerMode
+        pickerMode,
+        altGeometry
       ),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, pickerMode, t]
+    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, pickerMode, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

@@ -28,6 +28,11 @@ export interface SwisstopoMapProps {
    */
   geometry?: number[][] | null;
   /**
+   * Neuberechnete Alternativroute (Off-Route-Warnung). Wird als gestrichelte
+   * türkisfarbene Linie über der Hauptroute gezeichnet.
+   */
+  altGeometry?: number[][] | null;
+  /**
    * Optionale Offline-Kacheln als Data-URIs, Schluessel `z/x/y`. Sind sie
    * gesetzt, werden lokale Kacheln bevorzugt und fehlende online nachgeladen.
    */
@@ -110,7 +115,8 @@ export function buildSwisstopoHtml(
   pois?: MapPoi[] | null,
   legend?: MapLegendLabels | null,
   partners?: MapPoi[] | null,
-  pickerMode?: boolean
+  pickerMode?: boolean,
+  altGeometry?: number[][] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -127,6 +133,8 @@ export function buildSwisstopoHtml(
   const partnersJson =
     partners && partners.length > 0 ? JSON.stringify(partners) : "null";
   const legendJson = legend ? JSON.stringify(legend) : "null";
+  const altGeometryJson =
+    altGeometry && altGeometry.length > 1 ? JSON.stringify(altGeometry) : "null";
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -214,6 +222,7 @@ export function buildSwisstopoHtml(
     var map = L.map('map', { zoomControl: true, attributionControl: true, tap: false }).setView([${lat}, ${lng}], 14);
     var offline = ${offlineJson};
     var geometry = ${geometryJson};
+    var altGeometry = ${altGeometryJson};
     var aerialways = ${aerialwaysJson};
     // Basiskarte: helle, reduzierte Strassenkarte (kein Relief/Hoehenlinien).
     var tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
@@ -269,6 +278,12 @@ export function buildSwisstopoHtml(
       map.fitBounds(line.getBounds(), { padding: [26, 26] });
     } else {
       L.marker([${lat}, ${lng}], { icon: startIcon }).addTo(map).bindPopup(${title});
+    }
+
+    // Neuberechnete Alternativroute (Off-Route) — gestrichelte Tuerkis-Linie.
+    if (altGeometry && altGeometry.length > 1) {
+      L.polyline(altGeometry, { color: '#10181A', weight: 6, opacity: 0.4, lineJoin: 'round', lineCap: 'round' }).addTo(map);
+      L.polyline(altGeometry, { color: '#2EC4B6', weight: 3.5, opacity: 0.95, dashArray: '8,5', lineJoin: 'round', lineCap: 'round' }).addTo(map);
     }
 
     var partners = ${partnersJson};

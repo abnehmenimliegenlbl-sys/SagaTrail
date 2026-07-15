@@ -18,6 +18,7 @@ import { Pedometer } from "expo-sensors";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Linking,
   Modal,
@@ -53,7 +54,7 @@ import {
   stopBackgroundLocationTracking,
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { bboxAroundGeometry, bearingDeg, compassIndex, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -78,6 +79,15 @@ const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes G
 
 /** Minimaler Zeitabstand zwischen zwei geloggten Track-Punkten (ms). */
 const TRACK_LOG_INTERVAL_MS = 8000;
+
+/** Abstand in km ab dem eine Warnung "vom Weg abgekommen" ausgeloest wird. */
+const OFF_ROUTE_THRESHOLD_KM = 0.08;
+/** Abstand in km ab dem die Warnung automatisch wieder erlischt. */
+const OFF_ROUTE_RECOVER_KM = 0.04;
+/** Anzahl aufeinanderfolgender GPS-Fixes, die ueberschritten sein muessen, bevor gewarnt wird. */
+const OFF_ROUTE_CONFIRM_FIXES = 3;
+/** Valhalla-Fussweg-Routing (FOSSGIS, kein API-Key noetig). */
+const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
 /** RDP-Epsilon in Grad (≈ 8 m bei Schweizer Breitengraden). */
 const RDP_EPSILON = 0.00007;
 /** Mindestanzahl Punkte damit der Live-Track statt der Routen-Geometrie verwendet wird. */
@@ -268,6 +278,16 @@ export default function LiveHike() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [isOffline, setIsOffline] = useState<boolean>(false);
+  /** GPS-Position zum Zeitpunkt der Off-Route-Erkennung — treibt die Neuberechnung. */
+  const [offRoutePos, setOffRoutePos] = useState<LatLng | null>(null);
+  /** Neuberechnete Alternativroute von Valhalla (gestrichelte Linie auf der Karte). */
+  const [recalcGeom, setRecalcGeom] = useState<number[][] | null>(null);
+  /** true waehrend die Valhalla-Anfrage laeuft. */
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  /** true wenn Valhalla nicht erreichbar war. */
+  const [recalcFailed, setRecalcFailed] = useState(false);
+  /** true wenn der Nutzer "Dieser Route folgen" getippt hat. */
+  const [followingRecalc, setFollowingRecalc] = useState(false);
   // Einmalig true sobald der User den Streckenstart passiert hat —
   // verhindert, dass das "Zum Start laufen"-Banner nach dem Passieren
   // wieder auftaucht (User ist dann einfach weiter von geometry[0] weg).
@@ -284,6 +304,57 @@ export default function LiveHike() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+
+  // Valhalla-Neuberechnung: laeuft immer wenn offRoutePos sich aendert.
+  // Bei null (wieder auf der Route): alle Off-Route-States zuruecksetzen.
+  useEffect(() => {
+    if (!offRoutePos) {
+      setRecalcGeom(null);
+      setIsRecalculating(false);
+      setRecalcFailed(false);
+      setFollowingRecalc(false);
+      return;
+    }
+    const geom = routeGeomRef.current;
+    if (!geom || geom.length < 2) return;
+    const dest = geom[geom.length - 1]; // [lat, lng] des Routenendes
+    setIsRecalculating(true);
+    setRecalcFailed(false);
+    setRecalcGeom(null);
+    setFollowingRecalc(false);
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(VALHALLA_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            locations: [
+              { lon: offRoutePos.lng, lat: offRoutePos.lat },
+              { lon: dest[1], lat: dest[0] },
+            ],
+            costing: "pedestrian",
+            shape_format: "polyline6",
+          }),
+          signal: controller.signal,
+        });
+        const data = await res.json() as { trip?: { legs?: { shape?: string }[] } };
+        const shape = data?.trip?.legs?.[0]?.shape;
+        if (shape) {
+          setRecalcGeom(decodePolyline6(shape));
+        } else {
+          setRecalcFailed(true);
+        }
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") {
+          setRecalcFailed(true);
+        }
+      } finally {
+        setIsRecalculating(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [offRoutePos]);
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
@@ -348,6 +419,12 @@ export default function LiveHike() {
   /** Aufgezeichneter GPS-Track: [lat, lng]-Paare im zeitlichen Abstand >= TRACK_LOG_INTERVAL_MS */
   const posLogRef = useRef<[number, number][]>([]);
   const lastTrackLogTimeRef = useRef<number>(0);
+  /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
+  const routeGeomRef = useRef<number[][] | null | undefined>(null);
+  /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
+  const isOffRouteRef = useRef(false);
+  /** Zaehler aufeinanderfolgender GPS-Fixes ausserhalb der Route. */
+  const offRouteCountRef = useRef(0);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
   const narratedPoiIdRef = useRef<string | null>(null);
@@ -772,8 +849,14 @@ export default function LiveHike() {
     };
   }, [saga, isDownloaded, loadOfflineTiles]);
 
-  // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren
-  // und Track-Punkt fuer den GPX-Export loggen.
+  // routeGeomRef wird synchron gehalten damit handleFix (leere Deps)
+  // die aktuelle Geometrie immer per Ref lesen kann.
+  useEffect(() => {
+    routeGeomRef.current = route?.geometry;
+  });
+
+  // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren,
+  // Track-Punkt loggen und Off-Route-Status ueberpruefen.
   const handleFix = useCallback((lat: number, lng: number, accuracy: number | null = null) => {
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
@@ -792,6 +875,25 @@ export default function LiveHike() {
     if (now - lastTrackLogTimeRef.current >= TRACK_LOG_INTERVAL_MS) {
       posLogRef.current.push([lat, lng]);
       lastTrackLogTimeRef.current = now;
+    }
+    // Off-Route-Erkennung: Distanz zum naechsten Punkt auf der geplanten Route.
+    const geom = routeGeomRef.current;
+    if (geom && geom.length >= 2) {
+      const proj = fortschrittAufRoute(cur, geom);
+      const distKm = proj?.distKm ?? 0;
+      if (distKm > OFF_ROUTE_THRESHOLD_KM) {
+        offRouteCountRef.current += 1;
+        if (offRouteCountRef.current >= OFF_ROUTE_CONFIRM_FIXES && !isOffRouteRef.current) {
+          isOffRouteRef.current = true;
+          setOffRoutePos(cur);
+        }
+      } else if (distKm < OFF_ROUTE_RECOVER_KM) {
+        offRouteCountRef.current = 0;
+        if (isOffRouteRef.current) {
+          isOffRouteRef.current = false;
+          setOffRoutePos(null);
+        }
+      }
     }
   }, []);
 
@@ -1883,6 +1985,68 @@ export default function LiveHike() {
             </Text>
           </Animated.View>
         )}
+
+        {/* Off-Route-Warnung mit Neuberechnung */}
+        {offRoutePos && (
+          <Animated.View
+            entering={FadeInUp}
+            exiting={FadeOut}
+            style={[
+              styles.offRouteBanner,
+              { backgroundColor: colors.card, borderColor: "#E8A800" },
+            ]}
+          >
+            <View style={styles.offRouteBannerRow}>
+              <Feather name="alert-triangle" size={16} color="#E8A800" />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.offRouteBannerTitle, { color: colors.foreground }]}>
+                  {t.offRouteTitle}
+                </Text>
+                <Text style={[styles.offRouteBannerHint, { color: colors.mutedForeground }]}>
+                  {isRecalculating
+                    ? t.offRouteRecalculating
+                    : recalcFailed
+                    ? t.offRouteRecalcFailed
+                    : recalcGeom
+                    ? t.offRouteRecalcDone
+                    : t.offRouteHint}
+                </Text>
+              </View>
+              {isRecalculating && (
+                <ActivityIndicator size="small" color="#E8A800" />
+              )}
+              <Pressable
+                onPress={() => {
+                  isOffRouteRef.current = false;
+                  offRouteCountRef.current = 0;
+                  setOffRoutePos(null);
+                }}
+                hitSlop={10}
+              >
+                <Feather name="x" size={18} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
+            {recalcGeom && !isRecalculating && (
+              <Pressable
+                onPress={() => {
+                  setFollowingRecalc(true);
+                  isOffRouteRef.current = false;
+                  offRouteCountRef.current = 0;
+                  setOffRoutePos(null);
+                }}
+                style={[
+                  styles.offRouteFollowBtn,
+                  { backgroundColor: "#E8A800" },
+                ]}
+              >
+                <Feather name="navigation" size={14} color="#10181A" />
+                <Text style={[styles.offRouteFollowText, { color: "#10181A" }]}>
+                  {t.offRouteFollow}
+                </Text>
+              </Pressable>
+            )}
+          </Animated.View>
+        )}
         <View style={styles.headRow}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.eyebrow, { color: colors.accent }]}>
@@ -1922,7 +2086,8 @@ export default function LiveHike() {
                   position={shownPos}
                   label={saga.title}
                   height={hoehe}
-                  geometry={route?.geometry}
+                  geometry={followingRecalc ? (recalcGeom ?? route?.geometry) : route?.geometry}
+                  altGeometry={!followingRecalc ? recalcGeom : null}
                   offlineTiles={offlineTiles}
                   aerialways={aerialways}
                   pois={pois}
@@ -2508,6 +2673,26 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 14,
   },
+  offRouteBanner: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    gap: 10,
+  },
+  offRouteBannerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  offRouteBannerTitle: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  offRouteBannerHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  offRouteFollowBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
+  offRouteFollowText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   bannerBtn: {
     flexDirection: "row",
     alignItems: "center",

@@ -69,6 +69,12 @@ export interface HikeStrings {
   leaderChose: (option: string) => string;
   photoTake: string;
   photoSkip: string;
+  offRouteTitle: string;
+  offRouteHint: string;
+  offRouteRecalculating: string;
+  offRouteRecalcDone: string;
+  offRouteFollow: string;
+  offRouteRecalcFailed: string;
 }
 
 const HIKE_STRINGS: StringsDict<HikeStrings> = {
@@ -144,6 +150,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `Die Gruppenleitung hat gewählt: ${option}`,
     photoTake: "Foto aufnehmen",
     photoSkip: "Überspringen",
+    offRouteTitle: "Vom Weg abgekommen",
+    offRouteHint: "GPS zeigt ~80 m neben dem Wanderweg",
+    offRouteRecalculating: "Neue Route wird berechnet …",
+    offRouteRecalcDone: "Neue Route bereit",
+    offRouteFollow: "Dieser Route folgen",
+    offRouteRecalcFailed: "Neuberechnung fehlgeschlagen",
   },
   gsw: {
     notAvailable: "Nid verfügbär",
@@ -217,6 +229,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `D Gruppäleitig het gwählt: ${option}`,
     photoTake: "Foto ufnä",
     photoSkip: "Überspringe",
+    offRouteTitle: "Vom Wäg abcho",
+    offRouteHint: "GPS zeigt ~80 m näbe em Wanderwäg",
+    offRouteRecalculating: "Neui Route wird berechnet …",
+    offRouteRecalcDone: "Neui Route bereit",
+    offRouteFollow: "Dere Route folge",
+    offRouteRecalcFailed: "Neuberechniig fehlgschlage",
   },
   en: {
     notAvailable: "Not available",
@@ -290,6 +308,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `The group leader chose: ${option}`,
     photoTake: "Take photo",
     photoSkip: "Skip",
+    offRouteTitle: "Off Route",
+    offRouteHint: "GPS shows ~80 m from the hiking trail",
+    offRouteRecalculating: "Calculating new route …",
+    offRouteRecalcDone: "New route ready",
+    offRouteFollow: "Follow this route",
+    offRouteRecalcFailed: "Recalculation failed",
   },
   fr: {
     notAvailable: "Non disponible",
@@ -363,6 +387,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `Le chef de groupe a choisi : ${option}`,
     photoTake: "Prendre une photo",
     photoSkip: "Ignorer",
+    offRouteTitle: "Hors itinéraire",
+    offRouteHint: "Le GPS indique ~80 m à l'écart du sentier",
+    offRouteRecalculating: "Calcul du nouvel itinéraire …",
+    offRouteRecalcDone: "Nouvel itinéraire prêt",
+    offRouteFollow: "Suivre cet itinéraire",
+    offRouteRecalcFailed: "Recalcul impossible",
   },
   it: {
     notAvailable: "Non disponibile",
@@ -436,6 +466,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `Il capogruppo ha scelto: ${option}`,
     photoTake: "Scatta foto",
     photoSkip: "Salta",
+    offRouteTitle: "Fuori percorso",
+    offRouteHint: "Il GPS indica ~80 m dal sentiero",
+    offRouteRecalculating: "Calcolo nuovo percorso …",
+    offRouteRecalcDone: "Nuovo percorso pronto",
+    offRouteFollow: "Segui questo percorso",
+    offRouteRecalcFailed: "Ricalcolo fallito",
   },
   es: {
     notAvailable: "No disponible",
@@ -509,6 +545,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `El líder del grupo eligió: ${option}`,
     photoTake: "Tomar foto",
     photoSkip: "Omitir",
+    offRouteTitle: "Fuera de ruta",
+    offRouteHint: "El GPS muestra ~80 m fuera del sendero",
+    offRouteRecalculating: "Calculando nueva ruta …",
+    offRouteRecalcDone: "Nueva ruta lista",
+    offRouteFollow: "Seguir esta ruta",
+    offRouteRecalcFailed: "Recálculo fallido",
   },
   pt: {
     notAvailable: "Não disponível",
@@ -582,6 +624,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `O líder do grupo escolheu: ${option}`,
     photoTake: "Tirar foto",
     photoSkip: "Ignorar",
+    offRouteTitle: "Fora da rota",
+    offRouteHint: "GPS indica ~80 m do trilho",
+    offRouteRecalculating: "Calculando nova rota …",
+    offRouteRecalcDone: "Nova rota pronta",
+    offRouteFollow: "Seguir esta rota",
+    offRouteRecalcFailed: "Recálculo falhou",
   },
   zh: {
     notAvailable: "不可用",
@@ -655,6 +703,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `队长选择了：${option}`,
     photoTake: "拍照",
     photoSkip: "跳过",
+    offRouteTitle: "偏离路线",
+    offRouteHint: "GPS显示距步道约80米",
+    offRouteRecalculating: "正在计算新路线 …",
+    offRouteRecalcDone: "新路线已就绪",
+    offRouteFollow: "跟随此路线",
+    offRouteRecalcFailed: "重新计算失败",
   },
   ru: {
     notAvailable: "Недоступно",
@@ -728,6 +782,12 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     leaderChose: (option) => `Лидер группы выбрал: ${option}`,
     photoTake: "Сделать фото",
     photoSkip: "Пропустить",
+    offRouteTitle: "Отклонение от маршрута",
+    offRouteHint: "GPS показывает ~80 м в стороне от тропы",
+    offRouteRecalculating: "Рассчитывается новый маршрут …",
+    offRouteRecalcDone: "Новый маршрут готов",
+    offRouteFollow: "Следовать по маршруту",
+    offRouteRecalcFailed: "Пересчёт не удался",
   },
 };
 

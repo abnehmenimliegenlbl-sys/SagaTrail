@@ -105,6 +105,39 @@ export function compassIndex(deg: number): number {
   return Math.round(((deg % 360) + 360) % 360 / 45) % 8;
 }
 
+/**
+ * Dekodiert eine Polyline6-Zeichenkette (Valhalla-Format, Präzision 1e-6)
+ * in ein Array von [lat, lng]-Paaren. Wird genutzt, um Routing-Antworten
+ * der FOSSGIS-Valhalla-Instanz in Kartengeometrie umzuwandeln.
+ */
+export function decodePolyline6(encoded: string): [number, number][] {
+  const points: [number, number][] = [];
+  let lat = 0;
+  let lng = 0;
+  let i = 0;
+  while (i < encoded.length) {
+    let b: number;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = encoded.charCodeAt(i++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(i++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+    points.push([lat / 1e6, lng / 1e6]);
+  }
+  return points;
+}
+
 export interface BoundingBox {
   south: number;
   west: number;
