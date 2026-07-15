@@ -292,6 +292,31 @@ export interface AvalancheBulletin {
   regionName?: string | null;
 }
 
+export interface TransportDeparture {
+  /** Abfahrtszeit HH:MM */
+  time: string;
+  /** Zielstation */
+  to: string;
+  /** Verkehrsmittel-Kategorie (S, IC, IR, Bus, etc.) */
+  category: string;
+  /** Liniennummer */
+  number: string;
+  /** Verspaetung in Minuten (null = keine Echtzeit-Daten) */
+  delay?: number | null;
+  /** Gleis oder Kante */
+  platform?: string | null;
+}
+
+export type TransportStationboardStation = {
+  id: string;
+  name: string;
+} | null;
+
+export interface TransportStationboard {
+  station?: TransportStationboardStation;
+  departures: TransportDeparture[];
+}
+
 export type TrailConditionReportCondition = typeof TrailConditionReportCondition[keyof typeof TrailConditionReportCondition];
 
 
@@ -559,6 +584,17 @@ export const GetAvalancheBulletinLang = {
   it: 'it',
   en: 'en',
 } as const;
+
+export type GetTransportStationboardParams = {
+/**
+ * Breitengrad (WGS84)
+ */
+lat: number;
+/**
+ * Laengengrad (WGS84)
+ */
+lng: number;
+};
 
 export type GetWeatherParams = {
 lat: number;

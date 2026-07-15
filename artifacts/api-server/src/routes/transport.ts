@@ -1,0 +1,101 @@
+import { Router } from "express";
+import pino from "pino";
+
+const log = pino({ name: "transport" });
+const router = Router();
+
+const OPENDATA_BASE = "https://transport.opendata.ch/v1";
+const CACHE_TTL_MS = 2 * 60 * 1000;
+
+interface CacheEntry { data: TransportResult; ts: number }
+const cache = new Map<string, CacheEntry>();
+
+export interface TransportDeparture {
+  time: string;
+  to: string;
+  category: string;
+  number: string;
+  delay: number | null;
+  platform: string | null;
+}
+
+export interface TransportResult {
+  station: { id: string; name: string } | null;
+  departures: TransportDeparture[];
+}
+
+router.get("/transport", async (req, res) => {
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+  if (isNaN(lat) || isNaN(lng)) {
+    return res.status(400).json({ error: "lat und lng sind erforderlich" });
+  }
+
+  const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.ts < CACHE_TTL_MS) {
+    return res.json(hit.data);
+  }
+
+  try {
+    const locUrl = `${OPENDATA_BASE}/locations?x=${lat}&y=${lng}&type=station`;
+    const locRes = await fetch(locUrl, { signal: AbortSignal.timeout(8000) });
+    if (!locRes.ok) throw new Error(`locations HTTP ${locRes.status}`);
+
+    const locJson = (await locRes.json()) as {
+      stations: Array<{ id: string | null; name: string; distance: number | null }>;
+    };
+
+    const station = locJson.stations.find(s => s.id && /^\d+$/.test(s.id));
+    if (!station?.id) {
+      const empty: TransportResult = { station: null, departures: [] };
+      cache.set(key, { data: empty, ts: Date.now() });
+      return res.json(empty);
+    }
+
+    const now = new Date().toISOString().slice(0, 16);
+    const sbUrl = `${OPENDATA_BASE}/stationboard?station=${encodeURIComponent(station.id)}&limit=8&datetime=${encodeURIComponent(now)}`;
+    const sbRes = await fetch(sbUrl, { signal: AbortSignal.timeout(8000) });
+    if (!sbRes.ok) throw new Error(`stationboard HTTP ${sbRes.status}`);
+
+    const sbJson = (await sbRes.json()) as {
+      station: { id: string; name: string };
+      stationboard: Array<{
+        stop: {
+          departure: string | null;
+          departureTimestamp: number | null;
+          delay: number | null;
+          platform: string | null;
+        };
+        category: string;
+        number: string;
+        to: string;
+      }>;
+    };
+
+    const departures: TransportDeparture[] = (sbJson.stationboard ?? [])
+      .filter(e => e.stop.departureTimestamp != null)
+      .slice(0, 8)
+      .map(e => ({
+        time: e.stop.departure ? e.stop.departure.slice(11, 16) : "",
+        to: e.to,
+        category: e.category,
+        number: e.number,
+        delay: e.stop.delay ?? null,
+        platform: e.stop.platform ?? null,
+      }));
+
+    const result: TransportResult = {
+      station: { id: station.id, name: station.name },
+      departures,
+    };
+    cache.set(key, { data: result, ts: Date.now() });
+    log.info({ station: station.name, departures: departures.length }, "transport geladen");
+    return res.json(result);
+  } catch (err) {
+    log.warn({ err }, "transport fetch fehlgeschlagen");
+    return res.status(502).json({ error: "Fahrplan nicht verfügbar" });
+  }
+});
+
+export default router;

@@ -280,6 +280,31 @@ export const GetAvalancheBulletinResponse = zod.object({
 
 
 /**
+ * Findet den naechstgelegenen oeffentlichen Verkehrshalt (transport.opendata.ch) und liefert die naechsten Abfahrten. Wird fuer die SBB-live-Karte am Routenendpunkt verwendet. Daten werden 2 Minuten gecacht.
+ * @summary Live-SBB-Abfahrten am naechsten Bahnhof zu einem Koordinatenpunkt
+ */
+export const GetTransportStationboardQueryParams = zod.object({
+  "lat": zod.coerce.number().describe('Breitengrad (WGS84)'),
+  "lng": zod.coerce.number().describe('Laengengrad (WGS84)')
+})
+
+export const GetTransportStationboardResponse = zod.object({
+  "station": zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+}).nullish(),
+  "departures": zod.array(zod.object({
+  "time": zod.string().describe('Abfahrtszeit HH:MM'),
+  "to": zod.string().describe('Zielstation'),
+  "category": zod.string().describe('Verkehrsmittel-Kategorie (S, IC, IR, Bus, etc.)'),
+  "number": zod.string().describe('Liniennummer'),
+  "delay": zod.number().nullish().describe('Verspaetung in Minuten (null = keine Echtzeit-Daten)'),
+  "platform": zod.string().nullish().describe('Gleis oder Kante')
+}))
+})
+
+
+/**
  * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
  * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
  */

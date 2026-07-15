@@ -402,6 +402,39 @@ paths:
                 $ref: "#/components/schemas/AvalancheBulletin"
         "400":
           description: Fehlender canton-Parameter
+  /transport:
+    get:
+      operationId: getTransportStationboard
+      tags: [routes]
+      summary: Live-SBB-Abfahrten am naechsten Bahnhof zu einem Koordinatenpunkt
+      description: >
+        Findet den naechstgelegenen oeffentlichen Verkehrshalt (transport.opendata.ch)
+        und liefert die naechsten Abfahrten. Wird fuer die SBB-live-Karte am Routenendpunkt
+        verwendet. Daten werden 2 Minuten gecacht.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+          description: Breitengrad (WGS84)
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+          description: Laengengrad (WGS84)
+      responses:
+        "200":
+          description: Naechster Bahnhof und Abfahrten (oder leere Liste wenn keiner gefunden)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportStationboard"
+        "400":
+          description: Fehlende lat/lng Parameter
+        "502":
+          description: Upstream-Fehler von transport.opendata.ch
   /routes/weather:
     get:
       operationId: getWeather
@@ -1493,6 +1526,54 @@ components:
           nullable: true
       required:
         - available
+    TransportDeparture:
+      type: object
+      properties:
+        time:
+          type: string
+          description: Abfahrtszeit HH:MM
+        to:
+          type: string
+          description: Zielstation
+        category:
+          type: string
+          description: Verkehrsmittel-Kategorie (S, IC, IR, Bus, etc.)
+        number:
+          type: string
+          description: Liniennummer
+        delay:
+          type: integer
+          nullable: true
+          description: Verspaetung in Minuten (null = keine Echtzeit-Daten)
+        platform:
+          type: string
+          nullable: true
+          description: Gleis oder Kante
+      required:
+        - time
+        - to
+        - category
+        - number
+    TransportStationboard:
+      type: object
+      properties:
+        station:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+          required:
+            - id
+            - name
+        departures:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransportDeparture"
+      required:
+        - departures
     TrailConditionReport:
       type: object
       description: >-

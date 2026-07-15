@@ -1,3 +1,6 @@
+- [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
+- [Metro cache after orval codegen clean](metro-orval-cache.md) — orval clean:true deletes+recreates generated/*.ts; Metro file watcher sees deletion but misses recreation; always restart Expo workflow after codegen.
+- [SBB transport.opendata.ch](sagatrail-sbb-transport.md) — Swiss public transport live API, free, no auth; x=lat y=lng; nearest station + stationboard in 2 steps; 2min server cache.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [Python i18n batch-insert double-comma](sagatrail-python-i18n-insert.md) — inserting after `},` with a string starting with `,` creates `},,`; fix by omitting the leading comma in the insert string.
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.

@@ -39,6 +39,7 @@ import type {
   GetRoutePhotoParams,
   GetRouteSurfacesParams,
   GetSagaPhotoParams,
+  GetTransportStationboardParams,
   GetWeatherParams,
   GpxImportBody,
   HealthStatus,
@@ -58,6 +59,7 @@ import type {
   StoryResponse,
   TrailConditionInput,
   TrailConditionReport,
+  TransportStationboard,
   WeatherReport
 } from './api.schemas';
 
@@ -818,6 +820,91 @@ export function useGetAvalancheBulletin<TData = Awaited<ReturnType<typeof getAva
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAvalancheBulletinQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTransportStationboardUrl = (params: GetTransportStationboardParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/transport?${stringifiedParams}` : `/api/transport`
+}
+
+/**
+ * Findet den naechstgelegenen oeffentlichen Verkehrshalt (transport.opendata.ch) und liefert die naechsten Abfahrten. Wird fuer die SBB-live-Karte am Routenendpunkt verwendet. Daten werden 2 Minuten gecacht.
+ * @summary Live-SBB-Abfahrten am naechsten Bahnhof zu einem Koordinatenpunkt
+ */
+export const getTransportStationboard = async (params: GetTransportStationboardParams, options?: RequestInit): Promise<TransportStationboard> => {
+
+  return customFetch<TransportStationboard>(getGetTransportStationboardUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTransportStationboardQueryKey = (params?: GetTransportStationboardParams,) => {
+    return [
+    `/api/transport`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTransportStationboardQueryOptions = <TData = Awaited<ReturnType<typeof getTransportStationboard>>, TError = ErrorType<void>>(params: GetTransportStationboardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransportStationboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTransportStationboardQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTransportStationboard>>> = ({ signal }) => getTransportStationboard(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTransportStationboard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTransportStationboardQueryResult = NonNullable<Awaited<ReturnType<typeof getTransportStationboard>>>
+export type GetTransportStationboardQueryError = ErrorType<void>
+
+
+/**
+ * @summary Live-SBB-Abfahrten am naechsten Bahnhof zu einem Koordinatenpunkt
+ */
+
+export function useGetTransportStationboard<TData = Awaited<ReturnType<typeof getTransportStationboard>>, TError = ErrorType<void>>(
+ params: GetTransportStationboardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTransportStationboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTransportStationboardQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

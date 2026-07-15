@@ -4,11 +4,12 @@ import {
   getPartners,
   getWeather,
   getAvalancheBulletin,
+  getTransportStationboard,
   importGpxRoute,
   useGetRouteConditions,
   reportRouteCondition,
 } from "@workspace/api-client-react";
-import type { Partner, TrailConditionReport, WeatherReport, AvalancheBulletin } from "@workspace/api-client-react";
+import type { Partner, TrailConditionReport, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -261,6 +262,9 @@ export default function Routenplanung() {
   // Lawinenbulletin (EAWS) – alpine Kantone, Winterhalbjahr
   const [avalanche, setAvalanche] = useState<AvalancheBulletin | null>(null);
   const [avalancheLoading, setAvalancheLoading] = useState(false);
+  // SBB live am Ziel – naechste Abfahrten am Routenendpunkt
+  const [transport, setTransport] = useState<TransportStationboard | null>(null);
+  const [transportLoading, setTransportLoading] = useState(false);
 
   async function submitCondition() {
     if (!selectedCondition || !id) return;
@@ -361,6 +365,23 @@ export default function Routenplanung() {
       .catch(() => { if (!cancelled) { setAvalanche(null); setAvalancheLoading(false); } });
     return () => { cancelled = true; };
   }, [route?.id, sagas.length]);
+
+  // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
+  // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
+  useEffect(() => {
+    if (!route) return;
+    const geom = route.geometry;
+    const endPt = geom && geom.length > 0
+      ? { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] }
+      : route.coordinates;
+    if (!endPt) return;
+    let cancelled = false;
+    setTransportLoading(true);
+    getTransportStationboard({ lat: endPt.lat, lng: endPt.lng })
+      .then((result) => { if (!cancelled) { setTransport(result); setTransportLoading(false); } })
+      .catch(() => { if (!cancelled) { setTransport(null); setTransportLoading(false); } });
+    return () => { cancelled = true; };
+  }, [route?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -510,6 +531,38 @@ export default function Routenplanung() {
           <Stat label={t.sacScale} value={meta.sac} unit="" />
         </Animated.View>
 
+        {/* ── Höhenwarnung ──────────────────────────────────────────── */}
+        {route && (route.maxElevationM ?? 0) >= 2000 && (() => {
+          const elev = route.maxElevationM ?? 0;
+          const color = elev >= 3000 ? "#EF4444" : elev >= 2500 ? "#F97316" : "#F59E0B";
+          const msg = elev >= 3000
+            ? t.altitudeWarningAlpin
+            : elev >= 2500
+              ? t.altitudeWarningHoch
+              : t.altitudeWarningBerg;
+          return (
+            <View style={[styles.checkCard, { borderColor: color, backgroundColor: colors.glassBg, marginTop: 12, borderWidth: 1 }]}>
+              <View style={styles.checkRow}>
+                <Feather name="alert-triangle" size={16} color={color} />
+                <Text style={[styles.checkLabel, { color: colors.foreground, fontFamily: fonts.bodyBold }]}>
+                  {t.altitudeWarning}
+                </Text>
+                <Text style={[styles.checkValue, { color, fontFamily: fonts.bodyBold }]}>
+                  {elev >= 1000
+                    ? `${Math.round(elev / 100) / 10}k m`
+                    : `${Math.round(elev)} m`}
+                </Text>
+              </View>
+              <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 4 }]}>
+                {t.altitudeM(Math.round(elev))}
+              </Text>
+              <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 2 }]}>
+                {msg}
+              </Text>
+            </View>
+          );
+        })()}
+
         <View style={styles.checkRow}>
           <Feather
             name={meta.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
@@ -579,6 +632,59 @@ export default function Routenplanung() {
             {t.planOutward}
           </Text>
         </Pressable>
+
+        {/* ── SBB live am Ziel ──────────────────────────────────────── */}
+        <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
+          <View style={[styles.checkRow, { marginBottom: 6 }]}>
+            <Feather name="navigation" size={15} color={colors.accent} />
+            <Text style={[styles.checkLabel, { color: colors.foreground, fontFamily: fonts.bodyBold, flex: 1 }]}>
+              {t.transportLive}
+            </Text>
+            {transport?.station && (
+              <Text style={[styles.checkValue, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {t.transportDepartingFrom(transport.station.name)}
+              </Text>
+            )}
+          </View>
+          {transportLoading ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportLoading}</Text>
+            </View>
+          ) : !transport?.station ? (
+            <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportNoStation}</Text>
+          ) : transport.departures.length === 0 ? (
+            <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportError}</Text>
+          ) : (
+            transport.departures.slice(0, 6).map((dep, i) => (
+              <View key={i} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder, gap: 6 }}>
+                <Text style={[styles.checkValue, { color: colors.foreground, fontFamily: fonts.bodyBold, width: 42 }]}>
+                  {dep.time}
+                </Text>
+                <Text style={[styles.checkNote, { color: colors.accent, fontFamily: fonts.bodyBold, width: 36 }]} numberOfLines={1}>
+                  {dep.category}{dep.number}
+                </Text>
+                <Text style={[styles.checkNote, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>
+                  {dep.to}
+                </Text>
+                {dep.platform ? (
+                  <Text style={[styles.checkNote, { color: colors.mutedForeground, width: 36, textAlign: "right" }]} numberOfLines={1}>
+                    {t.transportPlatform(dep.platform)}
+                  </Text>
+                ) : null}
+                {dep.delay != null && dep.delay > 0 ? (
+                  <Text style={[styles.checkNote, { color: "#EF4444", width: 44, textAlign: "right" }]}>
+                    {t.transportDelay(dep.delay)}
+                  </Text>
+                ) : dep.delay === 0 ? (
+                  <Text style={[styles.checkNote, { color: "#78C800", width: 44, textAlign: "right" }]}>
+                    {t.transportOnTime}
+                  </Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </View>
 
         <View
           style={[

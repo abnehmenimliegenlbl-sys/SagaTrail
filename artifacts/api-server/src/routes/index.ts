@@ -24,6 +24,7 @@ import partnerPortalRouter from "./partnerPortal";
 import flyerRouter from "./flyer";
 import trailConditionsRouter from "./trailConditions";
 import avalancheRouter from "./avalanche";
+import transportRouter from "./transport";
 
 const router: IRouter = Router();
 
@@ -52,5 +53,6 @@ router.use(partnerPortalRouter);
 router.use(flyerRouter);
 router.use(trailConditionsRouter);
 router.use(avalancheRouter);
+router.use(transportRouter);
 
 export default router;
