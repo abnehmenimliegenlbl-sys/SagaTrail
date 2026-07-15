@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impressum – SagaTrail</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #fff;
+    color: #111;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .st-header {
+    background: #fff;
+    border-bottom: 4px solid #c00;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .st-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .st-logo-icon {
+    width: 40px; height: 40px;
+    background: #c00;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .st-logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #111;
+  }
+  .st-logo-text span { color: #c00; }
+  .st-back {
+    font-size: 14px;
+    font-weight: 600;
+    color: #c00;
+    text-decoration: none;
+  }
+  .st-back:hover { text-decoration: underline; }
+
+  /* ── HERO ── */
+  .st-hero {
+    background: #f8f8f8;
+    padding: 56px 24px 48px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  .st-hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    color: #111;
+    margin-bottom: 12px;
+  }
+  .st-hero h1 em { font-style: normal; color: #c00; }
+  .st-hero p {
+    font-size: 16px;
+    color: #888;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── CONTENT ── */
+  .st-content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .st-section {
+    margin-bottom: 40px;
+  }
+
+  .st-section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+  }
+  .st-section-title .num {
+    color: #c00;
+    margin-right: 6px;
+  }
+
+  .st-section p {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.75;
+    margin-bottom: 10px;
+  }
+  .st-section p:last-child { margin-bottom: 0; }
+  .st-section ul {
+    margin: 10px 0 12px 20px;
+  }
+  .st-section li {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+
+  .st-card {
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 14px;
+    padding: 28px 24px;
+    margin-top: 8px;
+  }
+  .st-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #c00;
+    margin-bottom: 8px;
+  }
+  .st-card h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 16px;
+  }
+  .st-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 6px 16px;
+    margin-bottom: 8px;
+    align-items: baseline;
+  }
+  .st-row:last-child { margin-bottom: 0; }
+  .st-row dt {
+    font-size: 12px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .st-row dd {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+  }
+  .st-row dd a { color: #c00; text-decoration: none; }
+  .st-row dd a:hover { text-decoration: underline; }
+
+  .st-highlight {
+    background: #fff8f8;
+    border-left: 4px solid #c00;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.65;
+  }
+
+  .st-grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .st-mini-card {
+    background: #f8f8f8;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .st-mini-card .label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .st-mini-card p {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+  .st-mini-card a { color: #c00; text-decoration: none; }
+  .st-mini-card a:hover { text-decoration: underline; }
+
+  a { color: #c00; }
+  a:hover { text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  .st-footer {
+    background: #111;
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+  }
+  .st-footer a { color: rgba(255,255,255,0.55); text-decoration: none; }
+  .st-footer a:hover { color: #c00; }
+
+  @media (max-width: 540px) {
+    .st-hero { padding: 40px 16px 32px; }
+    .st-content { padding: 36px 16px 60px; }
+    .st-row { grid-template-columns: 1fr; gap: 2px; margin-bottom: 12px; }
+    .st-row dt { margin-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="st-header">
+  <a href="/" class="st-logo">
+    <div class="st-logo-icon">🥾</div>
+    <span class="st-logo-text">Saga<span>Trail</span></span>
+  </a>
+  <a href="/" class="st-back">← Zurück zur App</a>
+</header>
+
+<div class="st-hero">
+  <h1><em>Impressum</em></h1>
+  <p>Angaben gemäss Art. 13 Schweizer DSG und § 5 TMG (Deutschland)</p>
+</div>
+
+<div class="st-content">
+
+  <!-- Anbieter -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">1.</span> Anbieter & Verantwortlicher</h2>
+
+    <div class="st-card">
+      <div class="st-card-label">Betreiber der App & Website</div>
+      <h3>SagaTrail</h3>
+      <dl>
+        <div class="st-row">
+          <dt>Name</dt>
+          <dd>[VORNAME NAME]</dd>
+        </div>
+        <div class="st-row">
+          <dt>Adresse</dt>
+          <dd>[STRASSE NR]<br>[PLZ ORT]<br>Schweiz</dd>
+        </div>
+        <div class="st-row">
+          <dt>E-Mail</dt>
+          <dd><a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a></dd>
+        </div>
+        <div class="st-row">
+          <dt>Website</dt>
+          <dd><a href="https://sagatrail.ch" target="_blank" rel="noopener">sagatrail.ch</a></dd>
+        </div>
+        <div class="st-row">
+          <dt>UID (CH)</dt>
+          <dd>[CHE-XXX.XXX.XXX] <span style="font-size:13px;color:#aaa">— sofern vorhanden</span></dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Kontakt -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">2.</span> Kontakt</h2>
+    <div class="st-grid2">
+      <div class="st-mini-card">
+        <div class="label">Allgemeine Anfragen</div>
+        <p><a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Datenschutz</div>
+        <p><a href="mailto:datenschutz@sagatrail.ch">datenschutz@sagatrail.ch</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Partner & Tourismus</div>
+        <p><a href="mailto:partner@sagatrail.ch">partner@sagatrail.ch</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Presse</div>
+        <p><a href="mailto:presse@sagatrail.ch">presse@sagatrail.ch</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- App-Stores -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">3.</span> App-Angebote</h2>
+    <p>SagaTrail ist als mobile App erhältlich:</p>
+    <div class="st-grid2">
+      <div class="st-mini-card">
+        <div class="label">Apple App Store</div>
+        <p>Anbieter: Apple Inc., One Apple Park Way, Cupertino, CA 95014, USA<br>
+        <a href="#APP-STORE-LINK#" target="_blank" rel="noopener">Im App Store ansehen</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Google Play Store</div>
+        <p>Anbieter: Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA<br>
+        <a href="#PLAY-STORE-LINK#" target="_blank" rel="noopener">Bei Google Play ansehen</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inhalt -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">4.</span> Inhalt der App</h2>
+    <p>SagaTrail ist eine GPS-geführte Wanderapp, die Nutzerinnen und Nutzern auf Wanderwegen in der Schweiz lokale Sagen und Mythen vermittelt. Die verwendeten Sagentexte stammen aus gemeinfreien historischen Quellen (public domain) und wurden für die App aufbereitet und übersetzt.</p>
+    <p>Für die Richtigkeit und Vollständigkeit der Sagen- und Streckendaten wird keine Gewähr übernommen. Die Navigation ersetzt keine offizielle Wanderkarte; Wandernde sind für ihre eigene Sicherheit auf dem Weg verantwortlich.</p>
+  </div>
+
+  <!-- Urheberrecht -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">5.</span> Urheberrecht</h2>
+    <p>Das Design, die Grafiken, Logos und der Quellcode der SagaTrail-App und -Website sind urheberrechtlich geschützt. Eine Nutzung ohne ausdrückliche schriftliche Genehmigung ist untersagt.</p>
+    <p>Kartendaten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Swisstopo-Daten © <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener">Bundesamt für Landestopografie swisstopo</a></p>
+    <p>Wanderwege-Overlays © <a href="https://waymarkedtrails.org" target="_blank" rel="noopener">Waymarked Trails</a> (CC BY-SA)</p>
+  </div>
+
+  <!-- Haftungsausschluss -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">6.</span> Haftungsausschluss</h2>
+
+    <p><strong>Navigation & Sicherheit:</strong> Die GPS-Navigation in SagaTrail ist eine Unterstützung für Wandernde und ersetzt keine professionelle Tourenplanung. Wir übernehmen keine Haftung für Schäden, die durch fehlerhafte GPS-Signale, falsch eingeschätzte Routenschwierigkeiten oder unvorhergesehene Wetterbedingungen entstehen. Beachte stets amtliche Sperrungen und Lawinenwarnungen.</p>
+
+    <p><strong>Externe Links:</strong> Unsere App und Website enthalten Links zu externen Webseiten Dritter. Für deren Inhalte sind ausschliesslich die jeweiligen Anbieter verantwortlich. Wir haben zum Zeitpunkt der Verlinkung keine rechtswidrigen Inhalte festgestellt; eine fortlaufende Kontrolle ist ohne konkreten Anhaltspunkt nicht zumutbar.</p>
+
+    <p><strong>Inhaltliche Korrektheit:</strong> Die Sagentexte basieren auf historischen Überlieferungen und wurden für die App redaktionell aufbereitet. Abweichungen von anderen Quellen sind möglich.</p>
+  </div>
+
+  <!-- Streitschlichtung -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">7.</span> Streitschlichtung (EU/CH)</h2>
+    <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a></p>
+    <p>Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. Bei Problemen wende dich direkt an uns — wir lösen Anliegen gerne unbürokratisch.</p>
+  </div>
+
+  <!-- Technische Partner -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">8.</span> Technische Dienstleister</h2>
+    <div class="st-highlight">
+      Folgende Unternehmen erbringen technische Dienstleistungen für den Betrieb von SagaTrail. Weitere Informationen zum Datenschutz finden sich in unserer <a href="/datenschutz">Datenschutzerklärung</a>.
+    </div>
+    <div class="st-grid2">
+      <div class="st-mini-card">
+        <div class="label">Authentifizierung</div>
+        <p>Clerk, Inc., USA — <a href="https://clerk.com" target="_blank" rel="noopener">clerk.com</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">In-App-Käufe</div>
+        <p>RevenueCat, Inc., USA — <a href="https://www.revenuecat.com" target="_blank" rel="noopener">revenuecat.com</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Sprache & Audio</div>
+        <p>ElevenLabs, Inc., USA — <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a></p>
+      </div>
+      <div class="st-mini-card">
+        <div class="label">Hosting</div>
+        <p>Replit, Inc., USA — <a href="https://replit.com" target="_blank" rel="noopener">replit.com</a></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="st-footer">
+  <p>© 2026 SagaTrail &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a> &nbsp;·&nbsp; <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="mailto:info@sagatrail.ch">Kontakt</a></p>
+</footer>
+
+</body>
+</html>
