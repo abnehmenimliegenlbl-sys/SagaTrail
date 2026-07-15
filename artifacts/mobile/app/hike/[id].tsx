@@ -1150,6 +1150,13 @@ export default function LiveHike() {
       const gen = ++narrationGenRef.current;
       setNarrationUnavailable(false);
       setSpeaking(true);
+      // Sofortige Synchronisation des Refs — setSpeaking ist asynchron (React
+      // State), der Ref wird sonst erst beim naechsten Render gesetzt. Ohne
+      // diese Zeile liegt zwischen setSpeaking(true) und dem naechsten Render
+      // eine Luecke, in der ein Meilenstein-/POI-Aufruf speakingRef.current
+      // noch als false sieht und nicht in die Warteschlange einreiht, sondern
+      // sofort unterbricht.
+      speakingRef.current = true;
 
       try {
         // TTS-Anfrage VOR dem Stopp des laufenden Audios: solange der
