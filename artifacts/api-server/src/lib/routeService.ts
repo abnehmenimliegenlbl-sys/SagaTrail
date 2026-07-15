@@ -155,6 +155,11 @@ const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 // eine voruebergehende Wikipedia-Drosselung hin und darf nicht 24 h als
 // "keine Infos vorhanden" im Cache haengen bleiben.
 const POI_NEGATIVE_TTL_MS = 10 * 60 * 1000; // 10 Minuten
+// Sehr kurze TTL fuer Overpass-Fehler (Timeout, Netzausfall): damit wird nach
+// 90 s erneut versucht statt 24 h lang leere POI-Listen auszuliefern.
+// (Ein leeres entries-Array landet sonst als keineAnreicherung=false im
+// poiCache und bekommt faelschlich den 24-h-TTL.)
+const POI_ERROR_TTL_MS = 90 * 1000; // 90 Sekunden
 const POI_WIKI_CONCURRENCY = 4;
 // Die unscharfe Wikipedia-Geo-Suche (Stufe 3, fuer POIs OHNE OSM-Verweis) ist
 // die teuerste Anreicherungsstufe. In dichten Staedten (z. B. Basel) liefert
@@ -162,6 +167,10 @@ const POI_WIKI_CONCURRENCY = 4;
 // laeuft mobil in Timeouts. POIs MIT OSM-Verweis werden immer aufgeloest.
 const POI_GEO_SEARCH_BUDGET = 30;
 const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
+// Separater Fehler-Cache: nur Timestamp, kein entries-Array. Wird von
+// poiCache bewusst getrennt gehalten, damit ein erfolgreicher Folgeaufruf
+// das poiCache-Ergebnis nicht mit einem leeren Array ueberschreiben kann.
+const poiErrorCache = new Map<string, number>();
 
 /**
  * Loest die Wikipedia-Referenz eines POI auf: zuerst der OSM-`wikipedia`-Tag
@@ -209,6 +218,10 @@ export async function getPois(
   log: Logger,
 ): Promise<EnrichedPoi[]> {
   const key = bboxCacheKey(bbox);
+  // Fehler-Cache pruefen: kurze TTL (90 s) verhindert, dass ein einzelner
+  // Overpass-Timeout den ganzen Tag lang leere POI-Listen liefert.
+  const errAt = poiErrorCache.get(key);
+  if (errAt !== undefined && Date.now() - errAt < POI_ERROR_TTL_MS) return [];
   const hit = poiCache.get(key);
   if (hit) {
     const keineAnreicherung =
@@ -220,16 +233,16 @@ export async function getPois(
   try {
     raw = await fetchHistoricPois(bbox, log);
   } catch (err) {
-    // Alle Overpass-Mirrors sind ausgefallen oder haben getimet out. Damit der
-    // naechste Request nicht erneut bis zu 75 s haengt, speichern wir ein leeres
-    // Ergebnis fuer POI_NEGATIVE_TTL_MS (10 Min) im Cache. Nach Ablauf der TTL
-    // wird Overpass automatisch erneut probiert. Die Route gibt trotzdem 200 OK
-    // mit leerem Array zurueck statt eines 502 — fuer den Nutzer ist "keine POI"
-    // besser als ein Fehler.
+    // Overpass ausgefallen oder Timeout: fuer 90 s im Fehler-Cache merken,
+    // damit Folgeanfragen schnell mit [] antworten statt erneut 42 s zu haengen.
+    // Wir schreiben NICHT ins poiCache, damit ein leeres Array nicht den
+    // 24-h-TTL bekommt. Nach 90 s wird Overpass automatisch erneut probiert.
     log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen, cache leeres Ergebnis");
-    poiCache.set(key, { at: Date.now(), entries: [] });
+    poiErrorCache.set(key, Date.now());
     return [];
   }
+  // Erfolgreicher Abruf: Fehler-Cache-Eintrag loeschen falls noch vorhanden.
+  poiErrorCache.delete(key);
   const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
   const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
     enrichPoiWithWikipedia(poi, log, geoSearchBudget),
