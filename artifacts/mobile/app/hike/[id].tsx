@@ -776,6 +776,10 @@ export default function LiveHike() {
   // einmal je Wanderung als Karte an ("live entlang der Route entdeckt").
   useEffect(() => {
     if (pois.length === 0) return;
+    // Solange ein POI aktiv angezeigt/erzaehlt wird, keinen neuen suchen:
+    // mehrere POIs in 300-m-Naehe wuerden sonst die laufende Ansage
+    // unterbrechen und den POI mehrfach vorgelesen klingen lassen.
+    if (nearbyPoi) return;
     const geo = route?.geometry;
     const current: LatLng | null =
       livePos ??
@@ -797,7 +801,7 @@ export default function LiveHike() {
       announcedPoiIdsRef.current.add(hit.id);
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, route?.geometry, pois]);
+  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
