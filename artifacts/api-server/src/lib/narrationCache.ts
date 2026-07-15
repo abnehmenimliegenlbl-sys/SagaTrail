@@ -124,3 +124,23 @@ export async function getOrCreateNarrationAudio(
   await writeToCache(bucket, text, language, voiceId, audio, log);
   return audio;
 }
+
+/**
+ * Loescht alle gecachten Narrations-Audiodateien aus dem Object Storage.
+ * Noetig nach einem ElevenLabs-Plan-Upgrade, damit alte Standard-Voice-Dateien
+ * nicht mehr serviert werden und die neu freigeschaltete Swiss-Akzent-Stimme
+ * beim naechsten Abruf frisch synthetisiert wird.
+ */
+export async function clearNarrationCache(log: Logger): Promise<number> {
+  const { bucketName, prefix } = parsePrivateDir();
+  const bucket = objectStorageClient.bucket(bucketName);
+  const narrationPrefix = prefix ? `${prefix}/narration/` : "narration/";
+  const [files] = await bucket.getFiles({ prefix: narrationPrefix });
+  if (files.length === 0) {
+    log.info({ prefix: narrationPrefix }, "Narration-Cache bereits leer");
+    return 0;
+  }
+  await Promise.all(files.map((f) => f.delete().catch(() => {})));
+  log.info({ prefix: narrationPrefix, deleted: files.length }, "Narration-Cache geleert");
+  return files.length;
+}

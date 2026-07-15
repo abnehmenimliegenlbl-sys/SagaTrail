@@ -13,6 +13,7 @@ import {
 } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
+import { clearNarrationCache } from "../lib/narrationCache";
 
 const router: IRouter = Router();
 
@@ -433,6 +434,21 @@ router.get("/admin/dashboard", (_req, res): void => {
 
 router.get("/admin/partner-ui", (_req, res): void => {
   res.redirect("/api/admin/dashboard");
+});
+
+// Loescht alle gecachten Narrations-Audiodateien. Noetig nach einem
+// ElevenLabs-Plan-Upgrade, damit die neue Schweizer-Akzent-Stimme (gsw)
+// beim naechsten Abruf frisch synthetisiert wird statt alter
+// Standard-Voice-Dateien zu servieren.
+router.delete("/admin/narration-cache", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const deleted = await clearNarrationCache(req.log);
+    res.json({ ok: true, deleted });
+  } catch (err) {
+    req.log.error({ err }, "Narration-Cache leeren fehlgeschlagen");
+    res.status(500).json({ error: "Cache leeren fehlgeschlagen" });
+  }
 });
 
 export default router;
