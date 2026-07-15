@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -34,6 +35,7 @@ import { useKantonStrings } from "@/lib/i18n/screens/kanton";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
+import { haversineKm } from "@/lib/geo";
 import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { kantonSlug } from "@/lib/kantonSlug";
@@ -134,6 +136,9 @@ export default function KantonRouten() {
   const [ascFilter, setAscFilter] = useState<[number, number]>([ASC_MIN, ASC_MAX]);
   const [diffFilter, setDiffFilter] = useState<[number, number]>([DIFF_MIN, DIFF_MAX]);
   const [ganzjaehrigFilter, setGanzjaehrigFilter] = useState(false);
+  const [nearbyPos, setNearbyPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyLocating, setNearbyLocating] = useState(false);
+  const [nearbyDenied, setNearbyDenied] = useState(false);
   // Waehrend ein Schieberegler gezogen wird, pausiert das Scrollen der Seite,
   // damit die Geste nicht von der Liste uebernommen wird und haengen bleibt.
   const [sliderAktiv, setSliderAktiv] = useState(false);
@@ -145,10 +150,37 @@ export default function KantonRouten() {
     setAscFilter([ASC_MIN, ASC_MAX]);
     setDiffFilter([DIFF_MIN, DIFF_MAX]);
     setGanzjaehrigFilter(false);
+    setNearbyPos(null);
+    setNearbyLocating(false);
+    setNearbyDenied(false);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
   }, [cantonName]);
+
+  const handleNearbyToggle = useCallback(async (value: boolean) => {
+    if (!value) {
+      setNearbyPos(null);
+      setNearbyDenied(false);
+      return;
+    }
+    setNearbyLocating(true);
+    setNearbyDenied(false);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setNearbyDenied(true);
+        setNearbyLocating(false);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setNearbyPos({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+    } catch {
+      setNearbyDenied(true);
+    } finally {
+      setNearbyLocating(false);
+    }
+  }, []);
 
   // Slider-Anschlaege in einen Filter uebersetzen: obere Anschlaege sind nach
   // oben offen (weglassen), volle Schwierigkeit bedeutet "kein Grad-Filter".
@@ -166,8 +198,12 @@ export default function KantonRouten() {
       filter.diffMax = diffMax;
     }
     if (ganzjaehrigFilter) filter.ganzjaehrigNur = true;
+    if (nearbyPos) {
+      filter.nearLat = nearbyPos.lat;
+      filter.nearLng = nearbyPos.lng;
+    }
     return filter;
-  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter]);
+  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter, nearbyPos]);
 
   const onSearch = useCallback(async () => {
     if (!cantonName) return;
@@ -278,6 +314,36 @@ export default function KantonRouten() {
               thumbColor={colors.foreground}
             />
           </View>
+
+          <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.switchLabel, { color: colors.foreground }]}>
+                {t.nearbyLabel}
+              </Text>
+              {nearbyLocating && (
+                <Text style={[styles.switchHint, { color: colors.mutedForeground }]}>
+                  {t.nearbyLocating}
+                </Text>
+              )}
+              {nearbyDenied && !nearbyLocating && (
+                <Text style={[styles.switchHint, { color: colors.destructive }]}>
+                  {t.nearbyDenied}
+                </Text>
+              )}
+              {nearbyPos && !nearbyLocating && (
+                <Text style={[styles.switchHint, { color: colors.accent }]}>
+                  {nearbyPos.lat.toFixed(4)}, {nearbyPos.lng.toFixed(4)}
+                </Text>
+              )}
+            </View>
+            <Switch
+              value={nearbyPos !== null}
+              onValueChange={handleNearbyToggle}
+              disabled={nearbyLocating}
+              trackColor={{ true: colors.accent, false: colors.card }}
+              thumbColor={colors.foreground}
+            />
+          </View>
         </View>
         </View>
 
@@ -359,6 +425,7 @@ export default function KantonRouten() {
                     index={i}
                     locked={locked}
                     unlocked={unlocked}
+                    nearbyPos={nearbyPos}
                     onPress={() => router.push(`/route/${route.id}`)}
                   />
                 );
@@ -376,16 +443,24 @@ function RouteCard({
   index,
   locked,
   unlocked,
+  nearbyPos,
   onPress,
 }: {
   route: HikingRoute;
   index: number;
   locked: boolean;
   unlocked?: boolean;
+  nearbyPos?: { lat: number; lng: number } | null;
   onPress: () => void;
 }) {
   const t = useKantonStrings();
   const colors = useColors();
+  const distToStart = nearbyPos && route.coordinates
+    ? (() => {
+        const km = haversineKm(nearbyPos, { lat: route.coordinates.lat, lng: route.coordinates.lng });
+        return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+      })()
+    : null;
   // Echtes, moeglichst saisonpassendes Foto aus Routennaehe; solange keins
   // geladen ist, zeigt der Hook das gebuendelte Saison-Panorama.
   const foto = useRouteFoto(route);
@@ -449,6 +524,15 @@ function RouteCard({
                       : "eherSommer"
                 ]}
               </Text>
+              {distToStart && (
+                <>
+                  <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}> · </Text>
+                  <Feather name="navigation" size={11} color={colors.accent} />
+                  <Text style={[styles.cardSeasonText, { color: colors.accent }]}>
+                    {" "}{t.nearbyDistBadge(distToStart)}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -525,7 +609,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingBottom: 14,
   },
-  switchLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },
+  switchLabel: { fontFamily: fonts.bodyMedium, fontSize: 14 },
+  switchHint: { fontFamily: fonts.body, fontSize: 12, marginTop: 3 },
   results: { marginTop: 18 },
   hint: { alignItems: "center", paddingVertical: 40, gap: 12 },
   hintText: {

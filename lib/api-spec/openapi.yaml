@@ -154,6 +154,24 @@ paths:
             einfacher Schwierigkeitsgrad) liefern.
           schema:
             type: boolean
+        - name: nearLat
+          in: query
+          required: false
+          description: >
+            Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng
+            verwendet, um Ergebnisse nach Luftlinien-Entfernung zum
+            Routenstart aufsteigend zu sortieren.
+          schema:
+            type: number
+        - name: nearLng
+          in: query
+          required: false
+          description: >
+            Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat
+            verwendet, um Ergebnisse nach Luftlinien-Entfernung zum
+            Routenstart aufsteigend zu sortieren.
+          schema:
+            type: number
       responses:
         "200":
           description: Routen

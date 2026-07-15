@@ -2250,9 +2250,9 @@ export default function LiveHike() {
           >
             <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
               <Glass>
-                {selectedPartner?.fotoUrl && (
+                {false && (
                   <Image
-                    source={{ uri: selectedPartner.fotoUrl }}
+                    source={{ uri: "" }}
                     style={{
                       width: "100%",
                       height: 140,

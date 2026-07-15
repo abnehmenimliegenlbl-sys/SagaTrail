@@ -65,8 +65,6 @@ export interface Profile {
   premium: boolean;
   /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */
   freeHikeUsed: boolean;
-  /** Slugs der per Kantonspack-Kauf freigeschalteten Kantone (primaere Quelle neben RC-Entitlements). */
-  purchasedPacks?: string[];
 }
 
 export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];
@@ -289,8 +287,6 @@ export interface Partner {
   angebot?: string | null;
   lat: number;
   lng: number;
-  fotoUrl?: string | null;
-  websiteUrl?: string | null;
 }
 
 /**
@@ -437,6 +433,14 @@ diffMax?: number;
  * Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.
  */
 ganzjaehrigNur?: boolean;
+/**
+ * Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
+ */
+nearLat?: number;
+/**
+ * Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
+ */
+nearLng?: number;
 };
 
 export type GetAerialwaysParams = {

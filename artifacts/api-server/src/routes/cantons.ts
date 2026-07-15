@@ -3,6 +3,7 @@ import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import type { ExternalRouteRow } from "@workspace/db";
 import { getCantonRoutes } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
+import { haversineM } from "../lib/geo";
 
 const router: IRouter = Router();
 
@@ -72,6 +73,8 @@ interface RouteFilter {
   diffMin: number | null;
   diffMax: number | null;
   ganzjaehrigNur: boolean | null;
+  nearLat: number | null;
+  nearLng: number | null;
 }
 
 /**
@@ -109,12 +112,22 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     diffMin: numParam(req.query.diffMin),
     diffMax: numParam(req.query.diffMax),
     ganzjaehrigNur: boolParam(req.query.ganzjaehrigNur),
+    nearLat: numParam(req.query.nearLat),
+    nearLng: numParam(req.query.nearLng),
   };
   try {
     const rows = await getCantonRoutes(canton, req.log, filter.distMax ?? undefined);
+    const userPos =
+      filter.nearLat !== null && filter.nearLng !== null
+        ? { lat: filter.nearLat, lng: filter.nearLng }
+        : null;
     const matched = rows
       .filter((row) => applyFilter(row, filter))
-      .sort(byRelevance)
+      .sort(userPos
+        ? (a, b) =>
+            haversineM({ lat: a.lat, lng: a.lng }, userPos) -
+            haversineM({ lat: b.lat, lng: b.lng }, userPos)
+        : byRelevance)
       .slice(0, RESULT_LIMIT);
     res.json(GetCantonRoutesResponse.parse(matched.map(toRoute)));
   } catch (err) {

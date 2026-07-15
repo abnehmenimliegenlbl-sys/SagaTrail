@@ -19,6 +19,4 @@ export interface Profile {
   premium: boolean;
   /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */
   freeHikeUsed: boolean;
-  /** Freigeschaltete Kantonspack-Slugs (z. B. ["uri", "bern"]) */
-  purchasedPacks: string[];
 }

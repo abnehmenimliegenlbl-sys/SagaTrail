@@ -43,4 +43,12 @@ diffMax?: number;
  * Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.
  */
 ganzjaehrigNur?: boolean;
+/**
+ * Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
+ */
+nearLat?: number;
+/**
+ * Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
+ */
+nearLng?: number;
 };

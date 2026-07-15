@@ -408,7 +408,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         homeCanton: serverProfile.homeCanton,
         language: serverProfile.language,
         ageTier: serverProfile.ageTier,
-        purchasedPacks: serverProfile.purchasedPacks ?? [],
+        purchasedPacks: (serverProfile as unknown as { purchasedPacks?: string[] }).purchasedPacks ?? [],
       };
       setProfile(next);
       setPremium(serverProfile.premium);

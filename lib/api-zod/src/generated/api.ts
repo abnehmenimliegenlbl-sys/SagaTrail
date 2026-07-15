@@ -137,7 +137,9 @@ export const GetCantonRoutesQueryParams = zod.object({
   "ascMax": zod.coerce.number().min(getCantonRoutesQueryAscMaxMin).optional().describe('Maximale Hoehenmeter im Aufstieg (weglassen = keine Obergrenze).'),
   "diffMin": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMinMax).optional().describe('Minimaler SAC-Grad (1 = T1). Nur Routen mit bekanntem Grad.'),
   "diffMax": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMaxMax).optional().describe('Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.'),
-  "ganzjaehrigNur": zod.coerce.boolean().optional().describe('Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.\n')
+  "ganzjaehrigNur": zod.coerce.boolean().optional().describe('Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.\n'),
+  "nearLat": zod.coerce.number().optional().describe('Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
+  "nearLng": zod.coerce.number().optional().describe('Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n')
 })
 
 export const GetCantonRoutesResponseItem = zod.object({
@@ -456,8 +458,7 @@ export const GetMyProfileResponse = zod.object({
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
-  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).default([]).describe('Freigeschaltete Kantonspack-Slugs (z. B. ["uri", "bern"])'),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
 })
 
 

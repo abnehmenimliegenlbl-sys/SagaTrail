@@ -32,6 +32,10 @@ export interface KantonStrings {
   packUnavailable: string;
   resetFilters: string;
   unlockedBadge: string;
+  nearbyLabel: string;
+  nearbyLocating: string;
+  nearbyDenied: string;
+  nearbyDistBadge: (distText: string) => string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -71,6 +75,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Sagen-Pack aktuell nicht verfügbar.",
     resetFilters: "Filter zurücksetzen",
     unlockedBadge: "Freigeschaltet",
+    nearbyLabel: "Ab meinem Standort",
+    nearbyLocating: "Standort wird ermittelt …",
+    nearbyDenied: "Standort nicht verfügbar",
+    nearbyDistBadge: (d) => `≈ ${d} vom Start`,
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -108,6 +116,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Sage-Pack grad nid verfüegbar.",
     resetFilters: "Filter zruggsetze",
     unlockedBadge: "Freigsclte",
+    nearbyLabel: "Ab mim Standort",
+    nearbyLocating: "Standort wird ermittlet …",
+    nearbyDenied: "Standort nid verfüegbar",
+    nearbyDistBadge: (d) => `≈ ${d} vom Start`,
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -145,6 +157,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Pack de légendes actuellement indisponible.",
     resetFilters: "Réinitialiser les filtres",
     unlockedBadge: "Débloqué",
+    nearbyLabel: "Depuis ma position",
+    nearbyLocating: "Localisation en cours …",
+    nearbyDenied: "Position non disponible",
+    nearbyDistBadge: (d) => `≈ ${d} du départ`,
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -182,6 +198,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Pacchetto di leggende attualmente non disponibile.",
     resetFilters: "Reimposta filtri",
     unlockedBadge: "Sbloccato",
+    nearbyLabel: "Dalla mia posizione",
+    nearbyLocating: "Localizzazione in corso …",
+    nearbyDenied: "Posizione non disponibile",
+    nearbyDistBadge: (d) => `≈ ${d} dall'inizio`,
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -219,6 +239,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Legend pack currently unavailable.",
     resetFilters: "Reset filters",
     unlockedBadge: "Unlocked",
+    nearbyLabel: "From my location",
+    nearbyLocating: "Getting location …",
+    nearbyDenied: "Location unavailable",
+    nearbyDistBadge: (d) => `≈ ${d} from start`,
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -255,6 +279,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "传说包当前不可用。",
     resetFilters: "重置过滤器",
     unlockedBadge: "已解锁",
+    nearbyLabel: "从我的位置出发",
+    nearbyLocating: "正在获取位置 …",
+    nearbyDenied: "位置不可用",
+    nearbyDistBadge: (d) => `≈ 距起点 ${d}`,
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -292,6 +320,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Пакет легенд сейчас недоступен.",
     resetFilters: "Сбросить фильтры",
     unlockedBadge: "Доступно",
+    nearbyLabel: "От моего местоположения",
+    nearbyLocating: "Определение местоположения …",
+    nearbyDenied: "Местоположение недоступно",
+    nearbyDistBadge: (d) => `≈ ${d} от старта`,
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -329,6 +361,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Pack de leyendas no disponible en este momento.",
     resetFilters: "Restablecer filtros",
     unlockedBadge: "Desbloqueado",
+    nearbyLabel: "Desde mi ubicación",
+    nearbyLocating: "Obteniendo ubicación …",
+    nearbyDenied: "Ubicación no disponible",
+    nearbyDistBadge: (d) => `≈ ${d} desde el inicio`,
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -366,6 +402,10 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     packUnavailable: "Pacote de lendas indisponível no momento.",
     resetFilters: "Redefinir filtros",
     unlockedBadge: "Desbloqueado",
+    nearbyLabel: "Da minha localização",
+    nearbyLocating: "Obtendo localização …",
+    nearbyDenied: "Localização indisponível",
+    nearbyDistBadge: (d) => `≈ ${d} do início`,
   },
 };
 
