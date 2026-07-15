@@ -1436,8 +1436,9 @@ export default function LiveHike() {
     if (promptedDecisionRef.current === currentIndex) return;
     promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
-    speakRef.current?.(pack.decisionVoicePrompt);
-  }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
+    const opts = chapters[currentIndex]?.decision?.options?.map((o) => o.label) ?? [];
+    speakRef.current?.(pack.buildDecisionPrompt(opts));
+  }, [awaitingDecision, speaking, currentIndex, storyLanguage, chapters]);
 
   // 30-Sekunden-Countdown fuer Entscheidungspunkte: laeuft automatisch an,
   // sobald der Entscheidungspunkt aktiv und die Erzaehlung fertig ist.

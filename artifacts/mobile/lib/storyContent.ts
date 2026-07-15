@@ -71,9 +71,9 @@ export interface StoryPack {
   // an eine Abbiegung live eingeschoben wird — unabhaengig vom Kapitel.
   turnVoice: (direction: "links" | "rechts") => string;
   // Gesprochene Aufforderung, die nach dem Kapitel-Ende an einem
-  // Entscheidungspunkt vorgelesen wird — fordert den Wanderer explizit auf,
-  // seine Wahl laut auszusprechen oder eine Option anzutippen.
-  decisionVoicePrompt: string;
+  // Entscheidungspunkt vorgelesen wird — listet die Optionen namentlich auf,
+  // damit Wandernde auch ohne Blick aufs Display wissen, was zur Wahl steht.
+  buildDecisionPrompt: (options: string[]) => string;
   // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der
   // Entscheidung gesprochen wird ("Das spricht fuer eine Persoenlichkeit mit…").
   decisionFeedback: (archetypeHint: string) => string;
@@ -155,8 +155,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Auf dem Weg zur Sage von ${landmark} hältst du dich an der nächsten Weggabelung ${direction}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiegen!" : "Jetzt rechts abbiegen!",
-    decisionVoicePrompt: "Was ist deine Wahl? Sprich sie laut aus — oder tippe eine der Optionen an.",
-    decisionFeedback: (hint) => `Das spricht für eine Persönlichkeit mit ${hint}. Eine tiefe Wahrheit über dich, hier draußen in der Stille.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Erstens", "Zweitens", "Drittens", "Viertens"];
+      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
+      return `Was ist deine Wahl? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Das spricht für eine Persönlichkeit mit ${hint}. Eine tiefe Wahrheit über dich, hier draußen in der Stille.`,
+        `${hint} — das ist es, was dich auf diesem Weg ausmacht.`,
+        `Diese Wahl trägt die Handschrift von ${hint}. Nichts hier ist zufällig.`,
+        `Du hast gewählt. Und diese Wahl verrät ${hint} — tief in dir, schon immer.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name}. ${extract}`
@@ -232,8 +244,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Uf em Wäg zur Sage vo ${landmark} haltsch di a de nächschte Wäggable ${direction === "links" ? "links" : "rächts"}.`,
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiege!" : "Jetzt rechts abbiege!",
-    decisionVoicePrompt: "Was isch dini Wahl? Sprich si lut us — oder tipp e vo de Optione a.",
-    decisionFeedback: (hint) => `Das spricht für e Persönlichkeit mit ${hint}. En tiefe Wahrhäit über dich, do draußen in de Stilli.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Erstens", "Zweitens", "Drittens", "Viertens"];
+      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
+      return `Was isch dini Wahl? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Das spricht für e Persönlichkeit mit ${hint}. En tiefe Wahrhäit über dich, do draußen in de Stilli.`,
+        `${hint} — das isch es, was dich uf däm Wäg usmacht.`,
+        `Dä Wahl steckt d Handschrift vo ${hint} drin. Nüüt isch do Zufall.`,
+        `Du häsch gwählt. Und dä Wahl verraat ${hint} — tüüf in dir, immer scho.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name}. ${extract}`
@@ -309,8 +333,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Pour atteindre la légende de ${landmark}, garde ta ${direction === "links" ? "gauche" : "droite"} à la prochaine bifurcation.`,
     turnVoice: (direction) => direction === "links" ? "Tournez à gauche !" : "Tournez à droite !",
-    decisionVoicePrompt: "Quel est ton choix ? Dis-le à voix haute — ou appuie sur l'une des options.",
-    decisionFeedback: (hint) => `Cela révèle une personnalité avec ${hint}. Une vérité profonde sur toi, ici dans le silence de la nature.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Premièrement", "Deuxièmement", "Troisièmement", "Quatrièmement"];
+      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`} : ${o}`).join(". ");
+      return `Quel est ton choix ? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Cela révèle une personnalité avec ${hint}. Une vérité profonde sur toi, ici dans le silence de la nature.`,
+        `${hint} — c'est ce qui te définit sur ce chemin.`,
+        `Ce choix porte la marque de ${hint}. Rien ici n'est anodin.`,
+        `Tu as choisi. Et ce choix trahit ${hint} — au plus profond de toi.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name}. ${extract}`
@@ -386,8 +422,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Per raggiungere la leggenda di ${landmark}, tieni la ${direction === "links" ? "sinistra" : "destra"} al prossimo bivio.`,
     turnVoice: (direction) => direction === "links" ? "Svoltate a sinistra!" : "Svoltate a destra!",
-    decisionVoicePrompt: "Qual è la tua scelta? Dilla ad alta voce — o tocca una delle opzioni.",
-    decisionFeedback: (hint) => `Questo rivela una personalità con ${hint}. Una verità profonda su di te, qui nel silenzio della natura.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Prima opzione", "Seconda opzione", "Terza opzione", "Quarta opzione"];
+      const list = options.map((o, i) => `${p[i] ?? `Opzione ${i + 1}`}: ${o}`).join(". ");
+      return `Qual è la tua scelta? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Questo rivela una personalità con ${hint}. Una verità profonda su di te, qui nel silenzio della natura.`,
+        `${hint} — è questo che ti distingue su questo cammino.`,
+        `Questa scelta porta la firma di ${hint}. Niente qui è casuale.`,
+        `Hai scelto. E questa scelta rivela ${hint} — nel profondo di te.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name}. ${extract}`
@@ -463,8 +511,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `To reach the legend of ${landmark}, keep ${direction === "links" ? "left" : "right"} at the next fork.`,
     turnVoice: (direction) => direction === "links" ? "Turn left!" : "Turn right!",
-    decisionVoicePrompt: "What is your choice? Say it aloud — or tap one of the options.",
-    decisionFeedback: (hint) => `This speaks to a personality shaped by ${hint}. A deep truth about you, out here in the stillness.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["First", "Second", "Third", "Fourth"];
+      const list = options.map((o, i) => `${p[i] ?? `Option ${i + 1}`}: ${o}`).join(". ");
+      return `What is your choice? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `This speaks to a personality shaped by ${hint}. A deep truth about you, out here in the stillness.`,
+        `${hint} — that is what defines you on this path.`,
+        `This choice carries the mark of ${hint}. Nothing here is coincidence.`,
+        `You have chosen. And that choice reveals ${hint} — deep inside you, always.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `A brief break from the saga — a real place right near you: ${name}. ${extract}`
@@ -536,8 +596,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `为了到达${landmark}的传说，在下一个岔路口靠${direction === "links" ? "左" : "右"}。`,
     turnVoice: (direction) => direction === "links" ? "向左转。" : "向右转。",
-    decisionVoicePrompt: "你的选择是什么？大声说出来——或者点击其中一个选项。",
-    decisionFeedback: (hint) => `这体现了一种具有${hint}的性格。在这片寂静中，这是关于你自己的深刻真相。`,
+    buildDecisionPrompt: (options) => {
+      const p = ["第一", "第二", "第三", "第四"];
+      const list = options.map((o, i) => `${p[i] ?? `选项${i + 1}`}：${o}`).join("。");
+      return `你的选择是什么？${list}。`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `这体现了一种具有${hint}的性格。在这片寂静中，这是关于你自己的深刻真相。`,
+        `${hint}——这就是你在这条路上的本质。`,
+        `这个选择带有${hint}的印记。这里的一切都非偶然。`,
+        `你已做出选择。而这个选择揭示了${hint}——深藏在你内心，始终如此。`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `传说暂停一下，你身边有一个真实的地方：${name}。${extract}`
@@ -613,8 +685,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para llegar a la leyenda de ${landmark}, mantente a la ${direction === "links" ? "izquierda" : "derecha"} en la próxima bifurcación.`,
     turnVoice: (direction) => direction === "links" ? "¡Gire a la izquierda!" : "¡Gire a la derecha!",
-    decisionVoicePrompt: "¿Cuál es tu elección? Dila en voz alta — o toca una de las opciones.",
-    decisionFeedback: (hint) => `Esto habla de una personalidad definida por ${hint}. Una verdad profunda sobre ti, aquí en el silencio de la naturaleza.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Primero", "Segundo", "Tercero", "Cuarto"];
+      const list = options.map((o, i) => `${p[i] ?? `Opción ${i + 1}`}: ${o}`).join(". ");
+      return `¿Cuál es tu elección? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Esto habla de una personalidad definida por ${hint}. Una verdad profunda sobre ti, aquí en el silencio de la naturaleza.`,
+        `${hint} — eso es lo que te define en este camino.`,
+        `Esta elección lleva la marca de ${hint}. Nada aquí es casualidad.`,
+        `Has elegido. Y esa elección revela ${hint} — en lo más profundo de ti.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name}. ${extract}`
@@ -690,8 +774,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Para chegar à lenda de ${landmark}, mantenha-se à ${direction === "links" ? "esquerda" : "direita"} na próxima bifurcação.`,
     turnVoice: (direction) => direction === "links" ? "Vire à esquerda!" : "Vire à direita!",
-    decisionVoicePrompt: "Qual é a sua escolha? Diga em voz alta — ou toque em uma das opções.",
-    decisionFeedback: (hint) => `Isso revela uma personalidade moldada por ${hint}. Uma verdade profunda sobre você, aqui no silêncio da natureza.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Primeiro", "Segundo", "Terceiro", "Quarto"];
+      const list = options.map((o, i) => `${p[i] ?? `Opção ${i + 1}`}: ${o}`).join(". ");
+      return `Qual é a sua escolha? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Isso revela uma personalidade moldada por ${hint}. Uma verdade profunda sobre você, aqui no silêncio da natureza.`,
+        `${hint} — é isso que te define neste caminho.`,
+        `Esta escolha carrega a marca de ${hint}. Nada aqui é coincidência.`,
+        `Você escolheu. E essa escolha revela ${hint} — no fundo de você, sempre.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Pequena pausa na lenda, um lugar real bem perto de você: ${name}. ${extract}`
@@ -767,8 +863,20 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     navCue: (direction, landmark) =>
       `Чтобы добраться до легенды о ${landmark}, держись ${direction === "links" ? "левой" : "правой"} стороны на следующей развилке.`,
     turnVoice: (direction) => direction === "links" ? "Поверните налево!" : "Поверните направо!",
-    decisionVoicePrompt: "Каков твой выбор? Произнеси его вслух — или нажми на один из вариантов.",
-    decisionFeedback: (hint) => `Это говорит о личности, наделённой ${hint}. Глубокая правда о тебе — здесь, в тишине природы.`,
+    buildDecisionPrompt: (options) => {
+      const p = ["Первое", "Второе", "Третье", "Четвёртое"];
+      const list = options.map((o, i) => `${p[i] ?? `Вариант ${i + 1}`}: ${o}`).join(". ");
+      return `Каков твой выбор? ${list}.`;
+    },
+    decisionFeedback: (hint) => {
+      const v = [
+        `Это говорит о личности, наделённой ${hint}. Глубокая правда о тебе — здесь, в тишине природы.`,
+        `${hint} — вот что определяет тебя на этом пути.`,
+        `Этот выбор несёт в себе отпечаток ${hint}. Здесь нет ничего случайного.`,
+        `Ты выбрал. И этот выбор открывает ${hint} — глубоко внутри тебя, всегда.`,
+      ];
+      return v[Math.floor(Math.random() * v.length)];
+    },
     poiAside: (name, extract) =>
       extract
         ? `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name}. ${extract}`
