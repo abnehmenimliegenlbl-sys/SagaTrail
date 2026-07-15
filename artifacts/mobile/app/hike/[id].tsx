@@ -77,15 +77,19 @@ const WEB_TOP = 67;
 const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
 
 /**
- * Erzeugt einen 1-Sekunden-Stille-WAV als Base64-String (8-bit, mono, 8 kHz).
- * Wird als Loop mit volume:0 abgespielt, um die iOS-Audiosession zwischen den
- * Kapiteln aktiv zu halten — ohne das bleibt der JS-Thread eingeschlaefert und
- * kein neues Kapitel kann gestartet werden (obwohl UIBackgroundModes["audio"]
- * gesetzt und staysActiveInBackground:true konfiguriert ist).
+ * Erzeugt einen 2-Sekunden-WAV-Keepalive als Base64-String (8-bit, mono, 8 kHz)
+ * mit einem 10-Hz-Infraschall-Sinus. Der Ton ist fuer Menschen voellig
+ * unhoerbar (Hoerschwelle ~20 Hz), aber liefert echte, nicht-stille PCM-Werte
+ * an den Bluetooth-Codec. Viele Auto-Radios (A2DP) erkennen digitale Stille
+ * (alle Samples = 128) als "nichts spielt" und deaktivieren den Stream; der
+ * naechste Ton kommt dann nicht mehr durch die Autolautsprecher. Ein echtes
+ * (wenn auch unhoerabares) Audiosignal haelt den A2DP-Stream aktiv.
+ * Wird als Loop bei sehr niedrigem volume abgespielt — nur so viel, dass echte
+ * PCM-Werte den Codec erreichen, ohne Lautstaerke wahrzunehmen.
  */
-function buildSilentWavBase64(): string {
+function buildKeepaliveWavBase64(): string {
   const sampleRate = 8000;
-  const numSamples = sampleRate; // 1 Sekunde
+  const numSamples = sampleRate * 2; // 2 Sekunden (reduziert Loop-Frequenz)
   const dataSize = numSamples; // 8-bit mono = 1 Byte/Sample
   const buf = new Uint8Array(44 + dataSize);
   const u16 = (off: number, v: number) => {
@@ -100,7 +104,15 @@ function buildSilentWavBase64(): string {
   u16(20, 1); u16(22, 1); u32(24, sampleRate); u32(28, sampleRate);
   u16(32, 1); u16(34, 8);
   buf.set([100, 97, 116, 97], 36); u32(40, dataSize);
-  buf.fill(128, 44); // 128 = Stille bei unsigned 8-bit PCM
+  // 10-Hz-Infraschall-Sinus: Period = 800 Samples bei 8 kHz.
+  // Amplitude 30 (von max. 127) → mit volume:0.008 ergibt das ~0.2 %
+  // des Vollausschlags — fuer jeden Lautsprecher und jeden Kopfhoerer
+  // absolut unhoorbar, aber der Bluetooth-Encoder sieht nichttriviale Werte.
+  const freq = 10; // Hz
+  const amp = 30;  // 0..127
+  for (let i = 0; i < numSamples; i++) {
+    buf[44 + i] = 128 + Math.round(amp * Math.sin(2 * Math.PI * freq * i / sampleRate));
+  }
   let s = '';
   for (let i = 0; i < buf.length; i++) s += String.fromCharCode(buf[i]);
   return typeof btoa !== 'undefined' ? btoa(s) : Buffer.from(buf).toString('base64');
@@ -463,7 +475,7 @@ export default function LiveHike() {
     let sound: Audio.Sound | null = null;
     (async () => {
       try {
-        const base64 = buildSilentWavBase64();
+        const base64 = buildKeepaliveWavBase64();
         const uri = (FileSystem.cacheDirectory ?? "") + "sagatrail_keepalive.wav";
         await FileSystem.writeAsStringAsync(uri, base64, {
           encoding: FileSystem.EncodingType.Base64,
@@ -471,7 +483,13 @@ export default function LiveHike() {
         if (!mounted) return;
         const result = await Audio.Sound.createAsync(
           { uri },
-          { shouldPlay: true, isLooping: true, volume: 0 }
+          // volume: 0.008 statt 0 — der 10-Hz-Infraschall-Sinus wird mit
+          // ~0.2 % Amplitude wiedergegeben (absolut unhoorbar), aber der
+          // Bluetooth-A2DP-Encoder sieht echte, nicht-stille PCM-Werte und
+          // haelt den Datenstrom zum Auto-Radio aktiv. volume:0 erzeugt
+          // digitale Stille (alle Samples × 0 = 0), was viele Car-Radios
+          // als "nichts spielt" werten und den A2DP-Stream pausieren.
+          { shouldPlay: true, isLooping: true, volume: 0.008 }
         );
         if (!mounted) {
           result.sound.unloadAsync().catch(() => {});
