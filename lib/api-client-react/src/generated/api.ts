@@ -21,6 +21,7 @@ import type {
 
 import type {
   Aerialway,
+  AvalancheBulletin,
   CatalogResponse,
   CatalogRoute,
   CatalogSaga,
@@ -29,6 +30,7 @@ import type {
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
+  GetAvalancheBulletinParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
   GetPartnersParams,
@@ -731,6 +733,91 @@ export function useGetPoiStory<TData = Awaited<ReturnType<typeof getPoiStory>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoiStoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAvalancheBulletinUrl = (params: GetAvalancheBulletinParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/avalanche?${stringifiedParams}` : `/api/avalanche`
+}
+
+/**
+ * Liefert das aktuelle EAWS-Lawinenbulletin (Gefahrenstufe 1–5) fuer den angegebenen Kanton. Nicht-alpine Kantone und Sommerhalbjahr geben available=false zurueck. Daten werden 1 Stunde gecacht.
+ * @summary Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
+ */
+export const getAvalancheBulletin = async (params: GetAvalancheBulletinParams, options?: RequestInit): Promise<AvalancheBulletin> => {
+
+  return customFetch<AvalancheBulletin>(getGetAvalancheBulletinUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAvalancheBulletinQueryKey = (params?: GetAvalancheBulletinParams,) => {
+    return [
+    `/api/avalanche`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAvalancheBulletinQueryOptions = <TData = Awaited<ReturnType<typeof getAvalancheBulletin>>, TError = ErrorType<void>>(params: GetAvalancheBulletinParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAvalancheBulletin>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAvalancheBulletinQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAvalancheBulletin>>> = ({ signal }) => getAvalancheBulletin(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAvalancheBulletin>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAvalancheBulletinQueryResult = NonNullable<Awaited<ReturnType<typeof getAvalancheBulletin>>>
+export type GetAvalancheBulletinQueryError = ErrorType<void>
+
+
+/**
+ * @summary Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
+ */
+
+export function useGetAvalancheBulletin<TData = Awaited<ReturnType<typeof getAvalancheBulletin>>, TError = ErrorType<void>>(
+ params: GetAvalancheBulletinParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAvalancheBulletin>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAvalancheBulletinQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

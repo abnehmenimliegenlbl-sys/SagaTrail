@@ -264,6 +264,34 @@ export interface Poi {
   wiki?: WikiSummary;
 }
 
+export type AvalancheBulletinReason = typeof AvalancheBulletinReason[keyof typeof AvalancheBulletinReason] | null;
+
+
+export const AvalancheBulletinReason = {
+  'no-alpine-region': 'no-alpine-region',
+  'no-bulletin': 'no-bulletin',
+  'api-error': 'api-error',
+} as const;
+
+/**
+ * Aktuelles EAWS-Lawinenbulletin. available=false wenn kein Bulletin vorhanden (Sommerhalbjahr oder nicht-alpine Region).
+ */
+export interface AvalancheBulletin {
+  available: boolean;
+  reason?: AvalancheBulletinReason;
+  /**
+     * Gefahrenstufe 1 (gering) bis 5 (sehr gross)
+     * @minimum 1
+     * @maximum 5
+     */
+  dangerLevel?: number | null;
+  dangerText?: string | null;
+  tendencyText?: string | null;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  regionName?: string | null;
+}
+
 export type TrailConditionReportCondition = typeof TrailConditionReportCondition[keyof typeof TrailConditionReportCondition];
 
 
@@ -513,6 +541,24 @@ extract?: string;
 kind?: string;
 lang: string;
 };
+
+export type GetAvalancheBulletinParams = {
+/**
+ * Kanton-Slug (z. B. "bern", "graubuenden", "valais")
+ */
+canton: string;
+lang?: GetAvalancheBulletinLang;
+};
+
+export type GetAvalancheBulletinLang = typeof GetAvalancheBulletinLang[keyof typeof GetAvalancheBulletinLang];
+
+
+export const GetAvalancheBulletinLang = {
+  de: 'de',
+  fr: 'fr',
+  it: 'it',
+  en: 'en',
+} as const;
 
 export type GetWeatherParams = {
 lat: number;

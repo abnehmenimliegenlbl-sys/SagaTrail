@@ -8,6 +8,8 @@
 
 export * from './achievement';
 export * from './aerialway';
+export * from './avalancheBulletin';
+export * from './avalancheBulletinReason';
 export * from './catalogCanton';
 export * from './catalogCoordinates';
 export * from './catalogResponse';
@@ -21,6 +23,8 @@ export * from './claimKantonspackResponse';
 export * from './errorResponse';
 export * from './geocodePlace';
 export * from './getAerialwaysParams';
+export * from './getAvalancheBulletinLang';
+export * from './getAvalancheBulletinParams';
 export * from './getCantonRoutesParams';
 export * from './getCustomRouteParams';
 export * from './getPartnersParams';

@@ -370,6 +370,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /avalanche:
+    get:
+      operationId: getAvalancheBulletin
+      tags: [routes]
+      summary: Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
+      description: >
+        Liefert das aktuelle EAWS-Lawinenbulletin (Gefahrenstufe 1–5) fuer den
+        angegebenen Kanton. Nicht-alpine Kantone und Sommerhalbjahr geben
+        available=false zurueck. Daten werden 1 Stunde gecacht.
+      parameters:
+        - name: canton
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Kanton-Slug (z. B. "bern", "graubuenden", "valais")
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [de, fr, it, en]
+            default: de
+      responses:
+        "200":
+          description: Lawinenbulletin oder Hinweis dass kein Bulletin verfuegbar ist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvalancheBulletin"
+        "400":
+          description: Fehlender canton-Parameter
   /routes/weather:
     get:
       operationId: getWeather
@@ -1424,6 +1456,43 @@ components:
         - kind
         - lat
         - lng
+    AvalancheBulletin:
+      type: object
+      description: >-
+        Aktuelles EAWS-Lawinenbulletin. available=false wenn kein Bulletin
+        vorhanden (Sommerhalbjahr oder nicht-alpine Region).
+      properties:
+        available:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+          enum: [no-alpine-region, no-bulletin, api-error]
+        dangerLevel:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+          description: Gefahrenstufe 1 (gering) bis 5 (sehr gross)
+        dangerText:
+          type: string
+          nullable: true
+        tendencyText:
+          type: string
+          nullable: true
+        validFrom:
+          type: string
+          nullable: true
+          format: date-time
+        validUntil:
+          type: string
+          nullable: true
+          format: date-time
+        regionName:
+          type: string
+          nullable: true
+      required:
+        - available
     TrailConditionReport:
       type: object
       description: >-

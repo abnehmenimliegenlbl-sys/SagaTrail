@@ -253,6 +253,33 @@ export const GetPoiStoryResponse = zod.object({
 
 
 /**
+ * Liefert das aktuelle EAWS-Lawinenbulletin (Gefahrenstufe 1–5) fuer den angegebenen Kanton. Nicht-alpine Kantone und Sommerhalbjahr geben available=false zurueck. Daten werden 1 Stunde gecacht.
+ * @summary Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
+ */
+export const getAvalancheBulletinQueryLangDefault = `de`;
+
+export const GetAvalancheBulletinQueryParams = zod.object({
+  "canton": zod.coerce.string().describe('Kanton-Slug (z. B. \"bern\", \"graubuenden\", \"valais\")'),
+  "lang": zod.enum(['de', 'fr', 'it', 'en']).default(getAvalancheBulletinQueryLangDefault)
+})
+
+export const getAvalancheBulletinResponseDangerLevelMax = 5;
+
+
+
+export const GetAvalancheBulletinResponse = zod.object({
+  "available": zod.boolean(),
+  "reason": zod.enum(['no-alpine-region', 'no-bulletin', 'api-error']).nullish(),
+  "dangerLevel": zod.number().min(1).max(getAvalancheBulletinResponseDangerLevelMax).nullish().describe('Gefahrenstufe 1 (gering) bis 5 (sehr gross)'),
+  "dangerText": zod.string().nullish(),
+  "tendencyText": zod.string().nullish(),
+  "validFrom": zod.coerce.date().nullish(),
+  "validUntil": zod.coerce.date().nullish(),
+  "regionName": zod.string().nullish()
+}).describe('Aktuelles EAWS-Lawinenbulletin. available=false wenn kein Bulletin vorhanden (Sommerhalbjahr oder nicht-alpine Region).')
+
+
+/**
  * Liefert aktuelle Wetterdaten (Open-Meteo, ohne API-Key) fuer den Ausgangspunkt einer Route sowie einen daraus abgeleiteten Wegzustand-Hinweis (kein offizieller Sperr-/Lawinenstatus, sondern eine Einschaetzung aus Niederschlag, Schneehoehe, Temperatur und Boeen).
  * @summary Live-Wetter und daraus abgeleiteter Wegzustand fuer einen Punkt
  */

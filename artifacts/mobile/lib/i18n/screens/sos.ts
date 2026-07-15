@@ -1,0 +1,167 @@
+import { createUseStrings, StringsDict } from "../createStrings";
+
+export interface SosStrings {
+  sos: string;
+  title: string;
+  yourPosition: string;
+  positionUnknown: string;
+  hint: string;
+  close: string;
+  rega: string;
+  regaDesc: string;
+  sanity: string;
+  sanityDesc: string;
+  police: string;
+  policeDesc: string;
+  eu: string;
+  euDesc: string;
+}
+
+const SOS_STRINGS: StringsDict<SosStrings> = {
+  de: {
+    sos: "SOS",
+    title: "Notruf Schweiz",
+    yourPosition: "Dein Standort",
+    positionUnknown: "Standort nicht bekannt — melde ihn am Telefon.",
+    hint: "Bleibt ruhig. Name, Standort (Koordinaten / Ort), Art des Unfalls und Anzahl Personen mitteilen.",
+    close: "Schliessen",
+    rega: "Rega",
+    regaDesc: "Schweizerische Rettungsflugwacht",
+    sanity: "Sanität",
+    sanityDesc: "Medizinischer Notfall",
+    police: "Polizei",
+    policeDesc: "Alle kantonalen Polizeistellen",
+    eu: "Europanotruf",
+    euDesc: "Funktioniert in allen EU/CH-Ländern",
+  },
+  gsw: {
+    sos: "SOS",
+    title: "Notrüef Schwiiz",
+    yourPosition: "Din Standort",
+    positionUnknown: "Standort nid bekannt — sag ihn am Telefon.",
+    hint: "Bliibt ruhig. Name, Standort (Koordinate / Ort), Art vom Unfall und Azahl Persone mitteile.",
+    close: "Zuemache",
+    rega: "Rega",
+    regaDesc: "Schwiizerische Rettungsflugwacht",
+    sanity: "Sanitäter",
+    sanityDesc: "Medizinische Notfall",
+    police: "Polizei",
+    policeDesc: "Alli Kantonspolizei",
+    eu: "Europa-Notrüef",
+    euDesc: "Giltet in all EU/CH-Länder",
+  },
+  en: {
+    sos: "SOS",
+    title: "Emergency Calls Switzerland",
+    yourPosition: "Your position",
+    positionUnknown: "Position unknown — report it by phone.",
+    hint: "Stay calm. Report: name, location (coordinates / place), nature of accident, number of persons.",
+    close: "Close",
+    rega: "Rega",
+    regaDesc: "Swiss Air Rescue",
+    sanity: "Ambulance",
+    sanityDesc: "Medical emergency",
+    police: "Police",
+    policeDesc: "All cantonal police stations",
+    eu: "European emergency",
+    euDesc: "Works in all EU/CH countries",
+  },
+  fr: {
+    sos: "SOS",
+    title: "Numéros d'urgence Suisse",
+    yourPosition: "Votre position",
+    positionUnknown: "Position inconnue — communiquez-la par téléphone.",
+    hint: "Restez calme. Indiquez : nom, position (coordonnées / lieu), nature de l'accident, nombre de personnes.",
+    close: "Fermer",
+    rega: "Rega",
+    regaDesc: "Garde aérienne suisse de sauvetage",
+    sanity: "Ambulance",
+    sanityDesc: "Urgence médicale",
+    police: "Police",
+    policeDesc: "Tous les postes de police cantonaux",
+    eu: "Urgences européennes",
+    euDesc: "Valable dans tous les pays EU/CH",
+  },
+  it: {
+    sos: "SOS",
+    title: "Numeri di emergenza Svizzera",
+    yourPosition: "La tua posizione",
+    positionUnknown: "Posizione sconosciuta — comunicala telefonicamente.",
+    hint: "Mantieni la calma. Comunica: nome, posizione (coordinate / luogo), natura dell'incidente, numero di persone.",
+    close: "Chiudi",
+    rega: "Rega",
+    regaDesc: "Guardia aerea svizzera di salvataggio",
+    sanity: "Ambulanza",
+    sanityDesc: "Emergenza medica",
+    police: "Polizia",
+    policeDesc: "Tutti i posti di polizia cantonali",
+    eu: "Emergenza europea",
+    euDesc: "Valido in tutti i paesi EU/CH",
+  },
+  es: {
+    sos: "SOS",
+    title: "Números de emergencia Suiza",
+    yourPosition: "Tu posición",
+    positionUnknown: "Posición desconocida — comunícala por teléfono.",
+    hint: "Mantén la calma. Indica: nombre, posición (coordenadas / lugar), naturaleza del accidente, número de personas.",
+    close: "Cerrar",
+    rega: "Rega",
+    regaDesc: "Guardia aérea suiza de rescate",
+    sanity: "Ambulancia",
+    sanityDesc: "Emergencia médica",
+    police: "Policía",
+    policeDesc: "Todas las comisarías cantonales",
+    eu: "Emergencia europea",
+    euDesc: "Válido en todos los países EU/CH",
+  },
+  pt: {
+    sos: "SOS",
+    title: "Números de emergência Suíça",
+    yourPosition: "Sua posição",
+    positionUnknown: "Posição desconhecida — comunique-a por telefone.",
+    hint: "Mantenha a calma. Informe: nome, posição (coordenadas / local), natureza do acidente, número de pessoas.",
+    close: "Fechar",
+    rega: "Rega",
+    regaDesc: "Guarda aérea suíça de resgate",
+    sanity: "Ambulância",
+    sanityDesc: "Emergência médica",
+    police: "Polícia",
+    policeDesc: "Todos os postos policiais cantonais",
+    eu: "Emergência europeia",
+    euDesc: "Válido em todos os países UE/CH",
+  },
+  zh: {
+    sos: "SOS",
+    title: "瑞士紧急求助电话",
+    yourPosition: "您的位置",
+    positionUnknown: "位置未知 — 请通过电话告知。",
+    hint: "保持冷静。报告：姓名、位置（坐标/地点）、事故性质、人数。",
+    close: "关闭",
+    rega: "救援直升机",
+    regaDesc: "瑞士空中救援队",
+    sanity: "急救",
+    sanityDesc: "医疗紧急情况",
+    police: "警察",
+    policeDesc: "各州警察局",
+    eu: "欧洲紧急电话",
+    euDesc: "适用于所有欧盟/瑞士国家",
+  },
+  ru: {
+    sos: "SOS",
+    title: "Экстренные номера Швейцарии",
+    yourPosition: "Ваше местоположение",
+    positionUnknown: "Местоположение неизвестно — сообщите его по телефону.",
+    hint: "Сохраняйте спокойствие. Сообщите: имя, местоположение (координаты/место), характер происшествия, количество пострадавших.",
+    close: "Закрыть",
+    rega: "Rega",
+    regaDesc: "Швейцарская воздушная спасательная служба",
+    sanity: "Скорая помощь",
+    sanityDesc: "Медицинская экстренная помощь",
+    police: "Полиция",
+    policeDesc: "Все кантональные полицейские участки",
+    eu: "Европейский экстренный номер",
+    euDesc: "Работает во всех странах ЕС/Швейцарии",
+  },
+};
+
+export const useSosStrings = createUseStrings(SOS_STRINGS);

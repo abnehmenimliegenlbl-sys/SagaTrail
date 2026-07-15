@@ -3,11 +3,12 @@ import {
   getAerialways,
   getPartners,
   getWeather,
+  getAvalancheBulletin,
   importGpxRoute,
   useGetRouteConditions,
   reportRouteCondition,
 } from "@workspace/api-client-react";
-import type { Partner, TrailConditionReport, WeatherReport } from "@workspace/api-client-react";
+import type { Partner, TrailConditionReport, WeatherReport, AvalancheBulletin } from "@workspace/api-client-react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -31,6 +32,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { SosButton } from "@/components/brand/SosButton";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
@@ -53,6 +55,14 @@ import { Saga } from "@/types";
 
 const WEB_TOP = 67;
 
+const AVALANCHE_COLORS: Record<number, string> = {
+  1: "#78C800",
+  2: "#FFD000",
+  3: "#FF8000",
+  4: "#FF0000",
+  5: "#222222",
+};
+
 export default function Routenplanung() {
   const t = useRouteStrings();
   const ts = useSharedStrings();
@@ -60,7 +70,7 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language } = useApp();
   const { isElite } = useSubscription();
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton, sagas } = useCatalog();
   const [importing, setImporting] = useState(false);
@@ -248,6 +258,9 @@ export default function Routenplanung() {
   const [weatherLoading, setWeatherLoading] = useState(true);
   // Zaehler fuer manuelle Wetter-Neuversuche (Retry-Knopf im Fehlerzustand).
   const [weatherVersuch, setWeatherVersuch] = useState(0);
+  // Lawinenbulletin (EAWS) – alpine Kantone, Winterhalbjahr
+  const [avalanche, setAvalanche] = useState<AvalancheBulletin | null>(null);
+  const [avalancheLoading, setAvalancheLoading] = useState(false);
 
   async function submitCondition() {
     if (!selectedCondition || !id) return;
@@ -332,6 +345,22 @@ export default function Routenplanung() {
       cancelled = true;
     };
   }, [route?.id, weatherVersuch]);
+
+  // Lawinenbulletin (EAWS) – nur alpine Kantone, Winterhalbjahr.
+  // Im Sommer gibt die API available=false zurueck (korrekt, kein Fehler).
+  // HikingRoute hat kein .canton-Feld; Kanton via sagaId aus dem Sagen-Katalog.
+  useEffect(() => {
+    if (!route?.sagaId) return;
+    const sagaCanton = sagas.find((s) => s.id === route.sagaId)?.canton;
+    if (!sagaCanton) return;
+    let cancelled = false;
+    const slug = kantonSlug(sagaCanton);
+    setAvalancheLoading(true);
+    getAvalancheBulletin({ canton: slug, lang: (language ?? "de") as "de" | "fr" | "it" | "en" })
+      .then((result) => { if (!cancelled) { setAvalanche(result); setAvalancheLoading(false); } })
+      .catch(() => { if (!cancelled) { setAvalanche(null); setAvalancheLoading(false); } });
+    return () => { cancelled = true; };
+  }, [route?.id, sagas.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -672,6 +701,47 @@ export default function Routenplanung() {
               </Text>
             </>
           )}
+        </View>
+
+        {/* ── Lawinenbulletin (EAWS) ───────────────────────────────── */}
+        {avalancheLoading ? (
+          <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
+            <View style={styles.checkRow}>
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+              <Text style={[styles.checkLabel, { color: colors.mutedForeground }]}>
+                {t.avalancheLoading}
+              </Text>
+            </View>
+          </View>
+        ) : avalanche?.available ? (
+          <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
+            <View style={styles.checkRow}>
+              <Feather name="alert-triangle" size={16} color={AVALANCHE_COLORS[avalanche.dangerLevel as keyof typeof AVALANCHE_COLORS] ?? colors.mutedForeground} />
+              <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.avalancheBulletin}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.checkValue, { color: AVALANCHE_COLORS[avalanche.dangerLevel as keyof typeof AVALANCHE_COLORS] ?? colors.foreground, fontFamily: fonts.bodyBold }]}>
+                  {t.avalancheLevelLabel(avalanche.dangerLevel ?? 0, t.avalancheLevelNames[(avalanche.dangerLevel ?? 1) as 1|2|3|4|5])}
+                </Text>
+                {avalanche.dangerText ? (
+                  <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 4 }]} numberOfLines={3}>
+                    {avalanche.dangerText}
+                  </Text>
+                ) : null}
+                <Text style={[styles.checkNote, { color: colors.mutedForeground, marginTop: 2 }]}>
+                  {t.avalancheSource}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : avalanche && !avalanche.available && avalanche.reason !== "no-alpine-region" && avalanche.reason !== "no-bulletin" ? (
+          <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
+            <CheckRow icon="check-circle" label={t.avalancheBulletin} value={t.avalancheError} ok />
+          </View>
+        ) : null}
+
+        {/* ── SOS-Notruf ───────────────────────────────────────────── */}
+        <View style={{ marginTop: 16, marginBottom: 4 }}>
+          <SosButton lat={route?.coordinates?.lat} lng={route?.coordinates?.lng} />
         </View>
 
         {/* ── Community Trail Conditions ────────────────────────────── */}

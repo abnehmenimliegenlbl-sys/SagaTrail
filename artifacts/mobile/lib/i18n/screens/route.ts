@@ -94,6 +94,15 @@ export interface RouteStrings {
     icy: string;
     blocked: string;
   };
+  avalancheBulletin: string;
+  avalancheLoading: string;
+  avalancheNoAlpine: string;
+  avalancheNoBulletin: string;
+  avalancheError: string;
+  avalancheSource: string;
+  avalancheValidUntil: (date: string) => string;
+  avalancheLevelLabel: (level: number, name: string) => string;
+  avalancheLevelNames: { 1: string; 2: string; 3: string; 4: string; 5: string };
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -193,6 +202,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Gesperrt",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Lawinenbulletin",
+    avalancheLoading: "Lawinenbulletin wird geladen …",
+    avalancheNoAlpine: "Für diese Region ist kein Lawinenbulletin verfügbar.",
+    avalancheNoBulletin: "Kein aktuelles Lawinenbulletin (Sommerhalbjahr).",
+    avalancheError: "Bulletin konnte nicht geladen werden.",
+    avalancheSource: "Quelle: EAWS / SLF",
+    avalancheValidUntil: (d) => `Gültig bis ${d}`,
+    avalancheLevelLabel: (l, n) => `Gefahrenstufe ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Gering", 2: "Mässig", 3: "Erheblich", 4: "Gross", 5: "Sehr gross" },
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -290,6 +308,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Gsperrt",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Lawinäbulletin",
+    avalancheLoading: "Lawinäbulletin wird gladä …",
+    avalancheNoAlpine: "Für die Region isch keis Lawinäbulletin verfüegbar.",
+    avalancheNoBulletin: "Keis aktuells Lawinäbulletin (Summerhalbjohr).",
+    avalancheError: "Bulletin isch nid gladä worde.",
+    avalancheSource: "Quelle: EAWS / SLF",
+    avalancheValidUntil: (d) => `Gültig bis ${d}`,
+    avalancheLevelLabel: (l, n) => `Gfahröstufe ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Gring", 2: "Mässig", 3: "Erheblich", 4: "Gross", 5: "Sehr gross" },
   },
   en: {
     notFound: "Route not found.",
@@ -387,6 +414,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Blocked",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Avalanche Bulletin",
+    avalancheLoading: "Loading avalanche bulletin …",
+    avalancheNoAlpine: "No avalanche bulletin available for this region.",
+    avalancheNoBulletin: "No current avalanche bulletin (summer season).",
+    avalancheError: "Could not load bulletin.",
+    avalancheSource: "Source: EAWS / SLF",
+    avalancheValidUntil: (d) => `Valid until ${d}`,
+    avalancheLevelLabel: (l, n) => `Danger level ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Low", 2: "Moderate", 3: "Considerable", 4: "High", 5: "Very high" },
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -484,6 +520,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Bloqué",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Bulletin d'avalanche",
+    avalancheLoading: "Chargement du bulletin d'avalanche …",
+    avalancheNoAlpine: "Pas de bulletin d'avalanche disponible pour cette région.",
+    avalancheNoBulletin: "Aucun bulletin d'avalanche actuel (saison estivale).",
+    avalancheError: "Impossible de charger le bulletin.",
+    avalancheSource: "Source : EAWS / SLF",
+    avalancheValidUntil: (d) => `Valable jusqu'au ${d}`,
+    avalancheLevelLabel: (l, n) => `Degré de danger ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Faible", 2: "Limité", 3: "Marqué", 4: "Fort", 5: "Très fort" },
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -581,6 +626,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Bloccato",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Bollettino valanghe",
+    avalancheLoading: "Caricamento bollettino valanghe …",
+    avalancheNoAlpine: "Nessun bollettino valanghe disponibile per questa regione.",
+    avalancheNoBulletin: "Nessun bollettino valanghe attuale (stagione estiva).",
+    avalancheError: "Impossibile caricare il bollettino.",
+    avalancheSource: "Fonte: EAWS / SLF",
+    avalancheValidUntil: (d) => `Valido fino al ${d}`,
+    avalancheLevelLabel: (l, n) => `Grado di pericolo ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Debole", 2: "Limitato", 3: "Marcato", 4: "Forte", 5: "Molto forte" },
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -678,6 +732,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Bloqueado",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Boletín de aludes",
+    avalancheLoading: "Cargando boletín de aludes …",
+    avalancheNoAlpine: "No hay boletín de aludes disponible para esta región.",
+    avalancheNoBulletin: "Sin boletín de aludes actual (temporada de verano).",
+    avalancheError: "No se pudo cargar el boletín.",
+    avalancheSource: "Fuente: EAWS / SLF",
+    avalancheValidUntil: (d) => `Válido hasta ${d}`,
+    avalancheLevelLabel: (l, n) => `Grado de peligro ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Débil", 2: "Limitado", 3: "Notable", 4: "Fuerte", 5: "Muy fuerte" },
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -775,6 +838,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Bloqueado",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Boletim de avalanche",
+    avalancheLoading: "Carregando boletim de avalanche …",
+    avalancheNoAlpine: "Não há boletim de avalanche disponível para esta região.",
+    avalancheNoBulletin: "Sem boletim de avalanche atual (época de verão).",
+    avalancheError: "Não foi possível carregar o boletim.",
+    avalancheSource: "Fonte: EAWS / SLF",
+    avalancheValidUntil: (d) => `Válido até ${d}`,
+    avalancheLevelLabel: (l, n) => `Grau de perigo ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Fraco", 2: "Limitado", 3: "Considerável", 4: "Forte", 5: "Muito forte" },
   },
   zh: {
     notFound: "未找到路线。",
@@ -865,6 +937,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "封路",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "雪崩公报",
+    avalancheLoading: "正在加载雪崩公报 …",
+    avalancheNoAlpine: "该地区暂无雪崩公报。",
+    avalancheNoBulletin: "当前无雪崩公报（夏季）。",
+    avalancheError: "无法加载公报。",
+    avalancheSource: "来源：EAWS / SLF",
+    avalancheValidUntil: (d) => `有效期至 ${d}`,
+    avalancheLevelLabel: (l, n) => `危险等级 ${l} · ${n}`,
+    avalancheLevelNames: { 1: "低", 2: "有限", 3: "显著", 4: "高", 5: "非常高" },
   },
   ru: {
     notFound: "Маршрут не найден.",
@@ -962,6 +1043,15 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       blocked: "Заблокировано",
     },
     conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
+    avalancheBulletin: "Лавинный бюллетень",
+    avalancheLoading: "Загрузка лавинного бюллетеня …",
+    avalancheNoAlpine: "Для этого региона лавинный бюллетень недоступен.",
+    avalancheNoBulletin: "Актуальный лавинный бюллетень отсутствует (летний сезон).",
+    avalancheError: "Не удалось загрузить бюллетень.",
+    avalancheSource: "Источник: EAWS / SLF",
+    avalancheValidUntil: (d) => `Действителен до ${d}`,
+    avalancheLevelLabel: (l, n) => `Уровень опасности ${l} · ${n}`,
+    avalancheLevelNames: { 1: "Незначительный", 2: "Ограниченный", 3: "Значительный", 4: "Высокий", 5: "Очень высокий" },
   },
 };
 

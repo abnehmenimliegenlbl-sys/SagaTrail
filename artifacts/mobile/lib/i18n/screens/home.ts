@@ -20,6 +20,9 @@ export interface HomeStrings {
   resumeHint: (chapter: number, total: number) => string;
   resumeCta: string;
   resumeDismiss: string;
+  searchPlaceholder: string;
+  searchNoResults: string;
+  searchInCanton: (canton: string) => string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -43,6 +46,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Kapitel ${c} von ${n} — die Sage wartet auf dich`,
     resumeCta: "Weiter wandern",
     resumeDismiss: "Verwerfen",
+    searchPlaceholder: "Sage oder Kanton suchen …",
+    searchNoResults: "Keine Ergebnisse",
+    searchInCanton: (c) => `→ Kanton ${c}`,
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -64,6 +70,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Kapitel ${c} vo ${n} — d Sag wartet uf di`,
     resumeCta: "Wiiter wandere",
     resumeDismiss: "Verwerfe",
+    searchPlaceholder: "Sag oder Kanton suche …",
+    searchNoResults: "Keni Resultat",
+    searchInCanton: (c) => `→ Kanton ${c}`,
   },
   en: {
     welcomeBack: "Welcome back",
@@ -85,6 +94,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Chapter ${c} of ${n} — the legend awaits you`,
     resumeCta: "Continue hiking",
     resumeDismiss: "Dismiss",
+    searchPlaceholder: "Search legend or canton …",
+    searchNoResults: "No results",
+    searchInCanton: (c) => `→ Canton ${c}`,
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -106,6 +118,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Chapitre ${c} sur ${n} — la légende t'attend`,
     resumeCta: "Reprendre la randonnée",
     resumeDismiss: "Ignorer",
+    searchPlaceholder: "Chercher légende ou canton …",
+    searchNoResults: "Aucun résultat",
+    searchInCanton: (c) => `→ Canton ${c}`,
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -127,6 +142,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capitolo ${c} di ${n} — la leggenda ti aspetta`,
     resumeCta: "Riprendi l'escursione",
     resumeDismiss: "Ignora",
+    searchPlaceholder: "Cerca leggenda o cantone …",
+    searchNoResults: "Nessun risultato",
+    searchInCanton: (c) => `→ Cantone ${c}`,
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -148,6 +166,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capítulo ${c} de ${n} — la leyenda te espera`,
     resumeCta: "Continuar caminata",
     resumeDismiss: "Descartar",
+    searchPlaceholder: "Buscar leyenda o cantón …",
+    searchNoResults: "Sin resultados",
+    searchInCanton: (c) => `→ Cantón ${c}`,
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -169,6 +190,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capítulo ${c} de ${n} — a lenda espera por você`,
     resumeCta: "Continuar caminhada",
     resumeDismiss: "Descartar",
+    searchPlaceholder: "Pesquisar lenda ou cantão …",
+    searchNoResults: "Sem resultados",
+    searchInCanton: (c) => `→ Cantão ${c}`,
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -190,6 +214,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `第 ${c} 章，共 ${n} 章 — 传说在等你`,
     resumeCta: "继续徒步",
     resumeDismiss: "忽略",
+    searchPlaceholder: "搜索传说或联邦州 …",
+    searchNoResults: "无结果",
+    searchInCanton: (c) => `→ ${c}州`,
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -211,6 +238,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Глава ${c} из ${n} — легенда ждёт тебя`,
     resumeCta: "Продолжить поход",
     resumeDismiss: "Отклонить",
+    searchPlaceholder: "Поиск легенды или кантона …",
+    searchNoResults: "Нет результатов",
+    searchInCanton: (c) => `→ Кантон ${c}`,
   },
 };
 

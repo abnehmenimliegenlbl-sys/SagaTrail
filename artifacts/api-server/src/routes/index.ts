@@ -23,6 +23,7 @@ import partnerAnfragenRouter from "./partnerAnfragen";
 import partnerPortalRouter from "./partnerPortal";
 import flyerRouter from "./flyer";
 import trailConditionsRouter from "./trailConditions";
+import avalancheRouter from "./avalanche";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(partnerAnfragenRouter);
 router.use(partnerPortalRouter);
 router.use(flyerRouter);
 router.use(trailConditionsRouter);
+router.use(avalancheRouter);
 
 export default router;
