@@ -93,6 +93,13 @@ a{color:var(--red);text-decoration:none}
 .hint{font-size:12px;color:#aaa}
 .sep{border:none;border-top:1px solid var(--border);margin:16px 0}
 .full{grid-column:1/-1}
+/* --- PUSH TIER BUTTONS --- */
+.push-tier-btn{padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;background:#fff;color:var(--mid);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.push-tier-btn:hover{border-color:var(--red);color:var(--red)}
+.push-tier-btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+/* --- PUSH RESULT ROW --- */
+.push-result-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.push-result-row:last-child{border-bottom:none}
 /* --- PARTNER LOOKUP --- */
 #np-lookup-wrap{grid-column:1/-1;background:#f7f5f2;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:4px}
 #np-lookup-wrap label{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block}
@@ -122,6 +129,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('users',this)">&#128101; Nutzer</button>
   <button class="tab-btn" onclick="switchTab('usage',this)">&#128290; Nutzungsdaten</button>
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
+  <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
 </div>
 
 <div id="content">
@@ -138,6 +146,65 @@ a{color:var(--red);text-decoration:none}
   <!-- NUTZUNGSDATEN -->
   <div id="tab-usage" class="tab-pane">
     <div id="usage-body"><p class="loading">Wird geladen...</p></div>
+  </div>
+
+  <!-- PUSH -->
+  <div id="tab-push" class="tab-pane">
+    <div class="card" style="max-width:640px">
+      <h2 style="margin-bottom:4px">&#128226; Push-Nachricht senden</h2>
+      <p class="hint" style="margin-bottom:18px">Nachricht wird über Expo Push an alle Geräte mit aktivem Push-Token gesendet.</p>
+
+      <!-- SEGMENT -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Empfänger</div>
+        <div id="push-tier-btns" style="display:flex;flex-wrap:wrap;gap:6px">
+          <button class="push-tier-btn active" data-tier="alle"        onclick="selectTier(this)">Alle</button>
+          <button class="push-tier-btn"         data-tier="premium"     onclick="selectTier(this)">Premium</button>
+          <button class="push-tier-btn"         data-tier="premium_family" onclick="selectTier(this)">Premium Family</button>
+          <button class="push-tier-btn"         data-tier="elite"       onclick="selectTier(this)">Elite</button>
+          <button class="push-tier-btn"         data-tier="elite_family" onclick="selectTier(this)">Elite Family</button>
+        </div>
+        <div id="push-tier-count" class="hint" style="margin-top:6px">Verbinden um Zielgrösse zu sehen</div>
+      </div>
+
+      <!-- TITEL -->
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Titel <span style="color:var(--red)">*</span></label>
+        <input id="push-title" type="text" maxlength="100" placeholder="z.B. Neue Sage entdeckt 🗻" oninput="updatePreview()" />
+      </div>
+
+      <!-- NACHRICHT -->
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Nachricht <span style="color:var(--red)">*</span> <span id="push-body-len" class="hint" style="float:right">0 / 200</span></label>
+        <textarea id="push-body" maxlength="200" rows="3" placeholder="z.B. Im Kanton Uri warten neue Wanderrouten auf dich…" oninput="updatePreview();updateBodyLen()" style="resize:vertical"></textarea>
+      </div>
+
+      <!-- VORSCHAU -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Vorschau</div>
+        <div id="push-preview" style="background:#f0eeeb;border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+          <div style="width:36px;height:36px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🥾</div>
+          <div style="min-width:0">
+            <div id="prev-title" style="font-weight:700;font-size:13px;color:#1a1a1a">Titel erscheint hier</div>
+            <div id="prev-body"  style="font-size:12px;color:#555;margin-top:2px;line-height:1.4">Nachricht erscheint hier</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEND -->
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" id="push-send-btn" onclick="sendPushCampaign()" style="padding:8px 20px;font-size:14px">&#128228; Jetzt senden</button>
+        <span id="push-status" class="hint"></span>
+      </div>
+    </div>
+
+    <!-- VERLAUF -->
+    <div class="card" style="max-width:640px;margin-top:0">
+      <h2 style="margin-bottom:12px">Letzte Sendungen</h2>
+      <div id="push-history">
+        <p class="hint">Noch keine Sendung in dieser Sitzung.</p>
+      </div>
+    </div>
   </div>
 
   <!-- PARTNER -->
@@ -250,7 +317,7 @@ async function connect() {
   _token = document.getElementById('tok-input').value;
   try {
     setTokStatus('Lade...', undefined);
-    await Promise.all([loadOverview(), loadPartner()]);
+    await Promise.all([loadOverview(), loadPartner(), loadPushStats()]);
     localStorage.setItem(LS_KEY, _token);
     document.getElementById('tok-input').style.display = 'none';
     document.getElementById('tok-btn').style.display = 'none';
@@ -276,7 +343,7 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tok-btn').style.display = 'none';
     document.getElementById('tok-forget').style.display = '';
     setTokStatus('Lade...', undefined);
-    Promise.all([loadOverview(), loadPartner()])
+    Promise.all([loadOverview(), loadPartner(), loadPushStats()])
       .then(function() { setTokStatus('Verbunden \u2713', true); })
       .catch(function(e) {
         localStorage.removeItem(LS_KEY);
@@ -298,6 +365,7 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   if (name === 'users' && token()) loadUsers();
   if (name === 'usage' && token()) loadUsage();
+  if (name === 'push'  && token()) loadPushStats();
 }
 
 /* ===================== ÜBERSICHT ===================== */
@@ -431,6 +499,101 @@ document.addEventListener('click', function(e) {
     document.getElementById('np-lookup-drop').style.display = 'none';
   }
 });
+
+/* ===================== PUSH ===================== */
+var _pushTier = 'alle';
+var _pushStats = null;
+
+function selectTier(btn) {
+  document.querySelectorAll('.push-tier-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  _pushTier = btn.getAttribute('data-tier');
+  updateTierCount();
+}
+
+function updateTierCount() {
+  if (!_pushStats) { document.getElementById('push-tier-count').textContent = 'Verbinden um Zielgrösse zu sehen'; return; }
+  var count = 0;
+  if (_pushTier === 'alle') {
+    count = _pushStats.totalWithToken;
+  } else {
+    var entry = _pushStats.byTier[_pushTier];
+    count = entry ? entry.withToken : 0;
+  }
+  var total = _pushStats.totalWithToken;
+  document.getElementById('push-tier-count').textContent = count + ' von ' + total + ' Geräten erhalten diese Nachricht';
+}
+
+async function loadPushStats() {
+  if (!token()) return;
+  try {
+    _pushStats = await api('/api/admin/push/stats');
+    updateTierCount();
+  } catch(e) {
+    document.getElementById('push-tier-count').textContent = 'Statistik nicht verfügbar';
+  }
+}
+
+function updatePreview() {
+  var t = document.getElementById('push-title').value || 'Titel erscheint hier';
+  var b = document.getElementById('push-body').value || 'Nachricht erscheint hier';
+  document.getElementById('prev-title').textContent = t;
+  document.getElementById('prev-body').textContent = b;
+}
+
+function updateBodyLen() {
+  var len = document.getElementById('push-body').value.length;
+  document.getElementById('push-body-len').textContent = len + ' / 200';
+}
+
+async function sendPushCampaign() {
+  var title = document.getElementById('push-title').value.trim();
+  var body  = document.getElementById('push-body').value.trim();
+  if (!title || !body) {
+    document.getElementById('push-status').textContent = 'Titel und Nachricht sind Pflichtfelder.';
+    return;
+  }
+  var tierLabel = {alle:'Alle', premium:'Premium', premium_family:'Premium Family', elite:'Elite', elite_family:'Elite Family'}[_pushTier] || _pushTier;
+  if (!confirm('Push-Nachricht an Segment «' + tierLabel + '» senden?\\n\\nTitel: ' + title + '\\n\\n' + body)) return;
+
+  var btn = document.getElementById('push-send-btn');
+  var status = document.getElementById('push-status');
+  btn.disabled = true;
+  status.textContent = 'Sende…';
+  status.style.color = '#aaa';
+
+  try {
+    var result = await api('/api/admin/push', { method:'POST', body: JSON.stringify({ tier: _pushTier, title: title, body: body }) });
+    status.textContent = '✓ Gesendet';
+    status.style.color = 'var(--green)';
+    appendPushHistory(tierLabel, title, body, result);
+    await loadPushStats();
+  } catch(e) {
+    status.textContent = 'Fehler: ' + e.message;
+    status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function appendPushHistory(tierLabel, title, body, r) {
+  var hist = document.getElementById('push-history');
+  if (hist.querySelector('.hint')) hist.innerHTML = '';
+  var now = new Date().toLocaleTimeString('de-CH', {hour:'2-digit', minute:'2-digit'});
+  var row = document.createElement('div');
+  row.className = 'push-result-row';
+  row.innerHTML =
+    '<div style="flex:1;min-width:0">' +
+      '<div style="font-weight:600">' + esc(title) + ' <span class="badge badge-blue">' + esc(tierLabel) + '</span></div>' +
+      '<div class="hint" style="margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(body) + '</div>' +
+    '</div>' +
+    '<div style="text-align:right;flex-shrink:0">' +
+      '<div style="font-weight:700;color:var(--green)">' + (r.sent||0) + ' gesendet</div>' +
+      (r.failed ? '<div style="color:var(--red);font-size:11px">' + r.failed + ' fehlgeschlagen</div>' : '') +
+      '<div class="hint">' + now + '</div>' +
+    '</div>';
+  hist.insertBefore(row, hist.firstChild);
+}
 
 /* ===================== PARTNER ===================== */
 async function loadPartner() {

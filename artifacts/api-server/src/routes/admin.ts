@@ -486,6 +486,115 @@ router.get("/admin/partner-ui", (_req, res): void => {
 // ElevenLabs-Plan-Upgrade, damit die neue Schweizer-Akzent-Stimme (gsw)
 // beim naechsten Abruf frisch synthetisiert wird statt alter
 // Standard-Voice-Dateien zu servieren.
+// ===================================================================
+// PUSH-NACHRICHTEN
+// ===================================================================
+
+type PushTier = "alle" | "premium" | "premium_family" | "elite" | "elite_family";
+const PUSH_TIERS: readonly PushTier[] = ["alle", "premium", "premium_family", "elite", "elite_family"];
+
+const PushSendBody = z.object({
+  tier:  z.union([
+    z.literal("alle"),
+    z.literal("premium"),
+    z.literal("premium_family"),
+    z.literal("elite"),
+    z.literal("elite_family"),
+  ]),
+  title: z.string().min(1).max(100),
+  body:  z.string().min(1).max(500),
+  data:  z.record(z.string(), z.unknown()).optional(),
+});
+
+async function sendExpoPush(
+  tokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<{ sent: number; failed: number }> {
+  const BATCH = 100;
+  let sent = 0;
+  let failed = 0;
+  for (let i = 0; i < tokens.length; i += BATCH) {
+    const chunk = tokens.slice(i, i + BATCH);
+    const messages = chunk.map((to) => ({
+      to,
+      title,
+      body,
+      sound: "default",
+      ...(data ? { data } : {}),
+    }));
+    try {
+      const res = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(messages),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) { failed += chunk.length; continue; }
+      const json = (await res.json()) as { data?: { status: string }[] };
+      (json.data ?? []).forEach((r) => {
+        if (r.status === "ok") sent++; else failed++;
+      });
+    } catch {
+      failed += chunk.length;
+    }
+  }
+  return { sent, failed };
+}
+
+router.post("/admin/push", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = PushSendBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { tier, title, body: msg, data } = parsed.data;
+
+  // Alle Profile mit Push-Token laden
+  const rows = await db
+    .select({ id: profilesTable.id, pushToken: profilesTable.pushToken, subscriptionTier: profilesTable.subscriptionTier })
+    .from(profilesTable)
+    .where(isNotNull(profilesTable.pushToken));
+
+  const matching = rows.filter((r) => {
+    if (!r.pushToken) return false;
+    if (tier === "alle") return true;
+    return r.subscriptionTier === tier;
+  });
+
+  const tokens = matching.map((r) => r.pushToken as string);
+  const skipped = rows.length - matching.length;
+
+  req.log.info({ tier, count: tokens.length }, "Push-Kampagne gestartet");
+
+  const { sent, failed } = await sendExpoPush(tokens, title, msg, data);
+
+  req.log.info({ tier, sent, failed, skipped }, "Push-Kampagne abgeschlossen");
+  res.json({ ok: true, tier, total: rows.length, targeted: tokens.length, sent, failed, skipped });
+});
+
+router.get("/admin/push/stats", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const rows = await db
+    .select({ tier: profilesTable.subscriptionTier, hasToken: profilesTable.pushToken })
+    .from(profilesTable);
+
+  const byTier: Record<string, { total: number; withToken: number }> = {};
+  let totalWithToken = 0;
+  rows.forEach((r) => {
+    const t = r.tier ?? "free";
+    if (!byTier[t]) byTier[t] = { total: 0, withToken: 0 };
+    byTier[t].total++;
+    if (r.hasToken) { byTier[t].withToken++; totalWithToken++; }
+  });
+
+  res.json({ total: rows.length, totalWithToken, byTier });
+});
+
 router.delete("/admin/narration-cache", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
