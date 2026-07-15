@@ -20,6 +20,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "SagaTrail nutzt deinen Standort während der Wanderung, um Story-Momente an den richtigen Wegpunkten auszulösen — auch wenn der Bildschirm gesperrt ist.",
         "NSMicrophoneUsageDescription": "SagaTrail hört bei Entscheidungspunkten kurz zu, damit du die Wanderung freihändig per Sprache steuern kannst.",
         "NSSpeechRecognitionUsageDescription": "SagaTrail erkennt deine gesprochene Antwort bei Entscheidungspunkten, damit du unterwegs keine Taste drücken musst.",
+        "NSMotionUsageDescription": "SagaTrail zählt deine Schritte während der Wanderung, damit du deine Aktivität im Hike-Log nachverfolgen kannst.",
         "UIBackgroundModes": [
           "audio",
           "location"
