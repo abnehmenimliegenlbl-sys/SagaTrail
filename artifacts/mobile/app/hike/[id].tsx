@@ -435,17 +435,19 @@ export default function LiveHike() {
   // Podcast, wird diese waehrend der Erzaehlung leiser gedreht statt in
   // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
   useEffect(() => {
+    // MixWithOthers als Standard: zwischen Kapiteln laeuft nur der stille
+    // Keepalive-Loop, der Musik anderer Apps NICHT dauerhaft ducken soll.
+    // Waehrend einer Erzaehlung (speak()) wird dynamisch auf DuckOthers
+    // gewechselt und danach wieder zurueck — so bleibt Musik im Hintergrund
+    // normal laut, ausser wenn gerade wirklich gesprochen wird.
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: true,
-    }).catch(() => {
-      // Best effort — falls die Audiosession nicht gesetzt werden kann, wird
-      // trotzdem versucht, ganz normal ueber die Standard-Session vorzulesen.
-    });
+      shouldDuckAndroid: false,
+    }).catch(() => {});
   }, []);
 
   // Stiller Audio-Keepalive — haelt die iOS-Audiosession zwischen zwei Kapiteln
@@ -1085,6 +1087,16 @@ export default function LiveHike() {
         // Best effort — Sound koennte bereits entladen sein.
       }
     }
+    // Zurueck auf MixWithOthers: manueller Stopp soll Musik sofort
+    // wieder normal laut werden lassen.
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      shouldDuckAndroid: false,
+    }).catch(() => {});
     setSpeaking(false);
   }, []);
 
@@ -1156,6 +1168,17 @@ export default function LiveHike() {
           try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
         }
         if (gen !== narrationGenRef.current) return;
+        // Vor dem Abspielen auf DuckOthers wechseln, damit die Erzaehlung
+        // Musik/Podcasts waehrend des Sprechens leiser zieht.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+        }).catch(() => {});
+        if (gen !== narrationGenRef.current) return;
         const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {
           sound.unloadAsync().catch(() => {});
@@ -1165,6 +1188,16 @@ export default function LiveHike() {
         sound.setOnPlaybackStatusUpdate((status) => {
           if (!status.isLoaded) return;
           if (status.didJustFinish) {
+            // Zurueck auf MixWithOthers: zwischen Kapiteln soll Musik wieder
+            // normal laut laufen (nur der stille Keepalive ist noch aktiv).
+            Audio.setAudioModeAsync({
+              allowsRecordingIOS: false,
+              playsInSilentModeIOS: true,
+              staysActiveInBackground: true,
+              interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+              shouldDuckAndroid: false,
+            }).catch(() => {});
             setSpeaking(false);
             speakingRef.current = false; // sofort synchronisieren fuer Queue-Check
             onFinished?.();
