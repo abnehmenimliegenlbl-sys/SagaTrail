@@ -1254,9 +1254,18 @@ export default function LiveHike() {
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
-      // Erstes Kapitel: Begruessung (Name + Tageszeit) voranstellen.
+      // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
       // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
-      speak(currentIndex === 0 ? `${greetingPrefix} ${ch.text}` : ch.text, undefined, { interrupt: true });
+      if (currentIndex === 0) {
+        const packForCue = STORY_PACKS[resolveLang(storyLanguage)];
+        speak(
+          `${greetingPrefix} ${packForCue.hikeStartCue}`,
+          () => { setTimeout(() => speak(ch.text), 1500); },
+          { interrupt: true }
+        );
+      } else {
+        speak(ch.text, undefined, { interrupt: true });
+      }
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
       // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
       if (currentIndex > 0 && turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
@@ -1269,7 +1278,7 @@ export default function LiveHike() {
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix]);
+  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim

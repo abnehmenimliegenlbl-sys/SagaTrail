@@ -97,6 +97,8 @@ export interface StoryPack {
   milestonePhrase: (pct: 25 | 50 | 75, name: string | null) => string;
   /** Routen-Einleitung vor Kapitel 1: Distanz, Dauer, Schwierigkeit, Oberfläche, POIs, Ausrüstung */
   routeBriefing: (p: RouteBriefingParams) => string;
+  /** Übergangs-Satz nach dem Briefing, direkt vor Kapitel 1 */
+  hikeStartCue: string;
 }
 
 /**
@@ -232,6 +234,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss genug Wasser und Proviant für die Strecke nicht." : "";
       return `${n}${diff} Route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Wenn du bereit bist, können wir jetzt loswandern.",
   },
 
   gsw: {
@@ -346,6 +349,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss gnueg Wasser und Proviant für d Sträck nid." : "";
       return `${n}${diff} Wäg: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Wenn du parat bisch, chöme mir jetzt loswandere.",
   },
 
   fr: {
@@ -460,6 +464,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " N'oublie pas suffisamment d'eau et de provisions pour le parcours." : "";
       return `${n}${diff} : ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Quand tu es prêt, nous pouvons partir.",
   },
 
   it: {
@@ -574,6 +579,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Non dimenticare acqua e provviste sufficienti per il percorso." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Quando sei pronto, possiamo partire.",
   },
 
   en: {
@@ -688,6 +694,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Don't forget enough water and food for the trail." : "";
       return `${n}${diff} route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Whenever you're ready, let's head out.",
   },
 
   zh: {
@@ -798,6 +805,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? "别忘了携带足够的水和食物。" : "";
       return `${n}${diff}路线：${p.distanceKm.toFixed(1)}公里，${dur}。${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "准备好了，我们出发吧。",
   },
 
   es: {
@@ -912,6 +920,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " No olvides suficiente agua y provisiones para el recorrido." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Cuando estés listo, nos ponemos en marcha.",
   },
 
   pt: {
@@ -1026,6 +1035,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Não te esqueças de água e provisões suficientes para o percurso." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Quando estiveres pronto, podemos partir.",
   },
 
   ru: {
@@ -1140,6 +1150,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Не забудь взять достаточно воды и еды на маршрут." : "";
       return `${n}${diff}: ${p.distanceKm.toFixed(1)} км, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
+    hikeStartCue: "Когда будешь готов — отправляемся.",
   },
 };
 
