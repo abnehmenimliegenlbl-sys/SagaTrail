@@ -1602,6 +1602,26 @@ export default function LiveHike() {
     chooseOption
   );
 
+  // Wenn die Spracherkennung endet (voiceListening: true → false), stellt
+  // dieser Effekt die Audio-Session explizit zurueck. expo-speech-recognition
+  // setzt intern allowsRecordingIOS (iOS Audio-Session wechselt auf
+  // PlayAndRecord), was den Lautsprecherausgang stark reduziert — iOS dreht
+  // ihn zum Schutz vor Rueckkopplung runter. Ohne diesen Reset bleibt die
+  // Session im Record-Modus und jede nachfolgende Erzaehlung klingt
+  // wesentlich leiser.
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    if (voiceListening) return;
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      shouldDuckAndroid: false,
+    }).catch(() => {});
+  }, [voiceListening]);
+
   const finishHike = useCallback(async () => {
     await cancelNarration();
     if (Platform.OS !== "web") {

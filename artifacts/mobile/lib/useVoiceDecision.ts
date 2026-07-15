@@ -100,7 +100,11 @@ export function useVoiceDecision(
         }
         ExpoSpeechRecognitionModule!.start({
           lang: SPEECH_LOCALE[langRef.current],
-          interimResults: false,
+          // interimResults: true — Treffer werden schon bei Zwischen-
+          // ergebnissen geprueft, nicht erst nach einer langen Sprechpause.
+          // Verbessert die Reaktionszeit deutlich (z. B. bei kurzem "Links"
+          // oder "Rechts") ohne die Erkennungsgenauigkeit zu senken.
+          interimResults: true,
           continuous: true,
         });
         setListening(true);
@@ -117,13 +121,17 @@ export function useVoiceDecision(
 
   useSpeechRecognitionEvent("result", (event) => {
     if (!active || matchedRef.current) return;
-    const transcript = event.results?.[0]?.transcript;
-    if (!transcript) return;
-    const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
-    if (index != null) {
-      matchedRef.current = true;
-      stopListening();
-      onMatchRef.current(index);
+    // Alle verfuegbaren Transkripte pruefen (auch Zwischen-Ergebnisse):
+    // ein Treffer reicht aus, um die Entscheidung auszuloesen.
+    const transcripts = event.results?.map((r) => r.transcript).filter(Boolean) ?? [];
+    for (const transcript of transcripts) {
+      const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
+      if (index != null) {
+        matchedRef.current = true;
+        stopListening();
+        onMatchRef.current(index);
+        return;
+      }
     }
   });
 
@@ -140,7 +148,7 @@ export function useVoiceDecision(
     try {
       ExpoSpeechRecognitionModule?.start({
         lang: SPEECH_LOCALE[langRef.current],
-        interimResults: false,
+        interimResults: true,
         continuous: true,
       });
     } catch {
