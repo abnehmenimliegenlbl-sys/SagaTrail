@@ -24,7 +24,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import { kantonSlug } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -46,7 +46,6 @@ export default function SagaDetail() {
   const { getSaga, ensureRouteSaga } = useCatalog();
   const {
     isElite,
-    hatEntitlement,
     offerings,
     purchase,
     isPurchasing,
@@ -113,16 +112,13 @@ export default function SagaDetail() {
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das Pack des
   // Kantons oder Elite (alle Packs inklusive).
-  const packKey = packEntitlementFuerKanton(saga.canton);
-  // packSlug vor den Pack-Checks benoetigt (DB-seitiger Freischaltungscheck).
+  // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
+  // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const packSlug = kantonSlug(saga.canton);
-  // DB-basierter Freischaltungscheck als Fallback fuer den Fall, dass das RC-
-  // Entitlement-Grant wegen fehlender Scope-Berechtigung fehlgeschlagen ist.
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
   const packLocked =
     premium &&
     !isElite &&
-    !hatEntitlement(packKey) &&
     !dbPackUnlocked &&
     !istSageInklusive(saga.canton, saga.id);
   // Jedes Kanton hat ein eigenes Paket ("pack_<slug>") im "packs"-Offering.

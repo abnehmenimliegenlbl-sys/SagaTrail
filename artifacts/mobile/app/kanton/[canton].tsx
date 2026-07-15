@@ -36,7 +36,7 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useRouteFoto } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
-import { kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
+import { kantonSlug } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -66,7 +66,6 @@ export default function KantonRouten() {
   const { loadCantonRoutes } = useCatalog();
   const {
     isElite,
-    hatEntitlement,
     offerings,
     purchase,
     isPurchasing,
@@ -82,15 +81,16 @@ export default function KantonRouten() {
   // entdeckte Sage inklusive; fuer weitere Sagen des Kantons braucht es das
   // Pack dieses Kantons (oder Elite, das alle Packs einschliesst). Ohne
   // Premium ist der Kauf noch nicht relevant (erst die Basis-Freischaltung).
-  const packKey = cantonName ? packEntitlementFuerKanton(cantonName) : "";
-  // packSlug vor den Pack-Checks benoetigt (DB-seitiger Freischaltungscheck).
+  // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
+  // RC-Entitlements werden bewusst NICHT geprueft: das sagatrail_kantonspack-
+  // Einzel-Consumable-Produkt hat kein RC-Entitlement verknuepft; wuerde ein
+  // (Fehl-)Grant trotzdem alle pack_<kanton>-Entitlements aktivieren, wuerden
+  // faelschlicherweise alle Kantone freigeschaltet.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
-  // DB-basierter Freischaltungscheck als Fallback fuer den Fall, dass das RC-
-  // Entitlement-Grant wegen fehlender Scope-Berechtigung fehlgeschlagen ist.
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
   const packLocked =
-    premium && !!cantonName && !isElite && !hatEntitlement(packKey) && !dbPackUnlocked;
-  const packUnlocked = premium && (isElite || hatEntitlement(packKey) || dbPackUnlocked);
+    premium && !!cantonName && !isElite && !dbPackUnlocked;
+  const packUnlocked = premium && (isElite || dbPackUnlocked);
   // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
   // gekauft; der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = packSlug

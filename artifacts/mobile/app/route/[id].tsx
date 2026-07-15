@@ -38,7 +38,7 @@ import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { packEntitlementFuerKanton, kantonSlug } from "@/lib/kantonSlug";
+import { kantonSlug } from "@/lib/kantonSlug";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -58,7 +58,7 @@ export default function Routenplanung() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive } = useApp();
-  const { isElite, hatEntitlement } = useSubscription();
+  const { isElite } = useSubscription();
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton } = useCatalog();
   const [importing, setImporting] = useState(false);
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
@@ -183,15 +183,17 @@ export default function Routenplanung() {
   // Prueft ob eine bestimmte Sage fuer den aktuellen User gesperrt ist.
   // Entspricht der bestehenden `locked`-Logik, aber sagen-individuell damit
   // der Picker gefiltert werden kann.
+  // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
+  // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
       if (!premium) return freeHikeUsed;
       if (isElite) return false;
-      const entKey = packEntitlementFuerKanton(s.canton);
-      if (entKey && hatEntitlement(entKey)) return false;
+      const slug = kantonSlug(s.canton);
+      if ((profile?.purchasedPacks ?? []).includes(slug)) return false;
       return !istSageInklusive(s.canton, s.id);
     },
-    [premium, freeHikeUsed, isElite, hatEntitlement, istSageInklusive],
+    [premium, freeHikeUsed, isElite, profile, istSageInklusive],
   );
 
   // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
@@ -321,10 +323,9 @@ export default function Routenplanung() {
   }
 
   const meta = route;
-  const routePackKey = saga?.canton ? packEntitlementFuerKanton(saga.canton) : "";
   const routePackSlug = saga?.canton ? kantonSlug(saga.canton) : "";
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routePackSlug);
-  const packUnlocked = premium && (isElite || (!!routePackKey && hatEntitlement(routePackKey)) || dbPackUnlocked);
+  const packUnlocked = premium && (isElite || dbPackUnlocked);
   const sagaPackLocked = premium && !packUnlocked && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id);
   const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
