@@ -67,6 +67,33 @@ export interface RouteStrings {
   planReturn: string;
   planOutward: string;
   similarRoutes: string;
+  communityConditions: string;
+  reportCondition: string;
+  conditionReportedAgo: (relTime: string) => string;
+  conditionNoteLabel: string;
+  conditionNotePlaceholder: string;
+  conditionSubmit: string;
+  conditionSubmitting: string;
+  conditionSubmitted: string;
+  conditionRateLimit: string;
+  conditionError: string;
+  conditionNoReports: string;
+  conditions: {
+    excellent: string;
+    clear: string;
+    muddy: string;
+    snow: string;
+    icy: string;
+    blocked: string;
+  };
+  conditionEmoji: {
+    excellent: string;
+    clear: string;
+    muddy: string;
+    snow: string;
+    icy: string;
+    blocked: string;
+  };
 }
 
 const ROUTE_STRINGS: StringsDict<RouteStrings> = {
@@ -146,6 +173,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Rückreise mit ÖV planen",
     planOutward: "Mit SBB anreisen",
     similarRoutes: "Weitere Routen im Kanton",
+    communityConditions: "Wegbedingungen der Community",
+    reportCondition: "Zustand melden",
+    conditionReportedAgo: (t) => `vor ${t}`,
+    conditionNoteLabel: "Anmerkung (optional)",
+    conditionNotePlaceholder: "z. B. Schnee ab 1500 m, Holzfällerbetrieb …",
+    conditionSubmit: "Melden",
+    conditionSubmitting: "Wird gespeichert …",
+    conditionSubmitted: "Danke für deinen Bericht!",
+    conditionRateLimit: "Du hast diese Route kürzlich bereits gemeldet. Bitte warte 2 Stunden.",
+    conditionError: "Meldung konnte nicht gespeichert werden.",
+    conditionNoReports: "Noch keine Meldungen in den letzten 7 Tagen.",
+    conditions: {
+      excellent: "Top-Zustand",
+      clear: "Problemlos",
+      muddy: "Nass / Matschig",
+      snow: "Schnee",
+      icy: "Vereist",
+      blocked: "Gesperrt",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   gsw: {
     notFound: "Route nid gfunde.",
@@ -223,6 +270,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Rückreis mit ÖV plane",
     planOutward: "Mit de SBB aareise",
     similarRoutes: "Wiiteri Route im Kanton",
+    communityConditions: "Wegbedingige vo de Community",
+    reportCondition: "Zuestand mälde",
+    conditionReportedAgo: (t) => `vor ${t}`,
+    conditionNoteLabel: "Aammerkig (optional)",
+    conditionNotePlaceholder: "z. B. Schnee ab 1500 m …",
+    conditionSubmit: "Mälde",
+    conditionSubmitting: "Wird gspicheret …",
+    conditionSubmitted: "Danke für dini Mäldig!",
+    conditionRateLimit: "Du häsch die Route kürzlich scho gmäldet. Bitte wart 2 Stund.",
+    conditionError: "Mäldig het nid chöne gspicheret wärde.",
+    conditionNoReports: "No kei Mäldigge in de letzte 7 Tag.",
+    conditions: {
+      excellent: "Top-Zuestand",
+      clear: "Problemlos",
+      muddy: "Nass / Matschig",
+      snow: "Schnee",
+      icy: "Veriiset",
+      blocked: "Gsperrt",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   en: {
     notFound: "Route not found.",
@@ -300,6 +367,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Plan return by public transport",
     planOutward: "Travel by SBB train",
     similarRoutes: "More routes in the canton",
+    communityConditions: "Community Trail Reports",
+    reportCondition: "Report conditions",
+    conditionReportedAgo: (t) => `${t} ago`,
+    conditionNoteLabel: "Note (optional)",
+    conditionNotePlaceholder: "e.g. snow above 1500 m, logging in progress …",
+    conditionSubmit: "Submit",
+    conditionSubmitting: "Saving …",
+    conditionSubmitted: "Thanks for your report!",
+    conditionRateLimit: "You already reported conditions for this route recently. Please wait 2 hours.",
+    conditionError: "Could not save your report.",
+    conditionNoReports: "No reports in the last 7 days.",
+    conditions: {
+      excellent: "Excellent",
+      clear: "All clear",
+      muddy: "Wet / Muddy",
+      snow: "Snow",
+      icy: "Icy",
+      blocked: "Blocked",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   fr: {
     notFound: "Itinéraire non trouvé.",
@@ -377,6 +464,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Planifier le retour en transports publics",
     planOutward: "Voyager en train SBB",
     similarRoutes: "Autres itinéraires dans le canton",
+    communityConditions: "Conditions signalées par la communauté",
+    reportCondition: "Signaler l'état",
+    conditionReportedAgo: (t) => `il y a ${t}`,
+    conditionNoteLabel: "Note (optionnel)",
+    conditionNotePlaceholder: "ex. neige dès 1500 m, exploitation forestière …",
+    conditionSubmit: "Signaler",
+    conditionSubmitting: "Enregistrement …",
+    conditionSubmitted: "Merci pour votre signalement !",
+    conditionRateLimit: "Vous avez déjà signalé cet itinéraire récemment. Veuillez attendre 2 heures.",
+    conditionError: "Le signalement n'a pas pu être enregistré.",
+    conditionNoReports: "Aucun signalement dans les 7 derniers jours.",
+    conditions: {
+      excellent: "Excellent",
+      clear: "Sans problème",
+      muddy: "Humide / Boueux",
+      snow: "Neige",
+      icy: "Verglacé",
+      blocked: "Bloqué",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   it: {
     notFound: "Percorso non trovato.",
@@ -454,6 +561,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Pianifica il ritorno con i mezzi pubblici",
     planOutward: "Viaggiare in treno SBB",
     similarRoutes: "Altri percorsi nel cantone",
+    communityConditions: "Condizioni segnalate dalla community",
+    reportCondition: "Segnala condizioni",
+    conditionReportedAgo: (t) => `${t} fa`,
+    conditionNoteLabel: "Nota (opzionale)",
+    conditionNotePlaceholder: "es. neve oltre 1500 m, lavori forestali …",
+    conditionSubmit: "Segnala",
+    conditionSubmitting: "Salvataggio …",
+    conditionSubmitted: "Grazie per la tua segnalazione!",
+    conditionRateLimit: "Hai già segnalato questo percorso di recente. Attendi 2 ore.",
+    conditionError: "La segnalazione non ha potuto essere salvata.",
+    conditionNoReports: "Nessuna segnalazione negli ultimi 7 giorni.",
+    conditions: {
+      excellent: "Ottime condizioni",
+      clear: "Senza problemi",
+      muddy: "Bagnato / Fangoso",
+      snow: "Neve",
+      icy: "Ghiacciato",
+      blocked: "Bloccato",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   es: {
     notFound: "Ruta no encontrada.",
@@ -531,6 +658,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Planificar el regreso en transporte público",
     planOutward: "Viajar en tren SBB",
     similarRoutes: "Más rutas en el cantón",
+    communityConditions: "Condiciones reportadas por la comunidad",
+    reportCondition: "Reportar estado",
+    conditionReportedAgo: (t) => `hace ${t}`,
+    conditionNoteLabel: "Nota (opcional)",
+    conditionNotePlaceholder: "ej. nieve sobre 1500 m, trabajo forestal …",
+    conditionSubmit: "Reportar",
+    conditionSubmitting: "Guardando …",
+    conditionSubmitted: "¡Gracias por tu reporte!",
+    conditionRateLimit: "Ya has reportado esta ruta recientemente. Por favor espera 2 horas.",
+    conditionError: "No se pudo guardar el reporte.",
+    conditionNoReports: "Sin reportes en los últimos 7 días.",
+    conditions: {
+      excellent: "Excelente",
+      clear: "Sin problemas",
+      muddy: "Húmedo / Embarrado",
+      snow: "Nieve",
+      icy: "Helado",
+      blocked: "Bloqueado",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   pt: {
     notFound: "Rota não encontrada.",
@@ -608,6 +755,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Planejar o retorno de transporte público",
     planOutward: "Viajar de trem SBB",
     similarRoutes: "Mais rotas no cantão",
+    communityConditions: "Condições relatadas pela comunidade",
+    reportCondition: "Reportar condições",
+    conditionReportedAgo: (t) => `há ${t}`,
+    conditionNoteLabel: "Nota (opcional)",
+    conditionNotePlaceholder: "ex. neve acima de 1500 m, trabalho florestal …",
+    conditionSubmit: "Reportar",
+    conditionSubmitting: "Salvando …",
+    conditionSubmitted: "Obrigado pelo seu relatório!",
+    conditionRateLimit: "Você já reportou esta rota recentemente. Aguarde 2 horas.",
+    conditionError: "O relatório não pôde ser salvo.",
+    conditionNoReports: "Sem relatórios nos últimos 7 dias.",
+    conditions: {
+      excellent: "Excelente",
+      clear: "Sem problemas",
+      muddy: "Molhado / Lamacento",
+      snow: "Neve",
+      icy: "Gelado",
+      blocked: "Bloqueado",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   zh: {
     notFound: "未找到路线。",
@@ -678,6 +845,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "规划公共交通返程",
     planOutward: "乘SBB火车出发",
     similarRoutes: "该州的更多路线",
+    communityConditions: "社区路况报告",
+    reportCondition: "报告路况",
+    conditionReportedAgo: (t) => `${t}前`,
+    conditionNoteLabel: "备注（可选）",
+    conditionNotePlaceholder: "例：1500 m以上有积雪，林业作业中…",
+    conditionSubmit: "提交",
+    conditionSubmitting: "保存中…",
+    conditionSubmitted: "感谢您的报告！",
+    conditionRateLimit: "您最近已报告过此路线，请等待2小时。",
+    conditionError: "报告保存失败。",
+    conditionNoReports: "最近7天内暂无报告。",
+    conditions: {
+      excellent: "状况极佳",
+      clear: "畅通无阻",
+      muddy: "潮湿/泥泞",
+      snow: "有积雪",
+      icy: "结冰",
+      blocked: "封路",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
   ru: {
     notFound: "Маршрут не найден.",
@@ -755,6 +942,26 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     planReturn: "Спланировать обратный путь на общественном транспорте",
     planOutward: "Ехать на поезде SBB",
     similarRoutes: "Ещё маршруты в кантоне",
+    communityConditions: "Состояние троп от сообщества",
+    reportCondition: "Сообщить о состоянии",
+    conditionReportedAgo: (t) => `${t} назад`,
+    conditionNoteLabel: "Комментарий (необязательно)",
+    conditionNotePlaceholder: "напр. снег выше 1500 м, лесозаготовительные работы …",
+    conditionSubmit: "Сообщить",
+    conditionSubmitting: "Сохранение …",
+    conditionSubmitted: "Спасибо за ваш отчёт!",
+    conditionRateLimit: "Вы уже недавно сообщали о состоянии этого маршрута. Подождите 2 часа.",
+    conditionError: "Не удалось сохранить отчёт.",
+    conditionNoReports: "За последние 7 дней отчётов нет.",
+    conditions: {
+      excellent: "Отличное состояние",
+      clear: "Без проблем",
+      muddy: "Влажно / Грязно",
+      snow: "Снег",
+      icy: "Обледенение",
+      blocked: "Заблокировано",
+    },
+    conditionEmoji: { excellent: "🌟", clear: "✅", muddy: "🟤", snow: "❄️", icy: "🧊", blocked: "🚫" },
   },
 };
 

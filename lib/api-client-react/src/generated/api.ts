@@ -54,6 +54,8 @@ import type {
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
+  TrailConditionInput,
+  TrailConditionReport,
   WeatherReport
 } from './api.schemas';
 
@@ -1902,6 +1904,156 @@ export const useConsumeMyFreeHike = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getConsumeMyFreeHikeMutationOptions(options));
+    }
+
+export const getGetRouteConditionsUrl = (routeId: string,) => {
+
+
+
+
+  return `/api/routes/${routeId}/conditions`
+}
+
+/**
+ * Gibt die juengsten community-gemeldeten Wegbedingungen fuer eine Route zurueck (max. 10, nur der letzten 7 Tage). Kein Auth erforderlich.
+ * @summary Community-Wegbedingungen abrufen
+ */
+export const getRouteConditions = async (routeId: string, options?: RequestInit): Promise<TrailConditionReport[]> => {
+
+  return customFetch<TrailConditionReport[]>(getGetRouteConditionsUrl(routeId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRouteConditionsQueryKey = (routeId: string,) => {
+    return [
+    `/api/routes/${routeId}/conditions`
+    ] as const;
+    }
+
+
+export const getGetRouteConditionsQueryOptions = <TData = Awaited<ReturnType<typeof getRouteConditions>>, TError = ErrorType<unknown>>(routeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteConditions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRouteConditionsQueryKey(routeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRouteConditions>>> = ({ signal }) => getRouteConditions(routeId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: routeId !== null && routeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRouteConditions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRouteConditionsQueryResult = NonNullable<Awaited<ReturnType<typeof getRouteConditions>>>
+export type GetRouteConditionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Community-Wegbedingungen abrufen
+ */
+
+export function useGetRouteConditions<TData = Awaited<ReturnType<typeof getRouteConditions>>, TError = ErrorType<unknown>>(
+ routeId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRouteConditions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRouteConditionsQueryOptions(routeId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReportRouteConditionUrl = (routeId: string,) => {
+
+
+
+
+  return `/api/routes/${routeId}/conditions`
+}
+
+/**
+ * Meldet eine neue Wegbedingung fuer eine Route. Authentifizierung erforderlich. Rate-Limit: max. 1 Bericht pro Nutzer und Route pro 2 Stunden.
+ * @summary Wegbedingung melden
+ */
+export const reportRouteCondition = async (routeId: string,
+    trailConditionInput: TrailConditionInput, options?: RequestInit): Promise<TrailConditionReport> => {
+
+  return customFetch<TrailConditionReport>(getReportRouteConditionUrl(routeId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(trailConditionInput)
+  }
+);}
+
+
+
+
+export const getReportRouteConditionMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportRouteCondition>>, TError,{routeId: string;data: BodyType<TrailConditionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportRouteCondition>>, TError,{routeId: string;data: BodyType<TrailConditionInput>}, TContext> => {
+
+const mutationKey = ['reportRouteCondition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportRouteCondition>>, {routeId: string;data: BodyType<TrailConditionInput>}> = (props) => {
+          const {routeId,data} = props ?? {};
+
+          return  reportRouteCondition(routeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReportRouteConditionMutationResult = NonNullable<Awaited<ReturnType<typeof reportRouteCondition>>>
+    export type ReportRouteConditionMutationBody = BodyType<TrailConditionInput>
+    export type ReportRouteConditionMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Wegbedingung melden
+ */
+export const useReportRouteCondition = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportRouteCondition>>, TError,{routeId: string;data: BodyType<TrailConditionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reportRouteCondition>>,
+        TError,
+        {routeId: string;data: BodyType<TrailConditionInput>},
+        TContext
+      > => {
+      return useMutation(getReportRouteConditionMutationOptions(options));
     }
 
 export const getCreateNarrationUrl = () => {

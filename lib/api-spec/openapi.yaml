@@ -902,6 +902,74 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/{routeId}/conditions:
+    get:
+      operationId: getRouteConditions
+      tags: [community]
+      summary: Community-Wegbedingungen abrufen
+      description: >-
+        Gibt die juengsten community-gemeldeten Wegbedingungen fuer eine Route
+        zurueck (max. 10, nur der letzten 7 Tage). Kein Auth erforderlich.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Liste der Berichte
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrailConditionReport"
+    post:
+      operationId: reportRouteCondition
+      tags: [community]
+      summary: Wegbedingung melden
+      description: >-
+        Meldet eine neue Wegbedingung fuer eine Route. Authentifizierung
+        erforderlich. Rate-Limit: max. 1 Bericht pro Nutzer und Route pro
+        2 Stunden.
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrailConditionInput"
+      responses:
+        "201":
+          description: Gespeicherter Bericht
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrailConditionReport"
+        "400":
+          description: Ungueltige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Zu viele Berichte (Rate-Limit)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /narration:
     post:
       operationId: createNarration
@@ -1356,6 +1424,45 @@ components:
         - kind
         - lat
         - lng
+    TrailConditionReport:
+      type: object
+      description: >-
+        Ein community-gemeldeter Wegbedingungsbericht. Berichte laufen nach
+        7 Tagen ab und werden beim Abruf serverseitig gefiltert.
+      properties:
+        id:
+          type: string
+        routeId:
+          type: string
+        userName:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          enum: [excellent, clear, muddy, snow, icy, blocked]
+        note:
+          type: string
+          nullable: true
+        reportedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - routeId
+        - condition
+        - reportedAt
+    TrailConditionInput:
+      type: object
+      properties:
+        condition:
+          type: string
+          enum: [excellent, clear, muddy, snow, icy, blocked]
+        note:
+          type: string
+          nullable: true
+          maxLength: 200
+      required:
+        - condition
     Partner:
       type: object
       description: >
@@ -1375,6 +1482,9 @@ components:
           type: string
           nullable: true
         angebot:
+          type: string
+          nullable: true
+        fotoUrl:
           type: string
           nullable: true
         lat:

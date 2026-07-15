@@ -264,6 +264,48 @@ export interface Poi {
   wiki?: WikiSummary;
 }
 
+export type TrailConditionReportCondition = typeof TrailConditionReportCondition[keyof typeof TrailConditionReportCondition];
+
+
+export const TrailConditionReportCondition = {
+  excellent: 'excellent',
+  clear: 'clear',
+  muddy: 'muddy',
+  snow: 'snow',
+  icy: 'icy',
+  blocked: 'blocked',
+} as const;
+
+/**
+ * Ein community-gemeldeter Wegbedingungsbericht. Berichte laufen nach 7 Tagen ab und werden beim Abruf serverseitig gefiltert.
+ */
+export interface TrailConditionReport {
+  id: string;
+  routeId: string;
+  userName?: string | null;
+  condition: TrailConditionReportCondition;
+  note?: string | null;
+  reportedAt: string;
+}
+
+export type TrailConditionInputCondition = typeof TrailConditionInputCondition[keyof typeof TrailConditionInputCondition];
+
+
+export const TrailConditionInputCondition = {
+  excellent: 'excellent',
+  clear: 'clear',
+  muddy: 'muddy',
+  snow: 'snow',
+  icy: 'icy',
+  blocked: 'blocked',
+} as const;
+
+export interface TrailConditionInput {
+  condition: TrailConditionInputCondition;
+  /** @maxLength 200 */
+  note?: string | null;
+}
+
 export type PartnerKategorie = typeof PartnerKategorie[keyof typeof PartnerKategorie];
 
 
@@ -285,6 +327,7 @@ export interface Partner {
   canton: string;
   beschreibung?: string | null;
   angebot?: string | null;
+  fotoUrl?: string | null;
   lat: number;
   lng: number;
 }

@@ -229,6 +229,7 @@ export const GetPartnersResponseItem = zod.object({
   "canton": zod.string(),
   "beschreibung": zod.string().nullish(),
   "angebot": zod.string().nullish(),
+  "fotoUrl": zod.string().nullish(),
   "lat": zod.number(),
   "lng": zod.number()
 }).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')
@@ -584,6 +585,52 @@ export const ConsumeMyFreeHikeResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.')
 })
+
+
+/**
+ * Gibt die juengsten community-gemeldeten Wegbedingungen fuer eine Route zurueck (max. 10, nur der letzten 7 Tage). Kein Auth erforderlich.
+ * @summary Community-Wegbedingungen abrufen
+ */
+export const GetRouteConditionsParams = zod.object({
+  "routeId": zod.coerce.string()
+})
+
+export const GetRouteConditionsResponseItem = zod.object({
+  "id": zod.string(),
+  "routeId": zod.string(),
+  "userName": zod.string().nullish(),
+  "condition": zod.enum(['excellent', 'clear', 'muddy', 'snow', 'icy', 'blocked']),
+  "note": zod.string().nullish(),
+  "reportedAt": zod.coerce.date()
+}).describe('Ein community-gemeldeter Wegbedingungsbericht. Berichte laufen nach 7 Tagen ab und werden beim Abruf serverseitig gefiltert.')
+export const GetRouteConditionsResponse = zod.array(GetRouteConditionsResponseItem)
+
+
+/**
+ * Meldet eine neue Wegbedingung fuer eine Route. Authentifizierung erforderlich. Rate-Limit: max. 1 Bericht pro Nutzer und Route pro 2 Stunden.
+ * @summary Wegbedingung melden
+ */
+export const ReportRouteConditionParams = zod.object({
+  "routeId": zod.coerce.string()
+})
+
+export const reportRouteConditionBodyNoteMax = 200;
+
+
+
+export const ReportRouteConditionBody = zod.object({
+  "condition": zod.enum(['excellent', 'clear', 'muddy', 'snow', 'icy', 'blocked']),
+  "note": zod.string().max(reportRouteConditionBodyNoteMax).nullish()
+})
+
+export const ReportRouteConditionResponse = zod.object({
+  "id": zod.string(),
+  "routeId": zod.string(),
+  "userName": zod.string().nullish(),
+  "condition": zod.enum(['excellent', 'clear', 'muddy', 'snow', 'icy', 'blocked']),
+  "note": zod.string().nullish(),
+  "reportedAt": zod.coerce.date()
+}).describe('Ein community-gemeldeter Wegbedingungsbericht. Berichte laufen nach 7 Tagen ab und werden beim Abruf serverseitig gefiltert.')
 
 
 /**

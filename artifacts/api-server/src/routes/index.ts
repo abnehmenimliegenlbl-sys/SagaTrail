@@ -22,6 +22,7 @@ import debugLogRouter from "./debugLog";
 import partnerAnfragenRouter from "./partnerAnfragen";
 import partnerPortalRouter from "./partnerPortal";
 import flyerRouter from "./flyer";
+import trailConditionsRouter from "./trailConditions";
 
 const router: IRouter = Router();
 
@@ -48,5 +49,6 @@ router.use(debugLogRouter);
 router.use(partnerAnfragenRouter);
 router.use(partnerPortalRouter);
 router.use(flyerRouter);
+router.use(trailConditionsRouter);
 
 export default router;
