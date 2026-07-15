@@ -76,6 +76,54 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 const WEB_TOP = 67;
 const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
 
+/** Minimaler Zeitabstand zwischen zwei geloggten Track-Punkten (ms). */
+const TRACK_LOG_INTERVAL_MS = 8000;
+/** RDP-Epsilon in Grad (≈ 8 m bei Schweizer Breitengraden). */
+const RDP_EPSILON = 0.00007;
+/** Mindestanzahl Punkte damit der Live-Track statt der Routen-Geometrie verwendet wird. */
+const MIN_TRACK_POINTS = 5;
+
+/** Senkrechter Abstand eines Punkts von der Gerade start→end (in Grad). */
+function rdpPerpendicularDist(
+  p: [number, number],
+  start: [number, number],
+  end: [number, number],
+): number {
+  const [x, y] = p;
+  const [x1, y1] = start;
+  const [x2, y2] = end;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  if (dx === 0 && dy === 0) return Math.hypot(x - x1, y - y1);
+  const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
+}
+
+/** Ramer-Douglas-Peucker — iterativ um Stack-Overflow bei langen Tracks zu vermeiden. */
+function rdpThin(points: [number, number][], epsilon: number): [number, number][] {
+  if (points.length < 3) return points;
+  const keep = new Uint8Array(points.length).fill(1);
+  // Stapel aus [startIdx, endIdx]-Paaren
+  const stack: [number, number][] = [[0, points.length - 1]];
+  while (stack.length) {
+    const [si, ei] = stack.pop()!;
+    if (ei - si < 2) continue;
+    let maxDist = 0;
+    let maxIdx = si;
+    for (let i = si + 1; i < ei; i++) {
+      if (!keep[i]) continue;
+      const d = rdpPerpendicularDist(points[i], points[si], points[ei]);
+      if (d > maxDist) { maxDist = d; maxIdx = i; }
+    }
+    if (maxDist > epsilon) {
+      stack.push([si, maxIdx], [maxIdx, ei]);
+    } else {
+      for (let i = si + 1; i < ei; i++) keep[i] = 0;
+    }
+  }
+  return points.filter((_, i) => keep[i]);
+}
+
 /**
  * Erzeugt einen 2-Sekunden-WAV-Keepalive als Base64-String (8-bit, mono, 8 kHz)
  * mit einem 10-Hz-Infraschall-Sinus. Der Ton ist fuer Menschen voellig
@@ -297,6 +345,9 @@ export default function LiveHike() {
   const decisionsRef = useRef<StoryChapter[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const lastFixRef = useRef<LatLng | null>(null);
+  /** Aufgezeichneter GPS-Track: [lat, lng]-Paare im zeitlichen Abstand >= TRACK_LOG_INTERVAL_MS */
+  const posLogRef = useRef<[number, number][]>([]);
+  const lastTrackLogTimeRef = useRef<number>(0);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
   const narratedPoiIdRef = useRef<string | null>(null);
@@ -722,6 +773,7 @@ export default function LiveHike() {
   }, [saga, isDownloaded, loadOfflineTiles]);
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren
+  // und Track-Punkt fuer den GPX-Export loggen.
   const handleFix = useCallback((lat: number, lng: number, accuracy: number | null = null) => {
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
@@ -735,6 +787,12 @@ export default function LiveHike() {
       }
     }
     lastFixRef.current = cur;
+    // Track-Punkt loggen: mindestens TRACK_LOG_INTERVAL_MS Abstand
+    const now = Date.now();
+    if (now - lastTrackLogTimeRef.current >= TRACK_LOG_INTERVAL_MS) {
+      posLogRef.current.push([lat, lng]);
+      lastTrackLogTimeRef.current = now;
+    }
   }, []);
 
   // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per
@@ -1669,7 +1727,15 @@ export default function LiveHike() {
       visitedPlaceIds: [saga.id],
       steps,
       durationMin: Math.round((Date.now() - startTimeRef.current) / 60000),
-      geometry: route?.geometry,
+      geometry: (() => {
+        // Echten GPS-Track bevorzugen; RDP ausdünnen für kompakte Speicherung.
+        // Fallback auf geplante Routen-Geometrie wenn Track zu kurz (z. B. kurze Demo-Wanderung).
+        const raw = posLogRef.current;
+        if (raw.length >= MIN_TRACK_POINTS) {
+          return rdpThin(raw, RDP_EPSILON);
+        }
+        return route?.geometry;
+      })(),
       photoUris: hikePhotos.length > 0 ? hikePhotos : undefined,
     };
     await Promise.all([
