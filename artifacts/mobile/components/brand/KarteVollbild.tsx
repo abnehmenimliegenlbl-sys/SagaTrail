@@ -85,14 +85,11 @@ export function KarteVollbild({
           accessibilityRole="button"
           accessibilityLabel="Karte im Vollbild anzeigen"
           onPress={() => setVollbild(true)}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          pointerEvents="none"
+          hitSlop={8}
           style={[styles.hinweis, { backgroundColor: colors.background + "CC" }]}
         >
           <Feather name="maximize-2" size={14} color={colors.foreground} />
-        </View>
+        </Pressable>
       </View>
 
       <Modal
