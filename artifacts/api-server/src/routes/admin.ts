@@ -537,10 +537,17 @@ async function sendExpoPush(
   title: string,
   body: string,
   data?: Record<string, unknown>,
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; errors: string[] }> {
   const BATCH = 100;
   let sent = 0;
   let failed = 0;
+  const errors: string[] = [];
+  const expoToken = process.env.EXPO_TOKEN;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(expoToken ? { Authorization: `Bearer ${expoToken}` } : {}),
+  };
   for (let i = 0; i < tokens.length; i += BATCH) {
     const chunk = tokens.slice(i, i + BATCH);
     const messages = chunk.map((to) => ({
@@ -553,20 +560,31 @@ async function sendExpoPush(
     try {
       const res = await fetch("https://exp.host/--/api/v2/push/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers,
         body: JSON.stringify(messages),
         signal: AbortSignal.timeout(15_000),
       });
-      if (!res.ok) { failed += chunk.length; continue; }
-      const json = (await res.json()) as { data?: { status: string }[] };
+      if (!res.ok) {
+        const errText = await res.text().catch(() => res.statusText);
+        errors.push(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
+        failed += chunk.length;
+        continue;
+      }
+      const json = (await res.json()) as { data?: { status: string; message?: string; details?: unknown }[] };
       (json.data ?? []).forEach((r) => {
-        if (r.status === "ok") sent++; else failed++;
+        if (r.status === "ok") {
+          sent++;
+        } else {
+          failed++;
+          errors.push(r.message ?? JSON.stringify(r.details ?? r));
+        }
       });
-    } catch {
+    } catch (e) {
+      errors.push(String(e));
       failed += chunk.length;
     }
   }
-  return { sent, failed };
+  return { sent, failed, errors };
 }
 
 router.post("/admin/push", async (req, res): Promise<void> => {
@@ -596,10 +614,10 @@ router.post("/admin/push", async (req, res): Promise<void> => {
 
   req.log.info({ tier, count: tokens.length }, "Push-Kampagne gestartet");
 
-  const { sent, failed } = await sendExpoPush(tokens, title, msg, data);
+  const { sent, failed, errors } = await sendExpoPush(tokens, title, msg, data);
 
-  req.log.info({ tier, sent, failed, skipped }, "Push-Kampagne abgeschlossen");
-  res.json({ ok: true, tier, total: rows.length, targeted: tokens.length, sent, failed, skipped });
+  req.log.info({ tier, sent, failed, skipped, errors }, "Push-Kampagne abgeschlossen");
+  res.json({ ok: true, tier, total: rows.length, targeted: tokens.length, sent, failed, skipped, errors });
 });
 
 router.get("/admin/push/stats", async (req, res): Promise<void> => {

@@ -612,7 +612,8 @@ function appendPushHistory(tierLabel, title, body, r) {
       '<div style="font-weight:700;color:var(--green)">' + (r.sent||0) + ' gesendet</div>' +
       (r.failed ? '<div style="color:var(--red);font-size:11px">' + r.failed + ' fehlgeschlagen</div>' : '') +
       '<div class="hint">' + now + '</div>' +
-    '</div>';
+    '</div>' +
+    (r.errors && r.errors.length ? '<div style="width:100%;margin-top:6px;padding:6px 8px;background:#fff4f4;border-radius:6px;font-size:11px;color:#8b0000;word-break:break-word">' + r.errors.slice(0,3).map(function(e){return esc(e)}).join('<br>') + '</div>' : '');
   hist.insertBefore(row, hist.firstChild);
 }
 
