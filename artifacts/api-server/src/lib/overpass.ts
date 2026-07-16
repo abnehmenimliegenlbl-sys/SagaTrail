@@ -562,6 +562,49 @@ export async function fetchDrinkingWater(
   return result;
 }
 
+export interface ParkingSpot {
+  osmId: string;
+  lat: number;
+  lng: number;
+  name: string | null;
+}
+
+/**
+ * Oeffentliche Parkplaetze im Umkreis einer Koordinate — aus OpenStreetMap
+ * ueber Overpass. Schliesst private Parkplaetze (access=private) aus.
+ * Nodes: direkte Koordinaten. Ways: Zentroid via `out center`.
+ */
+export async function fetchParking(
+  center: { lat: number; lng: number },
+  radiusM: number,
+  log: Logger,
+): Promise<ParkingSpot[]> {
+  const query = [
+    "[out:json][timeout:12];",
+    "(",
+    `node["amenity"="parking"]["access"!="private"](around:${radiusM},${center.lat},${center.lng});`,
+    `way["amenity"="parking"]["access"!="private"](around:${radiusM},${center.lat},${center.lng});`,
+    ");",
+    "out center tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query, 14_000);
+  const result: ParkingSpot[] = [];
+  for (const e of elements) {
+    const lat = e.lat ?? e.center?.lat;
+    const lng = e.lon ?? e.center?.lon;
+    if (lat == null || lng == null) continue;
+    const tags = e.tags ?? {};
+    result.push({
+      osmId: `${e.type}-${e.id}`,
+      lat,
+      lng,
+      name: tags.name ?? tags["name:de"] ?? null,
+    });
+  }
+  log.info({ count: result.length, radiusM }, "Overpass: Parkplaetze geladen");
+  return result;
+}
+
 export async function fetchRouteGeometries(
   osmIds: number[],
   log: Logger,

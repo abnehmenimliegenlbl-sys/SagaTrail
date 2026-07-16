@@ -32,6 +32,7 @@ import elevationProfileRouter from "./elevationProfile";
 import trinkwasserRouter from "./trinkwasser";
 import waypointAnnounceRouter from "./waypointAnnounce";
 import sperrungenRouter from "./sperrungen";
+import parkingRouter from "./parking";
 
 const router: IRouter = Router();
 
@@ -68,5 +69,6 @@ router.use(elevationProfileRouter);
 router.use(trinkwasserRouter);
 router.use(waypointAnnounceRouter);
 router.use(sperrungenRouter);
+router.use(parkingRouter);
 
 export default router;

@@ -269,6 +269,8 @@ export default function Routenplanung() {
   const [elevProfileLoading, setElevProfileLoading] = useState(false);
   // Trinkwasserquellen entlang der Route (für die Karte)
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
+  // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
+  const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
 
   // ShareCard ref für Native-Share-Export
   const shareCardRef = useRef<View>(null);
@@ -440,6 +442,35 @@ export default function Routenplanung() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [route?.id]);
+
+  // Parkplaetze am Start- und Endpunkt der Route laden (je 800 m Radius).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const geom = effectiveGeom.length >= 2 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) return;
+    const startPt = { lat: geom[0][0], lng: geom[0][1] };
+    const endPt   = { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] };
+    const base = getApiBaseUrl() ?? "";
+    type ParkingItem = { osmId: string; lat: number; lng: number; name: string | null };
+    const fetchOne = (lat: number, lng: number) =>
+      fetch(`${base}/api/parking?lat=${lat}&lng=${lng}&radius=800`)
+        .then((r) => r.json() as Promise<ParkingItem[]>)
+        .catch(() => [] as ParkingItem[]);
+    Promise.all([fetchOne(startPt.lat, startPt.lng), fetchOne(endPt.lat, endPt.lng)])
+      .then(([fromStart, fromEnd]) => {
+        if (cancelled) return;
+        const seen = new Set<string>();
+        const merged: MapPoi[] = [];
+        for (const item of [...fromStart, ...fromEnd]) {
+          if (!item?.osmId || seen.has(item.osmId)) continue;
+          seen.add(item.osmId);
+          merged.push({ id: item.osmId, name: item.name ?? "Parkplatz", lat: item.lat, lng: item.lng });
+        }
+        setParkingSpots(merged);
+      });
+    return () => { cancelled = true; };
+  }, [route?.id, effectiveGeom.length]);
 
   // SAC-Hütten im Umkreis der Route laden (Mittelpunkt der Geometrie).
   useEffect(() => {
@@ -665,6 +696,7 @@ export default function Routenplanung() {
                   aerialways={aerialways}
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
+                  parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safeAreaInsetTop={safeAreaTop}
                 />
               ) : (

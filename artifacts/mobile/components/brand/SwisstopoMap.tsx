@@ -25,6 +25,7 @@ export function SwisstopoMap({
   partners,
   onPartnerPress,
   waterSources,
+  parkingSpots,
   pickerMode,
   onMapClick,
   safeAreaInsetTop = 0,
@@ -66,9 +67,10 @@ export function SwisstopoMap({
         pickerMode,
         altGeometry,
         waterSources,
-        safeAreaInsetTop
+        safeAreaInsetTop,
+        parkingSpots
       ),
-    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, pickerMode, safeAreaInsetTop, t]
+    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

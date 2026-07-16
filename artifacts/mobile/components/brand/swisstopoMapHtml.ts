@@ -26,6 +26,7 @@ export interface SwisstopoMapProps {
   partners?: MapPoi[] | null;
   onPartnerPress?: (id: string) => void;
   waterSources?: MapPoi[] | null;
+  parkingSpots?: MapPoi[] | null;
   pickerMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   legend?: MapLegendLabels | null;
@@ -77,7 +78,8 @@ export function buildSwisstopoHtml(
   pickerMode?: boolean,
   altGeometry?: number[][] | null,
   waterSources?: MapPoi[] | null,
-  safeAreaInsetTop?: number
+  safeAreaInsetTop?: number,
+  parkingSpots?: MapPoi[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -95,6 +97,8 @@ export function buildSwisstopoHtml(
     partners && partners.length > 0 ? JSON.stringify(partners) : "null";
   const waterSourcesJson =
     waterSources && waterSources.length > 0 ? JSON.stringify(waterSources) : "null";
+  const parkingJson =
+    parkingSpots && parkingSpots.length > 0 ? JSON.stringify(parkingSpots) : "null";
   const legendJson = legend ? JSON.stringify(legend) : "null";
   const altGeometryJson =
     altGeometry && altGeometry.length > 1 ? JSON.stringify(altGeometry) : "null";
@@ -130,6 +134,7 @@ export function buildSwisstopoHtml(
   .stt-partner-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .stt-partner      { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C8932E; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(200,147,46,0.28); }
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
+  .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* --- Legende --- */
   #stt-legende { position: absolute; bottom: 28px; left: 10px; z-index: 10;
@@ -195,6 +200,7 @@ export function buildSwisstopoHtml(
   var pois      = ${poisJson};
   var partners  = ${partnersJson};
   var waters    = ${waterSourcesJson};
+  var parking   = ${parkingJson};
   var legende   = ${legendJson};
   var picker    = ${pickerJs};
   var centerLng = ${lng};
@@ -402,6 +408,17 @@ export function buildSwisstopoHtml(
         var el = document.createElement('div'); el.className = 'stt-wasser';
         new maplibregl.Marker({ element: el }).setLngLat([w.lng, w.lat])
           .setPopup(new maplibregl.Popup({ offset: 8 }).setText(w.name || 'Trinkwasser'))
+          .addTo(map);
+      });
+    }
+
+    /* Parkplaetze */
+    if (parking) {
+      parking.forEach(function(p) {
+        var el = document.createElement('div'); el.className = 'stt-parking';
+        el.textContent = 'P';
+        new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat])
+          .setPopup(new maplibregl.Popup({ offset: 12 }).setText(p.name || 'Parkplatz'))
           .addTo(map);
       });
     }
