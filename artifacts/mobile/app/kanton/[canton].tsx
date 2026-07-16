@@ -169,9 +169,9 @@ export default function KantonRouten() {
   // faelschlicherweise alle Kantone freigeschaltet.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
-  const packLocked =
-    premium && !!cantonName && !isElite && !dbPackUnlocked;
-  const packUnlocked = premium && (isElite || dbPackUnlocked);
+  const packUnlocked = isElite || dbPackUnlocked;
+  // Pack-Banner: nur für Gratis-User sichtbar (Premium hat vollen Zugang)
+  const packLocked = !premium && !!cantonName && freeHikeUsed && !packUnlocked;
   // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
   // gekauft; der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = packSlug
@@ -574,12 +574,10 @@ export default function KantonRouten() {
               {filteredRoutes.map((route, i) => {
                 const routeSaga = sagas.find((s) => s.id === route.sagaId);
                 const isAnchorRoute = !!routeSaga?.isAnchorPlace;
-                // Freemium: gesperrt sobald Gratis-Hike verbraucht oder Sage kein Ankerplatz
-                const freemiumLocked = !premium && (freeHikeUsed || !isAnchorRoute);
-                // Premium ohne Paket: Pack-Sagen gesperrt bis Kauf
-                const packLocked = premium && !packUnlocked && !isAnchorRoute;
-                const locked = freemiumLocked || packLocked;
-                const unlocked = premium && (packUnlocked || isAnchorRoute);
+                // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
+                const canAccess = premium || packUnlocked;
+                const locked = !canAccess && (freeHikeUsed || !isAnchorRoute);
+                const unlocked = canAccess;
                 return (
                   <RouteCard
                     key={route.id}

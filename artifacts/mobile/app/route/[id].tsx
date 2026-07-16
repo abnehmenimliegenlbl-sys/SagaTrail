@@ -560,12 +560,10 @@ export default function Routenplanung() {
   const routeEffectivePackSlug =
     routeSagaIdx >= 0 ? sagaPackSlug(routePackSlug, routeSagaIdx) : routePackSlug;
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routeEffectivePackSlug);
-  // Pack-2+-Sagen sind nie via Pack 1 entsperrt, auch nicht via Elite entfaellt dies nicht
-  const packUnlocked = premium && (isElite || (routeSagaIsInPack1 && dbPackUnlocked));
-  // Premium ohne Paket: nur Ankersagen zugaenglich. Pack-Kauf schaltet weitere frei.
-  const sagaPackLocked = premium && !packUnlocked && !saga?.isAnchorPlace;
-  // Freemium: nach erstem Gratis-Hike alle Routen gesperrt — Upgrade erforderlich.
-  const locked = sagaPackLocked || (!premium && freeHikeUsed);
+  // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
+  const canAccess = premium || isElite || dbPackUnlocked;
+  // Nur gesperrt wenn kein Zugang UND Gratis-Hike bereits verbraucht
+  const locked = !canAccess && freeHikeUsed;
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 
