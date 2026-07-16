@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -26,6 +28,7 @@ import { SearchProgress } from "@/components/brand/SearchProgress";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
+import { importGpxRoute } from "@workspace/api-client-react";
 import {
   useCatalog,
   CatalogSource,
@@ -108,7 +111,7 @@ export default function KantonRouten() {
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
   const { profile, premium, language, freeHikeUsed } = useApp();
-  const { loadCantonRoutes, sagas } = useCatalog();
+  const { loadCantonRoutes, sagas, addCustomRoute } = useCatalog();
   const {
     isElite,
     offerings,
@@ -117,6 +120,39 @@ export default function KantonRouten() {
     refreshCustomerInfo,
   } = useSubscription();
   const [packBusy, setPackBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const onImportGpx = useCallback(async () => {
+    setImporting(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ["application/gpx+xml", "application/octet-stream", "text/xml", "application/xml", "*/*"],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (picked.canceled || !picked.assets[0]) return;
+      const asset = picked.assets[0];
+      let gpx: string;
+      try {
+        gpx =
+          Platform.OS === "web"
+            ? await (await fetch(asset.uri)).text()
+            : await FileSystem.readAsStringAsync(asset.uri);
+      } catch {
+        alert(t.importGpxTitle, t.importGpxReadError);
+        return;
+      }
+      const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
+      const imported = (await importGpxRoute({ gpx, name })) as import("@/constants/routes").HikingRoute;
+      addCustomRoute(imported);
+      router.push(`/route/${imported.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      alert(t.importGpxTitle, message || t.importGpxText);
+    } finally {
+      setImporting(false);
+    }
+  }, [addCustomRoute, router, t]);
 
   const cantonName = decodeURIComponent(canton ?? "");
   const displayCantonName = translateCanton(cantonName, language as LanguageCode);
@@ -559,6 +595,24 @@ export default function KantonRouten() {
             </>
           )}
         </View>
+
+        {/* ── Eigene Route ─────────────────────────────────────────── */}
+        <View style={styles.eigeneRouteSection}>
+          <View style={styles.eigeneRouteHeader}>
+            <Feather name="upload" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.eigeneRouteTitle, { color: colors.mutedForeground }]}>
+              {t.eigeneRouteTitle}
+            </Text>
+          </View>
+          <PrimaryButton
+            label={importing ? t.importGpxImporting : t.importGpx}
+            variant="secondary"
+            onPress={onImportGpx}
+            disabled={importing}
+            loading={importing}
+          />
+        </View>
+
       </ScrollView>
     </Background>
   );
@@ -765,6 +819,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   retryBtnText: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  eigeneRouteSection: {
+    marginTop: 28,
+    marginBottom: 8,
+  },
+  eigeneRouteHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  eigeneRouteTitle: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
   timeRow: {
     flexDirection: "row",
     alignItems: "center",

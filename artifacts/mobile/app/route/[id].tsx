@@ -9,7 +9,6 @@ import {
   getWeather,
   getAvalancheBulletin,
   getTransportStationboard,
-  importGpxRoute,
   useGetRouteConditions,
 } from "@workspace/api-client-react";
 import type { Partner, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
@@ -25,8 +24,6 @@ interface TransportAnreiseResult {
     platform: string | null;
   }>;
 }
-import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -90,8 +87,7 @@ export default function Routenplanung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark } = useApp();
   const { isElite } = useSubscription();
-  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, addCustomRoute, getRoutesByCanton, sagas } = useCatalog();
-  const [importing, setImporting] = useState(false);
+  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, getRoutesByCanton, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
   const route = getRoute(id);
@@ -146,37 +142,6 @@ export default function Routenplanung() {
     ).catch(() => {});
   }, [effectiveGeom]);
 
-  const onImportGpx = useCallback(async () => {
-    setImporting(true);
-    try {
-      const picked = await DocumentPicker.getDocumentAsync({
-        type: ["application/gpx+xml", "application/octet-stream", "text/xml", "application/xml", "*/*"],
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
-      if (picked.canceled || !picked.assets[0]) return;
-      const asset = picked.assets[0];
-      let gpx: string;
-      try {
-        gpx =
-          Platform.OS === "web"
-            ? await (await fetch(asset.uri)).text()
-            : await FileSystem.readAsStringAsync(asset.uri);
-      } catch {
-        alert(t.importGpxTitle, t.importGpxReadError);
-        return;
-      }
-      const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
-      const imported = (await importGpxRoute({ gpx, name })) as import("@/constants/routes").HikingRoute;
-      addCustomRoute(imported);
-      router.replace(`/route/${imported.id}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      alert(t.importGpxTitle, message || t.importGpxText);
-    } finally {
-      setImporting(false);
-    }
-  }, [addCustomRoute, router, t]);
 
   const [saga, setSaga] = useState<Saga | undefined>(
     route ? getSagaForRoute(route) : undefined,
@@ -1246,14 +1211,6 @@ export default function Routenplanung() {
             thumbColor={colors.foreground}
           />
         </View>
-
-        <PrimaryButton
-          label={importing ? t.importGpxImporting : t.importGpx}
-          variant="secondary"
-          onPress={onImportGpx}
-          disabled={importing}
-          style={{ marginTop: 20 }}
-        />
 
         <SparkDivider style={{ marginVertical: 22 }} />
 

@@ -40,6 +40,12 @@ export interface KantonStrings {
   sunsetStartLabel: string;
   sunsetInfo: (time: string) => string;
   sunsetNoneInTime: string;
+  eigeneRouteTitle: string;
+  importGpx: string;
+  importGpxImporting: string;
+  importGpxTitle: string;
+  importGpxText: string;
+  importGpxReadError: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -87,6 +93,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Startzeit der Wanderung",
     sunsetInfo: (t) => `Sonnenuntergang heute ca. ${t} Uhr`,
     sunsetNoneInTime: "Keine Route bis Sonnenuntergang schaffbar",
+    eigeneRouteTitle: "Eigene Route",
+    importGpx: "GPX importieren",
+    importGpxImporting: "GPX wird importiert …",
+    importGpxTitle: "GPX-Import",
+    importGpxText: "Die GPX-Datei konnte nicht verarbeitet werden.",
+    importGpxReadError: "Die Datei konnte nicht gelesen werden.",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -132,6 +144,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Startziit vo de Wanderig",
     sunsetInfo: (t) => `Sunneundergang hüt cha. ${t} Uhr`,
     sunsetNoneInTime: "Kei Route bis Sunneundergang schaffbar",
+    eigeneRouteTitle: "Eigeni Route",
+    importGpx: "GPX importiere",
+    importGpxImporting: "GPX wird importiert …",
+    importGpxTitle: "GPX-Import",
+    importGpxText: "D'GPX-Datei het nid chöne verarbeitet wärde.",
+    importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -177,6 +195,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Heure de départ",
     sunsetInfo: (t) => `Coucher du soleil aujourd'hui vers ${t}`,
     sunsetNoneInTime: "Aucun itinéraire réalisable avant le coucher du soleil",
+    eigeneRouteTitle: "Itinéraire personnalisé",
+    importGpx: "Importer GPX",
+    importGpxImporting: "Importation du GPX …",
+    importGpxTitle: "Import GPX",
+    importGpxText: "Le fichier GPX n'a pas pu être traité.",
+    importGpxReadError: "Le fichier n'a pas pu être lu.",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -222,6 +246,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Orario di partenza",
     sunsetInfo: (t) => `Tramonto oggi circa ${t}`,
     sunsetNoneInTime: "Nessun percorso fattibile prima del tramonto",
+    eigeneRouteTitle: "Percorso personalizzato",
+    importGpx: "Importa GPX",
+    importGpxImporting: "Importazione GPX …",
+    importGpxTitle: "Importazione GPX",
+    importGpxText: "Il file GPX non ha potuto essere elaborato.",
+    importGpxReadError: "Il file non ha potuto essere letto.",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -267,6 +297,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Hike start time",
     sunsetInfo: (t) => `Sunset today approx. ${t}`,
     sunsetNoneInTime: "No route doable before sunset",
+    eigeneRouteTitle: "Custom route",
+    importGpx: "Import GPX",
+    importGpxImporting: "Importing GPX …",
+    importGpxTitle: "GPX Import",
+    importGpxText: "The GPX file could not be processed.",
+    importGpxReadError: "The file could not be read.",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -311,6 +347,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "出发时间",
     sunsetInfo: (t) => `今日日落约 ${t}`,
     sunsetNoneInTime: "没有可在日落前完成的路线",
+    eigeneRouteTitle: "自定义路线",
+    importGpx: "导入 GPX",
+    importGpxImporting: "正在导入 GPX …",
+    importGpxTitle: "GPX 导入",
+    importGpxText: "GPX 文件无法处理。",
+    importGpxReadError: "文件无法读取。",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -356,6 +398,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Время начала похода",
     sunsetInfo: (t) => `Закат сегодня примерно в ${t}`,
     sunsetNoneInTime: "До заката ни один маршрут не успеть пройти",
+    eigeneRouteTitle: "Свой маршрут",
+    importGpx: "Импортировать GPX",
+    importGpxImporting: "Импорт GPX …",
+    importGpxTitle: "Импорт GPX",
+    importGpxText: "Файл GPX не удалось обработать.",
+    importGpxReadError: "Файл не удалось прочитать.",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -401,6 +449,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Hora de inicio de la caminata",
     sunsetInfo: (t) => `Atardecer hoy aprox. ${t}`,
     sunsetNoneInTime: "Ninguna ruta realizable antes del atardecer",
+    eigeneRouteTitle: "Ruta personalizada",
+    importGpx: "Importar GPX",
+    importGpxImporting: "Importando GPX …",
+    importGpxTitle: "Importación GPX",
+    importGpxText: "El archivo GPX no pudo ser procesado.",
+    importGpxReadError: "El archivo no pudo ser leído.",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -446,6 +500,12 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetStartLabel: "Horário de início da caminhada",
     sunsetInfo: (t) => `Pôr do sol hoje por volta das ${t}`,
     sunsetNoneInTime: "Nenhuma rota realizável antes do pôr do sol",
+    eigeneRouteTitle: "Rota personalizada",
+    importGpx: "Importar GPX",
+    importGpxImporting: "Importando GPX …",
+    importGpxTitle: "Importação GPX",
+    importGpxText: "O arquivo GPX não pôde ser processado.",
+    importGpxReadError: "O arquivo não pôde ser lido.",
   },
 };
 
