@@ -58,7 +58,6 @@ import {
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
-import { computeWaypointEtas, nextWaypoint, type WaypointEta } from "@/lib/waypointEta";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -2443,51 +2442,6 @@ export default function LiveHike() {
             )}
           </View>
 
-          {/* ETA-Zwischenziele — nächster Meilenstein mit geschätzter Ankunftszeit */}
-          {!preparing && !finished && totalKm > 0 && (() => {
-            const etas = computeWaypointEtas(distance, totalKm, elapsedSec, ascentM);
-            const nxt = nextWaypoint(etas);
-            if (!nxt || nxt.pct === 100) return null;
-            const passed = etas.filter((e) => e.passed && e.pct !== 100);
-            return (
-              <View style={[styles.etaRow, { borderTopColor: colors.glassBorder }]}>
-                {/* Bereits erreichte Punkte als abgehakte Punkte */}
-                {([25, 50, 75] as const).map((pct) => {
-                  const e = etas.find((x) => x.pct === pct)!;
-                  const isNext = pct === nxt.pct;
-                  return (
-                    <View key={pct} style={styles.etaDot}>
-                      <View
-                        style={[
-                          styles.etaDotCircle,
-                          {
-                            backgroundColor: e.passed
-                              ? colors.accent
-                              : isNext
-                                ? colors.glassBorder
-                                : "transparent",
-                            borderColor: e.passed || isNext ? colors.accent : colors.glassBorder,
-                          },
-                        ]}
-                      >
-                        {e.passed && (
-                          <Feather name="check" size={8} color="#fff" />
-                        )}
-                      </View>
-                      {isNext && (
-                        <Text style={[styles.etaLabel, { color: colors.accent }]}>
-                          {t.waypointEtaMin(nxt.etaMin)}
-                        </Text>
-                      )}
-                    </View>
-                  );
-                })}
-                <Text style={[styles.etaNextLabel, { color: colors.mutedForeground }]}>
-                  {t.nextWaypointLabel} {nxt.pct} %
-                </Text>
-              </View>
-            );
-          })()}
         </Glass>
 
         {/* Story-Bereich */}
@@ -3009,25 +2963,6 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
-  etaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderTopWidth: 1,
-    marginTop: 10,
-    paddingTop: 10,
-  },
-  etaDot: { alignItems: "center", gap: 4 },
-  etaDotCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  etaLabel: { fontFamily: fonts.monoBold, fontSize: 10 },
-  etaNextLabel: { fontFamily: fonts.mono, fontSize: 10, flex: 1, textAlign: "right" },
   metric: { alignItems: "flex-start" },
   metricLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
   metricValRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 },

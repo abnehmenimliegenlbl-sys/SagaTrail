@@ -34,8 +34,7 @@ export interface HikeStrings {
   turnNotifRight: string;
   surfaceChangeTitle: string;
   milestoneTitle: string;
-  nextWaypointLabel: string;
-  waypointEtaMin: (min: number) => string;
+
   poiNotifBody: string;
   perception: string;
   finishHike: string;
@@ -134,8 +133,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Gleich rechts halten",
     surfaceChangeTitle: "Wegwechsel",
     milestoneTitle: "Meilenstein",
-    nextWaypointLabel: "Nächstes Ziel",
-    waypointEtaMin: (min) => `~${min} Min.`,
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
@@ -233,8 +230,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Grad rächts halte",
     surfaceChangeTitle: "Wägwächsel",
     milestoneTitle: "Miileschtei",
-    nextWaypointLabel: "Nächschts Ziel",
-    waypointEtaMin: (min) => `~${min} Min.`,
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
@@ -332,8 +327,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Keep right shortly",
     surfaceChangeTitle: "Trail surface",
     milestoneTitle: "Milestone",
-    nextWaypointLabel: "Next waypoint",
-    waypointEtaMin: (min) => `~${min} min`,
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
@@ -431,8 +424,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Serrez à droite",
     surfaceChangeTitle: "Surface du chemin",
     milestoneTitle: "Borne",
-    nextWaypointLabel: "Prochain étape",
-    waypointEtaMin: (min) => `~${min} min`,
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
@@ -530,8 +521,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Tieni la destra",
     surfaceChangeTitle: "Cambio di fondo",
     milestoneTitle: "Traguardo",
-    nextWaypointLabel: "Prossima tappa",
-    waypointEtaMin: (min) => `~${min} min`,
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
@@ -629,8 +618,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Mantente a la derecha",
     surfaceChangeTitle: "Cambio de superficie",
     milestoneTitle: "Hito",
-    nextWaypointLabel: "Próximo hito",
-    waypointEtaMin: (min) => `~${min} min`,
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
@@ -728,8 +715,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Mantenha-se à direita",
     surfaceChangeTitle: "Mudança de piso",
     milestoneTitle: "Marco",
-    nextWaypointLabel: "Próximo marco",
-    waypointEtaMin: (min) => `~${min} min`,
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
@@ -827,8 +812,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "即将靠右",
     surfaceChangeTitle: "路面变换",
     milestoneTitle: "里程碑",
-    nextWaypointLabel: "下一目标",
-    waypointEtaMin: (min) => `~${min}分钟`,
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
     finishHike: "完成徒步",
@@ -926,8 +909,6 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Скоро держитесь правее",
     surfaceChangeTitle: "Смена покрытия",
     milestoneTitle: "Веха",
-    nextWaypointLabel: "Следующий ориентир",
-    waypointEtaMin: (min) => `~${min} мин`,
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
     perception: "ВОСПРИЯТИЕ",
     finishHike: "Завершить поход",
