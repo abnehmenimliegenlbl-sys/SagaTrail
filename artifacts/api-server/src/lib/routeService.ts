@@ -120,6 +120,37 @@ export interface EnrichedPoi extends RawPoi {
   wiki: WikiSummary | null;
 }
 
+/** Normalisiert einen POI-Namen fuer den Duplikat-Vergleich. */
+function normalizePoiName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Entfernt gleichnamige Duplikate aus der POI-Liste (z. B. mehrere
+ * "Basiliskenbrunnen" in Basel). Pro normalisiertem Name bleibt genau ein
+ * Eintrag — bevorzugt derjenige mit dem reichhaltigsten Inhalt:
+ *   extract vorhanden (2) > nur Bild (1) > kein Wikipedia (0).
+ * Reihenfolge der Originalliste bleibt sonst erhalten.
+ */
+function deduplicatePois(pois: EnrichedPoi[]): EnrichedPoi[] {
+  const richness = (p: EnrichedPoi) =>
+    p.wiki?.extract ? 2 : p.wiki?.image ? 1 : 0;
+  const best = new Map<string, EnrichedPoi>();
+  for (const poi of pois) {
+    const key = normalizePoiName(poi.name);
+    const existing = best.get(key);
+    if (!existing || richness(poi) > richness(existing)) {
+      best.set(key, poi);
+    }
+  }
+  // Originalreihenfolge beibehalten (Map preserviert insertion order,
+  // aber wir wollen die erste Occurrence — nicht die letzte beibehaltene).
+  return pois.filter((poi) => best.get(normalizePoiName(poi.name)) === poi);
+}
+
 /**
  * Liefert aktive Partnerbetriebe innerhalb einer Bounding Box. Direkt aus
  * Postgres (kein externer Fetch/Cache noetig, da Datenmenge klein und selten
@@ -274,11 +305,15 @@ async function refreshPoisBackground(
     }
     poiErrorCache.delete(key);
     const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
-    const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
+    const enriched = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
       enrichPoiWithWikipedia(poi, log, geoSearchBudget),
     );
+    const entries = deduplicatePois(enriched);
     poiCache.set(key, { at: Date.now(), entries });
-    log.info({ bbox, count: entries.length }, "POI-Cache im Hintergrund aktualisiert");
+    log.info(
+      { bbox, total: enriched.length, deduplicated: entries.length },
+      "POI-Cache im Hintergrund aktualisiert",
+    );
   } finally {
     poiRefreshInFlight.delete(key);
   }
@@ -328,8 +363,13 @@ export async function getPois(
   // Erfolgreicher Abruf: Fehler-Cache-Eintrag loeschen falls noch vorhanden.
   poiErrorCache.delete(key);
   const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
-  const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
+  const enriched = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
     enrichPoiWithWikipedia(poi, log, geoSearchBudget),
+  );
+  const entries = deduplicatePois(enriched);
+  log.info(
+    { bbox, total: enriched.length, deduplicated: entries.length },
+    "POI-Deduplication abgeschlossen",
   );
   poiCache.set(key, { at: Date.now(), entries });
   return entries;
