@@ -854,25 +854,37 @@ export default function LiveHike() {
     };
 
     // Bei Netzfehler ODER leerem Ergebnis (transienter Overpass-Timeout-Cache)
-    // einmal nach 20 s nochmals versuchen. So werden POIs automatisch
-    // nachgeladen, auch wenn der erste Request einen leeren Error-Cache traf.
-    const tryLoad = (onEmpty: () => void) =>
+    // wird automatisch mit exponentiellem Backoff nachgeladen:
+    //   Versuch 1 sofort, dann nach 35 s, 70 s, 105 s — danach aufgegeben.
+    // 35 s > 30 s Server-Error-Cache, damit der naechste Versuch echte Daten
+    // bekommt und nicht wieder den abgelaufenen Cache trifft.
+    const MAX_RETRIES = 3;
+    const RETRY_INTERVAL_MS = 35_000;
+    let attempt = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const tryLoad = () => {
       getPois(bbox)
         .then((result) => {
           filterAndSet(result);
-          if (result.length === 0) onEmpty();
+          if (result.length === 0 && attempt < MAX_RETRIES && !cancelled) {
+            attempt++;
+            retryTimer = setTimeout(tryLoad, RETRY_INTERVAL_MS);
+          }
         })
-        .catch(onEmpty);
+        .catch(() => {
+          if (attempt < MAX_RETRIES && !cancelled) {
+            attempt++;
+            retryTimer = setTimeout(tryLoad, RETRY_INTERVAL_MS);
+          }
+        });
+    };
 
-    const retryTimer = setTimeout(() => {
-      if (!cancelled) tryLoad(() => { /* aufgegeben */ });
-    }, 20_000);
-
-    tryLoad(() => { /* Retry laeuft bereits */ });
+    tryLoad();
 
     return () => {
       cancelled = true;
-      clearTimeout(retryTimer);
+      if (retryTimer !== null) clearTimeout(retryTimer);
     };
   }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
 
