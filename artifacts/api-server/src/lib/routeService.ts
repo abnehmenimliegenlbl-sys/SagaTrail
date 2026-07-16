@@ -199,7 +199,7 @@ async function enrichPoiWithWikipedia(
 ): Promise<EnrichedPoi> {
   try {
     if (poi.wikipediaTag) {
-      const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag);
+      const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag, "de", poi.lat, poi.lng);
       if (wiki) return { ...poi, wiki: await withP18Image(wiki, poi.wikidataTag) };
     }
     if (poi.wikidataTag) {
@@ -210,7 +210,7 @@ async function enrichPoiWithWikipedia(
       const title = await resolveWikidataTitle(poi.wikidataTag);
       if (title) {
         const [wiki, p18Image] = await Promise.all([
-          fetchWikipediaSummary(title),
+          fetchWikipediaSummary(title, "de", poi.lat, poi.lng),
           fetchWikidataImage(poi.wikidataTag),
         ]);
         if (wiki) return { ...poi, wiki: wiki.image ? wiki : { ...wiki, image: p18Image } };
@@ -238,7 +238,7 @@ async function enrichPoiWithWikipedia(
     // Vierte Stufe: Claude-Wissenssuche — greift nur, wenn Wikipedia und
     // Geo-Suche komplett leer ausgingen. Antwortet mit "UNBEKANNT" wenn kein
     // verlässliches Wissen vorhanden, damit kein halluzinierter Text erscheint.
-    const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de");
+    const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng);
     if (aiWiki) return { ...poi, wiki: aiWiki };
   } catch (err) {
     log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");

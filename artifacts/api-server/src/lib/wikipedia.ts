@@ -1,5 +1,6 @@
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import type { Logger } from "pino";
+import { haversineM } from "./geo";
 
 /**
  * Live-Anreicherung mit Wikipedia-Kurzzusammenfassungen (CC BY-SA).
@@ -46,16 +47,37 @@ interface WikiRestSummary {
   type?: string;
   thumbnail?: { source?: string };
   originalimage?: { source?: string };
+  coordinates?: { lat?: number; lon?: number };
 }
 
-/** Laedt die Kurzzusammenfassung eines konkreten Wikipedia-Artikeltitels. */
+/**
+ * Laedt die Kurzzusammenfassung eines konkreten Wikipedia-Artikeltitels.
+ *
+ * Optional: refLat/refLng + maxDistKm — wenn der Artikel eigene Koordinaten hat
+ * und diese weiter als maxDistKm vom POI entfernt sind, wird null zurueckgegeben.
+ * Verhindert, dass OSM-Tags auf den falschen gleichnamigen Artikel zeigen
+ * (z.B. Basler "Pfalz"-Platz → "Rheinland-Pfalz" (Deutschland)).
+ */
 export async function fetchWikipediaSummary(
   title: string,
   lang: string = DEFAULT_LANG,
+  refLat?: number,
+  refLng?: number,
+  maxDistKm: number = 150,
 ): Promise<WikiSummary | null> {
   const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   const json = await fetchJson<WikiRestSummary>(url);
   if (!json || !json.extract || json.type === "disambiguation") return null;
+  if (
+    refLat !== undefined && refLng !== undefined &&
+    json.coordinates?.lat !== undefined && json.coordinates?.lon !== undefined
+  ) {
+    const distM = haversineM(
+      { lat: refLat, lng: refLng },
+      { lat: json.coordinates.lat, lng: json.coordinates.lon },
+    );
+    if (distM > maxDistKm * 1000) return null;
+  }
   return {
     title: json.title ?? title,
     extract: json.extract,
@@ -119,11 +141,13 @@ export async function fetchWikidataImage(
 export async function resolveOsmWikipediaTag(
   tag: string,
   fallbackLang: string = DEFAULT_LANG,
+  refLat?: number,
+  refLng?: number,
 ): Promise<WikiSummary | null> {
   const match = /^([a-z-]{2,})\s*:\s*(.+)$/.exec(tag.trim());
   const lang = match ? match[1] : fallbackLang;
   const title = match ? match[2] : tag.trim();
-  return fetchWikipediaSummary(title, lang);
+  return fetchWikipediaSummary(title, lang, refLat, refLng);
 }
 
 /** Normalisiert einen Namen fuer den unscharfen Vergleich (Kleinbuchstaben, nur Buchstaben/Ziffern). */
@@ -219,6 +243,8 @@ export async function searchAiPoiKnowledge(
   name: string,
   kind: string,
   lang: string = DEFAULT_LANG,
+  lat?: number,
+  lng?: number,
 ): Promise<WikiSummary | null> {
   const key = `${lang}::${name}::${kind}`;
   const hit = aiPoiCache.get(key);
@@ -229,15 +255,22 @@ export async function searchAiPoiKnowledge(
     es: "Español", pt: "Português", zh: "中文", ru: "Русский",
   };
   const langLabel = langLabels[lang] ?? "Deutsch";
+  const coordHint = lat !== undefined && lng !== undefined
+    ? `Koordinaten: ${lat.toFixed(4)}, ${lng.toFixed(4)} (Schweiz)`
+    : `Region: Schweiz`;
 
   const prompt = [
     `Du bist ein Experte für Schweizer Kulturgeschichte und Sehenswürdigkeiten.`,
     ``,
     `Ort: "${name}"`,
     `OSM-Kategorie: ${kind}`,
+    coordHint,
     ``,
-    `Aufgabe: Schreibe 2–3 faktische Sätze über diesen spezifischen Ort in der Schweiz`,
-    `(Bedeutung, Geschichte, was man vor Ort sieht). Antworte auf ${langLabel}.`,
+    `Aufgabe: Schreibe 2–3 faktische Sätze über genau diesen Ort an den angegebenen`,
+    `Koordinaten (Bedeutung, Geschichte, was man vor Ort sieht). Antworte auf ${langLabel}.`,
+    ``,
+    `Wichtig: Beziehe dich NUR auf diesen konkreten Ort, nicht auf andere Orte`,
+    `gleichen Namens in anderen Städten oder Ländern.`,
     ``,
     `Wenn du diesen konkreten Ort nicht kennst oder keine verlässlichen Fakten hast,`,
     `antworte ausschliesslich mit dem Wort: UNBEKANNT`,
