@@ -44,6 +44,7 @@ export function SwisstopoMap({
         {
           title: t.legendTitle,
           route: t.legendRoute,
+          altRoute: t.legendAltRoute,
           start: t.legendStart,
           ziel: t.legendZiel,
           position: t.legendPosition,

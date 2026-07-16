@@ -16,6 +16,7 @@ import { createUseStrings, StringsDict } from "../createStrings";
 export interface MapStrings {
   legendTitle: string;
   legendRoute: string;
+  legendAltRoute: string;
   legendStart: string;
   legendZiel: string;
   legendPosition: string;
@@ -38,6 +39,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   de: {
     legendTitle: "Legende",
     legendRoute: "Routenverlauf",
+    legendAltRoute: "Neu berechnete Route",
     legendStart: "Startpunkt",
     legendZiel: "Ziel",
     legendPosition: "Deine Position",
@@ -58,6 +60,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   gsw: {
     legendTitle: "Legände",
     legendRoute: "Routeverlauf",
+    legendAltRoute: "Neu berecchete Route",
     legendStart: "Startpunkt",
     legendZiel: "Ziil",
     legendPosition: "Dini Position",
@@ -78,6 +81,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   fr: {
     legendTitle: "Légende",
     legendRoute: "Tracé de l'itinéraire",
+    legendAltRoute: "Itinéraire recalculé",
     legendStart: "Point de départ",
     legendZiel: "Arrivée",
     legendPosition: "Votre position",
@@ -98,6 +102,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   it: {
     legendTitle: "Legenda",
     legendRoute: "Tracciato del percorso",
+    legendAltRoute: "Percorso ricalcolato",
     legendStart: "Punto di partenza",
     legendZiel: "Arrivo",
     legendPosition: "La tua posizione",
@@ -118,6 +123,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   en: {
     legendTitle: "Legend",
     legendRoute: "Route line",
+    legendAltRoute: "Recalculated route",
     legendStart: "Starting point",
     legendZiel: "Destination",
     legendPosition: "Your position",
@@ -138,6 +144,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   zh: {
     legendTitle: "图例",
     legendRoute: "路线走向",
+    legendAltRoute: "重新计算的路线",
     legendStart: "起点",
     legendZiel: "终点",
     legendPosition: "你的位置",
@@ -158,6 +165,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   es: {
     legendTitle: "Leyenda",
     legendRoute: "Trazado de la ruta",
+    legendAltRoute: "Ruta recalculada",
     legendStart: "Punto de partida",
     legendZiel: "Destino",
     legendPosition: "Tu posición",
@@ -178,6 +186,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   pt: {
     legendTitle: "Legenda",
     legendRoute: "Traçado da rota",
+    legendAltRoute: "Rota recalculada",
     legendStart: "Ponto de partida",
     legendZiel: "Destino",
     legendPosition: "Sua posição",
@@ -198,6 +207,7 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   ru: {
     legendTitle: "Легенда",
     legendRoute: "Линия маршрута",
+    legendAltRoute: "Пересчитанный маршрут",
     legendStart: "Начальная точка",
     legendZiel: "Цель",
     legendPosition: "Твоё местоположение",

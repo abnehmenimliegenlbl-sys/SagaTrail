@@ -38,6 +38,7 @@ export interface SwisstopoMapProps {
 export interface MapLegendLabels {
   title: string;
   route: string;
+  altRoute: string;
   start: string;
   ziel: string;
   position: string;
@@ -145,6 +146,7 @@ export function buildSwisstopoHtml(
   .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
   .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
   .stt-linie-route  { width: 18px; height: 4px; border-radius: 2px; background: #DA291C; }
+  .stt-linie-altroute { width: 18px; height: 3px; border-image: repeating-linear-gradient(90deg,#2EC4B6 0 5px,transparent 5px 8px) 1; border-top: 3px solid; }
   .stt-linie-iwn    { width: 18px; height: 3px; border-radius: 2px; background: #9C5AC8; }
   .stt-linie-nwn    { width: 18px; height: 3px; border-radius: 2px; background: #D9442E; }
   .stt-linie-rwn    { width: 18px; height: 3px; border-radius: 2px; background: #4A63D0; }
@@ -413,6 +415,9 @@ export function buildSwisstopoHtml(
       var rows = '';
       if (geometry && geometry.length > 1) {
         rows += zeile('<span class="stt-linie-route"></span>', legende.route);
+        if (altGeometry && altGeometry.length > 1) {
+          rows += zeile('<span class="stt-linie-altroute"></span>', legende.altRoute);
+        }
         rows += zeile('<div class="stt-start"></div>', legende.start);
         rows += zeile('<div class="stt-ziel"></div>', legende.ziel);
       } else {
