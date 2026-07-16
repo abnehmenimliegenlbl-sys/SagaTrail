@@ -41,6 +41,10 @@ export const profilesTable = pgTable("profiles", {
   savedSagaIds: text("saved_saga_ids").array().notNull().default([]),
   // Ob der Nutzer Wetterwarnungen fuer gespeicherte Touren erhalten moechte.
   pushWeatherEnabled: boolean("push_weather_enabled").notNull().default(true),
+  // Einmalige Willkommens-Schenkung: erstes Sagen Paket gratis nach Premium-Kauf.
+  // Wird gesetzt, sobald der Nutzer ein Paket gewählt und der Server es
+  // in purchased_packs eingetragen hat.
+  welcomeSagenpaketClaimed: boolean("welcome_sagenpaket_claimed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -128,15 +128,25 @@ export default function Paywall() {
         iapLog("paywall.buy: Kauf kam nach Timeout noch durch");
         return;
       }
-      iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere zurueck");
+      iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere weiter");
       hapticSuccess();
+      // Premium/Familie: direkt zum Willkommens-Sagen-Paket-Screen navigieren
+      // (Nutzer soll sofort Mehrwert erleben). Elite/Elite Familie: einfach
+      // zurueck (alle Packs bereits inklusive, kein Extra-Schritt noetig).
       // Apples nativer Kauf-Dialog (StoreKit-Sheet) ist zu diesem Zeitpunkt
       // oft noch nicht vollstaendig ausgeblendet. Kurze Verzoegerung laesst
       // StoreKit die Uebergabe sauber abschliessen, bevor wir navigieren —
       // sonst kollidieren zwei UIKit-Transitionen und die App friert ein.
+      const istPremiumPlan = ["monthly", "yearly", "family"].includes(
+        gewaehlterPlan?.key ?? ""
+      );
       setTimeout(() => {
         if (!mountedRef.current) return;
-        router.back();
+        if (istPremiumPlan) {
+          router.replace("/welcome-sagenpaket");
+        } else {
+          router.back();
+        }
       }, 600);
     } catch (err: any) {
       clearTimeout(timeoutId);

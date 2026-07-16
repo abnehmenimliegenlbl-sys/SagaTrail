@@ -624,6 +624,21 @@ export const ClaimKantonspackResponse = zod.object({
 
 
 /**
+ * Schenkt dem authentifizierten Premium-Nutzer einmalig ein Sagen Paket seiner Wahl.
+ * Idempotent: bei erneutem Aufruf wird bereitsGenutzt=true zurueckgegeben.
+ * @summary Willkommens-Sagen Paket einloesen
+ */
+export const WelcomeSagenpaketBody = zod.object({
+  "kanton": zod.string().describe('Kanton-Slug (z. B. "zuerich", wie kantonSlug(name))')
+})
+
+export const WelcomeSagenpaketResponse = zod.object({
+  "slug": zod.string().describe('Freigeschalteter Kanton-Slug'),
+  "bereitsGenutzt": zod.boolean().describe('True, wenn der Willkommens-Pack bereits frueher eingeloest wurde')
+})
+
+
+/**
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */

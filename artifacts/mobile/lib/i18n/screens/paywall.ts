@@ -46,6 +46,7 @@ export interface PaywallStrings {
 const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   de: {
     features: [
+      "1 Sagen Paket deiner Wahl – gratis beim Einstieg",
       "Alle 26 Kantone und ihre Sagen",
       "Unbegrenzte Wanderungen",
       "Erweiterte Charakter-Anpassung",
@@ -96,6 +97,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   gsw: {
     features: [
+      "1 Sage Paket nach Wahl – gratis bim Iistiig",
       "Alli 26 Kantön und ihri Sage",
       "Unbegrenzti Wanderige",
       "Erwiitereti Charakter-Apassig",
@@ -146,6 +148,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   en: {
     features: [
+      "1 Legend Pack of your choice – free on sign-up",
       "All 26 cantons and their legends",
       "Unlimited hikes",
       "Enhanced character customization",
@@ -196,6 +199,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   fr: {
     features: [
+      "1 Pack de Légendes au choix – offert à l'inscription",
       "Les 26 cantons et leurs légendes",
       "Randonnées illimitées",
       "Personnalisation avancée des personnages",
@@ -246,6 +250,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   it: {
     features: [
+      "1 Pacchetto di Leggende a scelta – gratis all'iscrizione",
       "Tutti i 26 cantoni e le loro leggende",
       "Escursioni illimitate",
       "Personalizzazione avanzata del personaggio",
@@ -296,6 +301,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   es: {
     features: [
+      "1 Pack de Leyendas a elegir – gratis al registrarte",
       "Los 26 cantones y sus leyendas",
       "Caminatas ilimitadas",
       "Personalización avanzada de personajes",
@@ -346,6 +352,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   pt: {
     features: [
+      "1 Pacote de Lendas à sua escolha – grátis ao entrar",
       "Todos os 26 cantões e suas lendas",
       "Caminhadas ilimitadas",
       "Customização avançada de personagem",
@@ -396,6 +403,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   zh: {
     features: [
+      "加入即赠1个传说包",
       "全部 26 个州及其传说",
       "无限次徒步体验",
       "高级角色定制",
@@ -444,6 +452,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   },
   ru: {
     features: [
+      "1 пакет легенд на выбор – бесплатно при вступлении",
       "Все 26 кантонов и их легенды",
       "Неограниченные походы",
       "Расширенная настройка персонажа",

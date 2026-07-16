@@ -8,6 +8,8 @@ import {
   UpdateMyPremiumBody,
   ClaimKantonspackBody,
   ClaimKantonspackResponse,
+  WelcomeSagenpaketBody,
+  WelcomeSagenpaketResponse,
   SyncMyProgressBody,
   SyncMyProgressResponse,
 } from "@workspace/api-zod";
@@ -385,6 +387,63 @@ router.delete("/me/bookmarks/:sagaId", async (req, res): Promise<void> => {
     .where(eq(profilesTable.id, userId))
     .returning({ savedSagaIds: profilesTable.savedSagaIds });
   res.json({ sagaIds: updated?.savedSagaIds ?? [] });
+});
+
+// POST /me/welcome-sagenpaket — schenkt dem Premium-Nutzer einmalig ein Sagen Paket seiner Wahl.
+// Idempotent: wird bereitsGenutzt=true zurueckgegeben wenn schon eingeloest.
+router.post("/me/welcome-sagenpaket", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsed = WelcomeSagenpaketBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const slug = parsed.data.kanton;
+  if (!KANTON_SLUGS.includes(slug)) {
+    res.status(400).json({ error: "Unbekannter Kanton" });
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+
+  if (!row) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+
+  // Bereits eingeloest — idempotent OK zurueckgeben.
+  if (row.welcomeSagenpaketClaimed) {
+    res.json(WelcomeSagenpaketResponse.parse({ slug, bereitsGenutzt: true }));
+    return;
+  }
+
+  // Nur fuer Premium-Nutzer (Elite ist automatisch eingeschlossen,
+  // braucht diese Schenkung aber nicht — trotzdem erlaubt).
+  if (!istPremiumAktiv(row)) {
+    res.status(403).json({ error: "Nur fuer Premium-Nutzer verfuegbar" });
+    return;
+  }
+
+  const currentPacks = row.purchasedPacks ?? [];
+  const newPacks = currentPacks.includes(slug)
+    ? currentPacks
+    : [...currentPacks, slug];
+
+  await db
+    .update(profilesTable)
+    .set({
+      purchasedPacks: newPacks,
+      welcomeSagenpaketClaimed: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(profilesTable.id, userId));
+
+  res.json(WelcomeSagenpaketResponse.parse({ slug, bereitsGenutzt: false }));
 });
 
 // PATCH /me/notifications — schaltet Wetter-Push ein/aus
