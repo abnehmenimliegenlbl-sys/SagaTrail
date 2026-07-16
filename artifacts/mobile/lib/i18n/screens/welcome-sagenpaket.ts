@@ -14,6 +14,7 @@ export interface WelcomeSagenpaketStrings {
   alreadyClaimedBtn: string;
   errorTitle: string;
   errorMsg: string;
+  notPremiumError: string;
 }
 
 const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
@@ -31,6 +32,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Fehler",
     errorMsg: "Das Sagen Paket konnte nicht aktiviert werden. Bitte versuche es erneut.",
+    notPremiumError: "Dein Premium-Abo konnte nicht bestätigt werden. Bitte versuche es erneut.",
   },
   gsw: {
     title: "Dis erscht Sage Paket",
@@ -46,6 +48,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Fehler",
     errorMsg: "S'Sage Paket het nöd chöne aktiviert werde. Bitte versueche es nomol.",
+    notPremiumError: "Dis Premium-Abo het nöd chöne bestätigt werde. Bitte versueche es nomol.",
   },
   en: {
     title: "Your First Legend Pack",
@@ -61,6 +64,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Error",
     errorMsg: "The Legend Pack could not be activated. Please try again.",
+    notPremiumError: "Your premium subscription could not be confirmed. Please try again.",
   },
   fr: {
     title: "Votre premier Pack de Légendes",
@@ -76,6 +80,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Erreur",
     errorMsg: "Le Pack de Légendes n'a pas pu être activé. Veuillez réessayer.",
+    notPremiumError: "Votre abonnement premium n'a pas pu être confirmé. Veuillez réessayer.",
   },
   it: {
     title: "Il tuo primo Pacchetto di Leggende",
@@ -91,6 +96,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Errore",
     errorMsg: "Il Pacchetto di Leggende non ha potuto essere attivato. Riprova.",
+    notPremiumError: "Il tuo abbonamento premium non ha potuto essere confermato. Riprova.",
   },
   es: {
     title: "Tu primer Pack de Leyendas",
@@ -106,6 +112,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Error",
     errorMsg: "El Pack de Leyendas no pudo activarse. Por favor, inténtalo de nuevo.",
+    notPremiumError: "Tu suscripción premium no pudo confirmarse. Por favor, inténtalo de nuevo.",
   },
   pt: {
     title: "Seu primeiro Pacote de Lendas",
@@ -121,6 +128,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Erro",
     errorMsg: "O Pacote de Lendas não pôde ser ativado. Por favor, tente novamente.",
+    notPremiumError: "A sua subscrição premium não pôde ser confirmada. Por favor, tente novamente.",
   },
   zh: {
     title: "您的第一个传说包",
@@ -136,6 +144,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "好",
     errorTitle: "错误",
     errorMsg: "传说包无法激活，请重试。",
+    notPremiumError: "无法确认您的高级订阅，请重试。",
   },
   ru: {
     title: "Ваш первый пакет легенд",
@@ -151,6 +160,7 @@ const STRINGS: StringsDict<WelcomeSagenpaketStrings> = {
     alreadyClaimedBtn: "OK",
     errorTitle: "Ошибка",
     errorMsg: "Не удалось активировать пакет легенд. Пожалуйста, повторите попытку.",
+    notPremiumError: "Не удалось подтвердить вашу премиум-подписку. Пожалуйста, повторите попытку.",
   },
 };
 

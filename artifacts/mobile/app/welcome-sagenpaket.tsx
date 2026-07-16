@@ -24,6 +24,7 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { kantonSlug } from "@/lib/kantonSlug";
 import { useWelcomeSagenpaketStrings } from "@/lib/i18n/screens/welcome-sagenpaket";
 import { getGetMyProfileQueryKey } from "@workspace/api-client-react";
+import { alert } from "@/lib/appAlert";
 
 const GERMAN_CANTON_NAMES = [
   "Aargau", "Appenzell Ausserrhoden", "Appenzell Innerrhoden",
@@ -38,7 +39,7 @@ export default function WelcomeSagenpaket() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { getToken } = useAuth();
-  const { language } = useApp();
+  const { language, unlockPremium } = useApp();
   const queryClient = useQueryClient();
   const t = useWelcomeSagenpaketStrings();
 
@@ -54,6 +55,11 @@ export default function WelcomeSagenpaket() {
     if (!selected || loading) return;
     setLoading(true);
     try {
+      // Premium-Status zuerst mit dem Server abgleichen — der Kauf könnte
+      // noch nicht in der DB angekommen sein, wenn man direkt nach dem Kauf
+      // auf diesen Screen navigiert wurde (Timing-Lücke).
+      await unlockPremium();
+
       const token = await getToken();
       const baseUrl = getApiBaseUrl() ?? "";
       const res = await fetch(`${baseUrl}/api/me/welcome-sagenpaket`, {
@@ -65,13 +71,19 @@ export default function WelcomeSagenpaket() {
         body: JSON.stringify({ kanton: selected }),
       });
       if (!res.ok) {
-        const err = await res.text().catch(() => "");
-        throw new Error(err || `Server-Fehler ${res.status}`);
+        const body = await res.text().catch(() => "");
+        let msg = body;
+        try { msg = JSON.parse(body)?.error ?? body; } catch {}
+        if (res.status === 403) {
+          throw new Error(t.notPremiumError);
+        }
+        throw new Error(msg || `Fehler ${res.status}`);
       }
       await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       setDone(true);
-    } catch {
-      // Fehler werden im UI als alert angezeigt — hier nur loading zurücksetzen.
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(t.errorTitle, msg);
     } finally {
       setLoading(false);
     }
