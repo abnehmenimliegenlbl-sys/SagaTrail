@@ -854,12 +854,11 @@ export default function LiveHike() {
     };
 
     // Bei Netzfehler ODER leerem Ergebnis (transienter Overpass-Timeout-Cache)
-    // wird automatisch mit exponentiellem Backoff nachgeladen:
-    //   Versuch 1 sofort, dann nach 35 s, 70 s, 105 s — danach aufgegeben.
-    // 35 s > 30 s Server-Error-Cache, damit der naechste Versuch echte Daten
+    // wird automatisch nachgeladen: sofort, dann alle 60 s — max. 10 Versuche.
+    // 60 s > 30 s Server-Error-Cache, damit der naechste Versuch echte Daten
     // bekommt und nicht wieder den abgelaufenen Cache trifft.
-    const MAX_RETRIES = 3;
-    const RETRY_INTERVAL_MS = 35_000;
+    const MAX_RETRIES = 10;
+    const RETRY_INTERVAL_MS = 60_000;
     let attempt = 0;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
