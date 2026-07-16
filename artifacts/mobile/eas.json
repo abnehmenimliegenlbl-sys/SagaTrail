@@ -16,6 +16,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "autoSubmit": true,
       "channel": "production",
       "ios": {
         "distribution": "store"
@@ -32,7 +33,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleTeamId": "R4254XKT8S"
+        "appleTeamId": "R4254XKT8S",
+        "ascAppId": "6788260668"
       }
     }
   }
