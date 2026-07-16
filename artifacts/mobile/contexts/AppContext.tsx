@@ -816,18 +816,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (hike: HikeSession) => {
       setLastHike(hike);
       await AsyncStorage.setItem(KEYS.lastHike, JSON.stringify(hike));
-      // Zusaetzlich ins Tagebuch schreiben (neueste zuerst, max. 200).
-      setHikeHistory((prev) => {
-        const next = [hike, ...prev.filter((h) => h.id !== hike.id)].slice(
-          0,
-          200
-        );
-        hikeHistoryRef.current = next;
-        AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(
-          () => {}
-        );
-        return next;
-      });
+      // Ref sofort synchron aktualisieren, BEVOR pushProgressSync aufgerufen
+      // wird — sonst liest pushProgressSync den alten (leeren) Ref-Wert,
+      // schickt eine leere Liste an den Server, und der Server-Response
+      // ueberschreibt den lokalen State wieder mit leer (Race-Condition).
+      const next = [hike, ...hikeHistoryRef.current.filter((h) => h.id !== hike.id)].slice(0, 200);
+      hikeHistoryRef.current = next;
+      setHikeHistory(next);
+      AsyncStorage.setItem(KEYS.hikeHistory, JSON.stringify(next)).catch(() => {});
       pushProgressSync();
     },
     [pushProgressSync]
