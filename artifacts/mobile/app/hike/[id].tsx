@@ -799,9 +799,13 @@ export default function LiveHike() {
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
   useEffect(() => {
-    if (!mapCenter) return;
+    // mapCenter ist ein einmalig beim Mount gesetzter Snapshot. Falls die Route
+    // beim Mount noch nicht im Cache war (Direktstart), ist mapCenter null —
+    // dann auf die nachgeladen Routen-/Sagen-Koordinaten zurueckfallen.
+    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    if (!center) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    const bbox = bboxAroundGeometry(route?.geometry, center);
     getAerialways(bbox)
       .then((result) => {
         if (!cancelled) setAerialways(result);
@@ -812,17 +816,18 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Historische/touristische Orte im Kartenausschnitt laden, live mit
   // Wikipedia-Zusammenfassungen angereichert — best effort, kein Blocker.
   useEffect(() => {
-    if (!mapCenter) return;
+    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    if (!center) return;
     let cancelled = false;
     // Enger Rand (0.5 km statt 3 km): behalten werden ohnehin nur POIs im
     // 300-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
     // dichten Staedten (z. B. Basel) so teuer, dass sie in ein Timeout laeuft.
-    const bbox = bboxAroundGeometry(route?.geometry, mapCenter, 0.5);
+    const bbox = bboxAroundGeometry(route?.geometry, center, 0.5);
     // Nur POIs im 300-m-Korridor um die Strecke behalten — Orte weiter weg
     // liegen nicht am Weg und wuerden die Karte und Ansagen verwaessern.
     // (100 m erwies sich im Feldtest als zu eng: auf 7 km nur 2 POIs.)
@@ -885,15 +890,16 @@ export default function LiveHike() {
       cancelled = true;
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
-  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im Kartenausschnitt
   // laden — gleiche Bounding Box wie die Seilbahnen, kein Korridorfilter noetig,
   // da Partner ohnehin nur vereinzelt gepflegt werden.
   useEffect(() => {
-    if (!mapCenter) return;
+    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    if (!center) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, mapCenter);
+    const bbox = bboxAroundGeometry(route?.geometry, center);
     getPartners(bbox)
       .then((result) => {
         if (!cancelled) setPartners(result);
@@ -904,7 +910,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
   // max. 3, innerhalb 100 m Routenabstand.
