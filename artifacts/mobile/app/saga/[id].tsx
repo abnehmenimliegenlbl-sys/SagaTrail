@@ -107,7 +107,7 @@ export default function SagaDetail() {
     );
   }
 
-  const locked = !premium && !istSageInklusive(saga.canton, saga.id);
+  const locked = !premium && !saga.isAnchorPlace;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder

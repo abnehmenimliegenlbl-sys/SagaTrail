@@ -207,7 +207,7 @@ export default function Routenplanung() {
   // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
-      if (!premium) return !istSageInklusive(s.canton, s.id);
+      if (!premium) return !s.isAnchorPlace;
       if (isElite) return false;
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
@@ -587,7 +587,7 @@ export default function Routenplanung() {
     (routeSagaIsInPack1
       ? !istSageInklusive(saga.canton, route.sagaId ?? saga.id)
       : true);
-  const locked = sagaPackLocked || (!premium && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id));
+  const locked = sagaPackLocked || (!premium && !saga?.isAnchorPlace);
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 

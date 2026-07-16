@@ -107,8 +107,8 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, language, freieSagen, istSageInklusive } = useApp();
-  const { loadCantonRoutes } = useCatalog();
+  const { profile, premium, language } = useApp();
+  const { loadCantonRoutes, sagas } = useCatalog();
   const {
     isElite,
     offerings,
@@ -536,10 +536,11 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {filteredRoutes.map((route, i) => {
-                const locked = !packUnlocked && !istSageInklusive(cantonName, route.sagaId ?? "");
+                const routeSaga = sagas.find((s) => s.id === route.sagaId);
+                const locked = !packUnlocked && !routeSaga?.isAnchorPlace;
                 const unlocked =
                   premium &&
-                  (packUnlocked || istSageInklusive(cantonName, route.sagaId ?? ""));
+                  (packUnlocked || !!routeSaga?.isAnchorPlace);
                 return (
                   <RouteCard
                     key={route.id}
