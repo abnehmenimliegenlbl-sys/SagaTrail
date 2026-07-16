@@ -77,9 +77,9 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
         'premium'  => 'Premium',
     );
     $paket_preise = array(
-        'basic'    => 'CHF 490.– / Jahr (zzgl. CHF 90.– Einrichtungsgebühr)',
-        'standard' => 'CHF 990.– / Jahr (Einrichtungsgebühr entfällt)',
-        'premium'  => 'CHF 1\'990.– / Jahr (Einrichtungsgebühr entfällt)',
+        'basic'    => 'CHF 99.– / Jahr (od. CHF 9.90 / Monat, keine Einrichtungsgebühr)',
+        'standard' => 'CHF 199.– / Jahr (od. CHF 19.90 / Monat, keine Einrichtungsgebühr)',
+        'premium'  => 'CHF 499.– / Jahr (keine Einrichtungsgebühr)',
     );
 
     $paket       = isset( $data['paket'] ) ? $data['paket'] : 'standard';
@@ -269,7 +269,7 @@ function sagatrail_paket_leistungen( $paket_name ) {
     if ( $paket_name === 'Premium' ) {
         $basis[4] = 'Beschreibungstext (bis 500 Zeichen) im App-Profil';
         $basis[]  = 'Detaillierter Statistik-Report (Views + Angebot-Tipps)';
-        $basis[]  = 'Featured-Platzierung mit Stern-Markierung auf der Karte';
+        $basis[]  = 'Narrations-Erwähnung beim Vorbeiwandern (automatisch via GPS)';
     }
     return $basis;
 }
