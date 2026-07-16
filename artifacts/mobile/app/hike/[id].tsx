@@ -853,23 +853,26 @@ export default function LiveHike() {
       if (!cancelled) setPois(gefiltert);
     };
 
-    // Bei Netzfehler oder Overpass-Timeout einmal nach 20 s nochmals versuchen.
-    // Ein leeres Array durch einen vorueberhenden Fehler-Cache-Treffer wird so
-    // automatisch aufgeloest, sobald der Server wieder antwortet.
-    getPois(bbox)
-      .then((result) => filterAndSet(result))
-      .catch(() => {
-        const retryTimer = setTimeout(() => {
-          if (!cancelled) {
-            getPois(bbox)
-              .then((result) => filterAndSet(result))
-              .catch(() => { /* aufgegeben */ });
-          }
-        }, 20_000);
-        return () => clearTimeout(retryTimer);
-      });
+    // Bei Netzfehler ODER leerem Ergebnis (transienter Overpass-Timeout-Cache)
+    // einmal nach 20 s nochmals versuchen. So werden POIs automatisch
+    // nachgeladen, auch wenn der erste Request einen leeren Error-Cache traf.
+    const tryLoad = (onEmpty: () => void) =>
+      getPois(bbox)
+        .then((result) => {
+          filterAndSet(result);
+          if (result.length === 0) onEmpty();
+        })
+        .catch(onEmpty);
+
+    const retryTimer = setTimeout(() => {
+      if (!cancelled) tryLoad(() => { /* aufgegeben */ });
+    }, 20_000);
+
+    tryLoad(() => { /* Retry laeuft bereits */ });
+
     return () => {
       cancelled = true;
+      clearTimeout(retryTimer);
     };
   }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
 
