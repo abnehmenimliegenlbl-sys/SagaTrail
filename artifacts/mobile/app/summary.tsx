@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import React, { useRef } from "react";
 import { captureRef } from "react-native-view-shot";
@@ -77,6 +78,36 @@ export default function Summary() {
       }
     } catch {
       // Auswahl abgebrochen oder nicht verfuegbar — kein Fehlerzustand noetig
+    }
+  };
+
+  const onExportGpx = async () => {
+    const g = lastHike?.geometry;
+    if (!g || g.length === 0) return;
+    try {
+      const name = lastHike.routeName ?? "SagaTrail-Route";
+      const now = new Date().toISOString();
+      const trkpts = g
+        .map(([lat, lng]) => `    <trkpt lat="${lat}" lon="${lng}"></trkpt>`)
+        .join("\n");
+      const gpx = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<gpx version="1.1" creator="SagaTrail" xmlns="http://www.topografix.com/GPX/1/1">',
+        `  <metadata><name>${name}</name><time>${now}</time></metadata>`,
+        "  <trk>",
+        `    <name>${name}</name>`,
+        "    <trkseg>",
+        trkpts,
+        "    </trkseg>",
+        "  </trk>",
+        "</gpx>",
+      ].join("\n");
+      const fileName = name.replace(/[^a-zA-Z0-9_\-]/g, "_") + ".gpx";
+      const uri = (FileSystem.cacheDirectory ?? "") + fileName;
+      await FileSystem.writeAsStringAsync(uri, gpx, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(uri, { mimeType: "application/gpx+xml", UTI: "com.topografix.gpx" });
+    } catch {
+      // Teilen abgebrochen oder nicht verfuegbar — kein Fehlerzustand noetig
     }
   };
 
@@ -223,6 +254,15 @@ export default function Summary() {
           onPress={share}
           style={{ marginTop: 30 }}
         />
+
+        {lastHike.geometry && lastHike.geometry.length > 0 && Platform.OS !== "web" && (
+          <PrimaryButton
+            variant="secondary"
+            label={t.exportGpx}
+            onPress={onExportGpx}
+            style={{ marginTop: 8 }}
+          />
+        )}
 
         <PrimaryButton
           label={t.backButton}
