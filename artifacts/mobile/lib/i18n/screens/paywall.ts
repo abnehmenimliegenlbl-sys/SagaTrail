@@ -48,7 +48,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   de: {
     features: [
       "1 Sagen Paket deiner Wahl – gratis beim Einstieg",
-      "Alle 26 Kantone und ihre Sagen",
+      "Alle Wanderrouten der Schweiz",
       "Unbegrenzte Wanderungen",
       "Erweiterte Charakter-Anpassung",
       "Erzählstimme mit natürlicher KI-Aussprache",
@@ -70,8 +70,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Familie",
     },
     planTaglines: {
-      monthly: "Alle Kantone, monatlich kündbar",
-      yearly: "Alle Kantone, bester Einstieg",
+      monthly: "Alle Wanderrouten, monatlich kündbar",
+      yearly: "Alle Wanderrouten, bester Einstieg",
       family: "Premium für die ganze Familie",
       elite: "Alle Sagen-Packs inklusive",
       eliteFamily: "Elite für die ganze Familie",
@@ -106,7 +106,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   gsw: {
     features: [
       "1 Sage Paket nach Wahl – gratis bim Iistiig",
-      "Alli 26 Kantön und ihri Sage",
+      "Alli Wanderwäg dr Schwiiz",
       "Unbegrenzti Wanderige",
       "Erwiitereti Charakter-Apassig",
       "Verzählerstimm mit natürlicher KI-Uusspraach",
@@ -128,8 +128,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Familie",
     },
     planTaglines: {
-      monthly: "Alli Kantön, monetlich kündbar",
-      yearly: "Alli Kantön, bester Iistiig",
+      monthly: "Alli Wanderwäg, monetlich kündbar",
+      yearly: "Alli Wanderwäg, bester Iistiig",
       family: "Premium für die ganzi Familie",
       elite: "Alli Sage-Packs inklusive",
       eliteFamily: "Elite für die ganzi Familie",
@@ -164,7 +164,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   en: {
     features: [
       "1 Legend Pack of your choice – free on sign-up",
-      "All 26 cantons and their legends",
+      "All hiking routes in Switzerland",
       "Unlimited hikes",
       "Enhanced character customization",
       "Narration voice with natural AI speech",
@@ -186,8 +186,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Family",
     },
     planTaglines: {
-      monthly: "All cantons, cancel monthly",
-      yearly: "All cantons, best way to start",
+      monthly: "All hiking routes, cancel monthly",
+      yearly: "All hiking routes, best way to start",
       family: "Premium for the whole family",
       elite: "All legend packs included",
       eliteFamily: "Elite for the whole family",
@@ -222,7 +222,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   fr: {
     features: [
       "1 Pack de Légendes au choix – offert à l'inscription",
-      "Les 26 cantons et leurs légendes",
+      "Tous les sentiers de randonnée de Suisse",
       "Randonnées illimitées",
       "Personnalisation avancée des personnages",
       "Voix de narration avec parole IA naturelle",
@@ -244,8 +244,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Famille",
     },
     planTaglines: {
-      monthly: "Tous les cantons, résiliable chaque mois",
-      yearly: "Tous les cantons, le meilleur départ",
+      monthly: "Tous les sentiers, résiliable chaque mois",
+      yearly: "Tous les sentiers, le meilleur départ",
       family: "Premium pour toute la famille",
       elite: "Tous les packs de légendes inclus",
       eliteFamily: "Elite pour toute la famille",
@@ -280,7 +280,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   it: {
     features: [
       "1 Pacchetto di Leggende a scelta – gratis all'iscrizione",
-      "Tutti i 26 cantoni e le loro leggende",
+      "Tutti i percorsi escursionistici della Svizzera",
       "Escursioni illimitate",
       "Personalizzazione avanzata del personaggio",
       "Voce narrante con parlato IA naturale",
@@ -302,8 +302,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Famiglia",
     },
     planTaglines: {
-      monthly: "Tutti i cantoni, disdetta mensile",
-      yearly: "Tutti i cantoni, il modo migliore per iniziare",
+      monthly: "Tutti i percorsi, disdetta mensile",
+      yearly: "Tutti i percorsi, il modo migliore per iniziare",
       family: "Premium per tutta la famiglia",
       elite: "Tutti i pacchetti di leggende inclusi",
       eliteFamily: "Elite per tutta la famiglia",
@@ -338,7 +338,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   es: {
     features: [
       "1 Pack de Leyendas a elegir – gratis al registrarte",
-      "Los 26 cantones y sus leyendas",
+      "Todas las rutas de senderismo de Suiza",
       "Caminatas ilimitadas",
       "Personalización avanzada de personajes",
       "Voz narrativa con habla de IA natural",
@@ -360,8 +360,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Familia",
     },
     planTaglines: {
-      monthly: "Todos los cantones, cancelable cada mes",
-      yearly: "Todos los cantones, la mejor forma de empezar",
+      monthly: "Todas las rutas, cancelable cada mes",
+      yearly: "Todas las rutas, la mejor forma de empezar",
       family: "Premium para toda la familia",
       elite: "Todos los packs de leyendas incluidos",
       eliteFamily: "Elite para toda la familia",
@@ -396,7 +396,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   pt: {
     features: [
       "1 Pacote de Lendas à sua escolha – grátis ao entrar",
-      "Todos os 26 cantões e suas lendas",
+      "Todas as rotas de caminhada da Suíça",
       "Caminhadas ilimitadas",
       "Customização avançada de personagem",
       "Voz narrativa com fala de IA natural",
@@ -418,8 +418,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Família",
     },
     planTaglines: {
-      monthly: "Todos os cantões, cancelável mensalmente",
-      yearly: "Todos os cantões, a melhor forma de começar",
+      monthly: "Todas as rotas, cancelável mensalmente",
+      yearly: "Todas as rotas, a melhor forma de começar",
       family: "Premium para toda a família",
       elite: "Todos os pacotes de lendas incluídos",
       eliteFamily: "Elite para toda a família",
@@ -454,7 +454,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   zh: {
     features: [
       "加入即赠1个传说包",
-      "全部 26 个州及其传说",
+      "瑞士全部徒步路线",
       "无限次徒步体验",
       "高级角色定制",
       "自然的 AI 语音叙事",
@@ -476,8 +476,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite 家庭版",
     },
     planTaglines: {
-      monthly: "全部州，按月可取消",
-      yearly: "全部州，最佳入门选择",
+      monthly: "全部路线，按月可取消",
+      yearly: "全部路线，最佳入门选择",
       family: "全家共享 Premium",
       elite: "包含所有传说包",
       eliteFamily: "全家共享 Elite",
@@ -510,7 +510,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
   ru: {
     features: [
       "1 пакет легенд на выбор – бесплатно при вступлении",
-      "Все 26 кантонов и их легенды",
+      "Все маршруты Швейцарии",
       "Неограниченные походы",
       "Расширенная настройка персонажа",
       "Голос повествования с естественной ИИ-речью",
@@ -532,8 +532,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite Семья",
     },
     planTaglines: {
-      monthly: "Все кантоны, отмена в любой месяц",
-      yearly: "Все кантоны, лучший старт",
+      monthly: "Все маршруты, отмена в любой месяц",
+      yearly: "Все маршруты, лучший старт",
       family: "Premium для всей семьи",
       elite: "Все пакеты легенд включены",
       eliteFamily: "Elite для всей семьи",
