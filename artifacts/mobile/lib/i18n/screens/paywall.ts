@@ -77,6 +77,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite für die ganze Familie",
     },
     planBadges: {
+      yearly: "40% gespart",
       family: "35% gespart",
       elite: "35% gespart",
       eliteFamily: "35% gespart",
@@ -133,6 +134,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite für die ganzi Familie",
     },
     planBadges: {
+      yearly: "40% gsparet",
       family: "35% gsparet",
       elite: "35% gsparet",
       eliteFamily: "35% gsparet",
@@ -189,6 +191,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite for the whole family",
     },
     planBadges: {
+      yearly: "Save 40%",
       family: "Save 35%",
       elite: "Save 35%",
       eliteFamily: "Save 35%",
@@ -245,6 +248,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite pour toute la famille",
     },
     planBadges: {
+      yearly: "40% économisé",
       family: "35% économisé",
       elite: "35% économisé",
       eliteFamily: "35% économisé",
@@ -301,6 +305,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite per tutta la famiglia",
     },
     planBadges: {
+      yearly: "Risparmia 40%",
       family: "Risparmia 35%",
       elite: "Risparmia 35%",
       eliteFamily: "Risparmia 35%",
@@ -357,6 +362,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite para toda la familia",
     },
     planBadges: {
+      yearly: "40% de ahorro",
       family: "35% de ahorro",
       elite: "35% de ahorro",
       eliteFamily: "35% de ahorro",
@@ -413,6 +419,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite para toda a família",
     },
     planBadges: {
+      yearly: "40% de economia",
       family: "35% de economia",
       elite: "35% de economia",
       eliteFamily: "35% de economia",
@@ -469,6 +476,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "全家共享 Elite",
     },
     planBadges: {
+      yearly: "节省 40%",
       family: "节省 35%",
       elite: "节省 35%",
       eliteFamily: "节省 35%",
@@ -523,6 +531,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Elite для всей семьи",
     },
     planBadges: {
+      yearly: "Скидка 40%",
       family: "Скидка 35%",
       elite: "Скидка 35%",
       eliteFamily: "Скидка 35%",
