@@ -34,7 +34,7 @@ export interface HikeStrings {
   turnNotifRight: string;
   surfaceChangeTitle: string;
   milestoneTitle: string;
-
+  waypointReached: string;
   poiNotifBody: string;
   perception: string;
   finishHike: string;
@@ -133,6 +133,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Gleich rechts halten",
     surfaceChangeTitle: "Wegwechsel",
     milestoneTitle: "Meilenstein",
+    waypointReached: "Zwischenziel erreicht",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
@@ -230,6 +231,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Grad rächts halte",
     surfaceChangeTitle: "Wägwächsel",
     milestoneTitle: "Miileschtei",
+    waypointReached: "Zwischeziel erreicht",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
@@ -327,6 +329,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Keep right shortly",
     surfaceChangeTitle: "Trail surface",
     milestoneTitle: "Milestone",
+    waypointReached: "Waypoint reached",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
@@ -424,6 +427,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Serrez à droite",
     surfaceChangeTitle: "Surface du chemin",
     milestoneTitle: "Borne",
+    waypointReached: "Étape atteinte",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
@@ -521,6 +525,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Tieni la destra",
     surfaceChangeTitle: "Cambio di fondo",
     milestoneTitle: "Traguardo",
+    waypointReached: "Tappa raggiunta",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
@@ -618,6 +623,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Mantente a la derecha",
     surfaceChangeTitle: "Cambio de superficie",
     milestoneTitle: "Hito",
+    waypointReached: "Punto intermedio alcanzado",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
@@ -715,6 +721,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Mantenha-se à direita",
     surfaceChangeTitle: "Mudança de piso",
     milestoneTitle: "Marco",
+    waypointReached: "Ponto intermediário atingido",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
@@ -812,6 +819,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "即将靠右",
     surfaceChangeTitle: "路面变换",
     milestoneTitle: "里程碑",
+    waypointReached: "已到达途经点",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
     finishHike: "完成徒步",
@@ -909,6 +917,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifRight: "Скоро держитесь правее",
     surfaceChangeTitle: "Смена покрытия",
     milestoneTitle: "Веха",
+    waypointReached: "Промежуточная точка достигнута",
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
     perception: "ВОСПРИЯТИЕ",
     finishHike: "Завершить поход",

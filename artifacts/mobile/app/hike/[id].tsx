@@ -58,6 +58,7 @@ import {
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
 import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
+import { computeRouteWaypoints, type RouteWaypoint } from "@/lib/routeWaypoints";
 import {
   effectiveStoryLanguage,
   resolveLang,
@@ -415,6 +416,9 @@ export default function LiveHike() {
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [routeWaypoints, setRouteWaypoints] = useState<RouteWaypoint[]>([]);
+  const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
+  const waypointAnnouncedRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
@@ -875,6 +879,18 @@ export default function LiveHike() {
     };
   }, [route?.id, route?.geometry, mapCenter?.lat, mapCenter?.lng]);
 
+  // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
+  // max. 3, innerhalb 100 m Routenabstand.
+  useEffect(() => {
+    const geom = route?.geometry;
+    if (!geom || geom.length < 2) return;
+    if (pois.length === 0 && partners.length === 0) return;
+    const wps = computeRouteWaypoints(geom, partners, pois);
+    setRouteWaypoints(wps);
+    waypointAnnouncedRef.current = new Set();
+    setReachedWaypointIds(new Set());
+  }, [route?.geometry, partners, pois]);
+
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {
     if (!saga || !isDownloaded(saga.id)) return;
@@ -1110,6 +1126,19 @@ export default function LiveHike() {
       setNearbyPoi(hit);
     }
   }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi]);
+
+  // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
+  useEffect(() => {
+    if (routeWaypoints.length === 0 || !livePos) return;
+    for (const wp of routeWaypoints) {
+      if (waypointAnnouncedRef.current.has(wp.id)) continue;
+      if (haversineKm(livePos, { lat: wp.lat, lng: wp.lng }) <= 0.05) {
+        waypointAnnouncedRef.current.add(wp.id);
+        setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
+        sendeAbbiegeMitteilung(t.waypointReached, wp.name);
+      }
+    }
+  }, [livePos, routeWaypoints, t]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
@@ -2442,6 +2471,30 @@ export default function LiveHike() {
             )}
           </View>
 
+          {routeWaypoints.length > 0 && (
+            <View style={[styles.waypointsRow, { borderTopColor: colors.glassBorder }]}>
+              {routeWaypoints.map((wp) => {
+                const reached = reachedWaypointIds.has(wp.id);
+                return (
+                  <View key={wp.id} style={styles.waypointChip}>
+                    <Feather
+                      name={wp.type === "partner" ? "coffee" : "map-pin"}
+                      size={11}
+                      color={reached ? colors.accent : colors.mutedForeground}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.waypointName, { color: reached ? colors.accent : colors.mutedForeground }]}
+                    >
+                      {wp.name}
+                    </Text>
+                    {reached && <Feather name="check" size={11} color={colors.accent} />}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
         </Glass>
 
         {/* Story-Bereich */}
@@ -2963,6 +3016,25 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
+  waypointsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  waypointChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    maxWidth: "48%",
+  },
+  waypointName: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    flex: 1,
+  },
   metric: { alignItems: "flex-start" },
   metricLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
   metricValRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 },
