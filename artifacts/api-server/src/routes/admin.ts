@@ -1,7 +1,7 @@
 import { randomUUID, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, ne } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, ne, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -194,6 +194,46 @@ router.post("/admin/reset-all", async (req, res): Promise<void> => {
     .returning({ id: profilesTable.id });
 
   req.log.warn({ anzahl: rows.length }, "Admin: Alle Profile auf Gratis zurueckgesetzt");
+  res.json({ zurueckgesetzt: rows.length, ids: rows.map((r) => r.id) });
+});
+
+// Setzt alle Profile zurueck AUSSER den angegebenen IDs (z.B. Apple-Tester).
+// Kein premiumSyncLockedUntil — RC-Sync darf sofort wieder hochstufen.
+// Loescht auch hike_history, achievements und free_hike_used.
+const ResetExceptBody = z.object({
+  excludeIds: z.array(z.string()).default([]),
+});
+router.post("/admin/reset-except", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = ResetExceptBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { excludeIds } = parsed.data;
+
+  const rows = await db
+    .update(profilesTable)
+    .set({
+      premium: false,
+      premiumBis: null,
+      premiumSyncLockedUntil: null,
+      purchasedPacks: [],
+      subscriptionTier: "free",
+      freeHikeUsed: false,
+      hikeHistory: [],
+      achievements: [],
+      updatedAt: new Date(),
+    })
+    .where(
+      excludeIds.length > 0
+        ? sql`${profilesTable.id} NOT IN (${sql.join(excludeIds.map((id) => sql`${id}`), sql`, `)})`
+        : sql`TRUE`
+    )
+    .returning({ id: profilesTable.id });
+
+  req.log.warn({ anzahl: rows.length, excludeIds }, "Admin: Profile selektiv zurueckgesetzt");
   res.json({ zurueckgesetzt: rows.length, ids: rows.map((r) => r.id) });
 });
 
