@@ -17,7 +17,7 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { kantonSlug } from "@/lib/kantonSlug";
+import { kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
 import { useColors } from "@/hooks/useColors";
 import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
@@ -371,7 +371,9 @@ export default function Sammlung() {
           const cantonSagas = sagas.filter((s) => s.canton === canton);
           const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
           const packUnlocked = isElite || (profile?.purchasedPacks ?? []).includes(kantonSlug(canton));
-          const accessibleTotal = packUnlocked ? cantonSagas.length : Math.min(1, cantonSagas.length);
+          const accessibleTotal = packUnlocked
+            ? Math.min(SAGEN_PRO_PACK, cantonSagas.length)
+            : Math.min(1, cantonSagas.length);
           const complete = discovered >= accessibleTotal && accessibleTotal > 0;
           return (
             <Animated.View
