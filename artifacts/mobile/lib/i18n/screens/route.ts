@@ -46,6 +46,10 @@ export interface RouteStrings {
   progressNew: string;
   progressStarted: string;
   progressDone: string;
+  progressHeard: string;
+  sagaOnRoute: string;
+  sagaNear: string;
+  sagaInCanton: string;
   windValues: (speed: number, gusts: number) => string;
   weatherValues: (label: string, temp: number) => string;
   trailConditions: {
@@ -193,6 +197,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Neu",
     progressStarted: "Angefangen",
     progressDone: "Gehört",
+    progressHeard: "schon gehört",
+    sagaOnRoute: "Spielt auf der Route",
+    sagaNear: "Spielt in der Nähe",
+    sagaInCanton: "Spielt in diesem Kanton",
     windValues: (speed, gusts) => `${speed} km/h, Böen ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -333,6 +341,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Neu",
     progressStarted: "Agriffe",
     progressDone: "Ghört",
+    progressHeard: "scho ghört",
+    sagaOnRoute: "Spielt uf dr Route",
+    sagaNear: "Spielt i dr Nächi",
+    sagaInCanton: "Spielt i däm Kanton",
     windValues: (speed, gusts) => `${speed} km/h, Böe ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -473,6 +485,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "New",
     progressStarted: "Started",
     progressDone: "Heard",
+    progressHeard: "already heard",
+    sagaOnRoute: "Set on this route",
+    sagaNear: "Set nearby",
+    sagaInCanton: "Set in this canton",
     windValues: (speed, gusts) => `${speed} km/h, gusts ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -613,6 +629,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Nouveau",
     progressStarted: "Commencé",
     progressDone: "Écouté",
+    progressHeard: "déjà écouté",
+    sagaOnRoute: "Sur cet itinéraire",
+    sagaNear: "À proximité",
+    sagaInCanton: "Dans ce canton",
     windValues: (speed, gusts) => `${speed} km/h, rafales ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -753,6 +773,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Nuovo",
     progressStarted: "Iniziato",
     progressDone: "Ascoltato",
+    progressHeard: "già ascoltato",
+    sagaOnRoute: "Si svolge sul percorso",
+    sagaNear: "Si svolge nelle vicinanze",
+    sagaInCanton: "Si svolge in questo cantone",
     windValues: (speed, gusts) => `${speed} km/h, raffiche ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -893,6 +917,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Nuevo",
     progressStarted: "Iniciado",
     progressDone: "Escuchado",
+    progressHeard: "ya escuchado",
+    sagaOnRoute: "Transcurre en esta ruta",
+    sagaNear: "Transcurre cerca",
+    sagaInCanton: "Transcurre en este cantón",
     windValues: (speed, gusts) => `${speed} km/h, ráfagas ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -1033,6 +1061,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Novo",
     progressStarted: "Iniciado",
     progressDone: "Ouvido",
+    progressHeard: "já ouvido",
+    sagaOnRoute: "Passa nesta rota",
+    sagaNear: "Passa perto",
+    sagaInCanton: "Passa neste cantão",
     windValues: (speed, gusts) => `${speed} km/h, rajadas ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {
@@ -1168,6 +1200,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "新",
     progressStarted: "已开始",
     progressDone: "已听",
+    progressHeard: "已听过",
+    sagaOnRoute: "发生在本路线上",
+    sagaNear: "发生在附近",
+    sagaInCanton: "发生在本州",
     windValues: (speed, gusts) => `${speed} km/h，阵风 ${gusts} km/h`,
     weatherValues: (label, temp) => `${label}，${temp}°C`,
     trailConditions: {
@@ -1306,6 +1342,10 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     progressNew: "Новая",
     progressStarted: "Начата",
     progressDone: "Прослушана",
+    progressHeard: "уже слушали",
+    sagaOnRoute: "Происходит на маршруте",
+    sagaNear: "Происходит рядом",
+    sagaInCanton: "Происходит в этом кантоне",
     windValues: (speed, gusts) => `${speed} км/ч, порывы ${gusts} км/ч`,
     weatherValues: (label, temp) => `${label}, ${temp}°C`,
     trailConditions: {

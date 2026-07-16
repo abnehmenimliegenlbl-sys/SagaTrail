@@ -67,7 +67,7 @@ import { useColors } from "@/hooks/useColors";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
-import { sagaLokalisierung } from "@/lib/sagaMatch";
+import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 
@@ -194,17 +194,18 @@ export default function Routenplanung() {
   }, [route?.id, route?.distanceKm, saga?.canton, getRoutesByCanton]);
   const [sagaLoading, setSagaLoading] = useState(!saga);
   const [sagaRetryCount, setSagaRetryCount] = useState(0);
-  const sagaCandidates = useMemo(
-    () => (route ? getSagasForRoute(route, 3) : []),
+  // Alle Sagen des Kantons, sortiert nach Proximity-Kategorie + Distanz.
+  const sagaCandidatesWithMeta = useMemo(
+    () =>
+      route
+        ? allCantonSagasSorted(route.coordinates, route.region, sagas)
+        : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [route?.id],
+    [route?.id, sagas],
   );
 
   // Prueft ob eine bestimmte Sage fuer den aktuellen User gesperrt ist.
-  // Entspricht der bestehenden `locked`-Logik, aber sagen-individuell damit
-  // der Picker gefiltert werden kann.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
-  // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
       if (!premium) return !s.isAnchorPlace;
@@ -212,9 +213,8 @@ export default function Routenplanung() {
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
       const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);
-      // Nicht im Katalog (dynamisch generierte Sage) → als Pack-1-Sage behandeln
       const isInPack1 = sagaIdx < 0 || sagaIdx < SAGEN_PRO_PACK;
-      if (!isInPack1) return true; // Pack-2-Sage: noch nicht kaufbar
+      if (!isInPack1) return true;
       const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
       return !s.isAnchorPlace;
@@ -222,16 +222,33 @@ export default function Routenplanung() {
     [premium, isElite, profile, sagas],
   );
 
-  // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
-  // gefiltert — stattdessen erscheint ein "Weitere Sagen freischalten"-Button.
-  const unlockedCandidates = useMemo(
-    () => sagaCandidates.filter((s) => !isSagaLocked(s)),
-    [sagaCandidates, isSagaLocked],
-  );
-  const hasLockedCandidates = sagaCandidates.length > unlockedCandidates.length;
+  // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie
+  // stehen ungehoerte Sagen (Neu) vor schon gehoerten.
+  const unlockedCandidatesWithMeta = useMemo((): SagaWithMeta[] => {
+    const unlocked = sagaCandidatesWithMeta.filter(
+      (m) => !isSagaLocked(m.saga),
+    );
+    const isHeard = (sagaId: string) =>
+      hikeHistory.some((h) => h.sagaId === sagaId);
+    // Stabile Re-Sortierung: Kategorie bleibt, innerhalb: Neu (0) vor Gehoert (1)
+    return [...unlocked].sort((a, b) => {
+      const catDiff = (a.category === b.category ? 0 : 1); // gleiche Kat → 0
+      if (a.category !== b.category) {
+        const ORDER: Record<SagaProximityCategory, number> = { on_route: 0, near: 1, canton: 2 };
+        return ORDER[a.category] - ORDER[b.category];
+      }
+      const heardA = isHeard(a.saga.id) ? 1 : 0;
+      const heardB = isHeard(b.saga.id) ? 1 : 0;
+      if (heardA !== heardB) return heardA - heardB;
+      return a.distM - b.distM;
+    });
+  }, [sagaCandidatesWithMeta, isSagaLocked, hikeHistory]);
+
+  const hasLockedCandidates =
+    unlockedCandidatesWithMeta.length < sagaCandidatesWithMeta.length;
 
   const [pickerDismissed, setPickerDismissed] = useState(false);
-  const showPicker = unlockedCandidates.length > 1 && !pickerDismissed;
+  const showPicker = unlockedCandidatesWithMeta.length > 1 && !pickerDismissed;
   function selectFromPicker(s: Saga) {
     setSaga(s);
     setSagaLoading(false);
@@ -1249,47 +1266,61 @@ export default function Routenplanung() {
             <Text style={[styles.sagaHint, { color: colors.mutedForeground }]}>
               {t.sagaPickerHint}
             </Text>
-            {unlockedCandidates.map((s) => {
-              const sessions = hikeHistory.filter((h) => h.sagaId === s.id);
-              const prog =
-                sessions.length === 0 ? 'new'
-                : sessions.some((h) => (h.chapters?.length ?? 0) >= 3) ? 'done'
-                : 'partial';
-              const progLabel = prog === 'done' ? t.progressDone : prog === 'partial' ? t.progressStarted : t.progressNew;
-              const progDot = prog === 'done' ? '#4caf50' : prog === 'partial' ? '#ff9800' : colors.mutedForeground;
-              return (
-                <Pressable
-                  key={s.id}
-                  onPress={() => selectFromPicker(s)}
-                  style={[
-                    styles.sagaCard,
-                    { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-                  ]}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.sagaCanton, { color: colors.accent }]}>
-                      {s.canton.toUpperCase()} · {s.coreMotif.toUpperCase()}
-                    </Text>
-                    <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
-                      {s.summaries?.[(profile?.language ?? 'de') as string]?.title ?? s.title}
-                    </Text>
-                    <Text style={[styles.sagaMood, { color: colors.mutedForeground }]} numberOfLines={1}>
-                      {s.mood}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end', gap: 6 }}>
-                    <View style={{
-                      backgroundColor: prog === 'done' ? '#4caf5022' : prog === 'partial' ? '#ff980022' : colors.glassBg,
-                      borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
-                      borderWidth: 1, borderColor: progDot + '55',
-                    }}>
-                      <Text style={{ color: progDot, fontSize: 11, fontWeight: '600' }}>{progLabel}</Text>
-                    </View>
-                    <Feather name="chevron-right" size={18} color={colors.accent} />
-                  </View>
-                </Pressable>
-              );
-            })}
+            {(() => {
+              const CAT_LABEL: Record<SagaProximityCategory, string> = {
+                on_route: t.sagaOnRoute,
+                near: t.sagaNear,
+                canton: t.sagaInCanton,
+              };
+              let lastCat: SagaProximityCategory | null = null;
+              return unlockedCandidatesWithMeta.map(({ saga: s, category }) => {
+                const showHeader = category !== lastCat;
+                lastCat = category;
+                const heard = hikeHistory.some((h) => h.sagaId === s.id);
+                const progLabel = heard ? t.progressHeard : t.progressNew;
+                const progDot = heard ? colors.mutedForeground : colors.accent;
+                const progBg = heard ? colors.glassBg : colors.accent + "22";
+                const progBorder = heard ? colors.glassBorder : colors.accent + "55";
+                return (
+                  <React.Fragment key={s.id}>
+                    {showHeader && (
+                      <Text style={[styles.pickerCategoryLabel, { color: colors.mutedForeground }]}>
+                        {CAT_LABEL[category]}
+                      </Text>
+                    )}
+                    <Pressable
+                      onPress={() => selectFromPicker(s)}
+                      style={[
+                        styles.sagaCard,
+                        { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                      ]}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.sagaCanton, { color: colors.accent }]}>
+                          {s.coreMotif.toUpperCase()}
+                        </Text>
+                        <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
+                          {s.summaries?.[(profile?.language ?? "de") as string]?.title ?? s.title}
+                        </Text>
+                        <Text style={[styles.sagaMood, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          {s.mood}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: "flex-end", gap: 6 }}>
+                        <View style={{
+                          backgroundColor: progBg,
+                          borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+                          borderWidth: 1, borderColor: progBorder,
+                        }}>
+                          <Text style={{ color: progDot, fontSize: 11, fontWeight: "600" }}>{progLabel}</Text>
+                        </View>
+                        <Feather name="chevron-right" size={18} color={colors.accent} />
+                      </View>
+                    </Pressable>
+                  </React.Fragment>
+                );
+              });
+            })()}
             {hasLockedCandidates && (
               <PrimaryButton
                 label={t.unlockMoreSagas}
@@ -1361,7 +1392,7 @@ export default function Routenplanung() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.sagaCanton, { color: colors.accent }]}>
-                    {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
+                    {saga.coreMotif.toUpperCase()}
                   </Text>
                   <Text style={[styles.sagaTitle, { color: colors.foreground }]}>
                     {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
@@ -1630,6 +1661,14 @@ const styles = StyleSheet.create({
   sagaTitle: { fontFamily: fonts.titleBold, fontSize: 19, marginTop: 4 },
   sagaMood: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
   sagaLoadingText: { fontFamily: fonts.mono, fontSize: 13 },
+  pickerCategoryLabel: {
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginTop: 16,
+    marginBottom: 6,
+  },
   localisationNote: {
     fontFamily: fonts.body,
     fontSize: 12,

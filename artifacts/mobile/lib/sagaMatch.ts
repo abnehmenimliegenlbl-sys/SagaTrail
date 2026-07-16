@@ -83,6 +83,65 @@ export function nearestNSagas(
     .map((x) => x.s);
 }
 
+// ---------------------------------------------------------------------------
+// Proximity-Kategorisierung für den Sagen-Picker
+// ---------------------------------------------------------------------------
+
+/** Distanz-Schwellenwerte für die 3 Picker-Kategorien */
+const NEAR_RADIUS_M = 15000; // 15 km
+
+export type SagaProximityCategory = "on_route" | "near" | "canton";
+
+const CATEGORY_ORDER: Record<SagaProximityCategory, number> = {
+  on_route: 0,
+  near: 1,
+  canton: 2,
+};
+
+/** Klassifiziert eine Sage nach ihrer Nähe zur Route. */
+export function sagaProximityCategory(
+  routeCoord: LatLng | undefined,
+  sagaCoord: LatLng | undefined,
+): SagaProximityCategory {
+  if (!routeCoord || !sagaCoord) return "canton";
+  const d = haversineM(routeCoord, sagaCoord);
+  if (d <= EXAKT_RADIUS_M) return "on_route";
+  if (d <= NEAR_RADIUS_M) return "near";
+  return "canton";
+}
+
+export interface SagaWithMeta {
+  saga: Saga;
+  category: SagaProximityCategory;
+  distM: number;
+}
+
+/**
+ * Gibt alle Sagen eines Kantons sortiert nach Proximity-Kategorie zurück.
+ * Innerhalb einer Kategorie aufsteigend nach Distanz.
+ */
+export function allCantonSagasSorted(
+  routeCoord: LatLng | undefined,
+  canton: string,
+  sagas: Saga[],
+): SagaWithMeta[] {
+  return sagas
+    .filter((s) => s.canton === canton)
+    .map((saga) => ({
+      saga,
+      category: sagaProximityCategory(routeCoord, saga.coordinates),
+      distM:
+        routeCoord && saga.coordinates
+          ? haversineM(routeCoord, saga.coordinates)
+          : Infinity,
+    }))
+    .sort((a, b) => {
+      const catDiff = CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category];
+      if (catDiff !== 0) return catDiff;
+      return a.distM - b.distM;
+    });
+}
+
 export type SagaLokalisierung = "exakt" | "nicht_exakt_lokalisierbar";
 
 /**
