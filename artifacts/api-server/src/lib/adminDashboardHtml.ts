@@ -193,8 +193,15 @@ a{color:var(--red);text-decoration:none}
 
       <!-- SEND -->
       <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn btn-primary" id="push-send-btn" onclick="sendPushCampaign()" style="padding:8px 20px;font-size:14px">&#128228; Jetzt senden</button>
+        <button class="btn btn-primary" id="push-send-btn" onclick="askPushConfirm()" style="padding:8px 20px;font-size:14px">&#128228; Jetzt senden</button>
         <span id="push-status" class="hint"></span>
+      </div>
+      <div id="push-confirm-row" style="display:none;margin-top:10px;padding:10px 14px;background:#fff8e1;border:1.5px solid #f0c040;border-radius:8px;font-size:13px">
+        <span id="push-confirm-msg" style="font-weight:600"></span>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" onclick="sendPushCampaign()" style="padding:5px 16px;font-size:13px">&#10003; Ja, senden</button>
+          <button class="btn" onclick="cancelPushConfirm()" style="padding:5px 16px;font-size:13px">Abbrechen</button>
+        </div>
       </div>
     </div>
 
@@ -546,7 +553,7 @@ function updateBodyLen() {
   document.getElementById('push-body-len').textContent = len + ' / 200';
 }
 
-async function sendPushCampaign() {
+function askPushConfirm() {
   var title = document.getElementById('push-title').value.trim();
   var body  = document.getElementById('push-body').value.trim();
   if (!title || !body) {
@@ -554,7 +561,20 @@ async function sendPushCampaign() {
     return;
   }
   var tierLabel = {alle:'Alle', premium:'Premium', premium_family:'Premium Family', elite:'Elite', elite_family:'Elite Family'}[_pushTier] || _pushTier;
-  if (!confirm('Push-Nachricht an Segment «' + tierLabel + '» senden?\\n\\nTitel: ' + title + '\\n\\n' + body)) return;
+  document.getElementById('push-confirm-msg').textContent = 'Push an «' + tierLabel + '» senden? Titel: ' + title;
+  document.getElementById('push-confirm-row').style.display = '';
+  document.getElementById('push-send-btn').disabled = true;
+}
+
+function cancelPushConfirm() {
+  document.getElementById('push-confirm-row').style.display = 'none';
+  document.getElementById('push-send-btn').disabled = false;
+}
+
+async function sendPushCampaign() {
+  var title = document.getElementById('push-title').value.trim();
+  var body  = document.getElementById('push-body').value.trim();
+  document.getElementById('push-confirm-row').style.display = 'none';
 
   var btn = document.getElementById('push-send-btn');
   var status = document.getElementById('push-status');
@@ -562,6 +582,7 @@ async function sendPushCampaign() {
   status.textContent = 'Sende…';
   status.style.color = '#aaa';
 
+  var tierLabel = {alle:'Alle', premium:'Premium', premium_family:'Premium Family', elite:'Elite', elite_family:'Elite Family'}[_pushTier] || _pushTier;
   try {
     var result = await api('/api/admin/push', { method:'POST', body: JSON.stringify({ tier: _pushTier, title: title, body: body }) });
     status.textContent = '✓ Gesendet';
