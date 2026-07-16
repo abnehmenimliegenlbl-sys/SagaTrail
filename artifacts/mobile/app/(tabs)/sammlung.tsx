@@ -372,7 +372,7 @@ export default function Sammlung() {
           const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
           const packUnlocked = isElite || (profile?.purchasedPacks ?? []).includes(kantonSlug(canton));
           const accessibleTotal = packUnlocked
-            ? Math.min(SAGEN_PRO_PACK, cantonSagas.length)
+            ? Math.min(SAGEN_PRO_PACK + 1, cantonSagas.length)
             : Math.min(1, cantonSagas.length);
           const complete = discovered >= accessibleTotal && accessibleTotal > 0;
           return (
