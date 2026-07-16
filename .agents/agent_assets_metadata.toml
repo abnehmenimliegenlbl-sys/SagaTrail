@@ -209,3 +209,9 @@ id = "ANdBIutRD7MKzS4v8PwW8"
 uri = "file://wordpress/sagatrail-partner-snippets-neu.zip"
 type = "unspecified"
 title = "SagaTrail Partner-Snippets (aktualisiert)"
+
+[[outputs]]
+id = "XIXl00UgAyjosK7aGBcaZ"
+uri = "file://wordpress/sagatrail-alle-snippets.zip"
+type = "unspecified"
+title = "SagaTrail – Alle Snippets (final)"

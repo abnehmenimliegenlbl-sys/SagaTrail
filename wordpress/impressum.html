@@ -10,7 +10,7 @@
   body {
     font-family: 'Helvetica Neue', Arial, sans-serif;
     background: #fff;
-    color: #111;
+    color: #111 !important;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
@@ -45,13 +45,13 @@
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: #111;
+    color: #111 !important;
   }
-  .st-logo-text span { color: #c00; }
+  .st-logo-text span { color: #c00 !important; }
   .st-back {
     font-size: 14px;
     font-weight: 600;
-    color: #c00;
+    color: #c00 !important;
     text-decoration: none;
   }
   .st-back:hover { text-decoration: underline; }
@@ -68,13 +68,13 @@
     font-weight: 900;
     line-height: 1.1;
     letter-spacing: -0.5px;
-    color: #111;
+    color: #111 !important;
     margin-bottom: 12px;
   }
-  .st-hero h1 em { font-style: normal; color: #c00; }
+  .st-hero h1 em { font-style: normal; color: #c00 !important; }
   .st-hero p {
     font-size: 16px;
-    color: #888;
+    color: #888 !important;
     max-width: 520px;
     margin: 0 auto;
     line-height: 1.6;
@@ -94,19 +94,19 @@
   .st-section-title {
     font-size: 20px;
     font-weight: 800;
-    color: #111;
+    color: #111 !important;
     margin-bottom: 16px;
     padding-bottom: 10px;
     border-bottom: 2px solid #eee;
   }
   .st-section-title .num {
-    color: #c00;
+    color: #c00 !important;
     margin-right: 6px;
   }
 
   .st-section p {
     font-size: 15px;
-    color: #444;
+    color: #444 !important;
     line-height: 1.75;
     margin-bottom: 10px;
   }
@@ -116,7 +116,7 @@
   }
   .st-section li {
     font-size: 15px;
-    color: #444;
+    color: #444 !important;
     line-height: 1.7;
     margin-bottom: 6px;
   }
@@ -133,13 +133,13 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #c00;
+    color: #c00 !important;
     margin-bottom: 8px;
   }
   .st-card h3 {
     font-size: 18px;
     font-weight: 800;
-    color: #111;
+    color: #111 !important;
     margin-bottom: 16px;
   }
   .st-row {
@@ -153,16 +153,16 @@
   .st-row dt {
     font-size: 12px;
     font-weight: 700;
-    color: #999;
+    color: #999 !important;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .st-row dd {
     font-size: 15px;
-    color: #333;
+    color: #333 !important;
     line-height: 1.6;
   }
-  .st-row dd a { color: #c00; text-decoration: none; }
+  .st-row dd a { color: #c00 !important; text-decoration: none; }
   .st-row dd a:hover { text-decoration: underline; }
 
   .st-highlight {
@@ -172,7 +172,7 @@
     padding: 16px 20px;
     margin: 16px 0;
     font-size: 14px;
-    color: #555;
+    color: #555 !important;
     line-height: 1.65;
   }
 
@@ -193,19 +193,19 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #999;
+    color: #999 !important;
     margin-bottom: 6px;
   }
   .st-mini-card p {
     font-size: 14px;
-    color: #444;
+    color: #444 !important;
     line-height: 1.6;
     margin-bottom: 0;
   }
-  .st-mini-card a { color: #c00; text-decoration: none; }
+  .st-mini-card a { color: #c00 !important; text-decoration: none; }
   .st-mini-card a:hover { text-decoration: underline; }
 
-  a { color: #c00; }
+  a { color: #c00 !important; }
   a:hover { text-decoration: underline; }
 
   /* ── FOOTER ── */
@@ -214,10 +214,10 @@
     padding: 32px 24px;
     text-align: center;
     font-size: 13px;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.4) !important;
   }
-  .st-footer a { color: rgba(255,255,255,0.55); text-decoration: none; }
-  .st-footer a:hover { color: #c00; }
+  .st-footer a { color: rgba(255,255,255,0.55) !important; text-decoration: none; }
+  .st-footer a:hover { color: #c00 !important; }
 
   @media (max-width: 540px) {
     .st-hero { padding: 40px 16px 32px; }
@@ -254,11 +254,11 @@
       <dl>
         <div class="st-row">
           <dt>Name</dt>
-          <dd>[VORNAME NAME]</dd>
+          <dd>Rolf Koch</dd>
         </div>
         <div class="st-row">
           <dt>Adresse</dt>
-          <dd>[STRASSE NR]<br>[PLZ ORT]<br>Schweiz</dd>
+          <dd>Mühlemattstrasse 11<br>4104 Oberwil BL<br>Schweiz</dd>
         </div>
         <div class="st-row">
           <dt>E-Mail</dt>
@@ -270,7 +270,7 @@
         </div>
         <div class="st-row">
           <dt>UID (CH)</dt>
-          <dd>[CHE-XXX.XXX.XXX] <span style="font-size:13px;color:#aaa">— sofern vorhanden</span></dd>
+          <dd>CHE-286.962.827</dd>
         </div>
       </dl>
     </div>
@@ -281,20 +281,8 @@
     <h2 class="st-section-title"><span class="num">2.</span> Kontakt</h2>
     <div class="st-grid2">
       <div class="st-mini-card">
-        <div class="label">Allgemeine Anfragen</div>
+        <div class="label">Alle Anfragen</div>
         <p><a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a></p>
-      </div>
-      <div class="st-mini-card">
-        <div class="label">Datenschutz</div>
-        <p><a href="mailto:datenschutz@sagatrail.ch">datenschutz@sagatrail.ch</a></p>
-      </div>
-      <div class="st-mini-card">
-        <div class="label">Partner & Tourismus</div>
-        <p><a href="mailto:partner@sagatrail.ch">partner@sagatrail.ch</a></p>
-      </div>
-      <div class="st-mini-card">
-        <div class="label">Presse</div>
-        <p><a href="mailto:presse@sagatrail.ch">presse@sagatrail.ch</a></p>
       </div>
     </div>
   </div>
