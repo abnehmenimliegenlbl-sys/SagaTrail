@@ -206,19 +206,21 @@ export async function searchNearbyWikipedia(
     .filter((h) => namesRoughlyMatch(h.title, name))
     .sort((a, b) => a.dist - b.dist);
   for (const hit of hits) {
-    const summary = await fetchWikipediaSummary(hit.title, lang);
+    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
     if (summary) return summary;
   }
   // Vierte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
   // Koordinaten in der Naehe traegt (z.B. beschreibt "Basiliskenbrunnen" alle
   // Basler Basilisken-Brunnen gemeinsam, ohne Einzelkoordinaten).
+  // Koordinaten werden mitgegeben: wenn der Artikel trotzdem weit weg ist
+  // (z.B. "Pfalz" → "Rheinland-Pfalz" via Titelsuche), wird er verworfen.
   const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&format=json&srlimit=5&origin=*`;
   const searchJson = await fetchJson<{ query?: { search?: { title: string }[] } }>(searchUrl);
   const titleHits = (searchJson?.query?.search ?? []).filter((h) =>
     namesRoughlyMatch(h.title, name),
   );
   for (const hit of titleHits) {
-    const summary = await fetchWikipediaSummary(hit.title, lang);
+    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
     if (summary) return summary;
   }
   return null;
