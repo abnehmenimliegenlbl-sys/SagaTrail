@@ -315,15 +315,22 @@ export default function LiveHike() {
   }, []);
 
   // Valhalla-Neuberechnung: laeuft immer wenn offRoutePos sich aendert.
-  // Bei null (wieder auf der Route): alle Off-Route-States zuruecksetzen.
+  // Bei null (wieder auf der Route): alle Off-Route-States zuruecksetzen —
+  // AUSSER wenn der Nutzer gerade "Dieser Route folgen" akzeptiert hat
+  // (followingRecalcRef), dann bleibt recalcGeom als Hauptroute erhalten.
   useEffect(() => {
     if (!offRoutePos) {
-      setRecalcGeom(null);
-      setIsRecalculating(false);
-      setRecalcFailed(false);
-      setFollowingRecalc(false);
+      if (!followingRecalcRef.current) {
+        setRecalcGeom(null);
+        setIsRecalculating(false);
+        setRecalcFailed(false);
+        setFollowingRecalc(false);
+      }
       return;
     }
+    // Neue Off-Route-Position: akzeptierte Neuberechnung aufheben,
+    // damit der neue Recalc-Zyklus sauber startet.
+    followingRecalcRef.current = false;
     const geom = routeGeomRef.current;
     if (!geom || geom.length < 2) return;
     // Ziel: naechster sinnvoller Punkt auf der Restroute.
@@ -452,6 +459,9 @@ export default function LiveHike() {
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
   const isOffRouteRef = useRef(false);
+  /** Synchrones Flag: User hat die neu berechnete Route akzeptiert —
+   *  verhindert dass setOffRoutePos(null) den recalcGeom-State loescht. */
+  const followingRecalcRef = useRef(false);
   /** Zaehler aufeinanderfolgender GPS-Fixes ausserhalb der Route. */
   const offRouteCountRef = useRef(0);
   const lastNarratedRef = useRef<number>(-1);
@@ -2135,6 +2145,7 @@ export default function LiveHike() {
             {recalcGeom && !isRecalculating && (
               <Pressable
                 onPress={() => {
+                  followingRecalcRef.current = true;
                   setFollowingRecalc(true);
                   isOffRouteRef.current = false;
                   offRouteCountRef.current = 0;
