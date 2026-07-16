@@ -24,6 +24,7 @@ export interface PaywallStrings {
     elite: string;
     eliteFamily: string;
   };
+  planBadges: Partial<Record<"monthly" | "yearly" | "family" | "elite" | "eliteFamily", string>>;
   buyBtn: string;
   restoreBtn: string;
   restoreSuccessTitle: string;
@@ -74,6 +75,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       family: "Premium für die ganze Familie",
       elite: "Alle Sagen-Packs inklusive",
       eliteFamily: "Elite für die ganze Familie",
+    },
+    planBadges: {
+      family: "35% gespart",
+      elite: "35% gespart",
+      eliteFamily: "35% gespart",
     },
     buyBtn: "Abo starten",
     restoreBtn: "Kauf wiederherstellen",
@@ -126,6 +132,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       elite: "Alli Sage-Packs inklusive",
       eliteFamily: "Elite für die ganzi Familie",
     },
+    planBadges: {
+      family: "35% gsparet",
+      elite: "35% gsparet",
+      eliteFamily: "35% gsparet",
+    },
     buyBtn: "Abo starte",
     restoreBtn: "Chauf wiederhärstelle",
     restoreSuccessTitle: "Wiederhärgstellt",
@@ -176,6 +187,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       family: "Premium for the whole family",
       elite: "All legend packs included",
       eliteFamily: "Elite for the whole family",
+    },
+    planBadges: {
+      family: "Save 35%",
+      elite: "Save 35%",
+      eliteFamily: "Save 35%",
     },
     buyBtn: "Start subscription",
     restoreBtn: "Restore purchase",
@@ -228,6 +244,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       elite: "Tous les packs de légendes inclus",
       eliteFamily: "Elite pour toute la famille",
     },
+    planBadges: {
+      family: "35% économisé",
+      elite: "35% économisé",
+      eliteFamily: "35% économisé",
+    },
     buyBtn: "Démarrer l'abonnement",
     restoreBtn: "Restaurer l'achat",
     restoreSuccessTitle: "Restauré",
@@ -278,6 +299,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       family: "Premium per tutta la famiglia",
       elite: "Tutti i pacchetti di leggende inclusi",
       eliteFamily: "Elite per tutta la famiglia",
+    },
+    planBadges: {
+      family: "Risparmia 35%",
+      elite: "Risparmia 35%",
+      eliteFamily: "Risparmia 35%",
     },
     buyBtn: "Avvia abbonamento",
     restoreBtn: "Ripristina acquisto",
@@ -330,6 +356,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       elite: "Todos los packs de leyendas incluidos",
       eliteFamily: "Elite para toda la familia",
     },
+    planBadges: {
+      family: "35% de ahorro",
+      elite: "35% de ahorro",
+      eliteFamily: "35% de ahorro",
+    },
     buyBtn: "Iniciar suscripción",
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
@@ -380,6 +411,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       family: "Premium para toda a família",
       elite: "Todos os pacotes de lendas incluídos",
       eliteFamily: "Elite para toda a família",
+    },
+    planBadges: {
+      family: "35% de economia",
+      elite: "35% de economia",
+      eliteFamily: "35% de economia",
     },
     buyBtn: "Iniciar assinatura",
     restoreBtn: "Restaurar compra",
@@ -432,6 +468,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       elite: "包含所有传说包",
       eliteFamily: "全家共享 Elite",
     },
+    planBadges: {
+      family: "节省 35%",
+      elite: "节省 35%",
+      eliteFamily: "节省 35%",
+    },
     buyBtn: "开始订阅",
     restoreBtn: "恢复购买",
     restoreSuccessTitle: "已恢复",
@@ -480,6 +521,11 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       family: "Premium для всей семьи",
       elite: "Все пакеты легенд включены",
       eliteFamily: "Elite для всей семьи",
+    },
+    planBadges: {
+      family: "Скидка 35%",
+      elite: "Скидка 35%",
+      eliteFamily: "Скидка 35%",
     },
     buyBtn: "Оформить подписку",
     restoreBtn: "Восстановить покупку",

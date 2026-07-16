@@ -3,6 +3,7 @@ import { hapticError, hapticSelection, hapticSuccess } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -15,7 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
-import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -41,20 +41,14 @@ export default function Paywall() {
     restore,
     isPurchasing,
     isRestoring,
-    refreshCustomerInfo,
   } = useSubscription();
   const t = usePaywallStrings();
   const ts = useSharedStrings();
 
   const [busy, setBusy] = useState(false);
-  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
+  const [buyingKey, setBuyingKey] = useState<string | null>(null);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
-  // Verhindert, dass ein verzoegert geplanter Dialog (siehe buy()/onRestore())
-  // noch praesentiert wird, nachdem der Nutzer diesen Screen bereits manuell
-  // verlassen hat — ein natives Modal ausserhalb des noch aktiven Screens
-  // praesentieren kann auf iOS zu einem UI-Deadlock (kompletter App-Freeze)
-  // fuehren, wenn es mit einer laufenden Navigations-Transition kollidiert.
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
@@ -63,8 +57,6 @@ export default function Paywall() {
     };
   }, []);
 
-  // Ordnet die Pakete des aktuellen Offerings den fuenf Plaenen zu.
-  // Preise kommen immer aus RevenueCat — nie hart codiert.
   type PlanKey = keyof typeof t.planNames;
   const PAKET_ZU_PLAN: Record<string, PlanKey> = {
     $rc_monthly: "monthly",
@@ -81,10 +73,7 @@ export default function Paywall() {
     "eliteFamily",
   ];
 
-  // Premium-Upgrade-Modus: bereits Premium, aber noch kein Elite — nur
-  // Elite-Pläne anzeigen, damit der Nutzer direkt upgraden kann.
   const upgradeMode = premium && !isElite;
-  // Familien-Upgrade: Familien-Abo aktiv → Elite Familie vorauswählen.
   const defaultUpgradePlan: PlanKey = isFamily ? "eliteFamily" : "elite";
 
   const plaene = useMemo(() => {
@@ -99,30 +88,26 @@ export default function Paywall() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offerings, upgradeMode]);
 
-  const gewaehlterPlan =
-    plaene.find((p) => p.key === gewaehlt) ??
-    (upgradeMode
-      ? plaene.find((p) => p.key === defaultUpgradePlan)
-      : plaene.find((p) => p.key === "yearly")) ??
-    plaene[0];
-  const packageToBuy = gewaehlterPlan?.paket;
+  const isBuying = buyingKey !== null || isPurchasing;
 
-  const buy = async () => {
-    if (!packageToBuy) return;
-    iapLog("paywall.buy: Tippe auf Kaufen", {
-      identifier: packageToBuy.identifier,
-      productId: packageToBuy.product.identifier,
+  const buy = async (planKey: PlanKey, pkg: (typeof plaene)[0]["paket"]) => {
+    if (isBuying) return;
+    iapLog("paywall.buy: Tippe auf Plan", {
+      planKey,
+      identifier: pkg.identifier,
+      productId: pkg.product.identifier,
     });
-    setBusy(true);
+    setBuyingKey(planKey);
+    hapticSelection();
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      setBusy(false);
+      setBuyingKey(null);
       iapLog("paywall.buy: 45s-Timeout ausgeloest — Kauf haengt");
       alert(t.purchaseErrorTitle, t.purchaseTimeoutMsg);
     }, 45000);
     try {
-      await purchase(packageToBuy);
+      await purchase(pkg);
       clearTimeout(timeoutId);
       if (timedOut) {
         iapLog("paywall.buy: Kauf kam nach Timeout noch durch");
@@ -130,16 +115,7 @@ export default function Paywall() {
       }
       iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere weiter");
       hapticSuccess();
-      // Premium/Familie: direkt zum Willkommens-Sagen-Paket-Screen navigieren
-      // (Nutzer soll sofort Mehrwert erleben). Elite/Elite Familie: einfach
-      // zurueck (alle Packs bereits inklusive, kein Extra-Schritt noetig).
-      // Apples nativer Kauf-Dialog (StoreKit-Sheet) ist zu diesem Zeitpunkt
-      // oft noch nicht vollstaendig ausgeblendet. Kurze Verzoegerung laesst
-      // StoreKit die Uebergabe sauber abschliessen, bevor wir navigieren —
-      // sonst kollidieren zwei UIKit-Transitionen und die App friert ein.
-      const istPremiumPlan = ["monthly", "yearly", "family"].includes(
-        gewaehlterPlan?.key ?? ""
-      );
+      const istPremiumPlan = ["monthly", "yearly", "family"].includes(planKey);
       setTimeout(() => {
         if (!mountedRef.current) return;
         if (istPremiumPlan) {
@@ -151,25 +127,12 @@ export default function Paywall() {
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (timedOut) return;
+      hapticError();
       iapLog("paywall.buy: Kauf-Promise abgelehnt", {
         code: err?.code,
         message: err?.message,
         userCancelled: err?.userCancelled,
       });
-      // StoreKit/Play meldet manchmal "bereits abonniert" statt den Kauf
-      // erfolgreich zurueckzugeben (z.B. nach Neuinstallation, oder wenn
-      // unser lokaler Sync das aktive Abo noch nicht mitbekommen hat — vgl.
-      // Screenshot-Bug: natives "You are currently subscribed"-Sheet ueber
-      // "Angebot wird geladen"). Das ist kein Fehler, sondern ein Erfolg,
-      // den wir sonst faelschlich als Kauf-Fehler anzeigen wuerden UND der
-      // ohne den Refetch hier nie zu einem premium-Sync fuehrt.
-      //
-      // "The receipt is not valid" tritt ebenfalls auf, wenn Apple dem Nutzer
-      // das "bereits abonniert"-Sheet zeigt und er OK tippt: StoreKit liefert
-      // dann die bestehende Quittung, die RevenueCat bereits kennt oder die
-      // aus einem anderen RC-Projekt stammt (z.B. nach einem API-Key-Wechsel).
-      // Auch das ist kein Fehler — wir erzwingen restorePurchases(), das alle
-      // Quittungen neu validiert und dem aktuellen RC-Customer zuordnet.
       const errStr = String(err?.message ?? err?.underlyingErrorMessage ?? "");
       const bereitsAbonniert =
         err?.code === "2" ||
@@ -182,15 +145,8 @@ export default function Paywall() {
           errStr,
         });
         try {
-          // restorePurchases() ist gruendlicher als refreshCustomerInfo():
-          // Es schickt alle lokalen StoreKit-Quittungen erneut an RC und
-          // verknuepft sie mit dem aktuellen Customer — deckt auch den Fall
-          // ab, dass ein frueherer Kauf mit einem anderen API-Key gemacht
-          // wurde (dann hilft refreshCustomerInfo nicht).
           await restore();
         } catch (restoreErr) {
-          // Nicht fatal: der naechste automatische Abgleich (AppContext)
-          // oder ein manueller "Kauf wiederherstellen" greift spaeter.
           iapLog("paywall.buy: restorePurchases fehlgeschlagen", {
             message:
               restoreErr instanceof Error
@@ -210,7 +166,7 @@ export default function Paywall() {
       }
     } finally {
       clearTimeout(timeoutId);
-      if (!timedOut) setBusy(false);
+      if (!timedOut) setBuyingKey(null);
     }
   };
 
@@ -270,7 +226,6 @@ export default function Paywall() {
         </View>
 
         {isElite ? (
-          // Bereits Elite — nichts mehr zu kaufen
           <View style={[styles.activeBox, { borderColor: colors.accent }]}>
             <Feather name="check-circle" size={22} color={colors.accent} />
             <Text style={[styles.activeText, { color: colors.foreground }]}>
@@ -282,7 +237,6 @@ export default function Paywall() {
             <SparkDivider style={{ marginVertical: 24 }} />
 
             {upgradeMode ? (
-              // Upgrade-Banner: Premium vorhanden, Elite fehlt noch
               <View style={[styles.activeBox, { borderColor: colors.glassBorder, marginBottom: 20 }]}>
                 <Feather name="zap" size={22} color={colors.accent} />
                 <Text style={[styles.activeText, { color: colors.foreground }]}>
@@ -303,8 +257,6 @@ export default function Paywall() {
             )}
 
             {isLoading ? (
-              /* Skeleton-Karten in Plangroesse — kein Layout-Sprung, wenn die
-                 echten Preiskarten von RevenueCat eintreffen. */
               <View style={{ gap: 10 }}>
                 {(upgradeMode ? ["elite", "eliteFamily"] : PLAN_REIHENFOLGE).map((key) => (
                   <Skeleton key={key} height={74} radius={colors.radius} />
@@ -313,42 +265,64 @@ export default function Paywall() {
             ) : plaene.length > 0 ? (
               <View style={{ gap: 10 }}>
                 {plaene.map(({ key, paket }) => {
-                  const aktiv = gewaehlterPlan?.key === key;
+                  const isThisBuying = buyingKey === key;
+                  const disabled = isBuying || busy || isRestoring;
+                  const badge = t.planBadges[key];
                   return (
                     <Pressable
                       key={key}
-                      onPress={() => { hapticSelection(); setGewaehlt(key); }}
-                      accessibilityRole="radio"
+                      onPress={() => buy(key, paket)}
+                      disabled={disabled}
+                      accessibilityRole="button"
                       accessibilityLabel={`${t.planNames[key]} — ${paket.product.priceString}`}
-                      accessibilityState={{ checked: aktiv }}
-                      style={[
+                      style={({ pressed }) => [
                         styles.planCard,
                         {
-                          borderColor: aktiv ? colors.accent : colors.glassBorder,
-                          backgroundColor: aktiv
-                            ? colors.glassBgStrong
-                            : colors.glassBg,
+                          borderColor: isThisBuying
+                            ? colors.accent
+                            : colors.glassBorder,
+                          backgroundColor:
+                            pressed && !disabled
+                              ? colors.glassBgStrong
+                              : colors.glassBg,
                           borderRadius: colors.radius,
+                          opacity: disabled && !isThisBuying ? 0.45 : 1,
                         },
                       ]}
                     >
+                      {badge ? (
+                        <View
+                          style={[
+                            styles.badge,
+                            { backgroundColor: colors.accent },
+                          ]}
+                        >
+                          <Text style={styles.badgeText}>{badge}</Text>
+                        </View>
+                      ) : null}
+
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.planTitle, { color: colors.foreground }]}>
                           {t.planNames[key]}
                         </Text>
-                        <Text
-                          style={[styles.planTagline, { color: colors.mutedForeground }]}
-                        >
+                        <Text style={[styles.planTagline, { color: colors.mutedForeground }]}>
                           {t.planTaglines[key]}
                         </Text>
                       </View>
-                      <View style={{ alignItems: "flex-end" }}>
-                        <Text style={[styles.planPrice, { color: colors.foreground }]}>
-                          {paket.product.priceString}
-                        </Text>
-                        <Text style={[styles.planPer, { color: colors.mutedForeground }]}>
-                          {key === "monthly" ? t.planPer : t.perYear}
-                        </Text>
+
+                      <View style={{ alignItems: "flex-end", minWidth: 72 }}>
+                        {isThisBuying ? (
+                          <ActivityIndicator color={colors.accent} size="small" />
+                        ) : (
+                          <>
+                            <Text style={[styles.planPrice, { color: colors.foreground }]}>
+                              {paket.product.priceString}
+                            </Text>
+                            <Text style={[styles.planPer, { color: colors.mutedForeground }]}>
+                              {key === "monthly" ? t.planPer : t.perYear}
+                            </Text>
+                          </>
+                        )}
                       </View>
                     </Pressable>
                   );
@@ -360,22 +334,15 @@ export default function Paywall() {
               </Text>
             )}
 
-            <PrimaryButton
-              label={busy || isPurchasing ? t.loadingOffering : upgradeMode ? t.upgradeBtn : t.buyBtn}
-              variant={upgradeMode ? "gold" : "primary"}
-              onPress={buy}
-              disabled={!packageToBuy || busy || isPurchasing}
-              style={{ marginTop: 22 }}
-            />
             <Pressable
               onPress={onRestore}
-              disabled={busy || isRestoring}
+              disabled={busy || isRestoring || isBuying}
               style={styles.restore}
               accessibilityRole="button"
               accessibilityLabel={t.restoreBtn}
             >
               <Text style={[styles.restoreText, { color: colors.mutedForeground }]}>
-                {t.restoreBtn}
+                {busy || isRestoring ? "…" : t.restoreBtn}
               </Text>
             </Pressable>
 
@@ -410,6 +377,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    overflow: "visible",
+  },
+  badge: {
+    position: "absolute",
+    top: -10,
+    right: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  badgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    color: "#fff",
+    letterSpacing: 0.3,
   },
   planTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
   planTagline: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
@@ -424,7 +407,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-  activeBox: { ...GLAS_3D,
+  activeBox: {
+    ...GLAS_3D,
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
