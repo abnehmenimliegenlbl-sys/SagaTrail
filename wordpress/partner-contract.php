@@ -28,6 +28,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 //   wp-content/uploads/sagatrail/signature.png  (Standard, empfohlen)
 //   oder: define('SAGATRAIL_SIGNATURE_PATH', '/absoluter/pfad/signature.png');
 
+function sagatrail_icon_pfad() {
+    if ( defined( 'SAGATRAIL_ICON_PATH' ) && file_exists( SAGATRAIL_ICON_PATH ) ) {
+        return SAGATRAIL_ICON_PATH;
+    }
+    $upload = wp_upload_dir();
+    $pfad   = trailingslashit( $upload['basedir'] ) . 'sagatrail/sagatrail-icon.png';
+    return file_exists( $pfad ) ? $pfad : false;
+}
+
 function sagatrail_sig_pfad() {
     if ( defined( 'SAGATRAIL_SIGNATURE_PATH' ) && file_exists( SAGATRAIL_SIGNATURE_PATH ) ) {
         return SAGATRAIL_SIGNATURE_PATH;
@@ -113,14 +122,21 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetAutoPageBreak( true, 20 );
 
     // ----- KOPF -----
-    $pdf->SetFont( 'Helvetica', 'B', 18 );
+    $icon_pfad = sagatrail_icon_pfad();
+    $icon_h = 16; // mm Höhe
+    $y_start = $pdf->GetY();
+    if ( $icon_pfad ) {
+        $pdf->Image( $icon_pfad, 20, $y_start, 0, $icon_h ); // Breite auto
+        $pdf->SetXY( 40, $y_start + 1 );
+    }
+    $pdf->SetFont( 'Helvetica', 'B', 20 );
     $pdf->SetTextColor( 204, 0, 0 );
     $pdf->Cell( 0, 10, 'SagaTrail', 0, 1, 'L' );
-
-    $pdf->SetFont( 'Helvetica', '', 9 );
+    $pdf->SetFont( 'Helvetica', '', 8 );
     $pdf->SetTextColor( 120, 120, 120 );
+    if ( $icon_pfad ) { $pdf->SetX( 40 ); }
     $pdf->Cell( 0, 5, 'A.i.L. by Koch  |  Mühlemattstrasse 11, 4104 Oberwil BL  |  info@sagatrail.ch', 0, 1, 'L' );
-    $pdf->Ln( 4 );
+    $pdf->Ln( max( 2, $y_start + $icon_h - $pdf->GetY() + 2 ) );
 
     // Trennlinie rot
     $pdf->SetDrawColor( 204, 0, 0 );
@@ -288,11 +304,19 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
     $html  = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">';
     $html .= '<title>SagaTrail Partnerschaftsvertrag ' . esc_html( $ref ) . '</title>';
     $html .= '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;max-width:700px;margin:0 auto;padding:24px}';
-    $html .= 'h1{color:#CC0000;font-size:20px}h2{font-size:14px;margin-top:20px;border-bottom:1px solid #ddd;padding-bottom:4px}';
+    $html .= 'h1{color:#CC0000;font-size:22px;margin:0;line-height:1}h2{font-size:14px;margin-top:20px;border-bottom:1px solid #ddd;padding-bottom:4px}';
     $html .= 'ul{margin:6px 0;padding-left:20px}li{margin:3px 0}.sig{border-top:1px solid #999;width:200px;margin-top:24px;padding-top:4px;display:inline-block}';
-    $html .= '.footer{color:#999;font-size:10px;text-align:center;margin-top:40px;border-top:1px solid #eee;padding-top:10px}</style></head><body>';
-    $html .= '<h1>SagaTrail</h1><p style="color:#666;font-size:11px">info@sagatrail.ch | www.sagatrail.ch</p>';
-    $html .= '<hr style="border-color:#CC0000;border-width:2px">';
+    $html .= '.footer{color:#999;font-size:10px;text-align:center;margin-top:40px;border-top:1px solid #eee;padding-top:10px}';
+    $html .= '.st-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}';
+    $html .= '.st-head img{width:52px;height:52px;border-radius:12px;flex-shrink:0}</style></head><body>';
+    $icon_pfad_h = sagatrail_icon_pfad();
+    $icon_tag = '';
+    if ( $icon_pfad_h ) {
+        $b64 = base64_encode( file_get_contents( $icon_pfad_h ) );
+        $icon_tag = '<img src="data:image/png;base64,' . $b64 . '" alt="SagaTrail">';
+    }
+    $html .= '<div class="st-head">' . $icon_tag . '<div><h1>SagaTrail</h1><p style="color:#666;font-size:11px;margin:2px 0 0">A.i.L. by Koch &nbsp;|&nbsp; info@sagatrail.ch &nbsp;|&nbsp; www.sagatrail.ch</p></div></div>';
+    $html .= '<hr style="border-color:#CC0000;border-width:2px;margin:10px 0 16px">';
     $html .= '<h2 style="border:none;font-size:18px">Partnerschaftsvereinbarung</h2>';
     $html .= '<p><strong>Referenz:</strong> ' . esc_html( $ref ) . ' &nbsp;|&nbsp; <strong>Datum:</strong> ' . esc_html( $datum ) . '</p>';
     $html .= '<h2>Vertragsparteien</h2>';
