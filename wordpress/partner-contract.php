@@ -217,7 +217,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetFont( 'Helvetica', 'B', 10 );
     $pdf->Cell( 0, 6, 'Unterschriften', 0, 1, 'L' );
     $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->Cell( 85, 5, 'A.i.L. by Koch', 0, 0 );
+    $pdf->Cell( 85, 5, 'A.i.L. by Koch  –  SagaTrail', 0, 0 );
     $pdf->Cell( 0,  5, $data['betriebs_name'], 0, 1 );
     $pdf->Ln( 3 );
 
@@ -236,7 +236,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->Line( 110, $pdf->GetY(), 190, $pdf->GetY() );
     $pdf->Ln( 3 );
     $pdf->SetFont( 'Helvetica', 'B', 9 );
-    $pdf->Cell( 85, 5, 'Rolf Koch für SagaTrail', 0, 0 );
+    $pdf->Cell( 85, 5, 'Rolf Koch, Inhaber', 0, 0 );
     $pdf->SetFont( 'Helvetica', '', 9 );
     $pdf->Cell( 0,  5, 'Ort, Datum, Unterschrift', 0, 1 );
     $pdf->SetFont( 'Helvetica', '', 8 );
@@ -318,7 +318,7 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
     } else {
         $html .= '<div style="height:50px"></div>';
     }
-    $html .= '<div class="sig"><strong>Rolf Koch für SagaTrail</strong><br><span style="color:#999;font-size:10px">' . esc_html( $datum ) . '</span></div>';
+    $html .= '<div class="sig"><strong>Rolf Koch, Inhaber</strong><br><span style="color:#999;font-size:10px">' . esc_html( $datum ) . '</span></div>';
     $html .= '</td>';
 
     // Rechte Spalte: Partner-Unterschrift (leer zum Ausfüllen)
