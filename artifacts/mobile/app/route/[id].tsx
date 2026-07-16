@@ -11,9 +11,8 @@ import {
   getTransportStationboard,
   importGpxRoute,
   useGetRouteConditions,
-  reportRouteCondition,
 } from "@workspace/api-client-react";
-import type { Partner, TrailConditionReport, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
+import type { Partner, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
 
 interface TransportAnreiseResult {
   station: { id: string; name: string } | null;
@@ -50,7 +49,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
-import { SosButton } from "@/components/brand/SosButton";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
@@ -275,12 +273,6 @@ export default function Routenplanung() {
   // Community Trail Conditions
   const { data: trailConditions, isLoading: conditionsLoading, refetch: refetchConditions } =
     useGetRouteConditions(id ?? "");
-  const [showReportForm, setShowReportForm] = useState(false);
-  const [selectedCondition, setSelectedCondition] =
-    useState<TrailConditionReport["condition"] | null>(null);
-  const [conditionNote, setConditionNote] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState<"ok" | "ratelimit" | "error" | null>(null);
   const [aerialways, setAerialways] = useState<
     { id: string; geometry: number[][] }[] | null
   >(null);
@@ -356,27 +348,6 @@ export default function Routenplanung() {
     }
   };
 
-  async function submitCondition() {
-    if (!selectedCondition || !id) return;
-    setSubmitting(true);
-    setSubmitResult(null);
-    try {
-      await reportRouteCondition(id, {
-        condition: selectedCondition,
-        note: conditionNote.trim() || null,
-      });
-      setSubmitResult("ok");
-      setShowReportForm(false);
-      setSelectedCondition(null);
-      setConditionNote("");
-      refetchConditions();
-    } catch (err: unknown) {
-      const status = (err as { status?: number })?.status;
-      setSubmitResult(status === 429 ? "ratelimit" : "error");
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Wegverlauf sinnvoll, best effort.
@@ -1187,11 +1158,6 @@ export default function Routenplanung() {
           </View>
         ) : null}
 
-        {/* ── SOS-Notruf ───────────────────────────────────────────── */}
-        <View style={{ marginTop: 16, marginBottom: 4 }}>
-          <SosButton lat={route?.coordinates?.lat} lng={route?.coordinates?.lng} />
-        </View>
-
         {/* ── Community Trail Conditions ────────────────────────────── */}
         <SparkDivider style={{ marginVertical: 22 }} />
         <Text style={[styles.blockTitle, { color: colors.foreground }]}>
@@ -1243,105 +1209,6 @@ export default function Routenplanung() {
           )}
         </View>
 
-        {submitResult === "ok" && (
-          <Text style={[styles.conditionSuccess, { color: colors.accent }]}>
-            {t.conditionSubmitted}
-          </Text>
-        )}
-        {(submitResult === "ratelimit" || submitResult === "error") && (
-          <Text style={[styles.conditionError, { color: colors.destructive }]}>
-            {submitResult === "ratelimit" ? t.conditionRateLimit : t.conditionError}
-          </Text>
-        )}
-
-        {showReportForm ? (
-          <Animated.View entering={FadeInDown.duration(200)} style={{ marginTop: 12 }}>
-            <Text style={[styles.checkNote, { color: colors.mutedForeground, marginBottom: 8 }]}>
-              {t.conditionNoteLabel}
-            </Text>
-            <View style={styles.conditionChips}>
-              {(["excellent", "clear", "muddy", "snow", "icy", "blocked"] as const).map(
-                (lvl) => (
-                  <Pressable
-                    key={lvl}
-                    onPress={() => setSelectedCondition(lvl)}
-                    style={[
-                      styles.conditionChip,
-                      {
-                        borderColor:
-                          selectedCondition === lvl ? colors.accent : colors.glassBorder,
-                        backgroundColor:
-                          selectedCondition === lvl
-                            ? colors.accent + "22"
-                            : colors.glassBg,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.conditionEmoji}>{t.conditionEmoji[lvl]}</Text>
-                    <Text
-                      style={[
-                        styles.conditionChipLabel,
-                        {
-                          color:
-                            selectedCondition === lvl
-                              ? colors.accent
-                              : colors.mutedForeground,
-                        },
-                      ]}
-                    >
-                      {t.conditions[lvl]}
-                    </Text>
-                  </Pressable>
-                ),
-              )}
-            </View>
-            <TextInput
-              style={[
-                styles.conditionInput,
-                {
-                  color: colors.foreground,
-                  borderColor: colors.glassBorder,
-                  backgroundColor: colors.glassBg,
-                },
-              ]}
-              placeholder={t.conditionNotePlaceholder}
-              placeholderTextColor={colors.mutedForeground}
-              value={conditionNote}
-              onChangeText={setConditionNote}
-              maxLength={200}
-              multiline
-            />
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-              <PrimaryButton
-                label={submitting ? t.conditionSubmitting : t.conditionSubmit}
-                onPress={submitCondition}
-                disabled={submitting || !selectedCondition}
-                style={{ flex: 1 }}
-              />
-              <PrimaryButton
-                label="✕"
-                variant="secondary"
-                onPress={() => {
-                  setShowReportForm(false);
-                  setSelectedCondition(null);
-                  setConditionNote("");
-                  setSubmitResult(null);
-                }}
-                style={{ flex: 1 }}
-              />
-            </View>
-          </Animated.View>
-        ) : (
-          <PrimaryButton
-            label={t.reportCondition}
-            variant="secondary"
-            onPress={() => {
-              setSubmitResult(null);
-              setShowReportForm(true);
-            }}
-            style={{ marginTop: 10 }}
-          />
-        )}
 
         <View
           style={[
@@ -1739,12 +1606,6 @@ const styles = StyleSheet.create({
   conditionLabel: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   conditionNote: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 2 },
   conditionTime: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
-  conditionChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
-  conditionChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12 },
-  conditionChipLabel: { fontFamily: fonts.body, fontSize: 13 },
-  conditionInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontFamily: fonts.body, fontSize: 13, minHeight: 72, textAlignVertical: "top", marginTop: 4 },
-  conditionSuccess: { fontFamily: fonts.bodyMedium, fontSize: 13, marginTop: 8, textAlign: "center" },
-  conditionError: { fontFamily: fonts.body, fontSize: 12, marginTop: 8 },
   rueckreiseButton: {
     flexDirection: "row",
     alignItems: "center",

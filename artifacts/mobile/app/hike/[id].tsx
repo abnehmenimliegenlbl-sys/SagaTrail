@@ -7,8 +7,10 @@ import {
   getPoiStory,
   getRouteSurfaces,
   getWeather,
+  useGetRouteConditions,
+  reportRouteCondition,
 } from "@workspace/api-client-react";
-import type { Partner, Poi, RouteSurfacePoint, WeatherReport } from "@workspace/api-client-react";
+import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
@@ -27,6 +29,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { alert } from "@/lib/appAlert";
@@ -374,6 +377,12 @@ export default function LiveHike() {
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
+  const [showConditionForm, setShowConditionForm] = useState(false);
+  const [selectedCondition, setSelectedCondition] = useState<TrailConditionReport["condition"] | null>(null);
+  const [conditionNote, setConditionNote] = useState("");
+  const [conditionSubmitting, setConditionSubmitting] = useState(false);
+  const [conditionSubmitResult, setConditionSubmitResult] = useState<"ok" | "ratelimit" | "error" | null>(null);
+  const { refetch: refetchConditions } = useGetRouteConditions(id ?? "");
   const [choiceFeedback, setChoiceFeedback] = useState<string | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1890,6 +1899,28 @@ export default function LiveHike() {
     }).catch(() => {});
   }, [voiceListening]);
 
+  async function submitConditionHike() {
+    if (!selectedCondition || !id) return;
+    setConditionSubmitting(true);
+    setConditionSubmitResult(null);
+    try {
+      await reportRouteCondition(id, {
+        condition: selectedCondition,
+        note: conditionNote.trim() || null,
+      });
+      setConditionSubmitResult("ok");
+      setShowConditionForm(false);
+      setSelectedCondition(null);
+      setConditionNote("");
+      refetchConditions();
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      setConditionSubmitResult(status === 429 ? "ratelimit" : "error");
+    } finally {
+      setConditionSubmitting(false);
+    }
+  }
+
   const finishHike = useCallback(async () => {
     await cancelNarration();
     hapticSuccess();
@@ -2722,6 +2753,83 @@ export default function LiveHike() {
             )}
           </Animated.View>
         )}
+
+        {/* ── Wegbedingungen melden ─────────────────────────────────── */}
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 }}>
+          <View style={[styles.conditionDivider, { backgroundColor: colors.glassBorder }]} />
+          {conditionSubmitResult === "ok" && (
+            <Text style={[styles.conditionSuccess, { color: colors.accent }]}>
+              {t.conditionSubmitted}
+            </Text>
+          )}
+          {(conditionSubmitResult === "ratelimit" || conditionSubmitResult === "error") && (
+            <Text style={[styles.conditionError, { color: colors.destructive }]}>
+              {conditionSubmitResult === "ratelimit" ? t.conditionRateLimit : t.conditionError}
+            </Text>
+          )}
+          {showConditionForm ? (
+            <Animated.View entering={FadeIn.duration(200)}>
+              <View style={styles.conditionChips}>
+                {(["excellent", "clear", "muddy", "snow", "icy", "blocked"] as const).map((lvl) => (
+                  <Pressable
+                    key={lvl}
+                    onPress={() => setSelectedCondition(lvl)}
+                    style={[
+                      styles.conditionChip,
+                      {
+                        borderColor: selectedCondition === lvl ? colors.accent : colors.glassBorder,
+                        backgroundColor: selectedCondition === lvl ? colors.accent + "22" : colors.glassBg,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.conditionEmojiText}>{t.conditionEmoji[lvl]}</Text>
+                    <Text style={[styles.conditionChipLabel, { color: selectedCondition === lvl ? colors.accent : colors.mutedForeground }]}>
+                      {t.conditions[lvl]}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <TextInput
+                style={[styles.conditionInput, { color: colors.foreground, borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+                placeholder={t.conditionNotePlaceholder}
+                placeholderTextColor={colors.mutedForeground}
+                value={conditionNote}
+                onChangeText={setConditionNote}
+                maxLength={200}
+                multiline
+              />
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                <PrimaryButton
+                  label={conditionSubmitting ? t.conditionSubmitting : t.conditionSubmit}
+                  onPress={submitConditionHike}
+                  disabled={conditionSubmitting || !selectedCondition}
+                  style={{ flex: 1 }}
+                />
+                <PrimaryButton
+                  label="✕"
+                  variant="secondary"
+                  onPress={() => {
+                    setShowConditionForm(false);
+                    setSelectedCondition(null);
+                    setConditionNote("");
+                    setConditionSubmitResult(null);
+                  }}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </Animated.View>
+          ) : (
+            <PrimaryButton
+              label={t.reportCondition}
+              variant="secondary"
+              onPress={() => {
+                setConditionSubmitResult(null);
+                setShowConditionForm(true);
+              }}
+              style={{ marginTop: 8 }}
+            />
+          )}
+        </View>
       </ScrollView>
 
       {/* SOS — bewusst KEIN Glas, immer sichtbar und deckend */}
@@ -2962,6 +3070,14 @@ const styles = StyleSheet.create({
   storyText: { fontFamily: fonts.story, fontSize: 20, lineHeight: 32 },
   narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
+  conditionDivider: { height: 1, marginVertical: 16 },
+  conditionChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  conditionChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12 },
+  conditionEmojiText: { fontSize: 18, lineHeight: 22 },
+  conditionChipLabel: { fontFamily: fonts.body, fontSize: 13 },
+  conditionInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontFamily: fonts.body, fontSize: 13, minHeight: 72, textAlignVertical: "top", marginTop: 4 },
+  conditionSuccess: { fontFamily: fonts.bodyMedium, fontSize: 13, marginTop: 8, textAlign: "center" },
+  conditionError: { fontFamily: fonts.body, fontSize: 12, marginTop: 8 },
   choiceFeedbackWrap: { marginTop: 16 },
   choiceFeedbackPanel: { ...GLAS_3D,
     borderWidth: 1,
