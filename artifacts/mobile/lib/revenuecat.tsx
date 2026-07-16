@@ -244,9 +244,19 @@ function useSubscriptionContext() {
   });
 
   const aktiveEntitlements = customerInfoQuery.data?.entitlements.active ?? {};
+
+  // Nur Abo-Entitlements zaehlen (expirationDate !== null).
+  // Konsumable/Einmalkauf-Produkte (z.B. sagatrail_kantonspack) koennen im
+  // RC-Dashboard irrtuemlicherweise mit "premium"/"elite" verknuepft sein und
+  // erhalten dann einen Lifetime-Grant (expirationDate = null). Solche Grants
+  // duerfen NICHT als aktives Abo gewertet werden.
+  const premiumEnt = aktiveEntitlements[REVENUECAT_ENTITLEMENT_IDENTIFIER];
   const isSubscribed =
-    aktiveEntitlements[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
-  const isElite = aktiveEntitlements[REVENUECAT_ELITE_ENTITLEMENT] !== undefined;
+    premiumEnt !== undefined && premiumEnt.expirationDate !== null;
+
+  const eliteEnt = aktiveEntitlements[REVENUECAT_ELITE_ENTITLEMENT];
+  const isElite = eliteEnt !== undefined && eliteEnt.expirationDate !== null;
+
   const hatEntitlement = (key: string) => aktiveEntitlements[key] !== undefined;
 
   // Familien-Abo: aktives Produkt enthaelt "family" aber kein "elite"

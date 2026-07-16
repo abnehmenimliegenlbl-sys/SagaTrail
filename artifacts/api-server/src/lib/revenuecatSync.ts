@@ -95,7 +95,12 @@ export async function hatAktivesPremiumEntitlement(
       items.some(
         (e) =>
           e.entitlement_id === premiumId &&
-          (e.expires_at === null || e.expires_at > jetzt)
+          // Nur echte Abos zaehlen: Konsumable/Einmalkauf-Grants haben
+          // expires_at = null (Lifetime-Grant). Falls sagatrail_kantonspack
+          // im RC-Dashboard irrtuemlicherweise mit "premium" verknuepft ist,
+          // wuerde dies sonst faelschlich Premium gewahren.
+          e.expires_at !== null &&
+          e.expires_at > jetzt
       )
     ) {
       return true;
