@@ -16,7 +16,6 @@
     },
     "production": {
       "autoIncrement": true,
-      "autoSubmit": true,
       "channel": "production",
       "ios": {
         "distribution": "store"
