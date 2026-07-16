@@ -24,10 +24,10 @@ export type Zahlungsstatus =
   | "mahnung2"
   | "gesperrt";
 
-export const PAKET_PREISE: Record<string, number> = {
-  basic: 490,
-  standard: 990,
-  premium: 1990,
+export const PAKET_PREISE: Record<string, { jahr: number; monat: number }> = {
+  basic:    { jahr:  99, monat:   990 },
+  standard: { jahr: 199, monat: 1990 },
+  premium:  { jahr: 499, monat:    0 },
 };
 
 export const partnersTable = pgTable("partners", {

@@ -242,7 +242,7 @@ a{color:var(--red);text-decoration:none}
         <div class="form-group full"><label>Foto-URL</label><input id="np-foto" type="url" /></div>
         <div class="form-group full"><span class="form-section-title">Vertrag & Preise</span></div>
         <div class="form-group"><label>Paket</label>
-          <select id="np-paket"><option value="">– wählen –</option><option value="basic">Basic (CHF 490/J.)</option><option value="standard">Standard (CHF 990/J.)</option><option value="premium">Premium (CHF 1'990/J.)</option></select>
+          <select id="np-paket"><option value="">– wählen –</option><option value="basic">Basic (CHF 99/J. · 9.90/Mt.)</option><option value="standard">Standard (CHF 199/J. · 19.90/Mt.)</option><option value="premium">Premium (CHF 499/J.) – Wandererwähnung</option></select>
         </div>
         <div class="form-group"><label>Individueller Preis CHF/J.</label><input id="np-preis" type="number" min="0" placeholder="Leer = Paket-Preis" /></div>
         <div class="form-group"><label>Einführungspreis CHF/J.</label><input id="np-einfpreis" type="number" min="0" /></div>
@@ -715,7 +715,7 @@ function katOptions(sel) {
   }).join('');
 }
 function paketOptions(sel) {
-  return [['','– wählen –'],['basic','Basic (490/J.)'],['standard','Standard (990/J.)'],["premium","Premium (1'990/J.)"]].map(function(o){
+  return [['','– wählen –'],['basic','Basic (99/J.)'],['standard','Standard (199/J.)'],['premium','Premium (499/J.)']].map(function(o){
     return '<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>';
   }).join('');
 }
@@ -866,9 +866,9 @@ function currentPreis(p) {
   var now = new Date();
   if (p.einfuehrungspreisChf && p.einfuehrungspreisGueltigBis && new Date(p.einfuehrungspreisGueltigBis) > now) return p.einfuehrungspreisChf + ' (Einf.)';
   if (p.preisChf) return p.preisChf;
-  if (p.paket === 'basic') return 490;
-  if (p.paket === 'standard') return 990;
-  if (p.paket === 'premium') return 1990;
+  if (p.paket === 'basic') return 99;
+  if (p.paket === 'standard') return 199;
+  if (p.paket === 'premium') return 499;
   return null;
 }
 function zahlBadge(s) { return {bezahlt:'badge-green',ausstehend:'badge-orange',mahnung1:'badge-yellow',mahnung2:'badge-red',gesperrt:'badge-red'}[s] || 'badge-gray'; }
