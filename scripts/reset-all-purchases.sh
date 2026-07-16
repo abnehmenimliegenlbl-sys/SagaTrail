@@ -23,5 +23,5 @@ if [ "$CONFIRM" != "ja" ]; then
 fi
 
 curl -s -X POST "$API/api/admin/reset-all" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "x-admin-token: $ADMIN_TOKEN" \
   -H "Content-Type: application/json" | python3 -m json.tool
