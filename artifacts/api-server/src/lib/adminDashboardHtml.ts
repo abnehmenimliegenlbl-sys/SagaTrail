@@ -140,6 +140,14 @@ a{color:var(--red);text-decoration:none}
 
   <!-- NUTZER -->
   <div id="tab-users" class="tab-pane">
+    <div class="card" style="max-width:640px;margin-bottom:16px;border:1.5px solid #ffd6d6;background:#fff8f8">
+      <h2 style="margin-bottom:6px;font-size:15px">&#9888;&#65039; Premium-Notfall-Reset</h2>
+      <p class="hint" style="margin-bottom:12px">Setzt <strong>alle</strong> Nutzer auf Free zurück und sperrt den RC-Sync für 30 Tage. Nutzen wenn RC-Cache oder Sync-Loop Premium fälschlicherweise wieder aktiviert.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn" style="background:#CC0000;color:#fff;padding:8px 18px;font-size:13px" onclick="doResetAll()">&#128683; Alle auf Free zurücksetzen</button>
+        <span id="reset-all-status" class="hint"></span>
+      </div>
+    </div>
     <div id="users-body"><p class="loading">Wird geladen...</p></div>
   </div>
 
@@ -401,6 +409,22 @@ function statCard(num, lbl, sub) {
 }
 
 /* ===================== NUTZER ===================== */
+async function doResetAll() {
+  var el = document.getElementById('reset-all-status');
+  if (!confirm('Wirklich ALLE Nutzer auf Free zurücksetzen? Der RC-Sync wird für 30 Tage gesperrt.')) return;
+  el.textContent = 'Wird zurückgesetzt…';
+  el.style.color = 'var(--mid)';
+  try {
+    var r = await api('/api/admin/reset-all', { method: 'POST' });
+    el.textContent = '✓ ' + r.zurueckgesetzt + ' Nutzer zurückgesetzt (RC-Sync gesperrt bis +30 Tage)';
+    el.style.color = 'green';
+    loadUsers();
+  } catch(e) {
+    el.textContent = '✗ Fehler: ' + esc(e.message);
+    el.style.color = 'var(--red)';
+  }
+}
+
 async function loadUsers() {
   document.getElementById('users-body').innerHTML = '<p class="loading">Lade Nutzer...</p>';
   try {
