@@ -23,8 +23,11 @@
         "NSMotionUsageDescription": "SagaTrail zählt deine Schritte während der Wanderung, damit du deine Aktivität im Hike-Log nachverfolgen kannst.",
         "UIBackgroundModes": [
           "audio",
+          "location",
+          "audio",
           "location"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.sagatrail2.app"
     },
