@@ -156,10 +156,10 @@ const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 // "keine Infos vorhanden" im Cache haengen bleiben.
 const POI_NEGATIVE_TTL_MS = 10 * 60 * 1000; // 10 Minuten
 // Sehr kurze TTL fuer Overpass-Fehler (Timeout, Netzausfall): damit wird nach
-// 90 s erneut versucht statt 24 h lang leere POI-Listen auszuliefern.
+// 30 s erneut versucht statt 24 h lang leere POI-Listen auszuliefern.
 // (Ein leeres entries-Array landet sonst als keineAnreicherung=false im
 // poiCache und bekommt faelschlich den 24-h-TTL.)
-const POI_ERROR_TTL_MS = 90 * 1000; // 90 Sekunden
+const POI_ERROR_TTL_MS = 30 * 1000; // 30 Sekunden
 const POI_WIKI_CONCURRENCY = 4;
 // Die unscharfe Wikipedia-Geo-Suche (Stufe 3, fuer POIs OHNE OSM-Verweis) ist
 // die teuerste Anreicherungsstufe. In dichten Staedten (z. B. Basel) liefert
@@ -171,6 +171,8 @@ const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 // poiCache bewusst getrennt gehalten, damit ein erfolgreicher Folgeaufruf
 // das poiCache-Ergebnis nicht mit einem leeren Array ueberschreiben kann.
 const poiErrorCache = new Map<string, number>();
+// Verhindert parallele Hintergrund-Refreshes fuer dieselbe BBox.
+const poiRefreshInFlight = new Set<string>();
 
 /**
  * Loest die Wikipedia-Referenz eines POI auf: zuerst der OSM-`wikipedia`-Tag
@@ -210,15 +212,56 @@ async function enrichPoiWithWikipedia(
 }
 
 /**
+ * Interne Hilfsfunktion: holt frische POI-Daten von Overpass und schreibt sie
+ * in den Cache. Laeuft ggf. im Hintergrund (fire-and-forget), ohne den
+ * Aufrufer zu blockieren. Verhindert Parallellaeufe fuer dieselbe BBox via
+ * poiRefreshInFlight.
+ */
+async function refreshPoisBackground(
+  bbox: { south: number; west: number; north: number; east: number },
+  key: string,
+  log: Logger,
+): Promise<void> {
+  if (poiRefreshInFlight.has(key)) return;
+  poiRefreshInFlight.add(key);
+  try {
+    // Fehler-Cache erneut pruefen — in der Zeit zwischen "stale" und
+    // Hintergrund-Start koennte ein anderer Request bereits fehlgeschlagen sein.
+    const errAt = poiErrorCache.get(key);
+    if (errAt !== undefined && Date.now() - errAt < POI_ERROR_TTL_MS) return;
+    let raw: RawPoi[];
+    try {
+      raw = await fetchHistoricPois(bbox, log);
+    } catch (err) {
+      log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen (Hintergrund-Refresh)");
+      poiErrorCache.set(key, Date.now());
+      return;
+    }
+    poiErrorCache.delete(key);
+    const geoSearchBudget = { rest: POI_GEO_SEARCH_BUDGET };
+    const entries = await mapPool(raw, POI_WIKI_CONCURRENCY, (poi) =>
+      enrichPoiWithWikipedia(poi, log, geoSearchBudget),
+    );
+    poiCache.set(key, { at: Date.now(), entries });
+    log.info({ bbox, count: entries.length }, "POI-Cache im Hintergrund aktualisiert");
+  } finally {
+    poiRefreshInFlight.delete(key);
+  }
+}
+
+/**
  * Liefert historische/touristische Orte in einer Bounding Box, live mit
  * Wikipedia-Zusammenfassungen angereichert (gecacht).
+ *
+ * Stale-while-revalidate: Gibt abgelaufene Cache-Eintraege sofort zurueck und
+ * aktualisiert den Cache im Hintergrund — so warten Nutzer nie auf Overpass.
  */
 export async function getPois(
   bbox: { south: number; west: number; north: number; east: number },
   log: Logger,
 ): Promise<EnrichedPoi[]> {
   const key = bboxCacheKey(bbox);
-  // Fehler-Cache pruefen: kurze TTL (90 s) verhindert, dass ein einzelner
+  // Fehler-Cache pruefen: kurze TTL (30 s) verhindert, dass ein einzelner
   // Overpass-Timeout den ganzen Tag lang leere POI-Listen liefert.
   const errAt = poiErrorCache.get(key);
   if (errAt !== undefined && Date.now() - errAt < POI_ERROR_TTL_MS) return [];
@@ -228,15 +271,21 @@ export async function getPois(
       hit.entries.length > 0 && hit.entries.every((e) => e.wiki === null);
     const ttl = keineAnreicherung ? POI_NEGATIVE_TTL_MS : POI_TTL_MS;
     if (Date.now() - hit.at < ttl) return hit.entries;
+    // Stale-while-revalidate: veraltete Daten sofort zurueckgeben, Cache im
+    // Hintergrund auffrischen. Nutzer sehen nie eine leere Karte wegen eines
+    // langsamen Overpass-Calls.
+    void refreshPoisBackground(bbox, key, log);
+    return hit.entries;
   }
+  // Kein Cache-Eintrag vorhanden: blockierender Erstaufruf.
   let raw: RawPoi[];
   try {
     raw = await fetchHistoricPois(bbox, log);
   } catch (err) {
-    // Overpass ausgefallen oder Timeout: fuer 90 s im Fehler-Cache merken,
+    // Overpass ausgefallen oder Timeout: fuer 30 s im Fehler-Cache merken,
     // damit Folgeanfragen schnell mit [] antworten statt erneut 42 s zu haengen.
     // Wir schreiben NICHT ins poiCache, damit ein leeres Array nicht den
-    // 24-h-TTL bekommt. Nach 90 s wird Overpass automatisch erneut probiert.
+    // 24-h-TTL bekommt. Nach 30 s wird Overpass automatisch erneut probiert.
     log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen, cache leeres Ergebnis");
     poiErrorCache.set(key, Date.now());
     return [];

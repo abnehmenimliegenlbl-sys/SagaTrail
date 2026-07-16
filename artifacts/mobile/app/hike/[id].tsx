@@ -830,30 +830,43 @@ export default function LiveHike() {
     // gespeicherte Geometrie ausgeduennt ist und Segmente >100 m lang sein koennen.
     const KORRIDOR_KM = 0.5;
     const geo = route?.geometry;
-    getPois(bbox)
-      .then((result) => {
-        const gefiltert =
-          geo && geo.length > 1
-            ? result.filter((p) => {
-                const punkt = { lat: p.lat, lng: p.lng };
-                for (let i = 0; i < geo.length - 1; i++) {
-                  if (
-                    distanzZuSegmentKm(
-                      punkt,
-                      { lat: geo[i][0], lng: geo[i][1] },
-                      { lat: geo[i + 1][0], lng: geo[i + 1][1] }
-                    ) <= KORRIDOR_KM
-                  ) {
-                    return true;
-                  }
+
+    const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
+      const gefiltert =
+        geo && geo.length > 1
+          ? result.filter((p) => {
+              const punkt = { lat: p.lat, lng: p.lng };
+              for (let i = 0; i < geo.length - 1; i++) {
+                if (
+                  distanzZuSegmentKm(
+                    punkt,
+                    { lat: geo[i][0], lng: geo[i][1] },
+                    { lat: geo[i + 1][0], lng: geo[i + 1][1] }
+                  ) <= KORRIDOR_KM
+                ) {
+                  return true;
                 }
-                return false;
-              })
-            : result;
-        if (!cancelled) setPois(gefiltert);
-      })
+              }
+              return false;
+            })
+          : result;
+      if (!cancelled) setPois(gefiltert);
+    };
+
+    // Bei Netzfehler oder Overpass-Timeout einmal nach 20 s nochmals versuchen.
+    // Ein leeres Array durch einen vorueberhenden Fehler-Cache-Treffer wird so
+    // automatisch aufgeloest, sobald der Server wieder antwortet.
+    getPois(bbox)
+      .then((result) => filterAndSet(result))
       .catch(() => {
-        if (!cancelled) setPois([]);
+        const retryTimer = setTimeout(() => {
+          if (!cancelled) {
+            getPois(bbox)
+              .then((result) => filterAndSet(result))
+              .catch(() => { /* aufgegeben */ });
+          }
+        }, 20_000);
+        return () => clearTimeout(retryTimer);
       });
     return () => {
       cancelled = true;
