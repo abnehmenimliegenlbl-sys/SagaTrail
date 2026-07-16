@@ -259,9 +259,7 @@ function CantonCard({
     ? cantonSagas.length
     : dbPackUnlocked
       ? pack1Count
-      : premium
-        ? Math.min(1, cantonSagas.length)
-        : cantonSagas.length;
+      : Math.min(1, cantonSagas.length);
 
   const cantonLabel = translateCanton(entry.canton, language as LanguageCode);
   return (
