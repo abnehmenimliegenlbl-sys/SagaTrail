@@ -1288,6 +1288,8 @@ export default function LiveHike() {
   const takePhoto = async () => {
     setShowPhotoChallenge(false);
     try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") return;
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
         quality: 0.8,
@@ -2580,6 +2582,7 @@ export default function LiveHike() {
             <View style={styles.photoRow}>
               <PrimaryButton
                 variant="secondary"
+                style={{ flex: 1 }}
                 label={
                   photoUploading
                     ? t.photoUploading

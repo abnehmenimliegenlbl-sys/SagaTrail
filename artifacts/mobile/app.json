@@ -73,6 +73,12 @@
       "expo-font",
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "SagaTrail möchte deine Kamera nutzen, damit du Erinnerungsfotos von deiner Wanderung aufnehmen kannst."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "iosDisplayInForeground": true
