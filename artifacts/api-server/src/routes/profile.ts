@@ -148,17 +148,6 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
     return;
   }
 
-  // Admin-Reset-Sperre: solange aktiv, wird ein weiterhin aktives
-  // RevenueCat-Test-Abo bewusst NICHT hochsynchronisiert (siehe Schema-Kommentar).
-  if (bestehend.premiumSyncLockedUntil && bestehend.premiumSyncLockedUntil > new Date()) {
-    req.log.info(
-      { userId, premiumSyncLockedUntil: bestehend.premiumSyncLockedUntil },
-      "[IAP] /me/premium/sync uebersprungen (Admin-Reset-Sperre aktiv)",
-    );
-    res.json(toProfile(bestehend));
-    return;
-  }
-
   let premiumAktiv: boolean;
   try {
     premiumAktiv = await hatAktivesPremiumEntitlement(userId);
@@ -168,6 +157,19 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
     // aktuellen Profilstatus zurueckgeben statt 502 — verhindert, dass ein
     // RC-Ausfall Admin-vergebenes Premium oder bereits aktive Abos loescht.
     req.log.warn({ err, userId }, "[IAP] RevenueCat nicht erreichbar — gebe bestehenden Profilstatus zurueck");
+    res.json(toProfile(bestehend));
+    return;
+  }
+
+  // Admin-Reset-Sperre: nur fuer Downgrade (kein aktives RC-Entitlement).
+  // Liegt ein echter Kauf vor (premiumAktiv=true), laeuft der Upgrade durch —
+  // die Sperre schuetzt nur davor, dass Admin-vergebenes Premium durch ein
+  // abgelaufenes Test-Abo entzogen wird.
+  if (!premiumAktiv && bestehend.premiumSyncLockedUntil && bestehend.premiumSyncLockedUntil > new Date()) {
+    req.log.info(
+      { userId, premiumSyncLockedUntil: bestehend.premiumSyncLockedUntil },
+      "[IAP] /me/premium/sync: kein Downgrade wegen Admin-Reset-Sperre",
+    );
     res.json(toProfile(bestehend));
     return;
   }
