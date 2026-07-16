@@ -207,7 +207,7 @@ export default function Routenplanung() {
   // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
-      if (!premium) return freeHikeUsed;
+      if (!premium) return !istSageInklusive(s.canton, s.id);
       if (isElite) return false;
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
@@ -219,7 +219,7 @@ export default function Routenplanung() {
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
       return !istSageInklusive(s.canton, s.id);
     },
-    [premium, freeHikeUsed, isElite, profile, sagas, istSageInklusive],
+    [premium, isElite, profile, sagas, istSageInklusive],
   );
 
   // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
@@ -587,7 +587,7 @@ export default function Routenplanung() {
     (routeSagaIsInPack1
       ? !istSageInklusive(saga.canton, route.sagaId ?? saga.id)
       : true);
-  const locked = sagaPackLocked || (!premium && freeHikeUsed);
+  const locked = sagaPackLocked || (!premium && !!saga?.canton && !istSageInklusive(saga.canton, route.sagaId ?? saga.id));
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 

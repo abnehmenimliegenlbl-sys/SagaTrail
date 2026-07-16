@@ -107,7 +107,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, freeHikeUsed, language, freieSagen, istSageInklusive } = useApp();
+  const { profile, premium, language, freieSagen, istSageInklusive } = useApp();
   const { loadCantonRoutes } = useCatalog();
   const {
     isElite,
@@ -536,11 +536,7 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {filteredRoutes.map((route, i) => {
-                const locked = packUnlocked
-                  ? false
-                  : premium
-                    ? !istSageInklusive(cantonName, route.sagaId ?? "")
-                    : freeHikeUsed;
+                const locked = !packUnlocked && !istSageInklusive(cantonName, route.sagaId ?? "");
                 const unlocked =
                   premium &&
                   (packUnlocked || istSageInklusive(cantonName, route.sagaId ?? ""));
