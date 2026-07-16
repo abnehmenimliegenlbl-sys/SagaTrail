@@ -76,6 +76,7 @@
     "expo-speech": "^14.0.8",
     "expo-speech-recognition": "^56.0.1",
     "expo-task-manager": "~14.0.9",
+    "expo-updates": "^57.0.7",
     "react-native-purchases": "^10.4.1",
     "react-native-view-shot": "4.0.3"
   }
