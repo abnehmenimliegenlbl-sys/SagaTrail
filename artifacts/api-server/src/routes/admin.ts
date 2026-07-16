@@ -171,6 +171,32 @@ router.post("/admin/premium/reset", async (req, res): Promise<void> => {
   res.json({ userId, premium: row.premium, premiumSyncLockedUntil: row.premiumSyncLockedUntil });
 });
 
+router.post("/admin/reset-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  // Setzt ALLE Profile auf Gratis-Stand zurueck:
+  // premium=false, purchasedPacks=[], subscriptionTier="free".
+  // premiumSyncLockedUntil wird auf +30 Tage gesetzt damit der naechste
+  // App-Start das Premium nicht sofort via RC-Sync wieder eintraegt.
+  const sperreBis = new Date();
+  sperreBis.setDate(sperreBis.getDate() + 30);
+
+  const rows = await db
+    .update(profilesTable)
+    .set({
+      premium: false,
+      premiumBis: null,
+      premiumSyncLockedUntil: sperreBis,
+      purchasedPacks: [],
+      subscriptionTier: "free",
+      updatedAt: new Date(),
+    })
+    .returning({ id: profilesTable.id });
+
+  req.log.warn({ anzahl: rows.length }, "Admin: Alle Profile auf Gratis zurueckgesetzt");
+  res.json({ zurueckgesetzt: rows.length, ids: rows.map((r) => r.id) });
+});
+
 const AppleTestUserBody = z.object({
   email: z.string().email(),
   password: z.string().min(8),
