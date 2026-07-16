@@ -7,6 +7,30 @@ const router = Router();
 const OPENDATA_BASE = "https://transport.opendata.ch/v1";
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
+/**
+ * Waehlt unter den Kandidaten-Stationen die "schweizerischste" aus.
+ *
+ * opendata.ch-IDs fuer Schweizer Stationen beginnen mit "85" (UIC-Code 85 =
+ * Schweiz). Deutsche Grenzbahnhoefe tauchen ebenfalls in der Locations-API auf
+ * (IDs wie 110XXXX oder 80XXXX), liefern aber in opendata.ch keinen
+ * vollstaendigen Fahrplan — deshalb werden sie nur als Fallback genutzt.
+ *
+ * Prioritaet: 85XXXXX > 8XXXXXX > alle anderen numerischen IDs
+ */
+function bestStation(
+  stations: Array<{ id: string | null; name: string; distance: number | null }>,
+): { id: string; name: string } | null {
+  const candidates = stations.filter(
+    (s): s is typeof s & { id: string } => !!s.id && /^\d+$/.test(s.id),
+  );
+  return (
+    candidates.find((s) => s.id.startsWith("85")) ??
+    candidates.find((s) => s.id.startsWith("8")) ??
+    candidates[0] ??
+    null
+  );
+}
+
 interface CacheEntry { data: TransportResult; ts: number }
 const cache = new Map<string, CacheEntry>();
 
@@ -63,7 +87,7 @@ router.get("/transport", async (req, res) => {
       stations: Array<{ id: string | null; name: string; distance: number | null }>;
     };
 
-    const station = locJson.stations.find(s => s.id && /^\d+$/.test(s.id));
+    const station = bestStation(locJson.stations);
     if (!station?.id) {
       const empty: TransportResult = { station: null, departures: [] };
       cache.set(key, { data: empty, ts: Date.now() });
@@ -137,7 +161,7 @@ router.get("/transport-anreise", async (req, res) => {
       stations: Array<{ id: string | null; name: string; distance: number | null }>;
     };
 
-    const station = locJson.stations.find(s => s.id && /^\d+$/.test(s.id));
+    const station = bestStation(locJson.stations);
     if (!station?.id) {
       const empty: TransportAnreiseResult = { station: null, arrivals: [] };
       cacheAnreise.set(key, { data: empty, ts: Date.now() });
