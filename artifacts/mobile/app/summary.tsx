@@ -2,10 +2,13 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import React, { useRef } from "react";
+import { Feather } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import { captureRef } from "react-native-view-shot";
 import {
+  ActivityIndicator,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -28,6 +31,10 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useSummaryStrings } from "@/lib/i18n/screens/summary";
+import {
+  getTransportStationboard,
+} from "@workspace/api-client-react";
+import type { TransportStationboard } from "@workspace/api-client-react";
 
 const WEB_TOP = 67;
 
@@ -46,6 +53,22 @@ export default function Summary() {
     ? onboardingStrings.archetypes[profile.archetype].title
     : undefined;
 
+  const [transport, setTransport] = useState<TransportStationboard | null>(null);
+  const [transportLoading, setTransportLoading] = useState(false);
+
+  // SBB live am Ziel — Abfahrten vom letzten Wegpunkt der abgeschlossenen Route.
+  useEffect(() => {
+    const g = lastHike?.geometry;
+    if (!g || g.length === 0) return;
+    const endPt = g[g.length - 1];
+    let cancelled = false;
+    setTransportLoading(true);
+    getTransportStationboard({ lat: endPt[0], lng: endPt[1] })
+      .then((result) => { if (!cancelled) { setTransport(result); setTransportLoading(false); } })
+      .catch(() => { if (!cancelled) { setTransport(null); setTransportLoading(false); } });
+    return () => { cancelled = true; };
+  }, [lastHike?.id]);
+
   if (!lastHike) {
     return (
       <Background>
@@ -63,6 +86,17 @@ export default function Summary() {
 
   const sagaTitle =
     sagas.find((s) => s.id === lastHike.sagaId)?.title ?? lastHike.routeName;
+
+  // SBB-Rueckreise: VON = Routenendpunkt, NACH = Routenstartpunkt.
+  const oeffneRueckreise = () => {
+    const g = lastHike.geometry;
+    if (!g || g.length < 2) return;
+    const von = `${g[g.length - 1][0]},${g[g.length - 1][1]}`;
+    const nach = `${g[0][0]},${g[0][1]}`;
+    Linking.openURL(
+      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
+    ).catch(() => {});
+  };
 
   // Erinnerungsfoto aus der Galerie waehlen und im Tagebuch ablegen.
   const pickPhoto = async () => {
@@ -248,6 +282,81 @@ export default function Summary() {
           />
         </View>
 
+        {/* ── SBB live am Ziel + Rückreise ──────────────────────────── */}
+        {lastHike.geometry && lastHike.geometry.length > 0 && (
+          <View style={{ marginTop: 30 }}>
+            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+              {t.transportLive}
+            </Text>
+            <View style={[styles.transportCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+              <View style={[styles.transportHeader, { marginBottom: 6 }]}>
+                <Feather name="navigation" size={15} color={colors.accent} />
+                {transport?.station && (
+                  <Text style={[styles.transportStation, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    {t.transportDepartingFrom(transport.station.name)}
+                  </Text>
+                )}
+              </View>
+              {transportLoading ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <ActivityIndicator size="small" color={colors.mutedForeground} />
+                  <Text style={[styles.transportNote, { color: colors.mutedForeground }]}>{t.transportLoading}</Text>
+                </View>
+              ) : !transport?.station ? (
+                <Text style={[styles.transportNote, { color: colors.mutedForeground }]}>{t.transportNoStation}</Text>
+              ) : transport.departures.length === 0 ? (
+                <Text style={[styles.transportNote, { color: colors.mutedForeground }]}>{t.transportError}</Text>
+              ) : (
+                transport.departures.slice(0, 6).map((dep, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 4,
+                      borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth,
+                      borderTopColor: colors.glassBorder,
+                      gap: 6,
+                    }}
+                  >
+                    <Text style={[styles.transportNote, { color: colors.foreground, fontFamily: fonts.bodyBold, width: 42 }]}>
+                      {dep.time}
+                    </Text>
+                    <Text style={[styles.transportNote, { color: colors.accent, fontFamily: fonts.bodyBold, width: 36 }]} numberOfLines={1}>
+                      {dep.category}{dep.number}
+                    </Text>
+                    <Text style={[styles.transportNote, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>
+                      {dep.to}
+                    </Text>
+                    {dep.platform ? (
+                      <Text style={[styles.transportNote, { color: colors.mutedForeground, width: 36, textAlign: "right" }]} numberOfLines={1}>
+                        {t.transportPlatform(dep.platform)}
+                      </Text>
+                    ) : null}
+                    {dep.delay != null && dep.delay > 0 ? (
+                      <Text style={[styles.transportNote, { color: "#EF4444", width: 44, textAlign: "right" }]}>
+                        {t.transportDelay(dep.delay)}
+                      </Text>
+                    ) : dep.delay === 0 ? (
+                      <Text style={[styles.transportNote, { color: "#78C800", width: 44, textAlign: "right" }]}>
+                        {t.transportOnTime}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))
+              )}
+            </View>
+            {lastHike.geometry.length >= 2 && (
+              <PrimaryButton
+                variant="secondary"
+                label={t.planReturn}
+                onPress={oeffneRueckreise}
+                style={{ marginTop: 8 }}
+              />
+            )}
+          </View>
+        )}
+
         <PrimaryButton
           variant="secondary"
           label={t.shareBtn}
@@ -340,6 +449,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     marginBottom: 4,
   },
+  transportCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+  },
+  transportHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  transportStation: { fontFamily: fonts.body, fontSize: 12, flex: 1 },
+  transportNote: { fontFamily: fonts.body, fontSize: 12 },
   // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
   // damit react-native-view-shot die Karte abfotografieren kann.
   shareCardOffscreen: { position: "absolute", left: -1000, top: 0 },

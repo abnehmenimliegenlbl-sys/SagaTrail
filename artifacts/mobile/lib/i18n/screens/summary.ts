@@ -23,6 +23,15 @@ export interface SummaryStrings {
   changePhoto: string;
   hikePhotosTitle: string;
   exportGpx: string;
+  transportLive: string;
+  transportLoading: string;
+  transportNoStation: string;
+  transportError: string;
+  transportDepartingFrom: (name: string) => string;
+  transportPlatform: (p: string) => string;
+  transportDelay: (min: number) => string;
+  transportOnTime: string;
+  planReturn: string;
 }
 
 const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
@@ -50,6 +59,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Foto ändern",
     hikePhotosTitle: "Fotos vom Herzort",
     exportGpx: "GPX exportieren",
+    transportLive: "SBB live am Ziel",
+    transportLoading: "Fahrplan wird geladen …",
+    transportNoStation: "Kein Bahnhof in der Nähe gefunden.",
+    transportError: "Fahrplan konnte nicht geladen werden.",
+    transportDepartingFrom: (name) => `Ab ${name}`,
+    transportPlatform: (p) => `Gl. ${p}`,
+    transportDelay: (min) => `+${min} Min.`,
+    transportOnTime: "pünktlich",
+    planReturn: "Mit SBB zurückreisen",
   },
   gsw: {
     noHikeFound: "Kei Wanderig gfunde.",
@@ -75,6 +93,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Foto ändere",
     hikePhotosTitle: "Fotos vom Herzort",
     exportGpx: "GPX exportiere",
+    transportLive: "SBB live am Ziel",
+    transportLoading: "Fahrplan wird gladä …",
+    transportNoStation: "Kei Bahnhof id Nächi gfunde.",
+    transportError: "Fahrplan isch nid ladbar gsi.",
+    transportDepartingFrom: (name) => `Ab ${name}`,
+    transportPlatform: (p) => `Gl. ${p}`,
+    transportDelay: (min) => `+${min} Min.`,
+    transportOnTime: "pünktlich",
+    planReturn: "Mit de SBB zruggfahre",
   },
   en: {
     noHikeFound: "No hike found.",
@@ -100,6 +127,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Change photo",
     hikePhotosTitle: "Photos from the heart of the legend",
     exportGpx: "Export GPX",
+    transportLive: "Live departures at destination",
+    transportLoading: "Loading timetable …",
+    transportNoStation: "No station found nearby.",
+    transportError: "Could not load timetable.",
+    transportDepartingFrom: (name) => `From ${name}`,
+    transportPlatform: (p) => `Pl. ${p}`,
+    transportDelay: (min) => `+${min} min`,
+    transportOnTime: "on time",
+    planReturn: "Return by SBB train",
   },
   fr: {
     noHikeFound: "Aucune randonnée trouvée.",
@@ -125,6 +161,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Changer la photo",
     hikePhotosTitle: "Photos du cœur de la légende",
     exportGpx: "Exporter GPX",
+    transportLive: "CFF en direct à l'arrivée",
+    transportLoading: "Chargement des horaires …",
+    transportNoStation: "Aucune gare trouvée à proximité.",
+    transportError: "Impossible de charger les horaires.",
+    transportDepartingFrom: (name) => `De ${name}`,
+    transportPlatform: (p) => `Voie ${p}`,
+    transportDelay: (min) => `+${min} min`,
+    transportOnTime: "à l'heure",
+    planReturn: "Retourner en train SBB",
   },
   it: {
     noHikeFound: "Nessuna escursione trovata.",
@@ -150,6 +195,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Cambia foto",
     hikePhotosTitle: "Foto dal cuore della leggenda",
     exportGpx: "Esporta GPX",
+    transportLive: "FFS in tempo reale a destinazione",
+    transportLoading: "Caricamento orari …",
+    transportNoStation: "Nessuna stazione trovata nelle vicinanze.",
+    transportError: "Impossibile caricare gli orari.",
+    transportDepartingFrom: (name) => `Da ${name}`,
+    transportPlatform: (p) => `Bin. ${p}`,
+    transportDelay: (min) => `+${min} min`,
+    transportOnTime: "in orario",
+    planReturn: "Tornare in treno SBB",
   },
   es: {
     noHikeFound: "No se encontró ninguna caminata.",
@@ -175,6 +229,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Cambiar foto",
     hikePhotosTitle: "Fotos del corazón de la leyenda",
     exportGpx: "Exportar GPX",
+    transportLive: "CFF en directo en el destino",
+    transportLoading: "Cargando horarios …",
+    transportNoStation: "No se encontró ninguna estación cercana.",
+    transportError: "No se pudieron cargar los horarios.",
+    transportDepartingFrom: (name) => `Desde ${name}`,
+    transportPlatform: (p) => `Vía ${p}`,
+    transportDelay: (min) => `+${min} min`,
+    transportOnTime: "puntual",
+    planReturn: "Volver en tren SBB",
   },
   pt: {
     noHikeFound: "Nenhuma caminhada encontrada.",
@@ -200,6 +263,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Trocar foto",
     hikePhotosTitle: "Fotos do coração da lenda",
     exportGpx: "Exportar GPX",
+    transportLive: "FFS ao vivo no destino",
+    transportLoading: "A carregar horários …",
+    transportNoStation: "Nenhuma estação encontrada nas proximidades.",
+    transportError: "Não foi possível carregar os horários.",
+    transportDepartingFrom: (name) => `De ${name}`,
+    transportPlatform: (p) => `Pl. ${p}`,
+    transportDelay: (min) => `+${min} min`,
+    transportOnTime: "pontual",
+    planReturn: "Voltar de trem SBB",
   },
   zh: {
     noHikeFound: "未找到徒步记录。",
@@ -225,6 +297,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "更换照片",
     hikePhotosTitle: "传说核心地的照片",
     exportGpx: "导出 GPX",
+    transportLive: "目的地实时班次",
+    transportLoading: "正在加载时刻表 …",
+    transportNoStation: "附近未找到车站。",
+    transportError: "无法加载时刻表。",
+    transportDepartingFrom: (name) => `从 ${name} 出发`,
+    transportPlatform: (p) => `${p} 站台`,
+    transportDelay: (min) => `+${min} 分钟`,
+    transportOnTime: "准时",
+    planReturn: "乘SBB火车返回",
   },
   ru: {
     noHikeFound: "Поход не найден.",
@@ -250,6 +331,15 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Изменить фото",
     hikePhotosTitle: "Фото из сердца легенды",
     exportGpx: "Экспортировать GPX",
+    transportLive: "ФЖД в реальном времени",
+    transportLoading: "Загрузка расписания …",
+    transportNoStation: "Станция поблизости не найдена.",
+    transportError: "Не удалось загрузить расписание.",
+    transportDepartingFrom: (name) => `От ${name}`,
+    transportPlatform: (p) => `Пл. ${p}`,
+    transportDelay: (min) => `+${min} мин`,
+    transportOnTime: "вовремя",
+    planReturn: "Вернуться на поезде SBB",
   },
 };
 
