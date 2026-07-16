@@ -217,9 +217,9 @@ export default function Routenplanung() {
       if (!isInPack1) return true; // Pack-2-Sage: noch nicht kaufbar
       const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
-      return !istSageInklusive(s.canton, s.id);
+      return !s.isAnchorPlace;
     },
-    [premium, isElite, profile, sagas, istSageInklusive],
+    [premium, isElite, profile, sagas],
   );
 
   // Nur freigeschaltete Sagen im Picker anzeigen. Gesperrte Kandidaten werden
@@ -580,14 +580,10 @@ export default function Routenplanung() {
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routeEffectivePackSlug);
   // Pack-2+-Sagen sind nie via Pack 1 entsperrt, auch nicht via Elite entfaellt dies nicht
   const packUnlocked = premium && (isElite || (routeSagaIsInPack1 && dbPackUnlocked));
-  const sagaPackLocked =
-    premium &&
-    !packUnlocked &&
-    !!saga?.canton &&
-    (routeSagaIsInPack1
-      ? !istSageInklusive(saga.canton, route.sagaId ?? saga.id)
-      : true);
-  const locked = sagaPackLocked || (!premium && !saga?.isAnchorPlace);
+  // Premium ohne Paket: nur Ankersagen zugaenglich. Pack-Kauf schaltet weitere frei.
+  const sagaPackLocked = premium && !packUnlocked && !saga?.isAnchorPlace;
+  // Freemium: nach erstem Gratis-Hike alle Routen gesperrt — Upgrade erforderlich.
+  const locked = sagaPackLocked || (!premium && freeHikeUsed);
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 

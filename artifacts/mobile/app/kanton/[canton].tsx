@@ -107,7 +107,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, language } = useApp();
+  const { profile, premium, language, freeHikeUsed } = useApp();
   const { loadCantonRoutes, sagas } = useCatalog();
   const {
     isElite,
@@ -537,10 +537,13 @@ export default function KantonRouten() {
               </Text>
               {filteredRoutes.map((route, i) => {
                 const routeSaga = sagas.find((s) => s.id === route.sagaId);
-                const locked = !packUnlocked && !routeSaga?.isAnchorPlace;
-                const unlocked =
-                  premium &&
-                  (packUnlocked || !!routeSaga?.isAnchorPlace);
+                const isAnchorRoute = !!routeSaga?.isAnchorPlace;
+                // Freemium: gesperrt sobald Gratis-Hike verbraucht oder Sage kein Ankerplatz
+                const freemiumLocked = !premium && (freeHikeUsed || !isAnchorRoute);
+                // Premium ohne Paket: Pack-Sagen gesperrt bis Kauf
+                const packLocked = premium && !packUnlocked && !isAnchorRoute;
+                const locked = freemiumLocked || packLocked;
+                const unlocked = premium && (packUnlocked || isAnchorRoute);
                 return (
                   <RouteCard
                     key={route.id}
