@@ -36,6 +36,7 @@ import {
   fetchWikidataImage,
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
+  searchAiPoiKnowledge,
   searchCantonLegend,
   searchNearbyWikipedia,
   type WikiSummary,
@@ -234,6 +235,11 @@ async function enrichPoiWithWikipedia(
       const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
       if (wiki) return { ...poi, wiki };
     }
+    // Vierte Stufe: Claude-Wissenssuche — greift nur, wenn Wikipedia und
+    // Geo-Suche komplett leer ausgingen. Antwortet mit "UNBEKANNT" wenn kein
+    // verlässliches Wissen vorhanden, damit kein halluzinierter Text erscheint.
+    const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de");
+    if (aiWiki) return { ...poi, wiki: aiWiki };
   } catch (err) {
     log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
   }

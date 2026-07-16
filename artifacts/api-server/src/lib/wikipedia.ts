@@ -1,3 +1,4 @@
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 import type { Logger } from "pino";
 
 /**
@@ -197,6 +198,71 @@ export async function searchNearbyWikipedia(
     if (summary) return summary;
   }
   return null;
+}
+
+// Separater In-Memory-Cache fuer KI-generierte POI-Informationen.
+// Laengere TTL als Wikipedia (7 Tage), da KI-Antworten nicht veralten.
+const aiPoiCache = new Map<string, { at: number; summary: WikiSummary | null }>();
+const AI_POI_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Vierte Anreicherungsstufe: fragt Claude nach faktischem Wissen ueber einen
+ * konkreten Schweizer POI, wenn alle Wikipedia-Pfade erfolglos waren.
+ *
+ * Claude antwortet entweder mit 2–3 faktischen Saetzen ODER mit dem Wort
+ * "UNBEKANNT" (wenn kein konkretes Wissen vorliegt). Letzteres wird als null
+ * zurueckgegeben, damit kein halluzinierter Inhalt in die App gelangt.
+ *
+ * Ergebnisse (inkl. null) werden 7 Tage gecacht, um Kosten zu minimieren.
+ */
+export async function searchAiPoiKnowledge(
+  name: string,
+  kind: string,
+  lang: string = DEFAULT_LANG,
+): Promise<WikiSummary | null> {
+  const key = `${lang}::${name}::${kind}`;
+  const hit = aiPoiCache.get(key);
+  if (hit && Date.now() - hit.at < AI_POI_TTL_MS) return hit.summary;
+
+  const langLabels: Record<string, string> = {
+    de: "Deutsch", en: "English", fr: "Français", it: "Italiano",
+    es: "Español", pt: "Português", zh: "中文", ru: "Русский",
+  };
+  const langLabel = langLabels[lang] ?? "Deutsch";
+
+  const prompt = [
+    `Du bist ein Experte für Schweizer Kulturgeschichte und Sehenswürdigkeiten.`,
+    ``,
+    `Ort: "${name}"`,
+    `OSM-Kategorie: ${kind}`,
+    ``,
+    `Aufgabe: Schreibe 2–3 faktische Sätze über diesen spezifischen Ort in der Schweiz`,
+    `(Bedeutung, Geschichte, was man vor Ort sieht). Antworte auf ${langLabel}.`,
+    ``,
+    `Wenn du diesen konkreten Ort nicht kennst oder keine verlässlichen Fakten hast,`,
+    `antworte ausschliesslich mit dem Wort: UNBEKANNT`,
+    ``,
+    `Keine Einleitung, keine Erklärungen — nur den Sachtext oder UNBEKANNT.`,
+  ].join("\n");
+
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 256,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const textBlock = message.content.find((b) => b.type === "text");
+    const text = textBlock?.type === "text" ? textBlock.text.trim() : "";
+    if (!text || text.toUpperCase().startsWith("UNBEKANNT") || text.length < 20) {
+      aiPoiCache.set(key, { at: Date.now(), summary: null });
+      return null;
+    }
+    const summary: WikiSummary = { title: name, extract: text, url: "", lang, image: null };
+    aiPoiCache.set(key, { at: Date.now(), summary });
+    return summary;
+  } catch {
+    return null;
+  }
 }
 
 /**
