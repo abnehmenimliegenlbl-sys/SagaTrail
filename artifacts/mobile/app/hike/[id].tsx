@@ -2572,41 +2572,21 @@ export default function LiveHike() {
 
             {/* Waypoint-Foto-Button — immer sichtbar */}
             <View style={styles.photoRow}>
-              <Pressable
-                onPress={takePhoto}
-                disabled={photoUploading}
-                style={[
-                  styles.photoFab,
-                  {
-                    borderColor: photoUploadFeedback === "error" ? colors.accent : colors.glassBorder,
-                    backgroundColor: colors.glassBg,
-                    opacity: photoUploading ? 0.6 : 1,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t.photoAddBtn}
-              >
-                {photoUploading ? (
-                  <ActivityIndicator size={14} color={colors.mutedForeground} />
-                ) : (
-                  <Feather
-                    name="camera"
-                    size={15}
-                    color={photoUploadFeedback === "error" ? colors.accent : colors.mutedForeground}
-                  />
-                )}
-                <Text style={[styles.photoFabText, {
-                  color: photoUploadFeedback === "error" ? colors.accent : colors.mutedForeground,
-                }]}>
-                  {photoUploading
+              <PrimaryButton
+                variant="secondary"
+                label={
+                  photoUploading
                     ? t.photoUploading
                     : photoUploadFeedback === "ok"
                     ? t.photoUploaded
                     : photoUploadFeedback === "error"
                     ? t.photoUploadError
-                    : t.photoAddBtn}
-                </Text>
-              </Pressable>
+                    : t.photoAddBtn
+                }
+                onPress={takePhoto}
+                disabled={photoUploading}
+                loading={photoUploading}
+              />
 
               {/* Thumbnail-Strip der aufgenommenen Fotos */}
               {hikePhotos.length > 0 && (

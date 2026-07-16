@@ -166,8 +166,8 @@ export function buildSwisstopoHtml(
   #stt-legende .stt-start, #stt-legende .stt-ziel, #stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   #stt-legende .stt-seilbahn-station { box-shadow: none; }
   #stt-legende .stt-poi, #stt-legende .stt-partner { box-shadow: none; cursor: default; }
-  /* --- 2D/3D/Sat-Toggle oben rechts --- */
-  #stt-mode { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; right: 10px; z-index: 10;
+  /* --- 2D/3D/Sat-Toggle oben links --- */
+  #stt-mode { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; left: 10px; z-index: 10;
     display: flex; border-radius: 8px; overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.45);
     font-family: -apple-system, system-ui, sans-serif; }
@@ -190,6 +190,7 @@ export function buildSwisstopoHtml(
   <button class="stt-mbtn" id="btn-3d" onclick="setMode('3d')">3D</button>
   <button class="stt-mbtn" id="btn-sat" onclick="setMode('sat')">Sat</button>
 </div>
+<div id="stt-legende" class="zu" style="display:none"></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 (function () {
@@ -426,8 +427,8 @@ export function buildSwisstopoHtml(
     /* Legende */
     if (legende) {
       var div = document.getElementById('stt-legende');
-      if (!div) { div = document.createElement('div'); div.id = 'stt-legende'; document.body.appendChild(div); }
-      div.classList.add('zu');
+      if (!div) { div = document.createElement('div'); div.id = 'stt-legende'; div.classList.add('zu'); document.body.appendChild(div); }
+      div.style.display = 'block';
       function zeile(sym, txt) { return '<div class="stt-legende-zeile"><span class="stt-legende-symbol">' + sym + '</span><span>' + txt + '</span></div>'; }
       var rows = '';
       if (geometry && geometry.length > 1) {
