@@ -23,7 +23,7 @@ import {
   ActivityIndicator,
   Image,
   Linking,
-  Modal,
+
   Platform,
   Pressable,
   ScrollView,
@@ -997,6 +997,13 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [selectedPoi, storyLanguage]);
+
+  // Partner-View-Tracking: sobald das Overlay erscheint, einmal fire-and-forget.
+  useEffect(() => {
+    if (!selectedPartner?.id) return;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/partners/${selectedPartner.id}/view`, { method: "POST" }).catch(() => {});
+  }, [selectedPartner?.id]);
 
   // POI-Panel automatisch schliessen, wenn der Nutzer mindestens 500 m vom
   // gewaehlten POI entfernt ist, oder wenn ein neuer POI in der Naehe auftaucht.
@@ -2323,20 +2330,18 @@ export default function LiveHike() {
           </Animated.View>
         )}
 
-        {/* Detailansicht eines angetippten Point of Interest auf der Karte */}
-        <Modal
-          visible={!!selectedPoi}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setSelectedPoi(null)}
-        >
+        {/* Detailansicht eines angetippten Point of Interest auf der Karte.
+            KEIN natives Modal: transparent+fade Modal hinterlaesst auf iOS eine
+            unsichtbare Touch-blockierende Schicht nach dem Schliessen. Stattdessen
+            absolut positioniertes Overlay im normalen View-Baum. */}
+        {!!selectedPoi && (
           <Pressable
-            style={styles.poiModalBackdrop}
+            style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
             onPress={() => setSelectedPoi(null)}
           >
             <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
               <Glass>
-                {selectedPoi?.wiki?.image && (
+                {selectedPoi.wiki?.image && (
                   <Image
                     source={{ uri: selectedPoi.wiki.image }}
                     style={styles.poiModalImage}
@@ -2350,7 +2355,7 @@ export default function LiveHike() {
                       {t.poiDetailEyebrow}
                     </Text>
                     <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                      {selectedPoi?.name}
+                      {selectedPoi.name}
                     </Text>
                   </View>
                   <Pressable
@@ -2370,45 +2375,22 @@ export default function LiveHike() {
                 >
                   {poiStoryLoading && !poiStory
                     ? t.poiStoryLoading
-                    : (poiStory ?? selectedPoi?.wiki?.extract ?? t.notAvailable)}
+                    : (poiStory ?? selectedPoi.wiki?.extract ?? t.notAvailable)}
                 </Text>
               </Glass>
             </Pressable>
           </Pressable>
-        </Modal>
+        )}
 
-        {/* Detailansicht eines angetippten Partnerbetriebs auf der Karte */}
-        <Modal
-          visible={!!selectedPartner}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setSelectedPartner(null)}
-          onShow={() => {
-            // View-Tracking: fire-and-forget, kein await
-            if (selectedPartner?.id) {
-              const base = getApiBaseUrl() ?? "";
-              fetch(`${base}/partners/${selectedPartner.id}/view`, { method: "POST" }).catch(() => {});
-            }
-          }}
-        >
+        {/* Detailansicht eines angetippten Partnerbetriebs auf der Karte.
+            Gleiche Strategie: kein Modal, absolut positioniertes Overlay. */}
+        {!!selectedPartner && (
           <Pressable
-            style={styles.poiModalBackdrop}
+            style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
             onPress={() => setSelectedPartner(null)}
           >
             <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
               <Glass>
-                {false && (
-                  <Image
-                    source={{ uri: "" }}
-                    style={{
-                      width: "100%",
-                      height: 140,
-                      borderRadius: 10,
-                      marginBottom: 10,
-                    }}
-                    resizeMode="cover"
-                  />
-                )}
                 <View style={styles.poiRow}>
                   <Feather name="coffee" size={18} color={colors.accent} />
                   <View style={{ flex: 1 }}>
@@ -2416,7 +2398,7 @@ export default function LiveHike() {
                       {t.partnerDetailEyebrow}
                     </Text>
                     <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                      {selectedPartner?.name}
+                      {selectedPartner.name}
                     </Text>
                   </View>
                   <Pressable
@@ -2428,7 +2410,7 @@ export default function LiveHike() {
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </Pressable>
                 </View>
-                {selectedPartner?.beschreibung && (
+                {selectedPartner.beschreibung && (
                   <Text
                     style={[
                       styles.poiSummary,
@@ -2438,10 +2420,9 @@ export default function LiveHike() {
                     {selectedPartner.beschreibung}
                   </Text>
                 )}
-                {selectedPartner?.angebot && (
+                {selectedPartner.angebot && (
                   <Pressable
                     onPress={() => {
-                      // Tap-Tracking: fire-and-forget
                       if (selectedPartner.id) {
                         const base = getApiBaseUrl() ?? "";
                         fetch(`${base}/partners/${selectedPartner.id}/tap`, { method: "POST" }).catch(() => {});
@@ -2461,7 +2442,7 @@ export default function LiveHike() {
               </Glass>
             </Pressable>
           </Pressable>
-        </Modal>
+        )}
 
         {/* Statusleiste in Frozen Glass */}
         <Glass style={{ marginTop: 14 }}>
