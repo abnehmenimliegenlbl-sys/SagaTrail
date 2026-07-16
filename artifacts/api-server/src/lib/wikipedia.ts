@@ -63,7 +63,7 @@ export async function fetchWikipediaSummary(
   lang: string = DEFAULT_LANG,
   refLat?: number,
   refLng?: number,
-  maxDistKm: number = 150,
+  maxDistKm: number = 50,
 ): Promise<WikiSummary | null> {
   const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   const json = await fetchJson<WikiRestSummary>(url);
@@ -216,9 +216,15 @@ export async function searchNearbyWikipedia(
   // (z.B. "Pfalz" → "Rheinland-Pfalz" via Titelsuche), wird er verworfen.
   const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&format=json&srlimit=5&origin=*`;
   const searchJson = await fetchJson<{ query?: { search?: { title: string }[] } }>(searchUrl);
-  const titleHits = (searchJson?.query?.search ?? []).filter((h) =>
-    namesRoughlyMatch(h.title, name),
-  );
+  // Strikterer Vergleich als namesRoughlyMatch: Titelsuche findet Artikel per
+  // Keyword-Relevanz, nicht per Naehe — ein Artikel darf daher max. 30 %
+  // laenger sein als der POI-Name, um Fehlzuordnungen zu vermeiden
+  // (z.B. "Pfalz" → "Kurpfalz": 8/5 = 1.6 > 1.3 → abgelehnt).
+  const maxLen = normalizeName(name).length * 1.3;
+  const titleHits = (searchJson?.query?.search ?? []).filter((h) => {
+    if (!namesRoughlyMatch(h.title, name)) return false;
+    return normalizeName(h.title).length <= maxLen;
+  });
   for (const hit of titleHits) {
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
     if (summary) return summary;
