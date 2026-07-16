@@ -2154,7 +2154,7 @@ export default function LiveHike() {
               pendingKarteActionRef.current?.();
               pendingKarteActionRef.current = null;
             }}
-            renderKarte={(hoehe) =>
+            renderKarte={(hoehe, safeAreaTop) =>
               mapCenter ? (
                 <SwisstopoMap
                   center={mapCenter}
@@ -2166,6 +2166,7 @@ export default function LiveHike() {
                   offlineTiles={offlineTiles}
                   aerialways={aerialways}
                   pois={pois}
+                  safeAreaInsetTop={safeAreaTop}
                   onPoiPress={(id) => {
                     const poi = pois.find((p) => p.id === id);
                     if (poi) {

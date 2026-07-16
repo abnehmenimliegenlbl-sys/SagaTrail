@@ -29,6 +29,9 @@ export interface SwisstopoMapProps {
   pickerMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   legend?: MapLegendLabels | null;
+  /** Sicherer Bereich oben (iOS-Statusleiste). Schiebt den 2D/3D/Sat-Toggle
+   *  nach unten damit er nicht hinter der Statusleiste verschwindet. */
+  safeAreaInsetTop?: number;
 }
 
 /** Beschriftungen der Kartenlegende (bereits lokalisiert vom Host). */
@@ -72,7 +75,8 @@ export function buildSwisstopoHtml(
   partners?: MapPoi[] | null,
   pickerMode?: boolean,
   altGeometry?: number[][] | null,
-  waterSources?: MapPoi[] | null
+  waterSources?: MapPoi[] | null,
+  safeAreaInsetTop?: number
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -156,7 +160,7 @@ export function buildSwisstopoHtml(
   #stt-legende .stt-seilbahn-station { box-shadow: none; }
   #stt-legende .stt-poi, #stt-legende .stt-partner { box-shadow: none; cursor: default; }
   /* --- 2D/3D/Sat-Toggle oben rechts --- */
-  #stt-mode { position: absolute; top: 10px; right: 10px; z-index: 10;
+  #stt-mode { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; right: 10px; z-index: 10;
     display: flex; border-radius: 8px; overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.45);
     font-family: -apple-system, system-ui, sans-serif; }

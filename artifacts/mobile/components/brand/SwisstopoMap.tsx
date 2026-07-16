@@ -27,6 +27,7 @@ export function SwisstopoMap({
   waterSources,
   pickerMode,
   onMapClick,
+  safeAreaInsetTop = 0,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -63,9 +64,10 @@ export function SwisstopoMap({
         partners,
         pickerMode,
         altGeometry,
-        waterSources
+        waterSources,
+        safeAreaInsetTop
       ),
-    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, pickerMode, t]
+    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, pickerMode, safeAreaInsetTop, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

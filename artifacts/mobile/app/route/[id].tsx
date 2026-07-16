@@ -715,7 +715,7 @@ export default function Routenplanung() {
         <View style={{ marginTop: 18 }}>
           <KarteVollbild
             height={200}
-            renderKarte={(hoehe) =>
+            renderKarte={(hoehe, safeAreaTop) =>
               route.coordinates ? (
                 <SwisstopoMap
                   center={route.coordinates}
@@ -725,6 +725,7 @@ export default function Routenplanung() {
                   aerialways={aerialways}
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
+                  safeAreaInsetTop={safeAreaTop}
                 />
               ) : (
                 <RouteMap progress={0.15} height={hoehe} />

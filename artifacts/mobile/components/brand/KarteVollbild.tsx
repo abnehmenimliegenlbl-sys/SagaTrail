@@ -15,7 +15,7 @@ interface KarteVollbildProps {
   /** Hoehe der eingebetteten (nicht-Vollbild-)Karte. */
   height?: number;
   /** Rendert die Karte fuer eine gegebene Hoehe (einmal klein, einmal Vollbild). */
-  renderKarte: (hoehe: number) => React.ReactNode;
+  renderKarte: (hoehe: number, safeAreaTop: number) => React.ReactNode;
   /**
    * Wird aufgerufen, sobald der Vollbild-Zustand sich aendert. Erlaubt es der
    * aufrufenden Seite, den aktuellen Vollbild-Status mitzuverfolgen.
@@ -80,7 +80,7 @@ export function KarteVollbild({
       <View style={{ height }}>
         {/* Im Vollbild laeuft nur EINE Karteninstanz (WebView/iframe ist
             teuer) — die eingebettete Karte pausiert solange als leere Flaeche. */}
-        {!vollbild && renderKarte(height)}
+        {!vollbild && renderKarte(height, 0)}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Karte im Vollbild anzeigen"
@@ -102,7 +102,7 @@ export function KarteVollbild({
         onDismiss={onFullyClosed}
       >
         <View style={[styles.vollbild, { backgroundColor: colors.background }]}>
-          {renderKarte(fensterHoehe)}
+          {renderKarte(fensterHoehe, insets.top)}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Vollbild schliessen"
