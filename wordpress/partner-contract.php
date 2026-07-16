@@ -119,7 +119,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
 
     $pdf->SetFont( 'Helvetica', '', 9 );
     $pdf->SetTextColor( 120, 120, 120 );
-    $pdf->Cell( 0, 5, 'SagaTrail GmbH  |  info@sagatrail.ch  |  www.sagatrail.ch', 0, 1, 'L' );
+    $pdf->Cell( 0, 5, 'A.i.L. by Koch  |  Mühlemattstrasse 11, 4104 Oberwil BL  |  info@sagatrail.ch', 0, 1, 'L' );
     $pdf->Ln( 4 );
 
     // Trennlinie rot
@@ -145,7 +145,8 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetFont( 'Helvetica', '', 9 );
 
     $zeilen = array(
-        'Anbieter:',       'SagaTrail GmbH, info@sagatrail.ch',
+        'Anbieter:',       'A.i.L. by Koch, Mühlemattstrasse 11, 4104 Oberwil BL',
+        'UID:',            'CHE-286.962.827  |  info@sagatrail.ch',
         'Partner:',        $data['betriebs_name'] . ', ' . $data['ort'],
         'Kontaktperson:',  $data['kontakt_name'] . ', ' . $data['kontakt_email'],
     );
@@ -216,7 +217,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetFont( 'Helvetica', 'B', 10 );
     $pdf->Cell( 0, 6, 'Unterschriften', 0, 1, 'L' );
     $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->Cell( 85, 5, 'SagaTrail GmbH', 0, 0 );
+    $pdf->Cell( 85, 5, 'A.i.L. by Koch', 0, 0 );
     $pdf->Cell( 0,  5, $data['betriebs_name'], 0, 1 );
     $pdf->Ln( 3 );
 
@@ -246,7 +247,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetY( -20 );
     $pdf->SetFont( 'Helvetica', 'I', 8 );
     $pdf->SetTextColor( 150, 150, 150 );
-    $pdf->Cell( 0, 5, 'SagaTrail – www.sagatrail.ch – info@sagatrail.ch  |  Referenz: ' . $ref, 0, 0, 'C' );
+    $pdf->Cell( 0, 5, 'A.i.L. by Koch – www.sagatrail.ch – info@sagatrail.ch  |  Referenz: ' . $ref, 0, 0, 'C' );
 
     return $pdf->Output( 'S' ); // Binärstring zurückgeben
 }
@@ -295,7 +296,7 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
     $html .= '<h2 style="border:none;font-size:18px">Partnerschaftsvereinbarung</h2>';
     $html .= '<p><strong>Referenz:</strong> ' . esc_html( $ref ) . ' &nbsp;|&nbsp; <strong>Datum:</strong> ' . esc_html( $datum ) . '</p>';
     $html .= '<h2>Vertragsparteien</h2>';
-    $html .= '<table><tr><td><strong>Anbieter:</strong></td><td>SagaTrail GmbH, info@sagatrail.ch</td></tr>';
+    $html .= '<table><tr><td><strong>Anbieter:</strong></td><td>A.i.L. by Koch, Mühlemattstrasse 11, 4104 Oberwil BL</td></tr><tr><td><strong>UID:</strong></td><td>CHE-286.962.827 &nbsp;|&nbsp; info@sagatrail.ch</td></tr>';
     $html .= '<tr><td><strong>Partner:</strong></td><td>' . esc_html( $data['betriebs_name'] ) . ', ' . esc_html( $data['ort'] ) . '</td></tr>';
     $html .= '<tr><td><strong>Kontakt:</strong></td><td>' . esc_html( $data['kontakt_name'] ) . ', ' . esc_html( $data['kontakt_email'] ) . '</td></tr></table>';
     $html .= '<h2>Leistungen (Paket ' . esc_html( $paket_name ) . ')</h2><ul>' . $li_html . '</ul>';
