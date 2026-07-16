@@ -33,6 +33,7 @@ import {
 } from "./geo";
 import {
   fetchWikipediaSummary,
+  fetchWikidataImage,
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
   searchCantonLegend,
@@ -179,6 +180,17 @@ const poiRefreshInFlight = new Set<string>();
  * (enthaelt bereits Sprache + Titel), sonst der `wikidata`-Tag (Q-ID -> Titel
  * der Zielsprache), sonst kein Treffer.
  */
+/**
+ * Laedt das Wikidata-P18-Bild (falls vorhanden) und fuegt es in ein bereits
+ * gefundenes WikiSummary ein. Vermeidet einen zweiten Netzwerkaufruf, wenn
+ * das Bild schon aus der Wikipedia-REST-API kommt.
+ */
+async function withP18Image(wiki: WikiSummary, qid: string | null): Promise<WikiSummary> {
+  if (wiki.image || !qid) return wiki;
+  const image = await fetchWikidataImage(qid);
+  return image ? { ...wiki, image } : wiki;
+}
+
 async function enrichPoiWithWikipedia(
   poi: RawPoi,
   log: Logger,
@@ -187,13 +199,30 @@ async function enrichPoiWithWikipedia(
   try {
     if (poi.wikipediaTag) {
       const wiki = await resolveOsmWikipediaTag(poi.wikipediaTag);
-      if (wiki) return { ...poi, wiki };
+      if (wiki) return { ...poi, wiki: await withP18Image(wiki, poi.wikidataTag) };
     }
     if (poi.wikidataTag) {
+      // Titel und P18-Bild parallel auflosen — beides kommt aus Wikidata, aber
+      // resolveWikidataTitle laedt nur Sitelinks, fetchWikidataImage nur Claims.
+      // Statt zwei serieller Requests: Titel zuerst (brauchen wir fuer Summary),
+      // dann Summary + P18 parallel.
       const title = await resolveWikidataTitle(poi.wikidataTag);
       if (title) {
-        const wiki = await fetchWikipediaSummary(title);
-        if (wiki) return { ...poi, wiki };
+        const [wiki, p18Image] = await Promise.all([
+          fetchWikipediaSummary(title),
+          fetchWikidataImage(poi.wikidataTag),
+        ]);
+        if (wiki) return { ...poi, wiki: wiki.image ? wiki : { ...wiki, image: p18Image } };
+        // Kein Wikipedia-Artikel, aber Bild vorhanden: minimales wiki-Objekt
+        if (p18Image) {
+          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: p18Image } };
+        }
+      } else {
+        // Kein Wikipedia-Eintrag in der Zielsprache — trotzdem P18-Bild probieren.
+        const p18Image = await fetchWikidataImage(poi.wikidataTag);
+        if (p18Image) {
+          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: p18Image } };
+        }
       }
     }
     // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-

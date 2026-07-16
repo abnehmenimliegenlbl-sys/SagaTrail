@@ -68,6 +68,16 @@ interface WikidataEntityResponse {
   entities?: Record<string, { sitelinks?: Record<string, { title?: string }> }>;
 }
 
+interface WikidataClaimsResponse {
+  entities?: Record<
+    string,
+    {
+      sitelinks?: Record<string, { title?: string }>;
+      claims?: Record<string, Array<{ mainsnak?: { datavalue?: { value?: unknown } } }>>;
+    }
+  >;
+}
+
 /** Loest eine Wikidata-Q-ID auf den Artikeltitel der Zielsprache auf (falls vorhanden). */
 export async function resolveWikidataTitle(
   qid: string,
@@ -77,6 +87,28 @@ export async function resolveWikidataTitle(
   const json = await fetchJson<WikidataEntityResponse>(url);
   const entity = json?.entities?.[qid];
   return entity?.sitelinks?.[`${lang}wiki`]?.title ?? entity?.sitelinks?.enwiki?.title ?? null;
+}
+
+/**
+ * Laedt das Hauptbild (Wikidata-Property P18) eines Objekts und gibt eine
+ * Wikimedia-Commons-URL in der angegebenen Breite zurueck.
+ *
+ * Viele Schweizer OSM-Objekte (historische Brunnen, Kapellen usw.) haben auf
+ * Wikipedia kein Hauptbild und liefern daher kein `thumbnail` in der REST-API.
+ * Das Wikidata-P18-Bild ist haeufig trotzdem vorhanden und qualitativ besser.
+ */
+export async function fetchWikidataImage(
+  qid: string,
+  widthPx = 600,
+): Promise<string | null> {
+  const url = `https://www.wikidata.org/wiki/Special:EntityData/${encodeURIComponent(qid)}.json`;
+  const json = await fetchJson<WikidataClaimsResponse>(url);
+  const entity = json?.entities?.[qid];
+  const p18 = entity?.claims?.["P18"];
+  const filename = p18?.[0]?.mainsnak?.datavalue?.value;
+  if (typeof filename !== "string" || !filename) return null;
+  const encoded = encodeURIComponent(filename.replace(/ /g, "_"));
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encoded}?width=${widthPx}`;
 }
 
 /**
