@@ -133,17 +133,17 @@ export default function Routenplanung() {
     Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encodeURIComponent(dest)}`).catch(() => {});
   }, [route?.region, effectiveGeom, reversed]);
 
-  // Oeffnet die OeV-Rueckreise vom Routenende zurueck zum Startpunkt.
+  // Oeffnet die SBB-Rueckreise vom Routenende zurueck zum Routenstart.
+  // VON = Routenendpunkt, NACH = Routenstartpunkt (beide als Koordinaten).
   const oeffneRueckreise = React.useCallback(() => {
     if (effectiveGeom.length < 2) return;
     const start = effectiveGeom[0];
     const ende = effectiveGeom[effectiveGeom.length - 1];
-    const url =
-      "https://www.google.com/maps/dir/?api=1" +
-      `&origin=${ende[0]},${ende[1]}` +
-      `&destination=${start[0]},${start[1]}` +
-      "&travelmode=transit";
-    Linking.openURL(url).catch(() => {});
+    const von = `${ende[0]},${ende[1]}`;
+    const nach = `${start[0]},${start[1]}`;
+    Linking.openURL(
+      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
+    ).catch(() => {});
   }, [effectiveGeom]);
 
   const onImportGpx = useCallback(async () => {
@@ -800,7 +800,7 @@ export default function Routenplanung() {
                     { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
                   ]}
                 >
-                  <Feather name="navigation" size={15} color={colors.accent} />
+                  <Feather name="send" size={15} color={colors.accent} />
                   <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
                     {t.planReturn}
                   </Text>
