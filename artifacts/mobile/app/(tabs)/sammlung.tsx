@@ -16,6 +16,8 @@ import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountai
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
+import { useSubscription } from "@/lib/revenuecat";
+import { kantonSlug } from "@/lib/kantonSlug";
 import { useColors } from "@/hooks/useColors";
 import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
@@ -90,7 +92,8 @@ export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { achievements, hikeHistory, language } = useApp();
+  const { achievements, hikeHistory, language, profile } = useApp();
+  const { isElite } = useSubscription();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
 
@@ -367,7 +370,9 @@ export default function Sammlung() {
         {cantons.map((canton, ci) => {
           const cantonSagas = sagas.filter((s) => s.canton === canton);
           const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
-          const complete = discovered === cantonSagas.length && discovered > 0;
+          const packUnlocked = isElite || (profile?.purchasedPacks ?? []).includes(kantonSlug(canton));
+          const accessibleTotal = packUnlocked ? cantonSagas.length : Math.min(1, cantonSagas.length);
+          const complete = discovered >= accessibleTotal && accessibleTotal > 0;
           return (
             <Animated.View
               key={canton}
@@ -398,7 +403,7 @@ export default function Sammlung() {
                   <Text
                     style={[styles.cantonProgress, { color: colors.mutedForeground }]}
                   >
-                    {t.cantonProgress(discovered, cantonSagas.length, canton)}
+                    {t.cantonProgress(discovered, accessibleTotal, canton)}
                   </Text>
                 </View>
                 {complete && (
@@ -413,8 +418,8 @@ export default function Sammlung() {
                     {
                       backgroundColor: colors.accent,
                       width: `${
-                        cantonSagas.length > 0
-                          ? Math.round((discovered / cantonSagas.length) * 100)
+                        accessibleTotal > 0
+                          ? Math.round((discovered / accessibleTotal) * 100)
                           : 0
                       }%`,
                     },
