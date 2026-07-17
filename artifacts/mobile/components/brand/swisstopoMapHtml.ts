@@ -177,7 +177,7 @@ export function buildSwisstopoHtml(
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* --- Legende --- */
-  #stt-legende { position: absolute; bottom: calc(52px + env(safe-area-inset-bottom, 0px)); left: 10px; z-index: 1000;
+  #stt-legende { position: absolute; bottom: env(safe-area-inset-bottom, 0px); left: 8px; z-index: 1000;
     background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35;
     overflow: hidden; font-family: -apple-system, system-ui, sans-serif; }
@@ -218,9 +218,12 @@ export function buildSwisstopoHtml(
   .stt-mbtn:last-child { border-right: none; }
   .stt-mbtn.active { background: #DA291C; color: #F5F3EC; }
   /* MapLibre overrides */
-  .maplibregl-ctrl-attrib { background: rgba(16,24,26,0.7) !important; }
+  .maplibregl-ctrl-bottom-right,
+  .maplibregl-ctrl-bottom-left { bottom: env(safe-area-inset-bottom, 0px) !important; }
+  .maplibregl-ctrl-attrib { background: rgba(16,24,26,0.7) !important; max-width: 140px !important; }
   .maplibregl-ctrl-attrib a { color: #DA291C !important; }
-  .maplibregl-ctrl-attrib-inner { color: #6B7568 !important; font-size: 10px !important; }
+  .maplibregl-ctrl-attrib-inner { color: #6B7568 !important; font-size: 9px !important;
+    white-space: normal !important; word-break: break-word !important; line-height: 1.3 !important; }
 </style>
 </head>
 <body>
