@@ -756,7 +756,7 @@ router.post("/admin/partner-leads/start", (req, res): void => {
     return;
   }
 
-  const radius = Number(req.query.radius ?? 500);
+  const radius = Number(req.query.radius ?? 2000);
   startPartnerLeadsExport(apiKey, radius);
   req.log.info({ radius }, "Partner-Leads Export gestartet (Background)");
   res.json({ started: true, message: "Export gestartet", state: sanitizeState() });
