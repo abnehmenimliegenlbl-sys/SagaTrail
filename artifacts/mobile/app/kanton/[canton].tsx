@@ -572,11 +572,11 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {filteredRoutes.map((route, i) => {
-                const routeSaga = sagas.find((s) => s.id === route.sagaId);
-                const isAnchorRoute = !!routeSaga?.isAnchorPlace;
+                // Erste Route in der Liste ist immer gratis (solange freeHikeUsed=false)
+                const isFirstRoute = i === 0;
                 // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
                 const canAccess = premium || packUnlocked;
-                const locked = !canAccess && (freeHikeUsed || !isAnchorRoute);
+                const locked = !canAccess && (freeHikeUsed || !isFirstRoute);
                 const unlocked = canAccess;
                 return (
                   <RouteCard
