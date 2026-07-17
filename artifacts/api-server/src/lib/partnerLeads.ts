@@ -264,6 +264,10 @@ interface DbRoute {
   canton: string;
   lat: number;
   lng: number;
+  startLat: number | null;
+  startLng: number | null;
+  endLat: number | null;
+  endLng: number | null;
 }
 
 async function loadSagas(): Promise<DbSaga[]> {
@@ -278,12 +282,29 @@ async function loadSagas(): Promise<DbSaga[]> {
 
 async function loadRoutes(): Promise<DbRoute[]> {
   const result = await db.execute(sql`
-    SELECT id, name, canton, lat, lng
+    SELECT
+      id, name, canton, lat, lng,
+      (geometry->0->>0)::float  AS start_lat,
+      (geometry->0->>1)::float  AS start_lng,
+      (geometry->-1->>0)::float AS end_lat,
+      (geometry->-1->>1)::float AS end_lng
     FROM external_routes
     WHERE lat IS NOT NULL AND lng IS NOT NULL
     ORDER BY canton, name
   `);
-  return result.rows as unknown as DbRoute[];
+  return (result.rows as unknown as {
+    id: string; name: string; canton: string;
+    lat: number; lng: number;
+    start_lat: number | null; start_lng: number | null;
+    end_lat: number | null; end_lng: number | null;
+  }[]).map((r) => ({
+    id: r.id, name: r.name, canton: r.canton,
+    lat: Number(r.lat), lng: Number(r.lng),
+    startLat: r.start_lat != null ? Number(r.start_lat) : null,
+    startLng: r.start_lng != null ? Number(r.start_lng) : null,
+    endLat: r.end_lat != null ? Number(r.end_lat) : null,
+    endLng: r.end_lng != null ? Number(r.end_lng) : null,
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -361,15 +382,15 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
       const name = tags.name;
       if (!name) continue;
 
-      // Nächste Route innerhalb radiusM finden (aus allen Routen)
+      // Nächste Route über Mitte, Start UND Ende suchen
       let nearestRoute: DbRoute | undefined;
       let nearestDist = Infinity;
       for (const r of routes) {
-        const d = haversineM({ lat, lng }, { lat: r.lat, lng: r.lng });
-        if (d < nearestDist) {
-          nearestDist = d;
-          nearestRoute = r;
-        }
+        const pts: { lat: number; lng: number }[] = [{ lat: r.lat, lng: r.lng }];
+        if (r.startLat != null && r.startLng != null) pts.push({ lat: r.startLat, lng: r.startLng });
+        if (r.endLat != null && r.endLng != null)   pts.push({ lat: r.endLat,   lng: r.endLng   });
+        const d = Math.min(...pts.map((p) => haversineM({ lat, lng }, p)));
+        if (d < nearestDist) { nearestDist = d; nearestRoute = r; }
       }
       if (!nearestRoute || nearestDist > radiusM * 3) continue;
 
