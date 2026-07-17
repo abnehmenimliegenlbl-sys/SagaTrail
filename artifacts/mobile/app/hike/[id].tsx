@@ -1442,6 +1442,26 @@ export default function LiveHike() {
     };
   }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
 
+  // Wechselt den Audio-Fokus: DoNotMix (=andere Apps pausieren) waehrend
+  // aktiver Narration, DuckOthers (=andere Apps leiser) in den Pausen.
+  // Fehler werden still geschluckt — ein fehlgeschlagener Moduswechsel
+  // soll die Narration nie abbrechen.
+  const setNarrationFocus = useCallback((active: boolean) => {
+    if (Platform.OS === "web") return;
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      interruptionModeIOS: active
+        ? InterruptionModeIOS.DoNotMix
+        : InterruptionModeIOS.DuckOthers,
+      interruptionModeAndroid: active
+        ? InterruptionModeAndroid.DoNotMix
+        : InterruptionModeAndroid.DuckOthers,
+      shouldDuckAndroid: !active,
+    }).catch(() => {});
+  }, []);
+
   const stopNarration = useCallback(async () => {
     const sound = narrationSoundRef.current;
     narrationSoundRef.current = null;
@@ -1453,9 +1473,9 @@ export default function LiveHike() {
         // Best effort — Sound koennte bereits entladen sein.
       }
     }
-    // Kein Moduswechsel mehr — Session bleibt durchgehend in DuckOthers.
+    setNarrationFocus(false);
     setSpeaking(false);
-  }, []);
+  }, [setNarrationFocus]);
 
   // Manueller Stopp (Pause-Button, Abschluss, Verlassen des Screens):
   // erhoeht zusaetzlich die Generation, damit auch noch in-flight laufende
