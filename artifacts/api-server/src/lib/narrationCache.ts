@@ -21,6 +21,35 @@ export class NarrationRateLimitError extends Error {
   }
 }
 
+// ---------------------------------------------------------------------------
+// In-Memory-Cache (Prozess-lokal)
+// ---------------------------------------------------------------------------
+// Schnelle Schicht vor GCS: einmal synthetisiert (ElevenLabs ODER OpenAI-
+// Fallback) wird der Audio-Buffer im Prozess gehalten. Vorteile:
+//   • Kein ElevenLabs-Aufruf, selbst wenn GCS-Write beim ersten Mal scheiterte
+//   • Kein GCS-Round-Trip fuer Texte, die im selben Server-Prozess bereits
+//     erzeugt wurden (z.B. "Ich verstehe." — wird taeglich dutzendfach angefordert)
+//   • Macht das OpenAI-Fallback-Problem unproblematisch: War OpenAI zustaendig,
+//     liefert der In-Memory-Cache sofort zurueck, ohne erst ElevenLabs zu probieren
+// Max. 300 Eintraege (~300 ×~50 KB ≈ ~15 MB) — bei Ueberschreitung wird der
+// aelteste Eintrag verdraengt (FIFO).
+const IN_MEMORY_MAX = 300;
+const inMemoryNarrationCache = new Map<string, Buffer>();
+
+function inMemoryGet(hash: string): Buffer | undefined {
+  return inMemoryNarrationCache.get(hash);
+}
+
+function inMemorySet(hash: string, audio: Buffer): void {
+  if (inMemoryNarrationCache.size >= IN_MEMORY_MAX) {
+    const oldestKey = inMemoryNarrationCache.keys().next().value;
+    if (oldestKey !== undefined) inMemoryNarrationCache.delete(oldestKey);
+  }
+  inMemoryNarrationCache.set(hash, audio);
+}
+
+// ---------------------------------------------------------------------------
+
 // Taeglich zulaessige Zeichen pro Nutzer (inkl. Whitespace/SSML).
 // Ueberschreibbar per Env-Variable fuer Tests oder Premium-Erweiterung.
 const DAILY_BUDGET = parseInt(process.env.NARRATION_DAILY_CHAR_BUDGET ?? "3000", 10);
@@ -120,15 +149,30 @@ async function readFromCache(
   language: string | undefined,
   log: Logger,
 ): Promise<Buffer | null> {
+  const candidates = [...voiceCandidatesForLanguage(language), OPENAI_FALLBACK_VOICE_ID];
+  // In-Memory zuerst pruefen — kein GCS-Round-Trip noetig.
+  // Dabei wird die bevorzugte Stimmen-Reihenfolge respektiert: ElevenLabs-
+  // Kandidaten kommen vor OpenAI, damit nach einem Plan-Upgrade frisches
+  // ElevenLabs-Audio aus dem In-Memory-Cache serviert wird (nicht altes OpenAI).
+  for (const voiceId of candidates) {
+    const hash = hashNarrationText(text, language, voiceId);
+    const mem = inMemoryGet(hash);
+    if (mem) {
+      log.info({ hash, voiceId }, "Narration-In-Memory-Treffer");
+      return mem;
+    }
+  }
+  // GCS-Fallback.
   try {
-    const candidates = [...voiceCandidatesForLanguage(language), OPENAI_FALLBACK_VOICE_ID];
     for (const voiceId of candidates) {
       const hash = hashNarrationText(text, language, voiceId);
       const file = bucket.file(narrationObjectName(hash));
       const [exists] = await file.exists();
       if (exists) {
-        log.info({ hash, voiceId }, "Narration-Cache-Treffer");
+        log.info({ hash, voiceId }, "Narration-GCS-Cache-Treffer");
         const [buffer] = await file.download();
+        // In-Memory befuellen damit der naechste Aufruf ohne GCS auskommt.
+        inMemorySet(hash, buffer);
         return buffer;
       }
     }
@@ -146,13 +190,16 @@ async function writeToCache(
   audio: Buffer,
   log: Logger,
 ): Promise<void> {
+  const hash = hashNarrationText(text, language, voiceId);
+  // In-Memory sofort befuellen — gilt auch wenn GCS-Write scheitert,
+  // damit dasselbe Audio im selben Prozess-Lauf sofort verfuegbar ist.
+  inMemorySet(hash, audio);
   try {
-    const hash = hashNarrationText(text, language, voiceId);
     const file = bucket.file(narrationObjectName(hash));
     await file.save(audio, { contentType: "audio/mpeg" });
     log.info({ hash, voiceId, bytes: audio.length }, "Narration erzeugt und gecacht");
   } catch (err) {
-    log.warn({ err }, "Narration-Cache-Schreibzugriff fehlgeschlagen, Audio bleibt ungecacht");
+    log.warn({ err }, "Narration-GCS-Schreibzugriff fehlgeschlagen, Audio nur in In-Memory-Cache");
   }
 }
 
@@ -171,12 +218,19 @@ export async function getOrCreateNarrationAudio(
   // (OpenAI laeuft ueber Replit-AI-Integration, kein separates Kontingent).
   if (provider === "openai") {
     const hash = hashNarrationText(text, language, OPENAI_FALLBACK_VOICE_ID);
+    // In-Memory zuerst pruefen.
+    const memHit = inMemoryGet(hash);
+    if (memHit) {
+      log.info({ hash }, "OpenAI-Narration-In-Memory-Treffer");
+      return memHit;
+    }
     const file = bucket.file(narrationObjectName(hash));
     try {
       const [exists] = await file.exists();
       if (exists) {
-        log.info({ hash }, "OpenAI-Narration-Cache-Treffer");
+        log.info({ hash }, "OpenAI-Narration-GCS-Cache-Treffer");
         const [buffer] = await file.download();
+        inMemorySet(hash, buffer);
         return buffer;
       }
     } catch (err) {
