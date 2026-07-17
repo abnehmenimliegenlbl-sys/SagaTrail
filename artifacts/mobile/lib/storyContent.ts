@@ -76,6 +76,9 @@ export interface StoryPack {
   // natuerlichen Konjunktionen auf, damit Wandernde ohne Blick aufs Display
   // verstehen, was zur Wahl steht.
   buildDecisionPrompt: (options: string[], question?: string) => string;
+  // Sofortige Geraetestimmen-Bestaetigung nach der Wahl (< 500 ms),
+  // bevor das KI-generierte Feedback geladen wird.
+  decisionAck: string;
   // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der
   // Entscheidung gesprochen wird ("Das spricht fuer eine Persoenlichkeit mit…").
   decisionFeedback: (archetypeHint: string) => string;
@@ -161,9 +164,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiegen!" : "Jetzt rechts abbiegen!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Triff jetzt deine Wahl.";
-      const list = options.join(". Oder: ");
+      const nummern = ["EINS", "ZWEI", "DREI"];
+      const list = options.map((opt, i) => `Sage ${nummern[i] ?? String(i + 1)} für ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Ich verstehe.",
     decisionFeedback: (hint) => {
       const v = [
         `Das spricht für eine Persönlichkeit mit ${hint}. Eine tiefe Wahrheit über dich, hier draußen in der Stille.`,
@@ -276,9 +281,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Jetzt links abbiege!" : "Jetzt rechts abbiege!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Triff jetzt dini Wahl.";
-      const list = options.join(". Oder: ");
+      const nummern = ["EIS", "ZWEI", "DRÜ"];
+      const list = options.map((opt, i) => `Sag ${nummern[i] ?? String(i + 1)} für ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Ich verstah.",
     decisionFeedback: (hint) => {
       const v = [
         `Das spricht für e Persönlichkeit mit ${hint}. En tiefe Wahrhäit über dich, do draußen in de Stilli.`,
@@ -391,9 +398,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Tournez à gauche !" : "Tournez à droite !",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Fais ton choix maintenant.";
-      const list = options.join(". Ou bien : ");
+      const nummern = ["UN", "DEUX", "TROIS"];
+      const list = options.map((opt, i) => `Dis ${nummern[i] ?? String(i + 1)} pour ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Je comprends.",
     decisionFeedback: (hint) => {
       const v = [
         `Cela révèle une personnalité avec ${hint}. Une vérité profonde sur toi, ici dans le silence de la nature.`,
@@ -506,9 +515,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Svoltate a sinistra!" : "Svoltate a destra!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Fai ora la tua scelta.";
-      const list = options.join(". Oppure: ");
+      const nummern = ["UNO", "DUE", "TRE"];
+      const list = options.map((opt, i) => `Di' ${nummern[i] ?? String(i + 1)} per ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Capisco.",
     decisionFeedback: (hint) => {
       const v = [
         `Questo rivela una personalità con ${hint}. Una verità profonda su di te, qui nel silenzio della natura.`,
@@ -621,9 +632,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Turn left!" : "Turn right!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Make your choice now.";
-      const list = options.join(". Or: ");
+      const nummern = ["ONE", "TWO", "THREE"];
+      const list = options.map((opt, i) => `Say ${nummern[i] ?? String(i + 1)} for ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "I understand.",
     decisionFeedback: (hint) => {
       const v = [
         `This speaks to a personality shaped by ${hint}. A deep truth about you, out here in the stillness.`,
@@ -732,9 +745,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "向左转。" : "向右转。",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "请做出你的选择。";
-      const list = options.join("。或者：");
+      const nummern = ["一", "二", "三"];
+      const list = options.map((opt, i) => `说${nummern[i] ?? String(i + 1)}选${opt}`).join("。");
       return `${q} ${list}。`;
     },
+    decisionAck: "明白了。",
     decisionFeedback: (hint) => {
       const v = [
         `这体现了一种具有${hint}的性格。在这片寂静中，这是关于你自己的深刻真相。`,
@@ -847,9 +862,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "¡Gire a la izquierda!" : "¡Gire a la derecha!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Toma tu decisión ahora.";
-      const list = options.join(". O bien: ");
+      const nummern = ["UNO", "DOS", "TRES"];
+      const list = options.map((opt, i) => `Di ${nummern[i] ?? String(i + 1)} para ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Entendido.",
     decisionFeedback: (hint) => {
       const v = [
         `Esto habla de una personalidad definida por ${hint}. Una verdad profunda sobre ti, aquí en el silencio de la naturaleza.`,
@@ -962,9 +979,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Vire à esquerda!" : "Vire à direita!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Faça sua escolha agora.";
-      const list = options.join(". Ou então: ");
+      const nummern = ["UM", "DOIS", "TRÊS"];
+      const list = options.map((opt, i) => `Diga ${nummern[i] ?? String(i + 1)} para ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Entendido.",
     decisionFeedback: (hint) => {
       const v = [
         `Isso revela uma personalidade moldada por ${hint}. Uma verdade profunda sobre você, aqui no silêncio da natureza.`,
@@ -1077,9 +1096,11 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     turnVoice: (direction) => direction === "links" ? "Поверните налево!" : "Поверните направо!",
     buildDecisionPrompt: (options, question) => {
       const q = question ?? "Сделай свой выбор сейчас.";
-      const list = options.join(". Или: ");
+      const nummern = ["ОДИН", "ДВА", "ТРИ"];
+      const list = options.map((opt, i) => `Скажи ${nummern[i] ?? String(i + 1)} для ${opt}`).join(". ");
       return `${q} ${list}.`;
     },
+    decisionAck: "Понятно.",
     decisionFeedback: (hint) => {
       const v = [
         `Это говорит о личности, наделённой ${hint}. Глубокая правда о тебе — здесь, в тишине природы.`,

@@ -1924,10 +1924,16 @@ export default function LiveHike() {
     });
     setAwaitingDecision(false);
     // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
+    // Zweistufig: sofortige Geraetestimmen-Bestaetigung (< 500 ms, kein Netz
+    // noetig), danach das vollstaendige KI-Feedback via ElevenLabs/OpenAI.
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useOpenAI: true });
+      speakRef.current?.(
+        pack.decisionAck,
+        () => { speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useOpenAI: true }); },
+        { useDevice: true, interrupt: true },
+      );
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {
