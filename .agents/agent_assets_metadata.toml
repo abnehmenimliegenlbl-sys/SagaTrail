@@ -263,3 +263,9 @@ id = "7tArOdkerH7sMx2OD5oC8"
 uri = "file://screenshots_ipad/ipad_en_screen3.png"
 type = "image"
 title = "iPad 13\" EN – Route Planning"
+
+[[outputs]]
+id = "1oeyJs4XnEB3KXw8bD-Gm"
+uri = "file://sagatrail-wp-export.zip"
+type = "unspecified"
+title = "sagatrail-wordpress.sql + osm-harvest.php"
