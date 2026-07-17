@@ -245,3 +245,21 @@ id = "-pQaEjL5DHxSkVv307rvm"
 uri = "file://screenshots_ipad/ipad_screen3.png"
 type = "image"
 title = "iPad 13\" – Routenplanung"
+
+[[outputs]]
+id = "ey44fVAT7Ex7QB9xtNpiE"
+uri = "file://screenshots_ipad/ipad_en_screen1.png"
+type = "image"
+title = "iPad 13\" EN – Cantons"
+
+[[outputs]]
+id = "N74bCMgo7zc3shvduephB"
+uri = "file://screenshots_ipad/ipad_en_screen2.png"
+type = "image"
+title = "iPad 13\" EN – Routes"
+
+[[outputs]]
+id = "7tArOdkerH7sMx2OD5oC8"
+uri = "file://screenshots_ipad/ipad_en_screen3.png"
+type = "image"
+title = "iPad 13\" EN – Route Planning"
