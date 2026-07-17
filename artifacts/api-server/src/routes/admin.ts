@@ -38,6 +38,50 @@ function requireAdminToken(req: Request, res: Response): boolean {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Demo-/Review-Nutzer anlegen (ohne E-Mail-Verifizierung)
+// ---------------------------------------------------------------------------
+// Clerk-Backend-API erstellt den Nutzer serverseitig — kein Verifizierungsmail
+// noetig. So koennen Reviewer-Accounts mit Fake-E-Mails angelegt werden.
+const CreateReviewUserBody = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+router.post("/admin/create-review-user", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const parsed = CreateReviewUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { email, password, firstName, lastName } = parsed.data;
+
+  // Pruefen ob der Nutzer bereits existiert.
+  const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
+  if (existing.data.length > 0) {
+    const userId = existing.data[0].id;
+    req.log.info({ userId, email }, "Review-Nutzer existiert bereits");
+    res.json({ created: false, userId, email, message: "Nutzer existiert bereits" });
+    return;
+  }
+
+  // Neu anlegen — Clerk-Backend-API ueberspringt E-Mail-Verifizierung.
+  const newUser = await clerkClient.users.createUser({
+    emailAddress: [email],
+    password,
+    firstName: firstName ?? "Demo",
+    lastName: lastName ?? "User",
+    skipPasswordChecks: false,
+  });
+
+  req.log.info({ userId: newUser.id, email }, "Review-Nutzer angelegt");
+  res.status(201).json({ created: true, userId: newUser.id, email });
+});
+
 router.post("/admin/premium", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
 
