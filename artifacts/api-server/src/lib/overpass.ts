@@ -570,8 +570,14 @@ export interface ParkingSpot {
 }
 
 /**
- * Oeffentliche Parkplaetze im Umkreis einer Koordinate — aus OpenStreetMap
- * ueber Overpass. Schliesst private Parkplaetze (access=private) aus.
+ * Oeffentliche Parkplaetze und Parkhaeuser im Umkreis einer Koordinate —
+ * aus OpenStreetMap ueber Overpass.
+ *
+ * Filterlogik:
+ * - Nur amenity=parking mit parking=surface|multi-storey|underground|rooftop
+ *   (schliesst private Garagen-Boxen und Carports aus)
+ * - access darf nicht private|customers|permit|no sein
+ *   (nur wirklich oeffentlich zugaengliche Anlagen)
  * Nodes: direkte Koordinaten. Ways: Zentroid via `out center`.
  */
 export async function fetchParking(
@@ -579,23 +585,43 @@ export async function fetchParking(
   radiusM: number,
   log: Logger,
 ): Promise<ParkingSpot[]> {
+  // Parktypen die oeffentlich zugaenglich sind:
+  // surface = normaler Oberflaechen-Parkplatz
+  // multi-storey = Parkhaus
+  // underground = Tiefgarage
+  // rooftop = Dachparkplatz
+  // park_and_ride = P+R-Anlage
+  const publicTypes = "surface|multi-storey|underground|rooftop|park_and_ride";
+  const accessFilter =
+    '["access"!="private"]["access"!="customers"]["access"!="permit"]["access"!="no"]';
+  const typeFilter = `["parking"~"${publicTypes}"]`;
+  const around = `(around:${radiusM},${center.lat},${center.lng})`;
   const query = [
     "[out:json][timeout:12];",
     "(",
-    `node["amenity"="parking"]["access"!="private"](around:${radiusM},${center.lat},${center.lng});`,
-    `way["amenity"="parking"]["access"!="private"](around:${radiusM},${center.lat},${center.lng});`,
+    `node["amenity"="parking"]${typeFilter}${accessFilter}${around};`,
+    `way["amenity"="parking"]${typeFilter}${accessFilter}${around};`,
+    // Fallback: amenity=parking OHNE parking-Subtag aber mit explizit
+    // oeffentlichem Zugang (access=yes oder access=public)
+    `node["amenity"="parking"]["access"~"yes|public"]${around};`,
+    `way["amenity"="parking"]["access"~"yes|public"]${around};`,
     ");",
     "out center tags;",
   ].join("");
   const elements = await runOverpass<OverpassPoiElement>(query, 14_000);
+  // Deduplizieren (Fallback kann Duplikate mit erstem Block erzeugen)
+  const seen = new Set<string>();
   const result: ParkingSpot[] = [];
   for (const e of elements) {
     const lat = e.lat ?? e.center?.lat;
     const lng = e.lon ?? e.center?.lon;
     if (lat == null || lng == null) continue;
+    const key = `${e.type}-${e.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     const tags = e.tags ?? {};
     result.push({
-      osmId: `${e.type}-${e.id}`,
+      osmId: key,
       lat,
       lng,
       name: tags.name ?? tags["name:de"] ?? null,
