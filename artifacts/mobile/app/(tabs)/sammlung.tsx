@@ -38,11 +38,13 @@ async function exportHikeGpx(hike: HikeSession, t: CollectionStrings) {
   }
   try {
     const name = hike.routeName.replace(/[<>&"]/g, " ");
-    const startTime = new Date(hike.startedAt).toISOString();
+    const startTime = hike.startedAt
+      ? new Date(hike.startedAt).toISOString()
+      : new Date().toISOString();
     const trkpts = hike.geometry
       .map(([lat, lng]) => `      <trkpt lat="${lat}" lon="${lng}"></trkpt>`)
       .join("\n");
-    const desc = `${hike.distanceKm} km · ${hike.ascentM} m ↑ · SagaTrail`;
+    const desc = `${hike.distanceKm ?? 0} km · ${hike.ascentM ?? 0} m ↑ · SagaTrail`;
     const gpx = [
       `<?xml version="1.0" encoding="UTF-8"?>`,
       `<gpx version="1.1" creator="SagaTrail" xmlns="http://www.topografix.com/GPX/1/1">`,
@@ -122,7 +124,11 @@ export default function Sammlung() {
   // Wanderungen bleibt die Liste so ueberschaubar.
   const tagebuchMonate = React.useMemo(() => {
     const locale = MONATS_LOCALE[language] ?? "de-CH";
-    const sortiert = [...hikeHistory].sort((a, b) => b.startedAt - a.startedAt);
+    // Sparse-Eintraege (nur {id}, kein startedAt) aus dem alten Sync herausfiltern
+    const vollstaendig = hikeHistory.filter(
+      (h) => h.startedAt && !isNaN(new Date(h.startedAt).getTime())
+    );
+    const sortiert = [...vollstaendig].sort((a, b) => b.startedAt - a.startedAt);
     const gruppen: { schluessel: string; titel: string; eintraege: HikeSession[] }[] = [];
     for (const hike of sortiert) {
       const d = new Date(hike.startedAt);
@@ -456,7 +462,7 @@ export default function Sammlung() {
           );
         })}
 
-        {hikeHistory.length > 0 && (
+        {tagebuchMonate.length > 0 && (
           <>
             <Text
               style={[
@@ -497,7 +503,7 @@ export default function Sammlung() {
                             {hike.routeName}
                           </Text>
                           <Text style={[styles.diaryMeta, { color: colors.mutedForeground }]}>
-                            {new Date(hike.startedAt).toLocaleDateString()} · {hike.distanceKm} km · {hike.ascentM} m
+                            {hike.startedAt ? new Date(hike.startedAt).toLocaleDateString() : "—"} · {hike.distanceKm ?? "?"} km · {hike.ascentM ?? "?"} m
                           </Text>
                         </View>
                         {hike.geometry && hike.geometry.length > 1 && (
