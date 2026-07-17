@@ -75,6 +75,8 @@ export function PermissionsStep() {
 
   const keys: PermissionKey[] = ["location", "microphone", "motion", "notifications"];
 
+  const activeStrings = activeModal ? t.permissions[activeModal] : null;
+
   return (
     <View>
       <Text style={[styles.hint, { color: colors.mutedForeground }]}>
@@ -135,23 +137,27 @@ export function PermissionsStep() {
                     : t.permissionStatusPending}
               </Text>
             </Pressable>
-            <PermissionModal
-              visible={activeModal === key}
-              onRequestClose={() => setActiveModal(null)}
-              icon={ICONS[key]}
-              title={strings.title}
-              message={strings.message}
-              allowLabel={strings.allow}
-              skipLabel={t.permissionSkip}
-              onAllow={() => {
-                setActiveModal(null);
-                requestNative(key);
-              }}
-              onSkip={() => setActiveModal(null)}
-            />
           </Animated.View>
         );
       })}
+
+      {activeModal && activeStrings && (
+        <PermissionModal
+          visible
+          onRequestClose={() => setActiveModal(null)}
+          icon={ICONS[activeModal]}
+          title={activeStrings.title}
+          message={activeStrings.message}
+          allowLabel={activeStrings.allow}
+          skipLabel={t.permissionSkip}
+          onAllow={() => {
+            const key = activeModal;
+            setActiveModal(null);
+            requestNative(key);
+          }}
+          onSkip={() => setActiveModal(null)}
+        />
+      )}
     </View>
   );
 }
