@@ -15,7 +15,7 @@ import { istPremiumAktiv } from "../lib/premiumStatus";
 import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
-import { fetchPartnerLeads, leadsToCSV } from "../lib/partnerLeads";
+import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 
 const router: IRouter = Router();
 
@@ -741,7 +741,8 @@ router.delete("/admin/narration-cache", async (req, res): Promise<void> => {
 // ---------------------------------------------------------------------------
 // Partner-Leads CSV (Google Places API)
 // ---------------------------------------------------------------------------
-router.get("/admin/partner-leads.csv", async (req, res): Promise<void> => {
+// POST /admin/partner-leads/start — startet Export im Hintergrund
+router.post("/admin/partner-leads/start", (req, res): void => {
   if (!requireAdminToken(req, res)) return;
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -750,21 +751,51 @@ router.get("/admin/partner-leads.csv", async (req, res): Promise<void> => {
     return;
   }
 
-  const radius = Number(req.query.radius ?? 3000);
-
-  req.log.info({ radius }, "Partner-Leads Export gestartet");
-
-  try {
-    const leads = await fetchPartnerLeads(apiKey, radius);
-    const csv = leadsToCSV(leads);
-
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="sagatrail-partner-leads.csv"');
-    res.send("\uFEFF" + csv); // BOM für Excel-Kompatibilität
-  } catch (err) {
-    req.log.error({ err }, "Partner-Leads Export fehlgeschlagen");
-    res.status(500).json({ error: "Export fehlgeschlagen" });
+  if (jobState.status === "running") {
+    res.json({ started: false, message: "Export läuft bereits", state: sanitizeState() });
+    return;
   }
+
+  const radius = Number(req.query.radius ?? 500);
+  startPartnerLeadsExport(apiKey, radius);
+  req.log.info({ radius }, "Partner-Leads Export gestartet (Background)");
+  res.json({ started: true, message: "Export gestartet", state: sanitizeState() });
 });
+
+// GET /admin/partner-leads/status — Fortschritt abfragen
+router.get("/admin/partner-leads/status", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(sanitizeState());
+});
+
+// GET /admin/partner-leads/download — CSV herunterladen wenn fertig
+router.get("/admin/partner-leads/download", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+
+  if (jobState.status === "running") {
+    res.status(202).json({ message: "Export läuft noch", state: sanitizeState() });
+    return;
+  }
+  if (jobState.status !== "done" || !jobState.csv) {
+    res.status(404).json({ message: "Kein Export vorhanden. Zuerst POST /start aufrufen." });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", 'attachment; filename="sagatrail-partner-leads.csv"');
+  res.send("\uFEFF" + jobState.csv);
+});
+
+function sanitizeState() {
+  return {
+    status: jobState.status,
+    cantonsTotal: jobState.cantonsTotal,
+    cantonesDone: jobState.cantonesDone,
+    leadsFound: jobState.leadsFound,
+    startedAt: jobState.startedAt,
+    finishedAt: jobState.finishedAt,
+    error: jobState.error,
+  };
+}
 
 export default router;
