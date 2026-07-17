@@ -1,0 +1,77 @@
+SagaTrail – OSM Partner-Leads Harvester
+=========================================
+
+INHALT DIESES ZIPS
+-------------------
+  sagatrail-wordpress.sql   Tabellen + 695 Routen für deine WordPress-DB
+  osm-harvest.php           PHP-Script das Overpass abfragt
+  ANLEITUNG.txt             Diese Datei
+
+SCHRITT 1 – SQL importieren
+-----------------------------
+Im Infomaniak Hosting-Panel:
+  → Databases → Verwalten → phpMyAdmin → deine WP-Datenbank → Importieren
+  → Datei: sagatrail-wordpress.sql hochladen → Ausführen
+
+Damit werden 3 Tabellen angelegt:
+  sagatrail_routen          695 Wanderrouten mit Koordinaten
+  sagatrail_partner_leads   leer – wird vom Script gefüllt
+  sagatrail_osm_progress    trackt welche Routen bereits abgefragt wurden
+
+
+SCHRITT 2 – PHP-Script hochladen
+----------------------------------
+  osm-harvest.php hochladen nach:
+  /wp-content/uploads/osm-harvest.php
+  (oder ein anderes Verzeichnis deiner Wahl)
+
+Am Anfang der Datei (Zeilen 41–44) den wp-load.php-Block aktivieren:
+  Kommentarzeichen vor den 3 Zeilen entfernen und Pfad anpassen:
+
+    $wp_root = dirname(__FILE__) . '/../../..'; // von wp-content/uploads/ aus
+    define('ABSPATH', $wp_root . '/');
+    require($wp_root . '/wp-load.php');
+
+
+SCHRITT 3 – Cron-Job einrichten (Infomaniak)
+----------------------------------------------
+Infomaniak Hosting-Panel → Hosting → deine Site → Cron-Jobs → Hinzufügen
+
+  Befehl:   php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/osm-harvest.php
+            (Pfad anpassen – siehst du in phpMyAdmin oder im Hosting-Panel)
+  Intervall: alle 5 Minuten  (oder alle 10 Minuten für mehr Vorsicht)
+  Ausgabe:  kann in eine Logdatei umgeleitet werden:
+            php /pfad/osm-harvest.php >> /pfad/osm-harvest.log 2>&1
+
+Das Script:
+  - verarbeitet 10 Routen pro Aufruf (BATCH_SIZE in Zeile 30)
+  - pausiert 6 Sekunden zwischen Overpass-Anfragen (PAUSE_SEK in Zeile 33)
+  - überspringt bereits abgefragte Routen (Fortschritt in sagatrail_osm_progress)
+  - hört automatisch auf wenn alle 695 Routen erledigt sind
+  - kann jederzeit abgebrochen und neugestartet werden
+
+
+FORTSCHRITT PRÜFEN
+-------------------
+In phpMyAdmin ausführen:
+
+  SELECT
+    (SELECT COUNT(*) FROM sagatrail_osm_progress) AS erledigt,
+    (SELECT COUNT(*) FROM sagatrail_routen)        AS gesamt,
+    (SELECT COUNT(*) FROM sagatrail_partner_leads) AS leads_total;
+
+  SELECT kanton, COUNT(*) as leads
+  FROM sagatrail_partner_leads
+  GROUP BY kanton ORDER BY leads DESC;
+
+
+LAUFZEIT-SCHÄTZUNG
+--------------------
+  695 Routen × (6s Pause + ~3s Overpass) ≈ 96 Minuten bei Dauerlauf
+  Mit Cron alle 5 Min × 10 Routen ≈ 58 Cron-Aufrufe ≈ ~5 Stunden
+
+
+FRAGEN?
+--------
+Das Script nutzt ausschliesslich die kostenlose Overpass API (OpenStreetMap).
+Keine API-Keys nötig.
