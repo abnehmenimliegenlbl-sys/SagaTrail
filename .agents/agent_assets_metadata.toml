@@ -221,3 +221,9 @@ id = "tfRzZgmWzE3-g22vi0Mu4"
 uri = "file://expo-qr.png"
 type = "image"
 title = "Expo QR Code"
+
+[[outputs]]
+id = "pnANnCJthp8TvE4b9xpOX"
+uri = "file://sagatrail-partner-leads.csv"
+type = "table"
+title = "SagaTrail Partner Leads – 439 Betriebe, alle 26 Kantone"
