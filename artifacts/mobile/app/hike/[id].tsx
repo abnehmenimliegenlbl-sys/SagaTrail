@@ -1929,9 +1929,10 @@ export default function LiveHike() {
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      const feedbackText = pack.decisionFeedback(archetypeHint, gewaehlt ?? "");
       speakRef.current?.(
         pack.decisionAck,
-        () => { speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useOpenAI: true }); },
+        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
         { useDevice: true, interrupt: true },
       );
     }

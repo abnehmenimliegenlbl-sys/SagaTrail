@@ -81,7 +81,7 @@ export interface StoryPack {
   decisionAck: string;
   // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der
   // Entscheidung gesprochen wird ("Das spricht fuer eine Persoenlichkeit mit…").
-  decisionFeedback: (archetypeHint: string) => string;
+  decisionFeedback: (archetypeHint: string, optionLabel: string) => string;
   // Kurzer, gesprochener Einschub, wenn unterwegs ein realer Ort (OSM/Wikipedia)
   // in der Naehe entdeckt wird — nutzt den bereits geladenen Wikipedia-Auszug,
   // keine KI-Generierung. extract ist null, wenn kein Wikipedia-Artikel vorliegt.
@@ -169,14 +169,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Ich verstehe.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Das spricht für eine Persönlichkeit mit ${hint}. Eine tiefe Wahrheit über dich, hier draußen in der Stille.`,
         `${hint} — das ist es, was dich auf diesem Weg ausmacht.`,
         `Diese Wahl trägt die Handschrift von ${hint}. Nichts hier ist zufällig.`,
         `Du hast gewählt. Und diese Wahl verrät ${hint} — tief in dir, schon immer.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Du meinst: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -286,14 +286,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Ich verstah.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Das spricht für e Persönlichkeit mit ${hint}. En tiefe Wahrhäit über dich, do draußen in de Stilli.`,
         `${hint} — das isch es, was dich uf däm Wäg usmacht.`,
         `Dä Wahl steckt d Handschrift vo ${hint} drin. Nüüt isch do Zufall.`,
         `Du häsch gwählt. Und dä Wahl verraat ${hint} — tüüf in dir, immer scho.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Du meinsch: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -403,14 +403,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Je comprends.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Cela révèle une personnalité avec ${hint}. Une vérité profonde sur toi, ici dans le silence de la nature.`,
         `${hint} — c'est ce qui te définit sur ce chemin.`,
         `Ce choix porte la marque de ${hint}. Rien ici n'est anodin.`,
         `Tu as choisi. Et ce choix trahit ${hint} — au plus profond de toi.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Tu veux dire : ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -520,14 +520,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Capisco.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Questo rivela una personalità con ${hint}. Una verità profonda su di te, qui nel silenzio della natura.`,
         `${hint} — è questo che ti distingue su questo cammino.`,
         `Questa scelta porta la firma di ${hint}. Niente qui è casuale.`,
         `Hai scelto. E questa scelta rivela ${hint} — nel profondo di te.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Vuoi dire: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -637,14 +637,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "I understand.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `This speaks to a personality shaped by ${hint}. A deep truth about you, out here in the stillness.`,
         `${hint} — that is what defines you on this path.`,
         `This choice carries the mark of ${hint}. Nothing here is coincidence.`,
         `You have chosen. And that choice reveals ${hint} — deep inside you, always.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `You mean: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -750,14 +750,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}。`;
     },
     decisionAck: "明白了。",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `这体现了一种具有${hint}的性格。在这片寂静中，这是关于你自己的深刻真相。`,
         `${hint}——这就是你在这条路上的本质。`,
         `这个选择带有${hint}的印记。这里的一切都非偶然。`,
         `你已做出选择。而这个选择揭示了${hint}——深藏在你内心，始终如此。`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `你的意思是：${label}。${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -867,14 +867,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Entendido.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Esto habla de una personalidad definida por ${hint}. Una verdad profunda sobre ti, aquí en el silencio de la naturaleza.`,
         `${hint} — eso es lo que te define en este camino.`,
         `Esta elección lleva la marca de ${hint}. Nada aquí es casualidad.`,
         `Has elegido. Y esa elección revela ${hint} — en lo más profundo de ti.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Quieres decir: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -984,14 +984,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Entendido.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Isso revela uma personalidade moldada por ${hint}. Uma verdade profunda sobre você, aqui no silêncio da natureza.`,
         `${hint} — é isso que te define neste caminho.`,
         `Esta escolha carrega a marca de ${hint}. Nada aqui é coincidência.`,
         `Você escolheu. E essa escolha revela ${hint} — no fundo de você, sempre.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Você quer dizer: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
@@ -1101,14 +1101,14 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       return `${q} ${list}.`;
     },
     decisionAck: "Понятно.",
-    decisionFeedback: (hint) => {
+    decisionFeedback: (hint, label) => {
       const v = [
         `Это говорит о личности, наделённой ${hint}. Глубокая правда о тебе — здесь, в тишине природы.`,
         `${hint} — вот что определяет тебя на этом пути.`,
         `Этот выбор несёт в себе отпечаток ${hint}. Здесь нет ничего случайного.`,
         `Ты выбрал. И этот выбор открывает ${hint} — глубоко внутри тебя, всегда.`,
       ];
-      return v[Math.floor(Math.random() * v.length)];
+      return `Ты имеешь в виду: ${label}. ${v[Math.floor(Math.random() * v.length)]}`;
     },
     poiAside: (name, extract) =>
       extract
