@@ -2049,6 +2049,7 @@ export default function LiveHike() {
     const session: HikeSession = {
       id: `h_${Date.now()}`,
       sagaId: saga.id,
+      routeId: route?.id,
       routeName: route?.name ?? saga.title,
       distanceKm: Number(distance.toFixed(1)),
       ascentM,

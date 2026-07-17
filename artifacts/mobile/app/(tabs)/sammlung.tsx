@@ -478,8 +478,21 @@ export default function Sammlung() {
                   {monat.titel}
                 </Text>
                 {monat.eintraege.map((hike, hi) => (
-                  <Animated.View
+                  <Pressable
                     key={hike.id}
+                    onPress={() => {
+                      hapticSelection();
+                      if (hike.routeId) {
+                        router.push(`/route/${encodeURIComponent(hike.routeId)}`);
+                      } else {
+                        router.push(`/saga/${encodeURIComponent(hike.sagaId)}`);
+                      }
+                    }}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+                    accessibilityRole="button"
+                    accessibilityLabel={hike.routeName}
+                  >
+                  <Animated.View
                     entering={FadeInDown.delay(hi * 60)}
                     style={[
                       styles.diaryCard,
@@ -530,6 +543,7 @@ export default function Sammlung() {
                       </View>
                     </View>
                   </Animated.View>
+                  </Pressable>
                 ))}
               </View>
             ))}

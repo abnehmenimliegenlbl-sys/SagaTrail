@@ -76,6 +76,8 @@ export interface StoryChapter {
 export interface HikeSession {
   id: string;
   sagaId: string;
+  /** OSM-Route-ID, falls vorhanden — wird für Navigation zur Route-Detailseite benötigt */
+  routeId?: string;
   routeName: string;
   distanceKm: number;
   ascentM: number;
