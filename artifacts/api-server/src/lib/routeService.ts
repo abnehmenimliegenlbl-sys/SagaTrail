@@ -23,6 +23,8 @@ import {
 } from "./overpass";
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
+import { getCachedRoutePhoto } from "./commonsPhoto";
+import { logger as rootLogger } from "./logger";
 import { deriveSeason } from "./season";
 import {
   downsample,
@@ -61,8 +63,8 @@ const ELEVATION_CONCURRENCY = 8;
 // Geometrie-/Hoehen-Anreicherung durchlaufen. Bei aktiver Distanz-Obergrenze
 // etwas grosszuegiger, weil manche Kandidaten die exakte Laengenpruefung noch
 // verfehlen (Bounding-Box-Diagonale ist nur eine untere Schranke).
-const GEOMETRY_POOL_DEFAULT = 40;
-const GEOMETRY_POOL_FILTERED = 60;
+const GEOMETRY_POOL_DEFAULT = 150;
+const GEOMETRY_POOL_FILTERED = 220;
 
 // Sicherheitszuschlag auf die Bounding-Box-Diagonale beim Vorfilter, damit die
 // haversine-Naeherung keine knapp passenden Kurzrouten faelschlich verwirft.
@@ -510,6 +512,8 @@ async function enrichAndStore(
     const geometry: [number, number][] = downsample(r.points, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
     );
+    // Repräsentatives Foto vom Startpunkt der Route (Wikimedia Commons, gedrosselt).
+    const photo = await getCachedRoutePhoto(start.lat, start.lng, log);
     return {
       id: r.id,
       sagaId: r.id,
@@ -528,6 +532,8 @@ async function enrichAndStore(
       geometryVersion: GEOMETRY_VERSION,
       source: "OpenStreetMap · swisstopo",
       featured: false,
+      photoUrl: photo.photoUrl,
+      photoAttribution: photo.attribution,
     };
   });
 
@@ -547,6 +553,10 @@ async function enrichAndStore(
           terrain: sql`excluded.terrain`,
           geometry: sql`excluded.geometry`,
           geometryVersion: sql`excluded.geometry_version`,
+          // Foto nur ueberschreiben wenn ein neues da ist — kein COALESCE um
+          // veraltete URLs durch aktuellere zu ersetzen, aber NULL nie setzen.
+          photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
+          photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
           fetchedAt: new Date(),
         },
       });
@@ -652,6 +662,52 @@ export async function warmAllCantonCaches(log: Logger): Promise<void> {
     }
     await new Promise((resolve) => setTimeout(resolve, WARM_STAGGER_MS));
   }
+}
+
+function millisUntilNext2amUtc(): number {
+  const now = new Date();
+  const next = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 2, 0, 0, 0),
+  );
+  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  return next.getTime() - now.getTime();
+}
+
+/**
+ * Taeglich-Kanton-Sync: jeden Tag um 02:00 UTC wird ein Kanton reihum
+ * (stabiler Index = Tag-der-Epoche mod 26) frisch aus Waymarked Trails +
+ * Overpass geladen und inkl. Fotos in external_routes geschrieben.
+ * Nach 26 Tagen ist jeder Kanton einmal aktualisiert worden.
+ * Laeuft komplett im Hintergrund; Fehler werden nur geloggt.
+ */
+export function startDailyCantonSync(): void {
+  const cantons = Object.keys(CANTON_ISO);
+  const log = rootLogger.child({ cron: "dailyCantonSync" });
+
+  const runSync = async () => {
+    const dayIndex = Math.floor(Date.now() / 86_400_000) % cantons.length;
+    const canton = cantons[dayIndex]!;
+    log.info({ canton, dayIndex }, "Taeglich-Kanton-Sync gestartet");
+    try {
+      // getCantonRoutes vergleicht bereits gecachte mit neuen Kandidaten und
+      // enrichAndStore holt nur fehlende oder abgelaufene Eintraege nach.
+      const routes = await getCantonRoutes(canton, log);
+      log.info({ canton, count: routes.length }, "Taeglich-Kanton-Sync abgeschlossen");
+    } catch (err) {
+      log.warn({ canton, err }, "Taeglich-Kanton-Sync fehlgeschlagen");
+    }
+  };
+
+  const scheduleNext = () => {
+    const delay = millisUntilNext2amUtc();
+    log.info({ inMinutes: Math.round(delay / 60_000) }, "Naechster Kanton-Sync geplant");
+    setTimeout(() => {
+      void runSync();
+      setInterval(() => void runSync(), 24 * 60 * 60 * 1000);
+    }, delay);
+  };
+
+  scheduleNext();
 }
 
 function nearestOf(

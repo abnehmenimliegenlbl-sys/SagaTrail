@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
-import { warmAllCantonCaches } from "./lib/routeService";
+import { warmAllCantonCaches, startDailyCantonSync } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 
@@ -42,6 +42,9 @@ const server = app.listen(port, async (err) => {
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();
+
+  // Jeden Tag um 02:00 UTC einen Kanton reihum aktualisieren (cap 150, inkl. Fotos).
+  startDailyCantonSync();
 });
 
 attachGroupsSocket(server);

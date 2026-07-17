@@ -37,6 +37,8 @@ export const externalRoutesTable = pgTable("external_routes", {
   geometryVersion: doublePrecision("geometry_version").notNull().default(1),
   source: text("source").notNull(),
   featured: boolean("featured").notNull().default(false),
+  photoUrl: text("photo_url"),
+  photoAttribution: text("photo_attribution"),
   fetchedAt: timestamp("fetched_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
