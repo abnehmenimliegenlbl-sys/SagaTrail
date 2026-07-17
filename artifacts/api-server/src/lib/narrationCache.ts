@@ -82,6 +82,12 @@ function narrationObjectName(hash: string): string {
   return `${base}/${hash}.mp3`;
 }
 
+// Cache-Versionierung fuer OpenAI-Fallback-Audio. Beim Bumpen werden alle
+// alten OpenAI-Narrations-Caches automatisch invalidiert (anderer Hash),
+// ohne ElevenLabs-Eintraege zu beruehren. Erhoehen, wenn sich OpenAI-
+// Synthesis-Parameter aendern (z.B. Lautstaerke, Tempo, Stimme).
+const OPENAI_CACHE_VERSION = "v2";
+
 export function hashNarrationText(
   text: string,
   language: string | undefined,
@@ -90,8 +96,12 @@ export function hashNarrationText(
   // Standardstimme = Legacy-Format ohne Voice-Anteil, damit der bestehende
   // Cache-Bestand nicht neu synthetisiert werden muss.
   const voicePart = voiceId === DEFAULT_NARRATOR_VOICE_ID ? "" : `|${voiceId}`;
+  // OpenAI-Cache-Buster: verhindert, dass alte OpenAI-Audios (z.B. mit
+  // anderer Lautstaerke) nach einem Parameter-Update noch serviert werden.
+  // ElevenLabs-Hashes sind davon vollstaendig unberuehrt.
+  const openaiVersion = voiceId.startsWith("openai:") ? `|${OPENAI_CACHE_VERSION}` : "";
   return createHash("sha256")
-    .update(`${language ?? "de"}|${text.trim()}${voicePart}`)
+    .update(`${language ?? "de"}|${text.trim()}${voicePart}${openaiVersion}`)
     .digest("hex");
 }
 
