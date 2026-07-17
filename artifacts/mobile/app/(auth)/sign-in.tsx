@@ -73,16 +73,19 @@ export default function SignInScreen() {
           await setActive({ session: result.createdSessionId });
           router.replace("/onboarding");
         } else {
-          setError(t.errorSignInIncomplete);
+          setError(`needs_first_factor → ${result.status}`);
         }
       } else if (attempt.status === "needs_second_factor") {
-        setError(t.errorSignInIncomplete);
+        setError(`needs_second_factor`);
       } else {
-        setError(t.errorSignInIncomplete);
+        setError(`status: ${attempt.status}`);
       }
     } catch (err: any) {
+      const clerkErr = err?.errors?.[0];
       setError(
-        err?.errors?.[0]?.message ?? t.errorSignInFailed
+        clerkErr
+          ? `[${clerkErr.code}] ${clerkErr.message}`
+          : String(err?.message ?? err)
       );
     } finally {
       setLoading(false);
