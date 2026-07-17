@@ -24,7 +24,12 @@ import sacHuettenSeed from "./sacHuettenSeed.json" assert { type: "json" };
 
 // Mehrere Overpass-Spiegel: der oeffentliche Hauptserver ist oft ueberlastet
 // (504/429). Wir probieren der Reihe nach mit kurzer Wartezeit weiter.
+// OVERPASS_PROXY_URL: optionaler PHP-Proxy auf eigenem Hosting (z.B. Infomaniak)
+// der nicht auf der Replit-Blockliste steht. Wird als erster Mirror verwendet.
+const OVERPASS_PROXY_URL = process.env.OVERPASS_PROXY_URL?.trim() ?? "";
+const OVERPASS_PROXY_TOKEN = process.env.OVERPASS_PROXY_TOKEN?.trim() ?? "";
 const OVERPASS_MIRRORS = [
+  ...(OVERPASS_PROXY_URL ? [OVERPASS_PROXY_URL] : []),
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
@@ -110,12 +115,16 @@ async function runOverpass<T>(query: string, timeoutMs = REQUEST_TIMEOUT_MS): Pr
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
+        const headers: Record<string, string> = {
+          "User-Agent": USER_AGENT,
+          "Content-Type": "application/x-www-form-urlencoded",
+        };
+        if (OVERPASS_PROXY_URL && url === OVERPASS_PROXY_URL && OVERPASS_PROXY_TOKEN) {
+          headers["X-Proxy-Token"] = OVERPASS_PROXY_TOKEN;
+        }
         const res = await fetch(url, {
           method: "POST",
-          headers: {
-            "User-Agent": USER_AGENT,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
+          headers,
           body: new URLSearchParams({ data: query }).toString(),
           signal: controller.signal,
         });
