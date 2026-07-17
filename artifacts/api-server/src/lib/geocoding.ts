@@ -22,11 +22,18 @@ export interface GeocodePlace {
   lng: number;
 }
 
+interface NominatimAddress {
+  state?: string;
+  county?: string;
+  /** ISO 3166-2 Kantonskuerzel, z.B. "CH-BL" oder "CH-ZH" */
+  "ISO3166-2-lvl4"?: string;
+}
+
 interface NominatimResult {
   display_name?: string;
   lat?: string;
   lon?: string;
-  address?: { state?: string };
+  address?: NominatimAddress;
 }
 
 /** Sucht Orte/Adressen in der Schweiz und liefert eine kurze Vorschlagsliste. */
@@ -64,9 +71,16 @@ export async function searchPlaces(
 }
 
 const CANTON_NAMES = Object.keys(CANTON_ISO);
+/** ISO-Code → Kantonsname (umgekehrte Richtung von CANTON_ISO). */
+const ISO_TO_CANTON = Object.fromEntries(
+  Object.entries(CANTON_ISO).map(([name, code]) => [code, name]),
+);
 
-/** Ordnet einen von Nominatim gelieferten "state"-Namen einem App-Kanton zu. */
-function matchCanton(state: string | undefined): string | null {
+/**
+ * Ordnet einen von Nominatim gelieferten "state"-Namen einem App-Kanton zu
+ * (Fuzzy-Match, sprachunabhaengig).
+ */
+function matchCantonName(state: string | undefined): string | null {
   if (!state) return null;
   const normalized = state.toLowerCase();
   return (
@@ -76,6 +90,19 @@ function matchCanton(state: string | undefined): string | null {
         canton.toLowerCase().includes(normalized),
     ) ?? null
   );
+}
+
+/**
+ * Bestimmt den Kanton aus einem Nominatim-Adress-Objekt. Reihenfolge:
+ *  1. ISO-3166-2-Kuerzel (z.B. "CH-BL") — zuverlaeessigste Quelle
+ *  2. address.state — deutsche Kantonsnamen wie "Kanton Basel-Landschaft"
+ *  3. address.county — Bezirksname als letzte Reserve
+ */
+function cantonFromAddress(address: NominatimAddress | undefined): string | null {
+  if (!address) return null;
+  const iso = address["ISO3166-2-lvl4"];
+  if (iso && ISO_TO_CANTON[iso]) return ISO_TO_CANTON[iso]!;
+  return matchCantonName(address.state) ?? matchCantonName(address.county);
 }
 
 export interface ReverseGeocodeResult {
@@ -112,7 +139,7 @@ export async function reverseGeocode(
     const data = (await res.json()) as NominatimResult;
     return {
       label: data.display_name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-      canton: matchCanton(data.address?.state),
+      canton: cantonFromAddress(data.address),
     };
   } catch (err) {
     log.warn({ err }, "Nominatim-Reverse: Anfrage fehlgeschlagen");

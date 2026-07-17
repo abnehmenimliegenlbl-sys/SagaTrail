@@ -125,14 +125,26 @@ export async function buildRouteFromPoints(
       ? Promise.resolve({ label: meta.startLabel, canton: null })
       : reverseGeocode(start.lat, start.lng, log),
     meta.endLabel
-      ? Promise.resolve({ label: meta.endLabel })
+      ? Promise.resolve({ label: meta.endLabel, canton: null })
       : reverseGeocode(end.lat, end.lng, log),
   ]);
 
   const ascentM = elevation?.ascentM ?? 0;
   const maxElevationM = elevation?.maxElevationM ?? 0;
   const sacGrade = sac ?? "unbekannt";
-  const region = startPlace.canton ?? "";
+
+  // Kanton-Erkennung: Startpunkt ist bevorzugt; faellt das Geocoding aus
+  // (z.B. Netzfehler oder Nominatim liefert kein verwertbares state-Feld),
+  // wird der Mittelpunkt der Route als Fallback geocodiert. Das ist wichtig
+  // fuer umgekehrte GPX-Importe, bei denen der Startpunkt nah an einer
+  // Kantonsgrenze liegt und die Kanton-Zuordnung unzuverlaessig ist.
+  let canton = startPlace.canton;
+  if (!canton && points.length > 2) {
+    const mid = points[Math.floor(points.length / 2)]!;
+    const midPlace = await reverseGeocode(mid.lat, mid.lng, log);
+    canton = midPlace.canton;
+  }
+  const region = canton ?? "";
   const geometry: [number, number][] = downsample(points, STORED_GEOMETRY_POINTS).map(
     (p) => [p.lat, p.lng],
   );
