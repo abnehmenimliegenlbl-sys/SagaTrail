@@ -64,6 +64,19 @@ export default function SignInScreen() {
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
         router.replace("/onboarding");
+      } else if (attempt.status === "needs_first_factor") {
+        const result = await signIn.attemptFirstFactor({
+          strategy: "password",
+          password,
+        });
+        if (result.status === "complete") {
+          await setActive({ session: result.createdSessionId });
+          router.replace("/onboarding");
+        } else {
+          setError(t.errorSignInIncomplete);
+        }
+      } else if (attempt.status === "needs_second_factor") {
+        setError(t.errorSignInIncomplete);
       } else {
         setError(t.errorSignInIncomplete);
       }
