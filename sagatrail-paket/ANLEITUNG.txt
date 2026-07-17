@@ -1,95 +1,55 @@
-SagaTrail – OSM Partner-Leads Harvester
-=========================================
+SagaTrail – OSM Partner-Leads Harvester (WP Cron)
+===================================================
 
-INHALT DIESES ZIPS
--------------------
-  sagatrail-wordpress.sql   Tabellen + 695 Routen für deine WordPress-DB
-  osm-harvest.php           PHP-Script das Overpass abfragt
-  ANLEITUNG.txt             Diese Datei
-
+INHALT
+------
+  sagatrail-wordpress.sql              SQL: 3 Tabellen + 695 Routen
+  sagatrail-osm-cron/
+    sagatrail-osm-cron.php             WP-Plugin für den Harvester
 
 SCHRITT 1 – SQL importieren
 -----------------------------
-Im Infomaniak Hosting-Panel:
-  → Databases → Verwalten → phpMyAdmin → deine WP-Datenbank → Importieren
-  → Datei: sagatrail-wordpress.sql hochladen → Ausführen
+phpMyAdmin → deine WP-Datenbank → Importieren → sagatrail-wordpress.sql
 
-Damit werden 3 Tabellen angelegt:
-  sagatrail_routen          695 Wanderrouten mit Koordinaten
-  sagatrail_partner_leads   leer – wird vom Script gefüllt
-  sagatrail_osm_progress    trackt welche Routen bereits abgefragt wurden
+Erzeugt:
+  sagatrail_routen          695 Routen
+  sagatrail_partner_leads   wird vom Plugin gefüllt
+  sagatrail_osm_progress    Fortschritts-Tracking
 
 
-SCHRITT 2 – PHP-Script hochladen
-----------------------------------
-1. Ordner anlegen (falls noch nicht vorhanden):
-   Im Infomaniak File Manager oder per FTP:
-     wp-content/uploads/sagatrail/
+SCHRITT 2 – Plugin installieren
+---------------------------------
+Den Ordner sagatrail-osm-cron/ hochladen nach:
+  wp-content/plugins/sagatrail-osm-cron/
 
-2. osm-harvest.php in diesen Ordner hochladen:
-     wp-content/uploads/sagatrail/osm-harvest.php
-
-3. Die Datei ist bereits fertig konfiguriert – du musst NICHTS editieren.
-   Der Pfad zu wp-load.php ist auf diesen Ordner voreingestellt:
-
-     $wp_root = dirname(__FILE__) . '/../../..';
-     // entspricht: wp-content/uploads/sagatrail/ → drei Ebenen rauf → WordPress-Root
-
-   Das lädt automatisch WordPress inkl. Datenbankverbindung ($wpdb),
-   ohne dass du Benutzername oder Passwort irgendwo eintippen musst.
-
-4. Kurzer Test – per SSH oder Infomaniak Web-Terminal:
-     php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/osm-harvest.php
-   
-   Du solltest sehen:
-     [2026-...] === SagaTrail OSM Harvester | 0/695 Routen erledigt | 695 offen ===
-     [2026-...] → Akeleienweg (Aargau)
-     [2026-...] ...
-
-   Wenn stattdessen "WordPress konnte nicht geladen werden" erscheint:
-     → Den absoluten Pfad in Zeile 44 der PHP-Datei manuell setzen:
-       define('ABSPATH', '/home/clients/XXXXX/sites/sagatrail.ch/');
-       (Diesen Pfad siehst du in der Fehlermeldung vom ersten Versuch)
+Dann im WP-Admin → Plugins → "SagaTrail OSM Harvester" aktivieren.
 
 
-SCHRITT 3 – Cron-Job einrichten (Infomaniak)
-----------------------------------------------
-Infomaniak Hosting-Panel → Hosting → deine Site → Cron-Jobs → Hinzufügen
+SCHRITT 3 – Task Scheduler (Infomaniak)
+-----------------------------------------
+Hosting-Panel → Task Scheduler → Aufgabe hinzufügen:
 
-  Befehl (Pfad XXXXX anpassen – steht im Hosting-Panel unter "Verzeichnis"):
-    php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/osm-harvest.php >> /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/harvest.log 2>&1
+  URL:      https://sagatrail.ch/wp-cron.php?doing_wp_cron
+  Passwort: keines nötig
+  Intervall: alle 5 Minuten
 
-  Intervall:  alle 5 Minuten
-  
-  Das Script läuft dann automatisch alle 5 Minuten, verarbeitet je 10 Routen
-  und hört von selbst auf, wenn alle 695 erledigt sind.
-
-  Tipp: Die Logdatei harvest.log zeigt dir live den Fortschritt.
-  Du kannst sie im File Manager öffnen oder per SSH:
-    tail -f wp-content/uploads/sagatrail/harvest.log
+Das war's. WP Cron läuft dann alle 5 Minuten und verarbeitet
+je 10 Routen, bis alle 695 erledigt sind. Das Plugin deaktiviert
+den Job automatisch wenn es fertig ist.
 
 
-FORTSCHRITT PRÜFEN
--------------------
-In phpMyAdmin ausführen:
+FORTSCHRITT PRÜFEN (phpMyAdmin)
+---------------------------------
+SELECT
+  (SELECT COUNT(*) FROM sagatrail_osm_progress) AS erledigt,
+  (SELECT COUNT(*) FROM sagatrail_routen)        AS gesamt,
+  (SELECT COUNT(*) FROM sagatrail_partner_leads) AS leads;
 
-  SELECT
-    (SELECT COUNT(*) FROM sagatrail_osm_progress) AS erledigt,
-    (SELECT COUNT(*) FROM sagatrail_routen)        AS gesamt,
-    (SELECT COUNT(*) FROM sagatrail_partner_leads) AS leads_total;
-
-  SELECT kanton, COUNT(*) as leads
-  FROM sagatrail_partner_leads
-  GROUP BY kanton ORDER BY leads DESC;
+SELECT kanton, COUNT(*) AS leads
+FROM sagatrail_partner_leads
+GROUP BY kanton ORDER BY leads DESC;
 
 
-LAUFZEIT-SCHÄTZUNG
---------------------
-  695 Routen × (6s Pause + ~3s Overpass) ≈ 96 Minuten bei Dauerlauf
-  Mit Cron alle 5 Min × 10 Routen ≈ 58 Cron-Aufrufe ≈ ~5 Stunden
-
-
-FRAGEN?
---------
-Das Script nutzt ausschliesslich die kostenlose Overpass API (OpenStreetMap).
-Keine API-Keys nötig.
+LAUFZEIT
+---------
+695 Routen / 10 pro Aufruf = 70 Aufrufe à 5 Min ≈ 6 Stunden
