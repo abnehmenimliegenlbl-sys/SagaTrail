@@ -181,6 +181,32 @@ export async function fetchNearbyCommonsImage(
 }
 
 /**
+ * Sucht auf Wikimedia Commons nach Dateien, deren Name den POI-Namen enthaelt.
+ * Findet Bilder, die weder per Geo-Tag noch per Wikidata-P18 verknuepft sind
+ * (z.B. kommunale Brunnen, Skulpturen, kleine Kapellen).
+ * Gibt die Thumbnail-URL des ersten Treffers zurueck.
+ */
+export async function fetchCommonsImageByName(
+  name: string,
+  widthPx = 600,
+): Promise<string | null> {
+  const searchUrl =
+    `https://commons.wikimedia.org/w/api.php?action=query` +
+    `&list=search&srsearch=${encodeURIComponent(name)}` +
+    `&srnamespace=6&srlimit=3&format=json&origin=*`;
+  const json = await fetchJson<{
+    query?: { search?: { title: string }[] };
+  }>(searchUrl);
+  const hits = json?.query?.search ?? [];
+  for (const hit of hits) {
+    const filename = hit.title.replace(/^File:/, "");
+    const url = await commonsImageUrl(filename, widthPx);
+    if (url) return url;
+  }
+  return null;
+}
+
+/**
  * Loest eine OSM-`wikipedia`-Tag-Angabe ("de:Artikelname" oder nur
  * "Artikelname") in eine Zusammenfassung auf.
  */

@@ -32,6 +32,7 @@ import {
   type LatLng,
 } from "./geo";
 import {
+  fetchCommonsImageByName,
   fetchNearbyCommonsImage,
   fetchWikipediaSummary,
   fetchWikidataImage,
@@ -246,53 +247,61 @@ async function enrichPoiWithWikipedia(
           fetchWikidataImage(poi.wikidataTag),
         ]);
         if (wiki) {
-          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > Commons-Geosearch
+          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > Commons-Name > Commons-Geo
           const image =
             wiki.image ??
             p18Image ??
+            (await fetchCommonsImageByName(poi.name)) ??
             (await fetchNearbyCommonsImage(poi.lat, poi.lng));
           return { ...poi, wiki: { ...wiki, image } };
         }
-        // Kein Wikipedia-Artikel, aber Bild vorhanden: minimales wiki-Objekt
-        const image = p18Image ?? (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+        // Kein Wikipedia-Artikel: P18 > Commons-Name > Commons-Geo
+        const image =
+          p18Image ??
+          (await fetchCommonsImageByName(poi.name)) ??
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng));
         if (image) {
           return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
       } else {
-        // Kein Wikipedia-Eintrag in der Zielsprache — P18 + Commons-Geosearch.
-        const [p18Image, commonsImage] = await Promise.all([
+        // Kein Wikipedia-Eintrag: P18 + Commons-Name + Commons-Geo parallel
+        const [p18Image, nameImage, geoImage] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
+          fetchCommonsImageByName(poi.name),
           fetchNearbyCommonsImage(poi.lat, poi.lng),
         ]);
-        const image = p18Image ?? commonsImage;
+        const image = p18Image ?? nameImage ?? geoImage;
         if (image) {
           return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
       }
     }
     // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
-    // Geo-Suche im Umkreis mit unscharfem Namensabgleich (z.B. findet
-    // "Basiliskbrunnen" so den Artikel "Basiliskenbrunnen"). Bewusst mit
-    // Budget gedeckelt, damit dichte Stadtgebiete nicht in Timeouts laufen.
+    // Geo-Suche im Umkreis mit unscharfem Namensabgleich. Budget-gedeckelt.
     if (geoSearchBudget.rest > 0) {
       geoSearchBudget.rest--;
       const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
       if (wiki) {
-        // Falls Wikipedia-Artikel kein Bild hat, Commons-Geosearch als Fallback
-        if (wiki.image) return { ...poi, wiki };
-        const image = await fetchNearbyCommonsImage(poi.lat, poi.lng);
+        // Falls Wikipedia-Artikel kein Bild hat: Commons-Name > Commons-Geo
+        const image =
+          wiki.image ??
+          (await fetchCommonsImageByName(poi.name)) ??
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng));
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
-    // Vierte Stufe: Commons-Geosearch — findet Fotos auch fuer Orte ganz ohne
-    // Wikipedia-Artikel (kleine Kapellen, Wegkreuze, Viewpoints usw.)
-    const commonsImage = await fetchNearbyCommonsImage(poi.lat, poi.lng);
+    // Vierte Stufe: Commons-Namenssuche + Commons-Geosearch parallel —
+    // findet Fotos fuer Orte ganz ohne Wikipedia-Artikel (Brunnen, Kapellen…)
+    const [nameImage, geoImage] = await Promise.all([
+      fetchCommonsImageByName(poi.name),
+      fetchNearbyCommonsImage(poi.lat, poi.lng),
+    ]);
+    const commonsImage = nameImage ?? geoImage;
     if (commonsImage) {
       return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: commonsImage } };
     }
     // Fuenfte Stufe: Claude-Wissenssuche — greift nur, wenn alle vorherigen
-    // Pfade erfolglos waren. Antwortet mit "UNBEKANNT" wenn kein verlässliches
-    // Wissen vorhanden, damit kein halluzinierter Text erscheint.
+    // Pfade erfolglos waren.
     const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng);
     if (aiWiki) return { ...poi, wiki: aiWiki };
   } catch (err) {
