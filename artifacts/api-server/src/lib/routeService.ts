@@ -32,6 +32,7 @@ import {
   type LatLng,
 } from "./geo";
 import {
+  fetchNearbyCommonsImage,
   fetchWikipediaSummary,
   fetchWikidataImage,
   resolveOsmWikipediaTag,
@@ -244,16 +245,28 @@ async function enrichPoiWithWikipedia(
           fetchWikipediaSummary(title, "de", poi.lat, poi.lng),
           fetchWikidataImage(poi.wikidataTag),
         ]);
-        if (wiki) return { ...poi, wiki: wiki.image ? wiki : { ...wiki, image: p18Image } };
+        if (wiki) {
+          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > Commons-Geosearch
+          const image =
+            wiki.image ??
+            p18Image ??
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+          return { ...poi, wiki: { ...wiki, image } };
+        }
         // Kein Wikipedia-Artikel, aber Bild vorhanden: minimales wiki-Objekt
-        if (p18Image) {
-          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: p18Image } };
+        const image = p18Image ?? (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+        if (image) {
+          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
       } else {
-        // Kein Wikipedia-Eintrag in der Zielsprache — trotzdem P18-Bild probieren.
-        const p18Image = await fetchWikidataImage(poi.wikidataTag);
-        if (p18Image) {
-          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: p18Image } };
+        // Kein Wikipedia-Eintrag in der Zielsprache — P18 + Commons-Geosearch.
+        const [p18Image, commonsImage] = await Promise.all([
+          fetchWikidataImage(poi.wikidataTag),
+          fetchNearbyCommonsImage(poi.lat, poi.lng),
+        ]);
+        const image = p18Image ?? commonsImage;
+        if (image) {
+          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
       }
     }
@@ -264,11 +277,22 @@ async function enrichPoiWithWikipedia(
     if (geoSearchBudget.rest > 0) {
       geoSearchBudget.rest--;
       const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
-      if (wiki) return { ...poi, wiki };
+      if (wiki) {
+        // Falls Wikipedia-Artikel kein Bild hat, Commons-Geosearch als Fallback
+        if (wiki.image) return { ...poi, wiki };
+        const image = await fetchNearbyCommonsImage(poi.lat, poi.lng);
+        return { ...poi, wiki: { ...wiki, image } };
+      }
     }
-    // Vierte Stufe: Claude-Wissenssuche — greift nur, wenn Wikipedia und
-    // Geo-Suche komplett leer ausgingen. Antwortet mit "UNBEKANNT" wenn kein
-    // verlässliches Wissen vorhanden, damit kein halluzinierter Text erscheint.
+    // Vierte Stufe: Commons-Geosearch — findet Fotos auch fuer Orte ganz ohne
+    // Wikipedia-Artikel (kleine Kapellen, Wegkreuze, Viewpoints usw.)
+    const commonsImage = await fetchNearbyCommonsImage(poi.lat, poi.lng);
+    if (commonsImage) {
+      return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: commonsImage } };
+    }
+    // Fuenfte Stufe: Claude-Wissenssuche — greift nur, wenn alle vorherigen
+    // Pfade erfolglos waren. Antwortet mit "UNBEKANNT" wenn kein verlässliches
+    // Wissen vorhanden, damit kein halluzinierter Text erscheint.
     const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng);
     if (aiWiki) return { ...poi, wiki: aiWiki };
   } catch (err) {

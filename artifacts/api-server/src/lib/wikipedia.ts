@@ -113,8 +113,9 @@ export async function resolveWikidataTitle(
 }
 
 /**
- * Laedt das Hauptbild (Wikidata-Property P18) eines Objekts und gibt eine
- * Wikimedia-Commons-URL in der angegebenen Breite zurueck.
+ * Laedt das Hauptbild (Wikidata-Property P18) eines Objekts ueber die
+ * Wikimedia-Commons-imageinfo-API und gibt eine direkte upload.wikimedia.org-
+ * Thumbnail-URL zurueck (kein Redirect-Chain, funktioniert zuverlässig in RN).
  *
  * Viele Schweizer OSM-Objekte (historische Brunnen, Kapellen usw.) haben auf
  * Wikipedia kein Hauptbild und liefern daher kein `thumbnail` in der REST-API.
@@ -130,8 +131,53 @@ export async function fetchWikidataImage(
   const p18 = entity?.claims?.["P18"];
   const filename = p18?.[0]?.mainsnak?.datavalue?.value;
   if (typeof filename !== "string" || !filename) return null;
-  const encoded = encodeURIComponent(filename.replace(/ /g, "_"));
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encoded}?width=${widthPx}`;
+  return commonsImageUrl(filename, widthPx);
+}
+
+/**
+ * Laedt die direkte Thumbnail-URL einer Commons-Datei ueber die imageinfo-API.
+ * Liefert eine upload.wikimedia.org-URL ohne Weiterleitungsketten.
+ */
+async function commonsImageUrl(filename: string, widthPx = 600): Promise<string | null> {
+  const title = `File:${filename}`;
+  const apiUrl =
+    `https://commons.wikimedia.org/w/api.php?action=query` +
+    `&titles=${encodeURIComponent(title)}` +
+    `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
+    `&format=json&origin=*`;
+  const json = await fetchJson<{
+    query?: { pages?: Record<string, { imageinfo?: { thumburl?: string; url?: string }[] }> };
+  }>(apiUrl);
+  const pages = Object.values(json?.query?.pages ?? {});
+  const info = pages[0]?.imageinfo?.[0];
+  return info?.thumburl ?? info?.url ?? null;
+}
+
+/**
+ * Sucht das naechstgelegene Wikimedia-Commons-Foto innerhalb von radiusM Metern
+ * und gibt eine direkte Thumbnail-URL zurueck. Wird als Fallback eingesetzt,
+ * wenn weder Wikipedia noch Wikidata ein Bild liefern.
+ */
+export async function fetchNearbyCommonsImage(
+  lat: number,
+  lng: number,
+  radiusM = 300,
+  widthPx = 600,
+): Promise<string | null> {
+  const geoUrl =
+    `https://commons.wikimedia.org/w/api.php?action=query` +
+    `&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=${radiusM}` +
+    `&gsnamespace=6&gslimit=3&format=json&origin=*`;
+  const json = await fetchJson<{
+    query?: { geosearch?: { title: string; dist: number }[] };
+  }>(geoUrl);
+  const hits = json?.query?.geosearch ?? [];
+  for (const hit of hits) {
+    const filename = hit.title.replace(/^File:/, "");
+    const url = await commonsImageUrl(filename, widthPx);
+    if (url) return url;
+  }
+  return null;
 }
 
 /**
