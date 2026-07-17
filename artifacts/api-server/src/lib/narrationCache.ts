@@ -9,6 +9,42 @@ import {
 } from "./elevenlabs";
 
 /**
+ * Wird geworfen, wenn ein Nutzer das tagesaktuelle Zeichen-Budget fuer
+ * ElevenLabs-Synthesen erschoepft hat. Der Aufrufer soll dann mit 429
+ * antworten und den Client zur Geraetestimme zuruecklenken.
+ */
+export class NarrationRateLimitError extends Error {
+  constructor() {
+    super("Tages-Zeichen-Budget fuer KI-Erzaehlstimme erschoepft");
+    this.name = "NarrationRateLimitError";
+  }
+}
+
+// Taeglich zulaessige Zeichen pro Nutzer (inkl. Whitespace/SSML).
+// Ueberschreibbar per Env-Variable fuer Tests oder Premium-Erweiterung.
+const DAILY_BUDGET = parseInt(process.env.NARRATION_DAILY_CHAR_BUDGET ?? "3000", 10);
+
+interface DayUsage { date: string; usedChars: number }
+const userBudget = new Map<string, DayUsage>();
+
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checkAndDeductBudget(userId: string, chars: number): void {
+  const today = todayUtc();
+  let entry = userBudget.get(userId);
+  if (!entry || entry.date !== today) {
+    entry = { date: today, usedChars: 0 };
+    userBudget.set(userId, entry);
+  }
+  if (entry.usedChars + chars > DAILY_BUDGET) {
+    throw new NarrationRateLimitError();
+  }
+  entry.usedChars += chars;
+}
+
+/**
  * Persistenter GCS-Cache fuer ElevenLabs-Audiodateien. Gecacht wird nach
  * SHA-256 des Erzaehltextes: derselbe Text (Sprache ist bereits Teil des
  * Textes) erzeugt denselben Audio-Schluessel, egal von welcher Sage/Route
@@ -112,6 +148,7 @@ async function writeToCache(
 export async function getOrCreateNarrationAudio(
   text: string,
   language: string | undefined,
+  userId: string,
   log: Logger,
 ): Promise<Buffer> {
   const { bucketName } = parsePrivateDir();
@@ -119,6 +156,10 @@ export async function getOrCreateNarrationAudio(
 
   const cached = await readFromCache(bucket, text, language, log);
   if (cached) return cached;
+
+  // Cache-Miss: Zeichen-Budget pruefen, bevor ElevenLabs-Credits verbraucht werden.
+  // Cache-Treffer passieren das Budget nicht — sie kosten nichts.
+  checkAndDeductBudget(userId, text.length);
 
   const { audio, voiceId } = await synthesizeNarration(text, language, log);
   await writeToCache(bucket, text, language, voiceId, audio, log);

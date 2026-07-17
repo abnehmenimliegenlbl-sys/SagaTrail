@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
 import { CreateNarrationBody } from "@workspace/api-zod";
-import { getOrCreateNarrationAudio } from "../lib/narrationCache";
+import { getOrCreateNarrationAudio, NarrationRateLimitError } from "../lib/narrationCache";
 
 const router: IRouter = Router();
 
@@ -28,12 +28,21 @@ router.post("/narration", async (req, res): Promise<void> => {
     const audio = await getOrCreateNarrationAudio(
       parsed.data.text,
       parsed.data.language,
+      userId,
       req.log,
     );
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "private, max-age=31536000, immutable");
     res.send(audio);
   } catch (err) {
+    if (err instanceof NarrationRateLimitError) {
+      req.log.info({ userId }, "Narration-Tageslimit erreicht, 429 an Client");
+      res.status(429).json({
+        error: "Tages-Budget für KI-Erzählstimme erreicht. Die Gerätestimme übernimmt bis Mitternacht UTC.",
+        fallbackToDevice: true,
+      });
+      return;
+    }
     req.log.error({ err }, "Narration-Synthese fehlgeschlagen");
     res.status(502).json({ error: "Sprachsynthese fehlgeschlagen" });
   }

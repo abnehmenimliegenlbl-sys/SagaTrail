@@ -9,12 +9,14 @@ import {
   getWeather,
   useGetRouteConditions,
   reportRouteCondition,
+  ApiError,
 } from "@workspace/api-client-react";
 import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
+import * as Speech from "expo-speech";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
 
@@ -62,8 +64,10 @@ import { computeRouteWaypoints, type RouteWaypoint } from "@/lib/routeWaypoints"
 import {
   effectiveStoryLanguage,
   resolveLang,
+  SPEECH_LOCALE,
   STORY_PACKS,
   trimForNarration,
+  type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
@@ -488,7 +492,7 @@ export default function LiveHike() {
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
-  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void }>>([]);
+  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean }>>([]);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -1084,7 +1088,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1141,7 +1145,7 @@ export default function LiveHike() {
       // Sprachansage kurz vor der Abbiegung — reiht sich in die Warteschlange
       // ein, damit eine laufende Kapitel-Erzaehlung nicht unterbrochen wird.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.turnVoice(treffer.cue.direction));
+      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { useDevice: true });
     }
   }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
 
@@ -1483,12 +1487,12 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean }) => {
       // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
       // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
       if (!opts?.interrupt && speakingRef.current) {
-        narrationQueueRef.current.push({ text, onFinished });
+        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice });
         return;
       }
       // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren.
@@ -1509,7 +1513,48 @@ export default function LiveHike() {
       // sofort unterbricht.
       speakingRef.current = true;
 
+      if (opts?.useDevice) {
+        // Geraetestimme (expo-speech) — kostenlos, kein ElevenLabs-Kontingent.
+        // Genutzt fuer dynamische/kurze Texte (Navigation, Entscheidungs-
+        // Feedback), die entweder immer andere Zeichen enthalten (Distanz)
+        // oder per Math.random() nie gecacht werden koennen.
+        const prevSound = narrationSoundRef.current;
+        narrationSoundRef.current = null;
+        if (prevSound) {
+          try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
+        }
+        try { Speech.stop(); } catch {}
+        const locale = SPEECH_LOCALE[resolveLang((profile?.language ?? "de") as Lang)];
+        Speech.speak(text, {
+          language: locale,
+          onDone: () => {
+            if (gen !== narrationGenRef.current) return;
+            setSpeaking(false);
+            speakingRef.current = false;
+            onFinished?.();
+            const next = narrationQueueRef.current.shift();
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+          },
+          onStopped: () => {
+            if (gen !== narrationGenRef.current) return;
+            setSpeaking(false);
+            speakingRef.current = false;
+          },
+          onError: () => {
+            if (gen !== narrationGenRef.current) return;
+            setSpeaking(false);
+            speakingRef.current = false;
+            onFinished?.();
+            const next = narrationQueueRef.current.shift();
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+          },
+        });
+        return;
+      }
+
       try {
+        // Laufende Geraetestimme stoppen, bevor der ElevenLabs-Request startet.
+        try { Speech.stop(); } catch {}
         // TTS-Anfrage VOR dem Stopp des laufenden Audios: solange der
         // Netzwerk-Request laeuft, spielt das vorherige Audio weiter —
         // die iOS-Audiosession bleibt aktiv und der JS-Thread wird im
@@ -1541,7 +1586,7 @@ export default function LiveHike() {
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished);
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
@@ -1550,14 +1595,19 @@ export default function LiveHike() {
             sound.playAsync().catch(() => {});
           }
         });
-      } catch {
+      } catch (err) {
         if (gen !== narrationGenRef.current) return;
+        // Rate-Limit (429): still auf Geraetestimme ausweichen, kein Fehler-Banner.
+        if (err instanceof ApiError && err.status === 429) {
+          speakRef.current?.(text, onFinished, { useDevice: true });
+          return;
+        }
         setNarrationUnavailable(true);
         setSpeaking(false);
         speakingRef.current = false;
         onFinished?.();
         const next = narrationQueueRef.current.shift();
-        if (next) speakRef.current?.(next.text, next.onFinished);
+        if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
       }
     },
     [profile?.language]
@@ -1742,7 +1792,7 @@ export default function LiveHike() {
     if (walkToStartAnnouncedRef.current) return;
     if (preparing || locState !== "granted") return;
     walkToStartAnnouncedRef.current = true;
-    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir));
+    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useDevice: true });
   }, [walkToStart, preparing, locState, speak, t]);
 
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
@@ -1875,7 +1925,7 @@ export default function LiveHike() {
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.decisionFeedback(archetypeHint));
+      speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useDevice: true });
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {
