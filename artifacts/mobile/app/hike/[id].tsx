@@ -492,7 +492,11 @@ export default function LiveHike() {
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
-  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean; useOpenAI?: boolean }>>([]);
+  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }>>([]);
+  // Vorgeladene ElevenLabs-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
+  // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
+  // Netzwerk-Latenz anfaellt und die ElevenLabs-Stimme sofort ertönt.
+  const ackAudioUriRef = useRef<string | null>(null);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -1088,7 +1092,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1489,12 +1493,12 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }) => {
       // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
       // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
       if (!opts?.interrupt && speakingRef.current) {
-        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI });
+        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
         return;
       }
       // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren.
@@ -1562,8 +1566,11 @@ export default function LiveHike() {
         // die iOS-Audiosession bleibt aktiv und der JS-Thread wird im
         // Hintergrund nicht suspendiert. Erst wenn das neue Audio bereit
         // ist, wird das alte gestoppt (Luecke < 100 ms statt 1-5 Sekunden).
-        const blob = await createNarration({ text, language: profile?.language, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
-        const uri = await blobToTempFileUri(blob);
+        // Vorgeladene URI direkt nutzen (kein Netzwerk-Request noetig).
+        const uri = opts?.preFetchedUri ?? await (async () => {
+          const blob = await createNarration({ text, language: profile?.language, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
+          return blobToTempFileUri(blob);
+        })();
         if (gen !== narrationGenRef.current) return;
         // Vorheriges Audio direkt stoppen — kein setState, damit speaking=true
         // fuer den Ladeindikator erhalten bleibt.
@@ -1588,7 +1595,7 @@ export default function LiveHike() {
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
@@ -1615,6 +1622,30 @@ export default function LiveHike() {
     [profile?.language]
   );
   speakRef.current = speak;
+
+  // Entscheidungs-Ack ("Ich verstehe." etc.) vorausladen sobald die Wanderung
+  // startet. Der Text ist je Sprache fix, wird genau einmal synthesiert und
+  // bleibt dauerhaft im GCS-Narrations-Cache — kein ElevenLabs-Anruf beim
+  // naechsten Wanderer. Das stellt sicher, dass bei der Wahl (Kapitel 3/5)
+  // sofort die richtige ElevenLabs-Stimme ertönt, ohne Netzwerk-Latenz.
+  useEffect(() => {
+    if (preparing) return;
+    const lang = profile?.language;
+    const pack = STORY_PACKS[resolveLang((lang ?? "de") as Lang)];
+    const ackText = pack.decisionAck;
+    let cancelled = false;
+    (async () => {
+      try {
+        const blob = await createNarration({ text: ackText, language: lang });
+        if (cancelled) return;
+        const uri = await blobToTempFileUri(blob);
+        if (!cancelled) ackAudioUriRef.current = uri;
+      } catch {
+        // Stummes Scheitern — Fallback bleibt ElevenLabs-Aufruf zur Laufzeit.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [preparing, profile?.language]);
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
@@ -1930,10 +1961,14 @@ export default function LiveHike() {
     if (archetypeHint) {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       const feedbackText = pack.decisionFeedback(archetypeHint, gewaehlt ?? "");
+      // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
+      // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
+      // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
+      const ackUri = ackAudioUriRef.current ?? undefined;
       speakRef.current?.(
         pack.decisionAck,
         () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
-        { useDevice: true, interrupt: true },
+        { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useDevice: true }) },
       );
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
