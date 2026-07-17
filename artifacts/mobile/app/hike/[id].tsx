@@ -2735,11 +2735,13 @@ export default function LiveHike() {
         </View>
       </ScrollView>
 
-      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
+      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt.
+          Beim Schliessen Karte wieder oeffnen, damit der User direkt den naechsten
+          POI antippen kann. */}
       {!!selectedPoi && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => setSelectedPoi(null)}
+          onPress={() => { setSelectedPoi(null); setKarteVollbild(true); }}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
@@ -2761,7 +2763,7 @@ export default function LiveHike() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => setSelectedPoi(null)}
+                  onPress={() => { setSelectedPoi(null); setKarteVollbild(true); }}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
@@ -2784,11 +2786,12 @@ export default function LiveHike() {
         </Pressable>
       )}
 
-      {/* Partner-Detail — ebenfalls ausserhalb ScrollView */}
+      {/* Partner-Detail — ebenfalls ausserhalb ScrollView.
+          Beim Schliessen Karte wieder oeffnen. */}
       {!!selectedPartner && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => setSelectedPartner(null)}
+          onPress={() => { setSelectedPartner(null); setKarteVollbild(true); }}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
@@ -2803,7 +2806,7 @@ export default function LiveHike() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => setSelectedPartner(null)}
+                  onPress={() => { setSelectedPartner(null); setKarteVollbild(true); }}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
