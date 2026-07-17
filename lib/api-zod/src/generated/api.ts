@@ -699,7 +699,8 @@ export const ReportRouteConditionResponse = zod.object({
 
 export const CreateNarrationBody = zod.object({
   "text": zod.string().min(1),
-  "language": zod.string().optional().describe('Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine Schweizer Faerbung fuer \"gsw\"). Der uebergebene Text muss fuer \"gsw\" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS geschickt.')
+  "language": zod.string().optional().describe('Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine Schweizer Faerbung fuer \"gsw\"). Der uebergebene Text muss fuer \"gsw\" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS geschickt.'),
+  "provider": zod.enum(['elevenlabs', 'openai']).optional().describe('Expliziter TTS-Anbieter. \"openai\" umgeht ElevenLabs vollstaendig und synthetisiert direkt mit OpenAI (guenstiger, fuer alle Nicht-Story-Inhalte: Einleitung, POIs, Meilensteine, Uebergaenge, Entscheidungs-Feedback). Fehlt der Wert, wird ElevenLabs mit OpenAI-Fallback verwendet (Story-Kapitel).')
 })
 
 export const CreateNarrationResponse = zod.unknown()

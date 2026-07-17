@@ -30,6 +30,7 @@ router.post("/narration", async (req, res): Promise<void> => {
       parsed.data.language,
       userId,
       req.log,
+      parsed.data.provider ?? undefined,
     );
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "private, max-age=31536000, immutable");

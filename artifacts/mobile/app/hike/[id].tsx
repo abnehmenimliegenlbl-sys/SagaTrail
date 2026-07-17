@@ -492,7 +492,7 @@ export default function LiveHike() {
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
-  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean }>>([]);
+  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean; useOpenAI?: boolean }>>([]);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -1088,7 +1088,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1230,7 +1230,7 @@ export default function LiveHike() {
         if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
         }
-        speakRef.current?.(text);
+        speakRef.current?.(text, undefined, { useOpenAI: true });
       }
     }
   }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
@@ -1280,20 +1280,20 @@ export default function LiveHike() {
               if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
                 sendeAbbiegeMitteilung(t.milestoneTitle, text);
               }
-              speakRef.current?.(text);
+              speakRef.current?.(text, undefined, { useOpenAI: true });
             })
             .catch(() => {
               clearTimeout(timeout);
               if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
                 sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
               }
-              speakRef.current?.(fallback);
+              speakRef.current?.(fallback, undefined, { useOpenAI: true });
             });
         } else {
           if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
             sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
           }
-          speakRef.current?.(fallback);
+          speakRef.current?.(fallback, undefined, { useOpenAI: true });
         }
       }
     }
@@ -1487,12 +1487,12 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean }) => {
       // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
       // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
       if (!opts?.interrupt && speakingRef.current) {
-        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice });
+        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI });
         return;
       }
       // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren.
@@ -1533,7 +1533,7 @@ export default function LiveHike() {
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
           },
           onStopped: () => {
             if (gen !== narrationGenRef.current) return;
@@ -1546,7 +1546,7 @@ export default function LiveHike() {
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
           },
         });
         return;
@@ -1560,7 +1560,7 @@ export default function LiveHike() {
         // die iOS-Audiosession bleibt aktiv und der JS-Thread wird im
         // Hintergrund nicht suspendiert. Erst wenn das neue Audio bereit
         // ist, wird das alte gestoppt (Luecke < 100 ms statt 1-5 Sekunden).
-        const blob = await createNarration({ text, language: profile?.language });
+        const blob = await createNarration({ text, language: profile?.language, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
         const uri = await blobToTempFileUri(blob);
         if (gen !== narrationGenRef.current) return;
         // Vorheriges Audio direkt stoppen — kein setState, damit speaking=true
@@ -1586,7 +1586,7 @@ export default function LiveHike() {
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
@@ -1607,7 +1607,7 @@ export default function LiveHike() {
         speakingRef.current = false;
         onFinished?.();
         const next = narrationQueueRef.current.shift();
-        if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice });
+        if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
       }
     },
     [profile?.language]
@@ -1630,7 +1630,7 @@ export default function LiveHike() {
         speak(
           `${greetingPrefix} ${packForCue.hikeStartCue}`,
           () => { setTimeout(() => speak(ch.text), 1500); },
-          { interrupt: true }
+          { interrupt: true, useOpenAI: true }
         );
       } else {
         speak(ch.text, undefined, { interrupt: true });
@@ -1708,7 +1708,7 @@ export default function LiveHike() {
     const rawExtract = nearbyPoi.wiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
-      if (!cancelled) speak(text);
+      if (!cancelled) speak(text, undefined, { useOpenAI: true });
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
@@ -1925,7 +1925,7 @@ export default function LiveHike() {
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useDevice: true });
+      speakRef.current?.(pack.decisionFeedback(archetypeHint), undefined, { useOpenAI: true });
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {

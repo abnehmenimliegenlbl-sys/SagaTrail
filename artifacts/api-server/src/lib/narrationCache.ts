@@ -7,6 +7,7 @@ import {
   synthesizeNarration,
   voiceCandidatesForLanguage,
 } from "./elevenlabs";
+import { synthesizeOpenAiNarrationWithPacing } from "./narrationPacing";
 
 /**
  * Wird geworfen, wenn ein Nutzer das tagesaktuelle Zeichen-Budget fuer
@@ -160,10 +161,34 @@ export async function getOrCreateNarrationAudio(
   language: string | undefined,
   userId: string,
   log: Logger,
+  provider?: "elevenlabs" | "openai",
 ): Promise<Buffer> {
   const { bucketName } = parsePrivateDir();
   const bucket = objectStorageClient.bucket(bucketName);
 
+  // OpenAI-Direkt-Pfad: Einleitung, POIs, Meilensteine, Uebergaenge,
+  // Entscheidungs-Feedback. Kein ElevenLabs, kein Zeichen-Budget-Check
+  // (OpenAI laeuft ueber Replit-AI-Integration, kein separates Kontingent).
+  if (provider === "openai") {
+    const hash = hashNarrationText(text, language, OPENAI_FALLBACK_VOICE_ID);
+    const file = bucket.file(narrationObjectName(hash));
+    try {
+      const [exists] = await file.exists();
+      if (exists) {
+        log.info({ hash }, "OpenAI-Narration-Cache-Treffer");
+        const [buffer] = await file.download();
+        return buffer;
+      }
+    } catch (err) {
+      log.warn({ err }, "OpenAI-Cache-Lesezugriff fehlgeschlagen, synthetisiere ohne Cache");
+    }
+    log.info({ chars: text.length, language }, "OpenAI-Narration direkt synthetisieren");
+    const audio = await synthesizeOpenAiNarrationWithPacing(text, "onyx", 0.95, log);
+    await writeToCache(bucket, text, language, OPENAI_FALLBACK_VOICE_ID, audio, log);
+    return audio;
+  }
+
+  // ElevenLabs-Pfad (Story-Kapitel): Cache ueber alle Stimm-Kandidaten pruefen.
   const cached = await readFromCache(bucket, text, language, log);
   if (cached) return cached;
 

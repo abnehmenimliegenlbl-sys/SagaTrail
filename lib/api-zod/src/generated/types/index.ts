@@ -40,6 +40,7 @@ export * from './healthStatus';
 export * from './hikeSession';
 export * from './localizedSummary';
 export * from './narrationInput';
+export * from './narrationInputProvider';
 export * from './partner';
 export * from './partnerKategorie';
 export * from './poi';

@@ -1279,6 +1279,15 @@ components:
             Schweizer Faerbung fuer "gsw"). Der uebergebene Text muss fuer
             "gsw" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS
             geschickt.
+        provider:
+          type: string
+          enum: [elevenlabs, openai]
+          description: >-
+            Expliziter TTS-Anbieter. "openai" umgeht ElevenLabs vollstaendig
+            und synthetisiert direkt mit OpenAI (guenstiger, fuer alle
+            Nicht-Story-Inhalte: Einleitung, POIs, Meilensteine, Uebergaenge,
+            Entscheidungs-Feedback). Fehlt der Wert, wird ElevenLabs mit
+            OpenAI-Fallback verwendet (Story-Kapitel).
       required:
         - text
     CatalogCoordinates:

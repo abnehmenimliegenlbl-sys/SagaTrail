@@ -5,10 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { NarrationInputProvider } from './narrationInputProvider';
 
 export interface NarrationInput {
   /** @minLength 1 */
   text: string;
   /** Sprachcode der Erzaehlung (bestimmt die Stimmwahl, z. B. eine Schweizer Faerbung fuer "gsw"). Der uebergebene Text muss fuer "gsw" bereits Hochdeutsch sein — Dialekt-Text wird nie an die TTS geschickt. */
   language?: string;
+  /** Expliziter TTS-Anbieter. "openai" umgeht ElevenLabs vollstaendig und synthetisiert direkt mit OpenAI (guenstiger, fuer alle Nicht-Story-Inhalte: Einleitung, POIs, Meilensteine, Uebergaenge, Entscheidungs-Feedback). Fehlt der Wert, wird ElevenLabs mit OpenAI-Fallback verwendet (Story-Kapitel). */
+  provider?: NarrationInputProvider;
 }
