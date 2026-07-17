@@ -1,6 +1,7 @@
 import { useSSO } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
@@ -75,12 +76,14 @@ export default function SignInScreen() {
     }
   };
 
+  const redirectUrl = makeRedirectUri();
+
   const onGooglePress = useCallback(async () => {
     setError(null);
     setGoogleLoading(true);
     try {
       const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow(
-        { strategy: "oauth_google" }
+        { strategy: "oauth_google", redirectUrl }
       );
       if (createdSessionId && setActiveSSO) {
         await setActiveSSO({ session: createdSessionId });
@@ -91,14 +94,14 @@ export default function SignInScreen() {
     } finally {
       setGoogleLoading(false);
     }
-  }, [startSSOFlow, router]);
+  }, [startSSOFlow, router, redirectUrl]);
 
   const onApplePress = useCallback(async () => {
     setError(null);
     setAppleLoading(true);
     try {
       const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow(
-        { strategy: "oauth_apple" }
+        { strategy: "oauth_apple", redirectUrl }
       );
       if (createdSessionId && setActiveSSO) {
         await setActiveSSO({ session: createdSessionId });
@@ -109,7 +112,7 @@ export default function SignInScreen() {
     } finally {
       setAppleLoading(false);
     }
-  }, [startSSOFlow, router, t]);
+  }, [startSSOFlow, router, redirectUrl, t]);
 
   return (
     <Background deep>
