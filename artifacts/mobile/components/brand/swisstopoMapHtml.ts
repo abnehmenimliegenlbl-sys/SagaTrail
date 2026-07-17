@@ -6,6 +6,8 @@ export interface MapPoi {
   name: string;
   lat: number;
   lng: number;
+  /** Optionale Zusatzinfo fuer den Popup (z. B. Adresse, Typ). */
+  description?: string | null;
 }
 
 /**
@@ -465,8 +467,12 @@ ${legendHtml}
       parking.forEach(function(p) {
         var el = document.createElement('div'); el.className = 'stt-parking';
         el.textContent = 'P';
+        var popupHtml = '<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;line-height:1.4;max-width:160px">';
+        popupHtml += '<strong style="font-size:13px">' + (p.name || 'Parkplatz') + '</strong>';
+        if (p.description) popupHtml += '<div style="margin-top:3px;color:#8A9BA8">' + p.description + '</div>';
+        popupHtml += '</div>';
         new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat])
-          .setPopup(new maplibregl.Popup({ offset: 12 }).setText(p.name || 'Parkplatz'))
+          .setPopup(new maplibregl.Popup({ offset: 12, maxWidth: '180px' }).setHTML(popupHtml))
           .addTo(map);
       });
     }

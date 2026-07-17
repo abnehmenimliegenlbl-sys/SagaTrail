@@ -662,6 +662,9 @@ export interface ParkingSpot {
   lat: number;
   lng: number;
   name: string | null;
+  address: string | null;
+  parkingType: string | null;
+  capacity: number | null;
 }
 
 /**
@@ -715,11 +718,27 @@ export async function fetchParking(
     if (seen.has(key)) continue;
     seen.add(key);
     const tags = e.tags ?? {};
+    const street = tags["addr:street"] ?? null;
+    const nr     = tags["addr:housenumber"] ?? null;
+    const zip    = tags["addr:postcode"] ?? null;
+    const city   = tags["addr:city"] ?? tags["addr:municipality"] ?? null;
+    const addrParts: string[] = [];
+    if (street) addrParts.push(nr ? `${street} ${nr}` : street);
+    if (zip || city) addrParts.push([zip, city].filter(Boolean).join(" "));
+    const typeLabels: Record<string, string> = {
+      "surface": "Parkplatz", "multi-storey": "Parkhaus",
+      "underground": "Tiefgarage", "rooftop": "Dachparkplatz",
+      "park_and_ride": "P+R",
+    };
+    const rawType = tags.parking ?? null;
     result.push({
       osmId: key,
       lat,
       lng,
       name: tags.name ?? tags["name:de"] ?? null,
+      address: addrParts.length > 0 ? addrParts.join(", ") : null,
+      parkingType: rawType ? (typeLabels[rawType] ?? rawType) : null,
+      capacity: tags.capacity ? parseInt(tags.capacity, 10) || null : null,
     });
   }
   log.info({ count: result.length, radiusM }, "Overpass: Parkplaetze geladen");

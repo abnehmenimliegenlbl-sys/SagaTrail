@@ -434,7 +434,7 @@ export default function Routenplanung() {
     const startPt = { lat: geom[0][0], lng: geom[0][1] };
     const endPt   = { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] };
     const base = getApiBaseUrl() ?? "";
-    type ParkingItem = { osmId: string; lat: number; lng: number; name: string | null };
+    type ParkingItem = { osmId: string; lat: number; lng: number; name: string | null; address: string | null; parkingType: string | null; capacity: number | null };
     const fetchOne = (lat: number, lng: number) =>
       fetch(`${base}/api/parking?lat=${lat}&lng=${lng}&radius=800`)
         .then((r) => r.json() as Promise<ParkingItem[]>)
@@ -449,7 +449,17 @@ export default function Routenplanung() {
         for (const item of [...safeStart, ...safeEnd]) {
           if (!item?.osmId || seen.has(item.osmId)) continue;
           seen.add(item.osmId);
-          merged.push({ id: item.osmId, name: item.name ?? "Parkplatz", lat: item.lat, lng: item.lng });
+          const descParts: string[] = [];
+          if (item.parkingType) descParts.push(item.parkingType);
+          if (item.address) descParts.push(item.address);
+          if (item.capacity) descParts.push(`${item.capacity} Plätze`);
+          merged.push({
+            id: item.osmId,
+            name: item.name ?? item.parkingType ?? "Parkplatz",
+            lat: item.lat,
+            lng: item.lng,
+            description: descParts.length > 0 ? descParts.join(" · ") : null,
+          });
         }
         setParkingSpots(merged);
       });
