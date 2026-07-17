@@ -422,14 +422,22 @@ export default function LiveHike() {
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  const [, setKarteVollbild] = useState(false);
+  const [karteVollbild, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
   // Aktion, die nach vollstaendigem Schliessen der Vollbild-Karte ausgefuehrt
-  // werden soll (z. B. POI- oder Partner-Detail oeffnen). Wird in onFullyClosed
-  // des KarteVollbild-Modals konsumiert — nie direkt nach closeSignal, da der
-  // Karten-Modal waehrend seiner Fade-Animation noch Touches abfaengt und der
-  // X-Button des Detail-Modals sonst nicht reagiert.
+  // werden soll (z. B. POI- oder Partner-Detail oeffnen). onDismiss des nativen
+  // iOS-Modals faengt beim zweiten Schliessen nicht zuverlaessig — stattdessen
+  // beobachten wir karteVollbild→false via useEffect und warten 320 ms (Fade-
+  // Animation) bevor die Aktion ausgefuehrt wird.
   const pendingKarteActionRef = React.useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!karteVollbild && pendingKarteActionRef.current) {
+      const action = pendingKarteActionRef.current;
+      pendingKarteActionRef.current = null;
+      const t = setTimeout(action, 320);
+      return () => clearTimeout(t);
+    }
+  }, [karteVollbild]);
   const [poiStory, setPoiStory] = useState<string | null>(null);
   const [poiStoryLoading, setPoiStoryLoading] = useState(false);
   // KI-Kontext fuer die "Entdeckt"-Karte, wenn der POI keinen
@@ -2258,14 +2266,6 @@ export default function LiveHike() {
             height={200}
             onVollbildChange={setKarteVollbild}
             closeSignal={karteCloseSignal}
-            onFullyClosed={() => {
-              // Karten-Modal ist jetzt vollstaendig weg (Fade-Animation
-              // abgeschlossen) — erst jetzt das Detail-Modal oeffnen, damit
-              // keine zwei Modals gleichzeitig offen sind und der X-Button
-              // des Details nicht vom noch-fading Karten-Modal blockiert wird.
-              pendingKarteActionRef.current?.();
-              pendingKarteActionRef.current = null;
-            }}
             renderKarte={(hoehe, safeAreaTop) =>
               mapCenter ? (
                 <SwisstopoMap
@@ -2735,13 +2735,11 @@ export default function LiveHike() {
         </View>
       </ScrollView>
 
-      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt.
-          Beim Schliessen Karte wieder oeffnen, damit der User direkt den naechsten
-          POI antippen kann. */}
+      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
       {!!selectedPoi && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => { setSelectedPoi(null); setKarteVollbild(true); }}
+          onPress={() => setSelectedPoi(null)}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
@@ -2763,7 +2761,7 @@ export default function LiveHike() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => { setSelectedPoi(null); setKarteVollbild(true); }}
+                  onPress={() => setSelectedPoi(null)}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
@@ -2786,12 +2784,11 @@ export default function LiveHike() {
         </Pressable>
       )}
 
-      {/* Partner-Detail — ebenfalls ausserhalb ScrollView.
-          Beim Schliessen Karte wieder oeffnen. */}
+      {/* Partner-Detail — ebenfalls ausserhalb ScrollView */}
       {!!selectedPartner && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-          onPress={() => { setSelectedPartner(null); setKarteVollbild(true); }}
+          onPress={() => setSelectedPartner(null)}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
@@ -2806,7 +2803,7 @@ export default function LiveHike() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => { setSelectedPartner(null); setKarteVollbild(true); }}
+                  onPress={() => setSelectedPartner(null)}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
