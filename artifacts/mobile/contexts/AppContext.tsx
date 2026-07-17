@@ -418,7 +418,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: serverProfile.id,
         name: serverProfile.name,
         archetype: serverProfile.archetype,
-        homeCanton: serverProfile.homeCanton,
+        ...(serverProfile.homeCanton ? { homeCanton: serverProfile.homeCanton } : {}),
         language: serverProfile.language,
         ageTier: serverProfile.ageTier,
         purchasedPacks: serverProfile.purchasedPacks ?? [],
@@ -586,7 +586,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: string;
       name: string;
       archetype: string;
-      homeCanton: string;
+      homeCanton?: string;
       language: string;
       ageTier: string;
       premium: boolean;
@@ -596,7 +596,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: result.id,
         name: result.name,
         archetype: result.archetype,
-        homeCanton: result.homeCanton,
+        ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
         ageTier: result.ageTier,
       } as Profile;
@@ -619,7 +619,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: next.name,
           archetype: next.archetype,
-          homeCanton: next.homeCanton,
+          ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
           ageTier: next.ageTier,
         },
@@ -637,7 +637,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: merged.name,
           archetype: merged.archetype,
-          homeCanton: merged.homeCanton,
+          ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
           ageTier: merged.ageTier,
         },

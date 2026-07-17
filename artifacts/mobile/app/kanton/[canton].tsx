@@ -572,11 +572,11 @@ export default function KantonRouten() {
                 {" "}{t.nextStepSaga}
               </Text>
               {filteredRoutes.map((route, i) => {
-                // Erste Route in der Liste ist immer gratis (solange freeHikeUsed=false)
-                const isFirstRoute = i === 0;
-                // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
+                // Premium oder Pack schaltet alles frei.
+                // Ohne Premium: eine beliebige Route ist gratis (solange freeHikeUsed=false).
+                // Sobald die erste Wanderung stattgefunden hat, sind alle weiteren gesperrt.
                 const canAccess = premium || packUnlocked;
-                const locked = !canAccess && (freeHikeUsed || !isFirstRoute);
+                const locked = !canAccess && freeHikeUsed;
                 const unlocked = canAccess;
                 return (
                   <RouteCard

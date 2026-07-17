@@ -10,7 +10,7 @@ export interface Profile {
   id: string;
   name: string;
   archetype: Archetype;
-  homeCanton: string;
+  homeCanton?: string;
   language: string;
   ageTier: AgeTier;
   navAnnouncementsEnabled?: boolean;

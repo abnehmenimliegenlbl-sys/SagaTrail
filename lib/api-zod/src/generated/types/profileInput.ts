@@ -13,7 +13,7 @@ export interface ProfileInput {
   name: string;
   archetype: ProfileInputArchetype;
   /** @minLength 1 */
-  homeCanton: string;
+  homeCanton?: string;
   /** @minLength 2 */
   language: string;
   ageTier: ProfileInputAgeTier;

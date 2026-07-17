@@ -17,7 +17,7 @@ import { Background } from "@/components/brand/Background";
 import { PermissionsStep } from "@/components/brand/PermissionsStep";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
-import { AGE_TIERS, ARCHETYPES, CANTONS } from "@/constants/onboarding";
+import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -40,14 +40,13 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
-  const [canton, setCanton] = useState<string | null>(null);
   const [language, setLanguage] = useState<LanguageCode>(activeLanguage);
   const [ageTier, setAgeTier] = useState<AgeTier | null>(null);
   const [consent, setConsent] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 12;
 
-  const totalSteps = 6;
+  const totalSteps = 5;
 
   const canAdvance = () => {
     switch (step) {
@@ -56,12 +55,10 @@ export default function Onboarding() {
       case 1:
         return archetype !== null;
       case 2:
-        return canton !== null;
-      case 3:
         return true;
-      case 4:
+      case 3:
         return ageTier !== null && (ageTier !== "kinder" || consent);
-      case 5:
+      case 4:
         return true;
       default:
         return false;
@@ -77,14 +74,13 @@ export default function Onboarding() {
     }
     if (step < totalSteps - 1) {
       setStep((s) => s + 1);
-    } else if (archetype && canton && ageTier) {
+    } else if (archetype && ageTier) {
       setSaveError(null);
       setSaving(true);
       try {
         await saveProfile({
           name: name.trim(),
           archetype,
-          homeCanton: canton,
           language,
           ageTier,
         });
@@ -197,44 +193,7 @@ export default function Onboarding() {
         )}
 
         {step === 2 && (
-          <StepFrame title={t.cantonTitle} eyebrow={t.stepOf(3, totalSteps)}>
-            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              {t.cantonHint}
-            </Text>
-            <View style={styles.chipWrap}>
-              {CANTONS.map((cn) => {
-                const active = canton === cn;
-                return (
-                  <Pressable
-                    key={cn}
-                    onPress={() => setCanton(cn)}
-                    style={[
-                      styles.chip,
-                      {
-                        borderColor: active ? colors.accent : colors.glassBorder,
-                        backgroundColor: active
-                          ? colors.glassBgStrong
-                          : "transparent",
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: active ? colors.foreground : colors.mutedForeground },
-                      ]}
-                    >
-                      {cn}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </StepFrame>
-        )}
-
-        {step === 3 && (
-          <StepFrame title={t.languageStepTitle} eyebrow={t.stepOf(4, totalSteps)}>
+          <StepFrame title={t.languageStepTitle} eyebrow={t.stepOf(3, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               {t.languageHint}
             </Text>
@@ -279,8 +238,8 @@ export default function Onboarding() {
           </StepFrame>
         )}
 
-        {step === 4 && (
-          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(5, totalSteps)}>
+        {step === 3 && (
+          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(4, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               {t.ageTierHint}
             </Text>
@@ -343,8 +302,8 @@ export default function Onboarding() {
           </StepFrame>
         )}
 
-        {step === 5 && (
-          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(6, totalSteps)}>
+        {step === 4 && (
+          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(5, totalSteps)}>
             <PermissionsStep />
           </StepFrame>
         )}

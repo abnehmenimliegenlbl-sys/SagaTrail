@@ -8,7 +8,6 @@ import { useRouter } from "expo-router";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FlatList,
   Linking,
   Modal,
   Platform,
@@ -35,7 +34,6 @@ import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
 import { useEinstellungenStrings } from "@/lib/i18n/screens/einstellungen";
-import { translateCanton } from "@/lib/i18n/cantonNames";
 import {
   NATIVE_LANGUAGE_NAMES,
   SUPPORTED_LANGUAGES,
@@ -109,7 +107,6 @@ export default function Einstellungen() {
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
-  const [editingCanton, setEditingCanton] = useState(false);
 
   // Vorschau-Sound (KI-Stimme via expo-av); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
@@ -260,14 +257,6 @@ export default function Einstellungen() {
               setNameInput(profile?.name ?? "");
               setEditingName(true);
             }}
-          />
-          <RowButton
-            label={t.homeCantonLabel}
-            value={profile?.homeCanton
-              ? translateCanton(profile.homeCanton, resolveLang(profile.language))
-              : "-"}
-            icon="chevron-right"
-            onPress={() => setEditingCanton(true)}
           />
           <RowButton label={t.archetypeLabel} value={archLabel ?? "-"} onPress={cycleArchetype} />
           <RowButton label={t.ageTierLabel} value={ageLabel ?? "-"} onPress={cycleAge} />
@@ -584,60 +573,9 @@ export default function Einstellungen() {
         </View>
       </Modal>
 
-      {/* ── Kanton-Auswahl-Modal ────────────────────────────────────── */}
-      <Modal
-        visible={editingCanton}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditingCanton(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, styles.cantonCard, { backgroundColor: colors.card, borderColor: colors.glassBorder }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.editCantonTitle}</Text>
-              <Pressable onPress={() => setEditingCanton(false)} hitSlop={12}>
-                <Feather name="x" size={20} color={colors.foreground} />
-              </Pressable>
-            </View>
-            <FlatList
-              data={SWISS_CANTONS}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => {
-                const active = profile?.homeCanton === item;
-                return (
-                  <Pressable
-                    onPress={() => {
-                      updateProfile({ homeCanton: item });
-                      setEditingCanton(false);
-                    }}
-                    style={[
-                      styles.cantonRow,
-                      { borderBottomColor: colors.glassBorder },
-                      active && { backgroundColor: colors.accent + "18" },
-                    ]}
-                  >
-                    <Text style={[styles.cantonRowText, { color: active ? colors.accent : colors.foreground }]}>
-                      {translateCanton(item, resolveLang(profile?.language))}
-                    </Text>
-                    {active && <Feather name="check" size={16} color={colors.accent} />}
-                  </Pressable>
-                );
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
     </Background>
   );
 }
-
-const SWISS_CANTONS: string[] = [
-  "Aargau", "Appenzell Ausserrhoden", "Appenzell Innerrhoden",
-  "Basel-Landschaft", "Basel-Stadt", "Bern", "Freiburg", "Genf",
-  "Glarus", "Graubünden", "Jura", "Luzern", "Neuenburg", "Nidwalden",
-  "Obwalden", "Schaffhausen", "Schwyz", "Solothurn", "St. Gallen",
-  "Tessin", "Thurgau", "Uri", "Waadt", "Wallis", "Zug", "Zürich",
-];
 
 function inputStyle(colors: ReturnType<typeof useColors>) {
   return {

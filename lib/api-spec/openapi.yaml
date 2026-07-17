@@ -1172,7 +1172,6 @@ components:
         - id
         - name
         - archetype
-        - homeCanton
         - language
         - ageTier
         - premium
@@ -1199,7 +1198,6 @@ components:
       required:
         - name
         - archetype
-        - homeCanton
         - language
         - ageTier
     PremiumUpdate:

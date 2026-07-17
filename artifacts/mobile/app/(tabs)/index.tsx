@@ -46,9 +46,6 @@ export default function Entdecken() {
     : "";
 
   const { cantons, ready, sagas } = useCatalog();
-  const homeCanton = profile?.homeCanton;
-  const homeEntry = cantons.find((c) => c.canton === homeCanton);
-  const others = cantons.filter((c) => c.canton !== homeCanton);
 
   return (
     <Background>
@@ -138,33 +135,9 @@ export default function Entdecken() {
           </Animated.View>
         )}
 
-        {homeEntry && (
-          <>
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                {t.homeCantonTitle}
-              </Text>
-              <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-                {t.homeCantonHint}
-              </Text>
-            </View>
-            <View style={{ paddingHorizontal: 20 }}>
-              <CantonCard
-                entry={homeEntry}
-                index={0}
-                highlight
-                onPress={() =>
-                  router.push(`/kanton/${encodeURIComponent(homeEntry.canton)}`)
-                }
-              />
-            </View>
-            <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
-          </>
-        )}
-
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {homeEntry ? t.otherCantonsTitle : t.cantonsTitle}
+            {t.cantonsTitle}
           </Text>
           <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
             {t.allCantonsHint(cantons.length)}
@@ -173,12 +146,10 @@ export default function Entdecken() {
 
         <View style={{ paddingHorizontal: 20 }}>
           {!ready
-            ? /* Kantonsliste laedt noch aus dem Speicher/Server — Skeleton-Karten
-                 in Kartengroesse statt leerer Flaeche. */
-              [0, 1, 2, 3, 4].map((i) => (
+            ? [0, 1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} height={76} radius={colors.radius} style={{ marginBottom: 12 }} />
               ))
-            : others.map((entry, i) => (
+            : cantons.map((entry, i) => (
                 <CantonCard
                   key={entry.canton}
                   entry={entry}
@@ -193,7 +164,7 @@ export default function Entdecken() {
         <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
 
         <View style={{ paddingHorizontal: 20 }}>
-          <Animated.View entering={FadeInDown.delay(others.length * 60)}>
+          <Animated.View entering={FadeInDown.delay(cantons.length * 60)}>
             <Pressable
               onPress={() => { hapticSelection(); router.push("/eigene-route"); }}
               accessibilityRole="button"

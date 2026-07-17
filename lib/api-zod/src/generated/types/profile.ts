@@ -13,7 +13,7 @@ export interface Profile {
   id: string;
   name: string;
   archetype: ProfileArchetype;
-  homeCanton: string;
+  homeCanton?: string;
   language: string;
   ageTier: ProfileAgeTier;
   premium: boolean;
