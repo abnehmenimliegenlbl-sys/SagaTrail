@@ -57,7 +57,11 @@ const AGE_LABEL: Record<string, string> = {
 
 export const LANGUAGE_LABEL: Record<string, string> = {
   de: "Hochdeutsch",
-  gsw: "Schweizerdeutsch (Mundart, Zürcher Prägung)",
+  // gsw nutzt bewusst Hochdeutsch als Textsprache: Die Schweizer Faerbung kommt
+  // ausschliesslich ueber die ElevenLabs-Stimmwahl (Schweizer Akzent), nicht
+  // ueber Dialektschreibung. OpenAI TTS (Fallback) kann Mundarttext nicht
+  // zuverlaessig aussprechen. (Nutzerentscheid 2026-07-08)
+  gsw: "Hochdeutsch",
   fr: "Französisch",
   it: "Italienisch",
   en: "Englisch",
