@@ -281,3 +281,9 @@ id = "5azj_7bugWJt5M56q6ZDq"
 uri = "file://sagatrail-osm-cron.zip"
 type = "unspecified"
 title = "sagatrail-osm-cron Plugin ZIP"
+
+[[outputs]]
+id = "FSZonFutZMkdOmCqUoGgO"
+uri = "file://wpcrontrol-event.zip"
+type = "unspecified"
+title = "wpcrontrol-event.php – Code für WP Crontrol"
