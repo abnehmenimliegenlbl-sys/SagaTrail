@@ -215,3 +215,9 @@ id = "XIXl00UgAyjosK7aGBcaZ"
 uri = "file://wordpress/sagatrail-alle-snippets.zip"
 type = "unspecified"
 title = "SagaTrail – Alle Snippets inkl. home.html"
+
+[[outputs]]
+id = "tfRzZgmWzE3-g22vi0Mu4"
+uri = "file://expo-qr.png"
+type = "image"
+title = "Expo QR Code"
