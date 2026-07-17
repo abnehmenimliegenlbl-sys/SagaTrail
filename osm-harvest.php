@@ -34,9 +34,9 @@ define('RADIUS_M', 2000);
 /** Pause zwischen Overpass-Anfragen in Sekunden */
 define('PAUSE_SEK', 6);
 
-/** Overpass via eigenem Proxy auf sagatrail.ch */
-define('OVERPASS_URL',   'https://sagatrail.ch/overpass-proxy.php');
-define('OVERPASS_TOKEN', '16673aafe24093bcdd0a01ddf29fb776250d2de850a94908');
+/** Overpass direkt – PHP läuft bereits auf Infomaniak, kein Proxy nötig */
+define('OVERPASS_URL',   'https://overpass-api.de/api/interpreter');
+define('OVERPASS_TOKEN', ''); // leer = kein Token-Header
 
 // ============================================================
 // WORDPRESS-UMGEBUNG LADEN
@@ -160,7 +160,8 @@ OPQ;
         'http' => [
             'method'  => 'POST',
             'header'  => "Content-Type: application/x-www-form-urlencoded\r\n"
-                       . "X-Proxy-Token: " . OVERPASS_TOKEN . "\r\n",
+                       . (OVERPASS_TOKEN ? "X-Proxy-Token: " . OVERPASS_TOKEN . "\r\n" : "")
+                       . "User-Agent: SagaTrail/1.0 (sagatrail.ch)\r\n",
             'content' => http_build_query(['data' => $query]),
             'timeout' => 45,
         ],
