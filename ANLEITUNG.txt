@@ -7,6 +7,7 @@ INHALT DIESES ZIPS
   osm-harvest.php           PHP-Script das Overpass abfragt
   ANLEITUNG.txt             Diese Datei
 
+
 SCHRITT 1 – SQL importieren
 -----------------------------
 Im Infomaniak Hosting-Panel:
@@ -21,34 +22,51 @@ Damit werden 3 Tabellen angelegt:
 
 SCHRITT 2 – PHP-Script hochladen
 ----------------------------------
-  osm-harvest.php hochladen nach:
-  /wp-content/uploads/osm-harvest.php
-  (oder ein anderes Verzeichnis deiner Wahl)
+1. Ordner anlegen (falls noch nicht vorhanden):
+   Im Infomaniak File Manager oder per FTP:
+     wp-content/uploads/sagatrail/
 
-Am Anfang der Datei (Zeilen 41–44) den wp-load.php-Block aktivieren:
-  Kommentarzeichen vor den 3 Zeilen entfernen und Pfad anpassen:
+2. osm-harvest.php in diesen Ordner hochladen:
+     wp-content/uploads/sagatrail/osm-harvest.php
 
-    $wp_root = dirname(__FILE__) . '/../../..'; // von wp-content/uploads/ aus
-    define('ABSPATH', $wp_root . '/');
-    require($wp_root . '/wp-load.php');
+3. Die Datei ist bereits fertig konfiguriert – du musst NICHTS editieren.
+   Der Pfad zu wp-load.php ist auf diesen Ordner voreingestellt:
+
+     $wp_root = dirname(__FILE__) . '/../../..';
+     // entspricht: wp-content/uploads/sagatrail/ → drei Ebenen rauf → WordPress-Root
+
+   Das lädt automatisch WordPress inkl. Datenbankverbindung ($wpdb),
+   ohne dass du Benutzername oder Passwort irgendwo eintippen musst.
+
+4. Kurzer Test – per SSH oder Infomaniak Web-Terminal:
+     php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/osm-harvest.php
+   
+   Du solltest sehen:
+     [2026-...] === SagaTrail OSM Harvester | 0/695 Routen erledigt | 695 offen ===
+     [2026-...] → Akeleienweg (Aargau)
+     [2026-...] ...
+
+   Wenn stattdessen "WordPress konnte nicht geladen werden" erscheint:
+     → Den absoluten Pfad in Zeile 44 der PHP-Datei manuell setzen:
+       define('ABSPATH', '/home/clients/XXXXX/sites/sagatrail.ch/');
+       (Diesen Pfad siehst du in der Fehlermeldung vom ersten Versuch)
 
 
 SCHRITT 3 – Cron-Job einrichten (Infomaniak)
 ----------------------------------------------
 Infomaniak Hosting-Panel → Hosting → deine Site → Cron-Jobs → Hinzufügen
 
-  Befehl:   php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/osm-harvest.php
-            (Pfad anpassen – siehst du in phpMyAdmin oder im Hosting-Panel)
-  Intervall: alle 5 Minuten  (oder alle 10 Minuten für mehr Vorsicht)
-  Ausgabe:  kann in eine Logdatei umgeleitet werden:
-            php /pfad/osm-harvest.php >> /pfad/osm-harvest.log 2>&1
+  Befehl (Pfad XXXXX anpassen – steht im Hosting-Panel unter "Verzeichnis"):
+    php /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/osm-harvest.php >> /home/clients/XXXXX/sites/sagatrail.ch/wp-content/uploads/sagatrail/harvest.log 2>&1
 
-Das Script:
-  - verarbeitet 10 Routen pro Aufruf (BATCH_SIZE in Zeile 30)
-  - pausiert 6 Sekunden zwischen Overpass-Anfragen (PAUSE_SEK in Zeile 33)
-  - überspringt bereits abgefragte Routen (Fortschritt in sagatrail_osm_progress)
-  - hört automatisch auf wenn alle 695 Routen erledigt sind
-  - kann jederzeit abgebrochen und neugestartet werden
+  Intervall:  alle 5 Minuten
+  
+  Das Script läuft dann automatisch alle 5 Minuten, verarbeitet je 10 Routen
+  und hört von selbst auf, wenn alle 695 erledigt sind.
+
+  Tipp: Die Logdatei harvest.log zeigt dir live den Fortschritt.
+  Du kannst sie im File Manager öffnen oder per SSH:
+    tail -f wp-content/uploads/sagatrail/harvest.log
 
 
 FORTSCHRITT PRÜFEN

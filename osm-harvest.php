@@ -43,11 +43,10 @@ define('OVERPASS_URL', 'https://overpass-api.de/api/interpreter');
 //  dann bereits verfügbar)
 // ============================================================
 if (!defined('ABSPATH')) {
-    // Pfad anpassen – diesen Block NUR für CLI/Cron aktivieren:
-    // $wp_root = dirname(__FILE__) . '/../../..'; // wenn in wp-content/uploads/
-    // define('ABSPATH', $wp_root . '/');
-    // require($wp_root . '/wp-load.php');
-    die('Bitte WordPress-Umgebung laden (wp-load.php einbinden oder als WP-Snippet ausführen).' . PHP_EOL);
+    // Pfad: wp-content/uploads/sagatrail/ → drei Ebenen hoch = WordPress-Root
+    $wp_root = dirname(__FILE__) . '/../../..';
+    define('ABSPATH', $wp_root . '/');
+    require($wp_root . '/wp-load.php');
 }
 
 global $wpdb;
