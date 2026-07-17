@@ -99,16 +99,56 @@ export function buildSwisstopoHtml(
     waterSources && waterSources.length > 0 ? JSON.stringify(waterSources) : "null";
   const parkingJson =
     parkingSpots && parkingSpots.length > 0 ? JSON.stringify(parkingSpots) : "null";
-  const legendJson = legend ? JSON.stringify(legend) : "null";
   const altGeometryJson =
     altGeometry && altGeometry.length > 1 ? JSON.stringify(altGeometry) : "null";
   const pickerJs = pickerMode ? "true" : "false";
+
+  /* Legende: statisch als HTML bauen (kein JS-show noetig, kein display:none-Risiko) */
+  function legendZeile(sym: string, txt: string): string {
+    return `<div class="stt-legende-zeile"><span class="stt-legende-symbol">${sym}</span><span>${txt}</span></div>`;
+  }
+  const legendHtml = legend ? (() => {
+    let rows = "";
+    if (geometry && geometry.length > 1) {
+      rows += legendZeile('<span class="stt-linie-route"></span>', legend.route);
+      if (altGeometry && altGeometry.length > 1)
+        rows += legendZeile('<span class="stt-linie-altroute"></span>', legend.altRoute);
+      rows += legendZeile('<div class="stt-start"></div>', legend.start);
+      rows += legendZeile('<div class="stt-ziel"></div>', legend.ziel);
+    } else {
+      rows += legendZeile('<div class="stt-start"></div>', legend.start);
+    }
+    rows += legendZeile('<div class="stt-live"></div>', legend.position);
+    rows += legendZeile('<span class="stt-linie-iwn"></span>', legend.wegInternational);
+    rows += legendZeile('<span class="stt-linie-nwn"></span>', legend.wegNational);
+    rows += legendZeile('<span class="stt-linie-rwn"></span>', legend.wegRegional);
+    rows += legendZeile('<span class="stt-linie-lwn"></span>', legend.wegLokal);
+    rows += legendZeile('<span class="stt-linie-mehrfach"></span>', legend.wegMehrfach);
+    rows += legendZeile('<span class="stt-schild stt-schild-gruen">2</span>', legend.nummerWanderland);
+    rows += legendZeile('<span class="stt-schild stt-schild-weiss">HW</span>', legend.nummerLokal);
+    rows += legendZeile('<span class="stt-schild stt-schild-weiss"><span class="stt-raute"></span></span>', legend.wegzeichen);
+    rows += legendZeile('<span class="stt-wegweiser"></span>', legend.wegweiser);
+    if (aerialways && aerialways.length > 0) {
+      rows += legendZeile('<span class="stt-linie-seilbahn"></span>', legend.seilbahn);
+      rows += legendZeile('<div class="stt-seilbahn-station"></div>', legend.seilbahnStation);
+    }
+    if (pois && pois.length > 0)
+      rows += legendZeile('<div class="stt-poi"></div>', legend.poi);
+    if (partners && partners.length > 0)
+      rows += legendZeile('<div class="stt-partner"></div>', legend.partner);
+    return (
+      `<div id="stt-legende" class="zu">` +
+      `<div class="stt-legende-kopf" onclick="this.parentElement.classList.toggle('zu')">` +
+      `<span class="stt-legende-pfeil">&#9662;</span>${legend.title}` +
+      `</div><div class="stt-legende-inhalt">${rows}</div></div>`
+    );
+  })() : "";
 
   return `<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <script>
   (function () {
     var pending = null;
@@ -137,7 +177,7 @@ export function buildSwisstopoHtml(
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* --- Legende --- */
-  #stt-legende { position: absolute; bottom: 28px; left: 10px; z-index: 10;
+  #stt-legende { position: absolute; bottom: calc(52px + env(safe-area-inset-bottom, 0px)); left: 10px; z-index: 1000;
     background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35;
     overflow: hidden; font-family: -apple-system, system-ui, sans-serif; }
@@ -190,7 +230,7 @@ export function buildSwisstopoHtml(
   <button class="stt-mbtn" id="btn-3d">3D</button>
   <button class="stt-mbtn" id="btn-sat">Sat</button>
 </div>
-<div id="stt-legende" class="zu" style="display:none"></div>
+${legendHtml}
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 (function () {
@@ -202,7 +242,6 @@ export function buildSwisstopoHtml(
   var partners  = ${partnersJson};
   var waters    = ${waterSourcesJson};
   var parking   = ${parkingJson};
-  var legende   = ${legendJson};
   var picker    = ${pickerJs};
   var centerLng = ${lng};
   var centerLat = ${lat};
@@ -427,45 +466,6 @@ export function buildSwisstopoHtml(
           .setPopup(new maplibregl.Popup({ offset: 12 }).setText(p.name || 'Parkplatz'))
           .addTo(map);
       });
-    }
-
-    /* Legende */
-    if (legende) {
-      var div = document.getElementById('stt-legende');
-      if (!div) { div = document.createElement('div'); div.id = 'stt-legende'; div.classList.add('zu'); document.body.appendChild(div); }
-      div.style.display = 'block';
-      function zeile(sym, txt) { return '<div class="stt-legende-zeile"><span class="stt-legende-symbol">' + sym + '</span><span>' + txt + '</span></div>'; }
-      var rows = '';
-      if (geometry && geometry.length > 1) {
-        rows += zeile('<span class="stt-linie-route"></span>', legende.route);
-        if (altGeometry && altGeometry.length > 1) {
-          rows += zeile('<span class="stt-linie-altroute"></span>', legende.altRoute);
-        }
-        rows += zeile('<div class="stt-start"></div>', legende.start);
-        rows += zeile('<div class="stt-ziel"></div>', legende.ziel);
-      } else {
-        rows += zeile('<div class="stt-start"></div>', legende.start);
-      }
-      rows += zeile('<div class="stt-live"></div>', legende.position);
-      rows += zeile('<span class="stt-linie-iwn"></span>', legende.wegInternational);
-      rows += zeile('<span class="stt-linie-nwn"></span>', legende.wegNational);
-      rows += zeile('<span class="stt-linie-rwn"></span>', legende.wegRegional);
-      rows += zeile('<span class="stt-linie-lwn"></span>', legende.wegLokal);
-      rows += zeile('<span class="stt-linie-mehrfach"></span>', legende.wegMehrfach);
-      rows += zeile('<span class="stt-schild stt-schild-gruen">2</span>', legende.nummerWanderland);
-      rows += zeile('<span class="stt-schild stt-schild-weiss">HW</span>', legende.nummerLokal);
-      rows += zeile('<span class="stt-schild stt-schild-weiss"><span class="stt-raute"></span></span>', legende.wegzeichen);
-      rows += zeile('<span class="stt-wegweiser"></span>', legende.wegweiser);
-      if (aerialways) {
-        rows += zeile('<span class="stt-linie-seilbahn"></span>', legende.seilbahn);
-        rows += zeile('<div class="stt-seilbahn-station"></div>', legende.seilbahnStation);
-      }
-      if (pois)     rows += zeile('<div class="stt-poi"></div>', legende.poi);
-      if (partners) rows += zeile('<div class="stt-partner"></div>', legende.partner);
-      div.innerHTML =
-        '<div class="stt-legende-kopf"><span class="stt-legende-pfeil">&#9662;</span>' + legende.title + '</div>' +
-        '<div class="stt-legende-inhalt">' + rows + '</div>';
-      div.querySelector('.stt-legende-kopf').addEventListener('click', function() { div.classList.toggle('zu'); });
     }
 
     /* Picker-Modus */
