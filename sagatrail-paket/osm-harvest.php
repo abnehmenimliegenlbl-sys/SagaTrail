@@ -34,8 +34,9 @@ define('RADIUS_M', 2000);
 /** Pause zwischen Overpass-Anfragen in Sekunden */
 define('PAUSE_SEK', 6);
 
-/** Overpass-Endpunkt */
-define('OVERPASS_URL', 'https://overpass-api.de/api/interpreter');
+/** Overpass via eigenem Proxy auf sagatrail.ch */
+define('OVERPASS_URL',   'https://sagatrail.ch/overpass-proxy.php');
+define('OVERPASS_TOKEN', '16673aafe24093bcdd0a01ddf29fb776250d2de850a94908');
 
 // ============================================================
 // WORDPRESS-UMGEBUNG LADEN
@@ -158,7 +159,8 @@ OPQ;
     $ctx = stream_context_create([
         'http' => [
             'method'  => 'POST',
-            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n"
+                       . "X-Proxy-Token: " . OVERPASS_TOKEN . "\r\n",
             'content' => http_build_query(['data' => $query]),
             'timeout' => 45,
         ],
