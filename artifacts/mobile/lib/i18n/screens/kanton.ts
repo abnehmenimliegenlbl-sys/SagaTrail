@@ -41,6 +41,7 @@ export interface KantonStrings {
   sunsetInfo: (time: string) => string;
   sunsetNoneInTime: string;
   eigeneRouteTitle: string;
+  eigeneRouteButton: string;
   importGpx: string;
   importGpxImporting: string;
   importGpxTitle: string;
@@ -94,6 +95,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Sonnenuntergang heute ca. ${t} Uhr`,
     sunsetNoneInTime: "Keine Route bis Sonnenuntergang schaffbar",
     eigeneRouteTitle: "Eigene Route",
+    eigeneRouteButton: "Eigene Route planen",
     importGpx: "GPX importieren",
     importGpxImporting: "GPX wird importiert …",
     importGpxTitle: "GPX-Import",
@@ -145,6 +147,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Sunneundergang hüt cha. ${t} Uhr`,
     sunsetNoneInTime: "Kei Route bis Sunneundergang schaffbar",
     eigeneRouteTitle: "Eigeni Route",
+    eigeneRouteButton: "Eigeni Route plane",
     importGpx: "GPX importiere",
     importGpxImporting: "GPX wird importiert …",
     importGpxTitle: "GPX-Import",
@@ -196,6 +199,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Coucher du soleil aujourd'hui vers ${t}`,
     sunsetNoneInTime: "Aucun itinéraire réalisable avant le coucher du soleil",
     eigeneRouteTitle: "Itinéraire personnalisé",
+    eigeneRouteButton: "Planifier un itinéraire",
     importGpx: "Importer GPX",
     importGpxImporting: "Importation du GPX …",
     importGpxTitle: "Import GPX",
@@ -247,6 +251,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Tramonto oggi circa ${t}`,
     sunsetNoneInTime: "Nessun percorso fattibile prima del tramonto",
     eigeneRouteTitle: "Percorso personalizzato",
+    eigeneRouteButton: "Pianifica percorso",
     importGpx: "Importa GPX",
     importGpxImporting: "Importazione GPX …",
     importGpxTitle: "Importazione GPX",
@@ -298,6 +303,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Sunset today approx. ${t}`,
     sunsetNoneInTime: "No route doable before sunset",
     eigeneRouteTitle: "Custom route",
+    eigeneRouteButton: "Plan custom route",
     importGpx: "Import GPX",
     importGpxImporting: "Importing GPX …",
     importGpxTitle: "GPX Import",
@@ -348,6 +354,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `今日日落约 ${t}`,
     sunsetNoneInTime: "没有可在日落前完成的路线",
     eigeneRouteTitle: "自定义路线",
+    eigeneRouteButton: "规划自定义路线",
     importGpx: "导入 GPX",
     importGpxImporting: "正在导入 GPX …",
     importGpxTitle: "GPX 导入",
@@ -399,6 +406,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Закат сегодня примерно в ${t}`,
     sunsetNoneInTime: "До заката ни один маршрут не успеть пройти",
     eigeneRouteTitle: "Свой маршрут",
+    eigeneRouteButton: "Спланировать маршрут",
     importGpx: "Импортировать GPX",
     importGpxImporting: "Импорт GPX …",
     importGpxTitle: "Импорт GPX",
@@ -450,6 +458,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Atardecer hoy aprox. ${t}`,
     sunsetNoneInTime: "Ninguna ruta realizable antes del atardecer",
     eigeneRouteTitle: "Ruta personalizada",
+    eigeneRouteButton: "Planificar ruta propia",
     importGpx: "Importar GPX",
     importGpxImporting: "Importando GPX …",
     importGpxTitle: "Importación GPX",
@@ -501,6 +510,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     sunsetInfo: (t) => `Pôr do sol hoje por volta das ${t}`,
     sunsetNoneInTime: "Nenhuma rota realizável antes do pôr do sol",
     eigeneRouteTitle: "Rota personalizada",
+    eigeneRouteButton: "Planear rota própria",
     importGpx: "Importar GPX",
     importGpxImporting: "Importando GPX …",
     importGpxTitle: "Importação GPX",

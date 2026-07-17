@@ -597,11 +597,17 @@ export default function KantonRouten() {
         {/* ── Eigene Route ─────────────────────────────────────────── */}
         <View style={styles.eigeneRouteSection}>
           <View style={styles.eigeneRouteHeader}>
-            <Feather name="upload" size={14} color={colors.mutedForeground} />
+            <Feather name="map" size={14} color={colors.mutedForeground} />
             <Text style={[styles.eigeneRouteTitle, { color: colors.mutedForeground }]}>
               {t.eigeneRouteTitle}
             </Text>
           </View>
+          <PrimaryButton
+            label={t.eigeneRouteButton}
+            variant="secondary"
+            onPress={() => router.push("/eigene-route")}
+            style={{ marginBottom: 10 }}
+          />
           <PrimaryButton
             label={importing ? t.importGpxImporting : t.importGpx}
             variant="secondary"
