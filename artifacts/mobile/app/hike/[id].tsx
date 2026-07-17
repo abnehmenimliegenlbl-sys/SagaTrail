@@ -624,18 +624,20 @@ export default function LiveHike() {
   // Podcast, wird diese waehrend der Erzaehlung leiser gedreht statt in
   // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
   useEffect(() => {
-    // MixWithOthers als Standard: zwischen Kapiteln laeuft nur der stille
-    // Keepalive-Loop, der Musik anderer Apps NICHT dauerhaft ducken soll.
-    // Waehrend einer Erzaehlung (speak()) wird dynamisch auf DuckOthers
-    // gewechselt und danach wieder zurueck — so bleibt Musik im Hintergrund
-    // normal laut, ausser wenn gerade wirklich gesprochen wird.
+    // DuckOthers fuer die gesamte Wanderung — kein Moduswechsel mehr.
+    // Grund: jeder setAudioModeAsync-Aufruf kann unter iOS eine
+    // Audio-Session-Unterbrechung ausloesen (z. B. wenn Bluetooth gerade
+    // verbindet). Mit einem einzigen stabilen Modus bleibt der A2DP-Stream
+    // zum Auto-Radio durchgehend aktiv. Background-Playback (staysActive-
+    // InBackground) ist zuverlaessiger wenn die Session durchgehend im
+    // selben Zustand ist — kein iOS-seitiges "ist das noch Playback?".
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
+      shouldDuckAndroid: true,
     }).catch(() => {});
   }, []);
 
@@ -647,7 +649,11 @@ export default function LiveHike() {
   // signalisiert iOS, dass die App Audio "spielt", und haelt den Thread wach.
   // Wird gestoppt, sobald die Wanderung endet oder die Komponente ausgehaengt.
   useEffect(() => {
-    if (Platform.OS === "web" || preparing) return;
+    // Keepalive startet sofort beim Mount — kein preparing-Gate mehr.
+    // Grund: zwischen Screen-Oeffnen und Story-Loading (mehrere Sekunden)
+    // laeuft kein Audio; iOS kann den JS-Thread in dieser Zeit suspendieren
+    // und sperrt den Bildschirm den Benutzer, bevor der Keepalive startet.
+    if (Platform.OS === "web") return;
     let mounted = true;
     let sound: Audio.Sound | null = null;
     (async () => {
@@ -660,13 +666,10 @@ export default function LiveHike() {
         if (!mounted) return;
         const result = await Audio.Sound.createAsync(
           { uri },
-          // volume: 0.008 statt 0 — der 10-Hz-Infraschall-Sinus wird mit
-          // ~0.2 % Amplitude wiedergegeben (absolut unhoorbar), aber der
-          // Bluetooth-A2DP-Encoder sieht echte, nicht-stille PCM-Werte und
-          // haelt den Datenstrom zum Auto-Radio aktiv. volume:0 erzeugt
-          // digitale Stille (alle Samples × 0 = 0), was viele Car-Radios
-          // als "nichts spielt" werten und den A2DP-Stream pausieren.
-          { shouldPlay: true, isLooping: true, volume: 0.008 }
+          // volume: 0.015 — 80-Hz-Ton bei ~0.1 % Amplitude (absolut unhoerbar).
+          // Hoeher als zuvor (0.008) damit SBC-Encoder des Auto-Radios den
+          // Datenstrom zuverlaessig als "aktiv" einordnet und nicht abbricht.
+          { shouldPlay: true, isLooping: true, volume: 0.015 }
         );
         if (!mounted) {
           result.sound.unloadAsync().catch(() => {});
@@ -684,7 +687,7 @@ export default function LiveHike() {
       sound?.unloadAsync().catch(() => {});
       keepaliveSoundRef.current = null;
     };
-  }, [preparing]);
+  }, []);
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   // resolveStory wendet effectiveStoryLanguage intern selbst an — hier wird
@@ -1444,16 +1447,7 @@ export default function LiveHike() {
         // Best effort — Sound koennte bereits entladen sein.
       }
     }
-    // Zurueck auf MixWithOthers: manueller Stopp soll Musik sofort
-    // wieder normal laut werden lassen.
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
-    }).catch(() => {});
+    // Kein Moduswechsel mehr — Session bleibt durchgehend in DuckOthers.
     setSpeaking(false);
   }, []);
 
@@ -1532,17 +1526,7 @@ export default function LiveHike() {
           try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
         }
         if (gen !== narrationGenRef.current) return;
-        // Vor dem Abspielen auf DuckOthers wechseln, damit die Erzaehlung
-        // Musik/Podcasts waehrend des Sprechens leiser zieht.
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: true,
-        }).catch(() => {});
-        if (gen !== narrationGenRef.current) return;
+        // Kein Moduswechsel — Session ist bereits dauerhaft in DuckOthers.
         const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {
           sound.unloadAsync().catch(() => {});
@@ -1552,22 +1536,18 @@ export default function LiveHike() {
         sound.setOnPlaybackStatusUpdate((status) => {
           if (!status.isLoaded) return;
           if (status.didJustFinish) {
-            // Zurueck auf MixWithOthers: zwischen Kapiteln soll Musik wieder
-            // normal laut laufen (nur der stille Keepalive ist noch aktiv).
-            Audio.setAudioModeAsync({
-              allowsRecordingIOS: false,
-              playsInSilentModeIOS: true,
-              staysActiveInBackground: true,
-              interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-              shouldDuckAndroid: false,
-            }).catch(() => {});
+            // Kein Moduswechsel mehr — Session bleibt in DuckOthers.
             setSpeaking(false);
-            speakingRef.current = false; // sofort synchronisieren fuer Queue-Check
+            speakingRef.current = false;
             onFinished?.();
-            // Naechstes Element aus der Warteschlange abspielen.
             const next = narrationQueueRef.current.shift();
             if (next) speakRef.current?.(next.text, next.onFinished);
+          } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
+            // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
+            // Audio-Session): iOS pausiert das Audio automatisch bei einer
+            // RouteChange-Interruption. Wir starten neu, sobald wir merken
+            // dass das Audio steht obwohl es nicht zu Ende gespielt hat.
+            sound.playAsync().catch(() => {});
           }
         });
       } catch {
@@ -1976,13 +1956,15 @@ export default function LiveHike() {
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (voiceListening) return;
+    // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
+    // PlayAndRecord): Session explizit zurueck auf DuckOthers/Playback.
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
+      shouldDuckAndroid: true,
     }).catch(() => {});
   }, [voiceListening]);
 
