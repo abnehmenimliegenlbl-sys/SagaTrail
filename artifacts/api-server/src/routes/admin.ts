@@ -15,6 +15,7 @@ import { istPremiumAktiv } from "../lib/premiumStatus";
 import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
+import { fetchPartnerLeads, leadsToCSV } from "../lib/partnerLeads";
 
 const router: IRouter = Router();
 
@@ -76,8 +77,10 @@ router.post("/admin/create-review-user", async (req, res): Promise<void> => {
     firstName: firstName ?? "Demo",
     lastName: lastName ?? "User",
     skipPasswordChecks: false,
-    bypassClientTrust: true,
   });
+
+  // bypass_client_trust erlaubt Login ohne Clerk-Dev-Trust-Check (Fake-E-Mails).
+  await clerkClient.users.updateUser(newUser.id, { bypassClientTrust: true } as any);
 
   req.log.info({ userId: newUser.id, email }, "Review-Nutzer angelegt");
   res.status(201).json({ created: true, userId: newUser.id, email });
@@ -732,6 +735,35 @@ router.delete("/admin/narration-cache", async (req, res): Promise<void> => {
   } catch (err) {
     req.log.error({ err }, "Narration-Cache leeren fehlgeschlagen");
     res.status(500).json({ error: "Cache leeren fehlgeschlagen" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Partner-Leads CSV (Google Places API)
+// ---------------------------------------------------------------------------
+router.get("/admin/partner-leads.csv", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "GOOGLE_PLACES_API_KEY nicht konfiguriert" });
+    return;
+  }
+
+  const radius = Number(req.query.radius ?? 3000);
+
+  req.log.info({ radius }, "Partner-Leads Export gestartet");
+
+  try {
+    const leads = await fetchPartnerLeads(apiKey, radius);
+    const csv = leadsToCSV(leads);
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="sagatrail-partner-leads.csv"');
+    res.send("\uFEFF" + csv); // BOM für Excel-Kompatibilität
+  } catch (err) {
+    req.log.error({ err }, "Partner-Leads Export fehlgeschlagen");
+    res.status(500).json({ error: "Export fehlgeschlagen" });
   }
 });
 
