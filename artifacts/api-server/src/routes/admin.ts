@@ -76,6 +76,7 @@ router.post("/admin/create-review-user", async (req, res): Promise<void> => {
     firstName: firstName ?? "Demo",
     lastName: lastName ?? "User",
     skipPasswordChecks: false,
+    bypassClientTrust: true,
   });
 
   req.log.info({ userId: newUser.id, email }, "Review-Nutzer angelegt");
