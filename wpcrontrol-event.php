@@ -3,12 +3,14 @@
 // Einfügen unter: WP Crontrol → PHP-Cron-Events → Hinzufügen
 // Intervall: sagatrail_15min (siehe unten registrieren)
 // Hook-Name: sagatrail_osm_harvest
+// Intervall: 15 Minuten (Infomaniak Task Scheduler Minimum)
+// Laufzeit:  695 Routen ÷ 8 pro Run × 15 Min ≈ 22 Stunden
 
 global $wpdb;
 
-$BATCH     = 10;
+$BATCH     = 8;     // 8 Routen à ~7s = ~1 Min normal, ~6 Min Worst-Case
 $RADIUS    = 2000;
-$PAUSE     = 4;
+$PAUSE     = 5;     // 5s Pause – höflich gegenüber Overpass
 $OVERPASS  = 'https://overpass-api.de/api/interpreter';
 
 $gesamt   = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_routen");
