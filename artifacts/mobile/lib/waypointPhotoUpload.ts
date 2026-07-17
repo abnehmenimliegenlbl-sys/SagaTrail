@@ -57,7 +57,16 @@ export async function uploadWaypointPhoto(
   if (result.status < 200 || result.status >= 300) {
     throw new Error(`Upload fehlgeschlagen: ${result.status} — ${result.body}`);
   }
-  return JSON.parse(result.body) as UploadedPhoto;
+  // Der Server hat den Upload akzeptiert (2xx). Auf manchen Geraeten/Proxys
+  // liefert FileSystem.uploadAsync einen leeren oder unvollstaendigen Response-
+  // Body zurueck, obwohl der Server korrekt geantwortet hat. JSON.parse wuerde
+  // dann einen SyntaxError werfen, der als Upload-Fehler erschiene — obwohl das
+  // Foto bereits sicher in GCS gespeichert ist. Daher: graceful fallback.
+  try {
+    return JSON.parse(result.body) as UploadedPhoto;
+  } catch {
+    return { id: "", objectPath: "", sagaId: meta.sagaId, chapterIndex: undefined, createdAt: new Date().toISOString() };
+  }
 }
 
 /** Holt Community-Fotos fuer eine Sage vom Server. */

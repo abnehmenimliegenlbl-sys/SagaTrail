@@ -1327,7 +1327,9 @@ export default function LiveHike() {
             },
             () => getTokenRef.current()
           );
-          setPhotoObjectPaths((prev) => [...prev, uploaded.objectPath]);
+          if (uploaded.objectPath) {
+            setPhotoObjectPaths((prev) => [...prev, uploaded.objectPath]);
+          }
           setPhotoUploadFeedback("ok");
         } catch {
           setPhotoUploadFeedback("error");
