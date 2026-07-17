@@ -227,3 +227,21 @@ id = "pnANnCJthp8TvE4b9xpOX"
 uri = "file://sagatrail-partner-leads.csv"
 type = "table"
 title = "SagaTrail Partner Leads – 439 Betriebe, alle 26 Kantone"
+
+[[outputs]]
+id = "u55BMPXJHtD74aOo2SSOy"
+uri = "file://screenshots_ipad/ipad_screen1.png"
+type = "image"
+title = "iPad 13\" – Kantone"
+
+[[outputs]]
+id = "5JOe3S3vfz3DltBLEKngC"
+uri = "file://screenshots_ipad/ipad_screen2.png"
+type = "image"
+title = "iPad 13\" – Routen"
+
+[[outputs]]
+id = "-pQaEjL5DHxSkVv307rvm"
+uri = "file://screenshots_ipad/ipad_screen3.png"
+type = "image"
+title = "iPad 13\" – Routenplanung"
