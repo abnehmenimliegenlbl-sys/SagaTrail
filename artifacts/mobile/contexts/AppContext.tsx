@@ -489,11 +489,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }[],
         },
       });
-      setHikeHistory(result.hikeHistory as unknown as HikeSession[]);
+      // Das Zod-Schema des Servers haelt hikeHistory auf { id } reduziert
+      // (orval ignoriert additionalProperties:true fuer Passthrough). Um
+      // sagaId, routeName etc. nicht zu verlieren, werden lokale Eintraege
+      // bevorzugt; vom Server gemeldete neue IDs (anderes Geraet) kommen
+      // als sparse Eintraege hinzu.
+      const localById = new Map(hikeHistoryRef.current.map((h) => [h.id, h]));
+      const serverOnlyNew = (result.hikeHistory as unknown as HikeSession[]).filter(
+        (h) => !localById.has(h.id)
+      );
+      const mergedHistory = [...hikeHistoryRef.current, ...serverOnlyNew].slice(0, 200);
+      setHikeHistory(mergedHistory);
       setAchievements(result.achievements as unknown as Achievement[]);
       AsyncStorage.setItem(
         KEYS.hikeHistory,
-        JSON.stringify(result.hikeHistory)
+        JSON.stringify(mergedHistory)
       ).catch(() => {});
       AsyncStorage.setItem(
         KEYS.achievements,

@@ -268,11 +268,20 @@ router.post("/me/progress/sync", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
+  // Strukturvalidierung: pruefen dass hikeHistory und achievements vorhanden
+  // und als Arrays uebermittelt werden. Das Zod-Schema wuerde extra Felder
+  // (sagaId, routeName, distanceKm …) aus den hikeHistory-Eintraegen strippen,
+  // deshalb verwenden wir nach der Validierung die rohen Body-Daten.
   const parsed = SyncMyProgressBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  // Rohformate aus dem Body: enthalten alle Felder die der Client geschickt hat.
+  const rawHikeHistory: { id: string; [key: string]: unknown }[] =
+    Array.isArray(req.body?.hikeHistory) ? req.body.hikeHistory : [];
+  const rawAchievements: { id: string; sagaTitle: string; unlockedAt: number }[] =
+    Array.isArray(req.body?.achievements) ? req.body.achievements : [];
 
   const [existing] = await db
     .select()
@@ -287,10 +296,12 @@ router.post("/me/progress/sync", async (req, res): Promise<void> => {
   // (oder auf einem anderen Geraet) mit leerem oder aelterem lokalen Zustand
   // synct, darf bereits serverseitig bekannte Wanderungen/Errungenschaften
   // nie loeschen. Merge erfolgt ausschliesslich ueber die id.
-  const mergedHikeHistory = mergeById(existing.hikeHistory, parsed.data.hikeHistory)
+  // Client-Eintraege gewinnen (neuere Daten), DB-Eintraege fuer unbekannte IDs
+  // werden ergaenzt — so bleiben volle Objekte (sagaId, routeName…) erhalten.
+  const mergedHikeHistory = mergeById(existing.hikeHistory, rawHikeHistory)
     .sort((a: any, b: any) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
     .slice(0, 200);
-  const mergedAchievements = mergeById(existing.achievements, parsed.data.achievements);
+  const mergedAchievements = mergeById(existing.achievements, rawAchievements);
 
   const [row] = await db
     .update(profilesTable)
@@ -302,12 +313,12 @@ router.post("/me/progress/sync", async (req, res): Promise<void> => {
     .where(eq(profilesTable.id, userId))
     .returning();
 
-  res.json(
-    SyncMyProgressResponse.parse({
-      hikeHistory: row.hikeHistory,
-      achievements: row.achievements,
-    })
-  );
+  // Antwort direkt ohne SyncMyProgressResponse.parse() senden: das Zod-Schema
+  // wuerde hikeHistory ebenfalls auf { id } reduzieren und sagaId etc. loeschen.
+  res.json({
+    hikeHistory: row.hikeHistory,
+    achievements: row.achievements,
+  });
 });
 
 router.patch("/me/free-hike", async (req, res): Promise<void> => {
