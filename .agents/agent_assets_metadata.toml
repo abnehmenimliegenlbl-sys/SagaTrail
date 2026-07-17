@@ -287,3 +287,9 @@ id = "FSZonFutZMkdOmCqUoGgO"
 uri = "file://wpcrontrol-event.zip"
 type = "unspecified"
 title = "wpcrontrol-event.php – 8 Routen, 15 Min Intervall"
+
+[[outputs]]
+id = "xkdVSO5RH4z3HOZq6tpGM"
+uri = "file://wpcrontrol-google-enrich.zip"
+type = "unspecified"
+title = "wpcrontrol-google-enrich.php – Google Places Enrichment"
