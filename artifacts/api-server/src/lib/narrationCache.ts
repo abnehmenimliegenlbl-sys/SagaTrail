@@ -31,9 +31,10 @@ export class NarrationRateLimitError extends Error {
 //     erzeugt wurden (z.B. "Ich verstehe." — wird taeglich dutzendfach angefordert)
 //   • Macht das OpenAI-Fallback-Problem unproblematisch: War OpenAI zustaendig,
 //     liefert der In-Memory-Cache sofort zurueck, ohne erst ElevenLabs zu probieren
-// Max. 300 Eintraege (~300 ×~50 KB ≈ ~15 MB) — bei Ueberschreitung wird der
-// aelteste Eintrag verdraengt (FIFO).
-const IN_MEMORY_MAX = 300;
+// Max. 50 Eintraege (~50 ×~1.5 MB ≈ ~75 MB) — bei Ueberschreitung wird der
+// aelteste Eintrag verdraengt (FIFO). Groessere Werte kaemen nahe an das
+// Heap-Limit eines typischen Node-Prozesses.
+const IN_MEMORY_MAX = 50;
 const inMemoryNarrationCache = new Map<string, Buffer>();
 
 function inMemoryGet(hash: string): Buffer | undefined {
