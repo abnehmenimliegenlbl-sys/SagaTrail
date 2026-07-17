@@ -142,12 +142,11 @@ function rdpThin(points: [number, number][], epsilon: number): [number, number][
 
 /**
  * Erzeugt einen 2-Sekunden-WAV-Keepalive als Base64-String (8-bit, mono, 8 kHz)
- * mit einem 10-Hz-Infraschall-Sinus. Der Ton ist fuer Menschen voellig
- * unhoerbar (Hoerschwelle ~20 Hz), aber liefert echte, nicht-stille PCM-Werte
- * an den Bluetooth-Codec. Viele Auto-Radios (A2DP) erkennen digitale Stille
- * (alle Samples = 128) als "nichts spielt" und deaktivieren den Stream; der
- * naechste Ton kommt dann nicht mehr durch die Autolautsprecher. Ein echtes
- * (wenn auch unhoerabares) Audiosignal haelt den A2DP-Stream aktiv.
+ * mit einem 80-Hz-Ton. 80 Hz liegt innerhalb des SBC-Codec-Durchlassbereichs
+ * (SBC schneidet typisch bei < 20 Hz ab) und ist fuer Menschen praktisch
+ * unhoerbar bei der verwendeten Amplitude. Viele Auto-Radios (A2DP) erkennen
+ * digitale Stille (alle Samples = 128) als "nichts spielt" und deaktivieren
+ * den Stream; ein echtes Audiosignal haelt den A2DP-Stream aktiv.
  * Wird als Loop bei sehr niedrigem volume abgespielt — nur so viel, dass echte
  * PCM-Werte den Codec erreichen, ohne Lautstaerke wahrzunehmen.
  */
@@ -168,12 +167,12 @@ function buildKeepaliveWavBase64(): string {
   u16(20, 1); u16(22, 1); u32(24, sampleRate); u32(28, sampleRate);
   u16(32, 1); u16(34, 8);
   buf.set([100, 97, 116, 97], 36); u32(40, dataSize);
-  // 10-Hz-Infraschall-Sinus: Period = 800 Samples bei 8 kHz.
-  // Amplitude 30 (von max. 127) → mit volume:0.008 ergibt das ~0.2 %
-  // des Vollausschlags — fuer jeden Lautsprecher und jeden Kopfhoerer
-  // absolut unhoorbar, aber der Bluetooth-Encoder sieht nichttriviale Werte.
-  const freq = 10; // Hz
-  const amp = 30;  // 0..127
+  // 80-Hz-Sinus: Period = 100 Samples bei 8 kHz.
+  // Amplitude 12 (von max. 127) → mit volume:0.015 ergibt das < 0.1 %
+  // des Vollausschlags — absolut unhoerbar, aber der Bluetooth-SBC-Encoder
+  // sieht nicht-triviale PCM-Werte und haelt den A2DP-Stream aktiv.
+  const freq = 80; // Hz — SBC-Codec-sicher (10 Hz wurde von manchen Encodern gefiltert)
+  const amp = 12;  // 0..127 — bei volume:0.015 absolut unhoerbar, aber nicht-stille PCM-Werte
   for (let i = 0; i < numSamples; i++) {
     buf[44 + i] = 128 + Math.round(amp * Math.sin(2 * Math.PI * freq * i / sampleRate));
   }
