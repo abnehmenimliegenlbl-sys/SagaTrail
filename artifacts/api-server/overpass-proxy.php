@@ -4,6 +4,7 @@
  * Auf Infomaniak Webhosting hochladen (in den Ordner wo wp-config.php liegt).
  * Leitet Overpass-Anfragen vom Replit-API-Server weiter.
  */
+set_time_limit(0); /* PHP-eigenes Limit deaktivieren; cURL-Timeout (s.u.) steuert die Wartezeit. */
 
 $secret = '16673aafe24093bcdd0a01ddf29fb776250d2de850a94908';
 
