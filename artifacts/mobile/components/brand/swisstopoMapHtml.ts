@@ -186,9 +186,9 @@ export function buildSwisstopoHtml(
 <body>
 <div id="map"></div>
 <div id="stt-mode">
-  <button class="stt-mbtn active" id="btn-2d" onclick="setMode('2d')">2D</button>
-  <button class="stt-mbtn" id="btn-3d" onclick="setMode('3d')">3D</button>
-  <button class="stt-mbtn" id="btn-sat" onclick="setMode('sat')">Sat</button>
+  <button class="stt-mbtn active" id="btn-2d">2D</button>
+  <button class="stt-mbtn" id="btn-3d">3D</button>
+  <button class="stt-mbtn" id="btn-sat">Sat</button>
 </div>
 <div id="stt-legende" class="zu" style="display:none"></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -247,6 +247,11 @@ export function buildSwisstopoHtml(
     if (!map.loaded()) return;
     applyMode(mode);
   }
+  /* Buttons koennen nicht via onclick="setMode(...)" aufgerufen werden weil
+     setMode im IIFE-Scope lebt — daher addEventListener im gleichen Scope. */
+  document.getElementById('btn-2d').addEventListener('click', function() { setMode('2d'); });
+  document.getElementById('btn-3d').addEventListener('click', function() { setMode('3d'); });
+  document.getElementById('btn-sat').addEventListener('click', function() { setMode('sat'); });
 
   function applyMode(mode) {
     var showCarto = mode !== 'sat';
