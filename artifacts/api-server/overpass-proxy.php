@@ -1,21 +1,12 @@
 <?php
 /**
  * overpass-proxy.php
- * Auf Infomaniak Webhosting hochladen (z.B. /www/overpass-proxy.php).
- * Leitet Overpass-Anfragen vom Replit-API-Server weiter — Infomaniaks IP
- * ist nicht geblockt, Replits IP schon.
- *
- * Schutz: X-Proxy-Token Header muss mit OVERPASS_PROXY_TOKEN übereinstimmen.
- * Token in .htaccess als SetEnv setzen ODER direkt hier als Klartext (sicherer: .htaccess).
+ * Auf Infomaniak Webhosting hochladen (in den Ordner wo wp-config.php liegt).
+ * Leitet Overpass-Anfragen vom Replit-API-Server weiter.
  */
 
-$secret = getenv('OVERPASS_PROXY_TOKEN');
-if ($secret === false || $secret === '') {
-    // Fallback: Token direkt hier eintragen falls .htaccess-SetEnv nicht geht
-    $secret = 'HIER_TOKEN_EINTRAGEN';
-}
+$secret = '16673aafe24093bcdd0a01ddf29fb776250d2de850a94908';
 
-// Token prüfen
 $incoming = $_SERVER['HTTP_X_PROXY_TOKEN'] ?? '';
 if ($incoming !== $secret) {
     http_response_code(403);
@@ -23,14 +14,12 @@ if ($incoming !== $secret) {
     exit('Forbidden');
 }
 
-// Nur POST erlaubt
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     header('Content-Type: text/plain');
     exit('Method Not Allowed');
 }
 
-// Body lesen (Format: data=<urlencoded overpass query>)
 $body = file_get_contents('php://input');
 if (empty(trim($body))) {
     http_response_code(400);
@@ -38,7 +27,6 @@ if (empty(trim($body))) {
     exit('Bad Request: leerer Body');
 }
 
-// Anfrage an Overpass weiterleiten
 $ch = curl_init('https://overpass-api.de/api/interpreter');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
