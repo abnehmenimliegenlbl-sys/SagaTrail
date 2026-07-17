@@ -444,7 +444,9 @@ export default function Routenplanung() {
         if (cancelled) return;
         const seen = new Set<string>();
         const merged: MapPoi[] = [];
-        for (const item of [...fromStart, ...fromEnd]) {
+        const safeStart = Array.isArray(fromStart) ? fromStart : [];
+        const safeEnd = Array.isArray(fromEnd) ? fromEnd : [];
+        for (const item of [...safeStart, ...safeEnd]) {
           if (!item?.osmId || seen.has(item.osmId)) continue;
           seen.add(item.osmId);
           merged.push({ id: item.osmId, name: item.name ?? "Parkplatz", lat: item.lat, lng: item.lng });

@@ -470,15 +470,18 @@ export async function fetchAlpineHuts(
 
   const overpassFetch = (async (): Promise<RawAlpineHut[] | null> => {
     try {
+      // Radius auf 6 km cappen: groessere Anfragen dauern >6 s und triggern
+      // Infomaniaks Gateway-Timeout (504). Hütten jenseits 6 km kommen vom Seed.
+      const overpassRadius = Math.min(radiusM, 6_000);
       const query = [
-        "[out:json][timeout:10];",
+        "[out:json][timeout:5];",
         "(",
-        `node["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
-        `way["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
+        `node["tourism"="alpine_hut"]["name"](around:${overpassRadius},${center.lat},${center.lng});`,
+        `way["tourism"="alpine_hut"]["name"](around:${overpassRadius},${center.lat},${center.lng});`,
         ");",
         "out center tags;",
       ].join("");
-      const elements = await runOverpass<OverpassPoiElement>(query, 8_000);
+      const elements = await runOverpass<OverpassPoiElement>(query, 6_000);
       const result: RawAlpineHut[] = [];
       for (const e of elements) {
         const tags = e.tags ?? {};
@@ -503,7 +506,7 @@ export async function fetchAlpineHuts(
     }
   })();
 
-  const deadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3_000));
+  const deadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000));
 
   const winner = await Promise.race([overpassFetch, deadline]);
 
