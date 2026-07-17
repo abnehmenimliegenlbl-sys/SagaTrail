@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db, profilesTable } from "@workspace/db";
 import {
   GetMyProfileResponse,
@@ -8,14 +9,19 @@ import {
   UpdateMyPremiumBody,
   ClaimKantonspackBody,
   ClaimKantonspackResponse,
-  WelcomeSagenpaketBody,
-  WelcomeSagenpaketResponse,
   SyncMyProgressBody,
   SyncMyProgressResponse,
 } from "@workspace/api-zod";
+
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { hatAktivesPremiumEntitlement } from "../lib/revenuecatSync";
 import { claimKantonspack, KANTON_SLUGS } from "../lib/kantonspackClaim";
+
+const WelcomeSagenpaketBody = z.object({ kanton: z.string().min(1) });
+const WelcomeSagenpaketResponse = z.object({
+  slug: z.string(),
+  bereitsGenutzt: z.boolean(),
+});
 
 const router: IRouter = Router();
 

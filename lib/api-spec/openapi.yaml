@@ -1161,6 +1161,13 @@ components:
             Ob die einmalige kostenlose Wanderung bereits verbraucht wurde.
             Solange false, ist genau eine Wanderung (egal welcher Kanton)
             auch ohne Premium freigeschaltet.
+        purchasedPacks:
+          type: array
+          items:
+            type: string
+          description: >-
+            Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat
+            (z.B. "schwyz", "bern_2"). Autoritaetive Quelle fuer Saga-Pack-Zugang.
       required:
         - id
         - name
@@ -1170,6 +1177,7 @@ components:
         - ageTier
         - premium
         - freeHikeUsed
+        - purchasedPacks
     ProfileInput:
       type: object
       properties:

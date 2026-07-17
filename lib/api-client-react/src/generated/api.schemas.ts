@@ -65,6 +65,8 @@ export interface Profile {
   premium: boolean;
   /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */
   freeHikeUsed: boolean;
+  /** Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. "schwyz", "bern_2"). Autoritaetive Quelle fuer Saga-Pack-Zugang. */
+  purchasedPacks: string[];
 }
 
 export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];
