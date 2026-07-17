@@ -1,5 +1,6 @@
 import type { Logger } from "pino";
 import { haversineM, type LatLng } from "./geo";
+import sacHuettenSeed from "./sacHuettenSeed.json" assert { type: "json" };
 
 /**
  * Laedt reale Wanderrouten je Kanton aus OpenStreetMap ueber die Overpass-API.
@@ -394,44 +395,126 @@ export interface RawAlpineHut {
   openingHours: string | null;
 }
 
+// In-Memory-Cache fuer Alpine-Hut-Abfragen.
+// Hütten-Koordinaten aendern sich praktisch nie → grosszuegige TTL.
+// Cache-Key: gerundete Koordinaten (0.1°-Raster ≈ 10km) + Radius.
+const ALPINE_HUT_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const alpineHutCache = new Map<string, { at: number; entries: RawAlpineHut[] }>();
+
+function alpineHutCacheKey(center: { lat: number; lng: number }, radiusM: number): string {
+  const latR = Math.round(center.lat * 10) / 10;
+  const lngR = Math.round(center.lng * 10) / 10;
+  return `${latR}:${lngR}:${radiusM}`;
+}
+
+// Statischer Seed mit bekannten Schweizer SAC-Hütten als Fallback wenn
+// Overpass nicht erreichbar ist. Wird radius-gefiltert zurückgegeben.
+interface SeedHut {
+  name: string;
+  lat: number;
+  lng: number;
+  elevation: number | null;
+  websiteUrl: string | null;
+}
+
+function seedHutsInRadius(
+  center: { lat: number; lng: number },
+  radiusM: number,
+): RawAlpineHut[] {
+  return (sacHuettenSeed as SeedHut[])
+    .filter((h) => haversineM(center, { lat: h.lat, lng: h.lng }) <= radiusM)
+    .map((h, i) => ({
+      osmId: `seed-${i}-${h.name.replace(/\s+/g, "_")}`,
+      name: h.name,
+      lat: h.lat,
+      lng: h.lng,
+      telefon: null,
+      websiteUrl: h.websiteUrl,
+      elevation: h.elevation,
+      openingHours: null,
+    }));
+}
+
 /**
  * Laedt SAC-Hütten (tourism=alpine_hut) im Umkreis eines Koordinaten-Punktes.
- * Liefert Phone, Website, Seehoehe und Oeffnungszeiten aus OSM-Tags.
+ * Versucht zuerst Overpass; faellt bei Netzwerkfehler auf einen statischen
+ * Seed mit ~50 offiziellen Schweizer SAC-Hütten zurück.
+ * Ergebnisse werden 24 Stunden im Speicher gecacht.
  */
 export async function fetchAlpineHuts(
   center: { lat: number; lng: number },
   radiusM: number,
   log: Logger,
 ): Promise<RawAlpineHut[]> {
-  const query = [
-    "[out:json][timeout:10];",
-    "(",
-    `node["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
-    `way["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
-    ");",
-    "out center tags;",
-  ].join("");
-  const elements = await runOverpass<OverpassPoiElement>(query, 14_000);
-  const result: RawAlpineHut[] = [];
-  for (const e of elements) {
-    const tags = e.tags ?? {};
-    if (!tags.name) continue;
-    const lat = e.lat ?? e.center?.lat;
-    const lng = e.lon ?? e.center?.lon;
-    if (lat == null || lng == null) continue;
-    result.push({
-      osmId: `${e.type}-${e.id}`,
-      name: tags.name,
-      lat,
-      lng,
-      telefon: tags.phone ?? tags["contact:phone"] ?? null,
-      websiteUrl: tags.website ?? tags["contact:website"] ?? tags.url ?? null,
-      elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
-      openingHours: tags.opening_hours ?? tags.seasonal ?? null,
-    });
+  const key = alpineHutCacheKey(center, radiusM);
+  const hit = alpineHutCache.get(key);
+  if (hit && Date.now() - hit.at < ALPINE_HUT_TTL_MS) {
+    log.info({ count: hit.entries.length, radiusM, cached: true }, "Alpine Huts (Cache)");
+    return hit.entries;
   }
-  log.info({ count: result.length, radiusM }, "Overpass: Alpine Huts geladen");
-  return result;
+
+  // Seed sofort bereit; Overpass-Versuch mit 3s Gesamt-Deadline (Promise.race).
+  // Wenn Overpass gewinnt: Cache mit echten OSM-Daten fuellen.
+  // Wenn Seed gewinnt (Timeout/Fehler): sofortige Antwort, Overpass laeuft
+  // im Hintergrund weiter und aktualisiert den Cache fuer den naechsten Aufruf.
+  const seed = seedHutsInRadius(center, radiusM);
+
+  const overpassFetch = (async (): Promise<RawAlpineHut[] | null> => {
+    try {
+      const query = [
+        "[out:json][timeout:10];",
+        "(",
+        `node["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
+        `way["tourism"="alpine_hut"]["name"](around:${radiusM},${center.lat},${center.lng});`,
+        ");",
+        "out center tags;",
+      ].join("");
+      const elements = await runOverpass<OverpassPoiElement>(query, 8_000);
+      const result: RawAlpineHut[] = [];
+      for (const e of elements) {
+        const tags = e.tags ?? {};
+        if (!tags.name) continue;
+        const lat = e.lat ?? e.center?.lat;
+        const lng = e.lon ?? e.center?.lon;
+        if (lat == null || lng == null) continue;
+        result.push({
+          osmId: `${e.type}-${e.id}`,
+          name: tags.name,
+          lat,
+          lng,
+          telefon: tags.phone ?? tags["contact:phone"] ?? null,
+          websiteUrl: tags.website ?? tags["contact:website"] ?? tags.url ?? null,
+          elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
+          openingHours: tags.opening_hours ?? tags.seasonal ?? null,
+        });
+      }
+      return result;
+    } catch {
+      return null;
+    }
+  })();
+
+  const deadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3_000));
+
+  const winner = await Promise.race([overpassFetch, deadline]);
+
+  if (winner !== null) {
+    // Overpass hat innerhalb der Deadline geantwortet
+    alpineHutCache.set(key, { at: Date.now(), entries: winner });
+    log.info({ count: winner.length, radiusM, source: "overpass" }, "Alpine Huts geladen");
+    return winner;
+  }
+
+  // Seed sofort zurueckgeben; Overpass laeuft weiter und aktualisiert Cache
+  alpineHutCache.set(key, { at: Date.now(), entries: seed });
+  log.warn({ count: seed.length, radiusM, source: "seed" }, "Alpine Huts: Seed-Fallback (Overpass zu langsam/nicht erreichbar)");
+  overpassFetch.then((r) => {
+    if (r !== null && r.length > 0) {
+      alpineHutCache.set(key, { at: Date.now(), entries: r });
+      log.info({ count: r.length, radiusM }, "Alpine Huts: Overpass-Ergebnis nachtraeglich gecacht");
+    }
+  }).catch(() => {});
+  return seed;
 }
 
 /**
