@@ -6,6 +6,10 @@ import { join } from "path";
 import type { Logger } from "pino";
 import { textToSpeech as openaiTextToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 
+// Lautstaerke-Boost fuer die OpenAI-Fallback-Stimme (relativ zu ElevenLabs).
+// 1.5 = 50 % lauter. Ueberschreibbar per Env-Variable OPENAI_NARRATION_VOLUME.
+const OPENAI_VOLUME_BOOST = parseFloat(process.env.OPENAI_NARRATION_VOLUME ?? "1.5");
+
 /**
  * Zerlegt Erzaehltext in Saetze und erkennt "dramatische" Saetze (Ausrufe,
  * Ellipsen), hinter denen eine laengere Pause wirkungsvoller ist als der
@@ -70,10 +74,10 @@ export async function synthesizeOpenAiNarrationWithPacing(
   const sentences = splitIntoSentences(text);
 
   // Ein einzelner Satz (oder Erkennung fehlgeschlagen): kein Concat noetig,
-  // nur Tempoanpassung.
+  // nur Tempoanpassung + Lautstaerke.
   if (sentences.length <= 1) {
     const audio = await openaiTextToSpeech(text, voice, "mp3");
-    return applyTempo(audio, speed);
+    return applyAudioProcessing(audio, speed, OPENAI_VOLUME_BOOST);
   }
 
   const dir = await mkdtemp(join(tmpdir(), "sagatrail-tts-"));
@@ -110,43 +114,60 @@ export async function synthesizeOpenAiNarrationWithPacing(
     ]);
 
     const concatenated = await readFile(concatPath);
-    return applyTempo(concatenated, speed);
+    return applyAudioProcessing(concatenated, speed, OPENAI_VOLUME_BOOST);
   } catch (err) {
     log.warn(
       { err },
       "Satzweise Pacing-Synthese fehlgeschlagen, Rueckfall auf einfache TTS ohne Pausen",
     );
     const audio = await openaiTextToSpeech(text, voice, "mp3");
-    return applyTempo(audio, speed);
+    return applyAudioProcessing(audio, speed, OPENAI_VOLUME_BOOST);
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
 }
 
-async function applyTempo(mp3Buffer: Buffer, speed: number): Promise<Buffer> {
-  // Bei vernachlaessigbarer Abweichung (< 1 %) direkt zurueckgeben.
-  if (Math.abs(speed - 1.0) < 0.01) return mp3Buffer;
-  // atempo unterstuetzt nur 0.5-2.0 pro Filterstufe; fuer unsere Werte
-  // (~0.95) reicht eine einzelne Stufe.
-  const clampedSpeed = Math.min(2, Math.max(0.5, speed));
-  const dir = await mkdtemp(join(tmpdir(), "sagatrail-tempo-"));
-  const inPath = join(dir, "in.mp3");
+/**
+ * Kombinierter Audio-Postprocessing-Schritt fuer OpenAI-TTS:
+ * Tempo (atempo) und Lautstaerke (volume) werden in einem einzigen
+ * ffmpeg-Durchlauf angewendet.
+ *
+ * @param speed      Tempokoeffizient (0.5–2.0); 1.0 = unveraendert
+ * @param volumeBoost Lautstaerkefaktor (z. B. 1.5 = 50 % lauter); 1.0 = unveraendert
+ */
+async function applyAudioProcessing(
+  mp3Buffer: Buffer,
+  speed: number,
+  volumeBoost = 1.0,
+): Promise<Buffer> {
+  const needsTempo  = Math.abs(speed - 1.0) >= 0.01;
+  const needsVolume = Math.abs(volumeBoost - 1.0) >= 0.01;
+  if (!needsTempo && !needsVolume) return mp3Buffer;
+
+  const clampedSpeed  = Math.min(2, Math.max(0.5, speed));
+  const clampedVolume = Math.min(10, Math.max(0.1, volumeBoost));
+
+  // Filter-Kette: atempo und/oder volume kombiniert.
+  const filters: string[] = [];
+  if (needsTempo)  filters.push(`atempo=${clampedSpeed}`);
+  if (needsVolume) filters.push(`volume=${clampedVolume}`);
+  const filterStr = filters.join(",");
+
+  const dir = await mkdtemp(join(tmpdir(), "sagatrail-audio-"));
+  const inPath  = join(dir, "in.mp3");
   const outPath = join(dir, "out.mp3");
   try {
     await writeFile(inPath, mp3Buffer);
     await runFfmpeg([
       "-i", inPath,
-      "-filter:a", `atempo=${clampedSpeed}`,
+      "-filter:a", filterStr,
       "-acodec", "libmp3lame",
       "-y",
       outPath,
     ]);
     return await readFile(outPath);
   } catch {
-    // ffmpeg nicht verfuegbar (z.B. Production-Container ohne ffmpeg-Binary) —
-    // Originalaudio ohne Tempoaenderung zurueckgeben statt die gesamte
-    // Narration mit 502 fehlschlagen zu lassen. Der Unterschied von 0.95x
-    // ist kaum wahrnehmbar.
+    // ffmpeg nicht verfuegbar — Originalaudio unveraendert zurueckgeben.
     return mp3Buffer;
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
