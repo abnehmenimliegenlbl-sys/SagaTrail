@@ -158,10 +158,8 @@ export default function KantonRouten() {
   const displayCantonName = translateCanton(cantonName, language as LanguageCode);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
-  // Sagen-Pack-Regel: Premium-Kundschaft bekommt pro Kanton die erste
-  // entdeckte Sage inklusive; fuer weitere Sagen des Kantons braucht es das
-  // Pack dieses Kantons (oder Elite, das alle Packs einschliesst). Ohne
-  // Premium ist der Kauf noch nicht relevant (erst die Basis-Freischaltung).
+  // Sagen-Pack-Regel: Premium-Kundschaft (nicht Elite) sieht den Kauf-Button,
+  // sobald der Kanton mindestens 8 noch nicht freigeschaltete Sagen hat.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   // RC-Entitlements werden bewusst NICHT geprueft: das sagatrail_kantonspack-
   // Einzel-Consumable-Produkt hat kein RC-Entitlement verknuepft; wuerde ein
@@ -170,8 +168,10 @@ export default function KantonRouten() {
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
   const packUnlocked = isElite || dbPackUnlocked;
-  // Pack-Banner: nur für Gratis-User sichtbar (Premium hat vollen Zugang)
-  const packLocked = !premium && !!cantonName && freeHikeUsed && !packUnlocked;
+  const sagasInCanton = sagas.filter((s) => s.canton === cantonName);
+  // Pack-Banner: nur fuer Premium (nicht Elite) sichtbar, wenn Pack noch nicht
+  // gekauft wurde und der Kanton >= 8 Sagen hat.
+  const packLocked = premium && !isElite && !!packSlug && !packUnlocked && sagasInCanton.length >= 8;
   // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
   // gekauft; der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = packSlug
