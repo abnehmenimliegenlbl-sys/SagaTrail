@@ -275,3 +275,9 @@ id = "gb01VAxdQdHyfOPNPciXC"
 uri = "file://sagatrail-komplett.zip"
 type = "unspecified"
 title = "WP Cron Plugin + SQL + Anleitung"
+
+[[outputs]]
+id = "5azj_7bugWJt5M56q6ZDq"
+uri = "file://sagatrail-osm-cron.zip"
+type = "unspecified"
+title = "sagatrail-osm-cron Plugin ZIP"
