@@ -2352,119 +2352,7 @@ export default function LiveHike() {
           </Animated.View>
         )}
 
-        {/* Detailansicht eines angetippten Point of Interest auf der Karte.
-            KEIN natives Modal: transparent+fade Modal hinterlaesst auf iOS eine
-            unsichtbare Touch-blockierende Schicht nach dem Schliessen. Stattdessen
-            absolut positioniertes Overlay im normalen View-Baum. */}
-        {!!selectedPoi && (
-          <Pressable
-            style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-            onPress={() => setSelectedPoi(null)}
-          >
-            <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
-              <Glass>
-                {selectedPoi.wiki?.image && (
-                  <Image
-                    source={{ uri: selectedPoi.wiki.image }}
-                    style={styles.poiModalImage}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={styles.poiRow}>
-                  <Feather name="map-pin" size={18} color={colors.accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                      {t.poiDetailEyebrow}
-                    </Text>
-                    <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                      {selectedPoi.name}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => setSelectedPoi(null)}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel={t.close}
-                  >
-                    <Feather name="x" size={16} color={colors.mutedForeground} />
-                  </Pressable>
-                </View>
-                <Text
-                  style={[
-                    styles.poiSummary,
-                    { color: colors.foreground, marginTop: 10 },
-                  ]}
-                >
-                  {poiStoryLoading && !poiStory
-                    ? t.poiStoryLoading
-                    : (poiStory ?? selectedPoi.wiki?.extract ?? t.notAvailable)}
-                </Text>
-              </Glass>
-            </Pressable>
-          </Pressable>
-        )}
 
-        {/* Detailansicht eines angetippten Partnerbetriebs auf der Karte.
-            Gleiche Strategie: kein Modal, absolut positioniertes Overlay. */}
-        {!!selectedPartner && (
-          <Pressable
-            style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
-            onPress={() => setSelectedPartner(null)}
-          >
-            <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
-              <Glass>
-                <View style={styles.poiRow}>
-                  <Feather name="coffee" size={18} color={colors.accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                      {t.partnerDetailEyebrow}
-                    </Text>
-                    <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                      {selectedPartner.name}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => setSelectedPartner(null)}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel={t.close}
-                  >
-                    <Feather name="x" size={16} color={colors.mutedForeground} />
-                  </Pressable>
-                </View>
-                {selectedPartner.beschreibung && (
-                  <Text
-                    style={[
-                      styles.poiSummary,
-                      { color: colors.foreground, marginTop: 10 },
-                    ]}
-                  >
-                    {selectedPartner.beschreibung}
-                  </Text>
-                )}
-                {selectedPartner.angebot && (
-                  <Pressable
-                    onPress={() => {
-                      if (selectedPartner.id) {
-                        const base = getApiBaseUrl() ?? "";
-                        fetch(`${base}/partners/${selectedPartner.id}/tap`, { method: "POST" }).catch(() => {});
-                      }
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.poiSummary,
-                        { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
-                      ]}
-                    >
-                      {t.partnerOffer}: {selectedPartner.angebot}
-                    </Text>
-                  </Pressable>
-                )}
-              </Glass>
-            </Pressable>
-          </Pressable>
-        )}
 
         {/* Statusleiste in Frozen Glass */}
         <Glass style={{ marginTop: 14 }}>
@@ -2846,6 +2734,116 @@ export default function LiveHike() {
           )}
         </View>
       </ScrollView>
+
+      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
+      {!!selectedPoi && (
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
+          onPress={() => setSelectedPoi(null)}
+        >
+          <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+            <Glass>
+              {selectedPoi.wiki?.image && (
+                <Image
+                  source={{ uri: selectedPoi.wiki.image }}
+                  style={styles.poiModalImage}
+                  resizeMode="cover"
+                />
+              )}
+              <View style={styles.poiRow}>
+                <Feather name="map-pin" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                    {t.poiDetailEyebrow}
+                  </Text>
+                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                    {selectedPoi.name}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setSelectedPoi(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.close}
+                >
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+              <Text
+                style={[
+                  styles.poiSummary,
+                  { color: colors.foreground, marginTop: 10 },
+                ]}
+              >
+                {poiStoryLoading && !poiStory
+                  ? t.poiStoryLoading
+                  : (poiStory ?? selectedPoi.wiki?.extract ?? t.notAvailable)}
+              </Text>
+            </Glass>
+          </Pressable>
+        </Pressable>
+      )}
+
+      {/* Partner-Detail — ebenfalls ausserhalb ScrollView */}
+      {!!selectedPartner && (
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
+          onPress={() => setSelectedPartner(null)}
+        >
+          <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+            <Glass>
+              <View style={styles.poiRow}>
+                <Feather name="coffee" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                    {t.partnerDetailEyebrow}
+                  </Text>
+                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                    {selectedPartner.name}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setSelectedPartner(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.close}
+                >
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+              {selectedPartner.beschreibung && (
+                <Text
+                  style={[
+                    styles.poiSummary,
+                    { color: colors.foreground, marginTop: 10 },
+                  ]}
+                >
+                  {selectedPartner.beschreibung}
+                </Text>
+              )}
+              {selectedPartner.angebot && (
+                <Pressable
+                  onPress={() => {
+                    if (selectedPartner.id) {
+                      const base = getApiBaseUrl() ?? "";
+                      fetch(`${base}/partners/${selectedPartner.id}/tap`, { method: "POST" }).catch(() => {});
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.poiSummary,
+                      { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
+                    ]}
+                  >
+                    {t.partnerOffer}: {selectedPartner.angebot}
+                  </Text>
+                </Pressable>
+              )}
+            </Glass>
+          </Pressable>
+        </Pressable>
+      )}
 
       {/* SOS — bewusst KEIN Glas, immer sichtbar und deckend */}
       <Pressable
