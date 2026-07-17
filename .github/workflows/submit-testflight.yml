@@ -1,0 +1,36 @@
+name: Submit to TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipa_url:
+        description: 'IPA download URL (from expo.dev Builds)'
+        required: true
+        default: 'https://expo.dev/artifacts/eas/-3Y3udsFLD8d5Rt-LMG8djz_uifa7FOIuQhlrsDtQ2A.ipa'
+
+jobs:
+  submit:
+    runs-on: macos-latest
+    steps:
+      - name: Download IPA
+        run: curl -L -o sagatrail.ipa "${{ github.event.inputs.ipa_url }}"
+
+      - name: Install Fastlane
+        run: gem install fastlane --no-document
+
+      - name: Write ASC API Key
+        run: echo "${{ secrets.ASC_API_KEY_P8 }}" > AuthKey.p8
+
+      - name: Submit to TestFlight
+        run: |
+          fastlane pilot upload \
+            --ipa sagatrail.ipa \
+            --api_key_path AuthKey.p8 \
+            --api_key_issuer_id "${{ secrets.ASC_API_KEY_ISSUER_ID }}" \
+            --api_key_id "${{ secrets.ASC_API_KEY_ID }}" \
+            --skip_submission true \
+            --skip_waiting_for_build_processing true
+
+      - name: Cleanup
+        if: always()
+        run: rm -f AuthKey.p8 sagatrail.ipa
