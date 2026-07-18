@@ -47,3 +47,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Gesprächs-Screenshots (kein App-Code)
+attached_assets/
