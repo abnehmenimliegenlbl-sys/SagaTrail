@@ -299,3 +299,9 @@ id = "1Nsm6T5NbHyeLMTNZPQVI"
 uri = "file://sagatrail-wordpress.zip"
 type = "unspecified"
 title = "sagatrail-wordpress.sql (1296 Routen, ZIP)"
+
+[[outputs]]
+id = "Z7lzOIQO9Js5Uxt2y4tTo"
+uri = "file://sagatrail-leads.zip"
+type = "unspecified"
+title = "sagatrail-leads.zip"
