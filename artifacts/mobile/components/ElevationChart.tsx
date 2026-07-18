@@ -130,12 +130,11 @@ export function ElevationChart({
     : 0;
 
   // Farbe der Fläche unter dem Höhenprofil
-  const fillColor = effectiveLevel > 0
-    ? (DANGER_FILL[effectiveLevel] ?? colors.accent)
-    : colors.accent;
+  // Keine Gefahr → grün (Stufe 1), sonst Gefahrenfarbe
+  const fillColor = DANGER_FILL[effectiveLevel > 0 ? effectiveLevel : 1];
 
-  const fillOpacityTop = effectiveLevel > 0 ? "0.50" : "0.28";
-  const fillOpacityBot = effectiveLevel > 0 ? "0.14" : "0.02";
+  const fillOpacityTop = effectiveLevel > 0 ? "0.50" : "0.35";
+  const fillOpacityBot = effectiveLevel > 0 ? "0.14" : "0.06";
 
   const textColor = DANGER_TEXT_COLOR[effectiveLevel] ?? "#b84800";
   const pill  = colors.card;
