@@ -717,7 +717,12 @@ export default function Routenplanung() {
                 <ActivityIndicator size="small" color={colors.accent} />
               </View>
             ) : elevProfile ? (
-              <ElevationChart profile={elevProfile} height={110} />
+              <ElevationChart
+                profile={elevProfile}
+                height={130}
+                dangerLevel={avalanche?.available ? (avalanche.dangerLevel ?? null) : null}
+                snowLineM={2000}
+              />
             ) : null}
           </View>
         )}
