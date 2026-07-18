@@ -598,6 +598,7 @@ router.get("/admin/sagas", async (req, res): Promise<void> => {
         canton: catalogSagasTable.canton,
         title: catalogSagasTable.title,
         summary: catalogSagasTable.summary,
+        bildmotiv: catalogSagasTable.bildmotiv,
         fotoUrl: catalogSagasTable.fotoUrl,
         fotoAttribution: catalogSagasTable.fotoAttribution,
       })

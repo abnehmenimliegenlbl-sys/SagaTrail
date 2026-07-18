@@ -935,7 +935,12 @@ function renderSagen(list) {
           : '<div id="sf-img-' + sid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>'
         ) +
       '</td>' +
-      '<td style="text-align:center">' +
+      '<td style="text-align:center;white-space:nowrap">' +
+        (s.bildmotiv
+          ? '<button class="btn btn-ghost btn-sm" title="Foto automatisch suchen (' + esc(s.bildmotiv) + ')" ' +
+              'onclick="searchSagaFoto(\\'' + s.id + '\\',\\'' + sid + '\\',\\'' + esc(s.bildmotiv).replace(/'/g,"\\\\'") + '\\')" ' +
+              'style="margin-right:4px">&#128269;</button>'
+          : '') +
         '<button id="sf-btn-' + sid + '" class="btn btn-ghost btn-sm" ' +
           'onclick="saveSagaFoto(\\'' + s.id + '\\',\\'' + sid + '\\')" ' +
           'style="opacity:.4" disabled>&#10003;</button>' +
@@ -949,6 +954,29 @@ function renderSagen(list) {
 function sagaFotoChanged(sid) {
   var btn = document.getElementById('sf-btn-' + sid);
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+async function searchSagaFoto(sagaId, sid, bildmotiv) {
+  var stEl = document.getElementById('sf-st-' + sid);
+  if (stEl) { stEl.style.color = 'var(--mid)'; stEl.textContent = '\\u2026'; }
+  try {
+    var res = await fetch('/api/sagas/photo?query=' + encodeURIComponent(bildmotiv) + '&sagaId=' + encodeURIComponent(sagaId));
+    var data = await res.json();
+    if (!data.photoUrl) {
+      if (stEl) { stEl.style.color = 'var(--red)'; stEl.textContent = 'Kein Foto'; }
+      return;
+    }
+    var urlEl = document.getElementById('sf-url-' + sid);
+    if (urlEl) { urlEl.value = data.photoUrl; sagaFotoChanged(sid); }
+    var imgEl = document.getElementById('sf-img-' + sid);
+    if (imgEl) {
+      imgEl.outerHTML = '<img id="sf-img-' + sid + '" src="' + esc(data.photoUrl) + '" ' +
+        'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+        'onerror="this.style.opacity=\\'0.2\\'" />';
+    }
+    if (stEl) { stEl.style.color = 'var(--green)'; stEl.textContent = 'Gefunden'; }
+  } catch(e) {
+    if (stEl) { stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler'; }
+  }
 }
 async function saveSagaFoto(sagaId, sid) {
   var urlEl = document.getElementById('sf-url-' + sid);
