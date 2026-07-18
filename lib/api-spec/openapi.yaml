@@ -1466,6 +1466,13 @@ components:
         conditionLabel:
           type: string
           description: Deutschsprachige Kurzbeschreibung des Wettercodes
+        uvIndex:
+          type: number
+          nullable: true
+          description: UV-Index (Open-Meteo), null wenn nicht verfügbar
+        isThunderstorm:
+          type: boolean
+          description: "true wenn WMO-Code 95/96/99 (Gewitter)"
         trailConditionLevel:
           type: string
           description: "gut | vorsicht | kritisch"

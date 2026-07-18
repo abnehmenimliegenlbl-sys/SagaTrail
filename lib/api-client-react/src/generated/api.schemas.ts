@@ -241,6 +241,10 @@ export interface WeatherReport {
   weatherCode: number;
   /** Deutschsprachige Kurzbeschreibung des Wettercodes */
   conditionLabel: string;
+  /** UV-Index (Open-Meteo), null wenn nicht verfügbar */
+  uvIndex?: number | null;
+  /** true wenn WMO-Code 95/96/99 (Gewitter) */
+  isThunderstorm?: boolean;
   /** gut | vorsicht | kritisch */
   trailConditionLevel: string;
   trailConditionLabel: string;

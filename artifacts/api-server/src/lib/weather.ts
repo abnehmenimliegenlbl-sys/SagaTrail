@@ -20,6 +20,8 @@ export interface WeatherReport {
   snowDepthCm: number;
   weatherCode: number;
   conditionLabel: string;
+  uvIndex: number | null;
+  isThunderstorm: boolean;
   trailConditionLevel: "gut" | "vorsicht" | "kritisch";
   trailConditionLabel: string;
   trailConditionNote: string;
@@ -34,6 +36,7 @@ interface OpenMeteoCurrent {
   precipitation: number;
   snow_depth: number;
   weather_code: number;
+  uv_index?: number;
 }
 
 interface OpenMeteoResponse {
@@ -116,7 +119,7 @@ export async function getWeather(lat: number, lng: number, log: Logger): Promise
   url.searchParams.set("longitude", String(lng));
   url.searchParams.set(
     "current",
-    "temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,snow_depth,weather_code",
+    "temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,snow_depth,weather_code,uv_index",
   );
   url.searchParams.set("timezone", "Europe/Zurich");
 
@@ -158,6 +161,8 @@ export async function getWeather(lat: number, lng: number, log: Logger): Promise
   const precipitationMm = current.precipitation;
   const snowDepthCm = current.snow_depth * 100;
   const weatherCode = current.weather_code;
+  const uvIndex = typeof current.uv_index === "number" ? current.uv_index : null;
+  const isThunderstorm = [95, 96, 99].includes(weatherCode);
 
   const trail = deriveTrailCondition({ temperatureC, windGustsKmh, precipitationMm, snowDepthCm });
 
@@ -169,6 +174,8 @@ export async function getWeather(lat: number, lng: number, log: Logger): Promise
     snowDepthCm,
     weatherCode,
     conditionLabel: conditionLabel(weatherCode),
+    uvIndex,
+    isThunderstorm,
     ...trail,
     source: "Open-Meteo",
     fetchedAt: new Date().toISOString(),

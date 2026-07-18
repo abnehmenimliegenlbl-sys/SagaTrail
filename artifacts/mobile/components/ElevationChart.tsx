@@ -17,6 +17,8 @@ export interface ElevationPoint {
   altM: number;
 }
 
+// ── Gefahrenstufen-Farbpaletten ──────────────────────────────────────────────
+
 const DANGER_COLORS: Record<number, string> = {
   1: "#78C800",
   2: "#FFD000",
@@ -24,31 +26,68 @@ const DANGER_COLORS: Record<number, string> = {
   4: "#FF0000",
   5: "#333333",
 };
-
 const DANGER_LABEL_COLORS: Record<number, string> = {
-  1: "#4a8800",
-  2: "#b08800",
-  3: "#c05000",
+  1: "#3e7000",
+  2: "#9a6c00",
+  3: "#b84800",
   4: "#cc0000",
-  5: "#222222",
+  5: "#111111",
 };
 
-interface Props {
-  profile: ElevationPoint[];
-  height?: number;
-  dangerLevel?: number | null;
-  snowLineM?: number;
+// UV-Index → Hintergrundfarbe (WHO-Palette)
+function uvColor(uv: number): string {
+  if (uv < 3) return "#78C800";   // niedrig – grün
+  if (uv < 6) return "#FFD000";   // moderat – gelb
+  if (uv < 8) return "#FF8000";   // hoch – orange
+  if (uv < 11) return "#FF0000";  // sehr hoch – rot
+  return "#9400D3";                // extrem – violett
+}
+function uvLabel(uv: number): string {
+  if (uv < 3) return "UV niedrig";
+  if (uv < 6) return "UV moderat";
+  if (uv < 8) return "UV hoch";
+  if (uv < 11) return "UV sehr hoch";
+  return "UV extrem";
+}
+function uvLabelColor(uv: number): string {
+  if (uv < 3) return "#3e7000";
+  if (uv < 6) return "#9a6c00";
+  if (uv < 8) return "#b84800";
+  if (uv < 11) return "#aa0000";
+  return "#6a00aa";
 }
 
+// ── Konstanten ───────────────────────────────────────────────────────────────
+
+const UV_BASE_M = 1500;      // ab hier gilt erhöhter UV-Index (Faustregel Alpen)
 const PAD = { top: 18, bottom: 4, left: 0, right: 0 };
 const LABEL_H = 17;
 const LABEL_INSET = 4;
 
+// ── Props ────────────────────────────────────────────────────────────────────
+
+interface Props {
+  profile: ElevationPoint[];
+  height?: number;
+  /** Lawinengefahr 1–5, null = kein Bulletin */
+  dangerLevel?: number | null;
+  /** Schneegrenze in Metern (default 2000) */
+  snowLineM?: number;
+  /** UV-Index aus Wetterdaten (Talstation) */
+  uvIndex?: number | null;
+  /** Gewittergefahr aus WMO-Code */
+  isThunderstorm?: boolean;
+}
+
+// ── Komponente ───────────────────────────────────────────────────────────────
+
 export function ElevationChart({
   profile,
-  height = 130,
+  height = 140,
   dangerLevel,
   snowLineM = 2000,
+  uvIndex,
+  isThunderstorm = false,
 }: Props) {
   const colors = useColors();
   const [svgWidth, setSvgWidth] = useState(0);
@@ -75,15 +114,33 @@ export function ElevationChart({
     `L${toX(0).toFixed(1)},${baseY.toFixed(1)}Z`;
 
   const accent = colors.accent;
+  const pill = colors.card;
 
-  // Danger zone: only shown if route reaches above snow line
+  // ── Lavinen-Band ──────────────────────────────────────────────────────────
   const dColor = dangerLevel ? (DANGER_COLORS[dangerLevel] ?? "#FF8000") : null;
-  const dLabelColor = dangerLevel ? (DANGER_LABEL_COLORS[dangerLevel] ?? "#c05000") : null;
+  const dLabelColor = dangerLevel ? (DANGER_LABEL_COLORS[dangerLevel] ?? "#b84800") : null;
   const showDanger = !!(dColor && maxAlt > snowLineM && snowLineM > minAlt);
   const snowY = showDanger ? toY(snowLineM) : null;
 
-  // Semi-transparent card background for label pills
-  const pill = colors.card;
+  // ── UV-Band ───────────────────────────────────────────────────────────────
+  // Zeige UV-Warnung ab UV_BASE_M wenn UV ≥ 3 und Route reicht bis dort
+  const showUv = !!(uvIndex != null && uvIndex >= 3 && maxAlt > UV_BASE_M);
+  const uvBaseAlt = Math.max(UV_BASE_M, minAlt); // Startpunkt des Bandes
+  const uvY = showUv ? toY(uvBaseAlt) : null;
+  // UV-Band endet oben an der Schneegrenze (wenn Lawinenband aktiv), sonst oben
+  const uvTopY = showUv
+    ? showDanger && snowY !== null
+      ? snowY  // UV-Band bis zur Schneegrenze, darüber Lawinen-Band
+      : PAD.top
+    : null;
+  const uvBandH =
+    uvY !== null && uvTopY !== null ? uvY - uvTopY : null;
+
+  const uvc = uvIndex != null ? uvColor(uvIndex) : null;
+  const uvlc = uvIndex != null ? uvLabelColor(uvIndex) : null;
+
+  // ── Gewitter-Streifen ─────────────────────────────────────────────────────
+  const THUNDER_H = 14;
 
   return (
     <View
@@ -97,15 +154,46 @@ export function ElevationChart({
               <Stop offset="0" stopColor={accent} stopOpacity="0.28" />
               <Stop offset="1" stopColor={accent} stopOpacity="0.02" />
             </LinearGradient>
+
             {showDanger && (
               <LinearGradient id="dangerGrad" x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={dColor!} stopOpacity="0.22" />
                 <Stop offset="1" stopColor={dColor!} stopOpacity="0.06" />
               </LinearGradient>
             )}
+
+            {showUv && (
+              <LinearGradient id="uvGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={uvc!} stopOpacity="0.18" />
+                <Stop offset="1" stopColor={uvc!} stopOpacity="0.04" />
+              </LinearGradient>
+            )}
           </Defs>
 
-          {/* ── Gefahren-Band (oberhalb Schneegrenze) ─────────────── */}
+          {/* ── Gewitter-Streifen (ganz oben) ──────────────────────────── */}
+          {isThunderstorm && (
+            <Rect
+              x="0"
+              y={PAD.top.toFixed(1)}
+              width={svgWidth}
+              height={THUNDER_H}
+              fill="#FF4400"
+              fillOpacity="0.18"
+            />
+          )}
+
+          {/* ── UV-Band ─────────────────────────────────────────────────── */}
+          {showUv && uvTopY !== null && uvBandH !== null && uvBandH > 2 && (
+            <Rect
+              x="0"
+              y={uvTopY.toFixed(1)}
+              width={svgWidth}
+              height={uvBandH.toFixed(1)}
+              fill="url(#uvGrad)"
+            />
+          )}
+
+          {/* ── Lavinen-Band (oberhalb Schneegrenze) ───────────────────── */}
           {showDanger && snowY !== null && (
             <Rect
               x="0"
@@ -116,10 +204,10 @@ export function ElevationChart({
             />
           )}
 
-          {/* ── Fläche unter dem Profil ────────────────────────── */}
+          {/* ── Fläche unter dem Profil ────────────────────────────────── */}
           <Path d={areaPath} fill="url(#elevGrad)" />
 
-          {/* ── Profilkurve ──────────────────────────────────────── */}
+          {/* ── Profilkurve ─────────────────────────────────────────────── */}
           <Path
             d={linePath}
             stroke={accent}
@@ -129,7 +217,21 @@ export function ElevationChart({
             strokeLinejoin="round"
           />
 
-          {/* ── Schneegrenz-Linie ─────────────────────────────────── */}
+          {/* ── UV-Basislinie ────────────────────────────────────────────── */}
+          {showUv && uvY !== null && (
+            <Line
+              x1="0"
+              y1={uvY.toFixed(1)}
+              x2={svgWidth.toString()}
+              y2={uvY.toFixed(1)}
+              stroke={uvc!}
+              strokeWidth="1"
+              strokeDasharray="4,3"
+              strokeOpacity="0.55"
+            />
+          )}
+
+          {/* ── Schneegrenz-Linie ────────────────────────────────────────── */}
           {showDanger && snowY !== null && (
             <Line
               x1="0"
@@ -143,7 +245,7 @@ export function ElevationChart({
             />
           )}
 
-          {/* ── Basislinie ────────────────────────────────────────── */}
+          {/* ── Basislinie ───────────────────────────────────────────────── */}
           <Line
             x1="0"
             y1={baseY.toFixed(1)}
@@ -153,7 +255,7 @@ export function ElevationChart({
             strokeWidth="1"
           />
 
-          {/* ── Max-Höhe Label (oben rechts) ─────────────────────── */}
+          {/* ── Max-Höhe Label (oben rechts) ─────────────────────────────── */}
           <Rect
             x={(svgWidth - 56).toFixed(1)}
             y={(PAD.top - 1).toFixed(1)}
@@ -173,7 +275,7 @@ export function ElevationChart({
             {maxAlt} m
           </SvgText>
 
-          {/* ── Min-Höhe Label (unten rechts, oberhalb Basislinie) ── */}
+          {/* ── Min-Höhe Label (unten rechts, über Basislinie) ───────────── */}
           <Rect
             x={(svgWidth - 56).toFixed(1)}
             y={(baseY - LABEL_H - 1).toFixed(1)}
@@ -193,13 +295,37 @@ export function ElevationChart({
             {minAlt} m
           </SvgText>
 
-          {/* ── Schneegrenz-Label (rechts neben Linie) ────────────── */}
+          {/* ── UV-Label ────────────────────────────────────────────────── */}
+          {showUv && uvY !== null && uvIndex != null && (
+            <>
+              <Rect
+                x={(svgWidth - 100).toFixed(1)}
+                y={(uvY - LABEL_H - 2).toFixed(1)}
+                width="100"
+                height={LABEL_H}
+                fill={pill}
+                fillOpacity="0.90"
+                rx="4"
+              />
+              <SvgText
+                x={(svgWidth - LABEL_INSET).toFixed(1)}
+                y={(uvY - 6).toFixed(1)}
+                fontSize="10"
+                fill={uvlc!}
+                textAnchor="end"
+              >
+                {uvBaseAlt} m · {uvLabel(uvIndex)} {uvIndex.toFixed(0)}
+              </SvgText>
+            </>
+          )}
+
+          {/* ── Schneegrenz-Label ────────────────────────────────────────── */}
           {showDanger && snowY !== null && (
             <>
               <Rect
-                x={(svgWidth - 80).toFixed(1)}
+                x={(svgWidth - 90).toFixed(1)}
                 y={(snowY - LABEL_H - 2).toFixed(1)}
-                width="80"
+                width="90"
                 height={LABEL_H}
                 fill={pill}
                 fillOpacity="0.90"
@@ -216,10 +342,34 @@ export function ElevationChart({
               </SvgText>
             </>
           )}
+
+          {/* ── Gewitter-Label (oben links) ──────────────────────────────── */}
+          {isThunderstorm && (
+            <>
+              <Rect
+                x="4"
+                y={(PAD.top + 1).toFixed(1)}
+                width="100"
+                height={LABEL_H - 2}
+                fill={pill}
+                fillOpacity="0.88"
+                rx="4"
+              />
+              <SvgText
+                x="8"
+                y={(PAD.top + LABEL_H - 7).toFixed(1)}
+                fontSize="10"
+                fill="#cc3300"
+                textAnchor="start"
+              >
+                ⚡ Gewittergefahr
+              </SvgText>
+            </>
+          )}
         </Svg>
       )}
 
-      {/* ── X-Achse ────────────────────────────────────────────────── */}
+      {/* ── X-Achse ─────────────────────────────────────────────────────────── */}
       <View style={styles.xLabels}>
         <Text style={[styles.xLabel, { color: colors.mutedForeground }]}>0 km</Text>
         <Text style={[styles.xLabel, { color: colors.mutedForeground }]}>

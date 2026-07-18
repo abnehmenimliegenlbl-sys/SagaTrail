@@ -327,6 +327,8 @@ export const GetWeatherResponse = zod.object({
   "snowDepthCm": zod.number(),
   "weatherCode": zod.number().describe('WMO-Wettercode von Open-Meteo'),
   "conditionLabel": zod.string().describe('Deutschsprachige Kurzbeschreibung des Wettercodes'),
+  "uvIndex": zod.number().nullish().describe('UV-Index (Open-Meteo), null wenn nicht verfügbar'),
+  "isThunderstorm": zod.boolean().optional().describe('true wenn WMO-Code 95\/96\/99 (Gewitter)'),
   "trailConditionLevel": zod.string().describe('gut | vorsicht | kritisch'),
   "trailConditionLabel": zod.string(),
   "trailConditionNote": zod.string(),

@@ -719,9 +719,11 @@ export default function Routenplanung() {
             ) : elevProfile ? (
               <ElevationChart
                 profile={elevProfile}
-                height={130}
+                height={140}
                 dangerLevel={avalanche?.available ? (avalanche.dangerLevel ?? null) : null}
                 snowLineM={2000}
+                uvIndex={weather?.uvIndex ?? null}
+                isThunderstorm={weather?.isThunderstorm ?? false}
               />
             ) : null}
           </View>
