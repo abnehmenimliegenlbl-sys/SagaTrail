@@ -1,0 +1,135 @@
+// SagaTrail – Google Places Enrichment
+// WP Crontrol → PHP-Cron-Event hinzufügen
+// Hook-Name:  sagatrail_google_enrich
+// Intervall:  15 Minuten
+// Laufzeit:   ~22 Stunden für alle Leads (je nach Trefferquote)
+//
+// SETUP: Google Places API Key als WP-Option speichern (einmalig):
+//   WP Admin → Tools → Cron Events → Run Now für diesen Hook –
+//   oder direkt in phpMyAdmin ausführen:
+//   INSERT INTO wp_options (option_name, option_value)
+//   VALUES ('sagatrail_google_key', 'DEIN-API-KEY')
+//   ON DUPLICATE KEY UPDATE option_value = 'DEIN-API-KEY';
+
+global $wpdb;
+
+// ============================================================
+// KONFIGURATION
+// ============================================================
+$API_KEY = get_option('sagatrail_google_key', '');
+$BATCH   = 20;   // Leads pro Aufruf (Places-API ist schnell)
+$PAUSE   = 1;    // 1s Pause – unter dem Free-Tier-Limit (100 req/s)
+
+if (empty($API_KEY)) {
+    error_log('[SagaTrail Google] Kein API-Key gefunden. Bitte sagatrail_google_key als WP-Option setzen.');
+    return;
+}
+
+// ============================================================
+// TABELLE VORBEREIREN (google_checked Spalte einmalig anlegen)
+// ============================================================
+$wpdb->query("
+    ALTER TABLE sagatrail_partner_leads
+    ADD COLUMN IF NOT EXISTS google_checked TINYINT(1) NOT NULL DEFAULT 0
+");
+
+// ============================================================
+// FORTSCHRITT
+// ============================================================
+$gesamt   = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_partner_leads");
+$erledigt = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_partner_leads WHERE google_checked = 1");
+$offen    = $gesamt - $erledigt;
+
+error_log("[SagaTrail Google] Batch start: {$erledigt}/{$gesamt} enriched, {$offen} offen");
+
+if ($offen <= 0) {
+    wp_clear_scheduled_hook('sagatrail_google_enrich');
+    error_log('[SagaTrail Google] Alle Leads enriched. Cron-Job deaktiviert.');
+    return;
+}
+
+// ============================================================
+// NÄCHSTE LEADS LADEN
+// ============================================================
+$leads = $wpdb->get_results($wpdb->prepare("
+    SELECT id, name, kanton, lat, lng, telefon, website, tier
+    FROM sagatrail_partner_leads
+    WHERE google_checked = 0
+    ORDER BY id
+    LIMIT %d
+", $BATCH), ARRAY_A);
+
+foreach ($leads as $lead) {
+    $found = st_google_find($lead, $API_KEY);
+
+    $update = ['google_checked' => 1];
+
+    // Nur fehlende Felder ergänzen – vorhandene OSM-Daten nicht überschreiben
+    if (empty($lead['telefon']) && !empty($found['phone'])) {
+        $update['telefon'] = $found['phone'];
+    }
+    if (empty($lead['website']) && !empty($found['website'])) {
+        $update['website'] = $found['website'];
+    }
+
+    // Tier setzen: Top bleibt unangetastet (OSM-Email vorhanden).
+    // Für alle anderen: Mid wenn Website bekannt (OSM oder Places), sonst Low.
+    if ($lead['tier'] !== 'Top') {
+        $hat_website = !empty($lead['website']) || !empty($found['website']);
+        $update['tier'] = $hat_website ? 'Mid' : 'Low';
+    }
+
+    $neu = count($update) - 1; // minus google_checked selbst
+    $wpdb->update('sagatrail_partner_leads', $update, ['id' => $lead['id']]);
+
+    error_log("[SagaTrail Google] #{$lead['id']} {$lead['name']}: tier={$update['tier']}, {$neu} Felder ergänzt");
+    sleep($PAUSE);
+}
+
+error_log('[SagaTrail Google] Batch fertig');
+
+
+// ============================================================
+// GOOGLE PLACES HILFSFUNKTION
+// ============================================================
+function st_google_find(array $lead, string $key): array {
+    // Schritt 1: Find Place (Name + Koordinaten → place_id)
+    $url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?' . http_build_query([
+        'input'        => $lead['name'],
+        'inputtype'    => 'textquery',
+        'locationbias' => "point:{$lead['lat']},{$lead['lng']}",
+        'fields'       => 'place_id',
+        'key'          => $key,
+    ]);
+
+    $raw = @file_get_contents($url, false, stream_context_create([
+        'http' => ['timeout' => 10, 'method' => 'GET']
+    ]));
+
+    if (!$raw) return [];
+
+    $data     = json_decode($raw, true);
+    $place_id = $data['candidates'][0]['place_id'] ?? null;
+
+    if (!$place_id) return [];
+
+    // Schritt 2: Place Details (phone, website)
+    $url2 = 'https://maps.googleapis.com/maps/api/place/details/json?' . http_build_query([
+        'place_id' => $place_id,
+        'fields'   => 'formatted_phone_number,website',
+        'key'      => $key,
+    ]);
+
+    $raw2 = @file_get_contents($url2, false, stream_context_create([
+        'http' => ['timeout' => 10, 'method' => 'GET']
+    ]));
+
+    if (!$raw2) return [];
+
+    $detail = json_decode($raw2, true)['result'] ?? [];
+
+    return [
+        'phone'   => $detail['formatted_phone_number'] ?? null,
+        'website' => $detail['website'] ?? null,
+    ];
+}
