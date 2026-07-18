@@ -54,6 +54,11 @@ export default function SignInScreen() {
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 24;
 
+  const isRateLimit = (err: any) =>
+    err?.status === 429 ||
+    /too.many.requests/i.test(err?.errors?.[0]?.message ?? "") ||
+    /too.many.requests/i.test(err?.message ?? "");
+
   const onSignInPress = async () => {
     if (!isLoaded) return;
     setError(null);
@@ -84,7 +89,7 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       setError(
-        err?.errors?.[0]?.message ?? t.errorSignInFailed
+        isRateLimit(err) ? t.errorRateLimit : (err?.errors?.[0]?.message ?? t.errorSignInFailed)
       );
     } finally {
       setLoading(false);

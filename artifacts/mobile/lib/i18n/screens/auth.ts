@@ -29,6 +29,7 @@ export interface AuthStrings {
   errorCodeInvalid: string;
   errorGoogleFailed: string;
   errorAppleFailed: string;
+  errorRateLimit: string;
 }
 
 const AUTH_STRINGS: StringsDict<AuthStrings> = {
@@ -61,6 +62,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Code ungültig. Bitte prüfen.",
     errorGoogleFailed: "Google-Anmeldung fehlgeschlagen.",
     errorAppleFailed: "Apple-Anmeldung fehlgeschlagen.",
+    errorRateLimit: "Zu viele Versuche. Bitte warte einige Minuten und versuche es erneut.",
   },
   gsw: {
     signInTitle: "Willkomme zrugg",
@@ -91,6 +93,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Code ungültig. Bitte checke.",
     errorGoogleFailed: "Google-Amäldig fehlgschlage.",
     errorAppleFailed: "Apple-Amäldig fehlgschlage.",
+    errorRateLimit: "Zu vili Versueche. Bitte wart es paar Minute und versuech's nomol.",
   },
   en: {
     signInTitle: "Welcome back",
@@ -121,6 +124,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Invalid code. Please check.",
     errorGoogleFailed: "Google sign-in failed.",
     errorAppleFailed: "Apple sign-in failed.",
+    errorRateLimit: "Too many attempts. Please wait a few minutes and try again.",
   },
   fr: {
     signInTitle: "Bon retour",
@@ -151,6 +155,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Code invalide. Veuillez vérifier.",
     errorGoogleFailed: "Échec de la connexion Google.",
     errorAppleFailed: "Échec de la connexion Apple.",
+    errorRateLimit: "Trop de tentatives. Merci de patienter quelques minutes avant de réessayer.",
   },
   it: {
     signInTitle: "Bentornato",
@@ -181,6 +186,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Codice non valido. Controlla.",
     errorGoogleFailed: "Accesso con Google non riuscito.",
     errorAppleFailed: "Accesso con Apple non riuscito.",
+    errorRateLimit: "Troppi tentativi. Attendi qualche minuto e riprova.",
   },
   es: {
     signInTitle: "Bienvenido de nuevo",
@@ -211,6 +217,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Código inválido. Verifica.",
     errorGoogleFailed: "Error al iniciar sesión con Google.",
     errorAppleFailed: "Error al iniciar sesión con Apple.",
+    errorRateLimit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
   },
   pt: {
     signInTitle: "Bem-vindo de volta",
@@ -241,6 +248,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Código inválido. Verifique.",
     errorGoogleFailed: "Falha no login com o Google.",
     errorAppleFailed: "Falha no login com a Apple.",
+    errorRateLimit: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
   },
   zh: {
     signInTitle: "欢迎回来",
@@ -271,6 +279,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "验证码无效，请检查。",
     errorGoogleFailed: "Google 登录失败。",
     errorAppleFailed: "Apple 登录失败。",
+    errorRateLimit: "尝试次数过多，请等待几分钟后重试。",
   },
   ru: {
     signInTitle: "С возвращением",
@@ -301,6 +310,7 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorCodeInvalid: "Неверный код. Проверьте.",
     errorGoogleFailed: "Вход через Google не удался.",
     errorAppleFailed: "Вход через Apple не удался.",
+    errorRateLimit: "Слишком много попыток. Подожди несколько минут и попробуй снова.",
   },
 };
 
