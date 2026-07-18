@@ -129,13 +129,6 @@ export function ElevationChart({
     ? Math.min(6, Math.max(...hazards.map((h) => h.level)))
     : 0;
 
-  // Farbe der Fläche unter dem Höhenprofil
-  // Keine Gefahr → grün (Stufe 1), sonst Gefahrenfarbe
-  const fillColor = DANGER_FILL[effectiveLevel > 0 ? effectiveLevel : 1];
-
-  const fillOpacityTop = effectiveLevel > 0 ? "0.50" : "0.35";
-  const fillOpacityBot = effectiveLevel > 0 ? "0.14" : "0.06";
-
   const textColor = DANGER_TEXT_COLOR[effectiveLevel] ?? "#b84800";
   const pill  = colors.card;
   const accent = colors.accent;
@@ -145,6 +138,22 @@ export function ElevationChart({
     .sort((a, b) => b.level - a.level)
     .filter((h, i, arr) => arr.findIndex((x) => x.icon === h.icon) === i);
 
+  // Mehrstufiger Gradient: grün (unten/sicher) → höchste Gefahrenstufe (oben/Gipfel)
+  // offset=0 entspricht dem oberen SVG-Rand (Gipfel), offset=1 dem unteren (Tal).
+  const level = effectiveLevel > 0 ? effectiveLevel : 1;
+  const gradStops: { offset: string; color: string; opacity: string }[] = [];
+  if (level === 1) {
+    gradStops.push({ offset: "0", color: DANGER_FILL[1], opacity: "0.40" });
+    gradStops.push({ offset: "1", color: DANGER_FILL[1], opacity: "0.06" });
+  } else {
+    for (let l = level; l >= 1; l--) {
+      const t = (level - l) / (level - 1);             // 0 am Gipfel, 1 im Tal
+      const offset = t.toFixed(2);
+      const opacity = (0.55 - t * 0.49).toFixed(2);   // 0.55 oben → 0.06 unten
+      gradStops.push({ offset, color: DANGER_FILL[l], opacity });
+    }
+  }
+
   return (
     <View
       onLayout={(e) => setSvgWidth(e.nativeEvent.layout.width)}
@@ -153,10 +162,16 @@ export function ElevationChart({
       {svgWidth > 0 && (
         <Svg width={svgWidth} height={height}>
           <Defs>
-            {/* Farbgradient der Fläche – von Gefahrenfarbe oben zu transparent unten */}
+            {/* Mehrstufiger Farbgradient: Stufe 1 (grün) im Tal → höchste Stufe am Gipfel */}
             <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0"   stopColor={fillColor} stopOpacity={fillOpacityTop} />
-              <Stop offset="1"   stopColor={fillColor} stopOpacity={fillOpacityBot} />
+              {gradStops.map((s) => (
+                <Stop
+                  key={s.offset}
+                  offset={s.offset}
+                  stopColor={s.color}
+                  stopOpacity={s.opacity}
+                />
+              ))}
             </LinearGradient>
           </Defs>
 
@@ -239,8 +254,8 @@ export function ElevationChart({
           style={[
             styles.dangerBadge,
             {
-              backgroundColor: fillColor + "22",
-              borderColor: fillColor + "66",
+              backgroundColor: gradStops[0].color + "22",
+              borderColor: gradStops[0].color + "66",
             },
           ]}
         >
