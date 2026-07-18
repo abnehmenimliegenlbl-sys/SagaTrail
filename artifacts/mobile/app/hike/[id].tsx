@@ -1819,7 +1819,7 @@ export default function LiveHike() {
     if (walkToStartAnnouncedRef.current) return;
     if (preparing || locState !== "granted") return;
     walkToStartAnnouncedRef.current = true;
-    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useDevice: true });
+    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useOpenAI: true });
   }, [walkToStart, preparing, locState, speak, t]);
 
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
