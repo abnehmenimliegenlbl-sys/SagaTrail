@@ -923,20 +923,20 @@ function renderSagen(list) {
       '<td>' +
         '<input id="sf-url-' + sid + '" type="url" value="' + esc(s.fotoUrl||'') + '" ' +
           'style="width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:monospace" ' +
-          'oninput="sagaFotoChanged(\'' + sid + '\')" ' +
-          'onkeydown="if(event.key===\'Enter\')saveSagaFoto(\'' + s.id + '\',\'' + sid + '\')" />' +
+          'oninput="sagaFotoChanged(\\'' + sid + '\\')" ' +
+          'onkeydown="if(event.key===\\'Enter\\')saveSagaFoto(\\'' + s.id + '\\',\\'' + sid + '\\')" />' +
       '</td>' +
       '<td style="text-align:center">' +
         (s.fotoUrl
           ? '<img id="sf-img-' + sid + '" src="' + esc(s.fotoUrl) + '" ' +
             'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
-            'onerror="this.style.opacity=\'0.2\'" />'
+            'onerror="this.style.opacity=\\'0.2\\'" />'
           : '<div id="sf-img-' + sid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>'
         ) +
       '</td>' +
       '<td style="text-align:center">' +
         '<button id="sf-btn-' + sid + '" class="btn btn-ghost btn-sm" ' +
-          'onclick="saveSagaFoto(\'' + s.id + '\',\'' + sid + '\')" ' +
+          'onclick="saveSagaFoto(\\'' + s.id + '\\',\\'' + sid + '\\')" ' +
           'style="opacity:.4" disabled>&#10003;</button>' +
         '<div id="sf-st-' + sid + '" style="font-size:10px;color:var(--mid);margin-top:2px"></div>' +
       '</td>' +
@@ -969,7 +969,7 @@ async function saveSagaFoto(sagaId, sid) {
       if (url) {
         imgEl.outerHTML = '<img id="sf-img-' + sid + '" src="' + esc(url) + '" ' +
           'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
-          'onerror="this.style.opacity=\'0.2\'" />';
+          'onerror="this.style.opacity=\\'0.2\\'" />';
       } else {
         imgEl.outerHTML = '<div id="sf-img-' + sid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>';
       }
