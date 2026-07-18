@@ -11,8 +11,8 @@ import type { Logger } from "pino";
 
 const COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php";
 const REQUEST_TIMEOUT_MS = 20000;
-const SUCH_RADIUS_M = 3000;
-const MAX_KANDIDATEN = 20;
+const SUCH_RADIUS_M = 5000;
+const MAX_KANDIDATEN = 30;
 const THUMB_BREITE_PX = 800;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h — Fotos aendern sich kaum
 const NEGATIV_TTL_MS = 30 * 60 * 1000; // 30 min bei echtem "nichts gefunden"
@@ -110,37 +110,28 @@ function htmlZuText(roh: string | undefined): string | null {
   return text.length > 0 ? text : null;
 }
 
-/** Offensichtlich ungeeignete Dateien (Karten, Wappen, Diagramme) aussieben. */
+/** Offensichtlich ungeeignete Dateien (Karten, Wappen, Infrastruktur, Innenräume) aussieben. */
 function wirktWieFoto(titel: string): boolean {
   const klein = titel.toLowerCase();
   if (!/\.(jpe?g)$/.test(klein)) return false;
   const verboten = [
-    "map",
-    "karte",
-    "wappen",
-    "coat_of_arms",
-    "logo",
-    "diagram",
-    "plan_",
-    "timetable",
-    "fahrplan",
-    "schild",
-    "sign",
-    "tafel",
-    "plaque",
-    "interior",
-    "innen",
-    "bahnhof",
-    "station",
-    "parkplatz",
-    "parking",
-    "lok",
-    "train",
-    "zug_",
-    "railcar",
-    "tram",
-    "bus_",
-    "wagen",
+    // Kartographie & Symbole
+    "map", "karte", "wappen", "coat_of_arms", "logo", "diagram", "plan_",
+    "schema", "chart", "infographic",
+    // Infrastruktur & Verkehr
+    "timetable", "fahrplan", "bahnhof", "station", "parkplatz", "parking",
+    "lok", "train", "zug_", "railcar", "tram", "bus_", "wagen", "bahn_",
+    "strassenbahnhaltestelle", "haltestelle", "autobahn",
+    // Schilder & Tafeln
+    "schild", "sign", "tafel", "plaque", "wegweiser", "hinweistafel",
+    // Innenräume & Gebäude-Details
+    "interior", "innen", "inside", "altar", "kanzel", "decke_",
+    "ceiling", "fenster_", "window_", "tuer_", "door_",
+    // Portraits & Personenfotos
+    "portrait", "porträt", "person_", "people_", "crowd_",
+    // Dokumente & Objekte
+    "document", "urkunde", "münze", "coin_", "stamp_", "briefmarke",
+    "book_", "buch_",
   ];
   return !verboten.some((wort) => klein.includes(wort));
 }
@@ -242,45 +233,52 @@ async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[
 }
 
 /**
- * Hinweise im Dateititel, dass ein Foto Landschaft/Ort statt Objekt zeigt.
+ * Hinweise im Dateititel, dass ein Foto Natur/Landschaft/Wandergebiet zeigt.
  * Rein heuristisch — Commons-Titel sind frei vergeben.
  */
 const LANDSCHAFTS_HINWEISE = [
-  "panorama",
-  "view",
-  "aussicht",
-  "blick",
-  "landschaft",
-  "landscape",
-  "tal",
-  "valley",
-  "berg",
-  "mountain",
-  "alp",
-  "see",
-  "lake",
-  "wasserfall",
-  "fall",
-  "gletscher",
-  "glacier",
-  "pass",
-  "schlucht",
-  "gorge",
-  "bruecke",
-  "brücke",
-  "bridge",
-  "dorf",
-  "village",
-  "switzerland",
-  "schweiz",
+  // Aussicht & Panorama
+  "panorama", "view", "aussicht", "blick", "rundblick", "fernblick",
+  // Landschaft allgemein
+  "landschaft", "landscape", "natur", "nature", "scenery",
+  // Gelaende & Topographie
+  "tal", "valley", "berg", "mountain", "gipfel", "peak", "summit",
+  "alp", "alpe", "alpen", "alps", "hochalp", "voralp",
+  "pass", "sattel", "col_", "joch",
+  "schlucht", "gorge", "klamm", "tobel", "graben",
+  "hügel", "hugel", "kuppe",
+  // Wasser
+  "see", "lake", "fluss", "river", "bach", "stream",
+  "wasserfall", "waterfall", "fall_", "falls_",
+  "gletscher", "glacier",
+  "moor", "ried", "sumpf",
+  // Vegetation & Gelände
+  "wald", "forest", "wood_", "woods",
+  "wiese", "meadow", "weide", "alm",
+  "feld", "field", "grain",
+  "weinberg", "vineyard",
+  // Wanderwege & Infrastruktur (draussen)
+  "wanderweg", "trail", "pfad", "path_", "weg_",
+  "bruecke", "brücke", "bridge",
+  "dorf", "village", "weiler",
+  // Geo-Referenz Schweiz
+  "switzerland", "schweiz", "svizzera", "suisse",
+  "appenzell", "graubünden", "graubuenden", "tessin", "wallis", "bern", "luzern",
 ];
 
 function landschaftsBonus(titel: string): number {
   const klein = titel.toLowerCase();
-  return LANDSCHAFTS_HINWEISE.some((wort) => klein.includes(wort)) ? 1 : 0;
+  const treffer = LANDSCHAFTS_HINWEISE.filter((wort) => klein.includes(wort)).length;
+  // 0 = kein Hinweis, 1 = ein Hinweis, 2 = mehrere Hinweise (stärkeres Signal)
+  return Math.min(treffer, 2);
 }
 
-function wähleFoto(seiten: CommonsPage[], jetzt: Date): RoutePhoto | null {
+/**
+ * Wählt das beste Foto aus den Geo-Suchergebnissen.
+ * Gibt null zurück wenn kein Ergebnis mit Landschafts-Hinweis gefunden wird —
+ * signalisiert dem Aufrufer, dass er eine Textsuche als Fallback starten soll.
+ */
+function wähleFoto(seiten: CommonsPage[], jetzt: Date, erlaubeOhneLandschaft = false): RoutePhoto | null {
   const zielJahreszeit = jahreszeitVonMonat(jetzt.getMonth() + 1);
   const kandidaten = seiten
     .filter((s) => s.title && wirktWieFoto(s.title) && s.imageinfo?.[0]?.thumburl)
@@ -298,15 +296,22 @@ function wähleFoto(seiten: CommonsPage[], jetzt: Date): RoutePhoto | null {
     })
     .filter((k) => k.url != null);
   if (kandidaten.length === 0) return null;
-  // Reihung: erst Landschafts-Hinweis im Titel, dann Saisonpassung, dann die
-  // urspruengliche Geosuche-Reihung (naechstgelegen zuerst).
-  kandidaten.sort(
+
+  // Strenge Auswahl: nur Kandidaten mit Landschafts-Hinweis im Titel.
+  // Wenn keine solchen vorhanden und erlaubeOhneLandschaft=false → null zurück
+  // (Aufrufer macht Fallback-Textsuche mit Routenname).
+  const mitLandschaft = kandidaten.filter((k) => k.landschaft > 0);
+  const pool = mitLandschaft.length > 0 ? mitLandschaft : (erlaubeOhneLandschaft ? kandidaten : []);
+  if (pool.length === 0) return null;
+
+  // Reihung: mehr Landschafts-Hinweise > Saisonpassung > näher am Startpunkt
+  pool.sort(
     (a, b) =>
       b.landschaft - a.landschaft ||
       Number(b.passtZurSaison) - Number(a.passtZurSaison) ||
       a.index - b.index,
   );
-  const gewaehlt = kandidaten[0]!;
+  const gewaehlt = pool[0]!;
   const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
     .filter((teil): teil is string => teil != null)
     .join(" · ");
@@ -358,10 +363,23 @@ export async function getCachedSagaPhoto(query: string, log: Logger): Promise<Ro
   }
 }
 
+/**
+ * Laedt ein repraesentatives Foto fuer eine Wanderroute.
+ *
+ * Zwei-Phasen-Suche:
+ * 1. Geosuche (5 km Radius) — nur Treffer mit Landschafts-Hinweis im Titel.
+ * 2. Falls Phase 1 leer: Textsuche mit dem Routennamen (+ "Wanderweg"),
+ *    damit Routen mit bekanntem Namen ein thematisch passendes Foto bekommen.
+ * 3. Letzter Fallback: Geo-Ergebnis ohne Landschafts-Anforderung nehmen,
+ *    sofern ueberhaupt etwas vorhanden ist.
+ *
+ * Der optionale `routeName`-Parameter aktiviert Phase 2.
+ */
 export async function getCachedRoutePhoto(
   lat: number,
   lng: number,
   log: Logger,
+  routeName?: string,
 ): Promise<RoutePhoto> {
   // Rasterung auf ~100 m, damit nahe Startpunkte denselben Cache-Schluessel teilen
   const schluessel = `${lat.toFixed(3)}|${lng.toFixed(3)}`;
@@ -369,16 +387,39 @@ export async function getCachedRoutePhoto(
   const vorhanden = cache.get(schluessel);
   if (vorhanden && vorhanden.bisMs > jetztMs) return vorhanden.wert;
   try {
-    const seiten = await sucheCommonsFotos(lat, lng);
-    const foto = wähleFoto(seiten, new Date());
-    const wert: RoutePhoto = foto ?? { photoUrl: null, attribution: null };
+    const jetzt = new Date();
+
+    // Phase 1: Geosuche — streng (nur mit Landschafts-Hinweis)
+    const geoSeiten = await sucheCommonsFotos(lat, lng);
+    const geoFoto = wähleFoto(geoSeiten, jetzt, false);
+    if (geoFoto) {
+      cache.set(schluessel, { wert: geoFoto, bisMs: jetztMs + CACHE_TTL_MS });
+      return geoFoto;
+    }
+
+    // Phase 2: Textsuche mit Routenname (wenn verfügbar)
+    if (routeName) {
+      const suchbegriff = routeName.length > 30
+        ? routeName.split(/[·\-–]/)[0]!.trim()
+        : routeName;
+      const textSeiten = await sucheCommonsFotosNachText(`${suchbegriff} Wanderweg`);
+      const textFoto = wähleTextFoto(textSeiten);
+      if (textFoto) {
+        cache.set(schluessel, { wert: textFoto, bisMs: jetztMs + CACHE_TTL_MS });
+        return textFoto;
+      }
+    }
+
+    // Phase 3: Geo-Ergebnis ohne Landschafts-Anforderung (letzter Fallback)
+    const fallbackFoto = wähleFoto(geoSeiten, jetzt, true);
+    const wert: RoutePhoto = fallbackFoto ?? { photoUrl: null, attribution: null };
     cache.set(schluessel, {
       wert,
-      bisMs: jetztMs + (foto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
+      bisMs: jetztMs + (fallbackFoto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
     });
     return wert;
   } catch (err) {
-    log.warn({ lat, lng, err }, "Commons-Routenfoto konnte nicht geladen werden");
+    log.warn({ lat, lng, routeName, err }, "Commons-Routenfoto konnte nicht geladen werden");
     const wert: RoutePhoto = { photoUrl: null, attribution: null };
     cache.set(schluessel, { wert, bisMs: jetztMs + FEHLER_TTL_MS });
     return wert;

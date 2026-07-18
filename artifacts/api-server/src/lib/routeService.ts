@@ -513,7 +513,9 @@ async function enrichAndStore(
       (p: LatLng) => [p.lat, p.lng],
     );
     // Repräsentatives Foto vom Startpunkt der Route (Wikimedia Commons, gedrosselt).
-    const photo = await getCachedRoutePhoto(start.lat, start.lng, log);
+    // Routenname mitgeben → aktiviert Textsuche als Fallback wenn Geosuche kein
+    // Landschaftsfoto findet.
+    const photo = await getCachedRoutePhoto(start.lat, start.lng, log, r.name);
     return {
       id: r.id,
       sagaId: r.id,

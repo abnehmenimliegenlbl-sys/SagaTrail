@@ -19,7 +19,8 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
   }
   const { lat, lng } = parsed.data;
   const routeId = typeof req.query.routeId === "string" ? req.query.routeId : null;
-  const foto = await getCachedRoutePhoto(lat, lng, req.log);
+  const routeName = typeof req.query.routeName === "string" ? req.query.routeName : undefined;
+  const foto = await getCachedRoutePhoto(lat, lng, req.log, routeName);
 
   // Foto in DB persistieren, damit es beim naechsten Laden der Route direkt
   // mitgeliefert wird (kein separater Request mehr noetig).

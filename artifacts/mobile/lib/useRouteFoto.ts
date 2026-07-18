@@ -48,9 +48,10 @@ async function ladeFoto(route: HikingRoute): Promise<GecachtesFoto> {
   const anfrage = getRoutePhoto({
     lat: route.coordinates.lat,
     lng: route.coordinates.lng,
-    // routeId mitschicken: Server persistiert das Foto in external_routes
-    // damit kuenftige Requests es direkt aus der Route-Antwort bekommen
+    // routeId + routeName mitschicken: Server persistiert das Foto in external_routes
+    // und nutzt den Namen als Fallback-Textsuche wenn Geosuche kein Landschaftsfoto findet
     routeId: route.id,
+    routeName: route.name,
   } as Parameters<typeof getRoutePhoto>[0])
     .then((antwort) => {
       const foto: GecachtesFoto = {
