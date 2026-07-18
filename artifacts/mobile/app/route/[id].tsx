@@ -116,31 +116,6 @@ export default function Routenplanung() {
     return reversed ? [...g].reverse() : g;
   }, [route?.geometry, reversed]);
 
-  // Oeffnet die SBB-Anreise zum Routenstart (Trailhead).
-  // Bei umgekehrter Strecke werden die Koordinaten des alten Endpunkts verwendet.
-  const oeffneAnreise = React.useCallback(() => {
-    let dest: string;
-    if (reversed && effectiveGeom.length > 0) {
-      const p = effectiveGeom[0];
-      dest = `${p[0]},${p[1]}`;
-    } else {
-      dest = route?.region ?? "";
-    }
-    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encodeURIComponent(dest)}`).catch(() => {});
-  }, [route?.region, effectiveGeom, reversed]);
-
-  // Oeffnet die SBB-Rueckreise vom Routenende zurueck zum Routenstart.
-  // VON = Routenendpunkt, NACH = Routenstartpunkt (beide als Koordinaten).
-  const oeffneRueckreise = React.useCallback(() => {
-    if (effectiveGeom.length < 2) return;
-    const start = effectiveGeom[0];
-    const ende = effectiveGeom[effectiveGeom.length - 1];
-    const von = `${ende[0]},${ende[1]}`;
-    const nach = `${start[0]},${start[1]}`;
-    Linking.openURL(
-      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
-    ).catch(() => {});
-  }, [effectiveGeom]);
 
 
   const [saga, setSaga] = useState<Saga | undefined>(
@@ -242,6 +217,31 @@ export default function Routenplanung() {
   // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart
   const [transportStart, setTransportStart] = useState<TransportAnreiseResult | null>(null);
   const [transportStartLoading, setTransportStartLoading] = useState(false);
+
+  // Oeffnet die SBB-Anreise zum Routenstart.
+  // Benutzt den bereits geladenen Stationsnamen, da SBB.ch rohe Koordinaten
+  // oder Kantonsnamen nicht zuverlaessig aufloesen kann.
+  const oeffneAnreise = React.useCallback(() => {
+    const dest = transportStart?.station?.name ?? route?.region ?? "";
+    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encodeURIComponent(dest)}`).catch(() => {});
+  }, [transportStart?.station?.name, route?.region]);
+
+  // Oeffnet die SBB-Rueckreise vom Routenende zum Routenstart.
+  // VON = naechster Bahnhof am Ziel, NACH = naechster Bahnhof am Start.
+  const oeffneRueckreise = React.useCallback(() => {
+    if (effectiveGeom.length < 2) return;
+    const von = transport?.station?.name ?? (() => {
+      const e = effectiveGeom[effectiveGeom.length - 1];
+      return `${e[0]},${e[1]}`;
+    })();
+    const nach = transportStart?.station?.name ?? (() => {
+      const s = effectiveGeom[0];
+      return `${s[0]},${s[1]}`;
+    })();
+    Linking.openURL(
+      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
+    ).catch(() => {});
+  }, [effectiveGeom, transport?.station?.name, transportStart?.station?.name]);
   // SAC-Hütten in der Nähe der Route
   const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
   const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
