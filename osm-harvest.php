@@ -122,12 +122,15 @@ foreach ($routen as $route) {
             'lat'        => $poi['lat']             ?? ($poi['center']['lat'] ?? null),
             'lng'        => $poi['lon']             ?? ($poi['center']['lon'] ?? null),
         ];
+        $e = $leads[$osm_id]['email'];
+        $w = $leads[$osm_id]['website'];
+        $leads[$osm_id]['tier'] = $e ? 'Top' : ($w ? 'Mid' : null);
     }
 
     $eingefuegt = 0;
     foreach ($leads as $lead) {
         $wpdb->insert('sagatrail_partner_leads', $lead,
-            ['%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%f']);
+            ['%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%f']);
         if ($wpdb->rows_affected > 0) $eingefuegt++;
     }
 
