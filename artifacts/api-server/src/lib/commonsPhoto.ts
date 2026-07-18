@@ -111,7 +111,7 @@ function htmlZuText(roh: string | undefined): string | null {
 }
 
 /** Offensichtlich ungeeignete Dateien (Karten, Wappen, Infrastruktur, Innenräume) aussieben. */
-function wirktWieFoto(titel: string): boolean {
+function wirktWieFoto(titel: string, fuerSage = false): boolean {
   const klein = titel.toLowerCase();
   if (!/\.(jpe?g)$/.test(klein)) return false;
   const verboten = [
@@ -122,10 +122,10 @@ function wirktWieFoto(titel: string): boolean {
     "timetable", "fahrplan", "bahnhof", "station", "parkplatz", "parking",
     "lok", "train", "zug_", "railcar", "tram", "bus_", "wagen", "bahn_",
     "strassenbahnhaltestelle", "haltestelle", "autobahn",
-    // Schilder & Tafeln
-    "schild", "sign", "tafel", "plaque", "wegweiser", "hinweistafel",
+    // Schilder & Tafeln (für Sagen deaktiviert — Denkmaltafeln sind relevant)
+    ...(!fuerSage ? ["schild", "sign", "tafel", "plaque", "wegweiser", "hinweistafel"] : []),
     // Innenräume & Gebäude-Details
-    "interior", "innen", "inside", "altar", "kanzel", "decke_",
+    "interior", "innen", "inside", "decke_",
     "ceiling", "fenster_", "window_", "tuer_", "door_",
     // Portraits & Personenfotos
     "portrait", "porträt", "person_", "people_", "crowd_",
@@ -318,14 +318,34 @@ function wähleFoto(seiten: CommonsPage[], jetzt: Date, erlaubeOhneLandschaft = 
   return { photoUrl: gewaehlt.url, attribution };
 }
 
-/** Bestplatziertes brauchbares Foto aus einer Volltextsuche waehlen (keine Orts-/Saisonlogik). */
-function wähleTextFoto(seiten: CommonsPage[]): RoutePhoto | null {
+/**
+ * Titelrelevanz eines Fotos zum Suchbegriff (fuer Saga-Fotos).
+ * Zaehlt wie viele normalisierte Suchwoerter im Dateinamen auftauchen —
+ * hoehere Übereinstimmung = das Bild zeigt wahrscheinlich genau das Motiv.
+ */
+function titelRelevanz(titel: string, queryWoerter: string[]): number {
+  const klein = titel.toLowerCase();
+  return queryWoerter.filter((w) => klein.includes(w)).length;
+}
+
+/**
+ * Bestplatziertes brauchbares Foto aus einer Volltextsuche waehlen.
+ * Mit optionalem `query` werden Kandidaten nach Titelrelevanz nachgeordnet —
+ * ein Bild dessen Dateiname Woerter aus dem Motiv-Suchbegriff enthaelt,
+ * bekommt Vorrang vor einem thematisch fernen aber relevanzsortiert hoeher
+ * platzierten Treffer.
+ */
+function wähleTextFoto(seiten: CommonsPage[], query?: string, fuerSage = false): RoutePhoto | null {
+  const queryWoerter = query
+    ? query.toLowerCase().split(/\s+/).filter((w) => w.length >= 3)
+    : [];
   const kandidaten = seiten
-    .filter((s) => s.title && wirktWieFoto(s.title) && s.imageinfo?.[0]?.thumburl)
+    .filter((s) => s.title && wirktWieFoto(s.title, fuerSage) && s.imageinfo?.[0]?.thumburl)
     .map((s, index) => {
       const info = s.imageinfo![0]!;
       return {
         url: info.thumburl ?? info.url ?? null,
+        relevanz: queryWoerter.length > 0 ? titelRelevanz(s.title!, queryWoerter) : 0,
         index,
         autor: htmlZuText(info.extmetadata?.Artist?.value),
         lizenz: htmlZuText(info.extmetadata?.LicenseShortName?.value),
@@ -333,7 +353,8 @@ function wähleTextFoto(seiten: CommonsPage[]): RoutePhoto | null {
     })
     .filter((k) => k.url != null);
   if (kandidaten.length === 0) return null;
-  // Volltextsuche liefert bereits relevanzsortiert — Reihenfolge beibehalten.
+  // Reihung: Titelrelevanz zuerst, dann ursprüngliche Relevanzsortierung der API
+  kandidaten.sort((a, b) => b.relevanz - a.relevanz || a.index - b.index);
   const gewaehlt = kandidaten[0]!;
   const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
     .filter((teil): teil is string => teil != null)
@@ -341,19 +362,47 @@ function wähleTextFoto(seiten: CommonsPage[]): RoutePhoto | null {
   return { photoUrl: gewaehlt.url, attribution };
 }
 
+/**
+ * Laedt ein repraesentatives Foto fuer eine Sage.
+ *
+ * Zwei-Phasen-Suche:
+ * 1. Textsuche mit dem vollen Bildmotiv-Begriff (z. B. "Vogel Gryff Basel").
+ *    Kandidaten werden nach Titelrelevanz nachgeordnet — Dateien deren Namen
+ *    Woerter aus dem Motiv enthalten, haben Vorrang.
+ * 2. Falls Phase 1 leer: Suche mit dem ersten Hauptwort des Motivs
+ *    (z. B. nur "Vogel Gryff"), um breitere Treffer zu finden.
+ *
+ * Denkmaltafeln und Skulpturen-Schilder sind fuer Sagen bewusst erlaubt
+ * (fuerSage=true) — ein Denkmal-Schild ist bei einer Legendenstätte relevant.
+ */
 export async function getCachedSagaPhoto(query: string, log: Logger): Promise<RoutePhoto> {
   const schluessel = `text:${query.trim().toLowerCase()}`;
   const jetztMs = Date.now();
   const vorhanden = cache.get(schluessel);
   if (vorhanden && vorhanden.bisMs > jetztMs) return vorhanden.wert;
   try {
+    // Phase 1: Volltextsuche mit vollständigem Bildmotiv
     const seiten = await sucheCommonsFotosNachText(query);
-    const foto = wähleTextFoto(seiten);
-    const wert: RoutePhoto = foto ?? { photoUrl: null, attribution: null };
-    cache.set(schluessel, {
-      wert,
-      bisMs: jetztMs + (foto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
-    });
+    const foto = wähleTextFoto(seiten, query, true);
+    if (foto) {
+      cache.set(schluessel, { wert: foto, bisMs: jetztMs + CACHE_TTL_MS });
+      return foto;
+    }
+
+    // Phase 2: Fallback mit gekürztem Suchbegriff (erste 2 Hauptwoerter)
+    const woerter = query.trim().split(/\s+/);
+    if (woerter.length > 2) {
+      const kurzBegriff = woerter.slice(0, 2).join(" ");
+      const kurzSeiten = await sucheCommonsFotosNachText(kurzBegriff);
+      const kurzFoto = wähleTextFoto(kurzSeiten, kurzBegriff, true);
+      if (kurzFoto) {
+        cache.set(schluessel, { wert: kurzFoto, bisMs: jetztMs + CACHE_TTL_MS });
+        return kurzFoto;
+      }
+    }
+
+    const wert: RoutePhoto = { photoUrl: null, attribution: null };
+    cache.set(schluessel, { wert, bisMs: jetztMs + NEGATIV_TTL_MS });
     return wert;
   } catch (err) {
     log.warn({ query, err }, "Commons-Sagenfoto (Textsuche) konnte nicht geladen werden");
@@ -403,7 +452,7 @@ export async function getCachedRoutePhoto(
         ? routeName.split(/[·\-–]/)[0]!.trim()
         : routeName;
       const textSeiten = await sucheCommonsFotosNachText(`${suchbegriff} Wanderweg`);
-      const textFoto = wähleTextFoto(textSeiten);
+      const textFoto = wähleTextFoto(textSeiten, suchbegriff);
       if (textFoto) {
         cache.set(schluessel, { wert: textFoto, bisMs: jetztMs + CACHE_TTL_MS });
         return textFoto;
