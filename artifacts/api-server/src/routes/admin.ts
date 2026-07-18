@@ -591,6 +591,7 @@ router.delete("/admin/partner/:id", async (req, res): Promise<void> => {
 
 /* ---- SAGEN-KATALOG (Foto-Kuration) ---- */
 router.get("/admin/sagas", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
   try {
     const rows = await db
       .select({
@@ -612,6 +613,7 @@ router.get("/admin/sagas", async (req, res): Promise<void> => {
 });
 
 router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
   const { id } = req.params;
   const { fotoUrl, fotoAttribution } = req.body as {
     fotoUrl?: string | null;
