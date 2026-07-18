@@ -208,11 +208,11 @@ export function buildSwisstopoHtml(
   #stt-legende .stt-start, #stt-legende .stt-ziel, #stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   #stt-legende .stt-seilbahn-station { box-shadow: none; }
   #stt-legende .stt-poi, #stt-legende .stt-partner { box-shadow: none; cursor: default; }
-  /* --- 2D/3D/Sat-Toggle oben links --- */
-  #stt-mode { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; left: 10px; z-index: 10;
-    display: flex; border-radius: 8px; overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.45);
-    font-family: -apple-system, system-ui, sans-serif; }
+  /* --- Karten-Toggles oben links (2D/3D + Topo/Sat) --- */
+  #stt-controls { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; left: 10px; z-index: 10;
+    display: flex; gap: 6px; font-family: -apple-system, system-ui, sans-serif; }
+  .stt-toggle { display: flex; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
   .stt-mbtn { padding: 6px 11px; font-size: 12px; font-weight: 600;
     background: rgba(16,24,26,0.88); color: #8A9BA8; cursor: pointer;
     border: none; border-right: 1px solid rgba(255,255,255,0.08);
@@ -230,10 +230,15 @@ export function buildSwisstopoHtml(
 </head>
 <body>
 <div id="map"></div>
-<div id="stt-mode">
-  <button class="stt-mbtn active" id="btn-2d">2D</button>
-  <button class="stt-mbtn" id="btn-3d">3D</button>
-  <button class="stt-mbtn" id="btn-sat">Sat</button>
+<div id="stt-controls">
+  <div class="stt-toggle">
+    <button class="stt-mbtn active" id="btn-2d">2D</button>
+    <button class="stt-mbtn" id="btn-3d">3D</button>
+  </div>
+  <div class="stt-toggle">
+    <button class="stt-mbtn active" id="btn-topo">Topo</button>
+    <button class="stt-mbtn" id="btn-sat">Sat</button>
+  </div>
 </div>
 ${legendHtml}
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -281,35 +286,40 @@ ${legendHtml}
     }
   }
 
-  /* ---- Mode-Logik ---- */
-  var currentMode = '2d';
-  function setMode(mode) {
-    currentMode = mode;
-    ['2d','3d','sat'].forEach(function(m) {
-      document.getElementById('btn-' + m).classList.toggle('active', m === mode);
-    });
-    if (!map.loaded()) return;
-    applyMode(mode);
+  /* ---- Mode-Logik: 2 unabhaengige Toggles (Dimension + Layer) ---- */
+  var is3d  = false;
+  var isSat = false;
+
+  function updateDimButtons() {
+    document.getElementById('btn-2d').classList.toggle('active', !is3d);
+    document.getElementById('btn-3d').classList.toggle('active',  is3d);
   }
-  /* Buttons koennen nicht via onclick="setMode(...)" aufgerufen werden weil
-     setMode im IIFE-Scope lebt — daher addEventListener im gleichen Scope. */
-  document.getElementById('btn-2d').addEventListener('click', function() { setMode('2d'); });
-  document.getElementById('btn-3d').addEventListener('click', function() { setMode('3d'); });
-  document.getElementById('btn-sat').addEventListener('click', function() { setMode('sat'); });
+  function updateLayerButtons() {
+    document.getElementById('btn-topo').classList.toggle('active', !isSat);
+    document.getElementById('btn-sat').classList.toggle('active',   isSat);
+  }
 
-  function applyMode(mode) {
-    var showCarto = mode !== 'sat';
-    var showSat   = mode === 'sat';
-    var showWaymarked = mode !== 'sat';
-    var do3d      = mode !== '2d';
+  document.getElementById('btn-2d').addEventListener('click', function() {
+    if (is3d) { is3d = false; updateDimButtons(); if (map.loaded()) applyMode(); }
+  });
+  document.getElementById('btn-3d').addEventListener('click', function() {
+    if (!is3d) { is3d = true; updateDimButtons(); if (map.loaded()) applyMode(); }
+  });
+  document.getElementById('btn-topo').addEventListener('click', function() {
+    if (isSat) { isSat = false; updateLayerButtons(); if (map.loaded()) applyMode(); }
+  });
+  document.getElementById('btn-sat').addEventListener('click', function() {
+    if (!isSat) { isSat = true; updateLayerButtons(); if (map.loaded()) applyMode(); }
+  });
 
-    if (map.getLayer('base-carto'))    map.setLayoutProperty('base-carto',    'visibility', showCarto    ? 'visible' : 'none');
-    if (map.getLayer('base-sat'))      map.setLayoutProperty('base-sat',      'visibility', showSat      ? 'visible' : 'none');
-    if (map.getLayer('waymarked'))     map.setLayoutProperty('waymarked',     'visibility', showWaymarked ? 'visible' : 'none');
+  function applyMode() {
+    if (map.getLayer('base-carto'))  map.setLayoutProperty('base-carto',  'visibility', isSat ? 'none' : 'visible');
+    if (map.getLayer('base-sat'))    map.setLayoutProperty('base-sat',    'visibility', isSat ? 'visible' : 'none');
+    if (map.getLayer('waymarked'))   map.setLayoutProperty('waymarked',   'visibility', isSat ? 'none' : 'visible');
 
-    if (do3d) {
+    if (is3d) {
       map.setTerrain({ source: 'terrain', exaggeration: 1.5 });
-      map.easeTo({ pitch: mode === '3d' ? 52 : 30, bearing: 0, duration: 600 });
+      map.easeTo({ pitch: 52, bearing: 0, duration: 600 });
     } else {
       map.setTerrain(null);
       map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
@@ -505,8 +515,8 @@ ${legendHtml}
     var early = window.__sttGetPending && window.__sttGetPending();
     if (early) window.__sttApply(early);
 
-    /* Initaler Mode anwenden (nach dem Load) */
-    applyMode(currentMode);
+    /* Initialen Mode anwenden (nach dem Load) */
+    applyMode();
     setTimeout(function() { map.resize(); }, 200);
   });
 })();
