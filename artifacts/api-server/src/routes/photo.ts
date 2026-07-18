@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { GetRoutePhotoResponse, GetRoutePhotoQueryParams } from "@workspace/api-zod";
 import { getCachedRoutePhoto } from "../lib/commonsPhoto";
 import { db, externalRoutesTable, catalogSagasTable } from "@workspace/db";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -46,32 +46,6 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
       .catch((err) => req.log.warn({ err, sagaId }, "Sagenfoto-Koordinaten-Rueckschreiben fehlgeschlagen"));
   }
 
-  // Kein sagaId vom Client (altes Binary) → Server-seitig Sage anhand der Koordinaten
-  // suchen und Foto zurueckschreiben. Toleranz 0.01 Grad ≈ 1 km.
-  if (!sagaId && foto.photoUrl) {
-    const TOL = 0.01;
-    db.select({ id: catalogSagasTable.id })
-      .from(catalogSagasTable)
-      .where(
-        and(
-          isNull(catalogSagasTable.fotoUrl),
-          sql`abs(${catalogSagasTable.lat} - ${lat}) < ${TOL}`,
-          sql`abs(${catalogSagasTable.lng} - ${lng}) < ${TOL}`,
-        ),
-      )
-      .limit(1)
-      .execute()
-      .then((rows) => {
-        if (!rows.length) return;
-        const gefundenId = rows[0].id;
-        return db.update(catalogSagasTable)
-          .set({ fotoUrl: foto.photoUrl, fotoAttribution: foto.attribution })
-          .where(and(eq(catalogSagasTable.id, gefundenId), isNull(catalogSagasTable.fotoUrl)))
-          .execute()
-          .then(() => req.log.info({ sagaId: gefundenId, photoUrl: foto.photoUrl, lat, lng }, "Sagenfoto (Koordinaten-Reverse-Lookup) in DB gespeichert"));
-      })
-      .catch((err) => req.log.warn({ err, lat, lng }, "Sagenfoto-Reverse-Lookup fehlgeschlagen"));
-  }
 
   res.json(GetRoutePhotoResponse.parse(foto));
 });
