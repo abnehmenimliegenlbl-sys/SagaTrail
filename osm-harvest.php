@@ -124,7 +124,7 @@ foreach ($routen as $route) {
         ];
         $e = $leads[$osm_id]['email'];
         $w = $leads[$osm_id]['website'];
-        $leads[$osm_id]['tier'] = $e ? 'Top' : ($w ? 'Mid' : null);
+        $leads[$osm_id]['tier'] = $e ? 'Top' : ($w ? 'Mid' : 'Low');
     }
 
     $eingefuegt = 0;
