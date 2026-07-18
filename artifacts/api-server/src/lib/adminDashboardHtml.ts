@@ -222,6 +222,7 @@ a{color:var(--red);text-decoration:none}
         <h2 style="margin:0">&#128218; Sagen-Fotos kuratieren</h2>
         <div style="display:flex;gap:8px;align-items:center">
           <input id="sagen-search" type="text" placeholder="Suchen (Titel, Kanton)..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px" oninput="filterSagen(this.value)">
+          <button class="btn btn-ghost btn-sm" onclick="loadSagen()" title="Daten neu laden">&#8635; Aktualisieren</button>
           <span id="sagen-count" class="hint"></span>
         </div>
       </div>
