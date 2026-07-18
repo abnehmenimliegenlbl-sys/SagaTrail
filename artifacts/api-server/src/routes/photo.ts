@@ -31,6 +31,7 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
         photoAttribution: foto.attribution,
       })
       .where(eq(externalRoutesTable.id, routeId))
+      .execute()
       .catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
   }
 
