@@ -20,20 +20,7 @@ export default function LegalDoc() {
 
   const isPrivacy = (doc ?? "datenschutz") === "datenschutz";
   const title = isPrivacy ? t.datenschutzTitle : t.impressumTitle;
-
-  const sections = isPrivacy
-    ? [
-        { h: t.datenschutz.q1, p: t.datenschutz.a1 },
-        { h: t.datenschutz.q2, p: t.datenschutz.a2 },
-        { h: t.datenschutz.q3, p: t.datenschutz.a3 },
-        { h: t.datenschutz.q4, p: t.datenschutz.a4 },
-      ]
-    : [
-        { h: t.impressum.q1, p: t.impressum.a1 },
-        { h: t.impressum.q2, p: t.impressum.a2 },
-        { h: t.impressum.q3, p: t.impressum.a3 },
-        { h: t.impressum.q4, p: t.impressum.a4 },
-      ];
+  const sections = isPrivacy ? t.datenschutz : t.impressum;
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
@@ -49,9 +36,9 @@ export default function LegalDoc() {
         <ScreenHeader eyebrow={t.eyebrow} title={title} onBack />
         <SparkDivider style={{ marginVertical: 22 }} />
         {sections.map((s) => (
-          <React.Fragment key={s.h}>
-            <Text style={[styles.h, { color: colors.accent }]}>{s.h}</Text>
-            <Text style={[styles.p, { color: colors.foreground }]}>{s.p}</Text>
+          <React.Fragment key={s.q}>
+            <Text style={[styles.h, { color: colors.accent }]}>{s.q}</Text>
+            <Text style={[styles.p, { color: colors.foreground }]}>{s.a}</Text>
           </React.Fragment>
         ))}
       </ScrollView>

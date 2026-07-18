@@ -80,6 +80,7 @@ export default function Einstellungen() {
     saveEmergencyContact,
     exportData,
     resetAll,
+    deleteAccount,
     pushWeatherEnabled,
     setPushWeatherEnabled,
   } = useApp();
@@ -210,7 +211,10 @@ export default function Einstellungen() {
         {
           text: t.delete,
           style: "destructive",
-          onPress: () => resetAll(),
+          onPress: async () => {
+            await deleteAccount();
+            await signOut();
+          },
         },
       ]
     );
@@ -457,6 +461,16 @@ export default function Einstellungen() {
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </View>
           </Pressable>
+          {premium && Platform.OS !== "web" && (
+            <PrimaryButton
+              label={t.manageSubscriptionButton}
+              variant="secondary"
+              onPress={() =>
+                Linking.openURL("itms-apps://apps.apple.com/account/subscriptions").catch(() => {})
+              }
+              style={{ marginTop: 12 }}
+            />
+          )}
           {!premium && (
             <PrimaryButton
               label={t.unlockPremiumButton}

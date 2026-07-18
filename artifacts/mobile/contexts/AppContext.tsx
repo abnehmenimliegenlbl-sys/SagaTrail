@@ -166,6 +166,7 @@ interface AppContextValue {
   clearActiveHike: () => Promise<void>;
   exportData: () => Promise<string>;
   resetAll: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 
   createGroupSession: () => void;
   joinGroupSession: (code: string) => void;
@@ -915,6 +916,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     pushTokenSyncedForUserRef.current = null;
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      const base = getApiBaseUrl();
+      const token = await getTokenRef.current();
+      if (token) {
+        await fetch(`${base}api/me`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch {
+      // Serverseitiger Fehler darf den lokalen Abbruch nicht blockieren
+    }
+    await resetAll();
+  }, [resetAll]);
+
   const toggleBookmark = useCallback(
     async (sagaId: string) => {
       const isCurrentlyBookmarked = savedSagaIds.includes(sagaId);
@@ -1034,6 +1051,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearActiveHike,
       exportData,
       resetAll,
+      deleteAccount,
       createGroupSession,
       joinGroupSession,
       leaveGroupSession,
@@ -1082,6 +1100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearActiveHike,
       exportData,
       resetAll,
+      deleteAccount,
       createGroupSession,
       joinGroupSession,
       leaveGroupSession,

@@ -4,26 +4,8 @@ export interface LegalStrings {
   eyebrow: string;
   datenschutzTitle: string;
   impressumTitle: string;
-  datenschutz: {
-    q1: string;
-    a1: string;
-    q2: string;
-    a2: string;
-    q3: string;
-    a3: string;
-    q4: string;
-    a4: string;
-  };
-  impressum: {
-    q1: string;
-    a1: string;
-    q2: string;
-    a2: string;
-    q3: string;
-    a3: string;
-    q4: string;
-    a4: string;
-  };
+  datenschutz: Array<{ q: string; a: string }>;
+  impressum: Array<{ q: string; a: string }>;
 }
 
 const LEGAL_STRINGS: StringsDict<LegalStrings> = {
@@ -31,226 +13,586 @@ const LEGAL_STRINGS: StringsDict<LegalStrings> = {
     eyebrow: "Recht & Daten",
     datenschutzTitle: "Datenschutz",
     impressumTitle: "Impressum",
-    datenschutz: {
-      q1: "Welche Daten wir erheben",
-      a1: "SagaTrail verarbeitet Standortdaten (nur während einer aktiven Wanderung), dein Profil (Name, Archetyp, Heimatkanton, Sprache, Alterstufe) sowie deinen Story-Fortschritt und freigeschaltete Sammlungen.",
-      q2: "Wo die Daten liegen",
-      a2: "In diesem Erststart-Build werden alle Daten ausschliesslich lokal auf deinem Gerät gespeichert. Es findet keine Übertragung an Server statt. Du kannst deine Daten jederzeit in den Einstellungen exportieren oder vollständig löschen.",
-      q3: "Standort",
-      a3: "Der Standort wird nur genutzt, um Erzählmomente an den passenden Wegpunkten auszulösen. Du kannst die Berechtigung jederzeit im Betriebssystem widerrufen; die App funktioniert dann mit einer simulierten Route weiter.",
-      q4: "Kinder",
-      a4: "Für die Alterstufe Kinder ist die Bestätigung einer erziehungsberechtigten Person erforderlich. Inhalte werden altersgerecht entschärft.",
-    },
-    impressum: {
-      q1: "Anbieter",
-      a1: "SagaTrail (Erststart-Build). Verantwortlich für den Inhalt der App ist das SagaTrail-Team.",
-      q2: "Sagen & Quellen",
-      a2: "Die erzählten Sagen beruhen auf gemeinfreien Überlieferungen und historischen Sagensammlungen. Die jeweilige Quelle ist in jeder Sage ausgewiesen.",
-      q3: "Notfall",
-      a3: "SagaTrail ersetzt keine offizielle Notfall- oder Bergrettungs-App. Im Notfall gilt: Rega 1414 oder Euro-Notruf 112.",
-      q4: "Kontakt",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Verantwortlicher",
+        a: "SagaTrail ist verantwortlich für die Verarbeitung deiner personenbezogenen Daten. Kontakt: info@sagatrail.ch",
+      },
+      {
+        q: "Welche Daten wir verarbeiten",
+        a: "Standortdaten (nur während aktiver Wanderung), Profildaten (Name, Archetyp, Heimatkanton, Sprache, Alterstufe), Wanderfortschritt & freigeschaltete Inhalte, Gerätekennungen für Push-Benachrichtigungen sowie anonymisierte Zahlungsmetadaten via App Store.",
+      },
+      {
+        q: "Authentifizierung (Clerk)",
+        a: "Für die Anmeldung nutzen wir Clerk (clerk.com). Clerk speichert deine E-Mail-Adresse und OAuth-Token sicher. Mehr dazu: clerk.com/privacy",
+      },
+      {
+        q: "Zahlungen & Abonnements (RevenueCat)",
+        a: "Abonnements werden über den App Store abgewickelt. RevenueCat (revenuecat.com) verwaltet den Abonnementstatus. Keine Kreditkartendaten gelangen zu SagaTrail.",
+      },
+      {
+        q: "Standortdaten",
+        a: "Der Standort wird nur während einer aktiven Wanderung erhoben, um Story-Momente an den richtigen Wegpunkten auszulösen. Standortdaten werden nicht dauerhaft auf Servern gespeichert. Du kannst die Berechtigung jederzeit im Betriebssystem widerrufen.",
+      },
+      {
+        q: "Deine Rechte (nDSG / DSGVO)",
+        a: "Du hast das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit. Zur Kontolöschung nutze die Option in den Einstellungen oder wende dich an info@sagatrail.ch.",
+      },
+      {
+        q: "Datensicherheit",
+        a: "Alle Daten werden verschlüsselt übertragen (TLS 1.3). Unsere Serverinfrastruktur befindet sich in der EU und entspricht dem Schweizer DSG sowie der DSGVO.",
+      },
+      {
+        q: "Kinder",
+        a: "SagaTrail ist nicht für Kinder unter 13 Jahren bestimmt. Für die Alterstufe Kinder ist die Bestätigung einer erziehungsberechtigten Person erforderlich.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Anbieter",
+        a: "SagaTrail\nKontakt: info@sagatrail.ch\nWebsite: sagatrail.ch",
+      },
+      {
+        q: "Sagen & Quellen",
+        a: "Die erzählten Sagen beruhen auf gemeinfreien Überlieferungen und historischen Sagensammlungen der Schweiz. Die jeweilige Quelle ist in jeder Sage ausgewiesen.",
+      },
+      {
+        q: "Kartendaten",
+        a: "Kartendaten: © OpenStreetMap-Mitwirkende (ODbL). Wanderwege: Waymarked Trails. Topografische Daten: © swisstopo (Bundesamt für Landestopografie). Routing: FOSSGIS Valhalla.",
+      },
+      {
+        q: "KI-Erzählstimmen",
+        a: "Erzähltexte werden durch KI-Stimmen (ElevenLabs, OpenAI) gesprochen. Die Inhalte sind menschlich redigiert und kuratiert.",
+      },
+      {
+        q: "Notfall",
+        a: "SagaTrail ersetzt keine offizielle Bergrettungs- oder Notfall-App. In einer Notlage: Rega 1414 oder europäischer Notruf 112.",
+      },
+      {
+        q: "Haftungsausschluss",
+        a: "SagaTrail übernimmt keine Haftung für die Richtigkeit von Routendaten oder Wetterbedingungen. Wanderungen erfolgen auf eigene Verantwortung. Bitte informiere dich vor jeder Wanderung über aktuelle Bedingungen.",
+      },
+    ],
   },
   gsw: {
     eyebrow: "Rächt & Date",
     datenschutzTitle: "Dateschutz",
     impressumTitle: "Impressum",
-    datenschutz: {
-      q1: "Weli Date mir sammled",
-      a1: "SagaTrail verarbeitet Standortdate (nur während ere aktive Wanderig), dis Profil (Name, Archetyp, Heimatkanton, Sprach, Alterstufe) sowie din Story-Fortschritt und freigschalteti Sammlige.",
-      q2: "Wo d'Date ligged",
-      a2: "In däm Erschtstart-Build wärdet alli Date usschliesslich lokal uf dim Grät gspeicheret. Es findet kei Übertragig an Server statt. Du chasch dini Date jederzeit in de Iistellige exportiere oder vollständig lösche.",
-      q3: "Standort",
-      a3: "De Standort wird nur gnutzt, zum Verzällmomänt a de passende Wägpunkt uszlöse. Du chasch d'Berechtigig jederzeit im Betriebssystem widerruefe; d'App funktioniert dänn mit ere simulierte Route wiiter.",
-      q4: "Chind",
-      a4: "Für d'Alterstufe Chind isch d'Bestätigung vonere erziehigsberechtigte Person erforderlich. Inhält wärdet altersgrächt entschärft.",
-    },
-    impressum: {
-      q1: "Aabieter",
-      a1: "SagaTrail (Erschtstart-Build). Verantwortlich für de Inhalt vode App isch s'SagaTrail-Team.",
-      q2: "Sage & Quelle",
-      a2: "D'verzällte Sage beruehed uf gmeinfreie Überliferige und historische Sagesammlige. Die jeweiligi Quelle isch in jedere Sag uusgwise.",
-      q3: "Notfall",
-      a3: "SagaTrail ersetzt kei offizielli Notfall- oder Bärgrettigs-App. Im Notfall gilt: Rega 1414 oder Euro-Notruef 112.",
-      q4: "Kontakt",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Verantwortlechi",
+        a: "SagaTrail isch verantwortlich für d'Veraarbeitig vo dine persoonebezogene Date. Kontakt: info@sagatrail.ch",
+      },
+      {
+        q: "Weli Date mir veraarbeited",
+        a: "Standortdate (nur während aktiver Wanderig), Profildaten (Name, Archetyp, Heimetkanton, Sprach, Alterstuefe), Wanderfortschritt & freigschalteti Inhält, Grätkennige für Push-Miiteilige sowie anonymisiertä Zahligsmetadate via App Store.",
+      },
+      {
+        q: "Aamehldig (Clerk)",
+        a: "Für d'Aamehldig nütze mir Clerk (clerk.com). Clerk speicheret dini E-Mail und OAuth-Token sicher. Meh derzue: clerk.com/privacy",
+      },
+      {
+        q: "Zahlige & Abos (RevenueCat)",
+        a: "Abos wärdet über de App Store abgwicklet. RevenueCat (revenuecat.com) verwaltet de Abo-Status. Keini Kreditkartedaten gönd zu SagaTrail.",
+      },
+      {
+        q: "Standortdate",
+        a: "De Standort wird nur während ere aktive Wanderig erhoben, um Story-Momänt a de richtige Wägpunkt uszlöse. Standortdate wärdet nöd dauerhaft uf Server gspeicheret. Du chasch d'Berechtigig jederzeit im Betriebssystem widerruefe.",
+      },
+      {
+        q: "Dini Rächt (nDSG / DSGVO)",
+        a: "Du hesch s'Rächt uf Uuskunft, Berichtigig, Löschig und Dateuibertragbarkeit. Zum Kontolösche nütz d'Option in de Iistellige oder wend dich an info@sagatrail.ch.",
+      },
+      {
+        q: "Datesicherheit",
+        a: "Alli Date wärdet verschlüsslet übertrage (TLS 1.3). Euseri Server-Infrastruktur isch in de EU und entspricht em Schwiizer DSG sowie de DSGVO.",
+      },
+      {
+        q: "Chind",
+        a: "SagaTrail isch nöd für Chind under 13 Jahr bestimmt. Für d'Alterstuefe Chind isch d'Bestätigung vonere erziehigsberechtigte Person erforderlich.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Aabieter",
+        a: "SagaTrail\nKontakt: info@sagatrail.ch\nWebsite: sagatrail.ch",
+      },
+      {
+        q: "Sage & Quelle",
+        a: "D'verzällte Sage beruehed uf gmeinfreie Überliferige und historische Sagesammlige vode Schwiiz. Die jeweiligi Quelle isch in jedere Sag uusgwise.",
+      },
+      {
+        q: "Chartedated",
+        a: "Chartedated: © OpenStreetMap-Mitwirkendi (ODbL). Wanderwäg: Waymarked Trails. Topografischi Date: © swisstopo. Routing: FOSSGIS Valhalla.",
+      },
+      {
+        q: "KI-Erzählstimme",
+        a: "Erzähltäxt wärdet durch KI-Stimme (ElevenLabs, OpenAI) gsproched. D'Inhält sind mänschlich redigiert und kuriert.",
+      },
+      {
+        q: "Notfall",
+        a: "SagaTrail ersetzt keini offizielli Bärgrettigs- oder Notfall-App. Im Notfall: Rega 1414 oder Euro-Notruef 112.",
+      },
+      {
+        q: "Haftiigsussschluss",
+        a: "SagaTrail übernimmt keini Haftig für d'Richtigkeit vo Routedate oder Wetterbedingige. Wanderige gschähed uf eigeni Verantwortung.",
+      },
+    ],
   },
   en: {
     eyebrow: "Legal & Data",
     datenschutzTitle: "Privacy Policy",
     impressumTitle: "Imprint",
-    datenschutz: {
-      q1: "What data we collect",
-      a1: "SagaTrail processes location data (only during an active hike), your profile (name, archetype, home canton, language, age tier) as well as your story progress and unlocked collections.",
-      q2: "Where the data is stored",
-      a2: "In this early launch build, all data is stored exclusively locally on your device. No data is transmitted to servers. You can export or completely delete your data at any time in the settings.",
-      q3: "Location",
-      a3: "Location is only used to trigger story moments at the appropriate waypoints. You can revoke this permission at any time in the operating system; the app will then continue to function with a simulated route.",
-      q4: "Children",
-      a4: "For the children's age tier, confirmation from a parent or legal guardian is required. Content is adapted to be age-appropriate.",
-    },
-    impressum: {
-      q1: "Provider",
-      a1: "SagaTrail (Early Launch Build). The SagaTrail team is responsible for the content of the app.",
-      q2: "Legends & Sources",
-      a2: "The stories told are based on public domain traditions and historical legend collections. The respective source is indicated in each legend.",
-      q3: "Emergency",
-      a3: "SagaTrail does not replace any official emergency or mountain rescue app. In case of emergency: Rega 1414 or Euro emergency 112.",
-      q4: "Contact",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Data Controller",
+        a: "SagaTrail is responsible for processing your personal data. Contact: info@sagatrail.ch",
+      },
+      {
+        q: "What data we process",
+        a: "Location data (only during active hikes), profile data (name, archetype, home canton, language, age tier), hike progress & unlocked content, device identifiers for push notifications, and anonymised payment metadata via the App Store.",
+      },
+      {
+        q: "Authentication (Clerk)",
+        a: "We use Clerk (clerk.com) for sign-in. Clerk securely stores your email address and OAuth tokens. More: clerk.com/privacy",
+      },
+      {
+        q: "Payments & Subscriptions (RevenueCat)",
+        a: "Subscriptions are processed through the App Store. RevenueCat (revenuecat.com) manages subscription status. No credit card data is shared with SagaTrail.",
+      },
+      {
+        q: "Location data",
+        a: "Location is only collected during an active hike to trigger story moments at the right waypoints. Location data is not permanently stored on servers. You can revoke this permission at any time in your device settings.",
+      },
+      {
+        q: "Your rights (GDPR / nFADP)",
+        a: "You have the right to access, correct, delete, and port your data. To delete your account, use the option in Settings or contact info@sagatrail.ch.",
+      },
+      {
+        q: "Data security",
+        a: "All data is transmitted with encryption (TLS 1.3). Our server infrastructure is located in the EU and complies with Swiss DSG and GDPR.",
+      },
+      {
+        q: "Children",
+        a: "SagaTrail is not intended for children under 13. For the children's age tier, confirmation from a parent or legal guardian is required.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Provider",
+        a: "SagaTrail\nContact: info@sagatrail.ch\nWebsite: sagatrail.ch",
+      },
+      {
+        q: "Legends & Sources",
+        a: "The stories told are based on public-domain traditions and historical Swiss legend collections. Each legend credits its source.",
+      },
+      {
+        q: "Map data",
+        a: "Map data: © OpenStreetMap contributors (ODbL). Hiking trails: Waymarked Trails. Topographic data: © swisstopo. Routing: FOSSGIS Valhalla.",
+      },
+      {
+        q: "AI narration voices",
+        a: "Story texts are narrated by AI voices (ElevenLabs, OpenAI). All content is human-edited and curated.",
+      },
+      {
+        q: "Emergency",
+        a: "SagaTrail does not replace any official mountain rescue or emergency app. In an emergency: Rega 1414 or European emergency number 112.",
+      },
+      {
+        q: "Disclaimer",
+        a: "SagaTrail accepts no liability for the accuracy of route data or weather conditions. Hikes are undertaken at your own risk. Please check current conditions before every hike.",
+      },
+    ],
   },
   fr: {
     eyebrow: "Droit & Données",
     datenschutzTitle: "Confidentialité",
     impressumTitle: "Mentions Légales",
-    datenschutz: {
-      q1: "Quelles données nous collectons",
-      a1: "SagaTrail traite les données de localisation (uniquement lors d'une randonnée active), votre profil (nom, archétype, canton d'origine, langue, tranche d'âge) ainsi que votre progression dans l'histoire et les collections débloquées.",
-      q2: "Où se trouvent les données",
-      a2: "Dans cette version de lancement, toutes les données sont stockées exclusivement localement sur votre appareil. Aucun transfert vers des serveurs n'a lieu. Vous pouvez exporter ou supprimer complètement vos données à tout moment dans les paramètres.",
-      q3: "Localisation",
-      a3: "La localisation n'est utilisée que pour déclencher des moments de narration aux points de passage appropriés. Vous pouvez révoquer l'autorisation à tout moment dans le système d'exploitation ; l'application continuera alors de fonctionner avec un itinéraire simulé.",
-      q4: "Enfants",
-      a4: "Pour la tranche d'âge des enfants, la confirmation d'un parent ou d'un tuteur légal est requise. Le contenu est adapté à l'âge.",
-    },
-    impressum: {
-      q1: "Prestataire",
-      a1: "SagaTrail (Version de lancement). L'équipe SagaTrail est responsable du contenu de l'application.",
-      q2: "Légendes & Sources",
-      a2: "Les légendes racontées sont basées sur des traditions du domaine public et des recueils de légendes historiques. La source respective est indiquée dans chaque légende.",
-      q3: "Urgence",
-      a3: "SagaTrail ne remplace aucune application officielle de secours ou de sauvetage en montagne. En cas d'urgence : Rega 1414 ou numéro d'urgence européen 112.",
-      q4: "Contact",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Responsable du traitement",
+        a: "SagaTrail est responsable du traitement de vos données personnelles. Contact : info@sagatrail.ch",
+      },
+      {
+        q: "Quelles données nous traitons",
+        a: "Données de localisation (uniquement pendant une randonnée active), profil (nom, archétype, canton d'origine, langue, tranche d'âge), progression et contenus débloqués, identifiants d'appareil pour les notifications, métadonnées de paiement anonymisées via l'App Store.",
+      },
+      {
+        q: "Authentification (Clerk)",
+        a: "Nous utilisons Clerk (clerk.com) pour la connexion. Clerk stocke votre e-mail et vos jetons OAuth en toute sécurité. En savoir plus : clerk.com/privacy",
+      },
+      {
+        q: "Paiements & abonnements (RevenueCat)",
+        a: "Les abonnements sont traités via l'App Store. RevenueCat (revenuecat.com) gère le statut des abonnements. Aucune donnée de carte bancaire n'est transmise à SagaTrail.",
+      },
+      {
+        q: "Données de localisation",
+        a: "La localisation n'est collectée que pendant une randonnée active, pour déclencher des moments narratifs aux bons points de passage. Les données ne sont pas stockées durablement sur les serveurs. Vous pouvez révoquer l'autorisation à tout moment dans les paramètres de l'appareil.",
+      },
+      {
+        q: "Vos droits (RGPD / LPD)",
+        a: "Vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité. Pour supprimer votre compte, utilisez l'option dans les Paramètres ou contactez info@sagatrail.ch.",
+      },
+      {
+        q: "Sécurité des données",
+        a: "Toutes les données sont transmises de manière chiffrée (TLS 1.3). Notre infrastructure serveur est en UE et respecte la LPD suisse et le RGPD.",
+      },
+      {
+        q: "Enfants",
+        a: "SagaTrail n'est pas destiné aux enfants de moins de 13 ans. Pour la tranche enfants, la confirmation d'un parent ou tuteur légal est requise.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Prestataire",
+        a: "SagaTrail\nContact : info@sagatrail.ch\nSite web : sagatrail.ch",
+      },
+      {
+        q: "Légendes & Sources",
+        a: "Les légendes sont issues du domaine public et de recueils historiques suisses. Chaque légende mentionne sa source.",
+      },
+      {
+        q: "Données cartographiques",
+        a: "Cartes : © contributeurs OpenStreetMap (ODbL). Sentiers : Waymarked Trails. Données topo : © swisstopo. Routage : FOSSGIS Valhalla.",
+      },
+      {
+        q: "Voix de narration IA",
+        a: "Les textes sont lus par des voix IA (ElevenLabs, OpenAI). Tous les contenus sont édités et curatés par des humains.",
+      },
+      {
+        q: "Urgence",
+        a: "SagaTrail ne remplace aucune application officielle de secours en montagne. En cas d'urgence : Rega 1414 ou numéro d'urgence européen 112.",
+      },
+      {
+        q: "Avertissement",
+        a: "SagaTrail décline toute responsabilité quant à l'exactitude des données d'itinéraires ou des conditions météo. Les randonnées sont effectuées sous votre propre responsabilité.",
+      },
+    ],
   },
   it: {
     eyebrow: "Legale & Dati",
     datenschutzTitle: "Protezione Dati",
     impressumTitle: "Note Legali",
-    datenschutz: {
-      q1: "Quali dati raccogliamo",
-      a1: "SagaTrail elabora i dati sulla posizione (solo durante un'escursione attiva), il tuo profilo (nome, archetipo, cantone di origine, lingua, fascia d'età), nonché i tuoi progressi nella storia e le collezioni sbloccate.",
-      q2: "Dove risiedono i dati",
-      a2: "In questa build di lancio iniziale, tutti i dati vengono memorizzati esclusivamente in locale sul tuo dispositivo. Non avviene alcun trasferimento ai server. Puoi esportare o cancellare completamente i tuoi dati in qualsiasi momento nelle impostazioni.",
-      q3: "Posizione",
-      a3: "La posizione viene utilizzata solo per attivare momenti narrativi nei punti di passaggio appropriati. Puoi revocare l'autorizzazione in qualsiasi momento nel sistema operativo; l'app continuerà quindi a funzionare con un percorso simulato.",
-      q4: "Bambini",
-      a4: "Per la fascia d'età dei bambini è richiesta la conferma di un genitore o di un tutore legale. I contenuti vengono adattati all'età.",
-    },
-    impressum: {
-      q1: "Fornitore",
-      a1: "SagaTrail (Build di lancio iniziale). Il team di SagaTrail è responsabile del contenuto dell'app.",
-      q2: "Leggende & Fonti",
-      a2: "Le leggende raccontate si basano su tradizioni di pubblico dominio e raccolte storiche di leggende. La rispettiva fonte è indicata in ogni leggenda.",
-      q3: "Emergenza",
-      a3: "SagaTrail non sostituisce alcuna app ufficiale di emergenza o soccorso alpino. In caso di emergenza: Rega 1414 o numero di emergenza europeo 112.",
-      q4: "Contatto",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Titolare del trattamento",
+        a: "SagaTrail è responsabile del trattamento dei tuoi dati personali. Contatto: info@sagatrail.ch",
+      },
+      {
+        q: "Quali dati trattiamo",
+        a: "Dati di posizione (solo durante un'escursione attiva), profilo (nome, archetipo, cantone, lingua, fascia d'età), progressi e contenuti sbloccati, identificatori del dispositivo per le notifiche, metadati di pagamento anonimi tramite App Store.",
+      },
+      {
+        q: "Autenticazione (Clerk)",
+        a: "Utilizziamo Clerk (clerk.com) per l'accesso. Clerk archivia in modo sicuro il tuo indirizzo email e i token OAuth. Maggiori info: clerk.com/privacy",
+      },
+      {
+        q: "Pagamenti & abbonamenti (RevenueCat)",
+        a: "Gli abbonamenti vengono elaborati tramite App Store. RevenueCat (revenuecat.com) gestisce lo stato degli abbonamenti. Nessun dato di carta di credito viene condiviso con SagaTrail.",
+      },
+      {
+        q: "Dati di posizione",
+        a: "La posizione viene raccolta solo durante un'escursione attiva per attivare i momenti narrativi. I dati non sono archiviati permanentemente sui server. Puoi revocare il permesso in qualsiasi momento nelle impostazioni del dispositivo.",
+      },
+      {
+        q: "I tuoi diritti (GDPR / LPD)",
+        a: "Hai il diritto di accesso, rettifica, cancellazione e portabilità dei dati. Per eliminare il tuo account, usa l'opzione nelle Impostazioni o contatta info@sagatrail.ch.",
+      },
+      {
+        q: "Sicurezza dei dati",
+        a: "Tutti i dati vengono trasmessi con crittografia (TLS 1.3). La nostra infrastruttura server è nell'UE e rispetta la LPD svizzera e il GDPR.",
+      },
+      {
+        q: "Bambini",
+        a: "SagaTrail non è destinato a bambini sotto i 13 anni. Per la fascia bambini, è richiesta la conferma di un genitore o tutore legale.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Fornitore",
+        a: "SagaTrail\nContatto: info@sagatrail.ch\nSito web: sagatrail.ch",
+      },
+      {
+        q: "Leggende & Fonti",
+        a: "Le leggende sono tratte dal dominio pubblico e da raccolte storiche svizzere. Ogni leggenda cita la sua fonte.",
+      },
+      {
+        q: "Dati cartografici",
+        a: "Mappe: © contributori OpenStreetMap (ODbL). Sentieri: Waymarked Trails. Dati topografici: © swisstopo. Routing: FOSSGIS Valhalla.",
+      },
+      {
+        q: "Voci di narrazione IA",
+        a: "I testi vengono narrati da voci IA (ElevenLabs, OpenAI). Tutti i contenuti sono curati e revisionati da esseri umani.",
+      },
+      {
+        q: "Emergenza",
+        a: "SagaTrail non sostituisce nessuna app ufficiale di soccorso alpino. In caso di emergenza: Rega 1414 o numero europeo 112.",
+      },
+      {
+        q: "Avvertenza",
+        a: "SagaTrail non si assume alcuna responsabilità per l'accuratezza dei dati di percorso o delle condizioni meteo. Le escursioni vengono effettuate a proprio rischio.",
+      },
+    ],
   },
   es: {
     eyebrow: "Legal & Datos",
     datenschutzTitle: "Privacidad",
     impressumTitle: "Aviso Legal",
-    datenschutz: {
-      q1: "Qué datos recopilamos",
-      a1: "SagaTrail procesa datos de ubicación (solo durante una caminata activa), tu perfil (nombre, arquetipo, cantón de origen, idioma, rango de edad), así como tu progreso en la historia y las colecciones desbloqueadas.",
-      q2: "Dónde están los datos",
-      a2: "En esta versión de lanzamiento inicial, todos los datos se almacenan exclusivamente de forma local en tu dispositivo. No se realiza ninguna transferencia a servidores. Puedes exportar o eliminar completamente tus datos en cualquier momento en la configuración.",
-      q3: "Ubicación",
-      a3: "La ubicación solo se utiliza para activar momentos narrativos en los puntos de ruta adecuados. Puedes revocar el permiso en cualquier momento en el sistema operativo; la aplicación seguirá funcionando con una ruta simulada.",
-      q4: "Niños",
-      a4: "Para el rango de edad de los niños, se requiere la confirmación de un padre o tutor legal. El contenido se adapta a la edad.",
-    },
-    impressum: {
-      q1: "Proveedor",
-      a1: "SagaTrail (Versión de lanzamiento inicial). El equipo de SagaTrail es responsable del contenido de la aplicación.",
-      q2: "Leyendas & Fuentes",
-      a2: "Las leyendas contadas se basan en tradiciones de dominio público y colecciones históricas de leyendas. La fuente respectiva se indica en cada leyenda.",
-      q3: "Emergencia",
-      a3: "SagaTrail no reemplaza ninguna aplicación oficial de emergencia o rescate de montaña. En caso de emergencia: Rega 1414 o número de emergencia europeo 112.",
-      q4: "Contacto",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Responsable del tratamiento",
+        a: "SagaTrail es responsable del tratamiento de tus datos personales. Contacto: info@sagatrail.ch",
+      },
+      {
+        q: "Qué datos tratamos",
+        a: "Datos de ubicación (solo durante una caminata activa), perfil (nombre, arquetipo, cantón, idioma, franja de edad), progreso y contenidos desbloqueados, identificadores de dispositivo para notificaciones, metadatos de pago anonimizados vía App Store.",
+      },
+      {
+        q: "Autenticación (Clerk)",
+        a: "Usamos Clerk (clerk.com) para el inicio de sesión. Clerk almacena de forma segura tu correo y tokens OAuth. Más info: clerk.com/privacy",
+      },
+      {
+        q: "Pagos & suscripciones (RevenueCat)",
+        a: "Las suscripciones se procesan a través del App Store. RevenueCat (revenuecat.com) gestiona el estado de las suscripciones. Ningún dato de tarjeta bancaria llega a SagaTrail.",
+      },
+      {
+        q: "Datos de ubicación",
+        a: "La ubicación solo se recoge durante una caminata activa para activar los momentos narrativos. Los datos no se almacenan permanentemente en servidores. Puedes revocar el permiso en cualquier momento en los ajustes del dispositivo.",
+      },
+      {
+        q: "Tus derechos (RGPD / LPD)",
+        a: "Tienes derecho a acceder, rectificar, eliminar y portar tus datos. Para eliminar tu cuenta, usa la opción en Ajustes o contacta info@sagatrail.ch.",
+      },
+      {
+        q: "Seguridad de datos",
+        a: "Todos los datos se transmiten con cifrado (TLS 1.3). Nuestra infraestructura de servidores está en la UE y cumple la LPD suiza y el RGPD.",
+      },
+      {
+        q: "Niños",
+        a: "SagaTrail no está destinado a niños menores de 13 años. Para la franja de niños, se requiere confirmación de un padre o tutor legal.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Proveedor",
+        a: "SagaTrail\nContacto: info@sagatrail.ch\nSitio web: sagatrail.ch",
+      },
+      {
+        q: "Leyendas & Fuentes",
+        a: "Las leyendas provienen del dominio público y de colecciones históricas suizas. Cada leyenda cita su fuente.",
+      },
+      {
+        q: "Datos cartográficos",
+        a: "Mapas: © contribuidores de OpenStreetMap (ODbL). Senderos: Waymarked Trails. Datos topográficos: © swisstopo. Enrutamiento: FOSSGIS Valhalla.",
+      },
+      {
+        q: "Voces de narración IA",
+        a: "Los textos son narrados por voces de IA (ElevenLabs, OpenAI). Todos los contenidos son editados y curados por humanos.",
+      },
+      {
+        q: "Emergencia",
+        a: "SagaTrail no sustituye ninguna app oficial de rescate de montaña. En caso de emergencia: Rega 1414 o número europeo 112.",
+      },
+      {
+        q: "Aviso",
+        a: "SagaTrail no se hace responsable de la exactitud de los datos de rutas o condiciones meteorológicas. Las caminatas se realizan bajo tu propia responsabilidad.",
+      },
+    ],
   },
   pt: {
     eyebrow: "Jurídico & Dados",
     datenschutzTitle: "Privacidade",
     impressumTitle: "Aviso Legal",
-    datenschutz: {
-      q1: "Quais dados coletamos",
-      a1: "SagaTrail processa dados de localização (apenas durante uma caminhada ativa), seu perfil (nome, arquétipo, cantão de origem, idioma, faixa etária), bem como seu progresso na história e coleções desbloqueadas.",
-      q2: "Onde os dados ficam",
-      a2: "Nesta versão de lançamento inicial, todos os dados são armazenados exclusivamente de forma local no seu dispositivo. Não ocorre nenhuma transferência para servidores. Você pode exportar ou excluir completamente seus dados a qualquer momento nas configurações.",
-      q3: "Localização",
-      a3: "A localização é usada apenas para acionar momentos da narrativa nos pontos de passagem apropriados. Você pode revogar a permissão a qualquer momento no sistema operacional; o aplicativo continuará funcionando com uma rota simulada.",
-      q4: "Crianças",
-      a4: "Para a faixa etária das crianças, é necessária a confirmação de um pai ou responsável legal. O conteúdo é adaptado à idade.",
-    },
-    impressum: {
-      q1: "Provedor",
-      a1: "SagaTrail (Versão de lançamento inicial). A equipe SagaTrail é responsável pelo conteúdo do aplicativo.",
-      q2: "Lendas & Fontes",
-      a2: "As lendas contadas baseiam-se em tradições de domínio público e coleções históricas de lendas. A respectiva fonte é indicada em cada lenda.",
-      q3: "Emergência",
-      a3: "SagaTrail não substitui nenhum aplicativo oficial de emergência ou resgate de montanha. Em caso de emergência: Rega 1414 ou número de emergência europeu 112.",
-      q4: "Contato",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Responsável pelo tratamento",
+        a: "SagaTrail é responsável pelo tratamento dos seus dados pessoais. Contacto: info@sagatrail.ch",
+      },
+      {
+        q: "Que dados tratamos",
+        a: "Dados de localização (apenas durante uma caminhada ativa), perfil (nome, arquétipo, cantão, idioma, faixa etária), progresso e conteúdos desbloqueados, identificadores de dispositivo para notificações, metadados de pagamento anonimizados via App Store.",
+      },
+      {
+        q: "Autenticação (Clerk)",
+        a: "Usamos o Clerk (clerk.com) para o início de sessão. O Clerk armazena de forma segura o seu e-mail e tokens OAuth. Mais informações: clerk.com/privacy",
+      },
+      {
+        q: "Pagamentos & assinaturas (RevenueCat)",
+        a: "As assinaturas são processadas pela App Store. RevenueCat (revenuecat.com) gere o estado das assinaturas. Nenhum dado de cartão bancário é partilhado com a SagaTrail.",
+      },
+      {
+        q: "Dados de localização",
+        a: "A localização só é recolhida durante uma caminhada ativa, para ativar os momentos narrativos. Os dados não são armazenados permanentemente nos servidores. Pode revogar a permissão a qualquer momento nas definições do dispositivo.",
+      },
+      {
+        q: "Os seus direitos (RGPD / LPD)",
+        a: "Tem direito de acesso, retificação, eliminação e portabilidade dos seus dados. Para eliminar a sua conta, use a opção em Definições ou contacte info@sagatrail.ch.",
+      },
+      {
+        q: "Segurança dos dados",
+        a: "Todos os dados são transmitidos com encriptação (TLS 1.3). A nossa infraestrutura de servidores está na UE e cumpre a LPD suíça e o RGPD.",
+      },
+      {
+        q: "Crianças",
+        a: "SagaTrail não é destinado a crianças com menos de 13 anos. Para a faixa etária de crianças, é necessária a confirmação de um pai ou tutor legal.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Fornecedor",
+        a: "SagaTrail\nContacto: info@sagatrail.ch\nSite: sagatrail.ch",
+      },
+      {
+        q: "Lendas & Fontes",
+        a: "As lendas provêm do domínio público e de coleções históricas suíças. Cada lenda cita a sua fonte.",
+      },
+      {
+        q: "Dados cartográficos",
+        a: "Mapas: © colaboradores do OpenStreetMap (ODbL). Trilhos: Waymarked Trails. Dados topográficos: © swisstopo. Encaminhamento: FOSSGIS Valhalla.",
+      },
+      {
+        q: "Vozes de narração IA",
+        a: "Os textos são narrados por vozes de IA (ElevenLabs, OpenAI). Todos os conteúdos são editados e curados por humanos.",
+      },
+      {
+        q: "Emergência",
+        a: "SagaTrail não substitui nenhuma app oficial de resgate em montanha. Em caso de emergência: Rega 1414 ou número europeu 112.",
+      },
+      {
+        q: "Aviso",
+        a: "SagaTrail não assume qualquer responsabilidade pela exatidão dos dados de percurso ou condições meteorológicas. As caminhadas são realizadas sob sua própria responsabilidade.",
+      },
+    ],
   },
   zh: {
     eyebrow: "法律与数据",
     datenschutzTitle: "隐私政策",
     impressumTitle: "法律声明",
-    datenschutz: {
-      q1: "我们收集哪些数据",
-      a1: "SagaTrail 处理位置数据（仅在活跃徒步期间）、您的个人资料（姓名、原型、家乡州、语言、年龄段）以及您的故事进度和解锁的收藏。",
-      q2: "数据存储在哪里",
-      a2: "在此初始启动版本中，所有数据都专门存储在您的设备本地。不会向服务器传输任何数据。您可以随时在设置中导出或完全删除您的数据。",
-      q3: "位置",
-      a3: "位置仅用于在适当的路点触发叙事时刻。您可以随时在操作系统中撤销授权；随后应用程序将通过模拟路线继续运行。",
-      q4: "儿童",
-      a4: "对于儿童年龄段，需要父母或法定监护人的确认。内容会根据年龄进行调整。",
-    },
-    impressum: {
-      q1: "提供者",
-      a1: "SagaTrail (初始启动版本)。SagaTrail 团队负责应用程序的内容。",
-      q2: "传说与来源",
-      a2: "讲述的故事基于公共领域的传统和历史传说集。每个传说中都注明了相应的来源。",
-      q3: "紧急情况",
-      a3: "SagaTrail 不能替代任何官方紧急或山地救援应用程序。在紧急情况下：Rega 1414 或欧洲紧急电话 112。",
-      q4: "联系方式",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "数据控制者",
+        a: "SagaTrail 负责处理您的个人数据。联系方式：info@sagatrail.ch",
+      },
+      {
+        q: "我们处理哪些数据",
+        a: "位置数据（仅在活跃徒步期间）、个人资料（姓名、原型、家乡州、语言、年龄段）、徒步进度与解锁内容、设备标识符（用于推送通知）以及通过 App Store 匿名化的支付元数据。",
+      },
+      {
+        q: "身份验证 (Clerk)",
+        a: "我们使用 Clerk (clerk.com) 进行登录。Clerk 安全存储您的电子邮件和 OAuth 令牌。了解更多：clerk.com/privacy",
+      },
+      {
+        q: "支付与订阅 (RevenueCat)",
+        a: "订阅通过 App Store 处理。RevenueCat (revenuecat.com) 管理订阅状态。SagaTrail 不会收到任何银行卡数据。",
+      },
+      {
+        q: "位置数据",
+        a: "位置数据仅在活跃徒步期间收集，用于在正确的路点触发故事时刻。数据不会永久存储在服务器上。您可以随时在设备设置中撤销此权限。",
+      },
+      {
+        q: "您的权利 (GDPR / nFADP)",
+        a: "您有权访问、更正、删除和转移您的数据。要删除账号，请使用「设置」中的选项或联系 info@sagatrail.ch。",
+      },
+      {
+        q: "数据安全",
+        a: "所有数据均通过加密传输 (TLS 1.3)。我们的服务器基础设施位于欧盟，符合瑞士 DSG 和 GDPR。",
+      },
+      {
+        q: "儿童",
+        a: "SagaTrail 不适用于 13 岁以下儿童。对于儿童年龄段，需要父母或法定监护人的确认。",
+      },
+    ],
+    impressum: [
+      {
+        q: "提供者",
+        a: "SagaTrail\n联系方式：info@sagatrail.ch\n网站：sagatrail.ch",
+      },
+      {
+        q: "传说与来源",
+        a: "讲述的故事来自公共领域的瑞士民间传说与历史传说集。每个故事均注明来源。",
+      },
+      {
+        q: "地图数据",
+        a: "地图：© OpenStreetMap 贡献者 (ODbL)。徒步路线：Waymarked Trails。地形数据：© swisstopo。路线规划：FOSSGIS Valhalla。",
+      },
+      {
+        q: "AI 叙述语音",
+        a: "故事文本由 AI 语音朗读（ElevenLabs、OpenAI）。所有内容均经过人工编辑和策划。",
+      },
+      {
+        q: "紧急情况",
+        a: "SagaTrail 不能替代任何官方山地救援或紧急应用。紧急情况下：Rega 1414 或欧洲紧急电话 112。",
+      },
+      {
+        q: "免责声明",
+        a: "SagaTrail 对路线数据或天气状况的准确性不承担任何责任。徒步活动由您自行负责。",
+      },
+    ],
   },
   ru: {
     eyebrow: "Право и данные",
     datenschutzTitle: "Конфиденциальность",
     impressumTitle: "Выходные данные",
-    datenschutz: {
-      q1: "Какие данные мы собираем",
-      a1: "SagaTrail обрабатывает данные о местоположении (только во время активного похода), твой профиль (имя, архетип, родной кантон, язык, возрастную группу), а также прогресс истории и разблокированные коллекции.",
-      q2: "Где хранятся данные",
-      a2: "В этой ранней версии все данные хранятся исключительно локально на твоём устройстве. Передача данных на серверы не происходит. Ты можешь в любой момент экспортировать или полностью удалить свои данные в настройках.",
-      q3: "Местоположение",
-      a3: "Местоположение используется только для запуска сюжетных моментов в подходящих точках маршрута. Ты можешь в любой момент отозвать разрешение в операционной системе; приложение продолжит работать с симулированным маршрутом.",
-      q4: "Дети",
-      a4: "Для возрастной группы «Дети» требуется подтверждение от родителя или законного опекуна. Контент адаптируется по возрасту.",
-    },
-    impressum: {
-      q1: "Поставщик",
-      a1: "SagaTrail (ранняя версия). За содержание приложения отвечает команда SagaTrail.",
-      q2: "Легенды и источники",
-      a2: "Рассказанные легенды основаны на общественном достоянии и исторических сборниках легенд. Соответствующий источник указан в каждой легенде.",
-      q3: "Экстренная помощь",
-      a3: "SagaTrail не заменяет официальное приложение экстренной помощи или горноспасательной службы. В экстренной ситуации: Rega 1414 или европейский номер экстренной помощи 112.",
-      q4: "Контакт",
-      a4: "info@sagatrail.ch",
-    },
+    datenschutz: [
+      {
+        q: "Контролёр данных",
+        a: "SagaTrail отвечает за обработку твоих персональных данных. Контакт: info@sagatrail.ch",
+      },
+      {
+        q: "Какие данные мы обрабатываем",
+        a: "Данные о местоположении (только во время активного похода), профиль (имя, архетип, родной кантон, язык, возрастная группа), прогресс и разблокированный контент, идентификаторы устройства для уведомлений, анонимизированные данные о платежах через App Store.",
+      },
+      {
+        q: "Аутентификация (Clerk)",
+        a: "Для входа используется Clerk (clerk.com). Clerk надёжно хранит твой адрес электронной почты и OAuth-токены. Подробнее: clerk.com/privacy",
+      },
+      {
+        q: "Платежи и подписки (RevenueCat)",
+        a: "Подписки обрабатываются через App Store. RevenueCat (revenuecat.com) управляет статусом подписок. Данные банковских карт не передаются SagaTrail.",
+      },
+      {
+        q: "Данные о местоположении",
+        a: "Местоположение собирается только во время активного похода для запуска сюжетных моментов. Данные не хранятся постоянно на серверах. Разрешение можно отозвать в любое время в настройках устройства.",
+      },
+      {
+        q: "Твои права (GDPR / nFADP)",
+        a: "Ты имеешь право на доступ, исправление, удаление и перенос своих данных. Для удаления аккаунта используй опцию в Настройках или напиши на info@sagatrail.ch.",
+      },
+      {
+        q: "Безопасность данных",
+        a: "Все данные передаются с шифрованием (TLS 1.3). Серверная инфраструктура находится в ЕС и соответствует швейцарскому DSG и GDPR.",
+      },
+      {
+        q: "Дети",
+        a: "SagaTrail не предназначен для детей до 13 лет. Для возрастной группы «Дети» требуется подтверждение от родителя или законного опекуна.",
+      },
+    ],
+    impressum: [
+      {
+        q: "Поставщик",
+        a: "SagaTrail\nКонтакт: info@sagatrail.ch\nСайт: sagatrail.ch",
+      },
+      {
+        q: "Легенды и источники",
+        a: "Рассказанные легенды основаны на общественном достоянии и исторических сборниках швейцарских легенд. Каждая легенда содержит ссылку на источник.",
+      },
+      {
+        q: "Картографические данные",
+        a: "Карты: © участники OpenStreetMap (ODbL). Маршруты: Waymarked Trails. Топографические данные: © swisstopo. Маршрутизация: FOSSGIS Valhalla.",
+      },
+      {
+        q: "Голоса ИИ-нарратора",
+        a: "Тексты озвучиваются голосами ИИ (ElevenLabs, OpenAI). Весь контент редактируется и курируется людьми.",
+      },
+      {
+        q: "Экстренная помощь",
+        a: "SagaTrail не заменяет официальное приложение горноспасательной службы. В экстренной ситуации: Rega 1414 или европейский номер 112.",
+      },
+      {
+        q: "Отказ от ответственности",
+        a: "SagaTrail не несёт ответственности за точность данных маршрутов или погодных условий. Походы совершаются на твоей собственной ответственности.",
+      },
+    ],
   },
 };
 

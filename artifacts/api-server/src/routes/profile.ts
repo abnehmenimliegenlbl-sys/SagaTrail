@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth, clerkClient } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, profilesTable } from "@workspace/db";
@@ -478,6 +478,19 @@ router.patch("/me/notifications", async (req, res): Promise<void> => {
     .update(profilesTable)
     .set({ pushWeatherEnabled })
     .where(eq(profilesTable.id, userId));
+  res.json({ ok: true });
+});
+
+// DELETE /me — löscht das Konto vollständig (DB + Clerk)
+router.delete("/me", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  await db.delete(profilesTable).where(eq(profilesTable.id, userId));
+  try {
+    await clerkClient.users.deleteUser(userId);
+  } catch (err) {
+    req.log.warn({ err }, "[deleteAccount] Clerk-Benutzer konnte nicht gelöscht werden");
+  }
   res.json({ ok: true });
 });
 

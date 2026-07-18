@@ -55,16 +55,27 @@ export default function Summary() {
 
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
+  const [transportStart, setTransportStart] = useState<TransportStationboard | null>(null);
 
   // SBB live am Ziel — Abfahrten vom letzten Wegpunkt der abgeschlossenen Route.
   useEffect(() => {
     const g = lastHike?.geometry;
     if (!g || g.length === 0) return;
     const endPt = g[g.length - 1];
+    const startPt = g[0];
     let cancelled = false;
     setTransportLoading(true);
-    getTransportStationboard({ lat: endPt[0], lng: endPt[1] })
-      .then((result) => { if (!cancelled) { setTransport(result); setTransportLoading(false); } })
+    Promise.all([
+      getTransportStationboard({ lat: endPt[0], lng: endPt[1] }),
+      getTransportStationboard({ lat: startPt[0], lng: startPt[1] }),
+    ])
+      .then(([endResult, startResult]) => {
+        if (!cancelled) {
+          setTransport(endResult);
+          setTransportStart(startResult);
+          setTransportLoading(false);
+        }
+      })
       .catch(() => { if (!cancelled) { setTransport(null); setTransportLoading(false); } });
     return () => { cancelled = true; };
   }, [lastHike?.id]);
@@ -87,12 +98,14 @@ export default function Summary() {
   const sagaTitle =
     sagas.find((s) => s.id === lastHike.sagaId)?.title ?? lastHike.routeName;
 
-  // SBB-Rueckreise: VON = Routenendpunkt, NACH = Routenstartpunkt.
+  // SBB-Rueckreise: VON = naechste Station am Endpunkt, NACH = naechste Station am Startpunkt.
   const oeffneRueckreise = () => {
     const g = lastHike.geometry;
     if (!g || g.length < 2) return;
-    const von = `${g[g.length - 1][0]},${g[g.length - 1][1]}`;
-    const nach = `${g[0][0]},${g[0][1]}`;
+    const von = transport?.station?.name
+      ?? `${g[g.length - 1][0]},${g[g.length - 1][1]}`;
+    const nach = transportStart?.station?.name
+      ?? `${g[0][0]},${g[0][1]}`;
     Linking.openURL(
       `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
     ).catch(() => {});
