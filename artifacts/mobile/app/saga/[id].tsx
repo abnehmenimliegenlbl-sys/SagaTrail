@@ -33,7 +33,7 @@ import {
 import { useClaimKantonspack, getGetMyProfileQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolveLang } from "@/lib/storyContent";
-import { useSagaFoto } from "@/lib/useSagaFoto";
+import { useSagaFoto, clearSagaFotoCache } from "@/lib/useSagaFoto";
 
 export default function SagaDetail() {
   const t = useSagaStrings();
@@ -52,6 +52,7 @@ export default function SagaDetail() {
     refreshCustomerInfo,
   } = useSubscription();
   const [packBusy, setPackBusy] = useState(false);
+  const [fotoFehler, setFotoFehler] = useState(false);
 
   const [saga, setSaga] = useState(() => getSaga(id));
   const [loading, setLoading] = useState(!saga);
@@ -183,7 +184,15 @@ export default function SagaDetail() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroWrap}>
-          <Image source={sagaFoto.source} style={styles.hero} resizeMode="cover" />
+          <Image
+            source={fotoFehler ? sagaFoto.fallback : sagaFoto.source}
+            style={styles.hero}
+            resizeMode="cover"
+            onError={() => {
+              if (saga) clearSagaFotoCache(saga.id);
+              setFotoFehler(true);
+            }}
+          />
           <Pressable
             onPress={() => router.back()}
             style={[

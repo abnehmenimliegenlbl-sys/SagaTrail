@@ -18,6 +18,7 @@ const teufelImg = require("@/assets/images/saga-teufelsbruecke.png");
 
 export interface SagaFoto {
   source: ImageSourcePropType;
+  fallback: ImageSourcePropType;
   attribution: string | null;
 }
 
@@ -28,6 +29,14 @@ interface GecachtesFoto {
 
 const fotoCache = new Map<string, GecachtesFoto>();
 const laufend = new Map<string, Promise<GecachtesFoto>>();
+
+/**
+ * Loescht den gecachten Foto-Eintrag fuer eine Sage (z. B. nach einem
+ * Ladefehler), damit beim naechsten Rendern ein neuer Versuch gestartet wird.
+ */
+export function clearSagaFotoCache(sagaId: string): void {
+  fotoCache.delete(sagaId);
+}
 
 function fallbackBild(saga: Saga | null): number {
   return saga?.id === "teufelsbrucke" ? teufelImg : heroImg;
@@ -124,7 +133,7 @@ export function useSagaFoto(saga: Saga | null): SagaFoto {
   }, [schluessel]);
 
   if (foto?.url) {
-    return { source: { uri: foto.url }, attribution: foto.attribution };
+    return { source: { uri: foto.url }, fallback, attribution: foto.attribution };
   }
-  return { source: fallback, attribution: null };
+  return { source: fallback, fallback, attribution: null };
 }
