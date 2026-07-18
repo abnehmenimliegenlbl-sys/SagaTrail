@@ -112,9 +112,7 @@ foreach ($routen as $route) {
             'lat'        => $poi['lat']             ?? ($poi['center']['lat'] ?? null),
             'lng'        => $poi['lon']             ?? ($poi['center']['lon'] ?? null),
         ];
-        $e = $leads[$osm_id]['email'];
-        $w = $leads[$osm_id]['website'];
-        $leads[$osm_id]['tier'] = $e ? 'Top' : ($w ? 'Mid' : 'Low');
+        $leads[$osm_id]['tier'] = $leads[$osm_id]['email'] ? 'Top' : null;
     }
 
     $eingefuegt = 0;
