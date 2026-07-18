@@ -48,12 +48,20 @@ async function ladeMotivFoto(saga: Saga, schluessel: string): Promise<GecachtesF
   const bereits = laufend.get(schluessel);
   if (bereits) return bereits;
   const anfrage = (async (): Promise<GecachtesFoto> => {
+    // 0. Sofort-Treffer: Foto bereits in der Sage-Antwort vom Server gecacht.
+    if (saga.fotoUrl) {
+      return { url: saga.fotoUrl, attribution: saga.fotoAttribution ?? null };
+    }
     // 1. Versuch: Foto passend zum konkreten Bildmotiv der Sage (worum es
     // inhaltlich geht, z. B. "Vogel Gryff" statt Rheinufer).
+    // sagaId mitschicken: Server schreibt Ergebnis dauerhaft in catalog_sagas.
     const suchbegriff = motivSuchbegriff(saga);
     if (suchbegriff) {
       try {
-        const motivAntwort = await getSagaPhoto({ query: suchbegriff });
+        const motivAntwort = await getSagaPhoto({
+          query: suchbegriff,
+          sagaId: saga.id,
+        } as Parameters<typeof getSagaPhoto>[0]);
         if (motivAntwort.photoUrl) {
           return {
             url: motivAntwort.photoUrl,

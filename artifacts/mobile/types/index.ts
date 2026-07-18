@@ -59,6 +59,9 @@ export interface Saga {
   coordinates?: LatLng;
   koordinatenSicherheit: KoordinatenSicherheit;
   isAnchorPlace: boolean;
+  /** Gecachtes Foto aus Wikimedia Commons. Null = noch kein Foto vorhanden. */
+  fotoUrl?: string | null;
+  fotoAttribution?: string | null;
 }
 
 export interface StoryChapter {

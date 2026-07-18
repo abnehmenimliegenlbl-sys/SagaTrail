@@ -450,6 +450,10 @@ export interface CatalogSaga {
   coordinates?: CatalogCoordinates;
   koordinatenSicherheit: CatalogSagaKoordinatenSicherheit;
   isAnchorPlace: boolean;
+  /** Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden. */
+  fotoUrl?: string | null;
+  /** Urheber-/Lizenzangabe zum Sagenfoto. */
+  fotoAttribution?: string | null;
 }
 
 export interface CatalogResponse {
@@ -634,6 +638,10 @@ lng: number;
 
 export type GetSagaPhotoParams = {
 query: string;
+/**
+ * Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird, speichert der Server das Ergebnis dauerhaft in catalog_sagas (dauerhafter Cache, analog zur Route-Foto-Logik).
+ */
+sagaId?: string;
 };
 
 export type SearchPlacesParams = {

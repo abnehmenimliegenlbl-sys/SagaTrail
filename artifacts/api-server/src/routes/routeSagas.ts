@@ -26,6 +26,8 @@ function toSaga(row: CatalogSagaRow) {
         : undefined,
     koordinatenSicherheit: row.koordinatenSicherheit,
     isAnchorPlace: row.isAnchorPlace,
+    fotoUrl: row.fotoUrl ?? null,
+    fotoAttribution: row.fotoAttribution ?? null,
   };
 }
 

@@ -769,6 +769,8 @@ function sagaFromWikiSummary(
     lng,
     koordinatenSicherheit: "ungefaehr",
     isAnchorPlace: false,
+    fotoUrl: null,
+    fotoAttribution: null,
   } as CatalogSagaRow;
 }
 

@@ -8,4 +8,8 @@
 
 export type GetSagaPhotoParams = {
 query: string;
+/**
+ * Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird, speichert der Server das Ergebnis dauerhaft in catalog_sagas (dauerhafter Cache, analog zur Route-Foto-Logik).
+ */
+sagaId?: string;
 };

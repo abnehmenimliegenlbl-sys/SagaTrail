@@ -70,6 +70,11 @@ export const catalogSagasTable = pgTable("catalog_sagas", {
     .notNull()
     .default("nicht_lokalisierbar"),
   isAnchorPlace: boolean("is_anchor_place").notNull().default(false),
+  // Gecachtes Foto aus Wikimedia Commons (Motiv-Suche via bildmotiv).
+  // Wird beim ersten erfolgreichen /sagas/photo-Aufruf persistent gesetzt
+  // und danach direkt in der Katalog-Antwort mitgeliefert (kein Extra-Request).
+  fotoUrl: text("foto_url"),
+  fotoAttribution: text("foto_attribution"),
 });
 
 export const insertCatalogSagaSchema = createInsertSchema(catalogSagasTable);

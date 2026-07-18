@@ -72,7 +72,9 @@ export const GetCatalogResponse = zod.object({
   "lng": zod.number()
 }).optional(),
   "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
-  "isAnchorPlace": zod.boolean()
+  "isAnchorPlace": zod.boolean(),
+  "fotoUrl": zod.string().nullish().describe('Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden.'),
+  "fotoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Sagenfoto.')
 }))
 })
 
@@ -370,7 +372,8 @@ export const GetRoutePhotoResponse = zod.object({
  * @summary Thematisch passendes Foto fuer eine Sage (Wikimedia Commons)
  */
 export const GetSagaPhotoQueryParams = zod.object({
-  "query": zod.coerce.string()
+  "query": zod.coerce.string(),
+  "sagaId": zod.coerce.string().optional().describe('Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird, speichert der Server das Ergebnis dauerhaft in catalog_sagas (dauerhafter Cache, analog zur Route-Foto-Logik).\n')
 })
 
 export const GetSagaPhotoResponse = zod.object({
@@ -503,7 +506,9 @@ export const GetRouteSagaResponse = zod.object({
   "lng": zod.number()
 }).optional(),
   "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
-  "isAnchorPlace": zod.boolean()
+  "isAnchorPlace": zod.boolean(),
+  "fotoUrl": zod.string().nullish().describe('Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden.'),
+  "fotoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Sagenfoto.')
 })
 
 

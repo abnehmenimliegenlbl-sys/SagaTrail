@@ -554,6 +554,15 @@ paths:
           required: true
           schema:
             type: string
+        - name: sagaId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: >
+            Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird,
+            speichert der Server das Ergebnis dauerhaft in catalog_sagas
+            (dauerhafter Cache, analog zur Route-Foto-Logik).
       responses:
         "200":
           description: Foto-URL oder null
@@ -1766,6 +1775,14 @@ components:
             - nicht_lokalisierbar
         isAnchorPlace:
           type: boolean
+        fotoUrl:
+          type: string
+          nullable: true
+          description: Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden.
+        fotoAttribution:
+          type: string
+          nullable: true
+          description: Urheber-/Lizenzangabe zum Sagenfoto.
       required:
         - id
         - title
