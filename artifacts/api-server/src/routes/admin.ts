@@ -589,6 +589,48 @@ router.delete("/admin/partner/:id", async (req, res): Promise<void> => {
   res.status(204).end();
 });
 
+/* ---- SAGEN-KATALOG (Foto-Kuration) ---- */
+router.get("/admin/sagas", async (req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select({
+        id: catalogSagasTable.id,
+        canton: catalogSagasTable.canton,
+        title: catalogSagasTable.title,
+        summary: catalogSagasTable.summary,
+        fotoUrl: catalogSagasTable.fotoUrl,
+        fotoAttribution: catalogSagasTable.fotoAttribution,
+      })
+      .from(catalogSagasTable)
+      .orderBy(catalogSagasTable.canton, catalogSagasTable.title);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Admin sagas list fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
+  const { id } = req.params;
+  const { fotoUrl, fotoAttribution } = req.body as {
+    fotoUrl?: string | null;
+    fotoAttribution?: string | null;
+  };
+  try {
+    await db
+      .update(catalogSagasTable)
+      .set({
+        fotoUrl: fotoUrl ?? null,
+        fotoAttribution: fotoAttribution ?? null,
+      })
+      .where(eq(catalogSagasTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Admin saga foto update fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
 router.get("/admin/dashboard", (_req, res): void => {
   res.type("html").send(ADMIN_DASHBOARD_HTML);
 });

@@ -130,6 +130,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('usage',this)">&#128290; Nutzungsdaten</button>
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
+  <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
 </div>
 
 <div id="content">
@@ -211,6 +212,21 @@ a{color:var(--red);text-decoration:none}
       <div id="push-history">
         <p class="hint">Noch keine Sendung in dieser Sitzung.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- SAGEN-FOTOS -->
+  <div id="tab-sagen" class="tab-pane">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">&#128218; Sagen-Fotos kuratieren</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="sagen-search" type="text" placeholder="Suchen (Titel, Kanton)..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px" oninput="filterSagen(this.value)">
+          <span id="sagen-count" class="hint"></span>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:12px">Foto-URL direkt in die Zeile eingeben und mit &#10003; speichern. Leer lassen um das Foto zu entfernen.</p>
+      <div id="sagen-body"><p class="loading">Verbinde...</p></div>
     </div>
   </div>
 
@@ -324,7 +340,7 @@ async function connect() {
   _token = document.getElementById('tok-input').value;
   try {
     setTokStatus('Lade...', undefined);
-    await Promise.all([loadOverview(), loadPartner(), loadPushStats()]);
+    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen()]);
     localStorage.setItem(LS_KEY, _token);
     document.getElementById('tok-input').style.display = 'none';
     document.getElementById('tok-btn').style.display = 'none';
@@ -350,7 +366,7 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tok-btn').style.display = 'none';
     document.getElementById('tok-forget').style.display = '';
     setTokStatus('Lade...', undefined);
-    Promise.all([loadOverview(), loadPartner(), loadPushStats()])
+    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen()])
       .then(function() { setTokStatus('Verbunden \u2713', true); })
       .catch(function(e) {
         localStorage.removeItem(LS_KEY);
@@ -370,9 +386,10 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'users' && token()) loadUsers();
-  if (name === 'usage' && token()) loadUsage();
-  if (name === 'push'  && token()) loadPushStats();
+  if (name === 'users'  && token()) loadUsers();
+  if (name === 'usage'  && token()) loadUsage();
+  if (name === 'push'   && token()) loadPushStats();
+  if (name === 'sagen'  && token()) loadSagen();
 }
 
 /* ===================== ÜBERSICHT ===================== */
@@ -855,6 +872,111 @@ function closeModal() { document.getElementById('modal-overlay').classList.remov
 function copyModal() {
   var t = document.getElementById('modal-text').textContent;
   navigator.clipboard.writeText(t).then(function(){ alert('Kopiert!'); }).catch(function(){ });
+}
+
+/* ===================== SAGEN-FOTOS ===================== */
+var _sagen = [];
+async function loadSagen() {
+  if (!token()) return;
+  try {
+    _sagen = await api('/api/admin/sagas');
+    renderSagen(_sagen);
+  } catch(e) {
+    document.getElementById('sagen-body').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+function filterSagen(q) {
+  var f = q.toLowerCase();
+  var filtered = _sagen.filter(function(s){
+    return !f || s.title.toLowerCase().includes(f) || s.canton.toLowerCase().includes(f);
+  });
+  renderSagen(filtered);
+}
+function renderSagen(list) {
+  var el = document.getElementById('sagen-body');
+  var cnt = document.getElementById('sagen-count');
+  cnt.textContent = list.length + ' Sagen';
+  var ohneF = list.filter(function(s){ return !s.fotoUrl; }).length;
+  if (ohneF) cnt.textContent += ' \u00b7 ' + ohneF + ' ohne Foto';
+  if (!list.length) { el.innerHTML = '<p class="hint">Keine Sagen gefunden.</p>'; return; }
+  var html = '<div style="overflow-x:auto"><table class="tbl" style="min-width:900px">' +
+    '<thead><tr>' +
+    '<th style="width:48px">Kanton</th>' +
+    '<th style="width:180px">Titel</th>' +
+    '<th>Kurzbeschreibung</th>' +
+    '<th style="width:320px">Foto-URL</th>' +
+    '<th style="width:72px">Foto</th>' +
+    '<th style="width:60px"></th>' +
+    '</tr></thead><tbody>';
+  list.forEach(function(s) {
+    var sid = s.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    var summary = s.summary ? (s.summary.length > 120 ? s.summary.slice(0,118) + '\u2026' : s.summary) : '';
+    html += '<tr id="sr-' + sid + '">' +
+      '<td><span class="badge badge-gray">' + esc(s.canton) + '</span></td>' +
+      '<td style="font-weight:600;font-size:12px">' + esc(s.title) + '</td>' +
+      '<td style="font-size:12px;color:var(--mid);line-height:1.4">' + esc(summary) + '</td>' +
+      '<td>' +
+        '<input id="sf-url-' + sid + '" type="url" value="' + esc(s.fotoUrl||'') + '" ' +
+          'style="width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:monospace" ' +
+          'oninput="sagaFotoChanged(\'' + sid + '\')" ' +
+          'onkeydown="if(event.key===\'Enter\')saveSagaFoto(\'' + s.id + '\',\'' + sid + '\')" />' +
+      '</td>' +
+      '<td style="text-align:center">' +
+        (s.fotoUrl
+          ? '<img id="sf-img-' + sid + '" src="' + esc(s.fotoUrl) + '" ' +
+            'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+            'onerror="this.style.opacity=\'0.2\'" />'
+          : '<div id="sf-img-' + sid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>'
+        ) +
+      '</td>' +
+      '<td style="text-align:center">' +
+        '<button id="sf-btn-' + sid + '" class="btn btn-ghost btn-sm" ' +
+          'onclick="saveSagaFoto(\'' + s.id + '\',\'' + sid + '\')" ' +
+          'style="opacity:.4" disabled>&#10003;</button>' +
+        '<div id="sf-st-' + sid + '" style="font-size:10px;color:var(--mid);margin-top:2px"></div>' +
+      '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+function sagaFotoChanged(sid) {
+  var btn = document.getElementById('sf-btn-' + sid);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+async function saveSagaFoto(sagaId, sid) {
+  var urlEl = document.getElementById('sf-url-' + sid);
+  var stEl  = document.getElementById('sf-st-'  + sid);
+  var btn   = document.getElementById('sf-btn-' + sid);
+  if (!urlEl) return;
+  var url = urlEl.value.trim();
+  btn.disabled = true; btn.style.opacity = '.4';
+  stEl.textContent = '\u2026';
+  try {
+    await api('/api/admin/sagas/' + encodeURIComponent(sagaId) + '/foto', {
+      method: 'PATCH',
+      body: JSON.stringify({ fotoUrl: url || null, fotoAttribution: null })
+    });
+    stEl.style.color = 'var(--green)'; stEl.textContent = '\u2713';
+    // Vorschau aktualisieren
+    var imgEl = document.getElementById('sf-img-' + sid);
+    if (imgEl) {
+      if (url) {
+        imgEl.outerHTML = '<img id="sf-img-' + sid + '" src="' + esc(url) + '" ' +
+          'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+          'onerror="this.style.opacity=\'0.2\'" />';
+      } else {
+        imgEl.outerHTML = '<div id="sf-img-' + sid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>';
+      }
+    }
+    // Cache aktualisieren
+    var entry = _sagen.find(function(s){ return s.id === sagaId; });
+    if (entry) entry.fotoUrl = url || null;
+    setTimeout(function(){ stEl.textContent = ''; }, 2000);
+  } catch(e) {
+    stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler';
+    btn.disabled = false; btn.style.opacity = '1';
+  }
 }
 
 /* ===================== HELPERS ===================== */
