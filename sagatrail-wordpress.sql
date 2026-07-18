@@ -1380,6 +1380,7 @@ CREATE TABLE `sagatrail_partner_leads` (
   `adresse`      VARCHAR(500)   DEFAULT NULL,
   `telefon`      VARCHAR(50)    DEFAULT NULL,
   `website`      VARCHAR(500)   DEFAULT NULL,
+  `email`        VARCHAR(255)   DEFAULT NULL,
   `lat`          DECIMAL(10,7)  DEFAULT NULL,
   `lng`          DECIMAL(10,7)  DEFAULT NULL,
   `erstellt_am`  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
