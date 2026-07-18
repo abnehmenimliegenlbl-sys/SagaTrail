@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D, SCHATTEN_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { PremiumUpsellBanner } from "@/components/brand/PremiumUpsellBanner";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
@@ -499,6 +500,15 @@ export default function KantonRouten() {
           loading={searching}
           disabled={searching}
         />
+
+        {freeHikeUsed && !premium && !isElite && (
+          <PremiumUpsellBanner
+            title={t.premiumCta}
+            body={t.premiumCtaBody}
+            cta={t.premiumCta}
+            style={{ marginTop: 12 }}
+          />
+        )}
 
         <View style={styles.results}>
           {searching ? (

@@ -47,6 +47,8 @@ export interface KantonStrings {
   importGpxTitle: string;
   importGpxText: string;
   importGpxReadError: string;
+  premiumCta: string;
+  premiumCtaBody: string;
 }
 
 const KANTON_STRINGS: StringsDict<KantonStrings> = {
@@ -101,6 +103,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "GPX-Import",
     importGpxText: "Die GPX-Datei konnte nicht verarbeitet werden.",
     importGpxReadError: "Die Datei konnte nicht gelesen werden.",
+    premiumCta: "Alle Routen freischalten",
+    premiumCtaBody: "Eine Route war gratis — Premium hebt die Sperre.",
   },
   gsw: {
     eyebrow: "Schritt 2 · Filter & Suechi",
@@ -153,6 +157,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "GPX-Import",
     importGpxText: "D'GPX-Datei het nid chöne verarbeitet wärde.",
     importGpxReadError: "D'Datei het nöd chöne gläse wärde.",
+    premiumCta: "Alli Route frischalte",
+    premiumCtaBody: "Ei Route isch umsunst gsi — Premium hebt d'Sperri.",
   },
   fr: {
     eyebrow: "Étape 2 · Filtres & Recherche",
@@ -205,6 +211,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "Import GPX",
     importGpxText: "Le fichier GPX n'a pas pu être traité.",
     importGpxReadError: "Le fichier n'a pas pu être lu.",
+    premiumCta: "Débloquer tous les itinéraires",
+    premiumCtaBody: "Un itinéraire était gratuit — Premium lève la restriction.",
   },
   it: {
     eyebrow: "Passo 2 · Filtri e Ricerca",
@@ -257,6 +265,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "Importazione GPX",
     importGpxText: "Il file GPX non ha potuto essere elaborato.",
     importGpxReadError: "Il file non ha potuto essere letto.",
+    premiumCta: "Sblocca tutti i percorsi",
+    premiumCtaBody: "Un percorso era gratuito — Premium rimuove il blocco.",
   },
   en: {
     eyebrow: "Step 2 · Filter & Search",
@@ -309,6 +319,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "GPX Import",
     importGpxText: "The GPX file could not be processed.",
     importGpxReadError: "The file could not be read.",
+    premiumCta: "Unlock all routes",
+    premiumCtaBody: "One route was free — Premium removes the lock.",
   },
   zh: {
     eyebrow: "第 2 步 · 过滤与搜索",
@@ -360,6 +372,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "GPX 导入",
     importGpxText: "GPX 文件无法处理。",
     importGpxReadError: "文件无法读取。",
+    premiumCta: "解锁所有路线",
+    premiumCtaBody: "一条路线是免费的——高级版解除限制。",
   },
   ru: {
     eyebrow: "Шаг 2 · Фильтр и поиск",
@@ -412,6 +426,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "Импорт GPX",
     importGpxText: "Файл GPX не удалось обработать.",
     importGpxReadError: "Файл не удалось прочитать.",
+    premiumCta: "Разблокировать все маршруты",
+    premiumCtaBody: "Один маршрут был бесплатным — Premium снимает ограничение.",
   },
   es: {
     eyebrow: "Paso 2 · Filtros y Búsqueda",
@@ -464,6 +480,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "Importación GPX",
     importGpxText: "El archivo GPX no pudo ser procesado.",
     importGpxReadError: "El archivo no pudo ser leído.",
+    premiumCta: "Desbloquear todas las rutas",
+    premiumCtaBody: "Una ruta era gratuita — Premium elimina la restricción.",
   },
   pt: {
     eyebrow: "Etapa 2 · Filtros e Busca",
@@ -516,6 +534,8 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     importGpxTitle: "Importação GPX",
     importGpxText: "O arquivo GPX não pôde ser processado.",
     importGpxReadError: "O arquivo não pôde ser lido.",
+    premiumCta: "Desbloquear todas as rotas",
+    premiumCtaBody: "Uma rota era gratuita — Premium remove o bloqueio.",
   },
 };
 

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { CantonWappen } from "@/components/brand/CantonWappen";
+import { PremiumUpsellBanner } from "@/components/brand/PremiumUpsellBanner";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { CantonWithRoutes } from "@/constants/routes";
@@ -36,7 +37,8 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, language, activeHike, clearActiveHike } = useApp();
+  const { profile, language, activeHike, clearActiveHike, premium, freeHikeUsed } = useApp();
+  const { isElite } = useSubscription();
   const t = useHomeStrings();
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
@@ -132,6 +134,16 @@ export default function Entdecken() {
                 <Feather name="x" size={16} color={colors.mutedForeground} />
               </Pressable>
             </Pressable>
+          </Animated.View>
+        )}
+
+        {freeHikeUsed && !premium && !isElite && (
+          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <PremiumUpsellBanner
+              title={t.premiumBannerTitle}
+              body={t.premiumBannerBody}
+              cta={t.premiumBannerCta}
+            />
           </Animated.View>
         )}
 

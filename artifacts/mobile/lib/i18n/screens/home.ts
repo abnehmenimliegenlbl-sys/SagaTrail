@@ -20,6 +20,9 @@ export interface HomeStrings {
   resumeHint: (chapter: number, total: number) => string;
   resumeCta: string;
   resumeDismiss: string;
+  premiumBannerTitle: string;
+  premiumBannerBody: string;
+  premiumBannerCta: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -43,6 +46,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Kapitel ${c} von ${n} — die Sage wartet auf dich`,
     resumeCta: "Weiter wandern",
     resumeDismiss: "Verwerfen",
+    premiumBannerTitle: "Deine Gratis-Route wurde gewandert",
+    premiumBannerBody: "Entdecke alle 26 Kantone und ihre Sagen — unbegrenzt.",
+    premiumBannerCta: "Premium holen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -64,6 +70,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Kapitel ${c} vo ${n} — d Sag wartet uf di`,
     resumeCta: "Wiiter wandere",
     resumeDismiss: "Verwerfe",
+    premiumBannerTitle: "Dini Gratis-Route isch gwanderet",
+    premiumBannerBody: "Entdeck alli 26 Kantön und iri Sage — ohni Gränze.",
+    premiumBannerCta: "Premium hole",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -85,6 +94,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Chapter ${c} of ${n} — the legend awaits you`,
     resumeCta: "Continue hiking",
     resumeDismiss: "Dismiss",
+    premiumBannerTitle: "Your free route is used",
+    premiumBannerBody: "Discover all 26 cantons and their legends — unlimited.",
+    premiumBannerCta: "Get Premium",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -106,6 +118,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Chapitre ${c} sur ${n} — la légende t'attend`,
     resumeCta: "Reprendre la randonnée",
     resumeDismiss: "Ignorer",
+    premiumBannerTitle: "Ta randonnée gratuite est utilisée",
+    premiumBannerBody: "Découvre les 26 cantons et leurs légendes — sans limite.",
+    premiumBannerCta: "Passer Premium",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -127,6 +142,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capitolo ${c} di ${n} — la leggenda ti aspetta`,
     resumeCta: "Riprendi l'escursione",
     resumeDismiss: "Ignora",
+    premiumBannerTitle: "Il tuo percorso gratuito è esaurito",
+    premiumBannerBody: "Scopri tutti i 26 cantoni e le loro leggende — senza limiti.",
+    premiumBannerCta: "Ottieni Premium",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -148,6 +166,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capítulo ${c} de ${n} — la leyenda te espera`,
     resumeCta: "Continuar caminata",
     resumeDismiss: "Descartar",
+    premiumBannerTitle: "Tu ruta gratuita ya está usada",
+    premiumBannerBody: "Descubre los 26 cantones y sus leyendas — sin límite.",
+    premiumBannerCta: "Obtener Premium",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -169,6 +190,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Capítulo ${c} de ${n} — a lenda espera por você`,
     resumeCta: "Continuar caminhada",
     resumeDismiss: "Descartar",
+    premiumBannerTitle: "A sua rota gratuita foi percorrida",
+    premiumBannerBody: "Descubra todos os 26 cantões e as suas lendas — sem limites.",
+    premiumBannerCta: "Obter Premium",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -190,6 +214,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `第 ${c} 章，共 ${n} 章 — 传说在等你`,
     resumeCta: "继续徒步",
     resumeDismiss: "忽略",
+    premiumBannerTitle: "你的免费路线已使用",
+    premiumBannerBody: "探索全部 26 个州及其传说——无限制。",
+    premiumBannerCta: "获取高级版",
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -211,6 +238,9 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     resumeHint: (c, n) => `Глава ${c} из ${n} — легенда ждёт тебя`,
     resumeCta: "Продолжить поход",
     resumeDismiss: "Отклонить",
+    premiumBannerTitle: "Твой бесплатный маршрут использован",
+    premiumBannerBody: "Открывай все 26 кантонов и их легенды — без ограничений.",
+    premiumBannerCta: "Получить Premium",
   },
 };
 
