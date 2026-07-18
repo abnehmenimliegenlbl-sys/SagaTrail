@@ -43,7 +43,9 @@ export const GetCatalogResponse = zod.object({
   "lng": zod.number()
 }),
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
-  "featured": zod.boolean()
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
 })),
   "sagas": zod.array(zod.object({
   "id": zod.string(),
@@ -159,7 +161,9 @@ export const GetCantonRoutesResponseItem = zod.object({
   "lng": zod.number()
 }),
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
-  "featured": zod.boolean()
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
 })
 export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
@@ -425,7 +429,9 @@ export const GetCustomRouteResponse = zod.object({
   "lng": zod.number()
 }),
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
-  "featured": zod.boolean()
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
 })
 
 
@@ -458,7 +464,9 @@ export const ImportGpxRouteResponse = zod.object({
   "lng": zod.number()
 }),
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
-  "featured": zod.boolean()
+  "featured": zod.boolean(),
+  "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
 })
 
 

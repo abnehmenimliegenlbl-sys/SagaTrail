@@ -8,6 +8,13 @@ import { panoramaFuerRoute } from "@/lib/panorama";
 /**
  * Laedt fuer eine Route ein echtes, moeglichst saisonpassendes Foto aus der
  * Umgebung des Startpunkts (Wikimedia Commons, ueber den eigenen API-Server).
+ *
+ * Wenn das Foto bereits in der Route-Antwort mitgeliefert wurde (route.photoUrl),
+ * wird kein separater Netzwerkrequest gemacht. Andernfalls ruft der Hook den
+ * /routes/photo-Endpunkt auf, der das Ergebnis anschliessend in der DB
+ * persistiert (routeId mitschicken), sodass kuenftige Ladungen direkt das Foto
+ * aus der Route-Antwort bekommen.
+ *
  * Solange nichts geladen ist oder kein Foto existiert, wird das gebuendelte
  * Saison-Panorama gezeigt — die Karte hat also nie ein leeres Bild.
  */
@@ -41,7 +48,10 @@ async function ladeFoto(route: HikingRoute): Promise<GecachtesFoto> {
   const anfrage = getRoutePhoto({
     lat: route.coordinates.lat,
     lng: route.coordinates.lng,
-  })
+    // routeId mitschicken: Server persistiert das Foto in external_routes
+    // damit kuenftige Requests es direkt aus der Route-Antwort bekommen
+    routeId: route.id,
+  } as Parameters<typeof getRoutePhoto>[0])
     .then((antwort) => {
       const foto: GecachtesFoto = {
         url: antwort.photoUrl ?? null,
@@ -64,11 +74,24 @@ async function ladeFoto(route: HikingRoute): Promise<GecachtesFoto> {
 export function useRouteFoto(route: HikingRoute): RouteFoto {
   const fallback = panoramaFuerRoute(route.maxElevationM);
   const schluessel = cacheSchluessel(route);
-  const [foto, setFoto] = useState<GecachtesFoto | null>(
-    () => fotoCache.get(schluessel) ?? null,
-  );
+
+  // Sofort-Ergebnis: bevorzuge das in der Route-Antwort mitgelieferte Foto
+  // (kein Netzwerkrequest noetig), sonst schaue in den Sitzungs-Cache.
+  function sofortFoto(): GecachtesFoto | null {
+    if (route.photoUrl) {
+      return { url: route.photoUrl, attribution: route.photoAttribution ?? null };
+    }
+    return fotoCache.get(schluessel) ?? null;
+  }
+
+  const [foto, setFoto] = useState<GecachtesFoto | null>(sofortFoto);
 
   useEffect(() => {
+    // Wenn die Route bereits ein Foto hat, brauchen wir keinen API-Aufruf.
+    if (route.photoUrl) {
+      setFoto({ url: route.photoUrl, attribution: route.photoAttribution ?? null });
+      return;
+    }
     let aktiv = true;
     ladeFoto(route).then((geladen) => {
       if (aktiv) setFoto(geladen);
@@ -76,9 +99,8 @@ export function useRouteFoto(route: HikingRoute): RouteFoto {
     return () => {
       aktiv = false;
     };
-    // Der Schluessel repraesentiert den Startpunkt — mehr braucht der Effekt nicht.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schluessel]);
+  }, [schluessel, route.photoUrl]);
 
   if (foto?.url) {
     return { source: { uri: foto.url }, attribution: foto.attribution };

@@ -81,7 +81,7 @@ router.put("/me", async (req, res): Promise<void> => {
       id: userId,
       name,
       archetype,
-      homeCanton,
+      homeCanton: homeCanton ?? "",
       language,
       ageTier,
     })
@@ -90,7 +90,7 @@ router.put("/me", async (req, res): Promise<void> => {
       set: {
         name,
         archetype,
-        homeCanton,
+        homeCanton: homeCanton ?? "",
         language,
         ageTier,
         updatedAt: new Date(),

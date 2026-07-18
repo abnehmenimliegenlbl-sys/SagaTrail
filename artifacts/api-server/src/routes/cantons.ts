@@ -39,6 +39,8 @@ function toRoute(row: ExternalRouteRow) {
     coordinates: { lat: row.lat, lng: row.lng },
     geometry: row.geometry,
     featured: row.featured,
+    photoUrl: row.photoUrl ?? null,
+    photoAttribution: row.photoAttribution ?? null,
   };
 }
 

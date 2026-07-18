@@ -1349,6 +1349,14 @@ components:
               type: number
         featured:
           type: boolean
+        photoUrl:
+          type: string
+          nullable: true
+          description: Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.
+        photoAttribution:
+          type: string
+          nullable: true
+          description: Urheber-/Lizenzangabe zum Foto.
       required:
         - id
         - sagaId

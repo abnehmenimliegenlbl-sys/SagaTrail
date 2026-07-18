@@ -35,6 +35,10 @@ export interface HikingRoute {
   geometry?: number[][];
   /** Wird als grosse Ankerroute auf der Startseite hervorgehoben */
   featured: boolean;
+  /** Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden. */
+  photoUrl?: string | null;
+  /** Urheber-/Lizenzangabe zum Foto. */
+  photoAttribution?: string | null;
 }
 
 /** Kanton mit der Anzahl aktuell bekannter Routen (nur als Vorschau). */

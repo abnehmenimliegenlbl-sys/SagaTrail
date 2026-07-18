@@ -190,6 +190,10 @@ export interface CatalogRoute {
   /** Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden). */
   geometry?: number[][];
   featured: boolean;
+  /** Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden. */
+  photoUrl?: string | null;
+  /** Urheber-/Lizenzangabe zum Foto. */
+  photoAttribution?: string | null;
 }
 
 /**
