@@ -26,6 +26,8 @@ export interface PaywallStrings {
   };
   planBadges: Partial<Record<"monthly" | "yearly" | "family" | "elite" | "eliteFamily", string>>;
   buyBtn: string;
+  privacyLink: string;
+  termsLink: string;
   restoreBtn: string;
   restoreSuccessTitle: string;
   restoreSuccessMsg: string;
@@ -84,6 +86,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "35% gespart",
     },
     buyBtn: "Abo starten",
+    privacyLink: "Datenschutz",
+    termsLink: "Nutzungsbedingungen",
     restoreBtn: "Kauf wiederherstellen",
     restoreSuccessTitle: "Wiederhergestellt",
     restoreSuccessMsg: "Dein Premium-Abo wurde erfolgreich wiederhergestellt.",
@@ -142,6 +146,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "35% gsparet",
     },
     buyBtn: "Abo starte",
+    privacyLink: "Dateschutz",
+    termsLink: "Nutzigsbedingige",
     restoreBtn: "Chauf wiederhärstelle",
     restoreSuccessTitle: "Wiederhärgstellt",
     restoreSuccessMsg: "Dis Premium-Abo isch erfolgriich wiederhärgstellt worde.",
@@ -200,6 +206,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Save 35%",
     },
     buyBtn: "Start subscription",
+    privacyLink: "Privacy Policy",
+    termsLink: "Terms of Use",
     restoreBtn: "Restore purchase",
     restoreSuccessTitle: "Restored",
     restoreSuccessMsg: "Your Premium subscription has been restored.",
@@ -258,6 +266,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "35% économisé",
     },
     buyBtn: "Démarrer l'abonnement",
+    privacyLink: "Confidentialité",
+    termsLink: "Conditions d'utilisation",
     restoreBtn: "Restaurer l'achat",
     restoreSuccessTitle: "Restauré",
     restoreSuccessMsg: "Votre abonnement Premium a été restauré.",
@@ -316,6 +326,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Risparmia 35%",
     },
     buyBtn: "Avvia abbonamento",
+    privacyLink: "Privacy",
+    termsLink: "Termini d'uso",
     restoreBtn: "Ripristina acquisto",
     restoreSuccessTitle: "Ripristinato",
     restoreSuccessMsg: "Il tuo abbonamento Premium è stato ripristinato.",
@@ -374,6 +386,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "35% de ahorro",
     },
     buyBtn: "Iniciar suscripción",
+    privacyLink: "Privacidad",
+    termsLink: "Términos de uso",
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
     restoreSuccessMsg: "Tu suscripción Premium ha sido restaurada.",
@@ -432,6 +446,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "35% de economia",
     },
     buyBtn: "Iniciar assinatura",
+    privacyLink: "Privacidade",
+    termsLink: "Termos de uso",
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
     restoreSuccessMsg: "Sua assinatura Premium foi restaurada.",
@@ -490,6 +506,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "节省 35%",
     },
     buyBtn: "开始订阅",
+    privacyLink: "隐私政策",
+    termsLink: "使用条款",
     restoreBtn: "恢复购买",
     restoreSuccessTitle: "已恢复",
     restoreSuccessMsg: "您的 Premium 订阅已恢复。",
@@ -546,6 +564,8 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
       eliteFamily: "Скидка 35%",
     },
     buyBtn: "Оформить подписку",
+    privacyLink: "Конфиденциальность",
+    termsLink: "Условия использования",
     restoreBtn: "Восстановить покупку",
     restoreSuccessTitle: "Восстановлено",
     restoreSuccessMsg: "Ваша подписка Premium была восстановлена.",

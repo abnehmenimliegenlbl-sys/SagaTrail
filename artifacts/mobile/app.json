@@ -15,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "SagaTrail braucht deinen Standort, um die Geschichte live an deine Position auf dem Wanderweg anzupassen.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "SagaTrail nutzt deinen Standort während der Wanderung, um Story-Momente an den richtigen Wegpunkten auszulösen — auch wenn der Bildschirm gesperrt ist.",

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -349,6 +350,30 @@ export default function Paywall() {
             <Text style={[styles.legal, { color: colors.mutedForeground }]}>
               {t.legalText}
             </Text>
+
+            <View style={styles.linksRow}>
+              <Pressable
+                onPress={() => router.push("/legal/datenschutz")}
+                accessibilityRole="link"
+              >
+                <Text style={[styles.linkText, { color: colors.accent }]}>
+                  {t.privacyLink}
+                </Text>
+              </Pressable>
+              <Text style={[styles.legal, { color: colors.mutedForeground }]}> · </Text>
+              <Pressable
+                onPress={() =>
+                  Linking.openURL(
+                    "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+                  )
+                }
+                accessibilityRole="link"
+              >
+                <Text style={[styles.linkText, { color: colors.accent }]}>
+                  {t.termsLink}
+                </Text>
+              </Pressable>
+            </View>
           </>
         )}
       </ScrollView>
@@ -406,6 +431,18 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     textAlign: "center",
     marginTop: 8,
+  },
+  linksRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+    flexWrap: "wrap",
+  },
+  linkText: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 11,
+    textDecorationLine: "underline",
   },
   activeBox: {
     ...GLAS_3D,
