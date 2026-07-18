@@ -9,6 +9,7 @@ import {
   partnersTable,
   catalogRoutesTable,
   catalogSagasTable,
+  externalRoutesTable,
   type PartnerKategorie,
 } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -778,6 +779,37 @@ router.get("/admin/partner-leads/download", (req, res): void => {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="sagatrail-partner-leads.csv"');
   res.send("\uFEFF" + jobState.csv);
+});
+
+// ---------------------------------------------------------------------------
+// Routen-Fotos zurücksetzen (nach Qualitäts-Logik-Upgrade)
+// ---------------------------------------------------------------------------
+// POST /admin/photos/reset
+// Leert photo_url + photo_attribution in external_routes für alle oder
+// einen bestimmten Kanton. Danach holt der tägliche Sync und der Mobile-
+// Client neue Fotos mit der aktuellen (strengeren) Qualitäts-Logik.
+//
+// Body (optional): { canton: "bern" }  — ohne canton: alle Kantone
+router.post("/admin/photos/reset", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { canton } = z.object({ canton: z.string().optional() }).parse(req.body ?? {});
+  try {
+    const result = canton
+      ? await db
+          .update(externalRoutesTable)
+          .set({ photoUrl: null, photoAttribution: null })
+          .where(eq(externalRoutesTable.canton, canton))
+          .returning({ id: externalRoutesTable.id })
+      : await db
+          .update(externalRoutesTable)
+          .set({ photoUrl: null, photoAttribution: null })
+          .returning({ id: externalRoutesTable.id });
+    req.log.info({ canton: canton ?? "alle", count: result.length }, "Routen-Fotos zurückgesetzt");
+    res.json({ ok: true, reset: result.length, canton: canton ?? "alle" });
+  } catch (err) {
+    req.log.error({ err }, "Routen-Fotos zurücksetzen fehlgeschlagen");
+    res.status(500).json({ error: "Zurücksetzen fehlgeschlagen" });
+  }
 });
 
 function sanitizeState() {
