@@ -293,3 +293,9 @@ id = "xkdVSO5RH4z3HOZq6tpGM"
 uri = "file://wpcrontrol-google-enrich.zip"
 type = "unspecified"
 title = "wpcrontrol-google-enrich.php – Google Places Enrichment"
+
+[[outputs]]
+id = "1Nsm6T5NbHyeLMTNZPQVI"
+uri = "file://sagatrail-wordpress.zip"
+type = "unspecified"
+title = "sagatrail-wordpress.sql (1296 Routen, ZIP)"
