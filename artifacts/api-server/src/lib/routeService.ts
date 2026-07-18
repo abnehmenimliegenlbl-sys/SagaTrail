@@ -581,6 +581,10 @@ async function enrichAndStore(
  * Router (`cantons.ts`). `distMax` steuert den Vorfilter, damit in dichten
  * Kantonen auch kurze lokale Routen in die Auswahl gelangen.
  */
+// Mindestanzahl frischer DB-Routen, ab der der Overpass-Index-Aufruf
+// uebersprungen wird. 20 reicht: der Router zeigt max. 16 Treffer.
+const DB_SHORTCUT_MIN = 20;
+
 export async function getCantonRoutes(
   canton: string,
   log: Logger,
@@ -592,6 +596,15 @@ export async function getCantonRoutes(
     return [];
   }
 
+  // DB-First-Shortcut: sind genuegend frische Routen in der DB, Overpass komplett
+  // ueberspringen. Das verhindert den langen Cold-Start nach Server-Restart.
+  const cached = await loadCachedRoutes(canton);
+  const fresh = cached.filter((row) => isFresh(row));
+  if (fresh.length >= DB_SHORTCUT_MIN) {
+    log.debug({ canton, count: fresh.length }, "Kanton-Routen aus DB-Cache (Shortcut)");
+    return fresh;
+  }
+
   let index: RouteIndexEntry[];
   try {
     index = await getCantonIndex(canton, iso, log);
@@ -600,8 +613,6 @@ export async function getCantonRoutes(
     // Fehler durchreichen (der Router meldet dann 502 -> UI "Server nicht
     // erreichbar"). Nur veraltete Cache-Zeilen zaehlen nicht als Treffer, sonst
     // wuerde ein Serverausfall faelschlich als "keine Routen" erscheinen.
-    const cached = await loadCachedRoutes(canton);
-    const fresh = cached.filter((row) => isFresh(row));
     if (fresh.length > 0) {
       log.warn({ canton, err }, "Kanton-Index nicht ladbar, nutze Cache");
       return fresh;
@@ -610,10 +621,7 @@ export async function getCantonRoutes(
   }
 
   const candidates = selectCandidates(index, distMax);
-  const cached = await loadCachedRoutes(canton);
-  const freshIds = new Set(
-    cached.filter((row) => isFresh(row)).map((row) => row.id),
-  );
+  const freshIds = new Set(fresh.map((row) => row.id));
   const missing = candidates
     .filter((c) => !freshIds.has(`osm-${c.osmId}`))
     .map((c) => c.osmId);
@@ -625,7 +633,7 @@ export async function getCantonRoutes(
       // Anreicherung fehlgeschlagen: vorhandene frische Treffer trotzdem liefern.
       if (freshIds.size > 0) {
         log.warn({ canton, err }, "Geometrie-Anreicherung fehlgeschlagen, nutze Cache");
-        return cached.filter((row) => isFresh(row));
+        return fresh;
       }
       throw err;
     }
