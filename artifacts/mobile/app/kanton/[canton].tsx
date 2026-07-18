@@ -302,11 +302,18 @@ export default function KantonRouten() {
   const onSearch = useCallback(async () => {
     if (!cantonName) return;
     setSearching(true);
-    const res = await loadCantonRoutes(cantonName, buildFilter());
-    setRoutes(res.routes);
-    setRouteSource(res.source);
-    setSearched(true);
-    setSearching(false);
+    try {
+      const res = await loadCantonRoutes(cantonName, buildFilter());
+      setRoutes(res.routes);
+      setRouteSource(res.source);
+      setSearched(true);
+    } catch {
+      // loadCantonRoutes fängt intern — hier nur als Sicherheitsnetz.
+      setRouteSource("error");
+      setSearched(true);
+    } finally {
+      setSearching(false);
+    }
   }, [cantonName, loadCantonRoutes, buildFilter]);
 
   const loadError = routeSource === "error";
