@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetRoutePhotoResponse, GetRoutePhotoQueryParams } from "@workspace/api-zod";
 import { getCachedRoutePhoto } from "../lib/commonsPhoto";
-import { db, externalRoutesTable } from "@workspace/db";
+import { db, externalRoutesTable, catalogSagasTable } from "@workspace/db";
 import { and, eq, isNull } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -19,6 +19,7 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
   }
   const { lat, lng } = parsed.data;
   const routeId = typeof req.query.routeId === "string" ? req.query.routeId : null;
+  const sagaId = typeof req.query.sagaId === "string" ? req.query.sagaId : null;
   const routeName = typeof req.query.routeName === "string" ? req.query.routeName : undefined;
   const foto = await getCachedRoutePhoto(lat, lng, req.log, routeName);
 
@@ -33,6 +34,16 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
       .where(and(eq(externalRoutesTable.id, routeId), isNull(externalRoutesTable.photoUrl)))
       .execute()
       .catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
+  }
+
+  // Koordinaten-Fallback-Foto auch fuer Sagen persistieren, falls sagaId mitgegeben.
+  if (sagaId && foto.photoUrl) {
+    db.update(catalogSagasTable)
+      .set({ fotoUrl: foto.photoUrl, fotoAttribution: foto.attribution })
+      .where(and(eq(catalogSagasTable.id, sagaId), isNull(catalogSagasTable.fotoUrl)))
+      .execute()
+      .then(() => req.log.info({ sagaId, photoUrl: foto.photoUrl }, "Sagenfoto (Koordinaten-Fallback) in DB gespeichert"))
+      .catch((err) => req.log.warn({ err, sagaId }, "Sagenfoto-Koordinaten-Rueckschreiben fehlgeschlagen"));
   }
 
   res.json(GetRoutePhotoResponse.parse(foto));

@@ -525,6 +525,15 @@ paths:
           required: true
           schema:
             type: number
+        - name: sagaId
+          in: query
+          required: false
+          description: >
+            Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird,
+            schreibt der Server das Ergebnis dauerhaft in catalog_sagas
+            (als Fallback-Cache fuer Koordinaten-basierte Fotos).
+          schema:
+            type: string
       responses:
         "200":
           description: Foto-URL oder null

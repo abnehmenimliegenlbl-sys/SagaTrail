@@ -9,4 +9,8 @@
 export type GetRoutePhotoParams = {
 lat: number;
 lng: number;
+/**
+ * Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird, schreibt der Server das Ergebnis dauerhaft in catalog_sagas (als Fallback-Cache fuer Koordinaten-basierte Fotos).
+ */
+sagaId?: string;
 };

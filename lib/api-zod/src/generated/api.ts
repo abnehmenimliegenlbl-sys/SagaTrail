@@ -358,7 +358,8 @@ export const GetRouteSurfacesResponse = zod.object({
  */
 export const GetRoutePhotoQueryParams = zod.object({
   "lat": zod.coerce.number(),
-  "lng": zod.coerce.number()
+  "lng": zod.coerce.number(),
+  "sagaId": zod.coerce.string().optional().describe('Optionale Sagen-ID. Wenn angegeben und ein Foto gefunden wird, schreibt der Server das Ergebnis dauerhaft in catalog_sagas (als Fallback-Cache fuer Koordinaten-basierte Fotos).\n')
 })
 
 export const GetRoutePhotoResponse = zod.object({

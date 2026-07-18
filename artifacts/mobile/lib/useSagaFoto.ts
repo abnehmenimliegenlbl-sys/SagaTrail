@@ -73,12 +73,14 @@ async function ladeMotivFoto(saga: Saga, schluessel: string): Promise<GecachtesF
       }
     }
     // 2. Fallback: ortsnahes Foto ueber die Koordinaten, falls vorhanden.
+    // sagaId mitschicken: Server schreibt auch dieses Foto dauerhaft in catalog_sagas.
     if (saga.coordinates) {
       try {
         const ortAntwort = await getRoutePhoto({
           lat: saga.coordinates.lat,
           lng: saga.coordinates.lng,
-        });
+          sagaId: saga.id,
+        } as Parameters<typeof getRoutePhoto>[0]);
         if (ortAntwort.photoUrl) {
           return { url: ortAntwort.photoUrl, attribution: ortAntwort.attribution ?? null };
         }
