@@ -218,6 +218,13 @@ export default function SagaDetail() {
               </Text>
             </View>
           </Animated.View>
+          {!fotoFehler && sagaFoto.attribution && (
+            <View style={styles.attributionScrim}>
+              <Text style={styles.attributionText} numberOfLines={1}>
+                {sagaFoto.attribution}
+              </Text>
+            </View>
+          )}
         </View>
 
         <Animated.View entering={FadeInDown.delay(80)} style={styles.body}>
@@ -346,6 +353,21 @@ export default function SagaDetail() {
 const styles = StyleSheet.create({
   heroWrap: { height: 380 },
   hero: { width: "100%", height: "100%" },
+  attributionScrim: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    maxWidth: "70%",
+    backgroundColor: "rgba(8,10,12,0.58)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  attributionText: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.88)",
+  },
   back: {
     position: "absolute",
     left: 16,

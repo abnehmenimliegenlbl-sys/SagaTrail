@@ -1,6 +1,7 @@
 import { useSSO } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { GoogleIcon } from "@/components/brand/GoogleIcon";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -205,23 +206,22 @@ export default function SignUpScreen() {
             <Pressable
               onPress={onApplePress}
               disabled={appleLoading}
-              style={[styles.googleButton, { borderColor: colors.glassBorder }]}
+              accessibilityRole="button"
+              accessibilityLabel={t.continueWithAppleSignUp}
+              style={styles.appleButton}
             >
-              <Ionicons name="logo-apple" size={18} color={colors.foreground} />
-              <Text style={[styles.googleLabel, { color: colors.foreground }]}>
-                {t.continueWithAppleSignUp}
-              </Text>
+              <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
+              <Text style={styles.appleLabel}>{t.continueWithAppleSignUp}</Text>
             </Pressable>
 
             <Pressable
               onPress={onGooglePress}
               disabled={googleLoading}
-              style={[
-                styles.googleButton,
-                { borderColor: colors.glassBorder, marginTop: 12 },
-              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t.continueWithGoogleSignUp}
+              style={[styles.googleButton, { borderColor: colors.glassBorder, marginTop: 12 }]}
             >
-              <Feather name="chrome" size={18} color={colors.foreground} />
+              <GoogleIcon size={18} />
               <Text style={[styles.googleLabel, { color: colors.foreground }]}>
                 {t.continueWithGoogleSignUp}
               </Text>
@@ -299,6 +299,17 @@ const styles = StyleSheet.create({
   },
   dividerLine: { flex: 1, height: 1 },
   dividerText: { fontFamily: fonts.body, fontSize: 12 },
+  appleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderRadius: 12,
+    paddingVertical: 14,
+    minHeight: 50,
+    backgroundColor: "#000000",
+  },
+  appleLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, color: "#FFFFFF" },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -307,6 +318,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     paddingVertical: 14,
+    minHeight: 50,
   },
   googleLabel: { fontFamily: fonts.bodyMedium, fontSize: 15 },
   footerRow: {
