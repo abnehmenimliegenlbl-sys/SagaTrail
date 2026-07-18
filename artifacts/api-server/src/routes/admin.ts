@@ -620,18 +620,12 @@ const PushSendBody = z.object({
   data:  z.record(z.string(), z.unknown()).optional(),
 });
 
-function experienceIdOf(token: string): string {
-  const colonIdx = token.indexOf(":");
-  return colonIdx !== -1 ? token.slice(0, colonIdx) : "__standalone__";
-}
-
 async function sendExpoPush(
   tokens: string[],
   title: string,
   body: string,
   data?: Record<string, unknown>,
 ): Promise<{ sent: number; failed: number; errors: string[] }> {
-  const BATCH = 100;
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];
@@ -642,51 +636,34 @@ async function sendExpoPush(
     ...(expoToken ? { Authorization: `Bearer ${expoToken}` } : {}),
   };
 
-  // Group tokens by experience ID — Expo rejects batches that mix experiences
-  const byExperience = new Map<string, string[]>();
-  for (const token of tokens) {
-    const key = experienceIdOf(token);
-    const group = byExperience.get(key) ?? [];
-    group.push(token);
-    byExperience.set(key, group);
-  }
-
-  for (const group of byExperience.values()) {
-    for (let i = 0; i < group.length; i += BATCH) {
-      const chunk = group.slice(i, i + BATCH);
-      const messages = chunk.map((to) => ({
-        to,
-        title,
-        body,
-        sound: "default",
-        ...(data ? { data } : {}),
-      }));
-      try {
-        const res = await fetch("https://exp.host/--/api/v2/push/send", {
-          method: "POST",
-          headers,
-          body: JSON.stringify(messages),
-          signal: AbortSignal.timeout(15_000),
-        });
-        if (!res.ok) {
-          const errText = await res.text().catch(() => res.statusText);
-          errors.push(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
-          failed += chunk.length;
-          continue;
-        }
-        const json = (await res.json()) as { data?: { status: string; message?: string; details?: unknown }[] };
-        (json.data ?? []).forEach((r) => {
-          if (r.status === "ok") {
-            sent++;
-          } else {
-            failed++;
-            errors.push(r.message ?? JSON.stringify(r.details ?? r));
-          }
-        });
-      } catch (e) {
-        errors.push(String(e));
-        failed += chunk.length;
+  // Send one token per request to avoid PUSH_TOO_MANY_EXPERIENCE_IDS —
+  // Expo determines experience IDs server-side so client-side batching
+  // cannot guarantee all tokens belong to the same project.
+  for (const to of tokens) {
+    try {
+      const res = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers,
+        body: JSON.stringify([{ to, title, body, sound: "default", ...(data ? { data } : {}) }]),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => res.statusText);
+        errors.push(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
+        failed++;
+        continue;
       }
+      const json = (await res.json()) as { data?: { status: string; message?: string; details?: unknown }[] };
+      const r = (json.data ?? [])[0];
+      if (!r || r.status === "ok") {
+        sent++;
+      } else {
+        failed++;
+        errors.push(r.message ?? JSON.stringify(r.details ?? r));
+      }
+    } catch (e) {
+      errors.push(String(e));
+      failed++;
     }
   }
   return { sent, failed, errors };
