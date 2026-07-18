@@ -19,8 +19,7 @@
       "autoIncrement": false,
       "channel": "production",
       "ios": {
-        "distribution": "store",
-        "image": "macos-sequoia-15.5-xcode-17.4"
+        "distribution": "store"
       },
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Z2xvd2luZy1qYWNrYWwtNTYuY2xlcmsuYWNjb3VudHMuZGV2JA",

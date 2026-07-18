@@ -79,6 +79,7 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
+      "./plugins/withPodfileXcode26Fix",
       [
         "expo-build-properties",
         {
