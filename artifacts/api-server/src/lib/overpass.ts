@@ -708,6 +708,12 @@ export async function fetchParking(
   ].join("");
   const elements = await runOverpass<OverpassPoiElement>(query, 14_000);
   // Deduplizieren (Fallback kann Duplikate mit erstem Block erzeugen)
+  // Nur grosse Parkplaetze anzeigen:
+  // - Parkhaeuser, Tiefgaragen und P+R-Anlagen sind strukturell gross
+  // - Oberflaechen-/Dachparkplaetze nur wenn explizit >= 20 Stellplaetze
+  const MIN_CAPACITY = 20;
+  const ALWAYS_LARGE = new Set(["multi-storey", "underground", "park_and_ride"]);
+
   const seen = new Set<string>();
   const result: ParkingSpot[] = [];
   for (const e of elements) {
@@ -718,6 +724,15 @@ export async function fetchParking(
     if (seen.has(key)) continue;
     seen.add(key);
     const tags = e.tags ?? {};
+    const rawType = tags.parking ?? null;
+    const capacity = tags.capacity ? parseInt(tags.capacity, 10) || null : null;
+
+    // Groessen-Filter: strukturell gross ODER genug Stellplaetze angegeben
+    const isLarge =
+      (rawType && ALWAYS_LARGE.has(rawType)) ||
+      (capacity != null && capacity >= MIN_CAPACITY);
+    if (!isLarge) continue;
+
     const street = tags["addr:street"] ?? null;
     const nr     = tags["addr:housenumber"] ?? null;
     const zip    = tags["addr:postcode"] ?? null;
@@ -730,7 +745,6 @@ export async function fetchParking(
       "underground": "Tiefgarage", "rooftop": "Dachparkplatz",
       "park_and_ride": "P+R",
     };
-    const rawType = tags.parking ?? null;
     result.push({
       osmId: key,
       lat,
@@ -738,10 +752,10 @@ export async function fetchParking(
       name: tags.name ?? tags["name:de"] ?? null,
       address: addrParts.length > 0 ? addrParts.join(", ") : null,
       parkingType: rawType ? (typeLabels[rawType] ?? rawType) : null,
-      capacity: tags.capacity ? parseInt(tags.capacity, 10) || null : null,
+      capacity,
     });
   }
-  log.info({ count: result.length, radiusM }, "Overpass: Parkplaetze geladen");
+  log.info({ count: result.length, radiusM }, "Overpass: Parkplaetze geladen (nur grosse)");
   return result;
 }
 
