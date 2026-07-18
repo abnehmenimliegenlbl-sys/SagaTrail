@@ -1043,24 +1043,18 @@ export default function LiveHike() {
     fetch(`${base}/partners/${selectedPartner.id}/view`, { method: "POST" }).catch(() => {});
   }, [selectedPartner?.id]);
 
-  // POI-Panel automatisch schliessen, wenn der Nutzer mindestens 500 m vom
-  // gewaehlten POI entfernt ist, oder wenn ein neuer POI in der Naehe auftaucht.
-  const POI_AUTO_CLOSE_KM = 0.5; // manuell angetipptes Detail-Panel
+  // POI-Panel automatisch schliessen, wenn ein anderer nearbyPoi auftaucht.
+  // KEIN Distanz-Auto-Close: manuell angetippte POIs bleiben offen bis der
+  // Nutzer sie explizit schliesst (X-Button oder Backdrop-Tap). Ein
+  // distanzbasiertes Schliessen wuerde den Panel sofort wieder zumachen,
+  // sobald der Nutzer weiter als 500 m vom POI steht — was beim Testen
+  // oder auf grossen Karten permanent passiert.
   useEffect(() => {
     if (!selectedPoi) return;
-    // Neuer nearby-POI erschienen (nicht derselbe) → Panel schliessen
     if (nearbyPoi && nearbyPoi.id !== selectedPoi.id) {
       setSelectedPoi(null);
-      return;
     }
-    // Nutzer ist 500 m+ vom gewaehlten POI entfernt → Panel schliessen
-    if (livePos) {
-      const dist = haversineKm(livePos, { lat: selectedPoi.lat, lng: selectedPoi.lng });
-      if (dist >= POI_AUTO_CLOSE_KM) {
-        setSelectedPoi(null);
-      }
-    }
-  }, [livePos, nearbyPoi, selectedPoi]);
+  }, [nearbyPoi, selectedPoi]);
 
   // nearbyPoi automatisch ausblenden, sobald der Nutzer sich mehr als 200 m
   // vom entdeckten POI entfernt hat (doppelte Hysterese zur 100-m-Erkennungs-
@@ -2357,22 +2351,28 @@ export default function LiveHike() {
                   safeAreaInsetTop={safeAreaTop}
                   onPoiPress={(id) => {
                     const poi = pois.find((p) => p.id === id);
-                    if (poi) {
-                      // Aktion merken, Vollbild schliessen. Das Detail-Modal
-                      // wird erst in onFullyClosed geoeffnet — nach Abschluss
-                      // der Fade-Animation, nicht schon waehrenddessen.
+                    if (!poi) return;
+                    if (karteVollbild) {
+                      // Vollbild: erst schliessen, dann nach Fade-Ende oeffnen.
                       pendingKarteActionRef.current = () => setSelectedPoi(poi);
                       setKarteVollbild(false);
                       setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      // Kleine Karte: karteVollbild ist bereits false,
+                      // useEffect wuerde nie feuern → direkt oeffnen.
+                      setSelectedPoi(poi);
                     }
                   }}
                   partners={partners}
                   onPartnerPress={(id) => {
                     const partner = partners.find((p) => p.id === id);
-                    if (partner) {
+                    if (!partner) return;
+                    if (karteVollbild) {
                       pendingKarteActionRef.current = () => setSelectedPartner(partner);
                       setKarteVollbild(false);
                       setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      setSelectedPartner(partner);
                     }
                   }}
                 />
