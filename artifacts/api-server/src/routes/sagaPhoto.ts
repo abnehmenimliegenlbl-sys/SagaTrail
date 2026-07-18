@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { GetRoutePhotoResponse, GetSagaPhotoQueryParams } from "@workspace/api-zod";
 import { getCachedSagaPhoto } from "../lib/commonsPhoto";
 import { db, catalogSagasTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -26,7 +26,7 @@ router.get("/sagas/photo", async (req, res): Promise<void> => {
   if (sagaId && foto.photoUrl) {
     db.update(catalogSagasTable)
       .set({ fotoUrl: foto.photoUrl, fotoAttribution: foto.attribution })
-      .where(eq(catalogSagasTable.id, sagaId))
+      .where(and(eq(catalogSagasTable.id, sagaId), isNull(catalogSagasTable.fotoUrl)))
       .execute()
       .catch((err) => req.log.warn({ err, sagaId }, "Sagenfoto-Rueckschreiben fehlgeschlagen"));
   }

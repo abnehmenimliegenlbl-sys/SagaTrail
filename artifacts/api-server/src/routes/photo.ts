@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { GetRoutePhotoResponse, GetRoutePhotoQueryParams } from "@workspace/api-zod";
 import { getCachedRoutePhoto } from "../lib/commonsPhoto";
 import { db, externalRoutesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -30,7 +30,7 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
         photoUrl: foto.photoUrl,
         photoAttribution: foto.attribution,
       })
-      .where(eq(externalRoutesTable.id, routeId))
+      .where(and(eq(externalRoutesTable.id, routeId), isNull(externalRoutesTable.photoUrl)))
       .execute()
       .catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
   }
