@@ -21,8 +21,17 @@ import { panoramaFuerRoute } from "@/lib/panorama";
 
 export interface RouteFoto {
   source: ImageSourcePropType;
+  fallback: ImageSourcePropType;
   /** Urheber-/Lizenzangabe des Commons-Fotos; null beim gebuendelten Fallback. */
   attribution: string | null;
+}
+
+/**
+ * Loescht den gecachten Foto-Eintrag fuer eine Route (z. B. nach einem
+ * Ladefehler), damit beim naechsten Rendern ein neuer Versuch gestartet wird.
+ */
+export function clearRouteFotoCache(route: HikingRoute): void {
+  fotoCache.delete(cacheSchluessel(route));
 }
 
 interface GecachtesFoto {
@@ -104,7 +113,7 @@ export function useRouteFoto(route: HikingRoute): RouteFoto {
   }, [schluessel, route.photoUrl]);
 
   if (foto?.url) {
-    return { source: { uri: foto.url }, attribution: foto.attribution };
+    return { source: { uri: foto.url }, fallback, attribution: foto.attribution };
   }
-  return { source: fallback, attribution: null };
+  return { source: fallback, fallback, attribution: null };
 }

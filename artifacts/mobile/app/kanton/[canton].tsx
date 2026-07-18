@@ -39,7 +39,7 @@ import { useSharedStrings } from "@/lib/i18n/screens/shared";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { haversineKm } from "@/lib/geo";
-import { useRouteFoto } from "@/lib/useRouteFoto";
+import { useRouteFoto, clearRouteFotoCache } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
 import { kantonSlug } from "@/lib/kantonSlug";
 import {
@@ -648,12 +648,18 @@ function RouteCard({
   // Echtes, moeglichst saisonpassendes Foto aus Routennaehe; solange keins
   // geladen ist, zeigt der Hook das gebuendelte Saison-Panorama.
   const foto = useRouteFoto(route);
+  const [fotoFehler, setFotoFehler] = useState(false);
   const h = Math.floor(route.minutes / 60);
   const m = route.minutes % 60;
   return (
     <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
       <Pressable onPress={onPress} style={styles.card}>
-        <Image source={foto.source} style={styles.cardImg} resizeMode="cover" />
+        <Image
+          source={fotoFehler ? foto.fallback : foto.source}
+          style={styles.cardImg}
+          resizeMode="cover"
+          onError={() => { clearRouteFotoCache(route); setFotoFehler(true); }}
+        />
         {foto.attribution && (
           <View style={styles.cardAttributionScrim}>
             <Text
