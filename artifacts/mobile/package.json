@@ -65,6 +65,7 @@
     "@expo-google-fonts/big-shoulders-display": "^0.2.3",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/karla": "^0.4.2",
+    "expo-apple-authentication": "^57.0.1",
     "expo-av": "^16.0.8",
     "expo-build-properties": "^1.0.10",
     "expo-document-picker": "~14.0.8",

@@ -1,11 +1,12 @@
 import { useSSO } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
 import { Ionicons } from "@expo/vector-icons";
-import { GoogleIcon } from "@/components/brand/GoogleIcon";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
+import { GoogleIcon } from "@/components/brand/GoogleIcon";
 import {
   Platform,
   Pressable,
@@ -114,19 +115,39 @@ export default function SignInScreen() {
     setError(null);
     setAppleLoading(true);
     try {
-      const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow(
-        { strategy: "oauth_apple", redirectUrl }
-      );
-      if (createdSessionId && setActiveSSO) {
-        await setActiveSSO({ session: createdSessionId });
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!cred.identityToken) {
+        setError(t.errorAppleFailed);
+        return;
+      }
+      if (!signIn || !setActive) { setError(t.errorAppleFailed); return; }
+      const attempt = await signIn.create({
+        strategy: "oauth_token_apple",
+        token: cred.identityToken,
+      });
+      if (attempt.status === "complete") {
+        await setActive({ session: attempt.createdSessionId });
         router.replace("/onboarding");
+      } else {
+        setError(t.errorAppleFailed);
       }
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
+      if (err?.code === "ERR_REQUEST_CANCELED") return;
+      const clerkCode = err?.errors?.[0]?.code;
+      if (clerkCode === "form_identifier_not_found") {
+        router.replace("/(auth)/sign-up");
+      } else {
+        setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
+      }
     } finally {
       setAppleLoading(false);
     }
-  }, [startSSOFlow, router, redirectUrl, t]);
+  }, [signIn, setActive, router, t]);
 
   return (
     <Background deep>
@@ -198,16 +219,18 @@ export default function SignInScreen() {
           <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
         </View>
 
-        <Pressable
-          onPress={onApplePress}
-          disabled={appleLoading}
-          accessibilityRole="button"
-          accessibilityLabel={t.continueWithAppleSignIn}
-          style={styles.appleButton}
-        >
-          <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
-          <Text style={styles.appleLabel}>{t.continueWithAppleSignIn}</Text>
-        </Pressable>
+        {Platform.OS === "ios" && (
+          <Pressable
+            onPress={onApplePress}
+            disabled={appleLoading}
+            accessibilityRole="button"
+            accessibilityLabel={t.continueWithAppleSignIn}
+            style={styles.appleButton}
+          >
+            <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
+            <Text style={styles.appleLabel}>{t.continueWithAppleSignIn}</Text>
+          </Pressable>
+        )}
 
         <Pressable
           onPress={onGooglePress}

@@ -1,6 +1,7 @@
 import { useSSO } from "@clerk/expo";
-import { useSignUp } from "@clerk/expo/legacy";
+import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { Ionicons } from "@expo/vector-icons";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { GoogleIcon } from "@/components/brand/GoogleIcon";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
@@ -33,6 +34,7 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { signIn, setActive: setActiveSignIn } = useSignIn();
   const { startSSOFlow } = useSSO();
   const t = useAuthStrings();
 
@@ -115,19 +117,54 @@ export default function SignUpScreen() {
     setError(null);
     setAppleLoading(true);
     try {
-      const { createdSessionId, setActive: setActiveSSO } = await startSSOFlow(
-        { strategy: "oauth_apple", redirectUrl }
-      );
-      if (createdSessionId && setActiveSSO) {
-        await setActiveSSO({ session: createdSessionId });
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!cred.identityToken) {
+        setError(t.errorAppleFailed);
+        return;
+      }
+      // Existing user → sign in
+      if (signIn && setActiveSignIn) {
+        try {
+          const existing = await signIn.create({
+            strategy: "oauth_token_apple",
+            token: cred.identityToken,
+          });
+          if (existing.status === "complete") {
+            await setActiveSignIn({ session: existing.createdSessionId });
+            router.replace("/onboarding");
+            return;
+          }
+        } catch (signInErr: any) {
+          const c = signInErr?.errors?.[0]?.code;
+          if (c !== "form_identifier_not_found" && c !== "strategy_for_user_invalid") {
+            throw signInErr;
+          }
+        }
+      }
+      // New user → sign up
+      if (!signUp || !setActive) { setError(t.errorAppleFailed); return; }
+      const attempt = await signUp.create({
+        strategy: "oauth_token_apple",
+        token: cred.identityToken,
+      });
+      if (attempt.status === "complete") {
+        await setActive({ session: attempt.createdSessionId });
         router.replace("/onboarding");
+      } else {
+        setError(t.errorAppleFailed);
       }
     } catch (err: any) {
+      if (err?.code === "ERR_REQUEST_CANCELED") return;
       setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
     } finally {
       setAppleLoading(false);
     }
-  }, [startSSOFlow, router, redirectUrl, t]);
+  }, [signIn, setActiveSignIn, signUp, setActive, router, t]);
 
   return (
     <Background deep>
@@ -203,16 +240,18 @@ export default function SignUpScreen() {
               <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
             </View>
 
-            <Pressable
-              onPress={onApplePress}
-              disabled={appleLoading}
-              accessibilityRole="button"
-              accessibilityLabel={t.continueWithAppleSignUp}
-              style={styles.appleButton}
-            >
-              <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
-              <Text style={styles.appleLabel}>{t.continueWithAppleSignUp}</Text>
-            </Pressable>
+            {Platform.OS === "ios" && (
+              <Pressable
+                onPress={onApplePress}
+                disabled={appleLoading}
+                accessibilityRole="button"
+                accessibilityLabel={t.continueWithAppleSignUp}
+                style={styles.appleButton}
+              >
+                <Ionicons name="logo-apple" size={19} color="#FFFFFF" />
+                <Text style={styles.appleLabel}>{t.continueWithAppleSignUp}</Text>
+              </Pressable>
+            )}
 
             <Pressable
               onPress={onGooglePress}
