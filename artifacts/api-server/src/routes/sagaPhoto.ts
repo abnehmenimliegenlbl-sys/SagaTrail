@@ -28,6 +28,7 @@ router.get("/sagas/photo", async (req, res): Promise<void> => {
       .set({ fotoUrl: foto.photoUrl, fotoAttribution: foto.attribution })
       .where(and(eq(catalogSagasTable.id, sagaId), isNull(catalogSagasTable.fotoUrl)))
       .execute()
+      .then(() => req.log.info({ sagaId, photoUrl: foto.photoUrl }, "Sagenfoto in DB gespeichert"))
       .catch((err) => req.log.warn({ err, sagaId }, "Sagenfoto-Rueckschreiben fehlgeschlagen"));
   }
 
