@@ -89,7 +89,7 @@ async function ladeMotivFoto(saga: Saga, schluessel: string): Promise<GecachtesF
     return { url: null, attribution: null };
   })()
     .then((foto) => {
-      fotoCache.set(schluessel, foto);
+      if (foto.url) fotoCache.set(schluessel, foto); // Nur Treffer cachen, nie null
       return foto;
     })
     .finally(() => {

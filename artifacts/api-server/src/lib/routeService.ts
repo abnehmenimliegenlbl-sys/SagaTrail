@@ -584,8 +584,9 @@ async function enrichAndStore(
  * Kantonen auch kurze lokale Routen in die Auswahl gelangen.
  */
 // Mindestanzahl frischer DB-Routen, ab der der Overpass-Index-Aufruf
-// uebersprungen wird. 20 reicht: der Router zeigt max. 16 Treffer.
-const DB_SHORTCUT_MIN = 20;
+// uebersprungen wird. 8 reicht: kleine Kantone (z.B. Basel-Stadt) haben
+// oft nur 10–12 Routen total — der Shortcut muss auch dort greifen.
+const DB_SHORTCUT_MIN = 8;
 
 export async function getCantonRoutes(
   canton: string,
