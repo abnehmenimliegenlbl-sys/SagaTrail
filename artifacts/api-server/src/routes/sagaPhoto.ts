@@ -27,6 +27,7 @@ router.get("/sagas/photo", async (req, res): Promise<void> => {
     db.update(catalogSagasTable)
       .set({ fotoUrl: foto.photoUrl, fotoAttribution: foto.attribution })
       .where(eq(catalogSagasTable.id, sagaId))
+      .execute()
       .catch((err) => req.log.warn({ err, sagaId }, "Sagenfoto-Rueckschreiben fehlgeschlagen"));
   }
 

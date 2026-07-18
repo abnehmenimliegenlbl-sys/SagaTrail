@@ -51,3 +51,4 @@
 - [RC Test key vs iOS key in dev builds](sagatrail-rc-key-devbuild.md) — `__DEV__` is true in TestFlight dev builds; using it to route to the web test key breaks native StoreKit receipt validation ("The receipt is not valid"); only route to test key on `Platform.OS==="web"` or `executionEnvironment==="storeClient"`.
 - [SagaTrail Herzfrequenz-basierte Pausen](sagatrail-heartrate-pause.md) — Stufe 1 (GPS/Kadenz, kein Framework) vs Stufe 2 (HealthKit/Apple Watch live HR); Garmin/Fitbit liefern KEIN Real-time HR während Workout.
 - [SagaTrail route photo DB writeback](sagatrail-route-photo-writeback.md) — photos found via /routes/photo persist to external_routes.photo_url; routes now serve photoUrl inline → zero extra requests for cached routes.
+- [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
