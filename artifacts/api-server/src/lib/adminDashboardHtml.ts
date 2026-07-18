@@ -358,7 +358,12 @@ window.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('online', function() {
     _applyTokStatus(_savedStatus.msg || 'Verbunden \u2713', _savedStatus.ok !== undefined ? _savedStatus.ok : true);
   });
-  var saved = localStorage.getItem(LS_KEY);
+  var urlToken = new URLSearchParams(window.location.search).get('token');
+  if (urlToken) {
+    localStorage.setItem(LS_KEY, urlToken);
+    history.replaceState(null, '', window.location.pathname);
+  }
+  var saved = urlToken || localStorage.getItem(LS_KEY);
   if (saved) {
     _token = saved;
     document.getElementById('tok-input').value = saved;
