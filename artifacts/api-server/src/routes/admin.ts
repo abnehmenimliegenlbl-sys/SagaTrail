@@ -1,7 +1,7 @@
 import { randomUUID, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, ne, sql } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -663,15 +663,30 @@ const PushSendBody = z.object({
   data:  z.record(z.string(), z.unknown()).optional(),
 });
 
+// Fehler-Muster die auf Expo-Go/Dev-Tokens hinweisen (kein APNs-Credential
+// vorhanden weil das Token zu einem Replit-Expo-Go-Experience gehört).
+// Diese Tokens werden stillschweigend übersprungen und aus der DB entfernt.
+const DEV_TOKEN_ERROR_PATTERNS = [
+  /could not find apns credentials/i,
+  /apns credentials/i,
+  /\bDEVICE_NOT_REGISTERED\b/,
+];
+
+function isDevTokenError(msg: string): boolean {
+  return DEV_TOKEN_ERROR_PATTERNS.some((p) => p.test(msg));
+}
+
 async function sendExpoPush(
   tokens: string[],
   title: string,
   body: string,
   data?: Record<string, unknown>,
-): Promise<{ sent: number; failed: number; errors: string[] }> {
+): Promise<{ sent: number; failed: number; devSkipped: number; errors: string[]; staleTokens: string[] }> {
   let sent = 0;
   let failed = 0;
+  let devSkipped = 0;
   const errors: string[] = [];
+  const staleTokens: string[] = [];
   const expoToken = process.env.EXPO_TOKEN;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -692,8 +707,13 @@ async function sendExpoPush(
       });
       if (!res.ok) {
         const errText = await res.text().catch(() => res.statusText);
-        errors.push(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
-        failed++;
+        if (isDevTokenError(errText)) {
+          devSkipped++;
+          staleTokens.push(to);
+        } else {
+          errors.push(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
+          failed++;
+        }
         continue;
       }
       const json = (await res.json()) as { data?: { status: string; message?: string; details?: unknown }[] };
@@ -701,15 +721,21 @@ async function sendExpoPush(
       if (!r || r.status === "ok") {
         sent++;
       } else {
-        failed++;
-        errors.push(r.message ?? JSON.stringify(r.details ?? r));
+        const msg = r.message ?? JSON.stringify(r.details ?? r);
+        if (isDevTokenError(msg)) {
+          devSkipped++;
+          staleTokens.push(to);
+        } else {
+          failed++;
+          errors.push(msg);
+        }
       }
     } catch (e) {
       errors.push(String(e));
       failed++;
     }
   }
-  return { sent, failed, errors };
+  return { sent, failed, devSkipped, errors, staleTokens };
 }
 
 router.post("/admin/push", async (req, res): Promise<void> => {
@@ -735,14 +761,23 @@ router.post("/admin/push", async (req, res): Promise<void> => {
   });
 
   const tokens = matching.map((r) => r.pushToken as string);
-  const skipped = rows.length - matching.length;
+  const tierSkipped = rows.length - matching.length;
 
   req.log.info({ tier, count: tokens.length }, "Push-Kampagne gestartet");
 
-  const { sent, failed, errors } = await sendExpoPush(tokens, title, msg, data);
+  const { sent, failed, devSkipped, errors, staleTokens } = await sendExpoPush(tokens, title, msg, data);
 
-  req.log.info({ tier, sent, failed, skipped, errors }, "Push-Kampagne abgeschlossen");
-  res.json({ ok: true, tier, total: rows.length, targeted: tokens.length, sent, failed, skipped, errors });
+  // Expo-Go/Dev-Tokens aus der DB entfernen — sie werden nie funktionieren
+  if (staleTokens.length > 0) {
+    db.update(profilesTable)
+      .set({ pushToken: null })
+      .where(inArray(profilesTable.pushToken, staleTokens))
+      .catch((err) => req.log.warn({ err }, "Stale-Token-Bereinigung fehlgeschlagen"));
+    req.log.info({ count: staleTokens.length }, "Expo-Go/Dev-Push-Tokens bereinigt");
+  }
+
+  req.log.info({ tier, sent, failed, devSkipped, tierSkipped, errors }, "Push-Kampagne abgeschlossen");
+  res.json({ ok: true, tier, total: rows.length, targeted: tokens.length, sent, failed, devSkipped, skipped: tierSkipped, errors });
 });
 
 router.get("/admin/push/stats", async (req, res): Promise<void> => {

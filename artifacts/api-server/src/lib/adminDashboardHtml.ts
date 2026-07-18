@@ -627,6 +627,7 @@ function appendPushHistory(tierLabel, title, body, r) {
     '</div>' +
     '<div style="text-align:right;flex-shrink:0">' +
       '<div style="font-weight:700;color:var(--green)">' + (r.sent||0) + ' gesendet</div>' +
+      (r.devSkipped ? '<div style="color:var(--mid);font-size:11px">' + r.devSkipped + ' Dev-Token übersprungen</div>' : '') +
       (r.failed ? '<div style="color:var(--red);font-size:11px">' + r.failed + ' fehlgeschlagen</div>' : '') +
       '<div class="hint">' + now + '</div>' +
     '</div>' +
