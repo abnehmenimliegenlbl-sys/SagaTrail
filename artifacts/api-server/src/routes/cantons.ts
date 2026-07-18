@@ -7,10 +7,8 @@ import { haversineM } from "../lib/geo";
 
 const router: IRouter = Router();
 
-// Deckel fuer die Trefferliste. Er greift bewusst NACH dem Filter: eine
-// 0-5-km-Suche liefert damit die besten Kurzrouten unter 5 km und nicht die
-// besten 16 Routen des Kantons, von denen dann zufaellig nur wenige kurz sind.
-const RESULT_LIMIT = 16;
+// Kein Deckel — alle gefilterten Routen werden zurueckgegeben.
+const RESULT_LIMIT = Infinity;
 
 /**
  * Sortiert Treffer nach Relevanz, damit der RESULT_LIMIT-Deckel die
