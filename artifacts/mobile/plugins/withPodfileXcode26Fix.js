@@ -1,6 +1,53 @@
-const { withDangerousMod, withXcodeProject } = require("expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const path = require("path");
 const fs = require("fs");
+
+// ─── Podfile prelude (inserted at the very top of the Podfile) ───────────────
+// ROOT CAUSE of the Xcode 26 "The project 'Pods' is damaged" failure:
+//
+// React Native's SPMManager (scripts/cocoapods/spm.rb, pulled in by Clerk's
+// spm_dependency) creates XCRemoteSwiftPackageReference /
+// XCSwiftPackageProductDependency objects during post_install via
+// \`project.new(klass)\`. The UUID allocator can hand out a UUID that is
+// ALREADY TAKEN — in the worst case the PBXProject root object's UUID.
+// The new SPM object then replaces PBXProject in objects_by_uuid, and the
+// saved Pods.xcodeproj is structurally corrupted. Xcode 26 fails to load it:
+//   -[XCRemoteSwiftPackageReference _setSavedArchiveVersion:]
+//     unrecognized selector … "The project 'Pods' is damaged"
+// → no pod target ever builds → "module map not found" / "no such module".
+//
+// The bug is probabilistic on pod count (one added/removed pod flips it),
+// which is why builds "suddenly" broke without any app change.
+// Fix verified in maplibre/maplibre-react-native#1499: never hand out a UUID
+// that already exists in objects_by_uuid.
+const PODFILE_PRELUDE = `# === SagaTrail Xcode 26 fix: UUID collision guard (see plugins/withPodfileXcode26Fix.js) ===
+require 'xcodeproj'
+require 'securerandom'
+$sagatrail_make_uuid_guard = lambda do
+  Module.new do
+    def generate_uuid
+      uuid = super
+      tries = 0
+      while objects_by_uuid.key?(uuid) && tries < 100000
+        uuid = SecureRandom.hex(12).upcase
+        tries += 1
+      end
+      uuid
+    end
+  end
+end
+Xcodeproj::Project.prepend($sagatrail_make_uuid_guard.call)
+Pod::Project.prepend($sagatrail_make_uuid_guard.call) if defined?(Pod::Project)
+# === End SagaTrail UUID collision guard ===
+
+`;
+
+// Re-applied right before react_native_post_install: by then Pod::Project is
+// guaranteed to be defined (it may not be while the Podfile itself loads),
+// and a subclass override of generate_uuid would otherwise bypass the guard.
+const GUARD_BEFORE_RN_POST_INSTALL = `# SagaTrail: ensure UUID guard also covers Pod::Project's own allocator
+    Pod::Project.prepend($sagatrail_make_uuid_guard.call) if defined?(Pod::Project)
+    `;
 
 // ─── Podfile fix (injected inside existing post_install) ─────────────────────
 // CocoaPods does NOT support multiple post_install blocks.
@@ -49,57 +96,20 @@ const PODFILE_FIX = `
     target.build_configurations.each do |config|
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
     end
-  end`;
+  end
 
-// ─── Run Script body ─────────────────────────────────────────────────────────
-// This script runs BEFORE "Compile Sources" in the SagaTrail (main) target.
-//
-// Root cause of the archive build error:
-//   Xcode 16+ uses per-target archive intermediates:
-//     ArchiveIntermediates/Expo/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap
-//   But PODS_CONFIGURATION_BUILD_DIR (= main-target BUILD_DIR + /Release-iphoneos)
-//   resolves to:
-//     ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap
-//   which does NOT exist → "module map file not found".
-//
-// Fix: copy every *.modulemap from every pod's ArchiveIntermediates directory
-// into the main target's BUILT_PRODUCTS_DIR so the compiler finds them.
-const COPY_MODULE_MAPS_SCRIPT = [
-  "# Fix for Xcode 16/26 archive-build module map path issue.",
-  "#",
-  "# During an archive build, OBJROOT is per-target:",
-  "#   .../Intermediates.noindex/ArchiveIntermediates/SagaTrail",
-  "# Pod module maps live in sibling directories one level up:",
-  "#   .../ArchiveIntermediates/Expo/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap",
-  "# So we search from OBJROOT/.. (not OBJROOT/ArchiveIntermediates which doesn't exist).",
-  "# See withPodfileXcode26Fix.js for the full explanation.",
-  "set +e",
-  'DEST="${BUILT_PRODUCTS_DIR}"',
-  '#',
-  '# ARCHIVE_ROOT is always 3 levels above BUILT_PRODUCTS_DIR:',
-  '#   BUILT_PRODUCTS_DIR = .../ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos',
-  '#   ../../..            = .../ArchiveIntermediates  <- pod sibling dirs live here',
-  '#',
-  '# We intentionally avoid OBJROOT: its value varies across Xcode versions and',
-  '# is unreliable (in Xcode 16 OBJROOT may or may not include the target subdir).',
-  'ARCHIVE_ROOT=$(cd "${BUILT_PRODUCTS_DIR}/../../.." 2>/dev/null && pwd)',
-  'echo "[CopyPodModuleMaps] BUILT_PRODUCTS_DIR=${BUILT_PRODUCTS_DIR}"',
-  'echo "[CopyPodModuleMaps] ARCHIVE_ROOT=${ARCHIVE_ROOT}"',
-  'if [ -d "${ARCHIVE_ROOT}" ]; then',
-  '  find "${ARCHIVE_ROOT}" -maxdepth 6 -name "*.modulemap" 2>/dev/null | while IFS= read -r f; do',
-  '    DIR=$(dirname "$f")',
-  '    NAME=$(basename "$DIR")',
-  '    DESTDIR="${DEST}/${NAME}"',
-  '    mkdir -p "${DESTDIR}"',
-  '    cp -f "$f" "${DESTDIR}/" 2>/dev/null || true',
-  '    echo "[CopyPodModuleMaps] ${NAME}/$(basename "$f") -> OK"',
-  '  done',
-  '  echo "[CopyPodModuleMaps] Done."',
-  "else",
-  '  echo "[CopyPodModuleMaps] ARCHIVE_ROOT not found — non-archive build, skipping."',
-  "fi",
-  "set -e",
-].join("\n");
+  # Fix 3: Integrity check — fail pod install EARLY (with a clear message)
+  # if the PBXProject root object was overwritten by a UUID collision.
+  # Without this, the corruption only surfaces minutes later as a cryptic
+  # "module map file not found" / "no such module 'Expo'" archive failure.
+  _root = installer.pods_project.root_object
+  _reg = installer.pods_project.objects_by_uuid[_root.uuid]
+  if _reg.equal?(_root)
+    Pod::UI.puts "[SagaTrail] OK: PBXProject root object intact (#{_root.uuid})"
+  else
+    raise "[SagaTrail] FATAL: Pods.xcodeproj root object #{_root.uuid} was overwritten by #{_reg ? _reg.isa : 'nil'} (UUID collision). Aborting before a doomed xcodebuild run."
+  end
+  installer.pods_project.save`;
 
 // ─── Podfile plugin ───────────────────────────────────────────────────────────
 function withPodfilePatched(config) {
@@ -115,6 +125,11 @@ function withPodfilePatched(config) {
       // Idempotent guard
       if (content.includes("pbxproj = installer.pods_project.path")) {
         return config;
+      }
+
+      // 1) UUID collision guard at the very top of the Podfile
+      if (!content.includes("sagatrail_make_uuid_guard")) {
+        content = PODFILE_PRELUDE + content;
       }
 
       const marker = "react_native_post_install(";
@@ -140,79 +155,20 @@ function withPodfilePatched(config) {
         return config;
       }
 
-      content = content.slice(0, closeIdx + 1) + "\n" + PODFILE_FIX + content.slice(closeIdx + 1);
+      content =
+        content.slice(0, markerIdx) +
+        GUARD_BEFORE_RN_POST_INSTALL +
+        content.slice(markerIdx, closeIdx + 1) +
+        "\n" +
+        PODFILE_FIX +
+        content.slice(closeIdx + 1);
       fs.writeFileSync(podfilePath, content);
       return config;
     },
   ]);
 }
 
-// ─── Xcode project plugin ─────────────────────────────────────────────────────
-function withCopyModuleMapsScript(config) {
-  return withXcodeProject(config, (config) => {
-    const xcodeproj = config.modResults;
-
-    // Idempotent check: look for our script in PBXShellScriptBuildPhase objects
-    const objects = xcodeproj.hash.project.objects;
-    const shellScripts = objects["PBXShellScriptBuildPhase"] || {};
-    const alreadyAdded = Object.values(shellScripts).some(
-      (p) => p && typeof p === "object" && (p.name || "").includes("CopyPodModuleMaps")
-    );
-    if (alreadyAdded) {
-      return config;
-    }
-
-    // Find the SagaTrail native target UUID
-    const nativeTargets = xcodeproj.pbxNativeTargetSection();
-    let targetUuid = null;
-    for (const key of Object.keys(nativeTargets)) {
-      const t = nativeTargets[key];
-      if (t && t.name && t.name.replace(/"/g, "") === "SagaTrail") {
-        targetUuid = key;
-        break;
-      }
-    }
-    if (!targetUuid) {
-      console.warn("[withPodfileXcode26Fix] SagaTrail native target not found — skipping run script");
-      return config;
-    }
-
-    // Add the shell script build phase via the correct API
-    const phaseName = "CopyPodModuleMaps";
-    xcodeproj.addBuildPhase(
-      [],
-      "PBXShellScriptBuildPhase",
-      phaseName,
-      targetUuid,
-      { shellScript: COPY_MODULE_MAPS_SCRIPT, shellPath: "/bin/sh" }
-    );
-
-    // Move the newly-added phase BEFORE "Compile Sources"
-    const pbxTarget = objects["PBXNativeTarget"][targetUuid];
-    const buildPhases = pbxTarget.buildPhases;
-
-    // Find the phase we just added (last one with our name comment)
-    const newPhaseIdx = buildPhases.map((p) => p.comment || "").lastIndexOf(phaseName);
-    if (newPhaseIdx <= 0) return config; // already at top or not found
-
-    // Find "Compile Sources" phase index
-    const sourcesIdx = buildPhases.findIndex(
-      (p) => (p.comment || "").includes("Sources")
-    );
-    if (sourcesIdx === -1 || newPhaseIdx <= sourcesIdx) return config;
-
-    // Move: remove from current position and insert before Sources
-    const [phaseRef] = buildPhases.splice(newPhaseIdx, 1);
-    const insertAt = buildPhases.findIndex((p) => (p.comment || "").includes("Sources"));
-    buildPhases.splice(insertAt, 0, phaseRef);
-
-    return config;
-  });
-}
-
 // ─── Compose and export ───────────────────────────────────────────────────────
 module.exports = function withPodfileXcode26Fix(config) {
-  config = withPodfilePatched(config);
-  config = withCopyModuleMapsScript(config);
-  return config;
+  return withPodfilePatched(config);
 };

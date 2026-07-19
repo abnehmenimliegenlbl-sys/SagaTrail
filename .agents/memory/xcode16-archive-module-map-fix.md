@@ -1,62 +1,14 @@
 ---
-name: Xcode 16+ archive build module map fix
-description: Why pod module maps are not found during xcodebuild archive in Xcode 16+, and the working fix via a run script build phase.
+name: CopyPodModuleMaps workaround was harmful (superseded)
+description: Why the CopyPodModuleMaps run-script phase was removed — it broke Swift module resolution with "umbrella header not found"; the real bug was elsewhere.
 ---
 
-# Xcode 16+ Archive Build: Pod Module Map Not Found
+# CopyPodModuleMaps: entfernt, nicht wieder einbauen
 
-## The Error
-```
-module map file '...ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap' not found
-```
+Ein früherer Workaround gegen `module map file '...ArchiveIntermediates/.../Expo.modulemap' not found` fügte per Config-Plugin eine Run-Script-Phase **CopyPodModuleMaps** (vor Compile Sources) ein, die alle `*.modulemap` aus `ArchiveIntermediates/<Pod>/BuildProductsPath/...` nach `BUILT_PRODUCTS_DIR/<Pod>/` kopierte.
 
-## Root Cause
-CocoaPods sets `PODS_BUILD_DIR = $(BUILD_DIR)` in the aggregate target xcconfig (`Pods-SagaTrail.release.xcconfig`). This feeds into `OTHER_CFLAGS` via `-fmodule-map-file="$(PODS_CONFIGURATION_BUILD_DIR)/Expo/Expo.modulemap"`.
+**Warum das schädlich war:** Die kopierten modulemaps referenzieren `umbrella header "<Pod>-umbrella.h"` relativ zu ihrem eigenen Verzeichnis — die Header wurden aber NICHT mitkopiert. Swift/Clang findet die kopierte (kaputte) modulemap zuerst → `umbrella header 'ClerkExpo-umbrella.h' not found` / `could not build Objective-C module 'ClerkExpo'` beim Kompilieren von ExpoModulesProvider.swift. Das brach den ersten Build, der die pod-install-Phase überlebte.
 
-In Xcode 16+, `$(BUILD_DIR)` during `xcodebuild archive` becomes **per-target**:
-- For SagaTrail (main target): `ArchiveIntermediates/SagaTrail/BuildProductsPath`
-- For Expo (pod target): `ArchiveIntermediates/Expo/BuildProductsPath`
+**Die ursprüngliche Fehlerkette hatte eine andere Ursache:** eine xcodeproj-UUID-Kollision beim SPM-Bridge-Code (`spm.rb`), die das Pods-Projekt korrumpierte — Details und funktionierender Fix (UUID-Guard) in `clerk-ios-spm-cocoapods.md`. Nach Behebung der echten Ursache war CopyPodModuleMaps nur noch destruktiv.
 
-So when SagaTrail's compiler sees `-fmodule-map-file="$(PODS_CONFIGURATION_BUILD_DIR)/Expo/Expo.modulemap"`, it expands to `ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap` — but the Expo module map was built to `ArchiveIntermediates/Expo/BuildProductsPath/Release-iphoneos/Expo/Expo.modulemap`. The two paths are different!
-
-## What Did NOT Fix It
-- `SWIFT_ENABLE_EXPLICIT_MODULES = NO` (RN already sets this, and it's a Swift setting, not Clang)
-- Setting `PODS_BUILD_DIR = $(SYMROOT)` in aggregate xcconfigs (SYMROOT also changes during archive OR the xcconfig override isn't picked up reliably)
-- Adding `FRAMEWORK_SEARCH_PATHS` / `OTHER_SWIFT_FLAGS` overrides
-
-## The Working Fix
-`withPodfileXcode26Fix.js` (at `artifacts/mobile/plugins/`) uses `withXcodeProject` to add a `PBXShellScriptBuildPhase` called **CopyPodModuleMaps** to the SagaTrail target, positioned **before "Compile Sources"**.
-
-The shell script:
-```bash
-set +e
-PODS_ARCHIVES="${OBJROOT}/ArchiveIntermediates"
-DEST="${BUILT_PRODUCTS_DIR}"
-if [ -d "${PODS_ARCHIVES}" ]; then
-  find "${PODS_ARCHIVES}" -maxdepth 5 -name "*.modulemap" | while IFS= read -r f; do
-    DIR=$(dirname "$f")
-    NAME=$(basename "$DIR")
-    DESTDIR="${DEST}/${NAME}"
-    mkdir -p "${DESTDIR}"
-    cp -f "$f" "${DESTDIR}/" 2>/dev/null || true
-  done
-fi
-set -e
-```
-
-At archive time, all pod targets complete before SagaTrail starts. The script copies every `*.modulemap` from `ArchiveIntermediates/<PodName>/BuildProductsPath/Release-iphoneos/<PodName>/` into `ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos/<PodName>/` = `BUILT_PRODUCTS_DIR`. Then Compile Sources finds them at the `PODS_CONFIGURATION_BUILD_DIR` path.
-
-**Why:** `BUILT_PRODUCTS_DIR` (SagaTrail, archive) = `ArchiveIntermediates/SagaTrail/BuildProductsPath/Release-iphoneos/` = same as `PODS_CONFIGURATION_BUILD_DIR` for the main target. So the compiler flag resolves correctly after the copy.
-
-## Status (2026-07-19)
-Fix is implemented and locally verified (run script appears before Sources in pbxproj). Free plan build quota exhausted (resets 2026-08-01). Next step: submit build after quota reset or plan upgrade.
-
-## Rebuilding
-Always run after any fix attempt:
-```bash
-cd artifacts/mobile
-rm -rf ios
-npx expo prebuild --platform ios --no-install
-# verify: grep "CopyPodModuleMaps" ios/SagaTrail.xcodeproj/project.pbxproj
-GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 EXPO_TOKEN=$EXPO_TOKEN npx eas build --platform ios --profile production --non-interactive --no-wait
-```
+**Lehre:** Symptom-Workarounds, die Build-Artefakte manipulieren, nach dem Root-Cause-Fix sofort entfernen — "kann ja nicht schaden" gilt bei Xcode-Buildphasen nicht. Nach Plugin-Änderungen immer `rm -rf ios && npx expo prebuild --platform ios --no-install` und per grep verifizieren, dass die Phase wirklich aus `project.pbxproj` verschwunden ist.
