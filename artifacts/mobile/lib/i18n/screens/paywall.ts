@@ -31,6 +31,7 @@ export interface PaywallStrings {
   restoreBtn: string;
   restoreSuccessTitle: string;
   restoreSuccessMsg: string;
+  purchaseSuccess: string;
   restoreNoneTitle: string;
   restoreNoneMsg: string;
   restoreErrorTitle: string;
@@ -91,6 +92,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Kauf wiederherstellen",
     restoreSuccessTitle: "Wiederhergestellt",
     restoreSuccessMsg: "Dein Premium-Abo wurde erfolgreich wiederhergestellt.",
+    purchaseSuccess: "Willkommen bei Premium!",
     restoreNoneTitle: "Kein Abo gefunden",
     restoreNoneMsg: "Für dieses Konto wurde kein aktives Abo gefunden.",
     restoreErrorTitle: "Wiederherstellung fehlgeschlagen",
@@ -151,6 +153,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Chauf wiederhärstelle",
     restoreSuccessTitle: "Wiederhärgstellt",
     restoreSuccessMsg: "Dis Premium-Abo isch erfolgriich wiederhärgstellt worde.",
+    purchaseSuccess: "Willkomme bi Premium!",
     restoreNoneTitle: "Kes Abo gfunde",
     restoreNoneMsg: "Für das Konto isch kes aktivs Abo gfunde worde.",
     restoreErrorTitle: "Wiederhärstellig fählgschlage",
@@ -211,6 +214,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Restore purchase",
     restoreSuccessTitle: "Restored",
     restoreSuccessMsg: "Your Premium subscription has been restored.",
+    purchaseSuccess: "Welcome to Premium!",
     restoreNoneTitle: "No subscription found",
     restoreNoneMsg: "No active subscription was found for this account.",
     restoreErrorTitle: "Restore failed",
@@ -271,6 +275,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Restaurer l'achat",
     restoreSuccessTitle: "Restauré",
     restoreSuccessMsg: "Votre abonnement Premium a été restauré.",
+    purchaseSuccess: "Bienvenue dans Premium !",
     restoreNoneTitle: "Aucun abonnement trouvé",
     restoreNoneMsg: "Aucun abonnement actif n'a été trouvé pour ce compte.",
     restoreErrorTitle: "Échec de la restauration",
@@ -331,6 +336,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Ripristina acquisto",
     restoreSuccessTitle: "Ripristinato",
     restoreSuccessMsg: "Il tuo abbonamento Premium è stato ripristinato.",
+    purchaseSuccess: "Benvenuto in Premium!",
     restoreNoneTitle: "Nessun abbonamento trovato",
     restoreNoneMsg: "Non è stato trovato nessun abbonamento attivo per questo account.",
     restoreErrorTitle: "Ripristino non riuscito",
@@ -391,6 +397,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
     restoreSuccessMsg: "Tu suscripción Premium ha sido restaurada.",
+    purchaseSuccess: "¡Bienvenido a Premium!",
     restoreNoneTitle: "No se encontró suscripción",
     restoreNoneMsg: "No se encontró ninguna suscripción activa para esta cuenta.",
     restoreErrorTitle: "Error al restaurar",
@@ -451,6 +458,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Restaurar compra",
     restoreSuccessTitle: "Restaurado",
     restoreSuccessMsg: "Sua assinatura Premium foi restaurada.",
+    purchaseSuccess: "Bem-vindo ao Premium!",
     restoreNoneTitle: "Nenhuma assinatura encontrada",
     restoreNoneMsg: "Nenhuma assinatura ativa foi encontrada para esta conta.",
     restoreErrorTitle: "Falha ao restaurar",
@@ -511,6 +519,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "恢复购买",
     restoreSuccessTitle: "已恢复",
     restoreSuccessMsg: "您的 Premium 订阅已恢复。",
+    purchaseSuccess: "欢迎加入 Premium！",
     restoreNoneTitle: "未找到订阅",
     restoreNoneMsg: "未找到此账户的有效订阅。",
     restoreErrorTitle: "恢复失败",
@@ -569,6 +578,7 @@ const PAYWALL_STRINGS: StringsDict<PaywallStrings> = {
     restoreBtn: "Восстановить покупку",
     restoreSuccessTitle: "Восстановлено",
     restoreSuccessMsg: "Ваша подписка Premium была восстановлена.",
+    purchaseSuccess: "Добро пожаловать в Premium!",
     restoreNoneTitle: "Подписка не найдена",
     restoreNoneMsg: "Для этого аккаунта не найдено активной подписки.",
     restoreErrorTitle: "Восстановление не удалось",

@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/lib/appAlert";
+import Animated, { ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -48,6 +49,9 @@ export default function Paywall() {
 
   const [busy, setBusy] = useState(false);
   const [buyingKey, setBuyingKey] = useState<string | null>(null);
+  // Nicht-modales Erfolgs-Overlay nach Kauf (bewusst KEIN natives Modal —
+  // direkt nach dem StoreKit-Sheet kann das iOS einfrieren).
+  const [showSuccess, setShowSuccess] = useState(false);
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   const mountedRef = useRef(true);
@@ -116,15 +120,17 @@ export default function Paywall() {
       }
       iapLog("paywall.buy: Kauf-Promise aufgeloest, navigiere weiter");
       hapticSuccess();
+      setShowSuccess(true);
       const istPremiumPlan = ["monthly", "yearly", "family"].includes(planKey);
       setTimeout(() => {
         if (!mountedRef.current) return;
+        setShowSuccess(false);
         if (istPremiumPlan) {
           router.replace("/welcome-sagenpaket");
         } else {
           router.back();
         }
-      }, 600);
+      }, 1400);
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (timedOut) return;
@@ -377,11 +383,56 @@ export default function Paywall() {
           </>
         )}
       </ScrollView>
+      {showSuccess && (
+        <View style={styles.successOverlay} pointerEvents="auto">
+          <Animated.View
+            entering={ZoomIn.springify().damping(14)}
+            style={[
+              styles.successCard,
+              { backgroundColor: colors.background, borderColor: colors.accent },
+            ]}
+          >
+            <View style={[styles.successCircle, { backgroundColor: colors.accent }]}>
+              <Feather name="check" size={40} color={colors.accentForeground} />
+            </View>
+            <Text style={[styles.successText, { color: colors.foreground }]}>
+              {t.purchaseSuccess}
+            </Text>
+          </Animated.View>
+        </View>
+      )}
     </Background>
   );
 }
 
 const styles = StyleSheet.create({
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  successCard: { ...GLAS_3D,
+    alignItems: "center",
+    paddingVertical: 28,
+    paddingHorizontal: 34,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    gap: 14,
+    maxWidth: 300,
+  },
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successText: {
+    fontFamily: fonts.titleBold,
+    fontSize: 19,
+    textAlign: "center",
+  },
   closeRow: { alignItems: "flex-end", marginBottom: 6 },
   hero: { alignItems: "center", marginTop: 6 },
   title: {

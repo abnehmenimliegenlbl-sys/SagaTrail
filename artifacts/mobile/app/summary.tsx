@@ -17,7 +17,8 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
+import { hapticSuccess } from "@/lib/haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -52,6 +53,12 @@ export default function Summary() {
   const archetype = profile?.archetype
     ? onboardingStrings.archetypes[profile.archetype].title
     : undefined;
+
+  // Erfolgsmoment beim Oeffnen der Zusammenfassung: kurzes Erfolgs-Haptic
+  // passend zur Einblend-Animation des Achievement-Markers.
+  useEffect(() => {
+    hapticSuccess();
+  }, []);
 
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
@@ -199,7 +206,9 @@ export default function Summary() {
         }}
       >
         <Animated.View entering={FadeIn} style={styles.hero}>
-          <AchievementMarker size={100} unlocked color={colors.accent} />
+          <Animated.View entering={ZoomIn.springify().damping(12)}>
+            <AchievementMarker size={100} unlocked color={colors.accent} />
+          </Animated.View>
           <Text style={[styles.unlocked, { color: colors.accent }]}>
             {t.achievementUnlocked}
           </Text>

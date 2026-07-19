@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   Platform,
@@ -309,6 +310,23 @@ export default function Onboarding() {
         )}
       </ScrollView>
 
+      {saveError && (
+        <Animated.View
+          entering={FadeIn}
+          style={[
+            styles.errorBox,
+            {
+              borderColor: colors.destructive,
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <Feather name="alert-circle" size={18} color={colors.destructive} />
+          <Text style={[styles.errorText, { color: colors.destructive }]}>
+            {saveError}
+          </Text>
+        </Animated.View>
+      )}
       <View
         style={[
           styles.footer,
@@ -330,16 +348,6 @@ export default function Onboarding() {
           style={{ flex: 1 }}
         />
       </View>
-      {saveError && (
-        <Text
-          style={[
-            styles.backText,
-            { color: colors.destructive, textAlign: "center", marginBottom: insets.bottom + 8 },
-          ]}
-        >
-          {saveError}
-        </Text>
-      )}
     </Background>
   );
 }
@@ -367,6 +375,23 @@ function StepFrame({
 }
 
 const styles = StyleSheet.create({
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 22,
+    marginBottom: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+  },
   progressRow: { flexDirection: "row", gap: 6, marginBottom: 28 },
   progressDot: { height: 8, borderRadius: 4 },
   welcome: { alignItems: "center", paddingTop: 12 },
