@@ -638,8 +638,8 @@ function fmtTime(min){
 }
 function cardHtml(r){
   const img = r.photoUrl
-    ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}" loading="lazy"
-         onerror="this.outerHTML=PH_SVG_ENCODED">\`
+    ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}"
+         onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
     : PH_SVG;
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
   const hm   = r.ascentM    ? r.ascentM+' hm' : '';
@@ -660,14 +660,8 @@ function cardHtml(r){
     </div>
   </div>\`;
 }
-// Inline placeholder string for the onerror (avoids closure issues)
-const PH_SVG_ENCODED = PH_SVG.replace(/"/g,"'");
-// Patch all cards' onerror after render
-document.addEventListener('click', ()=>{
-  document.querySelectorAll('.route-img').forEach(img=>{
-    img.onerror = function(){ this.outerHTML = PH_SVG; };
-  });
-});
+// Expose placeholder on window so onerror attributes can access it
+window.__sagaPH = PH_SVG.replace(/"/g,"'");
 
 function emptyHtml(title, sub){
   return \`<div class="empty-box">
