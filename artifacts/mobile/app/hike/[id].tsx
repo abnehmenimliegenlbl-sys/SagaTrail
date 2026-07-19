@@ -304,6 +304,8 @@ export default function LiveHike() {
   const [recalcFailed, setRecalcFailed] = useState(false);
   /** true wenn der Nutzer "Dieser Route folgen" getippt hat. */
   const [followingRecalc, setFollowingRecalc] = useState(false);
+  /** Anteil (0..1) der Originalroute, an dem die Neuberechnung wieder einmuendet. */
+  const [recalcRejoinFraction, setRecalcRejoinFraction] = useState<number | null>(null);
   // Einmalig true sobald der User den Streckenstart passiert hat —
   // verhindert, dass das "Zum Start laufen"-Banner nach dem Passieren
   // wieder auftaucht (User ist dann einfach weiter von geometry[0] weg).
@@ -329,6 +331,7 @@ export default function LiveHike() {
     if (!offRoutePos) {
       if (!followingRecalcRef.current) {
         setRecalcGeom(null);
+        setRecalcRejoinFraction(null);
         setIsRecalculating(false);
         setRecalcFailed(false);
         setFollowingRecalc(false);
@@ -354,6 +357,7 @@ export default function LiveHike() {
     setIsRecalculating(true);
     setRecalcFailed(false);
     setRecalcGeom(null);
+    setRecalcRejoinFraction(null);
     setFollowingRecalc(false);
     const controller = new AbortController();
     (async () => {
@@ -375,6 +379,9 @@ export default function LiveHike() {
         const shape = data?.trip?.legs?.[0]?.shape;
         if (shape) {
           setRecalcGeom(decodePolyline6(shape));
+          // Merken, wo die Alternativroute wieder auf die Originalroute trifft —
+          // noetig, um Restkilometer/Restzeit waehrend der Umleitung zu berechnen.
+          setRecalcRejoinFraction(geom.length > 1 ? destIdx / (geom.length - 1) : null);
         } else {
           setRecalcFailed(true);
         }
@@ -2146,6 +2153,31 @@ export default function LiveHike() {
     openUrlSafely(`tel:${num}`, t.callSosManually(num));
   };
 
+  // Waehrend einer akzeptierten Umleitung ("Dieser Route folgen") wird der
+  // Fortschritt entlang der NEUEN Route gemessen: Restdistanz = Rest auf der
+  // Umleitung + Rest der Originalroute ab dem Wiedereinstiegspunkt. Ohne diese
+  // Rechnung friert die Projektion auf die Originalroute ein und
+  // Restkilometer/Restzeit bewegen sich nicht mehr.
+  // WICHTIG: dieser Hook muss VOR dem "!saga || !profile"-Early-Return stehen,
+  // sonst aendert sich die Hook-Reihenfolge zwischen Renders (React-Crash).
+  const recalcProgress = useMemo(() => {
+    if (!followingRecalc || !recalcGeom || recalcGeom.length < 2 || !livePos) return null;
+    if (recalcRejoinFraction == null || totalKm <= 0) return null;
+    const match = fortschrittAufRoute(livePos, recalcGeom);
+    if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
+    let recalcLenKm = 0;
+    for (let i = 1; i < recalcGeom.length; i++) {
+      recalcLenKm += haversineKm(
+        { lat: recalcGeom[i - 1][0], lng: recalcGeom[i - 1][1] },
+        { lat: recalcGeom[i][0], lng: recalcGeom[i][1] },
+      );
+    }
+    const restUmleitungKm = recalcLenKm * (1 - match.fraction);
+    const restOriginalKm = totalKm * (1 - recalcRejoinFraction);
+    const remainingKm = restUmleitungKm + restOriginalKm;
+    return Math.max(0, Math.min(1, 1 - remainingKm / totalKm));
+  }, [followingRecalc, recalcGeom, recalcRejoinFraction, livePos, totalKm]);
+
   if (!saga || !profile) {
     return (
       <Background>
@@ -2166,7 +2198,7 @@ export default function LiveHike() {
   // Kapitelgrenzen springenden Story-Fortschritt — sonst zeigt die Restzeit
   // direkt nach einem Start mitten auf der Route faelschlich die volle
   // Wanderdauer an, bis das erste Kapitel erreicht ist.
-  const timeProgress = routeProgress ?? (totalKm > 0 ? Math.min(1, distance / totalKm) : progress);
+  const timeProgress = recalcProgress ?? routeProgress ?? (totalKm > 0 ? Math.min(1, distance / totalKm) : progress);
   const currentChapter = chapters[currentIndex];
 
   // Angezeigte Position auf der Karte: bei echtem GPS die Live-Position, sonst
