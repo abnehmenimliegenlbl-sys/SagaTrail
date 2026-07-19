@@ -977,7 +977,7 @@ export default function Routenplanung() {
 
         {/* Offline-Karte erst zeigen, wenn eine Sage zur Route feststeht —
             vorher ergibt "Sage & Route herunterladen" keinen Sinn. */}
-        {(saga || downloaded) && (
+        {!!saga && (
           <View
             style={[
               styles.downloadCard,
