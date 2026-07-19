@@ -800,6 +800,42 @@ async function findNearestCuratedSaga(
   return nearestOf(located, lat, lng);
 }
 
+const PHOTO_FILL_STAGGER_MS = 3000;
+
+/**
+ * Holt fehlende Fotos fuer alle gecachten Routen im Hintergrund nach.
+ * Laeuft einmalig nach dem Kanton-Warmup; Fehler pro Route werden nur geloggt.
+ * Stagger 3s zwischen Requests damit Wikimedia Commons nicht ueberfordert wird.
+ */
+export async function fillMissingRoutePhotos(log: Logger): Promise<void> {
+  const missing = await db
+    .select()
+    .from(externalRoutesTable)
+    .where(and(isNull(externalRoutesTable.photoUrl), sql`lat IS NOT NULL`));
+
+  log.info({ count: missing.length }, "Routen ohne Foto gefunden – starte Nachladen");
+
+  for (const route of missing) {
+    if (route.lat == null || route.lng == null) continue;
+    try {
+      const foto = await getCachedRoutePhoto(route.lat, route.lng, log, route.name ?? undefined);
+      if (foto.photoUrl) {
+        await db
+          .update(externalRoutesTable)
+          .set({ photoUrl: foto.photoUrl, photoAttribution: foto.attribution })
+          .where(and(eq(externalRoutesTable.id, route.id), isNull(externalRoutesTable.photoUrl)))
+          .execute();
+        log.debug({ routeId: route.id }, "Route-Foto nachgeladen");
+      }
+    } catch (err) {
+      log.warn({ err, routeId: route.id }, "Route-Foto-Nachladen fehlgeschlagen");
+    }
+    await new Promise((resolve) => setTimeout(resolve, PHOTO_FILL_STAGGER_MS));
+  }
+
+  log.info({ count: missing.length }, "Routen-Foto-Nachladen abgeschlossen");
+}
+
 /**
  * Liefert die kuratierte Sage zu einer dynamischen (OSM-)Route: die
  * naechstgelegene belegte Regionalsage. Es werden keine Sagen mehr erzeugt.

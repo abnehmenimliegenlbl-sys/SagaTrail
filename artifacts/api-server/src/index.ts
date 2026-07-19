@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
-import { warmAllCantonCaches, startDailyCantonSync } from "./lib/routeService";
+import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 
@@ -36,9 +36,11 @@ const server = app.listen(port, async (err) => {
 
   // Kanton-Routen-Cache im Hintergrund vorwaermen (nicht awaiten): reduziert
   // die haeufige Kaltstart-Wartezeit von 15-25s pro Kanton auf Cache-Treffer.
-  warmAllCantonCaches(logger).catch((err) => {
-    logger.error({ err }, "Cache-Vorwaermung fehlgeschlagen");
-  });
+  warmAllCantonCaches(logger)
+    .then(() => fillMissingRoutePhotos(logger))
+    .catch((err) => {
+      logger.error({ err }, "Cache-Vorwaermung oder Foto-Nachladen fehlgeschlagen");
+    });
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();
