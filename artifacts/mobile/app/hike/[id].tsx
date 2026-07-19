@@ -645,20 +645,16 @@ export default function LiveHike() {
   // Podcast, wird diese waehrend der Erzaehlung leiser gedreht statt in
   // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
   useEffect(() => {
-    // DuckOthers fuer die gesamte Wanderung — kein Moduswechsel mehr.
-    // Grund: jeder setAudioModeAsync-Aufruf kann unter iOS eine
-    // Audio-Session-Unterbrechung ausloesen (z. B. wenn Bluetooth gerade
-    // verbindet). Mit einem einzigen stabilen Modus bleibt der A2DP-Stream
-    // zum Auto-Radio durchgehend aktiv. Background-Playback (staysActive-
-    // InBackground) ist zuverlaessiger wenn die Session durchgehend im
-    // selben Zustand ist — kein iOS-seitiges "ist das noch Playback?".
+    // Grundmodus: MixWithOthers — der stille Keepalive-Loop darf andere Apps
+    // (Musik, Podcasts) nicht dauerhaft ducken. DuckOthers wird nur waehrend
+    // aktiver Erzaehlung gesetzt und danach sofort zurueckgenommen.
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: true,
+      shouldDuckAndroid: false,
     }).catch(() => {});
   }, []);
 
@@ -1464,7 +1460,15 @@ export default function LiveHike() {
         // Best effort — Sound koennte bereits entladen sein.
       }
     }
-    // Kein Moduswechsel mehr — Session bleibt durchgehend in DuckOthers.
+    // Zurueck auf MixWithOthers — andere Apps duerfen wieder ungedimmt spielen.
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+      shouldDuckAndroid: false,
+    }).catch(() => {});
     setSpeaking(false);
   }, []);
 
@@ -1538,6 +1542,23 @@ export default function LiveHike() {
         }
         try { Speech.stop(); } catch {}
         const locale = SPEECH_LOCALE[resolveLang((profile?.language ?? "de") as Lang)];
+        const restoreAudioMode = () => Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: false,
+        }).catch(() => {});
+        // Vor dem Sprechen auf DuckOthers wechseln.
+        Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+        }).catch(() => {});
         Speech.speak(text, {
           language: locale,
           onDone: () => {
@@ -1547,11 +1568,13 @@ export default function LiveHike() {
             onFinished?.();
             const next = narrationQueueRef.current.shift();
             if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+            else restoreAudioMode();
           },
           onStopped: () => {
             if (gen !== narrationGenRef.current) return;
             setSpeaking(false);
             speakingRef.current = false;
+            restoreAudioMode();
           },
           onError: () => {
             if (gen !== narrationGenRef.current) return;
@@ -1560,6 +1583,7 @@ export default function LiveHike() {
             onFinished?.();
             const next = narrationQueueRef.current.shift();
             if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+            else restoreAudioMode();
           },
         });
         return;
@@ -1587,7 +1611,15 @@ export default function LiveHike() {
           try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
         }
         if (gen !== narrationGenRef.current) return;
-        // Kein Moduswechsel — Session ist bereits dauerhaft in DuckOthers.
+        // Vor dem Abspielen auf DuckOthers wechseln — nur waehrend aktiver Erzaehlung.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+        }).catch(() => {});
         const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {
           sound.unloadAsync().catch(() => {});
@@ -1597,12 +1629,23 @@ export default function LiveHike() {
         sound.setOnPlaybackStatusUpdate((status) => {
           if (!status.isLoaded) return;
           if (status.didJustFinish) {
-            // Kein Moduswechsel mehr — Session bleibt in DuckOthers.
             setSpeaking(false);
             speakingRef.current = false;
             onFinished?.();
             const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
+            if (next) {
+              speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
+            } else {
+              // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
+              Audio.setAudioModeAsync({
+                allowsRecordingIOS: false,
+                playsInSilentModeIOS: true,
+                staysActiveInBackground: true,
+                interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+                interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+                shouldDuckAndroid: false,
+              }).catch(() => {});
+            }
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
@@ -2058,14 +2101,15 @@ export default function LiveHike() {
     if (Platform.OS === "web") return;
     if (voiceListening) return;
     // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
-    // PlayAndRecord): Session explizit zurueck auf DuckOthers/Playback.
+    // PlayAndRecord): Session zurueck auf MixWithOthers/Playback.
+    // DuckOthers wird erst wieder gesetzt wenn die naechste Erzaehlung startet.
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: true,
+      shouldDuckAndroid: false,
     }).catch(() => {});
   }, [voiceListening]);
 
