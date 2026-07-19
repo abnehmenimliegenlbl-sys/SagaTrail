@@ -195,15 +195,17 @@ export default function SagaDetail() {
               setFotoFehler(true);
             }}
           />
+          {/* Immer heller Pfeil auf dunklem Kreis — das Hero-Bild ist meist
+              duester, themeabhaengige Farben waeren darauf schlecht lesbar. */}
           <Pressable
             onPress={() => router.back()}
             style={[
               styles.back,
-              { top: topInset + 6, borderColor: colors.glassBorder },
+              { top: topInset + 6, borderColor: "rgba(255,255,255,0.45)" },
             ]}
             hitSlop={10}
           >
-            <Feather name="chevron-left" size={22} color={colors.foreground} />
+            <Feather name="chevron-left" size={22} color="#FFFFFF" />
           </Pressable>
           <View style={[styles.cantonChip, { backgroundColor: colors.accent, top: topInset + 6 }]}>
             <Text style={[styles.canton, { color: colors.accentForeground }]}>
@@ -379,7 +381,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(16,24,26,0.4)",
+    backgroundColor: "rgba(16,24,26,0.62)",
   },
   cantonChip: {
     position: "absolute",
