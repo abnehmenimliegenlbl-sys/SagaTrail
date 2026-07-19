@@ -179,21 +179,28 @@ router.get("/transport-anreise", async (req, res) => {
         stop: {
           arrival: string | null;
           arrivalTimestamp: number | null;
+          departure: string | null;
+          departureTimestamp: number | null;
           delay: number | null;
           platform: string | null;
         };
         category: string;
         number: string;
-        from: string;
+        from: string | null;
+        to: string | null;
       }>;
     };
 
+    // Kleine Bus-/Tramhaltestellen liefern in opendata.ch oft KEINE
+    // Ankunftszeiten (stop.arrival = null), nur Abfahrten. Fallback:
+    // Abfahrtszeit an derselben Haltestelle verwenden, sonst bleibt
+    // "SBB live am Start" bei solchen Stationen dauerhaft leer.
     const arrivals: TransportArrival[] = (sbJson.stationboard ?? [])
-      .filter(e => e.stop.arrivalTimestamp != null)
+      .filter(e => e.stop.arrivalTimestamp != null || e.stop.departureTimestamp != null)
       .slice(0, 8)
       .map(e => ({
-        time: e.stop.arrival ? e.stop.arrival.slice(11, 16) : "",
-        from: e.from ?? "",
+        time: (e.stop.arrival ?? e.stop.departure ?? "").slice(11, 16),
+        from: e.from ?? e.to ?? "",
         category: e.category,
         number: e.number,
         delay: e.stop.delay ?? null,
