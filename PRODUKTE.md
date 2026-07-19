@@ -77,4 +77,5 @@ Die Preise werden in CHF, USD und EUR angeboten. Der angezeigte Preis im jeweili
 - Die Abrechnung erfolgt über das Apple-ID- bzw. Google-Play-Konto des Nutzers.
 - Nicht genutzte Restlaufzeiten bei einem Upgrade werden nicht erstattet.
 - Preise in CHF (Schweizer Franken), Abrechnung gemäss den Nutzungsbedingungen des jeweiligen Stores.
-- [Datenschutzerklärung](https://sagatrail.ch/datenschutz/) · [Nutzungsbedingungen (Apple)](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/)
+- **Widerrufsrecht:** Bei digitalen In-App-Käufen und Abonnements, die über Apple App Store oder Google Play abgewickelt werden, gelten die Widerrufsregeln des jeweiligen Plattformbetreibers. Mit dem Beginn der Leistungserbringung (Aktivierung des Abonnements) entfällt das gesetzliche Widerrufsrecht für digitale Inhalte gemäss Art. 16 lit. m der EU-Verbraucherrechterichtlinie bzw. den entsprechenden nationalen Regelungen. Rückerstattungsanfragen sind direkt über Apple ([reportaproblem.apple.com](https://reportaproblem.apple.com)) oder Google Play zu stellen.
+- [Datenschutzerklärung](https://sagatrail.ch/datenschutz/) · [Nutzungsbedingungen (Apple)](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) · [Google Play](https://play.google.com/store/apps/details?id=com.sagatrail.app)
