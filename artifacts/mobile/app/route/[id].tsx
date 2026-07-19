@@ -1423,16 +1423,31 @@ export default function Routenplanung() {
             ) : null}
 
             {saga && !sagaLoading && !showPicker ? (
-              <PrimaryButton
-                label={locked ? t.premiumButton : t.continueToSaga}
-                variant={locked ? "gold" : "primary"}
-                onPress={() =>
-                  router.push(
-                    locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
-                  )
-                }
-                style={{ marginTop: 16 }}
-              />
+              <>
+                <PrimaryButton
+                  label={locked ? t.premiumButton : t.continueToSaga}
+                  variant={locked ? "gold" : "primary"}
+                  onPress={() =>
+                    router.push(
+                      locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`,
+                    )
+                  }
+                  style={{ marginTop: 16 }}
+                />
+                {unlockedCandidatesWithMeta.length > 1 && (
+                  <Pressable
+                    onPress={() => setPickerDismissed(false)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    style={{ alignSelf: "center", marginTop: 12, flexDirection: "row", alignItems: "center", gap: 6 }}
+                  >
+                    <Feather name="repeat" size={13} color={colors.accent} />
+                    <Text style={[styles.retryChipText, { color: colors.accent }]}>
+                      {t.chooseOtherSaga}
+                    </Text>
+                  </Pressable>
+                )}
+              </>
             ) : null}
           </>
         )}
