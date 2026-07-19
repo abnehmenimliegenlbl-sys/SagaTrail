@@ -100,8 +100,10 @@ const OFF_ROUTE_CONFIRM_FIXES = 3;
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
 /** RDP-Epsilon in Grad (≈ 8 m bei Schweizer Breitengraden). */
 const RDP_EPSILON = 0.00007;
-/** Mindestanzahl Punkte damit der Live-Track statt der Routen-Geometrie verwendet wird. */
-const MIN_TRACK_POINTS = 5;
+/** Mindestanzahl Punkte damit der Live-Track statt der Routen-Geometrie verwendet wird.
+ *  Bewusst niedrig: auch bei vorzeitigem Abbruch oder Routenaenderung soll die
+ *  Share-Karte die TATSAECHLICH gelaufene Strecke zeigen, nicht die geplante. */
+const MIN_TRACK_POINTS = 2;
 
 /** Senkrechter Abstand eines Punkts von der Gerade start→end (in Grad). */
 function rdpPerpendicularDist(
@@ -2108,7 +2110,8 @@ export default function LiveHike() {
       durationMin: Math.round((Date.now() - startTimeRef.current) / 60000),
       geometry: (() => {
         // Echten GPS-Track bevorzugen; RDP ausdünnen für kompakte Speicherung.
-        // Fallback auf geplante Routen-Geometrie wenn Track zu kurz (z. B. kurze Demo-Wanderung).
+        // Fallback auf geplante Routen-Geometrie nur wenn praktisch kein Track
+        // existiert (z. B. Web-Vorschau/Simulation ohne GPS).
         const raw = posLogRef.current;
         if (raw.length >= MIN_TRACK_POINTS) {
           return rdpThin(raw, RDP_EPSILON);

@@ -53,15 +53,37 @@ function latLngToPixel(lat: number, lng: number, zoom: number) {
 function buildRouteMap(geometry: number[][], width: number, height: number, padding: number) {
   if (!geometry || geometry.length < 2) return null;
 
-  let zoom = 11;
-  for (let z = 11; z <= 17; z++) {
+  // Bounding-Box der Route um 45% je Seite erweitern: so bleibt Umgebung
+  // (Ortschaften, Strassen) sichtbar und man erkennt, wo die Wanderung war.
+  const BBOX_EXPAND = 0.45;
+  // Max. Zoom bewusst begrenzt, damit Ortsnamen-Beschriftungen sichtbar sind.
+  const MAX_ZOOM = 15;
+
+  /** Erweiterte Bounding-Box der Route bei gegebenem Zoom. */
+  const expandedBounds = (z: number) => {
     const pts = geometry.map(([lat, lng]) => latLngToPixel(lat, lng, z));
-    const xs = pts.map((p) => p.x);
-    const ys = pts.map((p) => p.y);
-    const w = Math.max(...xs) - Math.min(...xs);
-    const h = Math.max(...ys) - Math.min(...ys);
-    const tilesX = Math.ceil(w / TILE_SIZE) + 2;
-    const tilesY = Math.ceil(h / TILE_SIZE) + 2;
+    const rawMinX = Math.min(...pts.map((p) => p.x));
+    const rawMaxX = Math.max(...pts.map((p) => p.x));
+    const rawMinY = Math.min(...pts.map((p) => p.y));
+    const rawMaxY = Math.max(...pts.map((p) => p.y));
+    const rawSpanX = Math.max(rawMaxX - rawMinX, 1);
+    const rawSpanY = Math.max(rawMaxY - rawMinY, 1);
+    return {
+      pts,
+      minX: rawMinX - rawSpanX * BBOX_EXPAND,
+      maxX: rawMaxX + rawSpanX * BBOX_EXPAND,
+      minY: rawMinY - rawSpanY * BBOX_EXPAND,
+      maxY: rawMaxY + rawSpanY * BBOX_EXPAND,
+    };
+  };
+
+  // Hoechsten Zoom waehlen, bei dem die ERWEITERTE Box das Kachelbudget einhaelt —
+  // so kann die finale Kachelanzahl das Budget nicht mehr sprengen.
+  let zoom = 10;
+  for (let z = 10; z <= MAX_ZOOM; z++) {
+    const b = expandedBounds(z);
+    const tilesX = Math.ceil((b.maxX - b.minX) / TILE_SIZE) + 2;
+    const tilesY = Math.ceil((b.maxY - b.minY) / TILE_SIZE) + 2;
     if (tilesX * tilesY <= MAX_TILES) {
       zoom = z;
     } else {
@@ -69,11 +91,9 @@ function buildRouteMap(geometry: number[][], width: number, height: number, padd
     }
   }
 
-  const rawPts = geometry.map(([lat, lng]) => latLngToPixel(lat, lng, zoom));
-  const minX = Math.min(...rawPts.map((p) => p.x));
-  const maxX = Math.max(...rawPts.map((p) => p.x));
-  const minY = Math.min(...rawPts.map((p) => p.y));
-  const maxY = Math.max(...rawPts.map((p) => p.y));
+  const bounds = expandedBounds(zoom);
+  const rawPts = bounds.pts;
+  const { minX, maxX, minY, maxY } = bounds;
   const spanX = Math.max(maxX - minX, 1);
   const spanY = Math.max(maxY - minY, 1);
 
@@ -317,7 +337,8 @@ const styles = StyleSheet.create({
   },
   mapDim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(16,24,26,0.18)",
+    // Nur ganz leicht abdunkeln — Ortsnamen auf der Karte muessen lesbar bleiben.
+    backgroundColor: "rgba(16,24,26,0.06)",
   },
   mapFallbackWrap: {
     flex: 1,
