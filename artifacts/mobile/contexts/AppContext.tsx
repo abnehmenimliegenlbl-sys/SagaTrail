@@ -204,6 +204,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  // Aktueller Profil-Stand fuer Callbacks ohne `profile`-Abhaengigkeit
+  // (z.B. applyServerProfile muss purchasedPacks erhalten koennen).
+  const profileRef = useRef<Profile | null>(null);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
   const [premium, setPremium] = useState(false);
   const [freeHikeUsed, setFreeHikeUsed] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -592,14 +598,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ageTier: string;
       premium: boolean;
       freeHikeUsed: boolean;
+      purchasedPacks?: string[];
     }) => {
-      const next = {
+      // WICHTIG: purchasedPacks muss erhalten bleiben. Frueher wurde das
+      // Profil hier OHNE purchasedPacks neu aufgebaut, wodurch gekaufte
+      // Sagenpakete lokal "verschwanden", sobald das Profil gespeichert
+      // wurde (z.B. nach einer Wanderung) — obwohl der Server sie kannte.
+      // Vorrang: Server-Antwort; Fallback: bisheriger lokaler Stand.
+      const next: Profile = {
         id: result.id,
         name: result.name,
         archetype: result.archetype,
         ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
         ageTier: result.ageTier,
+        purchasedPacks:
+          result.purchasedPacks ?? profileRef.current?.purchasedPacks ?? [],
       } as Profile;
       setProfile(next);
       setPremium(result.premium);
