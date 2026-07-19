@@ -88,7 +88,122 @@ SagaTrail ist nicht nur eine Storytelling-App — sie bietet alle Kernfunktionen
 
 ---
 
-## 3. Features für Partner
+## 3. Features nach Wanderphase
+
+---
+
+### 🗺️ Vor der Wanderung — Planung & Vorbereitung
+
+#### Route finden & auswählen
+- **Kantonsbrowser**: Alle 26 Kantone auf einen Blick — mit Wappenbild, Anzahl verfügbarer Sagen und freigeschalteten Routen
+- **Routenliste pro Kanton**: Alle Wanderrouten mit Vorschau, Distanz, Höhenmeter, SAC-Schwierigkeit (T1–T6) und Saison-Status auf einen Blick
+- **Sagen-Detailseite**: Hintergrundinformationen zur Sage, historische Quelle und Verbindung zur konkreten Route vor dem Start lesbar
+- **Höhenprofil**: Interaktives Elevationsprofil mit Auf- und Abstieg — vor dem Start sieht man genau, was einen erwartet
+- **Routenumkehr**: Mit einem Tippen die Strecke umkehren und als Gegenrichtung planen
+
+#### Bedingungen & Sicherheitscheck
+- **Live-Wetterbericht**: Wettervorhersage für den Routenbereich direkt auf der Routenseite
+- **EAWS-Lawinenbulletin**: Gefahrenstufe 1–5 inkl. Tendenz für alpine Kantone (European Avalanche Warning Services v6)
+- **Community-Wegzustände**: Aktuelle Meldungen anderer Nutzer — «Top Zustand», «Schnee», «Matschig», «Gesperrt» — mit Zeitstempel, bevor man das Haus verlässt
+- **Sperrungen & Wegschäden**: Offizielle Meldungen von Wanderwege Schweiz direkt auf der Routenseite
+
+#### ÖV & Anreise
+- **SBB live am Start**: Aktuelle Abfahrtszeiten vom nächsten Bahnhof zum eigenen GPS-Standort — inklusive Verspätungen und Gleis
+- **Mit SBB anreisen**: Ein-Klick-Link zu sbb.ch mit vorausgefülltem Abfahrtsbahnhof (eigener Standort) und Zielbahnhof (Trailhead)
+- **Parkplätze am Start**: Nächste Parkplätze am Routenanfang direkt auf der Karte
+
+#### Offline-Vorbereitung
+- **Offline sichern**: Route, Sage, Audio und Kartenkacheln für den Bereich herunterladen — drei Stufen (Sage, Routendaten, Kartenkacheln)
+- **Download-Fortschritt**: Echtzeit-Fortschrittsbalken während des Downloads
+- **Offline-Status**: Anzeige der heruntergeladenen Dateigrösse und Bestätigung der Offline-Verfügbarkeit
+
+#### Personalisierung vor dem Start
+- **Erzählstil wählen (Archetyp)**: Stimmung der Geschichte einstellen — düster, romantisch, abenteuerlich oder familienfreundlich
+- **Altersstufe wählen**: Inhalte für Kinder, Jugendliche oder Erwachsene
+- **Sprache wählen**: App-Erfahrung und Audio-Narration in 8 Sprachen (DE, GSW, EN, FR, IT, ES, PT, ZH)
+- **Stimme wählen**: Vorschau und Auswahl der Erzählstimme (ElevenLabs-Stimmen mit Fallback auf OpenAI)
+- **Gruppen-Wanderung eröffnen** (Premium): Eine Echtzeit-Gruppensession starten und Link an Mitglieder senden
+
+#### Tour merken
+- **Lesezeichen**: Route mit einem Tippen zu den gemerkten Touren hinzufügen — für spätere Planung jederzeit abrufbar
+- **Sagenpaket kaufen** (für neue Kantone): Zugangskauf direkt aus der App via RevenueCat / App Store
+
+---
+
+### 🥾 Während der Wanderung — Navigation & Erlebnis
+
+#### Karte & Navigation
+- **GPS-Live-Tracking**: Echtzeit-Position auf der Karte mit automatischem Nachführen
+- **Professionelle Kartengrundlage**: Carto Voyager (topografisch) und swisstopo SWISSIMAGE (Satellit) mit nahtlosem Umschalten
+- **2D/3D-Umschaltung**: Geländeansicht mit einstellbarer Höhenüberhöhung für bessere Orientierung im Gelände
+- **Waymarked Trails-Overlay**: Offizielle Schweizer Wanderwege eingeblendet — gelb = Wanderweg, rot = Bergwanderweg, blau = Alpinroute
+- **Aerialway-Overlay**: Seilbahnen, Gondeln und Sessellifte auf der Karte sichtbar
+- **Abbiegehinweise**: Echte turn-by-turn Navigationshinweise aus der Routengeometrie — visuell und haptisch
+- **Offroute-Erkennung**: Automatischer Alarm bei > 80 m Abweichung vom Weg mit Neuberechnungsangebot
+- **Vollbild-Karte**: Karte jederzeit in den Vollbildmodus erweitern
+
+#### Story-Erlebnis
+- **GPS-getriggerte Narration**: Geschichte startet automatisch am richtigen Ort — kein manuelles Starten
+- **Hintergrundwiedergabe**: Audio läuft weiter, auch wenn das Telefon gesperrt ist oder andere Apps geöffnet werden
+- **Interaktive Entscheidungspunkte**: Weggabelungen in der Erzählung — per Sprachbefehl oder Tippen beantworten; die Wahl beeinflusst die Nuancen der Geschichte
+- **Kapitelfortschritt**: Visueller Fortschrittsbalken zeigt, wie weit man in der Geschichte ist
+- **Sage wiederholen**: Gehörte Kapitel jederzeit nochmals abspielen
+
+#### Live-Metriken
+- **Distanz**: Zurückgelegte und verbleibende Strecke in Echtzeit
+- **Aufstieg**: Akkumulierte Höhenmeter während der Wanderung
+- **Geschätzte Restzeit**: Basierend auf aktuellem Tempo und verbleibender Strecke
+- **Schrittzähler**: Schritte werden pro Wanderung gezählt (expo-sensors Pedometer)
+- **Energiesparmodus**: GPS-Genauigkeit und Karten-Updates reduzieren zum Akkuschutz
+
+#### POI & Umgebung
+- **Points of Interest**: Sehenswürdigkeiten, Brunnen, Aussichtspunkte entlang der Route mit AI-gestützten Infotexten und Wikipedia-Zusammenfassungen
+- **POI-Fotos**: Community-Bilder an Wegpunkten von anderen Wanderern
+- **Eigene Fotos hochladen**: Waypoint-Fotos direkt aus der Wander-App machen und teilen
+- **SAC-Hütten in der Nähe**: Übersicht mit Öffnungsstatus, Höhenangabe, Beschreibung und Direktanruf/-reservierung
+- **Trinkwasserquellen**: Brunnen und Quellen entlang der Route auf der Karte eingeblendet
+
+#### Sicherheit
+- **SOS-Button**: Direktwahl zu Rega (1414) oder Euronotruf (112) mit einem Tippen — immer sichtbar
+- **Koordinaten per SMS**: Aktuelle GPS-Position automatisch an gespeicherten Notfallkontakt senden
+
+#### Gruppen-Modus (Premium)
+- **Echtzeit-Synchronisation**: Alle Gruppenmitglieder erleben dieselben Story-Kapitel und Navigationshinweise gleichzeitig
+- **Leader-Steuerung**: Nur der Gruppen-Leader kann Kapitel wechseln und die Navigation steuern
+- **Automatische Resynchronisation**: Spät dazustossende Mitglieder werden sofort auf den aktuellen Stand gebracht
+
+#### Wegzustand melden
+- **Community-Meldung**: Aktuelle Bedingungen auf dem Weg direkt aus der App melden — für alle anderen Wanderer sichtbar
+
+---
+
+### 🏁 Nach der Wanderung — Abschluss, Teilen & Erinnerung
+
+#### Wanderung abschliessen
+- **Hike-Zusammenfassung**: Übersichtliche Abschlussseite mit Gesamtdistanz, Aufstieg, Abstieg, Dauer, Schrittanzahl und gelaufener Strecke auf der Karte
+- **Gehörte Sage**: Zusammenfassung der erlebten Geschichte mit Sagentext zum Nachlesen
+
+#### Rückreise
+- **SBB live am Ziel**: Aktuelle Abfahrtszeiten vom nächsten Bahnhof am Routenende — mit Verspätungen und Gleis
+- **SBB-Rückreise**: Ein-Klick-Link zu sbb.ch mit vorausgefüllter Verbindung vom Routenende zum Routenstart
+
+#### Teilen
+- **Share-Card**: Automatisch generierte Vorschaukarte mit der tatsächlich gelaufenen Strecke, Kartenhintergrund, Routenname und Statistiken
+- **Nativer Share-Dialog**: Karte als Bild direkt an WhatsApp, Instagram, iMessage etc. teilen
+- **Sagenpaket teilen** (Family-Plan): Gruppenabonnement mit Familie oder Freunden teilen
+
+#### Sammlung & Fortschritt
+- **Persönliche Sagensammlung**: Jede abgeschlossene Wanderung fügt die Sage zur eigenen Sammlung hinzu
+- **Wanderhistorie**: Alle absolvierten Touren mit Datum, Distanz und Saga-Titel gespeichert
+- **Abzeichen & Errungenschaften**: Badges für Meilensteine (z. B. erster Kanton, 10 Wanderungen, besondere Sagen)
+- **Einmal gehört = immer entsperrt**: Jede gehörte Sage kann beliebig oft wiederholt werden — auch nach Ablauf eines Abonnements
+
+#### Feedback & Community
+- **Wegzustand nachtragen**: Kondition des Weges direkt nach der Tour melden, damit andere Wanderer von der frischen Erfahrung profitieren
+
+---
+
+## 4. Features für Partner
 
 SagaTrail bietet lokalen Betrieben entlang der Wanderrouten eine direkte Präsenz in der App.
 
