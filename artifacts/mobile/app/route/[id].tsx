@@ -210,33 +210,37 @@ export default function Routenplanung() {
   // SBB live am Start – Abfahrten vom naechsten Bahnhof zum aktuellen Standort des Users
   const [transportStart, setTransportStart] = useState<TransportStationboard | null>(null);
   const [transportStartLoading, setTransportStartLoading] = useState(false);
+  // Naechster Bahnhof am Routenstart (Trailhead) – nur fuer SBB-URL-Aufbau, kein Loading-State noetig
+  const [startStation, setStartStation] = useState<{ id: string; name: string } | null>(null);
 
   // Oeffnet die SBB-Anreise zum Routenstart.
-  // Benutzt den bereits geladenen Stationsnamen, da SBB.ch rohe Koordinaten
-  // oder Kantonsnamen nicht zuverlaessig aufloesen kann.
+  // von = naechster Bahnhof zum aktuellen Standort; nach = naechster Bahnhof am Trailhead.
   const oeffneAnreise = React.useCallback(() => {
-    const dest = transportStart?.station?.name ?? route?.region ?? "";
-    Linking.openURL(
-      `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?nach=${encodeURIComponent(dest)}`
-    ).catch(() => {});
-  }, [transportStart?.station?.name, route?.region]);
+    const von = transportStart?.station?.name;
+    const nach = startStation?.name ?? route?.region ?? "";
+    const base = "https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml";
+    const url = von
+      ? `${base}?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
+      : `${base}?nach=${encodeURIComponent(nach)}`;
+    Linking.openURL(url).catch(() => {});
+  }, [transportStart?.station?.name, startStation?.name, route?.region]);
 
   // Oeffnet die SBB-Rueckreise vom Routenende zum Routenstart.
-  // VON = naechster Bahnhof am Ziel, NACH = naechster Bahnhof am Start.
+  // VON = naechster Bahnhof am Ziel, NACH = naechster Bahnhof am Trailhead/Start.
   const oeffneRueckreise = React.useCallback(() => {
     if (effectiveGeom.length < 2) return;
     const von = transport?.station?.name ?? (() => {
       const e = effectiveGeom[effectiveGeom.length - 1];
       return `${e[0]},${e[1]}`;
     })();
-    const nach = transportStart?.station?.name ?? (() => {
+    const nach = startStation?.name ?? (() => {
       const s = effectiveGeom[0];
       return `${s[0]},${s[1]}`;
     })();
     Linking.openURL(
       `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
     ).catch(() => {});
-  }, [effectiveGeom, transport?.station?.name, transportStart?.station?.name]);
+  }, [effectiveGeom, transport?.station?.name, startStation?.name]);
   // SAC-Hütten in der Nähe der Route
   const [sacHuetten, setSacHuetten] = useState<SacHuette[]>([]);
   const [sacHuettenLoading, setSacHuettenLoading] = useState(false);
@@ -526,6 +530,21 @@ export default function Routenplanung() {
 
     return () => { cancelled = true; };
   }, [route?.id]);
+
+  // Naechster Bahnhof am Trailhead (Routenstart) – wird nur fuer die SBB-URL benoetigt.
+  useEffect(() => {
+    if (!route) return;
+    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+    const startPt = geom.length > 0
+      ? { lat: geom[0][0], lng: geom[0][1] }
+      : route.coordinates;
+    if (!startPt) return;
+    let cancelled = false;
+    getTransportStationboard({ lat: startPt.lat, lng: startPt.lng })
+      .then((result) => { if (!cancelled && result.station) setStartStation(result.station); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, reversed]);
 
   // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
   // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
