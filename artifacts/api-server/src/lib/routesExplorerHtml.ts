@@ -352,8 +352,6 @@ a{color:var(--red)!important;text-decoration:none}
   </a>
   <div class="st-nav-links">
     <a href="https://sagatrail.ch" class="nav-home">Home</a>
-    <a href="https://sagatrail.ch/partner">Partner</a>
-    <a href="/routen" class="active">Routen</a>
   </div>
 </nav>
 
