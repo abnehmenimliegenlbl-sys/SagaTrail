@@ -13,17 +13,7 @@ import {
 } from "@workspace/api-client-react";
 import type { Partner, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
 
-interface TransportAnreiseResult {
-  station: { id: string; name: string } | null;
-  arrivals: Array<{
-    time: string;
-    from: string;
-    category: string;
-    number: string;
-    delay: number | null;
-    platform: string | null;
-  }>;
-}
+import * as Location from "expo-location";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -217,8 +207,8 @@ export default function Routenplanung() {
   // SBB live am Ziel – naechste Abfahrten am Routenendpunkt
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
-  // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart
-  const [transportStart, setTransportStart] = useState<TransportAnreiseResult | null>(null);
+  // SBB live am Start – Abfahrten vom naechsten Bahnhof zum aktuellen Standort des Users
+  const [transportStart, setTransportStart] = useState<TransportStationboard | null>(null);
   const [transportStartLoading, setTransportStartLoading] = useState(false);
 
   // Oeffnet die SBB-Anreise zum Routenstart.
@@ -494,25 +484,48 @@ export default function Routenplanung() {
     return () => { cancelled = true; };
   }, [route?.id, reversed]);
 
-  // SBB live am Start – Ankünfte am naechsten Bahnhof zum Wanderstart.
+  // SBB live am Start – Abfahrten vom naechsten Bahnhof zum aktuellen GPS-Standort.
+  // Fallback: Routenstart, falls kein GPS verfuegbar.
   useEffect(() => {
     if (!route) return;
-    const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
-    const startPt = geom.length > 0
-      ? { lat: geom[0][0], lng: geom[0][1] }
-      : route.coordinates;
-    if (!startPt) return;
     let cancelled = false;
     setTransportStartLoading(true);
-    const base = getApiBaseUrl() ?? "";
-    fetch(`${base}/api/transport-anreise?lat=${startPt.lat}&lng=${startPt.lng}`)
-      .then((r) => r.json())
-      .then((data: TransportAnreiseResult) => {
-        if (!cancelled) { setTransportStart(data); setTransportStartLoading(false); }
-      })
-      .catch(() => { if (!cancelled) { setTransportStart(null); setTransportStartLoading(false); } });
+
+    (async () => {
+      let lat: number | null = null;
+      let lng: number | null = null;
+
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        }
+      } catch {
+        // kein GPS – Fallback auf Routenstart
+      }
+
+      if (lat == null || lng == null) {
+        const geom = reversed ? [...(route.geometry ?? [])].reverse() : (route.geometry ?? []);
+        const startPt = geom.length > 0
+          ? { lat: geom[0][0], lng: geom[0][1] }
+          : route.coordinates;
+        if (!startPt) { if (!cancelled) setTransportStartLoading(false); return; }
+        lat = startPt.lat;
+        lng = startPt.lng;
+      }
+
+      try {
+        const result = await getTransportStationboard({ lat, lng });
+        if (!cancelled) { setTransportStart(result); setTransportStartLoading(false); }
+      } catch {
+        if (!cancelled) { setTransportStart(null); setTransportStartLoading(false); }
+      }
+    })();
+
     return () => { cancelled = true; };
-  }, [route?.id, reversed]);
+  }, [route?.id]);
 
   // SBB live am Ziel – Abfahrten am naechsten Bahnhof zum Routenendpunkt.
   // Fuer Rundwege = Ausgangspunkt; fuer Streckenwanderungen = letzter Wegpunkt.
@@ -862,7 +875,7 @@ export default function Routenplanung() {
           </Pressable>
         )}
 
-        {/* ── SBB live am Start (Ankünfte am Trailhead) ─────────────── */}
+        {/* ── SBB live am Start (Abfahrten vom aktuellen Standort) ──── */}
         <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
           <View style={[styles.checkRow, { marginBottom: 6 }]}>
             <Feather name="log-in" size={15} color={colors.accent} />
@@ -871,7 +884,7 @@ export default function Routenplanung() {
             </Text>
             {transportStart?.station && (
               <Text style={[styles.checkValue, { color: colors.mutedForeground }]} numberOfLines={1}>
-                {t.transportArrivingAt(transportStart.station.name)}
+                {t.transportDepartingFrom(transportStart.station.name)}
               </Text>
             )}
           </View>
@@ -882,30 +895,30 @@ export default function Routenplanung() {
             </View>
           ) : !transportStart?.station ? (
             <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportNoStation}</Text>
-          ) : transportStart.arrivals.length === 0 ? (
+          ) : transportStart.departures.length === 0 ? (
             <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.transportError}</Text>
           ) : (
-            transportStart.arrivals.slice(0, 6).map((arr, i) => (
+            transportStart.departures.slice(0, 6).map((dep, i) => (
               <View key={i} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 4, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder, gap: 6 }}>
                 <Text style={[styles.checkValue, { color: colors.foreground, fontFamily: fonts.bodyBold, width: 42 }]}>
-                  {arr.time}
+                  {dep.time}
                 </Text>
                 <Text style={[styles.checkNote, { color: colors.accent, fontFamily: fonts.bodyBold, width: 36 }]} numberOfLines={1}>
-                  {arr.category}{arr.number}
+                  {dep.category}{dep.number}
                 </Text>
                 <Text style={[styles.checkNote, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>
-                  {arr.from}
+                  {dep.to}
                 </Text>
-                {arr.platform ? (
+                {dep.platform ? (
                   <Text style={[styles.checkNote, { color: colors.mutedForeground, width: 36, textAlign: "right" }]} numberOfLines={1}>
-                    {t.transportPlatform(arr.platform)}
+                    {t.transportPlatform(dep.platform)}
                   </Text>
                 ) : null}
-                {arr.delay != null && arr.delay > 0 ? (
+                {dep.delay != null && dep.delay > 0 ? (
                   <Text style={[styles.checkNote, { color: "#EF4444", width: 44, textAlign: "right" }]}>
-                    {t.transportDelay(arr.delay)}
+                    {t.transportDelay(dep.delay)}
                   </Text>
-                ) : arr.delay === 0 ? (
+                ) : dep.delay === 0 ? (
                   <Text style={[styles.checkNote, { color: "#78C800", width: 44, textAlign: "right" }]}>
                     {t.transportOnTime}
                   </Text>
