@@ -114,7 +114,7 @@ export default function Summary() {
     const nach = transportStart?.station?.name
       ?? `${g[0][0]},${g[0][1]}`;
     Linking.openURL(
-      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
+      `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
     ).catch(() => {});
   };
 

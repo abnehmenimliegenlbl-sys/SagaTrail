@@ -223,7 +223,9 @@ export default function Routenplanung() {
   // oder Kantonsnamen nicht zuverlaessig aufloesen kann.
   const oeffneAnreise = React.useCallback(() => {
     const dest = transportStart?.station?.name ?? route?.region ?? "";
-    Linking.openURL(`https://www.sbb.ch/fahrplan?nach=${encodeURIComponent(dest)}`).catch(() => {});
+    Linking.openURL(
+      `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?nach=${encodeURIComponent(dest)}`
+    ).catch(() => {});
   }, [transportStart?.station?.name, route?.region]);
 
   // Oeffnet die SBB-Rueckreise vom Routenende zum Routenstart.
@@ -239,7 +241,7 @@ export default function Routenplanung() {
       return `${s[0]},${s[1]}`;
     })();
     Linking.openURL(
-      `https://www.sbb.ch/fahrplan?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}`
+      `https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von=${encodeURIComponent(von)}&nach=${encodeURIComponent(nach)}&suche=true`
     ).catch(() => {});
   }, [effectiveGeom, transport?.station?.name, transportStart?.station?.name]);
   // SAC-Hütten in der Nähe der Route
@@ -816,23 +818,9 @@ export default function Routenplanung() {
               </Text>
             </View>
             {routentyp === "strecke" && (
-              <>
-                <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
-                  {t.streckeHint}
-                </Text>
-                <Pressable
-                  onPress={oeffneRueckreise}
-                  style={[
-                    styles.rueckreiseButton,
-                    { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-                  ]}
-                >
-                  <Feather name="send" size={15} color={colors.accent} />
-                  <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
-                    {t.planReturn}
-                  </Text>
-                </Pressable>
-              </>
+              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
+                {t.streckeHint}
+              </Text>
             )}
           </>
         )}
@@ -850,6 +838,22 @@ export default function Routenplanung() {
             {t.planOutward}
           </Text>
         </Pressable>
+
+        {/* SBB-Rückreise-Button — nur für Streckenwanderungen, unter der Anreise */}
+        {routentyp === "strecke" && (
+          <Pressable
+            onPress={oeffneRueckreise}
+            style={[
+              styles.rueckreiseButton,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 8 },
+            ]}
+          >
+            <Feather name="send" size={15} color={colors.accent} />
+            <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
+              {t.planReturn}
+            </Text>
+          </Pressable>
+        )}
 
         {/* ── SBB live am Start (Ankünfte am Trailhead) ─────────────── */}
         <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
