@@ -29,21 +29,8 @@ a{color:var(--red)!important;text-decoration:none}
 .st-nav{
   position:sticky;top:0;z-index:100;
   background:#fff;border-bottom:1px solid var(--border);
-  padding:0 24px;height:56px;
-  display:flex;align-items:center;justify-content:space-between;
+  height:68px;
 }
-.st-nav-logo{
-  display:flex;align-items:center;gap:10px;
-  font-weight:700 !important;font-size:18px !important;
-  color:#1a1a1a !important;text-decoration:none !important;
-}
-.st-nav-links{display:flex;align-items:center;gap:20px}
-.st-nav-links a{
-  color:#555 !important;font-size:14px !important;
-  font-weight:500 !important;text-decoration:none !important;
-  transition:color .15s;
-}
-.st-nav-links a:hover,.st-nav-links a.active{color:var(--red)!important}
 
 /* ── HERO ── */
 .st-hero{background:var(--red);padding:44px 24px 36px;color:#fff}
@@ -396,26 +383,13 @@ a{color:var(--red)!important;text-decoration:none}
 }
 @media(max-width:400px){
   .canton-grid{grid-template-columns:repeat(3,1fr)}
-  .st-nav-links a:not(.nav-home){display:none}
 }
 </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav class="st-nav">
-  <a href="https://sagatrail.ch" class="st-nav-logo">
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-      <polygon points="16,3 28,28 4,28" fill="#CC0000"/>
-      <polygon points="16,9 24,28 8,28" fill="#aa0000"/>
-      <path d="M13.5 12 L16 7 L18.5 12" fill="#d4a843"/>
-    </svg>
-    SagaTrail
-  </a>
-  <div class="st-nav-links">
-    <a href="https://sagatrail.ch" class="nav-home">Home</a>
-  </div>
-</nav>
+<nav class="st-nav"></nav>
 
 <!-- HERO -->
 <div class="st-hero">
