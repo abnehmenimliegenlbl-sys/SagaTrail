@@ -7,13 +7,41 @@ const fs = require("fs");
 const PODFILE_FIX = `
   # === Xcode 16/26 Post-install Fixes ===
 
-  # Fix 1: Strip savedArchiveVersion from Pods.xcodeproj
-  # Xcode 26 removed _setSavedArchiveVersion selector; CocoaPods still writes it.
-  pbxproj = installer.pods_project.path.to_s + "/project.pbxproj"
-  if File.exist?(pbxproj)
-    src = File.read(pbxproj)
-    patched = src.gsub(/[ \\t]*savedArchiveVersion = \\d+;\\n/, "")
-    File.write(pbxproj, patched) if patched != src
+  # Fix 1: Remove savedArchiveVersion from Pods.xcodeproj
+  #
+  # The selector _setSavedArchiveVersion: does not exist in Xcode 16/26 runtime.
+  # When Xcode tries to deserialize XCRemoteSwiftPackageReference objects that have
+  # this attribute, it throws an unrecognized-selector exception → Pods.xcodeproj
+  # fails to load → pod targets never compile → module maps never exist → build fails.
+  #
+  # WHY file-write alone fails: react_native_post_install() calls
+  # installer.pods_project.save() internally, which overwrites any direct file patch
+  # with the in-memory state (which still contains savedArchiveVersion).
+  #
+  # FIX: first clear the attribute on the in-memory objects (so all future save()
+  # calls write clean data), then save explicitly, then belt-and-suspenders file patch.
+  begin
+    installer.pods_project.objects.each do |obj|
+      next unless obj.class.to_s.include?('RemoteSwiftPackageReference')
+      obj.saved_archive_version = nil if obj.respond_to?(:saved_archive_version=)
+    end
+    Pod::UI.puts "[Fix1] Cleared savedArchiveVersion from in-memory package references"
+  rescue => e
+    Pod::UI.warn "[Fix1] In-memory removal error (continuing): #{e.message}"
+  end
+
+  # Save in-memory → disk (clean state, no savedArchiveVersion)
+  installer.pods_project.save
+
+  # Belt-and-suspenders: regex patch over the saved file
+  _pbxproj = installer.pods_project.path.to_s + "/project.pbxproj"
+  if File.exist?(_pbxproj)
+    _content = File.read(_pbxproj)
+    _patched = _content.gsub(/[^\\S\\r\\n]*savedArchiveVersion[^\\S\\r\\n]*=[^\\S\\r\\n]*\\d+[^\\S\\r\\n]*;[^\\r\\n]*\\r?\\n/, "")
+    if _patched != _content
+      File.write(_pbxproj, _patched)
+      Pod::UI.puts "[Fix1] File-patched savedArchiveVersion out of Pods.xcodeproj"
+    end
   end
 
   # Fix 2: BUILD_LIBRARY_FOR_DISTRIBUTION = NO for pod targets.
