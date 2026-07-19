@@ -135,6 +135,8 @@ export interface RouteStrings {
   sacHuettenClosed: string;
   sacHuettenAltitude: (m: number) => string;
   sacHuettenPartnerBadge: string;
+  sacHuettenOeffnungszeiten: string;
+  sacHuettenSchliessen: string;
   shareRoute: string;
   bookmarkAdd: string;
   bookmarkRemove: string;
@@ -282,6 +284,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Saisonschluss",
     sacHuettenAltitude: (m) => `${m} m ü. M.`,
     sacHuettenPartnerBadge: "Partner",
+    sacHuettenOeffnungszeiten: "Öffnungszeiten",
+    sacHuettenSchliessen: "Schliessen",
     shareRoute: "Route teilen",
     bookmarkAdd: "Tour merken",
     bookmarkRemove: "Gemerkt ✓",
@@ -427,6 +431,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Saisonsschluess",
     sacHuettenAltitude: (m) => `${m} m ü. M.`,
     sacHuettenPartnerBadge: "Partner",
+    sacHuettenOeffnungszeiten: "Öffnigszite",
+    sacHuettenSchliessen: "Zuemache",
     shareRoute: "Route teile",
     bookmarkAdd: "Tour merke",
     bookmarkRemove: "Gmerkt ✓",
@@ -572,6 +578,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Seasonal closure",
     sacHuettenAltitude: (m) => `${m} m a.s.l.`,
     sacHuettenPartnerBadge: "Partner",
+    sacHuettenOeffnungszeiten: "Opening Hours",
+    sacHuettenSchliessen: "Close",
     shareRoute: "Share Route",
     bookmarkAdd: "Save Tour",
     bookmarkRemove: "Saved ✓",
@@ -717,6 +725,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Fermeture saisonnière",
     sacHuettenAltitude: (m) => `${m} m s.m.`,
     sacHuettenPartnerBadge: "Partenaire",
+    sacHuettenOeffnungszeiten: "Horaires d'ouverture",
+    sacHuettenSchliessen: "Fermer",
     shareRoute: "Partager l'itinéraire",
     bookmarkAdd: "Enregistrer",
     bookmarkRemove: "Enregistré ✓",
@@ -862,6 +872,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Chiusura stagionale",
     sacHuettenAltitude: (m) => `${m} m s.l.m.`,
     sacHuettenPartnerBadge: "Partner",
+    sacHuettenOeffnungszeiten: "Orari di apertura",
+    sacHuettenSchliessen: "Chiudi",
     shareRoute: "Condividi percorso",
     bookmarkAdd: "Salva gita",
     bookmarkRemove: "Salvato ✓",
@@ -1007,6 +1019,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Cierre de temporada",
     sacHuettenAltitude: (m) => `${m} m s.n.m.`,
     sacHuettenPartnerBadge: "Socio",
+    sacHuettenOeffnungszeiten: "Horario de apertura",
+    sacHuettenSchliessen: "Cerrar",
     shareRoute: "Compartir ruta",
     bookmarkAdd: "Guardar excursión",
     bookmarkRemove: "Guardado ✓",
@@ -1152,6 +1166,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Encerramento sazonal",
     sacHuettenAltitude: (m) => `${m} m a.n.m.`,
     sacHuettenPartnerBadge: "Parceiro",
+    sacHuettenOeffnungszeiten: "Horário de abertura",
+    sacHuettenSchliessen: "Fechar",
     shareRoute: "Partilhar rota",
     bookmarkAdd: "Guardar percurso",
     bookmarkRemove: "Guardado ✓",
@@ -1290,6 +1306,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "季节性关闭",
     sacHuettenAltitude: (m) => `海拔 ${m} 米`,
     sacHuettenPartnerBadge: "合作伙伴",
+    sacHuettenOeffnungszeiten: "开放时间",
+    sacHuettenSchliessen: "关闭",
     shareRoute: "分享路线",
     bookmarkAdd: "收藏徒步路线",
     bookmarkRemove: "已收藏 ✓",
@@ -1435,6 +1453,8 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     sacHuettenClosed: "Сезонное закрытие",
     sacHuettenAltitude: (m) => `${m} м н.у.м.`,
     sacHuettenPartnerBadge: "Партнёр",
+    sacHuettenOeffnungszeiten: "Часы работы",
+    sacHuettenSchliessen: "Закрыть",
     shareRoute: "Поделиться маршрутом",
     bookmarkAdd: "Сохранить маршрут",
     bookmarkRemove: "Сохранено ✓",
