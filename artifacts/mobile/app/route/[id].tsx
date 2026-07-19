@@ -968,58 +968,62 @@ export default function Routenplanung() {
           error={sacHuettenError}
         />
 
-        <View
-          style={[
-            styles.downloadCard,
-            {
-              borderColor: downloaded ? colors.accent : colors.glassBorder,
-              backgroundColor: colors.glassBg,
-            },
-          ]}
-        >
-          <View style={styles.downloadHead}>
-            <Feather
-              name={downloaded ? "check-circle" : "download-cloud"}
-              size={18}
-              color={downloaded ? colors.accent : colors.foreground}
-            />
-            <Text style={[styles.downloadTitle, { color: colors.foreground }]}>
-              {downloaded ? t.offlineAvailable : t.saveForOffline}
-            </Text>
-          </View>
-          <Text style={[styles.downloadHint, { color: colors.mutedForeground }]}>
-            {downloaded
-              ? t.offlineStatusActive(sizeLabel)
-              : t.offlineStatusInactive}
-          </Text>
-
-          {downloading ? (
-            <View style={styles.downloadProgress}>
-              <Feather name="loader" size={15} color={colors.accent} />
-              <Text style={[styles.downloadProgressText, { color: colors.accent }]}>
-                {progressText}
+        {/* Offline-Karte erst zeigen, wenn eine Sage zur Route feststeht —
+            vorher ergibt "Sage & Route herunterladen" keinen Sinn. */}
+        {(saga || downloaded) && (
+          <View
+            style={[
+              styles.downloadCard,
+              {
+                borderColor: downloaded ? colors.accent : colors.glassBorder,
+                backgroundColor: colors.glassBg,
+              },
+            ]}
+          >
+            <View style={styles.downloadHead}>
+              <Feather
+                name={downloaded ? "check-circle" : "download-cloud"}
+                size={18}
+                color={downloaded ? colors.accent : colors.foreground}
+              />
+              <Text style={[styles.downloadTitle, { color: colors.foreground }]}>
+                {downloaded ? t.offlineAvailable : t.saveForOffline}
               </Text>
             </View>
-          ) : downloaded ? (
-            <PrimaryButton
-              label={t.removeDownload}
-              variant="secondary"
-              onPress={onDelete}
-              disabled={busy}
-              loading={busy}
-              style={{ marginTop: 14 }}
-            />
-          ) : (
-            <PrimaryButton
-              label={t.download}
-              variant="secondary"
-              onPress={onDownload}
-              disabled={!saga || sagaLoading || downloading || busy}
-              loading={downloading || busy}
-              style={{ marginTop: 14 }}
-            />
-          )}
-        </View>
+            <Text style={[styles.downloadHint, { color: colors.mutedForeground }]}>
+              {downloaded
+                ? t.offlineStatusActive(sizeLabel)
+                : t.offlineStatusInactive}
+            </Text>
+
+            {downloading ? (
+              <View style={styles.downloadProgress}>
+                <Feather name="loader" size={15} color={colors.accent} />
+                <Text style={[styles.downloadProgressText, { color: colors.accent }]}>
+                  {progressText}
+                </Text>
+              </View>
+            ) : downloaded ? (
+              <PrimaryButton
+                label={t.removeDownload}
+                variant="secondary"
+                onPress={onDelete}
+                disabled={busy}
+                loading={busy}
+                style={{ marginTop: 14 }}
+              />
+            ) : (
+              <PrimaryButton
+                label={t.download}
+                variant="secondary"
+                onPress={onDownload}
+                disabled={!saga || sagaLoading || downloading || busy}
+                loading={downloading || busy}
+                style={{ marginTop: 14 }}
+              />
+            )}
+          </View>
+        )}
 
         <SparkDivider style={{ marginVertical: 22 }} />
 
