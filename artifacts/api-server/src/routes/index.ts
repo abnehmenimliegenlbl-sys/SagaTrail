@@ -33,6 +33,7 @@ import trinkwasserRouter from "./trinkwasser";
 import waypointAnnounceRouter from "./waypointAnnounce";
 import sperrungenRouter from "./sperrungen";
 import parkingRouter from "./parking";
+import routesExplorerRouter from "./routesExplorer";
 
 const router: IRouter = Router();
 
@@ -70,5 +71,6 @@ router.use(trinkwasserRouter);
 router.use(waypointAnnounceRouter);
 router.use(sperrungenRouter);
 router.use(parkingRouter);
+router.use("/routen", routesExplorerRouter);
 
 export default router;
