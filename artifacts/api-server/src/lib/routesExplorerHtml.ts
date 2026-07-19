@@ -275,6 +275,68 @@ a{color:var(--red)!important;text-decoration:none}
 }
 .route-meta span{color:#555 !important;display:flex;align-items:center;gap:3px}
 
+/* ── ROUTE DRAWER ── */
+.drawer-overlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+  align-items:flex-end;justify-content:center;
+}
+.drawer-overlay.open{display:flex}
+.drawer-panel{
+  background:#fff;width:100%;max-width:640px;
+  border-radius:20px 20px 0 0;
+  max-height:88vh;overflow-y:auto;
+  animation:slideUp .25s ease;
+}
+@media(min-width:640px){
+  .drawer-overlay{align-items:center}
+  .drawer-panel{border-radius:20px;max-height:85vh;margin:16px}
+}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.drawer-photo{width:100%;height:220px;object-fit:cover;display:block;border-radius:20px 20px 0 0}
+.drawer-photo-ph{
+  width:100%;height:220px;border-radius:20px 20px 0 0;
+  background:linear-gradient(135deg,#ebe7df,#f5f3ef);
+  display:flex;align-items:center;justify-content:center;
+}
+.drawer-body{padding:20px 22px 32px}
+.drawer-close{
+  position:absolute;top:14px;right:14px;
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(0,0,0,.35);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;
+}
+.drawer-photo-wrap{position:relative}
+.drawer-title{
+  font-size:21px !important;font-weight:800 !important;
+  color:#1a1a1a !important;line-height:1.25 !important;margin-bottom:4px !important;
+}
+.drawer-region{font-size:13px !important;color:#888 !important;margin-bottom:14px !important}
+.drawer-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.drawer-stats{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:10px;margin-bottom:18px;
+}
+.drawer-stat{
+  background:#f5f3f0;border-radius:12px;padding:12px 14px;
+}
+.drawer-stat-val{font-size:18px !important;font-weight:700 !important;color:#1a1a1a !important}
+.drawer-stat-lbl{font-size:11px !important;color:#888 !important;margin-top:2px !important}
+.drawer-terrain{
+  font-size:13px !important;color:#555 !important;
+  background:#f9f8f6;border-radius:10px;padding:12px 14px;margin-bottom:18px;
+}
+.drawer-attr{font-size:11px !important;color:#aaa !important;margin-bottom:18px !important;line-height:1.4 !important}
+.drawer-cta{
+  display:block;width:100%;padding:15px;
+  background:var(--red);color:#fff !important;
+  border:none;border-radius:12px;cursor:pointer;
+  font-size:16px !important;font-weight:700 !important;text-align:center;
+  text-decoration:none;
+}
+.drawer-cta:hover{background:#b30000}
+.route-card{cursor:pointer}
+
 /* ── SPINNER / EMPTY ── */
 .spinner-wrap{display:flex;justify-content:center;padding:56px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -634,7 +696,11 @@ function fmtTime(min){
   const h=Math.floor(min/60), m=min%60;
   return h>0 ? h+':'+(m<10?'0':'')+m+' h' : m+' min';
 }
+// route store: id → full route object
+const __routeStore = {};
+
 function cardHtml(r){
+  __routeStore[r.id] = r;
   const img = r.photoUrl
     ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}"
          onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
@@ -642,7 +708,9 @@ function cardHtml(r){
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
   const hm   = r.ascentM    ? r.ascentM+' hm' : '';
   const zeit = fmtTime(r.minutes);
-  return \`<div class="route-card">
+  const rid  = r.id.replace(/"/g,'');
+  return \`<div class="route-card" onclick="openDrawer(__routeStore['\${rid}'])" role="button" tabindex="0"
+    onkeydown="if(event.key==='Enter')openDrawer(__routeStore['\${rid}'])">
     \${img}
     <div class="route-body">
       <div class="route-badges">
@@ -674,6 +742,80 @@ function emptyHtml(title, sub){
 // ── INIT ─────────────────────────────────────────────────────
 buildCantons();
 initSliders();
+// inject drawer HTML
+document.body.insertAdjacentHTML('beforeend',
+  '<div id="drawer-overlay" class="drawer-overlay"><div id="drawer-panel" class="drawer-panel"></div></div>'
+);
+// ── DRAWER ───────────────────────────────────────────────────
+const overlay = document.getElementById('drawer-overlay');
+const panel   = document.getElementById('drawer-panel');
+
+function openDrawer(r) {
+  const photoHtml = r.photoUrl
+    ? \`<img class="drawer-photo" src="\${r.photoUrl}" alt="\${r.name}"
+          onerror="this.outerHTML=window.__sagaPhLg;this.onerror=null">\`
+    : \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none">
+        <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
+        <polygon points="20,18 28,32 12,32" fill="#bbb"/>
+        <polygon points="52,14 60,28 44,28" fill="#bbb"/>
+       </svg></div>\`;
+
+  const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : null;
+  const hm   = r.ascentM    ? r.ascentM+' hm'   : null;
+  const zeit = r.minutes    ? fmtTime(r.minutes) : null;
+  const elev = r.maxElevationM ? r.maxElevationM+' m' : null;
+
+  function stat(val, lbl) {
+    if(!val) return '';
+    return \`<div class="drawer-stat">
+      <div class="drawer-stat-val">\${val}</div>
+      <div class="drawer-stat-lbl">\${lbl}</div>
+    </div>\`;
+  }
+
+  panel.innerHTML = \`
+    <div class="drawer-photo-wrap">
+      \${photoHtml}
+      <button class="drawer-close" onclick="closeDrawer()" aria-label="Schliessen">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-title">\${r.name}</div>
+      \${r.region ? \`<div class="drawer-region">📍 \${r.region}</div>\` : ''}
+      <div class="drawer-badges">
+        \${sacBadge(r.sac)}\${seasonBadge(r.season)}
+        \${r.featured ? '<span class="badge b-star">★ Featured</span>' : ''}
+      </div>
+      <div class="drawer-stats">
+        \${stat(km,   'Distanz')}
+        \${stat(hm,   'Höhenmeter')}
+        \${stat(zeit, 'Gehzeit')}
+        \${stat(elev, 'Max. Höhe')}
+      </div>
+      \${r.terrain ? \`<div class="drawer-terrain">🗺️ \${r.terrain}</div>\` : ''}
+      \${r.photoAttribution ? \`<div class="drawer-attr">Foto: \${r.photoAttribution}</div>\` : ''}
+      <a class="drawer-cta" href="https://apps.apple.com/ch/app/sagatrail/id6745218145" target="_blank" rel="noopener">
+        Diese Route in der App erleben →
+      </a>
+    </div>\`;
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+overlay.addEventListener('click', function(e) {
+  if(e.target === overlay) closeDrawer();
+});
+
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape') closeDrawer();
+});
+
+window.__sagaPhLg = \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none"><polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/><polygon points="20,18 28,32 12,32" fill="#bbb"/><polygon points="52,14 60,28 44,28" fill="#bbb"/></svg></div>\`;
 </script>
 </body>
 </html>`;
