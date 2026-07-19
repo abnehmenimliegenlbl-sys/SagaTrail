@@ -19,6 +19,7 @@
       "autoIncrement": false,
       "channel": "production",
       "ios": {
+        "image": "macos-sequoia-15.6-xcode-16.4",
         "distribution": "store"
       },
       "env": {

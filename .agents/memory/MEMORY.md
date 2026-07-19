@@ -52,3 +52,4 @@
 - [SagaTrail Herzfrequenz-basierte Pausen](sagatrail-heartrate-pause.md) — Stufe 1 (GPS/Kadenz, kein Framework) vs Stufe 2 (HealthKit/Apple Watch live HR); Garmin/Fitbit liefern KEIN Real-time HR während Workout.
 - [SagaTrail route photo DB writeback](sagatrail-route-photo-writeback.md) — photos found via /routes/photo persist to external_routes.photo_url; routes now serve photoUrl inline → zero extra requests for cached routes.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
+- [Xcode 16+ archive PODS_CONFIGURATION_BUILD_DIR fix](xcode16-archive-module-map-fix.md) — per-target ArchiveIntermediates breaks pod module map lookup; fix via CopyPodModuleMaps run script phase before Compile Sources.
