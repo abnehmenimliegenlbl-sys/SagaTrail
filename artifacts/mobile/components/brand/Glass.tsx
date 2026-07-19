@@ -21,9 +21,15 @@ interface GlassProps {
   style?: ViewStyle | ViewStyle[];
   strong?: boolean;
   intensity?: number;
+  /**
+   * Ueberschreibt die Milchglas-Fuellfarbe (statt glassBg/glassBgStrong).
+   * Fuer Inhalte, die maximale Lesbarkeit brauchen (z. B. POI-Infokacheln):
+   * im Hellmodus fast deckendes Weiss statt halbtransparentem Glas.
+   */
+  overlayColor?: string;
 }
 
-export function Glass({ children, style, strong = false, intensity = 20 }: GlassProps) {
+export function Glass({ children, style, strong = false, intensity = 20, overlayColor }: GlassProps) {
   const colors = useColors();
   return (
     <View
@@ -47,7 +53,7 @@ export function Glass({ children, style, strong = false, intensity = 20 }: Glass
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: strong ? colors.glassBgStrong : colors.glassBg },
+            { backgroundColor: overlayColor ?? (strong ? colors.glassBgStrong : colors.glassBg) },
           ]}
         />
         <View style={styles.content}>{children}</View>

@@ -49,7 +49,7 @@ import { RouteMap } from "@/components/brand/RouteMap";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { fonts } from "@/constants/typography";
-import { useApp } from "@/contexts/AppContext";
+import { useApp, useThemeModeSafe } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -189,6 +189,10 @@ type LocState = "idle" | "granted" | "denied" | "simulated";
 
 export default function LiveHike() {
   const colors = useColors();
+  const themeMode = useThemeModeSafe();
+  // POI-Infokacheln liegen ueber duesteren Karten/Bildern — im Hellmodus
+  // fast deckendes Weiss statt Milchglas, sonst wirken sie zu dunkel.
+  const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const t = useHikeStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -2386,7 +2390,7 @@ export default function LiveHike() {
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
         {nearbyPoi && (
           <Animated.View entering={FadeIn}>
-            <Glass style={{ marginTop: 14 }}>
+            <Glass style={{ marginTop: 14 }} overlayColor={poiOverlay}>
               {/* Vollbild-Bild: negative Margins brechen aus dem Glass-Padding (16px) heraus */}
               {nearbyPoi.wiki?.image && (
                 <Image
@@ -2818,7 +2822,7 @@ export default function LiveHike() {
           onPress={() => setSelectedPoi(null)}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
-            <Glass>
+            <Glass overlayColor={poiOverlay}>
               {selectedPoi.wiki?.image && (
                 <Image
                   source={{ uri: selectedPoi.wiki.image }}
