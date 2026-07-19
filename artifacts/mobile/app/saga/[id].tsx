@@ -110,7 +110,7 @@ export default function SagaDetail() {
 
   // Ohne Premium: alles offen, solange die eine Gratis-Wanderung noch nicht
   // genutzt wurde (gleiche Regel wie kanton/[canton].tsx). Danach gesperrt.
-  const locked = !premium && freeHikeUsed;
+  const locked = !premium && !isElite && freeHikeUsed;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder
