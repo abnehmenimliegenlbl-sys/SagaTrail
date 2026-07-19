@@ -696,21 +696,27 @@ function fmtTime(min){
   const h=Math.floor(min/60), m=min%60;
   return h>0 ? h+':'+(m<10?'0':'')+m+' h' : m+' min';
 }
-// route store: id → full route object
-const __routeStore = {};
+// route store: id → full route object (on window so onclick attrs can reach it)
+window.__routeStore = {};
+
+function proxyImg(url){
+  if(!url) return null;
+  return '/api/routen/img?url='+encodeURIComponent(url);
+}
 
 function cardHtml(r){
-  __routeStore[r.id] = r;
-  const img = r.photoUrl
-    ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}"
+  window.__routeStore[r.id] = r;
+  const src = proxyImg(r.photoUrl);
+  const img = src
+    ? \`<img class="route-img" src="\${src}" alt="\${r.name}"
          onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
     : PH_SVG;
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
   const hm   = r.ascentM    ? r.ascentM+' hm' : '';
   const zeit = fmtTime(r.minutes);
-  const rid  = r.id.replace(/"/g,'');
-  return \`<div class="route-card" onclick="openDrawer(__routeStore['\${rid}'])" role="button" tabindex="0"
-    onkeydown="if(event.key==='Enter')openDrawer(__routeStore['\${rid}'])">
+  const rid  = r.id.replace(/['"]/g,'');
+  return \`<div class="route-card" onclick="openDrawer(window.__routeStore['\${rid}'])" role="button" tabindex="0"
+    onkeydown="if(event.key==='Enter')openDrawer(window.__routeStore['\${rid}'])">
     \${img}
     <div class="route-body">
       <div class="route-badges">
@@ -752,7 +758,7 @@ const panel   = document.getElementById('drawer-panel');
 
 function openDrawer(r) {
   const photoHtml = r.photoUrl
-    ? \`<img class="drawer-photo" src="\${r.photoUrl}" alt="\${r.name}"
+    ? \`<img class="drawer-photo" src="\${proxyImg(r.photoUrl)}" alt="\${r.name}"
           onerror="this.outerHTML=window.__sagaPhLg;this.onerror=null">\`
     : \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none">
         <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
