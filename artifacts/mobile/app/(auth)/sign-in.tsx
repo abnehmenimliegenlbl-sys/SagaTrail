@@ -1,7 +1,7 @@
 import { useSSO } from "@clerk/expo";
+import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignIn } from "@clerk/expo/legacy";
 import { Ionicons } from "@expo/vector-icons";
-import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -35,6 +35,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const t = useAuthStrings();
 
   const [email, setEmail] = useState("");
@@ -120,39 +121,19 @@ export default function SignInScreen() {
     setError(null);
     setAppleLoading(true);
     try {
-      const cred = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-      if (!cred.identityToken) {
-        setError(t.errorAppleFailed);
-        return;
-      }
-      if (!signIn || !setActive) { setError(t.errorAppleFailed); return; }
-      const attempt = await signIn.create({
-        strategy: "oauth_token_apple",
-        token: cred.identityToken,
-      });
-      if (attempt.status === "complete") {
-        await setActive({ session: attempt.createdSessionId });
+      const { createdSessionId, setActive: setActiveApple } =
+        await startAppleAuthenticationFlow();
+      if (createdSessionId && setActiveApple) {
+        await setActiveApple({ session: createdSessionId });
         router.replace("/onboarding");
-      } else {
-        setError(t.errorAppleFailed);
       }
     } catch (err: any) {
       if (err?.code === "ERR_REQUEST_CANCELED") return;
-      const clerkCode = err?.errors?.[0]?.code;
-      if (clerkCode === "form_identifier_not_found") {
-        router.replace("/(auth)/sign-up");
-      } else {
-        setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
-      }
+      setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
     } finally {
       setAppleLoading(false);
     }
-  }, [signIn, setActive, router, t]);
+  }, [startAppleAuthenticationFlow, router, t]);
 
   return (
     <Background deep>

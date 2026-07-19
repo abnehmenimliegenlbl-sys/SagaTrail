@@ -1,7 +1,7 @@
 import { useSSO } from "@clerk/expo";
-import { useSignIn, useSignUp } from "@clerk/expo/legacy";
+import { useSignInWithApple } from "@clerk/expo/apple";
+import { useSignUp } from "@clerk/expo/legacy";
 import { Ionicons } from "@expo/vector-icons";
-import * as AppleAuthentication from "expo-apple-authentication";
 import { GoogleIcon } from "@/components/brand/GoogleIcon";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
@@ -34,8 +34,8 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signUp, setActive, isLoaded } = useSignUp();
-  const { signIn, setActive: setActiveSignIn } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const t = useAuthStrings();
 
   const [email, setEmail] = useState("");
@@ -122,46 +122,11 @@ export default function SignUpScreen() {
     setError(null);
     setAppleLoading(true);
     try {
-      const cred = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-      if (!cred.identityToken) {
-        setError(t.errorAppleFailed);
-        return;
-      }
-      // Existing user → sign in
-      if (signIn && setActiveSignIn) {
-        try {
-          const existing = await signIn.create({
-            strategy: "oauth_token_apple",
-            token: cred.identityToken,
-          });
-          if (existing.status === "complete") {
-            await setActiveSignIn({ session: existing.createdSessionId });
-            router.replace("/onboarding");
-            return;
-          }
-        } catch (signInErr: any) {
-          const c = signInErr?.errors?.[0]?.code;
-          if (c !== "form_identifier_not_found" && c !== "strategy_for_user_invalid") {
-            throw signInErr;
-          }
-        }
-      }
-      // New user → sign up
-      if (!signUp || !setActive) { setError(t.errorAppleFailed); return; }
-      const attempt = await signUp.create({
-        strategy: "oauth_token_apple",
-        token: cred.identityToken,
-      });
-      if (attempt.status === "complete") {
-        await setActive({ session: attempt.createdSessionId });
+      const { createdSessionId, setActive: setActiveApple } =
+        await startAppleAuthenticationFlow();
+      if (createdSessionId && setActiveApple) {
+        await setActiveApple({ session: createdSessionId });
         router.replace("/onboarding");
-      } else {
-        setError(t.errorAppleFailed);
       }
     } catch (err: any) {
       if (err?.code === "ERR_REQUEST_CANCELED") return;
@@ -169,7 +134,7 @@ export default function SignUpScreen() {
     } finally {
       setAppleLoading(false);
     }
-  }, [signIn, setActiveSignIn, signUp, setActive, router, t]);
+  }, [startAppleAuthenticationFlow, router, t]);
 
   return (
     <Background deep>
