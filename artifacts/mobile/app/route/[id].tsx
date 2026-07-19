@@ -148,7 +148,7 @@ export default function Routenplanung() {
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
-      if (!premium) return !s.isAnchorPlace;
+      if (!premium) return freeHikeUsed;
       if (isElite) return false;
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
@@ -159,7 +159,7 @@ export default function Routenplanung() {
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
       return !s.isAnchorPlace;
     },
-    [premium, isElite, profile, sagas],
+    [premium, isElite, freeHikeUsed, profile, sagas],
   );
 
   // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie

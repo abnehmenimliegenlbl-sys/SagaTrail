@@ -54,4 +54,5 @@
 - [SagaTrail route photo DB writeback](sagatrail-route-photo-writeback.md) — photos found via /routes/photo persist to external_routes.photo_url; routes now serve photoUrl inline → zero extra requests for cached routes.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
+- [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
 - [CopyPodModuleMaps ist SCHÄDLICH](xcode16-archive-module-map-fix.md) — der frühere Workaround kopierte modulemaps ohne umbrella headers → "umbrella header not found"; entfernt, echte Ursache war UUID-Kollision (siehe clerk-ios-spm-cocoapods.md).

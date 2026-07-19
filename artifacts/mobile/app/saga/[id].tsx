@@ -41,7 +41,7 @@ export default function SagaDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId } = useLocalSearchParams<{ id: string; routeId?: string }>();
-  const { profile, premium, registriereSagenEntdeckung } =
+  const { profile, premium, freeHikeUsed, registriereSagenEntdeckung } =
     useApp();
   const { getSaga, ensureRouteSaga, sagas } = useCatalog();
   const {
@@ -108,7 +108,9 @@ export default function SagaDetail() {
     );
   }
 
-  const locked = !premium && !saga.isAnchorPlace;
+  // Ohne Premium: alles offen, solange die eine Gratis-Wanderung noch nicht
+  // genutzt wurde (gleiche Regel wie kanton/[canton].tsx). Danach gesperrt.
+  const locked = !premium && freeHikeUsed;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder
