@@ -148,6 +148,9 @@ export default function Routenplanung() {
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const isSagaLocked = useCallback(
     (s: Saga): boolean => {
+      // Bereits gehoerte Sagen bleiben immer nutzbar: wer eine Sage schon
+      // auf einer Wanderung gehoert hat, darf sie beliebig oft wiederholen.
+      if (hikeHistory.some((h) => h.sagaId === s.id)) return false;
       if (!premium) return freeHikeUsed;
       if (isElite) return false;
       const slug = kantonSlug(s.canton);
@@ -159,7 +162,7 @@ export default function Routenplanung() {
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
       return !s.isAnchorPlace;
     },
-    [premium, isElite, freeHikeUsed, profile, sagas],
+    [premium, isElite, freeHikeUsed, profile, sagas, hikeHistory],
   );
 
   // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie
@@ -576,8 +579,12 @@ export default function Routenplanung() {
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routeEffectivePackSlug);
   // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
   const canAccess = premium || isElite || dbPackUnlocked;
-  // Nur gesperrt wenn kein Zugang UND Gratis-Hike bereits verbraucht
-  const locked = !canAccess && freeHikeUsed;
+  // Nur gesperrt wenn kein Zugang UND Gratis-Hike bereits verbraucht.
+  // Ausnahme: bereits gehoerte Sagen bleiben immer wiederholbar.
+  const routeSagaHeard = saga
+    ? hikeHistory.some((h) => h.sagaId === saga.id)
+    : false;
+  const locked = !canAccess && freeHikeUsed && !routeSagaHeard;
   const h = Math.floor(meta.minutes / 60);
   const m = meta.minutes % 60;
 
