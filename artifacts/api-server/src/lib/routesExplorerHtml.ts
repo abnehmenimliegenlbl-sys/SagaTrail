@@ -4,6 +4,8 @@ export const ROUTES_EXPLORER_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Routen entdecken — SagaTrail</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -280,7 +282,10 @@ a{color:var(--red)!important;text-decoration:none}
   .drawer-panel{border-radius:20px;max-height:85vh;margin:16px}
 }
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
-.drawer-photo{width:100%;height:220px;object-fit:cover;display:block;border-radius:20px 20px 0 0}
+.drawer-photo{display:none}
+.drawer-map-wrap{position:relative;height:240px;border-radius:20px 20px 0 0;overflow:hidden}
+.drawer-map{width:100%;height:100%}
+.leaflet-container{font-family:inherit}
 .drawer-photo-ph{
   width:100%;height:220px;border-radius:20px 20px 0 0;
   background:linear-gradient(135deg,#ebe7df,#f5f3ef);
@@ -730,16 +735,9 @@ document.body.insertAdjacentHTML('beforeend',
 const overlay = document.getElementById('drawer-overlay');
 const panel   = document.getElementById('drawer-panel');
 
-function openDrawer(r) {
-  const photoHtml = r.photoUrl
-    ? \`<img class="drawer-photo" src="\${proxyImg(r.photoUrl)}" alt="\${r.name}"
-          onerror="this.outerHTML=window.__sagaPhLg;this.onerror=null">\`
-    : \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none">
-        <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
-        <polygon points="20,18 28,32 12,32" fill="#bbb"/>
-        <polygon points="52,14 60,28 44,28" fill="#bbb"/>
-       </svg></div>\`;
+let _map = null;
 
+function openDrawer(r) {
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : null;
   const hm   = r.ascentM    ? r.ascentM+' hm'   : null;
   const zeit = r.minutes    ? fmtTime(r.minutes) : null;
@@ -754,8 +752,8 @@ function openDrawer(r) {
   }
 
   panel.innerHTML = \`
-    <div class="drawer-photo-wrap">
-      \${photoHtml}
+    <div class="drawer-map-wrap">
+      <div id="drawer-map" class="drawer-map"></div>
       <button class="drawer-close" onclick="closeDrawer()" aria-label="Schliessen">✕</button>
     </div>
     <div class="drawer-body">
@@ -772,7 +770,6 @@ function openDrawer(r) {
         \${stat(elev, 'Max. Höhe')}
       </div>
       \${r.terrain ? \`<div class="drawer-terrain">🗺️ \${r.terrain}</div>\` : ''}
-      \${r.photoAttribution ? \`<div class="drawer-attr">Foto: \${r.photoAttribution}</div>\` : ''}
       <a class="drawer-cta" href="https://apps.apple.com/ch/app/sagatrail/id6745218145" target="_blank" rel="noopener">
         Diese Route in der App erleben →
       </a>
@@ -780,11 +777,39 @@ function openDrawer(r) {
 
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // Karte initialisieren nachdem der DOM sichtbar ist
+  setTimeout(function() {
+    if(_map){ _map.remove(); _map = null; }
+    _map = L.map('drawer-map', {
+      zoomControl: true,
+      scrollWheelZoom: false,
+      attributionControl: false
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+      maxZoom: 18
+    }).addTo(_map);
+
+    const coords = Object.values(r.geometry || {});
+    if(coords.length > 0){
+      const poly = L.polyline(coords, {color:'#CC0000', weight:4, opacity:0.9}).addTo(_map);
+      // Startpunkt markieren
+      L.circleMarker(coords[0], {
+        radius:7, fillColor:'#CC0000', color:'#fff',
+        weight:2, fillOpacity:1
+      }).addTo(_map);
+      _map.fitBounds(poly.getBounds(), {padding:[20,20]});
+    } else if(r.coordinates){
+      _map.setView([r.coordinates.lat, r.coordinates.lng], 13);
+    }
+    _map.invalidateSize();
+  }, 60);
 }
 
 function closeDrawer() {
   overlay.classList.remove('open');
   document.body.style.overflow = '';
+  if(_map){ _map.remove(); _map = null; }
 }
 
 overlay.addEventListener('click', function(e) {
