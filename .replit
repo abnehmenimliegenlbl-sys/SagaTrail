@@ -9,6 +9,27 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "EAS Build 48"
+
+[[workflows.workflow]]
+name = "EAS Build 48"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/mobile && EXPO_APPLE_TEAM_ID=R4254XKT8S GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 echo \"n\" | eas build --platform ios --profile production --auto-submit --no-wait 2>&1 | tee /tmp/eas-build48.log; echo \"EAS_DONE\" >> /tmp/eas-build48.log; sleep 3600"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"
