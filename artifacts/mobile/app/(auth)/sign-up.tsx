@@ -1,4 +1,5 @@
 import { useSSO } from "@clerk/expo";
+import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignUp } from "@clerk/expo/legacy";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleIcon } from "@/components/brand/GoogleIcon";
@@ -34,6 +35,7 @@ export default function SignUpScreen() {
   const router = useRouter();
   const { signUp, setActive, isLoaded } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const t = useAuthStrings();
 
   const [email, setEmail] = useState("");
@@ -120,19 +122,19 @@ export default function SignUpScreen() {
     setError(null);
     setAppleLoading(true);
     try {
-      const { createdSessionId, setActive: setActiveApple } = await startSSOFlow(
-        { strategy: "oauth_apple", redirectUrl }
-      );
+      const { createdSessionId, setActive: setActiveApple } =
+        await startAppleAuthenticationFlow();
       if (createdSessionId && setActiveApple) {
         await setActiveApple({ session: createdSessionId });
         router.replace("/onboarding");
       }
     } catch (err: any) {
+      if (err?.code === "ERR_REQUEST_CANCELED") return;
       setError(err?.errors?.[0]?.message ?? t.errorAppleFailed);
     } finally {
       setAppleLoading(false);
     }
-  }, [startSSOFlow, router, redirectUrl, t]);
+  }, [startAppleAuthenticationFlow, router, t]);
 
   return (
     <Background deep>
