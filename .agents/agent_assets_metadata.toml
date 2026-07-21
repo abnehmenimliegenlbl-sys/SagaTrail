@@ -311,3 +311,9 @@ id = "sz8DHgGcYDhISQzThed6n"
 uri = "file://SagaTrail_Features.md"
 type = "text"
 title = "SagaTrail Features – vollständige Übersicht"
+
+[[outputs]]
+id = "IJjYgCnAF5AOKrI3q5gYb"
+uri = "file://attached_assets/partner-page-v2.zip"
+type = "unspecified"
+title = "partner-page-v2.zip (aktualisiertes WPCode-Snippet)"
