@@ -1610,9 +1610,14 @@ export default function LiveHike() {
             setSpeaking(false);
             speakingRef.current = false;
             onFinished?.();
-            const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-            else restoreAudioMode();
+            // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
+            // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
+            // soeben gestartete Ausgabe abwuergen (Race-Condition bei Meilensteinen).
+            if (!speakingRef.current) {
+              const next = narrationQueueRef.current.shift();
+              if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+              else restoreAudioMode();
+            }
           },
           onStopped: () => {
             if (gen !== narrationGenRef.current) return;
@@ -1625,9 +1630,11 @@ export default function LiveHike() {
             setSpeaking(false);
             speakingRef.current = false;
             onFinished?.();
-            const next = narrationQueueRef.current.shift();
-            if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-            else restoreAudioMode();
+            if (!speakingRef.current) {
+              const next = narrationQueueRef.current.shift();
+              if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+              else restoreAudioMode();
+            }
           },
         });
         return;
@@ -1676,19 +1683,27 @@ export default function LiveHike() {
             setSpeaking(false);
             speakingRef.current = false;
             onFinished?.();
-            const next = narrationQueueRef.current.shift();
-            if (next) {
-              speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
-            } else {
-              // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
-              Audio.setAudioModeAsync({
-                allowsRecordingIOS: false,
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-                interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-                interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-                shouldDuckAndroid: false,
-              }).catch(() => {});
+            // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
+            // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
+            // soeben gestartete Ausgabe abwuergen (Race-Condition: Meilenstein-
+            // Fetch loest sich genau dann auf, wenn die Entscheidungs-Ack endet,
+            // und liegt im Queue — ohne diesen Guard wuerde er die Feedback-
+            // Erzaehlung mit einem Gen-Bump abwuergen).
+            if (!speakingRef.current) {
+              const next = narrationQueueRef.current.shift();
+              if (next) {
+                speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
+              } else {
+                // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
+                Audio.setAudioModeAsync({
+                  allowsRecordingIOS: false,
+                  playsInSilentModeIOS: true,
+                  staysActiveInBackground: true,
+                  interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+                  interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+                  shouldDuckAndroid: false,
+                }).catch(() => {});
+              }
             }
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
@@ -1712,8 +1727,10 @@ export default function LiveHike() {
         setSpeaking(false);
         speakingRef.current = false;
         onFinished?.();
-        const next = narrationQueueRef.current.shift();
-        if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+        if (!speakingRef.current) {
+          const next = narrationQueueRef.current.shift();
+          if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
+        }
       }
     },
     [profile?.language]
