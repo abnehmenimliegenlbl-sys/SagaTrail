@@ -1,18 +1,9 @@
 import { randomBytes, randomUUID } from "crypto";
 import { Router, type IRouter } from "express";
-import multer from "multer";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, partnersTable, partnerTokensTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    cb(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype));
-  },
-});
 
 const router: IRouter = Router();
 const objectStorage = new ObjectStorageService();
@@ -24,7 +15,7 @@ function buildFotoServingUrl(partnerId: string, req: import("express").Request):
 function resolveFotoUrl(partner: { id: string; fotoUrl: string | null }, req: import("express").Request): string | null {
   const raw = partner.fotoUrl ?? null;
   if (!raw) return null;
-  if (raw.startsWith("/objects/")) return buildFotoServingUrl(partner.id, req);
+  if (raw.startsWith("/objects/") || raw.startsWith("data:image/")) return buildFotoServingUrl(partner.id, req);
   if (raw.startsWith("/")) return `${req.protocol}://${req.get("host")}${raw}`;
   return raw;
 }
@@ -106,35 +97,33 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
   });
 });
 
-// Foto-Upload: Datei direkt an unsere API senden, die sie server-seitig nach GCS hochlädt.
-router.post("/partner/portal/upload-photo", upload.single("foto"), async (req, res): Promise<void> => {
+// Foto-Upload: Base64-Bild (client-seitig auf 1200px resized) direkt in DB speichern.
+// Kein Object Storage nötig — funktioniert in Production und Development.
+router.post("/partner/portal/upload-photo", async (req, res): Promise<void> => {
   const token = req.query["token"];
   if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
 
   const partner = await resolveToken(token);
   if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
-  if (!req.file) {
-    res.status(400).json({ error: "Kein Bild empfangen. Bitte JPEG, PNG oder WebP hochladen (max. 5 MB)." });
+  const { fotoBase64 } = req.body ?? {};
+  if (typeof fotoBase64 !== "string" || !fotoBase64.startsWith("data:image/")) {
+    res.status(400).json({ error: "Kein gültiges Bild empfangen." });
+    return;
+  }
+  // Max ~2 MB base64 (~1.5 MB Bild)
+  if (fotoBase64.length > 2_200_000) {
+    res.status(400).json({ error: "Bild zu gross. Bitte kleineres Foto wählen." });
     return;
   }
 
-  try {
-    const ext = req.file.mimetype === "image/png" ? "png" : req.file.mimetype === "image/webp" ? "webp" : "jpg";
-    const subPath = `uploads/${randomUUID()}.${ext}`;
-    const objectPath = await objectStorage.uploadBuffer(req.file.buffer, req.file.mimetype, subPath);
+  await db
+    .update(partnersTable)
+    .set({ fotoUrl: fotoBase64 })
+    .where(eq(partnersTable.id, partner.id));
 
-    await db
-      .update(partnersTable)
-      .set({ fotoUrl: objectPath })
-      .where(eq(partnersTable.id, partner.id));
-
-    req.log.info({ partnerId: partner.id, objectPath }, "Partner-Foto hochgeladen");
-    res.json({ ok: true, fotoUrl: buildFotoServingUrl(partner.id, req) });
-  } catch (err) {
-    req.log.error({ err }, "Fehler beim Foto-Upload");
-    res.status(500).json({ error: "Foto-Upload fehlgeschlagen." });
-  }
+  req.log.info({ partnerId: partner.id }, "Partner-Foto hochgeladen (base64)");
+  res.json({ ok: true, fotoUrl: buildFotoServingUrl(partner.id, req) });
 });
 
 // Öffentliche Route: Partner-Foto aus GCS streamen.
@@ -147,26 +136,45 @@ router.get("/partner/foto/:partnerId", async (req, res): Promise<void> => {
     .where(eq(partnersTable.id, partnerId))
     .limit(1);
 
-  if (!partner || !partner.fotoUrl?.startsWith("/objects/")) {
+  if (!partner?.fotoUrl) {
     res.status(404).end();
     return;
   }
 
-  try {
-    const file = await objectStorage.getObjectEntityFile(partner.fotoUrl);
-    const [metadata] = await file.getMetadata();
-    res.set("Content-Type", (metadata.contentType as string) || "image/jpeg");
+  // Base64 data URL (neuer Speicherpfad)
+  if (partner.fotoUrl.startsWith("data:image/")) {
+    const [header, b64] = partner.fotoUrl.split(",");
+    const mimeMatch = header.match(/data:(image\/[a-z]+);base64/);
+    if (!mimeMatch || !b64) { res.status(404).end(); return; }
+    const buf = Buffer.from(b64, "base64");
+    res.set("Content-Type", mimeMatch[1]);
     res.set("Cache-Control", "public, max-age=86400");
     res.set("X-Content-Type-Options", "nosniff");
-    file.createReadStream().pipe(res);
-  } catch (err) {
-    if (err instanceof ObjectNotFoundError) {
-      res.status(404).end();
-    } else {
-      req.log.error({ err, partnerId }, "Fehler beim Laden des Partner-Fotos");
-      res.status(502).end();
-    }
+    res.send(buf);
+    return;
   }
+
+  // GCS object (alter Speicherpfad — Fallback)
+  if (partner.fotoUrl.startsWith("/objects/")) {
+    try {
+      const file = await objectStorage.getObjectEntityFile(partner.fotoUrl);
+      const [metadata] = await file.getMetadata();
+      res.set("Content-Type", (metadata.contentType as string) || "image/jpeg");
+      res.set("Cache-Control", "public, max-age=86400");
+      res.set("X-Content-Type-Options", "nosniff");
+      file.createReadStream().pipe(res);
+    } catch (err) {
+      if (err instanceof ObjectNotFoundError) {
+        res.status(404).end();
+      } else {
+        req.log.error({ err, partnerId }, "Fehler beim Laden des Partner-Fotos");
+        res.status(502).end();
+      }
+    }
+    return;
+  }
+
+  res.status(404).end();
 });
 
 router.patch("/partner/portal/me", async (req, res): Promise<void> => {

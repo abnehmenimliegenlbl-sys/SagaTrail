@@ -523,48 +523,58 @@
       return;
     }
 
-    // Lokale Vorschau
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var p = document.getElementById('spp-foto-preview');
-      p.src = e.target.result;
-      p.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-
-    // Upload: direkt zur API (server-seitig nach GCS)
+    // Lokale Vorschau + Canvas-Resize → Base64 → Upload
     var token = getToken();
     var bar = document.getElementById('spp-upload-fill');
     var prog = document.getElementById('spp-upload-progress');
-    prog.style.display = 'block';
-    bar.style.width = '5%';
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', API_BASE + '/api/partner/portal/upload-photo?token=' + encodeURIComponent(token));
-    xhr.upload.onprogress = function(e) {
-      if (e.lengthComputable) bar.style.width = Math.round((e.loaded / e.total) * 90) + '%';
-    };
-    xhr.onload = function() {
-      bar.style.width = '100%';
-      setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
-      try {
-        var d = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300 && d.ok) {
+    var img = new Image();
+    var objectUrl = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(objectUrl);
+
+      // Vorschau setzen
+      var p = document.getElementById('spp-foto-preview');
+      p.src = img.src;
+      p.style.display = 'block';
+
+      // Canvas-Resize auf max 1200px Breite
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+      // Upload als JSON
+      prog.style.display = 'block';
+      bar.style.width = '30%';
+
+      fetch(API_BASE + '/api/partner/portal/upload-photo?token=' + encodeURIComponent(token), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fotoBase64: dataUrl })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        bar.style.width = '100%';
+        setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
+        if (d.ok) {
           showMsg('spp-foto-msg', 'Foto erfolgreich hochgeladen!', true);
         } else {
           showMsg('spp-foto-msg', 'Upload fehlgeschlagen: ' + (d.error || 'Unbekannter Fehler.'), false);
         }
-      } catch(e) {
-        showMsg('spp-foto-msg', 'Upload fehlgeschlagen (ungültige Antwort).', false);
-      }
+      })
+      .catch(function() {
+        prog.style.display = 'none';
+        showMsg('spp-foto-msg', 'Verbindungsfehler beim Hochladen.', false);
+      });
     };
-    xhr.onerror = function() {
-      prog.style.display = 'none';
-      showMsg('spp-foto-msg', 'Verbindungsfehler beim Hochladen.', false);
+    img.onerror = function() {
+      showMsg('spp-foto-msg', 'Bild konnte nicht gelesen werden.', false);
     };
-    var fd = new FormData();
-    fd.append('foto', file);
-    xhr.send(fd);
+    img.src = objectUrl;
   };
 
   window.sppSave = function() {
