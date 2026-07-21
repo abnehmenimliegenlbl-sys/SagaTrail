@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
@@ -53,6 +54,7 @@ app.use(
   })),
 );
 
+app.use("/api/partner-fotos", express.static(path.join(__dirname, "../public/partner-fotos")));
 app.use("/routen", routesExplorerRouter);
 app.use("/api", router);
 
