@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 // ===================================================================
 
 add_action( 'wp_footer', function () {
-    if ( ! is_page( array( 'partner-portal', 'partnerprofil', 'mein-partner-profil' ) ) ) {
+    if ( ! is_page( array( 'portal', 'partner-portal', 'partnerprofil', 'mein-partner-profil' ) ) ) {
         return;
     }
     $api_base    = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : '';
