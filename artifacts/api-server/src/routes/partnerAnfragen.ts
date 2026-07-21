@@ -9,8 +9,6 @@ const AnfrageBody = z.object({
   betriebsName:   z.string().min(2).max(200),
   kategorie:      z.enum(["restaurant", "cafe", "souvenir", "uebernachtung", "sonstiges"]),
   canton:         z.string().min(2).max(30),
-  beschreibung:   z.string().max(1000).optional(),
-  angebot:        z.string().max(500).optional(),
   website:        z.string().url().max(300).optional().or(z.literal("")),
   adresse:        z.string().max(200).optional(),
   plz:            z.string().max(10).optional(),
@@ -19,6 +17,7 @@ const AnfrageBody = z.object({
   kontaktEmail:   z.email().max(200),
   kontaktTelefon: z.string().max(50).optional(),
   paket:          z.enum(["basic", "standard", "premium"]).default("standard"),
+  typ:            z.enum(["anfrage", "bestellung"]).default("anfrage"),
 });
 
 /**
@@ -43,8 +42,6 @@ router.post("/partner/anfrage", async (req, res): Promise<void> => {
         betriebsName:   data.betriebsName,
         kategorie:      data.kategorie,
         canton:         data.canton,
-        beschreibung:   data.beschreibung ?? null,
-        angebot:        data.angebot ?? null,
         website:        data.website || null,
         adresse:        data.adresse ?? null,
         plz:            data.plz ?? null,
@@ -52,6 +49,7 @@ router.post("/partner/anfrage", async (req, res): Promise<void> => {
         kontaktName:    data.kontaktName,
         kontaktEmail:   data.kontaktEmail,
         kontaktTelefon: data.kontaktTelefon ?? null,
+        typ:            data.typ,
         paket:          data.paket,
         status:         "neu",
       })

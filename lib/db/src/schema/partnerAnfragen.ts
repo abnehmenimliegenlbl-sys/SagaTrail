@@ -6,6 +6,10 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+export type PartnerAnfrageTyp =
+  | "anfrage"
+  | "bestellung";
+
 export type PartnerAnfrageStatus =
   | "neu"
   | "in_bearbeitung"
@@ -35,6 +39,7 @@ export const partnerAnfragenTable = pgTable("partner_anfragen", {
   kontaktName:    text("kontakt_name").notNull(),
   kontaktEmail:   text("kontakt_email").notNull(),
   kontaktTelefon: text("kontakt_telefon"),
+  typ:            text("typ").$type<PartnerAnfrageTyp>().notNull().default("anfrage"),
   paket:          text("paket").$type<PartnerAnfragePaket>().notNull().default("standard"),
   status:         text("status").$type<PartnerAnfrageStatus>().notNull().default("neu"),
   notizen:        text("notizen"),

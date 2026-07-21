@@ -7,6 +7,7 @@ import {
   db,
   profilesTable,
   partnersTable,
+  partnerAnfragenTable,
   catalogRoutesTable,
   catalogSagasTable,
   externalRoutesTable,
@@ -630,6 +631,48 @@ router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err, id }, "Admin saga foto update fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// ===================================================================
+// PARTNER-ANFRAGEN
+// ===================================================================
+
+router.get("/admin/anfragen", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db
+      .select()
+      .from(partnerAnfragenTable)
+      .orderBy(desc(partnerAnfragenTable.createdAt));
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Anfragen laden fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+const AnfrageStatusBody = z.object({
+  status: z.enum(["neu", "in_bearbeitung", "abgelehnt", "aktiv"]),
+});
+
+router.patch("/admin/anfragen/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  const parsed = AnfrageStatusBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungültiger Status" });
+    return;
+  }
+  try {
+    await db
+      .update(partnerAnfragenTable)
+      .set({ status: parsed.data.status, updatedAt: new Date() })
+      .where(eq(partnerAnfragenTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Anfrage-Status-Update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
   }
 });

@@ -57,6 +57,7 @@ a{color:var(--red);text-decoration:none}
 .btn-green{background:#e6f4ec;color:var(--green)}
 .btn-orange{background:#fef3e2;color:var(--orange)}
 .btn-sm{padding:3px 8px;font-size:11px}
+.sel-status{padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;cursor:pointer;}
 /* --- FORM --- */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .form-group{display:flex;flex-direction:column;gap:4px}
@@ -131,6 +132,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
+  <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
 </div>
 
 <div id="content">
@@ -231,6 +233,11 @@ a{color:var(--red);text-decoration:none}
     </div>
   </div>
 
+  <!-- ANFRAGEN -->
+  <div id="tab-anfragen" class="tab-pane">
+    <div id="anfragen-body"><p class="loading">Wird geladen...</p></div>
+  </div>
+
   <!-- PARTNER -->
   <div id="tab-partner" class="tab-pane">
     <div class="card">
@@ -302,6 +309,7 @@ a{color:var(--red);text-decoration:none}
 <script>
 var _token = '';
 var _partner = [];
+var _anfragen = [];
 var LS_KEY = 'sagatrail_admin_tok';
 
 var _savedStatus = {msg: '', ok: undefined};
@@ -341,7 +349,7 @@ async function connect() {
   _token = document.getElementById('tok-input').value;
   try {
     setTokStatus('Lade...', undefined);
-    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen()]);
+    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen()]);
     localStorage.setItem(LS_KEY, _token);
     document.getElementById('tok-input').style.display = 'none';
     document.getElementById('tok-btn').style.display = 'none';
@@ -372,7 +380,7 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tok-btn').style.display = 'none';
     document.getElementById('tok-forget').style.display = '';
     setTokStatus('Lade...', undefined);
-    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen()])
+    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen()])
       .then(function() { setTokStatus('Verbunden \u2713', true); })
       .catch(function(e) {
         localStorage.removeItem(LS_KEY);
@@ -392,10 +400,11 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'users'  && token()) loadUsers();
-  if (name === 'usage'  && token()) loadUsage();
-  if (name === 'push'   && token()) loadPushStats();
-  if (name === 'sagen'  && token()) loadSagen();
+  if (name === 'users'    && token()) loadUsers();
+  if (name === 'usage'    && token()) loadUsage();
+  if (name === 'push'     && token()) loadPushStats();
+  if (name === 'sagen'    && token()) loadSagen();
+  if (name === 'anfragen' && token()) loadAnfragen();
 }
 
 /* ===================== ÜBERSICHT ===================== */
@@ -1011,6 +1020,79 @@ async function saveSagaFoto(sagaId, sid) {
     stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler';
     btn.disabled = false; btn.style.opacity = '1';
   }
+}
+
+/* ===================== ANFRAGEN ===================== */
+async function loadAnfragen() {
+  var el = document.getElementById('anfragen-body');
+  if (!el || !token()) return;
+  el.innerHTML = '<p class="loading">Lade Anfragen...</p>';
+  try {
+    _anfragen = await api('/api/admin/anfragen');
+    var neuCount = _anfragen.filter(function(r){ return r.status === 'neu'; }).length;
+    var bestellCount = _anfragen.filter(function(r){ return r.typ === 'bestellung'; }).length;
+    var html = '<div class="stat-grid" style="margin-bottom:16px">' +
+      statCard(neuCount, 'Neue (unbearbeitet)', '') +
+      statCard(bestellCount, 'davon Bestellungen', '') +
+      statCard(_anfragen.length, 'Total', '') +
+      '</div>';
+    if (_anfragen.length === 0) {
+      html += '<div class="card"><p class="hint" style="padding:12px 0">Noch keine Anfragen eingegangen.</p></div>';
+    } else {
+      html += '<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+        '<th>Datum</th><th>Betrieb</th><th>Kat.</th><th>Kanton</th><th>Typ</th><th>Paket</th><th>Kontakt</th><th>Status</th><th></th>' +
+        '</tr></thead><tbody>';
+      _anfragen.forEach(function(r) {
+        var typBadge = r.typ === 'bestellung'
+          ? '<span class="badge badge-red">&#128722; Bestellung</span>'
+          : '<span class="badge badge-blue">&#128139; Anfrage</span>';
+        var statusOpts = ['neu','in_bearbeitung','abgelehnt','aktiv'].map(function(s){
+          return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' +
+            {neu:'Neu',in_bearbeitung:'In Bearbeitung',abgelehnt:'Abgelehnt',aktiv:'Aktiv'}[s] + '</option>';
+        }).join('');
+        html += '<tr>' +
+          '<td class="mono">' + fmtDate(r.createdAt) + '</td>' +
+          '<td><strong>' + esc(r.betriebsName) + '</strong>' + (r.ort ? '<br><span class="hint">' + esc(r.ort) + (r.adresse ? ', ' + esc(r.adresse) : '') + '</span>' : '') + (r.website ? '<br><a href="' + esc(r.website) + '" target="_blank" style="font-size:11px">' + esc(r.website) + '</a>' : '') + '</td>' +
+          '<td>' + katEmoji(r.kategorie) + ' ' + esc(r.kategorie) + '</td>' +
+          '<td>' + esc(r.canton) + '</td>' +
+          '<td>' + typBadge + '</td>' +
+          '<td><span class="badge badge-gray">' + esc(r.paket || 'standard') + '</span></td>' +
+          '<td>' + esc(r.kontaktName) + '<br><a href="mailto:' + esc(r.kontaktEmail) + '">' + esc(r.kontaktEmail) + '</a>' + (r.kontaktTelefon ? '<br>' + esc(r.kontaktTelefon) : '') + '</td>' +
+          '<td><select class="sel-status" onchange="setAnfrageStatus(\'' + r.id + '\',this.value)">' + statusOpts + '</select></td>' +
+          '<td><button class="btn btn-green btn-sm" onclick="prefillFromAnfrage(\'' + r.id + '\')">&#8594; Partner</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+async function setAnfrageStatus(id, status) {
+  try {
+    await api('/api/admin/anfragen/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ status: status }) });
+    var r = _anfragen.find(function(a){ return a.id === id; });
+    if (r) r.status = status;
+  } catch(e) {
+    alert('Status-Fehler: ' + e.message);
+  }
+}
+
+function prefillFromAnfrage(id) {
+  var r = _anfragen.find(function(a){ return a.id === id; });
+  if (!r) return;
+  var partnerTabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(function(b){ return b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'partner'") !== -1; });
+  if (partnerTabBtn) switchTab('partner', partnerTabBtn);
+  function setVal(elId, val) { var el = document.getElementById(elId); if (el && val) el.value = val; }
+  setVal('np-name', r.betriebsName);
+  setVal('np-email', r.kontaktEmail);
+  setVal('np-kat', r.kategorie);
+  setVal('np-canton', r.canton);
+  setVal('np-paket', r.paket || 'standard');
+  var npEl = document.getElementById('np-name');
+  if (npEl) setTimeout(function(){ npEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
 }
 
 /* ===================== HELPERS ===================== */
