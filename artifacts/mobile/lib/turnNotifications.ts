@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Notifications from "expo-notifications";
+import { hapticHeavy, hapticWarning } from "./haptics";
 
 /**
  * Lokale Abbiege-Mitteilungen waehrend der Live-Wanderung.
@@ -59,6 +60,10 @@ export async function sendePoiMitteilung(
   bildUrl?: string | null
 ): Promise<void> {
   if (Platform.OS === "web") return;
+  // Haptik sofort beim Senden — unabhaengig davon, ob die App im Vordergrund
+  // ist. Beim Wandern liegt das Handy oft in der Tasche; der Impuls am
+  // Handgelenk (Watch-Spiegelung) kommt zusaetzlich ueber die Notification.
+  hapticWarning();
   let lokalesBild: string | null = null;
   if (bildUrl) {
     try {
@@ -96,6 +101,8 @@ export async function sendePoiMitteilung(
 /** Loest sofort eine lokale Abbiege-Mitteilung aus (nativ, best effort). */
 export async function sendeAbbiegeMitteilung(titel: string, text: string): Promise<void> {
   if (Platform.OS === "web") return;
+  // Starke Haptik fuer Abbiegehinweise — muss auch mit Handschuhen spuerbar sein.
+  hapticHeavy();
   try {
     await Notifications.scheduleNotificationAsync({
       content: {

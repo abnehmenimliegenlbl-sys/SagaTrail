@@ -19,9 +19,11 @@ import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -37,6 +39,7 @@ import { configureApiClient } from "@/lib/apiConfig";
 import "@/lib/backgroundLocation";
 import { alert, AppAlertProvider } from "@/lib/appAlert";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
+import { hapticMedium, hapticWarning } from "@/lib/haptics";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const CRASH_KEY = "__sagatrail_last_crash__";
@@ -93,6 +96,30 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();
+
+  // Globale Notification-Listener fuer Haptik-Feedback.
+  // Deckt Remote-Push-Nachrichten (Wetter, Marketing) ab, die ankommen
+  // waehrend die App im Vordergrund ist, sowie den Tap auf eine Notification
+  // aus dem Sperrbildschirm / Notification Center.
+  // Lokale Wander-Notifications (Abbiegehinweise, POIs) erhalten ihre Haptik
+  // direkt beim Senden in turnNotifications.ts — dort ist der Kontext bekannt.
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    // Foreground: Remote-Push eingetroffen → Warning-Impuls (spuerbar, aber
+    // nicht erschreckend; passt zu Wetterwarnungen und allg. Hinweisen).
+    const receivedSub = Notifications.addNotificationReceivedListener(() => {
+      hapticWarning();
+    });
+    // Tap: Nutzer hat auf Notification getippt → Medium-Impuls als
+    // Bestaetigung, dass die App daraufhin oeffnet / in den Vordergrund tritt.
+    const responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+      hapticMedium();
+    });
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (!hydrated || !isLoaded) return;
