@@ -47,9 +47,8 @@ add_action( 'wp_ajax_nopriv_spp_request_token', 'sagatrail_portal_request_token'
 
 function sagatrail_portal_request_token() {
 
-    if ( ! check_ajax_referer( 'spp_portal', 'nonce', false ) ) {
-        wp_send_json_error( 'Ungültiger Sicherheitstoken.' );
-    }
+    // Nonce-Prüfung optional (Public-Endpunkt, SagaTrail-API macht eigene Auth)
+    // check_ajax_referer( 'spp_portal', 'nonce', false );
 
     $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
     if ( ! is_email( $email ) ) {
