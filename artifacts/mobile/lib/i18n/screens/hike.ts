@@ -207,8 +207,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartHint: (distance, direction) =>
       `No ${distance} Richtig ${direction} bis zum Wägstart.`,
     walkToStartSpoken: (distance, direction) =>
-      `Du bisch no ${distance} vom Wägstart wäg, Richtig ${direction}.`,
-    compassDirections: ["Norde", "Nordoschte", "Oschte", "Südoschte", "Süde", "Südwäschte", "Wäschte", "Nordwäschte"],
+      `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
+    compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
     live: "LIVE",
     discoveredNearby: "I DE NÄCHI ENTDECKT",
     metricDistance: "DISTANZ",
