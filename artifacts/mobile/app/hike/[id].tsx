@@ -3015,79 +3015,43 @@ export default function LiveHike() {
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
-              {/* PREMIUM: Volles Titelbild oben */}
-              {selectedPartner.paket === "premium" && !!selectedPartner.fotoUrl && (
-                <View style={{ marginBottom: 12, borderRadius: 10, overflow: "hidden" }}>
-                  <Image
-                    source={{ uri: selectedPartner.fotoUrl }}
-                    style={{ width: "100%", height: 180 }}
-                    resizeMode="cover"
-                  />
-                  <View style={{
-                    position: "absolute", top: 8, right: 8,
-                    backgroundColor: "#C8932E", borderRadius: 4,
-                    paddingHorizontal: 8, paddingVertical: 3,
-                  }}>
-                    <Text style={{ color: "#fff", fontSize: 10, fontFamily: fonts.bodyBold, letterSpacing: 1 }}>
-                      PREMIUM
-                    </Text>
-                  </View>
-                </View>
+              {/* Titelbild — identisch mit POI-Karte (Standard + Premium mit Foto) */}
+              {!!selectedPartner.fotoUrl && selectedPartner.paket !== "basic" && (
+                <Image
+                  source={{ uri: selectedPartner.fotoUrl }}
+                  style={styles.poiCardImage}
+                  resizeMode="cover"
+                />
               )}
 
-              {/* Header-Zeile: Icon + Name + (Standard: kleines Foto) + Schliessen */}
-              <View style={styles.poiRow}>
-                <Feather
-                  name="coffee"
-                  size={selectedPartner.paket === "premium" ? 22 : 18}
-                  color={colors.accent}
-                />
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                      {t.partnerDetailEyebrow}
-                    </Text>
-                    {selectedPartner.paket === "standard" && (
-                      <View style={{
-                        backgroundColor: colors.accent + "33", borderRadius: 3,
-                        paddingHorizontal: 6, paddingVertical: 1,
-                      }}>
-                        <Text style={{ fontSize: 9, color: colors.accent, fontFamily: fonts.bodyBold, letterSpacing: 0.8 }}>
-                          STANDARD
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={[
-                    styles.poiTitle, { color: colors.foreground },
-                    selectedPartner.paket === "premium" && { fontSize: 20 },
-                  ]}>
-                    {selectedPartner.name}
+              {/* Header — identisch mit POI-Karte */}
+              <View style={styles.poiCardHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                  {(!selectedPartner.fotoUrl || selectedPartner.paket === "basic") && (
+                    <Feather name="coffee" size={22} color={colors.accent} />
+                  )}
+                  <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                    {t.partnerDetailEyebrow}
                   </Text>
                 </View>
-
-                {/* Standard: kleines Foto rechts neben dem Titel */}
-                {selectedPartner.paket === "standard" && !!selectedPartner.fotoUrl && (
-                  <Image
-                    source={{ uri: selectedPartner.fotoUrl }}
-                    style={{ width: 60, height: 60, borderRadius: 8, marginLeft: 8 }}
-                    resizeMode="cover"
-                  />
-                )}
-
                 <Pressable
                   onPress={() => setSelectedPartner(null)}
-                  hitSlop={10}
+                  hitSlop={12}
                   accessibilityRole="button"
                   accessibilityLabel={t.close}
                 >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                  <Feather name="x" size={22} color={colors.mutedForeground} />
                 </Pressable>
               </View>
 
+              {/* Titel — identisch mit POI-Karte */}
+              <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                {selectedPartner.name}
+              </Text>
+
               {/* Offen / Geschlossen Badge + Öffnungszeiten */}
               {selectedPartner.istOffen != null ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
                   <View style={{
                     width: 8, height: 8, borderRadius: 4,
                     backgroundColor: selectedPartner.istOffen ? "#22C55E" : "#EF4444",
@@ -3106,14 +3070,14 @@ export default function LiveHike() {
                   )}
                 </View>
               ) : !!selectedPartner.oeffnungszeiten ? (
-                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6 }}>
+                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 8 }}>
                   {selectedPartner.oeffnungszeiten}
                 </Text>
               ) : null}
 
-              {/* Beschreibung */}
+              {/* Beschreibung — identisch mit POI-Karte */}
               {!!selectedPartner.beschreibung && (
-                <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
+                <Text style={[styles.poiSummary, { color: colors.foreground }]}>
                   {selectedPartner.beschreibung}
                 </Text>
               )}
@@ -3124,27 +3088,27 @@ export default function LiveHike() {
                   {!!selectedPartner.telefon && (
                     <Pressable
                       onPress={() => Linking.openURL(`tel:${selectedPartner.telefon}`)}
-                      style={{ marginTop: 10 }}
+                      style={{ marginTop: 12 }}
                     >
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Feather name="phone" size={14} color={colors.accent} />
-                        <Text style={{ color: colors.accent, fontSize: 14 }}>
+                        <Feather name="phone" size={16} color={colors.accent} />
+                        <Text style={{ color: colors.accent, fontSize: 16 }}>
                           {selectedPartner.telefon}
                         </Text>
                       </View>
                     </Pressable>
                   )}
                   {(!!selectedPartner.reservierungUrl || !!selectedPartner.websiteUrl) && (
-                    <View style={{ flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                       {!!selectedPartner.reservierungUrl && (
                         <Pressable
                           onPress={() => Linking.openURL(selectedPartner.reservierungUrl!)}
                           style={{
                             backgroundColor: colors.accent,
-                            borderRadius: 7, paddingHorizontal: 14, paddingVertical: 7,
+                            borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9,
                           }}
                         >
-                          <Text style={{ color: "#fff", fontSize: 13, fontFamily: fonts.bodyBold }}>
+                          <Text style={{ color: "#fff", fontSize: 14, fontFamily: fonts.bodyBold }}>
                             {t.partnerReservierung}
                           </Text>
                         </Pressable>
@@ -3154,10 +3118,10 @@ export default function LiveHike() {
                           onPress={() => Linking.openURL(selectedPartner.websiteUrl!)}
                           style={{
                             borderWidth: 1.5, borderColor: colors.accent,
-                            borderRadius: 7, paddingHorizontal: 14, paddingVertical: 7,
+                            borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9,
                           }}
                         >
-                          <Text style={{ color: colors.accent, fontSize: 13 }}>
+                          <Text style={{ color: colors.accent, fontSize: 14 }}>
                             {t.partnerWebsite}
                           </Text>
                         </Pressable>
@@ -3179,16 +3143,16 @@ export default function LiveHike() {
                 >
                   <View style={{
                     backgroundColor: colors.accent + "20",
-                    borderRadius: 8, padding: 10, marginTop: 12,
+                    borderRadius: 8, padding: 12, marginTop: 14,
                     borderLeftWidth: 3, borderLeftColor: colors.accent,
                   }}>
                     <Text style={{
                       fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold,
-                      marginBottom: 2, textTransform: "uppercase", letterSpacing: 0.5,
+                      marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.5,
                     }}>
                       {t.partnerOffer}
                     </Text>
-                    <Text style={{ fontSize: 13, color: colors.foreground }}>
+                    <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 0 }]}>
                       {selectedPartner.angebot}
                     </Text>
                   </View>
