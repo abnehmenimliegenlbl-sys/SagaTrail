@@ -40,6 +40,23 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration typ-Spalte fehlgeschlagen (nicht kritisch)");
   }
 
+  // Partner-Tabelle: neue Spalten (idempotent, Prod-DB nachrüsten).
+  try {
+    await db.execute(sql`
+      ALTER TABLE partners
+        ADD COLUMN IF NOT EXISTS beschreibung text,
+        ADD COLUMN IF NOT EXISTS angebot text,
+        ADD COLUMN IF NOT EXISTS foto_url text,
+        ADD COLUMN IF NOT EXISTS telefon text,
+        ADD COLUMN IF NOT EXISTS website_url text,
+        ADD COLUMN IF NOT EXISTS reservierung_url text,
+        ADD COLUMN IF NOT EXISTS oeffnungszeiten text
+    `);
+    logger.info("Schema-Migration: partners-Spalten sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration partners-Spalten fehlgeschlagen (nicht kritisch)");
+  }
+
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.
   try {
     await seedCatalog();

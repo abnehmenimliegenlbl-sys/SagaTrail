@@ -9,7 +9,7 @@ import { db, partnersTable, partnerTokensTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
-const FOTOS_DIR = path.join(__dirname, "../../public/partner-fotos");
+const FOTOS_DIR = path.join(__dirname, "../public/partner-fotos");
 fs.mkdirSync(FOTOS_DIR, { recursive: true });
 
 const upload = multer({

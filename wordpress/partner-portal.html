@@ -69,6 +69,15 @@
 
 /* Paket-Badge */
 .spp-paket-info{background:#f9f7ff;border:1px solid #e0d8f8;border-radius:8px;padding:10px 14px;font-size:13px;color:#5a3fa8 !important;margin-bottom:16px}
+
+/* Feiertage */
+.spp-ft-grid{display:grid;gap:4px;margin-top:6px}
+.spp-ft-row{display:grid;grid-template-columns:1fr 140px;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #f5f5f5}
+.spp-ft-row:last-child{border-bottom:none}
+.spp-ft-label{font-size:12.5px;color:#444 !important}
+.spp-ft-date{font-size:11px;color:#aaa !important}
+.spp-ft-select{padding:4px 8px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:#333;cursor:pointer}
+.spp-ft-select:focus{border-color:#CC0000;outline:none}
 </style>
 
 <div class="spp-wrap">
@@ -199,7 +208,13 @@
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+      <h3 style="margin-top:24px">Feiertage</h3>
+      <p style="font-size:12px;color:#888;margin:0 0 8px">
+        Abweichung vom normalen Wochenplan. «Wochenplan» = kein Sonderfall.
+      </p>
+      <div class="spp-ft-grid" id="spp-ft-grid"></div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:18px">
         <button class="spp-btn" id="spp-oz-save-btn" onclick="sppSaveOz()">
           <span class="spp-spinner"></span>
           <span class="spp-btn-txt">Öffnungszeiten speichern</span>
@@ -230,6 +245,28 @@
     {key:'freitag',    label:'Fr'},
     {key:'samstag',    label:'Sa'},
     {key:'sonntag',    label:'So'},
+  ];
+
+  var FEIERTAGE = [
+    {key:'neujahr',            label:'Neujahr',              datum:'1. Jan.'},
+    {key:'berchtoldstag',      label:'Berchtoldstag',        datum:'2. Jan.'},
+    {key:'heiligeDreiKoenige', label:'Heilige Drei Könige',  datum:'6. Jan.'},
+    {key:'josefstag',          label:'Josefstag',            datum:'19. März'},
+    {key:'karfreitag',         label:'Karfreitag',           datum:'variabel'},
+    {key:'ostermontag',        label:'Ostermontag',          datum:'variabel'},
+    {key:'tagDerArbeit',       label:'Tag der Arbeit',       datum:'1. Mai'},
+    {key:'auffahrt',           label:'Auffahrt',             datum:'variabel'},
+    {key:'pfingstmontag',      label:'Pfingstmontag',        datum:'variabel'},
+    {key:'fronleichnam',       label:'Fronleichnam',         datum:'variabel'},
+    {key:'nationalfeiertag',   label:'Nationalfeiertag',     datum:'1. Aug.'},
+    {key:'mariaHimmelfahrt',   label:'Maria Himmelfahrt',    datum:'15. Aug.'},
+    {key:'bettag',             label:'Eidg. Bettag',         datum:'3. So. Sept.'},
+    {key:'allerheiligen',      label:'Allerheiligen',        datum:'1. Nov.'},
+    {key:'mariaEmpfaengnis',   label:'Maria Empfängnis',     datum:'8. Dez.'},
+    {key:'heiligabend',        label:'Heiligabend',          datum:'24. Dez.'},
+    {key:'weihnachten',        label:'Weihnachten',          datum:'25. Dez.'},
+    {key:'stephanstag',        label:'Stephanstag',          datum:'26. Dez.'},
+    {key:'silvester',          label:'Silvester',            datum:'31. Dez.'},
   ];
 
   function getToken() {
@@ -280,6 +317,26 @@
           '<span class="spp-oz-sep">–</span>' +
           '<input type="time" id="oz-bis-' + d.key + '" value="17:00" />' +
         '</div>';
+      grid.appendChild(row);
+    });
+  })();
+
+  // Feiertage-Grid aufbauen
+  (function buildFtGrid() {
+    var grid = document.getElementById('spp-ft-grid');
+    FEIERTAGE.forEach(function(f) {
+      var row = document.createElement('div');
+      row.className = 'spp-ft-row';
+      row.innerHTML =
+        '<div>' +
+          '<span class="spp-ft-label">' + f.label + '</span> ' +
+          '<span class="spp-ft-date">(' + f.datum + ')</span>' +
+        '</div>' +
+        '<select class="spp-ft-select" id="ft-' + f.key + '">' +
+          '<option value="">Wochenplan</option>' +
+          '<option value="true">Geöffnet</option>' +
+          '<option value="false">Geschlossen</option>' +
+        '</select>';
       grid.appendChild(row);
     });
   })();
@@ -427,6 +484,16 @@
       var y2 = new Date().getFullYear();
       document.getElementById('spp-saison-ende').value = y2 + '-' + oz.saisonEnde;
     }
+    if (oz.feiertage) {
+      FEIERTAGE.forEach(function(f) {
+        var sel = document.getElementById('ft-' + f.key);
+        if (!sel) return;
+        var v = oz.feiertage[f.key];
+        if (v === true)  sel.value = 'true';
+        else if (v === false) sel.value = 'false';
+        else sel.value = '';
+      });
+    }
   }
 
   // Foto Upload
@@ -554,6 +621,14 @@
     var seEl = document.getElementById('spp-saison-ende');
     if (ssEl && ssEl.value) oz.saisonStart = ssEl.value.slice(5); // MM-DD
     if (seEl && seEl.value) oz.saisonEnde  = seEl.value.slice(5);
+
+    var feiertage = {};
+    FEIERTAGE.forEach(function(f) {
+      var sel = document.getElementById('ft-' + f.key);
+      if (!sel || sel.value === '') return;
+      feiertage[f.key] = (sel.value === 'true');
+    });
+    if (Object.keys(feiertage).length > 0) oz.feiertage = feiertage;
 
     fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
       method: 'PATCH',
