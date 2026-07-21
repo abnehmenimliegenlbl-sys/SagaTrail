@@ -241,15 +241,15 @@ a{color:var(--red);text-decoration:none}
   <!-- PARTNER -->
   <div id="tab-partner" class="tab-pane">
     <div class="card">
-      <h2>Neuer Partner anlegen</h2>
+      <h2 id="np-form-title">Neuer Partner anlegen</h2>
       <div class="form-grid" id="new-partner-form">
         <div id="np-lookup-wrap">
-          <label>Vorhandenen Partner suchen &amp; Felder vorausf&#252;llen</label>
+          <label>Partner oder Anfrage suchen</label>
           <div style="position:relative">
-            <input id="np-lookup-input" type="text" placeholder="Name oder E-Mail eingeben&#x2026;" oninput="lookupDebounce(this.value)" autocomplete="off" />
+            <input id="np-lookup-input" type="text" placeholder="Name, E-Mail oder Betrieb eingeben&#x2026;" oninput="lookupDebounce(this.value)" autocomplete="off" />
             <div id="np-lookup-drop" style="display:none"></div>
           </div>
-          <span id="np-lookup-hint">Tipp: Felder werden vorausgef&#252;llt &#8211; du erstellst aber immer einen <strong>neuen</strong> Eintrag.</span>
+          <span id="np-lookup-hint">Partner ausw&#228;hlen zum Bearbeiten, Anfrage ausw&#228;hlen zum Vorausf&#252;llen.</span>
         </div>
         <div class="form-group full"><span class="form-section-title">Basisdaten</span></div>
         <div class="form-group"><label>Name *</label><input id="np-name" type="text" /></div>
@@ -279,7 +279,7 @@ a{color:var(--red);text-decoration:none}
         </div>
         <div class="form-group full"><label>Interne Notizen</label><textarea id="np-notizen"></textarea></div>
       </div>
-      <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+      <div id="np-action-bar" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="createPartner()">Partner anlegen</button>
         <span id="np-status" class="hint"></span>
       </div>
@@ -310,6 +310,8 @@ a{color:var(--red);text-decoration:none}
 var _token = '';
 var _partner = [];
 var _anfragen = [];
+var _lookupResults = [];
+var _editPartnerId = null;
 var LS_KEY = 'sagatrail_admin_tok';
 
 var _savedStatus = {msg: '', ok: undefined};
@@ -478,7 +480,6 @@ async function loadUsage() {
 }
 
 /* ===================== PARTNER LOOKUP ===================== */
-var _lookupResults = [];
 var _lookupTimer = null;
 function lookupDebounce(val) {
   clearTimeout(_lookupTimer);
@@ -491,47 +492,158 @@ async function doLookup(q) {
   drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Suche&#x2026;</div>';
   drop.style.display = '';
   try {
-    var rows = await api('/api/admin/partner-lookup?q=' + encodeURIComponent(q), {method:'GET'});
-    _lookupResults = rows;
-    if (!rows.length) {
+    var partnerRows = await api('/api/admin/partner-lookup?q=' + encodeURIComponent(q), {method:'GET'});
+    var lq = q.toLowerCase();
+    var anfrageRows = _anfragen.filter(function(a) {
+      return a.betriebsName.toLowerCase().includes(lq) ||
+        (a.kontaktEmail && a.kontaktEmail.toLowerCase().includes(lq)) ||
+        (a.kontaktName && a.kontaktName.toLowerCase().includes(lq)) ||
+        (a.ort && a.ort.toLowerCase().includes(lq));
+    });
+    _lookupResults = partnerRows.map(function(p){ return { _type:'partner', _data:p }; })
+      .concat(anfrageRows.map(function(a){ return { _type:'anfrage', _data:a }; }));
+    if (!_lookupResults.length) {
       drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Kein Eintrag gefunden</div>';
       return;
     }
-    drop.innerHTML = rows.map(function(p, i) {
-      return '<div class="lookup-row" onclick="fillFromPartner(' + i + ')">' +
-        '<strong>' + esc(p.name) + '</strong>' +
-        '<span>' + esc(p.canton) + ' &middot; ' + esc(p.kategorie) + (p.email ? ' &middot; ' + esc(p.email) : '') + '</span>' +
-        '</div>';
+    drop.innerHTML = _lookupResults.map(function(r, i) {
+      if (r._type === 'partner') {
+        var p = r._data;
+        return '<div class="lookup-row" onclick="fillFromLookup(' + i + ')">' +
+          '<span class="badge badge-green" style="margin-right:5px;font-size:10px">Partner</span>' +
+          '<strong>' + esc(p.name) + '</strong>' +
+          '<span>' + esc(p.canton) + ' &middot; ' + esc(p.kategorie) + (p.email ? ' &middot; ' + esc(p.email) : '') + '</span>' +
+          '</div>';
+      } else {
+        var a = r._data;
+        return '<div class="lookup-row" onclick="fillFromLookup(' + i + ')">' +
+          '<span class="badge badge-blue" style="margin-right:5px;font-size:10px">Anfrage</span>' +
+          '<strong>' + esc(a.betriebsName) + '</strong>' +
+          '<span>' + esc(a.canton) + ' &middot; ' + esc(a.kategorie) + ' &middot; ' + esc(a.kontaktEmail) + '</span>' +
+          '</div>';
+      }
     }).join('');
   } catch(e) {
     drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--red)">Fehler: ' + esc(e.message) + '</div>';
   }
 }
-function fillFromPartner(idx) {
-  var p = _lookupResults[idx];
-  if (!p) return;
+
+function fillFromLookup(idx) {
+  var r = _lookupResults[idx];
+  if (!r) return;
+  document.getElementById('np-lookup-drop').style.display = 'none';
   function sv(id, val) { var el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ''; }
   function fmtD(dt) { return dt ? new Date(dt).toISOString().split('T')[0] : ''; }
-  sv('np-name', p.name);
-  sv('np-email', p.email);
-  sv('np-canton', p.canton);
-  sv('np-lat', p.lat);
-  sv('np-lng', p.lng);
-  sv('np-beschr', p.beschreibung);
-  sv('np-angebot', p.angebot);
-  sv('np-foto', p.fotoUrl);
-  sv('np-preis', p.preisChf);
-  sv('np-einfpreis', p.einfuehrungspreisChf);
-  sv('np-einfbis', fmtD(p.einfuehrungspreisGueltigBis));
-  sv('np-lstart', fmtD(p.laufzeitStart));
-  sv('np-lende', fmtD(p.laufzeitEnde));
-  sv('np-notizen', p.notizenIntern);
-  var kat = document.getElementById('np-kat'); if (kat) kat.value = p.kategorie || '';
-  var pak = document.getElementById('np-paket'); if (pak) pak.value = p.paket || '';
-  var zs = document.getElementById('np-zstatus'); if (zs) zs.value = p.zahlungsstatus || 'ausstehend';
-  document.getElementById('np-lookup-drop').style.display = 'none';
-  document.getElementById('np-lookup-input').value = p.name;
-  document.getElementById('np-lookup-hint').innerHTML = '&#9989; Felder aus <strong>' + esc(p.name) + '</strong> &#252;bernommen &ndash; wird als <strong>neuer</strong> Eintrag gespeichert.';
+  if (r._type === 'partner') {
+    var p = r._data;
+    sv('np-name', p.name);
+    sv('np-email', p.email);
+    sv('np-canton', p.canton);
+    sv('np-lat', p.lat);
+    sv('np-lng', p.lng);
+    sv('np-beschr', p.beschreibung);
+    sv('np-angebot', p.angebot);
+    sv('np-foto', p.fotoUrl);
+    sv('np-preis', p.preisChf);
+    sv('np-einfpreis', p.einfuehrungspreisChf);
+    sv('np-einfbis', fmtD(p.einfuehrungspreisGueltigBis));
+    sv('np-lstart', fmtD(p.laufzeitStart));
+    sv('np-lende', fmtD(p.laufzeitEnde));
+    sv('np-notizen', p.notizenIntern);
+    var kat = document.getElementById('np-kat'); if (kat) kat.value = p.kategorie || '';
+    var pak = document.getElementById('np-paket'); if (pak) pak.value = p.paket || '';
+    var zs = document.getElementById('np-zstatus'); if (zs) zs.value = p.zahlungsstatus || 'ausstehend';
+    document.getElementById('np-lookup-input').value = p.name;
+    setEditMode(p.id, p.name);
+  } else {
+    var a = r._data;
+    sv('np-name', a.betriebsName);
+    sv('np-email', a.kontaktEmail);
+    sv('np-canton', a.canton);
+    sv('np-beschr', '');
+    sv('np-angebot', '');
+    sv('np-lat', '');
+    sv('np-lng', '');
+    var kat2 = document.getElementById('np-kat'); if (kat2) kat2.value = a.kategorie || '';
+    var pak2 = document.getElementById('np-paket'); if (pak2) pak2.value = a.paket || '';
+    document.getElementById('np-lookup-input').value = a.betriebsName;
+    document.getElementById('np-lookup-hint').innerHTML = '&#128203; Felder aus Anfrage von <strong>' + esc(a.betriebsName) + '</strong> &#252;bernommen &ndash; wird als <strong>neuer</strong> Partner gespeichert.';
+    setNewMode();
+  }
+}
+
+function setEditMode(id, name) {
+  _editPartnerId = id;
+  document.getElementById('np-form-title').textContent = 'Partner bearbeiten: ' + name;
+  document.getElementById('np-lookup-hint').innerHTML = '&#9998; Bearbeitungsmodus &ndash; &#196;nderungen werden beim bestehenden Eintrag gespeichert.';
+  var bar = document.getElementById('np-action-bar');
+  bar.innerHTML =
+    '<button class="btn btn-primary" onclick="saveEditPartner()">Speichern</button>' +
+    '<button class="btn btn-danger" onclick="deleteEditPartner()">&#128465; L&#246;schen</button>' +
+    '<button class="btn btn-ghost" onclick="setNewMode()">+ Neu anlegen</button>' +
+    '<span id="np-status" class="hint"></span>';
+}
+
+function setNewMode() {
+  _editPartnerId = null;
+  document.getElementById('np-form-title').textContent = 'Neuer Partner anlegen';
+  document.getElementById('np-lookup-input').value = '';
+  document.getElementById('np-lookup-hint').textContent = 'Partner ausw\u00e4hlen zum Bearbeiten, Anfrage ausw\u00e4hlen zum Vorausf\u00fcllen.';
+  var bar = document.getElementById('np-action-bar');
+  bar.innerHTML =
+    '<button class="btn btn-primary" onclick="createPartner()">Partner anlegen</button>' +
+    '<span id="np-status" class="hint"></span>';
+}
+
+async function saveEditPartner() {
+  var id = _editPartnerId;
+  if (!id) return;
+  var einfbis = document.getElementById('np-einfbis').value;
+  var ls = document.getElementById('np-lstart').value;
+  var le = document.getElementById('np-lende').value;
+  var body = {
+    name:      document.getElementById('np-name').value.trim(),
+    email:     document.getElementById('np-email').value.trim() || undefined,
+    kategorie: document.getElementById('np-kat').value,
+    canton:    document.getElementById('np-canton').value.trim().toUpperCase(),
+    lat:       parseFloat(document.getElementById('np-lat').value) || undefined,
+    lng:       parseFloat(document.getElementById('np-lng').value) || undefined,
+    beschreibung: document.getElementById('np-beschr').value.trim() || undefined,
+    angebot:   document.getElementById('np-angebot').value.trim() || undefined,
+    fotoUrl:   document.getElementById('np-foto').value.trim() || undefined,
+    paket:     document.getElementById('np-paket').value || undefined,
+    preisChf:  parseInt(document.getElementById('np-preis').value) || undefined,
+    einfuehrungspreisChf: parseInt(document.getElementById('np-einfpreis').value) || undefined,
+    einfuehrungspreisGueltigBis: einfbis ? new Date(einfbis).toISOString() : undefined,
+    zahlungsstatus: document.getElementById('np-zstatus').value,
+    laufzeitStart: ls ? new Date(ls).toISOString() : undefined,
+    laufzeitEnde:  le ? new Date(le).toISOString() : undefined,
+    notizenIntern: document.getElementById('np-notizen').value.trim() || undefined,
+  };
+  var st = document.getElementById('np-status');
+  if (st) st.textContent = 'Speichern...';
+  try {
+    await api('/api/admin/partner/' + id, { method:'PATCH', body: JSON.stringify(body) });
+    if (st) st.textContent = 'Gespeichert \u2713';
+    await loadPartner();
+    await loadOverview();
+  } catch(e) {
+    if (st) st.textContent = 'Fehler: ' + e.message;
+  }
+}
+
+async function deleteEditPartner() {
+  var id = _editPartnerId;
+  if (!id) return;
+  var name = document.getElementById('np-name').value.trim();
+  if (!confirm('Partner «' + name + '» wirklich dauerhaft l\u00f6schen?')) return;
+  try {
+    await api('/api/admin/partner/' + id, { method:'DELETE' });
+    setNewMode();
+    ['np-name','np-email','np-canton','np-lat','np-lng','np-beschr','np-angebot','np-foto','np-preis','np-einfpreis','np-einfbis','np-lstart','np-lende','np-notizen'].forEach(function(eid){ var el = document.getElementById(eid); if (el) el.value=''; });
+    await loadPartner();
+    await loadOverview();
+  } catch(e) { alert('Fehler: ' + e.message); }
 }
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#np-lookup-wrap')) {
