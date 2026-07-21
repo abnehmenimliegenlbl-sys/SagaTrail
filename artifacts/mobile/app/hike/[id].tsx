@@ -492,6 +492,8 @@ export default function LiveHike() {
   /** Zaehler aufeinanderfolgender GPS-Fixes ausserhalb der Route. */
   const offRouteCountRef = useRef(0);
   const lastNarratedRef = useRef<number>(-1);
+  // true waehrend eine Navigationsansage laeuft und die Erzaehlung pausiert ist.
+  const navInterruptingRef = useRef(false);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
   // Koordinaten bereits angesagter POIs — verhindert Doppel-Ansage wenn
   // derselbe physische Ort als mehrere OSM-Objekte (node + way) vorliegt
@@ -1099,7 +1101,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1153,10 +1155,10 @@ export default function LiveHike() {
       // Doppelimpuls fuer Navigationsanweisungen — staerker und deutlich
       // unterscheidbar vom einfachen Kapitel-/POI-Start-Feedback.
       hapticDoublePulse();
-      // Sprachansage kurz vor der Abbiegung — reiht sich in die Warteschlange
-      // ein, damit eine laufende Kapitel-Erzaehlung nicht unterbrochen wird.
+      // Sprachansage kurz vor der Abbiegung — unterbricht sofortig und setzt
+      // eine laufende Erzaehlung danach an derselben Stelle fort.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { useDevice: true });
+      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { useDevice: true, navInterrupt: true });
     }
   }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
 
@@ -1515,7 +1517,36 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean }) => {
+      // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
+      // laufende Erzaehlung danach an derselben Stelle fort.
+      if (opts?.navInterrupt) {
+        const soundToResume = narrationSoundRef.current;
+        if (soundToResume && speakingRef.current) {
+          // Sound pausieren statt stoppen — Abspielposition bleibt erhalten.
+          navInterruptingRef.current = true;
+          try { await soundToResume.pauseAsync(); } catch {}
+        } else {
+          // Nur Geraetestimme aktiv — stoppen (kein Resume moeglich).
+          try { Speech.stop(); } catch {}
+        }
+        const locale = SPEECH_LOCALE[resolveLang((profile?.language ?? "de") as Lang)];
+        await new Promise<void>((resolve) => {
+          Speech.speak(text, {
+            language: locale,
+            onDone: resolve,
+            onStopped: resolve,
+            onError: () => resolve(),
+          });
+        });
+        // Nav-Ansage fertig: Narration fortsetzen, falls noch derselbe Sound aktiv.
+        navInterruptingRef.current = false;
+        if (soundToResume && narrationSoundRef.current === soundToResume) {
+          try { await soundToResume.playAsync(); } catch {}
+        }
+        return;
+      }
+
       // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
       // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
@@ -1523,9 +1554,11 @@ export default function LiveHike() {
         narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
         return;
       }
-      // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren.
+      // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren
+      // und laufenden Nav-Interrupt abbrechen.
       if (opts?.interrupt) {
         narrationQueueRef.current = [];
+        navInterruptingRef.current = false;
       }
       // Neue Generation SOFORT beanspruchen, damit noch laufende speak()-
       // Aufrufe (z. B. nach schnellem Doppel-Tipp auf "Wiederholen") sich
@@ -1662,6 +1695,9 @@ export default function LiveHike() {
             // Audio-Session): iOS pausiert das Audio automatisch bei einer
             // RouteChange-Interruption. Wir starten neu, sobald wir merken
             // dass das Audio steht obwohl es nicht zu Ende gespielt hat.
+            // AUSNAHME: absichtliche Pause wegen Nav-Interrupt — nicht sofort
+            // neu starten, sondern auf das Ende der Nav-Ansage warten.
+            if (navInterruptingRef.current) return;
             sound.playAsync().catch(() => {});
           }
         });
