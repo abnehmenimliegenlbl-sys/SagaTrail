@@ -3111,7 +3111,7 @@ export default function LiveHike() {
           onPress={() => setSelectedPartner(null)}
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
-            <Glass>
+            <Glass overlayColor={poiOverlay}>
               {/* Titelbild — identisch mit POI-Karte (Standard + Premium mit Foto) */}
               {!!selectedPartner.fotoUrl && selectedPartner.paket !== "basic" && (
                 <Image
