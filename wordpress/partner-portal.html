@@ -359,18 +359,21 @@
     var email = document.getElementById('spp-email').value.trim();
     if (!email) { showMsg('spp-login-msg', 'Bitte E-Mail-Adresse eingeben.', false); return; }
     setBtn('spp-login-btn', true);
-    var fd = new FormData();
-    fd.append('action', 'spp_request_token');
-    fd.append('nonce', PORTAL_NONCE);
-    fd.append('email', email);
-    fetch(AJAX_URL, { method:'POST', body:fd })
-      .then(function(r){ return r.json(); })
-      .then(function(j) {
+    fetch(API_BASE + '/api/partner/portal/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
         setBtn('spp-login-btn', false);
-        if (j.success) {
-          showMsg('spp-login-msg', 'Falls diese E-Mail registriert ist, haben Sie einen Link erhalten. Bitte prüfen Sie Ihren Posteingang.', true);
+        if (d.ok && d.token) {
+          localStorage.setItem('spp_token', d.token);
+          loadDashboard(d.token);
+        } else if (d.ok) {
+          showMsg('spp-login-msg', 'Diese E-Mail ist nicht als Partner registriert.', false);
         } else {
-          showMsg('spp-login-msg', j.data || 'Fehler. Bitte versuchen Sie es erneut.', false);
+          showMsg('spp-login-msg', d.error || 'Fehler. Bitte versuchen Sie es erneut.', false);
         }
       })
       .catch(function() {
