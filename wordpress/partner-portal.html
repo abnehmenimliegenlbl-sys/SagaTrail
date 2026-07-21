@@ -1,47 +1,80 @@
 <!--
   SAGATRAIL PARTNER-PORTAL | WPCode HTML Snippet
-  Typ: HTML Snippet | Einbetten auf der Seite "Partner-Portal" (Slug: partner-portal)
-  Funktionsweise:
-    1. Partner gibt E-Mail ein → Magic-Link kommt per Mail (24h gültig)
-    2. Link führt zu dieser Seite mit ?token=... → Dashboard erscheint
+  Seiten-Slug: portal (oder partner-portal)
   Benötigt: partner-portal-handler.php als separates PHP-Snippet (Run Everywhere)
 -->
 
 <style>
+*{box-sizing:border-box}
 .spp-wrap{max-width:680px;margin:0 auto;padding:24px 16px 60px;font-family:-apple-system,system-ui,sans-serif;color:#1a1a1a}
 .spp-logo{font-size:22px;font-weight:800;color:#CC0000 !important;margin-bottom:24px;letter-spacing:.3px}
 .spp-card{background:#fff;border:1.5px solid #e5e5e5;border-radius:14px;padding:28px 24px;margin-bottom:20px}
-.spp-card h2{font-size:16px;margin-bottom:16px;color:#1a1a1a}
+.spp-card h2{font-size:16px;margin:0 0 18px;color:#1a1a1a}
+.spp-card h3{font-size:13px;font-weight:700;color:#555 !important;margin:20px 0 12px;text-transform:uppercase;letter-spacing:.5px}
 .spp-field{margin-bottom:14px}
 .spp-field label{display:block;font-size:12px;font-weight:600;color:#555 !important;margin-bottom:4px}
-.spp-field input,.spp-field textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s}
-.spp-field input:focus,.spp-field textarea:focus{border-color:#CC0000}
-.spp-field textarea{min-height:80px;resize:vertical}
+.spp-field input,.spp-field textarea,.spp-field select{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;background:#fff;color:#1a1a1a}
+.spp-field input:focus,.spp-field textarea:focus,.spp-field select:focus{border-color:#CC0000}
+.spp-field textarea{min-height:75px;resize:vertical}
 .spp-field .hint{font-size:11px;color:#aaa !important;margin-top:3px}
-.spp-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:#CC0000;color:#fff !important;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.spp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.spp-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:#CC0000;color:#fff !important;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;text-decoration:none}
 .spp-btn:hover{background:#a80000}
 .spp-btn:disabled{opacity:.6;cursor:not-allowed}
-.spp-msg{display:none;padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px}
+.spp-btn-sec{background:#f5f5f5;color:#333 !important}
+.spp-btn-sec:hover{background:#e8e8e8}
+.spp-msg{display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px}
 .spp-msg.ok{background:#f0faf0;border:1px solid #98d898;color:#2d6b2d !important;display:block}
 .spp-msg.err{background:#fff4f4;border:1px solid #f0a0a0;color:#8b0000 !important;display:block}
-/* Stats */
-.spp-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.spp-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .spp-stat{background:#f7f6f4;border-radius:10px;padding:16px;text-align:center}
 .spp-stat .num{font-size:28px;font-weight:700;color:#CC0000 !important;line-height:1}
 .spp-stat .lbl{font-size:12px;color:#777 !important;margin-top:4px}
 .spp-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600}
 .spp-badge-green{background:#e6f4ec;color:#2e7d52}
 .spp-badge-gray{background:#f0eeeb;color:#666}
+.spp-badge-red{background:#fff0f0;color:#CC0000}
 .spp-laufzeit{font-size:12px;color:#777 !important;margin-top:6px}
 .spp-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
 .spp-btn.loading .spp-spinner{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Foto Upload */
+.spp-upload-area{border:2px dashed #ddd;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative}
+.spp-upload-area:hover,.spp-upload-area.drag{border-color:#CC0000;background:#fff8f8}
+.spp-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.spp-upload-icon{font-size:32px;margin-bottom:8px}
+.spp-upload-txt{font-size:13px;color:#777 !important}
+.spp-upload-txt strong{color:#CC0000 !important}
+.spp-foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:12px;display:none}
+.spp-upload-progress{margin-top:10px;display:none}
+.spp-upload-progress-bar{height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden}
+.spp-upload-progress-fill{height:100%;background:#CC0000;border-radius:2px;transition:width .3s}
+
+/* Öffnungszeiten */
+.spp-oz-grid{display:grid;gap:6px}
+.spp-oz-row{display:grid;grid-template-columns:90px 36px 1fr;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0}
+.spp-oz-row:last-child{border-bottom:none}
+.spp-oz-day{font-size:13px;font-weight:600;color:#333 !important}
+.spp-oz-toggle{position:relative;width:34px;height:20px;flex-shrink:0}
+.spp-oz-toggle input{opacity:0;width:0;height:0;position:absolute}
+.spp-oz-slider{position:absolute;inset:0;background:#ddd;border-radius:20px;cursor:pointer;transition:.2s}
+.spp-oz-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.spp-oz-toggle input:checked+.spp-oz-slider{background:#CC0000}
+.spp-oz-toggle input:checked+.spp-oz-slider:before{transform:translateX(14px)}
+.spp-oz-times{display:flex;align-items:center;gap:6px;font-size:13px}
+.spp-oz-times input[type=time]{width:88px;padding:4px 8px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit}
+.spp-oz-times.hidden{visibility:hidden}
+.spp-oz-sep{color:#aaa;font-size:12px}
+
+/* Paket-Badge */
+.spp-paket-info{background:#f9f7ff;border:1px solid #e0d8f8;border-radius:8px;padding:10px 14px;font-size:13px;color:#5a3fa8 !important;margin-bottom:16px}
 </style>
 
 <div class="spp-wrap">
   <div class="spp-logo">SagaTrail</div>
 
-  <!-- LOGIN FORM (sichtbar wenn kein Token) -->
+  <!-- LOGIN -->
   <div id="spp-login" class="spp-card">
     <h2>Partner-Portal</h2>
     <p style="font-size:13px;color:#555;margin-bottom:18px">
@@ -59,47 +92,119 @@
     <div id="spp-login-msg" class="spp-msg"></div>
   </div>
 
-  <!-- DASHBOARD (sichtbar nach Token-Validierung) -->
+  <!-- DASHBOARD -->
   <div id="spp-dashboard" style="display:none">
+
     <!-- Übersicht -->
     <div class="spp-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
         <div>
           <h2 style="margin:0" id="spp-name">–</h2>
           <div style="margin-top:4px" id="spp-meta"></div>
+          <div class="spp-laufzeit" id="spp-laufzeit"></div>
         </div>
         <span id="spp-status-badge"></span>
       </div>
       <div class="spp-stat-row">
-        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl">&#128065; Profil-Aufrufe</div></div>
-        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl">&#128722; Angebot-Tipps</div></div>
+        <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl">👁 Profil-Aufrufe</div></div>
+        <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl">🛍 Angebot-Tipps</div></div>
       </div>
-      <div class="spp-laufzeit" id="spp-laufzeit"></div>
+      <div id="spp-paket-info" class="spp-paket-info" style="display:none"></div>
     </div>
 
-    <!-- Profil bearbeiten -->
+    <!-- Foto (Standard / Premium) -->
+    <div class="spp-card" id="spp-foto-card" style="display:none">
+      <h2>Titelfoto</h2>
+      <p style="font-size:13px;color:#555;margin-bottom:14px">
+        Das Foto erscheint oben auf Ihrer Partnerkachel in der App. Querformat, mind. 800 × 450 px, max. 8 MB (JPEG, PNG, WebP).
+      </p>
+      <div class="spp-upload-area" id="spp-dropzone">
+        <input type="file" id="spp-foto-input" accept="image/jpeg,image/png,image/webp" onchange="sppHandleFile(this.files[0])" />
+        <div class="spp-upload-icon">🖼️</div>
+        <div class="spp-upload-txt">
+          <strong>Datei wählen</strong> oder hierher ziehen<br>
+          <span style="font-size:11px">JPEG · PNG · WebP · max. 8 MB</span>
+        </div>
+      </div>
+      <img id="spp-foto-preview" class="spp-foto-preview" alt="Vorschau" />
+      <div class="spp-upload-progress" id="spp-upload-progress">
+        <div class="spp-upload-progress-bar"><div class="spp-upload-progress-fill" id="spp-upload-fill" style="width:0%"></div></div>
+      </div>
+      <div id="spp-foto-msg" class="spp-msg"></div>
+    </div>
+
+    <!-- Profil -->
     <div class="spp-card">
       <h2>Profil bearbeiten</h2>
-      <div class="spp-field">
-        <label>Beschreibung <span style="color:#aaa;font-weight:400">(max. 500 Zeichen)</span></label>
-        <textarea id="spp-beschr" maxlength="500" placeholder="Was macht Ihren Betrieb besonders?"></textarea>
-        <div class="hint"><span id="spp-beschr-count">0</span>/500</div>
+
+      <!-- Beschreibung (Standard/Premium) -->
+      <div class="spp-field" id="spp-beschr-wrap" style="display:none">
+        <label>Kurzbeschreibung <span style="color:#aaa;font-weight:400">(max. 250 Zeichen)</span></label>
+        <textarea id="spp-beschr" maxlength="250" placeholder="Was macht Ihren Betrieb besonders? Spezialitäten, Atmosphäre, Lage …"></textarea>
+        <div class="hint"><span id="spp-beschr-count">0</span>/250</div>
       </div>
-      <div class="spp-field">
-        <label>Angebot für SagaTrail-Nutzer <span style="color:#aaa;font-weight:400">(max. 300 Zeichen)</span></label>
-        <input type="text" id="spp-angebot" maxlength="300" placeholder="z.B. Gratis Kaffee auf Vorzeigen der App" />
+
+      <!-- Angebot (Premium only) -->
+      <div class="spp-field" id="spp-angebot-wrap" style="display:none">
+        <label>SagaTrail-Angebot <span style="color:#aaa;font-weight:400">(max. 120 Zeichen)</span></label>
+        <input type="text" id="spp-angebot" maxlength="120" placeholder="z.B. Gratis Kaffee auf Vorzeigen der App" />
+        <div class="hint"><span id="spp-angebot-count">0</span>/120 — wird auch bei der automatischen Wanderer-Ansage verwendet</div>
       </div>
-      <div class="spp-field">
-        <label>Foto-URL</label>
-        <input type="url" id="spp-foto" placeholder="https://…" />
-        <div class="hint">Öffentlich zugängliche Bild-URL (JPG/PNG/WebP)</div>
+
+      <!-- Kontakt (Standard/Premium) -->
+      <div id="spp-kontakt-wrap" style="display:none">
+        <div class="spp-row">
+          <div class="spp-field">
+            <label>Telefon</label>
+            <input type="tel" id="spp-telefon" placeholder="+41 44 123 45 67" />
+          </div>
+          <div class="spp-field">
+            <label>Website</label>
+            <input type="url" id="spp-website" placeholder="https://www.meinbetrieb.ch" />
+          </div>
+        </div>
       </div>
-      <div style="margin-top:4px;display:flex;align-items:center;gap:10px">
+
+      <!-- Reservierung (Premium only) -->
+      <div class="spp-field" id="spp-reserv-wrap" style="display:none">
+        <label>Reservierungs-Link <span style="color:#aaa;font-weight:400">(optional)</span></label>
+        <input type="url" id="spp-reserv" placeholder="https://www.opentable.com/… oder eigene Buchungsseite" />
+        <div class="hint">Erscheint als prominenter Button auf Ihrer Kachel</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
         <button class="spp-btn" id="spp-save-btn" onclick="sppSave()">
           <span class="spp-spinner"></span>
           <span class="spp-btn-txt">Änderungen speichern</span>
         </button>
         <div id="spp-save-msg" class="spp-msg" style="margin-top:0"></div>
+      </div>
+    </div>
+
+    <!-- Öffnungszeiten -->
+    <div class="spp-card">
+      <h2>Öffnungszeiten</h2>
+      <div class="spp-oz-grid" id="spp-oz-grid"></div>
+
+      <h3 style="margin-top:20px">Saison</h3>
+      <div class="spp-row">
+        <div class="spp-field">
+          <label>Geöffnet ab</label>
+          <input type="date" id="spp-saison-start" />
+          <div class="hint">Leer = ganzjährig</div>
+        </div>
+        <div class="spp-field">
+          <label>Geschlossen ab</label>
+          <input type="date" id="spp-saison-ende" />
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <button class="spp-btn" id="spp-oz-save-btn" onclick="sppSaveOz()">
+          <span class="spp-spinner"></span>
+          <span class="spp-btn-txt">Öffnungszeiten speichern</span>
+        </button>
+        <div id="spp-oz-msg" class="spp-msg" style="margin-top:0"></div>
       </div>
     </div>
 
@@ -113,9 +218,19 @@
 (function() {
   'use strict';
 
-  var API_BASE = (window.stPartnerData && window.stPartnerData.apiBase) || 'https://api.sagatrail.ch';
-  var AJAX_URL = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
+  var API_BASE    = (window.stPartnerData && window.stPartnerData.apiBase) || 'https://api.sagatrail.ch';
+  var AJAX_URL    = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
   var PORTAL_NONCE = (window.stPartnerData && window.stPartnerData.portalNonce) || '';
+
+  var DAYS = [
+    {key:'montag',     label:'Mo'},
+    {key:'dienstag',   label:'Di'},
+    {key:'mittwoch',   label:'Mi'},
+    {key:'donnerstag', label:'Do'},
+    {key:'freitag',    label:'Fr'},
+    {key:'samstag',    label:'Sa'},
+    {key:'sonntag',    label:'So'},
+  ];
 
   function getToken() {
     var p = new URLSearchParams(window.location.search);
@@ -124,36 +239,62 @@
 
   function setBtn(id, loading) {
     var btn = document.getElementById(id);
+    if (!btn) return;
     btn.disabled = loading;
     btn.classList.toggle('loading', loading);
   }
 
   function showMsg(id, msg, ok) {
     var el = document.getElementById(id);
+    if (!el) return;
     el.textContent = msg;
     el.className = 'spp-msg ' + (ok ? 'ok' : 'err');
   }
 
-  function fmt(n) { return n == null ? '–' : Number(n).toLocaleString('de-CH'); }
-  function fmtDate(s) { if (!s) return ''; return new Date(s).toLocaleDateString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric'}); }
+  function fmt(n)    { return n == null ? '–' : Number(n).toLocaleString('de-CH'); }
+  function fmtDate(s){ if (!s) return ''; return new Date(s).toLocaleDateString('de-CH', {day:'2-digit',month:'2-digit',year:'numeric'}); }
 
   // Zeichenzähler
-  var beschrEl = document.getElementById('spp-beschr');
-  if (beschrEl) {
-    beschrEl.addEventListener('input', function() {
-      document.getElementById('spp-beschr-count').textContent = beschrEl.value.length;
+  ['beschr','angebot'].forEach(function(id) {
+    var el = document.getElementById('spp-' + id);
+    if (el) el.addEventListener('input', function() {
+      var cnt = document.getElementById('spp-' + id + '-count');
+      if (cnt) cnt.textContent = el.value.length;
     });
-  }
+  });
 
-  // Bei Seitenload: Token aus URL → in sessionStorage + Dashboard laden
+  // Öffnungszeiten-Grid aufbauen
+  (function buildOzGrid() {
+    var grid = document.getElementById('spp-oz-grid');
+    DAYS.forEach(function(d) {
+      var row = document.createElement('div');
+      row.className = 'spp-oz-row';
+      row.innerHTML =
+        '<span class="spp-oz-day">' + d.label + '</span>' +
+        '<label class="spp-oz-toggle">' +
+          '<input type="checkbox" id="oz-open-' + d.key + '" onchange="sppOzToggle(\'' + d.key + '\')" />' +
+          '<span class="spp-oz-slider"></span>' +
+        '</label>' +
+        '<div class="spp-oz-times hidden" id="oz-times-' + d.key + '">' +
+          '<input type="time" id="oz-von-' + d.key + '" value="09:00" />' +
+          '<span class="spp-oz-sep">–</span>' +
+          '<input type="time" id="oz-bis-' + d.key + '" value="17:00" />' +
+        '</div>';
+      grid.appendChild(row);
+    });
+  })();
+
+  window.sppOzToggle = function(key) {
+    var chk = document.getElementById('oz-open-' + key);
+    var times = document.getElementById('oz-times-' + key);
+    times.classList.toggle('hidden', !chk.checked);
+  };
+
+  // Token aus URL → sessionStorage
   var tok = getToken();
   if (tok) {
     sessionStorage.setItem('spp_token', tok);
-    // Token aus URL entfernen (saubere URL)
-    if (history.replaceState) {
-      var url = window.location.pathname + window.location.hash;
-      history.replaceState(null, '', url);
-    }
+    if (history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.hash);
     loadDashboard(tok);
   }
 
@@ -190,24 +331,76 @@
       .then(function(p) {
         document.getElementById('spp-login').style.display = 'none';
         document.getElementById('spp-dashboard').style.display = 'block';
+
         document.getElementById('spp-name').textContent = p.name;
         document.getElementById('spp-meta').innerHTML =
-          '<span style="font-size:13px;color:#777">' +
-          katLabel(p.kategorie) + ' &middot; ' + (p.canton || '') +
-          (p.paket ? ' &middot; Paket <strong>' + p.paket + '</strong>' : '') + '</span>';
+          '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
+          ' · ' + (p.canton || '') +
+          (p.paket ? ' · Paket <strong>' + p.paket.charAt(0).toUpperCase() + p.paket.slice(1) + '</strong>' : '') + '</span>';
         document.getElementById('spp-views').textContent = fmt(p.views);
         document.getElementById('spp-taps').textContent = fmt(p.offersTapped);
         document.getElementById('spp-status-badge').innerHTML =
-          p.isActive ? '<span class="spp-badge spp-badge-green">&#10003; Aktiv in der App</span>'
-                     : '<span class="spp-badge spp-badge-gray">Inaktiv</span>';
+          p.isActive
+            ? '<span class="spp-badge spp-badge-green">✓ Aktiv in der App</span>'
+            : '<span class="spp-badge spp-badge-gray">Inaktiv</span>';
+
         var lauf = '';
         if (p.laufzeitStart) lauf = 'Laufzeit: ' + fmtDate(p.laufzeitStart) + (p.laufzeitEnde ? ' – ' + fmtDate(p.laufzeitEnde) : '');
         document.getElementById('spp-laufzeit').textContent = lauf;
-        // Formular vorfüllen
-        document.getElementById('spp-beschr').value = p.beschreibung || '';
-        document.getElementById('spp-beschr-count').textContent = (p.beschreibung || '').length;
-        document.getElementById('spp-angebot').value = p.angebot || '';
-        document.getElementById('spp-foto').value = p.fotoUrl || '';
+
+        // Paket-Info
+        var paketEl = document.getElementById('spp-paket-info');
+        var paketTxt = {
+          basic:    '📦 Basic — Ihr Betrieb erscheint als Kartenmarker. Für Foto, Beschreibung und Angebot auf Standard oder Premium upgraden.',
+          standard: '⭐ Standard — Ihr Betrieb erscheint mit Foto, Beschreibung und Kontaktdaten.',
+          premium:  '🏆 Premium — Ihr Betrieb erscheint vollständig mit Foto, Angebot und wird Wanderern automatisch angesagt wenn sie in der Nähe sind.',
+        }[p.paket] || '';
+        if (paketTxt) { paketEl.textContent = paketTxt; paketEl.style.display = 'block'; }
+
+        var isStandard = p.paket === 'standard' || p.paket === 'premium';
+        var isPremium  = p.paket === 'premium';
+
+        // Foto
+        if (isStandard) {
+          document.getElementById('spp-foto-card').style.display = 'block';
+          if (p.fotoUrl) {
+            var preview = document.getElementById('spp-foto-preview');
+            preview.src = p.fotoUrl.startsWith('/api') ? API_BASE + p.fotoUrl : p.fotoUrl;
+            preview.style.display = 'block';
+          }
+        }
+
+        // Beschreibung
+        if (isStandard) {
+          document.getElementById('spp-beschr-wrap').style.display = 'block';
+          document.getElementById('spp-beschr').value = p.beschreibung || '';
+          document.getElementById('spp-beschr-count').textContent = (p.beschreibung || '').length;
+        }
+
+        // Angebot
+        if (isPremium) {
+          document.getElementById('spp-angebot-wrap').style.display = 'block';
+          document.getElementById('spp-angebot').value = p.angebot || '';
+          document.getElementById('spp-angebot-count').textContent = (p.angebot || '').length;
+        }
+
+        // Kontakt
+        if (isStandard) {
+          document.getElementById('spp-kontakt-wrap').style.display = 'block';
+          document.getElementById('spp-telefon').value = p.telefon || '';
+          document.getElementById('spp-website').value = p.websiteUrl || '';
+        }
+
+        // Reservierung
+        if (isPremium) {
+          document.getElementById('spp-reserv-wrap').style.display = 'block';
+          document.getElementById('spp-reserv').value = p.reservierungUrl || '';
+        }
+
+        // Öffnungszeiten
+        if (p.oeffnungszeiten) {
+          try { fillOz(JSON.parse(p.oeffnungszeiten)); } catch(e) {}
+        }
       })
       .catch(function(e) {
         sessionStorage.removeItem('spp_token');
@@ -215,15 +408,114 @@
       });
   }
 
+  function fillOz(oz) {
+    DAYS.forEach(function(d) {
+      var val = oz[d.key];
+      var chk = document.getElementById('oz-open-' + d.key);
+      if (val && val.von) {
+        chk.checked = true;
+        sppOzToggle(d.key);
+        document.getElementById('oz-von-' + d.key).value = val.von;
+        document.getElementById('oz-bis-' + d.key).value = val.bis || '17:00';
+      }
+    });
+    if (oz.saisonStart) {
+      var y = new Date().getFullYear();
+      document.getElementById('spp-saison-start').value = y + '-' + oz.saisonStart;
+    }
+    if (oz.saisonEnde) {
+      var y2 = new Date().getFullYear();
+      document.getElementById('spp-saison-ende').value = y2 + '-' + oz.saisonEnde;
+    }
+  }
+
+  // Foto Upload
+  var dropzone = document.getElementById('spp-dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+    dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('drag'); });
+    dropzone.addEventListener('drop', function(e){
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+      var f = e.dataTransfer.files[0];
+      if (f) sppHandleFile(f);
+    });
+  }
+
+  window.sppHandleFile = function(file) {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showMsg('spp-foto-msg', 'Datei zu gross (max. 8 MB).', false);
+      return;
+    }
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+      showMsg('spp-foto-msg', 'Ungültiges Format. Bitte JPEG, PNG oder WebP verwenden.', false);
+      return;
+    }
+
+    // Lokale Vorschau
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var p = document.getElementById('spp-foto-preview');
+      p.src = e.target.result;
+      p.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    // Upload
+    var token = getToken();
+    var fd = new FormData();
+    fd.append('foto', file);
+
+    var bar = document.getElementById('spp-upload-fill');
+    var prog = document.getElementById('spp-upload-progress');
+    prog.style.display = 'block';
+    bar.style.width = '10%';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', API_BASE + '/api/partner/portal/upload?token=' + encodeURIComponent(token));
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) bar.style.width = Math.round((e.loaded / e.total) * 90) + '%';
+    };
+    xhr.onload = function() {
+      bar.style.width = '100%';
+      setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
+      if (xhr.status === 200) {
+        showMsg('spp-foto-msg', 'Foto erfolgreich hochgeladen!', true);
+      } else {
+        try {
+          var err = JSON.parse(xhr.responseText);
+          showMsg('spp-foto-msg', err.error || 'Upload fehlgeschlagen.', false);
+        } catch(e) {
+          showMsg('spp-foto-msg', 'Upload fehlgeschlagen.', false);
+        }
+      }
+    };
+    xhr.onerror = function() {
+      prog.style.display = 'none';
+      showMsg('spp-foto-msg', 'Verbindungsfehler beim Upload.', false);
+    };
+    xhr.send(fd);
+  };
+
   window.sppSave = function() {
     var tok = getToken();
-    if (!tok) { showMsg('spp-save-msg', 'Sitzung abgelaufen. Bitte neu einloggen.', false); return; }
+    if (!tok) { showMsg('spp-save-msg', 'Sitzung abgelaufen.', false); return; }
     setBtn('spp-save-btn', true);
-    var body = {
-      beschreibung: document.getElementById('spp-beschr').value.trim(),
-      angebot:      document.getElementById('spp-angebot').value.trim(),
-      fotoUrl:      document.getElementById('spp-foto').value.trim(),
-    };
+
+    var body = {};
+    var beschrEl = document.getElementById('spp-beschr');
+    if (beschrEl && beschrEl.closest('[style*="block"]')) body.beschreibung = beschrEl.value.trim();
+    var angebotEl = document.getElementById('spp-angebot');
+    if (angebotEl && document.getElementById('spp-angebot-wrap').style.display !== 'none') body.angebot = angebotEl.value.trim();
+    var telEl = document.getElementById('spp-telefon');
+    if (telEl && document.getElementById('spp-kontakt-wrap').style.display !== 'none') {
+      body.telefon = telEl.value.trim();
+      body.websiteUrl = document.getElementById('spp-website').value.trim();
+    }
+    var resEl = document.getElementById('spp-reserv');
+    if (resEl && document.getElementById('spp-reserv-wrap').style.display !== 'none') body.reservierungUrl = resEl.value.trim();
+
     fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -240,8 +532,55 @@
       });
   };
 
+  window.sppSaveOz = function() {
+    var tok = getToken();
+    if (!tok) { showMsg('spp-oz-msg', 'Sitzung abgelaufen.', false); return; }
+    setBtn('spp-oz-save-btn', true);
+
+    var oz = {};
+    DAYS.forEach(function(d) {
+      var chk = document.getElementById('oz-open-' + d.key);
+      if (chk && chk.checked) {
+        oz[d.key] = {
+          von: document.getElementById('oz-von-' + d.key).value || '09:00',
+          bis: document.getElementById('oz-bis-' + d.key).value || '17:00',
+        };
+      } else {
+        oz[d.key] = null;
+      }
+    });
+
+    var ssEl = document.getElementById('spp-saison-start');
+    var seEl = document.getElementById('spp-saison-ende');
+    if (ssEl && ssEl.value) oz.saisonStart = ssEl.value.slice(5); // MM-DD
+    if (seEl && seEl.value) oz.saisonEnde  = seEl.value.slice(5);
+
+    fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oeffnungszeiten: JSON.stringify(oz) }),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('Speichern fehlgeschlagen.'); return r.json(); })
+      .then(function() {
+        setBtn('spp-oz-save-btn', false);
+        showMsg('spp-oz-msg', 'Öffnungszeiten gespeichert!', true);
+      })
+      .catch(function(e) {
+        setBtn('spp-oz-save-btn', false);
+        showMsg('spp-oz-msg', e.message, false);
+      });
+  };
+
   function katLabel(k) {
-    return {restaurant:'🍽 Restaurant',cafe:'☕ Café',souvenir:'🎁 Souvenir',uebernachtung:'🏨 Übernachtung',sonstiges:'📌 Sonstiges'}[k] || k;
+    return {
+      restaurant:  '🍽 Restaurant',
+      cafe:        '☕ Café',
+      bar:         '🍺 Bar',
+      souvenir:    '🎁 Shop',
+      uebernachtung:'🏨 Hotel',
+      sac_huette:  '🏔 SAC-Hütte',
+      sonstiges:   '📌 Partner',
+    }[k] || k;
   }
 })();
 </script>
