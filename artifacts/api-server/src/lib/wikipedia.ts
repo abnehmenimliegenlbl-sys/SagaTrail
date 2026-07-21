@@ -190,18 +190,27 @@ export async function fetchCommonsImageByName(
   name: string,
   widthPx = 600,
 ): Promise<string | null> {
-  const searchUrl =
-    `https://commons.wikimedia.org/w/api.php?action=query` +
-    `&list=search&srsearch=${encodeURIComponent(name)}` +
-    `&srnamespace=6&srlimit=3&format=json&origin=*`;
-  const json = await fetchJson<{
-    query?: { search?: { title: string }[] };
-  }>(searchUrl);
-  const hits = json?.query?.search ?? [];
-  for (const hit of hits) {
-    const filename = hit.title.replace(/^File:/, "");
-    const url = await commonsImageUrl(filename, widthPx);
-    if (url) return url;
+  // Versuche zuerst mit vollem Namen, dann mit gekürztem (erste 2 Wörter).
+  // "Christoph Merian Denkmal" → auch "Christoph Merian" suchen.
+  const suchbegriffe: string[] = [name];
+  const wörter = name.trim().split(/\s+/);
+  if (wörter.length > 2) {
+    suchbegriffe.push(wörter.slice(0, 2).join(" "));
+  }
+  for (const begriff of suchbegriffe) {
+    const searchUrl =
+      `https://commons.wikimedia.org/w/api.php?action=query` +
+      `&list=search&srsearch=${encodeURIComponent(begriff)}` +
+      `&srnamespace=6&srlimit=5&format=json&origin=*`;
+    const json = await fetchJson<{
+      query?: { search?: { title: string }[] };
+    }>(searchUrl);
+    const hits = json?.query?.search ?? [];
+    for (const hit of hits) {
+      const filename = hit.title.replace(/^File:/, "");
+      const url = await commonsImageUrl(filename, widthPx);
+      if (url) return url;
+    }
   }
   return null;
 }

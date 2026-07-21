@@ -67,21 +67,23 @@ function buildPrompt(input: PoiNarrationInput): string {
     ].join("\n");
   }
 
-  // Ohne Wikipedia-Auszug: nur Name + OSM-Kategorie sind bekannt. Der Text
-  // erklärt zurückhaltend, was für eine ART von Ort das ist, und lädt zum
-  // Hinschauen ein -- ohne konkrete Fakten zu diesem Ort zu behaupten.
+  // Ohne Wikipedia-Auszug: Name + OSM-Kategorie bekannt. Der Text nutzt,
+  // was der Name nahelegt (z.B. bekannte Personen, historische Ereignisse),
+  // und lädt zum Hinschauen ein -- ohne unsichere Fakten zu erfinden.
   return [
     ...kopf,
-    "Zu diesem Ort gibt es keinen Wikipedia-Artikel -- bekannt sind nur sein Name und seine",
-    "OpenStreetMap-Kategorie. Erkläre in einem kurzen, atmosphärischen Erzähltext, was für eine",
-    "Art von Ort das ist (was man an so einem Ort typischerweise sieht und wozu er einst diente),",
-    "und lade die wandernde Person ein, genauer hinzuschauen.",
+    "Zu diesem Ort gibt es keinen Wikipedia-Artikel. Bekannt sind sein Name und seine",
+    "OpenStreetMap-Kategorie. Schreibe einen kurzen, atmosphärischen Erzähltext, der:",
+    "1. Nutzt, was der Name des Ortes nahelegt (z.B. wenn der Name auf eine historische Person,",
+    "   ein Ereignis oder einen Ort hinweist, erwähne was du darüber weisst).",
+    "2. Die wandernde Person einlädt, genauer hinzuschauen.",
     "",
     `Ort: "${input.name}"`,
     `OpenStreetMap-Kategorie: ${input.kind ?? "unbekannt"}`,
     ...fuss,
-    "- Behaupte KEINE konkreten Fakten zu genau diesem Ort: keine Jahreszahlen, keine Namen von Personen, keine erfundenen Ereignisse oder Sagen.",
-    "- Sprich nur über das, was die Kategorie allgemein bedeutet, und über das, was der Name offensichtlich hergibt.",
+    "- Wenn der Name eine bekannte Person enthält (z.B. 'Christoph Merian Denkmal'), erkläre kurz wer diese Person war.",
+    "- Erfinde KEINE ungesicherten Details, Jahreszahlen oder Ereignisse, die du nicht kennst.",
+    "- Wenn du über den Namen nichts Konkretes weisst, erkläre was die Kategorie typischerweise bedeutet.",
   ].join("\n");
 }
 
