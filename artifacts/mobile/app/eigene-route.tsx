@@ -38,6 +38,18 @@ const WEB_TOP = 67;
 const DEBOUNCE_MS = 350;
 const MIN_QUERY_LEN = 3;
 
+function reverseGpxTrack(gpx: string): string {
+  // Trkpt-Tags in umgekehrter Reihenfolge zurückgeben.
+  const trkptRe = /<trkpt[\s\S]*?<\/trkpt>/g;
+  const matches = gpx.match(trkptRe);
+  if (!matches || matches.length === 0) return gpx;
+  let result = gpx;
+  const combined = matches.join("");
+  const reversedCombined = [...matches].reverse().join("");
+  result = result.replace(combined, reversedCombined);
+  return result;
+}
+
 interface Point {
   label: string;
   lat: number;
@@ -61,6 +73,7 @@ export default function EigeneRoute() {
   const [pickerCenter, setPickerCenter] = useState<{ lat: number; lng: number }>({ lat: 46.9479, lng: 7.4446 });
   const [pickerMapHeight, setPickerMapHeight] = useState(0);
   const [reversing, setReversing] = useState(false);
+  const [pendingGpx, setPendingGpx] = useState<{ gpx: string; name?: string; reversed: boolean } | null>(null);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
@@ -115,8 +128,26 @@ export default function EigeneRoute() {
       }
 
       const name = asset.name?.replace(/\.gpx$/i, "").trim() || undefined;
-      const route = (await importGpxRoute({ gpx, name })) as HikingRoute;
+      // Nicht sofort importieren — Benutzer soll zuerst "Strecke umdrehen" wählen können.
+      setPendingGpx({ gpx, name, reversed: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      alert(t.title, t.errorGeneric(message || t.gpxReadErrorLabel));
+    } finally {
+      setImporting(false);
+    }
+  }, [t]);
+
+  const onConfirmGpxImport = useCallback(async () => {
+    if (!pendingGpx) return;
+    setImporting(true);
+    try {
+      const gpxToSend = pendingGpx.reversed
+        ? reverseGpxTrack(pendingGpx.gpx)
+        : pendingGpx.gpx;
+      const route = (await importGpxRoute({ gpx: gpxToSend, name: pendingGpx.name })) as HikingRoute;
       addCustomRoute(route);
+      setPendingGpx(null);
       router.push(`/route/${route.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
@@ -136,7 +167,7 @@ export default function EigeneRoute() {
     } finally {
       setImporting(false);
     }
-  }, [addCustomRoute, router, t]);
+  }, [pendingGpx, addCustomRoute, router, t]);
 
   const useLocation = useCallback(async () => {
     setLocating(true);
@@ -288,30 +319,91 @@ export default function EigeneRoute() {
           <View style={[styles.dividerLine, { backgroundColor: colors.glassBorder }]} />
         </View>
 
-        <Pressable
-          onPress={onImportGpx}
-          disabled={importing}
-          accessibilityRole="button"
-          accessibilityLabel={t.gpxImportLabel}
-          style={[
-            styles.gpxButton,
-            GLAS_3D,
-            {
-              borderColor: colors.accent,
-              backgroundColor: colors.glassBgStrong,
-              opacity: importing ? 0.6 : 1,
-            },
-          ]}
-        >
-          {importing ? (
-            <ActivityIndicator size="small" color={colors.accent} />
-          ) : (
-            <Feather name="upload" size={16} color={colors.accent} />
-          )}
-          <Text style={[styles.gpxButtonLabel, { color: colors.accent }]}>
-            {importing ? t.gpxImportingLabel : t.gpxImportLabel}
-          </Text>
-        </Pressable>
+        {pendingGpx ? (
+          /* ── Bestätigungskarte nach GPX-Auswahl ── */
+          <Animated.View
+            entering={FadeInDown.duration(300)}
+            style={[
+              styles.gpxPendingCard,
+              GLAS_3D,
+              { borderColor: colors.accent, backgroundColor: colors.glassBgStrong },
+            ]}
+          >
+            <View style={styles.gpxPendingHeader}>
+              <Feather name="check-circle" size={16} color={colors.accent} />
+              <Text style={[styles.gpxPendingTitle, { color: colors.foreground }]}>
+                {pendingGpx.name ?? t.gpxReadyLabel}
+              </Text>
+            </View>
+
+            {/* Strecke umdrehen */}
+            <Pressable
+              onPress={() => setPendingGpx((p) => p ? { ...p, reversed: !p.reversed } : p)}
+              style={[styles.gpxReverseRow, { borderTopColor: colors.glassBorder }]}
+              hitSlop={8}
+            >
+              <Feather
+                name="repeat"
+                size={16}
+                color={pendingGpx.reversed ? colors.foreground : colors.accent}
+              />
+              <Text style={[
+                styles.gpxReverseLabel,
+                { color: pendingGpx.reversed ? colors.foreground : colors.accent },
+              ]}>
+                {pendingGpx.reversed ? t.gpxReversedLabel : t.gpxReverseLabel}
+              </Text>
+              {pendingGpx.reversed && (
+                <Feather name="check" size={14} color={colors.foreground} style={{ marginLeft: "auto" }} />
+              )}
+            </Pressable>
+
+            {/* Buttons */}
+            <View style={styles.gpxPendingActions}>
+              <Pressable
+                onPress={() => setPendingGpx(null)}
+                style={[styles.gpxCancelBtn, { borderColor: colors.glassBorder }]}
+                hitSlop={8}
+              >
+                <Text style={[styles.gpxCancelLabel, { color: colors.mutedForeground }]}>
+                  {t.gpxCancelLabel}
+                </Text>
+              </Pressable>
+              <PrimaryButton
+                label={importing ? t.gpxImportingLabel : t.gpxConfirmLabel}
+                onPress={onConfirmGpxImport}
+                disabled={importing}
+                loading={importing}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </Animated.View>
+        ) : (
+          <Pressable
+            onPress={onImportGpx}
+            disabled={importing}
+            accessibilityRole="button"
+            accessibilityLabel={t.gpxImportLabel}
+            style={[
+              styles.gpxButton,
+              GLAS_3D,
+              {
+                borderColor: colors.accent,
+                backgroundColor: colors.glassBgStrong,
+                opacity: importing ? 0.6 : 1,
+              },
+            ]}
+          >
+            {importing ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <Feather name="upload" size={16} color={colors.accent} />
+            )}
+            <Text style={[styles.gpxButtonLabel, { color: colors.accent }]}>
+              {importing ? t.gpxImportingLabel : t.gpxImportLabel}
+            </Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       {/* ── Karten-Picker-Modal ─────────────────────────────────────── */}
@@ -519,6 +611,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   gpxButtonLabel: { fontFamily: fonts.titleBold, fontSize: 14 },
+  gpxPendingCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  gpxPendingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+  },
+  gpxPendingTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 14,
+    flexShrink: 1,
+  },
+  gpxReverseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  gpxReverseLabel: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    flex: 1,
+  },
+  gpxPendingActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+  },
+  gpxCancelBtn: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  gpxCancelLabel: {
+    fontFamily: fonts.titleBold,
+    fontSize: 14,
+  },
   suggestions: { marginTop: 8, padding: 0 },
   suggestionRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
   suggestionText: { fontFamily: fonts.body, fontSize: 13, flexShrink: 1 },
