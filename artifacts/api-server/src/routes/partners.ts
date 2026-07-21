@@ -6,17 +6,41 @@ import { getPartners } from "../lib/routeService";
 
 const router: IRouter = Router();
 
+function computeIstOffen(oeffnungszeiten: string | null | undefined): boolean | null {
+  if (!oeffnungszeiten) return null;
+  const match = /(\d{1,2})(?::(\d{2}))?[–\-](\d{1,2})(?::(\d{2}))?/.exec(oeffnungszeiten);
+  if (!match) return null;
+  const vonH = parseInt(match[1]), vonM = parseInt(match[2] ?? "0");
+  const bisH = parseInt(match[3]), bisM = parseInt(match[4] ?? "0");
+  const parts = new Intl.DateTimeFormat("de-CH", {
+    timeZone: "Europe/Zurich",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(new Date());
+  const h = parseInt(parts.find((x) => x.type === "hour")?.value ?? "0");
+  const m = parseInt(parts.find((x) => x.type === "minute")?.value ?? "0");
+  const now = h * 60 + m;
+  return now >= vonH * 60 + vonM && now < bisH * 60 + bisM;
+}
+
 function toPartner(p: PartnerRow) {
   return {
     id: p.id,
     name: p.name,
     kategorie: p.kategorie,
     canton: p.canton,
-    beschreibung: p.beschreibung ?? undefined,
-    angebot: p.angebot ?? undefined,
-    fotoUrl: p.fotoUrl ?? undefined,
+    beschreibung: p.beschreibung ?? null,
+    angebot: p.angebot ?? null,
+    fotoUrl: p.fotoUrl ?? null,
     lat: p.lat,
     lng: p.lng,
+    paket: p.paket ?? null,
+    telefon: p.telefon ?? null,
+    websiteUrl: p.websiteUrl ?? null,
+    reservierungUrl: p.reservierungUrl ?? null,
+    oeffnungszeiten: p.oeffnungszeiten ?? null,
+    istOffen: computeIstOffen(p.oeffnungszeiten),
   };
 }
 

@@ -393,6 +393,15 @@ export const PartnerKategorie = {
   sonstiges: 'sonstiges',
 } as const;
 
+export type PartnerPaket = typeof PartnerPaket[keyof typeof PartnerPaket] | null;
+
+
+export const PartnerPaket = {
+  basic: 'basic',
+  standard: 'standard',
+  premium: 'premium',
+} as const;
+
 /**
  * Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.
  */
@@ -406,6 +415,12 @@ export interface Partner {
   fotoUrl?: string | null;
   lat: number;
   lng: number;
+  paket?: PartnerPaket;
+  telefon?: string | null;
+  websiteUrl?: string | null;
+  reservierungUrl?: string | null;
+  oeffnungszeiten?: string | null;
+  istOffen?: boolean | null;
 }
 
 /**

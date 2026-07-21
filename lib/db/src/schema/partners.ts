@@ -51,6 +51,8 @@ export const partnersTable = pgTable("partners", {
   laufzeitStart: timestamp("laufzeit_start", { withTimezone: true }),
   laufzeitEnde: timestamp("laufzeit_ende", { withTimezone: true }),
   notizenIntern: text("notizen_intern"),
+  oeffnungszeiten: text("oeffnungszeiten"),
+  reservierungUrl: text("reservierung_url"),
   aktivVon: timestamp("aktiv_von", { withTimezone: true }),
   aktivBis: timestamp("aktiv_bis", { withTimezone: true }),
   isActive: boolean("is_active").notNull().default(true),

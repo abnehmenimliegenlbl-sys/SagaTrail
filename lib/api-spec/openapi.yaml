@@ -1689,6 +1689,25 @@ components:
           type: number
         lng:
           type: number
+        paket:
+          type: string
+          nullable: true
+          enum: [basic, standard, premium]
+        telefon:
+          type: string
+          nullable: true
+        websiteUrl:
+          type: string
+          nullable: true
+        reservierungUrl:
+          type: string
+          nullable: true
+        oeffnungszeiten:
+          type: string
+          nullable: true
+        istOffen:
+          type: boolean
+          nullable: true
       required:
         - id
         - name

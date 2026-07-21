@@ -237,7 +237,13 @@ export const GetPartnersResponseItem = zod.object({
   "angebot": zod.string().nullish(),
   "fotoUrl": zod.string().nullish(),
   "lat": zod.number(),
-  "lng": zod.number()
+  "lng": zod.number(),
+  "paket": zod.enum(['basic', 'standard', 'premium']).nullish(),
+  "telefon": zod.string().nullish(),
+  "websiteUrl": zod.string().nullish(),
+  "reservierungUrl": zod.string().nullish(),
+  "oeffnungszeiten": zod.string().nullish(),
+  "istOffen": zod.boolean().nullish()
 }).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')
 export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
 

@@ -930,18 +930,14 @@ export default function LiveHike() {
   // da Partner ohnehin nur vereinzelt gepflegt werden.
   useEffect(() => {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
-    console.warn('[Partner-Debug hike] id=', route?.id, 'center=', center, 'routeCoords=', route?.coordinates);
     if (!center) return;
     let cancelled = false;
     const bbox = bboxAroundGeometry(route?.geometry, center);
-    console.warn('[Partner-Debug hike] bbox=', bbox);
     getPartners(bbox)
       .then((result) => {
-        console.warn('[Partner-Debug hike] result=', result.length);
         if (!cancelled) setPartners(result);
       })
-      .catch((err) => {
-        console.warn('[Partner-Debug hike] error=', err);
+      .catch(() => {
         if (!cancelled) setPartners([]);
       });
     return () => {
@@ -3011,7 +3007,7 @@ export default function LiveHike() {
         </Pressable>
       )}
 
-      {/* Partner-Detail — ebenfalls ausserhalb ScrollView */}
+      {/* Partner-Detail — tier-spezifisch (Basic / Standard / Premium) */}
       {!!selectedPartner && (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
@@ -3019,16 +3015,66 @@ export default function LiveHike() {
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass>
+              {/* PREMIUM: Volles Titelbild oben */}
+              {selectedPartner.paket === "premium" && !!selectedPartner.fotoUrl && (
+                <View style={{ marginBottom: 12, borderRadius: 10, overflow: "hidden" }}>
+                  <Image
+                    source={{ uri: selectedPartner.fotoUrl }}
+                    style={{ width: "100%", height: 180 }}
+                    resizeMode="cover"
+                  />
+                  <View style={{
+                    position: "absolute", top: 8, right: 8,
+                    backgroundColor: "#C8932E", borderRadius: 4,
+                    paddingHorizontal: 8, paddingVertical: 3,
+                  }}>
+                    <Text style={{ color: "#fff", fontSize: 10, fontFamily: fonts.bodyBold, letterSpacing: 1 }}>
+                      PREMIUM
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Header-Zeile: Icon + Name + (Standard: kleines Foto) + Schliessen */}
               <View style={styles.poiRow}>
-                <Feather name="coffee" size={18} color={colors.accent} />
+                <Feather
+                  name="coffee"
+                  size={selectedPartner.paket === "premium" ? 22 : 18}
+                  color={colors.accent}
+                />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                    {t.partnerDetailEyebrow}
-                  </Text>
-                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
+                      {t.partnerDetailEyebrow}
+                    </Text>
+                    {selectedPartner.paket === "standard" && (
+                      <View style={{
+                        backgroundColor: colors.accent + "33", borderRadius: 3,
+                        paddingHorizontal: 6, paddingVertical: 1,
+                      }}>
+                        <Text style={{ fontSize: 9, color: colors.accent, fontFamily: fonts.bodyBold, letterSpacing: 0.8 }}>
+                          STANDARD
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[
+                    styles.poiTitle, { color: colors.foreground },
+                    selectedPartner.paket === "premium" && { fontSize: 20 },
+                  ]}>
                     {selectedPartner.name}
                   </Text>
                 </View>
+
+                {/* Standard: kleines Foto rechts neben dem Titel */}
+                {selectedPartner.paket === "standard" && !!selectedPartner.fotoUrl && (
+                  <Image
+                    source={{ uri: selectedPartner.fotoUrl }}
+                    style={{ width: 60, height: 60, borderRadius: 8, marginLeft: 8 }}
+                    resizeMode="cover"
+                  />
+                )}
+
                 <Pressable
                   onPress={() => setSelectedPartner(null)}
                   hitSlop={10}
@@ -3038,17 +3084,91 @@ export default function LiveHike() {
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
-              {selectedPartner.beschreibung && (
-                <Text
-                  style={[
-                    styles.poiSummary,
-                    { color: colors.foreground, marginTop: 10 },
-                  ]}
-                >
+
+              {/* Offen / Geschlossen Badge + Öffnungszeiten */}
+              {selectedPartner.istOffen != null ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+                  <View style={{
+                    width: 8, height: 8, borderRadius: 4,
+                    backgroundColor: selectedPartner.istOffen ? "#22C55E" : "#EF4444",
+                  }} />
+                  <Text style={{
+                    fontSize: 13,
+                    color: selectedPartner.istOffen ? "#22C55E" : "#EF4444",
+                    fontFamily: fonts.bodyBold,
+                  }}>
+                    {selectedPartner.istOffen ? t.partnerOffen : t.partnerGeschlossen}
+                  </Text>
+                  {!!selectedPartner.oeffnungszeiten && (
+                    <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
+                      {" · "}{selectedPartner.oeffnungszeiten}
+                    </Text>
+                  )}
+                </View>
+              ) : !!selectedPartner.oeffnungszeiten ? (
+                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 6 }}>
+                  {selectedPartner.oeffnungszeiten}
+                </Text>
+              ) : null}
+
+              {/* Beschreibung */}
+              {!!selectedPartner.beschreibung && (
+                <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
                   {selectedPartner.beschreibung}
                 </Text>
               )}
-              {selectedPartner.angebot && (
+
+              {/* Standard + Premium: Telefon, Reservierung, Website */}
+              {(selectedPartner.paket === "premium" || selectedPartner.paket === "standard") && (
+                <>
+                  {!!selectedPartner.telefon && (
+                    <Pressable
+                      onPress={() => Linking.openURL(`tel:${selectedPartner.telefon}`)}
+                      style={{ marginTop: 10 }}
+                    >
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Feather name="phone" size={14} color={colors.accent} />
+                        <Text style={{ color: colors.accent, fontSize: 14 }}>
+                          {selectedPartner.telefon}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+                  {(!!selectedPartner.reservierungUrl || !!selectedPartner.websiteUrl) && (
+                    <View style={{ flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                      {!!selectedPartner.reservierungUrl && (
+                        <Pressable
+                          onPress={() => Linking.openURL(selectedPartner.reservierungUrl!)}
+                          style={{
+                            backgroundColor: colors.accent,
+                            borderRadius: 7, paddingHorizontal: 14, paddingVertical: 7,
+                          }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 13, fontFamily: fonts.bodyBold }}>
+                            {t.partnerReservierung}
+                          </Text>
+                        </Pressable>
+                      )}
+                      {!!selectedPartner.websiteUrl && (
+                        <Pressable
+                          onPress={() => Linking.openURL(selectedPartner.websiteUrl!)}
+                          style={{
+                            borderWidth: 1.5, borderColor: colors.accent,
+                            borderRadius: 7, paddingHorizontal: 14, paddingVertical: 7,
+                          }}
+                        >
+                          <Text style={{ color: colors.accent, fontSize: 13 }}>
+                            {t.partnerWebsite}
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+
+              {/* SagaTrail-Angebot — alle Tiers */}
+              {!!selectedPartner.angebot && (
                 <Pressable
                   onPress={() => {
                     if (selectedPartner.id) {
@@ -3057,14 +3177,21 @@ export default function LiveHike() {
                     }
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.poiSummary,
-                      { color: colors.accent, marginTop: 8, fontFamily: fonts.bodyBold },
-                    ]}
-                  >
-                    {t.partnerOffer}: {selectedPartner.angebot}
-                  </Text>
+                  <View style={{
+                    backgroundColor: colors.accent + "20",
+                    borderRadius: 8, padding: 10, marginTop: 12,
+                    borderLeftWidth: 3, borderLeftColor: colors.accent,
+                  }}>
+                    <Text style={{
+                      fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold,
+                      marginBottom: 2, textTransform: "uppercase", letterSpacing: 0.5,
+                    }}>
+                      {t.partnerOffer}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: colors.foreground }}>
+                      {selectedPartner.angebot}
+                    </Text>
+                  </View>
                 </Pressable>
               )}
             </Glass>

@@ -137,7 +137,7 @@ export function buildSwisstopoHtml(
     if (pois && pois.length > 0)
       rows += legendZeile('<div class="stt-poi"></div>', legend.poi);
     if (partners && partners.length > 0)
-      rows += legendZeile('<div class="stt-partner"></div>', legend.partner);
+      rows += legendZeile('<div class="stt-partner-standard" style="display:inline-block;flex-shrink:0"></div>', legend.partner);
     return (
       `<div id="stt-legende" class="zu">` +
       `<div class="stt-legende-kopf" onclick="this.parentElement.classList.toggle('zu')">` +
@@ -173,8 +173,10 @@ export function buildSwisstopoHtml(
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); }
-  .stt-partner-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-  .stt-partner      { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C8932E; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(200,147,46,0.28); }
+  .stt-partner-tipp     { width: 40px; height: 40px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
+  .stt-partner-basic    { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #B8832A; border: 2px solid #F5F3EC; box-shadow: 0 0 0 2px rgba(184,131,42,0.30); }
+  .stt-partner-standard { width: 14px; height: 14px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C8932E; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(200,147,46,0.40); }
+  .stt-partner-premium  { width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: linear-gradient(135deg,#E8B84B,#C8832A); border: 2.5px solid #FFF8E8; box-shadow: 0 0 0 3px rgba(212,164,42,0.45), 0 0 0 6px rgba(212,164,42,0.18); }
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
@@ -207,7 +209,7 @@ export function buildSwisstopoHtml(
   .stt-linie-seilbahn { width: 18px; height: 0; border-top: 2.5px dashed #5B6B78; }
   #stt-legende .stt-start, #stt-legende .stt-ziel, #stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   #stt-legende .stt-seilbahn-station { box-shadow: none; }
-  #stt-legende .stt-poi, #stt-legende .stt-partner { box-shadow: none; cursor: default; }
+  #stt-legende .stt-poi, #stt-legende .stt-partner-basic, #stt-legende .stt-partner-standard, #stt-legende .stt-partner-premium { box-shadow: none; cursor: default; }
   /* --- Karten-Toggles oben links (2D/3D + Topo/Sat) --- */
   #stt-controls { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; left: 10px; z-index: 10;
     display: flex; gap: 6px; font-family: -apple-system, system-ui, sans-serif; }
@@ -445,8 +447,9 @@ ${legendHtml}
     /* Partner-Marker */
     if (partners) {
       partners.forEach(function(p) {
+        var paket = p.paket || 'basic';
         var el = document.createElement('div'); el.className = 'stt-partner-tipp';
-        var dot = document.createElement('div'); dot.className = 'stt-partner'; el.appendChild(dot);
+        var dot = document.createElement('div'); dot.className = 'stt-partner-' + paket; el.appendChild(dot);
         el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
       });

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PartnerKategorie } from './partnerKategorie';
+import type { PartnerPaket } from './partnerPaket';
 
 /**
  * Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.
@@ -20,4 +21,10 @@ export interface Partner {
   fotoUrl?: string | null;
   lat: number;
   lng: number;
+  paket?: PartnerPaket;
+  telefon?: string | null;
+  websiteUrl?: string | null;
+  reservierungUrl?: string | null;
+  oeffnungszeiten?: string | null;
+  istOffen?: boolean | null;
 }

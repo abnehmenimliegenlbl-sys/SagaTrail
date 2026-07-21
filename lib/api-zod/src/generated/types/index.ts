@@ -43,6 +43,7 @@ export * from './narrationInput';
 export * from './narrationInputProvider';
 export * from './partner';
 export * from './partnerKategorie';
+export * from './partnerPaket';
 export * from './poi';
 export * from './poiStory';
 export * from './premiumUpdate';
