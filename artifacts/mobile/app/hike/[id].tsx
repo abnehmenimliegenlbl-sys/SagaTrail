@@ -493,6 +493,10 @@ export default function LiveHike() {
   const offRouteCountRef = useRef(0);
   const lastNarratedRef = useRef<number>(-1);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
+  // Koordinaten bereits angesagter POIs — verhindert Doppel-Ansage wenn
+  // derselbe physische Ort als mehrere OSM-Objekte (node + way) vorliegt
+  // und unterschiedliche IDs traegt.
+  const announcedPoiLocsRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const narratedPoiIdRef = useRef<string | null>(null);
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
   const keepaliveSoundRef = useRef<Audio.Sound | null>(null);
@@ -1177,13 +1181,20 @@ export default function LiveHike() {
         : null);
     if (!current) return;
     const NEARBY_KM = 0.3;
+    // Doppel-Schutz: (1) per ID, (2) per Koordinaten (derselbe Ort kann als
+    // node-NNN und als way-MMM in Overpass auftauchen — gleicher Ort, zwei IDs).
+    const DEDUP_KM = 0.1;
     const hit = pois.find(
       (poi) =>
         !announcedPoiIdsRef.current.has(poi.id) &&
+        !announcedPoiLocsRef.current.some(
+          (loc) => haversineKm({ lat: poi.lat, lng: poi.lng }, loc) <= DEDUP_KM
+        ) &&
         haversineKm(current, { lat: poi.lat, lng: poi.lng }) <= NEARBY_KM
     );
     if (hit) {
       announcedPoiIdsRef.current.add(hit.id);
+      announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
   }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi]);
