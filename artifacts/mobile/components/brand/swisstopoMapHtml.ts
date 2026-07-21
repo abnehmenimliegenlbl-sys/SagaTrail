@@ -137,7 +137,7 @@ export function buildSwisstopoHtml(
     if (pois && pois.length > 0)
       rows += legendZeile('<div class="stt-poi"></div>', legend.poi);
     if (partners && partners.length > 0)
-      rows += legendZeile('<div class="stt-partner-standard" style="display:inline-block;flex-shrink:0"></div>', legend.partner);
+      rows += legendZeile('<div class="stt-partner-pin stt-partner-pin--standard" style="width:16px;height:16px;border-radius:5px;flex-shrink:0"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#cc0000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>', legend.partner);
     return (
       `<div id="stt-legende" class="zu">` +
       `<div class="stt-legende-kopf" onclick="this.parentElement.classList.toggle('zu')">` +
@@ -173,10 +173,17 @@ export function buildSwisstopoHtml(
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); }
-  .stt-partner-tipp     { width: 40px; height: 40px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-  .stt-partner-basic    { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #B8832A; box-shadow: 0 0 0 2px rgba(184,131,42,0.30); }
-  .stt-partner-standard { width: 14px; height: 14px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #C8932E; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(200,147,46,0.40); }
-  .stt-partner-premium  { width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: linear-gradient(135deg,#E8B84B,#C8832A); border: 2.5px solid #DA291C; box-shadow: 0 0 0 3px rgba(218,41,28,0.55), 0 0 0 6px rgba(218,41,28,0.20); }
+  /* PARTNER PINS — weisse Kachel + Marken-Rot Icon (#cc0000) */
+  .stt-partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
+  .stt-partner-pin  { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
+  .stt-partner-pin::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #fff; }
+  .stt-partner-pin--basic    { width: 24px; height: 24px; opacity: 0.72; }
+  .stt-partner-pin--standard { width: 30px; height: 30px; }
+  .stt-partner-pin--premium  { width: 36px; height: 36px; box-shadow: 0 0 0 1.5px #cc0000; }
+  .stt-partner-pin--premium::after { border-top-color: #cc0000; top: calc(100% + 1.5px); }
+  .stt-partner-tipp--basic    { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.24)); }
+  .stt-partner-tipp--standard { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.26)); }
+  .stt-partner-tipp--premium  { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.30)); }
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
@@ -209,7 +216,7 @@ export function buildSwisstopoHtml(
   .stt-linie-seilbahn { width: 18px; height: 0; border-top: 2.5px dashed #5B6B78; }
   #stt-legende .stt-start, #stt-legende .stt-ziel, #stt-legende .stt-live { width: 11px; height: 11px; box-shadow: none; }
   #stt-legende .stt-seilbahn-station { box-shadow: none; }
-  #stt-legende .stt-poi, #stt-legende .stt-partner-basic, #stt-legende .stt-partner-standard, #stt-legende .stt-partner-premium { box-shadow: none; cursor: default; }
+  #stt-legende .stt-poi, #stt-legende .stt-partner-pin { box-shadow: none !important; cursor: default; }
   /* --- Karten-Toggles oben links (2D/3D + Topo/Sat) --- */
   #stt-controls { position: absolute; top: ${(safeAreaInsetTop ?? 0) + 10}px; left: 10px; z-index: 10;
     display: flex; gap: 6px; font-family: -apple-system, system-ui, sans-serif; }
@@ -444,12 +451,29 @@ ${legendHtml}
         layout: { 'line-join': 'round', 'line-cap': 'round' } });
     }
 
-    /* Partner-Marker */
+    /* Partner-Marker — weisse Kachel mit Kategorie-Icon (#cc0000) */
+    var PICONS = {
+      restaurant:    '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+      cafe:          '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+      bar:           '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+      hotel:         '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      uebernachtung: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      sac_huette:    '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      souvenir:      '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    };
+    var PICON_DEFAULT = PICONS.restaurant;
     if (partners) {
       partners.forEach(function(p) {
         var paket = p.paket || 'basic';
-        var el = document.createElement('div'); el.className = 'stt-partner-tipp';
-        var dot = document.createElement('div'); dot.className = 'stt-partner-' + paket; el.appendChild(dot);
+        var kat   = (p.kategorie || '').toLowerCase();
+        var paths = PICONS[kat] || PICON_DEFAULT;
+        var sz    = paket === 'premium' ? 18 : paket === 'standard' ? 15 : 12;
+        var el  = document.createElement('div');
+        el.className = 'stt-partner-tipp stt-partner-tipp--' + paket;
+        var pin = document.createElement('div');
+        pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
+        pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+        el.appendChild(pin);
         el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
       });
