@@ -325,14 +325,18 @@ export default function Routenplanung() {
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
   // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
   useEffect(() => {
+    console.warn('[Partner-Debug route] id=', route?.id, 'coords=', route?.coordinates);
     if (!route?.coordinates) return;
     let cancelled = false;
     const bbox = bboxAroundGeometry(route.geometry, route.coordinates);
+    console.warn('[Partner-Debug route] bbox=', bbox);
     getPartners(bbox)
       .then((result) => {
+        console.warn('[Partner-Debug route] result=', result.length);
         if (!cancelled) setPartners(result);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('[Partner-Debug route] error=', err);
         if (!cancelled) setPartners([]);
       });
     return () => {

@@ -930,14 +930,18 @@ export default function LiveHike() {
   // da Partner ohnehin nur vereinzelt gepflegt werden.
   useEffect(() => {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    console.warn('[Partner-Debug hike] id=', route?.id, 'center=', center, 'routeCoords=', route?.coordinates);
     if (!center) return;
     let cancelled = false;
     const bbox = bboxAroundGeometry(route?.geometry, center);
+    console.warn('[Partner-Debug hike] bbox=', bbox);
     getPartners(bbox)
       .then((result) => {
+        console.warn('[Partner-Debug hike] result=', result.length);
         if (!cancelled) setPartners(result);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('[Partner-Debug hike] error=', err);
         if (!cancelled) setPartners([]);
       });
     return () => {
