@@ -128,6 +128,17 @@ function formatPartnerOeffnungsInfo(
   return null;
 }
 
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
+const PARTNER_KATEGORIE: Record<string, { icon: FeatherIconName; label: string }> = {
+  restaurant:    { icon: "coffee",       label: "Restaurant" },
+  cafe:          { icon: "coffee",       label: "Café" },
+  bar:           { icon: "music",        label: "Bar" },
+  hotel:         { icon: "home",         label: "Hotel" },
+  uebernachtung: { icon: "home",         label: "Hotel" },
+  shop:          { icon: "shopping-bag", label: "Shop" },
+};
+const PARTNER_KAT_DEFAULT: { icon: FeatherIconName; label: string } = { icon: "coffee", label: "Partnerbetrieb" };
+
 /** Minimaler Zeitabstand zwischen zwei geloggten Track-Punkten (ms). */
 const TRACK_LOG_INTERVAL_MS = 8000;
 
@@ -3121,14 +3132,16 @@ export default function LiveHike() {
                 />
               )}
 
-              {/* Header — identisch mit POI-Karte */}
+              {/* Header — Kategorie-Icon + Label */}
               <View style={styles.poiCardHeader}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                  {(!selectedPartner.fotoUrl || selectedPartner.paket === "basic") && (
-                    <Feather name="coffee" size={22} color={colors.accent} />
-                  )}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 7, flex: 1 }}>
+                  <Feather
+                    name={(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).icon}
+                    size={15}
+                    color={colors.accent}
+                  />
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
-                    {t.partnerDetailEyebrow}
+                    {(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).label}
                   </Text>
                 </View>
                 <Pressable
@@ -3171,8 +3184,8 @@ export default function LiveHike() {
                 </View>
               ) : null}
 
-              {/* Beschreibung — identisch mit POI-Karte */}
-              {!!selectedPartner.beschreibung && (
+              {/* Beschreibung — nicht für Basic */}
+              {!!selectedPartner.beschreibung && selectedPartner.paket !== "basic" && (
                 <Text style={[styles.poiSummary, { color: colors.foreground }]}>
                   {selectedPartner.beschreibung}
                 </Text>
