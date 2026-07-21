@@ -821,6 +821,32 @@ document.addEventListener('keydown', function(e) {
 });
 
 window.__sagaPhLg = \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none"><polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/><polygon points="20,18 28,32 12,32" fill="#bbb"/><polygon points="52,14 60,28 44,28" fill="#bbb"/></svg></div>\`;
+
+// Iframe-Auto-Resize: schickt Seitenhöhe an WordPress-Parent
+(function() {
+  function sendHeight() {
+    var h = document.documentElement.scrollHeight;
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'sagaTrailHeight', height: h }, '*');
+    }
+  }
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+  var mo = new MutationObserver(sendHeight);
+  mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+})();
+</script>
+
+<!-- Iframe-Resize-Empfänger (falls direkt eingebettet via <script> auf sagatrail.ch) -->
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'sagaTrailHeight') {
+    var iframes = document.querySelectorAll('iframe');
+    iframes.forEach(function(f) {
+      try { if (f.contentWindow === e.source) f.style.height = e.data.height + 'px'; } catch(x){}
+    });
+  }
+});
 </script>
 </body>
 </html>`;
