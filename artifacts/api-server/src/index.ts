@@ -4,6 +4,8 @@ import { seedCatalog } from "./lib/catalogSeed";
 import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
 
@@ -26,6 +28,17 @@ const server = app.listen(port, async (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Schema-Migrations: additive Spalten idempotent nachziehen.
+  try {
+    await db.execute(sql`
+      ALTER TABLE partner_anfragen
+        ADD COLUMN IF NOT EXISTS typ text NOT NULL DEFAULT 'anfrage'
+    `);
+    logger.info("Schema-Migration: typ-Spalte sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration typ-Spalte fehlgeschlagen (nicht kritisch)");
+  }
 
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.
   try {
