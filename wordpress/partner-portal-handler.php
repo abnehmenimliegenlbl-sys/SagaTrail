@@ -85,7 +85,7 @@ function sagatrail_portal_request_token() {
     // Magic-Link zusammensetzen
     $portal_page = defined( 'SAGATRAIL_PORTAL_PAGE' )
         ? rtrim( SAGATRAIL_PORTAL_PAGE, '/' )
-        : ( get_permalink( get_page_by_path( 'partner-portal' ) ) ?: 'https://www.sagatrail.ch/partner-portal' );
+        : ( get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal' );
     $link = rtrim( $portal_page, '/' ) . '?token=' . rawurlencode( $body['token'] );
     $name = $body['partnerName'] ?? 'Partner';
 
