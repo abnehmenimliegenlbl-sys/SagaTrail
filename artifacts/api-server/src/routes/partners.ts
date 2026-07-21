@@ -10,9 +10,11 @@ const router: IRouter = Router();
 function toPartner(p: PartnerRow, req: Request) {
   const status = berechneOeffnungsStatus(p.oeffnungszeiten);
   const rawFoto = p.fotoUrl ?? null;
-  const fotoUrl = rawFoto?.startsWith("/")
-    ? `${req.protocol}://${req.get("host")}${rawFoto}`
-    : rawFoto;
+  const fotoUrl = rawFoto?.startsWith("/objects/")
+    ? `${req.protocol}://${req.get("host")}/api/partner/foto/${p.id}`
+    : rawFoto?.startsWith("/")
+      ? `${req.protocol}://${req.get("host")}${rawFoto}`
+      : rawFoto;
   return {
     id: p.id,
     name: p.name,

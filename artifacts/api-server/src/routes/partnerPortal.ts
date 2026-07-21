@@ -1,25 +1,24 @@
 import { randomBytes, randomUUID } from "crypto";
-import path from "path";
-import fs from "fs";
 import { Router, type IRouter } from "express";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
-import multer from "multer";
 import { db, partnersTable, partnerTokensTable } from "@workspace/db";
+import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 
 const router: IRouter = Router();
+const objectStorage = new ObjectStorageService();
 
-const FOTOS_DIR = path.join(__dirname, "../public/partner-fotos");
-fs.mkdirSync(FOTOS_DIR, { recursive: true });
+function buildFotoServingUrl(partnerId: string, req: import("express").Request): string {
+  return `${req.protocol}://${req.get("host")}/api/partner/foto/${partnerId}`;
+}
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype);
-    cb(null, ok);
-  },
-});
+function resolveFotoUrl(partner: { id: string; fotoUrl: string | null }, req: import("express").Request): string | null {
+  const raw = partner.fotoUrl ?? null;
+  if (!raw) return null;
+  if (raw.startsWith("/objects/")) return buildFotoServingUrl(partner.id, req);
+  if (raw.startsWith("/")) return `${req.protocol}://${req.get("host")}${raw}`;
+  return raw;
+}
 
 async function resolveToken(token: string) {
   const now = new Date();
@@ -83,7 +82,7 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
     canton: partner.canton,
     beschreibung: partner.beschreibung,
     angebot: partner.angebot,
-    fotoUrl: partner.fotoUrl,
+    fotoUrl: resolveFotoUrl(partner, req),
     telefon: partner.telefon,
     websiteUrl: partner.websiteUrl,
     reservierungUrl: partner.reservierungUrl,
@@ -98,34 +97,58 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
   });
 });
 
-router.post(
-  "/partner/portal/upload",
-  upload.single("foto"),
-  async (req, res): Promise<void> => {
-    const token = req.query["token"];
-    if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
-    const partner = await resolveToken(token);
-    if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
+// Schritt 1 des Upload-Flows: Presigned PUT-URL für GCS generieren.
+// Der Client lädt das Bild direkt bei GCS hoch (Schritt 2),
+// und speichert danach den objectPath via PATCH /partner/portal/me (Schritt 3).
+router.post("/partner/portal/upload-url", async (req, res): Promise<void> => {
+  const token = req.query["token"];
+  if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
 
-    if (!req.file) {
-      res.status(400).json({ error: "Keine Datei hochgeladen oder ungültiges Format (JPEG/PNG/WebP)." });
-      return;
-    }
+  const partner = await resolveToken(token);
+  if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
-    const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
-    const filename = `${randomUUID()}${ext}`;
-    fs.writeFileSync(path.join(FOTOS_DIR, filename), req.file.buffer);
-    const fotoUrl = `/api/partner-fotos/${filename}`;
-
-    await db
-      .update(partnersTable)
-      .set({ fotoUrl, updatedAt: new Date() })
-      .where(eq(partnersTable.id, partner.id));
-
-    req.log.info({ partnerId: partner.id, file: req.file.filename }, "Partner-Foto hochgeladen");
-    res.json({ ok: true, fotoUrl });
+  try {
+    const uploadURL = await objectStorage.getObjectEntityUploadURL();
+    const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
+    req.log.info({ partnerId: partner.id, objectPath }, "Partner-Foto Upload-URL generiert");
+    res.json({ ok: true, uploadURL, objectPath });
+  } catch (err) {
+    req.log.error({ err }, "Fehler beim Generieren der Upload-URL");
+    res.status(500).json({ error: "Upload-URL konnte nicht erstellt werden." });
   }
-);
+});
+
+// Öffentliche Route: Partner-Foto aus GCS streamen.
+// fotoUrl in DB muss mit /objects/ beginnen.
+router.get("/partner/foto/:partnerId", async (req, res): Promise<void> => {
+  const { partnerId } = req.params;
+  const [partner] = await db
+    .select({ id: partnersTable.id, fotoUrl: partnersTable.fotoUrl })
+    .from(partnersTable)
+    .where(eq(partnersTable.id, partnerId))
+    .limit(1);
+
+  if (!partner || !partner.fotoUrl?.startsWith("/objects/")) {
+    res.status(404).end();
+    return;
+  }
+
+  try {
+    const file = await objectStorage.getObjectEntityFile(partner.fotoUrl);
+    const [metadata] = await file.getMetadata();
+    res.set("Content-Type", (metadata.contentType as string) || "image/jpeg");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.set("X-Content-Type-Options", "nosniff");
+    file.createReadStream().pipe(res);
+  } catch (err) {
+    if (err instanceof ObjectNotFoundError) {
+      res.status(404).end();
+    } else {
+      req.log.error({ err, partnerId }, "Fehler beim Laden des Partner-Fotos");
+      res.status(502).end();
+    }
+  }
+});
 
 router.patch("/partner/portal/me", async (req, res): Promise<void> => {
   const token = req.query["token"];
@@ -135,23 +158,27 @@ router.patch("/partner/portal/me", async (req, res): Promise<void> => {
   if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
   const parsed = z.object({
-    beschreibung:  z.string().max(250).optional(),
-    angebot:       z.string().max(120).optional(),
-    telefon:       z.string().max(50).optional(),
-    websiteUrl:    z.string().max(300).optional(),
+    beschreibung:    z.string().max(250).optional(),
+    angebot:         z.string().max(120).optional(),
+    telefon:         z.string().max(50).optional(),
+    websiteUrl:      z.string().max(300).optional(),
     reservierungUrl: z.string().max(300).optional(),
     oeffnungszeiten: z.string().optional(),
+    fotoObjectPath:  z.string().optional(),
   }).safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const d = parsed.data;
   const update: Record<string, unknown> = { updatedAt: new Date() };
-  if (d.beschreibung   !== undefined) update["beschreibung"]   = d.beschreibung || null;
-  if (d.angebot        !== undefined) update["angebot"]        = d.angebot || null;
-  if (d.telefon        !== undefined) update["telefon"]        = d.telefon || null;
-  if (d.websiteUrl     !== undefined) update["websiteUrl"]     = d.websiteUrl || null;
+  if (d.beschreibung    !== undefined) update["beschreibung"]    = d.beschreibung || null;
+  if (d.angebot         !== undefined) update["angebot"]         = d.angebot || null;
+  if (d.telefon         !== undefined) update["telefon"]         = d.telefon || null;
+  if (d.websiteUrl      !== undefined) update["websiteUrl"]      = d.websiteUrl || null;
   if (d.reservierungUrl !== undefined) update["reservierungUrl"] = d.reservierungUrl || null;
   if (d.oeffnungszeiten !== undefined) update["oeffnungszeiten"] = d.oeffnungszeiten || null;
+  if (d.fotoObjectPath  !== undefined && d.fotoObjectPath.startsWith("/objects/")) {
+    update["fotoUrl"] = d.fotoObjectPath;
+  }
 
   const [updated] = await db
     .update(partnersTable)
