@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { randomUUID } from "crypto";
 import { z } from "zod/v4";
+import { sql } from "drizzle-orm";
 import { db, partnerAnfragenTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -24,6 +25,9 @@ const AnfrageBody = z.object({
  * Öffentlicher Endpunkt für Partnerschafts-Anfragen vom WordPress-Formular.
  * Speichert die Anfrage in partner_anfragen (status = 'neu') zur manuellen
  * Prüfung durch das SagaTrail-Team.
+ *
+ * Defensiv: falls die Prod-DB die `typ`-Spalte noch nicht hat (Schema-Lag),
+ * wird ein Fallback-Insert ohne `typ` ausgeführt damit keine Daten verloren gehen.
  */
 router.post("/partner/anfrage", async (req, res): Promise<void> => {
   const parsed = AnfrageBody.safeParse(req.body);
@@ -33,12 +37,14 @@ router.post("/partner/anfrage", async (req, res): Promise<void> => {
   }
 
   const data = parsed.data;
+  const id   = randomUUID();
+  const now  = new Date();
 
   try {
-    const [row] = await db
+    await db
       .insert(partnerAnfragenTable)
       .values({
-        id:             randomUUID(),
+        id,
         betriebsName:   data.betriebsName,
         kategorie:      data.kategorie,
         canton:         data.canton,
@@ -52,19 +58,41 @@ router.post("/partner/anfrage", async (req, res): Promise<void> => {
         typ:            data.typ,
         paket:          data.paket,
         status:         "neu",
-      })
-      .returning({ id: partnerAnfragenTable.id });
+      });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTypMissing = msg.includes("typ") && msg.includes("column");
+    if (!isTypMissing) {
+      req.log.error({ err }, "Partner-Anfrage konnte nicht gespeichert werden");
+      res.status(500).json({ error: "Anfrage konnte nicht gespeichert werden" });
+      return;
+    }
 
-    req.log.info(
-      { id: row.id, email: data.kontaktEmail, betrieb: data.betriebsName },
-      "Partner-Anfrage eingegangen"
-    );
-
-    res.status(201).json({ ok: true, id: row.id });
-  } catch (err) {
-    req.log.error({ err }, "Partner-Anfrage konnte nicht gespeichert werden");
-    res.status(500).json({ error: "Anfrage konnte nicht gespeichert werden" });
+    // Prod-DB hat noch keine typ-Spalte — Fallback ohne typ
+    req.log.warn("typ-Spalte fehlt in prod_db — Fallback-Insert ohne typ");
+    try {
+      await db.execute(sql`
+        INSERT INTO partner_anfragen
+          (id, betriebs_name, kategorie, canton, website, adresse, plz, ort,
+           kontakt_name, kontakt_email, kontakt_telefon, paket, status, created_at, updated_at)
+        VALUES
+          (${id}, ${data.betriebsName}, ${data.kategorie}, ${data.canton},
+           ${data.website || null}, ${data.adresse ?? null}, ${data.plz ?? null}, ${data.ort ?? null},
+           ${data.kontaktName}, ${data.kontaktEmail}, ${data.kontaktTelefon ?? null},
+           ${data.paket}, ${"neu"}, ${now}, ${now})
+      `);
+    } catch (err2) {
+      req.log.error({ err: err2 }, "Fallback-Insert fehlgeschlagen");
+      res.status(500).json({ error: "Anfrage konnte nicht gespeichert werden" });
+      return;
+    }
   }
+
+  req.log.info(
+    { id, email: data.kontaktEmail, betrieb: data.betriebsName, typ: data.typ },
+    "Partner-Anfrage eingegangen"
+  );
+  res.status(201).json({ ok: true, id });
 });
 
 export default router;
