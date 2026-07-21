@@ -271,7 +271,7 @@
 
   function getToken() {
     var p = new URLSearchParams(window.location.search);
-    return p.get('token') || sessionStorage.getItem('spp_token');
+    return p.get('token') || localStorage.getItem('spp_token');
   }
 
   function setBtn(id, loading) {
@@ -347,10 +347,10 @@
     times.classList.toggle('hidden', !chk.checked);
   };
 
-  // Token aus URL → sessionStorage
+  // Token aus URL oder localStorage → Dashboard laden
   var tok = getToken();
   if (tok) {
-    sessionStorage.setItem('spp_token', tok);
+    localStorage.setItem('spp_token', tok);
     if (history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.hash);
     loadDashboard(tok);
   }
@@ -460,7 +460,7 @@
         }
       })
       .catch(function(e) {
-        sessionStorage.removeItem('spp_token');
+        localStorage.removeItem('spp_token');
         showMsg('spp-login-msg', e.message || 'Link ungültig.', false);
       });
   }
