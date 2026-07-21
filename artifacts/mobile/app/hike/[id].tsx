@@ -435,6 +435,7 @@ export default function LiveHike() {
   const [routeWaypoints, setRouteWaypoints] = useState<RouteWaypoint[]>([]);
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
+  const announcedPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
@@ -954,6 +955,7 @@ export default function LiveHike() {
     const wps = computeRouteWaypoints(geom, partners, pois);
     setRouteWaypoints(wps);
     waypointAnnouncedRef.current = new Set();
+    announcedPremiumPartnerIdsRef.current = new Set();
     setReachedWaypointIds(new Set());
   }, [route?.geometry, partners, pois]);
 
@@ -1213,6 +1215,60 @@ export default function LiveHike() {
       }
     }
   }, [livePos, routeWaypoints, t]);
+
+  // Premium-Partner-Anpreisung: sobald der Wanderer auf 500 m an einen
+  // Premium-Partner herankommt, wird einmalig ein KI-generierter Text
+  // abgespielt, der den Betrieb in den Kontext der laufenden Sage einwebt.
+  // Nur aktive Partner, nur einmal pro Hike, nur wenn nicht gerade am Vorbereiten.
+  useEffect(() => {
+    if (preparing || !saga) return;
+    const premiumPartners = partners.filter((p) => p.paket === "premium");
+    if (premiumPartners.length === 0) return;
+    const geo = route?.geometry;
+    const current: LatLng | null =
+      livePos ??
+      (geo && geo.length > 1 && totalKm > 0
+        ? (() => {
+            const f = Math.max(0, Math.min(1, distance / totalKm));
+            const p = geo[Math.round(f * (geo.length - 1))];
+            return { lat: p[0], lng: p[1] };
+          })()
+        : null);
+    if (!current) return;
+    const PARTNER_NEARBY_KM = 0.5;
+    for (const partner of premiumPartners) {
+      if (announcedPremiumPartnerIdsRef.current.has(String(partner.id))) continue;
+      if (haversineKm(current, { lat: partner.lat, lng: partner.lng }) > PARTNER_NEARBY_KM) continue;
+      announcedPremiumPartnerIdsRef.current.add(String(partner.id));
+      const base = getApiBaseUrl() ?? "";
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      fetch(`${base}/api/partners/${partner.id}/announce`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sagaTitle: saga.title,
+          coreMotif: saga.coreMotif ?? "",
+          partnerName: partner.name,
+          angebot: partner.angebot ?? null,
+          beschreibung: partner.beschreibung ?? null,
+          lang: storyLanguage,
+        }),
+        signal: controller.signal,
+      })
+        .then((r) => r.json())
+        .then((data: { text?: string }) => {
+          clearTimeout(timeout);
+          const text = data?.text?.trim();
+          if (text) {
+            speakRef.current?.(text, undefined, { useOpenAI: true });
+          }
+        })
+        .catch(() => {
+          clearTimeout(timeout);
+        });
+    }
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
