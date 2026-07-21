@@ -188,14 +188,29 @@ export default function KantonRouten() {
     setPackBusy(true);
     try {
       await purchase(packPaket);
-      // Server-seitiger Grant (Best-Effort): RC vergibt das Entitlement
-      // bereits automatisch; dieser Aufruf schlaegt bei fehlendem Connector
-      // still fehl, ohne den Kauf rueckgaengig zu machen.
-      try {
-        await claimKantonspack({ data: { kanton: packSlug } });
-        await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
-      } catch {
-        // Nicht fatal.
+      // Server-seitiger Grant: der Kauf ist bei RC verbucht; der Server
+      // zaehlt die RC-Kaeufe und schreibt den Kanton in purchased_packs.
+      // 3 Versuche mit kurzer Pause decken voruebergehende Netzwerk-
+      // oder RC-API-Fehler ab.
+      let claimed = false;
+      for (let versuch = 0; versuch < 3; versuch++) {
+        try {
+          await claimKantonspack({ data: { kanton: packSlug } });
+          claimed = true;
+          break;
+        } catch {
+          if (versuch < 2) {
+            await new Promise((r) => setTimeout(r, 1200 * (versuch + 1)));
+          }
+        }
+      }
+      // Profil immer neu laden: war der Claim erfolgreich, zeigt die UI
+      // sofort das freigeschaltete Pack; war er es nicht, bleibt der
+      // Kauf-Button sichtbar, und der Nutzer kann es ueber den Hinweis
+      // erneut versuchen (naechstes App-Oeffnen loest den Claim erneut aus).
+      await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+      if (!claimed) {
+        alert(t.packBuyErrorTitle, t.packClaimFailed);
       }
       await refreshCustomerInfo();
     } catch (err: any) {

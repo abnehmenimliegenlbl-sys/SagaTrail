@@ -141,8 +141,11 @@ export default function Routenplanung() {
       // Bereits gehoerte Sagen bleiben immer nutzbar: wer eine Sage schon
       // auf einer Wanderung gehoert hat, darf sie beliebig oft wiederholen.
       if (hikeHistory.some((h) => h.sagaId === s.id)) return false;
-      if (!premium) return freeHikeUsed;
+      // Elite-Pruefung VOR dem freeHikeUsed-Abbruch: das DB-Premium-Flag
+      // koennte noch nicht synchronisiert sein (Erstinstall, Restore), aber
+      // das RC-Entitlement ist sofort verfuegbar und muss Vorrang haben.
       if (isElite) return false;
+      if (!premium) return freeHikeUsed;
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
       const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);

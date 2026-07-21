@@ -29,6 +29,7 @@ export interface KantonStrings {
   };
   buyPackButton: string;
   packBuyErrorTitle: string;
+  packClaimFailed: string;
   packUnavailable: string;
   resetFilters: string;
   unlockedBadge: string;
@@ -85,6 +86,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Sagenpaket für diesen Kanton kaufen",
     packBuyErrorTitle: "Kauf fehlgeschlagen",
+    packClaimFailed: "Kauf erfolgreich, Freischaltung ausstehend. Öffne den Kanton erneut, um es zu aktivieren.",
     packUnavailable: "Sagen-Pack aktuell nicht verfügbar.",
     resetFilters: "Filter zurücksetzen",
     unlockedBadge: "Freigeschaltet",
@@ -139,6 +141,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Sage-Pack für dä Kanton chaufe",
     packBuyErrorTitle: "Chauf fehlgschlage",
+    packClaimFailed: "Chauf erfolgriich, Freischaltig hängig. Öffne de Kanton nomol, zum aktiviere.",
     packUnavailable: "Sage-Pack grad nid verfüegbar.",
     resetFilters: "Filter zruggsetze",
     unlockedBadge: "Freigsclte",
@@ -193,6 +196,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Acheter le pack de légendes pour ce canton",
     packBuyErrorTitle: "Échec de l'achat",
+    packClaimFailed: "Achat réussi, activation en attente. Rouvre le canton pour l'activer.",
     packUnavailable: "Pack de légendes actuellement indisponible.",
     resetFilters: "Réinitialiser les filtres",
     unlockedBadge: "Débloqué",
@@ -247,6 +251,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Acquista il pacchetto di leggende per questo cantone",
     packBuyErrorTitle: "Acquisto non riuscito",
+    packClaimFailed: "Acquisto riuscito, attivazione in sospeso. Riapri il cantone per attivarlo.",
     packUnavailable: "Pacchetto di leggende attualmente non disponibile.",
     resetFilters: "Reimposta filtri",
     unlockedBadge: "Sbloccato",
@@ -301,6 +306,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Buy the legend pack for this canton",
     packBuyErrorTitle: "Purchase failed",
+    packClaimFailed: "Purchase successful, activation pending. Reopen the canton to activate it.",
     packUnavailable: "Legend pack currently unavailable.",
     resetFilters: "Reset filters",
     unlockedBadge: "Unlocked",
@@ -354,6 +360,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "购买该州的传说包",
     packBuyErrorTitle: "购买失败",
+    packClaimFailed: "购买成功，激活待处理。请重新打开该州以激活。",
     packUnavailable: "传说包当前不可用。",
     resetFilters: "重置过滤器",
     unlockedBadge: "已解锁",
@@ -408,6 +415,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Купить пакет легенд для этого кантона",
     packBuyErrorTitle: "Покупка не удалась",
+    packClaimFailed: "Покупка прошла успешно, активация в ожидании. Откройте кантон снова для активации.",
     packUnavailable: "Пакет легенд сейчас недоступен.",
     resetFilters: "Сбросить фильтры",
     unlockedBadge: "Доступно",
@@ -462,6 +470,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Comprar el pack de leyendas de este cantón",
     packBuyErrorTitle: "Compra fallida",
+    packClaimFailed: "Compra exitosa, activación pendiente. Vuelve a abrir el cantón para activarlo.",
     packUnavailable: "Pack de leyendas no disponible en este momento.",
     resetFilters: "Restablecer filtros",
     unlockedBadge: "Desbloqueado",
@@ -516,6 +525,7 @@ const KANTON_STRINGS: StringsDict<KantonStrings> = {
     },
     buyPackButton: "Comprar o pacote de lendas para este cantão",
     packBuyErrorTitle: "Falha na compra",
+    packClaimFailed: "Compra bem-sucedida, ativação pendente. Reabra o cantão para ativá-lo.",
     packUnavailable: "Pacote de lendas indisponível no momento.",
     resetFilters: "Redefinir filtros",
     unlockedBadge: "Desbloqueado",

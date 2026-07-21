@@ -182,7 +182,10 @@ export default function Paywall() {
     setBusy(true);
     try {
       const customerInfo = await restore();
-      const hasActive = !!customerInfo.entitlements.active["premium"];
+      // Sowohl "premium" als auch "elite" sind gueltige aktive Abos.
+      const hasActive =
+        !!customerInfo.entitlements.active["premium"] ||
+        !!customerInfo.entitlements.active["elite"];
       iapLog("paywall.onRestore: Ergebnis", { hasActive });
       setTimeout(() => {
         if (!mountedRef.current) return;

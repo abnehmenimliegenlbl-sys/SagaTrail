@@ -584,6 +584,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [authLoaded, isSignedIn, userId, hydrated, getToken]);
   const {
     isSubscribed,
+    isElite: isEliteSubscription,
     isLoading: subscriptionLoading,
     rcAppUserId,
   } = useSubscription();
@@ -731,8 +732,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Manueller Reset (Demo-Button) hat kurz Vorrang: sonst wuerde dieser
     // Effekt ein noch aktives RevenueCat-Abo sofort wieder hochsynchronisieren.
     if (Date.now() < manualLockUntilRef.current) return;
-    iapLog("premium-sync-effect: geprueft", { isSubscribed, premium });
-    if (isSubscribed && !premium) {
+    iapLog("premium-sync-effect: geprueft", { isSubscribed, isElite: isEliteSubscription, premium });
+    // Elite-Entitlement berechtigt ebenfalls zu Premium auf dem Server.
+    // Wichtig: isEliteSubscription wird direkt aus RC gelesen und ist auch
+    // dann sofort korrekt, wenn das DB-Premium-Flag noch nicht synchronisiert
+    // wurde (z. B. Erstinstall, Restore auf neuem Geraet).
+    if ((isSubscribed || isEliteSubscription) && !premium) {
       unlockPremium().catch((err) =>
         iapLog("premium-sync-effect: unlockPremium fehlgeschlagen", {
           message: err instanceof Error ? err.message : String(err),
@@ -750,6 +755,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     subscriptionLoading,
     rcAppUserId,
     isSubscribed,
+    isEliteSubscription,
     premium,
     unlockPremium,
   ]);
