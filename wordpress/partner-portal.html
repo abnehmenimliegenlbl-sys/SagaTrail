@@ -532,68 +532,39 @@
     };
     reader.readAsDataURL(file);
 
-    // Upload: 2-Schritt-Presigned-URL-Flow (direkt zu GCS)
+    // Upload: direkt zur API (server-seitig nach GCS)
     var token = getToken();
     var bar = document.getElementById('spp-upload-fill');
     var prog = document.getElementById('spp-upload-progress');
     prog.style.display = 'block';
     bar.style.width = '5%';
 
-    // Schritt 1: Presigned PUT-URL vom Server anfordern
-    fetch(API_BASE + '/api/partner/portal/upload-url?token=' + encodeURIComponent(token), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data.uploadURL || !data.objectPath) throw new Error(data.error || 'Keine Upload-URL erhalten.');
-      bar.style.width = '20%';
-
-      // Schritt 2: Datei direkt zu GCS hochladen
-      var xhr = new XMLHttpRequest();
-      xhr.open('PUT', data.uploadURL);
-      xhr.setRequestHeader('Content-Type', file.type);
-      xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) bar.style.width = (20 + Math.round((e.loaded / e.total) * 70)) + '%';
-      };
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          bar.style.width = '95%';
-          // Schritt 3: objectPath im Profil speichern
-          fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(token), {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fotoObjectPath: data.objectPath })
-          })
-          .then(function(r) {
-            bar.style.width = '100%';
-            setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
-            if (r.ok) {
-              showMsg('spp-foto-msg', 'Foto erfolgreich hochgeladen!', true);
-            } else {
-              showMsg('spp-foto-msg', 'Foto hochgeladen, aber Speichern fehlgeschlagen.', false);
-            }
-          })
-          .catch(function() {
-            prog.style.display = 'none';
-            showMsg('spp-foto-msg', 'Foto hochgeladen, aber Speichern fehlgeschlagen.', false);
-          });
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', API_BASE + '/api/partner/portal/upload-photo?token=' + encodeURIComponent(token));
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) bar.style.width = Math.round((e.loaded / e.total) * 90) + '%';
+    };
+    xhr.onload = function() {
+      bar.style.width = '100%';
+      setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
+      try {
+        var d = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && d.ok) {
+          showMsg('spp-foto-msg', 'Foto erfolgreich hochgeladen!', true);
         } else {
-          prog.style.display = 'none';
-          showMsg('spp-foto-msg', 'Upload fehlgeschlagen (GCS Status ' + xhr.status + ').', false);
+          showMsg('spp-foto-msg', 'Upload fehlgeschlagen: ' + (d.error || 'Unbekannter Fehler.'), false);
         }
-      };
-      xhr.onerror = function() {
-        prog.style.display = 'none';
-        showMsg('spp-foto-msg', 'Verbindungsfehler beim Hochladen.', false);
-      };
-      xhr.send(file);
-    })
-    .catch(function(err) {
+      } catch(e) {
+        showMsg('spp-foto-msg', 'Upload fehlgeschlagen (ungültige Antwort).', false);
+      }
+    };
+    xhr.onerror = function() {
       prog.style.display = 'none';
-      showMsg('spp-foto-msg', 'Upload fehlgeschlagen: ' + (err.message || err), false);
-    });
+      showMsg('spp-foto-msg', 'Verbindungsfehler beim Hochladen.', false);
+    };
+    var fd = new FormData();
+    fd.append('foto', file);
+    xhr.send(fd);
   };
 
   window.sppSave = function() {

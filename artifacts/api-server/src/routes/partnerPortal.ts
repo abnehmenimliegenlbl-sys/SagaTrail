@@ -1,9 +1,18 @@
 import { randomBytes, randomUUID } from "crypto";
 import { Router, type IRouter } from "express";
+import multer from "multer";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, partnersTable, partnerTokensTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype));
+  },
+});
 
 const router: IRouter = Router();
 const objectStorage = new ObjectStorageService();
@@ -97,24 +106,34 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
   });
 });
 
-// Schritt 1 des Upload-Flows: Presigned PUT-URL für GCS generieren.
-// Der Client lädt das Bild direkt bei GCS hoch (Schritt 2),
-// und speichert danach den objectPath via PATCH /partner/portal/me (Schritt 3).
-router.post("/partner/portal/upload-url", async (req, res): Promise<void> => {
+// Foto-Upload: Datei direkt an unsere API senden, die sie server-seitig nach GCS hochlädt.
+router.post("/partner/portal/upload-photo", upload.single("foto"), async (req, res): Promise<void> => {
   const token = req.query["token"];
   if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
 
   const partner = await resolveToken(token);
   if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
+  if (!req.file) {
+    res.status(400).json({ error: "Kein Bild empfangen. Bitte JPEG, PNG oder WebP hochladen (max. 5 MB)." });
+    return;
+  }
+
   try {
-    const uploadURL = await objectStorage.getObjectEntityUploadURL();
-    const objectPath = objectStorage.normalizeObjectEntityPath(uploadURL);
-    req.log.info({ partnerId: partner.id, objectPath }, "Partner-Foto Upload-URL generiert");
-    res.json({ ok: true, uploadURL, objectPath });
+    const ext = req.file.mimetype === "image/png" ? "png" : req.file.mimetype === "image/webp" ? "webp" : "jpg";
+    const subPath = `uploads/${randomUUID()}.${ext}`;
+    const objectPath = await objectStorage.uploadBuffer(req.file.buffer, req.file.mimetype, subPath);
+
+    await db
+      .update(partnersTable)
+      .set({ fotoUrl: objectPath })
+      .where(eq(partnersTable.id, partner.id));
+
+    req.log.info({ partnerId: partner.id, objectPath }, "Partner-Foto hochgeladen");
+    res.json({ ok: true, fotoUrl: buildFotoServingUrl(partner.id, req) });
   } catch (err) {
-    req.log.error({ err }, "Fehler beim Generieren der Upload-URL");
-    res.status(500).json({ error: "Upload-URL konnte nicht erstellt werden." });
+    req.log.error({ err }, "Fehler beim Foto-Upload");
+    res.status(500).json({ error: "Foto-Upload fehlgeschlagen." });
   }
 });
 
