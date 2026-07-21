@@ -1708,6 +1708,18 @@ components:
         istOffen:
           type: boolean
           nullable: true
+        schliesstUm:
+          type: string
+          nullable: true
+          description: Uhrzeit (HH:MM), zu der der Betrieb heute schliesst — nur wenn gerade geoeffnet.
+        oeffnetAmTag:
+          type: string
+          nullable: true
+          description: "Wann der Betrieb das naechste Mal oeffnet: 'heute', 'morgen' oder Wochentagsname (z.B. 'montag')."
+        oeffnetUm:
+          type: string
+          nullable: true
+          description: Uhrzeit (HH:MM), zu der der Betrieb das naechste Mal oeffnet — nur wenn gerade geschlossen.
       required:
         - id
         - name

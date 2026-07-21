@@ -87,6 +87,47 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 const WEB_TOP = 67;
 const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
 
+// Lokalisierte Wochentagnamen für die Partner-Öffnungszeiten-Anzeige.
+const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
+  de:  { montag: "Montag", dienstag: "Dienstag", mittwoch: "Mittwoch", donnerstag: "Donnerstag", freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" },
+  gsw: { montag: "Mäntig", dienstag: "Zischtig", mittwoch: "Mittwuch", donnerstag: "Dunschtig", freitag: "Friitig", samstag: "Samschtig", sonntag: "Sunntig" },
+  en:  { montag: "Monday", dienstag: "Tuesday", mittwoch: "Wednesday", donnerstag: "Thursday", freitag: "Friday", samstag: "Saturday", sonntag: "Sunday" },
+  fr:  { montag: "lundi", dienstag: "mardi", mittwoch: "mercredi", donnerstag: "jeudi", freitag: "vendredi", samstag: "samedi", sonntag: "dimanche" },
+  it:  { montag: "lunedì", dienstag: "martedì", mittwoch: "mercoledì", donnerstag: "giovedì", freitag: "venerdì", samstag: "sabato", sonntag: "domenica" },
+  es:  { montag: "lunes", dienstag: "martes", mittwoch: "miércoles", donnerstag: "jueves", freitag: "viernes", samstag: "sábado", sonntag: "domingo" },
+  pt:  { montag: "segunda", dienstag: "terça", mittwoch: "quarta", donnerstag: "quinta", freitag: "sexta", samstag: "sábado", sonntag: "domingo" },
+  zh:  { montag: "周一", dienstag: "周二", mittwoch: "周三", donnerstag: "周四", freitag: "周五", samstag: "周六", sonntag: "周日" },
+  ru:  { montag: "понедельник", dienstag: "вторник", mittwoch: "среда", donnerstag: "четверг", freitag: "пятница", samstag: "суббота", sonntag: "воскресенье" },
+};
+
+type HikeOeffnungsStrings = {
+  partnerSchliesstUm: string; partnerOeffnetUm: string; partnerOeffnetAm: string;
+  partnerHeute: string; partnerMorgen: string; partnerUhr: string;
+};
+
+function formatPartnerOeffnungsInfo(
+  partner: { istOffen?: boolean | null; schliesstUm?: string | null; oeffnetAmTag?: string | null; oeffnetUm?: string | null },
+  t: HikeOeffnungsStrings,
+  lang: string,
+): string | null {
+  const uhrSuffix = t.partnerUhr ? " " + t.partnerUhr : "";
+  if (partner.istOffen && partner.schliesstUm) {
+    return `${t.partnerSchliesstUm} ${partner.schliesstUm}${uhrSuffix}`;
+  }
+  if (!partner.istOffen && partner.oeffnetAmTag && partner.oeffnetUm) {
+    const tag = partner.oeffnetAmTag;
+    const uhr = partner.oeffnetUm;
+    if (tag === "heute")  return `${t.partnerOeffnetUm} ${t.partnerHeute} ${uhr}${uhrSuffix}`;
+    if (tag === "morgen") return `${t.partnerOeffnetUm} ${t.partnerMorgen} ${uhr}${uhrSuffix}`;
+    const tagName =
+      PARTNER_WOCHENTAGE[lang]?.[tag] ??
+      PARTNER_WOCHENTAGE["de"]?.[tag] ??
+      tag;
+    return `${t.partnerOeffnetAm} ${tagName} ${uhr}${uhrSuffix}`;
+  }
+  return null;
+}
+
 /** Minimaler Zeitabstand zwischen zwei geloggten Track-Punkten (ms). */
 const TRACK_LOG_INTERVAL_MS = 8000;
 
@@ -3105,7 +3146,7 @@ export default function LiveHike() {
                 {selectedPartner.name}
               </Text>
 
-              {/* Offen / Geschlossen Badge + Öffnungszeiten */}
+              {/* Offen / Geschlossen Badge + nächste Änderung */}
               {selectedPartner.istOffen != null ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
                   <View style={{
@@ -3119,16 +3160,15 @@ export default function LiveHike() {
                   }}>
                     {selectedPartner.istOffen ? t.partnerOffen : t.partnerGeschlossen}
                   </Text>
-                  {!!selectedPartner.oeffnungszeiten && (
-                    <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
-                      {" · "}{selectedPartner.oeffnungszeiten}
-                    </Text>
-                  )}
+                  {(() => {
+                    const info = formatPartnerOeffnungsInfo(selectedPartner, t, storyLanguage);
+                    return info ? (
+                      <Text style={{ fontSize: 12, color: colors.mutedForeground }}>
+                        {"· "}{info}
+                      </Text>
+                    ) : null;
+                  })()}
                 </View>
-              ) : !!selectedPartner.oeffnungszeiten ? (
-                <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 8 }}>
-                  {selectedPartner.oeffnungszeiten}
-                </Text>
               ) : null}
 
               {/* Beschreibung — identisch mit POI-Karte */}

@@ -27,4 +27,10 @@ export interface Partner {
   reservierungUrl?: string | null;
   oeffnungszeiten?: string | null;
   istOffen?: boolean | null;
+  /** Uhrzeit (HH:MM), zu der der Betrieb heute schliesst — nur wenn gerade geoeffnet. */
+  schliesstUm?: string | null;
+  /** Wann der Betrieb das naechste Mal oeffnet: 'heute', 'morgen' oder Wochentagsname (z.B. 'montag'). */
+  oeffnetAmTag?: string | null;
+  /** Uhrzeit (HH:MM), zu der der Betrieb das naechste Mal oeffnet — nur wenn gerade geschlossen. */
+  oeffnetUm?: string | null;
 }

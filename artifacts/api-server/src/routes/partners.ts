@@ -3,28 +3,12 @@ import { eq, sql } from "drizzle-orm";
 import { GetPartnersResponse, GetPartnersQueryParams } from "@workspace/api-zod";
 import { db, partnersTable, type PartnerRow } from "@workspace/db";
 import { getPartners } from "../lib/routeService";
+import { berechneOeffnungsStatus } from "../lib/oeffnungszeitenLogic";
 
 const router: IRouter = Router();
 
-function computeIstOffen(oeffnungszeiten: string | null | undefined): boolean | null {
-  if (!oeffnungszeiten) return null;
-  const match = /(\d{1,2})(?::(\d{2}))?[–\-](\d{1,2})(?::(\d{2}))?/.exec(oeffnungszeiten);
-  if (!match) return null;
-  const vonH = parseInt(match[1]), vonM = parseInt(match[2] ?? "0");
-  const bisH = parseInt(match[3]), bisM = parseInt(match[4] ?? "0");
-  const parts = new Intl.DateTimeFormat("de-CH", {
-    timeZone: "Europe/Zurich",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false,
-  }).formatToParts(new Date());
-  const h = parseInt(parts.find((x) => x.type === "hour")?.value ?? "0");
-  const m = parseInt(parts.find((x) => x.type === "minute")?.value ?? "0");
-  const now = h * 60 + m;
-  return now >= vonH * 60 + vonM && now < bisH * 60 + bisM;
-}
-
 function toPartner(p: PartnerRow) {
+  const status = berechneOeffnungsStatus(p.oeffnungszeiten);
   return {
     id: p.id,
     name: p.name,
@@ -40,7 +24,10 @@ function toPartner(p: PartnerRow) {
     websiteUrl: p.websiteUrl ?? null,
     reservierungUrl: p.reservierungUrl ?? null,
     oeffnungszeiten: p.oeffnungszeiten ?? null,
-    istOffen: computeIstOffen(p.oeffnungszeiten),
+    istOffen: status.istOffen,
+    schliesstUm: status.schliesstUm,
+    oeffnetAmTag: status.oeffnetAmTag,
+    oeffnetUm: status.oeffnetUm,
   };
 }
 

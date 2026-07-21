@@ -243,7 +243,10 @@ export const GetPartnersResponseItem = zod.object({
   "websiteUrl": zod.string().nullish(),
   "reservierungUrl": zod.string().nullish(),
   "oeffnungszeiten": zod.string().nullish(),
-  "istOffen": zod.boolean().nullish()
+  "istOffen": zod.boolean().nullish(),
+  "schliesstUm": zod.string().nullish().describe('Uhrzeit (HH:MM), zu der der Betrieb heute schliesst — nur wenn gerade geoeffnet.'),
+  "oeffnetAmTag": zod.string().nullish().describe('Wann der Betrieb das naechste Mal oeffnet: \'heute\', \'morgen\' oder Wochentagsname (z.B. \'montag\').'),
+  "oeffnetUm": zod.string().nullish().describe('Uhrzeit (HH:MM), zu der der Betrieb das naechste Mal oeffnet — nur wenn gerade geschlossen.')
 }).describe('Aktiver Partnerbetrieb (Restaurant, Souvenirladen, ...) entlang einer Route, gepflegt ueber die interne Admin-Oberflaeche.\n')
 export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
 
