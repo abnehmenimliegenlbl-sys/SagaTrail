@@ -189,6 +189,51 @@ async function commonsImageUrl(filename: string, widthPx = 600): Promise<string 
 }
 
 /**
+ * Durchsucht die Bilderliste eines Wikipedia-Artikels nach einem Foto, dessen
+ * Dateiname Schluesselwoerter des POI-Namens enthaelt. Greift fuer Faelle wie
+ * "Georg Herwegh Denkmal" → Artikel "Georg Herwegh" (Portrait als Hauptbild,
+ * aber Denkmal-Foto irgendwo im Artikel). Normalisiert sowohl Dateinamen als
+ * auch den POI-Namen: Umlaute, Bindestriche und Leerzeichen werden angeglichen.
+ */
+export async function fetchWikipediaArticleImageByPoiName(
+  articleTitle: string,
+  poiName: string,
+  lang: string = DEFAULT_LANG,
+  widthPx = 600,
+): Promise<string | null> {
+  const listUrl =
+    `https://${lang}.wikipedia.org/w/api.php?action=query` +
+    `&titles=${encodeURIComponent(articleTitle)}` +
+    `&prop=images&imlimit=30&format=json&origin=*`;
+  const json = await fetchJson<{
+    query?: { pages?: Record<string, { images?: { title: string }[] }> };
+  }>(listUrl);
+  const pages = Object.values(json?.query?.pages ?? {});
+  const images = pages[0]?.images ?? [];
+
+  // Schluesselwoerter aus POI-Namen ableiten (≥4 Buchstaben, stopwords ignorieren)
+  const stopwords = new Set(["der", "die", "das", "von", "des", "und", "the", "of"]);
+  const rawWords = poiName.toLowerCase()
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .split(/[\s\-_]+/)
+    .filter((w) => w.length >= 4 && !stopwords.has(w));
+
+  for (const img of images) {
+    const filename = img.title.replace(/^File:/i, "");
+    const fnNorm = filename.toLowerCase()
+      .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]/g, "");
+    // Mindestens 2 Schluesselwoerter muessen im Dateinamen vorkommen
+    const matches = rawWords.filter((w) => fnNorm.includes(w));
+    if (matches.length >= Math.min(2, rawWords.length)) {
+      const url = await commonsImageUrl(filename, widthPx);
+      if (url) return url;
+    }
+  }
+  return null;
+}
+
+/**
  * Sucht das naechstgelegene Wikimedia-Commons-Foto innerhalb von radiusM Metern
  * und gibt eine direkte Thumbnail-URL zurueck. Wird als Fallback eingesetzt,
  * wenn weder Wikipedia noch Wikidata ein Bild liefern.

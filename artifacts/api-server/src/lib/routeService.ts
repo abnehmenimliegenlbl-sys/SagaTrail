@@ -41,6 +41,7 @@ import {
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
   fetchWikidataCommonsCategory,
+  fetchWikipediaArticleImageByPoiName,
   searchAiPoiKnowledge,
   searchCantonLegend,
   searchNearbyWikipedia,
@@ -288,10 +289,14 @@ async function enrichPoiWithWikipedia(
       geoSearchBudget.rest--;
       const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
       if (wiki) {
-        // Falls Wikipedia-Artikel kein Bild hat: Commons-Name > Commons-Geo
+        // Bild-Hierarchie: Commons-Name-Suche zuerst (findet z.B. Denkmal-Foto
+        // auch wenn der Artikel ueber die Person handelt und nur ein Portrait als
+        // Thumbnail hat). Danach Artikel-interne Bildersuche, dann Thumbnail,
+        // dann Geo-Fallback.
         const image =
-          wiki.image ??
           (await fetchCommonsImageByName(poi.name)) ??
+          (await fetchWikipediaArticleImageByPoiName(wiki.title, poi.name)) ??
+          wiki.image ??
           (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
         return { ...poi, wiki: { ...wiki, image } };
       }
