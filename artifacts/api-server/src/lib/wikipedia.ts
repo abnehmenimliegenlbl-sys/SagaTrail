@@ -283,14 +283,28 @@ export async function searchNearbyWikipedia(
 ): Promise<WikiSummary | null> {
   const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=300&gslimit=10&format=json&origin=*`;
   const json = await fetchJson<GeoSearchResponse>(url);
-  const hits = (json?.query?.geosearch ?? [])
-    .filter((h) => namesRoughlyMatch(h.title, name))
-    .sort((a, b) => a.dist - b.dist);
-  for (const hit of hits) {
+  const allGeoHits = (json?.query?.geosearch ?? []).sort((a, b) => a.dist - b.dist);
+
+  // Erste Geo-Runde: Namensabgleich innerhalb 300m.
+  const nameMatchedHits = allGeoHits.filter((h) => namesRoughlyMatch(h.title, name));
+  for (const hit of nameMatchedHits) {
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
     if (summary) return summary;
   }
-  // Vierte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
+
+  // Zweite Geo-Runde: sehr nahe Artikel (< 100m) ohne Namensabgleich akzeptieren.
+  // Archäologische Stätten heissen in OSM und Wikipedia oft komplett anders
+  // (z.B. OSM "Römische Warte Au-hard" → Wikipedia "Burgus Au-hard").
+  // Bei < 100m Abstand ist es praktisch sicher dasselbe Objekt.
+  const veryNearHits = allGeoHits.filter(
+    (h) => h.dist < 100 && !nameMatchedHits.some((m) => m.title === h.title),
+  );
+  for (const hit of veryNearHits) {
+    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
+    if (summary) return summary;
+  }
+
+  // Dritte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
   // Koordinaten in der Naehe traegt (z.B. beschreibt "Basiliskenbrunnen" alle
   // Basler Basilisken-Brunnen gemeinsam, ohne Einzelkoordinaten).
   // Koordinaten werden mitgegeben: wenn der Artikel trotzdem weit weg ist
