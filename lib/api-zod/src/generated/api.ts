@@ -212,9 +212,35 @@ export const GetPoisResponseItem = zod.object({
   "url": zod.string(),
   "lang": zod.string(),
   "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
-}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).')
+}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
+  "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
+  "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)
+
+
+/**
+ * Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy), nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig gecacht.
+ * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ */
+export const GetPoiDetailQueryParams = zod.object({
+  "name": zod.coerce.string(),
+  "kind": zod.coerce.string(),
+  "lat": zod.coerce.number(),
+  "lng": zod.coerce.number(),
+  "wikipediaTag": zod.coerce.string().optional(),
+  "wikidataTag": zod.coerce.string().optional()
+})
+
+export const GetPoiDetailResponse = zod.object({
+  "wiki": zod.object({
+  "title": zod.string(),
+  "extract": zod.string(),
+  "url": zod.string(),
+  "lang": zod.string(),
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
+}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).')
+}).describe('On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung und\/oder Bild (kann null sein wenn nichts gefunden wurde).\n')
 
 
 /**

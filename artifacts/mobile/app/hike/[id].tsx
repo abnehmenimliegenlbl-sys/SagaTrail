@@ -4,6 +4,7 @@ import {
   getAerialways,
   getPartners,
   getPois,
+  getPoiDetail,
   getPoiStory,
   getRouteSurfaces,
   getWeather,
@@ -11,7 +12,7 @@ import {
   reportRouteCondition,
   ApiError,
 } from "@workspace/api-client-react";
-import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport } from "@workspace/api-client-react";
+import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport, WikiSummary } from "@workspace/api-client-react";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
@@ -489,6 +490,8 @@ export default function LiveHike() {
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
   const announcedPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
+  // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
+  const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [karteVollbild, setKarteVollbild] = useState(false);
@@ -1932,6 +1935,29 @@ export default function LiveHike() {
 
   // Sobald unterwegs ein realer Ort in der Naehe entdeckt wird (nearbyPoi,
   // siehe oben), erzaehlt der Erzaehler kurz davon — mit dem bereits
+  // Lazy Wiki-Anreicherung: wird ausgeloest wenn ein neuer nearbyPoi erscheint.
+  // Die Karte zeigt sofort Name + Typ; Bild und Beschreibungstext folgen nach
+  // ~1-2 s wenn der Server zurückmeldet (Wikipedia/Commons/AI).
+  useEffect(() => {
+    if (!nearbyPoi) {
+      setNearbyPoiWiki(undefined);
+      return;
+    }
+    setNearbyPoiWiki(undefined);
+    let cancelled = false;
+    getPoiDetail({
+      name: nearbyPoi.name,
+      kind: nearbyPoi.kind,
+      lat: nearbyPoi.lat,
+      lng: nearbyPoi.lng,
+      ...(nearbyPoi.wikipediaTag ? { wikipediaTag: nearbyPoi.wikipediaTag } : {}),
+      ...(nearbyPoi.wikidataTag ? { wikidataTag: nearbyPoi.wikidataTag } : {}),
+    })
+      .then((r) => { if (!cancelled) setNearbyPoiWiki(r.wiki ?? null); })
+      .catch(() => { if (!cancelled) setNearbyPoiWiki(null); });
+    return () => { cancelled = true; };
+  }, [nearbyPoi?.id]);
+
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
   // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; sobald der
   // POI-Einschub natuerlich zu Ende ist, wird das aktuelle Kapitel
@@ -1950,17 +1976,17 @@ export default function LiveHike() {
     // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
     // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
     const poiName = nearbyPoi.name;
-    const poiBild = nearbyPoi.wiki?.image ?? null;
-    const poiText = nearbyPoi.wiki?.extract
-      ? trimForNarration(nearbyPoi.wiki.extract)
+    // Wiki ist bei GPS-Trigger noch nicht geladen (lazy) — Notif ohne Bild
+    // ist besser als warten; das Bild erscheint spaeter im Modal.
+    const poiBild = nearbyPoiWiki?.image ?? null;
+    const poiText = nearbyPoiWiki?.extract
+      ? trimForNarration(nearbyPoiWiki.extract)
       : t.poiNotifBody;
     if (turnNotifsReadyRef.current) {
       sendePoiMitteilung(poiName, poiText, poiBild);
     }
-    // POI-Erzaehlung reiht sich in die Warteschlange ein — unterbricht kein
-    // laufendes Kapitel, spielt automatisch danach ab.
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
-    const rawExtract = nearbyPoi.wiki?.extract ?? null;
+    const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
       if (!cancelled) speak(text, undefined, { useOpenAI: true });
@@ -1976,7 +2002,7 @@ export default function LiveHike() {
       lang: storyLanguage,
     })
       .then((r) => {
-        if (!cancelled && !nearbyPoi.wiki?.extract) setNearbyPoiKontext(r.text);
+        if (!cancelled && !nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
         erzaehle(pack.poiAside(nearbyPoi.name, r.text));
       })
       .catch(() =>
@@ -1990,7 +2016,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [nearbyPoi, storyLanguage, speak, t]);
+  }, [nearbyPoi, nearbyPoiWiki, storyLanguage, speak, t]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
@@ -2642,17 +2668,21 @@ export default function LiveHike() {
         {nearbyPoi && (
           <Animated.View entering={FadeIn}>
             <Glass style={{ marginTop: 14 }} overlayColor={poiOverlay}>
-              {/* Vollbild-Bild: negative Margins brechen aus dem Glass-Padding (16px) heraus */}
-              {nearbyPoi.wiki?.image && (
+              {/* Ladeindikator solange Wiki noch nicht da; Bild sobald fertig */}
+              {nearbyPoiWiki === undefined ? (
+                <View style={[styles.poiCardImage, { alignItems: "center", justifyContent: "center" }]}>
+                  <ActivityIndicator color={colors.accent} />
+                </View>
+              ) : nearbyPoiWiki?.image ? (
                 <Image
-                  source={{ uri: nearbyPoi.wiki.image }}
+                  source={{ uri: nearbyPoiWiki.image }}
                   style={styles.poiCardImage}
                   resizeMode="cover"
                 />
-              )}
+              ) : null}
               <View style={styles.poiCardHeader}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                  {!nearbyPoi.wiki?.image && (
+                  {!nearbyPoiWiki?.image && nearbyPoiWiki !== undefined && (
                     <Feather name="map-pin" size={22} color={colors.accent} />
                   )}
                   <Text style={[styles.poiEyebrow, { color: colors.accent }]}>
@@ -2671,12 +2701,12 @@ export default function LiveHike() {
               <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                 {nearbyPoi.name}
               </Text>
-              {(nearbyPoi.wiki?.extract || nearbyPoiKontext) && (
+              {(nearbyPoiWiki?.extract || nearbyPoiKontext) && (
                 <Text
                   style={[styles.poiSummary, { color: colors.foreground }]}
                   numberOfLines={10}
                 >
-                  {nearbyPoi.wiki?.extract ?? nearbyPoiKontext}
+                  {nearbyPoiWiki?.extract ?? nearbyPoiKontext}
                 </Text>
               )}
             </Glass>

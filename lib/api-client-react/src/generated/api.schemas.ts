@@ -285,6 +285,17 @@ export interface Poi {
   lat: number;
   lng: number;
   wiki?: WikiSummary;
+  /** OSM wikipedia-Tag (z.B. 'de:Basiliskenbrunnen Basel'), fuer on-demand-Anreicherung. */
+  wikipediaTag?: string | null;
+  /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
+  wikidataTag?: string | null;
+}
+
+/**
+ * On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung und/oder Bild (kann null sein wenn nichts gefunden wurde).
+ */
+export interface PoiDetailResponse {
+  wiki?: WikiSummary;
 }
 
 export type AvalancheBulletinReason = typeof AvalancheBulletinReason[keyof typeof AvalancheBulletinReason] | null;
@@ -599,6 +610,15 @@ south: number;
 west: number;
 north: number;
 east: number;
+};
+
+export type GetPoiDetailParams = {
+name: string;
+kind: string;
+lat: number;
+lng: number;
+wikipediaTag?: string;
+wikidataTag?: string;
 };
 
 export type GetPartnersParams = {

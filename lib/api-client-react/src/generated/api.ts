@@ -34,6 +34,7 @@ import type {
   GetCantonRoutesParams,
   GetCustomRouteParams,
   GetPartnersParams,
+  GetPoiDetailParams,
   GetPoiStoryParams,
   GetPoisParams,
   GetRoutePhotoParams,
@@ -46,6 +47,7 @@ import type {
   NarrationInput,
   Partner,
   Poi,
+  PoiDetailResponse,
   PoiStory,
   PremiumUpdate,
   Profile,
@@ -565,6 +567,91 @@ export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPoiDetailUrl = (params: GetPoiDetailParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/poi-detail?${stringifiedParams}` : `/api/routes/poi-detail`
+}
+
+/**
+ * Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy), nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig gecacht.
+ * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ */
+export const getPoiDetail = async (params: GetPoiDetailParams, options?: RequestInit): Promise<PoiDetailResponse> => {
+
+  return customFetch<PoiDetailResponse>(getGetPoiDetailUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPoiDetailQueryKey = (params?: GetPoiDetailParams,) => {
+    return [
+    `/api/routes/poi-detail`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPoiDetailQueryOptions = <TData = Awaited<ReturnType<typeof getPoiDetail>>, TError = ErrorType<ErrorResponse>>(params: GetPoiDetailParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPoiDetail>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPoiDetailQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPoiDetail>>> = ({ signal }) => getPoiDetail(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPoiDetail>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPoiDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getPoiDetail>>>
+export type GetPoiDetailQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+ */
+
+export function useGetPoiDetail<TData = Awaited<ReturnType<typeof getPoiDetail>>, TError = ErrorType<ErrorResponse>>(
+ params: GetPoiDetailParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPoiDetail>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPoiDetailQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

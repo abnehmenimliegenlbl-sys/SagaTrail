@@ -279,6 +279,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /routes/poi-detail:
+    get:
+      operationId: getPoiDetail
+      tags: [routes]
+      summary: Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
+      description: >
+        Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of
+        Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy),
+        nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig
+        gecacht.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: wikipediaTag
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: wikidataTag
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Anreicherungsergebnis (wiki kann fehlen wenn nichts gefunden)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoiDetailResponse"
+        "400":
+          description: Ungueltige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/partners:
     get:
       operationId: getPartners
@@ -1531,12 +1585,29 @@ components:
           type: number
         wiki:
           $ref: "#/components/schemas/WikiSummary"
+        wikipediaTag:
+          type: string
+          nullable: true
+          description: "OSM wikipedia-Tag (z.B. 'de:Basiliskenbrunnen Basel'), fuer on-demand-Anreicherung."
+        wikidataTag:
+          type: string
+          nullable: true
+          description: "OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung."
       required:
         - id
         - name
         - kind
         - lat
         - lng
+    PoiDetailResponse:
+      type: object
+      description: >
+        On-demand-Anreicherung eines einzelnen POI mit Wikipedia-Zusammenfassung
+        und/oder Bild (kann null sein wenn nichts gefunden wurde).
+      properties:
+        wiki:
+          $ref: "#/components/schemas/WikiSummary"
+      required: []
     AvalancheBulletin:
       type: object
       description: >-

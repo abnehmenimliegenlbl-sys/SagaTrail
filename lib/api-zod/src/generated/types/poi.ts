@@ -18,4 +18,8 @@ export interface Poi {
   lat: number;
   lng: number;
   wiki?: WikiSummary;
+  /** OSM wikipedia-Tag (z.B. 'de:Basiliskenbrunnen Basel'), fuer on-demand-Anreicherung. */
+  wikipediaTag?: string | null;
+  /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
+  wikidataTag?: string | null;
 }
