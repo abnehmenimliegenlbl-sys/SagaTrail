@@ -301,20 +301,28 @@ async function enrichPoiWithWikipedia(
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
-    // Vierte Stufe: Commons-Namenssuche + Commons-Geosearch parallel —
-    // findet Fotos fuer Orte ganz ohne Wikipedia-Artikel (Brunnen, Kapellen…)
-    const [nameImage, geoImage] = await Promise.all([
+    // Vierte + Fuenfte Stufe parallel: Commons-Bild UND Claude-Text gleichzeitig
+    // suchen und kombinieren. Vorher waren beide exklusiv — bei einem Commons-Bild
+    // wurde Stage 5 nie aufgerufen; bei AI-Text war image immer null. Jetzt erhaelt
+    // der Nutzer sowohl Bild als auch Text, sofern beide Quellen etwas liefern.
+    const [nameImage, geoImage, aiWiki] = await Promise.all([
       fetchCommonsImageByName(poi.name),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
+      searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
     const commonsImage = nameImage ?? geoImage;
-    if (commonsImage) {
-      return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image: commonsImage } };
+    if (commonsImage || aiWiki) {
+      return {
+        ...poi,
+        wiki: {
+          title: aiWiki?.title ?? poi.name,
+          extract: aiWiki?.extract ?? "",
+          url: aiWiki?.url ?? "",
+          lang: aiWiki?.lang ?? "de",
+          image: commonsImage ?? aiWiki?.image ?? null,
+        },
+      };
     }
-    // Fuenfte Stufe: Claude-Wissenssuche — greift nur, wenn alle vorherigen
-    // Pfade erfolglos waren.
-    const aiWiki = await searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng);
-    if (aiWiki) return { ...poi, wiki: aiWiki };
   } catch (err) {
     log.warn({ poi: poi.id, err }, "POI-Wikipedia-Anreicherung fehlgeschlagen");
   }
