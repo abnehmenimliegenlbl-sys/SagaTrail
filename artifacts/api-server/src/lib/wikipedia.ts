@@ -404,6 +404,24 @@ export async function searchNearbyWikipedia(
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
     if (summary) return summary;
   }
+
+  // Vierte Stufe: Wikipedia-Volltext-Suche — findet Artikel, in deren Text
+  // der POI-Name vorkommt, auch wenn Titel ganz verschieden ist
+  // (z.B. "Grenzstein 151" → "Rechtsrheinischer Grenzverlauf um Basel").
+  // Sicherheitsnetz: Artikel muss Koordinaten innerhalb von 20 km haben.
+  const fulltextUrl =
+    `https://${lang}.wikipedia.org/w/api.php?action=query&list=search` +
+    `&srsearch=${encodeURIComponent(name)}&srwhat=text&format=json&srlimit=5&origin=*`;
+  const fulltextJson = await fetchJson<{ query?: { search?: { title: string }[] } }>(fulltextUrl);
+  const fulltextHits = fulltextJson?.query?.search ?? [];
+  for (const hit of fulltextHits) {
+    // Artikel darf nicht schon durch Titelsuche abgelehnt worden sein
+    if (titleHits.some((t) => t.title === hit.title)) continue;
+    // Geo-Distanz pruefen: maxDistKm=20 statt Standard 50, da kein Namens-Match
+    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng, 20);
+    if (summary) return summary;
+  }
+
   return null;
 }
 
