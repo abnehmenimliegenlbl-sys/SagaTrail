@@ -278,14 +278,31 @@ export async function fetchCommonsImageByName(
   name: string,
   widthPx = 600,
 ): Promise<string | null> {
-  // Versuche zuerst mit vollem Namen, dann mit gekürztem (erste 2 Wörter).
-  // Bindestriche als Wort-Trenner behandeln: "Georg-Herwegh-Denkmal" →
-  // Wörter ["Georg", "Herwegh", "Denkmal"] → Kurzsuche "Georg Herwegh".
-  const suchbegriffe: string[] = [name];
-  const wörter = name.trim().split(/[\s\-]+/);
-  if (wörter.length > 2) {
-    suchbegriffe.push(wörter.slice(0, 2).join(" "));
+  // Keywords generisch extrahieren: jedes Nicht-Wort-Zeichen (Bindestrich,
+  // Punkt, Klammer, Schrägstrich …) ist Wort-Trenner. Stopwords und sehr
+  // kurze Token (≤2 Zeichen) werden ignoriert.
+  // "Georg-Herwegh-Denkmal" → ["georg","herwegh","denkmal"]
+  // "Kapelle St. Josef (Hauptgasse)" → ["kapelle","josef","hauptgasse"]
+  const STOPWORDS = new Set([
+    "der","die","das","des","dem","den","ein","eine","und","oder",
+    "von","vom","bei","am","an","im","in","zu","zur","zum",
+    "the","of","at","by","in","st","nr","no","num",
+  ]);
+  const tokens = name
+    .toLowerCase()
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .split(/[\s\-_\.\/\\,;:()\[\]]+/)
+    .filter(t => t.length >= 3 && !STOPWORDS.has(t));
+
+  if (tokens.length === 0) return null;
+
+  // Suchbegriffe: alle Keywords (AND-Suche in MediaWiki) → engste Suche;
+  // dann nur die ersten 2 (bei ≥3 Keywords) → breiter Fallback.
+  const suchbegriffe: string[] = [tokens.join(" ")];
+  if (tokens.length > 2) {
+    suchbegriffe.push(tokens.slice(0, 2).join(" "));
   }
+
   for (const begriff of suchbegriffe) {
     const url =
       `https://commons.wikimedia.org/w/api.php?action=query` +
