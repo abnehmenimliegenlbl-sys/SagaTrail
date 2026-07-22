@@ -40,6 +40,7 @@ import {
   fetchWikidataImage,
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
+  fetchWikidataCommonsCategory,
   searchAiPoiKnowledge,
   searchCantonLegend,
   searchNearbyWikipedia,
@@ -249,30 +250,33 @@ async function enrichPoiWithWikipedia(
           fetchWikidataImage(poi.wikidataTag),
         ]);
         if (wiki) {
-          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > Commons-Name > Commons-Geo
+          // Bild-Hierarchie: Wikipedia-Thumbnail > P18 > P373-Kategorie > Commons-Name > Commons-Geo
           const image =
             wiki.image ??
             p18Image ??
+            (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
             (await fetchCommonsImageByName(poi.name)) ??
-            (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
           return { ...poi, wiki: { ...wiki, image } };
         }
-        // Kein Wikipedia-Artikel: P18 > Commons-Name > Commons-Geo
+        // Kein Wikipedia-Artikel: P18 > P373-Kategorie > Commons-Name > Commons-Geo
         const image =
           p18Image ??
+          (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
           (await fetchCommonsImageByName(poi.name)) ??
-          (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
         if (image) {
           return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
       } else {
-        // Kein Wikipedia-Eintrag: P18 + Commons-Name + Commons-Geo parallel
-        const [p18Image, nameImage, geoImage] = await Promise.all([
+        // Kein Wikipedia-Eintrag: P18 + P373-Kategorie + Commons-Name + Commons-Geo parallel
+        const [p18Image, p373Image, nameImage, geoImage] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
+          fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
-          fetchNearbyCommonsImage(poi.lat, poi.lng),
+          fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
         ]);
-        const image = p18Image ?? nameImage ?? geoImage;
+        const image = p18Image ?? p373Image ?? nameImage ?? geoImage;
         if (image) {
           return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
@@ -288,7 +292,7 @@ async function enrichPoiWithWikipedia(
         const image =
           wiki.image ??
           (await fetchCommonsImageByName(poi.name)) ??
-          (await fetchNearbyCommonsImage(poi.lat, poi.lng));
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
@@ -296,7 +300,7 @@ async function enrichPoiWithWikipedia(
     // findet Fotos fuer Orte ganz ohne Wikipedia-Artikel (Brunnen, Kapellen…)
     const [nameImage, geoImage] = await Promise.all([
       fetchCommonsImageByName(poi.name),
-      fetchNearbyCommonsImage(poi.lat, poi.lng),
+      fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
     ]);
     const commonsImage = nameImage ?? geoImage;
     if (commonsImage) {

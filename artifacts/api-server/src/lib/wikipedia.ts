@@ -135,6 +135,41 @@ export async function fetchWikidataImage(
 }
 
 /**
+ * Laedt das erste Bild aus der Wikimedia-Commons-Kategorie eines Wikidata-Objekts
+ * (Property P373). Greift fuer Objekte, die kein P18-Hauptbild haben, aber eine
+ * ganze Kategorie mit Fotos besitzen — haeufig bei Schweizer Burgen, Warten,
+ * Kapellen und archaeologischen Staetten.
+ */
+export async function fetchWikidataCommonsCategory(
+  qid: string,
+  widthPx = 600,
+): Promise<string | null> {
+  const url = `https://www.wikidata.org/wiki/Special:EntityData/${encodeURIComponent(qid)}.json`;
+  const json = await fetchJson<WikidataClaimsResponse>(url);
+  const entity = json?.entities?.[qid];
+  const p373 = entity?.claims?.["P373"];
+  const category = p373?.[0]?.mainsnak?.datavalue?.value;
+  if (typeof category !== "string" || !category) return null;
+
+  const apiUrl =
+    `https://commons.wikimedia.org/w/api.php?action=query` +
+    `&generator=categorymembers&gcmtitle=${encodeURIComponent(`Category:${category}`)}` +
+    `&gcmnamespace=6&gcmlimit=5` +
+    `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
+    `&format=json&origin=*`;
+  const catJson = await fetchJson<{
+    query?: { pages?: Record<string, { title?: string; imageinfo?: { thumburl?: string; url?: string }[] }> };
+  }>(apiUrl);
+  const pages = Object.values(catJson?.query?.pages ?? {});
+  for (const page of pages) {
+    const info = page.imageinfo?.[0];
+    const imgUrl = info?.thumburl ?? info?.url;
+    if (imgUrl) return imgUrl;
+  }
+  return null;
+}
+
+/**
  * Laedt die direkte Thumbnail-URL einer Commons-Datei ueber die imageinfo-API.
  * Liefert eine upload.wikimedia.org-URL ohne Weiterleitungsketten.
  */
