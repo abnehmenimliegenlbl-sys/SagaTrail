@@ -237,6 +237,10 @@ export async function fetchWikipediaArticleImageByPoiName(
  * Sucht das naechstgelegene Wikimedia-Commons-Foto innerhalb von radiusM Metern
  * und gibt eine direkte Thumbnail-URL zurueck. Wird als Fallback eingesetzt,
  * wenn weder Wikipedia noch Wikidata ein Bild liefern.
+ *
+ * Verwendet generator=geosearch + prop=imageinfo in EINEM Request statt
+ * geosearch (Request 1) + imageinfo pro Treffer (Request N) — reduziert
+ * Requests drastisch bei vielen gleichzeitigen POI-Enrichments.
  */
 export async function fetchNearbyCommonsImage(
   lat: number,
@@ -244,18 +248,20 @@ export async function fetchNearbyCommonsImage(
   radiusM = 300,
   widthPx = 600,
 ): Promise<string | null> {
-  const geoUrl =
+  const url =
     `https://commons.wikimedia.org/w/api.php?action=query` +
-    `&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=${radiusM}` +
-    `&gsnamespace=6&gslimit=3&format=json&origin=*`;
+    `&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=${radiusM}` +
+    `&ggsnamespace=6&ggslimit=3` +
+    `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
+    `&format=json&origin=*`;
   const json = await fetchJson<{
-    query?: { geosearch?: { title: string; dist: number }[] };
-  }>(geoUrl);
-  const hits = json?.query?.geosearch ?? [];
-  for (const hit of hits) {
-    const filename = hit.title.replace(/^File:/, "");
-    const url = await commonsImageUrl(filename, widthPx);
-    if (url) return url;
+    query?: { pages?: Record<string, { imageinfo?: { thumburl?: string; url?: string }[] }> };
+  }>(url);
+  const pages = Object.values(json?.query?.pages ?? {});
+  for (const page of pages) {
+    const info = page.imageinfo?.[0];
+    const thumb = info?.thumburl ?? info?.url;
+    if (thumb) return thumb;
   }
   return null;
 }
@@ -264,32 +270,37 @@ export async function fetchNearbyCommonsImage(
  * Sucht auf Wikimedia Commons nach Dateien, deren Name den POI-Namen enthaelt.
  * Findet Bilder, die weder per Geo-Tag noch per Wikidata-P18 verknuepft sind
  * (z.B. kommunale Brunnen, Skulpturen, kleine Kapellen).
- * Gibt die Thumbnail-URL des ersten Treffers zurueck.
+ *
+ * Verwendet generator=search + prop=imageinfo in EINEM Request statt
+ * search (Request 1) + imageinfo pro Treffer (Request N).
  */
 export async function fetchCommonsImageByName(
   name: string,
   widthPx = 600,
 ): Promise<string | null> {
   // Versuche zuerst mit vollem Namen, dann mit gekürztem (erste 2 Wörter).
-  // "Christoph Merian Denkmal" → auch "Christoph Merian" suchen.
+  // Bindestriche als Wort-Trenner behandeln: "Georg-Herwegh-Denkmal" →
+  // Wörter ["Georg", "Herwegh", "Denkmal"] → Kurzsuche "Georg Herwegh".
   const suchbegriffe: string[] = [name];
-  const wörter = name.trim().split(/\s+/);
+  const wörter = name.trim().split(/[\s\-]+/);
   if (wörter.length > 2) {
     suchbegriffe.push(wörter.slice(0, 2).join(" "));
   }
   for (const begriff of suchbegriffe) {
-    const searchUrl =
+    const url =
       `https://commons.wikimedia.org/w/api.php?action=query` +
-      `&list=search&srsearch=${encodeURIComponent(begriff)}` +
-      `&srnamespace=6&srlimit=5&format=json&origin=*`;
+      `&generator=search&gsrsearch=${encodeURIComponent(begriff)}` +
+      `&gsrnamespace=6&gsrlimit=5` +
+      `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
+      `&format=json&origin=*`;
     const json = await fetchJson<{
-      query?: { search?: { title: string }[] };
-    }>(searchUrl);
-    const hits = json?.query?.search ?? [];
-    for (const hit of hits) {
-      const filename = hit.title.replace(/^File:/, "");
-      const url = await commonsImageUrl(filename, widthPx);
-      if (url) return url;
+      query?: { pages?: Record<string, { title: string; imageinfo?: { thumburl?: string; url?: string }[] }> };
+    }>(url);
+    const pages = Object.values(json?.query?.pages ?? {});
+    for (const page of pages) {
+      const info = page.imageinfo?.[0];
+      const thumb = info?.thumburl ?? info?.url;
+      if (thumb) return thumb;
     }
   }
   return null;
