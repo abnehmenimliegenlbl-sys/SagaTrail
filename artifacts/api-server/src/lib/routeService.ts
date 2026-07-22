@@ -380,19 +380,13 @@ export async function getPois(
     void refreshPoisBackground(bbox, key, log);
     return hit.entries;
   }
-  let raw: RawPoi[];
-  try {
-    raw = await fetchHistoricPois(bbox, log);
-  } catch (err) {
-    log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen, cache leeres Ergebnis");
-    poiErrorCache.set(key, Date.now());
-    return [];
-  }
-  poiErrorCache.delete(key);
-  const entries = deduplicatePois(raw.map((p) => ({ ...p, wiki: null })));
-  log.info({ bbox, total: raw.length, deduplicated: entries.length }, "POIs geladen (ohne Anreicherung)");
-  poiCache.set(key, { at: Date.now(), entries });
-  return entries;
+  // Kein Cache-Eintrag vorhanden: Hintergrundladen starten und sofort []
+  // zurueckgeben. Der mobile Client hat bereits eine Retry-Logik (alle 60 s);
+  // nach dem Overpass-Aufruf (~5–30 s) liefert die naechste Anfrage sofort
+  // Daten aus dem Cache. Das verhindert, dass die App-HTTP-Anfrage vor dem
+  // Ende der Overpass-Kette abbricht und der Client nie POIs sieht.
+  void refreshPoisBackground(bbox, key, log);
+  return [];
 }
 
 /**

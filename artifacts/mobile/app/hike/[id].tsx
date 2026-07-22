@@ -948,11 +948,14 @@ export default function LiveHike() {
     };
 
     // Bei Netzfehler ODER leerem Ergebnis (transienter Overpass-Timeout-Cache)
-    // wird automatisch nachgeladen: sofort, dann alle 60 s — max. 10 Versuche.
-    // 60 s > 30 s Server-Error-Cache, damit der naechste Versuch echte Daten
-    // bekommt und nicht wieder den abgelaufenen Cache trifft.
+    // wird automatisch nachgeladen: sofort, dann alle 35 s — max. 10 Versuche.
+    // 35 s > 30 s Server-Error-Cache UND > typische Overpass-Ladezeit (~5-15 s),
+    // damit der naechste Versuch echte Daten aus dem Cache bekommt.
     const MAX_RETRIES = 10;
-    const RETRY_INTERVAL_MS = 60_000;
+    // 35 s > 30 s Server-Error-Cache, aber kuerzer als fruehere 60 s.
+    // Seit getPois() sofort [] zurueckgibt (fire-and-forget), ist der
+    // Overpass-Cache nach ~5–15 s gefuellt; 35 s-Retry holt dann echte Daten.
+    const RETRY_INTERVAL_MS = 35_000;
     let attempt = 0;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
