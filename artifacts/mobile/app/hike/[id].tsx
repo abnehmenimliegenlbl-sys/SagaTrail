@@ -493,6 +493,8 @@ export default function LiveHike() {
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
+  const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [karteVollbild, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
@@ -1093,7 +1095,7 @@ export default function LiveHike() {
     setPoiStoryLoading(true);
     getPoiStory({
       name: selectedPoi.name,
-      extract: selectedPoi.wiki?.extract,
+      extract: selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract,
       kind: selectedPoi.kind,
       lang: storyLanguage,
     })
@@ -1110,6 +1112,28 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [selectedPoi, storyLanguage]);
+
+  // Lazy Wiki-Anreicherung fuer getippte POIs (selectedPoi).
+  // Identisch zum nearbyPoiWiki-Effekt, aber fuer manuell geoeffnete Karten-POIs.
+  useEffect(() => {
+    if (!selectedPoi) {
+      setSelectedPoiWiki(undefined);
+      return;
+    }
+    setSelectedPoiWiki(undefined);
+    let cancelled = false;
+    getPoiDetail({
+      name: selectedPoi.name,
+      kind: selectedPoi.kind,
+      lat: selectedPoi.lat,
+      lng: selectedPoi.lng,
+      ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
+      ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
+    })
+      .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
+      .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+    return () => { cancelled = true; };
+  }, [selectedPoi?.id]);
 
   // Partner-View-Tracking: sobald das Overlay erscheint, einmal fire-and-forget.
   useEffect(() => {
@@ -3107,13 +3131,17 @@ export default function LiveHike() {
         >
           <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
             <Glass overlayColor={poiOverlay}>
-              {selectedPoi.wiki?.image && (
+              {selectedPoiWiki === undefined ? (
+                <View style={[styles.poiModalImage, { alignItems: "center", justifyContent: "center" }]}>
+                  <ActivityIndicator color={colors.accent} />
+                </View>
+              ) : selectedPoiWiki?.image ? (
                 <Image
-                  source={{ uri: selectedPoi.wiki.image }}
+                  source={{ uri: selectedPoiWiki.image }}
                   style={styles.poiModalImage}
                   resizeMode="cover"
                 />
-              )}
+              ) : null}
               <View style={styles.poiRow}>
                 <Feather name="map-pin" size={18} color={colors.accent} />
                 <View style={{ flex: 1 }}>
