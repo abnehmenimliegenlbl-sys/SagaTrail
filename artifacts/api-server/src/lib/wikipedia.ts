@@ -311,11 +311,28 @@ export async function fetchCommonsImageByName(
       `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
       `&format=json&origin=*`;
     const json = await fetchJson<{
-      query?: { pages?: Record<string, { title: string; imageinfo?: { thumburl?: string; url?: string }[] }> };
+      query?: { pages?: Record<string, { title: string; index?: number; imageinfo?: { thumburl?: string; url?: string }[] }> };
     }>(url);
-    const pages = Object.values(json?.query?.pages ?? {});
-    for (const page of pages) {
-      const info = page.imageinfo?.[0];
+    // Nach Suchrelevanz (index) sortieren, NICHT nach Page-ID. Object.values()
+    // liefert Seiten in numerisch aufsteigender Page-ID-Reihenfolge (aeltere Dateien
+    // zuerst), was z.B. Portrait-Fotos vor Denkmal-Fotos stellt. index=1 ist die
+    // relevanteste Suchantwort der MediaWiki-Suchmaschine.
+    const pages = Object.values(json?.query?.pages ?? {})
+      .sort((a, b) => (a.index ?? 999) - (b.index ?? 999));
+    // Erst Dateien bevorzugen deren Name ≥1 POI-Keyword enthaelt (Denkmal-Foto vor
+    // Portrait), danach alle restlichen Treffer mit Thumbnail als Fallback.
+    const norm = (s: string) =>
+      s.toLowerCase()
+        .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+        .replace(/[^a-z0-9]/g, "");
+    const withThumb = pages.filter((p) => p.imageinfo?.[0]?.thumburl ?? p.imageinfo?.[0]?.url);
+    const keywordMatch = withThumb.find((p) => {
+      const fn = norm(p.title.replace(/^File:/i, ""));
+      return tokens.some((t) => fn.includes(t));
+    });
+    const best = keywordMatch ?? withThumb[0];
+    if (best) {
+      const info = best.imageinfo?.[0];
       const thumb = info?.thumburl ?? info?.url;
       if (thumb) return thumb;
     }
