@@ -84,6 +84,12 @@ function buildPrompt(input: PoiNarrationInput): string {
     "- Wenn der Name eine bekannte Person enthält (z.B. 'Christoph Merian Denkmal'), erkläre kurz wer diese Person war.",
     "- Erfinde KEINE ungesicherten Details, Jahreszahlen oder Ereignisse, die du nicht kennst.",
     "- Wenn du über den Namen nichts Konkretes weisst, erkläre was die Kategorie typischerweise bedeutet.",
+    // Schutz vor falschen Assoziationen bei rein numerischen Namen (z.B. «42»
+    // wuerde Claude sonst als Douglas-Adams-Referenz interpretieren, obwohl
+    // es sich um eine Grenznummerierung handelt):
+    "- Wenn der Name eine reine Zahl oder ein kurzer alphanumerischer Code ist (z.B. '42', 'K17', 'B.3'),",
+    "  behandle ihn als Kennnummer oder Inventarnummer dieses Objekts — NICHT als kulturellen Verweis oder Filmzitat.",
+    "  Erkläre in diesem Fall was die OSM-Kategorie typischerweise bedeutet und lade zum Hinschauen ein.",
   ].join("\n");
 }
 
