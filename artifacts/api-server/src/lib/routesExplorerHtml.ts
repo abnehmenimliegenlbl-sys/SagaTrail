@@ -24,15 +24,13 @@ body{
   font-size:16px;
   line-height:1.5;
   -webkit-font-smoothing:antialiased;
+  -webkit-overflow-scrolling:touch;
+  overflow-y:auto;
 }
 a{color:var(--red)!important;text-decoration:none}
 
 /* ── NAV ── */
-.st-nav{
-  position:sticky;top:0;z-index:100;
-  background:#fff;border-bottom:1px solid var(--border);
-  height:68px;
-}
+.st-nav{display:none}
 
 /* ── HERO ── */
 .st-hero{background:var(--red);padding:44px 24px 36px;color:#fff}
@@ -392,9 +390,6 @@ a{color:var(--red)!important;text-decoration:none}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav class="st-nav"></nav>
 
 <!-- HERO -->
 <div class="st-hero">
