@@ -557,12 +557,9 @@ function pickCanton(btn, name) {
   document.querySelectorAll('.canton-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('filter-panel').classList.add('visible');
-  document.getElementById('routes-out').innerHTML = '';
-  document.getElementById('result-status').textContent = '';
   document.getElementById('app-banner').style.display = 'none';
-  // Scroll filter into view on mobile
-  setTimeout(() => document.getElementById('filter-panel')
-    .scrollIntoView({behavior:'smooth',block:'nearest'}), 80);
+  // Sofort suchen — kein extra Tipp auf den Suchen-Button nötig
+  doSearch();
 }
 
 // ── DUAL-RANGE SLIDERS ───────────────────────────────────────
