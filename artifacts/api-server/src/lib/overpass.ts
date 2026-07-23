@@ -334,6 +334,9 @@ export interface RawPoi {
   lng: number;
   wikipediaTag: string | null;
   wikidataTag: string | null;
+  /** Kuratierter Kontext aus OSM-Tags (note, description, inscription, alt_name …)
+   *  als formatierter String fuer den Claude-Prompt — enthaelt keine erfundenen Daten. */
+  osmContext: string | null;
 }
 
 interface OverpassPoiElement {
@@ -343,6 +346,38 @@ interface OverpassPoiElement {
   lon?: number;
   center?: { lat: number; lon: number };
   tags?: Record<string, string>;
+}
+
+/**
+ * Baut aus OSM-Tags einen kuratierten Kontext-String fuer den Claude-Prompt.
+ * Nur Felder die tatsaechlich zusaetzliche Information liefern (nicht name/kind,
+ * die separat uebergeben werden). Leere Werte werden uebersprungen.
+ */
+function buildOsmContext(tags: Record<string, string>): string | null {
+  const USEFUL_KEYS: Array<[string, string]> = [
+    ["note",        "Notiz"],
+    ["description", "Beschreibung"],
+    ["inscription", "Inschrift"],
+    ["alt_name",    "Alternativer Name"],
+    ["old_name",    "Historischer Name"],
+    ["name:de",     "Deutscher Name"],
+    ["name:gsw",    "Schweizerdeutscher Name"],
+    ["name:fr",     "Französischer Name"],
+    ["name:it",     "Italienischer Name"],
+    ["subject",     "Thema/Person"],
+    ["artist_name", "Künstler"],
+    ["start_date",  "Entstehungsjahr"],
+    ["heritage",    "Denkmalschutz"],
+    ["operator",    "Betreiber/Eigentümer"],
+    ["material",    "Material"],
+    ["historic:civilization", "Epoche"],
+  ];
+  const lines: string[] = [];
+  for (const [key, label] of USEFUL_KEYS) {
+    const val = tags[key];
+    if (val && val.trim()) lines.push(`${label}: ${val.trim()}`);
+  }
+  return lines.length > 0 ? lines.join("\n") : null;
 }
 
 /**
@@ -387,6 +422,7 @@ export async function fetchHistoricPois(
       lng,
       wikipediaTag: tags.wikipedia ?? null,
       wikidataTag: tags.wikidata ?? null,
+      osmContext: buildOsmContext(tags),
     });
   }
   log.info({ bbox, count: result.length }, "Overpass: POIs geladen");

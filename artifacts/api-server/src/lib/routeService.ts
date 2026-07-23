@@ -416,6 +416,7 @@ export async function getPoiDetail(
     lng: params.lng,
     wikipediaTag: params.wikipediaTag ?? null,
     wikidataTag: params.wikidataTag ?? null,
+    osmContext: null,
   };
   // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
   const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });

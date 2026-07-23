@@ -22,4 +22,6 @@ export interface Poi {
   wikipediaTag?: string | null;
   /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
   wikidataTag?: string | null;
+  /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
+  osmContext?: string | null;
 }

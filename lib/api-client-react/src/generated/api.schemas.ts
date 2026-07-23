@@ -289,6 +289,8 @@ export interface Poi {
   wikipediaTag?: string | null;
   /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
   wikidataTag?: string | null;
+  /** Kuratierter OSM-Kontext (note, inscription, alt_name …) fuer den KI-Prompt. */
+  osmContext?: string | null;
 }
 
 /**
@@ -633,6 +635,8 @@ name: string;
 extract?: string;
 kind?: string;
 lang: string;
+/** Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt Claude verifizierte Fakten. */
+osmContext?: string;
 };
 
 export type GetAvalancheBulletinParams = {

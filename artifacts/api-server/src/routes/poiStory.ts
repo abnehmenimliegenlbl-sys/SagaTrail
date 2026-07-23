@@ -12,9 +12,9 @@ router.get("/routes/poi-story", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Ungueltige Anfrage" });
     return;
   }
-  const { name, extract, kind, lang } = parsed.data;
+  const { name, extract, kind, lang, osmContext } = parsed.data;
   try {
-    const text = await narratePoi({ name, extract, kind, lang }, req.log);
+    const text = await narratePoi({ name, extract, kind, lang, osmContext }, req.log);
     res.json(GetPoiStoryResponse.parse({ text }));
   } catch (err) {
     req.log.error({ err }, "POI-Erzaehltext konnte nicht umgeschrieben werden");

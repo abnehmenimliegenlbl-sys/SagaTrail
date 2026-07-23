@@ -11,4 +11,6 @@ name: string;
 extract?: string;
 kind?: string;
 lang: string;
+/** Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt Claude Fakten statt zu halluzinieren. */
+osmContext?: string;
 };

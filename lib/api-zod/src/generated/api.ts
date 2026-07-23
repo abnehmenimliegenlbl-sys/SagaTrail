@@ -282,6 +282,7 @@ export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
  * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */
 export const GetPoiStoryQueryParams = zod.object({
+  osmContext: zod.string().optional(),
   "name": zod.coerce.string(),
   "extract": zod.coerce.string().optional(),
   "kind": zod.coerce.string().optional(),

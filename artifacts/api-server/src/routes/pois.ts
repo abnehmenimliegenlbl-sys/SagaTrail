@@ -16,6 +16,7 @@ function toPoi(p: EnrichedPoi) {
     wiki: p.wiki ?? undefined,
     wikipediaTag: p.wikipediaTag ?? undefined,
     wikidataTag: p.wikidataTag ?? undefined,
+    osmContext: p.osmContext ?? undefined,
   };
 }
 

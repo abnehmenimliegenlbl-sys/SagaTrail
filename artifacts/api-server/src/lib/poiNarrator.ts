@@ -22,6 +22,8 @@ interface PoiNarrationInput {
   extract?: string;
   kind?: string;
   lang: string;
+  /** Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt Claude verifizierte Fakten. */
+  osmContext?: string;
 }
 
 interface CacheEntry {
@@ -33,7 +35,7 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const cache = new Map<string, CacheEntry>();
 
 function cacheKey(input: PoiNarrationInput): string {
-  return `${input.lang}::${input.name}::${input.extract ?? ""}::${input.kind ?? ""}`;
+  return `${input.lang}::${input.name}::${input.extract ?? ""}::${input.kind ?? ""}::${input.osmContext ?? ""}`;
 }
 
 function buildPrompt(input: PoiNarrationInput): string {
@@ -41,6 +43,16 @@ function buildPrompt(input: PoiNarrationInput): string {
   const kopf = [
     "Du bist derselbe Erzähler, der in einer Schweizer Wander-App regionale Sagen live erzählt.",
     "Eine wandernde Person kommt unterwegs an einem realen Ort vorbei.",
+    "",
+    // Schweizer Dialekt-Hinweis — gilt für alle Zweige:
+    "WICHTIG – Schweizerdeutsche Ortsnamen:",
+    "Viele Ortsnamen in der Schweiz sind schweizerdeutsch (Mundart). Interpretiere sie sprachlich korrekt:",
+    "Beispiele: 'Törli'=kleines Tor, 'Gässli'=kleine Gasse, 'Brugg'/'Brüggli'=Brücke,",
+    "'Muul halte'/'Muulhalte'=Mund halten (Schweigegebot), 'Chilch'=Kirche, 'Bächli'=kleines Bächlein,",
+    "'Stäg'=Steg, 'Badi'=Badeanstalt, 'Wäg'=Weg, 'Hüsli'=kleines Haus, 'Rötel'=Röte/Rotstein,",
+    "'Gupf'=Gipfel, 'Rank'=Kurve, 'Gmünd'=Mündung, 'Stei'=Stein, 'Witi'=weite Ebene.",
+    "Leite den Inhalt AUS DEM KORREKTEN SPRACHSINN DES NAMENS ab — nie aus einer anderen Sprache",
+    "oder zufälligen Ähnlichkeiten ('Muul' ist NICHT Maultier, 'Törli' ist NICHT ein Eigenname).",
   ];
   const fuss = [
     "",
@@ -51,45 +63,55 @@ function buildPrompt(input: PoiNarrationInput): string {
     "- Verwende KEIN Gendern (keine Formen wie 'Wanderer*innen'); nutze neutrale oder generische Formen.",
     "- 2 bis 4 Sätze, keine Aufzählungen, keine Überschrift.",
     "- Antworte AUSSCHLIESSLICH mit dem reinen Erzähltext, ohne Anführungszeichen, ohne Markdown, ohne Praeambel.",
+    "- Wenn der Name eine reine Zahl oder ein kurzer Code ist (z.B. '42', 'K17', 'B.3'),",
+    "  ist er eine Kennnummer dieses Objekts — KEIN kultureller Verweis, KEIN Filmzitat.",
   ];
+
+  // OSM-Kontext-Block (falls vorhanden) — kommt vor fuss, nach dem Orts-Block
+  const osmBlock = input.osmContext
+    ? [
+        "",
+        "Zusätzliche verifizierte Informationen aus OpenStreetMap:",
+        input.osmContext,
+        "(Nutze diese Informationen bevorzugt — sie sind faktisch gesichert.)",
+      ]
+    : [];
 
   if (input.extract) {
     return [
       ...kopf,
+      "",
       "Forme den folgenden nüchternen Wikipedia-Auszug über diesen Ort in einen kurzen,",
       "atmosphärischen Erzähltext im selben Sagen-Erzählton um -- so, als würdest du der",
       "wandernden Person im Vorbeigehen davon erzählen.",
       "",
       `Ort: "${input.name}"`,
+      `OpenStreetMap-Kategorie: ${input.kind ?? "unbekannt"}`,
       `Wikipedia-Auszug: ${input.extract}`,
+      ...osmBlock,
       ...fuss,
-      "- Erfinde KEINE neuen Fakten, Ereignisse oder Sagen -- nutze ausschliesslich die Angaben aus dem Auszug.",
+      "- Erfinde KEINE neuen Fakten, Ereignisse oder Sagen -- nutze ausschliesslich die Angaben aus Auszug und OSM-Kontext.",
     ].join("\n");
   }
 
-  // Ohne Wikipedia-Auszug: Name + OSM-Kategorie bekannt. Der Text nutzt,
-  // was der Name nahelegt (z.B. bekannte Personen, historische Ereignisse),
-  // und lädt zum Hinschauen ein -- ohne unsichere Fakten zu erfinden.
+  // Ohne Wikipedia-Auszug: Name + OSM-Kategorie + optionaler OSM-Kontext bekannt.
   return [
     ...kopf,
-    "Zu diesem Ort gibt es keinen Wikipedia-Artikel. Bekannt sind sein Name und seine",
-    "OpenStreetMap-Kategorie. Schreibe einen kurzen, atmosphärischen Erzähltext, der:",
-    "1. Nutzt, was der Name des Ortes nahelegt (z.B. wenn der Name auf eine historische Person,",
-    "   ein Ereignis oder einen Ort hinweist, erwähne was du darüber weisst).",
-    "2. Die wandernde Person einlädt, genauer hinzuschauen.",
+    "",
+    "Zu diesem Ort gibt es keinen Wikipedia-Artikel.",
+    "Bekannt sind sein Name, seine OpenStreetMap-Kategorie und — falls vorhanden — zusätzliche OSM-Informationen.",
+    "Schreibe einen kurzen, atmosphärischen Erzähltext der:",
+    "1. Den korrekten sprachlichen Sinn des Namens nutzt (Schweizerdeutsch beachten, s.o.).",
+    "2. Die verifizierte OSM-Information einbezieht (falls vorhanden).",
+    "3. Die wandernde Person einlädt, genauer hinzuschauen.",
     "",
     `Ort: "${input.name}"`,
     `OpenStreetMap-Kategorie: ${input.kind ?? "unbekannt"}`,
+    ...osmBlock,
     ...fuss,
-    "- Wenn der Name eine bekannte Person enthält (z.B. 'Christoph Merian Denkmal'), erkläre kurz wer diese Person war.",
-    "- Erfinde KEINE ungesicherten Details, Jahreszahlen oder Ereignisse, die du nicht kennst.",
-    "- Wenn du über den Namen nichts Konkretes weisst, erkläre was die Kategorie typischerweise bedeutet.",
-    // Schutz vor falschen Assoziationen bei rein numerischen Namen (z.B. «42»
-    // wuerde Claude sonst als Douglas-Adams-Referenz interpretieren, obwohl
-    // es sich um eine Grenznummerierung handelt):
-    "- Wenn der Name eine reine Zahl oder ein kurzer alphanumerischer Code ist (z.B. '42', 'K17', 'B.3'),",
-    "  behandle ihn als Kennnummer oder Inventarnummer dieses Objekts — NICHT als kulturellen Verweis oder Filmzitat.",
-    "  Erkläre in diesem Fall was die OSM-Kategorie typischerweise bedeutet und lade zum Hinschauen ein.",
+    "- Wenn der Name auf eine bekannte historische Person hinweist, erwähne kurz wer sie war.",
+    "- Erfinde KEINE ungesicherten Details, Jahreszahlen oder Ereignisse.",
+    "- Wenn weder Name noch Kategorie konkreten Inhalt liefern, erkläre was diese Kategorie typischerweise bedeutet.",
   ].join("\n");
 }
 

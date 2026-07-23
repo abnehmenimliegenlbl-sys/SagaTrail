@@ -1098,6 +1098,7 @@ export default function LiveHike() {
       extract: selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract,
       kind: selectedPoi.kind,
       lang: storyLanguage,
+      osmContext: selectedPoi.osmContext ?? undefined,
     })
       .then((result) => {
         if (!cancelled) setPoiStory(result.text);
@@ -2027,6 +2028,7 @@ export default function LiveHike() {
       extract: rawExtract ?? undefined,
       kind: nearbyPoi.kind,
       lang: storyLanguage,
+      osmContext: nearbyPoi.osmContext ?? undefined,
     })
       .then((r) => {
         if (!cancelled && !nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
