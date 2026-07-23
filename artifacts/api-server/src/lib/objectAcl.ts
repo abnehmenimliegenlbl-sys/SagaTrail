@@ -1,21 +1,16 @@
-import { File } from "@google-cloud/storage";
+import type { S3Object } from "./s3";
 
-const ACL_POLICY_METADATA_KEY = "custom:aclPolicy";
+/**
+ * ACL-Policy wird als S3-Custom-Metadata unter dem Schluessel "acl-policy"
+ * gespeichert (JSON-kodiert). S3-Metadata-Keys duerfen nur [a-zA-Z0-9-]
+ * enthalten — kein Doppelpunkt wie beim frueheren GCS-Key "custom:aclPolicy".
+ */
+const ACL_POLICY_METADATA_KEY = "acl-policy";
 
-// Can be flexibly defined according to the use case.
-//
-// Examples:
-// - USER_LIST: the users from a list stored in the database;
-// - EMAIL_DOMAIN: the users whose email is in a specific domain;
-// - GROUP_MEMBER: the users who are members of a specific group;
-// - SUBSCRIBER: the users who are subscribers of a specific service / content
-//   creator.
 export enum ObjectAccessGroupType {}
 
 export interface ObjectAccessGroup {
   type: ObjectAccessGroupType;
-  // The logic id that identifies qualified group members. Format depends on the
-  // ObjectAccessGroupType — e.g. a user-list DB id, an email domain, a group id.
   id: string;
 }
 
@@ -29,7 +24,6 @@ export interface ObjectAclRule {
   permission: ObjectPermission;
 }
 
-// Stored as object custom metadata under "custom:aclPolicy" (JSON string).
 export interface ObjectAclPolicy {
   owner: string;
   visibility: "public" | "private";
@@ -51,47 +45,34 @@ abstract class BaseObjectAccessGroup implements ObjectAccessGroup {
     public readonly type: ObjectAccessGroupType,
     public readonly id: string,
   ) {}
-
   public abstract hasMember(userId: string): Promise<boolean>;
 }
 
-function createObjectAccessGroup(
-  group: ObjectAccessGroup,
-): BaseObjectAccessGroup {
+function createObjectAccessGroup(group: ObjectAccessGroup): BaseObjectAccessGroup {
   switch (group.type) {
-    // Implement per access group type, e.g.:
-    // case "USER_LIST":
-    //   return new UserListAccessGroup(group.id);
     default:
       throw new Error(`Unknown access group type: ${group.type}`);
   }
 }
 
 export async function setObjectAclPolicy(
-  objectFile: File,
+  objectFile: S3Object,
   aclPolicy: ObjectAclPolicy,
 ): Promise<void> {
   const [exists] = await objectFile.exists();
-  if (!exists) {
-    throw new Error(`Object not found: ${objectFile.name}`);
-  }
-
+  if (!exists) throw new Error(`Object not found: ${objectFile.name}`);
   await objectFile.setMetadata({
-    metadata: {
-      [ACL_POLICY_METADATA_KEY]: JSON.stringify(aclPolicy),
-    },
+    metadata: { [ACL_POLICY_METADATA_KEY]: JSON.stringify(aclPolicy) },
   });
 }
 
 export async function getObjectAclPolicy(
-  objectFile: File,
+  objectFile: S3Object,
 ): Promise<ObjectAclPolicy | null> {
-  const [metadata] = await objectFile.getMetadata();
-  const aclPolicy = metadata?.metadata?.[ACL_POLICY_METADATA_KEY];
-  if (!aclPolicy) {
-    return null;
-  }
-  return JSON.parse(aclPolicy as string);
+  const [meta] = await objectFile.getMetadata();
+  const raw = meta?.metadata?.[ACL_POLICY_METADATA_KEY];
+  if (!raw) return null;
+  return JSON.parse(raw) as ObjectAclPolicy;
 }
 
 export async function canAccessObject({
@@ -100,13 +81,11 @@ export async function canAccessObject({
   requestedPermission,
 }: {
   userId?: string;
-  objectFile: File;
+  objectFile: S3Object;
   requestedPermission: ObjectPermission;
 }): Promise<boolean> {
   const aclPolicy = await getObjectAclPolicy(objectFile);
-  if (!aclPolicy) {
-    return false;
-  }
+  if (!aclPolicy) return false;
 
   if (
     aclPolicy.visibility === "public" &&
@@ -115,15 +94,10 @@ export async function canAccessObject({
     return true;
   }
 
-  if (!userId) {
-    return false;
-  }
+  if (!userId) return false;
+  if (aclPolicy.owner === userId) return true;
 
-  if (aclPolicy.owner === userId) {
-    return true;
-  }
-
-  for (const rule of aclPolicy.aclRules || []) {
+  for (const rule of aclPolicy.aclRules ?? []) {
     const accessGroup = createObjectAccessGroup(rule.group);
     if (
       (await accessGroup.hasMember(userId)) &&
@@ -132,6 +106,5 @@ export async function canAccessObject({
       return true;
     }
   }
-
   return false;
 }

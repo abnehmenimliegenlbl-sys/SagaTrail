@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import type { Logger } from "pino";
-import { objectStorageClient } from "./objectStorage";
+import { objectStorageClient } from "./s3";
 import {
   DEFAULT_NARRATOR_VOICE_ID,
   OPENAI_FALLBACK_VOICE_ID,
@@ -94,17 +94,21 @@ function checkAndDeductBudget(userId: string, chars: number): void {
  */
 
 function parsePrivateDir(): { bucketName: string; prefix: string } {
+  // R2: Bucket und Praefix aus dedizierten Env-Variablen
+  const r2Bucket = process.env.R2_BUCKET_NAME;
+  if (r2Bucket) {
+    return { bucketName: r2Bucket, prefix: "private" };
+  }
+  // Legacy-Fallback fuer Replit Object Storage (dev-Umgebung ohne R2)
   const dir = process.env.PRIVATE_OBJECT_DIR || "";
   if (!dir) {
     throw new Error(
-      "PRIVATE_OBJECT_DIR nicht gesetzt. Object Storage wurde nicht provisioniert.",
+      "R2_BUCKET_NAME oder PRIVATE_OBJECT_DIR muss gesetzt sein.",
     );
   }
   const trimmed = dir.startsWith("/") ? dir.slice(1) : dir;
   const parts = trimmed.split("/");
-  const bucketName = parts[0];
-  const prefix = parts.slice(1).join("/");
-  return { bucketName, prefix };
+  return { bucketName: parts[0], prefix: parts.slice(1).join("/") };
 }
 
 function narrationObjectName(hash: string): string {
