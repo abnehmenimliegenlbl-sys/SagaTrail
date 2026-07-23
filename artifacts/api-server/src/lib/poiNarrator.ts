@@ -38,8 +38,43 @@ function cacheKey(input: PoiNarrationInput): string {
   return `${input.lang}::${input.name}::${input.extract ?? ""}::${input.kind ?? ""}::${input.osmContext ?? ""}`;
 }
 
+/** Uebersetzt rohe OSM-Kind-Tags ("historic=boundary_stone") in lesbare
+ *  deutsche Bezeichnungen, damit Claude den Objekttyp sofort versteht.
+ *  Unbekannte Werte werden unveraendert uebergeben. */
+function translateKind(kind: string | undefined): string {
+  if (!kind) return "unbekannt";
+  const MAP: Record<string, string> = {
+    // historic
+    "historic=boundary_stone":    "Historischer Grenzstein",
+    "historic=ruins":             "Historische Ruine",
+    "historic=castle":            "Burg oder Schloss",
+    "historic=manor":             "Historisches Herrenhaus",
+    "historic=monument":          "Denkmal",
+    "historic=memorial":          "Gedenkstätte oder Mahnmal",
+    "historic=wayside_cross":     "Wegkreuz (Bildstock)",
+    "historic=wayside_shrine":    "Wegkapelle oder Wegschrein",
+    "historic=church":            "Historische Kirche",
+    "historic=city_gate":         "Historisches Stadttor",
+    "historic=fort":              "Historische Festung",
+    "historic=archaeological_site": "Archäologische Fundstätte",
+    "historic=milestone":         "Historischer Meilenstein",
+    "historic=battlefield":       "Historisches Schlachtfeld",
+    "historic=mine":              "Historische Mine oder Bergwerk",
+    "historic=building":          "Historisches Gebäude",
+    "historic=tomb":              "Historisches Grabmal",
+    "historic=yes":               "Historisches Objekt",
+    // tourism
+    "tourism=artwork":            "Kunstobjekt / öffentliches Kunstwerk",
+    "tourism=attraction":         "Sehenswürdigkeit",
+    "tourism=viewpoint":          "Aussichtspunkt",
+    "tourism=museum":             "Museum",
+  };
+  return MAP[kind] ?? kind;
+}
+
 function buildPrompt(input: PoiNarrationInput): string {
   const langLabel = LANGUAGE_LABEL[input.lang] ?? "Hochdeutsch";
+  const kindLabel = translateKind(input.kind);
   const kopf = [
     "Du bist derselbe Erzähler, der in einer Schweizer Wander-App regionale Sagen live erzählt.",
     "Eine wandernde Person kommt unterwegs an einem realen Ort vorbei.",
@@ -86,7 +121,7 @@ function buildPrompt(input: PoiNarrationInput): string {
       "wandernden Person im Vorbeigehen davon erzählen.",
       "",
       `Ort: "${input.name}"`,
-      `OpenStreetMap-Kategorie: ${input.kind ?? "unbekannt"}`,
+      `Objekttyp: ${kindLabel}`,
       `Wikipedia-Auszug: ${input.extract}`,
       ...osmBlock,
       ...fuss,
@@ -106,7 +141,7 @@ function buildPrompt(input: PoiNarrationInput): string {
     "3. Die wandernde Person einlädt, genauer hinzuschauen.",
     "",
     `Ort: "${input.name}"`,
-    `OpenStreetMap-Kategorie: ${input.kind ?? "unbekannt"}`,
+    `Objekttyp: ${kindLabel}`,
     ...osmBlock,
     ...fuss,
     "- Wenn der Name auf eine bekannte historische Person hinweist, erwähne kurz wer sie war.",
