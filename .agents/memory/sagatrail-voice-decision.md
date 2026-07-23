@@ -51,3 +51,10 @@ Recognizer-Fehler (no-speech etc.) duerfen `listening` nicht auf false setzen �
 nur echte Permission-Fehler; (3) Restart-Limit muss das ganze Countdown-Fenster
 abdecken (iOS beendet Sessions nach 1-3s Stille). Zudem: letztes Transkript in
 der UI anzeigen, sonst ist der Fehler fuer Nutzende unsichtbar.
+
+**Pitfall (fixed 2026-07-23):** Ordinal-Matching normalisierte nur das
+Transkript (Akzente weg), nicht die Vergleichswortliste — Umlaut-/Akzent-
+Ordinale (gsw "zwöiti", fr "première", pt "três") matchten deshalb NIE.
+Beide Seiten durch dieselbe normalize() schicken. Matcher-Logik laesst sich
+ohne Test-Framework verifizieren: Datei mit gestubbtem Lang-Typ nach /tmp
+kopieren + `node --experimental-strip-types`.

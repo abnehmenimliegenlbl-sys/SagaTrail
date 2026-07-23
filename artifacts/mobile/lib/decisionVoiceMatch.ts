@@ -95,7 +95,11 @@ export function matchDecisionOption(
   const ordinals = ORDINAL_WORDS[lang] ?? ORDINAL_WORDS.de;
   const spokenWords = new Set(normalized.split(/\s+/));
   for (let i = 0; i < options.length && i < ordinals.length; i++) {
-    if (ordinals[i].some((word) => spokenWords.has(word))) {
+    // Ordinal-Woerter ebenfalls normalisieren: normalize() entfernt Akzente
+    // aus dem Transkript ("zwöiti" -> "zwoiti"), also muessen die
+    // Vergleichswoerter gleich behandelt werden, sonst matchen Umlaut-/
+    // Akzentwoerter (gsw, fr, pt, ru) nie.
+    if (ordinals[i].some((word) => spokenWords.has(normalize(word)))) {
       return i;
     }
   }
