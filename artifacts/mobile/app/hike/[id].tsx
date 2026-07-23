@@ -2308,7 +2308,7 @@ export default function LiveHike() {
   // Erzaehlstimme das Mikrofon stoeren. Faellt still auf die Buttons zurueck,
   // wenn Spracherkennung nicht verfuegbar/erlaubt ist (z. B. Expo Go, Web).
   const decisionOptions = chapters[currentIndex]?.decision?.options ?? [];
-  const { listening: voiceListening, supported: voiceSupported } = useVoiceDecision(
+  const { listening: voiceListening, supported: voiceSupported, lastTranscript: voiceTranscript } = useVoiceDecision(
     awaitingDecision && !speaking && decisionOptions.length > 0 && !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
@@ -2325,6 +2325,11 @@ export default function LiveHike() {
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (voiceListening) return;
+    // WICHTIG: Nicht zuruecksetzen solange der Entscheidungspunkt noch aktiv
+    // ist — zwischen den automatischen Erkennungs-Neustarts flackert
+    // voiceListening kurz auf false; allowsRecordingIOS:false wuerde dann das
+    // Mikrofon mitten im Entscheidungspunkt lahmlegen ("App hoert nicht zu").
+    if (awaitingDecision) return;
     // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
     // PlayAndRecord): Session zurueck auf MixWithOthers/Playback.
     // DuckOthers wird erst wieder gesetzt wenn die naechste Erzaehlung startet.
@@ -2336,7 +2341,7 @@ export default function LiveHike() {
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
       shouldDuckAndroid: false,
     }).catch(() => {});
-  }, [voiceListening]);
+  }, [voiceListening, awaitingDecision]);
 
   async function submitConditionHike() {
     if (!selectedCondition || !id) return;
@@ -2984,6 +2989,11 @@ export default function LiveHike() {
                       </Text>
                     </View>
                   )}
+                  {!folgtGruppenleitung && voiceSupported && voiceTranscript ? (
+                    <Text style={[styles.voiceHintText, { color: colors.mutedForeground, marginBottom: 8 }]} numberOfLines={1}>
+                      «{voiceTranscript}»
+                    </Text>
+                  ) : null}
                   {currentChapter.decision.options.map((opt, i) => (
                     <Pressable
                       key={i}

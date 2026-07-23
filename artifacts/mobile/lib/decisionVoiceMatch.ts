@@ -17,7 +17,7 @@ import { Lang } from "./storyContent";
 const ORDINAL_WORDS: Record<Lang, string[][]> = {
   de: [
     ["eins", "erste", "erstes", "erster", "1"],
-    ["zwei", "zweite", "zweites", "zweiter", "2"],
+    ["zwei", "zwo", "zweite", "zweites", "zweiter", "2"],
     ["drei", "dritte", "drittes", "dritter", "3"],
   ],
   gsw: [

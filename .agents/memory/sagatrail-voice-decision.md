@@ -40,3 +40,14 @@ native module", easily misdiagnosed as an unrelated feature bug (e.g. a
 no-op fallback for the hook itself so call order stays stable across renders.
 Apply the same guard pattern to any Expo native module lacking a web/Expo-Go
 JS fallback that's imported from a route file.
+
+**Pitfall (fixed 2026-07-23):** "App hoert nicht zu" bei Entscheidungspunkten:
+der Audio-Session-Reset-Effekt im Hike-Screen setzte `allowsRecordingIOS:false`
+sobald `listening` kurz false flackerte — also zwischen den automatischen
+Erkennungs-Neustarts, mitten im aktiven Entscheidungspunkt → Mikrofon tot,
+Countdown lief ab, Timeout-Default wurde gewaehlt. Drei Regeln: (1) Session-Reset
+nur wenn der Entscheidungspunkt NICHT mehr aktiv ist; (2) transiente
+Recognizer-Fehler (no-speech etc.) duerfen `listening` nicht auf false setzen —
+nur echte Permission-Fehler; (3) Restart-Limit muss das ganze Countdown-Fenster
+abdecken (iOS beendet Sessions nach 1-3s Stille). Zudem: letztes Transkript in
+der UI anzeigen, sonst ist der Fehler fuer Nutzende unsichtbar.

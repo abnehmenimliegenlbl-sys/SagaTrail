@@ -50,15 +50,19 @@ if (NATIVE_SPEECH_AVAILABLE) {
   }
 }
 
-const MAX_LISTEN_RESTARTS = 6;
+// Grosszuegig: iOS/Android beenden Sessions oft schon nach 1-3 s Stille.
+// Der Entscheidungs-Countdown laeuft 30 s — die Neustarts muessen die ganze
+// Zeitspanne abdecken, sonst ist das Mikrofon lange vor Ablauf tot.
+const MAX_LISTEN_RESTARTS = 40;
 
 export function useVoiceDecision(
   active: boolean,
   lang: Lang,
   options: VoiceMatchOption[],
   onMatch: (index: number) => void
-): { listening: boolean; supported: boolean } {
+): { listening: boolean; supported: boolean; lastTranscript: string | null } {
   const [listening, setListening] = useState(false);
+  const [lastTranscript, setLastTranscript] = useState<string | null>(null);
   const [supported, setSupported] = useState(
     NATIVE_SPEECH_AVAILABLE && ExpoSpeechRecognitionModule != null
   );
@@ -89,6 +93,7 @@ export function useVoiceDecision(
     let cancelled = false;
     restartsRef.current = 0;
     matchedRef.current = false;
+    setLastTranscript(null);
 
     (async () => {
       try {
@@ -124,6 +129,7 @@ export function useVoiceDecision(
     // Alle verfuegbaren Transkripte pruefen (auch Zwischen-Ergebnisse):
     // ein Treffer reicht aus, um die Entscheidung auszuloesen.
     const transcripts = event.results?.map((r) => r.transcript).filter(Boolean) ?? [];
+    if (transcripts.length > 0) setLastTranscript(transcripts[transcripts.length - 1]);
     for (const transcript of transcripts) {
       const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
       if (index != null) {
@@ -159,9 +165,16 @@ export function useVoiceDecision(
   useSpeechRecognitionEvent("error", (event) => {
     if (event.error === "not-allowed" || event.error === "service-not-allowed") {
       setSupported(false);
+      setListening(false);
+      return;
     }
-    setListening(false);
+    // Transiente Fehler ("no-speech", "network", "aborted" bei Session-Ende)
+    // NICHT als "Zuhoeren beendet" werten: gleich danach feuert "end" und
+    // startet die Erkennung neu. setListening(false) wuerde hier den
+    // Audio-Session-Reset im Hike-Screen ausloesen (allowsRecordingIOS:false)
+    // und das Mikrofon mitten im Entscheidungspunkt lahmlegen — genau der
+    // Fehler, bei dem die App scheinbar "nicht zuhoert".
   });
 
-  return { listening, supported };
+  return { listening, supported, lastTranscript };
 }
