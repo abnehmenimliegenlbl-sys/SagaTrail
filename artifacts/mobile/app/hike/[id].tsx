@@ -2267,11 +2267,14 @@ export default function LiveHike() {
     if (promptedDecisionRef.current === currentIndex) return;
     promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
-    const decision = chapters[currentIndex]?.decision;
+    // Kapitel-Daten ueber Ref lesen, NICHT aus State-Dep — sonst loest jede
+    // chapters-Aenderung (z. B. chosenOptionIndex nach Wahl, Group-Sync) den
+    // Effekt erneut aus und die Frage wird ein zweites Mal vorgelesen.
+    const decision = decisionsRef.current[currentIndex]?.decision;
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
     speakRef.current?.(pack.buildDecisionPrompt(opts, question));
-  }, [awaitingDecision, speaking, currentIndex, storyLanguage, chapters]);
+  }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
 
   // 30-Sekunden-Countdown fuer Entscheidungspunkte: laeuft automatisch an,
   // sobald der Entscheidungspunkt aktiv und die Erzaehlung fertig ist.
@@ -2322,14 +2325,18 @@ export default function LiveHike() {
   // ihn zum Schutz vor Rueckkopplung runter. Ohne diesen Reset bleibt die
   // Session im Record-Modus und jede nachfolgende Erzaehlung klingt
   // wesentlich leiser.
+  //
+  // KEIN awaitingDecision-Guard mehr: der fruehre Guard sollte verhindern,
+  // dass der Reset zwischen automatischen Erkennungs-Neustarts (voiceListening
+  // flackert false) das Mikrofon lahmlegt. Seit dem Neustarts-Fix (MAX_LISTEN_
+  // RESTARTS=40) setzt der "end"-Handler listening NIE auf false — er startet
+  // direkt neu ohne setListening(false). Damit gibt es kein Flackern mehr.
+  // Der Guard blockiert jetzt stattdessen den ECHTEN Reset nach der Entschei-
+  // dung: voiceListening geht false, awaitingDecision ist noch true (nicht
+  // gebatcht) → Guard greift → Session bleibt in PlayAndRecord → leise.
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (voiceListening) return;
-    // WICHTIG: Nicht zuruecksetzen solange der Entscheidungspunkt noch aktiv
-    // ist — zwischen den automatischen Erkennungs-Neustarts flackert
-    // voiceListening kurz auf false; allowsRecordingIOS:false wuerde dann das
-    // Mikrofon mitten im Entscheidungspunkt lahmlegen ("App hoert nicht zu").
-    if (awaitingDecision) return;
     // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
     // PlayAndRecord): Session zurueck auf MixWithOthers/Playback.
     // DuckOthers wird erst wieder gesetzt wenn die naechste Erzaehlung startet.
@@ -2341,7 +2348,7 @@ export default function LiveHike() {
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
       shouldDuckAndroid: false,
     }).catch(() => {});
-  }, [voiceListening, awaitingDecision]);
+  }, [voiceListening]);
 
   async function submitConditionHike() {
     if (!selectedCondition || !id) return;
