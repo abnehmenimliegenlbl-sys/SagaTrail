@@ -231,6 +231,16 @@ export default function SignInScreen() {
           </Text>
         </Pressable>
 
+        <Pressable
+          onPress={() => router.push("/forgot-password" as any)}
+          style={styles.forgotRow}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.forgotLink, { color: colors.mutedForeground }]}>
+            {t.forgotPasswordLink}
+          </Text>
+        </Pressable>
+
         <View style={styles.footerRow}>
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
             {t.noAccountYet}
@@ -303,4 +313,6 @@ const styles = StyleSheet.create({
   },
   footerText: { fontFamily: fonts.body, fontSize: 14 },
   footerLink: { fontFamily: fonts.bodyMedium, fontSize: 14 },
+  forgotRow: { alignItems: "center", marginTop: 12 },
+  forgotLink: { fontFamily: fonts.body, fontSize: 13 },
 });

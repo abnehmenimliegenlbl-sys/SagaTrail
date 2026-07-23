@@ -1,6 +1,15 @@
 import { createUseStrings, StringsDict } from "../createStrings";
 
 export interface AuthStrings {
+  forgotPasswordLink: string;
+  forgotPasswordTitle: string;
+  forgotPasswordSubtitle: string;
+  forgotPasswordButton: string;
+  forgotPasswordNewPassword: string;
+  forgotPasswordCodePlaceholder: string;
+  forgotPasswordSuccess: string;
+  forgotPasswordBackToLogin: string;
+  errorResetFailed: string;
   signInTitle: string;
   signInSubtitle: string;
   signUpTitle: string;
@@ -63,6 +72,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Google-Anmeldung fehlgeschlagen.",
     errorAppleFailed: "Apple-Anmeldung fehlgeschlagen.",
     errorRateLimit: "Zu viele Versuche. Bitte warte einige Minuten und versuche es erneut.",
+    forgotPasswordLink: "Passwort vergessen?",
+    forgotPasswordTitle: "Passwort zurücksetzen",
+    forgotPasswordSubtitle: "Wir schicken dir einen Code per E-Mail.",
+    forgotPasswordButton: "Code senden",
+    forgotPasswordNewPassword: "Neues Passwort",
+    forgotPasswordCodePlaceholder: "Reset-Code",
+    forgotPasswordSuccess: "Passwort erfolgreich geändert.",
+    forgotPasswordBackToLogin: "Zurück zur Anmeldung",
+    errorResetFailed: "Zurücksetzen fehlgeschlagen. Bitte prüfen.",
   },
   gsw: {
     signInTitle: "Willkomme zrugg",
@@ -94,6 +112,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Google-Amäldig fehlgschlage.",
     errorAppleFailed: "Apple-Amäldig fehlgschlage.",
     errorRateLimit: "Zu vili Versueche. Bitte wart es paar Minute und versuech's nomol.",
+    forgotPasswordLink: "Passwort vergässe?",
+    forgotPasswordTitle: "Passwort zrugksetze",
+    forgotPasswordSubtitle: "Mir schicke dir en Code per E-Mail.",
+    forgotPasswordButton: "Code schicke",
+    forgotPasswordNewPassword: "Neus Passwort",
+    forgotPasswordCodePlaceholder: "Reset-Code",
+    forgotPasswordSuccess: "Passwort erfolgriich gändert.",
+    forgotPasswordBackToLogin: "Zrugg zur Amäldig",
+    errorResetFailed: "Zrugksetze fehlgschlage. Bitte checke.",
   },
   en: {
     signInTitle: "Welcome back",
@@ -125,6 +152,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Google sign-in failed.",
     errorAppleFailed: "Apple sign-in failed.",
     errorRateLimit: "Too many attempts. Please wait a few minutes and try again.",
+    forgotPasswordLink: "Forgot password?",
+    forgotPasswordTitle: "Reset password",
+    forgotPasswordSubtitle: "We'll send you a code by email.",
+    forgotPasswordButton: "Send code",
+    forgotPasswordNewPassword: "New password",
+    forgotPasswordCodePlaceholder: "Reset code",
+    forgotPasswordSuccess: "Password changed successfully.",
+    forgotPasswordBackToLogin: "Back to sign in",
+    errorResetFailed: "Reset failed. Please check your details.",
   },
   fr: {
     signInTitle: "Bon retour",
@@ -156,6 +192,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Échec de la connexion Google.",
     errorAppleFailed: "Échec de la connexion Apple.",
     errorRateLimit: "Trop de tentatives. Merci de patienter quelques minutes avant de réessayer.",
+    forgotPasswordLink: "Mot de passe oublié ?",
+    forgotPasswordTitle: "Réinitialiser le mot de passe",
+    forgotPasswordSubtitle: "Nous t'enverrons un code par e-mail.",
+    forgotPasswordButton: "Envoyer le code",
+    forgotPasswordNewPassword: "Nouveau mot de passe",
+    forgotPasswordCodePlaceholder: "Code de réinitialisation",
+    forgotPasswordSuccess: "Mot de passe modifié avec succès.",
+    forgotPasswordBackToLogin: "Retour à la connexion",
+    errorResetFailed: "Réinitialisation échouée. Veuillez vérifier.",
   },
   it: {
     signInTitle: "Bentornato",
@@ -187,6 +232,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Accesso con Google non riuscito.",
     errorAppleFailed: "Accesso con Apple non riuscito.",
     errorRateLimit: "Troppi tentativi. Attendi qualche minuto e riprova.",
+    forgotPasswordLink: "Password dimenticata?",
+    forgotPasswordTitle: "Reimposta la password",
+    forgotPasswordSubtitle: "Ti invieremo un codice per e-mail.",
+    forgotPasswordButton: "Invia codice",
+    forgotPasswordNewPassword: "Nuova password",
+    forgotPasswordCodePlaceholder: "Codice di reimpostazione",
+    forgotPasswordSuccess: "Password modificata con successo.",
+    forgotPasswordBackToLogin: "Torna all'accesso",
+    errorResetFailed: "Reimpostazione non riuscita. Controlla i dati.",
   },
   es: {
     signInTitle: "Bienvenido de nuevo",
@@ -218,6 +272,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Error al iniciar sesión con Google.",
     errorAppleFailed: "Error al iniciar sesión con Apple.",
     errorRateLimit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+    forgotPasswordLink: "¿Olvidaste tu contraseña?",
+    forgotPasswordTitle: "Restablecer contraseña",
+    forgotPasswordSubtitle: "Te enviaremos un código por correo.",
+    forgotPasswordButton: "Enviar código",
+    forgotPasswordNewPassword: "Nueva contraseña",
+    forgotPasswordCodePlaceholder: "Código de restablecimiento",
+    forgotPasswordSuccess: "Contraseña cambiada con éxito.",
+    forgotPasswordBackToLogin: "Volver al inicio de sesión",
+    errorResetFailed: "Restablecimiento fallido. Verifica los datos.",
   },
   pt: {
     signInTitle: "Bem-vindo de volta",
@@ -249,6 +312,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Falha no login com o Google.",
     errorAppleFailed: "Falha no login com a Apple.",
     errorRateLimit: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+    forgotPasswordLink: "Esqueceu a senha?",
+    forgotPasswordTitle: "Redefinir senha",
+    forgotPasswordSubtitle: "Enviaremos um código para o seu e-mail.",
+    forgotPasswordButton: "Enviar código",
+    forgotPasswordNewPassword: "Nova senha",
+    forgotPasswordCodePlaceholder: "Código de redefinição",
+    forgotPasswordSuccess: "Senha alterada com sucesso.",
+    forgotPasswordBackToLogin: "Voltar ao login",
+    errorResetFailed: "Redefinição falhou. Verifique os dados.",
   },
   zh: {
     signInTitle: "欢迎回来",
@@ -280,6 +352,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Google 登录失败。",
     errorAppleFailed: "Apple 登录失败。",
     errorRateLimit: "尝试次数过多，请等待几分钟后重试。",
+    forgotPasswordLink: "忘记密码？",
+    forgotPasswordTitle: "重置密码",
+    forgotPasswordSubtitle: "我们将向你的邮箱发送验证码。",
+    forgotPasswordButton: "发送验证码",
+    forgotPasswordNewPassword: "新密码",
+    forgotPasswordCodePlaceholder: "重置验证码",
+    forgotPasswordSuccess: "密码修改成功。",
+    forgotPasswordBackToLogin: "返回登录",
+    errorResetFailed: "重置失败，请检查信息。",
   },
   ru: {
     signInTitle: "С возвращением",
@@ -311,6 +392,15 @@ const AUTH_STRINGS: StringsDict<AuthStrings> = {
     errorGoogleFailed: "Вход через Google не удался.",
     errorAppleFailed: "Вход через Apple не удался.",
     errorRateLimit: "Слишком много попыток. Подожди несколько минут и попробуй снова.",
+    forgotPasswordLink: "Забыли пароль?",
+    forgotPasswordTitle: "Сброс пароля",
+    forgotPasswordSubtitle: "Мы отправим код на твой e-mail.",
+    forgotPasswordButton: "Отправить код",
+    forgotPasswordNewPassword: "Новый пароль",
+    forgotPasswordCodePlaceholder: "Код сброса",
+    forgotPasswordSuccess: "Пароль успешно изменён.",
+    forgotPasswordBackToLogin: "Вернуться к входу",
+    errorResetFailed: "Сброс не удался. Проверьте данные.",
   },
 };
 
