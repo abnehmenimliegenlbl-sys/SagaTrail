@@ -679,7 +679,7 @@ function cardHtml(r){
   window.__routeStore[r.id] = r;
   const src = proxyImg(r.photoUrl);
   const img = src
-    ? \`<img class="route-img" src="\${src}" alt="\${r.name}"
+    ? \`<img class="route-img" src="\${src}" alt="\${r.name}" loading="lazy"
          onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
     : PH_SVG;
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
