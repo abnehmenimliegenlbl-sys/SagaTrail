@@ -84,7 +84,9 @@ export default function Paywall() {
   const plaene = useMemo(() => {
     const pakete = offerings?.current?.availablePackages ?? [];
     const reihenfolge = upgradeMode
-      ? (["elite", "eliteFamily"] as PlanKey[])
+      ? (isFamily
+          ? (["elite", "eliteFamily"] as PlanKey[])       // Family → nur Elite-Upgrades
+          : (["family", "elite", "eliteFamily"] as PlanKey[])) // Premium → Family + Elite
       : PLAN_REIHENFOLGE;
     return reihenfolge.flatMap((key) => {
       const paket = pakete.find((p) => PAKET_ZU_PLAN[p.identifier] === key);
@@ -268,7 +270,12 @@ export default function Paywall() {
 
             {isLoading ? (
               <View style={{ gap: 10 }}>
-                {(upgradeMode ? ["elite", "eliteFamily"] : PLAN_REIHENFOLGE).map((key) => (
+                {(upgradeMode
+                  ? isFamily
+                    ? ["elite", "eliteFamily"]
+                    : ["family", "elite", "eliteFamily"]
+                  : PLAN_REIHENFOLGE
+                ).map((key) => (
                   <Skeleton key={key} height={74} radius={colors.radius} />
                 ))}
               </View>
