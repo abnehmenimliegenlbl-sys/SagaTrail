@@ -1170,8 +1170,8 @@ async function loadAnfragen() {
           '<td>' + typBadge + '</td>' +
           '<td><span class="badge badge-gray">' + esc(r.paket || 'standard') + '</span></td>' +
           '<td>' + esc(r.kontaktName) + '<br><a href="mailto:' + esc(r.kontaktEmail) + '">' + esc(r.kontaktEmail) + '</a>' + (r.kontaktTelefon ? '<br>' + esc(r.kontaktTelefon) : '') + '</td>' +
-          '<td><select class="sel-status" onchange="setAnfrageStatus(\'' + r.id + '\',this.value)">' + statusOpts + '</select></td>' +
-          '<td><button class="btn btn-green btn-sm" onclick="prefillFromAnfrage(\'' + r.id + '\')">&#8594; Partner</button></td>' +
+          '<td><select class="sel-status" onchange="setAnfrageStatus(\\'' + r.id + '\\',this.value)">' + statusOpts + '</select></td>' +
+          '<td><button class="btn btn-green btn-sm" onclick="prefillFromAnfrage(\\'' + r.id + '\\')">&#8594; Partner</button></td>' +
           '</tr>';
       });
       html += '</tbody></table></div>';
