@@ -678,6 +678,7 @@ router.patch("/admin/anfragen/:id", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/dashboard", (_req, res): void => {
+  res.setHeader("Cache-Control", "no-store");
   res.type("html").send(ADMIN_DASHBOARD_HTML);
 });
 
