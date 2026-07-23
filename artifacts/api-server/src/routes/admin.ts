@@ -636,6 +636,74 @@ router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
 });
 
 // ===================================================================
+// ROUTEN-FOTOS
+// ===================================================================
+
+router.get("/admin/routes/cantons", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db
+      .selectDistinct({ canton: externalRoutesTable.canton })
+      .from(externalRoutesTable)
+      .orderBy(externalRoutesTable.canton);
+    res.json(rows.map((r) => r.canton));
+  } catch (err) {
+    req.log.error({ err }, "Admin routes cantons fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+router.get("/admin/routes", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const canton =
+    typeof req.query.canton === "string" ? req.query.canton : null;
+  try {
+    const rows = await db
+      .select({
+        id: externalRoutesTable.id,
+        canton: externalRoutesTable.canton,
+        name: externalRoutesTable.name,
+        distanceKm: externalRoutesTable.distanceKm,
+        sac: externalRoutesTable.sac,
+        lat: externalRoutesTable.lat,
+        lng: externalRoutesTable.lng,
+        sagaId: externalRoutesTable.sagaId,
+        photoUrl: externalRoutesTable.photoUrl,
+        photoAttribution: externalRoutesTable.photoAttribution,
+      })
+      .from(externalRoutesTable)
+      .where(canton ? eq(externalRoutesTable.canton, canton) : undefined)
+      .orderBy(externalRoutesTable.name);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Admin routes list fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+router.patch("/admin/routes/:id/foto", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  const { photoUrl, photoAttribution } = req.body as {
+    photoUrl?: string | null;
+    photoAttribution?: string | null;
+  };
+  try {
+    await db
+      .update(externalRoutesTable)
+      .set({
+        photoUrl: photoUrl ?? null,
+        photoAttribution: photoAttribution ?? null,
+      })
+      .where(eq(externalRoutesTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Admin route foto update fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// ===================================================================
 // PARTNER-ANFRAGEN
 // ===================================================================
 

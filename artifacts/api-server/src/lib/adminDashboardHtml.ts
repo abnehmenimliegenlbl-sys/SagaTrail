@@ -132,6 +132,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
+  <button class="tab-btn" onclick="switchTab('routen',this)">&#128247; Routen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
 </div>
 
@@ -233,6 +234,24 @@ a{color:var(--red);text-decoration:none}
     </div>
   </div>
 
+  <!-- ROUTEN-FOTOS -->
+  <div id="tab-routen" class="tab-pane">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">&#128247; Routen-Fotos kuratieren</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="routen-kanton" onchange="loadRoutenFotos()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--dark)">
+            <option value="">\u2013 Kanton w\u00e4hlen \u2013</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadRoutenFotos()" title="Neu laden">&#8635; Aktualisieren</button>
+          <span id="routen-count" class="hint"></span>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:12px">Foto-URL direkt eingeben und mit &#10003; speichern. &#128269; sucht automatisch ein passendes Wikimedia-Foto.</p>
+      <div id="routen-body"><p class="hint">Kanton w\u00e4hlen um Routen zu laden.</p></div>
+    </div>
+  </div>
+
   <!-- ANFRAGEN -->
   <div id="tab-anfragen" class="tab-pane">
     <div id="anfragen-body"><p class="loading">Wird geladen...</p></div>
@@ -310,6 +329,8 @@ a{color:var(--red);text-decoration:none}
 var _token = '';
 var _partner = [];
 var _anfragen = [];
+var _routen = [];
+var _routenKantons = [];
 var _lookupResults = [];
 var _editPartnerId = null;
 var LS_KEY = 'sagatrail_admin_tok';
@@ -406,6 +427,7 @@ function switchTab(name, btn) {
   if (name === 'usage'    && token()) loadUsage();
   if (name === 'push'     && token()) loadPushStats();
   if (name === 'sagen'    && token()) loadSagen();
+  if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
 }
 
@@ -1127,6 +1149,155 @@ async function saveSagaFoto(sagaId, sid) {
     // Cache aktualisieren
     var entry = _sagen.find(function(s){ return s.id === sagaId; });
     if (entry) entry.fotoUrl = url || null;
+    setTimeout(function(){ stEl.textContent = ''; }, 2000);
+  } catch(e) {
+    stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler';
+    btn.disabled = false; btn.style.opacity = '1';
+  }
+}
+
+/* ===================== ROUTEN-FOTOS ===================== */
+async function initRoutenTab() {
+  if (_routenKantons.length) return;
+  try {
+    _routenKantons = await api('/api/admin/routes/cantons');
+    var sel = document.getElementById('routen-kanton');
+    _routenKantons.forEach(function(k) {
+      var opt = document.createElement('option');
+      opt.value = k; opt.textContent = k;
+      sel.appendChild(opt);
+    });
+  } catch(e) {
+    document.getElementById('routen-body').innerHTML = '<p class="err">Kantone laden fehlgeschlagen: ' + esc(e.message) + '</p>';
+  }
+}
+async function loadRoutenFotos() {
+  var canton = document.getElementById('routen-kanton').value;
+  var el = document.getElementById('routen-body');
+  var cnt = document.getElementById('routen-count');
+  if (!token()) return;
+  if (!canton) {
+    el.innerHTML = '<p class="hint">Kanton w\u00e4hlen um Routen zu laden.</p>';
+    cnt.textContent = '';
+    return;
+  }
+  el.innerHTML = '<p class="loading">Lade Routen f\u00fcr ' + esc(canton) + '\u2026</p>';
+  try {
+    _routen = await api('/api/admin/routes?canton=' + encodeURIComponent(canton));
+    renderRouten();
+  } catch(e) {
+    el.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+function renderRouten() {
+  var el  = document.getElementById('routen-body');
+  var cnt = document.getElementById('routen-count');
+  var list = _routen;
+  var ohneFoto = list.filter(function(r){ return !r.photoUrl; }).length;
+  cnt.textContent = list.length + ' Routen';
+  if (ohneFoto) cnt.textContent += ' \u00b7 ' + ohneFoto + ' ohne Foto';
+  if (!list.length) { el.innerHTML = '<p class="hint">Keine Routen f\u00fcr diesen Kanton.</p>'; return; }
+  var html = '<div style="overflow-x:auto"><table class="tbl" style="min-width:920px">' +
+    '<thead><tr>' +
+    '<th style="width:200px">Name</th>' +
+    '<th style="width:55px">km</th>' +
+    '<th style="width:80px">SAC</th>' +
+    '<th style="width:320px">Foto-URL</th>' +
+    '<th style="width:72px">Foto</th>' +
+    '<th style="width:70px"></th>' +
+    '</tr></thead><tbody>';
+  list.forEach(function(r) {
+    var rid = r.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    html += '<tr id="rr-' + rid + '">' +
+      '<td style="font-weight:600;font-size:12px">' + esc(r.name) + '</td>' +
+      '<td style="font-size:12px;color:var(--mid)">' + (r.distanceKm ? r.distanceKm.toFixed(1) : '\u2013') + '</td>' +
+      '<td><span class="badge badge-gray" style="font-size:10px">' + esc(r.sac) + '</span></td>' +
+      '<td>' +
+        '<input id="rf-url-' + rid + '" type="url" value="' + esc(r.photoUrl||'') + '" ' +
+          'style="width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:monospace" ' +
+          'oninput="routeFotoChanged(\\'' + rid + '\\')" ' +
+          'onkeydown="if(event.key===\\'Enter\\')saveRouteFoto(\\'' + r.id + '\\',\\'' + rid + '\\')" />' +
+      '</td>' +
+      '<td style="text-align:center">' +
+        (r.photoUrl
+          ? '<img id="rf-img-' + rid + '" src="' + esc(r.photoUrl) + '" ' +
+            'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+            'onerror="this.style.opacity=\\'0.2\\'" />'
+          : '<div id="rf-img-' + rid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>'
+        ) +
+      '</td>' +
+      '<td style="text-align:center;white-space:nowrap">' +
+        '<button class="btn btn-ghost btn-sm" title="Foto automatisch suchen (' + esc(r.name) + ')" ' +
+          'onclick="searchRouteFoto(\\'' + r.id + '\\',\\'' + rid + '\\',' + r.lat + ',' + r.lng + ',\\'' + esc(r.name).replace(/'/g,"\\\\'") + '\\')" ' +
+          'style="margin-right:4px">&#128269;</button>' +
+        '<button id="rf-btn-' + rid + '" class="btn btn-ghost btn-sm" ' +
+          'onclick="saveRouteFoto(\\'' + r.id + '\\',\\'' + rid + '\\')" ' +
+          'style="opacity:.4" disabled>&#10003;</button>' +
+        '<div id="rf-st-' + rid + '" style="font-size:10px;color:var(--mid);margin-top:2px"></div>' +
+      '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+function routeFotoChanged(rid) {
+  var btn = document.getElementById('rf-btn-' + rid);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+async function searchRouteFoto(routeId, rid, lat, lng, routeName) {
+  var stEl = document.getElementById('rf-st-' + rid);
+  if (stEl) { stEl.style.color = 'var(--mid)'; stEl.textContent = '\\u2026'; }
+  try {
+    var url = '/api/routes/photo?lat=' + lat + '&lng=' + lng +
+      '&routeId=' + encodeURIComponent(routeId) +
+      '&routeName=' + encodeURIComponent(routeName);
+    var res = await fetch(url);
+    var data = await res.json();
+    if (!data.photoUrl) {
+      if (stEl) { stEl.style.color = 'var(--red)'; stEl.textContent = 'Kein Foto'; }
+      return;
+    }
+    var urlEl = document.getElementById('rf-url-' + rid);
+    if (urlEl) { urlEl.value = data.photoUrl; routeFotoChanged(rid); }
+    var imgEl = document.getElementById('rf-img-' + rid);
+    if (imgEl) {
+      imgEl.outerHTML = '<img id="rf-img-' + rid + '" src="' + esc(data.photoUrl) + '" ' +
+        'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+        'onerror="this.style.opacity=\\'0.2\\'" />';
+    }
+    if (stEl) { stEl.style.color = 'var(--green)'; stEl.textContent = 'Gefunden \u2013 speichern?'; }
+    var entry = _routen.find(function(r){ return r.id === routeId; });
+    if (entry) entry.photoUrl = data.photoUrl;
+  } catch(e) {
+    if (stEl) { stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler'; }
+  }
+}
+async function saveRouteFoto(routeId, rid) {
+  var urlEl = document.getElementById('rf-url-' + rid);
+  var stEl  = document.getElementById('rf-st-'  + rid);
+  var btn   = document.getElementById('rf-btn-' + rid);
+  if (!urlEl) return;
+  var url = urlEl.value.trim();
+  btn.disabled = true; btn.style.opacity = '.4';
+  stEl.style.color = 'var(--mid)'; stEl.textContent = '\\u2026';
+  try {
+    await api('/api/admin/routes/' + encodeURIComponent(routeId) + '/foto', {
+      method: 'PATCH',
+      body: JSON.stringify({ photoUrl: url || null, photoAttribution: null })
+    });
+    stEl.style.color = 'var(--green)'; stEl.textContent = '\\u2713';
+    var imgEl = document.getElementById('rf-img-' + rid);
+    if (imgEl) {
+      if (url) {
+        imgEl.outerHTML = '<img id="rf-img-' + rid + '" src="' + esc(url) + '" ' +
+          'style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" ' +
+          'onerror="this.style.opacity=\\'0.2\\'" />';
+      } else {
+        imgEl.outerHTML = '<div id="rf-img-' + rid + '" style="width:56px;height:56px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:#ccc">?</div>';
+      }
+    }
+    var entry = _routen.find(function(r){ return r.id === routeId; });
+    if (entry) entry.photoUrl = url || null;
     setTimeout(function(){ stEl.textContent = ''; }, 2000);
   } catch(e) {
     stEl.style.color = 'var(--red)'; stEl.textContent = 'Fehler';
