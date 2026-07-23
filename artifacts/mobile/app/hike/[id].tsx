@@ -80,6 +80,7 @@ import {
   sendePoiMitteilung,
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
+import { poiDisplayName } from "@/lib/poiDisplay";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@clerk/expo";
 import { uploadWaypointPhoto, waypointPhotoUrl } from "@/lib/waypointPhotoUpload";
@@ -2740,7 +2741,7 @@ export default function LiveHike() {
                 </Pressable>
               </View>
               <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                {nearbyPoi.name}
+                {poiDisplayName(nearbyPoi.name, nearbyPoi.kind)}
               </Text>
               {(nearbyPoiWiki?.extract || nearbyPoiKontext) && (
                 <Text
@@ -3168,7 +3169,7 @@ export default function LiveHike() {
                     {t.poiDetailEyebrow}
                   </Text>
                   <Text style={[styles.poiTitle, { color: colors.foreground }]}>
-                    {selectedPoi.name}
+                    {poiDisplayName(selectedPoi.name, selectedPoi.kind)}
                   </Text>
                 </View>
                 <Pressable
