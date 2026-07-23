@@ -57,11 +57,6 @@ async function fetchWikimedia(url: string): Promise<CacheEntry | null> {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
-// Trailing-slash-Redirect: /api/routen → /api/routen/
-router.get("", (_req, res): void => {
-  res.redirect(301, "/api/routen/");
-});
-
 router.get("/", (_req, res): void => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300");
