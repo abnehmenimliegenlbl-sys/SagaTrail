@@ -24,6 +24,42 @@ import {
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
+
+// ---------------------------------------------------------------------------
+// POI-Such-Hilfsfunktionen
+// ---------------------------------------------------------------------------
+
+/** Reiner Zahlen-/Code-Name ("42", "K17", "GB 42") — keine sinnvolle
+ *  Namens-Suche auf Commons oder Wikipedia moeglich. */
+function isCodeName(name: string): boolean {
+  return name.replace(/[\d\s.\-\/\\,#]+/g, "").length <= 2;
+}
+
+const KIND_SEARCH_LABEL: Record<string, string> = {
+  "historic=boundary_stone":      "Grenzstein",
+  "historic=ruins":               "Ruine",
+  "historic=castle":              "Burg Schloss",
+  "historic=manor":               "Herrenhaus",
+  "historic=monument":            "Denkmal",
+  "historic=memorial":            "Gedenkstätte",
+  "historic=wayside_cross":       "Wegkreuz",
+  "historic=wayside_shrine":      "Wegkapelle",
+  "historic=church":              "Kirche",
+  "historic=city_gate":           "Stadttor",
+  "historic=fort":                "Festung",
+  "historic=archaeological_site": "archäologische Stätte",
+  "historic=milestone":           "Meilenstein",
+  "historic=tomb":                "Grabmal",
+  "tourism=artwork":              "Kunstwerk",
+  "tourism=viewpoint":            "Aussichtspunkt",
+};
+
+/** Commons-Suchbegriff fuer einen POI. Reine Codes/Zahlen werden durch
+ *  den Typ ersetzt, damit Commons etwas Sinnvolles zurueckgibt. */
+function commonsSearchTerm(name: string, kind: string | undefined): string | null {
+  if (!isCodeName(name)) return name;
+  return kind ? (KIND_SEARCH_LABEL[kind] ?? null) : null;
+}
 import { logger as rootLogger } from "./logger";
 import { deriveSeason } from "./season";
 import {
@@ -277,7 +313,9 @@ async function enrichPoiWithWikipedia(
     }
     // Dritte Stufe: kein OSM-Verweis vorhanden oder aufloesbar — Wikipedia-
     // Geo-Suche im Umkreis mit unscharfem Namensabgleich. Budget-gedeckelt.
-    if (geoSearchBudget.rest > 0) {
+    // Reine Codes/Zahlen ("42") werden uebersprungen — Wikipedia hat dazu keinen
+    // Artikel und eine Namens-Suche nach "42" wuerde falsche Treffer liefern.
+    if (geoSearchBudget.rest > 0 && !isCodeName(poi.name)) {
       geoSearchBudget.rest--;
       const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
       if (wiki) {
@@ -294,11 +332,13 @@ async function enrichPoiWithWikipedia(
       }
     }
     // Vierte + Fuenfte Stufe parallel: Commons-Bild UND Claude-Text gleichzeitig
-    // suchen und kombinieren. Vorher waren beide exklusiv — bei einem Commons-Bild
-    // wurde Stage 5 nie aufgerufen; bei AI-Text war image immer null. Jetzt erhaelt
-    // der Nutzer sowohl Bild als auch Text, sofern beide Quellen etwas liefern.
+    // suchen und kombinieren. Bei reinen Codes/Zahlen ("42") wird statt dem
+    // bedeutungslosen Namen der Typ als Suchbegriff verwendet ("Grenzstein");
+    // ist kein Typbegriff verfuegbar, entfaellt die Namens-Suche und nur die
+    // Geo-Suche bleibt.
+    const searchTerm = commonsSearchTerm(poi.name, poi.kind);
     const [nameImage, geoImage, aiWiki] = await Promise.all([
-      fetchCommonsImageByName(poi.name),
+      searchTerm ? fetchCommonsImageByName(searchTerm) : Promise.resolve(null),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
       searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
