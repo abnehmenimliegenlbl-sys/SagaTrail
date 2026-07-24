@@ -86,9 +86,9 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
         'premium'  => 'Premium',
     );
     $paket_preise = array(
-        'basic'    => 'CHF 99.– / Jahr (od. CHF 9.90 / Monat, keine Einrichtungsgebühr)',
-        'standard' => 'CHF 199.– / Jahr (od. CHF 19.90 / Monat, keine Einrichtungsgebühr)',
-        'premium'  => 'CHF 499.– / Jahr (keine Einrichtungsgebühr)',
+        'basic'    => 'CHF 99.- / Jahr (od. CHF 9.90 / Monat, keine Einrichtungsgebuehr)',
+        'standard' => 'CHF 199.- / Jahr (od. CHF 19.90 / Monat, keine Einrichtungsgebuehr)',
+        'premium'  => 'CHF 499.- / Jahr (keine Einrichtungsgebuehr)',
     );
 
     $paket       = isset( $data['paket'] ) ? $data['paket'] : 'standard';
@@ -97,17 +97,13 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
     $datum       = date_i18n( 'd. F Y' );
     $ref         = 'ST-' . str_pad( $row_id, 5, '0', STR_PAD_LEFT );
 
-    // --- FPDF verfügbar? ---
-    $fpdf_ok = sagatrail_lade_fpdf();
-
-    if ( $fpdf_ok ) {
-        $pdf_inhalt = sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref );
-    } else {
-        // Fallback: HTML-formatierter Vertragstext als Anhang
-        $pdf_inhalt = sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref );
+    if ( ! sagatrail_lade_fpdf() ) {
+        error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' konnte nicht erzeugt werden.' );
+        return;
     }
 
-    sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $pdf_inhalt, $fpdf_ok );
+    $pdf_inhalt = sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref );
+    sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $pdf_inhalt );
 }
 
 // ===================================================================
@@ -357,56 +353,42 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
 // E-MAIL VERSENDEN
 // ===================================================================
 
-function sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $inhalt, $ist_pdf ) {
+function sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $pdf_inhalt ) {
 
-    $to      = sanitize_email( $data['kontakt_email'] );
-    $cc      = 'info@sagatrail.ch';
-    $subject = 'SagaTrail Partnerschaft ' . $ref . ' – Ihr Vertragsangebot';
+    $to = sanitize_email( $data['kontakt_email'] );
 
-    $text_body  = "Guten Tag " . $data['kontakt_name'] . ",\n\n";
-    $text_body .= "vielen Dank für Ihr Interesse an einer Partnerschaft mit SagaTrail.\n";
-    $text_body .= "Im Anhang finden Sie das Partnerschaftsangebot für Ihren Betrieb.\n\n";
-    $text_body .= "Paket:        " . $paket_name . "\n";
-    $text_body .= "Jahresgebühr: " . $paket_preis . "\n";
-    $text_body .= "Referenz:     " . $ref . "\n\n";
-    $text_body .= "Bitte unterschreiben Sie das Dokument und senden Sie es per E-Mail zurück.\n";
-    $text_body .= "Unser Team meldet sich innert 2 Werktagen, um die nächsten Schritte zu besprechen.\n\n";
-    $text_body .= "Freundliche Grüsse\n";
-    $text_body .= "Das SagaTrail-Team\n";
-    $text_body .= "info@sagatrail.ch | www.sagatrail.ch";
+    $subject = mb_encode_mimeheader(
+        'SagaTrail Partnerschaft ' . $ref . ' - Ihr Vertragsangebot',
+        'UTF-8', 'B'
+    );
 
-    // MIME-Aufbau mit Anhang
-    $boundary = 'ST_' . md5( uniqid( '', true ) );
+    $body  = "Guten Tag " . $data['kontakt_name'] . ",\n\n";
+    $body .= "vielen Dank fuer Ihr Interesse an einer Partnerschaft mit SagaTrail.\n";
+    $body .= "Im Anhang finden Sie das Partnerschaftsangebot fuer Ihren Betrieb als PDF.\n\n";
+    $body .= "Paket:        " . $paket_name  . "\n";
+    $body .= "Jahresgebuehr: " . $paket_preis . "\n";
+    $body .= "Referenz:     " . $ref          . "\n\n";
+    $body .= "Bitte drucken Sie das Dokument aus, unterschreiben Sie es und senden\n";
+    $body .= "Sie es per E-Mail zurueck an info@sagatrail.ch.\n";
+    $body .= "Unser Team meldet sich innert 2 Werktagen.\n\n";
+    $body .= "Freundliche Gruesse\n";
+    $body .= "Das SagaTrail-Team\n";
+    $body .= "info@sagatrail.ch | www.sagatrail.ch";
 
-    $headers  = 'From: SagaTrail <info@sagatrail.ch>' . "\r\n";
-    $headers .= 'Cc: ' . $cc . "\r\n";
-    $headers .= 'Reply-To: info@sagatrail.ch' . "\r\n";
-    $headers .= 'MIME-Version: 1.0' . "\r\n";
-    $headers .= 'Content-Type: multipart/mixed; boundary="' . $boundary . '"' . "\r\n";
+    $headers = array(
+        'Content-Type: text/plain; charset=UTF-8',
+        'From: SagaTrail <info@sagatrail.ch>',
+        'Cc: info@sagatrail.ch',
+        'Reply-To: info@sagatrail.ch',
+    );
 
-    $body  = '--' . $boundary . "\r\n";
-    $body .= 'Content-Type: text/plain; charset=UTF-8' . "\r\n";
-    $body .= 'Content-Transfer-Encoding: 8bit' . "\r\n\r\n";
-    $body .= $text_body . "\r\n";
+    // PDF als Temp-Datei speichern und als Anhang mitschicken
+    $pdf_file = get_temp_dir() . 'sagatrail-partner-' . sanitize_file_name( $ref ) . '.pdf';
+    file_put_contents( $pdf_file, $pdf_inhalt );
 
-    if ( $ist_pdf ) {
-        $encoded   = base64_encode( $inhalt );
-        $dateiname = 'SagaTrail-Partnerschaft-' . $ref . '.pdf';
-        $mime_type = 'application/pdf';
-    } else {
-        $encoded   = base64_encode( $inhalt );
-        $dateiname = 'SagaTrail-Partnerschaft-' . $ref . '.html';
-        $mime_type = 'text/html';
-    }
+    $gesendet = wp_mail( $to, $subject, $body, $headers, array( $pdf_file ) );
 
-    $body .= '--' . $boundary . "\r\n";
-    $body .= 'Content-Type: ' . $mime_type . '; name="' . $dateiname . '"' . "\r\n";
-    $body .= 'Content-Transfer-Encoding: base64' . "\r\n";
-    $body .= 'Content-Disposition: attachment; filename="' . $dateiname . '"' . "\r\n\r\n";
-    $body .= chunk_split( $encoded ) . "\r\n";
-    $body .= '--' . $boundary . '--';
-
-    $gesendet = wp_mail( $to, $subject, $body, $headers );
+    @unlink( $pdf_file );
 
     if ( ! $gesendet ) {
         error_log( 'SagaTrail Vertrags-Mail konnte nicht gesendet werden an: ' . $to );
