@@ -44,6 +44,11 @@ a{color:var(--red);text-decoration:none}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .badge-green{background:#e6f4ec;color:var(--green)}
 .badge-red{background:#fce8e8;color:var(--red)}
+.kt-chip{padding:4px 10px;border:1.5px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;color:var(--mid);transition:all .12s}
+.kt-chip:hover{border-color:#aaa;color:var(--dark)}
+.kt-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+.kt-alle{border-style:dashed}
+.kt-alle.active{background:#444;border-color:#444;border-style:solid;color:#fff}
 .badge-orange{background:#fef3e2;color:var(--orange)}
 .badge-yellow{background:#fefae0;color:var(--yellow)}
 .badge-gray{background:#f0eeeb;color:var(--mid)}
@@ -162,7 +167,38 @@ a{color:var(--red);text-decoration:none}
         <div class="form-group"><label>E-Mail *</label><input id="vb-email" type="email" placeholder="info@verband.ch"/></div>
         <div class="form-group"><label>Ansprechpartner *</label><input id="vb-kontakt" type="text" placeholder="Vorname Nachname"/></div>
         <div class="form-group"><label>Telefon</label><input id="vb-tel" type="tel" placeholder="+41 79 000 00 00"/></div>
-        <div class="form-group full"><label>Kantone (kommagetrennt oder "alle") *</label><input id="vb-kantone" type="text" placeholder="Graubünden,Glarus oder alle"/></div>
+        <div class="form-group full">
+          <label>Kantone *</label>
+          <div id="vb-kantone-picker" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+            <button type="button" class="kt-chip kt-alle" onclick="vbToggleAlle(this)" data-kt="alle">Alle Kantone</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Aargau">AG</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Appenzell Ausserrhoden">AR</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Appenzell Innerrhoden">AI</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Basel-Landschaft">BL</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Basel-Stadt">BS</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Bern">BE</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Freiburg">FR</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Genf">GE</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Glarus">GL</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Graubünden">GR</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Jura">JU</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Luzern">LU</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Neuenburg">NE</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Nidwalden">NW</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Obwalden">OW</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Schaffhausen">SH</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Schwyz">SZ</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Solothurn">SO</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="St. Gallen">SG</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Tessin">TI</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Thurgau">TG</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Uri">UR</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Waadt">VD</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Wallis">VS</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Zug">ZG</button>
+            <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Zürich">ZH</button>
+          </div>
+        </div>
         <div class="form-group full"><label>Interne Notizen</label><input id="vb-notizen" type="text" placeholder="optional"/></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
@@ -1433,19 +1469,40 @@ function renderVerbande(rows) {
     </div>\`;
   }).join('');
 }
+function vbGetKantone() {
+  var alle = document.querySelector('#vb-kantone-picker .kt-alle.active');
+  if (alle) return 'alle';
+  var sel = Array.from(document.querySelectorAll('#vb-kantone-picker .kt-chip.active:not(.kt-alle)'));
+  return sel.map(function(b){ return b.getAttribute('data-kt'); }).join(',');
+}
+function vbToggleKt(btn) {
+  // Deaktiviere "Alle" wenn ein einzelner Kanton gewählt
+  document.querySelector('#vb-kantone-picker .kt-alle').classList.remove('active');
+  btn.classList.toggle('active');
+}
+function vbToggleAlle(btn) {
+  var wasActive = btn.classList.contains('active');
+  // Alle Einzelkantone deaktivieren
+  document.querySelectorAll('#vb-kantone-picker .kt-chip:not(.kt-alle)').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.toggle('active', !wasActive);
+}
+function vbResetKantone() {
+  document.querySelectorAll('#vb-kantone-picker .kt-chip').forEach(function(b){ b.classList.remove('active'); });
+}
 async function createVerband() {
+  var kantone = vbGetKantone();
   var body = {
     name:           document.getElementById('vb-name').value.trim(),
     email:          document.getElementById('vb-email').value.trim(),
     kontaktName:    document.getElementById('vb-kontakt').value.trim(),
     kontaktTelefon: document.getElementById('vb-tel').value.trim() || undefined,
-    kantone:        document.getElementById('vb-kantone').value.trim(),
+    kantone:        kantone,
     notizen:        document.getElementById('vb-notizen').value.trim() || undefined,
     isActive:       true,
   };
   var st = document.getElementById('vb-status');
   if (!body.name || !body.email || !body.kontaktName || !body.kantone) {
-    st.textContent = 'Bitte Name, E-Mail, Kontakt und Kantone ausfüllen.';
+    st.textContent = 'Bitte Name, E-Mail, Kontakt und mindestens einen Kanton ausfüllen.';
     st.style.color = 'var(--red)';
     return;
   }
@@ -1453,7 +1510,8 @@ async function createVerband() {
     await api('/api/admin/verbande', {method:'POST', body: JSON.stringify(body)});
     st.textContent = 'Verband angelegt.';
     st.style.color = 'var(--green)';
-    ['vb-name','vb-email','vb-kontakt','vb-tel','vb-kantone','vb-notizen'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['vb-name','vb-email','vb-kontakt','vb-tel','vb-notizen'].forEach(function(id){ document.getElementById(id).value=''; });
+    vbResetKantone();
     await ladeVerbande();
   } catch(e) {
     st.textContent = e.message;
