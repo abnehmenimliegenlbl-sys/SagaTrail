@@ -309,7 +309,10 @@ function sagatrail_verband_html_vertrag( $data, $datum, $ref ) {
 
 function sagatrail_verband_mail_senden( $data, $datum, $ref, $inhalt, $ist_pdf ) {
     $to      = sanitize_email( $data['email'] );
-    $subject = 'SagaTrail Pilotpartnerschaft ' . $ref . ' – Ihr Vertragsangebot';
+    $subject = mb_encode_mimeheader(
+        'SagaTrail Pilotpartnerschaft ' . $ref . ' - Ihr Vertragsangebot',
+        'UTF-8', 'B'
+    );
 
     $text  = "Guten Tag " . $data['kontakt_name'] . ",\n\n";
     $text .= "vielen Dank für Ihre Anfrage zur Pilotpartnerschaft mit SagaTrail.\n";

@@ -235,103 +235,106 @@ function sagatrail_send_verband_willkommen() {
         wp_send_json_error( 'Unauthorized', 403 );
     }
 
-    $verband_name = sanitize_text_field( wp_unslash( $_POST['verbandName'] ?? '' ) );
-    $email        = sanitize_email( wp_unslash( $_POST['email']        ?? '' ) );
-    $kontakt_name = sanitize_text_field( wp_unslash( $_POST['kontaktName'] ?? '' ) );
-    $passwort     = sanitize_text_field( wp_unslash( $_POST['passwort']    ?? '' ) );
-    $portal_url   = esc_url_raw( wp_unslash( $_POST['portalUrl']  ?? '' ) );
+    $verband_name    = sanitize_text_field( wp_unslash( $_POST['verbandName']    ?? '' ) );
+    $email           = sanitize_email( wp_unslash( $_POST['email']               ?? '' ) );
+    $kontakt_name    = sanitize_text_field( wp_unslash( $_POST['kontaktName']    ?? '' ) );
+    $kontakt_telefon = sanitize_text_field( wp_unslash( $_POST['kontaktTelefon'] ?? '' ) );
+    $kantone         = sanitize_text_field( wp_unslash( $_POST['kantone']        ?? '' ) );
+    $passwort        = sanitize_text_field( wp_unslash( $_POST['passwort']       ?? '' ) );
+    $portal_url      = esc_url_raw( wp_unslash( $_POST['portalUrl']             ?? '' ) );
 
     if ( ! $verband_name || ! is_email( $email ) || ! $passwort ) {
         wp_send_json_error( 'Pflichtfelder fehlen.' );
     }
 
+    $datum = date_i18n( 'd. F Y' );
+
+    // ── PDF-Anhang erzeugen ──────────────────────────────────────────
+    $pdf_file    = null;
+    $attachments = array();
+
+    if ( function_exists( 'sagatrail_lade_fpdf' ) && sagatrail_lade_fpdf()
+         && function_exists( 'sagatrail_verband_pdf_erzeugen' ) ) {
+
+        $data = array(
+            'verband_name'    => $verband_name,
+            'kontakt_name'    => $kontakt_name,
+            'kontakt_telefon' => $kontakt_telefon,
+            'email'           => $email,
+            'kantone'         => $kantone ?: 'gemäss Vereinbarung',
+        );
+        // Laufende Referenznummer aus DB holen (neuester Eintrag dieses Verbands)
+        global $wpdb;
+        $table  = $wpdb->prefix . 'sagatrail_verband_anfragen';
+        $row_id = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT id FROM {$table} WHERE email = %s ORDER BY id DESC LIMIT 1", $email )
+        );
+        $ref = $row_id ? 'ST-V' . str_pad( $row_id, 5, '0', STR_PAD_LEFT ) : 'ST-W-' . date( 'Ymd' );
+
+        $pdf_content = sagatrail_verband_pdf_erzeugen( $data, $datum, $ref );
+        $pdf_file    = get_temp_dir() . 'sagatrail-vertrag-' . sanitize_file_name( $ref ) . '.pdf';
+        file_put_contents( $pdf_file, $pdf_content );
+        $attachments[] = $pdf_file;
+    }
+
+    // ── Subject (MIME-kodiert – kein Sonderzeichen im Raw-Header) ────
+    $subject = mb_encode_mimeheader(
+        'Willkommen bei SagaTrail - Ihr Verbandsportal ist bereit',
+        'UTF-8', 'B'
+    );
+
     $headers = array(
-        'Content-Type: text/html; charset=UTF-8',
+        'Content-Type: text/plain; charset=UTF-8',
         'From: SagaTrail <info@sagatrail.ch>',
         'Reply-To: info@sagatrail.ch',
     );
 
-    // ── E-Mail an den Verband ────────────────────────────────────────
-    $html_verband = '
-    <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;
-                color:#1a1a1a;max-width:600px;margin:0 auto">
-      <div style="background:#CC0000;padding:28px 32px;border-radius:12px 12px 0 0">
-        <h1 style="color:#fff;margin:0;font-size:22px;letter-spacing:-.3px">
-          Ihr SagaTrail-Account ist bereit
-        </h1>
-      </div>
-      <div style="padding:32px;border:1px solid #e0e0e0;border-top:none;
-                  border-radius:0 0 12px 12px;background:#fff">
-        <p style="margin-top:0">Guten Tag ' . esc_html( $kontakt_name ) . '</p>
-        <p>Wir haben Ihren Verbandsportal-Account für
-           <strong>' . esc_html( $verband_name ) . '</strong> eingerichtet.
-           Sie haben Zugang zu zwei Bereichen:</p>
+    // ── Plain-Text-Body an den Verband ───────────────────────────────
+    $body  = "Guten Tag " . $kontakt_name . ",\n\n";
+    $body .= "Ihr SagaTrail-Verbandsportal-Account ist bereit.\n\n";
+    $body .= "─────────────────────────────────────────────\n";
+    $body .= "1. VERBANDSPORTAL (Nutzungsdaten & Datenpflege)\n";
+    $body .= "─────────────────────────────────────────────\n";
+    $body .= "Melden Sie sich mit Ihrer E-Mail-Adresse an –\n";
+    $body .= "Sie erhalten jeweils einen direkten Zugangs-Link:\n";
+    $body .= $portal_url . "\n\n";
+    $body .= "─────────────────────────────────────────────\n";
+    $body .= "2. SAGATRAIL-APP (Premium-Zugang)\n";
+    $body .= "─────────────────────────────────────────────\n";
+    $body .= "E-Mail:   " . $email   . "\n";
+    $body .= "Passwort: " . $passwort . "\n";
+    $body .= "(Wir empfehlen, das Passwort nach dem ersten Login zu ändern.)\n\n";
+    if ( ! empty( $attachments ) ) {
+        $body .= "Im Anhang finden Sie die unterzeichnete Pilotpartnerschaftsvereinbarung als PDF.\n";
+        $body .= "Bitte drucken Sie diese aus, unterzeichnen Sie sie und senden Sie sie\n";
+        $body .= "per E-Mail zurueck an info@sagatrail.ch.\n\n";
+    }
+    $body .= "Bei Fragen stehen wir jederzeit zur Verfügung.\n\n";
+    $body .= "Freundliche Gruesse\n";
+    $body .= "Rolf Koch\n";
+    $body .= "Gründer SagaTrail\n";
+    $body .= "info@sagatrail.ch\n";
 
-        <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
-          1 · Verbandsportal (Nutzungsdaten &amp; Datenpflege)
-        </h3>
-        <p style="margin:0 0 8px">Melden Sie sich mit Ihrer E-Mail-Adresse an —
-           Sie erhalten jeweils einen direkten Zugangs-Link:</p>
-        <a href="' . esc_url( $portal_url ) . '"
-           style="display:inline-block;background:#CC0000;color:#fff;
-                  padding:10px 20px;border-radius:8px;text-decoration:none;
-                  font-weight:700;font-size:14px;margin-bottom:20px">
-          Zum Verbandsportal →
-        </a>
+    $ok = wp_mail( $email, $subject, $body, $headers, $attachments );
 
-        <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
-          2 · SagaTrail-App (Premium-Zugang)
-        </h3>
-        <p style="margin:0 0 12px">Sie erhalten einen Premium-Account für die SagaTrail-App,
-           um die App aus Nutzersicht kennenlernen zu können:</p>
-        <table style="border-collapse:collapse;font-size:14px;background:#f7f6f4;
-                      border-radius:8px;width:100%;margin-bottom:6px">
-          <tr>
-            <td style="padding:10px 14px;font-weight:700;width:100px;color:#555">E-Mail</td>
-            <td style="padding:10px 14px">' . esc_html( $email ) . '</td>
-          </tr>
-          <tr style="border-top:1px solid #e5e5e5">
-            <td style="padding:10px 14px;font-weight:700;color:#555">Passwort</td>
-            <td style="padding:10px 14px;font-family:monospace;font-size:15px;letter-spacing:.5px">
-              <strong>' . esc_html( $passwort ) . '</strong>
-            </td>
-          </tr>
-        </table>
-        <p style="font-size:12px;color:#888;margin-top:4px">
-          Wir empfehlen, das Passwort nach dem ersten Login zu ändern.</p>
-
-        <hr style="border:none;border-top:1px solid #e5e5e5;margin:28px 0"/>
-        <p>Bei Fragen stehen wir jederzeit zur Verfügung.</p>
-        <p style="margin-bottom:0">Freundliche Grüsse<br>
-        <strong>Rolf Koch</strong><br>Gründer SagaTrail<br>
-        <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a></p>
-      </div>
-    </div>';
-
-    $ok = wp_mail(
-        $email,
-        'Willkommen bei SagaTrail – Ihr Verbandsportal ist bereit',
-        $html_verband,
-        $headers
+    // ── Interne Kopie (plain text) ───────────────────────────────────
+    $subject_intern = mb_encode_mimeheader(
+        '[Verband angelegt] ' . $verband_name . ' - ' . $email,
+        'UTF-8', 'B'
     );
+    $intern  = "Verband-Account angelegt\n\n";
+    $intern .= "Verband:  " . $verband_name    . "\n";
+    $intern .= "Kontakt:  " . $kontakt_name    . "\n";
+    $intern .= "Telefon:  " . ( $kontakt_telefon ?: '-' ) . "\n";
+    $intern .= "E-Mail:   " . $email            . "\n";
+    $intern .= "Passwort: " . $passwort         . "\n";
+    $intern .= "Kantone:  " . ( $kantone ?: '-' ) . "\n";
+    wp_mail( 'info@sagatrail.ch', $subject_intern, $intern, $headers, $attachments );
 
-    // ── Interne Kopie ────────────────────────────────────────────────
-    wp_mail(
-        'info@sagatrail.ch',
-        '[Verband angelegt] ' . $verband_name . ' – ' . $email,
-        '<h2 style="font-family:sans-serif">Verband-Account angelegt</h2>
-         <table style="font-family:monospace;font-size:13px;border-collapse:collapse">
-           <tr><td style="padding:4px 16px 4px 0;color:#888">Verband</td>
-               <td><strong>' . esc_html( $verband_name ) . '</strong></td></tr>
-           <tr><td style="padding:4px 16px 4px 0;color:#888">Kontakt</td>
-               <td>' . esc_html( $kontakt_name ) . '</td></tr>
-           <tr><td style="padding:4px 16px 4px 0;color:#888">E-Mail</td>
-               <td>' . esc_html( $email ) . '</td></tr>
-           <tr><td style="padding:4px 16px 4px 0;color:#888">Passwort</td>
-               <td>' . esc_html( $passwort ) . '</td></tr>
-         </table>',
-        $headers
-    );
+    // Temp-Datei aufräumen
+    if ( $pdf_file && file_exists( $pdf_file ) ) {
+        @unlink( $pdf_file );
+    }
 
     if ( $ok ) {
         wp_send_json_success( array( 'sent' => true ) );

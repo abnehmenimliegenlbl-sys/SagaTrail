@@ -1107,11 +1107,13 @@ router.post("/admin/verbande", async (req, res): Promise<void> => {
 
     if (wpAjaxUrl && wpHookSecret) {
       const body = new URLSearchParams({
-        action:      "st_send_verband_willkommen",
-        secret:      wpHookSecret,
-        verbandName: row.name,
-        email:       row.email,
-        kontaktName: row.kontaktName,
+        action:          "st_send_verband_willkommen",
+        secret:          wpHookSecret,
+        verbandName:     row.name,
+        email:           row.email,
+        kontaktName:     row.kontaktName,
+        kontaktTelefon:  row.kontaktTelefon ?? "",
+        kantone:         row.kantone,
         passwort,
         portalUrl,
       });
