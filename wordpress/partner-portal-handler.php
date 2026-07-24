@@ -22,9 +22,6 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 // ===================================================================
 
 add_action( 'wp_footer', function () {
-    if ( ! is_page( array( 'portal', 'partner-portal', 'partnerprofil', 'mein-partner-profil' ) ) ) {
-        return;
-    }
     $api_base    = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : '';
     $portal_page = defined( 'SAGATRAIL_PORTAL_PAGE' ) ? SAGATRAIL_PORTAL_PAGE : get_permalink();
     ?>
@@ -87,10 +84,11 @@ function sagatrail_portal_request_token() {
         ? rtrim( SAGATRAIL_PORTAL_PAGE, '/' )
         : ( get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal' );
     $link = rtrim( $portal_page, '/' ) . '?token=' . rawurlencode( $body['token'] );
-    $name = $body['partnerName'] ?? 'Partner';
+    // partnerName für Partner, name für Verbände
+    $name = $body['partnerName'] ?? $body['name'] ?? 'Partner';
 
     // E-Mail senden
-    $subject  = 'Ihr SagaTrail Partner-Portal Login';
+    $subject  = mb_encode_mimeheader( 'Ihr SagaTrail Partner-Portal Login', 'UTF-8', 'B' );
     $ablauf   = isset( $body['expiresAt'] )
         ? wp_date( 'd.m.Y H:i', strtotime( $body['expiresAt'] ) )
         : '';
