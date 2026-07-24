@@ -55,7 +55,7 @@ if ( get_option( 'sagatrail_verband_db_version' ) !== '1.0' ) {
 // ===================================================================
 
 add_action( 'wp_footer', function() {
-    if ( ! is_page( array( 'tourismusverband', 'verband', 'verband-partner', 'pilotpartnerschaft' ) ) ) {
+    if ( ! is_page( array( 'tourismus-verbaende', 'tourismusverband', 'verband', 'verband-partner', 'pilotpartnerschaft' ) ) ) {
         return;
     }
     $api_base = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : '';
