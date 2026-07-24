@@ -1,7 +1,7 @@
 <!--
   SagaTrail – Tourismusverband-Seite  |  WPCode HTML-Snippet
   Typ: HTML Snippet
-  Seite: https://sagatrail.ch/tourismusverband
+  Seite: https://sagatrail.ch/tourismus-verbaende/
   Design-System: st-tv (Master-Design, identisch zu Home/Partner/Funktionen)
 -->
 <style>
@@ -107,7 +107,7 @@
   margin-bottom: 40px;
 }
 
-/* AUSTAUSCH-BOX (Was wir brauchen / Was wir liefern) */
+/* AUSTAUSCH-BOX */
 .st-tv .st-exchange { padding: 72px 0; }
 .st-tv .st-exchange-grid {
   display: grid;
@@ -179,15 +179,13 @@
 .st-tv .st-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
 .st-tv .st-card p { font-size: 0.9rem; color: #555; line-height: 1.55; }
 
-/* NUTZUNGSREPORT-BEISPIEL */
+/* NUTZUNGSREPORT */
 .st-tv .st-report { padding: 8px 0 56px; }
 .st-tv .st-report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
 @media(max-width:800px){ .st-tv .st-report-grid { grid-template-columns: 1fr; } }
 .st-tv .st-report-text h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 12px; }
 .st-tv .st-report-text p { font-size: 0.95rem; color: #555; }
-.st-tv .st-report-card {
-  background: #1a1a1a; border-radius: 16px; padding: 28px 26px; color: #fff;
-}
+.st-tv .st-report-card { background: #1a1a1a; border-radius: 16px; padding: 28px 26px; color: #fff; }
 .st-tv .st-report-card-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); margin-bottom: 18px; }
 .st-tv .st-report-row { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .st-tv .st-report-row:last-child { border-bottom: none; }
@@ -196,16 +194,10 @@
 
 /* SO FUNKTIONIERTS */
 .st-tv .st-how { padding: 72px 0; }
-.st-tv .st-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 32px;
-}
+.st-tv .st-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; }
 .st-tv .st-step-num {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: #CC0000;
-  color: #fff;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #CC0000; color: #fff;
   font-size: 1rem; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 14px;
@@ -215,14 +207,8 @@
 
 /* UND DANACH? */
 .st-tv .st-later { padding: 72px 0; }
-.st-tv .st-later-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-.st-tv .st-later-card {
-  background: #fff; border: 1.5px solid #ebebeb; border-radius: 14px; padding: 26px 24px;
-}
+.st-tv .st-later-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.st-tv .st-later-card { background: #fff; border: 1.5px solid #ebebeb; border-radius: 14px; padding: 26px 24px; }
 .st-tv .st-later-badge {
   display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: #CC0000; background: rgba(204,0,0,0.08); border-radius: 12px; padding: 4px 12px; margin-bottom: 14px;
@@ -233,17 +219,8 @@
 /* ZITAT */
 .st-tv .st-quote-wrap { padding: 64px 0; }
 .st-tv .st-quote { max-width: 760px; margin: 0 auto; text-align: center; }
-.st-tv .st-quote-mark {
-  font-size: 4rem; line-height: 1;
-  color: rgba(255,255,255,0.3);
-  font-family: Georgia, serif;
-  margin-bottom: 8px;
-}
-.st-tv .st-quote blockquote {
-  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  font-weight: 500; line-height: 1.7; font-style: italic;
-  margin-bottom: 20px; color: #fff !important;
-}
+.st-tv .st-quote-mark { font-size: 4rem; line-height: 1; color: rgba(255,255,255,0.3); font-family: Georgia, serif; margin-bottom: 8px; }
+.st-tv .st-quote blockquote { font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 500; line-height: 1.7; font-style: italic; margin-bottom: 20px; color: #fff !important; }
 .st-tv .st-quote cite { font-size: 0.85rem; font-style: normal; color: rgba(255,255,255,0.6) !important; font-weight: 600; }
 
 /* CTA */
@@ -261,9 +238,51 @@
 .st-tv .st-btn-red     { background: #CC0000; color: #fff; }
 .st-tv .st-btn-outline { background: transparent; color: #CC0000; border-color: #CC0000; }
 
+/* FORMULAR */
+.st-tv .st-form-section { padding: 80px 0 96px; }
+.st-tv .st-form-wrap { display: grid; grid-template-columns: 1fr 1.6fr; gap: 64px; align-items: start; margin-top: 48px; }
+@media(max-width:780px){ .st-tv .st-form-wrap { grid-template-columns: 1fr; gap: 32px; } }
+.st-tv .st-form-info-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
+.st-tv .st-form-checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.st-tv .st-form-checklist li { font-size: 0.9rem; color: #444; padding-left: 24px; position: relative; line-height: 1.5; }
+.st-tv .st-form-checklist li::before { content: '✓'; position: absolute; left: 0; color: #CC0000; font-weight: 700; }
+.st-tv .st-form-contact-box { background: #f7f7f5; border: 1.5px solid #ebebeb; border-radius: 12px; padding: 18px 20px; font-size: 0.88rem; color: #555; line-height: 1.6; }
+.st-tv .st-form-contact-box a { color: #CC0000; text-decoration: none; }
+#st-tv-form { background: #fff; border: 1.5px solid #ebebeb; border-radius: 16px; padding: 36px 32px; }
+@media(max-width:560px){ #st-tv-form { padding: 24px 18px; } }
+.st-tv .st-field { margin-bottom: 16px; }
+.st-tv .st-field label { display: block; font-size: 0.82rem; font-weight: 600; color: #333; margin-bottom: 5px; }
+.st-tv .st-field label .req { color: #CC0000; margin-left: 2px; }
+.st-tv .st-field input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.9rem; font-family: inherit; color: #1a1a1a; background: #fff; outline: none; transition: border-color .15s; }
+.st-tv .st-field input:focus { border-color: #CC0000; }
+.st-tv .st-field-hint { font-size: 0.78rem; color: #aaa; margin-top: 3px; }
+.st-tv .st-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media(max-width:520px){ .st-tv .st-field-row { grid-template-columns: 1fr; } }
+.st-tv .st-kanton-wrap { border: 1.5px solid #ddd; border-radius: 8px; overflow: hidden; background: #fff; transition: border-color .15s; }
+.st-tv .st-kanton-wrap:focus-within { border-color: #CC0000; }
+.st-tv .st-kanton-all { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f9f8f6; border-bottom: 1px solid #eee; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #1a1a1a; }
+.st-tv .st-kanton-all input { width: 16px; height: 16px; accent-color: #CC0000; cursor: pointer; flex-shrink: 0; }
+.st-tv .st-kanton-grid { display: grid; grid-template-columns: repeat(3,1fr); padding: 10px 14px; gap: 2px 0; max-height: 190px; overflow-y: auto; }
+@media(max-width:480px){ .st-tv .st-kanton-grid { grid-template-columns: repeat(2,1fr); } }
+.st-tv .st-kanton-item { display: flex; align-items: center; gap: 7px; font-size: 0.82rem; color: #333; cursor: pointer; padding: 3px 0; white-space: nowrap; }
+.st-tv .st-kanton-item input { width: 15px; height: 15px; accent-color: #CC0000; cursor: pointer; flex-shrink: 0; }
+.st-tv .st-consent { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0 24px; }
+.st-tv .st-consent input[type="checkbox"] { width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; accent-color: #CC0000; }
+.st-tv .st-consent label { font-size: 0.82rem; color: #555; line-height: 1.5; }
+.st-tv .st-consent a { color: #CC0000; }
+.st-tv .st-submit-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 24px; background: #CC0000; color: #fff; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: background .2s; }
+.st-tv .st-submit-btn:hover:not(:disabled) { background: #a80000; }
+.st-tv .st-submit-btn:disabled { opacity: .65; cursor: not-allowed; }
+.st-tv .st-submit-btn .spinner { display: none; width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: sttvSpin .7s linear infinite; }
+.st-tv .st-submit-btn.loading .spinner { display: block; }
+@keyframes sttvSpin { to { transform: rotate(360deg); } }
+.st-tv .st-feedback { display: none; padding: 13px 16px; border-radius: 8px; font-size: 0.88rem; margin-bottom: 18px; line-height: 1.5; }
+.st-tv .st-feedback.ok  { background: #f0faf0; border: 1px solid #98d898; color: #2a5c2a; display: block; }
+.st-tv .st-feedback.err { background: #fff4f4; border: 1px solid #f0a0a0; color: #8b0000; display: block; }
+
 @media (max-width: 700px) {
   .st-tv .st-hero { padding: 56px 0 44px; }
-  .st-tv .st-exchange, .st-tv .st-benefits, .st-tv .st-how, .st-tv .st-cta { padding: 52px 0; }
+  .st-tv .st-exchange, .st-tv .st-benefits, .st-tv .st-how, .st-tv .st-cta, .st-tv .st-form-section { padding: 52px 0; }
 }
 </style>
 
@@ -278,18 +297,9 @@
         SagaTrail ist die Schweizer Wander-App mit GPS-geführten Sagenrouten. Wir schlagen keine vage Empfehlung vor, sondern eine 6-monatige Pilotpartnerschaft mit klar definierten Beiträgen auf beiden Seiten &#8211; und einem Report am Ende, den ihr eurem Vorstand zeigen könnt.
       </p>
       <div class="st-hero-stats">
-        <div class="st-hero-stat">
-          <strong>210+</strong>
-          <span>Sagen aus 26 Kantonen</span>
-        </div>
-        <div class="st-hero-stat">
-          <strong>8</strong>
-          <span>Sprachen</span>
-        </div>
-        <div class="st-hero-stat">
-          <strong>6 Mt.</strong>
-          <span>Pilot, danach Entscheid</span>
-        </div>
+        <div class="st-hero-stat"><strong>210+</strong><span>Sagen aus 26 Kantonen</span></div>
+        <div class="st-hero-stat"><strong>8</strong><span>Sprachen</span></div>
+        <div class="st-hero-stat"><strong>6 Mt.</strong><span>Pilot, danach Entscheid</span></div>
       </div>
     </div>
   </div>
@@ -302,7 +312,6 @@
       <p class="st-section-sub">Keine Absichtserklärungen &#8211; drei überschaubare Beiträge von euch, fünf konkrete Gegenleistungen von uns. Beides mit wenig Aufwand umsetzbar.</p>
 
       <div class="st-exchange-grid">
-        <!-- Was der Verband beiträgt -->
         <div class="st-exchange-col give">
           <h3>Was wir vom Verband brauchen</h3>
           <p class="st-exchange-sub">Einmaliger Aufwand, kein laufendes Commitment</p>
@@ -312,11 +321,7 @@
             <li>Vorstellung bei 3&#8211;5 lokalen Betrieben (Restaurants, Bergbahnen, Hotels), die als SagaTrail-Partner interessant wären</li>
           </ol>
         </div>
-
-        <!-- Pfeil -->
         <div class="st-exchange-arrow">&#8594;</div>
-
-        <!-- Was der Verband bekommt -->
         <div class="st-exchange-col get">
           <h3>Was ihr dafür bekommt</h3>
           <p class="st-exchange-sub">Konkret, nicht &#8222;mehr Reichweite&#8220;</p>
@@ -389,7 +394,6 @@
           <div class="st-report-row"><span>&#216; Verweildauer pro Route</span><strong>2h 15min</strong></div>
         </div>
       </div>
-
       <p class="st-pilot-note" style="display:flex;align-items:flex-start;margin-top:32px;max-width:760px;font-weight:500;line-height:1.55">
         &#8505;&#65039;&nbsp; Das Dashboard ist auf Kantonsebene aufgebaut. Deckt euer Verband nur einen Teil des Kantons ab (z.&#160;B. eine Destination) oder mehrere Kantone gemeinsam, sprechen wir das im Erstgespräch konkret durch &#8211; die Zahlen sind dann als Näherungswert für eure Region zu verstehen, nicht exakt auf euer Gebiet zugeschnitten.
       </p>
@@ -428,7 +432,6 @@
       <div class="st-section-label">Bei Zufriedenheit</div>
       <div class="st-section-title">Und was passiert nach den 6 Monaten?</div>
       <p class="st-section-sub">Drei mögliche Stufen &#8211; unabhängig voneinander. Ihr entscheidet, ob und wie weit ihr geht, keine Stufe baut zwingend auf der vorherigen auf.</p>
-
       <div class="st-later-grid">
         <div class="st-later-card">
           <div class="st-later-badge">Stufe 1</div>
@@ -460,16 +463,180 @@
     </div>
   </div>
 
-  <!-- ⑧ CTA (weiss) -->
-  <div class="st-section st-white">
-    <div class="st-inner st-cta">
-      <h2>Jetzt Pilotpartnerschaft anfragen</h2>
-      <p>Unverbindliches Erstgespräch &#8211; 30 Minuten, keine Kosten, kein Commitment.</p>
-      <div class="st-btn-group">
-        <a href="mailto:info@sagatrail.ch?subject=Pilotpartnerschaft%20Tourismusverband" class="st-btn st-btn-red">Gespräch anfragen</a>
-        <a href="https://sagatrail.ch" class="st-btn st-btn-outline">App ansehen</a>
+  <!-- ⑧ FORMULAR (hell) -->
+  <div class="st-section st-light" id="st-tv-anfrage">
+    <div class="st-inner st-form-section">
+      <div class="st-section-label">Jetzt starten</div>
+      <div class="st-section-title">Pilotpartnerschaft anfragen</div>
+      <p class="st-section-sub">Formular ausfüllen &#8211; der Pilotvertrag kommt sofort per E-Mail. Kein Risiko, kein Commitment.</p>
+
+      <div class="st-form-wrap">
+
+        <!-- Info-Spalte -->
+        <div>
+          <p class="st-form-info-title">Was passiert nach dem Absenden?</p>
+          <ul class="st-form-checklist">
+            <li>Pilotvertrag kommt sofort per E-Mail (PDF)</li>
+            <li>Vollständig kostenlos &#8211; kein Commitment</li>
+            <li>Unterschreiben und zurücksenden &#8211; fertig</li>
+            <li>Wir melden uns innert 2 Werktagen</li>
+          </ul>
+          <div class="st-form-contact-box">
+            Fragen vorab?<br>
+            <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a>
+          </div>
+        </div>
+
+        <!-- Formular -->
+        <div>
+          <div id="st-tv-feedback" class="st-feedback"></div>
+          <form id="st-tv-form" novalidate>
+
+            <div class="st-field">
+              <label for="stv-name">Name des Verbands <span class="req">*</span></label>
+              <input type="text" id="stv-name" placeholder="z.B. Graubünden Ferien" maxlength="200">
+            </div>
+
+            <div class="st-field">
+              <label for="stv-email">E-Mail-Adresse <span class="req">*</span></label>
+              <input type="email" id="stv-email" placeholder="info@verband.ch" maxlength="200">
+            </div>
+
+            <div class="st-field-row">
+              <div class="st-field" style="margin-bottom:0">
+                <label for="stv-kontakt">Ansprechpartner <span class="req">*</span></label>
+                <input type="text" id="stv-kontakt" placeholder="Vorname Nachname" maxlength="200">
+              </div>
+              <div class="st-field" style="margin-bottom:0">
+                <label for="stv-tel">Telefon</label>
+                <input type="tel" id="stv-tel" placeholder="+41 79 000 00 00" maxlength="50">
+              </div>
+            </div>
+
+            <div class="st-field" style="margin-top:16px">
+              <label>Zuständige Kantone <span class="req">*</span></label>
+              <div class="st-kanton-wrap">
+                <label class="st-kanton-all">
+                  <input type="checkbox" id="stv-alle" onchange="stvAlleToggle(this)">
+                  Alle 26 Kantone auswählen
+                </label>
+                <div class="st-kanton-grid" id="stv-kanton-grid"></div>
+              </div>
+              <div class="st-field-hint">Mehrfachauswahl möglich.</div>
+            </div>
+
+            <div class="st-consent">
+              <input type="checkbox" id="stv-dsgvo">
+              <label for="stv-dsgvo">
+                Ich habe die <a href="/datenschutz" target="_blank">Datenschutzerklärung</a> gelesen und stimme der Verarbeitung meiner Daten zu.
+              </label>
+            </div>
+
+            <button type="submit" class="st-submit-btn" id="stv-btn">
+              <span class="spinner"></span>
+              <span class="stv-btn-text">Pilotpartnerschaft anfragen &amp; Vertrag erhalten</span>
+            </button>
+
+          </form>
+        </div>
+
       </div>
     </div>
   </div>
 
 </div>
+
+<script>
+(function(){
+  var KANTONE = ['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden',
+    'Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Genf','Glarus',
+    'Graubünden','Jura','Luzern','Neuenburg','Nidwalden','Obwalden',
+    'Schaffhausen','Schwyz','Solothurn','St. Gallen','Tessin','Thurgau',
+    'Uri','Waadt','Wallis','Zug','Zürich'];
+
+  var grid = document.getElementById('stv-kanton-grid');
+  KANTONE.forEach(function(k){
+    var lbl = document.createElement('label');
+    lbl.className = 'st-kanton-item';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = k;
+    cb.onchange = syncAlle;
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(k));
+    grid.appendChild(lbl);
+  });
+
+  function syncAlle(){
+    var cbs = grid.querySelectorAll('input');
+    document.getElementById('stv-alle').checked = Array.from(cbs).every(function(c){ return c.checked; });
+  }
+  window.stvAlleToggle = function(cb){
+    grid.querySelectorAll('input').forEach(function(c){ c.checked = cb.checked; });
+  };
+
+  var form     = document.getElementById('st-tv-form');
+  var feedback = document.getElementById('st-tv-feedback');
+  var btn      = document.getElementById('stv-btn');
+  var btnText  = btn.querySelector('.stv-btn-text');
+  var origText = btnText.textContent;
+
+  function showMsg(msg, type){
+    feedback.textContent = msg;
+    feedback.className = 'st-feedback ' + type;
+    feedback.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function setLoading(on){
+    btn.disabled = on;
+    btn.classList.toggle('loading', on);
+    btnText.textContent = on ? 'Wird gesendet…' : origText;
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    feedback.className = 'st-feedback';
+
+    var name    = document.getElementById('stv-name').value.trim();
+    var email   = document.getElementById('stv-email').value.trim();
+    var kontakt = document.getElementById('stv-kontakt').value.trim();
+    var tel     = document.getElementById('stv-tel').value.trim();
+    var dsgvo   = document.getElementById('stv-dsgvo').checked;
+    var alleBox = document.getElementById('stv-alle');
+    var checked = Array.from(grid.querySelectorAll('input:checked')).map(function(c){ return c.value; });
+
+    if(!name)                          { showMsg('Bitte Verbandsnamen eingeben.', 'err'); return; }
+    if(!email || !email.includes('@')) { showMsg('Bitte gültige E-Mail eingeben.', 'err'); return; }
+    if(!kontakt)                       { showMsg('Bitte Ansprechpartner angeben.', 'err'); return; }
+    if(!alleBox.checked && !checked.length){ showMsg('Bitte mindestens einen Kanton wählen.', 'err'); return; }
+    if(!dsgvo)                         { showMsg('Bitte Datenschutzerklärung akzeptieren.', 'err'); return; }
+
+    var kantone = alleBox.checked ? 'alle' : JSON.stringify(checked);
+    setLoading(true);
+
+    var ajaxUrl = (window.stVerbandData && window.stVerbandData.ajaxUrl) || '/wp-admin/admin-ajax.php';
+    var nonce   = (window.stVerbandData && window.stVerbandData.nonce)   || '';
+
+    var fd = new FormData();
+    fd.append('action',        'st_verband_anfrage');
+    fd.append('nonce',          nonce);
+    fd.append('verbandName',    name);
+    fd.append('email',          email);
+    fd.append('kontaktName',    kontakt);
+    fd.append('kontaktTelefon', tel);
+    fd.append('kantone',        kantone);
+
+    fetch(ajaxUrl, { method:'POST', body:fd })
+      .then(function(r){ return r.json(); })
+      .then(function(json){
+        if(!json.success) throw new Error(json.data || 'Fehler');
+        form.reset();
+        grid.querySelectorAll('input').forEach(function(c){ c.checked=false; });
+        document.getElementById('stv-alle').checked = false;
+        showMsg('Vielen Dank! Der Pilotvertrag wurde an ' + email + ' gesendet. Bitte ausdrucken, unterzeichnen und an info@sagatrail.ch zurücksenden.', 'ok');
+      })
+      .catch(function(err){
+        showMsg('Fehler: ' + err.message + '. Bitte direkt an info@sagatrail.ch schreiben.', 'err');
+      })
+      .finally(function(){ setLoading(false); });
+  });
+})();
+</script>
