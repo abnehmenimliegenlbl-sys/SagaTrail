@@ -140,6 +140,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('routen',this)">&#128247; Routen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
+  <button class="tab-btn" onclick="switchTab('kampagne',this)">&#128140; Kampagne</button>
 </div>
 
 <div id="content">
@@ -317,6 +318,96 @@ a{color:var(--red);text-decoration:none}
     <div id="anfragen-body"><p class="loading">Wird geladen...</p></div>
   </div>
 
+  <!-- KAMPAGNE -->
+  <div id="tab-kampagne" class="tab-pane">
+
+    <!-- EMPFÄNGER FILTERN -->
+    <div class="card">
+      <h2>&#127981; Empfänger filtern</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+        <div class="form-group" style="min-width:140px">
+          <label>Typ</label>
+          <select id="km-typ"><option value="">Alle Typen</option></select>
+        </div>
+        <div class="form-group" style="min-width:140px">
+          <label>Kanton</label>
+          <select id="km-kanton"><option value="">Alle Kantone</option></select>
+        </div>
+        <div class="form-group" style="min-width:120px">
+          <label>Sprache</label>
+          <select id="km-sprache">
+            <option value="">Alle</option>
+            <option value="DE">DE – Deutsch</option>
+            <option value="FR">FR – Französisch</option>
+            <option value="IT">IT – Italienisch</option>
+            <option value="RM">RM – Rätoromanisch</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Empfänger laden</button>
+        <span id="km-leads-count" style="font-size:13px;color:var(--mid)"></span>
+      </div>
+      <div id="km-leads-table" style="display:none">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr></thead>
+          <tbody id="km-leads-tbody"></tbody>
+        </table>
+        <p id="km-leads-more" class="hint" style="margin-top:6px;display:none"></p>
+      </div>
+    </div>
+
+    <!-- E-MAIL VERFASSEN -->
+    <div class="card">
+      <h2>&#9997;&#65039; E-Mail verfassen</h2>
+      <p class="hint" style="margin-bottom:12px">Variablen: <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%TYP%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%ROUTE%</code> – werden pro Empfänger ersetzt</p>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Betreff *</label>
+        <input id="km-subject" type="text" placeholder="Werden Sie SagaTrail-Partner in %KANTON%"/>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Text *</label>
+        <textarea id="km-body" style="min-height:180px;font-size:13px;line-height:1.6" placeholder="Guten Tag,%&#10;&#10;wir sind SagaTrail – die Schweizer App für Sagenrouten..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="kmPreview()">&#128065;&#65039; Vorschau</button>
+        <button class="btn btn-primary" id="km-send-btn" onclick="kmSend()" disabled>&#128140; Kampagne starten</button>
+        <span id="km-compose-status" class="hint"></span>
+      </div>
+    </div>
+
+    <!-- FORTSCHRITT -->
+    <div class="card" id="km-progress-card" style="display:none">
+      <h2>&#9654;&#65039; Kampagne läuft</h2>
+      <div style="background:#f0eeeb;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px">
+        <div id="km-progress-bar" style="height:100%;background:var(--red);width:0%;transition:width .5s"></div>
+      </div>
+      <p id="km-progress-text" class="hint"></p>
+    </div>
+
+    <!-- VORSCHAU-MODAL -->
+    <div id="km-preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;overflow:auto;padding:32px 16px">
+      <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <b style="font-size:14px">&#128065;&#65039; E-Mail Vorschau</b>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('km-preview-modal').style.display='none'">&#10005; Schliessen</button>
+        </div>
+        <iframe id="km-preview-iframe" style="width:100%;height:600px;border:none" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">&#128196; Versand-Log</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="km-log-search" type="text" placeholder="Subject filtern..." style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px"/>
+          <button class="btn btn-ghost btn-sm" onclick="kmLoadLog()">&#8635; Aktualisieren</button>
+        </div>
+      </div>
+      <div id="km-log-body"><p class="hint">Log wird beim ersten Öffnen des Tabs geladen.</p></div>
+    </div>
+
+  </div>
+
   <!-- PARTNER -->
   <div id="tab-partner" class="tab-pane">
     <div class="card">
@@ -490,6 +581,7 @@ function switchTab(name, btn) {
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
   if (name === 'verbande' && token()) ladeVerbande();
+  if (name === 'kampagne' && token()) { kmLoadMeta(); kmLoadLog(); }
 }
 
 /* ===================== ÜBERSICHT ===================== */
@@ -1613,6 +1705,180 @@ async function deleteVerband(id) {
   } catch(e) {
     alert(e.message);
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   KAMPAGNE / MASSEN-E-MAIL
+   ═══════════════════════════════════════════════════ */
+var _kmLeads = [];
+var _kmPolling = null;
+
+async function kmLoadMeta() {
+  try {
+    var meta = await api('/api/admin/leads/meta');
+    var typSel = document.getElementById('km-typ');
+    var ktSel  = document.getElementById('km-kanton');
+    // Typen
+    typSel.innerHTML = '<option value="">Alle Typen</option>';
+    (meta.typen || []).forEach(function(t){ typSel.innerHTML += '<option value="'+esc(t)+'">'+esc(t)+'</option>'; });
+    // Kantone
+    ktSel.innerHTML = '<option value="">Alle Kantone</option>';
+    (meta.kantone || []).forEach(function(k){ ktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+  } catch(e) {
+    document.getElementById('km-leads-count').textContent = '⚠ ' + e.message;
+  }
+}
+
+async function kmLoadLeads() {
+  var count = document.getElementById('km-leads-count');
+  var tbl   = document.getElementById('km-leads-table');
+  var tbody = document.getElementById('km-leads-tbody');
+  count.textContent = 'Wird geladen…';
+  tbl.style.display = 'none';
+  try {
+    var typ     = v('km-typ');
+    var kanton  = v('km-kanton');
+    var sprache = v('km-sprache');
+    var params  = new URLSearchParams();
+    if (typ)     params.set('typ', typ);
+    if (kanton)  params.set('kanton', kanton);
+    if (sprache) params.set('sprache', sprache);
+    var data = await api('/api/admin/leads/list?' + params.toString());
+    _kmLeads = data.leads || [];
+    count.textContent = _kmLeads.length + ' Empfänger gefunden';
+    var PREVIEW = 20;
+    tbody.innerHTML = _kmLeads.slice(0, PREVIEW).map(function(l){
+      return '<tr><td>'+esc(l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(l.route)+'</td></tr>';
+    }).join('');
+    var moreEl = document.getElementById('km-leads-more');
+    if (_kmLeads.length > PREVIEW) {
+      moreEl.textContent = '… und ' + (_kmLeads.length - PREVIEW) + ' weitere (werden alle versendet)';
+      moreEl.style.display = 'block';
+    } else { moreEl.style.display = 'none'; }
+    tbl.style.display = _kmLeads.length ? 'block' : 'none';
+    document.getElementById('km-send-btn').disabled = !_kmLeads.length;
+    document.getElementById('km-send-btn').title = _kmLeads.length ? '' : 'Zuerst Empfänger laden';
+  } catch(e) {
+    count.textContent = '⚠ ' + e.message;
+    document.getElementById('km-send-btn').disabled = true;
+  }
+}
+
+async function kmPreview() {
+  var bodyText = v('km-body');
+  if (!bodyText) { alert('Bitte zuerst einen Text eingeben.'); return; }
+  var sampleLead = _kmLeads[0] || {};
+  try {
+    var res = await fetch('/api/admin/leads/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+      body: JSON.stringify({ bodyText: bodyText, sampleLead: sampleLead })
+    });
+    var html = await res.text();
+    var iframe = document.getElementById('km-preview-iframe');
+    iframe.srcdoc = html;
+    document.getElementById('km-preview-modal').style.display = 'block';
+  } catch(e) { alert('Vorschau-Fehler: ' + e.message); }
+}
+
+async function kmSend() {
+  var subject  = v('km-subject');
+  var bodyText = v('km-body');
+  if (!subject || !bodyText) { alert('Betreff und Text sind erforderlich.'); return; }
+  if (!_kmLeads.length) { alert('Bitte zuerst Empfänger laden.'); return; }
+  if (!confirm('Kampagne an ' + _kmLeads.length + ' Empfänger senden?\n\nBetreff: ' + subject)) return;
+  var btn = document.getElementById('km-send-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sendet…';
+  document.getElementById('km-compose-status').textContent = '';
+  try {
+    var filters = { typ: v('km-typ'), kanton: v('km-kanton'), sprache: v('km-sprache') };
+    var res = await api('/api/admin/leads/send', { method:'POST',
+      body: JSON.stringify({ subject: subject, bodyText: bodyText, filters: filters }) });
+    document.getElementById('km-progress-card').style.display = 'block';
+    kmStartPolling();
+    document.getElementById('km-compose-status').textContent = '✓ Gestartet – ' + res.total + ' Empfänger';
+  } catch(e) {
+    document.getElementById('km-compose-status').textContent = '⚠ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '📩 Kampagne starten';
+  }
+}
+
+function kmStartPolling() {
+  if (_kmPolling) clearInterval(_kmPolling);
+  _kmPolling = setInterval(kmPollStatus, 1500);
+  kmPollStatus();
+}
+
+async function kmPollStatus() {
+  try {
+    var s = await api('/api/admin/leads/status');
+    var total = s.total || 1;
+    var done  = (s.sent || 0) + (s.failed || 0) + (s.skipped || 0);
+    var pct   = Math.min(100, Math.round(done / total * 100));
+    document.getElementById('km-progress-bar').style.width = pct + '%';
+    var last = s.lastRecipient ? ' · Zuletzt: ' + esc(s.lastRecipient) : '';
+    document.getElementById('km-progress-text').innerHTML =
+      '&#9989; Versendet: ' + s.sent + ' &nbsp; &#10060; Fehler: ' + s.failed +
+      ' &nbsp; &#9654; Übersprungen: ' + s.skipped + ' &nbsp; / ' + s.total + last;
+    if (s.status === 'done' || s.status === 'error') {
+      clearInterval(_kmPolling);
+      _kmPolling = null;
+      var btn = document.getElementById('km-send-btn');
+      btn.disabled = false;
+      btn.textContent = '📩 Kampagne starten';
+      if (s.status === 'error') {
+        document.getElementById('km-progress-bar').style.background = 'var(--red)';
+        document.getElementById('km-compose-status').textContent = '⚠ Fehler: ' + (s.error || '?');
+      } else {
+        document.getElementById('km-progress-bar').style.background = 'var(--green)';
+        document.getElementById('km-compose-status').textContent = '✓ Abgeschlossen – ' + s.sent + ' versendet, ' + s.failed + ' Fehler, ' + s.skipped + ' übersprungen';
+      }
+      kmLoadLog();
+    }
+  } catch(e) { /* ignorieren */ }
+}
+
+async function kmLoadLog() {
+  var search = document.getElementById('km-log-search') ? v('km-log-search') : '';
+  var params = new URLSearchParams({ perPage: '100' });
+  if (search) params.set('subject', search);
+  var logBody = document.getElementById('km-log-body');
+  logBody.innerHTML = '<p class="loading">Wird geladen…</p>';
+  try {
+    var data = await api('/api/admin/leads/log?' + params.toString());
+    var rows = data.rows || [];
+    if (!rows.length) { logBody.innerHTML = '<p class="hint">Noch keine Einträge.</p>'; return; }
+    var html = '<table class="tbl"><thead><tr><th>Datum</th><th>Status</th><th>E-Mail</th><th>Name</th><th>Betreff</th><th>Fehler</th><th></th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var isOk = r.status === 'ok';
+      var badge = isOk ? '<span class="badge badge-green">&#10003; OK</span>' : '<span class="badge badge-red">&#10005; Fail</span>';
+      html += '<tr>' +
+        '<td class="mono" style="white-space:nowrap">' + fmtDate(r.sent_at) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td class="mono">' + esc(r.email) + '</td>' +
+        '<td>' + esc(r.recipient_name || '–') + '</td>' +
+        '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.subject) + '</td>' +
+        '<td style="max-width:160px;font-size:11px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.error || '') + '</td>' +
+        '<td><button class="btn btn-ghost btn-sm" title="Aus Blockliste entfernen falls vorhanden" onclick="kmUnblock(\''+esc(r.email)+'\')">&#128274;</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    if (data.total > rows.length) {
+      html += '<p class="hint" style="margin-top:6px">Zeige ' + rows.length + ' von ' + data.total + ' Einträgen.</p>';
+    }
+    logBody.innerHTML = html;
+  } catch(e) {
+    logBody.innerHTML = '<p class="hint">⚠ ' + esc(e.message) + '</p>';
+  }
+}
+
+async function kmUnblock(email) {
+  try {
+    await api('/api/admin/leads/blocklist?email=' + encodeURIComponent(email), { method: 'DELETE' });
+    alert(email + ' wurde aus der Blockliste entfernt.');
+  } catch(e) { alert('Fehler: ' + e.message); }
 }
 
 /* ===================== HELPERS ===================== */

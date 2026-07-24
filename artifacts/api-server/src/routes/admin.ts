@@ -21,6 +21,11 @@ import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
+import {
+  fetchLeadsFromWp, campaignState, startCampaign, buildPreviewHtml,
+  makeUnsubToken, verifyUnsubToken,
+} from "../lib/leadMailer";
+import { partnerEmailLogTable, partnerEmailBlocklistTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -1169,6 +1174,145 @@ router.delete("/admin/verbande/:id", async (req, res): Promise<void> => {
   const [row] = await db.delete(verbandsTable).where(eq(verbandsTable.id, req.params.id as string)).returning();
   if (!row) { res.status(404).json({ error: "Verband nicht gefunden" }); return; }
   res.status(204).end();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MASSEN-E-MAIL / PARTNER-LEADS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const WP_AJAX = () => process.env.WP_AJAX_URL ?? "";
+const WP_SECRET = () => process.env.WP_HOOK_SECRET ?? "";
+
+// GET /admin/leads/meta – Typen, Kantone, Sprachen für Dropdowns
+router.get("/admin/leads/meta", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  try {
+    const form = new URLSearchParams({ action: "sagatrail_leads_meta", hook_secret: WP_SECRET() });
+    const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
+    const json = await r.json() as { success: boolean; data?: unknown };
+    if (!json.success) throw new Error("WP Fehler");
+    res.json(json.data);
+  } catch (err) {
+    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+  }
+});
+
+// GET /admin/leads/list?typ=&kanton=&sprache= – gefilterte Leads
+router.get("/admin/leads/list", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  const { typ, kanton, sprache } = req.query as Record<string, string>;
+  try {
+    const leads = await fetchLeadsFromWp({ typ, kanton, sprache }, wpUrl, WP_SECRET());
+    res.json({ leads, total: leads.length });
+  } catch (err) {
+    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+  }
+});
+
+// POST /admin/leads/preview – E-Mail-Vorschau als HTML
+router.post("/admin/leads/preview", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { bodyText, sampleLead } = req.body ?? {};
+  if (!bodyText) { res.status(400).json({ error: "bodyText fehlt" }); return; }
+  const html = buildPreviewHtml(String(bodyText), sampleLead ?? {});
+  res.type("html").send(html);
+});
+
+// POST /admin/leads/send – Kampagne starten
+router.post("/admin/leads/send", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (campaignState.status === "running") { res.status(409).json({ error: "Kampagne läuft bereits" }); return; }
+  const { subject, bodyText, filters } = req.body ?? {};
+  if (!subject || !bodyText) { res.status(400).json({ error: "subject und bodyText erforderlich" }); return; }
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  let leads;
+  try {
+    leads = await fetchLeadsFromWp(filters ?? {}, wpUrl, WP_SECRET());
+  } catch (err) {
+    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") }); return;
+  }
+  if (!leads.length) { res.status(400).json({ error: "Keine Empfänger mit diesen Filtern" }); return; }
+  const proto = req.headers["x-forwarded-proto"] as string ?? req.protocol;
+  const host  = req.get("host")!;
+  const apiBase = `${proto}://${host}`;
+  await startCampaign({ subject, bodyText, leads, apiBase });
+  res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
+});
+
+// GET /admin/leads/status – Kampagnen-Fortschritt
+router.get("/admin/leads/status", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(campaignState);
+});
+
+// GET /admin/leads/log?page=1&perPage=50&subject= – Versand-Log
+router.get("/admin/leads/log", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const page    = Math.max(1, parseInt(String(req.query["page"]  ?? "1"),   10));
+  const perPage = Math.min(200, Math.max(10, parseInt(String(req.query["perPage"] ?? "100"), 10)));
+  const subjectFilter = String(req.query["subject"] ?? "");
+  const offset = (page - 1) * perPage;
+  let rows;
+  if (subjectFilter) {
+    rows = await db.execute(sql`
+      SELECT id, campaign_id, subject, email, recipient_name, status, error, sent_at
+      FROM partner_email_log
+      WHERE subject ILIKE ${"%" + subjectFilter + "%"}
+      ORDER BY sent_at DESC
+      LIMIT ${perPage} OFFSET ${offset}
+    `);
+  } else {
+    rows = await db.execute(sql`
+      SELECT id, campaign_id, subject, email, recipient_name, status, error, sent_at
+      FROM partner_email_log
+      ORDER BY sent_at DESC
+      LIMIT ${perPage} OFFSET ${offset}
+    `);
+  }
+  const count = await db.execute(sql`SELECT COUNT(*) FROM partner_email_log`);
+  res.json({ rows: rows.rows, total: Number((count.rows[0] as Record<string,unknown>)["count"]) });
+});
+
+// DELETE /admin/leads/blocklist?email= – Aus Blockliste entfernen
+router.delete("/admin/leads/blocklist", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const email = String(req.query["email"] ?? "").toLowerCase();
+  if (!email) { res.status(400).json({ error: "email fehlt" }); return; }
+  await db.delete(partnerEmailBlocklistTable).where(eq(partnerEmailBlocklistTable.email, email));
+  res.json({ ok: true });
+});
+
+// GET /api/unsubscribe?e=BASE64URL(email)&t=TOKEN&c=CAMPAIGN_ID – öffentlich
+router.get("/unsubscribe", async (req, res): Promise<void> => {
+  const { e: emailB64, t: token, c: campaignId } = req.query as Record<string, string>;
+  let email = "";
+  try { email = Buffer.from(emailB64 ?? "", "base64url").toString(); } catch { /**/ }
+  const valid = email && campaignId && token && verifyUnsubToken(email, campaignId, token);
+  if (valid) {
+    await db.insert(partnerEmailBlocklistTable).values({ email: email.toLowerCase() }).onConflictDoNothing();
+  }
+  res.type("html").send(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SagaTrail – Abmeldung</title>
+<style>body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f4f1}
+.box{text-align:center;max-width:420px;padding:40px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+h1{color:#CC0000;font-size:24px;margin-bottom:12px}p{color:#555;font-size:15px;line-height:1.6;margin-bottom:8px}
+a{color:#CC0000}</style></head>
+<body><div class="box">
+${valid
+  ? `<h1>✓ Abgemeldet</h1>
+     <p>Die E-Mail-Adresse <strong>${email.replace(/[<>]/g,"")}</strong> wurde erfolgreich aus unserem Verteiler entfernt.</p>
+     <p style="font-size:13px;color:#aaa;margin-top:20px">Sie erhalten keine weiteren Marketingmails von SagaTrail.</p>
+     <p style="margin-top:16px"><a href="https://sagatrail.ch">sagatrail.ch</a></p>`
+  : `<h1>Ungültiger Link</h1>
+     <p>Dieser Abmeldelink ist nicht mehr gültig oder wurde bereits verwendet.</p>
+     <p>Bitte senden Sie eine E-Mail an <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a> um sich abzumelden.</p>`}
+</div></body></html>`);
 });
 
 function sanitizeState() {

@@ -57,6 +57,34 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration partners-Spalten fehlgeschlagen (nicht kritisch)");
   }
 
+  // Massen-E-Mail-Log-Tabellen (idempotent).
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_email_log (
+        id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        campaign_id    UUID NOT NULL,
+        subject        TEXT NOT NULL,
+        email          TEXT NOT NULL,
+        recipient_name TEXT,
+        status         TEXT NOT NULL,
+        error          TEXT,
+        sent_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_email_blocklist (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email      TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pel_campaign ON partner_email_log(campaign_id)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pel_email    ON partner_email_log(email)`);
+    logger.info("Schema-Migration: partner_email_log + blocklist sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration partner_email_log fehlgeschlagen (nicht kritisch)");
+  }
+
   // Verbands-Tabelle: logo_url-Spalte (idempotent).
   try {
     await db.execute(sql`

@@ -15,3 +15,4 @@ export * from "./waypointPhotos";
 export * from "./verbandAnfragen";
 export * from "./verbands";
 export * from "./verbandTokens";
+export * from "./partnerEmailLog";
