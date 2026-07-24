@@ -12,3 +12,4 @@ export * from "./partnerAnfragen";
 export * from "./partnerTokens";
 export * from "./trailConditions";
 export * from "./waypointPhotos";
+export * from "./verbandAnfragen";
