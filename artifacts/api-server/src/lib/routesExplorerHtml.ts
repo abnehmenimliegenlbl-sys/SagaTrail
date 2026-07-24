@@ -340,6 +340,29 @@ a{color:var(--red)!important;text-decoration:none}
 .empty-box h3{font-size:17px !important;color:#1a1a1a !important;margin-bottom:6px !important}
 .empty-box p{font-size:14px !important;color:#555 !important}
 
+/* ── HERO APP STORE BUTTON ── */
+.hero-store-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  margin-top:22px;
+  padding:11px 20px;
+  background:rgba(0,0,0,.22);border:1.5px solid rgba(255,255,255,.4);
+  border-radius:10px;color:#fff !important;
+  font-size:14px !important;font-weight:600 !important;
+  text-decoration:none !important;transition:background .15s;
+}
+.hero-store-btn:hover{background:rgba(0,0,0,.35)!important}
+.hero-store-small{font-size:10px !important;opacity:.8;display:block;line-height:1.2}
+
+/* ── CARD APP STORE BUTTON ── */
+.card-appstore-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  margin-top:12px;padding:9px 14px;
+  background:#000;border-radius:8px;
+  color:#fff !important;font-size:12px !important;font-weight:600 !important;
+  text-decoration:none !important;transition:opacity .15s;
+}
+.card-appstore-btn:hover{opacity:.82!important}
+
 /* ── APP BANNER ── */
 .app-banner{
   background:var(--red);border-radius:16px;
@@ -397,6 +420,10 @@ a{color:var(--red)!important;text-decoration:none}
     <div class="st-hero-eyebrow">Schweizer Sagenweg-App</div>
     <h1>Routen entdecken</h1>
     <p>Alle Wanderrouten der SagaTrail-App — wähle einen Kanton und filtere nach Distanz, Schwierigkeit und Saison.</p>
+    <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="hero-store-btn" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      <div><span class="hero-store-small">Laden im</span>App Store</div>
+    </a>
   </div>
 </div>
 
@@ -486,7 +513,7 @@ a{color:var(--red)!important;text-decoration:none}
     <h2>Diese Routen mit Audio-Erzählung erleben?</h2>
     <p>Lade die SagaTrail-App herunter — GPS-getriggerte Sagennarration in 8 Sprachen, direkt am Schauplatz.</p>
     <div class="store-btns">
-      <a href="https://apps.apple.com/ch/app/sagatrail/id6745218145" class="store-btn" target="_blank" rel="noopener">
+      <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="store-btn" target="_blank" rel="noopener">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
         <div><span class="store-small">Laden im</span>App Store</div>
       </a>
@@ -700,6 +727,11 @@ function cardHtml(r){
         \${hm  ?'<span>⛰️ '+hm+'</span>' :''}
         \${zeit?'<span>⏱️ '+zeit+'</span>':''}
       </div>
+      <a class="card-appstore-btn" href="https://apps.apple.com/de/app/sagatrail/id6788260668"
+         target="_blank" rel="noopener" onclick="event.stopPropagation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Im App Store laden
+      </a>
     </div>
   </div>\`;
 }
@@ -762,7 +794,7 @@ function openDrawer(r) {
         \${stat(elev, 'Max. Höhe')}
       </div>
       \${r.terrain ? \`<div class="drawer-terrain">🗺️ \${r.terrain}</div>\` : ''}
-      <a class="drawer-cta" href="https://apps.apple.com/ch/app/sagatrail/id6745218145" target="_blank" rel="noopener">
+      <a class="drawer-cta" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">
         Diese Route in der App erleben →
       </a>
     </div>\`;
