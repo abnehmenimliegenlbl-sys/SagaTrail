@@ -55,9 +55,8 @@ if ( get_option( 'sagatrail_verband_db_version' ) !== '1.0' ) {
 // ===================================================================
 
 add_action( 'wp_footer', function() {
-    if ( ! is_page( array( 'tourismus-verbaende', 'tourismusverband', 'verband', 'verband-partner', 'pilotpartnerschaft' ) ) ) {
-        return;
-    }
+    // Nonce auf allen Seiten einbetten – das Formular kann auf beliebigen
+    // Seiten eingebettet sein; der Slug-Check führte zu leerem Nonce → 403.
     $api_base = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : '';
     ?>
     <script>
