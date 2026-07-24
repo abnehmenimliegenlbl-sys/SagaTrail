@@ -70,6 +70,16 @@ export const LANGUAGE_LABEL: Record<string, string> = {
   pt: "Portugiesisch (brasilianisch)",
 };
 
+const GSW_SYSTEM =
+  "Du bist ein Schweizer Mundart-Erzähler. Du schreibst AUSSCHLIESSLICH in Schweizerdeutsch (gsw). " +
+  "Kein einziges Wort des erzählten Textes darf auf Hochdeutsch sein. " +
+  "Typische Mundartformen: 'isch' (ist), 'hät' (hat), 'häsch' (hast), 'nöd'/'nid' (nicht), 'scho' (schon), " +
+  "'chli' (ein bisschen), 'go' (gehen), 'cho' (kommen), 'gseh' (sehen), 'gseit' (gesagt), " +
+  "'nüt' (nichts), 'öppis' (etwas), 'lueg' (schau), 'wäg' (wegen), 'ds' (das), 'vo' (von), " +
+  "'hend' (haben sie), 'sind' bleibt 'sind', 'isch gsi' (war). " +
+  "Schreib für Deutschschweizer aus allen Kantonen verständlich — kein zu enger Lokal-Dialekt. " +
+  "JSON-Schlüssel (id, text, isDecisionPoint, decision, question, options, label, archetypeHint, tone) bleiben auf Englisch.";
+
 function buildPrompt(
   saga: StorySagaInput,
   archetype: string,
@@ -82,6 +92,14 @@ function buildPrompt(
     "Du bist ein meisterhafter mündlicher Erzähler für eine Schweizer Wander-App, die regionale Sagen live erzählt — in der Tradition grosser Sagenerzähler am Lagerfeuer.",
     "Erzeuge eine atmosphärische, kapitelweise Erzählung einer Schweizer Sage, die eine wandernde Person unterwegs über Kopfhörer hört.",
     "",
+    ...(language === "gsw"
+      ? [
+          "⚠️ SPRACHE (absolut zwingend): Schreibe den GESAMTEN erzählten Text in Schweizer Mundart (gsw).",
+          "Verwende konsequent Mundartformen: 'isch/hät/häsch/nöd/scho/chli/go/cho/gseh/gseit/nüt/öppis/lueg/wäg'.",
+          "Kein einziges hochdeutsches 'ist', 'hat', 'nicht', 'gehen', 'sehen' usw. im erzählten Text.",
+          "",
+        ]
+      : []),
     "Erzählstil (sehr wichtig):",
     "- Erzähle SZENISCH, nicht zusammenfassend: zeige Momente, statt sie zu berichten. Keine Chronistenprosa, kein Nacherzähl-Ton.",
     "- Baue jede Szene mit sinnlichen Details auf, die zur Wanderung passen: Geräusche, Gerüche, Licht, Wetter, der Boden unter den Füssen.",
@@ -97,11 +115,6 @@ function buildPrompt(
     `Zusammenfassung der Sage: ${saga.summary}`,
     "",
     `Zielsprache der Erzählung: ${langLabel}. Schreibe den gesamten erzählten Text ausschliesslich in dieser Sprache.`,
-    ...(language === "gsw"
-      ? [
-          "Dialekt-Hinweis (Schweizerdeutsch): Schreibe in natürlichem, lesbarem Schweizer Mundart-Stil. Typische Formen: 'isch' statt 'ist', 'hät' statt 'hat', 'häsch' statt 'hast', 'nöd'/'nid' statt 'nicht', 'scho' statt 'schon', 'chli' statt 'ein bisschen', 'go' statt 'gehen', 'cho' statt 'kommen', 'gseh' statt 'sehen', 'gseit' statt 'gesagt', 'nüt' statt 'nichts', 'öppis' statt 'etwas', 'lueg' statt 'schau', 'wäg' statt 'wegen'. Vermeide hochdeutsche Verbendungen auf -en, -st, -t wo Mundartformen existieren. Der Text soll für Deutschschweizer aus verschiedenen Kantonen verständlich klingen, ohne zu stark in einen einzelnen Dialekt zu verfallen.",
-        ]
-      : []),
     `Rolle der wandernden Person (Archetyp): ${ARCHETYPE_LABEL[archetype] ?? archetype}.`,
     `Zielgruppe (Alterstufe): ${AGE_LABEL[ageTier] ?? ageTier}.`,
     "",
@@ -186,6 +199,7 @@ export async function generateStory(
   const message = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
+    ...(language === "gsw" ? { system: GSW_SYSTEM } : {}),
     messages: [{ role: "user", content: prompt }],
   });
 
