@@ -57,11 +57,11 @@ const AGE_LABEL: Record<string, string> = {
 
 export const LANGUAGE_LABEL: Record<string, string> = {
   de: "Hochdeutsch",
-  // gsw nutzt bewusst Hochdeutsch als Textsprache: Die Schweizer Faerbung kommt
-  // ausschliesslich ueber die ElevenLabs-Stimmwahl (Schweizer Akzent), nicht
-  // ueber Dialektschreibung. OpenAI TTS (Fallback) kann Mundarttext nicht
-  // zuverlaessig aussprechen. (Nutzerentscheid 2026-07-08)
-  gsw: "Hochdeutsch",
+  // gsw: Echtes Schweizerdeutsch (Mundart), wenn ElevenLabs-Quota vorhanden.
+  // Die Schweizer ElevenLabs-Stimme (Heidi factual) wird bevorzugt; faellt
+  // ElevenLabs aus, liest OpenAI den Mundarttext — klingt dann weniger akzentiert,
+  // bleibt aber verstaendlich. (Nutzerentscheid 2026-07-24, ueberschreibt 2026-07-08)
+  gsw: "Schweizerdeutsch (Mundart)",
   fr: "Französisch",
   it: "Italienisch",
   en: "Englisch",
@@ -97,6 +97,11 @@ function buildPrompt(
     `Zusammenfassung der Sage: ${saga.summary}`,
     "",
     `Zielsprache der Erzählung: ${langLabel}. Schreibe den gesamten erzählten Text ausschliesslich in dieser Sprache.`,
+    ...(language === "gsw"
+      ? [
+          "Dialekt-Hinweis (Schweizerdeutsch): Schreibe in natürlichem, lesbarem Schweizer Mundart-Stil. Typische Formen: 'isch' statt 'ist', 'hät' statt 'hat', 'häsch' statt 'hast', 'nöd'/'nid' statt 'nicht', 'scho' statt 'schon', 'chli' statt 'ein bisschen', 'go' statt 'gehen', 'cho' statt 'kommen', 'gseh' statt 'sehen', 'gseit' statt 'gesagt', 'nüt' statt 'nichts', 'öppis' statt 'etwas', 'lueg' statt 'schau', 'wäg' statt 'wegen'. Vermeide hochdeutsche Verbendungen auf -en, -st, -t wo Mundartformen existieren. Der Text soll für Deutschschweizer aus verschiedenen Kantonen verständlich klingen, ohne zu stark in einen einzelnen Dialekt zu verfallen.",
+        ]
+      : []),
     `Rolle der wandernden Person (Archetyp): ${ARCHETYPE_LABEL[archetype] ?? archetype}.`,
     `Zielgruppe (Alterstufe): ${AGE_LABEL[ageTier] ?? ageTier}.`,
     "",

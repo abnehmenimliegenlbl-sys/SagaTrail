@@ -12,6 +12,7 @@ import {
   catalogSagasTable,
   externalRoutesTable,
   verbandsTable,
+  storiesTable,
   type PartnerKategorie,
 } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -1003,6 +1004,22 @@ router.post("/admin/photos/reset", async (req, res): Promise<void> => {
     req.log.error({ err }, "Routen-Fotos zurücksetzen fehlgeschlagen");
     res.status(500).json({ error: "Zurücksetzen fehlgeschlagen" });
   }
+});
+
+// ===================================================================
+// GSW STORY CACHE INVALIDIERUNG
+// ===================================================================
+
+// DELETE /admin/stories/gsw — löscht alle gecachten gsw-Storys aus der DB,
+// damit sie beim nächsten Abruf frisch als Mundart-Text generiert werden.
+router.delete("/admin/stories/gsw", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const result = await db
+    .delete(storiesTable)
+    .where(eq(storiesTable.lang, "gsw"))
+    .returning({ id: storiesTable.sagaId });
+  req.log.info({ count: result.length }, "gsw-Storys aus Cache gelöscht");
+  res.json({ ok: true, deleted: result.length });
 });
 
 // ===================================================================

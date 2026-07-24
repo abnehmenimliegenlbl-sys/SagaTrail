@@ -7,10 +7,10 @@ import { synthesizeOpenAiNarrationWithPacing, splitIntoSentences } from "./narra
  * erste Wanderung nutzt bewusst die on-device Stimme (expo-speech) und ruft
  * diesen Client NIE auf.
  *
- * Schweizerdeutsch (gsw) wird NIE als Dialekt-Text an die TTS geschickt:
- * der Aufrufer muss fuer gsw bereits den Hochdeutsch-Text uebergeben. Die
- * "Schweizer Faerbung" kommt ausschliesslich ueber die Stimmwahl, nicht
- * ueber den Text.
+ * Schweizerdeutsch (gsw) wird als echte Mundart an die TTS geschickt
+ * (Anthropic generiert Dialekttext). Vorrang hat die Schweizer ElevenLabs-
+ * Stimme (Heidi factual); faellt ElevenLabs aus (Quota = 0, Plan-Sperre),
+ * liest OpenAI den Mundarttext — klingt neutraler, bleibt aber verstaendlich.
  *
  * Wenn ELEVEN_LABS_API_KEY fehlt oder ALLE ElevenLabs-Stimmen scheitern
  * (z.B. Kontingent auf 0, Konto-Sperre), springt als letzte Stufe OpenAI
