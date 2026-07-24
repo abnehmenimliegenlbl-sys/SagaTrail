@@ -214,6 +214,134 @@ add_action( 'sagatrail_verband_anfrage_gespeichert', function( $data, $row_id ) 
 }, 10, 2 );
 
 // ===================================================================
+// 7. AJAX: WILLKOMMENS-E-MAIL (aufgerufen vom SagaTrail API-Server
+//    wenn ein Verband im Admin-Dashboard angelegt wird)
+//
+//  POST admin-ajax.php?action=st_send_verband_willkommen
+//  Felder: secret, verbandName, email, kontaktName, passwort, portalUrl
+//
+//  Absicherung: SAGATRAIL_HOOK_SECRET Konstante in wp-config.php
+//  (selber Wert wie WP_HOOK_SECRET im API-Server).
+// ===================================================================
+
+add_action( 'wp_ajax_st_send_verband_willkommen',        'sagatrail_send_verband_willkommen' );
+add_action( 'wp_ajax_nopriv_st_send_verband_willkommen', 'sagatrail_send_verband_willkommen' );
+
+function sagatrail_send_verband_willkommen() {
+
+    // Shared-Secret prüfen
+    $expected = defined( 'SAGATRAIL_HOOK_SECRET' ) ? SAGATRAIL_HOOK_SECRET : '';
+    $received = sanitize_text_field( wp_unslash( $_POST['secret'] ?? '' ) );
+    if ( empty( $expected ) || ! hash_equals( $expected, $received ) ) {
+        wp_send_json_error( 'Unauthorized', 403 );
+    }
+
+    $verband_name = sanitize_text_field( wp_unslash( $_POST['verbandName'] ?? '' ) );
+    $email        = sanitize_email( wp_unslash( $_POST['email']        ?? '' ) );
+    $kontakt_name = sanitize_text_field( wp_unslash( $_POST['kontaktName'] ?? '' ) );
+    $passwort     = sanitize_text_field( wp_unslash( $_POST['passwort']    ?? '' ) );
+    $portal_url   = esc_url_raw( wp_unslash( $_POST['portalUrl']  ?? '' ) );
+
+    if ( ! $verband_name || ! is_email( $email ) || ! $passwort ) {
+        wp_send_json_error( 'Pflichtfelder fehlen.' );
+    }
+
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: SagaTrail <info@sagatrail.ch>',
+        'Reply-To: info@sagatrail.ch',
+    );
+
+    // ── E-Mail an den Verband ────────────────────────────────────────
+    $html_verband = '
+    <div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;
+                color:#1a1a1a;max-width:600px;margin:0 auto">
+      <div style="background:#CC0000;padding:28px 32px;border-radius:12px 12px 0 0">
+        <h1 style="color:#fff;margin:0;font-size:22px;letter-spacing:-.3px">
+          Ihr SagaTrail-Account ist bereit
+        </h1>
+      </div>
+      <div style="padding:32px;border:1px solid #e0e0e0;border-top:none;
+                  border-radius:0 0 12px 12px;background:#fff">
+        <p style="margin-top:0">Guten Tag ' . esc_html( $kontakt_name ) . '</p>
+        <p>Wir haben Ihren Verbandsportal-Account für
+           <strong>' . esc_html( $verband_name ) . '</strong> eingerichtet.
+           Sie haben Zugang zu zwei Bereichen:</p>
+
+        <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
+          1 · Verbandsportal (Nutzungsdaten &amp; Datenpflege)
+        </h3>
+        <p style="margin:0 0 8px">Melden Sie sich mit Ihrer E-Mail-Adresse an —
+           Sie erhalten jeweils einen direkten Zugangs-Link:</p>
+        <a href="' . esc_url( $portal_url ) . '"
+           style="display:inline-block;background:#CC0000;color:#fff;
+                  padding:10px 20px;border-radius:8px;text-decoration:none;
+                  font-weight:700;font-size:14px;margin-bottom:20px">
+          Zum Verbandsportal →
+        </a>
+
+        <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
+          2 · SagaTrail-App (Premium-Zugang)
+        </h3>
+        <p style="margin:0 0 12px">Sie erhalten einen Premium-Account für die SagaTrail-App,
+           um die App aus Nutzersicht kennenlernen zu können:</p>
+        <table style="border-collapse:collapse;font-size:14px;background:#f7f6f4;
+                      border-radius:8px;width:100%;margin-bottom:6px">
+          <tr>
+            <td style="padding:10px 14px;font-weight:700;width:100px;color:#555">E-Mail</td>
+            <td style="padding:10px 14px">' . esc_html( $email ) . '</td>
+          </tr>
+          <tr style="border-top:1px solid #e5e5e5">
+            <td style="padding:10px 14px;font-weight:700;color:#555">Passwort</td>
+            <td style="padding:10px 14px;font-family:monospace;font-size:15px;letter-spacing:.5px">
+              <strong>' . esc_html( $passwort ) . '</strong>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:12px;color:#888;margin-top:4px">
+          Wir empfehlen, das Passwort nach dem ersten Login zu ändern.</p>
+
+        <hr style="border:none;border-top:1px solid #e5e5e5;margin:28px 0"/>
+        <p>Bei Fragen stehen wir jederzeit zur Verfügung.</p>
+        <p style="margin-bottom:0">Freundliche Grüsse<br>
+        <strong>Rolf Koch</strong><br>Gründer SagaTrail<br>
+        <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a></p>
+      </div>
+    </div>';
+
+    $ok = wp_mail(
+        $email,
+        'Willkommen bei SagaTrail – Ihr Verbandsportal ist bereit',
+        $html_verband,
+        $headers
+    );
+
+    // ── Interne Kopie ────────────────────────────────────────────────
+    wp_mail(
+        'info@sagatrail.ch',
+        '[Verband angelegt] ' . $verband_name . ' – ' . $email,
+        '<h2 style="font-family:sans-serif">Verband-Account angelegt</h2>
+         <table style="font-family:monospace;font-size:13px;border-collapse:collapse">
+           <tr><td style="padding:4px 16px 4px 0;color:#888">Verband</td>
+               <td><strong>' . esc_html( $verband_name ) . '</strong></td></tr>
+           <tr><td style="padding:4px 16px 4px 0;color:#888">Kontakt</td>
+               <td>' . esc_html( $kontakt_name ) . '</td></tr>
+           <tr><td style="padding:4px 16px 4px 0;color:#888">E-Mail</td>
+               <td>' . esc_html( $email ) . '</td></tr>
+           <tr><td style="padding:4px 16px 4px 0;color:#888">Passwort</td>
+               <td>' . esc_html( $passwort ) . '</td></tr>
+         </table>',
+        $headers
+    );
+
+    if ( $ok ) {
+        wp_send_json_success( array( 'sent' => true ) );
+    } else {
+        wp_send_json_error( 'wp_mail fehlgeschlagen' );
+    }
+}
+
+// ===================================================================
 // 6. ADMIN-ÜBERSICHT (wp-admin > SagaTrail > Verband-Anfragen)
 // ===================================================================
 

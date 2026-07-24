@@ -1096,17 +1096,50 @@ router.post("/admin/verbande", async (req, res): Promise<void> => {
         },
       });
 
-    // 3. Willkommens-E-Mail (fire-and-forget, blockiert die Antwort nicht)
-    const proto    = req.headers["x-forwarded-proto"] ?? "https";
-    const host     = req.headers["x-forwarded-host"] ?? req.headers.host ?? "sagatrail.ch";
+    // 3. Willkommens-E-Mail via WordPress AJAX-Handler (wie Verträge),
+    //    Fallback auf nodemailer wenn WP_AJAX_URL nicht konfiguriert.
+    const proto     = req.headers["x-forwarded-proto"] ?? "https";
+    const host      = req.headers["x-forwarded-host"] ?? req.headers.host ?? "sagatrail.ch";
     const portalUrl = `${proto}://${host}/api/verband/portal`;
-    sendVerbandWillkommen({
-      verbandName: row.name,
-      email:       row.email,
-      kontaktName: row.kontaktName,
-      passwort,
-      portalUrl,
-    }).catch((err) => req.log.warn({ err, email: row.email }, "Verband-Willkommens-Mail fehlgeschlagen"));
+
+    const wpAjaxUrl   = process.env.WP_AJAX_URL;   // z.B. https://sagatrail.ch/wp-admin/admin-ajax.php
+    const wpHookSecret = process.env.WP_HOOK_SECRET; // identisch mit SAGATRAIL_HOOK_SECRET in wp-config.php
+
+    if (wpAjaxUrl && wpHookSecret) {
+      const body = new URLSearchParams({
+        action:      "st_send_verband_willkommen",
+        secret:      wpHookSecret,
+        verbandName: row.name,
+        email:       row.email,
+        kontaktName: row.kontaktName,
+        passwort,
+        portalUrl,
+      });
+      fetch(wpAjaxUrl, {
+        method:  "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body:    body.toString(),
+        signal:  AbortSignal.timeout(15_000),
+      })
+        .then(async (r) => {
+          const json = await r.json().catch(() => ({}));
+          if (!r.ok || !(json as Record<string, unknown>).success) {
+            req.log.warn({ status: r.status, json, email: row.email }, "WP Willkommens-Mail fehlgeschlagen");
+          } else {
+            req.log.info({ email: row.email }, "WP Willkommens-Mail gesendet");
+          }
+        })
+        .catch((err) => req.log.warn({ err, email: row.email }, "WP Willkommens-Mail Netzwerkfehler"));
+    } else {
+      // Fallback: nodemailer direkt
+      sendVerbandWillkommen({
+        verbandName: row.name,
+        email:       row.email,
+        kontaktName: row.kontaktName,
+        passwort,
+        portalUrl,
+      }).catch((err) => req.log.warn({ err, email: row.email }, "Verband-Willkommens-Mail (nodemailer) fehlgeschlagen"));
+    }
 
     res.status(201).json({ ...row, _passwort: passwort, _clerkUserId: userId });
   } catch (err) {
