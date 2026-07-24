@@ -1582,8 +1582,8 @@ function verbandEditFormHtml(v) {
     '<div class="form-group full"><label>Notizen</label><textarea id="vef-notizen-'+v.id+'">'+esc(v.notizen||'')+'</textarea></div>' +
     '</div>' +
     '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">' +
-    '<button class="btn btn-primary" onclick="saveVerband(\''+v.id+'\')">Speichern</button>' +
-    '<button class="btn btn-ghost" onclick="toggleVerbandEdit(\''+v.id+'\')">Abbrechen</button>' +
+    '<button class="btn btn-primary" onclick="saveVerband(&apos;'+v.id+'&apos;)">Speichern</button>' +
+    '<button class="btn btn-ghost" onclick="toggleVerbandEdit(&apos;'+v.id+'&apos;)">Abbrechen</button>' +
     '<span id="vef-status-'+v.id+'" class="hint"></span>' +
     '</div>';
 }
@@ -1786,7 +1786,7 @@ async function kmSend() {
   var bodyText = v('km-body');
   if (!subject || !bodyText) { alert('Betreff und Text sind erforderlich.'); return; }
   if (!_kmLeads.length) { alert('Bitte zuerst Empfänger laden.'); return; }
-  if (!confirm('Kampagne an ' + _kmLeads.length + ' Empfänger senden?\n\nBetreff: ' + subject)) return;
+  if (!confirm('Kampagne an ' + _kmLeads.length + ' Empfänger senden? Betreff: ' + subject)) return;
   var btn = document.getElementById('km-send-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Sendet…';
@@ -1861,7 +1861,7 @@ async function kmLoadLog() {
         '<td>' + esc(r.recipient_name || '–') + '</td>' +
         '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.subject) + '</td>' +
         '<td style="max-width:160px;font-size:11px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.error || '') + '</td>' +
-        '<td><button class="btn btn-ghost btn-sm" title="Aus Blockliste entfernen falls vorhanden" onclick="kmUnblock(\''+esc(r.email)+'\')">&#128274;</button></td>' +
+        '<td><button class="btn btn-ghost btn-sm" title="Aus Blockliste entfernen falls vorhanden" onclick="kmUnblock(&apos;'+esc(r.email)+'&apos;)">&#128274;</button></td>' +
         '</tr>';
     });
     html += '</tbody></table>';
