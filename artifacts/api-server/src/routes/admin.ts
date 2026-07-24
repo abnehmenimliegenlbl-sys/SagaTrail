@@ -1,4 +1,4 @@
-import { randomUUID, timingSafeEqual } from "crypto";
+import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
 import { desc, eq, or, ilike, isNotNull, inArray, ne, sql } from "drizzle-orm";
@@ -20,6 +20,7 @@ import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
+import { sendVerbandWillkommen } from "../lib/verbandEmail";
 
 const router: IRouter = Router();
 
@@ -1046,9 +1047,73 @@ router.post("/admin/verbande", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const parsed = VerbandBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  // 1. Verband in DB anlegen
   const [row] = await db.insert(verbandsTable).values({ id: randomUUID(), ...parsed.data }).returning();
   req.log.info({ verbandId: row.id, name: row.name }, "Verband angelegt");
-  res.status(201).json(row);
+
+  // 2. Clerk-Account anlegen (oder bestehenden übernehmen) + Premium-Profil
+  const passwort = randomBytes(10).toString("base64url"); // ~14 Zeichen, URL-sicher
+  try {
+    const bestehende = await clerkClient.users.getUserList({ emailAddress: [row.email] });
+    let userId: string;
+    if (bestehende.data.length > 0) {
+      userId = bestehende.data[0].id;
+      req.log.info({ userId, email: row.email }, "Verband: bestehender Clerk-User gefunden");
+    } else {
+      const neuerUser = await clerkClient.users.createUser({
+        emailAddress: [row.email],
+        password:     passwort,
+        firstName:    row.kontaktName.split(" ")[0] ?? row.name,
+        lastName:     row.kontaktName.split(" ").slice(1).join(" ") || row.name,
+        skipPasswordChecks: true,
+      });
+      userId = neuerUser.id;
+      req.log.info({ userId, email: row.email }, "Verband: Clerk-User angelegt");
+    }
+
+    // Premium für 10 Jahre (analog Apple-Test-Accounts)
+    const premiumBis = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650);
+    await db
+      .insert(profilesTable)
+      .values({
+        id:          userId,
+        name:        row.kontaktName,
+        archetype:   "reisende",
+        homeCanton:  "Bern",
+        language:    "de",
+        ageTier:     "erwachsene",
+        premium:     false,
+        premiumBis,
+        premiumSyncLockedUntil: premiumBis,
+      })
+      .onConflictDoUpdate({
+        target: profilesTable.id,
+        set: {
+          premiumBis,
+          premiumSyncLockedUntil: premiumBis,
+          updatedAt: new Date(),
+        },
+      });
+
+    // 3. Willkommens-E-Mail (fire-and-forget, blockiert die Antwort nicht)
+    const proto    = req.headers["x-forwarded-proto"] ?? "https";
+    const host     = req.headers["x-forwarded-host"] ?? req.headers.host ?? "sagatrail.ch";
+    const portalUrl = `${proto}://${host}/api/verband/portal`;
+    sendVerbandWillkommen({
+      verbandName: row.name,
+      email:       row.email,
+      kontaktName: row.kontaktName,
+      passwort,
+      portalUrl,
+    }).catch((err) => req.log.warn({ err, email: row.email }, "Verband-Willkommens-Mail fehlgeschlagen"));
+
+    res.status(201).json({ ...row, _passwort: passwort, _clerkUserId: userId });
+  } catch (err) {
+    req.log.error({ err, verbandId: row.id }, "Clerk/Premium/Mail nach Verband-Anlage fehlgeschlagen");
+    // Verband ist schon angelegt — trotzdem 201, aber mit Hinweis
+    res.status(201).json({ ...row, _warning: "Clerk-Account oder E-Mail fehlgeschlagen, bitte manuell prüfen." });
+  }
 });
 
 router.patch("/admin/verbande/:id", async (req, res): Promise<void> => {

@@ -294,6 +294,112 @@ function tableRows(
   }
 }
 
+// ── Willkommens-E-Mail bei Verband-Anlage ────────────────────────────────────
+
+export interface VerbandWillkommenData {
+  verbandName:    string;
+  email:          string;
+  kontaktName:    string;
+  passwort:       string;   // generiertes Initialpasswort für die SagaTrail-App
+  portalUrl:      string;   // URL zum Verbandsportal
+}
+
+export async function sendVerbandWillkommen(data: VerbandWillkommenData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const transporter = createTransporter();
+
+  // 1) Mail an den Verband
+  await transporter.sendMail({
+    from:    `SagaTrail <${from}>`,
+    to:      data.email,
+    replyTo: "info@sagatrail.ch",
+    subject: `Willkommen bei SagaTrail – Ihr Verbandsportal ist bereit`,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                  color:#1a1a1a;max-width:600px;margin:0 auto">
+        <div style="background:#CC0000;padding:28px 32px;border-radius:12px 12px 0 0">
+          <h1 style="color:#fff;margin:0;font-size:22px;letter-spacing:-.3px">
+            Ihr SagaTrail-Account ist bereit
+          </h1>
+        </div>
+        <div style="padding:32px;border:1px solid #e0e0e0;border-top:none;
+                    border-radius:0 0 12px 12px;background:#fff">
+          <p style="margin-top:0">Guten Tag ${data.kontaktName}</p>
+          <p>Wir haben Ihren Verbandsportal-Account für
+             <strong>${data.verbandName}</strong> eingerichtet.
+             Sie haben Zugang zu zwei Bereichen:</p>
+
+          <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
+            1 · Verbandsportal (Nutzungsdaten &amp; Datenpflege)
+          </h3>
+          <p style="margin:0 0 8px">Melden Sie sich mit Ihrer E-Mail-Adresse an —
+             Sie erhalten jeweils einen direkten Zugangs-Link:</p>
+          <a href="${data.portalUrl}"
+             style="display:inline-block;background:#CC0000;color:#fff;
+                    padding:10px 20px;border-radius:8px;text-decoration:none;
+                    font-weight:700;font-size:14px;margin-bottom:20px">
+            Zum Verbandsportal →
+          </a>
+
+          <h3 style="color:#CC0000;margin-top:24px;margin-bottom:6px">
+            2 · SagaTrail-App (Premium-Zugang)
+          </h3>
+          <p style="margin:0 0 12px">Sie haben einen Premium-Account für die
+             SagaTrail-App erhalten, um die App aus Nutzersicht kennenlernen
+             zu können. Ihre Login-Daten:</p>
+          <table style="border-collapse:collapse;font-size:14px;
+                        background:#f7f6f4;border-radius:8px;
+                        width:100%;margin-bottom:20px">
+            <tr>
+              <td style="padding:10px 14px;font-weight:700;width:100px;
+                         color:#555;white-space:nowrap">E-Mail</td>
+              <td style="padding:10px 14px">${data.email}</td>
+            </tr>
+            <tr style="border-top:1px solid #e5e5e5">
+              <td style="padding:10px 14px;font-weight:700;color:#555">
+                Passwort</td>
+              <td style="padding:10px 14px;font-family:monospace;
+                         font-size:15px;letter-spacing:.5px">
+                <strong>${data.passwort}</strong></td>
+            </tr>
+          </table>
+          <p style="font-size:12px;color:#888;margin-top:-8px">
+            Wir empfehlen, das Passwort nach dem ersten Login zu ändern.</p>
+
+          <hr style="border:none;border-top:1px solid #e5e5e5;margin:28px 0"/>
+
+          <p>Bei Fragen stehen wir jederzeit zur Verfügung.</p>
+          <p style="margin-bottom:0">Freundliche Grüsse<br>
+          <strong>Rolf Koch</strong><br>
+          Gründer SagaTrail<br>
+          <a href="mailto:info@sagatrail.ch" style="color:#CC0000">
+            info@sagatrail.ch</a></p>
+        </div>
+      </div>
+    `,
+  });
+
+  // 2) Interne Kopie
+  await transporter.sendMail({
+    from:    `SagaTrail System <${from}>`,
+    to:      "info@sagatrail.ch",
+    subject: `[Verband angelegt] ${data.verbandName} – ${data.email}`,
+    html: `
+      <h2 style="font-family:sans-serif">Verband-Account angelegt</h2>
+      <table style="font-family:monospace;font-size:13px;border-collapse:collapse">
+        <tr><td style="padding:4px 16px 4px 0;color:#888">Verband</td>
+            <td><strong>${data.verbandName}</strong></td></tr>
+        <tr><td style="padding:4px 16px 4px 0;color:#888">Kontakt</td>
+            <td>${data.kontaktName}</td></tr>
+        <tr><td style="padding:4px 16px 4px 0;color:#888">E-Mail</td>
+            <td>${data.email}</td></tr>
+        <tr><td style="padding:4px 16px 4px 0;color:#888">Passwort</td>
+            <td>${data.passwort}</td></tr>
+      </table>
+    `,
+  });
+}
+
 // ── E-Mail versenden ──────────────────────────────────────────────────────────
 
 function createTransporter() {
