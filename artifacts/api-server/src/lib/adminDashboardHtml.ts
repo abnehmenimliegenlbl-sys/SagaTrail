@@ -1745,7 +1745,8 @@ async function kmLoadLeads() {
     if (kanton)  params.set('kanton', kanton);
     if (sprache) params.set('sprache', sprache);
     var data = await api('/api/admin/leads/list?' + params.toString());
-    _kmLeads = data.leads || [];
+    var seen = {};
+    _kmLeads = (data.leads || []).filter(function(l){ var e = (l.email||'').toLowerCase(); if (seen[e]) return false; seen[e]=true; return true; });
     count.textContent = _kmLeads.length + ' Empfänger gefunden';
     var PREVIEW = 20;
     tbody.innerHTML = _kmLeads.slice(0, PREVIEW).map(function(l){
