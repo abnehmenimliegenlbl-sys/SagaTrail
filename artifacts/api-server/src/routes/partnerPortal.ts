@@ -36,6 +36,22 @@ async function resolveToken(token: string) {
   return partner ?? null;
 }
 
+async function resolveVerbandToken(token: string) {
+  const now = new Date();
+  const [row] = await db
+    .select()
+    .from(verbandTokensTable)
+    .where(and(eq(verbandTokensTable.token, token), gt(verbandTokensTable.expiresAt, now)))
+    .limit(1);
+  if (!row) return null;
+  const [verband] = await db
+    .select()
+    .from(verbandsTable)
+    .where(eq(verbandsTable.id, row.verbandId))
+    .limit(1);
+  return verband ?? null;
+}
+
 router.post("/partner/portal/token", async (req, res): Promise<void> => {
   const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
   if (!parsed.success) {
@@ -87,29 +103,50 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
   const token = req.query["token"];
   if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
 
+  // Partner-Token prüfen
   const partner = await resolveToken(token);
-  if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
+  if (partner) {
+    res.json({
+      type: "partner",
+      id: partner.id,
+      name: partner.name,
+      kategorie: partner.kategorie,
+      canton: partner.canton,
+      beschreibung: partner.beschreibung,
+      angebot: partner.angebot,
+      fotoUrl: resolveFotoUrl(partner, req),
+      telefon: partner.telefon,
+      websiteUrl: partner.websiteUrl,
+      reservierungUrl: partner.reservierungUrl,
+      oeffnungszeiten: partner.oeffnungszeiten,
+      email: partner.email,
+      paket: partner.paket,
+      isActive: partner.isActive,
+      views: partner.views,
+      offersTapped: partner.offersTapped,
+      laufzeitStart: partner.laufzeitStart,
+      laufzeitEnde: partner.laufzeitEnde,
+    });
+    return;
+  }
 
-  res.json({
-    id: partner.id,
-    name: partner.name,
-    kategorie: partner.kategorie,
-    canton: partner.canton,
-    beschreibung: partner.beschreibung,
-    angebot: partner.angebot,
-    fotoUrl: resolveFotoUrl(partner, req),
-    telefon: partner.telefon,
-    websiteUrl: partner.websiteUrl,
-    reservierungUrl: partner.reservierungUrl,
-    oeffnungszeiten: partner.oeffnungszeiten,
-    email: partner.email,
-    paket: partner.paket,
-    isActive: partner.isActive,
-    views: partner.views,
-    offersTapped: partner.offersTapped,
-    laufzeitStart: partner.laufzeitStart,
-    laufzeitEnde: partner.laufzeitEnde,
-  });
+  // Verband-Token prüfen
+  const verband = await resolveVerbandToken(token);
+  if (verband) {
+    if (!verband.isActive) { res.status(403).json({ error: "Verband ist inaktiv." }); return; }
+    res.json({
+      type: "verband",
+      id: verband.id,
+      name: verband.name,
+      kantone: verband.kantone,
+      isActive: verband.isActive,
+      email: verband.email,
+      createdAt: verband.createdAt,
+    });
+    return;
+  }
+
+  res.status(401).json({ error: "Ungültiger oder abgelaufener Token." });
 });
 
 // Foto-Upload: Base64-Bild (client-seitig auf 1200px resized) direkt in DB speichern.

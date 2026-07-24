@@ -112,7 +112,10 @@
           <div style="margin-top:4px" id="spp-meta"></div>
           <div class="spp-laufzeit" id="spp-laufzeit"></div>
         </div>
-        <span id="spp-status-badge"></span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span id="spp-status-badge"></span>
+          <button onclick="sppLogout()" style="background:none;border:1px solid #ccc;border-radius:6px;padding:5px 12px;font-size:12px;color:#666;cursor:pointer;line-height:1.4" onmouseover="this.style.borderColor='#CC0000';this.style.color='#CC0000'" onmouseout="this.style.borderColor='#ccc';this.style.color='#666'">Abmelden</button>
+        </div>
       </div>
       <div class="spp-stat-row">
         <div class="spp-stat"><div class="num" id="spp-views">–</div><div class="lbl">👁 Profil-Aufrufe</div></div>
@@ -221,6 +224,28 @@
         </button>
         <div id="spp-oz-msg" class="spp-msg" style="margin-top:0"></div>
       </div>
+    </div>
+
+    <!-- Verband-Ansicht (wird für Verbände eingeblendet, Partner-Sektionen ausgeblendet) -->
+    <div class="spp-card" id="spp-verband-info" style="display:none">
+      <h2>Verbandsportal</h2>
+      <p style="font-size:13px;color:#555;margin-bottom:18px">
+        Ihr Verbandsportal ist aktiv. Bei Fragen oder Anpassungen melden Sie sich direkt bei uns.
+      </p>
+      <table style="font-size:13px;border-collapse:collapse;width:100%">
+        <tr>
+          <td style="padding:6px 16px 6px 0;color:#888;white-space:nowrap;vertical-align:top">Kantone</td>
+          <td id="spp-verband-kantone" style="padding:6px 0;font-weight:500">–</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 16px 6px 0;color:#888;white-space:nowrap">E-Mail</td>
+          <td id="spp-verband-email" style="padding:6px 0">–</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 16px 6px 0;color:#888;white-space:nowrap">Mitglied seit</td>
+          <td id="spp-verband-seit" style="padding:6px 0">–</td>
+        </tr>
+      </table>
     </div>
 
     <p style="font-size:11px;color:#aaa;text-align:center">
@@ -347,6 +372,14 @@
     times.classList.toggle('hidden', !chk.checked);
   };
 
+  window.sppLogout = function() {
+    localStorage.removeItem('spp_token');
+    document.getElementById('spp-dashboard').style.display = 'none';
+    document.getElementById('spp-login').style.display = 'block';
+    document.getElementById('spp-email').value = '';
+    document.getElementById('spp-login-msg').textContent = '';
+  };
+
   // Token aus URL oder localStorage → Dashboard laden
   var tok = getToken();
   if (tok) {
@@ -392,6 +425,42 @@
         document.getElementById('spp-login').style.display = 'none';
         document.getElementById('spp-dashboard').style.display = 'block';
 
+        // ── Verband-Ansicht ──────────────────────────────────────────
+        if (p.type === 'verband') {
+          document.getElementById('spp-name').textContent = p.name;
+          document.getElementById('spp-meta').innerHTML =
+            '<span style="font-size:13px;color:#777">Tourismusverband</span>';
+          document.getElementById('spp-status-badge').innerHTML =
+            p.isActive
+              ? '<span class="spp-badge spp-badge-green">✓ Aktiv</span>'
+              : '<span class="spp-badge spp-badge-gray">Inaktiv</span>';
+          document.getElementById('spp-views').textContent = '–';
+          document.getElementById('spp-taps').textContent = '–';
+          // Verband-Detailkarte
+          document.getElementById('spp-verband-info').style.display = 'block';
+          document.getElementById('spp-verband-kantone').textContent = p.kantone || '–';
+          document.getElementById('spp-verband-email').textContent   = p.email   || '–';
+          document.getElementById('spp-verband-seit').textContent    = p.createdAt ? fmtDate(p.createdAt) : '–';
+          // Partner-Sektionen ausblenden
+          ['spp-foto-card','spp-beschr-wrap','spp-angebot-wrap',
+           'spp-kontakt-wrap','spp-reserv-wrap','spp-paket-info'].forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          // Öffnungszeiten-Karte ausblenden
+          var cards = document.querySelectorAll('#spp-dashboard .spp-card');
+          cards.forEach(function(c) {
+            if (c.querySelector('h2') && c.querySelector('h2').textContent === 'Öffnungszeiten') {
+              c.style.display = 'none';
+            }
+            if (c.querySelector('h2') && c.querySelector('h2').textContent === 'Profil bearbeiten') {
+              c.style.display = 'none';
+            }
+          });
+          return; // früh raus – kein Partner-Setup nötig
+        }
+
+        // ── Partner-Ansicht ──────────────────────────────────────────
         document.getElementById('spp-name').textContent = p.name;
         document.getElementById('spp-meta').innerHTML =
           '<span style="font-size:13px;color:#777">' + katLabel(p.kategorie) +
