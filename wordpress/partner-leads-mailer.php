@@ -5,41 +5,17 @@
  * Dieses Snippet muss in WPCode als «Always Run» gespeichert werden.
  *
  * Es stellt zwei WP-AJAX-Aktionen bereit:
- *   1. sagatrail_get_leads   – gibt Leads aus wp_sagatrail_partner_leads zurück (JSON)
- *   2. sagatrail_unsubscribe – markiert eine E-Mail als abgemeldet (wird auch via /api/unsubscribe gehandhabt)
+ *   1. sagatrail_get_leads   – gibt Leads aus sagatrail_partner_leads zurück (JSON)
+ *   2. sagatrail_leads_meta  – Distinct-Werte für Filter-Dropdowns
  *
- * Tabelle wp_sagatrail_partner_leads (wird automatisch angelegt):
+ * Tabelle sagatrail_partner_leads (bereits vorhanden, KEIN wp_-Prefix):
  *   id, name, email, kanton, sprache, route, typ, adresse, telefon, website, created_at
  *
  * Authentifizierung: HTTP-Body-Parameter hook_secret muss mit SAGATRAIL_HOOK_SECRET übereinstimmen.
  */
 
-// ── Tabelle anlegen (idempotent) ──────────────────────────────────────────────
-function sagatrail_leads_create_table() {
-    global $wpdb;
-    $table   = $wpdb->prefix . 'sagatrail_partner_leads';
-    $charset = $wpdb->get_charset_collate();
-    $sql = "CREATE TABLE IF NOT EXISTS {$table} (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        name        VARCHAR(255) NOT NULL DEFAULT '',
-        email       VARCHAR(255) NOT NULL DEFAULT '',
-        kanton      VARCHAR(100) NOT NULL DEFAULT '',
-        sprache     VARCHAR(10)  NOT NULL DEFAULT 'DE',
-        route       VARCHAR(255) NOT NULL DEFAULT '',
-        typ         VARCHAR(100) NOT NULL DEFAULT '',
-        adresse     TEXT,
-        telefon     VARCHAR(100),
-        website     VARCHAR(500),
-        created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) {$charset};";
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( $sql );
-}
-
-if ( get_option( 'sagatrail_leads_db_version' ) !== '1.0' ) {
-    sagatrail_leads_create_table();
-    update_option( 'sagatrail_leads_db_version', '1.0' );
-}
+// Fixer Tabellenname – kein $wpdb->prefix, da die Tabelle ohne WP-Prefix existiert.
+define( 'SAGATRAIL_LEADS_TABLE', 'sagatrail_partner_leads' );
 
 // ── Hilfsfunktion: Secret prüfen ─────────────────────────────────────────────
 function sagatrail_leads_check_secret() {
@@ -59,7 +35,7 @@ function sagatrail_ajax_get_leads() {
     sagatrail_leads_check_secret();
 
     global $wpdb;
-    $table = $wpdb->prefix . 'sagatrail_partner_leads';
+    $table = SAGATRAIL_LEADS_TABLE;
 
     $where  = [];
     $params = [];
@@ -114,7 +90,7 @@ function sagatrail_ajax_leads_meta() {
     sagatrail_leads_check_secret();
 
     global $wpdb;
-    $table = $wpdb->prefix . 'sagatrail_partner_leads';
+    $table = SAGATRAIL_LEADS_TABLE;
 
     $typen    = $wpdb->get_col( "SELECT DISTINCT typ     FROM {$table} WHERE typ    != '' ORDER BY typ" );
     $kantone  = $wpdb->get_col( "SELECT DISTINCT kanton  FROM {$table} WHERE kanton != '' ORDER BY kanton" );
