@@ -11,6 +11,7 @@ import {
   catalogRoutesTable,
   catalogSagasTable,
   externalRoutesTable,
+  verbandsTable,
   type PartnerKategorie,
 } from "@workspace/db";
 import { istPremiumAktiv } from "../lib/premiumStatus";
@@ -1002,6 +1003,55 @@ router.post("/admin/photos/reset", async (req, res): Promise<void> => {
     req.log.error({ err }, "Routen-Fotos zurücksetzen fehlgeschlagen");
     res.status(500).json({ error: "Zurücksetzen fehlgeschlagen" });
   }
+});
+
+// ===================================================================
+// VERBÄNDE CRUD
+// ===================================================================
+
+const VerbandBody = z.object({
+  name:           z.string().min(1).max(200),
+  email:          z.string().email().max(200),
+  kontaktName:    z.string().min(1).max(200),
+  kontaktTelefon: z.string().max(50).optional(),
+  kantone:        z.string().min(1),
+  isActive:       z.boolean().default(true),
+  notizen:        z.string().optional(),
+});
+
+router.get("/admin/verbande", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const rows = await db.select().from(verbandsTable).orderBy(desc(verbandsTable.createdAt));
+  res.json(rows);
+});
+
+router.post("/admin/verbande", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = VerbandBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [row] = await db.insert(verbandsTable).values({ id: randomUUID(), ...parsed.data }).returning();
+  req.log.info({ verbandId: row.id, name: row.name }, "Verband angelegt");
+  res.status(201).json(row);
+});
+
+router.patch("/admin/verbande/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const parsed = VerbandBody.partial().safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [row] = await db
+    .update(verbandsTable)
+    .set({ ...parsed.data, updatedAt: new Date() })
+    .where(eq(verbandsTable.id, req.params.id as string))
+    .returning();
+  if (!row) { res.status(404).json({ error: "Verband nicht gefunden" }); return; }
+  res.json(row);
+});
+
+router.delete("/admin/verbande/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const [row] = await db.delete(verbandsTable).where(eq(verbandsTable.id, req.params.id as string)).returning();
+  if (!row) { res.status(404).json({ error: "Verband nicht gefunden" }); return; }
+  res.status(204).end();
 });
 
 function sanitizeState() {

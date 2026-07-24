@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "crypto";
 import { Router, type IRouter } from "express";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
-import { db, partnersTable, partnerTokensTable } from "@workspace/db";
+import { db, partnersTable, partnerTokensTable, verbandsTable, verbandTokensTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 
 const router: IRouter = Router();
@@ -43,29 +43,44 @@ router.post("/partner/portal/token", async (req, res): Promise<void> => {
     return;
   }
 
+  const email = parsed.data.email;
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const token = randomBytes(32).toString("hex");
+
+  // Zuerst Partner prüfen
   const [partner] = await db
     .select()
     .from(partnersTable)
-    .where(eq(partnersTable.email, parsed.data.email))
+    .where(eq(partnersTable.email, email))
     .limit(1);
 
-  if (!partner) {
-    res.json({ ok: true });
+  if (partner) {
+    await db.insert(partnerTokensTable).values({ id: randomUUID(), partnerId: partner.id, token, expiresAt });
+    req.log.info({ partnerId: partner.id }, "Partner-Portal-Token erstellt");
+    res.json({ ok: true, token, name: partner.name, partnerName: partner.name, type: "partner", expiresAt: expiresAt.toISOString() });
     return;
   }
 
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  // Dann Verband prüfen
+  const [verband] = await db
+    .select()
+    .from(verbandsTable)
+    .where(eq(verbandsTable.email, email))
+    .limit(1);
 
-  await db.insert(partnerTokensTable).values({
-    id: randomUUID(),
-    partnerId: partner.id,
-    token,
-    expiresAt,
-  });
+  if (verband) {
+    if (!verband.isActive) {
+      res.json({ ok: true }); // Stille Ablehnung inaktiver Verbände
+      return;
+    }
+    await db.insert(verbandTokensTable).values({ id: randomUUID(), verbandId: verband.id, token, expiresAt });
+    req.log.info({ verbandId: verband.id }, "Verband-Portal-Token erstellt");
+    res.json({ ok: true, token, name: verband.name, type: "verband", expiresAt: expiresAt.toISOString() });
+    return;
+  }
 
-  req.log.info({ partnerId: partner.id }, "Portal-Token erstellt");
-  res.json({ ok: true, token, partnerName: partner.name, expiresAt: expiresAt.toISOString() });
+  // Keine E-Mail gefunden — stille Antwort (kein Enumeration-Leak)
+  res.json({ ok: true });
 });
 
 router.get("/partner/portal/me", async (req, res): Promise<void> => {

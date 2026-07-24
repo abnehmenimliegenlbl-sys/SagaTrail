@@ -130,6 +130,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('users',this)">&#128101; Nutzer</button>
   <button class="tab-btn" onclick="switchTab('usage',this)">&#128290; Nutzungsdaten</button>
   <button class="tab-btn" onclick="switchTab('partner',this)">&#127968; Partner</button>
+  <button class="tab-btn" onclick="switchTab('verbande',this)">&#127956; Verbände</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('routen',this)">&#128247; Routen-Fotos</button>
@@ -150,6 +151,29 @@ a{color:var(--red);text-decoration:none}
   <!-- NUTZUNGSDATEN -->
   <div id="tab-usage" class="tab-pane">
     <div id="usage-body"><p class="loading">Wird geladen...</p></div>
+  </div>
+
+  <!-- VERBÄNDE -->
+  <div id="tab-verbande" class="tab-pane">
+    <div class="card">
+      <h2>&#127956; Neuer Verband</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Name *</label><input id="vb-name" type="text" placeholder="Graubünden Ferien"/></div>
+        <div class="form-group"><label>E-Mail *</label><input id="vb-email" type="email" placeholder="info@verband.ch"/></div>
+        <div class="form-group"><label>Ansprechpartner *</label><input id="vb-kontakt" type="text" placeholder="Vorname Nachname"/></div>
+        <div class="form-group"><label>Telefon</label><input id="vb-tel" type="tel" placeholder="+41 79 000 00 00"/></div>
+        <div class="form-group full"><label>Kantone (kommagetrennt oder "alle") *</label><input id="vb-kantone" type="text" placeholder="Graubünden,Glarus oder alle"/></div>
+        <div class="form-group full"><label>Interne Notizen</label><input id="vb-notizen" type="text" placeholder="optional"/></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="createVerband()">Verband anlegen</button>
+        <span id="vb-status" style="font-size:13px"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>&#127956; Bestehende Verbände</h2>
+      <div id="vb-liste"><p class="loading">Wird geladen…</p></div>
+    </div>
   </div>
 
   <!-- PUSH -->
@@ -372,7 +396,7 @@ async function connect() {
   _token = document.getElementById('tok-input').value;
   try {
     setTokStatus('Lade...', undefined);
-    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen()]);
+    await Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande()]);
     localStorage.setItem(LS_KEY, _token);
     document.getElementById('tok-input').style.display = 'none';
     document.getElementById('tok-btn').style.display = 'none';
@@ -403,7 +427,7 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tok-btn').style.display = 'none';
     document.getElementById('tok-forget').style.display = '';
     setTokStatus('Lade...', undefined);
-    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen()])
+    Promise.all([loadOverview(), loadPartner(), loadPushStats(), loadSagen(), loadAnfragen(), ladeVerbande()])
       .then(function() { setTokStatus('Verbunden \u2713', true); })
       .catch(function(e) {
         localStorage.removeItem(LS_KEY);
@@ -429,6 +453,7 @@ function switchTab(name, btn) {
   if (name === 'sagen'    && token()) loadSagen();
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
+  if (name === 'verbande' && token()) ladeVerbande();
 }
 
 /* ===================== ÜBERSICHT ===================== */
@@ -1376,6 +1401,81 @@ function prefillFromAnfrage(id) {
   setVal('np-paket', r.paket || 'standard');
   var npEl = document.getElementById('np-name');
   if (npEl) setTimeout(function(){ npEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+}
+
+/* ===================== VERBÄNDE ===================== */
+async function ladeVerbande() {
+  try {
+    var rows = await api('/api/admin/verbande', {method:'GET'});
+    renderVerbande(rows);
+  } catch(e) {
+    document.getElementById('vb-liste').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+function renderVerbande(rows) {
+  var el = document.getElementById('vb-liste');
+  if (!rows.length) { el.innerHTML = '<p class="hint">Noch keine Verbände angelegt.</p>'; return; }
+  el.innerHTML = rows.map(function(v) {
+    return \`<div class="partner-row">
+      <div class="partner-main">
+        <div class="partner-foto-ph">&#127956;</div>
+        <div class="partner-info">
+          <div class="partner-name">\${esc(v.name)} <span class="badge \${v.isActive ? 'badge-green' : 'badge-red'}">\${v.isActive ? 'Aktiv' : 'Inaktiv'}</span></div>
+          <div class="partner-meta"><a href="mailto:\${esc(v.email)}">\${esc(v.email)}</a> &middot; \${esc(v.kontaktName || '–')} \${v.kontaktTelefon ? '· ' + esc(v.kontaktTelefon) : ''}</div>
+          <div class="partner-meta" style="margin-top:2px">Kantone: \${esc(v.kantone)}</div>
+          <div class="partner-meta" style="margin-top:2px"><a href="/api/verband/portal" target="_blank" style="color:var(--red)">Portal öffnen</a></div>
+        </div>
+        <div class="partner-actions">
+          <button class="btn btn-ghost btn-sm" onclick="toggleVerband('\${v.id}',\${!v.isActive})">\${v.isActive ? 'Deaktivieren' : 'Aktivieren'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteVerband('\${v.id}')">Löschen</button>
+        </div>
+      </div>
+    </div>\`;
+  }).join('');
+}
+async function createVerband() {
+  var body = {
+    name:           document.getElementById('vb-name').value.trim(),
+    email:          document.getElementById('vb-email').value.trim(),
+    kontaktName:    document.getElementById('vb-kontakt').value.trim(),
+    kontaktTelefon: document.getElementById('vb-tel').value.trim() || undefined,
+    kantone:        document.getElementById('vb-kantone').value.trim(),
+    notizen:        document.getElementById('vb-notizen').value.trim() || undefined,
+    isActive:       true,
+  };
+  var st = document.getElementById('vb-status');
+  if (!body.name || !body.email || !body.kontaktName || !body.kantone) {
+    st.textContent = 'Bitte Name, E-Mail, Kontakt und Kantone ausfüllen.';
+    st.style.color = 'var(--red)';
+    return;
+  }
+  try {
+    await api('/api/admin/verbande', {method:'POST', body: JSON.stringify(body)});
+    st.textContent = 'Verband angelegt.';
+    st.style.color = 'var(--green)';
+    ['vb-name','vb-email','vb-kontakt','vb-tel','vb-kantone','vb-notizen'].forEach(function(id){ document.getElementById(id).value=''; });
+    await ladeVerbande();
+  } catch(e) {
+    st.textContent = e.message;
+    st.style.color = 'var(--red)';
+  }
+}
+async function toggleVerband(id, isActive) {
+  try {
+    await api('/api/admin/verbande/' + id, {method:'PATCH', body: JSON.stringify({isActive})});
+    await ladeVerbande();
+  } catch(e) {
+    alert(e.message);
+  }
+}
+async function deleteVerband(id) {
+  if (!confirm('Verband wirklich löschen?')) return;
+  try {
+    await api('/api/admin/verbande/' + id, {method:'DELETE'});
+    await ladeVerbande();
+  } catch(e) {
+    alert(e.message);
+  }
 }
 
 /* ===================== HELPERS ===================== */
