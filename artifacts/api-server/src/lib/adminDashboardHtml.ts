@@ -1454,21 +1454,100 @@ function renderVerbande(rows) {
   el.innerHTML = rows.map(function(v) {
     return \`<div class="partner-row">
       <div class="partner-main">
-        <div class="partner-foto-ph">&#127956;</div>
+        <div class="partner-foto-ph">\${v.logoUrl ? '<img src="' + esc(v.logoUrl) + '" style="width:40px;height:40px;object-fit:contain;border-radius:6px">' : '&#127956;'}</div>
         <div class="partner-info">
           <div class="partner-name">\${esc(v.name)} <span class="badge \${v.isActive ? 'badge-green' : 'badge-red'}">\${v.isActive ? 'Aktiv' : 'Inaktiv'}</span></div>
           <div class="partner-meta"><a href="mailto:\${esc(v.email)}">\${esc(v.email)}</a> &middot; \${esc(v.kontaktName || '–')} \${v.kontaktTelefon ? '· ' + esc(v.kontaktTelefon) : ''}</div>
           <div class="partner-meta" style="margin-top:2px">Kantone: \${esc(v.kantone)}</div>
-          <div class="partner-meta" style="margin-top:2px"><a href="/api/verband/portal" target="_blank" style="color:var(--red)">Portal öffnen</a></div>
+          \${v.notizen ? '<div style="font-size:11px;color:var(--mid);margin-top:2px">&#128172; ' + esc(v.notizen) + '</div>' : ''}
+          <div class="partner-meta" style="margin-top:2px"><a href="/api/verband/portal" target="_blank" style="color:var(--red)">Portal öffnen &#8599;</a></div>
         </div>
         <div class="partner-actions">
+          <button class="btn btn-ghost btn-sm" onclick="toggleVerbandEdit('\${v.id}')">&#9998; Bearbeiten</button>
           <button class="btn btn-ghost btn-sm" onclick="toggleVerband('\${v.id}',\${!v.isActive})">\${v.isActive ? 'Deaktivieren' : 'Aktivieren'}</button>
           <button class="btn btn-danger btn-sm" onclick="deleteVerband('\${v.id}')">Löschen</button>
         </div>
       </div>
+      <div class="partner-edit-form" id="vef-\${v.id}">\${verbandEditFormHtml(v)}</div>
     </div>\`;
   }).join('');
 }
+
+function verbandEditFormHtml(v) {
+  var ktAll = v.kantone === 'alle';
+  var ktList = ktAll ? [] : (v.kantone || '').split(',').map(function(s){ return s.trim(); });
+  var ALL_KT = ['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden','Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Genf','Glarus','Graubünden','Jura','Luzern','Neuenburg','Nidwalden','Obwalden','Schaffhausen','Schwyz','Solothurn','St. Gallen','Tessin','Thurgau','Uri','Waadt','Wallis','Zug','Zürich'];
+  var KT_ABBR = {Aargau:'AG','Appenzell Ausserrhoden':'AR','Appenzell Innerrhoden':'AI','Basel-Landschaft':'BL','Basel-Stadt':'BS',Bern:'BE',Freiburg:'FR',Genf:'GE',Glarus:'GL','Graubünden':'GR',Jura:'JU',Luzern:'LU',Neuenburg:'NE',Nidwalden:'NW',Obwalden:'OW',Schaffhausen:'SH',Schwyz:'SZ',Solothurn:'SO','St. Gallen':'SG',Tessin:'TI',Thurgau:'TG',Uri:'UR',Waadt:'VD',Wallis:'VS',Zug:'ZG','Zürich':'ZH'};
+  var ktChips = '<button type="button" class="kt-chip kt-alle' + (ktAll ? ' active' : '') + '" onclick="vefToggleAlle(this)" data-vef-id="' + v.id + '">Alle</button> ';
+  ktChips += ALL_KT.map(function(kt){ return '<button type="button" class="kt-chip' + (ktList.indexOf(kt) >= 0 ? ' active' : '') + '" onclick="vefToggleKt(this)" data-kt="' + kt + '">' + KT_ABBR[kt] + '</button>'; }).join(' ');
+
+  return '<div class="form-grid">' +
+    fg('Name *', '<input id="vef-name-'+v.id+'" value="'+esc(v.name||'')+'" type="text">') +
+    fg('E-Mail', '<input id="vef-email-'+v.id+'" value="'+esc(v.email||'')+'" type="email">') +
+    fg('Ansprechpartner', '<input id="vef-kontakt-'+v.id+'" value="'+esc(v.kontaktName||'')+'" type="text">') +
+    fg('Telefon', '<input id="vef-tel-'+v.id+'" value="'+esc(v.kontaktTelefon||'')+'" type="tel">') +
+    '<div class="form-group full"><label>Kantone</label><div id="vef-kt-'+v.id+'" data-vef-id="'+v.id+'" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+ktChips+'</div></div>' +
+    '<div class="form-group full"><label>Notizen</label><textarea id="vef-notizen-'+v.id+'">'+esc(v.notizen||'')+'</textarea></div>' +
+    '</div>' +
+    '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">' +
+    '<button class="btn btn-primary" onclick="saveVerband(\''+v.id+'\')">Speichern</button>' +
+    '<button class="btn btn-ghost" onclick="toggleVerbandEdit(\''+v.id+'\')">Abbrechen</button>' +
+    '<span id="vef-status-'+v.id+'" class="hint"></span>' +
+    '</div>';
+}
+
+function toggleVerbandEdit(id) {
+  var el = document.getElementById('vef-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function vefToggleKt(btn) {
+  var wrap = btn.closest('[data-vef-id]');
+  if (wrap) wrap.querySelector('.kt-alle').classList.remove('active');
+  btn.classList.toggle('active');
+}
+function vefToggleAlle(btn) {
+  var wrap = btn.closest('[data-vef-id]');
+  if (!wrap) return;
+  var wasActive = btn.classList.contains('active');
+  wrap.querySelectorAll('.kt-chip:not(.kt-alle)').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.toggle('active', !wasActive);
+}
+
+async function saveVerband(id) {
+  var stEl = document.getElementById('vef-status-' + id);
+  stEl.textContent = '';
+  var wrap = document.getElementById('vef-kt-' + id);
+  var isAlle = wrap && wrap.querySelector('.kt-alle.active');
+  var kantone;
+  if (isAlle) {
+    kantone = 'alle';
+  } else {
+    var sel = Array.from(wrap ? wrap.querySelectorAll('.kt-chip.active:not(.kt-alle)') : []);
+    kantone = sel.map(function(b){ return b.getAttribute('data-kt') || verbandKtFromAbbr(b.textContent.trim()); }).join(',');
+  }
+  var body = {
+    name:           v('vef-name-'+id),
+    email:          v('vef-email-'+id) || undefined,
+    kontaktName:    v('vef-kontakt-'+id) || undefined,
+    kontaktTelefon: v('vef-tel-'+id) || undefined,
+    kantone:        kantone || undefined,
+    notizen:        v('vef-notizen-'+id) || undefined,
+  };
+  try {
+    await api('/api/admin/verbande/' + id, {method:'PATCH', body: JSON.stringify(body)});
+    stEl.textContent = '✓ Gespeichert';
+    stEl.style.color = 'var(--green)';
+    setTimeout(function(){ toggleVerbandEdit(id); ladeVerbande(); }, 800);
+  } catch(e) {
+    stEl.textContent = e.message;
+    stEl.style.color = 'var(--red)';
+  }
+}
+
+// Kanton-Abkürzung → langer Name (für data-kt Fallback)
+var _VEF_KT_MAP = {'AG':'Aargau','AR':'Appenzell Ausserrhoden','AI':'Appenzell Innerrhoden','BL':'Basel-Landschaft','BS':'Basel-Stadt','BE':'Bern','FR':'Freiburg','GE':'Genf','GL':'Glarus','GR':'Graubünden','JU':'Jura','LU':'Luzern','NE':'Neuenburg','NW':'Nidwalden','OW':'Obwalden','SH':'Schaffhausen','SZ':'Schwyz','SO':'Solothurn','SG':'St. Gallen','TI':'Tessin','TG':'Thurgau','UR':'Uri','VD':'Waadt','VS':'Wallis','ZG':'Zug','ZH':'Zürich'};
+function verbandKtFromAbbr(abbr){ return _VEF_KT_MAP[abbr] || abbr; }
 function vbGetKantone() {
   var alle = document.querySelector('#vb-kantone-picker .kt-alle.active');
   if (alle) return 'alle';

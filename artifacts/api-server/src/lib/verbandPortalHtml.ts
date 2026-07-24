@@ -444,26 +444,34 @@ function renderStats(data){
     return;
   }
 
-  var html = '<div class="stat-grid">';
-  html += '<div class="stat-card"><div class="num">' + data.totalWanderungen + '</div><div class="lbl">Wanderungen gesamt</div></div>';
-  html += '<div class="stat-card"><div class="num">' + data.kantone.length + '</div><div class="lbl">Aktive Kantone</div></div>';
-
-  var avgArr = data.kantone.filter(function(c){ return c.avgDauerMin !== null; });
-  if (avgArr.length){
-    var avgSum = avgArr.reduce(function(s,c){ return s + c.avgDauerMin; }, 0);
-    html += '<div class="stat-card"><div class="num">' + Math.round(avgSum/avgArr.length) + '&#x202F;Min</div><div class="lbl">&#216; Verweildauer</div></div>';
-  }
-
+  // Globale Sprachverteilung über alle Kantone
   var allLangs = {};
   data.kantone.forEach(function(c){
     Object.entries(c.nachSprache).forEach(function(e){ allLangs[e[0]] = (allLangs[e[0]] || 0) + e[1]; });
   });
-  var sortedLangs = Object.entries(allLangs).sort(function(a,b){ return b[1]-a[1]; });
-  if (sortedLangs.length){
-    html += '<div class="stat-card"><div class="num">' + langLabel(sortedLangs[0][0]) + '</div><div class="lbl">Meistgenutzte Sprache</div></div>';
+  var sortedLangsGlobal = Object.entries(allLangs).sort(function(a,b){ return b[1]-a[1]; });
+
+  // Globale Ø-Verweildauer (gewichtet)
+  var totalDurCount = 0, totalDurSum = 0;
+  data.kantone.forEach(function(c){
+    if (c.avgDauerMin !== null && c.wanderungen > 0){
+      totalDurSum += c.avgDauerMin * c.wanderungen;
+      totalDurCount += c.wanderungen;
+    }
+  });
+  var globalAvg = totalDurCount > 0 ? Math.round(totalDurSum / totalDurCount) : null;
+
+  // Stat-Karten
+  var html = '<div class="stat-grid">';
+  html += '<div class="stat-card"><div class="num">' + data.totalWanderungen + '</div><div class="lbl">Wanderungen gesamt</div></div>';
+  html += '<div class="stat-card"><div class="num">' + data.kantone.length + '</div><div class="lbl">Aktive Kantone</div></div>';
+  html += '<div class="stat-card"><div class="num">' + (globalAvg !== null ? globalAvg + '&#x202F;Min' : '–') + '</div><div class="lbl">&#216; Verweildauer</div></div>';
+  if (sortedLangsGlobal.length){
+    html += '<div class="stat-card"><div class="num" style="font-size:16px;line-height:1.3">' + langLabel(sortedLangsGlobal[0][0]) + '</div><div class="lbl">Meistgenutzte Sprache</div></div>';
   }
   html += '</div>';
 
+  // Pro-Kanton-Blöcke
   data.kantone.forEach(function(c){
     html += '<div class="canton-block">';
     html += '<h3>&#127988;&#65039; ' + esc(c.canton) + '</h3>';
@@ -472,33 +480,59 @@ function renderStats(data){
     html += '<div class="canton-stat"><div class="n">' + (c.avgDauerMin !== null ? c.avgDauerMin + '&#x202F;Min' : '–') + '</div><div class="l">&#216; Dauer</div></div>';
     html += '</div>';
 
+    // Layout: Strecken links | Sprachen + Sagen rechts gestapelt
+    html += '<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">';
+
+    // LINKS: Top-20-Strecken
+    html += '<div>';
+    if (c.top20Strecken && c.top20Strecken.length){
+      html += '<div class="hint" style="margin-bottom:6px;font-weight:700">Top ' + Math.min(20,c.top20Strecken.length) + ' Strecken</div>';
+      html += '<table class="mini-table"><thead><tr><th>#</th><th>Strecke</th><th>Mal</th></tr></thead><tbody>';
+      c.top20Strecken.slice(0,20).forEach(function(s,i){
+        html += '<tr><td>' + (i+1) + '</td><td>' + esc(s.name) + '</td><td>' + s.count + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<p class="hint">Keine Streckendaten.</p>';
+    }
+    html += '</div>';
+
+    // RECHTS: Sprachen oben, Top-3-Sagen unten
+    html += '<div>';
+
     var langs = Object.entries(c.nachSprache).sort(function(a,b){ return b[1]-a[1]; });
     if (langs.length){
-      html += '<div style="margin-bottom:12px"><div class="hint" style="margin-bottom:6px;font-weight:700">Sprachen</div><div class="lang-pills">';
-      langs.forEach(function(e){ html += '<span class="lang-pill">' + langLabel(e[0]) + ' ' + e[1] + '</span>'; });
-      html += '</div></div>';
+      var total = langs.reduce(function(s,e){ return s+e[1]; }, 0);
+      html += '<div class="hint" style="margin-bottom:6px;font-weight:700">Sprachen</div>';
+      html += '<table class="mini-table" style="margin-bottom:16px"><thead><tr><th>Sprache</th><th>Wanderungen</th><th>%</th></tr></thead><tbody>';
+      langs.forEach(function(e){
+        var pct = total > 0 ? Math.round(e[1]/total*100) : 0;
+        html += '<tr><td>' + langLabel(e[0]) + '</td><td>' + e[1] + '</td><td>' + pct + '%</td></tr>';
+      });
+      html += '</tbody></table>';
     }
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
     if (c.top3Sagen && c.top3Sagen.length){
-      html += '<div><div class="hint" style="margin-bottom:6px;font-weight:700">Top 3 Sagen</div>';
+      html += '<div class="hint" style="margin-bottom:6px;font-weight:700">Top 3 Sagen</div>';
       html += '<table class="mini-table"><thead><tr><th>#</th><th>Sage</th><th>Mal</th></tr></thead><tbody>';
-      c.top3Sagen.forEach(function(s,i){ html += '<tr><td>' + (i+1) + '</td><td>' + esc(s.name) + '</td><td>' + s.count + '</td></tr>'; });
-      html += '</tbody></table></div>';
+      c.top3Sagen.forEach(function(s,i){
+        html += '<tr><td>' + (i+1) + '</td><td>' + esc(s.name) + '</td><td>' + s.count + '</td></tr>';
+      });
+      html += '</tbody></table>';
     }
-    if (c.top20Strecken && c.top20Strecken.length){
-      html += '<div><div class="hint" style="margin-bottom:6px;font-weight:700">Top 20 Strecken</div>';
-      html += '<table class="mini-table"><thead><tr><th>#</th><th>Strecke</th><th>Mal</th></tr></thead><tbody>';
-      c.top20Strecken.slice(0,20).forEach(function(s,i){ html += '<tr><td>' + (i+1) + '</td><td>' + esc(s.name) + '</td><td>' + s.count + '</td></tr>'; });
-      html += '</tbody></table></div>';
-    }
+
+    html += '</div>';
     html += '</div></div>';
   });
 
   body.innerHTML = html;
 }
 
-var LANG_LABELS = {de:'&#127465;&#127466; DE',gsw:'&#127464;&#127469; GSW',en:'&#127468;&#127463; EN',fr:'&#127467;&#127479; FR',it:'&#127470;&#127481; IT',es:'&#127466;&#127480; ES',pt:'&#127477;&#127481; PT',zh:'&#127464;&#127475; ZH'};
+var LANG_LABELS = {
+  de:'Deutsch', gsw:'Schweizerdeutsch', en:'Englisch', fr:'Französisch',
+  it:'Italienisch', es:'Spanisch', pt:'Portugiesisch', zh:'Chinesisch',
+  rm:'Rätoromanisch', nl:'Niederländisch', ja:'Japanisch', ko:'Koreanisch'
+};
 function langLabel(code){ return LANG_LABELS[code] || code.toUpperCase(); }
 function esc(s){ return String(s||'').replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 </script>
