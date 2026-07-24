@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 //   wp-content/uploads/sagatrail/signature.png  (Standard, empfohlen)
 //   oder: define('SAGATRAIL_SIGNATURE_PATH', '/absoluter/pfad/signature.png');
 
-function sagatrail_icon_pfad() {
+function sagatrail_partner_icon_pfad() {
     if ( defined( 'SAGATRAIL_ICON_PATH' ) && file_exists( SAGATRAIL_ICON_PATH ) ) {
         return SAGATRAIL_ICON_PATH;
     }
@@ -37,7 +37,7 @@ function sagatrail_icon_pfad() {
     return file_exists( $pfad ) ? $pfad : false;
 }
 
-function sagatrail_sig_pfad() {
+function sagatrail_partner_sig_pfad() {
     if ( defined( 'SAGATRAIL_SIGNATURE_PATH' ) && file_exists( SAGATRAIL_SIGNATURE_PATH ) ) {
         return SAGATRAIL_SIGNATURE_PATH;
     }
@@ -50,7 +50,7 @@ function sagatrail_sig_pfad() {
 // FPDF laden
 // ===================================================================
 
-function sagatrail_lade_fpdf() {
+function sagatrail_partner_lade_fpdf() {
     // 1. Expliziter Pfad in wp-config.php
     if ( defined( 'SAGATRAIL_FPDF_PATH' ) && file_exists( SAGATRAIL_FPDF_PATH ) ) {
         require_once SAGATRAIL_FPDF_PATH;
@@ -97,7 +97,7 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
     $datum       = date_i18n( 'd. F Y' );
     $ref         = 'ST-' . str_pad( $row_id, 5, '0', STR_PAD_LEFT );
 
-    if ( ! sagatrail_lade_fpdf() ) {
+    if ( ! sagatrail_partner_lade_fpdf() ) {
         error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' konnte nicht erzeugt werden.' );
         return;
     }
@@ -118,7 +118,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->SetAutoPageBreak( true, 20 );
 
     // ----- KOPF -----
-    $icon_pfad = sagatrail_icon_pfad();
+    $icon_pfad = sagatrail_partner_icon_pfad();
     $icon_h = 16; // mm Höhe
     $y_start = $pdf->GetY();
     if ( $icon_pfad ) {
@@ -234,7 +234,7 @@ function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref 
     $pdf->Ln( 3 );
 
     // Unterschrift SagaTrail (linke Spalte)
-    $sig_pfad = sagatrail_sig_pfad();
+    $sig_pfad = sagatrail_partner_sig_pfad();
     if ( $sig_pfad ) {
         $pdf->Image( $sig_pfad, 20, $pdf->GetY(), 55 ); // 55 mm breit, Seitenverhältnis auto
         $pdf->Ln( 22 );
@@ -305,7 +305,7 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
     $html .= '.footer{color:#999;font-size:10px;text-align:center;margin-top:40px;border-top:1px solid #eee;padding-top:10px}';
     $html .= '.st-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}';
     $html .= '.st-head img{width:52px;height:52px;border-radius:12px;flex-shrink:0}</style></head><body>';
-    $icon_pfad_h = sagatrail_icon_pfad();
+    $icon_pfad_h = sagatrail_partner_icon_pfad();
     $icon_tag = '';
     if ( $icon_pfad_h ) {
         $b64 = base64_encode( file_get_contents( $icon_pfad_h ) );
@@ -331,7 +331,7 @@ function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref 
 
     // Linke Spalte: SagaTrail-Unterschrift mit Bild
     $html .= '<td style="width:45%">';
-    $sig_pfad = sagatrail_sig_pfad();
+    $sig_pfad = sagatrail_partner_sig_pfad();
     if ( $sig_pfad ) {
         $sig_b64 = base64_encode( file_get_contents( $sig_pfad ) );
         $html .= '<img src="data:image/png;base64,' . $sig_b64 . '" style="max-width:180px;height:auto;display:block;margin-bottom:2px">';
