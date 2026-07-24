@@ -327,15 +327,15 @@ a{color:var(--red);text-decoration:none}
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
         <div class="form-group" style="min-width:140px">
           <label>Typ</label>
-          <select id="km-typ"><option value="">Alle Typen</option></select>
+          <select id="km-typ" onchange="kmLoadLeads()"><option value="">Alle Typen</option></select>
         </div>
         <div class="form-group" style="min-width:140px">
           <label>Kanton</label>
-          <select id="km-kanton"><option value="">Alle Kantone</option></select>
+          <select id="km-kanton" onchange="kmLoadLeads()"><option value="">Alle Kantone</option></select>
         </div>
         <div class="form-group" style="min-width:120px">
           <label>Sprache</label>
-          <select id="km-sprache">
+          <select id="km-sprache" onchange="kmLoadLeads()">
             <option value="">Alle</option>
             <option value="DE">DE – Deutsch</option>
             <option value="FR">FR – Französisch</option>
@@ -343,7 +343,7 @@ a{color:var(--red);text-decoration:none}
             <option value="RM">RM – Rätoromanisch</option>
           </select>
         </div>
-        <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Empfänger laden</button>
+        <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
         <span id="km-leads-count" style="font-size:13px;color:var(--mid)"></span>
       </div>
       <div id="km-leads-table" style="display:none">
@@ -1724,6 +1724,7 @@ async function kmLoadMeta() {
     // Kantone
     ktSel.innerHTML = '<option value="">Alle Kantone</option>';
     (meta.kantone || []).forEach(function(k){ ktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+    kmLoadLeads();
   } catch(e) {
     document.getElementById('km-leads-count').textContent = '⚠ ' + e.message;
   }
