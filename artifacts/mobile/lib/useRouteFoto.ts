@@ -6,32 +6,17 @@ import { HikingRoute } from "@/constants/routes";
 import { panoramaFuerRoute } from "@/lib/panorama";
 
 /**
- * Laedt fuer eine Route ein echtes, moeglichst saisonpassendes Foto aus der
- * Umgebung des Startpunkts (Wikimedia Commons, ueber den eigenen API-Server).
+ * Laedt fuer eine Route ein Foto – DB-first, dann Wiki-Fallback.
  *
- * Wenn das Foto bereits in der Route-Antwort mitgeliefert wurde (route.photoUrl),
- * wird kein separater Netzwerkrequest gemacht. Andernfalls ruft der Hook den
- * /routes/photo-Endpunkt auf, der das Ergebnis anschliessend in der DB
- * persistiert (routeId mitschicken), sodass kuenftige Ladungen direkt das Foto
- * aus der Route-Antwort bekommen.
- *
- * Solange nichts geladen ist oder kein Foto existiert, wird das gebuendelte
- * Saison-Panorama gezeigt — die Karte hat also nie ein leeres Bild.
+ * 1. route.photoUrl vorhanden (aus DB via API)?  → sofort anzeigen, kein Request.
+ * 2. Nicht in DB?  → /routes/photo (Wikimedia-Suche); Server persistiert Ergebnis.
+ * 3. Kein Ergebnis  → gebuendeltes Saison-Panorama.
  */
 
 export interface RouteFoto {
   source: ImageSourcePropType;
   fallback: ImageSourcePropType;
-  /** Urheber-/Lizenzangabe des Commons-Fotos; null beim gebuendelten Fallback. */
   attribution: string | null;
-}
-
-/**
- * Loescht den gecachten Foto-Eintrag fuer eine Route (z. B. nach einem
- * Ladefehler), damit beim naechsten Rendern ein neuer Versuch gestartet wird.
- */
-export function clearRouteFotoCache(route: HikingRoute): void {
-  fotoCache.delete(cacheSchluessel(route));
 }
 
 interface GecachtesFoto {
@@ -39,78 +24,64 @@ interface GecachtesFoto {
   attribution: string | null;
 }
 
-// Modulweiter Cache: pro gerundetem Startpunkt genau eine Serverabfrage
-// waehrend der App-Sitzung (der Server cached zusaetzlich selbst).
 const fotoCache = new Map<string, GecachtesFoto>();
-const laufend = new Map<string, Promise<GecachtesFoto>>();
+const laufend   = new Map<string, Promise<GecachtesFoto>>();
 
-function cacheSchluessel(route: HikingRoute): string {
+function cacheKey(route: HikingRoute): string {
   return `${route.coordinates.lat.toFixed(3)}|${route.coordinates.lng.toFixed(3)}`;
 }
 
+export function clearRouteFotoCache(route: HikingRoute): void {
+  fotoCache.delete(cacheKey(route));
+}
+
 async function ladeFoto(route: HikingRoute): Promise<GecachtesFoto> {
-  const schluessel = cacheSchluessel(route);
-  const vorhanden = fotoCache.get(schluessel);
-  if (vorhanden) return vorhanden;
-  const bereits = laufend.get(schluessel);
-  if (bereits) return bereits;
+  const key = cacheKey(route);
+  const hit = fotoCache.get(key);
+  if (hit) return hit;
+  const laufendes = laufend.get(key);
+  if (laufendes) return laufendes;
+
   const anfrage = getRoutePhoto({
-    lat: route.coordinates.lat,
-    lng: route.coordinates.lng,
-    // routeId + routeName mitschicken: Server persistiert das Foto in external_routes
-    // und nutzt den Namen als Fallback-Textsuche wenn Geosuche kein Landschaftsfoto findet
-    routeId: route.id,
+    lat:       route.coordinates.lat,
+    lng:       route.coordinates.lng,
+    routeId:   route.id,
     routeName: route.name,
   } as Parameters<typeof getRoutePhoto>[0])
-    .then((antwort) => {
-      const foto: GecachtesFoto = {
-        url: antwort.photoUrl ?? null,
-        attribution: antwort.attribution ?? null,
-      };
-      fotoCache.set(schluessel, foto);
-      return foto;
+    .then((r): GecachtesFoto => {
+      const f: GecachtesFoto = { url: r.photoUrl ?? null, attribution: r.attribution ?? null };
+      fotoCache.set(key, f);
+      return f;
     })
-    .catch((): GecachtesFoto => {
-      // Fehler NICHT dauerhaft cachen — beim naechsten Anzeigen erneut versuchen
-      return { url: null, attribution: null };
-    })
-    .finally(() => {
-      laufend.delete(schluessel);
-    });
-  laufend.set(schluessel, anfrage);
+    .catch((): GecachtesFoto => ({ url: null, attribution: null }))
+    .finally(() => laufend.delete(key));
+
+  laufend.set(key, anfrage);
   return anfrage;
 }
 
 export function useRouteFoto(route: HikingRoute): RouteFoto {
   const fallback = panoramaFuerRoute(route.maxElevationM);
-  const schluessel = cacheSchluessel(route);
 
-  // Sofort-Ergebnis: bevorzuge das in der Route-Antwort mitgelieferte Foto
-  // (kein Netzwerkrequest noetig), sonst schaue in den Sitzungs-Cache.
-  function sofortFoto(): GecachtesFoto | null {
-    if (route.photoUrl) {
-      return { url: route.photoUrl, attribution: route.photoAttribution ?? null };
-    }
-    return fotoCache.get(schluessel) ?? null;
+  function sofort(): GecachtesFoto | null {
+    if (route.photoUrl) return { url: route.photoUrl, attribution: route.photoAttribution ?? null };
+    return fotoCache.get(cacheKey(route)) ?? null;
   }
 
-  const [foto, setFoto] = useState<GecachtesFoto | null>(sofortFoto);
+  const [foto, setFoto] = useState<GecachtesFoto | null>(sofort);
 
   useEffect(() => {
-    // Wenn die Route bereits ein Foto hat, brauchen wir keinen API-Aufruf.
+    // Schritt 1: URL direkt aus DB-Response → kein weiterer Request.
     if (route.photoUrl) {
       setFoto({ url: route.photoUrl, attribution: route.photoAttribution ?? null });
       return;
     }
+    // Schritt 2: Wiki-Fallback via /routes/photo.
     let aktiv = true;
-    ladeFoto(route).then((geladen) => {
-      if (aktiv) setFoto(geladen);
-    });
-    return () => {
-      aktiv = false;
-    };
+    ladeFoto(route).then((f) => { if (aktiv) setFoto(f); });
+    return () => { aktiv = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schluessel, route.photoUrl]);
+  }, [cacheKey(route), route.photoUrl]);
 
   if (foto?.url) {
     return { source: { uri: foto.url }, fallback, attribution: foto.attribution };

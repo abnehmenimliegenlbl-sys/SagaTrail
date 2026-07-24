@@ -4,7 +4,7 @@ import * as Location from "expo-location";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   Platform,
@@ -681,6 +681,13 @@ function RouteCard({
   // geladen ist, zeigt der Hook das gebuendelte Saison-Panorama.
   const foto = useRouteFoto(route);
   const [fotoFehler, setFotoFehler] = useState(false);
+  // Sobald sich die Foto-URL ändert (z. B. DB-URL nachgeladen), Fehlerzustand
+  // zurücksetzen, damit der neue Versuch eine faire Chance bekommt.
+  const prevPhotoUrl = useRef(route.photoUrl);
+  if (prevPhotoUrl.current !== route.photoUrl) {
+    prevPhotoUrl.current = route.photoUrl;
+    setFotoFehler(false);
+  }
   const h = Math.floor(route.minutes / 60);
   const m = route.minutes % 60;
   return (
