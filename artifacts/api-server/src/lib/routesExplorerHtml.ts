@@ -663,6 +663,7 @@ async function doSearch(){
     }
     stat.textContent = routes.length + (routes.length===1?' Route gefunden':' Routen gefunden') + '.';
     out.innerHTML = '<div class="routes-grid">'+routes.map(cardHtml).join('')+'</div>';
+    if(window.__initLazyPhotos) window.__initLazyPhotos();
     document.getElementById('app-banner').style.display = 'block';
     out.scrollIntoView({behavior:'smooth',block:'start'});
   } catch(e){
@@ -673,12 +674,12 @@ async function doSearch(){
 }
 
 // ── CARD RENDERING ───────────────────────────────────────────
-const PH_SVG = \`<div class="route-img-ph">
-  <svg width="72" height="54" viewBox="0 0 72 54" fill="none">
-    <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
-    <polygon points="20,18 28,32 12,32" fill="#bbb"/>
-    <polygon points="52,14 60,28 44,28" fill="#bbb"/>
-  </svg></div>\`;
+const PH_SVG_INNER = \`<svg width="72" height="54" viewBox="0 0 72 54" fill="none">
+  <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
+  <polygon points="20,18 28,32 12,32" fill="#bbb"/>
+  <polygon points="52,14 60,28 44,28" fill="#bbb"/>
+</svg>\`;
+const PH_SVG = \`<div class="route-img-ph">\${PH_SVG_INNER}</div>\`;
 
 function sacBadge(sac){
   if(!sac||sac==='unknown') return '';
@@ -700,22 +701,22 @@ function fmtTime(min){
 // route store: id → full route object (on window so onclick attrs can reach it)
 window.__routeStore = {};
 
-function proxyImg(url){
-  if(!url) return null;
-  return '/api/routen/img?url='+encodeURIComponent(url);
-}
-
 function cardHtml(r){
   window.__routeStore[r.id] = r;
-  const src = proxyImg(r.photoUrl);
-  const img = src
-    ? \`<img class="route-img" src="\${src}" alt="\${r.name}" loading="lazy"
-         onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
-    : PH_SVG;
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
   const hm   = r.ascentM    ? r.ascentM+' hm' : '';
   const zeit = fmtTime(r.minutes);
   const rid  = r.id.replace(/['"]/g,'');
+
+  // 1. DB-URL vorhanden → direkt anzeigen (kein extra Request)
+  // 2. Nicht in DB → lazy via /api/routes/photo (schreibt Ergebnis in DB)
+  const img = r.photoUrl
+    ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}" loading="lazy"
+           onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
+    : \`<div class="route-img-lazy route-img-ph"
+           data-lat="\${r.coordinates?.lat}" data-lng="\${r.coordinates?.lng}"
+           data-id="\${rid}" data-name="\${encodeURIComponent(r.name)}">\${PH_SVG_INNER}</div>\`;
+
   return \`<div class="route-card" onclick="openDrawer(window.__routeStore['\${rid}'])" role="button" tabindex="0"
     onkeydown="if(event.key==='Enter')openDrawer(window.__routeStore['\${rid}'])">
     \${img}
@@ -738,8 +739,51 @@ function cardHtml(r){
     </div>
   </div>\`;
 }
+
 // Expose placeholder on window so onerror attributes can access it
-window.__sagaPH = PH_SVG.replace(/"/g,"'");
+window.__sagaPH = \`<div class="route-img-ph">\${PH_SVG_INNER}</div>\`;
+
+// ── LAZY PHOTO LOADER ─────────────────────────────────────────
+// Karten ohne DB-Foto (route-img-lazy): per IntersectionObserver sichtbar
+// werden → /api/routes/photo aufrufen → Foto anzeigen (Server schreibt in DB).
+(function(){
+  const fetching = new Set();
+  const obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      const el = e.target;
+      const id = el.dataset.id;
+      if(fetching.has(id)) return;
+      fetching.add(id);
+      obs.unobserve(el);
+      const lat  = el.dataset.lat;
+      const lng  = el.dataset.lng;
+      const name = el.dataset.name;
+      const url  = '/api/routes/photo?lat='+lat+'&lng='+lng
+                  +'&routeId=osm-'+id+'&routeName='+name;
+      fetch(url)
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(data){
+          if(!data || !data.photoUrl) return;
+          const img = document.createElement('img');
+          img.className = 'route-img';
+          img.alt = decodeURIComponent(name);
+          img.loading = 'lazy';
+          img.onerror = function(){ img.outerHTML = window.__sagaPH; };
+          img.src = data.photoUrl;
+          el.replaceWith(img);
+        })
+        .catch(function(){ fetching.delete(id); });
+    });
+  }, { rootMargin: '200px' });
+
+  // Neue Karten beobachten (wird nach jedem Render aufgerufen)
+  window.__initLazyPhotos = function(){
+    document.querySelectorAll('.route-img-lazy').forEach(function(el){
+      obs.observe(el);
+    });
+  };
+})();
 
 function emptyHtml(title, sub){
   return \`<div class="empty-box">
