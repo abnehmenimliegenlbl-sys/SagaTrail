@@ -15,6 +15,8 @@ export const verbandsTable = pgTable("verbands", {
   kantone:        text("kantone").notNull(),
   isActive:       boolean("is_active").notNull().default(true),
   notizen:        text("notizen"),
+  /** Base64-Data-URL oder HTTP-URL des Verbandslogos */
+  logoUrl:        text("logo_url"),
   createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

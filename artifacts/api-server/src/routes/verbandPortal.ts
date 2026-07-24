@@ -54,6 +54,10 @@ router.get("/verband/portal/me", async (req, res): Promise<void> => {
     kontaktTelefon: verband.kontaktTelefon,
     kantone:        verband.kantone,
     isActive:       verband.isActive,
+    notizen:        verband.notizen,
+    logoUrl:        verband.logoUrl
+      ? `${req.protocol}://${req.get("host")}/api/verband/logo/${verband.id}`
+      : null,
   });
 });
 
@@ -66,18 +70,67 @@ router.patch("/verband/portal/me", async (req, res): Promise<void> => {
   if (!verband) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
   const parsed = z.object({
+    name:           z.string().min(1).max(200).optional(),
     kontaktName:    z.string().max(200).optional(),
     kontaktTelefon: z.string().max(50).optional(),
+    notizen:        z.string().max(2000).optional(),
   }).safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  const update: Record<string, unknown> = { updatedAt: new Date() };
+  if (parsed.data.name           !== undefined) update["name"]           = parsed.data.name;
+  if (parsed.data.kontaktName    !== undefined) update["kontaktName"]    = parsed.data.kontaktName;
+  if (parsed.data.kontaktTelefon !== undefined) update["kontaktTelefon"] = parsed.data.kontaktTelefon;
+  if (parsed.data.notizen        !== undefined) update["notizen"]        = parsed.data.notizen || null;
+
   const [updated] = await db
     .update(verbandsTable)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set(update)
     .where(eq(verbandsTable.id, verband.id))
     .returning();
 
   res.json({ ok: true, verband: updated });
+});
+
+// ─── Logo hochladen ──────────────────────────────────────────────────────────
+
+router.post("/verband/portal/upload-logo", async (req, res): Promise<void> => {
+  const token = req.query["token"];
+  if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
+  const verband = await resolveVerbandToken(token);
+  if (!verband) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
+
+  const { logoBase64 } = req.body ?? {};
+  if (typeof logoBase64 !== "string" || !logoBase64.startsWith("data:image/")) {
+    res.status(400).json({ error: "Kein gültiges Bild empfangen." });
+    return;
+  }
+  if (logoBase64.length > 2_200_000) {
+    res.status(400).json({ error: "Bild zu gross. Bitte kleineres Logo wählen." });
+    return;
+  }
+
+  await db.update(verbandsTable).set({ logoUrl: logoBase64, updatedAt: new Date() }).where(eq(verbandsTable.id, verband.id));
+  req.log.info({ verbandId: verband.id }, "Verband-Logo hochgeladen");
+  res.json({ ok: true, logoUrl: `${req.protocol}://${req.get("host")}/api/verband/logo/${verband.id}` });
+});
+
+// ─── Logo ausliefern (public) ─────────────────────────────────────────────────
+
+router.get("/verband/logo/:verbandId", async (req, res): Promise<void> => {
+  const { verbandId } = req.params as { verbandId: string };
+  const [row] = await db.select({ logoUrl: verbandsTable.logoUrl }).from(verbandsTable).where(eq(verbandsTable.id, verbandId)).limit(1);
+  if (!row?.logoUrl) { res.status(404).end(); return; }
+
+  if (row.logoUrl.startsWith("data:image/")) {
+    const mimeMatch = row.logoUrl.match(/^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/s);
+    if (!mimeMatch) { res.status(404).end(); return; }
+    res.set("Content-Type", mimeMatch[1]);
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(mimeMatch[2], "base64"));
+    return;
+  }
+  res.status(404).end();
 });
 
 // ─── Dashboard-Statistiken ────────────────────────────────────────────────────

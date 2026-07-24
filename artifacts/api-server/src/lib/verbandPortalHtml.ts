@@ -13,6 +13,7 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 #hdr h1{font-size:16px;font-weight:700;letter-spacing:.5px}
 #hdr h1 span{color:var(--red)}
 #hdr-right{display:flex;align-items:center;gap:12px;font-size:13px}
+#hdr-logo{width:32px;height:32px;border-radius:6px;object-fit:contain;background:#fff;border:1px solid rgba(255,255,255,.2)}
 /* LOGIN */
 #login-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 52px);padding:24px}
 #login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px 32px;max-width:420px;width:100%;text-align:center}
@@ -41,8 +42,10 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 @media(max-width:560px){.form-row{grid-template-columns:1fr}}
 .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
 .form-group label{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.4px}
-.form-group input{padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;outline:none}
-.form-group input:focus{border-color:var(--red)}
+.form-group input,.form-group textarea{padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;outline:none;width:100%}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--red)}
+.form-group input:disabled,.form-group textarea:disabled{background:#f7f6f4;color:var(--mid);cursor:default}
+.form-group textarea{min-height:80px;resize:vertical}
 /* STATS */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
@@ -69,6 +72,14 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 .msg-err{background:#fce8e8;color:var(--red);border:1px solid #f0b0b0}
 .loading{color:var(--mid);font-size:13px;padding:20px;text-align:center}
 .hint{font-size:12px;color:#aaa}
+/* LOGO UPLOAD */
+#logo-dropzone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden;background:#fafaf9;margin-bottom:12px}
+#logo-dropzone:hover,#logo-dropzone.drag{border-color:var(--red)}
+#logo-dropzone p{font-size:12px;color:var(--mid);margin-top:6px}
+#logo-file-input{display:none}
+#logo-preview-wrap{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+#logo-preview{width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:#f0eeeb;display:none}
+#logo-placeholder{width:80px;height:80px;border-radius:8px;border:1px solid var(--border);background:#f0eeeb;display:flex;align-items:center;justify-content:center;font-size:28px}
 </style>
 </head>
 <body>
@@ -76,6 +87,7 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 <div id="hdr">
   <h1>Saga<span>Trail</span> Verbandsportal</h1>
   <div id="hdr-right" style="display:none">
+    <img id="hdr-logo" style="display:none" alt="Logo"/>
     <span id="hdr-name"></span>
     <button class="btn btn-ghost btn-sm" onclick="logout()">Abmelden</button>
   </div>
@@ -92,7 +104,7 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
     <button class="btn btn-red" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">
       <span id="login-btn-text">Zugang anfordern</span>
     </button>
-    <p class="hint" style="margin-top:16px">Der Link gilt 24 Stunden. Du wirst direkt angemeldet.</p>
+    <p class="hint" style="margin-top:16px">Der Link gilt 24 Stunden.</p>
   </div>
 </div>
 
@@ -118,9 +130,9 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
             <label>Bis</label>
             <input type="date" id="stat-bis" onchange="loadStats()"/>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="setRange(30)">Letzte 30 Tage</button>
-          <button class="btn btn-ghost btn-sm" onclick="setRange(90)">Letzte 90 Tage</button>
-          <button class="btn btn-ghost btn-sm" onclick="setRange(365)">Letzte 12 Monate</button>
+          <button class="btn btn-ghost btn-sm" onclick="setRange(30)">30 Tage</button>
+          <button class="btn btn-ghost btn-sm" onclick="setRange(90)">90 Tage</button>
+          <button class="btn btn-ghost btn-sm" onclick="setRange(365)">12 Monate</button>
         </div>
         <div id="stats-body"><p class="loading">Wird geladen…</p></div>
       </div>
@@ -128,16 +140,42 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 
     <!-- MEINE DATEN TAB -->
     <div id="tab-daten" class="tab-pane">
+
+      <!-- LOGO -->
       <div class="card" style="max-width:520px">
-        <h2>&#9997;&#65039; Meine Kontaktdaten</h2>
+        <h2>&#127758; Verbandslogo</h2>
+        <div id="daten-logo-msg"></div>
+        <div id="logo-preview-wrap">
+          <div id="logo-placeholder">&#127758;</div>
+          <img id="logo-preview" alt="Logo"/>
+          <div style="font-size:12px;color:var(--mid);line-height:1.6">
+            JPEG, PNG oder WebP<br>Empfohlen: quadratisch, mind. 400×400 px
+          </div>
+        </div>
+        <div id="logo-dropzone" onclick="document.getElementById('logo-file-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag')"
+             ondragleave="this.classList.remove('drag')"
+             ondrop="handleLogoDrop(event)">
+          <div style="font-size:28px">&#128444;&#65039;</div>
+          <p>Logo hier ablegen oder klicken zum Auswählen</p>
+        </div>
+        <input type="file" id="logo-file-input" accept="image/jpeg,image/png,image/webp"
+               onchange="handleLogoFile(this.files[0])"/>
+        <div id="logo-upload-progress" style="display:none;font-size:12px;color:var(--mid);margin-top:6px">Wird hochgeladen…</div>
+      </div>
+
+      <!-- KONTAKTDATEN -->
+      <div class="card" style="max-width:520px">
+        <h2>&#9997;&#65039; Kontaktdaten</h2>
         <div id="daten-msg"></div>
+
         <div class="form-group">
           <label>Verbandsname</label>
-          <input id="d-name" type="text" disabled style="background:#f7f6f4;color:var(--mid)"/>
+          <input id="d-name" type="text" placeholder="Tourismusverband Musterland"/>
         </div>
         <div class="form-group">
           <label>E-Mail</label>
-          <input id="d-email" type="email" disabled style="background:#f7f6f4;color:var(--mid)"/>
+          <input id="d-email" type="email" disabled/>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -150,12 +188,18 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
           </div>
         </div>
         <div class="form-group">
-          <label>Zuständige Kantone</label>
-          <input id="d-kantone" type="text" disabled style="background:#f7f6f4;color:var(--mid)"/>
+          <label>Zuständige Kantone <span style="font-weight:400;text-transform:none">(wird vom Admin gesetzt)</span></label>
+          <input id="d-kantone" type="text" disabled/>
         </div>
+        <div class="form-group">
+          <label>Interne Notizen</label>
+          <textarea id="d-notizen" placeholder="Anmerkungen, Hinweise, interne Infos…"></textarea>
+        </div>
+
         <button class="btn btn-red" onclick="saveDaten()">Speichern</button>
       </div>
-    </div>
+
+    </div><!-- /tab-daten -->
 
   </div>
 </div>
@@ -163,12 +207,24 @@ body{font-family:-apple-system,system-ui,sans-serif;background:var(--light);colo
 <script>
 var TOKEN = null;
 var ME = null;
+var BASE = '';
 
 /* ─── INIT ─────────────────────────────────────────── */
 (function(){
+  // Token aus URL-Parameter (Magic-Link)
+  var p = new URLSearchParams(location.search);
+  var urlToken = p.get('token');
+  if (urlToken) {
+    TOKEN = urlToken;
+    sessionStorage.setItem('stv_token', TOKEN);
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+    initPortal();
+    return;
+  }
+  // Gespeicherter Token
   var saved = sessionStorage.getItem('stv_token');
-  if (saved) { TOKEN = saved; initPortal(); }
-  // Default: letzte 90 Tage
+  if (saved) { TOKEN = saved; initPortal(); return; }
+  // Default-Zeitraum setzen
   setRange(90, false);
 })();
 
@@ -181,19 +237,19 @@ function doLogin(){
 
   fetch('/api/partner/portal/token', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({email})
+    body: JSON.stringify({email: email})
   })
   .then(function(r){ return r.json(); })
   .then(function(json){
     if (!json.ok){ throw new Error(json.error || 'Fehler'); }
     if (json.type !== 'verband'){
-      showLoginMsg('Diese E-Mail ist kein Verbands-Account. Bitte nutze das <a href="/api/partner/portal">Partner-Portal</a>.', true);
+      showLoginMsg('Diese E-Mail ist kein Verbands-Account. Bitte nutze das <a href="/portal" style="color:var(--red)">Partner-Portal</a>.', true);
       return;
     }
     TOKEN = json.token;
     sessionStorage.setItem('stv_token', TOKEN);
-    showLoginMsg('Angemeldet als ' + json.name + '.', false);
-    setTimeout(initPortal, 600);
+    showLoginMsg('Angemeldet.', false);
+    setTimeout(initPortal, 500);
   })
   .catch(function(e){ showLoginMsg(e.message, true); })
   .finally(function(){ document.getElementById('login-btn-text').textContent = 'Zugang anfordern'; });
@@ -217,7 +273,13 @@ function initPortal(){
     document.getElementById('portal').style.display = 'block';
     document.getElementById('hdr-right').style.display = 'flex';
     document.getElementById('hdr-name').textContent = me.name;
+    if (me.logoUrl) {
+      var hdrLogo = document.getElementById('hdr-logo');
+      hdrLogo.src = me.logoUrl;
+      hdrLogo.style.display = 'block';
+    }
     fillDaten(me);
+    setRange(90, false);
     loadStats();
   })
   .catch(function(){
@@ -246,26 +308,105 @@ function fillDaten(me){
   document.getElementById('d-kontakt').value = me.kontaktName || '';
   document.getElementById('d-tel').value     = me.kontaktTelefon || '';
   document.getElementById('d-kantone').value = me.kantone || '';
+  document.getElementById('d-notizen').value = me.notizen || '';
+  if (me.logoUrl) {
+    document.getElementById('logo-preview').src = me.logoUrl;
+    document.getElementById('logo-preview').style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+  }
 }
 
 function saveDaten(){
   var body = {
+    name:           document.getElementById('d-name').value.trim(),
     kontaktName:    document.getElementById('d-kontakt').value.trim(),
     kontaktTelefon: document.getElementById('d-tel').value.trim(),
+    notizen:        document.getElementById('d-notizen').value.trim(),
   };
+  var msgEl = document.getElementById('daten-msg');
+  msgEl.innerHTML = '';
   fetch('/api/verband/portal/me?token=' + encodeURIComponent(TOKEN), {
     method:'PATCH', headers:{'Content-Type':'application/json'},
     body: JSON.stringify(body)
   })
   .then(function(r){ return r.json(); })
   .then(function(json){
-    var el = document.getElementById('daten-msg');
     if (json.ok){
-      el.innerHTML = '<div class="msg msg-ok">Gespeichert.</div>';
+      msgEl.innerHTML = '<div class="msg msg-ok">&#10003; Gespeichert.</div>';
       ME = Object.assign(ME, body);
+      document.getElementById('hdr-name').textContent = body.name || ME.name;
     } else {
-      el.innerHTML = '<div class="msg msg-err">' + (json.error || 'Fehler') + '</div>';
+      msgEl.innerHTML = '<div class="msg msg-err">' + esc(json.error || 'Fehler') + '</div>';
     }
+    setTimeout(function(){ msgEl.innerHTML = ''; }, 3000);
+  });
+}
+
+/* ─── LOGO UPLOAD ──────────────────────────────────── */
+function handleLogoDrop(e){
+  e.preventDefault();
+  document.getElementById('logo-dropzone').classList.remove('drag');
+  var file = e.dataTransfer.files[0];
+  if (file) handleLogoFile(file);
+}
+
+function handleLogoFile(file){
+  if (!file || !file.type.startsWith('image/')) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var img = new Image();
+    img.onload = function(){
+      var MAX = 800;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX){
+        var ratio = Math.min(MAX/w, MAX/h);
+        w = Math.round(w*ratio); h = Math.round(h*ratio);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var base64 = canvas.toDataURL('image/jpeg', 0.88);
+      showLogoPreview(base64);
+      uploadLogo(base64);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showLogoPreview(src){
+  var preview = document.getElementById('logo-preview');
+  preview.src = src;
+  preview.style.display = 'block';
+  document.getElementById('logo-placeholder').style.display = 'none';
+  var hdrLogo = document.getElementById('hdr-logo');
+  hdrLogo.src = src;
+  hdrLogo.style.display = 'block';
+}
+
+function uploadLogo(base64){
+  var prog = document.getElementById('logo-upload-progress');
+  var msgEl = document.getElementById('daten-logo-msg');
+  prog.style.display = 'block';
+  msgEl.innerHTML = '';
+  fetch('/api/verband/portal/upload-logo?token=' + encodeURIComponent(TOKEN), {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ logoBase64: base64 })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(json){
+    prog.style.display = 'none';
+    if (json.ok){
+      msgEl.innerHTML = '<div class="msg msg-ok">&#10003; Logo gespeichert.</div>';
+      if (ME) ME.logoUrl = json.logoUrl;
+    } else {
+      msgEl.innerHTML = '<div class="msg msg-err">' + esc(json.error || 'Upload fehlgeschlagen') + '</div>';
+    }
+    setTimeout(function(){ msgEl.innerHTML = ''; }, 3000);
+  })
+  .catch(function(){
+    prog.style.display = 'none';
+    msgEl.innerHTML = '<div class="msg msg-err">Verbindungsfehler beim Upload.</div>';
   });
 }
 
@@ -290,11 +431,9 @@ function loadStats(){
 
   fetch(url)
   .then(function(r){ return r.json(); })
-  .then(function(json){
-    renderStats(json);
-  })
+  .then(function(json){ renderStats(json); })
   .catch(function(e){
-    document.getElementById('stats-body').innerHTML = '<p class="msg msg-err">Fehler: ' + e.message + '</p>';
+    document.getElementById('stats-body').innerHTML = '<p class="msg msg-err">Fehler: ' + esc(e.message) + '</p>';
   });
 }
 
@@ -309,19 +448,15 @@ function renderStats(data){
   html += '<div class="stat-card"><div class="num">' + data.totalWanderungen + '</div><div class="lbl">Wanderungen gesamt</div></div>';
   html += '<div class="stat-card"><div class="num">' + data.kantone.length + '</div><div class="lbl">Aktive Kantone</div></div>';
 
-  // Global avg dauer
   var avgArr = data.kantone.filter(function(c){ return c.avgDauerMin !== null; });
   if (avgArr.length){
     var avgSum = avgArr.reduce(function(s,c){ return s + c.avgDauerMin; }, 0);
-    html += '<div class="stat-card"><div class="num">' + Math.round(avgSum/avgArr.length) + ' Min</div><div class="lbl">&#216; Verweildauer</div></div>';
+    html += '<div class="stat-card"><div class="num">' + Math.round(avgSum/avgArr.length) + '&#x202F;Min</div><div class="lbl">&#216; Verweildauer</div></div>';
   }
 
-  // Globale Top-Sprache
   var allLangs = {};
   data.kantone.forEach(function(c){
-    Object.entries(c.nachSprache).forEach(function(entry){
-      allLangs[entry[0]] = (allLangs[entry[0]] || 0) + entry[1];
-    });
+    Object.entries(c.nachSprache).forEach(function(e){ allLangs[e[0]] = (allLangs[e[0]] || 0) + e[1]; });
   });
   var sortedLangs = Object.entries(allLangs).sort(function(a,b){ return b[1]-a[1]; });
   if (sortedLangs.length){
@@ -329,16 +464,14 @@ function renderStats(data){
   }
   html += '</div>';
 
-  // Pro Kanton
   data.kantone.forEach(function(c){
     html += '<div class="canton-block">';
     html += '<h3>&#127988;&#65039; ' + esc(c.canton) + '</h3>';
     html += '<div class="canton-stats-grid">';
     html += '<div class="canton-stat"><div class="n">' + c.wanderungen + '</div><div class="l">Wanderungen</div></div>';
-    html += '<div class="canton-stat"><div class="n">' + (c.avgDauerMin !== null ? c.avgDauerMin + ' Min' : '–') + '</div><div class="l">&#216; Dauer</div></div>';
+    html += '<div class="canton-stat"><div class="n">' + (c.avgDauerMin !== null ? c.avgDauerMin + '&#x202F;Min' : '–') + '</div><div class="l">&#216; Dauer</div></div>';
     html += '</div>';
 
-    // Sprachen
     var langs = Object.entries(c.nachSprache).sort(function(a,b){ return b[1]-a[1]; });
     if (langs.length){
       html += '<div style="margin-bottom:12px"><div class="hint" style="margin-bottom:6px;font-weight:700">Sprachen</div><div class="lang-pills">';
@@ -346,7 +479,6 @@ function renderStats(data){
       html += '</div></div>';
     }
 
-    // 2-Spalten: Sagen + Strecken
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
     if (c.top3Sagen && c.top3Sagen.length){
       html += '<div><div class="hint" style="margin-bottom:6px;font-weight:700">Top 3 Sagen</div>';
@@ -360,18 +492,14 @@ function renderStats(data){
       c.top20Strecken.slice(0,20).forEach(function(s,i){ html += '<tr><td>' + (i+1) + '</td><td>' + esc(s.name) + '</td><td>' + s.count + '</td></tr>'; });
       html += '</tbody></table></div>';
     }
-    html += '</div>';
-
-    html += '</div>';
+    html += '</div></div>';
   });
 
   body.innerHTML = html;
 }
 
-function langLabel(code){
-  var m = {de:'🇩🇪 DE',en:'🇬🇧 EN',fr:'🇫🇷 FR',it:'🇮🇹 IT',es:'🇪🇸 ES',pt:'🇵🇹 PT',ja:'🇯🇵 JA',zh:'🇨🇳 ZH'};
-  return m[code] || code.toUpperCase();
-}
+var LANG_LABELS = {de:'&#127465;&#127466; DE',gsw:'&#127464;&#127469; GSW',en:'&#127468;&#127463; EN',fr:'&#127467;&#127479; FR',it:'&#127470;&#127481; IT',es:'&#127466;&#127480; ES',pt:'&#127477;&#127481; PT',zh:'&#127464;&#127475; ZH'};
+function langLabel(code){ return LANG_LABELS[code] || code.toUpperCase(); }
 function esc(s){ return String(s||'').replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 </script>
 </body>

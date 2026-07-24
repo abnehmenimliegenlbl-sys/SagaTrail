@@ -80,10 +80,17 @@ function sagatrail_portal_request_token() {
     }
 
     // Magic-Link zusammensetzen
-    $portal_page = defined( 'SAGATRAIL_PORTAL_PAGE' )
-        ? rtrim( SAGATRAIL_PORTAL_PAGE, '/' )
-        : ( get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal' );
-    $link = rtrim( $portal_page, '/' ) . '?token=' . rawurlencode( $body['token'] );
+    // Magic-Link: Verbände → /api/verband/portal, Partner → WP-Portalseite
+    $typ = $body['type'] ?? 'partner';
+    if ( $typ === 'verband' ) {
+        $api_base_link = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : 'https://api.sagatrail.ch';
+        $link = $api_base_link . '/api/verband/portal?token=' . rawurlencode( $body['token'] );
+    } else {
+        $portal_page = defined( 'SAGATRAIL_PORTAL_PAGE' )
+            ? rtrim( SAGATRAIL_PORTAL_PAGE, '/' )
+            : ( get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal' );
+        $link = rtrim( $portal_page, '/' ) . '?token=' . rawurlencode( $body['token'] );
+    }
     // partnerName für Partner, name für Verbände
     $name = $body['partnerName'] ?? $body['name'] ?? 'Partner';
 
@@ -93,7 +100,8 @@ function sagatrail_portal_request_token() {
         ? wp_date( 'd.m.Y H:i', strtotime( $body['expiresAt'] ) )
         : '';
     $text     = "Guten Tag {$name},\n\n";
-    $text    .= "hier ist Ihr persönlicher Anmeldelink für das SagaTrail Partner-Portal:\n\n";
+    $portal_label = ( $typ === 'verband' ) ? 'Verbandsportal' : 'Partner-Portal';
+    $text    .= "hier ist Ihr persönlicher Anmeldelink für das SagaTrail {$portal_label}:\n\n";
     $text    .= $link . "\n\n";
     $text    .= ( $ablauf ? "Der Link ist gültig bis: {$ablauf} Uhr\n\n" : '' );
     $text    .= "Im Portal können Sie Ihre Klickstatistiken einsehen und Beschreibung,\n";

@@ -57,6 +57,17 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration partners-Spalten fehlgeschlagen (nicht kritisch)");
   }
 
+  // Verbands-Tabelle: logo_url-Spalte (idempotent).
+  try {
+    await db.execute(sql`
+      ALTER TABLE verbands
+        ADD COLUMN IF NOT EXISTS logo_url text
+    `);
+    logger.info("Schema-Migration: verbands.logo_url sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration verbands.logo_url fehlgeschlagen (nicht kritisch)");
+  }
+
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.
   try {
     await seedCatalog();
