@@ -359,7 +359,9 @@ async function runCampaign(campaignId: string, opts: {
   apiBase:  string;
 }): Promise<void> {
   const { subject, bodyText, leads, apiBase } = opts;
-  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  // envelopeFrom muss exakt mit dem auth-User übereinstimmen (Infomaniak-Requirement)
+  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const from = process.env.SMTP_FROM ?? envelopeFrom;
 
   // Blocklist laden
   const blocklist = await db
@@ -407,6 +409,7 @@ async function runCampaign(campaignId: string, opts: {
       // Gmail / Yahoo verlangen dies seit Feb 2024 für Bulk-Sender
       const unsubMailto = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
       await transporter.sendMail({
+        envelope: { from: envelopeFrom, to: lead.email },
         from:    `SagaTrail <${from}>`,
         to:      `${lead.name} <${lead.email}>`,
         replyTo: "info@sagatrail.ch",
