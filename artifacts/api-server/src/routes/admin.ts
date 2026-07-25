@@ -676,6 +676,7 @@ router.get("/admin/routes", async (req, res): Promise<void> => {
         lat: externalRoutesTable.lat,
         lng: externalRoutesTable.lng,
         sagaId: externalRoutesTable.sagaId,
+        featured: externalRoutesTable.featured,
         photoUrl: externalRoutesTable.photoUrl,
         photoAttribution: externalRoutesTable.photoAttribution,
       })
@@ -685,6 +686,23 @@ router.get("/admin/routes", async (req, res): Promise<void> => {
     res.json(rows);
   } catch (err) {
     req.log.error({ err }, "Admin routes list fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// PATCH /admin/routes/:id/featured – Featured-Flag toggeln
+router.patch("/admin/routes/:id/featured", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  const { featured } = req.body as { featured: boolean };
+  try {
+    await db
+      .update(externalRoutesTable)
+      .set({ featured: !!featured })
+      .where(eq(externalRoutesTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Admin route featured update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
   }
 });

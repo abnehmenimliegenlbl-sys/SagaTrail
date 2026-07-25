@@ -297,6 +297,22 @@ a{color:var(--red);text-decoration:none}
 
   <!-- ROUTEN-FOTOS -->
   <div id="tab-routen" class="tab-pane">
+
+    <!-- FEATURED ROUTEN -->
+    <div class="card">
+      <h2>&#11088; Featured Routen</h2>
+      <p class="hint" style="margin-bottom:12px">Featured Routen erscheinen immer an erster Stelle – unabhängig vom Algorithmus. Kanton wählen, Route suchen, Stern anklicken.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <select id="feat-kanton" onchange="loadFeaturedRoutes()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--dark)">
+          <option value="">– Kanton wählen –</option>
+        </select>
+        <input id="feat-search" type="text" placeholder="Route suchen…" oninput="featFilter(this.value)" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:200px"/>
+        <span id="feat-count" class="hint"></span>
+      </div>
+      <div id="feat-body"><p class="hint">Kanton wählen.</p></div>
+    </div>
+
+    <!-- ROUTEN-FOTOS -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <h2 style="margin:0">&#128247; Routen-Fotos kuratieren</h2>
@@ -1346,14 +1362,80 @@ async function initRoutenTab() {
   if (_routenKantons.length) return;
   try {
     _routenKantons = await api('/api/admin/routes/cantons');
-    var sel = document.getElementById('routen-kanton');
-    _routenKantons.forEach(function(k) {
-      var opt = document.createElement('option');
-      opt.value = k; opt.textContent = k;
-      sel.appendChild(opt);
+    ['routen-kanton','feat-kanton'].forEach(function(selId) {
+      var sel = document.getElementById(selId);
+      if (!sel) return;
+      _routenKantons.forEach(function(k) {
+        var opt = document.createElement('option');
+        opt.value = k; opt.textContent = k;
+        sel.appendChild(opt);
+      });
     });
   } catch(e) {
     document.getElementById('routen-body').innerHTML = '<p class="err">Kantone laden fehlgeschlagen: ' + esc(e.message) + '</p>';
+  }
+}
+
+/* ===================== FEATURED ROUTEN ===================== */
+var _featRoutes = [];
+
+async function loadFeaturedRoutes() {
+  var canton = document.getElementById('feat-kanton').value;
+  var body = document.getElementById('feat-body');
+  var cnt  = document.getElementById('feat-count');
+  if (!canton) { body.innerHTML = '<p class="hint">Kanton wählen.</p>'; cnt.textContent = ''; return; }
+  body.innerHTML = '<p class="loading">Lade...</p>';
+  try {
+    _featRoutes = await api('/api/admin/routes?canton=' + encodeURIComponent(canton));
+    renderFeaturedRoutes(_featRoutes);
+  } catch(e) {
+    body.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+function featFilter(q) {
+  if (!_featRoutes.length) return;
+  var filtered = q
+    ? _featRoutes.filter(function(r){ return r.name.toLowerCase().includes(q.toLowerCase()); })
+    : _featRoutes;
+  renderFeaturedRoutes(filtered);
+}
+
+function renderFeaturedRoutes(list) {
+  var body = document.getElementById('feat-body');
+  var cnt  = document.getElementById('feat-count');
+  var featCount = _featRoutes.filter(function(r){ return r.featured; }).length;
+  cnt.textContent = list.length + ' Routen · ' + featCount + ' featured';
+  if (!list.length) { body.innerHTML = '<p class="hint">Keine Routen gefunden.</p>'; return; }
+  var rows = list.map(function(r) {
+    var star = r.featured ? '★' : '☆';
+    var starClass = r.featured ? 'btn-primary' : 'btn-ghost';
+    var rid = r.id.replace(/[^a-zA-Z0-9_-]/g,'_');
+    return '<tr>' +
+      '<td style="font-weight:600;font-size:12px">' + esc(r.name) + '</td>' +
+      '<td style="font-size:12px;color:var(--mid)">' + (r.distanceKm ? r.distanceKm.toFixed(1) + ' km' : '–') + '</td>' +
+      '<td><span class="badge badge-gray" style="font-size:10px">' + esc(r.sac||'?') + '</span></td>' +
+      '<td style="text-align:center">' +
+        '<button id="feat-btn-'+rid+'" class="btn btn-sm '+starClass+'" onclick="toggleFeatured(&apos;'+r.id+'&apos;,&apos;'+rid+'&apos;,'+(!r.featured)+')" title="'+(r.featured?'Featured entfernen':'Als Featured markieren')+'">' + star + ' ' + (r.featured?'Featured':'Markieren') + '</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+  body.innerHTML = '<table class="tbl"><thead><tr><th>Route</th><th>km</th><th>SAC</th><th style="width:150px">Featured</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+async function toggleFeatured(routeId, rid, setFeatured) {
+  var btn = document.getElementById('feat-btn-' + rid);
+  if (btn) btn.disabled = true;
+  try {
+    await api('/api/admin/routes/' + encodeURIComponent(routeId) + '/featured', { method:'PATCH', body: JSON.stringify({ featured: setFeatured }) });
+    var entry = _featRoutes.find(function(r){ return r.id === routeId; });
+    if (entry) entry.featured = setFeatured;
+    renderFeaturedRoutes(_featRoutes);
+    var q = document.getElementById('feat-search') ? document.getElementById('feat-search').value : '';
+    if (q) featFilter(q);
+  } catch(e) {
+    alert('Fehler: ' + e.message);
+    if (btn) btn.disabled = false;
   }
 }
 async function loadRoutenFotos() {

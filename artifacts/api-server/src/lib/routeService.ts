@@ -101,8 +101,8 @@ const ELEVATION_CONCURRENCY = 8;
 // Geometrie-/Hoehen-Anreicherung durchlaufen. Bei aktiver Distanz-Obergrenze
 // etwas grosszuegiger, weil manche Kandidaten die exakte Laengenpruefung noch
 // verfehlen (Bounding-Box-Diagonale ist nur eine untere Schranke).
-const GEOMETRY_POOL_DEFAULT = 150;
-const GEOMETRY_POOL_FILTERED = 220;
+const GEOMETRY_POOL_DEFAULT = 300;
+const GEOMETRY_POOL_FILTERED = 400;
 
 // Sicherheitszuschlag auf die Bounding-Box-Diagonale beim Vorfilter, damit die
 // haversine-Naeherung keine knapp passenden Kurzrouten faelschlich verwirft.
@@ -482,9 +482,21 @@ function selectCandidates(
       ? index.filter((e) => e.bboxDiagKm <= distMax * BBOX_SLACK)
       : index;
   const pool = distMax != null ? GEOMETRY_POOL_FILTERED : GEOMETRY_POOL_DEFAULT;
+  // Generische Verbindungswege (z.B. "Baar – Höllgrotten", "Bibersteg - Bubrugg")
+  // erkennen: kein ref, kein network-Tag UND Name enthält " - " oder " – ".
+  // Sie werden ans Ende des Kandidatenpools geschoben, damit benannte
+  // Themenrouten und Fernwege bevorzugt Geometrie-Slots erhalten.
+  const isGenericConnector = (e: RouteIndexEntry) =>
+    e.rank >= 3 &&          // lwn oder ohne Tag
+    !e.ref &&
+    /\s[–\-]\s/.test(e.name);
+
   return filtered
     .slice()
     .sort((a, b) => {
+      const ga = isGenericConnector(a) ? 1 : 0;
+      const gb = isGenericConnector(b) ? 1 : 0;
+      if (ga !== gb) return ga - gb;          // generische ans Ende
       if (a.rank !== b.rank) return a.rank - b.rank;
       const refA = a.ref ? 0 : 1;
       const refB = b.ref ? 0 : 1;
