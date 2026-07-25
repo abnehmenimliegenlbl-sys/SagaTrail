@@ -19,6 +19,7 @@ export interface Lead {
   sprache: string;  // DE | FR | IT | RM
   route: string;
   typ: string;
+  satz?: string;    // anschreiben_satz aus organisationen → %SATZ%
   adresse?: string;
   telefon?: string;
   website?: string;
@@ -28,6 +29,12 @@ export interface LeadFilter {
   typ?: string;
   kanton?: string;
   sprache?: string;
+}
+
+export interface OrgFilter {
+  kategorie?: string;
+  typ?: string;     // national | regional | kantonal
+  kanton?: string;
 }
 
 export interface CampaignState {
@@ -58,6 +65,30 @@ export const campaignState: CampaignState = {
 
 // ─── WP AJAX: Leads laden ────────────────────────────────────────────────────
 
+export async function fetchOrgsFromWp(
+  filter: OrgFilter,
+  wpAjaxUrl: string,
+  hookSecret: string,
+): Promise<Lead[]> {
+  const form = new URLSearchParams();
+  form.set("action",      "sagatrail_get_organisationen");
+  form.set("hook_secret", hookSecret);
+  if (filter.kategorie) form.set("kategorie", filter.kategorie);
+  if (filter.typ)       form.set("typ",       filter.typ);
+  if (filter.kanton)    form.set("kanton",    filter.kanton);
+
+  const res = await fetch(wpAjaxUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
+  const json = await res.json() as { success: boolean; data?: Lead[]; error?: string };
+  if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
+  return json.data ?? [];
+}
+
 export async function fetchLeadsFromWp(
   filter: LeadFilter,
   wpAjaxUrl: string,
@@ -86,10 +117,11 @@ export async function fetchLeadsFromWp(
 
 function resolveVars(text: string, lead: Lead): string {
   return text
-    .replace(/%TYP%/gi,    lead.typ)
-    .replace(/%NAME%/gi,   lead.name)
-    .replace(/%KANTON%/gi, lead.kanton)
-    .replace(/%ROUTE%/gi,  lead.route);
+    .replace(/%TYP%/gi,    lead.typ    ?? "")
+    .replace(/%NAME%/gi,   lead.name   ?? "")
+    .replace(/%KANTON%/gi, lead.kanton ?? "")
+    .replace(/%ROUTE%/gi,  lead.route  ?? "")
+    .replace(/%SATZ%/gi,   lead.satz   ?? "");
 }
 
 // ─── Unsubscribe-Token ────────────────────────────────────────────────────────

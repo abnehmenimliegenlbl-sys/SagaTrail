@@ -99,3 +99,80 @@ function sagatrail_ajax_leads_meta() {
 
     wp_send_json_success( compact( 'typen', 'kantone', 'sprachen', 'total' ) );
 }
+
+// ── AJAX: Organisationen laden ────────────────────────────────────────────────
+add_action( 'wp_ajax_nopriv_sagatrail_get_organisationen', 'sagatrail_ajax_get_organisationen' );
+add_action( 'wp_ajax_sagatrail_get_organisationen',        'sagatrail_ajax_get_organisationen' );
+
+function sagatrail_ajax_get_organisationen() {
+    sagatrail_leads_check_secret();
+
+    global $wpdb;
+    $table = 'organisationen';
+
+    $where  = [ "email IS NOT NULL AND email != ''" ];
+    $params = [];
+
+    $kategorie = isset( $_POST['kategorie'] ) ? sanitize_text_field( $_POST['kategorie'] ) : '';
+    $typ       = isset( $_POST['typ'] )       ? sanitize_text_field( $_POST['typ'] )       : '';
+    $kanton    = isset( $_POST['kanton'] )    ? sanitize_text_field( $_POST['kanton'] )    : '';
+
+    if ( $kategorie ) { $where[] = 'kategorie = %s'; $params[] = $kategorie; }
+    if ( $typ )       { $where[] = 'typ = %s';       $params[] = $typ; }
+    // kantone ist kommagetrennt (z.B. "BE,ZH") – FIND_IN_SET prüft ob Kürzel enthalten
+    if ( $kanton )    { $where[] = 'FIND_IN_SET(%s, REPLACE(kantone, " ", "")) > 0'; $params[] = $kanton; }
+
+    $sql = "SELECT organisation, email, kantone, sprache, anschreiben_satz, ansprechperson, kategorie, typ
+            FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY organisation LIMIT 5000";
+
+    $rows = $params
+        ? $wpdb->get_results( $wpdb->prepare( $sql, $params ) )
+        : $wpdb->get_results( $sql );
+
+    $data = array_map( function( $r ) {
+        // %NAME% = Ansprechperson falls vorhanden, sonst Organisationsname
+        $name = ( ! empty( $r->ansprechperson ) ) ? (string) $r->ansprechperson : (string) $r->organisation;
+        return [
+            'name'    => $name,
+            'email'   => (string) $r->email,
+            'kanton'  => (string) $r->kantone,   // kommagetrennt z.B. "BE,ZH"
+            'sprache' => (string) ( $r->sprache ?? 'DE' ),
+            'route'   => '',
+            'typ'     => (string) $r->typ,
+            'satz'    => (string) ( $r->anschreiben_satz ?? '' ),
+            // Zusatzfelder für Tabellenansicht
+            '_org'      => (string) $r->organisation,
+            '_kategorie' => (string) $r->kategorie,
+        ];
+    }, $rows ?: [] );
+
+    wp_send_json_success( $data );
+}
+
+// ── AJAX: Organisationen-Meta (für Dropdowns) ─────────────────────────────────
+add_action( 'wp_ajax_nopriv_sagatrail_orgs_meta', 'sagatrail_ajax_orgs_meta' );
+add_action( 'wp_ajax_sagatrail_orgs_meta',        'sagatrail_ajax_orgs_meta' );
+
+function sagatrail_ajax_orgs_meta() {
+    sagatrail_leads_check_secret();
+
+    global $wpdb;
+    $table = 'organisationen';
+
+    $kategorien = $wpdb->get_col( "SELECT DISTINCT kategorie FROM {$table} WHERE kategorie != '' ORDER BY kategorie" );
+    $typen      = $wpdb->get_col( "SELECT DISTINCT typ       FROM {$table} WHERE typ       != '' ORDER BY typ" );
+    // Kantone: Spalte ist kommagetrennt → explodieren, deduplizieren, sortieren
+    $raw_kt     = $wpdb->get_col( "SELECT DISTINCT kantone   FROM {$table} WHERE kantone IS NOT NULL AND kantone != ''" );
+    $kt_set     = [];
+    foreach ( $raw_kt as $cell ) {
+        foreach ( explode( ',', $cell ) as $k ) {
+            $k = trim( $k );
+            if ( $k ) $kt_set[ $k ] = true;
+        }
+    }
+    ksort( $kt_set );
+    $kantone = array_keys( $kt_set );
+    $total   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email IS NOT NULL AND email != ''" );
+
+    wp_send_json_success( compact( 'kategorien', 'typen', 'kantone', 'total' ) );
+}

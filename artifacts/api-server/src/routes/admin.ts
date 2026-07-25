@@ -22,7 +22,7 @@ import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
-  fetchLeadsFromWp, campaignState, startCampaign, buildPreviewHtml,
+  fetchLeadsFromWp, fetchOrgsFromWp, campaignState, startCampaign, buildPreviewHtml,
   makeUnsubToken, verifyUnsubToken,
 } from "../lib/leadMailer";
 import { partnerEmailLogTable, partnerEmailBlocklistTable } from "@workspace/db";
@@ -1232,7 +1232,12 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   let leads;
   try {
-    leads = await fetchLeadsFromWp(filters ?? {}, wpUrl, WP_SECRET());
+    const f = filters ?? {};
+    if (f._source === "orgs") {
+      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton }, wpUrl, WP_SECRET());
+    } else {
+      leads = await fetchLeadsFromWp({ typ: f.typ, kanton: f.kanton, sprache: f.sprache }, wpUrl, WP_SECRET());
+    }
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") }); return;
   }
@@ -1242,6 +1247,36 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
   const apiBase = `${proto}://${host}`;
   await startCampaign({ subject, bodyText, leads, apiBase });
   res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
+});
+
+// GET /admin/orgs/meta – Kategorien, Typen, Kantone aus organisationen-Tabelle
+router.get("/admin/orgs/meta", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  try {
+    const form = new URLSearchParams({ action: "sagatrail_orgs_meta", hook_secret: WP_SECRET() });
+    const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
+    const json = await r.json() as { success: boolean; data?: unknown };
+    if (!json.success) throw new Error("WP Fehler");
+    res.json(json.data);
+  } catch (err) {
+    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+  }
+});
+
+// GET /admin/orgs/list?kategorie=&typ=&kanton= – gefilterte Organisationen
+router.get("/admin/orgs/list", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  const { kategorie, typ, kanton } = req.query as Record<string, string>;
+  try {
+    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton }, wpUrl, WP_SECRET());
+    res.json({ leads, total: leads.length });
+  } catch (err) {
+    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+  }
 });
 
 // GET /admin/leads/status – Kampagnen-Fortschritt

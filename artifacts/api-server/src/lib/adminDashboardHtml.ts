@@ -324,7 +324,15 @@ a{color:var(--red);text-decoration:none}
     <!-- EMPFÄNGER FILTERN -->
     <div class="card">
       <h2>&#127981; Empfänger filtern</h2>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+
+      <!-- Quelle -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button id="km-src-leads" class="btn btn-primary btn-sm" onclick="kmSetSource('leads')">&#128203; Partner-Leads</button>
+        <button id="km-src-orgs"  class="btn btn-ghost  btn-sm" onclick="kmSetSource('orgs')">&#127968; Verbände / Organisationen</button>
+      </div>
+
+      <!-- Filter Partner-Leads -->
+      <div id="km-filters-leads" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
         <div class="form-group" style="min-width:140px">
           <label>Typ</label>
           <select id="km-typ" onchange="kmLoadLeads()"><option value="">Alle Typen</option></select>
@@ -346,9 +354,33 @@ a{color:var(--red);text-decoration:none}
         <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
         <span id="km-leads-count" style="font-size:13px;color:var(--mid)"></span>
       </div>
+
+      <!-- Filter Organisationen -->
+      <div id="km-filters-orgs" style="display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+        <div class="form-group" style="min-width:180px">
+          <label>Kategorie</label>
+          <select id="km-org-kategorie" onchange="kmLoadLeads()"><option value="">Alle Kategorien</option></select>
+        </div>
+        <div class="form-group" style="min-width:140px">
+          <label>Typ</label>
+          <select id="km-org-typ" onchange="kmLoadLeads()">
+            <option value="">Alle</option>
+            <option value="national">National</option>
+            <option value="regional">Regional</option>
+            <option value="kantonal">Kantonal</option>
+          </select>
+        </div>
+        <div class="form-group" style="min-width:140px">
+          <label>Kanton</label>
+          <select id="km-org-kanton" onchange="kmLoadLeads()"><option value="">Alle Kantone</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
+        <span id="km-orgs-count" style="font-size:13px;color:var(--mid)"></span>
+      </div>
+
       <div id="km-leads-table" style="display:none">
-        <table class="tbl">
-          <thead><tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr></thead>
+        <table class="tbl" id="km-leads-tbl-el">
+          <thead id="km-leads-thead"><tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr></thead>
           <tbody id="km-leads-tbody"></tbody>
         </table>
         <p id="km-leads-more" class="hint" style="margin-top:6px;display:none"></p>
@@ -358,7 +390,7 @@ a{color:var(--red);text-decoration:none}
     <!-- E-MAIL VERFASSEN -->
     <div class="card">
       <h2>&#9997;&#65039; E-Mail verfassen</h2>
-      <p class="hint" style="margin-bottom:12px">Variablen: <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%TYP%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%ROUTE%</code> – werden pro Empfänger ersetzt</p>
+      <p id="km-vars-hint" class="hint" style="margin-bottom:12px">Variablen: <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%TYP%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%ROUTE%</code> – werden pro Empfänger ersetzt</p>
       <div class="form-group" style="margin-bottom:12px">
         <label>Betreff *</label>
         <input id="km-subject" type="text" placeholder="Werden Sie SagaTrail-Partner in %KANTON%"/>
@@ -1710,46 +1742,90 @@ async function deleteVerband(id) {
 /* ═══════════════════════════════════════════════════
    KAMPAGNE / MASSEN-E-MAIL
    ═══════════════════════════════════════════════════ */
-var _kmLeads = [];
+var _kmLeads   = [];
 var _kmPolling = null;
+var _kmSource  = 'leads';   // 'leads' | 'orgs'
+
+function kmSetSource(src) {
+  _kmSource = src;
+  document.getElementById('km-src-leads').className = 'btn btn-sm ' + (src === 'leads' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('km-src-orgs').className  = 'btn btn-sm ' + (src === 'orgs'  ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('km-filters-leads').style.display = src === 'leads' ? 'flex' : 'none';
+  document.getElementById('km-filters-orgs').style.display  = src === 'orgs'  ? 'flex' : 'none';
+  // Variablen-Hinweis je nach Quelle
+  var hint = document.getElementById('km-vars-hint');
+  if (src === 'orgs') {
+    hint.innerHTML = 'Variablen: <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%SATZ%</code> – werden pro Empfänger ersetzt';
+  } else {
+    hint.innerHTML = 'Variablen: <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%TYP%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%NAME%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%KANTON%</code> <code style="background:#f0eeeb;padding:2px 5px;border-radius:4px">%ROUTE%</code> – werden pro Empfänger ersetzt';
+  }
+  kmLoadLeads();
+}
 
 async function kmLoadMeta() {
+  // Partner-Leads Meta
   try {
     var meta = await api('/api/admin/leads/meta');
     var typSel = document.getElementById('km-typ');
     var ktSel  = document.getElementById('km-kanton');
-    // Typen
     typSel.innerHTML = '<option value="">Alle Typen</option>';
     (meta.typen || []).forEach(function(t){ typSel.innerHTML += '<option value="'+esc(t)+'">'+esc(t)+'</option>'; });
-    // Kantone
     ktSel.innerHTML = '<option value="">Alle Kantone</option>';
     (meta.kantone || []).forEach(function(k){ ktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
-    kmLoadLeads();
   } catch(e) {
     document.getElementById('km-leads-count').textContent = '⚠ ' + e.message;
   }
+  // Organisationen Meta
+  try {
+    var ometa = await api('/api/admin/orgs/meta');
+    var katSel = document.getElementById('km-org-kategorie');
+    var oktSel = document.getElementById('km-org-kanton');
+    katSel.innerHTML = '<option value="">Alle Kategorien</option>';
+    (ometa.kategorien || []).forEach(function(k){ katSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+    oktSel.innerHTML = '<option value="">Alle Kantone</option>';
+    (ometa.kantone || []).forEach(function(k){ oktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+  } catch(e) { /* ignorieren */ }
+  kmLoadLeads();
 }
 
 async function kmLoadLeads() {
-  var count = document.getElementById('km-leads-count');
-  var tbl   = document.getElementById('km-leads-table');
-  var tbody = document.getElementById('km-leads-tbody');
-  count.textContent = 'Wird geladen…';
+  var isOrgs = _kmSource === 'orgs';
+  var countEl = document.getElementById(isOrgs ? 'km-orgs-count' : 'km-leads-count');
+  var tbl     = document.getElementById('km-leads-table');
+  var tbody   = document.getElementById('km-leads-tbody');
+  var thead   = document.getElementById('km-leads-thead');
+  countEl.textContent = 'Wird geladen…';
   tbl.style.display = 'none';
   try {
-    var typ     = v('km-typ');
-    var kanton  = v('km-kanton');
-    var sprache = v('km-sprache');
-    var params  = new URLSearchParams();
-    if (typ)     params.set('typ', typ);
-    if (kanton)  params.set('kanton', kanton);
-    if (sprache) params.set('sprache', sprache);
-    var data = await api('/api/admin/leads/list?' + params.toString());
+    var params = new URLSearchParams();
+    var data;
+    if (isOrgs) {
+      var kat    = v('km-org-kategorie');
+      var otyp   = v('km-org-typ');
+      var okaton = v('km-org-kanton');
+      if (kat)    params.set('kategorie', kat);
+      if (otyp)   params.set('typ', otyp);
+      if (okaton) params.set('kanton', okaton);
+      data = await api('/api/admin/orgs/list?' + params.toString());
+      thead.innerHTML = '<tr><th>Organisation</th><th>E-Mail</th><th>Kategorie</th><th>Kantone</th><th>Sprache</th><th>Anschreiben-Satz</th></tr>';
+    } else {
+      var typ     = v('km-typ');
+      var kanton  = v('km-kanton');
+      var sprache = v('km-sprache');
+      if (typ)     params.set('typ', typ);
+      if (kanton)  params.set('kanton', kanton);
+      if (sprache) params.set('sprache', sprache);
+      data = await api('/api/admin/leads/list?' + params.toString());
+      thead.innerHTML = '<tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr>';
+    }
     var seen = {};
     _kmLeads = (data.leads || []).filter(function(l){ var e = (l.email||'').toLowerCase(); if (seen[e]) return false; seen[e]=true; return true; });
-    count.textContent = _kmLeads.length + ' Empfänger gefunden';
+    countEl.textContent = _kmLeads.length + ' Empfänger (einmalige E-Mails)';
     var PREVIEW = 20;
     tbody.innerHTML = _kmLeads.slice(0, PREVIEW).map(function(l){
+      if (isOrgs) {
+        return '<tr><td>'+esc(l._org||l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l._kategorie||l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.satz||'')+'">'+esc(l.satz||'–')+'</td></tr>';
+      }
       return '<tr><td>'+esc(l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(l.route)+'</td></tr>';
     }).join('');
     var moreEl = document.getElementById('km-leads-more');
@@ -1759,9 +1835,8 @@ async function kmLoadLeads() {
     } else { moreEl.style.display = 'none'; }
     tbl.style.display = _kmLeads.length ? 'block' : 'none';
     document.getElementById('km-send-btn').disabled = !_kmLeads.length;
-    document.getElementById('km-send-btn').title = _kmLeads.length ? '' : 'Zuerst Empfänger laden';
   } catch(e) {
-    count.textContent = '⚠ ' + e.message;
+    countEl.textContent = '⚠ ' + e.message;
     document.getElementById('km-send-btn').disabled = true;
   }
 }
@@ -1794,7 +1869,9 @@ async function kmSend() {
   btn.textContent = '⏳ Sendet…';
   document.getElementById('km-compose-status').textContent = '';
   try {
-    var filters = { typ: v('km-typ'), kanton: v('km-kanton'), sprache: v('km-sprache') };
+    var filters = _kmSource === 'orgs'
+      ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kanton: v('km-org-kanton') }
+      : { _source: 'leads', typ: v('km-typ'), kanton: v('km-kanton'), sprache: v('km-sprache') };
     var res = await api('/api/admin/leads/send', { method:'POST',
       body: JSON.stringify({ subject: subject, bodyText: bodyText, filters: filters }) });
     document.getElementById('km-progress-card').style.display = 'block';
