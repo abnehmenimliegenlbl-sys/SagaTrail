@@ -410,7 +410,7 @@ async function runCampaign(campaignId: string, opts: {
       const unsubMailto = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
       await transporter.sendMail({
         envelope: { from: envelopeFrom, to: lead.email },
-        from:    `SagaTrail <${from}>`,
+        from:    `SagaTrail <${envelopeFrom}>`,
         to:      `${lead.name} <${lead.email}>`,
         replyTo: "info@sagatrail.ch",
         subject: resolvedSubject,
