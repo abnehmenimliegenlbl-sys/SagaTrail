@@ -924,10 +924,24 @@
               </label>
             </div>
 
+            <!-- Standard / Premium -->
             <button type="submit" class="st-submit-btn" id="st-submit-btn">
               <span class="spinner"></span>
               <span class="btn-text">Anfrage kostenlos senden</span>
             </button>
+
+            <!-- Basic: zwei Abrechnungs-Buttons (initial versteckt) -->
+            <input type="hidden" id="st-abrechnung" name="abrechnungsperiode" value="">
+            <div id="st-basic-btns" style="display:none;flex-direction:column;gap:10px;">
+              <button type="button" class="st-submit-btn" id="st-btn-monatlich">
+                <span class="spinner"></span>
+                <span class="btn-text">14,99 CHF&nbsp;/&nbsp;Monat &mdash; monatlich k&uuml;ndbar</span>
+              </button>
+              <button type="button" class="st-submit-btn" id="st-btn-jaehrlich" style="background:#1a1a1a;">
+                <span class="spinner"></span>
+                <span class="btn-text">99,00 CHF&nbsp;/&nbsp;Jahr &mdash; 2 Monate gratis</span>
+              </button>
+            </div>
 
           </form>
         </div>
@@ -951,9 +965,13 @@
 (function() {
   'use strict';
 
-  var form    = document.getElementById('st-partner-form');
-  var feedback = document.getElementById('st-feedback');
-  var submitBtn = document.getElementById('st-submit-btn');
+  var form         = document.getElementById('st-partner-form');
+  var feedback     = document.getElementById('st-feedback');
+  var submitBtn    = document.getElementById('st-submit-btn');
+  var basicBtns    = document.getElementById('st-basic-btns');
+  var btnMonatlich = document.getElementById('st-btn-monatlich');
+  var btnJaehrlich = document.getElementById('st-btn-jaehrlich');
+  var abrInput     = document.getElementById('st-abrechnung');
 
   if (!form) return;
 
@@ -972,12 +990,43 @@
     feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function setLoading(on) {
-    submitBtn.disabled = on;
-    submitBtn.classList.toggle('loading', on);
-    submitBtn.querySelector('.btn-text').textContent =
-      on ? 'Wird gesendet...' : 'Anfrage kostenlos senden';
+  // Zeigt/versteckt die richtigen Submit-Buttons je nach gewähltem Paket
+  function updateSubmitArea() {
+    var paketVal = form.paket ? form.paket.value : 'standard';
+    if (paketVal === 'basic') {
+      submitBtn.style.display = 'none';
+      basicBtns.style.display = 'flex';
+    } else {
+      submitBtn.style.display = '';
+      basicBtns.style.display = 'none';
+      abrInput.value = '';
+    }
   }
+
+  // Paket-Radios beobachten
+  form.querySelectorAll('input[name="paket"]').forEach(function(radio) {
+    radio.addEventListener('change', updateSubmitArea);
+  });
+  updateSubmitArea(); // Initialzustand
+
+  function setLoading(on, activeBtn) {
+    var allBtns = [submitBtn, btnMonatlich, btnJaehrlich];
+    allBtns.forEach(function(b) { b.disabled = on; });
+    if (activeBtn) {
+      activeBtn.classList.toggle('loading', on);
+      activeBtn.querySelector('.btn-text').textContent =
+        on ? 'Wird gesendet...' : activeBtn.dataset.label;
+    }
+  }
+
+  // Basic-Buttons speichern ihr Label und triggern den Submit
+  [btnMonatlich, btnJaehrlich].forEach(function(btn) {
+    btn.dataset.label = btn.querySelector('.btn-text').textContent;
+    btn.addEventListener('click', function() {
+      abrInput.value = btn === btnMonatlich ? 'monatlich' : 'jaehrlich';
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    });
+  });
 
   // Foto-Button verdrahten
   var fotoBtn     = document.getElementById('st-foto-btn');
@@ -1008,6 +1057,12 @@
     });
   }
 
+  // Welcher Button hat den Submit ausgelöst?
+  var activeSubmitBtn = submitBtn;
+  submitBtn.addEventListener('click', function() { activeSubmitBtn = submitBtn; });
+  btnMonatlich.addEventListener('click', function() { activeSubmitBtn = btnMonatlich; }, true);
+  btnJaehrlich.addEventListener('click', function() { activeSubmitBtn = btnJaehrlich; }, true);
+
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     feedback.className = 'st-form-feedback';
@@ -1029,22 +1084,23 @@
     }
 
     var data = {
-      betriebsName:   form.betriebsName.value.trim(),
-      kategorie:      form.kategorie.value,
-      canton:         form.canton.value,
-      beschreibung:   form.beschreibung.value.trim() || undefined,
-      angebot:        form.angebot.value.trim() || undefined,
-      website:        form.website.value.trim() || undefined,
-      adresse:        form.adresse.value.trim() || undefined,
-      plz:            form.plz.value.trim() || undefined,
-      ort:            form.ort.value.trim(),
-      kontaktName:    form.kontaktName.value.trim(),
-      kontaktEmail:   form.kontaktEmail.value.trim(),
-      kontaktTelefon: form.kontaktTelefon.value.trim() || undefined,
-      paket:          form.paket.value || 'standard',
+      betriebsName:      form.betriebsName.value.trim(),
+      kategorie:         form.kategorie.value,
+      canton:            form.canton.value,
+      beschreibung:      form.beschreibung.value.trim() || undefined,
+      angebot:           form.angebot.value.trim() || undefined,
+      website:           form.website.value.trim() || undefined,
+      adresse:           form.adresse.value.trim() || undefined,
+      plz:               form.plz.value.trim() || undefined,
+      ort:               form.ort.value.trim(),
+      kontaktName:       form.kontaktName.value.trim(),
+      kontaktEmail:      form.kontaktEmail.value.trim(),
+      kontaktTelefon:    form.kontaktTelefon.value.trim() || undefined,
+      paket:             form.paket.value || 'standard',
+      abrechnungsperiode: abrInput.value || undefined,
     };
 
-    setLoading(true);
+    setLoading(true, activeSubmitBtn);
 
     // 1. In WordPress-DB speichern (PHP-Handler im gleichen WPCode-Setup)
     var wpFormData = new FormData();
@@ -1087,7 +1143,7 @@
           'error'
         );
       })
-      .finally(function() { setLoading(false); });
+      .finally(function() { setLoading(false, activeSubmitBtn); });
   });
 })();
 </script>

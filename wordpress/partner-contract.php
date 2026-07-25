@@ -7,26 +7,23 @@
  * und sendet ihn per E-Mail an den Interessenten und an info@sagatrail.ch.
  *
  * Benötigt FPDF (http://www.fpdf.org):
- *  Option A — Im WordPress-Theme-Ordner: /wp-content/themes/THEME/fpdf/fpdf.php
- *  Option B — Als Composer-Paket: composer require setasign/fpdf
- *             dann require_once ABSPATH . 'vendor/autoload.php';
+ *  Option A – Theme-Ordner: /wp-content/themes/THEME/fpdf/fpdf.php
+ *  Option B – Composer:     composer require setasign/fpdf
  *
- * Diese Funktion wird von partner-handler.php aufgerufen:
- *   sagatrail_partner_vertrag_senden($daten_array, $row_id)
- *
- * Konfiguration:
- *   define('SAGATRAIL_FPDF_PATH', '/pfad/zu/fpdf/fpdf.php');
- *   Ohne Konfiguration: Versuch mit Standard-Pfad, dann HTML-Fallback.
+ * Diese Funktion wird via WordPress-Action aufgerufen:
+ *   do_action('sagatrail_partner_anfrage_gespeichert', $data, $row_id);
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 // ===================================================================
-// UNTERSCHRIFT – Pfad-Auflösung
+// HILFSFUNKTIONEN
 // ===================================================================
-// Legen Sie signature.png (aus diesem ZIP) in einen dieser Ordner:
-//   wp-content/uploads/sagatrail/signature.png  (Standard, empfohlen)
-//   oder: define('SAGATRAIL_SIGNATURE_PATH', '/absoluter/pfad/signature.png');
+
+/** UTF-8 → Windows-1252 für FPDF-Standardfonts */
+function st_enc( $str ) {
+    return iconv( 'UTF-8', 'windows-1252//TRANSLIT', (string) $str );
+}
 
 function sagatrail_partner_icon_pfad() {
     if ( defined( 'SAGATRAIL_ICON_PATH' ) && file_exists( SAGATRAIL_ICON_PATH ) ) {
@@ -46,36 +43,83 @@ function sagatrail_partner_sig_pfad() {
     return file_exists( $pfad ) ? $pfad : null;
 }
 
-// ===================================================================
-// FPDF laden
-// ===================================================================
-
 function sagatrail_partner_lade_fpdf() {
-    // 1. Expliziter Pfad in wp-config.php
     if ( defined( 'SAGATRAIL_FPDF_PATH' ) && file_exists( SAGATRAIL_FPDF_PATH ) ) {
         require_once SAGATRAIL_FPDF_PATH;
         return class_exists( 'FPDF' );
     }
-    // 2. Autoloader (Composer)
     $autoload = ABSPATH . 'vendor/autoload.php';
     if ( file_exists( $autoload ) ) {
         require_once $autoload;
         if ( class_exists( 'FPDF' ) || class_exists( 'Fpdf\\Fpdf' ) ) { return true; }
     }
-    // 3. Standard-Pfade im Theme-Ordner
-    $kandidaten = array(
+    foreach ( array(
         get_template_directory() . '/fpdf/fpdf.php',
         get_template_directory() . '/vendor/fpdf/fpdf.php',
         WP_CONTENT_DIR . '/fpdf/fpdf.php',
-    );
-    foreach ( $kandidaten as $p ) {
+    ) as $p ) {
         if ( file_exists( $p ) ) { require_once $p; return class_exists( 'FPDF' ); }
     }
     return false;
 }
 
 // ===================================================================
-// HAUPTFUNKTION: Vertrag als PDF erzeugen und per Mail senden
+// LEISTUNGEN JE PAKET  (nur was wir tatsächlich liefern)
+// ===================================================================
+
+function sagatrail_paket_leistungen_v2( $paket_name ) {
+    $basis = array(
+        'Eintrag auf der SagaTrail-Wanderkarte (iOS & Android)',
+        'Auffindbar für Wanderinnen und Wanderer auf Schweizer Sagenwegen in der Nähe (Suchradius ca. 2 km)',
+        'Profil mit Name, Kategorie, Adresse und Öffnungszeiten',
+        'Exklusives Angebot / Rabatt für SagaTrail-Nutzerinnen und -Nutzer',
+        'Einrichtung innerhalb von 5 Werktagen nach Zahlungseingang – wir übernehmen den kompletten Setup',
+    );
+    if ( $paket_name === 'Standard' ) {
+        $basis[] = 'Beschreibungstext (bis 250 Zeichen) im App-Profil';
+        $basis[] = 'Monatliche Übersicht der Profilaufrufe und Angebot-Tipps per E-Mail';
+    }
+    if ( $paket_name === 'Premium' ) {
+        $basis[] = 'Beschreibungstext (bis 500 Zeichen) im App-Profil';
+        $basis[] = 'Monatlicher Statistikbericht: Profilaufrufe und Angebot-Tipps per E-Mail';
+        $basis[] = 'KI-gestützte Narrationserwaehnung: Sobald Wandernde sich auf weniger als 500 m nähern, webt der digitale Erzähler Ihren Betrieb und Ihr Angebot organisch in die laufende Sagenerzählung ein';
+    }
+    return $basis;
+}
+
+// ===================================================================
+// KONDITIONEN JE ABRECHNUNGSMODELL
+// ===================================================================
+
+function sagatrail_konditionen_v2( $paket_name, $preis_str, $is_monatlich ) {
+    if ( $is_monatlich ) {
+        return array(
+            'Monatliche Gebühr: ' . $preis_str,
+            'Vertragslaufzeit: monatlich, keine Mindestlaufzeit',
+            'Kündigung: schriftlich per E-Mail an info@sagatrail.ch, jederzeit zum Ende des laufenden Kalendermonats; der Eintrag wird am Monatsletzten deaktiviert',
+            'Rechnungsstellung: monatlich im Voraus nach Freischaltung',
+            'Zahlungsfrist: 10 Tage nach Rechnungseingang',
+            'Keine Einrichtungsgebühr',
+            'Bei Zahlungsverzug behält sich SagaTrail das Recht vor, den Eintrag vorübergehend zu deaktivieren',
+            'Pflichten des Partners: Bereitstellung korrekter und aktueller Betriebsinformationen; Einhaltung des kommunizierten Nutzerangebots; Meldung von Änderungen (Betriebsschluss, Angebotsänderung) innerhalb von 14 Tagen per E-Mail an info@sagatrail.ch',
+            'Gerichtsstand: Oberwil BL; es gilt ausschliesslich Schweizer Recht',
+        );
+    }
+    return array(
+        'Jahresgebühr: ' . $preis_str,
+        'Vertragslaufzeit: 12 Monate ab Freischaltung; verlängert sich automatisch um weitere 12 Monate',
+        'Kündigung: schriftlich per E-Mail an info@sagatrail.ch, mindestens 30 Tage vor Vertragsende; ohne rechtzeitige Kündigung verlängert sich der Vertrag automatisch um ein weiteres Jahr',
+        'Rechnungsstellung: jährlich im Voraus nach Freischaltung',
+        'Zahlungsfrist: 10 Tage nach Rechnungseingang',
+        'Keine Einrichtungsgebühr',
+        'Bei Zahlungsverzug behält sich SagaTrail das Recht vor, den Eintrag vorübergehend zu deaktivieren',
+        'Pflichten des Partners: Bereitstellung korrekter und aktueller Betriebsinformationen; Einhaltung des kommunizierten Nutzerangebots; Meldung von Änderungen (Betriebsschluss, Angebotsänderung) innerhalb von 14 Tagen per E-Mail an info@sagatrail.ch',
+        'Gerichtsstand: Oberwil BL; es gilt ausschliesslich Schweizer Recht',
+    );
+}
+
+// ===================================================================
+// HAUPTFUNKTION
 // ===================================================================
 
 function sagatrail_partner_vertrag_senden( $data, $row_id ) {
@@ -85,295 +129,293 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
         'standard' => 'Standard',
         'premium'  => 'Premium',
     );
-    $paket_preise = array(
-        'basic'    => 'CHF 99.- / Jahr (od. CHF 9.90 / Monat, keine Einrichtungsgebuehr)',
-        'standard' => 'CHF 199.- / Jahr (od. CHF 19.90 / Monat, keine Einrichtungsgebuehr)',
-        'premium'  => 'CHF 499.- / Jahr (keine Einrichtungsgebuehr)',
-    );
 
-    $paket       = isset( $data['paket'] ) ? $data['paket'] : 'standard';
-    $paket_name  = isset( $paket_namen[ $paket ] )  ? $paket_namen[ $paket ]  : ucfirst( $paket );
-    $paket_preis = isset( $paket_preise[ $paket ] ) ? $paket_preise[ $paket ] : '';
-    $datum       = date_i18n( 'd. F Y' );
-    $ref         = 'ST-' . str_pad( $row_id, 5, '0', STR_PAD_LEFT );
+    $paket              = isset( $data['paket'] ) ? $data['paket'] : 'standard';
+    $abr                = isset( $data['abrechnungsperiode'] ) ? $data['abrechnungsperiode'] : '';
+    $is_monatlich       = ( $paket === 'basic' && $abr === 'monatlich' );
+    $paket_name         = isset( $paket_namen[ $paket ] ) ? $paket_namen[ $paket ] : ucfirst( $paket );
+
+    // Konditionen-Text & Positionszeile
+    if ( $is_monatlich ) {
+        $preis_str = 'CHF 14.99 pro Monat';
+        $preis_pos = 'CHF 14,99';
+    } elseif ( $paket === 'basic' ) {
+        $preis_str = 'CHF 99.00 pro Jahr';
+        $preis_pos = 'CHF 99,00';
+    } elseif ( $paket === 'standard' ) {
+        $preis_str = 'CHF 199.00 pro Jahr';
+        $preis_pos = 'CHF 199,00';
+    } else {
+        $preis_str = 'CHF 499.00 pro Jahr';
+        $preis_pos = 'CHF 499,00';
+    }
+
+    $datum_kurz = date( 'd.m.Y' );
+    $datum_lang = date_i18n( 'd. F Y' );
+    $ref        = 'ST-' . str_pad( $row_id, 5, '0', STR_PAD_LEFT );
 
     if ( ! sagatrail_partner_lade_fpdf() ) {
-        error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' konnte nicht erzeugt werden.' );
+        error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' nicht erzeugt.' );
         return;
     }
 
-    $pdf_inhalt = sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref );
-    sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $pdf_inhalt );
+    $pdf_inhalt = sagatrail_pdf_erzeugen_v2( $data, $paket_name, $preis_str, $preis_pos, $datum_kurz, $datum_lang, $ref, $is_monatlich );
+    sagatrail_vertrag_mail_senden_v2( $data, $paket_name, $preis_str, $datum_lang, $ref, $pdf_inhalt );
 }
 
 // ===================================================================
-// PDF ERZEUGEN (FPDF)
+// PDF ERZEUGEN — Briefdesign gemäss Vorlage
 // ===================================================================
 
-function sagatrail_pdf_erzeugen( $data, $paket_name, $paket_preis, $datum, $ref ) {
+function sagatrail_pdf_erzeugen_v2( $data, $paket_name, $preis_str, $preis_pos, $datum_kurz, $datum_lang, $ref, $is_monatlich ) {
 
     $pdf = new FPDF( 'P', 'mm', 'A4' );
     $pdf->AddPage();
-    $pdf->SetMargins( 20, 20, 20 );
-    $pdf->SetAutoPageBreak( true, 20 );
+    $pdf->SetMargins( 22, 22, 22 );
+    $pdf->SetAutoPageBreak( true, 24 );
+    $pdf->SetY( 22 );
 
-    // ----- KOPF -----
+    $W = 166; // nutzbare Breite (210 – 44)
+    $L = 22;  // linker Rand
+
+    // ----- LOGO + FIRMENNAME -----
     $icon_pfad = sagatrail_partner_icon_pfad();
-    $icon_h = 16; // mm Höhe
-    $y_start = $pdf->GetY();
+    $logo_h    = 14; // mm
     if ( $icon_pfad ) {
-        $pdf->Image( $icon_pfad, 20, $y_start, 0, $icon_h ); // Breite auto
-        $pdf->SetXY( 40, $y_start + 1 );
+        $pdf->Image( $icon_pfad, $L, $pdf->GetY(), 0, $logo_h );
+        $pdf->SetXY( $L + 18, $pdf->GetY() + 1 );
     }
-    $pdf->SetFont( 'Helvetica', 'B', 20 );
+    $pdf->SetFont( 'Helvetica', 'B', 22 );
     $pdf->SetTextColor( 204, 0, 0 );
-    $pdf->Cell( 0, 10, 'SagaTrail', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 8 );
-    $pdf->SetTextColor( 120, 120, 120 );
-    if ( $icon_pfad ) { $pdf->SetX( 40 ); }
-    $pdf->Cell( 0, 5, 'A.i.L. by Koch  |  Mühlemattstrasse 11, 4104 Oberwil BL  |  info@sagatrail.ch', 0, 1, 'L' );
-    $pdf->Ln( max( 2, $y_start + $icon_h - $pdf->GetY() + 2 ) );
+    $pdf->Cell( 0, 10, st_enc( 'SagaTrail' ), 0, 1, 'L' );
 
-    // Trennlinie rot
+    if ( $icon_pfad ) { $pdf->SetX( $L + 18 ); }
+    $pdf->SetFont( 'Helvetica', '', 8 );
+    $pdf->SetTextColor( 130, 130, 130 );
+    $pdf->Cell( 0, 5, st_enc( 'www.sagatrail.ch  ·  info@sagatrail.ch' ), 0, 1, 'L' );
+
+    // Abstand bis zur roten Linie
+    $pdf->Ln( max( 2, ( $icon_pfad ? 22 + $logo_h : 0 ) - $pdf->GetY() + 2 ) );
+
+    // Rote Trennlinie
     $pdf->SetDrawColor( 204, 0, 0 );
     $pdf->SetLineWidth( 0.8 );
-    $pdf->Line( 20, $pdf->GetY(), 190, $pdf->GetY() );
-    $pdf->Ln( 6 );
+    $line_y = $pdf->GetY();
+    $pdf->Line( $L, $line_y, $L + $W, $line_y );
+    $pdf->Ln( 8 );
 
     // ----- TITEL -----
-    $pdf->SetFont( 'Helvetica', 'B', 14 );
+    $pdf->SetFont( 'Helvetica', 'B', 15 );
     $pdf->SetTextColor( 26, 26, 26 );
-    $pdf->Cell( 0, 8, 'Partnerschaftsvereinbarung', 0, 1, 'L' );
-
-    $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->SetTextColor( 100, 100, 100 );
-    $pdf->Cell( 0, 5, 'Referenz: ' . $ref . '   |   Datum: ' . $datum, 0, 1, 'L' );
-    $pdf->Ln( 6 );
-
-    // ----- PARTEIEN -----
-    $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->SetTextColor( 26, 26, 26 );
-    $pdf->Cell( 0, 6, 'Vertragsparteien', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 9 );
-
-    $zeilen = array(
-        'Anbieter:',       'A.i.L. by Koch, Mühlemattstrasse 11, 4104 Oberwil BL',
-        'UID:',            'CHE-286.962.827  |  info@sagatrail.ch',
-        'Partner:',        $data['betriebs_name'] . ', ' . $data['ort'],
-        'Kontaktperson:',  $data['kontakt_name'] . ', ' . $data['kontakt_email'],
-    );
-    for ( $i = 0; $i < count( $zeilen ); $i += 2 ) {
-        $pdf->SetFont( 'Helvetica', 'B', 9 );
-        $pdf->Cell( 35, 5.5, $zeilen[ $i ], 0, 0 );
-        $pdf->SetFont( 'Helvetica', '', 9 );
-        $pdf->Cell( 0, 5.5, $zeilen[ $i + 1 ], 0, 1 );
-    }
+    $pdf->Cell( 0, 8, st_enc( 'Partnerschaftsvertrag' ), 0, 1, 'L' );
     $pdf->Ln( 5 );
 
-    // ----- LEISTUNGEN -----
-    $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->Cell( 0, 6, 'Leistungen (Paket ' . $paket_name . ')', 0, 1, 'L' );
-
-    $leistungen = sagatrail_paket_leistungen( $paket_name );
+    // ----- VERTRAGSPARTEIEN -----
+    // "zwischen" + Datum rechtsbündig in gleicher Zeile
     $pdf->SetFont( 'Helvetica', '', 9 );
-    foreach ( $leistungen as $li ) {
-        $pdf->Cell( 6, 5, chr( 149 ), 0, 0 );
-        $pdf->MultiCell( 0, 5, $li, 0, 'L' );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Cell( $W - 55, 5, st_enc( 'zwischen' ), 0, 0, 'L' );
+    $pdf->SetTextColor( 100, 100, 100 );
+    $pdf->Cell( 55, 5, st_enc( 'Oberwil, den ' . $datum_kurz ), 0, 1, 'R' );
+    $pdf->Ln( 2 );
+
+    // SagaTrail-Adresse
+    $pdf->SetFont( 'Helvetica', 'B', 9 );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Cell( 0, 5, st_enc( 'A.i.L. by Koch' ), 0, 1, 'L' );
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    foreach ( array( 'Rolf Koch', 'Mühlemattstrasse 11', 'CH-4104 Oberwil BL', 'CHE-286.962.827' ) as $zeile ) {
+        $pdf->Cell( 0, 4.5, st_enc( $zeile ), 0, 1, 'L' );
     }
+    $pdf->Ln( 4 );
+
+    // "und"
+    $pdf->SetFont( 'Helvetica', 'I', 9 );
+    $pdf->SetTextColor( 100, 100, 100 );
+    $pdf->Cell( 0, 5, st_enc( 'und' ), 0, 1, 'L' );
+    $pdf->Ln( 2 );
+
+    // Partner-Adresse
+    $pdf->SetFont( 'Helvetica', 'B', 9 );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Cell( 0, 5, st_enc( $data['betriebs_name'] ?? '' ), 0, 1, 'L' );
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    if ( ! empty( $data['kontakt_name'] ) ) {
+        $pdf->Cell( 0, 4.5, st_enc( $data['kontakt_name'] ), 0, 1, 'L' );
+    }
+    if ( ! empty( $data['adresse'] ) ) {
+        $pdf->Cell( 0, 4.5, st_enc( $data['adresse'] ), 0, 1, 'L' );
+    }
+    $plz_ort_kanton = trim(
+        ( $data['plz'] ?? '' ) . ' ' .
+        ( $data['ort'] ?? '' ) . ' ' .
+        strtoupper( $data['canton'] ?? '' )
+    );
+    if ( $plz_ort_kanton ) {
+        $pdf->Cell( 0, 4.5, st_enc( 'CH-' . $plz_ort_kanton ), 0, 1, 'L' );
+    }
+
     $pdf->Ln( 3 );
+    $pdf->SetFont( 'Helvetica', '', 8 );
+    $pdf->SetTextColor( 160, 160, 160 );
+    $pdf->Cell( 0, 4, st_enc( 'Referenz: ' . $ref ), 0, 1, 'L' );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Ln( 7 );
+
+    // ----- POSITIONSTABELLE -----
+    $pdf->SetFont( 'Helvetica', 'B', 10 );
+    $pdf->Cell( 0, 6, st_enc( 'Partnerpaket' ), 0, 1, 'L' );
+    $pdf->Ln( 2 );
+
+    $col_pos   = 14;
+    $col_preis = 42;
+    $col_desc  = $W - $col_pos - $col_preis;
+
+    // Obere dünne Linie
+    $pdf->SetDrawColor( 160, 160, 160 );
+    $pdf->SetLineWidth( 0.25 );
+    $pdf->Line( $L, $pdf->GetY(), $L + $W, $pdf->GetY() );
+    $pdf->Ln( 1.5 );
+
+    // Spaltenüberschriften
+    $pdf->SetFont( 'Helvetica', 'B', 8 );
+    $pdf->SetTextColor( 120, 120, 120 );
+    $label_preis = $is_monatlich ? 'Preis p. Mt.' : 'Preis p.a.';
+    $pdf->Cell( $col_pos,  5, st_enc( 'Pos' ),          0, 0, 'L' );
+    $pdf->Cell( $col_desc, 5, st_enc( 'Beschreibung' ), 0, 0, 'L' );
+    $pdf->Cell( $col_preis,5, st_enc( $label_preis ),   0, 1, 'R' );
+
+    // Dicke Trennlinie unter Header
+    $pdf->SetDrawColor( 50, 50, 50 );
+    $pdf->SetLineWidth( 0.5 );
+    $pdf->Line( $L, $pdf->GetY(), $L + $W, $pdf->GetY() );
+    $pdf->Ln( 3 );
+
+    // Zeile
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Cell( $col_pos,  7, st_enc( '01' ), 0, 0, 'L' );
+    $pdf->Cell( $col_desc, 7, st_enc( $paket_name . ' Paket' ), 0, 0, 'L' );
+    $pdf->SetFont( 'Helvetica', 'B', 9 );
+    $pdf->Cell( $col_preis,7, st_enc( $preis_pos ), 0, 1, 'R' );
+
+    // Untere dicke Linie
+    $pdf->SetDrawColor( 50, 50, 50 );
+    $pdf->SetLineWidth( 0.5 );
+    $pdf->Line( $L, $pdf->GetY(), $L + $W, $pdf->GetY() );
+    $pdf->Ln( 9 );
+
+    // ----- LEISTUNGSBESCHREIBUNG -----
+    $pdf->SetFont( 'Helvetica', 'B', 10 );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $pdf->Cell( 0, 6, st_enc( 'Leistungsbeschreibung:' ), 0, 1, 'L' );
+    $pdf->Ln( 1 );
+
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    foreach ( sagatrail_paket_leistungen_v2( $paket_name ) as $li ) {
+        $pdf->SetX( $L );
+        $pdf->Cell( 5, 5, chr( 149 ), 0, 0 );
+        $pdf->MultiCell( $W - 5, 5, st_enc( $li ), 0, 'L' );
+    }
+    $pdf->Ln( 5 );
 
     // ----- KONDITIONEN -----
     $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->Cell( 0, 6, 'Konditionen', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 9 );
+    $pdf->Cell( 0, 6, st_enc( 'Konditionen:' ), 0, 1, 'L' );
+    $pdf->Ln( 1 );
 
-    $konditionen = array(
-        'Jahresgebühr: ' . $paket_preis,
-        'Vertragslaufzeit: 12 Monate, automatische Verlängerung um weitere 12 Monate.',
-        'Kündigung: schriftlich (E-Mail) 60 Tage vor Ablauf der Vertragslaufzeit.',
-        'Rechnungsstellung: jährlich im Voraus nach Freischaltung des Partner-Eintrags.',
-        'Zahlungsfrist: 30 Tage nach Rechnungseingang.',
-        'Alle Preise verstehen sich exkl. Mehrwertsteuer (Schweizer MWST 8,1 %).',
-    );
-    foreach ( $konditionen as $k ) {
-        $pdf->Cell( 6, 5, chr( 149 ), 0, 0 );
-        $pdf->MultiCell( 0, 5, $k, 0, 'L' );
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    foreach ( sagatrail_konditionen_v2( $paket_name, $preis_str, $is_monatlich ) as $k ) {
+        $pdf->SetX( $L );
+        $pdf->Cell( 5, 5, chr( 149 ), 0, 0 );
+        $pdf->MultiCell( $W - 5, 5, st_enc( $k ), 0, 'L' );
     }
-    $pdf->Ln( 3 );
-
-    // ----- PFLICHTEN -----
-    $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->Cell( 0, 6, 'Pflichten des Partners', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 9 );
-    $pflichten = array(
-        'Bereitstellung korrekter und aktueller Betriebsinformationen.',
-        'Einhaltung des kommunizierten SagaTrail-Nutzerangebots.',
-        'Meldung von Änderungen (Betriebsschluss, neues Angebot) innert 14 Tagen.',
-    );
-    foreach ( $pflichten as $p ) {
-        $pdf->Cell( 6, 5, chr( 149 ), 0, 0 );
-        $pdf->MultiCell( 0, 5, $p, 0, 'L' );
-    }
-    $pdf->Ln( 3 );
-
-    // ----- DATENSCHUTZ -----
-    $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->Cell( 0, 6, 'Datenschutz & Gerichtsstand', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->MultiCell( 0, 5,
-        'Die erhobenen Daten werden ausschliesslich zur Durchführung dieser Vereinbarung verwendet (DSG/DSGVO-konform). ' .
-        'Es gilt Schweizer Recht. Gerichtsstand ist der Sitz von SagaTrail.', 0, 'L' );
-    $pdf->Ln( 5 );
+    $pdf->Ln( 10 );
 
     // ----- UNTERSCHRIFTEN -----
-    $pdf->SetFont( 'Helvetica', 'B', 10 );
-    $pdf->Cell( 0, 6, 'Unterschriften', 0, 1, 'L' );
-    $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->Cell( 85, 5, 'A.i.L. by Koch  –  SagaTrail', 0, 0 );
-    $pdf->Cell( 0,  5, $data['betriebs_name'], 0, 1 );
-    $pdf->Ln( 3 );
-
-    // Unterschrift SagaTrail (linke Spalte)
-    $sig_pfad = sagatrail_partner_sig_pfad();
-    if ( $sig_pfad ) {
-        $pdf->Image( $sig_pfad, 20, $pdf->GetY(), 55 ); // 55 mm breit, Seitenverhältnis auto
-        $pdf->Ln( 22 );
-    } else {
-        $pdf->Ln( 14 );
+    // Prüfen ob noch genug Platz auf der Seite (mind. 50 mm für Sig-Block)
+    if ( $pdf->GetY() > 247 ) {
+        $pdf->AddPage();
+        $pdf->Ln( 10 );
     }
 
-    $pdf->SetDrawColor( 120, 120, 120 );
-    $pdf->SetLineWidth( 0.3 );
-    $pdf->Line( 20, $pdf->GetY(), 100, $pdf->GetY() );
-    $pdf->Line( 110, $pdf->GetY(), 190, $pdf->GetY() );
-    $pdf->Ln( 3 );
-    $pdf->SetFont( 'Helvetica', 'B', 9 );
-    $pdf->Cell( 85, 5, 'Rolf Koch, Inhaber', 0, 0 );
     $pdf->SetFont( 'Helvetica', '', 9 );
-    $pdf->Cell( 0,  5, 'Ort, Datum, Unterschrift', 0, 1 );
+    $pdf->SetTextColor( 26, 26, 26 );
+    $col_sig = ( $W - 10 ) / 2; // je ~78 mm, 10 mm Mitte
+    $pdf->Cell( $col_sig, 5, st_enc( 'A.i.L. by Koch  –  SagaTrail' ), 0, 0, 'L' );
+    $pdf->Cell( 10, 5, '', 0, 0 );
+    $pdf->Cell( $col_sig, 5, st_enc( $data['betriebs_name'] ?? '' ), 0, 1, 'L' );
+    $pdf->Ln( 3 );
+
+    // Signatur-Bild SagaTrail (links)
+    $sig_pfad = sagatrail_partner_sig_pfad();
+    $sig_y    = $pdf->GetY();
+    if ( $sig_pfad ) {
+        $pdf->Image( $sig_pfad, $L, $sig_y, 55 );
+        $pdf->SetY( $sig_y + 20 );
+    } else {
+        $pdf->Ln( 18 );
+    }
+
+    // Signaturlinie links + rechts
+    $pdf->SetDrawColor( 130, 130, 130 );
+    $pdf->SetLineWidth( 0.3 );
+    $sig_line_y = $pdf->GetY();
+    $pdf->Line( $L,            $sig_line_y, $L + $col_sig,              $sig_line_y );
+    $pdf->Line( $L + $col_sig + 10, $sig_line_y, $L + $W,               $sig_line_y );
+    $pdf->Ln( 3 );
+
+    $pdf->SetFont( 'Helvetica', 'B', 9 );
+    $pdf->Cell( $col_sig, 5, st_enc( 'Rolf Koch, Inhaber' ), 0, 0, 'L' );
+    $pdf->Cell( 10, 5, '', 0, 0 );
+    $pdf->SetFont( 'Helvetica', '', 9 );
+    $pdf->Cell( $col_sig, 5, st_enc( 'Ort, Datum, Unterschrift' ), 0, 1, 'L' );
     $pdf->SetFont( 'Helvetica', '', 8 );
-    $pdf->SetTextColor( 100, 100, 100 );
-    $pdf->Cell( 85, 4, $datum, 0, 1 );
+    $pdf->SetTextColor( 130, 130, 130 );
+    $pdf->Cell( $col_sig, 4, st_enc( $datum_lang ), 0, 1, 'L' );
 
     // ----- FUSSZEILE -----
-    $pdf->SetY( -20 );
+    $pdf->SetY( -18 );
+    $pdf->SetDrawColor( 204, 0, 0 );
+    $pdf->SetLineWidth( 0.4 );
+    $pdf->Line( $L, $pdf->GetY(), $L + $W, $pdf->GetY() );
+    $pdf->Ln( 3 );
     $pdf->SetFont( 'Helvetica', 'I', 8 );
-    $pdf->SetTextColor( 150, 150, 150 );
-    $pdf->Cell( 0, 5, 'A.i.L. by Koch – www.sagatrail.ch – info@sagatrail.ch  |  Referenz: ' . $ref, 0, 0, 'C' );
+    $pdf->SetTextColor( 160, 160, 160 );
+    $pdf->Cell( 0, 5, st_enc( 'A.i.L. by Koch  ·  www.sagatrail.ch  ·  info@sagatrail.ch  |  Referenz: ' . $ref ), 0, 0, 'C' );
 
-    return $pdf->Output( 'S' ); // Binärstring zurückgeben
-}
-
-// ===================================================================
-// PAKET-LEISTUNGEN
-// ===================================================================
-
-function sagatrail_paket_leistungen( $paket_name ) {
-    $basis = array(
-        'Eintrag auf der SagaTrail-Wanderkarte (iOS & Android)',
-        'Sichtbarkeit für Wanderinnen und Wanderer auf allen Schweizer Sagenwegen',
-        'Name, Kategorie und Adresse im App-Profil',
-        'Exklusives Angebot für SagaTrail-Nutzerinnen und -Nutzer',
-    );
-    if ( $paket_name === 'Standard' || $paket_name === 'Premium' ) {
-        $basis[] = 'Beschreibungstext (bis 250 Zeichen) im App-Profil';
-        $basis[] = 'Klick-Statistiken (monatliche Übersicht per E-Mail)';
-    }
-    if ( $paket_name === 'Premium' ) {
-        $basis[4] = 'Beschreibungstext (bis 500 Zeichen) im App-Profil';
-        $basis[]  = 'Detaillierter Statistik-Report (Views + Angebot-Tipps)';
-        $basis[]  = 'Narrations-Erwähnung beim Vorbeiwandern (automatisch via GPS)';
-    }
-    return $basis;
-}
-
-// ===================================================================
-// HTML-FALLBACK (wenn FPDF nicht installiert)
-// ===================================================================
-
-function sagatrail_html_vertrag( $data, $paket_name, $paket_preis, $datum, $ref ) {
-    $leistungen = sagatrail_paket_leistungen( $paket_name );
-    $li_html = implode( '', array_map( function( $l ) {
-        return '<li>' . esc_html( $l ) . '</li>';
-    }, $leistungen ) );
-
-    $html  = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">';
-    $html .= '<title>SagaTrail Partnerschaftsvertrag ' . esc_html( $ref ) . '</title>';
-    $html .= '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;max-width:700px;margin:0 auto;padding:24px}';
-    $html .= 'h1{color:#CC0000;font-size:22px;margin:0;line-height:1}h2{font-size:14px;margin-top:20px;border-bottom:1px solid #ddd;padding-bottom:4px}';
-    $html .= 'ul{margin:6px 0;padding-left:20px}li{margin:3px 0}.sig{border-top:1px solid #999;width:200px;margin-top:24px;padding-top:4px;display:inline-block}';
-    $html .= '.footer{color:#999;font-size:10px;text-align:center;margin-top:40px;border-top:1px solid #eee;padding-top:10px}';
-    $html .= '.st-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}';
-    $html .= '.st-head img{width:52px;height:52px;border-radius:12px;flex-shrink:0}</style></head><body>';
-    $icon_pfad_h = sagatrail_partner_icon_pfad();
-    $icon_tag = '';
-    if ( $icon_pfad_h ) {
-        $b64 = base64_encode( file_get_contents( $icon_pfad_h ) );
-        $icon_tag = '<img src="data:image/png;base64,' . $b64 . '" alt="SagaTrail">';
-    }
-    $html .= '<div class="st-head">' . $icon_tag . '<div><h1>SagaTrail</h1><p style="color:#666;font-size:11px;margin:2px 0 0">A.i.L. by Koch &nbsp;|&nbsp; info@sagatrail.ch &nbsp;|&nbsp; www.sagatrail.ch</p></div></div>';
-    $html .= '<hr style="border-color:#CC0000;border-width:2px;margin:10px 0 16px">';
-    $html .= '<h2 style="border:none;font-size:18px">Partnerschaftsvereinbarung</h2>';
-    $html .= '<p><strong>Referenz:</strong> ' . esc_html( $ref ) . ' &nbsp;|&nbsp; <strong>Datum:</strong> ' . esc_html( $datum ) . '</p>';
-    $html .= '<h2>Vertragsparteien</h2>';
-    $html .= '<table><tr><td><strong>Anbieter:</strong></td><td>A.i.L. by Koch, Mühlemattstrasse 11, 4104 Oberwil BL</td></tr><tr><td><strong>UID:</strong></td><td>CHE-286.962.827 &nbsp;|&nbsp; info@sagatrail.ch</td></tr>';
-    $html .= '<tr><td><strong>Partner:</strong></td><td>' . esc_html( $data['betriebs_name'] ) . ', ' . esc_html( $data['ort'] ) . '</td></tr>';
-    $html .= '<tr><td><strong>Kontakt:</strong></td><td>' . esc_html( $data['kontakt_name'] ) . ', ' . esc_html( $data['kontakt_email'] ) . '</td></tr></table>';
-    $html .= '<h2>Leistungen (Paket ' . esc_html( $paket_name ) . ')</h2><ul>' . $li_html . '</ul>';
-    $html .= '<h2>Konditionen</h2><ul>';
-    $html .= '<li><strong>Jahresgebühr:</strong> ' . esc_html( $paket_preis ) . '</li>';
-    $html .= '<li>Vertragslaufzeit: 12 Monate, automatische Verlängerung.</li>';
-    $html .= '<li>Kündigung schriftlich 60 Tage vor Ablauf.</li>';
-    $html .= '<li>Rechnungsstellung jährlich im Voraus. Zahlungsfrist 30 Tage.</li>';
-    $html .= '<li>Preise exkl. Schweizer MWST (8,1 %).</li></ul>';
-    $html .= '<h2>Unterschriften</h2>';
-    $html .= '<table style="width:100%;margin-top:16px"><tr valign="bottom">';
-
-    // Linke Spalte: SagaTrail-Unterschrift mit Bild
-    $html .= '<td style="width:45%">';
-    $sig_pfad = sagatrail_partner_sig_pfad();
-    if ( $sig_pfad ) {
-        $sig_b64 = base64_encode( file_get_contents( $sig_pfad ) );
-        $html .= '<img src="data:image/png;base64,' . $sig_b64 . '" style="max-width:180px;height:auto;display:block;margin-bottom:2px">';
-    } else {
-        $html .= '<div style="height:50px"></div>';
-    }
-    $html .= '<div class="sig"><strong>Rolf Koch, Inhaber</strong><br><span style="color:#999;font-size:10px">' . esc_html( $datum ) . '</span></div>';
-    $html .= '</td>';
-
-    // Rechte Spalte: Partner-Unterschrift (leer zum Ausfüllen)
-    $html .= '<td><div style="height:50px"></div><div class="sig">' . esc_html( $data['betriebs_name'] ) . '<br><span style="color:#999;font-size:10px">Ort, Datum, Unterschrift</span></div></td>';
-    $html .= '</tr></table>';
-    $html .= '<div class="footer">SagaTrail – www.sagatrail.ch – ' . esc_html( $ref ) . '</div>';
-    $html .= '</body></html>';
-    return $html;
+    return $pdf->Output( 'S' );
 }
 
 // ===================================================================
 // E-MAIL VERSENDEN
 // ===================================================================
 
-function sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum, $ref, $pdf_inhalt ) {
+function sagatrail_vertrag_mail_senden_v2( $data, $paket_name, $preis_str, $datum_lang, $ref, $pdf_inhalt ) {
 
-    $to = sanitize_email( $data['kontakt_email'] );
+    $to      = sanitize_email( $data['kontakt_email'] );
+    $name    = $data['kontakt_name'] ?? 'Interessentin / Interessent';
+    $betrieb = $data['betriebs_name'] ?? '';
 
     $subject = mb_encode_mimeheader(
-        'SagaTrail Partnerschaft ' . $ref . ' - Ihr Vertragsangebot',
+        'SagaTrail Partnerschaftsvertrag ' . $ref . ' – ' . $betrieb,
         'UTF-8', 'B'
     );
 
-    $body  = "Guten Tag " . $data['kontakt_name'] . ",\n\n";
-    $body .= "vielen Dank fuer Ihr Interesse an einer Partnerschaft mit SagaTrail.\n";
-    $body .= "Im Anhang finden Sie das Partnerschaftsangebot fuer Ihren Betrieb als PDF.\n\n";
-    $body .= "Paket:        " . $paket_name  . "\n";
-    $body .= "Jahresgebuehr: " . $paket_preis . "\n";
-    $body .= "Referenz:     " . $ref          . "\n\n";
-    $body .= "Bitte drucken Sie das Dokument aus, unterschreiben Sie es und senden\n";
-    $body .= "Sie es per E-Mail zurueck an info@sagatrail.ch.\n";
-    $body .= "Unser Team meldet sich innert 2 Werktagen.\n\n";
-    $body .= "Freundliche Gruesse\n";
+    $body  = "Guten Tag " . $name . ",\n\n";
+    $body .= "vielen Dank für Ihr Interesse an einer Partnerschaft mit SagaTrail.\n";
+    $body .= "Im Anhang finden Sie den Partnerschaftsvertrag als PDF.\n\n";
+    $body .= "Paket:     " . $paket_name . "\n";
+    $body .= "Gebühr:    " . $preis_str  . "\n";
+    $body .= "Referenz:  " . $ref        . "\n\n";
+    $body .= "Bitte drucken Sie das Dokument aus, unterschreiben Sie es und\n";
+    $body .= "senden Sie es uns per E-Mail zurück an info@sagatrail.ch.\n\n";
+    $body .= "Wir richten Ihren Eintrag innerhalb von 5 Werktagen nach\n";
+    $body .= "Zahlungseingang ein und melden uns, sobald Sie live sind.\n\n";
+    $body .= "Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.\n\n";
+    $body .= "Freundliche Grüsse\n";
     $body .= "Das SagaTrail-Team\n";
-    $body .= "info@sagatrail.ch | www.sagatrail.ch";
+    $body .= "info@sagatrail.ch  |  www.sagatrail.ch";
 
     $headers = array(
         'Content-Type: text/plain; charset=UTF-8',
@@ -382,7 +424,6 @@ function sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum
         'Reply-To: info@sagatrail.ch',
     );
 
-    // PDF als Temp-Datei speichern und als Anhang mitschicken
     $pdf_file = get_temp_dir() . 'sagatrail-partner-' . sanitize_file_name( $ref ) . '.pdf';
     file_put_contents( $pdf_file, $pdf_inhalt );
 
@@ -391,15 +432,13 @@ function sagatrail_vertrag_mail_senden( $data, $paket_name, $paket_preis, $datum
     @unlink( $pdf_file );
 
     if ( ! $gesendet ) {
-        error_log( 'SagaTrail Vertrags-Mail konnte nicht gesendet werden an: ' . $to );
+        error_log( 'SagaTrail Vertrags-Mail nicht gesendet an: ' . $to );
     }
     return $gesendet;
 }
 
 // ===================================================================
-// HOOK: nach dem Speichern einer Anfrage den Vertrag senden
-// (add_action in partner-handler.php nach dem $wpdb->insert aufrufen)
-// Oder direkt hier als Filter einhängen:
+// HOOK: nach Partner-Anfrage aufrufen
 // ===================================================================
 
 add_action( 'sagatrail_partner_anfrage_gespeichert', function( $data, $row_id ) {

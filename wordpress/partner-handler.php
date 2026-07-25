@@ -194,6 +194,11 @@ function sagatrail_handle_partner_anfrage() {
         }
     }
 
+    // Abrechnungsperiode: nur für E-Mail / Vertrag, nicht in der DB speichern
+    $allowed_abr = array( 'monatlich', 'jaehrlich' );
+    $abr_raw     = isset( $_POST['abrechnungsperiode'] ) ? sanitize_text_field( wp_unslash( $_POST['abrechnungsperiode'] ) ) : '';
+    $abrechnungsperiode = in_array( $abr_raw, $allowed_abr, true ) ? $abr_raw : '';
+
     // --- In WordPress-DB speichern ---
     global $wpdb;
     $table = $wpdb->prefix . 'sagatrail_partner_anfragen';
@@ -206,6 +211,11 @@ function sagatrail_handle_partner_anfrage() {
     }
 
     $row_id = $wpdb->insert_id;
+
+    // Abrechnungsperiode für E-Mail / Vertrag in $data einhängen (nicht in der DB)
+    if ( $abrechnungsperiode ) {
+        $data['abrechnungsperiode'] = $abrechnungsperiode;
+    }
 
     // --- Optional: E-Mail-Benachrichtigung an Admin ---
     sagatrail_partner_notify_admin( $data, $row_id );
@@ -242,7 +252,11 @@ function sagatrail_partner_notify_admin( $data, $row_id ) {
     $body .= "Ort:           " . $data['ort'] . " " . $data['plz'] . "\n";
     $body .= "Adresse:       " . ( $data['adresse'] ?: '–' ) . "\n";
     $body .= "Website:       " . ( $data['website'] ?: '–' ) . "\n";
-    $body .= "Paket:         " . strtoupper( $data['paket'] ) . "\n\n";
+    $body .= "Paket:         " . strtoupper( $data['paket'] ) . "\n";
+    if ( ! empty( $data['abrechnungsperiode'] ) ) {
+        $body .= "Abrechnung:    " . $data['abrechnungsperiode'] . "\n";
+    }
+    $body .= "\n";
     $body .= "Kontaktperson: " . $data['kontakt_name'] . "\n";
     $body .= "E-Mail:        " . $data['kontakt_email'] . "\n";
     $body .= "Telefon:       " . ( $data['kontakt_telefon'] ?: '–' ) . "\n\n";
