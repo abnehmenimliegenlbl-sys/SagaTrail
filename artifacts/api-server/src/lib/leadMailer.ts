@@ -302,11 +302,19 @@ function createTransporter() {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   if (!host || !user || !pass) throw new Error("SMTP_HOST / SMTP_USER / SMTP_PASS fehlen");
+  const port   = Number(process.env.SMTP_PORT ?? 587);
+  // port 465 → implicit TLS (secure=true), alles andere → STARTTLS (secure=false)
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
+  console.log(`[SMTP] host=${host} port=${port} secure=${secure} user=${user}`);
   return nodemailer.createTransport({
     host,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === "true",
+    port,
+    secure,
     auth: { user, pass },
+    connectionTimeout: 15_000,
+    greetingTimeout:   15_000,
+    socketTimeout:     30_000,
+    tls: { rejectUnauthorized: false },
   });
 }
 
