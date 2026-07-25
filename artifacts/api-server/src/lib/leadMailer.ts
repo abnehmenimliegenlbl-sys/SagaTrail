@@ -428,6 +428,7 @@ async function runCampaign(campaignId: string, opts: {
       status = "fail";
       error  = err instanceof Error ? err.message : String(err);
       campaignState.failed++;
+      console.error(`[SMTP-ERROR] to=${lead.email} err=${error}`);
     }
 
     // Log-Eintrag
