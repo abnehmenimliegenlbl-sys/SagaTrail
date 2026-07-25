@@ -32,7 +32,8 @@ const router: IRouter = Router();
 
 const PremiumFreischaltenBody = z.object({
   email: z.string().email(),
-  monate: z.number().int().min(1).max(120).default(12),
+  monate: z.number().int().min(1).max(600).default(12),
+  tier: z.enum(["premium", "premium_family", "elite", "elite_family"]).default("premium"),
 });
 
 function requireAdminToken(req: Request, res: Response): boolean {
@@ -105,7 +106,7 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { email, monate } = parsed.data;
+  const { email, monate, tier } = parsed.data;
 
   const nutzer = await clerkClient.users.getUserList({ emailAddress: [email] });
   if (nutzer.data.length === 0) {
@@ -119,7 +120,7 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
 
   const [row] = await db
     .update(profilesTable)
-    .set({ premiumBis: bis, updatedAt: new Date() })
+    .set({ premiumBis: bis, subscriptionTier: tier, updatedAt: new Date() })
     .where(eq(profilesTable.id, userId))
     .returning();
 
@@ -128,8 +129,8 @@ router.post("/admin/premium", async (req, res): Promise<void> => {
     return;
   }
 
-  req.log.info({ userId, email, premiumBis: bis.toISOString() }, "Premium manuell freigeschaltet");
-  res.json({ userId, email, premiumBis: bis.toISOString(), premiumAktiv: istPremiumAktiv(row) });
+  req.log.info({ userId, email, premiumBis: bis.toISOString(), tier }, "Premium manuell freigeschaltet");
+  res.json({ userId, email, premiumBis: bis.toISOString(), tier, premiumAktiv: istPremiumAktiv(row) });
 });
 
 const PackGrantBody = z.object({
