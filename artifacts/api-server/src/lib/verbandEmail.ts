@@ -56,15 +56,21 @@ function heute(): string {
   });
 }
 
+function heuteKurz(): string {
+  return new Date().toLocaleDateString("de-CH", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+  });
+}
+
 function refNummer(): string {
   const n = Date.now() % 100000;
   return "ST-V" + String(n).padStart(5, "0");
 }
 
-// ── PDF-Vertrag (pdfkit, A4, mm-äquivalent über 72dpi points) ────────────────
+// ── PDF-Vertrag (pdfkit, A4) — Brieflayout ────────────────────────────────────
 export async function generateVertragPdf(data: VerbandAnfrageData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 56, size: "A4" });
+    const doc = new PDFDocument({ margin: 56, size: "A4", autoFirstPage: true });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end",  () => resolve(Buffer.concat(chunks)));
@@ -74,59 +80,125 @@ export async function generateVertragPdf(data: VerbandAnfrageData): Promise<Buff
     const DARK  = "#1a1a1a";
     const MID   = "#646464";
     const LIGHT = "#969696";
-    const L     = 56;                         // left margin
-    const R     = doc.page.width - 56;        // right margin
-    const W     = R - L;                      // usable width
+    const L     = 56;               // left margin (pt)
+    const R     = doc.page.width - 56;
+    const W     = R - L;            // usable width
     const ref   = refNummer();
-    const datum = heute();
+    const datum      = heute();      // "25. Juli 2026"
+    const datumKurz  = heuteKurz(); // "25.07.2026"
 
     // ── KOPF ─────────────────────────────────────────────────────────────────
-    // SagaTrail-Name rot + groß
     doc
       .fontSize(22).font("Helvetica-Bold").fillColor(RED)
       .text("SagaTrail", L, 56);
 
-    // Adresszeile
     doc
       .fontSize(8).font("Helvetica").fillColor(LIGHT)
-      .text(
-        "A.i.L. by Koch  |  Mühlemattstrasse 11, 4104 Oberwil BL  |  info@sagatrail.ch",
-        L, 84,
-      );
+      .text("www.sagatrail.ch  ·  info@sagatrail.ch", L, doc.y + 2);
 
     // Roter Trennstrich
-    const lineY = 98;
+    const lineY = doc.y + 6;
     doc
       .moveTo(L, lineY).lineTo(R, lineY)
       .strokeColor(RED).lineWidth(1.5).stroke();
 
-    // Titel + Referenz
+    // ── TITEL ────────────────────────────────────────────────────────────────
     doc
-      .fontSize(14).font("Helvetica-Bold").fillColor(DARK)
-      .text("Pilotpartnerschaftsvereinbarung", L, lineY + 12);
+      .fontSize(15).font("Helvetica-Bold").fillColor(DARK)
+      .text("Pilotpartnerschaftsvereinbarung", L, lineY + 14);
+
+    doc.moveDown(0.7);
+
+    // ── PARTEIEN — "zwischen … und …"-Block mit Datum rechts ─────────────────
+    const zwY = doc.y;
+
+    // "zwischen" links, Datum rechts — gleiche Zeile
     doc
-      .fontSize(9).font("Helvetica").fillColor(MID)
-      .text(`Referenz: ${ref}   |   Datum: ${datum}`, L, doc.y + 2);
+      .fontSize(9).font("Helvetica").fillColor(DARK)
+      .text("zwischen", L, zwY);
+    doc
+      .fontSize(9).font("Helvetica").fillColor(LIGHT)
+      .text(`Oberwil, den ${datumKurz}`, L, zwY, { width: W, align: "right" });
 
-    doc.moveDown(1);
+    doc.moveDown(0.4);
 
-    // ── PARTEIEN ─────────────────────────────────────────────────────────────
-    sectionHead(doc, "Vertragsparteien", L, RED, DARK);
+    // SagaTrail-Adresse
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(DARK)
+       .text("A.i.L. by Koch", L);
+    doc.fontSize(9).font("Helvetica").fillColor(DARK);
+    for (const zeile of ["Rolf Koch", "Mühlemattstrasse 11", "CH-4104 Oberwil BL", "CHE-286.962.827"]) {
+      doc.text(zeile, L);
+    }
 
-    const rows: [string, string][] = [
-      ["Anbieter:",       "A.i.L. by Koch, Mühlemattstrasse 11, 4104 Oberwil BL"],
-      ["UID:",            "CHE-286.962.827  |  info@sagatrail.ch"],
-      ["Partner:",        `${data.verbandName}`],
-      ["Kontaktperson:",  `${data.kontaktName}${data.kontaktTelefon ? ", " + data.kontaktTelefon : ""}`],
-      ["E-Mail:",         data.email],
-      ["Kantone:",        kantoneLabel(data.kantone)],
-    ];
-    tableRows(doc, rows, L, MID, DARK);
+    doc.moveDown(0.5);
 
-    doc.moveDown(0.8);
+    // "und"
+    doc.fontSize(9).font("Helvetica-Oblique").fillColor(MID)
+       .text("und", L);
+
+    doc.moveDown(0.4);
+
+    // Verband-Adresse
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(DARK)
+       .text(data.verbandName, L);
+    doc.fontSize(9).font("Helvetica").fillColor(DARK);
+    doc.text(data.kontaktName + (data.kontaktTelefon ? `,  ${data.kontaktTelefon}` : ""), L);
+    doc.text(data.email, L);
+    doc.text(`Kantone: ${kantoneLabel(data.kantone)}`, L);
+
+    doc.moveDown(0.4);
+    doc.fontSize(8).font("Helvetica").fillColor(LIGHT)
+       .text(`Referenz: ${ref}`, L);
+
+    doc.moveDown(1.2);
+
+    // ── POSITIONSTABELLE ─────────────────────────────────────────────────────
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(DARK)
+       .text("Pilotpaket", L);
+    doc.moveDown(0.5);
+
+    const colPos   = 40;
+    const colPreis = 120;
+    const colDesc  = W - colPos - colPreis;
+    const tableTop = doc.y;
+
+    // Obere dünne Linie
+    doc.moveTo(L, tableTop).lineTo(R, tableTop)
+       .strokeColor("#aaaaaa").lineWidth(0.5).stroke();
+
+    doc.moveDown(0.3);
+    const headerY = doc.y;
+
+    // Spalten-Header
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(MID)
+       .text("Pos",          L,              headerY, { width: colPos,   lineBreak: false });
+    doc.text("Beschreibung", L + colPos,     headerY, { width: colDesc,  lineBreak: false });
+    doc.text("Preis",        L + colPos + colDesc, headerY, { width: colPreis, align: "right" });
+
+    doc.moveDown(0.15);
+    const thickY = doc.y + 2;
+    doc.moveTo(L, thickY).lineTo(R, thickY)
+       .strokeColor("#323232").lineWidth(0.8).stroke();
+
+    doc.moveDown(0.5);
+    const rowY = doc.y;
+
+    // Datenzeile
+    doc.fontSize(9).font("Helvetica").fillColor(DARK)
+       .text("01",                           L,              rowY, { width: colPos,   lineBreak: false });
+    doc.text("Pilotpartnerschaft (6 Monate)", L + colPos,    rowY, { width: colDesc,  lineBreak: false });
+    doc.font("Helvetica-Bold")
+       .text("kostenlos",                    L + colPos + colDesc, rowY, { width: colPreis, align: "right" });
+
+    doc.moveDown(0.5);
+    const bottomY = doc.y + 2;
+    doc.moveTo(L, bottomY).lineTo(R, bottomY)
+       .strokeColor("#323232").lineWidth(0.8).stroke();
+
+    doc.moveDown(1.5);
 
     // ── GEGENSTAND & LAUFZEIT ────────────────────────────────────────────────
-    sectionHead(doc, "1. Gegenstand und Laufzeit", L, RED, DARK);
+    sectionHead(doc, "1. Gegenstand und Laufzeit", L, DARK);
     para(doc, MID, W,
       "SagaTrail und der oben genannte Tourismusverband vereinbaren eine unentgeltliche " +
       "Pilotpartnerschaft für die Dauer von 6 Monaten ab Unterzeichnung dieses Dokuments. " +
@@ -134,107 +206,105 @@ export async function generateVertragPdf(data: VerbandAnfrageData): Promise<Buff
       "SagaTrail-App in der Destination des Verbands."
     );
 
+    doc.moveDown(0.8);
+
     // ── LEISTUNGEN SagaTrail ─────────────────────────────────────────────────
-    sectionHead(doc, "2. Leistungen SagaTrail", L, RED, DARK);
-    bulletList(doc, MID, L, [
+    sectionHead(doc, "2. Leistungen SagaTrail", L, DARK);
+    bulletList(doc, MID, L, W, [
       "Kostenlose Premium-Zugänge für Infostellen-Mitarbeitende des Verbands.",
       "Fertige digitale Marketing-Materialien (Texte, Bilder, QR-Codes, Social-Media-Vorlagen).",
       "Live-Nutzungsdashboard auf Kantonsebene: jederzeit einsehbar.",
       "Übernahme der Ansprache lokaler Betriebe fürs Partnerprogramm.",
     ]);
 
+    doc.moveDown(0.8);
+
     // ── PFLICHTEN VERBAND ────────────────────────────────────────────────────
-    sectionHead(doc, "3. Pflichten des Verbands", L, RED, DARK);
-    bulletList(doc, MID, L, [
+    sectionHead(doc, "3. Pflichten des Verbands", L, DARK);
+    bulletList(doc, MID, L, W, [
       "Erwähnung der Partnerschaft in Newsletter oder Social Media beim Start des Pilots.",
       "Platzierung eines QR-Codes oder Links auf der «Wandern»-Seite der Verbandswebsite.",
       "Vorstellung bei 3–5 lokalen Betrieben (Restaurants, Bergbahnen, Hotels), die als " +
         "SagaTrail-Partner in Frage kommen.",
     ]);
 
+    doc.moveDown(0.8);
+
     // ── KONDITIONEN ──────────────────────────────────────────────────────────
-    sectionHead(doc, "4. Konditionen", L, RED, DARK);
-    bulletList(doc, MID, L, [
+    sectionHead(doc, "4. Konditionen", L, DARK);
+    bulletList(doc, MID, L, W, [
       "Die Pilotpartnerschaft ist für den Verband vollständig kostenlos.",
       "Keine laufenden Gebühren während der Pilotphase.",
-      "Kündigung jederzeit schriftlich per E-Mail, wirksam mit Zugang der Erklärung.",
+      "Kündigung jederzeit schriftlich per E-Mail an info@sagatrail.ch, wirksam mit Zugang der Erklärung.",
       "Nach 6 Monaten entscheiden beide Parteien gemeinsam über Weiterführung.",
     ]);
 
+    doc.moveDown(0.8);
+
     // ── DATENSCHUTZ & GERICHTSSTAND ──────────────────────────────────────────
-    sectionHead(doc, "5. Datenschutz & Gerichtsstand", L, RED, DARK);
+    sectionHead(doc, "5. Datenschutz & Gerichtsstand", L, DARK);
     para(doc, MID, W,
       "SagaTrail verarbeitet Nutzungsdaten ausschliesslich aggregiert und anonymisiert " +
       "(DSG/DSGVO-konform). Personenbezogene Daten des Verbands werden ausschliesslich zur " +
       "Durchführung dieser Vereinbarung genutzt und nicht an Dritte weitergegeben. " +
-      "Es gilt Schweizer Recht. Gerichtsstand ist Basel."
+      "Es gilt Schweizer Recht. Gerichtsstand ist Oberwil BL."
     );
 
-    doc.moveDown(0.6);
+    doc.moveDown(1.2);
 
     // ── UNTERSCHRIFTEN ────────────────────────────────────────────────────────
-    // Sicherstellen, dass genug Platz auf der Seite ist
-    const neededH = 120;
-    if (doc.y + neededH > doc.page.height - 56) {
+    if (doc.y + 130 > doc.page.height - 56) {
       doc.addPage();
       doc.y = 56;
     }
 
-    sectionHead(doc, "Unterschriften", L, RED, DARK);
-
-    const colW   = (W - 36) / 2;
+    const colW   = (W - 28) / 2;  // je ~228pt
     const leftX  = L;
-    const rightX = L + colW + 36;
-    const sigTop = doc.y + 4;
+    const rightX = L + colW + 28;
+    const sigTop = doc.y;
 
-    // Linke Spalte — SagaTrail (vorunterschrieben)
-    doc
-      .fontSize(8).font("Helvetica").fillColor(MID)
-      .text("A.i.L. by Koch – SagaTrail", leftX, sigTop, { width: colW });
+    // Bezeichnungen
+    doc.fontSize(8).font("Helvetica").fillColor(MID)
+       .text("A.i.L. by Koch  –  SagaTrail", leftX, sigTop, { width: colW });
+    doc.text(data.verbandName, rightX, sigTop, { width: colW });
 
-    let afterSigY = sigTop + 16;
+    doc.moveDown(0.4);
+    let afterSigY = doc.y + 10;
 
     if (SIG_BUF) {
-      // Signature PNG (transparent background) — 90 points breit
       doc.image(SIG_BUF, leftX, afterSigY, { width: 90 });
-      afterSigY += 56;
+      afterSigY += 58;
     } else {
-      afterSigY += 40;
+      afterSigY += 44;
     }
 
-    // Linie links
+    // Unterschriftslinien
     doc
-      .moveTo(leftX, afterSigY).lineTo(leftX + colW, afterSigY)
+      .moveTo(leftX,  afterSigY).lineTo(leftX  + colW, afterSigY)
       .strokeColor("#aaaaaa").lineWidth(0.5).stroke();
-
-    doc
-      .fontSize(9).font("Helvetica-Bold").fillColor(DARK)
-      .text("Rolf Koch, Inhaber", leftX, afterSigY + 4, { width: colW });
-    doc
-      .fontSize(8).font("Helvetica").fillColor(LIGHT)
-      .text(datum, leftX, doc.y + 1, { width: colW });
-
-    // Rechte Spalte — Verband (leer zum Ausfüllen)
-    doc
-      .fontSize(8).font("Helvetica").fillColor(MID)
-      .text(data.verbandName, rightX, sigTop, { width: colW });
-
-    // Linie rechts (gleiche Y wie links)
     doc
       .moveTo(rightX, afterSigY).lineTo(rightX + colW, afterSigY)
       .strokeColor("#aaaaaa").lineWidth(0.5).stroke();
 
-    doc
-      .fontSize(8).font("Helvetica").fillColor(LIGHT)
-      .text("Ort, Datum, Unterschrift", rightX, afterSigY + 4, { width: colW });
+    const afterLineY = afterSigY + 5;
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(DARK)
+       .text("Rolf Koch, Inhaber", leftX, afterLineY, { width: colW });
+    doc.fontSize(8).font("Helvetica").fillColor(MID)
+       .text("Ort, Datum, Unterschrift",    rightX, afterLineY, { width: colW });
+
+    doc.fontSize(8).font("Helvetica").fillColor(LIGHT)
+       .text(datum, leftX, doc.y + 1, { width: colW });
 
     // ── FUSSZEILE ─────────────────────────────────────────────────────────────
+    const footY = doc.page.height - 36;
+    doc
+      .moveTo(L, footY - 6).lineTo(R, footY - 6)
+      .strokeColor(RED).lineWidth(0.6).stroke();
     doc
       .fontSize(7.5).font("Helvetica-Oblique").fillColor(LIGHT)
       .text(
-        `A.i.L. by Koch – www.sagatrail.ch – info@sagatrail.ch  |  Referenz: ${ref}`,
-        L,
-        doc.page.height - 36,
+        `A.i.L. by Koch  ·  www.sagatrail.ch  ·  info@sagatrail.ch  |  Referenz: ${ref}`,
+        L, footY,
         { align: "center", width: W },
       );
 
@@ -248,14 +318,10 @@ function sectionHead(
   doc: InstanceType<typeof PDFDocument>,
   title: string,
   l: number,
-  red: string,
   dark: string,
 ) {
-  doc.moveDown(0.5);
   doc.fontSize(10).font("Helvetica-Bold").fillColor(dark).text(title, l);
-  const y = doc.y + 1;
-  doc.moveTo(l, y).lineTo(l + 28, y).strokeColor(red).lineWidth(1.2).stroke();
-  doc.moveDown(0.45);
+  doc.moveDown(0.35);
 }
 
 function para(
@@ -271,27 +337,12 @@ function bulletList(
   doc: InstanceType<typeof PDFDocument>,
   mid: string,
   l: number,
+  width: number,
   items: string[],
 ) {
   doc
     .fontSize(9).font("Helvetica").fillColor(mid)
-    .list(items, l, doc.y, { bulletRadius: 1.8, textIndent: 12, lineGap: 2 });
-}
-
-function tableRows(
-  doc: InstanceType<typeof PDFDocument>,
-  rows: [string, string][],
-  l: number,
-  mid: string,
-  dark: string,
-) {
-  const labelW = 90;
-  for (const [label, value] of rows) {
-    const y = doc.y;
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(dark).text(label, l, y, { width: labelW, continued: false });
-    doc.fontSize(9).font("Helvetica").fillColor(mid).text(value, l + labelW, y, { width: 340 });
-    doc.moveDown(0.15);
-  }
+    .list(items, l, doc.y, { bulletRadius: 1.8, textIndent: 12, lineGap: 2, width });
 }
 
 // ── Willkommens-E-Mail bei Verband-Anlage ────────────────────────────────────
