@@ -171,13 +171,24 @@ export function buildEmailHtml(opts: {
 
   <!-- HEADER -->
   <tr>
-    <td style="background:#CC0000;padding:28px 36px">
-      <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:.5px">
-        Saga<span style="opacity:.75">Trail</span>
-      </p>
-      <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,.75)">
-        Schweizer Sagenerlebnis App
-      </p>
+    <td style="background:#CC0000;padding:24px 36px">
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="vertical-align:middle;padding-right:14px">
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/cropped-sagatrail-icon-1024-1.png"
+                 alt="SagaTrail" width="48" height="48"
+                 style="display:block;border-radius:10px;border:0"/>
+          </td>
+          <td style="vertical-align:middle">
+            <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:.5px">
+              Saga<span style="opacity:.75">Trail</span>
+            </p>
+            <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.75)">
+              Schweizer Sagenerlebnis App
+            </p>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 
@@ -203,10 +214,9 @@ export function buildEmailHtml(opts: {
       <table cellpadding="0" cellspacing="0">
         <tr>
           <td style="width:44px;vertical-align:top">
-            <div style="width:40px;height:40px;background:#CC0000;border-radius:8px;
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:18px;font-weight:800;color:#fff;line-height:40px;
-                        text-align:center">S</div>
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/cropped-sagatrail-icon-1024-1.png"
+                 alt="SagaTrail" width="40" height="40"
+                 style="display:block;border-radius:8px;border:0"/>
           </td>
           <td style="padding-left:12px;vertical-align:top">
             <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a1a">Rolf Koch</p>
