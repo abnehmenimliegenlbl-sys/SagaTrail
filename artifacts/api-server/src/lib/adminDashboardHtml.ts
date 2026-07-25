@@ -298,6 +298,18 @@ a{color:var(--red);text-decoration:none}
   <!-- ROUTEN-FOTOS -->
   <div id="tab-routen" class="tab-pane">
 
+    <!-- ROUTEN NEU LADEN -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 style="margin:0 0 4px">&#128257; Alle Routen neu laden</h2>
+          <p class="hint" style="margin:0">Lädt alle 26 Kantone frisch aus Overpass/OSM. Dauert ca. 5–10 Min. Der Server bleibt dabei erreichbar.</p>
+        </div>
+        <button id="reload-all-btn" class="btn btn-primary" onclick="reloadAllRoutes()">&#128257; Jetzt neu laden</button>
+      </div>
+      <div id="reload-all-status" style="margin-top:10px"></div>
+    </div>
+
     <!-- FEATURED ROUTEN -->
     <div class="card">
       <h2>&#11088; Featured Routen</h2>
@@ -389,6 +401,10 @@ a{color:var(--red);text-decoration:none}
         <div class="form-group" style="min-width:140px">
           <label>Kanton</label>
           <select id="km-org-kanton" onchange="kmLoadLeads()"><option value="">Alle Kantone</option></select>
+        </div>
+        <div class="form-group" style="min-width:120px">
+          <label>Sprache</label>
+          <select id="km-org-sprache" onchange="kmLoadLeads()"><option value="">Alle</option></select>
         </div>
         <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
         <span id="km-orgs-count" style="font-size:13px;color:var(--mid)"></span>
@@ -1866,6 +1882,11 @@ async function kmLoadMeta() {
     (ometa.kategorien || []).forEach(function(k){ katSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
     oktSel.innerHTML = '<option value="">Alle Kantone</option>';
     (ometa.kantone || []).forEach(function(k){ oktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+    var ospSel = document.getElementById('km-org-sprache');
+    if (ospSel) {
+      ospSel.innerHTML = '<option value="">Alle</option>';
+      (ometa.sprachen || []).forEach(function(s){ ospSel.innerHTML += '<option value="'+esc(s)+'">'+esc(s)+'</option>'; });
+    }
   } catch(e) { /* ignorieren */ }
   kmLoadLeads();
 }
@@ -1882,12 +1903,14 @@ async function kmLoadLeads() {
     var params = new URLSearchParams();
     var data;
     if (isOrgs) {
-      var kat    = v('km-org-kategorie');
-      var otyp   = v('km-org-typ');
-      var okaton = v('km-org-kanton');
-      if (kat)    params.set('kategorie', kat);
-      if (otyp)   params.set('typ', otyp);
-      if (okaton) params.set('kanton', okaton);
+      var kat      = v('km-org-kategorie');
+      var otyp     = v('km-org-typ');
+      var okaton   = v('km-org-kanton');
+      var osprache = v('km-org-sprache');
+      if (kat)      params.set('kategorie', kat);
+      if (otyp)     params.set('typ', otyp);
+      if (okaton)   params.set('kanton', okaton);
+      if (osprache) params.set('sprache', osprache);
       data = await api('/api/admin/orgs/list?' + params.toString());
       thead.innerHTML = '<tr><th>Organisation</th><th>E-Mail</th><th>Kategorie</th><th>Kantone</th><th>Sprache</th><th>Anschreiben-Satz</th></tr>';
     } else {
@@ -1952,7 +1975,7 @@ async function kmSend() {
   document.getElementById('km-compose-status').textContent = '';
   try {
     var filters = _kmSource === 'orgs'
-      ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kanton: v('km-org-kanton') }
+      ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kanton: v('km-org-kanton'), sprache: v('km-org-sprache') }
       : { _source: 'leads', typ: v('km-typ'), kanton: v('km-kanton'), sprache: v('km-sprache') };
     var res = await api('/api/admin/leads/send', { method:'POST',
       body: JSON.stringify({ subject: subject, bodyText: bodyText, filters: filters }) });

@@ -20,6 +20,7 @@ import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
+import { warmAllCantonCaches } from "../lib/routeService";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
   fetchLeadsFromWp, fetchOrgsFromWp, campaignState, startCampaign, buildPreviewHtml,
@@ -1252,7 +1253,7 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
   try {
     const f = filters ?? {};
     if (f._source === "orgs") {
-      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton }, wpUrl, WP_SECRET());
+      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, sprache: f.sprache }, wpUrl, WP_SECRET());
     } else {
       leads = await fetchLeadsFromWp({ typ: f.typ, kanton: f.kanton, sprache: f.sprache }, wpUrl, WP_SECRET());
     }
@@ -1288,9 +1289,9 @@ router.get("/admin/orgs/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const wpUrl = WP_AJAX();
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
-  const { kategorie, typ, kanton } = req.query as Record<string, string>;
+  const { kategorie, typ, kanton, sprache } = req.query as Record<string, string>;
   try {
-    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton }, wpUrl, WP_SECRET());
+    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton, sprache }, wpUrl, WP_SECRET());
     res.json({ leads, total: leads.length });
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });

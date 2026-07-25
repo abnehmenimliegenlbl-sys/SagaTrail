@@ -116,11 +116,13 @@ function sagatrail_ajax_get_organisationen() {
     $kategorie = isset( $_POST['kategorie'] ) ? sanitize_text_field( $_POST['kategorie'] ) : '';
     $typ       = isset( $_POST['typ'] )       ? sanitize_text_field( $_POST['typ'] )       : '';
     $kanton    = isset( $_POST['kanton'] )    ? sanitize_text_field( $_POST['kanton'] )    : '';
+    $sprache   = isset( $_POST['sprache'] )   ? strtoupper( sanitize_text_field( $_POST['sprache'] ) ) : '';
 
     if ( $kategorie ) { $where[] = 'kategorie = %s'; $params[] = $kategorie; }
     if ( $typ )       { $where[] = 'typ = %s';       $params[] = $typ; }
     // kantone ist kommagetrennt (z.B. "BE,ZH") – FIND_IN_SET prüft ob Kürzel enthalten
     if ( $kanton )    { $where[] = 'FIND_IN_SET(%s, REPLACE(kantone, " ", "")) > 0'; $params[] = $kanton; }
+    if ( $sprache )   { $where[] = 'UPPER(sprache) = %s'; $params[] = $sprache; }
 
     $sql = "SELECT organisation, email, kantone, sprache, anschreiben_satz, ansprechperson, kategorie, typ
             FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY organisation LIMIT 5000";
@@ -172,7 +174,8 @@ function sagatrail_ajax_orgs_meta() {
     }
     ksort( $kt_set );
     $kantone = array_keys( $kt_set );
-    $total   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email IS NOT NULL AND email != ''" );
+    $total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email IS NOT NULL AND email != ''" );
+    $sprachen = $wpdb->get_col( "SELECT DISTINCT UPPER(sprache) FROM {$table} WHERE sprache IS NOT NULL AND sprache != '' ORDER BY 1" );
 
-    wp_send_json_success( compact( 'kategorien', 'typen', 'kantone', 'total' ) );
+    wp_send_json_success( compact( 'kategorien', 'typen', 'kantone', 'sprachen', 'total' ) );
 }
