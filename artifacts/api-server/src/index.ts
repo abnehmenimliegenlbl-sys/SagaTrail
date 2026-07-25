@@ -1,6 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
+import { runMigrations } from "stripe-replit-sync";
+import { getStripeSync } from "./lib/stripeClient";
 import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
@@ -50,7 +52,15 @@ const server = app.listen(port, async (err) => {
         ADD COLUMN IF NOT EXISTS telefon text,
         ADD COLUMN IF NOT EXISTS website_url text,
         ADD COLUMN IF NOT EXISTS reservierung_url text,
-        ADD COLUMN IF NOT EXISTS oeffnungszeiten text
+        ADD COLUMN IF NOT EXISTS oeffnungszeiten text,
+        ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+        ADD COLUMN IF NOT EXISTS stripe_subscription_id text
+    `);
+    // lat/lng sind jetzt optional (für via Stripe ongeboardete Partner ohne Adresse)
+    await db.execute(sql`
+      ALTER TABLE partners
+        ALTER COLUMN lat DROP NOT NULL,
+        ALTER COLUMN lng DROP NOT NULL
     `);
     logger.info("Schema-Migration: partners-Spalten sichergestellt");
   } catch (migErr) {
@@ -94,6 +104,22 @@ const server = app.listen(port, async (err) => {
     logger.info("Schema-Migration: verbands.logo_url sichergestellt");
   } catch (migErr) {
     logger.warn({ err: migErr }, "Schema-Migration verbands.logo_url fehlgeschlagen (nicht kritisch)");
+  }
+
+  // Stripe: Schema + Webhook + Backfill (im Hintergrund, nicht blockierend).
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    runMigrations({ databaseUrl })
+      .then(() => getStripeSync())
+      .then(async (stripeSync) => {
+        const webhookBase = `https://${(process.env.REPLIT_DOMAINS ?? "").split(",")[0]}`;
+        await stripeSync.findOrCreateManagedWebhook(`${webhookBase}/api/stripe/webhook`);
+        logger.info("Stripe-Webhook konfiguriert");
+        stripeSync.syncBackfill().catch((e) => logger.warn({ err: e }, "Stripe syncBackfill fehlgeschlagen"));
+      })
+      .catch((e) => logger.warn({ err: e }, "Stripe-Init fehlgeschlagen (nicht kritisch)"));
+  } else {
+    logger.warn("DATABASE_URL fehlt — Stripe-Init übersprungen");
   }
 
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.

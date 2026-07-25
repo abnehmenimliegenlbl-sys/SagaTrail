@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.1",
-    "@replit/revenuecat-sdk": "^5.0.0"
+    "@replit/revenuecat-sdk": "^5.0.0",
+    "stripe": "^22.3.2",
+    "stripe-replit-sync": "^1.0.0"
   }
 }

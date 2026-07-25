@@ -22,7 +22,8 @@ export type Zahlungsstatus =
   | "bezahlt"
   | "mahnung1"
   | "mahnung2"
-  | "gesperrt";
+  | "gesperrt"
+  | "gekündigt";
 
 export const PAKET_PREISE: Record<string, { jahr: number; monat: number }> = {
   basic:    { jahr:  99, monat:   990 },
@@ -37,8 +38,8 @@ export const partnersTable = pgTable("partners", {
   canton: text("canton").notNull(),
   beschreibung: text("beschreibung"),
   angebot: text("angebot"),
-  lat: doublePrecision("lat").notNull(),
-  lng: doublePrecision("lng").notNull(),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
   fotoUrl: text("foto_url"),
   telefon: text("telefon"),
   websiteUrl: text("website_url"),
@@ -56,6 +57,8 @@ export const partnersTable = pgTable("partners", {
   aktivVon: timestamp("aktiv_von", { withTimezone: true }),
   aktivBis: timestamp("aktiv_bis", { withTimezone: true }),
   isActive: boolean("is_active").notNull().default(true),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   views: integer("views").notNull().default(0),
   offersTapped: integer("offers_tapped").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

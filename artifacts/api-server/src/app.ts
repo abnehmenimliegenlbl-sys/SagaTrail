@@ -12,6 +12,9 @@ import {
   clerkProxyMiddleware,
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
+import { WebhookHandlers } from "./lib/webhookHandlers";
+import { constructStripeEvent } from "./lib/stripeClient";
+import { handleStripeEvent } from "./lib/partnerWebhookHandler";
 
 const app: Express = express();
 
@@ -36,6 +39,40 @@ app.use(
 );
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+
+// ─── Stripe-Webhook MUSS vor express.json() registriert werden ────────────────
+// Der Webhook braucht den rohen Buffer, nicht geparstes JSON.
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const signature = req.headers["stripe-signature"];
+    if (!signature) {
+      res.status(400).json({ error: "Missing stripe-signature" });
+      return;
+    }
+    const sig = Array.isArray(signature) ? signature[0] : signature;
+
+    try {
+      // 1. stripe-replit-sync synchronisiert Stripe-Daten in die stripe.*-Tabellen
+      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+
+      // 2. Eigene Business-Logik (Partner anlegen, Magic-Link senden etc.)
+      try {
+        const event = await constructStripeEvent(req.body as Buffer, sig);
+        await handleStripeEvent(event);
+      } catch (bizErr: any) {
+        logger.error({ err: bizErr }, "Stripe-Business-Logik-Fehler (nicht kritisch)");
+        // Trotzdem 200 zurückgeben, damit Stripe nicht nochmal versucht
+      }
+
+      res.status(200).json({ received: true });
+    } catch (err: any) {
+      logger.error({ err }, "Stripe-Webhook-Fehler");
+      res.status(400).json({ error: "Webhook processing error" });
+    }
+  },
+);
 
 app.use(cors({ credentials: true, origin: true }));
 // Limit erhoeht: der GPX-Import (/api/routes/gpx) sendet komplette

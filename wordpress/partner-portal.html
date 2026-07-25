@@ -248,11 +248,169 @@
       </table>
     </div>
 
+    <!-- Standort auf Karte setzen -->
+    <div class="spp-card" id="spp-map-card">
+      <h2>Standort auf der Karte</h2>
+      <p style="font-size:13px;color:#555;margin-bottom:14px">
+        Setzen Sie Ihren genauen Standort — wichtig für Bergrestaurants und Betriebe ohne präzise Strassenadresse.
+        Der Marker bestimmt, wo Sie auf der Wanderroute erscheinen.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="spp-btn" id="spp-gps-btn" onclick="sppUseMyLocation()" type="button">
+          📍 Meinen Standort verwenden
+        </button>
+        <div id="spp-gps-msg" style="font-size:13px;align-self:center;color:#777"></div>
+      </div>
+      <div id="spp-map" style="height:320px;border-radius:10px;border:1.5px solid #ddd;overflow:hidden;margin-bottom:12px"></div>
+      <p style="font-size:12px;color:#aaa;margin:0 0 12px">Marker verschieben oder oben auf «Meinen Standort verwenden» tippen — dann speichern.</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="spp-btn" id="spp-map-save-btn" onclick="sppSaveLocation()" type="button">
+          <span class="spp-spinner"></span>
+          <span class="spp-btn-txt">Standort speichern</span>
+        </button>
+        <div id="spp-map-msg" class="spp-msg" style="margin-top:0"></div>
+      </div>
+    </div>
+
     <p style="font-size:11px;color:#aaa;text-align:center">
       Fragen? <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a>
     </p>
   </div>
 </div>
+
+<!-- Leaflet für Kartenpicker -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  var map = null;
+  var marker = null;
+  var currentLat = 46.8182; // Schweiz-Mitte
+  var currentLng = 8.2275;
+
+  function initMap(lat, lng) {
+    if (map) { map.remove(); map = null; }
+    currentLat = lat || 46.8182;
+    currentLng = lng || 8.2275;
+
+    map = L.map('spp-map').setView([currentLat, currentLng], lat ? 15 : 8);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    var icon = L.divIcon({
+      className: '',
+      html: '<div style="width:22px;height:22px;background:#CC0000;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+
+    marker = L.marker([currentLat, currentLng], { draggable: true, icon: icon }).addTo(map);
+    marker.on('dragend', function(e) {
+      var ll = e.target.getLatLng();
+      currentLat = ll.lat;
+      currentLng = ll.lng;
+    });
+
+    map.on('click', function(e) {
+      currentLat = e.latlng.lat;
+      currentLng = e.latlng.lng;
+      marker.setLatLng([currentLat, currentLng]);
+    });
+  }
+
+  // Nach Dashboard-Load Karte initialisieren (Partner-Koordinaten vorbelegen)
+  var origLoadDashboard = window.sppLoadDashboard;
+
+  // Hook: wird aus loadDashboard aufgerufen nachdem Profil geladen wurde
+  window.sppInitMapFromProfile = function(lat, lng) {
+    // Karte erst initialisieren wenn das Portal-Tab sichtbar ist
+    setTimeout(function() {
+      initMap(lat || null, lng || null);
+    }, 200);
+  };
+
+  window.sppUseMyLocation = function() {
+    var gpsMsg = document.getElementById('spp-gps-msg');
+    if (!navigator.geolocation) {
+      gpsMsg.textContent = 'GPS nicht verfügbar in diesem Browser.';
+      return;
+    }
+    gpsMsg.textContent = 'Standort wird ermittelt…';
+    var btn = document.getElementById('spp-gps-btn');
+    btn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        btn.disabled = false;
+        gpsMsg.textContent = '';
+        currentLat = pos.coords.latitude;
+        currentLng = pos.coords.longitude;
+        if (!map) {
+          initMap(currentLat, currentLng);
+        } else {
+          marker.setLatLng([currentLat, currentLng]);
+          map.setView([currentLat, currentLng], 16);
+        }
+      },
+      function(err) {
+        btn.disabled = false;
+        gpsMsg.textContent = 'Standort konnte nicht ermittelt werden. Bitte Marker manuell setzen.';
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  window.sppSaveLocation = function() {
+    var tok = (function() {
+      var p = new URLSearchParams(window.location.search);
+      return p.get('token') || localStorage.getItem('spp_token');
+    })();
+    if (!tok) { showMsg('spp-map-msg', 'Sitzung abgelaufen.', false); return; }
+    if (!currentLat || !currentLng) { showMsg('spp-map-msg', 'Bitte zuerst Standort setzen.', false); return; }
+
+    setBtn('spp-map-save-btn', true);
+    var API_BASE = (window.stPartnerData && window.stPartnerData.apiBase) || 'https://api.sagatrail.ch';
+
+    fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lat: currentLat, lng: currentLng }),
+    })
+      .then(function(r) { if (!r.ok) throw new Error('Speichern fehlgeschlagen.'); return r.json(); })
+      .then(function() {
+        setBtn('spp-map-save-btn', false);
+        showMsg('spp-map-msg', 'Standort gespeichert! Sichtbar in der App nach dem nächsten Routen-Abgleich.', true);
+      })
+      .catch(function(e) {
+        setBtn('spp-map-save-btn', false);
+        showMsg('spp-map-msg', e.message, false);
+      });
+  };
+
+  // Karte beim Laden des Dashboards initialisieren
+  // Wir patchen loadDashboard nachträglich via MutationObserver auf dem Dashboard-Div
+  var dashObs = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.type === 'attributes' && m.attributeName === 'style') {
+        var dash = document.getElementById('spp-dashboard');
+        if (dash && dash.style.display !== 'none' && !map) {
+          // Versuche gespeicherte Koordinaten aus dem Portal zu lesen
+          // (werden von loadDashboard nicht mehr direkt weitergegeben, daher Fallback auf Schweiz-Mitte)
+          initMap(null, null);
+        }
+      }
+    });
+  });
+
+  var dashEl = document.getElementById('spp-dashboard');
+  if (dashEl) dashObs.observe(dashEl, { attributes: true });
+})();
+</script>
 
 <script>
 (function() {
@@ -476,6 +634,11 @@
         var lauf = '';
         if (p.laufzeitStart) lauf = 'Laufzeit: ' + fmtDate(p.laufzeitStart) + (p.laufzeitEnde ? ' – ' + fmtDate(p.laufzeitEnde) : '');
         document.getElementById('spp-laufzeit').textContent = lauf;
+
+        // Karte mit gespeicherten Koordinaten initialisieren
+        if (typeof window.sppInitMapFromProfile === 'function') {
+          window.sppInitMapFromProfile(p.lat || null, p.lng || null);
+        }
 
         // Paket-Info
         var paketEl = document.getElementById('spp-paket-info');

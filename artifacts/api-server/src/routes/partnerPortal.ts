@@ -121,6 +121,8 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
       oeffnungszeiten: partner.oeffnungszeiten,
       email: partner.email,
       paket: partner.paket,
+      lat: partner.lat,
+      lng: partner.lng,
       isActive: partner.isActive,
       views: partner.views,
       offersTapped: partner.offersTapped,
@@ -244,6 +246,8 @@ router.patch("/partner/portal/me", async (req, res): Promise<void> => {
     reservierungUrl: z.string().max(300).optional(),
     oeffnungszeiten: z.string().optional(),
     fotoObjectPath:  z.string().optional(),
+    lat:             z.number().min(-90).max(90).optional(),
+    lng:             z.number().min(-180).max(180).optional(),
   }).safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
@@ -258,6 +262,8 @@ router.patch("/partner/portal/me", async (req, res): Promise<void> => {
   if (d.fotoObjectPath  !== undefined && d.fotoObjectPath.startsWith("/objects/")) {
     update["fotoUrl"] = d.fotoObjectPath;
   }
+  if (d.lat !== undefined) update["lat"] = d.lat;
+  if (d.lng !== undefined) update["lng"] = d.lng;
 
   const [updated] = await db
     .update(partnersTable)
