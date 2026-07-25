@@ -141,6 +141,28 @@ export function verifyUnsubToken(email: string, campaignId: string, token: strin
 
 // ─── HTML-E-Mail-Template ─────────────────────────────────────────────────────
 
+/** Unsubscribe-URL + beide Header nach RFC 2369 / RFC 8058 */
+export function buildUnsubInfo(recipientEmail: string, campaignId: string, apiBase: string) {
+  const token    = makeUnsubToken(recipientEmail, campaignId);
+  const emailB64 = Buffer.from(recipientEmail).toString("base64url");
+  const url      = `${apiBase}/api/unsubscribe?e=${emailB64}&t=${token}&c=${campaignId}`;
+  return { url, emailB64, token };
+}
+
+/** Einfache Plain-Text-Version aus dem Vorlagentext */
+function buildPlainText(bodyText: string, unsubUrl: string): string {
+  return [
+    bodyText,
+    "",
+    "---",
+    "SagaTrail · Rolf Koch · info@sagatrail.ch · sagatrail.ch",
+    "",
+    "Abmelden (DE): " + unsubUrl,
+    "Se désabonner (FR): " + unsubUrl,
+    "Annullare (IT): " + unsubUrl,
+  ].join("\n");
+}
+
 export function buildEmailHtml(opts: {
   bodyText:    string;
   recipientEmail: string;
@@ -148,9 +170,7 @@ export function buildEmailHtml(opts: {
   apiBase:     string;
 }): string {
   const { bodyText, recipientEmail, campaignId, apiBase } = opts;
-  const token    = makeUnsubToken(recipientEmail, campaignId);
-  const emailB64 = Buffer.from(recipientEmail).toString("base64url");
-  const unsubUrl = `${apiBase}/api/unsubscribe?e=${emailB64}&t=${token}&c=${campaignId}`;
+  const { url: unsubUrl } = buildUnsubInfo(recipientEmail, campaignId, apiBase);
 
   // Zeilenumbrüche → <br>-Tags
   const htmlBody = bodyText
@@ -372,12 +392,27 @@ async function runCampaign(campaignId: string, opts: {
     let error: string | null = null;
 
     try {
+      const resolvedSubject = resolveVars(subject, lead);
+      const { url: unsubUrl } = buildUnsubInfo(lead.email, campaignId, apiBase);
+      // List-Unsubscribe: RFC 2369 mailto + RFC 8058 one-click POST
+      // Gmail / Yahoo verlangen dies seit Feb 2024 für Bulk-Sender
+      const unsubMailto = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
       await transporter.sendMail({
-        from: `SagaTrail <${from}>`,
-        to:   `${lead.name} <${lead.email}>`,
+        from:    `SagaTrail <${from}>`,
+        to:      `${lead.name} <${lead.email}>`,
         replyTo: "info@sagatrail.ch",
-        subject: resolveVars(subject, lead),
+        subject: resolvedSubject,
         html,
+        text:    buildPlainText(resolveVars(bodyText, lead), unsubUrl),
+        headers: {
+          // Bulk-Mail-Marker — Gmail/Outlook sortieren weniger aggressiv
+          "Precedence":              "bulk",
+          // One-click unsubscribe (RFC 8058) — Pflicht bei Gmail/Yahoo Bulk
+          "List-Unsubscribe":        `<${unsubUrl}>, <${unsubMailto}>`,
+          "List-Unsubscribe-Post":   "List-Unsubscribe=One-Click",
+          // Kampagnen-ID für Tracking / Debugging
+          "X-Campaign-Id":           campaignId,
+        },
       });
       alreadySent.add(emailLc);
       campaignState.sent++;
