@@ -310,6 +310,7 @@ function createTransporter() {
     host,
     port,
     secure,
+    name: "sagatrail.ch",   // EHLO-Hostname — Infomaniak braucht FQDN
     auth: { user, pass },
     connectionTimeout: 15_000,
     greetingTimeout:   15_000,
