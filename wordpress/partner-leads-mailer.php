@@ -51,7 +51,7 @@ function sagatrail_ajax_get_leads() {
     // Nur Einträge mit E-Mail-Adresse
     $where[] = "email != ''";
 
-    $sql = "SELECT id, name, email, kanton, sprache, route, typ, adresse, telefon, website
+    $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, adresse, telefon, website
             FROM {$table}";
     if ( $where ) {
         $sql .= ' WHERE ' . implode( ' AND ', $where );
@@ -98,6 +98,32 @@ function sagatrail_ajax_leads_meta() {
     $total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email != ''" );
 
     wp_send_json_success( compact( 'typen', 'kantone', 'sprachen', 'total' ) );
+}
+
+// ── AJAX: Debug – Tabellenstruktur + Zählungen ───────────────────────────────
+add_action( 'wp_ajax_nopriv_sagatrail_leads_debug', 'sagatrail_ajax_leads_debug' );
+add_action( 'wp_ajax_sagatrail_leads_debug',        'sagatrail_ajax_leads_debug' );
+
+function sagatrail_ajax_leads_debug() {
+    sagatrail_leads_check_secret();
+    global $wpdb;
+    $table   = SAGATRAIL_LEADS_TABLE;
+    $cols    = $wpdb->get_results( "SHOW COLUMNS FROM {$table}" );
+    $total   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+    $with_em = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email IS NOT NULL AND email != ''" );
+    $sample  = $wpdb->get_row( "SELECT * FROM {$table} LIMIT 1", ARRAY_A );
+    // Anonymize sample email
+    if ( $sample && isset( $sample['email'] ) ) {
+        $em = $sample['email'];
+        $sample['email'] = $em ? substr( $em, 0, 3 ) . '***' . strstr( $em, '@' ) : '(leer/null)';
+    }
+    wp_send_json_success( [
+        'table'      => $table,
+        'columns'    => array_map( fn($c) => $c->Field . ' (' . $c->Type . ')', $cols ),
+        'total_rows' => $total,
+        'with_email' => $with_em,
+        'sample_row' => $sample,
+    ] );
 }
 
 // ── AJAX: Organisationen laden ────────────────────────────────────────────────
