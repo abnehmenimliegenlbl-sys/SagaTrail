@@ -17,8 +17,9 @@ const AnfrageBody = z.object({
   kontaktName:    z.string().min(2).max(200),
   kontaktEmail:   z.email().max(200),
   kontaktTelefon: z.string().max(50).optional(),
-  paket:          z.enum(["basic", "standard", "premium"]).default("standard"),
-  typ:            z.enum(["anfrage", "bestellung"]).default("anfrage"),
+  paket:               z.enum(["basic", "standard", "premium"]).default("standard"),
+  typ:                 z.enum(["anfrage", "bestellung"]).default("anfrage"),
+  abrechnungsperiode:  z.enum(["monatlich", "jaehrlich"]).optional(),
 });
 
 /**

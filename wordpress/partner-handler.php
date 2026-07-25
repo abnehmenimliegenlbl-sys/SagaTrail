@@ -199,6 +199,11 @@ function sagatrail_handle_partner_anfrage() {
     $abr_raw     = isset( $_POST['abrechnungsperiode'] ) ? sanitize_text_field( wp_unslash( $_POST['abrechnungsperiode'] ) ) : '';
     $abrechnungsperiode = in_array( $abr_raw, $allowed_abr, true ) ? $abr_raw : '';
 
+    // Typ: 'anfrage' oder 'bestellung' — nur für E-Mail-Logik, nicht in der DB
+    $allowed_typ = array( 'anfrage', 'bestellung' );
+    $typ_raw     = isset( $_POST['typ'] ) ? sanitize_text_field( wp_unslash( $_POST['typ'] ) ) : '';
+    $typ         = in_array( $typ_raw, $allowed_typ, true ) ? $typ_raw : 'anfrage';
+
     // --- In WordPress-DB speichern ---
     global $wpdb;
     $table = $wpdb->prefix . 'sagatrail_partner_anfragen';
@@ -212,10 +217,11 @@ function sagatrail_handle_partner_anfrage() {
 
     $row_id = $wpdb->insert_id;
 
-    // Abrechnungsperiode für E-Mail / Vertrag in $data einhängen (nicht in der DB)
+    // Abrechnungsperiode + Typ für E-Mail / Vertrag in $data einhängen (nicht in der DB)
     if ( $abrechnungsperiode ) {
         $data['abrechnungsperiode'] = $abrechnungsperiode;
     }
+    $data['typ'] = $typ;
 
     // --- Optional: E-Mail-Benachrichtigung an Admin ---
     sagatrail_partner_notify_admin( $data, $row_id );
@@ -297,8 +303,10 @@ function sagatrail_partner_forward_to_api( $data ) {
         'kontaktName'    => $data['kontakt_name'],
         'kontaktEmail'   => $data['kontakt_email'],
         'kontaktTelefon' => $data['kontakt_telefon'] ?: null,
-        'paket'          => $data['paket'],
-        'email'          => $data['kontakt_email'],
+        'paket'              => $data['paket'],
+        'typ'                => $data['typ'] ?? 'anfrage',
+        'abrechnungsperiode' => ! empty( $data['abrechnungsperiode'] ) ? $data['abrechnungsperiode'] : null,
+        'email'              => $data['kontakt_email'],
     );
 
     $response = wp_remote_post(

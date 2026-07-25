@@ -130,10 +130,11 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
         'premium'  => 'Premium',
     );
 
-    $paket              = isset( $data['paket'] ) ? $data['paket'] : 'standard';
-    $abr                = isset( $data['abrechnungsperiode'] ) ? $data['abrechnungsperiode'] : '';
-    $is_monatlich       = ( $paket === 'basic' && $abr === 'monatlich' );
-    $paket_name         = isset( $paket_namen[ $paket ] ) ? $paket_namen[ $paket ] : ucfirst( $paket );
+    $paket        = isset( $data['paket'] ) ? $data['paket'] : 'standard';
+    $abr          = isset( $data['abrechnungsperiode'] ) ? $data['abrechnungsperiode'] : '';
+    $typ          = isset( $data['typ'] ) ? $data['typ'] : 'anfrage';
+    $is_monatlich = ( $paket === 'basic' && $abr === 'monatlich' );
+    $paket_name   = isset( $paket_namen[ $paket ] ) ? $paket_namen[ $paket ] : ucfirst( $paket );
 
     // Konditionen-Text & Positionszeile
     if ( $is_monatlich ) {
@@ -154,13 +155,66 @@ function sagatrail_partner_vertrag_senden( $data, $row_id ) {
     $datum_lang = date_i18n( 'd. F Y' );
     $ref        = 'ST-' . str_pad( $row_id, 5, '0', STR_PAD_LEFT );
 
+    // ── Schritt 1: Eingangsbestätigung IMMER senden (kein FPDF nötig) ────────
+    sagatrail_partner_bestaetigung_senden( $data, $paket_name, $preis_str, $ref, $typ );
+
+    // ── Schritt 2: Vertrag als PDF nur bei Bestellung + FPDF vorhanden ───────
+    if ( $typ !== 'bestellung' ) {
+        return; // Nur Anfrage → kein Vertrag nötig, Eingangsbestätigung genügt
+    }
+
     if ( ! sagatrail_partner_lade_fpdf() ) {
-        error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' nicht erzeugt.' );
+        error_log( 'SagaTrail: FPDF nicht gefunden – Partnervertrag ' . $ref . ' nicht erzeugt (Bestätigung wurde bereits gesendet).' );
         return;
     }
 
     $pdf_inhalt = sagatrail_pdf_erzeugen_v2( $data, $paket_name, $preis_str, $preis_pos, $datum_kurz, $datum_lang, $ref, $is_monatlich );
     sagatrail_vertrag_mail_senden_v2( $data, $paket_name, $preis_str, $datum_lang, $ref, $pdf_inhalt );
+}
+
+/**
+ * Sendet eine einfache Eingangsbestätigung an den Partner.
+ * Wird immer aufgerufen – unabhängig von FPDF.
+ */
+function sagatrail_partner_bestaetigung_senden( $data, $paket_name, $preis_str, $ref, $typ ) {
+    $to      = sanitize_email( $data['kontakt_email'] );
+    $name    = ! empty( $data['kontakt_name'] ) ? $data['kontakt_name'] : 'Interessentin / Interessent';
+    $betrieb = ! empty( $data['betriebs_name'] ) ? $data['betriebs_name'] : '';
+
+    $subject = 'SagaTrail: Ihre Anfrage ' . $ref . ' ist eingegangen';
+
+    if ( $typ === 'bestellung' ) {
+        $body  = "Guten Tag " . $name . ",\n\n";
+        $body .= "vielen Dank für Ihre Bestellung – wir freuen uns auf die Partnerschaft!\n\n";
+        $body .= "Paket:     " . $paket_name . "\n";
+        $body .= "Gebühr:    " . $preis_str  . "\n";
+        $body .= "Referenz:  " . $ref        . "\n\n";
+        $body .= "Wir melden uns innerhalb eines Werktags bei Ihnen, um alles einzurichten.\n";
+        $body .= "Den Partnerschaftsvertrag erhalten Sie separat per E-Mail.\n\n";
+    } else {
+        $body  = "Guten Tag " . $name . ",\n\n";
+        $body .= "vielen Dank für Ihr Interesse an einer Partnerschaft mit SagaTrail.\n";
+        $body .= "Ihre Anfrage für das " . $paket_name . "-Paket ist bei uns eingegangen.\n\n";
+        $body .= "Referenz:  " . $ref . "\n\n";
+        $body .= "Wir melden uns innert 2 Werktagen für ein kurzes, unverbindliches Erstgespräch.\n\n";
+    }
+
+    $body .= "Bei Fragen stehen wir Ihnen gerne zur Verfügung:\n";
+    $body .= "info@sagatrail.ch  |  www.sagatrail.ch\n\n";
+    $body .= "Freundliche Grüsse\n";
+    $body .= "Das SagaTrail-Team";
+
+    $headers = array(
+        'Content-Type: text/plain; charset=UTF-8',
+        'From: SagaTrail <info@sagatrail.ch>',
+        'Reply-To: info@sagatrail.ch',
+    );
+
+    $ok = wp_mail( $to, $subject, $body, $headers );
+    if ( ! $ok ) {
+        error_log( 'SagaTrail: Eingangsbestätigung nicht gesendet an: ' . $to . ' (Referenz: ' . $ref . ')' );
+    }
+    return $ok;
 }
 
 // ===================================================================
