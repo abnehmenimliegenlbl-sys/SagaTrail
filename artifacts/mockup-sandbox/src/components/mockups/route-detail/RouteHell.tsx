@@ -152,9 +152,9 @@ export default function RouteHell() {
         />
         {/* Oben: leichter Schleier für Lesbarkeit */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />
-        {/* Unten: auslaufen in weiss */}
-        <div className="absolute bottom-0 left-0 right-0 h-20
-          bg-gradient-to-t from-white via-white/70 to-transparent" />
+        {/* Unten: auslaufen in Card-Hintergrund */}
+        <div className="absolute bottom-0 left-0 right-0 h-24
+          bg-gradient-to-t from-white via-white/60 to-transparent" />
 
         {/* Route-Titel oben auf dem Bild */}
         <div className="absolute top-0 left-0 right-0 px-4 pt-5">
@@ -174,7 +174,7 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           KACHEL-GRID  5 Spalten
       ══════════════════════════════════════════ */}
-      <div className="px-3 flex-shrink-0">
+      <div className="px-3 flex-shrink-0 -mt-6 relative z-10">
 
         {/* ── Reihe 1: 5 Metriken ── */}
         <div className="grid grid-cols-5 gap-1.5 mb-1.5">
