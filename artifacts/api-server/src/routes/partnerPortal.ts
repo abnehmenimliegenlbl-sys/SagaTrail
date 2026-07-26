@@ -304,15 +304,40 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
       req.log.info({ partnerId: partner.id, customerId }, "stripeCustomerId via E-Mail-Lookup nachgetragen");
     }
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer:   customerId,
-      return_url: "https://sagatrail.ch/portal",
-    });
+    // Falls Customer-ID aus Test-Modus stammt: per E-Mail in Live nachschlagen
+    let session;
+    try {
+      session = await stripe.billingPortal.sessions.create({
+        customer:   customerId,
+        return_url: "https://sagatrail.ch/portal",
+      });
+    } catch (stripeErr: any) {
+      if (stripeErr.code === "resource_missing") {
+        // Customer-ID ungültig (z.B. Test-Modus-ID) → E-Mail-Fallback
+        req.log.warn({ partnerId: partner.id, customerId }, "Customer-ID ungültig, suche per E-Mail");
+        const customers = await stripe.customers.list({ email: partner.email, limit: 1 });
+        if (customers.data.length === 0) {
+          res.status(400).json({ error: "Noch kein aktives Stripe-Abo für diesen Partner vorhanden." });
+          return;
+        }
+        const liveCustomerId = customers.data[0].id;
+        // Live-ID in DB speichern für zukünftige Aufrufe
+        await db.update(partnersTable)
+          .set({ stripeCustomerId: liveCustomerId, updatedAt: new Date() })
+          .where(eq(partnersTable.id, partner.id));
+        session = await stripe.billingPortal.sessions.create({
+          customer:   liveCustomerId,
+          return_url: "https://sagatrail.ch/portal",
+        });
+      } else {
+        throw stripeErr;
+      }
+    }
     req.log.info({ partnerId: partner.id }, "Stripe Billing-Portal-Session erstellt");
     res.json({ url: session.url });
   } catch (err: any) {
     req.log.error({ err }, "Fehler beim Erstellen der Billing-Portal-Session");
-    res.status(500).json({ error: "Stripe-Fehler: " + (err.message ?? "Unbekannter Fehler") });
+    res.status(400).json({ error: "Abo-Verwaltung nicht verfügbar. Bitte wenden Sie sich an info@sagatrail.ch." });
   }
 });
 
