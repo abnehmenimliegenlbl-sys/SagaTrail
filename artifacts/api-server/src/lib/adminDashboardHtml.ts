@@ -365,13 +365,13 @@ a{color:var(--red);text-decoration:none}
           <label>Typ</label>
           <select id="km-typ" onchange="kmLoadLeads()"><option value="">Alle Typen</option></select>
         </div>
-        <div class="form-group" style="min-width:140px">
-          <label>Kanton</label>
-          <select id="km-kanton" onchange="kmLoadLeads()"><option value="">Alle Kantone</option></select>
+        <div class="form-group full" style="min-width:280px">
+          <label>Kantone</label>
+          <div id="km-kanton-picker" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px"></div>
         </div>
         <div class="form-group" style="min-width:120px">
           <label>Sprache</label>
-          <select id="km-sprache" onchange="kmLoadLeads()">
+          <select id="km-sprache" onchange="kmSpracheChanged('leads')"
             <option value="">Alle</option>
             <option value="DE">DE – Deutsch</option>
             <option value="FR">FR – Französisch</option>
@@ -398,13 +398,13 @@ a{color:var(--red);text-decoration:none}
             <option value="kantonal">Kantonal</option>
           </select>
         </div>
-        <div class="form-group" style="min-width:140px">
-          <label>Kanton</label>
-          <select id="km-org-kanton" onchange="kmLoadLeads()"><option value="">Alle Kantone</option></select>
+        <div class="form-group full" style="min-width:280px">
+          <label>Kantone</label>
+          <div id="km-org-kanton-picker" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px"></div>
         </div>
         <div class="form-group" style="min-width:120px">
           <label>Sprache</label>
-          <select id="km-org-sprache" onchange="kmLoadLeads()"><option value="">Alle</option></select>
+          <select id="km-org-sprache" onchange="kmSpracheChanged('orgs')"><option value="">Alle</option></select>
         </div>
         <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
         <span id="km-orgs-count" style="font-size:13px;color:var(--mid)"></span>
@@ -1844,6 +1844,80 @@ var _kmLeads   = [];
 var _kmPolling = null;
 var _kmSource  = 'leads';   // 'leads' | 'orgs'
 
+// Kantone die die jeweilige Sprache sprechen (amtliche Sprachregionen CH)
+var KM_SPRACHE_KANTONE = {
+  'DE': ['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden','Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Glarus','Graubünden','Luzern','Nidwalden','Obwalden','Schaffhausen','Schwyz','Solothurn','St. Gallen','Thurgau','Uri','Wallis','Zug','Zürich'],
+  'FR': ['Bern','Freiburg','Genf','Jura','Neuenburg','Waadt','Wallis'],
+  'IT': ['Graubünden','Tessin'],
+  'RM': ['Graubünden'],
+};
+var KT_SHORT = {
+  'Aargau':'AG','Appenzell Ausserrhoden':'AR','Appenzell Innerrhoden':'AI',
+  'Basel-Landschaft':'BL','Basel-Stadt':'BS','Bern':'BE','Freiburg':'FR',
+  'Genf':'GE','Glarus':'GL','Graubünden':'GR','Jura':'JU','Luzern':'LU',
+  'Neuenburg':'NE','Nidwalden':'NW','Obwalden':'OW','Schaffhausen':'SH',
+  'Schwyz':'SZ','Solothurn':'SO','St. Gallen':'SG','Tessin':'TI',
+  'Thurgau':'TG','Uri':'UR','Waadt':'VD','Wallis':'VS','Zug':'ZG','Zürich':'ZH'
+};
+
+function kmBuildKantonPicker(pickerId, kantone) {
+  var el = document.getElementById(pickerId);
+  if (!el) return;
+  el.innerHTML = '<button type="button" class="kt-chip kt-alle active" onclick="kmToggleAlleChip(this,\''+pickerId+'\')" data-kt="alle">Alle</button>';
+  kantone.forEach(function(k) {
+    var short = KT_SHORT[k] || k;
+    el.innerHTML += '<button type="button" class="kt-chip" onclick="kmToggleKtChip(this,\''+pickerId+'\')" data-kt="'+esc(k)+'">'+esc(short)+'</button>';
+  });
+}
+
+function kmToggleAlleChip(btn, pickerId) {
+  var el = document.getElementById(pickerId);
+  el.querySelectorAll('.kt-chip').forEach(function(c){ c.classList.remove('active'); });
+  btn.classList.add('active');
+  kmLoadLeads();
+}
+
+function kmToggleKtChip(btn, pickerId) {
+  var el = document.getElementById(pickerId);
+  var alle = el.querySelector('.kt-alle');
+  if (btn.disabled) return;
+  btn.classList.toggle('active');
+  // Wenn nichts selektiert → zurück zu "Alle"
+  var anyActive = Array.from(el.querySelectorAll('.kt-chip:not(.kt-alle)')).some(function(c){ return c.classList.contains('active'); });
+  if (!anyActive) { alle.classList.add('active'); }
+  else { alle.classList.remove('active'); }
+  kmLoadLeads();
+}
+
+function kmGetSelectedKantone(pickerId) {
+  var el = document.getElementById(pickerId);
+  if (!el) return [];
+  var alle = el.querySelector('.kt-alle');
+  if (alle && alle.classList.contains('active')) return [];
+  return Array.from(el.querySelectorAll('.kt-chip:not(.kt-alle)')).filter(function(c){ return c.classList.contains('active'); }).map(function(c){ return c.getAttribute('data-kt'); });
+}
+
+function kmSpracheChanged(src) {
+  var sprache = v(src === 'leads' ? 'km-sprache' : 'km-org-sprache');
+  var pickerId = src === 'leads' ? 'km-kanton-picker' : 'km-org-kanton-picker';
+  var el = document.getElementById(pickerId);
+  if (!el) { kmLoadLeads(); return; }
+  var allowed = sprache ? KM_SPRACHE_KANTONE[sprache] || [] : null;
+  el.querySelectorAll('.kt-chip:not(.kt-alle)').forEach(function(chip) {
+    var kt = chip.getAttribute('data-kt');
+    var disabled = allowed && !allowed.includes(kt);
+    chip.disabled = disabled;
+    chip.style.opacity = disabled ? '0.3' : '';
+    chip.style.cursor  = disabled ? 'not-allowed' : '';
+    if (disabled) chip.classList.remove('active');
+  });
+  // Falls alle deselektiert wurden → "Alle" aktivieren
+  var anyActive = Array.from(el.querySelectorAll('.kt-chip:not(.kt-alle)')).some(function(c){ return c.classList.contains('active'); });
+  var alle = el.querySelector('.kt-alle');
+  if (!anyActive && alle) alle.classList.add('active');
+  kmLoadLeads();
+}
+
 function kmSetSource(src) {
   _kmSource = src;
   document.getElementById('km-src-leads').className = 'btn btn-sm ' + (src === 'leads' ? 'btn-primary' : 'btn-ghost');
@@ -1865,11 +1939,9 @@ async function kmLoadMeta() {
   try {
     var meta = await api('/api/admin/leads/meta');
     var typSel = document.getElementById('km-typ');
-    var ktSel  = document.getElementById('km-kanton');
     typSel.innerHTML = '<option value="">Alle Typen</option>';
     (meta.typen || []).forEach(function(t){ typSel.innerHTML += '<option value="'+esc(t)+'">'+esc(t)+'</option>'; });
-    ktSel.innerHTML = '<option value="">Alle Kantone</option>';
-    (meta.kantone || []).forEach(function(k){ ktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+    kmBuildKantonPicker('km-kanton-picker', meta.kantone || []);
   } catch(e) {
     document.getElementById('km-leads-count').textContent = '⚠ ' + e.message;
   }
@@ -1877,11 +1949,9 @@ async function kmLoadMeta() {
   try {
     var ometa = await api('/api/admin/orgs/meta');
     var katSel = document.getElementById('km-org-kategorie');
-    var oktSel = document.getElementById('km-org-kanton');
     katSel.innerHTML = '<option value="">Alle Kategorien</option>';
     (ometa.kategorien || []).forEach(function(k){ katSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
-    oktSel.innerHTML = '<option value="">Alle Kantone</option>';
-    (ometa.kantone || []).forEach(function(k){ oktSel.innerHTML += '<option value="'+esc(k)+'">'+esc(k)+'</option>'; });
+    kmBuildKantonPicker('km-org-kanton-picker', ometa.kantone || []);
     var ospSel = document.getElementById('km-org-sprache');
     if (ospSel) {
       ospSel.innerHTML = '<option value="">Alle</option>';
@@ -1905,21 +1975,21 @@ async function kmLoadLeads() {
     if (isOrgs) {
       var kat      = v('km-org-kategorie');
       var otyp     = v('km-org-typ');
-      var okaton   = v('km-org-kanton');
+      var okantone = kmGetSelectedKantone('km-org-kanton-picker');
       var osprache = v('km-org-sprache');
-      if (kat)      params.set('kategorie', kat);
-      if (otyp)     params.set('typ', otyp);
-      if (okaton)   params.set('kanton', okaton);
-      if (osprache) params.set('sprache', osprache);
+      if (kat)            params.set('kategorie', kat);
+      if (otyp)           params.set('typ', otyp);
+      if (okantone.length) params.set('kantone', okantone.join(','));
+      if (osprache)       params.set('sprache', osprache);
       data = await api('/api/admin/orgs/list?' + params.toString());
       thead.innerHTML = '<tr><th>Organisation</th><th>E-Mail</th><th>Kategorie</th><th>Kantone</th><th>Sprache</th><th>Anschreiben-Satz</th></tr>';
     } else {
       var typ     = v('km-typ');
-      var kanton  = v('km-kanton');
+      var kantone = kmGetSelectedKantone('km-kanton-picker');
       var sprache = v('km-sprache');
-      if (typ)     params.set('typ', typ);
-      if (kanton)  params.set('kanton', kanton);
-      if (sprache) params.set('sprache', sprache);
+      if (typ)           params.set('typ', typ);
+      if (kantone.length) params.set('kantone', kantone.join(','));
+      if (sprache)       params.set('sprache', sprache);
       data = await api('/api/admin/leads/list?' + params.toString());
       thead.innerHTML = '<tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr>';
     }
@@ -1975,8 +2045,8 @@ async function kmSend() {
   document.getElementById('km-compose-status').textContent = '';
   try {
     var filters = _kmSource === 'orgs'
-      ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kanton: v('km-org-kanton'), sprache: v('km-org-sprache') }
-      : { _source: 'leads', typ: v('km-typ'), kanton: v('km-kanton'), sprache: v('km-sprache') };
+      ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kantone: kmGetSelectedKantone('km-org-kanton-picker'), sprache: v('km-org-sprache') }
+      : { _source: 'leads', typ: v('km-typ'), kantone: kmGetSelectedKantone('km-kanton-picker'), sprache: v('km-sprache') };
     var res = await api('/api/admin/leads/send', { method:'POST',
       body: JSON.stringify({ subject: subject, bodyText: bodyText, filters: filters }) });
     document.getElementById('km-progress-card').style.display = 'block';

@@ -28,6 +28,7 @@ export interface Lead {
 export interface LeadFilter {
   typ?: string;
   kanton?: string;
+  kantone?: string[];   // Mehrfachauswahl; hat Vorrang vor kanton
   sprache?: string;
 }
 
@@ -35,6 +36,8 @@ export interface OrgFilter {
   kategorie?: string;
   typ?: string;     // national | regional | kantonal
   kanton?: string;
+  kantone?: string[];   // Mehrfachauswahl; hat Vorrang vor kanton
+  sprache?: string;
 }
 
 export interface CampaignState {
@@ -75,7 +78,8 @@ export async function fetchOrgsFromWp(
   form.set("hook_secret", hookSecret);
   if (filter.kategorie) form.set("kategorie", filter.kategorie);
   if (filter.typ)       form.set("typ",       filter.typ);
-  if (filter.kanton)    form.set("kanton",    filter.kanton);
+  // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
+  if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
 
   const res = await fetch(wpAjaxUrl, {
     method: "POST",
@@ -86,7 +90,11 @@ export async function fetchOrgsFromWp(
   if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
   const json = await res.json() as { success: boolean; data?: Lead[]; error?: string };
   if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  return json.data ?? [];
+  let leads = json.data ?? [];
+  if (filter.kantone?.length) {
+    leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
+  }
+  return leads;
 }
 
 export async function fetchLeadsFromWp(
@@ -98,7 +106,8 @@ export async function fetchLeadsFromWp(
   form.set("action",     "sagatrail_get_leads");
   form.set("hook_secret", hookSecret);
   if (filter.typ)     form.set("typ",     filter.typ);
-  if (filter.kanton)  form.set("kanton",  filter.kanton);
+  // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
+  if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
   if (filter.sprache) form.set("sprache", filter.sprache);
 
   const res = await fetch(wpAjaxUrl, {
@@ -110,7 +119,11 @@ export async function fetchLeadsFromWp(
   if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
   const json = await res.json() as { success: boolean; data?: Lead[]; error?: string };
   if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  return json.data ?? [];
+  let leads = json.data ?? [];
+  if (filter.kantone?.length) {
+    leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
+  }
+  return leads;
 }
 
 // ─── Variablen ersetzen ───────────────────────────────────────────────────────

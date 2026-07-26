@@ -1222,14 +1222,15 @@ router.get("/admin/leads/meta", async (req, res): Promise<void> => {
   }
 });
 
-// GET /admin/leads/list?typ=&kanton=&sprache= – gefilterte Leads
+// GET /admin/leads/list?typ=&kantone=ZH,BE&sprache= – gefilterte Leads
 router.get("/admin/leads/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const wpUrl = WP_AJAX();
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
-  const { typ, kanton, sprache } = req.query as Record<string, string>;
+  const { typ, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
+  const kantone = kantoneStr ? kantoneStr.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
   try {
-    const leads = await fetchLeadsFromWp({ typ, kanton, sprache }, wpUrl, WP_SECRET());
+    const leads = await fetchLeadsFromWp({ typ, kanton, kantone, sprache }, wpUrl, WP_SECRET());
     res.json({ leads, total: leads.length });
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
@@ -1257,9 +1258,11 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
   try {
     const f = filters ?? {};
     if (f._source === "orgs") {
-      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, sprache: f.sprache }, wpUrl, WP_SECRET());
+      const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
+      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
     } else {
-      leads = await fetchLeadsFromWp({ typ: f.typ, kanton: f.kanton, sprache: f.sprache }, wpUrl, WP_SECRET());
+      const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
+      leads = await fetchLeadsFromWp({ typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
     }
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") }); return;
@@ -1293,9 +1296,10 @@ router.get("/admin/orgs/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const wpUrl = WP_AJAX();
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
-  const { kategorie, typ, kanton, sprache } = req.query as Record<string, string>;
+  const { kategorie, typ, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
+  const kantone = kantoneStr ? kantoneStr.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
   try {
-    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton, sprache }, wpUrl, WP_SECRET());
+    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton, kantone, sprache }, wpUrl, WP_SECRET());
     res.json({ leads, total: leads.length });
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
