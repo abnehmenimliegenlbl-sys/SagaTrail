@@ -1382,4 +1382,75 @@ function sanitizeState() {
   };
 }
 
+// ─── Stripe-Produkte seeden (einmalig) ───────────────────────────────────────
+router.post("/admin/stripe/seed-products", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  try {
+    const { getUncachableStripeClient } = await import("../lib/stripeClient");
+    const stripe = await getUncachableStripeClient();
+
+    const PRODUCTS = [
+      {
+        name: "SagaTrail Basic",
+        description: "Ihr Betrieb erscheint als Kartenmarker auf der Wanderroute.",
+        prices: [
+          { interval: "month" as const, amount: 1499, label: "CHF 14.99/Monat" },
+          { interval: "year"  as const, amount: 9900, label: "CHF 99/Jahr" },
+        ],
+      },
+      {
+        name: "SagaTrail Standard",
+        description: "Mit Foto, Beschreibung und Kontaktdaten auf der Wanderroute.",
+        prices: [{ interval: "year" as const, amount: 19900, label: "CHF 199/Jahr" }],
+      },
+      {
+        name: "SagaTrail Premium",
+        description: "Vollständiges Profil + automatische Wanderer-Ansage in der Nähe.",
+        prices: [{ interval: "year" as const, amount: 49900, label: "CHF 499/Jahr" }],
+      },
+    ];
+
+    const results: string[] = [];
+
+    for (const prod of PRODUCTS) {
+      const existing = await stripe.products.search({
+        query: `name:'${prod.name}' AND active:'true'`,
+      });
+
+      let productId: string;
+      if (existing.data.length > 0) {
+        productId = existing.data[0].id;
+        results.push(`✓ Produkt bereits vorhanden: ${prod.name} (${productId})`);
+      } else {
+        const created = await stripe.products.create({ name: prod.name, description: prod.description });
+        productId = created.id;
+        results.push(`+ Produkt erstellt: ${prod.name} (${productId})`);
+      }
+
+      const existingPrices = await stripe.prices.list({ product: productId, active: true });
+      for (const p of prod.prices) {
+        const already = existingPrices.data.find(
+          (ep) => ep.recurring?.interval === p.interval && ep.unit_amount === p.amount,
+        );
+        if (already) {
+          results.push(`  ✓ Preis bereits vorhanden: ${p.label} (${already.id})`);
+        } else {
+          const price = await stripe.prices.create({
+            product: productId, currency: "chf",
+            unit_amount: p.amount, recurring: { interval: p.interval },
+          });
+          results.push(`  + Preis erstellt: ${p.label} (${price.id})`);
+        }
+      }
+    }
+
+    req.log.info({ results }, "Stripe-Produkte geseedet");
+    res.json({ ok: true, results });
+  } catch (err: any) {
+    req.log.error({ err }, "Stripe-Produkt-Seeding fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
