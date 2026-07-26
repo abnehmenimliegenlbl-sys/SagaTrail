@@ -122,6 +122,17 @@
         <div class="spp-stat"><div class="num" id="spp-taps">–</div><div class="lbl">🛍 Angebot-Tipps</div></div>
       </div>
       <div id="spp-paket-info" class="spp-paket-info" style="display:none"></div>
+
+      <!-- Abo verwalten -->
+      <div id="spp-billing-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eee">
+        <button onclick="sppOpenBillingPortal()" id="spp-billing-btn"
+          style="background:none;border:1.5px solid #5a3fa8;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;color:#5a3fa8;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1.4"
+          onmouseover="this.style.background='#f3f0ff'" onmouseout="this.style.background='none'">
+          <span id="spp-billing-spinner" class="spp-spinner" style="display:none"></span>
+          💳 Abo &amp; Rechnungen verwalten
+        </button>
+        <div id="spp-billing-msg" style="font-size:12px;color:#CC0000;margin-top:6px;display:none"></div>
+      </div>
     </div>
 
     <!-- Foto (Standard / Premium) -->
@@ -530,6 +541,38 @@
     times.classList.toggle('hidden', !chk.checked);
   };
 
+  window.sppOpenBillingPortal = function() {
+    var tok = getToken();
+    if (!tok) return;
+    var btn = document.getElementById('spp-billing-btn');
+    var spinner = document.getElementById('spp-billing-spinner');
+    var msg = document.getElementById('spp-billing-msg');
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    msg.style.display = 'none';
+    fetch(API_BASE + '/api/partner/portal/billing-portal?token=' + encodeURIComponent(tok), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        msg.textContent = data.error || 'Fehler beim Öffnen des Portals.';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    })
+    .catch(function() {
+      msg.textContent = 'Verbindungsfehler. Bitte erneut versuchen.';
+      msg.style.display = 'block';
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    });
+  };
+
   window.sppLogout = function() {
     localStorage.removeItem('spp_token');
     document.getElementById('spp-dashboard').style.display = 'none';
@@ -648,6 +691,9 @@
           premium:  '🏆 Premium — Ihr Betrieb erscheint vollständig mit Foto, Angebot und wird Wanderern automatisch angesagt wenn sie in der Nähe sind.',
         }[p.paket] || '';
         if (paketTxt) { paketEl.textContent = paketTxt; paketEl.style.display = 'block'; }
+
+        // Abo-Verwaltung immer für Partner mit Stripe-Konto einblenden
+        document.getElementById('spp-billing-wrap').style.display = 'block';
 
         var isStandard = p.paket === 'standard' || p.paket === 'premium';
         var isPremium  = p.paket === 'premium';

@@ -4,6 +4,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, partnersTable, partnerTokensTable, verbandsTable, verbandTokensTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
+import { getUncachableStripeClient } from "../lib/stripeClient";
 
 const router: IRouter = Router();
 const objectStorage = new ObjectStorageService();
@@ -273,6 +274,33 @@ router.patch("/partner/portal/me", async (req, res): Promise<void> => {
 
   req.log.info({ partnerId: partner.id }, "Profil via Portal aktualisiert");
   res.json({ ok: true, partner: updated });
+});
+
+// Stripe Billing-Portal-Session erstellen
+router.post("/partner/portal/billing-portal", async (req, res): Promise<void> => {
+  const token = req.query["token"];
+  if (typeof token !== "string") { res.status(401).json({ error: "Token fehlt." }); return; }
+
+  const partner = await resolveToken(token);
+  if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
+
+  if (!partner.stripeCustomerId) {
+    res.status(400).json({ error: "Kein Stripe-Kundenkonto verknüpft." });
+    return;
+  }
+
+  try {
+    const stripe = await getUncachableStripeClient();
+    const session = await stripe.billingPortal.sessions.create({
+      customer:   partner.stripeCustomerId,
+      return_url: "https://sagatrail.ch/portal",
+    });
+    req.log.info({ partnerId: partner.id }, "Stripe Billing-Portal-Session erstellt");
+    res.json({ url: session.url });
+  } catch (err: any) {
+    req.log.error({ err }, "Fehler beim Erstellen der Billing-Portal-Session");
+    res.status(500).json({ error: "Stripe-Fehler: " + (err.message ?? "Unbekannter Fehler") });
+  }
 });
 
 export default router;
