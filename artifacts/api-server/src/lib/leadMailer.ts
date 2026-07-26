@@ -27,6 +27,7 @@ export interface Lead {
 
 export interface LeadFilter {
   typ?: string;
+  kategorie?: string;   // "F+B" | "Herberge"
   kanton?: string;
   kantone?: string[];   // Mehrfachauswahl; hat Vorrang vor kanton
   sprache?: string;
@@ -120,10 +121,11 @@ export async function fetchLeadsFromWp(
   const form = new URLSearchParams();
   form.set("action",     "sagatrail_get_leads");
   form.set("hook_secret", hookSecret);
-  if (filter.typ)     form.set("typ",     filter.typ);
+  if (filter.typ)       form.set("typ",       filter.typ);
+  if (filter.kategorie) form.set("kategorie", filter.kategorie);
   // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
   if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
-  if (filter.sprache) form.set("sprache", filter.sprache);
+  if (filter.sprache)   form.set("sprache",   filter.sprache);
 
   const res = await fetch(wpAjaxUrl, {
     method: "POST",
@@ -132,11 +134,28 @@ export async function fetchLeadsFromWp(
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
-  const json = await res.json() as { success: boolean; data?: Lead[]; error?: string };
+  const json = await res.json() as { success: boolean; data?: any[]; error?: string };
   if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  let leads = json.data ?? [];
+  let raw = json.data ?? [];
+  // WP gibt Spaltennamen direkt zurück: anschreiben_satz → satz, organisation → name
+  let leads: Lead[] = raw.map((r: any) => ({
+    name:      r.name      ?? r.organisation ?? "",
+    email:     r.email     ?? "",
+    kanton:    r.kanton    ?? r.kantone ?? "",
+    sprache:   r.sprache   ?? "DE",
+    route:     r.route     ?? "",
+    typ:       r.typ       ?? "",
+    kategorie: r.kategorie ?? "",   // "F+B" | "Herberge"
+    satz:      r.satz      ?? r.anschreiben_satz ?? "",
+    adresse:   r.adresse   ?? "",
+    telefon:   r.telefon   ?? "",
+    website:   r.website   ?? "",
+  }));
   if (filter.kantone?.length) {
     leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
+  }
+  if (filter.kategorie) {
+    leads = leads.filter((l) => (l as any).kategorie === filter.kategorie);
   }
   return leads;
 }

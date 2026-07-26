@@ -1227,10 +1227,10 @@ router.get("/admin/leads/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const wpUrl = WP_AJAX();
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
-  const { typ, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
+  const { typ, kategorie, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
   const kantone = kantoneStr ? kantoneStr.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
   try {
-    const leads = await fetchLeadsFromWp({ typ, kanton, kantone, sprache }, wpUrl, WP_SECRET());
+    const leads = await fetchLeadsFromWp({ typ, kategorie, kanton, kantone, sprache }, wpUrl, WP_SECRET());
     res.json({ leads, total: leads.length });
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
@@ -1262,7 +1262,7 @@ router.post("/admin/leads/send", async (req, res): Promise<void> => {
       leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
     } else {
       const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
-      leads = await fetchLeadsFromWp({ typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
+      leads = await fetchLeadsFromWp({ typ: f.typ, kategorie: f.kategorie, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
     }
   } catch (err) {
     res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") }); return;

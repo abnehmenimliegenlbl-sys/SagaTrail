@@ -361,6 +361,14 @@ a{color:var(--red);text-decoration:none}
 
       <!-- Filter Partner-Leads -->
       <div id="km-filters-leads" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+        <div class="form-group" style="min-width:160px">
+          <label>Kategorie</label>
+          <div style="display:flex;gap:5px;margin-top:3px">
+            <button type="button" id="km-kat-alle"    class="kt-chip kt-alle" onclick="kmSetKat('')"        style="padding:4px 10px">Alle</button>
+            <button type="button" id="km-kat-fnb"     class="kt-chip"         onclick="kmSetKat('F+B')"     style="padding:4px 10px">🍽 F+B</button>
+            <button type="button" id="km-kat-herberg" class="kt-chip"         onclick="kmSetKat('Herberge')" style="padding:4px 10px">🏨 Herberge</button>
+          </div>
+        </div>
         <div class="form-group" style="min-width:140px">
           <label>Typ</label>
           <select id="km-typ" onchange="kmLoadLeads()"><option value="">Alle Typen</option></select>
@@ -1841,9 +1849,18 @@ async function deleteVerband(id) {
 /* ═══════════════════════════════════════════════════
    KAMPAGNE / MASSEN-E-MAIL
    ═══════════════════════════════════════════════════ */
-var _kmLeads   = [];
-var _kmPolling = null;
-var _kmSource  = 'leads';   // 'leads' | 'orgs'
+var _kmLeads     = [];
+var _kmPolling   = null;
+var _kmSource    = 'leads';   // 'leads' | 'orgs'
+var _kmKategorie = '';        // '' | 'F+B' | 'Herberge'
+
+function kmSetKat(kat) {
+  _kmKategorie = kat;
+  document.getElementById('km-kat-alle').classList.toggle('kt-alle', kat === '');
+  document.getElementById('km-kat-fnb').classList.toggle('kt-alle', kat === 'F+B');
+  document.getElementById('km-kat-herberg').classList.toggle('kt-alle', kat === 'Herberge');
+  kmLoadLeads();
+}
 
 // Kantone die die jeweilige Sprache sprechen (amtliche Sprachregionen CH)
 var KM_SPRACHE_KANTONE = {
@@ -1990,12 +2007,14 @@ async function kmLoadLeads() {
       data = await api('/api/admin/orgs/list?' + params.toString());
       thead.innerHTML = '<tr><th>Organisation</th><th>E-Mail</th><th>Kategorie</th><th>Kantone</th><th>Sprache</th><th>Anschreiben-Satz</th></tr>';
     } else {
-      var typ     = v('km-typ');
-      var kantone = kmGetSelectedKantone('km-kanton-picker');
-      var sprache = v('km-sprache');
-      if (typ)           params.set('typ', typ);
-      if (kantone.length) params.set('kantone', kantone.join(','));
-      if (sprache)       params.set('sprache', sprache);
+      var typ      = v('km-typ');
+      var kat      = _kmKategorie || '';
+      var kantone  = kmGetSelectedKantone('km-kanton-picker');
+      var sprache  = v('km-sprache');
+      if (typ)            params.set('typ',      typ);
+      if (kat)            params.set('kategorie', kat);
+      if (kantone.length) params.set('kantone',  kantone.join(','));
+      if (sprache)        params.set('sprache',  sprache);
       data = await api('/api/admin/leads/list?' + params.toString());
       thead.innerHTML = '<tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr>';
     }
@@ -2052,7 +2071,7 @@ async function kmSend() {
   try {
     var filters = _kmSource === 'orgs'
       ? { _source: 'orgs', kategorie: v('km-org-kategorie'), typ: v('km-org-typ'), kantone: kmGetSelectedKantone('km-org-kanton-picker'), sprache: v('km-org-sprache') }
-      : { _source: 'leads', typ: v('km-typ'), kantone: kmGetSelectedKantone('km-kanton-picker'), sprache: v('km-sprache') };
+      : { _source: 'leads', typ: v('km-typ'), kategorie: _kmKategorie || '', kantone: kmGetSelectedKantone('km-kanton-picker'), sprache: v('km-sprache') };
     var res = await api('/api/admin/leads/send', { method:'POST',
       body: JSON.stringify({ subject: subject, bodyText: bodyText, filters: filters }) });
     document.getElementById('km-progress-card').style.display = 'block';
