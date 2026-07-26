@@ -25,5 +25,5 @@ echo "         in den Replit Secrets speichern, dann Server neu starten."
 echo ""
 
 exec "$STRIPE_BIN" listen \
-  --api-key "$STRIPE_SECRET_KEY" \
+  --api-key "$STRIPE_SECRET_KEY_TEST" \
   --forward-to "http://localhost:8080/api/stripe/webhook"
