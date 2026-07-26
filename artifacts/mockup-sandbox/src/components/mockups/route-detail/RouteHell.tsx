@@ -174,7 +174,7 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           KACHEL-GRID  5 Spalten
       ══════════════════════════════════════════ */}
-      <div className="px-3 flex-shrink-0 pt-2">
+      <div className="px-3 flex-shrink-0">
 
         {/* ── Reihe 1: 5 Metriken ── */}
         <div className="grid grid-cols-5 gap-1.5 mb-1.5">
