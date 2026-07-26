@@ -21,6 +21,7 @@ import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes } from "../lib/routeService";
+import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
   fetchLeadsFromWp, fetchOrgsFromWp, campaignState, startCampaign, buildPreviewHtml,
@@ -753,6 +754,32 @@ router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
     } catch (err) {
       req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");
     }
+  })();
+});
+
+// POST /admin/routes/warm-all – Alle 26 Kantone sequenziell langsam laden
+router.post("/admin/routes/warm-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { timeoutMs = 120_000, batchSize = 15, pauseMs = 4_000, cantonPauseMs = 10_000, forceRefresh = true } =
+    req.body as { timeoutMs?: number; batchSize?: number; pauseMs?: number; cantonPauseMs?: number; forceRefresh?: boolean };
+
+  const cantons = Object.keys(CANTON_ISO);
+  res.json({ ok: true, cantons: cantons.length, timeoutMs, batchSize, pauseMs, cantonPauseMs, forceRefresh, message: "Alle-Kantone-Warm gestartet – läuft sequenziell im Hintergrund" });
+
+  (async () => {
+    req.log.info({ total: cantons.length, timeoutMs, batchSize, pauseMs, cantonPauseMs }, "Alle-Kantone-Warm gestartet");
+    for (const canton of cantons) {
+      try {
+        req.log.info({ canton }, "Kantone-Warm: starte");
+        const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs, forceRefresh });
+        req.log.info({ canton, count: routes.length }, "Kantone-Warm: abgeschlossen");
+      } catch (err) {
+        req.log.error({ canton, err }, "Kantone-Warm: fehlgeschlagen, weiter mit nächstem");
+      }
+      // Pause zwischen Kantonen damit Overpass sich erholen kann
+      await new Promise((resolve) => setTimeout(resolve, cantonPauseMs));
+    }
+    req.log.info("Alle-Kantone-Warm vollständig abgeschlossen");
   })();
 });
 
