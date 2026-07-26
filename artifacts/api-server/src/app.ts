@@ -52,26 +52,45 @@ app.post(
       return;
     }
     const sig = Array.isArray(signature) ? signature[0] : signature;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    try {
-      // 1. stripe-replit-sync synchronisiert Stripe-Daten in die stripe.*-Tabellen
-      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-
-      // 2. Eigene Business-Logik — Signatur wurde in Schritt 1 bereits geprüft,
-      //    daher können wir den Buffer direkt als JSON parsen.
+    // ── Signatur-Verifikation (direkt via Stripe SDK, unabhängig von stripe-replit-sync) ──
+    let event: Stripe.Event;
+    if (webhookSecret) {
       try {
-        const event = JSON.parse((req.body as Buffer).toString("utf8")) as Stripe.Event;
-        await handleStripeEvent(event);
-      } catch (bizErr: any) {
-        logger.error({ err: bizErr }, "Stripe-Business-Logik-Fehler (nicht kritisch)");
-        // Trotzdem 200 zurückgeben, damit Stripe nicht nochmal versucht
+        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+        event = stripeClient.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+      } catch (err: any) {
+        logger.warn({ err }, "Stripe-Webhook-Signatur ungültig");
+        res.status(400).json({ error: "Invalid signature" });
+        return;
       }
-
-      res.status(200).json({ received: true });
-    } catch (err: any) {
-      logger.error({ err }, "Stripe-Webhook-Fehler");
-      res.status(400).json({ error: "Webhook processing error" });
+    } else {
+      // Kein Secret konfiguriert — Event ohne Verifikation parsen (nur Dev/Test)
+      try {
+        event = JSON.parse((req.body as Buffer).toString("utf8")) as Stripe.Event;
+        logger.warn({ eventType: event.type }, "Stripe-Webhook ohne Signatur-Verifikation verarbeitet");
+      } catch {
+        res.status(400).json({ error: "Invalid JSON" });
+        return;
+      }
     }
+
+    // ── stripe-replit-sync (optional, kann scheitern) ──
+    try {
+      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+    } catch (syncErr: any) {
+      logger.warn({ err: syncErr }, "stripe-replit-sync fehlgeschlagen (nicht kritisch)");
+    }
+
+    // ── Eigene Business-Logik ──
+    try {
+      await handleStripeEvent(event);
+    } catch (bizErr: any) {
+      logger.error({ err: bizErr }, "Stripe-Business-Logik-Fehler (nicht kritisch)");
+    }
+
+    res.status(200).json({ received: true });
   },
 );
 
