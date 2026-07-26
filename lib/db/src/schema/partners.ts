@@ -19,6 +19,7 @@ export type PartnerKategorie =
 
 export type Zahlungsstatus =
   | "ausstehend"
+  | "trial"
   | "bezahlt"
   | "mahnung1"
   | "mahnung2"

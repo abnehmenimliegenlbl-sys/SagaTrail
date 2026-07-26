@@ -33,7 +33,7 @@ const PORTAL_BASE = "https://sagatrail.ch/portal";
 
 // ─── Magic-Link senden ────────────────────────────────────────────────────────
 
-async function sendMagicLink(partnerId: string, partnerName: string, email: string): Promise<void> {
+async function sendMagicLink(partnerId: string, partnerName: string, email: string, isTrial = false): Promise<void> {
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -49,15 +49,24 @@ async function sendMagicLink(partnerId: string, partnerName: string, email: stri
   const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
+  const subject = isTrial
+    ? "Ihr 30-tägiger SagaTrail-Test beginnt jetzt"
+    : "Ihr SagaTrail-Partner-Portal ist bereit";
+  const intro = isTrial
+    ? `Ihre kostenlose 30-Tage-Testphase hat begonnen. Sie haben vollen Zugang zu allen Partner-Funktionen – ohne Kosten, ohne Risiko. Nach Ablauf der Testphase wird Ihr Abo automatisch aktiviert.`
+    : `Ihr SagaTrail-Partner-Konto wurde erfolgreich aktiviert.`;
+
   await transporter.sendMail({
     envelope: { from: envelopeFrom, to: email },
     from: `SagaTrail <${envelopeFrom}>`,
     to: email,
-    subject: "Ihr SagaTrail-Partner-Portal ist bereit",
+    subject,
     text: [
       `Guten Tag ${partnerName},`,
       "",
-      "Ihr SagaTrail-Partner-Konto wurde erfolgreich aktiviert. Über folgenden Link gelangen Sie direkt in Ihr Partner-Portal:",
+      intro,
+      "",
+      "Über folgenden Link gelangen Sie direkt in Ihr Partner-Portal:",
       "",
       portalUrl,
       "",
@@ -100,7 +109,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     const session = event.data.object as Stripe.Checkout.Session;
     const meta = session.metadata ?? {};
 
-    // Nur Partner-Checkouts verarbeiten (nicht andere mögliche zukünftige Flows)
+    // Nur Partner-Checkouts verarbeiten
     if (meta.flow !== "partner_onboarding") return;
 
     const email = meta.email ?? session.customer_details?.email ?? "";
@@ -118,32 +127,48 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
     if (existing) {
       logger.info({ partnerId: existing.id }, "Partner existiert bereits — sende neuen Magic-Link");
-      await sendMagicLink(existing.id, existing.name, email);
+      await sendMagicLink(existing.id, existing.name, email, false);
       return;
     }
 
-    // Neuen Partner anlegen
+    // Trial-Status aus Subscription ermitteln
+    const stripeSubscriptionId = typeof session.subscription === "string"
+      ? session.subscription
+      : (session.subscription as any)?.id ?? null;
+
+    let isTrial = false;
+    let trialEnd: Date | null = null;
+
+    if (stripeSubscriptionId) {
+      try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY_TEST ?? "");
+        const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        isTrial = sub.status === "trialing";
+        if (isTrial && sub.trial_end) {
+          trialEnd = new Date(sub.trial_end * 1000);
+        }
+      } catch (err) {
+        logger.warn({ err, stripeSubscriptionId }, "Konnte Subscription-Status nicht abrufen");
+      }
+    }
+
     const now = new Date();
     const paket = (meta.paket as "basic" | "standard" | "premium") ?? "basic";
     const abrechnungsperiode = meta.abrechnungsperiode ?? "jaehrlich";
 
-    // Laufzeit: 1 Monat oder 1 Jahr
-    const laufzeitEnde = new Date(now);
-    if (abrechnungsperiode === "monatlich") {
-      laufzeitEnde.setMonth(laufzeitEnde.getMonth() + 1);
-    } else {
-      laufzeitEnde.setFullYear(laufzeitEnde.getFullYear() + 1);
-    }
+    // Laufzeit: bei Trial → bis Trial-Ende; sonst 1 Monat / 1 Jahr
+    const laufzeitEnde = trialEnd ?? (() => {
+      const d = new Date(now);
+      if (abrechnungsperiode === "monatlich") d.setMonth(d.getMonth() + 1);
+      else d.setFullYear(d.getFullYear() + 1);
+      return d;
+    })();
 
     const partnerId = randomUUID();
     const stripeCustomerId = typeof session.customer === "string"
       ? session.customer
-      : session.customer?.id ?? null;
-    const stripeSubscriptionId = typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription?.id ?? null;
+      : (session.customer as any)?.id ?? null;
 
-    // Adresse + Kontaktname in notizenIntern als JSON ablegen (Felder existieren nicht in partners-Tabelle)
     const notizenIntern = JSON.stringify({
       adresse:     meta.adresse,
       plz:         meta.plz,
@@ -159,7 +184,7 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       canton:               meta.canton ?? "",
       telefon:              meta.telefon ?? null,
       paket,
-      zahlungsstatus:       "bezahlt",
+      zahlungsstatus:       isTrial ? "trial" : "bezahlt",
       laufzeitStart:        now,
       laufzeitEnde,
       isActive:             true,
@@ -170,9 +195,45 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       updatedAt:            now,
     });
 
-    logger.info({ partnerId, email, paket }, "Partner via Stripe-Webhook angelegt");
+    logger.info({ partnerId, email, paket, isTrial }, "Partner via Stripe-Webhook angelegt");
 
-    await sendMagicLink(partnerId, meta.betriebsName ?? "Partner", email);
+    await sendMagicLink(partnerId, meta.betriebsName ?? "Partner", email, isTrial);
+  }
+
+  // Trial abgelaufen → erste echte Zahlung eingegangen
+  if (event.type === "invoice.paid") {
+    const invoice = event.data.object as Stripe.Invoice & { subscription?: string | { id: string } | null };
+    const subId = typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : (invoice.subscription as any)?.id ?? null;
+    if (!subId) return;
+
+    const [partner] = await db
+      .select()
+      .from(partnersTable)
+      .where(eq(partnersTable.stripeSubscriptionId, subId))
+      .limit(1);
+
+    if (!partner) return;
+
+    // Nur upgraden, nie downgraden (falls invoice.paid mehrfach feuert)
+    if (partner.zahlungsstatus === "trial" || partner.zahlungsstatus === "ausstehend") {
+      // Laufzeit ab jetzt verlängern
+      const now = new Date();
+      const laufzeitEnde = new Date(now);
+      const isMonatlich = partner.paket === "basic" && invoice.period_end
+        ? (invoice.period_end - invoice.period_start) < 35 * 86400
+        : false;
+      if (isMonatlich) laufzeitEnde.setMonth(laufzeitEnde.getMonth() + 1);
+      else laufzeitEnde.setFullYear(laufzeitEnde.getFullYear() + 1);
+
+      await db
+        .update(partnersTable)
+        .set({ zahlungsstatus: "bezahlt", laufzeitEnde, updatedAt: now })
+        .where(eq(partnersTable.id, partner.id));
+
+      logger.info({ partnerId: partner.id, subId }, "Partner Trial → bezahlt (invoice.paid)");
+    }
   }
 
   // Abo gekündigt / Zahlung fehlgeschlagen → Partner deaktivieren
