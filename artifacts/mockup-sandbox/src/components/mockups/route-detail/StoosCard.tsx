@@ -186,48 +186,24 @@ export default function StoosCard() {
               className="absolute inset-0 w-full h-full object-fill"
             />
             <svg viewBox="0 0 364 166" className="absolute inset-0 w-full h-full">
-              {/* Routenschatten */}
-              <polyline
-                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
-                fill="none" stroke="rgba(180,0,0,0.20)" strokeWidth="6"
-                strokeLinejoin="round" strokeLinecap="round"
-              />
-              {/* Route */}
-              <polyline
-                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
-                fill="none" stroke="#cc0000" strokeWidth="3.5"
-                strokeLinejoin="round" strokeLinecap="round"
-              />
-              {/* Start — Stoos */}
-              <circle cx="114" cy="67" r="7" fill="#cc0000"/>
-              <circle cx="114" cy="67" r="3.5" fill="white"/>
-              {/* Zwischenpunkte */}
-              {([[172,77],[213,98],[234,110]] as [number,number][]).map(([x,y],i) => (
-                <circle key={i} cx={x} cy={y} r="3" fill="white" stroke="#cc0000" strokeWidth="1.8"/>
-              ))}
-              {/* Ziel — Großer Mythen */}
-              <circle cx="281" cy="120" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
-              <circle cx="281" cy="120" r="3" fill="#cc0000"/>
+              {/* 1. Labels zuerst (unten in Z) */}
+              <text x="122" y="56" fontSize="8" fill="white" fontWeight="800" stroke="white" strokeWidth="3" paintOrder="stroke">Stoos</text>
+              <text x="122" y="56" fontSize="8" fill="#1a3a1a" fontWeight="700">Stoos</text>
+              <text x="122" y="64" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1300 m</text>
+              <text x="122" y="64" fontSize="6" fill="#3a5a3a">1300 m</text>
 
-              {/* Labels mit weissem Halo */}
-              {/* Stoos */}
-              <text x="122" y="63" fontSize="8" fill="white" fontWeight="800" stroke="white" strokeWidth="3" paintOrder="stroke">Stoos</text>
-              <text x="122" y="63" fontSize="8" fill="#1a3a1a" fontWeight="700">Stoos</text>
-              <text x="122" y="72" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1300 m</text>
-              <text x="122" y="72" fontSize="6" fill="#3a5a3a">1300 m</text>
-              {/* Holzegg */}
-              <text x="150" y="73" fontSize="7" fill="white" fontWeight="700" stroke="white" strokeWidth="3" paintOrder="stroke">Holzegg</text>
-              <text x="150" y="73" fontSize="7" fill="#1a3a1a" fontWeight="600">Holzegg</text>
-              {/* Kl. Mythen */}
-              <text x="198" y="106" fontSize="7" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="700">Kl. Mythen</text>
-              <text x="198" y="106" fontSize="7" fill="#1a3a1a" fontWeight="600">Kl. Mythen</text>
-              <text x="200" y="114" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1811 m</text>
-              <text x="200" y="114" fontSize="6" fill="#3a5a3a">1811 m</text>
-              {/* Gr. Mythen */}
-              <text x="244" y="116" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Gr. Mythen</text>
-              <text x="244" y="116" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Gr. Mythen</text>
-              <text x="248" y="125" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1898 m</text>
-              <text x="248" y="125" fontSize="6" fill="#3a5a3a">1898 m</text>
+              <text x="148" y="70" fontSize="7" fill="white" fontWeight="700" stroke="white" strokeWidth="3" paintOrder="stroke">Holzegg</text>
+              <text x="148" y="70" fontSize="7" fill="#1a3a1a" fontWeight="600">Holzegg</text>
+
+              <text x="194" y="100" fontSize="7" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="700">Kl. Mythen</text>
+              <text x="194" y="100" fontSize="7" fill="#1a3a1a" fontWeight="600">Kl. Mythen</text>
+              <text x="196" y="108" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1811 m</text>
+              <text x="196" y="108" fontSize="6" fill="#3a5a3a">1811 m</text>
+
+              <text x="240" y="112" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Gr. Mythen</text>
+              <text x="240" y="112" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Gr. Mythen</text>
+              <text x="244" y="121" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1898 m</text>
+              <text x="244" y="121" fontSize="6" fill="#3a5a3a">1898 m</text>
 
               {/* Kompass */}
               <g transform="translate(344,148)">
@@ -239,6 +215,25 @@ export default function StoosCard() {
               {/* © swisstopo */}
               <text x="6" y="163" fontSize="5.5" fill="white" stroke="white" strokeWidth="2" paintOrder="stroke" opacity="0.9">© swisstopo</text>
               <text x="6" y="163" fontSize="5.5" fill="#444" opacity="0.9">© swisstopo</text>
+
+              {/* 2. Route + Marker ganz oben in Z */}
+              <polyline
+                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
+                fill="none" stroke="rgba(180,0,0,0.22)" strokeWidth="7"
+                strokeLinejoin="round" strokeLinecap="round"
+              />
+              <polyline
+                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
+                fill="none" stroke="#cc0000" strokeWidth="3.5"
+                strokeLinejoin="round" strokeLinecap="round"
+              />
+              <circle cx="114" cy="67" r="7" fill="#cc0000"/>
+              <circle cx="114" cy="67" r="3.5" fill="white"/>
+              {([[172,77],[213,98],[234,110]] as [number,number][]).map(([x,y],i) => (
+                <circle key={i} cx={x} cy={y} r="3" fill="white" stroke="#cc0000" strokeWidth="1.8"/>
+              ))}
+              <circle cx="281" cy="120" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
+              <circle cx="281" cy="120" r="3" fill="#cc0000"/>
             </svg>
           </div>
         </div>
