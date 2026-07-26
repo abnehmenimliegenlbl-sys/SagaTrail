@@ -692,8 +692,10 @@
         }[p.paket] || '';
         if (paketTxt) { paketEl.textContent = paketTxt; paketEl.style.display = 'block'; }
 
-        // Abo-Verwaltung immer für Partner mit Stripe-Konto einblenden
-        document.getElementById('spp-billing-wrap').style.display = 'block';
+        // Abo-Verwaltung nur einblenden wenn Stripe-Abo verknüpft ist
+        if (p.hasStripeAccount) {
+          document.getElementById('spp-billing-wrap').style.display = 'block';
+        }
 
         var isStandard = p.paket === 'standard' || p.paket === 'premium';
         var isPremium  = p.paket === 'premium';

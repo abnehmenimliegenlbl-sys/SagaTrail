@@ -129,6 +129,7 @@ router.get("/partner/portal/me", async (req, res): Promise<void> => {
       offersTapped: partner.offersTapped,
       laufzeitStart: partner.laufzeitStart,
       laufzeitEnde: partner.laufzeitEnde,
+      hasStripeAccount: !!partner.stripeCustomerId,
     });
     return;
   }
