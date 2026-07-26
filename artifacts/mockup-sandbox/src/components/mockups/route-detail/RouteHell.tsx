@@ -174,12 +174,12 @@ export default function RouteHell() {
           </div>
           <div>
             <div className="text-white font-black text-[14px] tracking-wider leading-none mb-0.5">SAGATRAIL</div>
-            <div className="text-gray-400 text-[11px]">www.sagatrail.ch</div>
+            <div className="text-white/80 text-[11px]">www.sagatrail.ch</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-gray-500 text-[10px] uppercase tracking-widest">Wanderapp Schweiz</div>
-          <div className="text-gray-600 text-[10px] mt-0.5">Sagen auf dem Trail erleben</div>
+          <div className="text-white/70 text-[10px] uppercase tracking-widest">Wanderapp Schweiz</div>
+          <div className="text-white/70 text-[10px] mt-0.5">Sagen auf dem Trail erleben</div>
         </div>
       </div>
 
