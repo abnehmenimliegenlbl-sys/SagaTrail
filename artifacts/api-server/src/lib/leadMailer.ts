@@ -372,9 +372,10 @@ async function runCampaign(campaignId: string, opts: {
   apiBase:  string;
 }): Promise<void> {
   const { subject, bodyText, leads, apiBase } = opts;
-  // envelopeFrom muss exakt mit dem auth-User übereinstimmen (Infomaniak-Requirement)
-  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
-  const from = process.env.SMTP_FROM ?? envelopeFrom;
+  // SMTP_FROM = verifizierte Absenderadresse (info@sagatrail.ch)
+  // SMTP_USER = Brevo-Login (b35820001@smtp-brevo.com) – nur für Auth, nicht als From
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = from; // Brevo erlaubt beliebige verifizierte Sender als envelope.from
 
   // Blocklist laden
   const blocklist = await db
