@@ -1312,6 +1312,17 @@ router.get("/admin/leads/status", (req, res): void => {
   res.json(campaignState);
 });
 
+// POST /admin/leads/stop – laufende Kampagne anhalten
+router.post("/admin/leads/stop", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+  if (campaignState.status !== "running") {
+    res.status(409).json({ error: "Keine Kampagne läuft" });
+    return;
+  }
+  campaignState.stopRequested = true;
+  res.json({ ok: true });
+});
+
 // GET /admin/leads/log?page=1&perPage=50&subject= – Versand-Log
 router.get("/admin/leads/log", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;

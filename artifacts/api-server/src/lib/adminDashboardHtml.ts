@@ -434,6 +434,7 @@ a{color:var(--red);text-decoration:none}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="kmPreview()">&#128065;&#65039; Vorschau</button>
         <button class="btn btn-primary" id="km-send-btn" onclick="kmSend()" disabled>&#128140; Kampagne starten</button>
+        <button class="btn btn-danger"  id="km-stop-btn" onclick="kmStop()" style="display:none">&#9632; Stopp</button>
         <span id="km-compose-status" class="hint"></span>
       </div>
     </div>
@@ -2064,6 +2065,18 @@ async function kmSend() {
   }
 }
 
+async function kmStop() {
+  var btn = document.getElementById('km-stop-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Stoppe…';
+  try {
+    await api('/api/admin/leads/stop', { method: 'POST' });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '⏹ Stopp';
+  }
+}
+
 function kmStartPolling() {
   if (_kmPolling) clearInterval(_kmPolling);
   _kmPolling = setInterval(kmPollStatus, 1500);
@@ -2081,7 +2094,9 @@ async function kmPollStatus() {
     document.getElementById('km-progress-text').innerHTML =
       '&#9989; Versendet: ' + s.sent + ' &nbsp; &#10060; Fehler: ' + s.failed +
       ' &nbsp; &#9654; Übersprungen: ' + s.skipped + ' &nbsp; / ' + s.total + last;
-    if (s.status === 'done' || s.status === 'error') {
+    var isRunning = s.status === 'running';
+    document.getElementById('km-stop-btn').style.display = isRunning ? '' : 'none';
+    if (s.status === 'done' || s.status === 'error' || s.status === 'stopped') {
       clearInterval(_kmPolling);
       _kmPolling = null;
       var btn = document.getElementById('km-send-btn');
@@ -2090,6 +2105,9 @@ async function kmPollStatus() {
       if (s.status === 'error') {
         document.getElementById('km-progress-bar').style.background = 'var(--red)';
         document.getElementById('km-compose-status').textContent = '⚠ Fehler: ' + (s.error || '?');
+      } else if (s.status === 'stopped') {
+        document.getElementById('km-progress-bar').style.background = 'var(--orange, #f59e0b)';
+        document.getElementById('km-compose-status').textContent = '⏹ Gestoppt – ' + s.sent + ' versendet, ' + s.skipped + ' übersprungen';
       } else {
         document.getElementById('km-progress-bar').style.background = 'var(--green)';
         document.getElementById('km-compose-status').textContent = '✓ Abgeschlossen – ' + s.sent + ' versendet, ' + s.failed + ' Fehler, ' + s.skipped + ' übersprungen';

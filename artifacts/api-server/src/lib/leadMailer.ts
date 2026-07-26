@@ -41,7 +41,7 @@ export interface OrgFilter {
 }
 
 export interface CampaignState {
-  status: "idle" | "running" | "done" | "error";
+  status: "idle" | "running" | "done" | "error" | "stopped";
   campaignId: string | null;
   total: number;
   sent: number;
@@ -51,6 +51,7 @@ export interface CampaignState {
   startedAt: Date | null;
   finishedAt: Date | null;
   lastRecipient: string | null;
+  stopRequested: boolean;
 }
 
 export const campaignState: CampaignState = {
@@ -64,6 +65,7 @@ export const campaignState: CampaignState = {
   startedAt: null,
   finishedAt: null,
   lastRecipient: null,
+  stopRequested: false,
 };
 
 // ─── WP AJAX: Leads laden ────────────────────────────────────────────────────
@@ -349,16 +351,17 @@ export async function startCampaign(opts: {
   if (campaignState.status === "running") return;
 
   const campaignId = randomUUID();
-  campaignState.status      = "running";
-  campaignState.campaignId  = campaignId;
-  campaignState.total       = opts.leads.length;
-  campaignState.sent        = 0;
-  campaignState.failed      = 0;
-  campaignState.skipped     = 0;
-  campaignState.error       = null;
-  campaignState.startedAt   = new Date();
-  campaignState.finishedAt  = null;
+  campaignState.status        = "running";
+  campaignState.campaignId    = campaignId;
+  campaignState.total         = opts.leads.length;
+  campaignState.sent          = 0;
+  campaignState.failed        = 0;
+  campaignState.skipped       = 0;
+  campaignState.error         = null;
+  campaignState.startedAt     = new Date();
+  campaignState.finishedAt    = null;
   campaignState.lastRecipient = null;
+  campaignState.stopRequested = false;
 
   runCampaign(campaignId, opts).catch((err) => {
     campaignState.status = "error";
@@ -408,6 +411,11 @@ async function runCampaign(campaignId: string, opts: {
 
   // In Batches aufteilen
   for (let i = 0; i < toSend.length; i += BATCH_SIZE) {
+    if (campaignState.stopRequested) {
+      campaignState.status     = "stopped";
+      campaignState.finishedAt = new Date();
+      return;
+    }
     const batch = toSend.slice(i, i + BATCH_SIZE);
 
     // Alle im Batch vorab als "unterwegs" markieren → verhindert Doppel-Send
