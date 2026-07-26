@@ -335,3 +335,9 @@ id = "vOJBahBXmzMTpsr-NV83A"
 uri = "file://screenshots/stoos-mythen-karte-v3.jpg"
 type = "image"
 title = "Großer Mythen – SagaTrail Karte (final)"
+
+[[outputs]]
+id = "f0hz5nBAHebxat_3hsz9H"
+uri = "file://screenshots/beatus-hoehlen-karte.jpg"
+type = "image"
+title = "St. Beatus-Höhlen – SagaTrail Karte"
