@@ -1194,74 +1194,79 @@
 
     setLoading(true);
 
-    // 1. WordPress-DB (Primärquelle)
-    var wpFormData = new FormData();
-    wpFormData.append('action', 'st_partner_anfrage');
-    wpFormData.append('nonce', (window.stPartnerData && window.stPartnerData.nonce) || '');
-    Object.keys(data).forEach(function(k) {
-      if (data[k] !== undefined) wpFormData.append(k, data[k]);
-    });
-
-    var wpUrl = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
-
-    var apiBase = (window.stPartnerData && window.stPartnerData.apiBase) || 'https://api.sagatrail.ch';
+    var apiBase = (window.stPartnerData && window.stPartnerData.apiBase)
+               || 'https://api.sagatrail.ch';
     var isBestellung = (data.typ === 'bestellung');
 
-    fetch(wpUrl, { method: 'POST', body: wpFormData })
+    if (isBestellung) {
+      // ── Bestellung: direkt zu Stripe, kein WP-AJAX-Umweg ─────────────────
+      fetch(apiBase + '/api/partner/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          betriebsName:       data.betriebsName,
+          kategorie:          data.kategorie,
+          canton:             data.canton,
+          adresse:            data.adresse || '',
+          plz:                data.plz     || '',
+          ort:                data.ort     || '',
+          kontaktName:        data.kontaktName,
+          email:              data.kontaktEmail,
+          telefon:            data.kontaktTelefon || '',
+          paket:              data.paket,
+          abrechnungsperiode: data.abrechnungsperiode || 'jaehrlich',
+          returnHost:         window.location.origin,
+        })
+      })
       .then(function(r) { return r.json(); })
-      .then(function(json) {
-        if (!json.success) throw new Error(json.data || 'WordPress-Fehler');
-
-        if (isBestellung && apiBase) {
-          // Bestellung → Stripe Checkout
-          return fetch(apiBase + '/api/partner/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              betriebsName:       data.betriebsName,
-              kategorie:          data.kategorie,
-              canton:             data.canton,
-              adresse:            data.adresse || '',
-              plz:                data.plz     || '',
-              ort:                data.ort     || '',
-              kontaktName:        data.kontaktName,
-              email:              data.kontaktEmail,
-              telefon:            data.kontaktTelefon || '',
-              paket:              data.paket,
-              abrechnungsperiode: data.abrechnungsperiode || 'jaehrlich',
-              returnHost:         window.location.origin,
-            })
-          })
-          .then(function(r) { return r.json(); })
-          .then(function(j) {
-            if (j.url) {
-              window.location.href = j.url; // → Stripe Checkout
-            } else {
-              throw new Error(j.error || 'Kein Checkout-Link erhalten.');
-            }
-          });
+      .then(function(j) {
+        if (j.url) {
+          window.location.href = j.url;
         } else {
-          // Anfrage → fire-and-forget + Erfolgsmeldung
-          if (apiBase) {
-            fetch(apiBase + '/api/partner/anfrage', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-            }).catch(function() { /* silent */ });
-          }
-          form.reset();
-          updateSubmitArea();
-          showFeedback('Vielen Dank für Ihre Anfrage! Wir melden uns innert 2 Werktagen bei Ihnen.', 'success');
-          setLoading(false);
+          throw new Error(j.error || 'Kein Checkout-Link erhalten.');
         }
       })
       .catch(function(err) {
         showFeedback(
-          'Fehler: ' + err.message + '. Bitte versuchen Sie es erneut oder schreiben Sie uns an info@sagatrail.ch.',
+          'Fehler beim Checkout: ' + err.message + '. Bitte schreiben Sie uns an info@sagatrail.ch.',
           'error'
         );
         setLoading(false);
       });
+
+    } else {
+      // ── Anfrage: WP-AJAX (mit Nonce) + fire-and-forget zur API ───────────
+      var wpFormData = new FormData();
+      wpFormData.append('action', 'st_partner_anfrage');
+      wpFormData.append('nonce', (window.stPartnerData && window.stPartnerData.nonce) || '');
+      Object.keys(data).forEach(function(k) {
+        if (data[k] !== undefined) wpFormData.append(k, data[k]);
+      });
+      var wpUrl = (window.stPartnerData && window.stPartnerData.ajaxUrl) || '/wp-admin/admin-ajax.php';
+
+      fetch(wpUrl, { method: 'POST', body: wpFormData })
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+          if (!json.success) throw new Error(json.data || 'WordPress-Fehler');
+          // Fire-and-forget zur API
+          fetch(apiBase + '/api/partner/anfrage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          }).catch(function() {});
+          form.reset();
+          updateSubmitArea();
+          showFeedback('Vielen Dank für Ihre Anfrage! Wir melden uns innert 2 Werktagen bei Ihnen.', 'success');
+          setLoading(false);
+        })
+        .catch(function(err) {
+          showFeedback(
+            'Fehler: ' + err.message + '. Bitte versuchen Sie es erneut oder schreiben Sie uns an info@sagatrail.ch.',
+            'error'
+          );
+          setLoading(false);
+        });
+    }
   });
 })();
 </script>
