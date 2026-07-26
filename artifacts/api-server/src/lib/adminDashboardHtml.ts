@@ -1863,10 +1863,15 @@ var KT_SHORT = {
 function kmBuildKantonPicker(pickerId, kantone) {
   var el = document.getElementById(pickerId);
   if (!el) return;
-  el.innerHTML = '<button type="button" class="kt-chip kt-alle active" onclick="kmToggleAlleChip(this,\''+pickerId+'\')" data-kt="alle">Alle</button>';
+  var html = '<button type="button" class="kt-chip kt-alle active" data-kt="alle">Alle</button>';
   kantone.forEach(function(k) {
     var short = KT_SHORT[k] || k;
-    el.innerHTML += '<button type="button" class="kt-chip" onclick="kmToggleKtChip(this,\''+pickerId+'\')" data-kt="'+esc(k)+'">'+esc(short)+'</button>';
+    html += '<button type="button" class="kt-chip" data-kt="'+esc(k)+'">'+esc(short)+'</button>';
+  });
+  el.innerHTML = html;
+  el.querySelector('.kt-alle').addEventListener('click', function() { kmToggleAlleChip(this, pickerId); });
+  el.querySelectorAll('.kt-chip:not(.kt-alle)').forEach(function(chip) {
+    chip.addEventListener('click', function() { kmToggleKtChip(this, pickerId); });
   });
 }
 
