@@ -347,3 +347,9 @@ id = "YJ3XEvDY7qqQRJY2ea9Z5"
 uri = "file://screenshots/beatus-hoehlen-karte-v2.jpg"
 type = "image"
 title = "St. Beatus-Höhlen – SagaTrail Karte (fix)"
+
+[[outputs]]
+id = "LmX9J-9YFDu750nH2m_aJ"
+uri = "file://screenshots/beatus-hoehlen-karte-v3.jpg"
+type = "image"
+title = "St. Beatus-Höhlen – SagaTrail Karte (korrekte Route)"

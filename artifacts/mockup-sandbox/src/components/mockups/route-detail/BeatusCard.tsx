@@ -9,14 +9,14 @@ const DANGER_TEXT: Record<number, string> = {
 
 interface ElevPoint { distanceKm: number; altM: number }
 
-// Beatushöhlen Eingang (620m) → Beatenberg (1140m)
+// Bootsanleger Beatushöhlen (558m) → Höhleneingang (630m) → Beatenberg (1140m)
 const PROFILE: ElevPoint[] = [
-  { distanceKm: 0,   altM: 620 }, // Beatushöhlen
-  { distanceKm: 0.8, altM: 710 },
-  { distanceKm: 1.8, altM: 820 },
-  { distanceKm: 2.8, altM: 940 },
-  { distanceKm: 3.8, altM: 1040 },
-  { distanceKm: 5.0, altM: 1140 }, // Beatenberg
+  { distanceKm: 0,   altM: 558 }, // Bootsanleger
+  { distanceKm: 0.9, altM: 630 }, // Beatushöhlen
+  { distanceKm: 1.7, altM: 780 },
+  { distanceKm: 2.7, altM: 920 },
+  { distanceKm: 3.7, altM: 1050 },
+  { distanceKm: 4.5, altM: 1140 }, // Beatenberg
 ];
 
 // UV 5 → level 2 (Mäßig)
@@ -26,6 +26,7 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
   const chartH = H - PAD.top - PAD.bottom;
   const minAlt = Math.min(...profile.map(p => p.altM));
   const maxAlt = Math.max(...profile.map(p => p.altM));
+  const caveKm = 0.9; // Beatushöhlen marker on profile
   const maxDist = profile[profile.length - 1].distanceKm;
   const toX = (d: number) => (d / maxDist) * W;
   const toY = (a: number) => PAD.top + (1 - (a - minAlt) / (maxAlt - minAlt)) * chartH;
@@ -57,9 +58,9 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
         <path d={linePath} fill="none" stroke="#cc0000" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
         <line x1="0" y1={baseY} x2={W} y2={baseY} stroke="#e5e7eb" strokeWidth="1"/>
         {/* Beatushöhlen marker */}
-        <line x1={toX(1.1).toFixed(1)} y1={PAD.top} x2={toX(1.1).toFixed(1)} y2={baseY}
+        <line x1={toX(caveKm).toFixed(1)} y1={PAD.top} x2={toX(caveKm).toFixed(1)} y2={baseY}
           stroke="#cc0000" strokeWidth="1" strokeDasharray="3,2" opacity="0.5"/>
-        <text x={toX(1.1)+3} y={PAD.top+8} fontSize="7" fill="#cc0000" opacity="0.8">Höhlen</text>
+        <text x={toX(caveKm)+3} y={PAD.top+8} fontSize="7" fill="#cc0000" opacity="0.8">Höhlen</text>
         <rect x={W-54} y={PAD.top-1} width="54" height="16" fill="white" fillOpacity="0.92" rx="3"/>
         <text x={W-3} y={PAD.top+11} fontSize="10" fill="#374151" textAnchor="end" fontWeight="600">{maxAlt} m</text>
         <rect x={W-54} y={baseY-17} width="54" height="16" fill="white" fillOpacity="0.92" rx="3"/>
@@ -67,7 +68,7 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
       </svg>
       <div className="flex justify-between px-0.5 -mt-0.5">
         <span className="text-[9px] text-gray-400">0 km</span>
-        <span className="text-[9px] text-gray-400">5.0 km</span>
+        <span className="text-[9px] text-gray-400">4.5 km</span>
       </div>
       <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-lg border text-[10px] font-semibold"
         style={{ backgroundColor: DANGER_FILL[2]+'22', borderColor: DANGER_FILL[2]+'66', color: DANGER_TEXT[2] }}>
@@ -80,20 +81,16 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
 
 /*
   swisstopo WMS BBox (EPSG:4326, WMS 1.3.0: minLat,minLon,maxLat,maxLon):
-    lat 46.685–46.716 (range 0.031°) · lon 7.718–7.768 (range 0.050°)
-  → Bbox beginnt oberhalb des Thunersees; Route verläuft komplett auf Land.
-  Projektionsformel:
-    px_x = (lon − 7.718) / 0.050 × 364
-    px_y = (46.716 − lat) / 0.031 × 166
-
-  Stützpunkte:
-    Beatushöhlen Eingang (46.691, 7.741) → (167, 134)
-    Zwisch. 1            (46.694, 7.745) → (197, 118)
-    Zwisch. 2            (46.697, 7.750) → (233, 102)
-    Beatenberg           (46.700, 7.756) → (277,  86)
+    lat 46.679–46.700 (range 0.021°) · lon 7.770–7.798 (range 0.028°)
+  Verifiziert via Python-Annotation gegen echtes WMS-Tile:
+    Bootsanleger (46.685, 7.790) → (258, 118)
+    Beatushöhlen (46.684, 7.783) → (167, 126)
+    Beatenberg   (46.693, 7.783) → (172,  52)
+  Formel: px_x=(lon-7.770)/0.028×364, px_y=(46.700-lat)/0.021×166
+  Route: Bootsanleger →(Uferpfad westl.)→ Höhlen →(Aufstieg N)→ Beatenberg
 */
-const ROUTE_PTS = "167,134 182,126 197,118 215,110 233,102 255,93 277,86";
-const WAYPOINTS: [number, number][] = [[197, 118], [233, 102]];
+const ROUTE_PTS = "258,118 230,120 200,123 167,126 158,111 152,97 159,82 165,67 172,52";
+const WAYPOINTS: [number, number][] = [[167, 126], [152, 97], [159, 82]];
 
 export default function BeatusCard() {
   return (
@@ -131,8 +128,8 @@ export default function BeatusCard() {
         {/* Reihe 1 */}
         <div className="grid grid-cols-5 gap-1.5">
           {[
-            { icon: '📍', label: 'DISTANZ',  val: '5.0',  unit: 'km' },
-            { icon: '📈', label: 'AUFSTIEG', val: '520',  unit: 'hm' },
+            { icon: '📍', label: 'DISTANZ',  val: '4.5',  unit: 'km' },
+            { icon: '📈', label: 'AUFSTIEG', val: '582',  unit: 'hm' },
             { icon: '▲',  label: 'MAX.HÖHE', val: '1140', unit: 'm'  },
             { icon: '⏱',  label: 'ZEIT',     val: '3:00', unit: 'h'  },
             { icon: '🛡',  label: 'SAC',      val: 'T2',   unit: ''   },
@@ -184,25 +181,30 @@ export default function BeatusCard() {
         <div className="mt-1.5 rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 166 }}>
           <div className="h-full relative">
             <img
-              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=46.685%2C7.718%2C46.716%2C7.768"
+              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=46.679%2C7.770%2C46.700%2C7.798"
               alt="swisstopo Karte Beatushöhlen"
               className="absolute inset-0 w-full h-full object-fill"
             />
             <svg viewBox="0 0 364 166" className="absolute inset-0 w-full h-full">
               {/* 1. Labels (unten in Z) */}
-              {/* Beatushöhlen — Start */}
-              <text x="76" y="129" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatushöhlen</text>
-              <text x="76" y="129" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatushöhlen</text>
-              <text x="80" y="138" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">620 m</text>
-              <text x="80" y="138" fontSize="6" fill="#3a5a3a">620 m</text>
+              {/* Bootsanleger — Start */}
+              <text x="218" y="113" fontSize="7" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="700">Bootsanleger</text>
+              <text x="218" y="113" fontSize="7" fill="#1a3a1a" fontWeight="600">Bootsanleger</text>
+              <text x="222" y="121" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">558 m</text>
+              <text x="222" y="121" fontSize="6" fill="#3a5a3a">558 m</text>
+              {/* Beatushöhlen — Wegpunkt */}
+              <text x="102" y="122" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatushöhlen</text>
+              <text x="102" y="122" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatushöhlen</text>
+              <text x="106" y="131" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">630 m</text>
+              <text x="106" y="131" fontSize="6" fill="#3a5a3a">630 m</text>
               {/* Beatenberg — Ziel */}
-              <text x="238" y="80" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatenberg</text>
-              <text x="238" y="80" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatenberg</text>
-              <text x="242" y="89" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1140 m</text>
-              <text x="242" y="89" fontSize="6" fill="#3a5a3a">1140 m</text>
-              {/* Thunersee — nur als Referenz unten am Rand */}
-              <text x="15" y="160" fontSize="7.5" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke" fontStyle="italic" opacity="0.85">Thunersee</text>
-              <text x="15" y="160" fontSize="7.5" fill="#3a6a9a" fontStyle="italic" opacity="0.85">Thunersee</text>
+              <text x="118" y="47" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatenberg</text>
+              <text x="118" y="47" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatenberg</text>
+              <text x="122" y="56" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1140 m</text>
+              <text x="122" y="56" fontSize="6" fill="#3a5a3a">1140 m</text>
+              {/* Thunersee */}
+              <text x="12" y="160" fontSize="7.5" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke" fontStyle="italic" opacity="0.85">Thunersee</text>
+              <text x="12" y="160" fontSize="7.5" fill="#3a6a9a" fontStyle="italic" opacity="0.85">Thunersee</text>
               {/* Kompass */}
               <g transform="translate(344,148)">
                 <circle r="10" fill="white" opacity="0.88" stroke="#bbb" strokeWidth="0.8"/>
@@ -217,16 +219,16 @@ export default function BeatusCard() {
               {/* 2. Route + Marker — ganz oben in Z */}
               <polyline points={ROUTE_PTS} fill="none" stroke="rgba(180,0,0,0.22)" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round"/>
               <polyline points={ROUTE_PTS} fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
-              {/* Start */}
-              <circle cx="80" cy="110" r="7" fill="#cc0000"/>
-              <circle cx="80" cy="110" r="3.5" fill="white"/>
+              {/* Start — Bootsanleger */}
+              <circle cx="258" cy="118" r="7" fill="#cc0000"/>
+              <circle cx="258" cy="118" r="3.5" fill="white"/>
               {/* Zwischenpunkte */}
               {WAYPOINTS.map(([x, y], i) => (
                 <circle key={i} cx={x} cy={y} r="3" fill="white" stroke="#cc0000" strokeWidth="1.8"/>
               ))}
-              {/* Ziel */}
-              <circle cx="237" cy="56" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
-              <circle cx="237" cy="56" r="3" fill="#cc0000"/>
+              {/* Ziel — Beatenberg */}
+              <circle cx="172" cy="52" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
+              <circle cx="172" cy="52" r="3" fill="#cc0000"/>
             </svg>
           </div>
         </div>
