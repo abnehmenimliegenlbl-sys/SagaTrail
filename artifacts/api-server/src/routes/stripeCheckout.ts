@@ -87,7 +87,7 @@ router.post("/partner/checkout", async (req, res): Promise<void> => {
     });
 
     // Checkout-Session mit allen Partner-Daten in Metadata
-    const successUrl = `${d.returnHost}/partner-portal/?session_id={CHECKOUT_SESSION_ID}&checkout=success`;
+    const successUrl = `${d.returnHost}/portal/?session_id={CHECKOUT_SESSION_ID}&checkout=success`;
     const cancelUrl  = `${d.returnHost}/partner/?checkout=cancel`;
 
     const session = await stripe.checkout.sessions.create({

@@ -29,7 +29,7 @@ function createTransporter() {
   });
 }
 
-const PORTAL_BASE = "https://sagatrail.ch/partner-portal";
+const PORTAL_BASE = "https://sagatrail.ch/portal";
 
 // ─── Magic-Link senden ────────────────────────────────────────────────────────
 
