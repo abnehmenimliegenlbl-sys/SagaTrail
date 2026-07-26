@@ -46,11 +46,12 @@ async function sendMagicLink(partnerId: string, partnerName: string, email: stri
 
   const portalUrl = `${PORTAL_BASE}?token=${token}`;
 
-  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
   await transporter.sendMail({
-    from,
+    envelope: { from: envelopeFrom, to: email },
+    from: `SagaTrail <${envelopeFrom}>`,
     to: email,
     subject: "Ihr SagaTrail-Partner-Portal ist bereit",
     text: [

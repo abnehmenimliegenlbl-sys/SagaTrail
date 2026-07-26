@@ -356,12 +356,13 @@ export interface VerbandWillkommenData {
 }
 
 export async function sendVerbandWillkommen(data: VerbandWillkommenData): Promise<void> {
-  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
   // 1) Mail an den Verband
   await transporter.sendMail({
-    from:    `SagaTrail <${from}>`,
+    envelope: { from: envelopeFrom, to: data.email },
+    from:    `SagaTrail <${envelopeFrom}>`,
     to:      data.email,
     replyTo: "info@sagatrail.ch",
     subject: `Willkommen bei SagaTrail – Ihr Verbandsportal ist bereit`,
@@ -469,7 +470,7 @@ function createTransporter() {
 }
 
 export async function sendVerbandVertrag(data: VerbandAnfrageData): Promise<void> {
-  const from    = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
   const pdfBuf  = await generateVertragPdf(data);
   const transporter = createTransporter();
 
@@ -477,7 +478,8 @@ export async function sendVerbandVertrag(data: VerbandAnfrageData): Promise<void
 
   // 1) Mail an Kontaktperson
   await transporter.sendMail({
-    from:    `SagaTrail <${from}>`,
+    envelope: { from: envelopeFrom, to: data.email },
+    from:    `SagaTrail <${envelopeFrom}>`,
     to:      data.email,
     replyTo: "info@sagatrail.ch",
     subject: `Pilotpartnerschaftsvereinbarung SagaTrail – ${data.verbandName}`,
@@ -515,7 +517,8 @@ export async function sendVerbandVertrag(data: VerbandAnfrageData): Promise<void
 
   // 2) Interne Kopie an SagaTrail
   await transporter.sendMail({
-    from:    `SagaTrail System <${from}>`,
+    envelope: { from: envelopeFrom, to: "info@sagatrail.ch" },
+    from:    `SagaTrail System <${envelopeFrom}>`,
     to:      "info@sagatrail.ch",
     subject: `[Neue Verband-Anfrage] ${data.verbandName}`,
     html: `
