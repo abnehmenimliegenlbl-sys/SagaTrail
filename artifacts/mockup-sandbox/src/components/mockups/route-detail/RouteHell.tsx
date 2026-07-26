@@ -123,15 +123,45 @@ export default function RouteHell() {
       ══════════════════════════════════════════ */}
       <div className="px-3 mt-1.5 flex-shrink-0">
         <div className="rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 168 }}>
-          <div className="h-full relative bg-[#edf0ea]"
-            style={{ backgroundImage: 'radial-gradient(#c5ccc0 1px,transparent 1px)', backgroundSize: '9px 9px' }}>
+          <div className="h-full relative bg-[#e8ede4]"
+            style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 19px,#d4dace 19px,#d4dace 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,#d4dace 19px,#d4dace 20px)' }}>
             <svg viewBox="0 0 364 168" className="w-full h-full absolute inset-0">
+              {/* Terrain shading */}
+              <ellipse cx="190" cy="60"  rx="90" ry="30" fill="#dde5d8" opacity="0.7"/>
+              <ellipse cx="280" cy="45"  rx="60" ry="22" fill="#d4dece" opacity="0.6"/>
+              <ellipse cx="90"  cy="120" rx="55" ry="20" fill="#dde5d8" opacity="0.5"/>
+
+              {/* Höhenlinien-Andeutung */}
+              <path d="M10,155 Q80,140 140,120 Q200,100 260,70 Q310,48 355,52" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.8"/>
+              <path d="M10,145 Q80,128 140,108 Q200,86 260,56 Q310,36 355,40" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.6"/>
+              <path d="M60,168 Q120,158 175,138 Q230,116 285,85 Q320,65 355,64" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.5"/>
+
+              {/* Route */}
               <polyline points="28,140 70,108 114,126 164,72 204,90 254,38 328,58"
-                fill="none" stroke="#cc0000" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round"/>
-              <circle cx="28"  cy="140" r="5.5" fill="#cc0000"/>
-              <circle cx="328" cy="58"  r="5.5" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
-              <text x="20"  y="158" fontSize="8" fill="#999" fontWeight="500">Start</text>
-              <text x="308" y="52"  fontSize="8" fill="#999" fontWeight="500">Ziel</text>
+                fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
+
+              {/* Start marker */}
+              <circle cx="28" cy="140" r="6" fill="#cc0000"/>
+              <circle cx="28" cy="140" r="3" fill="white"/>
+
+              {/* Zwischenpunkte */}
+              <circle cx="114" cy="126" r="3" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
+              <circle cx="204" cy="90"  r="3" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
+
+              {/* Ziel marker */}
+              <circle cx="328" cy="58" r="6" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
+              <circle cx="328" cy="58" r="2.5" fill="#cc0000"/>
+
+              {/* Ortsnamen */}
+              <text x="10"  y="158" fontSize="8.5" fill="#5a6b52" fontWeight="700">Elm</text>
+              <text x="92"  y="121" fontSize="7.5" fill="#5a6b52" fontWeight="600">Empächli</text>
+              <text x="183" y="85"  fontSize="7.5" fill="#5a6b52" fontWeight="600">Ämpächli</text>
+              <text x="237" y="30"  fontSize="7.5" fill="#5a6b52" fontWeight="600">Glärnischhütte</text>
+              <text x="310" y="50"  fontSize="8.5" fill="#5a6b52" fontWeight="700">Ziel</text>
+
+              {/* Höhenangaben */}
+              <text x="250" y="44" fontSize="6.5" fill="#8a9e82" fontWeight="500">1842m</text>
+              <text x="14"  y="134" fontSize="6.5" fill="#8a9e82" fontWeight="500">979m</text>
             </svg>
           </div>
         </div>
