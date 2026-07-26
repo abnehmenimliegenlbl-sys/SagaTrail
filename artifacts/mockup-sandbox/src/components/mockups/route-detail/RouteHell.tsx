@@ -144,7 +144,7 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           HERO — echtes Foto, unten auslaufend
       ══════════════════════════════════════════ */}
-      <div className="relative flex-shrink-0" style={{ height: 310 }}>
+      <div className="relative flex-shrink-0" style={{ height: 286 }}>
         <img
           src="/__mockup/images/hero-hike.jpg"
           alt="Elm Höhenweg"
@@ -174,7 +174,7 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           KACHEL-GRID  5 Spalten
       ══════════════════════════════════════════ */}
-      <div className="px-3 flex-shrink-0" style={{ marginTop: -8 }}>
+      <div className="px-3 flex-shrink-0 pt-2">
 
         {/* ── Reihe 1: 5 Metriken ── */}
         <div className="grid grid-cols-5 gap-1.5 mb-1.5">
