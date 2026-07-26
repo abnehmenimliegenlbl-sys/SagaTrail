@@ -6,7 +6,8 @@ import { getStripeSync } from "./lib/stripeClient";
 import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
-import { db } from "@workspace/db";
+import { db, externalRoutesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
@@ -150,6 +151,26 @@ const server = app.listen(port, async (err) => {
   fillMissingRoutePhotos(logger).catch((err) => {
     logger.error({ err }, "Foto-Nachladen fehlgeschlagen");
   });
+
+  // Einmaliger Catch-up: falls die DB noch viele nicht-v3-Routen hat (z.B.
+  // nach einem neuen Prod-Deploy), alle Kantone im Hintergrund auffrischen.
+  // Laeuft nur wenn < 500 v3-Routen vorhanden – danach wird die Bedingung
+  // nie mehr erfuellt und zukuenftige Deploys starten keinen Warm-all.
+  db.select({ count: sql<number>`COUNT(*)::int` })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.geometryVersion, 3))
+    .then(([row]) => {
+      const v3count = row?.count ?? 0;
+      if (v3count < 500) {
+        logger.info({ v3count }, "DB-Catch-up: starte Warm-all aller Kantone im Hintergrund");
+        warmAllCantonCaches(logger).catch((err) =>
+          logger.warn({ err }, "DB-Catch-up Warm-all fehlgeschlagen"),
+        );
+      } else {
+        logger.info({ v3count }, "DB-Catch-up: DB aktuell, kein Warm-all noetig");
+      }
+    })
+    .catch((err) => logger.warn({ err }, "DB-Catch-up v3-Zaehlung fehlgeschlagen"));
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();
