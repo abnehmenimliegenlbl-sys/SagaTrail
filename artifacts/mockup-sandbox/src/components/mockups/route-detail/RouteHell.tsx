@@ -167,7 +167,7 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           BRANDING FOOTER
       ══════════════════════════════════════════ */}
-      <div className="bg-[#1a1a1a] px-4 py-3.5 flex items-center justify-between flex-shrink-0">
+      <div className="bg-[#cc0000] px-4 py-3.5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl overflow-hidden bg-white">
             <img src="/__mockup/images/sagatrail-icon.png" alt="SagaTrail" className="w-full h-full object-cover" />
