@@ -494,6 +494,9 @@ const PartnerBody = z.object({
   laufzeitStart: z.string().datetime().optional(),
   laufzeitEnde: z.string().datetime().optional(),
   notizenIntern: z.string().optional(),
+  telefon: z.string().optional(),
+  stripeCustomerId: z.string().optional(),
+  stripeSubscriptionId: z.string().optional(),
 });
 
 router.get("/admin/partner-lookup", async (req, res): Promise<void> => {
