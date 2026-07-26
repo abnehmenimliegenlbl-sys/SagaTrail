@@ -735,6 +735,24 @@ router.patch("/admin/routes/:id/foto", async (req, res): Promise<void> => {
   }
 });
 
+// POST /admin/routes/patch-geometry – Schreibt korrigierte Geometrie direkt in die DB,
+// ohne Overpass. Nützlich wenn Overpass überlastet ist und warm-canton timeoutet.
+router.post("/admin/routes/patch-geometry", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id, geometry } = req.body as { id?: string; geometry?: unknown };
+  if (!id || !Array.isArray(geometry) || geometry.length < 2) {
+    res.status(400).json({ error: "id und geometry (Array mit ≥2 Punkten) erforderlich" });
+    return;
+  }
+  await db
+    .update(externalRoutesTable)
+    .set({ geometry: geometry as [number, number][], geometryVersion: 3 })
+    .where(eq(externalRoutesTable.id, id))
+    .execute();
+  req.log.info({ id, punkte: geometry.length }, "patch-geometry: Geometrie direkt gesetzt");
+  res.json({ ok: true, id, punkte: geometry.length });
+});
+
 // POST /admin/routes/warm-canton – Lädt Routen eines Kantons langsam aus OSM
 // Nutzt große Timeouts + kleine Batches + Pausen → geeignet für Kantone mit 200+ Routen
 router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {

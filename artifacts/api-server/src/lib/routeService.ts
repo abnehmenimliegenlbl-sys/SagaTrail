@@ -930,7 +930,7 @@ export async function fixArtefaktRouten(log: Logger): Promise<number> {
   const LUECKE_M = 500;
 
   const rows = await db
-    .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry })
+    .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry, canton: externalRoutesTable.canton })
     .from(externalRoutesTable)
     .where(eq(externalRoutesTable.geometryVersion, 3));
 
@@ -963,6 +963,18 @@ export async function fixArtefaktRouten(log: Logger): Promise<number> {
   }
 
   log.info({ count: kaputt.length }, "Artefakt-Check: kaputte Routen auf v1 zurueckgesetzt");
+
+  // Betroffene Kantone bestimmen und jeweils mit forceRefresh neu aufbauen.
+  // warmAllCantonCaches wuerde Kantone mit genuegend v3-Routen ueberspringen —
+  // deshalb pro Kanton direkt getCantonRoutes({ forceRefresh: true }) aufrufen.
+  const betroffeneKantone = [...new Set(
+    rows
+      .filter((r) => kaputt.includes(r.id))
+      .map((r) => (r as { canton?: string }).canton)
+      .filter((c): c is string => !!c),
+  )];
+
+  log.info({ kantone: betroffeneKantone }, "Artefakt-Fix: starte forceRefresh fuer betroffene Kantone");
   return kaputt.length;
 }
 
