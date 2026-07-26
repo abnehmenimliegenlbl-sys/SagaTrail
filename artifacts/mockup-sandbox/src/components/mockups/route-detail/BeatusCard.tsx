@@ -9,16 +9,14 @@ const DANGER_TEXT: Record<number, string> = {
 
 interface ElevPoint { distanceKm: number; altM: number }
 
-// Beatenbucht (565m) → Beatushöhlen (620m) → Beatenberg (1140m)
+// Beatushöhlen Eingang (620m) → Beatenberg (1140m)
 const PROFILE: ElevPoint[] = [
-  { distanceKm: 0,   altM: 565 },
-  { distanceKm: 0.6, altM: 590 },
-  { distanceKm: 1.1, altM: 620 }, // Beatushöhlen
-  { distanceKm: 1.8, altM: 700 },
-  { distanceKm: 2.8, altM: 820 },
-  { distanceKm: 3.8, altM: 940 },
-  { distanceKm: 5.0, altM: 1060 },
-  { distanceKm: 6.2, altM: 1140 }, // Beatenberg
+  { distanceKm: 0,   altM: 620 }, // Beatushöhlen
+  { distanceKm: 0.8, altM: 710 },
+  { distanceKm: 1.8, altM: 820 },
+  { distanceKm: 2.8, altM: 940 },
+  { distanceKm: 3.8, altM: 1040 },
+  { distanceKm: 5.0, altM: 1140 }, // Beatenberg
 ];
 
 // UV 5 → level 2 (Mäßig)
@@ -69,7 +67,7 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
       </svg>
       <div className="flex justify-between px-0.5 -mt-0.5">
         <span className="text-[9px] text-gray-400">0 km</span>
-        <span className="text-[9px] text-gray-400">6.2 km</span>
+        <span className="text-[9px] text-gray-400">5.0 km</span>
       </div>
       <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-lg border text-[10px] font-semibold"
         style={{ backgroundColor: DANGER_FILL[2]+'22', borderColor: DANGER_FILL[2]+'66', color: DANGER_TEXT[2] }}>
@@ -82,20 +80,20 @@ function ElevChart({ profile }: { profile: ElevPoint[] }) {
 
 /*
   swisstopo WMS BBox (EPSG:4326, WMS 1.3.0: minLat,minLon,maxLat,maxLon):
-    lat 46.678–46.712 (range 0.034°) · lon 7.712–7.762 (range 0.050°)
+    lat 46.685–46.716 (range 0.031°) · lon 7.718–7.768 (range 0.050°)
+  → Bbox beginnt oberhalb des Thunersees; Route verläuft komplett auf Land.
   Projektionsformel:
-    px_x = (lon − 7.712) / 0.050 × 364
-    px_y = (46.712 − lat) / 0.034 × 166
+    px_x = (lon − 7.718) / 0.050 × 364
+    px_y = (46.716 − lat) / 0.031 × 166
 
   Stützpunkte:
-    Beatenbucht   (46.6895, 7.7230) → (80, 110)
-    Beatushöhlen  (46.6915, 7.7290) → (124, 100)
-    Zwisch. 1     (46.694,  7.735)  → (168,  87)
-    Zwisch. 2     (46.697,  7.742)  → (219,  73)
-    Beatenberg    (46.7005, 7.7445) → (237,  56)
+    Beatushöhlen Eingang (46.691, 7.741) → (167, 134)
+    Zwisch. 1            (46.694, 7.745) → (197, 118)
+    Zwisch. 2            (46.697, 7.750) → (233, 102)
+    Beatenberg           (46.700, 7.756) → (277,  86)
 */
-const ROUTE_PTS = "80,110 110,104 124,100 148,93 168,87 195,79 219,73 237,56";
-const WAYPOINTS: [number, number][] = [[124, 100], [168, 87], [219, 73]];
+const ROUTE_PTS = "167,134 182,126 197,118 215,110 233,102 255,93 277,86";
+const WAYPOINTS: [number, number][] = [[197, 118], [233, 102]];
 
 export default function BeatusCard() {
   return (
@@ -133,17 +131,17 @@ export default function BeatusCard() {
         {/* Reihe 1 */}
         <div className="grid grid-cols-5 gap-1.5">
           {[
-            { icon: '📍', label: 'DISTANZ',  val: '6.2',  unit: 'km' },
-            { icon: '📈', label: 'AUFSTIEG', val: '575',  unit: 'hm' },
+            { icon: '📍', label: 'DISTANZ',  val: '5.0',  unit: 'km' },
+            { icon: '📈', label: 'AUFSTIEG', val: '520',  unit: 'hm' },
             { icon: '▲',  label: 'MAX.HÖHE', val: '1140', unit: 'm'  },
-            { icon: '⏱',  label: 'ZEIT',     val: '3:30', unit: 'h'  },
+            { icon: '⏱',  label: 'ZEIT',     val: '3:00', unit: 'h'  },
             { icon: '🛡',  label: 'SAC',      val: 'T2',   unit: ''   },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl border border-black/[0.06] shadow-sm p-2 flex flex-col items-center">
               <span className="text-[#cc0000] text-[13px] mb-1">{s.icon}</span>
-              <span className="text-[13px] font-black text-[#1a1a1a] leading-none">
+              <div className="text-[13px] font-black text-[#1a1a1a] leading-none">
                 {s.val}<span className="text-[9px] font-bold text-[#cc0000] ml-0.5">{s.unit}</span>
-              </span>
+              </div>
               <span className="text-[7.5px] text-gray-400 font-bold tracking-wider mt-1">{s.label}</span>
             </div>
           ))}
@@ -186,30 +184,25 @@ export default function BeatusCard() {
         <div className="mt-1.5 rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 166 }}>
           <div className="h-full relative">
             <img
-              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=46.678%2C7.712%2C46.712%2C7.762"
+              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=46.685%2C7.718%2C46.716%2C7.768"
               alt="swisstopo Karte Beatushöhlen"
               className="absolute inset-0 w-full h-full object-fill"
             />
             <svg viewBox="0 0 364 166" className="absolute inset-0 w-full h-full">
               {/* 1. Labels (unten in Z) */}
-              {/* Beatenbucht */}
-              <text x="54" y="108" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="700">Beatenbucht</text>
-              <text x="54" y="108" fontSize="7.5" fill="#1a3a1a" fontWeight="600">Beatenbucht</text>
-              <text x="56" y="117" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">565 m</text>
-              <text x="56" y="117" fontSize="6" fill="#3a5a3a">565 m</text>
-              {/* Beatushöhlen */}
-              <text x="96" y="90" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatushöhlen</text>
-              <text x="96" y="90" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatushöhlen</text>
-              <text x="98" y="99" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">620 m</text>
-              <text x="98" y="99" fontSize="6" fill="#3a5a3a">620 m</text>
-              {/* Beatenberg */}
-              <text x="200" y="51" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatenberg</text>
-              <text x="200" y="51" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatenberg</text>
-              <text x="204" y="60" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1140 m</text>
-              <text x="204" y="60" fontSize="6" fill="#3a5a3a">1140 m</text>
-              {/* Thunersee */}
-              <text x="15" y="152" fontSize="8" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke" fontStyle="italic" opacity="0.9">Thunersee</text>
-              <text x="15" y="152" fontSize="8" fill="#3a6a9a" fontStyle="italic" opacity="0.9">Thunersee</text>
+              {/* Beatushöhlen — Start */}
+              <text x="76" y="129" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatushöhlen</text>
+              <text x="76" y="129" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatushöhlen</text>
+              <text x="80" y="138" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">620 m</text>
+              <text x="80" y="138" fontSize="6" fill="#3a5a3a">620 m</text>
+              {/* Beatenberg — Ziel */}
+              <text x="238" y="80" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Beatenberg</text>
+              <text x="238" y="80" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Beatenberg</text>
+              <text x="242" y="89" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1140 m</text>
+              <text x="242" y="89" fontSize="6" fill="#3a5a3a">1140 m</text>
+              {/* Thunersee — nur als Referenz unten am Rand */}
+              <text x="15" y="160" fontSize="7.5" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke" fontStyle="italic" opacity="0.85">Thunersee</text>
+              <text x="15" y="160" fontSize="7.5" fill="#3a6a9a" fontStyle="italic" opacity="0.85">Thunersee</text>
               {/* Kompass */}
               <g transform="translate(344,148)">
                 <circle r="10" fill="white" opacity="0.88" stroke="#bbb" strokeWidth="0.8"/>
