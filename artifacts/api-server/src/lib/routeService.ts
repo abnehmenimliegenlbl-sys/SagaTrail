@@ -64,6 +64,7 @@ import { logger as rootLogger } from "./logger";
 import { deriveSeason } from "./season";
 import {
   downsample,
+  rdpSimplify,
   estimateMinutes,
   haversineM,
   pathDistanceKm,
@@ -94,7 +95,7 @@ import {
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
 const MIN_KM = 1;
 const MAX_KM = 45;
-const STORED_GEOMETRY_POINTS = 80;
+const STORED_GEOMETRY_POINTS = 500; // Douglas-Peucker, war 80 (gleichmässig)
 const ELEVATION_CONCURRENCY = 8;
 
 // Wie viele Kandidaten (nach Bounding-Box-Vorfilter + Rang) pro Suche die teure
@@ -536,7 +537,7 @@ function terrainLabel(ref: string | null, network: string | null, sac: string): 
 // Version des Geometrie-Verkettungs-Algorithmus (siehe overpass.ts
 // stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
 // Zickzack-Verkettung erzeugt und gelten als abgelaufen.
-const GEOMETRY_VERSION = 2;
+const GEOMETRY_VERSION = 3; // RDP-Vereinfachung statt gleichmässigem Sampling
 
 function isFresh(row: ExternalRouteRow): boolean {
   return (
@@ -577,7 +578,7 @@ async function enrichAndStore(
     const sac =
       sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
     const start = r.points[0];
-    const geometry: [number, number][] = downsample(r.points, STORED_GEOMETRY_POINTS).map(
+    const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
     );
     // Repräsentatives Foto vom Startpunkt der Route (Wikimedia Commons, gedrosselt).

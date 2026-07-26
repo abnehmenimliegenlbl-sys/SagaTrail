@@ -51,6 +51,57 @@ export function downsample<T>(points: T[], max: number): T[] {
 }
 
 /**
+ * Senkrechter Abstand eines Punktes zur Geraden start–end, in Metern.
+ * Naeherung via flache Projektion (fuer kleine Gebiete wie die Schweiz ausreichend).
+ */
+function perpDistanceM(p: LatLng, start: LatLng, end: LatLng): number {
+  const LAT_M = 111_320;
+  const LNG_M = Math.cos(((start.lat + end.lat) / 2) * (Math.PI / 180)) * 111_320;
+  const px = (p.lng   - start.lng) * LNG_M;
+  const py = (p.lat   - start.lat) * LAT_M;
+  const dx = (end.lng - start.lng) * LNG_M;
+  const dy = (end.lat - start.lat) * LAT_M;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.sqrt(px * px + py * py);
+  const t   = Math.max(0, Math.min(1, (px * dx + py * dy) / lenSq));
+  const ex  = px - t * dx;
+  const ey  = py - t * dy;
+  return Math.sqrt(ex * ex + ey * ey);
+}
+
+/**
+ * Douglas-Peucker-Vereinfachung: behält alle Punkte die mehr als
+ * `toleranceM` Meter von der Sehne abweichen (Kurven, Biegungen bleiben
+ * erhalten). Redundante Zwischenpunkte auf geraden Strecken werden entfernt.
+ * Als Sicherheitsnetz werden die Punkte am Ende auf `maxPoints` begrenzt.
+ */
+export function rdpSimplify(points: LatLng[], toleranceM = 5, maxPoints = 500): LatLng[] {
+  if (points.length <= 2) return points.slice();
+
+  function rdp(pts: LatLng[], eps: number): LatLng[] {
+    if (pts.length <= 2) return pts.slice();
+    let maxDist = 0;
+    let maxIdx  = 1;
+    const first = pts[0];
+    const last  = pts[pts.length - 1];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = perpDistanceM(pts[i], first, last);
+      if (d > maxDist) { maxDist = d; maxIdx = i; }
+    }
+    if (maxDist > eps) {
+      const left  = rdp(pts.slice(0, maxIdx + 1), eps);
+      const right = rdp(pts.slice(maxIdx),         eps);
+      return [...left.slice(0, -1), ...right];
+    }
+    return [first, last];
+  }
+
+  const result = rdp(points, toleranceM);
+  // Sicherheitsnetz: falls Toleranz sehr klein und Route sehr lang
+  return result.length > maxPoints ? downsample(result, maxPoints) : result;
+}
+
+/**
  * Naeherungsformel swisstopo: WGS84 (lat/lng in Grad) -> LV95 (E/N in Metern).
  * Genauigkeit im Bereich weniger Meter, ausreichend fuer das Hoehenprofil.
  */
