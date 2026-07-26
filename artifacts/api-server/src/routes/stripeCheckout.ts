@@ -95,6 +95,7 @@ router.post("/partner/checkout", async (req, res): Promise<void> => {
       payment_method_types: ["card"],
       line_items:           [{ price: price.id, quantity: 1 }],
       mode:                 "subscription",
+      subscription_data:    { trial_period_days: 30 },
       success_url:          successUrl,
       cancel_url:           cancelUrl,
       locale:               "de",
