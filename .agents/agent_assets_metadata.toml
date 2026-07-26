@@ -317,3 +317,9 @@ id = "IJjYgCnAF5AOKrI3q5gYb"
 uri = "file://attached_assets/partner-page-v2.zip"
 type = "unspecified"
 title = "partner-page-v2.zip (aktualisiertes WPCode-Snippet)"
+
+[[outputs]]
+id = "MIuYFJO2IexZ6OfbcMu2g"
+uri = "file://screenshots/stoos-mythen-karte.jpg"
+type = "image"
+title = "Großer Mythen – SagaTrail Karte"
