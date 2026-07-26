@@ -316,14 +316,16 @@ function createTransporter() {
   const pass = process.env.SMTP_PASS;
   if (!host || !user || !pass) throw new Error("SMTP_HOST / SMTP_USER / SMTP_PASS fehlen");
   const port   = Number(process.env.SMTP_PORT ?? 587);
-  // port 465 → implicit TLS (secure=true), alles andere → STARTTLS (secure=false)
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   console.log(`[SMTP] host=${host} port=${port} secure=${secure} user=${user}`);
   return nodemailer.createTransport({
+    pool:           true,   // Verbindungen wiederverwenden statt pro Mail neu öffnen
+    maxConnections: 5,      // 5 parallele SMTP-Verbindungen zu Brevo
+    maxMessages:    100,    // max. Mails pro Verbindung bevor sie erneuert wird
     host,
     port,
     secure,
-    name: "sagatrail.ch",   // EHLO-Hostname — Infomaniak braucht FQDN
+    name: "sagatrail.ch",
     auth: { user, pass },
     connectionTimeout: 15_000,
     greetingTimeout:   15_000,
@@ -393,74 +395,78 @@ async function runCampaign(campaignId: string, opts: {
   );
 
   const transporter = createTransporter();
+  const BATCH_SIZE  = 5;   // parallele Sends pro Batch
+  const BATCH_DELAY = 100; // ms zwischen Batches (Brevo-Rate-Limit schonen)
 
-  for (const lead of leads) {
-    if (!lead.email) { campaignState.skipped++; continue; }
-    const emailLc = lead.email.toLowerCase();
+  // Filtern bevor wir batchen
+  const toSend = leads.filter((lead) => {
+    if (!lead.email) { campaignState.skipped++; return false; }
+    const lc = lead.email.toLowerCase();
+    if (blocked.has(lc) || alreadySent.has(lc)) { campaignState.skipped++; return false; }
+    return true;
+  });
 
-    if (blocked.has(emailLc) || alreadySent.has(emailLc)) {
-      campaignState.skipped++;
-      continue;
-    }
+  // In Batches aufteilen
+  for (let i = 0; i < toSend.length; i += BATCH_SIZE) {
+    const batch = toSend.slice(i, i + BATCH_SIZE);
 
-    campaignState.lastRecipient = lead.email;
+    // Alle im Batch vorab als "unterwegs" markieren → verhindert Doppel-Send
+    for (const lead of batch) alreadySent.add(lead.email.toLowerCase());
 
-    const resolvedText = resolveVars(bodyText, lead);
-    const html = buildEmailHtml({
-      bodyText: resolvedText,
-      recipientEmail: lead.email,
-      campaignId,
-      apiBase,
-    });
+    await Promise.all(batch.map(async (lead) => {
+      campaignState.lastRecipient = lead.email;
 
-    let status: "ok" | "fail" = "ok";
-    let error: string | null = null;
-
-    try {
+      const resolvedText    = resolveVars(bodyText, lead);
       const resolvedSubject = resolveVars(subject, lead);
+      const html            = buildEmailHtml({ bodyText: resolvedText, recipientEmail: lead.email, campaignId, apiBase });
       const { url: unsubUrl } = buildUnsubInfo(lead.email, campaignId, apiBase);
-      // List-Unsubscribe: RFC 2369 mailto + RFC 8058 one-click POST
-      // Gmail / Yahoo verlangen dies seit Feb 2024 für Bulk-Sender
-      const unsubMailto = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
-      await transporter.sendMail({
-        envelope: { from: envelopeFrom, to: lead.email },
-        from:    `SagaTrail <${envelopeFrom}>`,
-        to:      `${lead.name} <${lead.email}>`,
-        replyTo: "info@sagatrail.ch",
-        subject: resolvedSubject,
-        html,
-        text:    buildPlainText(resolveVars(bodyText, lead), unsubUrl),
-        headers: {
-          // Bulk-Mail-Marker — Gmail/Outlook sortieren weniger aggressiv
-          "Precedence":              "bulk",
-          // One-click unsubscribe (RFC 8058) — Pflicht bei Gmail/Yahoo Bulk
-          "List-Unsubscribe":        `<${unsubUrl}>, <${unsubMailto}>`,
-          "List-Unsubscribe-Post":   "List-Unsubscribe=One-Click",
-          // Kampagnen-ID für Tracking / Debugging
-          "X-Campaign-Id":           campaignId,
-        },
-      });
-      alreadySent.add(emailLc);
-      campaignState.sent++;
-    } catch (err) {
-      status = "fail";
-      error  = err instanceof Error ? err.message : String(err);
-      campaignState.failed++;
-      console.error(`[SMTP-ERROR] to=${lead.email} err=${error}`);
-    }
+      const unsubMailto     = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
 
-    // Log-Eintrag
-    await db.insert(partnerEmailLogTable).values({
-      campaignId,
-      subject:       subject, // Template-Betreff (nicht aufgelöst) für Dedup-Check
-      email:         lead.email,
-      recipientName: lead.name,
-      status,
-      error,
-    });
+      let status: "ok" | "fail" = "ok";
+      let error: string | null  = null;
 
-    await sleep(500); // SMTP-Rate-Limit schonen
+      try {
+        await transporter.sendMail({
+          envelope: { from: envelopeFrom, to: lead.email },
+          from:    `SagaTrail <${envelopeFrom}>`,
+          to:      `${lead.name} <${lead.email}>`,
+          replyTo: "info@sagatrail.ch",
+          subject: resolvedSubject,
+          html,
+          text:    buildPlainText(resolvedText, unsubUrl),
+          headers: {
+            "Precedence":            "bulk",
+            "List-Unsubscribe":      `<${unsubUrl}>, <${unsubMailto}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            "X-Campaign-Id":         campaignId,
+          },
+        });
+        campaignState.sent++;
+      } catch (err) {
+        status = "fail";
+        error  = err instanceof Error ? err.message : String(err);
+        campaignState.failed++;
+        console.error(`[SMTP-ERROR] to=${lead.email} err=${error}`);
+      }
+
+      // Log-Eintrag (fire-and-forget, blockiert den Batch nicht)
+      db.insert(partnerEmailLogTable).values({
+        campaignId,
+        subject,       // Template-Betreff für Dedup-Check
+        email:         lead.email,
+        recipientName: lead.name,
+        status,
+        error,
+      }).execute().catch((e: unknown) =>
+        console.error(`[DB-LOG-ERROR] ${lead.email}:`, e)
+      );
+    }));
+
+    if (i + BATCH_SIZE < toSend.length) await sleep(BATCH_DELAY);
   }
+
+  // Warten bis alle Log-Inserts durch sind
+  await sleep(300);
 
   campaignState.status     = "done";
   campaignState.finishedAt = new Date();
