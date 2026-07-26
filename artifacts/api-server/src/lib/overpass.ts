@@ -798,17 +798,23 @@ export async function fetchParking(
 export async function fetchRouteGeometries(
   osmIds: number[],
   log: Logger,
+  opts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number },
 ): Promise<RawHikingRoute[]> {
   if (osmIds.length === 0) return [];
+  const batchSize  = opts?.batchSize  ?? GEOMETRY_BATCH;
+  const timeoutMs  = opts?.timeoutMs  ?? REQUEST_TIMEOUT_MS;
+  const pauseMs    = opts?.pauseMs    ?? 0;
+  const ovTimeout  = Math.ceil(timeoutMs / 1000);
   const routes: RawHikingRoute[] = [];
-  for (let i = 0; i < osmIds.length; i += GEOMETRY_BATCH) {
-    const batch = osmIds.slice(i, i + GEOMETRY_BATCH);
+  for (let i = 0; i < osmIds.length; i += batchSize) {
+    const batch = osmIds.slice(i, i + batchSize);
     const query = [
-      "[out:json][timeout:90];",
+      `[out:json][timeout:${ovTimeout}];`,
       `relation(id:${batch.join(",")});`,
       "out geom;",
     ].join("");
-    const geom = await runOverpass<OverpassGeomElement>(query);
+    if (i > 0 && pauseMs > 0) await sleep(pauseMs);
+    const geom = await runOverpass<OverpassGeomElement>(query, timeoutMs);
     for (const g of geom) {
       if (!g.members) continue;
       const points = stitchGeometry(g.members);

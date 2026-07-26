@@ -20,7 +20,7 @@ import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes } from "../lib/routeService";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
   fetchLeadsFromWp, fetchOrgsFromWp, campaignState, startCampaign, buildPreviewHtml,
@@ -732,6 +732,28 @@ router.patch("/admin/routes/:id/foto", async (req, res): Promise<void> => {
     req.log.error({ err, id }, "Admin route foto update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
   }
+});
+
+// POST /admin/routes/warm-canton – Lädt Routen eines Kantons langsam aus OSM
+// Nutzt große Timeouts + kleine Batches + Pausen → geeignet für Kantone mit 200+ Routen
+router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { canton, timeoutMs = 120_000, batchSize = 20, pauseMs = 3_000 } =
+    req.body as { canton?: string; timeoutMs?: number; batchSize?: number; pauseMs?: number };
+  if (!canton) { res.status(400).json({ error: "canton fehlt" }); return; }
+
+  // Antwort sofort senden; Ladeprozess läuft im Hintergrund
+  res.json({ ok: true, canton, timeoutMs, batchSize, pauseMs, message: "Hintergrundlauf gestartet – verfolge den Fortschritt in den Server-Logs" });
+
+  (async () => {
+    try {
+      req.log.info({ canton, timeoutMs, batchSize, pauseMs }, "Slow-warm gestartet");
+      const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs });
+      req.log.info({ canton, count: routes.length }, "Slow-warm abgeschlossen");
+    } catch (err) {
+      req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");
+    }
+  })();
 });
 
 // ===================================================================

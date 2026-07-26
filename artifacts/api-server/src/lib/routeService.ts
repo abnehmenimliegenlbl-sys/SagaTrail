@@ -563,8 +563,9 @@ async function enrichAndStore(
   canton: string,
   osmIds: number[],
   log: Logger,
+  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number },
 ): Promise<void> {
-  const raw = await fetchRouteGeometries(osmIds, log);
+  const raw = await fetchRouteGeometries(osmIds, log, fetchOpts);
   const prepared = raw
     .map((r) => ({ r, distanceKm: pathDistanceKm(r.points) }))
     .filter(({ distanceKm }) => distanceKm >= MIN_KM && distanceKm <= MAX_KM);
@@ -661,6 +662,7 @@ export async function getCantonRoutes(
   canton: string,
   log: Logger,
   distMax?: number,
+  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number },
 ): Promise<ExternalRouteRow[]> {
   const iso = isoForCanton(canton);
   if (!iso) {
@@ -700,7 +702,7 @@ export async function getCantonRoutes(
 
   if (missing.length > 0) {
     try {
-      await enrichAndStore(canton, missing, log);
+      await enrichAndStore(canton, missing, log, fetchOpts);
     } catch (err) {
       // Anreicherung fehlgeschlagen: vorhandene frische Treffer trotzdem liefern.
       if (freshIds.size > 0) {
