@@ -123,45 +123,98 @@ export default function RouteHell() {
       ══════════════════════════════════════════ */}
       <div className="px-3 mt-1.5 flex-shrink-0">
         <div className="rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 168 }}>
-          <div className="h-full relative bg-[#e8ede4]"
-            style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 19px,#d4dace 19px,#d4dace 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,#d4dace 19px,#d4dace 20px)' }}>
+          <div className="h-full relative" style={{ background: '#e8ede2' }}>
             <svg viewBox="0 0 364 168" className="w-full h-full absolute inset-0">
-              {/* Terrain shading */}
-              <ellipse cx="190" cy="60"  rx="90" ry="30" fill="#dde5d8" opacity="0.7"/>
-              <ellipse cx="280" cy="45"  rx="60" ry="22" fill="#d4dece" opacity="0.6"/>
-              <ellipse cx="90"  cy="120" rx="55" ry="20" fill="#dde5d8" opacity="0.5"/>
+              {/* ── Hintergrund-Flächen ── */}
+              {/* Wald (grün) */}
+              <path d="M0,168 L0,130 Q30,120 55,128 Q75,118 95,132 Q110,122 130,130 L140,168Z" fill="#c8d8b8" opacity="0.7"/>
+              <path d="M300,168 L300,85 Q320,80 340,88 Q355,80 364,85 L364,168Z" fill="#c8d8b8" opacity="0.6"/>
+              {/* See / Wasser */}
+              <ellipse cx="178" cy="112" rx="14" ry="8" fill="#b8d4e8" opacity="0.85"/>
+              {/* Gletscher */}
+              <path d="M235,22 Q252,16 268,20 Q265,30 248,35 Q238,32 Z" fill="#e8f0f8" opacity="0.9"/>
+              <path d="M240,24 Q252,19 265,22 Q262,29 249,33Z" fill="#d0e4f4" opacity="0.7"/>
 
-              {/* Höhenlinien-Andeutung */}
-              <path d="M10,155 Q80,140 140,120 Q200,100 260,70 Q310,48 355,52" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.8"/>
-              <path d="M10,145 Q80,128 140,108 Q200,86 260,56 Q310,36 355,40" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.6"/>
-              <path d="M60,168 Q120,158 175,138 Q230,116 285,85 Q320,65 355,64" fill="none" stroke="#c8d4c0" strokeWidth="1" opacity="0.5"/>
+              {/* ── Höhenlinien ── */}
+              <path d="M5,162 Q60,152 110,138 Q165,122 215,105 Q260,88 310,70 Q338,60 364,62" fill="none" stroke="#b8c8b0" strokeWidth="0.8"/>
+              <path d="M5,150 Q55,138 108,124 Q162,108 212,90 Q258,74 308,55 Q336,45 364,47" fill="none" stroke="#b0c0a8" strokeWidth="0.8"/>
+              <path d="M20,140 Q70,126 118,112 Q168,95 215,76 Q260,58 305,40 Q330,30 364,32" fill="none" stroke="#b0c0a8" strokeWidth="0.8"/>
+              <path d="M50,132 Q95,116 140,100 Q188,82 230,62 Q270,44 312,28 Q338,18 364,18" fill="none" stroke="#a8b8a0" strokeWidth="0.8"/>
+              <path d="M90,124 Q130,108 170,90 Q210,70 248,50 Q280,34 318,20" fill="none" stroke="#a8b8a0" strokeWidth="0.7"/>
+              {/* Leitkurve (dicker) */}
+              <path d="M5,155 Q58,143 110,130 Q163,115 213,97 Q259,80 308,62 Q336,52 364,54" fill="none" stroke="#9aae90" strokeWidth="1.4"/>
+              <path d="M30,136 Q78,120 124,106 Q172,89 218,70 Q262,52 308,34 Q334,22 360,20" fill="none" stroke="#9aae90" strokeWidth="1.4"/>
 
-              {/* Route */}
-              <polyline points="28,140 70,108 114,126 164,72 204,90 254,38 328,58"
+              {/* ── Nebenstrasse ── */}
+              <path d="M0,148 Q20,144 35,138" fill="none" stroke="#e8dcc8" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M340,65 Q352,62 364,60" fill="none" stroke="#e8dcc8" strokeWidth="2.5" strokeLinecap="round"/>
+
+              {/* ── Route ── */}
+              <polyline points="28,140 52,124 70,108 90,116 114,126 138,104 164,72 184,80 204,90 228,62 254,38 282,44 310,52 328,58"
+                fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
+              {/* Route-Schatten für Tiefe */}
+              <polyline points="28,141 52,125 70,109 90,117 114,127 138,105 164,73 184,81 204,91 228,63 254,39 282,45 310,53 328,59"
+                fill="none" stroke="rgba(180,0,0,0.18)" strokeWidth="5.5" strokeLinejoin="round" strokeLinecap="round"/>
+              <polyline points="28,140 52,124 70,108 90,116 114,126 138,104 164,72 184,80 204,90 228,62 254,38 282,44 310,52 328,58"
                 fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
 
-              {/* Start marker */}
-              <circle cx="28" cy="140" r="6" fill="#cc0000"/>
-              <circle cx="28" cy="140" r="3" fill="white"/>
-
+              {/* ── Markers ── */}
+              {/* Start */}
+              <circle cx="28" cy="140" r="7" fill="#cc0000"/>
+              <circle cx="28" cy="140" r="3.5" fill="white"/>
               {/* Zwischenpunkte */}
-              <circle cx="114" cy="126" r="3" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
-              <circle cx="204" cy="90"  r="3" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
+              {[[70,108],[114,126],[164,72],[204,90],[254,38],[310,52]].map(([x,y],i) => (
+                <circle key={i} cx={x} cy={y} r="3" fill="white" stroke="#cc0000" strokeWidth="1.8"/>
+              ))}
+              {/* Ziel */}
+              <circle cx="328" cy="58" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
+              <circle cx="328" cy="58" r="3" fill="#cc0000"/>
 
-              {/* Ziel marker */}
-              <circle cx="328" cy="58" r="6" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
-              <circle cx="328" cy="58" r="2.5" fill="#cc0000"/>
+              {/* ── Ortsnamen ── */}
+              <text x="8"   y="157" fontSize="8"   fill="#3a4e32" fontWeight="700" letterSpacing="0.2">Elm</text>
+              <text x="8"   y="165" fontSize="6"   fill="#7a8e72"                               >979 m</text>
+              <text x="56"  y="118" fontSize="6.5" fill="#4a5e42" fontWeight="600">Empächli</text>
+              <text x="92"  y="138" fontSize="6"   fill="#7a8e72">1124 m</text>
+              <text x="120" y="120" fontSize="6.5" fill="#4a5e42" fontWeight="600">Chüeboden</text>
+              <text x="142" y="98"  fontSize="6.5" fill="#4a5e42" fontWeight="600">Ämpächli</text>
+              <text x="162" y="86"  fontSize="6"   fill="#7a8e72">1380 m</text>
+              <text x="183" y="122" fontSize="6"   fill="#7ab8d8" fontWeight="600">Ämpächlisee</text>
+              <text x="208" y="100" fontSize="6.5" fill="#4a5e42" fontWeight="600">Unterboden</text>
+              <text x="230" y="55"  fontSize="6.5" fill="#4a5e42" fontWeight="600">Glärnischhütte</text>
+              <text x="235" y="63"  fontSize="6"   fill="#7a8e72">1630 m</text>
+              <text x="252" y="28"  fontSize="6"   fill="#8a9eb8" fontWeight="600">Gletscher</text>
+              <text x="310" y="48"  fontSize="8"   fill="#3a4e32" fontWeight="700">Engi</text>
+              <text x="310" y="57"  fontSize="6"   fill="#7a8e72">1842 m</text>
 
-              {/* Ortsnamen */}
-              <text x="10"  y="158" fontSize="8.5" fill="#5a6b52" fontWeight="700">Elm</text>
-              <text x="92"  y="121" fontSize="7.5" fill="#5a6b52" fontWeight="600">Empächli</text>
-              <text x="183" y="85"  fontSize="7.5" fill="#5a6b52" fontWeight="600">Ämpächli</text>
-              <text x="237" y="30"  fontSize="7.5" fill="#5a6b52" fontWeight="600">Glärnischhütte</text>
-              <text x="310" y="50"  fontSize="8.5" fill="#5a6b52" fontWeight="700">Ziel</text>
+              {/* ── Waldpiktogramm ── */}
+              {[[18,120],[35,114],[50,120],[20,108],[38,104]].map(([x,y],i)=>(
+                <g key={i}>
+                  <polygon points={`${x},${y-8} ${x-4},${y} ${x+4},${y}`} fill="#7a9e6a" opacity="0.7"/>
+                  <rect x={x-1} y={y} width="2" height="3" fill="#8a7060" opacity="0.6"/>
+                </g>
+              ))}
+              {[[340,78],[350,72],[356,80],[344,68]].map(([x,y],i)=>(
+                <g key={i}>
+                  <polygon points={`${x},${y-7} ${x-3.5},${y} ${x+3.5},${y}`} fill="#7a9e6a" opacity="0.7"/>
+                  <rect x={x-1} y={y} width="2" height="3" fill="#8a7060" opacity="0.6"/>
+                </g>
+              ))}
 
-              {/* Höhenangaben */}
-              <text x="250" y="44" fontSize="6.5" fill="#8a9e82" fontWeight="500">1842m</text>
-              <text x="14"  y="134" fontSize="6.5" fill="#8a9e82" fontWeight="500">979m</text>
+              {/* ── Kompass ── */}
+              <g transform="translate(342,148)">
+                <circle r="10" fill="white" opacity="0.85" stroke="#c0c8b8" strokeWidth="0.8"/>
+                <polygon points="0,-7 -2.5,0 0,-2 2.5,0" fill="#cc0000"/>
+                <polygon points="0,7 -2.5,0 0,2 2.5,0" fill="#888"/>
+                <text x="0" y="-8" fontSize="5" fill="#cc0000" textAnchor="middle" fontWeight="700">N</text>
+              </g>
+
+              {/* ── Massstab ── */}
+              <g transform="translate(12,152)">
+                <line x1="0" y1="0" x2="28" y2="0" stroke="#667760" strokeWidth="1.5"/>
+                <line x1="0" y1="-2" x2="0" y2="2" stroke="#667760" strokeWidth="1.5"/>
+                <line x1="28" y1="-2" x2="28" y2="2" stroke="#667760" strokeWidth="1.5"/>
+                <text x="14" y="-3" fontSize="5.5" fill="#667760" textAnchor="middle">2 km</text>
+              </g>
             </svg>
           </div>
         </div>
