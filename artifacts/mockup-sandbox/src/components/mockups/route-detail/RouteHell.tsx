@@ -230,6 +230,29 @@ export default function RouteHell() {
       </div>
 
       {/* ══════════════════════════════════════════
+          SAGE — nur Titel
+      ══════════════════════════════════════════ */}
+      <div className="px-3 mt-1.5 flex-shrink-0">
+        <div className="bg-white rounded-xl border border-black/[0.06] shadow-sm px-4 py-3 flex items-center gap-3">
+          <div className="w-[46px] h-[46px] rounded-lg overflow-hidden shrink-0">
+            <div className="w-full h-full bg-gradient-to-br from-[#3e2a1a] via-[#5a3820] to-[#2a1608] relative">
+              <svg viewBox="0 0 46 46" className="absolute inset-0 w-full h-full">
+                <rect x="16" y="20" width="14" height="22" fill="rgba(255,255,255,0.22)"/>
+                <polygon points="23,8 13,20 33,20" fill="rgba(255,255,255,0.28)"/>
+                <rect x="20" y="12" width="6" height="7" fill="rgba(255,255,255,0.15)"/>
+                <rect x="17" y="30" width="6" height="12" fill="rgba(0,0,0,0.28)"/>
+              </svg>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-[#cc0000] block mb-1">🧚 Sage dieser Route</span>
+            <h3 className="text-[13px] font-bold text-[#1a1a1a] leading-snug">Der heilige Fridolin und der tote Bruder</h3>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════
           KARTE
       ══════════════════════════════════════════ */}
       <div className="px-3 mt-1.5 flex-shrink-0">
@@ -330,33 +353,6 @@ export default function RouteHell() {
           </div>
         </div>
       </div>
-
-      {/* ══════════════════════════════════════════
-          SAGE — nur Titel
-      ══════════════════════════════════════════ */}
-      <div className="px-3 mt-1.5 flex-shrink-0">
-        <div className="bg-white rounded-xl border border-black/[0.06] shadow-sm px-4 py-3 flex items-center gap-3">
-          {/* Saga foto */}
-          <div className="w-[46px] h-[46px] rounded-lg overflow-hidden shrink-0">
-            <div className="w-full h-full bg-gradient-to-br from-[#3e2a1a] via-[#5a3820] to-[#2a1608] relative">
-              <svg viewBox="0 0 46 46" className="absolute inset-0 w-full h-full">
-                <rect x="16" y="20" width="14" height="22" fill="rgba(255,255,255,0.22)"/>
-                <polygon points="23,8 13,20 33,20" fill="rgba(255,255,255,0.28)"/>
-                <rect x="20" y="12" width="6" height="7" fill="rgba(255,255,255,0.15)"/>
-                <rect x="17" y="30" width="6" height="12" fill="rgba(0,0,0,0.28)"/>
-              </svg>
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-[#cc0000] block mb-1">🧚 Sage dieser Route</span>
-            <h3 className="text-[13px] font-bold text-[#1a1a1a] leading-snug">
-              Der heilige Fridolin und der tote Bruder
-            </h3>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cc0000" strokeWidth="2.5" strokeLinecap="round" className="shrink-0"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      </div>
-
 
       {/* ══════════════════════════════════════════
           BRANDING FOOTER
