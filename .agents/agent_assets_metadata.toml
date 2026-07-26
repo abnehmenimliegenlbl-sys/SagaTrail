@@ -359,3 +359,15 @@ id = "QzqyNOFhdpmRwE-stO4iw"
 uri = "file://screenshots/rigi-kulm-karte.jpg"
 type = "image"
 title = "Rigi Kulm – SagaTrail Karte"
+
+[[outputs]]
+id = "nlrmnE3UsNcDjVcdsVip9"
+uri = "file://screenshots/rigi-v2.jpg"
+type = "image"
+title = "Rigi Kulm – POI + 2D Karte"
+
+[[outputs]]
+id = "F5-W0cPUWnPprG4XFMGCl"
+uri = "file://screenshots/rigi-v3.jpg"
+type = "image"
+title = "Rigi Kulm – aktueller Stand"
