@@ -90,9 +90,22 @@ export async function fetchOrgsFromWp(
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
-  const json = await res.json() as { success: boolean; data?: Lead[]; error?: string };
+  const json = await res.json() as { success: boolean; data?: any[]; error?: string };
   if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  let leads = json.data ?? [];
+  let raw = json.data ?? [];
+  // WP gibt Spaltennamen direkt zurück: organisation → name, anschreiben_satz → satz
+  let leads: Lead[] = raw.map((r: any) => ({
+    name:    r.name    ?? r.organisation ?? "",
+    email:   r.email   ?? "",
+    kanton:  r.kanton  ?? r.kantone ?? "",
+    sprache: r.sprache ?? "DE",
+    route:   r.route   ?? "",
+    typ:     r.typ     ?? r.kategorie ?? "",
+    satz:    r.satz    ?? r.anschreiben_satz ?? "",
+    adresse: r.adresse ?? "",
+    telefon: r.telefon ?? "",
+    website: r.website ?? "",
+  }));
   if (filter.kantone?.length) {
     leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
   }
