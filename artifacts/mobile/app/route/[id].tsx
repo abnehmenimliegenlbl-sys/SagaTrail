@@ -20,6 +20,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -30,6 +31,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { alert } from "@/lib/appAlert";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -708,12 +710,34 @@ export default function Routenplanung() {
           )}
         </View>
 
-        <Text style={[styles.routeName, { color: colors.foreground }]}>
-          {meta.name}
-        </Text>
-        <Text style={[styles.forSaga, { color: colors.accent }]}>
-          {route.terrain}
-        </Text>
+        {route.photoUrl ? (
+          <View style={styles.heroCard}>
+            <Image source={{ uri: route.photoUrl }} style={styles.heroImage} />
+            <LinearGradient
+              colors={["rgba(0,0,0,0.45)", "transparent"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.45 }}
+            />
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.35)"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0.55 }} end={{ x: 0, y: 1 }}
+            />
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroRegionRow}>
+                <View style={styles.heroDot} />
+                <Text style={styles.heroRegion}>{route.region?.toUpperCase()}</Text>
+              </View>
+              <Text style={styles.heroTitle} numberOfLines={2}>{meta.name}</Text>
+              <Text style={styles.heroTerrain}>{route.terrain}</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Text style={[styles.routeName, { color: colors.foreground }]}>{meta.name}</Text>
+            <Text style={[styles.forSaga, { color: colors.accent }]}>{route.terrain}</Text>
+          </>
+        )}
 
         <View style={{ marginTop: 18 }}>
           <KarteVollbild
@@ -739,10 +763,11 @@ export default function Routenplanung() {
         </View>
 
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>
-          <Stat label={t.distance} value={`${meta.distanceKm}`} unit="km" />
-          <Stat label={t.ascent} value={`${meta.ascentM}`} unit="hm" />
-          <Stat label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`} unit="h" />
-          <Stat label={t.sacScale} value={meta.sac} unit="" />
+          <StatTile icon="map-pin"     label={t.distance} value={`${meta.distanceKm}`}                         unit="km" />
+          <StatTile icon="trending-up" label={t.ascent}   value={`${meta.ascentM}`}                            unit="hm" />
+          <StatTile icon="triangle"    label="Max. Höhe"  value={`${route.maxElevationM ?? meta.ascentM}`}     unit="m"  />
+          <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
+          <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
 
         {/* ── Höhenprofil ────────────────────────────────────────────── */}
@@ -771,6 +796,28 @@ export default function Routenplanung() {
               />
             ) : null}
           </View>
+        )}
+
+        {/* ── Sage-Teaser ───────────────────────────────────────────── */}
+        {saga && !sagaLoading && (
+          <Pressable
+            onPress={() => router.push(locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`)}
+            style={[styles.sagaTeaserCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+            accessibilityRole="button"
+          >
+            <View style={[styles.sagaTeaserEmoji, { backgroundColor: colors.accent + "22" }]}>
+              <Text style={{ fontSize: 22 }}>🧚</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.sagaTeaserEyebrow, { color: colors.accent }]}>
+                {t.matchingSaga.toUpperCase()}
+              </Text>
+              <Text style={[styles.sagaTeaserTitle, { color: colors.foreground }]} numberOfLines={2}>
+                {saga.title}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.accent} />
+          </Pressable>
         )}
 
         {/* ── Strecke umkehren ──────────────────────────────────────── */}
@@ -1555,21 +1602,28 @@ export default function Routenplanung() {
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
   const colors = useColors();
   return (
-    <View
-      style={[
-        styles.stat,
-        { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-      ]}
-    >
-      <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
-        {label.toUpperCase()}
-      </Text>
+    <View style={[styles.stat, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+      <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label.toUpperCase()}</Text>
       <View style={styles.statValRow}>
         <Text style={[styles.statVal, { color: colors.foreground }]}>{value}</Text>
-        {unit ? (
-          <Text style={[styles.statUnit, { color: colors.accent }]}>{unit}</Text>
-        ) : null}
+        {unit ? <Text style={[styles.statUnit, { color: colors.accent }]}>{unit}</Text> : null}
       </View>
+    </View>
+  );
+}
+
+function StatTile({ icon, label, value, unit }: {
+  icon: React.ComponentProps<typeof Feather>["name"];
+  label: string; value: string; unit: string;
+}) {
+  const colors = useColors();
+  return (
+    <View style={[styles.statTile, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+      <Feather name={icon} size={14} color={colors.accent} style={{ marginBottom: 4 }} />
+      <Text style={[styles.statTileVal, { color: colors.foreground }]}>{value}
+        {unit ? <Text style={[styles.statTileUnit, { color: colors.accent }]}>{" "}{unit}</Text> : null}
+      </Text>
+      <Text style={[styles.statTileLabel, { color: colors.mutedForeground }]}>{label.toUpperCase()}</Text>
     </View>
   );
 }
@@ -1613,12 +1667,64 @@ const styles = StyleSheet.create({
   retryChipText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   routeName: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 18 },
   forSaga: { fontFamily: fonts.story, fontSize: 14, marginTop: 2 },
+  // ── Hero photo ──────────────────────────────────────────────────────
+  heroCard: {
+    marginTop: 14,
+    marginHorizontal: -20,
+    height: 220,
+    overflow: "hidden",
+  },
+  heroImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  heroOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  heroRegionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  heroDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#cc0000" },
+  heroRegion: { fontFamily: fonts.mono, fontSize: 10, color: "rgba(255,255,255,0.75)", letterSpacing: 1.5 },
+  heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, color: "#fff", lineHeight: 30 },
+  heroTerrain: { fontFamily: fonts.story, fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 2 },
+  // ── Stats 5-Spalten ─────────────────────────────────────────────────
   statsGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 16,
+    gap: 6,
+    marginTop: 14,
   },
+  statTile: {
+    ...GLAS_3D,
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+    alignItems: "center",
+  },
+  statTileVal: { fontFamily: fonts.monoBold, fontSize: 14, textAlign: "center" },
+  statTileUnit: { fontFamily: fonts.mono, fontSize: 10 },
+  statTileLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 0.8, marginTop: 2, textAlign: "center" },
+  // ── Saga-Teaser ─────────────────────────────────────────────────────
+  sagaTeaserCard: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  sagaTeaserEmoji: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sagaTeaserEyebrow: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.2, marginBottom: 3 },
+  sagaTeaserTitle: { fontFamily: fonts.bodyBold, fontSize: 14, lineHeight: 18 },
   elevChartCard: {
     ...GLAS_3D,
     borderWidth: 1,
