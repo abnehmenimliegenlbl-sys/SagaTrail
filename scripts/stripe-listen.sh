@@ -17,10 +17,13 @@ if [ ! -f "$STRIPE_BIN" ]; then
 fi
 
 echo ""
-echo "Webhook-Forwarding aktiv → https://api.sagatrail.ch/api/stripe/webhook"
+echo "Webhook-Forwarding aktiv → http://localhost:8080/api/stripe/webhook"
 echo "Testkarte: 4242 4242 4242 4242 · Ablauf: 12/34 · CVC: 123"
+echo ""
+echo "WICHTIG: Das angezeigte 'whsec_...' Secret als STRIPE_WEBHOOK_SECRET_CLI"
+echo "         in den Replit Secrets speichern, dann Server neu starten."
 echo ""
 
 exec "$STRIPE_BIN" listen \
   --api-key "$STRIPE_SECRET_KEY" \
-  --forward-to "https://api.sagatrail.ch/api/stripe/webhook"
+  --forward-to "http://localhost:8080/api/stripe/webhook"

@@ -55,13 +55,25 @@ app.post(
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     // ── Signatur-Verifikation (direkt via Stripe SDK, unabhängig von stripe-replit-sync) ──
+    // Unterstützt zwei Secrets: STRIPE_WEBHOOK_SECRET (Live/Prod) + STRIPE_WEBHOOK_SECRET_CLI (Test-CLI)
     let event: Stripe.Event;
-    if (webhookSecret) {
-      try {
-        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
-        event = stripeClient.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
-      } catch (err: any) {
-        logger.warn({ err }, "Stripe-Webhook-Signatur ungültig");
+    const cliSecret = process.env.STRIPE_WEBHOOK_SECRET_CLI;
+    const secrets = [webhookSecret, cliSecret].filter(Boolean) as string[];
+
+    if (secrets.length > 0) {
+      const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+      let verified = false;
+      for (const secret of secrets) {
+        try {
+          event = stripeClient.webhooks.constructEvent(req.body as Buffer, sig, secret);
+          verified = true;
+          break;
+        } catch {
+          // nächsten Secret versuchen
+        }
+      }
+      if (!verified) {
+        logger.warn("Stripe-Webhook-Signatur ungültig (alle Secrets fehlgeschlagen)");
         res.status(400).json({ error: "Invalid signature" });
         return;
       }
