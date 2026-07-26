@@ -13,8 +13,8 @@ import {
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
 import { WebhookHandlers } from "./lib/webhookHandlers";
-import { constructStripeEvent } from "./lib/stripeClient";
 import { handleStripeEvent } from "./lib/partnerWebhookHandler";
+import Stripe from "stripe";
 
 const app: Express = express();
 
@@ -57,9 +57,10 @@ app.post(
       // 1. stripe-replit-sync synchronisiert Stripe-Daten in die stripe.*-Tabellen
       await WebhookHandlers.processWebhook(req.body as Buffer, sig);
 
-      // 2. Eigene Business-Logik (Partner anlegen, Magic-Link senden etc.)
+      // 2. Eigene Business-Logik — Signatur wurde in Schritt 1 bereits geprüft,
+      //    daher können wir den Buffer direkt als JSON parsen.
       try {
-        const event = await constructStripeEvent(req.body as Buffer, sig);
+        const event = JSON.parse((req.body as Buffer).toString("utf8")) as Stripe.Event;
         await handleStripeEvent(event);
       } catch (bizErr: any) {
         logger.error({ err: bizErr }, "Stripe-Business-Logik-Fehler (nicht kritisch)");
