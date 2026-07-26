@@ -188,6 +188,34 @@ const NEBENROLLEN = new Set([
 // kommen aber vor, z.B. an Faehren oder Strassenquerungen).
 const VERBINDUNGS_TOLERANZ_M = 150;
 
+// Ab dieser Lueckengroesse gilt ein Sprung als Stitch-Artefakt (keine echte
+// Wegverbindung). stitchGeometry gibt dann nur die laengste lueckenfreie
+// Teilkette zurueck — eine sichtbare Luecke ist besser als eine km-lange
+// Phantomlinie quer durchs Gelaende.
+const ARTEFAKT_LUECKE_M = 500;
+
+/**
+ * Teilt eine Punktliste an Spruengen > maxLueckeM auf und gibt die laengste
+ * zusammenhaengende Teilkette zurueck. Entfernt so Stitch-Artefakte aus dem
+ * Routenverlauf, ohne die Geometrie zu verfaelschen.
+ */
+function laengsteKette(punkte: LatLng[], maxLueckeM: number): LatLng[] {
+  if (punkte.length < 2) return punkte;
+  const ketten: LatLng[][] = [];
+  let aktuelle: LatLng[] = [punkte[0]!];
+  for (let i = 1; i < punkte.length; i++) {
+    if (haversineM(punkte[i - 1]!, punkte[i]!) > maxLueckeM) {
+      ketten.push(aktuelle);
+      aktuelle = [punkte[i]!];
+    } else {
+      aktuelle.push(punkte[i]!);
+    }
+  }
+  ketten.push(aktuelle);
+  // Laengste Kette nach Punktanzahl — korreliert mit physischer Strecklaenge
+  return ketten.reduce((a, b) => (b.length > a.length ? b : a), [] as LatLng[]);
+}
+
 /**
  * Verkettet die Wegstuecke einer Relation zu einer Punktliste.
  *
@@ -198,7 +226,8 @@ const VERBINDUNGS_TOLERANZ_M = 150;
  * umgedreht), dessen Endpunkt dem aktuellen Kettenende am naechsten liegt.
  * Liegt kein Stueck mehr innerhalb der Toleranz, wird das naechstgelegene
  * Reststueck mit sichtbarer Luecke angefuegt (besser eine kleine Luecke als
- * ein Sprung quer ueber das Tal).
+ * ein Sprung quer ueber das Tal). Anschliessend entfernt laengsteKette alle
+ * Artefakt-Geraden > ARTEFAKT_LUECKE_M und gibt nur die Hauptkette zurueck.
  */
 function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
   const segmente: LatLng[][] = [];
@@ -273,7 +302,7 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
     }
   }
 
-  return kette;
+  return laengsteKette(kette, ARTEFAKT_LUECKE_M);
 }
 
 /** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */
