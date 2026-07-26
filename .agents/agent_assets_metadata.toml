@@ -323,3 +323,9 @@ id = "MIuYFJO2IexZ6OfbcMu2g"
 uri = "file://screenshots/stoos-mythen-karte.jpg"
 type = "image"
 title = "Großer Mythen – SagaTrail Karte"
+
+[[outputs]]
+id = "vl3vXFytO4NEzXVPbKV_d"
+uri = "file://screenshots/stoos-mythen-karte-v2.jpg"
+type = "image"
+title = "Großer Mythen – SagaTrail Karte (swisstopo)"

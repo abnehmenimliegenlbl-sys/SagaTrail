@@ -123,7 +123,7 @@ export default function StoosCard() {
             { icon: '📍', label: 'DISTANZ',   val: '5.9',  unit: 'km' },
             { icon: '📈', label: 'AUFSTIEG',  val: '598',  unit: 'hm' },
             { icon: '▲',  label: 'MAX.HÖHE',  val: '1898', unit: 'm'  },
-            { icon: '⏱',  label: 'ZEIT',      val: '2:45', unit: 'h'  },
+            { icon: '⏱',  label: 'ZEIT',      val: '3:30', unit: 'h'  },
             { icon: '🛡',  label: 'SAC',       val: 'T3',   unit: ''   },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl border border-black/[0.06] shadow-sm p-2 flex flex-col items-center">
@@ -169,81 +169,76 @@ export default function StoosCard() {
           </svg>
         </div>
 
-        {/* KARTE */}
+        {/* KARTE — swisstopo WMS + SVG-Route */}
         <div className="mt-1.5 rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 166 }}>
-          <div className="h-full relative" style={{ background: '#e8ede2' }}>
-            <svg viewBox="0 0 364 166" className="w-full h-full absolute inset-0">
-              {/* Terrain shading */}
-              <path d="M0,166 L0,130 Q40,118 80,128 Q110,115 140,125 L160,166Z" fill="#c8d8b8" opacity="0.65"/>
-              <path d="M290,166 L290,90 Q320,72 350,80 Q358,74 364,78 L364,166Z" fill="#c8d8b8" opacity="0.6"/>
-              {/* Schnee/Fels am Gipfel */}
-              <ellipse cx="314" cy="42" rx="28" ry="16" fill="#e0e8f0" opacity="0.85"/>
-              <ellipse cx="314" cy="42" rx="18" ry="10" fill="#d0dce8" opacity="0.7"/>
-              {/* Höhenlinien */}
-              <path d="M5,158 Q70,144 130,128 Q190,110 250,88 Q300,70 350,55 Q358,52 364,52" fill="none" stroke="#b8c8b0" strokeWidth="0.8"/>
-              <path d="M5,146 Q70,130 130,114 Q190,95 250,73 Q300,55 350,40 Q358,37 364,37" fill="none" stroke="#b0c0a8" strokeWidth="0.8"/>
-              <path d="M25,136 Q80,118 138,100 Q196,80 252,58 Q302,40 348,28" fill="none" stroke="#b0c0a8" strokeWidth="0.8"/>
-              {/* Leitkurve */}
-              <path d="M5,152 Q70,137 130,121 Q190,102 250,80 Q300,62 350,47 Q358,44 364,44" fill="none" stroke="#9aae90" strokeWidth="1.4"/>
-              <path d="M20,140 Q76,122 134,107 Q192,88 250,67 Q300,49 348,36" fill="none" stroke="#9aae90" strokeWidth="1.4"/>
-              {/* See */}
-              <ellipse cx="155" cy="110" rx="12" ry="7" fill="#b8d4e8" opacity="0.8"/>
+          <div className="h-full relative">
+            {/*
+              swisstopo WMS GetMap — öffentlich, keine Auth nötig.
+              BBox (EPSG:4326, WMS 1.3.0: minLat,minLon,maxLat,maxLon):
+                lat 46.955–46.990 · lon 8.645–8.715
+              Projektionsformel für SVG-Punkte (lineare Annäherung, reicht für 7 km):
+                px_x = (lon − 8.645) / 0.070 × 364
+                px_y = (46.990 − lat) / 0.035 × 166
+            */}
+            <img
+              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=46.955%2C8.645%2C46.990%2C8.715"
+              alt="swisstopo Karte Stoos–Großer Mythen"
+              className="absolute inset-0 w-full h-full object-fill"
+            />
+            <svg viewBox="0 0 364 166" className="absolute inset-0 w-full h-full">
+              {/* Routenschatten */}
+              <polyline
+                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
+                fill="none" stroke="rgba(180,0,0,0.20)" strokeWidth="6"
+                strokeLinejoin="round" strokeLinecap="round"
+              />
               {/* Route */}
-              <polyline points="30,138 55,128 80,115 108,105 140,90 172,74 206,58 238,44 270,36 300,30 314,28"
-                fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
-              <polyline points="30,139 55,129 80,116 108,106 140,91 172,75 206,59 238,45 270,37 300,31 314,29"
-                fill="none" stroke="rgba(180,0,0,0.15)" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round"/>
-              <polyline points="30,138 55,128 80,115 108,105 140,90 172,74 206,58 238,44 270,36 300,30 314,28"
-                fill="none" stroke="#cc0000" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"/>
-              {/* Start */}
-              <circle cx="30" cy="138" r="7" fill="#cc0000"/>
-              <circle cx="30" cy="138" r="3.5" fill="white"/>
+              <polyline
+                points="114,67 143,72 172,77 192,88 213,98 234,110 258,116 281,120"
+                fill="none" stroke="#cc0000" strokeWidth="3.5"
+                strokeLinejoin="round" strokeLinecap="round"
+              />
+              {/* Start — Stoos */}
+              <circle cx="114" cy="67" r="7" fill="#cc0000"/>
+              <circle cx="114" cy="67" r="3.5" fill="white"/>
               {/* Zwischenpunkte */}
-              {[[80,115],[140,90],[206,58]].map(([x,y],i) => (
+              {([[172,77],[213,98],[234,110]] as [number,number][]).map(([x,y],i) => (
                 <circle key={i} cx={x} cy={y} r="3" fill="white" stroke="#cc0000" strokeWidth="1.8"/>
               ))}
-              {/* Gipfel */}
-              <circle cx="314" cy="28" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
-              <circle cx="314" cy="28" r="3" fill="#cc0000"/>
-              {/* Ortsnamen */}
-              <text x="10"  y="150" fontSize="8"   fill="#3a4e32" fontWeight="700">Stoos</text>
-              <text x="10"  y="158" fontSize="6"   fill="#7a8e72">1300 m</text>
-              <text x="60"  y="108" fontSize="6.5" fill="#4a5e42" fontWeight="600">Holzegg</text>
-              <text x="62"  y="116" fontSize="6"   fill="#7a8e72">1405 m</text>
-              <text x="145" y="84"  fontSize="6.5" fill="#4a5e42" fontWeight="600">Sattel</text>
-              <text x="140" y="118" fontSize="6"   fill="#7ab8d8" fontWeight="600">Lauerz&shy;see</text>
-              <text x="210" y="52"  fontSize="6.5" fill="#4a5e42" fontWeight="600">Kl. Mythen</text>
-              <text x="212" y="60"  fontSize="6"   fill="#7a8e72">1811 m</text>
-              <text x="270" y="24"  fontSize="6"   fill="#8a9eb8" fontWeight="600">Gr. Mythen</text>
-              <text x="294" y="20"  fontSize="8"   fill="#3a4e32" fontWeight="700">Gipfel</text>
-              <text x="296" y="9"   fontSize="6"   fill="#7a8e72">1898 m</text>
-              {/* Wald */}
-              {[[18,118],[32,112],[46,118],[22,106],[38,104]].map(([x,y],i)=>(
-                <g key={i}>
-                  <polygon points={`${x},${y-8} ${x-4},${y} ${x+4},${y}`} fill="#7a9e6a" opacity="0.7"/>
-                  <rect x={x-1} y={y} width="2" height="3" fill="#8a7060" opacity="0.6"/>
-                </g>
-              ))}
-              {[[338,78],[348,72],[354,80],[342,68]].map(([x,y],i)=>(
-                <g key={i}>
-                  <polygon points={`${x},${y-7} ${x-3.5},${y} ${x+3.5},${y}`} fill="#7a9e6a" opacity="0.7"/>
-                  <rect x={x-1} y={y} width="2" height="3" fill="#8a7060" opacity="0.6"/>
-                </g>
-              ))}
+              {/* Ziel — Großer Mythen */}
+              <circle cx="281" cy="120" r="7" fill="white" stroke="#cc0000" strokeWidth="2.5"/>
+              <circle cx="281" cy="120" r="3" fill="#cc0000"/>
+
+              {/* Labels mit weissem Halo */}
+              {/* Stoos */}
+              <text x="122" y="63" fontSize="8" fill="white" fontWeight="800" stroke="white" strokeWidth="3" paintOrder="stroke">Stoos</text>
+              <text x="122" y="63" fontSize="8" fill="#1a3a1a" fontWeight="700">Stoos</text>
+              <text x="122" y="72" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1300 m</text>
+              <text x="122" y="72" fontSize="6" fill="#3a5a3a">1300 m</text>
+              {/* Holzegg */}
+              <text x="150" y="73" fontSize="7" fill="white" fontWeight="700" stroke="white" strokeWidth="3" paintOrder="stroke">Holzegg</text>
+              <text x="150" y="73" fontSize="7" fill="#1a3a1a" fontWeight="600">Holzegg</text>
+              {/* Kl. Mythen */}
+              <text x="198" y="106" fontSize="7" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="700">Kl. Mythen</text>
+              <text x="198" y="106" fontSize="7" fill="#1a3a1a" fontWeight="600">Kl. Mythen</text>
+              <text x="200" y="114" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1811 m</text>
+              <text x="200" y="114" fontSize="6" fill="#3a5a3a">1811 m</text>
+              {/* Gr. Mythen */}
+              <text x="244" y="116" fontSize="7.5" fill="white" stroke="white" strokeWidth="3" paintOrder="stroke" fontWeight="800">Gr. Mythen</text>
+              <text x="244" y="116" fontSize="7.5" fill="#1a1a1a" fontWeight="700">Gr. Mythen</text>
+              <text x="248" y="125" fontSize="6" fill="white" stroke="white" strokeWidth="2.5" paintOrder="stroke">1898 m</text>
+              <text x="248" y="125" fontSize="6" fill="#3a5a3a">1898 m</text>
+
               {/* Kompass */}
-              <g transform="translate(342,148)">
-                <circle r="10" fill="white" opacity="0.85" stroke="#c0c8b8" strokeWidth="0.8"/>
+              <g transform="translate(344,148)">
+                <circle r="10" fill="white" opacity="0.88" stroke="#bbb" strokeWidth="0.8"/>
                 <polygon points="0,-7 -2.5,0 0,-2 2.5,0" fill="#cc0000"/>
-                <polygon points="0,7 -2.5,0 0,2 2.5,0" fill="#888"/>
+                <polygon points="0,7 -2.5,0 0,2 2.5,0" fill="#999"/>
                 <text x="0" y="-8" fontSize="5" fill="#cc0000" textAnchor="middle" fontWeight="700">N</text>
               </g>
-              {/* Massstab */}
-              <g transform="translate(12,152)">
-                <line x1="0" y1="0" x2="24" y2="0" stroke="#667760" strokeWidth="1.5"/>
-                <line x1="0" y1="-2" x2="0" y2="2" stroke="#667760" strokeWidth="1.5"/>
-                <line x1="24" y1="-2" x2="24" y2="2" stroke="#667760" strokeWidth="1.5"/>
-                <text x="12" y="-3" fontSize="5.5" fill="#667760" textAnchor="middle">1 km</text>
-              </g>
+              {/* © swisstopo */}
+              <text x="6" y="163" fontSize="5.5" fill="white" stroke="white" strokeWidth="2" paintOrder="stroke" opacity="0.9">© swisstopo</text>
+              <text x="6" y="163" fontSize="5.5" fill="#444" opacity="0.9">© swisstopo</text>
             </svg>
           </div>
         </div>
