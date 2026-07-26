@@ -141,12 +141,12 @@ export default function RigiCard() {
 
         <div className="grid grid-cols-5 gap-1.5 mt-1.5">
           <div className="col-span-2 bg-white rounded-xl border border-black/[0.06] shadow-sm p-2.5 flex flex-col justify-center">
-            <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 block mb-1.5">SAC</span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 block mb-1.5">POI</span>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[#cc0000] flex items-center justify-center shrink-0">
-                <span className="text-white font-black text-[13px]">T2</span>
+                <span className="text-white font-black text-[15px]">9</span>
               </div>
-              <span className="text-[10px] text-gray-500 leading-tight">Berg&shy;wanderweg</span>
+              <span className="text-[10px] text-gray-500 leading-tight">Punkte auf dem Trail</span>
             </div>
           </div>
           <div className="col-span-3 bg-white rounded-xl border border-black/[0.06] shadow-sm px-3 pt-2 pb-2">
@@ -175,7 +175,7 @@ export default function RigiCard() {
         <div className="mt-1.5 rounded-xl overflow-hidden border border-black/[0.06] shadow-sm" style={{ height: 166 }}>
           <div className="h-full relative">
             <img
-              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-farbe&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=47.005%2C8.435%2C47.070%2C8.532"
+              src="https://wms.geo.admin.ch/?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fjpeg&LAYERS=ch.swisstopo.pixelkarte-grau&CRS=EPSG%3A4326&STYLES=&WIDTH=364&HEIGHT=166&BBOX=47.005%2C8.435%2C47.070%2C8.532"
               alt="swisstopo Karte Vitznau–Rigi Kulm"
               className="absolute inset-0 w-full h-full object-fill"
             />
