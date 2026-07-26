@@ -285,15 +285,27 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
   const partner = await resolveToken(token);
   if (!partner) { res.status(401).json({ error: "Ungültiger oder abgelaufener Token." }); return; }
 
-  if (!partner.stripeCustomerId) {
-    res.status(400).json({ error: "Kein Stripe-Kundenkonto verknüpft." });
-    return;
-  }
-
   try {
     const stripe = await getUncachableStripeClient();
+
+    let customerId = partner.stripeCustomerId;
+
+    // Kein Customer in DB → per E-Mail in Stripe suchen und nachholen
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: partner.email, limit: 1 });
+      if (customers.data.length === 0) {
+        res.status(400).json({ error: "Kein Stripe-Kundenkonto für diese E-Mail-Adresse gefunden." });
+        return;
+      }
+      customerId = customers.data[0].id;
+      await db.update(partnersTable)
+        .set({ stripeCustomerId: customerId, updatedAt: new Date() })
+        .where(eq(partnersTable.id, partner.id));
+      req.log.info({ partnerId: partner.id, customerId }, "stripeCustomerId via E-Mail-Lookup nachgetragen");
+    }
+
     const session = await stripe.billingPortal.sessions.create({
-      customer:   partner.stripeCustomerId,
+      customer:   customerId,
       return_url: "https://sagatrail.ch/portal",
     });
     req.log.info({ partnerId: partner.id }, "Stripe Billing-Portal-Session erstellt");
