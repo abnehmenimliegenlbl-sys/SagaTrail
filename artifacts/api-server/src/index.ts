@@ -3,7 +3,7 @@ import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./lib/stripeClient";
-import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos } from "./lib/routeService";
+import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos, fixArtefaktRouten } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 import { db, externalRoutesTable } from "@workspace/db";
@@ -171,6 +171,22 @@ const server = app.listen(port, async (err) => {
       }
     })
     .catch((err) => logger.warn({ err }, "DB-Catch-up v3-Zaehlung fehlgeschlagen"));
+
+  // Artefakt-Luecken-Fix: prueft alle v3-Routen auf Phantomlinien > 500 m
+  // (entstehen durch fehlerhaftes OSM-Stitching). Kaputte Routen werden auf
+  // geometry_version = 1 gesetzt; wenn welche gefunden wurden, startet ein
+  // Warm-all im Hintergrund, der sie mit dem korrigierten Algorithmus neu
+  // aufbaut. Laeuft auf jedem Deploy bis alle Routen sauber sind.
+  fixArtefaktRouten(logger)
+    .then((count) => {
+      if (count > 0) {
+        logger.info({ count }, "Artefakt-Fix: starte Warm-all im Hintergrund");
+        warmAllCantonCaches(logger).catch((err) =>
+          logger.warn({ err }, "Artefakt-Fix Warm-all fehlgeschlagen"),
+        );
+      }
+    })
+    .catch((err) => logger.warn({ err }, "Artefakt-Fix fehlgeschlagen (nicht kritisch)"));
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();

@@ -917,6 +917,56 @@ export async function fillMissingRoutePhotos(log: Logger): Promise<void> {
 }
 
 /**
+ * Prueft alle v3-Routen in der DB auf Artefakt-Luecken > 500 m im Geometry-
+ * Array (gerade Phantomlinien aus fehlerhaftem OSM-Stitching). Kaputte Routen
+ * werden auf geometry_version = 1 zurueckgesetzt, damit der naechste Warm-all
+ * sie neu aufbaut. Gibt die Anzahl der markierten Routen zurueck.
+ *
+ * Wird einmalig beim Server-Start aufgerufen. Sobald alle Routen korrekt
+ * sind, findet die Funktion nichts mehr und kehrt sofort zurueck (O(n) Scan,
+ * n = Anzahl v3-Routen).
+ */
+export async function fixArtefaktRouten(log: Logger): Promise<number> {
+  const LUECKE_M = 500;
+
+  const rows = await db
+    .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.geometryVersion, 3));
+
+  const kaputt: string[] = [];
+  for (const row of rows) {
+    const geom = row.geometry as [number, number][] | null;
+    if (!geom || geom.length < 2) continue;
+    for (let i = 1; i < geom.length; i++) {
+      const [lat1, lng1] = geom[i - 1]!;
+      const [lat2, lng2] = geom[i]!;
+      if (haversineM({ lat: lat1!, lng: lng1! }, { lat: lat2!, lng: lng2! }) > LUECKE_M) {
+        kaputt.push(row.id);
+        break;
+      }
+    }
+  }
+
+  if (kaputt.length === 0) {
+    log.info("Artefakt-Check: keine kaputten Routen gefunden");
+    return 0;
+  }
+
+  // In Batches a 100 updaten (IN-Klausel-Laenge begrenzen).
+  const BATCH = 100;
+  for (let i = 0; i < kaputt.length; i += BATCH) {
+    const slice = kaputt.slice(i, i + BATCH);
+    await db.execute(
+      sql`UPDATE external_routes SET geometry_version = 1 WHERE id = ANY(${sql.raw(`ARRAY[${slice.map((id) => `'${id}'`).join(",")}]`)})`,
+    );
+  }
+
+  log.info({ count: kaputt.length }, "Artefakt-Check: kaputte Routen auf v1 zurueckgesetzt");
+  return kaputt.length;
+}
+
+/**
  * Liefert die kuratierte Sage zu einer dynamischen (OSM-)Route: die
  * naechstgelegene belegte Regionalsage. Es werden keine Sagen mehr erzeugt.
  */
