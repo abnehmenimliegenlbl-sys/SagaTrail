@@ -452,7 +452,7 @@ async function runCampaign(campaignId: string, opts: {
     // Log-Eintrag
     await db.insert(partnerEmailLogTable).values({
       campaignId,
-      subject:       resolveVars(subject, lead),
+      subject:       subject, // Template-Betreff (nicht aufgelöst) für Dedup-Check
       email:         lead.email,
       recipientName: lead.name,
       status,

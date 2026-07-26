@@ -106,6 +106,22 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration verbands.logo_url fehlgeschlagen (nicht kritisch)");
   }
 
+  // Einmalig: aufgelöste Betreffs in partner_email_log auf Template-Form korrigieren
+  // damit der Dedup-Check bei variablen Betreffs (%NAME% etc.) korrekt greift.
+  try {
+    const fixed = await db.execute(sql`
+      UPDATE partner_email_log
+      SET subject = '%NAME% – Ihr Restaurant in der SagaTrail-Wander-App?'
+      WHERE subject LIKE '% – Ihr Restaurant in der SagaTrail-Wander-App?'
+        AND subject NOT LIKE '%NAME%'
+    `);
+    if ((fixed.rowCount ?? 0) > 0) {
+      logger.info({ count: fixed.rowCount }, "Migration: email_log Betreffs auf Template korrigiert");
+    }
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Migration email_log Betreffs fehlgeschlagen (nicht kritisch)");
+  }
+
   // Stripe: Schema + Webhook + Backfill (im Hintergrund, nicht blockierend).
   const databaseUrl = process.env.DATABASE_URL;
   if (databaseUrl) {
