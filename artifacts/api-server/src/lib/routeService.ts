@@ -121,10 +121,11 @@ async function getCantonIndex(
   canton: string,
   iso: string,
   log: Logger,
+  timeoutMs?: number,
 ): Promise<RouteIndexEntry[]> {
   const hit = indexCache.get(canton);
-  if (hit && Date.now() - hit.at < INDEX_TTL_MS) return hit.entries;
-  const entries = await fetchCantonRouteIndex(iso, log);
+  if (hit && !timeoutMs && Date.now() - hit.at < INDEX_TTL_MS) return hit.entries;
+  const entries = await fetchCantonRouteIndex(iso, log, timeoutMs);
   indexCache.set(canton, { at: Date.now(), entries });
   return entries;
 }
@@ -546,7 +547,7 @@ function isFresh(row: ExternalRouteRow): boolean {
   );
 }
 
-async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow[]> {
+export async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow[]> {
   return db
     .select()
     .from(externalRoutesTable)
@@ -662,7 +663,7 @@ export async function getCantonRoutes(
   canton: string,
   log: Logger,
   distMax?: number,
-  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number },
+  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean },
 ): Promise<ExternalRouteRow[]> {
   const iso = isoForCanton(canton);
   if (!iso) {
@@ -674,14 +675,14 @@ export async function getCantonRoutes(
   // ueberspringen. Das verhindert den langen Cold-Start nach Server-Restart.
   const cached = await loadCachedRoutes(canton);
   const fresh = cached.filter((row) => isFresh(row));
-  if (fresh.length >= DB_SHORTCUT_MIN) {
+  if (!fetchOpts?.forceRefresh && fresh.length >= DB_SHORTCUT_MIN) {
     log.debug({ canton, count: fresh.length }, "Kanton-Routen aus DB-Cache (Shortcut)");
     return fresh;
   }
 
   let index: RouteIndexEntry[];
   try {
-    index = await getCantonIndex(canton, iso, log);
+    index = await getCantonIndex(canton, iso, log, fetchOpts?.timeoutMs);
   } catch (err) {
     // Index nicht ladbar: auf bereits FRISCH gecachte Routen ausweichen, sonst
     // Fehler durchreichen (der Router meldet dann 502 -> UI "Server nicht
@@ -736,6 +737,14 @@ const WARM_STAGGER_MS = 4000;
 export async function warmAllCantonCaches(log: Logger): Promise<void> {
   const cantons = Object.keys(CANTON_ISO);
   for (const canton of cantons) {
+    // Kanton überspringen wenn bereits genug frische Routen in DB —
+    // verhindert unnötige Overpass-Last beim Serverneustart.
+    const cached = await loadCachedRoutes(canton);
+    const fresh = cached.filter((row) => isFresh(row));
+    if (fresh.length >= DB_SHORTCUT_MIN) {
+      log.debug({ canton, count: fresh.length }, "Kanton-Cache aktuell – Vorwaermung übersprungen");
+      continue;
+    }
     try {
       const routes = await getCantonRoutes(canton, log);
       log.info({ canton, count: routes.length }, "Kanton-Cache vorgewaermt");

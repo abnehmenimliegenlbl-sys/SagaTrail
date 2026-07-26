@@ -738,17 +738,17 @@ router.patch("/admin/routes/:id/foto", async (req, res): Promise<void> => {
 // Nutzt große Timeouts + kleine Batches + Pausen → geeignet für Kantone mit 200+ Routen
 router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const { canton, timeoutMs = 120_000, batchSize = 20, pauseMs = 3_000 } =
-    req.body as { canton?: string; timeoutMs?: number; batchSize?: number; pauseMs?: number };
+  const { canton, timeoutMs = 120_000, batchSize = 20, pauseMs = 3_000, forceRefresh = false } =
+    req.body as { canton?: string; timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean };
   if (!canton) { res.status(400).json({ error: "canton fehlt" }); return; }
 
   // Antwort sofort senden; Ladeprozess läuft im Hintergrund
-  res.json({ ok: true, canton, timeoutMs, batchSize, pauseMs, message: "Hintergrundlauf gestartet – verfolge den Fortschritt in den Server-Logs" });
+  res.json({ ok: true, canton, timeoutMs, batchSize, pauseMs, forceRefresh, message: "Hintergrundlauf gestartet – verfolge den Fortschritt in den Server-Logs" });
 
   (async () => {
     try {
-      req.log.info({ canton, timeoutMs, batchSize, pauseMs }, "Slow-warm gestartet");
-      const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs });
+      req.log.info({ canton, timeoutMs, batchSize, pauseMs, forceRefresh }, "Slow-warm gestartet");
+      const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs, forceRefresh });
       req.log.info({ canton, count: routes.length }, "Slow-warm abgeschlossen");
     } catch (err) {
       req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");

@@ -572,14 +572,17 @@ export async function fetchAlpineHuts(
 export async function fetchCantonRouteIndex(
   iso: string,
   log: Logger,
+  timeoutMs?: number,
 ): Promise<RouteIndexEntry[]> {
+  const httpTimeout = timeoutMs ?? REQUEST_TIMEOUT_MS;
+  const ovTimeout  = Math.ceil(httpTimeout / 1000);
   const query = [
-    "[out:json][timeout:90];",
+    `[out:json][timeout:${ovTimeout}];`,
     `area["ISO3166-2"="${iso}"]->.a;`,
     'relation["route"="hiking"]["name"](area.a);',
     "out tags bb;",
   ].join("");
-  const elements = await runOverpass<OverpassTagsElement>(query);
+  const elements = await runOverpass<OverpassTagsElement>(query, httpTimeout);
   const index: RouteIndexEntry[] = [];
   for (const e of elements) {
     const tags = e.tags ?? {};

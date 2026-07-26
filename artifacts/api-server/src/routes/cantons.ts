@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import type { ExternalRouteRow } from "@workspace/db";
-import { getCantonRoutes } from "../lib/routeService";
+import { loadCachedRoutes } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
 import { haversineM } from "../lib/geo";
 
@@ -116,7 +116,7 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     nearLng: numParam(req.query.nearLng),
   };
   try {
-    const rows = await getCantonRoutes(canton, req.log, filter.distMax ?? undefined);
+    const rows = await loadCachedRoutes(canton);
     const userPos =
       filter.nearLat !== null && filter.nearLng !== null
         ? { lat: filter.nearLat, lng: filter.nearLng }

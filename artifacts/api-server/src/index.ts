@@ -145,13 +145,11 @@ const server = app.listen(port, async (err) => {
     logger.error({ err: seedErr }, "Katalog-Seeding fehlgeschlagen");
   }
 
-  // Kanton-Routen-Cache im Hintergrund vorwaermen (nicht awaiten): reduziert
-  // die haeufige Kaltstart-Wartezeit von 15-25s pro Kanton auf Cache-Treffer.
-  warmAllCantonCaches(logger)
-    .then(() => fillMissingRoutePhotos(logger))
-    .catch((err) => {
-      logger.error({ err }, "Cache-Vorwaermung oder Foto-Nachladen fehlgeschlagen");
-    });
+  // Routen kommen ausschliesslich aus dem DB-Cache (kein Live-Overpass bei
+  // User-Requests). Fehlende Fotos im Hintergrund nachladen.
+  fillMissingRoutePhotos(logger).catch((err) => {
+    logger.error({ err }, "Foto-Nachladen fehlgeschlagen");
+  });
 
   // Taeglich-Wetter-Benachrichtigungen starten (07:00 UTC).
   startWeatherNotificationCron();
