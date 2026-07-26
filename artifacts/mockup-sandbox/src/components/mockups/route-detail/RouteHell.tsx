@@ -357,19 +357,21 @@ export default function RouteHell() {
       {/* ══════════════════════════════════════════
           BRANDING FOOTER
       ══════════════════════════════════════════ */}
-      <div className="bg-[#cc0000] px-4 py-3.5 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl overflow-hidden bg-white">
-            <img src="/__mockup/images/sagatrail-icon.png" alt="SagaTrail" className="w-full h-full object-cover" />
+      <div className="px-3 pb-3 mt-1.5 flex-shrink-0">
+        <div className="bg-white rounded-xl border border-black/[0.06] shadow-sm px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-black/[0.06]">
+              <img src="/__mockup/images/sagatrail-icon.png" alt="SagaTrail" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <div className="text-[#1a1a1a] font-black text-[14px] tracking-wider leading-none mb-0.5">SAGATRAIL</div>
+              <div className="text-[#cc0000] text-[11px] font-medium">www.sagatrail.ch</div>
+            </div>
           </div>
-          <div>
-            <div className="text-white font-black text-[14px] tracking-wider leading-none mb-0.5">SAGATRAIL</div>
-            <div className="text-white/80 text-[11px]">www.sagatrail.ch</div>
+          <div className="text-right">
+            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Wanderapp Schweiz</div>
+            <div className="text-gray-400 text-[10px] mt-0.5">Sagen auf dem Trail erleben</div>
           </div>
-        </div>
-        <div className="text-right">
-          <div className="text-white/70 text-[10px] uppercase tracking-widest">Wanderapp Schweiz</div>
-          <div className="text-white/70 text-[10px] mt-0.5">Sagen auf dem Trail erleben</div>
         </div>
       </div>
 
