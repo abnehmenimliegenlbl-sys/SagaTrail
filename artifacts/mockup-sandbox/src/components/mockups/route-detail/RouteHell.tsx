@@ -1,5 +1,132 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { MapPin, TrendingUp, Mountain, Clock, Footprints, Landmark } from 'lucide-react';
+
+// ── Gefahren-Farbpalette (1:1 aus ElevationChart.tsx) ──────────────────────
+const DANGER_FILL: Record<number, string> = {
+  1: "#4CAF50", 2: "#CDDC39", 3: "#FF9800", 4: "#F44336", 5: "#B71C1C", 6: "#4A0000",
+};
+const DANGER_TEXT: Record<number, string> = {
+  1: "#2E7D32", 2: "#6D6E00", 3: "#E65100", 4: "#C62828", 5: "#7f0000", 6: "#300000",
+};
+const DANGER_LABEL: Record<number, string> = {
+  1: "Gefahrenstufe 1 – Gering", 2: "Gefahrenstufe 2 – Mäßig",
+  3: "Gefahrenstufe 3 – Erheblich", 4: "Gefahrenstufe 4 – Groß",
+  5: "Gefahrenstufe 5 – Sehr groß", 6: "Gefahrenstufe 6 – Extrem",
+};
+
+interface ElevationPoint { distanceKm: number; altM: number }
+
+function ElevationChartWeb({
+  profile, dangerLevel, uvIndex, isThunderstorm = false, snowLineM = 2000,
+}: {
+  profile: ElevationPoint[]; dangerLevel?: number; uvIndex?: number;
+  isThunderstorm?: boolean; snowLineM?: number;
+}) {
+  const W = 220, H = 68;
+  const PAD = { top: 16, bottom: 2, left: 0, right: 0 };
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const minAlt = Math.min(...profile.map(p => p.altM));
+  const maxAlt = Math.max(...profile.map(p => p.altM));
+  const maxDist = profile[profile.length - 1].distanceKm;
+  const toX = (d: number) => (d / maxDist) * W;
+  const toY = (a: number) => PAD.top + (1 - (a - minAlt) / (maxAlt - minAlt)) * chartH;
+
+  const pts = profile.map(p => `${toX(p.distanceKm).toFixed(1)},${toY(p.altM).toFixed(1)}`);
+  const linePath = `M${pts.join('L')}`;
+  const baseY = PAD.top + chartH;
+  const areaPath = `M${pts[0]}L${pts.join('L')}L${toX(maxDist).toFixed(1)},${baseY}L0,${baseY}Z`;
+
+  // Hazards
+  const hazards: { level: number; icon: string }[] = [];
+  if (dangerLevel && dangerLevel >= 1) {
+    hazards.push({ level: dangerLevel, icon: "🏔️" });
+    if (maxAlt > snowLineM) hazards.push({ level: dangerLevel, icon: "❄️" });
+  }
+  if (isThunderstorm) hazards.push({ level: 4, icon: "⛈️" });
+  if (uvIndex != null && uvIndex >= 3) {
+    const ul = uvIndex < 3 ? 1 : uvIndex < 6 ? 2 : uvIndex < 8 ? 3 : uvIndex < 11 ? 4 : 5;
+    hazards.push({ level: ul, icon: "☀️" });
+  }
+  const effectiveLevel = hazards.length > 0 ? Math.min(6, Math.max(...hazards.map(h => h.level))) : 0;
+  const sortedIcons = [...hazards].sort((a,b) => b.level - a.level)
+    .filter((h,i,arr) => arr.findIndex(x => x.icon === h.icon) === i)
+    .map(h => h.icon);
+
+  // Gradient stops
+  const level = effectiveLevel > 0 ? effectiveLevel : 1;
+  const gradStops = level === 1
+    ? [{ offset: '0%', color: DANGER_FILL[1], opacity: 0.40 }, { offset: '100%', color: DANGER_FILL[1], opacity: 0.06 }]
+    : Array.from({ length: level }, (_, i) => {
+        const l = level - i;
+        const t = i / (level - 1);
+        return { offset: `${(t * 100).toFixed(0)}%`, color: DANGER_FILL[l], opacity: +(0.55 - t * 0.49).toFixed(2) };
+      });
+
+  return (
+    <div className="w-full">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+        <defs>
+          <linearGradient id="elev-danger" x1="0" y1="0" x2="0" y2="1">
+            {gradStops.map(s => (
+              <stop key={s.offset} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity} />
+            ))}
+          </linearGradient>
+        </defs>
+        {/* Grid */}
+        {[PAD.top + chartH * 0.33, PAD.top + chartH * 0.66].map(y => (
+          <line key={y} x1="0" y1={y} x2={W} y2={y} stroke="#f0f0f0" strokeWidth="1"/>
+        ))}
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#elev-danger)" />
+        {/* Line */}
+        <path d={linePath} fill="none" stroke="#cc0000" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+        {/* Baseline */}
+        <line x1="0" y1={baseY} x2={W} y2={baseY} stroke="#e5e7eb" strokeWidth="1"/>
+        {/* Max label */}
+        <rect x={W - 54} y={PAD.top - 1} width="54" height="16" fill="white" fillOpacity="0.92" rx="3"/>
+        <text x={W - 3} y={PAD.top + 11} fontSize="10" fill="#374151" textAnchor="end" fontWeight="600">{maxAlt} m</text>
+        {/* Min label */}
+        <rect x={W - 54} y={baseY - 17} width="54" height="16" fill="white" fillOpacity="0.92" rx="3"/>
+        <text x={W - 3} y={baseY - 4} fontSize="10" fill="#374151" textAnchor="end" fontWeight="600">{minAlt} m</text>
+      </svg>
+      {/* X-labels */}
+      <div className="flex justify-between px-0.5 -mt-0.5">
+        <span className="text-[9px] text-gray-400">0 km</span>
+        <span className="text-[9px] text-gray-400">{maxDist.toFixed(1)} km</span>
+      </div>
+      {/* Danger badge */}
+      {effectiveLevel > 0 && (
+        <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1 rounded-lg border text-[10px] font-semibold"
+          style={{
+            backgroundColor: DANGER_FILL[effectiveLevel] + '22',
+            borderColor: DANGER_FILL[effectiveLevel] + '66',
+            color: DANGER_TEXT[effectiveLevel],
+          }}>
+          <span>{sortedIcons.join('  ')}</span>
+          <span>{DANGER_LABEL[effectiveLevel]}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Elm Höhenweg — synthetisches Profil (T2, 979m → 1842m)
+const ELM_PROFILE: ElevationPoint[] = [
+  { distanceKm: 0,    altM: 979  },
+  { distanceKm: 1.2,  altM: 1080 },
+  { distanceKm: 2.5,  altM: 1180 },
+  { distanceKm: 3.8,  altM: 1290 },
+  { distanceKm: 5.0,  altM: 1380 },
+  { distanceKm: 6.2,  altM: 1480 },
+  { distanceKm: 7.5,  altM: 1590 },
+  { distanceKm: 8.8,  altM: 1680 },
+  { distanceKm: 10.2, altM: 1760 },
+  { distanceKm: 11.0, altM: 1842 },
+  { distanceKm: 12.1, altM: 1790 },
+  { distanceKm: 13.0, altM: 1720 },
+  { distanceKm: 14.2, altM: 1630 },
+];
 
 /* ─────────────────────────────────────────────────────────
    SOCIAL POST CARD — 390 × 844 px, festes Format, kein Scrollen
@@ -89,30 +216,14 @@ export default function RouteHell() {
           </div>
 
           {/* Höhenprofil — 3 Spalten breit */}
-          <div className="col-span-3 bg-white rounded-xl border border-black/[0.06] shadow-sm px-3 pt-2 pb-1.5">
+          <div className="col-span-3 bg-white rounded-xl border border-black/[0.06] shadow-sm px-3 pt-2 pb-2">
             <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Höhenprofil</span>
-            <svg viewBox="0 0 180 52" className="w-full h-auto">
-              <defs>
-                <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#cc0000" stopOpacity="0.18"/>
-                  <stop offset="100%" stopColor="#cc0000" stopOpacity="0"/>
-                </linearGradient>
-              </defs>
-              {[13, 26, 39].map(y =>
-                <line key={y} x1="0" y1={y} x2="180" y2={y} stroke="#f0f0f0" strokeWidth="1"/>
-              )}
-              <polyline
-                points="0,46 12,40 28,32 46,20 68,14 90,6 112,12 130,24 152,34 180,40 180,52 0,52"
-                fill="url(#eg)"
-              />
-              <polyline
-                points="0,46 12,40 28,32 46,20 68,14 90,6 112,12 130,24 152,34 180,40"
-                fill="none" stroke="#cc0000" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
-              />
-              <text x="1"   y="51" fontSize="6.5" fill="#ccc">1200m</text>
-              <text x="1"   y="8"  fontSize="6.5" fill="#ccc">1900m</text>
-              <text x="158" y="51" fontSize="6.5" fill="#ccc">14km</text>
-            </svg>
+            <ElevationChartWeb
+              profile={ELM_PROFILE}
+              dangerLevel={3}
+              uvIndex={7}
+              snowLineM={2000}
+            />
           </div>
 
         </div>
