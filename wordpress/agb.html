@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allgemeine Geschäftsbedingungen – SagaTrail</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #fff;
+    color: #111 !important;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .st-header {
+    background: #fff;
+    border-bottom: 4px solid #c00;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .st-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .st-logo-icon {
+    width: 40px; height: 40px;
+    background: #c00;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .st-logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #111 !important;
+  }
+  .st-logo-text span { color: #c00 !important; }
+  .st-back {
+    font-size: 14px;
+    font-weight: 600;
+    color: #c00 !important;
+    text-decoration: none;
+  }
+  .st-back:hover { text-decoration: underline; }
+
+  /* ── HERO ── */
+  .st-hero {
+    background: #f8f8f8;
+    padding: 56px 24px 48px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  .st-hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    color: #111 !important;
+    margin-bottom: 12px;
+  }
+  .st-hero h1 em { font-style: normal; color: #c00 !important; }
+  .st-hero p {
+    font-size: 16px;
+    color: #888 !important;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── CONTENT ── */
+  .st-content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .st-section {
+    margin-bottom: 40px;
+  }
+
+  .st-section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #111 !important;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+  }
+  .st-section-title .num {
+    color: #c00 !important;
+    margin-right: 6px;
+  }
+
+  .st-section p {
+    font-size: 15px;
+    color: #444 !important;
+    line-height: 1.75;
+    margin-bottom: 12px;
+  }
+  .st-section p:last-child { margin-bottom: 0; }
+
+  .st-section ul, .st-section ol {
+    margin: 10px 0 12px 20px;
+  }
+  .st-section li {
+    font-size: 15px;
+    color: #444 !important;
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+
+  .st-card {
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 16px;
+    transition: border-color 0.2s;
+  }
+  .st-card:hover { border-color: #c00; }
+
+  .st-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #c00 !important;
+    margin-bottom: 6px;
+  }
+  .st-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111 !important;
+    margin-bottom: 8px;
+  }
+  .st-card p {
+    font-size: 14px;
+    color: #666 !important;
+    line-height: 1.65;
+    margin-bottom: 0;
+  }
+  .st-card a { color: #c00 !important; text-decoration: none; }
+  .st-card a:hover { text-decoration: underline; }
+
+  .st-highlight {
+    background: #fff8f8;
+    border-left: 4px solid #c00;
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #555 !important;
+    line-height: 1.65;
+  }
+
+  .st-highlight strong { color: #c00 !important; }
+
+  a { color: #c00 !important; }
+  a:hover { text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  .st-footer {
+    background: #111;
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4) !important;
+  }
+  .st-footer a { color: rgba(255,255,255,0.55) !important; text-decoration: none; }
+  .st-footer a:hover { color: #c00 !important; }
+
+  @media (max-width: 480px) {
+    .st-hero { padding: 40px 16px 32px; }
+    .st-content { padding: 36px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="st-header">
+  <a href="/" class="st-logo">
+    <div class="st-logo-icon">🥾</div>
+    <span class="st-logo-text">Saga<span>Trail</span></span>
+  </a>
+  <a href="/" class="st-back">← Zurück zur App</a>
+</header>
+
+<div class="st-hero">
+  <h1>Allgemeine Geschäfts<em>bedingungen</em></h1>
+  <p>Stand: Juli 2026 · Gültig für die SagaTrail-App, Abonnements und Partner-Dienste</p>
+</div>
+
+<div class="st-content">
+
+  <div class="st-highlight">
+    Bitte lesen Sie diese Bedingungen sorgfältig durch, bevor Sie SagaTrail nutzen. Mit der Nutzung der App oder dem Abschluss eines Abonnements erklären Sie sich mit diesen AGB einverstanden.
+  </div>
+
+  <!-- 1 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">1.</span> Anbieter und Geltungsbereich</h2>
+    <p>Diese Allgemeinen Geschäftsbedingungen gelten für alle Leistungen, die über die SagaTrail-App sowie die Website <a href="https://sagatrail.ch">sagatrail.ch</a> erbracht werden.</p>
+    <div class="st-card">
+      <div class="st-card-label">Anbieter</div>
+      <h3>SagaTrail</h3>
+      <p>
+        A.i.L. by Koch (Rolf Koch)<br>
+        Mühlemattstrasse 11<br>
+        4104 Oberwil BL, Schweiz<br><br>
+        E-Mail: <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a>
+      </p>
+    </div>
+    <p style="margin-top:16px">Diese AGB gelten für Endnutzerinnen und Endnutzer der App sowie für Partner-Betriebe, die sich über das Partner-Programm registrieren. Abweichende Bedingungen des Kunden haben keine Geltung, sofern wir ihnen nicht ausdrücklich schriftlich zugestimmt haben.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">2.</span> Leistungen</h2>
+    <p>SagaTrail bietet folgende Leistungen an:</p>
+    <ul>
+      <li><strong>Kostenlose Basisnutzung</strong> — Zugang zu einer Auswahl von Wanderrouten und Sagen in der App ohne Registrierung</li>
+      <li><strong>Premium-Abonnement</strong> — Unbegrenzter Zugang zu allen Routen, Sagen und Funktionen (GPS-Narration, Gruppen-Wanderungen, Offline-Modus)</li>
+      <li><strong>Sagenpakete</strong> — Einmalige Freischaltung von Sagensammlungen einzelner Kantone</li>
+      <li><strong>Partner-Programm</strong> — Präsentation von gastgewerblichen Betrieben und Dienstleistungen in der App für registrierte Partner-Betriebe</li>
+    </ul>
+    <p>Wir behalten uns vor, den Funktionsumfang der App jederzeit zu erweitern, einzuschränken oder anzupassen. Änderungen am Leistungsumfang kostenpflichtiger Abonnements werden mindestens 30 Tage im Voraus angekündigt.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">3.</span> Registrierung und Nutzerkonto</h2>
+    <p>Für die vollständige Nutzung der App ist eine Registrierung mit einer gültigen E-Mail-Adresse oder einem Social-Login (Apple, Google) erforderlich. Sie verpflichten sich:</p>
+    <ul>
+      <li>Nur ein Nutzerkonto zu erstellen</li>
+      <li>Wahrheitsgemässe und aktuelle Angaben zu machen</li>
+      <li>Ihre Zugangsdaten vertraulich zu behandeln</li>
+      <li>Uns unverzüglich über einen Missbrauch Ihres Kontos zu informieren</li>
+    </ul>
+    <p>Wir behalten uns vor, Konten bei Verstoss gegen diese AGB oder bei missbräuchlicher Nutzung ohne Vorankündigung zu sperren oder zu löschen.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">4.</span> Preise und Zahlungsbedingungen</h2>
+    <p>Alle Preise sind Endpreise in Schweizer Franken (CHF) inkl. allfälliger Steuern, sofern nicht anders angegeben.</p>
+
+    <div class="st-card">
+      <div class="st-card-label">In-App-Käufe (Endnutzer)</div>
+      <h3>App Store und Google Play</h3>
+      <p>Abonnements und Sagenpakete werden über den Apple App Store bzw. Google Play Store abgewickelt. Die Zahlung erfolgt über das jeweilige Store-Konto. Es gelten die Zahlungsbedingungen von Apple bzw. Google.</p>
+    </div>
+
+    <div class="st-card">
+      <div class="st-card-label">Partner-Abonnements</div>
+      <h3>Stripe-Zahlungsabwicklung</h3>
+      <p>Partner-Abonnements werden über Stripe Payments Europe, Ltd. abgewickelt. Die Abrechnung erfolgt monatlich oder jährlich gemäss dem gewählten Paket. Die Zahlung wird am Beginn jedes Abrechnungszeitraums fällig. Bei fehlgeschlagener Zahlung behalten wir uns vor, den Zugang zum Partner-Portal vorübergehend zu sperren.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">5.</span> Rückerstattungen</h2>
+
+    <div class="st-highlight">
+      <strong>Grundsatz: Kein Rückgaberecht bei digitalen Inhalten.</strong> Alle Käufe digitaler Inhalte — einschliesslich Abonnements, Sagenpakete und Partner-Mitgliedschaften — sind nach Kaufabschluss ausdrücklich vom Widerrufsrecht ausgenommen und nicht rückerstattungsfähig.
+    </div>
+
+    <p>Im Einzelnen gilt:</p>
+
+    <div class="st-card">
+      <div class="st-card-label">Premium-Abonnements und Sagenpakete</div>
+      <h3>Keine Rückerstattung</h3>
+      <p>Abonnements und Einmalkäufe innerhalb der App werden über den Apple App Store oder Google Play abgewickelt. Rückerstattungsanfragen für diese Käufe richten sich ausschliesslich nach den Richtlinien von Apple bzw. Google und sind direkt über den jeweiligen Store einzureichen. SagaTrail ist an deren Entscheid gebunden und kann selbst keine Rückerstattungen für Store-Käufe vornehmen.</p>
+    </div>
+
+    <div class="st-card">
+      <div class="st-card-label">Partner-Abonnements</div>
+      <h3>Keine Rückerstattung nach Aktivierung</h3>
+      <p>Partner-Abonnements werden nach erfolgter Zahlung und Freischaltung des Partner-Kontos nicht zurückerstattet — weder für den laufenden Abrechnungszeitraum noch für bereits abgerechnete Perioden. Mit der Buchung bestätigen Sie, dass Sie auf Ihr Widerrufsrecht verzichten, soweit dies nach anwendbarem Recht zulässig ist. Eine Kündigung ist jederzeit möglich und wirkt auf Ende des bezahlten Abrechnungszeitraums.</p>
+    </div>
+
+    <p>Ausnahmen von diesem Grundsatz werden nur in Fällen gewährt, in denen SagaTrail die versprochene Leistung nachweislich dauerhaft nicht erbringen kann und eine angemessene Nacherfüllung nicht möglich ist. In diesem Fall wenden Sie sich an <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a>.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">6.</span> Abonnements und Kündigung</h2>
+    <p>Abonnements verlängern sich automatisch um die jeweilige Laufzeit (Monat oder Jahr), sofern sie nicht rechtzeitig gekündigt werden.</p>
+    <ul>
+      <li><strong>Kündigung durch Endnutzer (App Store / Google Play)</strong> — Jederzeit über die Kontoeinstellungen des jeweiligen Stores, spätestens 24 Stunden vor Ende des laufenden Abrechnungszeitraums</li>
+      <li><strong>Kündigung durch Partner</strong> — Jederzeit über das Stripe-Kundenportal im Partner-Portal oder per E-Mail an <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a>, mit Wirkung auf Ende des bezahlten Abrechnungszeitraums</li>
+    </ul>
+    <p>Nach Kündigung bleibt der Zugang bis zum Ende des bezahlten Zeitraums aktiv. Es erfolgt keine anteilige Rückerstattung.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">7.</span> Nutzungsrechte und geistiges Eigentum</h2>
+    <p>SagaTrail räumt Ihnen mit Abschluss eines Abonnements oder Einmalkaufs ein nicht-exklusives, nicht übertragbares Nutzungsrecht für den persönlichen, nicht-kommerziellen Gebrauch der freigeschalteten Inhalte ein.</p>
+    <p>Sämtliche Inhalte der App — darunter Texte, Sagen, Routen, Audionarration, Grafiken und Softwarecode — sind urheberrechtlich geschützt und dürfen ohne ausdrückliche schriftliche Zustimmung von SagaTrail nicht vervielfältigt, verbreitet oder kommerziell genutzt werden.</p>
+    <p>Partner-Betriebe räumen SagaTrail mit der Registrierung das Recht ein, ihre hochgeladenen Inhalte (Fotos, Beschreibungen, Angebote) innerhalb der App anzuzeigen und für die Vermarktung von SagaTrail zu verwenden.</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">8.</span> Verfügbarkeit und Haftung</h2>
+    <p>Wir bemühen uns um eine hohe Verfügbarkeit der App und der Server-Dienste, übernehmen jedoch keine Garantie für eine ununterbrochene Verfügbarkeit. Geplante Wartungsarbeiten werden, wenn möglich, im Voraus angekündigt.</p>
+    <p>Die Haftung von SagaTrail ist, soweit gesetzlich zulässig, auf Fälle von Vorsatz und grober Fahrlässigkeit beschränkt. SagaTrail haftet insbesondere nicht für:</p>
+    <ul>
+      <li>Schäden durch Nutzung der App in unebenem Gelände oder unter gefährlichen Bedingungen</li>
+      <li>Unvollständigkeit oder Unrichtigkeit von Routen- oder Sagendaten</li>
+      <li>Datenverluste durch technische Störungen oder Drittanbieter</li>
+      <li>Entgangenen Gewinn oder indirekte Schäden</li>
+    </ul>
+    <p>Wandern erfolgt auf eigene Gefahr. SagaTrail ersetzt keine professionelle Berg- oder Wanderführung.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">9.</span> Pflichten der Nutzer</h2>
+    <p>Sie verpflichten sich, die App ausschliesslich bestimmungsgemäss und im Einklang mit geltendem Recht zu nutzen. Untersagt sind insbesondere:</p>
+    <ul>
+      <li>Automatisierter Zugriff (Scraping, Bots) auf Inhalte der App oder API</li>
+      <li>Reverse Engineering oder Dekompilierung der App</li>
+      <li>Umgehung von Zugangskontrollen oder Kopierschutzmassnahmen</li>
+      <li>Hochladen rechtswidriger, beleidigender oder irreführender Inhalte (Partner-Portal)</li>
+      <li>Weitergabe von Zugangsdaten an Dritte</li>
+    </ul>
+  </div>
+
+  <!-- 10 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">10.</span> Änderungen der AGB</h2>
+    <p>Wir behalten uns vor, diese AGB bei wesentlichen Änderungen anzupassen. Änderungen werden mindestens 30 Tage vor Inkrafttreten per E-Mail oder über eine Benachrichtigung in der App mitgeteilt. Wenn Sie die Änderungen nicht akzeptieren, steht Ihnen das Recht zur Kündigung bis zum Inkrafttreten der neuen AGB zu. Die fortgesetzte Nutzung der App nach Inkrafttreten gilt als Zustimmung.</p>
+  </div>
+
+  <!-- 11 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">11.</span> Anwendbares Recht und Gerichtsstand</h2>
+    <p>Diese AGB und alle daraus entstehenden Rechtsbeziehungen unterliegen ausschliesslich dem Recht der Schweiz, unter Ausschluss des UN-Kaufrechts (CISG).</p>
+    <p>Ausschliesslicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesen AGB ist, soweit gesetzlich zulässig, <strong>Basel-Landschaft, Schweiz</strong>. Für Konsumentinnen und Konsumenten bleibt der gesetzliche Gerichtsstand nach Art. 32 ZPO vorbehalten.</p>
+  </div>
+
+  <!-- 12 -->
+  <div class="st-section">
+    <h2 class="st-section-title"><span class="num">12.</span> Kontakt</h2>
+    <p>Bei Fragen zu diesen AGB wenden Sie sich an:</p>
+    <div class="st-card">
+      <div class="st-card-label">Kontakt</div>
+      <h3>SagaTrail</h3>
+      <p>
+        A.i.L. by Koch (Rolf Koch)<br>
+        Mühlemattstrasse 11 · 4104 Oberwil BL<br><br>
+        E-Mail: <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a><br>
+        Wir antworten in der Regel innerhalb von 10 Werktagen.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<footer class="st-footer">
+  <p>© 2026 SagaTrail &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a> &nbsp;·&nbsp; <a href="/agb">AGB</a> &nbsp;·&nbsp; <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="mailto:info@sagatrail.ch">Kontakt</a></p>
+</footer>
+
+</body>
+</html>
