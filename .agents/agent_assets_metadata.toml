@@ -371,3 +371,9 @@ id = "F5-W0cPUWnPprG4XFMGCl"
 uri = "file://screenshots/rigi-v3.jpg"
 type = "image"
 title = "Rigi Kulm – aktueller Stand"
+
+[[outputs]]
+id = "X5xz4Ocw1bhZIHy6-yR8W"
+uri = "file://attached_assets/partner-seite-updated.html"
+type = "unspecified"
+title = "Partner-Seite – aktualisiert (1. Monat kostenlos + Button-Ausrichtung)"
