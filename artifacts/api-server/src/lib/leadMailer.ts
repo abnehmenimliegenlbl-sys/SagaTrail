@@ -327,12 +327,13 @@ export function buildEmailHtml(opts: {
 
 export function buildPreviewHtml(bodyText: string, sampleLead: Partial<Lead>): string {
   const resolved = resolveVars(bodyText, {
-    name: sampleLead.name ?? "Muster Restaurant",
-    email: "preview@example.com",
-    kanton: sampleLead.kanton ?? "Bern",
+    name:    sampleLead.name    ?? "Muster Restaurant",
+    email:   "preview@example.com",
+    kanton:  sampleLead.kanton  ?? "Bern",
     sprache: sampleLead.sprache ?? "DE",
-    route: sampleLead.route ?? "Sagapfad Bern",
-    typ: sampleLead.typ ?? "Restaurant",
+    route:   sampleLead.route   ?? "Sagapfad Bern",
+    typ:     sampleLead.typ     ?? "Restaurant",
+    satz:    sampleLead.satz    ?? "Ihr Betrieb liegt direkt an einer der schönsten Sagenrouten der Schweiz.",
   });
   return buildEmailHtml({
     bodyText: resolved,
