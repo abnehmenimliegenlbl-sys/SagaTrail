@@ -429,10 +429,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         language: serverProfile.language,
         ageTier: serverProfile.ageTier,
         purchasedPacks: serverProfile.purchasedPacks ?? [],
+        ...(serverProfile.subscriptionTier ? { subscriptionTier: serverProfile.subscriptionTier } : {}),
       };
       setProfile(next);
       setPremium(serverProfile.premium);
       setFreeHikeUsed(serverProfile.freeHikeUsed);
+      if (serverProfile.subscriptionTier) setDbTier(serverProfile.subscriptionTier);
       AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       AsyncStorage.setItem(KEYS.premium, serverProfile.premium ? "true" : "false");
       AsyncStorage.setItem(
@@ -587,6 +589,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     isElite: isEliteSubscription,
     isLoading: subscriptionLoading,
     rcAppUserId,
+    setDbTier,
   } = useSubscription();
 
   const applyServerProfile = useCallback(
@@ -600,6 +603,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       premium: boolean;
       freeHikeUsed: boolean;
       purchasedPacks?: string[];
+      subscriptionTier?: string;
     }) => {
       // WICHTIG: purchasedPacks muss erhalten bleiben. Frueher wurde das
       // Profil hier OHNE purchasedPacks neu aufgebaut, wodurch gekaufte
@@ -615,10 +619,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ageTier: result.ageTier,
         purchasedPacks:
           result.purchasedPacks ?? profileRef.current?.purchasedPacks ?? [],
+        ...(result.subscriptionTier ? { subscriptionTier: result.subscriptionTier } : {}),
       } as Profile;
       setProfile(next);
       setPremium(result.premium);
       setFreeHikeUsed(result.freeHikeUsed);
+      if (result.subscriptionTier) setDbTier(result.subscriptionTier);
       await AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       await AsyncStorage.setItem(KEYS.premium, result.premium ? "true" : "false");
       await AsyncStorage.setItem(
@@ -626,7 +632,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         result.freeHikeUsed ? "true" : "false"
       );
     },
-    []
+    [setDbTier]
   );
 
   const saveProfile = useCallback(

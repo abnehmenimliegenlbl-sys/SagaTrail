@@ -15,6 +15,7 @@ export interface Profile {
   ageTier: AgeTier;
   navAnnouncementsEnabled?: boolean;
   purchasedPacks?: string[];
+  subscriptionTier?: string;
 }
 
 export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar";

@@ -78,6 +78,9 @@ function useSubscriptionContext() {
   // (sonst prueft der Server einen Customer, dem der anonyme Kauf noch
   // nicht zugeordnet wurde).
   const [rcAppUserId, setRcAppUserId] = React.useState<string | null>(null);
+  // DB-seitiger Subscription-Tier (gesetzt von AppContext nach Profile-Load).
+  // Dient als Fallback wenn kein RC-Entitlement vorhanden (z.B. Admin-Grant).
+  const [dbTier, setDbTier] = React.useState<string>("free");
   // Merkt sich, ob die letzte Identitaets-Verknuepfung fehlgeschlagen ist
   // (z.B. kurzer Netzwerk-Aussetzer beim kalten App-Start). Ohne erneuten
   // Versuch bleibt RevenueCat sonst bis zum naechsten vollstaendigen
@@ -255,16 +258,19 @@ function useSubscriptionContext() {
     premiumEnt !== undefined && premiumEnt.expirationDate !== null;
 
   const eliteEnt = aktiveEntitlements[REVENUECAT_ELITE_ENTITLEMENT];
-  const isElite = eliteEnt !== undefined && eliteEnt.expirationDate !== null;
+  const isEliteRc = eliteEnt !== undefined && eliteEnt.expirationDate !== null;
+  // Admin-Grant-Fallback: DB-Tier beruecksichtigen wenn kein RC-Entitlement
+  const isElite = isEliteRc || dbTier === "elite" || dbTier === "elite_family";
 
   const hatEntitlement = (key: string) => aktiveEntitlements[key] !== undefined;
 
   // Familien-Abo: aktives Produkt enthaelt "family" aber kein "elite"
   // (Elite-Familie ist schon via isElite abgedeckt).
   const aktiveProdukte = customerInfoQuery.data?.activeSubscriptions ?? [];
-  const isFamily = aktiveProdukte.some(
+  const isFamilyRc = aktiveProdukte.some(
     (id) => id.toLowerCase().includes("family") && !id.toLowerCase().includes("elite")
   );
+  const isFamily = isFamilyRc || dbTier === "premium_family" || dbTier === "elite_family";
 
   return {
     customerInfo: customerInfoQuery.data,
@@ -274,6 +280,7 @@ function useSubscriptionContext() {
     isElite,
     isFamily,
     hatEntitlement,
+    setDbTier,
     isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
     purchase: purchaseMutation.mutateAsync,
     restore: restoreMutation.mutateAsync,
