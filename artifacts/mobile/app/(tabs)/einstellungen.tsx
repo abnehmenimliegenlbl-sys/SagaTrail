@@ -3,6 +3,7 @@ import { Feather } from "@expo/vector-icons";
 import { createNarration } from "@workspace/api-client-react";
 import { Audio } from "expo-av";
 import Constants from "expo-constants";
+import * as Application from "expo-application";
 import { hapticRigid } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 
@@ -536,10 +537,8 @@ export default function Einstellungen() {
 
         <Text style={[styles.version, { color: colors.mutedForeground }]}>
           {t.versionFooter(
-            Constants.expoConfig?.version ?? "1.0.0",
-            Constants.expoConfig?.ios?.buildNumber
-              ?? Constants.expoConfig?.android?.versionCode?.toString()
-              ?? "dev"
+            Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? "1.0.0",
+            Application.nativeBuildVersion ?? "dev"
           )}
         </Text>
       </ScrollView>
