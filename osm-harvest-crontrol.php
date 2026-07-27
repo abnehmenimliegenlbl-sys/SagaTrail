@@ -18,7 +18,11 @@ error_log('[SagaTrail OSM] === Funktion gestartet ===');
 // ============================================================
 $backfilled = (int) $wpdb->query(
     "UPDATE sagatrail_partner_leads
-        SET kategorie = typ
+        SET kategorie = CASE
+            WHEN typ IN ('Restaurant','Café','Bar','Pub','Schnellimbiss','Biergarten') THEN 'F+B'
+            WHEN typ IN ('Hotel','Hostel','Pension','Campingplatz','Berghütte','Wildnishütte') THEN 'Herberge'
+            ELSE 'Sonstiges'
+        END
       WHERE (kategorie IS NULL OR kategorie = '')
         AND typ IS NOT NULL AND typ != ''"
 );
@@ -103,7 +107,11 @@ foreach ($routen as $route) {
             'guest_house'   => 'Pension',    'camp_site'     => 'Campingplatz',
             'alpine_hut'    => 'Berghütte',  'wilderness_hut'=> 'Wildnishütte',
         ];
-        $kategorie = $typen[$a] ?? $typen[$t] ?? ucfirst($a ?: $t ?: 'Sonstiges');
+        $typ = $typen[$a] ?? $typen[$t] ?? ucfirst($a ?: $t ?: 'Sonstiges');
+        $fb      = ['Restaurant','Café','Bar','Pub','Schnellimbiss','Biergarten'];
+        $herberg = ['Hotel','Hostel','Pension','Campingplatz','Berghütte','Wildnishütte'];
+        $kategorie = in_array($typ, $fb, true) ? 'F+B'
+                   : (in_array($typ, $herberg, true) ? 'Herberge' : $typ);
 
         $strasse = trim(($poi['tags']['addr:street'] ?? '') . ' ' . ($poi['tags']['addr:housenumber'] ?? ''));
         $ort     = trim(($poi['tags']['addr:postcode'] ?? '') . ' ' . ($poi['tags']['addr:city'] ?? ''));
@@ -115,8 +123,8 @@ foreach ($routen as $route) {
             'route_name' => $route['name'],
             'kanton'     => $route['kanton'],
             'osm_id'     => $osm_id,
-            'typ'        => $kategorie,   // Legacy-Spalte beibehalten
-            'kategorie'  => $kategorie,   // Neue Spalte
+            'typ'        => $typ,
+            'kategorie'  => $kategorie,
             'name'       => $name,
             'adresse'    => $adresse,
             'telefon'    => $poi['tags']['phone'] ?? $poi['tags']['contact:phone'] ?? null,

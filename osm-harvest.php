@@ -69,7 +69,11 @@ global $wpdb;
 // ============================================================
 $backfilled = (int) $wpdb->query(
     "UPDATE sagatrail_partner_leads
-        SET kategorie = typ
+        SET kategorie = CASE
+            WHEN typ IN ('Restaurant','Café','Bar','Pub','Schnellimbiss','Biergarten') THEN 'F+B'
+            WHEN typ IN ('Hotel','Hostel','Pension','Campingplatz','Berghütte','Wildnishütte') THEN 'Herberge'
+            ELSE typ
+        END
       WHERE (kategorie IS NULL OR kategorie = '')
         AND typ IS NOT NULL AND typ != ''"
 );
@@ -118,15 +122,16 @@ foreach ($routen as $route) {
         $name = trim($poi['tags']['name'] ?? '');
         if ($name === '') continue;
 
-        $kategorie = bestimme_kategorie($poi['tags'] ?? []);
+        $typ       = bestimme_typ($poi['tags'] ?? []);
+        $kategorie = bestimme_kategorie($typ);
 
         $leads[$osm_id] = [
             'route_id'   => $route['id'],
             'route_name' => $route['name'],
             'kanton'     => $route['kanton'],
             'osm_id'     => $osm_id,
-            'typ'        => $kategorie,   // Legacy-Spalte beibehalten
-            'kategorie'  => $kategorie,   // Neue Spalte
+            'typ'        => $typ,
+            'kategorie'  => $kategorie,
             'name'       => $name,
             'adresse'    => baue_adresse($poi['tags'] ?? []),
             'telefon'    => $poi['tags']['phone']
@@ -212,7 +217,7 @@ function overpass_abfragen(float $lat, float $lng): array {
     return [];
 }
 
-function bestimme_kategorie(array $tags): string {
+function bestimme_typ(array $tags): string {
     $map = [
         'restaurant'    => 'Restaurant',
         'cafe'          => 'Café',
@@ -230,6 +235,14 @@ function bestimme_kategorie(array $tags): string {
     $a = $tags['amenity'] ?? '';
     $t = $tags['tourism'] ?? '';
     return $map[$a] ?? $map[$t] ?? ucfirst($a ?: $t ?: 'Sonstiges');
+}
+
+function bestimme_kategorie(string $typ): string {
+    $fb      = ['Restaurant','Café','Bar','Pub','Schnellimbiss','Biergarten'];
+    $herberg = ['Hotel','Hostel','Pension','Campingplatz','Berghütte','Wildnishütte'];
+    if (in_array($typ, $fb,      true)) return 'F+B';
+    if (in_array($typ, $herberg, true)) return 'Herberge';
+    return $typ; // alles andere: Kategorie = Typ
 }
 
 function baue_adresse(array $tags): ?string {
