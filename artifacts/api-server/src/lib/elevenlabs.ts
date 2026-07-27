@@ -82,6 +82,37 @@ export class ElevenLabsError extends Error {
 // Fuegt <break/>-SSML-Tags zwischen Saetzen ein, analog zur OpenAI-Pacing-
 // Logik (narrationPacing.ts): dramatische Saetze (Ausrufe, Ellipsen)
 // bekommen eine laengere Pause als normale Satzuebergaenge. ElevenLabs'
+/**
+ * Normalisiert Schweizerdeutschen Text (gsw) vor der TTS-Synthese.
+ *
+ * ElevenLabs kennt keine gsw-Grammatik und liest Mundart-Kurzformen oft
+ * falsch vor (z.B. "Dr" → "Doktor", "D'" → unklar). Diese Funktion
+ * ersetzt die haeufigstes Problemmuster durch eine explizitere Form, die
+ * das Modell phonetisch korrekt liest.
+ *
+ * Regeln:
+ *   "Dr " / "dr " als Artikel (kein Punkt danach, vor Grossbuchstabe oder
+ *   Kleinbuchstabe am Satzanfang) → "Der " / "der "
+ *   "D'" / "d'" (weiblicher/neutraler Artikel vor Vokal) → "Di " / "di "
+ *   "em " (Dativ-Artikel) → nicht angefasst (wird korrekt gelesen)
+ *
+ * Wichtig: "Dr." MIT Punkt bleibt unveraendert (= Doktor/Titel).
+ */
+function normalisiereGswText(text: string): string {
+  return (
+    text
+      // "Dr " ohne Punkt davor → "Der " (Artikel, nicht Doktor)
+      // Positiver Lookahead: muss von Buchstabe gefolgt sein
+      .replace(/\bDr(?!\.) /g, "Der ")
+      .replace(/\bdr(?!\.) /g, "der ")
+      // "D'" / "d'" vor Vokal (weiblicher Artikel) → "Di " / "di "
+      .replace(/\bD'/g, "Di ")
+      .replace(/\bd'/g, "di ")
+      // "'s " (saechlicher Artikel) → "es " damit TTS nicht stolpert
+      .replace(/\b's /g, "es ")
+  );
+}
+
 // eleven_multilingual_v2 unterstuetzt <break time="Xs" />-Tags direkt im
 // Text.
 function mitPausenAnreichern(text: string): string {
@@ -157,6 +188,11 @@ export async function synthesizeNarration(
   language: string | undefined,
   log: Logger,
 ): Promise<NarrationResult> {
+  const normalizedText = language === "gsw" ? normalisiereGswText(text) : text;
+  // Ab hier wird normalizedText statt text verwendet.
+  // eslint-disable-next-line no-param-reassign
+  text = normalizedText;
+
   const apiKey = process.env.ELEVEN_LABS_API_KEY;
 
   if (apiKey) {
