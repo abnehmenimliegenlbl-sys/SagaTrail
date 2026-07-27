@@ -34,14 +34,13 @@ export function resolveLang(code: string | undefined): Lang {
 /**
  * Sprache, in der Story-Text tatsaechlich angefordert/angezeigt werden soll.
  *
- * Fuer gsw (Schweizerdeutsch) bleibt der angezeigte Story-Text Hochdeutsch
- * (language="de") — die Schweizer Faerbung kommt ausschliesslich ueber die
- * ElevenLabs-Stimmwahl (Heidi), nicht ueber Dialektschrift im Text.
- * Die Narrations-Anfrage in hike/[id].tsx verwendet profile.language direkt
- * (nicht diese Funktion), damit ElevenLabs "gsw" als Stimmhinweis erhaelt.
+ * Fuer gsw (Schweizerdeutsch) wird der Sagen-Text als echter Mundarttext
+ * generiert — ElevenLabs liest und spricht ihn als Schweizerdeutsch.
+ * OpenAI-Texte (Vorspann, Nav-Cues, Meilensteine) verwenden eine separate
+ * cueLanguage-Variable in hike/[id].tsx, die gsw→de normalisiert.
  */
-export function effectiveStoryLanguage(language: string, premium: boolean): string {
-  return premium && language === "gsw" ? "de" : language;
+export function effectiveStoryLanguage(language: string, _premium: boolean): string {
+  return language;
 }
 
 export interface DecisionOptionText {

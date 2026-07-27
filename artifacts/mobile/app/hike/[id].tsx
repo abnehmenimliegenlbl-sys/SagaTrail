@@ -608,6 +608,9 @@ export default function LiveHike() {
   // verwendet: die Story wird in diesem Fall in Hochdeutsch angefordert, die
   // Schweizer Faerbung kommt allein ueber die Stimmwahl (server-seitig).
   const storyLanguage = effectiveStoryLanguage(profile?.language ?? "de", true);
+  // cueLanguage: fuer alle OpenAI-gesprochenen Texte (Vorspann, Nav-Cues,
+  // Meilensteine, POI-Ansagen). OpenAI kann kein Schweizerdeutsch — gsw→de.
+  const cueLanguage = storyLanguage === "gsw" ? "de" : storyLanguage;
 
   // Tageszeit beim Wanderungsstart (unveraenderlich fuer die ganze Session).
   const timeOfDay = useMemo((): "morgen" | "mittag" | "abend" | "nacht" => {
@@ -1336,7 +1339,7 @@ export default function LiveHike() {
           partnerName: partner.name,
           angebot: partner.angebot ?? null,
           beschreibung: partner.beschreibung ?? null,
-          lang: storyLanguage,
+          lang: cueLanguage,
         }),
         signal: controller.signal,
       })
@@ -1385,7 +1388,7 @@ export default function LiveHike() {
       if (notifiedSurfaceFractionsRef.current.has(key)) continue;
       if (currentFraction >= sp.fraction - 0.02) {
         notifiedSurfaceFractionsRef.current.add(key);
-        const pack = STORY_PACKS[resolveLang(storyLanguage)];
+        const pack = STORY_PACKS[resolveLang(cueLanguage)];
         const text = pack.surfaceTransitionPhrase(sp.surface);
         if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
@@ -1413,7 +1416,7 @@ export default function LiveHike() {
     for (const pct of milestones) {
       if (fraction * 100 >= pct && !notifiedMilestonesRef.current.has(pct)) {
         notifiedMilestonesRef.current.add(pct);
-        const pack = STORY_PACKS[resolveLang(storyLanguage)];
+        const pack = STORY_PACKS[resolveLang(cueLanguage)];
         const name = profile?.name?.trim() || null;
         const fallback = pack.milestonePhrase(pct, name);
         // KI-Ansage im Sagen-Stil: async, Fallback bei Fehler oder Timeout.
@@ -1429,7 +1432,7 @@ export default function LiveHike() {
               sagaTitle: saga.title,
               coreMotif: saga.coreMotif ?? "",
               pct,
-              lang: storyLanguage,
+              lang: cueLanguage,
             }),
             signal: controller.signal,
           })
@@ -1790,7 +1793,8 @@ export default function LiveHike() {
         // ist, wird das alte gestoppt (Luecke < 100 ms statt 1-5 Sekunden).
         // Vorgeladene URI direkt nutzen (kein Netzwerk-Request noetig).
         const uri = opts?.preFetchedUri ?? await (async () => {
-          const blob = await createNarration({ text, language: profile?.language, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
+          const narrationLang = opts?.useOpenAI && profile?.language === "gsw" ? "de" : profile?.language;
+          const blob = await createNarration({ text, language: narrationLang, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
           return blobToTempFileUri(blob);
         })();
         if (gen !== narrationGenRef.current) return;
@@ -1913,7 +1917,7 @@ export default function LiveHike() {
       // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
       // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
       if (currentIndex === 0) {
-        const packForCue = STORY_PACKS[resolveLang(storyLanguage)];
+        const packForCue = STORY_PACKS[resolveLang(cueLanguage)];
         speak(
           `${greetingPrefix} ${packForCue.hikeStartCue}`,
           () => { setTimeout(() => speak(ch.text), 1500); },
@@ -2014,7 +2018,7 @@ export default function LiveHike() {
     if (turnNotifsReadyRef.current) {
       sendePoiMitteilung(poiName, poiText, poiBild);
     }
-    const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    const pack = STORY_PACKS[resolveLang(cueLanguage)];
     const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
@@ -2028,7 +2032,7 @@ export default function LiveHike() {
       name: nearbyPoi.name,
       extract: rawExtract ?? undefined,
       kind: nearbyPoi.kind,
-      lang: storyLanguage,
+      lang: cueLanguage,
       osmContext: nearbyPoi.osmContext ?? undefined,
     })
       .then((r) => {
@@ -2237,7 +2241,7 @@ export default function LiveHike() {
     // noetig), danach das vollstaendige KI-Feedback via ElevenLabs/OpenAI.
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
-      const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      const pack = STORY_PACKS[resolveLang(cueLanguage)];
       const feedbackText = pack.decisionFeedback(archetypeHint, gewaehlt ?? "");
       // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
       // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
