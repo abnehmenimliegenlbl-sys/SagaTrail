@@ -1609,6 +1609,7 @@ router.post("/admin/stripe/seed-products", async (req, res): Promise<void> => {
  * Zeigt Fortschritt der Geometrie-Anreicherung: total, fertig, ausstehend.
  */
 router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
   try {
     const [total] = await db.select({ n: count() }).from(externalRoutesTable);
     const [enriched] = await db
@@ -1658,6 +1659,7 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
  * Für Cron-Jobs: einfach wiederholt aufrufen bis pending=0.
  */
 router.post("/admin/routes/enrich-next", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
   const n = Math.min(parseInt((req.query.n as string) ?? "5", 10) || 5, 20);
   try {
     const rows = await db
