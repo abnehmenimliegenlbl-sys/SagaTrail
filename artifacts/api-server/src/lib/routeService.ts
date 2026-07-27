@@ -564,7 +564,7 @@ async function enrichAndStore(
   canton: string,
   osmIds: number[],
   log: Logger,
-  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number },
+  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number; skipPhotos?: boolean },
 ): Promise<void> {
   const raw = await fetchRouteGeometries(osmIds, log, fetchOpts);
   const prepared = raw
@@ -583,10 +583,11 @@ async function enrichAndStore(
     const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
     );
-    // Repräsentatives Foto vom Startpunkt der Route (Wikimedia Commons, gedrosselt).
-    // Routenname mitgeben → aktiviert Textsuche als Fallback wenn Geosuche kein
-    // Landschaftsfoto findet.
-    const photo = await getCachedRoutePhoto(start.lat, start.lng, log, r.name);
+    // Foto überspringen wenn skipPhotos gesetzt — Backfill läuft beim nächsten
+    // Server-Start automatisch über loadMissingRoutePhotos().
+    const photo = fetchOpts?.skipPhotos
+      ? { photoUrl: null, attribution: null }
+      : await getCachedRoutePhoto(start.lat, start.lng, log, r.name);
     return {
       id: r.id,
       sagaId: r.id,
@@ -663,7 +664,7 @@ export async function getCantonRoutes(
   canton: string,
   log: Logger,
   distMax?: number,
-  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean },
+  fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean; skipPhotos?: boolean },
 ): Promise<ExternalRouteRow[]> {
   const iso = isoForCanton(canton);
   if (!iso) {
