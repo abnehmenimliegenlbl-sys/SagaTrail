@@ -753,21 +753,41 @@ router.post("/admin/routes/patch-geometry", async (req, res): Promise<void> => {
   res.json({ ok: true, id, punkte: geometry.length });
 });
 
+// DELETE /admin/routes/clear-canton – Löscht alle gespeicherten Routen eines Kantons aus der DB
+router.delete("/admin/routes/clear-canton", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { canton } = req.body as { canton?: string };
+  if (!canton) { res.status(400).json({ error: "canton fehlt" }); return; }
+
+  const result = await db
+    .delete(externalRoutesTable)
+    .where(eq(externalRoutesTable.canton, canton))
+    .returning({ id: externalRoutesTable.id });
+
+  req.log.info({ canton, deleted: result.length }, "Kanton-Routen gelöscht");
+  res.json({ ok: true, canton, deleted: result.length });
+});
+
 // POST /admin/routes/warm-canton – Lädt Routen eines Kantons langsam aus OSM
 // Nutzt große Timeouts + kleine Batches + Pausen → geeignet für Kantone mit 200+ Routen
+// clearFirst: true → löscht alle bestehenden Routen des Kantons vor dem Neu-Laden
 router.post("/admin/routes/warm-canton", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const { canton, timeoutMs = 120_000, batchSize = 20, pauseMs = 3_000, forceRefresh = false, skipPhotos = false } =
-    req.body as { canton?: string; timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean; skipPhotos?: boolean };
+  const { canton, timeoutMs = 120_000, batchSize = 20, pauseMs = 3_000, forceRefresh = false, skipPhotos = false, clearFirst = false } =
+    req.body as { canton?: string; timeoutMs?: number; batchSize?: number; pauseMs?: number; forceRefresh?: boolean; skipPhotos?: boolean; clearFirst?: boolean };
   if (!canton) { res.status(400).json({ error: "canton fehlt" }); return; }
 
   // Antwort sofort senden; Ladeprozess läuft im Hintergrund
-  res.json({ ok: true, canton, timeoutMs, batchSize, pauseMs, forceRefresh, skipPhotos, message: "Hintergrundlauf gestartet – verfolge den Fortschritt in den Server-Logs" });
+  res.json({ ok: true, canton, timeoutMs, batchSize, pauseMs, forceRefresh, skipPhotos, clearFirst, message: "Hintergrundlauf gestartet – verfolge den Fortschritt in den Server-Logs" });
 
   (async () => {
     try {
-      req.log.info({ canton, timeoutMs, batchSize, pauseMs, forceRefresh, skipPhotos }, "Slow-warm gestartet");
-      const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs, forceRefresh, skipPhotos });
+      if (clearFirst) {
+        const deleted = await db.delete(externalRoutesTable).where(eq(externalRoutesTable.canton, canton)).returning({ id: externalRoutesTable.id });
+        req.log.info({ canton, deleted: deleted.length }, "Slow-warm: Routen gelöscht vor Neu-Laden");
+      }
+      req.log.info({ canton, timeoutMs, batchSize, pauseMs, forceRefresh, skipPhotos, clearFirst }, "Slow-warm gestartet");
+      const routes = await getCantonRoutes(canton, req.log, undefined, { timeoutMs, batchSize, pauseMs, forceRefresh: clearFirst ? true : forceRefresh, skipPhotos });
       req.log.info({ canton, count: routes.length }, "Slow-warm abgeschlossen");
     } catch (err) {
       req.log.error({ canton, err }, "Slow-warm fehlgeschlagen");

@@ -485,20 +485,17 @@ function selectCandidates(
       : index;
   const pool = distMax != null ? GEOMETRY_POOL_FILTERED : GEOMETRY_POOL_DEFAULT;
   // Generische Verbindungswege (z.B. "Baar – Höllgrotten", "Bibersteg - Bubrugg")
-  // erkennen: kein ref, kein network-Tag UND Name enthält " - " oder " – ".
-  // Sie werden ans Ende des Kandidatenpools geschoben, damit benannte
-  // Themenrouten und Fernwege bevorzugt Geometrie-Slots erhalten.
+  // erkennen: kein ref, kein network-Tag (lwn/ohne) UND Name enthält " - " oder " – ".
+  // Diese werden komplett ausgeschlossen – sie sind kurze Pfadsegmente, keine
+  // eigenständigen Wanderrouten, und füllen den Pool mit unbrauchbarem Inhalt.
   const isGenericConnector = (e: RouteIndexEntry) =>
     e.rank >= 3 &&          // lwn oder ohne Tag
     !e.ref &&
     /\s[–\-]\s/.test(e.name);
 
   return filtered
-    .slice()
+    .filter((e) => !isGenericConnector(e))
     .sort((a, b) => {
-      const ga = isGenericConnector(a) ? 1 : 0;
-      const gb = isGenericConnector(b) ? 1 : 0;
-      if (ga !== gb) return ga - gb;          // generische ans Ende
       if (a.rank !== b.rank) return a.rank - b.rank;
       const refA = a.ref ? 0 : 1;
       const refB = b.ref ? 0 : 1;
