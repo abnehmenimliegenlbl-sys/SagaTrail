@@ -20,6 +20,9 @@ export const externalRoutesTable = pgTable("external_routes", {
   id: text("id").primaryKey(),
   sagaId: text("saga_id").notNull(),
   canton: text("canton").notNull(),
+  // Alle durchquerten Kantone (inkl. Startkanton) — fuer Multi-Kanton-Filter.
+  // Leeres Array = noch nicht ermittelt (Backfill via Enrich-Cron).
+  cantons: text("cantons").array().notNull().default([]),
   name: text("name").notNull(),
   ref: text("ref"),
   distanceKm: doublePrecision("distance_km").notNull(),

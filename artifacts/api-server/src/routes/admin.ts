@@ -1,7 +1,7 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, inArray, ne, sql } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, isNull, inArray, ne, sql, count, and, lt } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -20,7 +20,7 @@ import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, backfillCantonsForRoute } from "../lib/routeService";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
@@ -821,6 +821,50 @@ router.post("/admin/routes/warm-all", async (req, res): Promise<void> => {
   })();
 });
 
+// POST /admin/routes/sync-numbered – Alle nummerierten SchweizMobil-Routen (1–999)
+// aus OSM laden und dem jeweiligen Startkanton zuordnen.
+router.post("/admin/routes/sync-numbered", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const {
+    skipPhotos = true,
+    // batchSize=3: nationale Routen haben Hunderte Ways, groessere Batches
+    // bringen Overpass in ein Timeout. Nicht via API ueberschreibbar um
+    // versehentliche Timeouts zu verhindern.
+    batchSize = 3,
+    pauseMs = 4_000,
+    // 120s pro Route: auch sehr grosse nationale Routen (Nordalpenweg etc.)
+    // brauchen Zeit. Kein Distanzlimit mehr — wir laden alles vollstaendig.
+    timeoutMs = 120_000,
+    forceRefresh = false,
+  } = req.body as {
+    skipPhotos?: boolean;
+    batchSize?: number;
+    pauseMs?: number;
+    timeoutMs?: number;
+    forceRefresh?: boolean;
+  };
+
+  res.json({
+    ok: true,
+    skipPhotos,
+    batchSize,
+    pauseMs,
+    timeoutMs,
+    forceRefresh,
+    message: "Nummerierte-Routen-Sync gestartet – läuft im Hintergrund",
+  });
+
+  (async () => {
+    try {
+      req.log.info({ skipPhotos, batchSize, pauseMs, timeoutMs, forceRefresh }, "Nummerierte-Routen-Sync: Start");
+      const count = await syncSwissNumberedRoutes(req.log, { skipPhotos, batchSize, pauseMs, timeoutMs, forceRefresh });
+      req.log.info({ count }, "Nummerierte-Routen-Sync: fertig");
+    } catch (err) {
+      req.log.error({ err }, "Nummerierte-Routen-Sync: fehlgeschlagen");
+    }
+  })();
+});
+
 // ===================================================================
 // PARTNER-ANFRAGEN
 // ===================================================================
@@ -1554,6 +1598,111 @@ router.post("/admin/stripe/seed-products", async (req, res): Promise<void> => {
     res.json({ ok: true, results });
   } catch (err: any) {
     req.log.error({ err }, "Stripe-Produkt-Seeding fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Route-Anreicherung (Cron-freundlich) ─────────────────────────────────────
+
+/**
+ * GET /admin/routes/enrich-status
+ * Zeigt Fortschritt der Geometrie-Anreicherung: total, fertig, ausstehend.
+ */
+router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
+  try {
+    const [total] = await db.select({ n: count() }).from(externalRoutesTable);
+    const [enriched] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(and(sql`geometry_version > 0`, sql`id LIKE 'osm-%'`));
+    const [pending] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`));
+    const [noOsm] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(sql`id NOT LIKE 'osm-%'`);
+    const [cantonsPending] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(sql`cantons = '{}'`);
+
+    // Pro Quelle aufschlüsseln
+    const bySource = await db
+      .select({ source: externalRoutesTable.source, n: count() })
+      .from(externalRoutesTable)
+      .groupBy(externalRoutesTable.source);
+
+    res.json({
+      total: total?.n ?? 0,
+      enriched: enriched?.n ?? 0,
+      pending: pending?.n ?? 0,
+      noOsmId: noOsm?.n ?? 0,
+      cantonsPending: cantonsPending?.n ?? 0,
+      progressPct:
+        (enriched?.n ?? 0) + (pending?.n ?? 0) > 0
+          ? Math.round(((enriched?.n ?? 0) / ((enriched?.n ?? 0) + (pending?.n ?? 0))) * 100)
+          : 100,
+      bySource,
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "enrich-status fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/enrich-next?n=5
+ * Bereichert die nächsten N Routen mit geometry_version=0 und OSM-ID.
+ * Für Cron-Jobs: einfach wiederholt aufrufen bis pending=0.
+ */
+router.post("/admin/routes/enrich-next", async (req, res): Promise<void> => {
+  const n = Math.min(parseInt((req.query.n as string) ?? "5", 10) || 5, 20);
+  try {
+    const rows = await db
+      .select({ id: externalRoutesTable.id })
+      .from(externalRoutesTable)
+      .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`))
+      .limit(n);
+
+    const results: { id: string; ok: boolean; distanceKm?: number; canton?: string; cantons?: string[]; reason?: string }[] = [];
+    for (const row of rows) {
+      const result = await enrichOneRoute(row.id, req.log);
+      results.push({ id: row.id, ...result });
+    }
+
+    // Phase 2: restliches Budget für Multi-Kanton-Backfill nutzen
+    const backfillBudget = n - rows.length;
+    if (backfillBudget > 0) {
+      const backfillRows = await db
+        .select({ id: externalRoutesTable.id })
+        .from(externalRoutesTable)
+        .where(sql`cantons = '{}'`)
+        .limit(backfillBudget);
+      for (const row of backfillRows) {
+        const result = await backfillCantonsForRoute(row.id, req.log);
+        results.push({ id: row.id, ...result });
+      }
+    }
+
+    const [pending] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`));
+    const [cantonsPending] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(sql`cantons = '{}'`);
+
+    res.json({
+      done: (pending?.n ?? 0) === 0 && (cantonsPending?.n ?? 0) === 0,
+      enriched: results,
+      pending: pending?.n ?? 0,
+      cantonsPending: cantonsPending?.n ?? 0,
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "enrich-next fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });

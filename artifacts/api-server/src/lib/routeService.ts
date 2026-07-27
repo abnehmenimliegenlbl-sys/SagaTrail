@@ -15,15 +15,18 @@ import { isoForCanton, CANTON_ISO } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
+  fetchSwissNumberedIndex,
   fetchAerialways,
   fetchHistoricPois,
   type RouteIndexEntry,
+  type RawHikingRoute,
   type RawAerialway,
   type RawPoi,
 } from "./overpass";
 import { computeElevationStats } from "./elevation";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
+import { reverseGeocode } from "./geocoding";
 
 // ---------------------------------------------------------------------------
 // POI-Such-Hilfsfunktionen
@@ -548,7 +551,12 @@ export async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow
   return db
     .select()
     .from(externalRoutesTable)
-    .where(eq(externalRoutesTable.canton, canton));
+    .where(
+      or(
+        eq(externalRoutesTable.canton, canton),
+        sql`${canton} = ANY(${externalRoutesTable.cantons})`,
+      ),
+    );
 }
 
 /**
@@ -1025,6 +1033,364 @@ export async function fixArtefaktRouten(log: Logger): Promise<number> {
 
   log.info({ kantone: betroffeneKantone }, "Artefakt-Fix: starte forceRefresh fuer betroffene Kantone");
   return kaputt.length;
+}
+
+// ---------------------------------------------------------------------------
+// SchweizMobil-Sync: alle nummerierten Schweizer Wanderrouten (1–999)
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalisiert einen OSM-Routennamen und stellt die offizielle Nummer voran.
+ *
+ * Beispiel:
+ *   ref="7", name="Via Gottardo - Etappe 1: Basel - Liestal"
+ *   → "7 Via Gottardo Etappe 1 Basel - Liestal"
+ */
+/**
+ * Waehlt den besten Anzeigenamen:
+ * 1. name:de bevorzugt
+ * 2. Fallback auf name
+ * Dann: Formatierung + Ref-Praefix
+ */
+export function formatNumberedRouteName(
+  ref: string | null,
+  osmName: string,
+  nameDe?: string | null,
+): string {
+  let name = (nameDe || osmName).trim();
+  // "ViaJacobi" / "ViaGottardo" → "Via Jacobi" / "Via Gottardo"
+  name = name.replace(/\bVia([A-ZÄÖÜ])/g, "Via $1");
+  // " - Etappe" oder " – Etappe" → " Etappe"
+  name = name.replace(/\s+[-–]\s+(?=Etappe\s)/gi, " ");
+  // "Etappe 1: Basel" → "Etappe 1 Basel"
+  name = name.replace(/(Etappe\s+\d+)\s*:\s*/gi, "$1 ");
+  // Mehrfache Leerzeichen bereinigen
+  name = name.replace(/\s{2,}/g, " ").trim();
+  return ref ? `${ref} ${name}` : name;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Laedt und speichert alle nummerierten Schweizer Wanderrouten (nwn + rwn,
+ * Nummern 1–999) aus OSM. Routen werden dem Kanton zugeordnet, in dem der
+ * Startpunkt liegt (Nominatim-Reverse-Geocoding, gecacht nach ~10-km-Zelle).
+ *
+ * Laeuft als Hintergrundprozess; gibt die Anzahl gespeicherter Routen zurueck.
+ */
+export async function syncSwissNumberedRoutes(
+  log: Logger,
+  opts?: {
+    skipPhotos?: boolean;
+    batchSize?: number;
+    pauseMs?: number;
+    timeoutMs?: number;
+    forceRefresh?: boolean;
+    /** Nur bestimmte Netzwerk-Typen verarbeiten, z.B. ["nwn"] oder ["rwn","lwn"] */
+    networks?: string[];
+  },
+): Promise<number> {
+  const batchSize = opts?.batchSize ?? 3;
+  const pauseMs = opts?.pauseMs ?? 4_000;
+  const timeoutMs = opts?.timeoutMs ?? 90_000;
+
+  // 1. Index aller nummerierten Routen in der Schweiz holen
+  let index = await fetchSwissNumberedIndex(log);
+
+  // Optional: nur bestimmte Netzwerk-Typen verarbeiten
+  if (opts?.networks && opts.networks.length > 0) {
+    const nets = new Set(opts.networks);
+    index = index.filter((e) => nets.has(e.network ?? ""));
+    log.info({ networks: opts.networks, filtered: index.length }, "Nummerierte-Routen-Sync: Netzwerk-Filter aktiv");
+  }
+
+  // 2. Bereits frisch gecachte OSM-IDs überspringen (ausser forceRefresh)
+  let toFetch: RouteIndexEntry[];
+  if (opts?.forceRefresh) {
+    toFetch = index;
+  } else {
+    const existing = await db
+      .select({ id: externalRoutesTable.id, fetchedAt: externalRoutesTable.fetchedAt })
+      .from(externalRoutesTable);
+    const freshIds = new Set(
+      existing
+        .filter((r) => Date.now() - r.fetchedAt.getTime() < CACHE_TTL_MS)
+        .map((r) => r.id),
+    );
+    toFetch = index.filter((e) => !freshIds.has(`osm-${e.osmId}`));
+  }
+
+  log.info(
+    { total: index.length, toFetch: toFetch.length },
+    "Nummerierte-Routen-Sync: starte",
+  );
+
+  if (toFetch.length === 0) {
+    log.info("Alle nummerierten Routen bereits aktuell");
+    return 0;
+  }
+
+  // 3. Kanton-Cache: Nominatim-Anfragen per ~10-km-Gitterzelle bündeln
+  // Nur erfolgreiche Kantone cachen — null-Ergebnisse werden NICHT gecacht,
+  // damit eine temporaer fehlgeschlagene Nominatim-Anfrage nicht alle
+  // Routen im selben ~10-km-Gitter dauerhaft blockiert.
+  const cantonCache = new Map<string, string>();
+  async function detectCanton(lat: number, lng: number): Promise<string | null> {
+    const key = `${lat.toFixed(1)},${lng.toFixed(1)}`;
+    if (cantonCache.has(key)) return cantonCache.get(key)!;
+    await sleep(1_100);
+    const result = await reverseGeocode(lat, lng, log);
+    if (result.canton) cantonCache.set(key, result.canton);
+    return result.canton;
+  }
+
+  // 4. Pro Route einzeln verarbeiten — bei Geometrie-Fehler überspringen statt
+  //    die ganze Sync-Runde abbrechen. Nationale Routen haben bis zu 1000+ Ways;
+  //    ein einziger Overpass-Timeout soll nicht alle anderen mitreissen.
+  let stored = 0;
+  let skipped = 0;
+  for (let i = 0; i < toFetch.length; i++) {
+    const entry = toFetch[i];
+    if (i > 0) await sleep(pauseMs); // Rate-Limit zwischen Overpass-Anfragen
+
+    let raw: RawHikingRoute[];
+    try {
+      raw = await fetchRouteGeometries([entry.osmId], log, { batchSize: 1, pauseMs: 0, timeoutMs });
+    } catch (geoErr) {
+      log.warn(
+        { osmId: entry.osmId, name: entry.name, ref: entry.ref, err: geoErr },
+        "Nummerierte Route: Geometrie-Fetch fehlgeschlagen, übersprungen",
+      );
+      skipped++;
+      continue;
+    }
+
+    const r = raw[0];
+    if (!r || r.points.length < 2) { skipped++; continue; }
+
+    // 5. Minimale Länge (< 1 km = keine echte Wanderroute), kein Maximum –
+    //    nationale Mehrtagesrouten (100+ km) werden bewusst vollständig geladen.
+    const distanceKm = pathDistanceKm(r.points);
+    if (distanceKm < MIN_KM) {
+      log.debug({ osmId: entry.osmId, distanceKm }, "Nummerierte Route: zu kurz → übersprungen");
+      skipped++;
+      continue;
+    }
+
+    // 6. Kanton, Elevation, SAC, Name → DB-Zeile bauen
+    try {
+      const start = r.points[0];
+      const canton = await detectCanton(start.lat, start.lng);
+      if (!canton) {
+        log.debug({ id: r.id, name: r.name }, "Nummerierte Route: kein Kanton → übersprungen");
+        skipped++;
+        continue;
+      }
+
+      const elevation = await computeElevationStats(r.points, log);
+      const ascentM = elevation?.ascentM ?? 0;
+      const maxElevationM = elevation?.maxElevationM ?? 0;
+      const sac =
+        sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
+      const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
+        (p: LatLng) => [p.lat, p.lng],
+      );
+      const formattedName = formatNumberedRouteName(r.ref, r.name);
+      const photo = opts?.skipPhotos
+        ? { photoUrl: null, attribution: null }
+        : await getCachedRoutePhoto(start.lat, start.lng, log, r.name);
+
+      const row = {
+        id: r.id,
+        sagaId: r.id,
+        canton,
+        name: formattedName,
+        ref: r.ref,
+        distanceKm: Math.round(distanceKm * 10) / 10,
+        ascentM,
+        maxElevationM,
+        minutes: estimateMinutes(distanceKm, ascentM),
+        sac,
+        terrain: terrainLabel(r.ref, r.network, sac),
+        lat: start.lat,
+        lng: start.lng,
+        geometry,
+        geometryVersion: GEOMETRY_VERSION,
+        source: "SchweizMobil · OSM",
+        featured: false,
+        photoUrl: photo.photoUrl,
+        photoAttribution: photo.attribution,
+      };
+
+      await db
+        .insert(externalRoutesTable)
+        .values(row)
+        .onConflictDoUpdate({
+          target: externalRoutesTable.id,
+          set: {
+            name: sql`excluded.name`,
+            canton: sql`excluded.canton`,
+            distanceKm: sql`excluded.distance_km`,
+            ascentM: sql`excluded.ascent_m`,
+            maxElevationM: sql`excluded.max_elevation_m`,
+            minutes: sql`excluded.minutes`,
+            sac: sql`excluded.sac`,
+            terrain: sql`excluded.terrain`,
+            geometry: sql`excluded.geometry`,
+            geometryVersion: sql`excluded.geometry_version`,
+            source: sql`excluded.source`,
+            ref: sql`excluded.ref`,
+            photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
+            photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
+            fetchedAt: new Date(),
+          },
+        })
+        .execute();
+
+      stored++;
+      if (stored % 5 === 0) {
+        log.info({ stored, total: toFetch.length, skipped }, "Nummerierte-Routen-Sync: Fortschritt");
+      }
+    } catch (err) {
+      log.warn({ id: r.id, name: r.name, err }, "Nummerierte Route: DB/Verarbeitung fehlgeschlagen, weiter");
+      skipped++;
+    }
+  }
+
+  log.info({ stored, skipped, total: toFetch.length }, "Nummerierte-Routen-Sync: abgeschlossen");
+  return stored;
+}
+
+/**
+ * Reichert eine einzelne Route (id = "osm-XXXXXX") mit Geometrie, Distanz,
+ * Hoehenprofil und Kanton an. Wird vom /admin/routes/enrich-next Cron-Endpoint
+ * aufgerufen — laeuft langsam, eine Route nach der anderen.
+ */
+export async function enrichOneRoute(
+  rowId: string,
+  log: Logger,
+): Promise<{ ok: true; distanceKm: number; canton: string } | { ok: false; reason: string }> {
+  const osmId = parseInt(rowId.replace("osm-", ""), 10);
+  if (isNaN(osmId)) return { ok: false, reason: "kein OSM-ID" };
+
+  let raw: RawHikingRoute[];
+  try {
+    raw = await fetchRouteGeometries([osmId], log, { batchSize: 1, timeoutMs: 60_000 });
+  } catch (e: any) {
+    return { ok: false, reason: `Overpass: ${e.message}` };
+  }
+  if (!raw.length) return { ok: false, reason: "keine Geometrie in Overpass" };
+
+  const r = raw[0]!;
+  const distanceKm = pathDistanceKm(r.points);
+  const elevation = await computeElevationStats(r.points, log);
+  const ascentM = elevation?.ascentM ?? 0;
+  const maxElevationM = elevation?.maxElevationM ?? 0;
+  const sac = sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
+  const start = r.points[0]!;
+  const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
+    (p) => [p.lat, p.lng],
+  );
+  const minutes = estimateMinutes(distanceKm, ascentM);
+
+  // Kanton aus DB lesen falls schon gesetzt, sonst reverse geocoden
+  const [existing] = await db
+    .select({ canton: externalRoutesTable.canton, ref: externalRoutesTable.ref })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, rowId));
+  let canton =
+    existing?.canton && existing.canton !== "pending" ? existing.canton : null;
+  if (!canton) {
+    await sleep(1_100);
+    const geo = await reverseGeocode(start.lat, start.lng, log);
+    canton = geo.canton ?? "unbekannt";
+  }
+
+  const terrain = terrainLabel(r.ref ?? existing?.ref ?? null, r.network, sac);
+  const cantons = await detectRouteCantons(r.points, canton, log);
+
+  await db
+    .update(externalRoutesTable)
+    .set({
+      lat: start.lat,
+      lng: start.lng,
+      distanceKm: Math.round(distanceKm * 10) / 10,
+      ascentM,
+      maxElevationM,
+      minutes,
+      sac,
+      terrain,
+      canton,
+      cantons,
+      geometry: JSON.stringify(geometry),
+      geometryVersion: GEOMETRY_VERSION,
+    })
+    .where(eq(externalRoutesTable.id, rowId));
+
+  return { ok: true, distanceKm: Math.round(distanceKm * 10) / 10, canton };
+}
+
+/**
+ * Ermittelt alle durchquerten Kantone einer Route: Geometrie an bis zu 6
+ * Stuetzpunkten sampeln und reverse geocoden (1.1s Pause pro Nominatim-
+ * Anfrage). Startkanton ist immer enthalten.
+ */
+export async function detectRouteCantons(
+  points: LatLng[],
+  startCanton: string,
+  log: Logger,
+): Promise<string[]> {
+  const found = new Set<string>();
+  if (startCanton && startCanton !== "pending" && startCanton !== "unbekannt") {
+    found.add(startCanton);
+  }
+  if (points.length < 2) return [...found];
+  const SAMPLES = 6;
+  const step = Math.max(1, Math.floor(points.length / SAMPLES));
+  for (let i = step; i < points.length; i += step) {
+    const p = points[i]!;
+    try {
+      await sleep(1_100);
+      const geo = await reverseGeocode(p.lat, p.lng, log);
+      if (geo.canton) found.add(geo.canton);
+    } catch {
+      // Einzelner Geocoding-Fehler ist unkritisch — Sample überspringen
+    }
+  }
+  return [...found];
+}
+
+/**
+ * Backfill: ermittelt fuer eine bereits angereicherte Route (geometry
+ * vorhanden) nur die Multi-Kanton-Liste, ohne Overpass-Anfrage.
+ */
+export async function backfillCantonsForRoute(
+  rowId: string,
+  log: Logger,
+): Promise<{ ok: true; cantons: string[] } | { ok: false; reason: string }> {
+  const [row] = await db
+    .select({ canton: externalRoutesTable.canton, geometry: externalRoutesTable.geometry })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, rowId));
+  if (!row) return { ok: false, reason: "nicht gefunden" };
+  const geom = row.geometry as [number, number][] | null;
+  if (!geom || !Array.isArray(geom) || geom.length < 2) {
+    // Keine Geometrie — nur Startkanton eintragen, damit der Backfill-Cron
+    // die Route nicht endlos erneut anfasst.
+    const only = row.canton && row.canton !== "pending" ? [row.canton] : ["unbekannt"];
+    await db
+      .update(externalRoutesTable)
+      .set({ cantons: only })
+      .where(eq(externalRoutesTable.id, rowId));
+    return { ok: true, cantons: only };
+  }
+  const points: LatLng[] = geom.map(([lat, lng]) => ({ lat, lng }));
+  const cantons = await detectRouteCantons(points, row.canton, log);
+  await db
+    .update(externalRoutesTable)
+    .set({ cantons })
+    .where(eq(externalRoutesTable.id, rowId));
+  return { ok: true, cantons };
 }
 
 /**

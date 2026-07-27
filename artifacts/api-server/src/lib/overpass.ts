@@ -70,6 +70,7 @@ export interface RawHikingRoute {
 export interface RouteIndexEntry {
   osmId: number;
   name: string;
+  nameDe: string | null;
   ref: string | null;
   sac: string | null;
   network: string | null;
@@ -770,6 +771,85 @@ export async function fetchCantonRouteIndex(
     });
   }
   log.info({ iso, indexed: index.length }, "Overpass: Kanton-Index geladen");
+  return index;
+}
+
+/**
+ * Laedt alle nummerierten SchweizMobil-Wanderrouten inkl. Etappen:
+ *   nwn  ref  1–7    (7 nationale Routen)
+ *   rwn  ref 22–99   (~80 regionale Routen)
+ *   lwn  ref 101–999 (~700 lokale Routen)
+ * Jede Etappe ist in OSM eine eigene Relation mit demselben ref wie die
+ * Elternroute — die Query liefert daher Parent + alle Etappen zusammen.
+ * Drei separate Queries damit keine einzelne Overpass-Abfrage zu gross wird.
+ */
+export async function fetchSwissNumberedIndex(log: Logger): Promise<RouteIndexEntry[]> {
+  const ovTimeout = 120;
+  const httpTimeout = 150_000;
+  const CH_BBOX = "45.8,5.95,47.85,10.5";
+
+  function makeQuery(network: string): string {
+    return [
+      `[out:json][timeout:${ovTimeout}][bbox:${CH_BBOX}];`,
+      `relation["route"="hiking"]["network"="${network}"]["ref"~"^[0-9]+$"];`,
+      `out tags bb;`,
+    ].join("");
+  }
+
+  function parseElements(elements: OverpassTagsElement[], minRef: number, maxRef: number): RouteIndexEntry[] {
+    const result: RouteIndexEntry[] = [];
+    for (const e of elements) {
+      const tags = e.tags ?? {};
+      if (!tags.ref || !tags.name || !e.bounds) continue;
+      const refNum = parseInt(tags.ref, 10);
+      if (isNaN(refNum) || refNum < minRef || refNum > maxRef) continue;
+      const network = tags.network ?? null;
+      result.push({
+        osmId: e.id,
+        name: tags.name,
+        nameDe: tags["name:de"] ?? null,
+        ref: tags.ref,
+        sac: tags.sac_scale ?? null,
+        network,
+        bboxDiagKm: bboxDiagonalKm(e.bounds),
+        rank: rankOf(network),
+      });
+    }
+    return result;
+  }
+
+  const [nwnElements, rwnElements, lwnElements] = await Promise.all([
+    runOverpass<OverpassTagsElement>(makeQuery("nwn"), httpTimeout).catch((err) => {
+      log.warn({ err }, "fetchSwissNumberedIndex: nwn-Query fehlgeschlagen");
+      return [] as OverpassTagsElement[];
+    }),
+    runOverpass<OverpassTagsElement>(makeQuery("rwn"), httpTimeout).catch((err) => {
+      log.warn({ err }, "fetchSwissNumberedIndex: rwn-Query fehlgeschlagen");
+      return [] as OverpassTagsElement[];
+    }),
+    runOverpass<OverpassTagsElement>(makeQuery("lwn"), httpTimeout).catch((err) => {
+      log.warn({ err }, "fetchSwissNumberedIndex: lwn-Query fehlgeschlagen");
+      return [] as OverpassTagsElement[];
+    }),
+  ]);
+
+  const seen = new Set<number>();
+  const index: RouteIndexEntry[] = [];
+  for (const entry of [
+    ...parseElements(nwnElements, 1, 7),      // national: 1–7
+    ...parseElements(rwnElements, 22, 99),    // regional: 22–99
+    ...parseElements(lwnElements, 101, 999),  // lokal: 101–999
+  ]) {
+    if (!seen.has(entry.osmId)) {
+      seen.add(entry.osmId);
+      index.push(entry);
+    }
+  }
+
+  log.info(
+    { nwn: nwnElements.length, rwn: rwnElements.length, lwn: lwnElements.length, indexed: index.length },
+    "Overpass: Schweiz-nummerierte-Routen-Index geladen",
+  );
   return index;
 }
 
