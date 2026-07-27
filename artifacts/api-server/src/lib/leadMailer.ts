@@ -81,6 +81,7 @@ export async function fetchOrgsFromWp(
   form.set("hook_secret", hookSecret);
   if (filter.kategorie) form.set("kategorie", filter.kategorie);
   if (filter.typ)       form.set("typ",       filter.typ);
+  if (filter.sprache)   form.set("sprache",   filter.sprache);
   // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
   if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
 
