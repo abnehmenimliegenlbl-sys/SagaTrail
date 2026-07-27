@@ -62,7 +62,23 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 // ============================================================
-// FORTSCHRITT
+// SCHRITT 1: KATEGORIE-BACKFILL
+// Bestehende Leads ohne kategorie-Wert bekommen ihn aus typ.
+// Läuft immer (auch wenn keine neuen Routen offen), damit der
+// Datenbestand nach dem Spalten-Add vollständig ist.
+// ============================================================
+$backfilled = (int) $wpdb->query(
+    "UPDATE sagatrail_partner_leads
+        SET kategorie = typ
+      WHERE (kategorie IS NULL OR kategorie = '')
+        AND typ IS NOT NULL AND typ != ''"
+);
+if ($backfilled > 0) {
+    osm_log("Kategorie-Backfill: {$backfilled} Leads aktualisiert.");
+}
+
+// ============================================================
+// SCHRITT 2: FORTSCHRITT PRÜFEN
 // ============================================================
 $gesamt     = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_routen");
 $erledigt   = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_osm_progress");
@@ -77,7 +93,7 @@ if ($noch_offen <= 0) {
 }
 
 // ============================================================
-// NÄCHSTE ROUTEN LADEN
+// SCHRITT 3: NÄCHSTE ROUTEN LADEN
 // ============================================================
 $routen = $wpdb->get_results($wpdb->prepare("
     SELECT r.*
@@ -93,8 +109,8 @@ osm_log("Verarbeite " . count($routen) . " Routen …");
 foreach ($routen as $route) {
     osm_log("→ {$route['name']} ({$route['kanton']}, lat={$route['lat']}, lng={$route['lng']})");
 
-    $pois      = overpass_abfragen((float)$route['lat'], (float)$route['lng']);
-    $leads     = [];
+    $pois  = overpass_abfragen((float)$route['lat'], (float)$route['lng']);
+    $leads = [];
 
     foreach ($pois as $poi) {
         $osm_id = ($poi['type'] ?? 'node') . '-' . $poi['id'];
@@ -102,12 +118,15 @@ foreach ($routen as $route) {
         $name = trim($poi['tags']['name'] ?? '');
         if ($name === '') continue;
 
+        $kategorie = bestimme_kategorie($poi['tags'] ?? []);
+
         $leads[$osm_id] = [
             'route_id'   => $route['id'],
             'route_name' => $route['name'],
             'kanton'     => $route['kanton'],
             'osm_id'     => $osm_id,
-            'typ'        => bestimme_typ($poi['tags'] ?? []),
+            'typ'        => $kategorie,   // Legacy-Spalte beibehalten
+            'kategorie'  => $kategorie,   // Neue Spalte
             'name'       => $name,
             'adresse'    => baue_adresse($poi['tags'] ?? []),
             'telefon'    => $poi['tags']['phone']
@@ -127,8 +146,20 @@ foreach ($routen as $route) {
 
     $eingefuegt = 0;
     foreach ($leads as $lead) {
-        $wpdb->insert('sagatrail_partner_leads', $lead,
-            ['%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%f']);
+        // INSERT IGNORE verhindert Duplikate bei erneutem Durchlauf
+        // (erfordert UNIQUE-Index auf osm_id in sagatrail_partner_leads)
+        $wpdb->query($wpdb->prepare(
+            "INSERT IGNORE INTO sagatrail_partner_leads
+                (route_id, route_name, kanton, osm_id, typ, kategorie, name,
+                 adresse, telefon, website, email, lat, lng, tier)
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %f, %f, %s)",
+            $lead['route_id'], $lead['route_name'], $lead['kanton'],
+            $lead['osm_id'],   $lead['typ'],        $lead['kategorie'],
+            $lead['name'],     $lead['adresse'],    $lead['telefon'],
+            $lead['website'],  $lead['email'],
+            $lead['lat'],      $lead['lng'],
+            $lead['tier']
+        ));
         if ($wpdb->rows_affected > 0) $eingefuegt++;
     }
 
@@ -181,13 +212,20 @@ function overpass_abfragen(float $lat, float $lng): array {
     return [];
 }
 
-function bestimme_typ(array $tags): string {
+function bestimme_kategorie(array $tags): string {
     $map = [
-        'restaurant'=>'Restaurant','cafe'=>'Café','bar'=>'Bar',
-        'pub'=>'Pub','fast_food'=>'Schnellimbiss','biergarten'=>'Biergarten',
-        'hotel'=>'Hotel','hostel'=>'Hostel','guest_house'=>'Pension',
-        'camp_site'=>'Campingplatz','alpine_hut'=>'Berghütte',
-        'wilderness_hut'=>'Wildnishütte',
+        'restaurant'    => 'Restaurant',
+        'cafe'          => 'Café',
+        'bar'           => 'Bar',
+        'pub'           => 'Pub',
+        'fast_food'     => 'Schnellimbiss',
+        'biergarten'    => 'Biergarten',
+        'hotel'         => 'Hotel',
+        'hostel'        => 'Hostel',
+        'guest_house'   => 'Pension',
+        'camp_site'     => 'Campingplatz',
+        'alpine_hut'    => 'Berghütte',
+        'wilderness_hut'=> 'Wildnishütte',
     ];
     $a = $tags['amenity'] ?? '';
     $t = $tags['tourism'] ?? '';

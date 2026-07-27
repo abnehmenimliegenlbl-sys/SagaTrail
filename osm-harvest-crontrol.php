@@ -1,3 +1,9 @@
+<?php
+/**
+ * SagaTrail – OSM Harvester (WP-Crontrol / wp_schedule_event Version)
+ * Läuft als WordPress-Cron-Hook, kein direkter HTTP-Aufruf.
+ */
+
 define('ST_BATCH_SIZE', 10);
 define('ST_RADIUS_M', 2000);
 define('ST_PAUSE_SEK', 4);
@@ -6,6 +12,23 @@ define('ST_OVERPASS_URL', 'https://overpass-api.de/api/interpreter');
 global $wpdb;
 error_log('[SagaTrail OSM] === Funktion gestartet ===');
 
+// ============================================================
+// SCHRITT 1: KATEGORIE-BACKFILL
+// Bestehende Leads ohne kategorie-Wert bekommen ihn aus typ.
+// ============================================================
+$backfilled = (int) $wpdb->query(
+    "UPDATE sagatrail_partner_leads
+        SET kategorie = typ
+      WHERE (kategorie IS NULL OR kategorie = '')
+        AND typ IS NOT NULL AND typ != ''"
+);
+if ($backfilled > 0) {
+    error_log("[SagaTrail OSM] Kategorie-Backfill: {$backfilled} Leads aktualisiert.");
+}
+
+// ============================================================
+// SCHRITT 2: FORTSCHRITT PRÜFEN
+// ============================================================
 $gesamt     = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_routen");
 $erledigt   = (int) $wpdb->get_var("SELECT COUNT(*) FROM sagatrail_osm_progress");
 $noch_offen = $gesamt - $erledigt;
@@ -16,6 +39,9 @@ if ($noch_offen <= 0) {
     return;
 }
 
+// ============================================================
+// SCHRITT 3: NÄCHSTE ROUTEN LADEN
+// ============================================================
 $routen = $wpdb->get_results($wpdb->prepare("
     SELECT r.* FROM sagatrail_routen r
     LEFT JOIN sagatrail_osm_progress p ON p.route_id = r.id
@@ -29,7 +55,7 @@ error_log('[SagaTrail OSM] Batch: ' . count($routen) . ' Routen');
 foreach ($routen as $route) {
     error_log("[SagaTrail OSM] Route: {$route['name']} lat={$route['lat']} lng={$route['lng']}");
 
-    $r = ST_RADIUS_M;
+    $r   = ST_RADIUS_M;
     $lat = (float)$route['lat'];
     $lng = (float)$route['lng'];
 
@@ -66,23 +92,31 @@ foreach ($routen as $route) {
         if (isset($leads[$osm_id])) continue;
         $name = trim($poi['tags']['name'] ?? '');
         if ($name === '') continue;
+
         $a = $poi['tags']['amenity'] ?? '';
         $t = $poi['tags']['tourism'] ?? '';
-        $typen = ['restaurant'=>'Restaurant','cafe'=>'Café','bar'=>'Bar','pub'=>'Pub',
-            'fast_food'=>'Schnellimbiss','biergarten'=>'Biergarten','hotel'=>'Hotel',
-            'hostel'=>'Hostel','guest_house'=>'Pension','camp_site'=>'Campingplatz',
-            'alpine_hut'=>'Berghütte','wilderness_hut'=>'Wildnishütte'];
-        $typ = $typen[$a] ?? $typen[$t] ?? ucfirst($a ?: $t ?: 'Sonstiges');
+        $typen = [
+            'restaurant'    => 'Restaurant', 'cafe'          => 'Café',
+            'bar'           => 'Bar',        'pub'           => 'Pub',
+            'fast_food'     => 'Schnellimbiss','biergarten'  => 'Biergarten',
+            'hotel'         => 'Hotel',      'hostel'        => 'Hostel',
+            'guest_house'   => 'Pension',    'camp_site'     => 'Campingplatz',
+            'alpine_hut'    => 'Berghütte',  'wilderness_hut'=> 'Wildnishütte',
+        ];
+        $kategorie = $typen[$a] ?? $typen[$t] ?? ucfirst($a ?: $t ?: 'Sonstiges');
+
         $strasse = trim(($poi['tags']['addr:street'] ?? '') . ' ' . ($poi['tags']['addr:housenumber'] ?? ''));
         $ort     = trim(($poi['tags']['addr:postcode'] ?? '') . ' ' . ($poi['tags']['addr:city'] ?? ''));
         $adresse = trim(implode(', ', array_filter([$strasse, $ort]))) ?: null;
         $email   = $poi['tags']['email'] ?? $poi['tags']['contact:email'] ?? null;
+
         $leads[$osm_id] = [
             'route_id'   => $route['id'],
             'route_name' => $route['name'],
             'kanton'     => $route['kanton'],
             'osm_id'     => $osm_id,
-            'typ'        => $typ,
+            'typ'        => $kategorie,   // Legacy-Spalte beibehalten
+            'kategorie'  => $kategorie,   // Neue Spalte
             'name'       => $name,
             'adresse'    => $adresse,
             'telefon'    => $poi['tags']['phone'] ?? $poi['tags']['contact:phone'] ?? null,
@@ -98,8 +132,20 @@ foreach ($routen as $route) {
 
     $eingefuegt = 0;
     foreach ($leads as $lead) {
-        $wpdb->insert('sagatrail_partner_leads', $lead,
-            ['%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%f']);
+        // INSERT IGNORE verhindert Duplikate bei erneutem Durchlauf
+        // (erfordert UNIQUE-Index auf osm_id in sagatrail_partner_leads)
+        $wpdb->query($wpdb->prepare(
+            "INSERT IGNORE INTO sagatrail_partner_leads
+                (route_id, route_name, kanton, osm_id, typ, kategorie, name,
+                 adresse, telefon, website, email, lat, lng, tier)
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %f, %f, %s)",
+            $lead['route_id'], $lead['route_name'], $lead['kanton'],
+            $lead['osm_id'],   $lead['typ'],        $lead['kategorie'],
+            $lead['name'],     $lead['adresse'],    $lead['telefon'],
+            $lead['website'],  $lead['email'],
+            $lead['lat'],      $lead['lng'],
+            $lead['tier']
+        ));
         if ($wpdb->last_error) error_log('[SagaTrail OSM] Insert-Fehler: ' . $wpdb->last_error);
         if ($wpdb->rows_affected > 0) $eingefuegt++;
     }
