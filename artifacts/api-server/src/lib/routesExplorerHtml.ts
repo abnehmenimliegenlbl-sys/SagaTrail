@@ -281,7 +281,7 @@ a{color:var(--red)!important;text-decoration:none}
 }
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
 .drawer-photo{display:none}
-.drawer-map-wrap{position:relative;height:240px;border-radius:20px 20px 0 0;overflow:hidden}
+.drawer-map-wrap{position:relative;height:320px;border-radius:20px 20px 0 0;overflow:hidden}
 .drawer-map{width:100%;height:100%}
 .leaflet-container{font-family:inherit}
 .drawer-photo-ph{
@@ -661,7 +661,12 @@ async function doSearch(){
     out.innerHTML = '<div class="routes-grid">'+routes.map(cardHtml).join('')+'</div>';
     if(window.__initLazyPhotos) window.__initLazyPhotos();
     document.getElementById('app-banner').style.display = 'block';
-    out.scrollIntoView({behavior:'smooth',block:'start'});
+    // Kein internes scrollIntoView – das setzt body.scrollTop bevor WordPress
+    // die iframe-Höhe angepasst hat und schneidet Kantongrid/Filter oben ab.
+    // Internes Scroll explizit zurücksetzen, dann Parent bitten auf iframe zu scrollen.
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    try { window.parent.postMessage({type:'sagaTrailScrollToRoutes'}, '*'); } catch(e){}
   } catch(e){
     btn.disabled = false;
     stat.textContent = '';
@@ -874,11 +879,16 @@ function openDrawer(r) {
     _map = L.map('drawer-map', {
       zoomControl: true,
       scrollWheelZoom: false,
-      attributionControl: false
+      attributionControl: true
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-      maxZoom: 18
-    }).addTo(_map);
+    L.tileLayer(
+      'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg',
+      {
+        maxZoom: 18,
+        attribution: '© <a href="https://www.swisstopo.admin.ch" target="_blank">swisstopo</a>',
+        tileSize: 256
+      }
+    ).addTo(_map);
 
     const coords = Object.values(r.geometry || {});
     if(coords.length > 0){
