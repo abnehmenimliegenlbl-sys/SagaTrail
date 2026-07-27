@@ -25,7 +25,7 @@ body{
   line-height:1.5;
   -webkit-font-smoothing:antialiased;
   -webkit-overflow-scrolling:touch;
-  overflow-y:auto;
+  overflow-y:scroll;
 }
 a{color:var(--red)!important;text-decoration:none}
 
@@ -661,9 +661,6 @@ async function doSearch(){
     out.innerHTML = '<div class="routes-grid">'+routes.map(cardHtml).join('')+'</div>';
     if(window.__initLazyPhotos) window.__initLazyPhotos();
     document.getElementById('app-banner').style.display = 'block';
-    // Parent bitten auf den iframe zu scrollen (Routen-Bereich sichtbar machen).
-    // Kein internes scrollTop-Reset – das stört die scrollHeight-Berechnung.
-    try { window.parent.postMessage({type:'sagaTrailScrollToRoutes'}, '*'); } catch(e){}
   } catch(e){
     btn.disabled = false;
     stat.textContent = '';
@@ -806,30 +803,7 @@ const panel   = document.getElementById('drawer-panel');
 
 let _map = null;
 
-// Wenn der Explorer in einem iframe läuft (WordPress-Seite), muss der iframe
-// auf Viewport-Höhe gestaucht werden bevor position:fixed den Drawer zeigt.
-// position:fixed ist sonst relativ zur vollen iframe-Inhaltshöhe (z.B. 2000px),
-// der Panel erscheint ganz unten und ist nicht sichtbar.
-var __drawerSavedH = null;
-function _drawerIframeShrink() {
-  if (window === window.parent) return; // kein iframe
-  __drawerSavedH = document.documentElement.scrollHeight;
-  // iframe auf Bildschirmhöhe stauchen → position:fixed deckt nur den Viewport ab
-  var vh = (window.visualViewport && window.visualViewport.height > 100)
-    ? window.visualViewport.height
-    : (window.screen && window.screen.availHeight > 100 ? window.screen.availHeight : 800);
-  try { window.parent.postMessage({type:'sagaTrailHeight', height: vh}, '*'); } catch(e){}
-  // Parent auch bitten zum iframe zu scrollen
-  try { window.parent.postMessage({type:'sagaTrailScrollToIframe'}, '*'); } catch(e){}
-}
-function _drawerIframeRestore() {
-  if (window === window.parent || __drawerSavedH === null) return;
-  try { window.parent.postMessage({type:'sagaTrailHeight', height: __drawerSavedH}, '*'); } catch(e){}
-  __drawerSavedH = null;
-}
-
 function openDrawer(r) {
-  _drawerIframeShrink();
   const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : null;
   const hm   = r.ascentM    ? r.ascentM+' hm'   : null;
   const zeit = r.minutes    ? fmtTime(r.minutes) : null;
@@ -879,7 +853,7 @@ function openDrawer(r) {
       attributionControl: true
     });
     L.tileLayer(
-      'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg',
+      'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg',
       {
         maxZoom: 18,
         attribution: '© <a href="https://www.swisstopo.admin.ch" target="_blank">swisstopo</a>',
@@ -906,7 +880,6 @@ function openDrawer(r) {
 function closeDrawer() {
   overlay.classList.remove('open');
   document.body.style.overflow = '';
-  _drawerIframeRestore();
   if(_map){ _map.remove(); _map = null; }
 }
 
@@ -920,43 +893,6 @@ document.addEventListener('keydown', function(e) {
 
 window.__sagaPhLg = \`<div class="drawer-photo-ph"><svg width="80" height="60" viewBox="0 0 72 54" fill="none"><polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/><polygon points="20,18 28,32 12,32" fill="#bbb"/><polygon points="52,14 60,28 44,28" fill="#bbb"/></svg></div>\`;
 
-// Iframe-Auto-Resize: schickt Seitenhöhe an WordPress-Parent
-(function() {
-  var _sendTimer = null;
-  function sendHeight() {
-    // Kurz warten bis DOM-Paint abgeschlossen – verhindert dass scrollHeight
-    // die alte (kleinere) Höhe meldet bevor neue Inhalte gerendert sind.
-    clearTimeout(_sendTimer);
-    _sendTimer = setTimeout(function() {
-      // body.scrollHeight ist massgebend wenn overflow-y:auto auf body gesetzt ist
-      var h = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-        document.documentElement.offsetHeight,
-        document.body.offsetHeight
-      );
-      if (window.parent !== window) {
-        window.parent.postMessage({ type: 'sagaTrailHeight', height: h }, '*');
-      }
-    }, 50);
-  }
-  window.addEventListener('load', sendHeight);
-  window.addEventListener('resize', sendHeight);
-  var mo = new MutationObserver(sendHeight);
-  mo.observe(document.body, { childList: true, subtree: true, attributes: true });
-})();
-</script>
-
-<!-- Iframe-Resize-Empfänger (falls direkt eingebettet via <script> auf sagatrail.ch) -->
-<script>
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'sagaTrailHeight') {
-    var iframes = document.querySelectorAll('iframe');
-    iframes.forEach(function(f) {
-      try { if (f.contentWindow === e.source) f.style.height = e.data.height + 'px'; } catch(x){}
-    });
-  }
-});
 </script>
 </body>
 </html>`;
