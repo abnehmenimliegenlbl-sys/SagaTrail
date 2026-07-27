@@ -661,11 +661,8 @@ async function doSearch(){
     out.innerHTML = '<div class="routes-grid">'+routes.map(cardHtml).join('')+'</div>';
     if(window.__initLazyPhotos) window.__initLazyPhotos();
     document.getElementById('app-banner').style.display = 'block';
-    // Kein internes scrollIntoView – das setzt body.scrollTop bevor WordPress
-    // die iframe-Höhe angepasst hat und schneidet Kantongrid/Filter oben ab.
-    // Internes Scroll explizit zurücksetzen, dann Parent bitten auf iframe zu scrollen.
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Parent bitten auf den iframe zu scrollen (Routen-Bereich sichtbar machen).
+    // Kein internes scrollTop-Reset – das stört die scrollHeight-Berechnung.
     try { window.parent.postMessage({type:'sagaTrailScrollToRoutes'}, '*'); } catch(e){}
   } catch(e){
     btn.disabled = false;
@@ -925,11 +922,23 @@ window.__sagaPhLg = \`<div class="drawer-photo-ph"><svg width="80" height="60" v
 
 // Iframe-Auto-Resize: schickt Seitenhöhe an WordPress-Parent
 (function() {
+  var _sendTimer = null;
   function sendHeight() {
-    var h = document.documentElement.scrollHeight;
-    if (window.parent !== window) {
-      window.parent.postMessage({ type: 'sagaTrailHeight', height: h }, '*');
-    }
+    // Kurz warten bis DOM-Paint abgeschlossen – verhindert dass scrollHeight
+    // die alte (kleinere) Höhe meldet bevor neue Inhalte gerendert sind.
+    clearTimeout(_sendTimer);
+    _sendTimer = setTimeout(function() {
+      // body.scrollHeight ist massgebend wenn overflow-y:auto auf body gesetzt ist
+      var h = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        document.documentElement.offsetHeight,
+        document.body.offsetHeight
+      );
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'sagaTrailHeight', height: h }, '*');
+      }
+    }, 50);
   }
   window.addEventListener('load', sendHeight);
   window.addEventListener('resize', sendHeight);
