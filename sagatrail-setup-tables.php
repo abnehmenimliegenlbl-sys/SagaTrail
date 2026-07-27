@@ -32,13 +32,20 @@ $charset = $wpdb->get_charset_collate();
 //    Wird manuell oder per Import befüllt (kein Auto-Insert).
 // ============================================================
 $wpdb->query("CREATE TABLE IF NOT EXISTS sagatrail_routen (
-    id          VARCHAR(100) NOT NULL,
-    name        VARCHAR(255) NOT NULL,
-    kanton      VARCHAR(100) NOT NULL,
-    lat         DOUBLE       NOT NULL,
-    lng         DOUBLE       NOT NULL,
-    erstellt_am DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    id                  VARCHAR(60)     NOT NULL,
+    name                VARCHAR(255)    NOT NULL,
+    kanton              VARCHAR(60)     NOT NULL,
+    distanz_km          DECIMAL(6,2)    DEFAULT NULL,
+    aufstieg_m          SMALLINT(6)     DEFAULT NULL,
+    minuten             SMALLINT(6)     DEFAULT NULL,
+    sac                 VARCHAR(10)     DEFAULT NULL,
+    lat                 DECIMAL(10,7)   NOT NULL,
+    lng                 DECIMAL(10,7)   NOT NULL,
+    featured            TINYINT(1)      NOT NULL DEFAULT 0,
+    photo_url           TEXT            DEFAULT NULL,
+    photo_attribution   VARCHAR(500)    DEFAULT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_kanton (kanton)
 ) {$charset};");
 echo "sagatrail_routen: " . ($wpdb->last_error ?: 'OK') . "\n";
 
