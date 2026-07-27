@@ -195,6 +195,136 @@ const VERBINDUNGS_TOLERANZ_M = 150;
 const ARTEFAKT_LUECKE_M = 500;
 
 /**
+ * Kompassrichtung von a nach b in Grad [0, 360).
+ */
+function kompassRichtung(a: LatLng, b: LatLng): number {
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const x = Math.sin(dLng) * Math.cos(lat2);
+  const y =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360;
+}
+
+/**
+ * Richtungsaenderung in Grad zwischen den Vektoren a→b und b→c.
+ * 0 = gleiche Richtung, 180 = Kehrtwendung.
+ */
+function richtungsAenderung(a: LatLng, b: LatLng, c: LatLng): number {
+  const r1 = kompassRichtung(a, b);
+  const r2 = kompassRichtung(b, c);
+  const d = Math.abs(r2 - r1);
+  return d <= 180 ? d : 360 - d;
+}
+
+/**
+ * Korrigiert Zickzack-Artefakte in einer Punktkette, die durch falsch
+ * ausgerichtete OSM-Wegstuecke entstehen.
+ *
+ * Verfahren: lokaler Umkehr-Optimierer. Kandidaten-Grenzen sind alle Punkte
+ * mit Richtungsaenderung > 60 Grad (plus Kettenanfang/-ende). Fuer jedes
+ * Grenzpaar wird probeweise der Abschnitt dazwischen umgedreht; die Umkehrung
+ * wird uebernommen, wenn sie die Anzahl scharfer Knicke (> 150 Grad) senkt
+ * OHNE die Gesamtlaenge zu erhoehen (Toleranz 1 %) — sonst wuerde der
+ * Optimierer Knicke durch lange Phantom-Verbindungen "wegoptimieren".
+ * Iteriert bis keine Verbesserung mehr moeglich ist (max. 5 Runden).
+ */
+function korrigiereZickzack(punkte: LatLng[]): LatLng[] {
+  const KNICK_WINKEL = 150;
+  const KANDIDAT_WINKEL = 60;
+  const KNICK_MINDEST_M = 15;
+  const MAX_FENSTER = 120; // max. Indizes zwischen Umkehr-Grenzen
+  const MAX_RUNDEN = 5;
+
+  if (punkte.length < 3) return punkte;
+
+  const zaehleKnicke = (g: LatLng[]): number => {
+    let n = 0;
+    for (let i = 1; i < g.length - 1; i++) {
+      if (
+        haversineM(g[i - 1]!, g[i]!) > KNICK_MINDEST_M &&
+        haversineM(g[i]!, g[i + 1]!) > KNICK_MINDEST_M &&
+        richtungsAenderung(g[i - 1]!, g[i]!, g[i + 1]!) > KNICK_WINKEL
+      )
+        n++;
+    }
+    return n;
+  };
+
+  const gesamtLaenge = (g: LatLng[]): number => {
+    let l = 0;
+    for (let i = 1; i < g.length; i++) l += haversineM(g[i - 1]!, g[i]!);
+    return l;
+  };
+
+  let kette = punkte;
+  for (let runde = 0; runde < MAX_RUNDEN; runde++) {
+    const knicke = zaehleKnicke(kette);
+    if (knicke === 0) break;
+
+    // Kandidaten-Grenzen: Punkte mit deutlicher Richtungsaenderung
+    const grenzen: number[] = [0];
+    for (let i = 1; i < kette.length - 1; i++) {
+      if (
+        haversineM(kette[i - 1]!, kette[i]!) > KNICK_MINDEST_M &&
+        haversineM(kette[i]!, kette[i + 1]!) > KNICK_MINDEST_M &&
+        richtungsAenderung(kette[i - 1]!, kette[i]!, kette[i + 1]!) > KANDIDAT_WINKEL
+      )
+        grenzen.push(i);
+    }
+    grenzen.push(kette.length);
+
+    // Kosten-Deckel: bei sehr verwinkelten Routen (viele Kandidaten-Grenzen)
+    // waere die Paar-Schleife zu teuer — dann nur die scharfen Knicke selbst
+    // als Grenzen verwenden.
+    if (grenzen.length > 40) {
+      const nurKnicke: number[] = [0];
+      for (let i = 1; i < kette.length - 1; i++) {
+        if (
+          haversineM(kette[i - 1]!, kette[i]!) > KNICK_MINDEST_M &&
+          haversineM(kette[i]!, kette[i + 1]!) > KNICK_MINDEST_M &&
+          richtungsAenderung(kette[i - 1]!, kette[i]!, kette[i + 1]!) > KNICK_WINKEL
+        )
+          nurKnicke.push(i);
+      }
+      nurKnicke.push(kette.length);
+      grenzen.length = 0;
+      grenzen.push(...nurKnicke);
+    }
+
+    const laengeVorher = gesamtLaenge(kette);
+    let beste: LatLng[] | null = null;
+    let besterScore = knicke;
+
+    for (let ai = 0; ai < grenzen.length; ai++) {
+      for (let bi = ai + 1; bi < grenzen.length; bi++) {
+        const a = grenzen[ai]!;
+        const b = grenzen[bi]!;
+        if (b - a < 2 || b - a > MAX_FENSTER) continue;
+        const kandidat = [
+          ...kette.slice(0, a),
+          ...kette.slice(a, b).reverse(),
+          ...kette.slice(b),
+        ];
+        if (gesamtLaenge(kandidat) > laengeVorher * 1.01) continue;
+        const score = zaehleKnicke(kandidat);
+        if (score < besterScore) {
+          besterScore = score;
+          beste = kandidat;
+        }
+      }
+    }
+
+    if (!beste) break;
+    kette = beste;
+  }
+
+  return kette;
+}
+
+/**
  * Teilt eine Punktliste an Spruengen > maxLueckeM auf und gibt die laengste
  * zusammenhaengende Teilkette zurueck. Entfernt so Stitch-Artefakte aus dem
  * Routenverlauf, ohne die Geometrie zu verfaelschen.
@@ -217,17 +347,16 @@ function laengsteKette(punkte: LatLng[], maxLueckeM: number): LatLng[] {
 }
 
 /**
- * Verkettet die Wegstuecke einer Relation zu einer Punktliste.
+ * Verkettet die Wegstuecke einer OSM-Relation zu einer Punktliste.
  *
- * OSM-Relationen garantieren WEDER die Reihenfolge NOCH die Ausrichtung ihrer
- * Wegstuecke. Naives Aneinanderhaengen erzeugt deshalb Zickzack-Linien quer
- * durchs Gelaende. Stattdessen: gierige Verkettung ueber die Endpunkte — es
- * wird stets das Wegstueck angefuegt (vorne oder hinten, bei Bedarf
- * umgedreht), dessen Endpunkt dem aktuellen Kettenende am naechsten liegt.
- * Liegt kein Stueck mehr innerhalb der Toleranz, wird das naechstgelegene
- * Reststueck mit sichtbarer Luecke angefuegt (besser eine kleine Luecke als
- * ein Sprung quer ueber das Tal). Anschliessend entfernt laengsteKette alle
- * Artefakt-Geraden > ARTEFAKT_LUECKE_M und gibt nur die Hauptkette zurueck.
+ * Strategie: geordnete Traversierung entlang der OSM-Memberreihenfolge.
+ * OSM-Editoren speichern die Ways einer Route in der Begehungsreihenfolge;
+ * die Ausrichtung jedes Ways wird per Endpunkt-Uebereinstimmung mit dem
+ * aktuellen Kettenende bestimmt (kein Umsortieren). Liegt ein Stueck ausserhalb
+ * der Verbindungstoleranz, wird es als neue Luecke angefuegt — laengsteKette
+ * entfernt spaeter alle Luecken > ARTEFAKT_LUECKE_M und gibt die Hauptkette
+ * zurueck. Abstecher/Schleifen mit grosser Luecke zur Hauptkette fallen dabei
+ * automatisch heraus, was Zickzack-Artefakte durch Figur-8-Routen verhindert.
  */
 function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
   const segmente: LatLng[][] = [];
@@ -238,71 +367,84 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
   }
   if (segmente.length === 0) return [];
 
-  const offen = new Set(segmente.map((_, i) => i));
-  const erste = segmente[0];
-  offen.delete(0);
-  let kette: LatLng[] = [...erste];
-
-  const anhaengen = (ziel: LatLng[], stueck: LatLng[]) => {
-    const start = ziel[ziel.length - 1];
-    const naechster = stueck[0];
+  const naht = (ziel: LatLng[], stueck: LatLng[]) => {
     // Doppelten Nahtpunkt vermeiden
-    const ohneDuplikat =
-      start.lat === naechster.lat && start.lng === naechster.lng
+    const last = ziel[ziel.length - 1]!;
+    const first = stueck[0]!;
+    ziel.push(
+      ...(last.lat === first.lat && last.lng === first.lng
         ? stueck.slice(1)
-        : stueck;
-    ziel.push(...ohneDuplikat);
+        : stueck),
+    );
   };
 
-  while (offen.size > 0) {
-    const kettenEnde = kette[kette.length - 1];
-    const kettenStart = kette[0];
-    let bester = -1;
-    let besteDistanz = Infinity;
-    let umdrehen = false;
-    let vorne = false;
-    for (const i of offen) {
-      const s = segmente[i];
-      const kandidaten: [number, boolean, boolean][] = [
-        [haversineM(kettenEnde, s[0]), false, false], // hinten anfuegen
-        [haversineM(kettenEnde, s[s.length - 1]), true, false], // hinten, umgedreht
-        [haversineM(kettenStart, s[s.length - 1]), false, true], // vorne anfuegen
-        [haversineM(kettenStart, s[0]), true, true], // vorne, umgedreht
-      ];
-      for (const [d, rev, front] of kandidaten) {
-        if (d < besteDistanz) {
-          besteDistanz = d;
-          bester = i;
-          umdrehen = rev;
-          vorne = front;
-        }
-      }
-    }
-    if (bester < 0) break;
-    offen.delete(bester);
-    // Ausserhalb der Toleranz: Stueck trotzdem hinten anfuegen (Luecke),
-    // aber nie vorne einschieben — das wuerde den Verlauf verdrehen. Die
-    // Ausrichtung folgt dem naeher liegenden Endpunkt, damit der kuenstliche
-    // Verbindungssprung so kurz wie moeglich bleibt.
-    if (besteDistanz > VERBINDUNGS_TOLERANZ_M) {
-      const rest = segmente[bester];
-      const ende = kette[kette.length - 1];
-      const gedreht =
-        haversineM(ende, rest[rest.length - 1]) < haversineM(ende, rest[0]);
-      kette.push(...(gedreht ? [...rest].reverse() : rest));
-      continue;
-    }
-    const stueck = umdrehen ? [...segmente[bester]].reverse() : segmente[bester];
-    if (vorne) {
-      const neu = [...stueck];
-      anhaengen(neu, kette);
-      kette = neu;
+  // Erste Segment-Ausrichtung: schaue auf das zweite Segment um zu bestimmen,
+  // ob das erste vorwaerts oder rueckwaerts traversiert werden soll. Sind
+  // beide Enden fast gleich nah (< 5 m Unterschied, z.B. Rundweg-Start),
+  // entscheidet der Anschlusswinkel zum zweiten Segment.
+  let kette: LatLng[];
+  if (segmente.length > 1) {
+    const s0 = segmente[0]!;
+    const s1 = segmente[1]!;
+    const d0end = Math.min(
+      haversineM(s0[s0.length - 1]!, s1[0]!),
+      haversineM(s0[s0.length - 1]!, s1[s1.length - 1]!),
+    );
+    const d0start = Math.min(
+      haversineM(s0[0]!, s1[0]!),
+      haversineM(s0[0]!, s1[s1.length - 1]!),
+    );
+    if (Math.abs(d0start - d0end) < 5 && s0.length >= 2 && s1.length >= 2) {
+      // Winkel-Tiebreaker: welches Ende von s0 laeuft glatter in s1 weiter?
+      const s1Naechster =
+        haversineM(s0[s0.length - 1]!, s1[0]!) <=
+        haversineM(s0[s0.length - 1]!, s1[s1.length - 1]!)
+          ? s1[1]!
+          : s1[s1.length - 2]!;
+      const winkelVorwaerts = richtungsAenderung(
+        s0[s0.length - 2]!,
+        s0[s0.length - 1]!,
+        s1Naechster,
+      );
+      const winkelRueck = richtungsAenderung(s0[1]!, s0[0]!, s1Naechster);
+      kette = winkelRueck < winkelVorwaerts ? [...s0].reverse() : [...s0];
     } else {
-      anhaengen(kette, stueck);
+      kette = d0start < d0end ? [...s0].reverse() : [...s0];
     }
+  } else {
+    kette = [...segmente[0]!];
   }
 
-  return laengsteKette(kette, ARTEFAKT_LUECKE_M);
+  // Geordnete Traversierung: jedes Segment in Memberreihenfolge anfuegen.
+  // Richtung: primaer per Endpunkt-Naehe, Tiebreaker per Winkel wenn beide
+  // Enden fast gleich weit sind (< 5 m Unterschied) — verhindert, dass kurze
+  // Ways rueckwaerts angehaengt werden und Zickzack erzeugen.
+  for (let i = 1; i < segmente.length; i++) {
+    const s = segmente[i]!;
+    const ende = kette[kette.length - 1]!;
+    const dStart = haversineM(ende, s[0]!);
+    const dEnd = haversineM(ende, s[s.length - 1]!);
+
+    let vorwaerts: boolean;
+    if (Math.abs(dStart - dEnd) < 5 && kette.length >= 2) {
+      // Tiebreaker: waehle Richtung mit kleinerem Anschlusswinkel
+      const vorPunkt = kette[kette.length - 2]!;
+      const winkelVorwaerts = s.length >= 2
+        ? richtungsAenderung(vorPunkt, ende, s[1]!)
+        : 180;
+      const winkelRueck = s.length >= 2
+        ? richtungsAenderung(vorPunkt, ende, s[s.length - 2]!)
+        : 180;
+      vorwaerts = winkelVorwaerts <= winkelRueck;
+    } else {
+      vorwaerts = dStart <= dEnd;
+    }
+
+    naht(kette, vorwaerts ? s : [...s].reverse());
+  }
+
+  const hauptkette = laengsteKette(kette, ARTEFAKT_LUECKE_M);
+  return korrigiereZickzack(hauptkette);
 }
 
 /** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */

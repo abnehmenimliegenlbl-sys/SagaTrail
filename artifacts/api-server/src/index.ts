@@ -3,11 +3,11 @@ import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/catalogSeed";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./lib/stripeClient";
-import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos, fixArtefaktRouten } from "./lib/routeService";
+import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos, fixArtefaktRouten, GEOMETRY_VERSION } from "./lib/routeService";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 import { db, externalRoutesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, gte } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
@@ -152,25 +152,26 @@ const server = app.listen(port, async (err) => {
     logger.error({ err }, "Foto-Nachladen fehlgeschlagen");
   });
 
-  // Einmaliger Catch-up: falls die DB noch viele nicht-v3-Routen hat (z.B.
-  // nach einem neuen Prod-Deploy), alle Kantone im Hintergrund auffrischen.
-  // Laeuft nur wenn < 500 v3-Routen vorhanden – danach wird die Bedingung
-  // nie mehr erfuellt und zukuenftige Deploys starten keinen Warm-all.
+  // Einmaliger Catch-up: falls die DB noch viele Routen mit veralteter
+  // Geometrie-Version hat (z.B. nach einem Deploy mit neuem Stitching-
+  // Algorithmus), alle Kantone im Hintergrund auffrischen. Zaehlt Routen mit
+  // aktueller GEOMETRY_VERSION — nach vollstaendigem Warm-all ist die
+  // Bedingung nie mehr erfuellt.
   db.select({ count: sql<number>`COUNT(*)::int` })
     .from(externalRoutesTable)
-    .where(eq(externalRoutesTable.geometryVersion, 3))
+    .where(gte(externalRoutesTable.geometryVersion, GEOMETRY_VERSION))
     .then(([row]) => {
-      const v3count = row?.count ?? 0;
-      if (v3count < 500) {
-        logger.info({ v3count }, "DB-Catch-up: starte Warm-all aller Kantone im Hintergrund");
+      const aktuellCount = row?.count ?? 0;
+      if (aktuellCount < 500) {
+        logger.info({ aktuellCount }, "DB-Catch-up: starte Warm-all aller Kantone im Hintergrund");
         warmAllCantonCaches(logger).catch((err) =>
           logger.warn({ err }, "DB-Catch-up Warm-all fehlgeschlagen"),
         );
       } else {
-        logger.info({ v3count }, "DB-Catch-up: DB aktuell, kein Warm-all noetig");
+        logger.info({ aktuellCount }, "DB-Catch-up: DB aktuell, kein Warm-all noetig");
       }
     })
-    .catch((err) => logger.warn({ err }, "DB-Catch-up v3-Zaehlung fehlgeschlagen"));
+    .catch((err) => logger.warn({ err }, "DB-Catch-up Zaehlung fehlgeschlagen"));
 
   // Artefakt-Luecken-Fix: prueft alle v3-Routen auf Phantomlinien > 500 m
   // (entstehen durch fehlerhaftes OSM-Stitching). Kaputte Routen werden auf

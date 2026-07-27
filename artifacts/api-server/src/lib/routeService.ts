@@ -538,7 +538,7 @@ function terrainLabel(ref: string | null, network: string | null, sac: string): 
 // Version des Geometrie-Verkettungs-Algorithmus (siehe overpass.ts
 // stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
 // Zickzack-Verkettung erzeugt und gelten als abgelaufen.
-const GEOMETRY_VERSION = 3; // RDP-Vereinfachung statt gleichmässigem Sampling
+export const GEOMETRY_VERSION = 4; // v4: geordnetes Stitching (OSM-Memberreihenfolge) statt Greedy
 
 function isFresh(row: ExternalRouteRow): boolean {
   return (
@@ -734,7 +734,24 @@ const WARM_STAGGER_MS = 4000;
  * ein einzelner haengender Kanton den Start nicht blockiert oder die anderen
  * verhindert.
  */
+let warmAllLaeuft = false;
+
 export async function warmAllCantonCaches(log: Logger): Promise<void> {
+  // Debounce: Catch-up und Artefakt-Fix koennen beide beim Start einen
+  // Warm-all ausloesen — nie zwei parallel laufen lassen (Overpass-Last).
+  if (warmAllLaeuft) {
+    log.info("Warm-all laeuft bereits — zweiter Aufruf uebersprungen");
+    return;
+  }
+  warmAllLaeuft = true;
+  try {
+    await warmAllCantonCachesInner(log);
+  } finally {
+    warmAllLaeuft = false;
+  }
+}
+
+async function warmAllCantonCachesInner(log: Logger): Promise<void> {
   const cantons = Object.keys(CANTON_ISO);
   for (const canton of cantons) {
     // Kanton überspringen wenn bereits genug frische Routen in DB —
@@ -917,10 +934,15 @@ export async function fillMissingRoutePhotos(log: Logger): Promise<void> {
 }
 
 /**
- * Prueft alle v3-Routen in der DB auf Artefakt-Luecken > 500 m im Geometry-
- * Array (gerade Phantomlinien aus fehlerhaftem OSM-Stitching). Kaputte Routen
- * werden auf geometry_version = 1 zurueckgesetzt, damit der naechste Warm-all
- * sie neu aufbaut. Gibt die Anzahl der markierten Routen zurueck.
+ * Prueft alle v3-Routen in der DB auf zwei Artefakt-Typen aus fehlerhaftem
+ * OSM-Stitching:
+ *   1. Luecken > 500 m (gerade Phantomlinien quer durchs Gelaende)
+ *   2. Zickzack-Knicke: >= 2 Richtungsumkehrungen > 150 Grad zwischen
+ *      Segmenten > 15 m (falsch ausgerichtete Wegstuecke; einzelne scharfe
+ *      Kehren koennen echte Serpentinen sein und bleiben unangetastet)
+ * Kaputte Routen werden auf geometry_version = 1 zurueckgesetzt, damit der
+ * naechste Warm-all sie mit dem geordneten Stitching neu aufbaut. Gibt die
+ * Anzahl der markierten Routen zurueck.
  *
  * Wird einmalig beim Server-Start aufgerufen. Sobald alle Routen korrekt
  * sind, findet die Funktion nichts mehr und kehrt sofort zurueck (O(n) Scan,
@@ -928,24 +950,53 @@ export async function fillMissingRoutePhotos(log: Logger): Promise<void> {
  */
 export async function fixArtefaktRouten(log: Logger): Promise<number> {
   const LUECKE_M = 500;
+  const KNICK_GRAD = 150;
+  const KNICK_MIN_SEGMENT_M = 15;
+  const KNICK_MAX_OK = 1; // 1 scharfe Kehre kann echt sein (Serpentine)
 
   const rows = await db
     .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry, canton: externalRoutesTable.canton })
     .from(externalRoutesTable)
     .where(eq(externalRoutesTable.geometryVersion, 3));
 
+  const kompass = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const lat1 = (a.lat * Math.PI) / 180;
+    const lat2 = (b.lat * Math.PI) / 180;
+    const x = Math.sin(dLng) * Math.cos(lat2);
+    const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360;
+  };
+
   const kaputt: string[] = [];
   for (const row of rows) {
     const geom = row.geometry as [number, number][] | null;
     if (!geom || geom.length < 2) continue;
-    for (let i = 1; i < geom.length; i++) {
-      const [lat1, lng1] = geom[i - 1]!;
-      const [lat2, lng2] = geom[i]!;
-      if (haversineM({ lat: lat1!, lng: lng1! }, { lat: lat2!, lng: lng2! }) > LUECKE_M) {
-        kaputt.push(row.id);
+    const pts = geom.map(([lat, lng]) => ({ lat: lat!, lng: lng! }));
+
+    let defekt = false;
+    let knicke = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = haversineM(pts[i - 1]!, pts[i]!);
+      if (d > LUECKE_M) {
+        defekt = true;
         break;
       }
+      // Knick-Check am Punkt i (braucht Nachfolger)
+      if (i < pts.length - 1 && d > KNICK_MIN_SEGMENT_M) {
+        const d2 = haversineM(pts[i]!, pts[i + 1]!);
+        if (d2 > KNICK_MIN_SEGMENT_M) {
+          let diff = Math.abs(kompass(pts[i]!, pts[i + 1]!) - kompass(pts[i - 1]!, pts[i]!));
+          if (diff > 180) diff = 360 - diff;
+          if (diff > KNICK_GRAD) knicke++;
+          if (knicke > KNICK_MAX_OK) {
+            defekt = true;
+            break;
+          }
+        }
+      }
     }
+    if (defekt) kaputt.push(row.id);
   }
 
   if (kaputt.length === 0) {
