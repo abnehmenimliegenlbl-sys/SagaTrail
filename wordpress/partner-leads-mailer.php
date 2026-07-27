@@ -40,18 +40,20 @@ function sagatrail_ajax_get_leads() {
     $where  = [];
     $params = [];
 
-    $typ     = isset( $_POST['typ'] )     ? sanitize_text_field( $_POST['typ'] )     : '';
-    $kanton  = isset( $_POST['kanton'] )  ? sanitize_text_field( $_POST['kanton'] )  : '';
-    $sprache = isset( $_POST['sprache'] ) ? sanitize_text_field( $_POST['sprache'] ) : '';
+    $typ       = isset( $_POST['typ'] )       ? sanitize_text_field( $_POST['typ'] )       : '';
+    $kategorie = isset( $_POST['kategorie'] ) ? sanitize_text_field( $_POST['kategorie'] ) : '';
+    $kanton    = isset( $_POST['kanton'] )    ? sanitize_text_field( $_POST['kanton'] )    : '';
+    $sprache   = isset( $_POST['sprache'] )   ? sanitize_text_field( $_POST['sprache'] )   : '';
 
-    if ( $typ )     { $where[] = 'typ = %s';     $params[] = $typ; }
-    if ( $kanton )  { $where[] = 'kanton = %s';  $params[] = $kanton; }
-    if ( $sprache ) { $where[] = 'sprache = %s'; $params[] = $sprache; }
+    if ( $typ )       { $where[] = 'typ = %s';       $params[] = $typ; }
+    if ( $kategorie ) { $where[] = 'kategorie = %s'; $params[] = $kategorie; }
+    if ( $kanton )    { $where[] = 'kanton = %s';    $params[] = $kanton; }
+    if ( $sprache )   { $where[] = 'sprache = %s';   $params[] = $sprache; }
 
     // Nur Einträge mit E-Mail-Adresse
     $where[] = "email != ''";
 
-    $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, adresse, telefon, website
+    $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, kategorie, adresse, telefon, website
             FROM {$table}";
     if ( $where ) {
         $sql .= ' WHERE ' . implode( ' AND ', $where );
@@ -67,15 +69,16 @@ function sagatrail_ajax_get_leads() {
     // Felder als korrekte Typen zurückgeben
     $data = array_map( function( $r ) {
         return [
-            'name'    => (string) $r->name,
-            'email'   => (string) $r->email,
-            'kanton'  => (string) $r->kanton,
-            'sprache' => (string) $r->sprache,
-            'route'   => (string) $r->route,
-            'typ'     => (string) $r->typ,
-            'adresse' => (string) $r->adresse,
-            'telefon' => (string) $r->telefon,
-            'website' => (string) $r->website,
+            'name'      => (string) $r->name,
+            'email'     => (string) $r->email,
+            'kanton'    => (string) $r->kanton,
+            'sprache'   => (string) $r->sprache,
+            'route'     => (string) $r->route,
+            'typ'       => (string) $r->typ,
+            'kategorie' => (string) ( $r->kategorie ?? '' ),
+            'adresse'   => (string) $r->adresse,
+            'telefon'   => (string) $r->telefon,
+            'website'   => (string) $r->website,
         ];
     }, $rows ?: [] );
 
@@ -92,12 +95,13 @@ function sagatrail_ajax_leads_meta() {
     global $wpdb;
     $table = SAGATRAIL_LEADS_TABLE;
 
-    $typen    = $wpdb->get_col( "SELECT DISTINCT typ     FROM {$table} WHERE typ    != '' ORDER BY typ" );
-    $kantone  = $wpdb->get_col( "SELECT DISTINCT kanton  FROM {$table} WHERE kanton != '' ORDER BY kanton" );
-    $sprachen = $wpdb->get_col( "SELECT DISTINCT sprache FROM {$table} WHERE sprache!= '' ORDER BY sprache" );
-    $total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email != ''" );
+    $typen      = $wpdb->get_col( "SELECT DISTINCT typ       FROM {$table} WHERE typ       != '' ORDER BY typ" );
+    $kategorien = $wpdb->get_col( "SELECT DISTINCT kategorie FROM {$table} WHERE kategorie != '' ORDER BY kategorie" );
+    $kantone    = $wpdb->get_col( "SELECT DISTINCT kanton    FROM {$table} WHERE kanton    != '' ORDER BY kanton" );
+    $sprachen   = $wpdb->get_col( "SELECT DISTINCT sprache   FROM {$table} WHERE sprache   != '' ORDER BY sprache" );
+    $total      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE email != ''" );
 
-    wp_send_json_success( compact( 'typen', 'kantone', 'sprachen', 'total' ) );
+    wp_send_json_success( compact( 'typen', 'kategorien', 'kantone', 'sprachen', 'total' ) );
 }
 
 // ── AJAX: Debug – Tabellenstruktur + Zählungen ───────────────────────────────
