@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "Stripe Webhook (Test)"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "EAS Build Submit"
+
 [[workflows.workflow]]
 name = "Stripe Webhook (Test)"
 author = "agent"
@@ -27,6 +31,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bash scripts/stripe-listen.sh"
+
+[[workflows.workflow]]
+name = "EAS Build Submit"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 EXPO_APPLE_TEAM_ID=R4254XKT8S npx eas build --platform ios --profile production --auto-submit --no-wait --non-interactive 2>&1 | tee /tmp/eas-build.log; echo EAS_DONE >> /tmp/eas-build.log; sleep 3600"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"
