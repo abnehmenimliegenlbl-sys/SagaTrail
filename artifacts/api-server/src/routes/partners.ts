@@ -4,6 +4,7 @@ import { GetPartnersResponse, GetPartnersQueryParams } from "@workspace/api-zod"
 import { db, partnersTable, type PartnerRow } from "@workspace/db";
 import { getPartners } from "../lib/routeService";
 import { berechneOeffnungsStatus } from "../lib/oeffnungszeitenLogic";
+import { translatePartnerContent } from "../lib/partnerTranslator";
 
 const router: IRouter = Router();
 
@@ -52,6 +53,36 @@ router.get("/routes/partners", async (req, res): Promise<void> => {
   } catch (err) {
     req.log.error({ err }, "Partner konnten nicht geladen werden");
     res.status(502).json({ error: "Partner konnten nicht geladen werden" });
+  }
+});
+
+// GET /partners/:id/translate?lang=fr — beschreibung + angebot in Zielsprache übersetzen
+router.get("/partners/:id/translate", async (req, res): Promise<void> => {
+  const id = req.params.id as string;
+  const lang = (req.query.lang as string | undefined)?.toLowerCase() ?? "de";
+
+  // Für Deutsch (und gsw) keine Übersetzung nötig — Texte sind primär Deutsch
+  if (lang === "de" || lang === "gsw") {
+    res.json({ beschreibung: null, angebot: null });
+    return;
+  }
+
+  try {
+    const rows = await db.select().from(partnersTable).where(eq(partnersTable.id, id)).limit(1);
+    if (!rows.length) { res.status(404).json({ error: "Partner nicht gefunden" }); return; }
+    const p = rows[0];
+    const result = await translatePartnerContent(
+      id,
+      p.beschreibung ?? null,
+      p.angebot ?? null,
+      lang,
+      req.log,
+    );
+    res.json(result);
+  } catch (err: any) {
+    req.log.error({ err, partnerId: id, lang }, "Partner-Übersetzung fehlgeschlagen");
+    // Graceful degradation: leere Antwort → Client zeigt Originaltext
+    res.json({ beschreibung: null, angebot: null });
   }
 });
 

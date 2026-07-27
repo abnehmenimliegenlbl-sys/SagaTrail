@@ -497,6 +497,7 @@ export default function LiveHike() {
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [partnerTranslation, setPartnerTranslation] = useState<{ beschreibung: string | null; angebot: string | null } | null>(null);
   const [karteVollbild, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
   // Aktion, die nach vollstaendigem Schliessen der Vollbild-Karte ausgefuehrt
@@ -1146,6 +1147,23 @@ export default function LiveHike() {
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/partners/${selectedPartner.id}/view`, { method: "POST" }).catch(() => {});
   }, [selectedPartner?.id]);
+
+  // Partner-Übersetzung: beschreibung + angebot in Nutzersprache laden (on-demand, gecacht am Server).
+  // Für DE/GSW übersprungen — Texte sind primär Deutsch.
+  useEffect(() => {
+    if (!selectedPartner?.id || storyLanguage === "de" || storyLanguage === "gsw") {
+      setPartnerTranslation(null);
+      return;
+    }
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    const lang = storyLanguage === "gsw" ? "de" : storyLanguage;
+    fetch(`${base}/partners/${selectedPartner.id}/translate?lang=${lang}`)
+      .then((r) => r.json())
+      .then((data) => { if (!cancelled) setPartnerTranslation(data); })
+      .catch(() => { if (!cancelled) setPartnerTranslation(null); });
+    return () => { cancelled = true; };
+  }, [selectedPartner?.id, storyLanguage]);
 
   // POI-Panel automatisch schliessen, wenn ein anderer nearbyPoi auftaucht.
   // KEIN Distanz-Auto-Close: manuell angetippte POIs bleiben offen bis der
@@ -3270,9 +3288,9 @@ export default function LiveHike() {
               ) : null}
 
               {/* Beschreibung — nicht für Basic */}
-              {!!selectedPartner.beschreibung && selectedPartner.paket !== "basic" && (
+              {!!(partnerTranslation?.beschreibung ?? selectedPartner.beschreibung) && selectedPartner.paket !== "basic" && (
                 <Text style={[styles.poiSummary, { color: colors.foreground }]}>
-                  {selectedPartner.beschreibung}
+                  {partnerTranslation?.beschreibung ?? selectedPartner.beschreibung}
                 </Text>
               )}
 
@@ -3326,7 +3344,7 @@ export default function LiveHike() {
               )}
 
               {/* SagaTrail-Angebot — alle Tiers */}
-              {!!selectedPartner.angebot && (
+              {!!(partnerTranslation?.angebot ?? selectedPartner.angebot) && (
                 <Pressable
                   onPress={() => {
                     if (selectedPartner.id) {
@@ -3347,7 +3365,7 @@ export default function LiveHike() {
                       {t.partnerOffer}
                     </Text>
                     <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 0 }]}>
-                      {selectedPartner.angebot}
+                      {partnerTranslation?.angebot ?? selectedPartner.angebot}
                     </Text>
                   </View>
                 </Pressable>
