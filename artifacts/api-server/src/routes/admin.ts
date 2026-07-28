@@ -1196,6 +1196,38 @@ router.post("/admin/photos/reset", async (req, res): Promise<void> => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Routen-Namen bereinigen (fixme-Platzhalter entfernen)
+// ---------------------------------------------------------------------------
+// POST /admin/routes/fix-names
+// Bereinigt "fixme"-Platzhalter in external_routes.name direkt per SQL,
+// ohne dass ein vollstaendiger Overpass-Sync noetig waere.
+router.post("/admin/routes/fix-names", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const result = await db.execute(sql`
+      UPDATE external_routes
+      SET name = trim(
+        regexp_replace(
+          regexp_replace(
+            regexp_replace(name, '\\s*[-\u2013\u2014]?\\s*fixme\\s*[-\u2013\u2014]?\\s*', ' ', 'gi'),
+            '\\s{2,}', ' ', 'g'
+          ),
+          '^\\s*[-\u2013\u2014]\\s*|\\s*[-\u2013\u2014]\\s*$', '', 'g'
+        )
+      )
+      WHERE name ~* 'fixme'
+      RETURNING id, name
+    `);
+    const rows = result.rows as { id: string; name: string }[];
+    req.log.info({ count: rows.length }, "Routen-Namen bereinigt (fixme entfernt)");
+    res.json({ ok: true, cleaned: rows.length, examples: rows.slice(0, 5) });
+  } catch (err) {
+    req.log.error({ err }, "Routen-Namen-Bereinigung fehlgeschlagen");
+    res.status(500).json({ error: "Bereinigung fehlgeschlagen" });
+  }
+});
+
 // -------------------------------------------------------------------
 // GSW STORY CACHE INVALIDIERUNG
 // -------------------------------------------------------------------

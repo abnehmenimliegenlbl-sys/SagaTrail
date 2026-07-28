@@ -594,11 +594,19 @@ async function enrichAndStore(
     const photo = fetchOpts?.skipPhotos
       ? { photoUrl: null, attribution: null }
       : await getCachedRoutePhoto(start.lat, start.lng, log, r.name);
+    // OSM-Platzhalter "fixme" (in jeder Schreibweise) bereinigen,
+    // inkl. haengender Trennstriche: "Hüttner Brugg - Finstersee - fixme" →
+    // "Hüttner Brugg - Finstersee".
+    const cleanedName = r.name
+      .replace(/\s*[-–—]?\s*\bfixme\b\s*[-–—]?\s*/gi, " ")
+      .replace(/\s{2,}/g, " ")
+      .replace(/^\s*[-–—]\s*|\s*[-–—]\s*$/g, "")
+      .trim();
     return {
       id: r.id,
       sagaId: r.id,
       canton,
-      name: r.name,
+      name: cleanedName,
       ref: r.ref,
       distanceKm: Math.round(distanceKm * 10) / 10,
       ascentM,
