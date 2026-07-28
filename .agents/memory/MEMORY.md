@@ -66,4 +66,5 @@
 - [Overpass chunked geometry fallback](overpass-chunked-fallback.md) — huge relations timing out on `out geom;`: load member list, expand Etappen, fetch ways in batches; node-only relations → geometry_version=-1.
 - [Server-side background jobs](background-jobs-server-side.md) — nohup/setsid shell jobs get killed & /tmp wiped on restart; long batch loops must run im API-Server (warm-all-Muster, z.B. /admin/routes/enrich-all).
 - [Route geometry formats + restitch](sagatrail-geometry-formats-restitch.md) — geometry points sind {lat,lng} ODER [lat,lng]; Analysen brauchen COALESCE beider Formate; restitch_parents.cjs baut Gesamtrouten aus Etappen neu.
+- [Express duplicate route after task merge](express-duplicate-route-merge.md) — same path added by dir + task agent → first handler wins silently; grep route paths after merges.
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.

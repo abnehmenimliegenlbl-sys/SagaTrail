@@ -1,7 +1,7 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
-import { desc, eq, or, ilike, isNotNull, isNull, inArray, ne, sql, count, and, lt } from "drizzle-orm";
+import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, lt } from "drizzle-orm";
 import { z } from "zod/v4";
 import {
   db,
@@ -1642,8 +1642,12 @@ router.post("/admin/stripe/seed-products", async (req, res): Promise<void> => {
 router.post("/admin/routes/import", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const { rows } = req.body as { rows?: Record<string, unknown>[] };
-  if (!Array.isArray(rows) || !rows.length) {
-    res.status(400).json({ error: "rows (Array) erforderlich" });
+  if (!Array.isArray(rows) || !rows.length || rows.length > 500) {
+    res.status(400).json({ error: "rows (Array mit 1–500 Einträgen) erforderlich" });
+    return;
+  }
+  if (rows.some((r) => !r || typeof r.id !== "string" || !r.id)) {
+    res.status(400).json({ error: "Jede Zeile braucht eine id" });
     return;
   }
   try {
@@ -1672,6 +1676,8 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
           featured: sql`excluded.featured`,
           photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
           photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
+          description: sql`COALESCE(excluded.description, ${externalRoutesTable.description})`,
+          descriptionSource: sql`COALESCE(excluded.description_source, ${externalRoutesTable.descriptionSource})`,
           fetchedAt: new Date(),
         },
       })
@@ -1700,7 +1706,7 @@ router.post("/admin/routes/prune", async (req, res): Promise<void> => {
   try {
     const result = await db
       .delete(externalRoutesTable)
-      .where(sql`id != ALL(${keepIds})`)
+      .where(notInArray(externalRoutesTable.id, keepIds))
       .returning({ id: externalRoutesTable.id });
     req.log.info({ deleted: result.length }, "Routen-Prune abgeschlossen");
     res.json({ ok: true, deleted: result.length });
@@ -1911,45 +1917,6 @@ function parseWikiEtappen(wikitext: string): Map<string, { text: string; bild: s
   }
   return ergebnis;
 }
-
-/**
- * POST /admin/routes/import
- * Bulk-Upsert fertig angereicherter Routen (Datenübernahme Dev → Prod).
- * Body: { rows: [...] } mit max. 200 Zeilen im externalRoutesTable-Format.
- * Der Prod-Server schreibt in seine eigene DB — der einzige erlaubte Schreibweg.
- */
-router.post("/admin/routes/import", async (req, res): Promise<void> => {
-  if (!requireAdminToken(req, res)) return;
-  const rows = (req.body as { rows?: unknown })?.rows;
-  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 200) {
-    res.status(400).json({ error: "rows: Array mit 1–200 Einträgen erwartet" });
-    return;
-  }
-  let upserted = 0;
-  for (const r of rows as (typeof externalRoutesTable.$inferInsert)[]) {
-    if (!r || typeof r.id !== "string" || !r.id) {
-      res.status(400).json({ error: "Jede Zeile braucht eine id" });
-      return;
-    }
-    await db
-      .insert(externalRoutesTable)
-      .values(r)
-      .onConflictDoUpdate({
-        target: externalRoutesTable.id,
-        set: {
-          sagaId: r.sagaId, canton: r.canton, cantons: r.cantons, name: r.name, ref: r.ref,
-          distanceKm: r.distanceKm, ascentM: r.ascentM, maxElevationM: r.maxElevationM,
-          minutes: r.minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
-          geometry: r.geometry, geometryVersion: r.geometryVersion, source: r.source,
-          featured: r.featured, photoUrl: r.photoUrl, photoAttribution: r.photoAttribution,
-          description: r.description, descriptionSource: r.descriptionSource,
-        },
-      });
-    upserted++;
-  }
-  req.log.info({ upserted }, "Routen-Import abgeschlossen");
-  res.json({ ok: true, upserted });
-});
 
 /**
  * POST /admin/routes/wiki-enrich-all
