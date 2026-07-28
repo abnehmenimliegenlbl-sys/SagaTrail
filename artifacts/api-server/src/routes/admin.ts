@@ -140,6 +140,33 @@ const PackGrantBody = z.object({
   slug: z.string().min(1),
 });
 
+/**
+ * POST /admin/user-delete
+ * Löscht ein Konto vollständig (Profil-Zeile + Clerk-Nutzer), analog DELETE /me,
+ * aber admin-gesteuert für Test-/Karteileichen-Accounts.
+ */
+router.post("/admin/user-delete", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { userId } = req.body as { userId?: unknown };
+  if (typeof userId !== "string" || !userId.startsWith("user_")) {
+    res.status(400).json({ error: "userId (Clerk-ID, 'user_…') erforderlich" });
+    return;
+  }
+  const deleted = await db
+    .delete(profilesTable)
+    .where(eq(profilesTable.id, userId))
+    .returning({ id: profilesTable.id });
+  let clerkGeloescht = true;
+  try {
+    await clerkClient.users.deleteUser(userId);
+  } catch (err) {
+    clerkGeloescht = false;
+    req.log.warn({ err, userId }, "[admin/user-delete] Clerk-Nutzer konnte nicht gelöscht werden");
+  }
+  req.log.info({ userId, profilGeloescht: deleted.length > 0, clerkGeloescht }, "Admin-Nutzerlöschung");
+  res.json({ ok: true, profilGeloescht: deleted.length > 0, clerkGeloescht });
+});
+
 router.post("/admin/pack-grant", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
 
@@ -1771,18 +1798,39 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
     try {
       // Phase 1: Geometrie
       let fehlerSerien = 0;
+      // In diesem Lauf gescheiterte Routen (z.B. Overpass-Timeout) merken und
+      // erst NACH allen anderen erneut anfassen — sonst liefert LIMIT 10 immer
+      // wieder dieselben Problemrouten und der Lauf faehrt sich fest.
+      const gescheitert = new Set<string>();
       for (;;) {
         const rows = await db
           .select({ id: externalRoutesTable.id })
           .from(externalRoutesTable)
-          .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`))
+          .where(
+            and(
+              sql`geometry_version = 0`,
+              sql`id LIKE 'osm-%'`,
+              gescheitert.size > 0
+                ? notInArray(externalRoutesTable.id, [...gescheitert])
+                : undefined,
+            ),
+          )
           .limit(10);
-        if (!rows.length) break;
+        if (!rows.length) {
+          if (gescheitert.size === 0) break;
+          // Alle uebrigen sind Problemrouten: einmal gesammelt erneut versuchen.
+          log.info({ anzahl: gescheitert.size }, "enrich-all: zweiter Versuch fuer gescheiterte Routen");
+          gescheitert.clear();
+          continue;
+        }
         let okCount = 0;
         for (const row of rows) {
           const r = await enrichOneRoute(row.id, log);
           if (r.ok) okCount++;
-          else log.warn({ id: row.id, reason: r.reason }, "enrich-all: Route übersprungen");
+          else {
+            gescheitert.add(row.id);
+            log.warn({ id: row.id, reason: r.reason }, "enrich-all: Route übersprungen");
+          }
           await new Promise((resolve) => setTimeout(resolve, 2_000));
         }
         if (okCount === 0) {

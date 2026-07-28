@@ -61,6 +61,28 @@ export interface RawHikingRoute {
   sac: string | null;
   network: string | null;
   points: LatLng[];
+  /** Amtliche Distanz (km) aus dem OSM-Tag `distance` (SchweizMobil-Angabe), falls vorhanden. */
+  distanceTagKm: number | null;
+  /** Amtlicher Aufstieg (m) aus dem OSM-Tag `ascent`, falls vorhanden. */
+  ascentTagM: number | null;
+}
+
+/**
+ * Parst numerische OSM-Tags wie `distance`/`ascent` ("8", "8.2 km", "1,250").
+ * Liefert null bei fehlendem oder unbrauchbarem Wert.
+ */
+export function parseNumericTag(
+  value: string | undefined,
+  max = Infinity,
+): number | null {
+  if (!value) return null;
+  let s = value.trim().replace(/['\s\u00a0]/g, "");
+  // Komma: Tausendertrenner ("1,250" → 1250) vs. Dezimaltrenner ("8,2" → 8.2)
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+  else s = s.replace(",", ".");
+  const v = parseFloat(s.replace(/[^0-9.]/g, ""));
+  // Plausibilitaetsgrenze: absurde Tag-Werte nie als amtlich uebernehmen.
+  return Number.isFinite(v) && v > 0 && v <= max ? v : null;
 }
 
 /**
@@ -359,7 +381,10 @@ function laengsteKette(punkte: LatLng[], maxLueckeM: number): LatLng[] {
  * zurueck. Abstecher/Schleifen mit grosser Luecke zur Hauptkette fallen dabei
  * automatisch heraus, was Zickzack-Artefakte durch Figur-8-Routen verhindert.
  */
-function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
+function stitchGeometry(
+  members: OverpassGeomMember[],
+  opts?: { behalteAlleKetten?: boolean },
+): LatLng[] {
   const segmente: LatLng[][] = [];
   for (const m of members) {
     if (m.type !== "way" || !m.geometry || m.geometry.length < 2) continue;
@@ -444,8 +469,49 @@ function stitchGeometry(members: OverpassGeomMember[]): LatLng[] {
     naht(kette, vorwaerts ? s : [...s].reverse());
   }
 
-  const hauptkette = laengsteKette(kette, ARTEFAKT_LUECKE_M);
+  // Standard: nur die laengste zusammenhaengende Kette behalten (verhindert
+  // Zickzack-Artefakte bei Figur-8-Routen). Bei nachweislich zu kurzem
+  // Ergebnis (amtliche Distanz aus OSM-Tags deutlich groesser) verbindet der
+  // Aufrufer per behalteAlleKetten alle Teilstuecke in Memberreihenfolge —
+  // kleine Luecken werden dann als direkte Verbindung ueberbrueckt.
+  const hauptkette = opts?.behalteAlleKetten
+    ? kette
+    : laengsteKette(kette, ARTEFAKT_LUECKE_M);
   return korrigiereZickzack(hauptkette);
+}
+
+/** Streckenlaenge einer Punktliste in km (fuer Plausibilitaetspruefungen). */
+function kettenLaengeKm(points: LatLng[]): number {
+  let m = 0;
+  for (let i = 1; i < points.length; i++) m += haversineM(points[i - 1]!, points[i]!);
+  return m / 1000;
+}
+
+/**
+ * Stitcht eine Relation und prueft das Ergebnis gegen die amtliche Distanz
+ * aus den OSM-Tags: faellt die Hauptkette deutlich zu kurz aus (< 75% der
+ * amtlichen Laenge), sind Teilstuecke durch Luecken > ARTEFAKT_LUECKE_M
+ * abgeschnitten worden (z.B. Route 831 Rigi Scheidegg) — dann werden alle
+ * Ketten in Memberreihenfolge verbunden, sofern das dem Amtswert naeher kommt.
+ */
+function stitchMitTagPruefung(
+  members: OverpassGeomMember[],
+  tags: Record<string, string>,
+): LatLng[] {
+  const standard = stitchGeometry(members);
+  const amtlichKm = parseNumericTag(tags.distance, 500);
+  if (!amtlichKm || standard.length < 2) return standard;
+  const standardKm = kettenLaengeKm(standard);
+  if (standardKm >= amtlichKm * 0.75) return standard;
+  const voll = stitchGeometry(members, { behalteAlleKetten: true });
+  if (voll.length < 2) return standard;
+  const vollKm = kettenLaengeKm(voll);
+  // Nur uebernehmen wenn die Vollversion naeher am Amtswert liegt und nicht
+  // absurd ueberschiesst (Hin+Rueck doppelt erfasst o.ae.).
+  return Math.abs(vollKm - amtlichKm) < Math.abs(standardKm - amtlichKm) &&
+    vollKm <= amtlichKm * 1.6
+    ? voll
+    : standard;
 }
 
 /** Seilbahn/Standseilbahn-Wegstueck aus OpenStreetMap fuer die Kartendarstellung. */
@@ -1161,7 +1227,7 @@ export async function fetchRouteGeometryChunked(
   const members: OverpassGeomMember[] = wayMembers
     .map((m): OverpassGeomMember => ({ type: "way", role: m.role, geometry: geomById.get(m.ref) }))
     .filter((m) => !!m.geometry && m.geometry.length >= 2);
-  const points = stitchGeometry(members);
+  const points = stitchMitTagPruefung(members, relation.tags ?? {});
   if (points.length < 2) {
     if (etappenFehler > 0 || geomById.size < uniqueIds.length) {
       // Nicht alle Daten kamen an → retryable, nicht "bewiesen leer".
@@ -1184,6 +1250,8 @@ export async function fetchRouteGeometryChunked(
     sac: tags.sac_scale ?? null,
     network: tags.network ?? null,
     points,
+    distanceTagKm: parseNumericTag(tags.distance, 500),
+    ascentTagM: parseNumericTag(tags.ascent, 20000),
   };
 }
 
@@ -1209,9 +1277,9 @@ export async function fetchRouteGeometries(
     const geom = await runOverpass<OverpassGeomElement>(query, timeoutMs);
     for (const g of geom) {
       if (!g.members) continue;
-      const points = stitchGeometry(g.members);
-      if (points.length < 2) continue;
       const tags = g.tags ?? {};
+      const points = stitchMitTagPruefung(g.members, tags);
+      if (points.length < 2) continue;
       routes.push({
         id: `osm-${g.id}`,
         osmId: g.id,
@@ -1220,6 +1288,8 @@ export async function fetchRouteGeometries(
         sac: tags.sac_scale ?? null,
         network: tags.network ?? null,
         points,
+        distanceTagKm: parseNumericTag(tags.distance, 500),
+        ascentTagM: parseNumericTag(tags.ascent, 20000),
       });
     }
   }

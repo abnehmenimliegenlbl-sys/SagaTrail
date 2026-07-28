@@ -539,7 +539,7 @@ function terrainLabel(ref: string | null, network: string | null, sac: string): 
 // Version des Geometrie-Verkettungs-Algorithmus (siehe overpass.ts
 // stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
 // Zickzack-Verkettung erzeugt und gelten als abgelaufen.
-export const GEOMETRY_VERSION = 4; // v4: geordnetes Stitching (OSM-Memberreihenfolge) statt Greedy
+export const GEOMETRY_VERSION = 5; // v5: amtliche SchweizMobil-Werte (OSM-Tags distance/ascent) + Lückenüberbrückung statt nur längster Kette
 
 function isFresh(row: ExternalRouteRow): boolean {
   return (
@@ -573,13 +573,21 @@ async function enrichAndStore(
   fetchOpts?: { timeoutMs?: number; batchSize?: number; pauseMs?: number; skipPhotos?: boolean },
 ): Promise<void> {
   const raw = await fetchRouteGeometries(osmIds, log, fetchOpts);
+  // Laengenfenster gegen die massgebliche Distanz pruefen: amtlicher Tag-Wert
+  // (falls vorhanden) vor berechneter Laenge — sonst fallen in OSM unvollstaendig
+  // erfasste Routen faelschlich unter MIN_KM.
   const prepared = raw
-    .map((r) => ({ r, distanceKm: pathDistanceKm(r.points) }))
+    .map((r) => ({ r, distanceKm: r.distanceTagKm ?? pathDistanceKm(r.points) }))
     .filter(({ distanceKm }) => distanceKm >= MIN_KM && distanceKm <= MAX_KM);
 
-  const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm }) => {
+  const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm: computedKm }) => {
     const elevation = await computeElevationStats(r.points, log);
-    const ascentM = elevation?.ascentM ?? 0;
+    // Amtliche SchweizMobil-Angaben aus den OSM-Relation-Tags (`distance`/`ascent`)
+    // haben Vorrang vor der eigenen Berechnung: bei in OSM unvollständig
+    // erfassten Routen (z.B. 831 Rigi Scheidegg, fixme=complete) ist die
+    // berechnete Länge sonst viel zu kurz.
+    const distanceKm = r.distanceTagKm ?? computedKm;
+    const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
     const maxElevationM = elevation?.maxElevationM ?? 0;
     // Schwierigkeit: OSM-`sac_scale` normalisieren; fehlt sie, aus dem amtlichen
     // swissTLM3D-Wanderwegnetz ableiten; sonst bleibt sie unbekannt.
@@ -1187,7 +1195,8 @@ export async function syncSwissNumberedRoutes(
 
     // 5. Minimale Länge (< 1 km = keine echte Wanderroute), kein Maximum –
     //    nationale Mehrtagesrouten (100+ km) werden bewusst vollständig geladen.
-    const distanceKm = pathDistanceKm(r.points);
+    // Amtlicher Tag-Wert vor berechneter Laenge (unvollstaendige OSM-Erfassung).
+    const distanceKm = r.distanceTagKm ?? pathDistanceKm(r.points);
     if (distanceKm < MIN_KM) {
       log.debug({ osmId: entry.osmId, distanceKm }, "Nummerierte Route: zu kurz → übersprungen");
       skipped++;
@@ -1205,7 +1214,10 @@ export async function syncSwissNumberedRoutes(
       }
 
       const elevation = await computeElevationStats(r.points, log);
-      const ascentM = elevation?.ascentM ?? 0;
+      // Amtliche SchweizMobil-Werte aus den OSM-Tags vor eigene Berechnung
+      // (unvollständig erfasste Relationen liefern sonst zu kurze Strecken).
+      const finalKm = r.distanceTagKm ?? distanceKm;
+      const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
       const maxElevationM = elevation?.maxElevationM ?? 0;
       const sac =
         sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
@@ -1223,10 +1235,10 @@ export async function syncSwissNumberedRoutes(
         canton,
         name: formattedName,
         ref: r.ref,
-        distanceKm: Math.round(distanceKm * 10) / 10,
+        distanceKm: Math.round(finalKm * 10) / 10,
         ascentM,
         maxElevationM,
-        minutes: estimateMinutes(distanceKm, ascentM),
+        minutes: estimateMinutes(finalKm, ascentM),
         sac,
         terrain: terrainLabel(r.ref, r.network, sac),
         lat: start.lat,
@@ -1321,9 +1333,10 @@ export async function enrichOneRoute(
   }
 
   const r = route;
-  const distanceKm = pathDistanceKm(r.points);
+  // Amtliche SchweizMobil-Werte aus den OSM-Tags vor eigene Berechnung.
+  const distanceKm = r.distanceTagKm ?? pathDistanceKm(r.points);
   const elevation = await computeElevationStats(r.points, log);
-  const ascentM = elevation?.ascentM ?? 0;
+  const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
   const maxElevationM = elevation?.maxElevationM ?? 0;
   const sac = sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
   const start = r.points[0]!;
