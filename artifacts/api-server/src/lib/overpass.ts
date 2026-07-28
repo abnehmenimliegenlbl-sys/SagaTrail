@@ -763,6 +763,7 @@ export async function fetchCantonRouteIndex(
     index.push({
       osmId: e.id,
       name: tags.name,
+      nameDe: tags["name:de"] ?? null,
       ref: tags.ref ?? null,
       sac: tags.sac_scale ?? null,
       network,
@@ -1047,6 +1048,143 @@ export async function fetchParking(
   }
   log.info({ count: result.length, radiusM }, "Overpass: Parkplaetze geladen (nur grosse)");
   return result;
+}
+
+interface OverpassRelBodyMember {
+  type: string;
+  ref: number;
+  role?: string;
+}
+
+interface OverpassRelBodyElement {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  members?: OverpassRelBodyMember[];
+}
+
+/**
+ * Fallback-Lader fuer sehr grosse Routen-Relationen, bei denen `out geom;`
+ * auf der ganzen Relation regelmaessig ins Overpass-Timeout laeuft.
+ *
+ * Vorgehen in kleinen, einzeln guenstigen Abfragen:
+ *  1. Nur die Member-Liste der Relation laden (`out body;` — winzig).
+ *  2. Sub-Relationen (Etappen) eine Ebene tief expandieren, in Member-
+ *     Reihenfolge (wichtig fuer die geordnete Traversierung beim Stitchen).
+ *  3. Way-Geometrien in Bloecken nachladen und in der originalen
+ *     Member-Reihenfolge wieder zusammensetzen.
+ *
+ * Gibt `null` zurueck, wenn die Relation NACHWEISLICH keine nutzbare
+ * Geometrie hat (keine Way-Member) — Netzwerk-/Timeout-Fehler werfen dagegen
+ * weiterhin, damit der Aufrufer sie als "spaeter erneut versuchen" behandelt.
+ */
+export async function fetchRouteGeometryChunked(
+  osmId: number,
+  log: Logger,
+): Promise<RawHikingRoute | null> {
+  const CHUNK_TIMEOUT_MS = 55_000;
+  const WAY_BATCH = 120;
+
+  const ladeRelationBody = async (id: number): Promise<OverpassRelBodyElement | null> => {
+    const els = await runOverpass<OverpassRelBodyElement>(
+      `[out:json][timeout:50];relation(${id});out body;`,
+      CHUNK_TIMEOUT_MS,
+    );
+    return els.find((e) => e.type === "relation" && e.id === id) ?? null;
+  };
+
+  const relation = await ladeRelationBody(osmId);
+  if (!relation?.members?.length) {
+    log.warn({ osmId }, "Chunked-Lader: Relation ohne Member");
+    return null;
+  }
+
+  // Way-Member in Reihenfolge sammeln; Sub-Relationen (Etappen) eine Ebene
+  // tief expandieren. Nebenrollen (Varianten/Zubringer) ueberspringen.
+  // Wichtig: transient gescheiterte Etappen-Abfragen zaehlen — solange auch
+  // nur eine Etappe unklar ist, darf das Ergebnis NIE als "nachweislich ohne
+  // Geometrie" (null) gewertet werden, sonst wuerde der Aufrufer eine bloss
+  // temporaer nicht ladbare Route dauerhaft als unenrichable markieren.
+  const wayMembers: OverpassRelBodyMember[] = [];
+  let etappenFehler = 0;
+  for (const m of relation.members) {
+    if (m.role && NEBENROLLEN.has(m.role.trim().toLowerCase())) continue;
+    if (m.type === "way") {
+      wayMembers.push(m);
+    } else if (m.type === "relation") {
+      try {
+        await sleep(1_000);
+        const sub = await ladeRelationBody(m.ref);
+        for (const sm of sub?.members ?? []) {
+          if (sm.type !== "way") continue;
+          if (sm.role && NEBENROLLEN.has(sm.role.trim().toLowerCase())) continue;
+          wayMembers.push(sm);
+        }
+      } catch (err) {
+        // Einzelne Etappe nicht ladbar → Rest trotzdem versuchen; laengsteKette
+        // schneidet entstehende Luecken spaeter weg.
+        etappenFehler++;
+        log.warn({ osmId, subRelation: m.ref, err }, "Chunked-Lader: Etappe uebersprungen");
+      }
+    }
+  }
+  if (!wayMembers.length) {
+    if (etappenFehler > 0) {
+      // Unklarer Zustand: Etappen konnten nicht geladen werden — retryable
+      // Fehler werfen statt faelschlich "keine Geometrie" zu behaupten.
+      throw new Error(
+        `Chunked-Lader: ${etappenFehler} Etappe(n) nicht ladbar — spaeter erneut versuchen`,
+      );
+    }
+    log.warn({ osmId }, "Chunked-Lader: keine Way-Member — nicht anreicherbar");
+    return null;
+  }
+
+  // Way-Geometrien blockweise laden (dedupliziert, aber Reihenfolge bleibt
+  // ueber wayMembers erhalten).
+  const uniqueIds = [...new Set(wayMembers.map((m) => m.ref))];
+  const geomById = new Map<number, { lat: number; lon: number }[]>();
+  for (let i = 0; i < uniqueIds.length; i += WAY_BATCH) {
+    const batch = uniqueIds.slice(i, i + WAY_BATCH);
+    if (i > 0) await sleep(1_500);
+    const els = await runOverpass<OverpassWayGeomElement>(
+      `[out:json][timeout:50];way(id:${batch.join(",")});out geom;`,
+      CHUNK_TIMEOUT_MS,
+    );
+    for (const w of els) {
+      if (w.type === "way" && w.geometry && w.geometry.length >= 2) {
+        geomById.set(w.id, w.geometry);
+      }
+    }
+  }
+
+  const members: OverpassGeomMember[] = wayMembers
+    .map((m): OverpassGeomMember => ({ type: "way", role: m.role, geometry: geomById.get(m.ref) }))
+    .filter((m) => !!m.geometry && m.geometry.length >= 2);
+  const points = stitchGeometry(members);
+  if (points.length < 2) {
+    if (etappenFehler > 0 || geomById.size < uniqueIds.length) {
+      // Nicht alle Daten kamen an → retryable, nicht "bewiesen leer".
+      throw new Error("Chunked-Lader: unvollstaendige Daten — spaeter erneut versuchen");
+    }
+    log.warn({ osmId, ways: wayMembers.length, geladen: geomById.size }, "Chunked-Lader: Stitch ergab keine Kette");
+    return null;
+  }
+
+  const tags = relation.tags ?? {};
+  log.info(
+    { osmId, ways: uniqueIds.length, punkte: points.length },
+    "Chunked-Lader: Geometrie zusammengesetzt",
+  );
+  return {
+    id: `osm-${osmId}`,
+    osmId,
+    name: tags.name ?? `Wanderroute ${osmId}`,
+    ref: tags.ref ?? null,
+    sac: tags.sac_scale ?? null,
+    network: tags.network ?? null,
+    points,
+  };
 }
 
 export async function fetchRouteGeometries(

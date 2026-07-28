@@ -56,7 +56,7 @@ app.post(
 
     // ── Signatur-Verifikation (direkt via Stripe SDK, unabhängig von stripe-replit-sync) ──
     // Unterstützt zwei Secrets: STRIPE_WEBHOOK_SECRET (Live/Prod) + STRIPE_WEBHOOK_SECRET_CLI (Test-CLI)
-    let event: Stripe.Event;
+    let event: Stripe.Event | undefined;
     const cliSecret = process.env.STRIPE_WEBHOOK_SECRET_CLI;
     const secrets = [webhookSecret, cliSecret].filter(Boolean) as string[];
 
@@ -96,6 +96,12 @@ app.post(
     }
 
     // ── Eigene Business-Logik ──
+    if (!event) {
+      // Kann nach der Verifikations-/Parse-Logik oben nicht passieren —
+      // Absicherung fuer den Typchecker und gegen zukuenftige Umbauten.
+      res.status(400).json({ error: "Kein Event" });
+      return;
+    }
     try {
       await handleStripeEvent(event);
     } catch (bizErr: any) {

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Ruft den lokalen Enrich-Endpoint in Schleife auf bis alles fertig ist.
-TOKEN="EoDsNibkuKk9VFapDZ0f3YHcc5Lkt0se"
+# Admin-Token kommt aus der Umgebung (Secret ADMIN_TOKEN), niemals hardcoden.
+TOKEN="${ADMIN_TOKEN:?ADMIN_TOKEN env var fehlt}"
 URL="http://localhost:8080/api/admin/routes/enrich-next?n=10"
 
 while true; do

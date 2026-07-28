@@ -218,7 +218,8 @@ export const GetPoisResponseItem = zod.object({
   "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
 }).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
   "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
-  "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.')
+  "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
 }).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
 export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
@@ -289,7 +290,8 @@ export const GetPoiStoryQueryParams = zod.object({
   "name": zod.coerce.string(),
   "extract": zod.coerce.string().optional(),
   "kind": zod.coerce.string().optional(),
-  "lang": zod.coerce.string()
+  "lang": zod.coerce.string(),
+  "osmContext": zod.coerce.string().optional().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt der KI verifizierte Fakten.')
 })
 
 export const GetPoiStoryResponse = zod.object({
@@ -571,7 +573,8 @@ export const GetMyProfileResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
 })
 
 
@@ -603,7 +606,8 @@ export const SaveMyProfileResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
 })
 
 
@@ -624,7 +628,8 @@ export const UpdateMyPremiumResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
 })
 
 
@@ -641,7 +646,8 @@ export const SyncMyPremiumResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
 })
 
 
@@ -699,7 +705,8 @@ export const ConsumeMyFreeHikeResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
 })
 
 

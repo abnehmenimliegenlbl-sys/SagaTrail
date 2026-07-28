@@ -67,7 +67,10 @@ router.get("/sac-huetten", async (req: Request, res: Response): Promise<void> =>
 
     const enriched = huts.map((hut: RawAlpineHut) => {
       const partner = partners.find(
-        (p) => distanceM({ lat: p.lat, lng: p.lng }, { lat: hut.lat, lng: hut.lng }) < MATCH_RADIUS_M
+        (p) =>
+          p.lat != null &&
+          p.lng != null &&
+          distanceM({ lat: p.lat, lng: p.lng }, { lat: hut.lat, lng: hut.lng }) < MATCH_RADIUS_M
       ) ?? null;
       return {
         osmId: hut.osmId,

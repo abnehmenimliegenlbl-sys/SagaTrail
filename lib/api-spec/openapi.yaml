@@ -405,6 +405,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: osmContext
+          in: query
+          required: false
+          description: "Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt der KI verifizierte Fakten."
+          schema:
+            type: string
       responses:
         "200":
           description: Sagen-stilisierter Erzaehltext
@@ -1240,6 +1246,11 @@ components:
           description: >-
             Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat
             (z.B. "schwyz", "bern_2"). Autoritaetive Quelle fuer Saga-Pack-Zugang.
+        subscriptionTier:
+          type: string
+          description: >-
+            Abo-Stufe des Nutzers (z.B. "free", "premium", "elite",
+            "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free").
       required:
         - id
         - name
@@ -1601,6 +1612,10 @@ components:
           type: string
           nullable: true
           description: "OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung."
+        osmContext:
+          type: string
+          nullable: true
+          description: "Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt."
       required:
         - id
         - name

@@ -21,4 +21,6 @@ export interface Profile {
   freeHikeUsed: boolean;
   /** Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. "schwyz", "bern_2"). Autoritaetive Quelle fuer Saga-Pack-Zugang. */
   purchasedPacks: string[];
+  /** Abo-Stufe des Nutzers (z.B. "free", "premium", "elite", "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free"). */
+  subscriptionTier?: string;
 }

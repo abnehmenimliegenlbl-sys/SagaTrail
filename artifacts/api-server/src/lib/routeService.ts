@@ -15,6 +15,7 @@ import { isoForCanton, CANTON_ISO } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
+  fetchRouteGeometryChunked,
   fetchSwissNumberedIndex,
   fetchAerialways,
   fetchHistoricPois,
@@ -1273,15 +1274,37 @@ export async function enrichOneRoute(
   const osmId = parseInt(rowId.replace("osm-", ""), 10);
   if (isNaN(osmId)) return { ok: false, reason: "kein OSM-ID" };
 
-  let raw: RawHikingRoute[];
+  // Erst der normale Weg (ganze Relation mit `out geom;`); wenn der scheitert
+  // (typisch: sehr grosse Relationen laufen ins Overpass-Timeout), der
+  // Chunked-Fallback: Member-Liste + Way-Geometrien in kleinen Bloecken.
+  let route: RawHikingRoute | null = null;
+  let ersterFehler: string | null = null;
   try {
-    raw = await fetchRouteGeometries([osmId], log, { batchSize: 1, timeoutMs: 60_000 });
+    const raw = await fetchRouteGeometries([osmId], log, { batchSize: 1, timeoutMs: 60_000 });
+    route = raw[0] ?? null;
   } catch (e: any) {
-    return { ok: false, reason: `Overpass: ${e.message}` };
+    ersterFehler = e.message;
   }
-  if (!raw.length) return { ok: false, reason: "keine Geometrie in Overpass" };
+  if (!route) {
+    log.info({ id: rowId, ersterFehler }, "enrich: Standard-Lader leer/gescheitert — Chunked-Fallback");
+    try {
+      route = await fetchRouteGeometryChunked(osmId, log);
+    } catch (e: any) {
+      // Netzwerk-/Timeout-Fehler: NICHT dauerhaft markieren, spaeter erneut.
+      return { ok: false, reason: `Overpass (auch chunked): ${e.message}` };
+    }
+    if (!route) {
+      // Nachweislich nicht anreicherbar (Relation ohne nutzbare Way-Geometrie):
+      // dauerhaft markieren, damit der Job sie nicht endlos erneut anfasst.
+      await db
+        .update(externalRoutesTable)
+        .set({ geometryVersion: -1 })
+        .where(eq(externalRoutesTable.id, rowId));
+      return { ok: false, reason: "nicht anreicherbar (keine nutzbare Geometrie) — als -1 markiert" };
+    }
+  }
 
-  const r = raw[0]!;
+  const r = route;
   const distanceKm = pathDistanceKm(r.points);
   const elevation = await computeElevationStats(r.points, log);
   const ascentM = elevation?.ascentM ?? 0;

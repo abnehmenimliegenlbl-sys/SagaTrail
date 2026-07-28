@@ -67,6 +67,8 @@ export interface Profile {
   freeHikeUsed: boolean;
   /** Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. "schwyz", "bern_2"). Autoritaetive Quelle fuer Saga-Pack-Zugang. */
   purchasedPacks: string[];
+  /** Abo-Stufe des Nutzers (z.B. "free", "premium", "elite", "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free"). */
+  subscriptionTier?: string;
 }
 
 export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];
@@ -293,6 +295,8 @@ export interface Poi {
   wikipediaTag?: string | null;
   /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
   wikidataTag?: string | null;
+  /** Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt. */
+  osmContext?: string | null;
 }
 
 /**
@@ -637,6 +641,10 @@ name: string;
 extract?: string;
 kind?: string;
 lang: string;
+/**
+ * Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt der KI verifizierte Fakten.
+ */
+osmContext?: string;
 };
 
 export type GetAvalancheBulletinParams = {

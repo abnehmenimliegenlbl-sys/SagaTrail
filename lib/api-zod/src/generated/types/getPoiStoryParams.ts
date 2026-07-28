@@ -11,4 +11,8 @@ name: string;
 extract?: string;
 kind?: string;
 lang: string;
+/**
+ * Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt der KI verifizierte Fakten.
+ */
+osmContext?: string;
 };

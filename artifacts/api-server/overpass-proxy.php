@@ -10,7 +10,19 @@ if (function_exists('set_time_limit')) {
     @set_time_limit(0);
 }
 
-$secret = '16673aafe24093bcdd0a01ddf29fb776250d2de850a94908';
+/* Token NICHT hardcoden: beim Deployment auf dem Hosting entweder als
+   Umgebungsvariable OVERPASS_PROXY_TOKEN setzen oder eine (nicht
+   versionierte) Datei overpass-proxy-token.php mit
+   `<?php return '...';` daneben legen. */
+$secret = getenv('OVERPASS_PROXY_TOKEN') ?: '';
+if ($secret === '' && is_readable(__DIR__ . '/overpass-proxy-token.php')) {
+    $secret = (string) require __DIR__ . '/overpass-proxy-token.php';
+}
+if ($secret === '') {
+    http_response_code(500);
+    header('Content-Type: text/plain');
+    exit('Proxy token not configured');
+}
 
 $incoming = $_SERVER['HTTP_X_PROXY_TOKEN'] ?? '';
 if ($incoming !== $secret) {

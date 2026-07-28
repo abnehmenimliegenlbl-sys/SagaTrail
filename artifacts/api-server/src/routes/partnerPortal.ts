@@ -292,7 +292,7 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
 
     // Kein Customer in DB → per E-Mail in Stripe suchen und nachholen
     if (!customerId) {
-      const customers = await stripe.customers.list({ email: partner.email, limit: 1 });
+      const customers = await stripe.customers.list({ email: partner.email ?? undefined, limit: 1 });
       if (customers.data.length === 0) {
         res.status(400).json({ error: "Kein Stripe-Kundenkonto für diese E-Mail-Adresse gefunden." });
         return;
@@ -315,7 +315,7 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
       if (stripeErr.code === "resource_missing") {
         // Customer-ID ungültig (z.B. Test-Modus-ID) → E-Mail-Fallback
         req.log.warn({ partnerId: partner.id, customerId }, "Customer-ID ungültig, suche per E-Mail");
-        const customers = await stripe.customers.list({ email: partner.email, limit: 1 });
+        const customers = await stripe.customers.list({ email: partner.email ?? undefined, limit: 1 });
         if (customers.data.length === 0) {
           res.status(400).json({ error: "Noch kein aktives Stripe-Abo für diesen Partner vorhanden." });
           return;

@@ -433,7 +433,7 @@ export async function sendVerbandWillkommen(data: VerbandWillkommenData): Promis
 
   // 2) Interne Kopie
   await transporter.sendMail({
-    from:    `SagaTrail System <${from}>`,
+    from:    `SagaTrail System <${envelopeFrom}>`,
     to:      "info@sagatrail.ch",
     subject: `[Verband angelegt] ${data.verbandName} – ${data.email}`,
     html: `

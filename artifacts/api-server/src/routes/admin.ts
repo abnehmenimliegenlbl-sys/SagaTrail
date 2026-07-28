@@ -358,9 +358,9 @@ router.post("/admin/apple-test-user", async (req, res): Promise<void> => {
   res.json({ userId, email, premiumAktiv: istPremiumAktiv(row), premiumBis: row.premiumBis });
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // ADMIN STATS / USERS / USAGE
-// ===================================================================
+// -------------------------------------------------------------------
 
 router.get("/admin/stats", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -467,9 +467,9 @@ router.get("/admin/usage", async (req, res): Promise<void> => {
   res.json({ routes, sagas });
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // PARTNER CRUD
-// ===================================================================
+// -------------------------------------------------------------------
 
 const PARTNER_KATEGORIEN = [
   "restaurant", "cafe", "souvenir", "uebernachtung", "sonstiges",
@@ -650,9 +650,9 @@ router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
   }
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // ROUTEN-FOTOS
-// ===================================================================
+// -------------------------------------------------------------------
 
 router.get("/admin/routes/cantons", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -866,9 +866,9 @@ router.post("/admin/routes/sync-numbered", async (req, res): Promise<void> => {
   })();
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // PARTNER-ANFRAGEN
-// ===================================================================
+// -------------------------------------------------------------------
 
 router.get("/admin/anfragen", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -921,9 +921,9 @@ router.get("/admin/partner-ui", (_req, res): void => {
 // ElevenLabs-Plan-Upgrade, damit die neue Schweizer-Akzent-Stimme (gsw)
 // beim naechsten Abruf frisch synthetisiert wird statt alter
 // Standard-Voice-Dateien zu servieren.
-// ===================================================================
+// -------------------------------------------------------------------
 // PUSH-NACHRICHTEN
-// ===================================================================
+// -------------------------------------------------------------------
 
 type PushTier = "alle" | "premium" | "premium_family" | "elite" | "elite_family";
 const PUSH_TIERS: readonly PushTier[] = ["alle", "premium", "premium_family", "elite", "elite_family"];
@@ -1196,9 +1196,9 @@ router.post("/admin/photos/reset", async (req, res): Promise<void> => {
   }
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // GSW STORY CACHE INVALIDIERUNG
-// ===================================================================
+// -------------------------------------------------------------------
 
 // DELETE /admin/stories/gsw — löscht alle gecachten gsw-Storys aus der DB,
 // damit sie beim nächsten Abruf frisch als Mundart-Text generiert werden.
@@ -1212,9 +1212,9 @@ router.delete("/admin/stories/gsw", async (req, res): Promise<void> => {
   res.json({ ok: true, deleted: result.length });
 });
 
-// ===================================================================
+// -------------------------------------------------------------------
 // VERBÄNDE CRUD
-// ===================================================================
+// -------------------------------------------------------------------
 
 const VerbandBody = z.object({
   name:           z.string().min(1).max(200),
@@ -1790,6 +1790,11 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
       .select({ n: count() })
       .from(externalRoutesTable)
       .where(sql`id NOT LIKE 'osm-%'`);
+    // Nachweislich nicht anreicherbar (Relation ohne nutzbare Way-Geometrie)
+    const [unenrichable] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(and(sql`geometry_version < 0`, sql`id LIKE 'osm-%'`));
     // Pro Quelle aufschlüsseln
     const bySource = await db
       .select({ source: externalRoutesTable.source, n: count() })
@@ -1800,6 +1805,7 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
       total: total?.n ?? 0,
       enriched: enriched?.n ?? 0,
       pending: pending?.n ?? 0,
+      unenrichable: unenrichable?.n ?? 0,
       noOsmId: noOsm?.n ?? 0,
       progressPct:
         (enriched?.n ?? 0) + (pending?.n ?? 0) > 0
