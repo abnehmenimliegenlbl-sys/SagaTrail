@@ -17,6 +17,7 @@ import {
   fetchRouteGeometries,
   fetchRouteGeometryChunked,
   fetchSwissNumberedIndex,
+  resolveNumberedRouteOsmId,
   fetchAerialways,
   fetchHistoricPois,
   type RouteIndexEntry,
@@ -1299,8 +1300,34 @@ export async function enrichOneRoute(
   rowId: string,
   log: Logger,
 ): Promise<{ ok: true; distanceKm: number; canton: string } | { ok: false; reason: string }> {
-  const osmId = parseInt(rowId.replace("osm-", ""), 10);
-  if (isNaN(osmId)) return { ok: false, reason: "kein OSM-ID" };
+  let osmId = parseInt(rowId.replace("osm-", ""), 10);
+  if (isNaN(osmId)) {
+    // Alt-IDs ohne OSM-ID: "schweizmobil-<net>-<ref>" oder
+    // "placeholder-<net>-<ref>-etappe-<n>" → Relation via network+ref aufloesen.
+    const m = /^(?:schweizmobil|placeholder)-(nwn|rwn|lwn)-(\d+)(?:-etappe-(\d+))?$/.exec(rowId);
+    if (!m) return { ok: false, reason: "kein OSM-ID" };
+    const [, network, ref, etappe] = m;
+    let resolved: number | null;
+    try {
+      resolved = await resolveNumberedRouteOsmId(
+        network!,
+        ref!,
+        { etappe: etappe ? parseInt(etappe, 10) : undefined },
+        log,
+      );
+    } catch (e: any) {
+      // Netzwerk-/Timeout-Fehler: NICHT dauerhaft markieren, spaeter erneut.
+      return { ok: false, reason: `OSM-ID-Aufloesung: ${e.message}` };
+    }
+    if (resolved == null) {
+      await db
+        .update(externalRoutesTable)
+        .set({ geometryVersion: -1 })
+        .where(eq(externalRoutesTable.id, rowId));
+      return { ok: false, reason: "keine passende OSM-Relation — als -1 markiert" };
+    }
+    osmId = resolved;
+  }
 
   // Erst der normale Weg (ganze Relation mit `out geom;`); wenn der scheitert
   // (typisch: sehr grosse Relationen laufen ins Overpass-Timeout), der

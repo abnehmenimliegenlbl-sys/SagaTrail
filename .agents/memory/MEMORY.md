@@ -68,4 +68,5 @@
 - [Route geometry formats + restitch](sagatrail-geometry-formats-restitch.md) — geometry points sind {lat,lng} ODER [lat,lng]; Analysen brauchen COALESCE beider Formate; restitch_parents.cjs baut Gesamtrouten aus Etappen neu.
 - [Express duplicate route after task merge](express-duplicate-route-merge.md) — same path added by dir + task agent → first handler wins silently; grep route paths after merges.
 - [Amtliche SchweizMobil-Werte aus OSM-Tags](sagatrail-official-tag-values.md) — distance/ascent-Tags haben Vorrang vor eigener Berechnung; enrich-all nimmt NUR geometry_version=0 (Bump allein reicht nicht).
+- [Legacy-Routen-IDs ohne OSM-ID](sagatrail-legacy-route-ids.md) — schweizmobil-*/placeholder-* IDs werden per gecachtem Netzwerk-Index (network+ref) auf OSM-Relationen aufgelöst; 54 dauerhaft -1, Liste in docs/unenrichable-routes.md.
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.

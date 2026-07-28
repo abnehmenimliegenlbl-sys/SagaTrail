@@ -1809,7 +1809,6 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
           .where(
             and(
               sql`geometry_version = 0`,
-              sql`id LIKE 'osm-%'`,
               gescheitert.size > 0
                 ? notInArray(externalRoutesTable.id, [...gescheitert])
                 : undefined,
@@ -1867,11 +1866,11 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
     const [enriched] = await db
       .select({ n: count() })
       .from(externalRoutesTable)
-      .where(and(sql`geometry_version > 0`, sql`id LIKE 'osm-%'`));
+      .where(sql`geometry_version > 0`);
     const [pending] = await db
       .select({ n: count() })
       .from(externalRoutesTable)
-      .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`));
+      .where(sql`geometry_version = 0`);
     const [noOsm] = await db
       .select({ n: count() })
       .from(externalRoutesTable)
@@ -1880,7 +1879,7 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
     const [unenrichable] = await db
       .select({ n: count() })
       .from(externalRoutesTable)
-      .where(and(sql`geometry_version < 0`, sql`id LIKE 'osm-%'`));
+      .where(sql`geometry_version < 0`);
     // Pro Quelle aufschlüsseln
     const bySource = await db
       .select({ source: externalRoutesTable.source, n: count() })

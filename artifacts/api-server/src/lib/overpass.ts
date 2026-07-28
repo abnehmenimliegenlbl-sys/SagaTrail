@@ -921,6 +921,16 @@ export async function fetchSwissNumberedIndex(log: Logger): Promise<RouteIndexEn
 }
 
 /**
+ * Loest eine nummerierte SchweizMobil-Route (network + ref, optional Etappe)
+ * auf ihre OSM-Relations-ID auf. Wird fuer Alt-Datensaetze mit IDs wie
+ * "schweizmobil-rwn-92" oder "placeholder-nwn-5-etappe-13" gebraucht, die
+ * keine OSM-ID im Schluessel tragen.
+ *
+ * Liefert null, wenn Overpass antwortet, aber keine passende Relation
+ * existiert (dauerhaft nicht aufloesbar). Netzwerkfehler werfen.
+ */
+const numberedIndexCache = new Map<string, { elements: OverpassTagsElement[]; ts: number }>();
+/**
  * Wegoberflaechenabschnitte (OSM surface-Tags) aller Haupt-Ways einer Route.
  * Wird einmal pro osmId gecacht (1 h TTL).
  */
@@ -1298,4 +1308,58 @@ export async function fetchRouteGeometries(
     "Overpass: Geometrie geladen",
   );
   return routes;
+}
+
+const NUMBERED_INDEX_TTL_MS = 60 * 60_000;
+
+export async function resolveNumberedRouteOsmId(
+  network: string,
+  ref: string,
+  opts: { etappe?: number; nameHint?: string | null },
+  log: Logger,
+): Promise<number | null> {
+  // Kompletten Netzwerk-Index einmal laden und 1 h cachen — eine Overpass-
+  // Anfrage pro Netzwerk statt einer pro Route (Drosselungs-Schonung).
+  const cached = numberedIndexCache.get(network);
+  let all: OverpassTagsElement[];
+  if (cached && Date.now() - cached.ts < NUMBERED_INDEX_TTL_MS) {
+    all = cached.elements;
+  } else {
+    const CH_BBOX = "45.8,5.95,47.85,10.5";
+    const query = [
+      `[out:json][timeout:90][bbox:${CH_BBOX}];`,
+      `relation["route"="hiking"]["network"="${network}"];`,
+      `out tags bb;`,
+    ].join("");
+    all = await runOverpass<OverpassTagsElement>(query, 120_000);
+    numberedIndexCache.set(network, { elements: all, ts: Date.now() });
+    log.info({ network, relations: all.length }, "resolveNumberedRoute: Netzwerk-Index geladen");
+  }
+  const elements = all.filter((e) => (e.tags?.ref ?? "") === ref);
+  if (!elements.length) return null;
+
+  const etappeRegex = (n: number) =>
+    new RegExp(`(?:Etappe|Étape|Etape|Tappa|Stage)\\s*0?${n}(?:\\b|:)`, "i");
+  const anyEtappe = /(?:Etappe|Étape|Etape|Tappa|Stage)\s*\d+/i;
+
+  const named = elements.map((e) => ({
+    id: e.id,
+    name: `${e.tags?.name ?? ""} ${e.tags?.["name:de"] ?? ""}`.trim(),
+    diag: e.bounds ? bboxDiagonalKm(e.bounds) : 0,
+  }));
+
+  if (opts.etappe != null) {
+    const re = etappeRegex(opts.etappe);
+    const match = named.find((e) => re.test(e.name));
+    if (match) return match.id;
+    log.info({ network, ref, etappe: opts.etappe }, "resolveNumberedRoute: keine Etappen-Relation gefunden");
+    return null;
+  }
+
+  // Gesamtroute: Etappen-Relationen ausschliessen, groesste Bounding Box gewinnt
+  // (die Parent-/Superroute umfasst alle Etappen).
+  const kandidaten = named.filter((e) => !anyEtappe.test(e.name));
+  const pool = kandidaten.length ? kandidaten : named;
+  pool.sort((a, b) => b.diag - a.diag);
+  return pool[0]?.id ?? null;
 }
