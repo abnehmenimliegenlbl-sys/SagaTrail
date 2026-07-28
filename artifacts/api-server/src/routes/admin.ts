@@ -1913,6 +1913,45 @@ function parseWikiEtappen(wikitext: string): Map<string, { text: string; bild: s
 }
 
 /**
+ * POST /admin/routes/import
+ * Bulk-Upsert fertig angereicherter Routen (Datenübernahme Dev → Prod).
+ * Body: { rows: [...] } mit max. 200 Zeilen im externalRoutesTable-Format.
+ * Der Prod-Server schreibt in seine eigene DB — der einzige erlaubte Schreibweg.
+ */
+router.post("/admin/routes/import", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const rows = (req.body as { rows?: unknown })?.rows;
+  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 200) {
+    res.status(400).json({ error: "rows: Array mit 1–200 Einträgen erwartet" });
+    return;
+  }
+  let upserted = 0;
+  for (const r of rows as (typeof externalRoutesTable.$inferInsert)[]) {
+    if (!r || typeof r.id !== "string" || !r.id) {
+      res.status(400).json({ error: "Jede Zeile braucht eine id" });
+      return;
+    }
+    await db
+      .insert(externalRoutesTable)
+      .values(r)
+      .onConflictDoUpdate({
+        target: externalRoutesTable.id,
+        set: {
+          sagaId: r.sagaId, canton: r.canton, cantons: r.cantons, name: r.name, ref: r.ref,
+          distanceKm: r.distanceKm, ascentM: r.ascentM, maxElevationM: r.maxElevationM,
+          minutes: r.minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
+          geometry: r.geometry, geometryVersion: r.geometryVersion, source: r.source,
+          featured: r.featured, photoUrl: r.photoUrl, photoAttribution: r.photoAttribution,
+          description: r.description, descriptionSource: r.descriptionSource,
+        },
+      });
+    upserted++;
+  }
+  req.log.info({ upserted }, "Routen-Import abgeschlossen");
+  res.json({ ok: true, upserted });
+});
+
+/**
  * POST /admin/routes/wiki-enrich-all
  * Holt fuer alle amtlichen Wanderland-Routen (Name beginnt mit 1-999)
  * Beschreibung + ggf. Bild aus Wikipedia (de). Etappen erben den Artikel
