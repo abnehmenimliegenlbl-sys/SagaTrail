@@ -9,4 +9,6 @@ Regel: Für gsw wird der Erzähltext als echtes **Schweizerdeutsch (Mundart)** g
 
 Constraint: ElevenLabs-Community-/Bibliotheks-Stimmen brauchen Bezahlplan (402 auf Gratis). Die gsw-Wunschstimme ist erster Kandidat und fällt bei 401/402/403/404 automatisch zurück — greift nach Plan-Upgrade ohne Codeänderung.
 
+Push-Nachrichten: geschriebene gsw-Pushs werden ebenfalls als echte Mundart übersetzt (pushTranslator schliesst nur "de" aus). Nur die VORGELESENE Mundart via OpenAI-Stimme galt als künstlich — geschriebener Dialekt ist erwünscht.
+
 Cache-Invalidierung: `DELETE /api/admin/stories/gsw` (x-admin-token) löscht gecachte Hochdeutsch-gsw-Storys aus der DB, sodass neue als Mundart regeneriert werden.

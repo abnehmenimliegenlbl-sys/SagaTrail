@@ -12,8 +12,9 @@ export interface PushText {
 
 /**
  * Übersetzt eine Push-Nachricht (Titel + Text) in mehrere Zielsprachen in
- * EINEM Anthropic-Aufruf. Deutsch (de) und Schweizerdeutsch (gsw) behalten
- * den Originaltext (gsw-Regel: Text bleibt Hochdeutsch).
+ * EINEM Anthropic-Aufruf. Deutsch (de) behält den Originaltext; gsw wird als
+ * geschriebene Mundart übersetzt (Nutzerentscheid: nur die VORGELESENE
+ * Mundart wirkte künstlich — geschriebene Push-Texte sollen echt gsw sein).
  * Schlägt die Übersetzung fehl, fällt jede Sprache auf das Original zurück.
  */
 export async function translatePush(
@@ -22,7 +23,7 @@ export async function translatePush(
   log: Logger,
 ): Promise<Map<string, PushText>> {
   const result = new Map<string, PushText>();
-  const zuUebersetzen = [...new Set(langs)].filter((l) => l !== "de" && l !== "gsw");
+  const zuUebersetzen = [...new Set(langs)].filter((l) => l !== "de");
   for (const l of langs) result.set(l, original); // Fallback: Original
 
   if (zuUebersetzen.length === 0) return result;
