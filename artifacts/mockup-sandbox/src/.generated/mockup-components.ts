@@ -7,5 +7,9 @@ export const modules: ModuleMap = {
   "./components/mockups/route-detail/RouteHell.tsx": () => import("../components/mockups/route-detail/RouteHell.tsx"),
   "./components/mockups/route-detail/StoosCard.tsx": () => import("../components/mockups/route-detail/StoosCard.tsx"),
   "./components/mockups/sagatrail-theme/SchweizDunkel.tsx": () => import("../components/mockups/sagatrail-theme/SchweizDunkel.tsx"),
-  "./components/mockups/sagatrail-theme/SchweizHell.tsx": () => import("../components/mockups/sagatrail-theme/SchweizHell.tsx")
+  "./components/mockups/sagatrail-theme/SchweizHell.tsx": () => import("../components/mockups/sagatrail-theme/SchweizHell.tsx"),
+  "./components/mockups/route-card-info/GlasChips.tsx": () => import("../components/mockups/route-card-info/GlasChips.tsx"),
+  "./components/mockups/route-card-info/ZeitAufSchild.tsx": () => import("../components/mockups/route-card-info/ZeitAufSchild.tsx"),
+  "./components/mockups/route-card-info/Zeitleiste.tsx": () => import("../components/mockups/route-card-info/Zeitleiste.tsx"),
+  "./components/mockups/route-card-info/Zusatztafel.tsx": () => import("../components/mockups/route-card-info/Zusatztafel.tsx")
 };

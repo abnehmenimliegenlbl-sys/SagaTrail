@@ -42,6 +42,7 @@ import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { Wegweiser } from "@/components/Wegweiser";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { SparkDivider } from "@/components/brand/SparkMountain";
@@ -193,6 +194,8 @@ export default function Routenplanung() {
     setPickerDismissed(true);
   }
   const [lowBattery] = useState(false);
+  // Routenbeschreibung (Wikipedia) ein-/ausklappen
+  const [beschreibungOffen, setBeschreibungOffen] = useState(false);
   const [busy, setBusy] = useState(false);
   // Community Trail Conditions
   const { data: trailConditions, isLoading: conditionsLoading, refetch: refetchConditions } =
@@ -629,6 +632,9 @@ export default function Routenplanung() {
   // sagaId erst nach dem asynchronen ensureRouteSaga-Abgleich gesetzt; der
   // Download wird aber unter saga.id gespeichert — also dieselbe ID verwenden.
   const sagaId = saga?.id ?? route.sagaId;
+  // HikingRoute hat kein .canton-Feld; Kanton via Sage aus dem Katalog
+  // (für das Kantonswappen im Wegweiser bei regionalen/kantonalen Routen).
+  const routeKanton = sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null;
   const downloaded = isDownloaded(sagaId);
   const record = getRecord(sagaId);
   const downloading = progress?.sagaId === sagaId;
@@ -728,14 +734,16 @@ export default function Routenplanung() {
                 <View style={styles.heroDot} />
                 <Text style={styles.heroRegion}>{route.region?.toUpperCase()}</Text>
               </View>
-              <Text style={styles.heroTitle} numberOfLines={2}>{meta.name}</Text>
-              <Text style={styles.heroTerrain}>{route.terrain}</Text>
+              <View style={{ marginTop: 4, marginBottom: 4 }}>
+                <Wegweiser name={meta.name} sac={route.sac} umgekehrt={reversed} kanton={routeKanton} />
+              </View>
             </View>
           </View>
         ) : (
           <>
-            <Text style={[styles.routeName, { color: colors.foreground }]}>{meta.name}</Text>
-            <Text style={[styles.forSaga, { color: colors.accent }]}>{route.terrain}</Text>
+            <View style={{ marginBottom: 6 }}>
+              <Wegweiser name={meta.name} sac={route.sac} umgekehrt={reversed} kanton={routeKanton} />
+            </View>
           </>
         )}
 
@@ -795,6 +803,43 @@ export default function Routenplanung() {
                 isThunderstorm={weather?.isThunderstorm ?? false}
               />
             ) : null}
+          </View>
+        )}
+
+        {/* ── Routenbeschreibung (Wikipedia) ────────────────────────── */}
+        {!!route.description && (
+          <View
+            style={[
+              styles.elevChartCard,
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+            ]}
+          >
+            <Text style={[styles.elevChartTitle, { color: colors.foreground }]}>
+              Über diese Route
+            </Text>
+            <Text
+              style={{ color: colors.mutedForeground, fontSize: 14, lineHeight: 21 }}
+              numberOfLines={beschreibungOffen ? undefined : 5}
+            >
+              {route.description}
+            </Text>
+            <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 16 }}>
+              <Pressable onPress={() => setBeschreibungOffen((v) => !v)} hitSlop={8}>
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "600" }}>
+                  {beschreibungOffen ? "Weniger anzeigen" : "Mehr anzeigen"}
+                </Text>
+              </Pressable>
+              {!!route.descriptionSource && beschreibungOffen && (
+                <Pressable
+                  onPress={() => Linking.openURL(route.descriptionSource!).catch(() => {})}
+                  hitSlop={8}
+                >
+                  <Text style={{ color: colors.mutedForeground, fontSize: 12, textDecorationLine: "underline" }}>
+                    Quelle: Wikipedia
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           </View>
         )}
 
@@ -1685,7 +1730,7 @@ const styles = StyleSheet.create({
   },
   heroRegionRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
   heroDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#cc0000" },
-  heroRegion: { fontFamily: fonts.mono, fontSize: 10, color: "rgba(255,255,255,0.75)", letterSpacing: 1.5 },
+  heroRegion: { fontFamily: fonts.mono, fontSize: 10, color: "#FFFFFF", letterSpacing: 1.5 },
   heroTitle: { fontFamily: fonts.titleBold, fontSize: 26, color: "#fff", lineHeight: 30 },
   heroTerrain: { fontFamily: fonts.story, fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 2 },
   // ── Stats 5-Spalten ─────────────────────────────────────────────────

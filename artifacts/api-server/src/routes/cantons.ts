@@ -15,11 +15,39 @@ const RESULT_LIMIT = Infinity;
  * aussagekraeftigsten Routen behaelt: amtlich nummerierte Wanderland-Routen
  * (mit `ref`) zuerst, danach alphabetisch.
  */
+/**
+ * Sortier-Rangfolge:
+ * 1. nationale Routen (1-stellige Nummer), 2. deren Etappen,
+ * 3. regionale Routen (2-stellig), 4. deren Etappen,
+ * 5. lokale Routen (3-stellig), 6. deren Etappen,
+ * 7. kantonale Routen (K-Nummern), 8. Rest.
+ * Innerhalb jeder Kategorie nach Routen-Nummer, Etappen zusätzlich
+ * nach Etappen-Nummer.
+ */
+function sortSchluessel(row: ExternalRouteRow): [number, number, number] {
+  const ref = row.ref ?? "";
+  const istEtappe = /\b(?:etappe|étape|etape|tappa)\b/i.test(row.name);
+  const etappenNr = istEtappe
+    ? parseInt(row.name.match(/\b(?:Etappe|Étape|Etape|Tappa)\s+(\d+)/i)?.[1] ?? "0", 10)
+    : 0;
+
+  if (/^\d+$/.test(ref)) {
+    const nr = parseInt(ref, 10);
+    const stufe = ref.length === 1 ? 0 : ref.length === 2 ? 2 : 4; // national/regional/lokal
+    return [stufe + (istEtappe ? 1 : 0), nr, etappenNr];
+  }
+  if (/^K\d+$/.test(ref)) {
+    return [6, parseInt(ref.slice(1), 10), 0];
+  }
+  return [7, 0, 0];
+}
+
 function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {
-  if (a.featured !== b.featured) return a.featured ? -1 : 1;
-  const refA = a.ref ? 0 : 1;
-  const refB = b.ref ? 0 : 1;
-  if (refA !== refB) return refA - refB;
+  const ka = sortSchluessel(a);
+  const kb = sortSchluessel(b);
+  if (ka[0] !== kb[0]) return ka[0] - kb[0];
+  if (ka[1] !== kb[1]) return ka[1] - kb[1];
+  if (ka[2] !== kb[2]) return ka[2] - kb[2];
   return a.name.localeCompare(b.name, "de");
 }
 
@@ -41,6 +69,8 @@ function toRoute(row: ExternalRouteRow) {
     featured: row.featured,
     photoUrl: row.photoUrl ?? null,
     photoAttribution: row.photoAttribution ?? null,
+    description: row.description ?? null,
+    descriptionSource: row.descriptionSource ?? null,
   };
 }
 

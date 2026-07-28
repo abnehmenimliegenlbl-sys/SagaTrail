@@ -45,7 +45,9 @@ export const GetCatalogResponse = zod.object({
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean(),
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
-  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
 })),
   "sagas": zod.array(zod.object({
   "id": zod.string(),
@@ -165,7 +167,9 @@ export const GetCantonRoutesResponseItem = zod.object({
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean(),
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
-  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
 })
 export const GetCantonRoutesResponse = zod.array(GetCantonRoutesResponseItem)
 
@@ -282,7 +286,6 @@ export const GetPartnersResponse = zod.array(GetPartnersResponseItem)
  * @summary Kontexttext eines Point of Interest in Sagen-Erzaehlton erzeugen
  */
 export const GetPoiStoryQueryParams = zod.object({
-  osmContext: zod.string().optional(),
   "name": zod.coerce.string(),
   "extract": zod.coerce.string().optional(),
   "kind": zod.coerce.string().optional(),
@@ -473,7 +476,9 @@ export const GetCustomRouteResponse = zod.object({
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean(),
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
-  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
 })
 
 
@@ -508,7 +513,9 @@ export const ImportGpxRouteResponse = zod.object({
   "geometry": zod.array(zod.array(zod.number())).optional().describe('Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden).'),
   "featured": zod.boolean(),
   "photoUrl": zod.string().nullish().describe('Foto-URL aus Wikimedia Commons, bereits in DB gecacht. Null wenn noch kein Foto vorhanden.'),
-  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.')
+  "photoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Foto.'),
+  "description": zod.string().nullish().describe('Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.'),
+  "descriptionSource": zod.string().nullish().describe('URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.')
 })
 
 
@@ -564,8 +571,7 @@ export const GetMyProfileResponse = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
-  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('DB-Subscription-Tier: free | premium | premium_family | elite | elite_family')
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.')
 })
 
 

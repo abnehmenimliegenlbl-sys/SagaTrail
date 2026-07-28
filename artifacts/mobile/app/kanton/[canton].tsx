@@ -26,6 +26,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RangeSlider } from "@/components/brand/RangeSlider";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SearchProgress } from "@/components/brand/SearchProgress";
+import { Wegweiser } from "@/components/Wegweiser";
 import { HikingRoute } from "@/constants/routes";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -609,16 +610,15 @@ export default function KantonRouten() {
                 // Sobald die erste Wanderung stattgefunden hat, sind alle weiteren gesperrt.
                 const canAccess = premium || packUnlocked;
                 const locked = !canAccess && freeHikeUsed;
-                const unlocked = canAccess;
                 return (
                   <RouteCard
                     key={route.id}
                     route={route}
                     index={i}
                     locked={locked}
-                    unlocked={unlocked}
                     nearbyPos={nearbyPos}
                     onPress={() => router.push(`/route/${route.id}`)}
+                    kanton={cantonName}
                   />
                 );
               })}
@@ -658,16 +658,16 @@ function RouteCard({
   route,
   index,
   locked,
-  unlocked,
   nearbyPos,
   onPress,
+  kanton,
 }: {
   route: HikingRoute;
   index: number;
   locked: boolean;
-  unlocked?: boolean;
   nearbyPos?: { lat: number; lng: number } | null;
   onPress: () => void;
+  kanton?: string | null;
 }) {
   const t = useKantonStrings();
   const colors = useColors();
@@ -709,61 +709,39 @@ function RouteCard({
             </Text>
           </View>
         )}
+        {locked && (
+          <View style={styles.cardLockBadge}>
+            <Feather name="lock" size={14} color={colors.photoScrimText} />
+          </View>
+        )}
         <View style={styles.cardContent}>
-          <View style={styles.cardTopRow}>
-            <View style={[styles.cardEyebrowChip, { backgroundColor: colors.accent }]}>
-              <Text style={[styles.cardEyebrow, { color: colors.accentForeground }]}>
-                {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
-                {h}:{String(m).padStart(2, "0")} h
-              </Text>
-            </View>
-            {locked && (
-              <View style={styles.cardLockBadge}>
-                <Feather name="lock" size={14} color={colors.photoScrimText} />
-              </View>
-            )}
-            {!locked && unlocked && (
-              <View style={styles.cardUnlockedBadge}>
-                <Feather name="check-circle" size={14} color="#fff" />
-              </View>
-            )}
-          </View>
-          <View style={styles.cardTextScrim}>
-            <Text style={[styles.cardTitle, { color: colors.photoScrimText }]}>
-              {route.name}
-            </Text>
-            <Text
-              style={[styles.cardTerrain, { color: colors.photoScrimMuted }]}
-              numberOfLines={1}
-            >
-              {route.terrain}
-            </Text>
+          <Wegweiser name={route.name} sac={route.sac} kompakt kanton={kanton} />
+          {distToStart && (
             <View style={styles.cardSeasonRow}>
-              <Feather
-                name={route.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
-                size={12}
-                color={colors.photoScrimMuted}
-              />
-              <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}>
-                {t.season[
-                  route.season === "ganzjaehrig"
-                    ? "ganzjaehrig"
-                    : route.season === "nur_sommer"
-                      ? "nurSommer"
-                      : "eherSommer"
-                ]}
+              <Feather name="navigation" size={11} color={colors.accent} />
+              <Text style={[styles.cardSeasonText, { color: colors.accent }]}>
+                {" "}{t.nearbyDistBadge(distToStart)}
               </Text>
-              {distToStart && (
-                <>
-                  <Text style={[styles.cardSeasonText, { color: colors.photoScrimMuted }]}> · </Text>
-                  <Feather name="navigation" size={11} color={colors.accent} />
-                  <Text style={[styles.cardSeasonText, { color: colors.accent }]}>
-                    {" "}{t.nearbyDistBadge(distToStart)}
-                  </Text>
-                </>
-              )}
             </View>
-          </View>
+          )}
+        </View>
+        <View style={styles.cardZeitleiste}>
+          <Text
+            style={styles.cardZeitleisteText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
+            {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
+            {h}:{String(m).padStart(2, "0")} h ·{" "}
+            {t.season[
+              route.season === "ganzjaehrig"
+                ? "ganzjaehrig"
+                : route.season === "nur_sommer"
+                  ? "nurSommer"
+                  : "eherSommer"
+            ]}
+          </Text>
         </View>
       </Pressable>
     </Animated.View>
@@ -919,42 +897,39 @@ const styles = StyleSheet.create({
   cardWrap: { ...SCHATTEN_3D, marginBottom: 14 },
   card: { ...GLAS_3D, height: 200, borderRadius: 18, borderWidth: 1, overflow: "hidden" },
   cardImg: { width: "100%", height: "100%" },
-  cardContent: { position: "absolute", left: 16, right: 16, bottom: 16 },
-  cardTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  cardEyebrowChip: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    alignSelf: "flex-start",
-  },
-  cardEyebrow: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1 },
+  cardContent: { position: "absolute", left: 16, right: 16, bottom: 40 },
   cardLockBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
     width: 26,
     height: 26,
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(8,10,12,0.55)",
+    zIndex: 2,
   },
-  cardUnlockedBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  cardZeitleiste: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 28,
+    backgroundColor: "rgba(227,6,19,0.55)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#16A34A",
+    paddingHorizontal: 10,
   },
-  cardTextScrim: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(8,10,12,0.4)",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 8,
-    maxWidth: "100%",
+  cardZeitleisteText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  cardTitle: { fontFamily: fonts.titleBold, fontSize: 24, marginTop: 0 },
-  cardTerrain: { fontFamily: fonts.story, fontSize: 13, marginTop: 3 },
   cardSeasonRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
   cardSeasonText: { fontFamily: fonts.body, fontSize: 11 },
 });

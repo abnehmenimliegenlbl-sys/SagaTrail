@@ -30,4 +30,8 @@ export interface CatalogRoute {
   photoUrl?: string | null;
   /** Urheber-/Lizenzangabe zum Foto. */
   photoAttribution?: string | null;
+  /** Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden. */
+  description?: string | null;
+  /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
+  descriptionSource?: string | null;
 }

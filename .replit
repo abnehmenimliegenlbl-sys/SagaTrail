@@ -78,6 +78,7 @@ ASC_APP_ID = "6788260668"
 NARRATION_DAILY_CHAR_BUDGET = "25000"
 R2_ACCOUNT_ID = "ae2d32c2f9bc47f08cca887f689853b5"
 R2_BUCKET_NAME = "sagatrail"
+OVERPASS_PROXY_URL = "https://sagatrail.ch/overpass-proxy.php"
 
 [userenv.development]
 

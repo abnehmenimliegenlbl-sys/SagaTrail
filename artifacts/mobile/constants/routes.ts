@@ -39,6 +39,10 @@ export interface HikingRoute {
   photoUrl?: string | null;
   /** Urheber-/Lizenzangabe zum Foto. */
   photoAttribution?: string | null;
+  /** Kurzbeschreibung aus Wikipedia (de); null/fehlend wenn keine vorhanden. */
+  description?: string | null;
+  /** URL des Wikipedia-Artikels zur Beschreibung. */
+  descriptionSource?: string | null;
 }
 
 /** Kanton mit der Anzahl aktuell bekannter Routen (nur als Vorschau). */

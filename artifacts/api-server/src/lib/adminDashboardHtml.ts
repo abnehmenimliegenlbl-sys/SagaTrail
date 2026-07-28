@@ -244,6 +244,15 @@ a{color:var(--red);text-decoration:none}
         <textarea id="push-body" maxlength="200" rows="3" placeholder="z.B. Im Kanton Uri warten neue Wanderrouten auf dich…" oninput="updatePreview();updateBodyLen()" style="resize:vertical"></textarea>
       </div>
 
+      <!-- ÜBERSETZUNG -->
+      <div class="form-group" style="margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
+          <input id="push-translate" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--green)" />
+          Automatisch in die Sprache jedes Nutzers übersetzen (KI)
+        </label>
+        <div class="hint" style="margin-top:4px">Deutsch schreiben genügt — Empfänger mit EN/FR/IT/ES/PT/ZH erhalten die Nachricht übersetzt.</div>
+      </div>
+
       <!-- VORSCHAU -->
       <div style="margin-bottom:18px">
         <div style="font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Vorschau</div>
@@ -976,7 +985,7 @@ async function sendPushCampaign() {
 
   var tierLabel = {alle:'Alle', premium:'Premium', premium_family:'Premium Family', elite:'Elite', elite_family:'Elite Family'}[_pushTier] || _pushTier;
   try {
-    var result = await api('/api/admin/push', { method:'POST', body: JSON.stringify({ tier: _pushTier, title: title, body: body }) });
+    var result = await api('/api/admin/push', { method:'POST', body: JSON.stringify({ tier: _pushTier, title: title, body: body, translate: document.getElementById('push-translate').checked }) });
     status.textContent = '✓ Gesendet';
     status.style.color = 'var(--green)';
     appendPushHistory(tierLabel, title, body, result);

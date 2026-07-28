@@ -42,6 +42,11 @@ export const externalRoutesTable = pgTable("external_routes", {
   featured: boolean("featured").notNull().default(false),
   photoUrl: text("photo_url"),
   photoAttribution: text("photo_attribution"),
+  // Kurzbeschreibung aus Wikipedia (de) fuer amtliche Wanderland-Routen 1-999
+  // (Etappen erben den Artikel der Gesamtroute). Null = noch nicht geholt.
+  description: text("description"),
+  // Quell-URL des Wikipedia-Artikels zur Beschreibung.
+  descriptionSource: text("description_source"),
   fetchedAt: timestamp("fetched_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

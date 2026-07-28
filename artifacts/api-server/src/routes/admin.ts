@@ -18,9 +18,10 @@ import {
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
+import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, backfillCantonsForRoute } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute } from "../lib/routeService";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
@@ -938,6 +939,7 @@ const PushSendBody = z.object({
   title: z.string().min(1).max(100),
   body:  z.string().min(1).max(500),
   data:  z.record(z.string(), z.unknown()).optional(),
+  translate: z.boolean().optional(),
 });
 
 // Fehler-Muster die auf Expo-Go/Dev-Tokens hinweisen (kein APNs-Credential
@@ -1023,11 +1025,11 @@ router.post("/admin/push", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { tier, title, body: msg, data } = parsed.data;
+  const { tier, title, body: msg, data, translate } = parsed.data;
 
   // Alle Profile mit Push-Token laden
   const rows = await db
-    .select({ id: profilesTable.id, pushToken: profilesTable.pushToken, subscriptionTier: profilesTable.subscriptionTier })
+    .select({ id: profilesTable.id, pushToken: profilesTable.pushToken, subscriptionTier: profilesTable.subscriptionTier, language: profilesTable.language })
     .from(profilesTable)
     .where(isNotNull(profilesTable.pushToken));
 
@@ -1040,9 +1042,37 @@ router.post("/admin/push", async (req, res): Promise<void> => {
   const tokens = matching.map((r) => r.pushToken as string);
   const tierSkipped = rows.length - matching.length;
 
-  req.log.info({ tier, count: tokens.length }, "Push-Kampagne gestartet");
+  req.log.info({ tier, count: tokens.length, translate: !!translate }, "Push-Kampagne gestartet");
 
-  const { sent, failed, devSkipped, errors, staleTokens } = await sendExpoPush(tokens, title, msg, data);
+  let sent = 0, failed = 0, devSkipped = 0;
+  const errors: string[] = [];
+  const staleTokens: string[] = [];
+
+  if (translate) {
+    // Nach Nutzersprache gruppieren und pro Sprache übersetzt senden
+    const nachSprache = new Map<string, string[]>();
+    const gesehen = new Set<string>();
+    for (const r of matching) {
+      const token = r.pushToken as string;
+      if (gesehen.has(token)) continue; // Dedupe: jedes Gerät erhält genau eine Nachricht
+      gesehen.add(token);
+      const lang = r.language || "de";
+      const arr = nachSprache.get(lang) ?? [];
+      arr.push(token);
+      nachSprache.set(lang, arr);
+    }
+    const texte = await translatePush({ title, body: msg }, [...nachSprache.keys()], req.log);
+    for (const [lang, langTokens] of nachSprache) {
+      const t = texte.get(lang) ?? { title, body: msg };
+      const r = await sendExpoPush(langTokens, t.title, t.body, data);
+      sent += r.sent; failed += r.failed; devSkipped += r.devSkipped;
+      errors.push(...r.errors); staleTokens.push(...r.staleTokens);
+    }
+  } else {
+    const r = await sendExpoPush(tokens, title, msg, data);
+    sent = r.sent; failed = r.failed; devSkipped = r.devSkipped;
+    errors.push(...r.errors); staleTokens.push(...r.staleTokens);
+  }
 
   // Expo-Go/Dev-Tokens aus der DB entfernen — sie werden nie funktionieren
   if (staleTokens.length > 0) {
@@ -1602,7 +1632,143 @@ router.post("/admin/stripe/seed-products", async (req, res): Promise<void> => {
   }
 });
 
+// ── Route-Bulk-Import (Dev→Prod-Abgleich) ────────────────────────────────────
+
+/**
+ * POST /admin/routes/import
+ * Upsert eines Batches vollständiger Routen-Zeilen (inkl. Geometrie).
+ * Für den Abgleich des Dev-Datenstands nach Prod — in Chunks aufrufen.
+ */
+router.post("/admin/routes/import", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { rows } = req.body as { rows?: Record<string, unknown>[] };
+  if (!Array.isArray(rows) || !rows.length) {
+    res.status(400).json({ error: "rows (Array) erforderlich" });
+    return;
+  }
+  try {
+    await db
+      .insert(externalRoutesTable)
+      .values(rows as any)
+      .onConflictDoUpdate({
+        target: externalRoutesTable.id,
+        set: {
+          sagaId: sql`excluded.saga_id`,
+          canton: sql`excluded.canton`,
+          cantons: sql`excluded.cantons`,
+          name: sql`excluded.name`,
+          ref: sql`excluded.ref`,
+          distanceKm: sql`excluded.distance_km`,
+          ascentM: sql`excluded.ascent_m`,
+          maxElevationM: sql`excluded.max_elevation_m`,
+          minutes: sql`excluded.minutes`,
+          sac: sql`excluded.sac`,
+          terrain: sql`excluded.terrain`,
+          lat: sql`excluded.lat`,
+          lng: sql`excluded.lng`,
+          geometry: sql`excluded.geometry`,
+          geometryVersion: sql`excluded.geometry_version`,
+          source: sql`excluded.source`,
+          featured: sql`excluded.featured`,
+          photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
+          photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
+          fetchedAt: new Date(),
+        },
+      })
+      .execute();
+    req.log.info({ count: rows.length }, "Routen-Import: Batch upserted");
+    res.json({ ok: true, upserted: rows.length });
+  } catch (err: any) {
+    req.log.error({ err }, "Routen-Import fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/prune
+ * Löscht alle Routen deren id NICHT in keepIds ist (Abschluss des Abgleichs).
+ * Schutz: keepIds muss ≥500 Einträge haben, damit ein versehentlicher Aufruf
+ * nicht die halbe DB leert.
+ */
+router.post("/admin/routes/prune", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { keepIds } = req.body as { keepIds?: string[] };
+  if (!Array.isArray(keepIds) || keepIds.length < 500) {
+    res.status(400).json({ error: "keepIds (Array mit ≥500 IDs) erforderlich" });
+    return;
+  }
+  try {
+    const result = await db
+      .delete(externalRoutesTable)
+      .where(sql`id != ALL(${keepIds})`)
+      .returning({ id: externalRoutesTable.id });
+    req.log.info({ deleted: result.length }, "Routen-Prune abgeschlossen");
+    res.json({ ok: true, deleted: result.length });
+  } catch (err: any) {
+    req.log.error({ err }, "Routen-Prune fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Route-Anreicherung (Cron-freundlich) ─────────────────────────────────────
+
+/**
+ * POST /admin/routes/enrich-all
+ * Startet die komplette Anreicherung (Geometrie + Multi-Kanton) als
+ * Hintergrundlauf im Server — kein externer Cron nötig. Fortschritt über
+ * GET /admin/routes/enrich-status verfolgen.
+ */
+let enrichAllLaeuft = false;
+router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (enrichAllLaeuft) {
+    res.json({ ok: true, message: "Läuft bereits" });
+    return;
+  }
+  enrichAllLaeuft = true;
+  res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
+
+  (async () => {
+    const log = req.log;
+    try {
+      // Phase 1: Geometrie
+      let fehlerSerien = 0;
+      for (;;) {
+        const rows = await db
+          .select({ id: externalRoutesTable.id })
+          .from(externalRoutesTable)
+          .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`))
+          .limit(10);
+        if (!rows.length) break;
+        let okCount = 0;
+        for (const row of rows) {
+          const r = await enrichOneRoute(row.id, log);
+          if (r.ok) okCount++;
+          else log.warn({ id: row.id, reason: r.reason }, "enrich-all: Route übersprungen");
+          await new Promise((resolve) => setTimeout(resolve, 2_000));
+        }
+        if (okCount === 0) {
+          // Kompletter Batch gescheitert → vermutlich Overpass-Drosselung.
+          fehlerSerien++;
+          if (fehlerSerien >= 6) {
+            log.error("enrich-all: 6 Batches in Folge gescheitert — Abbruch, später erneut starten");
+            break;
+          }
+          const wartezeitMs = 5 * 60_000;
+          log.warn({ fehlerSerien }, "enrich-all: Batch komplett gescheitert — 5 Min Abkühl-Pause");
+          await new Promise((resolve) => setTimeout(resolve, wartezeitMs));
+        } else {
+          fehlerSerien = 0;
+        }
+      }
+      log.info("enrich-all: Geometrie-Phase abgeschlossen — komplett (nur Start-Kanton, kein Multi-Kanton-Backfill)");
+    } catch (err) {
+      log.error({ err }, "enrich-all: abgebrochen");
+    } finally {
+      enrichAllLaeuft = false;
+    }
+  })();
+});
 
 /**
  * GET /admin/routes/enrich-status
@@ -1624,11 +1790,6 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
       .select({ n: count() })
       .from(externalRoutesTable)
       .where(sql`id NOT LIKE 'osm-%'`);
-    const [cantonsPending] = await db
-      .select({ n: count() })
-      .from(externalRoutesTable)
-      .where(sql`cantons = '{}'`);
-
     // Pro Quelle aufschlüsseln
     const bySource = await db
       .select({ source: externalRoutesTable.source, n: count() })
@@ -1640,7 +1801,6 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
       enriched: enriched?.n ?? 0,
       pending: pending?.n ?? 0,
       noOsmId: noOsm?.n ?? 0,
-      cantonsPending: cantonsPending?.n ?? 0,
       progressPct:
         (enriched?.n ?? 0) + (pending?.n ?? 0) > 0
           ? Math.round(((enriched?.n ?? 0) / ((enriched?.n ?? 0) + (pending?.n ?? 0))) * 100)
@@ -1649,6 +1809,286 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
     });
   } catch (err: any) {
     req.log.error({ err }, "enrich-status fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Wikipedia-Anreicherung (Beschreibung + Bild) ────────────────────────────
+
+/** Basis-Titel einer amtlichen Route: Nummer weg, Etappen-Suffix weg. */
+function wikiBasisTitel(name: string): string | null {
+  const m = /^(\d{1,3})\s+(.+)$/.exec(name.trim());
+  if (!m) return null;
+  let rest = m[2];
+  // Etappen-Suffix und alles danach entfernen
+  rest = rest.replace(/\s+(Etappe|Étape|Etape|Tappa|Stage)\s+\d+.*$/i, "");
+  // Streckenangabe "Startort - Zielort" am Ende entfernen: alles ab " - " weg,
+  // danach genau EIN Wort (den Startort) abschneiden — nie mehr.
+  const strich = rest.search(/\s[-–]\s/);
+  if (strich > 0) {
+    rest = rest.slice(0, strich).trim();
+    const worte = rest.split(/\s+/);
+    if (worte.length > 2) rest = worte.slice(0, -1).join(" ");
+  }
+  rest = rest.trim();
+  return rest.length >= 4 ? rest : m[2].trim();
+}
+
+/** Wiki-Markup grob in Klartext umwandeln (Links, Vorlagen, Refs entfernen). */
+function wikiKlartext(s: string): string {
+  let t = s;
+  t = t.replace(/<ref[^>]*\/>/g, "").replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, "");
+  // Vorlagen {{...}} entfernen (auch verschachtelt, mehrere Durchgaenge)
+  for (let i = 0; i < 5 && /\{\{[^{}]*\}\}/.test(t); i++) t = t.replace(/\{\{[^{}]*\}\}/g, "");
+  t = t.replace(/\[\[(?:[^\[\]|]*\|)?([^\[\]|]*)\]\]/g, "$1");
+  t = t.replace(/'''?/g, "").replace(/&nbsp;/g, " ").replace(/<[^>]+>/g, "");
+  return t.replace(/\s+/g, " ").replace(/\s+([,.;:])/g, "$1").trim();
+}
+
+/**
+ * Etappen-Abschnitte aus einem Wikipedia-Artikel parsen. Viele ViaStoria-/
+ * Wanderland-Artikel listen Etappen als "* 7.1 Basel–Liestal ..., 24 km,
+ * 6 Stunden: Beschreibung" mit <gallery>-Bloecken dazwischen. Liefert pro
+ * "N.M" Text + (falls per Ortsname zuordenbar) ein Galeriebild.
+ */
+function parseWikiEtappen(wikitext: string): Map<string, { text: string; bild: string | null }> {
+  const ergebnis = new Map<string, { text: string; bild: string | null }>();
+  // Offene Etappen seit der letzten Galerie: fuer Bild-Zuordnung per Ortsname
+  let offen: { key: string; orte: string[] }[] = [];
+  const zeilen = wikitext.split("\n");
+  for (let i = 0; i < zeilen.length; i++) {
+    const zeile = zeilen[i];
+    const m = /^\*\s*(\d{1,3})\.(\d{1,2})\s+(.+)$/.exec(zeile.trim());
+    if (m) {
+      const key = `${m[1]}.${m[2]}`;
+      const klartext = wikiKlartext(m[3]);
+      const doppel = klartext.indexOf(": ");
+      const kopf = doppel > 0 ? klartext.slice(0, doppel) : klartext;
+      const text = doppel > 0 ? klartext.slice(doppel + 2).trim() : "";
+      if (text.length >= 60) {
+        ergebnis.set(key, { text: `${kopf}: ${text}`, bild: null });
+        const orte = kopf
+          .split(/[–\-,]/)
+          .map((o) => o.trim())
+          .filter((o) => o.length >= 4 && !/^\d/.test(o) && !/Stunden|km/i.test(o));
+        offen.push({ key, orte });
+      }
+      continue;
+    }
+    if (/^<gallery/i.test(zeile.trim())) {
+      // Galeriezeilen bis </gallery> einsammeln
+      const bilder: { datei: string; caption: string }[] = [];
+      for (i++; i < zeilen.length && !/<\/gallery>/i.test(zeilen[i]); i++) {
+        const teile = zeilen[i].trim().split("|");
+        if (teile[0] && /\.(jpe?g|png|webp)$/i.test(teile[0].trim())) {
+          bilder.push({ datei: teile[0].trim(), caption: teile.slice(1).join(" ") });
+        }
+      }
+      for (const bild of bilder) {
+        const treffer = offen.find(
+          (e) =>
+            !ergebnis.get(e.key)?.bild &&
+            e.orte.some((ort) => (bild.caption + " " + bild.datei).toLowerCase().includes(ort.toLowerCase()))
+        );
+        if (treffer) {
+          const eintrag = ergebnis.get(treffer.key);
+          if (eintrag) {
+            eintrag.bild =
+              "https://commons.wikimedia.org/wiki/Special:FilePath/" +
+              encodeURIComponent(bild.datei.replace(/ /g, "_")) +
+              "?width=1024";
+          }
+        }
+      }
+      offen = [];
+    }
+  }
+  return ergebnis;
+}
+
+/**
+ * POST /admin/routes/wiki-enrich-all
+ * Holt fuer alle amtlichen Wanderland-Routen (Name beginnt mit 1-999)
+ * Beschreibung + ggf. Bild aus Wikipedia (de). Etappen erben den Artikel
+ * der Gesamtroute. Idempotent: bereits beschriebene Routen werden uebersprungen.
+ */
+let wikiEnrichLaeuft = false;
+router.post("/admin/routes/wiki-enrich-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (wikiEnrichLaeuft) {
+    res.json({ ok: true, message: "Läuft bereits" });
+    return;
+  }
+  wikiEnrichLaeuft = true;
+  res.json({ ok: true, message: "Wikipedia-Anreicherung gestartet — Fortschritt via wiki-enrich-status" });
+
+  (async () => {
+    const log = req.log;
+    try {
+      const rows = await db
+        .select({
+          id: externalRoutesTable.id,
+          name: externalRoutesTable.name,
+          photoUrl: externalRoutesTable.photoUrl,
+        })
+        .from(externalRoutesTable)
+        .where(and(sql`name ~ '^[0-9]{1,3} '`, sql`description IS NULL`));
+      log.info({ n: rows.length }, "wiki-enrich: Start");
+
+      // Artikel-Cache pro Basis-Titel (Etappen teilen sich den Artikel)
+      const cache = new Map<string, { extract: string; url: string; thumb: string | null } | null>();
+      // Etappen-Abschnitte pro Artikel-URL (einmal Wikitext holen, dann parsen)
+      const etappenCache = new Map<string, Map<string, { text: string; bild: string | null }> | null>();
+      let ok = 0, leer = 0;
+
+      for (const row of rows) {
+        const titel = wikiBasisTitel(row.name);
+        if (!titel) { leer++; continue; }
+
+        if (!cache.has(titel)) {
+          let gescheitert = false;
+          try {
+            const api =
+              "https://de.wikipedia.org/w/api.php?action=query&format=json&generator=search" +
+              `&gsrsearch=${encodeURIComponent(titel)}&gsrlimit=3` +
+              "&prop=extracts|pageimages|info|pageprops&inprop=url&exintro=1&explaintext=1&exchars=1500" +
+              "&piprop=thumbnail&pithumbsize=1024";
+            // Sanft anfragen: bei 429 (Drosselung) bis zu 3x mit langer Pause wiederholen
+            let resp: globalThis.Response | null = null;
+            for (let versuch = 0; versuch < 3; versuch++) {
+              resp = await fetch(api, {
+                headers: { "User-Agent": "SagaTrail/1.0 (kontakt@sagatrail.ch) Wanderrouten-Beschreibungen" },
+              });
+              if (resp.status !== 429) break;
+              log.warn({ titel, versuch }, "wiki-enrich: 429 — 60s Pause");
+              await new Promise((r) => setTimeout(r, 60_000));
+            }
+            if (!resp || !resp.ok) throw new Error(`HTTP ${resp?.status}`);
+            const data: any = await resp.json();
+            const pages: any[] = Object.values(data?.query?.pages ?? {});
+            pages.sort((a, b) => (a.index ?? 9) - (b.index ?? 9));
+            // Bester Treffer: kein Begriffsklärungs-Artikel, Titel passt zur Route,
+            // Extract vorhanden und klingt nach Wanderroute/Ort
+            const norm = (s: string) =>
+              s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+            const suchNorm = norm(titel);
+            const hit = pages.find((p) => {
+              if (typeof p.extract !== "string" || p.extract.length < 80) return false;
+              if (p.pageprops && "disambiguation" in p.pageprops) return false;
+              if (/steht für:|bezeichnet:/i.test(p.extract.slice(0, 60))) return false;
+              const titelNorm = norm(p.title ?? "");
+              // Titel muss substanziell zur Suche passen: Substring-Match nur,
+              // wenn der kuerzere Teil selbst aussagekraeftig ist (>=10 Zeichen
+              // und >=2 Woerter) — verhindert Treffer wie "Chemin" -> "Chemin des Dames".
+              const substanziell = (s: string) =>
+                (s.split(" ").length >= 2 && s.length >= 10) ||
+                (s.split(" ").length === 1 && s.length >= 8);
+              const enthaeltWort = (ganz: string, teil: string) =>
+                ` ${ganz} `.includes(` ${teil} `);
+              const passt =
+                (enthaeltWort(suchNorm, titelNorm) && substanziell(titelNorm)) ||
+                (enthaeltWort(titelNorm, suchNorm) && substanziell(suchNorm)) ||
+                titelNorm === suchNorm;
+              if (!passt) return false;
+              // Zusatzanker: Artikel muss Schweiz/Liechtenstein-Kontext haben
+              // (verhindert gleichnamige Wege im Ausland).
+              const schweizKontext =
+                /schweiz|liechtenstein|svizzera|suisse|kanton|graubünd|wallis|tessin|jura|appenzell|schweizmobil|wanderland/i.test(
+                  p.extract
+                );
+              return schweizKontext && /wander|weitwander|route|weg|trail|sentiero|chemin|pfad/i.test(p.extract);
+            });
+            cache.set(
+              titel,
+              hit
+                ? {
+                    extract: hit.extract.trim(),
+                    url: hit.fullurl ?? `https://de.wikipedia.org/wiki/${encodeURIComponent(hit.title)}`,
+                    thumb: hit.thumbnail?.source ?? null,
+                  }
+                : null
+            );
+          } catch (err) {
+            log.warn({ titel, err }, "wiki-enrich: Wikipedia-Abfrage gescheitert");
+            // Fehler NICHT cachen — ein spaeterer Lauf soll es erneut versuchen
+            gescheitert = true;
+          }
+          await new Promise((r) => setTimeout(r, 1_500));
+          if (gescheitert) { leer++; continue; }
+        }
+
+        const art = cache.get(titel);
+        if (!art) { leer++; continue; }
+
+        // Etappen: eigenen Abschnitt aus dem Artikel verwenden, falls vorhanden
+        // (z. B. "* 7.3 Läufelfingen–Olten ...: Der historische Passweg ...")
+        let etappe: { text: string; bild: string | null } | null = null;
+        const em = /^(\d{1,3})\s.*\b(?:Etappe|Étape|Etape|Tappa|Stage)\s+(\d{1,2})\b/i.exec(row.name.trim());
+        if (em) {
+          if (!etappenCache.has(art.url)) {
+            try {
+              const artikelTitel = decodeURIComponent(art.url.split("/wiki/")[1] ?? "");
+              const wt = await fetch(
+                `https://de.wikipedia.org/w/api.php?action=parse&format=json&prop=wikitext&page=${encodeURIComponent(artikelTitel)}`,
+                { headers: { "User-Agent": "SagaTrail/1.0 (kontakt@sagatrail.ch) Wanderrouten-Beschreibungen" } }
+              );
+              const wtData: any = wt.ok ? await wt.json() : null;
+              const wikitext: string | undefined = wtData?.parse?.wikitext?.["*"];
+              etappenCache.set(art.url, wikitext ? parseWikiEtappen(wikitext) : new Map());
+              await new Promise((r) => setTimeout(r, 1_500));
+            } catch (err) {
+              log.warn({ url: art.url, err }, "wiki-enrich: Wikitext-Abruf gescheitert");
+              etappenCache.set(art.url, new Map());
+            }
+          }
+          etappe = etappenCache.get(art.url)?.get(`${em[1]}.${em[2]}`) ?? null;
+        }
+
+        const updates: Record<string, unknown> = {
+          description: etappe?.text ?? art.extract,
+          descriptionSource: art.url,
+        };
+        const bild = etappe?.bild ?? art.thumb;
+        if (!row.photoUrl && bild) {
+          updates.photoUrl = bild;
+          updates.photoAttribution = "Bild: Wikimedia Commons";
+        }
+        await db
+          .update(externalRoutesTable)
+          .set(updates)
+          .where(eq(externalRoutesTable.id, row.id))
+          .execute();
+        ok++;
+      }
+      log.info({ ok, leer }, "wiki-enrich: fertig");
+    } catch (err) {
+      log.error({ err }, "wiki-enrich: abgebrochen");
+    } finally {
+      wikiEnrichLaeuft = false;
+    }
+  })();
+});
+
+/** GET /admin/routes/wiki-enrich-status — Fortschritt der Wikipedia-Anreicherung. */
+router.get("/admin/routes/wiki-enrich-status", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const [amtlich] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(sql`name ~ '^[0-9]{1,3} '`);
+    const [mitBeschreibung] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(and(sql`name ~ '^[0-9]{1,3} '`, sql`description IS NOT NULL`));
+    res.json({
+      laeuft: wikiEnrichLaeuft,
+      amtlicheRouten: amtlich?.n ?? 0,
+      mitBeschreibung: mitBeschreibung?.n ?? 0,
+      offen: (amtlich?.n ?? 0) - (mitBeschreibung?.n ?? 0),
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "wiki-enrich-status fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });
@@ -1674,34 +2114,15 @@ router.post("/admin/routes/enrich-next", async (req, res): Promise<void> => {
       results.push({ id: row.id, ...result });
     }
 
-    // Phase 2: restliches Budget für Multi-Kanton-Backfill nutzen
-    const backfillBudget = n - rows.length;
-    if (backfillBudget > 0) {
-      const backfillRows = await db
-        .select({ id: externalRoutesTable.id })
-        .from(externalRoutesTable)
-        .where(sql`cantons = '{}'`)
-        .limit(backfillBudget);
-      for (const row of backfillRows) {
-        const result = await backfillCantonsForRoute(row.id, req.log);
-        results.push({ id: row.id, ...result });
-      }
-    }
-
     const [pending] = await db
       .select({ n: count() })
       .from(externalRoutesTable)
       .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`));
-    const [cantonsPending] = await db
-      .select({ n: count() })
-      .from(externalRoutesTable)
-      .where(sql`cantons = '{}'`);
 
     res.json({
-      done: (pending?.n ?? 0) === 0 && (cantonsPending?.n ?? 0) === 0,
+      done: (pending?.n ?? 0) === 0,
       enriched: results,
       pending: pending?.n ?? 0,
-      cantonsPending: cantonsPending?.n ?? 0,
     });
   } catch (err: any) {
     req.log.error({ err }, "enrich-next fehlgeschlagen");

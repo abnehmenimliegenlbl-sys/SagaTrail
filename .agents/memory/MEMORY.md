@@ -61,4 +61,7 @@
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
 - [CopyPodModuleMaps ist SCHÄDLICH](xcode16-archive-module-map-fix.md) — der frühere Workaround kopierte modulemaps ohne umbrella headers → "umbrella header not found"; entfernt, echte Ursache war UUID-Kollision (siehe clerk-ios-spm-cocoapods.md).
+- [Route canton = start point only](sagatrail-canton-startpoint-only.md) — user rejected multi-canton; one canton per route (start point); cantons TEXT[] column is inert, don't re-add backfill.
+- [Server-side background jobs](background-jobs-server-side.md) — nohup/setsid shell jobs get killed & /tmp wiped on restart; long batch loops must run im API-Server (warm-all-Muster, z.B. /admin/routes/enrich-all).
+- [Route geometry formats + restitch](sagatrail-geometry-formats-restitch.md) — geometry points sind {lat,lng} ODER [lat,lng]; Analysen brauchen COALESCE beider Formate; restitch_parents.cjs baut Gesamtrouten aus Etappen neu.
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.

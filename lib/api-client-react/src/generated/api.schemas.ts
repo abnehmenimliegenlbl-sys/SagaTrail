@@ -194,6 +194,10 @@ export interface CatalogRoute {
   photoUrl?: string | null;
   /** Urheber-/Lizenzangabe zum Foto. */
   photoAttribution?: string | null;
+  /** Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden. */
+  description?: string | null;
+  /** URL des Wikipedia-Artikels, aus dem die Beschreibung stammt. */
+  descriptionSource?: string | null;
 }
 
 /**
@@ -289,8 +293,6 @@ export interface Poi {
   wikipediaTag?: string | null;
   /** OSM wikidata-Tag (z.B. 'Q123456'), fuer on-demand-Anreicherung. */
   wikidataTag?: string | null;
-  /** Kuratierter OSM-Kontext (note, inscription, alt_name …) fuer den KI-Prompt. */
-  osmContext?: string | null;
 }
 
 /**
@@ -635,8 +637,6 @@ name: string;
 extract?: string;
 kind?: string;
 lang: string;
-/** Kuratierter OSM-Kontext (note, inscription, alt_name …) — gibt Claude verifizierte Fakten. */
-osmContext?: string;
 };
 
 export type GetAvalancheBulletinParams = {

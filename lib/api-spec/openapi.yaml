@@ -1429,6 +1429,14 @@ components:
           type: string
           nullable: true
           description: Urheber-/Lizenzangabe zum Foto.
+        description:
+          type: string
+          nullable: true
+          description: Kurzbeschreibung der Route aus Wikipedia (de); null wenn keine vorhanden.
+        descriptionSource:
+          type: string
+          nullable: true
+          description: URL des Wikipedia-Artikels, aus dem die Beschreibung stammt.
       required:
         - id
         - sagaId
