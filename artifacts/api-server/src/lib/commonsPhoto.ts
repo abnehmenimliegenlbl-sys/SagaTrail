@@ -83,6 +83,25 @@ function urlVergeben(url: string | null, schluessel: string | undefined): void {
   if (url && schluessel && !vergebeneUrls.has(url)) vergebeneUrls.set(url, schluessel);
 }
 
+/**
+ * Vorbelegung der vergebenen URLs mit bereits in der DB gespeicherten
+ * Foto-URLs (beim Serverstart). Ohne diese Vorbelegung "vergisst" der Server
+ * nach jedem Neustart, welche Bilder schon an Routen vergeben sind, und
+ * benachbarte Routen koennen dasselbe Panoramabild erneut waehlen.
+ * Der Sentinel-Inhaber "db:<url>" stimmt mit keinem Request-Schluessel
+ * ueberein, d.h. urlFreiFuer() liefert fuer alle neuen Anfragen false.
+ */
+export function vorbelegeVergebeneUrls(urls: Array<string | null>): number {
+  let neu = 0;
+  for (const url of urls) {
+    if (url && !vergebeneUrls.has(url)) {
+      vergebeneUrls.set(url, `db:${url}`);
+      neu += 1;
+    }
+  }
+  return neu;
+}
+
 // Grobe Bounding-Box Schweiz + Liechtenstein: Treffer ausserhalb sind fuer
 // Wanderrouten sicher irrelevant (z. B. US-Feuerwachtuerme aus der Textsuche).
 function inSchweizOderFL(lat: number, lon: number): boolean {

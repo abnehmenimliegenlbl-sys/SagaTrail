@@ -26,21 +26,28 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
   // Foto in DB persistieren, damit es beim naechsten Laden der Route direkt
   // mitgeliefert wird (kein separater Request mehr noetig).
   if (routeId && foto.photoUrl) {
-    db.update(externalRoutesTable)
-      .set({
-        photoUrl: foto.photoUrl,
-        photoAttribution: foto.attribution,
-      })
-      .where(
-        and(
-          eq(externalRoutesTable.id, routeId),
-          isNull(externalRoutesTable.photoUrl),
-          // Dedupe: dasselbe Bild nicht fuer eine zweite Route persistieren.
-          sql`NOT EXISTS (SELECT 1 FROM external_routes er2 WHERE er2.photo_url = ${foto.photoUrl} AND er2.id <> ${routeId})`,
-        ),
-      )
-      .execute()
-      .catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
+    // Race-Condition-Schutz: bei parallelen Requests benachbarter Routen
+    // passieren sonst alle den NOT-EXISTS-Check, bevor eine committed hat,
+    // und alle speichern dasselbe Bild. Der Advisory-Lock (gehasht auf die
+    // Foto-URL) serialisiert die Write-backs pro Bild innerhalb einer
+    // Transaktion — erst danach sieht der NOT-EXISTS-Check den Vorgaenger.
+    db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${foto.photoUrl}))`);
+      await tx
+        .update(externalRoutesTable)
+        .set({
+          photoUrl: foto.photoUrl,
+          photoAttribution: foto.attribution,
+        })
+        .where(
+          and(
+            eq(externalRoutesTable.id, routeId),
+            isNull(externalRoutesTable.photoUrl),
+            // Dedupe: dasselbe Bild nicht fuer eine zweite Route persistieren.
+            sql`NOT EXISTS (SELECT 1 FROM external_routes er2 WHERE er2.photo_url = ${foto.photoUrl} AND er2.id <> ${routeId})`,
+          ),
+        );
+    }).catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
   }
 
   // Koordinaten-Fallback-Foto auch fuer Sagen persistieren, falls sagaId mitgegeben.

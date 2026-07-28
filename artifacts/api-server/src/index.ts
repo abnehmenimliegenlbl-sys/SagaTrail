@@ -7,7 +7,8 @@ import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos, fixA
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 import { db, externalRoutesTable } from "@workspace/db";
-import { eq, gte } from "drizzle-orm";
+import { eq, gte, isNotNull } from "drizzle-orm";
+import { vorbelegeVergebeneUrls } from "./lib/commonsPhoto";
 import { sql } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
@@ -144,6 +145,20 @@ const server = app.listen(port, async (err) => {
     await seedCatalog();
   } catch (seedErr) {
     logger.error({ err: seedErr }, "Katalog-Seeding fehlgeschlagen");
+  }
+
+  // Vergebene Foto-URLs aus der DB vorbelegen, damit die in-memory-Dedupe
+  // (vergebeneUrls) auch nach einem Neustart weiss, welche Bilder schon an
+  // Routen haengen — sonst waehlen benachbarte Routen dasselbe Panoramabild.
+  try {
+    const zeilen = await db
+      .selectDistinct({ photoUrl: externalRoutesTable.photoUrl })
+      .from(externalRoutesTable)
+      .where(isNotNull(externalRoutesTable.photoUrl));
+    const anzahl = vorbelegeVergebeneUrls(zeilen.map((z) => z.photoUrl));
+    logger.info({ anzahl }, "Vergebene Foto-URLs aus DB vorbelegt");
+  } catch (err) {
+    logger.warn({ err }, "Vorbelegung vergebener Foto-URLs fehlgeschlagen (nicht kritisch)");
   }
 
   // Routen kommen ausschliesslich aus dem DB-Cache (kein Live-Overpass bei
