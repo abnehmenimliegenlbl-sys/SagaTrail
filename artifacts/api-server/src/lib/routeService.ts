@@ -1059,6 +1059,14 @@ export function formatNumberedRouteName(
   nameDe?: string | null,
 ): string {
   let name = (nameDe || osmName).trim();
+  // OSM-Platzhalter "fixme" (in jeder Schreibweise) entfernen, inkl.
+  // haengender Trennstriche: "Hüttner Brugg - Finstersee - fixme" →
+  // "Hüttner Brugg - Finstersee", "fixme - Chapf" → "Chapf"
+  name = name
+    .replace(/\s*[-–—]?\s*\bfixme\b\s*[-–—]?\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^\s*[-–—]\s*|\s*[-–—]\s*$/g, "")
+    .trim();
   // "ViaJacobi" / "ViaGottardo" → "Via Jacobi" / "Via Gottardo"
   name = name.replace(/\bVia([A-ZÄÖÜ])/g, "Via $1");
   // " - Etappe" oder " – Etappe" → " Etappe"

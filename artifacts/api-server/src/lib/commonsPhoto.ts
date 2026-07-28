@@ -67,6 +67,28 @@ interface CacheEintrag {
 
 const cache = new Map<string, CacheEintrag>();
 
+// Welche Foto-URL wurde bereits fuer welchen Cache-Schluessel (Route/Ort)
+// vergeben? Verhindert, dass dasselbe Bild fuer viele verschiedene Routen
+// wiederverwendet wird (z. B. ein generischer Textsuche-Treffer, der frueher
+// bei hunderten Code-Routen landete).
+const vergebeneUrls = new Map<string, string>();
+
+function urlFreiFuer(url: string | null, schluessel: string | undefined): boolean {
+  if (!url || !schluessel) return true;
+  const inhaber = vergebeneUrls.get(url);
+  return inhaber === undefined || inhaber === schluessel;
+}
+
+function urlVergeben(url: string | null, schluessel: string | undefined): void {
+  if (url && schluessel && !vergebeneUrls.has(url)) vergebeneUrls.set(url, schluessel);
+}
+
+// Grobe Bounding-Box Schweiz + Liechtenstein: Treffer ausserhalb sind fuer
+// Wanderrouten sicher irrelevant (z. B. US-Feuerwachtuerme aus der Textsuche).
+function inSchweizOderFL(lat: number, lon: number): boolean {
+  return lat >= 45.7 && lat <= 47.95 && lon >= 5.8 && lon <= 10.6;
+}
+
 type Jahreszeit = "fruehling" | "sommer" | "herbst" | "winter";
 
 function jahreszeitVonMonat(monat: number): Jahreszeit {
@@ -78,6 +100,7 @@ function jahreszeitVonMonat(monat: number): Jahreszeit {
 
 interface CommonsPage {
   title?: string;
+  coordinates?: Array<{ lat?: number; lon?: number }>;
   imageinfo?: Array<{
     thumburl?: string;
     url?: string;
@@ -206,7 +229,8 @@ async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> 
     gsrsearch: `${effektiverBegriff} filetype:bitmap`,
     gsrnamespace: "6",
     gsrlimit: String(MAX_KANDIDATEN),
-    prop: "imageinfo",
+    prop: "imageinfo|coordinates",
+    colimit: "max",
     iiprop: "url|extmetadata",
     iiurlwidth: String(THUMB_BREITE_PX),
     iiextmetadatafilter: "DateTimeOriginal|Artist|LicenseShortName",
@@ -278,7 +302,12 @@ function landschaftsBonus(titel: string): number {
  * Gibt null zurück wenn kein Ergebnis mit Landschafts-Hinweis gefunden wird —
  * signalisiert dem Aufrufer, dass er eine Textsuche als Fallback starten soll.
  */
-function wähleFoto(seiten: CommonsPage[], jetzt: Date, erlaubeOhneLandschaft = false): RoutePhoto | null {
+function wähleFoto(
+  seiten: CommonsPage[],
+  jetzt: Date,
+  erlaubeOhneLandschaft = false,
+  schluessel?: string,
+): RoutePhoto | null {
   const zielJahreszeit = jahreszeitVonMonat(jetzt.getMonth() + 1);
   const kandidaten = seiten
     .filter((s) => s.title && wirktWieFoto(s.title) && s.imageinfo?.[0]?.thumburl)
@@ -311,7 +340,11 @@ function wähleFoto(seiten: CommonsPage[], jetzt: Date, erlaubeOhneLandschaft = 
       Number(b.passtZurSaison) - Number(a.passtZurSaison) ||
       a.index - b.index,
   );
-  const gewaehlt = pool[0]!;
+  // Bevorzugt ein Bild, das noch keine andere Route nutzt; wenn alle schon
+  // vergeben sind, ist der lokale Geo-Treffer dennoch akzeptabel (Nachbarrouten
+  // teilen sich legitim eine Gegend).
+  const gewaehlt = pool.find((k) => urlFreiFuer(k.url, schluessel)) ?? pool[0]!;
+  urlVergeben(gewaehlt.url, schluessel);
   const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
     .filter((teil): teil is string => teil != null)
     .join(" · ");
@@ -335,7 +368,12 @@ function titelRelevanz(titel: string, queryWoerter: string[]): number {
  * bekommt Vorrang vor einem thematisch fernen aber relevanzsortiert hoeher
  * platzierten Treffer.
  */
-function wähleTextFoto(seiten: CommonsPage[], query?: string, fuerSage = false): RoutePhoto | null {
+function wähleTextFoto(
+  seiten: CommonsPage[],
+  query?: string,
+  fuerSage = false,
+  schluessel?: string,
+): RoutePhoto | null {
   const queryWoerter = query
     ? query.toLowerCase().split(/\s+/).filter((w) => w.length >= 3)
     : [];
@@ -343,19 +381,39 @@ function wähleTextFoto(seiten: CommonsPage[], query?: string, fuerSage = false)
     .filter((s) => s.title && wirktWieFoto(s.title, fuerSage) && s.imageinfo?.[0]?.thumburl)
     .map((s, index) => {
       const info = s.imageinfo![0]!;
+      const koord = s.coordinates?.[0];
       return {
         url: info.thumburl ?? info.url ?? null,
         relevanz: queryWoerter.length > 0 ? titelRelevanz(s.title!, queryWoerter) : 0,
+        koordLat: typeof koord?.lat === "number" ? koord.lat : null,
+        koordLon: typeof koord?.lon === "number" ? koord.lon : null,
         index,
         autor: htmlZuText(info.extmetadata?.Artist?.value),
         lizenz: htmlZuText(info.extmetadata?.LicenseShortName?.value),
       };
     })
-    .filter((k) => k.url != null);
+    .filter((k) => k.url != null)
+    // Geo-Relevanz fuer Routen-Textsuche: Treffer mit Koordinaten ausserhalb
+    // der Schweiz/Liechtenstein verwerfen (z. B. US-Feuerwachturm). Treffer
+    // OHNE Koordinaten nur behalten, wenn der Dateiname tatsaechlich Woerter
+    // aus dem Routennamen enthaelt — sonst sind es generische Streutreffer.
+    .filter((k) => {
+      if (fuerSage) return true;
+      if (k.koordLat != null && k.koordLon != null) {
+        return inSchweizOderFL(k.koordLat, k.koordLon);
+      }
+      return k.relevanz > 0;
+    });
   if (kandidaten.length === 0) return null;
   // Reihung: Titelrelevanz zuerst, dann ursprüngliche Relevanzsortierung der API
   kandidaten.sort((a, b) => b.relevanz - a.relevanz || a.index - b.index);
-  const gewaehlt = kandidaten[0]!;
+  // Textsuche-Treffer sind nicht ortsgebunden — ein bereits anderswo vergebenes
+  // Bild NICHT wiederverwenden (sonst bekommen viele Routen dasselbe Foto).
+  const gewaehlt = fuerSage
+    ? kandidaten[0]!
+    : kandidaten.find((k) => urlFreiFuer(k.url, schluessel));
+  if (!gewaehlt) return null;
+  urlVergeben(gewaehlt.url, schluessel);
   const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
     .filter((teil): teil is string => teil != null)
     .join(" · ");
@@ -440,7 +498,7 @@ export async function getCachedRoutePhoto(
 
     // Phase 1: Geosuche — streng (nur mit Landschafts-Hinweis)
     const geoSeiten = await sucheCommonsFotos(lat, lng);
-    const geoFoto = wähleFoto(geoSeiten, jetzt, false);
+    const geoFoto = wähleFoto(geoSeiten, jetzt, false, schluessel);
     if (geoFoto) {
       cache.set(schluessel, { wert: geoFoto, bisMs: jetztMs + CACHE_TTL_MS });
       return geoFoto;
@@ -452,7 +510,7 @@ export async function getCachedRoutePhoto(
         ? routeName.split(/[·\-–]/)[0]!.trim()
         : routeName;
       const textSeiten = await sucheCommonsFotosNachText(`${suchbegriff} Wanderweg`);
-      const textFoto = wähleTextFoto(textSeiten, suchbegriff);
+      const textFoto = wähleTextFoto(textSeiten, suchbegriff, false, schluessel);
       if (textFoto) {
         cache.set(schluessel, { wert: textFoto, bisMs: jetztMs + CACHE_TTL_MS });
         return textFoto;
@@ -460,7 +518,7 @@ export async function getCachedRoutePhoto(
     }
 
     // Phase 3: Geo-Ergebnis ohne Landschafts-Anforderung (letzter Fallback)
-    const fallbackFoto = wähleFoto(geoSeiten, jetzt, true);
+    const fallbackFoto = wähleFoto(geoSeiten, jetzt, true, schluessel);
     const wert: RoutePhoto = fallbackFoto ?? { photoUrl: null, attribution: null };
     cache.set(schluessel, {
       wert,

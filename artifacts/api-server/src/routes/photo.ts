@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { GetRoutePhotoResponse, GetRoutePhotoQueryParams } from "@workspace/api-zod";
 import { getCachedRoutePhoto } from "../lib/commonsPhoto";
 import { db, externalRoutesTable, catalogSagasTable } from "@workspace/db";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -31,7 +31,14 @@ router.get("/routes/photo", async (req, res): Promise<void> => {
         photoUrl: foto.photoUrl,
         photoAttribution: foto.attribution,
       })
-      .where(and(eq(externalRoutesTable.id, routeId), isNull(externalRoutesTable.photoUrl)))
+      .where(
+        and(
+          eq(externalRoutesTable.id, routeId),
+          isNull(externalRoutesTable.photoUrl),
+          // Dedupe: dasselbe Bild nicht fuer eine zweite Route persistieren.
+          sql`NOT EXISTS (SELECT 1 FROM external_routes er2 WHERE er2.photo_url = ${foto.photoUrl} AND er2.id <> ${routeId})`,
+        ),
+      )
       .execute()
       .catch((err) => req.log.warn({ err, routeId }, "Foto-Rueckschreiben fehlgeschlagen"));
   }
