@@ -1999,6 +1999,22 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
   }
 });
 
+/** GET /admin/routes/photo-status — Wie viele Routen haben bereits ein Foto. */
+router.get("/admin/routes/photo-status", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const [total] = await db.select({ n: count() }).from(externalRoutesTable);
+    const [filled] = await db
+      .select({ n: count() })
+      .from(externalRoutesTable)
+      .where(isNotNull(externalRoutesTable.photoUrl));
+    res.json({ total: total?.n ?? 0, filled: filled?.n ?? 0 });
+  } catch (err: any) {
+    req.log.error({ err }, "photo-status fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Wikipedia-Anreicherung (Beschreibung + Bild) ────────────────────────────
 
 /** Basis-Titel einer amtlichen Route: Nummer weg, Etappen-Suffix weg. */

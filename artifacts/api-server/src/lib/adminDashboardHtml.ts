@@ -307,6 +307,18 @@ a{color:var(--red);text-decoration:none}
   <!-- ROUTEN-FOTOS -->
   <div id="tab-routen" class="tab-pane">
 
+    <!-- ENRICH-FORTSCHRITT -->
+    <div class="card" id="enrich-progress-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h2 style="margin:0">&#9881;&#65039; Enrich-Loop Fortschritt</h2>
+        <span id="enrich-updated" class="hint" style="font-size:11px"></span>
+      </div>
+      <div style="background:#f0eeeb;border-radius:8px;height:14px;overflow:hidden;margin-bottom:10px">
+        <div id="enrich-bar" style="height:100%;background:var(--red);width:0%;transition:width .6s"></div>
+      </div>
+      <div id="enrich-text" class="hint" style="font-size:12px;line-height:1.8">Wird geladen…</div>
+    </div>
+
     <!-- ROUTEN NEU LADEN -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
@@ -1392,7 +1404,39 @@ async function saveSagaFoto(sagaId, sid) {
 }
 
 /* ===================== ROUTEN-FOTOS ===================== */
+var _enrichInterval = null;
+
+async function loadEnrichStatus() {
+  try {
+    var s = await api('/api/admin/routes/enrich-status');
+    var pct = s.progressPct || 0;
+    document.getElementById('enrich-bar').style.width = pct + '%';
+    document.getElementById('enrich-bar').style.background = pct >= 100 ? 'var(--green)' : 'var(--red)';
+    var photoLine = '';
+    try {
+      var ps = await api('/api/admin/routes/photo-status');
+      photoLine = ' &nbsp;|&nbsp; &#128247; Fotos: ' + ps.filled + ' / ' + ps.total + ' (' + Math.round(ps.filled * 100 / (ps.total || 1)) + '%)';
+    } catch(e) { /* optional */ }
+    document.getElementById('enrich-text').innerHTML =
+      '&#9881;&#65039; Enriched: <b>' + s.enriched + '</b> / ' + s.total +
+      ' &nbsp;(<b>' + pct + '%</b>)' +
+      ' &nbsp;|&nbsp; &#9201;&#65039; Pending: <b>' + s.pending + '</b>' +
+      ' &nbsp;|&nbsp; &#128683; Unenrichable: ' + s.unenrichable +
+      photoLine;
+    var now = new Date();
+    document.getElementById('enrich-updated').textContent =
+      'Aktualisiert ' + now.toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if (pct >= 100 && _enrichInterval) { clearInterval(_enrichInterval); _enrichInterval = null; }
+  } catch(e) {
+    document.getElementById('enrich-text').textContent = 'Fehler: ' + e.message;
+  }
+}
+
 async function initRoutenTab() {
+  loadEnrichStatus();
+  if (_enrichInterval) clearInterval(_enrichInterval);
+  _enrichInterval = setInterval(loadEnrichStatus, 10000);
+
   if (_routenKantons.length) return;
   try {
     _routenKantons = await api('/api/admin/routes/cantons');
