@@ -4,6 +4,7 @@ import { seedCatalog } from "./lib/catalogSeed";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./lib/stripeClient";
 import { warmAllCantonCaches, startDailyCantonSync, fillMissingRoutePhotos, fixArtefaktRouten, GEOMETRY_VERSION } from "./lib/routeService";
+import { startEnrichAllIfNeeded } from "./routes/admin";
 import { attachGroupsSocket } from "./ws/groupsSocket";
 import { startWeatherNotificationCron } from "./lib/weatherNotifications";
 import { db, externalRoutesTable } from "@workspace/db";
@@ -209,6 +210,11 @@ const server = app.listen(port, async (err) => {
 
   // Jeden Tag um 02:00 UTC einen Kanton reihum aktualisieren (cap 150, inkl. Fotos).
   startDailyCantonSync();
+
+  // Routen-Anreicherung nach Server-Boot automatisch fortsetzen, falls noch
+  // Routen mit geometry_version=0 vorhanden sind — so geht nach einem Neustart
+  // kein Fortschritt verloren.
+  startEnrichAllIfNeeded(logger);
 });
 
 attachGroupsSocket(server);

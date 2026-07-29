@@ -22,6 +22,7 @@ import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute } from "../lib/routeService";
+import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
@@ -1784,17 +1785,34 @@ router.post("/admin/routes/prune", async (req, res): Promise<void> => {
  * GET /admin/routes/enrich-status verfolgen.
  */
 let enrichAllLaeuft = false;
-router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
-  if (!requireAdminToken(req, res)) return;
-  if (enrichAllLaeuft) {
-    res.json({ ok: true, message: "Läuft bereits" });
-    return;
-  }
-  enrichAllLaeuft = true;
-  res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
 
+/**
+ * Startet den Enrich-All-Hintergrundlauf, falls noch Routen offen sind.
+ * Kann beim Server-Start aufgerufen werden (log = pino-root-logger).
+ * Gibt sofort zurück; die eigentliche Arbeit läuft asynchron.
+ */
+export function startEnrichAllIfNeeded(log: Logger): void {
+  if (enrichAllLaeuft) return;
+  // Erst prüfen ob überhaupt offene Routen da sind — kein unnötiger Loop.
+  db.select({ n: count() })
+    .from(externalRoutesTable)
+    .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`))
+    .then(([row]) => {
+      const offen = row?.n ?? 0;
+      if (offen === 0) {
+        log.info("enrich-all (auto): keine offenen Routen — kein Start nötig");
+        return;
+      }
+      log.info({ offen }, "enrich-all (auto): starte Lauf nach Server-Boot");
+      runEnrichAllLoop(log);
+    })
+    .catch((err) => log.warn({ err }, "enrich-all (auto): Prüfabfrage fehlgeschlagen"));
+}
+
+function runEnrichAllLoop(log: Logger): void {
+  if (enrichAllLaeuft) return;
+  enrichAllLaeuft = true;
   (async () => {
-    const log = req.log;
     try {
       // Phase 1: Geometrie
       let fehlerSerien = 0;
@@ -1809,6 +1827,7 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
           .where(
             and(
               sql`geometry_version = 0`,
+              sql`id LIKE 'osm-%'`,
               gescheitert.size > 0
                 ? notInArray(externalRoutesTable.id, [...gescheitert])
                 : undefined,
@@ -1853,6 +1872,16 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
       enrichAllLaeuft = false;
     }
   })();
+}
+
+router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (enrichAllLaeuft) {
+    res.json({ ok: true, message: "Läuft bereits" });
+    return;
+  }
+  runEnrichAllLoop(req.log);
+  res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
 });
 
 /**
