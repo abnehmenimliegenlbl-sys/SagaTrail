@@ -790,7 +790,8 @@ async function enrichAndStore(
       .onConflictDoUpdate({
         target: externalRoutesTable.id,
         set: {
-          name: sql`excluded.name`,
+          // name, ref, route_type, is_etappe werden NIE überschrieben —
+          // manuelle Korrekturen (K-Nummerierung, nwn/rwn/lwn/kantonal) bleiben erhalten.
           distanceKm: sql`excluded.distance_km`,
           distanceTagKm: sql`excluded.distance_tag_km`,
           ascentM: sql`excluded.ascent_m`,
@@ -1589,21 +1590,25 @@ export async function enrichOneRoute(
     .where(eq(externalRoutesTable.id, rowId));
   let updatedName: string | undefined;
   if (nameRow?.name) {
-    // "ViaXxx" → "Via Xxx" bereinigen
-    const cleanedName = nameRow.name
-      .replace(/\bVia([A-ZÄÖÜ])/g, "Via $1")
-      .trim();
-    const f = r.from?.trim();
-    const t = r.to?.trim();
-    const vonBis = (() => {
-      if (!f && !t) return "";
-      if (f && cleanedName.includes(f)) return "";
-      if (f && t) return ` ${f} - ${t}`;
-      if (f) return ` ${f}`;
-      return ` - ${t}`;
-    })();
-    const candidate = cleanedName + vonBis;
-    if (candidate !== nameRow.name) updatedName = candidate;
+    // Nummernpräfix (1–3 Stellen) oder K-Kantonal-Prefix → Name geschützt, nie überschreiben.
+    const nameIsProtected = /^(\d{1,3} |K\d+ [A-Z]{2} )/.test(nameRow.name);
+    if (!nameIsProtected) {
+      // "ViaXxx" → "Via Xxx" bereinigen
+      const cleanedName = nameRow.name
+        .replace(/\bVia([A-ZÄÖÜ])/g, "Via $1")
+        .trim();
+      const f = r.from?.trim();
+      const t = r.to?.trim();
+      const vonBis = (() => {
+        if (!f && !t) return "";
+        if (f && cleanedName.includes(f)) return "";
+        if (f && t) return ` ${f} - ${t}`;
+        if (f) return ` ${f}`;
+        return ` - ${t}`;
+      })();
+      const candidate = cleanedName + vonBis;
+      if (candidate !== nameRow.name) updatedName = candidate;
+    }
   }
 
   await db
