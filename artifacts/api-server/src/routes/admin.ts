@@ -727,6 +727,62 @@ router.get("/admin/routes", async (req, res): Promise<void> => {
   }
 });
 
+// DELETE /admin/routes/all — löscht ALLE Routen (für Prod-Sync von Dev)
+router.delete("/admin/routes/all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const result = await db.delete(externalRoutesTable);
+    res.json({ ok: true, message: "Alle Routen gelöscht" });
+  } catch (err) {
+    req.log.error({ err }, "routes/all delete fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// POST /admin/routes/bulk-insert — fügt einen Batch von Routen ein (für Prod-Sync von Dev)
+router.post("/admin/routes/bulk-insert", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = req.body as Array<Record<string, unknown>>;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      res.status(400).json({ error: "Leeres oder ungültiges Array" });
+      return;
+    }
+    const values = rows.map((r) => ({
+      id: String(r.id),
+      sagaId: String(r.saga_id ?? ""),
+      canton: String(r.canton ?? ""),
+      cantons: Array.isArray(r.cantons) ? r.cantons as string[] : [],
+      name: String(r.name ?? ""),
+      ref: r.ref != null ? String(r.ref) : null,
+      distanceKm: Number(r.distance_km ?? 0),
+      distanceTagKm: r.distance_tag_km != null ? Number(r.distance_tag_km) : null,
+      ascentM: Number(r.ascent_m ?? 0),
+      maxElevationM: Number(r.max_elevation_m ?? 0),
+      minutes: Number(r.minutes ?? 0),
+      sac: String(r.sac ?? "unbekannt"),
+      terrain: String(r.terrain ?? ""),
+      lat: Number(r.lat ?? 0),
+      lng: Number(r.lng ?? 0),
+      geometry: r.geometry as object,
+      geometryVersion: Number(r.geometry_version ?? 0),
+      source: String(r.source ?? ""),
+      featured: Boolean(r.featured ?? false),
+      photoUrl: r.photo_url != null ? String(r.photo_url) : null,
+      photoAttribution: r.photo_attribution != null ? String(r.photo_attribution) : null,
+      routeType: r.route_type != null ? String(r.route_type) : null,
+      isEtappe: Boolean(r.is_etappe ?? false),
+      description: r.description != null ? String(r.description) : null,
+      descriptionSource: r.description_source != null ? String(r.description_source) : null,
+    }));
+    await db.insert(externalRoutesTable).values(values);
+    res.json({ ok: true, inserted: values.length });
+  } catch (err) {
+    req.log.error({ err }, "routes/bulk-insert fehlgeschlagen");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // PATCH /admin/routes/:id/featured – Featured-Flag toggeln
 router.patch("/admin/routes/:id/featured", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
