@@ -164,7 +164,7 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
         ? { lat: filter.nearLat, lng: filter.nearLng }
         : null;
     // Etappen-Labels für Routen mit gleichem ref UND gleichem Namen (kein "Etappe" drin):
-    // z.B. 4× "60 ViaRhenana" in Aargau → "60 ViaRhenana Etappe 1" … "Etappe 4"
+    // z.B. 4× "60 Via Rhenana" in Aargau → "60 Via Rhenana Etappe 1" … "Etappe 4"
     // Sortierung innerhalb der Gruppe: längste zuerst (= Hauptetappe = Etappe 1).
     const refGroups = new Map<string, ExternalRouteRow[]>();
     for (const row of rows) {

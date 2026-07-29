@@ -1500,3 +1500,128 @@ export async function fetchOsmRelationTags(
   }
   return results;
 }
+
+/**
+ * Gibt alle direkten Unter-Relationen einer OSM-Route zurück, die als
+ * Wanderroute (route=hiking/foot) getaggt sind — also die echten Etappen.
+ */
+export async function fetchSubRelations(
+  osmId: number,
+  log: Logger,
+): Promise<{ results: { osmId: number; name: string | null; ref: string | null; network: string | null }[]; overpassOk: boolean }> {
+  const query = `[out:json][timeout:50];relation(${osmId});rel(r)[route~"^(hiking|foot)$"];out tags;`;
+  let overpassOk = true;
+  const elements = await runOverpass<OverpassTagsElement>(query, 55_000).catch((err) => {
+    log.warn({ err, osmId }, "fetchSubRelations: Overpass-Fehler");
+    overpassOk = false;
+    return [] as OverpassTagsElement[];
+  });
+  return {
+    overpassOk,
+    results: elements.map((el) => {
+      const t = el.tags ?? {};
+      return {
+        osmId: el.id,
+        name: t.name ?? t["name:de"] ?? null,
+        ref: t.ref ?? null,
+        network: t.network ?? null,
+      };
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Wikipedia Etappen-Fallback
+// ---------------------------------------------------------------------------
+
+export interface WikiEtappe {
+  nr: number;
+  from: string;
+  to: string;
+  distKm: number | null;
+}
+
+function stripWikiLinks(text: string): string {
+  // [[Ziel|Anzeige]] → Anzeige  /  [[Ziel]] → Ziel
+  return text.replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, (_, inner) => inner.split("|").pop()!);
+}
+
+/**
+ * Lädt die Wikipedia-Etappen-Sektion für einen Schweizer Wanderweg.
+ * articleTitle: z. B. "Via Rhenana" oder "Via Sbrinz"
+ */
+export async function fetchWikiEtappen(articleTitle: string, log: Logger): Promise<WikiEtappe[]> {
+  const url =
+    `https://de.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(articleTitle)}` +
+    `&prop=wikitext&format=json`;
+  let wikitext = "";
+  try {
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "SagaTrail/1.0" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!resp.ok) return [];
+    const data = (await resp.json()) as Record<string, unknown>;
+    wikitext =
+      ((data?.parse as Record<string, unknown>)?.wikitext as Record<string, string>)?.["*"] ?? "";
+  } catch (err) {
+    log.warn({ err, articleTitle }, "fetchWikiEtappen: Abruf fehlgeschlagen");
+    return [];
+  }
+
+  // Etappen-Sektion isolieren
+  const etappenMatch = wikitext.match(/==\s*Etappen\s*==\s*([\s\S]*?)(?:\n==|$)/);
+  if (!etappenMatch) return [];
+
+  const results: WikiEtappe[] = [];
+  let nr = 0;
+  for (const rawLine of etappenMatch[1].split("\n")) {
+    // Wikilinks, Templates, HTML-Entities (&nbsp; etc.) bereinigen
+    const line = stripWikiLinks(rawLine)
+      .replace(/\{\{[^{}]*\}\}/g, "")   // Templates wie {{Bruch|4|3|4}}
+      .replace(/&nbsp;/g, " ")
+      .replace(/&[a-z]+;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    // Format 1: # Von – Bis: Xkm   Format 2: * Etappe N: Zwischen–... –Ziel: Xkm
+    const m = line.match(
+      /^[#*]\s*(?:Etappe\s+\d+:\s*)?(.+?):\s*(\d+(?:[.,]\d+)?)\s*(?:Kilometer|km)/i,
+    );
+    if (!m) continue;
+    nr++;
+    const vonBis = m[1].trim();
+    // Em-dash, en-dash oder " - " als Trennzeichen
+    const parts = vonBis.split(/\s*(?:[–—]|-(?=\s))\s*/);
+    const from = parts[0].replace(/^\*+\s*/, "").trim();
+    const to = parts[parts.length - 1].trim();
+    const distKm = parseFloat(m[2].replace(",", "."));
+    if (from && to && from !== to) {
+      results.push({ nr, from, to, distKm: isNaN(distKm) ? null : distKm });
+    }
+  }
+  log.info({ articleTitle, etappen: results.length }, "fetchWikiEtappen: geparst");
+  return results;
+}
+
+/**
+ * Sucht in OSM nach einer Wanderrouten-Relation mit passenden from/to-Tags
+ * (Schweiz-Bounding-Box).  Gibt gefundene OSM-IDs zurück.
+ */
+export async function searchOsmRouteByFromTo(
+  from: string,
+  to: string,
+  log: Logger,
+): Promise<number[]> {
+  const safe = (s: string) => s.replace(/['"\\]/g, "").trim();
+  const query =
+    `[out:json][timeout:30][bbox:45.8,5.95,47.85,10.5];` +
+    `relation[route~"hiking|foot"][from~"${safe(from)}",i][to~"${safe(to)}",i];` +
+    `out ids tags;`;
+  try {
+    const elements = await runOverpass<OverpassTagsElement>(query, 35_000);
+    return elements.map((e) => e.id);
+  } catch (err) {
+    log.warn({ err, from, to }, "searchOsmRouteByFromTo: Fehler");
+    return [];
+  }
+}

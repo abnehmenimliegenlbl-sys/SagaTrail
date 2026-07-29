@@ -616,7 +616,7 @@ export async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow
  * in den Cache. Kandidaten ausserhalb des plausiblen Laengenfensters
  * (MIN_KM..MAX_KM) entfallen.
  */
-async function enrichAndStore(
+export async function enrichAndStore(
   canton: string,
   osmIds: number[],
   log: Logger,
@@ -830,9 +830,9 @@ async function enrichAndStore(
  * Kantonen auch kurze lokale Routen in die Auswahl gelangen.
  */
 // Mindestanzahl frischer DB-Routen, ab der der Overpass-Index-Aufruf
-// uebersprungen wird. 8 reicht: kleine Kantone (z.B. Basel-Stadt) haben
-// oft nur 10–12 Routen total — der Shortcut muss auch dort greifen.
-const DB_SHORTCUT_MIN = 8;
+// uebersprungen wird. 50 = erst wenn ein Kanton gut befüllt ist keinen
+// neuen OSM-Abruf machen.
+const DB_SHORTCUT_MIN = 50;
 
 export async function getCantonRoutes(
   canton: string,
@@ -924,6 +924,30 @@ export async function getCantonRoutes(
     await renumberKRoutes(canton, log).catch((err) =>
       log.warn({ err, canton }, "renumberKRoutes fehlgeschlagen"),
     );
+    // Placeholder bereinigen: falls eine neue osm-* Route dieselbe ref hat wie
+    // ein bestehender Placeholder, wird der Placeholder gelöscht — er hat seinen
+    // Zweck erfüllt. schweizmobil-* bleiben unberührt.
+    await db
+      .delete(externalRoutesTable)
+      .where(
+        and(
+          sql`${externalRoutesTable.id} LIKE 'placeholder-%'`,
+          eq(externalRoutesTable.canton, canton),
+          isNotNull(externalRoutesTable.ref),
+          sql`${externalRoutesTable.ref} IN (
+            SELECT ref FROM ${externalRoutesTable}
+            WHERE id LIKE 'osm-%'
+              AND canton = ${canton}
+              AND ref IS NOT NULL
+          )`,
+        ),
+      )
+      .execute()
+      .then(({ rowCount }) => {
+        if ((rowCount ?? 0) > 0)
+          log.info({ canton, rowCount }, "Placeholder durch echte OSM-Routen ersetzt und gelöscht");
+      })
+      .catch((err) => log.warn({ err, canton }, "Placeholder-Cleanup fehlgeschlagen"));
   }
 
   const stored = await loadCachedRoutes(canton);
@@ -984,13 +1008,18 @@ async function warmAllCantonCachesInner(log: Logger): Promise<void> {
   }
 }
 
-function millisUntilNext2amUtc(): number {
+/** Millisekunden bis zur nächsten 02:00 Uhr MEZ/MESZ (Europe/Zurich). */
+function millisUntilNext2amMez(): number {
   const now = new Date();
-  const next = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 2, 0, 0, 0),
-  );
-  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
-  return next.getTime() - now.getTime();
+  // Zurich-Wanduhr als "UTC-Fake" parsen: toLocaleString gibt die lokale Uhrzeit
+  // in Zürich zurück, new Date() interpretiert sie als UTC → getTime() ist falsch
+  // absolut, aber getHours/getDate stimmen mit der Zürich-Wanduhr überein.
+  const zurichWall = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Zurich" }));
+  const offsetMs = now.getTime() - zurichWall.getTime(); // UTC-Offset in ms (negativ im Sommer)
+  const target = new Date(zurichWall);
+  target.setHours(2, 0, 0, 0);
+  if (target <= zurichWall) target.setDate(target.getDate() + 1);
+  return target.getTime() + offsetMs - now.getTime();
 }
 
 /**
@@ -1019,7 +1048,7 @@ export function startDailyCantonSync(): void {
   };
 
   const scheduleNext = () => {
-    const delay = millisUntilNext2amUtc();
+    const delay = millisUntilNext2amMez();
     log.info({ inMinutes: Math.round(delay / 60_000) }, "Naechster Kanton-Sync geplant");
     setTimeout(() => {
       void runSync();

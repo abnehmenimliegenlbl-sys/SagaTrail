@@ -57,6 +57,19 @@ export function parseRouteName(name: string): WegweiserDaten {
     }
   }
 
+  // Sonderfall: Name beginnt direkt mit "Etappe N: A – B" (wiki-* Platzhalter)
+  // → Etappennummer ins grüne Feld, Strecke in die zweite Zeile
+  const etappeStart = rest.match(/^(Etappe\s+(\d+))\s*[:\s]\s*(.+?)\s*[-–]\s*(.+)$/i);
+  if (etappeStart && !nummer) {
+    return {
+      nummer: etappeStart[2],
+      kategorie: null,
+      titel: etappeStart[1],
+      etappe: null,
+      strecke: `${etappeStart[3].trim()} – ${etappeStart[4].trim()}`,
+    };
+  }
+
   // Etappe herauslösen
   let etappe: string | null = null;
   const e = rest.match(/^(.*?)\s+((?:Etappe|Étape|Etape|Tappa)\s+\d+[a-z]?)\s*(.*)$/i);

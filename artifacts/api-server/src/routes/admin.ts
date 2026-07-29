@@ -21,8 +21,9 @@ import { clearNarrationCache } from "../lib/narrationCache";
 import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute } from "../lib/routeService";
-import { fetchOsmRelationTags } from "../lib/overpass";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore } from "../lib/routeService";
+import { reverseGeocode } from "../lib/geocoding";
+import { fetchOsmRelationTags, fetchSubRelations, fetchWikiEtappen, searchOsmRouteByFromTo } from "../lib/overpass";
 import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
@@ -1787,7 +1788,7 @@ router.post("/admin/routes/prune", async (req, res): Promise<void> => {
  */
 let enrichAllLaeuft = false;
 // Manuell auf true setzen um den Loop zu pausieren (z.B. bei Daten-Korrekturen).
-let enrichAllPaused = true;
+let enrichAllPaused = false;
 
 /**
  * Startet den Enrich-All-Hintergrundlauf, falls noch Routen offen sind.
@@ -2843,6 +2844,612 @@ router.post("/admin/routes/lwn-ref-dryrun", async (req, res): Promise<void> => {
     mitLwnRef: found.length,
     beispiele: found.slice(0, 10),
   });
+});
+
+/**
+ * POST /admin/routes/fetch-etappen
+ * Prüft alle rwn/nwn-Elternrouten (is_etappe=FALSE) ob OSM direkte
+ * Unter-Relationen (Etappen) kennt, die wir noch nicht haben, und
+ * speichert diese — inkl. is_etappe=TRUE Markierung.
+ * Läuft im Hintergrund; Fortschritt per GET /admin/routes/fetch-etappen-status.
+ */
+let fetchEtappenLaeuft = false;
+const fetchEtappenStatus = { laufend: false, geprueft: 0, gefunden: 0, gespeichert: 0, fehler: 0 };
+
+router.get("/admin/routes/fetch-etappen-status", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(fetchEtappenStatus);
+});
+
+router.post("/admin/routes/fetch-etappen", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (fetchEtappenLaeuft) {
+    res.json({ ok: false, message: "Läuft bereits", status: fetchEtappenStatus });
+    return;
+  }
+  fetchEtappenLaeuft = true;
+  fetchEtappenStatus.laufend = true;
+  fetchEtappenStatus.geprueft = 0;
+  fetchEtappenStatus.gefunden = 0;
+  fetchEtappenStatus.gespeichert = 0;
+  fetchEtappenStatus.fehler = 0;
+  res.json({ ok: true, message: "Gestartet — Status via GET /admin/routes/fetch-etappen-status" });
+
+  const log: Logger = req.log;
+
+  (async () => {
+    try {
+      // Alle rwn/nwn Elternrouten ohne eigene Etappen-Markierung holen
+      const eltern = await db
+        .select({ id: externalRoutesTable.id, canton: externalRoutesTable.canton, name: externalRoutesTable.name, routeType: externalRoutesTable.routeType })
+        .from(externalRoutesTable)
+        .where(
+          and(
+            sql`${externalRoutesTable.routeType} IN ('rwn', 'nwn')`,
+            eq(externalRoutesTable.isEtappe, false),
+            sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+          ),
+        );
+
+      // Bekannte OSM-IDs vorab laden — kein Doppel-Insert
+      const bekannteIds = new Set(
+        (await db.select({ id: externalRoutesTable.id }).from(externalRoutesTable)).map((r) => r.id),
+      );
+
+      /** Statische Mapping-Tabelle: rwn-Nummer → exakter Wikipedia-Artikeltitel.
+       *  Quelle: de.wikipedia.org/wiki/Schweizer_Wanderwege, Sektion 13. */
+      const RWN_WIKI: Record<string, string> = {
+        "22": "Kulturspur Appenzellerland",
+        "23": "Senda Scuol–Samnaun",
+        "24": "Thurweg",
+        "25": "Senda Segantini",
+        "26": "Panorama Rundweg Thunersee",
+        "27": "Swiss Tour Monte Rosa",
+        "29": "Pragelpass-Weg",
+        "30": "Via Valtellina",
+        "31": "Chemin du Jura",
+        "32": "ViaSurprise",
+        "33": "Via Albula/Bernina",
+        "34": "Klettgau-Rhein-Weg",
+        "35": "Walserweg Graubünden",
+        "36": "Chemin du vignoble",
+        "37": "Berner Voralpenweg",
+        "38": "ViaBerna",
+        "39": "Aletsch-Panoramaweg",
+        "40": "Via Sbrinz",
+        "42": "Aargauer Weg",
+        "43": "Jakobsweg Graubünden",
+        "44": "Appenzeller Weg",
+        "45": "Nationalpark-Panoramaweg",
+        "46": "Tour des Alpes Vaudoises",
+        "47": "Zürich-Zugerland-Panoramaweg",
+        "48": "Toggenburger Höhenweg",
+        "49": "Vier-Quellen-Weg",
+        "50": "Via Spluga",
+        "51": "Furka-Höhenweg",
+        "52": "Sentiero Lago di Lugano",
+        "53": "Bernina-Tour",
+        "54": "Mittelbünden-Panoramaweg",
+        "55": "Via Suworow",
+        "56": "Lötschberg-Panoramaweg",
+        "57": "Obwaldner Höhenweg",
+        "58": "Chemin des Bisses",
+        "59": "Sentiero Cristallina",
+        "60": "Via Rhenana",
+        "61": "Walliser Sonnenweg",
+        "63": "Schwyzer Höhenweg",
+        "64": "ViaSett",
+        "65": "Grenzpfad Napfbergland",
+        "66": "Liechtensteiner Panoramaweg",
+        "67": "Dreiland-Wanderweg",
+        "68": "WALSA-Weg",
+        "69": "Züri Oberland-Höhenweg",
+        "70": "Via Francigena",
+        "71": "Chemin des Trois-Lacs",
+        "72": "Prättigauer Höhenweg",
+        "73": "Sardona-Welterbe-Weg",
+        "74": "Sentiero Verzasca",
+        "76": "Seeland-Solothurn-Weg",
+        "78": "Freiburger Voralpenweg",
+        "79": "Thurgauer Panoramaweg",
+        "80": "ViaJura",
+        "81": "Fribourg en diagonale",
+        "82": "Sanetsch-Muveran-Weg",
+        "84": "Zürichsee-Rundweg",
+        "85": "Senda Sursilvana",
+        "86": "Rheintaler Höhenweg",
+        "87": "Via Engiadina",
+        "88": "Nidwaldner Höhenweg",
+        "90": "Via Stockalper",
+        "91": "Chemin du Jura bernois",
+        "95": "Au fil du Doubs",
+        "98": "Waldstätterweg",
+        "99": "Weg der Schweiz",
+      };
+
+      /** Wikipedia-Artikeltitel aus DB-Routenname ableiten.
+       *  Zuerst statische Map per Routennummer (zuverlässig),
+       *  Fallback: Zahl-Prefix abschneiden.
+       */
+      function wikiTitelAus(routeName: string | null): string {
+        if (!routeName) return "";
+        const nrMatch = routeName.match(/^(\d{1,3})\s+/);
+        if (nrMatch) {
+          const titel = RWN_WIKI[nrMatch[1]];
+          if (titel) return titel;
+        }
+        // Fallback: nur Zahl-Prefix abschneiden
+        return routeName.replace(/^\d{1,3}\s+/, "").trim();
+      }
+
+      /** Enrich-Hilfsfunktion: OSM-IDs einpflegen + is_etappe setzen */
+      async function enrichEtappenIds(canton: string | null, osmIds: number[]): Promise<void> {
+        if (osmIds.length === 0) return;
+        await enrichAndStore(canton ?? "CH", osmIds, log, { skipPhotos: false });
+        const ids = osmIds.map((id) => `osm-${id}`);
+        await db
+          .update(externalRoutesTable)
+          .set({ isEtappe: true })
+          .where(sql`${externalRoutesTable.id} = ANY(${ids})`)
+          .execute();
+        fetchEtappenStatus.gespeichert += osmIds.length;
+        ids.forEach((id) => bekannteIds.add(id));
+      }
+
+      for (const parent of eltern) {
+        const osmId = parseInt(parent.id.replace("osm-", ""), 10);
+        if (isNaN(osmId)) continue;
+        fetchEtappenStatus.geprueft++;
+
+        // ── 1. OSM Sub-Relationen ─────────────────────────────────────────
+        const { results: subs, overpassOk } = await fetchSubRelations(osmId, log);
+        await new Promise((r) => setTimeout(r, 1_500)); // Overpass schonen
+
+        const neuOsm = subs.filter((s) => !bekannteIds.has(`osm-${s.osmId}`));
+        if (neuOsm.length > 0) {
+          fetchEtappenStatus.gefunden += neuOsm.length;
+          log.info({ parent: parent.id, neuEtappen: neuOsm.length }, "fetch-etappen: OSM Etappen gefunden");
+          try {
+            await enrichEtappenIds(parent.canton, neuOsm.map((s) => s.osmId));
+          } catch (err) {
+            fetchEtappenStatus.fehler++;
+            log.warn({ err, parent: parent.id }, "fetch-etappen: enrichAndStore (OSM) fehlgeschlagen");
+          }
+          continue; // OSM hat geliefert — kein Wikipedia-Fallback nötig
+        }
+
+        // ── 2. Wikipedia-Fallback ────────────────────────────────────────
+        const wikiTitel = wikiTitelAus(parent.name);
+        if (!wikiTitel) continue;
+
+        const etappen = await fetchWikiEtappen(wikiTitel, log);
+        if (etappen.length === 0) {
+          log.info({ parent: parent.id, wikiTitel }, "fetch-etappen: kein Wikipedia-Eintrag gefunden");
+          continue;
+        }
+
+        log.info({ parent: parent.id, wikiTitel, etappen: etappen.length, overpassOk }, "fetch-etappen: Wikipedia-Fallback");
+        const wikiOsmIds: number[] = [];
+
+        // OSM from/to-Suche nur wenn Overpass erreichbar war — sonst direkt Platzhalter
+        if (overpassOk) {
+          for (const etappe of etappen) {
+            await new Promise((r) => setTimeout(r, 1_200)); // Overpass schonen
+            const gefunden = await searchOsmRouteByFromTo(etappe.from, etappe.to, log);
+            for (const id of gefunden) {
+              if (!bekannteIds.has(`osm-${id}`) && !wikiOsmIds.includes(id)) {
+                wikiOsmIds.push(id);
+              }
+            }
+          }
+        }
+
+        if (wikiOsmIds.length > 0) {
+          // OSM hat passende Relationen geliefert → normal enrich
+          fetchEtappenStatus.gefunden += wikiOsmIds.length;
+          log.info({ parent: parent.id, wikiTitel, wikiOsmIds }, "fetch-etappen: Wikipedia→OSM Etappen gefunden");
+          try {
+            await enrichEtappenIds(parent.canton, wikiOsmIds);
+          } catch (err) {
+            fetchEtappenStatus.fehler++;
+            log.warn({ err, parent: parent.id }, "fetch-etappen: enrichAndStore (Wiki) fehlgeschlagen");
+          }
+          continue;
+        }
+
+        // OSM nicht erreichbar / keine Treffer → Wiki-Daten direkt als Platzhalter speichern
+        const neuWikiEtappen = etappen.filter(
+          (e) => !bekannteIds.has(`wiki-${osmId}-${e.nr}`),
+        );
+        if (neuWikiEtappen.length === 0) continue;
+
+        log.info(
+          { parent: parent.id, wikiTitel, anzahl: neuWikiEtappen.length },
+          "fetch-etappen: Wikipedia-Platzhalter direkt gespeichert",
+        );
+
+        for (const e of neuWikiEtappen) {
+          const wikiId = `wiki-${osmId}-${e.nr}`;
+          const distKm = e.distKm ?? 10;
+          try {
+            await db
+              .insert(externalRoutesTable)
+              .values({
+                id: wikiId,
+                sagaId: parent.id, // Elternroute als Sagen-Anker
+                canton: "", // wird per slice-wiki-etappen vom Startpunkt gesetzt
+                name: `${parent.name.match(/^(\d{1,3})\s+/)?.[1] ?? ""} ${wikiTitel} Etappe ${e.nr} ${e.from} – ${e.to}`.trimStart(),
+                distanceKm: distKm,
+                distanceTagKm: e.distKm ?? null,
+                ascentM: 0,
+                maxElevationM: 0,
+                minutes: Math.round((distKm / 4) * 60), // ~4 km/h
+                sac: "unbekannt",
+                terrain: "Wanderweg",
+                lat: 0,
+                lng: 0,
+                geometry: [],
+                source: "wiki",
+                routeType: parent.routeType ?? "rwn",
+                isEtappe: true,
+              })
+              .onConflictDoNothing()
+              .execute();
+            bekannteIds.add(wikiId);
+            fetchEtappenStatus.gefunden++;
+            fetchEtappenStatus.gespeichert++;
+          } catch (err) {
+            fetchEtappenStatus.fehler++;
+            log.warn({ err, wikiId }, "fetch-etappen: Wiki-Platzhalter Insert fehlgeschlagen");
+          }
+        }
+      }
+      log.info(fetchEtappenStatus, "fetch-etappen: abgeschlossen");
+    } finally {
+      fetchEtappenStatus.laufend = false;
+      fetchEtappenLaeuft = false;
+    }
+  })().catch((err) => {
+    log.error({ err }, "fetch-etappen: unerwarteter Fehler");
+    fetchEtappenStatus.laufend = false;
+    fetchEtappenLaeuft = false;
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /admin/routes/slice-wiki-etappen
+// Schneidet die Geometrie der Elternroute für wiki-* Platzhalter-Etappen zu.
+// Benutzt SBB-Bahnhof-Koordinaten (transport.opendata.ch) als Schnittpunkte,
+// fällt auf Nominatim (Stadtmitte) zurück, falls kein Bahnhof gefunden.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const OPENDATA_BASE_ADMIN = "https://transport.opendata.ch/v1";
+const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
+
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+/** Normalisiert einen Geometrie-Punkt zu [lat, lng] */
+function toLatLng(pt: unknown): [number, number] | null {
+  if (Array.isArray(pt) && pt.length >= 2) return [Number(pt[0]), Number(pt[1])];
+  if (pt && typeof pt === "object") {
+    const o = pt as Record<string, number>;
+    if ("lat" in o && "lng" in o) return [o.lat, o.lng];
+  }
+  return null;
+}
+
+/** Nächster Index in geometry ab startFrom */
+function nearestIdx(geom: [number, number][], lat: number, lng: number, startFrom = 0): number {
+  let best = startFrom;
+  let bestDist = Infinity;
+  for (let i = startFrom; i < geom.length; i++) {
+    const d = haversineKm(lat, lng, geom[i][0], geom[i][1]);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/** Koordinaten via SBB-Bahnhof oder Nominatim */
+async function geocodeCity(
+  city: string,
+  log: Logger,
+): Promise<{ lat: number; lng: number; via: string } | null> {
+  // 1. SBB Hauptbahnhof
+  try {
+    const url = `${OPENDATA_BASE_ADMIN}/locations?query=${encodeURIComponent(city)}&type=station`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (res.ok) {
+      const json = (await res.json()) as {
+        stations: Array<{
+          id: string | null;
+          name: string;
+          coordinate: { x: number; y: number } | null;
+        }>;
+      };
+      // Priorisiere Schweizer Bahnhöfe (ID beginnt mit 85)
+      const candidates = (json.stations ?? []).filter(
+        (s): s is typeof s & { id: string; coordinate: { x: number; y: number } } =>
+          !!s.id && /^\d+$/.test(s.id) && !!s.coordinate,
+      );
+      const best =
+        candidates.find((s) => s.id.startsWith("85")) ??
+        candidates.find((s) => s.id.startsWith("8")) ??
+        candidates[0];
+      if (best) {
+        return { lat: best.coordinate.x, lng: best.coordinate.y, via: `SBB:${best.name}` };
+      }
+    }
+  } catch (_e) {
+    /* weiter zu Nominatim */
+  }
+
+  // 2. Nominatim (Stadtmitte)
+  await new Promise((r) => setTimeout(r, 1100)); // Rate-Limit 1/s
+  try {
+    const url = `${NOMINATIM_BASE}?q=${encodeURIComponent(city + " Schweiz")}&format=json&limit=1&countrycodes=ch,de,at,li`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      headers: { "User-Agent": "SagaTrail/1.0 (admin slice-etappen)" },
+    });
+    if (res.ok) {
+      const json = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
+      if (json[0]) {
+        return {
+          lat: parseFloat(json[0].lat),
+          lng: parseFloat(json[0].lon),
+          via: `Nominatim:${json[0].display_name.split(",")[0]}`,
+        };
+      }
+    }
+  } catch (_e) {
+    /* nichts gefunden */
+  }
+
+  log.warn({ city }, "slice-wiki: Geocoding fehlgeschlagen");
+  return null;
+}
+
+/** Parst "Etappe N: FROM – TO" → { nr, from, to } */
+function parseEtappeName(name: string): { nr: number; from: string; to: string } | null {
+  const m = name.match(/^Etappe\s+(\d+):\s*(.+?)\s*[–\-]\s*(.+)$/);
+  if (!m) return null;
+  return { nr: parseInt(m[1], 10), from: m[2].trim(), to: m[3].trim() };
+}
+
+let sliceWikiLaeuft = false;
+let sliceWikiStatus: {
+  laufend: boolean;
+  geprueft: number;
+  aktualisiert: number;
+  uebersprungen: number;
+  fehler: number;
+} = { laufend: false, geprueft: 0, aktualisiert: 0, uebersprungen: 0, fehler: 0 };
+
+router.get("/admin/routes/slice-wiki-etappen-status", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(sliceWikiStatus);
+});
+
+router.post("/admin/routes/slice-wiki-etappen", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  if (sliceWikiLaeuft) {
+    return res.status(409).json({ error: "Läuft bereits", status: sliceWikiStatus });
+  }
+  sliceWikiLaeuft = true;
+  sliceWikiStatus = { laufend: true, geprueft: 0, aktualisiert: 0, uebersprungen: 0, fehler: 0 };
+  res.json({ gestartet: true });
+
+  const log: Logger = req.log;
+
+  (async () => {
+    try {
+      // 1. Alle wiki-* Routen mit leerer Geometrie laden
+      const wikiRouten = await db
+        .select({
+          id: externalRoutesTable.id,
+          name: externalRoutesTable.name,
+          sagaId: externalRoutesTable.sagaId,
+        })
+        .from(externalRoutesTable)
+        .where(
+          and(
+            sql`${externalRoutesTable.id} LIKE 'wiki-%'`,
+            sql`(${externalRoutesTable.geometry}::jsonb = '[]'::jsonb OR ${externalRoutesTable.lat} = 0)`,
+          ),
+        );
+
+      // 2. Elternrouten-Geometrien laden
+      const parentIds = [...new Set(wikiRouten.map((r) => r.sagaId).filter(Boolean))] as string[];
+      const parents = await db
+        .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry })
+        .from(externalRoutesTable)
+        .where(sql`${externalRoutesTable.id} = ANY(ARRAY[${sql.raw(
+          parentIds.map((id) => `'${id.replace(/'/g, "''")}'`).join(","),
+        )}])`);
+
+      const parentGeom = new Map<string, [number, number][]>();
+      for (const p of parents) {
+        if (!p.geometry || !Array.isArray(p.geometry) || (p.geometry as unknown[]).length === 0)
+          continue;
+        const pts: [number, number][] = [];
+        for (const raw of p.geometry as unknown[]) {
+          const pt = toLatLng(raw);
+          if (pt) pts.push(pt);
+        }
+        if (pts.length > 1) parentGeom.set(p.id, pts);
+      }
+
+      // 3. Gruppiert nach Elternroute, sortiert nach Etappennummer
+      const grouped = new Map<string, typeof wikiRouten>();
+      for (const r of wikiRouten) {
+        if (!r.sagaId) continue;
+        if (!grouped.has(r.sagaId)) grouped.set(r.sagaId, []);
+        grouped.get(r.sagaId)!.push(r);
+      }
+
+      for (const [parentId, etappen] of grouped) {
+        const geom = parentGeom.get(parentId); // kann null sein → reiner Geocoding-Modus
+
+        // Etappen nach Nummer sortieren
+        const sortiert = etappen
+          .map((e) => ({ ...e, parsed: parseEtappeName(e.name ?? "") }))
+          .filter((e): e is typeof e & { parsed: NonNullable<typeof e.parsed> } => !!e.parsed)
+          .sort((a, b) => a.parsed.nr - b.parsed.nr);
+
+        // ── Richtungserkennung (nur wenn Elterngeometrie vorhanden) ──────────
+        let arbeitsGeom: [number, number][] | null = geom ?? null;
+        if (arbeitsGeom && sortiert.length > 0) {
+          const ersteEtappe = sortiert[0].parsed;
+          const erstFromCoord = await geocodeCity(ersteEtappe.from, log);
+          if (erstFromCoord) {
+            const distZumAnfang = haversineKm(
+              erstFromCoord.lat, erstFromCoord.lng,
+              arbeitsGeom[0][0], arbeitsGeom[0][1],
+            );
+            const distZumEnde = haversineKm(
+              erstFromCoord.lat, erstFromCoord.lng,
+              arbeitsGeom[arbeitsGeom.length - 1][0], arbeitsGeom[arbeitsGeom.length - 1][1],
+            );
+            if (distZumEnde < distZumAnfang) {
+              arbeitsGeom = [...arbeitsGeom].reverse();
+              log.info(
+                { parentId, distZumAnfang: distZumAnfang.toFixed(2), distZumEnde: distZumEnde.toFixed(2) },
+                "slice-wiki: Geometrie umgekehrt (Etappen laufen gegen Geometrie-Richtung)",
+              );
+            }
+          }
+        } else if (!arbeitsGeom) {
+          log.info({ parentId }, "slice-wiki: kein Elterngeometrie → reiner Geocoding-Modus (2-Punkte-Stubs)");
+        }
+
+        // Geocoding-Cache damit jede Stadt nur einmal abgefragt wird
+        const coordCache = new Map<string, { lat: number; lng: number; via: string } | null>();
+        const cachedGeocode = async (city: string) => {
+          if (!coordCache.has(city)) coordCache.set(city, await geocodeCity(city, log));
+          return coordCache.get(city)!;
+        };
+
+        let suchStartIdx = 0; // Monoton voranschreiten (nur bei vorhandener Geometrie relevant)
+
+        for (const etappe of sortiert) {
+          sliceWikiStatus.geprueft++;
+          const { from, to } = etappe.parsed;
+          log.info({ id: etappe.id, from, to }, "slice-wiki: geocodiere Schnittpunkte");
+
+          const fromCoord = await cachedGeocode(from);
+          const toCoord = await cachedGeocode(to);
+
+          if (!fromCoord || !toCoord) {
+            log.warn({ id: etappe.id, from, to }, "slice-wiki: Geocoding unvollständig – übersprungen");
+            sliceWikiStatus.uebersprungen++;
+            continue;
+          }
+
+          const straightLineDist = haversineKm(fromCoord.lat, fromCoord.lng, toCoord.lat, toCoord.lng);
+          let segment: [number, number][];
+          let usedFallback = false;
+
+          if (!arbeitsGeom) {
+            // Kein Elterngeometrie → direkt Geocoding-Stub
+            segment = [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]];
+            usedFallback = true;
+          } else {
+            const fromIdx = nearestIdx(arbeitsGeom, fromCoord.lat, fromCoord.lng, suchStartIdx);
+            const toIdx = nearestIdx(arbeitsGeom, toCoord.lat, toCoord.lng, fromIdx + 1);
+
+            if (fromIdx >= toIdx) {
+              segment = [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]];
+              usedFallback = true;
+            } else {
+              const candidate = arbeitsGeom.slice(fromIdx, toIdx + 1);
+              const candidateDist = (() => {
+                let d = 0;
+                for (let i = 1; i < candidate.length; i++)
+                  d += haversineKm(candidate[i-1][0], candidate[i-1][1], candidate[i][0], candidate[i][1]);
+                return d;
+              })();
+              // Wenn Segment << Luftlinie (< 30%), war Geometrie unvollständig → Stub ehrlicher
+              if (candidateDist < straightLineDist * 0.3 && straightLineDist > 2) {
+                segment = [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]];
+                usedFallback = true;
+              } else {
+                segment = candidate;
+                suchStartIdx = fromIdx;
+              }
+            }
+          }
+
+          const midPt = segment[Math.floor(segment.length / 2)];
+          const distKm = (() => {
+            if (usedFallback) return Math.round(straightLineDist * 10) / 10;
+            let d = 0;
+            for (let i = 1; i < segment.length; i++)
+              d += haversineKm(segment[i - 1][0], segment[i - 1][1], segment[i][0], segment[i][1]);
+            return Math.round(d * 10) / 10;
+          })();
+
+          // Kanton vom Startpunkt der Etappe (nicht vom Elternrouten-Kanton)
+          const geoResult = await reverseGeocode(fromCoord.lat, fromCoord.lng, log).catch(() => null);
+          const kantonVomStart = geoResult?.canton ?? null;
+
+          try {
+            await db
+              .update(externalRoutesTable)
+              .set({
+                geometry: segment as unknown as typeof externalRoutesTable.geometry._,
+                lat: midPt[0],
+                lng: midPt[1],
+                distanceKm: distKm > 0 ? distKm : undefined,
+                minutes: distKm > 0 ? Math.round((distKm / 4) * 60) : undefined,
+                ...(kantonVomStart ? { canton: kantonVomStart } : {}),
+              })
+              .where(eq(externalRoutesTable.id, etappe.id))
+              .execute();
+
+            sliceWikiStatus.aktualisiert++;
+            log.info(
+              {
+                id: etappe.id,
+                segPts: segment.length,
+                distKm,
+                usedFallback,
+                fromVia: fromCoord.via,
+                toVia: toCoord.via,
+              },
+              "slice-wiki: Geometrie gesetzt",
+            );
+          } catch (err) {
+            sliceWikiStatus.fehler++;
+            log.warn({ err, id: etappe.id }, "slice-wiki: DB-Update fehlgeschlagen");
+          }
+        }
+      }
+
+      log.info(sliceWikiStatus, "slice-wiki: abgeschlossen");
+    } finally {
+      sliceWikiStatus.laufend = false;
+      sliceWikiLaeuft = false;
+    }
+  })().catch((err) => {
+    log.error({ err }, "slice-wiki: unerwarteter Fehler");
+    sliceWikiStatus.laufend = false;
+    sliceWikiLaeuft = false;
+  });
+  return;
 });
 
 export default router;

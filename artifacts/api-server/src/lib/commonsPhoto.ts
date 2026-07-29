@@ -11,7 +11,7 @@ import type { Logger } from "pino";
 
 const COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php";
 const REQUEST_TIMEOUT_MS = 20000;
-const SUCH_RADIUS_M = 5000;
+const SUCH_RADIUS_M = 2000;
 const MAX_KANDIDATEN = 30;
 const THUMB_BREITE_PX = 800;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h — Fotos aendern sich kaum
@@ -169,6 +169,12 @@ function wirktWieFoto(titel: string, fuerSage = false): boolean {
     // Innenräume & Gebäude-Details
     "interior", "innen", "inside", "decke_",
     "ceiling", "fenster_", "window_", "tuer_", "door_",
+    // Gebäude & Stadtbilder (für Wanderrouten ungeeignet)
+    "building", "gebäude", "gebaude", "fassade", "facade",
+    "strasse", "straße", "street_", "_street", "gasse_", "_gasse",
+    "rathaus", "kirche_", "_kirche", "church_", "_church",
+    "haus_", "_haus", "_house", "house_",
+    "stadtblick", "stadtansicht", "innenstadt",
     // Portraits & Personenfotos
     "portrait", "porträt", "person_", "people_", "crowd_",
     // Dokumente & Objekte
@@ -236,6 +242,54 @@ function extrahiereSuchbegriff(query: string): string {
   );
   if (nomen.length < 2) return wörter.slice(-2).join(" ");
   return nomen.slice(-2).join(" ");
+}
+
+/**
+ * Zerlegt einen Routennamen in seine Bestandteile für die Commons-Suche.
+ * Gibt { start, ziel } zurück — start = Routenname + Startort,
+ *                                ziel  = Routenname + Zielort.
+ * Beispiel: "60 Via Rhenana Etappe 8 Laufenburg - Bad Säckingen"
+ *   → start: "Via Rhenana Laufenburg"  |  ziel: "Via Rhenana Bad Säckingen"
+ * Beispiel: "24 Thurweg Etappe 1 Wildhaus, Gamplüt - Nesslau"
+ *   → start: "Thurweg Wildhaus"         |  ziel: "Thurweg Nesslau"
+ * Beispiel: "K4 AG Fricktal-Rhein-Weg"
+ *   → start: "Fricktal-Rhein-Weg"       |  ziel: null (kein Von-Bis)
+ */
+function bautRouteSuchbegriffe(routeName: string): { start: string; ziel: string | null } {
+  // Führende Nummer entfernen
+  let name = routeName.replace(/^\d{1,3}\s+/, "").trim();
+  // K-Routen: "K4 AG Name" → "Name"
+  name = name.replace(/^K\d+\s+[A-Z]{2}\s+/, "").trim();
+  // "Etappe N " entfernen
+  name = name.replace(/\s+Etappe\s+\d+[a-z]?\s+/i, " ").trim();
+
+  // Reinen Routennamen (ohne Strecke) extrahieren
+  const teile = name.split(/\s+[-–]\s+/);
+  const vonTeil = teile[0]!.trim();
+  const bisTeil = teile[1]?.trim() ?? null;
+
+  // Routenname = alles vor dem ersten Grossbuchstaben-Wort das nach einem
+  // bekannten Trailnamen-Wort kommt — heuristisch: letztes Wort im vonTeil
+  // wenn vonTeil > 1 Wort: erster Teil ist Trailname, Rest ist Startort.
+  const vonWörter = vonTeil.split(/\s+/);
+  // Trailname: alle Wörter die NICHT ein Ortsname (Komma-bereinigt) sind —
+  // einfache Heuristik: nimm alles bis auf das letzte Wort als Trailname.
+  const trailname = vonWörter.length > 1
+    ? vonWörter.slice(0, -1).join(" ")
+    : vonTeil;
+  const startOrt = vonWörter.length > 1
+    ? vonWörter.at(-1)!.split(",")[0]!.trim()
+    : "";
+  const zielOrt = bisTeil ? bisTeil.split(",")[0]!.trim() : null;
+
+  const start = [trailname, startOrt].filter(Boolean).slice(0, 4).join(" ");
+  const ziel = zielOrt ? [trailname, zielOrt].filter(Boolean).slice(0, 4).join(" ") : null;
+  return { start, ziel };
+}
+
+/** Rückwärtskompatibel: gibt nur den Start-Suchbegriff zurück. */
+function bautRouteSuchbegriff(routeName: string): string {
+  return bautRouteSuchbegriffe(routeName).start;
 }
 
 async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> {
@@ -359,9 +413,8 @@ function wähleFoto(
       Number(b.passtZurSaison) - Number(a.passtZurSaison) ||
       a.index - b.index,
   );
-  // Bevorzugt ein Bild, das noch keine andere Route nutzt; wenn alle schon
-  // vergeben sind, ist der lokale Geo-Treffer dennoch akzeptabel (Nachbarrouten
-  // teilen sich legitim eine Gegend).
+  // Bevorzugt ein Bild das noch keine andere Route nutzt; wenn alle schon
+  // vergeben sind, ist der lokale Geo-Treffer dennoch akzeptabel.
   const gewaehlt = pool.find((k) => urlFreiFuer(k.url, schluessel)) ?? pool[0]!;
   urlVergeben(gewaehlt.url, schluessel);
   const attribution = [gewaehlt.autor, gewaehlt.lizenz, "Wikimedia Commons"]
@@ -492,14 +545,16 @@ export async function getCachedSagaPhoto(query: string, log: Logger): Promise<Ro
 /**
  * Laedt ein repraesentatives Foto fuer eine Wanderroute.
  *
- * Zwei-Phasen-Suche:
- * 1. Geosuche (5 km Radius) — nur Treffer mit Landschafts-Hinweis im Titel.
- * 2. Falls Phase 1 leer: Textsuche mit dem Routennamen (+ "Wanderweg"),
- *    damit Routen mit bekanntem Namen ein thematisch passendes Foto bekommen.
- * 3. Letzter Fallback: Geo-Ergebnis ohne Landschafts-Anforderung nehmen,
- *    sofern ueberhaupt etwas vorhanden ist.
+ * Strategie (benannte Routen — hat routeName):
+ * 1. Textsuche mit präzisem Suchbegriff aus Routenname + Startort
+ *    (z. B. "Via Rhenana Laufenburg Wanderweg") — Trail-spezifisch.
+ * 2. Geosuche (2 km Radius) — nur Treffer mit Landschafts-Hinweis.
+ * 3. Geo-Ergebnis ohne Landschafts-Anforderung (letzter Fallback).
  *
- * Der optionale `routeName`-Parameter aktiviert Phase 2.
+ * Lokale Routen ohne Namen: direkt Geosuche.
+ *
+ * Cache-Schluessel: routeName wenn vorhanden (jede Route bekommt ihr eigenes
+ * Foto), sonst Koordinatenraster (100 m).
  */
 export async function getCachedRoutePhoto(
   lat: number,
@@ -507,33 +562,48 @@ export async function getCachedRoutePhoto(
   log: Logger,
   routeName?: string,
 ): Promise<RoutePhoto> {
-  // Rasterung auf ~100 m, damit nahe Startpunkte denselben Cache-Schluessel teilen
-  const schluessel = `${lat.toFixed(3)}|${lng.toFixed(3)}`;
+  // Jede benannte Route bekommt ihren eigenen Cache-Schluessel —
+  // verhindert dass zwei Routen am gleichen Startpunkt dasselbe Foto teilen.
+  const schluessel = routeName
+    ? `name:${routeName.toLowerCase()}`
+    : `${lat.toFixed(3)}|${lng.toFixed(3)}`;
   const jetztMs = Date.now();
   const vorhanden = cache.get(schluessel);
   if (vorhanden && vorhanden.bisMs > jetztMs) return vorhanden.wert;
   try {
     const jetzt = new Date();
 
-    // Phase 1: Geosuche — streng (nur mit Landschafts-Hinweis)
+    // Phase 1 (nur bei benannten Routen): Textsuche mit Startort, dann Zielort.
+    // Bevorzugt Trail-Name + Ort, damit das Foto zur Route passt statt
+    // zum nächsten Gebäude innerhalb des Geo-Radius.
+    if (routeName) {
+      const { start: startBegriff, ziel: zielBegriff } = bautRouteSuchbegriffe(routeName);
+
+      // 1a: Startort
+      const startSeiten = await sucheCommonsFotosNachText(`${startBegriff} Wanderweg`);
+      const startFoto = wähleTextFoto(startSeiten, startBegriff, false, schluessel);
+      if (startFoto) {
+        cache.set(schluessel, { wert: startFoto, bisMs: jetztMs + CACHE_TTL_MS });
+        return startFoto;
+      }
+
+      // 1b: Zielort (falls vorhanden und Start nichts ergab)
+      if (zielBegriff) {
+        const zielSeiten = await sucheCommonsFotosNachText(`${zielBegriff} Wanderweg`);
+        const zielFoto = wähleTextFoto(zielSeiten, zielBegriff, false, schluessel);
+        if (zielFoto) {
+          cache.set(schluessel, { wert: zielFoto, bisMs: jetztMs + CACHE_TTL_MS });
+          return zielFoto;
+        }
+      }
+    }
+
+    // Phase 2: Geosuche (2 km Radius) — streng, nur mit Landschafts-Hinweis
     const geoSeiten = await sucheCommonsFotos(lat, lng);
     const geoFoto = wähleFoto(geoSeiten, jetzt, false, schluessel);
     if (geoFoto) {
       cache.set(schluessel, { wert: geoFoto, bisMs: jetztMs + CACHE_TTL_MS });
       return geoFoto;
-    }
-
-    // Phase 2: Textsuche mit Routenname (wenn verfügbar)
-    if (routeName) {
-      const suchbegriff = routeName.length > 30
-        ? routeName.split(/[·\-–]/)[0]!.trim()
-        : routeName;
-      const textSeiten = await sucheCommonsFotosNachText(`${suchbegriff} Wanderweg`);
-      const textFoto = wähleTextFoto(textSeiten, suchbegriff, false, schluessel);
-      if (textFoto) {
-        cache.set(schluessel, { wert: textFoto, bisMs: jetztMs + CACHE_TTL_MS });
-        return textFoto;
-      }
     }
 
     // Phase 3: Geo-Ergebnis ohne Landschafts-Anforderung (letzter Fallback)
