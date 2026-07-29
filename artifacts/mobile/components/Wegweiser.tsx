@@ -61,17 +61,31 @@ export function parseRouteName(name: string): WegweiserDaten {
   let etappe: string | null = null;
   const e = rest.match(/^(.*?)\s+((?:Etappe|Étape|Etape|Tappa)\s+\d+[a-z]?)\s*(.*)$/i);
   if (e) {
-    rest = e[1];
-    etappe = e[2];
-    var streckeRest = e[3]?.trim() || null;
-    return { nummer, kategorie, titel: rest.trim(), etappe, strecke: streckeRest };
+    let titel = e[1].trim();
+    const streckeRest = e[3]?.trim() || null;
+    // Wenn der Gesamtrouten-Name schon ein "Von – Bis" enthält (z.B.
+    // "Alpenpanorama-Weg Rorschach – Genève"), soll das NICHT im Titel
+    // der Etappe erscheinen — nur der Routenname ohne Strecke.
+    const outerVonBis = titel.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
+    if (outerVonBis && outerVonBis[1].trim().length >= 3) {
+      titel = outerVonBis[1].trim();
+    }
+    return { nummer, kategorie, titel, etappe: e[2], strecke: streckeRest };
   }
 
-  // "Name Von - Nach": letzte " A - B"-Sequenz als Strecke abtrennen,
-  // aber nur wenn davor noch ein Titel übrig bleibt.
-  const s = rest.match(/^(.+?)\s+([^-–]+\s[-–]\s.+)$/);
+  // "Name Von - Nach": letzte " A - B"-Sequenz als Strecke abtrennen.
+  // Greedy (.+) damit "Via Jura Basel - Biel" → titel="Via Jura", strecke="Basel - Biel"
+  // und nicht titel="Via", strecke="Jura Basel - Biel".
+  const s = rest.match(/^(.+)\s+([^-–]+\s[-–]\s.+)$/);
   if (s && s[1].length >= 3) {
-    return { nummer, kategorie, titel: s[1].trim(), etappe: null, strecke: s[2].trim() };
+    let titel = s[1].trim();
+    // Falls der Titel selbst noch ein "Von – Bis" enthält (z.B. "Alpenpanorama-Weg
+    // Rorschach – Genève"), nur den eigentlichen Routennamen behalten.
+    const innerVonBis = titel.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
+    if (innerVonBis && innerVonBis[1].trim().length >= 3) {
+      titel = innerVonBis[1].trim();
+    }
+    return { nummer, kategorie, titel, etappe: null, strecke: s[2].trim() };
   }
   return { nummer, kategorie, titel: rest, etappe: null, strecke: null };
 }
@@ -128,9 +142,17 @@ export function Wegweiser({
             ) : (
               <>
                 {d.kategorie && d.kategorie.length > 2 && (
-                  <Text style={styles.kategorieText} numberOfLines={2}>
-                    {d.kategorie.replace(/\s+/, "\n")}
-                  </Text>
+                  // Lokale Route (3-stellig): Wappen als Hintergrund hinter dem Kategorietext
+                  <View style={{ alignSelf: "flex-start" }}>
+                    {kanton && d.kategorie === "Wanderland lokal" && (
+                      <View style={{ position: "absolute", top: 0, right: 0, bottom: 0, justifyContent: "center" }}>
+                        <CantonWappen canton={kanton} size={kompakt ? 15 : 19} greenShade />
+                      </View>
+                    )}
+                    <Text style={styles.kategorieText} numberOfLines={2}>
+                      {d.kategorie.replace(/\s+/, "\n")}
+                    </Text>
+                  </View>
                 )}
                 <View style={styles.nummerZeile}>
                   {d.kategorie === "Wanderland national" ? (
@@ -138,12 +160,7 @@ export function Wegweiser({
                       <View style={styles.kreuzQuer} />
                       <View style={styles.kreuzHoch} />
                     </View>
-                  ) : kanton && d.kategorie === "Wanderland lokal" ? (
-                    // Lokale Route (3-stellig): Nummer liegt über dem Wappen
-                    <View style={{ position: "absolute", left: 0, bottom: 1 }}>
-                      <CantonWappen canton={kanton} size={kompakt ? 16 : 20} />
-                    </View>
-                  ) : kanton ? (
+                  ) : kanton && d.kategorie !== "Wanderland lokal" ? (
                     <View style={{ marginBottom: 2 }}>
                       <CantonWappen canton={kanton} size={kompakt ? 12 : 15} />
                     </View>

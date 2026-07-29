@@ -1,4 +1,4 @@
-import { boolean, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -45,6 +45,12 @@ export const profilesTable = pgTable("profiles", {
   // Wird gesetzt, sobald der Nutzer ein Paket gewählt und der Server es
   // in purchased_packs eingetragen hat.
   welcomeSagenpaketClaimed: boolean("welcome_sagenpaket_claimed").notNull().default(false),
+  // Einzigartiger Einladungscode dieses Nutzers (z. B. "XK7P3M").
+  // Wird beim ersten Abruf von GET /me/referral-code generiert.
+  referralCode: text("referral_code").unique(),
+  // Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen.
+  // Wird erhöht, wenn ein eingeladener Freund Premium kauft.
+  pendingPackRewards: integer("pending_pack_rewards").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

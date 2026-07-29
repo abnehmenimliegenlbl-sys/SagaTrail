@@ -82,6 +82,7 @@ import {
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName } from "@/lib/poiDisplay";
 import * as ImagePicker from "expo-image-picker";
+import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
 import { uploadWaypointPhoto, waypointPhotoUrl } from "@/lib/waypointPhotoUpload";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
@@ -277,6 +278,7 @@ export default function LiveHike() {
     activeHike,
     saveActiveHike,
     clearActiveHike,
+    hikeHistory,
   } = useApp();
 
   // Beim ersten Aufbau der Story einmalig pruefen, ob eine unterbrochene
@@ -664,8 +666,11 @@ export default function LiveHike() {
 
   // Begruessung (Wetter + Solo-Name + Tageszeit + Routen-Einleitung),
   // die dem ersten Kapitel vorangestellt wird.
+  // gsw → de: OpenAI TTS kann kein Schweizerdeutsch; der Begrüssungstext
+  // bleibt deshalb immer Hochdeutsch — nur die Sage selbst ist Mundart.
   const greetingPrefix = useMemo(() => {
-    const pack = STORY_PACKS[resolveLang(storyLanguage)];
+    const greetingLang = storyLanguage === "gsw" ? "de" : storyLanguage;
+    const pack = STORY_PACKS[resolveLang(greetingLang)];
     const wetterSatz = hikeWeather ? pack.weatherPhrase(classifyWetter(hikeWeather)) : "";
     const tod = pack.timeOfDayGreeting(timeOfDay);
     const personal = !inGruppe && profile?.name?.trim()
@@ -2432,7 +2437,20 @@ export default function LiveHike() {
       clearActiveHike(),
     ]);
     router.replace("/summary");
-  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+    // App-Store-Bewertung: nach der 1. abgeschlossenen Route, dann jede 3. (1, 4, 7, …)
+    const newCount = hikeHistory.length + 1;
+    if (newCount % 3 === 1) {
+      setTimeout(async () => {
+        try {
+          if (await StoreReview.isAvailableAsync()) {
+            await StoreReview.requestReview();
+          }
+        } catch {
+          // Review-Anfrage ist best-effort — Fehler still ignorieren
+        }
+      }, 1500);
+    }
+  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting

@@ -4,6 +4,7 @@ import { createNarration } from "@workspace/api-client-react";
 import { Audio } from "expo-av";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
+import * as StoreReview from "expo-store-review";
 import { hapticRigid } from "@/lib/haptics";
 import { useRouter } from "expo-router";
 
@@ -40,6 +41,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
@@ -66,7 +68,7 @@ export default function Einstellungen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const t = useEinstellungenStrings();
   const onboardingStrings = useOnboardingStrings();
   const {
@@ -87,6 +89,46 @@ export default function Einstellungen() {
   } = useApp();
 
   const { isElite, isFamily } = useSubscription();
+
+  // Einladungscode-Modal State
+  const [codeModalVisible, setCodeModalVisible] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeStatus, setCodeStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const claimInviteCode = async () => {
+    const code = codeInput.trim().toUpperCase();
+    if (!code || codeStatus === "loading") return;
+    setCodeStatus("loading");
+    try {
+      const token = await getToken();
+      const baseUrl = getApiBaseUrl() ?? "";
+      const res = await fetch(`${baseUrl}/api/referrals/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ code }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = (body as { error?: string }).error ?? `Fehler ${res.status}`;
+        if (res.status === 404) {
+          setCodeStatus("error");
+          return;
+        }
+        throw new Error(msg);
+      }
+      setCodeStatus("success");
+      setTimeout(() => {
+        setCodeModalVisible(false);
+        setCodeInput("");
+        setCodeStatus("idle");
+      }, 2000);
+    } catch (err) {
+      setCodeStatus("error");
+    }
+  };
   const tierLabel = !premium
     ? t.subscriptionFree
     : isElite
@@ -94,7 +136,9 @@ export default function Einstellungen() {
       : isFamily
         ? t.tierPremiumFamilie
         : t.tierPremium;
-  const tierBgColor = !premium ? "#6B7280" : isElite ? "#7C3AED" : "#B45309";
+  // Schwarz = Gratis · Silber = Premium/Familie · Gold = Elite
+  const tierBgColor = !premium ? "#18181B" : isElite ? "#B8860B" : "#64748B";
+  const tierBorderColor = !premium ? "#3F3F46" : isElite ? "#F59E0B" : "#94A3B8";
   const tierIcon: React.ComponentProps<typeof Feather>["name"] = !premium
     ? "user"
     : isElite
@@ -451,6 +495,8 @@ export default function Einstellungen() {
                 gap: 5,
                 backgroundColor: tierBgColor,
                 borderRadius: 999,
+                borderWidth: 1,
+                borderColor: tierBorderColor,
                 paddingHorizontal: 11,
                 paddingVertical: 4,
               }}>
@@ -497,6 +543,112 @@ export default function Einstellungen() {
             icon="chevron-right"
             onPress={() => router.push("/legal/impressum")}
           />
+          <RowButton
+            label={t.bewertungLabel}
+            value=""
+            icon="star"
+            onPress={async () => {
+              try {
+                if (await StoreReview.isAvailableAsync()) {
+                  await StoreReview.requestReview();
+                } else {
+                  const url = "https://apps.apple.com/app/id6788260668?action=write-review";
+                  if (await Linking.canOpenURL(url)) {
+                    await Linking.openURL(url);
+                  }
+                }
+              } catch {
+                // best-effort, silent
+              }
+            }}
+          />
+          <View>
+            <RowButton
+              label={t.freundeEinladenLabel}
+              value=""
+              icon="user-plus"
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message: "SagaTrail – Wandere durch Schweizer Sagen 🏔️ https://apps.apple.com/app/id6788260668",
+                    url: "https://apps.apple.com/app/id6788260668",
+                  });
+                } catch {
+                  // abgebrochen
+                }
+              }}
+            />
+            <Text style={[styles.rowHint, { color: colors.mutedForeground, paddingBottom: 10 }]}>
+              {t.freundeEinladenHint}
+            </Text>
+          </View>
+          <RowButton
+            label={t.einladungscodeLabel}
+            value=""
+            icon="tag"
+            onPress={() => { setCodeInput(""); setCodeStatus("idle"); setCodeModalVisible(true); }}
+          />
+          {/* Einladungscode-Modal */}
+          <Modal
+            visible={codeModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setCodeModalVisible(false)}
+          >
+            <Pressable
+              style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center", paddingHorizontal: 24 }}
+              onPress={() => setCodeModalVisible(false)}
+            >
+              <Pressable
+                onPress={() => {}}
+                style={[{ backgroundColor: colors.glassBg, borderRadius: colors.radius, padding: 24, width: "100%", gap: 16, borderWidth: 1, borderColor: colors.glassBorder }]}
+              >
+                <Text style={[styles.rowLabel, { color: colors.foreground, fontSize: 17 }]}>
+                  {t.einladungscodeLabel}
+                </Text>
+                {codeStatus === "success" ? (
+                  <View style={{ gap: 8, alignItems: "center" }}>
+                    <Feather name="check-circle" size={40} color={colors.accent} />
+                    <Text style={[styles.rowHint, { color: colors.foreground, textAlign: "center" }]}>
+                      {t.einladungscodeSuccess}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <TextInput
+                      value={codeInput}
+                      onChangeText={setCodeInput}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      maxLength={8}
+                      placeholder="z.B. AB3CDE"
+                      placeholderTextColor={colors.mutedForeground}
+                      style={{
+                        fontFamily: fonts.mono,
+                        fontSize: 20,
+                        letterSpacing: 4,
+                        color: colors.foreground,
+                        borderBottomWidth: 2,
+                        borderBottomColor: colors.accent,
+                        paddingVertical: 8,
+                        textAlign: "center",
+                      }}
+                    />
+                    {codeStatus === "error" && (
+                      <Text style={[styles.rowHint, { color: colors.destructive ?? colors.mutedForeground }]}>
+                        {t.einladungscodeError}
+                      </Text>
+                    )}
+                    <PrimaryButton
+                      label={codeStatus === "loading" ? "…" : t.einladungscodeButton}
+                      onPress={claimInviteCode}
+                      disabled={!codeInput.trim() || codeStatus === "loading"}
+                    />
+                  </>
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
           <RowButton
             label={t.supportLabel}
             value=""

@@ -37,7 +37,7 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, language, activeHike, clearActiveHike, premium, freeHikeUsed } = useApp();
+  const { profile, language, activeHike, clearActiveHike, premium, freeHikeUsed, pendingPackRewards } = useApp();
   const { isElite } = useSubscription();
   const t = useHomeStrings();
 
@@ -144,6 +144,28 @@ export default function Entdecken() {
               body={t.premiumBannerBody}
               cta={t.premiumBannerCta}
             />
+          </Animated.View>
+        )}
+
+        {pendingPackRewards > 0 && (
+          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <Pressable
+              onPress={() => router.push("/referral-reward")}
+              style={[
+                styles.resumeCard,
+                { backgroundColor: colors.glassBgStrong, borderColor: colors.accent, borderRadius: colors.radius },
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>
+                  {t.referralRewardTitle.toUpperCase()}
+                </Text>
+                <Text style={[styles.resumeName, { color: colors.foreground }]}>
+                  {t.referralRewardCta}
+                </Text>
+              </View>
+              <Feather name="gift" size={22} color={colors.accent} />
+            </Pressable>
           </Animated.View>
         )}
 

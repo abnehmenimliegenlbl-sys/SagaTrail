@@ -65,6 +65,9 @@ export interface RawHikingRoute {
   distanceTagKm: number | null;
   /** Amtlicher Aufstieg (m) aus dem OSM-Tag `ascent`, falls vorhanden. */
   ascentTagM: number | null;
+  /** OSM `from`/`to` Tags — Startort und Zielort der Route. */
+  from: string | null;
+  to: string | null;
 }
 
 /**
@@ -127,7 +130,7 @@ interface OverpassGeomElement {
   members?: OverpassGeomMember[];
 }
 
-async function runOverpass<T>(query: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T[]> {
+export async function runOverpass<T>(query: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T[]> {
   // Ein Versuch je Spiegel: mit Cache-Vorwaermung (siehe routeService.warmAllCantonCaches)
   // treffen echte Nutzer selten den kalten Pfad, daher zaehlt hier vor allem,
   // schnell zum naechsten Spiegel (bzw. zum DB-Cache-Fallback) zu wechseln,
@@ -1262,6 +1265,8 @@ export async function fetchRouteGeometryChunked(
     points,
     distanceTagKm: parseNumericTag(tags.distance, 500),
     ascentTagM: parseNumericTag(tags.ascent, 20000),
+    from: tags.from ?? null,
+    to: tags.to ?? null,
   };
 }
 
@@ -1300,6 +1305,8 @@ export async function fetchRouteGeometries(
         points,
         distanceTagKm: parseNumericTag(tags.distance, 500),
         ascentTagM: parseNumericTag(tags.ascent, 20000),
+        from: tags.from ?? null,
+        to: tags.to ?? null,
       });
     }
   }
@@ -1362,4 +1369,134 @@ export async function resolveNumberedRouteOsmId(
   const pool = kandidaten.length ? kandidaten : named;
   pool.sort((a, b) => b.diag - a.diag);
   return pool[0]?.id ?? null;
+}
+
+/**
+ * Holt ALLE Schweizer Wanderrouten-Relationen eines Netzwerks (rwn/nwn/lwn) mit
+ * numerischem ref in einem Bereich. Eine einzige Overpass-Abfrage für alle Refs.
+ * Liefert from/to/name/nameDe/ref/network je Relation.
+ */
+export interface OsmRouteEntry {
+  osmId: number;
+  ref: number;
+  name: string | null;
+  nameDe: string | null;
+  from: string | null;
+  to: string | null;
+  network: string | null;
+}
+
+export async function fetchOsmRoutesInRange(
+  refMin: number,
+  refMax: number,
+  log: Logger,
+): Promise<OsmRouteEntry[]> {
+  const CH_BBOX = "45.8,5.95,47.85,10.5";
+  // Eine einzige Abfrage für alle Netzwerktypen
+  const query = `[out:json][timeout:60][bbox:${CH_BBOX}];
+(
+  relation["route"="hiking"]["network"="rwn"]["ref"~"^[0-9]+$"];
+  relation["route"="hiking"]["network"="nwn"]["ref"~"^[0-9]+$"];
+);
+out tags;`;
+
+  const elements = await runOverpass<OverpassTagsElement>(query, 70_000).catch((err) => {
+    log.warn({ err }, "fetchOsmRoutesInRange: Overpass-Fehler");
+    return [] as OverpassTagsElement[];
+  });
+
+  const results: OsmRouteEntry[] = [];
+  for (const el of elements) {
+    const t = el.tags ?? {};
+    const refNum = parseInt(t.ref ?? "", 10);
+    if (isNaN(refNum) || refNum < refMin || refNum > refMax) continue;
+    results.push({
+      osmId: el.id,
+      ref: refNum,
+      name: t.name ?? null,
+      nameDe: t["name:de"] ?? null,
+      from: t.from ?? null,
+      to: t.to ?? null,
+      network: t.network ?? null,
+    });
+  }
+  return results;
+}
+
+/**
+ * Sucht alle Wanderrouten-Relationen mit gegebenem ref im CH-Bbox und gibt ihre Tags zurück.
+ * Nützlich um fehlende Etappen einer nummerierten Route in OSM aufzuspüren.
+ */
+export async function fetchOsmRelationsByRef(
+  ref: string,
+  log: Logger,
+): Promise<{ osmId: number; name: string | null; nameDe: string | null; from: string | null; to: string | null; network: string | null }[]> {
+  const CH_BBOX = "45.8,5.95,47.85,10.5";
+  const query = `[out:json][timeout:30][bbox:${CH_BBOX}];relation["route"="hiking"]["ref"="${ref}"];out tags;`;
+  const elements = await runOverpass<OverpassTagsElement>(query, 35_000).catch((err) => {
+    log.warn({ err, ref }, "fetchOsmRelationsByRef: Overpass-Fehler");
+    return [] as OverpassTagsElement[];
+  });
+  return elements.map((el) => {
+    const t = el.tags ?? {};
+    return {
+      osmId: el.id,
+      name: t.name ?? null,
+      nameDe: t["name:de"] ?? null,
+      from: t.from ?? null,
+      to: t.to ?? null,
+      network: t.network ?? null,
+    };
+  });
+}
+
+/**
+ * Holt Tags (from, to, name, ref) fuer eine Liste von OSM-Relations-IDs direkt
+ * per Overpass. Wird vom fill-vonbis-Endpoint genutzt, um fehlende Von-Bis-
+ * Angaben aus OSM nachzufuellen, statt sie per Reverse-Geocoding zu raten.
+ */
+export interface OsmRelationTags {
+  osmId: number;
+  name: string | null;
+  from: string | null;
+  to: string | null;
+  ref: string | null;
+  /** Etappen-Nummer aus dem OSM-Tag "name" extrahiert, z.B. "Etappe 3" → 3. */
+  etappeNr: number | null;
+}
+
+export async function fetchOsmRelationTags(
+  osmIds: number[],
+  log: Logger,
+): Promise<OsmRelationTags[]> {
+  if (osmIds.length === 0) return [];
+  const BATCH = 100;
+  const results: OsmRelationTags[] = [];
+
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const chunk = osmIds.slice(i, i + BATCH);
+    const idList = chunk.join(",");
+    const query = `[out:json][timeout:30];relation(id:${idList});out tags;`;
+    const elements = await runOverpass<OverpassTagsElement>(query, 35_000).catch((err) => {
+      log.warn({ err, chunk: chunk.slice(0, 5) }, "fetchOsmRelationTags: Overpass-Fehler");
+      return [] as OverpassTagsElement[];
+    });
+    for (const el of elements) {
+      const tags = el.tags ?? {};
+      // Deutschen Namen bevorzugen (name:de), Fallback auf name
+      const rawName = tags["name:de"] ?? tags.name ?? null;
+      // Etappe-Nummer aus OSM-Name extrahieren: "Alpenpanorama-Weg Etappe 3: ..." → 3
+      const etappeMatch = rawName?.match(/[Ee]tappe\s+(\d+)/);
+      results.push({
+        osmId: el.id,
+        name: rawName,
+        from: tags.from ?? null,
+        to: tags.to ?? null,
+        ref: tags.ref ?? null,
+        etappeNr: etappeMatch ? parseInt(etappeMatch[1], 10) : null,
+      });
+    }
+    if (i + BATCH < osmIds.length) await sleep(500);
+  }
+  return results;
 }

@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -244,6 +245,22 @@ export default function Gruppe() {
               <Text style={[styles.tierNote, { color: colors.accent }]}>
                 {t.tierNote(t.ageTiers[youngest as AgeTier] ?? t.ageTiers.erwachsene)}
               </Text>
+              {groupSession.isLeader && (
+                <PrimaryButton
+                  variant="secondary"
+                  label={t.inviteLabel}
+                  onPress={async () => {
+                    try {
+                      await Share.share({
+                        message: t.inviteText(groupSession.code),
+                      });
+                    } catch {
+                      // abgebrochen
+                    }
+                  }}
+                  style={{ marginTop: 14 }}
+                />
+              )}
             </View>
 
             <Text style={[styles.membersTitle, { color: colors.foreground }]}>

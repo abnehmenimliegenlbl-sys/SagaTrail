@@ -181,6 +181,8 @@ interface AppContextValue {
   savedSagaIds: string[];
   /** Ob Wetter-Push-Benachrichtigungen aktiv sind. */
   pushWeatherEnabled: boolean;
+  /** Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. */
+  pendingPackRewards: number;
   /** Saga zu Lesezeichen hinzufuegen oder entfernen (Toggle). */
   toggleBookmark: (sagaId: string) => Promise<void>;
   /** Wetter-Push-Einstellung aktualisieren (lokal + Server). */
@@ -233,6 +235,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [freieSagen, setFreieSagen] = useState<Record<string, string>>({});
   const [savedSagaIds, setSavedSagaIds] = useState<string[]>([]);
   const [pushWeatherEnabled, setPushWeatherEnabledState] = useState(true);
+  const [pendingPackRewards, setPendingPackRewards] = useState(0);
 
   // Der Socket-Client lebt ausserhalb des React-State (eine Instanz pro
   // App-Laufzeit) und meldet Ereignisse ueber Callbacks zurueck, die den
@@ -604,6 +607,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       freeHikeUsed: boolean;
       purchasedPacks?: string[];
       subscriptionTier?: string;
+      pendingPackRewards?: number;
     }) => {
       // WICHTIG: purchasedPacks muss erhalten bleiben. Frueher wurde das
       // Profil hier OHNE purchasedPacks neu aufgebaut, wodurch gekaufte
@@ -625,6 +629,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPremium(result.premium);
       setFreeHikeUsed(result.freeHikeUsed);
       if (result.subscriptionTier) setDbTier(result.subscriptionTier);
+      setPendingPackRewards(result.pendingPackRewards ?? 0);
       await AsyncStorage.setItem(KEYS.profile, JSON.stringify(next));
       await AsyncStorage.setItem(KEYS.premium, result.premium ? "true" : "false");
       await AsyncStorage.setItem(
@@ -1087,6 +1092,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearGroupError,
       savedSagaIds,
       pushWeatherEnabled,
+      pendingPackRewards,
       toggleBookmark,
       setPushWeatherEnabled,
     }),
@@ -1136,6 +1142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearGroupError,
       savedSagaIds,
       pushWeatherEnabled,
+      pendingPackRewards,
       toggleBookmark,
       setPushWeatherEnabled,
     ]

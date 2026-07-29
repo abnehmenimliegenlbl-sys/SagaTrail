@@ -24,7 +24,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
-import { ShareCard } from "@/components/brand/ShareCard";
+import { ShareCard, type ElevationPoint } from "@/components/brand/ShareCard";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -63,6 +64,26 @@ export default function Summary() {
   const [transport, setTransport] = useState<TransportStationboard | null>(null);
   const [transportLoading, setTransportLoading] = useState(false);
   const [transportStart, setTransportStart] = useState<TransportStationboard | null>(null);
+  const [elevationProfile, setElevationProfile] = useState<ElevationPoint[] | undefined>();
+
+  // Höhenprofil für die Share-Karte laden.
+  useEffect(() => {
+    const g = lastHike?.geometry;
+    if (!g || g.length < 2) return;
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/elevation-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geometry: g }),
+    })
+      .then((r) => r.json())
+      .then((data: { profile: ElevationPoint[] }) => {
+        if (!cancelled && Array.isArray(data?.profile)) setElevationProfile(data.profile);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [lastHike?.id]);
 
   // SBB live am Ziel — Abfahrten vom letzten Wegpunkt der abgeschlossenen Route.
   useEffect(() => {
@@ -163,6 +184,24 @@ export default function Summary() {
     } catch {
       // Teilen abgebrochen oder nicht verfuegbar — kein Fehlerzustand noetig
     }
+  };
+
+  const FB_GROUP_URL = "https://www.facebook.com/groups/1405863634716590";
+  const FB_GROUP_DEEPLINK = "fb://group/1405863634716590";
+
+  const shareToFacebook = async () => {
+    // Bild zuerst via nativem Share-Sheet teilen (Nutzer kann Facebook wählen)
+    await share();
+    // Danach Gruppe öffnen — kleines Timeout damit der Share-Dialog nicht
+    // sofort von der Gruppe überdeckt wird.
+    setTimeout(async () => {
+      try {
+        const canOpen = await Linking.canOpenURL(FB_GROUP_DEEPLINK);
+        await Linking.openURL(canOpen ? FB_GROUP_DEEPLINK : FB_GROUP_URL);
+      } catch {
+        Linking.openURL(FB_GROUP_URL).catch(() => {});
+      }
+    }, 800);
   };
 
   const share = async () => {
@@ -386,6 +425,15 @@ export default function Summary() {
           style={{ marginTop: 30 }}
         />
 
+        {Platform.OS !== "web" && (
+          <PrimaryButton
+            variant="secondary"
+            label={t.facebookGruppe}
+            onPress={shareToFacebook}
+            style={{ marginTop: 8 }}
+          />
+        )}
+
         {lastHike.geometry && lastHike.geometry.length > 0 && Platform.OS !== "web" && (
           <PrimaryButton
             variant="secondary"
@@ -408,13 +456,21 @@ export default function Summary() {
             ref={shareCardRef}
             sagaTitle={sagaTitle}
             routeName={lastHike.routeName}
+            canton={sagas.find((s) => s.id === lastHike.sagaId)?.canton}
             distanceKm={lastHike.distanceKm}
             ascentM={lastHike.ascentM}
+            maxAltM={
+              elevationProfile && elevationProfile.length > 0
+                ? Math.max(...elevationProfile.map((p) => p.altM))
+                : undefined
+            }
             sacScale={lastHike.sacScale}
             durationMin={lastHike.durationMin}
             steps={lastHike.steps}
             geometry={lastHike.geometry}
             photoUri={lastHike.photoUri}
+            elevationProfile={elevationProfile}
+            visitedPlaceCount={lastHike.visitedPlaceIds?.length ?? 0}
             distanceLabel={t.stats.distance}
             ascentLabel={t.stats.ascent}
             timeLabel={t.stats.time}

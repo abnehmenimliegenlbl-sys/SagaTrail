@@ -24,30 +24,41 @@ const RESULT_LIMIT = Infinity;
  * Innerhalb jeder Kategorie nach Routen-Nummer, Etappen zusätzlich
  * nach Etappen-Nummer.
  */
-function sortSchluessel(row: ExternalRouteRow): [number, number, number] {
-  const ref = row.ref ?? "";
+// Sortierschlüssel: [Kategorie, RoutenNr, IstEtappe, EtappenNr]
+// Kategorie: 0=national, 1=regional, 2=lokal, 3=kantonal, 4=rest
+// IstEtappe: 0=Hauptroute (kommt zuerst), 1=Etappe
+// Ergibt: 1 Via Alpina → 1 Etappe 1 → 1 Etappe 2 → 5 Jura Höhenweg → 5 Etappe 1 → …
+function sortSchluessel(row: ExternalRouteRow): [number, number, number, number] {
   const istEtappe = /\b(?:etappe|étape|etape|tappa)\b/i.test(row.name);
   const etappenNr = istEtappe
     ? parseInt(row.name.match(/\b(?:Etappe|Étape|Etape|Tappa)\s+(\d+)/i)?.[1] ?? "0", 10)
     : 0;
 
-  if (/^\d+$/.test(ref)) {
-    const nr = parseInt(ref, 10);
-    const stufe = ref.length === 1 ? 0 : ref.length === 2 ? 2 : 4; // national/regional/lokal
-    return [stufe + (istEtappe ? 1 : 0), nr, etappenNr];
+  // Kantonale K-Route: Name beginnt mit "K{n} {CC}" (z.B. "K4 AG Kulturweg")
+  const kMatch = row.name.match(/^K(\d+)\s+[A-Z]{2}\b/);
+  if (kMatch) {
+    return [3, parseInt(kMatch[1], 10), istEtappe ? 1 : 0, etappenNr];
   }
-  if (/^K\d+$/.test(ref)) {
-    return [6, parseInt(ref.slice(1), 10), 0];
+
+  // SchweizMobil-Routen: Nummer am Anfang des Namens bestimmt Kategorie
+  const numMatch = row.name.match(/^(\d{1,3})\s/);
+  if (numMatch) {
+    const nr = parseInt(numMatch[1], 10);
+    const kat = numMatch[1].length === 1 ? 0 : numMatch[1].length === 2 ? 1 : 2;
+    return [kat, nr, istEtappe ? 1 : 0, etappenNr];
   }
-  return [7, 0, 0];
+
+  return [4, 0, 0, 0];
 }
 
 function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {
   const ka = sortSchluessel(a);
   const kb = sortSchluessel(b);
-  if (ka[0] !== kb[0]) return ka[0] - kb[0];
-  if (ka[1] !== kb[1]) return ka[1] - kb[1];
-  if (ka[2] !== kb[2]) return ka[2] - kb[2];
+  for (let i = 0; i < 4; i++) {
+    if (ka[i] !== kb[i]) return ka[i]! - kb[i]!;
+  }
+  // Gleicher Schlüssel: längste Route zuerst (Hauptroute vor kurzen Etappen ohne Label).
+  if ((b.distanceKm ?? 0) !== (a.distanceKm ?? 0)) return (b.distanceKm ?? 0) - (a.distanceKm ?? 0);
   return a.name.localeCompare(b.name, "de");
 }
 
@@ -58,6 +69,7 @@ function toRoute(row: ExternalRouteRow) {
     name: row.name,
     region: row.canton,
     distanceKm: row.distanceKm,
+    distanceTagKm: row.distanceTagKm ?? row.distanceKm,
     ascentM: row.ascentM,
     maxElevationM: row.maxElevationM,
     season: deriveSeason(row.maxElevationM, row.sac),
@@ -151,7 +163,31 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
       filter.nearLat !== null && filter.nearLng !== null
         ? { lat: filter.nearLat, lng: filter.nearLng }
         : null;
-    const matched = rows
+    // Etappen-Labels für Routen mit gleichem ref UND gleichem Namen (kein "Etappe" drin):
+    // z.B. 4× "60 ViaRhenana" in Aargau → "60 ViaRhenana Etappe 1" … "Etappe 4"
+    // Sortierung innerhalb der Gruppe: längste zuerst (= Hauptetappe = Etappe 1).
+    const refGroups = new Map<string, ExternalRouteRow[]>();
+    for (const row of rows) {
+      if (!row.ref) continue;
+      const key = `${row.ref}::${row.name}`;
+      if (!/etappe|étape|tappa/i.test(row.name)) {
+        if (!refGroups.has(key)) refGroups.set(key, []);
+        refGroups.get(key)!.push(row);
+      }
+    }
+    const etappenNames = new Map<string, string>();
+    for (const group of refGroups.values()) {
+      if (group.length < 2) continue;
+      group.sort((a, b) => b.distanceKm - a.distanceKm);
+      group.forEach((row, i) => etappenNames.set(row.id, `${row.name} Etappe ${i + 1}`));
+    }
+
+    // Etappen-Labels VOR dem Sort anwenden damit sortSchluessel "Etappe N" sieht.
+    const rowsMitLabels = rows.map((row) =>
+      etappenNames.has(row.id) ? { ...row, name: etappenNames.get(row.id)! } : row,
+    );
+
+    const matched = rowsMitLabels
       .filter((row) => applyFilter(row, filter))
       .sort(userPos
         ? (a, b) =>

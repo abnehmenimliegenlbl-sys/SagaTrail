@@ -20,6 +20,8 @@ export interface HikingRoute {
   name: string;
   region: string;
   distanceKm: number;
+  /** Amtliche Distanz aus dem OSM-Tag `distance` (SchweizMobil-Wert); Fallback auf distanceKm. Immer gesetzt. */
+  distanceTagKm: number;
   ascentM: number;
   /** Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil). */
   maxElevationM: number;

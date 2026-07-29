@@ -23,6 +23,8 @@ export interface HomeStrings {
   premiumBannerTitle: string;
   premiumBannerBody: string;
   premiumBannerCta: string;
+  referralRewardTitle: string;
+  referralRewardCta: string;
 }
 
 const HOME_STRINGS: StringsDict<HomeStrings> = {
@@ -49,6 +51,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Deine Gratis-Route wurde gewandert",
     premiumBannerBody: "Entdecke alle 26 Kantone und ihre Sagen — unbegrenzt.",
     premiumBannerCta: "Premium holen",
+    referralRewardTitle: "Belohnung wartet!",
+    referralRewardCta: "Sagenpaket wählen",
   },
   gsw: {
     welcomeBack: "Willkomme zrugg",
@@ -73,6 +77,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Dini Gratis-Route isch gwanderet",
     premiumBannerBody: "Entdeck alli 26 Kantön und iri Sage — ohni Gränze.",
     premiumBannerCta: "Premium hole",
+    referralRewardTitle: "Belohnig wartet!",
+    referralRewardCta: "Sagenpaket wähle",
   },
   en: {
     welcomeBack: "Welcome back",
@@ -97,6 +103,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Your free route is used",
     premiumBannerBody: "Discover all 26 cantons and their legends — unlimited.",
     premiumBannerCta: "Get Premium",
+    referralRewardTitle: "Reward waiting!",
+    referralRewardCta: "Choose saga pack",
   },
   fr: {
     welcomeBack: "Bon retour parmi nous",
@@ -121,6 +129,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Ta randonnée gratuite est utilisée",
     premiumBannerBody: "Découvre les 26 cantons et leurs légendes — sans limite.",
     premiumBannerCta: "Passer Premium",
+    referralRewardTitle: "Récompense disponible !",
+    referralRewardCta: "Choisir un pack",
   },
   it: {
     welcomeBack: "Bentornato/a",
@@ -145,6 +155,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Il tuo percorso gratuito è esaurito",
     premiumBannerBody: "Scopri tutti i 26 cantoni e le loro leggende — senza limiti.",
     premiumBannerCta: "Ottieni Premium",
+    referralRewardTitle: "Ricompensa disponibile!",
+    referralRewardCta: "Scegli un pacchetto",
   },
   es: {
     welcomeBack: "Bienvenido/a de nuevo",
@@ -169,6 +181,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Tu ruta gratuita ya está usada",
     premiumBannerBody: "Descubre los 26 cantones y sus leyendas — sin límite.",
     premiumBannerCta: "Obtener Premium",
+    referralRewardTitle: "¡Recompensa disponible!",
+    referralRewardCta: "Elegir pack de sagas",
   },
   pt: {
     welcomeBack: "Bem-vindo/a de volta",
@@ -193,6 +207,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "A sua rota gratuita foi percorrida",
     premiumBannerBody: "Descubra todos os 26 cantões e as suas lendas — sem limites.",
     premiumBannerCta: "Obter Premium",
+    referralRewardTitle: "Recompensa disponível!",
+    referralRewardCta: "Escolher pacote de lendas",
   },
   zh: {
     welcomeBack: "欢迎回来",
@@ -217,6 +233,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "你的免费路线已使用",
     premiumBannerBody: "探索全部 26 个州及其传说——无限制。",
     premiumBannerCta: "获取高级版",
+    referralRewardTitle: "奖励等待领取！",
+    referralRewardCta: "选择传说包",
   },
   ru: {
     welcomeBack: "С возвращением",
@@ -241,6 +259,8 @@ const HOME_STRINGS: StringsDict<HomeStrings> = {
     premiumBannerTitle: "Твой бесплатный маршрут использован",
     premiumBannerBody: "Открывай все 26 кантонов и их легенды — без ограничений.",
     premiumBannerCta: "Получить Premium",
+    referralRewardTitle: "Награда ждёт тебя!",
+    referralRewardCta: "Выбрать пакет саг",
   },
 };
 

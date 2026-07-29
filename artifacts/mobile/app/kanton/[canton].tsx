@@ -732,7 +732,7 @@ function RouteCard({
             adjustsFontSizeToFit
             minimumFontScale={0.75}
           >
-            {t.sacLabel} {route.sac} · {route.distanceKm} km · {route.ascentM} hm ·{" "}
+            {t.sacLabel} {route.sac} · {route.distanceTagKm ?? route.distanceKm} km · {route.ascentM} hm ·{" "}
             {h}:{String(m).padStart(2, "0")} h ·{" "}
             {t.season[
               route.season === "ganzjaehrig"

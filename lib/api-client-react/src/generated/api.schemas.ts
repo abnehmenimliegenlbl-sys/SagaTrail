@@ -69,6 +69,8 @@ export interface Profile {
   purchasedPacks: string[];
   /** Abo-Stufe des Nutzers (z.B. "free", "premium", "elite", "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free"). */
   subscriptionTier?: string;
+  /** Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft. */
+  pendingPackRewards: number;
 }
 
 export type ProfileInputArchetype = typeof ProfileInputArchetype[keyof typeof ProfileInputArchetype];
@@ -179,7 +181,10 @@ export interface CatalogRoute {
   sagaId: string;
   name: string;
   region: string;
+  /** Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation). */
   distanceKm: number;
+  /** Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt. */
+  distanceTagKm: number;
   ascentM: number;
   /** Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil). */
   maxElevationM: number;
@@ -719,5 +724,24 @@ endLat: number;
 endLng: number;
 startLabel?: string;
 endLabel?: string;
+};
+
+export type GetMyReferralCode200 = {
+  code: string;
+};
+
+export type ClaimReferralCodeBody = {
+  /** @minLength 1 */
+  code: string;
+};
+
+export type ClaimReferralCode200 = {
+  ok: boolean;
+  alreadyClaimed: boolean;
+};
+
+export type ClaimPackRewardBody = {
+  /** @minLength 1 */
+  packSlug: string;
 };
 

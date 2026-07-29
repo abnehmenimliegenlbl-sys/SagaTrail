@@ -27,12 +27,16 @@ import type {
   CatalogSaga,
   ClaimKantonspackBody,
   ClaimKantonspackResponse,
+  ClaimPackRewardBody,
+  ClaimReferralCode200,
+  ClaimReferralCodeBody,
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
   GetAvalancheBulletinParams,
   GetCantonRoutesParams,
   GetCustomRouteParams,
+  GetMyReferralCode200,
   GetPartnersParams,
   GetPoiDetailParams,
   GetPoiStoryParams,
@@ -2165,6 +2169,223 @@ export const useConsumeMyFreeHike = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getConsumeMyFreeHikeMutationOptions(options));
+    }
+
+export const getGetMyReferralCodeUrl = () => {
+
+
+
+
+  return `/api/me/referral-code`
+}
+
+/**
+ * @summary Einladungscode abrufen oder erstellen
+ */
+export const getMyReferralCode = async ( options?: RequestInit): Promise<GetMyReferralCode200> => {
+
+  return customFetch<GetMyReferralCode200>(getGetMyReferralCodeUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMyReferralCodeQueryKey = () => {
+    return [
+    `/api/me/referral-code`
+    ] as const;
+    }
+
+
+export const getGetMyReferralCodeQueryOptions = <TData = Awaited<ReturnType<typeof getMyReferralCode>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyReferralCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyReferralCodeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyReferralCode>>> = ({ signal }) => getMyReferralCode({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyReferralCode>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyReferralCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getMyReferralCode>>>
+export type GetMyReferralCodeQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Einladungscode abrufen oder erstellen
+ */
+
+export function useGetMyReferralCode<TData = Awaited<ReturnType<typeof getMyReferralCode>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyReferralCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyReferralCodeQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getClaimReferralCodeUrl = () => {
+
+
+
+
+  return `/api/referrals/claim`
+}
+
+/**
+ * @summary Einladungscode einlösen
+ */
+export const claimReferralCode = async (claimReferralCodeBody: ClaimReferralCodeBody, options?: RequestInit): Promise<ClaimReferralCode200> => {
+
+  return customFetch<ClaimReferralCode200>(getClaimReferralCodeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(claimReferralCodeBody)
+  }
+);}
+
+
+
+
+export const getClaimReferralCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimReferralCode>>, TError,{data: BodyType<ClaimReferralCodeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimReferralCode>>, TError,{data: BodyType<ClaimReferralCodeBody>}, TContext> => {
+
+const mutationKey = ['claimReferralCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimReferralCode>>, {data: BodyType<ClaimReferralCodeBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  claimReferralCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimReferralCodeMutationResult = NonNullable<Awaited<ReturnType<typeof claimReferralCode>>>
+    export type ClaimReferralCodeMutationBody = BodyType<ClaimReferralCodeBody>
+    export type ClaimReferralCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Einladungscode einlösen
+ */
+export const useClaimReferralCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimReferralCode>>, TError,{data: BodyType<ClaimReferralCodeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimReferralCode>>,
+        TError,
+        {data: BodyType<ClaimReferralCodeBody>},
+        TContext
+      > => {
+      return useMutation(getClaimReferralCodeMutationOptions(options));
+    }
+
+export const getClaimPackRewardUrl = () => {
+
+
+
+
+  return `/api/me/pack-reward/claim`
+}
+
+/**
+ * @summary Sagenpaket-Belohnung einlösen
+ */
+export const claimPackReward = async (claimPackRewardBody: ClaimPackRewardBody, options?: RequestInit): Promise<Profile> => {
+
+  return customFetch<Profile>(getClaimPackRewardUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(claimPackRewardBody)
+  }
+);}
+
+
+
+
+export const getClaimPackRewardMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimPackReward>>, TError,{data: BodyType<ClaimPackRewardBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimPackReward>>, TError,{data: BodyType<ClaimPackRewardBody>}, TContext> => {
+
+const mutationKey = ['claimPackReward'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimPackReward>>, {data: BodyType<ClaimPackRewardBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  claimPackReward(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimPackRewardMutationResult = NonNullable<Awaited<ReturnType<typeof claimPackReward>>>
+    export type ClaimPackRewardMutationBody = BodyType<ClaimPackRewardBody>
+    export type ClaimPackRewardMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Sagenpaket-Belohnung einlösen
+ */
+export const useClaimPackReward = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimPackReward>>, TError,{data: BodyType<ClaimPackRewardBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimPackReward>>,
+        TError,
+        {data: BodyType<ClaimPackRewardBody>},
+        TContext
+      > => {
+      return useMutation(getClaimPackRewardMutationOptions(options));
     }
 
 export const getGetRouteConditionsUrl = (routeId: string,) => {

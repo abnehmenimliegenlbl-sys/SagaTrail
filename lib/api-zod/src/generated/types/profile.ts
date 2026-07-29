@@ -23,4 +23,6 @@ export interface Profile {
   purchasedPacks: string[];
   /** Abo-Stufe des Nutzers (z.B. "free", "premium", "elite", "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free"). */
   subscriptionTier?: string;
+  /** Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft. */
+  pendingPackRewards: number;
 }

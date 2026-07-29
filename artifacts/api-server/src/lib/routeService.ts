@@ -10,7 +10,7 @@ import {
   type CatalogSagaRow,
   type PartnerRow,
 } from "@workspace/db";
-import { and, gte, lte, isNull, or } from "drizzle-orm";
+import { and, gte, lte, isNull, isNotNull, or, notInArray } from "drizzle-orm";
 import { isoForCanton, CANTON_ISO } from "./cantonIso";
 import {
   fetchCantonRouteIndex,
@@ -98,7 +98,7 @@ import {
  */
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
-const MIN_KM = 1;
+const MIN_KM = 5;
 const MAX_KM = 45;
 const STORED_GEOMETRY_POINTS = 500; // Douglas-Peucker, war 80 (gleichmässig)
 const ELEVATION_CONCURRENCY = 8;
@@ -489,6 +489,11 @@ function selectCandidates(
       ? index.filter((e) => e.bboxDiagKm <= distMax * BBOX_SLACK)
       : index;
   const pool = distMax != null ? GEOMETRY_POOL_FILTERED : GEOMETRY_POOL_DEFAULT;
+  // Nationale (nwn) und internationale (iwn) Routen (Trans Swiss Trail, Via Alpina…)
+  // kommen über syncSwissNumberedRoutes in die DB — hier explizit ausschliessen,
+  // damit sie nicht doppelt (ohne Nummer) in Kanton-Listen erscheinen.
+  const isNationalOrIntl = (e: RouteIndexEntry) => e.rank <= 1; // iwn=0, nwn=1
+
   // Generische Verbindungswege (z.B. "Baar – Höllgrotten", "Bibersteg - Bubrugg")
   // erkennen: kein ref, kein network-Tag (lwn/ohne) UND Name enthält " - " oder " – ".
   // Diese werden komplett ausgeschlossen – sie sind kurze Pfadsegmente, keine
@@ -549,16 +554,60 @@ function isFresh(row: ExternalRouteRow): boolean {
   );
 }
 
+/** Mapping Kanton-Name → 2-stelliges Kürzel (für K-Routen-Label "K4 AG Name"). */
+const CANTON_ABBREVIATIONS: Record<string, string> = {
+  "Aargau": "AG", "Appenzell Ausserrhoden": "AR", "Appenzell Innerrhoden": "AI",
+  "Basel-Landschaft": "BL", "Basel-Stadt": "BS", "Bern": "BE",
+  "Freiburg": "FR", "Fribourg": "FR", "Genf": "GE", "Genève": "GE",
+  "Glarus": "GL", "Graubünden": "GR", "Jura": "JU", "Luzern": "LU",
+  "Nidwalden": "NW", "Obwalden": "OW", "Schaffhausen": "SH", "Schwyz": "SZ",
+  "Solothurn": "SO", "St. Gallen": "SG", "Tessin": "TI", "Ticino": "TI",
+  "Thurgau": "TG", "Uri": "UR", "Waadt": "VD", "Vaud": "VD",
+  "Wallis": "VS", "Valais": "VS", "Zug": "ZG", "Zürich": "ZH",
+};
+
+/**
+ * Nummeriert alle K-Routen eines Kantons neu durch: K1 AG, K2 AG, K3 AG …
+ * Sortierung nach OSM-ID (stabil — gleiche Route bekommt immer die gleiche Nummer).
+ * Wird nach enrichAndStore aufgerufen damit neue Routen korrekt eingereiht werden.
+ */
+async function renumberKRoutes(canton: string, log: Logger): Promise<void> {
+  const abbrev = CANTON_ABBREVIATIONS[canton];
+  if (!abbrev) return;
+
+  const kRoutes = await db
+    .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        eq(externalRoutesTable.canton, canton),
+        sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+        sql`${externalRoutesTable.name} ~ '^K[0-9]+'`,
+      ),
+    )
+    .orderBy(sql`CAST(SPLIT_PART(${externalRoutesTable.id}, '-', 2) AS BIGINT)`);
+
+  for (let i = 0; i < kRoutes.length; i++) {
+    const row = kRoutes[i];
+    const baseName = row.name.replace(/^K\d+\s+(?:[A-Z]{2}\s+)?/, "");
+    const newName = `K${i + 1} ${abbrev} ${baseName}`;
+    if (newName === row.name) continue;
+    await db
+      .update(externalRoutesTable)
+      .set({ name: newName })
+      .where(eq(externalRoutesTable.id, row.id))
+      .execute()
+      .catch((err) => log.warn({ err, id: row.id }, "renumberKRoutes: Update fehlgeschlagen"));
+  }
+  log.info({ canton, count: kRoutes.length, abbrev }, "K-Routen neu nummeriert");
+}
+
 export async function loadCachedRoutes(canton: string): Promise<ExternalRouteRow[]> {
+  // Nur primärer Kanton (Startpunkt) — cantons[] ist inaktiv (one canton per route).
   return db
     .select()
     .from(externalRoutesTable)
-    .where(
-      or(
-        eq(externalRoutesTable.canton, canton),
-        sql`${canton} = ANY(${externalRoutesTable.cantons})`,
-      ),
-    );
+    .where(eq(externalRoutesTable.canton, canton));
 }
 
 /**
@@ -577,17 +626,79 @@ async function enrichAndStore(
   // Laengenfenster gegen die massgebliche Distanz pruefen: amtlicher Tag-Wert
   // (falls vorhanden) vor berechneter Laenge — sonst fallen in OSM unvollstaendig
   // erfasste Routen faelschlich unter MIN_KM.
-  const prepared = raw
-    .map((r) => ({ r, distanceKm: r.distanceTagKm ?? pathDistanceKm(r.points) }))
-    .filter(({ distanceKm }) => distanceKm >= MIN_KM && distanceKm <= MAX_KM);
+  const withDist = raw.map((r) => ({ r, distanceKm: r.distanceTagKm ?? pathDistanceKm(r.points) }));
+  // Nur untere Schranke (< 5 km = kein echter Wanderweg). Keine obere Schranke
+  // mehr — nwn/rwn-Langstreckenrouten (z.B. 323 km Via Gottardo) wären sonst
+  // fälschlicherweise aus der DB gelöscht worden.
+  const prepared = withDist.filter(({ distanceKm }) => distanceKm >= MIN_KM);
 
-  const rows = await mapPool(prepared, ELEVATION_CONCURRENCY, async ({ r, distanceKm: computedKm }) => {
+  // Nur wirklich zu kurze Routen löschen.
+  const zuLoeschen = withDist
+    .filter(({ distanceKm }) => distanceKm < MIN_KM)
+    .map(({ r }) => `osm-${r.osmId}`);
+  if (zuLoeschen.length > 0) {
+    await db.delete(externalRoutesTable)
+      .where(sql`${externalRoutesTable.id} = ANY(${zuLoeschen})`)
+      .execute()
+      .catch((err) => log.warn({ err, anzahl: zuLoeschen.length }, "enrichAndStore: Kurzrouten-Cleanup fehlgeschlagen"));
+    log.info({ anzahl: zuLoeschen.length }, "enrichAndStore: zu kurze Routen aus DB entfernt");
+  }
+
+  // Startpunkt-Filter: nur Routen behalten deren erster Punkt im Ziel-Kanton
+  // liegt. Verhindert dass Durchgangsrouten (z.B. Via Gottardo via AG) im
+  // falschen Kanton landen. Geocoding sequentiell wegen Nominatim-Rate-Limit.
+  // Bei unklarem Ergebnis (null) wird die Route nicht verworfen.
+  const startKantonGeprüft: typeof prepared = [];
+  for (const item of prepared) {
+    const start = item.r.points[0];
+    if (!start) { startKantonGeprüft.push(item); continue; }
+    await new Promise<void>((r) => setTimeout(r, 1_100));
+    const geo = await reverseGeocode(start.lat, start.lng, log);
+    if (!geo.canton || geo.canton === canton) {
+      startKantonGeprüft.push(item);
+    } else {
+      log.debug(
+        { id: `osm-${item.r.osmId}`, name: item.r.name, startKanton: geo.canton, zielKanton: canton },
+        "enrichAndStore: Route startet in anderem Kanton — übersprungen",
+      );
+    }
+  }
+  log.info(
+    { gesamt: prepared.length, behalten: startKantonGeprüft.length, verworfen: prepared.length - startKantonGeprüft.length },
+    "enrichAndStore: Startpunkt-Filter abgeschlossen",
+  );
+
+  // Lookup: bestehende 2-stellige (rwn) Routen im Kanton → Basis-Name → ref-Nummer.
+  // Wird benutzt damit rwn-Etappen ohne eigenes ref-Tag (z.B. Sardona Etappe 1–6)
+  // den korrekten 2-stelligen ref ihrer Elternroute erhalten statt einer K-Nummer.
+  const rwnRefLookup = new Map<string, number>();
+  {
+    const existingRwn = await db
+      .select({ name: externalRoutesTable.name })
+      .from(externalRoutesTable)
+      .where(
+        and(
+          eq(externalRoutesTable.canton, canton),
+          sql`${externalRoutesTable.name} ~ '^[1-9][0-9] '`,
+        ),
+      );
+    for (const row of existingRwn) {
+      const m = row.name.match(/^(\d{2})\s+(.+?)(?:\s+Etappe\s|\s+-\s|$)/);
+      if (m) rwnRefLookup.set(m[2].trim().toLowerCase(), parseInt(m[1], 10));
+    }
+  }
+
+  const rows = await mapPool(startKantonGeprüft, ELEVATION_CONCURRENCY, async ({ r, distanceKm: computedKm }) => {
     const elevation = await computeElevationStats(r.points, log);
     // Amtliche SchweizMobil-Angaben aus den OSM-Relation-Tags (`distance`/`ascent`)
     // haben Vorrang vor der eigenen Berechnung: bei in OSM unvollständig
     // erfassten Routen (z.B. 831 Rigi Scheidegg, fixme=complete) ist die
     // berechnete Länge sonst viel zu kurz.
-    const distanceKm = r.distanceTagKm ?? computedKm;
+    // distanceKm = aus Geometrie berechnet (weisse Kachel, Navigation)
+    // distanceTagKm = amtlicher OSM-Tag-Wert (roter Balken Kantonsliste)
+    const distanceKm = computedKm;
+    const distanceTagKm = r.distanceTagKm != null ? Math.round(r.distanceTagKm * 10) / 10 : null;
+    const minutesKm = distanceTagKm ?? distanceKm;
     const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
     const maxElevationM = elevation?.maxElevationM ?? 0;
     // Schwierigkeit: OSM-`sac_scale` normalisieren; fehlt sie, aus dem amtlichen
@@ -611,16 +722,54 @@ async function enrichAndStore(
       .replace(/\s{2,}/g, " ")
       .replace(/^\s*[-–—]\s*|\s*[-–—]\s*$/g, "")
       .trim();
+
+    // Von-Bis anhängen wenn OSM `from`/`to` gesetzt und noch nicht im Namen enthalten.
+    const vonBis = (() => {
+      const f = r.from?.trim();
+      const t = r.to?.trim();
+      if (!f && !t) return "";
+      // Nicht doppelt einfügen: prüfen ob Startort schon im Namen steht.
+      if (f && cleanedName.includes(f)) return "";
+      if (f && t) return ` ${f} - ${t}`;
+      if (f) return ` ${f}`;
+      return ` - ${t}`;
+    })();
+    const nameWithVonBis = cleanedName + vonBis;
+
+    // Routenname mit Nummer aufbauen — Kombination aus network-Tag und ref:
+    // • nwn/iwn + ref 1–9   → Nationalroute   (1-stellig)
+    // • rwn     + ref 10–99 → Regionalroute   (2-stellig)
+    // • lwn     + ref 100–999 → Lokalroute    (3-stellig)
+    // • alles andere (z.B. lwn+ref=1, kein Netz) → K-Kennung aus OSM-ID
+    const refNum = r.ref ? parseInt(r.ref, 10) : NaN;
+    const net = (r.network ?? "").toLowerCase();
+    const isNwn = net === "nwn" || net === "iwn";
+    const isRwn = net === "rwn";
+    const isLwn = net === "lwn" || net === "";
+    const hasValidRef =
+      (isNwn && !isNaN(refNum) && refNum >= 1  && refNum <= 9)   ||
+      (isRwn && !isNaN(refNum) && refNum >= 10 && refNum <= 99)  ||
+      (isLwn && !isNaN(refNum) && refNum >= 100 && refNum <= 999);
+    // rwn ohne eigenes ref: Eltern-ref via Name-Lookup finden
+    const derivedRwnRef = (!hasValidRef && isRwn)
+      ? rwnRefLookup.get(cleanedName.replace(/\s*[Ee]tappe\s+\d+.*$/, "").replace(/\s*-\s*$/, "").trim().toLowerCase())
+      : undefined;
+    const routeName = hasValidRef
+      ? `${refNum} ${nameWithVonBis}`
+      : derivedRwnRef
+        ? `${derivedRwnRef} ${nameWithVonBis}`
+        : `K${(Math.abs(r.osmId ?? 0) % 900) + 100} ${nameWithVonBis}`;
     return {
       id: r.id,
       sagaId: r.id,
       canton,
-      name: cleanedName,
+      name: routeName,
       ref: r.ref,
       distanceKm: Math.round(distanceKm * 10) / 10,
+      distanceTagKm,
       ascentM,
       maxElevationM,
-      minutes: estimateMinutes(distanceKm, ascentM),
+      minutes: estimateMinutes(minutesKm, ascentM),
       sac,
       terrain: terrainLabel(r.ref, r.network, sac),
       lat: start.lat,
@@ -643,6 +792,7 @@ async function enrichAndStore(
         set: {
           name: sql`excluded.name`,
           distanceKm: sql`excluded.distance_km`,
+          distanceTagKm: sql`excluded.distance_tag_km`,
           ascentM: sql`excluded.ascent_m`,
           maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
@@ -721,8 +871,41 @@ export async function getCantonRoutes(
 
   const candidates = selectCandidates(index, distMax);
   const freshIds = new Set(fresh.map((row) => row.id));
+
+  // Routen die bereits als schweizmobil-* gespeichert sind nicht nochmals als
+  // osm-* einfügen — globaler Ref-Check über alle Kantone.
+  // WICHTIG: placeholder-* absichtlich NICHT schützen — Placeholder sollen
+  // ersetzt werden sobald echte OSM-Daten verfügbar sind.
+  const candidateRefs = candidates.map((c) => c.ref).filter((r): r is string => !!r);
+  const coveredRefs = new Set<string>(
+    candidateRefs.length > 0
+      ? (
+          await db
+            .select({ ref: externalRoutesTable.ref })
+            .from(externalRoutesTable)
+            .where(
+              and(
+                isNotNull(externalRoutesTable.ref),
+                sql`${externalRoutesTable.ref} = ANY(${candidateRefs})`,
+                sql`${externalRoutesTable.id} LIKE 'schweizmobil-%'`,
+              ),
+            )
+        )
+          .map((r) => r.ref)
+          .filter((r): r is string => !!r)
+      : [],
+  );
+
+  // Bbox-Vorfilter: Kandidaten mit sehr kleiner Bounding-Box können unmöglich
+  // ≥ MIN_KM lang sein — Geometrie erst gar nicht holen. Faktor 0.5 weil eine
+  // gewundene Route deutlich länger als ihre Bbox-Diagonale sein kann.
   const missing = candidates
-    .filter((c) => !freshIds.has(`osm-${c.osmId}`))
+    .filter(
+      (c) =>
+        !freshIds.has(`osm-${c.osmId}`) &&
+        !(c.ref && coveredRefs.has(c.ref)) &&
+        c.bboxDiagKm >= MIN_KM * 0.5,
+    )
     .map((c) => c.osmId);
 
   if (missing.length > 0) {
@@ -736,6 +919,10 @@ export async function getCantonRoutes(
       }
       throw err;
     }
+    // Neue Routen eingereiht → K-Nummern für diesen Kanton neu vergeben.
+    await renumberKRoutes(canton, log).catch((err) =>
+      log.warn({ err, canton }, "renumberKRoutes fehlgeschlagen"),
+    );
   }
 
   const stored = await loadCachedRoutes(canton);
@@ -1196,10 +1383,11 @@ export async function syncSwissNumberedRoutes(
 
     // 5. Minimale Länge (< 1 km = keine echte Wanderroute), kein Maximum –
     //    nationale Mehrtagesrouten (100+ km) werden bewusst vollständig geladen.
-    // Amtlicher Tag-Wert vor berechneter Laenge (unvollstaendige OSM-Erfassung).
-    const distanceKm = r.distanceTagKm ?? pathDistanceKm(r.points);
-    if (distanceKm < MIN_KM) {
-      log.debug({ osmId: entry.osmId, distanceKm }, "Nummerierte Route: zu kurz → übersprungen");
+    // Amtlicher Tag-Wert für den Längencheck (unvollständige Geometrien nicht wegfiltern).
+    const geomKm2 = pathDistanceKm(r.points);
+    const distanceTagKm2 = r.distanceTagKm != null ? Math.round(r.distanceTagKm * 10) / 10 : null;
+    if ((distanceTagKm2 ?? geomKm2) < MIN_KM) {
+      log.debug({ osmId: entry.osmId, geomKm2 }, "Nummerierte Route: zu kurz → übersprungen");
       skipped++;
       continue;
     }
@@ -1215,9 +1403,9 @@ export async function syncSwissNumberedRoutes(
       }
 
       const elevation = await computeElevationStats(r.points, log);
-      // Amtliche SchweizMobil-Werte aus den OSM-Tags vor eigene Berechnung
-      // (unvollständig erfasste Relationen liefern sonst zu kurze Strecken).
-      const finalKm = r.distanceTagKm ?? distanceKm;
+      // distanceKm = Geometrie (weisse Kachel), distanceTagKm = OSM-Tag (roter Balken)
+      const distanceKm2 = Math.round(geomKm2 * 10) / 10;
+      const minutesKm2 = distanceTagKm2 ?? distanceKm2;
       const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
       const maxElevationM = elevation?.maxElevationM ?? 0;
       const sac =
@@ -1236,10 +1424,11 @@ export async function syncSwissNumberedRoutes(
         canton,
         name: formattedName,
         ref: r.ref,
-        distanceKm: Math.round(finalKm * 10) / 10,
+        distanceKm: distanceKm2,
+        distanceTagKm: distanceTagKm2,
         ascentM,
         maxElevationM,
-        minutes: estimateMinutes(finalKm, ascentM),
+        minutes: estimateMinutes(minutesKm2, ascentM),
         sac,
         terrain: terrainLabel(r.ref, r.network, sac),
         lat: start.lat,
@@ -1261,6 +1450,7 @@ export async function syncSwissNumberedRoutes(
             name: sql`excluded.name`,
             canton: sql`excluded.canton`,
             distanceKm: sql`excluded.distance_km`,
+            distanceTagKm: sql`excluded.distance_tag_km`,
             ascentM: sql`excluded.ascent_m`,
             maxElevationM: sql`excluded.max_elevation_m`,
             minutes: sql`excluded.minutes`,
@@ -1360,8 +1550,12 @@ export async function enrichOneRoute(
   }
 
   const r = route;
-  // Amtliche SchweizMobil-Werte aus den OSM-Tags vor eigene Berechnung.
-  const distanceKm = r.distanceTagKm ?? pathDistanceKm(r.points);
+  // distanceKm = aus Geometrie berechnet (weisse Kachel, Navigation)
+  // distanceTagKm = amtlicher OSM-Tag-Wert (roter Balken); null wenn kein Tag
+  const geomKm = pathDistanceKm(r.points);
+  const distanceTagKm = r.distanceTagKm != null ? Math.round(r.distanceTagKm * 10) / 10 : null;
+  const distanceKm = Math.round(geomKm * 10) / 10;
+  const minutesKm = distanceTagKm ?? distanceKm;
   const elevation = await computeElevationStats(r.points, log);
   const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
   const maxElevationM = elevation?.maxElevationM ?? 0;
@@ -1370,7 +1564,7 @@ export async function enrichOneRoute(
   const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
     (p) => [p.lat, p.lng],
   );
-  const minutes = estimateMinutes(distanceKm, ascentM);
+  const minutes = estimateMinutes(minutesKm, ascentM);
 
   // Kanton aus DB lesen falls schon gesetzt, sonst reverse geocoden
   const [existing] = await db
@@ -1388,12 +1582,37 @@ export async function enrichOneRoute(
   const terrain = terrainLabel(r.ref ?? existing?.ref ?? null, r.network, sac);
   const cantons = await detectRouteCantons(r.points, canton, log);
 
+  // Von-Bis an den Namen anhängen (gleiche Logik wie in enrichAndStore).
+  const [nameRow] = await db
+    .select({ name: externalRoutesTable.name })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, rowId));
+  let updatedName: string | undefined;
+  if (nameRow?.name) {
+    // "ViaXxx" → "Via Xxx" bereinigen
+    const cleanedName = nameRow.name
+      .replace(/\bVia([A-ZÄÖÜ])/g, "Via $1")
+      .trim();
+    const f = r.from?.trim();
+    const t = r.to?.trim();
+    const vonBis = (() => {
+      if (!f && !t) return "";
+      if (f && cleanedName.includes(f)) return "";
+      if (f && t) return ` ${f} - ${t}`;
+      if (f) return ` ${f}`;
+      return ` - ${t}`;
+    })();
+    const candidate = cleanedName + vonBis;
+    if (candidate !== nameRow.name) updatedName = candidate;
+  }
+
   await db
     .update(externalRoutesTable)
     .set({
       lat: start.lat,
       lng: start.lng,
-      distanceKm: Math.round(distanceKm * 10) / 10,
+      distanceKm,
+      distanceTagKm,
       ascentM,
       maxElevationM,
       minutes,
@@ -1403,10 +1622,11 @@ export async function enrichOneRoute(
       cantons,
       geometry: JSON.stringify(geometry),
       geometryVersion: GEOMETRY_VERSION,
+      ...(updatedName ? { name: updatedName } : {}),
     })
     .where(eq(externalRoutesTable.id, rowId));
 
-  return { ok: true, distanceKm: Math.round(distanceKm * 10) / 10, canton };
+  return { ok: true, distanceKm, canton };
 }
 
 /**

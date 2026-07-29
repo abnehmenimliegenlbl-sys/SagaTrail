@@ -22,6 +22,7 @@ import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute } from "../lib/routeService";
+import { fetchOsmRelationTags } from "../lib/overpass";
 import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
@@ -1785,6 +1786,8 @@ router.post("/admin/routes/prune", async (req, res): Promise<void> => {
  * GET /admin/routes/enrich-status verfolgen.
  */
 let enrichAllLaeuft = false;
+// Manuell auf true setzen um den Loop zu pausieren (z.B. bei Daten-Korrekturen).
+let enrichAllPaused = true;
 
 /**
  * Startet den Enrich-All-Hintergrundlauf, falls noch Routen offen sind.
@@ -1793,10 +1796,11 @@ let enrichAllLaeuft = false;
  */
 export function startEnrichAllIfNeeded(log: Logger): void {
   if (enrichAllLaeuft) return;
+  if (enrichAllPaused) { log.info("enrich-all: pausiert — enrichAllPaused=true"); return; }
   // Erst prüfen ob überhaupt offene Routen da sind — kein unnötiger Loop.
   db.select({ n: count() })
     .from(externalRoutesTable)
-    .where(and(sql`geometry_version = 0`, sql`id LIKE 'osm-%'`))
+    .where(sql`geometry_version = 0`)
     .then(([row]) => {
       const offen = row?.n ?? 0;
       if (offen === 0) {
@@ -1827,7 +1831,6 @@ function runEnrichAllLoop(log: Logger): void {
           .where(
             and(
               sql`geometry_version = 0`,
-              sql`id LIKE 'osm-%'`,
               gescheitert.size > 0
                 ? notInArray(externalRoutesTable.id, [...gescheitert])
                 : undefined,
@@ -1855,19 +1858,25 @@ function runEnrichAllLoop(log: Logger): void {
           // Kompletter Batch gescheitert → vermutlich Overpass-Drosselung.
           fehlerSerien++;
           if (fehlerSerien >= 6) {
-            log.error("enrich-all: 6 Batches in Folge gescheitert — Abbruch, später erneut starten");
-            break;
-          }
+            // Lange Pause statt Abbruch — Loop läuft nach 30 Min selbst weiter.
+            log.warn("enrich-all: 6 Batches in Folge gescheitert — 30 Min Abkühl-Pause, dann weiter");
+            fehlerSerien = 0;
+            await new Promise((resolve) => setTimeout(resolve, 30 * 60_000));
+          } else {
           const wartezeitMs = 5 * 60_000;
           log.warn({ fehlerSerien }, "enrich-all: Batch komplett gescheitert — 5 Min Abkühl-Pause");
           await new Promise((resolve) => setTimeout(resolve, wartezeitMs));
+          }
         } else {
           fehlerSerien = 0;
         }
       }
       log.info("enrich-all: Geometrie-Phase abgeschlossen — komplett (nur Start-Kanton, kein Multi-Kanton-Backfill)");
     } catch (err) {
-      log.error({ err }, "enrich-all: abgebrochen");
+      log.error({ err }, "enrich-all: abgebrochen mit Fehler — Neustart in 30 Min");
+      // Nach unerwartetem Fehler: Loop nach 30 Min selbst neu starten falls
+      // noch offene Routen vorhanden (z.B. nach Replit-Idle-Wakeup).
+      setTimeout(() => startEnrichAllIfNeeded(log), 30 * 60_000);
     } finally {
       enrichAllLaeuft = false;
     }
@@ -2248,6 +2257,592 @@ router.post("/admin/routes/enrich-next", async (req, res): Promise<void> => {
     req.log.error({ err }, "enrich-next fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * POST /admin/routes/fill-vonbis?refs=1-7
+ * Holt from/to-Tags direkt aus OSM für alle Routen ohne Von-Bis-Angabe
+ * und trägt sie in die DB ein. refs=1-7 filtert auf Nationalrouten 1–7.
+ * Gibt updated/skipped/failed zurück.
+ */
+router.post("/admin/routes/fill-vonbis", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+
+  const dry = req.query.dry === "true";
+  // refs-Parameter: "1-7" → [1,2,3,4,5,6,7] oder "3" → [3]
+  const refsParam = (req.query.refs as string | undefined) ?? "1-7";
+  const [refLo, refHi] = refsParam.includes("-")
+    ? refsParam.split("-").map(Number)
+    : [Number(refsParam), Number(refsParam)];
+
+  try {
+    // 1. Alle osm-* Routen im ref-Bereich ohne Von-Bis laden
+    const candidates = await db
+      .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+      .from(externalRoutesTable)
+      .where(
+        and(
+          sql`id LIKE 'osm-%'`,
+          sql`name NOT LIKE '% - %'`,
+          sql`SPLIT_PART(name, ' ', 1) ~ '^[0-9]+$'`,
+          sql`CAST(SPLIT_PART(name, ' ', 1) AS INTEGER) BETWEEN ${refLo} AND ${refHi}`,
+        ),
+      );
+
+    if (candidates.length === 0) {
+      res.json({ updated: 0, skipped: 0, failed: 0, message: "Keine Kandidaten gefunden" });
+      return;
+    }
+
+    // OSM-IDs extrahieren
+    const osmIds = candidates
+      .map((c) => parseInt(c.id.replace("osm-", ""), 10))
+      .filter((n) => !isNaN(n));
+
+    req.log.info({ count: osmIds.length }, "fill-vonbis: Overpass-Abfrage starten");
+
+    // 2. Tags per Overpass abrufen
+    const tagMap = new Map<number, Awaited<ReturnType<typeof fetchOsmRelationTags>>[number]>();
+    const tags = await fetchOsmRelationTags(osmIds, req.log);
+    for (const t of tags) tagMap.set(t.osmId, t);
+
+    // 3. Für jede Route: Von-Bis aus OSM-Tags einsetzen
+    let updated = 0, skipped = 0, failed = 0;
+    const details: { id: string; old: string; new: string; source: string }[] = [];
+
+    for (const c of candidates) {
+      const osmId = parseInt(c.id.replace("osm-", ""), 10);
+      const t = tagMap.get(osmId);
+      if (!t) { skipped++; continue; }
+
+      const from = t.from?.trim();
+      const to   = t.to?.trim();
+
+      // Von-Bis nur eintragen wenn beide Endpunkte bekannt
+      if (!from || !to) { skipped++; continue; }
+
+      // Basis-Routenname: alles nach der führenden Zahl + Routenname, ohne
+      // bestehendes Von-Bis oder Etappen-Label (wird neu gebaut)
+      // z.B. "3 Alpenpanorama-Weg" bleibt "3 Alpenpanorama-Weg"
+      const baseMatch = c.name.match(/^(\d+)\s+(.+)$/);
+      if (!baseMatch) { skipped++; continue; }
+      const [, refStr, baseName] = baseMatch;
+
+      // Etappen-Nummer: aus OSM-Name oder aus bestehendem DB-Name
+      const etappeNr = t.etappeNr
+        ?? c.name.match(/[Ee]tappe\s+(\d+)/)?.[1];
+      const etappeLabel = etappeNr ? ` Etappe ${etappeNr}` : "";
+
+      // Basis ohne bereits vorhandenes "Etappe N ..." kürzen
+      const cleanBase = baseName.replace(/\s*[Ee]tappe\s+\d+.*$/, "").trim();
+      const newName = `${refStr} ${cleanBase}${etappeLabel} ${from} - ${to}`;
+
+      details.push({ id: c.id, old: c.name, new: newName, source: "osm-tags" });
+      if (!dry) {
+        try {
+          await db
+            .update(externalRoutesTable)
+            .set({ name: newName })
+            .where(eq(externalRoutesTable.id, c.id))
+            .execute();
+          updated++;
+        } catch (err: any) {
+          req.log.warn({ err, id: c.id }, "fill-vonbis: DB-Update fehlgeschlagen");
+          failed++;
+        }
+      } else {
+        updated++;
+      }
+    }
+
+    req.log.info({ dry, updated, skipped, failed }, "fill-vonbis: abgeschlossen");
+    res.json({ dry, updated, skipped, failed, details });
+  } catch (err: any) {
+    req.log.error({ err }, "fill-vonbis: Fehler");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/osm-bulk-fill?refMin=22&refMax=99&dry=true
+ * Holt alle CH-Wanderrouten im ref-Bereich aus OSM in einer Overpass-Abfrage,
+ * vergleicht mit DB und trägt fehlende Von-Bis / neue Routen ein.
+ */
+router.post("/admin/routes/osm-bulk-fill", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const dry = req.query.dry === "true";
+  const refMin = parseInt((req.query.refMin as string) ?? "22", 10);
+  const refMax = parseInt((req.query.refMax as string) ?? "99", 10);
+
+  try {
+    const { fetchOsmRoutesInRange } = await import("../lib/overpass");
+    req.log.info({ refMin, refMax }, "osm-bulk-fill: Overpass-Abfrage");
+    const osmRoutes = await fetchOsmRoutesInRange(refMin, refMax, req.log);
+    req.log.info({ count: osmRoutes.length }, "osm-bulk-fill: OSM-Ergebnis");
+
+    // Bestehende DB-Einträge für diesen ref-Bereich laden
+    const existing = await db
+      .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+      .from(externalRoutesTable)
+      .where(
+        and(
+          sql`SPLIT_PART(name, ' ', 1) ~ '^[0-9]+$'`,
+          sql`CAST(SPLIT_PART(name, ' ', 1) AS INTEGER) BETWEEN ${refMin} AND ${refMax}`,
+        ),
+      );
+
+    // OSM-IDs die bereits in DB sind
+    const dbOsmIds = new Set(
+      existing
+        .filter((e) => e.id.startsWith("osm-"))
+        .map((e) => parseInt(e.id.replace("osm-", ""), 10)),
+    );
+
+    // Routen-Namen aus DB für Elternrouten-Check (schweizmobil-* Einträge)
+    const dbNames = new Set(existing.map((e) => e.name));
+
+    const toAdd: typeof osmRoutes = [];
+    const toUpdate: { id: string; newName: string; oldName: string }[] = [];
+
+    for (const r of osmRoutes) {
+      const from = r.from?.trim();
+      const to   = r.to?.trim();
+      const baseName = r.nameDe ?? r.name;
+      if (!baseName) continue;
+
+      // Etappe-Nummer aus OSM-Namen extrahieren ("Etappe N" oder "01-" Prefix)
+      const etappeMatchA = baseName.match(/[Ee]tappe\s+(\d+)/);
+      const etappeMatchB = !etappeMatchA ? baseName.match(/^(\d{1,2})-/) : null;
+      const etappeNr = etappeMatchA ? parseInt(etappeMatchA[1], 10)
+                     : etappeMatchB ? parseInt(etappeMatchB[1], 10) : null;
+      const cleanBase = baseName
+        .replace(/\s*[Ee]tappe\s+\d+.*$/, "")  // "Etappe N …" am Ende
+        .replace(/^\d{1,2}-/, "")               // "01-" Prefix
+        .replace(/\s*[-–]\s*$/, "")             // hängendes " -" am Ende
+        .trim();
+
+      // Von-Bis aufbauen
+      const vonBis = from && to ? ` ${from} - ${to}` : (from ? ` ${from}` : "");
+      if (!vonBis) continue; // Kein Von-Bis → überspringen
+
+      const etappeLabel = etappeNr ? ` Etappe ${etappeNr}` : "";
+      const newName = `${r.ref} ${cleanBase}${etappeLabel}${vonBis}`;
+
+      if (dbOsmIds.has(r.osmId)) {
+        // Bereits in DB: Von-Bis fehlt?
+        const dbEntry = existing.find((e) => e.id === `osm-${r.osmId}`);
+        if (dbEntry && !dbEntry.name.includes(" - ")) {
+          toUpdate.push({ id: `osm-${r.osmId}`, newName, oldName: dbEntry.name });
+        }
+      } else {
+        // Noch nicht in DB → als neuen Eintrag vormerken
+        toAdd.push(r);
+      }
+    }
+
+    // Updates (Von-Bis ergänzen)
+    let updated = 0;
+    for (const u of toUpdate) {
+      if (!dry) {
+        await db.update(externalRoutesTable).set({ name: u.newName })
+          .where(eq(externalRoutesTable.id, u.id)).execute();
+      }
+      updated++;
+    }
+
+    // Neue Routen einfügen (nur Metadaten, keine Geometrie)
+    // → werden beim nächsten canton-sync mit Geometrie befüllt
+    let inserted = 0;
+    for (const r of toAdd) {
+      const from = r.from?.trim();
+      const to   = r.to?.trim();
+      const baseName = r.nameDe ?? r.name ?? "";
+      const etappeMatchA2 = baseName.match(/[Ee]tappe\s+(\d+)/);
+      const etappeMatchB2 = !etappeMatchA2 ? baseName.match(/^(\d{1,2})-/) : null;
+      const etappeNr = etappeMatchA2 ? parseInt(etappeMatchA2[1], 10)
+                     : etappeMatchB2 ? parseInt(etappeMatchB2[1], 10) : null;
+      const cleanBase = baseName
+        .replace(/\s*[Ee]tappe\s+\d+.*$/, "")
+        .replace(/^\d{1,2}-/, "")
+        .replace(/\s*[-–]\s*$/, "")
+        .trim();
+      const etappeLabel = etappeNr ? ` Etappe ${etappeNr}` : "";
+      const vonBis = from && to ? ` ${from} - ${to}` : "";
+      const newName = `${r.ref} ${cleanBase}${etappeLabel}${vonBis}`;
+      if (!dry) {
+        const oid = "osm-" + r.osmId;
+        await db.execute(sql`
+          INSERT INTO external_routes
+            (id, saga_id, canton, name, ref, distance_km, ascent_m, max_elevation_m,
+             minutes, sac, terrain, lat, lng, geometry, geometry_version, source)
+          VALUES (
+            ${oid}, '', '', ${newName}, ${String(r.ref)},
+            0, 0, 0, 0, 'unbekannt', '', 0, 0,
+            '[]'::jsonb, -1, 'error'
+          )
+          ON CONFLICT (id) DO NOTHING
+        `);
+      }
+      inserted++;
+    }
+
+    req.log.info({ dry, updated, inserted }, "osm-bulk-fill: fertig");
+    res.json({
+      dry,
+      updated,
+      inserted,
+      updates: toUpdate,
+      inserts: toAdd.map((r) => {
+        const baseName = r.nameDe ?? r.name ?? "";
+        const emA = baseName.match(/[Ee]tappe\s+(\d+)/);
+        const emB = !emA ? baseName.match(/^(\d{1,2})-/) : null;
+        const en = emA ? ` Etappe ${emA[1]}` : emB ? ` Etappe ${parseInt(emB[1],10)}` : "";
+        const cb = baseName
+          .replace(/\s*[Ee]tappe\s+\d+.*$/, "")
+          .replace(/^\d{1,2}-/, "")
+          .replace(/\s*[-–]\s*$/, "")
+          .trim();
+        const vb = r.from && r.to ? ` ${r.from} - ${r.to}` : "";
+        return { osmId: r.osmId, name: `${r.ref} ${cb}${en}${vb}` };
+      }),
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "osm-bulk-fill: Fehler");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /admin/routes/osm-search?ref=22
+ * Sucht alle OSM-Hiking-Relationen mit gegebenem ref im CH-Bbox und gibt Tags zurück.
+ * Einmaliger Hilfendpoint zum Auffinden fehlender Etappen.
+ */
+router.get("/admin/routes/osm-search", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const ref = (req.query.ref as string | undefined)?.trim();
+  if (!ref) { res.status(400).json({ error: "ref fehlt" }); return; }
+  try {
+    const { fetchOsmRelationsByRef } = await import("../lib/overpass");
+    const results = await fetchOsmRelationsByRef(ref, req.log);
+    res.json({ count: results.length, results });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/fix-lwn-refs
+ * Prüft alle 3-stelligen Routen ohne ref-Spalte gegen Overpass:
+ * - Hat die OSM-Relation einen ref-Tag (100–999)? → Name-Prefix + ref-Spalte aktualisieren
+ * - Fehlt Von-Bis im Name und hat OSM from/to-Tags? → Von-Bis anhängen
+ */
+router.post("/admin/routes/fix-lwn-refs", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const log = req.log;
+
+  // 1. Alle betroffenen Routen aus DB laden
+  const rows = await db
+    .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        isNull(externalRoutesTable.ref),
+        sql`${externalRoutesTable.name} ~ '^[1-9][0-9][0-9] '`,
+        sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+      ),
+    );
+
+  const osmIds = rows.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+  log.info({ total: osmIds.length }, "fix-lwn-refs: Routen geladen");
+
+  // 2. Overpass in Batches à 80 abfragen (nur Tags, kein Geom)
+  const { runOverpass } = await import("../lib/overpass");
+  const BATCH = 80;
+  const tagMap = new Map<number, { ref?: string; from?: string; to?: string }>();
+
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const batch = osmIds.slice(i, i + BATCH);
+    const query = `[out:json][timeout:30];\nrelation(id:${batch.join(",")});\nout tags;`;
+    try {
+      const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query);
+      for (const el of elements) {
+        const t = el.tags ?? {};
+        tagMap.set(el.id, { ref: t.ref, from: t.from, to: t.to });
+      }
+    } catch (err) {
+      log.warn({ err, batch: batch.slice(0, 3) }, "fix-lwn-refs: Overpass-Batch fehlgeschlagen");
+    }
+    if (i + BATCH < osmIds.length) await new Promise<void>((r) => setTimeout(r, 1_200));
+  }
+
+  log.info({ fetched: tagMap.size }, "fix-lwn-refs: Overpass-Tags geholt");
+
+  // 3. DB-Updates berechnen und ausführen
+  let refUpdates = 0;
+  let vonBisUpdates = 0;
+  let combined = 0;
+
+  for (const row of rows) {
+    const osmId = parseInt(row.id.replace("osm-", ""), 10);
+    const tags = tagMap.get(osmId);
+    if (!tags) continue;
+
+    const refNum = tags.ref ? parseInt(tags.ref, 10) : NaN;
+    const hasValidRef = !isNaN(refNum) && refNum >= 100 && refNum <= 999;
+    const hasVonBis = row.name.includes(" - ");
+    const hasOsmVonBis = !!(tags.from && tags.to);
+
+    if (!hasValidRef && (hasVonBis || !hasOsmVonBis)) continue; // nichts zu tun
+
+    // Basis-Name ohne aktuellen Zahlen-Prefix
+    const baseName = row.name.replace(/^\d+\s+/, "");
+    // Von-Bis anhängen wenn nötig
+    const nameWithVonBis =
+      !hasVonBis && hasOsmVonBis
+        ? `${baseName} ${tags.from} - ${tags.to}`
+        : baseName;
+
+    const newName = hasValidRef
+      ? `${refNum} ${nameWithVonBis}`
+      : `${row.name.match(/^\d+/)?.[0] ?? "100"} ${nameWithVonBis}`;
+
+    const newRef = hasValidRef ? String(refNum) : null;
+
+    if (newName === row.name && newRef === null) continue;
+
+    await db
+      .update(externalRoutesTable)
+      .set({ name: newName, ...(newRef !== null ? { ref: newRef } : {}) })
+      .where(eq(externalRoutesTable.id, row.id))
+      .execute()
+      .catch((err) => log.warn({ err, id: row.id }, "fix-lwn-refs: Update fehlgeschlagen"));
+
+    if (hasValidRef && !hasVonBis && hasOsmVonBis) combined++;
+    else if (hasValidRef) refUpdates++;
+    else vonBisUpdates++;
+  }
+
+  res.json({
+    geprüft: rows.length,
+    overpassTags: tagMap.size,
+    refUmbenannt: refUpdates,
+    vonBisErgänzt: vonBisUpdates,
+    beides: combined,
+  });
+});
+
+/**
+ * POST /admin/routes/check-lwn-tags
+ * Prüft die 797 3-stelligen Routen ohne ref nochmals in Overpass:
+ * Hat die OSM-Relation network=lwn UND eine 3-stellige Zahl irgendwo in den Tags
+ * (ref, name, alt_name, ref:schweizmobil …)? → ref-Spalte + Name-Prefix aktualisieren.
+ */
+router.post("/admin/routes/check-lwn-tags", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const log = req.log;
+
+  const rows = await db
+    .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        isNull(externalRoutesTable.ref),
+        sql`${externalRoutesTable.name} ~ '^[1-9][0-9][0-9] '`,
+        sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+      ),
+    );
+
+  const osmIds = rows.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+  log.info({ total: osmIds.length }, "check-lwn-tags: Routen geladen");
+
+  const { runOverpass } = await import("../lib/overpass");
+  const BATCH = 80;
+  const tagMap = new Map<number, Record<string, string>>();
+
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const batch = osmIds.slice(i, i + BATCH);
+    const query = `[out:json][timeout:30];\nrelation(id:${batch.join(",")});\nout tags;`;
+    try {
+      const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query);
+      for (const el of elements) tagMap.set(el.id, el.tags ?? {});
+    } catch (err) {
+      log.warn({ err }, "check-lwn-tags: Batch fehlgeschlagen");
+    }
+    if (i + BATCH < osmIds.length) await new Promise<void>((r) => setTimeout(r, 1_200));
+  }
+
+  log.info({ fetched: tagMap.size }, "check-lwn-tags: Tags geholt");
+
+  // Alle Tags nach 3-stelliger Zahl (100–999) durchsuchen
+  const DREI_DIGIT = /\b([1-9][0-9][0-9])\b/;
+  let updated = 0;
+  const found: Array<{ id: string; newRef: number; newName: string }> = [];
+
+  for (const row of rows) {
+    const osmId = parseInt(row.id.replace("osm-", ""), 10);
+    const tags = tagMap.get(osmId);
+    if (!tags) continue;
+
+    const network = (tags.network ?? "").toLowerCase();
+    if (network !== "lwn") continue; // nur echte lwn
+
+    // Suche 3-stellige Zahl in allen Tag-Werten
+    let foundNum: number | null = null;
+    for (const val of Object.values(tags)) {
+      const m = DREI_DIGIT.exec(val);
+      if (m) { foundNum = parseInt(m[1], 10); break; }
+    }
+    if (!foundNum) continue;
+
+    // Name-Prefix ersetzen
+    const baseName = row.name.replace(/^\d+\s+/, "");
+    const newName = `${foundNum} ${baseName}`;
+    found.push({ id: row.id, newRef: foundNum, newName });
+  }
+
+  // Updates in DB schreiben
+  for (const item of found) {
+    await db
+      .update(externalRoutesTable)
+      .set({ name: item.newName, ref: String(item.newRef) })
+      .where(eq(externalRoutesTable.id, item.id))
+      .execute()
+      .catch((err) => log.warn({ err, id: item.id }, "check-lwn-tags: Update fehlgeschlagen"));
+    updated++;
+  }
+
+  res.json({ geprüft: rows.length, overpassTags: tagMap.size, lwnMit3Stellig: found.length, updated });
+});
+
+/**
+ * POST /admin/routes/undo-check-lwn-tags
+ * Macht die check-lwn-tags-Änderungen rückgängig:
+ * Prüft alle 3-stelligen Routen mit ref IS NOT NULL gegen Overpass.
+ * Wenn der OSM ref-Tag NICHT mit dem DB-ref übereinstimmt (Zahl wurde aus
+ * name/alt_name geholt, nicht aus dem ref-Tag) → sequentielle Nummer zurück,
+ * ref auf NULL setzen.
+ */
+router.post("/admin/routes/undo-check-lwn-tags", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const log = req.log;
+
+  // Alle 3-stelligen Routen mit ref IS NOT NULL
+  const rows = await db
+    .select({ id: externalRoutesTable.id, name: externalRoutesTable.name, ref: externalRoutesTable.ref, canton: externalRoutesTable.canton })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        isNotNull(externalRoutesTable.ref),
+        sql`${externalRoutesTable.name} ~ '^[1-9][0-9][0-9] '`,
+        sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+      ),
+    );
+
+  const osmIds = rows.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+  log.info({ total: osmIds.length }, "undo-check-lwn-tags: Routen geladen");
+
+  const { runOverpass } = await import("../lib/overpass");
+  const BATCH = 80;
+  const osmRefMap = new Map<number, string | null>(); // osmId → OSM ref-Tag (oder null)
+
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const batch = osmIds.slice(i, i + BATCH);
+    const query = `[out:json][timeout:30];\nrelation(id:${batch.join(",")});\nout tags;`;
+    try {
+      const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query);
+      for (const el of elements) osmRefMap.set(el.id, el.tags?.ref ?? null);
+    } catch (err) {
+      log.warn({ err }, "undo-check-lwn-tags: Batch fehlgeschlagen");
+    }
+    if (i + BATCH < osmIds.length) await new Promise<void>((r) => setTimeout(r, 1_200));
+  }
+
+  // Routen identifizieren wo DB-ref ≠ OSM ref-Tag → waren check-lwn-tags
+  const toReset = rows.filter((row) => {
+    const osmId = parseInt(row.id.replace("osm-", ""), 10);
+    const osmRef = osmRefMap.get(osmId);
+    return osmRef !== row.ref; // OSM ref passt nicht zum DB ref
+  });
+
+  log.info({ toReset: toReset.length }, "undo-check-lwn-tags: Routen zum Zurücksetzen");
+  if (toReset.length === 0) { res.json({ zurückgesetzt: 0 }); return; }
+
+  // Nur ref auf NULL setzen — Name bleibt unverändert
+  let updated = 0;
+  for (const row of toReset) {
+    await db
+      .update(externalRoutesTable)
+      .set({ ref: null })
+      .where(eq(externalRoutesTable.id, row.id))
+      .execute()
+      .catch((err) => log.warn({ err, id: row.id }, "undo-check-lwn-tags: Update fehlgeschlagen"));
+    updated++;
+  }
+
+  res.json({ geprüft: rows.length, overpassTags: osmRefMap.size, zurückgesetzt: updated });
+});
+
+/**
+ * POST /admin/routes/lwn-ref-dryrun
+ * Dry-run: prüft die 818 Routen ohne Prefix und ohne ref in Overpass.
+ * Gibt zurück wieviele einen lwn ref-Tag (100–999) haben — ändert nichts.
+ */
+router.post("/admin/routes/lwn-ref-dryrun", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const log = req.log;
+
+  const rows = await db
+    .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        isNull(externalRoutesTable.ref),
+        sql`${externalRoutesTable.name} !~ '^[1-9]'`,
+        sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+      ),
+    );
+
+  const osmIds = rows.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+  log.info({ total: osmIds.length }, "lwn-ref-dryrun: Routen geladen");
+
+  const { runOverpass } = await import("../lib/overpass");
+  const BATCH = 80;
+  const found: Array<{ id: string; name: string; ref: number }> = [];
+  let fetched = 0;
+
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const batch = osmIds.slice(i, i + BATCH);
+    const query = `[out:json][timeout:30];\nrelation(id:${batch.join(",")});\nout tags;`;
+    try {
+      const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query);
+      fetched += elements.length;
+      const DREI_DIGIT = /\b([1-9][0-9][0-9])\b/;
+      for (const el of elements) {
+        const vals = Object.values(el.tags ?? {});
+        const hasLwn = vals.some((v) => v.toLowerCase().includes("lwn"));
+        if (!hasLwn) continue;
+        // Zusätzlich: 3-stellige Zahl (100–999) irgendwo in den Tags
+        let foundNum: number | null = null;
+        for (const v of vals) {
+          const m = DREI_DIGIT.exec(v);
+          if (m) { foundNum = parseInt(m[1], 10); break; }
+        }
+        if (!foundNum) continue;
+        const row = rows.find((r) => r.id === `osm-${el.id}`);
+        if (row) found.push({ id: row.id, name: row.name, ref: foundNum });
+      }
+    } catch (err) {
+      log.warn({ err }, "lwn-ref-dryrun: Batch fehlgeschlagen");
+    }
+    if (i + BATCH < osmIds.length) await new Promise<void>((r) => setTimeout(r, 1_200));
+  }
+
+  res.json({
+    geprüft: osmIds.length,
+    overpassGefunden: fetched,
+    mitLwnRef: found.length,
+    beispiele: found.slice(0, 10),
+  });
 });
 
 export default router;

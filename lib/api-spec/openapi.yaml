@@ -1045,6 +1045,116 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /me/referral-code:
+    get:
+      operationId: getMyReferralCode
+      tags: [profile]
+      summary: Einladungscode abrufen oder erstellen
+      responses:
+        "200":
+          description: Einladungscode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                required: [code]
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /referrals/claim:
+    post:
+      operationId: claimReferralCode
+      tags: [profile]
+      summary: Einladungscode einlösen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  minLength: 1
+              required: [code]
+      responses:
+        "200":
+          description: Eingelöst
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  alreadyClaimed:
+                    type: boolean
+                required: [ok, alreadyClaimed]
+        "400":
+          description: Ungültige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Code nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/pack-reward/claim:
+    post:
+      operationId: claimPackReward
+      tags: [profile]
+      summary: Sagenpaket-Belohnung einlösen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packSlug:
+                  type: string
+                  minLength: 1
+              required: [packSlug]
+      responses:
+        "200":
+          description: Pack eingelöst — gibt aktualisiertes Profil zurück
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Keine Belohnung verfügbar oder ungültiger Pack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kein Profil vorhanden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /routes/{routeId}/conditions:
     get:
       operationId: getRouteConditions
@@ -1251,6 +1361,12 @@ components:
           description: >-
             Abo-Stufe des Nutzers (z.B. "free", "premium", "elite",
             "family", "elite_family"). DB-Spalte ist NOT NULL (Default "free").
+        pendingPackRewards:
+          type: integer
+          description: >-
+            Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen.
+            Wird > 0, sobald ein eingeladener Freund Premium kauft.
+          default: 0
       required:
         - id
         - name
@@ -1260,6 +1376,7 @@ components:
         - premium
         - freeHikeUsed
         - purchasedPacks
+        - pendingPackRewards
     ProfileInput:
       type: object
       properties:
@@ -1404,6 +1521,10 @@ components:
           type: string
         distanceKm:
           type: number
+          description: Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).
+        distanceTagKm:
+          type: number
+          description: Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.
         ascentM:
           type: number
         maxElevationM:
@@ -1454,6 +1575,7 @@ components:
         - name
         - region
         - distanceKm
+        - distanceTagKm
         - ascentM
         - maxElevationM
         - season

@@ -26,6 +26,11 @@ export const externalRoutesTable = pgTable("external_routes", {
   name: text("name").notNull(),
   ref: text("ref"),
   distanceKm: doublePrecision("distance_km").notNull(),
+  // Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert).
+  // Null = kein Tag gesetzt (OSM-Kantonsrouten haben oft keinen Tag).
+  // Wird im roten Balken (Kantonsliste) angezeigt; distanceKm bleibt die
+  // aus der Geometrie berechnete Strecke (weisse Kachel, Navigation).
+  distanceTagKm: doublePrecision("distance_tag_km"),
   ascentM: doublePrecision("ascent_m").notNull(),
   maxElevationM: doublePrecision("max_elevation_m").notNull().default(0),
   minutes: doublePrecision("minutes").notNull(),

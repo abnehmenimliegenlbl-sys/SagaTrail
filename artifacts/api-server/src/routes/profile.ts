@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { db, profilesTable } from "@workspace/db";
+import { db, profilesTable, referralsTable } from "@workspace/db";
 import {
   GetMyProfileResponse,
   SaveMyProfileBody,
@@ -34,6 +34,32 @@ function requireUserId(req: Request, res: Response): string | null {
   return auth.userId;
 }
 
+/** Generiert einen zufälligen 6-stelligen Einladungscode (Gross-Alphanum ohne O/I/0/1). */
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+/** Belohnt den Einlader mit einem ausstehenden Pack-Reward (fire-and-forget). */
+async function rewardReferralInviter(inviteeId: string): Promise<void> {
+  const [referral] = await db
+    .select()
+    .from(referralsTable)
+    .where(and(eq(referralsTable.inviteeId, inviteeId), eq(referralsTable.status, "pending")))
+    .limit(1);
+  if (!referral) return;
+  await db
+    .update(referralsTable)
+    .set({ status: "rewarded", rewardedAt: new Date() })
+    .where(eq(referralsTable.id, referral.id));
+  await db
+    .update(profilesTable)
+    .set({ pendingPackRewards: sql`${profilesTable.pendingPackRewards} + 1`, updatedAt: new Date() })
+    .where(eq(profilesTable.id, referral.inviterId));
+}
+
 function toProfile(row: typeof profilesTable.$inferSelect) {
   return GetMyProfileResponse.parse({
     id: row.id,
@@ -46,6 +72,7 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     freeHikeUsed: row.freeHikeUsed,
     purchasedPacks: row.purchasedPacks ?? [],
     subscriptionTier: row.subscriptionTier,
+    pendingPackRewards: row.pendingPackRewards ?? 0,
   });
 }
 
@@ -190,6 +217,12 @@ router.post("/me/premium/sync", async (req, res): Promise<void> => {
     if (!row) {
       res.status(404).json({ error: "Kein Profil vorhanden" });
       return;
+    }
+    // Erster Premium-Kauf → Einlader belohnen (fire-and-forget)
+    if (!bestehend.premium) {
+      rewardReferralInviter(userId).catch((err) =>
+        req.log.warn({ err, userId }, "[Referral] Reward-Trigger fehlgeschlagen"),
+      );
     }
     res.json(toProfile(row));
     return;
@@ -480,6 +513,145 @@ router.patch("/me/notifications", async (req, res): Promise<void> => {
     .set({ pushWeatherEnabled })
     .where(eq(profilesTable.id, userId));
   res.json({ ok: true });
+});
+
+// GET /me/referral-code — persönlichen Einladungscode abrufen (oder erstellen)
+router.get("/me/referral-code", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const [row] = await db
+    .select({ referralCode: profilesTable.referralCode })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+
+  if (!row) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+  if (row.referralCode) {
+    res.json({ code: row.referralCode });
+    return;
+  }
+
+  // Code generieren — Kollisionen vermeiden
+  let code = "";
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = generateReferralCode();
+    const [exists] = await db
+      .select({ id: profilesTable.id })
+      .from(profilesTable)
+      .where(eq(profilesTable.referralCode, candidate))
+      .limit(1);
+    if (!exists) {
+      code = candidate;
+      break;
+    }
+  }
+  if (!code) {
+    res.status(500).json({ error: "Code-Generierung fehlgeschlagen" });
+    return;
+  }
+  await db
+    .update(profilesTable)
+    .set({ referralCode: code, updatedAt: new Date() })
+    .where(eq(profilesTable.id, userId));
+  res.json({ code });
+});
+
+// POST /referrals/claim — neuer Nutzer löst Einladungscode eines Einladers ein
+router.post("/referrals/claim", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const rawCode = (req.body as { code?: unknown }).code;
+  if (!rawCode || typeof rawCode !== "string" || !rawCode.trim()) {
+    res.status(400).json({ error: "Code fehlt" });
+    return;
+  }
+  const normalised = rawCode.trim().toUpperCase();
+
+  const [inviter] = await db
+    .select({ id: profilesTable.id })
+    .from(profilesTable)
+    .where(eq(profilesTable.referralCode, normalised))
+    .limit(1);
+
+  if (!inviter) {
+    res.status(404).json({ error: "Unbekannter Einladungscode" });
+    return;
+  }
+  if (inviter.id === userId) {
+    res.status(400).json({ error: "Du kannst deinen eigenen Code nicht einlösen" });
+    return;
+  }
+
+  // Idempotent: bereits eingelöst → OK zurückgeben
+  const [existing] = await db
+    .select({ id: referralsTable.id })
+    .from(referralsTable)
+    .where(eq(referralsTable.inviteeId, userId))
+    .limit(1);
+
+  if (existing) {
+    res.json({ ok: true, alreadyClaimed: true });
+    return;
+  }
+  await db.insert(referralsTable).values({ inviterId: inviter.id, inviteeId: userId });
+  res.json({ ok: true, alreadyClaimed: false });
+});
+
+// POST /me/pack-reward/claim — Einlader löst eine ausstehende Pack-Belohnung ein
+const PackRewardClaimBody = z.object({ packSlug: z.string().min(1) });
+
+router.post("/me/pack-reward/claim", async (req, res): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsed = PackRewardClaimBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { packSlug } = parsed.data;
+
+  if (!KANTON_SLUGS.includes(packSlug)) {
+    res.status(400).json({ error: "Unbekannter Kanton" });
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, userId));
+
+  if (!row) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+  if ((row.pendingPackRewards ?? 0) <= 0) {
+    res.status(400).json({ error: "Keine ausstehenden Belohnungen" });
+    return;
+  }
+
+  const currentPacks = row.purchasedPacks ?? [];
+  const newPacks = currentPacks.includes(packSlug) ? currentPacks : [...currentPacks, packSlug];
+
+  const [updated] = await db
+    .update(profilesTable)
+    .set({
+      purchasedPacks: newPacks,
+      pendingPackRewards: (row.pendingPackRewards ?? 1) - 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(profilesTable.id, userId))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Kein Profil vorhanden" });
+    return;
+  }
+  res.json(toProfile(updated));
 });
 
 // DELETE /me — löscht das Konto vollständig (DB + Clerk)

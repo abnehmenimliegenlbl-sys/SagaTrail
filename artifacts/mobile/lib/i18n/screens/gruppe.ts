@@ -27,6 +27,8 @@ export interface GruppeStrings {
   activityReady: string;
   syncNote: string;
   leaveSessionButton: string;
+  inviteLabel: string;
+  inviteText: (code: string) => string;
   ageTiers: Record<AgeTier, string>;
 }
 
@@ -57,6 +59,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "bereit",
     syncNote: "Live verbunden: Beitritte, Austritte und Wander-Status der Gruppe werden in Echtzeit synchronisiert.",
     leaveSessionButton: "Session verlassen",
+    inviteLabel: "Freunde einladen",
+    inviteText: (code) => `Komm auf SagaTrail mit uns wandern! 🏔️\nBeitritts-Code: ${code}\nApp herunterladen: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Kinder",
       jugendliche: "Jugendliche",
@@ -89,6 +93,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "bereit",
     syncNote: "Live verbunde: Biitritt, Uustritt und Wander-Status vode Gruppe wärdet in Ächtziit synchronisiert.",
     leaveSessionButton: "Session verlaa",
+    inviteLabel: "Fründe iilade",
+    inviteText: (code) => `Chum uf SagaTrail mit eus wanderä! 🏔️\nBiitritts-Code: ${code}\nApp abelade: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Chind",
       jugendliche: "Jugendlichi",
@@ -121,6 +127,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "prêt",
     syncNote: "Connecté en direct : les adhésions, les départs et le statut de randonnée du groupe sont synchronisés en temps réel.",
     leaveSessionButton: "Quitter la session",
+    inviteLabel: "Inviter des amis",
+    inviteText: (code) => `Rejoins-nous sur SagaTrail ! 🏔️\nCode d'adhésion : ${code}\nTélécharger l'app : https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Enfants",
       jugendliche: "Adolescents",
@@ -153,6 +161,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "pronto",
     syncNote: "Connesso live: entrate, uscite e stato dell'escursione del gruppo sono sincronizzati in tempo reale.",
     leaveSessionButton: "Lascia sessione",
+    inviteLabel: "Invita amici",
+    inviteText: (code) => `Unisciti a noi su SagaTrail! 🏔️\nCodice di accesso: ${code}\nScarica l'app: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Bambini",
       jugendliche: "Adolescenti",
@@ -185,6 +195,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "ready",
     syncNote: "Live connected: joins, leaves, and hiking status of the group are synchronized in real time.",
     leaveSessionButton: "Leave session",
+    inviteLabel: "Invite friends",
+    inviteText: (code) => `Join us on SagaTrail! 🏔️\nJoin code: ${code}\nDownload the app: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Children",
       jugendliche: "Teenagers",
@@ -217,6 +229,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "就绪",
     syncNote: "实时连接：小组的加入、退出和徒步状态将实时同步。",
     leaveSessionButton: "离开会话",
+    inviteLabel: "邀请朋友",
+    inviteText: (code) => `来 SagaTrail 和我们一起徒步吧！🏔️\n加入代码：${code}\n下载 App：https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "儿童",
       jugendliche: "青少年",
@@ -249,6 +263,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "listo",
     syncNote: "Conectado en vivo: las incorporaciones, salidas y el estado de la caminata del grupo se sincronizan en tiempo real.",
     leaveSessionButton: "Abandonar sesión",
+    inviteLabel: "Invitar amigos",
+    inviteText: (code) => `¡Únete a nosotros en SagaTrail! 🏔️\nCódigo de acceso: ${code}\nDescarga la app: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Niños",
       jugendliche: "Adolescentes",
@@ -281,6 +297,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "pronto",
     syncNote: "Conectado ao vivo: entradas, saídas e status de caminhada do grupo são sincronizados em tempo real.",
     leaveSessionButton: "Sair da sessão",
+    inviteLabel: "Convidar amigos",
+    inviteText: (code) => `Junta-te a nós no SagaTrail! 🏔️\nCódigo de adesão: ${code}\nDescarrega a app: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Crianças",
       jugendliche: "Adolescentes",
@@ -313,6 +331,8 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
     activityReady: "готов",
     syncNote: "Подключено в реальном времени: присоединения, выходы и статус похода группы синхронизируются мгновенно.",
     leaveSessionButton: "Покинуть сессию",
+    inviteLabel: "Пригласить друзей",
+    inviteText: (code) => `Присоединяйся к нам в SagaTrail! 🏔️\nКод для входа: ${code}\nСкачать приложение: https://apps.apple.com/app/id6788260668`,
     ageTiers: {
       kinder: "Дети",
       jugendliche: "Подростки",

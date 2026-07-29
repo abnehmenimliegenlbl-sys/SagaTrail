@@ -23,6 +23,7 @@ export interface SummaryStrings {
   changePhoto: string;
   hikePhotosTitle: string;
   exportGpx: string;
+  facebookGruppe: string;
   transportLive: string;
   transportLoading: string;
   transportNoStation: string;
@@ -59,6 +60,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Foto ändern",
     hikePhotosTitle: "Fotos vom Herzort",
     exportGpx: "GPX exportieren",
+    facebookGruppe: "In Facebook-Gruppe teilen",
     transportLive: "SBB live am Ziel",
     transportLoading: "Fahrplan wird geladen …",
     transportNoStation: "Kein Bahnhof in der Nähe gefunden.",
@@ -93,6 +95,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Foto ändere",
     hikePhotosTitle: "Fotos vom Herzort",
     exportGpx: "GPX exportiere",
+    facebookGruppe: "In Facebook-Gruppe teile",
     transportLive: "SBB live am Ziel",
     transportLoading: "Fahrplan wird gladä …",
     transportNoStation: "Kei Bahnhof id Nächi gfunde.",
@@ -127,6 +130,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Change photo",
     hikePhotosTitle: "Photos from the heart of the legend",
     exportGpx: "Export GPX",
+    facebookGruppe: "Share in Facebook group",
     transportLive: "Live departures at destination",
     transportLoading: "Loading timetable …",
     transportNoStation: "No station found nearby.",
@@ -161,6 +165,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Changer la photo",
     hikePhotosTitle: "Photos du cœur de la légende",
     exportGpx: "Exporter GPX",
+    facebookGruppe: "Partager dans le groupe Facebook",
     transportLive: "CFF en direct à l'arrivée",
     transportLoading: "Chargement des horaires …",
     transportNoStation: "Aucune gare trouvée à proximité.",
@@ -195,6 +200,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Cambia foto",
     hikePhotosTitle: "Foto dal cuore della leggenda",
     exportGpx: "Esporta GPX",
+    facebookGruppe: "Condividi nel gruppo Facebook",
     transportLive: "FFS in tempo reale a destinazione",
     transportLoading: "Caricamento orari …",
     transportNoStation: "Nessuna stazione trovata nelle vicinanze.",
@@ -229,6 +235,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Cambiar foto",
     hikePhotosTitle: "Fotos del corazón de la leyenda",
     exportGpx: "Exportar GPX",
+    facebookGruppe: "Compartir en el grupo de Facebook",
     transportLive: "CFF en directo en el destino",
     transportLoading: "Cargando horarios …",
     transportNoStation: "No se encontró ninguna estación cercana.",
@@ -263,6 +270,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Trocar foto",
     hikePhotosTitle: "Fotos do coração da lenda",
     exportGpx: "Exportar GPX",
+    facebookGruppe: "Compartilhar no grupo do Facebook",
     transportLive: "FFS ao vivo no destino",
     transportLoading: "A carregar horários …",
     transportNoStation: "Nenhuma estação encontrada nas proximidades.",
@@ -297,6 +305,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "更换照片",
     hikePhotosTitle: "传说核心地的照片",
     exportGpx: "导出 GPX",
+    facebookGruppe: "分享到 Facebook 群组",
     transportLive: "目的地实时班次",
     transportLoading: "正在加载时刻表 …",
     transportNoStation: "附近未找到车站。",
@@ -331,6 +340,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     changePhoto: "Изменить фото",
     hikePhotosTitle: "Фото из сердца легенды",
     exportGpx: "Экспортировать GPX",
+    facebookGruppe: "Поделиться в группе Facebook",
     transportLive: "ФЖД в реальном времени",
     transportLoading: "Загрузка расписания …",
     transportNoStation: "Станция поблизости не найдена.",

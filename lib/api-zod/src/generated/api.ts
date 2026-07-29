@@ -31,7 +31,8 @@ export const GetCatalogResponse = zod.object({
   "sagaId": zod.string(),
   "name": zod.string(),
   "region": zod.string(),
-  "distanceKm": zod.number(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
   "ascentM": zod.number(),
   "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
   "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
@@ -153,7 +154,8 @@ export const GetCantonRoutesResponseItem = zod.object({
   "sagaId": zod.string(),
   "name": zod.string(),
   "region": zod.string(),
-  "distanceKm": zod.number(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
   "ascentM": zod.number(),
   "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
   "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
@@ -464,7 +466,8 @@ export const GetCustomRouteResponse = zod.object({
   "sagaId": zod.string(),
   "name": zod.string(),
   "region": zod.string(),
-  "distanceKm": zod.number(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
   "ascentM": zod.number(),
   "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
   "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
@@ -501,7 +504,8 @@ export const ImportGpxRouteResponse = zod.object({
   "sagaId": zod.string(),
   "name": zod.string(),
   "region": zod.string(),
-  "distanceKm": zod.number(),
+  "distanceKm": zod.number().describe('Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation).'),
+  "distanceTagKm": zod.number().describe('Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt.'),
   "ascentM": zod.number(),
   "maxElevationM": zod.number().describe('Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil).'),
   "season": zod.enum(['ganzjaehrig', 'eher_sommer', 'nur_sommer']).describe('Grobe Saison-Einschaetzung aus maximaler Hoehe und SAC-Schwierigkeit (Heuristik, keine amtliche Aussage zum aktuellen Zustand).\n'),
@@ -564,6 +568,8 @@ export const GetRouteSagaResponse = zod.object({
  * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
  * @summary Eigenes Profil laden
  */
+export const getMyProfileResponsePendingPackRewardsDefault = 0;
+
 export const GetMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
@@ -574,7 +580,8 @@ export const GetMyProfileResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(getMyProfileResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
 })
 
 
@@ -597,6 +604,8 @@ export const SaveMyProfileBody = zod.object({
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene'])
 })
 
+export const saveMyProfileResponsePendingPackRewardsDefault = 0;
+
 export const SaveMyProfileResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
@@ -607,7 +616,8 @@ export const SaveMyProfileResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(saveMyProfileResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
 })
 
 
@@ -619,6 +629,8 @@ export const UpdateMyPremiumBody = zod.object({
   "premium": zod.boolean()
 })
 
+export const updateMyPremiumResponsePendingPackRewardsDefault = 0;
+
 export const UpdateMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
@@ -629,7 +641,8 @@ export const UpdateMyPremiumResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(updateMyPremiumResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
 })
 
 
@@ -637,6 +650,8 @@ export const UpdateMyPremiumResponse = zod.object({
  * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
  * @summary Premium-Status verifiziert mit RevenueCat abgleichen
  */
+export const syncMyPremiumResponsePendingPackRewardsDefault = 0;
+
 export const SyncMyPremiumResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
@@ -647,7 +662,8 @@ export const SyncMyPremiumResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(syncMyPremiumResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
 })
 
 
@@ -696,6 +712,8 @@ export const ClaimKantonspackResponse = zod.object({
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */
+export const consumeMyFreeHikeResponsePendingPackRewardsDefault = 0;
+
 export const ConsumeMyFreeHikeResponse = zod.object({
   "id": zod.string().describe('Clerk-Benutzer-ID'),
   "name": zod.string(),
@@ -706,7 +724,59 @@ export const ConsumeMyFreeHikeResponse = zod.object({
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
-  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").')
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(consumeMyFreeHikeResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
+})
+
+
+/**
+ * @summary Einladungscode abrufen oder erstellen
+ */
+export const GetMyReferralCodeResponse = zod.object({
+  "code": zod.string()
+})
+
+
+/**
+ * @summary Einladungscode einlösen
+ */
+
+
+
+export const ClaimReferralCodeBody = zod.object({
+  "code": zod.string().min(1)
+})
+
+export const ClaimReferralCodeResponse = zod.object({
+  "ok": zod.boolean(),
+  "alreadyClaimed": zod.boolean()
+})
+
+
+/**
+ * @summary Sagenpaket-Belohnung einlösen
+ */
+
+
+
+export const ClaimPackRewardBody = zod.object({
+  "packSlug": zod.string().min(1)
+})
+
+export const claimPackRewardResponsePendingPackRewardsDefault = 0;
+
+export const ClaimPackRewardResponse = zod.object({
+  "id": zod.string().describe('Clerk-Benutzer-ID'),
+  "name": zod.string(),
+  "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
+  "homeCanton": zod.string().optional(),
+  "language": zod.string(),
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "premium": zod.boolean(),
+  "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
+  "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
+  "subscriptionTier": zod.string().optional().describe('Abo-Stufe des Nutzers (z.B. \"free\", \"premium\", \"elite\", \"family\", \"elite_family\"). DB-Spalte ist NOT NULL (Default \"free\").'),
+  "pendingPackRewards": zod.number().default(claimPackRewardResponsePendingPackRewardsDefault).describe('Anzahl ausstehender Pack-Belohnungen aus erfolgreichen Einladungen. Wird > 0, sobald ein eingeladener Freund Premium kauft.')
 })
 
 

@@ -13,7 +13,10 @@ export interface CatalogRoute {
   sagaId: string;
   name: string;
   region: string;
+  /** Aus der gespeicherten Geometrie berechnete Streckenlänge in km (weisse Kachel, Navigation). */
   distanceKm: number;
+  /** Amtliche Distanz aus dem OSM-Relation-Tag `distance` (SchweizMobil-Wert); Fallback auf berechnete Geometrie-Distanz wenn kein Tag vorhanden. Immer gesetzt. */
+  distanceTagKm: number;
   ascentM: number;
   /** Hoechster Punkt der Route in Metern ue. M. (swisstopo-Hoehenprofil). */
   maxElevationM: number;
