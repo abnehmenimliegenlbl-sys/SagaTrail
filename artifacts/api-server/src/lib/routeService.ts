@@ -16,6 +16,7 @@ import {
   fetchCantonRouteIndex,
   fetchRouteGeometries,
   fetchRouteGeometryChunked,
+  fetchRouteSuperDeep,
   fetchSwissNumberedIndex,
   resolveNumberedRouteOsmId,
   fetchAerialways,
@@ -1568,14 +1569,23 @@ export async function enrichOneRoute(
       // Netzwerk-/Timeout-Fehler: NICHT dauerhaft markieren, spaeter erneut.
       return { ok: false, reason: `Overpass (auch chunked): ${e.message}` };
     }
+  }
+  if (!route) {
+    // Dritter Versuch: 2-Ebenen-Expansion für NWN/RWN-Super-Relationen
+    // (Super-Relation → Parent-Routen → Etappen → Ways).
+    log.info({ id: rowId }, "enrich: Chunked-Lader leer — SuperDeep-Fallback (2-Ebenen)");
+    try {
+      route = await fetchRouteSuperDeep(osmId, log);
+    } catch (e: any) {
+      return { ok: false, reason: `Overpass (superdeep): ${e.message}` };
+    }
     if (!route) {
-      // Nachweislich nicht anreicherbar (Relation ohne nutzbare Way-Geometrie):
-      // dauerhaft markieren, damit der Job sie nicht endlos erneut anfasst.
+      // Nachweislich nicht anreicherbar: dauerhaft markieren.
       await db
         .update(externalRoutesTable)
         .set({ geometryVersion: -1 })
         .where(eq(externalRoutesTable.id, rowId));
-      return { ok: false, reason: "nicht anreicherbar (keine nutzbare Geometrie) — als -1 markiert" };
+      return { ok: false, reason: "nicht anreicherbar (auch 2-Ebenen-Expansion leer) — als -1 markiert" };
     }
   }
 

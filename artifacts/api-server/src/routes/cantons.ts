@@ -158,11 +158,20 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     nearLng: numParam(req.query.nearLng),
   };
   try {
-    const rows = await loadCachedRoutes(canton);
+    const rawRows = await loadCachedRoutes(canton);
     const userPos =
       filter.nearLat !== null && filter.nearLng !== null
         ? { lat: filter.nearLat, lng: filter.nearLng }
         : null;
+
+    // Deduplizierung: schweizmobil-* Zeilen entfernen wenn eine osm-* Route mit exakt
+    // gleichem Namen existiert (beide sind dasselbe Wanderweg-Netz, aber die osm-Zeile
+    // hat die angereicherte Geometrie und soll die schweizmobil-Zeile ersetzen).
+    const osmNames = new Set(rawRows.filter((r) => r.id.startsWith("osm-")).map((r) => r.name));
+    const rows = rawRows.filter(
+      (r) => !r.id.startsWith("schweizmobil-") || !osmNames.has(r.name),
+    );
+
     // Etappen-Labels für Routen mit gleichem ref UND gleichem Namen (kein "Etappe" drin):
     // z.B. 4× "60 Via Rhenana" in Aargau → "60 Via Rhenana Etappe 1" … "Etappe 4"
     // Sortierung innerhalb der Gruppe: längste zuerst (= Hauptetappe = Etappe 1).

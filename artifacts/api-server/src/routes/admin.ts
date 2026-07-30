@@ -21,9 +21,9 @@ import { clearNarrationCache } from "../lib/narrationCache";
 import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, GEOMETRY_VERSION } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
-import { fetchOsmRelationTags, fetchSubRelations, fetchWikiEtappen, searchOsmRouteByFromTo } from "../lib/overpass";
+import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchWikiEtappen, type WikiEtappe, searchOsmRouteByFromTo } from "../lib/overpass";
 import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
@@ -748,6 +748,8 @@ router.post("/admin/routes/bulk-insert", async (req, res): Promise<void> => {
       res.status(400).json({ error: "Leeres oder ungültiges Array" });
       return;
     }
+    // upsert=true überschreibt bestehende Rows vollständig (für Prod-Sync)
+    const upsert = req.query.upsert === "true";
     const values = rows.map((r) => ({
       id: String(r.id),
       sagaId: String(r.saga_id ?? ""),
@@ -775,10 +777,64 @@ router.post("/admin/routes/bulk-insert", async (req, res): Promise<void> => {
       description: r.description != null ? String(r.description) : null,
       descriptionSource: r.description_source != null ? String(r.description_source) : null,
     }));
-    await db.insert(externalRoutesTable).values(values);
-    res.json({ ok: true, inserted: values.length });
+    if (upsert) {
+      await db.insert(externalRoutesTable).values(values).onConflictDoUpdate({
+        target: externalRoutesTable.id,
+        set: {
+          sagaId: sql`excluded.saga_id`,
+          canton: sql`excluded.canton`,
+          name: sql`excluded.name`,
+          ref: sql`excluded.ref`,
+          distanceKm: sql`excluded.distance_km`,
+          distanceTagKm: sql`excluded.distance_tag_km`,
+          ascentM: sql`excluded.ascent_m`,
+          maxElevationM: sql`excluded.max_elevation_m`,
+          minutes: sql`excluded.minutes`,
+          sac: sql`excluded.sac`,
+          terrain: sql`excluded.terrain`,
+          lat: sql`excluded.lat`,
+          lng: sql`excluded.lng`,
+          geometry: sql`excluded.geometry`,
+          geometryVersion: sql`excluded.geometry_version`,
+          source: sql`excluded.source`,
+          routeType: sql`excluded.route_type`,
+          isEtappe: sql`excluded.is_etappe`,
+          photoUrl: sql`excluded.photo_url`,
+          photoAttribution: sql`excluded.photo_attribution`,
+          description: sql`excluded.description`,
+          descriptionSource: sql`excluded.description_source`,
+        },
+      });
+    } else {
+      await db.insert(externalRoutesTable).values(values);
+    }
+    res.json({ ok: true, inserted: values.length, upsert });
   } catch (err) {
     req.log.error({ err }, "routes/bulk-insert fehlgeschlagen");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /admin/routes/bulk-meta-update — aktualisiert saga_id + is_etappe auf bestehenden Routen
+router.post("/admin/routes/bulk-meta-update", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = req.body as Array<{ id: string; saga_id: string; is_etappe: boolean }>;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      res.status(400).json({ error: "Leeres oder ungültiges Array" });
+      return;
+    }
+    let updated = 0;
+    for (const r of rows) {
+      const result = await db
+        .update(externalRoutesTable)
+        .set({ sagaId: String(r.saga_id ?? ""), isEtappe: Boolean(r.is_etappe ?? false) })
+        .where(eq(externalRoutesTable.id, String(r.id)));
+      updated += (result as any).rowCount ?? 0;
+    }
+    res.json({ ok: true, updated });
+  } catch (err) {
+    req.log.error({ err }, "routes/bulk-meta-update fehlgeschlagen");
     res.status(500).json({ error: String(err) });
   }
 });
@@ -1997,6 +2053,15 @@ router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
     req.log.error({ err }, "enrich-status fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
+});
+
+/** POST /admin/routes/photo-backfill/restart — Foto-Backfill neu starten (z.B. nach erweitertem Radius). */
+router.post("/admin/routes/photo-backfill/restart", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  res.json({ ok: true, message: "Foto-Backfill gestartet (5km-Fallback aktiv)" });
+  fillMissingRoutePhotos(req.log).catch((err) => {
+    req.log.error({ err }, "Foto-Backfill fehlgeschlagen");
+  });
 });
 
 /** GET /admin/routes/photo-status — Wie viele Routen haben bereits ein Foto. */
@@ -3522,6 +3587,279 @@ router.post("/admin/routes/slice-wiki-etappen", (req, res) => {
     sliceWikiLaeuft = false;
   });
   return;
+});
+
+// ─── Enrich Super-Relationen & Placeholder-Etappen ───────────────────────────
+let enrichSuperLaeuft = false;
+let enrichSuperStatus: {
+  laufend: boolean;
+  resetA: number;
+  behandeltB: number;
+  fehlerB: number;
+  log: string[];
+} = { laufend: false, resetA: 0, behandeltB: 0, fehlerB: 0, log: [] };
+
+router.get("/admin/routes/enrich-super-status", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(enrichSuperStatus);
+});
+
+/**
+ * POST /admin/routes/enrich-super
+ *
+ * Gruppe A: 24 osm-* Super-Relationen (geometry_version=-1) → auf 0 zurücksetzen,
+ *           damit der Enrich-Loop sie mit dem neuen SuperDeep-Fallback verarbeitet.
+ * Gruppe B:  9 placeholder-*-Etappen → Geometrie via Wikipedia + Elternroute schneiden.
+ */
+router.post("/admin/routes/enrich-super", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (enrichSuperLaeuft) {
+    res.json({ ok: false, message: "Läuft bereits", status: enrichSuperStatus });
+    return;
+  }
+  enrichSuperLaeuft = true;
+  enrichSuperStatus = { laufend: true, resetA: 0, behandeltB: 0, fehlerB: 0, log: [] };
+  res.json({ ok: true, message: "Gestartet — Status via GET /admin/routes/enrich-super-status" });
+
+  const log: Logger = req.log;
+  const addLog = (s: string) => {
+    enrichSuperStatus.log.push(s);
+    log.info(s);
+  };
+
+  // Wikipedia-Artikel für fehlende NWN/RWN-Etappen
+  const PLACEHOLDER_WIKI: Record<string, Record<string, string>> = {
+    nwn: {
+      "2": "Trans Swiss Trail",
+      "4": "Via Jacobi",
+      "5": "Jura-Höhenweg",
+      "6": "Voie des Alpes",
+    },
+    rwn: {
+      "62": "Walserweg Gottardo",
+    },
+  };
+
+  (async () => {
+    try {
+      // ── Gruppe A: osm-* Super-Relationen ohne Geometrie → zurücksetzen ──────
+      const gruppeA = await db
+        .select({ id: externalRoutesTable.id })
+        .from(externalRoutesTable)
+        .where(
+          and(
+            sql`geometry_version = -1`,
+            sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+          ),
+        );
+
+      if (gruppeA.length > 0) {
+        const ids = gruppeA.map((r) => r.id);
+        for (const slice of [ids]) {
+          await db
+            .update(externalRoutesTable)
+            .set({ geometryVersion: 0 })
+            .where(
+              sql`${externalRoutesTable.id} = ANY(ARRAY[${sql.raw(slice.map((id) => `'${id.replace(/'/g, "''")}'`).join(","))}])`,
+            );
+        }
+        enrichSuperStatus.resetA = ids.length;
+        addLog(`Gruppe A: ${ids.length} osm-* Super-Relationen → geometry_version=0 (enrich-loop mit SuperDeep-Fallback übernimmt)`);
+      } else {
+        addLog("Gruppe A: keine osm-* Routen mit geometry_version=-1");
+      }
+
+      // ── Gruppe B: placeholder-Etappen → Geometrie aus Elternroute schneiden ─
+      const gruppeB = await db
+        .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+        .from(externalRoutesTable)
+        .where(
+          and(
+            sql`geometry_version = -1`,
+            sql`${externalRoutesTable.id} LIKE 'placeholder-%'`,
+          ),
+        );
+
+      addLog(`Gruppe B: ${gruppeB.length} Placeholder-Etappen`);
+
+      for (const etappe of gruppeB) {
+        const m = /^placeholder-(nwn|rwn)-(\d+)-etappe-(\d+)$/.exec(etappe.id);
+        if (!m) {
+          enrichSuperStatus.fehlerB++;
+          addLog(`  ✗ ${etappe.id}: unbekanntes ID-Format`);
+          continue;
+        }
+        const [, network, ref, stageStr] = m;
+        const stageNr = parseInt(stageStr!, 10);
+
+        const wikiTitle = PLACEHOLDER_WIKI[network!]?.[ref!];
+        if (!wikiTitle) {
+          enrichSuperStatus.fehlerB++;
+          addLog(`  ✗ ${etappe.id}: kein Wiki-Artikel für ${network}-${ref}`);
+          continue;
+        }
+
+        // Elternroute in DB: name LIKE 'ref %', hat Geometrie
+        const parents = await db
+          .select({ id: externalRoutesTable.id, geometry: externalRoutesTable.geometry })
+          .from(externalRoutesTable)
+          .where(
+            and(
+              sql`geometry_version > 0`,
+              sql`${externalRoutesTable.id} LIKE 'osm-%'`,
+              sql`${externalRoutesTable.name} LIKE ${ref + " %"}`,
+              eq(externalRoutesTable.isEtappe, false),
+            ),
+          )
+          .limit(1);
+
+        const parent = parents[0];
+        let parentGeom: [number, number][] | null = null;
+        if (parent?.geometry && Array.isArray(parent.geometry)) {
+          const pts: [number, number][] = [];
+          for (const raw of parent.geometry as unknown[]) {
+            const pt = toLatLng(raw);
+            if (pt) pts.push(pt);
+          }
+          if (pts.length > 1) parentGeom = pts;
+        }
+        addLog(`  ${etappe.id}: Wiki="${wikiTitle}", Eltern=${parent?.id ?? "—"} (${parentGeom?.length ?? 0} Punkte)`);
+
+        // ── Strategie 1: Wikipedia-Etappen (bereits bekannte Artikel) ───────
+        let stageFrom: string | null = null;
+        let stageTo: string | null = null;
+        let stageDistKm: number | null = null;
+        let directGeom: [number, number][] | null = null;
+
+        const wikiEtappen = await fetchWikiEtappen(wikiTitle, log).catch((): WikiEtappe[] => []);
+        const stageData = wikiEtappen.find((e) => e.nr === stageNr);
+        if (stageData?.from && stageData?.to) {
+          stageFrom = stageData.from;
+          stageTo = stageData.to;
+          stageDistKm = stageData.distKm ?? null;
+          addLog(`  → Wikipedia: Etappe ${stageNr}: ${stageFrom} – ${stageTo} (${stageDistKm ?? "?"}km)`);
+        } else {
+          addLog(`  Wikipedia lieferte ${wikiEtappen.length} Etappen (Etappe ${stageNr} nicht dabei) — OSM-Fallback`);
+
+          // ── Strategie 2: Direkt OSM-Sub-Relationen ───────────────────────
+          const osmCandidates = await fetchOsmRelationsByRef(ref!, log);
+          const anyEtappeRe = /(etappe|étape|tappa|stage)/i;
+          // Parent-Kandidaten: selbes Netzwerk, kein Etappen-Name
+          const parentCandidates = osmCandidates.filter(
+            (r) => r.network === network && !anyEtappeRe.test(r.name ?? ""),
+          );
+          const topCandidates = parentCandidates.slice(0, 4);
+          addLog(`  OSM: ${osmCandidates.length} Relationen mit ref=${ref!}, ${parentCandidates.length} Eltern-Kandidaten (prüfe ${topCandidates.length})`);
+
+          for (const pc of topCandidates) {
+            const { results: subRels } = await fetchSubRelations(pc.osmId, log);
+            // Sub-Relation mit passender Etappennummer suchen
+            const stageRe = new RegExp(
+              String.raw`(?:etappe|étape|tappa|stage)\s*0?${stageNr}\b`,
+              "i",
+            );
+            const match = subRels.find((s) => stageRe.test(s.name ?? "") || s.ref === String(stageNr));
+            if (match) {
+              addLog(`  OSM: Sub-Relation gefunden: ${match.osmId} "${match.name ?? match.ref}"`);
+              const rawGeoArr = await fetchRouteGeometries([match.osmId], log, {
+                batchSize: 1,
+                timeoutMs: 60_000,
+              }).catch(() => []);
+              const rawGeo = rawGeoArr[0];
+              if (rawGeo?.points && rawGeo.points.length >= 2) {
+                directGeom = rawGeo.points.map((p) => [p.lat, p.lng] as [number, number]);
+                stageDistKm = rawGeo.distanceTagKm ?? null;
+                addLog(`  ✓ OSM: ${directGeom.length} Punkte geladen`);
+              }
+              break;
+            }
+          }
+
+          if (!directGeom) {
+            enrichSuperStatus.fehlerB++;
+            addLog(`  ✗ ${etappe.id}: weder Wikipedia noch OSM haben Etappe ${stageNr}`);
+            continue;
+          }
+        }
+
+        // ── Geometrie: entweder direkt aus OSM oder via from/to aus Elternroute ─
+        let segment: [number, number][];
+        let distKm: number;
+
+        if (directGeom) {
+          segment = directGeom;
+          distKm = stageDistKm ?? (() => {
+            let d = 0;
+            for (let i = 1; i < segment.length; i++)
+              d += haversineKm(segment[i - 1]![0], segment[i - 1]![1], segment[i]![0], segment[i]![1]);
+            return Math.round(d * 10) / 10;
+          })();
+        } else {
+          // from/to über Geocoding + Elternroute schneiden
+          const fromCoord = await geocodeCity(stageFrom!, log).catch(() => null);
+          const toCoord = await geocodeCity(stageTo!, log).catch(() => null);
+          if (!fromCoord || !toCoord) {
+            enrichSuperStatus.fehlerB++;
+            addLog(`  ✗ ${etappe.id}: Geocoding fehlgeschlagen (${stageFrom} / ${stageTo})`);
+            continue;
+          }
+          if (parentGeom) {
+            const fromIdx = nearestIdx(parentGeom, fromCoord.lat, fromCoord.lng, 0);
+            const toIdx = nearestIdx(parentGeom, toCoord.lat, toCoord.lng, fromIdx + 1);
+            segment = fromIdx < toIdx
+              ? parentGeom.slice(fromIdx, toIdx + 1)
+              : [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]];
+          } else {
+            segment = [[fromCoord.lat, fromCoord.lng], [toCoord.lat, toCoord.lng]];
+          }
+          distKm = stageDistKm ?? (() => {
+            let d = 0;
+            for (let i = 1; i < segment.length; i++)
+              d += haversineKm(segment[i - 1]![0], segment[i - 1]![1], segment[i]![0], segment[i]![1]);
+            return Math.round(d * 10) / 10;
+          })();
+        }
+
+        const midPt = segment[Math.floor(segment.length / 2)]!;
+        const geoResult = await reverseGeocode(midPt[0], midPt[1], log).catch(() => null);
+        const canton = geoResult?.canton ?? null;
+
+        try {
+          await db
+            .update(externalRoutesTable)
+            .set({
+              geometry: segment as unknown as typeof externalRoutesTable.geometry._,
+              lat: midPt[0],
+              lng: midPt[1],
+              distanceKm: distKm > 0 ? distKm : undefined,
+              minutes: distKm > 0 ? Math.round((distKm / 4) * 60) : undefined,
+              geometryVersion: GEOMETRY_VERSION,
+              ...(canton ? { canton } : {}),
+            })
+            .where(eq(externalRoutesTable.id, etappe.id))
+            .execute();
+
+          enrichSuperStatus.behandeltB++;
+          addLog(`  ✓ ${etappe.id}: gespeichert (${segment.length} Punkte, ${distKm}km, ${canton ?? "?"})`);
+        } catch (err) {
+          enrichSuperStatus.fehlerB++;
+          addLog(`  ✗ ${etappe.id}: DB-Update fehlgeschlagen`);
+          log.warn({ err, id: etappe.id }, "enrich-super: DB-Fehler");
+        }
+      }
+
+      addLog(
+        `Fertig: A=${enrichSuperStatus.resetA} zurückgesetzt, B=${enrichSuperStatus.behandeltB} behandelt, Fehler=${enrichSuperStatus.fehlerB}`,
+      );
+    } finally {
+      enrichSuperStatus.laufend = false;
+      enrichSuperLaeuft = false;
+    }
+  })().catch((err) => {
+    log.error({ err }, "enrich-super: unerwarteter Fehler");
+    enrichSuperStatus.laufend = false;
+    enrichSuperLaeuft = false;
+  });
 });
 
 export default router;

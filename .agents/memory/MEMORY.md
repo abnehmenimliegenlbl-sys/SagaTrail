@@ -72,6 +72,7 @@
 - [Express duplicate route after task merge](express-duplicate-route-merge.md) — same path added by dir + task agent → first handler wins silently; grep route paths after merges.
 - [Amtliche SchweizMobil-Werte aus OSM-Tags](sagatrail-official-tag-values.md) — distance/ascent-Tags haben Vorrang vor eigener Berechnung; enrich-all nimmt NUR geometry_version=0 (Bump allein reicht nicht).
 - [Legacy-Routen-IDs ohne OSM-ID](sagatrail-legacy-route-ids.md) — schweizmobil-*/placeholder-* IDs werden per gecachtem Netzwerk-Index (network+ref) auf OSM-Relationen aufgelöst; 54 dauerhaft -1, Liste in docs/unenrichable-routes.md.
+- [SuperDeep Enrich + enrich-super Endpoint](superdeep-enrich.md) — fetchRouteSuperDeep (2-Ebenen) als 3. Fallback in enrichOneRoute; POST /admin/routes/enrich-super; 9 placeholder-Etappen bleiben dauerhaft -1 (Etappen > was OSM/WP haben).
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
 - [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
 - [SagaTrail Referral System](sagatrail-referral-system.md) — profiles.referral_code + pending_pack_rewards; referrals table; reward triggers on first premium purchase in POST /me/premium/sync; claim via /referral-reward screen.

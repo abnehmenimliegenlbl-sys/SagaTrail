@@ -311,14 +311,14 @@ async function sucheCommonsFotosNachText(query: string): Promise<CommonsPage[]> 
   return commonsFetch(params, "SagaTrail/1.0 (Sagenfoto-Suche)");
 }
 
-async function sucheCommonsFotos(lat: number, lng: number): Promise<CommonsPage[]> {
+async function sucheCommonsFotos(lat: number, lng: number, radiusM = SUCH_RADIUS_M): Promise<CommonsPage[]> {
   const params = new URLSearchParams({
     action: "query",
     format: "json",
     formatversion: "1",
     generator: "geosearch",
     ggscoord: `${lat}|${lng}`,
-    ggsradius: String(SUCH_RADIUS_M),
+    ggsradius: String(radiusM),
     ggslimit: String(MAX_KANDIDATEN),
     ggsnamespace: "6",
     prop: "imageinfo",
@@ -606,12 +606,20 @@ export async function getCachedRoutePhoto(
       return geoFoto;
     }
 
-    // Phase 3: Geo-Ergebnis ohne Landschafts-Anforderung (letzter Fallback)
+    // Phase 3: Geo-Ergebnis ohne Landschafts-Anforderung
     const fallbackFoto = wähleFoto(geoSeiten, jetzt, true, schluessel);
-    const wert: RoutePhoto = fallbackFoto ?? { photoUrl: null, attribution: null };
+    if (fallbackFoto) {
+      cache.set(schluessel, { wert: fallbackFoto, bisMs: jetztMs + CACHE_TTL_MS });
+      return fallbackFoto;
+    }
+
+    // Phase 4: Weiterer Geo-Radius (5 km) — für abgelegene Routen ohne nahe Commons-Bilder
+    const weitSeiten = await sucheCommonsFotos(lat, lng, 5000);
+    const weitFoto = wähleFoto(weitSeiten, jetzt, false, schluessel) ?? wähleFoto(weitSeiten, jetzt, true, schluessel);
+    const wert: RoutePhoto = weitFoto ?? { photoUrl: null, attribution: null };
     cache.set(schluessel, {
       wert,
-      bisMs: jetztMs + (fallbackFoto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
+      bisMs: jetztMs + (weitFoto ? CACHE_TTL_MS : NEGATIV_TTL_MS),
     });
     return wert;
   } catch (err) {

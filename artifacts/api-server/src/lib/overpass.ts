@@ -1270,6 +1270,114 @@ export async function fetchRouteGeometryChunked(
   };
 }
 
+/**
+ * Wie fetchRouteGeometryChunked, aber expandiert Member-Relationen ZWEI Ebenen
+ * tief: Super-Relation → Parent-Route-Relationen → Etappen-Relationen → Ways.
+ * Notwendig für NWN/RWN-Superrouten, deren OSM-Hierarchie drei Stufen hat und
+ * bei denen fetchRouteGeometryChunked (1 Ebene) keine Way-Member findet.
+ */
+export async function fetchRouteSuperDeep(
+  osmId: number,
+  log: Logger,
+): Promise<RawHikingRoute | null> {
+  const CHUNK_TIMEOUT_MS = 55_000;
+  const WAY_BATCH = 120;
+  const MAX_DEPTH = 2;
+
+  const ladeRelationBody = async (id: number): Promise<OverpassRelBodyElement | null> => {
+    const els = await runOverpass<OverpassRelBodyElement>(
+      `[out:json][timeout:50];relation(${id});out body;`,
+      CHUNK_TIMEOUT_MS,
+    );
+    return els.find((e) => e.type === "relation" && e.id === id) ?? null;
+  };
+
+  const relation = await ladeRelationBody(osmId);
+  if (!relation?.members?.length) {
+    log.warn({ osmId }, "SuperDeep: Relation ohne Member");
+    return null;
+  }
+
+  const wayMembers: OverpassRelBodyMember[] = [];
+  let fehler = 0;
+
+  // Rekursive Expansion bis MAX_DEPTH Ebenen tief
+  const expand = async (members: OverpassRelBodyMember[], depth: number): Promise<void> => {
+    for (const m of members) {
+      if (m.role && NEBENROLLEN.has(m.role.trim().toLowerCase())) continue;
+      if (m.type === "way") {
+        wayMembers.push(m);
+      } else if (m.type === "relation" && depth < MAX_DEPTH) {
+        try {
+          await sleep(600);
+          const sub = await ladeRelationBody(m.ref);
+          if (sub?.members?.length) {
+            await expand(sub.members, depth + 1);
+          }
+        } catch (err) {
+          fehler++;
+          log.warn({ osmId, subRef: m.ref, depth, err }, "SuperDeep: Sub-Relation übersprungen");
+        }
+      }
+    }
+  };
+
+  await expand(relation.members, 0);
+
+  if (!wayMembers.length) {
+    if (fehler > 0) {
+      throw new Error(`SuperDeep: ${fehler} Sub-Relation(en) nicht ladbar — spaeter erneut versuchen`);
+    }
+    log.warn({ osmId }, "SuperDeep: keine Way-Member nach 2-Ebenen-Expansion");
+    return null;
+  }
+
+  const uniqueIds = [...new Set(wayMembers.map((m) => m.ref))];
+  const geomById = new Map<number, { lat: number; lon: number }[]>();
+  for (let i = 0; i < uniqueIds.length; i += WAY_BATCH) {
+    const batch = uniqueIds.slice(i, i + WAY_BATCH);
+    if (i > 0) await sleep(1_500);
+    const els = await runOverpass<OverpassWayGeomElement>(
+      `[out:json][timeout:50];way(id:${batch.join(",")});out geom;`,
+      CHUNK_TIMEOUT_MS,
+    );
+    for (const w of els) {
+      if (w.type === "way" && w.geometry && w.geometry.length >= 2) {
+        geomById.set(w.id, w.geometry);
+      }
+    }
+  }
+
+  const members: OverpassGeomMember[] = wayMembers
+    .map((m): OverpassGeomMember => ({ type: "way", role: m.role, geometry: geomById.get(m.ref) }))
+    .filter((m) => !!m.geometry && m.geometry.length >= 2);
+
+  const points = stitchMitTagPruefung(members, relation.tags ?? {});
+  if (points.length < 2) {
+    if (fehler > 0 || geomById.size < uniqueIds.length) {
+      throw new Error("SuperDeep: unvollstaendige Daten — spaeter erneut versuchen");
+    }
+    log.warn({ osmId, ways: wayMembers.length, geladen: geomById.size }, "SuperDeep: Stitch ergab keine Kette");
+    return null;
+  }
+
+  const tags = relation.tags ?? {};
+  log.info({ osmId, ways: uniqueIds.length, punkte: points.length }, "SuperDeep: Geometrie zusammengesetzt");
+  return {
+    id: `osm-${osmId}`,
+    osmId,
+    name: tags.name ?? `Wanderroute ${osmId}`,
+    ref: tags.ref ?? null,
+    sac: tags.sac_scale ?? null,
+    network: tags.network ?? null,
+    points,
+    distanceTagKm: parseNumericTag(tags.distance, 500),
+    ascentTagM: parseNumericTag(tags.ascent, 20000),
+    from: tags.from ?? null,
+    to: tags.to ?? null,
+  };
+}
+
 export async function fetchRouteGeometries(
   osmIds: number[],
   log: Logger,
@@ -1569,8 +1677,8 @@ export async function fetchWikiEtappen(articleTitle: string, log: Logger): Promi
     return [];
   }
 
-  // Etappen-Sektion isolieren
-  const etappenMatch = wikitext.match(/==\s*Etappen\s*==\s*([\s\S]*?)(?:\n==|$)/);
+  // Etappen-Sektion isolieren — breiter Regex für z.B. "Etappen und Sehenswürdigkeiten"
+  const etappenMatch = wikitext.match(/==\s*Etappen[^=\n]*==\s*([\s\S]*?)(?:\n==|$)/);
   if (!etappenMatch) return [];
 
   const results: WikiEtappe[] = [];

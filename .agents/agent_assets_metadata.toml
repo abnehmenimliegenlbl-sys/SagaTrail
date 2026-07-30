@@ -377,3 +377,9 @@ id = "X5xz4Ocw1bhZIHy6-yR8W"
 uri = "file://attached_assets/partner-seite-updated.html"
 type = "unspecified"
 title = "Partner-Seite – aktualisiert (1. Monat kostenlos + Button-Ausrichtung)"
+
+[[outputs]]
+id = "prMpN9I_L6tfGmph5qEv5"
+uri = "file://attached_assets/share_card_senda_segantini_et3.jpg"
+type = "image"
+title = "Share-Karte: Senda Segantini Etappe 3"
