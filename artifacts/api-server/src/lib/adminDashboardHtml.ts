@@ -141,6 +141,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('routen',this)">&#128247; Routen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
   <button class="tab-btn" onclick="switchTab('kampagne',this)">&#128140; Kampagne</button>
+  <button class="tab-btn" onclick="switchTab('leads-suche',this)">&#128269; Leads-Suche</button>
 </div>
 
 <div id="content">
@@ -498,6 +499,77 @@ a{color:var(--red);text-decoration:none}
         </div>
       </div>
       <div id="km-log-body"><p class="hint">Log wird beim ersten Öffnen des Tabs geladen.</p></div>
+    </div>
+
+  </div>
+
+  <!-- LEADS-SUCHE -->
+  <div id="tab-leads-suche" class="tab-pane">
+
+    <!-- STEUERUNG -->
+    <div class="card">
+      <h2>&#128269; OSM Partner-Leads entlang der Routen suchen</h2>
+      <p class="hint" style="margin-bottom:14px">
+        Sucht Restaurants, Cafés, Hotels und Berghütten entlang aller Routen-Geometrien via OpenStreetMap.
+        Bereits in der partners-Tabelle vorhandene Betriebe und Blockliste-Adressen werden automatisch ausgeschlossen.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group">
+          <label>Radius (m)</label>
+          <select id="ls-radius" style="width:110px">
+            <option value="300">300 m</option>
+            <option value="400" selected>400 m</option>
+            <option value="500">500 m</option>
+            <option value="750">750 m</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="ls-start-btn" onclick="lsStart()">&#9654; Suche starten</button>
+        <button class="btn btn-green" id="ls-download-btn" onclick="lsDownload()" style="display:none">&#11015; CSV herunterladen</button>
+        <span id="ls-status-text" style="font-size:13px;color:var(--mid)"></span>
+      </div>
+
+      <!-- Fortschrittsbalken -->
+      <div id="ls-progress-wrap" style="display:none;margin-top:16px">
+        <div style="background:#f0eeeb;border-radius:8px;height:10px;overflow:hidden;margin-bottom:8px">
+          <div id="ls-progress-bar" style="height:100%;background:var(--red);width:0%;transition:width .4s"></div>
+        </div>
+        <p id="ls-progress-text" class="hint"></p>
+      </div>
+
+      <!-- Zusammenfassung -->
+      <div id="ls-summary" style="display:none;margin-top:14px;padding:12px 16px;background:#f7f6f4;border-radius:8px;border:1px solid var(--border)">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div><span style="font-size:24px;font-weight:700;color:var(--red)" id="ls-found-num">0</span><br/><span class="hint">Neue Leads</span></div>
+          <div><span style="font-size:24px;font-weight:700;color:var(--mid)" id="ls-excl-num">0</span><br/><span class="hint">Ausgeschlossen</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VORSCHAU-TABELLE -->
+    <div class="card" id="ls-preview-card" style="display:none">
+      <h2>&#128203; Vorschau (erste 100 Leads)</h2>
+      <p class="hint" style="margin-bottom:12px">
+        Überprüfe die Leads, bevor du die CSV in WordPress hochlädst und Mails versendest.
+        Bestehende Partner und Blockliste sind bereits herausgefiltert.
+      </p>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="ls-preview-tbl">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Typ</th>
+              <th>Kanton</th>
+              <th>Sprache</th>
+              <th>Route</th>
+              <th>Adresse</th>
+              <th>Telefon</th>
+              <th>Website</th>
+              <th>Quelle</th>
+            </tr>
+          </thead>
+          <tbody id="ls-preview-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -2229,6 +2301,127 @@ async function kmUnblock(email) {
     alert(email + ' wurde aus der Blockliste entfernt.');
   } catch(e) { alert('Fehler: ' + e.message); }
 }
+
+/* ===================== LEADS-SUCHE ===================== */
+var _lsPoller = null;
+
+async function lsStart() {
+  var radius = document.getElementById('ls-radius').value;
+  try {
+    document.getElementById('ls-start-btn').disabled = true;
+    document.getElementById('ls-status-text').textContent = 'Starte...';
+    document.getElementById('ls-download-btn').style.display = 'none';
+    document.getElementById('ls-progress-wrap').style.display = 'block';
+    document.getElementById('ls-summary').style.display = 'none';
+    document.getElementById('ls-preview-card').style.display = 'none';
+    await api('/api/admin/partner-leads/start?radius=' + radius, { method: 'POST' });
+    lsPoll();
+  } catch(e) {
+    document.getElementById('ls-start-btn').disabled = false;
+    document.getElementById('ls-status-text').textContent = '⚠ ' + esc(e.message);
+  }
+}
+
+function lsPoll() {
+  if (_lsPoller) clearInterval(_lsPoller);
+  _lsPoller = setInterval(async function() {
+    try {
+      var s = await api('/api/admin/partner-leads/status');
+      lsRenderState(s);
+      if (s.status === 'done' || s.status === 'error') {
+        clearInterval(_lsPoller);
+        _lsPoller = null;
+        document.getElementById('ls-start-btn').disabled = false;
+      }
+    } catch(e) { /* ignore transient errors */ }
+  }, 3000);
+}
+
+function lsRenderState(s) {
+  var pct = s.cantonsTotal > 0 ? Math.round(s.cantonesDone / s.cantonsTotal * 100) : 0;
+  document.getElementById('ls-progress-bar').style.width = pct + '%';
+
+  if (s.status === 'running') {
+    document.getElementById('ls-progress-text').textContent =
+      'Batch ' + s.cantonesDone + ' / ' + s.cantonsTotal +
+      ' · ' + s.leadsFound + ' Leads gefunden · ' + (s.excluded || 0) + ' ausgeschlossen';
+    document.getElementById('ls-status-text').textContent = '⏳ Läuft...';
+  } else if (s.status === 'done') {
+    document.getElementById('ls-progress-text').textContent = 'Fertig.';
+    document.getElementById('ls-status-text').textContent = '✓ Abgeschlossen';
+    document.getElementById('ls-progress-bar').style.width = '100%';
+    document.getElementById('ls-download-btn').style.display = '';
+    document.getElementById('ls-summary').style.display = '';
+    document.getElementById('ls-found-num').textContent = s.leadsFound;
+    document.getElementById('ls-excl-num').textContent  = s.excluded || 0;
+    if (s.preview && s.preview.length > 0) {
+      lsRenderPreview(s.preview);
+    }
+  } else if (s.status === 'error') {
+    document.getElementById('ls-status-text').textContent = '⚠ Fehler: ' + esc(s.error || '');
+  } else if (s.status === 'idle') {
+    document.getElementById('ls-progress-wrap').style.display = 'none';
+    document.getElementById('ls-status-text').textContent = '';
+  }
+}
+
+function lsRenderPreview(leads) {
+  var tbody = document.getElementById('ls-preview-tbody');
+  tbody.innerHTML = leads.map(function(l) {
+    var ws = l.website ? '<a href="' + esc(l.website) + '" target="_blank" style="color:var(--red)">' + esc(l.website.replace(/^https?:\/\/(www\.)?/,'').slice(0,30)) + '</a>' : '–';
+    return '<tr>' +
+      '<td><strong>' + esc(l.name) + '</strong></td>' +
+      '<td>' + esc(l.typ) + '</td>' +
+      '<td>' + esc(l.kanton) + '</td>' +
+      '<td><span class="badge badge-gray">' + esc(l.sprache) + '</span></td>' +
+      '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(l.route) + '</td>' +
+      '<td class="mono">' + esc(l.adresse || '–') + '</td>' +
+      '<td class="mono">' + esc(l.telefon || '–') + '</td>' +
+      '<td>' + ws + '</td>' +
+      '<td><span class="badge ' + (l.quelle === 'Google' ? 'badge-blue' : 'badge-gray') + '">' + esc(l.quelle) + '</span></td>' +
+      '</tr>';
+  }).join('');
+  document.getElementById('ls-preview-card').style.display = '';
+}
+
+async function lsDownload() {
+  try {
+    var res = await fetch('/api/admin/partner-leads/download', {
+      headers: { 'x-admin-token': document.getElementById('tok-input').value }
+    });
+    if (!res.ok) { alert('Fehler beim Download: HTTP ' + res.status); return; }
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'sagatrail-partner-leads.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+  } catch(e) { alert('Download-Fehler: ' + e.message); }
+}
+
+// Beim ersten Öffnen des Tabs Status laden
+var _lsTabLoaded = false;
+var _origSwitchTab = null;
+document.addEventListener('DOMContentLoaded', function() {
+  _origSwitchTab = window.switchTab;
+});
+
+/* Patch: beim Aktivieren des Leads-Suche Tabs aktuellen Status laden */
+document.addEventListener('click', function(e) {
+  var btn = e.target && e.target.closest && e.target.closest('.tab-btn');
+  if (!btn) return;
+  var onclick = btn.getAttribute('onclick') || '';
+  if (onclick.indexOf("'leads-suche'") === -1) return;
+  setTimeout(async function() {
+    try {
+      var tok = document.getElementById('tok-input').value;
+      if (!tok) return;
+      var s = await api('/api/admin/partner-leads/status');
+      lsRenderState(s);
+      if (s.status === 'running' && !_lsPoller) lsPoll();
+    } catch(e) { /* ignore */ }
+  }, 100);
+}, true);
 
 /* ===================== HELPERS ===================== */
 function v(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }

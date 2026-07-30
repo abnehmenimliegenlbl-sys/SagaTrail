@@ -1266,20 +1266,16 @@ router.delete("/admin/narration-cache", async (req, res): Promise<void> => {
 router.post("/admin/partner-leads/start", (req, res): void => {
   if (!requireAdminToken(req, res)) return;
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) {
-    res.status(503).json({ error: "GOOGLE_PLACES_API_KEY nicht konfiguriert" });
-    return;
-  }
-
   if (jobState.status === "running") {
     res.json({ started: false, message: "Export läuft bereits", state: sanitizeState() });
     return;
   }
 
-  const radius = Number(req.query.radius ?? 2000);
+  // Google Places Enrichment ist optional – ohne API-Key wird nur OSM genutzt
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY ?? "";
+  const radius = Number(req.query.radius ?? 400);
   startPartnerLeadsExport(apiKey, radius);
-  req.log.info({ radius }, "Partner-Leads Export gestartet (Background)");
+  req.log.info({ radius, googleEnrichment: !!apiKey }, "Partner-Leads Export gestartet (Background)");
   res.json({ started: true, message: "Export gestartet", state: sanitizeState() });
 });
 
@@ -1729,9 +1725,11 @@ function sanitizeState() {
     cantonsTotal: jobState.cantonsTotal,
     cantonesDone: jobState.cantonesDone,
     leadsFound: jobState.leadsFound,
+    excluded: jobState.excluded,
     startedAt: jobState.startedAt,
     finishedAt: jobState.finishedAt,
     error: jobState.error,
+    preview: jobState.preview ?? [],
   };
 }
 

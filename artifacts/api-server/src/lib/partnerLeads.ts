@@ -1,9 +1,13 @@
 /**
  * Partner-Leads: 2-stufig
  *
- * Stufe 1 – OSM via Overpass: 1 Query pro Kanton (Kantonsgebiet-Filter),
- *   dann Nähefilter auf Routen-Koordinaten aus external_routes.
+ * Stufe 1 – OSM via Overpass: Punkte entlang der Routen-Geometrie
+ *   (Sampling alle ~800m), dann Proximity-Filter auf Route-Koordinaten.
  * Stufe 2 – Google Places Enrichment: nur für POIs ohne Telefon UND Website.
+ *
+ * Bereits in der partners-Tabelle vorhandene Betriebe und Betriebe
+ * aus dem partner_email_log / partner_email_blocklist werden
+ * automatisch ausgeschlossen.
  */
 
 import { db } from "@workspace/db";
@@ -86,6 +90,40 @@ function haversineM(
 }
 
 // ---------------------------------------------------------------------------
+// Routen-Geometrie samplen (alle ~sampleDistM Meter ein Punkt)
+// ---------------------------------------------------------------------------
+
+type GeoPoint = [number, number] | { lat: number; lng: number };
+
+function toLatLng(p: GeoPoint): { lat: number; lng: number } {
+  if (Array.isArray(p)) return { lat: p[0], lng: p[1] };
+  return p as { lat: number; lng: number };
+}
+
+function sampleGeometryPoints(
+  geom: GeoPoint[],
+  sampleDistM = 800,
+): { lat: number; lng: number }[] {
+  if (!geom || geom.length === 0) return [];
+  const pts = geom.map(toLatLng);
+  const result: { lat: number; lng: number }[] = [pts[0]];
+  let distSinceSample = 0;
+
+  for (let i = 1; i < pts.length; i++) {
+    distSinceSample += haversineM(pts[i - 1], pts[i]);
+    if (distSinceSample >= sampleDistM) {
+      result.push(pts[i]);
+      distSinceSample = 0;
+    }
+  }
+
+  const last = pts[pts.length - 1];
+  if (result[result.length - 1] !== last) result.push(last);
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Overpass
 // ---------------------------------------------------------------------------
 
@@ -108,7 +146,7 @@ interface OsmElement {
   tags?: Record<string, string>;
 }
 
-async function runOverpass(query: string, timeoutMs = 30_000): Promise<OsmElement[]> {
+async function runOverpass(query: string, timeoutMs = 45_000): Promise<OsmElement[]> {
   let lastError: Error | null = null;
   for (const url of OVERPASS_MIRRORS) {
     const controller = new AbortController();
@@ -145,18 +183,15 @@ async function runOverpass(query: string, timeoutMs = 30_000): Promise<OsmElemen
 
 /**
  * Batch-Query: alle Restaurants, Cafés und Unterkünfte im Umkreis von
- * mehreren Sagen-Koordinaten gleichzeitig (Union von around-Filtern).
- * Klein und schnell (500m Radius je Punkt) statt kantonsweiter Query.
+ * mehreren Routen-Sampling-Punkten gleichzeitig.
+ * Max 8 Punkte pro Query (Overpass-Limit beachten).
  */
-async function fetchPoiAroundSagas(
+async function fetchPoiAroundPoints(
   points: { lat: number; lng: number }[],
   radiusM: number,
 ): Promise<OsmElement[]> {
   if (points.length === 0) return [];
 
-  const arounds = points.map((p) => `around:${radiusM},${p.lat},${p.lng}`).join("|");
-
-  // Für jeden Typ ein Union-Block mit allen Punkten
   const union = points.flatMap((p) => {
     const a = `around:${radiusM},${p.lat},${p.lng}`;
     return [
@@ -167,17 +202,15 @@ async function fetchPoiAroundSagas(
     ];
   });
 
-  void arounds; // suppress unused warning
-
   const query = [
-    "[out:json][timeout:30];",
+    "[out:json][timeout:40];",
     "(",
     ...union,
     ");",
     "out center tags;",
   ].join("");
 
-  return runOverpass(query, 35_000);
+  return runOverpass(query, 50_000);
 }
 
 function osmTypLabel(tags: Record<string, string>): string {
@@ -194,7 +227,7 @@ function osmTypLabel(tags: Record<string, string>): string {
 }
 
 // ---------------------------------------------------------------------------
-// Google Places Enrichment
+// Google Places Enrichment (optional – nur wenn API-Key vorhanden)
 // ---------------------------------------------------------------------------
 
 const PLACES_BASE = "https://maps.googleapis.com/maps/api/place";
@@ -248,15 +281,8 @@ async function googleDetails(
 }
 
 // ---------------------------------------------------------------------------
-// DB laden: Sagas + Routen
+// DB laden: Routen mit Geometrie
 // ---------------------------------------------------------------------------
-
-interface DbSaga {
-  id: string;
-  canton: string;
-  lat: number;
-  lng: number;
-}
 
 interface DbRoute {
   id: string;
@@ -268,16 +294,7 @@ interface DbRoute {
   startLng: number | null;
   endLat: number | null;
   endLng: number | null;
-}
-
-async function loadSagas(): Promise<DbSaga[]> {
-  const result = await db.execute(sql`
-    SELECT id, canton, lat, lng
-    FROM catalog_sagas
-    WHERE lat IS NOT NULL AND lng IS NOT NULL
-    ORDER BY canton
-  `);
-  return result.rows as unknown as DbSaga[];
+  geometry: GeoPoint[] | null;
 }
 
 async function loadRoutes(): Promise<DbRoute[]> {
@@ -287,7 +304,8 @@ async function loadRoutes(): Promise<DbRoute[]> {
       (geometry->0->>0)::float  AS start_lat,
       (geometry->0->>1)::float  AS start_lng,
       (geometry->-1->>0)::float AS end_lat,
-      (geometry->-1->>1)::float AS end_lng
+      (geometry->-1->>1)::float AS end_lng,
+      geometry
     FROM external_routes
     WHERE lat IS NOT NULL AND lng IS NOT NULL
     ORDER BY canton, name
@@ -297,6 +315,7 @@ async function loadRoutes(): Promise<DbRoute[]> {
     lat: number; lng: number;
     start_lat: number | null; start_lng: number | null;
     end_lat: number | null; end_lng: number | null;
+    geometry: GeoPoint[] | null;
   }[]).map((r) => ({
     id: r.id, name: r.name, canton: r.canton,
     lat: Number(r.lat), lng: Number(r.lng),
@@ -304,7 +323,66 @@ async function loadRoutes(): Promise<DbRoute[]> {
     startLng: r.start_lng != null ? Number(r.start_lng) : null,
     endLat: r.end_lat != null ? Number(r.end_lat) : null,
     endLng: r.end_lng != null ? Number(r.end_lng) : null,
+    geometry: Array.isArray(r.geometry) ? r.geometry as GeoPoint[] : null,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Bereits vorhandene Partner & kontaktierte E-Mails laden
+// ---------------------------------------------------------------------------
+
+interface ExistingPartner {
+  name: string;
+  websiteDomain: string;
+}
+
+async function loadExistingPartners(): Promise<ExistingPartner[]> {
+  const result = await db.execute(sql`
+    SELECT name, COALESCE(website_url, '') AS website_url
+    FROM partners
+  `);
+  return (result.rows as Array<{ name: string; website_url: string }>).map((r) => ({
+    name: r.name.toLowerCase().trim(),
+    websiteDomain: extractDomain(r.website_url),
+  }));
+}
+
+async function loadContactedWebsites(): Promise<Set<string>> {
+  const result = await db.execute(sql`
+    SELECT DISTINCT el.email
+    FROM partner_email_log el
+    WHERE el.status = 'ok'
+    UNION
+    SELECT email FROM partner_email_blocklist
+  `);
+  return new Set(
+    (result.rows as Array<{ email: string }>).map((r) => r.email.toLowerCase()),
+  );
+}
+
+function extractDomain(url: string): string {
+  if (!url) return "";
+  try {
+    return new URL(url.startsWith("http") ? url : `https://${url}`).hostname
+      .replace(/^www\./, "")
+      .toLowerCase();
+  } catch {
+    return url.toLowerCase().trim();
+  }
+}
+
+function isExistingPartner(
+  name: string,
+  website: string,
+  existing: ExistingPartner[],
+): boolean {
+  const normName = name.toLowerCase().trim();
+  const domain = extractDomain(website);
+  for (const p of existing) {
+    if (p.name === normName) return true;
+    if (domain && p.websiteDomain && domain === p.websiteDomain) return true;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -318,10 +396,13 @@ export interface JobState {
   cantonsTotal: number;
   cantonesDone: number;
   leadsFound: number;
+  excluded: number;
   startedAt: Date | null;
   finishedAt: Date | null;
   error: string | null;
   csv: string | null;
+  /** Erste 100 Leads zur Vorschau im Admin-Dashboard */
+  preview: PartnerLead[];
 }
 
 export const jobState: JobState = {
@@ -329,10 +410,12 @@ export const jobState: JobState = {
   cantonsTotal: 0,
   cantonesDone: 0,
   leadsFound: 0,
+  excluded: 0,
   startedAt: null,
   finishedAt: null,
   error: null,
   csv: null,
+  preview: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -343,29 +426,62 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-const SAGA_BATCH_SIZE = 5; // Sagen pro Overpass-Query
+/**
+ * Fasst alle Routen-Sampling-Punkte in Batches zusammen.
+ * Je Batch wird eine Overpass-Query mit BATCH_SIZE Punkten gesendet.
+ */
+const POINT_BATCH_SIZE = 8; // Punkte pro Overpass-Query
 
 async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
-  const [sagas, routes] = await Promise.all([loadSagas(), loadRoutes()]);
+  // Routen laden (mit Geometrie)
+  const routes = await loadRoutes();
 
-  // Sagas in Batches aufteilen
-  const batches: DbSaga[][] = [];
-  for (let i = 0; i < sagas.length; i += SAGA_BATCH_SIZE) {
-    batches.push(sagas.slice(i, i + SAGA_BATCH_SIZE));
+  // Bestehende Partner und bereits kontaktierte E-Mails laden
+  const [existingPartners, contactedEmails] = await Promise.all([
+    loadExistingPartners(),
+    loadContactedWebsites(),
+  ]);
+
+  // Alle Sampling-Punkte aus Routen-Geometrien erzeugen
+  // Jeder Punkt trägt die Route-ID mit sich
+  const allPoints: { lat: number; lng: number; routeId: string }[] = [];
+  for (const route of routes) {
+    const geomPts = route.geometry ? sampleGeometryPoints(route.geometry, 800) : [];
+    // Fallback: Mitte, Start, Ende wenn keine Geometrie
+    if (geomPts.length === 0) {
+      geomPts.push({ lat: route.lat, lng: route.lng });
+      if (route.startLat != null && route.startLng != null)
+        geomPts.push({ lat: route.startLat, lng: route.startLng });
+      if (route.endLat != null && route.endLng != null)
+        geomPts.push({ lat: route.endLat, lng: route.endLng });
+    }
+    for (const pt of geomPts) {
+      allPoints.push({ lat: pt.lat, lng: pt.lng, routeId: route.id });
+    }
   }
+
+  // Punkte in Batches aufteilen
+  const batches: { lat: number; lng: number; routeId: string }[][] = [];
+  for (let i = 0; i < allPoints.length; i += POINT_BATCH_SIZE) {
+    batches.push(allPoints.slice(i, i + POINT_BATCH_SIZE));
+  }
+
+  // Route-Lookup nach ID
+  const routeById = new Map(routes.map((r) => [r.id, r]));
 
   jobState.cantonsTotal = batches.length;
   jobState.cantonesDone = 0;
+  jobState.excluded = 0;
 
   const seen = new Set<string>();
   const leads: PartnerLead[] = [];
 
   for (const batch of batches) {
-    const points = batch.map((s) => ({ lat: s.lat, lng: s.lng }));
+    const points = batch.map((p) => ({ lat: p.lat, lng: p.lng }));
 
     let elements: OsmElement[];
     try {
-      elements = await fetchPoiAroundSagas(points, radiusM);
+      elements = await fetchPoiAroundPoints(points, radiusM);
     } catch {
       elements = [];
     }
@@ -382,34 +498,59 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
       const name = tags.name;
       if (!name) continue;
 
-      // Nächste Route über Mitte, Start UND Ende suchen
+      // Nächste Route über alle Punkte im Batch suchen
       let nearestRoute: DbRoute | undefined;
       let nearestDist = Infinity;
-      for (const r of routes) {
-        const pts: { lat: number; lng: number }[] = [{ lat: r.lat, lng: r.lng }];
-        if (r.startLat != null && r.startLng != null) pts.push({ lat: r.startLat, lng: r.startLng });
-        if (r.endLat != null && r.endLng != null)   pts.push({ lat: r.endLat,   lng: r.endLng   });
-        const d = Math.min(...pts.map((p) => haversineM({ lat, lng }, p)));
-        if (d < nearestDist) { nearestDist = d; nearestRoute = r; }
+      for (const bp of batch) {
+        const d = haversineM({ lat, lng }, { lat: bp.lat, lng: bp.lng });
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearestRoute = routeById.get(bp.routeId);
+        }
       }
-      if (!nearestRoute || nearestDist > radiusM * 3) continue;
+      // Auch Routen-Mitte/Start/Ende prüfen für korrekte Zuordnung
+      if (!nearestRoute || nearestDist > radiusM * 2) {
+        for (const r of routes) {
+          const pts: { lat: number; lng: number }[] = [{ lat: r.lat, lng: r.lng }];
+          if (r.startLat != null && r.startLng != null) pts.push({ lat: r.startLat, lng: r.startLng });
+          if (r.endLat != null && r.endLng != null)   pts.push({ lat: r.endLat,   lng: r.endLng   });
+          const d = Math.min(...pts.map((p) => haversineM({ lat, lng }, p)));
+          if (d < nearestDist) { nearestDist = d; nearestRoute = r; }
+        }
+      }
+      if (!nearestRoute || nearestDist > radiusM * 2) continue;
 
-      // Kanton aus nächster Saga des Batches ableiten
-      let canton = nearestRoute.canton ?? "Unbekannt";
-      // Feinabgleich: welche Saga aus dem Batch ist am nächsten?
-      let sagaCanton = canton;
-      let sagaDist = Infinity;
-      for (const s of batch) {
-        const d = haversineM({ lat, lng }, { lat: s.lat, lng: s.lng });
-        if (d < sagaDist) { sagaDist = d; sagaCanton = s.canton; }
+      const telefon = tags.phone ?? tags["contact:phone"] ?? "";
+      const website = tags.website ?? tags["contact:website"] ?? tags.url ?? "";
+
+      // Bereits vorhandene Partner ausschließen
+      if (isExistingPartner(name, website, existingPartners)) {
+        seen.add(osmKey);
+        jobState.excluded++;
+        continue;
       }
-      if (sagaDist <= radiusM) canton = sagaCanton;
+
+      // Bereits kontaktierte E-Mail-Domain ausschließen
+      const domain = extractDomain(website);
+      if (domain) {
+        let alreadyContacted = false;
+        for (const email of contactedEmails) {
+          if (email.endsWith("@" + domain) || email.includes(domain)) {
+            alreadyContacted = true;
+            break;
+          }
+        }
+        if (alreadyContacted) {
+          seen.add(osmKey);
+          jobState.excluded++;
+          continue;
+        }
+      }
 
       seen.add(osmKey);
 
+      const canton = nearestRoute.canton ?? "Unbekannt";
       const sprache = detectSprache(canton, lat, lng);
-      const telefon = tags.phone ?? tags["contact:phone"] ?? "";
-      const website = tags.website ?? tags["contact:website"] ?? tags.url ?? "";
       const adresse = [
         tags["addr:street"],
         tags["addr:housenumber"],
@@ -454,16 +595,21 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
     }
 
     jobState.cantonesDone++;
-    await sleep(200);
+
+    // Vorschau aktualisieren (max. 100 Einträge)
+    jobState.preview = leads.slice(0, 100);
+
+    await sleep(150);
   }
 
   jobState.csv = leadsToCSV(leads);
+  jobState.preview = leads.slice(0, 100);
   jobState.status = "done";
   jobState.finishedAt = new Date();
 }
 
 /** Startet den Export im Hintergrund (non-blocking). */
-export function startPartnerLeadsExport(googleApiKey: string, radiusM = 500): void {
+export function startPartnerLeadsExport(googleApiKey: string, radiusM = 400): void {
   if (jobState.status === "running") return;
   jobState.status = "running";
   jobState.startedAt = new Date();
@@ -472,6 +618,8 @@ export function startPartnerLeadsExport(googleApiKey: string, radiusM = 500): vo
   jobState.csv = null;
   jobState.cantonesDone = 0;
   jobState.leadsFound = 0;
+  jobState.excluded = 0;
+  jobState.preview = [];
 
   runExport(googleApiKey, radiusM).catch((err) => {
     jobState.status = "error";
