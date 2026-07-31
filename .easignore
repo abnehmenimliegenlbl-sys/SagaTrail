@@ -1,0 +1,5 @@
+# Exclude non-mobile artifacts from EAS upload (saves ~50 MB)
+artifacts/api-server/
+artifacts/mockup-sandbox/
+/scripts/
+.agents/

@@ -80,6 +80,7 @@
     },
     "plugins": [
       "./plugins/withPodfileXcode26Fix",
+      "./plugins/withAndroidPackagingFix",
       [
         "expo-build-properties",
         {

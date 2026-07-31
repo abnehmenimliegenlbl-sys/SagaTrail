@@ -41,6 +41,11 @@ no-op fallback for the hook itself so call order stays stable across renders.
 Apply the same guard pattern to any Expo native module lacking a web/Expo-Go
 JS fallback that's imported from a route file.
 
+**Pitfall (fixed 2026-07-31):** "Timer läuft ab, 'zwei' wird ignoriert" — zwei gleichzeitige Bugs:
+(1) Race-Condition Audio-Session: `speak/didJustFinish` setzt `Audio.setAudioModeAsync({allowsRecordingIOS:false})` fire-and-forget, NACHDEM `setSpeaking(false)` React-State-Update getriggert wurde. Das Re-Render startet sofort die Spracherkennung (useVoiceDecision-Effekt), aber der verzögerte Audio-Reset schreibt danach noch `allowsRecordingIOS:false` und tötet das Mikrofon. Fix: (a) `awaitingDecisionRef` als Ref-Spiegel auf `awaitingDecision`; (b) Audio-Reset in "Queue leer"-Pfad überspringen wenn `awaitingDecisionRef.current`; (c) 250ms Startdelay in `useVoiceDecision` (Belt+Suspenders).
+(2) 50%-Meilenstein feuert genau bei Etappe 3 (Halbzeit = Entscheidungspunkt): `speaking=true` → Countdown+Erkennung stoppen → Audio-Session-Reset → Neustart → Mikrofon kaputt. Fix: GPS-getriggerte Ansagen (Meilenstein, Wegoberfläche, Partner) checken `awaitingDecisionRef.current` und überspringen nur den `speak()`-Aufruf (Watch-Mitteilung bleibt).
+Scope: `app/hike/[id].tsx` (awaitingDecisionRef + alle speakRef.current-Calls in GPS-Effekten); `lib/useVoiceDecision.ts` (250ms Delay).
+
 **Pitfall (fixed 2026-07-23):** "App hoert nicht zu" bei Entscheidungspunkten:
 der Audio-Session-Reset-Effekt im Hike-Screen setzte `allowsRecordingIOS:false`
 sobald `listening` kurz false flackerte — also zwischen den automatischen

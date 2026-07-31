@@ -97,6 +97,12 @@ export function useVoiceDecision(
 
     (async () => {
       try {
+        // Kurze Pause damit laufende fire-and-forget Audio.setAudioModeAsync()-
+        // Aufrufe (aus speak/didJustFinish) abgeschlossen sind, bevor die
+        // Spracherkennung allowsRecordingIOS:true setzt. Ohne diese Pause kann
+        // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
+        await new Promise<void>((r) => setTimeout(r, 250));
+        if (cancelled) return;
         const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
         if (cancelled) return;
         if (!perm.granted) {

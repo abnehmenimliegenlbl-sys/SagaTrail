@@ -143,6 +143,7 @@ async function getCantonIndex(
  * Kartenausschnitte auf denselben Cache-Eintrag.
  */
 const AERIALWAY_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const AERIALWAY_CACHE_MAX = 40;
 const aerialwayCache = new Map<string, { at: number; entries: RawAerialway[] }>();
 
 function bboxCacheKey(bbox: { south: number; west: number; north: number; east: number }): string {
@@ -161,6 +162,7 @@ export async function getAerialways(
   const hit = aerialwayCache.get(key);
   if (hit && Date.now() - hit.at < AERIALWAY_TTL_MS) return hit.entries;
   const entries = await fetchAerialways(bbox, log);
+  if (aerialwayCache.size >= AERIALWAY_CACHE_MAX) { const k = aerialwayCache.keys().next().value; if (k !== undefined) aerialwayCache.delete(k); }
   aerialwayCache.set(key, { at: Date.now(), entries });
   return entries;
 }
@@ -239,14 +241,17 @@ const POI_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 const POI_ERROR_TTL_MS = 30 * 1000; // 30 Sekunden
 // Cache fuer on-demand-Anreicherung einzelner POIs (lazy, pro Name+Koordinate).
 const POI_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const POI_CACHE_MAX = 150;
 const poiCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 // Separater Fehler-Cache: nur Timestamp, kein entries-Array. Wird von
 // poiCache bewusst getrennt gehalten, damit ein erfolgreicher Folgeaufruf
 // das poiCache-Ergebnis nicht mit einem leeren Array ueberschreiben kann.
+const POI_ERROR_CACHE_MAX = 100;
 const poiErrorCache = new Map<string, number>();
 // Verhindert parallele Hintergrund-Refreshes fuer dieselbe BBox.
 const poiRefreshInFlight = new Set<string>();
 // On-demand-Cache fuer einzelne POI-Anreicherungen.
+const POI_DETAIL_CACHE_MAX = 200;
 const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
 
 /**
@@ -390,6 +395,7 @@ async function refreshPoisBackground(
       raw = await fetchHistoricPois(bbox, log);
     } catch (err) {
       log.warn({ err, bbox }, "POI-Overpass fehlgeschlagen (Hintergrund-Refresh)");
+      if (poiErrorCache.size >= POI_ERROR_CACHE_MAX) { const k = poiErrorCache.keys().next().value; if (k !== undefined) poiErrorCache.delete(k); }
       poiErrorCache.set(key, Date.now());
       return;
     }
@@ -398,6 +404,7 @@ async function refreshPoisBackground(
     // des POI geladen. Das eliminiert Rate-Limiting durch hunderte parallele
     // Wikimedia-Requests und macht den Karten-Load sofort.
     const entries = deduplicatePois(raw.map((p) => ({ ...p, wiki: null })));
+    if (poiCache.size >= POI_CACHE_MAX) { const k = poiCache.keys().next().value; if (k !== undefined) poiCache.delete(k); }
     poiCache.set(key, { at: Date.now(), entries });
     log.info(
       { bbox, total: raw.length, deduplicated: entries.length },
@@ -469,6 +476,7 @@ export async function getPoiDetail(
   // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
   const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });
   const wiki = enriched.wiki;
+  if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) { const k = poiDetailCache.keys().next().value; if (k !== undefined) poiDetailCache.delete(k); }
   poiDetailCache.set(cacheKey, { at: Date.now(), wiki });
   log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");
   return wiki;

@@ -472,6 +472,7 @@ export async function searchNearbyWikipedia(
 
 // Separater In-Memory-Cache fuer KI-generierte POI-Informationen.
 // Laengere TTL als Wikipedia (7 Tage), da KI-Antworten nicht veralten.
+const AI_POI_CACHE_MAX = 300;
 const aiPoiCache = new Map<string, { at: number; summary: WikiSummary | null }>();
 const AI_POI_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -533,10 +534,12 @@ export async function searchAiPoiKnowledge(
     const textBlock = message.content.find((b) => b.type === "text");
     const text = textBlock?.type === "text" ? textBlock.text.trim() : "";
     if (!text || text.toUpperCase().startsWith("UNBEKANNT") || text.length < 20) {
+      if (aiPoiCache.size >= AI_POI_CACHE_MAX) { const k = aiPoiCache.keys().next().value; if (k !== undefined) aiPoiCache.delete(k); }
       aiPoiCache.set(key, { at: Date.now(), summary: null });
       return null;
     }
     const summary: WikiSummary = { title: name, extract: text, url: "", lang, image: null };
+    if (aiPoiCache.size >= AI_POI_CACHE_MAX) { const k = aiPoiCache.keys().next().value; if (k !== undefined) aiPoiCache.delete(k); }
     aiPoiCache.set(key, { at: Date.now(), summary });
     return summary;
   } catch {

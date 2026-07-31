@@ -24,6 +24,10 @@ args = "Stripe Webhook (Test)"
 task = "workflow.run"
 args = "EAS Build Submit"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "EAS Android Build"
+
 [[workflows.workflow]]
 name = "Stripe Webhook (Test)"
 author = "agent"
@@ -42,6 +46,14 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "if [ ! -f /tmp/eas-go ]; then echo \"Sicherung: kein Build ausgelöst. Zum Bauen zuerst 'touch /tmp/eas-go', dann Workflow neu starten.\"; sleep 3600; exit 0; fi; rm -f /tmp/eas-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 EXPO_APPLE_TEAM_ID=R4254XKT8S npx eas build --platform ios --profile production --auto-submit --no-wait --non-interactive 2>&1 | tee /tmp/eas-build.log; echo EAS_DONE >> /tmp/eas-build.log; sleep 3600"
+
+[[workflows.workflow]]
+name = "EAS Android Build"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "if [ ! -f /tmp/eas-android-go ]; then echo 'Sicherung: kein Build ausgelöst. Zum Bauen zuerst touch /tmp/eas-android-go, dann Workflow neu starten.'; sleep 3600; exit 0; fi; rm -f /tmp/eas-android-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 npx eas build --platform android --profile production --no-wait --non-interactive 2>&1 | tee /tmp/eas-android.log; echo EAS_DONE >> /tmp/eas-android.log; sleep 3600"
 
 [agent]
 stack = "PNPM_WORKSPACE"

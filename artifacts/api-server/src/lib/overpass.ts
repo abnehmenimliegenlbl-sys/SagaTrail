@@ -685,7 +685,12 @@ export interface RawAlpineHut {
 // Hütten-Koordinaten aendern sich praktisch nie → grosszuegige TTL.
 // Cache-Key: gerundete Koordinaten (0.1°-Raster ≈ 10km) + Radius.
 const ALPINE_HUT_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
+const ALPINE_HUT_CACHE_MAX = 50;
 const alpineHutCache = new Map<string, { at: number; entries: RawAlpineHut[] }>();
+function alpineHutCacheSet(key: string, entries: RawAlpineHut[]): void {
+  if (alpineHutCache.size >= ALPINE_HUT_CACHE_MAX) { const k = alpineHutCache.keys().next().value; if (k !== undefined) alpineHutCache.delete(k); }
+  alpineHutCache.set(key, { at: Date.now(), entries });
+}
 
 function alpineHutCacheKey(center: { lat: number; lng: number }, radiusM: number): string {
   const latR = Math.round(center.lat * 10) / 10;
@@ -789,17 +794,17 @@ export async function fetchAlpineHuts(
 
   if (winner !== null) {
     // Overpass hat innerhalb der Deadline geantwortet
-    alpineHutCache.set(key, { at: Date.now(), entries: winner });
+    alpineHutCacheSet(key, winner);
     log.info({ count: winner.length, radiusM, source: "overpass" }, "Alpine Huts geladen");
     return winner;
   }
 
   // Seed sofort zurueckgeben; Overpass laeuft weiter und aktualisiert Cache
-  alpineHutCache.set(key, { at: Date.now(), entries: seed });
+  alpineHutCacheSet(key, seed);
   log.warn({ count: seed.length, radiusM, source: "seed" }, "Alpine Huts: Seed-Fallback (Overpass zu langsam/nicht erreichbar)");
   overpassFetch.then((r) => {
     if (r !== null && r.length > 0) {
-      alpineHutCache.set(key, { at: Date.now(), entries: r });
+      alpineHutCacheSet(key, r);
       log.info({ count: r.length, radiusM }, "Alpine Huts: Overpass-Ergebnis nachtraeglich gecacht");
     }
   }).catch(() => {});
@@ -950,6 +955,7 @@ interface OverpassWayWithTags {
   geometry?: { lat: number; lon: number }[];
 }
 
+const SURFACE_CACHE_MAX = 100;
 const surfaceCache = new Map<number, { at: number; points: RouteSurfacePoint[] }>();
 const SURFACE_TTL_MS = 60 * 60 * 1000; // 1 Stunde
 
@@ -979,6 +985,7 @@ export async function fetchRouteSurfaces(osmId: number): Promise<RouteSurfacePoi
     points.push({ surface: el.tags.surface, lat: first.lat, lng: first.lon });
   }
 
+  if (surfaceCache.size >= SURFACE_CACHE_MAX) { const k = surfaceCache.keys().next().value; if (k !== undefined) surfaceCache.delete(k); }
   surfaceCache.set(osmId, { at: Date.now(), points });
   return points;
 }

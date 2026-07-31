@@ -351,6 +351,12 @@ export default function LiveHike() {
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
+  /** Ref-Spiegel fuer awaitingDecision — erlaubt Zugriff aus asynchronen
+   *  Audio-Callbacks (speak/didJustFinish, Meilenstein-Fetch) ohne Closure-
+   *  Veraltung. Wird unmittelbar nach dem useState-Setter auf dem Render-Pfad
+   *  gesetzt, sodass er immer den aktuellen Wert traegt. */
+  const awaitingDecisionRef = useRef(false);
+  awaitingDecisionRef.current = awaitingDecision;
   const [isOffline, setIsOffline] = useState<boolean>(false);
   /** GPS-Position zum Zeitpunkt der Off-Route-Erkennung — treibt die Neuberechnung. */
   const [offRoutePos, setOffRoutePos] = useState<LatLng | null>(null);
@@ -1370,7 +1376,7 @@ export default function LiveHike() {
         .then((data: { text?: string }) => {
           clearTimeout(timeout);
           const text = data?.text?.trim();
-          if (text) {
+          if (text && !awaitingDecisionRef.current) {
             speakRef.current?.(text, undefined, { useOpenAI: true });
           }
         })
@@ -1416,7 +1422,9 @@ export default function LiveHike() {
         if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
           sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
         }
-        speakRef.current?.(text, undefined, { useOpenAI: true });
+        if (!awaitingDecisionRef.current) {
+          speakRef.current?.(text, undefined, { useOpenAI: true });
+        }
       }
     }
   }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
@@ -1466,20 +1474,29 @@ export default function LiveHike() {
               if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
                 sendeAbbiegeMitteilung(t.milestoneTitle, text);
               }
-              speakRef.current?.(text, undefined, { useOpenAI: true });
+              // Keine Sprachausgabe waehrend Entscheidungspunkt: Meilenstein wuerde
+              // speaking=true setzen → Spracherkennung stoppt → Audio-Session-Reset
+              // → Mikrofon tot. Uhr-Mitteilung (oben) wird immer gesendet.
+              if (!awaitingDecisionRef.current) {
+                speakRef.current?.(text, undefined, { useOpenAI: true });
+              }
             })
             .catch(() => {
               clearTimeout(timeout);
               if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
                 sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
               }
-              speakRef.current?.(fallback, undefined, { useOpenAI: true });
+              if (!awaitingDecisionRef.current) {
+                speakRef.current?.(fallback, undefined, { useOpenAI: true });
+              }
             });
         } else {
           if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
             sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
           }
-          speakRef.current?.(fallback, undefined, { useOpenAI: true });
+          if (!awaitingDecisionRef.current) {
+            speakRef.current?.(fallback, undefined, { useOpenAI: true });
+          }
         }
       }
     }
@@ -1782,7 +1799,10 @@ export default function LiveHike() {
             if (!speakingRef.current) {
               const next = narrationQueueRef.current.shift();
               if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-              else restoreAudioMode();
+              // Kein Audio-Session-Reset waehrend Entscheidungspunkt: gleich
+              // danach startet die Spracherkennung und setzt allowsRecordingIOS:true.
+              // Der feuervergessene Reset koennte die Erkennung killen (Race).
+              else if (!awaitingDecisionRef.current) restoreAudioMode();
             }
           },
           onStopped: () => {
@@ -1860,8 +1880,11 @@ export default function LiveHike() {
               const next = narrationQueueRef.current.shift();
               if (next) {
                 speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
-              } else {
+              } else if (!awaitingDecisionRef.current) {
                 // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
+                // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
+                // startet die Spracherkennung und benoetigt allowsRecordingIOS:true.
+                // Der fire-and-forget-Reset koennte die Erkennung killen (Race-Condition).
                 Audio.setAudioModeAsync({
                   allowsRecordingIOS: false,
                   playsInSilentModeIOS: true,
@@ -1912,12 +1935,18 @@ export default function LiveHike() {
   useEffect(() => {
     if (preparing) return;
     const lang = profile?.language;
-    const pack = STORY_PACKS[resolveLang((lang ?? "de") as Lang)];
+    // Vorab-Laden in der Sprache, die beim Entscheidungspunkt TATSAECHLICH
+    // abgespielt wird. Fuer gsw wird der cueLanguage-Pack ("de") verwendet
+    // (OpenAI-Texte + Ack bleiben Hochdeutsch), also muss das Ack-Audio
+    // auch in "de" vorgeladen werden — sonst wuerde die preFetchedUri ein
+    // gsw-Audio ("Ich verstah.") spielen, obwohl der Text "Ich verstehe." lautet.
+    const ackLang = lang === "gsw" ? "de" : (lang ?? "de");
+    const pack = STORY_PACKS[resolveLang(ackLang as Lang)];
     const ackText = pack.decisionAck;
     let cancelled = false;
     (async () => {
       try {
-        const blob = await createNarration({ text: ackText, language: lang });
+        const blob = await createNarration({ text: ackText, language: ackLang });
         if (cancelled) return;
         const uri = await blobToTempFileUri(blob);
         if (!cancelled) ackAudioUriRef.current = uri;
@@ -2264,15 +2293,25 @@ export default function LiveHike() {
     // noetig), danach das vollstaendige KI-Feedback via ElevenLabs/OpenAI.
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
-      const pack = STORY_PACKS[resolveLang(cueLanguage)];
-      const feedbackText = pack.decisionFeedback(archetypeHint, gewaehlt ?? "");
+      const ackPack = STORY_PACKS[resolveLang(cueLanguage)];
+      // feedbackText-Pack: fuer gsw kommen archetypeHint und gewaehlt-Label aus
+      // dem gsw-generierten Kapiteltext (Mundart). Das deutsche Template-Pack
+      // wuerde diese gsw-Woerter einbetten → OpenAI liest einen German-Mundart-
+      // Mix vor, was klingt wie "Text in Schwytzerdütsch". Loesung: fuer gsw
+      // den gsw-Pack verwenden (Template + Mundart-Variablen passen zusammen)
+      // und ElevenLabs-Heidi-Stimme sprechen lassen (nicht OpenAI).
+      const feedbackPack = storyLanguage === "gsw"
+        ? STORY_PACKS[resolveLang("gsw")]
+        : STORY_PACKS[resolveLang(cueLanguage)];
+      const feedbackText = feedbackPack.decisionFeedback(archetypeHint, gewaehlt ?? "");
+      const useOpenAIForFeedback = storyLanguage !== "gsw";
       // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
       // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
       const ackUri = ackAudioUriRef.current ?? undefined;
       speakRef.current?.(
-        pack.decisionAck,
-        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
+        ackPack.decisionAck,
+        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: useOpenAIForFeedback }); },
         { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useDevice: true }) },
       );
     }
