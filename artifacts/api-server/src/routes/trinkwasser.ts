@@ -15,6 +15,13 @@ const QuerySchema = z.object({
  * Liefert oeffentliche Trinkwasserquellen (Brunnen, Trinkwasserstellen) im
  * Umkreis einer Koordinate — gefiltert aus OpenStreetMap ueber Overpass API.
  */
+// Sekundaere POI-Daten: max. 8 s warten, dann leeres Array (kein 502).
+// So blockiert ein langsames Overpass nie den Route-Detailscreen.
+const QUICK_TIMEOUT_MS = 8_000;
+function withTimeout<T>(p: Promise<T>, fallback: T, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
 router.get("/trinkwasser", async (req: Request, res: Response): Promise<void> => {
   const parsed = QuerySchema.safeParse(req.query);
   if (!parsed.success) {
@@ -23,11 +30,15 @@ router.get("/trinkwasser", async (req: Request, res: Response): Promise<void> =>
   }
   const { lat, lng, radius } = parsed.data;
   try {
-    const sources = await fetchDrinkingWater({ lat, lng }, radius, req.log);
+    const sources = await withTimeout(
+      fetchDrinkingWater({ lat, lng }, radius, req.log),
+      [],
+      QUICK_TIMEOUT_MS,
+    );
     res.json(sources);
   } catch (err) {
-    req.log.error({ err }, "Trinkwasser konnten nicht geladen werden");
-    res.status(502).json({ error: "Trinkwasserquellen konnten nicht geladen werden." });
+    req.log.warn({ err }, "Trinkwasser Timeout/Fehler — leeres Array");
+    res.json([]);
   }
 });
 

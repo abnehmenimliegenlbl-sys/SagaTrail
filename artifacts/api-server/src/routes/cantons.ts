@@ -28,7 +28,7 @@ const RESULT_LIMIT = Infinity;
 // Kategorie: 0=national, 1=regional, 2=lokal, 3=kantonal, 4=rest
 // IstEtappe: 0=Hauptroute (kommt zuerst), 1=Etappe
 // Ergibt: 1 Via Alpina → 1 Etappe 1 → 1 Etappe 2 → 5 Jura Höhenweg → 5 Etappe 1 → …
-function sortSchluessel(row: ExternalRouteRow): [number, number, number, number] {
+function sortSchluessel(row: ExternalRouteRow): [number, number, number, number, number] {
   const istEtappe = /\b(?:etappe|étape|etape|tappa)\b/i.test(row.name);
   const etappenNr = istEtappe
     ? parseInt(row.name.match(/\b(?:Etappe|Étape|Etape|Tappa)\s+(\d+)/i)?.[1] ?? "0", 10)
@@ -37,18 +37,21 @@ function sortSchluessel(row: ExternalRouteRow): [number, number, number, number]
   // Kantonale K-Route: Name beginnt mit "K{n} {CC}" (z.B. "K4 AG Kulturweg")
   const kMatch = row.name.match(/^K(\d+)\s+[A-Z]{2}\b/);
   if (kMatch) {
-    return [3, parseInt(kMatch[1], 10), istEtappe ? 1 : 0, etappenNr];
+    return [3, parseInt(kMatch[1], 10), istEtappe ? 1 : 0, etappenNr, 0];
   }
 
-  // SchweizMobil-Routen: Nummer am Anfang des Namens bestimmt Kategorie
-  const numMatch = row.name.match(/^(\d{1,3})\s/);
+  // SchweizMobil-Routen: Nummer am Anfang des Namens bestimmt Kategorie (z.B. "4a" → national)
+  // Suffix-Ordnung: kein Suffix = 0, "a" = 1, "b" = 2 … → "4" vor "4a"
+  const numMatch = row.name.match(/^(\d{1,3})([a-z]?)\s/);
   if (numMatch) {
     const nr = parseInt(numMatch[1], 10);
-    const kat = numMatch[1].length === 1 ? 0 : numMatch[1].length === 2 ? 1 : 2;
-    return [kat, nr, istEtappe ? 1 : 0, etappenNr];
+    const numLen = nr.toString().length;
+    const kat = numLen === 1 ? 0 : numLen === 2 ? 1 : 2;
+    const suffixOrder = numMatch[2] ? numMatch[2].charCodeAt(0) - 96 : 0; // '' → 0, 'a' → 1
+    return [kat, nr, istEtappe ? 1 : 0, etappenNr, suffixOrder];
   }
 
-  return [4, 0, 0, 0];
+  return [4, 0, 0, 0, 0];
 }
 
 function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {

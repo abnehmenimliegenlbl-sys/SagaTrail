@@ -13,6 +13,11 @@ function toAerialway(a: RawAerialway) {
   };
 }
 
+const QUICK_TIMEOUT_MS = 8_000;
+function withTimeout<T>(p: Promise<T>, fallback: T, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
 // Seilbahnen/Standseilbahnen fuer einen Kartenausschnitt — typische alpine
 // Wander-Verkehrsmittel, dienen nur der Kartendarstellung (kein Routing).
 router.get("/routes/aerialways", async (req, res): Promise<void> => {
@@ -23,11 +28,15 @@ router.get("/routes/aerialways", async (req, res): Promise<void> => {
   }
   const { south, west, north, east } = parsed.data;
   try {
-    const aerialways = await getAerialways({ south, west, north, east }, req.log);
+    const aerialways = await withTimeout(
+      getAerialways({ south, west, north, east }, req.log),
+      [],
+      QUICK_TIMEOUT_MS,
+    );
     res.json(GetAerialwaysResponse.parse(aerialways.map(toAerialway)));
   } catch (err) {
-    req.log.error({ err }, "Seilbahnen konnten nicht geladen werden");
-    res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
+    req.log.warn({ err }, "Seilbahnen Timeout/Fehler — leeres Array");
+    res.json(GetAerialwaysResponse.parse([]));
   }
 });
 

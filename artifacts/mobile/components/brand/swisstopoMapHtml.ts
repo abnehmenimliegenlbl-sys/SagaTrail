@@ -384,6 +384,22 @@ ${legendHtml}
       paint: { 'hillshade-intensity': 0.35, 'hillshade-shadow-color': '#10181A', 'hillshade-highlight-color': '#F5F3EC' }
     });
 
+    /* ---- Zoom-gesteuerte Sichtbarkeit ---- */
+    /* Marker-Gruppen: { els: HTMLElement[], minZoom: number } */
+    var zoomGroups = [];
+    function updateZoomVisibility() {
+      var z = map.getZoom();
+      zoomGroups.forEach(function(g) {
+        var vis = z >= g.minZoom ? '' : 'none';
+        g.els.forEach(function(el) { el.style.display = vis; });
+      });
+      /* Seilbahn-Linienlayer ebenfalls */
+      if (map.getLayer('seilbahnen-line')) {
+        map.setLayoutProperty('seilbahnen-line', 'visibility', z >= 11 ? 'visible' : 'none');
+      }
+    }
+    map.on('zoom', updateZoomVisibility);
+
     /* Seilbahnen */
     if (aerialways) {
       var seilbahnGeojson = {
@@ -396,14 +412,17 @@ ${legendHtml}
       map.addLayer({ id: 'seilbahnen-line', type: 'line', source: 'seilbahnen',
         paint: { 'line-color': '#5B6B78', 'line-width': 2.5, 'line-opacity': 0.9, 'line-dasharray': [1,3] }
       });
+      var seilbahnEls = [];
       aerialways.forEach(function(a) {
         var g = a.geometry;
         if (!g || g.length < 2) return;
-        var stEl = document.createElement('div'); stEl.className = 'stt-seilbahn-station';
-        new maplibregl.Marker({ element: stEl }).setLngLat([g[0][1], g[0][0]]).addTo(map);
-        var enEl = document.createElement('div'); enEl.className = 'stt-seilbahn-station';
-        new maplibregl.Marker({ element: enEl }).setLngLat([g[g.length-1][1], g[g.length-1][0]]).addTo(map);
+        var stEl = document.createElement('div'); stEl.className = 'stt-seilbahn-station'; stEl.style.zIndex = '1';
+        new maplibregl.Marker({ element: stEl, zIndex: 1 }).setLngLat([g[0][1], g[0][0]]).addTo(map);
+        var enEl = document.createElement('div'); enEl.className = 'stt-seilbahn-station'; enEl.style.zIndex = '1';
+        new maplibregl.Marker({ element: enEl, zIndex: 1 }).setLngLat([g[g.length-1][1], g[g.length-1][0]]).addTo(map);
+        seilbahnEls.push(stEl, enEl);
       });
+      if (seilbahnEls.length) zoomGroups.push({ els: seilbahnEls, minZoom: 11 });
     }
 
     /* Routengeometrie */
@@ -417,14 +436,14 @@ ${legendHtml}
         paint: { 'line-color': '#DA291C', 'line-width': 4, 'line-opacity': 0.95 },
         layout: { 'line-join': 'round', 'line-cap': 'round' } });
 
-      var startEl = document.createElement('div'); startEl.className = 'stt-start';
-      new maplibregl.Marker({ element: startEl })
+      var startEl = document.createElement('div'); startEl.className = 'stt-start'; startEl.style.zIndex = '30';
+      new maplibregl.Marker({ element: startEl, zIndex: 30 })
         .setLngLat([coords[0][0], coords[0][1]])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText(${title}))
         .addTo(map);
 
-      var zielEl = document.createElement('div'); zielEl.className = 'stt-ziel';
-      new maplibregl.Marker({ element: zielEl })
+      var zielEl = document.createElement('div'); zielEl.className = 'stt-ziel'; zielEl.style.zIndex = '30';
+      new maplibregl.Marker({ element: zielEl, zIndex: 30 })
         .setLngLat([coords[coords.length-1][0], coords[coords.length-1][1]])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText('Ziel'))
         .addTo(map);
@@ -432,8 +451,8 @@ ${legendHtml}
       var bounds = coords.reduce(function(b,c){ return b.extend(c); }, new maplibregl.LngLatBounds(coords[0], coords[0]));
       map.fitBounds(bounds, { padding: 36, duration: 0 });
     } else {
-      var startEl2 = document.createElement('div'); startEl2.className = 'stt-start';
-      new maplibregl.Marker({ element: startEl2 })
+      var startEl2 = document.createElement('div'); startEl2.className = 'stt-start'; startEl2.style.zIndex = '30';
+      new maplibregl.Marker({ element: startEl2, zIndex: 30 })
         .setLngLat([centerLng, centerLat])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText(${title}))
         .addTo(map);
@@ -463,6 +482,7 @@ ${legendHtml}
     };
     var PICON_DEFAULT = PICONS.restaurant;
     if (partners) {
+      var partnerEls = [];
       partners.forEach(function(p) {
         var paket = p.paket || 'basic';
         var kat   = (p.kategorie || '').toLowerCase();
@@ -476,31 +496,40 @@ ${legendHtml}
         el.appendChild(pin);
         el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
+        partnerEls.push(el);
       });
+      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
     }
 
     /* POI-Marker */
     if (pois) {
+      var poiEls = [];
       pois.forEach(function(p) {
         var el = document.createElement('div'); el.className = 'stt-poi-tipp';
         var dot = document.createElement('div'); dot.className = 'stt-poi'; el.appendChild(dot);
         el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-poi-press', id: p.id })); });
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
+        poiEls.push(el);
       });
+      if (poiEls.length) zoomGroups.push({ els: poiEls, minZoom: 13 });
     }
 
     /* Trinkwasserquellen */
     if (waters) {
+      var wasserEls = [];
       waters.forEach(function(w) {
         var el = document.createElement('div'); el.className = 'stt-wasser';
         new maplibregl.Marker({ element: el }).setLngLat([w.lng, w.lat])
           .setPopup(new maplibregl.Popup({ offset: 8 }).setText(w.name || 'Trinkwasser'))
           .addTo(map);
+        wasserEls.push(el);
       });
+      if (wasserEls.length) zoomGroups.push({ els: wasserEls, minZoom: 13 });
     }
 
     /* Parkplaetze */
     if (parking) {
+      var parkingEls = [];
       parking.forEach(function(p) {
         var el = document.createElement('div'); el.className = 'stt-parking';
         el.textContent = 'P';
@@ -511,7 +540,9 @@ ${legendHtml}
         new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat])
           .setPopup(new maplibregl.Popup({ offset: 12, maxWidth: '180px' }).setHTML(popupHtml))
           .addTo(map);
+        parkingEls.push(el);
       });
+      if (parkingEls.length) zoomGroups.push({ els: parkingEls, minZoom: 14 });
     }
 
     /* Picker-Modus */
@@ -531,11 +562,11 @@ ${legendHtml}
     }
 
     /* Live-Positionsmarker */
-    var liveEl = document.createElement('div'); liveEl.className = 'stt-live';
+    var liveEl = document.createElement('div'); liveEl.className = 'stt-live'; liveEl.style.zIndex = '40';
     var liveMarker = null;
     window.__sttApply = function(ll) {
       if (!ll) return;
-      if (!liveMarker) { liveMarker = new maplibregl.Marker({ element: liveEl }).setLngLat([ll[1], ll[0]]).addTo(map); }
+      if (!liveMarker) { liveMarker = new maplibregl.Marker({ element: liveEl, zIndex: 40 }).setLngLat([ll[1], ll[0]]).addTo(map); }
       else { liveMarker.setLngLat([ll[1], ll[0]]); }
       map.panTo([ll[1], ll[0]], { animate: true });
     };
@@ -544,7 +575,21 @@ ${legendHtml}
 
     /* Initialen Mode anwenden (nach dem Load) */
     applyMode();
-    setTimeout(function() { map.resize(); }, 200);
+    /* Zoom-Sichtbarkeit einmalig nach dem Load setzen (fitBounds hat Zoom geändert) */
+    updateZoomVisibility();
+    setTimeout(function() { map.resize(); updateZoomVisibility(); }, 300);
+
+    /* Route-Layer garantiert ganz oben — nach allen anderen Layern,
+       damit Waymarked-Raster-Tiles und Seilbahnen nie darueber liegen. */
+    function liftRouteLayers() {
+      if (map.getLayer('route-shadow')) map.moveLayer('route-shadow');
+      if (map.getLayer('route-line'))   map.moveLayer('route-line');
+      if (map.getLayer('altroute-shadow')) map.moveLayer('altroute-shadow');
+      if (map.getLayer('altroute-line'))   map.moveLayer('altroute-line');
+    }
+    liftRouteLayers();
+    /* Nochmals nach 1s falls Tiles spaet nachladen und den Canvas neu ordnen */
+    setTimeout(liftRouteLayers, 1000);
   });
 })();
 </script>

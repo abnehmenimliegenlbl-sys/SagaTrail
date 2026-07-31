@@ -839,6 +839,25 @@ router.post("/admin/routes/bulk-meta-update", async (req, res): Promise<void> =>
   }
 });
 
+// POST /admin/routes/bulk-delete — löscht Routen anhand einer ID-Liste
+router.post("/admin/routes/bulk-delete", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const ids: string[] = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "Body muss ein nicht-leeres Array von IDs sein" });
+    return;
+  }
+  try {
+    const result = await db
+      .delete(externalRoutesTable)
+      .where(inArray(externalRoutesTable.id, ids));
+    res.json({ ok: true, deleted: ids.length });
+  } catch (err) {
+    req.log.error({ err }, "routes/bulk-delete fehlgeschlagen");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // PATCH /admin/routes/:id/featured – Featured-Flag toggeln
 router.patch("/admin/routes/:id/featured", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;

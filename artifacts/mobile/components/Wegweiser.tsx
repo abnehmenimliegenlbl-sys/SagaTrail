@@ -43,14 +43,15 @@ export function parseRouteName(name: string): WegweiserDaten {
     kategorie = k[2] ?? null; // Kantonskürzel ins Feld, falls vorhanden
     rest = k[3];
   } else {
-    // SchweizMobil: "60 Via Rhenana ..." — 1-3-stellige Nummer
-    const m = rest.match(/^(\d{1,3})\s+(.*)$/);
+    // SchweizMobil: "60 Via Rhenana ..." — 1-3-stellige Nummer, optional Buchstaben-Suffix (z.B. "4a")
+    const m = rest.match(/^(\d{1,3}[a-z]?)\s+(.*)$/);
     if (m) {
       nummer = m[1];
+      const numLen = parseInt(m[1], 10).toString().length; // "4a" → 4 → length 1
       kategorie =
-        m[1].length === 1
+        numLen === 1
           ? "Wanderland national"
-          : m[1].length === 2
+          : numLen === 2
             ? "Wanderland regional"
             : "Wanderland lokal";
       rest = m[2];

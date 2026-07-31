@@ -16,6 +16,11 @@ const QuerySchema = z.object({
  * einer Koordinate aus OpenStreetMap/Overpass. Typischerweise am Start und
  * Endpunkt einer Wanderroute aufgerufen.
  */
+const QUICK_TIMEOUT_MS = 8_000;
+function withTimeout<T>(p: Promise<T>, fallback: T, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
 router.get("/parking", async (req: Request, res: Response): Promise<void> => {
   const parsed = QuerySchema.safeParse(req.query);
   if (!parsed.success) {
@@ -24,11 +29,15 @@ router.get("/parking", async (req: Request, res: Response): Promise<void> => {
   }
   const { lat, lng, radius } = parsed.data;
   try {
-    const spots = await fetchParking({ lat, lng }, radius, req.log);
+    const spots = await withTimeout(
+      fetchParking({ lat, lng }, radius, req.log),
+      [],
+      QUICK_TIMEOUT_MS,
+    );
     res.json(spots);
   } catch (err) {
-    req.log.error({ err }, "Parkplaetze konnten nicht geladen werden");
-    res.status(502).json({ error: "Parkplaetze konnten nicht geladen werden." });
+    req.log.warn({ err }, "Parkplaetze Timeout/Fehler — leeres Array");
+    res.json([]);
   }
 });
 
