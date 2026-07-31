@@ -3879,4 +3879,229 @@ router.post("/admin/routes/enrich-super", async (req, res): Promise<void> => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// POST /admin/migrate-20260731
+// Einmalige Datenmigration: Route-43-Korrekturen + Parent-Geometrien restitch
+// Nur einmal gegen Prod aufrufen nach Publish.
+// ---------------------------------------------------------------------------
+const migrate20260731Status = { done: false, log: [] as string[] };
+
+router.post("/migrate-20260731", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+
+  const addLog = (msg: string) => {
+    migrate20260731Status.log.push(msg);
+    console.log("[migrate-20260731]", msg);
+  };
+
+  res.json({ ok: true, message: "Migration gestartet – GET /admin/migrate-20260731/status für Fortschritt" });
+
+  (async () => {
+    if (migrate20260731Status.done) { addLog("Bereits ausgeführt."); return; }
+    addLog("=== Migration 2026-07-31 Start ===");
+
+    // -----------------------------------------------------------------------
+    // 1. Route 43 Etappen-Korrekturen
+    // -----------------------------------------------------------------------
+    const etappenUpdates: Array<{ id: string; name: string; isEtappe: boolean; distanceKm?: number; distanceTagKm?: number; ascentM?: number }> = [
+      { id: "osm-17065236", name: "43 Jakobsweg Graubünden Etappe 13 Tamins - Trin Digg",  isEtappe: true, distanceKm: 4.9, distanceTagKm: 5,  ascentM: 260 },
+      { id: "osm-20113042", name: "43 Jakobsweg Graubünden Etappe 19 Rueras - Oberalppass", isEtappe: true, distanceTagKm: 12, ascentM: 1050 },
+      { id: "osm-20113013", name: "43 Jakobsweg Graubünden Etappe 18 Disentis - Rueras",   isEtappe: true, distanceTagKm: 12, ascentM: 500 },
+      { id: "osm-17057573", name: "43 Jakobsweg Graubünden Etappe 1 Müstair - Lü",          isEtappe: true, distanceTagKm: 18, ascentM: 820 },
+      { id: "osm-17057571", name: "43 Jakobsweg Graubünden Etappe 2 Lü - S-charl",          isEtappe: true, distanceTagKm: 15, ascentM: 500 },
+      { id: "osm-17057572", name: "43 Jakobsweg Graubünden Etappe 3 S-charl - Scuol",       isEtappe: true, distanceTagKm: 14, ascentM: 280 },
+      { id: "osm-17059092", name: "43 Jakobsweg Graubünden Etappe 7 S-chanf (Cinuos-chel) - Dürrboden", isEtappe: true, distanceTagKm: 18, ascentM: 1050 },
+      { id: "osm-17064977", name: "43 Jakobsweg Graubünden Etappe 8 Dürrboden - Davos Dorf", isEtappe: true, ascentM: 70 },
+      { id: "osm-20112862", name: "43 Jakobsweg Graubünden Etappe 10 Langwies - Tschiertschen", isEtappe: true, ascentM: 640 },
+      { id: "osm-20112882", name: "43 Jakobsweg Graubünden Etappe 11 Tschiertschen - Chur",  isEtappe: true, ascentM: 240 },
+      { id: "osm-17065237", name: "43 Jakobsweg Graubünden Etappe 12 Chur - Tamins",         isEtappe: true, distanceTagKm: 13, ascentM: 360 },
+      { id: "osm-17066113", name: "43 Jakobsweg Graubünden Etappe 14 Trin Digg - Laax (Falera)", isEtappe: true, distanceTagKm: 17, ascentM: 950 },
+      { id: "osm-17066346", name: "43 Jakobsweg Graubünden Etappe 15 Laax (Falera) - Brigels (Andiast)", isEtappe: true, distanceTagKm: 21, ascentM: 800 },
+      { id: "osm-17066412", name: "43 Jakobsweg Graubünden Etappe 16 Brigels (Andiast) - Trun", isEtappe: true, ascentM: 727 },
+    ];
+
+    for (const u of etappenUpdates) {
+      try {
+        await db
+          .update(externalRoutesTable)
+          .set({
+            name: u.name,
+            isEtappe: u.isEtappe,
+            ...(u.distanceKm    !== undefined ? { distanceKm:    u.distanceKm }    : {}),
+            ...(u.distanceTagKm !== undefined ? { distanceTagKm: u.distanceTagKm } : {}),
+            ...(u.ascentM       !== undefined ? { ascentM:       u.ascentM }       : {}),
+          })
+          .where(eq(externalRoutesTable.id, u.id))
+          .execute();
+        addLog(`✓ Etappe ${u.id} aktualisiert`);
+      } catch (err) {
+        addLog(`✗ Etappe ${u.id} Fehler: ${err}`);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 2. Parent-Routen: distance_tag_km, ascent_m korrigieren + gv=-1 setzen
+    // -----------------------------------------------------------------------
+    const parentUpdates: Array<{ id: string; distanceTagKm?: number; ascentM?: number }> = [
+      { id: "schweizmobil-rwn-43", distanceTagKm: 265,    ascentM: 11140 },
+      { id: "schweizmobil-rwn-24", distanceTagKm: 100,    ascentM: 220 },
+      { id: "schweizmobil-rwn-32", distanceTagKm: 87 },
+      { id: "schweizmobil-rwn-55", distanceTagKm: 172,    ascentM: 7590 },
+      { id: "schweizmobil-rwn-60", distanceTagKm: 110 },
+      { id: "schweizmobil-rwn-64", distanceTagKm: 110,    ascentM: 4520 },
+      { id: "schweizmobil-rwn-71", distanceTagKm: 45.7 },
+      { id: "schweizmobil-rwn-80", distanceTagKm: 52 },
+      { id: "schweizmobil-rwn-83", distanceTagKm: 66 },
+      { id: "schweizmobil-rwn-86", distanceTagKm: 94 },
+      { id: "schweizmobil-rwn-87", distanceTagKm: 132.8 },
+      { id: "schweizmobil-rwn-98", distanceTagKm: 114 },
+      { id: "schweizmobil-rwn-99", distanceTagKm: 34,     ascentM: 1380 },
+    ];
+
+    for (const p of parentUpdates) {
+      try {
+        await db
+          .update(externalRoutesTable)
+          .set({
+            ...(p.distanceTagKm !== undefined ? { distanceTagKm: p.distanceTagKm } : {}),
+            ...(p.ascentM       !== undefined ? { ascentM:       p.ascentM }       : {}),
+            geometryVersion: -1,
+          })
+          .where(eq(externalRoutesTable.id, p.id))
+          .execute();
+        addLog(`✓ Parent ${p.id} → tagKm=${p.distanceTagKm ?? "unbeh."}, gv=-1`);
+      } catch (err) {
+        addLog(`✗ Parent ${p.id} Fehler: ${err}`);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 3. Restitch: Parents mit gv=-1 aus Etappen neu aufbauen
+    // -----------------------------------------------------------------------
+    addLog("--- Restitch Start ---");
+
+    const R = 6371;
+    const hav = (a: [number, number], b: [number, number]) => {
+      const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+      const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+      const s = Math.sin(dLat / 2) ** 2 +
+        Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(s));
+    };
+
+    const normGeo = (g: unknown): [number, number][] | null => {
+      if (!g) return null;
+      try {
+        const parsed = typeof g === "string" ? JSON.parse(g) : g;
+        if (!Array.isArray(parsed) || parsed.length < 2) return null;
+        return parsed.map((p: unknown) =>
+          Array.isArray(p) ? [p[0], p[1]] : [(p as any).lat ?? (p as any)[0], (p as any).lng ?? (p as any)[1]]
+        );
+      } catch { return null; }
+    };
+
+    const etappenNrFromName = (name: string): number | null => {
+      const m = name.match(/(?:Etappe|Étape|Etape|Tappa|Stage)\s+(\d+)/i);
+      return m ? parseInt(m[1], 10) : null;
+    };
+
+    const stitch = (segs: [number, number][][]): [number, number][] => {
+      let chain = segs[0].slice();
+      for (let i = 1; i < segs.length; i++) {
+        const seg = segs[i].slice();
+        const end = chain[chain.length - 1];
+        if (hav(end, seg[seg.length - 1]) < hav(end, seg[0])) seg.reverse();
+        chain = chain.concat(seg);
+      }
+      return chain;
+    };
+
+    // Alle Parents mit gv=-1 laden (nur die, die wir gerade gesetzt haben)
+    const targetParentIds = parentUpdates.map(p => p.id);
+
+    const parentsToStitch = await db
+      .select({ id: externalRoutesTable.id, name: externalRoutesTable.name })
+      .from(externalRoutesTable)
+      .where(
+        and(
+          inArray(externalRoutesTable.id, targetParentIds),
+          eq(externalRoutesTable.geometryVersion, -1)
+        )
+      )
+      .execute();
+
+    addLog(`${parentsToStitch.length} Parents zum Restitch gefunden`);
+
+    for (const parent of parentsToStitch) {
+      // Etappen dieses Parents laden (via saga_id)
+      const etappen = await db
+        .select({
+          id: externalRoutesTable.id,
+          name: externalRoutesTable.name,
+          geometry: externalRoutesTable.geometry,
+        })
+        .from(externalRoutesTable)
+        .where(
+          and(
+            eq(externalRoutesTable.sagaId, parent.id),
+            eq(externalRoutesTable.isEtappe, true)
+          )
+        )
+        .execute();
+
+      if (etappen.length === 0) {
+        addLog(`SKIP ${parent.id} — keine Etappen verlinkt`);
+        continue;
+      }
+
+      const withGeo = etappen
+        .map(e => ({ ...e, pts: normGeo(e.geometry) }))
+        .filter(e => e.pts && e.pts.length >= 2);
+
+      if (withGeo.length < etappen.length) {
+        addLog(`SKIP ${parent.id} — ${etappen.length - withGeo.length}/${etappen.length} Etappen ohne Geo`);
+        continue;
+      }
+
+      // Nach Etappen-Nummer sortieren
+      const ordered = [...withGeo].sort((a, b) => {
+        const na = etappenNrFromName(a.name ?? "");
+        const nb = etappenNrFromName(b.name ?? "");
+        if (na !== null && nb !== null) return na - nb;
+        return 0;
+      });
+
+      try {
+        const chain = stitch(ordered.map(e => e.pts!));
+        const rounded = chain.map(([lat, lng]) => [
+          Math.round(lat * 1e6) / 1e6,
+          Math.round(lng * 1e6) / 1e6,
+        ]);
+
+        await db
+          .update(externalRoutesTable)
+          .set({ geometry: JSON.stringify(rounded) as any, geometryVersion: 5 })
+          .where(eq(externalRoutesTable.id, parent.id))
+          .execute();
+
+        addLog(`✓ Restitch ${parent.id}: ${ordered.length} Etappen → ${rounded.length} Punkte`);
+      } catch (err) {
+        addLog(`✗ Restitch ${parent.id} Fehler: ${err}`);
+      }
+    }
+
+    migrate20260731Status.done = true;
+    addLog("=== Migration 2026-07-31 FERTIG ===");
+  })().catch(err => {
+    migrate20260731Status.log.push(`FATAL: ${err}`);
+    console.error("[migrate-20260731] Fehler:", err);
+  });
+});
+
+router.get("/migrate-20260731/status", (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  res.json(migrate20260731Status);
+});
+
 export default router;
+
