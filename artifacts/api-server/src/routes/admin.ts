@@ -658,6 +658,18 @@ router.get("/admin/sagas", async (req, res): Promise<void> => {
   }
 });
 
+router.delete("/admin/sagas/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    await db.delete(catalogSagasTable).where(eq(catalogSagasTable.id, id));
+    res.json({ ok: true, deleted: id });
+  } catch (err) {
+    req.log.error({ err }, "Admin saga delete fehlgeschlagen");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const { id } = req.params;
@@ -2021,6 +2033,31 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
   }
   runEnrichAllLoop(req.log);
   res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
+});
+
+/**
+ * POST /admin/routes/force-reenrich
+ * Body: { ids: string[] }
+ * Setzt geometry_version auf NULL für die angegebenen IDs und startet den Enrich-Loop.
+ */
+router.post("/admin/routes/force-reenrich", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { ids } = req.body as { ids: string[] };
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "Body: { ids: string[] } erwartet" });
+    return;
+  }
+  try {
+    await db
+      .update(externalRoutesTable)
+      .set({ geometryVersion: null } as any)
+      .where(inArray(externalRoutesTable.id, ids));
+    res.json({ ok: true, reset: ids.length, message: "geometry_version zurückgesetzt — Loop startet" });
+    startEnrichAllIfNeeded(req.log);
+  } catch (err: any) {
+    req.log.error({ err }, "force-reenrich fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**

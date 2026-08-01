@@ -53,7 +53,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "if [ ! -f /tmp/eas-android-go ]; then echo 'Sicherung: kein Build ausgelöst. Zum Bauen zuerst touch /tmp/eas-android-go, dann Workflow neu starten.'; sleep 3600; exit 0; fi; rm -f /tmp/eas-android-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 npx eas build --platform android --profile production --no-wait --non-interactive 2>&1 | tee /tmp/eas-android.log; echo EAS_DONE >> /tmp/eas-android.log; sleep 3600"
+args = "if [ ! -f /tmp/eas-android-go ]; then echo 'Sicherung: kein Build ausgelöst. Zum Bauen zuerst touch /tmp/eas-android-go, dann Workflow neu starten.'; sleep 3600; exit 0; fi; rm -f /tmp/eas-android-go; cd artifacts/mobile && GIT_OPTIONAL_LOCKS=0 EAS_SKIP_AUTO_FINGERPRINT=1 npx eas build --platform android --profile production --auto-submit --no-wait --non-interactive 2>&1 | tee /tmp/eas-android.log; echo EAS_DONE >> /tmp/eas-android.log; sleep 3600"
 
 [agent]
 stack = "PNPM_WORKSPACE"

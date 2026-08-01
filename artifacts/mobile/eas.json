@@ -39,6 +39,12 @@
         "ascApiKeyId": "P4743KUS27",
         "ascApiKeyIssuerId": "32ef5d6a-9f33-46c1-8117-2104384151aa",
         "ascApiKeyPath": "./AuthKey_submit.p8"
+      },
+      "android": {
+        "serviceAccountKeyPath": "$GOOGLE_SERVICE_ACCOUNT_KEY",
+        "track": "internal",
+        "releaseStatus": "completed",
+        "changesNotSentForReview": false
       }
     }
   }
