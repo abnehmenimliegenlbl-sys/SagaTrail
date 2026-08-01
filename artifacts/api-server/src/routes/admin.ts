@@ -670,6 +670,56 @@ router.delete("/admin/sagas/:id", async (req, res): Promise<void> => {
   }
 });
 
+/** POST /admin/sagas — Saga einfügen oder aktualisieren (upsert by id) */
+router.post("/admin/sagas", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const row = req.body as Record<string, any>;
+    if (!row.id || !row.title) {
+      res.status(400).json({ error: "id und title erforderlich" });
+      return;
+    }
+    await db
+      .insert(catalogSagasTable)
+      .values({
+        id: row.id,
+        title: row.title,
+        canton: row.canton ?? null,
+        coreMotif: row.coreMotif ?? row.core_motif ?? null,
+        mood: row.mood ?? null,
+        summary: row.summary ?? null,
+        summaries: row.summaries ? (typeof row.summaries === "string" ? row.summaries : JSON.stringify(row.summaries)) : null,
+        altersStufenHinweis: row.altersstufen_hinweis ?? row.altersStufenHinweis ?? null,
+        quelle: row.quelle ? (typeof row.quelle === "string" ? row.quelle : JSON.stringify(row.quelle)) : null,
+        source: row.source ?? null,
+        lat: row.lat ?? null,
+        lng: row.lng ?? null,
+        koordinatenSicherheit: row.koordinaten_sicherheit ?? row.koordinatenSicherheit ?? null,
+        isAnchorPlace: row.is_anchor_place ?? row.isAnchorPlace ?? false,
+        bildmotiv: row.bildmotiv ?? null,
+        fotoUrl: row.fotoUrl ?? row.foto_url ?? null,
+        fotoAttribution: row.fotoAttribution ?? row.foto_attribution ?? null,
+      } as any)
+      .onConflictDoUpdate({
+        target: catalogSagasTable.id,
+        set: {
+          title: sql`excluded.title`,
+          canton: sql`excluded.canton`,
+          summary: sql`excluded.summary`,
+          summaries: sql`excluded.summaries`,
+          lat: sql`excluded.lat`,
+          lng: sql`excluded.lng`,
+          source: sql`excluded.source`,
+          bildmotiv: sql`excluded.bildmotiv`,
+        },
+      });
+    res.json({ ok: true, upserted: row.id });
+  } catch (err: any) {
+    req.log.error({ err }, "Admin saga upsert fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const { id } = req.params;
