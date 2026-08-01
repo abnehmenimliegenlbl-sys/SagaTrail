@@ -2562,6 +2562,64 @@ router.post("/admin/routes/enrich-next", async (req, res): Promise<void> => {
 });
 
 /**
+ * POST /admin/routes/enrich-one
+ * Body: { id: string }  (z.B. "osm-1107386")
+ * Holt amtliche distance/ascent-Tags direkt aus OSM und trägt sie in die DB ein,
+ * ohne geometry_version oder Geometrie zu verändern.
+ * Gibt { ok, id, distanceTagKm, ascentTagM, changed } zurück.
+ */
+router.post("/admin/routes/enrich-one", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.body as { id?: string };
+  if (!id || typeof id !== "string") {
+    res.status(400).json({ error: "Body: { id: string } erwartet (z.B. 'osm-1107386')" });
+    return;
+  }
+  const osmIdRaw = parseInt(id.replace(/^osm-/, ""), 10);
+  if (isNaN(osmIdRaw)) {
+    res.status(400).json({ error: `Konnte keine OSM-ID aus '${id}' ableiten` });
+    return;
+  }
+  try {
+    const { runOverpass, parseNumericTag } = await import("../lib/overpass");
+    const query = `[out:json][timeout:30];relation(id:${osmIdRaw});out tags;`;
+    const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query, 35_000);
+    const tags = elements[0]?.tags ?? {};
+
+    // NWN/RWN-Superrouten können > 500 km und > 20 000 m sein → grosszügigere Limits
+    const distanceTagKm = parseNumericTag(tags.distance, 5_000);
+    const ascentTagM = parseNumericTag(tags.ascent, 200_000);
+
+    const newDistanceTagKm = distanceTagKm != null ? Math.round(distanceTagKm * 10) / 10 : null;
+    const newAscentM = ascentTagM != null ? Math.round(ascentTagM) : null;
+    const changed = newDistanceTagKm != null || newAscentM != null;
+
+    if (changed) {
+      const setObj: Record<string, unknown> = {};
+      if (newDistanceTagKm != null) setObj["distanceTagKm"] = newDistanceTagKm;
+      if (newAscentM != null) setObj["ascentM"] = newAscentM;
+      await db
+        .update(externalRoutesTable)
+        .set(setObj as { distanceTagKm?: number; ascentM?: number })
+        .where(eq(externalRoutesTable.id, id));
+    }
+
+    res.json({
+      ok: true,
+      id,
+      osmId: osmIdRaw,
+      tagsFound: { distance: tags.distance ?? null, ascent: tags.ascent ?? null },
+      distanceTagKm: newDistanceTagKm,
+      ascentTagM: newAscentM,
+      changed,
+    });
+  } catch (err: any) {
+    req.log.error({ err, id }, "enrich-one fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /admin/routes/fill-vonbis?refs=1-7
  * Holt from/to-Tags direkt aus OSM für alle Routen ohne Von-Bis-Angabe
  * und trägt sie in die DB ein. refs=1-7 filtert auf Nationalrouten 1–7.
