@@ -2098,10 +2098,11 @@ router.post("/admin/routes/force-reenrich", async (req, res): Promise<void> => {
     return;
   }
   try {
-    await db
-      .update(externalRoutesTable)
-      .set({ geometryVersion: null } as any)
-      .where(inArray(externalRoutesTable.id, ids));
+    await db.execute(
+      sql.raw(
+        `UPDATE external_routes SET geometry_version = NULL WHERE id = ANY(ARRAY[${ids.map((id) => `'${id.replace(/'/g, "''")}'`).join(",")}])`
+      )
+    );
     res.json({ ok: true, reset: ids.length, message: "geometry_version zurückgesetzt — Loop startet" });
     startEnrichAllIfNeeded(req.log);
   } catch (err: any) {
