@@ -16,7 +16,7 @@ if (!DRY && (!PROD_URL || !TOKEN)) {
   await c.connect();
   // Nur fertig angereicherte Routen übertragen
   const { rows } = await c.query(
-    `SELECT id, saga_id, canton, cantons, name, ref, distance_km, ascent_m,
+    `SELECT id, saga_id, canton, cantons, name, ref, distance_km, distance_tag_km, ascent_m,
             max_elevation_m, minutes, sac, terrain, lat, lng, geometry,
             geometry_version, source, featured, photo_url, photo_attribution,
             description, description_source
@@ -28,7 +28,8 @@ if (!DRY && (!PROD_URL || !TOKEN)) {
 
   const map = (r) => ({
     id: r.id, sagaId: r.saga_id, canton: r.canton, cantons: r.cantons, name: r.name,
-    ref: r.ref, distanceKm: r.distance_km, ascentM: r.ascent_m, maxElevationM: r.max_elevation_m,
+    ref: r.ref, distanceKm: r.distance_km, distanceTagKm: r.distance_tag_km,
+    ascentM: r.ascent_m, maxElevationM: r.max_elevation_m,
     minutes: r.minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
     geometry: r.geometry, geometryVersion: r.geometry_version, source: r.source,
     featured: r.featured, photoUrl: r.photo_url, photoAttribution: r.photo_attribution,

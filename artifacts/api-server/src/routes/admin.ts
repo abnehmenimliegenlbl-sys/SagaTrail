@@ -1936,6 +1936,7 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
           name: sql`excluded.name`,
           ref: sql`excluded.ref`,
           distanceKm: sql`excluded.distance_km`,
+          distanceTagKm: sql`excluded.distance_tag_km`,
           ascentM: sql`excluded.ascent_m`,
           maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
