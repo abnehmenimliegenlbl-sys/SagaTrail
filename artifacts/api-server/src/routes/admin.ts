@@ -789,6 +789,26 @@ router.get("/admin/routes", async (req, res): Promise<void> => {
   }
 });
 
+// DELETE /admin/routes/:id — löscht eine einzelne Route per ID
+router.delete("/admin/routes/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const deleted = await db
+      .delete(externalRoutesTable)
+      .where(eq(externalRoutesTable.id, id))
+      .returning({ id: externalRoutesTable.id });
+    if (deleted.length === 0) {
+      res.status(404).json({ error: `Route '${id}' nicht gefunden` });
+      return;
+    }
+    res.json({ ok: true, deleted: deleted[0]!.id });
+  } catch (err: any) {
+    req.log.error({ err }, "routes/:id delete fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /admin/routes/all — löscht ALLE Routen (für Prod-Sync von Dev)
 router.delete("/admin/routes/all", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -2106,6 +2126,46 @@ router.post("/admin/routes/force-reenrich", async (req, res): Promise<void> => {
     startEnrichAllIfNeeded(req.log);
   } catch (err: any) {
     req.log.error({ err }, "force-reenrich fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/fix-saga-ids
+ * Body: { refs: string[] }  (z.B. ["27","49","57","88"])
+ * Weist allen Routen mit diesen refs die nächstgelegene echte Sage zu,
+ * falls saga_id leer oder kein gültiger catalog_sagas-Eintrag ist.
+ */
+router.post("/admin/routes/fix-saga-ids", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { refs } = req.body as { refs: string[] };
+  if (!Array.isArray(refs) || refs.length === 0) {
+    res.status(400).json({ error: "Body: { refs: string[] } erwartet" });
+    return;
+  }
+  try {
+    const result = await db.execute(sql`
+      WITH nearest AS (
+        SELECT DISTINCT ON (r.id)
+               r.id AS route_id,
+               s.id AS new_saga_id
+        FROM external_routes r
+        CROSS JOIN catalog_sagas s
+        WHERE r.ref = ANY(${refs})
+          AND r.lat IS NOT NULL AND r.lng IS NOT NULL
+          AND s.lat IS NOT NULL AND s.lng IS NOT NULL
+          AND (r.saga_id IS NULL OR r.saga_id NOT IN (SELECT id FROM catalog_sagas))
+        ORDER BY r.id, ((r.lat - s.lat)^2 + (r.lng - s.lng)^2)
+      )
+      UPDATE external_routes r
+      SET saga_id = n.new_saga_id
+      FROM nearest n
+      WHERE r.id = n.route_id
+      RETURNING r.id, r.saga_id
+    `);
+    res.json({ ok: true, updated: result.rows.length, rows: result.rows });
+  } catch (err: any) {
+    req.log.error({ err }, "fix-saga-ids fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });

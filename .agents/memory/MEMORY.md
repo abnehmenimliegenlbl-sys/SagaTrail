@@ -1,7 +1,7 @@
 - [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
 - [Canton geocoding robustness](sagatrail-canton-geocoding.md) — Nominatim can return canton via ISO3166-2-lvl4 ("CH-BL") even when address.state is absent/unparseable; always check ISO code first, then state, then county; + midpoint fallback in buildRouteFromPoints when start canton is null.
 - [Metro cache after orval codegen clean](metro-orval-cache.md) — orval clean:true deletes+recreates generated/*.ts; Metro file watcher sees deletion but misses recreation; always restart Expo workflow after codegen.
-- [SBB transport.opendata.ch](sagatrail-sbb-transport.md) — Swiss public transport live API, free, no auth; x=lat y=lng; nearest station + stationboard in 2 steps; 2min server cache.
+- [SBB Transport API](sagatrail-sbb-transport.md) — transport.opendata.ch ist vom Replit-Netzwerk geblockt; stattdessen timetable.search.ch (latlon + stationboard by name).
 - [opendata arrivals at small stops](sagatrail-opendata-arrivals.md) — type=arrival gives arrival=null at small stops; must fall back to departure time or board is empty; lookups use route coords, not user GPS.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
