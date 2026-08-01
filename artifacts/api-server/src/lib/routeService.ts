@@ -21,6 +21,7 @@ import {
   resolveNumberedRouteOsmId,
   fetchAerialways,
   fetchHistoricPois,
+  searchOsmRouteByFromTo,
   type RouteIndexEntry,
   type RawHikingRoute,
   type RawAerialway,
@@ -1742,6 +1743,107 @@ export async function backfillCantonsForRoute(
     .set({ cantons })
     .where(eq(externalRoutesTable.id, rowId));
   return { ok: true, cantons };
+}
+
+/**
+ * Versucht, einen Wiki-Etappen-Platzhalter durch echte OSM-Geometrie zu ersetzen.
+ * Läuft als Teil des enrich-all-Loops oder über den Endpoint
+ * POST /admin/routes/replace-wiki-etappen.
+ *
+ * Strategie:
+ * 1. From/To aus dem Name-Feld parsen ("…Etappe N From – To")
+ * 2. Per Overpass Wanderrouten-Relation mit passenden from/to-Tags suchen
+ * 3. Bei Treffer: Route über enrichAndStore einpflegen
+ * 4. sagaId + isEtappe aus dem wiki-* Datensatz auf die osm-* Zeile schreiben
+ *    (auch wenn die osm-* Zeile schon existierte)
+ * 5. Erst dann wiki-* Eintrag löschen (verhindert Verlust bei Absturz zwischen 4 und 5)
+ * 6. Kein Treffer → nichts tun (OSM kann die Route später nachrüsten)
+ *
+ * Gibt replaced=false zurück wenn:
+ * - from/to nicht erkennbar
+ * - Overpass findet keine passende Relation
+ * - enrichAndStore scheitert (transiente Fehler — erneuter Versuch beim nächsten Lauf)
+ */
+export async function tryReplaceWikiRoute(
+  row: Pick<ExternalRouteRow, "id" | "name" | "canton" | "sagaId" | "routeType" | "isEtappe">,
+  log: Logger,
+): Promise<{ replaced: boolean; osmId?: number; reason?: string }> {
+  // From/To aus Name extrahieren: "4a Via Jacobi Etappe 24 Rapperswil (SG) – Luzern"
+  // Trennzeichen: em-dash (–), en-dash (—) oder Spiegelstrich ( - )
+  const nameStr = row.name ?? "";
+  const vonBisMatch = nameStr.match(/[Ee]tappe\s+\d+\s+(.+?)\s*(?:[–—]|-(?=\s))\s*(.+)$/);
+  if (!vonBisMatch) {
+    return { replaced: false, reason: "from/to nicht im Name erkennbar" };
+  }
+  const from = vonBisMatch[1].trim();
+  const to = vonBisMatch[2].trim();
+  if (!from || !to || from === to) {
+    return { replaced: false, reason: `ungültige from/to: "${from}" → "${to}"` };
+  }
+
+  // Overpass: Relation mit passenden from/to-Tags suchen
+  let osmIds: number[];
+  try {
+    osmIds = await searchOsmRouteByFromTo(from, to, log);
+  } catch (err) {
+    return { replaced: false, reason: `Overpass-Fehler: ${String(err)}` };
+  }
+  if (osmIds.length === 0) {
+    return { replaced: false, reason: `keine OSM-Relation für from="${from}" to="${to}"` };
+  }
+
+  const osmId = osmIds[0]!;
+  const osmRouteId = `osm-${osmId}`;
+  // Canton aus der wiki-* Zeile übernehmen; leerer String = unbekannt → "CH" als Fallback
+  const canton = row.canton && row.canton !== "" ? row.canton : "CH";
+
+  // Prüfen ob die osm-* Route bereits gespeichert ist (Doppelarbeit vermeiden)
+  const [existingRow] = await db
+    .select({ id: externalRoutesTable.id })
+    .from(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, osmRouteId));
+
+  if (!existingRow) {
+    // OSM-Route vollständig einreichern (Geometrie + Höhenmeter + SAC + Foto)
+    try {
+      await enrichAndStore(canton, [osmId], log, { skipPhotos: false });
+    } catch (err) {
+      log.warn({ wikiId: row.id, osmId, err }, "tryReplaceWikiRoute: enrichAndStore gescheitert");
+      return { replaced: false, reason: `enrichAndStore gescheitert: ${String(err)}` };
+    }
+
+    // Sicherstellen dass der Insert erfolgreich war (Längen-/Kantonfilter könnte ablehnen)
+    const [inserted] = await db
+      .select({ id: externalRoutesTable.id })
+      .from(externalRoutesTable)
+      .where(eq(externalRoutesTable.id, osmRouteId));
+    if (!inserted) {
+      return { replaced: false, reason: "enrichAndStore lieferte kein Ergebnis (Längen- oder Kantonfilter?)" };
+    }
+  }
+
+  // sagaId und isEtappe aus dem wiki-* Datensatz übernehmen — IMMER, egal ob die
+  // osm-* Zeile neu angelegt wurde oder schon existierte. enrichAndStore setzt sagaId
+  // auf die eigene ID; die wiki-* Zeile kennt dagegen den echten Eltern-Anker.
+  await db
+    .update(externalRoutesTable)
+    .set({
+      sagaId: row.sagaId ?? osmRouteId,
+      isEtappe: row.isEtappe,
+    })
+    .where(eq(externalRoutesTable.id, osmRouteId))
+    .execute();
+
+  // Erst nach erfolgreichem Update den wiki-* Eintrag entfernen — so geht bei einem
+  // Absturz zwischen Update und Delete die Etappe nicht verloren (bei erneutem Lauf
+  // wird der wiki-* Eintrag gefunden, osm-* existiert bereits, Update + Delete laufen).
+  await db
+    .delete(externalRoutesTable)
+    .where(eq(externalRoutesTable.id, row.id))
+    .execute();
+
+  log.info({ wikiId: row.id, osmId, canton, sagaId: row.sagaId }, "tryReplaceWikiRoute: wiki-Platzhalter durch OSM-Route ersetzt");
+  return { replaced: true, osmId };
 }
 
 /**

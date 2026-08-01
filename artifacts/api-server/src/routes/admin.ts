@@ -21,7 +21,7 @@ import { clearNarrationCache } from "../lib/narrationCache";
 import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, GEOMETRY_VERSION } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchWikiEtappen, type WikiEtappe, searchOsmRouteByFromTo } from "../lib/overpass";
 import type { Logger } from "pino";
@@ -2085,6 +2085,39 @@ function runEnrichAllLoop(log: Logger): void {
         }
       }
       log.info("enrich-all: Geometrie-Phase abgeschlossen — komplett (nur Start-Kanton, kein Multi-Kanton-Backfill)");
+
+      // Phase 2: Wiki-Etappen-Platzhalter durch echte OSM-Geometrie ersetzen.
+      // Läuft nur wenn Overpass erreichbar ist (hängt nach Geometrie-Phase).
+      // Stagger 4s zwischen Anfragen damit Overpass nicht gedrosselt wird.
+      try {
+        const wikiRows = await db
+          .select({
+            id: externalRoutesTable.id,
+            name: externalRoutesTable.name,
+            canton: externalRoutesTable.canton,
+            sagaId: externalRoutesTable.sagaId,
+            routeType: externalRoutesTable.routeType,
+            isEtappe: externalRoutesTable.isEtappe,
+          })
+          .from(externalRoutesTable)
+          .where(sql`${externalRoutesTable.id} LIKE 'wiki-%'`);
+
+        if (wikiRows.length > 0) {
+          log.info({ n: wikiRows.length }, "enrich-all: Wiki-Ersatz-Phase gestartet");
+          let wikiErsetzt = 0;
+          for (const row of wikiRows) {
+            const result = await tryReplaceWikiRoute(row, log);
+            if (result.replaced) {
+              wikiErsetzt++;
+              log.info({ wikiId: row.id, osmId: result.osmId }, "enrich-all: wiki-Platzhalter ersetzt");
+            }
+            await new Promise((resolve) => setTimeout(resolve, 4_000));
+          }
+          log.info({ geprueft: wikiRows.length, ersetzt: wikiErsetzt }, "enrich-all: Wiki-Ersatz-Phase abgeschlossen");
+        }
+      } catch (wikiErr) {
+        log.warn({ err: wikiErr }, "enrich-all: Wiki-Ersatz-Phase fehlgeschlagen — nicht kritisch");
+      }
     } catch (err) {
       log.error({ err }, "enrich-all: abgebrochen mit Fehler — Neustart in 30 Min");
       // Nach unerwartetem Fehler: Loop nach 30 Min selbst neu starten falls
@@ -2104,6 +2137,61 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
   }
   runEnrichAllLoop(req.log);
   res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
+});
+
+/**
+ * POST /admin/routes/replace-wiki-etappen
+ * Sucht für alle wiki-* Platzhalter-Etappen nach echten OSM-Relationen und
+ * ersetzt sie, wenn OSM die Relation inzwischen nachgerüstet hat.
+ * Läuft im Hintergrund; Fortschritt erscheint in den Server-Logs.
+ */
+let replaceWikiLaeuft = false;
+
+router.post("/admin/routes/replace-wiki-etappen", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (replaceWikiLaeuft) {
+    res.json({ ok: true, message: "Läuft bereits" });
+    return;
+  }
+  replaceWikiLaeuft = true;
+  res.json({ ok: true, message: "Wiki-Etappen-Ersatz gestartet — Fortschritt via Server-Logs" });
+
+  const log = req.log;
+  (async () => {
+    try {
+      const wikiRows = await db
+        .select({
+          id: externalRoutesTable.id,
+          name: externalRoutesTable.name,
+          canton: externalRoutesTable.canton,
+          sagaId: externalRoutesTable.sagaId,
+          routeType: externalRoutesTable.routeType,
+          isEtappe: externalRoutesTable.isEtappe,
+        })
+        .from(externalRoutesTable)
+        .where(sql`${externalRoutesTable.id} LIKE 'wiki-%'`);
+
+      log.info({ n: wikiRows.length }, "replace-wiki-etappen: Start");
+      let ersetzt = 0;
+
+      for (const row of wikiRows) {
+        const result = await tryReplaceWikiRoute(row, log);
+        if (result.replaced) {
+          ersetzt++;
+          log.info({ wikiId: row.id, osmId: result.osmId }, "replace-wiki-etappen: Route ersetzt");
+        } else {
+          log.debug({ wikiId: row.id, reason: result.reason }, "replace-wiki-etappen: kein Ersatz");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 4_000)); // Overpass schonen
+      }
+
+      log.info({ geprueft: wikiRows.length, ersetzt }, "replace-wiki-etappen: abgeschlossen");
+    } catch (err) {
+      log.error({ err }, "replace-wiki-etappen: unerwarteter Fehler");
+    } finally {
+      replaceWikiLaeuft = false;
+    }
+  })();
 });
 
 /**
