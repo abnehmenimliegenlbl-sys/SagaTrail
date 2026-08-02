@@ -23,7 +23,8 @@ import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
-import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchWikiEtappen, type WikiEtappe, searchOsmRouteByFromTo } from "../lib/overpass";
+import { estimateMinutes } from "../lib/geo";
+import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchWikiEtappen, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
 import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
@@ -1404,6 +1405,102 @@ router.get("/admin/partner-leads/download", (req, res): void => {
   res.send("\uFEFF" + jobState.csv);
 });
 
+// POST /admin/partner-leads/wp-book — einzelnen Lead in WP einbuchen
+// Body: { lead: PartnerLead }
+router.post("/admin/partner-leads/wp-book", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = process.env.WP_AJAX_URL ?? "";
+  const wpSecret = process.env.WP_HOOK_SECRET ?? "";
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+
+  const lead = req.body?.lead as {
+    name?: string; email?: string; typ?: string; kanton?: string;
+    sprache?: string; route?: string; adresse?: string; telefon?: string;
+    website?: string; googleMaps?: string; quelle?: string;
+  };
+  if (!lead?.name) { res.status(400).json({ error: "lead.name fehlt" }); return; }
+
+  const form = new URLSearchParams({
+    action:     "sagatrail_book_lead",
+    hook_secret: wpSecret,
+    name:       lead.name ?? "",
+    email:      lead.email ?? "",
+    typ:        lead.typ ?? "",
+    kanton:     lead.kanton ?? "",
+    sprache:    lead.sprache ?? "",
+    route:      lead.route ?? "",
+    adresse:    lead.adresse ?? "",
+    telefon:    lead.telefon ?? "",
+    website:    lead.website ?? "",
+    googleMaps: lead.googleMaps ?? "",
+    quelle:     lead.quelle ?? "OSM",
+  });
+
+  try {
+    const r = await fetch(wpUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+      signal: AbortSignal.timeout(12_000),
+    });
+    const json = await r.json().catch(() => ({})) as Record<string, unknown>;
+    if (!r.ok || !json.success) {
+      req.log.warn({ status: r.status, json, name: lead.name }, "wp-book: WP AJAX Fehler");
+      res.status(502).json({ error: (json.data as string) ?? `WP HTTP ${r.status}` });
+      return;
+    }
+    req.log.info({ name: lead.name, kanton: lead.kanton }, "partner-leads: Lead in WP eingebucht");
+    res.json({ ok: true });
+  } catch (err: any) {
+    req.log.warn({ err: err.message, name: lead.name }, "wp-book: Netzwerkfehler");
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// POST /admin/partner-leads/wp-book-all — alle Preview-Leads in WP einbuchen (Batch)
+router.post("/admin/partner-leads/wp-book-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = process.env.WP_AJAX_URL ?? "";
+  const wpSecret = process.env.WP_HOOK_SECRET ?? "";
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  if (jobState.status !== "done" || !jobState.preview?.length) {
+    res.status(400).json({ error: "Kein abgeschlossener Export vorhanden" }); return;
+  }
+
+  // Fire-and-forget: im Hintergrund einbuchen, sofort 202 zurückgeben
+  res.status(202).json({ ok: true, total: jobState.preview.length, message: "Einbuchung läuft — Fortschritt via Server-Logs" });
+
+  const log = req.log;
+  (async () => {
+    let ok = 0; let fail = 0;
+    for (const lead of jobState.preview) {
+      const form = new URLSearchParams({
+        action:     "sagatrail_book_lead",
+        hook_secret: wpSecret,
+        name:       lead.name,
+        email:      "",
+        typ:        lead.typ,
+        kanton:     lead.kanton,
+        sprache:    lead.sprache,
+        route:      lead.route,
+        adresse:    lead.adresse,
+        telefon:    lead.telefon,
+        website:    lead.website,
+        googleMaps: lead.googleMaps,
+        quelle:     lead.quelle,
+      });
+      try {
+        const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
+        const json = await r.json().catch(() => ({})) as Record<string, unknown>;
+        if (!r.ok || !json.success) { fail++; log.warn({ name: lead.name, status: r.status }, "wp-book-all: Einzel-Fehler"); }
+        else ok++;
+      } catch { fail++; }
+      await new Promise((r) => setTimeout(r, 300)); // WP schonen
+    }
+    log.info({ ok, fail, total: jobState.preview.length }, "wp-book-all: Einbuchung abgeschlossen");
+  })();
+});
+
 // ---------------------------------------------------------------------------
 // Routen-Fotos zurücksetzen (nach Qualitäts-Logik-Upgrade)
 // ---------------------------------------------------------------------------
@@ -2118,6 +2215,97 @@ function runEnrichAllLoop(log: Logger): void {
       } catch (wikiErr) {
         log.warn({ err: wikiErr }, "enrich-all: Wiki-Ersatz-Phase fehlgeschlagen — nicht kritisch");
       }
+
+      // Phase 3: Amtliche Tag-Nachpflege — holt distance/ascent für Routen
+      // bei denen beim ersten Enrich noch kein OSM-Tag vorhanden war.
+      try {
+        const { runOverpass, parseNumericTag: parsePT } = await import("../lib/overpass");
+        const tagRows = await db
+          .select({ id: externalRoutesTable.id, distanceKm: externalRoutesTable.distanceKm, ascentM: externalRoutesTable.ascentM })
+          .from(externalRoutesTable)
+          .where(sql`id LIKE 'osm-%' AND geometry_version >= 1 AND distance_tag_km IS NULL`);
+
+        if (tagRows.length > 0) {
+          log.info({ n: tagRows.length }, "enrich-all: Tag-Sweep gestartet");
+          let tagUpdated = 0;
+          const TAG_BATCH = 100;
+          for (let i = 0; i < tagRows.length; i += TAG_BATCH) {
+            const batch = tagRows.slice(i, i + TAG_BATCH);
+            const osmIds = batch.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+            if (!osmIds.length) continue;
+            try {
+              const q = `[out:json][timeout:60];relation(id:${osmIds.join(",")});out tags;`;
+              const els = await runOverpass<{ id: number; tags?: Record<string, string> }>(q, 65_000);
+              const byId = new Map(els.map((e) => [e.id, e.tags ?? {}]));
+              for (const row of batch) {
+                const oid = parseInt(row.id.replace("osm-", ""), 10);
+                const tags = byId.get(oid);
+                if (!tags) continue;
+                const nd = parsePT(tags.distance, 5_000);
+                const na = parsePT(tags.ascent, 100_000);
+                if (!nd && !na) continue;
+                const setObj: Record<string, unknown> = {};
+                if (nd != null) setObj["distanceTagKm"] = Math.round(nd * 10) / 10;
+                if (na != null) setObj["ascentM"] = Math.round(na);
+                const ed = nd ?? (row.distanceKm ? Number(row.distanceKm) : 0);
+                const ea = na ?? (row.ascentM ? Number(row.ascentM) : 0);
+                setObj["minutes"] = estimateMinutes(ed, ea);
+                await db.update(externalRoutesTable).set(setObj as any).where(eq(externalRoutesTable.id, row.id)).execute();
+                tagUpdated++;
+              }
+            } catch (bErr: any) {
+              log.warn({ err: bErr.message, from: i }, "enrich-all: Tag-Sweep Batch fehlgeschlagen — weiter");
+            }
+            if (i + TAG_BATCH < tagRows.length) await new Promise((r) => setTimeout(r, 1_500));
+          }
+          log.info({ geprueft: tagRows.length, aktualisiert: tagUpdated }, "enrich-all: Tag-Sweep abgeschlossen");
+        }
+      } catch (tagErr) {
+        log.warn({ err: tagErr }, "enrich-all: Tag-Sweep fehlgeschlagen — nicht kritisch");
+      }
+
+      // Phase 4: Namensbasierte Suche für dauerhaft nicht anreicherbare Routen (#25)
+      // Versucht für geometry_version=-1 Routen (placeholder-* / schweizmobil-lwn-*)
+      // eine passende OSM-Relation per Name zu finden — als letzter Fallback.
+      try {
+        const unenrichable = await db
+          .select({ id: externalRoutesTable.id, name: externalRoutesTable.name, canton: externalRoutesTable.canton })
+          .from(externalRoutesTable)
+          .where(sql`geometry_version = -1 AND (id LIKE 'placeholder-%' OR id LIKE 'schweizmobil-lwn-%')`)
+          .limit(30); // Overpass schonen: max 30 pro Lauf
+
+        if (unenrichable.length > 0) {
+          log.info({ n: unenrichable.length }, "enrich-all: Phase 4 Namenssuche gestartet");
+          let nameFound = 0;
+          for (const row of unenrichable) {
+            const candidates = await searchOsmRouteByName(row.name ?? row.id, log);
+            if (candidates.length > 0) {
+              const osmId = candidates[0]!;
+              const canton = row.canton && row.canton !== "" ? row.canton : "CH";
+              try {
+                await enrichAndStore(canton, [osmId], log, { skipPhotos: false });
+                // sagaId und isEtappe aus dem alten Eintrag übernehmen und alte Zeile löschen
+                const [existing] = await db.select({ id: externalRoutesTable.id }).from(externalRoutesTable).where(eq(externalRoutesTable.id, `osm-${osmId}`));
+                if (existing) {
+                  const [oldRow] = await db.select({ sagaId: externalRoutesTable.sagaId, isEtappe: externalRoutesTable.isEtappe }).from(externalRoutesTable).where(eq(externalRoutesTable.id, row.id));
+                  if (oldRow?.sagaId) {
+                    await db.update(externalRoutesTable).set({ sagaId: oldRow.sagaId, isEtappe: oldRow.isEtappe }).where(eq(externalRoutesTable.id, `osm-${osmId}`)).execute();
+                  }
+                  await db.delete(externalRoutesTable).where(eq(externalRoutesTable.id, row.id)).execute();
+                  log.info({ old: row.id, new: `osm-${osmId}` }, "enrich-all: Phase 4 — Route über Namen gefunden und ersetzt");
+                  nameFound++;
+                }
+              } catch (enrichErr) {
+                log.warn({ err: String(enrichErr), id: row.id }, "enrich-all: Phase 4 enrichAndStore fehlgeschlagen");
+              }
+            }
+            await new Promise((r) => setTimeout(r, 3_000));
+          }
+          log.info({ geprueft: unenrichable.length, gefunden: nameFound }, "enrich-all: Phase 4 Namenssuche abgeschlossen");
+        }
+      } catch (nameErr) {
+        log.warn({ err: nameErr }, "enrich-all: Phase 4 fehlgeschlagen — nicht kritisch");
+      }
     } catch (err) {
       log.error({ err }, "enrich-all: abgebrochen mit Fehler — Neustart in 30 Min");
       // Nach unerwartetem Fehler: Loop nach 30 Min selbst neu starten falls
@@ -2146,6 +2334,83 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
  * Läuft im Hintergrund; Fortschritt erscheint in den Server-Logs.
  */
 let replaceWikiLaeuft = false;
+
+/**
+ * POST /admin/routes/enrich-by-name
+ * Sucht für alle geometry_version=-1 Routen (placeholder-* / schweizmobil-lwn-*)
+ * nach OSM-Relationen via Namen-Matching und ersetzt sie, wenn ein guter Treffer
+ * gefunden wird. Läuft im Hintergrund; max 30 Routen pro Aufruf.
+ */
+let enrichByNameLaeuft = false;
+
+/**
+ * GET /admin/routes/unenrichable-list
+ * Listet alle Routen mit geometry_version = -1 (placeholder-* + schweizmobil-lwn-*).
+ */
+router.get("/admin/routes/unenrichable-list", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db
+      .select({ id: externalRoutesTable.id, name: externalRoutesTable.name, canton: externalRoutesTable.canton })
+      .from(externalRoutesTable)
+      .where(sql`geometry_version = -1 AND (id LIKE 'placeholder-%' OR id LIKE 'schweizmobil-lwn-%' OR id LIKE 'wiki-%')`)
+      .orderBy(externalRoutesTable.name);
+    res.json({ count: rows.length, routes: rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/admin/routes/enrich-by-name", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (enrichByNameLaeuft) { res.json({ ok: true, message: "Läuft bereits" }); return; }
+  enrichByNameLaeuft = true;
+  res.json({ ok: true, message: "Namenssuche gestartet — Fortschritt via Server-Logs" });
+
+  const log = req.log;
+  (async () => {
+    try {
+      const rows = await db
+        .select({ id: externalRoutesTable.id, name: externalRoutesTable.name, canton: externalRoutesTable.canton, sagaId: externalRoutesTable.sagaId, isEtappe: externalRoutesTable.isEtappe })
+        .from(externalRoutesTable)
+        .where(sql`geometry_version = -1 AND (id LIKE 'placeholder-%' OR id LIKE 'schweizmobil-lwn-%')`);
+
+      log.info({ n: rows.length }, "enrich-by-name: Start");
+      let found = 0;
+
+      for (const row of rows) {
+        const candidates = await searchOsmRouteByName(row.name ?? row.id, log);
+        if (candidates.length > 0) {
+          const osmId = candidates[0]!;
+          const canton = row.canton && row.canton !== "" ? row.canton : "CH";
+          try {
+            await enrichAndStore(canton, [osmId], log, { skipPhotos: false });
+            const [inserted] = await db.select({ id: externalRoutesTable.id }).from(externalRoutesTable).where(eq(externalRoutesTable.id, `osm-${osmId}`));
+            if (inserted) {
+              if (row.sagaId) {
+                await db.update(externalRoutesTable).set({ sagaId: row.sagaId, isEtappe: row.isEtappe }).where(eq(externalRoutesTable.id, `osm-${osmId}`)).execute();
+              }
+              await db.delete(externalRoutesTable).where(eq(externalRoutesTable.id, row.id)).execute();
+              log.info({ old: row.id, new: `osm-${osmId}`, name: row.name }, "enrich-by-name: Route ersetzt");
+              found++;
+            }
+          } catch (e) {
+            log.warn({ err: String(e), id: row.id }, "enrich-by-name: enrichAndStore fehlgeschlagen");
+          }
+        } else {
+          log.debug({ id: row.id, name: row.name }, "enrich-by-name: kein Treffer");
+        }
+        await new Promise((r) => setTimeout(r, 3_000));
+      }
+
+      log.info({ geprueft: rows.length, ersetzt: found }, "enrich-by-name: abgeschlossen");
+    } catch (err) {
+      log.error({ err }, "enrich-by-name: unerwarteter Fehler");
+    } finally {
+      enrichByNameLaeuft = false;
+    }
+  })();
+});
 
 router.post("/admin/routes/replace-wiki-etappen", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -2263,6 +2528,102 @@ router.post("/admin/routes/fix-saga-ids", async (req, res): Promise<void> => {
  * GET /admin/routes/enrich-status
  * Zeigt Fortschritt der Geometrie-Anreicherung: total, fertig, ausstehend.
  */
+/**
+ * GET /admin/routes/wiki-straight
+ * Liefert alle wiki-* Routen mit gerader Geometrie (genau 2 Punkte).
+ * Diese Routen haben noch keine echte OSM-Geometrie und zeigen im App
+ * eine gerade Linie zwischen Start und Ziel.
+ */
+router.get("/admin/routes/wiki-straight", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db
+      .select({
+        id: externalRoutesTable.id,
+        name: externalRoutesTable.name,
+        canton: externalRoutesTable.canton,
+        distanceKm: externalRoutesTable.distanceKm,
+        geometryVersion: externalRoutesTable.geometryVersion,
+      })
+      .from(externalRoutesTable)
+      .where(sql`id LIKE 'wiki-%' AND jsonb_typeof(geometry)='array' AND jsonb_array_length(geometry) = 2`)
+      .orderBy(externalRoutesTable.name);
+    res.json({ count: rows.length, routes: rows });
+  } catch (err: any) {
+    req.log.error({ err }, "wiki-straight fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /admin/routes/wiki-italy
+ * Listet wiki-* Etappen deren from/to ausschliesslich in Italien liegen (Name endet auf "(I)").
+ * Gibt dazu die naechstgelegenen OSM-Wanderrouten im Schweizer Korridor (Bbox n=46.55 s=46.20)
+ * als Ersatz-Kandidaten zurück — via zwischengespeichertem Overpass-Ergebnis.
+ */
+router.get("/admin/routes/wiki-italy", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    // Wiki-Etappen bei denen BEIDE Orts-Namen auf "(I)" enden → reine Italien-Etappen
+    const wikiRows = await db
+      .select({
+        id: externalRoutesTable.id,
+        name: externalRoutesTable.name,
+        canton: externalRoutesTable.canton,
+        sagaId: externalRoutesTable.sagaId,
+        distanceTagKm: externalRoutesTable.distanceTagKm,
+        geometry: externalRoutesTable.geometry,
+      })
+      .from(externalRoutesTable)
+      .where(sql`id LIKE 'wiki-%' AND name ~ '\\(I\\)[^–—-]*[–—-][^–—-]+\\(I\\)'`);
+    res.json({ count: wikiRows.length, routes: wikiRows.map((r) => ({ ...r, geometry: undefined })) });
+  } catch (err: any) {
+    req.log.error({ err }, "wiki-italy fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/wiki-italy-search
+ * Sucht per Overpass nach Wanderrouten im Schweizer Korridor zwischen den
+ * Endpunkten der Italien-Etappen von Route 62 (Binn → Bosco Gurin via Schweiz).
+ * Bounding-Box: 46.15,8.10,46.60,8.55 (Wallis/Tessin-Grenzgebiet)
+ * Body: optional { bboxStr: "minLat,minLng,maxLat,maxLng" }
+ */
+router.post("/admin/routes/wiki-italy-search", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const bboxStr = (req.body?.bboxStr as string | undefined) ?? "46.15,8.10,46.60,8.55";
+  try {
+    const { runOverpass } = await import("../lib/overpass");
+    // Suche alle Wanderrouten-Relationen in der Bbox mit route=hiking + type=route
+    const q = `[out:json][timeout:90];
+(
+  relation["type"="route"]["route"="hiking"]["network"~"nwn|rwn|lwn"](${bboxStr});
+);
+out tags;`;
+    type OvEl = { id: number; tags?: Record<string, string> };
+    const els = await runOverpass<OvEl>(q, 95_000);
+    const candidates = els
+      .filter((e) => e.tags)
+      .map((e) => ({
+        osmId: e.id,
+        name: e.tags!.name ?? e.tags!["name:de"] ?? `OSM ${e.id}`,
+        from: e.tags!.from ?? "",
+        to: e.tags!.to ?? "",
+        network: e.tags!.network ?? "",
+        ref: e.tags!.ref ?? "",
+        distance: e.tags!.distance ?? "",
+        website: e.tags!.website ?? "",
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    req.log.info({ bbox: bboxStr, found: candidates.length }, "wiki-italy-search: Kandidaten gefunden");
+    res.json({ bbox: bboxStr, count: candidates.length, candidates });
+  } catch (err: any) {
+    req.log.error({ err }, "wiki-italy-search fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/admin/routes/enrich-status", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
@@ -2683,13 +3044,31 @@ router.post("/admin/routes/enrich-one", async (req, res): Promise<void> => {
     const newAscentM = ascentTagM != null ? Math.round(ascentTagM) : null;
     const changed = newDistanceTagKm != null || newAscentM != null;
 
+    // Fetch existing row so we can fall back to current values when only one tag changed
+    const [existing] = await db
+      .select({
+        distanceKm: externalRoutesTable.distanceKm,
+        distanceTagKm: externalRoutesTable.distanceTagKm,
+        ascentM: externalRoutesTable.ascentM,
+      })
+      .from(externalRoutesTable)
+      .where(eq(externalRoutesTable.id, id))
+      .limit(1);
+
     if (changed) {
       const setObj: Record<string, unknown> = {};
       if (newDistanceTagKm != null) setObj["distanceTagKm"] = newDistanceTagKm;
       if (newAscentM != null) setObj["ascentM"] = newAscentM;
+
+      // Recompute minutes from official tag values (fall back to existing DB values)
+      const effectiveDistKm =
+        newDistanceTagKm ?? existing?.distanceTagKm ?? existing?.distanceKm ?? 0;
+      const effectiveAscentM = newAscentM ?? existing?.ascentM ?? 0;
+      setObj["minutes"] = estimateMinutes(effectiveDistKm, effectiveAscentM);
+
       await db
         .update(externalRoutesTable)
-        .set(setObj as { distanceTagKm?: number; ascentM?: number })
+        .set(setObj as { distanceTagKm?: number; ascentM?: number; minutes?: number })
         .where(eq(externalRoutesTable.id, id));
     }
 
@@ -2704,6 +3083,77 @@ router.post("/admin/routes/enrich-one", async (req, res): Promise<void> => {
     });
   } catch (err: any) {
     req.log.error({ err, id }, "enrich-one fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/tag-sweep
+ * Holt amtliche distance/ascent-Tags aus OSM für alle osm-* Routen
+ * bei denen distance_tag_km noch NULL ist (geometry_version >= 1).
+ * Batched: bis zu 100 Relationen pro Overpass-Abfrage.
+ * Body: { dryRun?: boolean, batchSize?: number }
+ * Gibt { swept, updated, noTag } zurück.
+ */
+router.post("/admin/routes/tag-sweep", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { dryRun = false, batchSize: bs = 100 } = (req.body ?? {}) as {
+    dryRun?: boolean;
+    batchSize?: number;
+  };
+  const batchSize = Math.max(1, Math.min(200, bs));
+
+  try {
+    // Alle osm-* Routen ohne distanceTagKm laden (geometry bereits bekannt)
+    const rows = await db
+      .select({ id: externalRoutesTable.id, distanceKm: externalRoutesTable.distanceKm, ascentM: externalRoutesTable.ascentM })
+      .from(externalRoutesTable)
+      .where(sql`id LIKE 'osm-%' AND geometry_version >= 1 AND distance_tag_km IS NULL`);
+
+    const { runOverpass, parseNumericTag } = await import("../lib/overpass");
+    let updated = 0;
+    let noTag = 0;
+
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const osmIds = batch.map((r) => parseInt(r.id.replace("osm-", ""), 10)).filter((n) => !isNaN(n));
+      if (!osmIds.length) continue;
+      try {
+        const query = `[out:json][timeout:60];relation(id:${osmIds.join(",")});out tags;`;
+        const elements = await runOverpass<{ id: number; tags?: Record<string, string> }>(query, 65_000);
+        const tagsByOsmId = new Map(elements.map((e) => [e.id, e.tags ?? {}]));
+
+        for (const row of batch) {
+          const osmId = parseInt(row.id.replace("osm-", ""), 10);
+          const tags = tagsByOsmId.get(osmId);
+          if (!tags) { noTag++; continue; }
+          const newDist = parseNumericTag(tags.distance, 5_000);
+          const newAscent = parseNumericTag(tags.ascent, 100_000);
+          if (!newDist && !newAscent) { noTag++; continue; }
+          if (!dryRun) {
+            const setObj: Record<string, unknown> = {};
+            if (newDist != null) setObj["distanceTagKm"] = Math.round(newDist * 10) / 10;
+            if (newAscent != null) setObj["ascentM"] = Math.round(newAscent);
+            const effectiveDist = (newDist ?? (row.distanceKm ? Number(row.distanceKm) : 0));
+            const effectiveAscent = (newAscent ?? (row.ascentM ? Number(row.ascentM) : 0));
+            setObj["minutes"] = estimateMinutes(effectiveDist, effectiveAscent);
+            await db.update(externalRoutesTable)
+              .set(setObj as any)
+              .where(eq(externalRoutesTable.id, row.id))
+              .execute();
+          }
+          updated++;
+        }
+      } catch (batchErr: any) {
+        req.log.warn({ batchErr: batchErr.message, from: i }, "tag-sweep: Batch fehlgeschlagen — weiter");
+      }
+      // kurze Pause zwischen Batches
+      if (i + batchSize < rows.length) await new Promise((r) => setTimeout(r, 1_000));
+    }
+
+    res.json({ ok: true, swept: rows.length, updated, noTag, dryRun });
+  } catch (err: any) {
+    req.log.error({ err }, "tag-sweep fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });
@@ -4350,7 +4800,9 @@ router.post("/migrate-20260731", (req, res) => {
 
       const withGeo = etappen
         .map(e => ({ ...e, pts: normGeo(e.geometry) }))
-        .filter(e => e.pts && e.pts.length >= 2);
+        // Mindestens 3 Punkte: 2-Punkt-Etappen sind Geraden (wiki-Platzhalter)
+        // und dürfen die Parent-Geometrie nicht einfrieren (#72)
+        .filter(e => e.pts && e.pts.length >= 3);
 
       if (withGeo.length < etappen.length) {
         addLog(`SKIP ${parent.id} — ${etappen.length - withGeo.length}/${etappen.length} Etappen ohne Geo`);
@@ -4374,7 +4826,7 @@ router.post("/migrate-20260731", (req, res) => {
 
         await db
           .update(externalRoutesTable)
-          .set({ geometry: JSON.stringify(rounded) as any, geometryVersion: 5 })
+          .set({ geometry: rounded as any, geometryVersion: 5 })
           .where(eq(externalRoutesTable.id, parent.id))
           .execute();
 

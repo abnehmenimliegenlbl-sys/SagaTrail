@@ -199,6 +199,12 @@ async function fetchPoiAroundPoints(
       `node["tourism"~"^(hotel|hostel|alpine_hut|wilderness_hut|guest_house)$"]["name"](${a});`,
       `way["amenity"~"^(restaurant|cafe)$"]["name"](${a});`,
       `way["tourism"~"^(hotel|hostel|alpine_hut|wilderness_hut|guest_house)$"]["name"](${a});`,
+      // #28: Bergbahnen (cable cars, gondolas, chair lifts)
+      `node["aerialway"~"^(cable_car|gondola|chair_lift)$"]["name"](${a});`,
+      `way["aerialway"~"^(cable_car|gondola|chair_lift)$"]["name"](${a});`,
+      // #28: Outdoor- & Sportgeschäfte
+      `node["shop"~"^(outdoor|sports|ski)$"]["name"](${a});`,
+      `way["shop"~"^(outdoor|sports|ski)$"]["name"](${a});`,
     ];
   });
 
@@ -216,6 +222,8 @@ async function fetchPoiAroundPoints(
 function osmTypLabel(tags: Record<string, string>): string {
   const a = tags.amenity;
   const t = tags.tourism;
+  const aw = tags.aerialway;
+  const sh = tags.shop;
   if (a === "restaurant") return "Restaurant";
   if (a === "cafe") return "Café";
   if (t === "hotel") return "Hotel";
@@ -223,7 +231,15 @@ function osmTypLabel(tags: Record<string, string>): string {
   if (t === "alpine_hut") return "Berghütte";
   if (t === "wilderness_hut") return "Wilderness Hut";
   if (t === "guest_house") return "Pension";
-  return a ?? t ?? "Sonstiges";
+  // #28: Bergbahnen
+  if (aw === "cable_car") return "Seilbahn";
+  if (aw === "gondola") return "Gondelbahn";
+  if (aw === "chair_lift") return "Sessellift";
+  // #28: Outdoor-/Sportgeschäfte
+  if (sh === "outdoor") return "Outdoor-Shop";
+  if (sh === "sports") return "Sportgeschäft";
+  if (sh === "ski") return "Ski-Shop";
+  return a ?? t ?? aw ?? sh ?? "Sonstiges";
 }
 
 // ---------------------------------------------------------------------------

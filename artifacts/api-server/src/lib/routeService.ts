@@ -1673,8 +1673,9 @@ export async function enrichOneRoute(
       terrain,
       canton,
       cantons,
-      geometry: JSON.stringify(geometry),
+      geometry: geometry as any,
       geometryVersion: GEOMETRY_VERSION,
+      source: "OpenStreetMap · swisstopo",
       ...(updatedName ? { name: updatedName } : {}),
     })
     .where(eq(externalRoutesTable.id, rowId));
@@ -1843,7 +1844,103 @@ export async function tryReplaceWikiRoute(
     .execute();
 
   log.info({ wikiId: row.id, osmId, canton, sagaId: row.sagaId }, "tryReplaceWikiRoute: wiki-Platzhalter durch OSM-Route ersetzt");
+
+  // #71: Automatisch Parent-Route neu vernähen wenn alle Etappen jetzt echte Geometrie haben.
+  // Nur wenn sagaId auf eine bekannte Parent-Route zeigt (nicht auf eine Sagen-ID).
+  const parentId = row.sagaId ?? "";
+  const looksLikeParent = /^(schweizmobil|osm|placeholder)-/.test(parentId);
+  if (looksLikeParent) {
+    // Fire-and-forget — kein await, damit die Ersetzungs-Schleife nicht aufgehalten wird
+    tryRestitchParentRoute(parentId, log).catch((e) =>
+      log.warn({ parentId, err: String(e) }, "tryReplaceWikiRoute: Auto-Restitch fehlgeschlagen"),
+    );
+  }
+
   return { replaced: true, osmId };
+}
+
+/**
+ * Vernäht eine Elternroute automatisch neu, sobald alle verknüpften Etappen
+ * echte Geometrie haben (> 2 Punkte; keine Wiki-Geraden).
+ * Wird nach erfolgreichem wiki-Ersatz aufgerufen (#71).
+ */
+export async function tryRestitchParentRoute(parentId: string, log: Logger): Promise<void> {
+  // Alle Etappen dieses Parents laden
+  const etappen = await db
+    .select({
+      id: externalRoutesTable.id,
+      name: externalRoutesTable.name,
+      geometry: externalRoutesTable.geometry,
+    })
+    .from(externalRoutesTable)
+    .where(
+      and(
+        eq(externalRoutesTable.sagaId, parentId),
+        eq(externalRoutesTable.isEtappe, true),
+      ),
+    );
+
+  if (etappen.length < 2) return; // Zu wenige Etappen
+
+  // Alle Etappen müssen echte Geometrie haben (> 2 Punkte)
+  const normGeo = (raw: unknown): [number, number][] | null => {
+    if (!raw) return null;
+    try {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!Array.isArray(parsed) || parsed.length < 3) return null;
+      return parsed.map((p: unknown) =>
+        Array.isArray(p) ? [p[0] as number, p[1] as number] : [(p as any).lat ?? 0, (p as any).lng ?? 0],
+      );
+    } catch { return null; }
+  };
+
+  const withGeo = etappen
+    .map((e) => ({ ...e, pts: normGeo(e.geometry) }))
+    .filter((e): e is typeof e & { pts: [number, number][] } => e.pts !== null);
+
+  if (withGeo.length < etappen.length) {
+    log.debug({ parentId, total: etappen.length, withGeo: withGeo.length }, "tryRestitchParent: noch nicht alle Etappen bereit");
+    return; // Warten bis alle Etappen echte Geometrie haben
+  }
+
+  // Etappen nach Etappen-Nummer sortieren
+  const etappenNrFromName = (name: string): number =>
+    parseInt(name.match(/(?:Etappe|Étape|Etape|Tappa|Stage)\s+(\d+)/i)?.[1] ?? "0", 10);
+
+  const ordered = [...withGeo].sort((a, b) => etappenNrFromName(a.name) - etappenNrFromName(b.name));
+
+  // Verketten (Endpunkt-nächste Ausrichtung)
+  const R = 6371;
+  const hav = (a: [number, number], b: [number, number]) => {
+    const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+    const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+    const s = Math.sin(dLat / 2) ** 2 +
+      Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+
+  let chain: [number, number][] = ordered[0].pts.slice();
+  for (let i = 1; i < ordered.length; i++) {
+    const seg = ordered[i].pts.slice();
+    const end = chain[chain.length - 1]!;
+    if (hav(end, seg[seg.length - 1]!) < hav(end, seg[0]!)) seg.reverse();
+    chain = chain.concat(seg);
+  }
+
+  if (chain.length < 3) return;
+
+  const rounded = chain.map(([lat, lng]) => [
+    Math.round(lat * 1e6) / 1e6,
+    Math.round(lng * 1e6) / 1e6,
+  ]);
+
+  await db
+    .update(externalRoutesTable)
+    .set({ geometry: rounded as any, geometryVersion: 5 })
+    .where(eq(externalRoutesTable.id, parentId))
+    .execute();
+
+  log.info({ parentId, etappen: ordered.length, pts: rounded.length }, "tryRestitchParent: Elternroute automatisch vernäht (#71)");
 }
 
 /**

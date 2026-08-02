@@ -20,7 +20,7 @@ const CACHE_TTL_MS = 2 * 60 * 1000;
 /** Wählt unter den Kandidaten die nächste echte Haltestelle (mit ID, nicht Adresse). */
 function bestStation(
   candidates: Array<{ id?: string; label: string; dist?: number; iconclass?: string }>,
-): { id: string; name: string } | null {
+): { id: string; label: string; dist?: number; iconclass?: string } | null {
   const withId = candidates.filter((s): s is typeof s & { id: string } => !!s.id);
   if (!withId.length) return null;
   // Züge bevorzugen, dann S-Bahn, dann beliebig — jeweils nächste (dist aufsteigend)

@@ -320,6 +320,54 @@ a{color:var(--red);text-decoration:none}
       <div id="enrich-text" class="hint" style="font-size:12px;line-height:1.8">Wird geladen…</div>
     </div>
 
+    <!-- NICHT ANREICHERBARE ROUTEN — NAMENSSUCHE (#25) -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <h2 style="margin:0">&#128683; Nicht anreicherbare Routen (geometry_version = &#8722;1)</h2>
+        <span id="unenrich-badge" class="badge badge-gray">Wird geladen…</span>
+      </div>
+      <p class="hint" style="margin-bottom:12px">
+        Diese Routen konnten via network+ref nicht in OSM gefunden werden.
+        «Namenssuche starten» versucht sie über ihren Route-Namen in OSM zu finden (max 30 pro Lauf, 3 s Pause zwischen Anfragen).
+      </p>
+      <div id="unenrich-body" style="max-height:200px;overflow-y:auto;margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="enrichByName()" id="enrich-by-name-btn">&#128269; Namenssuche starten</button>
+        <span id="enrich-by-name-status" class="hint"></span>
+      </div>
+    </div>
+
+    <!-- WIKI-ITALIEN-ETAPPEN -->
+    <div class="card" id="wiki-italy-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h2 style="margin:0">&#127470;&#127481; Wiki-Etappen in Italien (keine OSM-Daten)</h2>
+        <span id="wiki-italy-badge" class="badge badge-gray" style="font-size:12px">Wird geladen…</span>
+      </div>
+      <p class="hint" style="margin-bottom:10px">Diese wiki-Platzhalter-Etappen haben <em>ausschliesslich</em> italienische Ortsnamen (<code>(I)</code>). Es gibt keine OSM-Wanderrouten-Relation für sie. Mit «Schweizer Routen suchen» findet das Tool OSM-Relationen in der Bbox 46.15–46.60N/8.10–8.55E als mögliche Alternativen.</p>
+      <div id="wiki-italy-body" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="wikiItalySearch()" id="wiki-italy-search-btn">&#128269; Schweizer Routen suchen (Overpass)</button>
+        <span id="wiki-italy-search-status" class="hint"></span>
+      </div>
+      <div id="wiki-italy-candidates" style="margin-top:14px;display:none">
+        <h3 style="font-size:13px;font-weight:600;margin:0 0 8px">OSM-Kandidaten in der Bbox:</h3>
+        <div style="overflow-x:auto"><table class="tbl" id="wiki-italy-tbl">
+          <thead><tr><th>OSM-ID</th><th>Name</th><th>Von</th><th>Nach</th><th>Netz</th><th>Ref</th><th>Distanz</th><th>Aktion</th></tr></thead>
+          <tbody id="wiki-italy-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- WIKI-GERADE-LINIEN-WARNUNG -->
+    <div class="card" id="wiki-straight-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h2 style="margin:0">&#9888;&#65039; Wiki-Etappen ohne echte Geometrie</h2>
+        <span id="wiki-straight-badge" class="badge badge-gray" style="font-size:12px">Wird geladen…</span>
+      </div>
+      <p class="hint" style="margin-bottom:10px">Diese Etappen-Routen haben nur 2 Geometrie-Punkte (Gerade Linie Start→Ziel). Nutzer sehen im App eine Luftlinie statt des echten Wanderwegs. Die Geometrie wird automatisch durch den nächsten Enrich-Lauf oder tryReplaceWikiRoute ersetzt.</p>
+      <div id="wiki-straight-body" style="max-height:280px;overflow-y:auto"></div>
+    </div>
+
     <!-- ROUTEN NEU LADEN -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
@@ -525,6 +573,7 @@ a{color:var(--red);text-decoration:none}
         </div>
         <button class="btn btn-primary" id="ls-start-btn" onclick="lsStart()">&#9654; Suche starten</button>
         <button class="btn btn-green" id="ls-download-btn" onclick="lsDownload()" style="display:none">&#11015; CSV herunterladen</button>
+        <button class="btn btn-primary" id="ls-wpbook-all-btn" onclick="lsWpBookAll()" style="display:none">&#128640; Alle in WP einbuchen</button>
         <span id="ls-status-text" style="font-size:13px;color:var(--mid)"></span>
       </div>
 
@@ -551,6 +600,7 @@ a{color:var(--red);text-decoration:none}
       <p class="hint" style="margin-bottom:12px">
         Überprüfe die Leads, bevor du die CSV in WordPress hochlädst und Mails versendest.
         Bestehende Partner und Blockliste sind bereits herausgefiltert.
+        Mit «Einbuchen» wird der Lead direkt via WP AJAX (<code>sagatrail_book_lead</code>) in WordPress gespeichert.
       </p>
       <div style="overflow-x:auto">
         <table class="tbl" id="ls-preview-tbl">
@@ -565,6 +615,7 @@ a{color:var(--red);text-decoration:none}
               <th>Telefon</th>
               <th>Website</th>
               <th>Quelle</th>
+              <th>WP</th>
             </tr>
           </thead>
           <tbody id="ls-preview-tbody"></tbody>
@@ -1504,8 +1555,184 @@ async function loadEnrichStatus() {
   }
 }
 
+async function loadWikiItaly() {
+  var badge = document.getElementById('wiki-italy-badge');
+  var body  = document.getElementById('wiki-italy-body');
+  try {
+    var d = await api('/api/admin/routes/wiki-italy');
+    if (d.count === 0) {
+      badge.className = 'badge badge-green';
+      badge.textContent = '✓ Keine reinen Italien-Etappen';
+      body.innerHTML = '<p class="hint" style="color:var(--green)">Alle wiki-Etappen haben Schweizer Endpunkte.</p>';
+      return;
+    }
+    badge.className = 'badge badge-orange';
+    badge.textContent = d.count + ' Etappe' + (d.count !== 1 ? 'n' : '') + ' nur in Italien';
+    var rows = d.routes.map(function(r) {
+      return '<tr style="font-size:12px">' +
+        '<td style="padding:4px 8px;font-family:monospace;color:var(--mid)">' + esc(r.id) + '</td>' +
+        '<td style="padding:4px 8px">' + esc(r.name) + '</td>' +
+        '<td style="padding:4px 8px;text-align:center">' + esc(r.canton || '—') + '</td>' +
+        '<td style="padding:4px 8px;text-align:right">' + (r.distanceTagKm ? r.distanceTagKm + ' km' : '—') + '</td>' +
+        '</tr>';
+    }).join('');
+    body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr style="font-size:11px;color:var(--mid)">' +
+      '<th style="padding:4px 8px;text-align:left">ID</th>' +
+      '<th style="padding:4px 8px;text-align:left">Name</th>' +
+      '<th style="padding:4px 8px">Kanton</th>' +
+      '<th style="padding:4px 8px;text-align:right">Distanz</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+  } catch(e) {
+    if (badge) badge.textContent = 'Fehler';
+    if (body) body.textContent = e.message;
+  }
+}
+
+async function wikiItalySearch() {
+  var btn = document.getElementById('wiki-italy-search-btn');
+  var status = document.getElementById('wiki-italy-search-status');
+  var cands = document.getElementById('wiki-italy-candidates');
+  btn.disabled = true;
+  status.textContent = '⏳ Suche via Overpass (30–90 s)…';
+  cands.style.display = 'none';
+  try {
+    var d = await api('/api/admin/routes/wiki-italy-search', { method: 'POST', body: JSON.stringify({}) });
+    status.textContent = d.count + ' Kandidaten gefunden';
+    status.style.color = d.count > 0 ? 'var(--green)' : 'var(--mid)';
+    var tbody = document.getElementById('wiki-italy-tbody');
+    if (d.count === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="hint">Keine passenden Wanderrouten in der Bbox gefunden.</td></tr>';
+    } else {
+      tbody.innerHTML = d.candidates.map(function(c) {
+        var enrichUrl = '/api/admin/routes/force-reenrich';
+        return '<tr style="font-size:12px">' +
+          '<td class="mono"><a href="https://www.openstreetmap.org/relation/' + c.osmId + '" target="_blank" style="color:var(--red)">' + c.osmId + '</a></td>' +
+          '<td>' + esc(c.name) + '</td>' +
+          '<td>' + esc(c.from) + '</td>' +
+          '<td>' + esc(c.to) + '</td>' +
+          '<td><span class="badge badge-gray">' + esc(c.network) + '</span></td>' +
+          '<td class="mono">' + esc(c.ref) + '</td>' +
+          '<td class="mono">' + esc(c.distance) + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm" onclick="wikiItalyEnrich(' + c.osmId + ')">Einladen</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+    cands.style.display = '';
+  } catch(e) {
+    status.textContent = '⚠ ' + esc(e.message);
+    status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function wikiItalyEnrich(osmId) {
+  if (!confirm('OSM-Route ' + osmId + ' als osm-' + osmId + ' in die DB laden und anreichern?')) return;
+  try {
+    await api('/api/admin/routes/force-reenrich', { method: 'POST', body: JSON.stringify({ ids: ['osm-' + osmId] }) });
+    alert('Gestartet. Route erscheint nach dem Enrich-Loop in der DB.');
+  } catch(e) { alert('Fehler: ' + e.message); }
+}
+
+async function loadWikiStraight() {
+  var badge = document.getElementById('wiki-straight-badge');
+  var body  = document.getElementById('wiki-straight-body');
+  try {
+    var d = await api('/api/admin/routes/wiki-straight');
+    if (d.count === 0) {
+      badge.className = 'badge badge-green';
+      badge.textContent = '✓ Keine geraden Linien';
+      body.innerHTML = '<p class="hint" style="color:var(--green)">Alle wiki-Etappen haben echte Geometrie.</p>';
+      return;
+    }
+    badge.className = 'badge badge-orange';
+    badge.textContent = d.count + ' Route' + (d.count !== 1 ? 'n' : '') + ' ohne Geometrie';
+    var rows = d.routes.map(function(r) {
+      return '<tr style="font-size:12px">' +
+        '<td style="padding:4px 8px;font-family:monospace;color:var(--mid)">' + esc(r.id) + '</td>' +
+        '<td style="padding:4px 8px">' + esc(r.name) + '</td>' +
+        '<td style="padding:4px 8px;text-align:center">' + esc(r.canton || '—') + '</td>' +
+        '<td style="padding:4px 8px;text-align:right">' + (r.distanceKm ? r.distanceKm + ' km' : '—') + '</td>' +
+        '<td style="padding:4px 8px;text-align:center"><span class="badge badge-orange">v' + r.geometryVersion + '</span></td>' +
+        '</tr>';
+    }).join('');
+    body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr style="font-size:11px;color:var(--mid)">' +
+      '<th style="padding:4px 8px;text-align:left;font-weight:600">ID</th>' +
+      '<th style="padding:4px 8px;text-align:left;font-weight:600">Name</th>' +
+      '<th style="padding:4px 8px;text-align:center;font-weight:600">Kanton</th>' +
+      '<th style="padding:4px 8px;text-align:right;font-weight:600">Distanz</th>' +
+      '<th style="padding:4px 8px;text-align:center;font-weight:600">Version</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+  } catch(e) {
+    badge.className = 'badge badge-red';
+    badge.textContent = 'Fehler';
+    body.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+async function loadUnenrichable() {
+  var badge = document.getElementById('unenrich-badge');
+  var body  = document.getElementById('unenrich-body');
+  try {
+    var d = await api('/api/admin/routes/enrich-status');
+    if (badge) {
+      badge.className = d.unenrichable > 0 ? 'badge badge-red' : 'badge badge-green';
+      badge.textContent = d.unenrichable > 0 ? d.unenrichable + ' Routen (geometry = −1)' : '✓ Keine';
+    }
+    if (!body) return;
+    if (d.unenrichable === 0) {
+      body.innerHTML = '<p class="hint" style="color:var(--green)">Alle Routen sind angereichert.</p>';
+      return;
+    }
+    // Direkte Abfrage für die Tabelle
+    try {
+      var rows = await api('/api/admin/routes/unenrichable-list');
+      if (rows && rows.routes) {
+        body.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+          '<thead><tr style="font-size:11px;color:var(--mid)">' +
+          '<th style="padding:3px 8px;text-align:left">ID</th>' +
+          '<th style="padding:3px 8px;text-align:left">Name</th>' +
+          '<th style="padding:3px 8px">Kanton</th>' +
+          '</tr></thead><tbody>' +
+          rows.routes.map(function(r) {
+            return '<tr style="font-size:12px">' +
+              '<td style="padding:3px 8px;font-family:monospace;color:var(--mid)">' + esc(r.id) + '</td>' +
+              '<td style="padding:3px 8px">' + esc(r.name) + '</td>' +
+              '<td style="padding:3px 8px;text-align:center">' + esc(r.canton||'—') + '</td>' +
+              '</tr>';
+          }).join('') + '</tbody></table>';
+      }
+    } catch(e2) { body.innerHTML = '<p class="hint">Liste nicht verfügbar.</p>'; }
+  } catch(e) {
+    if (badge) badge.textContent = 'Fehler';
+  }
+}
+
+async function enrichByName() {
+  var btn = document.getElementById('enrich-by-name-btn');
+  var st  = document.getElementById('enrich-by-name-status');
+  btn.disabled = true;
+  st.textContent = '⏳ Gestartet — Fortschritt in Server-Logs…';
+  st.style.color = 'var(--mid)';
+  try {
+    await api('/api/admin/routes/enrich-by-name', { method: 'POST' });
+    st.textContent = '✓ Läuft im Hintergrund. Seite in 5 Min neu laden um Fortschritt zu sehen.';
+    st.style.color = 'var(--green)';
+    setTimeout(function() { btn.disabled = false; loadUnenrichable(); }, 5 * 60_000);
+  } catch(e) {
+    st.textContent = '⚠ ' + esc(e.message);
+    st.style.color = 'var(--red)';
+    btn.disabled = false;
+  }
+}
+
 async function initRoutenTab() {
+  loadUnenrichable();
+  loadWikiItaly();
   loadEnrichStatus();
+  loadWikiStraight();
   if (_enrichInterval) clearInterval(_enrichInterval);
   _enrichInterval = setInterval(loadEnrichStatus, 10000);
 
@@ -2351,6 +2578,7 @@ function lsRenderState(s) {
     document.getElementById('ls-status-text').textContent = '✓ Abgeschlossen';
     document.getElementById('ls-progress-bar').style.width = '100%';
     document.getElementById('ls-download-btn').style.display = '';
+    document.getElementById('ls-wpbook-all-btn').style.display = '';
     document.getElementById('ls-summary').style.display = '';
     document.getElementById('ls-found-num').textContent = s.leadsFound;
     document.getElementById('ls-excl-num').textContent  = s.excluded || 0;
@@ -2365,11 +2593,15 @@ function lsRenderState(s) {
   }
 }
 
+// Leads-Vorschau in Memory halten für wp-book
+var _lsPreviewLeads = [];
+
 function lsRenderPreview(leads) {
+  _lsPreviewLeads = leads;
   var tbody = document.getElementById('ls-preview-tbody');
-  tbody.innerHTML = leads.map(function(l) {
+  tbody.innerHTML = leads.map(function(l, i) {
     var ws = l.website ? '<a href="' + esc(l.website) + '" target="_blank" style="color:var(--red)">' + esc(l.website.replace(/^https?:\/\/(www\.)?/,'').slice(0,30)) + '</a>' : '–';
-    return '<tr>' +
+    return '<tr id="ls-row-' + i + '">' +
       '<td><strong>' + esc(l.name) + '</strong></td>' +
       '<td>' + esc(l.typ) + '</td>' +
       '<td>' + esc(l.kanton) + '</td>' +
@@ -2379,9 +2611,36 @@ function lsRenderPreview(leads) {
       '<td class="mono">' + esc(l.telefon || '–') + '</td>' +
       '<td>' + ws + '</td>' +
       '<td><span class="badge ' + (l.quelle === 'Google' ? 'badge-blue' : 'badge-gray') + '">' + esc(l.quelle) + '</span></td>' +
+      '<td><button class="btn btn-ghost btn-sm" id="ls-book-btn-' + i + '" onclick="lsWpBookOne(' + i + ')">&#128640;</button></td>' +
       '</tr>';
   }).join('');
   document.getElementById('ls-preview-card').style.display = '';
+}
+
+async function lsWpBookOne(idx) {
+  var lead = _lsPreviewLeads[idx];
+  if (!lead) return;
+  var btn = document.getElementById('ls-book-btn-' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    await api('/api/admin/partner-leads/wp-book', { method: 'POST', body: JSON.stringify({ lead: lead }) });
+    if (btn) { btn.textContent = '✓'; btn.style.color = 'var(--green)'; }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '⚠'; btn.title = e.message; btn.style.color = 'var(--red)'; }
+  }
+}
+
+async function lsWpBookAll() {
+  if (!confirm('Alle ' + _lsPreviewLeads.length + ' Leads in WordPress einbuchen? (Läuft im Hintergrund)')) return;
+  var btn = document.getElementById('ls-wpbook-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Einbuchung läuft...'; }
+  try {
+    await api('/api/admin/partner-leads/wp-book-all', { method: 'POST' });
+    if (btn) { btn.textContent = '✓ Gestartet — Logs prüfen'; btn.style.color = 'var(--green)'; }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '&#128640; Alle in WP einbuchen'; }
+    alert('Fehler: ' + e.message);
+  }
 }
 
 async function lsDownload() {

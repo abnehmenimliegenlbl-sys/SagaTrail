@@ -502,7 +502,7 @@ function stitchMitTagPruefung(
   tags: Record<string, string>,
 ): LatLng[] {
   const standard = stitchGeometry(members);
-  const amtlichKm = parseNumericTag(tags.distance, 500);
+  const amtlichKm = parseNumericTag(tags.distance, 5_000);
   if (!amtlichKm || standard.length < 2) return standard;
   const standardKm = kettenLaengeKm(standard);
   if (standardKm >= amtlichKm * 0.75) return standard;
@@ -1270,8 +1270,8 @@ export async function fetchRouteGeometryChunked(
     sac: tags.sac_scale ?? null,
     network: tags.network ?? null,
     points,
-    distanceTagKm: parseNumericTag(tags.distance, 500),
-    ascentTagM: parseNumericTag(tags.ascent, 20000),
+    distanceTagKm: parseNumericTag(tags.distance, 5_000),
+    ascentTagM: parseNumericTag(tags.ascent, 100_000),
     from: tags.from ?? null,
     to: tags.to ?? null,
   };
@@ -1378,8 +1378,8 @@ export async function fetchRouteSuperDeep(
     sac: tags.sac_scale ?? null,
     network: tags.network ?? null,
     points,
-    distanceTagKm: parseNumericTag(tags.distance, 500),
-    ascentTagM: parseNumericTag(tags.ascent, 20000),
+    distanceTagKm: parseNumericTag(tags.distance, 5_000),
+    ascentTagM: parseNumericTag(tags.ascent, 100_000),
     from: tags.from ?? null,
     to: tags.to ?? null,
   };
@@ -1716,6 +1716,57 @@ export async function fetchWikiEtappen(articleTitle: string, log: Logger): Promi
   }
   log.info({ articleTitle, etappen: results.length }, "fetchWikiEtappen: geparst");
   return results;
+}
+
+/**
+ * Sucht in OSM nach einer Wanderrouten-Relation anhand des Namens.
+ * Strategie (#25): extrahiert den Kern-Routen-Namen (ohne führende Zahl und
+ * "Etappe N"), sucht in der Schweiz-Bbox nach Relationen mit passendem name-Tag.
+ * Gibt bis zu 5 OSM-IDs zurück, sortiert nach Relevanz (kürzeste Edit-Distanz zuerst).
+ */
+export async function searchOsmRouteByName(
+  routeName: string,
+  log: Logger,
+): Promise<number[]> {
+  // Kern-Name extrahieren: führende Zahl + Etappe-Angabe entfernen
+  // z.B. "447 Schönriederweg Saanenmöser - Schönried" → "Schönriederweg"
+  // z.B. "placeholder-nwn-4-etappe-24" (ID, nicht Name) → Roh-Suche
+  const stripped = routeName
+    .replace(/^\d+\s+/, "")           // führende Zahl
+    .replace(/\bEtappe\s+\d+\b/i, "") // Etappe N
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!stripped || stripped.length < 4) return [];
+
+  // Erstes markantes Wort (mind. 5 Zeichen) als Such-Anker
+  const words = stripped.split(/\s+/);
+  const anchor = words.find((w) => w.length >= 5) ?? words[0] ?? "";
+  if (!anchor) return [];
+
+  const safe = anchor.replace(/['"\\]/g, "").trim();
+  const query =
+    `[out:json][timeout:30][bbox:45.8,5.95,47.85,10.5];` +
+    `relation["type"="route"]["route"~"hiking|foot"]["name"~"${safe}",i];` +
+    `out ids tags;`;
+
+  try {
+    const elements = await runOverpass<OverpassTagsElement>(query, 35_000);
+    if (elements.length === 0) return [];
+
+    // Nach Ähnlichkeit zum Originalnamen sortieren (einfache Heuristik: Anzahl gemeinsamer Wörter)
+    const origWords = new Set(stripped.toLowerCase().split(/\W+/).filter((w) => w.length >= 3));
+    const scored = elements.map((e) => {
+      const eName = ((e.tags as Record<string, string>).name ?? "").toLowerCase();
+      const common = [...origWords].filter((w) => eName.includes(w)).length;
+      return { id: e.id, common };
+    });
+    scored.sort((a, b) => b.common - a.common);
+    return scored.slice(0, 5).map((s) => s.id);
+  } catch (err) {
+    log.warn({ err, routeName }, "searchOsmRouteByName: Fehler");
+    return [];
+  }
 }
 
 /**

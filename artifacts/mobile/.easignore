@@ -1,0 +1,14 @@
+# EAS Upload Exclusions
+# EAS respects .gitignore automatically; this file adds additional exclusions.
+
+# TypeScript incremental build cache — not needed by EAS build machines
+.tsbuildinfo
+
+# Local web dev-server (serves static Expo web builds locally, not needed for native EAS builds)
+server/
+
+# Local-only build script (EAS has its own pipeline; only eas-post-install.js is needed)
+scripts/build.js
+
+# Replit workspace metadata
+.replit-artifact

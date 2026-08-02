@@ -74,7 +74,13 @@ function etappenNr(name) {
     `SELECT id, name, distance_km, geometry FROM external_routes
      WHERE name ~* '(Etappe|Étape|Etape|Tappa|Stage)\\s+\\d+'
        AND geometry IS NOT NULL
-       AND jsonb_typeof(geometry) IN ('array', 'string')`
+       AND jsonb_typeof(geometry) IN ('array', 'string')
+       -- Keine schweizmobil-* Parent-Routen als Etappen behandeln
+       -- (passiert wenn ihr Name fehlerhaft "Etappe X" enthält)
+       AND id NOT LIKE 'schweizmobil-%'
+       -- Keine wiki-* Routen mit nur 2 Punkten (Gerade Linie) — würde
+       -- schlechte Geometrie einfrieren (#72)
+       AND NOT (id LIKE 'wiki-%' AND jsonb_array_length(geometry) <= 2)`
   );
 
   console.log(`Parents geladen: ${parents.length}, Etappen geladen: ${allEtappen.length}`);

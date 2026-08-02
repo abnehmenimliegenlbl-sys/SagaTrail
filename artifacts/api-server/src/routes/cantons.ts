@@ -65,6 +65,16 @@ function byRelevance(a: ExternalRouteRow, b: ExternalRouteRow): number {
   return a.name.localeCompare(b.name, "de");
 }
 
+/** Parst Geometrie aus dem DB-Feld: korrekte JSONB-Arrays kommen direkt durch,
+ *  historisch doppelt-codierte JSON-Strings werden on-the-fly geparst. */
+function parseGeometry(raw: unknown): number[][] | undefined {
+  if (Array.isArray(raw)) return raw as number[][];
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as number[][]; } catch { return undefined; }
+  }
+  return undefined;
+}
+
 function toRoute(row: ExternalRouteRow) {
   return {
     id: row.id,
@@ -80,7 +90,7 @@ function toRoute(row: ExternalRouteRow) {
     sac: row.sac,
     terrain: row.terrain,
     coordinates: { lat: row.lat, lng: row.lng },
-    geometry: row.geometry,
+    geometry: parseGeometry(row.geometry),
     featured: row.featured,
     photoUrl: row.photoUrl ?? null,
     photoAttribution: row.photoAttribution ?? null,

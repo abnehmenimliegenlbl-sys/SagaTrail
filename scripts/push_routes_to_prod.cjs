@@ -26,15 +26,31 @@ if (!DRY && (!PROD_URL || !TOKEN)) {
   console.log(`${rows.length} angereicherte Routen exportiert${DRY ? " (dry-run, kein Upload)" : ""}`);
   if (DRY) return;
 
-  const map = (r) => ({
-    id: r.id, sagaId: r.saga_id, canton: r.canton, cantons: r.cantons, name: r.name,
-    ref: r.ref, distanceKm: r.distance_km, distanceTagKm: r.distance_tag_km,
-    ascentM: r.ascent_m, maxElevationM: r.max_elevation_m,
-    minutes: r.minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
-    geometry: r.geometry, geometryVersion: r.geometry_version, source: r.source,
-    featured: r.featured, photoUrl: r.photo_url, photoAttribution: r.photo_attribution,
-    description: r.description, descriptionSource: r.description_source,
-  });
+  // Mirrors estimateMinutes() in geo.ts (Naismith rule)
+  function estimateMinutes(distanceKm, ascentM) {
+    const horizontalH = distanceKm / 4;
+    const verticalH = Math.max(0, ascentM || 0) / 400;
+    const hours = Math.max(horizontalH, verticalH) + Math.min(horizontalH, verticalH) / 2;
+    return Math.max(15, Math.round(hours * 60));
+  }
+
+  const map = (r) => {
+    // Recompute minutes from official tag distance when available,
+    // so stale DB values never silently reach prod (#67)
+    const effectiveDist = r.distance_tag_km != null ? r.distance_tag_km : (r.distance_km || 0);
+    const minutes = effectiveDist > 0
+      ? estimateMinutes(effectiveDist, r.ascent_m || 0)
+      : (r.minutes || 0);
+    return {
+      id: r.id, sagaId: r.saga_id, canton: r.canton, cantons: r.cantons, name: r.name,
+      ref: r.ref, distanceKm: r.distance_km, distanceTagKm: r.distance_tag_km,
+      ascentM: r.ascent_m, maxElevationM: r.max_elevation_m,
+      minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
+      geometry: r.geometry, geometryVersion: r.geometry_version, source: r.source,
+      featured: r.featured, photoUrl: r.photo_url, photoAttribution: r.photo_attribution,
+      description: r.description, descriptionSource: r.description_source,
+    };
+  };
 
   let done = 0;
   for (let i = 0; i < rows.length; i += 100) {

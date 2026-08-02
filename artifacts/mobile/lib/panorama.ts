@@ -6,20 +6,20 @@
 
 const BILDER = {
   fruehling: {
-    tal: require("@/assets/images/panorama/fruehling-tal.png"),
-    alpin: require("@/assets/images/panorama/fruehling-alpin.png"),
+    tal: require("@/assets/images/panorama/fruehling-tal.jpg"),
+    alpin: require("@/assets/images/panorama/fruehling-alpin.jpg"),
   },
   sommer: {
-    tal: require("@/assets/images/panorama/sommer-tal.png"),
-    alpin: require("@/assets/images/panorama/sommer-alpin.png"),
+    tal: require("@/assets/images/panorama/sommer-tal.jpg"),
+    alpin: require("@/assets/images/panorama/sommer-alpin.jpg"),
   },
   herbst: {
-    tal: require("@/assets/images/panorama/herbst-tal.png"),
-    alpin: require("@/assets/images/panorama/herbst-alpin.png"),
+    tal: require("@/assets/images/panorama/herbst-tal.jpg"),
+    alpin: require("@/assets/images/panorama/herbst-alpin.jpg"),
   },
   winter: {
-    tal: require("@/assets/images/panorama/winter-tal.png"),
-    alpin: require("@/assets/images/panorama/winter-alpin.png"),
+    tal: require("@/assets/images/panorama/winter-tal.jpg"),
+    alpin: require("@/assets/images/panorama/winter-alpin.jpg"),
   },
 } as const;
 
