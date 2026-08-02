@@ -9,6 +9,13 @@
 //   - Coverage-Check: kein festes Obergrenzen-Verhältnis mehr; parent.distance_km
 //     kann falsch sein (z.B. 41 statt 661 km). Untergrenze bleibt (60%), aber
 //     wenn sumKm > parent_km gilt parent als veraltet und sumKm als Referenz.
+//
+// Fixes ggü. v2:
+//   - Zweites Verbesserungs-Kriterium: Wird das neue Ergebnis DRASTISCH näher
+//     an der Etappen-Summe als das bisherige (< 10 % des alten Fehlers), wird
+//     trotzdem geschrieben – auch wenn der Max-Sprung nicht kleiner wird.
+//     Betrifft Parent-Routen, deren gespeicherte Geometrie nur eine einzige
+//     Etappe enthält (z.B. Route 2 = 23 km, aber 31 Etappen = 479 km).
 
 const { createRequire } = require("module");
 const path = require("path");
@@ -138,10 +145,19 @@ function etappenNr(name) {
 
     const oldS = stats(norm(parentGeom));
     const newS = stats(chain);
-    // Verbesserungskriterien: Max-Sprung min. 40% kleiner UND Länge nicht deutlich schlechter
+    // Verbesserungskriterien (ODER-verknüpft):
+    //   A) Max-Sprung min. 40% kleiner UND Länge nicht deutlich schlechter
+    //   B) Neues Ergebnis ist drastisch näher an der Referenz (< 10 % des alten Fehlers):
+    //      Trifft zu wenn bisherige Geometrie nur eine Etappe enthält (sehr unvollständig).
     const oldErr = Math.abs(oldS.len - refKm);
     const newErr = Math.abs(newS.len - refKm);
-    if (newS.maxGap < 0.6 * oldS.maxGap && newErr <= oldErr * 1.3) {
+    const betterGap = newS.maxGap < 0.6 * oldS.maxGap && newErr <= oldErr * 1.3;
+    // dramaticallyCloser: old geometry is far too SHORT (not too long).
+    // Guard newS.len > oldS.len: avoids replacing a long (possibly over-fetched)
+    // geometry with a shorter stitched one (e.g. route 55: 498→70 km would be wrong).
+    const dramaticallyCloser =
+      oldErr > 20 && newErr < 0.1 * oldErr && newS.len > oldS.len * 1.2;
+    if (betterGap || dramaticallyCloser) {
       await c.query(
         `UPDATE external_routes SET geometry = $1::jsonb, fetched_at = now() WHERE id = $2`,
         [
@@ -154,8 +170,9 @@ function etappenNr(name) {
           p.id,
         ]
       );
+      const reason = dramaticallyCloser ? "len-fix" : "gap-fix";
       console.log(
-        `FIXED  ${p.id.slice(0, 30).padEnd(30)} | ${p.name.slice(0, 40).padEnd(40)} | maxGap ${oldS.maxGap.toFixed(1)}->${newS.maxGap.toFixed(1)} km | len ${oldS.len.toFixed(0)}->${newS.len.toFixed(0)} (ref ${refKm})`
+        `FIXED(${reason}) ${p.id.slice(0, 28).padEnd(28)} | ${p.name.slice(0, 40).padEnd(40)} | maxGap ${oldS.maxGap.toFixed(1)}->${newS.maxGap.toFixed(1)} km | len ${oldS.len.toFixed(0)}->${newS.len.toFixed(0)} (ref ${refKm.toFixed(0)})`
       );
       fixed++;
     } else {
