@@ -1,4 +1,5 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
+import { sendPartnerVertrag } from "../lib/partnerEmail";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
 import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, lt } from "drizzle-orm";
@@ -1149,6 +1150,48 @@ router.patch("/admin/anfragen/:id", async (req, res): Promise<void> => {
   } catch (err) {
     req.log.error({ err, id }, "Anfrage-Status-Update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// POST /admin/anfragen/:id/send-vertrag — Partnervertrag als PDF per E-Mail senden
+router.post("/admin/anfragen/:id/send-vertrag", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const rows = await db
+      .select()
+      .from(partnerAnfragenTable)
+      .where(eq(partnerAnfragenTable.id, id))
+      .limit(1);
+    if (!rows.length) {
+      res.status(404).json({ error: "Anfrage nicht gefunden" });
+      return;
+    }
+    const r = rows[0];
+    await sendPartnerVertrag({
+      betriebsName:    r.betriebsName,
+      kontaktName:     r.kontaktName,
+      kontaktEmail:    r.kontaktEmail,
+      kontaktTelefon:  r.kontaktTelefon,
+      kategorie:       r.kategorie,
+      canton:          r.canton,
+      adresse:         r.adresse,
+      plz:             r.plz,
+      ort:             r.ort,
+      paket:           (r.paket as "basic" | "standard" | "premium") ?? "standard",
+    });
+    // Status auf in_bearbeitung setzen falls noch neu
+    if (r.status === "neu") {
+      await db
+        .update(partnerAnfragenTable)
+        .set({ status: "in_bearbeitung", updatedAt: new Date() })
+        .where(eq(partnerAnfragenTable.id, id));
+    }
+    req.log.info({ id, email: r.kontaktEmail }, "Partner-Vertrag gesendet");
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Partner-Vertrag senden fehlgeschlagen");
+    res.status(500).json({ error: err instanceof Error ? err.message : "Fehler beim Senden" });
   }
 });
 

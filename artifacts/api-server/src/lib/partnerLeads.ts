@@ -41,10 +41,10 @@ function detectKategorie(tags: Record<string, string>): string {
   const to = tags.tourism ?? "";
   const ae = tags.aerialway ?? "";
   if (ae) return "Transport";
-  if (["restaurant", "cafe", "bar", "fast_food", "biergarten"].includes(am)) return "Gastronomie";
+  if (["restaurant", "cafe", "bar", "fast_food", "biergarten"].includes(am)) return "F+B";
   if (["hotel", "hostel", "guest_house", "alpine_hut", "chalet"].includes(am) ||
-      ["hotel", "hostel", "guest_house", "alpine_hut"].includes(to)) return "Unterkunft";
-  if (["outdoor", "sports", "ski"].includes(sh)) return "Ausrüstung";
+      ["hotel", "hostel", "guest_house", "alpine_hut"].includes(to)) return "Herberge";
+  if (["outdoor", "sports", "ski", "gift"].includes(sh)) return "Ausrüstung";
   if (am === "shelter" || to === "viewpoint") return "Attraktion";
   return "Sonstiges";
 }
@@ -234,8 +234,8 @@ async function fetchPoiAroundPoints(
       `node["aerialway"~"^(cable_car|gondola|chair_lift)$"]["name"](${a});`,
       `way["aerialway"~"^(cable_car|gondola|chair_lift)$"]["name"](${a});`,
       // #28: Outdoor- & Sportgeschäfte
-      `node["shop"~"^(outdoor|sports|ski)$"]["name"](${a});`,
-      `way["shop"~"^(outdoor|sports|ski)$"]["name"](${a});`,
+      `node["shop"~"^(outdoor|sports|ski|gift)$"]["name"](${a});`,
+      `way["shop"~"^(outdoor|sports|ski|gift)$"]["name"](${a});`,
     ];
   });
 
@@ -269,6 +269,7 @@ function osmTypLabel(tags: Record<string, string>): string {
   // #28: Outdoor-/Sportgeschäfte
   if (sh === "outdoor") return "Outdoor-Shop";
   if (sh === "sports") return "Sportgeschäft";
+  if (sh === "gift") return "Souvenirladen";
   if (sh === "ski") return "Ski-Shop";
   return a ?? t ?? aw ?? sh ?? "Sonstiges";
 }
