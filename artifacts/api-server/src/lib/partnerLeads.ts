@@ -18,13 +18,44 @@ export interface PartnerLead {
   kanton: string;
   sprache: string;
   route: string;
+  routeId?: string;
+  osmId?: string;
   typ: string;
+  kategorie?: string;
+  tier?: "Top" | "Mid+" | "Mid" | "Low";
   name: string;
   adresse: string;
   telefon: string;
   website: string;
+  email?: string;
   googleMaps: string;
+  lat?: number;
+  lng?: number;
   quelle: "OSM" | "Google";
+}
+
+/** Leitet eine grobe Kategorie aus dem OSM-Typ ab. */
+function detectKategorie(tags: Record<string, string>): string {
+  const am = tags.amenity ?? "";
+  const sh = tags.shop ?? "";
+  const to = tags.tourism ?? "";
+  const ae = tags.aerialway ?? "";
+  if (ae) return "Transport";
+  if (["restaurant", "cafe", "bar", "fast_food", "biergarten"].includes(am)) return "Gastronomie";
+  if (["hotel", "hostel", "guest_house", "alpine_hut", "chalet"].includes(am) ||
+      ["hotel", "hostel", "guest_house", "alpine_hut"].includes(to)) return "Unterkunft";
+  if (["outdoor", "sports", "ski"].includes(sh)) return "Ausrüstung";
+  if (am === "shelter" || to === "viewpoint") return "Attraktion";
+  return "Sonstiges";
+}
+
+/** Schätzt die Lead-Qualität anhand verfügbarer Kontaktdaten. */
+function detectTier(telefon: string, website: string, hasGoogleData: boolean): "Top" | "Mid+" | "Mid" | "Low" {
+  const hasPhone = telefon.trim().length > 0;
+  const hasWeb   = website.trim().length > 0;
+  if (hasPhone && hasWeb) return "Top";
+  if (hasPhone || hasWeb) return hasGoogleData ? "Mid+" : "Mid";
+  return "Low";
 }
 
 // ---------------------------------------------------------------------------
@@ -315,13 +346,7 @@ interface DbRoute {
 
 async function loadRoutes(): Promise<DbRoute[]> {
   const result = await db.execute(sql`
-    SELECT
-      id, name, canton, lat, lng,
-      (geometry->0->>0)::float  AS start_lat,
-      (geometry->0->>1)::float  AS start_lng,
-      (geometry->-1->>0)::float AS end_lat,
-      (geometry->-1->>1)::float AS end_lng,
-      geometry
+    SELECT id, name, canton, lat, lng, geometry
     FROM external_routes
     WHERE lat IS NOT NULL AND lng IS NOT NULL
     ORDER BY canton, name
@@ -329,18 +354,21 @@ async function loadRoutes(): Promise<DbRoute[]> {
   return (result.rows as unknown as {
     id: string; name: string; canton: string;
     lat: number; lng: number;
-    start_lat: number | null; start_lng: number | null;
-    end_lat: number | null; end_lng: number | null;
-    geometry: GeoPoint[] | null;
-  }[]).map((r) => ({
-    id: r.id, name: r.name, canton: r.canton,
-    lat: Number(r.lat), lng: Number(r.lng),
-    startLat: r.start_lat != null ? Number(r.start_lat) : null,
-    startLng: r.start_lng != null ? Number(r.start_lng) : null,
-    endLat: r.end_lat != null ? Number(r.end_lat) : null,
-    endLng: r.end_lng != null ? Number(r.end_lng) : null,
-    geometry: Array.isArray(r.geometry) ? r.geometry as GeoPoint[] : null,
-  }));
+    geometry: unknown;
+  }[]).map((r) => {
+    const geom = Array.isArray(r.geometry) ? r.geometry as GeoPoint[] : null;
+    const first = geom?.[0] != null ? toLatLng(geom[0]) : null;
+    const last  = geom?.length     ? toLatLng(geom[geom.length - 1]) : null;
+    return {
+      id: r.id, name: r.name, canton: r.canton,
+      lat: Number(r.lat), lng: Number(r.lng),
+      startLat: first?.lat ?? null,
+      startLng: first?.lng ?? null,
+      endLat:   last?.lat  ?? null,
+      endLng:   last?.lng  ?? null,
+      geometry: geom,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -594,16 +622,24 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
         }
       }
 
+      const typLabel = osmTypLabel(tags);
       leads.push({
         kanton: canton,
         sprache,
         route: nearestRoute.name,
-        typ: osmTypLabel(tags),
+        routeId: nearestRoute.id,
+        osmId: String(el.id),
+        typ: typLabel,
+        kategorie: detectKategorie(tags),
+        tier: detectTier(finalTelefon, finalWebsite, quelle === "Google"),
         name,
         adresse,
         telefon: finalTelefon,
         website: finalWebsite,
+        email: "",
         googleMaps: finalMapsUrl,
+        lat,
+        lng,
         quelle,
       });
 
@@ -645,11 +681,13 @@ export function startPartnerLeadsExport(googleApiKey: string, radiusM = 400): vo
 }
 
 export function leadsToCSV(leads: PartnerLead[]): string {
-  const header = "Kanton;Sprache;Route;Typ;Name;Adresse;Telefon;Website;Google Maps;Quelle";
+  const header = "Kanton;Sprache;Route;Route-ID;OSM-ID;Typ;Kategorie;Tier;Name;Adresse;Telefon;Website;Google Maps;Lat;Lng;Quelle";
   const rows = leads.map((l) =>
     [
-      l.kanton, l.sprache, l.route, l.typ, l.name,
-      l.adresse, l.telefon, l.website, l.googleMaps, l.quelle,
+      l.kanton, l.sprache, l.route, l.routeId ?? "", l.osmId ?? "",
+      l.typ, l.kategorie ?? "", l.tier ?? "", l.name,
+      l.adresse, l.telefon, l.website, l.googleMaps,
+      l.lat ?? "", l.lng ?? "", l.quelle,
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(";"),

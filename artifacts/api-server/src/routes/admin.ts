@@ -1405,6 +1405,73 @@ router.get("/admin/partner-leads/download", (req, res): void => {
   res.send("\uFEFF" + jobState.csv);
 });
 
+// ---------------------------------------------------------------------------
+// Helper: E-Mail aus Website scrapen (mailto-Links + gängige Patterns)
+// ---------------------------------------------------------------------------
+async function scrapeEmailFromWebsite(url: string): Promise<string> {
+  if (!url) return "";
+  try {
+    const r = await fetch(url, {
+      signal: AbortSignal.timeout(8_000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SagaTrailBot/1.0)" },
+    });
+    if (!r.ok) return "";
+    const html = await r.text();
+    // mailto: Links zuerst (zuverlässigste Quelle)
+    const mailto = html.match(/mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+    if (mailto) return mailto[1].toLowerCase();
+    // Generisches E-Mail-Pattern im sichtbaren Text
+    const plain = html.replace(/<[^>]+>/g, " ");
+    const match = plain.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    if (match) return match[0].toLowerCase();
+  } catch { /* Timeout oder Netzwerkfehler → leer zurückgeben */ }
+  return "";
+}
+
+// Baut den WP-Payload aus einem Lead (shared von book + book-all)
+async function buildWpLeadForm(
+  lead: {
+    name?: string; email?: string; typ?: string; kanton?: string;
+    sprache?: string; route?: string; routeId?: string; osmId?: string;
+    adresse?: string; telefon?: string; website?: string;
+    quelle?: string; lat?: number; lng?: number; tier?: string; kategorie?: string;
+  },
+  wpSecret: string,
+): Promise<URLSearchParams> {
+  const website = lead.website ?? "";
+  let email = lead.email ?? "";
+  let scrapped = "0";
+
+  // Kein E-Mail vorhanden → Website scrapen
+  if (!email && website) {
+    scrapped = "1"; // Versuch wird immer markiert, auch wenn nichts gefunden
+    email = await scrapeEmailFromWebsite(website);
+  }
+
+  return new URLSearchParams({
+    action:          "sagatrail_book_lead",
+    hook_secret:     wpSecret,
+    name:            lead.name ?? "",
+    email,
+    typ:             lead.typ ?? "",
+    kategorie:       lead.kategorie ?? "",
+    tier:            lead.tier ?? "",
+    kanton:          lead.kanton ?? "",
+    sprache:         lead.sprache ?? "",
+    route_name:      lead.route ?? "",
+    route_id:        lead.routeId ?? "",
+    osm_id:          lead.osmId ?? "",
+    adresse:         lead.adresse ?? "",
+    telefon:         lead.telefon ?? "",
+    website,
+    lat:             lead.lat != null ? String(lead.lat) : "",
+    lng:             lead.lng != null ? String(lead.lng) : "",
+    quelle:          lead.quelle ?? "OSM",
+    google_checked:  "0",
+    scrapped,
+  });
+}
+
 // POST /admin/partner-leads/wp-book — einzelnen Lead in WP einbuchen
 // Body: { lead: PartnerLead }
 router.post("/admin/partner-leads/wp-book", async (req, res): Promise<void> => {
@@ -1413,35 +1480,16 @@ router.post("/admin/partner-leads/wp-book", async (req, res): Promise<void> => {
   const wpSecret = process.env.WP_HOOK_SECRET ?? "";
   if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
 
-  const lead = req.body?.lead as {
-    name?: string; email?: string; typ?: string; kanton?: string;
-    sprache?: string; route?: string; adresse?: string; telefon?: string;
-    website?: string; googleMaps?: string; quelle?: string;
-  };
+  const lead = req.body?.lead;
   if (!lead?.name) { res.status(400).json({ error: "lead.name fehlt" }); return; }
 
-  const form = new URLSearchParams({
-    action:     "sagatrail_book_lead",
-    hook_secret: wpSecret,
-    name:       lead.name ?? "",
-    email:      lead.email ?? "",
-    typ:        lead.typ ?? "",
-    kanton:     lead.kanton ?? "",
-    sprache:    lead.sprache ?? "",
-    route:      lead.route ?? "",
-    adresse:    lead.adresse ?? "",
-    telefon:    lead.telefon ?? "",
-    website:    lead.website ?? "",
-    googleMaps: lead.googleMaps ?? "",
-    quelle:     lead.quelle ?? "OSM",
-  });
-
   try {
+    const form = await buildWpLeadForm(lead, wpSecret);
     const r = await fetch(wpUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: form.toString(),
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(15_000),
     });
     const json = await r.json().catch(() => ({})) as Record<string, unknown>;
     if (!r.ok || !json.success) {
@@ -1449,8 +1497,8 @@ router.post("/admin/partner-leads/wp-book", async (req, res): Promise<void> => {
       res.status(502).json({ error: (json.data as string) ?? `WP HTTP ${r.status}` });
       return;
     }
-    req.log.info({ name: lead.name, kanton: lead.kanton }, "partner-leads: Lead in WP eingebucht");
-    res.json({ ok: true });
+    req.log.info({ name: lead.name, kanton: lead.kanton, scrapped: form.get("scrapped"), email: form.get("email") }, "partner-leads: Lead in WP eingebucht");
+    res.json({ ok: true, email: form.get("email") || null, scrapped: form.get("scrapped") === "1" });
   } catch (err: any) {
     req.log.warn({ err: err.message, name: lead.name }, "wp-book: Netzwerkfehler");
     res.status(502).json({ error: err.message });
@@ -1467,35 +1515,20 @@ router.post("/admin/partner-leads/wp-book-all", async (req, res): Promise<void> 
     res.status(400).json({ error: "Kein abgeschlossener Export vorhanden" }); return;
   }
 
-  // Fire-and-forget: im Hintergrund einbuchen, sofort 202 zurückgeben
   res.status(202).json({ ok: true, total: jobState.preview.length, message: "Einbuchung läuft — Fortschritt via Server-Logs" });
 
   const log = req.log;
   (async () => {
     let ok = 0; let fail = 0;
     for (const lead of jobState.preview) {
-      const form = new URLSearchParams({
-        action:     "sagatrail_book_lead",
-        hook_secret: wpSecret,
-        name:       lead.name,
-        email:      "",
-        typ:        lead.typ,
-        kanton:     lead.kanton,
-        sprache:    lead.sprache,
-        route:      lead.route,
-        adresse:    lead.adresse,
-        telefon:    lead.telefon,
-        website:    lead.website,
-        googleMaps: lead.googleMaps,
-        quelle:     lead.quelle,
-      });
       try {
-        const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
+        const form = await buildWpLeadForm(lead, wpSecret);
+        const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(15_000) });
         const json = await r.json().catch(() => ({})) as Record<string, unknown>;
         if (!r.ok || !json.success) { fail++; log.warn({ name: lead.name, status: r.status }, "wp-book-all: Einzel-Fehler"); }
-        else ok++;
-      } catch { fail++; }
-      await new Promise((r) => setTimeout(r, 300)); // WP schonen
+        else { ok++; log.info({ name: lead.name, email: form.get("email") || "—", scrapped: form.get("scrapped") }, "wp-book-all: eingebucht"); }
+      } catch (e: any) { fail++; log.warn({ name: lead.name, err: e.message }, "wp-book-all: Fehler"); }
+      await new Promise((r) => setTimeout(r, 500)); // WP + Scraper schonen
     }
     log.info({ ok, fail, total: jobState.preview.length }, "wp-book-all: Einbuchung abgeschlossen");
   })();
