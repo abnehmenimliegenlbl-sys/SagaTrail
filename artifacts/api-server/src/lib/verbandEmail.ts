@@ -356,7 +356,7 @@ export interface VerbandWillkommenData {
 }
 
 export async function sendVerbandWillkommen(data: VerbandWillkommenData): Promise<void> {
-  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_FROM ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
   // 1) Mail an den Verband
@@ -470,7 +470,7 @@ function createTransporter() {
 }
 
 export async function sendVerbandVertrag(data: VerbandAnfrageData): Promise<void> {
-  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_FROM ?? "info@sagatrail.ch";
   const pdfBuf  = await generateVertragPdf(data);
   const transporter = createTransporter();
 

@@ -377,7 +377,7 @@ function createTransporter() {
 
 // ── Hauptfunktion: PDF generieren + 2 Mails versenden ────────────────────────
 export async function sendPartnerVertrag(data: PartnerAnfrageEmailData): Promise<void> {
-  const envelopeFrom = process.env.SMTP_USER ?? "info@sagatrail.ch";
+  const envelopeFrom = process.env.SMTP_FROM ?? "info@sagatrail.ch";
   const pdfBuf       = await generatePartnerVertragPdf(data);
   const transporter  = createTransporter();
   const paketInfo    = PAKET_INFO[data.paket] ?? PAKET_INFO.standard;
