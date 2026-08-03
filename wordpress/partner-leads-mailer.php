@@ -53,12 +53,15 @@ function sagatrail_ajax_get_leads() {
     // Nur Einträge mit E-Mail-Adresse
     $where[] = "email != ''";
 
+    $limit  = isset( $_POST['limit'] )  ? max( 1, min( 10000, (int) $_POST['limit'] ) )  : 5000;
+    $offset = isset( $_POST['offset'] ) ? max( 0, (int) $_POST['offset'] ) : 0;
+
     $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, kategorie, adresse, telefon, website
             FROM {$table}";
     if ( $where ) {
         $sql .= ' WHERE ' . implode( ' AND ', $where );
     }
-    $sql .= ' ORDER BY kanton, name LIMIT 5000';
+    $sql .= " ORDER BY kanton, name LIMIT {$limit} OFFSET {$offset}";
 
     if ( $params ) {
         $rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
@@ -154,8 +157,11 @@ function sagatrail_ajax_get_organisationen() {
     if ( $kanton )    { $where[] = 'FIND_IN_SET(%s, REPLACE(kantone, " ", "")) > 0'; $params[] = $kanton; }
     if ( $sprache )   { $where[] = 'UPPER(sprache) = %s'; $params[] = $sprache; }
 
+    $limit  = isset( $_POST['limit'] )  ? max( 1, min( 10000, (int) $_POST['limit'] ) )  : 5000;
+    $offset = isset( $_POST['offset'] ) ? max( 0, (int) $_POST['offset'] ) : 0;
+
     $sql = "SELECT organisation, email, kantone, sprache, anschreiben_satz, ansprechperson, kategorie, typ
-            FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY organisation LIMIT 5000";
+            FROM {$table} WHERE " . implode( ' AND ', $where ) . " ORDER BY organisation LIMIT {$limit} OFFSET {$offset}";
 
     $rows = $params
         ? $wpdb->get_results( $wpdb->prepare( $sql, $params ) )

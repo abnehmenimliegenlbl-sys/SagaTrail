@@ -200,42 +200,52 @@ export async function fetchOrgsFromWp(
   wpAjaxUrl: string,
   hookSecret: string,
 ): Promise<Lead[]> {
-  const form = new URLSearchParams();
-  form.set("action",      "sagatrail_get_organisationen");
-  form.set("hook_secret", hookSecret);
-  if (filter.kategorie) form.set("kategorie", filter.kategorie);
-  if (filter.typ)       form.set("typ",       filter.typ);
-  if (filter.sprache)   form.set("sprache",   filter.sprache);
-  // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
-  if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
+  const PAGE = 5000;
+  const all: Lead[] = [];
+  let offset = 0;
+  while (true) {
+    const form = new URLSearchParams();
+    form.set("action",      "sagatrail_get_organisationen");
+    form.set("hook_secret", hookSecret);
+    form.set("limit",       String(PAGE));
+    form.set("offset",      String(offset));
+    if (filter.kategorie) form.set("kategorie", filter.kategorie);
+    if (filter.typ)       form.set("typ",       filter.typ);
+    if (filter.sprache)   form.set("sprache",   filter.sprache);
+    // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
+    if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
 
-  const res = await fetch(wpAjaxUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form.toString(),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
-  const json = await res.json() as { success: boolean; data?: any[]; error?: string };
-  if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  let raw = json.data ?? [];
-  // WP gibt Spaltennamen direkt zurück: organisation → name, anschreiben_satz → satz
-  let leads: Lead[] = raw.map((r: any) => ({
-    name:    r.name    ?? r.organisation ?? "",
-    email:   r.email   ?? "",
-    kanton:  r.kanton  ?? r.kantone ?? "",
-    sprache: r.sprache ?? "DE",
-    route:   r.route   ?? "",
-    typ:     r.typ     ?? r.kategorie ?? "",
-    satz:    r.satz    ?? r.anschreiben_satz ?? "",
-    adresse: r.adresse ?? "",
-    telefon: r.telefon ?? "",
-    website: r.website ?? "",
-  }));
-  if (filter.kantone?.length) {
-    leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
+    const res = await fetch(wpAjaxUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
+    const json = await res.json() as { success: boolean; data?: any[]; error?: string };
+    if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
+    const raw = json.data ?? [];
+    // WP gibt Spaltennamen direkt zurück: organisation → name, anschreiben_satz → satz
+    let page: Lead[] = raw.map((r: any) => ({
+      name:    r.name    ?? r.organisation ?? "",
+      email:   r.email   ?? "",
+      kanton:  r.kanton  ?? r.kantone ?? "",
+      sprache: r.sprache ?? "DE",
+      route:   r.route   ?? "",
+      typ:     r.typ     ?? r.kategorie ?? "",
+      satz:    r.satz    ?? r.anschreiben_satz ?? "",
+      adresse: r.adresse ?? "",
+      telefon: r.telefon ?? "",
+      website: r.website ?? "",
+    }));
+    all.push(...page);
+    if (raw.length < PAGE) break; // letzte Seite
+    offset += PAGE;
   }
-  return leads;
+  if (filter.kantone?.length) {
+    return all.filter((l) => filter.kantone!.includes(l.kanton));
+  }
+  return all;
 }
 
 export async function fetchLeadsFromWp(
@@ -243,39 +253,50 @@ export async function fetchLeadsFromWp(
   wpAjaxUrl: string,
   hookSecret: string,
 ): Promise<Lead[]> {
-  const form = new URLSearchParams();
-  form.set("action",     "sagatrail_get_leads");
-  form.set("hook_secret", hookSecret);
-  if (filter.typ)       form.set("typ",       filter.typ);
-  if (filter.kategorie) form.set("kategorie", filter.kategorie);
-  // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
-  if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
-  if (filter.sprache)   form.set("sprache",   filter.sprache);
+  const PAGE = 5000;
+  const all: Lead[] = [];
+  let offset = 0;
+  while (true) {
+    const form = new URLSearchParams();
+    form.set("action",      "sagatrail_get_leads");
+    form.set("hook_secret", hookSecret);
+    form.set("limit",       String(PAGE));
+    form.set("offset",      String(offset));
+    if (filter.typ)       form.set("typ",       filter.typ);
+    if (filter.kategorie) form.set("kategorie", filter.kategorie);
+    // Bei Mehrfach-Kanton: WP ohne Kanton-Filter aufrufen, danach server-seitig filtern
+    if (!filter.kantone?.length && filter.kanton) form.set("kanton", filter.kanton);
+    if (filter.sprache)   form.set("sprache",   filter.sprache);
 
-  const res = await fetch(wpAjaxUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form.toString(),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
-  const json = await res.json() as { success: boolean; data?: any[]; error?: string };
-  if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
-  let raw = json.data ?? [];
-  // WP gibt Spaltennamen direkt zurück: anschreiben_satz → satz, organisation → name
-  let leads: Lead[] = raw.map((r: any) => ({
-    name:      r.name      ?? r.organisation ?? "",
-    email:     r.email     ?? "",
-    kanton:    r.kanton    ?? r.kantone ?? "",
-    sprache:   r.sprache   ?? "DE",
-    route:     r.route     ?? "",
-    typ:       r.typ       ?? "",
-    kategorie: r.kategorie ?? "",   // "F+B" | "Herberge"
-    satz:      r.satz      ?? r.anschreiben_satz ?? "",
-    adresse:   r.adresse   ?? "",
-    telefon:   r.telefon   ?? "",
-    website:   r.website   ?? "",
-  }));
+    const res = await fetch(wpAjaxUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`WP AJAX HTTP ${res.status}`);
+    const json = await res.json() as { success: boolean; data?: any[]; error?: string };
+    if (!json.success) throw new Error(json.error ?? "WP AJAX Fehler");
+    const raw = json.data ?? [];
+    // WP gibt Spaltennamen direkt zurück: anschreiben_satz → satz, organisation → name
+    const page: Lead[] = raw.map((r: any) => ({
+      name:      r.name      ?? r.organisation ?? "",
+      email:     r.email     ?? "",
+      kanton:    r.kanton    ?? r.kantone ?? "",
+      sprache:   r.sprache   ?? "DE",
+      route:     r.route     ?? "",
+      typ:       r.typ       ?? "",
+      kategorie: r.kategorie ?? "",   // "F+B" | "Herberge"
+      satz:      r.satz      ?? r.anschreiben_satz ?? "",
+      adresse:   r.adresse   ?? "",
+      telefon:   r.telefon   ?? "",
+      website:   r.website   ?? "",
+    }));
+    all.push(...page);
+    if (raw.length < PAGE) break; // letzte Seite
+    offset += PAGE;
+  }
+  let leads = all;
   if (filter.kantone?.length) {
     leads = leads.filter((l) => filter.kantone!.includes(l.kanton));
   }
