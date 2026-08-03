@@ -13,6 +13,7 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { CANTON_ISO } from "./cantonIso";
+import { upsertLeadsToDb } from "./leadMailer";
 
 export interface PartnerLead {
   kanton: string;
@@ -50,11 +51,11 @@ function detectKategorie(tags: Record<string, string>): string {
 }
 
 /** Schätzt die Lead-Qualität anhand verfügbarer Kontaktdaten. */
-function detectTier(telefon: string, website: string, hasGoogleData: boolean): "Top" | "Mid+" | "Mid" | "Low" {
-  const hasPhone = telefon.trim().length > 0;
+function detectTier(email: string, website: string, websiteFromGoogle: boolean): "Top" | "Mid+" | "Mid" | "Low" {
+  const hasEmail = email.trim().length > 0;
   const hasWeb   = website.trim().length > 0;
-  if (hasPhone && hasWeb) return "Top";
-  if (hasPhone || hasWeb) return hasGoogleData ? "Mid+" : "Mid";
+  if (hasEmail && hasWeb)  return "Top";
+  if (!hasEmail && hasWeb) return websiteFromGoogle ? "Mid+" : "Mid";
   return "Low";
 }
 
@@ -436,12 +437,27 @@ function isExistingPartner(
 
 export type JobStatus = "idle" | "running" | "done" | "error";
 
+export interface TierCounts {
+  Top: number;
+  "Mid+": number;
+  Mid: number;
+  Low: number;
+}
+
+export interface EmailScrapeState {
+  total: number;   // Leads mit Website aber ohne E-Mail (Kandidaten)
+  done:  number;   // bereits geprüft
+  found: number;   // E-Mails erfolgreich gefunden
+}
+
 export interface JobState {
   status: JobStatus;
   cantonsTotal: number;
   cantonesDone: number;
   leadsFound: number;
   excluded: number;
+  tierCounts: TierCounts;
+  emailScrape: EmailScrapeState;
   startedAt: Date | null;
   finishedAt: Date | null;
   error: string | null;
@@ -456,6 +472,8 @@ export const jobState: JobState = {
   cantonesDone: 0,
   leadsFound: 0,
   excluded: 0,
+  tierCounts: { Top: 0, "Mid+": 0, Mid: 0, Low: 0 },
+  emailScrape: { total: 0, done: 0, found: 0 },
   startedAt: null,
   finishedAt: null,
   error: null,
@@ -469,6 +487,56 @@ export const jobState: JobState = {
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+// ---------------------------------------------------------------------------
+// E-Mail-Scraper (parallel zum OSM-Export)
+// ---------------------------------------------------------------------------
+
+async function scrapeEmailFromWebsite(url: string): Promise<string> {
+  if (!url) return "";
+  try {
+    const r = await fetch(url, {
+      signal: AbortSignal.timeout(8_000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SagaTrailBot/1.0)" },
+    });
+    if (!r.ok) return "";
+    const html = await r.text();
+    const mailto = html.match(/mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+    if (mailto) return mailto[1].toLowerCase();
+    const plain = html.replace(/<[^>]+>/g, " ");
+    const match = plain.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    if (match) return match[0].toLowerCase();
+  } catch { /* Timeout oder Netzwerkfehler */ }
+  return "";
+}
+
+/** Scraped E-Mails für alle Leads im Batch die eine Website aber keine E-Mail haben.
+ *  Läuft fire-and-forget parallel zur Hauptsuche. */
+async function scrapeEmailsBatchAsync(leads: PartnerLead[]): Promise<void> {
+  const candidates = leads.filter((l) => l.website && !l.email && l.osmId);
+  jobState.emailScrape.total += candidates.length;
+
+  for (const lead of candidates) {
+    // Abbrechen wenn Job gestoppt
+    if (jobState.status === "idle") break;
+
+    const email = await scrapeEmailFromWebsite(lead.website);
+    jobState.emailScrape.done++;
+
+    if (email) {
+      jobState.emailScrape.found++;
+      lead.email = email;
+
+      // Nur E-Mail in DB schreiben — Tier bleibt unverändert
+      db.execute(sql`
+        UPDATE partner_leads
+        SET email = ${email}
+        WHERE osm_id = ${lead.osmId!} AND (email IS NULL OR email = '')
+      `).catch(() => { /* ignoriere */ });
+    }
+    await sleep(80);
+  }
 }
 
 /**
@@ -517,9 +585,12 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
   jobState.cantonsTotal = batches.length;
   jobState.cantonesDone = 0;
   jobState.excluded = 0;
+  jobState.tierCounts = { Top: 0, "Mid+": 0, Mid: 0, Low: 0 };
+  jobState.emailScrape = { total: 0, done: 0, found: 0 };
 
   const seen = new Set<string>();
   const leads: PartnerLead[] = [];
+  let savedCursor = 0; // wie viele Leads bereits in die DB geschrieben wurden
 
   for (const batch of batches) {
     const points = batch.map((p) => ({ lat: p.lat, lng: p.lng }));
@@ -567,6 +638,7 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
 
       const telefon = tags.phone ?? tags["contact:phone"] ?? "";
       const website = tags.website ?? tags["contact:website"] ?? tags.url ?? "";
+      const osmEmail = tags.email ?? tags["contact:email"] ?? "";
 
       // Bereits vorhandene Partner ausschließen
       if (isExistingPartner(name, website, existingPartners)) {
@@ -624,6 +696,7 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
       }
 
       const typLabel = osmTypLabel(tags);
+      const tier = detectTier(osmEmail, finalWebsite, quelle === "Google");
       leads.push({
         kanton: canton,
         sprache,
@@ -632,12 +705,12 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
         osmId: String(el.id),
         typ: typLabel,
         kategorie: detectKategorie(tags),
-        tier: detectTier(finalTelefon, finalWebsite, quelle === "Google"),
+        tier,
         name,
         adresse,
         telefon: finalTelefon,
         website: finalWebsite,
-        email: "",
+        email: osmEmail,
         googleMaps: finalMapsUrl,
         lat,
         lng,
@@ -645,12 +718,40 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
       });
 
       jobState.leadsFound = leads.length;
+      jobState.tierCounts[tier] = (jobState.tierCounts[tier] ?? 0) + 1;
     }
 
     jobState.cantonesDone++;
 
     // Vorschau aktualisieren (max. 100 Einträge)
     jobState.preview = leads.slice(0, 100);
+
+    // Neu gefundene Leads dieses Batches automatisch in DB schreiben
+    const newLeads = leads.slice(savedCursor);
+    if (newLeads.length > 0) {
+      const rows = newLeads.map((l) => ({
+        quelle: l.quelle === "Google" ? ("osm" as const) : ("osm" as const),
+        osmId: l.osmId,
+        name: l.name,
+        email: l.email ?? null,
+        kanton: l.kanton,
+        sprache: l.sprache,
+        route: l.route,
+        routeId: l.routeId,
+        typ: l.typ,
+        kategorie: l.kategorie,
+        tier: l.tier,
+        adresse: l.adresse,
+        telefon: l.telefon,
+        website: l.website,
+        lat: l.lat,
+        lng: l.lng,
+      }));
+      upsertLeadsToDb(rows).catch(() => { /* ignoriere Fehler – nächster Batch */ });
+      // E-Mail-Scraping parallel starten (fire-and-forget)
+      scrapeEmailsBatchAsync(newLeads);
+      savedCursor = leads.length;
+    }
 
     await sleep(150);
   }

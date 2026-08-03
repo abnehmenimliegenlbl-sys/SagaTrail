@@ -157,7 +157,8 @@ export async function upsertLeadsToDb(leads: LeadRow[]): Promise<number> {
             sprache   = EXCLUDED.sprache,
             kategorie = EXCLUDED.kategorie,
             satz      = EXCLUDED.satz,
-            typ       = EXCLUDED.typ
+            typ       = EXCLUDED.typ,
+            tier      = EXCLUDED.tier
         `);
       } else {
         if (l.osmId) {
@@ -174,6 +175,7 @@ export async function upsertLeadsToDb(leads: LeadRow[]): Promise<number> {
             ON CONFLICT (quelle, osm_id) WHERE osm_id IS NOT NULL DO NOTHING
           `);
         } else {
+          // WP-Leads (keine osmId): plain INSERT — Dedup via DELETE vor Import
           await db.execute(sql`
             INSERT INTO partner_leads
               (quelle, osm_id, name, email, kanton, sprache, route, typ,
@@ -291,6 +293,7 @@ export async function fetchLeadsFromWp(
       adresse:   r.adresse   ?? "",
       telefon:   r.telefon   ?? "",
       website:   r.website   ?? "",
+      tier:      (r.tier || undefined) as "Top" | "Mid+" | "Mid" | "Low" | undefined,
     }));
     all.push(...page);
     if (raw.length < PAGE) break; // letzte Seite

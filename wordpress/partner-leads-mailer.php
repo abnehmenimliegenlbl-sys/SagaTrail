@@ -56,7 +56,7 @@ function sagatrail_ajax_get_leads() {
     $limit  = isset( $_POST['limit'] )  ? max( 1, min( 10000, (int) $_POST['limit'] ) )  : 5000;
     $offset = isset( $_POST['offset'] ) ? max( 0, (int) $_POST['offset'] ) : 0;
 
-    $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, kategorie, adresse, telefon, website
+    $sql = "SELECT id, name, email, kanton, sprache, route_name AS route, typ, kategorie, adresse, telefon, website, tier
             FROM {$table}";
     if ( $where ) {
         $sql .= ' WHERE ' . implode( ' AND ', $where );
@@ -82,6 +82,7 @@ function sagatrail_ajax_get_leads() {
             'adresse'   => (string) $r->adresse,
             'telefon'   => (string) $r->telefon,
             'website'   => (string) $r->website,
+            'tier'      => (string) ( $r->tier ?? '' ),
         ];
     }, $rows ?: [] );
 

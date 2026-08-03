@@ -2163,6 +2163,18 @@ router.get("/admin/orgs/list", async (req, res): Promise<void> => {
   }
 });
 
+// DELETE /admin/leads/all – Alle partner_leads leeren (vor sauberem Re-Import)
+router.delete("/admin/leads/all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    await db.execute(sql`TRUNCATE TABLE partner_leads`);
+    req.log.info("partner_leads geleert");
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Fehler" });
+  }
+});
+
 // POST /admin/leads/import-wp – Einmaliger Import aller WP-Leads + Orgs nach Postgres
 router.post("/admin/leads/import-wp", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -2179,6 +2191,7 @@ router.post("/admin/leads/import-wp", async (req, res): Promise<void> => {
       name: l.name, email: l.email, kanton: l.kanton, sprache: l.sprache,
       route: l.route, typ: l.typ, satz: l.satz,
       adresse: l.adresse, telefon: l.telefon, website: l.website,
+      tier: (l as any).tier || undefined,
     }));
     const orgRows: LeadRow[] = wpOrgs.map((o) => ({
       quelle: "orgs" as const,
@@ -2186,6 +2199,7 @@ router.post("/admin/leads/import-wp", async (req, res): Promise<void> => {
       route: o.route, typ: o.typ, satz: o.satz,
       adresse: o.adresse, telefon: o.telefon, website: o.website,
       kategorie: (o as any)._kategorie ?? o.typ,
+      tier: (o as any).tier || undefined,
     }));
 
     const [leadsImported, orgsImported] = await Promise.all([
@@ -2289,6 +2303,8 @@ function sanitizeState() {
     cantonesDone: jobState.cantonesDone,
     leadsFound: jobState.leadsFound,
     excluded: jobState.excluded,
+    tierCounts: jobState.tierCounts,
+    emailScrape: jobState.emailScrape,
     startedAt: jobState.startedAt,
     finishedAt: jobState.finishedAt,
     error: jobState.error,
