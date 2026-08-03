@@ -1889,6 +1889,22 @@ router.patch("/admin/verband-anfragen/:id", async (req, res): Promise<void> => {
   }
 });
 
+router.delete("/admin/verband-anfragen/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const deleted = await db
+      .delete(verbandAnfragenTable)
+      .where(eq(verbandAnfragenTable.id, id))
+      .returning();
+    if (deleted.length === 0) { res.status(404).json({ error: "Anfrage nicht gefunden" }); return; }
+    res.json({ ok: true, deleted: id });
+  } catch (err) {
+    req.log.error({ err }, "Verband-Anfrage löschen fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
 router.get("/admin/verbande", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const rows = await db.select().from(verbandsTable).orderBy(desc(verbandsTable.createdAt));

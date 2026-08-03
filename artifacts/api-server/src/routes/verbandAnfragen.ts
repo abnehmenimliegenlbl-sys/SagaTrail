@@ -4,8 +4,51 @@ import { z } from "zod/v4";
 import { eq } from "drizzle-orm";
 import { db, verbandAnfragenTable } from "@workspace/db";
 import { sendVerbandVertrag } from "../lib/verbandEmail";
+import { VERBAND_FORM_SNIPPET } from "../lib/verbandFormHtml";
 
 const router: IRouter = Router();
+
+/**
+ * GET /verband/form
+ * Liefert das Tourismusverband-Anfrageformular als eigenständige HTML-Seite.
+ * Einbindung auf sagatrail.ch via WPCode-Iframe:
+ *   <iframe src="https://api.sagatrail.ch/api/verband/form" style="width:100%;border:none;min-height:800px" loading="lazy"></iframe>
+ */
+router.get("/verband/form", (_req, res): void => {
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tourismusverband – SagaTrail Pilotpartnerschaft</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  </style>
+  <script>
+    /* Resize-Nachricht an Parent-Iframe */
+    function notifyHeight() {
+      var h = document.documentElement.scrollHeight;
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'st-vf-height', height: h }, '*');
+      }
+    }
+    var ro = new ResizeObserver(notifyHeight);
+    document.addEventListener('DOMContentLoaded', function() {
+      ro.observe(document.body);
+      notifyHeight();
+    });
+  </script>
+</head>
+<body>
+${VERBAND_FORM_SNIPPET}
+</body>
+</html>`;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("X-Frame-Options", "ALLOWALL");
+  res.setHeader("Content-Security-Policy", "frame-ancestors *");
+  res.send(html);
+});
 
 const ALLE_KANTONE = [
   "Aargau","Appenzell Ausserrhoden","Appenzell Innerrhoden",

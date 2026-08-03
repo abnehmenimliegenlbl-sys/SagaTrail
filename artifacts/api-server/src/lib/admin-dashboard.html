@@ -2125,13 +2125,27 @@ async function loadVerbandAnfragen() {
         '<td>' + esc(r.kontaktName) + '<br><a href="mailto:' + esc(r.email) + '" style="font-size:11px">' + esc(r.email) + '</a>' + (r.kontaktTelefon ? '<br><span class="hint">' + esc(r.kontaktTelefon) + '</span>' : '') + '</td>' +
         '<td style="font-size:12px">' + esc(kantoneShort) + '</td>' +
         '<td>' + vertragStatus + '</td>' +
-        '<td><select class="sel-status" onchange="setVerbandAnfrageStatus(\''+r.id+'\',this.value)">' + statusOpts + '</select></td>' +
+        '<td style="white-space:nowrap">' +
+          '<select class="sel-status" onchange="setVerbandAnfrageStatus(\''+r.id+'\',this.value)">' + statusOpts + '</select>' +
+          ' <button class="btn btn-ghost btn-sm" title="Anfrage löschen" onclick="deleteVerbandAnfrage(\''+r.id+'\',\''+esc(r.verbandName)+'\')" style="color:#cc0000;padding:4px 8px">&#128465;</button>' +
+        '</td>' +
         '</tr>';
     });
     html += '</tbody></table></div>';
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+async function deleteVerbandAnfrage(id, name) {
+  if (!confirm('Verband-Anfrage von "' + name + '" wirklich löschen?')) return;
+  try {
+    await api('/api/admin/verband-anfragen/' + encodeURIComponent(id), { method: 'DELETE' });
+    _verbandAnfragen = _verbandAnfragen.filter(function(a){ return a.id !== id; });
+    await loadVerbandAnfragen();
+  } catch(e) {
+    alert('Fehler beim Löschen: ' + e.message);
   }
 }
 
