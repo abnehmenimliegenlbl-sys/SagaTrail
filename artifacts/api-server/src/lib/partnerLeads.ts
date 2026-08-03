@@ -452,6 +452,7 @@ export interface EmailScrapeState {
 
 export interface JobState {
   status: JobStatus;
+  stopRequested: boolean;
   cantonsTotal: number;
   cantonesDone: number;
   leadsFound: number;
@@ -468,6 +469,7 @@ export interface JobState {
 
 export const jobState: JobState = {
   status: "idle",
+  stopRequested: false,
   cantonsTotal: 0,
   cantonesDone: 0,
   leadsFound: 0,
@@ -585,6 +587,7 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
   jobState.cantonsTotal = batches.length;
   jobState.cantonesDone = 0;
   jobState.excluded = 0;
+  jobState.stopRequested = false;
   jobState.tierCounts = { Top: 0, "Mid+": 0, Mid: 0, Low: 0 };
   jobState.emailScrape = { total: 0, done: 0, found: 0 };
 
@@ -593,6 +596,12 @@ async function runExport(googleApiKey: string, radiusM: number): Promise<void> {
   let savedCursor = 0; // wie viele Leads bereits in die DB geschrieben wurden
 
   for (const batch of batches) {
+    if (jobState.stopRequested) {
+      jobState.status = "done";
+      jobState.finishedAt = new Date();
+      break;
+    }
+
     const points = batch.map((p) => ({ lat: p.lat, lng: p.lng }));
 
     let elements: OsmElement[];

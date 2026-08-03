@@ -175,7 +175,7 @@ export async function upsertLeadsToDb(leads: LeadRow[]): Promise<number> {
             ON CONFLICT (quelle, osm_id) WHERE osm_id IS NOT NULL DO NOTHING
           `);
         } else {
-          // WP-Leads (keine osmId): plain INSERT — Dedup via DELETE vor Import
+          // WP-Leads (keine osmId): dedup über email (unique index idx_pl_leads_email)
           await db.execute(sql`
             INSERT INTO partner_leads
               (quelle, osm_id, name, email, kanton, sprache, route, typ,
@@ -186,6 +186,13 @@ export async function upsertLeadsToDb(leads: LeadRow[]): Promise<number> {
                ${l.kategorie ?? null}, ${l.satz ?? null},
                ${l.adresse ?? null}, ${l.telefon ?? null}, ${l.website ?? null},
                ${l.routeId ?? null}, ${l.lat ?? null}, ${l.lng ?? null}, ${l.tier ?? null})
+            ON CONFLICT (email) WHERE quelle = 'leads' AND email IS NOT NULL
+            DO UPDATE SET
+              name    = EXCLUDED.name,
+              kanton  = EXCLUDED.kanton,
+              sprache = EXCLUDED.sprache,
+              satz    = EXCLUDED.satz,
+              tier    = EXCLUDED.tier
           `);
         }
       }

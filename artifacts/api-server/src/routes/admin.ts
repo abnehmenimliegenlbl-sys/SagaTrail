@@ -1562,6 +1562,17 @@ router.get("/admin/partner-leads/status", (req, res): void => {
   res.json(sanitizeState());
 });
 
+// POST /admin/partner-leads/stop — laufende Suche anhalten
+router.post("/admin/partner-leads/stop", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+  if (jobState.status !== "running") {
+    res.status(409).json({ error: "Keine Suche läuft" });
+    return;
+  }
+  jobState.stopRequested = true;
+  res.json({ ok: true });
+});
+
 // GET /admin/partner-leads/download — CSV herunterladen wenn fertig
 router.get("/admin/partner-leads/download", (req, res): void => {
   if (!requireAdminToken(req, res)) return;
