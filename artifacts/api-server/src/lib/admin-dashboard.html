@@ -162,6 +162,10 @@ a{color:var(--red);text-decoration:none}
 
   <!-- VERBÄNDE -->
   <div id="tab-verbande" class="tab-pane">
+    <div class="card" style="margin-bottom:12px">
+      <h2>&#128203; Eingehende Verband-Anfragen</h2>
+      <div id="vb-anfragen-body"><p class="loading">Wird geladen…</p></div>
+    </div>
     <div class="card">
       <h2>&#127956; Neuer Verband</h2>
       <div class="form-grid">
@@ -517,6 +521,7 @@ a{color:var(--red);text-decoration:none}
         <button class="btn btn-ghost" onclick="kmPreview()">&#128065;&#65039; Vorschau</button>
         <button class="btn btn-primary" id="km-send-btn" onclick="kmSend()" disabled>&#128140; Kampagne starten</button>
         <button class="btn btn-danger"  id="km-stop-btn" onclick="kmStop()" style="display:none">&#9632; Stopp</button>
+        <button class="btn btn-ghost" id="km-import-wp-btn" onclick="kmImportFromWp()" title="Alle Leads und Orgs einmalig von WordPress nach PostgreSQL importieren">&#128260; Import von WP</button>
         <span id="km-compose-status" class="hint"></span>
       </div>
     </div>
@@ -577,7 +582,7 @@ a{color:var(--red);text-decoration:none}
         </div>
         <button class="btn btn-primary" id="ls-start-btn" onclick="lsStart()">&#9654; Suche starten</button>
         <button class="btn btn-green" id="ls-download-btn" onclick="lsDownload()" style="display:none">&#11015; CSV herunterladen</button>
-        <button class="btn btn-primary" id="ls-wpbook-all-btn" onclick="lsWpBookAll()" style="display:none">&#128640; Alle in WP einbuchen</button>
+        <button class="btn btn-primary" id="ls-pgsave-all-btn" onclick="lsPgSaveAll()" style="display:none">&#128190; Alle in Postgres speichern</button>
         <span id="ls-status-text" style="font-size:13px;color:var(--mid)"></span>
       </div>
 
@@ -604,7 +609,7 @@ a{color:var(--red);text-decoration:none}
       <p class="hint" style="margin-bottom:12px">
         Überprüfe die Leads, bevor du die CSV in WordPress hochlädst und Mails versendest.
         Bestehende Partner und Blockliste sind bereits herausgefiltert.
-        Mit «Einbuchen» wird der Lead direkt via WP AJAX (<code>sagatrail_book_lead</code>) in WordPress gespeichert.
+        Mit «💾» wird der Lead direkt in PostgreSQL gespeichert (quelle='osm'). Danach im Kampagnen-Tab verfügbar.
       </p>
       <div style="overflow-x:auto">
         <table class="tbl" id="ls-preview-tbl">
@@ -695,6 +700,7 @@ a{color:var(--red);text-decoration:none}
 var _token = '';
 var _partner = [];
 var _anfragen = [];
+var _verbandAnfragen = [];
 var _routen = [];
 var _routenKantons = [];
 var _lookupResults = [];
@@ -724,6 +730,7 @@ function forgetToken() {
 
 async function api(path, opts) {
   var res = await fetch(path, {
+    cache: 'no-store',
     ...opts,
     headers: { 'Content-Type':'application/json', 'x-admin-token': token(), ...(opts && opts.headers) }
   });
@@ -795,7 +802,7 @@ function switchTab(name, btn) {
   if (name === 'sagen'    && token()) loadSagen();
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
-  if (name === 'verbande' && token()) ladeVerbande();
+  if (name === 'verbande' && token()) { ladeVerbande(); loadVerbandAnfragen(); }
   if (name === 'kampagne' && token()) { kmLoadMeta(); kmLoadLog(); }
 }
 
@@ -1936,42 +1943,89 @@ async function loadAnfragen() {
   try {
     _anfragen = await api('/api/admin/anfragen');
     var neuCount = _anfragen.filter(function(r){ return r.status === 'neu'; }).length;
-    var bestellCount = _anfragen.filter(function(r){ return r.typ === 'bestellung'; }).length;
     var html = '<div class="stat-grid" style="margin-bottom:16px">' +
-      statCard(neuCount, 'Neue (unbearbeitet)', '') +
-      statCard(bestellCount, 'davon Bestellungen', '') +
+      statCard(neuCount, 'Neu / unbearbeitet', '') +
+      statCard(_anfragen.filter(function(r){return r.typ==='bestellung';}).length, 'davon Bestellungen', '') +
       statCard(_anfragen.length, 'Total', '') +
       '</div>';
     if (_anfragen.length === 0) {
       html += '<div class="card"><p class="hint" style="padding:12px 0">Noch keine Anfragen eingegangen.</p></div>';
     } else {
-      html += '<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr>' +
-        '<th>Datum</th><th>Betrieb</th><th>Kat.</th><th>Kanton</th><th>Typ</th><th>Paket</th><th>Kontakt</th><th>Status</th><th></th>' +
-        '</tr></thead><tbody>';
       _anfragen.forEach(function(r) {
         var typBadge = r.typ === 'bestellung'
           ? '<span class="badge badge-red">&#128722; Bestellung</span>'
-          : '<span class="badge badge-blue">&#128139; Anfrage</span>';
+          : '<span class="badge badge-blue">&#128203; Anfrage</span>';
         var statusOpts = ['neu','in_bearbeitung','abgelehnt','aktiv'].map(function(s){
-          return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' +
-            {neu:'Neu',in_bearbeitung:'In Bearbeitung',abgelehnt:'Abgelehnt',aktiv:'Aktiv'}[s] + '</option>';
+          return '<option value="'+s+'"'+(r.status===s?' selected':'')+'>' +
+            {neu:'Neu',in_bearbeitung:'In Bearbeitung',abgelehnt:'Abgelehnt',aktiv:'Aktiv'}[s]+'</option>';
         }).join('');
-        html += '<tr>' +
-          '<td class="mono">' + fmtDate(r.createdAt) + '</td>' +
-          '<td><strong>' + esc(r.betriebsName) + '</strong>' + (r.ort ? '<br><span class="hint">' + esc(r.ort) + (r.adresse ? ', ' + esc(r.adresse) : '') + '</span>' : '') + (r.website ? '<br><a href="' + esc(r.website) + '" target="_blank" style="font-size:11px">' + esc(r.website) + '</a>' : '') + '</td>' +
-          '<td>' + katEmoji(r.kategorie) + ' ' + esc(r.kategorie) + '</td>' +
-          '<td>' + esc(r.canton) + '</td>' +
-          '<td>' + typBadge + '</td>' +
-          '<td><span class="badge badge-gray">' + esc(r.paket || 'standard') + '</span></td>' +
-          '<td>' + esc(r.kontaktName) + '<br><a href="mailto:' + esc(r.kontaktEmail) + '">' + esc(r.kontaktEmail) + '</a>' + (r.kontaktTelefon ? '<br>' + esc(r.kontaktTelefon) : '') + '</td>' +
-          '<td><select class="sel-status" onchange="setAnfrageStatus(\'' + r.id + '\',this.value)">' + statusOpts + '</select></td>' +
-          '<td style="white-space:nowrap">' +
-            '<button class="btn btn-green btn-sm" onclick="prefillFromAnfrage(\'' + r.id + '\')" style="margin-bottom:4px">&#8594; Partner</button><br>' +
-            '<button class="btn btn-primary btn-sm" id="vbtn-' + r.id + '" onclick="sendAnfrageVertrag(\'' + r.id + '\')">&#128235; Vertrag</button>' +
-          '</td>' +
-          '</tr>';
+
+        // Schritt 1: Vertrag senden
+        var vertagtBereits = r.status !== 'neu';
+        var step1 = vertagtBereits
+          ? '<button class="btn btn-ghost btn-sm" onclick="sendAnfrageVertrag(\''+r.id+'\')" id="vbtn-'+r.id+'">&#128235; Erneut senden</button>'
+          : '<button class="btn btn-primary btn-sm" onclick="sendAnfrageVertrag(\''+r.id+'\')" id="vbtn-'+r.id+'">&#128235; Vertrag senden</button>';
+
+        // Schritt 2: Vertrag zurück Checkbox
+        var step2 = '<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap">' +
+          '<input type="checkbox"'+(r.vertragZurueck?' checked':'')+
+          ' onchange="toggleVertragZurueck(\''+r.id+'\',this.checked)" style="width:16px;height:16px;cursor:pointer"> ' +
+          'Vertrag zur&uuml;ck</label>';
+
+        // Schritt 3: Partner anlegen
+        var step3;
+        if (r.status === 'aktiv') {
+          step3 = '<span class="badge badge-green" style="font-size:12px;padding:6px 10px">&#10003; Partner aktiv</span>';
+        } else if (r.vertragZurueck) {
+          step3 = '<button class="btn btn-green btn-sm" id="pabtn-'+r.id+'" onclick="partnerAusAnfrage(\''+r.id+'\')">&#127970; Partner anlegen + Magic-Link</button>';
+        } else {
+          step3 = '<span class="hint" style="font-size:12px">wartet auf Vertrag</span>';
+        }
+
+        html += '<div class="card" style="margin-bottom:12px">' +
+          // Header
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">' +
+            typBadge +
+            '<strong style="font-size:15px">'+esc(r.betriebsName)+'</strong>' +
+            '<span class="hint">'+esc(r.canton)+' &middot; '+katEmoji(r.kategorie)+' '+esc(r.kategorie)+'</span>' +
+            '<span class="hint" style="margin-left:4px">'+fmtDate(r.createdAt)+'</span>' +
+            '<span style="margin-left:auto;display:flex;align-items:center;gap:8px">' +
+              '<select class="sel-status" onchange="setAnfrageStatus(\''+r.id+'\',this.value)">'+statusOpts+'</select>' +
+              '<button class="btn btn-ghost btn-sm" title="Anfrage löschen" onclick="deleteAnfrage(\''+r.id+'\',\''+esc(r.betriebsName)+'\')" style="color:#cc0000;padding:4px 8px">&#128465;</button>' +
+            '</span>' +
+          '</div>' +
+          // Kontakt
+          '<div style="font-size:13px;color:var(--mid);margin-bottom:4px">' +
+            '<strong>'+esc(r.kontaktName)+'</strong>' +
+            ' &middot; <a href="mailto:'+esc(r.kontaktEmail)+'">'+esc(r.kontaktEmail)+'</a>' +
+            (r.kontaktTelefon ? ' &middot; '+esc(r.kontaktTelefon) : '') +
+          '</div>' +
+          // Details
+          '<div style="font-size:12px;color:var(--mid);margin-bottom:12px">' +
+            '<span class="badge badge-gray">'+esc(r.paket||'standard')+'</span>' +
+            (r.ort ? ' &nbsp;'+esc(r.ort) : '') +
+            (r.adresse ? ', '+esc(r.adresse) : '') +
+            (r.website ? ' &nbsp;&middot; <a href="'+esc(r.website)+'" target="_blank" style="font-size:11px">Website</a>' : '') +
+          '</div>' +
+          // 3-Schritt Workflow
+          '<div style="display:flex;gap:0;align-items:stretch;border-top:1px solid var(--border);padding-top:12px;flex-wrap:wrap;gap:8px">' +
+            '<div style="display:flex;flex-direction:column;gap:4px;min-width:160px">' +
+              '<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mid);letter-spacing:.5px">Schritt 1 &mdash; Vertrag senden</span>' +
+              step1 +
+            '</div>' +
+            '<div style="display:flex;align-items:center;padding:0 8px;color:var(--border);font-size:20px">&#8594;</div>' +
+            '<div style="display:flex;flex-direction:column;gap:4px;min-width:160px">' +
+              '<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mid);letter-spacing:.5px">Schritt 2 &mdash; Unterschrift</span>' +
+              step2 +
+            '</div>' +
+            '<div style="display:flex;align-items:center;padding:0 8px;color:var(--border);font-size:20px">&#8594;</div>' +
+            '<div style="display:flex;flex-direction:column;gap:4px;min-width:200px">' +
+              '<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mid);letter-spacing:.5px">Schritt 3 &mdash; Zugang einrichten</span>' +
+              step3 +
+            '</div>' +
+          '</div>' +
+        '</div>';
       });
-      html += '</tbody></table></div>';
     }
     el.innerHTML = html;
   } catch(e) {
@@ -1981,7 +2035,7 @@ async function loadAnfragen() {
 
 async function setAnfrageStatus(id, status) {
   try {
-    await api('/api/admin/anfragen/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ status: status }) });
+    await api('/api/admin/anfragen/'+encodeURIComponent(id), { method:'PATCH', body: JSON.stringify({ status: status }) });
     var r = _anfragen.find(function(a){ return a.id === id; });
     if (r) r.status = status;
   } catch(e) {
@@ -1989,40 +2043,108 @@ async function setAnfrageStatus(id, status) {
   }
 }
 
-async function sendAnfrageVertrag(id) {
-  var btn = document.getElementById('vbtn-' + id);
-  var r = _anfragen.find(function(a){ return a.id === id; });
-  var name = r ? r.betriebsName : id;
-  if (!confirm('Partnervertrag (PDF) an ' + name + ' senden?')) return;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Senden…'; }
+async function deleteAnfrage(id, name) {
+  if (!confirm('Anfrage von "' + name + '" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
   try {
-    await api('/api/admin/anfragen/' + encodeURIComponent(id) + '/send-vertrag', { method: 'POST' });
-    if (btn) { btn.textContent = '✓ Gesendet'; btn.classList.add('btn-ghost'); }
-    // Status lokal auf in_bearbeitung aktualisieren
-    if (r && r.status === 'neu') { r.status = 'in_bearbeitung'; }
+    await api('/api/admin/anfragen/'+encodeURIComponent(id), { method:'DELETE' });
+    _anfragen = _anfragen.filter(function(a){ return a.id !== id; });
     await loadAnfragen();
   } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '📩 Vertrag'; }
-    alert('Fehler beim Senden: ' + e.message);
+    alert('Fehler beim Löschen: ' + e.message);
   }
 }
 
-function prefillFromAnfrage(id) {
+async function toggleVertragZurueck(id, checked) {
+  try {
+    await api('/api/admin/anfragen/'+encodeURIComponent(id), { method:'PATCH', body: JSON.stringify({ vertragZurueck: checked }) });
+    var r = _anfragen.find(function(a){ return a.id === id; });
+    if (r) r.vertragZurueck = checked;
+    await loadAnfragen();
+  } catch(e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function sendAnfrageVertrag(id) {
+  var btn = document.getElementById('vbtn-'+id);
+  var r = _anfragen.find(function(a){ return a.id === id; });
+  var name = r ? r.betriebsName : id;
+  if (!confirm('Partnervertrag (PDF) an \u00ab'+name+'\u00bb senden?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '\u23f3 Senden\u2026'; }
+  try {
+    await api('/api/admin/anfragen/'+encodeURIComponent(id)+'/send-vertrag', { method: 'POST' });
+    await loadAnfragen();
+  } catch(e) {
+    if (btn) { btn.disabled = false; }
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function partnerAusAnfrage(id) {
   var r = _anfragen.find(function(a){ return a.id === id; });
   if (!r) return;
-  var partnerTabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(function(b){ return b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'partner'") !== -1; });
-  if (partnerTabBtn) switchTab('partner', partnerTabBtn);
-  function setVal(elId, val) { var el = document.getElementById(elId); if (el && val) el.value = val; }
-  setVal('np-name', r.betriebsName);
-  setVal('np-email', r.kontaktEmail);
-  setVal('np-kat', r.kategorie);
-  setVal('np-canton', r.canton);
-  setVal('np-paket', r.paket || 'standard');
-  var npEl = document.getElementById('np-name');
-  if (npEl) setTimeout(function(){ npEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+  if (!confirm('Partner \u00ab'+r.betriebsName+'\u00bb anlegen und Magic-Link zum Partner-Portal senden?')) return;
+  var btn = document.getElementById('pabtn-'+id);
+  if (btn) { btn.disabled = true; btn.textContent = '\u23f3 Anlegen\u2026'; }
+  try {
+    await api('/api/admin/anfragen/'+encodeURIComponent(id)+'/create-partner', { method: 'POST' });
+    await loadAnfragen();
+    await loadPartner();
+    await loadOverview();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '\u{1F3D8} Partner anlegen + Magic-Link'; }
+    alert('Fehler: ' + e.message);
+  }
 }
 
 /* ===================== VERBÄNDE ===================== */
+async function loadVerbandAnfragen() {
+  var el = document.getElementById('vb-anfragen-body');
+  if (!el || !token()) return;
+  try {
+    _verbandAnfragen = await api('/api/admin/verband-anfragen');
+    if (!_verbandAnfragen.length) {
+      el.innerHTML = '<p class="hint" style="padding:8px 0">Noch keine Anfragen eingegangen.</p>';
+      return;
+    }
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>Datum</th><th>Verband</th><th>Kontakt</th><th>Kantone</th><th>Vertrag</th><th>Status</th>' +
+      '</tr></thead><tbody>';
+    _verbandAnfragen.forEach(function(r) {
+      var statusOpts = ['neu','in_bearbeitung','aktiv','abgelehnt'].map(function(s){
+        return '<option value="'+s+'"'+(r.status===s?' selected':'')+'>' +
+          {neu:'Neu',in_bearbeitung:'In Bearbeitung',aktiv:'Aktiv',abgelehnt:'Abgelehnt'}[s]+'</option>';
+      }).join('');
+      var kantoneShort = r.kantone === 'alle' ? '&#127464;&#127469; Alle 26' : r.kantone.split(',').slice(0,3).join(', ') + (r.kantone.split(',').length > 3 ? ' +' + (r.kantone.split(',').length - 3) : '');
+      var vertragStatus = r.contractSentAt
+        ? '<span style="color:var(--green);font-size:12px">&#10003; ' + fmtDate(r.contractSentAt) + '</span>'
+        : '<span class="hint" style="font-size:12px">nicht gesendet</span>';
+      html += '<tr>' +
+        '<td class="mono">' + fmtDate(r.createdAt) + '</td>' +
+        '<td><strong>' + esc(r.verbandName) + '</strong></td>' +
+        '<td>' + esc(r.kontaktName) + '<br><a href="mailto:' + esc(r.email) + '" style="font-size:11px">' + esc(r.email) + '</a>' + (r.kontaktTelefon ? '<br><span class="hint">' + esc(r.kontaktTelefon) + '</span>' : '') + '</td>' +
+        '<td style="font-size:12px">' + esc(kantoneShort) + '</td>' +
+        '<td>' + vertragStatus + '</td>' +
+        '<td><select class="sel-status" onchange="setVerbandAnfrageStatus(\''+r.id+'\',this.value)">' + statusOpts + '</select></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+async function setVerbandAnfrageStatus(id, status) {
+  try {
+    await api('/api/admin/verband-anfragen/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ status: status }) });
+    var r = _verbandAnfragen.find(function(a){ return a.id === id; });
+    if (r) r.status = status;
+  } catch(e) {
+    alert('Status-Fehler: ' + e.message);
+  }
+}
+
 async function ladeVerbande() {
   try {
     var rows = await api('/api/admin/verbande', {method:'GET'});
@@ -2436,6 +2558,22 @@ async function kmSend() {
   }
 }
 
+async function kmImportFromWp() {
+  if (!confirm('Alle Leads und Orgs von WordPress nach PostgreSQL importieren? (Duplikate werden übersprungen)')) return;
+  var btn = document.getElementById('km-import-wp-btn');
+  var status = document.getElementById('km-compose-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Importiere...'; }
+  try {
+    var r = await api('/api/admin/leads/import-wp', { method: 'POST' });
+    if (btn) { btn.textContent = '✓ Import abgeschlossen'; btn.style.color = 'var(--green)'; }
+    if (status) status.textContent = r.leadsImported + ' Leads + ' + r.orgsImported + ' Orgs importiert';
+    setTimeout(function(){ kmLoadMeta(); }, 500);
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Import von WP'; }
+    alert('Import fehlgeschlagen: ' + e.message);
+  }
+}
+
 async function kmStop() {
   var btn = document.getElementById('km-stop-btn');
   btn.disabled = true;
@@ -2578,7 +2716,7 @@ function lsRenderState(s) {
     document.getElementById('ls-status-text').textContent = '✓ Abgeschlossen';
     document.getElementById('ls-progress-bar').style.width = '100%';
     document.getElementById('ls-download-btn').style.display = '';
-    document.getElementById('ls-wpbook-all-btn').style.display = '';
+    document.getElementById('ls-pgsave-all-btn').style.display = '';
     document.getElementById('ls-summary').style.display = '';
     document.getElementById('ls-found-num').textContent = s.leadsFound;
     document.getElementById('ls-excl-num').textContent  = s.excluded || 0;
@@ -2593,7 +2731,7 @@ function lsRenderState(s) {
   }
 }
 
-// Leads-Vorschau in Memory halten für wp-book
+// Leads-Vorschau in Memory halten für pg-save
 var _lsPreviewLeads = [];
 
 function lsRenderPreview(leads) {
@@ -2611,34 +2749,34 @@ function lsRenderPreview(leads) {
       '<td class="mono">' + esc(l.telefon || '–') + '</td>' +
       '<td>' + ws + '</td>' +
       '<td><span class="badge ' + (l.quelle === 'Google' ? 'badge-blue' : 'badge-gray') + '">' + esc(l.quelle) + '</span></td>' +
-      '<td><button class="btn btn-ghost btn-sm" id="ls-book-btn-' + i + '" onclick="lsWpBookOne(' + i + ')">&#128640;</button></td>' +
+      '<td><button class="btn btn-ghost btn-sm" id="ls-book-btn-' + i + '" onclick="lsPgSaveOne(' + i + ')">&#128190;</button></td>' +
       '</tr>';
   }).join('');
   document.getElementById('ls-preview-card').style.display = '';
 }
 
-async function lsWpBookOne(idx) {
+async function lsPgSaveOne(idx) {
   var lead = _lsPreviewLeads[idx];
   if (!lead) return;
   var btn = document.getElementById('ls-book-btn-' + idx);
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   try {
-    await api('/api/admin/partner-leads/wp-book', { method: 'POST', body: JSON.stringify({ lead: lead }) });
+    await api('/api/admin/partner-leads/pg-save-one', { method: 'POST', body: JSON.stringify({ lead: lead }) });
     if (btn) { btn.textContent = '✓'; btn.style.color = 'var(--green)'; }
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '⚠'; btn.title = e.message; btn.style.color = 'var(--red)'; }
   }
 }
 
-async function lsWpBookAll() {
-  if (!confirm('Alle ' + _lsPreviewLeads.length + ' Leads in WordPress einbuchen? (Läuft im Hintergrund)')) return;
-  var btn = document.getElementById('ls-wpbook-all-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Einbuchung läuft...'; }
+async function lsPgSaveAll() {
+  if (!confirm('Alle ' + _lsPreviewLeads.length + ' Leads in PostgreSQL speichern?')) return;
+  var btn = document.getElementById('ls-pgsave-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Speichern...'; }
   try {
-    await api('/api/admin/partner-leads/wp-book-all', { method: 'POST' });
-    if (btn) { btn.textContent = '✓ Gestartet — Logs prüfen'; btn.style.color = 'var(--green)'; }
+    var r = await api('/api/admin/partner-leads/pg-save-all', { method: 'POST' });
+    if (btn) { btn.textContent = '✓ ' + (r.saved || 0) + ' gespeichert'; btn.style.color = 'var(--green)'; }
   } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '&#128640; Alle in WP einbuchen'; }
+    if (btn) { btn.disabled = false; btn.textContent = '&#128190; Alle in Postgres speichern'; }
     alert('Fehler: ' + e.message);
   }
 }

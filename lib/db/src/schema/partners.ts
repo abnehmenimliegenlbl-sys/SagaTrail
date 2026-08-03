@@ -27,7 +27,7 @@ export type Zahlungsstatus =
   | "gekündigt";
 
 export const PAKET_PREISE: Record<string, { jahr: number; monat: number }> = {
-  basic:    { jahr:  99, monat:   990 },
+  basic:    { jahr:  99, monat:  1499 },
   standard: { jahr: 199, monat: 1990 },
   premium:  { jahr: 499, monat:    0 },
 };

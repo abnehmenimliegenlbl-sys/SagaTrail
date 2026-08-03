@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod/v4";
 import { sql } from "drizzle-orm";
 import { db, partnerAnfragenTable } from "@workspace/db";
-import { sendPartnerVertrag } from "../lib/partnerEmail";
+import { sendPartnerVertrag, sendAnfrageBestaetigung } from "../lib/partnerEmail";
 
 const router: IRouter = Router();
 
@@ -94,6 +94,17 @@ router.post("/partner/anfrage", async (req, res): Promise<void> => {
     { id, email: data.kontaktEmail, betrieb: data.betriebsName, typ: data.typ },
     "Partner-Anfrage eingegangen"
   );
+
+  // Eingangsbestätigung an den Partner senden (fire-and-forget, immer)
+  sendAnfrageBestaetigung({
+    betriebsName:  data.betriebsName,
+    kontaktName:   data.kontaktName,
+    kontaktEmail:  data.kontaktEmail,
+    paket:         data.paket,
+    typ:           data.typ,
+  })
+    .then(() => req.log.info({ id }, "Eingangsbestätigung gesendet"))
+    .catch((err: unknown) => req.log.error({ err, id }, "Eingangsbestätigung fehlgeschlagen"));
 
   // Bei Direktbestellungen sofort Vertrag per E-Mail senden (fire-and-forget)
   if (data.typ === "bestellung") {

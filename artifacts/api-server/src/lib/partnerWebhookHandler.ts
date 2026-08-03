@@ -33,7 +33,7 @@ const PORTAL_BASE = "https://sagatrail.ch/portal";
 
 // ─── Magic-Link senden ────────────────────────────────────────────────────────
 
-async function sendMagicLink(partnerId: string, partnerName: string, email: string, isTrial = false): Promise<void> {
+export async function sendMagicLink(partnerId: string, partnerName: string, email: string, isTrial = false): Promise<void> {
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -49,52 +49,78 @@ async function sendMagicLink(partnerId: string, partnerName: string, email: stri
   const envelopeFrom = process.env.SMTP_FROM ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
-  const subject = isTrial
-    ? "Ihr 30-tägiger SagaTrail-Test beginnt jetzt"
-    : "Ihr SagaTrail-Partner-Portal ist bereit";
-  const intro = isTrial
-    ? `Ihre kostenlose 30-Tage-Testphase hat begonnen. Sie haben vollen Zugang zu allen Partner-Funktionen – ohne Kosten, ohne Risiko. Nach Ablauf der Testphase wird Ihr Abo automatisch aktiviert.`
-    : `Ihr SagaTrail-Partner-Konto wurde erfolgreich aktiviert.`;
+  const LANGS = [
+    {
+      code: "DE",
+      subject:  isTrial ? "Ihr 30-tägiger SagaTrail-Test beginnt jetzt" : "Ihr SagaTrail-Partner-Portal ist bereit",
+      greeting: `Guten Tag ${partnerName},`,
+      intro:    isTrial
+        ? "Ihre kostenlose 30-Tage-Testphase hat begonnen. Sie haben vollen Zugang zu allen Partner-Funktionen – ohne Kosten, ohne Risiko. Nach Ablauf der Testphase wird Ihr Abo automatisch aktiviert."
+        : "Ihr SagaTrail-Partner-Konto wurde erfolgreich aktiviert.",
+      btn:      "Partner-Portal öffnen",
+      validity: "Der Link ist <strong>24 Stunden</strong> gültig. Danach können Sie jederzeit einen neuen Link über das Portal anfordern.",
+      features: "Im Portal können Sie Ihr Profil (Beschreibung, Öffnungszeiten, Foto) bearbeiten, Ihren genauen Standort setzen und Ihre Statistiken einsehen.",
+      signoff:  "Herzliche Grüsse\nDas SagaTrail-Team",
+    },
+    {
+      code: "FR",
+      subject:  isTrial ? "Votre période d'essai SagaTrail de 30 jours commence maintenant" : "Votre portail partenaire SagaTrail est prêt",
+      greeting: `Bonjour ${partnerName},`,
+      intro:    isTrial
+        ? "Votre période d'essai gratuite de 30 jours a débuté. Vous avez accès à toutes les fonctions partenaires – sans frais, sans risque. À l'issue de la période d'essai, votre abonnement sera automatiquement activé."
+        : "Votre compte partenaire SagaTrail a été activé avec succès.",
+      btn:      "Ouvrir le portail partenaire",
+      validity: "Le lien est valable <strong>24 heures</strong>. Vous pouvez en demander un nouveau à tout moment via le portail.",
+      features: "Dans le portail, vous pouvez modifier votre profil (description, horaires, photo), définir votre emplacement exact et consulter vos statistiques.",
+      signoff:  "Cordiales salutations\nL'équipe SagaTrail",
+    },
+    {
+      code: "IT",
+      subject:  isTrial ? "Il tuo periodo di prova SagaTrail di 30 giorni inizia ora" : "Il tuo portale partner SagaTrail è pronto",
+      greeting: `Buongiorno ${partnerName},`,
+      intro:    isTrial
+        ? "Il tuo periodo di prova gratuito di 30 giorni è iniziato. Hai accesso a tutte le funzioni partner – senza costi, senza rischi. Allo scadere del periodo di prova, l'abbonamento verrà attivato automaticamente."
+        : "Il tuo account partner SagaTrail è stato attivato con successo.",
+      btn:      "Apri il portale partner",
+      validity: "Il link è valido <strong>24 ore</strong>. In seguito puoi richiederne uno nuovo in qualsiasi momento tramite il portale.",
+      features: "Nel portale puoi modificare il tuo profilo (descrizione, orari, foto), impostare la tua posizione esatta e visualizzare le tue statistiche.",
+      signoff:  "Cordiali saluti\nIl team SagaTrail",
+    },
+  ] as const;
+
+  const subject = LANGS.map(l => l.subject).join(" / ");
+
+  const htmlBlocks = LANGS.map((l, i) => `
+    <div>
+      <p style="margin:0 0 2px;font-size:10px;font-weight:700;letter-spacing:1px;color:#aaa">${l.code}</p>
+      <p style="margin:0 0 8px">${l.greeting}</p>
+      <p style="margin:0 0 16px">${l.intro}</p>
+      <p style="text-align:center;margin:20px 0">
+        <a href="${portalUrl}" style="display:inline-block;padding:12px 26px;background:#CC0000;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px">${l.btn}</a>
+      </p>
+      <p style="font-size:13px;color:#777">${l.validity}</p>
+      <p style="font-size:13px">${l.features}</p>
+      <p style="font-size:13px;white-space:pre-line">${l.signoff}</p>
+    </div>
+    ${i < LANGS.length - 1 ? '<hr style="border:none;border-top:1px solid #eee;margin:20px 0">' : ""}
+  `).join("");
+
+  const textBody = LANGS.map(l =>
+    `--- ${l.code} ---\n\n${l.greeting}\n\n${l.intro}\n\n${portalUrl}\n\n${l.validity.replace(/<[^>]+>/g, "")}\n\n${l.features}\n\n${l.signoff}`
+  ).join("\n\n");
 
   await transporter.sendMail({
     envelope: { from: envelopeFrom, to: email },
     from: `SagaTrail <${envelopeFrom}>`,
     to: email,
     subject,
-    text: [
-      `Guten Tag ${partnerName},`,
-      "",
-      intro,
-      "",
-      "Über folgenden Link gelangen Sie direkt in Ihr Partner-Portal:",
-      "",
-      portalUrl,
-      "",
-      "Der Link ist 24 Stunden gültig. Danach können Sie jederzeit einen neuen Link über das Portal anfordern.",
-      "",
-      "Im Portal können Sie:",
-      "• Ihr Profil (Beschreibung, Öffnungszeiten, Foto) bearbeiten",
-      "• Ihren genauen Standort auf der Karte setzen",
-      "• Profilaufrufe und Angebot-Tipps einsehen",
-      "",
-      "Bei Fragen stehen wir gerne zur Verfügung.",
-      "",
-      "Herzliche Grüsse",
-      "Das SagaTrail-Team",
-      "info@sagatrail.ch",
-    ].join("\n"),
+    text: textBody,
     html: `
-      <div style="font-family:-apple-system,system-ui,sans-serif;max-width:540px;margin:0 auto;color:#1a1a1a">
+      <div style="font-family:-apple-system,system-ui,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a">
         <div style="font-size:22px;font-weight:800;color:#CC0000;margin-bottom:24px;letter-spacing:.3px">SagaTrail</div>
-        <p>Guten Tag <strong>${partnerName}</strong>,</p>
-        <p>Ihr SagaTrail-Partner-Konto wurde erfolgreich aktiviert. Über folgenden Button gelangen Sie direkt in Ihr Partner-Portal:</p>
-        <p style="text-align:center;margin:32px 0">
-          <a href="${portalUrl}" style="display:inline-block;padding:14px 28px;background:#CC0000;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px">Partner-Portal öffnen</a>
-        </p>
-        <p style="font-size:13px;color:#777">Der Link ist <strong>24 Stunden</strong> gültig. Danach können Sie jederzeit einen neuen Link über das Portal anfordern.</p>
-        <p style="font-size:13px">Im Portal können Sie Ihr Profil (Beschreibung, Öffnungszeiten, Foto) bearbeiten, Ihren genauen Standort setzen und Ihre Statistiken einsehen.</p>
-        <hr style="border:none;border-top:1px solid #eee;margin:28px 0">
-        <p style="font-size:12px;color:#aaa">Fragen? <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a></p>
+        ${htmlBlocks}
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+        <p style="font-size:12px;color:#aaa">Fragen? / Questions ? / Domande? <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a></p>
       </div>
     `,
   });

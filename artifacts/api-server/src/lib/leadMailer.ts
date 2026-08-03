@@ -6,8 +6,8 @@
 
 import nodemailer from "nodemailer";
 import { randomUUID, createHmac } from "node:crypto";
-import { db, partnerEmailLogTable, partnerEmailBlocklistTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -68,6 +68,130 @@ export const campaignState: CampaignState = {
   lastRecipient: null,
   stopRequested: false,
 };
+
+// ─── PostgreSQL: Leads laden + upserten ──────────────────────────────────────
+
+export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
+  const conds: ReturnType<typeof eq>[] = [eq(partnerLeadsTable.quelle, "leads") as any];
+  if (filter.typ)     conds.push(eq(partnerLeadsTable.typ,     filter.typ)     as any);
+  if (filter.sprache) conds.push(eq(partnerLeadsTable.sprache, filter.sprache) as any);
+  if (!filter.kantone?.length && filter.kanton)
+    conds.push(eq(partnerLeadsTable.kanton, filter.kanton) as any);
+
+  let rows = await db.select().from(partnerLeadsTable).where(and(...conds));
+  if (filter.kantone?.length)  rows = rows.filter((r) => filter.kantone!.includes(r.kanton));
+  if (filter.kategorie)        rows = rows.filter((r) => r.kategorie === filter.kategorie);
+
+  return rows.map((r) => ({
+    name:    r.name,        email:   r.email    ?? "",
+    kanton:  r.kanton,      sprache: r.sprache,
+    route:   r.route,       typ:     r.typ,
+    satz:    r.satz    ?? "",
+    adresse: r.adresse ?? "", telefon: r.telefon ?? "", website: r.website ?? "",
+  }));
+}
+
+export async function fetchOrgsFromDb(filter: OrgFilter): Promise<Lead[]> {
+  const conds: ReturnType<typeof eq>[] = [eq(partnerLeadsTable.quelle, "orgs") as any];
+  if (filter.kategorie) conds.push(eq(partnerLeadsTable.kategorie, filter.kategorie) as any);
+  if (filter.typ)       conds.push(eq(partnerLeadsTable.typ,       filter.typ)       as any);
+  if (filter.sprache)   conds.push(eq(partnerLeadsTable.sprache,   filter.sprache)   as any);
+  if (!filter.kantone?.length && filter.kanton)
+    conds.push(eq(partnerLeadsTable.kanton, filter.kanton) as any);
+
+  let rows = await db.select().from(partnerLeadsTable).where(and(...conds));
+  if (filter.kantone?.length) rows = rows.filter((r) => filter.kantone!.includes(r.kanton));
+
+  return rows.map((r) => ({
+    name:    r.name,        email:   r.email    ?? "",
+    kanton:  r.kanton,      sprache: r.sprache,
+    route:   r.route,       typ:     r.typ      ?? r.kategorie ?? "",
+    satz:    r.satz    ?? "",
+    adresse: r.adresse ?? "", telefon: r.telefon ?? "", website: r.website ?? "",
+    _org:       r.name,
+    _kategorie: r.kategorie ?? "",
+  } as any));
+}
+
+export interface LeadRow {
+  quelle:    "leads" | "orgs" | "osm";
+  osmId?:    string | null;
+  name:      string;
+  email?:    string | null;
+  kanton:    string;
+  sprache:   string;
+  route:     string;
+  typ:       string;
+  kategorie?: string | null;
+  satz?:      string | null;
+  adresse?:   string | null;
+  telefon?:   string | null;
+  website?:   string | null;
+  routeId?:   string | null;
+  lat?:       number | null;
+  lng?:       number | null;
+  tier?:      string | null;
+}
+
+/** Upsert: leads/osm → ON CONFLICT (quelle, osm_id); orgs → ON CONFLICT (email) */
+export async function upsertLeadsToDb(leads: LeadRow[]): Promise<number> {
+  if (!leads.length) return 0;
+  let count = 0;
+  for (const l of leads) {
+    try {
+      if (l.quelle === "orgs") {
+        await db.execute(sql`
+          INSERT INTO partner_leads
+            (quelle, osm_id, name, email, kanton, sprache, route, typ,
+             kategorie, satz, adresse, telefon, website, route_id, lat, lng, tier)
+          VALUES
+            (${l.quelle}, ${l.osmId ?? null}, ${l.name}, ${l.email ?? null},
+             ${l.kanton}, ${l.sprache}, ${l.route}, ${l.typ},
+             ${l.kategorie ?? null}, ${l.satz ?? null},
+             ${l.adresse ?? null}, ${l.telefon ?? null}, ${l.website ?? null},
+             ${l.routeId ?? null}, ${l.lat ?? null}, ${l.lng ?? null}, ${l.tier ?? null})
+          ON CONFLICT (email) WHERE quelle = 'orgs' AND email IS NOT NULL
+          DO UPDATE SET
+            name      = EXCLUDED.name,
+            kanton    = EXCLUDED.kanton,
+            sprache   = EXCLUDED.sprache,
+            kategorie = EXCLUDED.kategorie,
+            satz      = EXCLUDED.satz,
+            typ       = EXCLUDED.typ
+        `);
+      } else {
+        if (l.osmId) {
+          await db.execute(sql`
+            INSERT INTO partner_leads
+              (quelle, osm_id, name, email, kanton, sprache, route, typ,
+               kategorie, satz, adresse, telefon, website, route_id, lat, lng, tier)
+            VALUES
+              (${l.quelle}, ${l.osmId}, ${l.name}, ${l.email ?? null},
+               ${l.kanton}, ${l.sprache}, ${l.route}, ${l.typ},
+               ${l.kategorie ?? null}, ${l.satz ?? null},
+               ${l.adresse ?? null}, ${l.telefon ?? null}, ${l.website ?? null},
+               ${l.routeId ?? null}, ${l.lat ?? null}, ${l.lng ?? null}, ${l.tier ?? null})
+            ON CONFLICT (quelle, osm_id) WHERE osm_id IS NOT NULL DO NOTHING
+          `);
+        } else {
+          await db.execute(sql`
+            INSERT INTO partner_leads
+              (quelle, osm_id, name, email, kanton, sprache, route, typ,
+               kategorie, satz, adresse, telefon, website, route_id, lat, lng, tier)
+            VALUES
+              (${l.quelle}, NULL, ${l.name}, ${l.email ?? null},
+               ${l.kanton}, ${l.sprache}, ${l.route}, ${l.typ},
+               ${l.kategorie ?? null}, ${l.satz ?? null},
+               ${l.adresse ?? null}, ${l.telefon ?? null}, ${l.website ?? null},
+               ${l.routeId ?? null}, ${l.lat ?? null}, ${l.lng ?? null}, ${l.tier ?? null})
+          `);
+        }
+      }
+      count++;
+    } catch { /* Duplikat oder Constraint → überspringen */ }
+  }
+  return count;
+}
 
 // ─── WP AJAX: Leads laden ────────────────────────────────────────────────────
 
@@ -216,8 +340,9 @@ export function buildEmailHtml(opts: {
   recipientEmail: string;
   campaignId:  string;
   apiBase:     string;
+  infoUrl?:    string;
 }): string {
-  const { bodyText, recipientEmail, campaignId, apiBase } = opts;
+  const { bodyText, recipientEmail, campaignId, apiBase, infoUrl } = opts;
   const { url: unsubUrl } = buildUnsubInfo(recipientEmail, campaignId, apiBase);
 
   // Zeilenumbrüche → <br>-Tags
@@ -268,6 +393,19 @@ export function buildEmailHtml(opts: {
       </div>
     </td>
   </tr>
+
+  <!-- INFO BUTTON -->
+  ${infoUrl ? `
+  <tr>
+    <td style="background:#ffffff;padding:4px 36px 24px;text-align:center">
+      <a href="${infoUrl}"
+         style="display:inline-block;padding:13px 32px;background:#CC0000;color:#ffffff;
+                text-decoration:none;border-radius:8px;font-weight:700;font-size:15px;
+                letter-spacing:.2px">
+        Info
+      </a>
+    </td>
+  </tr>` : ""}
 
   <!-- DIVIDER -->
   <tr>
@@ -326,7 +464,7 @@ export function buildEmailHtml(opts: {
 
 // ─── Vorschau-HTML (ohne echte Links) ────────────────────────────────────────
 
-export function buildPreviewHtml(bodyText: string, sampleLead: Partial<Lead>): string {
+export function buildPreviewHtml(bodyText: string, sampleLead: Partial<Lead>, infoUrl?: string): string {
   const resolved = resolveVars(bodyText, {
     name:    sampleLead.name    ?? "Muster Restaurant",
     email:   "preview@example.com",
@@ -341,6 +479,7 @@ export function buildPreviewHtml(bodyText: string, sampleLead: Partial<Lead>): s
     recipientEmail: "preview@example.com",
     campaignId: "preview",
     apiBase: "https://api.sagatrail.ch",
+    infoUrl,
   });
 }
 
@@ -381,6 +520,7 @@ export async function startCampaign(opts: {
   bodyText: string;
   leads:    Lead[];
   apiBase:  string;
+  infoUrl?: string;
 }): Promise<void> {
   if (campaignState.status === "running") return;
 
@@ -397,7 +537,7 @@ export async function startCampaign(opts: {
   campaignState.lastRecipient = null;
   campaignState.stopRequested = false;
 
-  runCampaign(campaignId, opts).catch((err) => {
+  runCampaign(campaignId, { ...opts }).catch((err) => {
     campaignState.status = "error";
     campaignState.error  = err instanceof Error ? err.message : String(err);
     campaignState.finishedAt = new Date();
@@ -409,8 +549,9 @@ async function runCampaign(campaignId: string, opts: {
   bodyText: string;
   leads:    Lead[];
   apiBase:  string;
+  infoUrl?: string;
 }): Promise<void> {
-  const { subject, bodyText, leads, apiBase } = opts;
+  const { subject, bodyText, leads, apiBase, infoUrl } = opts;
   // SMTP_FROM = verifizierte Absenderadresse (info@sagatrail.ch)
   // SMTP_USER = Brevo-Login (b35820001@smtp-brevo.com) – nur für Auth, nicht als From
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "info@sagatrail.ch";
@@ -460,7 +601,7 @@ async function runCampaign(campaignId: string, opts: {
 
       const resolvedText    = resolveVars(bodyText, lead);
       const resolvedSubject = resolveVars(subject, lead);
-      const html            = buildEmailHtml({ bodyText: resolvedText, recipientEmail: lead.email, campaignId, apiBase });
+      const html            = buildEmailHtml({ bodyText: resolvedText, recipientEmail: lead.email, campaignId, apiBase, infoUrl });
       const { url: unsubUrl } = buildUnsubInfo(lead.email, campaignId, apiBase);
       const unsubMailto     = `mailto:info@sagatrail.ch?subject=Abmelden%20${encodeURIComponent(lead.email)}`;
 

@@ -38,7 +38,8 @@ const server = app.listen(port, async (err) => {
   try {
     await db.execute(sql`
       ALTER TABLE partner_anfragen
-        ADD COLUMN IF NOT EXISTS typ text NOT NULL DEFAULT 'anfrage'
+        ADD COLUMN IF NOT EXISTS typ text NOT NULL DEFAULT 'anfrage',
+        ADD COLUMN IF NOT EXISTS vertrag_zurueck BOOLEAN NOT NULL DEFAULT FALSE
     `);
     logger.info("Schema-Migration: typ-Spalte sichergestellt");
   } catch (migErr) {
@@ -98,6 +99,48 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration partner_email_log fehlgeschlagen (nicht kritisch)");
   }
 
+  // Partner-Leads-Tabelle: zentrale Lead-Datenbank (ersetzt WP-MySQL).
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS partner_leads (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        quelle      TEXT        NOT NULL DEFAULT 'leads',
+        osm_id      TEXT,
+        name        TEXT        NOT NULL,
+        email       TEXT,
+        kanton      TEXT        NOT NULL DEFAULT '',
+        sprache     TEXT        NOT NULL DEFAULT 'DE',
+        route       TEXT        NOT NULL DEFAULT '',
+        typ         TEXT        NOT NULL DEFAULT '',
+        kategorie   TEXT,
+        satz        TEXT,
+        adresse     TEXT,
+        telefon     TEXT,
+        website     TEXT,
+        route_id    TEXT,
+        lat         REAL,
+        lng         REAL,
+        tier        TEXT,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_pl_quelle_osm
+        ON partner_leads(quelle, osm_id)
+        WHERE osm_id IS NOT NULL
+    `);
+    await db.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_pl_orgs_email
+        ON partner_leads(email)
+        WHERE quelle = 'orgs' AND email IS NOT NULL
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pl_kanton ON partner_leads(kanton)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_pl_quelle ON partner_leads(quelle)`);
+    logger.info("Schema-Migration: partner_leads sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration partner_leads fehlgeschlagen (nicht kritisch)");
+  }
+
   // Verbands-Tabelle: logo_url-Spalte (idempotent).
   try {
     await db.execute(sql`
@@ -107,6 +150,28 @@ const server = app.listen(port, async (err) => {
     logger.info("Schema-Migration: verbands.logo_url sichergestellt");
   } catch (migErr) {
     logger.warn({ err: migErr }, "Schema-Migration verbands.logo_url fehlgeschlagen (nicht kritisch)");
+  }
+
+  // verband_anfragen Tabelle anlegen (idempotent — fehlte bisher komplett).
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS verband_anfragen (
+        id                TEXT        PRIMARY KEY,
+        verband_name      TEXT        NOT NULL,
+        email             TEXT        NOT NULL,
+        kontakt_name      TEXT        NOT NULL,
+        kontakt_telefon   TEXT,
+        kantone           TEXT        NOT NULL,
+        status            TEXT        NOT NULL DEFAULT 'neu',
+        contract_sent_at  TIMESTAMPTZ,
+        notizen           TEXT,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    logger.info("Schema-Migration: verband_anfragen sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration verband_anfragen fehlgeschlagen (nicht kritisch)");
   }
 
   // Einmalig: aufgelöste Betreffs in partner_email_log auf Template-Form korrigieren

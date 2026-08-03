@@ -16,4 +16,5 @@ export * from "./verbandAnfragen";
 export * from "./verbands";
 export * from "./verbandTokens";
 export * from "./partnerEmailLog";
+export * from "./partnerLeads";
 export * from "./referrals";

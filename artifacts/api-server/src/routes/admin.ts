@@ -1,5 +1,6 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
 import { sendPartnerVertrag } from "../lib/partnerEmail";
+import { sendMagicLink } from "../lib/partnerWebhookHandler";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient } from "@clerk/express";
 import { desc, eq, or, ilike, isNotNull, isNull, inArray, notInArray, ne, sql, count, and, lt } from "drizzle-orm";
@@ -13,6 +14,7 @@ import {
   catalogSagasTable,
   externalRoutesTable,
   verbandsTable,
+  verbandAnfragenTable,
   storiesTable,
   type PartnerKategorie,
 } from "@workspace/db";
@@ -30,10 +32,13 @@ import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
 import {
-  fetchLeadsFromWp, fetchOrgsFromWp, campaignState, startCampaign, buildPreviewHtml,
+  fetchLeadsFromWp, fetchOrgsFromWp,
+  fetchLeadsFromDb, fetchOrgsFromDb, upsertLeadsToDb,
+  campaignState, startCampaign, buildPreviewHtml,
   makeUnsubToken, verifyUnsubToken,
+  type LeadRow,
 } from "../lib/leadMailer";
-import { partnerEmailLogTable, partnerEmailBlocklistTable } from "@workspace/db";
+import { partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -580,6 +585,13 @@ router.post("/admin/partner", async (req, res): Promise<void> => {
     .returning();
 
   req.log.info({ partnerId: row.id, name: row.name }, "Partner angelegt");
+
+  // Magic-Link ans Portal senden, falls E-Mail vorhanden
+  if (row.email) {
+    sendMagicLink(row.id, row.name, row.email)
+      .catch((err) => req.log.warn({ err, partnerId: row.id }, "Magic-Link senden fehlgeschlagen"));
+  }
+
   res.status(201).json(row);
 });
 
@@ -1129,27 +1141,122 @@ router.get("/admin/anfragen", async (req, res): Promise<void> => {
   }
 });
 
-const AnfrageStatusBody = z.object({
-  status: z.enum(["neu", "in_bearbeitung", "abgelehnt", "aktiv"]),
+const AnfrageUpdateBody = z.object({
+  status: z.enum(["neu", "in_bearbeitung", "abgelehnt", "aktiv"]).optional(),
+  vertragZurueck: z.boolean().optional(),
+});
+
+router.delete("/admin/anfragen/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const deleted = await db
+      .delete(partnerAnfragenTable)
+      .where(eq(partnerAnfragenTable.id, id))
+      .returning();
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Anfrage nicht gefunden" });
+      return;
+    }
+    res.json({ ok: true, deleted: id });
+  } catch (err) {
+    req.log.error({ err }, "Anfrage löschen fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
 });
 
 router.patch("/admin/anfragen/:id", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const { id } = req.params;
-  const parsed = AnfrageStatusBody.safeParse(req.body);
+  const parsed = AnfrageUpdateBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Ungültiger Status" });
+    res.status(400).json({ error: "Ungültige Daten" });
+    return;
+  }
+  const { status, vertragZurueck } = parsed.data;
+  if (status === undefined && vertragZurueck === undefined) {
+    res.status(400).json({ error: "Kein Feld zum Aktualisieren" });
     return;
   }
   try {
     await db
       .update(partnerAnfragenTable)
-      .set({ status: parsed.data.status, updatedAt: new Date() })
+      .set({
+        ...(status !== undefined && { status }),
+        ...(vertragZurueck !== undefined && { vertragZurueck }),
+        updatedAt: new Date(),
+      })
       .where(eq(partnerAnfragenTable.id, id));
     res.json({ ok: true });
   } catch (err) {
-    req.log.error({ err, id }, "Anfrage-Status-Update fehlgeschlagen");
+    req.log.error({ err, id }, "Anfrage-Update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// POST /admin/anfragen/:id/create-partner — Partner aus Anfrage anlegen + Magic-Link senden
+router.post("/admin/anfragen/:id/create-partner", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const [r] = await db
+      .select()
+      .from(partnerAnfragenTable)
+      .where(eq(partnerAnfragenTable.id, id))
+      .limit(1);
+    if (!r) { res.status(404).json({ error: "Anfrage nicht gefunden" }); return; }
+    if (r.status === "aktiv") {
+      res.status(409).json({ error: "Partner wurde bereits angelegt (Status: aktiv)" });
+      return;
+    }
+
+    // Partner mit gleicher E-Mail bereits vorhanden → nur Magic-Link senden
+    const [existing] = await db
+      .select()
+      .from(partnersTable)
+      .where(eq(partnersTable.email, r.kontaktEmail))
+      .limit(1);
+    if (existing) {
+      await sendMagicLink(existing.id, existing.name, r.kontaktEmail);
+      await db.update(partnerAnfragenTable)
+        .set({ status: "aktiv", updatedAt: new Date() })
+        .where(eq(partnerAnfragenTable.id, id));
+      req.log.info({ partnerId: existing.id, anfrageId: id }, "Partner existiert bereits — Magic-Link erneut gesendet");
+      res.json({ ok: true, partnerId: existing.id, note: "Magic-Link erneut gesendet" });
+      return;
+    }
+
+    const validKategorien = ["restaurant", "cafe", "souvenir", "uebernachtung", "sonstiges"] as const;
+    const kategorie = validKategorien.includes(r.kategorie as any)
+      ? (r.kategorie as typeof validKategorien[number])
+      : "sonstiges";
+
+    const partnerId = randomUUID();
+    await db.insert(partnersTable).values({
+      id: partnerId,
+      name: r.betriebsName,
+      email: r.kontaktEmail,
+      telefon: r.kontaktTelefon ?? null,
+      kategorie,
+      canton: r.canton,
+      beschreibung: r.beschreibung ?? null,
+      angebot: r.angebot ?? null,
+      paket: r.paket ?? null,
+      zahlungsstatus: "ausstehend",
+      isActive: true,
+      notizenIntern: JSON.stringify({ kontaktName: r.kontaktName }),
+    });
+
+    await sendMagicLink(partnerId, r.betriebsName, r.kontaktEmail);
+    await db.update(partnerAnfragenTable)
+      .set({ status: "aktiv", updatedAt: new Date() })
+      .where(eq(partnerAnfragenTable.id, id));
+
+    req.log.info({ partnerId, anfrageId: id, name: r.betriebsName }, "Partner aus Anfrage angelegt + Magic-Link gesendet");
+    res.status(201).json({ ok: true, partnerId });
+  } catch (err) {
+    req.log.error({ err, id }, "Partner aus Anfrage anlegen fehlgeschlagen");
+    res.status(500).json({ error: err instanceof Error ? err.message : "Interner Fehler" });
   }
 });
 
@@ -1168,17 +1275,27 @@ router.post("/admin/anfragen/:id/send-vertrag", async (req, res): Promise<void> 
       return;
     }
     const r = rows[0];
+
+    // Laufzeit aus dem Partner-Eintrag holen, falls bereits angelegt
+    const [partner] = await db
+      .select()
+      .from(partnersTable)
+      .where(eq(partnersTable.email, r.kontaktEmail))
+      .limit(1);
+
     await sendPartnerVertrag({
-      betriebsName:    r.betriebsName,
-      kontaktName:     r.kontaktName,
-      kontaktEmail:    r.kontaktEmail,
-      kontaktTelefon:  r.kontaktTelefon,
-      kategorie:       r.kategorie,
-      canton:          r.canton,
-      adresse:         r.adresse,
-      plz:             r.plz,
-      ort:             r.ort,
-      paket:           (r.paket as "basic" | "standard" | "premium") ?? "standard",
+      betriebsName:       r.betriebsName,
+      kontaktName:        r.kontaktName,
+      kontaktEmail:       r.kontaktEmail,
+      kontaktTelefon:     r.kontaktTelefon,
+      kategorie:          r.kategorie,
+      canton:             r.canton,
+      adresse:            r.adresse,
+      plz:                r.plz,
+      ort:                r.ort,
+      paket:              (r.paket as "basic" | "standard" | "premium") ?? "standard",
+      laufzeitStart:      partner?.laufzeitStart ?? null,
+      laufzeitEnde:       partner?.laufzeitEnde ?? null,
     });
     // Status auf in_bearbeitung setzen falls noch neu
     if (r.status === "neu") {
@@ -1548,6 +1665,72 @@ router.post("/admin/partner-leads/wp-book", async (req, res): Promise<void> => {
   }
 });
 
+// POST /admin/partner-leads/pg-save-one — einzelnen OSM-Lead in Postgres speichern
+router.post("/admin/partner-leads/pg-save-one", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const lead = req.body?.lead;
+  if (!lead?.name) { res.status(400).json({ error: "lead.name fehlt" }); return; }
+  try {
+    const rows: LeadRow[] = [{
+      quelle:    "osm" as const,
+      osmId:     lead.osmId    ?? null,
+      name:      lead.name,
+      email:     lead.email    ?? null,
+      kanton:    lead.kanton   ?? "",
+      sprache:   lead.sprache  ?? "DE",
+      route:     lead.route    ?? "",
+      routeId:   lead.routeId  ?? null,
+      typ:       lead.typ      ?? "",
+      kategorie: lead.kategorie ?? null,
+      adresse:   lead.adresse  ?? null,
+      telefon:   lead.telefon  ?? null,
+      website:   lead.website  ?? null,
+      lat:       lead.lat      ?? null,
+      lng:       lead.lng      ?? null,
+      tier:      lead.tier     ?? null,
+    }];
+    const saved = await upsertLeadsToDb(rows);
+    res.json({ ok: true, saved });
+  } catch (err) {
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
+  }
+});
+
+// POST /admin/partner-leads/pg-save-all — alle OSM-Preview-Leads direkt in Postgres speichern
+router.post("/admin/partner-leads/pg-save-all", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (jobState.status !== "done" || !jobState.preview?.length) {
+    res.status(400).json({ error: "Kein abgeschlossener Export vorhanden" }); return;
+  }
+
+  const rows: LeadRow[] = jobState.preview.map((l) => ({
+    quelle:    "osm" as const,
+    osmId:     l.osmId    ?? null,
+    name:      l.name,
+    email:     l.email    ?? null,
+    kanton:    l.kanton,
+    sprache:   l.sprache,
+    route:     l.route,
+    routeId:   l.routeId  ?? null,
+    typ:       l.typ,
+    kategorie: l.kategorie ?? null,
+    adresse:   l.adresse,
+    telefon:   l.telefon,
+    website:   l.website,
+    lat:       l.lat      ?? null,
+    lng:       l.lng      ?? null,
+    tier:      l.tier     ?? null,
+  }));
+
+  try {
+    const saved = await upsertLeadsToDb(rows);
+    req.log.info({ saved }, "OSM-Leads in Postgres gespeichert");
+    res.json({ ok: true, saved });
+  } catch (err) {
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
+  }
+});
+
 // POST /admin/partner-leads/wp-book-all — alle Preview-Leads in WP einbuchen (Batch)
 router.post("/admin/partner-leads/wp-book-all", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -1668,6 +1851,42 @@ const VerbandBody = z.object({
   kantone:        z.string().min(1),
   isActive:       z.boolean().default(true),
   notizen:        z.string().optional(),
+});
+
+router.get("/admin/verband-anfragen", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db.select().from(verbandAnfragenTable).orderBy(desc(verbandAnfragenTable.createdAt));
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Verband-Anfragen laden fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+router.patch("/admin/verband-anfragen/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  const parsed = z.object({
+    status:  z.enum(["neu", "in_bearbeitung", "aktiv", "abgelehnt"]).optional(),
+    notizen: z.string().optional(),
+  }).safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "Ungültige Daten" }); return; }
+  const { status, notizen } = parsed.data;
+  if (status === undefined && notizen === undefined) { res.status(400).json({ error: "Kein Feld angegeben" }); return; }
+  try {
+    await db.update(verbandAnfragenTable)
+      .set({
+        ...(status  !== undefined && { status }),
+        ...(notizen !== undefined && { notizen }),
+        updatedAt: new Date(),
+      })
+      .where(eq(verbandAnfragenTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err, id }, "Verband-Anfrage Update fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
 });
 
 router.get("/admin/verbande", async (req, res): Promise<void> => {
@@ -1811,34 +2030,32 @@ router.delete("/admin/verbande/:id", async (req, res): Promise<void> => {
 const WP_AJAX = () => process.env.WP_AJAX_URL ?? "";
 const WP_SECRET = () => process.env.WP_HOOK_SECRET ?? "";
 
-// GET /admin/leads/meta – Typen, Kantone, Sprachen für Dropdowns
+// GET /admin/leads/meta – Typen, Kantone, Sprachen für Dropdowns (aus Postgres)
 router.get("/admin/leads/meta", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const wpUrl = WP_AJAX();
-  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   try {
-    const form = new URLSearchParams({ action: "sagatrail_leads_meta", hook_secret: WP_SECRET() });
-    const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
-    const json = await r.json() as { success: boolean; data?: unknown };
-    if (!json.success) throw new Error("WP Fehler");
-    res.json(json.data);
+    const [typenRows, kantoneRows] = await Promise.all([
+      db.execute(sql`SELECT DISTINCT typ FROM partner_leads WHERE quelle = 'leads' AND typ != '' ORDER BY typ`),
+      db.execute(sql`SELECT DISTINCT kanton FROM partner_leads WHERE quelle = 'leads' AND kanton != '' ORDER BY kanton`),
+    ]);
+    const typen   = (typenRows.rows   as Array<{typ: string}>).map(r => r.typ);
+    const kantone = (kantoneRows.rows as Array<{kanton: string}>).map(r => r.kanton);
+    res.json({ typen, kantone });
   } catch (err) {
-    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
   }
 });
 
-// GET /admin/leads/list?typ=&kantone=ZH,BE&sprache= – gefilterte Leads
+// GET /admin/leads/list?typ=&kantone=ZH,BE&sprache= – gefilterte Leads (aus Postgres)
 router.get("/admin/leads/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const wpUrl = WP_AJAX();
-  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   const { typ, kategorie, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
   const kantone = kantoneStr ? kantoneStr.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
   try {
-    const leads = await fetchLeadsFromWp({ typ, kategorie, kanton, kantone, sprache }, wpUrl, WP_SECRET());
+    const leads = await fetchLeadsFromDb({ typ, kategorie, kanton, kantone, sprache });
     res.json({ leads, total: leads.length });
   } catch (err) {
-    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
   }
 });
 
@@ -1847,67 +2064,108 @@ router.post("/admin/leads/preview", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const { bodyText, sampleLead } = req.body ?? {};
   if (!bodyText) { res.status(400).json({ error: "bodyText fehlt" }); return; }
-  const html = buildPreviewHtml(String(bodyText), sampleLead ?? {});
+  const { _source } = (req.body ?? {}) as { _source?: string };
+  const previewInfoUrl = _source === "orgs"
+    ? "https://sagatrail.ch/tourismus-verbaende/"
+    : "https://sagatrail.ch/partner/";
+  const html = buildPreviewHtml(String(bodyText), sampleLead ?? {}, previewInfoUrl);
   res.type("html").send(html);
 });
 
-// POST /admin/leads/send – Kampagne starten
+// POST /admin/leads/send – Kampagne starten (Postgres als Quelle)
 router.post("/admin/leads/send", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   if (campaignState.status === "running") { res.status(409).json({ error: "Kampagne läuft bereits" }); return; }
   const { subject, bodyText, filters } = req.body ?? {};
   if (!subject || !bodyText) { res.status(400).json({ error: "subject und bodyText erforderlich" }); return; }
-  const wpUrl = WP_AJAX();
-  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   let leads;
   try {
     const f = filters ?? {};
+    const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
     if (f._source === "orgs") {
-      const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
-      leads = await fetchOrgsFromWp({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
+      leads = await fetchOrgsFromDb({ kategorie: f.kategorie, typ: f.typ, kanton: f.kanton, kantone, sprache: f.sprache });
     } else {
-      const kantone = Array.isArray(f.kantone) && f.kantone.length ? f.kantone : undefined;
-      leads = await fetchLeadsFromWp({ typ: f.typ, kategorie: f.kategorie, kanton: f.kanton, kantone, sprache: f.sprache }, wpUrl, WP_SECRET());
+      leads = await fetchLeadsFromDb({ typ: f.typ, kategorie: f.kategorie, kanton: f.kanton, kantone, sprache: f.sprache });
     }
   } catch (err) {
-    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") }); return;
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") }); return;
   }
   if (!leads.length) { res.status(400).json({ error: "Keine Empfänger mit diesen Filtern" }); return; }
   const proto = req.headers["x-forwarded-proto"] as string ?? req.protocol;
   const host  = req.get("host")!;
   const apiBase = `${proto}://${host}`;
-  await startCampaign({ subject, bodyText, leads, apiBase });
+  const infoUrl = (filters?._source === "orgs")
+    ? "https://sagatrail.ch/tourismus-verbaende/"
+    : "https://sagatrail.ch/partner/";
+  await startCampaign({ subject, bodyText, leads, apiBase, infoUrl });
   res.json({ ok: true, total: leads.length, campaignId: campaignState.campaignId });
 });
 
-// GET /admin/orgs/meta – Kategorien, Typen, Kantone aus organisationen-Tabelle
+// GET /admin/orgs/meta – Kategorien, Typen, Kantone (aus Postgres)
 router.get("/admin/orgs/meta", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const wpUrl = WP_AJAX();
-  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   try {
-    const form = new URLSearchParams({ action: "sagatrail_orgs_meta", hook_secret: WP_SECRET() });
-    const r = await fetch(wpUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form.toString(), signal: AbortSignal.timeout(10_000) });
-    const json = await r.json() as { success: boolean; data?: unknown };
-    if (!json.success) throw new Error("WP Fehler");
-    res.json(json.data);
+    const [katRows, kantonRows, spracheRows] = await Promise.all([
+      db.execute(sql`SELECT DISTINCT kategorie FROM partner_leads WHERE quelle = 'orgs' AND kategorie IS NOT NULL ORDER BY kategorie`),
+      db.execute(sql`SELECT DISTINCT kanton FROM partner_leads WHERE quelle = 'orgs' AND kanton != '' ORDER BY kanton`),
+      db.execute(sql`SELECT DISTINCT sprache FROM partner_leads WHERE quelle = 'orgs' AND sprache != '' ORDER BY sprache`),
+    ]);
+    const kategorien = (katRows.rows    as Array<{kategorie: string}>).map(r => r.kategorie);
+    const kantone    = (kantonRows.rows as Array<{kanton: string}>).map(r => r.kanton);
+    const sprachen   = (spracheRows.rows as Array<{sprache: string}>).map(r => r.sprache);
+    res.json({ kategorien, kantone, sprachen });
   } catch (err) {
-    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
   }
 });
 
-// GET /admin/orgs/list?kategorie=&typ=&kanton= – gefilterte Organisationen
+// GET /admin/orgs/list?kategorie=&typ=&kanton= – gefilterte Organisationen (aus Postgres)
 router.get("/admin/orgs/list", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
-  const wpUrl = WP_AJAX();
-  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
   const { kategorie, typ, kanton, kantone: kantoneStr, sprache } = req.query as Record<string, string>;
   const kantone = kantoneStr ? kantoneStr.split(",").map((k) => k.trim()).filter(Boolean) : undefined;
   try {
-    const leads = await fetchOrgsFromWp({ kategorie, typ, kanton, kantone, sprache }, wpUrl, WP_SECRET());
+    const leads = await fetchOrgsFromDb({ kategorie, typ, kanton, kantone, sprache });
     res.json({ leads, total: leads.length });
   } catch (err) {
-    res.status(502).json({ error: (err instanceof Error ? err.message : "WP nicht erreichbar") });
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
+  }
+});
+
+// POST /admin/leads/import-wp – Einmaliger Import aller WP-Leads + Orgs nach Postgres
+router.post("/admin/leads/import-wp", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const wpUrl = WP_AJAX();
+  if (!wpUrl) { res.status(503).json({ error: "WP_AJAX_URL nicht konfiguriert" }); return; }
+  try {
+    const [wpLeads, wpOrgs] = await Promise.all([
+      fetchLeadsFromWp({}, wpUrl, WP_SECRET()),
+      fetchOrgsFromWp({},  wpUrl, WP_SECRET()),
+    ]);
+
+    const leadRows: LeadRow[] = wpLeads.map((l) => ({
+      quelle: "leads" as const,
+      name: l.name, email: l.email, kanton: l.kanton, sprache: l.sprache,
+      route: l.route, typ: l.typ, satz: l.satz,
+      adresse: l.adresse, telefon: l.telefon, website: l.website,
+    }));
+    const orgRows: LeadRow[] = wpOrgs.map((o) => ({
+      quelle: "orgs" as const,
+      name: o.name, email: o.email, kanton: o.kanton, sprache: o.sprache,
+      route: o.route, typ: o.typ, satz: o.satz,
+      adresse: o.adresse, telefon: o.telefon, website: o.website,
+      kategorie: (o as any)._kategorie ?? o.typ,
+    }));
+
+    const [leadsImported, orgsImported] = await Promise.all([
+      upsertLeadsToDb(leadRows),
+      upsertLeadsToDb(orgRows),
+    ]);
+    req.log.info({ leadsImported, orgsImported }, "WP → Postgres Import abgeschlossen");
+    res.json({ ok: true, leadsImported, orgsImported, total: leadsImported + orgsImported });
+  } catch (err) {
+    req.log.error({ err }, "WP Import fehlgeschlagen");
+    res.status(502).json({ error: (err instanceof Error ? err.message : "Import fehlgeschlagen") });
   }
 });
 
