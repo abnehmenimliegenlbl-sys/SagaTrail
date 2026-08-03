@@ -106,18 +106,18 @@ a{color:var(--red);text-decoration:none}
 /* --- PUSH RESULT ROW --- */
 .push-result-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
 .push-result-row:last-child{border-bottom:none}
-/* --- PARTNER LOOKUP --- */
-#np-lookup-wrap{grid-column:1/-1;background:#f7f5f2;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:4px}
-#np-lookup-wrap label{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block}
-#np-lookup-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box}
-#np-lookup-input:focus{outline:none;border-color:var(--red)}
-#np-lookup-drop{position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:230px;overflow-y:auto;margin-top:3px}
+/* --- PARTNER / VERBAND LOOKUP --- */
+#np-lookup-wrap,#vb-lookup-wrap{grid-column:1/-1;background:#f7f5f2;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:4px}
+#np-lookup-wrap label,#vb-lookup-wrap label{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block}
+#np-lookup-input,#vb-lookup-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box}
+#np-lookup-input:focus,#vb-lookup-input:focus{outline:none;border-color:var(--red)}
+#np-lookup-drop,#vb-lookup-drop{position:absolute;top:100%;left:0;right:0;z-index:300;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:230px;overflow-y:auto;margin-top:3px}
 .lookup-row{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;line-height:1.4}
 .lookup-row:last-child{border-bottom:none}
 .lookup-row:hover{background:#f5f2ef}
 .lookup-row strong{color:var(--dark)}
 .lookup-row span{color:var(--mid);font-size:11px;margin-left:8px}
-#np-lookup-hint{font-size:11px;color:#888;margin-top:6px;display:block}
+#np-lookup-hint,#vb-lookup-hint{font-size:11px;color:#888;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -167,8 +167,16 @@ a{color:var(--red);text-decoration:none}
       <div id="vb-anfragen-body"><p class="loading">Wird geladen…</p></div>
     </div>
     <div class="card">
-      <h2>&#127956; Neuer Verband</h2>
+      <h2 id="vb-form-title">&#127956; Neuer Verband</h2>
       <div class="form-grid">
+        <div id="vb-lookup-wrap">
+          <label>Verband oder Anfrage suchen</label>
+          <div style="position:relative">
+            <input id="vb-lookup-input" type="text" placeholder="Name oder E-Mail eingeben&#x2026;" oninput="vbLookupDebounce(this.value)" autocomplete="off" />
+            <div id="vb-lookup-drop" style="display:none"></div>
+          </div>
+          <span id="vb-lookup-hint">Bestehenden Verband ausw&#228;hlen zum Bearbeiten, Anfrage ausw&#228;hlen zum Vorausf&#252;llen.</span>
+        </div>
         <div class="form-group"><label>Name *</label><input id="vb-name" type="text" placeholder="Graubünden Ferien"/></div>
         <div class="form-group"><label>E-Mail *</label><input id="vb-email" type="email" placeholder="info@verband.ch"/></div>
         <div class="form-group"><label>Ansprechpartner *</label><input id="vb-kontakt" type="text" placeholder="Vorname Nachname"/></div>
@@ -205,9 +213,9 @@ a{color:var(--red);text-decoration:none}
             <button type="button" class="kt-chip" onclick="vbToggleKt(this)" data-kt="Zürich">ZH</button>
           </div>
         </div>
-        <div class="form-group full"><label>Interne Notizen</label><input id="vb-notizen" type="text" placeholder="optional"/></div>
+        <div class="form-group full"><label>Geteilte Notizen</label><input id="vb-notizen" type="text" placeholder="optional"/></div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <div id="vb-action-bar" style="margin-top:12px;display:flex;gap:8px;align-items:center">
         <button class="btn btn-primary" onclick="createVerband()">Verband anlegen</button>
         <span id="vb-status" style="font-size:13px"></span>
       </div>
@@ -667,7 +675,7 @@ a{color:var(--red);text-decoration:none}
         <div class="form-group"><label>Zahlungsstatus</label>
           <select id="np-zstatus"><option value="ausstehend">Ausstehend</option><option value="bezahlt">Bezahlt</option><option value="mahnung1">Mahnung 1</option><option value="mahnung2">Mahnung 2</option><option value="gesperrt">Gesperrt</option></select>
         </div>
-        <div class="form-group full"><label>Interne Notizen</label><textarea id="np-notizen"></textarea></div>
+        <div class="form-group full"><label>Geteilte Notizen</label><textarea id="np-notizen"></textarea></div>
       </div>
       <div id="np-action-bar" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="createPartner()">Partner anlegen</button>
@@ -701,6 +709,7 @@ var _token = '';
 var _partner = [];
 var _anfragen = [];
 var _verbandAnfragen = [];
+var _verbande = [];
 var _routen = [];
 var _routenKantons = [];
 var _lookupResults = [];
@@ -876,6 +885,157 @@ async function loadUsage() {
   }
 }
 
+/* ===================== VERBAND LOOKUP ===================== */
+var _vbLookupTimer = null;
+var _vbLookupResults = [];
+var _editVerbandId = null;
+
+function vbLookupDebounce(val) {
+  clearTimeout(_vbLookupTimer);
+  var drop = document.getElementById('vb-lookup-drop');
+  if (val.length < 2) { drop.style.display = 'none'; return; }
+  _vbLookupTimer = setTimeout(function() { doVbLookup(val); }, 320);
+}
+
+async function doVbLookup(q) {
+  var drop = document.getElementById('vb-lookup-drop');
+  drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Suche&#x2026;</div>';
+  drop.style.display = '';
+  try {
+    var lq = q.toLowerCase();
+    var verbandRows = (_verbande || []).filter(function(v) {
+      return v.name.toLowerCase().includes(lq) || (v.email && v.email.toLowerCase().includes(lq));
+    });
+    var anfrageRows = (_verbandAnfragen || []).filter(function(a) {
+      return a.verbandName.toLowerCase().includes(lq) ||
+        (a.email && a.email.toLowerCase().includes(lq)) ||
+        (a.kontaktName && a.kontaktName.toLowerCase().includes(lq));
+    });
+    _vbLookupResults = verbandRows.map(function(v){ return { _type:'verband', _data:v }; })
+      .concat(anfrageRows.map(function(a){ return { _type:'anfrage', _data:a }; }));
+    if (!_vbLookupResults.length) {
+      drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--mid)">Kein Eintrag gefunden</div>';
+      return;
+    }
+    drop.innerHTML = _vbLookupResults.map(function(r, i) {
+      if (r._type === 'verband') {
+        var vv = r._data;
+        return '<div class="lookup-row" onclick="fillFromVbLookup(' + i + ')">' +
+          '<span class="badge badge-green" style="margin-right:5px;font-size:10px">Verband</span>' +
+          '<strong>' + esc(vv.name) + '</strong>' +
+          '<span>' + esc(vv.email || '') + (vv.kontaktName ? ' &middot; ' + esc(vv.kontaktName) : '') + '</span>' +
+          '</div>';
+      } else {
+        var a = r._data;
+        return '<div class="lookup-row" onclick="fillFromVbLookup(' + i + ')">' +
+          '<span class="badge badge-blue" style="margin-right:5px;font-size:10px">Anfrage</span>' +
+          '<strong>' + esc(a.verbandName) + '</strong>' +
+          '<span>' + esc(a.email) + (a.kontaktName ? ' &middot; ' + esc(a.kontaktName) : '') + '</span>' +
+          '</div>';
+      }
+    }).join('');
+  } catch(e) {
+    drop.innerHTML = '<div style="padding:9px 12px;font-size:12px;color:var(--red)">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+
+function fillFromVbLookup(idx) {
+  var r = _vbLookupResults[idx];
+  if (!r) return;
+  document.getElementById('vb-lookup-drop').style.display = 'none';
+  function sv(id, val) { var el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ''; }
+  if (r._type === 'verband') {
+    var vv = r._data;
+    sv('vb-name', vv.name);
+    sv('vb-email', vv.email);
+    sv('vb-kontakt', vv.kontaktName);
+    sv('vb-tel', vv.kontaktTelefon);
+    sv('vb-notizen', vv.notizen);
+    // Kantone setzen
+    vbResetKantone();
+    if (vv.kantone === 'alle') {
+      document.querySelector('#vb-kantone-picker .kt-alle').classList.add('active');
+    } else {
+      (vv.kantone || '').split(',').forEach(function(kt) {
+        kt = kt.trim();
+        var btn = document.querySelector('#vb-kantone-picker [data-kt="' + kt + '"]');
+        if (btn) btn.classList.add('active');
+      });
+    }
+    document.getElementById('vb-lookup-input').value = vv.name;
+    vbSetEditMode(vv.id, vv.name);
+  } else {
+    var a = r._data;
+    sv('vb-name', a.verbandName);
+    sv('vb-email', a.email);
+    sv('vb-kontakt', a.kontaktName);
+    sv('vb-tel', a.kontaktTelefon);
+    // Kantone setzen
+    vbResetKantone();
+    if (a.kantone === 'alle') {
+      document.querySelector('#vb-kantone-picker .kt-alle').classList.add('active');
+    } else {
+      (a.kantone || '').split(',').forEach(function(kt) {
+        kt = kt.trim();
+        var btn = document.querySelector('#vb-kantone-picker [data-kt="' + kt + '"]');
+        if (btn) btn.classList.add('active');
+      });
+    }
+    document.getElementById('vb-lookup-input').value = a.verbandName;
+    document.getElementById('vb-lookup-hint').innerHTML = '&#128203; Felder aus Anfrage von <strong>' + esc(a.verbandName) + '</strong> &#252;bernommen &ndash; wird als <strong>neuer</strong> Verband gespeichert.';
+    vbSetNewMode();
+  }
+}
+
+function vbSetEditMode(id, name) {
+  _editVerbandId = id;
+  document.getElementById('vb-form-title').textContent = 'Verband bearbeiten: ' + name;
+  document.getElementById('vb-lookup-hint').innerHTML = '&#9998; Bearbeitungsmodus &ndash; &#196;nderungen werden beim bestehenden Eintrag gespeichert.';
+  var bar = document.getElementById('vb-action-bar');
+  bar.innerHTML =
+    '<button class="btn btn-primary" onclick="saveVerbandFromForm()">Speichern</button>' +
+    '<button class="btn btn-ghost" onclick="vbSetNewMode()">+ Neu anlegen</button>' +
+    '<span id="vb-status" style="font-size:13px"></span>';
+}
+
+function vbSetNewMode() {
+  _editVerbandId = null;
+  document.getElementById('vb-form-title').textContent = '🏕 Neuer Verband';
+  document.getElementById('vb-lookup-input').value = '';
+  document.getElementById('vb-lookup-hint').textContent = 'Bestehenden Verband ausw\u00e4hlen zum Bearbeiten, Anfrage ausw\u00e4hlen zum Vorausf\u00fcllen.';
+  var bar = document.getElementById('vb-action-bar');
+  bar.innerHTML =
+    '<button class="btn btn-primary" onclick="createVerband()">Verband anlegen</button>' +
+    '<span id="vb-status" style="font-size:13px"></span>';
+}
+
+async function saveVerbandFromForm() {
+  var id = _editVerbandId;
+  if (!id) return;
+  var kantone = vbGetKantone();
+  var body = {
+    name:           document.getElementById('vb-name').value.trim(),
+    email:          document.getElementById('vb-email').value.trim() || undefined,
+    kontaktName:    document.getElementById('vb-kontakt').value.trim() || undefined,
+    kontaktTelefon: document.getElementById('vb-tel').value.trim() || undefined,
+    kantone:        kantone || undefined,
+    notizen:        document.getElementById('vb-notizen').value.trim() || undefined,
+  };
+  var st = document.getElementById('vb-status');
+  try {
+    await api('/api/admin/verbande/' + id, {method:'PATCH', body: JSON.stringify(body)});
+    st.textContent = '✓ Gespeichert';
+    st.style.color = 'var(--green)';
+    vbSetNewMode();
+    vbResetKantone();
+    ['vb-name','vb-email','vb-kontakt','vb-tel','vb-notizen'].forEach(function(eid){ document.getElementById(eid).value=''; });
+    await ladeVerbande();
+  } catch(e) {
+    st.textContent = e.message;
+    st.style.color = 'var(--red)';
+  }
+}
+
 /* ===================== PARTNER LOOKUP ===================== */
 var _lookupTimer = null;
 function lookupDebounce(val) {
@@ -1031,6 +1191,10 @@ async function deleteEditPartner() {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#np-lookup-wrap')) {
     document.getElementById('np-lookup-drop').style.display = 'none';
+  }
+  if (!e.target.closest('#vb-lookup-wrap')) {
+    var vbDrop = document.getElementById('vb-lookup-drop');
+    if (vbDrop) vbDrop.style.display = 'none';
   }
 });
 
@@ -1225,7 +1389,7 @@ function editFormHtml(p) {
     fg('Laufzeit Ende','<input id="ef-lende-'+p.id+'" value="'+le+'" type="date">') +
     '<span class="form-section-title">Buchhaltung</span>' +
     fg('Zahlungsstatus','<select id="ef-zstatus-'+p.id+'">' + zstatusOptions(p.zahlungsstatus||'ausstehend') + '</select>') +
-    fgFull('Interne Notizen','<textarea id="ef-notizen-'+p.id+'">'+esc(p.notizenIntern||'')+'</textarea>') +
+    fgFull('Geteilte Notizen','<textarea id="ef-notizen-'+p.id+'">'+esc(p.notizenIntern||'')+'</textarea>') +
     '</div>' +
     '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">' +
     '<button class="btn btn-primary" onclick="savePartner(&#39;'+p.id+'&#39;)">Speichern</button>' +
@@ -1960,11 +2124,32 @@ async function loadAnfragen() {
             {neu:'Neu',in_bearbeitung:'In Bearbeitung',abgelehnt:'Abgelehnt',aktiv:'Aktiv'}[s]+'</option>';
         }).join('');
 
-        // Schritt 1: Vertrag senden
+        // Schritt 1: Vertrag senden (mit Konditionen-Formular)
         var vertagtBereits = r.status !== 'neu';
-        var step1 = vertagtBereits
-          ? '<button class="btn btn-ghost btn-sm" onclick="sendAnfrageVertrag(\''+r.id+'\')" id="vbtn-'+r.id+'">&#128235; Erneut senden</button>'
-          : '<button class="btn btn-primary btn-sm" onclick="sendAnfrageVertrag(\''+r.id+'\')" id="vbtn-'+r.id+'">&#128235; Vertrag senden</button>';
+        var paketOpts = ['basic','standard','premium'].map(function(p){
+          var label = {basic:'Basic (CHF 99/J.)',standard:'Standard (CHF 199/J.)',premium:'Premium (CHF 499/J.)'}[p];
+          return '<option value="'+p+'"'+(r.paket===p?' selected':'')+'>'+label+'</option>';
+        }).join('');
+        var step1 =
+          '<div id="vf-'+r.id+'" style="display:none;background:#f7f5f2;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:none">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' +
+              '<div><label style="font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:3px">Paket</label>' +
+                '<select id="vf-paket-'+r.id+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit">'+paketOpts+'</select></div>' +
+              '<div><label style="font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:3px">Individueller Preis CHF/J.</label>' +
+                '<input id="vf-preis-'+r.id+'" type="number" min="0" value="'+(r.preisChf||'')+'" placeholder="Leer = Paket-Preis" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;box-sizing:border-box"></div>' +
+              '<div><label style="font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:3px">Laufzeit Start</label>' +
+                '<input id="vf-lstart-'+r.id+'" type="date" value="'+(r.laufzeitStart?r.laufzeitStart.split('T')[0]:'')+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;box-sizing:border-box"></div>' +
+              '<div><label style="font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:3px">Laufzeit Ende</label>' +
+                '<input id="vf-lende-'+r.id+'" type="date" value="'+(r.laufzeitEnde?r.laufzeitEnde.split('T')[0]:'')+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;box-sizing:border-box"></div>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px">' +
+              '<button class="btn btn-primary btn-sm" onclick="doSendAnfrageVertrag(\''+r.id+'\')">&#128235; Senden</button>' +
+              '<button class="btn btn-ghost btn-sm" onclick="toggleVertragForm(\''+r.id+'\')">Abbrechen</button>' +
+            '</div>' +
+          '</div>' +
+          '<button class="btn '+(vertagtBereits?'btn-ghost':'btn-primary')+' btn-sm" onclick="toggleVertragForm(\''+r.id+'\')" id="vbtn-'+r.id+'">' +
+            (vertagtBereits?'&#128235; Erneut senden':'&#128235; Vertrag senden') +
+          '</button>';
 
         // Schritt 2: Vertrag zurück Checkbox
         var step2 = '<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap">' +
@@ -2065,17 +2250,33 @@ async function toggleVertragZurueck(id, checked) {
   }
 }
 
-async function sendAnfrageVertrag(id) {
-  var btn = document.getElementById('vbtn-'+id);
+function toggleVertragForm(id) {
+  var form = document.getElementById('vf-' + id);
+  var btn  = document.getElementById('vbtn-' + id);
+  if (!form) return;
+  var isOpen = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.style.display = isOpen ? '' : 'none';
+}
+
+async function doSendAnfrageVertrag(id) {
   var r = _anfragen.find(function(a){ return a.id === id; });
   var name = r ? r.betriebsName : id;
-  if (!confirm('Partnervertrag (PDF) an \u00ab'+name+'\u00bb senden?')) return;
-  if (btn) { btn.disabled = true; btn.textContent = '\u23f3 Senden\u2026'; }
+  var paket   = (document.getElementById('vf-paket-'+id)||{}).value || 'standard';
+  var preisEl = document.getElementById('vf-preis-'+id);
+  var preisChf = preisEl && preisEl.value ? parseInt(preisEl.value) : undefined;
+  var lstart  = (document.getElementById('vf-lstart-'+id)||{}).value || undefined;
+  var lende   = (document.getElementById('vf-lende-'+id)||{}).value || undefined;
+  var sendBtn = document.querySelector('#vf-'+id+' .btn-primary');
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '\u23f3 Senden\u2026'; }
   try {
-    await api('/api/admin/anfragen/'+encodeURIComponent(id)+'/send-vertrag', { method: 'POST' });
+    await api('/api/admin/anfragen/'+encodeURIComponent(id)+'/send-vertrag', {
+      method: 'POST',
+      body: JSON.stringify({ paket: paket, preisChf: preisChf, laufzeitStart: lstart, laufzeitEnde: lende })
+    });
     await loadAnfragen();
   } catch(e) {
-    if (btn) { btn.disabled = false; }
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '\u{1F4EB} Senden'; }
     alert('Fehler: ' + e.message);
   }
 }
@@ -2162,6 +2363,7 @@ async function setVerbandAnfrageStatus(id, status) {
 async function ladeVerbande() {
   try {
     var rows = await api('/api/admin/verbande', {method:'GET'});
+    _verbande = rows;
     renderVerbande(rows);
   } catch(e) {
     document.getElementById('vb-liste').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
@@ -2206,7 +2408,7 @@ function verbandEditFormHtml(v) {
     fg('Ansprechpartner', '<input id="vef-kontakt-'+v.id+'" value="'+esc(v.kontaktName||'')+'" type="text">') +
     fg('Telefon', '<input id="vef-tel-'+v.id+'" value="'+esc(v.kontaktTelefon||'')+'" type="tel">') +
     '<div class="form-group full"><label>Kantone</label><div id="vef-kt-'+v.id+'" data-vef-id="'+v.id+'" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+ktChips+'</div></div>' +
-    '<div class="form-group full"><label>Notizen</label><textarea id="vef-notizen-'+v.id+'">'+esc(v.notizen||'')+'</textarea></div>' +
+    '<div class="form-group full"><label>Geteilte Notizen</label><textarea id="vef-notizen-'+v.id+'">'+esc(v.notizen||'')+'</textarea></div>' +
     '</div>' +
     '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">' +
     '<button class="btn btn-primary" onclick="saveVerband(&apos;'+v.id+'&apos;)">Speichern</button>' +

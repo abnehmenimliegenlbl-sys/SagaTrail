@@ -43,6 +43,8 @@ export interface PartnerAnfrageEmailData {
   abrechnungsperiode?: "jaehrlich" | "monatlich";
   laufzeitStart?:     Date | null;
   laufzeitEnde?:      Date | null;
+  /** Individueller Preis überschreibt den Paket-Standardpreis im PDF */
+  preisChfOverride?:  number | null;
 }
 
 // ── Paket-Details ─────────────────────────────────────────────────────────────
@@ -305,8 +307,10 @@ export async function generatePartnerVertragPdf(
     const datum        = heute();
     const datumKurz    = heuteKurz();
     const paketInfo    = PAKET_INFO[data.paket] ?? PAKET_INFO.standard;
-    const preis        = data.abrechnungsperiode === "monatlich" ? paketInfo.preisMonat : paketInfo.preisJahr;
     const monatlich    = data.abrechnungsperiode === "monatlich";
+    const preis        = data.preisChfOverride != null
+      ? `CHF ${data.preisChfOverride} / Jahr`
+      : (monatlich ? paketInfo.preisMonat : paketInfo.preisJahr);
     const laufzeitStartStr = data.laufzeitStart
       ? data.laufzeitStart.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
       : null;

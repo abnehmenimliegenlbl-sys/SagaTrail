@@ -1242,6 +1242,9 @@ router.post("/admin/anfragen/:id/create-partner", async (req, res): Promise<void
       beschreibung: r.beschreibung ?? null,
       angebot: r.angebot ?? null,
       paket: r.paket ?? null,
+      preisChf: r.preisChf ?? null,
+      laufzeitStart: r.laufzeitStart ?? null,
+      laufzeitEnde: r.laufzeitEnde ?? null,
       zahlungsstatus: "ausstehend",
       isActive: true,
       notizenIntern: JSON.stringify({ kontaktName: r.kontaktName }),
@@ -1276,35 +1279,47 @@ router.post("/admin/anfragen/:id/send-vertrag", async (req, res): Promise<void> 
     }
     const r = rows[0];
 
-    // Laufzeit aus dem Partner-Eintrag holen, falls bereits angelegt
-    const [partner] = await db
-      .select()
-      .from(partnersTable)
-      .where(eq(partnersTable.email, r.kontaktEmail))
-      .limit(1);
+    // Konditionen aus Body übernehmen (überschreiben Anfrage-Defaults)
+    const body = req.body as {
+      paket?: string;
+      preisChf?: number;
+      laufzeitStart?: string;
+      laufzeitEnde?: string;
+    };
+    const paket = (body.paket ?? r.paket ?? "standard") as "basic" | "standard" | "premium";
+    const preisChf = body.preisChf != null ? Number(body.preisChf) : (r.preisChf ?? null);
+    const laufzeitStart = body.laufzeitStart ? new Date(body.laufzeitStart) : (r.laufzeitStart ?? null);
+    const laufzeitEnde  = body.laufzeitEnde  ? new Date(body.laufzeitEnde)  : (r.laufzeitEnde  ?? null);
+
+    // Konditionen zurück in Anfrage speichern (für späteres create-partner)
+    await db.update(partnerAnfragenTable)
+      .set({
+        paket,
+        preisChf:      preisChf ?? undefined,
+        laufzeitStart: laufzeitStart ?? undefined,
+        laufzeitEnde:  laufzeitEnde  ?? undefined,
+        status:        r.status === "neu" ? "in_bearbeitung" : r.status,
+        updatedAt:     new Date(),
+      })
+      .where(eq(partnerAnfragenTable.id, id));
 
     await sendPartnerVertrag({
-      betriebsName:       r.betriebsName,
-      kontaktName:        r.kontaktName,
-      kontaktEmail:       r.kontaktEmail,
-      kontaktTelefon:     r.kontaktTelefon,
-      kategorie:          r.kategorie,
-      canton:             r.canton,
-      adresse:            r.adresse,
-      plz:                r.plz,
-      ort:                r.ort,
-      paket:              (r.paket as "basic" | "standard" | "premium") ?? "standard",
-      laufzeitStart:      partner?.laufzeitStart ?? null,
-      laufzeitEnde:       partner?.laufzeitEnde ?? null,
+      betriebsName:      r.betriebsName,
+      kontaktName:       r.kontaktName,
+      kontaktEmail:      r.kontaktEmail,
+      kontaktTelefon:    r.kontaktTelefon,
+      kategorie:         r.kategorie,
+      canton:            r.canton,
+      adresse:           r.adresse,
+      plz:               r.plz,
+      ort:               r.ort,
+      paket,
+      laufzeitStart,
+      laufzeitEnde,
+      preisChfOverride:  preisChf,
     });
-    // Status auf in_bearbeitung setzen falls noch neu
-    if (r.status === "neu") {
-      await db
-        .update(partnerAnfragenTable)
-        .set({ status: "in_bearbeitung", updatedAt: new Date() })
-        .where(eq(partnerAnfragenTable.id, id));
-    }
-    req.log.info({ id, email: r.kontaktEmail }, "Partner-Vertrag gesendet");
+
+    req.log.info({ id, email: r.kontaktEmail, paket, preisChf }, "Partner-Vertrag gesendet");
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err, id }, "Partner-Vertrag senden fehlgeschlagen");

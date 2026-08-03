@@ -141,6 +141,16 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: migErr }, "Schema-Migration partner_leads fehlgeschlagen (nicht kritisch)");
   }
 
+  // partner_anfragen: Vertrag-Konditionen-Spalten (idempotent).
+  try {
+    await db.execute(sql`ALTER TABLE partner_anfragen ADD COLUMN IF NOT EXISTS preis_chf INTEGER`);
+    await db.execute(sql`ALTER TABLE partner_anfragen ADD COLUMN IF NOT EXISTS laufzeit_start TIMESTAMPTZ`);
+    await db.execute(sql`ALTER TABLE partner_anfragen ADD COLUMN IF NOT EXISTS laufzeit_ende TIMESTAMPTZ`);
+    logger.info("Schema-Migration: partner_anfragen Vertrag-Spalten sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration partner_anfragen Vertrag-Spalten fehlgeschlagen (nicht kritisch)");
+  }
+
   // Verbands-Tabelle: logo_url-Spalte (idempotent).
   try {
     await db.execute(sql`

@@ -1,5 +1,6 @@
 import {
   boolean,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -45,6 +46,10 @@ export const partnerAnfragenTable = pgTable("partner_anfragen", {
   status:         text("status").$type<PartnerAnfrageStatus>().notNull().default("neu"),
   notizen:        text("notizen"),
   vertragZurueck: boolean("vertrag_zurueck").notNull().default(false),
+  // Vertrag-Konditionen (werden beim Vertrag-Senden gesetzt)
+  preisChf:                    integer("preis_chf"),
+  laufzeitStart:               timestamp("laufzeit_start", { withTimezone: true }),
+  laufzeitEnde:                timestamp("laufzeit_ende", { withTimezone: true }),
   createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
