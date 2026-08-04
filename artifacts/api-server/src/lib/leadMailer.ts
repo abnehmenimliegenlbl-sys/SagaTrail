@@ -69,6 +69,40 @@ export const campaignState: CampaignState = {
   stopRequested: false,
 };
 
+// ─── Kategorie Normalisierung ─────────────────────────────────────────────────
+
+/** Normalisiert alte Kategorienamen (F+B, Herberge …) auf neue einheitliche Namen. */
+export function normalizeKategorie(kat: string): string {
+  switch ((kat ?? "").trim()) {
+    case "F+B":       return "Gastronomie";
+    case "Herberge":  return "Unterkunft";
+    default:          return kat;
+  }
+}
+
+// ─── Typ → Kategorie Mapping ─────────────────────────────────────────────────
+
+/** Leitet die Kategorie aus dem menschenlesbaren typ-Label ab. */
+export function typToKategorie(typ: string): string {
+  const t = (typ ?? "").toLowerCase();
+  // Gastronomie
+  if (/restaurant|café|cafe|bar|pub|schnellimbiss|biergarten|imbiss|bistro|brasserie|pizzeria|trattoria|taverne/.test(t))
+    return "Gastronomie";
+  // Unterkunft
+  if (/hotel|hostel|pension|berghütte|berghuette|chalet|motel|wilderness|herberge|unterkunft|b&b|bed|apartment|ferienwohnung|camping|zeltplatz/.test(t))
+    return "Unterkunft";
+  // Transport
+  if (/seilbahn|gondelbahn|sessellift|skilift|bergbahn|luftseilbahn|standseilbahn|zahnradbahn|aerialway|cable|gondola|chairlift/.test(t))
+    return "Transport";
+  // Ausrüstung
+  if (/outdoor|sport|ski|souvenir|souvenirs|laden|shop|geschäft|ausrüstung/.test(t))
+    return "Ausrüstung";
+  // Attraktion
+  if (/aussichtspunkt|museum|sehenswürdigkeit|freizeitpark|galerie|schutzhütte|schutzhütte|viewpoint|attraction|galerie|kunstgalerie/.test(t))
+    return "Attraktion";
+  return "Sonstiges";
+}
+
 // ─── PostgreSQL: Leads laden + upserten ──────────────────────────────────────
 
 export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
@@ -80,7 +114,7 @@ export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
 
   let rows = await db.select().from(partnerLeadsTable).where(and(...conds));
   if (filter.kantone?.length)  rows = rows.filter((r) => filter.kantone!.includes(r.kanton));
-  if (filter.kategorie)        rows = rows.filter((r) => r.kategorie === filter.kategorie);
+  if (filter.kategorie)        rows = rows.filter((r) => (normalizeKategorie(r.kategorie ?? "") || typToKategorie(r.typ ?? "")) === filter.kategorie);
 
   return rows.map((r) => ({
     name:    r.name,        email:   r.email    ?? "",
@@ -295,7 +329,7 @@ export async function fetchLeadsFromWp(
       sprache:   r.sprache   ?? "DE",
       route:     r.route     ?? "",
       typ:       r.typ       ?? "",
-      kategorie: r.kategorie ?? "",   // "F+B" | "Herberge"
+      kategorie: normalizeKategorie(r.kategorie ?? ""),
       satz:      r.satz      ?? r.anschreiben_satz ?? "",
       adresse:   r.adresse   ?? "",
       telefon:   r.telefon   ?? "",

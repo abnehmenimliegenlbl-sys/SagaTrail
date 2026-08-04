@@ -448,13 +448,13 @@ a{color:var(--red);text-decoration:none}
         <div class="form-group" style="min-width:160px">
           <label>Kategorie</label>
           <div style="display:flex;gap:5px;margin-top:3px">
-            <button type="button" id="km-kat-alle"    class="kt-chip kt-alle active" onclick="kmSetKat('')"        style="padding:4px 10px">Alle</button>
-            <button type="button" id="km-kat-fnb"       class="kt-chip" onclick="kmSetKat('F+B')"        style="padding:4px 10px">🍽 F+B</button>
-            <button type="button" id="km-kat-herberg"  class="kt-chip" onclick="kmSetKat('Herberge')"   style="padding:4px 10px">🏨 Herberge</button>
-            <button type="button" id="km-kat-transport" class="kt-chip" onclick="kmSetKat('Transport')"  style="padding:4px 10px">🚡 Transport</button>
-            <button type="button" id="km-kat-ausrst"   class="kt-chip" onclick="kmSetKat('Ausrüstung')" style="padding:4px 10px">🎒 Ausrüstung</button>
-            <button type="button" id="km-kat-attrakt"  class="kt-chip" onclick="kmSetKat('Attraktion')" style="padding:4px 10px">🏔 Attraktion</button>
-            <button type="button" id="km-kat-sonst"    class="kt-chip" onclick="kmSetKat('Sonstiges')"  style="padding:4px 10px">📦 Sonstiges</button>
+            <button type="button" id="km-kat-alle"      class="kt-chip kt-alle active" onclick="kmSetKat('')"           style="padding:4px 10px">Alle</button>
+            <button type="button" id="km-kat-gastro"   class="kt-chip" onclick="kmSetKat('Gastronomie')"  style="padding:4px 10px">🍽 Gastronomie</button>
+            <button type="button" id="km-kat-unterkunft" class="kt-chip" onclick="kmSetKat('Unterkunft')" style="padding:4px 10px">🏨 Unterkunft</button>
+            <button type="button" id="km-kat-transport" class="kt-chip" onclick="kmSetKat('Transport')"   style="padding:4px 10px">🚡 Transport</button>
+            <button type="button" id="km-kat-ausrst"   class="kt-chip" onclick="kmSetKat('Ausrüstung')"  style="padding:4px 10px">🎒 Ausrüstung</button>
+            <button type="button" id="km-kat-attrakt"  class="kt-chip" onclick="kmSetKat('Attraktion')"  style="padding:4px 10px">🏔 Attraktion</button>
+            <button type="button" id="km-kat-sonst"    class="kt-chip" onclick="kmSetKat('Sonstiges')"   style="padding:4px 10px">📦 Sonstiges</button>
           </div>
         </div>
         <div class="form-group" style="min-width:140px">
@@ -2572,13 +2572,13 @@ var _kmKategorie = '';        // '' | 'F+B' | 'Herberge'
 function kmSetKat(kat) {
   _kmKategorie = kat;
   var chips = [
-    { id: 'km-kat-alle',      val: '' },
-    { id: 'km-kat-fnb',       val: 'F+B' },
-    { id: 'km-kat-herberg',   val: 'Herberge' },
-    { id: 'km-kat-transport', val: 'Transport' },
-    { id: 'km-kat-ausrst',    val: 'Ausrüstung' },
-    { id: 'km-kat-attrakt',   val: 'Attraktion' },
-    { id: 'km-kat-sonst',     val: 'Sonstiges' },
+    { id: 'km-kat-alle',       val: '' },
+    { id: 'km-kat-gastro',     val: 'Gastronomie' },
+    { id: 'km-kat-unterkunft', val: 'Unterkunft' },
+    { id: 'km-kat-transport',  val: 'Transport' },
+    { id: 'km-kat-ausrst',     val: 'Ausrüstung' },
+    { id: 'km-kat-attrakt',    val: 'Attraktion' },
+    { id: 'km-kat-sonst',      val: 'Sonstiges' },
   ];
   chips.forEach(function(c) {
     var el = document.getElementById(c.id);

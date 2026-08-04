@@ -35,18 +35,18 @@ export interface PartnerLead {
   quelle: "OSM" | "Google";
 }
 
-/** Leitet eine grobe Kategorie aus dem OSM-Typ ab. */
+/** Leitet eine Kategorie aus dem OSM-Typ ab. */
 function detectKategorie(tags: Record<string, string>): string {
   const am = tags.amenity ?? "";
   const sh = tags.shop ?? "";
   const to = tags.tourism ?? "";
   const ae = tags.aerialway ?? "";
   if (ae) return "Transport";
-  if (["restaurant", "cafe", "bar", "fast_food", "biergarten"].includes(am)) return "F+B";
-  if (["hotel", "hostel", "guest_house", "alpine_hut", "chalet"].includes(am) ||
-      ["hotel", "hostel", "guest_house", "alpine_hut"].includes(to)) return "Herberge";
-  if (["outdoor", "sports", "ski", "gift"].includes(sh)) return "Ausrüstung";
-  if (am === "shelter" || to === "viewpoint") return "Attraktion";
+  if (["restaurant", "cafe", "bar", "fast_food", "biergarten", "pub"].includes(am)) return "Gastronomie";
+  if (["hotel", "hostel", "guest_house", "alpine_hut", "chalet", "wilderness_hut", "motel"].includes(am) ||
+      ["hotel", "hostel", "guest_house", "alpine_hut", "wilderness_hut", "chalet"].includes(to)) return "Unterkunft";
+  if (["outdoor", "sports", "ski", "gift", "souvenir", "sport"].includes(sh)) return "Ausrüstung";
+  if (["shelter", "toilets"].includes(am) || ["viewpoint", "museum", "attraction", "theme_park", "gallery", "artwork"].includes(to)) return "Attraktion";
   return "Sonstiges";
 }
 
@@ -256,22 +256,38 @@ function osmTypLabel(tags: Record<string, string>): string {
   const t = tags.tourism;
   const aw = tags.aerialway;
   const sh = tags.shop;
+  // Gastronomie
   if (a === "restaurant") return "Restaurant";
   if (a === "cafe") return "Café";
+  if (a === "bar") return "Bar";
+  if (a === "pub") return "Pub";
+  if (a === "fast_food") return "Schnellimbiss";
+  if (a === "biergarten") return "Biergarten";
+  // Unterkunft
   if (t === "hotel") return "Hotel";
   if (t === "hostel") return "Hostel";
   if (t === "alpine_hut") return "Berghütte";
-  if (t === "wilderness_hut") return "Wilderness Hut";
+  if (t === "wilderness_hut") return "Berghütte";
   if (t === "guest_house") return "Pension";
-  // #28: Bergbahnen
+  if (t === "chalet") return "Chalet";
+  if (a === "motel") return "Motel";
+  // Transport
   if (aw === "cable_car") return "Seilbahn";
   if (aw === "gondola") return "Gondelbahn";
   if (aw === "chair_lift") return "Sessellift";
-  // #28: Outdoor-/Sportgeschäfte
+  if (aw === "drag_lift") return "Skilift";
+  // Ausrüstung
   if (sh === "outdoor") return "Outdoor-Shop";
-  if (sh === "sports") return "Sportgeschäft";
-  if (sh === "gift") return "Souvenirladen";
+  if (sh === "sports" || sh === "sport") return "Sportgeschäft";
+  if (sh === "gift" || sh === "souvenir") return "Souvenirladen";
   if (sh === "ski") return "Ski-Shop";
+  // Attraktion
+  if (t === "viewpoint") return "Aussichtspunkt";
+  if (t === "museum") return "Museum";
+  if (t === "attraction") return "Sehenswürdigkeit";
+  if (t === "theme_park") return "Freizeitpark";
+  if (t === "gallery") return "Galerie";
+  if (a === "shelter") return "Schutzhütte";
   return a ?? t ?? aw ?? sh ?? "Sonstiges";
 }
 

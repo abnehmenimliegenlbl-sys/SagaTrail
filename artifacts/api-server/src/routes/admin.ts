@@ -2224,6 +2224,7 @@ router.post("/admin/leads/import-wp", async (req, res): Promise<void> => {
       name: l.name, email: l.email, kanton: l.kanton, sprache: l.sprache,
       route: l.route, typ: l.typ, satz: l.satz,
       adresse: l.adresse, telefon: l.telefon, website: l.website,
+      kategorie: (l as any).kategorie ?? null,
       tier: (l as any).tier || undefined,
     }));
     const orgRows: LeadRow[] = wpOrgs.map((o) => ({
