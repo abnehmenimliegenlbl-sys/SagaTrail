@@ -7,7 +7,7 @@
 import nodemailer from "nodemailer";
 import { randomUUID, createHmac } from "node:crypto";
 import { db, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ilike } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export const campaignState: CampaignState = {
 export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
   const conds: ReturnType<typeof eq>[] = [eq(partnerLeadsTable.quelle, "leads") as any];
   if (filter.typ)     conds.push(eq(partnerLeadsTable.typ,     filter.typ)     as any);
-  if (filter.sprache) conds.push(eq(partnerLeadsTable.sprache, filter.sprache) as any);
+  if (filter.sprache) conds.push(ilike(partnerLeadsTable.sprache, filter.sprache) as any);
   if (!filter.kantone?.length && filter.kanton)
     conds.push(eq(partnerLeadsTable.kanton, filter.kanton) as any);
 

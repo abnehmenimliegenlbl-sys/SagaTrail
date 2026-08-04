@@ -52,6 +52,7 @@ a{color:var(--red);text-decoration:none}
 .badge-orange{background:#fef3e2;color:var(--orange)}
 .badge-yellow{background:#fefae0;color:var(--yellow)}
 .badge-gray{background:#f0eeeb;color:var(--mid)}
+.badge-gold{background:#fef9e0;color:#a07000}
 .badge-blue{background:#e8f0fc;color:var(--blue)}
 /* --- BUTTONS --- */
 .btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:opacity .15s}
@@ -466,12 +467,12 @@ a{color:var(--red);text-decoration:none}
         </div>
         <div class="form-group" style="min-width:120px">
           <label>Sprache</label>
-          <select id="km-sprache" onchange="kmSpracheChanged('leads')"
+          <select id="km-sprache" onchange="kmSpracheChanged('leads')">
             <option value="">Alle</option>
-            <option value="DE">DE – Deutsch</option>
-            <option value="FR">FR – Französisch</option>
-            <option value="IT">IT – Italienisch</option>
-            <option value="RM">RM – Rätoromanisch</option>
+            <option value="de">DE – Deutsch</option>
+            <option value="fr">FR – Französisch</option>
+            <option value="it">IT – Italienisch</option>
+            <option value="rm">RM – Rätoromanisch</option>
           </select>
         </div>
         <button class="btn btn-primary" onclick="kmLoadLeads()">&#128269; Aktualisieren</button>
@@ -846,6 +847,7 @@ async function loadOverview() {
       '<div class="stat-grid">' +
       statCard(s.users.total, 'Nutzer gesamt', s.users.freeHikeUsed + ' Gratis-Hike genutzt') +
       statCard(s.users.premium, 'Premium-Nutzer', premPct + '% aller Nutzer') +
+      statCard(s.users.elite || 0, 'Elite-Nutzer', '') +
       statCard(s.partners.active + ' / ' + s.partners.total, 'Aktive Partner', '') +
       statCard(s.hikes.total, 'Wanderungen', 'aus Nutzerprofilen') +
       '</div>' +
@@ -872,7 +874,11 @@ async function loadUsers() {
         '<td>' + esc(u.homeCanton) + '</td>' +
         '<td>' + esc(u.language) + '</td>' +
         '<td>' + esc(u.archetype) + '</td>' +
-        '<td>' + (u.premium ? '<span class="badge badge-green">Premium' + (u.premiumBis ? '<br><span style="font-size:10px;font-weight:400">' + fmtDate(u.premiumBis) + '</span>' : '') + '</span>' : '<span class="badge badge-gray">Free</span>') + '</td>' +
+        '<td>' + (u.premium
+          ? (u.subscriptionTier === 'elite' || u.subscriptionTier === 'elite_family'
+              ? '<span class="badge badge-gold">Elite' + (u.premiumBis ? '<br><span style="font-size:10px;font-weight:400">' + fmtDate(u.premiumBis) + '</span>' : '') + '</span>'
+              : '<span class="badge badge-green">Premium' + (u.premiumBis ? '<br><span style="font-size:10px;font-weight:400">' + fmtDate(u.premiumBis) + '</span>' : '') + '</span>')
+          : '<span class="badge badge-gray">Free</span>') + '</td>' +
         '<td style="text-align:center">' + u.hikeCount + '</td>' +
         '<td class="mono">' + fmtDate(u.createdAt) + '</td>' +
         '</tr>';
@@ -2573,10 +2579,10 @@ function kmSetKat(kat) {
 
 // Kantone die die jeweilige Sprache sprechen (amtliche Sprachregionen CH)
 var KM_SPRACHE_KANTONE = {
-  'DE': ['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden','Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Glarus','Graubünden','Luzern','Nidwalden','Obwalden','Schaffhausen','Schwyz','Solothurn','St. Gallen','Thurgau','Uri','Wallis','Zug','Zürich'],
-  'FR': ['Bern','Freiburg','Genf','Jura','Neuenburg','Waadt','Wallis'],
-  'IT': ['Graubünden','Tessin'],
-  'RM': ['Graubünden'],
+  'de': ['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden','Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Glarus','Graubünden','Luzern','Nidwalden','Obwalden','Schaffhausen','Schwyz','Solothurn','St. Gallen','Thurgau','Uri','Wallis','Zug','Zürich'],
+  'fr': ['Bern','Freiburg','Genf','Jura','Neuenburg','Waadt','Wallis'],
+  'it': ['Graubünden','Tessin'],
+  'rm': ['Graubünden'],
 };
 var KT_SHORT = {
   'Aargau':'AG','Appenzell Ausserrhoden':'AR','Appenzell Innerrhoden':'AI',

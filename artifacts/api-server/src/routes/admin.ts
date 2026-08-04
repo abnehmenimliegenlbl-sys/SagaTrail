@@ -419,7 +419,8 @@ router.get("/admin/stats", async (req, res): Promise<void> => {
   res.json({
     users: {
       total: allProfiles.length,
-      premium: allProfiles.filter((p) => istPremiumAktiv(p)).length,
+      premium: allProfiles.filter((p) => istPremiumAktiv(p) && !["elite","elite_family"].includes(p.subscriptionTier ?? "")).length,
+      elite:   allProfiles.filter((p) => istPremiumAktiv(p) &&  ["elite","elite_family"].includes(p.subscriptionTier ?? "")).length,
       freeHikeUsed: allProfiles.filter((p) => p.freeHikeUsed).length,
     },
     partners: {
@@ -449,6 +450,7 @@ router.get("/admin/users", async (req, res): Promise<void> => {
       archetype: p.archetype,
       premium: istPremiumAktiv(p),
       premiumBis: p.premiumBis,
+      subscriptionTier: p.subscriptionTier ?? "free",
       freeHikeUsed: p.freeHikeUsed,
       hikeCount: Array.isArray(p.hikeHistory) ? (p.hikeHistory as unknown[]).length : 0,
       createdAt: p.createdAt,
@@ -1966,8 +1968,8 @@ router.post("/admin/verbande", async (req, res): Promise<void> => {
       req.log.info({ userId, email: row.email }, "Verband: Clerk-User angelegt");
     }
 
-    // Premium für 10 Jahre (analog Apple-Test-Accounts)
-    const premiumBis = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3650);
+    // Premium für 6 Monate
+    const premiumBis = new Date(Date.now() + 1000 * 60 * 60 * 24 * 183);
     await db
       .insert(profilesTable)
       .values({
@@ -2062,7 +2064,27 @@ router.delete("/admin/verbande/:id", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   const [row] = await db.delete(verbandsTable).where(eq(verbandsTable.id, req.params.id as string)).returning();
   if (!row) { res.status(404).json({ error: "Verband nicht gefunden" }); return; }
-  res.status(204).end();
+
+  // Clerk-User + Profil per E-Mail suchen und löschen
+  let clerkGeloescht = false;
+  let profilGeloescht = false;
+  try {
+    const clerkUsers = await clerkClient.users.getUserList({ emailAddress: [row.email] });
+    if (clerkUsers.data.length > 0) {
+      const clerkUserId = clerkUsers.data[0].id;
+      await db.delete(profilesTable).where(eq(profilesTable.id, clerkUserId));
+      profilGeloescht = true;
+      await clerkClient.users.deleteUser(clerkUserId);
+      clerkGeloescht = true;
+      req.log.info({ verbandId: row.id, email: row.email, clerkUserId }, "Verband: Clerk-User + Profil gelöscht");
+    } else {
+      req.log.warn({ email: row.email }, "Verband: kein Clerk-User gefunden");
+    }
+  } catch (err) {
+    req.log.warn({ err, email: row.email }, "Verband: Clerk-User löschen fehlgeschlagen");
+  }
+
+  res.json({ ok: true, clerkGeloescht, profilGeloescht });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
