@@ -508,7 +508,7 @@ a{color:var(--red);text-decoration:none}
 
       <div id="km-leads-table" style="display:none">
         <table class="tbl" id="km-leads-tbl-el">
-          <thead id="km-leads-thead"><tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr></thead>
+          <thead id="km-leads-thead"><tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th><th></th></tr></thead>
           <tbody id="km-leads-tbody"></tbody>
         </table>
         <p id="km-leads-more" class="hint" style="margin-top:6px;display:none"></p>
@@ -2741,17 +2741,18 @@ async function kmLoadLeads() {
       if (kantone.length) params.set('kantone',  kantone.join(','));
       if (sprache)        params.set('sprache',  sprache);
       data = await api('/api/admin/leads/list?' + params.toString());
-      thead.innerHTML = '<tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th></tr>';
+      thead.innerHTML = '<tr><th>Name</th><th>E-Mail</th><th>Typ</th><th>Kanton</th><th>Sprache</th><th>Route</th><th></th></tr>';
     }
     var seen = {};
     _kmLeads = (data.leads || []).filter(function(l){ var e = (l.email||'').toLowerCase(); if (seen[e]) return false; seen[e]=true; return true; });
     countEl.textContent = _kmLeads.length + ' Empfänger (einmalige E-Mails)';
     var PREVIEW = 20;
     tbody.innerHTML = _kmLeads.slice(0, PREVIEW).map(function(l){
+      var delBtn = l.id ? '<button class="btn btn-ghost btn-sm" title="Löschen" onclick="kmDeleteLead(\''+l.id+'\',\''+esc(l.name)+'\')" style="color:#cc0000;padding:2px 6px">🗑</button>' : '';
       if (isOrgs) {
-        return '<tr><td>'+esc(l._org||l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l._kategorie||l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.satz||'')+'">'+esc(l.satz||'–')+'</td></tr>';
+        return '<tr><td>'+esc(l._org||l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l._kategorie||l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.satz||'')+'">'+esc(l.satz||'–')+'</td><td>'+delBtn+'</td></tr>';
       }
-      return '<tr><td>'+esc(l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(l.route)+'</td></tr>';
+      return '<tr><td>'+esc(l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(l.route)+'</td><td>'+delBtn+'</td></tr>';
     }).join('');
     var moreEl = document.getElementById('km-leads-more');
     if (_kmLeads.length > PREVIEW) {
@@ -2834,6 +2835,33 @@ async function kmStop() {
   } catch(e) {
     btn.disabled = false;
     btn.textContent = '⏹ Stopp';
+  }
+}
+
+async function kmDeleteLead(id, name) {
+  if (!confirm('Lead "' + name + '" wirklich löschen?')) return;
+  try {
+    await api('/api/admin/leads/' + encodeURIComponent(id), { method: 'DELETE' });
+    _kmLeads = _kmLeads.filter(function(l){ return l.id !== id; });
+    document.getElementById('km-leads-count').textContent = _kmLeads.length + ' Empfänger (einmalige E-Mails)';
+    var PREVIEW = 20;
+    var tbody = document.getElementById('km-leads-tbody');
+    if (tbody) {
+      var isOrgs = document.getElementById('km-source') && document.getElementById('km-source').value === 'orgs';
+      tbody.innerHTML = _kmLeads.slice(0, PREVIEW).map(function(l){
+        var delBtn = l.id ? '<button class="btn btn-ghost btn-sm" title="Löschen" onclick="kmDeleteLead(\''+l.id+'\',\''+esc(l.name)+'\')" style="color:#cc0000;padding:2px 6px">🗑</button>' : '';
+        if (isOrgs) {
+          return '<tr><td>'+esc(l._org||l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l._kategorie||l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(l.satz||'')+'">'+esc(l.satz||'–')+'</td><td>'+delBtn+'</td></tr>';
+        }
+        return '<tr><td>'+esc(l.name)+'</td><td class="mono">'+esc(l.email)+'</td><td>'+esc(l.typ)+'</td><td>'+esc(l.kanton)+'</td><td>'+esc(l.sprache)+'</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(l.route)+'</td><td>'+delBtn+'</td></tr>';
+      }).join('');
+    }
+    if (!_kmLeads.length) {
+      document.getElementById('km-leads-table').style.display = 'none';
+      document.getElementById('km-send-btn').disabled = true;
+    }
+  } catch(e) {
+    alert('Fehler beim Löschen: ' + e.message);
   }
 }
 

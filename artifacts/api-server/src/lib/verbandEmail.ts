@@ -141,8 +141,8 @@ const VBAND_DE: VerbandTexte = {
   ],
   s4Title: "4. Konditionen",
   s4Bullets: [
-    "Die Pilotpartnerschaft ist für den Verband vollständig kostenlos.",
-    "Keine laufenden Gebühren während der Pilotphase.",
+    "Die Pilotpartnerschaft und darüberhinausgehende Partnerschaften sind für den Verband vollständig kostenlos.",
+    "Keine laufenden Gebühren während der Pilotphase oder darüber hinaus.",
     "Kündigung jederzeit schriftlich per E-Mail an info@sagatrail.ch, wirksam mit Zugang der Erklärung.",
     "Nach 6 Monaten entscheiden beide Parteien gemeinsam über Weiterführung.",
   ],

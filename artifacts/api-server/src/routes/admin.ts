@@ -2196,6 +2196,20 @@ router.get("/admin/orgs/list", async (req, res): Promise<void> => {
   }
 });
 
+// DELETE /admin/leads/:id – Einzelnen Lead löschen
+router.delete("/admin/leads/:id", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  try {
+    const result = await db.execute(sql`DELETE FROM partner_leads WHERE id = ${id}::uuid`);
+    const deleted = (result as any).rowCount ?? 0;
+    if (!deleted) { res.status(404).json({ error: "Lead nicht gefunden" }); return; }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Fehler" });
+  }
+});
+
 // DELETE /admin/leads/all – Alle partner_leads leeren (vor sauberem Re-Import)
 router.delete("/admin/leads/all", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;

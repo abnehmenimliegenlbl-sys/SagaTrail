@@ -117,6 +117,7 @@ export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
   if (filter.kategorie)        rows = rows.filter((r) => (normalizeKategorie(r.kategorie ?? "") || typToKategorie(r.typ ?? "")) === filter.kategorie);
 
   return rows.map((r) => ({
+    id:      r.id,
     name:    r.name,        email:   r.email    ?? "",
     kanton:  r.kanton,      sprache: r.sprache,
     route:   r.route,       typ:     r.typ,
@@ -137,6 +138,7 @@ export async function fetchOrgsFromDb(filter: OrgFilter): Promise<Lead[]> {
   if (filter.kantone?.length) rows = rows.filter((r) => filter.kantone!.includes(r.kanton));
 
   return rows.map((r) => ({
+    id:      r.id,
     name:    r.name,        email:   r.email    ?? "",
     kanton:  r.kanton,      sprache: r.sprache,
     route:   r.route,       typ:     r.typ      ?? r.kategorie ?? "",
