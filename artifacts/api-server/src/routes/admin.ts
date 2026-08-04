@@ -2099,7 +2099,7 @@ router.get("/admin/leads/meta", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
     const [typenRows, kantoneRows] = await Promise.all([
-      db.execute(sql`SELECT DISTINCT typ FROM partner_leads WHERE quelle = 'leads' AND typ != '' ORDER BY typ`),
+      db.execute(sql`SELECT DISTINCT typ FROM partner_leads WHERE typ IS NOT NULL AND typ != '' ORDER BY typ`),
       db.execute(sql`SELECT DISTINCT kanton FROM partner_leads WHERE quelle = 'leads' AND kanton != '' ORDER BY kanton`),
     ]);
     const typen   = (typenRows.rows   as Array<{typ: string}>).map(r => r.typ);
