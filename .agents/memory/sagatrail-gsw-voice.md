@@ -3,12 +3,12 @@ name: SagaTrail gsw-Erzählstimme
 description: Entscheidung rund um Schweizerdeutsch-Text und ElevenLabs-Stimme für gsw
 ---
 
-Regel: Für gsw wird der Erzähltext als echtes **Schweizerdeutsch (Mundart)** generiert; die Schweizer ElevenLabs-Stimme (Heidi factual, kMdYHZK2wkocJnpZxE08) wird bevorzugt.
-**Why:** Nutzerentscheid 2026-07-24 — Dialekttext erwünscht, überschreibt Entscheid 2026-07-08 (damals Hochdeutsch).
-**How to apply:** `LANGUAGE_LABEL.gsw = "Schweizerdeutsch (Mundart)"` in storyGenerator.ts; Prompt enthält Dialekt-Schreibhinweise (isch/hät/nöd/…). Fallback-Kette bleibt: Schweizer-Stimme → Standardstimme → OpenAI (liest Mundarttext dann neutraler, aber verständlich).
+Regel: Für gsw wird der **geschriebene** Erzähltext als echtes Schweizerdeutsch (Mundart) generiert; **gesprochen** wird IMMER Hochdeutsch (DE-Stimme).
+**Why:** ElevenLabs kann kein Schweizerdeutsch sprechen. Nutzerentscheid 2026-08-04: geschriebene Texte dürfen Dialekt bleiben, aber alle TTS-Ausgaben auf Hochdeutsch umstellen.
+**How to apply:** `voiceCandidatesForLanguage` mappt `gsw → de` (DE-Stimme, kein Heidi). `synthesizeNarration` normalisiert gsw-Text weiterhin (hilft der DE-Stimme bei Mundartformen). `narrationLang` in hike/[id].tsx immer `gsw → "de"` (unabhängig von Provider). feedbackPack für gsw verwendet den DE-Pack + `useOpenAIForFeedback = true`.
 
-Constraint: ElevenLabs-Community-/Bibliotheks-Stimmen brauchen Bezahlplan (402 auf Gratis). Die gsw-Wunschstimme ist erster Kandidat und fällt bei 401/402/403/404 automatisch zurück — greift nach Plan-Upgrade ohne Codeänderung.
+Constraint: ElevenLabs-Community-/Bibliotheks-Stimmen brauchen Bezahlplan (402 auf Gratis). DE-Wunschstimme ist erster Kandidat und fällt bei 401/402/403/404 auf Standardstimme zurück.
 
-Push-Nachrichten: geschriebene gsw-Pushs werden ebenfalls als echte Mundart übersetzt (pushTranslator schliesst nur "de" aus). Nur die VORGELESENE Mundart via OpenAI-Stimme galt als künstlich — geschriebener Dialekt ist erwünscht.
+Push-Nachrichten: geschriebene gsw-Pushs bleiben echte Mundart (pushTranslator schliesst nur "de" aus).
 
-Cache-Invalidierung: `DELETE /api/admin/stories/gsw` (x-admin-token) löscht gecachte Hochdeutsch-gsw-Storys aus der DB, sodass neue als Mundart regeneriert werden.
+Cache-Invalidierung: `DELETE /api/admin/stories/gsw` (x-admin-token) löscht gecachte gsw-Storys aus der DB.

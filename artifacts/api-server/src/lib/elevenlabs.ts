@@ -46,10 +46,9 @@ const DE_NARRATOR_VOICE_ID =
 const MODEL_ID = "eleven_multilingual_v2";
 
 export function voiceCandidatesForLanguage(language: string | undefined): string[] {
-  if (language === "gsw" && GSW_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
-    return [GSW_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
-  }
-  if (language === "de" && DE_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
+  // gsw: spoken audio always uses the Hochdeutsch voice (ElevenLabs cannot speak Schweizerdeutsch)
+  const effectiveLang = language === "gsw" ? "de" : language;
+  if (effectiveLang === "de" && DE_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
     return [DE_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
   }
   return [DEFAULT_NARRATOR_VOICE_ID];
@@ -188,6 +187,7 @@ export async function synthesizeNarration(
   language: string | undefined,
   log: Logger,
 ): Promise<NarrationResult> {
+  // gsw spoken as Hochdeutsch: still normalize common dialect forms so the DE voice reads them cleanly
   const normalizedText = language === "gsw" ? normalisiereGswText(text) : text;
   // Ab hier wird normalizedText statt text verwendet.
   // eslint-disable-next-line no-param-reassign

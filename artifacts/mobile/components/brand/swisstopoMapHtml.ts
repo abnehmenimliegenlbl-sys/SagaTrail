@@ -121,15 +121,6 @@ export function buildSwisstopoHtml(
       rows += legendZeile('<div class="stt-start"></div>', legend.start);
     }
     rows += legendZeile('<div class="stt-live"></div>', legend.position);
-    rows += legendZeile('<span class="stt-linie-iwn"></span>', legend.wegInternational);
-    rows += legendZeile('<span class="stt-linie-nwn"></span>', legend.wegNational);
-    rows += legendZeile('<span class="stt-linie-rwn"></span>', legend.wegRegional);
-    rows += legendZeile('<span class="stt-linie-lwn"></span>', legend.wegLokal);
-    rows += legendZeile('<span class="stt-linie-mehrfach"></span>', legend.wegMehrfach);
-    rows += legendZeile('<span class="stt-schild stt-schild-gruen">2</span>', legend.nummerWanderland);
-    rows += legendZeile('<span class="stt-schild stt-schild-weiss">HW</span>', legend.nummerLokal);
-    rows += legendZeile('<span class="stt-schild stt-schild-weiss"><span class="stt-raute"></span></span>', legend.wegzeichen);
-    rows += legendZeile('<span class="stt-wegweiser"></span>', legend.wegweiser);
     if (aerialways && aerialways.length > 0) {
       rows += legendZeile('<span class="stt-linie-seilbahn"></span>', legend.seilbahn);
       rows += legendZeile('<div class="stt-seilbahn-station"></div>', legend.seilbahnStation);
@@ -338,17 +329,18 @@ ${legendHtml}
   /* ---- Karte bereit ---- */
   map.on('load', function () {
 
-    /* Carto Voyager — 2D und 3D-Basis */
+    /* OpenTopoMap — Höhenkurven + OSM-Stadtdetails, gute Balance Stadt/Land */
     map.addSource('carto', {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+        'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://c.tile.opentopomap.org/{z}/{x}/{y}.png'
       ],
       tileSize: 256,
-      attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap'
+      minzoom: 2,
+      maxzoom: 17,
+      attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
     map.addLayer({ id: 'base-carto', type: 'raster', source: 'carto' });
 
@@ -370,7 +362,7 @@ ${legendHtml}
       tileSize: 256,
       attribution: '&copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
     });
-    map.addLayer({ id: 'waymarked', type: 'raster', source: 'waymarked', paint: { 'raster-opacity': 0.85 } });
+    map.addLayer({ id: 'waymarked', type: 'raster', source: 'waymarked', paint: { 'raster-opacity': 0 } });
 
     /* AWS Terrain-DEM (Terrarium-Encoding) fuer 3D/Sat */
     map.addSource('terrain', {
@@ -381,7 +373,7 @@ ${legendHtml}
       maxzoom: 15
     });
     map.addLayer({ id: 'hillshade', type: 'hillshade', source: 'terrain',
-      paint: { 'hillshade-intensity': 0.35, 'hillshade-shadow-color': '#10181A', 'hillshade-highlight-color': '#F5F3EC' }
+      paint: { 'hillshade-intensity': 0.18, 'hillshade-shadow-color': '#10181A', 'hillshade-highlight-color': '#F5F3EC' }
     });
 
     /* ---- Zoom-gesteuerte Sichtbarkeit ---- */
