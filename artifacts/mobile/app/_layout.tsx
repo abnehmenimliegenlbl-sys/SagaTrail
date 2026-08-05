@@ -15,8 +15,14 @@ import {
   useFonts,
 } from "@expo-google-fonts/karla";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/expo";
-import { tokenCache } from "@clerk/expo/token-cache";
+import { ClerkProvider, useAuth } from "@clerk/expo";
+import {
+  clearKeychainOnFreshInstall,
+  clerkTokenCache,
+} from "@/lib/clerkAuth";
+
+// Sofort beim Modulload ausführen (vor ClerkProvider-Initialisierung).
+void clearKeychainOnFreshInstall();
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as Notifications from "expo-notifications";
@@ -86,6 +92,12 @@ const CLERK_PROXY_URL = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
   setAuthTokenGetter(() => getToken());
+  return <>{children}</>;
+}
+
+function ClerkGuard({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+  if (!isLoaded) return null;
   return <>{children}</>;
 }
 
@@ -195,9 +207,9 @@ export default function RootLayout() {
       <ClerkProvider
         publishableKey={CLERK_PUBLISHABLE_KEY}
         proxyUrl={CLERK_PROXY_URL}
-        tokenCache={tokenCache}
+        tokenCache={clerkTokenCache}
       >
-        <ClerkLoaded>
+        <ClerkGuard>
           <SafeAreaProvider>
             <ErrorBoundary>
               <QueryClientProvider client={queryClient}>
@@ -221,7 +233,7 @@ export default function RootLayout() {
               </QueryClientProvider>
             </ErrorBoundary>
           </SafeAreaProvider>
-        </ClerkLoaded>
+        </ClerkGuard>
       </ClerkProvider>
     </ErrorBoundary>
   );

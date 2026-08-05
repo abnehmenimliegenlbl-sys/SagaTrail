@@ -1836,8 +1836,8 @@ export default function LiveHike() {
         // ist, wird das alte gestoppt (Luecke < 100 ms statt 1-5 Sekunden).
         // Vorgeladene URI direkt nutzen (kein Netzwerk-Request noetig).
         const uri = opts?.preFetchedUri ?? await (async () => {
-          // gsw: TTS immer auf Hochdeutsch (ElevenLabs und OpenAI können kein Schweizerdeutsch sprechen)
-          const narrationLang = profile?.language === "gsw" ? "de" : profile?.language;
+          // gsw: Heidi-Stimme via gsw-language-Key; Text ist bereits Hochdeutsch (storyGenerator)
+          const narrationLang = profile?.language;
           const blob = await createNarration({ text, language: narrationLang, ...(opts?.useOpenAI ? { provider: "openai" as const } : {}) });
           return blobToTempFileUri(blob);
         })();
@@ -2295,11 +2295,10 @@ export default function LiveHike() {
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const ackPack = STORY_PACKS[resolveLang(cueLanguage)];
-      // feedbackText-Pack: gsw-Texte werden mit DE-Stimme gesprochen → DE-Pack verwenden
-      // damit Template-Saetze ebenfalls Hochdeutsch sind.
+      // feedbackPack: cueLanguage ist bereits gsw→de gemappt; DE-Template passt zu Hochdeutsch-Text
       const feedbackPack = STORY_PACKS[resolveLang(cueLanguage)];
       const feedbackText = feedbackPack.decisionFeedback(archetypeHint, gewaehlt ?? "");
-      const useOpenAIForFeedback = true;
+      const useOpenAIForFeedback = storyLanguage !== "gsw";
       // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
       // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).

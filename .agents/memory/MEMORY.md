@@ -27,6 +27,7 @@
 - [SagaTrail gsw voice](sagatrail-gsw-voice.md) — gsw narration text stays Hochdeutsch (user rejected dialect TTS); Swiss-accent library voice blocked on ElevenLabs free plan, auto-fallback wired.
 - [Public routers without API key](public-routers-no-key.md) — OSRM demo serves car-only regardless of URL profile; use FOSSGIS Valhalla pedestrian (polyline6 shapes) for foot routing.
 - [Clerk iOS SPM + CocoaPods build crash](clerk-ios-spm-cocoapods.md) — iOS EAS build with Clerk's SPM-linked SDK only works with `expo-build-properties` `useFrameworks: "static"` (dynamic triggers validator crashes).
+- [Clerk OTA Keychain Login-Block](clerk-ota-keychain.md) — nach OTA/Reinstall: AFTER_FIRST_UNLOCK nötig, kein zirkulärer Import aus _layout.tsx, kein Timeout-Auto-Clear; Utils in lib/clerkAuth.ts.
 - [Prod premium admin endpoint](prod-premium-admin.md) — prod DB is read-only from workspace; grant premium via ADMIN_TOKEN-protected /admin/premium after publish; self-upgrade deliberately blocked.
 - [Prod push URL + minutes recompute](sagatrail-prod-push.md) — PROD_URL=https://saga-trail.replit.app; push script recomputes minutes from distanceTagKm at push time (Naismith); schweizmobil-nwn/rwn parent routes get minutes fixed this way.
 - [SagaTrail group hike sync](sagatrail-group-hike-sync.md) — leader-only enforced server-side; non-fatal WS errors must not close the socket; late joiners resync via member-count rebroadcast.

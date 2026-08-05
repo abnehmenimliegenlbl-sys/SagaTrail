@@ -76,6 +76,7 @@ export interface CustomRoute {
   name: string;
   region: string;
   distanceKm: number;
+  distanceTagKm: number;
   ascentM: number;
   maxElevationM: number;
   season: ReturnType<typeof deriveSeason>;
@@ -150,12 +151,14 @@ export async function buildRouteFromPoints(
   );
   const shortLabel = (label: string) => label.split(",")[0]?.trim() || label;
 
+  const roundedDistanceKm = Math.round(distanceKm * 10) / 10;
   return {
     id: meta.id,
     sagaId: meta.id,
     name: meta.name ?? `${shortLabel(startPlace.label)} → ${shortLabel(endPlace.label)}`,
     region,
-    distanceKm: Math.round(distanceKm * 10) / 10,
+    distanceKm: roundedDistanceKm,
+    distanceTagKm: roundedDistanceKm,
     ascentM,
     maxElevationM,
     season: deriveSeason(maxElevationM, sacGrade),

@@ -7,16 +7,12 @@ import { synthesizeOpenAiNarrationWithPacing, splitIntoSentences } from "./narra
  * erste Wanderung nutzt bewusst die on-device Stimme (expo-speech) und ruft
  * diesen Client NIE auf.
  *
- * Schweizerdeutsch (gsw) wird als echte Mundart an die TTS geschickt
- * (Anthropic generiert Dialekttext). Vorrang hat die Schweizer ElevenLabs-
- * Stimme (Heidi factual); faellt ElevenLabs aus (Quota = 0, Plan-Sperre),
- * liest OpenAI den Mundarttext — klingt neutraler, bleibt aber verstaendlich.
+ * Alle Texte werden in Hochdeutsch generiert. Fuer gsw-Nutzer spricht
+ * die Schweizer Stimme "Heidi" (Schweizer Akzent, Hochdeutsch-Text).
  *
  * Wenn ELEVEN_LABS_API_KEY fehlt oder ALLE ElevenLabs-Stimmen scheitern
  * (z.B. Kontingent auf 0, Konto-Sperre), springt als letzte Stufe OpenAI
  * (gpt-audio ueber die Replit-AI-Integration, keine eigene Rechnung) ein.
- * Klingt neutraler/ohne Schweizer Akzent, haelt die Erzaehlung aber
- * hoerbar statt komplett auszufallen.
  */
 
 const ELEVEN_LABS_API_BASE = "https://api.elevenlabs.io/v1";
@@ -46,9 +42,11 @@ const DE_NARRATOR_VOICE_ID =
 const MODEL_ID = "eleven_multilingual_v2";
 
 export function voiceCandidatesForLanguage(language: string | undefined): string[] {
-  // gsw: spoken audio always uses the Hochdeutsch voice (ElevenLabs cannot speak Schweizerdeutsch)
-  const effectiveLang = language === "gsw" ? "de" : language;
-  if (effectiveLang === "de" && DE_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
+  // gsw: Heidi-Stimme (Schweizer Akzent), Text ist Hochdeutsch
+  if (language === "gsw" && GSW_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
+    return [GSW_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
+  }
+  if (language === "de" && DE_NARRATOR_VOICE_ID !== DEFAULT_NARRATOR_VOICE_ID) {
     return [DE_NARRATOR_VOICE_ID, DEFAULT_NARRATOR_VOICE_ID];
   }
   return [DEFAULT_NARRATOR_VOICE_ID];
@@ -81,36 +79,6 @@ export class ElevenLabsError extends Error {
 // Fuegt <break/>-SSML-Tags zwischen Saetzen ein, analog zur OpenAI-Pacing-
 // Logik (narrationPacing.ts): dramatische Saetze (Ausrufe, Ellipsen)
 // bekommen eine laengere Pause als normale Satzuebergaenge. ElevenLabs'
-/**
- * Normalisiert Schweizerdeutschen Text (gsw) vor der TTS-Synthese.
- *
- * ElevenLabs kennt keine gsw-Grammatik und liest Mundart-Kurzformen oft
- * falsch vor (z.B. "Dr" → "Doktor", "D'" → unklar). Diese Funktion
- * ersetzt die haeufigstes Problemmuster durch eine explizitere Form, die
- * das Modell phonetisch korrekt liest.
- *
- * Regeln:
- *   "Dr " / "dr " als Artikel (kein Punkt danach, vor Grossbuchstabe oder
- *   Kleinbuchstabe am Satzanfang) → "Der " / "der "
- *   "D'" / "d'" (weiblicher/neutraler Artikel vor Vokal) → "Di " / "di "
- *   "em " (Dativ-Artikel) → nicht angefasst (wird korrekt gelesen)
- *
- * Wichtig: "Dr." MIT Punkt bleibt unveraendert (= Doktor/Titel).
- */
-function normalisiereGswText(text: string): string {
-  return (
-    text
-      // "Dr " ohne Punkt davor → "Der " (Artikel, nicht Doktor)
-      // Positiver Lookahead: muss von Buchstabe gefolgt sein
-      .replace(/\bDr(?!\.) /g, "Der ")
-      .replace(/\bdr(?!\.) /g, "der ")
-      // "D'" / "d'" vor Vokal (weiblicher Artikel) → "Di " / "di "
-      .replace(/\bD'/g, "Di ")
-      .replace(/\bd'/g, "di ")
-      // "'s " (saechlicher Artikel) → "es " damit TTS nicht stolpert
-      .replace(/\b's /g, "es ")
-  );
-}
 
 // eleven_multilingual_v2 unterstuetzt <break time="Xs" />-Tags direkt im
 // Text.
@@ -187,11 +155,7 @@ export async function synthesizeNarration(
   language: string | undefined,
   log: Logger,
 ): Promise<NarrationResult> {
-  // gsw spoken as Hochdeutsch: still normalize common dialect forms so the DE voice reads them cleanly
-  const normalizedText = language === "gsw" ? normalisiereGswText(text) : text;
-  // Ab hier wird normalizedText statt text verwendet.
-  // eslint-disable-next-line no-param-reassign
-  text = normalizedText;
+  // Texte sind immer Hochdeutsch (auch fuer gsw-Nutzer), keine Dialekt-Normalisierung noetig.
 
   const apiKey = process.env.ELEVEN_LABS_API_KEY;
 

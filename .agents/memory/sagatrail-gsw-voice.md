@@ -3,12 +3,15 @@ name: SagaTrail gsw-Erzählstimme
 description: Entscheidung rund um Schweizerdeutsch-Text und ElevenLabs-Stimme für gsw
 ---
 
-Regel: Für gsw wird der **geschriebene** Erzähltext als echtes Schweizerdeutsch (Mundart) generiert; **gesprochen** wird IMMER Hochdeutsch (DE-Stimme).
-**Why:** ElevenLabs kann kein Schweizerdeutsch sprechen. Nutzerentscheid 2026-08-04: geschriebene Texte dürfen Dialekt bleiben, aber alle TTS-Ausgaben auf Hochdeutsch umstellen.
-**How to apply:** `voiceCandidatesForLanguage` mappt `gsw → de` (DE-Stimme, kein Heidi). `synthesizeNarration` normalisiert gsw-Text weiterhin (hilft der DE-Stimme bei Mundartformen). `narrationLang` in hike/[id].tsx immer `gsw → "de"` (unabhängig von Provider). feedbackPack für gsw verwendet den DE-Pack + `useOpenAIForFeedback = true`.
+Regel: gsw = **Heidi-Stimme** (Schweizer Akzent, GSW_NARRATOR_VOICE_ID) + **Text in Hochdeutsch**.
+**Why:** ElevenLabs kann kein Schweizerdeutsch sprechen. Nutzerentscheid 2026-08-04: Heidi bleibt die Stimme für gsw, aber der generierte Text ist Hochdeutsch (nicht Dialekt). Geschriebene Texte (Push, UI) dürfen weiterhin Dialekt sein.
+**How to apply:**
+- `voiceCandidatesForLanguage("gsw")` → [GSW_NARRATOR_VOICE_ID, DEFAULT] (Heidi bleibt)
+- `LANGUAGE_LABEL.gsw = "Hochdeutsch"` in storyGenerator.ts → Anthropic generiert Hochdeutsch
+- GSW_SYSTEM Dialekt-Prompt ist ENTFERNT — nie wieder einbauen
+- `narrationLang` in hike/[id].tsx übergibt `profile?.language` unverändert (gsw) → Heidi wird gewählt
+- `normalisiereGswText` ist ENTFERNT (war überflüssig, Text ist Hochdeutsch)
 
-Constraint: ElevenLabs-Community-/Bibliotheks-Stimmen brauchen Bezahlplan (402 auf Gratis). DE-Wunschstimme ist erster Kandidat und fällt bei 401/402/403/404 auf Standardstimme zurück.
+Cache-Invalidierung nach dieser Änderung nötig: `DELETE /admin/stories/gsw` (x-admin-token) löscht gecachte Dialekt-Storys, damit neue Hochdeutsch-Versionen generiert werden. Wurde 2026-08-05 ausgeführt (9 Stories gelöscht).
 
-Push-Nachrichten: geschriebene gsw-Pushs bleiben echte Mundart (pushTranslator schliesst nur "de" aus).
-
-Cache-Invalidierung: `DELETE /api/admin/stories/gsw` (x-admin-token) löscht gecachte gsw-Storys aus der DB.
+Constraint: ElevenLabs-Community-Stimmen brauchen Bezahlplan (402 auf Gratis). Heidi ist erster Kandidat, fällt bei 401/402/403/404 auf Standardstimme zurück.

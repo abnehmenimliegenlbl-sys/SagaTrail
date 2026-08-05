@@ -1,6 +1,7 @@
 import { useSSO } from "@clerk/expo";
 import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignIn } from "@clerk/expo/legacy";
+import { clearAllClerkTokens, healStaleClerkSession } from "@/lib/clerkAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { makeRedirectUri } from "expo-auth-session";
 import { Link, useRouter } from "expo-router";
@@ -44,6 +45,19 @@ export default function SignInScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetDone, setResetDone] = useState(false);
+
+  const onResetSession = async () => {
+    await clearAllClerkTokens();
+    setResetDone(true);
+    setError(null);
+  };
+
+  // Selbstheilung: alter Clerk-Zustand wird beim Anzeigen des Login-Screens
+  // automatisch bereinigt (User ist hier ohnehin ausgeloggt).
+  useEffect(() => {
+    void healStaleClerkSession();
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -251,6 +265,13 @@ export default function SignInScreen() {
             </Text>
           </Link>
         </View>
+
+        {/* Sitzungs-Reset für User die nach einem App-Update nicht mehr einloggen können */}
+        <Pressable onPress={onResetSession} style={{ alignItems: "center", marginTop: 24 }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedForeground, textDecorationLine: "underline" }}>
+            {resetDone ? "✓ Sitzung zurückgesetzt — bitte neu einloggen" : "Anmeldeproblem? Sitzung zurücksetzen"}
+          </Text>
+        </Pressable>
       </ScrollView>
     </Background>
   );
