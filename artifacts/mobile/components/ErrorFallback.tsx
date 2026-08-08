@@ -12,9 +12,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { GLAS_3D_STARK } from "@/constants/depth";
-import { fonts } from "@/constants/typography";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "700",
+    fontFamily: fonts.bodyBold,
     textAlign: "center",
     lineHeight: 40,
   },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonText: {
-    fontWeight: "600",
+    fontFamily: fonts.bodyMedium,
     textAlign: "center",
     fontSize: 16,
   },
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: fonts.bodyMedium,
   },
   closeButton: {
     width: 44,

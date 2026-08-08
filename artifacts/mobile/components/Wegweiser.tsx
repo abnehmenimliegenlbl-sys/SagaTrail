@@ -281,8 +281,7 @@ const styles = StyleSheet.create({
   },
   nummerText: {
     color: "#FFFFFF",
-    fontFamily: Platform.select({ ios: "Arial", android: "sans-serif", default: "Arial, Helvetica, sans-serif" }),
-    fontWeight: "800",
+    fontFamily: fonts.titleBlack,
     fontSize: 36,
     fontStyle: "italic",
     lineHeight: 37,

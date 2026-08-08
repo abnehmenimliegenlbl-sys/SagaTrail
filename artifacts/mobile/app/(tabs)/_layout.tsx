@@ -48,6 +48,21 @@ export default function TabLayout() {
                 { backgroundColor: c.nachthimmel },
               ]}
             />
+          ) : Platform.OS === "android" ? (
+            // BlurView funktioniert auf Android unzuverlässig → solider Hintergrund
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor:
+                    themeMode === "hell"
+                      ? "rgba(255,255,255,0.97)"
+                      : "rgba(18,22,30,0.97)",
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                  borderTopColor: c.glassBorder,
+                },
+              ]}
+            />
           ) : (
             <BlurView
               intensity={30}

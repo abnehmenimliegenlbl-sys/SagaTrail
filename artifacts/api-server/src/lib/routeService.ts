@@ -355,7 +355,7 @@ async function enrichPoiWithWikipedia(
     // Artikel und eine Namens-Suche nach "42" wuerde falsche Treffer liefern.
     if (geoSearchBudget.rest > 0 && !isCodeName(poi.name)) {
       geoSearchBudget.rest--;
-      const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng);
+      const wiki = await searchNearbyWikipedia(poi.name, poi.lat, poi.lng, "de", poi.kind);
       if (wiki) {
         // Bild-Hierarchie: Commons-Name-Suche zuerst (findet z.B. Denkmal-Foto
         // auch wenn der Artikel ueber die Person handelt und nur ein Portrait als

@@ -628,11 +628,18 @@ function buildOsmContext(tags: Record<string, string>): string | null {
  *
  * Abgedeckte Kategorien:
  *  • historic=*          — Burgen, Ruinen, Denkmäler, Wegkreuze, …
- *  • tourism=attraction|viewpoint|artwork — Sehenswürdigkeiten, Kunstwerke
- *  • natural=peak|saddle|waterfall|cave_entrance|glacier|rock|arch
- *                        — Gipfel, Pässe, Wasserfälle, Höhlen, Gletscher
- *  • man_made=cross|obelisk — Gipfelkreuze, Gedenksteine
- *  • amenity=place_of_worship + building=chapel|wayside_shrine — Kapellen
+ *  • tourism=attraction|viewpoint|artwork|information — Sehenswürdigkeiten, Infotafeln
+ *  • natural=peak|saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
+ *                        — Gipfel, Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
+ *  • man_made=cross|obelisk — Gipfel-/Wegkreuze (auch ohne Namen → «Wegkreuz»)
+ *  • amenity=place_of_worship + chapel/shrine — Kapellen
+ *  • amenity=shelter      — Alpine Unterstände / Biwakschachteln
+ *  • geological=erratic|moraine|* — Findlinge, Moränen (auch ohne Namen)
+ *
+ * Warum ohne Namen für cross/ruins/shelter/geological:
+ *  Wegkreuze, Ruinen und Findlinge haben in OSM sehr oft KEINEN name-Tag.
+ *  Für diese Kategorien wird ein Fallback-Name generiert (z. B. «Wegkreuz»,
+ *  «Ruine», «Findling»), damit sie trotzdem als POIs erscheinen.
  */
 export async function fetchHistoricPois(
   bbox: { south: number; west: number; north: number; east: number },
@@ -640,47 +647,85 @@ export async function fetchHistoricPois(
 ): Promise<RawPoi[]> {
   const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
   const query = [
-    "[out:json][timeout:18];",
+    "[out:json][timeout:22];",
     "(",
-    // Historic (alle Untertypen: Burgen, Ruinen, Wegkreuze, Denkmäler, …)
+    // Historic benannt (Burgen, Denkmäler, Kapellen, …)
     `node["historic"]["name"](${b});`,
     `way["historic"]["name"](${b});`,
-    // Tourismus: Sehenswürdigkeiten, Aussichtspunkte, Kunstwerke
-    `node["tourism"~"^(attraction|viewpoint|artwork)$"]["name"](${b});`,
+    // Historic OHNE Namen: Ruinen, Fundstätten, röm. Reste → Fallback-Name
+    `node["historic"~"^(ruins|archaeological_site|fort|roman_road|roman_villa|roman_building|battlefield)$"](${b});`,
+    `way["historic"~"^(ruins|archaeological_site|fort|roman_road|roman_villa|roman_building|battlefield)$"](${b});`,
+    // Tourismus: Sehenswürdigkeiten, Aussichtspunkte, Kunstwerke, Infotafeln
+    `node["tourism"~"^(attraction|viewpoint|artwork|information)$"]["name"](${b});`,
     `way["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
-    // Alpine Naturmerkmale (der wichtigste Block für Berggebiete)
-    `node["natural"~"^(peak|saddle|waterfall|cave_entrance|glacier|rock|arch|spring)$"]["name"](${b});`,
-    `way["natural"~"^(waterfall|glacier|cave_entrance)$"]["name"](${b});`,
-    // Gipfelkreuze und Obelisken
-    `node["man_made"~"^(cross|obelisk)$"]["name"](${b});`,
+    // Alpine Naturmerkmale
+    `node["natural"~"^(peak|saddle|waterfall|cave_entrance|glacier|rock|arch|spring|gorge)$"]["name"](${b});`,
+    `way["natural"~"^(waterfall|glacier|cave_entrance|gorge)$"]["name"](${b});`,
+    // Gipfel-/Wegkreuze und Obelisken — OHNE Namen-Filter, Fallback «Wegkreuz»
+    `node["man_made"~"^(cross|obelisk)$"](${b});`,
     // Kapellen und Wegkapellen
     `node["amenity"="place_of_worship"]["building"~"^(chapel|wayside_shrine|shrine)$"]["name"](${b});`,
     `node["amenity"="place_of_worship"]["historic"~"^(chapel|wayside_shrine)$"]["name"](${b});`,
+    // Alpine Unterstände / Biwakschachteln — Fallback «Unterstand»
+    `node["amenity"="shelter"](${b});`,
+    // Geologische Merkmale: Findlinge, Moränen — Fallback-Name aus Tag-Wert
+    `node["geological"](${b});`,
     ");",
     "out center tags;",
   ].join("");
-  // HTTP-Timeout etwas ueber dem Overpass-internen Timeout (18 s):
-  // Groessere Query durch alpine Typen braucht etwas mehr Zeit.
-  const POI_HTTP_TIMEOUT_MS = 22_000;
+  // HTTP-Timeout etwas ueber dem Overpass-internen Timeout (22 s):
+  // Groessere Query (shelter, geological, ruins ohne Namen) braucht mehr Zeit.
+  const POI_HTTP_TIMEOUT_MS = 26_000;
   const elements = await runOverpass<OverpassPoiElement>(query, POI_HTTP_TIMEOUT_MS);
   const result: RawPoi[] = [];
   for (const e of elements) {
     const tags = e.tags ?? {};
-    if (!tags.name) continue;
     const lat = e.lat ?? e.center?.lat;
     const lng = e.lon ?? e.center?.lon;
     if (lat == null || lng == null) continue;
+
+    // Fallback-Namen für Kategorien die in OSM oft keinen name-Tag haben:
+    //  • man_made=cross    → «Wegkreuz» / «Gipfelkreuz»
+    //  • historic=ruins    → «Ruine» (+ alt_name wenn vorhanden)
+    //  • historic=archaeological_site → «Archäologischer Fundort»
+    //  • historic=fort/roman_road/… → Typ-Label
+    //  • amenity=shelter   → «Unterstand» / «Biwakschachtel»
+    //  • geological=erratic/moraine → «Findling» / «Moräne»
+    let name = tags.name || tags.alt_name || tags.old_name || "";
+    if (!name) {
+      const h = tags.historic;
+      const mm = tags["man_made"];
+      const am = tags.amenity;
+      const ge = tags.geological;
+      if      (mm === "cross")                name = "Wegkreuz";
+      else if (mm === "obelisk")              name = "Obelisk";
+      else if (h === "ruins")                 name = "Ruine";
+      else if (h === "archaeological_site")   name = "Archäologischer Fundort";
+      else if (h === "fort")                  name = "Befestigungsanlage";
+      else if (h === "roman_road")            name = "Römerstrasse";
+      else if (h === "roman_villa")           name = "Römische Villa";
+      else if (h === "roman_building")        name = "Römisches Gebäude";
+      else if (h === "battlefield")           name = "Schlachtfeld";
+      else if (am === "shelter")              name = tags.ref ? `Unterstand ${tags.ref}` : "Unterstand";
+      else if (ge === "erratic")              name = "Findling";
+      else if (ge === "moraine")              name = "Moräne";
+      else if (ge)                            name = ge; // andere geologische Merkmale
+      else continue; // kein sinnvoller Name ableitbar → überspringen
+    }
+
     // kind: priorisiert in Reihenfolge der kartografischen Wichtigkeit
     let kind: string;
     if (tags.natural)          kind = `natural=${tags.natural}`;
+    else if (tags.geological)  kind = `geological=${tags.geological}`;
     else if (tags.historic)    kind = `historic=${tags.historic}`;
     else if (tags.tourism)     kind = `tourism=${tags.tourism}`;
     else if (tags["man_made"]) kind = `man_made=${tags["man_made"]}`;
     else if (tags.amenity)     kind = `amenity=${tags.amenity}`;
     else                       kind = "unknown";
+
     result.push({
       id: `${e.type}-${e.id}`,
-      name: tags.name,
+      name,
       kind,
       lat,
       lng,

@@ -29,6 +29,14 @@ const KIND_LABEL: Record<string, string> = {
   "tourism=attraction":           "Sehenswürdigkeit",
   "tourism=viewpoint":            "Aussichtspunkt",
   "tourism=museum":               "Museum",
+  "tourism=information":          "Infotafel",
+  "historic=roman_road":          "Römerstrasse",
+  "historic=roman_villa":         "Römische Villa",
+  "historic=roman_building":      "Römisches Gebäude",
+  "natural=gorge":                "Schlucht / Tobel",
+  "amenity=shelter":              "Unterstand / Biwak",
+  "geological=erratic":           "Findling",
+  "geological=moraine":           "Moräne",
 };
 
 /** Gibt den anzuzeigenden POI-Titel zurueck.

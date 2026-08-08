@@ -414,16 +414,62 @@ interface GeoSearchResponse {
 }
 
 /**
+ * Prueft ob ein Wikipedia-Auszug thematisch zum OSM-POI-Typ passt.
+ *
+ * Verhindert, dass Artikel ueber Musik, Filme, Buecher etc. als Beschreibung
+ * fuer physische Orte ausgegeben werden. Klassisches Fehlbeispiel:
+ *  POI "Lass deine Steine hier" (tourism=attraction, Via Jacobi)
+ *  → Wikipedia findet Album "Laß deine Steine hier" von Ton Steine Scherben
+ *  → kein Geo-Filter greift (Album hat keine WP-Koordinaten)
+ *  → Falschartikel wird akzeptiert, KI-Fallback nie aufgerufen
+ *
+ * Wird nur auf auto-gesuchte Artikel angewendet (NICHT auf explizite
+ * OSM-wikipedia-Tags, denen wir vertrauen).
+ */
+export function isExtractDomainCoherent(extract: string, kind: string | undefined): boolean {
+  if (!kind) return true;
+  // Nur fuer eindeutig physische POI-Typen pruefen
+  const PHYSICAL_PREFIXES = [
+    "historic=", "tourism=", "natural=", "man_made=", "amenity=", "geological=",
+  ];
+  if (!PHYSICAL_PREFIXES.some(p => kind.startsWith(p))) return true;
+
+  // Schluesselwoerter die auf Nicht-Orte hinweisen (Medien, Personen, Begriffe)
+  const NON_PLACE_KEYWORDS = [
+    // Musik
+    " album", "album ", "studioalbum", "livealbum", "kompilation",
+    "single ", "ep ", "lp ", " ep,", " lp,",
+    "lied ", " lied ", "lieder", "titelsong", "titelstück",
+    "rockband", "punkband", "musikband", "musikgruppe",
+    "diskografie", "diskographie", "discography",
+    "musiker", "komponist", "komponierte",
+    "sänger", "sängerin", "rapper", "rapperin",
+    "schallplatte", "vinyl", "veröffentlicht von",
+    // Filme / Serien
+    "spielfilm", "kinofilm", "fernsehfilm", "dokumentarfilm",
+    "fernsehserie", " serie ", "staffel ", "folge ", "episode ",
+    // Buecher / Sonstiges
+    "roman ", " roman,", "sachbuch", "novelle",
+  ];
+  const ext = extract.toLowerCase();
+  return !NON_PLACE_KEYWORDS.some(kw => ext.includes(kw));
+}
+
+/**
  * Sucht einen Wikipedia-Artikel fuer einen benannten Ort ueber die
  * Geo-Suche (Artikel mit Koordinaten im Umkreis) und gleicht die Titel
  * unscharf mit dem OSM-Namen ab. Dritte Stufe der POI-Anreicherung, wenn
  * das OSM-Objekt weder wikipedia- noch wikidata-Tag traegt.
+ *
+ * kind wird mitgegeben, damit domain-inkohaerente Artikel (z.B. Musik-Alben
+ * fuer einen Wanderweg-POI) erkannt und verworfen werden.
  */
 export async function searchNearbyWikipedia(
   name: string,
   lat: number,
   lng: number,
   lang: string = DEFAULT_LANG,
+  kind?: string,
 ): Promise<WikiSummary | null> {
   const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}%7C${lng}&gsradius=300&gslimit=10&format=json&origin=*`;
   const json = await fetchJson<GeoSearchResponse>(url);
@@ -433,7 +479,7 @@ export async function searchNearbyWikipedia(
   const nameMatchedHits = allGeoHits.filter((h) => namesRoughlyMatch(h.title, name));
   for (const hit of nameMatchedHits) {
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
-    if (summary) return summary;
+    if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
   // Zweite Geo-Runde: sehr nahe Artikel (< 100m) ohne Namensabgleich akzeptieren.
@@ -445,7 +491,7 @@ export async function searchNearbyWikipedia(
   );
   for (const hit of veryNearHits) {
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
-    if (summary) return summary;
+    if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
   // Dritte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
@@ -453,6 +499,9 @@ export async function searchNearbyWikipedia(
   // Basler Basilisken-Brunnen gemeinsam, ohne Einzelkoordinaten).
   // Koordinaten werden mitgegeben: wenn der Artikel trotzdem weit weg ist
   // (z.B. "Pfalz" → "Rheinland-Pfalz" via Titelsuche), wird er verworfen.
+  // Domain-Filter: Artikel ueber Musik-Alben, Filme etc. werden fuer physische
+  // POI-Typen abgelehnt (z.B. "Lass deine Steine hier" = Ton-Steine-Scherben-
+  // Album hat keine Koordinaten → ohne Filter fälschlicherweise akzeptiert).
   const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&format=json&srlimit=5&origin=*`;
   const searchJson = await fetchJson<{ query?: { search?: { title: string }[] } }>(searchUrl);
   // Strikterer Vergleich als namesRoughlyMatch: Titelsuche findet Artikel per
@@ -466,7 +515,7 @@ export async function searchNearbyWikipedia(
   });
   for (const hit of titleHits) {
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
-    if (summary) return summary;
+    if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
   // Vierte Stufe: Wikipedia-Volltext-Suche — findet Artikel, in deren Text
@@ -491,7 +540,7 @@ export async function searchNearbyWikipedia(
     // bei reinem Geo-Treffer (archäologische Objekte etc.) max 2 km.
     const maxDist = titleMatches ? 5 : 2;
     const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng, maxDist);
-    if (summary) return summary;
+    if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
   return null;

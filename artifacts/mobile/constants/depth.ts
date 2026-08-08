@@ -12,20 +12,25 @@ import { Platform, ViewStyle } from "react-native";
  * Nur der Aussenschatten, ohne Kanten — fuer Wrapper um Flaechen mit
  * overflow:"hidden" (dort wuerde der Schatten sonst abgeschnitten).
  */
+// Nur der Aussenschatten-Wrapper (kein overflow:"hidden") — kleines
+// Android-elevation damit Route-Kacheln einen sauberen Schatten bekommen.
 export const SCHATTEN_3D: ViewStyle = {
   shadowColor: "#000",
   shadowOpacity: 0.35,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
-  ...(Platform.OS === "android" ? { elevation: 6 } : null),
+  ...(Platform.OS === "android" ? { elevation: 3 } : null),
 };
 
+// Auf Android elevation:0 — verhindert den "Material Raised Surface"-Bevel-Effekt
+// (helle Tint oben, dunkler Rand unten) auf weissen/hellen Kacheln und Buttons.
+// Visuelle Tiefe kommt auf Android von borderColor + Gradient, nicht elevation.
 export const GLAS_3D: ViewStyle = {
   shadowColor: "#000",
   shadowOpacity: 0.35,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 6 },
-  ...(Platform.OS === "android" ? { elevation: 6 } : null),
+  ...(Platform.OS === "android" ? { elevation: 0 } : null),
 };
 
 /** Staerkere Variante fuer prominente Elemente (Primaerknoepfe, Modals). */
@@ -34,5 +39,5 @@ export const GLAS_3D_STARK: ViewStyle = {
   shadowOpacity: 0.5,
   shadowRadius: 14,
   shadowOffset: { width: 0, height: 8 },
-  ...(Platform.OS === "android" ? { elevation: 10 } : null),
+  // elevation bewusst nicht erhoeht — GLAS_3D setzt bereits 0 fuer Android.
 };

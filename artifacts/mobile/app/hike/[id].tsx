@@ -944,13 +944,25 @@ export default function LiveHike() {
     // 2 km Rand damit alpine Gipfel/Pässe auch dann gefetcht werden wenn sie
     // etwas abseits der Route liegen.
     const bbox = bboxAroundGeometry(route?.geometry, center, 2.0);
-    // Alpine Naturmerkmale (Gipfel, Pässe, Gletscher) dürfen bis 2 km vom
-    // Routenverlauf entfernt sein; alle anderen POIs bleiben bei 0.5 km.
+    // Gipfel, Pässe, Gletscher, Schluchten und geologische Merkmale dürfen
+    // bis 2 km vom Routenverlauf entfernt sein.
+    // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
+    // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
     const ALPINE_KINDS = new Set([
       "natural=peak", "natural=saddle", "natural=glacier",
-      "natural=rock",  "natural=arch",
+      "natural=rock", "natural=arch", "natural=gorge",
+      "geological=erratic", "geological=moraine",
     ]);
-    const korridorKm = (kind: string) => ALPINE_KINDS.has(kind) ? 2.0 : 0.5;
+    const RUIN_KINDS = new Set([
+      "historic=ruins", "historic=archaeological_site",
+      "historic=fort", "historic=roman_road", "historic=roman_villa",
+      "historic=roman_building", "historic=battlefield",
+    ]);
+    const korridorKm = (kind: string): number => {
+      if (ALPINE_KINDS.has(kind)) return 2.0;
+      if (RUIN_KINDS.has(kind)) return 1.0;
+      return 0.5;
+    };
     const geo = route?.geometry;
 
     const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {

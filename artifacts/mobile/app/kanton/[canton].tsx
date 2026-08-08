@@ -695,7 +695,7 @@ function RouteCard({
   const m = route.minutes % 60;
   return (
     <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
-      <Pressable onPress={onPress} style={styles.card}>
+      <Pressable onPress={onPress} style={[styles.card, { borderColor: colors.glassBorder }]}>
         <ExpoImage
           source={fotoFehler ? foto.fallback : foto.source}
           style={styles.cardImg}

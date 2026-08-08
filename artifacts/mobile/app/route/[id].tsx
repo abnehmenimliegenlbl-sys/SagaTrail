@@ -405,13 +405,25 @@ export default function Routenplanung() {
     const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 2.0);
     const geo = route.geometry;
     // Alpine Naturmerkmale dürfen bis 2 km vom Routenverlauf entfernt sein —
-    // Gipfel und Pässe sind oft gut sichtbar aber nicht direkt am Weg.
-    // Alle anderen POIs (Denkmäler, Brunnen, …) bleiben bei 0.5 km.
+    // Gipfel, Pässe, Gletscher, Schluchten und geologische Merkmale dürfen
+    // bis 2 km vom Routenverlauf entfernt sein.
+    // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
+    // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
     const ALPINE_KINDS = new Set([
       "natural=peak", "natural=saddle", "natural=glacier",
-      "natural=rock",  "natural=arch",
+      "natural=rock", "natural=arch", "natural=gorge",
+      "geological=erratic", "geological=moraine",
     ]);
-    const korridorKm = (kind: string) => ALPINE_KINDS.has(kind) ? 2.0 : 0.5;
+    const RUIN_KINDS = new Set([
+      "historic=ruins", "historic=archaeological_site",
+      "historic=fort", "historic=roman_road", "historic=roman_villa",
+      "historic=roman_building", "historic=battlefield",
+    ]);
+    const korridorKm = (kind: string): number => {
+      if (ALPINE_KINDS.has(kind)) return 2.0;
+      if (RUIN_KINDS.has(kind)) return 1.0;
+      return 0.5;
+    };
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
@@ -981,7 +993,7 @@ export default function Routenplanung() {
             </Text>
             <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 16 }}>
               <Pressable onPress={() => setBeschreibungOffen((v) => !v)} hitSlop={8}>
-                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "600" }}>
+                <Text style={{ color: colors.accent, fontSize: 13, fontFamily: fonts.bodyMedium }}>
                   {beschreibungOffen ? "Weniger anzeigen" : "Mehr anzeigen"}
                 </Text>
               </Pressable>
@@ -1654,7 +1666,7 @@ export default function Routenplanung() {
                           borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
                           borderWidth: 1, borderColor: progBorder,
                         }}>
-                          <Text style={{ color: progDot, fontSize: 11, fontWeight: "600" }}>{progLabel}</Text>
+                          <Text style={{ color: progDot, fontSize: 11, fontFamily: fonts.bodyMedium }}>{progLabel}</Text>
                         </View>
                         <Feather name="chevron-right" size={18} color={colors.accent} />
                       </View>
@@ -1761,7 +1773,7 @@ export default function Routenplanung() {
                         borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
                         borderWidth: 1, borderColor: progDot + '55',
                       }}>
-                        <Text style={{ color: progDot, fontSize: 11, fontWeight: '600' }}>{progLabel}</Text>
+                        <Text style={{ color: progDot, fontSize: 11, fontFamily: fonts.bodyMedium }}>{progLabel}</Text>
                       </View>
                     );
                   })()}
