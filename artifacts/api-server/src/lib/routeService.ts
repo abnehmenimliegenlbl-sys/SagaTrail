@@ -1652,13 +1652,19 @@ export async function enrichOneRoute(
   );
   const minutes = estimateMinutes(minutesKm, ascentM);
 
-  // Kanton aus DB lesen falls schon gesetzt, sonst reverse geocoden
+  // Kanton aus DB lesen falls schon gesetzt, sonst reverse geocoden.
+  // '__hidden__' und 'pending' werden wie null behandelt → immer neu geocoden,
+  // damit versteckte Routen nach erfolgreichem Enrichment automatisch wieder
+  // sichtbar werden (falls die Geometrie gut genug ist, s.u.).
   const [existing] = await db
     .select({ canton: externalRoutesTable.canton, ref: externalRoutesTable.ref })
     .from(externalRoutesTable)
     .where(eq(externalRoutesTable.id, rowId));
+  const wasHidden = existing?.canton === "__hidden__";
   let canton =
-    existing?.canton && existing.canton !== "pending" ? existing.canton : null;
+    existing?.canton && existing.canton !== "pending" && existing.canton !== "__hidden__"
+      ? existing.canton
+      : null;
   if (!canton) {
     await sleep(1_100);
     const geo = await reverseGeocode(start.lat, start.lng, log);
@@ -1696,6 +1702,29 @@ export async function enrichOneRoute(
     }
   }
 
+  // Wenn die Route vorher versteckt war: Geometrie-Qualität prüfen.
+  // Mindestens 10 Punkte pro km — sonst bleibt sie versteckt und wird erneut
+  // in gv=0 gesetzt damit der Loop es später nochmal versucht.
+  const ptsPerKm = distanceKm > 0 ? geometry.length / distanceKm : 0;
+  const HIDDEN_QUALITY_THRESHOLD = 10; // pts/km
+  const stillHidden = wasHidden && ptsPerKm < HIDDEN_QUALITY_THRESHOLD;
+  const finalCanton = stillHidden ? "__hidden__" : canton;
+  const finalGv     = stillHidden ? 0 : GEOMETRY_VERSION;
+
+  if (wasHidden) {
+    if (stillHidden) {
+      log.info(
+        { id: rowId, ptsPerKm: Math.round(ptsPerKm), threshold: HIDDEN_QUALITY_THRESHOLD },
+        "enrich: Route war __hidden__, Geometrie noch zu dünn — bleibt versteckt, gv=0",
+      );
+    } else {
+      log.info(
+        { id: rowId, canton, ptsPerKm: Math.round(ptsPerKm) },
+        "enrich: Route war __hidden__, Geometrie gut genug — wird wieder sichtbar",
+      );
+    }
+  }
+
   await db
     .update(externalRoutesTable)
     .set({
@@ -1708,16 +1737,16 @@ export async function enrichOneRoute(
       minutes,
       sac,
       terrain,
-      canton,
+      canton: finalCanton,
       cantons,
       geometry: geometry as any,
-      geometryVersion: GEOMETRY_VERSION,
+      geometryVersion: finalGv,
       source: "OpenStreetMap · swisstopo",
       ...(updatedName ? { name: updatedName } : {}),
     })
     .where(eq(externalRoutesTable.id, rowId));
 
-  return { ok: true, distanceKm, canton };
+  return { ok: true, distanceKm, canton: finalCanton };
 }
 
 /**

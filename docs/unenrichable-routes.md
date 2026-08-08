@@ -1,10 +1,17 @@
 # Nicht anreicherbare Routen (geometry_version = -1)
 
-Stand: 28.07.2026 — nach dem Komplett-Lauf von POST /api/admin/routes/enrich-all.
+Stand: 08.08.2026 — 56 Routen total (54 aus enrich-all, 2 nachträglich identifiziert).
 
-Diese 54 Routen haben keine auflösbare OSM-Relation (network+ref existiert nicht
+Diese Routen haben keine auflösbare OSM-Relation (network+ref existiert nicht
 mehr in OSM, oder die Etappen-Relation ist nicht per Namensmuster auffindbar).
 Sie bleiben bewusst mit geometry_version = -1 markiert und werden nicht nach Prod gepusht.
+
+**Nachträglich identifiziert (08.08.2026):**
+- `schweizmobil-rwn-73` — Sardona-Welterbe-Weg Weisstannen → Sardonahütte (Glarus):
+  OSM kennt Sardona-Welterbe-Weg als Gesamtroute + Etappen 1–6, aber keine Relation mit ref=73.
+- `wiki-1-etappe-20` — Via Alpina Etappe 20 Rochers de Naye → Montreux (Waadt):
+  OSM hat Via Alpina Route 1 als Gesamtroute (IDs 14249124/14249125), Etappe 20 ist
+  keine eigene Sub-Relation. Wiki-Quelle teilt feiner auf als OSM.
 
 | ID | Name |
 |----|------|
