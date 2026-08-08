@@ -2517,6 +2517,197 @@ router.post("/admin/routes/prune", async (req, res): Promise<void> => {
   }
 });
 
+// ── Eltern-Routen-Restitch ────────────────────────────────────────────────────
+
+/**
+ * Vernäht die Geometrie von SchweizMobil-Gesamtrouten aus ihren Etappen neu.
+ * Portiert aus scripts/restitch_parents.cjs — läuft direkt im API-Server ohne
+ * externen pg-Client-Import.
+ *
+ * Gibt { fixed, skipped, unchanged } zurück.
+ */
+export async function stitchParents(log: Logger): Promise<{ fixed: number; skipped: number; unchanged: number }> {
+  const R = 6371;
+  function hav(a: [number, number], b: [number, number]): number {
+    const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+    const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+    const s =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((a[0] * Math.PI) / 180) *
+        Math.cos((b[0] * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+
+  function parseGeom(raw: unknown): [number, number][] | null {
+    if (!raw) return null;
+    let g: unknown = raw;
+    if (typeof g === "string") {
+      try { g = JSON.parse(g); } catch { return null; }
+    }
+    if (!Array.isArray(g) || g.length < 2) return null;
+    return g as [number, number][];
+  }
+
+  function norm(g: [number, number][]): [number, number][] {
+    return g.map((p) => (Array.isArray(p) ? [p[0], p[1]] : [(p as any).lat, (p as any).lng]) as [number, number]);
+  }
+
+  function routeStats(pts: [number, number][]): { len: number; maxGap: number } {
+    let len = 0, maxGap = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = hav(pts[i - 1]!, pts[i]!);
+      len += d;
+      if (d > maxGap) maxGap = d;
+    }
+    return { len, maxGap };
+  }
+
+  function etappenNr(name: string): number | null {
+    const m = name.match(/(?:Etappe|Étape|Etape|Tappa|Stage)\s+(\d+)/i);
+    return m ? parseInt(m[1]!, 10) : null;
+  }
+
+  // Eltern-Routen laden
+  const parentRows = await db.execute<{ id: string; name: string; distance_km: string | null; geometry: unknown }>(
+    sql`SELECT id, name, distance_km, geometry FROM external_routes
+        WHERE id LIKE 'schweizmobil-%'
+          AND geometry IS NOT NULL
+          AND jsonb_typeof(geometry) IN ('array', 'string')`
+  );
+  // Etappen laden (nicht schweizmobil-*, nicht wiki-* mit ≤2 Punkten)
+  const etappenRows = await db.execute<{ id: string; name: string; distance_km: string | null; geometry: unknown }>(
+    sql`SELECT id, name, distance_km, geometry FROM external_routes
+        WHERE name ~* '(Etappe|Étape|Etape|Tappa|Stage)\\s+\\d+'
+          AND geometry IS NOT NULL
+          AND jsonb_typeof(geometry) IN ('array', 'string')
+          AND id NOT LIKE 'schweizmobil-%'
+          AND NOT (id LIKE 'wiki-%' AND jsonb_array_length(geometry) <= 2)`
+  );
+
+  const parents = parentRows.rows ?? (parentRows as any);
+  const allEtappen = etappenRows.rows ?? (etappenRows as any);
+
+  log.info({ parents: parents.length, etappen: allEtappen.length }, "restitch-parents: Daten geladen");
+
+  let fixed = 0, skipped = 0, unchanged = 0;
+
+  for (const p of parents) {
+    const num = (p.name as string).match(/^(\d+)\s/)?.[1];
+    if (!num) { skipped++; continue; }
+
+    const kids = (allEtappen as any[])
+      .filter((k) => new RegExp(`^${num}\\s`).test(k.name) && etappenNr(k.name) !== null)
+      .map((k) => ({ ...k, nr: etappenNr(k.name) as number }))
+      .sort((a, b) => a.nr - b.nr);
+    if (kids.length < 2) { skipped++; continue; }
+
+    const parsedKids = kids
+      .map((k) => {
+        const g = parseGeom(k.geometry);
+        return g ? { ...k, parsedGeom: g } : null;
+      })
+      .filter(Boolean) as Array<typeof kids[0] & { parsedGeom: [number, number][] }>;
+    if (parsedKids.length < 2) { skipped++; continue; }
+
+    const sumKm = parsedKids.reduce((s, k) => s + (parseFloat(k.distance_km ?? "0") || 0), 0);
+    const parentKm = parseFloat((p.distance_km as string | null) ?? "0") || 0;
+    const refKm = parentKm > 0 && parentKm >= sumKm * 0.4 ? parentKm : sumKm;
+    if (sumKm < 0.55 * refKm) { skipped++; continue; }
+
+    const parentGeom = parseGeom(p.geometry);
+    if (!parentGeom) { skipped++; continue; }
+
+    // Etappen verketten, Orientierung per Endpunkt-Nähe
+    let chain: [number, number][] | null = null;
+    let ok = true;
+    for (const k of parsedKids) {
+      let seg = norm(k.parsedGeom);
+      if (seg.length < 2) { ok = false; break; }
+      if (!chain) { chain = seg.slice(); continue; }
+      const end = chain[chain.length - 1]!;
+      const dStart = hav(end, seg[0]!);
+      const dEnd = hav(end, seg[seg.length - 1]!);
+      if (dEnd < dStart) seg = seg.slice().reverse();
+      chain = chain.concat(seg);
+    }
+    if (!ok || !chain || chain.length < 2) { skipped++; continue; }
+
+    const oldS = routeStats(norm(parentGeom));
+    const newS = routeStats(chain);
+    const oldErr = Math.abs(oldS.len - refKm);
+    const newErr = Math.abs(newS.len - refKm);
+    const betterGap = newS.maxGap < 0.6 * oldS.maxGap && newErr <= oldErr * 1.3;
+    const dramaticallyCloser =
+      oldErr > 20 && newErr < 0.1 * oldErr && newS.len > oldS.len * 1.2;
+
+    if (betterGap || dramaticallyCloser) {
+      const reason = dramaticallyCloser ? "len-fix" : "gap-fix";
+      const newGeom = chain.map(([lat, lng]) => [
+        Math.round(lat * 1e6) / 1e6,
+        Math.round(lng * 1e6) / 1e6,
+      ]);
+      await db
+        .update(externalRoutesTable)
+        .set({ geometry: newGeom as any, fetchedAt: new Date() })
+        .where(eq(externalRoutesTable.id, p.id as string))
+        .execute();
+      log.info(
+        { reason, id: p.id, maxGapOld: oldS.maxGap.toFixed(1), maxGapNew: newS.maxGap.toFixed(1), lenOld: oldS.len.toFixed(0), lenNew: newS.len.toFixed(0), ref: refKm.toFixed(0) },
+        "restitch-parents: FIXED"
+      );
+      fixed++;
+    } else {
+      unchanged++;
+      if (oldS.maxGap > 3) {
+        log.debug(
+          { id: p.id, maxGapOld: oldS.maxGap.toFixed(1), maxGapNew: newS.maxGap.toFixed(1) },
+          "restitch-parents: KEEP (kein Verbesserungs-Kriterium erfüllt)"
+        );
+      }
+    }
+  }
+
+  log.info({ fixed, skipped, unchanged }, "restitch-parents: abgeschlossen");
+  return { fixed, skipped, unchanged };
+}
+
+let restitchLaeuft = false;
+
+/**
+ * Startet einen nächtlichen Restitch täglich um ~02:00 UTC.
+ * Wird einmalig beim Server-Start aufgerufen.
+ */
+export function scheduleNightlyRestitch(log: Logger): void {
+  function msUntilNextRun(): number {
+    const now = new Date();
+    const next = new Date(now);
+    next.setUTCHours(2, 0, 0, 0);
+    if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+    return next.getTime() - now.getTime();
+  }
+
+  function scheduleNext(): void {
+    const ms = msUntilNextRun();
+    log.info({ inMinutes: Math.round(ms / 60_000) }, "restitch-parents: nächster Nacht-Lauf geplant");
+    setTimeout(async () => {
+      if (!restitchLaeuft) {
+        restitchLaeuft = true;
+        try {
+          await stitchParents(log);
+        } catch (err) {
+          log.warn({ err }, "restitch-parents: Nacht-Lauf fehlgeschlagen");
+        } finally {
+          restitchLaeuft = false;
+        }
+      }
+      scheduleNext();
+    }, ms);
+  }
+
+  scheduleNext();
+}
+
 // ── Route-Anreicherung (Cron-freundlich) ─────────────────────────────────────
 
 /**
@@ -2736,6 +2927,17 @@ function runEnrichAllLoop(log: Logger): void {
       } catch (nameErr) {
         log.warn({ err: nameErr }, "enrich-all: Phase 4 fehlgeschlagen — nicht kritisch");
       }
+
+      // Phase 5: Eltern-Routen neu vernähen.
+      // Läuft nach jeder vollständigen Enrich-Runde damit neue/verbesserte
+      // Etappen sofort in der Parent-Geometrie landen.
+      try {
+        log.info("enrich-all: Phase 5 Restitch-Eltern gestartet");
+        const rs = await stitchParents(log);
+        log.info(rs, "enrich-all: Phase 5 Restitch-Eltern abgeschlossen");
+      } catch (rsErr) {
+        log.warn({ err: rsErr }, "enrich-all: Phase 5 Restitch fehlgeschlagen — nicht kritisch");
+      }
     } catch (err) {
       log.error({ err }, "enrich-all: abgebrochen mit Fehler — Neustart in 30 Min");
       // Nach unerwartetem Fehler: Loop nach 30 Min selbst neu starten falls
@@ -2755,6 +2957,30 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
   }
   runEnrichAllLoop(req.log);
   res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
+});
+
+/**
+ * POST /admin/routes/restitch-parents
+ * Löst das Vernähen der SchweizMobil-Eltern-Routen manuell aus.
+ * Läuft im Hintergrund; Antwort kommt sofort.
+ */
+router.post("/admin/routes/restitch-parents", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (restitchLaeuft) {
+    res.json({ ok: true, message: "Restitch läuft bereits" });
+    return;
+  }
+  restitchLaeuft = true;
+  res.json({ ok: true, message: "Restitch gestartet — Fortschritt in Server-Logs" });
+  (async () => {
+    try {
+      await stitchParents(req.log);
+    } catch (err) {
+      req.log.warn({ err }, "restitch-parents: Lauf fehlgeschlagen");
+    } finally {
+      restitchLaeuft = false;
+    }
+  })();
 });
 
 /**
