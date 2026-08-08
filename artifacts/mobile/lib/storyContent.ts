@@ -90,6 +90,8 @@ export interface StoryPack {
   timeOfDayGreeting: (tod: "morgen" | "mittag" | "abend" | "nacht") => string;
   /** Gesprochene GPS-Foto-Challenge am Herzort der Sage */
   photoChallengePrompt: string;
+  /** Kurze Ankunfts-Ansage wenn GPS < 10 m vom Sagenmittelpunkt — GPS-bestätigt, darf "du stehst hier" sagen */
+  sagaHeartArrival: string;
   /** Atmosphärische Wettereinleitung, die dem Greeting vorangestellt wird */
   weatherPhrase: (klasse: WetterKlasse) => string;
   /** Atmosphärische Ansage beim Wechsel der Wegoberfläche */
@@ -188,6 +190,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Willkommen auf dem Weg, ${name}. Lass die Sage dich begleiten.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Die Berge erwachen noch — ein guter Morgen für alte Geschichten.", mittag: "Die Mittagssonne wirft klare Schatten, doch dieser Weg birgt noch Geheimnisse.", abend: "Das Abendlicht taucht alles in warmes Gold — die richtige Stunde für Sagen.", nacht: "Dunkelheit liegt über dem Pfad. Genau jetzt erwachen die alten Geschichten." } as const)[tod],
     photoChallengePrompt: "Du bist am Herzort dieser Sage. Halte diesen besonderen Ort in einem Foto fest.",
+    sagaHeartArrival: "Du stehst jetzt genau am Herzort dieser Sage.",
     weatherPhrase: (k) => ({
       heiss:    "Die Hitze liegt schwer über dem Tal — als hätte die Sonne heute ein altes Urteil zu sprechen.",
       sonnig:   "Die Sonne steht klar am Himmel. Ein solcher Tag hat schon immer die richtigen Geschichten angelockt.",
@@ -344,6 +347,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Willkomme uf em Wäg, ${name}. Lo d Sage dich bgleite.`,
     timeOfDayGreeting: (tod) => ({ morgen: "D Bärg erwache no — en guete Morge für alti Gschichte.", mittag: "D Miittagssunne wirft klari Schatte, aber dä Wäg verbirgt no Gheimnis.", abend: "S Abelicht taucht alles i warmes Gold — geni Stund für Sage.", nacht: "Dunkelheit liit über em Pfad. Genau jetzt erwache d alte Gschichte." } as const)[tod],
     photoChallengePrompt: "Du bisch am Härzort vo dere Sage. Halte dä bsundere Ort i eme Foto fescht.",
+    sagaHeartArrival: "Du staasch jetzt genau am Härzort vo dere Sage.",
     weatherPhrase: (k) => ({
       heiss:    "D Hitzi liit schwer über em Tal — as ob d Sunne hüt es alts Urteil z spreche hätt.",
       sonnig:   "D Sunne staht klar am Himmel. Sotti Täg händ scho immer d richtigi Gschichte ahzoge.",
@@ -500,6 +504,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bienvenue sur ce chemin, ${name}. Laisse la légende te guider.`,
     timeOfDayGreeting: (tod) => ({ morgen: "La montagne s'éveille encore — un bon matin pour de vieilles histoires.", mittag: "Le soleil de midi projette des ombres nettes, et pourtant ce chemin cache encore des secrets.", abend: "La lumière du soir teinte tout d'un or chaud — l'heure idéale pour les légendes.", nacht: "L'obscurité recouvre le sentier. C'est maintenant que les vieilles histoires s'éveillent." } as const)[tod],
     photoChallengePrompt: "Tu es au cœur de cette légende. Garde ce lieu particulier en photo.",
+    sagaHeartArrival: "Tu te trouves maintenant exactement au cœur de cette légende.",
     weatherPhrase: (k) => ({
       heiss:    "La chaleur pèse lourd sur la vallée — comme si le soleil avait aujourd'hui un vieux verdict à rendre.",
       sonnig:   "Le soleil se dresse clair dans le ciel. De tels jours ont toujours attiré les bonnes histoires.",
@@ -656,6 +661,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Benvenuto·a su questo cammino, ${name}. Lascia che la leggenda ti guidi.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Le montagne si stanno ancora svegliando — un buon mattino per le storie antiche.", mittag: "Il sole a picco proietta ombre nette, eppure questo sentiero cela ancora segreti.", abend: "La luce della sera tinge tutto di un oro caldo — l'ora giusta per le leggende.", nacht: "L'oscurità avvolge il sentiero. È proprio ora che le storie antiche si risvegliano." } as const)[tod],
     photoChallengePrompt: "Sei nel cuore di questa leggenda. Ferma questo luogo speciale in una foto.",
+    sagaHeartArrival: "Sei ora esattamente nel cuore di questa leggenda.",
     weatherPhrase: (k) => ({
       heiss:    "Il calore pesa sulla valle — come se il sole avesse oggi un antico verdetto da pronunciare.",
       sonnig:   "Il sole splende chiaro nel cielo. Giornate simili hanno sempre attirato le storie giuste.",
@@ -812,6 +818,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Welcome to the trail, ${name}. Let the saga guide you.`,
     timeOfDayGreeting: (tod) => ({ morgen: "The mountains are still waking — a good morning for old tales.", mittag: "The midday sun casts sharp shadows, yet this path still hides its secrets.", abend: "Evening light bathes everything in warm gold — the right hour for legends.", nacht: "Darkness lies over the path. This is when old stories stir." } as const)[tod],
     photoChallengePrompt: "You are at the heart of this saga. Capture this special place in a photo.",
+    sagaHeartArrival: "You are now standing at the exact heart of this saga.",
     weatherPhrase: (k) => ({
       heiss:    "The heat bears down on the valley — as if the sun had an old verdict to deliver today.",
       sonnig:   "The sun stands clear in the sky. Days like this have always drawn the right stories out.",
@@ -964,6 +971,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `欢迎踏上这条小路，${name}。让传说引领你前行。`,
     timeOfDayGreeting: (tod) => ({ morgen: "山峦尚在沉睡中苏醒——这是聆听古老故事的好早晨。", mittag: "正午的阳光投下清晰的阴影，然而这条路仍藏着秘密。", abend: "傍晚的光将一切染成温暖的金色——这正是传说最宜讲述的时刻。", nacht: "黑暗笼罩着山径。正是在这样的时刻，古老的故事悄然苏醒。" } as const)[tod],
     photoChallengePrompt: "你正身处这段传说的核心之地。用一张照片记录下这个特别的地方。",
+    sagaHeartArrival: "你现在正站在这段传说的核心之地。",
     weatherPhrase: (k) => ({
       heiss:    "酷热笼罩山谷，仿佛太阳今日要宣布一个古老的裁决。",
       sonnig:   "阳光清澈地立于天穹。这样的日子，向来最适合古老的故事。",
@@ -1120,6 +1128,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bienvenido·a al sendero, ${name}. Deja que la leyenda te guíe.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Las montañas aún se despiertan — una buena mañana para historias antiguas.", mittag: "El sol del mediodía proyecta sombras nítidas, y aun así este camino guarda secretos.", abend: "La luz del atardecer lo baña todo en oro cálido — la hora justa para las leyendas.", nacht: "La oscuridad cubre el sendero. Es ahora cuando las viejas historias despiertan." } as const)[tod],
     photoChallengePrompt: "Estás en el corazón de esta leyenda. Inmortaliza este lugar especial en una foto.",
+    sagaHeartArrival: "Ahora estás exactamente en el corazón de esta leyenda.",
     weatherPhrase: (k) => ({
       heiss:    "El calor pesa sobre el valle — como si el sol tuviera hoy un viejo veredicto que dictar.",
       sonnig:   "El sol luce claro en el cielo. Días así siempre han atraído las historias adecuadas.",
@@ -1276,6 +1285,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Bem-vindo·a à trilha, ${name}. Deixa a lenda te guiar.`,
     timeOfDayGreeting: (tod) => ({ morgen: "As montanhas ainda estão a despertar — uma boa manhã para histórias antigas.", mittag: "O sol do meio-dia projeta sombras nítidas, mas este caminho ainda guarda segredos.", abend: "A luz da tarde banha tudo em ouro quente — a hora certa para as lendas.", nacht: "A escuridão cobre o caminho. É agora que as velhas histórias despertam." } as const)[tod],
     photoChallengePrompt: "Estás no coração desta lenda. Guarda este lugar especial numa foto.",
+    sagaHeartArrival: "Estás agora exactamente no coração desta lenda.",
     weatherPhrase: (k) => ({
       heiss:    "O calor pesa sobre o vale — como se o sol tivesse hoje um antigo veredicto a pronunciar.",
       sonnig:   "O sol brilha claro no céu. Dias assim sempre atraíram as histórias certas.",
@@ -1432,6 +1442,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
     soloGreeting: (name) => `Добро пожаловать на тропу, ${name}. Пусть легенда ведёт тебя.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Горы ещё просыпаются — хорошее утро для старых историй.", mittag: "Полуденное солнце отбрасывает чёткие тени, и всё же этот путь хранит свои тайны.", abend: "Вечерний свет окрашивает всё в тёплое золото — самое время для легенд.", nacht: "Тьма лежит над тропой. Именно сейчас пробуждаются старые истории." } as const)[tod],
     photoChallengePrompt: "Ты в самом сердце этой легенды. Запечатли это особое место на фото.",
+    sagaHeartArrival: "Ты сейчас стоишь точно в сердце этой легенды.",
     weatherPhrase: (k) => ({
       heiss:    "Зной давит на долину — словно солнце сегодня выносит давний приговор.",
       sonnig:   "Солнце стоит ясно в небе. Такие дни всегда притягивали нужные истории.",

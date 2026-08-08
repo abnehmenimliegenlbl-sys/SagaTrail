@@ -83,6 +83,7 @@ import {
   fetchNearbyCommonsImage,
   fetchWikipediaSummary,
   fetchWikidataImage,
+  fetchWikidataFacts,
   resolveOsmWikipediaTag,
   resolveWikidataTitle,
   fetchWikidataCommonsCategory,
@@ -303,22 +304,25 @@ async function enrichPoiWithWikipedia(
             (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
           return { ...poi, wiki: { ...wiki, image } };
         }
-        // Kein Wikipedia-Artikel: P18 > P373-Kategorie > Commons-Name > Commons-Geo
-        // KI-Text parallel holen — lieber Text+Bild als nur Bild.
-        const [imageFromWikidata, aiTextWiki] = await Promise.all([
+        // Kein Wikipedia-Artikel: Wikidata-Fakten + Bild + KI parallel.
+        // Wikidata-Fakten (Beschreibung + Einweihungsjahr) haben Vorrang vor
+        // searchAiPoiKnowledge — verifizierte Fakten vor geratenen.
+        const [imageFromWikidata, wikidataFacts, aiTextWiki] = await Promise.all([
           (async () =>
             p18Image ??
             (poi.wikidataTag ? await fetchWikidataCommonsCategory(poi.wikidataTag) : null) ??
             (await fetchCommonsImageByName(poi.name)) ??
             (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name)))(),
+          poi.wikidataTag ? fetchWikidataFacts(poi.wikidataTag) : Promise.resolve(null),
           searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
-        if (imageFromWikidata || aiTextWiki) {
+        const extractA = wikidataFacts ?? aiTextWiki?.extract ?? "";
+        if (imageFromWikidata || extractA) {
           return {
             ...poi,
             wiki: {
               title: aiTextWiki?.title ?? poi.name,
-              extract: aiTextWiki?.extract ?? "",
+              extract: extractA,
               url: aiTextWiki?.url ?? "",
               lang: "de",
               image: imageFromWikidata ?? aiTextWiki?.image ?? null,
@@ -326,21 +330,24 @@ async function enrichPoiWithWikipedia(
           };
         }
       } else {
-        // Kein Wikipedia-Eintrag: P18 + P373-Kategorie + Commons-Name + Commons-Geo + KI parallel
-        const [p18Image, p373Image, nameImage, geoImage, aiTextWiki] = await Promise.all([
+        // Kein Wikipedia-Eintrag: Wikidata-Fakten + Bild + KI parallel.
+        // Wikidata-Fakten haben Vorrang vor searchAiPoiKnowledge.
+        const [p18Image, p373Image, nameImage, geoImage, wikidataFactsB, aiTextWiki] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
           fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
           fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
+          fetchWikidataFacts(poi.wikidataTag),
           searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
         const image = p18Image ?? p373Image ?? nameImage ?? geoImage;
-        if (image || aiTextWiki) {
+        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? "";
+        if (image || extractB) {
           return {
             ...poi,
             wiki: {
               title: aiTextWiki?.title ?? poi.name,
-              extract: aiTextWiki?.extract ?? "",
+              extract: extractB,
               url: aiTextWiki?.url ?? "",
               lang: "de",
               image: image ?? aiTextWiki?.image ?? null,

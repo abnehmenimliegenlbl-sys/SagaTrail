@@ -23,6 +23,7 @@ import { ADMIN_DASHBOARD_HTML } from "../lib/adminDashboardHtml";
 import { clearNarrationCache } from "../lib/narrationCache";
 import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
@@ -5276,6 +5277,138 @@ router.post("/migrate-20260731", (req, res) => {
 router.get("/migrate-20260731/status", (req, res) => {
   if (!requireAdminToken(req, res)) return;
   res.json(migrate20260731Status);
+});
+
+// ---------------------------------------------------------------------------
+// POST /admin/sagas/geocode-ungefaehr
+// Liest alle Sagen mit koordinaten_sicherheit='ungefaehr', extrahiert per
+// Claude den spezifischsten genannten Ort aus dem Summary und geocodiert
+// ihn via Nominatim. Wenn der Treffer <30 km vom bestehenden Mittelpunkt
+// liegt, wird lat/lng + sicherheit='exakt' in die DB geschrieben.
+// Gibt einen vollständigen Report zurück (aktualisiert / nicht gefunden / Fehler).
+// ---------------------------------------------------------------------------
+router.post("/admin/sagas/geocode-ungefaehr", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const dryRun = req.query.dry === "1";
+
+  const sagas = await db
+    .select({
+      id: catalogSagasTable.id,
+      title: catalogSagasTable.title,
+      canton: catalogSagasTable.canton,
+      summary: catalogSagasTable.summary,
+      lat: catalogSagasTable.lat,
+      lng: catalogSagasTable.lng,
+    })
+    .from(catalogSagasTable)
+    .where(eq(catalogSagasTable.koordinatenSicherheit, "ungefaehr"));
+
+  req.log.info({ count: sagas.length, dryRun }, "Starte Geocodierung ungefähr-Sagen");
+
+  const results: {
+    title: string;
+    canton: string;
+    status: "aktualisiert" | "kein_ort" | "zu_weit" | "geocode_fehler" | "ki_fehler";
+    ort?: string;
+    lat?: number;
+    lng?: number;
+    distKm?: number;
+  }[] = [];
+
+  const NOMINATIM_UA = "SagaTrail/1.0 (Swiss hiking app)";
+  const MAX_DIST_KM = 30;
+
+  for (const saga of sagas) {
+    await new Promise((r) => setTimeout(r, 1100)); // Nominatim: max 1 req/s
+
+    // 1. Ortsname per Claude extrahieren
+    let ortName: string | null = null;
+    try {
+      const msg = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 64,
+        messages: [{
+          role: "user",
+          content: [
+            `Sage: "${saga.title}" (Kanton ${saga.canton})`,
+            `Summary: ${saga.summary}`,
+            ``,
+            `Aufgabe: Nenne NUR den spezifischsten konkreten Ort, der im Summary explizit erwähnt wird`,
+            `(z.B. "Rheinfähre Basel", "Spalentor Basel", "Teufelsbrücke Andermatt").`,
+            `Wenn kein konkreter Ort genannt wird, antworte exakt: KEIN_ORT`,
+            `Keine Erklärung, nur der Ortsname oder KEIN_ORT.`,
+          ].join("\n"),
+        }],
+      });
+      const block = msg.content.find((b) => b.type === "text");
+      const raw = block?.type === "text" ? block.text.trim() : "KEIN_ORT";
+      ortName = raw === "KEIN_ORT" || raw.length < 3 ? null : raw;
+    } catch {
+      results.push({ title: saga.title, canton: saga.canton, status: "ki_fehler" });
+      continue;
+    }
+
+    if (!ortName) {
+      results.push({ title: saga.title, canton: saga.canton, status: "kein_ort" });
+      continue;
+    }
+
+    // 2. Geocodieren via Nominatim (Schweiz + Liechtenstein)
+    let hitLat: number | null = null;
+    let hitLng: number | null = null;
+    try {
+      const query = `${ortName}, ${saga.canton}, Schweiz`;
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=ch,li`;
+      const resp = await fetch(url, { headers: { "User-Agent": NOMINATIM_UA }, signal: AbortSignal.timeout(8000) });
+      const hits = await resp.json() as { lat: string; lon: string }[];
+      if (hits.length > 0) {
+        hitLat = parseFloat(hits[0].lat);
+        hitLng = parseFloat(hits[0].lon);
+      }
+    } catch {
+      results.push({ title: saga.title, canton: saga.canton, status: "geocode_fehler", ort: ortName });
+      continue;
+    }
+
+    if (hitLat === null || hitLng === null) {
+      results.push({ title: saga.title, canton: saga.canton, status: "geocode_fehler", ort: ortName });
+      continue;
+    }
+
+    // 3. Distanz zum bestehenden Mittelpunkt prüfen
+    const distKm = saga.lat && saga.lng
+      ? Math.sqrt(
+          Math.pow((hitLat - saga.lat) * 111.32, 2) +
+          Math.pow((hitLng - saga.lng) * 111.32 * Math.cos((saga.lat * Math.PI) / 180), 2)
+        )
+      : 0;
+
+    if (distKm > MAX_DIST_KM) {
+      results.push({ title: saga.title, canton: saga.canton, status: "zu_weit", ort: ortName, lat: hitLat, lng: hitLng, distKm: Math.round(distKm) });
+      continue;
+    }
+
+    // 4. DB updaten
+    if (!dryRun) {
+      await db
+        .update(catalogSagasTable)
+        .set({ lat: hitLat, lng: hitLng, koordinatenSicherheit: "exakt" })
+        .where(eq(catalogSagasTable.id, saga.id));
+    }
+    results.push({ title: saga.title, canton: saga.canton, status: "aktualisiert", ort: ortName, lat: hitLat, lng: hitLng, distKm: Math.round(distKm) });
+    req.log.info({ title: saga.title, ort: ortName, lat: hitLat, lng: hitLng, distKm, dryRun }, "Saga geocodiert");
+  }
+
+  const summary = {
+    gesamt: sagas.length,
+    aktualisiert: results.filter((r) => r.status === "aktualisiert").length,
+    kein_ort: results.filter((r) => r.status === "kein_ort").length,
+    zu_weit: results.filter((r) => r.status === "zu_weit").length,
+    fehler: results.filter((r) => ["geocode_fehler", "ki_fehler"].includes(r.status)).length,
+    dryRun,
+  };
+  req.log.info(summary, "Geocodierung abgeschlossen");
+  res.json({ summary, results });
 });
 
 export default router;

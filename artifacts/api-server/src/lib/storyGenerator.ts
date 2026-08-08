@@ -75,7 +75,7 @@ function buildPrompt(
   language: string,
 ): string {
   const langLabel = LANGUAGE_LABEL[language] ?? "Hochdeutsch";
-  const decisionCount = ageTier === "kinder" ? 1 : 2;
+  const decisionCount = ageTier === "kinder" ? 2 : 3;
   return [
     "Du bist ein meisterhafter mündlicher Erzähler für eine Schweizer Wander-App, die regionale Sagen live erzählt — in der Tradition grosser Sagenerzähler am Lagerfeuer.",
     "Erzeuge eine atmosphärische, kapitelweise Erzählung einer Schweizer Sage, die eine wandernde Person unterwegs über Kopfhörer hört.",
@@ -85,8 +85,9 @@ function buildPrompt(
     "- Baue jede Szene mit sinnlichen Details auf, die zur Wanderung passen: Geräusche, Gerüche, Licht, Wetter, der Boden unter den Füssen.",
     "- Verwende wörtliche Rede der Sagenfiguren, wo die Sage es hergibt — knapp, altertümlich gefärbt, nie modern klingend.",
     "- Baue einen Spannungsbogen über die Kapitel: leiser Auftakt, wachsende Unruhe, Höhepunkt, Nachklang.",
-    "- Jedes Kapitel hat 120 bis 200 Wörter — lang genug für echtes Eintauchen, kurz genug für eine Etappe.",
-    "- Sprich die wandernde Person direkt an und verwebe die Landschaft um sie herum mit der Sage ('Der Pfad, auf dem du gehst...').",
+    "- Jedes Kapitel hat 120 bis 200 Wörter — lang genug für echtes Eintauchen, kurz genug für eine Etappe auf einer langen Wanderung.",
+    "- Sprich die wandernde Person direkt an und webe die Atmosphäre der Wanderung in die Sage — Geräusche, Licht, Wetter, Gerüche, der Boden unter den Füssen ('Der Pfad trägt dich...', 'Die Luft riecht nach...').",
+    "- KEINE konkreten Ortshinweise: KEIN 'Du stehst vor dem Münster', 'Schau nach links', 'Hinter dir liegt die Brücke', 'Dort drüben siehst du...' — die Erzählung wird einmal generiert und läuft an verschiedenen Stellen der Route. Solche Angaben stimmen fast nie.",
     "- Vermeide Formulierungen wie 'Die Sage erzählt', 'Es heisst, dass', 'Der Legende nach' — erzähle die Geschichte unmittelbar, als geschehe sie jetzt.",
     "",
     `Sage: "${saga.title}" (Kanton ${saga.canton})`,
@@ -102,7 +103,7 @@ function buildPrompt(
     "- Die wandernde Person ist stets Zeuge, nie Held. Der Ausgang der Sage bleibt unveränderlich.",
     "- Schreibe im Präsens, in der Du-Anrede.",
     "- Verwende KEIN Gendern (keine Formen wie 'Leser:innen', 'Wanderer*innen', 'Held/in'); nutze durchgehend neutrale oder generische Formen.",
-    `- Erzeuge 4 bis 6 Kapitel, davon genau ${decisionCount} Entscheidungspunkt(e).`,
+    `- Erzeuge 8 bis 10 Kapitel, davon genau ${decisionCount} Entscheidungspunkt(e).`,
     "- Entscheidungen betreffen nur Haltung und Blick der wandernden Person, niemals den Ausgang der Sage.",
     "- Jeder Entscheidungspunkt hat eine kurze Frage und 2 bis 3 Optionen.",
     "- Jede Option hat: label (die Wahl, in Zielsprache), archetypeHint (kurzer Hinweis, in Zielsprache), tone (STABILE deutsche Kennung, eines von: mutig, bedacht, wachsam, ehrfuerchtig, nachdenklich).",

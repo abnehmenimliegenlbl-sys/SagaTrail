@@ -63,6 +63,8 @@ function translateKind(kind: string | undefined): string {
     "historic=building":          "Historisches Gebäude",
     "historic=tomb":              "Historisches Grabmal",
     "historic=yes":               "Historisches Objekt",
+    // saga
+    "saga=heart":                 "Herzort der Sage",
     // tourism
     "tourism=artwork":            "Kunstobjekt / öffentliches Kunstwerk",
     "tourism=attraction":         "Sehenswürdigkeit",
@@ -72,9 +74,41 @@ function translateKind(kind: string | undefined): string {
   return MAP[kind] ?? kind;
 }
 
+/**
+ * Erkennt institutionelle/behördliche Kategoriewörter im POI-Namen.
+ * Wenn ein solches Wort vorhanden ist, IST die Kategorie das eigentliche Objekt —
+ * nicht der geografische Zusatz im Namen (z.B. "Huetstock" in "Jagdbanngebiet Huetstock").
+ * Gibt das erkannte Kategoriewort zurück oder null.
+ */
+function detectInstitutionalCategory(name: string): string | null {
+  const lower = name.toLowerCase();
+  const CATEGORIES: [string, string][] = [
+    ["jagdbanngebiet",        "Jagdbanngebiet (Bundesschutzzone für Wildtiere)"],
+    ["wildschutzgebiet",      "Wildschutzgebiet"],
+    ["wildreservat",          "Wildreservat"],
+    ["naturschutzgebiet",     "Naturschutzgebiet"],
+    ["naturreservat",         "Naturreservat"],
+    ["bundesreservat",        "Bundesreservat"],
+    ["wildnisgebiet",         "Wildnisgebiet"],
+    ["nationalpark",          "Nationalpark"],
+    ["regionaler naturpark",  "Regionaler Naturpark"],
+    ["naturpark",             "Naturpark"],
+    ["vogelschutzreservat",   "Vogelschutzreservat"],
+    ["moorlandschaft",        "Moorlandschaft (Bundesinventar)"],
+    ["hochmoor",              "Hochmoor (Bundesinventar)"],
+    ["flachmoor",             "Flachmoor (Bundesinventar)"],
+    ["auengebiet",            "Auengebiet (Bundesinventar)"],
+  ];
+  for (const [key, label] of CATEGORIES) {
+    if (lower.includes(key)) return label;
+  }
+  return null;
+}
+
 function buildPrompt(input: PoiNarrationInput): string {
   const langLabel = LANGUAGE_LABEL[input.lang] ?? "Hochdeutsch";
   const kindLabel = translateKind(input.kind);
+  const institutionalCategory = detectInstitutionalCategory(input.name);
   const kopf = [
     "Du bist derselbe Erzähler, der in einer Schweizer Wander-App regionale Sagen live erzählt.",
     "Eine wandernde Person kommt unterwegs an einem realen Ort vorbei.",
@@ -116,6 +150,21 @@ function buildPrompt(input: PoiNarrationInput): string {
     : [];
 
   if (input.extract) {
+    // Wenn der Name eine institutionelle Kategorie enthält (z.B. "Jagdbanngebiet"),
+    // beschreibt der Wikipedia-Auszug oft nur die geografische Lage (den Berg, das Tal),
+    // nicht die Institution selbst. Explizit klarstellen, was das Hauptthema ist.
+    const institutionalNote = institutionalCategory
+      ? [
+          "",
+          `WICHTIG: Der POI-Name enthält eine institutionelle Kategorie: "${institutionalCategory}".`,
+          "Der Wikipedia-Auszug beschreibt möglicherweise das geografische Objekt (Berg, Tal, Gewässer),",
+          "das Teil des Namens ist — NICHT die Institution selbst.",
+          `Dein Text soll erklären, was ein ${institutionalCategory} ist und welche Bedeutung`,
+          "es für Natur und Wandernde hat. Nutze den Wikipedia-Auszug nur als geografischen Kontext",
+          "(Lage, Größe, Höhe) — beschreibe NICHT primär das geografische Objekt.",
+        ]
+      : [];
+
     return [
       ...kopf,
       "",
@@ -126,6 +175,7 @@ function buildPrompt(input: PoiNarrationInput): string {
       `Ort: "${input.name}"`,
       `Objekttyp: ${kindLabel}`,
       `Wikipedia-Auszug: ${input.extract}`,
+      ...institutionalNote,
       ...osmBlock,
       ...fuss,
       "- Erfinde KEINE neuen Fakten, Ereignisse oder Sagen -- nutze ausschliesslich die Angaben aus Auszug und OSM-Kontext.",

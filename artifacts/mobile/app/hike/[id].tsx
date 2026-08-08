@@ -542,6 +542,7 @@ export default function LiveHike() {
   const [photoUploadFeedback, setPhotoUploadFeedback] = useState<"ok" | "error" | null>(null);
   const [showPhotoChallenge, setShowPhotoChallenge] = useState(false);
   const photoChallengeShownRef = useRef(false);
+  const sagaArrivalSpokenRef   = useRef(false);
   const [rawSurfacePoints, setRawSurfacePoints] = useState<RouteSurfacePoint[]>([]);
   const notifiedSurfaceFractionsRef = useRef<Set<number>>(new Set());
   const notifiedMilestonesRef = useRef<Set<number>>(new Set());
@@ -985,7 +986,26 @@ export default function LiveHike() {
               return false;
             })
           : result;
-      if (!cancelled) setPois(gefiltert);
+      // Sagenmittelpunkt als synthetischen POI einfügen — nur wenn die
+      // Koordinaten als "exakt" klassifiziert sind (99 von 236 Sagen).
+      // "ungefaehr"-Koordinaten liegen nur grob im Gemeindegebiet und
+      // würden den POI an der falschen Stelle auslösen.
+      const sagaHeartPoi: Poi | null =
+        saga?.coordinates && saga?.title && saga?.id &&
+        saga?.koordinatenSicherheit === "exakt"
+          ? {
+              id: `saga-heart-${saga.id}`,
+              name: saga.title,
+              kind: "saga=heart",
+              lat: saga.coordinates.lat,
+              lng: saga.coordinates.lng,
+              osmContext: saga.summary ?? undefined,
+            }
+          : null;
+      const mitSagaHerz = sagaHeartPoi
+        ? [...gefiltert.filter((p) => p.id !== sagaHeartPoi.id), sagaHeartPoi]
+        : gefiltert;
+      if (!cancelled) setPois(mitSagaHerz);
     };
 
     // Bei Netzfehler ODER leerem Ergebnis (transienter Overpass-Timeout-Cache)
@@ -1334,7 +1354,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1415,17 +1435,22 @@ export default function LiveHike() {
           })()
         : null);
     if (!current) return;
-    const NEARBY_KM = 0.3;
     // Doppel-Schutz: (1) per ID, (2) per Koordinaten (derselbe Ort kann als
     // node-NNN und als way-MMM in Overpass auftauchen — gleicher Ort, zwei IDs).
     const DEDUP_KM = 0.1;
     const hit = pois.find(
-      (poi) =>
-        !announcedPoiIdsRef.current.has(poi.id) &&
-        !announcedPoiLocsRef.current.some(
-          (loc) => haversineKm({ lat: poi.lat, lng: poi.lng }, loc) <= DEDUP_KM
-        ) &&
-        haversineKm(current, { lat: poi.lat, lng: poi.lng }) <= NEARBY_KM
+      (poi) => {
+        // Sagenmittelpunkt: 500 m Radius (Herzort der laufenden Sage ist
+        // immer relevant, auch auf dem Land). Normale POIs: 300 m.
+        const radiusKm = poi.kind === "saga=heart" ? 0.5 : 0.3;
+        return (
+          !announcedPoiIdsRef.current.has(poi.id) &&
+          !announcedPoiLocsRef.current.some(
+            (loc) => haversineKm({ lat: poi.lat, lng: poi.lng }, loc) <= DEDUP_KM
+          ) &&
+          haversineKm(current, { lat: poi.lat, lng: poi.lng }) <= radiusKm
+        );
+      }
     );
     if (hit) {
       announcedPoiIdsRef.current.add(hit.id);
@@ -1514,6 +1539,20 @@ export default function LiveHike() {
       speakRef.current?.(pack.photoChallengePrompt);
     }
   }, [livePos, saga?.coordinates, storyLanguage]);
+
+  // Sagenmittelpunkt-Ankunft: einmalige kurze Ansage wenn GPS < 10 m entfernt (GPS-bestätigt,
+  // daher darf die Phrase "du stehst hier" sagen). Nur für Sagen mit exakten Koordinaten —
+  // der saga=heart-POI wurde dort bereits auf koordinatenSicherheit='exakt' beschränkt.
+  useEffect(() => {
+    if (!livePos || !saga?.coordinates || saga.koordinatenSicherheit !== "exakt") return;
+    if (sagaArrivalSpokenRef.current) return;
+    const dist = haversineKm(livePos, saga.coordinates);
+    if (dist <= 0.01) {
+      sagaArrivalSpokenRef.current = true;
+      const pack = STORY_PACKS[resolveLang(storyLanguage)];
+      speakRef.current?.(pack.sagaHeartArrival, undefined, { sagaInterrupt: true });
+    }
+  }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage]);
 
   // Wegoberflaechenansage: sobald der Wanderer einen neuen Oberflaechenabschnitt betritt,
   // wird ein saga-atmosphaerischer Satz gesprochen (und optional als Push-Notif gesendet).
@@ -1817,7 +1856,7 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -1888,10 +1927,27 @@ export default function LiveHike() {
         return;
       }
 
-      // Ohne interrupt: in die Warteschlange einreihen, wenn gerade gesprochen
-      // wird — so unterbrechen POI, Navigation, Meilenstein etc. keine laufende
+      // PRIO 2 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
+      // Eingesetzt fuer die 10-m-Sagenmittelpunkt-Ansage.
+      if (opts?.sagaInterrupt) {
+        if (navInterruptingRef.current) {
+          // Abbiegehinweis laeuft gerade — dahinter einreihen, nicht unterbrechen.
+          narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
+          return;
+        }
+        // Alles andere (Kapitel, POI, Meilenstein): Queue leeren, sofort starten.
+        narrationQueueRef.current = [];
+        // Laufenden Sound stoppen — wird im normalen Pfad neu gestartet.
+        const prev = narrationSoundRef.current;
+        narrationSoundRef.current = null;
+        if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
+        try { Speech.stop(); } catch {}
+      }
+
+      // PRIO 3 — ohne interrupt: in die Warteschlange einreihen, wenn gerade
+      // gesprochen wird — so unterbrechen POI, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
-      if (!opts?.interrupt && speakingRef.current) {
+      if (!opts?.interrupt && !opts?.sagaInterrupt && speakingRef.current) {
         narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
         return;
       }
@@ -2223,14 +2279,16 @@ export default function LiveHike() {
     // Parallel zur Erzaehlung eine Mitteilung mit dem Wikipedia-Bild des Ortes
     // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
     // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
+    const isSagaHeart = nearbyPoi.kind === "saga=heart";
     const poiName = nearbyPoi.name;
     // Wiki ist bei GPS-Trigger noch nicht geladen (lazy) — Notif ohne Bild
     // ist besser als warten; das Bild erscheint spaeter im Modal.
-    const poiBild = nearbyPoiWiki?.image ?? null;
-    const poiText = nearbyPoiWiki?.extract
-      ? trimForNarration(nearbyPoiWiki.extract)
-      : t.poiNotifBody;
-    if (turnNotifsReadyRef.current) {
+    // Sagenmittelpunkt: keine Push-Mitteilung (ist kein "Unterbrechungs"-POI).
+    if (!isSagaHeart && turnNotifsReadyRef.current) {
+      const poiBild = nearbyPoiWiki?.image ?? null;
+      const poiText = nearbyPoiWiki?.extract
+        ? trimForNarration(nearbyPoiWiki.extract)
+        : t.poiNotifBody;
       sendePoiMitteilung(poiName, poiText, poiBild);
     }
     const pack = STORY_PACKS[resolveLang(cueLanguage)];
@@ -2243,13 +2301,15 @@ export default function LiveHike() {
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
     // wird der rohe Wikipedia-Auszug erzaehlt; ohne Auszug erzeugt der Server
     // einen kurzen Kontext aus Name + OSM-Kategorie (Fallback: nur der Name).
+    // Sagenmittelpunkt: kein "Unterbrechung der Sage"-Wrapper — der Text
+    // fliesst direkt als nahtlose Fortsetzung der laufenden Erzaehlung.
     // Offline-Cache bevorzugen, sonst Netzwerk-Request.
     (async () => {
       const cached = await getOfflinePoiStory(nearbyPoi.id, cueLanguage);
       if (cached !== null) {
         if (!cancelled) {
           if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
-          erzaehle(pack.poiAside(nearbyPoi.name, cached));
+          erzaehle(isSagaHeart ? cached : pack.poiAside(nearbyPoi.name, cached));
         }
         return;
       }
@@ -2262,16 +2322,12 @@ export default function LiveHike() {
       })
         .then((r) => {
           if (!cancelled && !nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
-          erzaehle(pack.poiAside(nearbyPoi.name, r.text));
+          erzaehle(isSagaHeart ? r.text : pack.poiAside(nearbyPoi.name, r.text));
         })
-        .catch(() =>
-          erzaehle(
-            pack.poiAside(
-              nearbyPoi.name,
-              rawExtract ? trimForNarration(rawExtract) : null,
-            ),
-          ),
-        );
+        .catch(() => {
+          if (!isSagaHeart)
+            erzaehle(pack.poiAside(nearbyPoi.name, rawExtract ? trimForNarration(rawExtract) : null));
+        });
     })();
     return () => {
       cancelled = true;

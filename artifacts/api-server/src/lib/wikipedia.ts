@@ -96,6 +96,8 @@ interface WikidataClaimsResponse {
     string,
     {
       sitelinks?: Record<string, { title?: string }>;
+      labels?: Record<string, { language?: string; value?: string }>;
+      descriptions?: Record<string, { language?: string; value?: string }>;
       claims?: Record<string, Array<{ mainsnak?: { datavalue?: { value?: unknown } } }>>;
     }
   >;
@@ -167,6 +169,104 @@ export async function fetchWikidataCommonsCategory(
     if (imgUrl) return imgUrl;
   }
   return null;
+}
+
+/**
+ * Extrahiert verifizierte Fakten aus einem Wikidata-Eintrag.
+ *
+ * Schritt 1: Entity-JSON laden (Beschreibung + Claims).
+ * Schritt 2: Q-ID-Werte aus strukturierten Properties (P138 benannt nach,
+ *   P84 Architekt, P170 Gestaltet von, P186 Material, P140 Religion)
+ *   sammeln und per Batch-API in einem zweiten Request in lesbare Namen
+ *   aufloesen.
+ *
+ * Ergebnis: "Trinkbrunnen in Basel, benannt nach Friedrich Nietzsche.
+ *   Benannt nach: Friedrich Nietzsche. Material: Kalkstein. Eingeweiht/erbaut: 2015."
+ *
+ * Dient als `extract` an den POI-Narrator — Claude bekommt verifizierte
+ * Fakten statt aus dem Trainings-Wissen zu raten.
+ */
+export async function fetchWikidataFacts(
+  qid: string,
+  lang: string = DEFAULT_LANG,
+): Promise<string | null> {
+  const url = `https://www.wikidata.org/wiki/Special:EntityData/${encodeURIComponent(qid)}.json`;
+  const json = await fetchJson<WikidataClaimsResponse>(url);
+  const entity = json?.entities?.[qid];
+  if (!entity) return null;
+
+  const parts: string[] = [];
+
+  // Beschreibung (z.B. "Trinkbrunnen in Basel, benannt nach Friedrich Nietzsche")
+  const desc =
+    entity.descriptions?.[lang]?.value ??
+    entity.descriptions?.["de"]?.value ??
+    entity.descriptions?.["en"]?.value;
+  if (desc) parts.push(desc);
+
+  // Properties mit Q-Item-Werten die per Batch aufgeloest werden muessen.
+  // Reihenfolge bestimmt Ausgabe-Reihenfolge.
+  const Q_PROPS: Array<[string, string]> = [
+    ["P138", "Benannt nach"],   // named after
+    ["P84",  "Architekt"],      // architect
+    ["P170", "Gestaltet von"],  // creator (Kunstwerke/Denkmäler)
+    ["P186", "Material"],       // material used
+    ["P140", "Religion"],       // religion (Kapellen, Kirchen)
+  ];
+
+  // Alle Q-IDs einsammeln (max 2 Werte pro Property, um Token zu sparen)
+  const pendingQids: string[] = [];
+  for (const [prop] of Q_PROPS) {
+    for (const claim of (entity.claims?.[prop] ?? []).slice(0, 2)) {
+      const val = claim.mainsnak?.datavalue?.value;
+      if (val && typeof val === "object" && "id" in (val as object)) {
+        const itemQid = (val as { id: string }).id;
+        if (!pendingQids.includes(itemQid)) pendingQids.push(itemQid);
+      }
+    }
+  }
+
+  // Batch-Label-Lookup — ein einziger Request für alle Q-IDs
+  const qidToLabel = new Map<string, string>();
+  if (pendingQids.length > 0) {
+    const batchUrl =
+      `https://www.wikidata.org/w/api.php?action=wbgetentities` +
+      `&ids=${encodeURIComponent(pendingQids.join("|"))}` +
+      `&props=labels&languages=${lang}|de|en&format=json&origin=*`;
+    const batchJson = await fetchJson<{
+      entities?: Record<string, { labels?: Record<string, { value?: string }> }>;
+    }>(batchUrl);
+    for (const [q, data] of Object.entries(batchJson?.entities ?? {})) {
+      const label =
+        data.labels?.[lang]?.value ??
+        data.labels?.["de"]?.value ??
+        data.labels?.["en"]?.value;
+      if (label) qidToLabel.set(q, label);
+    }
+  }
+
+  // Aufgeloeste Labels in lesbaren Text umwandeln
+  for (const [prop, label] of Q_PROPS) {
+    const resolved: string[] = [];
+    for (const claim of (entity.claims?.[prop] ?? []).slice(0, 2)) {
+      const val = claim.mainsnak?.datavalue?.value;
+      if (val && typeof val === "object" && "id" in (val as object)) {
+        const name = qidToLabel.get((val as { id: string }).id);
+        if (name) resolved.push(name);
+      }
+    }
+    if (resolved.length > 0) parts.push(`${label}: ${resolved.join(", ")}.`);
+  }
+
+  // Einweihungs- / Erbauungsjahr (P571) — Zeitwert, kein Q-Item
+  const p571Val = entity.claims?.["P571"]?.[0]?.mainsnak?.datavalue?.value;
+  if (p571Val && typeof p571Val === "object" && "time" in (p571Val as object)) {
+    const year = ((p571Val as { time: string }).time ?? "").match(/\+(\d{4})/)?.[1];
+    if (year) parts.push(`Eingeweiht/erbaut: ${year}.`);
+  }
+
+  if (parts.length === 0) return null;
+  return parts.join(" ");
 }
 
 /**
@@ -399,12 +499,35 @@ function commonPrefixLength(a: string, b: string): number {
  * gegenueber kleinen Schreibvarianten (z.B. "Basiliskbrunnen" vs.
  * "Basiliskenbrunnen"): Enthaltensein nach Normalisierung oder ein
  * gemeinsames Praefix von mindestens 60 % des kuerzeren Namens.
+ *
+ * Asymmetrischer Sonderfall — KEIN Match wenn:
+ *   Artikel-Titel ⊂ POI-Name  UND  POI-Name ⊄ Artikel-Titel
+ *   UND  Artikel-Titel < 70 % der Laenge des POI-Namens
+ *
+ * Das verhindert, dass ein Artikel ueber ein grosses geografisches Objekt
+ * (See, Berg, Fluss) als Beschreibung fuer ein kleines POI-Objekt akzeptiert
+ * wird, das zufaellig diesen Gebietsname im Namen traegt.
+ *
+ * Beispiele:
+ *   "Genfersee" (9) ⊂ "kreuzamgenfersee" (15)  → 60 % < 70 % → KEIN Match ✓
+ *   "Pilatus"   (7) ⊂ "hoehlampilatus"   (13)  → 54 % < 70 % → KEIN Match ✓
+ *   "Basiliskenbrunnen" (18) ⊂ "basiliskenbrunnenbasel" (21) → 86 % > 70 % → Match ✓
  */
 function namesRoughlyMatch(a: string, b: string): boolean {
   const na = normalizeName(a);
   const nb = normalizeName(b);
   if (na.length < 4 || nb.length < 4) return na === nb;
-  if (na.includes(nb) || nb.includes(na)) return true;
+  if (na.includes(nb) || nb.includes(na)) {
+    // Artikel-Titel ist Teilmenge des (laengeren) POI-Namens, aber nicht umgekehrt
+    // → Artikel beschreibt nur den geografischen Kontext, nicht das Objekt selbst.
+    // AUSNAHME: Steht der Artikel-Titel am Anfang des POI-Namens, ist er der Kern-Name
+    // mit angehängtem Orts-Qualifier (z.B. "Nietzsche-Haus" in "Nietzsche-Haus Sils Maria").
+    if (nb.includes(na) && !na.includes(nb) && na.length / nb.length < 0.70) {
+      if (nb.startsWith(na) && na.length / nb.length >= 0.50) return true; // Kern-Name + Ort-Qualifier → OK
+      return false;
+    }
+    return true;
+  }
   const prefix = commonPrefixLength(na, nb);
   return prefix >= Math.ceil(Math.min(na.length, nb.length) * 0.6);
 }
