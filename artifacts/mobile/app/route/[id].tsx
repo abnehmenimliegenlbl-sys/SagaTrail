@@ -19,11 +19,11 @@ import * as Location from "expo-location";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated as RNAnimated,
-  Image,
   Linking,
   Platform,
   Pressable,
@@ -400,22 +400,32 @@ export default function Routenplanung() {
     let cancelled = false;
     // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
     // Overpass-Timeouts in dichten Staedten wie Basel.
-    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 0.5);
+    // 2 km Rand damit alpine Gipfel (natural=peak) und Pässe (natural=saddle)
+    // auch abseits der Route noch gefetcht werden.
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 2.0);
     const geo = route.geometry;
-    const KORRIDOR_KM = 0.5;
+    // Alpine Naturmerkmale dürfen bis 2 km vom Routenverlauf entfernt sein —
+    // Gipfel und Pässe sind oft gut sichtbar aber nicht direkt am Weg.
+    // Alle anderen POIs (Denkmäler, Brunnen, …) bleiben bei 0.5 km.
+    const ALPINE_KINDS = new Set([
+      "natural=peak", "natural=saddle", "natural=glacier",
+      "natural=rock",  "natural=arch",
+    ]);
+    const korridorKm = (kind: string) => ALPINE_KINDS.has(kind) ? 2.0 : 0.5;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
       const gefiltert =
         geo && geo.length > 1
           ? result.filter((p) => {
+              const maxKm = korridorKm(p.kind ?? "");
               for (let i = 0; i < geo.length - 1; i++) {
                 if (
                   distanzZuSegmentKm(
                     { lat: p.lat, lng: p.lng },
                     { lat: geo[i][0], lng: geo[i][1] },
                     { lat: geo[i + 1][0], lng: geo[i + 1][1] }
-                  ) <= KORRIDOR_KM
+                  ) <= maxKm
                 ) return true;
               }
               return false;
@@ -848,7 +858,7 @@ export default function Routenplanung() {
 
         {route.photoUrl ? (
           <View style={styles.heroCard}>
-            <Image source={{ uri: route.photoUrl }} style={styles.heroImage} />
+            <ExpoImage source={{ uri: route.photoUrl }} style={styles.heroImage} contentFit="cover" />
             <LinearGradient
               colors={["rgba(0,0,0,0.45)", "transparent"]}
               style={StyleSheet.absoluteFill}
@@ -1581,7 +1591,8 @@ export default function Routenplanung() {
           <Switch
             value={energiesparmodus}
             onValueChange={setEnergiesparmodus}
-            trackColor={{ true: colors.accent, false: colors.card }}
+            trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
             thumbColor={colors.foreground}
           />
         </View>
@@ -1869,10 +1880,10 @@ export default function Routenplanung() {
                   <ActivityIndicator color={colors.accent} />
                 </View>
               ) : selectedPoiWiki?.image ? (
-                <Image
+                <ExpoImage
                   source={{ uri: selectedPoiWiki.image }}
                   style={styles.poiModalImage}
-                  resizeMode="cover"
+                  contentFit="cover"
                 />
               ) : null}
               <View style={styles.poiRow}>
@@ -1990,7 +2001,7 @@ const styles = StyleSheet.create({
     height: 220,
     overflow: "hidden",
   },
-  heroImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  heroImage: { width: "100%", height: "100%" },
   heroOverlay: {
     position: "absolute",
     bottom: 0,

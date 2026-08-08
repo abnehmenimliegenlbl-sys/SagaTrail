@@ -3,7 +3,7 @@ import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignIn } from "@clerk/expo/legacy";
 import { clearAllClerkTokens, healStaleClerkSession } from "@/lib/clerkAuth";
 import { Ionicons } from "@expo/vector-icons";
-import { makeRedirectUri } from "expo-auth-session";
+import * as Linking from "expo-linking";
 import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
@@ -111,7 +111,7 @@ export default function SignInScreen() {
     }
   };
 
-  const redirectUrl = makeRedirectUri();
+  const redirectUrl = Linking.createURL("/");
 
   const onGooglePress = useCallback(async () => {
     setError(null);

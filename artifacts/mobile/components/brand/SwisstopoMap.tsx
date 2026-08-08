@@ -140,6 +140,15 @@ export function SwisstopoMap({
         ref={ref}
         originWhitelist={["*"]}
         source={{ html }}
+        // Wenn das native Layout der WebView sich ändert (z.B. Vollbild-Übergang
+        // oder erster Render), schicken wir ein explizites map.resize() rein —
+        // MapLibre kennt sonst die tatsächliche Canvas-Grösse nicht und lädt
+        // nur Kacheln für einen falschen (oft 0x0) Viewport.
+        onLayout={() => {
+          ref.current?.injectJavaScript(
+            "if(window.sttMapResize) window.sttMapResize(); true;"
+          );
+        }}
         onMessage={(event) => {
           try {
             const data = JSON.parse(event.nativeEvent.data);

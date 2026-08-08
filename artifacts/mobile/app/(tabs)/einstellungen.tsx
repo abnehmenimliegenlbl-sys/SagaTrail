@@ -413,7 +413,8 @@ export default function Einstellungen() {
             <Switch
               value={profile?.navAnnouncementsEnabled !== false}
               onValueChange={(v) => updateProfile({ navAnnouncementsEnabled: v })}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>
@@ -429,7 +430,8 @@ export default function Einstellungen() {
             <Switch
               value={pushWeatherEnabled}
               onValueChange={(v) => void setPushWeatherEnabled(v)}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>
@@ -445,7 +447,8 @@ export default function Einstellungen() {
             <Switch
               value={energiesparmodus}
               onValueChange={setEnergiesparmodus}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>

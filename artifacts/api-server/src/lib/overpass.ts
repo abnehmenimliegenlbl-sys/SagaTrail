@@ -622,9 +622,17 @@ function buildOsmContext(tags: Record<string, string>): string | null {
 }
 
 /**
- * Laedt historische und touristische Orte (historic=*, tourism=attraction|
- * viewpoint) innerhalb einer Bounding Box. Bewusst auf benannte Orte begrenzt,
- * damit nur POIs geliefert werden, die sich sinnvoll erzaehlen lassen.
+ * Laedt historische, touristische und alpine Orte innerhalb einer Bounding Box.
+ * Bewusst auf benannte Orte begrenzt, damit nur POIs geliefert werden, die
+ * sich sinnvoll erzaehlen lassen.
+ *
+ * Abgedeckte Kategorien:
+ *  • historic=*          — Burgen, Ruinen, Denkmäler, Wegkreuze, …
+ *  • tourism=attraction|viewpoint|artwork — Sehenswürdigkeiten, Kunstwerke
+ *  • natural=peak|saddle|waterfall|cave_entrance|glacier|rock|arch
+ *                        — Gipfel, Pässe, Wasserfälle, Höhlen, Gletscher
+ *  • man_made=cross|obelisk — Gipfelkreuze, Gedenksteine
+ *  • amenity=place_of_worship + building=chapel|wayside_shrine — Kapellen
  */
 export async function fetchHistoricPois(
   bbox: { south: number; west: number; north: number; east: number },
@@ -632,20 +640,28 @@ export async function fetchHistoricPois(
 ): Promise<RawPoi[]> {
   const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
   const query = [
-    "[out:json][timeout:10];",
+    "[out:json][timeout:18];",
     "(",
+    // Historic (alle Untertypen: Burgen, Ruinen, Wegkreuze, Denkmäler, …)
     `node["historic"]["name"](${b});`,
     `way["historic"]["name"](${b});`,
-    `node["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
+    // Tourismus: Sehenswürdigkeiten, Aussichtspunkte, Kunstwerke
+    `node["tourism"~"^(attraction|viewpoint|artwork)$"]["name"](${b});`,
     `way["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
+    // Alpine Naturmerkmale (der wichtigste Block für Berggebiete)
+    `node["natural"~"^(peak|saddle|waterfall|cave_entrance|glacier|rock|arch|spring)$"]["name"](${b});`,
+    `way["natural"~"^(waterfall|glacier|cave_entrance)$"]["name"](${b});`,
+    // Gipfelkreuze und Obelisken
+    `node["man_made"~"^(cross|obelisk)$"]["name"](${b});`,
+    // Kapellen und Wegkapellen
+    `node["amenity"="place_of_worship"]["building"~"^(chapel|wayside_shrine|shrine)$"]["name"](${b});`,
+    `node["amenity"="place_of_worship"]["historic"~"^(chapel|wayside_shrine)$"]["name"](${b});`,
     ");",
     "out center tags;",
   ].join("");
-  // HTTP-Timeout muss etwas ueber dem Overpass-internen Timeout liegen (10 s),
-  // damit die Antwort noch ankommen kann, bevor wir abbrechen. Mit 3 Mirrors
-  // und je 14 s max dauert ein Komplett-Ausfall hoechstens ~42 s statt 75 s —
-  // und dank Fehler-Caching in getPois haengt nur der ERSTE Request so lang.
-  const POI_HTTP_TIMEOUT_MS = 14_000;
+  // HTTP-Timeout etwas ueber dem Overpass-internen Timeout (18 s):
+  // Groessere Query durch alpine Typen braucht etwas mehr Zeit.
+  const POI_HTTP_TIMEOUT_MS = 22_000;
   const elements = await runOverpass<OverpassPoiElement>(query, POI_HTTP_TIMEOUT_MS);
   const result: RawPoi[] = [];
   for (const e of elements) {
@@ -654,7 +670,14 @@ export async function fetchHistoricPois(
     const lat = e.lat ?? e.center?.lat;
     const lng = e.lon ?? e.center?.lon;
     if (lat == null || lng == null) continue;
-    const kind = tags.historic ? `historic=${tags.historic}` : `tourism=${tags.tourism}`;
+    // kind: priorisiert in Reihenfolge der kartografischen Wichtigkeit
+    let kind: string;
+    if (tags.natural)          kind = `natural=${tags.natural}`;
+    else if (tags.historic)    kind = `historic=${tags.historic}`;
+    else if (tags.tourism)     kind = `tourism=${tags.tourism}`;
+    else if (tags["man_made"]) kind = `man_made=${tags["man_made"]}`;
+    else if (tags.amenity)     kind = `amenity=${tags.amenity}`;
+    else                       kind = "unknown";
     result.push({
       id: `${e.type}-${e.id}`,
       name: tags.name,

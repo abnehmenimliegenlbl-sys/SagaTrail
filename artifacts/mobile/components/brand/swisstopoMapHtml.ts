@@ -182,7 +182,7 @@ export function buildSwisstopoHtml(
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* --- Legende --- */
-  #stt-legende { position: absolute; bottom: env(safe-area-inset-bottom, 0px); left: 8px; z-index: 1000;
+  #stt-legende { position: absolute; bottom: 0px; left: 8px; z-index: 1000;
     background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.35); font-size: 12px; line-height: 1.35;
     overflow: hidden; font-family: -apple-system, system-ui, sans-serif; }
@@ -224,7 +224,7 @@ export function buildSwisstopoHtml(
   .stt-mbtn.active { background: #DA291C; color: #F5F3EC; }
   /* MapLibre overrides */
   .maplibregl-ctrl-bottom-right,
-  .maplibregl-ctrl-bottom-left { bottom: env(safe-area-inset-bottom, 0px) !important; }
+  .maplibregl-ctrl-bottom-left { bottom: 0px !important; }
   .maplibregl-ctrl-attrib { background: rgba(16,24,26,0.7) !important; max-width: 140px !important; }
   .maplibregl-ctrl-attrib a { color: #DA291C !important; }
   .maplibregl-ctrl-attrib-inner { color: #6B7568 !important; font-size: 9px !important;
@@ -363,7 +363,7 @@ ${legendHtml}
       maxzoom: 17,
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
-    map.addLayer({ id: 'base-carto', type: 'raster', source: 'carto' });
+    map.addLayer({ id: 'base-carto', type: 'raster', source: 'carto', paint: { 'raster-fade-duration': 0 } });
 
     /* swisstopo SWISSIMAGE — Satellit */
     map.addSource('swissimage', {
@@ -374,7 +374,7 @@ ${legendHtml}
       minzoom: 2,
       maxzoom: 19
     });
-    map.addLayer({ id: 'base-sat', type: 'raster', source: 'swissimage', layout: { visibility: 'none' } });
+    map.addLayer({ id: 'base-sat', type: 'raster', source: 'swissimage', layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 0 } });
 
     /* Waymarked Trails — Wanderweg-Overlay */
     map.addSource('waymarked', {
@@ -383,7 +383,7 @@ ${legendHtml}
       tileSize: 256,
       attribution: '&copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
     });
-    map.addLayer({ id: 'waymarked', type: 'raster', source: 'waymarked', paint: { 'raster-opacity': 0 } });
+    map.addLayer({ id: 'waymarked', type: 'raster', source: 'waymarked', paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 } });
 
     /* AWS Terrain-DEM (Terrarium-Encoding) fuer 3D/Sat */
     map.addSource('terrain', {
@@ -815,7 +815,19 @@ ${legendHtml}
     applyMode();
     /* Zoom-Sichtbarkeit einmalig nach dem Load setzen (fitBounds hat Zoom geändert) */
     updateZoomVisibility();
-    setTimeout(function() { map.resize(); updateZoomVisibility(); }, 300);
+    /* Globale Resize-Funktion: wird vom nativen onLayout-Handler aufgerufen
+       damit MapLibre die echte WebView-Grösse kennt. Mehrere Pulse sichern
+       ab, dass auch ein später settlender Layout-Pass berücksichtigt wird. */
+    window.sttMapResize = function() {
+      map.resize();
+      updateZoomVisibility();
+    };
+    /* Initiale Resize-Pulse: 0 / 150 / 500 / 1200 ms nach map-load.
+       Der 0-ms-Pulse greift meist nicht (Layout noch nicht settled),
+       aber 150 ms + 500 ms fangen alle gängigen WebView-Render-Fälle ab. */
+    [0, 150, 500, 1200].forEach(function(ms) {
+      setTimeout(function() { map.resize(); updateZoomVisibility(); }, ms);
+    });
 
     /* Route-Layer garantiert ganz oben — nach allen anderen Layern,
        damit Waymarked-Raster-Tiles und Seilbahnen nie darueber liegen. */

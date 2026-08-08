@@ -304,25 +304,48 @@ async function enrichPoiWithWikipedia(
           return { ...poi, wiki: { ...wiki, image } };
         }
         // Kein Wikipedia-Artikel: P18 > P373-Kategorie > Commons-Name > Commons-Geo
-        const image =
-          p18Image ??
-          (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
-          (await fetchCommonsImageByName(poi.name)) ??
-          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
-        if (image) {
-          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
+        // KI-Text parallel holen — lieber Text+Bild als nur Bild.
+        const [imageFromWikidata, aiTextWiki] = await Promise.all([
+          (async () =>
+            p18Image ??
+            (poi.wikidataTag ? await fetchWikidataCommonsCategory(poi.wikidataTag) : null) ??
+            (await fetchCommonsImageByName(poi.name)) ??
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name)))(),
+          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
+        ]);
+        if (imageFromWikidata || aiTextWiki) {
+          return {
+            ...poi,
+            wiki: {
+              title: aiTextWiki?.title ?? poi.name,
+              extract: aiTextWiki?.extract ?? "",
+              url: aiTextWiki?.url ?? "",
+              lang: "de",
+              image: imageFromWikidata ?? aiTextWiki?.image ?? null,
+            },
+          };
         }
       } else {
-        // Kein Wikipedia-Eintrag: P18 + P373-Kategorie + Commons-Name + Commons-Geo parallel
-        const [p18Image, p373Image, nameImage, geoImage] = await Promise.all([
+        // Kein Wikipedia-Eintrag: P18 + P373-Kategorie + Commons-Name + Commons-Geo + KI parallel
+        const [p18Image, p373Image, nameImage, geoImage, aiTextWiki] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
           fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
           fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
+          searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
         const image = p18Image ?? p373Image ?? nameImage ?? geoImage;
-        if (image) {
-          return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
+        if (image || aiTextWiki) {
+          return {
+            ...poi,
+            wiki: {
+              title: aiTextWiki?.title ?? poi.name,
+              extract: aiTextWiki?.extract ?? "",
+              url: aiTextWiki?.url ?? "",
+              lang: "de",
+              image: image ?? aiTextWiki?.image ?? null,
+            },
+          };
         }
       }
     }

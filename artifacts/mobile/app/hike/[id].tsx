@@ -13,6 +13,7 @@ import {
   ApiError,
 } from "@workspace/api-client-react";
 import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport, WikiSummary } from "@workspace/api-client-react";
+import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
@@ -496,6 +497,8 @@ export default function LiveHike() {
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
+  const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
   const [routeWaypoints, setRouteWaypoints] = useState<RouteWaypoint[]>([]);
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
@@ -938,13 +941,16 @@ export default function LiveHike() {
     // Enger Rand (0.5 km statt 3 km): behalten werden ohnehin nur POIs im
     // 300-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
     // dichten Staedten (z. B. Basel) so teuer, dass sie in ein Timeout laeuft.
-    const bbox = bboxAroundGeometry(route?.geometry, center, 0.5);
-    // Nur POIs im 300-m-Korridor um die Strecke behalten — Orte weiter weg
-    // liegen nicht am Weg und wuerden die Karte und Ansagen verwaessern.
-    // (100 m erwies sich im Feldtest als zu eng: auf 7 km nur 2 POIs.)
-    // Gemessen wird gegen die Liniensegmente (nicht nur Stuetzpunkte), da die
-    // gespeicherte Geometrie ausgeduennt ist und Segmente >100 m lang sein koennen.
-    const KORRIDOR_KM = 0.5;
+    // 2 km Rand damit alpine Gipfel/Pässe auch dann gefetcht werden wenn sie
+    // etwas abseits der Route liegen.
+    const bbox = bboxAroundGeometry(route?.geometry, center, 2.0);
+    // Alpine Naturmerkmale (Gipfel, Pässe, Gletscher) dürfen bis 2 km vom
+    // Routenverlauf entfernt sein; alle anderen POIs bleiben bei 0.5 km.
+    const ALPINE_KINDS = new Set([
+      "natural=peak", "natural=saddle", "natural=glacier",
+      "natural=rock",  "natural=arch",
+    ]);
+    const korridorKm = (kind: string) => ALPINE_KINDS.has(kind) ? 2.0 : 0.5;
     const geo = route?.geometry;
 
     const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
@@ -952,13 +958,14 @@ export default function LiveHike() {
         geo && geo.length > 1
           ? result.filter((p) => {
               const punkt = { lat: p.lat, lng: p.lng };
+              const maxKm = korridorKm(p.kind ?? "");
               for (let i = 0; i < geo.length - 1; i++) {
                 if (
                   distanzZuSegmentKm(
                     punkt,
                     { lat: geo[i][0], lng: geo[i][1] },
                     { lat: geo[i + 1][0], lng: geo[i + 1][1] }
-                  ) <= KORRIDOR_KM
+                  ) <= maxKm
                 ) {
                   return true;
                 }
@@ -1038,6 +1045,57 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+
+  // Trinkwasser im Umkreis der Route laden (Mittelpunkt, 8 km Radius).
+  useEffect(() => {
+    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    if (!center) return;
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`)
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        if (cancelled || !Array.isArray(data)) return;
+        const mapped: MapPoi[] = (data as { osmId: string; lat: number; lng: number; name: string | null }[])
+          .filter((w) => w?.osmId)
+          .map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng, description: null }));
+        setWaterSources(mapped);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+
+  // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
+  useEffect(() => {
+    const geom = route?.geometry;
+    if (!geom || geom.length < 2) return;
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    const startPt = { lat: geom[0][0], lng: geom[0][1] };
+    const endPt   = { lat: geom[geom.length - 1][0], lng: geom[geom.length - 1][1] };
+    type ParkingItem = { osmId: string; lat: number; lng: number; name: string | null; address: string | null; parkingType: string | null; capacity: number | null };
+    const fetchOne = (lat: number, lng: number) =>
+      fetch(`${base}/api/parking?lat=${lat}&lng=${lng}&radius=800`)
+        .then((r) => r.json() as Promise<ParkingItem[]>)
+        .catch(() => [] as ParkingItem[]);
+    Promise.all([fetchOne(startPt.lat, startPt.lng), fetchOne(endPt.lat, endPt.lng)])
+      .then(([fromStart, fromEnd]) => {
+        if (cancelled) return;
+        const seen = new Set<string>();
+        const merged: MapPoi[] = [];
+        for (const item of [...(Array.isArray(fromStart) ? fromStart : []), ...(Array.isArray(fromEnd) ? fromEnd : [])]) {
+          if (!item?.osmId || seen.has(item.osmId)) continue;
+          seen.add(item.osmId);
+          const descParts: string[] = [];
+          if (item.parkingType) descParts.push(item.parkingType);
+          if (item.address) descParts.push(item.address);
+          if (item.capacity) descParts.push(`${item.capacity} Plätze`);
+          merged.push({ id: item.osmId, name: item.name ?? item.parkingType ?? "Parkplatz", lat: item.lat, lng: item.lng, description: descParts.length > 0 ? descParts.join(" · ") : null });
+        }
+        setParkingSpots(merged);
+      });
+    return () => { cancelled = true; };
+  }, [route?.id, route?.geometry]);
 
   // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
   // max. 3, innerhalb 100 m Routenabstand.
@@ -2850,6 +2908,8 @@ export default function LiveHike() {
                   offlineTiles={offlineTiles}
                   aerialways={aerialways}
                   pois={pois}
+                  waterSources={waterSources.length > 0 ? waterSources : null}
+                  parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safeAreaInsetTop={safeAreaTop}
                   onPoiPress={(id) => {
                     const poi = pois.find((p) => p.id === id);

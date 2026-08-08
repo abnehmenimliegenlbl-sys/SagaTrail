@@ -4,9 +4,9 @@ import * as Location from "expo-location";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -427,7 +427,8 @@ export default function KantonRouten() {
             <Switch
               value={ganzjaehrigFilter}
               onValueChange={setGanzjaehrigFilter}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>
@@ -457,7 +458,8 @@ export default function KantonRouten() {
               value={nearbyPos !== null}
               onValueChange={handleNearbyToggle}
               disabled={nearbyLocating}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>
@@ -474,7 +476,8 @@ export default function KantonRouten() {
             <Switch
               value={sunsetFilter}
               onValueChange={setSunsetFilter}
-              trackColor={{ true: colors.accent, false: colors.card }}
+              trackColor={{ true: colors.accent, false: colors.muted }}
+              ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
           </View>
@@ -693,10 +696,10 @@ function RouteCard({
   return (
     <Animated.View entering={FadeInDown.delay(index * 80)} style={styles.cardWrap}>
       <Pressable onPress={onPress} style={styles.card}>
-        <Image
+        <ExpoImage
           source={fotoFehler ? foto.fallback : foto.source}
           style={styles.cardImg}
-          resizeMode="cover"
+          contentFit="cover"
           onError={() => { clearRouteFotoCache(route); setFotoFehler(true); }}
         />
         {foto.attribution && (

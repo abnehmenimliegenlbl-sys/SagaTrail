@@ -472,7 +472,11 @@ export async function searchNearbyWikipedia(
   // Vierte Stufe: Wikipedia-Volltext-Suche — findet Artikel, in deren Text
   // der POI-Name vorkommt, auch wenn Titel ganz verschieden ist
   // (z.B. "Grenzstein 151" → "Rechtsrheinischer Grenzverlauf um Basel").
-  // Sicherheitsnetz: Artikel muss Koordinaten innerhalb von 20 km haben.
+  // Doppeltes Sicherheitsnetz: Artikel muss (a) Koordinaten innerhalb 5 km
+  // haben UND (b) entweder den Namen im Titel tragen ODER innerhalb 2 km
+  // liegen. Ohne (b) landen Stadt-Artikel wie "Lörrach" als Beschreibung
+  // für einen POI "Fasnachtsfeuer", weil der Stadtartikel das Wort im Text
+  // erwähnt, aber thematisch nichts mit dem POI zu tun hat.
   const fulltextUrl =
     `https://${lang}.wikipedia.org/w/api.php?action=query&list=search` +
     `&srsearch=${encodeURIComponent(name)}&srwhat=text&format=json&srlimit=5&origin=*`;
@@ -481,8 +485,12 @@ export async function searchNearbyWikipedia(
   for (const hit of fulltextHits) {
     // Artikel darf nicht schon durch Titelsuche abgelehnt worden sein
     if (titleHits.some((t) => t.title === hit.title)) continue;
-    // Geo-Distanz pruefen: maxDistKm=20 statt Standard 50, da kein Namens-Match
-    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng, 20);
+    // Namensabgleich: Titel muss POI-Name grob enthalten (oder umgekehrt)
+    const titleMatches = namesRoughlyMatch(hit.title, name);
+    // maxDistKm=5 grundsätzlich; bei Titelübereinstimmung 5 km genug,
+    // bei reinem Geo-Treffer (archäologische Objekte etc.) max 2 km.
+    const maxDist = titleMatches ? 5 : 2;
+    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng, maxDist);
     if (summary) return summary;
   }
 
