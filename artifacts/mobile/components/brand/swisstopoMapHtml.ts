@@ -92,11 +92,13 @@ export function buildSwisstopoHtml(
     offlineTiles && Object.keys(offlineTiles).length > 0
       ? JSON.stringify(offlineTiles)
       : "null";
-  const aerialwaysJson =
-    aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
-  const poisJson = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
-  const partnersJson =
-    partners && partners.length > 0 ? JSON.stringify(partners) : "null";
+  // aerialways/pois/partners werden NICHT ins HTML gebacken — sie werden nach
+  // map-load per injectJavaScript via window.sttSet* nachgeliefert, damit die
+  // WebView beim async-Laden dieser Daten nicht neu geladen wird (WKWebView
+  // droppt postMessage waehrend eines Reloads → click-Kanal bricht ab).
+  const aerialwaysJson = "null";
+  const poisJson       = "null";
+  const partnersJson   = "null";
   const waterSourcesJson =
     waterSources && waterSources.length > 0 ? JSON.stringify(waterSources) : "null";
   const parkingJson =
@@ -157,13 +159,14 @@ export function buildSwisstopoHtml(
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #10181A; }
   #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #10181A; }
+  .stt-cluster-badge { position: absolute; transform: translate(-50%, -50%); color: #F5F3EC; font-size: 11px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; pointer-events: none; z-index: 10; }
   /* --- Kartenmarker (unveraendert) --- */
   .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
   .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
   .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(47,111,237,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-  .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,0.25); }
+  .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,0.25); }
   /* PARTNER PINS — weisse Kachel + Marken-Rot Icon (#cc0000) */
   .stt-partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
   .stt-partner-pin  { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
@@ -257,6 +260,24 @@ ${legendHtml}
   var centerLat = ${lat};
 
   /* ---- MapLibre init mit leerem Stil ---- */
+  /* Injektions-Puffer: sttSet* darf JEDERZEIT aufgerufen werden — auch bevor
+     die Karte fertig geladen ist. Daten werden gepuffert und beim map-load
+     angewendet. Ohne Puffer verpufft ein frueher injectJavaScript-Aufruf. */
+  var _sttPending = { pois: null, partners: null, aerialways: null };
+  var _sttApply   = { pois: null, partners: null, aerialways: null };
+  window.sttSetPois = function(d) {
+    _sttPending.pois = d;
+    if (_sttApply.pois) _sttApply.pois(d);
+  };
+  window.sttSetPartners = function(d) {
+    _sttPending.partners = d;
+    if (_sttApply.partners) _sttApply.partners(d);
+  };
+  window.sttSetAerialways = function(d) {
+    _sttPending.aerialways = d;
+    if (_sttApply.aerialways) _sttApply.aerialways(d);
+  };
+
   var map = new maplibregl.Map({
     container: 'map',
     style: { version: 8, sources: {}, layers: [], glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf' },
@@ -493,18 +514,217 @@ ${legendHtml}
       if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
     }
 
-    /* POI-Marker */
+    /* POI-Koordinaten und -Marker-Elemente: ausserhalb von if(pois) damit
+       map.on('click') darauf zugreifen kann (Closures über load-Scope). */
+    var poiCoords    = {};  /* id → [lng, lat] */
+    var poiMarkerEls = {};  /* id → DOM-Element */
+
+    /* POI-Marker mit MapLibre-Clustering */
     if (pois) {
-      var poiEls = [];
-      pois.forEach(function(p) {
-        var el = document.createElement('div'); el.className = 'stt-poi-tipp';
-        var dot = document.createElement('div'); dot.className = 'stt-poi'; el.appendChild(dot);
-        el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-poi-press', id: p.id })); });
-        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
-        poiEls.push(el);
+      map.addSource('stt-pois', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: pois.map(function(p) {
+            return {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+              properties: { id: p.id, name: p.name }
+            };
+          })
+        },
+        cluster: true,
+        clusterMaxZoom: 13,
+        clusterRadius: 45
       });
-      if (poiEls.length) zoomGroups.push({ els: poiEls, minZoom: 13 });
+      /* Cluster-Kreis (rot) */
+      map.addLayer({
+        id: 'stt-poi-clusters',
+        type: 'circle',
+        source: 'stt-pois',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#cc0000',
+          'circle-radius': ['step', ['get', 'point_count'], 13, 10, 17, 30, 21],
+          'circle-stroke-color': '#F5F3EC',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.9
+        }
+      });
+      /* Unsichtbare Click-Target-Schicht fuer unklustrierte POIs.
+         circle-opacity:0 → geometrisch vorhanden (queryRenderedFeatures), visuell transparent.
+         Der DOM-Marker übernimmt die visuelle Darstellung. */
+      map.addLayer({
+        id: 'stt-poi-click-target',
+        type: 'circle',
+        source: 'stt-pois',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-radius': 24,
+          'circle-opacity': 0,
+          'circle-stroke-opacity': 0,
+          'circle-color': '#cc0000'
+        }
+      });
+      /* Alle Einzel-Marker sofort erstellen.
+         pointer-events:none → Touches fallen durch zum MapLibre-Canvas →
+         map.on('click') kann per Pixel-Distanz-Check die Selektion übernehmen. */
+      pois.forEach(function(p) {
+        var wrap = document.createElement('div'); wrap.className = 'stt-poi-tipp';
+        var dot  = document.createElement('div'); dot.className  = 'stt-poi';
+        wrap.appendChild(dot);
+        new maplibregl.Marker({ element: wrap, anchor: 'bottom' })
+          .setLngLat([p.lng, p.lat]).addTo(map);
+        wrap.style.pointerEvents = 'none';  /* Nach Marker-Init setzen */
+        poiMarkerEls[p.id] = wrap;
+        poiCoords[p.id]    = [p.lng, p.lat];
+      });
+      /* Cluster-Badges + Einzel-Marker ein-/ausblenden */
+      var clusterBadges = {};
+      map.on('render', function() {
+        try {
+          var clusterFeats = map.queryRenderedFeatures({ layers: ['stt-poi-clusters'] });
+          var seen = {};
+          var clusterPts = [];
+          clusterFeats.forEach(function(f) {
+            if (!f.properties || !f.geometry || !f.geometry.coordinates) return;
+            var cid = String(f.properties.cluster_id);
+            var pt  = map.project(f.geometry.coordinates);
+            clusterPts.push(pt);
+            seen[cid] = true;
+            if (!clusterBadges[cid]) {
+              var el = document.createElement('div');
+              el.className = 'stt-cluster-badge';
+              document.getElementById('map').appendChild(el);
+              clusterBadges[cid] = el;
+            }
+            clusterBadges[cid].textContent = String(f.properties.point_count_abbreviated);
+            clusterBadges[cid].style.left = pt.x + 'px';
+            clusterBadges[cid].style.top  = pt.y + 'px';
+          });
+          Object.keys(clusterBadges).forEach(function(cid) {
+            if (!seen[cid]) { clusterBadges[cid].remove(); delete clusterBadges[cid]; }
+          });
+          /* Einzel-Marker ausblenden wenn von einem Cluster-Kreis bedeckt (< 30 px) */
+          Object.keys(poiMarkerEls).forEach(function(pid) {
+            var coords = poiCoords[pid]; if (!coords) return;
+            var mpt = map.project(coords);
+            var hidden = clusterPts.some(function(cpt) {
+              var dx = mpt.x - cpt.x, dy = mpt.y - cpt.y;
+              return (dx * dx + dy * dy) < 900;
+            });
+            poiMarkerEls[pid].style.display = hidden ? 'none' : '';
+          });
+        } catch(e) { /* Render-Loop-Fehler still schlucken — JS-Thread nicht crashen */ }
+      });
     }
+
+    /* ---- Dynamisch injizierbare Datensätze ----------------------------------------
+       Diese Funktionen werden per injectJavaScript aufgerufen, nachdem die WebView
+       geladen ist. So lädt die WebView nur EINMAL — kein Reload bei async-Daten. */
+    _sttApply.pois = function(poisData) {
+      if (!poisData || !poisData.length) return;
+      if (map.getSource('stt-pois')) return; /* Guard gegen Doppelaufruf */
+      map.addSource('stt-pois', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: poisData.map(function(p) {
+            return { type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+              properties: { id: p.id, name: p.name } };
+          })
+        },
+        cluster: true, clusterMaxZoom: 13, clusterRadius: 45
+      });
+      map.addLayer({ id: 'stt-poi-clusters', type: 'circle', source: 'stt-pois',
+        filter: ['has', 'point_count'],
+        paint: { 'circle-color': '#cc0000',
+          'circle-radius': ['step', ['get', 'point_count'], 13, 10, 17, 30, 21],
+          'circle-stroke-color': '#F5F3EC', 'circle-stroke-width': 2, 'circle-opacity': 0.9 }
+      });
+      /* Cluster-Anzahl als Text-Layer (Glyphs kommen vom Style) */
+      map.addLayer({ id: 'stt-poi-cluster-count', type: 'symbol', source: 'stt-pois',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 12
+        },
+        paint: { 'text-color': '#F5F3EC' }
+      });
+      /* Einzel-POIs als sichtbarer Kreis-Layer — MapLibre blendet sie beim
+         Clustern automatisch aus (kein DOM-Marker, kein Render-Loop noetig) */
+      map.addLayer({ id: 'stt-poi-punkt', type: 'circle', source: 'stt-pois',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': '#cc0000',
+          'circle-radius': 7,
+          'circle-stroke-color': '#F5F3EC',
+          'circle-stroke-width': 2
+        }
+      });
+      /* Unsichtbare, grosse Klick-Zielflaeche fuer Finger-Taps */
+      map.addLayer({ id: 'stt-poi-click-target', type: 'circle', source: 'stt-pois',
+        filter: ['!', ['has', 'point_count']],
+        paint: { 'circle-radius': 24, 'circle-opacity': 0, 'circle-stroke-opacity': 0, 'circle-color': '#cc0000' }
+      });
+      poisData.forEach(function(p) { poiCoords[p.id] = [p.lng, p.lat]; });
+    };
+
+    var _partnersApplied = false;
+    _sttApply.partners = function(partnersData) {
+      if (!partnersData || !partnersData.length) return;
+      if (_partnersApplied) return; /* Guard gegen doppelte DOM-Marker */
+      _partnersApplied = true;
+      var partnerEls = [];
+      partnersData.forEach(function(p) {
+        var paket = p.paket || 'basic';
+        var kat   = (p.kategorie || '').toLowerCase();
+        var paths = PICONS[kat] || PICON_DEFAULT;
+        var sz    = paket === 'premium' ? 18 : paket === 'standard' ? 15 : 12;
+        var el  = document.createElement('div');
+        el.className = 'stt-partner-tipp stt-partner-tipp--' + paket;
+        var pin = document.createElement('div');
+        pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
+        pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+        el.appendChild(pin);
+        el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
+        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
+        partnerEls.push(el);
+      });
+      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
+    };
+
+    _sttApply.aerialways = function(aerialwaysData) {
+      if (!aerialwaysData || !aerialwaysData.length) return;
+      if (map.getSource('seilbahnen')) return;
+      var seilbahnGeojson = { type: 'FeatureCollection', features: aerialwaysData.map(function(a) {
+        return { type: 'Feature', geometry: { type: 'LineString', coordinates: a.geometry.map(function(p){ return [p[1],p[0]]; }) } };
+      })};
+      map.addSource('seilbahnen', { type: 'geojson', data: seilbahnGeojson });
+      map.addLayer({ id: 'seilbahnen-line', type: 'line', source: 'seilbahnen',
+        paint: { 'line-color': '#5B6B78', 'line-width': 2.5, 'line-opacity': 0.9, 'line-dasharray': [1,3] }
+      });
+      var seilbahnEls = [];
+      aerialwaysData.forEach(function(a) {
+        var g = a.geometry; if (!g || g.length < 2) return;
+        var stEl = document.createElement('div'); stEl.className = 'stt-seilbahn-station';
+        new maplibregl.Marker({ element: stEl }).setLngLat([g[0][1], g[0][0]]).addTo(map);
+        var enEl = document.createElement('div'); enEl.className = 'stt-seilbahn-station';
+        new maplibregl.Marker({ element: enEl }).setLngLat([g[g.length-1][1], g[g.length-1][0]]).addTo(map);
+        seilbahnEls.push(stEl, enEl);
+      });
+      if (seilbahnEls.length) zoomGroups.push({ els: seilbahnEls, minZoom: 11 });
+    };
+
+    /* Gepufferte Daten anwenden, die VOR map-load injiziert wurden — erst
+       danach Bereitschaft melden. onLoadEnd der WebView ist als Trigger
+       unzuverlaessig (feuert auch fuer Zwischen-Dokumente). */
+    if (_sttPending.pois)       _sttApply.pois(_sttPending.pois);
+    if (_sttPending.partners)   _sttApply.partners(_sttPending.partners);
+    if (_sttPending.aerialways) _sttApply.aerialways(_sttPending.aerialways);
+    post(JSON.stringify({ type: 'stt-html-ready' }));
+    /* ------------------------------------------------------------------------------- */
 
     /* Trinkwasserquellen */
     if (waters) {
@@ -537,21 +757,47 @@ ${legendHtml}
       if (parkingEls.length) zoomGroups.push({ els: parkingEls, minZoom: 14 });
     }
 
-    /* Picker-Modus */
-    if (picker) {
-      map.getCanvas().style.cursor = 'crosshair';
-      var pickerMarker = null;
-      map.on('click', function(e) {
+    /* Picker-Modus Cursor */
+    var pickerMarker = null;
+    if (picker) { map.getCanvas().style.cursor = 'crosshair'; }
+
+    /* Einheitlicher Click-Handler: POI-Cluster → Cluster-Tap, POI-Punkt → nativer Callback,
+       Picker → Koordinaten-Post. Verwendet queryRenderedFeatures mit 22px Box statt
+       layer-spezifischer Listener — viel zuverlässiger bei Finger-Taps auf kleinen Kreisen. */
+    map.on('click', function(e) {
+      var R = 22;
+      var box = [[e.point.x - R, e.point.y - R], [e.point.x + R, e.point.y + R]];
+      /* 1. POI-Cluster → reinzoomen */
+      if (map.getSource && map.getSource('stt-pois')) {
+        var clusterHits = map.queryRenderedFeatures(box, { layers: ['stt-poi-clusters'] });
+        if (clusterHits.length) {
+          var cId = clusterHits[0].properties.cluster_id;
+          map.getSource('stt-pois').getClusterExpansionZoom(cId)
+            .then(function(z) { map.easeTo({ center: clusterHits[0].geometry.coordinates, zoom: z + 0.5 }); })
+            .catch(function() {});
+          return;
+        }
+      }
+      /* 2. Einzel-POI: unsichtbare click-target-Schicht (queryRenderedFeatures).
+            Funktioniert weil die Schicht geometrisch gerendert ist, nur visuell transparent. */
+      var poiHits = map.queryRenderedFeatures(box, { layers: ['stt-poi-click-target'] });
+      if (poiHits.length) {
+        var poiId = poiHits[0].properties && poiHits[0].properties.id;
+        if (poiId) {
+          post(JSON.stringify({ type: 'stt-poi-press', id: String(poiId) }));
+          return;
+        }
+      }
+      /* 3. Picker */
+      if (picker) {
         var plat = e.lngLat.lat, plng = e.lngLat.lng;
         if (!pickerMarker) {
           var pel = document.createElement('div'); pel.className = 'stt-picker';
           pickerMarker = new maplibregl.Marker({ element: pel, anchor: 'bottom' }).setLngLat([plng, plat]).addTo(map);
-        } else {
-          pickerMarker.setLngLat([plng, plat]);
-        }
+        } else { pickerMarker.setLngLat([plng, plat]); }
         post(JSON.stringify({ type: 'stt-mapclick', lat: plat, lng: plng }));
-      });
-    }
+      }
+    });
 
     /* Live-Positionsmarker */
     var liveEl = document.createElement('div'); liveEl.className = 'stt-live'; liveEl.style.zIndex = '40';

@@ -73,6 +73,10 @@ interface Props {
   uvIndex?: number | null;
   /** true wenn Gewittergefahr */
   isThunderstorm?: boolean;
+  /** Amtliche Distanz in km (z. B. OSM-Tag/SchweizMobil) — wird als End-Label
+      der X-Achse gezeigt, damit die Angabe zur Distanz-Kachel passt. Die
+      Kurve selbst wird weiter über die gemessene Geometrie geplottet. */
+  officialDistanceKm?: number | null;
 }
 
 // ── Komponente ────────────────────────────────────────────────────────────────
@@ -83,6 +87,7 @@ export function ElevationChart({
   snowLineM = 2000,
   uvIndex,
   isThunderstorm = false,
+  officialDistanceKm,
 }: Props) {
   const colors = useColors();
   const [svgWidth, setSvgWidth] = useState(0);
@@ -244,7 +249,7 @@ export function ElevationChart({
       <View style={styles.xLabels}>
         <Text style={[styles.xLabel, { color: colors.mutedForeground }]}>0 km</Text>
         <Text style={[styles.xLabel, { color: colors.mutedForeground }]}>
-          {maxDist.toFixed(1)} km
+          {(officialDistanceKm ?? maxDist).toFixed(1)} km
         </Text>
       </View>
 

@@ -10,6 +10,12 @@ import { buildSwisstopoHtml, SwisstopoMapProps } from "./swisstopoMapHtml";
  * Native Kartenansicht (iOS/Android): rendert die swisstopo-Leaflet-Karte in
  * einer WebView. Position-Updates werden per injectJavaScript eingespielt,
  * damit die Kacheln nicht neu geladen werden.
+ *
+ * pois, partners, aerialways werden NICHT ins HTML gebacken — sie werden nach
+ * map-load per injectJavaScript injiziert (window.sttSetPois / sttSetPartners /
+ * sttSetAerialways). So lädt die WebView nur einmal, auch wenn diese Daten
+ * async nachkommen. Ein WKWebView-Reload während eines postMessage-Aufrufs
+ * würde die Nachricht fallen lassen und den POI-Klick-Kanal brechen.
  */
 export function SwisstopoMap({
   center,
@@ -33,6 +39,8 @@ export function SwisstopoMap({
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const t = useMapStrings();
+
+  // HTML erzeugen — OHNE pois/partners/aerialways (die werden per inject nachgeliefert).
   const html = useMemo(
     () =>
       buildSwisstopoHtml(
@@ -40,8 +48,8 @@ export function SwisstopoMap({
         label,
         geometry,
         offlineTiles,
-        aerialways,
-        pois,
+        null,   // aerialways — per sttSetAerialways injiziert
+        null,   // pois      — per sttSetPois injiziert
         {
           title: t.legendTitle,
           route: t.legendRoute,
@@ -63,28 +71,57 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
         },
-        partners,
+        null,   // partners  — per sttSetPartners injiziert
         pickerMode,
         altGeometry,
         waterSources,
         safeAreaInsetTop,
         parkingSpots
       ),
-    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
+    // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [center.lat, center.lng, label, geometry, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
   );
 
-  // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die
-  // Position erst nach vollstaendigem Neuladen eingespielt wird.
+  // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen.
   useEffect(() => {
     setReady(false);
   }, [html]);
 
+  // Position per injectJavaScript einspielen (kein Reload).
   useEffect(() => {
     if (!ready || !position) return;
     ref.current?.injectJavaScript(
       `window.sttSetPosition && window.sttSetPosition(${position.lat}, ${position.lng}); true;`
     );
   }, [ready, position?.lat, position?.lng]);
+
+  // POIs per injectJavaScript einspielen (kein Reload).
+  useEffect(() => {
+    if (!ready) return;
+    const json = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
+    ref.current?.injectJavaScript(
+      `window.sttSetPois && window.sttSetPois(${json}); true;`
+    );
+  }, [ready, pois]);
+
+  // Partner per injectJavaScript einspielen (kein Reload).
+  useEffect(() => {
+    if (!ready) return;
+    const json = partners && partners.length > 0 ? JSON.stringify(partners) : "null";
+    ref.current?.injectJavaScript(
+      `window.sttSetPartners && window.sttSetPartners(${json}); true;`
+    );
+  }, [ready, partners]);
+
+  // Seilbahnen per injectJavaScript einspielen (kein Reload).
+  useEffect(() => {
+    if (!ready) return;
+    const json = aerialways && aerialways.length > 0 ? JSON.stringify(aerialways) : "null";
+    ref.current?.injectJavaScript(
+      `window.sttSetAerialways && window.sttSetAerialways(${json}); true;`
+    );
+  }, [ready, aerialways]);
 
   const colors = useColors();
   return (
@@ -103,10 +140,15 @@ export function SwisstopoMap({
         ref={ref}
         originWhitelist={["*"]}
         source={{ html }}
-        onLoadEnd={() => setReady(true)}
         onMessage={(event) => {
           try {
             const data = JSON.parse(event.nativeEvent.data);
+            if (data?.type === "stt-html-ready") {
+              // Erst wenn die Karte selbst "bereit" meldet, injizieren wir
+              // Daten — onLoadEnd feuert bei WKWebView auch fuer Zwischen-
+              // Dokumente und die Injektion ginge dann verloren.
+              setReady(true);
+            }
             if (data?.type === "stt-poi-press" && typeof data.id === "string") {
               onPoiPress?.(data.id);
             }

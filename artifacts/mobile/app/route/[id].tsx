@@ -6,12 +6,14 @@ import { getApiBaseUrl } from "@/lib/apiConfig";
 import {
   getAerialways,
   getPartners,
+  getPois,
+  getPoiDetail,
   getWeather,
   getAvalancheBulletin,
   getTransportStationboard,
   useGetRouteConditions,
 } from "@workspace/api-client-react";
-import type { Partner, WeatherReport, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
+import type { Partner, Poi, WeatherReport, WikiSummary, AvalancheBulletin, TransportStationboard } from "@workspace/api-client-react";
 
 import * as Location from "expo-location";
 import * as Sharing from "expo-sharing";
@@ -20,6 +22,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated as RNAnimated,
   Image,
   Linking,
   Platform,
@@ -38,7 +41,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
+import { poiDisplayName } from "@/lib/poiDisplay";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
@@ -56,7 +61,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
-import { bboxAroundGeometry, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, distanzZuSegmentKm, haversineKm } from "@/lib/geo";
 import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
@@ -78,7 +83,10 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
+  // POI-Infokacheln liegen ueber duesteren Karten — im Hellmodus fast
+  // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
+  const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const { isElite } = useSubscription();
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, getRoutesByCanton, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
@@ -260,6 +268,46 @@ export default function Routenplanung() {
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
+  // Historische / touristische POIs entlang der Route (für die Karte)
+  const [pois, setPois] = useState<MapPoi[]>([]);
+  // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
+  const poisVollRef = useRef<Map<string, Poi>>(new Map());
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
+  const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
+  // Vollbild → erst Karte schliessen, dann Detail öffnen — sonst Doppel-Modal).
+  const [karteVollbild, setKarteVollbild] = useState(false);
+  const [karteCloseSignal, setKarteCloseSignal] = useState(0);
+  const pendingKarteActionRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!karteVollbild && pendingKarteActionRef.current) {
+      const action = pendingKarteActionRef.current;
+      pendingKarteActionRef.current = null;
+      const timer = setTimeout(action, 320);
+      return () => clearTimeout(timer);
+    }
+  }, [karteVollbild]);
+  // Wiki-Anreicherung für angetippte POIs (identisch zum Hike-Screen, ohne Offline-Cache)
+  useEffect(() => {
+    if (!selectedPoi) {
+      setSelectedPoiWiki(undefined);
+      return;
+    }
+    setSelectedPoiWiki(undefined);
+    let cancelled = false;
+    getPoiDetail({
+      name: selectedPoi.name,
+      kind: selectedPoi.kind,
+      lat: selectedPoi.lat,
+      lng: selectedPoi.lng,
+      ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
+      ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
+    })
+      .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
+      .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+    return () => { cancelled = true; };
+  }, [selectedPoi?.id]);
 
   // ShareCard ref für Native-Share-Export
   const shareCardRef = useRef<View>(null);
@@ -342,6 +390,60 @@ export default function Routenplanung() {
       });
     return () => {
       cancelled = true;
+    };
+  }, [route?.id]);
+
+  // Historische/touristische POIs entlang der Route laden (fire-and-forget:
+  // Server gibt sofort [] zurueck und füllt den Cache; nach 35 s Retry).
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
+    // Overpass-Timeouts in dichten Staedten wie Basel.
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 0.5);
+    const geo = route.geometry;
+    const KORRIDOR_KM = 0.5;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
+      const gefiltert =
+        geo && geo.length > 1
+          ? result.filter((p) => {
+              for (let i = 0; i < geo.length - 1; i++) {
+                if (
+                  distanzZuSegmentKm(
+                    { lat: p.lat, lng: p.lng },
+                    { lat: geo[i][0], lng: geo[i][1] },
+                    { lat: geo[i + 1][0], lng: geo[i + 1][1] }
+                  ) <= KORRIDOR_KM
+                ) return true;
+              }
+              return false;
+            })
+          : result;
+      if (!cancelled) {
+        poisVollRef.current = new Map(gefiltert.map((p) => [p.id, p]));
+        setPois(gefiltert.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })));
+      }
+    };
+
+    const tryLoad = () => {
+      getPois(bbox)
+        .then((result) => {
+          filterAndSet(result);
+          if (result.length === 0 && !cancelled) {
+            retryTimer = setTimeout(tryLoad, 35_000);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) retryTimer = setTimeout(tryLoad, 35_000);
+        });
+    };
+    tryLoad();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) clearTimeout(retryTimer);
     };
   }, [route?.id]);
 
@@ -641,8 +743,36 @@ export default function Routenplanung() {
   const progressText = downloading
     ? progress?.phase === "tiles"
       ? t.loadingMap(progress.done, progress.total)
+      : progress?.phase === "audio"
+      ? t.loadingAudio(progress.done, progress.total)
+      : progress?.phase === "pois"
+      ? t.loadingPois
       : t.loadingSaga
     : "";
+
+  // Animierter Gesamtfortschritt 0–1 fuer den Download-Fortschrittsbalken.
+  // Phasengewichte: Sage 3–8 %, Audio 8–50 %, Orte 50–70 %, Karte 70–100 %.
+  // Start bei 3 % damit der Balken sofort sichtbar ist, statt bei 0 % zu kleben.
+  const overallProgress = useMemo(() => {
+    if (!downloading || !progress) return 0.03;
+    const frac = progress.total > 0 ? Math.min(progress.done / progress.total, 1) : 0;
+    switch (progress.phase) {
+      case "story": return 0.03 + frac * 0.05;
+      case "audio": return 0.08 + frac * 0.42;
+      case "pois":  return 0.50 + frac * 0.20;
+      case "tiles": return 0.70 + frac * 0.30;
+      default: return 0.03;
+    }
+  }, [downloading, progress]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const dlAnim = useRef(new RNAnimated.Value(0.03)).current;
+  useEffect(() => {
+    RNAnimated.timing(dlAnim, {
+      toValue: downloading ? overallProgress : 0.03,
+      duration: 450,
+      useNativeDriver: false,
+    }).start();
+  }, [downloading, overallProgress, dlAnim]);
 
   const onDownload = async () => {
     if (!profile || !saga || downloading || busy) return;
@@ -750,6 +880,8 @@ export default function Routenplanung() {
         <View style={{ marginTop: 18 }}>
           <KarteVollbild
             height={200}
+            onVollbildChange={setKarteVollbild}
+            closeSignal={karteCloseSignal}
             renderKarte={(hoehe, safeAreaTop) =>
               route.coordinates ? (
                 <SwisstopoMap
@@ -758,10 +890,23 @@ export default function Routenplanung() {
                   height={hoehe}
                   geometry={effectiveGeom.length > 0 ? effectiveGeom : route.geometry}
                   aerialways={aerialways}
+                  pois={pois.length > 0 ? pois : null}
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safeAreaInsetTop={safeAreaTop}
+                  onPoiPress={(id) => {
+                    const poi = poisVollRef.current.get(id);
+                    if (!poi) return;
+                    if (karteVollbild) {
+                      // Vollbild: erst schliessen, dann nach Fade-Ende öffnen.
+                      pendingKarteActionRef.current = () => setSelectedPoi(poi);
+                      setKarteVollbild(false);
+                      setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      setSelectedPoi(poi);
+                    }
+                  }}
                 />
               ) : (
                 <RouteMap progress={0.15} height={hoehe} />
@@ -773,7 +918,7 @@ export default function Routenplanung() {
         <Animated.View entering={FadeInDown} style={styles.statsGrid}>
           <StatTile icon="map-pin"     label={t.distance} value={`${meta.distanceKm}`}                         unit="km" />
           <StatTile icon="trending-up" label={t.ascent}   value={`${meta.ascentM}`}                            unit="hm" />
-          <StatTile icon="triangle"    label="Max. Höhe"  value={`${route.maxElevationM ?? meta.ascentM}`}     unit="m"  />
+          <StatTile icon="triangle"    label="Max. Höhe"  value={`${elevProfile && elevProfile.length > 1 ? Math.max(...elevProfile.map((p) => p.altM)) : (route.maxElevationM ?? meta.ascentM)}`} unit="m" />
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
@@ -801,6 +946,7 @@ export default function Routenplanung() {
                 snowLineM={2000}
                 uvIndex={weather?.uvIndex ?? null}
                 isThunderstorm={weather?.isThunderstorm ?? false}
+                officialDistanceKm={meta.distanceKm}
               />
             ) : null}
           </View>
@@ -1130,10 +1276,79 @@ export default function Routenplanung() {
                 : t.offlineStatusInactive}
             </Text>
 
+            {/* Was wird geladen — nur vor dem ersten Download */}
+            {!downloaded && !downloading && (
+              <View style={styles.downloadInfoBox}>
+                {t.downloadInfoItems.map((item, i) => (
+                  <View key={i} style={styles.downloadInfoRow}>
+                    <Feather name="check" size={12} color={colors.accent} />
+                    <Text style={[styles.downloadInfoItem, { color: colors.mutedForeground }]}>
+                      {item}
+                    </Text>
+                  </View>
+                ))}
+                <View style={styles.downloadInfoTimeRow}>
+                  <Feather name="clock" size={11} color={colors.mutedForeground} />
+                  <Text style={[styles.downloadInfoTime, { color: colors.mutedForeground }]}>
+                    {t.downloadInfoTime}
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {downloading ? (
-              <View style={styles.downloadProgress}>
-                <Feather name="loader" size={15} color={colors.accent} />
-                <Text style={[styles.downloadProgressText, { color: colors.accent }]}>
+              <View style={{ marginTop: 14 }}>
+                {/* Fortschrittsbalken + Prozent */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 11 }}>
+                  <View style={[styles.dlBarTrack, { backgroundColor: colors.glassBorder, flex: 1 }]}>
+                    <RNAnimated.View
+                      style={[
+                        styles.dlBarFill,
+                        {
+                          backgroundColor: colors.accent,
+                          width: dlAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0%", "100%"],
+                          }),
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.downloadProgressText, { color: colors.mutedForeground, minWidth: 38, textAlign: "right" }]}>
+                    {Math.round(overallProgress * 100)}%
+                  </Text>
+                </View>
+                {/* Phasen-Schritte */}
+                <View style={styles.dlPhaseRow}>
+                  {(["story", "audio", "pois", "tiles"] as const).map((ph, i) => {
+                    const order = ["story", "audio", "pois", "tiles"];
+                    const cur = order.indexOf(progress?.phase ?? "story");
+                    const isDone = i < cur;
+                    const isActive = i === cur;
+                    const c = isDone || isActive ? colors.accent : colors.mutedForeground;
+                    return (
+                      <View key={ph} style={styles.dlPhaseStep}>
+                        <View
+                          style={[
+                            styles.dlPhaseDot,
+                            {
+                              backgroundColor: isDone || isActive ? colors.accent : "transparent",
+                              borderColor: isDone || isActive ? colors.accent : colors.mutedForeground,
+                              opacity: isDone || isActive ? 1 : 0.35,
+                            },
+                          ]}
+                        >
+                          {isDone && <Feather name="check" size={9} color={colors.background} />}
+                        </View>
+                        <Text style={[styles.dlPhaseLabel, { color: c, opacity: isDone || isActive ? 1 : 0.4 }]}>
+                          {t.downloadPhaseLabels[i]}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+                {/* Statuszeile */}
+                <Text style={[styles.downloadProgressText, { color: colors.mutedForeground, marginTop: 8, fontSize: 12 }]}>
                   {progressText}
                 </Text>
               </View>
@@ -1640,6 +1855,51 @@ export default function Routenplanung() {
           </View>
         )}
       </ScrollView>
+
+      {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
+      {!!selectedPoi && (
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
+          onPress={() => setSelectedPoi(null)}
+        >
+          <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+            <Glass overlayColor={poiOverlay}>
+              {selectedPoiWiki === undefined ? (
+                <View style={[styles.poiModalImage, { alignItems: "center", justifyContent: "center" }]}>
+                  <ActivityIndicator color={colors.accent} />
+                </View>
+              ) : selectedPoiWiki?.image ? (
+                <Image
+                  source={{ uri: selectedPoiWiki.image }}
+                  style={styles.poiModalImage}
+                  resizeMode="cover"
+                />
+              ) : null}
+              <View style={styles.poiRow}>
+                <Feather name="map-pin" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                    {poiDisplayName(selectedPoi.name, selectedPoi.kind)}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setSelectedPoi(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={ts.close}
+                >
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+              {!!(selectedPoiWiki?.extract) && (
+                <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
+                  {selectedPoiWiki.extract}
+                </Text>
+              )}
+            </Glass>
+          </Pressable>
+        </Pressable>
+      )}
     </Background>
   );
 }
@@ -1698,6 +1958,17 @@ function CheckRow({
 }
 
 const styles = StyleSheet.create({
+  poiModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(16,24,26,0.7)",
+    justifyContent: "center",
+    padding: 16,
+    zIndex: 50,
+  },
+  poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  poiTitle: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
+  poiSummary: { fontFamily: fonts.story, fontSize: 18, marginTop: 8, lineHeight: 28 },
+  poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   retryChip: {
     flexDirection: "row",
@@ -1798,13 +2069,25 @@ const styles = StyleSheet.create({
   downloadHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   downloadTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
   downloadHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 6 },
-  downloadProgress: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 14,
-  },
+  downloadInfoBox: { marginTop: 12, gap: 5 },
+  downloadInfoRow: { flexDirection: "row" as const, alignItems: "center" as const, gap: 7 },
+  downloadInfoItem: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, flex: 1 },
+  downloadInfoTimeRow: { flexDirection: "row" as const, alignItems: "center" as const, gap: 5, marginTop: 4 },
+  downloadInfoTime: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, flex: 1, fontStyle: "italic" as const },
   downloadProgressText: { fontFamily: fonts.mono, fontSize: 13 },
+  dlBarTrack: { height: 5, borderRadius: 3, overflow: "hidden" as const },
+  dlBarFill: { height: 5, borderRadius: 3 },
+  dlPhaseRow: { flexDirection: "row" as const, justifyContent: "space-between" as const },
+  dlPhaseStep: { alignItems: "center" as const, flex: 1, gap: 4 },
+  dlPhaseDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  dlPhaseLabel: { fontFamily: fonts.mono, fontSize: 10, textAlign: "center" as const },
   checkCard: { ...GLAS_3D, borderWidth: 1, borderRadius: 16, padding: 16 },
   checkRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
   checkLabel: { fontFamily: fonts.bodyMedium, fontSize: 14, flex: 1 },

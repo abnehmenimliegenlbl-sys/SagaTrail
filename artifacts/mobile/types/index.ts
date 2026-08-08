@@ -99,6 +99,8 @@ export interface HikeSession {
   durationMin?: number;
   /** Ausgeduennter Wegverlauf als [lat, lng]-Paare, fuer die Share-Grafik */
   geometry?: number[][];
+  /** Waehrend der Wanderung getippte POIs fuer das Wandertagebuch (Name, Text, Bild) */
+  visitedPois?: { id: string; name: string; extract?: string; photoUrl?: string }[];
 }
 
 export interface Achievement {

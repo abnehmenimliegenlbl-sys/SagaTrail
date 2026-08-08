@@ -71,7 +71,9 @@ import {
   type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
-import { blobToTempFileUri } from "@/lib/narrationAudio";
+import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
+import { getTurnAudio } from "@/lib/turnAudio";
+import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
 import * as FileSystem from "expo-file-system/legacy";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
@@ -310,7 +312,7 @@ export default function LiveHike() {
     isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
   const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
-  const { resolveStory, loadOfflineTiles, isDownloaded } = useDownloads();
+  const { resolveStory, loadOfflineTiles, loadOfflinePois, isDownloaded } = useDownloads();
 
   const saga = getSaga(id);
   // Die konkret gewaehlte Route (mit Wegverlauf) hat Vorrang; nur wenn keine
@@ -524,6 +526,8 @@ export default function LiveHike() {
   }, [karteVollbild]);
   const [poiStory, setPoiStory] = useState<string | null>(null);
   const [poiStoryLoading, setPoiStoryLoading] = useState(false);
+  /** Getippte POIs waehrend dieser Wanderung, fuer das Wandertagebuch */
+  const visitedPoisRef = useRef<Map<string, { id: string; name: string; extract?: string; photoUrl?: string }>>(new Map());
   // KI-Kontext fuer die "Entdeckt"-Karte, wenn der POI keinen
   // Wikipedia-Auszug hat (wird im Erzaehl-Effekt mitbefuellt).
   const [nearbyPoiKontext, setNearbyPoiKontext] = useState<string | null>(null);
@@ -994,13 +998,26 @@ export default function LiveHike() {
         });
     };
 
-    tryLoad();
+    // Offline-Cache bevorzugen wenn heruntergeladen — kein Netzwerk noetig.
+    (async () => {
+      if (route?.id) {
+        try {
+          const offlinePois = await loadOfflinePois(route.id);
+          if (offlinePois && !cancelled) {
+            filterAndSet(offlinePois as Awaited<ReturnType<typeof getPois>>);
+            return;
+          }
+        } catch {}
+      }
+      // Immer laden — cancelled-Check ist in filterAndSet/retry enthalten.
+      tryLoad();
+    })();
 
     return () => {
       cancelled = true;
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng, loadOfflinePois]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im Kartenausschnitt
   // laden — gleiche Bounding Box wie die Seilbahnen, kein Korridorfilter noetig,
@@ -1109,22 +1126,31 @@ export default function LiveHike() {
     let cancelled = false;
     setPoiStory(null);
     setPoiStoryLoading(true);
-    getPoiStory({
-      name: selectedPoi.name,
-      extract: selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract,
-      kind: selectedPoi.kind,
-      lang: storyLanguage,
-      osmContext: selectedPoi.osmContext ?? undefined,
-    })
-      .then((result) => {
-        if (!cancelled) setPoiStory(result.text);
+    (async () => {
+      // Offline-Cache bevorzugen
+      const cached = await getOfflinePoiStory(selectedPoi.id, storyLanguage);
+      if (cached !== null && !cancelled) {
+        setPoiStory(cached);
+        setPoiStoryLoading(false);
+        return;
+      }
+      getPoiStory({
+        name: selectedPoi.name,
+        extract: selectedPoiWiki?.extract ?? selectedPoi.wiki?.extract,
+        kind: selectedPoi.kind,
+        lang: storyLanguage,
+        osmContext: selectedPoi.osmContext ?? undefined,
       })
-      .catch(() => {
-        // Fallback bleibt der rohe Wikipedia-Auszug (siehe Rendering unten).
-      })
-      .finally(() => {
-        if (!cancelled) setPoiStoryLoading(false);
-      });
+        .then((result) => {
+          if (!cancelled) setPoiStory(result.text);
+        })
+        .catch(() => {
+          // Fallback bleibt der rohe Wikipedia-Auszug (siehe Rendering unten).
+        })
+        .finally(() => {
+          if (!cancelled) setPoiStoryLoading(false);
+        });
+    })();
     return () => {
       cancelled = true;
     };
@@ -1139,18 +1165,37 @@ export default function LiveHike() {
     }
     setSelectedPoiWiki(undefined);
     let cancelled = false;
-    getPoiDetail({
-      name: selectedPoi.name,
-      kind: selectedPoi.kind,
-      lat: selectedPoi.lat,
-      lng: selectedPoi.lng,
-      ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
-      ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
-    })
-      .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
-      .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+    (async () => {
+      const cached = await getOfflinePoiDetail(selectedPoi.id);
+      if (cached !== undefined) {
+        if (!cancelled) setSelectedPoiWiki(cached);
+        return;
+      }
+      getPoiDetail({
+        name: selectedPoi.name,
+        kind: selectedPoi.kind,
+        lat: selectedPoi.lat,
+        lng: selectedPoi.lng,
+        ...(selectedPoi.wikipediaTag ? { wikipediaTag: selectedPoi.wikipediaTag } : {}),
+        ...(selectedPoi.wikidataTag ? { wikidataTag: selectedPoi.wikidataTag } : {}),
+      })
+        .then((r) => { if (!cancelled) setSelectedPoiWiki(r.wiki ?? null); })
+        .catch(() => { if (!cancelled) setSelectedPoiWiki(null); });
+    })();
     return () => { cancelled = true; };
   }, [selectedPoi?.id]);
+
+  // Automatisch vorbeigelaufene POIs fuer das Wandertagebuch aufzeichnen.
+  // Laeuft wenn nearbyPoi erkannt wird und wenn das Wiki nachlaedt.
+  useEffect(() => {
+    if (!nearbyPoi) return;
+    const existing = visitedPoisRef.current.get(nearbyPoi.id) ?? { id: nearbyPoi.id, name: nearbyPoi.name };
+    visitedPoisRef.current.set(nearbyPoi.id, {
+      ...existing,
+      ...(nearbyPoiWiki?.extract ? { extract: nearbyPoiWiki.extract } : {}),
+      ...(nearbyPoiWiki?.image   ? { photoUrl: nearbyPoiWiki.image }  : {}),
+    });
+  }, [nearbyPoi?.id, nearbyPoiWiki]);
 
   // Partner-View-Tracking: sobald das Overlay erscheint, einmal fire-and-forget.
   useEffect(() => {
@@ -1219,7 +1264,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -1276,7 +1321,7 @@ export default function LiveHike() {
       // Sprachansage kurz vor der Abbiegung — unterbricht sofortig und setzt
       // eine laufende Erzaehlung danach an derselben Stelle fort.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { useDevice: true, navInterrupt: true });
+      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { navInterrupt: true, turnAudio: treffer.cue.direction });
     }
   }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
 
@@ -1403,7 +1448,9 @@ export default function LiveHike() {
   // Wegoberflaechenansage: sobald der Wanderer einen neuen Oberflaechenabschnitt betritt,
   // wird ein saga-atmosphaerischer Satz gesprochen (und optional als Push-Notif gesendet).
   useEffect(() => {
-    if (surfacePoints.length === 0 || preparing) return;
+    // Erst nach dem ersten Meter ansagen — GPS gibt sonst sofort eine Route-Position
+    // zurueck (z. B. Fraction 0.15) und loest alle Wechsel davor auf einmal aus.
+    if (surfacePoints.length === 0 || preparing || distance === 0) return;
     const currentFraction = (() => {
       if (livePos && route?.geometry && route.geometry.length >= 2) {
         const match = fortschrittAufRoute(livePos, route.geometry);
@@ -1700,7 +1747,7 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -1710,18 +1757,59 @@ export default function LiveHike() {
           navInterruptingRef.current = true;
           try { await soundToResume.pauseAsync(); } catch {}
         } else {
-          // Nur Geraetestimme aktiv — stoppen (kein Resume moeglich).
           try { Speech.stop(); } catch {}
         }
-        const locale = SPEECH_LOCALE[resolveLang((profile?.language ?? "de") as Lang)];
-        await new Promise<void>((resolve) => {
-          Speech.speak(text, {
-            language: locale,
-            onDone: resolve,
-            onStopped: resolve,
-            onError: () => resolve(),
-          });
-        });
+
+        // Vorab gerenderten Clip abspielen (kein Netzwerk, kein Geraete-TTS).
+        if (opts.turnAudio) {
+          const lang = resolveLang((profile?.language ?? "de") as Lang);
+          const source = getTurnAudio(lang, opts.turnAudio);
+          let turnSound: import("expo-av").Audio.Sound | null = null;
+          try {
+            // Audio-Session auf DuckOthers schalten, damit Clip hörbar ist.
+            await Audio.setAudioModeAsync({
+              allowsRecordingIOS: false,
+              playsInSilentModeIOS: true,
+              staysActiveInBackground: true,
+              interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+              shouldDuckAndroid: true,
+            }).catch(() => {});
+            const { sound } = await Audio.Sound.createAsync(source);
+            turnSound = sound;
+            await sound.playAsync();
+            await new Promise<void>((resolve) => {
+              sound.setOnPlaybackStatusUpdate((status) => {
+                if (!status.isLoaded || status.didJustFinish) resolve();
+              });
+            });
+          } catch {
+            // Gerätestimme als letzter Fallback wenn Clip nicht ladbar.
+            const locale = SPEECH_LOCALE[lang];
+            await new Promise<void>((resolve) => {
+              Speech.speak(text, {
+                language: locale,
+                onDone: resolve,
+                onStopped: resolve,
+                onError: () => resolve(),
+              });
+            });
+          } finally {
+            try { await turnSound?.unloadAsync(); } catch {}
+          }
+          // Audio-Session IMMER zurücksetzen — auch wenn der Clip via catch
+          // mit Speech.speak abgespielt wurde. DuckOthers bleibt sonst aktiv
+          // und korrumpiert den Bluetooth-A2DP-Stream der Narration danach.
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+            shouldDuckAndroid: false,
+          }).catch(() => {});
+        }
+
         // Nav-Ansage fertig: Narration fortsetzen, falls noch derselbe Sound aktiv.
         navInterruptingRef.current = false;
         if (soundToResume && narrationSoundRef.current === soundToResume) {
@@ -1909,19 +1997,10 @@ export default function LiveHike() {
         });
       } catch (err) {
         if (gen !== narrationGenRef.current) return;
-        // Rate-Limit (429): still auf Geraetestimme ausweichen, kein Fehler-Banner.
-        if (err instanceof ApiError && err.status === 429) {
-          speakRef.current?.(text, onFinished, { useDevice: true });
-          return;
-        }
-        setNarrationUnavailable(true);
-        setSpeaking(false);
-        speakingRef.current = false;
-        onFinished?.();
-        if (!speakingRef.current) {
-          const next = narrationQueueRef.current.shift();
-          if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-        }
+        // Bei jedem Fehler (Rate-Limit, Netzwerkfehler, Server-Fehler, Offline):
+        // still auf Geraetestimme ausweichen statt abbrechen — so laeuft die
+        // Erzaehlung auch ohne Netz oder bei vollem ElevenLabs-Kontingent weiter.
+        speakRef.current?.(text, onFinished, { useDevice: true });
       }
     },
     [profile?.language]
@@ -1969,16 +2048,22 @@ export default function LiveHike() {
       lastNarratedRef.current = currentIndex;
       // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
       // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
-      if (currentIndex === 0) {
-        const packForCue = STORY_PACKS[resolveLang(cueLanguage)];
-        speak(
-          `${greetingPrefix} ${packForCue.hikeStartCue}`,
-          () => { setTimeout(() => speak(ch.text), 1500); },
-          { interrupt: true, useOpenAI: true }
-        );
-      } else {
-        speak(ch.text, undefined, { interrupt: true });
-      }
+      // Offline-Audio bevorzugen wenn vorhanden — kein Netzwerk noetig.
+      (async () => {
+        const offlineUri = saga?.id
+          ? await getOfflineAudioUri(saga.id, currentIndex).catch(() => null)
+          : null;
+        if (currentIndex === 0) {
+          const packForCue = STORY_PACKS[resolveLang(cueLanguage)];
+          speak(
+            `${greetingPrefix} ${packForCue.hikeStartCue}`,
+            () => { setTimeout(() => speak(ch.text, undefined, { preFetchedUri: offlineUri ?? undefined }), 1500); },
+            { interrupt: true, useOpenAI: true }
+          );
+        } else {
+          speak(ch.text, undefined, { interrupt: true, preFetchedUri: offlineUri ?? undefined });
+        }
+      })();
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
       // Das erste Kapitel wird nicht gemeldet — der Start ist offensichtlich.
       if (currentIndex > 0 && turnNotifsReady && profile?.navAnnouncementsEnabled !== false) {
@@ -2031,16 +2116,23 @@ export default function LiveHike() {
     }
     setNearbyPoiWiki(undefined);
     let cancelled = false;
-    getPoiDetail({
-      name: nearbyPoi.name,
-      kind: nearbyPoi.kind,
-      lat: nearbyPoi.lat,
-      lng: nearbyPoi.lng,
-      ...(nearbyPoi.wikipediaTag ? { wikipediaTag: nearbyPoi.wikipediaTag } : {}),
-      ...(nearbyPoi.wikidataTag ? { wikidataTag: nearbyPoi.wikidataTag } : {}),
-    })
-      .then((r) => { if (!cancelled) setNearbyPoiWiki(r.wiki ?? null); })
-      .catch(() => { if (!cancelled) setNearbyPoiWiki(null); });
+    (async () => {
+      const cached = await getOfflinePoiDetail(nearbyPoi.id);
+      if (cached !== undefined) {
+        if (!cancelled) setNearbyPoiWiki(cached);
+        return;
+      }
+      getPoiDetail({
+        name: nearbyPoi.name,
+        kind: nearbyPoi.kind,
+        lat: nearbyPoi.lat,
+        lng: nearbyPoi.lng,
+        ...(nearbyPoi.wikipediaTag ? { wikipediaTag: nearbyPoi.wikipediaTag } : {}),
+        ...(nearbyPoi.wikidataTag ? { wikidataTag: nearbyPoi.wikidataTag } : {}),
+      })
+        .then((r) => { if (!cancelled) setNearbyPoiWiki(r.wiki ?? null); })
+        .catch(() => { if (!cancelled) setNearbyPoiWiki(null); });
+    })();
     return () => { cancelled = true; };
   }, [nearbyPoi?.id]);
 
@@ -2081,25 +2173,36 @@ export default function LiveHike() {
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
     // wird der rohe Wikipedia-Auszug erzaehlt; ohne Auszug erzeugt der Server
     // einen kurzen Kontext aus Name + OSM-Kategorie (Fallback: nur der Name).
-    getPoiStory({
-      name: nearbyPoi.name,
-      extract: rawExtract ?? undefined,
-      kind: nearbyPoi.kind,
-      lang: cueLanguage,
-      osmContext: nearbyPoi.osmContext ?? undefined,
-    })
-      .then((r) => {
-        if (!cancelled && !nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
-        erzaehle(pack.poiAside(nearbyPoi.name, r.text));
+    // Offline-Cache bevorzugen, sonst Netzwerk-Request.
+    (async () => {
+      const cached = await getOfflinePoiStory(nearbyPoi.id, cueLanguage);
+      if (cached !== null) {
+        if (!cancelled) {
+          if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
+          erzaehle(pack.poiAside(nearbyPoi.name, cached));
+        }
+        return;
+      }
+      getPoiStory({
+        name: nearbyPoi.name,
+        extract: rawExtract ?? undefined,
+        kind: nearbyPoi.kind,
+        lang: cueLanguage,
+        osmContext: nearbyPoi.osmContext ?? undefined,
       })
-      .catch(() =>
-        erzaehle(
-          pack.poiAside(
-            nearbyPoi.name,
-            rawExtract ? trimForNarration(rawExtract) : null,
+        .then((r) => {
+          if (!cancelled && !nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
+          erzaehle(pack.poiAside(nearbyPoi.name, r.text));
+        })
+        .catch(() =>
+          erzaehle(
+            pack.poiAside(
+              nearbyPoi.name,
+              rawExtract ? trimForNarration(rawExtract) : null,
+            ),
           ),
-        ),
-      );
+        );
+    })();
     return () => {
       cancelled = true;
     };
@@ -2463,6 +2566,9 @@ export default function LiveHike() {
         return route?.geometry;
       })(),
       photoUris: hikePhotos.length > 0 ? hikePhotos : undefined,
+      visitedPois: visitedPoisRef.current.size > 0
+        ? Array.from(visitedPoisRef.current.values())
+        : undefined,
     };
     await Promise.all([
       saveHike(session),

@@ -10,9 +10,9 @@ Jede Route ist einer echten, kuratierten Schweizer Sage zugeordnet (keine KI-gen
 
 - **Sagen-Wanderungen mit Live-Audio-Erzählung**: GPS-basiert, Geschichte "erwacht" an bestimmten Streckenpunkten, inklusive Navigationshinweisen (Abbiegehinweise aus echter Routen-Geometrie).
 - **Kartenintegration**: Interaktive Karte (Carto Voyager / Waymarked Trails) mit Routenverlauf, SAC-Schwierigkeitsgrad, Distanz und Höhenprofil.
-- **Mehrsprachigkeit**: App-Oberfläche und Erzählungen in bis zu 8 Sprachen (inkl. Schweizerdeutsch-Textvariante).
-- **Offline-Funktion**: Sagen, Texte und Audio lassen sich vorab herunterladen und ohne Internetverbindung nutzen (dreistufiges Offline-Modell); Kartenkacheln offline in der nativen App.
-- **Points of Interest unterwegs**: Automatisch erkannte Sehenswürdigkeiten/POIs entlang der Route mit KI-generierten Zusatzinfos und historischen Fotos.
+- **Mehrsprachigkeit**: App-Oberfläche und Erzählungen in 9 Sprachen (DE, GSW, EN, FR, IT, ES, PT, ZH, RU).
+- **Offline-Funktion**: Sagentext, Audio-Kapitel (MP3), Kartenkacheln entlang der gesamten Route sowie alle Sehenswürdigkeiten (Wikipedia-Texte und KI-Story) lassen sich vorab herunterladen — die Wanderung funktioniert danach vollständig ohne Mobilnetz.
+- **Points of Interest unterwegs**: Automatisch erkannte Sehenswürdigkeiten/POIs entlang der Route mit Wikipedia-Zusammenfassungen, KI-generierten Erzähltexten und Fotos — auch offline verfügbar nach Download.
 - **Freihändige Bedienung**: Sprachsteuerung für Entscheidungspunkte während der Wanderung (z. B. "links" / "rechts" per Zuruf statt Antippen).
 - **Hinweis zum Ausgangspunkt**: Kompass- und Distanzanzeige zum Trailhead vor Wanderstart.
 - **Fortschritt & Erfolge**: Wanderhistorie, Abzeichen/Achievements, Schritt-/Aktivitätszähler – geräteübergreifend gesichert (Cloud-Sync beim Login).

@@ -28,6 +28,7 @@ import {
   type RawPoi,
 } from "./overpass";
 import { computeElevationStats } from "./elevation";
+import { istPoiBildPassend } from "./poiImageCheck";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
 import { reverseGeocode } from "./geocoding";
@@ -299,7 +300,7 @@ async function enrichPoiWithWikipedia(
             p18Image ??
             (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
             (await fetchCommonsImageByName(poi.name)) ??
-            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
+            (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
           return { ...poi, wiki: { ...wiki, image } };
         }
         // Kein Wikipedia-Artikel: P18 > P373-Kategorie > Commons-Name > Commons-Geo
@@ -307,7 +308,7 @@ async function enrichPoiWithWikipedia(
           p18Image ??
           (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
           (await fetchCommonsImageByName(poi.name)) ??
-          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
         if (image) {
           return { ...poi, wiki: { title: poi.name, extract: "", url: "", lang: "de", image } };
         }
@@ -317,7 +318,7 @@ async function enrichPoiWithWikipedia(
           fetchWikidataImage(poi.wikidataTag),
           fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
-          fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
+          fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
         ]);
         const image = p18Image ?? p373Image ?? nameImage ?? geoImage;
         if (image) {
@@ -341,7 +342,7 @@ async function enrichPoiWithWikipedia(
           (await fetchCommonsImageByName(poi.name)) ??
           (await fetchWikipediaArticleImageByPoiName(wiki.title, poi.name)) ??
           wiki.image ??
-          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500));
+          (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
@@ -353,7 +354,7 @@ async function enrichPoiWithWikipedia(
     const searchTerm = commonsSearchTerm(poi.name, poi.kind);
     const [nameImage, geoImage, aiWiki] = await Promise.all([
       searchTerm ? fetchCommonsImageByName(searchTerm) : Promise.resolve(null),
-      fetchNearbyCommonsImage(poi.lat, poi.lng, 500),
+      fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
       searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
     const commonsImage = nameImage ?? geoImage;
@@ -476,7 +477,13 @@ export async function getPoiDetail(
   };
   // Voller Anreicherungs-Budget fuer einen einzelnen POI (kein Batch-Limit).
   const enriched = await enrichPoiWithWikipedia(rawPoi, log, { rest: 1 });
-  const wiki = enriched.wiki;
+  let wiki = enriched.wiki;
+  // KI-Passungspruefung des Bildes (nur on-demand, Ergebnis haengt am 24h-Cache):
+  // unpassende Bilder (Lok statt Refugium, Portrait statt Denkmal) verwerfen.
+  if (wiki?.image) {
+    const passend = await istPoiBildPassend(wiki.image, params.name, params.kind, log);
+    if (!passend) wiki = { ...wiki, image: null };
+  }
   if (poiDetailCache.size >= POI_DETAIL_CACHE_MAX) { const k = poiDetailCache.keys().next().value; if (k !== undefined) poiDetailCache.delete(k); }
   poiDetailCache.set(cacheKey, { at: Date.now(), wiki });
   log.info({ name: params.name, hasImage: !!wiki?.image, hasExtract: !!wiki?.extract }, "POI-Detail angereichert");

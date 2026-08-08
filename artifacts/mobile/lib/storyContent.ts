@@ -121,6 +121,11 @@ export type RouteBriefingParams = {
   wetterKlasse: WetterKlasse | null;
 };
 
+/** Zieht zufällig einen Satz aus einem Array — für abwechslungsreiche Ansagen. */
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 // Die tone-Werte bleiben ueber alle Sprachen als stabile Kennungen deutsch.
 export const STORY_PACKS: Record<Lang, StoryPack> = {
   de: {
@@ -193,8 +198,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Die Kälte beißt in die Wangen — genau so muss es sich damals angefühlt haben.",
       gewitter: "Ein Gewitter liegt in der Luft. Alte Geschichten brauchen keinen besseren Rahmen.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "Der Weg wechselt auf Asphalt. Einst trugen diese Pfade ganz andere Schritte.", kies: "Kies knirscht unter den Sohlen. Der Weg wird rauer — und echter.", naturweg: "Blanke Erde liegt unter den Füssen. Hier bewegten sich Menschen, lange bevor man Wege befestigte.", fels: "Nackter Fels trägt dich jetzt. Uraltes Gestein, das die Sage schon immer kannte.", holz: "Holzplanken führen dich weiter — jeder Schritt hallt, als würde der Weg zurückflüstern." } as Record<string, string>)[surface]) ?? "Die Beschaffenheit des Weges wandelt sich. Die Sage begleitet dich weiter.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "Der Weg wechselt auf Asphalt. Einst trugen diese Pfade ganz andere Schritte.",
+          "Asphalt unter den Füssen — die Moderne holt dich kurz ein, bevor die Sage dich zurückruft.",
+          "Der Teer liegt glatt unter deinen Schritten. Irgendwo darunter schläft der alte Weg.",
+          "Hart und schweigend. Die Strasse kennt keine Sage — aber sie führt dich weiter.",
+        ],
+        kies: [
+          "Kies knirscht unter den Sohlen. Der Weg wird rauer — und echter.",
+          "Schotter. Jeder Schritt macht sich selbst hörbar. Der Weg bekommt eine Stimme.",
+          "Rollende Steinchen unter den Sohlen — so hat sich dieser Pfad schon immer angehört.",
+          "Der Kies flüstert. Rau, aber aufrichtig. Der alte Weg meldet sich zurück.",
+        ],
+        naturweg: [
+          "Blanke Erde liegt unter den Füssen. Hier bewegten sich Menschen, lange bevor man Wege befestigte.",
+          "Gewachsener Boden trägt dich. Kein Belag, kein Lärm — nur Erde und Schritt.",
+          "Der Weg ist wieder er selbst: pur, ungekämmt, lebendig.",
+          "Deine Sohlen berühren die Erde direkt — so wie alle, die vor dir gingen.",
+        ],
+        fels: [
+          "Nackter Fels trägt dich jetzt. Uraltes Gestein, das die Sage schon immer kannte.",
+          "Stein. Unveränderlich, kalt, ehrlich. Er war hier, bevor die erste Geschichte erzählt wurde.",
+          "Hartes Gestein unter jedem Schritt. Tausend Jahresringe tragen dich — tritt behutsam.",
+          "Der Fels gibt nicht nach. Hier hat die Zeit keine Spuren hinterlassen, die nicht schon immer da waren.",
+        ],
+        holz: [
+          "Holzplanken führen dich weiter — jeder Schritt hallt, als würde der Weg zurückflüstern.",
+          "Ein Steg aus Holz. Das Knarren gehört dazu, wie der Wind zur Sage gehört.",
+          "Holz unter den Sohlen — warm, ein bisschen wankend. Der Weg erzählt seine eigene Geschichte.",
+          "Planken. Das Holz hat Wetter und Winter gesehen. Deine Schritte sind bei weitem nicht die ersten.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "Die Beschaffenheit des Weges wandelt sich. Die Sage begleitet dich weiter.",
+        "Neuer Untergrund, gleicher Weg. Die Sage lässt nicht los.",
+        "Der Pfad verändert sich unter deinen Füssen — geh einfach weiter.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Ein Viertel geschafft, ${name}. Die Sage trägt dich weiter.`, 50: `Halbzeit, ${name}. Was hinter dir liegt, ist genauso weit wie das, was noch kommt.`, 75: `Noch ein letztes Stück, ${name}. Drei Viertel hast du bereits hinter dir gelassen.` } as Record<number, string>)
@@ -310,8 +354,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "D Chälti biisst i d Bache — genau so muss sich's damals aaghört ha.",
       gewitter: "Es Gwitter liit i de Luft. Alti Gschichte bruched kei bessere Rahme.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "Dr Wäg wechslet uf Asphalt. Amol händ ganz anderi Schritt dä Pfad treit.", kies: "Kies chnürpst under de Sohle. De Wäg wird rouher — und echter.", naturweg: "Blosi Ärd liit under de Fies. Do händ sich Mänsche bewegt, lang bevor mer Wäg bfestigt het.", fels: "Nackter Fels treit di jetzt. Uralts Gstei, das d Sage scho immer kennt het.", holz: "Holzbrätt führed di witer — jede Schritt hallt, as ob dr Wäg zrugg flüschteret." } as Record<string, string>)[surface]) ?? "D Beschaffenheit vom Wäg wandlet sich. D Sage begleitet di witer.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "Dr Wäg wechslet uf Asphalt. Amol händ ganz anderi Schritt dä Pfad treit.",
+          "Asphalt under de Fies — d Mordernis holt di chli y, bevor d Sage di zrugg ruft.",
+          "Dr Teer liegt glatt under dine Schritt. Irgendwo drunter schlaft dr alte Wäg.",
+          "Hart und schwigend. D Strass kennt keni Sage — aber si führt di witer.",
+        ],
+        kies: [
+          "Kies chnürpst under de Sohle. De Wäg wird rouher — und echter.",
+          "Schotter. Jede Schritt macht sich selber hörbar. Dr Wäg kriegt e Stimm.",
+          "Rollendi Stei under de Sohle — so het sich dä Pfad scho immer aghört.",
+          "Dr Kies flüschteret. Rau, aber ufrichtig. Dr alte Wäg mäudet sich zrugg.",
+        ],
+        naturweg: [
+          "Blosi Ärd liit under de Fies. Do händ sich Mänsche bewegt, lang bevor mer Wäg bfestigt het.",
+          "Gwachsene Bode treit di. Kei Belag, kei Lärm — numme Ärd und Schritt.",
+          "Dr Wäg isch wider er sälber: pur, wüüd, läbendig.",
+          "Dini Sohle berüehred d Ärd diräkt — so wie alli, wo vor dir cho sind.",
+        ],
+        fels: [
+          "Nackter Fels treit di jetzt. Uralts Gstei, das d Sage scho immer kennt het.",
+          "Stei. Unveränderlich, kalt, ehrlich. Er isch do gsi, bevor d erschti Gschicht erzellt worden isch.",
+          "Hartes Gstei under jedem Schritt. Tuusig Joorring trägid di — trit behuetsam.",
+          "Dr Fels git nüt nache. Hie het d Zit keni Spure gloh, wo nüd scho immer do gsi wäre.",
+        ],
+        holz: [
+          "Holzbrätt führed di witer — jede Schritt hallt, as ob dr Wäg zrugg flüschteret.",
+          "En Stäg us Holz. S Chnarre ghört derzue, so wie dr Wind zur Sage ghört.",
+          "Holz under de Sohle — warm, chli wankend. Dr Wäg erzellt sini eigeni Gschicht.",
+          "Brätt. S Holz het Wätter und Winter gseh. Dini Schritt sind bi wiitem nüd d erschte.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "D Beschaffenheit vom Wäg wandlet sich. D Sage begleitet di witer.",
+        "Neue Untergrund, gliche Wäg. D Sage laat nüd los.",
+        "Dr Pfad veränderet sich under dine Fies — gah eifach witer.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Es Viertel gschafft, ${name}. D Sage treit di witer.`, 50: `Halbzyt, ${name}. Was hinder dir liit, isch genau so wit wie das, was no chunt.`, 75: `No es letschts Stück, ${name}. Drü Viertel hesch du scho hinder dir glah.` } as Record<number, string>)
@@ -427,8 +510,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Le froid mord les joues — exactement comme cela a dû se passer jadis.",
       gewitter: "Un orage se prépare. Les vieilles histoires n'ont pas besoin d'un meilleur décor.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "Le sentier passe sur l'asphalte. Autrefois, d'autres pas foulaient ces chemins.", kies: "Le gravier crisse sous les semelles. Le chemin devient plus rude — et plus vrai.", naturweg: "La terre nue est sous les pieds. Ici les hommes marchaient bien avant que l'on construise des routes.", fels: "La roche nue te porte à présent. Pierre millénaire que la légende a toujours connue.", holz: "Des planches de bois te guident — chaque pas résonne un peu, comme si le chemin murmurait en retour." } as Record<string, string>)[surface]) ?? "La nature du chemin change. La légende t'accompagne toujours.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "Le sentier passe sur l'asphalte. Autrefois, d'autres pas foulaient ces chemins.",
+          "L'asphalte sous les semelles — la modernité t'attrape un instant avant que la légende te reprenne.",
+          "Le bitume est lisse sous tes pas. Quelque part en dessous, l'ancien chemin sommeille.",
+          "Dur et silencieux. La route ne connaît pas les légendes — mais elle te mène plus loin.",
+        ],
+        kies: [
+          "Le gravier crisse sous les semelles. Le chemin devient plus rude — et plus vrai.",
+          "Cailloux et graviers — chaque pas se fait entendre. Le chemin retrouve une voix.",
+          "Des pierres roulent sous les pieds. C'est ainsi que ce sentier a toujours sonné.",
+          "Le gravier chuchote. Rugueux, mais honnête. L'ancien chemin se rappelle à toi.",
+        ],
+        naturweg: [
+          "La terre nue est sous les pieds. Ici les hommes marchaient bien avant que l'on construise des routes.",
+          "Un sol vivant te porte. Pas de revêtement, pas de bruit — juste la terre et le pas.",
+          "Le chemin redevient lui-même : pur, sauvage, vivant.",
+          "Tes semelles touchent la terre directement — comme tous ceux qui sont passés avant toi.",
+        ],
+        fels: [
+          "La roche nue te porte à présent. Pierre millénaire que la légende a toujours connue.",
+          "Pierre. Immuable, froide, franche. Elle était là avant que la première histoire soit racontée.",
+          "De la roche dure sous chaque pas. Des millénaires te portent — avance avec soin.",
+          "Le rocher ne cède pas. Ici le temps n'a laissé que les marques qu'il a toujours portées.",
+        ],
+        holz: [
+          "Des planches de bois te guident — chaque pas résonne un peu, comme si le chemin murmurait en retour.",
+          "Un ponton de bois. Les grincements font partie du voyage, comme le vent fait partie de la légende.",
+          "Du bois sous les semelles — chaud, légèrement instable. Le chemin raconte sa propre histoire.",
+          "Des planches. Le bois a vu pluie et hiver. Tes pas ne sont pas les premiers, de loin.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "La nature du chemin change. La légende t'accompagne toujours.",
+        "Nouveau sol, même chemin. La légende ne lâche pas prise.",
+        "Le sentier se transforme sous tes pieds — continue simplement.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Un quart accompli, ${name}. La légende te porte plus loin.`, 50: `Mi-chemin, ${name}. Ce qui est derrière toi est aussi loin que ce qui t'attend encore.`, 75: `Un dernier bout, ${name}. Trois quarts sont déjà derrière toi.` } as Record<number, string>)
@@ -544,8 +666,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Il freddo morde le guance — esattamente come doveva sembrare allora.",
       gewitter: "C'è un temporale nell'aria. Le vecchie storie non hanno bisogno di una cornice migliore.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "Il sentiero passa sull'asfalto. Un tempo altri passi battevano questi percorsi.", kies: "La ghiaia scricchiola sotto le suole. Il cammino diventa più aspro — e più vero.", naturweg: "Terra nuda sotto i piedi. Qui la gente camminava ben prima che si costruissero strade.", fels: "Roccia nuda ti sostiene ora. Pietra antichissima che la leggenda ha sempre conosciuto.", holz: "Assi di legno ti guidano — ogni passo risuona un po', come se il sentiero sussurrasse di rimando." } as Record<string, string>)[surface]) ?? "La natura del sentiero cambia. La leggenda ti accompagna ancora.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "Il sentiero passa sull'asfalto. Un tempo altri passi battevano questi percorsi.",
+          "L'asfalto sotto le suole — la modernità ti raggiunge un attimo prima che la leggenda ti riprenda.",
+          "Il catrame è liscio sotto i tuoi passi. Da qualche parte sotto, l'antico sentiero dorme.",
+          "Duro e silenzioso. La strada non conosce leggende — ma ti conduce avanti.",
+        ],
+        kies: [
+          "La ghiaia scricchiola sotto le suole. Il cammino diventa più aspro — e più vero.",
+          "Sassolini e ghiaia — ogni passo si fa sentire. Il sentiero ritrova una voce.",
+          "Pietre che rotolano sotto i piedi. È così che questo sentiero ha sempre suonato.",
+          "La ghiaia sussurra. Ruvida, ma onesta. L'antico cammino si fa di nuovo sentire.",
+        ],
+        naturweg: [
+          "Terra nuda sotto i piedi. Qui la gente camminava ben prima che si costruissero strade.",
+          "Un suolo vivo ti porta. Nessun rivestimento, nessun rumore — solo terra e passo.",
+          "Il sentiero torna a essere se stesso: puro, selvaggio, vivo.",
+          "Le tue suole toccano la terra direttamente — come tutti coloro che ti hanno preceduto.",
+        ],
+        fels: [
+          "Roccia nuda ti sostiene ora. Pietra antichissima che la leggenda ha sempre conosciuto.",
+          "Pietra. Immutabile, fredda, onesta. Era qui prima che si raccontasse la prima storia.",
+          "Roccia dura sotto ogni passo. Millenni ti portano — cammina con cautela.",
+          "La roccia non cede. Qui il tempo ha lasciato solo le tracce che ha sempre avuto.",
+        ],
+        holz: [
+          "Assi di legno ti guidano — ogni passo risuona un po', come se il sentiero sussurrasse di rimando.",
+          "Una passerella di legno. Il cigolìo fa parte del viaggio, come il vento fa parte della leggenda.",
+          "Legno sotto le suole — caldo, leggermente cedevole. Il sentiero racconta la sua storia.",
+          "Assi. Il legno ha visto pioggia e inverno. I tuoi passi non sono i primi, di gran lunga.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "La natura del sentiero cambia. La leggenda ti accompagna ancora.",
+        "Nuovo fondo, stesso cammino. La leggenda non ti lascia andare.",
+        "Il sentiero si trasforma sotto i tuoi piedi — continua semplicemente.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Un quarto completato, ${name}. La leggenda ti porta avanti.`, 50: `Metà strada, ${name}. Ciò che hai percorso è lungo quanto ciò che ti aspetta ancora.`, 75: `Un ultimo tratto, ${name}. Tre quarti sono già alle tue spalle.` } as Record<number, string>)
@@ -661,8 +822,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "The cold bites at your cheeks — exactly as it must have felt back then.",
       gewitter: "A storm is gathering. Old stories have never needed a better setting.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "The path meets asphalt. Once, very different feet walked here.", kies: "Gravel crunches underfoot. The trail grows rougher — and more honest.", naturweg: "Bare earth lies under your feet. People have moved here long before any road was built.", fels: "Bare rock carries you now. Ancient stone the saga has always known.", holz: "Wooden boards guide you forward — each step echoes a little, as if the path whispers back." } as Record<string, string>)[surface]) ?? "The character of the trail changes. The saga walks with you still.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "The path meets asphalt. Once, very different feet walked here.",
+          "Asphalt underfoot — the modern world catches up for a moment before the saga pulls you back.",
+          "Smooth tarmac under your steps. Somewhere beneath it, the old path still sleeps.",
+          "Hard and silent. The road knows no saga — but it carries you forward all the same.",
+        ],
+        kies: [
+          "Gravel crunches underfoot. The trail grows rougher — and more honest.",
+          "Stones and grit — every step announces itself. The path finds its voice.",
+          "Loose pebbles shift under your soles. This is how this track has always sounded.",
+          "The gravel whispers. Rough, but straightforward. The old way makes itself known again.",
+        ],
+        naturweg: [
+          "Bare earth lies under your feet. People have moved here long before any road was built.",
+          "Living ground carries you. No surface, no noise — just earth and footfall.",
+          "The path becomes itself again: raw, untamed, alive.",
+          "Your soles touch the earth directly — just as all who came before you did.",
+        ],
+        fels: [
+          "Bare rock carries you now. Ancient stone the saga has always known.",
+          "Stone. Unchanging, cold, honest. It was here before the first story was ever told.",
+          "Hard rock under every step. Millennia carry you — tread carefully.",
+          "The rock does not give. Here time has left only the marks it always had.",
+        ],
+        holz: [
+          "Wooden boards guide you forward — each step echoes a little, as if the path whispers back.",
+          "A wooden boardwalk. The creaking is part of it, the way the wind is part of the saga.",
+          "Wood underfoot — warm, slightly yielding. The path tells its own story.",
+          "Planks. The wood has seen rain and winter. Your steps are far from the first.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "The character of the trail changes. The saga walks with you still.",
+        "New ground, same path. The saga does not let go.",
+        "The trail shifts beneath your feet — just keep walking.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `A quarter done, ${name}. The saga carries you onward.`, 50: `Halfway, ${name}. What lies behind is as far as what still waits for you.`, 75: `One last stretch, ${name}. Three quarters already lie behind you.` } as Record<number, string>)
@@ -774,8 +974,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "寒意咬上脸颊——想必当年，也是如此。",
       gewitter: "雷雨蓄势待发。古老的故事，从不需要更好的舞台。",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "山径换上了沥青路面。曾经，全然不同的脚步踏过这里。", kies: "砾石在脚底咯吱作响。路变得更粗粝——也更真实。", naturweg: "赤裸的土地在脚下。早在修路之前，人们便已在这里行走。", fels: "裸露的岩石托起你的脚步。这块古老的石头，传说从来都认识它。", holz: "木板引路，每一步都微微回响——仿佛山路在轻声回应。" } as Record<string, string>)[surface]) ?? "路的质地悄然变换。传说依然与你同行。",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "山径换上了沥青路面。曾经，全然不同的脚步踏过这里。",
+          "沥青在脚下——现代世界短暂追上你，随即传说又将你带走。",
+          "平滑的柏油铺在你脚下。它的下面，古老的路还在沉睡。",
+          "坚硬而沉默。道路不懂传说——但它依然带你前行。",
+        ],
+        kies: [
+          "砾石在脚底咯吱作响。路变得更粗粝——也更真实。",
+          "石子和碎砾——每一步都有声音。小路重新找回了自己的声音。",
+          "脚下的碎石滚动着。这条路一直以来都是这个声音。",
+          "砾石在低语。粗糙，却坦诚。古老的路再次显现。",
+        ],
+        naturweg: [
+          "赤裸的土地在脚下。早在修路之前，人们便已在这里行走。",
+          "活土承载着你。没有铺装，没有噪声——只有泥土和脚步。",
+          "路又回归本真：纯粹、野性、生动。",
+          "你的脚底直接触碰大地——和所有走在你前面的人一样。",
+        ],
+        fels: [
+          "裸露的岩石托起你的脚步。这块古老的石头，传说从来都认识它。",
+          "石头。亘古不变，冰冷，坦诚。第一个故事讲述之前，它就在这里了。",
+          "坚硬的岩石在每一步下。千年的岁月托举着你——请轻步而行。",
+          "岩石纹丝不动。时光在这里留下的，只是它本就有的痕迹。",
+        ],
+        holz: [
+          "木板引路，每一步都微微回响——仿佛山路在轻声回应。",
+          "木栈道。吱呀声是旅途的一部分，就像风是传说的一部分。",
+          "脚下是木头——温暖，略有弹性。小路在讲述自己的故事。",
+          "木板。这木头见过风雨和严冬。你的脚步远不是第一双。",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "路的质地悄然变换。传说依然与你同行。",
+        "换了地面，路还是那条路。传说不曾松手。",
+        "脚下的路在变——只管继续走。",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `完成了四分之一，${name}。传说继续带你前行。`, 50: `到了中点，${name}。走过的路，和前方等待的路一样远。`, 75: `最后一段路了，${name}。四分之三已经在你身后。` } as Record<number, string>)
@@ -891,8 +1130,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "El frío muerde las mejillas — exactamente así debió de sentirse entonces.",
       gewitter: "Se avecina una tormenta. Las viejas historias nunca han necesitado mejor escenario.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "El sendero llega al asfalto. Antes, pasos muy distintos recorrían estos caminos.", kies: "La grava cruje bajo las suelas. El camino se vuelve más áspero — y más genuino.", naturweg: "Tierra desnuda bajo los pies. Aquí caminaba la gente mucho antes de que se construyeran caminos.", fels: "Roca desnuda te sostiene ahora. Piedra milenaria que la leyenda siempre ha conocido.", holz: "Tablones de madera te guían — cada paso resuena un poco, como si el sendero susurrara de vuelta." } as Record<string, string>)[surface]) ?? "La naturaleza del camino cambia. La leyenda te acompaña todavía.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "El sendero llega al asfalto. Antes, pasos muy distintos recorrían estos caminos.",
+          "Asfalto bajo los pies — la modernidad te alcanza un instante antes de que la leyenda te reclame.",
+          "El alquitrán es liso bajo tus pasos. En algún lugar por debajo, el antiguo camino sigue durmiendo.",
+          "Duro y silencioso. La carretera no conoce leyendas — pero te lleva adelante.",
+        ],
+        kies: [
+          "La grava cruje bajo las suelas. El camino se vuelve más áspero — y más genuino.",
+          "Piedras y gravilla — cada paso se anuncia a sí mismo. El camino encuentra su voz.",
+          "Las piedrecillas ruedan bajo las plantas. Así ha sonado siempre este sendero.",
+          "La grava susurra. Áspera, pero honesta. El viejo camino vuelve a hacerse notar.",
+        ],
+        naturweg: [
+          "Tierra desnuda bajo los pies. Aquí caminaba la gente mucho antes de que se construyeran caminos.",
+          "Un suelo vivo te sostiene. Sin pavimento, sin ruido — solo tierra y paso.",
+          "El camino vuelve a ser él mismo: puro, indómito, vivo.",
+          "Tus suelas tocan la tierra directamente — igual que todos los que vinieron antes.",
+        ],
+        fels: [
+          "Roca desnuda te sostiene ahora. Piedra milenaria que la leyenda siempre ha conocido.",
+          "Piedra. Inmutable, fría, honesta. Estaba aquí antes de que se contara la primera historia.",
+          "Roca dura bajo cada paso. Milenios te sostienen — pisa con cuidado.",
+          "La roca no cede. Aquí el tiempo sólo ha dejado las huellas que siempre tuvo.",
+        ],
+        holz: [
+          "Tablones de madera te guían — cada paso resuena un poco, como si el sendero susurrara de vuelta.",
+          "Una pasarela de madera. El crujido forma parte del camino, igual que el viento forma parte de la leyenda.",
+          "Madera bajo las suelas — cálida, ligeramente flexible. El sendero cuenta su propia historia.",
+          "Tablones. La madera ha visto lluvia e invierno. Tus pasos están muy lejos de ser los primeros.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "La naturaleza del camino cambia. La leyenda te acompaña todavía.",
+        "Nuevo suelo, mismo sendero. La leyenda no te suelta.",
+        "El sendero cambia bajo tus pies — sigue caminando.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Un cuarto completado, ${name}. La leyenda te lleva más lejos.`, 50: `A mitad de camino, ${name}. Lo que tienes detrás es tan largo como lo que aún te espera.`, 75: `Un último trecho, ${name}. Ya llevas tres cuartos a tus espaldas.` } as Record<number, string>)
@@ -1008,8 +1286,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "O frio morde as bochechas — exatamente como devia ter parecido naquele tempo.",
       gewitter: "Uma tempestade se aproxima. As velhas histórias nunca precisaram de um cenário melhor.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "O trilho encontra o asfalto. Noutros tempos, outros passos percorreram estes caminhos.", kies: "O cascalho range sob as solas. O caminho torna-se mais áspero — e mais genuíno.", naturweg: "Terra nua sob os pés. Aqui as pessoas caminhavam muito antes de se construírem estradas.", fels: "Rocha nua te sustenta agora. Pedra milenar que a lenda sempre conheceu.", holz: "Tábuas de madeira guiam-te — cada passo ressoa um pouco, como se o caminho sussurrasse de volta." } as Record<string, string>)[surface]) ?? "A natureza do trilho muda. A lenda continua a acompanhar-te.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "O trilho encontra o asfalto. Noutros tempos, outros passos percorreram estes caminhos.",
+          "Asfalto sob as solas — o mundo moderno alcança-te por um momento antes de a lenda te reclamar.",
+          "O alcatrão é liso sob os teus passos. Em algum lugar por baixo, o antigo caminho ainda dorme.",
+          "Duro e silencioso. A estrada não conhece lendas — mas leva-te adiante.",
+        ],
+        kies: [
+          "O cascalho range sob as solas. O caminho torna-se mais áspero — e mais genuíno.",
+          "Pedras e gravilha — cada passo anuncia-se a si mesmo. O trilho reencontra a sua voz.",
+          "Pedrinhas rolam sob os pés. É assim que este caminho sempre soou.",
+          "O cascalho sussurra. Áspero, mas honesto. O antigo caminho faz-se notar novamente.",
+        ],
+        naturweg: [
+          "Terra nua sob os pés. Aqui as pessoas caminhavam muito antes de se construírem estradas.",
+          "Um solo vivo sustenta-te. Sem pavimento, sem ruído — apenas terra e passos.",
+          "O caminho volta a ser ele próprio: puro, selvagem, vivo.",
+          "As tuas solas tocam a terra diretamente — tal como todos os que vieram antes de ti.",
+        ],
+        fels: [
+          "Rocha nua te sustenta agora. Pedra milenar que a lenda sempre conheceu.",
+          "Pedra. Imutável, fria, honesta. Estava aqui antes de a primeira história ser contada.",
+          "Rocha dura sob cada passo. Milénios sustentam-te — pisa com cuidado.",
+          "A rocha não cede. Aqui o tempo só deixou as marcas que sempre teve.",
+        ],
+        holz: [
+          "Tábuas de madeira guiam-te — cada passo ressoa um pouco, como se o caminho sussurrasse de volta.",
+          "Uma passarela de madeira. O ranger faz parte da viagem, tal como o vento faz parte da lenda.",
+          "Madeira sob as solas — quente, ligeiramente flexível. O caminho conta a sua própria história.",
+          "Tábuas. A madeira já viu chuva e inverno. Os teus passos estão longe de ser os primeiros.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "A natureza do trilho muda. A lenda continua a acompanhar-te.",
+        "Novo solo, mesmo caminho. A lenda não te larga.",
+        "O trilho muda sob os teus pés — continua simplesmente a caminhar.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Um quarto concluído, ${name}. A lenda leva-te mais longe.`, 50: `A meio caminho, ${name}. O que ficou para trás é tão longo quanto o que ainda te aguarda.`, 75: `Um último trecho, ${name}. Três quartos já ficaram para trás.` } as Record<number, string>)
@@ -1125,8 +1442,47 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       kalt:     "Холод кусает щёки — наверное, именно так всё и ощущалось тогда.",
       gewitter: "В воздухе висит гроза. Старые истории никогда не нуждались в лучших декорациях.",
     } as const)[k],
-    surfaceTransitionPhrase: (surface) =>
-      (({ asphalt: "Тропа переходит на асфальт. Некогда по этим путям ступали совсем другие ноги.", kies: "Гравий хрустит под подошвами. Дорожка становится грубее — и честнее.", naturweg: "Голая земля под ногами. Люди ходили здесь задолго до того, как были проложены дороги.", fels: "Голый камень несёт тебя теперь. Древняя порода, которую предание знало всегда.", holz: "Деревянные доски ведут тебя дальше — каждый шаг чуть гулкий, словно тропа шепчет в ответ." } as Record<string, string>)[surface]) ?? "Характер дороги меняется. Предание идёт рядом.",
+    surfaceTransitionPhrase: (surface) => {
+      const m: Record<string, string[]> = {
+        asphalt: [
+          "Тропа переходит на асфальт. Некогда по этим путям ступали совсем другие ноги.",
+          "Асфальт под подошвами — современный мир на миг догоняет тебя, прежде чем предание вновь уводит прочь.",
+          "Гладкий битум под шагами. Где-то под ним спит старая тропа.",
+          "Твёрдый и молчаливый. Дорога не знает преданий — но ведёт тебя вперёд.",
+        ],
+        kies: [
+          "Гравий хрустит под подошвами. Дорожка становится грубее — и честнее.",
+          "Камешки и щебень — каждый шаг слышен. Тропа обретает голос.",
+          "Мелкие камни перекатываются под ногами. Вот как эта тропа звучала всегда.",
+          "Гравий шепчет. Шершавый, но прямой. Старый путь напоминает о себе.",
+        ],
+        naturweg: [
+          "Голая земля под ногами. Люди ходили здесь задолго до того, как были проложены дороги.",
+          "Живая почва несёт тебя. Никакого покрытия, никакого шума — только земля и шаг.",
+          "Тропа снова становится собой: чистой, дикой, живой.",
+          "Подошвы касаются земли напрямую — так же, как все, кто шёл здесь до тебя.",
+        ],
+        fels: [
+          "Голый камень несёт тебя теперь. Древняя порода, которую предание знало всегда.",
+          "Камень. Неизменный, холодный, честный. Он был здесь до того, как рассказали первую историю.",
+          "Твёрдая скала под каждым шагом. Тысячелетия держат тебя — ступай осторожно.",
+          "Скала не поддаётся. Время оставило здесь только те следы, что были здесь всегда.",
+        ],
+        holz: [
+          "Деревянные доски ведут тебя дальше — каждый шаг чуть гулкий, словно тропа шепчет в ответ.",
+          "Деревянный настил. Скрип — часть пути, так же как ветер — часть предания.",
+          "Дерево под подошвами — тёплое, слегка пружинящее. Тропа рассказывает свою историю.",
+          "Доски. Это дерево видело дождь и зиму. Твои шаги далеко не первые.",
+        ],
+      };
+      const variants = m[surface];
+      if (variants) return pick(variants);
+      return pick([
+        "Характер дороги меняется. Предание идёт рядом.",
+        "Новый грунт, тот же путь. Предание не отпускает.",
+        "Тропа меняется под ногами — просто иди вперёд.",
+      ]);
+    },
     milestonePhrase: (pct, name) =>
       (name
         ? ({ 25: `Четверть пройдена, ${name}. Предание несёт тебя дальше.`, 50: `Полпути, ${name}. То, что позади, так же далеко, как и то, что ещё ждёт.`, 75: `Последний отрезок, ${name}. Три четверти уже остались позади.` } as Record<number, string>)

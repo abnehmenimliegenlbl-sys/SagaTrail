@@ -33,6 +33,7 @@ export interface SummaryStrings {
   transportDelay: (min: number) => string;
   transportOnTime: string;
   planReturn: string;
+  visitedPoisTitle: string;
 }
 
 const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
@@ -70,6 +71,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
     planReturn: "Mit SBB zurückreisen",
+    visitedPoisTitle: "Entdeckte Orte",
   },
   gsw: {
     noHikeFound: "Kei Wanderig gfunde.",
@@ -105,6 +107,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
     planReturn: "Mit de SBB zruggfahre",
+    visitedPoisTitle: "Entdeckti Ort",
   },
   en: {
     noHikeFound: "No hike found.",
@@ -140,6 +143,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "on time",
     planReturn: "Return by SBB train",
+    visitedPoisTitle: "Places discovered",
   },
   fr: {
     noHikeFound: "Aucune randonnée trouvée.",
@@ -175,6 +179,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "à l'heure",
     planReturn: "Retourner en train SBB",
+    visitedPoisTitle: "Lieux découverts",
   },
   it: {
     noHikeFound: "Nessuna escursione trovata.",
@@ -210,6 +215,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "in orario",
     planReturn: "Tornare in treno SBB",
+    visitedPoisTitle: "Luoghi scoperti",
   },
   es: {
     noHikeFound: "No se encontró ninguna caminata.",
@@ -245,6 +251,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "puntual",
     planReturn: "Volver en tren SBB",
+    visitedPoisTitle: "Lugares descubiertos",
   },
   pt: {
     noHikeFound: "Nenhuma caminhada encontrada.",
@@ -280,6 +287,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "pontual",
     planReturn: "Voltar de trem SBB",
+    visitedPoisTitle: "Lugares descobertos",
   },
   zh: {
     noHikeFound: "未找到徒步记录。",
@@ -315,6 +323,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} 分钟`,
     transportOnTime: "准时",
     planReturn: "乘SBB火车返回",
+    visitedPoisTitle: "探访过的地点",
   },
   ru: {
     noHikeFound: "Поход не найден.",
@@ -350,6 +359,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportDelay: (min) => `+${min} мин`,
     transportOnTime: "вовремя",
     planReturn: "Вернуться на поезде SBB",
+    visitedPoisTitle: "Открытые места",
   },
 };
 

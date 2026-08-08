@@ -543,6 +543,30 @@ export default function Einstellungen() {
             icon="chevron-right"
             onPress={() => router.push("/legal/impressum")}
           />
+          {/* Google-Play-Compliance: Quellen amtlicher Daten + Hinweis, dass
+              die App keine Behörde vertritt. */}
+          <View style={[styles.quellenBox, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <Feather name="info" size={14} color={colors.accent} />
+              <Text style={[styles.quellenTitel, { color: colors.foreground }]}>
+                {t.datenquellenLabel}
+              </Text>
+            </View>
+            <Text style={[styles.quellenText, { color: colors.mutedForeground }]}>
+              {t.datenquellenDisclaimer}
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+              {[
+                ["geo.admin.ch", "https://www.geo.admin.ch"],
+                ["slf.ch", "https://www.slf.ch"],
+                ["schweizmobil.ch", "https://www.schweizmobil.ch"],
+              ].map(([label, url]) => (
+                <Pressable key={url} onPress={() => Linking.openURL(url)} hitSlop={8}>
+                  <Text style={[styles.quellenLink, { color: colors.accent }]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
           <RowButton
             label={t.bewertungLabel}
             value=""
@@ -862,6 +886,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 10,
   },
+  quellenBox: { borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 10 },
+  quellenTitel: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  quellenText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  quellenLink: { fontFamily: fonts.bodyMedium, fontSize: 12, textDecorationLine: "underline" },
   version: {
     fontFamily: fonts.mono,
     fontSize: 11,

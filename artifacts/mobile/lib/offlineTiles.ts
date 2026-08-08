@@ -7,30 +7,45 @@ import { LatLng } from "@/types";
  * Offline-Kartenkacheln (Carto Voyager) fuer eine Wanderung.
  *
  * Es werden dieselben hellen Carto-Voyager-Basiskacheln (EPSG:3857,
- * Standard-XYZ, kein API-Schluessel) wie in der Live-Kartenansicht fuer
- * einen begrenzten Korridor rund um den Startpunkt in wenigen Zoomstufen
- * heruntergeladen und lokal via expo-file-system abgelegt. Der Umfang ist
- * bewusst eng begrenzt, damit der Speicherbedarf klein bleibt. Das
- * Wanderwege-Overlay (Waymarked Trails) wird bewusst NICHT offline
- * gesichert — es ist eine reine Zusatzebene, die offline einfach fehlt und
- * online nachlaedt, sobald wieder Empfang besteht.
+ * Standard-XYZ, kein API-Schluessel) wie in der Live-Kartenansicht
+ * heruntergeladen und lokal via expo-file-system abgelegt.
  *
- * Web hat kein Dateisystem — dort sind alle Operationen bewusste No-Ops und die
- * Karte bleibt online.
+ * Zwei Download-Modi:
+ * - downloadTiles(sagaId, center): klassischer Startpunkt-Korridor (einzelner
+ *   Mittelpunkt, fester Radius).
+ * - downloadTilesAlongRoute(sagaId, points): deckelt die gesamte Route ab —
+ *   nimmt Abtastpunkte entlang der Geometrie, berechnet die Kacheln fuer jeden
+ *   Punkt und dedupliziert per Set. Geeignet, wenn die Route-Geometrie
+ *   verfuegbar ist.
+ *
+ * Das Waymarked-Trails-Overlay wird bewusst NICHT offline gesichert — es ist
+ * eine reine Zusatzebene, die online nachlaedt sobald Empfang besteht.
+ *
+ * Web hat kein Dateisystem — dort sind alle Operationen bewusste No-Ops.
  */
 
-// Feste Subdomain fuer deterministische, cachebare Download-URLs (die
-// Live-Karte rotiert 'abcd' fuer Parallelitaet, das ist hier nicht noetig).
+// Feste Subdomain fuer deterministische, cachebare Download-URLs.
 const TILE_URL = (z: number, x: number, y: number) =>
   `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
 
-// Zoomstufen und jeweiliger Radius (in Kacheln) rund um den Startpunkt.
-// Eng gehalten fuer einen kleinen, vorhersehbaren Speicherbedarf.
+// Zoomstufen und jeweiliger Radius (in Kacheln) fuer den Startpunkt-Korridor.
 const LEVELS: { zoom: number; radius: number }[] = [
   { zoom: 13, radius: 1 },
   { zoom: 14, radius: 2 },
   { zoom: 15, radius: 3 },
 ];
+
+// Fuer den Routen-Korridor: kleiner Radius (1) damit Tile-Zahl beherrschbar bleibt;
+// die Streckenabdeckung kommt durch viele Abtastpunkte, nicht durch grossen Radius.
+const ROUTE_LEVELS: { zoom: number; radius: number }[] = [
+  { zoom: 13, radius: 1 },
+  { zoom: 14, radius: 1 },
+  { zoom: 15, radius: 1 },
+];
+
+// Maximale Abtastpunkte pro Zoomstufe, damit bei langen Routen (>200 Punkte)
+// die Tile-Anzahl nicht explodiert. 80 Punkte × (3+3+3) Tiles/Punkt = ~720 max.
+const MAX_SAMPLES_PER_ZOOM = 80;
 
 export interface TileCoord {
   z: number;
@@ -52,7 +67,7 @@ export function lngLatToTile(lat: number, lng: number, z: number): { x: number; 
   };
 }
 
-/** Liefert alle Kacheln des begrenzten Korridors rund um den Mittelpunkt. */
+/** Liefert alle Kacheln des begrenzten Korridors rund um einen Mittelpunkt. */
 export function tilesForCorridor(center: LatLng): TileCoord[] {
   const tiles: TileCoord[] = [];
   for (const { zoom, radius } of LEVELS) {
@@ -64,6 +79,56 @@ export function tilesForCorridor(center: LatLng): TileCoord[] {
         const y = cy + dy;
         if (x < 0 || y < 0 || x >= max || y >= max) continue;
         tiles.push({ z: zoom, x, y });
+      }
+    }
+  }
+  return tiles;
+}
+
+/**
+ * Liefert alle Kacheln entlang einer Route (Geometrie als LatLng-Array).
+ * Abtastpunkte werden pro Zoomstufe auf MAX_SAMPLES_PER_ZOOM begrenzt;
+ * Duplikate werden per Set-Key dedupliziert.
+ */
+export function tilesForRoute(points: LatLng[]): TileCoord[] {
+  if (points.length === 0) return [];
+  const seen = new Set<string>();
+  const tiles: TileCoord[] = [];
+
+  for (const { zoom, radius } of ROUTE_LEVELS) {
+    // Gleichmaessige Abtastung der Geometrie-Punkte
+    const step = Math.max(1, Math.ceil(points.length / MAX_SAMPLES_PER_ZOOM));
+    const max = 2 ** zoom;
+
+    for (let i = 0; i < points.length; i += step) {
+      const pt = points[i];
+      const { x: cx, y: cy } = lngLatToTile(pt.lat, pt.lng, zoom);
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x < 0 || y < 0 || x >= max || y >= max) continue;
+          const key = `${zoom}/${x}/${y}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            tiles.push({ z: zoom, x, y });
+          }
+        }
+      }
+    }
+    // Letzten Punkt immer aufnehmen (Ziel der Route)
+    const last = points[points.length - 1];
+    const { x: cx, y: cy } = lngLatToTile(last.lat, last.lng, zoom);
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = cx + dx;
+        const y = cy + dy;
+        if (x < 0 || y < 0 || x >= max || y >= max) continue;
+        const key = `${zoom}/${x}/${y}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          tiles.push({ z: zoom, x, y });
+        }
       }
     }
   }
@@ -87,18 +152,12 @@ export interface TileDownloadResult {
   sizeBytes: number;
 }
 
-/**
- * Laedt die Korridor-Kacheln herunter und legt sie lokal ab.
- * `onProgress(done, total)` meldet den Fortschritt. Web: No-Op.
- */
-export async function downloadTiles(
+/** Laedt eine Liste von Kacheln herunter und legt sie lokal ab. Interne Hilfsfunktion. */
+async function downloadTileList(
   sagaId: string,
-  center: LatLng,
+  tiles: TileCoord[],
   onProgress?: (done: number, total: number) => void
 ): Promise<TileDownloadResult> {
-  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0 };
-
-  const tiles = tilesForCorridor(center);
   const dir = tilesDir(sagaId);
   await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
 
@@ -129,6 +188,35 @@ export async function downloadTiles(
   }
 
   return { tileCount, sizeBytes };
+}
+
+/**
+ * Laedt die Korridor-Kacheln rund um einen Startpunkt herunter.
+ * Fuer die volle Routenabdeckung: downloadTilesAlongRoute verwenden.
+ * Web: No-Op.
+ */
+export async function downloadTiles(
+  sagaId: string,
+  center: LatLng,
+  onProgress?: (done: number, total: number) => void
+): Promise<TileDownloadResult> {
+  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0 };
+  return downloadTileList(sagaId, tilesForCorridor(center), onProgress);
+}
+
+/**
+ * Laedt Kacheln entlang der gesamten Routen-Geometrie herunter.
+ * Deckelt die komplette Strecke ab (nicht nur den Startpunkt).
+ * Web: No-Op.
+ */
+export async function downloadTilesAlongRoute(
+  sagaId: string,
+  points: LatLng[],
+  onProgress?: (done: number, total: number) => void
+): Promise<TileDownloadResult> {
+  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0 };
+  if (points.length === 0) return { tileCount: 0, sizeBytes: 0 };
+  return downloadTileList(sagaId, tilesForRoute(points), onProgress);
 }
 
 /** Liest alle lokal vorhandenen Kacheln als Base64-Data-URIs (Schluessel `z/x/y`). */

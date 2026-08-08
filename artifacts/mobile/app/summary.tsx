@@ -324,6 +324,41 @@ export default function Summary() {
           </View>
         )}
 
+        {lastHike.visitedPois && lastHike.visitedPois.length > 0 && (
+          <View style={{ marginTop: 30 }}>
+            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+              {t.visitedPoisTitle}
+            </Text>
+            {lastHike.visitedPois.map((poi) => (
+              <View
+                key={poi.id}
+                style={[styles.poiCard, { borderColor: colors.glassBorder, ...GLAS_3D }]}
+              >
+                {poi.photoUrl ? (
+                  <Image
+                    source={{ uri: poi.photoUrl }}
+                    style={styles.poiThumb}
+                    resizeMode="cover"
+                  />
+                ) : null}
+                <View style={styles.poiContent}>
+                  <Text style={[styles.poiName, { color: colors.foreground }]}>
+                    {poi.name}
+                  </Text>
+                  {poi.extract ? (
+                    <Text
+                      style={[styles.poiExtract, { color: colors.mutedForeground }]}
+                      numberOfLines={4}
+                    >
+                      {poi.extract}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={{ marginTop: 30 }}>
           <Text style={[styles.blockTitle, { color: colors.foreground }]}>
             {t.photoTitle}
@@ -538,4 +573,16 @@ const styles = StyleSheet.create({
   // Ausserhalb des sichtbaren Bereichs, aber gerendert — Voraussetzung,
   // damit react-native-view-shot die Karte abfotografieren kann.
   shareCardOffscreen: { position: "absolute", left: -1000, top: 0 },
+  poiCard: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 12,
+    alignItems: "flex-start",
+  },
+  poiThumb: { width: 84, height: 84 },
+  poiContent: { flex: 1, padding: 12 },
+  poiName: { fontFamily: fonts.titleBold, fontSize: 15, marginBottom: 4 },
+  poiExtract: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
 });

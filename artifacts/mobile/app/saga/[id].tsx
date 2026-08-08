@@ -283,14 +283,8 @@ export default function SagaDetail() {
             )}
           </View>
 
-          {showKinderHinweis ? (
-            <View style={[styles.kinderBox, { borderColor: colors.glassBorder }]}>
-              <Feather name="info" size={15} color={colors.accent} />
-              <Text style={[styles.kinderText, { color: colors.foreground }]}>
-                {saga.altersstufenHinweis}
-              </Text>
-            </View>
-          ) : null}
+          {/* altersstufenHinweis ist eine interne KI-Regieanweisung für den
+              Narrator — wird NICHT an Nutzer angezeigt. */}
 
           {locked ? (
             <View

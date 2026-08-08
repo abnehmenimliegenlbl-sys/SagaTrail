@@ -63,6 +63,8 @@ export interface EinstellungenStrings {
   delete: string;
   logout: string;
   exportTitle: string;
+  datenquellenLabel: string;
+  datenquellenDisclaimer: string;
   versionFooter: (version: string, build: string) => string;
 }
 
@@ -130,6 +132,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Löschen",
     logout: "Abmelden",
     exportTitle: "Datenexport",
+    datenquellenLabel: "Datenquellen & amtliche Hinweise",
+    datenquellenDisclaimer: "SagaTrail ist eine private App und vertritt keine Behörde. Karten-, Höhen- und Wanderwegdaten: Bundesamt für Landestopografie swisstopo (geo.admin.ch). Lawinenbulletin: WSL-Institut für Schnee- und Lawinenforschung SLF (slf.ch). Routen: SchweizMobil (schweizmobil.ch) und OpenStreetMap. Alle Angaben ohne Gewähr — massgebend sind die offiziellen Quellen.",
     versionFooter: (v, b) => `SagaTrail · Version ${v} · ${b}`,
   },
   gsw: {
@@ -195,6 +199,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Lösche",
     logout: "Abmälde",
     exportTitle: "Date-Export",
+    datenquellenLabel: "Datequelle & amtlichi Hiiwiis",
+    datenquellenDisclaimer: "SagaTrail isch e privati App und vertritt kei Behörde. Charte-, Höche- und Wanderwägdate: Bundesamt für Landestopografie swisstopo (geo.admin.ch). Lawinäbulletin: WSL-Institut SLF (slf.ch). Route: SchweizMobil (schweizmobil.ch) und OpenStreetMap. Alli Aagabe ohni Gwähr — massgäbend sind di offizielle Quelle.",
     versionFooter: (v, b) => `SagaTrail · Version ${v} · ${b}`,
   },
   fr: {
@@ -260,6 +266,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Supprimer",
     logout: "Déconnexion",
     exportTitle: "Exportation de données",
+    datenquellenLabel: "Sources de données & mentions officielles",
+    datenquellenDisclaimer: "SagaTrail est une application privée et ne représente aucune autorité. Cartes, altitudes et chemins de randonnée : Office fédéral de topographie swisstopo (geo.admin.ch). Bulletin d'avalanches : Institut WSL SLF (slf.ch). Itinéraires : SuisseMobile (suissemobile.ch) et OpenStreetMap. Informations sans garantie — les sources officielles font foi.",
     versionFooter: (v, b) => `SagaTrail · Version ${v} · ${b}`,
   },
   it: {
@@ -325,6 +333,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Elimina",
     logout: "Disconnetti",
     exportTitle: "Esportazione dati",
+    datenquellenLabel: "Fonti dei dati & note ufficiali",
+    datenquellenDisclaimer: "SagaTrail è un'app privata e non rappresenta alcuna autorità. Carte, altitudini e sentieri: Ufficio federale di topografia swisstopo (geo.admin.ch). Bollettino valanghe: Istituto WSL SLF (slf.ch). Percorsi: SvizzeraMobile (svizzeramobile.ch) e OpenStreetMap. Dati senza garanzia — fanno fede le fonti ufficiali.",
     versionFooter: (v, b) => `SagaTrail · Versione ${v} · ${b}`,
   },
   en: {
@@ -390,6 +400,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Delete",
     logout: "Log Out",
     exportTitle: "Data Export",
+    datenquellenLabel: "Data sources & official notices",
+    datenquellenDisclaimer: "SagaTrail is a private app and does not represent any government authority. Map, elevation and hiking-trail data: Swiss Federal Office of Topography swisstopo (geo.admin.ch). Avalanche bulletin: WSL Institute SLF (slf.ch). Routes: SwitzerlandMobility (schweizmobil.ch) and OpenStreetMap. No warranty — the official sources are authoritative.",
     versionFooter: (v, b) => `SagaTrail · Version ${v} · ${b}`,
   },
   zh: {
@@ -455,6 +467,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "删除",
     logout: "退出",
     exportTitle: "数据导出",
+    datenquellenLabel: "数据来源与官方说明",
+    datenquellenDisclaimer: "SagaTrail 是一款私人应用，不代表任何政府机构。地图、海拔和徒步路径数据：瑞士联邦地形局 swisstopo（geo.admin.ch）。雪崩公报：WSL 研究所 SLF（slf.ch）。路线：SwitzerlandMobility（schweizmobil.ch）和 OpenStreetMap。所有信息不作担保——以官方来源为准。",
     versionFooter: (v, b) => `SagaTrail · 版本 ${v} · ${b}`,
   },
   es: {
@@ -520,6 +534,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Eliminar",
     logout: "Cerrar sesión",
     exportTitle: "Exportación de datos",
+    datenquellenLabel: "Fuentes de datos y avisos oficiales",
+    datenquellenDisclaimer: "SagaTrail es una aplicación privada y no representa a ninguna autoridad. Mapas, altitudes y senderos: Oficina Federal de Topografía swisstopo (geo.admin.ch). Boletín de aludes: Instituto WSL SLF (slf.ch). Rutas: SwitzerlandMobility (schweizmobil.ch) y OpenStreetMap. Información sin garantía — las fuentes oficiales son las vinculantes.",
     versionFooter: (v, b) => `SagaTrail · Versión ${v} · ${b}`,
   },
   pt: {
@@ -585,6 +601,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Excluir",
     logout: "Sair",
     exportTitle: "Exportação de dados",
+    datenquellenLabel: "Fontes de dados e avisos oficiais",
+    datenquellenDisclaimer: "SagaTrail é uma aplicação privada e não representa nenhuma autoridade. Mapas, altitudes e trilhos: Serviço Federal de Topografia swisstopo (geo.admin.ch). Boletim de avalanche: Instituto WSL SLF (slf.ch). Rotas: SwitzerlandMobility (schweizmobil.ch) e OpenStreetMap. Informações sem garantia — as fontes oficiais prevalecem.",
     versionFooter: (v, b) => `SagaTrail · Versão ${v} · ${b}`,
   },
   ru: {
@@ -650,6 +668,8 @@ const EINSTELLUNGEN_STRINGS: StringsDict<EinstellungenStrings> = {
     delete: "Удалить",
     logout: "Выйти",
     exportTitle: "Экспорт данных",
+    datenquellenLabel: "Источники данных и официальные примечания",
+    datenquellenDisclaimer: "SagaTrail — частное приложение, не представляющее государственные органы. Карты, высоты и пешеходные маршруты: Федеральное ведомство топографии swisstopo (geo.admin.ch). Лавинный бюллетень: институт WSL SLF (slf.ch). Маршруты: SwitzerlandMobility (schweizmobil.ch) и OpenStreetMap. Данные без гарантии — официальные источники имеют приоритет.",
     versionFooter: (v, b) => `SagaTrail · Версия ${v} · ${b}`,
   },
 };

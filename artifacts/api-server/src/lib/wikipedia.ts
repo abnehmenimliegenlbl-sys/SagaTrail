@@ -247,21 +247,40 @@ export async function fetchNearbyCommonsImage(
   lng: number,
   radiusM = 300,
   widthPx = 600,
+  nameHint?: string | null,
 ): Promise<string | null> {
   const url =
     `https://commons.wikimedia.org/w/api.php?action=query` +
     `&generator=geosearch&ggscoord=${lat}%7C${lng}&ggsradius=${radiusM}` +
-    `&ggsnamespace=6&ggslimit=3` +
+    `&ggsnamespace=6&ggslimit=10` +
     `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
     `&format=json&origin=*`;
   const json = await fetchJson<{
-    query?: { pages?: Record<string, { imageinfo?: { thumburl?: string; url?: string }[] }> };
+    query?: { pages?: Record<string, { title?: string; imageinfo?: { thumburl?: string; url?: string }[] }> };
   }>(url);
   const pages = Object.values(json?.query?.pages ?? {});
+  // Relevanz-Filter: ist ein nameHint gegeben, nur Dateien akzeptieren, deren
+  // Dateiname mindestens ein Namens-/Typ-Keyword enthaelt. Ein zufaelliges
+  // Nachbarschaftsfoto (Lok, Bahnhof, Strassenschild …) ist schlechter als
+  // gar kein Bild.
+  const norm = (s: string) =>
+    s.toLowerCase()
+      .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]/g, "");
+  const hintTokens = (nameHint ?? "")
+    .toLowerCase()
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .split(/[\s\-_\.\/\\,;:()\[\]]+/)
+    .filter((t) => t.length >= 3);
   for (const page of pages) {
     const info = page.imageinfo?.[0];
     const thumb = info?.thumburl ?? info?.url;
-    if (thumb) return thumb;
+    if (!thumb) continue;
+    if (hintTokens.length > 0) {
+      const fn = norm((page.title ?? "").replace(/^File:/i, ""));
+      if (!hintTokens.some((t) => fn.includes(t))) continue;
+    }
+    return thumb;
   }
   return null;
 }

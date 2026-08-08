@@ -13,6 +13,11 @@ export interface RouteStrings {
   offlineStatusInactive: string;
   loadingMap: (done: number, total: number) => string;
   loadingSaga: string;
+  loadingAudio: (done: number, total: number) => string;
+  loadingPois: string;
+  downloadInfoItems: string[];
+  downloadInfoTime: string;
+  downloadPhaseLabels: [string, string, string, string];
   removeDownload: string;
   download: string;
   downloadFailed: string;
@@ -162,6 +167,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Lädt die Sage und den Kartenausschnitt herunter, damit die Tour auch ohne Empfang funktioniert.",
     loadingMap: (done, total) => `Karte wird gesichert … ${done}/${total}`,
     loadingSaga: "Sage wird geladen …",
+    loadingAudio: (done, total) => `Audio wird gespeichert … ${done}/${total}`,
+    loadingPois: "Orte werden gesichert …",
+    downloadInfoItems: [
+      "Sagentext & Geschichte",
+      "Sprach-Erzählung (Audio)",
+      "Karte & Wanderwege",
+      "Sehenswürdigkeiten & Orte",
+    ],
+    downloadInfoTime:
+      "Je nach Route kann der Download einige Minuten dauern.",
+    downloadPhaseLabels: ["Sage", "Audio", "Orte", "Karte"],
     removeDownload: "Download entfernen",
     download: "Herunterladen",
     downloadFailed: "Download fehlgeschlagen",
@@ -309,6 +325,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Ladet d'Sag und de Kartenuusschnitt abe, damit d'Tour au ohni Empfang funktioniert.",
     loadingMap: (done, total) => `Karte wird gsicheret … ${done}/${total}`,
     loadingSaga: "Sag wird glade …",
+    loadingAudio: (done, total) => `Audio wird gspeicheret … ${done}/${total}`,
+    loadingPois: "Ort werde gsicheret …",
+    downloadInfoItems: [
+      "Sagetexcht & G'schicht",
+      "Sprach-Verzählig (Audio)",
+      "Karte & Wanderwäg",
+      "Sehenswürdigkeite & Ort",
+    ],
+    downloadInfoTime:
+      "Je nach Wäg cha s Abelade einigi Minute brüche.",
+    downloadPhaseLabels: ["Sag", "Audio", "Ort", "Charte"],
     removeDownload: "Download entferne",
     download: "Abelade",
     downloadFailed: "Download fählgschlage",
@@ -456,6 +483,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Downloads the legend and map section so the tour works even without reception.",
     loadingMap: (done, total) => `Saving map … ${done}/${total}`,
     loadingSaga: "Loading legend …",
+    loadingAudio: (done, total) => `Saving audio … ${done}/${total}`,
+    loadingPois: "Saving points of interest …",
+    downloadInfoItems: [
+      "Legend text & story",
+      "Voice narration (audio)",
+      "Map & hiking trails",
+      "Points of interest & places",
+    ],
+    downloadInfoTime:
+      "The download may take a few minutes depending on the route.",
+    downloadPhaseLabels: ["Legend", "Audio", "Places", "Map"],
     removeDownload: "Remove download",
     download: "Download",
     downloadFailed: "Download failed",
@@ -603,6 +641,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Télécharge la légende et la section de carte pour que le tour fonctionne même sans réseau.",
     loadingMap: (done, total) => `Enregistrement de la carte … ${done}/${total}`,
     loadingSaga: "Chargement de la légende …",
+    loadingAudio: (done, total) => `Enregistrement audio … ${done}/${total}`,
+    loadingPois: "Enregistrement des lieux …",
+    downloadInfoItems: [
+      "Texte de légende & histoire",
+      "Narration vocale (audio)",
+      "Carte & sentiers de randonnée",
+      "Sites & lieux d'intérêt",
+    ],
+    downloadInfoTime:
+      "Le téléchargement peut prendre quelques minutes selon le parcours.",
+    downloadPhaseLabels: ["Légende", "Audio", "Lieux", "Carte"],
     removeDownload: "Supprimer le téléchargement",
     download: "Télécharger",
     downloadFailed: "Échec du téléchargement",
@@ -750,6 +799,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Scarica la leggenda e la sezione della mappa in modo che il tour funzioni anche senza ricezione.",
     loadingMap: (done, total) => `Salvataggio mappa … ${done}/${total}`,
     loadingSaga: "Caricamento leggenda …",
+    loadingAudio: (done, total) => `Salvataggio audio … ${done}/${total}`,
+    loadingPois: "Salvataggio luoghi …",
+    downloadInfoItems: [
+      "Testo della leggenda & storia",
+      "Narrazione vocale (audio)",
+      "Mappa & sentieri escursionistici",
+      "Punti di interesse & luoghi",
+    ],
+    downloadInfoTime:
+      "Il download può richiedere alcuni minuti a seconda del percorso.",
+    downloadPhaseLabels: ["Leggenda", "Audio", "Luoghi", "Mappa"],
     removeDownload: "Rimuovi download",
     download: "Scarica",
     downloadFailed: "Download fallito",
@@ -897,6 +957,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Descarga la leyenda y la sección del mapa para que el recorrido funcione incluso sin recepción.",
     loadingMap: (done, total) => `Guardando mapa … ${done}/${total}`,
     loadingSaga: "Cargando leyenda …",
+    loadingAudio: (done, total) => `Guardando audio … ${done}/${total}`,
+    loadingPois: "Guardando lugares …",
+    downloadInfoItems: [
+      "Texto de la leyenda & historia",
+      "Narración de voz (audio)",
+      "Mapa & senderos de montaña",
+      "Puntos de interés & lugares",
+    ],
+    downloadInfoTime:
+      "La descarga puede tardar algunos minutos según la ruta.",
+    downloadPhaseLabels: ["Leyenda", "Audio", "Lugares", "Mapa"],
     removeDownload: "Eliminar descarga",
     download: "Descargar",
     downloadFailed: "Descarga fallida",
@@ -1044,6 +1115,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Baixa a lenda e a seção do mapa para que o passeio funcione mesmo sem recepção.",
     loadingMap: (done, total) => `Salvando mapa … ${done}/${total}`,
     loadingSaga: "Carregando lenda …",
+    loadingAudio: (done, total) => `Salvando áudio … ${done}/${total}`,
+    loadingPois: "Salvando locais …",
+    downloadInfoItems: [
+      "Texto da lenda & história",
+      "Narração de voz (áudio)",
+      "Mapa & trilhas de caminhada",
+      "Pontos de interesse & locais",
+    ],
+    downloadInfoTime:
+      "O download pode levar alguns minutos dependendo da rota.",
+    downloadPhaseLabels: ["Lenda", "Áudio", "Locais", "Mapa"],
     removeDownload: "Remover download",
     download: "Baixar",
     downloadFailed: "Download falhou",
@@ -1190,6 +1272,16 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     offlineStatusInactive: "下载传说和地图区域，以便在无信号时也能正常游览。",
     loadingMap: (done, total) => `正在保存地图 … ${done}/${total}`,
     loadingSaga: "正在加载传说 …",
+    loadingAudio: (done, total) => `正在保存音频 … ${done}/${total}`,
+    loadingPois: "正在保存景点 …",
+    downloadInfoItems: [
+      "传说文本与故事",
+      "语音朗读（音频）",
+      "地图与徒步路线",
+      "景点与地点",
+    ],
+    downloadInfoTime: "根据路线不同，下载可能需要几分钟。",
+    downloadPhaseLabels: ["传说", "音频", "地点", "地图"],
     removeDownload: "移除下载",
     download: "下载",
     downloadFailed: "下载失败",
@@ -1331,6 +1423,17 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
       "Загружает легенду и участок карты, чтобы поход работал даже без сети.",
     loadingMap: (done, total) => `Сохранение карты … ${done}/${total}`,
     loadingSaga: "Загрузка легенды …",
+    loadingAudio: (done, total) => `Сохранение аудио … ${done}/${total}`,
+    loadingPois: "Сохранение мест …",
+    downloadInfoItems: [
+      "Текст легенды и история",
+      "Голосовое повествование (аудио)",
+      "Карта и туристические маршруты",
+      "Достопримечательности и места",
+    ],
+    downloadInfoTime:
+      "Загрузка может занять несколько минут в зависимости от маршрута.",
+    downloadPhaseLabels: ["Легенда", "Аудио", "Места", "Карта"],
     removeDownload: "Удалить загрузку",
     download: "Скачать",
     downloadFailed: "Загрузка не удалась",

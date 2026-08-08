@@ -1,3 +1,4 @@
+- [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
 - [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
 - [Canton geocoding robustness](sagatrail-canton-geocoding.md) — Nominatim can return canton via ISO3166-2-lvl4 ("CH-BL") even when address.state is absent/unparseable; always check ISO code first, then state, then county; + midpoint fallback in buildRouteFromPoints when start canton is null.
 - [Metro cache after orval codegen clean](metro-orval-cache.md) — orval clean:true deletes+recreates generated/*.ts; Metro file watcher sees deletion but misses recreation; always restart Expo workflow after codegen.
@@ -83,4 +84,5 @@
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
 - [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
 - [SagaTrail Referral System](sagatrail-referral-system.md) — profiles.referral_code + pending_pack_rewards; referrals table; reward triggers on first premium purchase in POST /me/premium/sync; claim via /referral-reward screen.
+- [Anthropic image url-source](anthropic-image-url-source.md) — Vision mit source type "url" scheitert an Wikimedia-Bildern (400); serverseitig laden und als base64 schicken, fail-open.
 - [SagaTrail Leads in Postgres](sagatrail-leads-postgres.md) — partner_leads Tabelle ist single source of truth; WP MySQL nicht mehr Quelle; Import via POST /admin/leads/import-wp; OSM-Suche speichert direkt in PG.

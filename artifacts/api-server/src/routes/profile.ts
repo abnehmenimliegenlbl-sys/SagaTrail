@@ -13,6 +13,7 @@ import {
   SyncMyProgressResponse,
 } from "@workspace/api-zod";
 
+import { purgeUserData } from "./accountDeletion";
 import { istPremiumAktiv } from "../lib/premiumStatus";
 import { hatAktivesPremiumEntitlement } from "../lib/revenuecatSync";
 import { claimKantonspack, KANTON_SLUGS } from "../lib/kantonspackClaim";
@@ -658,13 +659,20 @@ router.post("/me/pack-reward/claim", async (req, res): Promise<void> => {
 router.delete("/me", async (req, res): Promise<void> => {
   const userId = requireUserId(req, res);
   if (!userId) return;
-  await db.delete(profilesTable).where(eq(profilesTable.id, userId));
   try {
-    await clerkClient.users.deleteUser(userId);
+    // Clerk zuerst; nur "nicht gefunden" gilt als idempotent-ok.
+    try {
+      await clerkClient.users.deleteUser(userId);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status !== 404) throw err;
+    }
+    await purgeUserData(userId, req.log);
+    res.json({ ok: true });
   } catch (err) {
-    req.log.warn({ err }, "[deleteAccount] Clerk-Benutzer konnte nicht gelöscht werden");
+    req.log.error({ err }, "[deleteAccount] Löschung fehlgeschlagen");
+    res.status(500).json({ error: "Löschung fehlgeschlagen" });
   }
-  res.json({ ok: true });
 });
 
 export default router;

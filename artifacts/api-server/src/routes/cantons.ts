@@ -75,6 +75,86 @@ function parseGeometry(raw: unknown): number[][] | undefined {
   return undefined;
 }
 
+/** Formatiert km deutsch: "20,3" bzw. "19" ohne unnötige Dezimalstelle. */
+function fmtKm(km: number): string {
+  const gerundet = Math.round(km * 10) / 10;
+  return Number.isInteger(gerundet) ? String(gerundet) : String(gerundet).replace(".", ",");
+}
+
+/** Formatiert Minuten als Stundenangabe: 361 → "6", 390 → "6½". */
+function fmtStunden(minuten: number): string {
+  const halbe = Math.round(minuten / 30);
+  const h = Math.floor(halbe / 2);
+  return halbe % 2 === 1 ? `${h}½` : String(h);
+}
+
+/** Parst "19", "20,3", "20.3" zu einer Zahl. */
+function parseZahl(s: string): number {
+  return Number(s.replace(",", "."));
+}
+
+/**
+ * Gleicht Zahlenangaben im kuratierten Beschreibungstext an die amtlichen
+ * Werte an (Distanz, Dauer, Höhenmeter). Ersetzt NUR Werte, die nahe am
+ * amtlichen Gesamtwert liegen (Toleranz) — Zwischenangaben wie "nach 5 km
+ * erreicht man…" bleiben unangetastet.
+ */
+function harmonisiereBeschreibung(
+  text: string,
+  distanzKm: number | null,
+  minuten: number | null,
+  aufstiegM: number | null,
+): string {
+  let out = text;
+  if (distanzKm != null && distanzKm > 0) {
+    out = out.replace(
+      /(\d+(?:[.,]\d+)?)(\s*(?:km\b|Kilometer))/g,
+      (ganz, zahl: string, einheit: string) => {
+        const wert = parseZahl(zahl);
+        return wert >= distanzKm * 0.7 && wert <= distanzKm * 1.3
+          ? `${fmtKm(distanzKm)}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  if (minuten != null && minuten > 0) {
+    const stundenAmtlich = minuten / 60;
+    out = out.replace(
+      /(\d+(?:[.,]\d+)?)(?:\s*(?:bis|[–-])\s*(\d+(?:[.,]\d+)?))?(\s*(?:Stunden\b|Std\.?))/g,
+      (ganz, von: string, bis: string | undefined, einheit: string) => {
+        if (bis) {
+          // Zeitspanne ("4 bis 5 Stunden"): bewusste Unschärfe erhalten.
+          // Liegt der amtliche Wert innerhalb der Spanne → unangetastet lassen;
+          // nur wenn er klar draussen liegt → durch Punktwert ersetzen.
+          const lo = parseZahl(von);
+          const hi = parseZahl(bis);
+          if (stundenAmtlich >= lo && stundenAmtlich <= hi) return ganz;
+          const mitte = (lo + hi) / 2;
+          return mitte >= stundenAmtlich * 0.6 && mitte <= stundenAmtlich * 1.4
+            ? `${fmtStunden(minuten)}${einheit}`
+            : ganz;
+        }
+        const wert = parseZahl(von);
+        return wert >= stundenAmtlich * 0.6 && wert <= stundenAmtlich * 1.4
+          ? `${fmtStunden(minuten)}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  if (aufstiegM != null && aufstiegM > 0) {
+    out = out.replace(
+      /(\d+)(\s*(?:Höhenmeter|Hm\b|hm\b))/g,
+      (ganz, zahl: string, einheit: string) => {
+        const wert = Number(zahl);
+        return wert >= aufstiegM * 0.6 && wert <= aufstiegM * 1.4
+          ? `${aufstiegM}${einheit}`
+          : ganz;
+      },
+    );
+  }
+  return out;
+}
+
 function toRoute(row: ExternalRouteRow) {
   return {
     id: row.id,
@@ -94,7 +174,14 @@ function toRoute(row: ExternalRouteRow) {
     featured: row.featured,
     photoUrl: row.photoUrl ?? null,
     photoAttribution: row.photoAttribution ?? null,
-    description: row.description ?? null,
+    description: row.description
+      ? harmonisiereBeschreibung(
+          row.description,
+          row.distanceTagKm ?? row.distanceKm,
+          row.minutes,
+          row.ascentM,
+        )
+      : null,
     descriptionSource: row.descriptionSource ?? null,
   };
 }

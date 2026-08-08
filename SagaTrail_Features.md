@@ -1,5 +1,7 @@
 # SagaTrail – Feature-Übersicht
 
+**Version 1.0.3 · Stand: 6. August 2026**
+
 ---
 
 ## 1. Der Sagen-Teil
@@ -12,7 +14,7 @@ SagaTrail verbindet echte Schweizer Wanderwege mit authentischen, historisch bel
 - Jede Sage ist geografisch verankert: Die Route führt zum tatsächlichen Ort des Geschehens
 
 ### Mehrsprachige Audio-Narration
-- Professionell eingelesene oder hochwertige KI-Stimmen (ElevenLabs) in **8 Sprachen**: Deutsch, Schweizerdeutsch (GSW), Englisch, Französisch, Italienisch, Spanisch, Portugiesisch, Chinesisch
+- Professionell eingelesene oder hochwertige KI-Stimmen (ElevenLabs) in **9 Sprachen**: Deutsch, Schweizerdeutsch (GSW), Englisch, Französisch, Italienisch, Spanisch, Portugiesisch, Chinesisch, Russisch
 - GPS-getriggerte Narration: Kapitel der Geschichte werden automatisch abgespielt, wenn der Wanderer den entsprechenden Wegpunkt erreicht
 - Hintergrundwiedergabe auch bei gesperrtem Bildschirm (native Audio-Session)
 - Automatischer Fallback auf OpenAI-Stimme (gpt-audio) wenn ElevenLabs-Kontingent erschöpft
@@ -59,11 +61,14 @@ SagaTrail ist nicht nur eine Storytelling-App — sie bietet alle Kernfunktionen
 - **Offline-Betrieb**: Gespeicherte Routen inklusive Kacheln und Audio funktionieren ohne Mobilnetz
 
 ### Offline-Modus
-- Drei-Stufen-Offline-Modell:
-  1. **Sagen** (Text, Audio) — immer offline verfügbar nach Download
-  2. **Routendaten** — Geometrie und Metadaten offline speicherbar
-  3. **Kartenkacheln** — stufenweise Tile-Downloads für die Wanderregion
-- Download-Fortschrittsanzeige in Echtzeit
+- Vollständig offline-fähig nach einmaligem Download — kein Mobilnetz nötig auf dem Weg
+- **Was wird gespeichert:**
+  1. **Sagentext & Geschichte** — vollständig inkl. aller Kapitel
+  2. **Sprach-Erzählung (Audio)** — alle Kapitel als MP3 auf dem Gerät
+  3. **Karte & Wanderwege** — Kartenkacheln entlang der gesamten Route (Zoom 13–15)
+  4. **Sehenswürdigkeiten & Orte** — POI-Marker, Wikipedia-Auszüge und KI-Story für jeden Ort auf der Route
+- **Download-Fortschrittsanzeige** in Echtzeit, phasenweise (Sage → Audio → Orte → Karte)
+- **Vorschau vor dem Download**: Die App erklärt übersichtlich, was geladen wird und dass der Vorgang einige Minuten dauern kann
 
 ### Wetter & Lawinen
 - **Live-Wetterbericht** für den Routenbereich
@@ -113,14 +118,15 @@ SagaTrail ist nicht nur eine Storytelling-App — sie bietet alle Kernfunktionen
 - **Parkplätze am Start**: Nächste Parkplätze am Routenanfang direkt auf der Karte
 
 #### Offline-Vorbereitung
-- **Offline sichern**: Route, Sage, Audio und Kartenkacheln für den Bereich herunterladen — drei Stufen (Sage, Routendaten, Kartenkacheln)
-- **Download-Fortschritt**: Echtzeit-Fortschrittsbalken während des Downloads
+- **Offline sichern**: Sagentext, Audio-Erzählung, Karte und alle Sehenswürdigkeiten (inkl. Wikipedia-Texte und KI-Story) herunterladen — vollständig offline-fähig für die gesamte Wanderung
+- **Download-Info**: Übersichtliche Erklärung vor dem Download, was alles gesichert wird und dass der Vorgang einige Minuten dauern kann
+- **Download-Fortschritt**: Echtzeit-Fortschrittsbalken mit Phasenangabe (Sage → Audio → Orte → Karte)
 - **Offline-Status**: Anzeige der heruntergeladenen Dateigrösse und Bestätigung der Offline-Verfügbarkeit
 
 #### Personalisierung vor dem Start
 - **Erzählstil wählen (Archetyp)**: Stimmung der Geschichte einstellen — düster, romantisch, abenteuerlich oder familienfreundlich
 - **Altersstufe wählen**: Inhalte für Kinder, Jugendliche oder Erwachsene
-- **Sprache wählen**: App-Erfahrung und Audio-Narration in 8 Sprachen (DE, GSW, EN, FR, IT, ES, PT, ZH)
+- **Sprache wählen**: App-Erfahrung und Audio-Narration in 9 Sprachen (DE, GSW, EN, FR, IT, ES, PT, ZH, RU)
 - **Stimme wählen**: Vorschau und Auswahl der Erzählstimme (ElevenLabs-Stimmen mit Fallback auf OpenAI)
 - **Gruppen-Wanderung eröffnen** (Premium): Eine Echtzeit-Gruppensession starten und Link an Mitglieder senden
 
@@ -246,7 +252,7 @@ SagaTrail bietet lokalen Betrieben entlang der Wanderrouten eine direkte Präsen
 | **Sprache** | Vollständige App-Erfahrung in 8 Sprachen — ideal für Touristen und internationale Nutzer |
 | **Navigation** | Professionelle Kartengrundlage (swisstopo) kombiniert mit GPS-Tracking, Abbiegehinweisen und Offroute-Erkennung |
 | **Sicherheit** | SOS-Funktion mit Rega-Direktwahl und automatischer GPS-Koordinaten-SMS — kein Umweg über andere Apps |
-| **Offline** | Kein Mobilnetz nötig: Routen, Geschichten, Audio und Karten vollständig downloadbar |
+| **Offline** | Kein Mobilnetz nötig: Routen, Geschichten, Audio, Karten und alle Sehenswürdigkeiten (inkl. Wikipedia & KI-Story) vollständig downloadbar |
 | **ÖV** | Direkte SBB-Integration: Kein Suchen auf sbb.ch — Abfahrtszeiten vom eigenen Standort und Rückreise-Link sind fertig vorausgefüllt |
 | **Planung** | Höhenprofil, SAC-Schwierigkeit, Wegzustand-Meldungen und Wetter auf einen Blick vor Tourstart |
 | **Personalisierung** | Erzählstil, Altersstufe, Sprache, Stimme und Archetyp frei wählbar — die Geschichte passt sich dem Wanderer an |
