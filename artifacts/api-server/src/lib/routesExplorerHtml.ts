@@ -223,24 +223,110 @@ a{color:var(--red)!important;text-decoration:none}
   gap:18px;
 }
 
-/* ── ROUTE CARD ── */
+/* ── ROUTE CARD (Wegweiser-Design) ── */
 .route-card{
-  background:#fff;border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;
+  position:relative;border-radius:16px;overflow:hidden;
+  height:210px;background:#2a2a2a;
+  cursor:pointer;
   transition:transform .15s,box-shadow .15s;
+  display:flex;flex-direction:column;justify-content:flex-end;
 }
 .route-card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(0,0,0,.1);
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(0,0,0,.22);
 }
-.route-img{width:100%;height:176px;object-fit:cover;display:block}
-.route-img-ph{
-  width:100%;height:176px;
-  background:linear-gradient(135deg,#ebe7df 0%,#f5f3ef 100%);
+/* Vollbild-Foto */
+.rc-img{
+  position:absolute;inset:0;
+  width:100%;height:100%;object-fit:cover;
+  display:block;
+}
+.rc-ph{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,#3a3530 0%,#1e1b18 100%);
   display:flex;align-items:center;justify-content:center;
 }
-.route-body{padding:14px 16px 16px}
-.route-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+/* Dunkles Gradient über das Foto */
+.rc-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,0) 15%,
+    rgba(0,0,0,.45) 50%,
+    rgba(0,0,0,.82) 75%,
+    rgba(0,0,0,.92) 100%);
+}
+/* Inhalt-Wrapper (über Gradient) */
+.rc-content{
+  position:relative;z-index:2;
+  padding:10px 13px 7px;
+}
+/* ── Wegweiser ── */
+.ww{
+  display:inline-flex;align-items:stretch;
+  height:50px;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));
+  margin-bottom:8px;
+}
+.ww-label{
+  background:#2d5c27;
+  padding:4px 7px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  font-size:6.5px !important;font-weight:800 !important;
+  text-transform:uppercase;letter-spacing:.05em;
+  color:#fff !important;line-height:1.35;
+  min-width:42px;border-radius:3px 0 0 3px;
+}
+.ww-flag{font-size:13px;margin-bottom:2px;line-height:1}
+.ww-arrow{
+  /* clip-path erzeugt die Pfeilspitze rechts */
+  clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%);
+  padding:6px 22px 6px 11px;
+  display:flex;align-items:center;justify-content:center;
+  min-width:54px;
+  /* Farbe = Schwierigkeit; Default gelb (T1) */
+  background:#4a9c4a;
+  transition:background .2s;
+}
+.ww-arrow.sac-t1{background:#4a9c4a}
+.ww-arrow.sac-t2{background:#8ab22a}
+.ww-arrow.sac-t3{background:#d4a000}
+.ww-arrow.sac-t4{background:#d46400}
+.ww-arrow.sac-t5{background:#c42828}
+.ww-arrow.sac-t6{background:#7a1080}
+.ww-arrow.sac-none{background:#888}
+.ww-num{
+  font-size:1.45rem !important;font-weight:900 !important;
+  color:#fff !important;line-height:1;letter-spacing:-.02em;
+}
+/* Routenname + Etappe/Von-Bis */
+.rc-name{
+  font-size:15px !important;font-weight:800 !important;
+  color:#fff !important;line-height:1.25 !important;
+  margin-bottom:2px !important;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+.rc-sub{
+  font-size:11.5px !important;color:rgba(255,255,255,.8) !important;
+  line-height:1.3 !important;margin-bottom:0 !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+/* Stats-Leiste unten (rot) */
+.rc-stats{
+  position:relative;z-index:2;
+  background:rgba(180,0,0,.88);
+  padding:5px 13px;
+  font-size:11px !important;font-weight:700 !important;
+  color:#fff !important;letter-spacing:.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* Fotocredit */
+.rc-attr{
+  position:absolute;top:7px;right:9px;z-index:3;
+  font-size:9px !important;color:rgba(255,255,255,.6) !important;
+  pointer-events:none;
+}
+/* ── BADGE (für Drawer) ── */
 .badge{
   display:inline-flex;align-items:center;
   padding:3px 9px;border-radius:20px;
@@ -252,15 +338,6 @@ a{color:var(--red)!important;text-decoration:none}
 .b-blue{background:#e8f0fc;color:#1a5fa8!important}
 .b-gray{background:#f0eeeb;color:#555!important}
 .b-star{background:#fff8e6;color:#b8935a!important;border:1px solid #e8d5a0}
-.route-name{
-  font-size:16px !important;font-weight:700 !important;
-  color:#1a1a1a !important;line-height:1.3 !important;margin-bottom:8px !important;
-}
-.route-meta{
-  display:flex;gap:12px;flex-wrap:wrap;
-  font-size:13px !important;color:#555 !important;
-}
-.route-meta span{color:#555 !important;display:flex;align-items:center;gap:3px}
 
 /* ── ROUTE DRAWER ── */
 .drawer-overlay{
@@ -668,13 +745,79 @@ async function doSearch(){
   }
 }
 
-// ── CARD RENDERING ───────────────────────────────────────────
-const PH_SVG_INNER = \`<svg width="72" height="54" viewBox="0 0 72 54" fill="none">
-  <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#ddd"/>
-  <polygon points="20,18 28,32 12,32" fill="#bbb"/>
-  <polygon points="52,14 60,28 44,28" fill="#bbb"/>
-</svg>\`;
-const PH_SVG = \`<div class="route-img-ph">\${PH_SVG_INNER}</div>\`;
+// ── WEGWEISER HELPERS ────────────────────────────────────────
+// Parst den Routennamen in Teile:
+//   displayName  = Routenname ohne Nummer-Prefix und ohne Von/Bis
+//   etappe       = "Etappe X" (falls vorhanden)
+//   vonBis       = "Von – Bis" oder leer
+// Verwendet r.ref / r.network direkt (aus API), parsed Name nur als Fallback.
+function parseRoute(name, ref, network){
+  let num = ref ? String(ref) : '';
+  let type = '';
+  if(network){
+    if(network==='nwn'||network==='iwn') type='national';
+    else if(network==='rwn') type='regional';
+    else if(network==='lwn') type='lokal';
+    else type='kantonal';
+  }
+
+  // Führende Nummer aus Name entfernen → rest
+  let rest = name;
+  // K-Route: "K4 AG Name…"
+  let m = /^K\d+\s+[A-Z]{2}\s+(.+)$/.exec(name);
+  if(m){ rest = m[1]; if(!num) num = (name.match(/^K(\d+)/)||[])[1]||''; if(!type) type='kantonal'; }
+  else {
+    // Nummerierte Route: "3 Name…"
+    m = /^(\d+)\s+(.+)$/.exec(name);
+    if(m){ rest = m[2]; if(!num) { const n=+m[1]; num=String(n); if(!type) type=n<=9?'national':n<=99?'regional':'lokal'; } }
+  }
+
+  // Etappe: "Name Etappe X Von - Bis"
+  m = /^(.*?)\s+Etappe\s+(\d+)\s+(.+)$/i.exec(rest);
+  if(m){
+    const fromTo = m[3].trim();
+    // fromTo = "Trogen - Appenzell" oder "Trogen – Appenzell"
+    return { num, type, displayName: m[1].trim(), etappe:'Etappe '+m[2], vonBis: fromTo };
+  }
+
+  // Kein Etappe → Von/Bis nach erstem " - " oder " – " mit Leerzeichen
+  m = /^(.+?)\s{1,2}[-–]\s{1,2}(.+)$/.exec(rest);
+  if(m){
+    const displayName = m[1].trim();
+    const vonBis      = displayName + ' – ' + m[2].trim();
+    return { num, type, displayName, etappe:'', vonBis };
+  }
+
+  return { num, type, displayName: rest, etappe:'', vonBis:'' };
+}
+
+function sacArrowClass(sac){
+  if(!sac||sac==='unknown') return 'sac-none';
+  const m=/T\s*([1-6])/i.exec(sac); if(!m) return 'sac-none';
+  return 'sac-t'+m[1];
+}
+function typLabel(type){
+  if(type==='national')  return 'national';
+  if(type==='regional')  return 'regional';
+  if(type==='lokal')     return 'lokal';
+  if(type==='kantonal')  return 'kantonal';
+  return '';
+}
+
+function wegweiserHtml(num, type, sac){
+  if(!num) return '';
+  const lbl = typLabel(type);
+  return \`<div class="ww">
+    <div class="ww-label">
+      <div class="ww-flag">&#127464;&#127469;</div>
+      <div>Wanderland</div>
+      \${lbl ? \`<div>\${lbl}</div>\` : ''}
+    </div>
+    <div class="ww-arrow \${sacArrowClass(sac)}">
+      <span class="ww-num">\${num}</span>
+    </div>
+  </div>\`;
+}
 
 function sacBadge(sac){
   if(!sac||sac==='unknown') return '';
@@ -693,47 +836,70 @@ function fmtTime(min){
   const h=Math.floor(min/60), m=min%60;
   return h>0 ? h+':'+(m<10?'0':'')+m+' h' : m+' min';
 }
+function seasonLabel(s){
+  if(!s) return '';
+  if(s==='ganzjaehrig') return 'Ganzjährig';
+  if(s==='sommer')      return 'Nur Sommer';
+  if(s==='alpin')       return 'Alpin';
+  if(s==='hochalpin')   return 'Hochalpin';
+  return s;
+}
+
 // route store: id → full route object (on window so onclick attrs can reach it)
 window.__routeStore = {};
 
+const PH_SVG_INNER = \`<svg width="48" height="36" viewBox="0 0 72 54" fill="none">
+  <polygon points="0,50 20,18 36,38 52,14 72,50" fill="#444"/>
+  <polygon points="20,18 28,32 12,32" fill="#555"/>
+  <polygon points="52,14 60,28 44,28" fill="#555"/>
+</svg>\`;
+
 function cardHtml(r){
   window.__routeStore[r.id] = r;
-  const km   = r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
-  const hm   = r.ascentM    ? r.ascentM+' hm' : '';
-  const zeit = fmtTime(r.minutes);
   const rid  = r.id.replace(/['"]/g,'');
+  const p    = parseRoute(r.name, r.ref, r.network);
 
-  // 1. DB-URL vorhanden → direkt anzeigen (kein extra Request)
-  // 2. Nicht in DB → lazy via /api/routes/photo (schreibt Ergebnis in DB)
-  const img = r.photoUrl
-    ? \`<img class="route-img" src="\${r.photoUrl}" alt="\${r.name}" loading="lazy"
-           onerror="this.outerHTML=window.__sagaPH;this.onerror=null">\`
-    : \`<div class="route-img-lazy route-img-ph"
+  const km   = r.distanceTagKm
+    ? (Math.round(r.distanceTagKm*10)/10)+' km'
+    : r.distanceKm ? (Math.round(r.distanceKm*10)/10)+' km' : '';
+  const hm   = r.ascentM ? r.ascentM+' hm' : '';
+  const zeit = fmtTime(r.minutes);
+  const seas = seasonLabel(r.season);
+
+  const statsArr = [r.sac&&r.sac!=='unknown'?r.sac.replace(/\s+/g,''):'', km, hm, zeit, seas].filter(Boolean);
+  const statsLine = statsArr.join(' · ');
+
+  // Subline: Etappe + vonBis
+  const subParts = [p.etappe, p.vonBis].filter(Boolean);
+  const subLine  = subParts.join(' · ');
+
+  // Foto (DB-URL sofort, sonst lazy)
+  const imgEl = r.photoUrl
+    ? \`<img class="rc-img" src="\${r.photoUrl}" alt="\${esc(p.displayName)}" loading="lazy"
+           onerror="this.style.display='none';this.onerror=null">\`
+    : \`<div class="rc-img route-img-lazy rc-ph"
            data-lat="\${r.coordinates?.lat}" data-lng="\${r.coordinates?.lng}"
            data-id="\${rid}" data-name="\${encodeURIComponent(r.name)}">\${PH_SVG_INNER}</div>\`;
 
+  const attr = r.photoAttribution
+    ? \`<div class="rc-attr">\${r.photoAttribution.replace(/<[^>]+>/g,'').substring(0,60)}</div>\`
+    : '';
+
   return \`<div class="route-card" onclick="openDrawer(window.__routeStore['\${rid}'])" role="button" tabindex="0"
     onkeydown="if(event.key==='Enter')openDrawer(window.__routeStore['\${rid}'])">
-    \${img}
-    <div class="route-body">
-      <div class="route-badges">
-        \${sacBadge(r.sac)}\${seasonBadge(r.season)}
-        \${r.featured?'<span class="badge b-star">★ Featured</span>':''}
-      </div>
-      <div class="route-name">\${r.name}</div>
-      <div class="route-meta">
-        \${km  ?'<span>📏 '+km+'</span>'  :''}
-        \${hm  ?'<span>⛰️ '+hm+'</span>' :''}
-        \${zeit?'<span>⏱️ '+zeit+'</span>':''}
-      </div>
-      <a class="card-appstore-btn" href="https://apps.apple.com/de/app/sagatrail/id6788260668"
-         target="_blank" rel="noopener" onclick="event.stopPropagation()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="black"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-        Im App Store laden
-      </a>
+    \${imgEl}
+    \${attr}
+    <div class="rc-overlay"></div>
+    <div class="rc-content">
+      \${wegweiserHtml(p.num, p.type, r.sac)}
+      <div class="rc-name">\${esc(p.displayName)}</div>
+      \${subLine ? \`<div class="rc-sub">\${esc(subLine)}</div>\` : ''}
     </div>
+    <div class="rc-stats">\${esc(statsLine)||'&nbsp;'}</div>
   </div>\`;
 }
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // Expose placeholder on window so onerror attributes can access it
 window.__sagaPH = \`<div class="route-img-ph">\${PH_SVG_INNER}</div>\`;
@@ -761,10 +927,10 @@ window.__sagaPH = \`<div class="route-img-ph">\${PH_SVG_INNER}</div>\`;
         .then(function(data){
           if(!data || !data.photoUrl) return;
           const img = document.createElement('img');
-          img.className = 'route-img';
+          img.className = 'rc-img';
           img.alt = decodeURIComponent(name);
           img.loading = 'lazy';
-          img.onerror = function(){ img.outerHTML = window.__sagaPH; };
+          img.onerror = function(){ this.style.display='none'; };
           img.src = data.photoUrl;
           el.replaceWith(img);
         })
@@ -793,6 +959,13 @@ function emptyHtml(title, sub){
 // ── INIT ─────────────────────────────────────────────────────
 buildCantons();
 initSliders();
+// Auto-Kanton aus URL-Parameter
+(function(){
+  const p = new URLSearchParams(location.search).get('canton');
+  if(!p) return;
+  const btn = Array.from(document.querySelectorAll('.canton-btn')).find(function(b){ return b.dataset.name===p; });
+  if(btn) setTimeout(function(){ btn.click(); }, 100);
+})();
 // inject drawer HTML
 document.body.insertAdjacentHTML('beforeend',
   '<div id="drawer-overlay" class="drawer-overlay"><div id="drawer-panel" class="drawer-panel"></div></div>'
@@ -817,14 +990,18 @@ function openDrawer(r) {
     </div>\`;
   }
 
+  const dp = parseRoute(r.name, r.ref, r.network);
+  const subParts2 = [dp.etappe, dp.vonBis].filter(Boolean);
+
   panel.innerHTML = \`
     <div class="drawer-map-wrap">
       <div id="drawer-map" class="drawer-map"></div>
       <button class="drawer-close" onclick="closeDrawer()" aria-label="Schliessen">✕</button>
+      \${dp.num ? \`<div style="position:absolute;bottom:14px;left:14px;z-index:500">\${wegweiserHtml(dp.num,dp.type,r.sac)}</div>\` : ''}
     </div>
     <div class="drawer-body">
-      <div class="drawer-title">\${r.name}</div>
-      \${r.region ? \`<div class="drawer-region">📍 \${r.region}</div>\` : ''}
+      <div class="drawer-title">\${dp.displayName || r.name}</div>
+      \${subParts2.length ? \`<div class="drawer-region">🗺️ \${subParts2.join(' · ')}</div>\` : r.region ? \`<div class="drawer-region">📍 \${r.region}</div>\` : ''}
       <div class="drawer-badges">
         \${sacBadge(r.sac)}\${seasonBadge(r.season)}
         \${r.featured ? '<span class="badge b-star">★ Featured</span>' : ''}
@@ -835,7 +1012,7 @@ function openDrawer(r) {
         \${stat(zeit, 'Gehzeit')}
         \${stat(elev, 'Max. Höhe')}
       </div>
-      \${r.terrain ? \`<div class="drawer-terrain">🗺️ \${r.terrain}</div>\` : ''}
+      \${r.description ? \`<div class="drawer-terrain" style="line-height:1.6;font-size:14px !important;color:#333 !important">\${r.description}</div>\` : r.terrain ? \`<div class="drawer-terrain">🗺️ \${r.terrain}</div>\` : ''}
       <a class="drawer-cta" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">
         Diese Route in der App erleben →
       </a>
