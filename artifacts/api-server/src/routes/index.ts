@@ -39,6 +39,7 @@ import verbandPortalRouter from "./verbandPortal";
 import sperrungenRouter from "./sperrungen";
 import parkingRouter from "./parking";
 import routesExplorerRouter from "./routesExplorer";
+import androidBetaRouter from "./androidBeta";
 
 const router: IRouter = Router();
 
@@ -82,5 +83,6 @@ router.use(verbandPortalRouter);
 router.use(sperrungenRouter);
 router.use(parkingRouter);
 router.use("/routen", routesExplorerRouter);
+router.use(androidBetaRouter);
 
 export default router;

@@ -1,0 +1,791 @@
+<!-- ============================================================
+     SAGATRAIL HOME  |  WPCode HTML-Snippet
+     Typ: HTML Snippet
+     Seite: https://sagatrail.ch  (Startseite)
+     Design-System: identisch zur Partner-Seite (st-*)
+     ============================================================ -->
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2256003155248475');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=2256003155248475&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+<style>
+/* ===== RESET & BASIS ===== */
+.st-home *,
+.st-home *::before,
+.st-home *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.st-home {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.6;
+}
+
+/* ===== FULL-WIDTH SEKTIONEN ===== */
+.st-section {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+.st-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== FARBEN ===== */
+.st-red    { background: #CC0000; color: #fff; }
+.st-white  { background: #fff; color: #1a1a1a; }
+.st-light  { background: #f7f7f5; color: #1a1a1a; }
+.st-dark   { background: #1a1a1a; color: #fff; }
+
+/* ===== HERO ===== */
+.st-hero { padding: 80px 0 60px; }
+.st-hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.st-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  color: #fff !important;
+}
+.st-hero h1 em { font-style: normal; opacity: 0.85; }
+.st-hero p {
+  font-size: 1.15rem;
+  max-width: 640px;
+  opacity: 0.92;
+  margin-bottom: 32px;
+  color: #fff !important;
+}
+.st-hero-stats {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 24px;
+  margin-top: 8px;
+}
+.st-hero-stat strong {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.st-hero-stat span {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* ===== APP-STORE BUTTON ===== */
+.st-store-btns { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; align-items: flex-start; }
+.st-store-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 12px;
+  padding: 11px 20px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  border: none;
+}
+.st-store-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.st-store-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.st-store-btn span { display: flex; flex-direction: column; line-height: 1.2; }
+.st-store-btn span small { font-weight: 400; font-size: 0.72rem; opacity: 0.6; }
+
+/* ===== ANDROID BETA BUTTON ===== */
+.st-android-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 12px;
+  padding: 11px 20px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: background 0.15s, transform 0.15s;
+  cursor: pointer;
+  line-height: 1;
+}
+.st-android-btn:hover { background: rgba(255,255,255,0.22); transform: translateY(-2px); }
+.st-android-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.st-android-btn span { display: flex; flex-direction: column; line-height: 1.2; }
+.st-android-btn span small { font-weight: 400; font-size: 0.72rem; opacity: 0.7; }
+
+/* ===== ANDROID BETA INLINE-FORM ===== */
+.st-android-form-wrap {
+  display: none;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  margin-bottom: 0;
+  max-width: 400px;
+  animation: stFadeIn 0.2s ease;
+}
+.st-android-form-wrap.open { display: block; }
+@keyframes stFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.st-android-form-title { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 14px; }
+.st-android-form-title span { opacity: 0.8; font-weight: 400; font-size: 0.82rem; display: block; margin-top: 2px; }
+.st-android-field {
+  width: 100%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  color: #fff;
+  margin-bottom: 10px;
+  outline: none;
+  font-family: inherit;
+}
+.st-android-field::placeholder { color: rgba(255,255,255,0.55); }
+.st-android-field:focus { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.2); }
+.st-android-submit {
+  width: 100%;
+  background: #fff;
+  color: #CC0000;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 11px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.st-android-submit:hover { background: #f0f0f0; }
+.st-android-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.st-android-msg { font-size: 0.82rem; margin-top: 8px; color: rgba(255,255,255,0.8); display:none; }
+.st-android-msg.ok  { color: #6effa0; display: block; }
+.st-android-msg.err { color: #ffb3b3; display: block; }
+
+/* ===== SECTION LABEL / TITLE / SUB ===== */
+.st-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #CC0000;
+  margin-bottom: 10px;
+}
+.st-section-label-light { color: rgba(255,255,255,0.65) !important; }
+.st-section-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.st-section-sub {
+  font-size: 1rem;
+  color: #555;
+  max-width: 560px;
+  margin-bottom: 48px;
+}
+.st-section-sub-light { color: rgba(255,255,255,0.8) !important; }
+
+/* ===== FEATURE GRID (Karten) ===== */
+.st-benefits { padding: 72px 0; }
+.st-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+.st-card {
+  background: #fff;
+  border: 1.5px solid #ebebeb;
+  border-radius: 14px;
+  padding: 28px 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.st-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.st-card-icon { font-size: 2rem; margin-bottom: 14px; line-height: 1; }
+.st-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.st-card p { font-size: 0.9rem; color: #555; line-height: 1.55; }
+
+/* ===== SO FUNKTIONIERT'S ===== */
+.st-prozess { padding: 72px 0; }
+.st-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+.st-step-num {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #CC0000;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.st-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.st-step p { font-size: 0.88rem; color: #555; line-height: 1.55; }
+
+/* ===== SAGEN SHOWCASE ===== */
+.st-sagas { padding: 80px 0; }
+.st-sagas .st-section-label-light { color: #CC0000 !important; }
+.st-saga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.st-saga-card {
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-left: 3px solid #CC0000;
+  padding: 24px 24px 24px 22px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.st-saga-card:hover { background: rgba(204,0,0,0.12); border-color: rgba(255,255,255,0.15); border-left-color: #CC0000; }
+.st-saga-kanton {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #CC0000;
+  margin-bottom: 8px;
+}
+.st-saga-card h3 { font-size: 1.1rem; font-weight: 700; color: #fff !important; margin-bottom: 8px; }
+.st-saga-card p { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.5; }
+
+/* ===== PAKETE / PREISE ===== */
+.st-pakete { padding: 72px 0; }
+.st-pakete-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 20px;
+}
+.st-paket {
+  background: #fff;
+  border: 2px solid #ebebeb;
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  position: relative;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.st-paket:hover { border-color: #CC0000; transform: translateY(-3px); }
+.st-paket.featured { border-color: #CC0000; box-shadow: 0 8px 40px rgba(204,0,0,0.12); }
+.st-paket.accent { border-width: 1px; border-color: #CC0000; }
+.st-paket-badge {
+  position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  background: #CC0000; color: #fff;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+}
+.st-paket-name {
+  font-size: 0.9rem; font-weight: 700; color: #888;
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+}
+.st-paket-price { font-size: 2.4rem; font-weight: 800; line-height: 1; color: #1a1a1a; }
+.st-paket-price sup { font-size: 1rem; font-weight: 700; vertical-align: top; margin-top: 8px; display: inline-block; color: #555; }
+.st-paket-period { font-size: 0.85rem; color: #888; margin-bottom: 20px; }
+.st-paket-divider { border: none; border-top: 1px solid #ebebeb; margin: 20px 0; }
+.st-paket ul { list-style: none; text-align: left; margin-bottom: 24px; }
+.st-paket ul li { font-size: 0.88rem; color: #333; padding: 5px 0 5px 24px; position: relative; }
+.st-paket ul li::before { content: '\2713'; position: absolute; left: 0; color: #CC0000; font-weight: 700; }
+.st-btn {
+  display: inline-block; width: 100%; text-align: center;
+  background: #CC0000; color: #fff;
+  font-size: 0.95rem; font-weight: 700;
+  padding: 13px 28px; border-radius: 8px;
+  text-decoration: none; border: none; cursor: pointer;
+  transition: background 0.2s;
+}
+.st-btn:hover { background: #a80000; color: #fff; }
+.st-btn-outline { background: transparent; color: #CC0000; border: 2px solid #CC0000; }
+.st-btn-outline:hover { background: #CC0000; color: #fff; }
+.st-paket-note { font-size: 0.78rem; color: #999; text-align: center; margin-top: 10px; }
+
+/* ===== CTA ===== */
+.st-cta { padding: 80px 0; }
+.st-cta-inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; }
+.st-cta h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: #fff !important; max-width: 640px; line-height: 1.15; }
+.st-cta p { font-size: 1rem; color: rgba(255,255,255,0.82) !important; max-width: 500px; }
+.st-btn-white { background: #fff; color: #CC0000; }
+.st-btn-white:hover { background: #f0f0f0; }
+
+/* ===== FOOTER ===== */
+.st-footer { padding: 40px 0; }
+.st-footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; font-size: 0.82rem; }
+.st-footer-brand { font-weight: 800; font-size: 1.1rem; color: #fff; }
+.st-footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.st-footer-links a { color: rgba(255,255,255,0.65); text-decoration: none; transition: color 0.15s; }
+.st-footer-links a:hover { color: #fff; }
+.st-footer-copy { color: rgba(255,255,255,0.45); }
+
+/* ===== SCREENSHOT-PLATZHALTER ===== */
+.st-shot {
+  width: 100%;
+  aspect-ratio: 1320 / 2868;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  gap: 4px;
+}
+.st-shot-onlight { background: rgba(0,0,0,0.03); border: 2px dashed rgba(0,0,0,0.18); }
+.st-shot-onlight .st-shot-label { color: #1a1a1a; }
+.st-shot-onlight .st-shot-spec { color: #888; }
+.st-shot-ondark { background: rgba(255,255,255,0.06); border: 2px dashed rgba(255,255,255,0.3); }
+.st-shot-ondark .st-shot-label { color: #fff; }
+.st-shot-ondark .st-shot-spec { color: rgba(255,255,255,0.55); }
+.st-shot-label { font-size: 0.85rem; font-weight: 700; line-height: 1.4; }
+.st-shot-spec { font-size: 0.7rem; }
+.st-shot-icon { font-size: 1.6rem; margin-bottom: 4px; opacity: 0.6; }
+.st-shot-sm { max-width: 130px; margin: 0 auto 16px; }
+.st-shot-sm .st-shot-label { font-size: 0.72rem; }
+.st-shot-sm .st-shot-spec { display: none; }
+.st-shot, .st-video { position: relative; }
+.st-shot-num {
+  position: absolute; top: 10px; left: 10px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #CC0000; color: #fff;
+  font-size: 0.75rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; z-index: 2;
+}
+
+/* Video-Platzhalter 9:16 (Hero) */
+.st-video {
+  width: 100%; aspect-ratio: 9 / 16; border-radius: 28px;
+  background: rgba(255,255,255,0.06); border: 2px dashed rgba(255,255,255,0.3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 16px; gap: 8px;
+}
+.st-video-play {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: #fff;
+}
+.st-video .st-shot-label { color: #fff; }
+.st-video .st-shot-spec { color: rgba(255,255,255,0.55); }
+
+/* Hero: Text/Bild nebeneinander */
+.st-hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 48px;
+  align-items: center;
+}
+.st-hero-shot { max-width: 280px; margin: 0 auto; }
+@media (max-width: 800px) {
+  .st-hero-grid { grid-template-columns: 1fr; }
+  .st-hero-shot { max-width: 220px; margin-top: 32px; }
+}
+
+/* Features: Text + Bild nebeneinander */
+.st-benefits-grid { display: grid; grid-template-columns: 1fr 320px; gap: 48px; align-items: start; margin-bottom: 8px; }
+.st-benefits-shot { max-width: 260px; }
+@media (max-width: 900px) {
+  .st-benefits-grid { grid-template-columns: 1fr; }
+  .st-benefits-shot { max-width: 220px; margin: 0 auto 32px; }
+}
+
+/* Sagen: Text + Bild nebeneinander */
+.st-sagas-grid { display: grid; grid-template-columns: 1fr 300px; gap: 48px; align-items: start; margin-bottom: 40px; }
+.st-sagas-shot { max-width: 260px; }
+@media (max-width: 900px) {
+  .st-sagas-grid { grid-template-columns: 1fr; }
+  .st-sagas-shot { max-width: 220px; margin: 0 auto 32px; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 700px) {
+  .st-hero { padding: 56px 0 40px; }
+  .st-hero-stats { gap: 24px; }
+  .st-store-btns { flex-direction: column; align-items: flex-start; }
+  .st-cta { padding: 56px 0; }
+  .st-benefits, .st-prozess, .st-sagas, .st-pakete { padding: 56px 0; }
+  .st-pakete-grid { grid-template-columns: 1fr; max-width: 380px; margin-left: auto; margin-right: auto; }
+}
+</style>
+
+<div class="st-home">
+
+  <!-- ===== HERO ===== -->
+  <section class="st-section st-red st-hero">
+    <div class="st-inner">
+      <div class="st-hero-grid">
+        <div>
+          <div class="st-hero-badge">Die vollwertige Wander-App der Schweiz</div>
+          <h1 style="color:#fff !important">Wandern Sie durch die Schweiz.<br>Und durch <em>ihre Geschichte.</em></h1>
+          <p style="color:#fff !important">SagaTrail ist eine vollwertige Wander-Navigation für die Schweiz — mit swisstopo-Karten, GPS-Tracking und SOS-Funktion. Einzigartig: Sehenswürdigkeiten entlang Ihrer Route werden Teil einer echten, historisch belegten Sage, automatisch erzählt am Schauplatz. Das macht jede Wanderung spannender und lehrreicher als eine reine Routenkarte es je könnte. So lernen Einheimische und Touristen die Schweiz noch besser kennen.</p>
+
+          <div class="st-store-btns">
+            <!-- App Store -->
+            <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="st-store-btn" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              <span><small>Laden im</small>App Store</span>
+            </a>
+
+            <!-- Android Beta Button -->
+            <button class="st-android-btn" id="st-android-toggle" onclick="stToggleAndroid()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341a.5.5 0 0 1-.848.35l-1.55-1.549a5.96 5.96 0 0 1-6.25 0L7.325 15.69a.5.5 0 0 1-.848-.35V5.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5zm-11.5-11A.5.5 0 0 0 5.5 5h13a.5.5 0 0 0 .5-.5V3.5a.5.5 0 0 0-.5-.5h-13a.5.5 0 0 0-.5.5zM6.5 7a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm11 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+              <span><small>Als Erstes</small>Android testen</span>
+            </button>
+          </div>
+
+          <!-- Android Beta Inline-Formular -->
+          <div class="st-android-form-wrap" id="st-android-form-wrap" style="margin-bottom: 24px;">
+            <div class="st-android-form-title">
+              Android Beta-Test
+              <span>Trag dich ein — wir melden uns sobald der Test startet.</span>
+            </div>
+            <input class="st-android-field" id="st-beta-name" type="text" placeholder="Vorname (optional)" autocomplete="given-name">
+            <input class="st-android-field" id="st-beta-email" type="email" placeholder="E-Mail-Adresse *" autocomplete="email" required>
+            <button class="st-android-submit" id="st-beta-submit" onclick="stSubmitBeta()">Jetzt anmelden ›</button>
+            <div class="st-android-msg" id="st-beta-msg"></div>
+          </div>
+
+          <div class="st-hero-stats">
+            <div class="st-hero-stat"><strong>26</strong><span>Kantone</span></div>
+            <div class="st-hero-stat"><strong>200+</strong><span>Sagenorte</span></div>
+            <div class="st-hero-stat"><strong>8</strong><span>Sprachen</span></div>
+            <div class="st-hero-stat"><strong>Gratis</strong><span>Basisversion</span></div>
+          </div>
+        </div>
+
+        <div>
+          <video autoplay muted loop playsinline poster="https://sagatrail.ch/wp-content/uploads/2026/07/poster.jpg" style="width:100%;border-radius:28px;display:block">
+            <source src="https://sagatrail.ch/wp-content/uploads/2026/07/Sagatrail.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="st-section st-white st-benefits">
+    <div class="st-inner">
+      <div class="st-benefits-grid">
+        <div>
+          <div class="st-section-label">Die App</div>
+          <h2 class="st-section-title">Mehr als eine Wanderkarte</h2>
+          <p class="st-section-sub" style="margin-bottom:0">SagaTrail ist zuerst eine professionelle Wander-Navigation für die Schweiz — und erzählt Ihnen gleichzeitig die Sehenswürdigkeiten Ihrer Route als Teil einer echten Sage. Ein Erlebnis, das Kinder und Erwachsene, Touristen und Einheimische gleichermassen begeistert.</p>
+        </div>
+        <div class="st-benefits-shot">
+          <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7341-scaled.png" alt="SagaTrail Screenshot: Routenübersicht" style="width:100%;display:block;border-radius:28px;box-shadow:0 12px 32px rgba(0,0,0,0.12)">
+        </div>
+      </div>
+      <div style="margin-top:48px">
+      <div class="st-grid-3">
+        <div class="st-card">
+          <div class="st-card-icon">&#127956;&#65039;</div>
+          <h3>Professionelle Navigation</h3>
+          <p>swisstopo-Karten, Live-GPS-Tracking, Abbiegehinweise und Offroute-Erkennung — so präzise wie eine echte Wander-App sein muss.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">&#127897;&#65039;</div>
+          <h3>Sehenswürdigkeiten werden Geschichte</h3>
+          <p>Aussichtspunkte, Brunnen und Wegkreuze entlang Ihrer Route werden Teil der Sage — automatisch erzählt, sobald Sie dort ankommen.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">&#127758;</div>
+          <h3>Offline unterwegs</h3>
+          <p>Route, Sage, Audio und Kartenkacheln herunterladen und ohne Mobilfunknetz wandern — ideal in abgelegenen Gebieten.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">&#128680;</div>
+          <h3>Sicherheit inklusive</h3>
+          <p>SOS-Direktwahl zu Rega oder Euronotruf und automatische GPS-Koordinaten per SMS an Ihren Notfallkontakt.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">&#128101;</div>
+          <h3>Gruppen-Wanderungen</h3>
+          <p>Wandern Sie synchron mit Familie und Freunden — alle sehen dieselbe Route und hören die gleichen Geschichten.</p>
+        </div>
+        <div class="st-card">
+          <div class="st-card-icon">&#127868;</div>
+          <h3>Lokale Partner</h3>
+          <p>Restaurants, Bergbeizli und Unterkünfte direkt auf der Route — speziell für SagaTrail-Wanderinnen und -Wanderer.</p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SO FUNKTIONIERT'S ===== -->
+  <section class="st-section st-light st-prozess">
+    <div class="st-inner">
+      <div class="st-section-label">So funktioniert's</div>
+      <h2 class="st-section-title">In 4 Schritten auf dem Sagenweg</h2>
+      <p class="st-section-sub">Kein Aufwand, keine Vorkenntnisse nötig — einfach App öffnen und loswandern.</p>
+
+      <div class="st-steps">
+        <div class="st-step">
+          <div class="st-shot-sm">
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7339-scaled.png" alt="Kantonsbrowser" style="width:100%;display:block;border-radius:18px">
+          </div>
+          <div class="st-step-num">1</div>
+          <h3>Kanton wählen</h3>
+          <p>Wählen Sie Ihren Kanton oder suchen Sie nach einem Sagenort in Ihrer Nähe. Die App schlägt passende Routen vor.</p>
+        </div>
+        <div class="st-step">
+          <div class="st-shot-sm">
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7348-scaled.png" alt="Live-Navigation" style="width:100%;display:block;border-radius:18px">
+          </div>
+          <div class="st-step-num">2</div>
+          <h3>Route starten</h3>
+          <p>Starten Sie die Navigation und folgen Sie dem roten Pfad auf der Karte. GPS führt Sie sicher zum Ziel.</p>
+        </div>
+        <div class="st-step">
+          <div class="st-shot-sm">
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7346-scaled.png" alt="Story-Player" style="width:100%;display:block;border-radius:18px">
+          </div>
+          <div class="st-step-num">3</div>
+          <h3>Geschichten erleben</h3>
+          <p>An jedem Sagenort — und an Sehenswürdigkeiten unterwegs — beginnt automatisch eine Erzählung. So wird aus einem Aussichtspunkt ein Teil der Geschichte.</p>
+        </div>
+        <div class="st-step">
+          <div class="st-shot-sm">
+            <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7354-scaled.png" alt="Abschluss & Abzeichen" style="width:100%;display:block;border-radius:18px">
+          </div>
+          <div class="st-step-num">4</div>
+          <h3>Erfolge sammeln</h3>
+          <p>Jede abgeschlossene Route hinterlässt eine Spur. Sammeln Sie Abzeichen und teilen Sie Ihre Erlebnisse.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SAGEN SHOWCASE ===== -->
+  <section class="st-section st-dark st-sagas">
+    <div class="st-inner">
+      <div class="st-sagas-grid">
+        <div>
+          <div class="st-section-label st-section-label-light">Sagenschatz Schweiz</div>
+          <h2 class="st-section-title" style="color:#fff !important">Jahrhundertealte Geschichten.<br><span style="color:#CC0000">Neu erlebt.</span></h2>
+          <p class="st-section-sub st-section-sub-light" style="margin-bottom:0">Von Drachen und Riesen, Wassermännern und Hexen — über 200 kuratierte Sagen aus allen Sprachregionen der Schweiz, handverlesen und professionell aufbereitet. Keine KI-generierten Geschichten — alle Inhalte stammen aus öffentlich zugänglichen, historischen Quellen.</p>
+        </div>
+        <div class="st-sagas-shot">
+          <img src="https://sagatrail.ch/wp-content/uploads/2026/07/IMG_7347-scaled.png" alt="SagaTrail Screenshot: Sagen-Erzählung mit Audio-Player" style="width:100%;display:block;border-radius:28px;box-shadow:0 12px 32px rgba(0,0,0,0.3)">
+        </div>
+      </div>
+
+      <div class="st-saga-grid">
+        <div class="st-saga-card">
+          <div class="st-saga-kanton">Kanton Uri</div>
+          <h3>Der Teufelsstein am Gotthard</h3>
+          <p>Der Teufel half beim Bau der Teufelsbrücke — und forderte eine Seele als Lohn. Was dann geschah, hat die Urner nie vergessen.</p>
+        </div>
+        <div class="st-saga-card">
+          <div class="st-saga-kanton">Kanton Basel-Stadt</div>
+          <h3>Der Vogel Gryff</h3>
+          <p>Jedes Jahr erscheint der Vogel Gryff auf dem Rhein und tanzt — eine jahrhundertealte Tradition, die Klein-Basel bis heute in Atem hält.</p>
+        </div>
+        <div class="st-saga-card">
+          <div class="st-saga-kanton">Kanton Bern</div>
+          <h3>Der Bär von Bern</h3>
+          <p>Zähringen-Herzog Berchtold gab der Stadt ihren Namen — nach einem Bären. Doch welche Kräfte steckten wirklich dahinter?</p>
+        </div>
+      </div>
+
+      <p style="margin-top:32px;font-size:0.88rem;color:rgba(255,255,255,0.55);text-align:center">
+        Und hunderte weitere Sagen — in Deutsch, Schweizerdeutsch, Französisch, Italienisch, Englisch, Spanisch, Portugiesisch und Chinesisch.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== PREISE ===== -->
+  <section class="st-section st-white st-pakete">
+    <div class="st-inner">
+      <div class="st-section-label">Preise</div>
+      <h2 class="st-section-title">Kostenlos starten,<br>unbegrenzt erleben</h2>
+      <p class="st-section-sub">Alle Preise in CHF. Abonnements verlängern sich automatisch, bis sie im Store-Konto gekündigt werden.</p>
+
+      <div class="st-pakete-grid">
+        <div class="st-paket accent">
+          <div class="st-paket-name">Kostenlos</div>
+          <div class="st-paket-price"><sup>CHF </sup>0</div>
+          <div class="st-paket-period">für immer</div>
+          <hr class="st-paket-divider">
+          <ul>
+            <li>App herunterladen &amp; nutzen</li>
+            <li>Eine Wanderroute kostenlos</li>
+          </ul>
+          <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="st-btn st-btn-outline" target="_blank" rel="noopener">Gratis laden</a>
+        </div>
+
+        <div class="st-paket featured">
+          <div class="st-paket-badge">&#11088; Beliebt</div>
+          <div class="st-paket-name">Premium</div>
+          <div class="st-paket-price"><sup>CHF </sup>6.95</div>
+          <div class="st-paket-period">pro Monat &nbsp;&middot;&nbsp; oder CHF 49.90/Jahr</div>
+          <hr class="st-paket-divider">
+          <ul>
+            <li>Alle Wanderrouten der Schweiz</li>
+            <li>Unbegrenzte Wanderungen</li>
+            <li>1 Sagen-Paket gratis beim Einstieg</li>
+            <li>Erweiterte Charakter-Anpassung</li>
+            <li>Natürliche KI-Erzählstimme inklusive</li>
+            <li>Gruppenmodus ohne Limit</li>
+            <li>Kantons-Sagen-Packs einzeln (CHF 6.95)</li>
+          </ul>
+          <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="st-btn" target="_blank" rel="noopener">Premium starten</a>
+        </div>
+
+        <div class="st-paket accent">
+          <div class="st-paket-name">Elite</div>
+          <div class="st-paket-price"><sup>CHF </sup>149.90</div>
+          <div class="st-paket-period">pro Jahr</div>
+          <hr class="st-paket-divider">
+          <ul>
+            <li>Alles aus Premium</li>
+            <li>Alle 26 Kantons-Sagen-Packs inklusive</li>
+          </ul>
+          <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="st-btn st-btn-outline" target="_blank" rel="noopener">Elite wählen</a>
+        </div>
+      </div>
+
+      <p style="font-size:0.82rem;color:#aaa;text-align:center;margin-top:16px">
+        Auch als Familie erhältlich: Premium Familie CHF 79.90/Jahr &middot; Elite Familie CHF 239.90/Jahr (bis 6 Familienmitglieder, Apple Family Sharing). Kantons-Sagen-Packs einzeln CHF 6.95 (nur für aktive Premium-Abonnenten). Für Schulen und Gemeinden:
+        <a href="mailto:info@sagatrail.ch" style="color:#CC0000">info@sagatrail.ch</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="st-section st-red st-cta">
+    <div class="st-inner">
+      <div class="st-cta-inner">
+        <h2>Die Schweiz hat unzählige Geheimnisse.<br>Entdecken Sie sie.</h2>
+        <p>Laden Sie SagaTrail gratis herunter und starten Sie Ihre erste Sagenroute — in Ihrem Kanton, heute noch.</p>
+        <div class="st-store-btns" style="justify-content:center; margin-bottom:0;">
+          <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="st-store-btn" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            <span><small>Laden im</small>App Store</span>
+          </a>
+        </div>
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.55)">Für iPhone &nbsp;&middot;&nbsp; Gratis starten, kein Abo nötig</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <section class="st-section st-dark st-footer">
+    <div class="st-inner">
+      <div class="st-footer-inner">
+        <div class="st-footer-brand">SagaTrail</div>
+        <div class="st-footer-links">
+          <a href="/impressum">Impressum</a>
+          <a href="/datenschutz">Datenschutz</a>
+          <a href="/agb">AGB</a>
+          <a href="mailto:info@sagatrail.ch">info@sagatrail.ch</a>
+        </div>
+        <div class="st-footer-copy">
+          &copy; 2026 A.i.L. by Koch &nbsp;&middot;&nbsp; Rolf Koch, Inhaber<br>
+          Mühlemattstrasse 11, 4104 Oberwil BL &nbsp;&middot;&nbsp; CHE-286.962.827
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /.st-home -->
+
+<script>
+(function () {
+  var API = 'https://saga-trail.replit.app/api/android-beta-signup';
+
+  window.stToggleAndroid = function () {
+    var wrap = document.getElementById('st-android-form-wrap');
+    var btn  = document.getElementById('st-android-toggle');
+    var open = wrap.classList.toggle('open');
+    btn.style.opacity = open ? '0.7' : '1';
+    if (open) document.getElementById('st-beta-email').focus();
+  };
+
+  window.stSubmitBeta = function () {
+    var email = document.getElementById('st-beta-email').value.trim();
+    var name  = document.getElementById('st-beta-name').value.trim();
+    var msg   = document.getElementById('st-beta-msg');
+    var btn   = document.getElementById('st-beta-submit');
+
+    msg.className = 'st-android-msg';
+    msg.textContent = '';
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.className = 'st-android-msg err';
+      msg.textContent = 'Bitte eine gültige E-Mail-Adresse eingeben.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Wird eingetragen…';
+
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, name: name || undefined }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          msg.className = 'st-android-msg ok';
+          msg.textContent = '✓ Danke! Wir melden uns, sobald der Android-Test startet.';
+          btn.textContent = 'Angemeldet ✓';
+          document.getElementById('st-beta-email').value = '';
+          document.getElementById('st-beta-name').value  = '';
+        } else {
+          throw new Error(data.error || 'Fehler');
+        }
+      })
+      .catch(function (err) {
+        msg.className = 'st-android-msg err';
+        msg.textContent = 'Fehler: ' + (err.message || 'Bitte später nochmal versuchen.');
+        btn.disabled = false;
+        btn.textContent = 'Jetzt anmelden ›';
+      });
+  };
+
+  // Enter-Taste im E-Mail-Feld = Absenden
+  document.addEventListener('DOMContentLoaded', function () {
+    var field = document.getElementById('st-beta-email');
+    if (field) field.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') window.stSubmitBeta();
+    });
+  });
+})();
+</script>

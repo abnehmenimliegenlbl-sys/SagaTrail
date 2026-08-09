@@ -34,6 +34,22 @@ const server = app.listen(port, async (err) => {
 
   logger.info({ port }, "Server listening");
 
+  // Android-Beta-Tester-Tabelle (idempotent).
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS android_beta_testers (
+        id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email        TEXT NOT NULL UNIQUE,
+        name         TEXT,
+        added_to_play BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    logger.info("Schema-Migration: android_beta_testers sichergestellt");
+  } catch (migErr) {
+    logger.warn({ err: migErr }, "Schema-Migration android_beta_testers fehlgeschlagen (nicht kritisch)");
+  }
+
   // Schema-Migrations: additive Spalten idempotent nachziehen.
   try {
     await db.execute(sql`

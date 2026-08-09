@@ -18,3 +18,4 @@ export * from "./verbandTokens";
 export * from "./partnerEmailLog";
 export * from "./partnerLeads";
 export * from "./referrals";
+export * from "./androidBetaTesters";
