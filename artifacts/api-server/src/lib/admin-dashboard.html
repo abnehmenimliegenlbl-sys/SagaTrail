@@ -144,6 +144,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
   <button class="tab-btn" onclick="switchTab('kampagne',this)">&#128140; Kampagne</button>
   <button class="tab-btn" onclick="switchTab('leads-suche',this)">&#128269; Leads-Suche</button>
+  <button class="tab-btn" onclick="switchTab('android-beta',this)">&#129505; Android Beta</button>
 </div>
 
 <div id="content">
@@ -662,6 +663,21 @@ a{color:var(--red);text-decoration:none}
 
   </div>
 
+  <!-- ANDROID BETA -->
+  <div id="tab-android-beta" class="tab-pane">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <h2 style="margin:0">&#129505; Android Beta-Tester</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a id="ab-csv-btn" href="#" onclick="abDownloadCsv(event)" class="btn btn-green" style="text-decoration:none">&#11015; CSV für Play Console</a>
+          <button class="btn btn-primary" onclick="loadAndroidBeta()">&#8635; Aktualisieren</button>
+        </div>
+      </div>
+      <div id="ab-stat" style="margin-bottom:14px"></div>
+      <div id="ab-body"><p class="loading">Wird geladen…</p></div>
+    </div>
+  </div>
+
   <!-- PARTNER -->
   <div id="tab-partner" class="tab-pane">
     <div class="card">
@@ -832,7 +848,66 @@ function switchTab(name, btn) {
   if (name === 'routen'   && token()) initRoutenTab();
   if (name === 'anfragen' && token()) loadAnfragen();
   if (name === 'verbande' && token()) { ladeVerbande(); loadVerbandAnfragen(); }
-  if (name === 'kampagne' && token()) { kmLoadMeta(); kmLoadLog(); }
+  if (name === 'kampagne'     && token()) { kmLoadMeta(); kmLoadLog(); }
+  if (name === 'android-beta' && token()) loadAndroidBeta();
+}
+
+/* ===================== ANDROID BETA ===================== */
+async function loadAndroidBeta() {
+  document.getElementById('ab-body').innerHTML = '<p class="loading">Lade Tester…</p>';
+  document.getElementById('ab-stat').innerHTML = '';
+  try {
+    var data = await api('/api/admin/android-beta/testers');
+    var testers = data.testers || [];
+    var added = testers.filter(function(t){ return t.addedToPlay; }).length;
+    document.getElementById('ab-stat').innerHTML =
+      '<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">' +
+      statCard(testers.length, 'Anmeldungen', '') +
+      statCard(added, 'Im Play Store', '') +
+      statCard(testers.length - added, 'Noch offen', '') +
+      '</div>';
+    if (!testers.length) {
+      document.getElementById('ab-body').innerHTML = '<p class="hint">Noch keine Anmeldungen.</p>';
+      return;
+    }
+    var html = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th>E-Mail</th><th>Name</th><th>Angemeldet</th><th>Play Store</th><th></th>' +
+      '</tr></thead><tbody>';
+    testers.forEach(function(t) {
+      html += '<tr>' +
+        '<td class="mono">' + esc(t.email) + '</td>' +
+        '<td>' + esc(t.name || '–') + '</td>' +
+        '<td class="mono">' + fmtDate(t.createdAt) + '</td>' +
+        '<td>' + (t.addedToPlay
+          ? '<span class="badge badge-green">&#10003; Eingetragen</span>'
+          : '<span class="badge badge-gray">Ausstehend</span>') + '</td>' +
+        '<td>' + (!t.addedToPlay
+          ? '<button class="btn btn-ghost" style="font-size:11px;padding:3px 8px" onclick="abMarkAdded(\'' + esc(t.email) + '\',this)">&#10003; Markieren</button>'
+          : '') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('ab-body').innerHTML = html;
+  } catch(e) {
+    document.getElementById('ab-body').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+  }
+}
+
+async function abMarkAdded(email, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    await api('/api/admin/android-beta/mark-added', { method:'POST', body: JSON.stringify({ emails:[email] }) });
+    loadAndroidBeta();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '✓ Markieren';
+    alert('Fehler: ' + e.message);
+  }
+}
+
+function abDownloadCsv(e) {
+  e.preventDefault();
+  if (!token()) return;
+  window.location.href = '/api/admin/android-beta/export-csv?token=' + encodeURIComponent(token());
 }
 
 /* ===================== ÜBERSICHT ===================== */
