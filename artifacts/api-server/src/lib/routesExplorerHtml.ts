@@ -263,41 +263,33 @@ a{color:var(--red)!important;text-decoration:none}
 /* ── Wegweiser ── */
 .ww{
   display:inline-flex;align-items:stretch;
-  height:50px;
+  height:48px;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));
   margin-bottom:8px;
 }
 .ww-label{
   background:#2d5c27;
   padding:4px 7px;
-  display:flex;flex-direction:column;
+  display:flex;
   align-items:center;justify-content:center;
-  font-size:6.5px !important;font-weight:800 !important;
-  text-transform:uppercase;letter-spacing:.05em;
-  color:#fff !important;line-height:1.35;
-  min-width:42px;border-radius:3px 0 0 3px;
+  min-width:38px;border-radius:3px 0 0 3px;
+  overflow:hidden;
 }
-.ww-flag{font-size:13px;margin-bottom:2px;line-height:1}
+.ww-flag{font-size:20px;line-height:1;display:block}
+.ww-wappen{width:26px;height:26px;object-fit:contain;display:block;
+  image-rendering:crisp-edges}
 .ww-arrow{
   /* clip-path erzeugt die Pfeilspitze rechts */
   clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%);
-  padding:6px 22px 6px 11px;
+  padding:5px 23px 5px 11px;
   display:flex;align-items:center;justify-content:center;
-  min-width:54px;
-  /* Farbe = Schwierigkeit; Default gelb (T1) */
-  background:#4a9c4a;
-  transition:background .2s;
+  min-width:56px;
+  /* Grundfarbe Wanderweg-Gelb; Schwierigkeit nur als Spitzenstreifen (inline-style) */
+  background:#f7c520;
 }
-.ww-arrow.sac-t1{background:#4a9c4a}
-.ww-arrow.sac-t2{background:#8ab22a}
-.ww-arrow.sac-t3{background:#d4a000}
-.ww-arrow.sac-t4{background:#d46400}
-.ww-arrow.sac-t5{background:#c42828}
-.ww-arrow.sac-t6{background:#7a1080}
-.ww-arrow.sac-none{background:#888}
 .ww-num{
-  font-size:1.45rem !important;font-weight:900 !important;
-  color:#fff !important;line-height:1;letter-spacing:-.02em;
+  font-size:1.25rem !important;font-weight:900 !important;
+  color:#1a1a1a !important;line-height:1;letter-spacing:-.02em;
 }
 /* Routenname + Etappe/Von-Bis */
 .rc-name{
@@ -763,6 +755,7 @@ async function doSearch(){
 function parseRoute(name, ref, network){
   let num = ref ? String(ref) : '';
   let type = '';
+  let kantonAbbr = '';  // 2-letter uppercase kanton code from K-route name (e.g. "AG")
   if(network){
     if(network==='nwn'||network==='iwn') type='national';
     else if(network==='rwn') type='regional';
@@ -773,8 +766,8 @@ function parseRoute(name, ref, network){
   // Führende Nummer aus Name entfernen → rest
   let rest = name;
   // K-Route: "K4 AG Name…"
-  let m = /^K\\d+\\s+[A-Z]{2}\\s+(.+)$/.exec(name);
-  if(m){ rest = m[1]; if(!num) num = (name.match(/^K(\\d+)/)||[])[1]||''; if(!type) type='kantonal'; }
+  let m = /^K(\\d+)\\s+([A-Z]{2})\\s+(.+)$/.exec(name);
+  if(m){ rest = m[3]; kantonAbbr = m[2]; if(!num) num = m[1]; if(!type) type='kantonal'; }
   else {
     // Nummerierte Route: "3 Name…"
     m = /^(\\d+)\\s+(.+)$/.exec(name);
@@ -785,8 +778,7 @@ function parseRoute(name, ref, network){
   m = /^(.*?)\\s+Etappe\\s+(\\d+)\\s+(.+)$/i.exec(rest);
   if(m){
     const fromTo = m[3].trim();
-    // fromTo = "Trogen - Appenzell" oder "Trogen – Appenzell"
-    return { num, type, displayName: m[1].trim(), etappe:'Etappe '+m[2], vonBis: fromTo };
+    return { num, type, kantonAbbr, displayName: m[1].trim(), etappe:'Etappe '+m[2], vonBis: fromTo };
   }
 
   // Kein Etappe → Von/Bis nach erstem " - " oder " – " mit Leerzeichen
@@ -794,36 +786,44 @@ function parseRoute(name, ref, network){
   if(m){
     const displayName = m[1].trim();
     const vonBis      = displayName + ' – ' + m[2].trim();
-    return { num, type, displayName, etappe:'', vonBis };
+    return { num, type, kantonAbbr, displayName, etappe:'', vonBis };
   }
 
-  return { num, type, displayName: rest, etappe:'', vonBis:'' };
+  return { num, type, kantonAbbr, displayName: rest, etappe:'', vonBis:'' };
 }
 
-function sacArrowClass(sac){
-  if(!sac||sac==='unknown') return 'sac-none';
-  const m=/T\\s*([1-6])/i.exec(sac); if(!m) return 'sac-none';
-  return 'sac-t'+m[1];
-}
-function typLabel(type){
-  if(type==='national')  return 'national';
-  if(type==='regional')  return 'regional';
-  if(type==='lokal')     return 'lokal';
-  if(type==='kantonal')  return 'kantonal';
-  return '';
+// Farbstreifen an der Wegweiser-Spitze je nach SAC-Schwierigkeit
+// T1-T2 = kein Streifen (Wanderweg, gelb)
+// T3-T4 = roter Streifen (Bergwanderweg)
+// T5-T6 = blauer Streifen (Alpinwanderweg)
+function sacTipStyle(sac){
+  const m=/T\\s*([1-6])/i.exec(sac||'');
+  if(!m) return 'background:#f7c520';
+  const t=+m[1];
+  if(t>=5) return 'background:linear-gradient(to right,#f7c520 calc(100% - 20px),#1a5fa8 calc(100% - 20px))';
+  if(t>=3) return 'background:linear-gradient(to right,#f7c520 calc(100% - 20px),#cc0000 calc(100% - 20px))';
+  return 'background:#f7c520';
 }
 
-function wegweiserHtml(num, type, sac){
+// wappenCode: 2-stelliger Kürzel (lowercase) für Kantonswappen-SVG
+// null → Schweizer Flagge (Nationalrouten)
+function wegweiserHtml(num, type, sac, wappenCode){
   if(!num) return '';
-  const lbl = typLabel(type);
+  // Pfeil-Nummer: bei kantonal mit K-Präfix
+  const dispNum = type==='kantonal' ? 'K'+num : num;
+  // Label-Inhalt: Flagge oder Kantonswappen
+  let labelContent;
+  if(wappenCode){
+    const url='https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/symbols/13x13/'+wappenCode+'.svg';
+    labelContent=\`<img class="ww-wappen" src="\${url}" alt="\${wappenCode.toUpperCase()}"
+      onerror="this.style.display='none'">\`;
+  } else {
+    labelContent='<span class="ww-flag">&#127464;&#127469;</span>';
+  }
   return \`<div class="ww">
-    <div class="ww-label">
-      <div class="ww-flag">&#127464;&#127469;</div>
-      <div>Wanderland</div>
-      \${lbl ? \`<div>\${lbl}</div>\` : ''}
-    </div>
-    <div class="ww-arrow \${sacArrowClass(sac)}">
-      <span class="ww-num">\${num}</span>
+    <div class="ww-label">\${labelContent}</div>
+    <div class="ww-arrow" style="\${sacTipStyle(sac)}">
+      <span class="ww-num">\${dispNum}</span>
     </div>
   </div>\`;
 }
@@ -854,6 +854,18 @@ function seasonLabel(s){
   return s;
 }
 
+// Kantons-Name → 2-stelliges ISO-Kürzel (lowercase) für Wappen-SVG
+const KANTON_CODE = {
+  'Aargau':'ag','Appenzell Ausserrhoden':'ar','Appenzell Innerrhoden':'ai',
+  'Basel-Landschaft':'bl','Basel-Stadt':'bs','Bern':'be',
+  'Freiburg':'fr','Fribourg':'fr','Genf':'ge','Glarus':'gl',
+  'Graubünden':'gr','Jura':'ju','Luzern':'lu','Neuenburg':'ne',
+  'Nidwalden':'nw','Obwalden':'ow','Schaffhausen':'sh',
+  'Schwyz':'sz','Solothurn':'so','St. Gallen':'sg',
+  'Tessin':'ti','Thurgau':'tg','Uri':'ur','Wallis':'vs',
+  'Waadt':'vd','Zug':'zg','Zürich':'zh',
+};
+
 // route store: id → full route object (on window so onclick attrs can reach it)
 window.__routeStore = {};
 
@@ -867,6 +879,15 @@ function cardHtml(r){
   window.__routeStore[r.id] = r;
   const rid  = r.id.replace(/['"]/g,'');
   const p    = parseRoute(r.name, r.ref, r.network);
+
+  // Kantonswappen: kantonal-Routen nutzen das Kürzel aus dem Namen (z.B. "AG"),
+  // regional/lokal nutzen den Kanton-Namen aus der API (Lookup-Tabelle).
+  // National → null (Schweizer Flagge).
+  let wappenCode = null;
+  if(p.type !== 'national'){
+    if(p.kantonAbbr)              wappenCode = p.kantonAbbr.toLowerCase();
+    else if(r.canton)             wappenCode = KANTON_CODE[r.canton] || null;
+  }
 
   const km   = r.distanceTagKm
     ? (Math.round(r.distanceTagKm*10)/10)+' km'
@@ -900,7 +921,7 @@ function cardHtml(r){
     \${attr}
     <div class="rc-overlay"></div>
     <div class="rc-content">
-      \${wegweiserHtml(p.num, p.type, r.sac)}
+      \${wegweiserHtml(p.num, p.type, r.sac, wappenCode)}
       <div class="rc-name">\${esc(p.displayName)}</div>
       \${subLine ? \`<div class="rc-sub">\${esc(subLine)}</div>\` : ''}
     </div>
@@ -1006,7 +1027,7 @@ function openDrawer(r) {
     <div class="drawer-map-wrap">
       <div id="drawer-map" class="drawer-map"></div>
       <button class="drawer-close" onclick="closeDrawer()" aria-label="Schliessen">✕</button>
-      \${dp.num ? \`<div style="position:absolute;bottom:14px;left:14px;z-index:500">\${wegweiserHtml(dp.num,dp.type,r.sac)}</div>\` : ''}
+      \${dp.num ? \`<div style="position:absolute;bottom:14px;left:14px;z-index:500">\${wegweiserHtml(dp.num,dp.type,r.sac,dp.type!=='national'?(dp.kantonAbbr?dp.kantonAbbr.toLowerCase():(KANTON_CODE[r.canton]||null)):null)}</div>\` : ''}
     </div>
     <div class="drawer-body">
       <div class="drawer-title">\${dp.displayName || r.name}</div>
