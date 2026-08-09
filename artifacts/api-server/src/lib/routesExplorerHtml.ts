@@ -402,6 +402,15 @@ a{color:var(--red)!important;text-decoration:none}
   text-decoration:none;
 }
 .drawer-cta:hover{background:#b30000}
+.drawer-close-bottom{
+  display:none;width:100%;margin-top:12px;
+  padding:13px;background:#f0eeeb;border:none;border-radius:12px;
+  font-size:15px !important;font-weight:700 !important;color:#333 !important;
+  cursor:pointer;
+}
+@media(max-width:600px){
+  .drawer-close-bottom{display:block}
+}
 .route-card{cursor:pointer}
 
 /* ── SPINNER / EMPTY ── */
@@ -764,16 +773,16 @@ function parseRoute(name, ref, network){
   // Führende Nummer aus Name entfernen → rest
   let rest = name;
   // K-Route: "K4 AG Name…"
-  let m = /^K\d+\s+[A-Z]{2}\s+(.+)$/.exec(name);
-  if(m){ rest = m[1]; if(!num) num = (name.match(/^K(\d+)/)||[])[1]||''; if(!type) type='kantonal'; }
+  let m = /^K\\d+\\s+[A-Z]{2}\\s+(.+)$/.exec(name);
+  if(m){ rest = m[1]; if(!num) num = (name.match(/^K(\\d+)/)||[])[1]||''; if(!type) type='kantonal'; }
   else {
     // Nummerierte Route: "3 Name…"
-    m = /^(\d+)\s+(.+)$/.exec(name);
+    m = /^(\\d+)\\s+(.+)$/.exec(name);
     if(m){ rest = m[2]; if(!num) { const n=+m[1]; num=String(n); if(!type) type=n<=9?'national':n<=99?'regional':'lokal'; } }
   }
 
   // Etappe: "Name Etappe X Von - Bis"
-  m = /^(.*?)\s+Etappe\s+(\d+)\s+(.+)$/i.exec(rest);
+  m = /^(.*?)\\s+Etappe\\s+(\\d+)\\s+(.+)$/i.exec(rest);
   if(m){
     const fromTo = m[3].trim();
     // fromTo = "Trogen - Appenzell" oder "Trogen – Appenzell"
@@ -781,7 +790,7 @@ function parseRoute(name, ref, network){
   }
 
   // Kein Etappe → Von/Bis nach erstem " - " oder " – " mit Leerzeichen
-  m = /^(.+?)\s{1,2}[-–]\s{1,2}(.+)$/.exec(rest);
+  m = /^(.+?)\\s{1,2}[-–]\\s{1,2}(.+)$/.exec(rest);
   if(m){
     const displayName = m[1].trim();
     const vonBis      = displayName + ' – ' + m[2].trim();
@@ -793,7 +802,7 @@ function parseRoute(name, ref, network){
 
 function sacArrowClass(sac){
   if(!sac||sac==='unknown') return 'sac-none';
-  const m=/T\s*([1-6])/i.exec(sac); if(!m) return 'sac-none';
+  const m=/T\\s*([1-6])/i.exec(sac); if(!m) return 'sac-none';
   return 'sac-t'+m[1];
 }
 function typLabel(type){
@@ -821,8 +830,8 @@ function wegweiserHtml(num, type, sac){
 
 function sacBadge(sac){
   if(!sac||sac==='unknown') return '';
-  const m=/T\s*([1-6])/i.exec(sac); if(!m) return '';
-  return \`<span class="badge b-sac">SAC \${sac.replace(/\s+/g,'')}</span>\`;
+  const m=/T\\s*([1-6])/i.exec(sac); if(!m) return '';
+  return \`<span class="badge b-sac">SAC \${sac.replace(/\\s+/g,'')}</span>\`;
 }
 function seasonBadge(s){
   if(!s) return '';
@@ -866,7 +875,7 @@ function cardHtml(r){
   const zeit = fmtTime(r.minutes);
   const seas = seasonLabel(r.season);
 
-  const statsArr = [r.sac&&r.sac!=='unknown'?r.sac.replace(/\s+/g,''):'', km, hm, zeit, seas].filter(Boolean);
+  const statsArr = [r.sac&&r.sac!=='unknown'?r.sac.replace(/\\s+/g,''):'', km, hm, zeit, seas].filter(Boolean);
   const statsLine = statsArr.join(' · ');
 
   // Subline: Etappe + vonBis
@@ -1016,6 +1025,7 @@ function openDrawer(r) {
       <a class="drawer-cta" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">
         Diese Route in der App erleben →
       </a>
+      <button class="drawer-close-bottom" onclick="closeDrawer()">✕ Schliessen</button>
     </div>\`;
 
   overlay.classList.add('open');
