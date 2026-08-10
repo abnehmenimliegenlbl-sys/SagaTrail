@@ -1883,6 +1883,21 @@ router.post("/admin/partner-leads/bulk-set-routes", async (req, res): Promise<vo
   res.json({ ok, total: updates.length });
 });
 
+// POST /admin/partner-leads/bulk-delete — mehrere Leads per ID-Liste löschen
+router.post("/admin/partner-leads/bulk-delete", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const ids: string[] = req.body?.ids ?? [];
+  if (!ids.length) { res.status(400).json({ error: "ids fehlt" }); return; }
+  let ok = 0;
+  for (const id of ids) {
+    try {
+      await db.delete(partnerLeadsTable).where(eq(partnerLeadsTable.id, id)).execute();
+      ok++;
+    } catch { /* skip */ }
+  }
+  res.json({ ok, total: ids.length });
+});
+
 // POST /admin/partner-leads/wp-book-all — alle Preview-Leads in WP einbuchen (Batch)
 router.post("/admin/partner-leads/wp-book-all", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
