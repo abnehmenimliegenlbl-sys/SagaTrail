@@ -1835,9 +1835,10 @@ router.post("/admin/partner-leads/assign-routes", async (req, res): Promise<void
           if (d < minDist) { minDist = d; nearest = r; }
         }
 
-        // 5) Lead updaten
+        // 5) Lead updaten (lat/lng + route + typ normalisieren)
+        const typLabel = kategorie.charAt(0).toUpperCase() + kategorie.slice(1).toLowerCase();
         await db.update(partnerLeadsTable)
-          .set({ lat: jhLat, lng: jhLng, route: nearest.name })
+          .set({ lat: jhLat, lng: jhLng, route: nearest.name, typ: typLabel })
           .where(eq(partnerLeadsTable.id, lead.id))
           .execute();
 
@@ -1868,11 +1869,12 @@ router.post("/admin/partner-leads/bulk-set-routes", async (req, res): Promise<vo
       const set: Record<string, unknown> = { route: u.route };
       if (u.lat != null) set.lat = u.lat;
       if (u.lng != null) set.lng = u.lng;
-      const result = await db.execute(sql`
+      await db.execute(sql`
         UPDATE partner_leads SET
           route = ${u.route},
           lat   = COALESCE(${u.lat ?? null}, lat),
-          lng   = COALESCE(${u.lng ?? null}, lng)
+          lng   = COALESCE(${u.lng ?? null}, lng),
+          typ   = COALESCE(${(u as any).typ ?? null}, typ)
         WHERE email = ${u.email}
       `);
       ok++;

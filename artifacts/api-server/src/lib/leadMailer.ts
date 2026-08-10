@@ -123,7 +123,10 @@ export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
     id:      r.id,
     name:    r.name,        email:   r.email    ?? "",
     kanton:  r.kanton,      sprache: r.sprache,
-    route:   r.route,       typ:     r.typ,
+    route:   r.route ?? "",
+    typ:     r.kategorie
+      ? r.kategorie.charAt(0).toUpperCase() + r.kategorie.slice(1).toLowerCase()
+      : (r.typ ?? ""),
     satz:    r.satz    ?? "",
     adresse: r.adresse ?? "", telefon: r.telefon ?? "", website: r.website ?? "",
   }));
