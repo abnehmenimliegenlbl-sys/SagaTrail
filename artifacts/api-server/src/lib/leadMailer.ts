@@ -7,7 +7,7 @@
 import nodemailer from "nodemailer";
 import { randomUUID, createHmac } from "node:crypto";
 import { db, partnerEmailLogTable, partnerEmailBlocklistTable, partnerLeadsTable } from "@workspace/db";
-import { eq, and, ilike, inArray } from "drizzle-orm";
+import { eq, and, ilike, inArray, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 // ─── Typen ────────────────────────────────────────────────────────────────────
@@ -106,8 +106,11 @@ export function typToKategorie(typ: string): string {
 // ─── PostgreSQL: Leads laden + upserten ──────────────────────────────────────
 
 export async function fetchLeadsFromDb(filter: LeadFilter): Promise<Lead[]> {
-  const conds: ReturnType<typeof eq>[] = [inArray(partnerLeadsTable.quelle, ["leads", "osm"]) as any];
-  if (filter.typ)     conds.push(eq(partnerLeadsTable.typ,     filter.typ)     as any);
+  const conds: ReturnType<typeof eq>[] = [inArray(partnerLeadsTable.quelle, ["leads", "osm", "manual"]) as any];
+  if (filter.typ)     conds.push(or(
+    ilike(partnerLeadsTable.typ,      filter.typ),
+    ilike(partnerLeadsTable.kategorie, filter.typ),
+  ) as any);
   if (filter.sprache) conds.push(ilike(partnerLeadsTable.sprache, filter.sprache) as any);
   if (!filter.kantone?.length && filter.kanton)
     conds.push(eq(partnerLeadsTable.kanton, filter.kanton) as any);

@@ -1760,6 +1760,127 @@ router.post("/admin/partner-leads/pg-save-all", async (req, res): Promise<void> 
   }
 });
 
+// POST /admin/partner-leads/assign-routes — nächste Route per Nominatim + Haversine zuweisen
+router.post("/admin/partner-leads/assign-routes", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { kategorie = "jugendherberge", overwrite = false } = req.body ?? {};
+
+  function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  try {
+    // 1) Alle passenden Leads laden
+    let leads = await db.select({
+      id: partnerLeadsTable.id,
+      name: partnerLeadsTable.name,
+      adresse: partnerLeadsTable.adresse,
+      kanton: partnerLeadsTable.kanton,
+      route: partnerLeadsTable.route,
+    }).from(partnerLeadsTable)
+      .where(ilike(partnerLeadsTable.kategorie, kategorie));
+
+    if (!overwrite) leads = leads.filter((l) => !l.route);
+
+    // 2) Alle Routen mit Koordinaten laden
+    const routes = await db.select({
+      id: externalRoutesTable.id,
+      name: externalRoutesTable.name,
+      canton: externalRoutesTable.canton,
+      lat: externalRoutesTable.lat,
+      lng: externalRoutesTable.lng,
+    }).from(externalRoutesTable)
+      .where(sql`${externalRoutesTable.lat} IS NOT NULL AND ${externalRoutesTable.lat} != 0`);
+
+    req.log.info({ leads: leads.length, routes: routes.length }, "assign-routes: start");
+
+    const results: Array<{ id: string; name: string; route: string; distKm: number; ok: boolean }> = [];
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    for (const lead of leads) {
+      try {
+        // 3) Nominatim-Geocoding (full address, then postcode+city fallback)
+        const adresse = lead.adresse ?? "";
+        const queries: string[] = [adresse + ", Switzerland"];
+        // Fallback: extract "PLZ City" from last comma-part of address
+        const lastPart = adresse.split(",").at(-1)?.trim() ?? "";
+        if (lastPart && lastPart !== adresse) queries.push(lastPart + ", Switzerland");
+        // Fallback: just kanton name
+        if (lead.kanton) queries.push(lead.kanton + ", Switzerland");
+
+        let geoJson: Array<{ lat: string; lon: string }> = [];
+        for (const q of queries) {
+          const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+          const geoResp = await fetch(geoUrl, { headers: { "User-Agent": "SagaTrail/1.0 contact@sagatrail.ch" } });
+          geoJson = await geoResp.json() as Array<{ lat: string; lon: string }>;
+          await sleep(1100);
+          if (geoJson.length) break;
+        }
+
+        if (!geoJson.length) { results.push({ id: lead.id, name: lead.name, route: "", distKm: -1, ok: false }); continue; }
+        const jhLat = parseFloat(geoJson[0].lat);
+        const jhLng = parseFloat(geoJson[0].lon);
+
+        // 4) Nächste Route suchen (Kanton zuerst, dann global)
+        const inKanton = routes.filter((r) => r.canton === lead.kanton);
+        const pool = inKanton.length ? inKanton : routes;
+        let nearest = pool[0];
+        let minDist = haversineKm(jhLat, jhLng, nearest.lat as number, nearest.lng as number);
+        for (const r of pool) {
+          const d = haversineKm(jhLat, jhLng, r.lat as number, r.lng as number);
+          if (d < minDist) { minDist = d; nearest = r; }
+        }
+
+        // 5) Lead updaten
+        await db.update(partnerLeadsTable)
+          .set({ lat: jhLat, lng: jhLng, route: nearest.name })
+          .where(eq(partnerLeadsTable.id, lead.id))
+          .execute();
+
+        results.push({ id: lead.id, name: lead.name, route: nearest.name, distKm: Math.round(minDist * 10) / 10, ok: true });
+      } catch (err) {
+        results.push({ id: lead.id, name: lead.name, route: "", distKm: -1, ok: false });
+      }
+    }
+
+    const ok = results.filter((r) => r.ok).length;
+    req.log.info({ ok, total: leads.length }, "assign-routes: done");
+    res.json({ ok, total: leads.length, results });
+  } catch (err) {
+    res.status(500).json({ error: (err instanceof Error ? err.message : "DB-Fehler") });
+  }
+});
+
+// POST /admin/partner-leads/bulk-set-routes — Route+Koordinaten direkt per E-Mail-Liste setzen
+router.post("/admin/partner-leads/bulk-set-routes", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  // Body: { updates: Array<{ email: string; route: string; lat?: number; lng?: number }> }
+  const updates = req.body?.updates as Array<{ email: string; route: string; lat?: number; lng?: number }> | undefined;
+  if (!Array.isArray(updates) || !updates.length) { res.status(400).json({ error: "updates[] fehlt" }); return; }
+  let ok = 0;
+  for (const u of updates) {
+    if (!u.email || !u.route) continue;
+    try {
+      const set: Record<string, unknown> = { route: u.route };
+      if (u.lat != null) set.lat = u.lat;
+      if (u.lng != null) set.lng = u.lng;
+      const result = await db.execute(sql`
+        UPDATE partner_leads SET
+          route = ${u.route},
+          lat   = COALESCE(${u.lat ?? null}, lat),
+          lng   = COALESCE(${u.lng ?? null}, lng)
+        WHERE email = ${u.email}
+      `);
+      ok++;
+    } catch { /* skip */ }
+  }
+  res.json({ ok, total: updates.length });
+});
+
 // POST /admin/partner-leads/wp-book-all — alle Preview-Leads in WP einbuchen (Batch)
 router.post("/admin/partner-leads/wp-book-all", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
@@ -2101,7 +2222,7 @@ router.get("/admin/leads/meta", async (req, res): Promise<void> => {
   try {
     const [typenRows, kantoneRows] = await Promise.all([
       db.execute(sql`SELECT DISTINCT typ FROM partner_leads WHERE typ IS NOT NULL AND typ != '' ORDER BY typ`),
-      db.execute(sql`SELECT DISTINCT kanton FROM partner_leads WHERE quelle = 'leads' AND kanton != '' ORDER BY kanton`),
+      db.execute(sql`SELECT DISTINCT kanton FROM partner_leads WHERE quelle IN ('leads','osm','manual') AND kanton IS NOT NULL AND kanton != '' ORDER BY kanton`),
     ]);
     const typen   = (typenRows.rows   as Array<{typ: string}>).map(r => r.typ);
     const kantone = (kantoneRows.rows as Array<{kanton: string}>).map(r => r.kanton);

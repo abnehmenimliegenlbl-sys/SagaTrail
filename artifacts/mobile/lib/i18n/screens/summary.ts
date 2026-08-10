@@ -32,6 +32,7 @@ export interface SummaryStrings {
   transportPlatform: (p: string) => string;
   transportDelay: (min: number) => string;
   transportOnTime: string;
+  transportDisclaimer: string;
   planReturn: string;
   visitedPoisTitle: string;
 }
@@ -70,6 +71,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportDisclaimer: "Fahrplandaten: opendata.ch · Keine offizielle SBB-App",
     planReturn: "Mit SBB zurückreisen",
     visitedPoisTitle: "Entdeckte Orte",
   },
@@ -106,6 +108,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportDisclaimer: "Fahrplandaten: opendata.ch · Kei offizielle SBB-App",
     planReturn: "Mit de SBB zruggfahre",
     visitedPoisTitle: "Entdeckti Ort",
   },
@@ -142,6 +145,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "on time",
+    transportDisclaimer: "Schedule data: opendata.ch · Not an official SBB service",
     planReturn: "Return by SBB train",
     visitedPoisTitle: "Places discovered",
   },
@@ -178,6 +182,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Voie ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "à l'heure",
+    transportDisclaimer: "Données horaires: opendata.ch · Pas une app SBB officielle",
     planReturn: "Retourner en train SBB",
     visitedPoisTitle: "Lieux découverts",
   },
@@ -214,6 +219,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Bin. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "in orario",
+    transportDisclaimer: "Dati orari: opendata.ch · Non è un'app SBB ufficiale",
     planReturn: "Tornare in treno SBB",
     visitedPoisTitle: "Luoghi scoperti",
   },
@@ -250,6 +256,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Vía ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "puntual",
+    transportDisclaimer: "Datos horarios: opendata.ch · No es una app oficial de SBB",
     planReturn: "Volver en tren SBB",
     visitedPoisTitle: "Lugares descubiertos",
   },
@@ -286,6 +293,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "pontual",
+    transportDisclaimer: "Dados horários: opendata.ch · Não é um app oficial SBB",
     planReturn: "Voltar de trem SBB",
     visitedPoisTitle: "Lugares descobertos",
   },
@@ -322,6 +330,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `${p} 站台`,
     transportDelay: (min) => `+${min} 分钟`,
     transportOnTime: "准时",
+    transportDisclaimer: "时刻表数据: opendata.ch · 非官方SBB应用",
     planReturn: "乘SBB火车返回",
     visitedPoisTitle: "探访过的地点",
   },
@@ -358,6 +367,7 @@ const SUMMARY_STRINGS: StringsDict<SummaryStrings> = {
     transportPlatform: (p) => `Пл. ${p}`,
     transportDelay: (min) => `+${min} мин`,
     transportOnTime: "вовремя",
+    transportDisclaimer: "Данные расписания: opendata.ch · Не официальный сервис SBB",
     planReturn: "Вернуться на поезде SBB",
     visitedPoisTitle: "Открытые места",
   },

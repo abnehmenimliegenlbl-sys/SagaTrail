@@ -450,6 +450,9 @@ export default function Summary() {
                 style={{ marginTop: 8 }}
               />
             )}
+            <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 6, textAlign: "center", opacity: 0.7 }}>
+              {t.transportDisclaimer}
+            </Text>
           </View>
         )}
 

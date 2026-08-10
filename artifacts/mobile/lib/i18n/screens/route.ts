@@ -126,6 +126,7 @@ export interface RouteStrings {
   transportPlatform: (p: string) => string;
   transportDelay: (min: number) => string;
   transportOnTime: string;
+  transportDisclaimer: string;
   transportAnreiseLive: string;
   transportArrivingAt: (name: string) => string;
   reverseRoute: string;
@@ -286,6 +287,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportDisclaimer: "Fahrplandaten: opendata.ch · Keine offizielle SBB-App",
     transportAnreiseLive: "SBB live am Start",
     transportArrivingAt: (name) => `Ankunft in ${name}`,
     reverseRoute: "Strecke umkehren",
@@ -444,6 +446,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Gl. ${p}`,
     transportDelay: (min) => `+${min} Min.`,
     transportOnTime: "pünktlich",
+    transportDisclaimer: "Fahrplandaten: opendata.ch · Kei offizielle SBB-App",
     transportAnreiseLive: "SBB live am Schtart",
     transportArrivingAt: (name) => `Aakunft i ${name}`,
     reverseRoute: "Strecke umcheere",
@@ -602,6 +605,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "on time",
+    transportDisclaimer: "Schedule data: opendata.ch · Not an official SBB service",
     transportAnreiseLive: "Live arrivals at trailhead",
     transportArrivingAt: (name) => `Arriving at ${name}`,
     reverseRoute: "Reverse route",
@@ -760,6 +764,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Voie ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "à l'heure",
+    transportDisclaimer: "Données horaires: opendata.ch · Pas une app SBB officielle",
     transportAnreiseLive: "SBB live au départ",
     transportArrivingAt: (name) => `Arrivée à ${name}`,
     reverseRoute: "Inverser l'itinéraire",
@@ -918,6 +923,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Bin. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "in orario",
+    transportDisclaimer: "Dati orari: opendata.ch · Non è un'app SBB ufficiale",
     transportAnreiseLive: "SBB live alla partenza",
     transportArrivingAt: (name) => `Arrivo a ${name}`,
     reverseRoute: "Inverti percorso",
@@ -1076,6 +1082,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Vía ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "puntual",
+    transportDisclaimer: "Datos horarios: opendata.ch · No es una app oficial de SBB",
     transportAnreiseLive: "SBB live en el inicio",
     transportArrivingAt: (name) => `Llegada a ${name}`,
     reverseRoute: "Invertir recorrido",
@@ -1234,6 +1241,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Pl. ${p}`,
     transportDelay: (min) => `+${min} min`,
     transportOnTime: "pontual",
+    transportDisclaimer: "Dados horários: opendata.ch · Não é um app oficial SBB",
     transportAnreiseLive: "SBB live na partida",
     transportArrivingAt: (name) => `Chegada em ${name}`,
     reverseRoute: "Inverter rota",
@@ -1384,6 +1392,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `${p} 站台`,
     transportDelay: (min) => `+${min} 分钟`,
     transportOnTime: "准时",
+    transportDisclaimer: "时刻表数据: opendata.ch · 非官方SBB应用",
     transportAnreiseLive: "出发站实时到达",
     transportArrivingAt: (name) => `到达${name}`,
     reverseRoute: "反转路线",
@@ -1542,6 +1551,7 @@ const ROUTE_STRINGS: StringsDict<RouteStrings> = {
     transportPlatform: (p) => `Пл. ${p}`,
     transportDelay: (min) => `+${min} мин`,
     transportOnTime: "вовремя",
+    transportDisclaimer: "Данные расписания: opendata.ch · Не официальный сервис SBB",
     transportAnreiseLive: "SBB у стартовой точки",
     transportArrivingAt: (name) => `Прибытие к ${name}`,
     reverseRoute: "Обратный маршрут",
