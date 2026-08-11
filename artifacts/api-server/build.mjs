@@ -127,7 +127,6 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
   // Copy runtime data files to dist (loaded via createRequire / readFileSync at runtime)
   const srcLib = path.resolve(artifactDir, "src/lib");
   await Promise.all([
-    copyFile(path.join(srcLib, "curatedSagasPakete.json"), path.join(distDir, "curatedSagasPakete.json")),
     copyFile(path.join(srcLib, "curatedSagas.json"),       path.join(distDir, "curatedSagas.json")),
     copyFile(path.join(srcLib, "admin-dashboard.html"),    path.join(distDir, "admin-dashboard.html")),
   ]);

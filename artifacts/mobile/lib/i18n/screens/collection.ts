@@ -27,6 +27,12 @@ export interface CollectionStrings {
   pointsLabel: string;
   nextRankProgress: (remaining: number, nextRank: string) => string;
   maxRankReached: string;
+  diaryDetailChapters: string;
+  diaryDetailPois: string;
+  diaryDetailSteps: string;
+  diaryDetailViewRoute: string;
+  diaryDetailViewSaga: string;
+  diaryDetailNotFound: string;
 }
 
 const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
@@ -66,8 +72,14 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
       "SagaTrail-Legende",
     ],
     pointsLabel: "Funken",
-    nextRankProgress: (remaining, nextRank) => `Noch ${remaining} Funken bis „${nextRank}“`,
+    nextRankProgress: (remaining, nextRank) => `Noch ${remaining} Funken bis „${nextRank}"`,
     maxRankReached: "Höchster Rang erreicht!",
+    diaryDetailChapters: "Erlebte Geschichte",
+    diaryDetailPois: "Besuchte Orte",
+    diaryDetailSteps: "Schritte",
+    diaryDetailViewRoute: "Route anzeigen",
+    diaryDetailViewSaga: "Sage anzeigen",
+    diaryDetailNotFound: "Eintrag nicht gefunden.",
   },
   gsw: {
     eyebrow: "Dini Reis",
@@ -105,8 +117,14 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
       "SagaTrail-Legändi",
     ],
     pointsLabel: "Funke",
-    nextRankProgress: (remaining, nextRank) => `No ${remaining} Funke bis „${nextRank}“`,
+    nextRankProgress: (remaining, nextRank) => `No ${remaining} Funke bis „${nextRank}"`,
     maxRankReached: "Höchschte Rang erreicht!",
+    diaryDetailChapters: "Erläbti Gschicht",
+    diaryDetailPois: "Bsuechi Ort",
+    diaryDetailSteps: "Schrittli",
+    diaryDetailViewRoute: "Route aazeige",
+    diaryDetailViewSaga: "Sag aazeige",
+    diaryDetailNotFound: "Iitrag nöd gfunde.",
   },
   en: {
     eyebrow: "Your Journey",
@@ -146,6 +164,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Sparks",
     nextRankProgress: (remaining, nextRank) => `${remaining} sparks to reach "${nextRank}"`,
     maxRankReached: "Highest rank reached!",
+    diaryDetailChapters: "Story experienced",
+    diaryDetailPois: "Places visited",
+    diaryDetailSteps: "Steps",
+    diaryDetailViewRoute: "View route",
+    diaryDetailViewSaga: "View saga",
+    diaryDetailNotFound: "Entry not found.",
   },
   fr: {
     eyebrow: "Ton voyage",
@@ -185,6 +209,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Étincelles",
     nextRankProgress: (remaining, nextRank) => `Encore ${remaining} étincelles pour « ${nextRank} »`,
     maxRankReached: "Rang maximal atteint !",
+    diaryDetailChapters: "Histoire vécue",
+    diaryDetailPois: "Lieux visités",
+    diaryDetailSteps: "Pas",
+    diaryDetailViewRoute: "Voir l'itinéraire",
+    diaryDetailViewSaga: "Voir la légende",
+    diaryDetailNotFound: "Entrée introuvable.",
   },
   it: {
     eyebrow: "Il tuo viaggio",
@@ -224,6 +254,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Scintille",
     nextRankProgress: (remaining, nextRank) => `Ancora ${remaining} scintille per "${nextRank}"`,
     maxRankReached: "Rango massimo raggiunto!",
+    diaryDetailChapters: "Storia vissuta",
+    diaryDetailPois: "Luoghi visitati",
+    diaryDetailSteps: "Passi",
+    diaryDetailViewRoute: "Vedi percorso",
+    diaryDetailViewSaga: "Vedi leggenda",
+    diaryDetailNotFound: "Voce non trovata.",
   },
   es: {
     eyebrow: "Tu viaje",
@@ -263,6 +299,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Chispas",
     nextRankProgress: (remaining, nextRank) => `Aún faltan ${remaining} chispas para "${nextRank}"`,
     maxRankReached: "¡Rango máximo alcanzado!",
+    diaryDetailChapters: "Historia vivida",
+    diaryDetailPois: "Lugares visitados",
+    diaryDetailSteps: "Pasos",
+    diaryDetailViewRoute: "Ver ruta",
+    diaryDetailViewSaga: "Ver leyenda",
+    diaryDetailNotFound: "Entrada no encontrada.",
   },
   pt: {
     eyebrow: "Sua jornada",
@@ -302,6 +344,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Faíscas",
     nextRankProgress: (remaining, nextRank) => `Faltam ${remaining} faíscas para "${nextRank}"`,
     maxRankReached: "Ranque máximo alcançado!",
+    diaryDetailChapters: "História vivida",
+    diaryDetailPois: "Lugares visitados",
+    diaryDetailSteps: "Passos",
+    diaryDetailViewRoute: "Ver rota",
+    diaryDetailViewSaga: "Ver lenda",
+    diaryDetailNotFound: "Entrada não encontrada.",
   },
   zh: {
     eyebrow: "你的旅程",
@@ -341,6 +389,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "火花",
     nextRankProgress: (remaining, nextRank) => `还差 ${remaining} 火花即可晋升为"${nextRank}"`,
     maxRankReached: "已达到最高等级！",
+    diaryDetailChapters: "经历的故事",
+    diaryDetailPois: "到访地点",
+    diaryDetailSteps: "步数",
+    diaryDetailViewRoute: "查看路线",
+    diaryDetailViewSaga: "查看传说",
+    diaryDetailNotFound: "未找到该记录。",
   },
   ru: {
     eyebrow: "Твоё путешествие",
@@ -380,6 +434,12 @@ const COLLECTION_STRINGS: StringsDict<CollectionStrings> = {
     pointsLabel: "Искры",
     nextRankProgress: (remaining, nextRank) => `Ещё ${remaining} искр до ранга «${nextRank}»`,
     maxRankReached: "Достигнут максимальный ранг!",
+    diaryDetailChapters: "Пройденная история",
+    diaryDetailPois: "Посещённые места",
+    diaryDetailSteps: "Шаги",
+    diaryDetailViewRoute: "Смотреть маршрут",
+    diaryDetailViewSaga: "Смотреть легенду",
+    diaryDetailNotFound: "Запись не найдена.",
   },
 };
 

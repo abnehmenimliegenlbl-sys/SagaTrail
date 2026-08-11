@@ -482,11 +482,7 @@ export default function Sammlung() {
                     key={hike.id}
                     onPress={() => {
                       hapticSelection();
-                      if (hike.routeId) {
-                        router.push(`/route/${encodeURIComponent(hike.routeId)}`);
-                      } else {
-                        router.push(`/saga/${encodeURIComponent(hike.sagaId)}`);
-                      }
+                      router.push(`/hike-history/${encodeURIComponent(hike.id)}`);
                     }}
                     style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
                     accessibilityRole="button"

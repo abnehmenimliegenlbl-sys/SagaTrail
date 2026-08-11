@@ -1,10 +1,7 @@
 import { db, catalogRoutesTable, catalogSagasTable } from "@workspace/db";
 import { CURATED_SAGAS } from "./curatedSagas";
-import { PACKAGE_SAGAS } from "./curatedSagasPakete";
 import { notInArray, sql } from "drizzle-orm";
 import { logger } from "./logger";
-
-const ALL_SAGAS = [...CURATED_SAGAS, ...PACKAGE_SAGAS];
 
 /**
  * Befuellt den Katalog idempotent beim Serverstart. Der Katalog liefert nur noch
@@ -15,7 +12,7 @@ const ALL_SAGAS = [...CURATED_SAGAS, ...PACKAGE_SAGAS];
 export async function seedCatalog(): Promise<void> {
   await db
     .insert(catalogSagasTable)
-    .values(ALL_SAGAS)
+    .values(CURATED_SAGAS)
     .onConflictDoUpdate({
       target: catalogSagasTable.id,
       set: {
@@ -42,7 +39,7 @@ export async function seedCatalog(): Promise<void> {
   await db.delete(catalogSagasTable).where(
     notInArray(
       catalogSagasTable.id,
-      ALL_SAGAS.map((s) => s.id),
+      CURATED_SAGAS.map((s) => s.id),
     ),
   );
 
@@ -51,5 +48,5 @@ export async function seedCatalog(): Promise<void> {
   // mehr aus einem gebuendelten Katalog-Seed.
   await db.delete(catalogRoutesTable);
 
-  logger.info({ sagas: ALL_SAGAS.length, standalone: CURATED_SAGAS.length, pakete: PACKAGE_SAGAS.length }, "Katalog geseedet");
+  logger.info({ sagas: CURATED_SAGAS.length }, "Katalog geseedet");
 }

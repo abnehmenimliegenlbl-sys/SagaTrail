@@ -568,6 +568,10 @@ export default function LiveHike() {
   /** Zaehler aufeinanderfolgender GPS-Fixes ausserhalb der Route. */
   const offRouteCountRef = useRef(0);
   const lastNarratedRef = useRef<number>(-1);
+  /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
+   *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
+   *  async Enrichment) den Kapitel-Effekt erneut ausloesen. */
+  const lastDecisionTriggeredRef = useRef<number>(-1);
   // true waehrend eine Navigationsansage laeuft und die Erzaehlung pausiert ist.
   const navInterruptingRef = useRef(false);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
@@ -2199,7 +2203,9 @@ export default function LiveHike() {
         );
       }
     }
-    if (ch.isDecisionPoint && ch.chosenOptionIndex == null) {
+    if (ch.isDecisionPoint && ch.chosenOptionIndex == null &&
+        lastDecisionTriggeredRef.current !== currentIndex) {
+      lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
     }
   }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
