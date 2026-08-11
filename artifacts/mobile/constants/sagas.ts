@@ -60,7 +60,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "tell",
+  "id": "wilhelm-tell-apfelschuss-und-tellensprung",
   "title": "Wilhelm Tell – Apfelschuss und Tellensprung",
   "canton": "Uri",
   "coreMotif": "Freiheit und Auflehnung",
@@ -114,7 +114,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "gallus",
+  "id": "gallus-und-der-bar-an-der-steinach",
   "title": "Gallus und der Bär an der Steinach",
   "canton": "St. Gallen",
   "coreMotif": "Heiligenlegende und wilde Natur",
@@ -168,7 +168,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "teufelskeller",
+  "id": "der-ausgebrochene-knochen-vor-gericht-aarg",
   "title": "Der Teufelskeller bei Baden",
   "canton": "Aargau",
   "coreMotif": "Teufelswerk in der Landschaft",
@@ -276,7 +276,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "wildesheer",
+  "id": "der-berggeist",
   "title": "Das Wilde Heer über dem Säntis",
   "canton": "Appenzell Ausserrhoden",
   "coreMotif": "Geisterzug und Warnung",
@@ -330,7 +330,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "sennentuntschi",
+  "id": "die-brennende-alp-meglisalp",
   "title": "Das Sennentuntschi im Alpstein",
   "canton": "Appenzell Innerrhoden",
   "coreMotif": "Erschaffenes Wesen und Hybris",
@@ -384,7 +384,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "raegemaennli",
+  "id": "die-quellen-der-schafmatt",
   "title": "S'Rägemännli von Zunzgen",
   "canton": "Basel-Landschaft",
   "coreMotif": "Warnendes Geisterwesen",
@@ -492,7 +492,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "zaehringerbaer",
+  "id": "ochsen-zeigen-die-heilige-statte",
   "title": "Die Bärensage von Bern",
   "canton": "Bern",
   "coreMotif": "Stadtgründung und Namensgebung",
@@ -546,7 +546,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "schwarzsee",
+  "id": "die-tarnkappe",
   "title": "Die Sage vom Schwarzsee",
   "canton": "Freiburg",
   "coreMotif": "Verfluchtes Dorf und Strafe",
@@ -600,7 +600,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "escalade",
+  "id": "die-heldentat-der-mere-royaume-escalade-1602",
   "title": "Die Marmite der Mère Royaume",
   "canton": "Genf",
   "coreMotif": "Verteidigung und Mutprobe",
@@ -654,7 +654,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "fridolin",
+  "id": "vrenelis-gartli",
   "title": "Der heilige Fridolin und der tote Bruder",
   "canton": "Glarus",
   "coreMotif": "Wunder und Gerechtigkeit",
@@ -708,7 +708,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "flimserbergsturz",
+  "id": "die-fenggin-madrisa",
   "title": "Die Sage vom Flimser Bergsturz",
   "canton": "Graubünden",
   "coreMotif": "Strafe und Landschaftsentstehung",
@@ -762,7 +762,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "rochedor",
+  "id": "das-irrlicht-vom-moor-von-les-pontins",
   "title": "Die Roche d'Or bei Réclère",
   "canton": "Jura",
   "coreMotif": "Verborgener Schatz",
@@ -816,7 +816,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "pilatusdrache",
+  "id": "wie-die-kastanien-am-vierwaldstattersee-heimisch-wurden",
   "title": "Der Drache vom Pilatus",
   "canton": "Luzern",
   "coreMotif": "Naturwunder und Wächterwesen",
@@ -870,7 +870,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "vouivre",
+  "id": "la-vouivre-am-neuenburgersee",
   "title": "La Vouivre am Neuenburgersee",
   "canton": "Neuenburg",
   "coreMotif": "Wächterschlange und kostbares Auge",
@@ -924,7 +924,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "winkelried",
+  "id": "arnold-von-winkelried-bei-sempach",
   "title": "Arnold von Winkelried bei Sempach",
   "canton": "Nidwalden",
   "coreMotif": "Selbstopfer für die Gemeinschaft",
@@ -978,7 +978,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "bruderklaus",
+  "id": "die-ochsen-auf-dem-acker-zu-melchtal",
   "title": "Bruder Klaus und die Vision im Ranft",
   "canton": "Obwalden",
   "coreMotif": "Vision und Frieden",
@@ -1032,7 +1032,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "rheinfallnixe",
+  "id": "die-grundung-des-klosters-rheinau",
   "title": "Die Nixe im Rheinfall",
   "canton": "Schaffhausen",
   "coreMotif": "Wasserwesen und verborgener Schatz",
@@ -1086,7 +1086,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "mythenriesen",
+  "id": "der-bund-in-rutli",
   "title": "Die versteinerten Riesen der Mythen",
   "canton": "Schwyz",
   "coreMotif": "Verwandlung und Strafe",
@@ -1140,7 +1140,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "ursus",
+  "id": "die-rose-von-mariastein",
   "title": "Der heilige Ursus, der kopflose Legionär",
   "canton": "Solothurn",
   "coreMotif": "Standhaftigkeit und Wunder",
@@ -1194,7 +1194,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "pontedeisalti",
+  "id": "die-geisterbrucke-von-lavertezzo",
   "title": "Der Teufel und der Ponte dei Salti",
   "canton": "Tessin",
   "coreMotif": "Pakt mit dem Teufel",
@@ -1248,61 +1248,275 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "ottenberg",
-  "title": "Die Sage vom Ottenberg",
+  "id": "das-schlossfraulein-auf-der-festi-mullheim",
+  "title": "Das Schlossfräulein auf der Festi",
   "canton": "Thurgau",
-  "coreMotif": "Verwunschenes Schloss",
-  "bildmotiv": "Ottenberg Schlossruine",
-  "mood": "Nebelverhangen, geheimnisvoll",
-  "summary": "Am Ottenberg bei Weinfelden, wo einst die Burg Alt-Weinfelden stand, so erzählen die alten Thurgauer Sagen, soll in Vollmondnächten das Klirren von Rüstungen und der ferne Klang eines Hifthorns zu hören sein – Überreste eines verwunschenen Rittergeschlechts, das für seinen Hochmut nie zur Ruhe kommt und über die Hänge des Hügels zieht.",
+  "coreMotif": "Verbotene Liebe und tragisches Schicksal",
+  "bildmotiv": "Liebespaar ertrinkt Rhein Wellengrab Schloss Gottlieben",
+  "mood": "Tragisch und wehmütig",
+  "summary": "Das Schlossfräulein auf der Festi (Müllheim)Die „Festi“ oberhalb von Müllheim ist ein bewaldeter Hügel, auf dem einst eine stolze mittelalterliche Burg stand. Heute sind nur noch spärliche Mauerreste zu sehen, doch die Sage berichtet von einer unglücklichen Wächterin.Die Handlung: Vor Hunderten von Jahren lebte auf der Burg die Tochter des Schlossherrn. Sie war bekannt für ihre aussergewöhnliche Schönheit, aber auch für ihren unerbittlichen Hochmut. Sie wies jeden rechtschaffenen Freier aus der Region ab, weil keiner ihren Ansprüchen an Reichtum und Macht genügte. Als die Burg schliesslich in den Schwabenkriegen gestürmt und bis auf die Grundmauern niedergebrannt wurde, weigerte sie sich, ihre Schatzkammer zu verlassen, und kam in den Flammen um.Der Spuk: Da ihr Herz an den irdischen Gütern hing, fand ihre Seele im Jenseits keine Ruhe. Seither wandelt sie als weiss gekleidetes Schlossfräulein durch die bewaldeten Ruinenreste der Festi. Sie erscheint meist in lauen Vollmondnächten, sitzt auf einem bemoosten Quaderstein und kämmt ihr langes, goldenes Haar mit einem silbernen Kamm, während zu ihren Füssen eine schwere eiserne Kiste voller Goldmünzen steht.Das Versagen: Ein junger Knecht aus Müllheim sammelte am Fusse des Hügels Pilze, als er das Fräulein erblickte. Sie winkte ihn stumm herbei, deutete auf die Truhe und sprach mit klagender Stimme: „Nimm diesen goldenen Schlüssel aus dem Maul der schwarzen Natter, die auf meinem Schoss schläft, und schliesse die Truhe auf. Dann gehört das Gold dir, und ich bin endlich erlöst.“ Der Knecht trat mutig vor, doch als er die Hand ausstreckte, erwachte die Schlange, zischte wild und blies ihm feurigen Atem entgegen. Den Knecht verliess der Mut, er prallte zurück und rief: „Gott steh mir bei!“ Im selben Moment gab es einen lauten Donnerschlag, die Gestalt verschwand mit einem markerschütternden Schrei und der Knecht fand sich ohnmächtig im Dornengebüsch wieder.",
   "summaries": {
     "gsw": {
-      "text": "Am Ottenberg bi Wyfelde, wo einisch d Burg Alt-Wyfelde gstande isch, söll mer i Vollmondnächt s Chlirre vo Rüstige und en fernä Hornton ghöre – Reschte vomene verwünschte Rittergschlächt.",
-      "reviewEmpfohlen": true
-    },
-    "de": {
-      "text": "Am Ottenberg bei Weinfelden, wo einst die Burg Alt-Weinfelden stand, so erzählen die alten Thurgauer Sagen, soll in Vollmondnächten das Klirren von Rüstungen und der ferne Klang eines Hifthorns zu hören sein – Überreste eines verwunschenen Rittergeschlechts, das für seinen Hochmut nie zur Ruhe kommt und über die Hänge des Hügels zieht.",
+      "title": "S Schlossfräulein uf dr Festi",
+      "text": "Uf dr bewaldete Festi oberhalb vo Mülheim spukt sit Johrhunderte es stoltis Schlossfräulein – wiiss gchlidet, mit guldenem Hoor und silberem Chamm, gfange zwüsche Überfluss und Verdammnis. In laue Vollmondnächt sitzt si uf bemooste Steine nebena Chischte voller Gold und verlockt Wanderer, e guldene Schlüssel us em Mul vo ner fürspiende Schlange z'näh. Aber wär sich traut, erfährt göttlich Straf – und d'Seel vo de Riche findet nimmer Rueh. Folg de Spurä vo de Burgruine und entdeck sälber, warum mängi Schätz besser verborge bliibed.",
       "reviewEmpfohlen": false
     },
-    "fr": {
-      "text": "Sur l'Ottenberg près de Weinfelden, où se dressait jadis le château d'Alt-Weinfelden, racontent les vieilles légendes thurgoviennes, on entendrait par nuit de pleine lune le cliquetis d'armures et le son lointain d'un cor de chasse – vestiges d'une lignée de chevaliers ensorcelés qui, pour son orgueil, ne trouve jamais le repos et parcourt les pentes de la colline.",
+    "de": {
+      "title": "Das Schlossfräulein auf der Festi",
+      "text": "Auf der bewaldeten Festi oberhalb von Müllheim spukt seit Jahrhunderten ein stolzes Schlossfräulein – weiß gekleidet, mit goldenem Haar und silbernem Kamm, gefangen zwischen Überfluss und Verdammnis. In lauen Vollmondnächten sitzt sie auf bemoosten Steinen neben einer Truhe voller Gold und verlockt Wanderer, einen goldenen Schlüssel aus dem Maul einer feuerspeienden Schlange zu nehmen. Doch wer sich traut, erfährt göttliche Strafe – und die Seele der Reichen findet niemals Ruhe. Folge den Spuren der Burgruinen und entdecke selbst, warum manche Schätze besser verborgen ble",
       "reviewEmpfohlen": true
+    },
+    "fr": {
+      "title": "La Demoiselle du Château sur la Festi",
+      "text": "Sur la Festi boisée au-dessus de Müllheim, une fière demoiselle du château hante depuis des siècles – vêtue de blanc, aux cheveux dorés et un peigne d'argent, piégée entre l'abondance et la damnation. Les nuits de pleine lune douces, elle s'assoit sur des pierres couvertes de mousse à côté d'un coffre rempli d'or et tente les voyageurs de prendre une clé d'or de la bouche d'un serpent cracheur de feu. Mais celui qui ose subira un châtiment divin – et l'âme des riches ne trouvera jamais la paix. Suivez les traces des ruines du château et découvrez par vous-même pourquoi certains trésors sont mieux cachés.",
+      "reviewEmpfohlen": false
     },
     "it": {
-      "text": "Sull'Ottenberg presso Weinfelden, dove un tempo sorgeva il castello di Alt-Weinfelden, raccontano le antiche leggende turgoviesi, nelle notti di luna piena si udirebbe il tintinnio di armature e il suono lontano di un corno da caccia – resti di una stirpe di cavalieri stregati che, per la loro superbia, non trova mai pace e vaga sui pendii della collina.",
-      "reviewEmpfohlen": true
+      "title": "La Damigella del Castello sulla Festi",
+      "text": "Sulla Festi boscosa sopra Müllheim, una orgogliosa damigella del castello infesta da secoli – vestita di bianco, con capelli dorati e un pettine d'argento, intrappolata tra l'abbondanza e la dannazione. Nelle notti di luna piena tiepide, siede su pietre coperte di muschio accanto a un forziere pieno d'oro e tenta i viandanti di prendere una chiave d'oro dalla bocca di un serpente che sputa fuoco. Ma chi osa sperimenterà una punizione divina – e l'anima dei ricchi non troverà mai pace. Segui le tracce delle rovine del castello e scopri tu stesso perché alcuni tesori è meglio che rimangano nascosti.",
+      "reviewEmpfohlen": false
     },
     "en": {
-      "text": "On the Ottenberg near Weinfelden, where the castle of Alt-Weinfelden once stood, the old Thurgau legends say that on full-moon nights one can hear the clatter of armour and the distant sound of a hunting horn – remnants of an accursed line of knights who, for their pride, never find rest and roam the hillside.",
+      "title": "The Castle Maiden on the Festi",
+      "text": "On the forested Festi above Müllheim, a proud castle maiden has haunted for centuries – dressed in white, with golden hair and a silver comb, trapped between abundance and damnation. On warm full moon nights, she sits on moss-covered stones beside a chest full of gold and tempts wanderers to take a golden key from the mouth of a fire-breathing serpent. But whoever dares will experience divine punishment – and the soul of the rich will never find peace. Follow the traces of the castle ruins and discover for yourself why some treasures are better left hidden.",
       "reviewEmpfohlen": false
     },
     "zh": {
-      "text": "在温菲尔登附近的奥腾山，昔日阿尔特-温菲尔登城堡的所在地，图尔高地区的古老传说称，满月之夜能听到盔甲的碰撞声与遥远的猎号声——那是一支因傲慢而永不安息的中了魔咒的骑士家族的遗迹，在山坡上游荡。",
-      "reviewEmpfohlen": true
+      "title": "费斯蒂城堡小姐",
+      "text": "在米尔海姆上方林木茂密的费斯蒂，一位高傲的城堡小姐几个世纪以来一直在闹鬼——穿着白衣，金色长发，银色梳子，被困在富足与诅咒之间。在温暖的满月之夜，她坐在布满苔藓的石头上，靠着一个装满黄金的箱子，引诱旅人从喷火蛇的嘴中取出一把金钥匙。但胆敢这样做的人会遭受神圣的惩罚——富人的灵魂永远无法安息。追随城堡遗迹的踪迹，自己去发现为什么某些宝藏最好还是保持隐藏。",
+      "reviewEmpfohlen": false
     },
     "es": {
-      "text": "En el Ottenberg cerca de Weinfelden, donde antaño se alzaba el castillo de Alt-Weinfelden, cuentan las antiguas leyendas de Turgovia, en noches de luna llena se oiría el tintineo de armaduras y el sonido lejano de un cuerno de caza – restos de un linaje de caballeros hechizados que, por su soberbia, nunca encuentra descanso y vaga por las laderas de la colina.",
-      "reviewEmpfohlen": true
+      "title": "La Doncella del Castillo en la Festi",
+      "text": "En la Festi boscosa sobre Müllheim, una orgullosa doncella del castillo ha acechado durante siglos – vestida de blanco, con cabello dorado y un peine de plata, atrapada entre la abundancia y la condenación. En las noches de luna llena cálidas, se sienta en piedras cubiertas de musgo junto a un cofre lleno de oro y tienta a los viajeros para que tomen una llave dorada de la boca de una serpiente que escupe fuego. Pero quien se atreva experimentará castigo divino – y el alma de los ricos nunca encontrará paz. Sigue las huellas de las ruinas del castillo y descubre por ti mismo por qué algunos tesoros es mejor que permanezcan ocultos.",
+      "reviewEmpfohlen": false
     },
     "pt": {
-      "text": "No Ottenberg perto de Weinfelden, onde outrora se erguia o castelo de Alt-Weinfelden, contam as antigas lendas da Turgóvia, em noites de lua cheia ouve-se o tilintar de armaduras e o som distante de uma corneta de caça – vestígios de uma linhagem de cavaleiros enfeitiçados que, por sua soberba, nunca encontra descanso e vagueia pelas encostas da colina.",
-      "reviewEmpfohlen": true
+      "title": "A Donzela do Castelo na Festi",
+      "text": "Na Festi florestada acima de Müllheim, uma orgulhosa donzela do castelo assombra há séculos – vestida de branco, com cabelos dourados e um pente de prata, presa entre a abundância e a condenação. Nas noites de lua cheia morna, ela se senta em pedras cobertas de musgo ao lado de um baú cheio de ouro e tenta andarilhos a pegar uma chave de ouro da boca de uma serpente que cospe fogo. Mas quem ousar experimentará castigo divino – e a alma dos ricos nunca encontrará paz. Siga os rastros das ruínas do castelo e descubra por si mesmo por que alguns tesouros é melhor que permaneçam escondidos.",
+      "reviewEmpfohlen": false
+    },
+    "ru": {
+      "title": "Дева замка на Фести",
+      "text": "На лесистой Фести над Мюльхаймом уже веками наведывается гордая барышня замка – в белом платье, с золотыми волосами и серебряным гребнем, пойманная между изобилием и проклятием. В теплые ночи полнолуния она сидит на покрытых мхом камнях рядом с сундуком, полным золота, и соблазняет путников взять золотой ключ из пасти огнедышащей змеи. Но того, кто осмелится, ждет божественное наказание – и душа богатых никогда не найдет покоя. Следуй по следам руин замка и сам убедишься, почему некоторые сокровища лучше оставить скрытыми.",
+      "reviewEmpfohlen": false
     }
   },
-  "altersstufenHinweis": "Die Geistererscheinung als geheimnisvoll, nicht als angsteinflössend schildern.",
+  "altersstufenHinweis": "Das tragische Ende und die Andeutung von Geschwisterliebe für jüngere Kinder abmildern oder auslassen.",
   "quelle": {
-    "autor": "Thurgauer Sagensammlung",
-    "werk": "Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft",
-    "jahr": "19. Jahrhundert",
-    "fundstelleUrl": "https://www.gigers.com/ernst/Sprache/TG_SAGEN.pdf"
+    "autor": "",
+    "werk": "Lokale Thurgauer Überlieferung",
+    "jahr": "",
+    "fundstelleUrl": "user-provided"
   },
-  "source": "Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (19. Jh.)",
-  "coordinates": { "lat": 47.5833, "lng": 9.1 },
+  "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
+  "coordinates": { "lat": 47.60196, "lng": 9.00201 },
   "koordinatenSicherheit": "ungefaehr",
   "isAnchorPlace": true
 },
 {
-  "id": "theodul",
+  "id": "der-unheimliche-fahrmann-von-pfyn",
+  "title": "Der unheimliche Fährmann von Pfyn",
+  "canton": "Thurgau",
+  "coreMotif": "Gelübde in Seenot und Klostergründung",
+  "bildmotiv": "Fromme Königstochter betet Seenot Klostergründung Bodensee",
+  "mood": "Friedlich und dankbar",
+  "summary": "Der unheimliche Fährmann von PfynDie Gemeinde Pfyn blickt auf eine lange Geschichte zurück, die bis zu den Römern (Ad Fines) reicht. Bevor es moderne Brücken gab, war der Übergang über die unberechenbare Thur ein gefährliches Geschäft.Die Gier des Fährmannes: Im Mittelalter betrieb ein geiziger und hartherziger Mann die offizielle Fähre über die Thur bei Pfyn. Er war im ganzen Dorf dafür berüchtigt, dass er den armen Bauern und Taglöhnern das doppelte Fährgeld abknöpfte. Wer nicht bezahlen konnte, den liess er selbst bei dichtem Schneetreiben oder schwerem Hochwasser am Ufer stehen, wo schon mancher Wanderer in der Kälte sein Ende fand.Die geisterhafte Fracht: In einer stürmischen, stockfinsteren Novembernacht, als die Thur gefährliches Treibholz mit sich riss, hörte der Fährmann vom gegenüberliegenden Ufer eine tiefe, hohle Stimme rufen: „Fährmann, hol über!“ Getrieben von der Gier nach spätem Lohn, ruderte er trotz der Lebensgefahr hinüber. Am Ufer wartete eine lange Reihe von Gestalten in dunklen Kapuzenmänteln. Sie sprachen kein Wort, bestiegen stumm das Boot und machten es so schwer, dass das Wasser fast über die Kante schwappte.Das Strafgericht: Als das Boot die Mitte des reissenden Flusses erreichte, riss der Wind die Kapuzen der Passagiere zurück. Der Fährmann erstarrte vor Schreck: Die Gestalten hatten keine Gesichter, sondern bestanden aus bleichen Skeletten und leeren Augenhöhlen – es waren die Seelen derer, die im Laufe der Jahre in der Thur ertrunken waren, weil er ihnen die Hilfe verweigert hatte. Der Anführer der Geister packte die Hand des Fährmannes, die augenblicklich wie zu Eis erfror. Das Boot sank nicht, sondern löste sich mitsamt dem Fährmann im Nebel auf. Die älteren Dorfbewohner erzählen, dass man in stürmischen Herbstnächten noch immer das leise Plätschern von Rudern auf der Thur hören kann – der gierige Fährmann ist dazu verdammt, die Seelen der Verstorbenen bis an das Ende aller Tage über den Fluss zu setzen, ohne jemals einen einzigen Pfennig Lohn zu erhalten.",
+  "summaries": {
+    "gsw": {
+      "title": "Dr unheimlich Fährmo vo Pfyn",
+      "text": "En geizige Fährmo bim Pfyn hät armi Wanderer im Schnee und Hochwasser ertränkt, wenns nit zahle chönnten – bis ine in ener stürmische Novembernacht hohli Stimme vom Ufer aglöckt händ. Di Gstalte, wo is Boot gstige sind, wäre kei lebendige Mänsche gsi, sondern di blasse Skelett vo allne, wo imal im Opfer gsi sind. As dr Wind ihri Chutz ine zrisslet und ine di eiskalti Hand vom Anführer packt, hät sich Boot und Fährmo im Nebel uufglöst – verdammt, für alli Ewigkeit di Toten über d Thur z ruudern, ohni je ne Pfännig Lohn z gseh. In stürmische Herbstnächte höred d Lüt...",
+      "reviewEmpfohlen": false
+    },
+    "de": {
+      "title": "Der unheimliche Fährmann von Pfyn",
+      "text": "Ein geiziger Fährmann bei Pfyn liess arme Wanderer in Schnee und Hochwasser ertrinken, wenn sie nicht zahlen konnten – bis ihn in einer stürmischen Novembernacht hohle Stimmen vom Ufer lockten. Die Gestalten, die sein Boot bestiegen, waren keine lebenden Menschen, sondern die bleichen Skelette aller, die ihm zum Opfer gefallen waren. Als der Wind ihre Kapuzen zurückriss und ihn die eiskalte Hand des Anführers packte, löste sich Boot und Fährmann im Nebel auf – verdammt, für alle Ewigkeit die Toten über die Thur zu rudern, ohne je einen Pfennig Lohn zu sehen. In stürmischen Herbstnächten hört",
+      "reviewEmpfohlen": true
+    },
+    "fr": {
+      "title": "Le Passeur Sinistre de Pfyn",
+      "text": "Un avare passeur près de Pfyn laissait se noyer les pauvres voyageurs dans la neige et les inondations s'ils ne pouvaient pas payer – jusqu'à ce que des voix creuses le tentent depuis la rive par une nuit de novembre tempétueuse. Les silhouettes qui montaient dans son bateau n'étaient pas des êtres vivants, mais les squelettes pâles de tous ceux qui en avaient été victimes. Quand le vent arracha leurs capuches et que la main glacée du chef le saisit, le bateau et le passeur se dissolvirent dans le brouillard – maudits à ramer les morts sur la Thur pour l'éternité, sans jamais voir un seul sou de salaire. Les nuits d'automne tempétueuses, on entend...",
+      "reviewEmpfohlen": false
+    },
+    "it": {
+      "title": "Il Traghettatore Sinistro di Pfyn",
+      "text": "Un avaro traghettatore vicino a Pfyn lasciava annegare i poveri viandanti nella neve e nelle inondazioni se non potevano pagare – finché voci vuote non lo attirarono dalla riva in una tempestosa notte di novembre. Le figure che salirono sulla sua barca non erano persone viventi, ma gli scheletri pallidi di tutti coloro che ne erano stati vittime. Quando il vento strappò indietro i loro cappucci e la mano gelida del capo lo afferrò, la barca e il traghettatore si dissolsero nella nebbia – maledetti a trasportare i morti attraverso il Thur per l'eternità, senza mai vedere un soldo di paga. Nelle tempestose notti d'autunno si sente...",
+      "reviewEmpfohlen": false
+    },
+    "en": {
+      "title": "The Eerie Ferryman of Pfyn",
+      "text": "A stingy ferryman near Pfyn let poor wanderers drown in snow and floods if they could not pay – until hollow voices lured him from the shore on a stormy November night. The figures that boarded his boat were not living people, but the pale skeletons of all who had fallen victim to him. When the wind tore back their hoods and the ice-cold hand of their leader seized him, the boat and ferryman dissolved into the mist – cursed to row the dead across the Thur for all eternity, never to see a single penny in wages. On stormy autumn nights, people hear...",
+      "reviewEmpfohlen": false
+    },
+    "zh": {
+      "title": "普芬的诡异船夫",
+      "text": "普芬附近有一个吝啬的船夫，当穷困的旅人无法支付船费时，他就会让他们在冰雪和洪水中溺水身亡——直到在一个风暴肆虐的十一月之夜，空洞的声音从河岸引诱了他。登上他船只的身影并非活人，而是所有遭他毒手的人的苍白骨骼。当狂风吹落他们的兜帽，冰冷的手掌——那个领袖的手——抓住他时，船和船夫都在迷雾中消散了——被诅咒要永远在图尔河上摆渡死者，却永远看不到一分钱的报酬。在风暴肆虐的秋夜，人们听到...",
+      "reviewEmpfohlen": false
+    },
+    "es": {
+      "title": "El Barquero Siniestro de Pfyn",
+      "text": "Un avaro barquero cerca de Pfyn dejaba morir ahogados a los pobres viajeros en la nieve e inundaciones si no podían pagar – hasta que voces huecas lo tentaron desde la orilla en una tempestuosa noche de noviembre. Las figuras que subieron a su barca no eran personas vivas, sino los esqueletos pálidos de todos los que habían sido sus víctimas. Cuando el viento arrancó sus capuchas y la mano helada del líder lo agarró, la barca y el barquero se disolvieron en la niebla – malditos a remar a los muertos a través del Thur por la eternidad, sin ver jamás un solo céntimo de salario. En las tempestuosas noches de otoño se oye...",
+      "reviewEmpfohlen": false
+    },
+    "pt": {
+      "title": "O Barqueiro Sinistro de Pfyn",
+      "text": "Um ganancioso barqueiro perto de Pfyn deixava pobres viajantes se afogarem na neve e nas enchentes se não pudessem pagar – até que vozes ocas o atraíram da margem numa tempestuosa noite de novembro. As figuras que entraram em seu barco não eram pessoas vivas, mas os esqueletos pálidos de todos os que haviam sido suas vítimas. Quando o vento arrancou seus capuzes e a mão gelada do líder o agarrou, o barco e o barqueiro se dissolverem na neblina – amaldiçoados a remar os mortos através do Thur pela eternidade, nunca vendo um único tostão de salário. Em noites tempestuosas de outono, ouve-se...",
+      "reviewEmpfohlen": false
+    },
+    "ru": {
+      "title": "Жуткий паромщик из Пфына",
+      "text": "Жадный паромщик близ Пфына позволял бедным путникам утонуть в снегу и паводках, если они не могли заплатить – пока в штормовую ноябрьскую ночь пустые голоса не привлекли его с берега. Фигуры, поднявшиеся на его паром, были не живыми людьми, а бледными скелетами всех, кто пал его жертвами. Когда ветер откинул их капюшоны и ледяная рука вождя схватила его, паром и паромщик растворились в тумане – проклятые вечно перевозить мертвецов через Тур, так и не увидев ни единой монеты в виде жалованья. В бурные осенние ночи люди слышат...",
+      "reviewEmpfohlen": false
+    }
+  },
+  "altersstufenHinweis": "Keine besondere Anpassung nötig.",
+  "quelle": {
+    "autor": "",
+    "werk": "Lokale Thurgauer Überlieferung",
+    "jahr": "",
+    "fundstelleUrl": "user-provided"
+  },
+  "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
+  "coordinates": { "lat": 47.60704, "lng": 8.95466 },
+  "koordinatenSicherheit": "ungefaehr",
+  "isAnchorPlace": true
+},
+{
+  "id": "der-seegeist-vom-hutttwilersee",
+  "title": "Der Seegeist vom Hüttwilersee",
+  "canton": "Thurgau",
+  "coreMotif": "Strafe für Hartherzigkeit gegenüber den Armen",
+  "bildmotiv": "Kornwucherer von Mäusen gefressen Güttingen Bodensee",
+  "mood": "Grausam und gerecht",
+  "summary": "Der Seegeist vom Hüttwilersee (Seebachtal)Der Hüttwilersee ist Teil des idyllischen und heute geschützten Seebachtals. Die Sage berichtet von einem unheimlichen Wesen, das die Fischer in früheren Jahrhunderten in Angst und Schrecken versetzte.Der Frevel zur Schonzeit: Ein wohlhabender, aber skrupelloser Fischer aus Hüttwilen war bekannt dafür, dass er die alten Gesetze der Natur missachtete. Er fischte heimlich während der Laichzeit und fuhr sogar in der heiligen Christnacht hinaus, wenn die Dorfbewohner in der Kirche beteten, weil er auf den wertvollen Fang der grossen Hechte hoffte.Die Erscheinung: Mitten auf dem See wurde das Wasser in jener Nacht plötzlich spiegelglatt, obwohl der Winterwind um ihn herum raste. Als er sein Netz einholte, war es so schwer, dass sein Holzboot bedrohlich schwankte. Mit aller Kraft zog er das Seil ein – doch statt Fischen brachte er ein furchterregendes Ungeheuer an die Oberfläche. Das Wesen hatte den schuppigen Körper einer riesigen Wasserschlange, aber das Gesicht eines ertrunkenen Mannes, und seine langen Haare bestanden aus grünem Schilf und Algen. Es war der gefürchtete Geist des Hüttwilersees.Das Urteil: Der Seegeist blickte den Fischer mit glühenden Augen an und sprach mit einer Stimme, die wie das dumpfe Grollen des Bodens klang: „Du hast den See ausgebeutet und die heilige Nacht entweiht. Nun wirst du die Tiefe mit mir teilen!“ Der Fischer wollte nach seiner Axt greifen, doch eine eiskalte Lähmung ergriff seine Glieder. Der Dämon schlug mit seinem mächtigen Schwanz auf das Wasser, erzeugte eine riesige Welle und zog das Boot samt dem gierigen Fischer in den schlammigen Grund. Das Boot wurde am nächsten Tag zerschellt am Schilfufer aufgefunden, doch vom Fischer fehlte jede Spur.",
+  "summaries": {
+    "gsw": {
+      "title": "Der Seegeist vom Hüttwilersee",
+      "text": "En rücksiichtsloos Fischer ignoriert d'Naturgsetz und fischt frech in dr heilige Christnacht – da erhäbt sich us em Hüttwilersee es grüusigs Unghuür mit Schlangaliib und Mänschegsicht, umwunde vo Schilf und Alge. Mit glüende Auge und ire Stimm wie Donnergroll spricht dr Seegeist si Urteil: Dr Fischer söll d'Tüüfi mit ihm teile. En gwältiger Schlag vom dämonische Schwanz rüsst Boot und Ma in de schlammige Grund – am nächste Morge findet mer nur no d'zerschällte Trümmer, vom Fischer aber käi Spur.",
+      "reviewEmpfohlen": false
+    },
+    "de": {
+      "title": "Der Seegeist vom Hüttwilersee",
+      "text": "Ein skrupelloser Fischer ignoriert die Naturgesetze und fischt frech in der heiligen Christnacht – da erhebt sich aus dem Hüttwilersee ein grauenhaftes Ungeheuer mit Schlangenleib und Menschengesicht, umwunden von Schilf und Algen. Mit glühenden Augen und einer Stimme wie Donnergrollen spricht der Seegeist sein Urteil: Der Fischer soll die Tiefe mit ihm teilen. Ein gewaltiger Schlag des dämonischen Schwanzes reißt Boot und Mann in den schlammigen Grund – am nächsten Morgen findet man nur noch die zerschellten Trümmer, vom Fischer aber keine Spur.",
+      "reviewEmpfohlen": true
+    },
+    "fr": {
+      "title": "L'Esprit du Lac de Hüttwilersee",
+      "text": "Un pêcheur sans scrupules ignore les lois de la nature et pêche effrontément la nuit de Noël sacrée – alors une créature horrible surgit du Hüttwilersee avec un corps de serpent et un visage humain, enrobée de roseaux et d'algues. Avec des yeux rougeoyants et une voix comme un tonnerre, l'esprit du lac prononce son jugement : le pêcheur doit partager les profondeurs avec lui. Un coup puissant de la queue démoniaque entraîne le bateau et l'homme dans l'abîme vaseux – le lendemain matin, on ne trouve que des débris fracassés, mais aucune trace du pêcheur.",
+      "reviewEmpfohlen": false
+    },
+    "it": {
+      "title": "Lo Spirito del Lago di Hüttwilersee",
+      "text": "Un pescatore senza scrupoli ignora le leggi della natura e pesca sfacciatamente nella notte di Natale sacra – quando un orribile mostro emerge dal Hüttwilersee con corpo di serpente e volto umano, avvolto in canne e alghe. Con occhi fiammeggianti e una voce come un tuono, lo spirito del lago pronuncia il suo verdetto: il pescatore deve condividere le profondità con lui. Un potente colpo della coda demoniaca trascina la barca e l'uomo nell'abisso fangoso – la mattina dopo, si trovano solo relitti fracassati, ma nessuna traccia del pescatore.",
+      "reviewEmpfohlen": false
+    },
+    "en": {
+      "title": "The Lake Spirit of Hüttwilersee",
+      "text": "A ruthless fisherman ignores the laws of nature and brazenly fishes on sacred Christmas Eve – when a horrifying monster rises from Hüttwilersee with a serpent's body and a human face, wrapped in reeds and algae. With glowing eyes and a voice like thunder, the lake spirit pronounces its judgment: the fisherman shall share the depths with it. A mighty blow of the demonic tail drags boat and man into the muddy abyss – the next morning, only shattered wreckage is found, but no trace of the fisherman.",
+      "reviewEmpfohlen": false
+    },
+    "zh": {
+      "title": "胡特威勒湖的湖灵",
+      "text": "一个肆无忌惮的渔夫无视自然法则，在神圣的圣诞夜放肆地捕鱼——这时，一个可怕的怪物从胡特威勒湖中升起，拥有蛇的身体和人类的面孔，被芦苇和海草缠绕。湖灵用炽热的眼睛和如雷鸣般的声音宣布判决：渔夫必须与它分享深渊。恶魔尾巴的一次强力挥扫将船和人拖入泥泞的湖底——第二天早晨，人们只找到了破碎的残骸，但渔夫无影无踪。",
+      "reviewEmpfohlen": false
+    },
+    "es": {
+      "title": "El Espíritu del Lago Hüttwilersee",
+      "text": "Un pescador sin escrúpulos ignora las leyes de la naturaleza y pesca descaradamente en la noche de Navidad sagrada – cuando una criatura horrible surge del Hüttwilersee con cuerpo de serpiente y rostro humano, envuelta en juncos y algas. Con ojos brillantes y una voz como un trueno, el espíritu del lago pronuncia su sentencia: el pescador debe compartir las profundidades con él. Un golpe poderoso de la cola demoníaca arrastra la barca y al hombre al abismo fangoso – la mañana siguiente, solo se encuentran restos destrozados, pero ni rastro del pescador.",
+      "reviewEmpfohlen": false
+    },
+    "pt": {
+      "title": "O Espírito do Lago Hüttwilersee",
+      "text": "Um pescador sem escrúpulos ignora as leis da natureza e pesca descaradamente na noite sagrada de Natal – quando uma criatura horrível surge do Hüttwilersee com corpo de serpente e rosto humano, envolvida em juncos e algas. Com olhos incandescentes e uma voz como trovão, o espírito do lago pronuncia seu veredicto: o pescador deve compartilhar as profundezas com ele. Um golpe poderoso da cauda demoníaca arrasta o barco e o homem para o abismo lodoso – na manhã seguinte, apenas destroços despedaçados são encontrados, mas nenhum sinal do pescador.",
+      "reviewEmpfohlen": false
+    },
+    "ru": {
+      "title": "Дух озера Хюттвилер",
+      "text": "Беспринципный рыбак игнорирует законы природы и нагло ловит рыбу в священную ночь Рождества – из озера Хюттвилер поднимается ужасное чудовище с телом змеи и человеческим лицом, обвитое камышом и водорослями. С горящими глазами и голосом, похожим на гром, дух озера произносит свой приговор: рыбак должен разделить глубины с ним. Мощный удар демонического хвоста увлекает лодку и человека в грязное дно – на следующее утро находят только обломки, но следов рыбака нет.",
+      "reviewEmpfohlen": false
+    }
+  },
+  "altersstufenHinweis": "Die Grausamkeit des Brandes und das Verspeisen bei lebendigem Leib für jüngere Kinder deutlich abmildern oder auslassen.",
+  "quelle": {
+    "autor": "",
+    "werk": "Lokale Thurgauer Überlieferung",
+    "jahr": "",
+    "fundstelleUrl": "user-provided"
+  },
+  "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
+  "coordinates": { "lat": 47.61026, "lng": 8.84374 },
+  "koordinatenSicherheit": "ungefaehr",
+  "isAnchorPlace": true
+},
+{
+  "id": "das-gespenst-von-schloss-steckborn",
+  "title": "Das Gespenst von Schloss Steckborn",
+  "canton": "Thurgau",
+  "coreMotif": "Listige Ausrede eines Handwerksgesellen",
+  "bildmotiv": "Steinmetz trifft himmlische Geschwister Münsterplatz",
+  "mood": "Schalkhaft und witzig",
+  "summary": "Das Gespenst von Schloss Steckborn (Turmhof)Der markante Turmhof direkt am Ufer des Untersees in Steckborn blickt auf eine lange Geschichte als Sitz der Äbte von Reichenau zurück. In seinen dicken Mauern haust die bekannteste Spukgestalt des Ortes.Die Tyrannei des Kastellans: Im5. Jahrhundert verwaltete ein äusserst korrupter und herrschsüchtiger Kastellan das Schloss. Er unterschlug die Abgaben der Steckborner Bürger, bereicherte sich an den Strafgeldern und liess unschuldige Handwerker in den tiefen, feuchten Schlosskeller sperren, wenn sie es wagten, gegen seine Willkür zu protestieren. Er verstarb plötzlich an einem Schlagfluss, ohne jemals für seine Verbrechen zur Rechenschaft gezogen worden zu sein.Der ewige Spuk: Da seine Seele mit dem Leid der Bevölkerung beladen war, verwehrte man ihm den Frieden im Jenseits. Er wurde dazu verdammt, als „schwarzer Geist“ im Turmhof zu spuken. Über Generationen hinweg berichteten die Nachtwächter der Stadt, dass man zur Mitternachtsstunde das schwere Schleppen von Stiefeln, das Rasseln eines grossen Schlüsselbundes und das dumpfe Klirren von Münzen im Rittersaal hören konnte.Das Phänomen: Manchmal sah man in den Fenstern, die zum See hinzeigten, ein mattes, bläuliches Licht wandern. Der Geist des Kastellans ist dazu verdammt, jede Nacht das erschlichene Gold auf dem Tisch des Turmzimmers auszuzählen, bis das letzte unrechtmässig erworbene Gut symbolisch abgetragen ist. Alte Steckborner erzählen sich, dass man vor allem im Spätherbst, wenn der Nebel dicht über den Untersee zieht, sein seufzendes Klagen im Gemäuer vernehmen kann.",
+  "summaries": {
+    "gsw": {
+      "title": "S Gspenst vom Schloss Steckbore",
+      "text": "Ein korrupte Chästellä het Steckbore im 5. Joorhundert terrorisiert, bis in ein Schlag derniiderghaut het – ohni dass är je Buess leischtet het. Sither verflucht, spookt sini Seel als schwarzi Gscht dur de Turmhof u zellt jedi Nacht sin gstohlis Gold. Nachtöchter hend vo schwere Tritte, klirrendem Münzwärk u blöulichem Liecht in de Fönschter zum See berichtet. Besunders wemm Herbstnäbel über de Undirsee zieht, sölle Wänderer sin sföfzends Chläge in de dicki Müre na heit chöne höre.",
+      "reviewEmpfohlen": false
+    },
+    "de": {
+      "title": "Das Gespenst von Schloss Steckborn",
+      "text": "Ein korrupter Kastellan terrorisierte Steckborn im 5. Jahrhundert, bis ihn der Schlag niederstreckte – ohne dass er je Buße leisten musste. Seitdem verflucht, spukt seine Seele als schwarzer Geist durch den Turmhof und zählt jede Nacht sein gestohlenes Gold. Nachtwächter berichteten von schweren Schritten, klirrendem Münzwerk und blaulichem Licht in den Fenstern zum See. Besonders wenn Herbstnebel über den Untersee zieht, sollen Wanderer sein seufzendes Klagen in den dicken Mauern noch heute hören können.",
+      "reviewEmpfohlen": true
+    },
+    "fr": {
+      "title": "Le Fantôme du Château de Steckborn",
+      "text": "Un châtelain corrompu terrorisait Steckborn au 5e siècle jusqu'à ce qu'une apoplexie le terrasse – sans qu'il n'ait jamais fait pénitence. Depuis, maudit, son âme hante la cour de la tour en tant qu'esprit noir, comptant son or volé chaque nuit. Les veilleurs de nuit ont rapporté des pas lourds, un cliquetis de pièces et une lumière bleuâtre aux fenêtres donnant sur le lac. Particulièrement quand les brouillards d'automne dérivent sur l'Untersee, les randonneurs prétendent encore entendre aujourd'hui ses plaintes gémissantes dans les épais murs.",
+      "reviewEmpfohlen": false
+    },
+    "it": {
+      "title": "Il Fantasma del Castello di Steckborn",
+      "text": "Un castellano corrotto terrorizzò Steckborn nel 5º secolo finché un colpo non lo abbatté – senza che mai facesse penitenza. Da allora, maledetto, il suo spirito infesta la corte della torre come un fantasma nero, contando il suo oro rubato ogni notte. Le guardie notturne hanno segnalato passi pesanti, tintinnio di monete e una luce bluastra alle finestre affacciate sul lago. Specialmente quando la nebbia autunnale si diffonde sull'Untersee, i viaggiatori affermano di sentire ancora oggi i suoi lamenti sofferenti nelle spesse mura.",
+      "reviewEmpfohlen": false
+    },
+    "en": {
+      "title": "The Ghost of Steckborn Castle",
+      "text": "A corrupt castellan terrorized Steckborn in the 5th century until a stroke struck him down – without ever having made amends. Since then, cursed, his soul haunts the tower courtyard as a black spirit, counting his stolen gold every night. Night watchmen reported heavy footsteps, clinking coins, and a bluish light in the windows facing the lake. Especially when autumn fog drifts over the Untersee, wanderers claim they can still hear his sighing laments in the thick walls today.",
+      "reviewEmpfohlen": false
+    },
+    "zh": {
+      "title": "施泰克博恩城堡的幽灵",
+      "text": "一位腐败的城堡长官在5世纪恐吓施泰克博恩，直到中风击倒了他——但他从未做过忏悔。从那以后，被诅咒的他的灵魂作为黑色幽灵在塔楼庭院中作祟，每晚都在数他偷来的黄金。夜间守卫报告了沉重的脚步声、硬币的叮当声和面向湖泊窗户的蓝色光线。特别是当秋季的雾气飘过下湖时，游客声称他们今天仍然可以在厚厚的城墙中听到他的叹息哭声。",
+      "reviewEmpfohlen": false
+    },
+    "es": {
+      "title": "El Fantasma del Castillo de Steckborn",
+      "text": "Un castellano corrupto aterrorizó Steckborn en el siglo V hasta que un golpe lo derribó – sin haber hecho nunca penitencia. Desde entonces, maldito, su alma recorre la corte de la torre como un espíritu negro, contando su oro robado cada noche. Los guardianes nocturnos reportaron pasos pesados, tintineo de monedas y una luz azulada en las ventanas que dan al lago. Especialmente cuando la niebla otoñal se desliza sobre el Untersee, los caminantes afirman que aún hoy pueden escuchar sus lamentos susurrantes en los gruesos muros.",
+      "reviewEmpfohlen": false
+    },
+    "pt": {
+      "title": "O Fantasma do Castelo de Steckborn",
+      "text": "Um castellão corrupto aterrorizou Steckborn no século V até que um derrame o derrubasse – sem nunca ter feito penitência. Desde então, amaldiçoado, sua alma assombra o pátio da torre como um espírito negro, contando seu ouro roubado todas as noites. Vigilantes noturnos relataram passos pesados, tilintar de moedas e uma luz azulada nas janelas voltadas para o lago. Especialmente quando a neblina de outono se move sobre o Untersee, os viajantes afirmam que ainda conseguem ouvir seus lamentos gementes nas paredes espessas hoje.",
+      "reviewEmpfohlen": false
+    },
+    "ru": {
+      "title": "Привидение замка Штекборн",
+      "text": "Коррумпированный кастелян терроризировал Штекборн в 5-м веке, пока инсульт не сразил его – не совершив никакого покаяния. С тех пор проклятый его дух привидится в башенном дворе чёрным призраком, считая украденное золото каждую ночь. Ночные стражи сообщали о тяжёлых шагах, звоне монет и голубоватом свете в окнах, выходящих на озеро. Особенно когда осенний туман проходит над Унтерзее, странники утверждают, что до сих пор слышат его стонущие рыдания в толстых стенах.",
+      "reviewEmpfohlen": false
+    }
+  },
+  "altersstufenHinweis": "Keine besondere Anpassung nötig, die Geschichte ist bereits kindgerecht und humorvoll.",
+  "quelle": {
+    "autor": "",
+    "werk": "Lokale Thurgauer Überlieferung",
+    "jahr": "",
+    "fundstelleUrl": "user-provided"
+  },
+  "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
+  "coordinates": { "lat": 47.66889, "lng": 8.9828 },
+  "koordinatenSicherheit": "ungefaehr",
+  "isAnchorPlace": true
+},
+{
+  "id": "das-missachtete-arbeitstabu",
   "title": "Der heilige Theodul und die Glocke",
   "canton": "Wallis",
   "coreMotif": "Überlistung des Teufels",
@@ -1356,7 +1570,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "zugbergsturz",
+  "id": "grundung-der-stadt-zug",
   "title": "Die versunkene Vorstadt von Zug",
   "canton": "Zug",
   "coreMotif": "Naturkatastrophe und Erinnerung",
@@ -1410,7 +1624,7 @@ export const SAGAS: Saga[] = [
   "isAnchorPlace": true
 },
 {
-  "id": "felixregula",
+  "id": "das-goldene-tor",
   "title": "Felix und Regula, die kopflosen Stadtheiligen",
   "canton": "Zürich",
   "coreMotif": "Martyrium und Wunder",

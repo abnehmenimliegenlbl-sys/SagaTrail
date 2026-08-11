@@ -98,7 +98,3 @@ OVERPASS_PROXY_URL = "https://sagatrail.ch/overpass-proxy.php"
 [userenv.development]
 
 [userenv.production]
-
-[[ports]]
-localPort = 8080
-externalPort = 80
