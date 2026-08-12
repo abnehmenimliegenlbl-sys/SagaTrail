@@ -26,6 +26,7 @@ export function SwisstopoMap({
   onPartnerPress,
   waterSources,
   parkingSpots,
+  sagaPin: _sagaPin, // Web-Variante: Pin wird via inline-HTML baked (kein inject nötig)
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);

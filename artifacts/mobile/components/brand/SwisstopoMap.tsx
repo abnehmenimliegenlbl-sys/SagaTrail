@@ -35,6 +35,7 @@ export function SwisstopoMap({
   pickerMode,
   onMapClick,
   safeAreaInsetTop = 0,
+  sagaPin,
 }: SwisstopoMapProps) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -122,6 +123,15 @@ export function SwisstopoMap({
       `window.sttSetAerialways && window.sttSetAerialways(${json}); true;`
     );
   }, [ready, aerialways]);
+
+  // Saga-Pin per injectJavaScript einspielen.
+  useEffect(() => {
+    if (!ready) return;
+    const json = sagaPin ? JSON.stringify(sagaPin) : "null";
+    ref.current?.injectJavaScript(
+      `window.sttSetSagaPin && window.sttSetSagaPin(${json}); true;`
+    );
+  }, [ready, sagaPin?.lat, sagaPin?.lng, sagaPin?.name]);
 
   const colors = useColors();
   return (

@@ -917,6 +917,7 @@ export default function Routenplanung() {
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safeAreaInsetTop={safeAreaTop}
+                  sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {
                     const poi = poisVollRef.current.get(id);
                     if (!poi) return;

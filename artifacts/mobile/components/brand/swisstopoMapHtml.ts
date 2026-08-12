@@ -1,5 +1,94 @@
 import { LatLng } from "@/types";
 
+/** Base64-kodiertes SagaTrail-Pin-Icon (rotes Berg-Symbol, transparent). */
+const SAGA_PIN_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8" +
+  "YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCA1LjEuMTITAUd0" +
+  "AAAAuGVYSWZJSSoACAAAAAUAGgEFAAEAAABKAAAAGwEFAAEAAABSAAAAKAEDAAEAAAACAAAAMQECABEA" +
+  "AABaAAAAaYcEAAEAAABsAAAAAAAAAPJ2AQDoAwAA8nYBAOgDAABQYWludC5ORVQgNS4xLjEyAAADAACQ" +
+  "BwAEAAAAMDIzMAGgAwABAAAAAQAAAAWgBAABAAAAlgAAAAAAAAACAAEAAgAEAAAAUjk4AAIABwAEAAAA" +
+  "MDEwMAAAAACDfy8cctDT3wAAAYdpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdp" +
+  "bj0n77u/JyBpZD0nVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkJz8+DQo8eDp4bXBtZXRhIHhtbG5zOng9" +
+  "ImFkb2JlOm5zOm1ldGEvIj48cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkv" +
+  "MDIvMjItcmRmLXN5bnRheC1ucyMiPjxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSJ1dWlkOmZhZjVi" +
+  "ZGQ1LWJhM2QtMTFkYS1hZDMxLWQzM2Q3NTE4MmYxYiIgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2Jl" +
+  "LmNvbS90aWZmLzEuMC8iPjx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+PC9yZGY6" +
+  "RGVzY3JpcHRpb24+PC9yZGY6UkRGPjwveDp4bXBtZXRhPg0KPD94cGFja2V0IGVuZD0ndyc/PiyUmAsA" +
+  "ABF7SURBVGhD3ZlZrK7Xedd/zxre4Zv2cPY+g89JfJLj1q7jJiSOkiZxUugATis6qW6lqOSqTQVCoghE" +
+  "LrgIFaqEBBKIuxQkVECgGqnQXER0IIkESRPUyiZx7DZ2HLk+xznjPnv4hndYaz1crO/bZ2fHMRSfvS/4" +
+  "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";
 /** Minimale Marker-Daten fuer einen Point of Interest auf der Karte. */
 export interface MapPoi {
   id: string;
@@ -14,6 +103,13 @@ export interface MapPoi {
  * Gemeinsame Props der plattformspezifischen SwisstopoMap-Varianten
  * (SwisstopoMap.tsx nutzt eine WebView, SwisstopoMap.web.tsx ein iframe).
  */
+/** Koordinate + Name einer Sage fuer den Kartenmarker. */
+export interface SagaPin {
+  lat: number;
+  lng: number;
+  name: string;
+}
+
 export interface SwisstopoMapProps {
   center: LatLng;
   position?: LatLng | null;
@@ -35,6 +131,8 @@ export interface SwisstopoMapProps {
   /** Sicherer Bereich oben (iOS-Statusleiste). Schiebt den 2D/3D/Sat-Toggle
    *  nach unten damit er nicht hinter der Statusleiste verschwindet. */
   safeAreaInsetTop?: number;
+  /** Koordinate der zugehörigen Sage — wird als kleines SagaTrail-Icon auf der Karte dargestellt. */
+  sagaPin?: SagaPin | null;
 }
 
 /** Beschriftungen der Kartenlegende (bereits lokalisiert vom Host). */
@@ -181,6 +279,9 @@ export function buildSwisstopoHtml(
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
+  /* Saga-Pin */
+  .stt-saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(255,255,255,0.60); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .stt-saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
   /* --- Legende --- */
   #stt-legende { position: absolute; bottom: 0px; left: 8px; z-index: 1000;
     background: rgba(16,24,26,0.88); color: #F5F3EC; border-radius: 10px;
@@ -263,8 +364,8 @@ ${legendHtml}
   /* Injektions-Puffer: sttSet* darf JEDERZEIT aufgerufen werden — auch bevor
      die Karte fertig geladen ist. Daten werden gepuffert und beim map-load
      angewendet. Ohne Puffer verpufft ein frueher injectJavaScript-Aufruf. */
-  var _sttPending = { pois: null, partners: null, aerialways: null };
-  var _sttApply   = { pois: null, partners: null, aerialways: null };
+  var _sttPending = { pois: null, partners: null, aerialways: null, sagaPin: null };
+  var _sttApply   = { pois: null, partners: null, aerialways: null, sagaPin: null };
   window.sttSetPois = function(d) {
     _sttPending.pois = d;
     if (_sttApply.pois) _sttApply.pois(d);
@@ -276,6 +377,10 @@ ${legendHtml}
   window.sttSetAerialways = function(d) {
     _sttPending.aerialways = d;
     if (_sttApply.aerialways) _sttApply.aerialways(d);
+  };
+  window.sttSetSagaPin = function(d) {
+    _sttPending.sagaPin = d;
+    if (_sttApply.sagaPin) _sttApply.sagaPin(d);
   };
 
   var map = new maplibregl.Map({
@@ -695,6 +800,25 @@ ${legendHtml}
       if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
     };
 
+    /* Saga-Pin: kleines SagaTrail-Icon an der Sagen-Koordinate */
+    var SAGA_B64 = 'data:image/png;base64,${SAGA_PIN_B64}';
+    _sttApply.sagaPin = function(pin) {
+      if (!pin || pin.applied) return;
+      pin.applied = true;
+      var wrap = document.createElement('div');
+      wrap.className = 'stt-saga-tipp';
+      var img = document.createElement('img');
+      img.src = SAGA_B64;
+      img.alt = pin.name || 'Sage';
+      wrap.appendChild(img);
+      var popup = new maplibregl.Popup({ offset: [0, -4], maxWidth: '200px' })
+        .setHTML('<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;font-weight:600;color:#10181A;padding:2px 0">' + (pin.name || 'Sage') + '</div>');
+      new maplibregl.Marker({ element: wrap, anchor: 'bottom' })
+        .setLngLat([pin.lng, pin.lat])
+        .setPopup(popup)
+        .addTo(map);
+    };
+
     _sttApply.aerialways = function(aerialwaysData) {
       if (!aerialwaysData || !aerialwaysData.length) return;
       if (map.getSource('seilbahnen')) return;
@@ -723,6 +847,7 @@ ${legendHtml}
     if (_sttPending.pois)       _sttApply.pois(_sttPending.pois);
     if (_sttPending.partners)   _sttApply.partners(_sttPending.partners);
     if (_sttPending.aerialways) _sttApply.aerialways(_sttPending.aerialways);
+    if (_sttPending.sagaPin)    _sttApply.sagaPin(_sttPending.sagaPin);
     post(JSON.stringify({ type: 'stt-html-ready' }));
     /* ------------------------------------------------------------------------------- */
 
