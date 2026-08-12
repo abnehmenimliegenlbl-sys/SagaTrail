@@ -2036,6 +2036,10 @@ components:
             - exakt
             - ungefaehr
             - nicht_lokalisierbar
+            - Ort identifiziert
+            - Region identifiziert
+            - Muss GPS Verifiziert werden
+            - Nur Kanton identifiziert
         isAnchorPlace:
           type: boolean
         fotoUrl:

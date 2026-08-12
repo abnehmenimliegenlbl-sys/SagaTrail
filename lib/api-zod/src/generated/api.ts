@@ -74,7 +74,7 @@ export const GetCatalogResponse = zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }).optional(),
-  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
+  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar', 'Ort identifiziert', 'Region identifiziert', 'Muss GPS Verifiziert werden', 'Nur Kanton identifiziert']),
   "isAnchorPlace": zod.boolean(),
   "fotoUrl": zod.string().nullish().describe('Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden.'),
   "fotoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Sagenfoto.')
@@ -557,7 +557,7 @@ export const GetRouteSagaResponse = zod.object({
   "lat": zod.number(),
   "lng": zod.number()
 }).optional(),
-  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar']),
+  "koordinatenSicherheit": zod.enum(['exakt', 'ungefaehr', 'nicht_lokalisierbar', 'Ort identifiziert', 'Region identifiziert', 'Muss GPS Verifiziert werden', 'Nur Kanton identifiziert']),
   "isAnchorPlace": zod.boolean(),
   "fotoUrl": zod.string().nullish().describe('Gecachtes Foto aus Wikimedia Commons (Motiv-Suche). Null wenn noch kein Foto vorhanden.'),
   "fotoAttribution": zod.string().nullish().describe('Urheber-\/Lizenzangabe zum Sagenfoto.')

@@ -481,6 +481,10 @@ export const CatalogSagaKoordinatenSicherheit = {
   exakt: 'exakt',
   ungefaehr: 'ungefaehr',
   nicht_lokalisierbar: 'nicht_lokalisierbar',
+  Ort_identifiziert: 'Ort identifiziert',
+  Region_identifiziert: 'Region identifiziert',
+  Muss_GPS_Verifiziert_werden: 'Muss GPS Verifiziert werden',
+  Nur_Kanton_identifiziert: 'Nur Kanton identifiziert',
 } as const;
 
 export interface CatalogSaga {

@@ -86,3 +86,4 @@
 - [SagaTrail Referral System](sagatrail-referral-system.md) — profiles.referral_code + pending_pack_rewards; referrals table; reward triggers on first premium purchase in POST /me/premium/sync; claim via /referral-reward screen.
 - [Anthropic image url-source](anthropic-image-url-source.md) — Vision mit source type "url" scheitert an Wikimedia-Bildern (400); serverseitig laden und als base64 schicken, fail-open.
 - [SagaTrail Leads in Postgres](sagatrail-leads-postgres.md) — partner_leads Tabelle ist single source of truth; WP MySQL nicht mehr Quelle; Import via POST /admin/leads/import-wp; OSM-Suche speichert direkt in PG.
+- [Nominatim jsonv2 category](nominatim-jsonv2-category.md) — format=jsonv2 liefert "category" statt "class"; Filter auf r.class verwirft lautlos alle Treffer.
