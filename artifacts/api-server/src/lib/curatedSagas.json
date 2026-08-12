@@ -3441,47 +3441,56 @@
       "de": {
         "title": "Judas Im Mond Neuenburg",
         "text": "Auf Schloss Vaumarcus über dem Neuenburgersee starb eine Tochter aus gebrochenenem Herzen – ihr Vater zwang sie zur Standesehe, ihr heimlicher Liebster wurde ermordet. In den nebligen Novembernächten wandelt die „Dame Blanche\" seitdem durch die dunklen Gänge und Wehrgänge, eine winzige, unauslöschliche Kerze in der Hand. Fischer berichten, dass ihr Erscheinen auf den Mauern ein sicheres Zeichen für kommende Stürme ist – und eine zweite Chance für die Verdammte, Leben zu retten. Wandert ihr an einem nebligen Novemberabend an Vaumarcus vorbei, haltet Ausschau: Vielleicht",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Judas in the Moon Neuchâtel",
         "text": "At Castle Vaumarcus overlooking Lake Neuchâtel, a daughter died of a broken heart – her father forced her into a marriage of convenience, her secret lover was murdered. Since then, the \"White Lady\" has wandered through the dark corridors and battlements on foggy November nights, a tiny, indelible candle in her hand. Fishermen report that her appearance on the walls is a sure sign of approaching storms – and a second chance for the damned to save lives. If you wander past Vaumarcus on a foggy November evening, keep watch: Perhaps",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "text": "Au château de Vaumarcus surplombant le lac de Neuchâtel, une fille mourut d'un cœur brisé – son père l'obligea à un mariage de convenance, son amant secret fut assassiné. Depuis, la « Dame Blanche » erre dans les couloirs sombres et les chemins de ronde lors des nuits de novembre brumeux, une toute petite bougie indélébile à la main. Les pêcheurs rapportent que son apparition sur les murs est un signe certain d'orages à venir – et une deuxième chance pour la damnée de sauver des vies. Si vous passez près de Vaumarcus lors d'une soirée de novembre brumeux, gardez les yeux ouverts : Peut-être",
         "quelleVerifiziert": false,
-        "title": "Judas dans la Lune Neuchâtel"
+        "title": "Judas dans la Lune Neuchâtel",
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Giuda nella Luna Neuchâtel",
         "text": "Al Castello di Vaumarcus che domina il Lago di Neuchâtel, una figlia morì per un cuore spezzato – suo padre la costrinse a un matrimonio di convenienza, il suo amante segreto fu assassinato. Da allora, la \"Dama Bianca\" vaga per i corridoi bui e i camminamenti di ronda nelle nebbiose notti di novembre, una minuscola candela indelebile in mano. I pescatori riferiscono che la sua apparizione sulle mura è un sicuro segno di tempeste imminenti – e una seconda possibilità per la dannata di salvare vite. Se passerete accanto a Vaumarcus in una nebbiosa sera di novembre, tenete gli occhi aperti: Forse",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Judas en la Luna Neuchâtel",
         "text": "En el Castillo de Vaumarcus que domina el Lago de Neuchâtel, una hija murió de corazón roto – su padre la obligó a un matrimonio de conveniencia, su amante secreto fue asesinado. Desde entonces, la \"Dama Blanca\" deambula por los corredores oscuros y adarves en las neblinosas noches de noviembre, una minúscula vela indeleble en la mano. Los pescadores informan que su aparición en los muros es una señal segura de tormentas próximas – y una segunda oportunidad para la condenada de salvar vidas. Si pasáis junto a Vaumarcus en una neblinosa tarde de noviembre, estad atentos: Quizás",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Judas na Lua Neuchâtel",
         "text": "No Castelo de Vaumarcus que domina o Lago de Neuchâtel, uma filha morreu de coração partido – seu pai a forçou a um casamento de conveniência, seu amante secreto foi assassinado. Desde então, a \"Dama Branca\" vaga pelos corredores escuros e amuadas nas nebulosas noites de novembro, uma minúscula vela indelével na mão. Os pescadores relatam que seu aparecimento nas muralhas é um sinal certo de tempestades vindouras – e uma segunda chance para a condenada salvar vidas. Se passardes por Vaumarcus em uma nebulosa noite de novembro, fiquem atentos: Talvez",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "月亮上的犹大 纳沙泰尔",
         "text": "在俯瞰纳沙泰尔湖的沃马克城堡，一位女儿因心碎而亡——她的父亲强迫她进行门当户对的婚姻，她的秘密恋人被谋杀了。从那以后，\"白衣夫人\"在雾霭沉沉的十一月夜晚在黑暗的走廊和城垛中漂泊，手中握着一支微小、不灭的蜡烛。渔民报告说，她出现在城墙上是暴风雨即将来临的确定信号——也是被诅咒者拯救生命的第二次机会。如果你在雾霭沉沉的十一月傍晚经过沃马克，请留意：也许",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Judas im Mond Nüburg",
         "text": "Uf Schloss Vaumarcus über em Nüburger See isch e Tochter vor gebrochenem Herze gstorbe – ihr Vater het si zur Standes-Eh zwunge, ihr Gheimnis Liebster isch ermordert worde. In de blutige Novembernächt wandlet d'\"Dame Blanche\" sit dere düre d'dunkle Gäng und Wehrgang, e winzigs, unlösches Cherzli in de Hand. Fischer berichte, dass ihr Erscheine uf e Muurne e sichres Zeiche für chummendi Stürm isch – und e zweite Chance für d'Verdammti, Läbe z'rette. Wenn e a nebligem Novemberabig a Vaumarcus vorbei laufet, haltet Uschau: Villicht",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Иуда в Луне Невшатель",
         "text": "В замке Вомарк, возвышающемся над озером Невшатель, умерла дочь от разбитого сердца – её отец заставил её вступить в брак по расчёту, её тайного возлюбленного убили. С тех пор «Белая Дама» бродит по тёмным коридорам и боевым ходам в туманные ноябрьские ночи, держа в руке крошечную неугасимую свечу. Рыбаки сообщают, что её появление на стенах – верный знак приближающихся штормов – и второй шанс для проклятой спасать жизни. Если вы будете проходить мимо Вомарка в туманный ноябрьский вечер, смотрите в оба: Возможно",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig, die Sage enthält keine Gewaltdarstellung, nur eine bildhafte Strafvorstellung am Nachthimmel.",
@@ -3504,47 +3513,56 @@
       "de": {
         "title": "Sonnwendtanz Chalet Des Rocha",
         "text": "In den düsteren Höhlen der Areuse-Schlucht lauerte ein gigantisches Ungeheuer – eine giftige Riesenschlange mit feurigen Augen, die Herden und Hoffnung der Siedler verschlang. Die verzweifelten Bewohner des Val-de-Travers stellten eine tückische Falle: Ein mutiger Köhler bestückte einen Holzwagen mit scharfen Eisendornen und lockte das Monster mit frischem Fleisch an. Als sich das Ungeheuer gierig um den Wagen wickelte, bohrten sich die Dornen tief in sein Fleisch – und der Köhler erledigte das gefesselte Monster mit seiner Axt. Die reißende Areuse verschlang das Unge",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Solstice Dance Chalet Des Rocha",
         "text": "In the dark caves of the Areuse Gorge lurked a gigantic monster – a venomous giant serpent with fiery eyes that devoured the herds and hopes of the settlers. The desperate inhabitants of Val-de-Travers set a cunning trap: A brave charcoal burner equipped a wooden cart with sharp iron spikes and lured the monster with fresh meat. As the creature greedily coiled around the cart, the spikes burrowed deep into its flesh – and the charcoal burner finished the trapped monster with his axe. The raging Areuse swallowed the monster.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "text": "Dans les grottes sombres des Gorges de l'Areuse rôdait un monstre gigantesque – un serpent géant venimeux aux yeux ardents qui dévorait les troupeaux et les espoirs des colons. Les habitants désespérés du Val-de-Travers ont tendu un piège perfide : Un courageux charbonnier équipa un chariot en bois de piquants de fer acérés et attira le monstre avec de la viande fraîche. Alors que la créature s'enroula avidement autour du chariot, les piquants s'enfoncèrent profondément dans sa chair – et le charbonnier acheva le monstre piégé avec sa hache. L'Areuse déchaînée avala le monstre.",
         "quelleVerifiziert": false,
-        "title": "Danse du Solstice Chalet Des Rocha"
+        "title": "Danse du Solstice Chalet Des Rocha",
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Danza del Solstizio Chalet Des Rocha",
         "text": "Nelle grotte oscure della Gola di Areuse si nascondeva un mostro gigantesco – un serpente gigante velenoso con occhi infuocati che divorava le mandrie e le speranze dei coloni. Gli abitanti disperati della Valle di Travers tesero una trappola subdola: Un coraggioso carbonaio equipaggiò un carro in legno con punte di ferro affilate e attirò il mostro con carne fresca. Mentre la creatura si avvolgeva avidamente intorno al carro, le punte si piantarono profondamente nella sua carne – e il carbonaio finì il mostro intrappolato con la sua ascia. L'Areuse impetuosa inghiottì il mostro.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Danza del Solsticio Chalet Des Rocha",
         "text": "En las cuevas oscuras de la Garganta de Areuse acechaba un monstruo gigantesco – una serpiente gigante venenosa con ojos ardientes que devoraba los rebaños y las esperanzas de los colonos. Los desesperados habitantes del Val-de-Travers tendieron una trampa astuta: Un valiente carbonero equipó un carro de madera con pinchos de hierro afilados y atrajo al monstruo con carne fresca. Cuando la criatura se enrolló ávidamente alrededor del carro, los pinchos se hundieron profundamente en su carne – y el carbonero acabó con el monstruo atrapado con su hacha. El Areuse embravecido se tragó al monstruo.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Dança do Solstício Chalet Des Rocha",
         "text": "Nas cavernas escuras da Garganta de Areuse espreitava um monstro gigantesco – uma serpente gigante venenosa com olhos ardentes que devorava os rebanhos e esperanças dos colonos. Os desesperados habitantes do Val-de-Travers armaram uma cilada astuta: Um corajoso carvoeiro equipou um carrinho de madeira com espinhos de ferro afiados e atraiu o monstro com carne fresca. Quando a criatura se enroscou avidamente ao redor do carrinho, os espinhos penetraram profundamente em sua carne – e o carvoeiro eliminou o monstro preso com seu machado. O Areuse caudaloso engoliu o monstro.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "至日之舞 罗卡山间小屋",
         "text": "在阿勒乌塞峡谷的黑暗洞穴中潜伏着一个巨大的怪物——一条长着炽热双眼的剧毒巨蛇，吞噬了定居者的牲畜和希望。绝望的瓦勒德特拉维尔斯居民设置了一个阴险的陷阱：一个勇敢的制炭工用锋利的铁刺装备了一辆木制手推车，用新鲜的肉吸引怪物。当怪物贪婪地缠绕在手推车周围时，铁刺深深扎入了它的血肉——制炭工用他的斧头解决了被困的怪物。湍急的阿勒乌塞河吞没了怪物。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Sunnewendtanz Chalet Des Rocha",
         "text": "In de dunkle Höhler vo de Areuse-Schlucht hät e riise Ungeüür gelauert – e giftig Rieseschlange mit füürige Auge, wo d'Herde und d'Hoffnig vo de Siedler vrzücht het. D'verzwiiflte Bewohner vom Val-de-Travers händ e tückisch Falle gstellt: E mutige Köhler hät e Holzwage mit scharfe Iisedörne usgrüstet und s'Monster mit frischem Fläisch angelockt. As sich s'Ungeüür girig ume de Wage gwunde het, händ sich d'Dörne tüüf is Fläisch iigebohrt – und de Köhler het s'gfesslet Monster mit sire Axt erledigt. D'riisendi Areuse het s'Ungeüür vrzücht.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Танец Солнцестояния Шале Де Роша",
         "text": "В темных пещерах ущелья Ареузе скрывалось гигантское чудовище – ядовитая гигантская змея с пылающими глазами, которая пожирала стада и надежды поселенцев. Отчаянные жители Валь-де-Траверс расставили коварную ловушку: Смелый углежог оснастил деревянную повозку острыми железными шипами и приманил чудовище свежим мясом. Когда существо жадно обвилось вокруг повозки, шипы глубоко вонзились в его плоть – и углежог расправился с пойманным чудовищем своим топором. Бушующая Ареузе поглотила чудовище.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig, die Sage beschreibt ein friedliches Volksfest ohne bedrohliche Elemente.",
@@ -3567,47 +3585,56 @@
       "de": {
         "title": "Heilige Baeume Gorgier",
         "text": "Ein skrupelloser Wilderer erblickt am Creux du Van eine schneeweiße Gemse mit goldenen Hörnern – doch zwischen Jäger und Beute tritt plötzlich das Männlein des Felskessels auf, ein winziger Erdgeist mit grauem Bart und Moosmantel, und warnt mit Donnerstimme. Der Wilderer lacht und schießt – doch die Kugel prallt ab und trifft ihn selbst, während das Felsband unter ihm bricht. Zwar überlebt er den Sturz in die Tiefe, doch bleibt er für immer gehemmt, und die weiße Gemse verschwindet für alle Zeit aus dem monumentalen Felskessel. Eine Geschichte von Gier, Str",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Holy Trees of Gorgier",
         "text": "A ruthless poacher catches sight of a snow-white chamois with golden horns at the Creux du Van – but between hunter and prey, the little man of the rock basin suddenly appears, a tiny earth spirit with a gray beard and moss cloak, and warns with a thunderous voice. The poacher laughs and shoots – but the bullet ricochets and strikes him instead, while the rock ledge beneath him breaks. Although he survives the fall into the depths, he remains paralyzed forever, and the white chamois vanishes for all time from the monumental rock basin. A story of greed and punishment.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "text": "Un braconnier sans scrupules aperçoit une chamois blanc comme neige aux cornes d'or au Creux du Van – mais entre le chasseur et sa proie apparaît soudain le petit homme du cirque rocheux, un minuscule esprit de la terre au long barbe grise et manteau de mousse, qui avertit d'une voix tonnante. Le braconnier rit et tire – mais la balle ricochet et le frappe lui-même, tandis que la bande rocheuse se brise sous lui. Bien qu'il survive à la chute dans les profondeurs, il reste paralysé à jamais, et la chamois blanche disparaît pour toujours du bassin rocheux monumental. Une histoire d'avidité et de punition.",
         "quelleVerifiziert": false,
-        "title": "Les Arbres Sacrés de Gorgier"
+        "title": "Les Arbres Sacrés de Gorgier",
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Gli Alberi Sacri di Gorgier",
         "text": "Un cacciatore senza scrupoli scorge uno stambecco bianco come la neve con corna d'oro al Creux du Van – ma tra il cacciatore e la preda appare improvvisamente l'ometto del bacino roccioso, un minuscolo spirito terrestre con la barba grigia e il mantello di muschio, che avverte con voce tonante. Il cacciatore ride e spara – ma il proiettile rimbalza e lo colpisce lui stesso, mentre la roccia sotto di lui si spezza. Sebbene sopravviva alla caduta nelle profondità, rimane paralizzato per sempre, e lo stambecco bianco scompare per sempre dal bacino roccioso monumentale. Una storia di avidità e punizione.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Los Árboles Sagrados de Gorgier",
         "text": "Un cazador furtivo sin escrúpulos vislumbra una gamuza blanca como la nieve con cuernos dorados en el Creux du Van – pero entre el cazador y su presa aparece de repente el hombrecillo de la cuenca rocosa, un minúsculo espíritu de la tierra con barba gris y capa de musgo, que advierte con voz tonante. El cazador ríe y dispara – pero la bala rebota y lo golpea a él mismo, mientras la roca bajo sus pies se quiebra. Aunque sobrevive a la caída en las profundidades, permanece paralizado para siempre, y la gamuza blanca desaparece para siempre de la cuenca rocosa monumental. Una historia de avaricia y castigo.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "As Árvores Sagradas de Gorgier",
         "text": "Um caçador furtivo sem escrúpulos avista uma camurça branca como a neve com chifres dourados no Creux du Van – mas entre o caçador e sua presa, o homenzinho da bacia rochosa aparece de repente, um minúsculo espírito da terra com barba cinzenta e manto de musgo, e avisa com voz trovejante. O caçador ri e dispara – mas a bala ricocheia e o atinge, enquanto a rocha sob seus pés se quebra. Embora sobreviva à queda nas profundezas, permanece paralizado para sempre, e a camurça branca desaparece para sempre da bacia rochosa monumental. Uma história de ganância e castigo.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "戈热的圣树",
         "text": "一个无良的偷猎者在克鲁克斯杜凡看到一只雪白的羱羊，长着金色的角——但在猎人和猎物之间，岩石盆地的小男人突然出现了，一个留着灰色胡须、穿着苔藓斗篷的微小土地精灵，用雷鸣般的声音发出警告。偷猎者笑着开枪——但子弹反弹并击中了他自己，而他脚下的岩石边缘断裂了。虽然他从深处的跌落中活了下来，但他永远瘫痪了，白色的羱羊永远从宏伟的岩石盆地消失了。这是一个关于贪婪和惩罚的故事。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Heiige Büm Gorgier",
         "text": "En ruchlosa Wilderer het am Creux du Van e schneewiiss Gemse mit goldige Hörner gseh – aber zwüsche Jäger und Beut isch plötzlich s Männli vom Felskessle cho, es winzigs Erdgeischtli mit gryem Bart und Moosmantel, und het mit Donnerstimm gwaarnt. De Wilderer het glacht und gschossa – aber d Chugel isch abprällt und het ihn selber troffe, während s Felsband under ihm brocht isch. Zwar het er de Sturz i d Tüfi überlebt, aber er bliibt für ewig ghemmt, und d wiiss Gemse verschwiidet für alli Zyt us em monumentale Felskessle. E Gschicht vo Giir und Bestrafig.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Святые деревья Горжье",
         "text": "Безжалостный браконьер видит на Крё-дю-Ван снежно-белую серну с золотыми рогами – но между охотником и добычей внезапно появляется человечек из каменной чаши, крошечный дух земли с седой бородой и плащом из мха, и грозно предупреждает. Браконьер смеется и стреляет – но пуля отскакивает и поражает его самого, а скальная полоса под ним обрушивается. Хотя он выживает после падения в глубину, он остается парализованным навсегда, а белая серна навсегда исчезает из монументальной каменной чаши. История о жадности и наказании.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig, die Sage ist bereits kindgerecht und handelt von Ehrfurcht vor der Natur.",
@@ -3630,47 +3657,56 @@
       "de": {
         "title": "Les Fees Du Doubs",
         "text": "Ein weisses Kaninchen führt den verzweifelten Müller Jonas in eine finstere Felsspalte – dort rauscht unter der Erde ein gigantischer, unberührter Fluss. Mit blossem Mut und den Händen seiner Dorfbewohner meisselt er die ersten unterirdischen Mühlen der Welt aus dem Gestein und rettet sein Dorf vor dem Hungertod. Noch heute sollen Wanderer das mystische Tier in den Höhlen von Col-des-Roches sehen, wie es den verlorenen Müllern im Dunkeln den Weg weist – ein Segen aus der Tiefe.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "D'Feen vom Doubs",
         "text": "Es wiss Häsli füert de verzweiflet Müller Jonas i ne finsteri Felspalte – dört rüüscht under de Erde e riisengrosse, unberüerti Fluss. Mit bloss em Muet und de Händ vo sine Dorfbewohner meisslet er d'erste Unterirdische Mühle vo de Welt us em Gestein us und rettet si Dorf vor em Hungertod. Hüt no sölle Wanderer s'mystische Tier i de Höhle vo Col-des-Roches gsee, wie's de verlorene Müller im Dunkle de Wäg wiist – e Seege us de Tiefi.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "text": "Un lapin blanc conduit le meunier Jonas désespéré dans une sombre crevasse rocheuse – là gronde sous terre un fleuve gigantesque et vierge. Avec seulement son courage et les mains de ses concitoyens, il cisèle les premiers moulins souterrains du monde dans la roche et sauve son village de la famine. Aujourd'hui encore, les randonneurs affirment voir la créature mystique dans les grottes de Col-des-Roches, guidant les meuniers perdus dans l'obscurité – une bénédiction des profondeurs.",
         "quelleVerifiziert": false,
-        "title": "Les Fées du Doubs"
+        "title": "Les Fées du Doubs",
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Le Fate del Doubs",
         "text": "Un coniglio bianco conduce il mugnaio disperato Jonas in una scura fenditura rocciosa – dove sotto terra rimbomba un fiume gigantesco e incontaminato. Con solo coraggio e le mani dei suoi concittadini, scolpisce i primi mulini sotterranei del mondo nella roccia e salva il suo villaggio dalla fame. Ancora oggi, gli escursionisti affermano di vedere la creatura mistica nelle grotte di Col-des-Roches, che guida i mugnai perduti nell'oscurità – una benedizione dalle profondità.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Fairies of the Doubs",
         "text": "A white rabbit leads desperate miller Jonas into a dark rocky crevice – where a gigantic, pristine underground river roars beneath the earth. With nothing but courage and the hands of his fellow villagers, he chisels the world's first underground mills from the stone and saves his village from starvation. Even today, wanderers claim to see the mystical creature in the caves of Col-des-Roches, guiding lost millers through the darkness – a blessing from the depths.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "杜布斯的仙女",
         "text": "一只白色兔子引领绝望的磨坊主约翰走进一条黑暗的岩石裂缝——地下咆哮着一条巨大而原始的河流。凭借仅有的勇气和村民的双手，他从岩石中凿出了世界上第一批地下磨坊，拯救了他的村庄免于饥荒。直到今天，登山者们声称在科尔德罗什溶洞中看到了这只神秘的生物，在黑暗中为迷失的磨坊主指引道路——来自深处的祝福。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Феи Дубса",
         "text": "Белый кролик ведёт отчаявшегося мельника Йонаса в тёмную скальную расселину – там под землёй бушует гигантская, нетронутая река. Обладая только мужеством и руками своих односельчан, он высекает из камня первые в мире подземные мельницы и спасает свою деревню от голода. И по сей день странники клянутся, что видят мистическое животное в пещерах Кол-де-Рош, указывающее заблудившимся мельникам путь во тьме – благословение из глубин.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Las Hadas del Doubs",
         "text": "Un conejo blanco guía al desesperado molinero Jonas hacia una sombría grieta rocosa – donde ruge bajo tierra un río gigantesco e intacto. Con solo su coraje y las manos de sus conciudadanos, cinceló los primeros molinos subterráneos del mundo en la piedra y salvó a su pueblo del hambre. Aún hoy, los excursionistas afirman ver la criatura mística en las cuevas de Col-des-Roches, guiando a los molineros perdidos en la oscuridad – una bendición desde las profundidades.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "As Fadas do Doubs",
         "text": "Um coelho branco conduz o moleiro desesperado Jonas a uma escura fenda rochosa – onde sob a terra ruge um rio gigantesco e intocado. Com apenas coragem e as mãos de seus conterrâneos, ele esculpe os primeiros moinhos subterrâneos do mundo na rocha e salva sua aldeia da fome. Ainda hoje, os caminhantes afirmam ver a criatura mística nas cavernas de Col-des-Roches, guiando os moleiros perdidos na escuridão – uma bênção das profundezas.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": null,
@@ -3771,42 +3807,50 @@
       "en": {
         "title": "Foundation of the Convent of All Saints",
         "text": "A stormy winter night on the Munot – and a lazy watchman falls asleep at a forbidden place. Suddenly he awakens to the knocking of a tiny man with a pointed hood and silver axe, relentlessly striking against the foundation stones. Invisible forces compel the watchman to help pile stones all night long until his hands bleed – a punishment that the spirit inflicts on anyone who neglects the fortress. By morning, the watchman is broken, and from then on he never sleeps during his watch again.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Fondation du Couvent de Tous les Saints",
         "text": "Une nuit d'hiver orageuse sur le Munot – et un gardien paresseux s'endort à un endroit interdit. Soudain, il s'éveille aux coups d'un minuscule bonhomme coiffé d'un capuchon pointu et armé d'une hache d'argent, qui frappe implacablement les pierres de fondation. Des forces invisibles forcent le gardien à l'aider à entasser des pierres toute la nuit jusqu'à ce que ses mains saignent – un châtiment que l'esprit impose à quiconque néglige la forteresse. Au matin, le gardien est brisé, et désormais il ne dort plus jamais pendant sa garde.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Fondazione del Convento di Ognissanti",
         "text": "Una notte d'inverno tempestosa sul Munot – e una sentinella pigra si addormenta in un luogo vietato. All'improvviso si sveglia ai colpi di un minuscolo ometto con un cappuccio a punta e un'ascia d'argento, che colpisce implacabilmente i blocchi di fondazione. Forze invisibili costringono la sentinella ad aiutare ad ammucchiare pietre per tutta la notte finché le sue mani sanguinano – una punizione che lo spirito infligge a chiunque trascuri la fortezza. Al mattino, la sentinella è distrutta e da allora non dorme mai più durante la sua guardia.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Fundación del Convento de Todos los Santos",
         "text": "Una noche de invierno tormentosa en el Munot – y un perezoso vigilante se queda dormido en un lugar prohibido. De repente despierta al golpeteo de un diminuto hombrecillo con capucha puntiaguda y un hacha de plata, golpeando implacablemente las piedras de cimentación. Fuerzas invisibles obligan al vigilante a ayudar a amontonar piedras toda la noche hasta que sus manos sangran – un castigo que el espíritu impone a quien descuide la fortaleza. Por la mañana, el vigilante está roto, y desde entonces nunca vuelve a dormir durante su vigilancia.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Fundação do Convento de Todos os Santos",
         "text": "Uma noite de inverno tempestuosa no Munot – e um guarda preguiçoso adormece em um local proibido. De repente, ele acorda com as batidas de um homenzinho minúsculo com capuz pontiagudo e um machado de prata, golpeando implacavelmente as pedras de fundação. Forças invisíveis forçam o guarda a ajudar a empilhar pedras a noite toda até que suas mãos sangrem – um castigo que o espírito impõe a quem negligenciar a fortaleza. Pela manhã, o guarda está quebrado, e a partir de então nunca mais dorme durante sua guarda.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "众圣殿修道院的建立",
         "text": "穆诺特堡垒上的一个暴风骤雨的冬夜——一个懒惰的守卫在禁地睡着了。突然,他被一个戴着尖帽、拿着银斧的小个子人物的敲击声惊醒,这个人无情地敲打着地基石块。无形的力量迫使守卫整夜帮助堆积石头,直到他的手流血——这是鬼魂对所有忽视堡垒的人施加的惩罚。天亮时,守卫已经崩溃,从此他在值班时再也不睡觉了。",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Gründig vom Chloster Allerheilige",
         "text": "Ä stürmischi Winternacht uf em Munot – und ä faule Wächter schläft a verbotenem Ort ii. Plötzlich wacht er uf zum Chlopfe vun ä winzige Männli mit spitzer Chutte und silbreme Biil, das unnachgiebig gegen d Grundstei schluut. Unsichtbari Chräft zwingid d Wächter, d ganz Nacht lang bim Steihüüfle z'helfe, bis sini Händ bluet – ä Straf, wo der Geischt jedem uferleit, wo d Feschtung vernachlässigt. Am Morge isch der Wächter broche, und er schläft vo da a nie meh während sinere Wacht.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Основание монастыря Всех Святых",
         "text": "Бурная зимняя ночь на Мюноте – и ленивый сторож засыпает в запретном месте. Внезапно он просыпается от стука крошечного человечка в остроконечном капюшоне с серебряным топором, неумолимо бьющего по фундаментным камням. Невидимые силы заставляют сторожа всю ночь помогать складывать камни, пока его руки не кровоточат – наказание, которое дух налагает на каждого, кто пренебрегает крепостью. К утру сторож сломлен, и с тех пор он никогда больше не спит во время своей смены.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine besondere Anpassung nötig, die Geschichte ist bereits kindgerecht.",
@@ -3835,42 +3879,50 @@
       "en": {
         "title": "The Stag of Hohenklingen",
         "text": "A poor shepherd boy follows a lost goat and discovers behind thick brush the entrance to a mysterious cave – illuminated by a thousand lights and guarded by an ancient sage. There stands a life-sized calf of pure gold on a stone altar, and the old man grants the boy a precious gift: a piece of gold to save his family. When the greed of his relatives drives him to betrayal and an entire group of farmers climbs the Randen, the cave and its secret vanish forever behind a massive rockfall – and only the",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Cerf de Hohenklingen",
         "text": "Un pauvre garçon berger suit une chèvre égarée et découvre derrière un épais buisson l'entrée d'une grotte mystérieuse – illuminée par mille lumières et gardée par un sage ancien. Là se dresse un veau grandeur nature en or pur sur un autel de pierre, et le vieil homme offre au garçon un cadeau précieux : un morceau d'or pour sauver sa famille. Quand la cupidité de ses proches le pousse à la trahison et qu'un groupe entier de paysans grimpe le Randen, la grotte et son secret disparaissent à jamais derrière un énorme éboulement – et seul",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Cervo di Hohenklingen",
         "text": "Un povero ragazzo pastore segue una capra smarrita e scopre dietro fitti cespugli l'ingresso di una misteriosa caverna – illuminata da mille luci e custodita da un antico saggio. Lì si erge un vitello a grandezza naturale di oro puro su un altare di pietra, e il vecchio concede al ragazzo un dono prezioso: un pezzo d'oro per salvare la sua famiglia. Quando l'avidità dei suoi parenti lo spinge al tradimento e un intero gruppo di contadini scala il Randen, la caverna e il suo segreto scompaiono per sempre dietro una massiccia frana – e solo",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Ciervo de Hohenklingen",
         "text": "Un pobre niño pastor sigue a una cabra perdida y descubre detrás de maleza espesa la entrada a una cueva misteriosa – iluminada por mil luces y custodiada por un sabio anciano. Allí se alza un becerro de tamaño natural hecho de oro puro en un altar de piedra, y el anciano le concede al niño un regalo precioso: un trozo de oro para salvar a su familia. Cuando la avaricia de sus parientes lo impulsa a la traición y un grupo entero de campesinos sube el Randen, la cueva y su secreto desaparecen para siempre detrás de un derrumbe masivo – y solo",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Cervo de Hohenklingen",
         "text": "Um pobre menino pastor segue uma cabra perdida e descobre atrás de arbustos densos a entrada de uma caverna misteriosa – iluminada por mil luzes e guardada por um sábio ancião. Lá está um bezerro em tamanho natural feito de ouro puro em um altar de pedra, e o ancião concede ao menino um presente precioso: um pedaço de ouro para salvar sua família. Quando a ganância de seus parentes o leva à traição e um grupo inteiro de agricultores sobe o Randen, a caverna e seu segredo desaparecem para sempre atrás de um colossal deslizamento de terra – e apenas",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "霍恩克林根的雄鹿",
         "text": "一个贫穷的牧羊男孩跟随一只迷路的山羊，在茂密的灌木丛后发现了一个神秘洞穴的入口——被千盏灯光照亮，由一位古老的智者守护。那里有一只纯金制成的真人大小的小牛站在石制祭坛上，老人赐予男孩一份珍贵的礼物：一块金子来拯救他的家人。当亲属的贪婪驱使他背叛，一整群农民爬上兰登山时，洞穴和它的秘密永远消失在巨大的山崩之后——只有",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "De Hirsch uf Hoheklige",
         "text": "E arme Hirtebue folgt ere verirrte Ziige und entdeckt hinder dichtem Gstrüpp de Ingang zu ere gheimnisvole Höhle – erleuchtet vo tuusig Lichter und bewacht vo eme ururalte Gries. Dört staht e läbensgroosses Chlibli us pure Gold uf eme steinernem Altar, und de alt Ma gwährt em Bue e kostbars Gschänk: es Stückli Gold, zum sini Familie z rette. Wa di Gier vo sine Verwandte in zum Verrat dribt und e ganz Grupp vo Buure de Rande erchlimt, verschwindet di Höhle und ir Gheimnis für ewig hinder eme gwältige Felssturz – und nume",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Олень Хохенклингена",
         "text": "Бедный пастушок следует за заблудившейся козой и обнаруживает за густым кустарником вход в таинственную пещеру – освещённую тысячью огней и охраняемую древним мудрецом. Там стоит телёнок в натуральную величину из чистого золота на каменном алтаре, и старик дарует мальчику драгоценный подарок: кусок золота, чтобы спасти свою семью. Когда алчность его родственников подталкивает его к предательству и целая группа крестьян поднимается на Рандена, пещера и её тайна навсегда исчезают под мощным обвалом – и только",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine besondere Anpassung nötig, die Geschichte ist bereits kindgerecht.",
@@ -5492,47 +5544,56 @@
       "de": {
         "title": "Der Gute Ritter Von Eugensberg",
         "text": "Ein stolzes Fräulein auf Schloss Altenklingen wies einen armen Ritter voller Verachtung ab – und besiegelte damit ihr eigenes Schicksal. Seit Jahrhunderten wandelt sie als weisses Gespenst durch die Schlossgärten, gefangen im Fluch des gedemütigten Mannes, der vor seinem Tod nur eine Bedingung setzte: Erlöst könne sie nur werden durch einen Menschen, der sie aus reiner Nächstenliebe rettet. In einer stürmischen Nacht erscheint sie einem ehrlichen Handwerksburschen und führt ihn in die Tiefen des Schlosskellers – doch die schreckliche Prüfung, die er dort bestehen muss, fordert mehr Mut, als er aufbringen",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Good Knight of Eugensberg",
         "text": "A proud maiden at Castle Altenklingen scorned a poor knight with contempt – and sealed her own fate. For centuries, she has wandered as a white ghost through the castle gardens, trapped in the curse of the humiliated man who, before his death, set only one condition: she could only be redeemed by someone who saves her out of pure charity. On a stormy night, she appears to an honest craftsman and leads him into the depths of the castle cellar – but the terrible ordeal he must endure there demands more courage than he can muster.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Bon Chevalier d'Eugensberg",
         "text": "Une fière demoiselle du château d'Altenklingen repoussa avec mépris un pauvre chevalier – et scella ainsi son propre destin. Depuis des siècles, elle erre sous la forme d'un spectre blanc dans les jardins du château, prisonnière de la malédiction de l'homme humilié qui, avant sa mort, n'imposa qu'une seule condition : elle ne pouvait être libérée que par quelqu'un qui la sauverait par pure charité. Une nuit orageuse, elle apparaît à un honnête compagnon artisan et le conduit dans les profondeurs de la cave du château – mais l'épreuve terrible qu'il doit affronter exige plus de courage qu'il ne peut en rassembler.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Buon Cavaliere di Eugensberg",
         "text": "Una superba signorina del Castello di Altenklingen respinse con disprezzo un povero cavaliere – e sigillò così il suo stesso destino. Da secoli, vaga come uno spettro bianco nei giardini del castello, intrappolata nella maledizione dell'uomo umiliato che, prima di morire, pose una sola condizione: poteva essere redenta solo da chi la salvasse per pura carità. In una notte tempestosa, appare a un onesto operaio e lo conduce nelle profondità della cantina del castello – ma la terribile prova che deve affrontare richiede più coraggio di quanto possa raccogliere.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Buen Caballero de Eugensberg",
         "text": "Una orgullosa doncella del Castillo de Altenklingen rechazó con desdén a un pobre caballero – y selló así su propio destino. Durante siglos, ha deambulado como un fantasma blanco por los jardines del castillo, atrapada en la maldición del hombre humillado que, antes de su muerte, estableció una única condición: solo podría ser redimida por alguien que la salvara por pura caridad. En una noche tormentosa, se le aparece a un honrado aprendiz de artesano y lo conduce a las profundidades de la bodega del castillo – pero la terrible prueba que debe superar allí exige más valor del que puede reunir.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Bom Cavaleiro de Eugensberg",
         "text": "Uma donzela orgulhosa do Castelo de Altenklingen rejeitou com desprezo um pobre cavaleiro – e selou assim seu próprio destino. Por séculos, ela vaga como um fantasma branco pelos jardins do castelo, presa à maldição do homem humilhado que, antes de sua morte, estabeleceu apenas uma condição: ela só poderia ser redimida por alguém que a salvasse por pura caridade. Em uma noite tempestuosa, ela aparece a um honesto aprendiz de artesão e o conduz às profundezas da adega do castelo – mas a terrível provação que ele deve enfrentar lá exige mais coragem do que consegue reunir.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "尤根斯堡的善良骑士",
         "text": "阿尔滕克林根城堡里一位骄傲的少女以蔑视的态度拒绝了一位贫穷的骑士——从而封印了自己的命运。几个世纪以来，她作为白色幽灵在城堡花园中游荡，被那位受辱男子的诅咒所困，他在死前只设定了一个条件：只有出于纯粹的怜悯之心拯救她的人，才能将她解救。在一个暴风雨之夜，她向一位诚实的工匠显现，并将他引向城堡地窖的深处——但他必须经历的那场可怕的考验，需要比他能鼓起的更多的勇气。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Der Guet Ritter vo Öigesberg",
         "text": "Es stolz Fräulein uf Schloss Altechlingen het e arme Ritter mit Verachtung abwise – und het so ir eiges Schicksal besiglat. Sit Jahrhunderte wandlet si as wisses Gspenst dür d Schlossgärte, gfange im Fluech vom demütigte Ma, wo vor sim Dod nume ei Bedingig gstellt het: Erlöst cha si nume werde dur ne Mönsch, wo si us purer Nächsteliebi rettet. In ere Sturmacht erschint si nem ehrliche Handwerksburscht und führt in i d Tiefe vom Schlosscheller – aber d schrecklichi Pruefig, wo er do bstoh muss, verlangt meh Muet, as er ufbringe cha.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Добрый рыцарь Евгенсберга",
         "text": "Гордая дева замка Альтенклинген с презрением отвергла бедного рыцаря – и тем самым запечатала свою собственную судьбу. Столетиями она бродит белым призраком по замковым садам, заключённая в проклятие оскорблённого мужчины, который перед смертью поставил только одно условие: её можно спасти только тому, кто спасёт её из чистой любви к ближнему. В бурную ночь она являет себя честному мастеровому и ведёт его в глубины замковых подземелий – но страшное испытание, которое он там должен пройти, требует больше мужества, чем он может собрать.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine besondere Anpassung nötig.",
@@ -5555,47 +5616,56 @@
       "de": {
         "title": "Der Ritter Und Das Wildschwein",
         "text": "Ein geiziger Fischer aus Steckborn missachtet die heiligen Gesetze des Untersees und wirft seine Netze auch bei Nebel und in der Schonzeit aus. Eines Abends holt er statt Fischen ein grauenvolles Ungeheuer an die Oberfläche – einen Seedämon mit Menschengesicht und Schlangenkörper, bedeckt von grünem Schlamm und Algen. Mit glühenden Augen und einer Donnerstimme verflucht das Wesen den Fischer für seine Habgier und zieht ihn mit einem gewaltigen Schwanzschlag in die bodenlose Tiefe. Am nächsten Morgen wird nur noch das zerschellte Boot an Land gespült – der Fischer aber verschwindet für immer in den",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Knight and the Wild Boar",
         "text": "A greedy fisherman from Steckborn disregards the sacred laws of Lake Untersee and casts his nets even in fog and during closed seasons. One evening, instead of fish, he pulls a horrifying monster to the surface – a lake demon with a human face and serpent body, covered in green slime and algae. With glowing eyes and a thunderous voice, the creature curses the fisherman for his greed and drags him into the fathomless depths with a powerful blow of its tail. The next morning, only the shattered boat washes ashore – but the fisherman vanishes forever into the depths.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Chevalier et le Sanglier Sauvage",
         "text": "Un pêcheur avare de Steckborn méprise les lois sacrées du lac Untersee et jette ses filets même par brouillard et en période de fermeture. Un soir, au lieu de poissons, il remonte à la surface une créature horrible – un démon lacustre au visage humain et au corps de serpent, recouvert de vase verte et d'algues. Avec des yeux rougeoyants et une voix tonnante, la créature maudit le pêcheur pour son avarice et le traîne dans les profondeurs sans fond d'un coup de queue puissant. Le lendemain matin, seul le bateau fracassé s'échoue sur le rivage – mais le pêcheur disparaît à jamais dans les profondeurs.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Cavaliere e il Cinghiale Selvaggio",
         "text": "Un pescatore avaro di Steckborn dispregia le leggi sacre del lago Untersee e getta le sue reti anche nella nebbia e durante i periodi di chiusura. Una sera, invece di pesci, tira in superficie una creatura orribile – un demone lacustre con faccia umana e corpo di serpente, coperto di melma verde e alghe. Con gli occhi ardenti e una voce tonante, la creatura maledice il pescatore per la sua avidità e lo trascina negli abissi senza fondo con un colpo potente della coda. La mattina seguente, solo la barca distrutta si arena sulla riva – ma il pescatore scompare per sempre negli abissi.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Caballero y el Jabalí Salvaje",
         "text": "Un pescador avaro de Steckborn desatiende las leyes sagradas del lago Untersee y lanza sus redes incluso en la niebla y en época de veda. Una noche, en lugar de peces, saca a la superficie una criatura horrible – un demonio lacustre con rostro humano y cuerpo de serpiente, cubierto de lodo verde y algas. Con los ojos ardientes y una voz tonante, la criatura maldice al pescador por su avaricia y lo arrastra a las profundidades insondables con un poderoso golpe de cola. A la mañana siguiente, solo el barco destrozado llega a la orilla – pero el pescador desaparece para siempre en las profundidades.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Cavaleiro e o Javali Selvagem",
         "text": "Um pescador ganancioso de Steckborn desrespeita as leis sagradas do lago Untersee e lança suas redes até mesmo na névoa e em períodos de fechamento. Uma noite, em vez de peixes, ele puxa à superfície uma criatura horrível – um demônio lacustre com rosto humano e corpo de serpente, coberto de lodo verde e algas. Com olhos brilhantes e voz trovejante, a criatura amalçoa o pescador por sua ganância e o arrasta para as profundezas insondáveis com um poderoso golpe de cauda. Na manhã seguinte, apenas o barco despedaçado chega à costa – mas o pescador desaparece para sempre nas profundezas.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "骑士与野猪",
         "text": "一位来自施泰克博恩的贪心渔夫无视下湖的神圣法律,甚至在雾天和禁渔期也投下渔网。一个晚上,他没有捕到鱼,反而从水中拉出一个可怕的怪物——一个湖魔,有着人类的面孔和蛇的身体,覆盖着绿色的淤泥和水藻。这个生物用炽热的眼睛和雷鸣般的声音诅咒渔夫的贪心,用强有力的尾巴一击将他拖入无底深渊。第二天早上,只有破碎的船被冲回岸边——但那个渔夫永远消失在深渊之中。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "De Ritter und s Wùdschwin",
         "text": "E giizig Fischär us Steckbore missachted d heilige Gsetz vom Underseee und wirft sini Nätz au bi Nebel und in dr Schonziit us. Enis Aabends holt er stadde Fisch e grüslig Ungheüür a d Oberfläch – e Seedämon mit Mänschegischt und Schlangekörper, bedecçt vo grüenäm Schlamm und Alge. Mit glüenäde Auge und ä Donnerstimm verfluecht s Wäse de Fischär für sini Habgier und zieht in mit ä gwaltäg Schwanzschlag i d bodelos Tüüfi. Am nächscht Morge wird nur no s zerschellte Boot a Land gschpült – de Fischär aber verschwundet für ewig i d Tiufi.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Рыцарь и Дикий Кабан",
         "text": "Алчный рыбак из Штеккборна презирает священные законы озера Унтерзе и забрасывает сети даже в туман и в запретное время. Одним вечером вместо рыбы он вытягивает на поверхность ужасное чудовище – озёрного демона с человеческим лицом и телом змеи, покрытого зелёным илом и водорослями. Со сверкающими глазами и громовым голосом существо проклинает рыбака за его жадность и затягивает его в безднные глубины мощным ударом хвоста. На следующее утро на берег выбрасывается только разбитая лодка – а рыбак исчезает навеки в пучине.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine besondere Anpassung nötig.",
@@ -5618,47 +5688,56 @@
       "de": {
         "title": "Das Versprechen Des Ritters Von Salenstein",
         "text": "Ein frommer Bauer rettet im tiefsten Winter auf dem mystischen Seerücken ein winziges Erdgeistchen aus Bedrängnis – und erhält dafür eine rätselhaft wirkende Handvoll vertrockneter Blätter. Daheim angekommen, verwandeln sich die Blätter vor seinen Augen in glänzendes Gold und retten seine Familie aus der Not. Doch als ein gieriger Nachbar das Geheimnis lüften will und brutal nach dem Männlein sucht, wendet sich das Glück zu Fluch: Sein Holz wird zu giftigen Schlangen, die ihn vertreiben. Eine Geschichte über das Vertrauen zwischen Mensch und Natur – und die Macht derer, die unsichtbar über Wald und",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Promise of the Knight of Salenstein",
         "text": "A pious farmer rescues a tiny earth spirit from distress in the depths of winter on the mystical Seerücken – and receives in return a handful of withered leaves that seem enigmatic. Upon arriving home, the leaves transform before his eyes into gleaming gold and save his family from hardship. But when a greedy neighbor wants to uncover the secret and brutally searches for the little man, luck turns to curse: his wood becomes poisonous snakes that drive him away. A story about trust between humans and nature – and the power of those who invisibly rule over forest and",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "La Promesse du Chevalier de Salenstein",
         "text": "Un fermier pieux sauve un minuscule esprit de la terre en détresse au cœur de l'hiver sur le mystérieux Seerücken – et reçoit en retour une poignée de feuilles desséchées qui semblent énigmatiques. En arrivant chez lui, les feuilles se transforment sous ses yeux en or brillant et sauvent sa famille de la misère. Mais quand un voisin avide veut découvrir le secret et cherche brutalement le petit homme, la chance se transforme en malédiction : son bois devient des serpents venimeux qui le chassent. Une histoire sur la confiance entre les humains et la nature – et le pouvoir de ceux qui règnent invisiblement sur la forêt et",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "La Promessa del Cavaliere di Salenstein",
         "text": "Un contadino pio salva uno spiritello della terra da una difficile situazione nel profondo inverno sullo Seerücken mistico – e riceve in cambio una manciata di foglie appassite che sembrano enigmatiche. Arrivato a casa, le foglie si trasformano davanti ai suoi occhi in oro brillante e salvano la sua famiglia dalla miseria. Ma quando un vicino avido vuole scoprire il segreto e cerca brutalmente l'ometto, la fortuna si trasforma in maledizione: il suo legno diventa serpenti velenosi che lo scacciano. Una storia sulla fiducia tra gli umani e la natura – e il potere di coloro che invisibilmente regnano sulla foresta e",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "La Promesa del Caballero de Salenstein",
         "text": "Un granjero piadoso rescata a un diminuto espíritu de la tierra en apuros en lo más profundo del invierno en el místico Seerücken – y recibe a cambio un puñado de hojas marchitas que parecen enigmáticas. Al llegar a casa, las hojas se transforman ante sus ojos en oro reluciente y salvan a su familia de la necesidad. Pero cuando un vecino codicioso quiere descubrir el secreto y busca brutalmente al pequeño hombre, la suerte se convierte en maldición: su madera se convierte en serpientes venenosas que lo expulsan. Una historia sobre la confianza entre los humanos y la naturaleza – y el poder de aquellos que gobiernan invisiblemente sobre el bosque y",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "A Promessa do Cavaleiro de Salenstein",
         "text": "Um fazendeiro piedoso resgata um pequeno espírito da terra em apuros no auge do inverno no místico Seerücken – e recebe em troca um punhado de folhas ressecadas que parecem enigmáticas. Ao chegar em casa, as folhas se transformam diante de seus olhos em ouro reluzente e salvam sua família da miséria. Mas quando um vizinho ganancioso quer desvendar o segredo e procura brutalmente pelo homenzinho, a sorte se transforma em maldição: sua madeira se torna cobras venenosas que o expulsam. Uma história sobre a confiança entre humanos e natureza – e o poder daqueles que governam invisivamente sobre a floresta e",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "萨伦施泰因骑士的承诺",
         "text": "一位虔诚的农民在神秘的塞吕肯在严冬中从困境中救出了一个微小的土地精灵——作为回报，他得到了一把看似神秘的枯叶。回到家后，这些叶子在他眼前变成了闪闪发光的黄金，拯救了他的家人脱离困境。但当贪心的邻居想要揭露秘密并残暴地寻找这个小人时，幸运变成了诅咒：他的木头变成了有毒的蛇，将他赶了出去。这是一个关于人与自然之间信任的故事——也是那些无形中统治森林和",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "S Versprächä vom Ritter vo Sälästei",
         "text": "E frömä Buure rettet im tiefstä Wintter uf em mystische Seerügge e winzigs Erdgeischtli us Bedrängniss – und überchunt defür e rätselhaft wirkendi Handvoll vertrochneti Blätter. Dihei acho, verwandlid sich d Blätter vor sinä Ouge i gläntads Gold und retted sini Familie us dere Not. Aber wenn e gierigi Nachber s Gheimnis lüfte will und brutal nach em Männli suechet, wendet sich s Glück zu Fluech: Sin Holz wird zu giftigi Schlangä, diä in vertribid. E Gschichte über s Vertraue zwüsched Mänsch und Natur – und d Macht von dänä, wo onsiichtbar über Wald und",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Обещание Рыцаря из Салештейна",
         "text": "Благочестивый крестьянин спасает крошечного духа земли от беды в разгар зимы на мистическом Зеерюккене – и получает взамен горсть высохших листьев, которые кажутся загадочными. Придя домой, листья превращаются у него на глазах в сверкающее золото и спасают его семью от нужды. Но когда алчный сосед хочет раскрыть тайну и жестоко ищет маленького человека, удача превращается в проклятие: его дерево становится ядовитыми змеями, которые его изгоняют. История о доверии между людьми и природой – и о власти тех, кто невидимо правит лесом и",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine besondere Anpassung nötig.",
@@ -10041,47 +10120,56 @@
       "de": {
         "title": "Meinrad Raben Einsiedeln",
         "text": "Nachts schleicht sich ein gestaltloser Schatten durchs winzigste Loch in die Ställe des Stoos – das gefürchtete Schrättele, das Kühe im Schlaf quält und auszehrt. Ein wachsamer Senn beobachtet, wie das Wesen auf den Rücken seiner besten Kuh springt, und fängt es mit geweihtem Seil ein. In seiner Panik verwandelt sich das Schrättele in eine harmlose Holzspindel und wird für immer in einem Eichenstamm versiegelt – doch die Warnung hallt bis heute nach: Öffnet man dieses Loch je wieder, entweicht das böse Wesen und bringt Unheil über die Alpen.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Meinrad's Ravens of Einsiedeln",
         "text": "At night, a formless shadow creeps through the tiniest hole into the stables of Stoos – the feared Schrättele, which torments and wastes away cows in their sleep. A vigilant alpine herder observes how the creature jumps onto the back of his finest cow and captures it with consecrated rope. In its panic, the Schrättele transforms into a harmless wooden spindle and is sealed forever in an oak trunk – yet the warning echoes to this day: if this hole is ever opened again, the evil creature escapes and brings disaster upon the Alps.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Les Corbeaux de Meinrad à Einsiedeln",
         "text": "La nuit, une ombre sans forme se glisse par le plus minuscule trou dans les étables du Stoos – le redouté Schrättele, qui tourmente et épuise les vaches pendant leur sommeil. Un alpage vigilant observe comment la créature saute sur le dos de sa plus belle vache et la capture avec une corde consacrée. Pris de panique, le Schrättele se transforme en une innocente bobine de bois et est scellé à jamais dans un tronc de chêne – pourtant l'avertissement résonne jusqu'à aujourd'hui : si ce trou est jamais ouvert à nouveau, la créature maléfique s'échappe et apporte la catastrophe sur les Alpes.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "I Corvi di Meinrad a Einsiedeln",
         "text": "Di notte, un'ombra senza forma si intrufola attraverso il più minuscolo buco nelle stalle dello Stoos – lo Schrättele temuto, che tormenta e consuma le mucche nel loro sonno. Un attento casaro osserva come la creatura salta sul dorso della sua mucca migliore e la cattura con una corda consacrata. Nel panico, lo Schrättele si trasforma in un'innocua rocca di legno e viene sigillato per sempre in un tronco di quercia – eppure l'avvertimento risuona ancora oggi: se questo buco fosse mai aperto di nuovo, la creatura malvagia scapprebbe e porterebbe disastro sulle Alpi.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Los Cuervos de Meinrad en Einsiedeln",
         "text": "Por la noche, una sombra sin forma se cuela por el agujero más diminuto en los establos de Stoos – el temido Schrättele, que atormenta y consume a las vacas mientras duermen. Un pastor alpino vigilante observa cómo la criatura salta sobre el lomo de su mejor vaca y la captura con una cuerda consagrada. En su pánico, el Schrättele se transforma en una inofensiva bobina de madera y queda sellado para siempre en un tronco de roble – pero la advertencia resuena hasta hoy: si alguna vez se abre este agujero nuevamente, la criatura maligna escapa y trae desastre a los Alpes.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Os Corvos de Meinrad em Einsiedeln",
         "text": "À noite, uma sombra sem forma esgueira-se pelo buraco minúsculo nos estábulos de Stoos – o temido Schrättele, que atormentava e consumia as vacas enquanto dormiam. Um pastor alpino vigilante observa como a criatura salta sobre as costas de sua melhor vaca e a captura com uma corda consagrada. Em seu pânico, o Schrättele se transforma em uma bobina de madeira inofensiva e fica selado para sempre em um tronco de carvalho – mas o aviso ecoa até hoje: se este buraco for aberto novamente, a criatura maligna escapa e traz desastre aos Alpes.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "梅恩拉德在艾因西德隆的乌鸦",
         "text": "夜晚，一个无形的影子从最微小的洞穴潜入斯图斯的马厩——令人恐惧的施瑞特尔魔，在睡眠中折磨并衰弱奶牛。一位警惕的高山牧民观察到这个生物跳到他最好的奶牛背上，用圣洁的绳子捕捉了它。在恐惧中，施瑞特尔魔变成了一个无害的木制纺锤体，被永远密封在橡木树干中——但警告持续到今天：如果这个洞被重新打开，邪恶的生物就会逃脱，给阿尔卑斯山带来灾难。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Meinrads Rabe z Äinsidlä",
         "text": "Nachts schleicht sich en formlose Schatte durchs winzigste Loch i d Ställ vom Stoos – das gfürchtete Schrättele, das Küüe im Schlaaf quält und auszehrt. En wachsamer Senn beobachtet, wie das Wese uf e Rugge vo sinere beste Chue springt, und faht es mit gwichtem Seil yy. In sinere Panik verwandlet sich s Schrättele i e harmlose Holzspindel und wird für immer in em Eichestamm versieglet – aber d Warnung hallt bis hüt no naa: Wenn me dies Loch je wider öffnet, entwiischt das böse Wese und bringt Unheil über d Alpe.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Вороны Мейнрада в Айнзидельне",
         "text": "Ночью бесформная тень пробирается через крошечное отверстие в конюшни Стооса – грозный Шрёттеле, который мучает и изнуряет коров во время сна. Внимательный пастух видит, как существо прыгает на спину его лучшей коровы, и ловит его священным канатом. В панике Шрёттеле превращается в безобидное деревянное веретено и навечно запечатывается в дубовом стволе – но предупреждение звучит до сих пор: если когда-либо открыть это отверстие снова, злое существо сбежит и принесет беду на Альпы.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Die Tötung mit Keulen für jüngere Kinder abmildern; den Fokus auf die treuen Raben legen.",
@@ -10104,47 +10192,56 @@
       "de": {
         "title": "Engelweihe Einsiedeln",
         "text": "Die Ruinen von Schauensee bei Küssnacht halten ein düsteres Geheimnis: Eine junge Frau, zerrissen zwischen Liebe und Pflicht, öffnete ihrer Heimat die Tore – und zahlte dafür mit ihrem Leben. Seitdem schwebt die Weiße Dame durch die Gemäuer, ein fliegendes Licht in der Dunkelheit, dessen Flamme selbst der wildeste Sturm nicht löschen kann. Fischer schwören, dass ihr Erscheinen auf den Felsen eine Warnung vor dem gefährlichen Föhnwind ist – die letzte Botschaft einer unruhigen Seele, die zwischen zwei Welten gefangen bleibt.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Angel's Consecration of Einsiedeln",
         "text": "The ruins of Schauensee near Küssnacht hold a dark secret: A young woman, torn between love and duty, opened the gates of her homeland – and paid for it with her life. Since then, the White Lady drifts through the walls, a flying light in the darkness, whose flame even the wildest storm cannot extinguish. Fishermen swear that her appearance on the rocks is a warning of the dangerous föhn wind – the final message of a restless soul trapped between two worlds.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "La Consécration de l'Ange d'Einsiedeln",
         "text": "Les ruines de Schauensee près de Küssnacht gardent un secret sinistre : une jeune femme, déchirée entre l'amour et le devoir, a ouvert les portes de sa patrie – et l'a payé de sa vie. Depuis lors, la Dame Blanche flotte à travers les murs, une lumière volante dans l'obscurité, dont la flamme ne peut être éteinte même par le vent de föhn le plus violent. Les pêcheurs jurent que son apparition sur les rochers est un avertissement du dangereux vent de föhn – le dernier message d'une âme tourmentée prisonnière entre deux mondes.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "La Consacrazione dell'Angelo di Einsiedeln",
         "text": "Le rovine di Schauensee vicino a Küssnacht nascondono un segreto oscuro: una giovane donna, lacerata tra amore e dovere, ha aperto i cancelli della sua patria – e ha pagato con la sua vita. Da allora, la Dama Bianca fluttua attraverso le mura, una luce volante nell'oscurità, la cui fiamma nemmeno la tempesta più selvaggia può spegnere. I pescatori giurano che la sua apparizione sulle rocce è un avvertimento del pericoloso vento föhn – l'ultimo messaggio di un'anima inquieta intrappolata tra due mondi.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "La Consagración del Ángel de Einsiedeln",
         "text": "Las ruinas de Schauensee cerca de Küssnacht guardan un secreto oscuro: una joven mujer, desgarrada entre el amor y el deber, abrió las puertas de su patria – y pagó con su vida. Desde entonces, la Dama Blanca flota a través de los muros, una luz volante en la oscuridad, cuya llama ni la tormenta más salvaje puede extinguir. Los pescadores juran que su aparición en las rocas es una advertencia del peligroso viento föhn – el último mensaje de un alma inquieta atrapada entre dos mundos.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "A Consagração do Anjo de Einsiedeln",
         "text": "As ruínas de Schauensee perto de Küssnacht guardam um segredo sombrio: uma jovem mulher, dilacerada entre o amor e o dever, abriu os portões de sua pátria – e pagou com sua vida. Desde então, a Dama Branca flutua através das paredes, uma luz voadora na escuridão, cuja chama nem mesmo a tempestade mais selvagem pode extinguir. Os pescadores juram que seu aparecimento nas rochas é um aviso do perigoso vento föhn – a última mensagem de uma alma inquieta presa entre dois mundos.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "艾因西德伦的天使圣化",
         "text": "库斯纳赫特附近的绍恩湖废墟隐藏着一个黑暗的秘密：一位年轻女子，被爱与责任撕裂，为故土打开了大门——却为此付出了生命的代价。从那以后，白衣夫人在墙垣间飘荡，一团在黑暗中飞动的光焰，即使是最狂暴的风暴也吹不灭。渔民们发誓，她在岩石上的显现是对危险焚风的警告——一个被困于两个世界之间的不安灵魂的最后讯息。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "d'Engelwiih Einsiedla",
         "text": "D'Ruine vo Schauensee bi Küssnacht halted es finsters Gheimnis: E jungi Frau, zerisse zwitsche Liebi und Pflicht, het ihrer Heimat d'Türe öffnet – und het defür mit ihrem Läbe bezahlt. Sithär schwooft d'Wiiß Frue durch d'Gmäuer, es fliegendes Licht in dr Finsternis, wo kein no so wilde Sturm söne Flamme lösche cha. Fischer schwüred, ass ihr Erschine uf de Felse e Warnung vor em gföährliche Föhnwind isch – d'letschti Botschaft vo ner onruehige Seel, wo zwische zwei Welte gfange bliibt.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Освящение Ангела Айнзидельна",
         "text": "Развалины Шауэнзее близ Кюсснахта хранят мрачную тайну: молодая женщина, разорванная между любовью и долгом, открыла врата своей родины – и заплатила за это жизнью. С тех пор Белая Дама парит сквозь стены, летающий свет во тьме, чей огонь не в силах погасить даже самый лютый шторм. Рыбаки клянутся, что её явление на скалах – предупреждение об опасном фёне – последнее послание беспокойной души, застрявшей между двумя мирами.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig; die Erzählung ist bereits kindgerecht.",
@@ -10245,47 +10342,56 @@
       "de": {
         "title": "Koenig Hakon Mythen",
         "text": "Der Nebel liegt dicht über Einsiedeln, und in der Novembernacht erscheint das Nachtvolk – eine geisterhafte Prozession der Toten, die schweigend durch die Straßen zieht. Ein reicher, stolzer Bürger trifft auf diese schaurige Schar und erkennt in den bleichen Gesichtern verstorbene Nachbarn und Freunde. Doch am Ende des Zuges wartet eine leere Totenbahre mit seinem eigenen Gesicht darauf, ihn ins Jenseits zu holen. Am Morgen findet man den Spötter leblos am Wegesrand – das Nachtvolk hat sich seinen Hochmut bezahlt gemacht.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "King Hakon Myths",
         "text": "The fog lies thick over Einsiedeln, and on the November night, the night folk appear – a ghostly procession of the dead, moving silently through the streets. A wealthy, proud citizen encounters this eerie crowd and recognizes in the pale faces deceased neighbors and friends. But at the end of the procession waits an empty funeral bier with his own face, ready to take him to the afterlife. In the morning, the mocker is found lifeless on the roadside – the night folk have made him pay for his arrogance.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Les Mythes du Roi Hakon",
         "text": "Le brouillard s'étend épais sur Einsiedeln, et dans la nuit de novembre apparaît le peuple nocturne – une procession fantomatique des morts qui traverse silencieusement les rues. Un citoyen riche et orgueilleux rencontre cette troupe sinistre et reconnaît dans les visages pâles des voisins et des amis décédés. Mais à la fin du cortège attend une civière funéraire vide avec son propre visage, prête à le conduire dans l'au-delà. Le matin, on trouve le moqueur sans vie au bord du chemin – le peuple nocturne lui a fait payer son arrogance.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "I Miti del Re Hakon",
         "text": "La nebbia giace fitta su Einsiedeln, e nella notte di novembre appare il popolo notturno – una processione spettrale dei morti che attraversa silenziosamente le strade. Un cittadino ricco e superbo incontra questa folla inquietante e riconosce nei volti pallidi i vicini e gli amici defunti. Ma alla fine del corteo lo aspetta una bara funebre vuota con il suo stesso volto, pronta a condurlo nell'aldilà. La mattina il beffatore viene trovato senza vita al margine della strada – il popolo notturno gli ha fatto pagare la sua arroganza.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Los Mitos del Rey Hakon",
         "text": "La niebla se extiende densa sobre Einsiedeln, y en la noche de noviembre aparece el pueblo nocturno – una procesión espectral de los muertos que atraviesa silenciosamente las calles. Un ciudadano rico y orgulloso se encuentra con esta multitud inquietante y reconoce en los rostros pálidos a vecinos y amigos difuntos. Pero al final de la procesión lo espera una camilla funeraria vacía con su propio rostro, lista para llevarlo al más allá. Por la mañana, el burlador es encontrado sin vida al borde del camino – el pueblo nocturno le ha hecho pagar su arrogancia.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Os Mitos do Rei Hakon",
         "text": "A névoa repousa espessa sobre Einsiedeln, e na noite de novembro aparece o povo noturno – uma procissão espectral dos mortos que atravessa silenciosamente as ruas. Um cidadão rico e orgulhoso encontra essa multidão assustadora e reconhece nos rostos pálidos vizinhos e amigos falecidos. Mas no final da procissão o espera uma maca fúnebre vazia com seu próprio rosto, pronta para levá-lo para o além. De manhã, o zombador é encontrado sem vida à beira da estrada – o povo noturno lhe fez pagar sua arrogância.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "哈孔国王的神话",
         "text": "浓雾笼罩着埃因西德伦，在十一月的夜晚，夜晚的人民出现了——死者的幽灵般的游行队伍，沉默地穿过街道。一位富有而骄傲的公民遇到了这支令人毛骨悚然的人群，在苍白的面孔中认出了已故的邻居和朋友。但在游行队伍的末尾，一个空的葬礼担架等待着他，上面有他自己的脸，准备将他带到来世。早上，嘲笑者被发现死在路边——夜晚的人民让他为自己的傲慢付出了代价。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "König Hakon Mythen",
         "text": "Dr Näbel liegt digg über Einsiedle, und in dr Novembernacht erschint s Nachtvolg – e gschnäterig Prozessio vo de Tote, wo still durch d Strasse gönd. E riiche, stoure Bürger träffts uf disi grüslige Schar und erkennt i de blasse Gsichter verstorbni Näbur und Fründ. Aber am Ändi vom Zug wartet e leeri Totebahre mit sim eigene Gsicht, um en is Jenseits z hole. Am Morge findet me dr Spot labloos am Wegsrand – s Nachtvolg het im sini Hochmue blicht gmacht.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Мифы короля Хакона",
         "text": "Туман лежит густо над Айнзидельном, и в ноябрьскую ночь появляется ночной народ – призрачная процессия мертвецов, молча движущихся по улицам. Богатый и гордый гражданин встречает эту жуткую толпу и узнает в бледных лицах умерших соседей и друзей. Но в конце процессии его ждут пустые похоронные носилки со своим собственным лицом, готовые отнести его в загробный мир. Утром насмешника находят мертвым у обочины дороги – ночной народ заставил его расплатиться за его высокомерие.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig; keine Gewaltdarstellung.",
@@ -14246,47 +14352,56 @@
       "de": {
         "title": "Erdmaennlein Napf",
         "text": "Sechs mutige Luzerner erklimmen 1387 trotz Verbot den Pilatussee – um zu beweisen, dass der Geist des biblischen Richters Pontius Pilatus nur eine Legende ist. Doch kaum werfen sie Steine ins schwarze Wasser, erhebt sich eine düstere Gestalt aus den Fluten und entfesselt einen Sturm der Vernichtung: Hagelkörner zerschmettern das Vieh, Schlammlawinen ergießen sich ins Tal. Die Frevler fliehen um ihr Leben – und die Angst vor dem verfluchten Berg sitzt der Stadt so tief in den Knochen, dass erst Jahrhunderte später der See rituell trockengelegt werden muss, um den Bann zu",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "S'Erdmännli vom Napf",
         "text": "Sechs mueti Luzärner erkliimmed 1387 trotz Verbot de Pilatussee – um z'bewisä, dass de Gheischt vum biblische Richter Pontius Pilatus nüt as e Legende isch. Aber sobald si Stei ins schwarze Wasser werred, erhäbt sich e dünkeli Gschtalt us de Flüte und entfäßlet e Sturm vo Verwüeschtig: Hagelchörner zerschmettred s'Vieh, Schlammlavined ärgüssed sich is Tal. D'Frevler flüched um ih Läbe – und d'Angst vor em verflüchte Bärg sitzt de Stadt so tüüf i de Chnooche, dass erst Joorhundert später de See rituell troggäleit werde muess, um de Bann z'breche.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Earth Manikin of Napf",
         "text": "Six brave Lucernians climb the Pilatus Lake in 1387 despite a ban – to prove that the spirit of the biblical judge Pontius Pilatus is merely a legend. But as soon as they throw stones into the black water, a dark figure rises from the depths and unleashes a storm of destruction: hailstones shatter the livestock, mud avalanches pour into the valley. The blasphemers flee for their lives – and the fear of the cursed mountain grips the city so deeply that centuries later the lake must be ritually drained to break the curse.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Petit Homme de Terre du Napf",
         "text": "Six braves Lucernois escaladent le lac de Pilate en 1387 malgré l'interdiction – pour prouver que l'esprit du juge biblique Ponce Pilate n'est qu'une légende. Mais à peine jettent-ils des pierres dans l'eau noire qu'une figure sombre émerge des profondeurs et déchaîne une tempête de destruction : des grêlons brisent le bétail, des avalanches de boue s'écoulent dans la vallée. Les blasphémateurs s'enfuient pour leur vie – et la peur de la montagne maudite s'enfonce si profondément dans la ville que des siècles plus tard, le lac doit être rituellement vidé pour briser le sort.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "L'Omino della Terra del Napf",
         "text": "Sei coraggiosi Lucernesi scalano il lago di Pilato nel 1387 nonostante il divieto – per provare che lo spirito del giudice biblico Ponzio Pilato è solo una leggenda. Ma non appena gettano pietre nell'acqua nera, una figura oscura emerge dalle profondità e scatena una tempesta di distruzione: i chicchi di grandine decimano il bestiame, valanghe di fango si riversano nella valle. I bestemmiatori fuggono per salvarsi la vita – e la paura della montagna maledetta si radica così profondamente nella città che secoli dopo il lago deve essere ritualisticamente prosciugato per spezzare la maledizione.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Hombrecillo de Tierra del Napf",
         "text": "Seis valientes lucernenses escalan el lago de Pilato en 1387 a pesar de la prohibición – para demostrar que el espíritu del juez bíblico Poncio Pilato es solo una leyenda. Pero tan pronto como lanzan piedras al agua negra, una figura oscura surge de las profundidades y desata una tormenta de destrucción: el granizo destrozza el ganado, aludes de lodo se desbordan al valle. Los blasfemos huyen por sus vidas – y el miedo a la montaña maldita se clava tan profundamente en la ciudad que siglos después el lago debe ser ritualmente drenado para romper la maldición.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Homenzinho da Terra do Napf",
         "text": "Seis bravos lucernenses escalam o lago de Pilatos em 1387 apesar da proibição – para provar que o espírito do juiz bíblico Pôncio Pilatos é apenas uma lenda. Mas assim que jogam pedras na água negra, uma figura sombria emerge das profundezas e desencadeia uma tempestade de destruição: pedriscos destroem o gado, avalanches de lama despencam no vale. Os blasfemadores fogem pela vida – e o medo da montanha amaldiçoada se enraíza tão profundamente na cidade que séculos depois o lago deve ser ritualmente drenado para quebrar a maldição.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "纳普夫的土地小人",
         "text": "六位勇敢的卢塞恩人在1387年不顾禁令爬上皮拉图湖──为了证明圣经法官本丢·彼拉多的灵魂只是一个传说。但他们刚把石头扔进黑水中，一个黑暗的身影就从深处升起，释放出毁灭之风：冰雹砸碎牲畜，泥石流涌入山谷。亵渎者仓皇逃命──对这座被诅咒山峰的恐惧如此深深扎根于城市的骨髓，以至于几个世纪后必须通过仪式干涸这个湖来打破诅咒。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Земляной Человечек Напфа",
         "text": "Шесть смелых люцернцев в 1387 году взбираются на озеро Пилата вопреки запрету – чтобы доказать, что дух библейского судьи Понтия Пилата – это всего лишь легенда. Но едва они бросают камни в чёрную воду, из глубин восстаёт мрачная фигура и развязывает бурю разрушения: град сокрушает скот, грязевые лавины хлынут в долину. Богохульники спасаются бегством – и страх перед проклятой горой так глубоко пронизывает город, что спустя столетия озеро приходится ритуально осушить, чтобы разрушить проклятие.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Keine Anpassung nötig; kindgerecht und freundlich.",
@@ -14315,42 +14430,50 @@
       "gsw": {
         "title": "Lindwurm Lungerersee",
         "text": "En rücksichtsloos Holzhändler us Lungern wird für sini Betrügeriye zur Recheschafft ghöu – vo dene, dene er Unrächt tah het. Als er spät in dr Nacht dur de Näbel wanderet, erblickt er e gspenschtigi Prozässioon: Dodi in wisse Gwänder, di er alli kennt, und ganz am Änd e läri Bahrä mit sim eigene Gsicht. Dr Schreckä vo dere Visioon raubt em de Verstand – am nächscht Morge find me en starr und läblos am Wägrand, vom Nachtvolk ghöu.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Lindworm of Lungerersee",
         "text": "A ruthless timber merchant from Lungern is called to account for his deceptions – by those he has wronged. As he wanders through the fog late at night, he beholds a ghostly procession: the dead in white garments, all of whom he knows, and at the very end an empty bier bearing his own face. The terror of this vision robs him of his sanity – the next morning he is found rigid and lifeless by the roadside, taken by the night folk.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Lindworm du lac Lungerersee",
         "text": "Un marchand de bois impitoyable de Lungern est tenu responsable de ses tromperies – par ceux qu'il a lésés. Alors qu'il erre dans le brouillard tard dans la nuit, il aperçoit une procession spectrale : les morts vêtus de blanc, qu'il connaît tous, et tout au bout un cercueil vide portant son propre visage. L'horreur de cette vision le rend fou – le lendemain matin, on le trouve raide mort au bord du chemin, emporté par le peuple de la nuit.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Lindworm del lago Lungerersee",
         "text": "Un commerciante di legname senza scrupoli da Lungern è chiamato a rendere conto dei suoi inganni – da coloro che ha danneggiato. Mentre vaga nella nebbia a tarda notte, scorge una processione spettrale: i morti in vesti bianche, che conosce tutti, e alla fine una bara vuota con il suo stesso volto. L'orrore di questa visione lo priva della ragione – la mattina seguente lo trovano rigido e senza vita al bordo della strada, preso dal popolo della notte.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Lindworm del lago Lungerersee",
         "text": "Un despiadado comerciante de madera de Lungern es llamado a rendir cuentas por sus engaños – por aquellos a quienes ha agraviado. Mientras camina entre la niebla a altas horas de la noche, ve una procesión espectral: los muertos vestidos de blanco, todos a quienes conoce, y al final un ataúd vacío con su propio rostro. El terror de esta visión lo priva de la cordura – a la mañana siguiente lo encuentran rígido e inerte al borde del camino, llevado por el pueblo nocturno.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Lindworm do lago Lungerersee",
         "text": "Um comerciante de madeira sem escrúpulos de Lungern é responsabilizado por suas fraudes – por aqueles a quem prejudicou. Enquanto caminha pela névoa no final da noite, ele vê uma procissão espectral: os mortos em vestes brancas, todos que conhece, e no final um caixão vazio com seu próprio rosto. O terror dessa visão o priva da sanidade – na manhã seguinte é encontrado rígido e inerte à beira da estrada, levado pelo povo da noite.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "龙蜥湖的林德沃姆",
         "text": "一位来自隆根的无情木材商因其欺骗行为受到惩罚——来自那些被他伤害的人。当他在深夜穿过浓雾时，他看到了一个幽灵般的送葬队伍：穿着白衣的死者，全是他认识的人，最后是一口空的棺材，上面放着他自己的脸。这个幻象的恐怖使他精神崩溃——第二天早上，人们在路边发现他僵硬无生命的尸体，已被夜间民族带走。",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Линдворм озера Лунгеререзее",
         "text": "Беспринципный лесоторговец из Лунгерна привлекается к ответственности за его обман – теми, кого он обидел. Когда он поздно ночью бродит в тумане, ему предстает призрачная процессия: мертвецы в белых одеяниях, которых он знает, и в самом конце пустой гроб с его собственным лицом. Ужас этого видения лишает его рассудка – на следующее утро его находят окоченевшим и мертвым у дороги, забранным ночным народом.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Die Beschreibung des Viehfressens für sehr junge Kinder abmildern; den Mut des Hirten betonen.",
@@ -16075,47 +16198,56 @@
       "de": {
         "title": "Pestjungfrau Glarus",
         "text": "Ein hinterlistiger Senn aus Flims schwört einen falschen Eid vor dem Heiligen Martin – und besiegelt damit sein Schicksal. Mit göttlicher Wut schleudert der Heilige seinen Hirtenstab gegen die Felswand der Tschingelhörner und durchbricht sie wie Papier. Der betrügerische Senn wird von herabstürzenden Gesteinsbrocken erschlagen, und zurück bleibt das Martinsloch – ein gewaltiges Felsloch, das bis heute zweimal im Jahr die Sonne direkt auf den Kirchturm von Elm wirft. Eine Mahnung, dass die Wahrheit immer ans Licht kommt.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Peschtjungfrau Glarus",
         "text": "Ein hinterlistige Senn us Flims schwört en faalschen Eid vor em Heilige Martin – und besigelt dermit sein Schicksal. Mit göttliger Wuet schleuderet der Heilig sine Hirtestab gegen d'Felsewand vo de Tschingelhörner und durchbricht sie wie Papier. Der betrügerisch Senn wird vo herabstürzende Gesteinsbrocke erschlage, und zrugg bleibt s'Martinsloch – es gwältiges Felsloch, das bis hüt zweimal im Jaar d'Sunne direkt uf de Chireturm vo Elm wirft. E Mahnung, dass d'Wahrheit immer ans Liecht chunnt.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Plague Maiden of Glarus",
         "text": "A deceitful Alpine herder from Flims swears a false oath before Saint Martin – and seals his fate. With divine wrath, the Saint hurls his shepherd's staff against the rock face of the Tschingelhörner and pierces it like paper. The fraudulent herder is struck dead by tumbling boulders, leaving behind the Martinsloch – a massive rock hole that to this day twice a year casts the sun directly onto the church tower of Elm. A reminder that truth always comes to light.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "La Jeune Fille Pestiférée de Glaris",
         "text": "Un berger rusé de Flims jure un faux serment devant Saint Martin – et scelle ainsi son destin. Avec une colère divine, le Saint projette son bâton de berger contre la paroi rocheuse des Tschingelhörner et la transperce comme du papier. Le berger frauduleux est écrasé par des blocs de pierre qui s'effondrent, laissant derrière lui le Martinsloch – un énorme trou rocheux qui projette deux fois par an les rayons du soleil directement sur le clocher de l'église d'Elm. Un rappel que la vérité finit toujours par émerger.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "La Vergine della Peste di Glarona",
         "text": "Un astuto pastore di Flims giura un falso giuramento davanti a San Martino – e sigilla così il suo destino. Con ira divina, il Santo scaglia il suo bastone da pastore contro la parete rocciosa dei Tschingelhörner e la perfora come carta. Il pastore fraudolento viene ucciso da massi che crollano, lasciando dietro di sé il Martinsloch – un enorme buco nella roccia che ancora oggi, due volte all'anno, proietta il sole direttamente sul campanile della chiesa di Elm. Un promemoria che la verità viene sempre alla luce.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "La Doncella Pestilente de Glarus",
         "text": "Un astuto pastor de Flims jura un falso juramento ante San Martín – y sella así su destino. Con ira divina, el Santo lanza su báculo de pastor contra la pared de roca de los Tschingelhörner y la perfora como papel. El pastor fraudulento es aplastado por bloques de piedra que caen, dejando atrás el Martinsloch – un enorme agujero en la roca que aún hoy, dos veces al año, proyecta el sol directamente sobre la torre de la iglesia de Elm. Un recordatorio de que la verdad siempre sale a la luz.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "A Donzela Pestilenta de Glarus",
         "text": "Um pastor astuto de Flims jura um falso juramento diante de São Martim – e sela assim seu destino. Com ira divina, o Santo lança seu cajado de pastor contra a parede rochosa dos Tschingelhörner e a perfura como papel. O pastor fraudulento é esmagado por blocos de pedra que desabam, deixando para trás o Martinsloch – um enorme buraco nas rochas que ainda hoje, duas vezes ao ano, projeta o sol diretamente na torre da igreja de Elm. Um lembrete de que a verdade sempre vem à tona.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "格拉鲁斯的瘟疫少女",
         "text": "来自弗利姆斯的狡猾牧羊人在圣马丁面前起了假誓——从而封印了他的命运。圣马丁愤怒地将他的牧羊杖掷向钦根霍恩的岩壁，如纸一样刺穿了它。这个欺诈的牧羊人被坍塌的石块砸死，留下了马丁斯洛赫——一个巨大的岩石洞穴，至今每年仍有两次将阳光直接投射到埃尔姆教堂塔顶。这是一个提醒，真理终将大白于天下。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Чумная дева Гларуса",
         "text": "Хитрый пастух из Флимса клянется ложной клятвой перед святым Мартином – и тем самым запечатывает свою судьбу. В божественном гневе святой бросает свой пастырский посох в скальную стену Чингельхорнов и пробивает её как бумагу. Мошенничающий пастух убит падающими глыбами камня, оставляя позади себя Мартинслох – огромную дыру в скале, которая до сих пор дважды в год направляет солнечный свет прямо на колокольню церкви в Эльме. Напоминание о том, что истина всегда выходит на свет.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Die Pesttod-Darstellung für jüngere Kinder abmildern; den mutigen Trick des Zimmermanns betonen.",
@@ -16214,47 +16346,56 @@
       "de": {
         "title": "Nixe Walensee",
         "text": "Im 18. Jahrhundert trieb ein gieriger Aufseher die Arbeiter im Landesplattenberg unbarmherzig in die Tiefe – bis ein Felssturz mehrere unschuldige Knappen mit sich riss. Mit gestohlenen Goldstücken floh er, doch der plötzliche Tod ließ seine Seele keine Ruhe. Seitdem spukt sein ruheloser Geist in den dunklen Schächten von Engi: Nacht für Nacht hämmert er auf Schiefer ein, das Erz fällt am Morgen zu Staub – eine ewige Strafe für seine Gier und Grausamkeit.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "D Nixe vom Walensee",
         "text": "Im 18. Jahrhundert het e giirigi Aufsäher d Arbeiter im Landesplattaberg erbarmelig in d Tiäfi triibe – bis e Felssturz mehreri unschuldigi Chnäppa mitgnoh het. Mit gestohlnä Goldstücker isch er gflüchtet, aber d plötzlich Tod het sinr Seel kä Rue la. Sithär spöukt sii ruheloos Geischt in dä dunkla Schächta vo Ängi: Nacht für Nacht het er uuf Schiffra ghämmeret, s Erz zerfällt am Morgä z Staub – ä ewig Straf für siini Giir und Grüsamkeit.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Nixe of Walensee",
         "text": "In the 18th century, a greedy overseer drove workers mercilessly into the depths of the Landesplattenberg slate mine – until a rockfall swept several innocent miners away. He fled with stolen gold pieces, but sudden death granted his soul no peace. Since then, his restless spirit haunts the dark shafts of Engi: night after night he hammers on slate, the ore crumbles to dust by morning – an eternal punishment for his greed and cruelty.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "La Nixe du Walensee",
         "text": "Au 18e siècle, un contremaître avide poussait impitoyablement les ouvriers dans les profondeurs de la mine d'ardoise de Landesplattenberg – jusqu'à ce qu'un éboulement emporte plusieurs jeunes mineurs innocents. Il s'enfuit avec des pièces d'or volées, mais la mort soudaine ne laissa aucun repos à son âme. Depuis, son esprit sans repos hante les galeries sombres d'Engi : nuit après nuit, il martèle l'ardoise, le minerai s'effrite en poussière le matin – un châtiment éternel pour son avarice et sa cruauté.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "La Nixe del Walensee",
         "text": "Nel 18° secolo, un sovrintendente avido spingeva spietatamente i lavoratori nelle profondità della miniera di ardesia di Landesplattenberg – finché una frana non travolse diversi giovani minatori innocenti. Fuggì con monete d'oro rubate, ma la morte improvvisa non concesse pace alla sua anima. Da allora il suo spirito irrequieto infesta i cunicoli bui di Engi: notte dopo notte batte lo schisto, il minerale si riduce in polvere al mattino – una punizione eterna per la sua avidità e crudeltà.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "La Nixe del Walensee",
         "text": "En el siglo 18, un capataz codicioso impulsaba despiadadamente a los trabajadores a las profundidades de la mina de pizarra de Landesplattenberg – hasta que un derrumbe se llevó a varios mineros inocentes. Huyó con monedas de oro robadas, pero la muerte repentina no permitió que su alma descansara. Desde entonces, su espíritu inquieto embruja las galerías oscuras de Engi: noche tras noche golpea la pizarra, el mineral se convierte en polvo por la mañana – un castigo eterno por su codicia y crueldad.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "A Nixe do Walensee",
         "text": "No século 18, um feitor ganancioso impelia implacavelmente os trabalhadores às profundezas da mina de ardósia de Landesplattenberg – até que um desabamento levou vários mineiros inocentes. Fugiu com moedas de ouro roubadas, mas a morte súbita não permitiu que sua alma descansasse. Desde então, seu espírito inquieto assombra as galerias escuras de Engi: noite após noite bate na ardósia, o minério se reduz a pó pela manhã – um castigo eterno por sua ganância e crueldade.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "瓦伦湖水妖精",
         "text": "18世纪，一个贪婪的监工在兰德斯普拉腾贝格板岩矿中无情地驱赶工人进入深处——直到一场崖崩吞没了几名无辜的矿工。他带着偷来的金币逃跑了，但突然的死亡使他的灵魂无法安宁。从那时起，他不安的鬼魂在恩吉的黑暗矿井里作祟：夜复一夜地敲打板岩，到了早晨矿石化作尘埃——这是对他的贪婪和残忍的永恒惩罚。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Никса Валенского озера",
         "text": "В XVIII веке алчный надзиратель безжалостно гонял рабочих в глубины сланцевого рудника Ландесплаттенберг – пока обвал не увлёк за собой нескольких невинных шахтёров. Он бежал с украденными золотыми монетами, но внезапная смерть не дала его душе покоя. С тех пор его беспокойный дух привидится в тёмных шахтах Энги: ночь за ночью он стучит по сланцу, руда превращается в пыль к утру – вечное наказание за его алчность и жестокость.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": null,
@@ -16277,47 +16418,56 @@
       "de": {
         "title": "Erdzwerg Elm",
         "text": "Ein gieriger Bauer vom Klöntal besass die prächtigsten Herden, doch das reichte ihm nicht – er zauste heimlich Gemeindeweiden ein und schlug jeden nieder, der protestierte. In seiner Hybris fluchte er laut: „Und wenn mir der Teufel selbst einen Stier schickt!\" In der folgenden Nacht stand in seinem Stall ein riesiger, pechschwarzer Stier mit glühenden Augen und Funken aus den Nüstern. Das Ungeheuer trieb den Bauern immer höher in die schroffen Felsen des Glärnischs hinauf, bis er in den Klöntalersee stürzte – und seither flüchtern Fischer in stürmischen Herbstnächten von d",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Erdwärg Elm",
         "text": "En girig Buure vom Klöntal het d'schönste Herda gha, aber das isch em nid grenüegt gsi – er het heimlich Gmeindsöömad uusgnütscht und jedn, wo protestiert het, nidergschlage. In sinre Hochmuet het er lut gfluecht: \"Und wemmer mir de Tüüfel selber en Stier schickt!\" In dr nächste Nacht isch im Stall en riisengrosse, pechschwarzer Stier gstande mit glüend Ooge und Funkne us de Nüschtere. S'Unghüür het de Buure immer höcher uf d'schroffe Felse vom Glärnis ufitriebe, bis er in de Klöntalersee isch ifalle – und sither flüchtred Fischer in stürmische Herbstnächt vor...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Earth Dwarf Elm",
         "text": "A greedy farmer from Klöntal owned the most magnificent herds, yet it was not enough for him – he secretly plundered common pastures and struck down anyone who protested. In his hubris, he cursed loudly: \"And if the devil himself sends me a bull!\" That very night, a gigantic, pitch-black bull with glowing eyes and sparks shooting from its nostrils appeared in his stable. The monster drove the farmer ever higher into the jagged rocks of Glärnis, until he plunged into Lake Klöntal – and since then, fishermen flee in stormy autumn nights from...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Nain de Terre Elm",
         "text": "Un fermier avide de Klöntal possédait les plus magnifiques troupeaux, mais cela ne lui suffisait pas – il pillait secrètement les pâturages communaux et frappait quiconque protestait. Dans son hybris, il maudit à haute voix : « Et si le diable lui-même m'envoyait un taureau ! » Cette nuit-là, un énorme taureau noir comme du poix avec des yeux incandescents et des étincelles jaillissant de ses naseaux apparut dans son étable. Le monstre poussa le fermier toujours plus haut dans les rochers déchiquetés du Glärnis, jusqu'à ce qu'il se précipite dans le lac de Klöntal – et depuis lors, les pêcheurs s'enfuient lors des nuits d'automne orageuses...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Nano della Terra Elm",
         "text": "Un agricoltore avido di Klöntal possedeva i più magnifici greggi, eppure non era sufficiente per lui – depredava segretamente i pascoli comuni e colpiva chiunque protestasse. Nella sua hybris, maledisse ad alta voce: \"E se il diavolo stesso mi mandasse un toro!\" Quella stessa notte, un enorme toro nero come la pece con occhi incandescenti e scintille che schizzavano dalle narici apparve nella sua stalla. Il mostro spinse l'agricoltore sempre più in alto tra le rocce frastagliate del Glärnis, fino a quando non precipitò nel lago di Klöntal – e da allora i pescatori fuggono nelle notti autunnali tempestose...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Enano de Tierra Elm",
         "text": "Un codicioso granjero de Klöntal poseía los rebaños más magníficos, pero eso no le bastaba – saqueaba en secreto los pastos comunes y golpeaba a cualquiera que protestara. En su hybris, maldijo en voz alta: \"¡Y si el mismo diablo me envía un toro!\" Esa misma noche, un enorme toro negro como el carbón con ojos incandescentes y chispas que salían de sus fosas nasales apareció en su establo. El monstruo empujó al granjero cada vez más alto hacia las rocas escarpadas del Glärnis, hasta que se despeñó en el lago de Klöntal – y desde entonces, los pescadores huyen en las tormentosas noches de otoño...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Anão da Terra Elm",
         "text": "Um fazendeiro ganancioso de Klöntal possuía os mais magníficos rebanhos, mas isso não era suficiente para ele – saqueava secretamente os pastos comunais e atacava quem quer que protestasse. Em sua hybris, amaldiçoou em voz alta: \"E se o próprio diabo me enviar um touro!\" Naquela mesma noite, um enorme touro preto como a pez com olhos incandescentes e faíscas saindo de suas narinas apareceu em seu estábulo. O monstro impeliu o fazendeiro cada vez mais alto pelas rochas escarpadas do Glärnis, até que ele se precipitou no lago de Klöntal – e desde então, os pescadores fogem nas noites de outono tempestuosas...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "土地侏儒艾尔姆",
         "text": "克伦塔尔的一位贪婪农民拥有最壮观的牧群，但这对他来说还不够——他偷偷掠夺公共草地，并殴打任何抗议的人。在他的狂妄中，他大声诅咒：\"即使恶魔本人给我送来一头公牛！\"那天晚上，一头巨大的漆黑色公牛出现在他的马厩里，眼睛炽热，鼻孔喷出火花。这个怪物把农民驱赶得越来越高，来到格拉尼什山的陡峭岩石之间，直到他坠入克伦塔尔湖——从那以后，渔民在秋天的暴风雨之夜都会逃离...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Земляной гном Elm",
         "text": "Жадный крестьянин из Клёнталя владел самыми великолепными стадами, но этого ему было недостаточно – он тайно грабил общественные пастбища и бил каждого, кто протестовал. В своей гордыне он громко прокленал: «И если сам дьявол пришлёт мне быка!» В ту же ночь в его стойле появился огромный чёрный, как смола, бык с горящими глазами и искрами, летящими из ноздрей. Чудовище гнало крестьянина всё выше в скалистые утёсы Глярниша, пока он не упал в озеро Клёнталь – и с тех пор рыбаки бегут в бурные осенние ночи от...",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": "Den historischen Bergsturz für jüngere Kinder abmildern; die Schutzfunktion der Erdgeister betonen.",
@@ -16416,47 +16566,56 @@
       "de": {
         "title": "Riese Fridolin Glarus",
         "text": "Tief in den Höhlen des Kärpf-Massivs lebten einst wohlwollende Zwerge, die nächtens den Sennen und ihrem Vieh halfen – bis ein hochmütiger Hirte sein Misstrauen mit geladener Flinte zeigte. Mit einem traurigen Seufzer verliessen die Erdmännli für immer die Hochebene, und ohne ihren Schutz wurde die Wildnis gnadenlos gejagt. Erst 1548 erklärten die Glarner den Kärpf zum ältesten Wildschutzgebiet Europas – um das verlorene Erbe der Zwerge zu bewahren.",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Riese Fridolin Glarus",
         "text": "Tief in de Höhlene vom Kärpf-Massiv hend emol wohlwollendi Zwerge glebt, di nächtens de Sennen und ihrem Vieh ghulfe hend – bis es Hirte, wo stolz isch gsi, sinis Mistrouwe mit gladerem Flinte grächet hend. Mit em trurige Seufzer hend d Erdmännli für immer d Höchi verloh, und ohn ihrem Schutz isch d Wildnis gnodelos gjagt worden. Erst 1548 hend d Glarner de Kärpf zum eltisten Wildschutzgebiet Europas erklärt – um das verlorene Erb de Zwerge z bewahre.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Giant Fridolin of Glarus",
         "text": "Deep within the caves of the Kärpf Massif once lived benevolent dwarves who helped the alpine herders and their livestock at night – until an arrogant shepherd showed his mistrust with a loaded rifle. With a sad sigh, the earth-men left the highland plateau forever, and without their protection, the wilderness was hunted mercilessly. Only in 1548 did the people of Glarus declare the Kärpf the oldest wildlife sanctuary in Europe – to preserve the lost legacy of the dwarves.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Le Géant Fridolin de Glaris",
         "text": "Au cœur des cavernes du massif du Kärpf vivaient autrefois de bienveillants nains qui aidaient les bergers alpins et leur bétail la nuit – jusqu'à ce qu'un berger arrogant leur montre sa méfiance avec un fusil chargé. Avec un soupir triste, les hommes de la terre quittèrent à jamais l'alpage, et sans leur protection, la nature sauvage fut impitoyablement chassée. Ce n'est qu'en 1548 que les habitants de Glaris déclarèrent le Kärpf plus ancienne réserve naturelle d'Europe – pour préserver l'héritage perdu des nains.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Il Gigante Fridolino di Glarona",
         "text": "Nelle profondità delle caverne del massiccio del Kärpf vivevano un tempo benevoli nani che aiutavano i pastori alpini e il loro bestiame durante la notte – finché un pastore arrogante non mostrò la sua sfiducia con un fucile carico. Con un sospiro triste, gli uomini della terra abbandonarono per sempre l'altopiano, e senza la loro protezione, la natura selvaggia fu cacciata senza pietà. Solo nel 1548 gli abitanti di Glarona dichiararono il Kärpf la più antica riserva naturale d'Europa – per preservare l'eredità perduta dei nani.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "El Gigante Fridolín de Glaris",
         "text": "En las profundidades de las cuevas del macizo del Kärpf vivían antaño enanos benevolentes que ayudaban a los pastores alpinos y su ganado durante la noche – hasta que un pastor arrogante mostró su desconfianza con un fusil cargado. Con un suspiro triste, los hombres de la tierra abandonaron la meseta alpina para siempre, y sin su protección, la naturaleza salvaje fue cazada sin piedad. Solo en 1548 los glaronen declararon el Kärpf la reserva natural más antigua de Europa – para preservar el legado perdido de los enanos.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Gigante Fridolim de Glarus",
         "text": "Nas profundezas das cavernas do maciço do Kärpf viviam outrora anões benevolentes que ajudavam os pastores alpinos e seu rebanho à noite – até que um pastor arrogante mostrou sua desconfiança com um rifle carregado. Com um suspiro triste, os homens da terra abandonaram o planalto para sempre, e sem sua proteção, a natureza selvagem foi caçada implacavelmente. Apenas em 1548, os glarnenses declararam o Kärpf a reserva natural mais antiga da Europa – para preservar o legado perdido dos anões.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "格拉鲁斯的巨人弗里多林",
         "text": "在卡尔普山块的深处洞穴中，曾经住着善良的侏儒，他们在夜间帮助高山牧民和他们的牲畜——直到一个傲慢的牧羊人用上膛的步枪表示了他的不信任。带着悲伤的叹息，这些地下人永远离开了高地，没有了他们的保护，荒野被无情地猎杀。直到1548年，格拉鲁斯人才宣布卡尔普为欧洲最古老的野生动物保护区——以保护侏儒失落的遗产。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Гигант Фридолин Гларус",
         "text": "Глубоко в пещерах массива Кярпф когда-то обитали добрые карлики, которые помогали альпийским пастухам и их скоту по ночам – пока один гордый пастух не выказал своё недоверие заряженной винтовкой. С печальным вздохом земляные человечки навсегда покинули высокогорное плато, и без их защиты дикая природа была беспощадно истребляема. Только в 1548 году жители Гларуса объявили Кярпф старейшим заповедником дикой природы в Европе – чтобы сохранить утраченное наследие карликов.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": null,
@@ -16479,47 +16638,56 @@
       "de": {
         "title": "Klause Muehlehorn",
         "text": "Im regnerischen Frühling des Linthtals warnt ein winziges Männlein mit silbernem Bart und Schilfmantel einen armen Bauern vor der kommenden Katastrophe – seine Stimme klingt wie Kieselsteine im Wasser. Der Bauer vertraut dem Geist, rettet seine Familie auf die Anhöhe, und Sekunden später zerstört ein gewaltiger Murgang alles, was er besessen hat. Doch zum Dank für seinen Mut findet er am nächsten Morgen eine kleine Holzdose voller silberner Münzen – das Geschenk des Linth-Männchens, des rätselhaften Hüters des Flusses. Noch heute durchziehen die Spuren dieser wundersamen",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "Klause Muehlehorn",
         "text": "Im regnerische Fruehlig vo dr Lintthal warnt es winzigs Maennli mit silbernem Bart und Schilfmantl e arme Buur vor dr chummende Chatastroph – syni Stimm tönt wie Chiiselstei im Wasser. Dr Buur vertraut em Geischt, rettet syni Familie uf d Anhoeh, und Sekunde spaeter zerstoert e gwaltigs Murgang ales, wa er ghaa het. Aber zum Dank fuer syn Muet findet er am naechste Morge e chlis Holzdose voll silberne Muenze – s Geschenk vom Linth-Maennli, em raetselhaften Hueter vom Fluss. Nonig hout tuet d Spure vo deere wundersame",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "Klaus Mühlehorn",
         "text": "In the rainy spring of the Linth valley, a tiny man with a silver beard and reed cloak warns a poor farmer of the coming disaster – his voice sounds like pebbles in water. The farmer trusts the spirit, rescues his family to higher ground, and seconds later a massive mudslide destroys everything he owns. But in gratitude for his courage, he finds a small wooden box filled with silver coins the next morning – a gift from the Linth-man, the mysterious guardian of the river. Even today, the traces of this wondrous",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "Klaus Mühlehorn",
         "text": "Au printemps pluvieux de la vallée de la Linth, un minuscule homme à la barbe argentée et au manteau de roseaux avertit un pauvre fermier de la catastrophe imminente – sa voix ressemble à des cailloux dans l'eau. Le fermier fait confiance à l'esprit, sauve sa famille sur les hauteurs, et quelques secondes plus tard, une énorme coulée de boue détruit tout ce qu'il possédait. Mais en remerciement de son courage, il trouve le lendemain matin une petite boîte en bois remplie de pièces d'argent – le cadeau du petit homme de la Linth, le mystérieux gardien du fleuve. Encore aujourd'hui, les traces de ce merveilleux",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "Klaus Mühlehorn",
         "text": "Nella piovosa primavera della valle della Linth, un minuscolo uomo con la barba argentata e il mantello di canne avverte un povero contadino della catastrofe imminente – la sua voce suona come i ciottoli nell'acqua. Il contadino si fida dello spirito, salva la sua famiglia in altura, e pochi secondi dopo una massiccia colata di fango distrugge tutto ciò che possiede. Ma in segno di gratitudine per il suo coraggio, trova il mattino seguente una piccola scatola di legno piena di monete d'argento – il dono dell'uomo della Linth, il misterioso guardiano del fiume. Ancora oggi, le tracce di questo meraviglioso",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "Klaus Mühlehorn",
         "text": "En la lluviosa primavera del valle de Linth, un diminuto hombre con barba plateada y capa de caña advierte a un pobre granjero de la catástrofe que se aproxima – su voz suena como guijarros en el agua. El granjero confía en el espíritu, rescata a su familia hacia las alturas, y segundos después un enorme alud de lodo destruye todo lo que posee. Pero en gratitud por su valor, encuentra a la mañana siguiente una pequeña caja de madera llena de monedas de plata – el regalo del hombrecillo de Linth, el misterioso guardián del río. Incluso hoy en día, los rastros de este maravilloso",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "Klaus Mühlehorn",
         "text": "Na chuvosa primavera do vale de Linth, um pequeno homem com barba prateada e capa de junco avisa um pobre fazendeiro sobre a catástrofe que se aproxima – sua voz soa como seixos na água. O fazendeiro confia no espírito, salva sua família nas terras altas, e segundos depois uma enorme enxurrada de lama destrói tudo o que ele possuía. Mas em gratidão por sua coragem, ele encontra na manhã seguinte uma pequena caixa de madeira cheia de moedas de prata – o presente do homenzinho da Linth, o misterioso guardião do rio. Ainda hoje, os rastros deste maravilhoso",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "克劳斯·米勒霍恩",
         "text": "在林特谷多雨的春天，一个留着银色胡须、穿着芦苇斗篷的小个子男人警告一位贫苦农民即将来临的灾难——他的声音听起来像水中的鹅卵石。农民相信了这个幽灵，将家人救到高地，几秒钟后，一场巨大的泥石流摧毁了他拥有的一切。但作为对他勇气的感谢，第二天早上他发现了一个装满银币的小木盒——这是林特小人，那位神秘的河流守护者的礼物。直到今天，这个奇妙的",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Клаус Мюльхорн",
         "text": "В дождливую весну долины Линт крошечный человечек с серебристой бородой и плащом из камыша предупреждает бедного крестьянина о грядущей катастрофе – его голос звучит как галька в воде. Крестьянин верит духу, спасает свою семью, поднявшись на возвышение, и через несколько секунд мощный оползень уничтожает всё, что он имел. Но в благодарность за его мужество на следующее утро он находит маленький деревянный ящик, полный серебряных монет – подарок от человечка Линта, загадочного хранителя реки. И поныне следы этого чудесного",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": null,
@@ -16542,47 +16710,56 @@
       "de": {
         "title": "Glocke Naefels",
         "text": "Ein mürrischer Riese bewachte einst die Gletscherregionen des Clariden und wollte kein menschliches Treiben in seiner wilden Einsamkeit dulden. Als Handelsleute begannen, Saumpfade über die Berge zu schlagen, geriet er in solchen Zorn, dass er einen gigantischen Felsblock aus dem Gipfel riss, um das Tal für immer zu sperren. Doch die Berggeister straften seinen Hochmut mit einem Donnerschlag aus heiterem Himmel – der Riese erstarrte zu Stein, für ewig gebunden an die Last seines eigenen Zorns. Noch heute erkennst du in den zerklüfteten Zacken des Clariden die versteinerten Umr",
-        "quelleVerifiziert": true
+        "quelleVerifiziert": true,
+        "reviewEmpfohlen": false
       },
       "gsw": {
         "title": "d Glogge vo Näfels",
         "text": "Es isch emol e mürrischer Riis gwesen, wo d Gletscherregione vom Clariden bewacht het und kei menschligs Triibu in sinere wilde Einsamkeit wöd duld ha. Won d Händler aagfange hai, Sumpfwäg über d Bärge z schla, isch er i so ne Zorn koh, dass er e gigantische Felsbrocke us em Gipfel risse het, zum s Tal für immer z sperrä. Aber d Berggeischter hei sym Hochmuet mit nem Donnerschlag us hiterem Himmel gstraft – der Riis isch z Stei erstorrt, für ewig bunde a d Last vo sym aigene Zorn. Hüt no chösch du i de zerkluftete Zacke vom Clariden d verstäinerte Umriss erkenne.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "en": {
         "title": "The Bell of Naefels",
         "text": "A grumpy giant once guarded the glacier regions of Clariden and would not tolerate any human activity in his wild solitude. When merchants began carving trade routes over the mountains, his rage was so great that he tore a gigantic boulder from the peak to block the valley forever. But the mountain spirits punished his arrogance with a thunderbolt from a clear sky – the giant froze into stone, eternally bound to the burden of his own anger. Even today, you can recognize in the jagged peaks of Clariden the petrified outlines of his form.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "fr": {
         "title": "La Cloche de Naefels",
         "text": "Un géant grincheux gardait autrefois les régions glaciaires du Clariden et ne tolérait aucune activité humaine dans sa solitude sauvage. Quand les marchands commencèrent à tracer des routes commerciales sur les montagnes, sa rage était si grande qu'il arracha un bloc rocheux gigantesque du sommet pour bloquer la vallée à jamais. Mais les esprits des montagnes punirent son arrogance par un coup de tonnerre d'un ciel clair – le géant se figea en pierre, éternellement lié au fardeau de sa propre colère. Encore aujourd'hui, vous pouvez reconnaître dans les pics dentelés du Clariden les contours pétrifiés de sa forme.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "it": {
         "title": "La Campana di Naefels",
         "text": "Un gigante scontroso un tempo custodiva le regioni glaciali del Clariden e non tollerava alcuna attività umana nella sua solitudine selvaggia. Quando i mercanti iniziarono a tracciare rotte commerciali sulle montagne, la sua collera era così grande che strappò un blocco di roccia gigantesco dalla vetta per bloccare la valle per sempre. Ma gli spiriti delle montagne punirono la sua arroganza con un fulmine da un cielo sereno – il gigante si congelò in pietra, eternamente legato al fardello della sua stessa ira. Ancora oggi, puoi riconoscere nei picchi frastagliati del Clariden i contorni pietrificati della sua forma.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "es": {
         "title": "La Campana de Naefels",
         "text": "Antaño, un gigante gruñón guardaba las regiones glaciares del Clariden y no toleraba actividad humana alguna en su soledad salvaje. Cuando los mercaderes comenzaron a trazar rutas comerciales sobre las montañas, su furia fue tan grande que arrancó un bloque rocoso gigantesco de la cumbre para bloquear el valle para siempre. Pero los espíritus de las montañas castigaron su arrogancia con un rayo de un cielo despejado – el gigante se congeló en piedra, eternamente atado a la carga de su propia ira. Aún hoy, puedes reconocer en los picos dentados del Clariden los contornos petrificados de su forma.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "pt": {
         "title": "O Sino de Naefels",
         "text": "Um gigante rabugento outrora guardava as regiões glaciais do Clariden e não tolerava nenhuma atividade humana em sua solidão selvagem. Quando os mercadores começaram a traçar rotas comerciais sobre as montanhas, sua fúria era tão grande que arrancou um bloco de rocha gigantesco do pico para bloquear o vale para sempre. Mas os espíritos das montanhas puniram sua arrogância com um raio de um céu limpo – o gigante congelou em pedra, eternamente ligado ao fardo de sua própria ira. Ainda hoje, você pode reconhecer nos picos dentados do Clariden os contornos petrificados de sua forma.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "zh": {
         "title": "内费尔斯钟声",
         "text": "从前，一个脾气暴躁的巨人守护着克拉里登的冰川地区，不允许任何人类活动侵扰他的野生寂静。当商人们开始在山上开辟贸易路线时，他的怒火如此之大，以至于他从山顶撕下了一块巨大的岩石，想要永远封闭山谷。但山神用晴空中的雷鸣惩罚了他的傲慢——巨人化为了石头，永远被束缚在自己愤怒的重担之下。即使在今天，你仍可以在克拉里登崎岖的山峰上认出他石化的轮廓。",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       },
       "ru": {
         "title": "Колокол Наэфельса",
         "text": "Некогда мрачный гигант охранял ледниковые регионы Кларидена и не терпел никакой человеческой деятельности в своей дикой уединенности. Когда купцы начали прокладывать торговые пути через горы, его ярость была так велика, что он оторвал гигантский каменный блок с вершины, чтобы навсегда перекрыть долину. Но горные духи наказали его высокомерие громом с ясного неба – гигант превратился в камень, навеки привязанный к бремени собственного гнева. И сегодня в зазубренных вершинах Кларидена можно узнать окаменевшие очертания его формы.",
-        "quelleVerifiziert": false
+        "quelleVerifiziert": false,
+        "reviewEmpfohlen": false
       }
     },
     "altersstufenHinweis": null,

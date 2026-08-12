@@ -5,13 +5,13 @@ export const modules: ModuleMap = {
   "./components/mockups/route-card-info/ZeitAufSchild.tsx": () => import("../components/mockups/route-card-info/ZeitAufSchild.tsx"),
   "./components/mockups/route-card-info/Zeitleiste.tsx": () => import("../components/mockups/route-card-info/Zeitleiste.tsx"),
   "./components/mockups/route-card-info/Zusatztafel.tsx": () => import("../components/mockups/route-card-info/Zusatztafel.tsx"),
+  "./components/mockups/sagatrail-theme/SchweizDunkel.tsx": () => import("../components/mockups/sagatrail-theme/SchweizDunkel.tsx"),
+  "./components/mockups/sagatrail-theme/SchweizHell.tsx": () => import("../components/mockups/sagatrail-theme/SchweizHell.tsx"),
   "./components/mockups/route-detail/BeatusCard.tsx": () => import("../components/mockups/route-detail/BeatusCard.tsx"),
   "./components/mockups/route-detail/RigiCard.tsx": () => import("../components/mockups/route-detail/RigiCard.tsx"),
   "./components/mockups/route-detail/RouteDunkel.tsx": () => import("../components/mockups/route-detail/RouteDunkel.tsx"),
   "./components/mockups/route-detail/RouteHell.tsx": () => import("../components/mockups/route-detail/RouteHell.tsx"),
   "./components/mockups/route-detail/StoosCard.tsx": () => import("../components/mockups/route-detail/StoosCard.tsx"),
-  "./components/mockups/sagatrail-theme/SchweizDunkel.tsx": () => import("../components/mockups/sagatrail-theme/SchweizDunkel.tsx"),
-  "./components/mockups/sagatrail-theme/SchweizHell.tsx": () => import("../components/mockups/sagatrail-theme/SchweizHell.tsx"),
   "./components/mockups/social-card/SocialCard.tsx": () => import("../components/mockups/social-card/SocialCard.tsx"),
   "./components/mockups/social-card/WalserCard.tsx": () => import("../components/mockups/social-card/WalserCard.tsx")
 };
