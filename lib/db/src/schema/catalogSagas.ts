@@ -7,7 +7,14 @@ import { createInsertSchema } from "drizzle-zod";
  * - "ungefaehr": Region/Tal ist belegt, aber kein punktgenauer Ort.
  * - "nicht_lokalisierbar": Die Sage laesst sich keinem realen Ort zuordnen.
  */
-export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar";
+export type KoordinatenSicherheit =
+  | "exakt"
+  | "Ort identifiziert"
+  | "Region identifiziert"
+  | "Muss GPS Verifiziert werden"
+  | "Nur Kanton identifiziert"
+  | "ungefaehr"
+  | "nicht_lokalisierbar";
 
 /**
  * Eine pro Zielsprache eigenstaendig verfasste Zusammenfassung. `reviewEmpfohlen`

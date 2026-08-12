@@ -140,6 +140,7 @@ a{color:var(--red);text-decoration:none}
   <button class="tab-btn" onclick="switchTab('verbande',this)">&#127956; Verbände</button>
   <button class="tab-btn" onclick="switchTab('push',this)">&#128226; Push</button>
   <button class="tab-btn" onclick="switchTab('sagen',this)">&#128218; Sagen-Fotos</button>
+  <button class="tab-btn" onclick="switchTab('gps-check',this)">&#128506; GPS-Check</button>
   <button class="tab-btn" onclick="switchTab('routen',this)">&#128247; Routen-Fotos</button>
   <button class="tab-btn" onclick="switchTab('anfragen',this)">&#128203; Anfragen</button>
   <button class="tab-btn" onclick="switchTab('kampagne',this)">&#128140; Kampagne</button>
@@ -319,6 +320,343 @@ a{color:var(--red);text-decoration:none}
       <div id="sagen-body"><p class="loading">Verbinde...</p></div>
     </div>
   </div>
+
+  <!-- GPS-CHECK -->
+  <div id="tab-gps-check" class="tab-pane">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <h2 style="margin:0">&#128506; GPS-Koordinaten verifizieren</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="loadGpsCheck()">&#8635; Aktualisieren</button>
+          <span id="gps-progress-text" class="hint" style="font-size:12px"></span>
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px">
+        <div id="gps-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width .4s"></div>
+      </div>
+      <p class="hint" style="font-size:11px">Pin ziehen um Koordinaten zu setzen, dann Sicherheitsstufe wählen und &#10003; speichern.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start">
+
+      <!-- SIDEBAR -->
+      <div class="card" style="padding:12px">
+        <div id="gps-canton-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px"></div>
+        <input id="gps-search" type="text" placeholder="Suchen…" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;margin-bottom:8px" oninput="filterGpsList(this.value)">
+        <div id="gps-list" style="max-height:calc(100vh - 340px);overflow-y:auto"></div>
+      </div>
+
+      <!-- MAP -->
+      <div id="gps-map" style="height:calc(100vh - 240px);min-height:500px;border-radius:12px;border:1px solid var(--border);overflow:hidden;background:#e8e0d8"></div>
+    </div>
+
+    <!-- SAVE PANEL (hidden, shown on drag) -->
+    <div id="gps-save-panel" style="display:none;position:fixed;bottom:20px;right:20px;z-index:9999;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 4px 24px rgba(0,0,0,.18);min-width:300px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px" id="gps-save-title">Saga-Titel</div>
+      <div style="font-size:11px;color:var(--mid);margin-bottom:10px" id="gps-save-coords"></div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;font-weight:600;color:var(--mid);display:block;margin-bottom:4px">Koordinatensicherheit</label>
+        <select id="gps-save-sicherheit" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+          <option value="exakt">✅ exakt</option>
+          <option value="Ort identifiziert">📍 Ort identifiziert</option>
+          <option value="Region identifiziert">🗺 Region identifiziert</option>
+          <option value="Muss GPS Verifiziert werden" selected>⏳ Muss GPS Verifiziert werden</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveGpsCoord()" style="flex:1">&#10003; Speichern</button>
+        <button class="btn btn-ghost" onclick="cancelGpsSave()">&#10005;</button>
+      </div>
+    </div>
+  </div>
+
+<style>
+#gps-list .gps-item{padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;line-height:1.4}
+#gps-list .gps-item:last-child{border-bottom:none}
+#gps-list .gps-item:hover{background:#fafaf8}
+#gps-list .gps-item.active{background:#fce8e8;font-weight:600}
+#gps-list .gps-item-canton{font-size:10px;color:var(--mid);margin-top:2px}
+#gps-list .gps-item-status{float:right;margin-left:8px}
+</style>
+
+<script>
+(function(){
+var _gpsLoaded = false;
+var _gpsMap = null;
+var _gpsMarkers = {}; // id -> L.marker
+var _gpsPending = []; // all pending sagas from server
+var _gpsFiltered = []; // currently shown in list
+var _gpsActiveCanton = 'alle';
+var _gpsActiveSearch = '';
+var _gpsCurrentEdit = null; // {id, title, lat, lng}
+var _gpsTotalPending = 0;
+var _gpsVerifiedCount = 0;
+
+window.loadGpsCheck = async function() {
+  if (!token()) { return; }
+  document.getElementById('gps-list').innerHTML = '<p class="loading" style="font-size:12px;padding:8px">Wird geladen…</p>';
+  try {
+    _gpsPending = await api('/api/admin/sagas/gps-pending');
+    _gpsTotalPending = _gpsPending.length;
+    // Also fetch all sagas to get verified count
+    try {
+      var all = await api('/api/admin/sagas');
+      _gpsVerifiedCount = all.filter(function(s){ return s.koordinatenSicherheit !== 'Muss GPS Verifiziert werden'; }).length;
+    } catch(e) { _gpsVerifiedCount = 234 - _gpsPending.length; }
+    updateGpsProgress();
+    buildGpsCantonChips();
+    if (!_gpsLoaded) { initGpsMap(); }
+    _gpsFiltered = _gpsPending;
+    renderGpsList();
+    placeAllMarkers();
+  } catch(e) {
+    document.getElementById('gps-list').innerHTML = '<p class="loading" style="color:red;font-size:12px;padding:8px">Fehler: '+e+'</p>';
+  }
+};
+
+function updateGpsProgress() {
+  var done = _gpsVerifiedCount;
+  var total = done + _gpsTotalPending;
+  var pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('gps-progress-bar').style.width = pct + '%';
+  document.getElementById('gps-progress-text').textContent = done + ' / ' + total + ' verifiziert (' + _gpsTotalPending + ' ausstehend)';
+}
+
+function buildGpsCantonChips() {
+  var cantons = [...new Set(_gpsPending.map(function(s){ return s.canton; }))].sort();
+  var el = document.getElementById('gps-canton-chips');
+  el.innerHTML = '<button class="kt-chip kt-alle active" onclick="setGpsCanton(\'alle\',this)">Alle</button>';
+  cantons.forEach(function(c){
+    var btn = document.createElement('button');
+    btn.className = 'kt-chip';
+    btn.textContent = c;
+    btn.onclick = function(){ setGpsCanton(c, btn); };
+    el.appendChild(btn);
+  });
+}
+
+window.setGpsCanton = function(c, btn) {
+  _gpsActiveCanton = c;
+  document.querySelectorAll('#gps-canton-chips .kt-chip').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  applyGpsFilter();
+};
+
+window.filterGpsList = function(q) {
+  _gpsActiveSearch = q.toLowerCase();
+  applyGpsFilter();
+};
+
+function applyGpsFilter() {
+  _gpsFiltered = _gpsPending.filter(function(s){
+    var cantonOk = _gpsActiveCanton === 'alle' || s.canton === _gpsActiveCanton;
+    var searchOk = !_gpsActiveSearch || s.title.toLowerCase().includes(_gpsActiveSearch);
+    return cantonOk && searchOk;
+  });
+  renderGpsList();
+  // Show/hide markers
+  Object.keys(_gpsMarkers).forEach(function(id){
+    var marker = _gpsMarkers[id];
+    var shown = _gpsFiltered.some(function(s){ return s.id === id; });
+    if (_gpsMap) {
+      if (shown) { if (!_gpsMap.hasLayer(marker)) marker.addTo(_gpsMap); }
+      else { if (_gpsMap.hasLayer(marker)) marker.remove(); }
+    }
+  });
+}
+
+function renderGpsList() {
+  var el = document.getElementById('gps-list');
+  if (!_gpsFiltered.length) { el.innerHTML = '<p class="hint" style="padding:8px;font-size:12px">Keine Einträge.</p>'; return; }
+  el.innerHTML = _gpsFiltered.map(function(s){
+    var sichHtml = '';
+    if (s.koordinatenSicherheit === 'exakt') sichHtml = '<span style="color:var(--green)">✅</span>';
+    else if (s.koordinatenSicherheit === 'Ort identifiziert') sichHtml = '<span>📍</span>';
+    else sichHtml = '<span style="color:var(--orange)">⏳</span>';
+    return '<div class="gps-item" id="gps-item-'+s.id+'" onclick="focusGpsSaga(\''+s.id+'\')">' +
+      '<span class="gps-item-status">'+sichHtml+'</span>' +
+      '<div style="font-weight:600">'+escHtml(s.title)+'</div>' +
+      '<div class="gps-item-canton">'+escHtml(s.canton)+(s.lat ? ' · '+s.lat.toFixed(4)+', '+s.lng.toFixed(4) : ' · keine Koordinaten')+'</div>' +
+      '</div>';
+  }).join('');
+}
+
+function escHtml(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function initGpsMap() {
+  if (_gpsLoaded) return;
+  // Load Leaflet CSS
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(link);
+  // Load Leaflet JS
+  var script = document.createElement('script');
+  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.onload = function(){
+    _gpsLoaded = true;
+    _gpsMap = L.map('gps-map').setView([46.8, 8.2], 8);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com">CARTO</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
+      maxZoom: 18
+    }).addTo(_gpsMap);
+    placeAllMarkers();
+  };
+  document.head.appendChild(script);
+}
+
+function makeMarkerIcon(sicherheit) {
+  var color = sicherheit === 'exakt' ? '#2e7d52'
+    : sicherheit === 'Ort identifiziert' ? '#1a5fa8'
+    : sicherheit === 'Region identifiziert' ? '#d07000'
+    : '#CC0000';
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">' +
+    '<path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="' + color + '"/>' +
+    '<circle cx="12" cy="12" r="5" fill="#fff"/>' +
+    '</svg>';
+  return typeof L !== 'undefined' ? L.divIcon({
+    html: svg,
+    iconSize: [24, 36],
+    iconAnchor: [12, 36],
+    popupAnchor: [0, -36],
+    className: ''
+  }) : null;
+}
+
+function placeAllMarkers() {
+  if (!_gpsLoaded || !_gpsMap || typeof L === 'undefined') return;
+  // Clear existing
+  Object.values(_gpsMarkers).forEach(function(m){ m.remove(); });
+  _gpsMarkers = {};
+  _gpsPending.forEach(function(s){
+    if (!s.lat || !s.lng) return; // skip no-coord sagas for now
+    var marker = L.marker([s.lat, s.lng], {
+      draggable: true,
+      icon: makeMarkerIcon(s.koordinatenSicherheit),
+      title: s.title
+    });
+    marker.bindTooltip('<b>'+escHtml(s.title)+'</b><br>'+escHtml(s.canton), {permanent:false, direction:'top'});
+    marker.on('dragend', function(e){
+      var ll = e.target.getLatLng();
+      openGpsSavePanel(s.id, s.title, ll.lat, ll.lng);
+    });
+    marker.on('click', function(){
+      openGpsSavePanel(s.id, s.title, marker.getLatLng().lat, marker.getLatLng().lng);
+      highlightGpsItem(s.id);
+    });
+    marker.addTo(_gpsMap);
+    _gpsMarkers[s.id] = marker;
+  });
+  // Also place without-coord sagas at Switzerland center with dim icon for manual placement
+  _gpsPending.filter(function(s){ return !s.lat || !s.lng; }).forEach(function(s){
+    var lat = 46.8 + (Math.random()-0.5)*2;
+    var lng = 8.2 + (Math.random()-0.5)*3;
+    var marker = L.marker([lat, lng], {
+      draggable: true,
+      icon: makeMarkerIcon('keine'),
+      title: s.title + ' (keine Koordinaten)'
+    });
+    marker.bindTooltip('<b>'+escHtml(s.title)+'</b><br><i>Keine Koordinaten — Pin positionieren</i>', {permanent:false, direction:'top'});
+    marker.on('dragend', function(e){
+      var ll = e.target.getLatLng();
+      openGpsSavePanel(s.id, s.title, ll.lat, ll.lng);
+    });
+    marker.on('click', function(){
+      openGpsSavePanel(s.id, s.title, marker.getLatLng().lat, marker.getLatLng().lng);
+      highlightGpsItem(s.id);
+    });
+    marker.addTo(_gpsMap);
+    _gpsMarkers[s.id] = marker;
+  });
+}
+
+function openGpsSavePanel(id, title, lat, lng) {
+  _gpsCurrentEdit = {id:id, title:title, lat:lat, lng:lng};
+  document.getElementById('gps-save-title').textContent = title;
+  document.getElementById('gps-save-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  var sel = document.getElementById('gps-save-sicherheit');
+  sel.value = 'exakt';
+  document.getElementById('gps-save-panel').style.display = 'block';
+  highlightGpsItem(id);
+}
+
+function highlightGpsItem(id) {
+  document.querySelectorAll('.gps-item').forEach(function(el){ el.classList.remove('active'); });
+  var el = document.getElementById('gps-item-'+id);
+  if (el) { el.classList.add('active'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+
+window.focusGpsSaga = function(id) {
+  var saga = _gpsPending.find(function(s){ return s.id===id; });
+  if (!saga) return;
+  highlightGpsItem(id);
+  if (_gpsMap && _gpsMarkers[id]) {
+    _gpsMap.setView(_gpsMarkers[id].getLatLng(), 14, {animate:true});
+    _gpsMarkers[id].openTooltip();
+  }
+};
+
+window.saveGpsCoord = async function() {
+  if (!_gpsCurrentEdit) return;
+  var btn = document.querySelector('#gps-save-panel .btn-primary');
+  btn.textContent = 'Speichere…';
+  btn.disabled = true;
+  var sicherheit = document.getElementById('gps-save-sicherheit').value;
+  try {
+    await api('/api/admin/sagas/'+_gpsCurrentEdit.id+'/koordinaten', {
+      method:'PATCH',
+      body: JSON.stringify({lat:_gpsCurrentEdit.lat, lng:_gpsCurrentEdit.lng, koordinatenSicherheit:sicherheit})
+    });
+    // Update local data
+    var saga = _gpsPending.find(function(s){ return s.id===_gpsCurrentEdit.id; });
+    if (saga) {
+      saga.lat = _gpsCurrentEdit.lat;
+      saga.lng = _gpsCurrentEdit.lng;
+      saga.koordinatenSicherheit = sicherheit;
+    }
+    // Remove from pending list if now verified
+    if (sicherheit !== 'Muss GPS Verifiziert werden') {
+      _gpsPending = _gpsPending.filter(function(s){ return s.id!==_gpsCurrentEdit.id; });
+      _gpsVerifiedCount++;
+      updateGpsProgress();
+      applyGpsFilter();
+    } else {
+      renderGpsList();
+    }
+    // Update marker icon
+    if (_gpsMarkers[_gpsCurrentEdit.id]) {
+      _gpsMarkers[_gpsCurrentEdit.id].setIcon(makeMarkerIcon(sicherheit));
+    }
+    document.getElementById('gps-save-panel').style.display = 'none';
+    _gpsCurrentEdit = null;
+  } catch(e) {
+    alert('Fehler: '+e);
+  } finally {
+    btn.textContent = '✓ Speichern';
+    btn.disabled = false;
+  }
+};
+
+window.cancelGpsSave = function() {
+  // Reset marker to old position if dragged
+  if (_gpsCurrentEdit) {
+    var saga = _gpsPending.find(function(s){ return s.id===_gpsCurrentEdit.id; });
+    if (saga && saga.lat && _gpsMarkers[_gpsCurrentEdit.id]) {
+      _gpsMarkers[_gpsCurrentEdit.id].setLatLng([saga.lat, saga.lng]);
+    }
+  }
+  document.getElementById('gps-save-panel').style.display = 'none';
+  _gpsCurrentEdit = null;
+};
+
+// Hook into switchTab to trigger load on first open
+var _origSwitchTab = window.switchTab;
+window.switchTab = function(name, btn) {
+  _origSwitchTab(name, btn);
+  if (name === 'gps-check' && token()) loadGpsCheck();
+};
+})();
+</script>
 
   <!-- ROUTEN-FOTOS -->
   <div id="tab-routen" class="tab-pane">

@@ -1,4 +1,6 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
+import { readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 import { sendPartnerVertrag } from "../lib/partnerEmail";
 import { sendMagicLink } from "../lib/partnerWebhookHandler";
 import { Router, type IRouter, type Request, type Response } from "express";
@@ -755,6 +757,86 @@ router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err, id }, "Admin saga foto update fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+// -------------------------------------------------------------------
+// SAGEN GPS-VERIFIKATION
+// -------------------------------------------------------------------
+
+/** GET /admin/sagas/gps-pending — alle Sagen mit "Muss GPS Verifiziert werden" */
+router.get("/admin/sagas/gps-pending", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const rows = await db
+      .select({
+        id: catalogSagasTable.id,
+        title: catalogSagasTable.title,
+        canton: catalogSagasTable.canton,
+        lat: catalogSagasTable.lat,
+        lng: catalogSagasTable.lng,
+        koordinatenSicherheit: catalogSagasTable.koordinatenSicherheit,
+        bildmotiv: catalogSagasTable.bildmotiv,
+        summary: catalogSagasTable.summary,
+      })
+      .from(catalogSagasTable)
+      .where(eq(catalogSagasTable.koordinatenSicherheit, "Muss GPS Verifiziert werden"))
+      .orderBy(catalogSagasTable.canton, catalogSagasTable.title);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Admin sagas gps-pending fehlgeschlagen");
+    res.status(500).json({ error: "Interner Fehler" });
+  }
+});
+
+/** PATCH /admin/sagas/:id/koordinaten — lat/lng + Sicherheitsstufe aktualisieren */
+router.patch("/admin/sagas/:id/koordinaten", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const { id } = req.params;
+  const { lat, lng, koordinatenSicherheit } = req.body as {
+    lat?: number;
+    lng?: number;
+    koordinatenSicherheit?: string;
+  };
+  const ALLOWED = ["exakt", "Ort identifiziert", "Region identifiziert", "Muss GPS Verifiziert werden", "Nur Kanton identifiziert"];
+  if (!ALLOWED.includes(koordinatenSicherheit ?? "")) {
+    res.status(400).json({ error: `koordinatenSicherheit muss einer von: ${ALLOWED.join(", ")}` });
+    return;
+  }
+  try {
+    // 1. DB aktualisieren
+    await db
+      .update(catalogSagasTable)
+      .set({
+        lat: lat ?? null,
+        lng: lng ?? null,
+        koordinatenSicherheit: koordinatenSicherheit ?? null,
+      } as any)
+      .where(eq(catalogSagasTable.id, id));
+
+    // 2. JSON-Quelldatei aktualisieren (damit catalogSeed() beim nächsten Start
+    //    die gesetzten Koordinaten nicht überschreibt)
+    const jsonPath = resolve(__dirname, "../lib/curatedSagas.json");
+    try {
+      const sagas: any[] = JSON.parse(readFileSync(jsonPath, "utf-8"));
+      const entry = sagas.find((s: any) => s.id === id);
+      if (entry) {
+        if (lat !== undefined) entry.lat = lat;
+        if (lng !== undefined) entry.lng = lng;
+        if (koordinatenSicherheit !== undefined) entry.koordinatenSicherheit = koordinatenSicherheit;
+        writeFileSync(jsonPath, JSON.stringify(sagas, null, 2), "utf-8");
+        req.log.info({ id, lat, lng, koordinatenSicherheit }, "curatedSagas.json aktualisiert");
+      } else {
+        req.log.warn({ id }, "GPS-Patch: ID nicht in curatedSagas.json gefunden — nur DB aktualisiert");
+      }
+    } catch (jsonErr) {
+      req.log.error({ jsonErr, id }, "GPS-Patch: JSON-Writeback fehlgeschlagen — DB wurde trotzdem aktualisiert");
+    }
+
+    res.json({ ok: true, id, lat, lng, koordinatenSicherheit });
+  } catch (err) {
+    req.log.error({ err, id }, "Admin saga koordinaten update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
   }
 });
