@@ -402,7 +402,7 @@ window.loadGpsCheck = async function() {
     try {
       var all = await api('/api/admin/sagas');
       _gpsVerifiedCount = all.filter(function(s){ return s.koordinatenSicherheit !== 'Muss GPS Verifiziert werden'; }).length;
-    } catch(e) { _gpsVerifiedCount = 234 - _gpsPending.length; }
+    } catch(e) { _gpsVerifiedCount = 0; }
     updateGpsProgress();
     buildGpsCantonChips();
     if (!_gpsLoaded) { initGpsMap(); }

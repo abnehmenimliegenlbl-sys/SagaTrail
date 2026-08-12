@@ -667,6 +667,9 @@ router.get("/admin/sagas", async (req, res): Promise<void> => {
         bildmotiv: catalogSagasTable.bildmotiv,
         fotoUrl: catalogSagasTable.fotoUrl,
         fotoAttribution: catalogSagasTable.fotoAttribution,
+        koordinatenSicherheit: catalogSagasTable.koordinatenSicherheit,
+        lat: catalogSagasTable.lat,
+        lng: catalogSagasTable.lng,
       })
       .from(catalogSagasTable)
       .orderBy(catalogSagasTable.canton, catalogSagasTable.title);
