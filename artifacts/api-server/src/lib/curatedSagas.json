@@ -67,13 +67,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Wilhelm Tell",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/wilhelmtell.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/uri/wilhelmtell.html",
     "lat": 46.881,
     "lng": 8.6442,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -150,7 +150,7 @@
     "source": "Walahfrid Strabo: Vita Sancti Galli (um 833)",
     "lat": 47.4239,
     "lng": 9.3767,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -221,12 +221,14 @@
     "altersstufenHinweis": "Den Teufel eher als tölpelhafte denn als bedrohliche Gestalt zeichnen; das Chaos der Felsen staunend schildern.",
     "quelle": {
       "werk": "sagen.at – Der ausgebrochene Knochen vor Gericht",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/aargau/derausgebrocheneknochen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/aargau/derausgebrocheneknochen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau (1856)",
     "lat": 47.4739,
     "lng": 8.3039,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -297,12 +299,14 @@
     "altersstufenHinweis": "Den Bergsturz und die Zerstörung nicht drastisch ausmalen; das geheimnisvolle Kegelspiel der Teufel betonen.",
     "quelle": {
       "werk": "sagen.at – Traditionelle Sagen",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/sagen.htm"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/sagen.htm",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.3667,
     "lng": 7.2167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -373,12 +377,14 @@
     "altersstufenHinweis": "Das Verschwinden von Menschen andeuten statt ausschmücken; die Regel (hinlegen, still bleiben) als Kern der Geschichte betonen.",
     "quelle": {
       "werk": "sagen.at – Der Berggeist",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/appenzell_ausserhoden/derberggeist.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/appenzell_ausserhoden/derberggeist.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.395,
     "lng": 9.28,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -450,12 +456,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.2931,
     "lng": 9.4153,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -525,12 +533,14 @@
     "altersstufenHinweis": "Das Rägemännli eher als scheues denn als bedrohliches Wesen zeichnen; das Verhalten der Tiere als Spannungsmoment nutzen.",
     "quelle": {
       "werk": "sagen.at – Die Quellen der Schafmatt",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/basel_landschaft/diequellen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/basel_landschaft/diequellen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Sutermeister: Schweizer Sagen (1874); mündliche Überlieferung Baselbiet",
     "lat": 47.4481,
     "lng": 7.9211,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -601,12 +611,14 @@
     "altersstufenHinweis": "Die Jagd nicht ausschmücken; den Namensfund als spielerisches Gründungsrätsel erzählen.",
     "quelle": {
       "werk": "sagen.at – Ochsen zeigen die heilige Stätte",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/ochsenzeigen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/ochsenzeigen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Konrad Justinger: Berner Chronik (ca. 1420)",
     "lat": 46.9481,
     "lng": 7.4474,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -677,12 +689,14 @@
     "altersstufenHinweis": "Die Strafe als Naturereignis erzählen, nicht als Ertrinken von Menschen ausmalen; das Glockenläuten als geheimnisvolles Detail betonen.",
     "quelle": {
       "werk": "sagen.at – Die Tarnkappe",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/freiburg/tarnkappe.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/freiburg/tarnkappe.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Theodor Vernaleken: Alpensagen (1858)",
     "lat": 46.6667,
     "lng": 7.2333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -753,12 +767,14 @@
     "altersstufenHinweis": "Die Marmite und den Mut der Mère Royaume in den Vordergrund stellen, den Kampf selbst nur andeuten.",
     "quelle": {
       "werk": "Genfer Stadtlegende, historisch überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Genfer Chronik-Überlieferung zur Escalade (1602)",
     "lat": 46.2044,
     "lng": 6.1432,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -829,12 +845,14 @@
     "altersstufenHinweis": "Das Wunder als friedliches Zeichen der Gerechtigkeit erzählen, den toten Bruder nicht gruselig ausmalen.",
     "quelle": {
       "werk": "sagen.at – Vrenelis Gärtli",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/vrenelis_gaertli.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/vrenelis_gaertli.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Mittelalterliche Fridolins-Legende (Vita Sancti Fridolini)",
     "lat": 47.0415,
     "lng": 9.0633,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -905,12 +923,14 @@
     "altersstufenHinweis": "Die Zerstörung als urzeitliches Naturereignis erzählen, nicht auf Menschenopfer eingehen.",
     "quelle": {
       "werk": "sagen.at – Die Fenggin Madrisa",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/oesterreich/vorarlberg/beitl/madrisa.htm"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/oesterreich/vorarlberg/beitl/madrisa.htm",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Theodor Vernaleken: Alpensagen (1858)",
     "lat": 46.8333,
     "lng": 9.2833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -981,12 +1001,14 @@
     "altersstufenHinweis": "Die Botschaft (Gier wird bestraft, Bescheidenheit belohnt) klar herausstellen, ohne Drohszenen.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Jurassische Volksüberlieferung, Region Ajoie (19. Jahrhundert)",
     "lat": 47.4167,
     "lng": 6.9833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1057,12 +1079,14 @@
     "altersstufenHinweis": "Den Drachen eher als beeindruckendes Naturwesen denn als Bedrohung zeichnen; die Rettung des Hirten betonen.",
     "quelle": {
       "werk": "sagen.at – Wie die Kastanien am Vierwaldstättersee heimisch wurden",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/vierwaldstaettersee.htm"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/vierwaldstaettersee.htm",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Konrad Gessner: Descriptio Montis Fracti (1555)",
     "lat": 46.9789,
     "lng": 8.2544,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1140,7 +1164,7 @@
     "source": "Charles Beauquier: Traditions populaires, la Vouivre (1897)",
     "lat": 46.9472,
     "lng": 6.8667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -1217,7 +1241,7 @@
     "source": "Petermann Etterlin: Kronica von der loblichen Eydtgnoschaft (1507)",
     "lat": 47.0222,
     "lng": 8.2833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -1287,12 +1311,14 @@
     "altersstufenHinweis": "Die Askese knapp erwähnen, den Frieden stiftenden Rat als eigentlichen Kern der Geschichte betonen.",
     "quelle": {
       "werk": "sagen.at – Die Ochsen auf dem Acker zu Melchtal",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/obwalden/dieochsenaufdemacker.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/obwalden/dieochsenaufdemacker.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Heinrich Wölflin: Vita Beati Nicolai de Rupe (1501)",
     "lat": 46.92,
     "lng": 8.1567,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1363,12 +1389,14 @@
     "altersstufenHinweis": "Die Nixe als geheimnisvoll, nicht als böse zeichnen; das Verlorengehen andeuten statt dramatisieren.",
     "quelle": {
       "werk": "sagen.at – Die Gründung des Klosters Rheinau",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/schaffhausen/gruendungrheinau.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/schaffhausen/gruendungrheinau.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ernst Ludwig Rochholz: Naturmythen (1862); Rheinfall-Überlieferung",
     "lat": 47.6778,
     "lng": 8.6153,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1439,12 +1467,14 @@
     "altersstufenHinweis": "Den Streit der Riesen kurz halten, die Versöhnung im Nebeneinanderstehen betonen.",
     "quelle": {
       "werk": "sagen.at – Der Bund in Rütli",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/schwyz/derbundinruetli.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/schwyz/derbundinruetli.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Theodor Vernaleken: Alpensagen (1858)",
     "lat": 46.9644,
     "lng": 8.6028,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1515,12 +1545,14 @@
     "altersstufenHinweis": "Die Enthauptung nicht drastisch schildern; die Standhaftigkeit und das Wunder in den Vordergrund stellen.",
     "quelle": {
       "werk": "sagen.at – Die Rose von Mariastein",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/solothurn/Rose_Mariastein.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/solothurn/Rose_Mariastein.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eucherius von Lyon (zugeschrieben): Passio Acaunensium Martyrum (5. Jh.)",
     "lat": 47.2088,
     "lng": 7.5323,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1591,12 +1623,14 @@
     "altersstufenHinweis": "Den Pakt mit dem Teufel abmildern; die List der Talbewohner als cleveren Kniff betonen.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eligio Pometta: Leggende ticinesi (1921)",
     "lat": 46.2833,
     "lng": 8.8167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1667,12 +1701,14 @@
     "altersstufenHinweis": "Die Geistererscheinung als geheimnisvoll, nicht als angsteinflössend schildern.",
     "quelle": {
       "werk": "sagen.at – Burg Steinach",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/thurgau/burgsteinach.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/thurgau/burgsteinach.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (19. Jh.)",
     "lat": 47.5611,
     "lng": 9.1611,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1743,12 +1779,14 @@
     "altersstufenHinweis": "Die List gegen den Teufel als humorvollen Kern erzählen, nicht als Angstszene.",
     "quelle": {
       "werk": "sagen.at – Das missachtete Arbeitstabu",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/dasmissachtetearbeitstabu.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/dasmissachtetearbeitstabu.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Mittelalterliche Theodul-Legende (Vita Sancti Theoduli)",
     "lat": 45.9767,
     "lng": 7.6533,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1819,12 +1857,14 @@
     "altersstufenHinweis": "Die Katastrophe als Naturereignis erzählen, den Verlust von Menschen nicht ausschmücken; die Lichter und Glocken als geheimnisvolles Bild betonen.",
     "quelle": {
       "werk": "sagen.at – Gründung der Stadt Zug",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/gruendungzug.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/gruendungzug.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Zuger Stadtchronik, Überlieferung zum Bergsturz von 1435",
     "lat": 47.1662,
     "lng": 8.5155,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1894,12 +1934,14 @@
     "altersstufenHinweis": "Die Enthauptung nicht drastisch schildern; das Wunder des Weges auf den Hügel als zentrales Bild erzählen.",
     "quelle": {
       "werk": "sagen.at – Das goldene Tor",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zuerich/dasgoldenetor.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zuerich/dasgoldenetor.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Frühmittelalterliche Passio Feliciani, Felix-und-Regula-Legende (9. Jh.)",
     "lat": 47.5114,
     "lng": 8.5247,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true,
     "quelleNichtVerifiziert": false
   },
@@ -1971,13 +2013,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Radbod von Habsburg",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/radbodvonhabsburg.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/grimm/radbodvonhabsburg.html",
     "lat": 47.4767,
     "lng": 8.1808,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -2048,13 +2090,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Der Kreuzliberg",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/aargau/derkreuzliberg.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/aargau/derkreuzliberg.html",
     "lat": 47.4739,
     "lng": 8.304,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -2125,13 +2167,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Der Stiefelreiter",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/aargau/stiefelreiter.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/aargau/stiefelreiter.html",
     "lat": 47.2726,
     "lng": 8.338,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -2202,12 +2244,14 @@
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/aargau/derausgebrocheneknochen.html",
     "lat": 47.3893,
     "lng": 8.1786,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/aargau/kuengold.html",
-      "werk": "sagen.at – Die schöne Küngold und der Tanz am Looweiher"
+      "werk": "sagen.at – Die schöne Küngold und der Tanz am Looweiher",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2276,12 +2320,14 @@
     "altersstufenHinweis": "Die Enthauptung für jüngere Kinder abmildern und das Wunder der weiterwandernden Pilger in den Vordergrund stellen.",
     "quelle": {
       "werk": "sagen.at – Teufelsbrücke",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/teufelsbruecke.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/teufelsbruecke.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau (1856)",
     "lat": 47.3319,
     "lng": 8.2542,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -2352,12 +2398,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Des Teufels Brand",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/desteufelsbrand.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/desteufelsbrand.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau (1856)",
     "lat": 47.3126,
     "lng": 8.3345,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -2429,12 +2477,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau (1856)",
     "lat": 47.2822,
     "lng": 8.3122,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Nr.395, Aarau 1856",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2504,12 +2554,14 @@
     "altersstufenHinweis": "Gruselige Elemente; für jüngere Kinder inhaltlich besprechen.",
     "quelle": {
       "werk": "Upload – Aargauer Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Aargauer Schlossüberlieferung, 14. Jahrhundert",
     "lat": 47.2847,
     "lng": 8.2083,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -2580,12 +2632,14 @@
     "source": "Jacob und Wilhelm Grimm: Deutsche Sagen, Erster Band, Nummer 357 (1816)",
     "lat": 47.3656,
     "lng": 9.2889,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2656,12 +2710,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.3136,
     "lng": 9.2339,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2732,12 +2788,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.3833,
     "lng": 9.4667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2808,12 +2866,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.3822,
     "lng": 9.2808,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2884,12 +2944,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.4011,
     "lng": 9.4329,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -2960,12 +3022,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.3957,
     "lng": 9.3897,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -3036,12 +3100,14 @@
     "source": "Christian Nef: Sagen aus dem Appenzellerland (1893)",
     "lat": 47.4067,
     "lng": 9.4639,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -3112,12 +3178,14 @@
     "source": "Titus Tobler: Appenzellischer Sprachschatz (1837)",
     "lat": 47.4181,
     "lng": 9.4736,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Appenzeller Volkssage (Ausserrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -3194,7 +3262,7 @@
     "source": "Almanach du Véritable Messager boiteux de Neuchâtel (1849)",
     "lat": 46.7047,
     "lng": 6.4103,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -3271,7 +3339,7 @@
     "source": "Almanach du Véritable Messager boiteux de Neuchâtel (1849)",
     "lat": 46.71,
     "lng": 6.42,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -3348,7 +3416,7 @@
     "source": "Fritz Chabloz: Les sorcières neuchâteloises (1868)",
     "lat": 47.0007,
     "lng": 6.9333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -3425,7 +3493,7 @@
     "source": "Fritz Chabloz: Les Sorcières neuchâteloises (1868)",
     "lat": 46.855,
     "lng": 6.717,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3497,7 +3565,7 @@
     "source": "Fritz Chabloz: Les Sorcières neuchâteloises (1868)",
     "lat": 46.8708,
     "lng": 6.7897,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3569,7 +3637,7 @@
     "source": "Fritz Chabloz: Les Sorcières neuchâteloises (1868)",
     "lat": 46.9,
     "lng": 6.75,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3641,7 +3709,7 @@
     "source": "Fritz Chabloz: Les Sorcières neuchâteloises (1868)",
     "lat": 46.9275,
     "lng": 6.7483,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3713,7 +3781,7 @@
     "source": "Fritz Chabloz: Les Sorcières neuchâteloises (1868)",
     "lat": 47.0644,
     "lng": 6.6325,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3785,7 +3853,7 @@
     "source": "Johann Jacob Schalch: Erinnerungen aus der Geschichte der Stadt Schaffhausen (1834), wiedergegeben im Badischen Sagen-Buch von Friedrich Emanuel von Hurter (1846)",
     "lat": 47.6935,
     "lng": 8.475,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3857,7 +3925,7 @@
     "source": "Schaffhauser Stifterbuch (14./15. Jahrhundert), wiedergegeben bei Johann Jacob Schalch: Erinnerungen aus der Geschichte der Stadt Schaffhausen (1834)",
     "lat": 47.6978,
     "lng": 8.6331,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -3929,7 +3997,7 @@
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.6783,
     "lng": 8.8903,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -4001,7 +4069,7 @@
     "source": "Reinhard Frauenfelder und Hans Ulrich Wipf (Hrsg.): Sagen und Legenden aus dem Kanton Schaffhausen (1983)",
     "lat": 47.6597,
     "lng": 8.8603,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -4079,7 +4147,7 @@
     "source": "Reinhard Frauenfelder und Hans Ulrich Wipf (Hrsg.): Sagen und Legenden aus dem Kanton Schaffhausen (1983)",
     "lat": 47.6778,
     "lng": 8.6142,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -4156,7 +4224,7 @@
     "source": "Reinhard Frauenfelder und Hans Ulrich Wipf (Hrsg.): Sagen und Legenden aus dem Kanton Schaffhausen (1983)",
     "lat": 47.745,
     "lng": 8.7167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -4233,7 +4301,7 @@
     "source": "Reinhard Frauenfelder und Hans Ulrich Wipf (Hrsg.): Sagen und Legenden aus dem Kanton Schaffhausen (1983)",
     "lat": 47.715,
     "lng": 8.6833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -4295,12 +4363,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Erzählung ist bereits kindgerecht und frei von bedrohlichen Elementen.",
     "quelle": {
       "werk": "sagen.at – Der Werwolf vom Born",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/solothurn/Werwolf_Born.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/solothurn/Werwolf_Born.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Mittelalterliche Vita Sanctae Verenae, Solothurner Lokaltradition zur Einsiedelei St. Verena",
     "lat": 47.3883,
     "lng": 7.7258,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -4372,12 +4442,14 @@
     "source": "Mittelalterliche Vita Sanctae Verenae, Solothurner Lokaltradition zur Einsiedelei St. Verena",
     "lat": 47.2172,
     "lng": 7.5575,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Legende der heiligen Verena, Solothurner Überlieferung (4. Jh.)",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4448,12 +4520,14 @@
     "source": "Mittelalterliche Vita Sanctae Verenae, Solothurner Lokaltradition zur Einsiedelei St. Verena",
     "lat": 47.2172,
     "lng": 7.5575,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Volksüberlieferung aus dem Bucheggberg, Kanton Solothurn",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4524,12 +4598,14 @@
     "source": "Eucherius von Lyon: Passio Acaunensium Martyrum (5. Jh.), erweitert in der mittelalterlichen Solothurner Passio Sanctorum Ursi et Victoris",
     "lat": 47.2088,
     "lng": 7.5323,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Solothurnische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4600,12 +4676,14 @@
     "source": "Franz Josef Schiffmann: Sagen, Legenden und Geschichten der Grafschaft Buchsgau (1862)",
     "lat": 47.2608,
     "lng": 7.4799,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Volksüberlieferung aus Balm bei Günsberg, Solothurner Jura",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4676,12 +4754,14 @@
     "source": "Franz Josef Schiffmann: Sagen, Legenden und Geschichten der Grafschaft Buchsgau (1862)",
     "lat": 47.3583,
     "lng": 7.7,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Solothurnische Volkssage vom Grenchenberg, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4752,12 +4832,14 @@
     "source": "Franz Josef Schiffmann: Sagen, Legenden und Geschichten der Grafschaft Buchsgau (1862)",
     "lat": 47.2706,
     "lng": 7.6319,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Volksüberlieferung aus der Klus bei Balsthal, Solothurner Jura",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -4827,12 +4909,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Historische Überlieferung zur Solothurner Stadtgeschichte (1382)",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Franz Josef Schiffmann: Sagen, Legenden und Geschichten der Grafschaft Buchsgau (1862)",
     "lat": 47.3517,
     "lng": 7.6944,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -4910,7 +4994,7 @@
     "source": "Vita Sanctae Wiboradae, verfasst von Hartmann und Hepidannus von St. Gallen (10./11. Jahrhundert)",
     "lat": 47.4239,
     "lng": 9.3767,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -4988,7 +5072,7 @@
     "source": "Ekkehart IV. von St. Gallen: Casus Sancti Galli (11. Jahrhundert)",
     "lat": 47.4239,
     "lng": 9.3767,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5066,7 +5150,7 @@
     "source": "Ludwig Bechstein: Deutsches Sagenbuch (1853)",
     "lat": 47.25,
     "lng": 9.4667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5137,12 +5221,14 @@
     "altersstufenHinweis": "Die Tötung des Jägers und den Sturz vom Turm für jüngere Kinder abmildern, den Schwerpunkt auf die wundersame Rettung und das friedliche Leben danach legen.",
     "quelle": {
       "werk": "sagen.at – Der Rosengarten von St. Jakob",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/st_gallen/rosengarten.htm"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/st_gallen/rosengarten.htm",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albrecht von Bonstetten: Vita der heiligen Idda (1481), aufgenommen bei den Brüdern Grimm: Deutsche Sagen (1816)",
     "lat": 47.3556,
     "lng": 9.1472,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5220,7 +5306,7 @@
     "source": "Alois Senti: Sagen aus dem Sarganserland (1974)",
     "lat": 47.1417,
     "lng": 9.2083,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5298,7 +5384,7 @@
     "source": "NZZ Magazin: Sagenhafte Sieben (2016), nach mündlicher Überlieferung",
     "lat": 47.2492,
     "lng": 9.3431,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5376,7 +5462,7 @@
     "source": "Jakob Kuoni: Sagen des Kantons St. Gallen (1903)",
     "lat": 47.2244,
     "lng": 8.8178,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5448,12 +5534,14 @@
     "source": "Alois Näf: Sagen aus dem Kanton St. Gallen (1894)",
     "lat": 47.1167,
     "lng": 9.2167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/st_gallen/Eisenriet_Geiss.html",
-      "werk": "sagen.at – Die Eisenriet-Geiss"
+      "werk": "sagen.at – Die Eisenriet-Geiss",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -5523,12 +5611,14 @@
     "altersstufenHinweis": "Keine besondere Anpassung nötig.",
     "quelle": {
       "werk": "sagen.at – Der verschwundene Wald",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/der_verschwundene_wald.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/der_verschwundene_wald.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.5833,
     "lng": 9.1,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5600,7 +5690,7 @@
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.5978,
     "lng": 9.0622,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5672,7 +5762,7 @@
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.6631,
     "lng": 8.9931,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5744,7 +5834,7 @@
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.6525,
     "lng": 9.0667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5815,12 +5905,14 @@
     "altersstufenHinweis": "Die Höllenqualen der Zecher für jüngere Kinder stark abmildern oder nur andeuten.",
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Aarau 1856, Nr.306",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.7,
     "lng": 8.4667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5891,12 +5983,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Erzählung betont Zusammenhalt und Gemeinschaft.",
     "quelle": {
       "werk": "sagen.at – Die büssenden Seelen im Eis",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/diebuessendenseelen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/diebuessendenseelen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Weisses Buch von Sarnen, aufgezeichnet von Hans Schriber (um 1470)",
     "lat": 46.9644,
     "lng": 8.6028,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -5968,13 +6062,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Der Grenzlauf",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/dergrenzlauf.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/uri/dergrenzlauf.html",
     "lat": 46.8886,
     "lng": 8.9295,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -6044,12 +6138,14 @@
     "altersstufenHinweis": "Das gewaltsame Ende für jüngere Kinder abmildern und stattdessen betonen, dass gebrochene Versprechen gegenüber der Natur Folgen haben.",
     "quelle": {
       "werk": "sagen.at – Der geschundene Senn",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/dergeschundenesenn.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/dergeschundenesenn.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Josef Müller: Sagen aus Uri, 3 Bände (1926-1945)",
     "lat": 46.8833,
     "lng": 8.5333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6120,12 +6216,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Sage ist bereits als stimmungsvolle, gefahrlose Schatzerzählung angelegt.",
     "quelle": {
       "werk": "sagen.at – Der Zuschauer bei der Totenprozession",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/derzuschauer.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/derzuschauer.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862)",
     "lat": 46.8622,
     "lng": 8.6297,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6196,12 +6294,14 @@
     "altersstufenHinweis": "Den Tod von Agnes für jüngeres Publikum abmildern, etwa indem sie das Untier bezwingt und erschöpft, aber lebend zurückkehrt.",
     "quelle": {
       "werk": "sagen.at – Die Vergebung der Schuld",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/dievergebung.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/dievergebung.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Meinrad Lienert: Schweizer Sagen und Heldengeschichten (1915)",
     "lat": 46.8,
     "lng": 8.5,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6272,12 +6372,14 @@
     "altersstufenHinweis": "Keine besondere Anpassung nötig, die Sage ist bereits ruhig und geheimnisvoll ohne bedrohliche Elemente.",
     "quelle": {
       "werk": "sagen.at – Liebeszauber",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/liebeszauber.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/liebeszauber.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Josef Müller: Sagen aus Uri, Band I (1926)",
     "lat": 46.95,
     "lng": 8.7833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6348,12 +6450,14 @@
     "altersstufenHinweis": "Die Liebesgeschichte für jüngeres Publikum neutraler fassen, etwa als Flucht zweier Freunde vor ungerechter Verfolgung, ohne romantische Details.",
     "quelle": {
       "werk": "sagen.at – Sturz des Mandlisers",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/mandliser.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/mandliser.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Josef Müller: Sagen aus Uri, Band III (1945), nach Osenbrüggen 1874",
     "lat": 46.6717,
     "lng": 8.5978,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6424,12 +6528,14 @@
     "altersstufenHinweis": "Keine besondere Anpassung nötig, die Sage enthält keine Gewalt und eignet sich bereits für jüngeres Publikum.",
     "quelle": {
       "werk": "sagen.at – Die Puppe auf Klariden",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/Puppe_Klariden.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/uri/Puppe_Klariden.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Josef Müller: Sagen aus Uri, Band III (1945)",
     "lat": 46.8833,
     "lng": 8.95,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6501,7 +6607,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.6333,
     "lng": 6.3167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6572,12 +6678,14 @@
     "altersstufenHinweis": "Die Ertrinkungsszene für jüngere Kinder abmildern, etwa indem Frisette die Kinder rechtzeitig auffängt, bevor sie überhaupt ins Wasser fallen.",
     "quelle": {
       "werk": "sagen.at – Vergletscherungen in den Alpen",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/vergletscherungen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/vergletscherungen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.3919,
     "lng": 7.0028,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -6655,7 +6763,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.4142,
     "lng": 6.9272,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -6732,7 +6840,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.6333,
     "lng": 6.3167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -6809,7 +6917,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.5983,
     "lng": 6.3081,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -6886,7 +6994,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.8056,
     "lng": 6.6453,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -6963,7 +7071,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.7139,
     "lng": 6.3436,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -7040,7 +7148,7 @@
     "source": "Alfred Cérésole: Légendes des Alpes vaudoises (1885)",
     "lat": 46.4722,
     "lng": 6.8583,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -7110,12 +7218,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Erzählung ist bereits für jüngeres Publikum geeignet.",
     "quelle": {
       "werk": "sagen.at – Aroleid",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/aroleid.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/aroleid.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Moritz Tscheinen und Peter Josef Ruppen: Walliser Sagen (1872)",
     "lat": 45.9833,
     "lng": 7.75,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7185,12 +7295,14 @@
     "altersstufenHinweis": "Das Erschiessen der Tiere und das Verschwinden des Jägers für jüngere Kinder etwas abmildern, den Naturschutz-Gedanken in den Vordergrund stellen.",
     "quelle": {
       "werk": "sagen.at – Altentötung der Zwerge",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/altentoetungderzwerge.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/altentoetungderzwerge.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Moritz Tscheinen und Peter Josef Ruppen: Walliser Sagen (1872)",
     "lat": 46.5333,
     "lng": 8.0333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7261,12 +7373,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Geschichte betont List statt Gewalt und eignet sich gut für jüngeres Publikum.",
     "quelle": {
       "werk": "sagen.at – Die Vuivra",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/vuivra.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/vuivra.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Moritz Tscheinen und Peter Josef Ruppen: Walliser Sagen (1872)",
     "lat": 46.0207,
     "lng": 7.7491,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7344,7 +7458,7 @@
     "source": "Ludwig Bechstein: Deutsches Sagenbuch (1853), nach den Brüdern Grimm",
     "lat": 45.9764,
     "lng": 7.6586,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7415,12 +7529,14 @@
     "altersstufenHinweis": "Die Verwünschung und den Untergang des Dorfes für jüngere Kinder als warnendes Märchenmotiv erzählen, ohne es zu sehr auszumalen.",
     "quelle": {
       "werk": "sagen.at – Des Teufels Reittier",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/desteufelsreittier.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/desteufelsreittier.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ludwig Bechstein: Deutsches Sagenbuch (1853), nach den Brüdern Grimm",
     "lat": 46.0653,
     "lng": 7.7853,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7492,13 +7608,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Das Muttergottesbild am Felsen",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/dasmuttergottesbild.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/wallis/dasmuttergottesbild.html",
     "lat": 46.1747,
     "lng": 7.8017,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -7568,12 +7684,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig, die Sage ist bereits als sanftes Naturmärchen erzählt.",
     "quelle": {
       "werk": "sagen.at – Der Teufel als Tänzer",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/derteufelalstaenzer.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/derteufelalstaenzer.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ludwig Bechstein: Deutsches Sagenbuch (1853), nach den Brüdern Grimm",
     "lat": 45.9764,
     "lng": 7.6586,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7643,12 +7761,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Der Zug der armen Seelen",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/derzugderarmenseelen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/wallis/derzugderarmenseelen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Erasmus Ritter: Beschreibung des Kantons Wallis (1786)",
     "lat": 46.3167,
     "lng": 7.6333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7719,12 +7839,14 @@
     "altersstufenHinweis": "Keine speziellen Anpassungen nötig; die Sage ist bereits kindgerecht.",
     "quelle": {
       "werk": "sagen.at – Der Kriemhilte-Graben",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/kriemhilte_graben.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/kriemhilte_graben.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Heinrich Brennwald: Schweizerchronik (um 1508–1516)",
     "lat": 47.37,
     "lng": 8.5437,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7795,12 +7917,14 @@
     "altersstufenHinweis": "Keine speziellen Anpassungen nötig; die Sage ist bereits kindgerecht.",
     "quelle": {
       "werk": "sagen.at – Der Kaiser und die Schlange",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zuerich/derkaiserunddieschlange.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zuerich/derkaiserunddieschlange.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Heinrich Brennwald: Schweizerchronik (um 1508–1516)",
     "lat": 47.3706,
     "lng": 8.5414,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7871,12 +7995,14 @@
     "altersstufenHinweis": "Die Tötung Stüssis unter dem Steg für jüngere Kinder abmildern oder auslassen; den heldenhaften Widerstand in den Vordergrund stellen.",
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Aarau 1856, Nr.351",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Meinrad Lienert: Schweizer Sagen und Heldengeschichten (1915)",
     "lat": 47.3706,
     "lng": 8.5414,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -7954,7 +8080,7 @@
     "source": "Ernst Ludwig Rochholz: Naturmythen. Neue Schweizer Sagen (1862)",
     "lat": 47.3444,
     "lng": 8.5167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8031,7 +8157,7 @@
     "source": "Kaspar Marthaler: Dialektnotizen des Pfarrers von Rümlang, Bibliothek des Schweizerdeutschen Wörterbuchs (1869)",
     "lat": 47.2956,
     "lng": 8.5667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8108,7 +8234,7 @@
     "source": "Schweizerisches Archiv für Volkskunde (SAVk), Band 3: «Glockensagen der Schweiz» (1899)",
     "lat": 47.3497,
     "lng": 8.4919,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8185,7 +8311,7 @@
     "source": "K. W. Glaettli: Zürcher Sagen, nach Emil Stelzer: Geschichte der Gemeinde Meilen (Meilen 1934)",
     "lat": 47.37,
     "lng": 8.5437,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8262,7 +8388,7 @@
     "source": "Zürcher Stadtchronik (15. Jahrhundert) / Johann Jacob Bodmer (1758)",
     "lat": 47.2244,
     "lng": 8.8178,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8333,13 +8459,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Die Toten vom Gubel",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/gubel.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/zug/gubel.html",
     "lat": 47.1333,
     "lng": 8.5833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8416,7 +8542,7 @@
     "source": "Hans Koch: Zuger Sagen und Legenden (1955)",
     "lat": 47.128,
     "lng": 8.605,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -8488,13 +8614,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Der tapfere Metzger",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/metzger.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/zug/metzger.html",
     "lat": 47.1667,
     "lng": 8.5167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8565,13 +8691,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Die Brandstifterin",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/brandstifterin.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/zug/brandstifterin.html",
     "lat": 47.1716,
     "lng": 8.515,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8642,13 +8768,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Die Seejungfer von Zug",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/seejungfer_zug.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/zug/seejungfer_zug.html",
     "lat": 47.1665,
     "lng": 8.5145,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8725,7 +8851,7 @@
     "source": "Hans Koch: Zuger Sagen und Legenden (1955), nacherzählt bei Maria Greco und Brigitt Andermatt: Zuger Sage (2009)",
     "lat": 47.1706,
     "lng": 8.4227,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -8797,13 +8923,13 @@
     "quelle": {
       "autor": "sagen.at",
       "werk": "Die dankbaren Toten zu Baar",
-      "jahr": null,
+      "jahr": "",
       "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/baar.html"
     },
     "source": "sagen.at – https://www.sagen.at/texte/sagen/schweiz/zug/baar.html",
     "lat": 47.1965,
     "lng": 8.528,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -8873,12 +8999,14 @@
     "altersstufenHinweis": "Die nächtliche Bedrohlichkeit für jüngere Kinder abschwächen und den Fokus auf die Möglichkeit der Erlösung legen.",
     "quelle": {
       "werk": "sagen.at – Die Mordnacht von Zug",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/mordnacht.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/zug/mordnacht.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Theodor Vernaleken: Alpensagen (1858)",
     "lat": 47.1022,
     "lng": 8.5178,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -8956,7 +9084,7 @@
     "source": "Aegidius Tschudi: Chronicon Helveticum (samt dem gedruckten Halbsuterlied) (um 1564 / 1533)",
     "lat": 47.1328,
     "lng": 8.1897,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9027,13 +9155,13 @@
     "quelle": {
       "autor": "Robert Geiger (Hrsg.)",
       "werk": "Schweizer Sagen und Heldengeschichten",
-      "jahr": null,
-      "fundstelleUrl": null
+      "jahr": "",
+      "fundstelleUrl": ""
     },
     "source": "Robert Geiger (Hrsg.): Schweizer Sagen und Heldengeschichten",
     "lat": 47.05,
     "lng": 8.3167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9110,7 +9238,7 @@
     "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
     "lat": 46.9235,
     "lng": 8.4029,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": true
   },
@@ -9188,7 +9316,7 @@
     "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
     "lat": 46.9556,
     "lng": 8.5119,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9265,7 +9393,7 @@
     "source": "Franz Niderberger: Sagen und Gebräuche aus Unterwalden (1909-1924)",
     "lat": 46.9803,
     "lng": 8.4381,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9342,7 +9470,7 @@
     "source": "Franz Joseph Gut: Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen (1862)",
     "lat": 46.9581,
     "lng": 8.3661,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9419,7 +9547,7 @@
     "source": "Aegidius Tschudi: Chronicon Helveticum (um 1570)",
     "lat": 46.9578,
     "lng": 8.3661,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9496,7 +9624,7 @@
     "source": "Franz Joseph Gut (nach dem Bericht von Kaplan Jakob Kaiser): Der Ueberfall in Nidwalden im Jahre 1798 in seinen Ursachen und Folgen (1862)",
     "lat": 46.9833,
     "lng": 8.35,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -9566,12 +9694,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; die Erzählung ist bereits kindgerecht.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Siro Borrani: Il Ticino Sacro. Memorie religiose della Svizzera Italiana (1896)",
     "lat": 46.0444,
     "lng": 8.7917,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -9642,12 +9772,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; die Erzählung ist bereits kindgerecht.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Siro Borrani: Il Ticino Sacro. Memorie religiose della Svizzera Italiana (1896)",
     "lat": 45.8556,
     "lng": 9.0556,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -9718,12 +9850,14 @@
     "altersstufenHinweis": "Die Zahl der Toten und die Härte des Kampfes für jüngere Kinder abmildern; den Einfallsreichtum der Verteidiger betonen.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Theodor von Liebenau: La battaglia di Giornico, Bollettino storico della Svizzera Italiana, Anno 1 (1879)",
     "lat": 46.3917,
     "lng": 8.8617,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -9794,12 +9928,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; enthält keine Gewaltdarstellung, nur politische Intrige.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eligio Pometta: Come il Ticino venne in potere degli Svizzeri (1912-1915)",
     "lat": 46.0,
     "lng": 8.95,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -9870,12 +10006,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; keine Gewaltdarstellung.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eligio Pometta: Le case dei pagani ed i saraceni nelle Alpi, Anzeiger für schweizerische Altertumskunde 22 (1920)",
     "lat": 46.5167,
     "lng": 8.9,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -9953,7 +10091,7 @@
     "source": "Guglielmo Buetti: Note storiche religiose delle chiese e parrocchie... Valle Maggia e Ascona (1906)",
     "lat": 46.3,
     "lng": 8.6333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -10023,12 +10161,14 @@
     "altersstufenHinweis": "Kriegerische Drohkulisse für jüngere Kinder abmildern; den Mut der Bevölkerung betonen.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eligio Pometta: Come il Ticino venne in potere degli Svizzeri, Vol. 1 (1912-1915)",
     "lat": 46.1956,
     "lng": 9.0211,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10099,12 +10239,14 @@
     "altersstufenHinweis": "Schlachtdetails und Verlustzahlen für jüngere Kinder abmildern; den Verlauf eher als spannende Geschichte denn als Gemetzel erzählen.",
     "quelle": {
       "werk": "Tessiner Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Eligio Pometta: Come il Ticino venne in potere degli Svizzeri, Vol. 1 (1912-1915)",
     "lat": 46.2167,
     "lng": 9.0333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10176,7 +10318,7 @@
     "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
     "lat": 46.9944,
     "lng": 8.7444,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10248,7 +10390,7 @@
     "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
     "lat": 47.0833,
     "lng": 8.45,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10326,7 +10468,7 @@
     "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
     "lat": 46.9956,
     "lng": 8.7378,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10398,7 +10540,7 @@
     "source": "Renward Cysat: Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae (um 1600)",
     "lat": 47.1281,
     "lng": 8.7481,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -10476,7 +10618,7 @@
     "source": "Renward Cysat: Collectanea Chronica und denkwürdige Sachen pro Chronica Lucernensi et Helvetiae (um 1600)",
     "lat": 47.1256,
     "lng": 8.7722,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -10553,7 +10695,7 @@
     "source": "Hans Tschachtlan (u.a. Chronisten): Tschachtlanchronik (1483)",
     "lat": 47.0,
     "lng": 8.65,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -10630,7 +10772,7 @@
     "source": "Hans Tschachtlan (u.a. Chronisten): Tschachtlanchronik (1483)",
     "lat": 47.0333,
     "lng": 8.7333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": true
   },
@@ -10708,7 +10850,7 @@
     "source": "Unbekannt (Weisses Buch von Sarnen): Das Weisse Buch von Sarnen (um 1470)",
     "lat": 47.0636,
     "lng": 8.5333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -10779,12 +10921,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Erster Band (1856); mündliche Überlieferung Baselbiet",
     "lat": 47.4004,
     "lng": 7.7008,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -10855,12 +10999,14 @@
     "source": "Otto Sutermeister: Schweizer Sagen (1874); mündliche Überlieferung Baselbiet",
     "lat": 47.3966,
     "lng": 7.8808,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -10931,12 +11077,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Erster Band (1856)",
     "lat": 47.4353,
     "lng": 7.7519,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11007,12 +11155,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Zweiter Band (1856); Ortsüberlieferung Pratteln",
     "lat": 47.5216,
     "lng": 7.6908,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11083,12 +11233,14 @@
     "source": "Historische Überlieferung: Baselbieter Hexenprozesse, Staatsarchiv Basel-Landschaft (16. und 17. Jahrhundert)",
     "lat": 47.4839,
     "lng": 7.7333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, H.R. Sauerländer, Aarau, 1856, Nr.344",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11159,12 +11311,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Erster Band (1856)",
     "lat": 47.484,
     "lng": 7.733,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11235,12 +11389,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Zweiter Band (1857); Ortsüberlieferung Pratteln",
     "lat": 47.4639,
     "lng": 7.7139,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Aarau 1856, Nr.363",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11311,12 +11467,14 @@
     "source": "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau, Erster Band (1856)",
     "lat": 47.487,
     "lng": 7.73,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Baselbieter Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11386,12 +11544,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Historische Sagensammlung Basel, 19. Jh.",
-      "fundstelleUrl": "attached_assets/image_1786452720946.png"
+      "fundstelleUrl": "attached_assets/image_1786452720946.png",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Daniel Burckhardt-Biedermann: Geschichte der Mittleren Brücke und des Lällenkönigs zu Basel (1889)",
     "lat": 47.5667,
     "lng": 7.5908,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -11463,12 +11623,14 @@
     "source": "Matthäus Merian: Topographia Helvetiae (1642); Basler Lokalüberlieferung zu Bischoff Haito und dem Münsterbau",
     "lat": 47.5542,
     "lng": 7.5905,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Mündliche Überlieferung Basel",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11539,12 +11701,14 @@
     "source": "Lokale Basler Überlieferung, 19. Jahrhundert; Ortsüberlieferung zum Fährbetrieb am Rhein",
     "lat": 47.5583,
     "lng": 7.5889,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Paul Barth, Kleinbasler Erinnerungen, Basler Jahrbuch 1910; Franz Hui, Hexen- und Gespenstergeschichten aus dem alten Basel, Basler Jahrbuch 1935",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11615,12 +11779,14 @@
     "source": "Lokale Basler Überlieferung, 19. Jahrhundert; Stadtarchiv Basel",
     "lat": 47.5594,
     "lng": 7.5814,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Mündliche Überlieferung zur Basler Konzilszeit (1431–1449)",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -11690,12 +11856,14 @@
     "altersstufenHinweis": "Spannendes historisches Rätsel, für alle Altersgruppen geeignet.",
     "quelle": {
       "werk": "Upload – Basler Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Basler Stadtüberlieferung, 14. Jahrhundert",
     "lat": 47.5542,
     "lng": 7.5905,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -11765,12 +11933,14 @@
     "altersstufenHinweis": "Gruselige Elemente; für jüngere Kinder inhaltlich besprechen (Kind erfriert).",
     "quelle": {
       "werk": "Upload – Basler Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Basler Stadtüberlieferung, 15. Jahrhundert",
     "lat": 47.5583,
     "lng": 7.5806,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -11840,12 +12010,14 @@
     "altersstufenHinweis": "Wundersame, friedliche Legende; für alle Altersgruppen geeignet.",
     "quelle": {
       "werk": "Upload – Basler Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Ursula-Legende, Basler Rheinbrücken-Überlieferung, 13. Jahrhundert",
     "lat": 47.5617,
     "lng": 7.5889,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -11915,12 +12087,14 @@
     "altersstufenHinweis": "Historisch und spannend; für alle Altersgruppen geeignet.",
     "quelle": {
       "werk": "Upload – Basler Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Basler Stadtüberlieferung, Erdbeben 1356",
     "lat": 47.5511,
     "lng": 7.5994,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -11990,12 +12164,14 @@
     "altersstufenHinweis": "Gruselige Elemente; inhaltlich ruhig aufbereitet.",
     "quelle": {
       "werk": "Upload – Basler Sagentexte",
-      "fundstelleUrl": ""
+      "fundstelleUrl": "",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Basler Klosterüberlieferung, 15. Jahrhundert",
     "lat": 47.555,
     "lng": 7.5897,
-    "koordinatenSicherheit": "hoch",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": true
   },
   {
@@ -12072,7 +12248,7 @@
     "source": "Franciscus Guillimann: De Episcopis Constantiensibus (1605); vgl. Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.6833,
     "lng": 7.7833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12143,12 +12319,14 @@
     "altersstufenHinweis": "Für alle Altersstufen geeignet; das Motiv der verlorenen Hilfe als sanfte Lehre über Neugier und Dankbarkeit erzählen.",
     "quelle": {
       "werk": "sagen.at – Der Sterbensstein",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/dersterbensstein.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/dersterbensstein.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.9394,
     "lng": 7.7833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12219,12 +12397,14 @@
     "altersstufenHinweis": "Den Drachen als Schatzwächter erzählen, nicht als Menschenfresser; die Gier als Auslöser betonen.",
     "quelle": {
       "werk": "sagen.at – Das Drachenloch",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/bern/dasdrachenloch.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/bern/dasdrachenloch.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 47.0594,
     "lng": 7.6244,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12295,12 +12475,14 @@
     "altersstufenHinweis": "Die Blutbeute für jüngere Kinder weglassen; den Sturmritt als dramatisches Naturszenario erzählen.",
     "quelle": {
       "werk": "sagen.at – Blümelisalp",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/bluemelisalp.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/bluemelisalp.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.6483,
     "lng": 7.6511,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12371,12 +12553,14 @@
     "altersstufenHinweis": "Stimmungsreich erzählen; kein Schrecken, nur Ehrfurcht – für alle Altersstufen geeignet.",
     "quelle": {
       "werk": "sagen.at – Der einkehrende Zwerg",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/dereinkehrendezwerg.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/dereinkehrendezwerg.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.7567,
     "lng": 7.9711,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12447,12 +12631,14 @@
     "altersstufenHinweis": "Hexenprozess-Kontext für Erwachsene; für Kinder als Feier-/Tanzfest ohne Verfolgung erzählen.",
     "quelle": {
       "werk": "sagen.at – Die Füße der Zwerge",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/diefuessederzwerge.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/diefuessederzwerge.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.6908,
     "lng": 7.7656,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12523,12 +12709,14 @@
     "altersstufenHinweis": "Humorvoll erzählen; den Schmied als schlauen Helden betonen. Für alle Altersstufen geeignet.",
     "quelle": {
       "werk": "sagen.at – Die Zwerge auf dem Felsstein",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/zwergeaufdemfelsstein.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/zwergeaufdemfelsstein.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 46.7833,
     "lng": 7.5333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12599,12 +12787,14 @@
     "altersstufenHinweis": "Für alle Altersstufen geeignet; den schützenden Riesen als Freund der Stadt Bern erzählen.",
     "quelle": {
       "werk": "sagen.at – Rudolf von Strättlingen",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/rudolfvonstraettlingen.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/rudolfvonstraettlingen.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Jahn: Sagen aus dem Bernbiet (1839)",
     "lat": 47.0333,
     "lng": 7.4667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12675,12 +12865,14 @@
     "altersstufenHinweis": "Die Blutfärbung des Rheins abstrahieren; den listigen Hirten als Helden betonen. Für alle Altersstufen geeignet.",
     "quelle": {
       "werk": "sagen.at – Der Schatz auf der hohen Rialt",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/schatz_rialt.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/schatz_rialt.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.8333,
     "lng": 9.3833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12751,12 +12943,14 @@
     "altersstufenHinweis": "Die hohle Rücken-Beschreibung kann Kinder erschrecken; als Warnung vor dem tiefen Blick in Fremdes erzählen.",
     "quelle": {
       "werk": "sagen.at – Johannes Chaldar",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/chaldar.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/chaldar.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Caspar Decurtins: Rätoromanische Chrestomathie, Bd. III (1901)",
     "lat": 46.5167,
     "lng": 9.85,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12819,12 +13013,14 @@
     "altersstufenHinweis": "Das Monster als phantastisches Fabeltier erzählen; den Trick mit dem Lavendel als kindgerechte Lösung betonen.",
     "quelle": {
       "werk": "sagen.at – Das schwere Kind",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/dasschwerekind.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/dasschwerekind.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.505,
     "lng": 9.3444,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12895,12 +13091,14 @@
     "altersstufenHinweis": "Moralische Sage; für Kinder den Mahncharakter betonen, nicht das Strafgericht. Das Glockenläuten als poetisches Bild eignet sich gut.",
     "quelle": {
       "werk": "sagen.at – Die Tanzgesellschaft",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/oesterreich/vorarlberg/beitl/tanzgesellschaft.htm"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/oesterreich/vorarlberg/beitl/tanzgesellschaft.htm",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.8167,
     "lng": 9.1667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -12971,12 +13169,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; den schützenden Charakter des Berggeists betonen. Dankbarkeitsmotiv kindgerecht.",
     "quelle": {
       "werk": "sagen.at – Der Rat des wilden Mannes",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/derratdeswildenmanns.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/derratdeswildenmanns.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.8833,
     "lng": 9.5167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13047,12 +13247,14 @@
     "altersstufenHinweis": "Hexenprozess-Kontext: für Erwachsene und Jugendliche. Für Kinder den historischen Kontext weglassen; als Wetter-Weise erzählen.",
     "quelle": {
       "werk": "sagen.at – Das verlorene Tal",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/das_verlorene_tal.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/das_verlorene_tal.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.7,
     "lng": 9.4333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13123,12 +13325,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; das Motiv «nur ohne Gier» kindgerecht als Lerngeschichte erzählen.",
     "quelle": {
       "werk": "sagen.at – Der Sumpfdrache",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/dersumpfdrache.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/graubuenden/dersumpfdrache.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Otto Carisch: Sagen und Märchen aus Graubünden (1875)",
     "lat": 46.7667,
     "lng": 9.5167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13199,12 +13403,14 @@
     "altersstufenHinweis": "Für alle Altersstufen geeignet; das Verrat-Motiv kindgerecht als Warnung vor Heimlichtuerei erzählen.",
     "quelle": {
       "werk": "sagen.at – Der Gletscher ob Flims",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/gletscher_ob_flims.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/vernaleken/gletscher_ob_flims.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Caspar Decurtins: Rätoromanische Chrestomathie, Bd. IV (1903)",
     "lat": 46.5703,
     "lng": 9.7228,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13275,12 +13481,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; schützenden Charakter betonen.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852); Überlieferung Appenzell Innerrhoden",
     "lat": 47.2792,
     "lng": 9.4278,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13351,12 +13559,14 @@
     "altersstufenHinweis": "Das Ertrinken-Motiv als Schwimmen-Lehre umdeuten; für Kinder geeignet.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2708,
     "lng": 9.38,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13427,12 +13637,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; den listigen Pfarrer als Helden betonen.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2819,
     "lng": 9.3631,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13503,12 +13715,14 @@
     "altersstufenHinweis": "Das Unheil-Motiv für Kinder abstrahieren; als Naturzeichengeschichte erzählen.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2956,
     "lng": 9.4197,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13579,12 +13793,14 @@
     "altersstufenHinweis": "Für Kinder als nächtliches Fest ohne Bedrohungsaspekt erzählen.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.3319,
     "lng": 9.4183,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13655,12 +13871,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; das Schweigegebot als spannendes Element.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2575,
     "lng": 9.4667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13731,12 +13949,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; Respekt vor der Natur betonen.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2744,
     "lng": 9.3972,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13807,12 +14027,14 @@
     "altersstufenHinweis": "Für alle Altersstufen; das Märchenmotiv des Zeitsprungs kindgerecht.",
     "quelle": {
       "werk": "Appenzeller Volkssage (Innerrhoden), überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Albert Schott: Beiträge zur deutschen Mythologie (1852)",
     "lat": 47.2358,
     "lng": 9.3814,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13883,12 +14105,14 @@
     "altersstufenHinweis": "Die Vorstellung des aufsitzenden Nachtmahrs für sehr junge Kinder abmildern.",
     "quelle": {
       "werk": "sagen.at – Der Knabe erzählt's dem Ofen",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/derknabeerzaehlts.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/derknabeerzaehlts.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.9542,
     "lng": 8.0183,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -13960,12 +14184,14 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 47.0167,
     "lng": 8.3667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Aarau 1856, Nr.240",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -14035,12 +14261,14 @@
     "altersstufenHinweis": "Den Paktschluss und den Tod für jüngere Kinder abmildern; moralischen Kern betonen.",
     "quelle": {
       "werk": "sagen.at – Der Drache fährt aus",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/derdrachefaehrtaus.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/derdrachefaehrtaus.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 47.1866,
     "lng": 8.1947,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14103,12 +14331,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Der Luzerner Harschhörner",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/derluzernerharschhoerner.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/derluzernerharschhoerner.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Joseph Bergmann: Schweizer Sagen und Erzählungen (1850)",
     "lat": 47.05,
     "lng": 8.3,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14179,12 +14409,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Die drei Telle",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/diedreitelle.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/grimm/diedreitelle.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Xaver Schnyder von Wartensee: Luzerner Sagenbuch (1845)",
     "lat": 47.0667,
     "lng": 8.3667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14255,12 +14487,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Selbstmord des Pilatus",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/selbstmorddespilatus.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/selbstmorddespilatus.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 47.1667,
     "lng": 8.1167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14331,12 +14565,14 @@
     "altersstufenHinweis": "Kampf- und Todesdetails für jüngere Kinder abmildern; das Gedenkritual betonen.",
     "quelle": {
       "werk": "sagen.at – Die Rache des Türst",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/rache_tuerst.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/luzern/rache_tuerst.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Joseph Eutych Kopp: Urkunden zur Geschichte der eidgenössischen Bünde (1835)",
     "lat": 47.1333,
     "lng": 8.1833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14408,7 +14644,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.9789,
     "lng": 8.2536,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14480,7 +14716,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.7833,
     "lng": 8.1667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14551,12 +14787,14 @@
     "altersstufenHinweis": "Die Vorstellung der kalten Hand für sehr junge Kinder abmildern.",
     "quelle": {
       "werk": "sagen.at – Giswil",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/obwalden/giswil.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/obwalden/giswil.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.9789,
     "lng": 8.2536,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14628,7 +14866,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.8167,
     "lng": 8.2667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14700,7 +14938,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.8983,
     "lng": 8.2444,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14772,7 +15010,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.9389,
     "lng": 8.275,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14844,7 +15082,7 @@
     "source": "Theodor von Liebenau: Volkskundliche Notizen aus Obwalden (1895)",
     "lat": 46.9369,
     "lng": 8.3317,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14916,7 +15154,7 @@
     "source": "Pater Nikolaus Durrer: Kunstdenkmäler des Kantons Unterwalden (1899–1928)",
     "lat": 46.8219,
     "lng": 8.4058,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -14988,7 +15226,7 @@
     "source": "Alphons Lütolf: Sagen, Bräuche, Legenden aus den fünf Orten (1865)",
     "lat": 46.8444,
     "lng": 8.1833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15060,7 +15298,7 @@
     "source": "Johann Rudolf Rahn: Die Stadtgründungssage von Freiburg im Uechtland (1873)",
     "lat": 46.8025,
     "lng": 7.1583,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15132,7 +15370,7 @@
     "source": "Eugène Hubert: Légendes et traditions du pays de Gruyère (1888)",
     "lat": 46.5833,
     "lng": 7.0847,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15204,7 +15442,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.5862,
     "lng": 7.2543,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15276,7 +15514,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.9279,
     "lng": 7.118,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15348,7 +15586,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.8025,
     "lng": 7.1567,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15420,7 +15658,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.6577,
     "lng": 7.2891,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15498,7 +15736,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.5267,
     "lng": 6.9039,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -15575,7 +15813,7 @@
     "source": "Peter Aebischer: Légendes fribourgeoises (1926)",
     "lat": 46.6183,
     "lng": 7.2333,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false
   },
   {
@@ -15645,12 +15883,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.2012,
     "lng": 6.1483,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15721,12 +15961,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.228,
     "lng": 6.2101,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15797,12 +16039,14 @@
     "altersstufenHinweis": "Die gesichtslose Gestalt für sehr junge Kinder abmildern; den liebevollen Kern betonen.",
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.2008,
     "lng": 6.148,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15873,12 +16117,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.1948,
     "lng": 6.1485,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -15949,12 +16195,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.1896,
     "lng": 6.0352,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16025,12 +16273,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.2139,
     "lng": 6.3225,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16101,12 +16351,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.2018,
     "lng": 6.142,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16177,12 +16429,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Genfer Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Amélie Pictet und Adrien Chaponnière: Légendes genevoises (1842)",
     "lat": 46.2033,
     "lng": 6.172,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16254,7 +16508,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 46.9236,
     "lng": 9.1553,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16325,12 +16579,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "sagen.at – Das kopflose Roß, der Geißer, der Fäyer",
-      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/glarus/daskopfloseross.html"
+      "fundstelleUrl": "https://www.sagen.at/texte/sagen/schweiz/glarus/daskopfloseross.html",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 47.0067,
     "lng": 9.0444,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16402,7 +16658,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 47.0533,
     "lng": 9.0966,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16474,7 +16730,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 47.0023,
     "lng": 9.0278,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16546,12 +16802,14 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 47.0415,
     "lng": 9.0633,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false,
     "quelle": {
       "werk": "Ernst Ludwig Rochholz, Schweizersagen aus dem Aargau, Band 2, Aarau 1856, Nr.285",
-      "fundstelleUrl": "user-provided-pdf"
+      "fundstelleUrl": "user-provided-pdf",
+      "autor": "",
+      "jahr": ""
     }
   },
   {
@@ -16622,7 +16880,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 46.9833,
     "lng": 9.0833,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16694,7 +16952,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 46.9667,
     "lng": 9.0167,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16766,7 +17024,7 @@
     "source": "Johann Jakob Blumer: Sagen des Cantons Glarus (1846)",
     "lat": 46.8333,
     "lng": 8.9667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16837,12 +17095,14 @@
     "altersstufenHinweis": "Die Schicksalsankündigung und den Tod des Sohnes für jüngere Kinder abmildern.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.4153,
     "lng": 7.0739,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16913,12 +17173,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.3917,
     "lng": 7.0583,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -16989,12 +17251,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; kindgerecht und bezaubernd.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Jules Surdez: Légendes et contes du Jura bernois (1924)",
     "lat": 47.2517,
     "lng": 6.9846,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17065,12 +17329,14 @@
     "altersstufenHinweis": null,
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.3616,
     "lng": 7.1512,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17141,12 +17407,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; die List der Dorfleute macht die Geschichte kindgerecht und lehrreich.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.3617,
     "lng": 7.1508,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17217,12 +17485,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; der magische Charakter ist kindgerecht.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.2778,
     "lng": 7.3709,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17293,12 +17563,14 @@
     "altersstufenHinweis": "Keine Anpassung nötig; der Riese ist gutmütig und die Geschichte kindgerecht.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Auguste Quiquerez: Monuments de l'ancien Evêché de Bâle, Légendes et traditions (1867)",
     "lat": 47.4167,
     "lng": 7.0667,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17369,12 +17641,14 @@
     "altersstufenHinweis": "Für jüngere Kinder den Todesaspekt abmildern; das mystische Tier in den Vordergrund stellen.",
     "quelle": {
       "werk": "Jurassische Volkssage, überliefert",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Jules Surdez: Légendes et contes du Jura bernois (1924)",
     "lat": 47.2517,
     "lng": 6.9846,
-    "koordinatenSicherheit": "mittel",
+    "koordinatenSicherheit": "ungefaehr",
     "isAnchorPlace": false,
     "quelleNichtVerifiziert": false
   },
@@ -17445,7 +17719,9 @@
     "altersstufenHinweis": "Das tragische Ende und die Andeutung von Geschwisterliebe für jüngere Kinder abmildern oder auslassen.",
     "quelle": {
       "werk": "Lokale Thurgauer Überlieferung",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.60196,
@@ -17524,7 +17800,9 @@
     "altersstufenHinweis": "Keine besondere Anpassung nötig.",
     "quelle": {
       "werk": "Lokale Thurgauer Überlieferung",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.60704,
@@ -17603,7 +17881,9 @@
     "altersstufenHinweis": "Die Grausamkeit des Brandes und das Verspeisen bei lebendigem Leib für jüngere Kinder deutlich abmildern oder auslassen.",
     "quelle": {
       "werk": "Lokale Thurgauer Überlieferung",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.60739,
@@ -17682,7 +17962,9 @@
     "altersstufenHinweis": "Keine besondere Anpassung nötig, die Geschichte ist bereits kindgerecht und humorvoll.",
     "quelle": {
       "werk": "Lokale Thurgauer Überlieferung",
-      "fundstelleUrl": "user-provided"
+      "fundstelleUrl": "user-provided",
+      "autor": "",
+      "jahr": ""
     },
     "source": "Arnold Othmar Oberholzer: Thurgauer Sagen (1912), wiedergegeben bei Ernst Giger: Sagen, Schwänke und Legenden aus dem Thurgau und der Nachbarschaft (1996)",
     "lat": 47.66889,
