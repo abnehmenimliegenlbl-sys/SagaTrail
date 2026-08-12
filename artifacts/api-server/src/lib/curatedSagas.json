@@ -7593,7 +7593,7 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 47.467031092, 
+    "lat": 47.467031092,
     "lng": 8.302709061216676,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
@@ -11418,9 +11418,9 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 46.992,
-    "lng": 6.9314,
-    "koordinatenSicherheit": "Muss GPS Verifiziert werden",
+    "lat": 46.66052514924324,
+    "lng": 6.514299997029141,
+    "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
   {
@@ -11469,9 +11469,9 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 47.2088,
-    "lng": 7.5323,
-    "koordinatenSicherheit": "Muss GPS Verifiziert werden",
+    "lat": 47.22738299191803,
+    "lng": 8.815724881714559,
+    "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
   {
