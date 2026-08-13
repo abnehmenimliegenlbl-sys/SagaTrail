@@ -215,10 +215,10 @@ export function buildSwisstopoHtml(
       rows += legendZeile('<span class="stt-linie-route"></span>', legend.route);
       if (altGeometry && altGeometry.length > 1)
         rows += legendZeile('<span class="stt-linie-altroute"></span>', legend.altRoute);
-      rows += legendZeile('<div class="stt-start"></div>', legend.start);
-      rows += legendZeile('<div class="stt-ziel"></div>', legend.ziel);
+      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>', legend.start);
+      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>', legend.ziel);
     } else {
-      rows += legendZeile('<div class="stt-start"></div>', legend.start);
+      rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>', legend.start);
     }
     rows += legendZeile('<div class="stt-live"></div>', legend.position);
     if (aerialways && aerialways.length > 0) {
@@ -543,6 +543,16 @@ ${legendHtml}
       if (seilbahnEls.length) zoomGroups.push({ els: seilbahnEls, minZoom: 11 });
     }
 
+    /* Fahnen-Icons für Start und Ziel */
+    function makeFahneEl(typ) {
+      var el = document.createElement('div');
+      el.style.cssText = 'width:30px;height:38px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))';
+      el.innerHTML = typ === 'ziel'
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+      return el;
+    }
+
     /* Routengeometrie */
     if (geometry && geometry.length > 1) {
       var coords = geometry.map(function(p){ return [p[1],p[0]]; });
@@ -554,14 +564,12 @@ ${legendHtml}
         paint: { 'line-color': '#DA291C', 'line-width': 4, 'line-opacity': 0.95 },
         layout: { 'line-join': 'round', 'line-cap': 'round' } });
 
-      var startEl = document.createElement('div'); startEl.className = 'stt-start'; startEl.style.zIndex = '30';
-      new maplibregl.Marker({ element: startEl, zIndex: 30 })
+      new maplibregl.Marker({ element: makeFahneEl('start'), anchor: 'bottom-left', zIndex: 30 })
         .setLngLat([coords[0][0], coords[0][1]])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText(${title}))
         .addTo(map);
 
-      var zielEl = document.createElement('div'); zielEl.className = 'stt-ziel'; zielEl.style.zIndex = '30';
-      new maplibregl.Marker({ element: zielEl, zIndex: 30 })
+      new maplibregl.Marker({ element: makeFahneEl('ziel'), anchor: 'bottom-left', zIndex: 30 })
         .setLngLat([coords[coords.length-1][0], coords[coords.length-1][1]])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText('Ziel'))
         .addTo(map);
@@ -569,8 +577,7 @@ ${legendHtml}
       var bounds = coords.reduce(function(b,c){ return b.extend(c); }, new maplibregl.LngLatBounds(coords[0], coords[0]));
       map.fitBounds(bounds, { padding: 36, duration: 0 });
     } else {
-      var startEl2 = document.createElement('div'); startEl2.className = 'stt-start'; startEl2.style.zIndex = '30';
-      new maplibregl.Marker({ element: startEl2, zIndex: 30 })
+      new maplibregl.Marker({ element: makeFahneEl('start'), anchor: 'bottom-left', zIndex: 30 })
         .setLngLat([centerLng, centerLat])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText(${title}))
         .addTo(map);
