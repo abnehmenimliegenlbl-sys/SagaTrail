@@ -836,9 +836,14 @@ window.strOpenRoute=function(idx){
     var mapEl=document.getElementById('str-map');
     if(!_strMap){
       _strMap=L.map(mapEl,{zoomControl:true,attributionControl:true});
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        attribution:'© <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        maxZoom:19
+      /* OpenTopoMap Basiskarte */
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
+        attribution:'<a href="https://www.opentopomap.org">OpenTopoMap</a> · <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
+        maxZoom:17,opacity:1
+      }).addTo(_strMap);
+      /* Waymarked Trails Wanderwege-Overlay */
+      L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',{
+        maxZoom:17,opacity:1,pane:'overlayPane'
       }).addTo(_strMap);
     } else {
       if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
@@ -848,13 +853,16 @@ window.strOpenRoute=function(idx){
     setTimeout(function(){
       _strMap.invalidateSize();
       if(pts.length>1){
-        _strPolyline=L.polyline(pts,{color:'#CC0000',weight:4,opacity:.85}).addTo(_strMap);
-        _strMap.fitBounds(_strPolyline.getBounds(),{padding:[24,24]});
+        _strPolyline=L.polyline(pts,{color:'#CC0000',weight:5,opacity:.9}).addTo(_strMap);
+        _strMap.fitBounds(_strPolyline.getBounds(),{padding:[28,28]});
+        /* Start- und Endpunkt */
+        var dot={radius:8,color:'#fff',weight:2,fillColor:'#CC0000',fillOpacity:1};
+        L.circleMarker(pts[0],dot).addTo(_strMap);
+        L.circleMarker(pts[pts.length-1],dot).addTo(_strMap);
       } else if(pts.length===1){
         _strMap.setView(pts[0],13);
-        L.circleMarker(pts[0],{radius:8,color:'#CC0000',fillColor:'#CC0000',fillOpacity:1}).addTo(_strMap);
+        L.circleMarker(pts[0],{radius:8,color:'#fff',weight:2,fillColor:'#CC0000',fillOpacity:1}).addTo(_strMap);
       } else {
-        /* Schweiz-Übersicht als Fallback */
         _strMap.setView([46.8,8.2],8);
       }
     },80);
