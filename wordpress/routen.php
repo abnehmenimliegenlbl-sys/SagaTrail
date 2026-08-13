@@ -841,10 +841,7 @@ window.strOpenRoute=function(idx){
         attribution:'<a href="https://www.opentopomap.org">OpenTopoMap</a> · <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
         maxZoom:17,opacity:1
       }).addTo(_strMap);
-      /* Waymarked Trails Wanderwege-Overlay */
-      L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',{
-        maxZoom:17,opacity:1,pane:'overlayPane'
-      }).addTo(_strMap);
+      /* Kein Waymarked-Trails-Overlay — nur die gewählte Route als rote Linie */
     } else {
       if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
       mapEl.style.display='block';
