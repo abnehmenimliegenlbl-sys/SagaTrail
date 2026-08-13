@@ -773,6 +773,30 @@ function renderRoutes(){
 /* ══════════════════════════════════════
    ROUTE-MODAL mit Leaflet-Karte
    ══════════════════════════════════════ */
+/* ── Fahnen-Icons für Leaflet (SVG divIcon, Ankerpunkt = Mastfuss) ── */
+function strMapFahne(typ){
+  var svg=typ==='ziel'
+    /* Zielflagge: Formel-1-Schachbrettmuster, 3×2 Zeilen */
+    ?'<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">'
+      +'<line x1="4" y1="1" x2="4" y2="38" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>'
+      +'<rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#555" stroke-width=".5"/>'
+      /* Reihe 1 */
+      +'<rect x="4"  y="1" width="8" height="5.3" fill="#111"/>'
+      +'<rect x="20" y="1" width="8" height="5.3" fill="#111"/>'
+      /* Reihe 2 */
+      +'<rect x="12" y="6.3" width="8" height="5.4" fill="#111"/>'
+      /* Reihe 3 */
+      +'<rect x="4"  y="11.7" width="8" height="5.3" fill="#111"/>'
+      +'<rect x="20" y="11.7" width="8" height="5.3" fill="#111"/>'
+      +'</svg>'
+    /* Startflagge: rotes Dreieck */
+    :'<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">'
+      +'<line x1="4" y1="1" x2="4" y2="38" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>'
+      +'<polygon points="4,1 29,9 4,17" fill="#CC0000"/>'
+      +'</svg>';
+  return L.divIcon({html:svg,iconSize:[30,38],iconAnchor:[4,38],className:''});
+}
+
 var _leafletReady=false;
 var _leafletLoading=false;
 var _leafletCallbacks=[];
@@ -852,13 +876,12 @@ window.strOpenRoute=function(idx){
       if(pts.length>1){
         _strPolyline=L.polyline(pts,{color:'#CC0000',weight:5,opacity:.9}).addTo(_strMap);
         _strMap.fitBounds(_strPolyline.getBounds(),{padding:[28,28]});
-        /* Start- und Endpunkt */
-        var dot={radius:8,color:'#fff',weight:2,fillColor:'#CC0000',fillOpacity:1};
-        L.circleMarker(pts[0],dot).addTo(_strMap);
-        L.circleMarker(pts[pts.length-1],dot).addTo(_strMap);
+        /* Start- und Zielpunkt als Fahnen */
+        L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap);
+        L.marker(pts[pts.length-1],{icon:strMapFahne('ziel')}).addTo(_strMap);
       } else if(pts.length===1){
         _strMap.setView(pts[0],13);
-        L.circleMarker(pts[0],{radius:8,color:'#fff',weight:2,fillColor:'#CC0000',fillOpacity:1}).addTo(_strMap);
+        L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap);
       } else {
         _strMap.setView([46.8,8.2],8);
       }
