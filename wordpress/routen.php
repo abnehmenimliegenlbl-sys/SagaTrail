@@ -663,7 +663,7 @@ function makeWegweiser(name,sac,wpUrl){
     +'</div>';
   return '<div class="str-ww" style="height:'+h+'px">'
     +'<div class="str-ww-body" style="height:'+h+'px">'
-    +(d.nummer?'<div class="str-ww-green" style="width:'+(h-8)+'px;height:'+(h-8)+'px">'+green+'</div>':'')
+    +(d.nummer?'<div class="str-ww-green" style="min-width:'+(h-8)+'px;height:'+(h-8)+'px;padding:5px 7px 4px">'+green+'</div>':'')
     +'<div class="str-ww-text">'+txt+'</div>'
     +'</div>'
     +tip
@@ -753,7 +753,7 @@ function renderRoutes(){
     var mins=r.minutes||0, h2=Math.floor(mins/60), m2=mins%60;
     var season=r.season==='ganzjaehrig'?'Ganzjährig':r.season==='nur_sommer'?'Nur Sommer':r.season==='eher_sommer'?'Eher Sommer':'';
     var bar=[
-      sac||null,
+      sac||'SAC unbekannt',
       km?parseFloat(km).toFixed(1)+' km':null,
       r.ascentM?'+'+Math.round(r.ascentM)+' hm':null,
       mins?(h2+':'+(m2<10?'0':'')+m2+' h'):null,
