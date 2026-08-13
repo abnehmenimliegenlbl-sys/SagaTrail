@@ -264,7 +264,7 @@ export function buildSwisstopoHtml(
   .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(47,111,237,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-  .stt-poi          { width: 11px; height: 11px; transform: rotate(45deg); background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,0.25); }
+  .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,0.25); }
   /* PARTNER PINS — weisse Kachel + Marken-Rot Icon (#cc0000) */
   .stt-partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
   .stt-partner-pin  { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
@@ -744,14 +744,25 @@ ${legendHtml}
     _sttApply.pois = function(poisData) {
       if (!poisData || !poisData.length) return;
       if (map.getSource('stt-pois')) return; /* Guard gegen Doppelaufruf */
-      /* Diamond-Icon für Einzel-POIs */
-      if (!map.hasImage('poi-diamond')) {
-        var cvs = document.createElement('canvas'); cvs.width = 28; cvs.height = 28;
+      /* Stecknadel-Icon für Einzel-POIs */
+      if (!map.hasImage('poi-pin')) {
+        var W = 24, H = 34;
+        var cvs = document.createElement('canvas'); cvs.width = W; cvs.height = H;
         var cx = cvs.getContext('2d');
-        cx.beginPath(); cx.moveTo(14,1); cx.lineTo(27,14); cx.lineTo(14,27); cx.lineTo(1,14); cx.closePath();
-        cx.fillStyle = '#cc0000'; cx.fill();
-        cx.strokeStyle = '#F5F3EC'; cx.lineWidth = 3; cx.stroke();
-        map.addImage('poi-diamond', { width: 28, height: 28, data: new Uint8Array(cx.getImageData(0,0,28,28).data.buffer) }, { pixelRatio: 2 });
+        var R = W/2 - 1; /* Kreis-Radius = 11 */
+        var cxc = W/2, cyc = R + 1; /* Kreismittelpunkt (12, 12) */
+        cx.beginPath();
+        cx.moveTo(W/2, H-1); /* Spitze unten */
+        cx.bezierCurveTo(W/2-3, H-7, 1, cyc+R+2, 1, cyc); /* linke Kurve hoch */
+        cx.arc(cxc, cyc, R, Math.PI, 0, false); /* Halbkreis oben links→rechts */
+        cx.bezierCurveTo(W-1, cyc+R+2, W/2+3, H-7, W/2, H-1); /* rechte Kurve runter */
+        cx.closePath();
+        cx.fillStyle = '#DA291C'; cx.fill();
+        cx.strokeStyle = '#F5F3EC'; cx.lineWidth = 2; cx.stroke();
+        /* kleiner weisser Innenkreis */
+        cx.beginPath(); cx.arc(cxc, cyc, R*0.38, 0, Math.PI*2);
+        cx.fillStyle = 'rgba(255,255,255,0.55)'; cx.fill();
+        map.addImage('poi-pin', { width: W, height: H, data: new Uint8Array(cx.getImageData(0,0,W,H).data.buffer) }, { pixelRatio: 2 });
       }
       map.addSource('stt-pois', {
         type: 'geojson',
@@ -780,13 +791,14 @@ ${legendHtml}
         },
         paint: { 'text-color': '#F5F3EC' }
       });
-      /* Einzel-POIs als Rauten-Symbol — MapLibre blendet sie beim
+      /* Einzel-POIs als Stecknadel-Symbol — MapLibre blendet sie beim
          Clustern automatisch aus (kein DOM-Marker, kein Render-Loop noetig) */
       map.addLayer({ id: 'stt-poi-punkt', type: 'symbol', source: 'stt-pois',
         filter: ['!', ['has', 'point_count']],
         layout: {
-          'icon-image': 'poi-diamond',
+          'icon-image': 'poi-pin',
           'icon-size': 1,
+          'icon-anchor': 'bottom',
           'icon-allow-overlap': true,
           'icon-ignore-placement': true
         }
