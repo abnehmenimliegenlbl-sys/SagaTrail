@@ -68,6 +68,44 @@ import { hapticMedium, hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
 
+// ─── Partner-Marker Hilfskonstanten (analog hike/[id].tsx) ──────────────────
+const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
+  de:  { montag: "Montag", dienstag: "Dienstag", mittwoch: "Mittwoch", donnerstag: "Donnerstag", freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" },
+  gsw: { montag: "Mäntig", dienstag: "Zischtig", mittwoch: "Mittwuch", donnerstag: "Dunschtig", freitag: "Friitig", samstag: "Samschtig", sonntag: "Sunntig" },
+  en:  { montag: "Monday", dienstag: "Tuesday", mittwoch: "Wednesday", donnerstag: "Thursday", freitag: "Friday", samstag: "Saturday", sonntag: "Sunday" },
+  fr:  { montag: "lundi", dienstag: "mardi", mittwoch: "mercredi", donnerstag: "jeudi", freitag: "vendredi", samstag: "samedi", sonntag: "dimanche" },
+  it:  { montag: "lunedì", dienstag: "martedì", mittwoch: "mercoledì", donnerstag: "giovedì", freitag: "venerdì", samstag: "sabato", sonntag: "domenica" },
+  es:  { montag: "lunes", dienstag: "martes", mittwoch: "miércoles", donnerstag: "jueves", freitag: "viernes", samstag: "sábado", sonntag: "domingo" },
+  pt:  { montag: "segunda", dienstag: "terça", mittwoch: "quarta", donnerstag: "quinta", freitag: "sexta", samstag: "sábado", sonntag: "domingo" },
+  zh:  { montag: "周一", dienstag: "周二", mittwoch: "周三", donnerstag: "周四", freitag: "周五", samstag: "周六", sonntag: "周日" },
+};
+function formatPartnerOeffnungszeit(
+  partner: { istOffen?: boolean | null; schliesstUm?: string | null; oeffnetAmTag?: string | null; oeffnetUm?: string | null },
+  lang: string,
+): string | null {
+  if (partner.istOffen && partner.schliesstUm) return `Schliesst um ${partner.schliesstUm} Uhr`;
+  if (!partner.istOffen && partner.oeffnetAmTag && partner.oeffnetUm) {
+    const tag = partner.oeffnetAmTag;
+    const uhr = partner.oeffnetUm;
+    if (tag === "heute")  return `Öffnet heute um ${uhr} Uhr`;
+    if (tag === "morgen") return `Öffnet morgen um ${uhr} Uhr`;
+    const tagName = PARTNER_WOCHENTAGE[lang]?.[tag] ?? PARTNER_WOCHENTAGE["de"]?.[tag] ?? tag;
+    return `Öffnet am ${tagName} um ${uhr} Uhr`;
+  }
+  return null;
+}
+type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
+const PARTNER_KATEGORIE: Record<string, { icon: FeatherIconName; label: string }> = {
+  restaurant:    { icon: "coffee",       label: "Restaurant" },
+  cafe:          { icon: "coffee",       label: "Café" },
+  bar:           { icon: "music",        label: "Bar" },
+  hotel:         { icon: "home",         label: "Hotel" },
+  uebernachtung: { icon: "home",         label: "Hotel" },
+  shop:          { icon: "shopping-bag", label: "Shop" },
+};
+const PARTNER_KAT_DEFAULT: { icon: FeatherIconName; label: string } = { icon: "coffee", label: "Partnerbetrieb" };
+// ────────────────────────────────────────────────────────────────────────────
+
 const AVALANCHE_COLORS: Record<number, string> = {
   1: "#78C800",
   2: "#FFD000",
@@ -275,6 +313,7 @@ export default function Routenplanung() {
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = lädt, null = nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   // Vollbild-Karte: Zustand + Signal zum Schliessen von aussen (POI-Tap im
   // Vollbild → erst Karte schliessen, dann Detail öffnen — sonst Doppel-Modal).
   const [karteVollbild, setKarteVollbild] = useState(false);
@@ -928,6 +967,17 @@ export default function Routenplanung() {
                       setKarteCloseSignal((n) => n + 1);
                     } else {
                       setSelectedPoi(poi);
+                    }
+                  }}
+                  onPartnerPress={(id) => {
+                    const partner = partners.find((p) => p.id === id);
+                    if (!partner) return;
+                    if (karteVollbild) {
+                      pendingKarteActionRef.current = () => setSelectedPartner(partner);
+                      setKarteVollbild(false);
+                      setKarteCloseSignal((n) => n + 1);
+                    } else {
+                      setSelectedPartner(partner);
                     }
                   }}
                 />
@@ -1924,6 +1974,114 @@ export default function Routenplanung() {
                 <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
                   {selectedPoiWiki.extract}
                 </Text>
+              )}
+            </Glass>
+          </Pressable>
+        </Pressable>
+      )}
+
+      {/* Partner-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
+      {!!selectedPartner && (
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.poiModalBackdrop]}
+          onPress={() => setSelectedPartner(null)}
+        >
+          <Pressable style={{ width: "100%" }} onPress={(e) => e.stopPropagation()}>
+            <Glass overlayColor={poiOverlay}>
+              {!!selectedPartner.fotoUrl && selectedPartner.paket !== "basic" && (
+                <ExpoImage
+                  source={{ uri: selectedPartner.fotoUrl }}
+                  style={styles.poiModalImage}
+                  contentFit="cover"
+                />
+              )}
+              <View style={styles.poiRow}>
+                <Feather
+                  name={(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).icon}
+                  size={18}
+                  color={colors.accent}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).label}
+                  </Text>
+                  <Text style={[styles.poiTitle, { color: colors.foreground }]}>
+                    {selectedPartner.name}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setSelectedPartner(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={ts.close}
+                >
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+
+              {selectedPartner.istOffen != null && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: selectedPartner.istOffen ? "#22C55E" : "#EF4444" }} />
+                  <Text style={{ fontSize: 13, color: selectedPartner.istOffen ? "#22C55E" : "#EF4444", fontFamily: fonts.bodyBold }}>
+                    {selectedPartner.istOffen ? "Geöffnet" : "Geschlossen"}
+                  </Text>
+                  {(() => {
+                    const info = formatPartnerOeffnungszeit(selectedPartner, language ?? "de");
+                    return info ? (
+                      <Text style={{ fontSize: 12, color: colors.mutedForeground }}>{"· "}{info}</Text>
+                    ) : null;
+                  })()}
+                </View>
+              )}
+
+              {!!selectedPartner.beschreibung && selectedPartner.paket !== "basic" && (
+                <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
+                  {selectedPartner.beschreibung}
+                </Text>
+              )}
+
+              {(selectedPartner.paket === "premium" || selectedPartner.paket === "standard") && (
+                <>
+                  {!!selectedPartner.telefon && (
+                    <Pressable onPress={() => Linking.openURL(`tel:${selectedPartner.telefon}`)} style={{ marginTop: 12 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Feather name="phone" size={16} color={colors.accent} />
+                        <Text style={{ color: colors.accent, fontSize: 16 }}>{selectedPartner.telefon}</Text>
+                      </View>
+                    </Pressable>
+                  )}
+                  {(!!selectedPartner.reservierungUrl || !!selectedPartner.websiteUrl) && (
+                    <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      {!!selectedPartner.reservierungUrl && (
+                        <Pressable
+                          onPress={() => Linking.openURL(selectedPartner.reservierungUrl!)}
+                          style={{ backgroundColor: colors.accent, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9 }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 14, fontFamily: fonts.bodyBold }}>Reservieren</Text>
+                        </Pressable>
+                      )}
+                      {!!selectedPartner.websiteUrl && (
+                        <Pressable
+                          onPress={() => Linking.openURL(selectedPartner.websiteUrl!)}
+                          style={{ borderWidth: 1.5, borderColor: colors.accent, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 9 }}
+                        >
+                          <Text style={{ color: colors.accent, fontSize: 14 }}>Website</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+
+              {!!selectedPartner.angebot && (
+                <View style={{ backgroundColor: colors.accent + "20", borderRadius: 8, padding: 12, marginTop: 14, borderLeftWidth: 3, borderLeftColor: colors.accent }}>
+                  <Text style={{ fontSize: 11, color: colors.accent, fontFamily: fonts.bodyBold, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    SagaTrail-Angebot
+                  </Text>
+                  <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 0 }]}>
+                    {selectedPartner.angebot}
+                  </Text>
+                </View>
               )}
             </Glass>
           </Pressable>
