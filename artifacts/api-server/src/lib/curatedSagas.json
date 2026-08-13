@@ -300,8 +300,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.3977,
-    "lng": 9.3829,
+    "lat": 47.386706,
+    "lng": 9.3941102,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -657,8 +657,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.275,
-    "lng": 9.4083,
+    "lat": 47.2682729,
+    "lng": 9.4007692,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -708,8 +708,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.2639,
-    "lng": 9.395,
+    "lat": 47.2518591,
+    "lng": 9.4191601,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -759,8 +759,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.2583,
-    "lng": 9.3917,
+    "lat": 47.2557394,
+    "lng": 9.3854457,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -1220,7 +1220,7 @@
     "source": "Manual Upload",
     "lat": 47.5497,
     "lng": 7.6006,
-    "koordinatenSicherheit": "exakt",
+    "koordinatenSicherheit": "Ort identifiziert",
     "isAnchorPlace": true
   },
   {
@@ -1371,8 +1371,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.5564,
-    "lng": 7.5876,
+    "lat": 47.55772,
+    "lng": 7.59064,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -1473,8 +1473,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.6503,
-    "lng": 7.3086,
+    "lat": 46.6651365,
+    "lng": 7.280644,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -1983,8 +1983,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.269402,
-    "lng": 6.159068,
+    "lat": 46.1135565,
+    "lng": 6.1576686,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -2850,8 +2850,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.8889,
-    "lng": 8.2361,
+    "lat": 46.8677372,
+    "lng": 8.2164418,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -2901,8 +2901,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.7575,
-    "lng": 8.1292,
+    "lat": 46.7568632,
+    "lng": 8.1369857,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -5043,8 +5043,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.2658,
-    "lng": 8.7997,
+    "lat": 46.2601225,
+    "lng": 8.8361676,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -5198,7 +5198,7 @@
     "source": "Manual Upload",
     "lat": 46.5494,
     "lng": 8.5528,
-    "koordinatenSicherheit": "exakt",
+    "koordinatenSicherheit": "Ort identifiziert",
     "isAnchorPlace": true
   },
   {
@@ -5553,8 +5553,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 46.6556,
-    "lng": 6.2622,
+    "lat": 46.6396048,
+    "lng": 6.2859274,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -6624,8 +6624,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.0361,
-    "lng": 8.3583,
+    "lat": 47.0352051,
+    "lng": 8.3562077,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -7287,8 +7287,8 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.4839,
-    "lng": 7.7339,
+    "lat": 47.4880319,
+    "lng": 7.7538361,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -8258,7 +8258,7 @@
     "source": "Sagen AT",
     "lat": 47.0502,
     "lng": 8.3093,
-    "koordinatenSicherheit": "exakt",
+    "koordinatenSicherheit": "Ort identifiziert",
     "isAnchorPlace": true
   },
   {
@@ -8562,8 +8562,8 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 47.476166,
-    "lng": 7.492314,
+    "lat": 47.4761663,
+    "lng": 7.4923143,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -8972,7 +8972,7 @@
     "source": "Sagen AT",
     "lat": 47.3769,
     "lng": 8.5417,
-    "koordinatenSicherheit": "exakt",
+    "koordinatenSicherheit": "Ort identifiziert",
     "isAnchorPlace": true
   },
   {
@@ -9023,7 +9023,7 @@
     "source": "Sagen AT",
     "lat": 47.3769,
     "lng": 8.5417,
-    "koordinatenSicherheit": "exakt",
+    "koordinatenSicherheit": "Ort identifiziert",
     "isAnchorPlace": true
   },
   {
@@ -9990,8 +9990,8 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 47.1662,
-    "lng": 8.5155,
+    "lat": 47.1661115,
+    "lng": 8.5151453,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },
@@ -10908,7 +10908,7 @@
       }
     },
     "source": "Sagen AT",
-    "lat": 46.867666,
+    "lat": 46.8676662,
     "lng": 9.437507,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
@@ -11368,7 +11368,7 @@
     },
     "source": "Sagen AT",
     "lat": 47.462555,
-    "lng": 8.180702,
+    "lng": 8.1807018,
     "koordinatenSicherheit": "exakt",
     "isAnchorPlace": true
   },

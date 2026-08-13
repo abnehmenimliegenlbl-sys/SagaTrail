@@ -29,13 +29,17 @@ const EXACT_CLASSES = {
   historic: null,
   building: null,
   man_made: null,
-  tourism: ["attraction", "viewpoint", "artwork"],
-  amenity: ["place_of_worship", "monastery", "fountain"],
-  natural: ["cave_entrance", "peak", "saddle", "spring", "rock", "stone", "cliff", "arch"],
-  waterway: ["waterfall", "weir", "dam"],
+  tourism: ["attraction", "viewpoint", "artwork", "alpine_hut", "chalet", "wilderness_hut"],
+  amenity: ["place_of_worship", "monastery", "fountain", "townhall", "theatre"],
+  natural: ["cave_entrance", "peak", "saddle", "spring", "rock", "stone", "cliff", "arch",
+            "water", "glacier", "gorge", "valley", "wood"],
+  waterway: ["waterfall", "weir", "dam", "river", "stream", "lake"],
+  water: null,        // Seen, Weiher, Teiche
   bridge: null,
-  place: ["islet", "island"],
-  leisure: ["park", "garden"],
+  place: ["islet", "island", "locality"],
+  leisure: ["park", "garden", "nature_reserve"],
+  landuse: ["meadow", "grass"],
+  boundary: ["protected_area"],
 };
 function isExactHit(r) {
   const cls = r.category ?? r.class;
