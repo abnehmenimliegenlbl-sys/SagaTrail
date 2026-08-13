@@ -376,15 +376,30 @@
     );
   };
 
+  // Hilfsfunktionen lokal (sppSaveLocation läuft in dieser IIFE, hat keinen
+  // Zugriff auf showMsg/setBtn aus der zweiten IIFE weiter unten im File).
+  function mapShowMsg(msg, ok) {
+    var el = document.getElementById('spp-map-msg');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'spp-msg ' + (ok ? 'ok' : 'err');
+  }
+  function mapSetBtn(loading) {
+    var btn = document.getElementById('spp-map-save-btn');
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
   window.sppSaveLocation = function() {
     var tok = (function() {
       var p = new URLSearchParams(window.location.search);
       return p.get('token') || localStorage.getItem('spp_token');
     })();
-    if (!tok) { showMsg('spp-map-msg', 'Sitzung abgelaufen.', false); return; }
-    if (!currentLat || !currentLng) { showMsg('spp-map-msg', 'Bitte zuerst Standort setzen.', false); return; }
+    if (!tok) { mapShowMsg('Sitzung abgelaufen.', false); return; }
+    if (!currentLat || !currentLng) { mapShowMsg('Bitte zuerst Standort setzen.', false); return; }
 
-    setBtn('spp-map-save-btn', true);
+    mapSetBtn(true);
     var API_BASE = (window.stPartnerData && window.stPartnerData.apiBase) || 'https://api.sagatrail.ch';
 
     fetch(API_BASE + '/api/partner/portal/me?token=' + encodeURIComponent(tok), {
@@ -394,12 +409,12 @@
     })
       .then(function(r) { if (!r.ok) throw new Error('Speichern fehlgeschlagen.'); return r.json(); })
       .then(function() {
-        setBtn('spp-map-save-btn', false);
-        showMsg('spp-map-msg', 'Standort gespeichert! Sichtbar in der App nach dem nächsten Routen-Abgleich.', true);
+        mapSetBtn(false);
+        mapShowMsg('Standort gespeichert! Sichtbar in der App nach dem nächsten Routen-Abgleich.', true);
       })
       .catch(function(e) {
-        setBtn('spp-map-save-btn', false);
-        showMsg('spp-map-msg', e.message, false);
+        mapSetBtn(false);
+        mapShowMsg(e.message, false);
       });
   };
 
