@@ -616,7 +616,7 @@ ${legendHtml}
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
         partnerEls.push(el);
       });
-      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
+      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 10 });
     }
 
     /* POI-Koordinaten und -Marker-Elemente: ausserhalb von if(pois) damit
@@ -797,7 +797,7 @@ ${legendHtml}
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
         partnerEls.push(el);
       });
-      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
+      if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 10 });
     };
 
     /* Saga-Pin: kleines SagaTrail-Icon an der Sagen-Koordinate.
