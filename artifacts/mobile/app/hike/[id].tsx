@@ -2418,7 +2418,13 @@ export default function LiveHike() {
     // Projektion), damit man unabhaengig vom Startpunkt immer bei Kapitel 0
     // beginnt — auch wenn man mitten auf der Route einsteigt.
     const ratio = totalKm > 0 ? distance / totalKm : 0;
-    const reached = Math.min(steps, Math.floor(ratio * steps + 1e-6));
+    // Letztes Kapitel schon ab ~70 % des letzten Streckenabschnitts ausloesen:
+    // GPS-Distanz bleibt in der Praxis meistens etwas unter der offiziellen
+    // Routenlaenge (Drift, abweichendes Routenende), weshalb ratio selten
+    // exakt 1.0 erreicht und das letzte Kapitel sonst nie gefeuert wird.
+    const reached = ratio >= (steps - 0.3) / steps
+      ? steps
+      : Math.min(steps - 1, Math.floor(ratio * steps + 1e-6));
     if (reached > currentIndex) {
       setCurrentIndex(reached);
       setAwaitingDecision(false);
