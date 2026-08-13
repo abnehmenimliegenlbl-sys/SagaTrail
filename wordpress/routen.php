@@ -52,33 +52,35 @@ if ( ! function_exists( 'str_routes_ajax_handler' ) ) {
 if ( ! is_page( 'routen' ) ) return;
 
 /* ── Kanton-Daten (API-Name → ISO-Kürzel) ──────────────────────────────── */
+/* Wikimedia Commons Special:FilePath — SVG, skaliert via CSS, kein Hash nötig */
+$str_wappen_base = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 $str_kantone = [
-  [ 'api' => 'Aargau',                 'code' => 'AG' ],
-  [ 'api' => 'Appenzell Ausserrhoden', 'code' => 'AR' ],
-  [ 'api' => 'Appenzell Innerrhoden',  'code' => 'AI' ],
-  [ 'api' => 'Basel-Landschaft',       'code' => 'BL' ],
-  [ 'api' => 'Basel-Stadt',            'code' => 'BS' ],
-  [ 'api' => 'Bern',                   'code' => 'BE' ],
-  [ 'api' => 'Freiburg',               'code' => 'FR' ],
-  [ 'api' => 'Genf',                   'code' => 'GE' ],
-  [ 'api' => 'Glarus',                 'code' => 'GL' ],
-  [ 'api' => 'Graubünden',             'code' => 'GR' ],
-  [ 'api' => 'Jura',                   'code' => 'JU' ],
-  [ 'api' => 'Luzern',                 'code' => 'LU' ],
-  [ 'api' => 'Neuenburg',              'code' => 'NE' ],
-  [ 'api' => 'Nidwalden',              'code' => 'NW' ],
-  [ 'api' => 'Obwalden',               'code' => 'OW' ],
-  [ 'api' => 'Schaffhausen',           'code' => 'SH' ],
-  [ 'api' => 'Schwyz',                 'code' => 'SZ' ],
-  [ 'api' => 'Solothurn',              'code' => 'SO' ],
-  [ 'api' => 'St. Gallen',             'code' => 'SG' ],
-  [ 'api' => 'Tessin',                 'code' => 'TI' ],
-  [ 'api' => 'Thurgau',                'code' => 'TG' ],
-  [ 'api' => 'Uri',                    'code' => 'UR' ],
-  [ 'api' => 'Waadt',                  'code' => 'VD' ],
-  [ 'api' => 'Wallis',                 'code' => 'VS' ],
-  [ 'api' => 'Zug',                    'code' => 'ZG' ],
-  [ 'api' => 'Zürich',                 'code' => 'ZH' ],
+  [ 'api' => 'Aargau',                 'code' => 'AG', 'wappen' => 'Wappen_Aargau_matt.svg' ],
+  [ 'api' => 'Appenzell Ausserrhoden', 'code' => 'AR', 'wappen' => 'Wappen_Appenzell_Ausserrhoden_matt.svg' ],
+  [ 'api' => 'Appenzell Innerrhoden',  'code' => 'AI', 'wappen' => 'Wappen_Appenzell_Innerrhoden_matt.svg' ],
+  [ 'api' => 'Basel-Landschaft',       'code' => 'BL', 'wappen' => 'Coat_of_arms_of_Kanton_Basel-Landschaft.svg' ],
+  [ 'api' => 'Basel-Stadt',            'code' => 'BS', 'wappen' => 'Wappen_Basel-Stadt_matt.svg' ],
+  [ 'api' => 'Bern',                   'code' => 'BE', 'wappen' => 'Wappen_Bern_matt.svg' ],
+  [ 'api' => 'Freiburg',               'code' => 'FR', 'wappen' => 'Wappen_Freiburg_matt.svg' ],
+  [ 'api' => 'Genf',                   'code' => 'GE', 'wappen' => 'Wappen_Genf_matt.svg' ],
+  [ 'api' => 'Glarus',                 'code' => 'GL', 'wappen' => 'Wappen_Glarus_matt.svg' ],
+  [ 'api' => 'Graubünden',             'code' => 'GR', 'wappen' => 'Wappen_Graub%C3%BCnden_matt.svg' ],
+  [ 'api' => 'Jura',                   'code' => 'JU', 'wappen' => 'Wappen_Jura_matt.svg' ],
+  [ 'api' => 'Luzern',                 'code' => 'LU', 'wappen' => 'Wappen_Luzern_matt.svg' ],
+  [ 'api' => 'Neuenburg',              'code' => 'NE', 'wappen' => 'Wappen_Neuenburg_matt.svg' ],
+  [ 'api' => 'Nidwalden',              'code' => 'NW', 'wappen' => 'Wappen_Nidwalden_matt.svg' ],
+  [ 'api' => 'Obwalden',               'code' => 'OW', 'wappen' => 'Wappen_Obwalden_matt.svg' ],
+  [ 'api' => 'Schaffhausen',           'code' => 'SH', 'wappen' => 'Wappen_Schaffhausen_matt.svg' ],
+  [ 'api' => 'Schwyz',                 'code' => 'SZ', 'wappen' => 'Wappen_Schwyz_matt.svg' ],
+  [ 'api' => 'Solothurn',              'code' => 'SO', 'wappen' => 'Wappen_Solothurn_matt.svg' ],
+  [ 'api' => 'St. Gallen',             'code' => 'SG', 'wappen' => 'Coat_of_arms_of_canton_of_St._Gallen.svg' ],
+  [ 'api' => 'Tessin',                 'code' => 'TI', 'wappen' => 'Wappen_Tessin_matt.svg' ],
+  [ 'api' => 'Thurgau',                'code' => 'TG', 'wappen' => 'Wappen_Thurgau_matt.svg' ],
+  [ 'api' => 'Uri',                    'code' => 'UR', 'wappen' => 'Wappen_Uri_matt.svg' ],
+  [ 'api' => 'Waadt',                  'code' => 'VD', 'wappen' => 'Wappen_Waadt_matt.svg' ],
+  [ 'api' => 'Wallis',                 'code' => 'VS', 'wappen' => 'Wappen_Wallis_matt.svg' ],
+  [ 'api' => 'Zug',                    'code' => 'ZG', 'wappen' => 'Wappen_Zug_matt.svg' ],
+  [ 'api' => 'Zürich',                 'code' => 'ZH', 'wappen' => 'Wappen_Z%C3%BCrich_matt.svg' ],
 ];
 
 $str_ajax_url = admin_url( 'admin-ajax.php' );
@@ -343,15 +345,14 @@ $str_ajax_url = admin_url( 'admin-ajax.php' );
       <h2 class="str-section-title">Wo möchtest du wandern?</h2>
       <div class="str-kanton-grid" id="str-kanton-grid">
         <?php foreach ( $str_kantone as $k ) :
-          $code_lc  = strtolower( $k['code'] );
-          $wappen   = 'https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/symbols/13x13/' . strtolower( $k['code'] ) . '.svg';
+          $wappen_url = $str_wappen_base . $k['wappen'];
         ?>
         <div class="str-kanton-card"
              data-api="<?php echo esc_attr( $k['api'] ); ?>"
              data-code="<?php echo esc_attr( $k['code'] ); ?>"
              onclick="strSelectKanton('<?php echo esc_js( $k['api'] ); ?>', '<?php echo esc_js( $k['code'] ); ?>', this)">
           <div class="str-kanton-wappen">
-            <img src="<?php echo esc_url( $wappen ); ?>"
+            <img src="<?php echo esc_url( $wappen_url ); ?>"
                  alt="Wappen <?php echo esc_attr( $k['api'] ); ?>"
                  loading="lazy"
                  onerror="this.style.display='none'">
