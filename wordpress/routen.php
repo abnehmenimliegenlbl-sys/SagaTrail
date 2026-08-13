@@ -822,14 +822,15 @@ var STR_PICONS={
   sac_huette:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
   souvenir:  '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'
 };
-function strPartnerIcon(kat){
+function strPartnerIcon(kat,open){
   var k=(kat||'').toLowerCase();
   var paths=STR_PICONS[k]||STR_PICONS.restaurant;
+  var col=open===true?'#22c55e':'#cc0000';
   var html='<div style="display:flex;flex-direction:column;align-items:center;">'
-    +'<div style="width:30px;height:30px;background:#fff;border-radius:8px;border:1.5px solid #cc0000;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.22)">'
+    +'<div style="width:30px;height:30px;background:#fff;border-radius:8px;border:2px solid '+col+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.22)">'
     +'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>'
     +'</div>'
-    +'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #cc0000"></div>'
+    +'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid '+col+'"></div>'
     +'</div>';
   return L.divIcon({html:html,iconSize:[30,36],iconAnchor:[15,36],className:''});
 }
@@ -844,7 +845,7 @@ function strAddExtrasToMap(pois,partners){
   partners.forEach(function(p){
     if(!p.lat||!p.lng)return;
     var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
-    var m=L.marker([p.lat,p.lng],{icon:strPartnerIcon(p.kategorie)})
+    var m=L.marker([p.lat,p.lng],{icon:strPartnerIcon(p.kategorie,p.istOffen)})
       .bindTooltip(label,{direction:'top',offset:[0,-30]});
     m.addTo(_strMap);_strExtras.push(m);
   });

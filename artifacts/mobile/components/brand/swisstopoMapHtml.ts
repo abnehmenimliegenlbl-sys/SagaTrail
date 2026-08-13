@@ -271,8 +271,11 @@ export function buildSwisstopoHtml(
   .stt-partner-pin::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #fff; }
   .stt-partner-pin--basic    { width: 24px; height: 24px; opacity: 0.72; }
   .stt-partner-pin--standard { width: 30px; height: 30px; }
-  .stt-partner-pin--premium  { width: 36px; height: 36px; box-shadow: 0 0 0 1.5px #cc0000; }
-  .stt-partner-pin--premium::after { border-top-color: #cc0000; top: calc(100% + 1.5px); }
+  .stt-partner-pin--premium  { width: 36px; height: 36px; }
+  .stt-partner-pin--open    { box-shadow: 0 0 0 2px #22c55e; }
+  .stt-partner-pin--open::after    { border-top-color: #22c55e; top: calc(100% + 2px); }
+  .stt-partner-pin--closed  { box-shadow: 0 0 0 2px #cc0000; }
+  .stt-partner-pin--closed::after  { border-top-color: #cc0000; top: calc(100% + 2px); }
   .stt-partner-tipp--basic    { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.24)); }
   .stt-partner-tipp--standard { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.26)); }
   .stt-partner-tipp--premium  { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.30)); }
@@ -617,6 +620,8 @@ ${legendHtml}
         el.className = 'stt-partner-tipp stt-partner-tipp--' + paket;
         var pin = document.createElement('div');
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
+        if (p.istOffen === true)  pin.classList.add('stt-partner-pin--open');
+        if (p.istOffen === false) pin.classList.add('stt-partner-pin--closed');
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
         /* touchend feuert sofort (kein 300ms-Delay); click als Fallback fuer
@@ -826,6 +831,8 @@ ${legendHtml}
         el.className = 'stt-partner-tipp stt-partner-tipp--' + paket;
         var pin = document.createElement('div');
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
+        if (p.istOffen === true)  pin.classList.add('stt-partner-pin--open');
+        if (p.istOffen === false) pin.classList.add('stt-partner-pin--closed');
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
         (function(id) {
