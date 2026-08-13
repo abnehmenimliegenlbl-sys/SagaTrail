@@ -813,36 +813,29 @@ function strPinIcon(open){
     +'</svg>';
   return L.divIcon({html:svg,iconSize:[14,20],iconAnchor:[7,20],className:''});
 }
+var STR_PICONS={
+  restaurant:'<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  cafe:      '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  bar:       '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  hotel:     '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  uebernachtung:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  sac_huette:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  souvenir:  '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'
+};
 function strPartnerIcon(kat,open){
-  var col=open===false?'#888':'#DA291C';
+  var col=open===false?'#999':'#cc0000';
   var k=(kat||'').toLowerCase();
-  var icon;
-  if(k.includes('restaurant')||k.includes('cuisine')||k.includes('food')){
-    /* Gabeln + Messer */
-    icon='<path d="M8 5.5v5M10.5 5.5v2a2 2 0 0 0 2 2v-4" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-  } else if(k.includes('hotel')||k.includes('unterkunft')||k.includes('hostel')||k.includes('hütte')||k.includes('huette')){
-    /* Bett */
-    icon='<path d="M6.5 12V8h7v4M6.5 10.5h7" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
-        +'<rect x="7.5" y="8.5" width="2.2" height="1.8" rx="0.4" fill="'+col+'" opacity="0.75"/>';
-  } else if(k.includes('bar')||k.includes('wein')||k.includes('wine')||k.includes('cocktail')){
-    /* Weinglas */
-    icon='<path d="M7.5 5.5h5L11 9.5H9L7.5 5.5M10 9.5V12M8 12h4" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-  } else if(k.includes('café')||k.includes('cafe')||k.includes('kaffee')||k.includes('coffee')){
-    /* Kaffeetasse */
-    icon='<path d="M7.5 8h5v3a2.5 2.5 0 0 1-5 0V8M12.5 9c.8 0 1.5-.7 1.5-1.5" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
-        +'<path d="M9.2 7q.4-1.2 1-1.2t.9 1.2" stroke="'+col+'" stroke-width="1.1" fill="none"/>';
-  } else if(k.includes('shop')||k.includes('laden')||k.includes('markt')||k.includes('store')){
-    /* Einkaufstasche */
-    icon='<path d="M7.5 9h5v4h-5V9M9 9V7.5a1 1 0 0 1 2 0V9" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-  } else {
-    icon='<circle cx="10" cy="9" r="2.5" fill="'+col+'" opacity="0.8"/>';
-  }
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="28" viewBox="0 0 20 28">'
-    +'<path d="M10 1C5.582 1 2 4.582 2 9c0 6.627 8 18 8 18s8-11.373 8-18C18 4.582 14.418 1 10 1z" fill="'+col+'" stroke="#fff" stroke-width="1.5"/>'
-    +'<circle cx="10" cy="9" r="6.2" fill="white" opacity="0.93"/>'
-    +icon
-    +'</svg>';
-  return L.divIcon({html:svg,iconSize:[20,28],iconAnchor:[10,28],className:''});
+  var paths=STR_PICONS[k]||STR_PICONS.restaurant;
+  var brd='1.5px solid '+col;
+  var shadow=open===false?'none':'0 2px 6px rgba(0,0,0,.22)';
+  var op=open===false?'opacity:.6;':'';
+  var html='<div style="display:flex;flex-direction:column;align-items:center;'+op+'">'
+    +'<div style="width:30px;height:30px;background:#fff;border-radius:8px;border:'+brd+';display:flex;align-items:center;justify-content:center;box-shadow:'+shadow+'">'
+    +'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>'
+    +'</div>'
+    +'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid '+col+'"></div>'
+    +'</div>';
+  return L.divIcon({html:html,iconSize:[30,36],iconAnchor:[15,36],className:''});
 }
 
 function strAddExtrasToMap(pois,partners){
