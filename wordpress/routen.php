@@ -202,15 +202,39 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-results-header{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
 .str-results-title{font-size:1.3rem;font-weight:800;color:#1a1a1a}
 .str-results-badge{background:#CC0000;color:#fff;border-radius:20px;padding:2px 10px;font-size:.78rem;font-weight:700;display:none}
-.str-route-list{display:flex;flex-direction:column;gap:10px}
-.str-route-card{background:#fff;border:1.5px solid #e8e8e6;border-radius:14px;overflow:hidden;display:flex;transition:box-shadow .15s,transform .12s}
-.str-route-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);transform:translateY(-1px)}
-.str-route-photo{width:110px;min-width:110px;background:#eee;overflow:hidden;flex-shrink:0}
-.str-route-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.str-route-photo-ph{width:100%;height:100%;min-height:90px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f2f2f0,#e6e6e4);font-size:1.8rem}
-.str-route-body{padding:14px 16px;flex:1;min-width:0}
-.str-route-name{font-size:1rem;font-weight:700;color:#1a1a1a;margin-bottom:7px;line-height:1.3}
-.str-route-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.str-route-list{display:flex;flex-direction:column;gap:0}
+/* ── App-Style RouteCard ── */
+.str-route-card{position:relative;height:200px;border-radius:18px;overflow:hidden;cursor:pointer;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,.22),0 1px 4px rgba(0,0,0,.14)}
+.str-rc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.str-rc-img-ph{position:absolute;inset:0;background:linear-gradient(135deg,#2a2a28,#1a1a18);display:flex;align-items:center;justify-content:center;font-size:3rem}
+.str-rc-attr{position:absolute;top:8px;right:10px;max-width:70%;background:rgba(8,10,12,.58);border-radius:6px;padding:3px 6px;font-size:11px;color:rgba(255,255,255,.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.str-rc-content{position:absolute;left:16px;right:16px;bottom:40px}
+.str-rc-bar{position:absolute;left:0;right:0;bottom:0;height:28px;background:rgba(227,6,19,.55);display:flex;align-items:center;justify-content:center;padding:0 10px;font-size:12px;font-weight:600;color:#fff;letter-spacing:.3px;text-shadow:0 1px 2px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── Wegweiser (Schweizer Wanderwegschild) ── */
+.str-ww{display:flex;flex-direction:row;align-items:center;align-self:flex-start;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.str-ww-body{display:flex;flex-direction:row;align-items:center;background:rgba(255,204,0,.55);padding-left:6px;padding-right:8px;gap:8px;overflow:hidden}
+.str-ww-green{background:#7FB73F;padding:5px 5px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.str-ww-kat{color:#141412;font-size:7px;line-height:8.5px;font-weight:700;font-style:italic;white-space:pre-line}
+.str-ww-numrow{display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;width:100%}
+/* Schweizer Flagge */
+.str-ww-flag{width:11px;height:11px;background:#C42526;transform:rotate(-8deg);position:relative;margin-bottom:3px;flex-shrink:0}
+.str-ww-fh,.str-ww-fv{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff}
+.str-ww-fh{width:62%;height:20%}
+.str-ww-fv{width:20%;height:62%}
+/* Kantonswappen im grünen Feld */
+.str-ww-wp{width:12px;height:12px;object-fit:contain;margin-bottom:3px;flex-shrink:0}
+.str-ww-wp-lg{width:16px;height:16px;object-fit:contain;margin-bottom:2px}
+/* Nummer */
+.str-ww-num{color:#fff;font-size:27px;line-height:28px;font-weight:900;font-style:italic;margin-left:auto}
+.str-ww-num-sm{color:#fff;font-size:14px;line-height:16px;font-weight:900;font-style:italic;margin-left:auto}
+/* Wegweiser Text */
+.str-ww-text{display:flex;flex-direction:column;min-width:0;flex:1}
+.str-ww-titel{color:#fff;font-size:19px;line-height:22px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.str-ww-zeile{color:#fff;font-size:12px;line-height:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Pfeilspitze */
+.str-ww-tip{width:0;height:0;border-top-style:solid;border-top-color:transparent;border-bottom-style:solid;border-bottom-color:transparent;border-left-style:solid;flex-shrink:0;position:relative}
+.str-ww-balken{position:absolute;left:0;top:50%;transform:translateY(-50%);width:62%}
+/* Modal Tags */
 .str-tag{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:2px 7px;font-size:.72rem;font-weight:600;white-space:nowrap}
 .str-tag-dist{background:#f0f0f0;color:#444}
 .str-tag-asc{background:#eef3fb;color:#2563eb}
@@ -221,8 +245,25 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-tag-T4{background:#fee2e2;color:#dc2626}
 .str-tag-T5{background:#fef2f2;color:#991b1b}
 .str-tag-T6{background:#1a1a1a;color:#fff}
-.str-route-desc{font-size:.82rem;color:#666;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.str-app-link{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;color:#CC0000;margin-top:10px}
+/* ── Route-Modal ── */
+.str-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99998;display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .22s;pointer-events:none}
+.str-modal-backdrop.str-open{opacity:1;pointer-events:auto}
+@media(min-width:640px){.str-modal-backdrop{align-items:center}}
+.str-modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;transform:translateY(40px);transition:transform .26s cubic-bezier(.22,1,.36,1)}
+@media(min-width:640px){.str-modal{border-radius:20px;transform:scale(.96);max-height:88vh;box-shadow:0 24px 60px rgba(0,0,0,.22)}}
+.str-modal-backdrop.str-open .str-modal{transform:translateY(0) scale(1)}
+.str-modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid #f0f0ee;flex-shrink:0}
+.str-modal-title{font-size:1.05rem;font-weight:800;color:#1a1a1a;line-height:1.3;padding-right:12px}
+.str-modal-close{width:32px;height:32px;border:none;background:#f0f0ee;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#444;transition:background .15s;line-height:1}
+.str-modal-close:hover{background:#e0e0e0}
+.str-modal-map{flex-shrink:0;height:260px;background:#e8ede8;position:relative}
+@media(min-width:640px){.str-modal-map{height:320px}}
+#str-map{width:100%;height:100%}
+.str-modal-body{overflow-y:auto;padding:16px 20px 28px;flex:1}
+.str-modal-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.str-modal-desc{font-size:.88rem;color:#555;line-height:1.65;margin-bottom:18px}
+.str-modal-cta{display:flex;align-items:center;justify-content:center;gap:10px;background:#CC0000;color:#fff;border:none;border-radius:12px;padding:14px 20px;font-size:.88rem;font-weight:700;cursor:pointer;text-decoration:none;width:100%}
+.str-modal-cta:hover{opacity:.88}
 .str-spinner{text-align:center;padding:60px 20px}
 .str-spinner-ring{display:inline-block;width:40px;height:40px;border:3px solid #e8e8e6;border-top-color:#CC0000;border-radius:50%;animation:str-spin .7s linear infinite}
 @keyframes str-spin{to{transform:rotate(360deg)}}
@@ -386,6 +427,24 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
   </div>
 </div>
 
+<!-- Route-Modal -->
+<div class="str-modal-backdrop" id="str-modal-backdrop" onclick="strCloseModal(event)">
+  <div class="str-modal" role="dialog" aria-modal="true">
+    <div class="str-modal-head">
+      <h2 class="str-modal-title" id="str-modal-title"></h2>
+      <button class="str-modal-close" onclick="strCloseModal()" aria-label="Schliessen">✕</button>
+    </div>
+    <div class="str-modal-map"><div id="str-map"></div></div>
+    <div class="str-modal-body">
+      <div class="str-modal-tags" id="str-modal-tags"></div>
+      <p class="str-modal-desc" id="str-modal-desc"></p>
+      <a id="str-modal-cta" class="str-modal-cta" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">
+        🍎 &nbsp;In der SagaTrail-App öffnen
+      </a>
+    </div>
+  </div>
+</div>
+
 <!-- SEO: Alle Routen als crawlbares HTML (für Google, ohne JS-Interaktion) -->
 <div id="str-seo" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">
   <h2>Wanderrouten in der Schweiz nach Kanton</h2>
@@ -418,8 +477,15 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 (function(){
 'use strict';
 
+/* ── Kanton→Wappen-URL (PHP-generiert) ── */
+var STR_WAPPEN=<?php
+  $jw=[];
+  foreach($str_kantone as $k){ $jw[$k['api']]='https://commons.wikimedia.org/wiki/Special:FilePath/'.$k['svg']; }
+  echo wp_json_encode($jw,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+?>;
+
 /* ── State ── */
-var S={kanton:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
+var S={kanton:null,kantonWappen:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
 var cache={};
 
 /* ══════════════════════════════════════
@@ -523,11 +589,91 @@ function recount(){
   document.getElementById('str-hint').textContent=n+' Route'+(n!==1?'n':'')+' gefunden. Danach folgt die passende Sage.';
 }
 
+/* ══════════════════════════════════════════════════════════
+   parseRouteName — Port der TS-Logik aus Wegweiser.tsx
+   ══════════════════════════════════════════════════════════ */
+function parseRouteName(name){
+  var rest=name.trim(), nummer=null, kategorie=null;
+  var k=rest.match(/^K(\d+)\s+(?:([A-Z]{2})\s+)?(.*)$/);
+  if(k){ nummer=k[1]; kategorie=k[2]||null; rest=k[3]; }
+  else {
+    var m=rest.match(/^(\d{1,3}[a-z]?)\s+(.*)$/);
+    if(m){
+      nummer=m[1];
+      var nl=parseInt(m[1],10).toString().length;
+      kategorie=nl===1?'Wanderland national':nl===2?'Wanderland regional':'Wanderland lokal';
+      rest=m[2];
+    }
+  }
+  var es=rest.match(/^(Etappe\s+(\d+))\s*[:\s]\s*(.+?)\s*[-–]\s*(.+)$/i);
+  if(es&&!nummer) return {nummer:es[2],kategorie:null,titel:es[1],etappe:null,strecke:es[3].trim()+' – '+es[4].trim()};
+  var e=rest.match(/^(.*?)\s+((?:Etappe|Étape|Etape|Tappa)\s+\d+[a-z]?)\s*(.*)$/i);
+  if(e){
+    var t=e[1].trim(), sr=e[3]?e[3].trim():null;
+    var ov=t.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
+    if(ov&&ov[1].trim().length>=3)t=ov[1].trim();
+    return {nummer:nummer,kategorie:kategorie,titel:t,etappe:e[2],strecke:sr};
+  }
+  var s=rest.match(/^(.+)\s+([^-–]+\s[-–]\s.+)$/);
+  if(s&&s[1].length>=3){
+    var t=s[1].trim();
+    var iv=t.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
+    if(iv&&iv[1].trim().length>=3)t=iv[1].trim();
+    return {nummer:nummer,kategorie:kategorie,titel:t,etappe:null,strecke:s[2].trim()};
+  }
+  return {nummer:nummer,kategorie:kategorie,titel:rest,etappe:null,strecke:null};
+}
+
+/* ══════════════════════════════════════════════════════════
+   makeWegweiser — HTML-Äquivalent des RN-Wegweiser
+   ══════════════════════════════════════════════════════════ */
+function makeWegweiser(name,sac,wpUrl){
+  var d=parseRouteName(name);
+  var h=54, sw=Math.round(h*0.55); // kompakt
+  /* Pfeilfarbe */
+  var sacN=sacNum(sac);
+  var balken=sacN>=5?'#005EB8':sacN>=3?'#E30613':null;
+  var tipClr=balken?'rgba(255,255,255,0.55)':'rgba(255,204,0,0.55)';
+  /* Grünes Feld */
+  var green='';
+  if(d.nummer){
+    if(d.kategorie&&d.kategorie.length===2){
+      /* Kantonal: Wappen + "K{n}-{code}" */
+      green=(wpUrl?'<img class="str-ww-wp-lg" src="'+esc(wpUrl)+'" alt="">':'')
+        +'<span class="str-ww-num-sm">K'+esc(d.nummer)+'-'+esc(d.kategorie)+'</span>';
+    } else {
+      /* National / Regional / Lokal */
+      var katTxt=d.kategorie?d.kategorie.replace(' ','\n'):'';
+      var katHtml=katTxt?'<span class="str-ww-kat">'+esc(katTxt)+'</span>':'';
+      var emblem='';
+      if(d.kategorie==='Wanderland national'){
+        emblem='<div class="str-ww-flag"><div class="str-ww-fh"></div><div class="str-ww-fv"></div></div>';
+      } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
+        emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
+      }
+      green=katHtml+'<div class="str-ww-numrow">'+emblem+'<span class="str-ww-num">'+esc(d.nummer)+'</span></div>';
+    }
+  }
+  /* Beschriftung */
+  var txt='<span class="str-ww-titel">'+esc(d.titel)+'</span>';
+  if(d.etappe) txt+='<span class="str-ww-zeile">'+esc(d.etappe)+'</span>';
+  if(d.strecke) txt+='<span class="str-ww-zeile">'+esc(d.strecke)+'</span>';
+  /* Balken */
+  var balkenH=balken?'<div class="str-ww-balken" style="background:'+balken+';height:'+Math.round(h*0.18)+'px"></div>':'';
+  return '<div class="str-ww" style="height:'+h+'px">'
+    +'<div class="str-ww-body" style="height:'+h+'px">'
+    +(d.nummer?'<div class="str-ww-green" style="width:'+(h-8)+'px;height:'+(h-8)+'px">'+green+'</div>':'')
+    +'<div class="str-ww-text">'+txt+'</div>'
+    +'</div>'
+    +'<div class="str-ww-tip" style="border-top-width:'+Math.round(h/2)+'px;border-bottom-width:'+Math.round(h/2)+'px;border-left-width:'+sw+'px;border-left-color:'+tipClr+'">'+balkenH+'</div>'
+    +'</div>';
+}
+
 /* ── Kanton wählen ── */
 window.strSelectKanton=function(api,el){
   document.querySelectorAll('.str-kanton-card').forEach(function(c){c.classList.remove('str-active');});
   el.classList.add('str-active');
-  S.kanton=api; S.routes=[];
+  S.kanton=api; S.kantonWappen=STR_WAPPEN[api]||null; S.routes=[];
   document.getElementById('str-filter-title').textContent=api;
   document.getElementById('str-filter-section').classList.add('str-visible');
   document.getElementById('str-results-section').classList.remove('str-visible');
@@ -581,8 +727,11 @@ function fmtHm(v){return v?'+'+Math.round(v)+' hm':null;}
 function fmtMin(m){if(!m)return null;return m<60?m+' Min.':Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60)+' h';}
 function sacCls(s){var n=sacNum(s);return 'str-tag-T'+Math.min(6,Math.max(1,n||1));}
 
+var _strRouteIndex=[];
+
 function renderRoutes(){
   var vis=filtered();
+  _strRouteIndex=vis;
   var badge=document.getElementById('str-results-badge');
   var list=document.getElementById('str-route-list');
   badge.textContent=vis.length+' Route'+(vis.length!==1?'n':'');
@@ -597,23 +746,126 @@ function renderRoutes(){
     list.innerHTML='<div class="str-empty"><div class="str-empty-icon">🏔️</div><h3>Keine Routen für diesen Filter</h3><p>Passe Distanz, Höhenmeter oder Schwierigkeit an.</p></div>';
     return;
   }
-  list.innerHTML=vis.map(function(r){
+  list.innerHTML=vis.map(function(r,i){
     var sac=r.sac&&r.sac!=='unbekannt'?r.sac:null;
-    var desc=r.description?r.description.replace(/<[^>]*>/g,'').substring(0,160):'';
-    var photo=r.photoUrl?'<img src="'+esc(r.photoUrl)+'" alt="'+esc(r.name)+'" loading="lazy">'
-      :'<div class="str-route-photo-ph">🏔️</div>';
-    var tags='<span class="str-tag str-tag-dist">📍 '+(esc(fmtKm(r.distanceTagKm||r.distanceKm))||'—')+'</span>';
-    var hm=fmtHm(r.ascentM);if(hm)tags+='<span class="str-tag str-tag-asc">↑ '+esc(hm)+'</span>';
-    var tm=fmtMin(r.minutes);if(tm)tags+='<span class="str-tag str-tag-time">⏱ '+esc(tm)+'</span>';
-    if(sac)tags+='<span class="str-tag '+sacCls(r.sac)+'">'+esc(sac)+'</span>';
-    return '<div class="str-route-card"><div class="str-route-photo">'+photo+'</div>'
-      +'<div class="str-route-body"><h3 class="str-route-name">'+esc(r.name)+'</h3>'
-      +'<div class="str-route-meta">'+tags+'</div>'
-      +(desc?'<p class="str-route-desc">'+esc(desc)+'…</p>':'')
-      +'<a class="str-app-link" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">→ In der SagaTrail-App öffnen</a>'
-      +'</div></div>';
+    var km=r.distanceTagKm||r.distanceKm;
+    var mins=r.minutes||0, h2=Math.floor(mins/60), m2=mins%60;
+    var season=r.season==='ganzjaehrig'?'Ganzjährig':r.season==='nur_sommer'?'Nur Sommer':r.season==='eher_sommer'?'Eher Sommer':'';
+    var bar=[
+      sac||null,
+      km?parseFloat(km).toFixed(1)+' km':null,
+      r.ascentM?'+'+Math.round(r.ascentM)+' hm':null,
+      mins?(h2+':'+(m2<10?'0':'')+m2+' h'):null,
+      season||null
+    ].filter(Boolean).join(' · ');
+    var photo=r.photoUrl
+      ?'<img class="str-rc-img" src="'+esc(r.photoUrl)+'" alt="'+esc(r.name)+'" loading="lazy">'
+      :'<div class="str-rc-img-ph">🏔️</div>';
+    return '<div class="str-route-card" onclick="strOpenRoute('+i+')" role="button" tabindex="0">'
+      +photo
+      +'<div class="str-rc-content">'+makeWegweiser(r.name,r.sac,S.kantonWappen)+'</div>'
+      +'<div class="str-rc-bar">'+esc(bar)+'</div>'
+      +'</div>';
   }).join('');
 }
+
+/* ══════════════════════════════════════
+   ROUTE-MODAL mit Leaflet-Karte
+   ══════════════════════════════════════ */
+var _leafletReady=false;
+var _leafletLoading=false;
+var _leafletCallbacks=[];
+var _strMap=null;
+var _strPolyline=null;
+
+function loadLeaflet(cb){
+  if(_leafletReady){cb();return;}
+  _leafletCallbacks.push(cb);
+  if(_leafletLoading)return;
+  _leafletLoading=true;
+  var lnk=document.createElement('link');
+  lnk.rel='stylesheet';lnk.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(lnk);
+  var scr=document.createElement('script');
+  scr.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  scr.onload=function(){
+    _leafletReady=true;
+    _leafletCallbacks.forEach(function(fn){fn();});
+    _leafletCallbacks=[];
+  };
+  document.head.appendChild(scr);
+}
+
+function latLng(pt){
+  /* Geometry-Punkte sind {lat,lng} ODER [lat,lng] */
+  if(Array.isArray(pt))return[pt[0],pt[1]];
+  return[pt.lat,pt.lng];
+}
+
+window.strOpenRoute=function(idx){
+  var r=_strRouteIndex[idx];
+  if(!r)return;
+  /* Meta */
+  document.getElementById('str-modal-title').textContent=r.name||'Route';
+  /* Tags */
+  var tags='';
+  var km=fmtKm(r.distanceTagKm||r.distanceKm);
+  if(km)tags+='<span class="str-tag str-tag-dist">📍 '+esc(km)+'</span>';
+  var hm=fmtHm(r.ascentM);if(hm)tags+='<span class="str-tag str-tag-asc">↑ '+esc(hm)+'</span>';
+  var tm=fmtMin(r.minutes);if(tm)tags+='<span class="str-tag str-tag-time">⏱ '+esc(tm)+'</span>';
+  var sac=r.sac&&r.sac!=='unbekannt'?r.sac:null;
+  if(sac)tags+='<span class="str-tag '+sacCls(r.sac)+'">'+esc(sac)+'</span>';
+  document.getElementById('str-modal-tags').innerHTML=tags;
+  /* Beschreibung */
+  var desc=r.description?r.description.replace(/<[^>]*>/g,''):'';
+  document.getElementById('str-modal-desc').textContent=desc||'';
+  document.getElementById('str-modal-desc').style.display=desc?'':'none';
+  /* Backdrop öffnen */
+  var bd=document.getElementById('str-modal-backdrop');
+  bd.classList.add('str-open');
+  document.body.style.overflow='hidden';
+  /* Karte initialisieren (lazy) */
+  loadLeaflet(function(){
+    var pts=[];
+    if(r.geometry&&r.geometry.length>1){
+      pts=r.geometry.map(latLng);
+    } else if(r.startLat&&r.startLng){
+      pts=[[r.startLat,r.startLng]];
+    }
+    var mapEl=document.getElementById('str-map');
+    if(!_strMap){
+      _strMap=L.map(mapEl,{zoomControl:true,attributionControl:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+        maxZoom:19
+      }).addTo(_strMap);
+    } else {
+      if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
+      mapEl.style.display='block';
+    }
+    /* Kurz warten bis Modal sichtbar, dann Leaflet-Größe korrigieren */
+    setTimeout(function(){
+      _strMap.invalidateSize();
+      if(pts.length>1){
+        _strPolyline=L.polyline(pts,{color:'#CC0000',weight:4,opacity:.85}).addTo(_strMap);
+        _strMap.fitBounds(_strPolyline.getBounds(),{padding:[24,24]});
+      } else if(pts.length===1){
+        _strMap.setView(pts[0],13);
+        L.circleMarker(pts[0],{radius:8,color:'#CC0000',fillColor:'#CC0000',fillOpacity:1}).addTo(_strMap);
+      } else {
+        /* Schweiz-Übersicht als Fallback */
+        _strMap.setView([46.8,8.2],8);
+      }
+    },80);
+  });
+};
+
+window.strCloseModal=function(e){
+  if(e&&e.target!==document.getElementById('str-modal-backdrop'))return;
+  document.getElementById('str-modal-backdrop').classList.remove('str-open');
+  document.body.style.overflow='';
+};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')window.strCloseModal();});
 
 })();
 </script>
