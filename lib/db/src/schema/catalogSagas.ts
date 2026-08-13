@@ -82,6 +82,9 @@ export const catalogSagasTable = pgTable("catalog_sagas", {
   // und danach direkt in der Katalog-Antwort mitgeliefert (kein Extra-Request).
   fotoUrl: text("foto_url"),
   fotoAttribution: text("foto_attribution"),
+  // Offizieller OSM-Name des identifizierten Ortes (z. B. "Basler Münster", "Schloss Habsburg").
+  // Wird beim GPS-Präzisierungs-Lauf per Nominatim/Overpass befüllt.
+  ortName: text("ort_name"),
 });
 
 export const insertCatalogSagaSchema = createInsertSchema(catalogSagasTable);

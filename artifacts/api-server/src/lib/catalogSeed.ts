@@ -52,6 +52,7 @@ export async function seedCatalog(): Promise<void> {
           lat: sql`excluded.lat`,
           lng: sql`excluded.lng`,
           isAnchorPlace: sql`excluded.is_anchor_place`,
+          ortName: sql`excluded.ort_name`,
         },
       });
   }

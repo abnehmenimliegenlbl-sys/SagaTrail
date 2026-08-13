@@ -48,7 +48,8 @@
     "lat": 47.3232471,
     "lng": 8.193806,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Hallwyl"
   },
   {
     "id": "badwirt-von-baden",
@@ -201,7 +202,8 @@
     "lat": 47.388463,
     "lng": 9.2543788,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Rosenburg"
   },
   {
     "id": "der-teufel-auf-dem-sitz-schwellbrunn",
@@ -252,7 +254,8 @@
     "lat": 47.345125,
     "lng": 9.229364,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Sitz"
   },
   {
     "id": "das-gespenst-im-zeughaus-teufen",
@@ -303,7 +306,8 @@
     "lat": 47.386706,
     "lng": 9.3941102,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Zeughaus Teufen"
   },
   {
     "id": "der-hexenbaum-von-waldstatt",
@@ -405,7 +409,8 @@
     "lat": 47.3408035,
     "lng": 9.3333751,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Hundwiler Höhi"
   },
   {
     "id": "das-nachtvolk-von-trogen",
@@ -558,7 +563,8 @@
     "lat": 47.3815671,
     "lng": 9.4679351,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Gäbris"
   },
   {
     "id": "das-schlossfrauelein-von-clanx",
@@ -609,7 +615,8 @@
     "lat": 47.3472228,
     "lng": 9.4113348,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Clanx"
   },
   {
     "id": "der-drache-vom-seealpsee",
@@ -660,7 +667,8 @@
     "lat": 47.2682729,
     "lng": 9.4007692,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Seealpsee"
   },
   {
     "id": "das-geistervolk-vom-faehlensee",
@@ -711,7 +719,8 @@
     "lat": 47.2518591,
     "lng": 9.4191601,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Klettergarten Widderalpstöck"
   },
   {
     "id": "die-brennende-alp-meglisalp",
@@ -762,7 +771,8 @@
     "lat": 47.2557394,
     "lng": 9.3854457,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Meglisalp"
   },
   {
     "id": "das-maennlein-vom-schaefler",
@@ -813,7 +823,8 @@
     "lat": 47.275965,
     "lng": 9.3904491,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schäfler"
   },
   {
     "id": "die-verzauberte-geldtruhe-im-ebenalp-keller",
@@ -864,7 +875,8 @@
     "lat": 47.284361,
     "lng": 9.4150315,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Wildkirchli"
   },
   {
     "id": "das-toggenburger-mandli-und-die-grenzwand",
@@ -1017,7 +1029,8 @@
     "lat": 47.5551,
     "lng": 7.5852,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Basilisk"
   },
   {
     "id": "das-ewige-licht-im-basler-muenster",
@@ -1068,7 +1081,8 @@
     "lat": 47.5564238,
     "lng": 7.5922413,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Basler Münster"
   },
   {
     "id": "das-geheimnis-der-basler-rats-uhr",
@@ -1170,7 +1184,8 @@
     "lat": 47.5601485,
     "lng": 7.589726,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Mittlere Brücke"
   },
   {
     "id": "das-huhn-von-st-alban",
@@ -1272,7 +1287,8 @@
     "lat": 47.5545021,
     "lng": 7.5904861,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Barfüsserkirche"
   },
   {
     "id": "das-laellekoening-geheimnis-am-rheintor",
@@ -1374,7 +1390,8 @@
     "lat": 47.5582611,
     "lng": 7.5885155,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Basler Rathaus"
   },
   {
     "id": "das-weisse-frauelein-von-schloss-greyerz",
@@ -1425,7 +1442,8 @@
     "lat": 46.5847869,
     "lng": 7.084053,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Greyerz"
   },
   {
     "id": "die-hexen-vom-schwarzsee",
@@ -1476,7 +1494,8 @@
     "lat": 46.6651365,
     "lng": 7.280644,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schwarzsee"
   },
   {
     "id": "der-teufel-an-der-saanebruecke-freiburg",
@@ -1527,7 +1546,8 @@
     "lat": 46.8042602,
     "lng": 7.1689599,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Bernbrücke"
   },
   {
     "id": "das-wunderbare-brot-von-chatel-saint-denis",
@@ -1629,7 +1649,8 @@
     "lat": 46.8554,
     "lng": 7.1959,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Totenried"
   },
   {
     "id": "das-maennlein-vom-belprahon-mont-vully",
@@ -1680,7 +1701,8 @@
     "lat": 46.9539087,
     "lng": 7.0864781,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Grottes des Roches Grises \"La Lamberta\""
   },
   {
     "id": "die-sage-vom-katzenjunge-im-saanetal",
@@ -1986,7 +2008,8 @@
     "lat": 46.1135565,
     "lng": 6.1576686,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Salève"
   },
   {
     "id": "die-geisterfischer-von-versoix",
@@ -2190,7 +2213,8 @@
     "lat": 46.2034,
     "lng": 6.156,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Pierres du Niton"
   },
   {
     "id": "das-martinsloch-und-der-kampf-um-die-grenze-elm",
@@ -2241,7 +2265,8 @@
     "lat": 46.899628,
     "lng": 9.222414,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Pass dil Segnas"
   },
   {
     "id": "das-gespenst-vom-landesplattenberg-engi",
@@ -2292,7 +2317,8 @@
     "lat": 46.9697958,
     "lng": 9.1576368,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Landesplattenberg"
   },
   {
     "id": "der-feurige-stier-vom-kloentalersee",
@@ -2547,7 +2573,8 @@
     "lat": 46.9928949,
     "lng": 8.9891065,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Hinter Couloir"
   },
   {
     "id": "das-gespenst-vom-tour-de-lile",
@@ -2598,7 +2625,8 @@
     "lat": 46.2049713,
     "lng": 6.1432419,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Tour de l'Île"
   },
   {
     "id": "das-goldene-kegelspiel-ruchenberg-graubuenden",
@@ -2649,7 +2677,8 @@
     "lat": 46.8807123,
     "lng": 9.5720838,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Ober-Ruchenberg"
   },
   {
     "id": "das-verbot-am-pilatussee-und-der-geist-des-pontius-pilatus",
@@ -2853,7 +2882,8 @@
     "lat": 46.8677372,
     "lng": 8.2164418,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Sarnersee"
   },
   {
     "id": "das-maennlein-vom-bruenig",
@@ -2904,7 +2934,8 @@
     "lat": 46.7568632,
     "lng": 8.1369857,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Brünigpass"
   },
   {
     "id": "die-brennende-alp-auf-dem-giswilerstock",
@@ -2955,7 +2986,8 @@
     "lat": 46.8153442,
     "lng": 8.1144978,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Telti"
   },
   {
     "id": "das-nachtvolk-von-lungern",
@@ -3108,7 +3140,8 @@
     "lat": 47.3675,
     "lng": 7.1564,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Pont du Diable Saint-Ursanne"
   },
   {
     "id": "das-geheimnis-der-grotte-von-sainte-colombe-undervelier",
@@ -3159,7 +3192,8 @@
     "lat": 47.30675,
     "lng": 7.218974,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Grotte der Heiligen Columba"
   },
   {
     "id": "der-riese-von-mont-terri",
@@ -3312,7 +3346,8 @@
     "lat": 47.485081,
     "lng": 7.016056,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Grotte de Milandre"
   },
   {
     "id": "die-weisse-dame-von-schloss-porrentruy",
@@ -3363,7 +3398,8 @@
     "lat": 47.4194397,
     "lng": 7.07234,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Prison de Porrentruy, L'Orangerie"
   },
   {
     "id": "der-zauberer-vom-clos-du-doubs",
@@ -3516,7 +3552,8 @@
     "lat": 46.8791213,
     "lng": 6.7557338,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Château de Vaumarcus"
   },
   {
     "id": "das-maennlein-von-creux-du-van",
@@ -3567,7 +3604,8 @@
     "lat": 46.9320198,
     "lng": 6.7230127,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Creux du Van"
   },
   {
     "id": "das-geheimnis-der-unterirdischen-muehlen-von-le-locle",
@@ -3771,7 +3809,8 @@
     "lat": 47.0003117,
     "lng": 8.3983261,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Chätteremändli"
   },
   {
     "id": "die-weisse-frau-von-schloss-rosenburg-stans",
@@ -3822,7 +3861,8 @@
     "lat": 46.9578,
     "lng": 8.3636,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Rosenburg"
   },
   {
     "id": "das-geisterschiff-vom-vierwaldstaettersee",
@@ -4179,7 +4219,8 @@
     "lat": 47.6783615,
     "lng": 8.6148706,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Rheinfall"
   },
   {
     "id": "das-beili-maennlein-vom-munot",
@@ -4230,7 +4271,8 @@
     "lat": 47.6968942,
     "lng": 8.6398926,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Munot"
   },
   {
     "id": "der-hexenbaum-von-thayngen",
@@ -4332,7 +4374,8 @@
     "lat": 47.7338869,
     "lng": 8.6618747,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Herblingen"
   },
   {
     "id": "das-goldene-kalb-vom-randen",
@@ -4434,7 +4477,8 @@
     "lat": 47.6585392,
     "lng": 8.8602293,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kloster St. Georgen"
   },
   {
     "id": "der-unheimliche-faehrmann-von-buesingen",
@@ -4638,7 +4682,8 @@
     "lat": 47.0298789,
     "lng": 8.6885334,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Grosser Mythen"
   },
   {
     "id": "die-geisterhexe-vom-muotathal",
@@ -4842,7 +4887,8 @@
     "lat": 47.1267753,
     "lng": 8.752337,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kloster Einsiedeln"
   },
   {
     "id": "das-ungeheuer-vom-areuse-tal",
@@ -5046,7 +5092,8 @@
     "lat": 46.2601225,
     "lng": 8.8361676,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ponte dei Salti"
   },
   {
     "id": "das-gold-von-campo-vallemaggia",
@@ -5250,7 +5297,8 @@
     "lat": 46.1929023,
     "lng": 9.0217456,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Castelgrande"
   },
   {
     "id": "die-weisse-dame-von-gandria",
@@ -5352,7 +5400,8 @@
     "lat": 45.9094,
     "lng": 9.0225,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Monte Generoso"
   },
   {
     "id": "die-teufelskueche-von-giornico",
@@ -5505,7 +5554,8 @@
     "lat": 46.4142394,
     "lng": 6.9276018,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Chillon"
   },
   {
     "id": "das-ungeheuer-vom-lac-de-joux",
@@ -5556,7 +5606,8 @@
     "lat": 46.6396048,
     "lng": 6.2859274,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Lac de Joux"
   },
   {
     "id": "das-maennlein-vom-mont-tendre",
@@ -5607,7 +5658,8 @@
     "lat": 46.5947242,
     "lng": 6.3100337,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Mont Tendre"
   },
   {
     "id": "das-gespenst-von-schloss-grandson",
@@ -5811,7 +5863,8 @@
     "lat": 47.2194,
     "lng": 7.5292,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Heilige Verena"
   },
   {
     "id": "der-balmrys-der-riese-von-balm",
@@ -5862,7 +5915,8 @@
     "lat": 47.2583,
     "lng": 7.525,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Balmfluh"
   },
   {
     "id": "als-die-magyaren-st-gallen-ueberfielen",
@@ -5913,7 +5967,8 @@
     "lat": 47.4235309,
     "lng": 9.3775,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kloster St. Gallen"
   },
   {
     "id": "die-sage-vom-brueckenmaennlein-von-rapperswil-hurden",
@@ -6015,7 +6070,8 @@
     "lat": 47.602131,
     "lng": 9.0780434,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Altenklingen"
   },
   {
     "id": "der-seedaemon-vom-untersee-steckborn",
@@ -6117,7 +6173,8 @@
     "lat": 47.555201,
     "lng": 8.8968712,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Frauenfeld"
   },
   {
     "id": "die-totenprozession-von-diessenhofen",
@@ -6168,7 +6225,8 @@
     "lat": 47.6944,
     "lng": 8.7567,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Diessenhofen"
   },
   {
     "id": "die-tanzenden-eichen-von-waengi",
@@ -6270,7 +6328,8 @@
     "lat": 47.3697153,
     "lng": 8.5411996,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Fraumünster"
   },
   {
     "id": "das-manesse-gespenst-auf-der-burgruine-manegg",
@@ -6423,7 +6482,8 @@
     "lat": 47.3494459,
     "lng": 8.4919649,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Üetliberg"
   },
   {
     "id": "das-ewige-licht-im-grossmuenster",
@@ -6474,7 +6534,8 @@
     "lat": 47.3701214,
     "lng": 8.5439115,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Grossmünster"
   },
   {
     "id": "kaiser-karl-und-die-dankbare-schlange-zuerich",
@@ -6627,7 +6688,8 @@
     "lat": 47.0352051,
     "lng": 8.3562077,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Meggenhorn"
   },
   {
     "id": "der-verzauberte-schatz-auf-der-ruine-hasenburg-willisau",
@@ -6678,7 +6740,8 @@
     "lat": 47.125597,
     "lng": 8.0038736,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Hasenburg"
   },
   {
     "id": "das-ewige-licht-im-luzerner-jesuitenkloster",
@@ -6729,7 +6792,8 @@
     "lat": 47.0504383,
     "lng": 8.3051486,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Jesuitenkirche Luzern"
   },
   {
     "id": "das-goldene-kegelspiel-auf-der-ruine-alt-falkenstein",
@@ -6780,7 +6844,8 @@
     "lat": 47.3128,
     "lng": 7.6975,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Alt-Falkenstein"
   },
   {
     "id": "das-gespenst-von-schloss-buchegg",
@@ -7035,7 +7100,8 @@
     "lat": 47.6614,
     "lng": 8.9833,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Steckborn"
   },
   {
     "id": "das-erdbeben-von-1356-und-die-zerstoerung-von-madeln-pratteln",
@@ -7086,7 +7152,8 @@
     "lat": 47.5065317,
     "lng": 7.6966979,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Madeln"
   },
   {
     "id": "der-brudermord-auf-schloss-wildenstein-bubendorf",
@@ -7137,7 +7204,8 @@
     "lat": 47.4302219,
     "lng": 7.7359798,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Wildenstein"
   },
   {
     "id": "das-verlorene-kind-von-der-ruine-schauenburg-frenkendorf",
@@ -7239,7 +7307,8 @@
     "lat": 47.4930291,
     "lng": 7.8703778,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Ruine Farnsburg"
   },
   {
     "id": "das-hexen-kaethi-vom-schleifenberg-liestal",
@@ -7290,7 +7359,8 @@
     "lat": 47.4880319,
     "lng": 7.7538361,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schleifenberg"
   },
   {
     "id": "der-schatzergraeber-von-burg-pfeffingen",
@@ -7341,7 +7411,8 @@
     "lat": 47.4533128,
     "lng": 7.5918446,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Burg Pfeffingen"
   },
   {
     "id": "das-wundervoegelin-im-bruderholz",
@@ -7596,7 +7667,8 @@
     "lat": 47.4659616,
     "lng": 8.306199,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kreuzliberg"
   },
   {
     "id": "der-ausgebrochene-knochen-vor-gericht-aarg",
@@ -7647,7 +7719,8 @@
     "lat": 47.3872674,
     "lng": 8.1852444,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Lenzburg"
   },
   {
     "id": "der-stiefelreiter-aarg",
@@ -7698,7 +7771,8 @@
     "lat": 47.3502834,
     "lng": 8.3403546,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kapelle Sankt Nepomuk"
   },
   {
     "id": "die-tarnkappe-frei",
@@ -8361,7 +8435,8 @@
     "lat": 46.8324492,
     "lng": 8.1844457,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Burgruine Rudenz"
   },
   {
     "id": "die-gr-ndung-des-klosters-rheinau-scha",
@@ -8412,7 +8487,8 @@
     "lat": 47.697,
     "lng": 8.6318,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Rheinfall"
   },
   {
     "id": "der-bund-in-r-tli-schw",
@@ -8565,7 +8641,8 @@
     "lat": 47.4761663,
     "lng": 7.4923143,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kloster Mariastein"
   },
   {
     "id": "die-herren-von-hohensax-st_g",
@@ -8616,7 +8693,8 @@
     "lat": 47.2305036,
     "lng": 9.4439763,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Feuerstelle Burgruine Hohensax"
   },
   {
     "id": "die-st-galler-m-nche-erbeten-wein-st_g",
@@ -8667,7 +8745,8 @@
     "lat": 47.4245,
     "lng": 9.3767,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Stiftskirche St. Gallen"
   },
   {
     "id": "spielmann-steucheler-paracelsus-stga",
@@ -8871,7 +8950,8 @@
     "lat": 47.0575727,
     "lng": 9.4512508,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Bergwerk Gonzen"
   },
   {
     "id": "drachenloch-vaettis-pfaefers-sg",
@@ -8922,7 +9002,8 @@
     "lat": 46.9256455,
     "lng": 9.4140946,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Drachenloch"
   },
   {
     "id": "der-kaiser-und-die-schlange-zuer",
@@ -9993,7 +10074,8 @@
     "lat": 47.1661115,
     "lng": 8.5151453,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Zuger Burg"
   },
   {
     "id": "die-mordnacht-von-zug-zug",
@@ -10095,7 +10177,8 @@
     "lat": 47.1652085,
     "lng": 8.5159521,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "St. Oswaldkirche"
   },
   {
     "id": "das-blutwunder-von-zug-zug",
@@ -10299,7 +10382,8 @@
     "lat": 47.1662,
     "lng": 8.5155,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Heiligkreuz Kloster"
   },
   {
     "id": "die-altstadtmadonna-zug",
@@ -10350,7 +10434,8 @@
     "lat": 47.1662,
     "lng": 8.5155,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Altstadtkapelle Zug"
   },
   {
     "id": "teufelsbr-cke-ein-schweizer-hirte-der-fters-sein-m-dche-aarg",
@@ -10656,7 +10741,8 @@
     "lat": 46.7257531,
     "lng": 7.5136581,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Kirche Blumenstein"
   },
   {
     "id": "die-altels-bern",
@@ -10809,7 +10895,8 @@
     "lat": 46.992895,
     "lng": 8.989107,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Vrenelisgärtli"
   },
   {
     "id": "das-verlorene-tal-grau",
@@ -10911,7 +10998,8 @@
     "lat": 46.8676662,
     "lng": 9.437507,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Calanda"
   },
   {
     "id": "der-gletscher-ob-flims-grau",
@@ -11370,7 +11458,8 @@
     "lat": 47.462555,
     "lng": 8.1807018,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Habsburg"
   },
   {
     "id": "der-ritter-von-lasarraz-neuen",
@@ -11421,7 +11510,8 @@
     "lat": 46.66052514924324,
     "lng": 6.514299997029141,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Château de La Sarraz"
   },
   {
     "id": "die-durstigen-eidgenossen-solot",
@@ -11472,7 +11562,8 @@
     "lat": 47.2273187,
     "lng": 8.8157803,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Rapperswil"
   },
   {
     "id": "der-vogt-auf-schwendi-appen",
@@ -11523,7 +11614,8 @@
     "lat": 47.3166,
     "lng": 9.4166,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Burg Schwendi"
   },
   {
     "id": "uli-rotach-appen",
@@ -11829,7 +11921,8 @@
     "lat": 47.0444477,
     "lng": 7.094397,
     "koordinatenSicherheit": "exakt",
-    "isAnchorPlace": true
+    "isAnchorPlace": true,
+    "ortName": "Schloss Erlach"
   },
   {
     "id": "silberne-kirchenglocke-lac-de-joux-waadt",
