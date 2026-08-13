@@ -10,6 +10,48 @@
 /* ── Nur auf der Routen-Seite rendern ── */
 if ( ! is_page( 'routen' ) ) return;
 
+/* ════════════════════════════════════════════════════════════════
+   SEO: Alle 26 Kantone server-seitig vorladen (parallel curl_multi)
+   Ergebnis in WP-Option gecacht (6 h). Wird als verstecktes HTML
+   + JSON-LD in die Seite eingebettet → Google sieht alle Routen
+   ohne JS-Interaktion.
+   ════════════════════════════════════════════════════════════════ */
+function str_fetch_all_routes( array $kantone ): array {
+  $cache_key = 'str_all_routes_v2';
+  $cached    = get_option( $cache_key );
+  if ( $cached && isset( $cached['ts'] ) && time() - $cached['ts'] < 6 * 3600 ) {
+    return $cached['data'];
+  }
+
+  $mh      = curl_multi_init();
+  $handles = [];
+  foreach ( $kantone as $k ) {
+    $ch = curl_init( 'https://saga-trail.replit.app/api/cantons/' . rawurlencode( $k['api'] ) . '/routes' );
+    curl_setopt_array( $ch, [
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_TIMEOUT        => 20,
+      CURLOPT_SSL_VERIFYPEER => true,
+    ] );
+    curl_multi_add_handle( $mh, $ch );
+    $handles[ $k['api'] ] = $ch;
+  }
+  $active = null;
+  do { curl_multi_exec( $mh, $active ); curl_multi_select( $mh ); } while ( $active > 0 );
+
+  $all = [];
+  foreach ( $handles as $kanton => $ch ) {
+    $body       = curl_multi_getcontent( $ch );
+    $data       = json_decode( $body, true );
+    $all[ $kanton ] = is_array( $data ) ? $data : [];
+    curl_multi_remove_handle( $mh, $ch );
+    curl_close( $ch );
+  }
+  curl_multi_close( $mh );
+
+  update_option( $cache_key, [ 'ts' => time(), 'data' => $all ], false );
+  return $all;
+}
+
 /* ── Kantondaten ── */
 $str_wp = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 $str_kantone = [
@@ -40,6 +82,42 @@ $str_kantone = [
   [ 'api' => 'Zug',                    'code' => 'ZG', 'svg' => 'Wappen_Zug_matt.svg' ],
   [ 'api' => 'Zürich',                 'code' => 'ZH', 'svg' => 'Wappen_Z%C3%BCrich_matt.svg' ],
 ];
+
+/* ── Alle Routen laden (gecacht) ── */
+$str_all_routes = str_fetch_all_routes( $str_kantone );
+
+/* ── JSON-LD: alle Routen als TouristAttraction-ItemList ── */
+$ld_items = [];
+$ld_i     = 1;
+foreach ( $str_all_routes as $kanton => $routes ) {
+  foreach ( $routes as $r ) {
+    $ld_items[] = array_filter( [
+      '@type'       => 'TouristAttraction',
+      'position'    => $ld_i++,
+      'name'        => $r['name'] ?? null,
+      'description' => isset( $r['description'] )
+        ? wp_strip_all_tags( $r['description'] )
+        : null,
+      'url'         => 'https://apps.apple.com/de/app/sagatrail/id6788260668',
+      'touristType' => 'Wanderer',
+      'geo'         => isset( $r['startLat'], $r['startLng'] ) ? [
+        '@type'     => 'GeoCoordinates',
+        'latitude'  => $r['startLat'],
+        'longitude' => $r['startLng'],
+      ] : null,
+      'containedInPlace' => [ '@type' => 'AdministrativeArea', 'name' => $kanton . ', Schweiz' ],
+    ] );
+    if ( $ld_i > 500 ) break 2; /* Limit für JSON-LD-Grösse */
+  }
+}
+echo '<script type="application/ld+json">' . wp_json_encode( [
+  '@context'        => 'https://schema.org',
+  '@type'           => 'ItemList',
+  'name'            => 'SagaTrail – Wanderrouten Schweiz',
+  'description'     => 'GPS-geführte Sagenwanderungen in allen 26 Schweizer Kantonen.',
+  'numberOfItems'   => count( $ld_items ),
+  'itemListElement' => $ld_items,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>';
 ?>
 <style>
 .str-wrap*,.str-wrap *::before,.str-wrap *::after{box-sizing:border-box;margin:0;padding:0}
@@ -304,6 +382,32 @@ $str_kantone = [
       <a href="https://play.google.com/store/apps/details?id=com.inster.sagatrail" class="str-cta-btn str-cta-btn-out" target="_blank" rel="noopener">▶ &nbsp;Google Play</a>
     </div>
   </div>
+</div>
+
+<!-- SEO: Alle Routen als crawlbares HTML (für Google, ohne JS-Interaktion) -->
+<div id="str-seo" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">
+  <h2>Wanderrouten in der Schweiz nach Kanton</h2>
+  <?php foreach ( $str_all_routes as $kanton => $routes ) : if ( empty( $routes ) ) continue; ?>
+  <section>
+    <h3>Wanderrouten <?php echo esc_html( $kanton ); ?> (<?php echo count( $routes ); ?> Routen)</h3>
+    <ul>
+      <?php foreach ( array_slice( $routes, 0, 40 ) as $r ) :
+        $km  = $r['distanceTagKm'] ?? $r['distanceKm'] ?? null;
+        $hm  = $r['ascentM'] ?? null;
+        $sac = $r['sac'] ?? null;
+        $desc = isset( $r['description'] ) ? wp_strip_all_tags( $r['description'] ) : '';
+      ?>
+      <li>
+        <strong><?php echo esc_html( $r['name'] ?? '' ); ?></strong>
+        <?php if ( $km )  echo ' · ' . esc_html( round( (float) $km, 1 ) ) . ' km'; ?>
+        <?php if ( $hm )  echo ' · +' . esc_html( (int) $hm ) . ' hm'; ?>
+        <?php if ( $sac ) echo ' · ' . esc_html( $sac ); ?>
+        <?php if ( $desc ) echo ' — ' . esc_html( mb_substr( $desc, 0, 140 ) ) . '…'; ?>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
+  <?php endforeach; ?>
 </div>
 
 </div><!-- .str-wrap -->
