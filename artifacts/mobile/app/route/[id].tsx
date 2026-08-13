@@ -419,7 +419,7 @@ export default function Routenplanung() {
   useEffect(() => {
     if (!route?.coordinates) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route.geometry, route.coordinates);
+    const bbox = bboxAroundGeometry(route.geometry, route.coordinates, 5.0);
     getPartners(bbox)
       .then((result) => {
         if (!cancelled) setPartners(result);

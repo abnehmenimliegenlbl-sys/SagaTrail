@@ -1069,7 +1069,7 @@ export default function LiveHike() {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
     if (!center) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, center);
+    const bbox = bboxAroundGeometry(route?.geometry, center, 5.0);
     getPartners(bbox)
       .then((result) => {
         if (!cancelled) setPartners(result);
