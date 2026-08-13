@@ -49,7 +49,7 @@ if ( ! function_exists( 'str_routes_ajax_handler' ) ) {
 }
 
 /* ── Nur auf der Routen-Seite rendern ──────────────────────────────────── */
-if ( ! is_page( 'routen' ) && ! ( defined('DOING_AJAX') && DOING_AJAX ) ) return;
+if ( ! is_page( 'routen' ) ) return;
 
 /* ── Kanton-Daten (API-Name → ISO-Kürzel) ──────────────────────────────── */
 $str_kantone = [
@@ -344,7 +344,7 @@ $str_ajax_url = admin_url( 'admin-ajax.php' );
       <div class="str-kanton-grid" id="str-kanton-grid">
         <?php foreach ( $str_kantone as $k ) :
           $code_lc  = strtolower( $k['code'] );
-          $wappen   = 'https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/img/wappen/' . $k['code'] . '.svg';
+          $wappen   = 'https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/symbols/13x13/' . strtolower( $k['code'] ) . '.svg';
         ?>
         <div class="str-kanton-card"
              data-api="<?php echo esc_attr( $k['api'] ); ?>"
@@ -376,8 +376,13 @@ $str_ajax_url = admin_url( 'admin-ajax.php' );
       <div class="str-filter-card">
         <div class="str-filter-header">
           <div class="str-filter-icon">
-            <svg fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-              <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            <svg fill="none" stroke="white" stroke-width="1.8" viewBox="0 0 24 24">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <circle cx="8"  cy="6"  r="2.2" fill="white" stroke="none"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <circle cx="16" cy="12" r="2.2" fill="white" stroke="none"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+              <circle cx="11" cy="18" r="2.2" fill="white" stroke="none"/>
             </svg>
           </div>
           <span class="str-filter-title-text">Filter</span>
@@ -486,20 +491,49 @@ $str_ajax_url = admin_url( 'admin-ajax.php' );
     var lo   = document.getElementById(idLo);
     var hi   = document.getElementById(idHi);
     var fill = document.getElementById(fillId);
-    function sync() {
+    var wrap = fill.closest('.str-dual-range');
+
+    /* Initialer z-index: lo oben, damit linker Thumb immer klickbar */
+    lo.style.zIndex = 3;
+    hi.style.zIndex = 2;
+
+    function updateFill() {
       var mn = parseFloat(lo.min), mx = parseFloat(lo.max);
       var vLo = parseFloat(lo.value), vHi = parseFloat(hi.value);
-      if (vLo > vHi) { lo.value = vHi; vLo = vHi; }
-      if (vHi < vLo) { hi.value = vLo; vHi = vLo; }
       var pLo = (vLo - mn) / (mx - mn) * 100;
       var pHi = (vHi - mn) / (mx - mn) * 100;
       fill.style.left  = pLo + '%';
       fill.style.width = (pHi - pLo) + '%';
-      onUpdate(vLo, vHi);
     }
-    lo.addEventListener('input', sync);
-    hi.addEventListener('input', sync);
-    sync();
+
+    /* Vor mousedown/touchstart: näherster Thumb bekommt z-index 3 */
+    function pickClosest(clientX) {
+      var rect = wrap.getBoundingClientRect();
+      var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      var mn   = parseFloat(lo.min), mx = parseFloat(lo.max);
+      var pLo  = (parseFloat(lo.value) - mn) / (mx - mn);
+      var pHi  = (parseFloat(hi.value) - mn) / (mx - mn);
+      if (Math.abs(pct - pLo) <= Math.abs(pct - pHi)) {
+        lo.style.zIndex = 3; hi.style.zIndex = 2;
+      } else {
+        hi.style.zIndex = 3; lo.style.zIndex = 2;
+      }
+    }
+    wrap.addEventListener('mousedown',  function(e){ pickClosest(e.clientX); });
+    wrap.addEventListener('touchstart', function(e){ if(e.touches[0]) pickClosest(e.touches[0].clientX); }, {passive:true});
+
+    function sync(mover) {
+      var mn = parseFloat(lo.min), mx = parseFloat(lo.max);
+      var vLo = parseFloat(lo.value), vHi = parseFloat(hi.value);
+      if (mover === 'lo' && vLo > vHi) { lo.value = vHi; vLo = vHi; }
+      if (mover === 'hi' && vHi < vLo) { hi.value = vLo; vHi = vLo; }
+      updateFill();
+      onUpdate(parseFloat(lo.value), parseFloat(hi.value));
+    }
+    lo.addEventListener('input', function(){ sync('lo'); });
+    hi.addEventListener('input', function(){ sync('hi'); });
+    updateFill();
+    onUpdate(parseFloat(lo.value), parseFloat(hi.value));
   }
 
   initDual('str-dist-lo', 'str-dist-hi', 'str-dist-fill', function (lo, hi) {
