@@ -813,6 +813,37 @@ function strPinIcon(open){
     +'</svg>';
   return L.divIcon({html:svg,iconSize:[14,20],iconAnchor:[7,20],className:''});
 }
+function strPartnerIcon(kat,open){
+  var col=open===false?'#888':'#DA291C';
+  var k=(kat||'').toLowerCase();
+  var icon;
+  if(k.includes('restaurant')||k.includes('cuisine')||k.includes('food')){
+    /* Gabeln + Messer */
+    icon='<path d="M8 5.5v5M10.5 5.5v2a2 2 0 0 0 2 2v-4" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+  } else if(k.includes('hotel')||k.includes('unterkunft')||k.includes('hostel')||k.includes('hütte')||k.includes('huette')){
+    /* Bett */
+    icon='<path d="M6.5 12V8h7v4M6.5 10.5h7" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+        +'<rect x="7.5" y="8.5" width="2.2" height="1.8" rx="0.4" fill="'+col+'" opacity="0.75"/>';
+  } else if(k.includes('bar')||k.includes('wein')||k.includes('wine')||k.includes('cocktail')){
+    /* Weinglas */
+    icon='<path d="M7.5 5.5h5L11 9.5H9L7.5 5.5M10 9.5V12M8 12h4" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+  } else if(k.includes('café')||k.includes('cafe')||k.includes('kaffee')||k.includes('coffee')){
+    /* Kaffeetasse */
+    icon='<path d="M7.5 8h5v3a2.5 2.5 0 0 1-5 0V8M12.5 9c.8 0 1.5-.7 1.5-1.5" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+        +'<path d="M9.2 7q.4-1.2 1-1.2t.9 1.2" stroke="'+col+'" stroke-width="1.1" fill="none"/>';
+  } else if(k.includes('shop')||k.includes('laden')||k.includes('markt')||k.includes('store')){
+    /* Einkaufstasche */
+    icon='<path d="M7.5 9h5v4h-5V9M9 9V7.5a1 1 0 0 1 2 0V9" stroke="'+col+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+  } else {
+    icon='<circle cx="10" cy="9" r="2.5" fill="'+col+'" opacity="0.8"/>';
+  }
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="28" viewBox="0 0 20 28">'
+    +'<path d="M10 1C5.582 1 2 4.582 2 9c0 6.627 8 18 8 18s8-11.373 8-18C18 4.582 14.418 1 10 1z" fill="'+col+'" stroke="#fff" stroke-width="1.5"/>'
+    +'<circle cx="10" cy="9" r="6.2" fill="white" opacity="0.93"/>'
+    +icon
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[20,28],iconAnchor:[10,28],className:''});
+}
 
 function strAddExtrasToMap(pois,partners){
   pois.forEach(function(p){
@@ -824,8 +855,8 @@ function strAddExtrasToMap(pois,partners){
   partners.forEach(function(p){
     if(!p.lat||!p.lng)return;
     var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
-    var m=L.marker([p.lat,p.lng],{icon:strPinIcon(p.istOffen)})
-      .bindTooltip(label,{direction:'top',offset:[0,-22]});
+    var m=L.marker([p.lat,p.lng],{icon:strPartnerIcon(p.kategorie,p.istOffen)})
+      .bindTooltip(label,{direction:'top',offset:[0,-30]});
     m.addTo(_strMap);_strExtras.push(m);
   });
 }
@@ -841,7 +872,7 @@ function strLoadMapExtras(bounds,isRetry){
     var partners=Array.isArray(results[1])?results[1]:[];
     /* POIs beim 1. Aufruf leer → Overpass lädt im Hintergrund; 12s warten + 1x retry */
     if(!isRetry&&pois.length===0){
-      setTimeout(function(){if(_strMap)strLoadMapExtras(bounds,true);},12000);
+      setTimeout(function(){if(_strMap)strLoadMapExtras(bounds,true);},45000);
     }
     strAddExtrasToMap(pois,partners);
   });
