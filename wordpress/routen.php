@@ -231,9 +231,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-ww-text{display:flex;flex-direction:column;min-width:0;flex:1}
 .str-ww-titel{color:#fff;font-size:19px;line-height:22px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .str-ww-zeile{color:#fff;font-size:12px;line-height:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* Pfeilspitze */
-.str-ww-tip{width:0;height:0;border-top-style:solid;border-top-color:transparent;border-bottom-style:solid;border-bottom-color:transparent;border-left-style:solid;flex-shrink:0;position:relative}
-.str-ww-balken{position:absolute;left:0;top:50%;transform:translateY(-50%);width:62%}
+/* Pfeilspitze — via clip-path inline generiert, kein eigenes CSS nötig */
 /* Modal Tags */
 .str-tag{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:2px 7px;font-size:.72rem;font-weight:600;white-space:nowrap}
 .str-tag-dist{background:#f0f0f0;color:#444}
@@ -656,14 +654,19 @@ function makeWegweiser(name,sac,wpUrl){
   var txt='<span class="str-ww-titel">'+esc(d.titel)+'</span>';
   if(d.etappe) txt+='<span class="str-ww-zeile">'+esc(d.etappe)+'</span>';
   if(d.strecke) txt+='<span class="str-ww-zeile">'+esc(d.strecke)+'</span>';
-  /* Balken */
-  var balkenH=balken?'<div class="str-ww-balken" style="background:'+balken+';height:'+Math.round(h*0.18)+'px"></div>':'';
+  /* Pfeilspitze via clip-path — so kann der Balken absolut positioniert werden */
+  var bh=Math.round(h*0.18);
+  var tip='<div style="width:'+sw+'px;height:'+h+'px;flex-shrink:0;position:relative;'
+    +'clip-path:polygon(0 0,100% 50%,0 100%)">'
+    +'<div style="position:absolute;inset:0;background:'+tipClr+'"></div>'
+    +(balken?'<div style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:'+bh+'px;background:'+balken+'"></div>':'')
+    +'</div>';
   return '<div class="str-ww" style="height:'+h+'px">'
     +'<div class="str-ww-body" style="height:'+h+'px">'
     +(d.nummer?'<div class="str-ww-green" style="width:'+(h-8)+'px;height:'+(h-8)+'px">'+green+'</div>':'')
     +'<div class="str-ww-text">'+txt+'</div>'
     +'</div>'
-    +'<div class="str-ww-tip" style="border-top-width:'+Math.round(h/2)+'px;border-bottom-width:'+Math.round(h/2)+'px;border-left-width:'+sw+'px;border-left-color:'+tipClr+'">'+balkenH+'</div>'
+    +tip
     +'</div>';
 }
 
