@@ -233,6 +233,16 @@ const server = app.listen(port, async (err) => {
     logger.warn("DATABASE_URL fehlt — Stripe-Init übersprungen");
   }
 
+  // Schema-Migration: neue Spalten die per ALTER TABLE hinzugefügt wurden,
+  // aber noch nicht in der Prod-DB existieren (IF NOT EXISTS = idempotent).
+  try {
+    await db.execute(
+      sql`ALTER TABLE catalog_sagas ADD COLUMN IF NOT EXISTS ort_name TEXT`
+    );
+  } catch (colErr) {
+    logger.warn({ err: colErr }, "Spalten-Migration ort_name fehlgeschlagen (nicht kritisch)");
+  }
+
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.
   try {
     await seedCatalog();

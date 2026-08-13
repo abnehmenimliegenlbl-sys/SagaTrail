@@ -1130,10 +1130,11 @@
       }
     },
     "source": "Manual Upload",
-    "lat": 47.5556,
-    "lng": 7.5894,
-    "koordinatenSicherheit": "Muss GPS Verifiziert werden",
-    "isAnchorPlace": true
+    "lat": 47.5582611,
+    "lng": 7.5885155,
+    "koordinatenSicherheit": "exakt",
+    "isAnchorPlace": true,
+    "ortName": "Basler Rathaus"
   },
   {
     "id": "das-wunder-der-elftausend-jungfrauen",
