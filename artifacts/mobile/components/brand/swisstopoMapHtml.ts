@@ -800,11 +800,15 @@ ${legendHtml}
       if (partnerEls.length) zoomGroups.push({ els: partnerEls, minZoom: 13 });
     };
 
-    /* Saga-Pin: kleines SagaTrail-Icon an der Sagen-Koordinate */
+    /* Saga-Pin: kleines SagaTrail-Icon an der Sagen-Koordinate.
+       _sttSagaMarker hält den aktuellen MapLibre-Marker, damit er bei einem
+       Wechsel (andere Sage, gleiche Karte) entfernt werden kann, bevor der
+       neue gesetzt wird. */
     var SAGA_B64 = 'data:image/png;base64,${SAGA_PIN_B64}';
+    var _sttSagaMarker = null;
     _sttApply.sagaPin = function(pin) {
-      if (!pin || pin.applied) return;
-      pin.applied = true;
+      if (_sttSagaMarker) { _sttSagaMarker.remove(); _sttSagaMarker = null; }
+      if (!pin) return;
       var wrap = document.createElement('div');
       wrap.className = 'stt-saga-tipp';
       var img = document.createElement('img');
@@ -813,7 +817,7 @@ ${legendHtml}
       wrap.appendChild(img);
       var popup = new maplibregl.Popup({ offset: [0, -4], maxWidth: '200px' })
         .setHTML('<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;font-weight:600;color:#10181A;padding:2px 0">' + (pin.name || 'Sage') + '</div>');
-      new maplibregl.Marker({ element: wrap, anchor: 'bottom' })
+      _sttSagaMarker = new maplibregl.Marker({ element: wrap, anchor: 'bottom' })
         .setLngLat([pin.lng, pin.lat])
         .setPopup(popup)
         .addTo(map);
