@@ -642,16 +642,14 @@ function makeWegweiser(name,sac,wpUrl){
       green=(wpUrl?'<img class="str-ww-wp-lg" src="'+esc(wpUrl)+'" alt="">':'')
         +'<span class="str-ww-num-sm">K'+esc(d.nummer)+'-'+esc(d.kategorie)+'</span>';
     } else {
-      /* National / Regional / Lokal */
-      var katTxt=d.kategorie?d.kategorie.replace(' ','\n'):'';
-      var katHtml=katTxt?'<span class="str-ww-kat">'+esc(katTxt)+'</span>':'';
+      /* National / Regional / Lokal — kein Kategorie-Text */
       var emblem='';
       if(d.kategorie==='Wanderland national'){
         emblem='<div class="str-ww-flag"><div class="str-ww-fh"></div><div class="str-ww-fv"></div></div>';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
-      green=katHtml+'<div class="str-ww-numrow">'+emblem+'<span class="str-ww-num">'+esc(d.nummer)+'</span></div>';
+      green='<div class="str-ww-numrow" style="height:100%">'+emblem+'<span class="str-ww-num">'+esc(d.nummer)+'</span></div>';
     }
   }
   /* Beschriftung */
