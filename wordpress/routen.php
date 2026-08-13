@@ -753,7 +753,7 @@ function renderRoutes(){
     var mins=r.minutes||0, h2=Math.floor(mins/60), m2=mins%60;
     var season=r.season==='ganzjaehrig'?'Ganzjährig':r.season==='nur_sommer'?'Nur Sommer':r.season==='eher_sommer'?'Eher Sommer':'';
     var bar=[
-      sac||'SAC unbekannt',
+      sac?'SAC '+sac:'SAC unbekannt',
       km?parseFloat(km).toFixed(1)+' km':null,
       r.ascentM?'+'+Math.round(r.ascentM)+' hm':null,
       mins?(h2+':'+(m2<10?'0':'')+m2+' h'):null,
