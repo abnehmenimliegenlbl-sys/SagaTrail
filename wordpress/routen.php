@@ -1,51 +1,13 @@
 <?php
 /**
  * SagaTrail Routen — WPCode PHP Snippet
- * ⚠️  WPCode-Einstellung: Typ = PHP-Snippet, Ort = ÜBERALL (Everywhere)
- *     Nur "Überall" stellt sicher dass der REST-Endpoint auf allen Anfragen
- *     registriert wird — nicht nur auf der Routen-Seite.
+ * Typ: PHP Snippet · Ort: Nur auf der Routen-Seite (oder Überall)
+ *
+ * Routen werden direkt vom Browser via fetch() geladen —
+ * die API erlaubt CORS für sagatrail.ch explizit.
  */
 
-/* ══════════════════════════════════════════════════════════════
-   REST-API-ENDPOINT  /wp-json/str/v1/routes?kanton=Aargau
-   Läuft server-seitig mit WP-Transient-Cache (6h).
-   ══════════════════════════════════════════════════════════════ */
-add_action( 'rest_api_init', function () {
-  register_rest_route( 'str/v1', '/routes', [
-    'methods'             => 'GET',
-    'permission_callback' => '__return_true',
-    'callback'            => function ( WP_REST_Request $req ) {
-      $valid = [
-        'Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden',
-        'Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Genf','Glarus',
-        'Graubünden','Jura','Luzern','Neuenburg','Nidwalden','Obwalden',
-        'Schaffhausen','Schwyz','Solothurn','St. Gallen','Tessin','Thurgau',
-        'Uri','Waadt','Wallis','Zug','Zürich',
-      ];
-      $kanton = sanitize_text_field( $req->get_param( 'kanton' ) ?? '' );
-      if ( ! in_array( $kanton, $valid, true ) ) {
-        return new WP_Error( 'invalid_kanton', 'Ungültiger Kanton', [ 'status' => 400 ] );
-      }
-      $key    = 'str_v1_' . md5( $kanton );
-      $routes = get_transient( $key );
-      if ( false === $routes ) {
-        $resp = wp_remote_get(
-          'https://saga-trail.replit.app/api/cantons/' . rawurlencode( $kanton ) . '/routes',
-          [ 'timeout' => 20 ]
-        );
-        $routes = ( ! is_wp_error( $resp ) && 200 === (int) wp_remote_retrieve_response_code( $resp ) )
-          ? ( json_decode( wp_remote_retrieve_body( $resp ), true ) ?: [] )
-          : [];
-        set_transient( $key, $routes, 6 * HOUR_IN_SECONDS );
-      }
-      return rest_ensure_response( $routes );
-    },
-  ] );
-} );
-
-/* ══════════════════════════════════════════════════════════════
-   NUR AUF DER ROUTEN-SEITE rendern
-   ══════════════════════════════════════════════════════════════ */
+/* ── Nur auf der Routen-Seite rendern ── */
 if ( ! is_page( 'routen' ) ) return;
 
 /* ── Kantondaten ── */
@@ -471,7 +433,7 @@ window.strSelectKanton=function(api,el){
 /* ── REST-API Fetch (server-seitig, WP-Transient-Cache) ── */
 function preload(kanton){
   if(cache[kanton]){S.routes=cache[kanton];recount();return;}
-  fetch('/wp-json/str/v1/routes?kanton='+encodeURIComponent(kanton))
+  fetch('https://saga-trail.replit.app/api/cantons/'+encodeURIComponent(kanton)+'/routes')
     .then(function(r){return r.json();})
     .then(function(d){cache[kanton]=Array.isArray(d)?d:[];if(S.kanton===kanton){S.routes=cache[kanton];recount();}})
     .catch(function(){});
@@ -489,7 +451,7 @@ window.strSearch=function(){
     list.innerHTML='<div class="str-spinner"><div class="str-spinner-ring"></div></div>';
     S.loading=true;
     document.getElementById('str-search-btn').disabled=true;
-    fetch('/wp-json/str/v1/routes?kanton='+encodeURIComponent(S.kanton))
+    fetch('https://saga-trail.replit.app/api/cantons/'+encodeURIComponent(S.kanton)+'/routes')
       .then(function(r){return r.json();})
       .then(function(d){
         cache[S.kanton]=Array.isArray(d)?d:[];
