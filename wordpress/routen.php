@@ -11,18 +11,16 @@
 /* ── AJAX-Handler: liefert Routen für einen Kanton ────────────────────── */
 if ( ! function_exists( 'str_routes_ajax_handler' ) ) {
 
-  $str_kantone_valid = [
-    'Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden',
-    'Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Genf','Glarus',
-    'Graubünden','Jura','Luzern','Neuenburg','Nidwalden','Obwalden',
-    'Schaffhausen','Schwyz','Solothurn','St. Gallen','Tessin','Thurgau',
-    'Uri','Waadt','Wallis','Zug','Zürich',
-  ];
-
   function str_routes_ajax_handler() {
-    global $str_kantone_valid;
+    $valid = [
+      'Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden',
+      'Basel-Landschaft','Basel-Stadt','Bern','Freiburg','Genf','Glarus',
+      'Graubünden','Jura','Luzern','Neuenburg','Nidwalden','Obwalden',
+      'Schaffhausen','Schwyz','Solothurn','St. Gallen','Tessin','Thurgau',
+      'Uri','Waadt','Wallis','Zug','Zürich',
+    ];
     $kanton = isset( $_GET['kanton'] ) ? sanitize_text_field( wp_unslash( $_GET['kanton'] ) ) : '';
-    if ( ! in_array( $kanton, $str_kantone_valid, true ) ) {
+    if ( ! in_array( $kanton, $valid, true ) ) {
       wp_send_json_error( 'Ungültiger Kanton', 400 );
     }
 
@@ -494,45 +492,49 @@ $str_ajax_url = admin_url( 'admin-ajax.php' );
     var fill = document.getElementById(fillId);
     var wrap = fill.closest('.str-dual-range');
 
-    /* Initialer z-index: lo oben, damit linker Thumb immer klickbar */
-    lo.style.zIndex = 3;
-    hi.style.zIndex = 2;
+    /* Beide Inputs: pointer-events dynamisch per mousemove gesteuert.
+       Nur der Thumb näher am Cursor bekommt pointer-events:auto —
+       so kann kein Input den anderen verdecken. */
+    lo.style.pointerEvents = 'none';
+    hi.style.pointerEvents = 'none';
 
-    function updateFill() {
-      var mn = parseFloat(lo.min), mx = parseFloat(lo.max);
-      var vLo = parseFloat(lo.value), vHi = parseFloat(hi.value);
-      var pLo = (vLo - mn) / (mx - mn) * 100;
-      var pHi = (vHi - mn) / (mx - mn) * 100;
-      fill.style.left  = pLo + '%';
-      fill.style.width = (pHi - pLo) + '%';
-    }
-
-    /* Vor mousedown/touchstart: näherster Thumb bekommt z-index 3 */
-    function pickClosest(clientX) {
+    function activateClosest(clientX) {
       var rect = wrap.getBoundingClientRect();
       var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
       var mn   = parseFloat(lo.min), mx = parseFloat(lo.max);
       var pLo  = (parseFloat(lo.value) - mn) / (mx - mn);
       var pHi  = (parseFloat(hi.value) - mn) / (mx - mn);
       if (Math.abs(pct - pLo) <= Math.abs(pct - pHi)) {
-        lo.style.zIndex = 3; hi.style.zIndex = 2;
+        lo.style.pointerEvents = 'auto';
+        hi.style.pointerEvents = 'none';
       } else {
-        hi.style.zIndex = 3; lo.style.zIndex = 2;
+        hi.style.pointerEvents = 'auto';
+        lo.style.pointerEvents = 'none';
       }
     }
-    wrap.addEventListener('mousedown',  function(e){ pickClosest(e.clientX); });
-    wrap.addEventListener('touchstart', function(e){ if(e.touches[0]) pickClosest(e.touches[0].clientX); }, {passive:true});
+
+    wrap.addEventListener('mousemove', function(e) { activateClosest(e.clientX); });
+    wrap.addEventListener('touchstart', function(e) {
+      if (e.touches[0]) activateClosest(e.touches[0].clientX);
+    }, { passive: true });
+
+    function updateFill() {
+      var mn = parseFloat(lo.min), mx = parseFloat(lo.max);
+      var pLo = (parseFloat(lo.value) - mn) / (mx - mn) * 100;
+      var pHi = (parseFloat(hi.value) - mn) / (mx - mn) * 100;
+      fill.style.left  = pLo + '%';
+      fill.style.width = (pHi - pLo) + '%';
+    }
 
     function sync(mover) {
-      var mn = parseFloat(lo.min), mx = parseFloat(lo.max);
       var vLo = parseFloat(lo.value), vHi = parseFloat(hi.value);
-      if (mover === 'lo' && vLo > vHi) { lo.value = vHi; vLo = vHi; }
-      if (mover === 'hi' && vHi < vLo) { hi.value = vLo; vHi = vLo; }
+      if (mover === 'lo' && vLo > vHi) { lo.value = vHi; }
+      if (mover === 'hi' && vHi < vLo) { hi.value = vLo; }
       updateFill();
       onUpdate(parseFloat(lo.value), parseFloat(hi.value));
     }
-    lo.addEventListener('input', function(){ sync('lo'); });
-    hi.addEventListener('input', function(){ sync('hi'); });
+    lo.addEventListener('input', function() { sync('lo'); });
+    hi.addEventListener('input', function() { sync('hi'); });
     updateFill();
     onUpdate(parseFloat(lo.value), parseFloat(hi.value));
   }
