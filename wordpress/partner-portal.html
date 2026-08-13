@@ -718,7 +718,10 @@
           document.getElementById('spp-foto-card').style.display = 'block';
           if (p.fotoUrl) {
             var preview = document.getElementById('spp-foto-preview');
-            preview.src = p.fotoUrl.startsWith('/api') ? API_BASE + p.fotoUrl : p.fotoUrl;
+            var fotoSrc = p.fotoUrl.startsWith('/api') ? API_BASE + p.fotoUrl : p.fotoUrl;
+            // Cache-Buster: verhindert dass Browser nach einem Foto-Wechsel das
+            // alte gecachte Bild zeigt (Server setzt max-age=86400).
+            preview.src = fotoSrc + (fotoSrc.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
             preview.style.display = 'block';
           }
         }
@@ -826,11 +829,6 @@
     img.onload = function() {
       URL.revokeObjectURL(objectUrl);
 
-      // Vorschau setzen
-      var p = document.getElementById('spp-foto-preview');
-      p.src = img.src;
-      p.style.display = 'block';
-
       // Canvas-Resize auf max 1200px Breite
       var MAX = 1200;
       var w = img.width, h = img.height;
@@ -839,6 +837,11 @@
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+      // Sofort-Vorschau mit lokalem dataUrl (zuverlässiger als revokede Blob-URL)
+      var p = document.getElementById('spp-foto-preview');
+      p.src = dataUrl;
+      p.style.display = 'block';
 
       // Upload als JSON
       prog.style.display = 'block';
@@ -855,6 +858,11 @@
         setTimeout(function(){ prog.style.display = 'none'; bar.style.width = '0%'; }, 800);
         if (d.ok) {
           showMsg('spp-foto-msg', 'Foto erfolgreich hochgeladen!', true);
+          // Vorschau auf echte Server-URL aktualisieren (cache-buster verhindert
+          // dass der Browser beim nächsten Laden das alte gecachte Bild zeigt)
+          if (d.fotoUrl) {
+            p.src = d.fotoUrl + '?t=' + Date.now();
+          }
         } else {
           showMsg('spp-foto-msg', 'Upload fehlgeschlagen: ' + (d.error || 'Unbekannter Fehler.'), false);
         }
