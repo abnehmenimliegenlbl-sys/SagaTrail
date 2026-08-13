@@ -16,6 +16,7 @@ if ( ! is_page( 'routen' ) ) return;
    + JSON-LD in die Seite eingebettet → Google sieht alle Routen
    ohne JS-Interaktion.
    ════════════════════════════════════════════════════════════════ */
+if ( ! function_exists( 'str_fetch_all_routes' ) ) :
 function str_fetch_all_routes( array $kantone ): array {
   $cache_key = 'str_all_routes_v2';
   $cached    = get_option( $cache_key );
@@ -51,6 +52,7 @@ function str_fetch_all_routes( array $kantone ): array {
   update_option( $cache_key, [ 'ts' => time(), 'data' => $all ], false );
   return $all;
 }
+endif;
 
 /* ── Kantondaten ── */
 $str_wp = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
