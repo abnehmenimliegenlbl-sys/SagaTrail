@@ -835,29 +835,36 @@ function strEmojiIcon(emoji,open){
   });
 }
 
-function strLoadMapExtras(bounds){
+function strAddExtrasToMap(pois,partners){
+  pois.forEach(function(p){
+    if(!p.lat||!p.lng)return;
+    var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPoiEmoji(p.kind))})
+      .bindTooltip(esc(p.name||p.kind),{direction:'top',offset:[0,-10]});
+    m.addTo(_strMap);_strExtras.push(m);
+  });
+  partners.forEach(function(p){
+    if(!p.lat||!p.lng)return;
+    var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
+    var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPartnerEmoji(p.kategorie),p.istOffen)})
+      .bindTooltip(label,{direction:'top',offset:[0,-10]});
+    m.addTo(_strMap);_strExtras.push(m);
+  });
+}
+
+function strLoadMapExtras(bounds,isRetry){
   var q='south='+bounds.getSouth()+'&west='+bounds.getWest()+'&north='+bounds.getNorth()+'&east='+bounds.getEast();
   var base='https://saga-trail.replit.app/api';
-  /* POIs und Partner parallel laden */
   Promise.all([
     fetch(base+'/routes/pois?'+q).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}),
     fetch(base+'/routes/partners?'+q).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];})
   ]).then(function(results){
     var pois=Array.isArray(results[0])?results[0]:[];
     var partners=Array.isArray(results[1])?results[1]:[];
-    pois.forEach(function(p){
-      if(!p.lat||!p.lng)return;
-      var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPoiEmoji(p.kind))})
-        .bindTooltip(esc(p.name||p.kind),{direction:'top',offset:[0,-10]});
-      m.addTo(_strMap);_strExtras.push(m);
-    });
-    partners.forEach(function(p){
-      if(!p.lat||!p.lng)return;
-      var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
-      var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPartnerEmoji(p.kategorie),p.istOffen)})
-        .bindTooltip(label,{direction:'top',offset:[0,-10]});
-      m.addTo(_strMap);_strExtras.push(m);
-    });
+    /* POIs beim 1. Aufruf leer → Overpass lädt im Hintergrund; 12s warten + 1x retry */
+    if(!isRetry&&pois.length===0){
+      setTimeout(function(){if(_strMap)strLoadMapExtras(bounds,true);},12000);
+    }
+    strAddExtrasToMap(pois,partners);
   });
 }
 
