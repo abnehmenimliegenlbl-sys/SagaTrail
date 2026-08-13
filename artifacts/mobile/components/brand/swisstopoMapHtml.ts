@@ -621,7 +621,7 @@ ${legendHtml}
         var pin = document.createElement('div');
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
         if (p.istOffen === true)  pin.classList.add('stt-partner-pin--open');
-        if (p.istOffen === false) pin.classList.add('stt-partner-pin--closed');
+        if (p.istOffen !== true)  pin.classList.add('stt-partner-pin--closed');
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
         /* touchend feuert sofort (kein 300ms-Delay); click als Fallback fuer
@@ -832,7 +832,7 @@ ${legendHtml}
         var pin = document.createElement('div');
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
         if (p.istOffen === true)  pin.classList.add('stt-partner-pin--open');
-        if (p.istOffen === false) pin.classList.add('stt-partner-pin--closed');
+        if (p.istOffen !== true)  pin.classList.add('stt-partner-pin--closed');
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
         (function(id) {
