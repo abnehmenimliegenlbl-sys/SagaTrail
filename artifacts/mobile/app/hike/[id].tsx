@@ -2179,11 +2179,20 @@ export default function LiveHike() {
       // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
       // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
       // Offline-Audio bevorzugen wenn vorhanden — kein Netzwerk noetig.
+      // capturedIndex sichert den Index zum Zeitpunkt des Effect-Aufrufens.
+      // Nach dem async getOfflineAudioUri-Await kann der User bereits eine
+      // Entscheidung getroffen haben (chooseOption → Ack laeuft). Ohne
+      // diese Pruefung wuerde speak(..., {interrupt:true}) den Ack unterbrechen
+      // und den Kapiteltext erneut abspielen — das ist Bug "Frage zweimal gestellt".
+      const capturedIndex = currentIndex;
       (async () => {
         const offlineUri = saga?.id
-          ? await getOfflineAudioUri(saga.id, currentIndex).catch(() => null)
+          ? await getOfflineAudioUri(saga.id, capturedIndex).catch(() => null)
           : null;
-        if (currentIndex === 0) {
+        // Abbrechen wenn GPS oder Entscheidung diesen Kapitel-Index bereits
+        // verlassen hat waehrend das Offline-Audio geladen wurde.
+        if (currentIndexRef.current !== capturedIndex) return;
+        if (capturedIndex === 0) {
           const packForCue = STORY_PACKS[resolveLang(cueLanguage)];
           speak(
             `${greetingPrefix} ${packForCue.hikeStartCue}`,
@@ -2426,9 +2435,16 @@ export default function LiveHike() {
       ? steps
       : Math.min(steps - 1, Math.floor(ratio * steps + 1e-6));
     if (reached > currentIndex) {
-      setCurrentIndex(reached);
+      // Immer nur einen Schritt weiter — nie springen. So wird jedes Kapitel
+      // (auch Entscheidungskapitel) mindestens einmal als currentIndex gesetzt
+      // und der Narrations-Effect bekommt die Chance, die Frage zu stellen.
+      // Der Effect laeuft erneut sobald currentIndex sich aendert, sodass
+      // schnell aufeinanderfolgende GPS-Updates trotzdem zueegig durch alle
+      // Kapitel durchlaufen — nur eben Schritt fuer Schritt statt mit Sprung.
+      const next = currentIndex + 1;
+      setCurrentIndex(next);
       setAwaitingDecision(false);
-      if (reached >= steps) setFinished(true);
+      if (next >= steps) setFinished(true);
     }
   }, [
     distance,
