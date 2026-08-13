@@ -827,7 +827,7 @@ function strPartnerIcon(kat,open){
   var paths=STR_PICONS[k]||STR_PICONS.restaurant;
   var col=open===true?'#22c55e':'#cc0000';
   var html='<div style="display:flex;flex-direction:column;align-items:center;">'
-    +'<div style="width:30px;height:30px;background:#fff;border-radius:8px;border:2px solid '+col+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.22)">'
+    +'<div style="width:30px;height:30px;background:#fff;border-radius:8px;box-shadow:0 0 0 2px '+col+',0 2px 6px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;">'
     +'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+paths+'</svg>'
     +'</div>'
     +'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid '+col+'"></div>'
