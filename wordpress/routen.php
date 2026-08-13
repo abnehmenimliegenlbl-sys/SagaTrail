@@ -3,435 +3,446 @@
  * SagaTrail Routen — WPCode PHP Snippet
  * Typ:  PHP Snippet
  * Seite: sagatrail.ch/routen
- *
- * Eine Seite — Kantonsauswahl + Routen + Filter.
- * Routen werden per JS von der API geladen (sessionStorage-Cache pro Kanton).
- * Schema.org TouristAttraction-Markup wird via JS in den <head> injiziert.
  */
 
+/* ── Kanton-Daten: API-Name, Kürzel, Wappen-SVG ── */
 $str_kantone = [
-  'ag' => 'Aargau',             'ai' => 'App. Innerrhoden', 'ar' => 'App. Ausserrhoden',
-  'be' => 'Bern',               'bl' => 'Basel-Landschaft', 'bs' => 'Basel-Stadt',
-  'fr' => 'Fribourg',           'ge' => 'Genève',           'gl' => 'Glarus',
-  'gr' => 'Graubünden',         'ju' => 'Jura',             'lu' => 'Luzern',
-  'ne' => 'Neuchâtel',          'nw' => 'Nidwalden',        'ow' => 'Obwalden',
-  'sg' => 'St. Gallen',         'sh' => 'Schaffhausen',     'so' => 'Solothurn',
-  'sz' => 'Schwyz',             'tg' => 'Thurgau',          'ti' => 'Ticino',
-  'ur' => 'Uri',                'vd' => 'Vaud',             'vs' => 'Valais',
-  'zg' => 'Zug',                'zh' => 'Zürich',
+  ['api' => 'Aargau',                 'code' => 'AG'],
+  ['api' => 'Appenzell Ausserrhoden', 'code' => 'AR'],
+  ['api' => 'Appenzell Innerrhoden',  'code' => 'AI'],
+  ['api' => 'Basel-Landschaft',       'code' => 'BL'],
+  ['api' => 'Basel-Stadt',            'code' => 'BS'],
+  ['api' => 'Bern',                   'code' => 'BE'],
+  ['api' => 'Freiburg',               'code' => 'FR'],
+  ['api' => 'Genf',                   'code' => 'GE'],
+  ['api' => 'Glarus',                 'code' => 'GL'],
+  ['api' => 'Graubünden',             'code' => 'GR'],
+  ['api' => 'Jura',                   'code' => 'JU'],
+  ['api' => 'Luzern',                 'code' => 'LU'],
+  ['api' => 'Neuenburg',              'code' => 'NE'],
+  ['api' => 'Nidwalden',              'code' => 'NW'],
+  ['api' => 'Obwalden',               'code' => 'OW'],
+  ['api' => 'Schaffhausen',           'code' => 'SH'],
+  ['api' => 'Schwyz',                 'code' => 'SZ'],
+  ['api' => 'Solothurn',              'code' => 'SO'],
+  ['api' => 'St. Gallen',             'code' => 'SG'],
+  ['api' => 'Tessin',                 'code' => 'TI'],
+  ['api' => 'Thurgau',                'code' => 'TG'],
+  ['api' => 'Uri',                    'code' => 'UR'],
+  ['api' => 'Waadt',                  'code' => 'VD'],
+  ['api' => 'Wallis',                 'code' => 'VS'],
+  ['api' => 'Zug',                    'code' => 'ZG'],
+  ['api' => 'Zürich',                 'code' => 'ZH'],
 ];
+
 $str_api = 'https://saga-trail.replit.app/api';
+
+/* Wappen-SVGs (Quelle: nzzdev/ch-canton-symbols, CC BY-SA 4.0) */
+$str_wappen = [
+  'AG' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path fill="#4997BE" d="M17 2h13v28H17z"/><path fill="#FFF" d="M2 20h13v3H2zM22 20h3v3h-3zM25 10h3v3h-3zM19 10h3v3h-3zM2 15h13v3H2zM2 10h13v3H2z"/></svg>',
+  'AR' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path d="M2 30V2h28v28H2z" fill="#FFF"/><path d="M22 28h-5v-3h3V20h-3l-3 3v5h-5v-3h3V20l3-3v-8H7v-3h8l-3-3h-3V2h3l5 5V2h3l3 3v20z" fill="#333"/><path d="M17 2v3h-3l3-3z" fill="#BF4A3A"/><path fill="#333" d="M25 15h3v10h-3zM5 15h3v10H5z"/></svg>',
+  'AI' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path d="M2 30V2h28v28H2z" fill="#FFF"/><path d="M22 28h-5v-3h3V20h-3l-3 3v5h-5v-3h3V20l3-3v-8H7v-3h8l-3-3h-3V2h3l5 5V2h3l3 3v20z" fill="#333"/><path d="M17 2v3h-3l3-3z" fill="#BF4A3A"/></svg>',
+  'BL' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path fill="#FFF" d="M2 2h28v28H2z"/><path d="M7 12v15l3-3 3 3 3-3 3 3V12l3 3h3l3-3V10L23 5H15L7 12zm10-3h3v3h-3V9z" fill="#BF4A3A"/></svg>',
+  'BS' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path fill="#FFF" d="M2 2h28v28H2z"/><path d="M25 28l-3-3-3 3-3-3-3 3V12l-3 3H7l-3-3V10l5-5h5l8 8v15zM15 10h-3v3h3v-3z" fill="#333"/></svg>',
+  'BE' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0v32h32V0z"/><path fill="#FFD800" d="M2 2v15l13 13h15V15L17 2z"/><path fill="#333" d="M5 5v5h5v5H5v3h8v5h3V18h3v8h3V23h5v5h3V18L17 7h-3V5z"/></svg>',
+  'FR' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path d="M2 30V15h28v15H2z" fill="#FFF"/></svg>',
+  'GE' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path fill="#FFD800" d="M2 2h13v28H2z"/><path d="M22 20V2h-3v18h-3v10h8V20h-2zm3-8V10h-3V5h3V2h5v10h-5zm-3 5h3v5h-3v-5zm5-18h3v5h-3V2z" fill="#FFD800"/><path d="M15 5H10v3l3 3v3h-3V9L5 5v20l8-8v3l-5 5 3 3 3-3v3h3V5z" fill="#010202"/><path d="M10 5v3L7 5h3zM7 25l3 3H7v-3z" fill="#BF4A3A"/></svg>',
+  'GL' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path fill="#FFD800" d="M5 2h3v28H5zM12 2h8v8h-8z"/><path d="M12 30h3v-3h5v3h3V17h3V12l-3-3h-5V5h-3v5H7v3h5v18z" fill="#333"/><path fill="#FFF" d="M15 7h3v3h-3z"/><path fill="#FFD800" d="M17 12h3v3h-3z"/></svg>',
+  'GR' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#333" d="M0 0h32v32H0z"/><path d="M2 17H9V2h21v28H2V17z" fill="#FFF"/><path fill="#FFD800" d="M15 2h17v15H15z"/><path fill="#4997BE" d="M15 2h5v5h-5zM25 12h5v5h-5zM25 7V2h-3v6l-.02 1.2H22V10h3v-.02L29 10l.045-2.5L25 7zM22 10.06V10h-3v.02L15 10l-.045 2.5L19 13V17h3V11.3l.02-1.24H22z"/><path d="M5 22h3V20l3-3h8v3H13v3h15v5H3v-5h2zM2 22h3v3H2z" fill="#333"/></svg>',
+  'JU' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M17 22V17h13v-3H17V10h13V7H17V2H2v28h15v-5h13V22H17z" fill="#FFF"/><path d="M15 10v18l-3-3-3 3V10l-3 3-3-3V7l3-3h3l5 5zM10 7H7v3h3V7z" fill="#BF4A3A"/></svg>',
+  'LU' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#4997BE" d="M0 0h32v32H0z"/><path d="M15 30V2h15v28H15z" fill="#FFF"/></svg>',
+  'NE' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path fill="#00A84A" d="M2 2h8v28H2z"/><path fill="#FFF" d="M10 2h10v28H10zM27 5V2h-3v3h-3v3h3v3h3V8h3V5h-3z"/></svg>',
+  'NW' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M15 17V15h3v3h10v10H20v3H12v-3H5V17h10zm3-8h8V7H20V5h5V2H7v3h5v3H7v3h8v5h3V9zM7 20v5h8v3h3v-3h8v-5H7z" fill="#FFF"/></svg>',
+  'OW' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M2 15v15h28V15H17V2H7v3h5v3H7v3h8v5H2z" fill="#FFF"/><path d="M7 17h8V15h3v3h8v8H20v3H12v-3H7V17zm3 3v3h5v3h3V23h5V20H10z" fill="#BF4A3A"/></svg>',
+  'SH' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#FFD800" d="M0 0h32v32H0z"/><path d="M12 25l3-3V20l-3-3H7l-3 3V15h5V10L7 7h5v5l3-3V7h3V2h3v5h5v3h-3v3l-3 3 10 10-5 5V30h-5l-5 5v-5z" fill="#333"/><path d="M15 7v3h-3l3-3z" fill="#BF4A3A"/><path d="M22 17l3-3h3v3l-3 3h-3v-3z" fill="#333"/></svg>',
+  'SZ' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M27 5V2h-3v3h-3v3h3v3h3V8h3V5h-3z" fill="#FFF"/></svg>',
+  'SO' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M2 30V15h28v15H2z" fill="#FFF"/></svg>',
+  'SG' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#00A84A" d="M0 0h32v32H0z"/><g fill="#FFF"><path d="M17 10h3v13h-3zM15 25h3v5h-3zM12 2h3l3 3-3 3h-3V2zM12 10h3v13h-3z"/></g></svg>',
+  'TI' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#4997BE" d="M0 0h32v32H0z"/><path fill="#BF4A3A" d="M2 2h15v28H2z"/></svg>',
+  'TG' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#00A84A" d="M0 0h32v32H0z"/><path d="M2 2l28 28V2H2z" fill="#FFF"/><path d="M15 22H10l3-3-3-3H7V15l-3-3v10h3v3H7v3h8v-3h3v3h5l-8-8zM17 10h5l-2 3 3 3h3v3l3 3V10h-3V7h3V5H20v3h-3V5H12l5 5z" fill="#FFD800"/></svg>',
+  'UR' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#FFD800" d="M0 0h32v32H0z"/><path d="M25 15h-3v10l-3 3H13l-3-3V15H7l-3-3 5-5V2l5 5h3l5-5v5l5 5-3 3z" fill="#333"/><path d="M12 12l3 3h-3v-3zM20 12v3h-3l3-3z" fill="#FFF"/><path d="M15 28v-3h-3v3l3 3h3l3-3v-3h-3v3h-3z" fill="#BF4A3A"/></svg>',
+  'VD' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#00A84A" d="M0 0h32v32H0z"/><path fill="#FFF" d="M2 2h28v18H2z"/><path fill="#FFD800" d="M5 5h22v3H5zM12 10h8v3h-8zM7 15h18v3H7z"/></svg>',
+  'VS' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#BF4A3A" d="M0 0h32v32H0z"/><path d="M15 22V20h3V17h-3V15h3V12h-3V10h3V7h-3V2H2v28h13v-5h3V22h-3zm0-20h3v3h-3V2zm0 25h3v3h-3v-3zM7 22h3v3H7v-3zm0-5h3v3H7v-3zm0-5h3v3H7v-3zm0-5h3v3H7V7zm15 15h3v3h-3v-3zm0-5h3v3h-3v-3zm0-5h3v3h-3v-3zm0-5h3v3h-3V7z" fill="#FFF"/></svg>',
+  'ZG' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#4997BE" d="M0 0h32v32H0z"/><path d="M2 10V2h28v8H2zm0 20V22h28v8H2z" fill="#FFF"/></svg>',
+  'ZH' => '<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><path fill="#4997BE" d="M0 0h32v32H0z"/><path d="M2 2h28v28L2 2z" fill="#FFF"/></svg>',
+];
 ?>
+
 <!-- ============================================================
      SAGATRAIL ROUTEN  |  WPCode PHP Snippet
      Seite: sagatrail.ch/routen
      ============================================================ -->
-
 <style>
-/* ===== RESET & BASIS ===== */
+/* ── Reset ── */
 .str-wrap *, .str-wrap *::before, .str-wrap *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .str-wrap {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #1a1a1a;
   line-height: 1.6;
 }
-.str-wrap a { text-decoration: none; color: inherit; }
-
-/* ===== FULL-WIDTH HELPER ===== */
-.str-fw {
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  margin-left: -50vw;
-}
+/* ── Full-width ── */
+.str-fw { width: 100vw; position: relative; left: 50%; margin-left: -50vw; }
 .str-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
-/* ===== HERO ===== */
-.str-hero {
-  background: #CC0000;
-  padding: 64px 0 56px;
-  color: #fff;
-}
-.str-hero-label {
+/* ── Hero ── */
+.str-hero { background: #CC0000; padding: 64px 0 52px; color: #fff; }
+.str-hero-badge {
   display: inline-block;
   background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 20px;
-  padding: 5px 16px;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 18px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px; padding: 5px 16px;
+  font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 18px; color: #fff;
 }
 .str-hero h1 {
-  font-size: clamp(2rem, 5vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 16px;
-  color: #fff;
+  font-size: clamp(1.9rem, 5vw, 3rem); font-weight: 800; line-height: 1.1;
+  margin-bottom: 14px; color: #fff;
 }
-.str-hero p {
-  font-size: 1.1rem;
-  max-width: 580px;
-  opacity: 0.9;
-  color: #fff;
-}
+.str-hero p { font-size: 1.05rem; max-width: 560px; opacity: 0.9; color: #fff; }
 .str-hero-stats {
-  display: flex;
-  gap: 36px;
-  flex-wrap: wrap;
-  margin-top: 36px;
-  padding-top: 28px;
+  display: flex; gap: 36px; flex-wrap: wrap;
+  margin-top: 32px; padding-top: 24px;
   border-top: 1px solid rgba(255,255,255,0.2);
 }
 .str-hero-stat strong { display: block; font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1; }
 .str-hero-stat span   { font-size: 0.8rem; opacity: 0.75; color: #fff; }
 
-/* ===== KANTONSAUSWAHL ===== */
-.str-kanton-section { padding: 52px 0 40px; background: #f7f7f5; }
+/* ── Kanton-Grid ── */
+.str-kanton-section { padding: 48px 0 36px; background: #f7f7f5; }
 .str-section-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #CC0000;
-  margin-bottom: 10px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #CC0000; margin-bottom: 8px;
 }
-.str-section-title {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 800;
-  color: #1a1a1a;
-  margin-bottom: 28px;
-}
+.str-section-title { font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 800; margin-bottom: 24px; }
 .str-kanton-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
 }
 .str-kanton-card {
-  background: #fff;
-  border: 1.5px solid #e8e8e6;
-  border-radius: 12px;
-  padding: 14px 10px 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  background: #fff; border: 1.5px solid #e8e8e6; border-radius: 12px;
+  padding: 12px 8px 10px; text-align: center; cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
   user-select: none;
 }
-.str-kanton-card:hover {
-  border-color: #CC0000;
-  box-shadow: 0 4px 16px rgba(204,0,0,0.12);
-  transform: translateY(-2px);
+.str-kanton-card:hover { border-color: #CC0000; box-shadow: 0 4px 14px rgba(204,0,0,0.12); transform: translateY(-2px); }
+.str-kanton-card.str-active { border-color: #CC0000; background: #CC0000; }
+.str-kanton-wappen {
+  width: 36px; height: 36px; margin: 0 auto 6px;
+  display: flex; align-items: center; justify-content: center;
 }
-.str-kanton-card.str-active {
-  border-color: #CC0000;
-  background: #CC0000;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(204,0,0,0.25);
-}
-.str-kanton-abbr {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  display: block;
-  line-height: 1;
-  margin-bottom: 5px;
-}
-.str-kanton-name {
-  font-size: 0.72rem;
-  color: #666;
-  line-height: 1.3;
-}
-.str-kanton-card.str-active .str-kanton-name { color: rgba(255,255,255,0.8); }
+.str-kanton-wappen svg { width: 36px; height: 36px; border-radius: 4px; }
+.str-kanton-code { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; color: #1a1a1a; }
+.str-kanton-name { font-size: 0.65rem; color: #777; line-height: 1.25; margin-top: 2px; }
+.str-kanton-card.str-active .str-kanton-code,
+.str-kanton-card.str-active .str-kanton-name { color: #fff; }
 
-/* ===== FILTER ===== */
-.str-filter-bar {
-  background: #fff;
-  border-bottom: 1px solid #e8e8e6;
-  padding: 16px 0;
-  display: none;
+/* ── Filter-Bereich ── */
+.str-filter-section { background: #f7f7f5; padding-bottom: 8px; display: none; }
+.str-filter-section.str-visible { display: block; }
+.str-filter-card {
+  background: #fff; border: 1.5px solid #e8e8e6; border-radius: 16px;
+  padding: 20px 20px 8px; margin-bottom: 16px;
 }
-.str-filter-bar.str-visible { display: block; }
-.str-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+.str-filter-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px; padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0ee;
 }
-.str-filter-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #666;
-  white-space: nowrap;
-  min-width: 80px;
+.str-filter-icon {
+  width: 34px; height: 34px; background: #CC0000; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.str-filter-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.str-chip {
-  border: 1.5px solid #ddd;
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #fff;
-  color: #444;
-  transition: all 0.12s;
-  white-space: nowrap;
-}
-.str-chip:hover   { border-color: #CC0000; color: #CC0000; }
-.str-chip.str-on  { background: #CC0000; border-color: #CC0000; color: #fff; }
-.str-filter-count { margin-left: auto; font-size: 0.82rem; color: #888; white-space: nowrap; }
-@media (max-width: 640px) {
-  .str-filter-row { gap: 10px; }
-  .str-filter-count { width: 100%; }
-}
+.str-filter-icon svg { width: 18px; height: 18px; }
+.str-filter-title { font-size: 1rem; font-weight: 700; color: #1a1a1a; }
 
-/* ===== ROUTEN-ERGEBNISSE ===== */
-.str-results-section { padding: 40px 0 64px; background: #f7f7f5; min-height: 200px; }
-.str-results-header {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.str-results-title { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
-.str-results-count {
-  font-size: 0.82rem;
-  background: #CC0000;
-  color: #fff;
-  border-radius: 20px;
-  padding: 2px 10px;
-  font-weight: 600;
-}
-.str-route-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.str-route-card {
-  background: #fff;
-  border: 1.5px solid #e8e8e6;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  transition: box-shadow 0.15s, transform 0.15s;
-}
-.str-route-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transform: translateY(-1px);
-}
-.str-route-photo {
-  width: 120px;
-  min-width: 120px;
-  background: #e8e8e6;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.str-route-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.str-route-photo-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f0f0ee 0%, #e4e4e2 100%);
-  font-size: 2rem;
-}
-.str-route-body {
-  padding: 16px 20px;
-  flex: 1;
-  min-width: 0;
-}
-.str-route-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-.str-route-meta {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+/* ── Slider ── */
+.str-filter-row { margin-bottom: 18px; }
+.str-filter-row-head {
+  display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 10px;
-  align-items: center;
 }
-.str-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.str-filter-row-label { font-size: 0.9rem; font-weight: 600; color: #1a1a1a; }
+.str-filter-row-val { font-size: 0.82rem; font-weight: 600; color: #CC0000; }
+.str-dual-range {
+  position: relative; height: 32px; display: flex; align-items: center;
 }
-.str-badge-dist  { background: #f0f0f0; color: #444; }
-.str-badge-asc   { background: #eef4fb; color: #2563eb; }
-.str-badge-time  { background: #f0fdf4; color: #15803d; }
-.str-badge-T1    { background: #dcfce7; color: #15803d; }
-.str-badge-T2    { background: #d1fae5; color: #059669; }
-.str-badge-T3    { background: #fff7ed; color: #ea580c; }
-.str-badge-T4    { background: #fee2e2; color: #dc2626; }
-.str-badge-T5    { background: #fef2f2; color: #991b1b; }
-.str-badge-T6    { background: #1a1a1a; color: #fff; }
-.str-route-desc {
-  font-size: 0.85rem;
-  color: #555;
-  line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.str-range-track {
+  position: absolute; left: 0; right: 0; height: 4px;
+  background: #e0e0e0; border-radius: 2px; pointer-events: none;
 }
-.str-route-app-link {
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #CC0000;
+.str-range-fill {
+  position: absolute; height: 4px; background: #CC0000; border-radius: 2px;
 }
-.str-route-app-link:hover { opacity: 0.8; }
-@media (max-width: 560px) {
-  .str-route-photo { width: 90px; min-width: 90px; }
-  .str-route-body { padding: 12px 14px; }
+.str-range-input {
+  position: absolute; width: 100%; height: 0;
+  appearance: none; -webkit-appearance: none;
+  background: transparent; pointer-events: none;
+  outline: none;
+}
+.str-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23CC0000'/%3E%3Crect x='16.5' y='8' width='7' height='24' rx='1.5' fill='white'/%3E%3Crect x='8' y='16.5' width='24' height='7' rx='1.5' fill='white'/%3E%3C/svg%3E") center/cover no-repeat;
+  cursor: pointer; pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(204,0,0,0.35);
+  transition: transform 0.1s;
+}
+.str-range-input::-webkit-slider-thumb:hover { transform: scale(1.1); }
+.str-range-input::-moz-range-thumb {
+  width: 30px; height: 30px; border: none; border-radius: 50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23CC0000'/%3E%3Crect x='16.5' y='8' width='7' height='24' rx='1.5' fill='white'/%3E%3Crect x='8' y='16.5' width='24' height='7' rx='1.5' fill='white'/%3E%3C/svg%3E") center/cover no-repeat;
+  cursor: pointer; pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(204,0,0,0.35);
 }
 
-/* ===== ZUSTÄNDE ===== */
-.str-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: #888;
+/* ── Toggle ── */
+.str-toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-top: 1px solid #f0f0ee;
 }
-.str-empty-icon { font-size: 3rem; margin-bottom: 16px; }
-.str-empty h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: #444; }
-.str-spinner {
-  text-align: center;
-  padding: 60px 20px;
+.str-toggle-label { font-size: 0.9rem; font-weight: 500; color: #1a1a1a; }
+.str-toggle {
+  position: relative; width: 48px; height: 28px;
+  background: #ddd; border-radius: 14px; cursor: pointer;
+  transition: background 0.2s; flex-shrink: 0;
 }
+.str-toggle.str-on { background: #CC0000; }
+.str-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.str-toggle.str-on::after { transform: translateX(20px); }
+
+/* ── Suchen-Button ── */
+.str-search-btn {
+  width: 100%; padding: 16px; background: #CC0000; color: #fff; border: none;
+  border-radius: 12px; font-size: 0.85rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  margin: 8px 0 20px; transition: opacity 0.15s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.str-search-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.str-search-btn:active { transform: translateY(0); }
+.str-route-count-hint { font-size: 0.82rem; color: #888; margin-top: 4px; }
+
+/* ── Routen-Ergebnisse ── */
+.str-results-section { padding: 8px 0 64px; background: #f7f7f5; }
+.str-results-header {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px;
+}
+.str-results-title { font-size: 1.3rem; font-weight: 800; color: #1a1a1a; }
+.str-results-badge {
+  background: #CC0000; color: #fff;
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 0.78rem; font-weight: 700;
+}
+.str-route-list { display: flex; flex-direction: column; gap: 10px; }
+.str-route-card {
+  background: #fff; border: 1.5px solid #e8e8e6; border-radius: 14px;
+  overflow: hidden; display: flex;
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+.str-route-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.08); transform: translateY(-1px); }
+.str-route-photo {
+  width: 110px; min-width: 110px; background: #eee; overflow: hidden; flex-shrink: 0;
+}
+.str-route-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.str-route-photo-ph {
+  width: 100%; height: 100%; min-height: 90px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg,#f2f2f0,#e6e6e4); font-size: 1.8rem;
+}
+.str-route-body { padding: 14px 16px; flex: 1; min-width: 0; }
+.str-route-name { font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 7px; line-height: 1.3; }
+.str-route-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+.str-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  border-radius: 6px; padding: 2px 7px;
+  font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+}
+.str-tag-dist { background: #f0f0f0; color: #444; }
+.str-tag-asc  { background: #eef3fb; color: #2563eb; }
+.str-tag-time { background: #f0fdf4; color: #16a34a; }
+.str-tag-T1   { background: #dcfce7; color: #15803d; }
+.str-tag-T2   { background: #d1fae5; color: #059669; }
+.str-tag-T3   { background: #fff7ed; color: #ea580c; }
+.str-tag-T4   { background: #fee2e2; color: #dc2626; }
+.str-tag-T5   { background: #fef2f2; color: #991b1b; }
+.str-tag-T6   { background: #1a1a1a; color: #fff; }
+.str-route-desc {
+  font-size: 0.82rem; color: #666; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.str-app-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; font-weight: 600; color: #CC0000; margin-top: 10px;
+}
+/* ── Spinner & Empty ── */
+.str-spinner { text-align: center; padding: 60px 20px; }
 .str-spinner-ring {
-  display: inline-block;
-  width: 40px; height: 40px;
-  border: 3px solid #e8e8e6;
-  border-top-color: #CC0000;
-  border-radius: 50%;
-  animation: str-spin 0.7s linear infinite;
+  display: inline-block; width: 40px; height: 40px;
+  border: 3px solid #e8e8e6; border-top-color: #CC0000;
+  border-radius: 50%; animation: str-spin 0.7s linear infinite;
 }
 @keyframes str-spin { to { transform: rotate(360deg); } }
+.str-empty { text-align: center; padding: 50px 20px; }
+.str-empty-icon { font-size: 2.8rem; margin-bottom: 14px; }
+.str-empty h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: #444; }
+.str-empty p  { font-size: 0.85rem; color: #888; }
 
-/* ===== APP CTA ===== */
-.str-cta-section { background: #1a1a1a; padding: 56px 0; }
-.str-cta-section h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; color: #fff; margin-bottom: 10px; }
-.str-cta-section p  { color: rgba(255,255,255,0.7); margin-bottom: 28px; }
-.str-cta-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+/* ── App-CTA ── */
+.str-cta { background: #1a1a1a; padding: 52px 0; }
+.str-cta h2 { font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 800; color: #fff; margin-bottom: 10px; }
+.str-cta p  { color: rgba(255,255,255,0.65); margin-bottom: 24px; }
+.str-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 .str-cta-btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 22px; border-radius: 10px; font-weight: 700; font-size: 0.9rem;
+  padding: 12px 22px; border-radius: 10px;
+  font-weight: 700; font-size: 0.88rem;
   background: #CC0000; color: #fff; transition: opacity 0.15s;
 }
-.str-cta-btn:hover { opacity: 0.88; }
-.str-cta-btn-outline {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,0.3);
-  color: #fff;
+.str-cta-btn:hover { opacity: 0.85; }
+.str-cta-btn-out { background: transparent; border: 1.5px solid rgba(255,255,255,0.28); }
+
+@media (max-width: 560px) {
+  .str-route-photo { width: 88px; min-width: 88px; }
+  .str-route-body  { padding: 11px 12px; }
+  .str-kanton-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
 }
 </style>
 
 <div class="str-wrap" id="str-root">
 
-  <!-- ═══ HERO ═══ -->
+  <!-- HERO -->
   <div class="str-fw str-hero">
     <div class="str-inner">
-      <span class="str-hero-label">🇨🇭 Schweizer Wanderrouten</span>
+      <span class="str-hero-badge">🇨🇭 Schweizer Wanderrouten</span>
       <h1>Sagenrouten in allen 26 Kantonen</h1>
-      <p>GPS-geführte Wanderungen auf den Spuren alter Schweizer Sagen — von T1 bis T5, Frühling bis Herbst.</p>
+      <p>GPS-geführte Wanderungen auf den Spuren alter Schweizer Sagen — kostenlos in der SagaTrail-App.</p>
       <div class="str-hero-stats">
         <div class="str-hero-stat"><strong>200+</strong><span>Wanderrouten</span></div>
         <div class="str-hero-stat"><strong>26</strong><span>Kantone</span></div>
-        <div class="str-hero-stat"><strong>100+</strong><span>Schweizer Sagen</span></div>
+        <div class="str-hero-stat"><strong>T1–T6</strong><span>Schwierigkeit</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ KANTONSAUSWAHL ═══ -->
-  <div class="str-fw str-kanton-section">
+  <!-- KANTONSAUSWAHL -->
+  <div class="str-fw str-kanton-section" id="str-kanton-section">
     <div class="str-inner">
-      <div class="str-section-label">Kanton wählen</div>
+      <div class="str-section-label">Schritt 1 · Kanton wählen</div>
       <h2 class="str-section-title">Wo möchtest du wandern?</h2>
       <div class="str-kanton-grid" id="str-kanton-grid">
-        <?php foreach ($str_kantone as $code => $name): ?>
+        <?php foreach ($str_kantone as $k): ?>
         <div class="str-kanton-card"
-             data-kanton="<?php echo esc_attr($code); ?>"
-             onclick="strSelectKanton('<?php echo esc_js($code); ?>')">
-          <span class="str-kanton-abbr"><?php echo esc_html(strtoupper($code)); ?></span>
-          <span class="str-kanton-name"><?php echo esc_html($name); ?></span>
+             data-api="<?php echo esc_attr($k['api']); ?>"
+             data-code="<?php echo esc_attr($k['code']); ?>"
+             onclick="strSelectKanton('<?php echo esc_js($k['api']); ?>', '<?php echo esc_js($k['code']); ?>')">
+          <div class="str-kanton-wappen">
+            <?php echo isset($str_wappen[$k['code']]) ? $str_wappen[$k['code']] : ''; ?>
+          </div>
+          <div class="str-kanton-code"><?php echo esc_html($k['code']); ?></div>
+          <div class="str-kanton-name"><?php echo esc_html($k['api']); ?></div>
         </div>
         <?php endforeach; ?>
       </div>
     </div>
   </div>
 
-  <!-- ═══ FILTER ═══ -->
-  <div class="str-fw str-filter-bar" id="str-filter-bar">
+  <!-- FILTER -->
+  <div class="str-fw str-filter-section" id="str-filter-section">
     <div class="str-inner">
-      <div class="str-filter-row">
-        <span class="str-filter-label">Distanz</span>
-        <div class="str-filter-chips" id="str-dist-chips">
-          <span class="str-chip str-on" data-min="0"  data-max="9999" onclick="strSetDist(this,0,9999)">Alle</span>
-          <span class="str-chip"        data-min="0"  data-max="10"   onclick="strSetDist(this,0,10)">bis 10 km</span>
-          <span class="str-chip"        data-min="10" data-max="20"   onclick="strSetDist(this,10,20)">10–20 km</span>
-          <span class="str-chip"        data-min="20" data-max="30"   onclick="strSetDist(this,20,30)">20–30 km</span>
-          <span class="str-chip"        data-min="30" data-max="9999" onclick="strSetDist(this,30,9999)">30+ km</span>
+      <div class="str-section-label">Schritt 2 · Filter &amp; Suche</div>
+      <h2 class="str-section-title" id="str-filter-title">Graubünden</h2>
+      <p style="font-size:0.88rem;color:#666;margin-bottom:20px;margin-top:-8px;">
+        Lege Distanz, Höhenmeter und Schwierigkeit fest. Die App durchsucht dann eine externe Wanderdatenbank (OpenStreetMap, angereichert mit swisstopo-Höhenmetern) nach passenden Routen.
+      </p>
+
+      <div class="str-filter-card">
+        <div class="str-filter-header">
+          <div class="str-filter-icon">
+            <svg fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          </div>
+          <span class="str-filter-title">Filter</span>
+        </div>
+
+        <!-- Distanz -->
+        <div class="str-filter-row">
+          <div class="str-filter-row-head">
+            <span class="str-filter-row-label">Distanz</span>
+            <span class="str-filter-row-val" id="str-dist-val">0 km – 50+ km</span>
+          </div>
+          <div class="str-dual-range">
+            <div class="str-range-track"><div class="str-range-fill" id="str-dist-fill"></div></div>
+            <input type="range" class="str-range-input" id="str-dist-lo" min="0" max="50" value="0" step="1">
+            <input type="range" class="str-range-input" id="str-dist-hi" min="0" max="50" value="50" step="1">
+          </div>
+        </div>
+
+        <!-- Höhenmeter -->
+        <div class="str-filter-row">
+          <div class="str-filter-row-head">
+            <span class="str-filter-row-label">Höhenmeter</span>
+            <span class="str-filter-row-val" id="str-asc-val">0 hm – 3000+ hm</span>
+          </div>
+          <div class="str-dual-range">
+            <div class="str-range-track"><div class="str-range-fill" id="str-asc-fill"></div></div>
+            <input type="range" class="str-range-input" id="str-asc-lo" min="0" max="3000" value="0" step="50">
+            <input type="range" class="str-range-input" id="str-asc-hi" min="0" max="3000" value="3000" step="50">
+          </div>
+        </div>
+
+        <!-- Schwierigkeit -->
+        <div class="str-filter-row" style="margin-bottom:4px;">
+          <div class="str-filter-row-head">
+            <span class="str-filter-row-label">Schwierigkeit</span>
+            <span class="str-filter-row-val" id="str-sac-val">T1 – T6</span>
+          </div>
+          <div class="str-dual-range">
+            <div class="str-range-track"><div class="str-range-fill" id="str-sac-fill"></div></div>
+            <input type="range" class="str-range-input" id="str-sac-lo" min="1" max="6" value="1" step="1">
+            <input type="range" class="str-range-input" id="str-sac-hi" min="1" max="6" value="6" step="1">
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="str-toggle-row">
+          <span class="str-toggle-label">Nur ganzjährige Routen</span>
+          <div class="str-toggle" id="str-toggle-gj" onclick="strToggle('gj')"></div>
         </div>
       </div>
-      <div class="str-filter-row" style="margin-top:10px;">
-        <span class="str-filter-label">Schwierigkeit</span>
-        <div class="str-filter-chips" id="str-sac-chips">
-          <span class="str-chip str-on" data-sac="0" onclick="strSetSac(this,0)">Alle</span>
-          <span class="str-chip"        data-sac="1" onclick="strSetSac(this,1)">T1</span>
-          <span class="str-chip"        data-sac="2" onclick="strSetSac(this,2)">T2</span>
-          <span class="str-chip"        data-sac="3" onclick="strSetSac(this,3)">T3</span>
-          <span class="str-chip"        data-sac="4" onclick="strSetSac(this,4)">T4</span>
-          <span class="str-chip"        data-sac="5" onclick="strSetSac(this,5)">T5+</span>
-        </div>
-        <span class="str-filter-count" id="str-filter-count"></span>
-      </div>
+
+      <button class="str-search-btn" onclick="strSearch()">
+        <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Passende Routen suchen
+      </button>
+      <p class="str-route-count-hint" id="str-hint"></p>
     </div>
   </div>
 
-  <!-- ═══ ROUTEN-LISTE ═══ -->
+  <!-- ROUTEN-ERGEBNISSE -->
   <div class="str-fw str-results-section" id="str-results-section" style="display:none;">
     <div class="str-inner">
       <div class="str-results-header">
         <h2 class="str-results-title" id="str-results-title">Routen</h2>
-        <span class="str-results-count" id="str-results-count" style="display:none;"></span>
+        <span class="str-results-badge" id="str-results-badge" style="display:none;"></span>
       </div>
       <div id="str-route-list"></div>
     </div>
   </div>
 
-  <!-- ═══ APP CTA ═══ -->
-  <div class="str-fw str-cta-section">
+  <!-- APP CTA -->
+  <div class="str-fw str-cta">
     <div class="str-inner">
       <h2>Starte deine Sagenwanderung</h2>
-      <p>GPS-Navigation, Audio-Erzählungen und Entscheidungen unterwegs — kostenlos in der App.</p>
+      <p>GPS-Navigation, Audio-Erzählungen und historische Sagen — kostenlos in der App.</p>
       <div class="str-cta-btns">
-        <a href="https://apps.apple.com/app/id6744444594" class="str-cta-btn" target="_blank" rel="noopener">
-          🍎 &nbsp;App Store
-        </a>
-        <a href="https://play.google.com/store/apps/details?id=com.inster.sagatrail" class="str-cta-btn str-cta-btn-outline" target="_blank" rel="noopener">
-          ▶ &nbsp;Google Play
-        </a>
+        <a href="https://apps.apple.com/app/id6744444594" class="str-cta-btn" target="_blank" rel="noopener">🍎 &nbsp;App Store</a>
+        <a href="https://play.google.com/store/apps/details?id=com.inster.sagatrail" class="str-cta-btn str-cta-btn-out" target="_blank" rel="noopener">▶ &nbsp;Google Play</a>
       </div>
     </div>
   </div>
@@ -439,224 +450,205 @@ $str_api = 'https://saga-trail.replit.app/api';
 </div><!-- .str-wrap -->
 
 <script>
-(function() {
+(function(){
   var API = '<?php echo esc_js($str_api); ?>';
-  var cache = {}; /* sessionStorage-Fallback für ältere Browser */
 
-  /* ─── Zustand ─── */
-  var state = {
+  /* ── State ── */
+  var S = {
     kanton: null,
     kantonName: null,
-    routes: [],      /* alle Routen des gewählten Kantons */
-    distMin: 0,
-    distMax: 9999,
-    sacMin: 0,       /* 0 = alle */
+    allRoutes: [],
+    distLo: 0,  distHi: 50,
+    ascLo: 0,   ascHi: 3000,
+    sacLo: 1,   sacHi: 6,
+    gj: false,
   };
 
-  /* ─── Hilfsfunktionen ─── */
-  function sacNum(sac) {
-    if (!sac) return 0;
-    var m = /T\s*([1-6])/i.exec(sac);
-    return m ? parseInt(m[1], 10) : 0;
-  }
-
-  function fmtDist(km) {
-    if (!km && km !== 0) return '—';
-    return parseFloat(km).toFixed(1) + ' km';
-  }
-
-  function fmtAsc(m) {
-    if (!m && m !== 0) return null;
-    return '+' + Math.round(m) + ' hm';
-  }
-
-  function fmtTime(min) {
-    if (!min) return null;
-    if (min < 60) return min + ' Min.';
-    var h = Math.floor(min / 60), m = min % 60;
-    return h + ':' + (m < 10 ? '0' : '') + m + ' h';
-  }
-
-  function sacBadgeClass(sac) {
-    var n = sacNum(sac);
-    if (n >= 6) return 'str-badge-T6';
-    if (n >= 5) return 'str-badge-T5';
-    if (n >= 4) return 'str-badge-T4';
-    if (n >= 3) return 'str-badge-T3';
-    if (n >= 2) return 'str-badge-T2';
-    return 'str-badge-T1';
-  }
-
-  function esc(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  /* ─── Filter ─── */
-  function applyFilter() {
-    return state.routes.filter(function(r) {
-      var km = parseFloat(r.distanceTagKm || r.distanceKm || 0);
-      if (km < state.distMin || km > state.distMax) return false;
-      if (state.sacMin > 0) {
-        var n = sacNum(r.sac);
-        if (state.sacMin === 5) { if (n < 5) return false; }
-        else { if (n !== state.sacMin) return false; }
+  /* ── Dual-Range-Slider-Setup ── */
+  function makeDual(idLo, idHi, fillId, onChange) {
+    var lo = document.getElementById(idLo);
+    var hi = document.getElementById(idHi);
+    var fill = document.getElementById(fillId);
+    function update() {
+      var min = parseFloat(lo.min), max = parseFloat(lo.max);
+      var vLo = parseFloat(lo.value), vHi = parseFloat(hi.value);
+      if (vLo > vHi) { /* Kreuzung verhindern */
+        if (this === lo) { lo.value = vHi; vLo = vHi; }
+        else             { hi.value = vLo; vHi = vLo; }
       }
+      var pLo = (vLo - min) / (max - min) * 100;
+      var pHi = (vHi - min) / (max - min) * 100;
+      fill.style.left  = pLo + '%';
+      fill.style.width = (pHi - pLo) + '%';
+      onChange(vLo, vHi);
+    }
+    lo.addEventListener('input', update);
+    hi.addEventListener('input', update);
+    update.call(lo);
+  }
+
+  /* ── Slider-Label-Formatierung ── */
+  function fmtDist(lo, hi) {
+    var hStr = (hi >= 50) ? '50+ km' : hi + ' km';
+    return lo + ' km – ' + hStr;
+  }
+  function fmtAsc(lo, hi) {
+    var hStr = (hi >= 3000) ? '3000+ hm' : hi + ' hm';
+    return lo + ' hm – ' + hStr;
+  }
+  function fmtSac(lo, hi) {
+    return 'T' + lo + ' – T' + hi;
+  }
+
+  makeDual('str-dist-lo','str-dist-hi','str-dist-fill', function(lo,hi){
+    S.distLo = lo; S.distHi = hi;
+    document.getElementById('str-dist-val').textContent = fmtDist(lo, hi);
+  });
+  makeDual('str-asc-lo','str-asc-hi','str-asc-fill', function(lo,hi){
+    S.ascLo = lo; S.ascHi = hi;
+    document.getElementById('str-asc-val').textContent = fmtAsc(lo, hi);
+  });
+  makeDual('str-sac-lo','str-sac-hi','str-sac-fill', function(lo,hi){
+    S.sacLo = lo; S.sacHi = hi;
+    document.getElementById('str-sac-val').textContent = fmtSac(lo, hi);
+  });
+
+  /* ── Toggle ── */
+  window.strToggle = function(key) {
+    if (key === 'gj') {
+      S.gj = !S.gj;
+      document.getElementById('str-toggle-gj').classList.toggle('str-on', S.gj);
+    }
+  };
+
+  /* ── Kanton wählen ── */
+  window.strSelectKanton = function(apiName, code) {
+    document.querySelectorAll('.str-kanton-card').forEach(function(el) {
+      el.classList.toggle('str-active', el.dataset.api === apiName);
+    });
+    S.kanton = apiName;
+    S.kantonName = apiName;
+    document.getElementById('str-filter-title').textContent = apiName;
+    document.getElementById('str-filter-section').classList.add('str-visible');
+    document.getElementById('str-results-section').style.display = 'none';
+    document.getElementById('str-hint').textContent = '';
+    /* Zum Filter-Bereich scrollen */
+    setTimeout(function(){
+      document.getElementById('str-filter-section').scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 80);
+    /* Routen vorladen (für schnelle Suche) */
+    preloadRoutes(apiName);
+  };
+
+  /* ── Vorladen ── */
+  function preloadRoutes(kanton) {
+    if (S.allRoutes.length && S._loadedKanton === kanton) return;
+    S._loadedKanton = kanton;
+    S.allRoutes = [];
+    try {
+      var cached = sessionStorage.getItem('str_' + kanton);
+      if (cached) { S.allRoutes = JSON.parse(cached); updateHint(); return; }
+    } catch(e) {}
+    fetch(API + '/cantons/' + encodeURIComponent(kanton) + '/routes')
+      .then(function(r){ return r.json(); })
+      .then(function(d){ S.allRoutes = Array.isArray(d) ? d : []; try { sessionStorage.setItem('str_' + kanton, JSON.stringify(S.allRoutes)); } catch(e){} updateHint(); })
+      .catch(function(){ S.allRoutes = []; });
+  }
+
+  function updateHint() {
+    var n = applyFilter().length;
+    document.getElementById('str-hint').textContent = n + ' Routen gefunden. Danach folgt die passende Sage.';
+  }
+
+  /* ── Filter anwenden ── */
+  function sacNum(sac) { if (!sac) return 0; var m=/T\s*([1-6])/i.exec(sac); return m ? parseInt(m[1]):0; }
+  function applyFilter() {
+    return S.allRoutes.filter(function(r) {
+      var km  = parseFloat(r.distanceTagKm || r.distanceKm || 0);
+      var hm  = parseInt(r.ascentM || 0, 10);
+      var sac = sacNum(r.sac);
+      if (km  < S.distLo || (S.distHi < 50 && km > S.distHi)) return false;
+      if (hm  < S.ascLo  || (S.ascHi < 3000 && hm > S.ascHi)) return false;
+      if (sac && (sac < S.sacLo || sac > S.sacHi)) return false;
+      if (S.gj && r.season !== 'ganzjaehrig') return false;
       return true;
     });
   }
 
-  /* ─── Rendern ─── */
-  function renderRoutes() {
-    var visible = applyFilter();
+  /* ── Suchen ── */
+  window.strSearch = function() {
+    if (!S.kanton) return;
+    var sec = document.getElementById('str-results-section');
     var list = document.getElementById('str-route-list');
-    var cnt  = document.getElementById('str-results-count');
-    var filterCnt = document.getElementById('str-filter-count');
+    sec.style.display = '';
+    document.getElementById('str-results-title').textContent = S.kantonName;
+    sec.scrollIntoView({ behavior:'smooth', block:'start' });
 
-    cnt.textContent = visible.length + ' Route' + (visible.length !== 1 ? 'n' : '');
-    cnt.style.display = visible.length > 0 ? '' : 'none';
-    filterCnt.textContent = visible.length + ' von ' + state.routes.length + ' Routen';
-
-    if (visible.length === 0) {
-      list.innerHTML = '<div class="str-empty"><div class="str-empty-icon">🏔️</div><h3>Keine Routen für diesen Filter</h3><p>Passe die Distanz oder Schwierigkeit an.</p></div>';
+    if (!S.allRoutes.length) {
+      list.innerHTML = '<div class="str-spinner"><div class="str-spinner-ring"></div></div>';
+      var interval = setInterval(function(){
+        if (S.allRoutes.length || S._loadFailed) { clearInterval(interval); renderResults(); }
+      }, 200);
       return;
     }
+    renderResults();
+  };
+
+  /* ── Rendern ── */
+  function esc(s){ return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+  function fmtKm(km){ return km ? parseFloat(km).toFixed(1)+' km' : null; }
+  function fmtHm(m) { return m ? '+'+Math.round(m)+' hm' : null; }
+  function fmtMin(m){ if(!m)return null; if(m<60)return m+' Min.'; return Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60)+' h'; }
+  function sacClass(sac){ var n=sacNum(sac); return 'str-tag-T'+Math.min(6,Math.max(1,n||1)); }
+
+  function renderResults() {
+    var visible = applyFilter();
+    var badge = document.getElementById('str-results-badge');
+    var list  = document.getElementById('str-route-list');
+    badge.textContent = visible.length + ' Route' + (visible.length!==1?'n':'');
+    badge.style.display = '';
 
     /* Schema.org JSON-LD */
-    var schemaItems = visible.slice(0, 50).map(function(r, i) {
-      return {
-        '@type': 'TouristAttraction',
-        'position': i + 1,
-        'name': r.name,
-        'description': r.description || undefined,
-        'url': 'https://sagatrail.ch/routen',
-        'geo': r.coordinates ? {
-          '@type': 'GeoCoordinates',
-          'latitude':  r.coordinates.lat,
-          'longitude': r.coordinates.lng
-        } : undefined,
-        'touristType': 'Wanderer'
-      };
-    });
-    var existing = document.getElementById('str-schema-ld');
-    if (existing) existing.remove();
-    var script = document.createElement('script');
-    script.id   = 'str-schema-ld';
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      'name': 'Wanderrouten ' + (state.kantonName || ''),
-      'description': 'GPS-geführte Sagenrouten in ' + (state.kantonName || 'der Schweiz'),
-      'numberOfItems': visible.length,
-      'itemListElement': schemaItems
-    });
-    document.head.appendChild(script);
-
-    /* HTML */
-    var html = visible.map(function(r) {
-      var sac   = r.sac && r.sac !== 'unbekannt' ? r.sac : null;
-      var asc   = fmtAsc(r.ascentM);
-      var time  = fmtTime(r.minutes);
-      var desc  = r.description ? r.description.replace(/<[^>]*>/g, '') : '';
-
-      var photoHtml = r.photoUrl
-        ? '<img src="' + esc(r.photoUrl) + '" alt="' + esc(r.name) + '" loading="lazy">'
-        : '<div class="str-route-photo-placeholder">🏔️</div>';
-
-      var badges = '<span class="str-badge str-badge-dist">📍 ' + esc(fmtDist(r.distanceTagKm || r.distanceKm)) + '</span>';
-      if (asc)  badges += '<span class="str-badge str-badge-asc">↑ ' + esc(asc) + '</span>';
-      if (time) badges += '<span class="str-badge str-badge-time">⏱ ' + esc(time) + '</span>';
-      if (sac)  badges += '<span class="str-badge ' + sacBadgeClass(r.sac) + '">' + esc(sac) + '</span>';
-
-      return '<div class="str-route-card" itemscope itemtype="https://schema.org/TouristAttraction">'
-        + '<div class="str-route-photo">' + photoHtml + '</div>'
-        + '<div class="str-route-body">'
-        +   '<h3 class="str-route-name" itemprop="name">' + esc(r.name) + '</h3>'
-        +   '<div class="str-route-meta">' + badges + '</div>'
-        + (desc ? '<p class="str-route-desc" itemprop="description">' + esc(desc.substring(0, 180)) + '…</p>' : '')
-        +   '<a class="str-route-app-link" href="https://apps.apple.com/app/id6744444594" target="_blank" rel="noopener">'
-        +     '→ In der SagaTrail-App öffnen'
-        +   '</a>'
-        + '</div>'
-        + '</div>';
-    }).join('');
-
-    list.innerHTML = html;
-  }
-
-  /* ─── Laden ─── */
-  function loadRoutes(kanton) {
-    var list = document.getElementById('str-route-list');
-    list.innerHTML = '<div class="str-spinner"><div class="str-spinner-ring"></div></div>';
-
-    /* sessionStorage-Cache */
-    try {
-      var cached = sessionStorage.getItem('str_' + kanton);
-      if (cached) {
-        state.routes = JSON.parse(cached);
-        renderRoutes();
-        return;
-      }
-    } catch(e) {}
-
-    fetch(API + '/cantons/' + encodeURIComponent(kanton) + '/routes')
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        state.routes = Array.isArray(data) ? data : (data.routes || []);
-        try { sessionStorage.setItem('str_' + kanton, JSON.stringify(state.routes)); } catch(e) {}
-        renderRoutes();
+    var old = document.getElementById('str-schema');
+    if (old) old.remove();
+    var sc = document.createElement('script');
+    sc.id='str-schema'; sc.type='application/ld+json';
+    sc.textContent = JSON.stringify({
+      '@context':'https://schema.org','@type':'ItemList',
+      'name':'Wanderrouten '+S.kantonName,
+      'description':'GPS-geführte Sagenrouten in '+S.kantonName,
+      'numberOfItems':visible.length,
+      'itemListElement': visible.slice(0,50).map(function(r,i){
+        return {'@type':'TouristAttraction','position':i+1,'name':r.name,
+          'description':r.description?r.description.replace(/<[^>]*>/g,'').substring(0,160):undefined,
+          'geo':r.coordinates?{'@type':'GeoCoordinates','latitude':r.coordinates.lat,'longitude':r.coordinates.lng}:undefined};
       })
-      .catch(function() {
-        list.innerHTML = '<div class="str-empty"><div class="str-empty-icon">⚠️</div><h3>Routen konnten nicht geladen werden</h3><p>Bitte später nochmals versuchen.</p></div>';
-      });
-  }
-
-  /* ─── API ─── */
-  window.strSelectKanton = function(kanton) {
-    var kantone = <?php echo json_encode($str_kantone); ?>;
-
-    /* Karte markieren */
-    document.querySelectorAll('.str-kanton-card').forEach(function(el) {
-      el.classList.toggle('str-active', el.dataset.kanton === kanton);
     });
+    document.head.appendChild(sc);
 
-    /* Filter zurücksetzen */
-    state.distMin = 0; state.distMax = 9999; state.sacMin = 0;
-    document.querySelectorAll('#str-dist-chips .str-chip').forEach(function(c,i) { c.classList.toggle('str-on', i===0); });
-    document.querySelectorAll('#str-sac-chips  .str-chip').forEach(function(c,i) { c.classList.toggle('str-on', i===0); });
-
-    state.kanton     = kanton;
-    state.kantonName = kantone[kanton] || kanton.toUpperCase();
-
-    document.getElementById('str-results-title').textContent = 'Routen in ' + state.kantonName;
-    document.getElementById('str-filter-bar').classList.add('str-visible');
-    document.getElementById('str-results-section').style.display = '';
-
-    /* Zur Ergebnisliste scrollen */
-    setTimeout(function() {
-      document.getElementById('str-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 80);
-
-    loadRoutes(kanton);
-  };
-
-  window.strSetDist = function(el, min, max) {
-    state.distMin = min; state.distMax = max;
-    document.querySelectorAll('#str-dist-chips .str-chip').forEach(function(c) { c.classList.remove('str-on'); });
-    el.classList.add('str-on');
-    renderRoutes();
-  };
-
-  window.strSetSac = function(el, sac) {
-    state.sacMin = sac;
-    document.querySelectorAll('#str-sac-chips .str-chip').forEach(function(c) { c.classList.remove('str-on'); });
-    el.classList.add('str-on');
-    renderRoutes();
-  };
+    if (!visible.length) {
+      list.innerHTML = '<div class="str-empty"><div class="str-empty-icon">🏔️</div><h3>Keine Routen für diesen Filter</h3><p>Passe Distanz, Höhenmeter oder Schwierigkeit an.</p></div>';
+      return;
+    }
+    list.innerHTML = visible.map(function(r){
+      var sac  = r.sac && r.sac!=='unbekannt' ? r.sac : null;
+      var desc = r.description ? r.description.replace(/<[^>]*>/g,'').substring(0,160) : '';
+      var photo = r.photoUrl
+        ? '<img src="'+esc(r.photoUrl)+'" alt="'+esc(r.name)+'" loading="lazy">'
+        : '<div class="str-route-photo-ph">🏔️</div>';
+      var tags = '<span class="str-tag str-tag-dist">📍 '+(esc(fmtKm(r.distanceTagKm||r.distanceKm))||'—')+'</span>';
+      var hm = fmtHm(r.ascentM); if(hm) tags+='<span class="str-tag str-tag-asc">↑ '+esc(hm)+'</span>';
+      var tm = fmtMin(r.minutes); if(tm) tags+='<span class="str-tag str-tag-time">⏱ '+esc(tm)+'</span>';
+      if(sac) tags+='<span class="str-tag '+sacClass(r.sac)+'">'+esc(sac)+'</span>';
+      return '<div class="str-route-card" itemscope itemtype="https://schema.org/TouristAttraction">'
+        +'<div class="str-route-photo">'+photo+'</div>'
+        +'<div class="str-route-body">'
+        +'<h3 class="str-route-name" itemprop="name">'+esc(r.name)+'</h3>'
+        +'<div class="str-route-meta">'+tags+'</div>'
+        +(desc?'<p class="str-route-desc" itemprop="description">'+esc(desc)+'…</p>':'')
+        +'<a class="str-app-link" href="https://apps.apple.com/app/id6744444594" target="_blank" rel="noopener">→ In der SagaTrail-App öffnen</a>'
+        +'</div></div>';
+    }).join('');
+  }
 })();
 </script>
