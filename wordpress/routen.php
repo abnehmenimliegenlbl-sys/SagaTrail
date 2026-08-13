@@ -860,12 +860,11 @@ window.strOpenRoute=function(idx){
     var mapEl=document.getElementById('str-map');
     if(!_strMap){
       _strMap=L.map(mapEl,{zoomControl:true,attributionControl:true});
-      /* OpenTopoMap Basiskarte */
-      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
-        attribution:'<a href="https://www.opentopomap.org">OpenTopoMap</a> · <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://waymarkedtrails.org">Waymarked Trails</a>',
-        maxZoom:17,opacity:1
+      /* ESRI World Topo Map — Höhenlinien, Geländeschattierung, keine Wanderwege */
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{
+        attribution:'Tiles © <a href="https://www.esri.com">Esri</a>',
+        maxZoom:19
       }).addTo(_strMap);
-      /* Kein Waymarked-Trails-Overlay — nur die gewählte Route als rote Linie */
     } else {
       if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
       mapEl.style.display='block';
