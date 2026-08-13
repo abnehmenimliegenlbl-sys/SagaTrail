@@ -802,6 +802,64 @@ var _leafletLoading=false;
 var _leafletCallbacks=[];
 var _strMap=null;
 var _strPolyline=null;
+var _strExtras=[];  /* POI + Partner Layer */
+
+/* POI-Kind → Emoji */
+function strPoiEmoji(kind){
+  var k=(kind||'').toLowerCase();
+  if(k==='peak'||k==='summit')return '⛰️';
+  if(k==='viewpoint')return '🔭';
+  if(k==='waterfall')return '💧';
+  if(k==='lake'||k==='water')return '🏞️';
+  if(k==='cave')return '🕳️';
+  if(k==='castle'||k==='ruins')return '🏰';
+  if(k==='church'||k==='chapel')return '⛪';
+  if(k==='alpine_hut'||k==='shelter')return '🏠';
+  if(k==='hotel'||k==='hostel')return '🛏️';
+  if(k==='restaurant'||k==='cafe')return '🍽️';
+  return '📍';
+}
+function strPartnerEmoji(kat){
+  var k=(kat||'').toLowerCase();
+  if(k.includes('restaurant')||k.includes('café')||k.includes('cafe'))return '🍽️';
+  if(k.includes('hotel')||k.includes('unterkunft'))return '🛏️';
+  if(k.includes('shop')||k.includes('laden'))return '🛍️';
+  if(k.includes('transport'))return '🚌';
+  return '🤝';
+}
+function strEmojiIcon(emoji,open){
+  var border=open===false?'#999':'#CC0000';
+  return L.divIcon({
+    html:'<div style="font-size:18px;line-height:24px;text-align:center;width:28px;height:28px;background:rgba(255,255,255,.9);border-radius:50%;border:2px solid '+border+';display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+emoji+'</div>',
+    iconSize:[28,28],iconAnchor:[14,14],className:''
+  });
+}
+
+function strLoadMapExtras(bounds){
+  var q='south='+bounds.getSouth()+'&west='+bounds.getWest()+'&north='+bounds.getNorth()+'&east='+bounds.getEast();
+  var base='https://saga-trail.replit.app/api';
+  /* POIs und Partner parallel laden */
+  Promise.all([
+    fetch(base+'/routes/pois?'+q).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}),
+    fetch(base+'/routes/partners?'+q).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];})
+  ]).then(function(results){
+    var pois=Array.isArray(results[0])?results[0]:[];
+    var partners=Array.isArray(results[1])?results[1]:[];
+    pois.forEach(function(p){
+      if(!p.lat||!p.lng)return;
+      var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPoiEmoji(p.kind))})
+        .bindTooltip(esc(p.name||p.kind),{direction:'top',offset:[0,-10]});
+      m.addTo(_strMap);_strExtras.push(m);
+    });
+    partners.forEach(function(p){
+      if(!p.lat||!p.lng)return;
+      var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
+      var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPartnerEmoji(p.kategorie),p.istOffen)})
+        .bindTooltip(label,{direction:'top',offset:[0,-10]});
+      m.addTo(_strMap);_strExtras.push(m);
+    });
+  });
+}
 
 function loadLeaflet(cb){
   if(_leafletReady){cb();return;}
@@ -867,6 +925,7 @@ window.strOpenRoute=function(idx){
       }).addTo(_strMap);
     } else {
       if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
+      _strExtras.forEach(function(l){_strMap.removeLayer(l);});_strExtras=[];
       mapEl.style.display='block';
     }
     /* Kurz warten bis Modal sichtbar, dann Leaflet-Größe korrigieren */
@@ -874,7 +933,9 @@ window.strOpenRoute=function(idx){
       _strMap.invalidateSize();
       if(pts.length>1){
         _strPolyline=L.polyline(pts,{color:'#CC0000',weight:5,opacity:.9}).addTo(_strMap);
-        _strMap.fitBounds(_strPolyline.getBounds(),{padding:[28,28]});
+        var _bounds=_strPolyline.getBounds();
+        _strMap.fitBounds(_bounds,{padding:[28,28]});
+        strLoadMapExtras(_bounds);
         /* Start- und Zielpunkt als Fahnen */
         L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap);
         L.marker(pts[pts.length-1],{icon:strMapFahne('ziel')}).addTo(_strMap);
