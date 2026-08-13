@@ -612,7 +612,14 @@ ${legendHtml}
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
-        el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
+        /* touchend feuert sofort (kein 300ms-Delay); click als Fallback fuer
+           Nicht-Touch-Umgebungen. Fired-Flag verhindert Doppel-Trigger. */
+        (function(id) {
+          var fired = false;
+          function send(e) { e.stopPropagation(); if (fired) return; fired = true; setTimeout(function(){ fired=false; }, 600); post(JSON.stringify({ type: 'stt-partner-press', id: id })); }
+          el.addEventListener('touchend', send, { passive: false });
+          el.addEventListener('click',    send);
+        })(p.id);
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
         partnerEls.push(el);
       });
@@ -793,7 +800,12 @@ ${legendHtml}
         pin.className = 'stt-partner-pin stt-partner-pin--' + paket;
         pin.innerHTML = '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="none" stroke="#cc0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
         el.appendChild(pin);
-        el.addEventListener('click', function(e) { e.stopPropagation(); post(JSON.stringify({ type: 'stt-partner-press', id: p.id })); });
+        (function(id) {
+          var fired = false;
+          function send(e) { e.stopPropagation(); if (fired) return; fired = true; setTimeout(function(){ fired=false; }, 600); post(JSON.stringify({ type: 'stt-partner-press', id: id })); }
+          el.addEventListener('touchend', send, { passive: false });
+          el.addEventListener('click',    send);
+        })(p.id);
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).addTo(map);
         partnerEls.push(el);
       });
