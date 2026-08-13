@@ -805,48 +805,27 @@ var _strPolyline=null;
 var _strExtras=[];  /* POI + Partner Layer */
 
 /* POI-Kind → Emoji */
-function strPoiEmoji(kind){
-  var k=(kind||'').toLowerCase();
-  if(k==='peak'||k==='summit')return '⛰️';
-  if(k==='viewpoint')return '🔭';
-  if(k==='waterfall')return '💧';
-  if(k==='lake'||k==='water')return '🏞️';
-  if(k==='cave')return '🕳️';
-  if(k==='castle'||k==='ruins')return '🏰';
-  if(k==='church'||k==='chapel')return '⛪';
-  if(k==='alpine_hut'||k==='shelter')return '🏠';
-  if(k==='hotel'||k==='hostel')return '🛏️';
-  if(k==='restaurant'||k==='cafe')return '🍽️';
-  return '📍';
-}
-function strPartnerEmoji(kat){
-  var k=(kat||'').toLowerCase();
-  if(k.includes('restaurant')||k.includes('café')||k.includes('cafe'))return '🍽️';
-  if(k.includes('hotel')||k.includes('unterkunft'))return '🛏️';
-  if(k.includes('shop')||k.includes('laden'))return '🛍️';
-  if(k.includes('transport'))return '🚌';
-  return '🤝';
-}
-function strEmojiIcon(emoji,open){
-  var border=open===false?'#999':'#CC0000';
-  return L.divIcon({
-    html:'<div style="font-size:18px;line-height:24px;text-align:center;width:28px;height:28px;background:rgba(255,255,255,.9);border-radius:50%;border:2px solid '+border+';display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+emoji+'</div>',
-    iconSize:[28,28],iconAnchor:[14,14],className:''
-  });
+function strPinIcon(open){
+  var col=open===false?'#999':'#DA291C';
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="20" viewBox="0 0 14 20">'
+    +'<path d="M7 1C3.686 1 1 3.686 1 7c0 4.418 6 12 6 12s6-7.582 6-12C13 3.686 10.314 1 7 1z" fill="'+col+'" stroke="#fff" stroke-width="1.2"/>'
+    +'<circle cx="7" cy="7" r="2.2" fill="rgba(255,255,255,0.5)"/>'
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[14,20],iconAnchor:[7,20],className:''});
 }
 
 function strAddExtrasToMap(pois,partners){
   pois.forEach(function(p){
     if(!p.lat||!p.lng)return;
-    var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPoiEmoji(p.kind))})
-      .bindTooltip(esc(p.name||p.kind),{direction:'top',offset:[0,-10]});
+    var m=L.marker([p.lat,p.lng],{icon:strPinIcon()})
+      .bindTooltip(esc(p.name||p.kind),{direction:'top',offset:[0,-22]});
     m.addTo(_strMap);_strExtras.push(m);
   });
   partners.forEach(function(p){
     if(!p.lat||!p.lng)return;
     var label=(p.istOffen?'✅ ':'🔴 ')+esc(p.name);
-    var m=L.marker([p.lat,p.lng],{icon:strEmojiIcon(strPartnerEmoji(p.kategorie),p.istOffen)})
-      .bindTooltip(label,{direction:'top',offset:[0,-10]});
+    var m=L.marker([p.lat,p.lng],{icon:strPinIcon(p.istOffen)})
+      .bindTooltip(label,{direction:'top',offset:[0,-22]});
     m.addTo(_strMap);_strExtras.push(m);
   });
 }
