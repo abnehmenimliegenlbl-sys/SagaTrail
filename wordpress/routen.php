@@ -18,38 +18,58 @@ if ( ! is_page( 'routen' ) ) return;
    ════════════════════════════════════════════════════════════════ */
 if ( ! function_exists( 'str_fetch_all_routes' ) ) :
 function str_fetch_all_routes( array $kantone ): array {
-  $cache_key = 'str_all_routes_v2';
+  $cache_key = 'str_all_routes_v3';
   $cached    = get_option( $cache_key );
+  /* Frischer Cache → sofort zurückgeben */
   if ( $cached && isset( $cached['ts'] ) && time() - $cached['ts'] < 6 * 3600 ) {
     return $cached['data'];
   }
+
+  /* Zeitlimit auf 25s setzen bevor curl startet */
+  @set_time_limit( 25 );
 
   $mh      = curl_multi_init();
   $handles = [];
   foreach ( $kantone as $k ) {
     $ch = curl_init( 'https://saga-trail.replit.app/api/cantons/' . rawurlencode( $k['api'] ) . '/routes' );
     curl_setopt_array( $ch, [
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_TIMEOUT        => 20,
-      CURLOPT_SSL_VERIFYPEER => true,
+      CURLOPT_RETURNTRANSFER  => true,
+      CURLOPT_CONNECTTIMEOUT  => 5,
+      CURLOPT_TIMEOUT         => 8,
+      CURLOPT_SSL_VERIFYPEER  => true,
     ] );
     curl_multi_add_handle( $mh, $ch );
     $handles[ $k['api'] ] = $ch;
   }
   $active = null;
-  do { curl_multi_exec( $mh, $active ); curl_multi_select( $mh ); } while ( $active > 0 );
+  do { curl_multi_exec( $mh, $active ); curl_multi_select( $mh, 0.5 ); } while ( $active > 0 );
 
   $all = [];
+  $got_any = false;
   foreach ( $handles as $kanton => $ch ) {
-    $body       = curl_multi_getcontent( $ch );
-    $data       = json_decode( $body, true );
+    $body  = curl_multi_getcontent( $ch );
+    $data  = json_decode( $body, true );
+    /* Geometrie entfernen — zu gross fürs WP-Options-Feld */
+    if ( is_array( $data ) ) {
+      $data = array_map( function( $r ) {
+        unset( $r['geometry'] );
+        return $r;
+      }, $data );
+      $got_any = true;
+    }
     $all[ $kanton ] = is_array( $data ) ? $data : [];
     curl_multi_remove_handle( $mh, $ch );
     curl_close( $ch );
   }
   curl_multi_close( $mh );
 
-  update_option( $cache_key, [ 'ts' => time(), 'data' => $all ], false );
+  /* Nur cachen wenn mindestens ein Kanton Daten geliefert hat */
+  if ( $got_any ) {
+    update_option( $cache_key, [ 'ts' => time(), 'data' => $all ], false );
+  } elseif ( $cached && isset( $cached['data'] ) ) {
+    /* Fallback: abgelaufener Cache ist besser als leere Seite */
+    return $cached['data'];
+  }
   return $all;
 }
 endif;
