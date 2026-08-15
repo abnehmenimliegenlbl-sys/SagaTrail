@@ -25,24 +25,26 @@ function str_fetch_all_routes( array $kantone ): array {
     return $cached['data'];
   }
 
-  /* Zeitlimit auf 25s setzen bevor curl startet */
-  @set_time_limit( 25 );
-
   $mh      = curl_multi_init();
   $handles = [];
   foreach ( $kantone as $k ) {
     $ch = curl_init( 'https://saga-trail.replit.app/api/cantons/' . rawurlencode( $k['api'] ) . '/routes' );
     curl_setopt_array( $ch, [
       CURLOPT_RETURNTRANSFER  => true,
-      CURLOPT_CONNECTTIMEOUT  => 5,
-      CURLOPT_TIMEOUT         => 8,
+      CURLOPT_CONNECTTIMEOUT  => 3,
+      CURLOPT_TIMEOUT         => 5,
       CURLOPT_SSL_VERIFYPEER  => true,
     ] );
     curl_multi_add_handle( $mh, $ch );
     $handles[ $k['api'] ] = $ch;
   }
-  $active = null;
-  do { curl_multi_exec( $mh, $active ); curl_multi_select( $mh, 0.5 ); } while ( $active > 0 );
+  $active   = null;
+  $deadline = microtime( true ) + 6.0;   /* max 6s für alle 26 Requests */
+  do {
+    curl_multi_exec( $mh, $active );
+    if ( $active ) { curl_multi_select( $mh, 0.3 ); }
+    if ( microtime( true ) > $deadline ) break;
+  } while ( $active > 0 );
 
   $all = [];
   $got_any = false;
