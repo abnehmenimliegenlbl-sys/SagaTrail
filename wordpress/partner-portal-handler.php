@@ -86,10 +86,17 @@ function sagatrail_portal_request_token() {
         $api_base_link = defined( 'SAGATRAIL_API_BASE' ) ? rtrim( SAGATRAIL_API_BASE, '/' ) : 'https://api.sagatrail.ch';
         $link = $api_base_link . '/api/verband/portal?token=' . rawurlencode( $body['token'] );
     } else {
-        $portal_page = defined( 'SAGATRAIL_PORTAL_PAGE' )
-            ? rtrim( SAGATRAIL_PORTAL_PAGE, '/' )
-            : ( get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal' );
-        $link = rtrim( $portal_page, '/' ) . '?token=' . rawurlencode( $body['token'] );
+        /* portal_url aus dem JS-Request priorisieren (Mehrsprachigkeit) */
+        $submitted_portal = isset( $_POST['portal_url'] ) ? esc_url_raw( wp_unslash( $_POST['portal_url'] ) ) : '';
+        if ( $submitted_portal && strpos( $submitted_portal, 'sagatrail.ch' ) !== false ) {
+            $portal_page = rtrim( $submitted_portal, '/' );
+        } elseif ( defined( 'SAGATRAIL_PORTAL_PAGE' ) ) {
+            $portal_page = rtrim( SAGATRAIL_PORTAL_PAGE, '/' );
+        } else {
+            $portal_page = get_permalink( get_page_by_path( 'portal' ) ) ?: 'https://sagatrail.ch/portal';
+            $portal_page = rtrim( $portal_page, '/' );
+        }
+        $link = $portal_page . '?token=' . rawurlencode( $body['token'] );
     }
     // partnerName für Partner, name für Verbände
     $name = $body['partnerName'] ?? $body['name'] ?? 'Partner';
