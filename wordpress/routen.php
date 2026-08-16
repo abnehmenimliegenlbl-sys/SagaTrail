@@ -7,8 +7,166 @@
  * die API erlaubt CORS für sagatrail.ch explizit.
  */
 
-/* ── Nur auf der Routen-Seite rendern ── */
-if ( ! is_page( 'routen' ) ) return;
+/* ── Nur auf den Routen-Seiten rendern (DE/FR/EN/IT) ── */
+if ( ! is_page( [ 'routen', 'itineraires', 'routes', 'percorsi' ] ) ) return;
+
+/* ── Sprache aus URL-Slug ── */
+$str_lang = 'de';
+if ( is_page( 'itineraires' ) ) $str_lang = 'fr';
+elseif ( is_page( 'routes' )   ) $str_lang = 'en';
+elseif ( is_page( 'percorsi' ) ) $str_lang = 'it';
+
+$str_i18n = [
+  'de' => [
+    'hero_badge'      => '🇨🇭 Schweizer Wanderrouten',
+    'hero_h1'         => 'Sagenrouten in allen 26 Kantonen',
+    'hero_desc'       => 'GPS-geführte Wanderungen auf den Spuren alter Schweizer Sagen — kostenlos in der SagaTrail-App.',
+    'stat_routes'     => 'Wanderrouten',
+    'stat_cantons'    => 'Kantone',
+    'stat_diff'       => 'Schwierigkeit',
+    'step1_label'     => 'Schritt 1 · Kanton wählen',
+    'step1_title'     => 'Wo möchtest du wandern?',
+    'step2_label'     => 'Schritt 2 · Filter &amp; Suche',
+    'step2_desc'      => 'Lege Distanz, Höhenmeter und Schwierigkeit fest. Danach folgt die passende Sage.',
+    'filter_title'    => 'Filter',
+    'filter_dist'     => 'Distanz',
+    'filter_asc'      => 'Höhenmeter',
+    'filter_diff'     => 'Schwierigkeit',
+    'filter_gj'       => 'Nur ganzjährige Routen',
+    'btn_search'      => 'Passende Routen suchen',
+    'cta_h2'          => 'Starte deine Sagenwanderung',
+    'cta_desc'        => 'GPS-Navigation, Audio-Erzählungen und historische Sagen — kostenlos in der App.',
+    'modal_open'      => '🍎 &nbsp;In der SagaTrail-App öffnen',
+    'modal_close_lbl' => 'Schliessen',
+    'seo_h2'          => 'Wanderrouten in der Schweiz nach Kanton',
+    'seo_h3'          => 'Wanderrouten %s (%d Routen)',
+    'js_results'      => 'Routen',
+    'js_badge_one'    => 'Route',
+    'js_badge_many'   => 'Routen',
+    'js_schema_pfx'   => 'Wanderrouten ',
+    'js_err_title'    => 'Fehler beim Laden',
+    'js_err_desc'     => 'Bitte versuche es erneut.',
+    'js_empty_title'  => 'Keine Routen für diesen Filter',
+    'js_empty_desc'   => 'Passe Distanz, Höhenmeter oder Schwierigkeit an.',
+    'js_season_full'  => 'Ganzjährig',
+    'js_season_sum'   => 'Nur Sommer',
+    'js_season_esun'  => 'Eher Sommer',
+    'js_sac_unk'      => 'SAC unbekannt',
+    'js_min'          => 'Min.',
+  ],
+  'fr' => [
+    'hero_badge'      => '🇨🇭 Itinéraires suisses',
+    'hero_h1'         => 'Itinéraires légendaires dans les 26 cantons',
+    'hero_desc'       => 'Randonnées guidées par GPS sur les traces des vieilles légendes suisses — gratuitement dans l\'app SagaTrail.',
+    'stat_routes'     => 'Itinéraires',
+    'stat_cantons'    => 'Cantons',
+    'stat_diff'       => 'Difficulté',
+    'step1_label'     => 'Étape 1 · Choisir un canton',
+    'step1_title'     => 'Où veux-tu randonner ?',
+    'step2_label'     => 'Étape 2 · Filtres &amp; recherche',
+    'step2_desc'      => 'Définis la distance, le dénivelé et la difficulté. Ensuite, la légende correspondante.',
+    'filter_title'    => 'Filtres',
+    'filter_dist'     => 'Distance',
+    'filter_asc'      => 'Dénivelé',
+    'filter_diff'     => 'Difficulté',
+    'filter_gj'       => 'Itinéraires ouverts toute l\'année',
+    'btn_search'      => 'Rechercher des itinéraires',
+    'cta_h2'          => 'Commence ton itinéraire légendaire',
+    'cta_desc'        => 'Navigation GPS, récits audio et légendes historiques — gratuitement dans l\'app.',
+    'modal_open'      => '🍎 &nbsp;Ouvrir dans l\'app SagaTrail',
+    'modal_close_lbl' => 'Fermer',
+    'seo_h2'          => 'Itinéraires de randonnée en Suisse par canton',
+    'seo_h3'          => 'Itinéraires %s (%d itinéraires)',
+    'js_results'      => 'Itinéraires',
+    'js_badge_one'    => 'itinéraire',
+    'js_badge_many'   => 'itinéraires',
+    'js_schema_pfx'   => 'Itinéraires ',
+    'js_err_title'    => 'Erreur de chargement',
+    'js_err_desc'     => 'Merci de réessayer.',
+    'js_empty_title'  => 'Aucun itinéraire pour ce filtre',
+    'js_empty_desc'   => 'Ajuste la distance, le dénivelé ou la difficulté.',
+    'js_season_full'  => 'Toute l\'année',
+    'js_season_sum'   => 'Été uniquement',
+    'js_season_esun'  => 'Plutôt en été',
+    'js_sac_unk'      => 'SAC inconnu',
+    'js_min'          => 'min.',
+  ],
+  'en' => [
+    'hero_badge'      => '🇨🇭 Swiss Hiking Routes',
+    'hero_h1'         => 'Legend Trails in all 26 Cantons',
+    'hero_desc'       => 'GPS-guided hikes tracing ancient Swiss legends — free in the SagaTrail app.',
+    'stat_routes'     => 'Hiking routes',
+    'stat_cantons'    => 'Cantons',
+    'stat_diff'       => 'Difficulty',
+    'step1_label'     => 'Step 1 · Choose a canton',
+    'step1_title'     => 'Where do you want to hike?',
+    'step2_label'     => 'Step 2 · Filter &amp; search',
+    'step2_desc'      => 'Set distance, elevation and difficulty. Then find your matching legend.',
+    'filter_title'    => 'Filters',
+    'filter_dist'     => 'Distance',
+    'filter_asc'      => 'Elevation',
+    'filter_diff'     => 'Difficulty',
+    'filter_gj'       => 'Year-round routes only',
+    'btn_search'      => 'Find matching routes',
+    'cta_h2'          => 'Start your legend hike',
+    'cta_desc'        => 'GPS navigation, audio narration and historic legends — free in the app.',
+    'modal_open'      => '🍎 &nbsp;Open in SagaTrail app',
+    'modal_close_lbl' => 'Close',
+    'seo_h2'          => 'Hiking routes in Switzerland by canton',
+    'seo_h3'          => 'Routes %s (%d routes)',
+    'js_results'      => 'Routes',
+    'js_badge_one'    => 'route',
+    'js_badge_many'   => 'routes',
+    'js_schema_pfx'   => 'Routes ',
+    'js_err_title'    => 'Loading error',
+    'js_err_desc'     => 'Please try again.',
+    'js_empty_title'  => 'No routes for this filter',
+    'js_empty_desc'   => 'Adjust distance, elevation or difficulty.',
+    'js_season_full'  => 'Year-round',
+    'js_season_sum'   => 'Summer only',
+    'js_season_esun'  => 'Mostly summer',
+    'js_sac_unk'      => 'SAC unknown',
+    'js_min'          => 'min.',
+  ],
+  'it' => [
+    'hero_badge'      => '🇨🇭 Percorsi svizzeri',
+    'hero_h1'         => 'Percorsi leggendari in tutti i 26 cantoni',
+    'hero_desc'       => 'Escursioni guidate da GPS sulle tracce delle antiche leggende svizzere — gratis nell\'app SagaTrail.',
+    'stat_routes'     => 'Percorsi',
+    'stat_cantons'    => 'Cantoni',
+    'stat_diff'       => 'Difficoltà',
+    'step1_label'     => 'Passo 1 · Scegli un cantone',
+    'step1_title'     => 'Dove vuoi camminare?',
+    'step2_label'     => 'Passo 2 · Filtri &amp; ricerca',
+    'step2_desc'      => 'Imposta distanza, dislivello e difficoltà. Poi troverai la leggenda corrispondente.',
+    'filter_title'    => 'Filtri',
+    'filter_dist'     => 'Distanza',
+    'filter_asc'      => 'Dislivello',
+    'filter_diff'     => 'Difficoltà',
+    'filter_gj'       => 'Solo percorsi tutto l\'anno',
+    'btn_search'      => 'Cerca percorsi',
+    'cta_h2'          => 'Inizia la tua escursione leggendaria',
+    'cta_desc'        => 'Navigazione GPS, narrazione audio e leggende storiche — gratis nell\'app.',
+    'modal_open'      => '🍎 &nbsp;Apri nell\'app SagaTrail',
+    'modal_close_lbl' => 'Chiudi',
+    'seo_h2'          => 'Percorsi escursionistici in Svizzera per cantone',
+    'seo_h3'          => 'Percorsi %s (%d percorsi)',
+    'js_results'      => 'Percorsi',
+    'js_badge_one'    => 'percorso',
+    'js_badge_many'   => 'percorsi',
+    'js_schema_pfx'   => 'Percorsi ',
+    'js_err_title'    => 'Errore di caricamento',
+    'js_err_desc'     => 'Riprova.',
+    'js_empty_title'  => 'Nessun percorso per questo filtro',
+    'js_empty_desc'   => 'Modifica distanza, dislivello o difficoltà.',
+    'js_season_full'  => 'Tutto l\'anno',
+    'js_season_sum'   => 'Solo estate',
+    'js_season_esun'  => 'Prevalentemente estate',
+    'js_sac_unk'      => 'SAC sconosciuto',
+    'js_min'          => 'min.',
+  ],
+];
+$t = $str_i18n[ $str_lang ];
 
 /* ════════════════════════════════════════════════════════════════
    SEO: Alle 26 Kantone server-seitig vorladen (parallel curl_multi)
@@ -311,13 +469,13 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 <!-- HERO -->
 <div class="str-fw str-hero">
   <div class="str-inner">
-    <span class="str-hero-badge">🇨🇭 Schweizer Wanderrouten</span>
-    <h1>Sagenrouten in allen 26 Kantonen</h1>
-    <p>GPS-geführte Wanderungen auf den Spuren alter Schweizer Sagen — kostenlos in der SagaTrail-App.</p>
+    <span class="str-hero-badge"><?php echo esc_html( $t['hero_badge'] ); ?></span>
+    <h1><?php echo esc_html( $t['hero_h1'] ); ?></h1>
+    <p><?php echo esc_html( $t['hero_desc'] ); ?></p>
     <div class="str-hero-stats">
-      <div class="str-hero-stat"><strong>200+</strong><span>Wanderrouten</span></div>
-      <div class="str-hero-stat"><strong>26</strong><span>Kantone</span></div>
-      <div class="str-hero-stat"><strong>T1–T6</strong><span>Schwierigkeit</span></div>
+      <div class="str-hero-stat"><strong>200+</strong><span><?php echo esc_html( $t['stat_routes'] ); ?></span></div>
+      <div class="str-hero-stat"><strong>26</strong><span><?php echo esc_html( $t['stat_cantons'] ); ?></span></div>
+      <div class="str-hero-stat"><strong>T1–T6</strong><span><?php echo esc_html( $t['stat_diff'] ); ?></span></div>
     </div>
   </div>
 </div>
@@ -325,8 +483,8 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 <!-- KANTONSAUSWAHL -->
 <div class="str-fw str-kanton-section">
   <div class="str-inner">
-    <div class="str-section-label">Schritt 1 · Kanton wählen</div>
-    <h2 class="str-section-title">Wo möchtest du wandern?</h2>
+    <div class="str-section-label"><?php echo $t['step1_label']; ?></div>
+    <h2 class="str-section-title"><?php echo esc_html( $t['step1_title'] ); ?></h2>
     <div class="str-kanton-grid">
       <?php foreach ( $str_kantone as $k ) : ?>
       <div class="str-kanton-card"
@@ -348,10 +506,10 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 <!-- FILTER -->
 <div class="str-fw str-filter-section" id="str-filter-section">
   <div class="str-inner">
-    <div class="str-section-label">Schritt 2 · Filter &amp; Suche</div>
+    <div class="str-section-label"><?php echo $t['step2_label']; ?></div>
     <h2 class="str-section-title" id="str-filter-title">–</h2>
     <p style="font-size:.88rem;color:#666;margin-bottom:20px;margin-top:-8px;">
-      Lege Distanz, Höhenmeter und Schwierigkeit fest. Danach folgt die passende Sage.
+      <?php echo esc_html( $t['step2_desc'] ); ?>
     </p>
     <div class="str-filter-card">
       <div class="str-filter-header">
@@ -365,13 +523,13 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
             <circle cx="11" cy="18" r="2.2" fill="white" stroke="none"/>
           </svg>
         </div>
-        <span class="str-filter-title-text">Filter</span>
+        <span class="str-filter-title-text"><?php echo esc_html( $t['filter_title'] ); ?></span>
       </div>
 
       <!-- Distanz -->
       <div class="str-filter-row">
         <div class="str-filter-row-head">
-          <span class="str-filter-row-label">Distanz</span>
+          <span class="str-filter-row-label"><?php echo esc_html( $t['filter_dist'] ); ?></span>
           <span class="str-filter-row-val" id="str-dist-val">0 km – 50+ km</span>
         </div>
         <div class="str-dual-range" id="str-dist-range">
@@ -384,7 +542,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
       <!-- Höhenmeter -->
       <div class="str-filter-row">
         <div class="str-filter-row-head">
-          <span class="str-filter-row-label">Höhenmeter</span>
+          <span class="str-filter-row-label"><?php echo esc_html( $t['filter_asc'] ); ?></span>
           <span class="str-filter-row-val" id="str-asc-val">0 hm – 3000+ hm</span>
         </div>
         <div class="str-dual-range" id="str-asc-range">
@@ -397,7 +555,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
       <!-- Schwierigkeit -->
       <div class="str-filter-row" style="margin-bottom:4px">
         <div class="str-filter-row-head">
-          <span class="str-filter-row-label">Schwierigkeit</span>
+          <span class="str-filter-row-label"><?php echo esc_html( $t['filter_diff'] ); ?></span>
           <span class="str-filter-row-val" id="str-sac-val">T1 – T6</span>
         </div>
         <div class="str-dual-range" id="str-sac-range">
@@ -409,7 +567,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 
       <!-- Toggle -->
       <div class="str-toggle-row">
-        <span class="str-toggle-label">Nur ganzjährige Routen</span>
+        <span class="str-toggle-label"><?php echo esc_html( $t['filter_gj'] ); ?></span>
         <div class="str-toggle" id="str-toggle-gj" onclick="strToggleGj()" role="switch" aria-checked="false"></div>
       </div>
     </div>
@@ -418,7 +576,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
       <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
-      Passende Routen suchen
+      <?php echo esc_html( $t['btn_search'] ); ?>
     </button>
     <p class="str-route-count-hint" id="str-hint"></p>
   </div>
@@ -438,8 +596,8 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 <!-- APP CTA -->
 <div class="str-fw str-cta">
   <div class="str-inner">
-    <h2>Starte deine Sagenwanderung</h2>
-    <p>GPS-Navigation, Audio-Erzählungen und historische Sagen — kostenlos in der App.</p>
+    <h2><?php echo esc_html( $t['cta_h2'] ); ?></h2>
+    <p><?php echo esc_html( $t['cta_desc'] ); ?></p>
     <div class="str-cta-btns">
       <a href="https://apps.apple.com/de/app/sagatrail/id6788260668" class="str-cta-btn" target="_blank" rel="noopener">🍎 &nbsp;App Store</a>
       <a href="https://play.google.com/store/apps/details?id=com.inster.sagatrail" class="str-cta-btn str-cta-btn-out" target="_blank" rel="noopener">▶ &nbsp;Google Play</a>
@@ -452,14 +610,14 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
   <div class="str-modal" role="dialog" aria-modal="true">
     <div class="str-modal-head">
       <h2 class="str-modal-title" id="str-modal-title"></h2>
-      <button class="str-modal-close" onclick="strCloseModal()" aria-label="Schliessen">✕</button>
+      <button class="str-modal-close" onclick="strCloseModal()" aria-label="<?php echo esc_attr( $t['modal_close_lbl'] ); ?>">✕</button>
     </div>
     <div class="str-modal-map"><div id="str-map"></div></div>
     <div class="str-modal-body">
       <div class="str-modal-tags" id="str-modal-tags"></div>
       <p class="str-modal-desc" id="str-modal-desc"></p>
       <a id="str-modal-cta" class="str-modal-cta" href="https://apps.apple.com/de/app/sagatrail/id6788260668" target="_blank" rel="noopener">
-        🍎 &nbsp;In der SagaTrail-App öffnen
+        <?php echo $t['modal_open']; ?>
       </a>
     </div>
   </div>
@@ -467,10 +625,10 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 
 <!-- SEO: Alle Routen als crawlbares HTML (für Google, ohne JS-Interaktion) -->
 <div id="str-seo" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">
-  <h2>Wanderrouten in der Schweiz nach Kanton</h2>
+  <h2><?php echo esc_html( $t['seo_h2'] ); ?></h2>
   <?php foreach ( $str_all_routes as $kanton => $routes ) : if ( empty( $routes ) ) continue; ?>
   <section>
-    <h3>Wanderrouten <?php echo esc_html( $kanton ); ?> (<?php echo count( $routes ); ?> Routen)</h3>
+    <h3><?php printf( esc_html( $t['seo_h3'] ), esc_html( $kanton ), count( $routes ) ); ?></h3>
     <ul>
       <?php foreach ( array_slice( $routes, 0, 40 ) as $r ) :
         $km  = $r['distanceTagKm'] ?? $r['distanceKm'] ?? null;
@@ -503,6 +661,9 @@ var STR_WAPPEN=<?php
   foreach($str_kantone as $k){ $jw[$k['api']]='https://commons.wikimedia.org/wiki/Special:FilePath/'.$k['svg']; }
   echo wp_json_encode($jw,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 ?>;
+
+/* ── Übersetzungen (PHP-generiert) ── */
+var STR_L10N=<?php echo wp_json_encode(array_filter($t,function($k){return strpos($k,'js_')===0;},ARRAY_FILTER_USE_KEY),JSON_UNESCAPED_UNICODE); ?>;
 
 /* ── State ── */
 var S={kanton:null,kantonWappen:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
@@ -738,7 +899,7 @@ window.strSearch=function(){
       .catch(function(){
         S.loading=false;
         document.getElementById('str-search-btn').disabled=false;
-        list.innerHTML='<div class="str-empty"><div class="str-empty-icon">⚠️</div><h3>Fehler beim Laden</h3><p>Bitte versuche es erneut.</p></div>';
+        list.innerHTML='<div class="str-empty"><div class="str-empty-icon">⚠️</div><h3>'+STR_L10N.js_err_title+'</h3><p>'+STR_L10N.js_err_desc+'</p></div>';
       });
   }else{renderRoutes();}
 };
@@ -747,7 +908,7 @@ window.strSearch=function(){
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 function fmtKm(v){return v?parseFloat(v).toFixed(1)+' km':null;}
 function fmtHm(v){return v?'+'+Math.round(v)+' hm':null;}
-function fmtMin(m){if(!m)return null;return m<60?m+' Min.':Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60)+' h';}
+function fmtMin(m){if(!m)return null;return m<60?m+' '+STR_L10N.js_min:Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60)+' h';}
 function sacCls(s){var n=sacNum(s);return 'str-tag-T'+Math.min(6,Math.max(1,n||1));}
 
 var _strRouteIndex=[];
@@ -757,25 +918,25 @@ function renderRoutes(){
   _strRouteIndex=vis;
   var badge=document.getElementById('str-results-badge');
   var list=document.getElementById('str-route-list');
-  badge.textContent=vis.length+' Route'+(vis.length!==1?'n':'');
+  badge.textContent=vis.length+' '+(vis.length===1?STR_L10N.js_badge_one:STR_L10N.js_badge_many);
   badge.style.display='';
   /* Schema.org */
   var old=document.getElementById('str-schema');if(old)old.remove();
   var sc=document.createElement('script');sc.id='str-schema';sc.type='application/ld+json';
-  sc.textContent=JSON.stringify({'@context':'https://schema.org','@type':'ItemList','name':'Wanderrouten '+S.kanton,'numberOfItems':vis.length,
+  sc.textContent=JSON.stringify({'@context':'https://schema.org','@type':'ItemList','name':STR_L10N.js_schema_pfx+S.kanton,'numberOfItems':vis.length,
     'itemListElement':vis.slice(0,50).map(function(r,i){return{'@type':'TouristAttraction','position':i+1,'name':r.name};})});
   document.head.appendChild(sc);
   if(!vis.length){
-    list.innerHTML='<div class="str-empty"><div class="str-empty-icon">🏔️</div><h3>Keine Routen für diesen Filter</h3><p>Passe Distanz, Höhenmeter oder Schwierigkeit an.</p></div>';
+    list.innerHTML='<div class="str-empty"><div class="str-empty-icon">🏔️</div><h3>'+STR_L10N.js_empty_title+'</h3><p>'+STR_L10N.js_empty_desc+'</p></div>';
     return;
   }
   list.innerHTML=vis.map(function(r,i){
     var sac=r.sac&&r.sac!=='unbekannt'?r.sac:null;
     var km=r.distanceTagKm||r.distanceKm;
     var mins=r.minutes||0, h2=Math.floor(mins/60), m2=mins%60;
-    var season=r.season==='ganzjaehrig'?'Ganzjährig':r.season==='nur_sommer'?'Nur Sommer':r.season==='eher_sommer'?'Eher Sommer':'';
+    var season=r.season==='ganzjaehrig'?STR_L10N.js_season_full:r.season==='nur_sommer'?STR_L10N.js_season_sum:r.season==='eher_sommer'?STR_L10N.js_season_esun:'';
     var bar=[
-      sac?'SAC '+sac:'SAC unbekannt',
+      sac?'SAC '+sac:STR_L10N.js_sac_unk,
       km?parseFloat(km).toFixed(1)+' km':null,
       r.ascentM?'+'+Math.round(r.ascentM)+' hm':null,
       mins?(h2+':'+(m2<10?'0':'')+m2+' h'):null,
