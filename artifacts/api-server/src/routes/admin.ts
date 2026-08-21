@@ -2070,6 +2070,19 @@ router.post("/admin/photos/reset", async (req, res): Promise<void> => {
 router.post("/admin/routes/fix-names", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
+    // Optionale explizite Overrides: { overrides: { "osm-123": "Korrektername" } }
+    const overrides: Record<string, string> = req.body?.overrides ?? {};
+    const overrideRows: { id: string; name: string }[] = [];
+
+    for (const [routeId, correctName] of Object.entries(overrides)) {
+      const r = await db.execute(
+        sql`UPDATE external_routes SET name = ${correctName} WHERE id = ${routeId} RETURNING id, name`
+      );
+      const rows = r.rows as { id: string; name: string }[];
+      overrideRows.push(...rows);
+    }
+
+    // Verbleibende fixme-Platzhalter (ohne expliziten Override) automatisch bereinigen
     const result = await db.execute(sql`
       UPDATE external_routes
       SET name = trim(
@@ -2084,9 +2097,16 @@ router.post("/admin/routes/fix-names", async (req, res): Promise<void> => {
       WHERE name ~* 'fixme'
       RETURNING id, name
     `);
-    const rows = result.rows as { id: string; name: string }[];
-    req.log.info({ count: rows.length }, "Routen-Namen bereinigt (fixme entfernt)");
-    res.json({ ok: true, cleaned: rows.length, examples: rows.slice(0, 5) });
+    const strippedRows = result.rows as { id: string; name: string }[];
+    req.log.info(
+      { overrides: overrideRows.length, stripped: strippedRows.length },
+      "Routen-Namen bereinigt (fixme)"
+    );
+    res.json({
+      ok: true,
+      overridden: overrideRows,
+      stripped: strippedRows,
+    });
   } catch (err) {
     req.log.error({ err }, "Routen-Namen-Bereinigung fehlgeschlagen");
     res.status(500).json({ error: "Bereinigung fehlgeschlagen" });
