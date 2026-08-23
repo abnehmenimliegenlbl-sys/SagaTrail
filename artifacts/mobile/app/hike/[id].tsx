@@ -83,7 +83,7 @@ import {
   sendePoiMitteilung,
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
-import { poiDisplayName } from "@/lib/poiDisplay";
+import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
 import * as ImagePicker from "expo-image-picker";
 import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
@@ -555,6 +555,8 @@ export default function LiveHike() {
   const decisionsRef = useRef<StoryChapter[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const lastFixRef = useRef<LatLng | null>(null);
+  /** Vorherige GPS-Position vor dem letzten signifikanten Schritt — fuer Himmelsrichtungsberechnung zum POI. */
+  const prevLivePosRef = useRef<LatLng | null>(null);
   /** Aufgezeichneter GPS-Track: [lat, lng]-Paare im zeitlichen Abstand >= TRACK_LOG_INTERVAL_MS */
   const posLogRef = useRef<[number, number][]>([]);
   const lastTrackLogTimeRef = useRef<number>(0);
@@ -580,6 +582,10 @@ export default function LiveHike() {
   // und unterschiedliche IDs traegt.
   const announcedPoiLocsRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const narratedPoiIdRef = useRef<string | null>(null);
+  /** Bereits mit 200-m-Richtungshinweis angesagte POI-IDs (Annaeherungs-Flow). */
+  const hintedPoiIdRef = useRef<string | null>(null);
+  /** Bereits mit voller Geschichte (50 m) erzaehlte POI-IDs (Annaeherungs-Flow). */
+  const poiStoryToldRef = useRef<string | null>(null);
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
   const keepaliveSoundRef = useRef<Audio.Sound | null>(null);
   // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
@@ -1176,6 +1182,7 @@ export default function LiveHike() {
       // GPS-Rauschen (<3 m) und unrealistische Spruenge (>500 m) ignorieren
       if (d > 0.003 && d < 0.5) {
         setDistance((x) => x + d);
+        prevLivePosRef.current = prev; // Vorgaenger fuer Himmelsrichtungsberechnung merken
       }
     }
     lastFixRef.current = cur;
@@ -2285,6 +2292,9 @@ export default function LiveHike() {
   useEffect(() => {
     if (!nearbyPoi) return;
     if (narratedPoiIdRef.current === nearbyPoi.id) return;
+    // Kulturelle/historische POIs mit spezifischem Namen werden durch den
+    // progressiven Annaeherungs-Effekt erzaehlt (200 m Hinweis + 50 m Geschichte).
+    if (POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "") && isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
     narratedPoiIdRef.current = nearbyPoi.id;
     // Kontext des vorherigen POI darf nicht an der neuen Karte kleben.
     setNearbyPoiKontext(null);
@@ -2348,6 +2358,62 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [nearbyPoi, nearbyPoiWiki, storyLanguage, speak, t]);
+
+  // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
+  // 200 m → einmaliger Richtungshinweis per Geraetestimme
+  // 50 m  → volle Geschichte in Erzaehlstimme (identisch zum normalen POI-Flow)
+  useEffect(() => {
+    if (!nearbyPoi || !livePos) return;
+    if (!POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "")) return;
+    if (!isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
+    const distKm = haversineKm(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
+
+    // 200 m: Richtungshinweis (einmalig pro POI)
+    if (distKm <= 0.2 && hintedPoiIdRef.current !== nearbyPoi.id) {
+      hintedPoiIdRef.current = nearbyPoi.id;
+      const pack = STORY_PACKS[resolveLang(cueLanguage)];
+      // Bewegungsrichtung aus zwei aufeinanderfolgenden GPS-Fixes ableiten
+      let dir: "links" | "rechts" | "geradeaus" = "geradeaus";
+      if (prevLivePosRef.current) {
+        const heading = bearingDeg(prevLivePosRef.current, livePos);
+        const bear = bearingDeg(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
+        const rel = ((bear - heading) + 360) % 360;
+        dir = rel < 45 || rel > 315 ? "geradeaus" : rel <= 135 ? "rechts" : "links";
+      }
+      speak(pack.poiApproachHint(dir), undefined, { useDevice: true });
+    }
+
+    // 50 m: volle Geschichte (einmalig pro POI)
+    if (distKm <= 0.05 && poiStoryToldRef.current !== nearbyPoi.id) {
+      poiStoryToldRef.current = nearbyPoi.id;
+      const pack = STORY_PACKS[resolveLang(cueLanguage)];
+      const rawExtract = nearbyPoiWiki?.extract ?? null;
+      hapticHeavy();
+      const capturedPoi = nearbyPoi;
+      (async () => {
+        const cached = await getOfflinePoiStory(capturedPoi.id, cueLanguage);
+        if (cached !== null) {
+          if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
+          speak(pack.poiAside(capturedPoi.name, cached), undefined, { useOpenAI: true });
+          return;
+        }
+        getPoiStory({
+          name: capturedPoi.name,
+          extract: rawExtract ?? undefined,
+          kind: capturedPoi.kind,
+          lang: cueLanguage,
+          osmContext: capturedPoi.osmContext ?? undefined,
+        })
+          .then((r) => {
+            if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
+            speak(pack.poiAside(capturedPoi.name, r.text), undefined, { useOpenAI: true });
+          })
+          .catch(() => {
+            speak(pack.poiAside(capturedPoi.name, rawExtract ? trimForNarration(rawExtract) : null), undefined, { useOpenAI: true });
+          });
+      })();
+    }
+  }, [livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der

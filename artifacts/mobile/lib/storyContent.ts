@@ -84,6 +84,8 @@ export interface StoryPack {
   // in der Naehe entdeckt wird — nutzt den bereits geladenen Wikipedia-Auszug,
   // keine KI-Generierung. extract ist null, wenn kein Wikipedia-Artikel vorliegt.
   poiAside: (name: string, extract: string | null) => string;
+  /** Gesprochener Richtungshinweis bei 200 m Annaeherung an einen kulturellen/historischen POI. */
+  poiApproachHint: (direction: "links" | "rechts" | "geradeaus") => string;
   /** Persoenliche Begruessing beim Einzelstart — wird dem ersten Kapitel vorangestellt */
   soloGreeting: (name: string) => string;
   /** Kurzer Tageszeit-Einstieg (morgen/mittag/abend/nacht) vor Kapitel 1 */
@@ -187,6 +189,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name}. ${extract}`
         : `Kleine Unterbrechung der Sage, ein echter Ort ganz in deiner Nähe: ${name} — ein stiller Zeuge vergangener Zeiten.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Du bist ganz in der Nähe von einem interessanten Ort. Gehe nach links, um mehr darüber zu erfahren."
+        : dir === "rechts"
+        ? "Du bist ganz in der Nähe von einem interessanten Ort. Gehe nach rechts, um mehr darüber zu erfahren."
+        : "Du bist ganz in der Nähe von einem interessanten Ort. Gehe geradeaus, um mehr darüber zu erfahren.",
     soloGreeting: (name) => `Willkommen auf dem Weg, ${name}. Lass die Sage dich begleiten.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Die Berge erwachen noch — ein guter Morgen für alte Geschichten.", mittag: "Die Mittagssonne wirft klare Schatten, doch dieser Weg birgt noch Geheimnisse.", abend: "Das Abendlicht taucht alles in warmes Gold — die richtige Stunde für Sagen.", nacht: "Dunkelheit liegt über dem Pfad. Genau jetzt erwachen die alten Geschichten." } as const)[tod],
     photoChallengePrompt: "Du bist am Herzort dieser Sage. Halte diesen besonderen Ort in einem Foto fest.",
@@ -344,6 +352,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name}. ${extract}`
         : `Chlini Underbrächig vo de Sage, en echte Ort ganz i dinere Nöchi: ${name} — en stille Züügä vo vergangene Zyte.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Du bisch ganz in dr Nächi vo eme interessante Ort. Gang nach links, um meh dezue z'erfahre."
+        : dir === "rechts"
+        ? "Du bisch ganz in dr Nächi vo eme interessante Ort. Gang nach rächts, um meh dezue z'erfahre."
+        : "Du bisch ganz in dr Nächi vo eme interessante Ort. Gang gradeuss, um meh dezue z'erfahre.",
     soloGreeting: (name) => `Willkomme uf em Wäg, ${name}. Lo d Sage dich bgleite.`,
     timeOfDayGreeting: (tod) => ({ morgen: "D Bärg erwache no — en guete Morge für alti Gschichte.", mittag: "D Miittagssunne wirft klari Schatte, aber dä Wäg verbirgt no Gheimnis.", abend: "S Abelicht taucht alles i warmes Gold — geni Stund für Sage.", nacht: "Dunkelheit liit über em Pfad. Genau jetzt erwache d alte Gschichte." } as const)[tod],
     photoChallengePrompt: "Du bisch am Härzort vo dere Sage. Halte dä bsundere Ort i eme Foto fescht.",
@@ -501,6 +515,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name}. ${extract}`
         : `Petite interruption de la légende, un lieu bien réel tout près de toi : ${name} — un témoin silencieux du passé.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Tu es tout près d'un endroit intéressant. Va à gauche pour en savoir plus."
+        : dir === "rechts"
+        ? "Tu es tout près d'un endroit intéressant. Va à droite pour en savoir plus."
+        : "Tu es tout près d'un endroit intéressant. Continue tout droit pour en savoir plus.",
     soloGreeting: (name) => `Bienvenue sur ce chemin, ${name}. Laisse la légende te guider.`,
     timeOfDayGreeting: (tod) => ({ morgen: "La montagne s'éveille encore — un bon matin pour de vieilles histoires.", mittag: "Le soleil de midi projette des ombres nettes, et pourtant ce chemin cache encore des secrets.", abend: "La lumière du soir teinte tout d'un or chaud — l'heure idéale pour les légendes.", nacht: "L'obscurité recouvre le sentier. C'est maintenant que les vieilles histoires s'éveillent." } as const)[tod],
     photoChallengePrompt: "Tu es au cœur de cette légende. Garde ce lieu particulier en photo.",
@@ -658,6 +678,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name}. ${extract}`
         : `Piccola interruzione della leggenda, un luogo reale proprio vicino a te: ${name} — un testimone silenzioso del passato.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Sei vicinissimo a un posto interessante. Vai a sinistra per saperne di più."
+        : dir === "rechts"
+        ? "Sei vicinissimo a un posto interessante. Vai a destra per saperne di più."
+        : "Sei vicinissimo a un posto interessante. Continua dritto per saperne di più.",
     soloGreeting: (name) => `Benvenuto·a su questo cammino, ${name}. Lascia che la leggenda ti guidi.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Le montagne si stanno ancora svegliando — un buon mattino per le storie antiche.", mittag: "Il sole a picco proietta ombre nette, eppure questo sentiero cela ancora segreti.", abend: "La luce della sera tinge tutto di un oro caldo — l'ora giusta per le leggende.", nacht: "L'oscurità avvolge il sentiero. È proprio ora che le storie antiche si risvegliano." } as const)[tod],
     photoChallengePrompt: "Sei nel cuore di questa leggenda. Ferma questo luogo speciale in una foto.",
@@ -815,6 +841,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `A brief break from the saga — a real place right near you: ${name}. ${extract}`
         : `A brief break from the saga — a real place right near you: ${name} — a quiet witness to times past.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "You're very close to an interesting place. Go left to find out more."
+        : dir === "rechts"
+        ? "You're very close to an interesting place. Go right to find out more."
+        : "You're very close to an interesting place. Keep going straight to find out more.",
     soloGreeting: (name) => `Welcome to the trail, ${name}. Let the saga guide you.`,
     timeOfDayGreeting: (tod) => ({ morgen: "The mountains are still waking — a good morning for old tales.", mittag: "The midday sun casts sharp shadows, yet this path still hides its secrets.", abend: "Evening light bathes everything in warm gold — the right hour for legends.", nacht: "Darkness lies over the path. This is when old stories stir." } as const)[tod],
     photoChallengePrompt: "You are at the heart of this saga. Capture this special place in a photo.",
@@ -968,6 +1000,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `传说暂停一下，你身边有一个真实的地方：${name}。${extract}`
         : `传说暂停一下，你身边有一个真实的地方：${name}——一段往昔岁月的沉默见证。`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "你离一个有趣的地方非常近了。向左走，了解更多。"
+        : dir === "rechts"
+        ? "你离一个有趣的地方非常近了。向右走，了解更多。"
+        : "你离一个有趣的地方非常近了。继续直走，了解更多。",
     soloGreeting: (name) => `欢迎踏上这条小路，${name}。让传说引领你前行。`,
     timeOfDayGreeting: (tod) => ({ morgen: "山峦尚在沉睡中苏醒——这是聆听古老故事的好早晨。", mittag: "正午的阳光投下清晰的阴影，然而这条路仍藏着秘密。", abend: "傍晚的光将一切染成温暖的金色——这正是传说最宜讲述的时刻。", nacht: "黑暗笼罩着山径。正是在这样的时刻，古老的故事悄然苏醒。" } as const)[tod],
     photoChallengePrompt: "你正身处这段传说的核心之地。用一张照片记录下这个特别的地方。",
@@ -1125,6 +1163,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name}. ${extract}`
         : `Breve pausa de la leyenda, un lugar real muy cerca de ti: ${name} — un testigo silencioso de tiempos pasados.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Estás muy cerca de un lugar interesante. Ve a la izquierda para saber más."
+        : dir === "rechts"
+        ? "Estás muy cerca de un lugar interesante. Ve a la derecha para saber más."
+        : "Estás muy cerca de un lugar interesante. Sigue recto para saber más.",
     soloGreeting: (name) => `Bienvenido·a al sendero, ${name}. Deja que la leyenda te guíe.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Las montañas aún se despiertan — una buena mañana para historias antiguas.", mittag: "El sol del mediodía proyecta sombras nítidas, y aun así este camino guarda secretos.", abend: "La luz del atardecer lo baña todo en oro cálido — la hora justa para las leyendas.", nacht: "La oscuridad cubre el sendero. Es ahora cuando las viejas historias despiertan." } as const)[tod],
     photoChallengePrompt: "Estás en el corazón de esta leyenda. Inmortaliza este lugar especial en una foto.",
@@ -1282,6 +1326,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Pequena pausa na lenda, um lugar real bem perto de você: ${name}. ${extract}`
         : `Pequena pausa na lenda, um lugar real bem perto de você: ${name} — uma testemunha silenciosa de tempos passados.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Estás mesmo perto de um lugar interessante. Vai à esquerda para saber mais."
+        : dir === "rechts"
+        ? "Estás mesmo perto de um lugar interessante. Vai à direita para saber mais."
+        : "Estás mesmo perto de um lugar interessante. Continua em frente para saber mais.",
     soloGreeting: (name) => `Bem-vindo·a à trilha, ${name}. Deixa a lenda te guiar.`,
     timeOfDayGreeting: (tod) => ({ morgen: "As montanhas ainda estão a despertar — uma boa manhã para histórias antigas.", mittag: "O sol do meio-dia projeta sombras nítidas, mas este caminho ainda guarda segredos.", abend: "A luz da tarde banha tudo em ouro quente — a hora certa para as lendas.", nacht: "A escuridão cobre o caminho. É agora que as velhas histórias despertam." } as const)[tod],
     photoChallengePrompt: "Estás no coração desta lenda. Guarda este lugar especial numa foto.",
@@ -1439,6 +1489,12 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
       extract
         ? `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name}. ${extract}`
         : `Небольшое отступление от легенды — реальное место совсем рядом с тобой: ${name} — тихий свидетель ушедших времён.`,
+    poiApproachHint: (dir) =>
+      dir === "links"
+        ? "Ты совсем рядом с интересным местом. Иди налево, чтобы узнать больше."
+        : dir === "rechts"
+        ? "Ты совсем рядом с интересным местом. Иди направо, чтобы узнать больше."
+        : "Ты совсем рядом с интересным местом. Иди прямо, чтобы узнать больше.",
     soloGreeting: (name) => `Добро пожаловать на тропу, ${name}. Пусть легенда ведёт тебя.`,
     timeOfDayGreeting: (tod) => ({ morgen: "Горы ещё просыпаются — хорошее утро для старых историй.", mittag: "Полуденное солнце отбрасывает чёткие тени, и всё же этот путь хранит свои тайны.", abend: "Вечерний свет окрашивает всё в тёплое золото — самое время для легенд.", nacht: "Тьма лежит над тропой. Именно сейчас пробуждаются старые истории." } as const)[tod],
     photoChallengePrompt: "Ты в самом сердце этой легенды. Запечатли это особое место на фото.",

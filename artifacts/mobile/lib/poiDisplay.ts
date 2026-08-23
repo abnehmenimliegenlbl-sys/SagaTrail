@@ -53,3 +53,59 @@ export function poiDisplayName(name: string, kind: string | undefined): string {
   // Reiner Code/Zahl → Praefix anhaengen
   return `${label} ${name}`;
 }
+
+/** POI-Kategorien, die eine stufenweise Annaeherungs-Ansage erhalten:
+ *  300 m → Kachel, 200 m → Richtungshinweis, 50 m → Geschichte. */
+export const POI_APPROACH_KINDS = new Set([
+  "natural=cave_entrance",
+  "natural=arch",
+  "historic=castle",
+  "historic=ruins",
+  "historic=archaeological_site",
+  "historic=fort",
+  "historic=roman_road",
+  "historic=roman_villa",
+  "historic=roman_building",
+  "historic=battlefield",
+  "historic=chapel",
+  "historic=wayside_shrine",
+  "tourism=viewpoint",
+  "tourism=attraction",
+  "tourism=artwork",
+  "tourism=information",
+  "man_made=cross",
+  "man_made=obelisk",
+  "amenity=place_of_worship",
+  "amenity=shelter",
+]);
+
+/** Reine Objekttyp-Bezeichnungen ohne individuellen Charakter (generisch). */
+const GENERIC_NAMES = new Set([
+  // DE
+  "kapelle", "ruine", "ruinen", "burg", "schloss", "aussichtspunkt", "wegkreuz",
+  "wegkapelle", "unterstand", "infotafel", "kunstobjekt", "denkmal", "höhle",
+  "felsbogen", "festung", "obelisk", "kirche", "sehenswürdigkeit",
+  // EN
+  "chapel", "ruins", "castle", "viewpoint", "cross", "shrine", "shelter",
+  "information", "artwork", "monument", "cave", "arch", "fort", "obelisk",
+  "church", "attraction",
+  // FR
+  "chapelle", "ruines", "château", "point de vue", "croix", "abri",
+  "grotte", "forteresse", "église",
+  // IT
+  "cappella", "rovine", "castello", "belvedere", "croce", "grotta",
+  "fortezza", "chiesa",
+]);
+
+/** Gibt true zurück wenn der POI-Name spezifisch genug ist, um einen
+ *  Annaeherungs-Hinweis auszuloesen (kein reiner Objekttyp, kein Code). */
+export function isPoiNameSpecific(name: string, kind: string | undefined): boolean {
+  if (!name || name.trim().length < 3) return false;
+  const lower = name.toLowerCase().trim();
+  if (GENERIC_NAMES.has(lower)) return false;
+  // Wenn poiDisplayName ein Praefix anhaengt, war der Name nur ein Code
+  if (poiDisplayName(name, kind) !== name) return false;
+  // Name muss mindestens 4 bedeutungsvolle Buchstaben enthalten
+  const meaningful = name.replace(/[\d\s.\-\/\\,#()]+/g, "");
+  return meaningful.length >= 4;
+}
