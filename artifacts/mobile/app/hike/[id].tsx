@@ -2366,6 +2366,18 @@ export default function LiveHike() {
     if (!nearbyPoi || !livePos) return;
     if (!POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "")) return;
     if (!isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
+    // Pruefe ob spezifischer Inhalt vorhanden ist — reine KI-Generierung
+    // aus Kategorie+Name wuerde generischen Text liefern ("eine Ruine ist ein
+    // verfallendes Gebaeude"), nicht spezifische Informationen zu DIESEM Ort.
+    // nearbyPoiWiki === undefined: Wiki wird noch geladen; Effekt laeuft
+    // erneut wenn er ankommt. null: kein Artikel → weiter nur mit osmContext.
+    const wikiLoading = nearbyPoiWiki === undefined;
+    const hasSpecificContent =
+      Boolean(nearbyPoi.osmContext && nearbyPoi.osmContext.trim().length > 0) ||
+      Boolean(!wikiLoading && nearbyPoiWiki?.extract);
+    if (wikiLoading && !nearbyPoi.osmContext) return; // noch am Laden, warten
+    if (!hasSpecificContent) return; // kein spezifischer Inhalt, ueberspringen
+
     const distKm = haversineKm(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
 
     // 200 m: Richtungshinweis (einmalig pro POI)
