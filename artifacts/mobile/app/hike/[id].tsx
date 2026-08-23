@@ -2380,7 +2380,7 @@ export default function LiveHike() {
         const rel = ((bear - heading) + 360) % 360;
         dir = rel < 45 || rel > 315 ? "geradeaus" : rel <= 135 ? "rechts" : "links";
       }
-      speak(pack.poiApproachHint(dir), undefined, { useDevice: true });
+      speak(pack.poiApproachHint(dir), undefined, { useOpenAI: true });
     }
 
     // 50 m: volle Geschichte (einmalig pro POI)
