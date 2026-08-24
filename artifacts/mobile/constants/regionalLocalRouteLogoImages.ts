@@ -32,6 +32,8 @@ export const REGIONAL_LOCAL_ROUTE_LOGO_IMAGES: Record<string, ImageSourcePropTyp
   'AG-42': require("../assets/schweizmobil/regional-local/WL_042_AG.jpg"),
   'SO-42': require("../assets/schweizmobil/regional-local/WL_042_SO.jpg"),
   'GR-43': require("../assets/schweizmobil/regional-local/WL_043_GR.jpg"),
+  // Jakobsweg Graubünden: Die Uri-Etappe gehört zum Gesamtweg ab Graubünden.
+  'UR-43': require("../assets/schweizmobil/regional-local/WL_043_GR.jpg"),
   'AI-44': require("../assets/schweizmobil/regional-local/WL_044_AI.jpg"),
   'AR-44': require("../assets/schweizmobil/regional-local/WL_044_AR.jpg"),
   'SG-44': require("../assets/schweizmobil/regional-local/WL_044_SG.jpg"),
