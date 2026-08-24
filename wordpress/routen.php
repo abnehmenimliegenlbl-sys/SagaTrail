@@ -1226,3 +1226,4 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')window.strCl
 
 })();
 </script>
+ab wann gilt die 
