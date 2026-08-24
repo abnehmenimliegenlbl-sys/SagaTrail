@@ -2003,7 +2003,11 @@ export default function LiveHike() {
           shouldDuckAndroid: false,
         }).catch(() => {});
         // Vor dem Sprechen auf DuckOthers wechseln.
-        Audio.setAudioModeAsync({
+        // WICHTIG: auf nativen Geraeten muss dieser Wechsel abgeschlossen sein,
+        // bevor AVSpeechSynthesizer startet. Andernfalls kann die noch aktive
+        // Aufnahme-Session der Spracherkennung die Bestaetigung leiser machen
+        // oder die Audio-Session anderer Apps dauerhaft geduckt lassen.
+        await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
@@ -2603,6 +2607,11 @@ export default function LiveHike() {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
     if (folgtGruppenleitung) return;
+    // Eine Entscheidung darf nur einmal verarbeitet werden. Das Ref wird
+    // synchron mit dem State aktualisiert, sodass ein schneller Tap parallel
+    // zu einem Sprach-Treffer weder Ack noch Persoenlichkeits-Feedback doppelt
+    // startet.
+    if (chapters[currentIndex]?.chosenOptionIndex != null) return;
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
     // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
     // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
