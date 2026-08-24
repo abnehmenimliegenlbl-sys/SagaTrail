@@ -797,7 +797,12 @@ export default function Routenplanung() {
   const sagaId = saga?.id ?? route.sagaId;
   // HikingRoute hat kein .canton-Feld; Kanton via Sage aus dem Katalog
   // (für das Kantonswappen im Wegweiser bei regionalen/kantonalen Routen).
-  const routeKanton = sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null;
+  // Der Startkanton am Routenobjekt ist autoritativ. Die Sage-Zuordnung bleibt
+  // nur Rückfall für ältere/individuelle Routen ohne gespeicherten Kanton.
+  const routeKanton =
+    route?.canton ??
+    route?.region ??
+    (sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null);
   const downloaded = isDownloaded(sagaId);
   const record = getRecord(sagaId);
   const downloading = progress?.sagaId === sagaId;

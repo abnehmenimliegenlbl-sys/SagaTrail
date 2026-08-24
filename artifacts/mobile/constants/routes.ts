@@ -18,6 +18,8 @@ export interface HikingRoute {
   id: string;
   sagaId: string;
   name: string;
+  /** Startkanton der Route; regionale/lokale SchweizMobil-Logos werden daraus bestimmt. */
+  canton?: string;
   region: string;
   distanceKm: number;
   /** Amtliche Distanz aus dem OSM-Tag `distance` (SchweizMobil-Wert); Fallback auf distanceKm. Immer gesetzt. */

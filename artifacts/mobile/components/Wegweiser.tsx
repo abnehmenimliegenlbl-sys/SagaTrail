@@ -1,9 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { SvgXml } from "react-native-svg";
+import { SvgUri, SvgXml } from "react-native-svg";
 import { fonts } from "@/constants/typography";
 import { CantonWappen } from "@/components/brand/CantonWappen";
 import { NATIONAL_ROUTE_LOGOS } from "@/constants/nationalRouteLogos";
+import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 
 /**
  * Schweizer Wanderweg-Wegweiser als UI-Element.
@@ -113,6 +114,19 @@ function spitzenFarben(sac: string | null | undefined): { balken: string | null 
   return { balken: null }; // T1/T2 oder unbekannt → ganz gelb
 }
 
+function offiziellesLogoUri(kategorie: string | null, nummer: string | null, kanton?: string | null): string | null {
+  if (
+    (kategorie !== "Wanderland regional" && kategorie !== "Wanderland lokal") ||
+    !nummer ||
+    !kanton
+  ) {
+    return null;
+  }
+  const code = kantonsKuerzel(kanton).toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code) || !/^\d{2,3}$/.test(nummer)) return null;
+  return `https://images.schweizmobil.ch/image-svg/WL_${code}_${nummer}_075.svg`;
+}
+
 export function Wegweiser({
   name,
   sac,
@@ -139,16 +153,27 @@ export function Wegweiser({
   const nationalLogo = d.kategorie === "Wanderland national"
     ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""]
     : undefined;
+  const regionalLocalLogoUri = offiziellesLogoUri(d.kategorie, d.nummer, kanton);
 
   return (
     <View style={[styles.reihe, { height: hoehe }]}>
       {/* Gelber Körper */}
       <View style={[styles.koerper, { height: hoehe }]}>
         {d.nummer && (
-          <View style={[styles.gruenFeld, { width: hoehe - 8, height: hoehe - 8 }]}>
+          <View style={[
+            styles.gruenFeld,
+            regionalLocalLogoUri || nationalLogo ? styles.offiziellesFeld : null,
+            { width: hoehe - 8, height: hoehe - 8 },
+          ]}>
             {nationalLogo ? (
               <SvgXml
                 xml={nationalLogo}
+                width={hoehe - 8}
+                height={hoehe - 8}
+              />
+            ) : regionalLocalLogoUri ? (
+              <SvgUri
+                uri={regionalLocalLogoUri}
                 width={hoehe - 8}
                 height={hoehe - 8}
               />
@@ -276,6 +301,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     alignItems: "flex-start",
     justifyContent: "space-between",
+  },
+  offiziellesFeld: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: "transparent",
   },
   kategorieText: {
     color: SCHWARZ,

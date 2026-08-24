@@ -816,9 +816,17 @@ function wegweiserHtml(num, type, sac, wappenCode){
   // Label-Inhalt: Flagge oder Kantonswappen
   let labelContent;
   const officialNationalLogo = type === 'national' && /^[1-7]$/.test(String(num));
+  const officialRegionalLocalLogo =
+    (type === 'regional' || type === 'lokal') &&
+    !!wappenCode &&
+    /^[a-z]{2}$/.test(wappenCode) &&
+    /^\d{2,3}$/.test(String(num));
   if(officialNationalLogo){
     labelContent=\`<img class="ww-official-logo" src="/routen/logo/\${encodeURIComponent(String(num))}.svg"
       alt="SchweizMobil Nationalroute \${String(num)}">\`;
+  } else if(officialRegionalLocalLogo){
+    labelContent=\`<img class="ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_\${wappenCode.toUpperCase()}_\${encodeURIComponent(String(num))}_075.svg"
+      alt="SchweizMobil \${type === 'regional' ? 'Regionalroute' : 'Lokalroute'} \${String(num)}">\`;
   } else if(wappenCode){
     const url='https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/symbols/13x13/'+wappenCode+'.svg';
     labelContent=\`<img class="ww-wappen" src="\${url}" alt="\${wappenCode.toUpperCase()}"
@@ -827,7 +835,7 @@ function wegweiserHtml(num, type, sac, wappenCode){
     labelContent='<span class="ww-flag">&#127464;&#127469;</span>';
   }
   return \`<div class="ww">
-    <div class="ww-label\${officialNationalLogo ? ' ww-official-label' : ''}">\${labelContent}</div>
+    <div class="ww-label\${officialNationalLogo || officialRegionalLocalLogo ? ' ww-official-label' : ''}">\${labelContent}</div>
     <div class="ww-arrow" style="\${sacTipStyle(sac)}">
       <span class="ww-num">\${dispNum}</span>
     </div>
@@ -892,7 +900,7 @@ function cardHtml(r){
   let wappenCode = null;
   if(p.type !== 'national'){
     if(p.kantonAbbr)              wappenCode = p.kantonAbbr.toLowerCase();
-    else if(r.canton)             wappenCode = KANTON_CODE[r.canton] || null;
+    else if(r.canton || r.region) wappenCode = KANTON_CODE[r.canton || r.region] || null;
   }
 
   const km   = r.distanceTagKm
