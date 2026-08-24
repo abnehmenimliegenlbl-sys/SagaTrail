@@ -1,7 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
+import { SvgXml } from "react-native-svg";
 import { fonts } from "@/constants/typography";
 import { CantonWappen } from "@/components/brand/CantonWappen";
+import { NATIONAL_ROUTE_LOGOS } from "@/constants/nationalRouteLogos";
 
 /**
  * Schweizer Wanderweg-Wegweiser als UI-Element.
@@ -134,6 +136,9 @@ export function Wegweiser({
   const { balken } = spitzenFarben(sac);
   const hoehe = kompakt ? 54 : 68;
   const spitzeBreite = hoehe * 0.55;
+  const nationalLogo = d.kategorie === "Wanderland national"
+    ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""]
+    : undefined;
 
   return (
     <View style={[styles.reihe, { height: hoehe }]}>
@@ -141,7 +146,13 @@ export function Wegweiser({
       <View style={[styles.koerper, { height: hoehe }]}>
         {d.nummer && (
           <View style={[styles.gruenFeld, { width: hoehe - 8, height: hoehe - 8 }]}>
-            {d.kategorie && d.kategorie.length === 2 ? (
+            {nationalLogo ? (
+              <SvgXml
+                xml={nationalLogo}
+                width={hoehe - 8}
+                height={hoehe - 8}
+              />
+            ) : d.kategorie && d.kategorie.length === 2 ? (
               // Kantonale Route: Wappen links oben, Nummer "K1-BE" darunter
               <>
                 <CantonWappen canton={d.kategorie} size={kompakt ? 14 : 18} />

@@ -275,9 +275,11 @@ a{color:var(--red)!important;text-decoration:none}
   min-width:38px;border-radius:3px 0 0 3px;
   overflow:hidden;
 }
+.ww-official-label{padding:0;min-width:48px;background:transparent}
 .ww-flag{font-size:20px;line-height:1;display:block}
 .ww-wappen{width:26px;height:26px;object-fit:contain;display:block;
   image-rendering:crisp-edges}
+.ww-official-logo{width:48px;height:48px;object-fit:contain;display:block}
 .ww-arrow{
   /* clip-path erzeugt die Pfeilspitze rechts */
   clip-path:polygon(0 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,0 100%);
@@ -813,7 +815,11 @@ function wegweiserHtml(num, type, sac, wappenCode){
   const dispNum = type==='kantonal' ? 'K'+num : num;
   // Label-Inhalt: Flagge oder Kantonswappen
   let labelContent;
-  if(wappenCode){
+  const officialNationalLogo = type === 'national' && /^[1-7]$/.test(String(num));
+  if(officialNationalLogo){
+    labelContent=\`<img class="ww-official-logo" src="/routen/logo/\${encodeURIComponent(String(num))}.svg"
+      alt="SchweizMobil Nationalroute \${String(num)}">\`;
+  } else if(wappenCode){
     const url='https://raw.githubusercontent.com/nzzdev/ch-canton-symbols/master/symbols/13x13/'+wappenCode+'.svg';
     labelContent=\`<img class="ww-wappen" src="\${url}" alt="\${wappenCode.toUpperCase()}"
       onerror="this.style.display='none'">\`;
@@ -821,7 +827,7 @@ function wegweiserHtml(num, type, sac, wappenCode){
     labelContent='<span class="ww-flag">&#127464;&#127469;</span>';
   }
   return \`<div class="ww">
-    <div class="ww-label">\${labelContent}</div>
+    <div class="ww-label\${officialNationalLogo ? ' ww-official-label' : ''}">\${labelContent}</div>
     <div class="ww-arrow" style="\${sacTipStyle(sac)}">
       <span class="ww-num">\${dispNum}</span>
     </div>

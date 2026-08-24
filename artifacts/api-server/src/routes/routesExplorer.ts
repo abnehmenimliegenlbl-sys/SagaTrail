@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import path from "node:path";
 import { ROUTES_EXPLORER_HTML } from "../lib/routesExplorerHtml";
 
 const router: IRouter = Router();
@@ -56,6 +57,16 @@ async function fetchWikimedia(url: string): Promise<CacheEntry | null> {
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
+
+router.get("/logo/:number.svg", (req, res): void => {
+  const number = req.params.number;
+  if (!/^[1-7]$/.test(number)) {
+    res.status(404).end();
+    return;
+  }
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.sendFile(path.join(__dirname, "../public/schweizmobil-logos", `${number}.svg`));
+});
 
 router.get("/", (_req, res): void => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
