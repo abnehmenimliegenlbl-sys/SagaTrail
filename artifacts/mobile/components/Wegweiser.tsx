@@ -155,11 +155,18 @@ function offiziellesLogoImage(kategorie: string | null, nummer: string | null, k
   if (
     (kategorie !== "Wanderland regional" && kategorie !== "Wanderland lokal") ||
     !nummer ||
-    !kanton ||
     !/^\d{2,3}$/.test(nummer)
   ) {
     return null;
   }
+  // Die Etappen 2–4 der regionalen Route 62 liegen vollständig in Italien
+  // und haben deshalb keinen Schweizer Startkanton (`pending`). SchweizMobil
+  // führt dafür kein eigenes Italien-Asset; der offizielle Tessin-Abzug ist
+  // die festgelegte Logo-Variante für diese drei Etappen.
+  if (nummer === "62" && (!kanton || kanton === "pending")) {
+    return REGIONAL_LOCAL_ROUTE_LOGO_IMAGES["TI-62"] ?? null;
+  }
+  if (!kanton) return null;
   const code = kantonsKuerzel(kanton).toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) return null;
   return (

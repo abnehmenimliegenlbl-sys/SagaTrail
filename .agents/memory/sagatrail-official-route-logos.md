@@ -7,4 +7,4 @@ SagaTrail's national Wanderland route logos are sourced from the official Schwei
 
 **Why:** The green route-number squares are protected brand marks; recreating, recoloring, or distorting them is not appropriate, while cantonal route signage has a separate visual rule.
 
-**How to apply:** When updating route signage, use the official SVG assets for national routes 1–7 in both native Wegweiser rendering and `/routen`; reject unsupported national logo numbers rather than inventing a new official-looking mark.
+**How to apply:** When updating route signage, use the official SVG assets for national routes 1–7 in both native Wegweiser rendering and `/routen`; reject unsupported national logo numbers rather than inventing a new official-looking mark. For route 62's Italy-only stages without a Swiss canton, use the existing official `WL_062_TI.jpg` variant rather than assigning a false canton.
