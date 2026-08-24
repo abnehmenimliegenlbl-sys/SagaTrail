@@ -813,6 +813,7 @@ function parseRouteName(name){
     var t=e[1].trim(), sr=e[3]?e[3].trim():null;
     var ov=t.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
     if(ov&&ov[1].trim().length>=3)t=ov[1].trim();
+    if(String(nummer).toLowerCase()==='4a')t='Via Jacobi Alternativzweig';
     return {nummer:nummer,kategorie:kategorie,titel:t,etappe:e[2],strecke:sr};
   }
   var s=rest.match(/^(.+)\s+([^-–]+\s[-–]\s.+)$/);
@@ -820,9 +821,10 @@ function parseRouteName(name){
     var t=s[1].trim();
     var iv=t.match(/^(.+?)\s+([^-–\s][^-–]*\s[-–]\s.+)$/);
     if(iv&&iv[1].trim().length>=3)t=iv[1].trim();
+    if(String(nummer).toLowerCase()==='4a')t='Via Jacobi Alternativzweig';
     return {nummer:nummer,kategorie:kategorie,titel:t,etappe:null,strecke:s[2].trim()};
   }
-  return {nummer:nummer,kategorie:kategorie,titel:rest,etappe:null,strecke:null};
+  return {nummer:nummer,kategorie:kategorie,titel:String(nummer).toLowerCase()==='4a'?'Via Jacobi Alternativzweig':rest,etappe:null,strecke:null};
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -846,7 +848,13 @@ function parseRouteName(name){
     } else {
       /* National / Regional / Lokal — kein Kategorie-Text */
       var emblem='';
-       if(
+       if(d.kategorie==='Wanderland national' && /^\d{1,2}[a-z]?$/.test(d.nummer)){
+         officialLogo=true;
+         var nationalNum=d.nummer.toLowerCase()==='4a'?'4':d.nummer;
+         emblem='<img class="str-ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_'
+           +esc(nationalNum)+'.svg" alt="Offizielles SchweizMobil-Logo"'
+           +' onerror="strHandleOfficialLogoError(this)">';
+       } else if(
          (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
          cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)
        ){

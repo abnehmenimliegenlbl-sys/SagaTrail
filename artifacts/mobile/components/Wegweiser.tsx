@@ -87,6 +87,7 @@ export function parseRouteName(name: string): WegweiserDaten {
     if (outerVonBis && outerVonBis[1].trim().length >= 3) {
       titel = outerVonBis[1].trim();
     }
+    if (nummer?.toLowerCase() === "4a") titel = "Via Jacobi Alternativzweig";
     return { nummer, kategorie, titel, etappe: e[2], strecke: streckeRest };
   }
 
@@ -102,9 +103,16 @@ export function parseRouteName(name: string): WegweiserDaten {
     if (innerVonBis && innerVonBis[1].trim().length >= 3) {
       titel = innerVonBis[1].trim();
     }
+    if (nummer?.toLowerCase() === "4a") titel = "Via Jacobi Alternativzweig";
     return { nummer, kategorie, titel, etappe: null, strecke: s[2].trim() };
   }
-  return { nummer, kategorie, titel: rest, etappe: null, strecke: null };
+  return {
+    nummer,
+    kategorie,
+    titel: nummer?.toLowerCase() === "4a" ? "Via Jacobi Alternativzweig" : rest,
+    etappe: null,
+    strecke: null,
+  };
 }
 
 function spitzenFarben(sac: string | null | undefined): { balken: string | null } {
@@ -151,7 +159,7 @@ export function Wegweiser({
   const hoehe = kompakt ? 54 : 68;
   const spitzeBreite = hoehe * 0.55;
   const nationalLogo = d.kategorie === "Wanderland national"
-    ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""]
+    ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""] ?? (d.nummer?.toLowerCase() === "4a" ? NATIONAL_ROUTE_LOGOS["4"] : undefined)
     : undefined;
   const regionalLocalLogoUri = offiziellesLogoUri(d.kategorie, d.nummer, kanton);
   const istKantonaleRoute = !!d.kategorie && d.kategorie.length === 2;
