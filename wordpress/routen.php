@@ -830,6 +830,7 @@ function parseRouteName(name){
 /* ══════════════════════════════════════════════════════════
    makeWegweiser — HTML-Äquivalent des RN-Wegweiser
    ══════════════════════════════════════════════════════════ */
+ var STR_ROUTE_LOGO_BASE='https://saga-trail.replit.app/api/route-logos/';
  function makeWegweiser(name,sac,wpUrl,cantonCode){
   var d=parseRouteName(name);
   var h=54, sw=Math.round(h*0.55); // kompakt
@@ -854,6 +855,17 @@ function parseRouteName(name){
          emblem='<img class="str-ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_'
            +esc(nationalNum)+'.svg" alt="Offizielles SchweizMobil-Logo"'
            +' onerror="strHandleOfficialLogoError(this)">';
+       } else if(
+         d.kategorie==='Wanderland lokal' &&
+         /^\d{3}$/.test(d.nummer)
+       ){
+         /* Lokale SchweizMobil-Routen: offizielle JPGs aus dem gemeinsamen
+            Asset-Bestand. Keine separate Nummer neben dem Logo anzeigen. */
+         officialLogo=true;
+         emblem='<img class="str-ww-official-logo" src="'+STR_ROUTE_LOGO_BASE
+           +'WL_'+esc(('000'+d.nummer).slice(-3))+'.jpg"'
+           +' alt="Offizielles SchweizMobil-Logo"'
+           +' onerror="strHandleOfficialLogoError(this)">'; 
        } else if(
          (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
          cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)

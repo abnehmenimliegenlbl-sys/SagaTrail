@@ -130,6 +130,16 @@ app.use(
 );
 
 app.use("/api/partner-fotos", express.static(path.join(__dirname, "../public/partner-fotos")));
+// Offizielle, unveränderte SchweizMobil-Logos für die WordPress-Routenansicht.
+// Die Dateien stammen aus dem gebündelten Mobile-Asset-Verzeichnis und werden
+// ausschließlich lesend ausgeliefert.
+app.use(
+  "/api/route-logos",
+  express.static(path.join(__dirname, "../../mobile/assets/schweizmobil/regional-local"), {
+    immutable: true,
+    maxAge: "30d",
+  }),
+);
 app.use("/routen", routesExplorerRouter);
 app.use("/api", router);
 
