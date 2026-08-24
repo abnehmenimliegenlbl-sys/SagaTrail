@@ -154,12 +154,13 @@ export function Wegweiser({
     ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""]
     : undefined;
   const regionalLocalLogoUri = offiziellesLogoUri(d.kategorie, d.nummer, kanton);
+  const istKantonaleRoute = !!d.kategorie && d.kategorie.length === 2;
 
   return (
     <View style={[styles.reihe, { height: hoehe }]}>
       {/* Gelber Körper */}
       <View style={[styles.koerper, { height: hoehe }]}>
-        {d.nummer && (
+        {d.nummer && (nationalLogo || regionalLocalLogoUri || istKantonaleRoute) && (
           <View style={[
             styles.gruenFeld,
             regionalLocalLogoUri || nationalLogo ? styles.offiziellesFeld : null,
@@ -177,10 +178,10 @@ export function Wegweiser({
                 width={hoehe - 8}
                 height={hoehe - 8}
               />
-            ) : d.kategorie && d.kategorie.length === 2 ? (
+            ) : istKantonaleRoute ? (
               // Kantonale Route: Wappen links oben, Nummer "K1-BE" darunter
               <>
-                <CantonWappen canton={d.kategorie} size={kompakt ? 14 : 18} />
+                <CantonWappen canton={d.kategorie!} size={kompakt ? 14 : 18} />
                 <Text
                   style={[styles.nummerText, { fontSize: kompakt ? 13 : 16, lineHeight: kompakt ? 15 : 18 }]}
                   numberOfLines={1}
@@ -189,42 +190,7 @@ export function Wegweiser({
                   {`K${d.nummer}-${d.kategorie}`}
                 </Text>
               </>
-            ) : (
-              <>
-                {d.kategorie && d.kategorie.length > 2 && (
-                  // Lokale Route (3-stellig): Wappen als Hintergrund hinter dem Kategorietext
-                  <View style={{ alignSelf: "flex-start" }}>
-                    {kanton && d.kategorie === "Wanderland lokal" && (
-                      <View style={{ position: "absolute", top: 0, right: 0, bottom: 0, justifyContent: "center" }}>
-                        <CantonWappen canton={kanton} size={kompakt ? 15 : 19} greenShade />
-                      </View>
-                    )}
-                    <Text style={styles.kategorieText} numberOfLines={2}>
-                      {d.kategorie.replace(/\s+/, "\n")}
-                    </Text>
-                  </View>
-                )}
-                <View style={styles.nummerZeile}>
-                  {d.kategorie === "Wanderland national" ? (
-                    <View style={[styles.flagge, kompakt && { width: 9, height: 9 }]}>
-                      <View style={styles.kreuzQuer} />
-                      <View style={styles.kreuzHoch} />
-                    </View>
-                  ) : kanton && d.kategorie !== "Wanderland lokal" ? (
-                    <View style={{ marginBottom: 2 }}>
-                      <CantonWappen canton={kanton} size={kompakt ? 12 : 15} />
-                    </View>
-                  ) : null}
-                  <Text
-                    style={[styles.nummerText, kompakt && { fontSize: 27, lineHeight: 28 }]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  >
-                    {d.nummer}
-                  </Text>
-                </View>
-              </>
-            )}
+            ) : null}
           </View>
         )}
         <View style={styles.textSpalte}>

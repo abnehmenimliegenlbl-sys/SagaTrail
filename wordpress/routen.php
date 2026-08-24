@@ -675,16 +675,6 @@ var STR_L10N=<?php echo wp_json_encode(array_filter($t,function($k){return strpo
 /* ── State ── */
 var S={kanton:null,kantonWappen:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
 var cache={};
-var STR_KANTONAL_NEXT=1;
-
-function strPrepareKantonFallbacks(){
-  var max=0;
-  (S.routes||[]).forEach(function(r){
-    var m=/^K(\d+)(?:\s+[A-Z]{2})?\s/.exec(String(r.name||''));
-    if(m)max=Math.max(max,parseInt(m[1],10)||0);
-  });
-  STR_KANTONAL_NEXT=max+1;
-}
 function strHandleOfficialLogoError(img){
   if(img.dataset.fallback){
     img.src=img.dataset.fallback;
@@ -692,21 +682,7 @@ function strHandleOfficialLogoError(img){
     return;
   }
   var p=img.closest('.str-ww-green');
-  if(!p)return;
-  var assigned=STR_KANTONAL_NEXT++;
-  p.classList.remove('str-ww-official');
-  p.style.padding='5px 7px 4px';
-  p.style.background='#7FB73F';
-  p.innerHTML='';
-  var w=document.createElement('img');
-  w.className='str-ww-wp-lg';
-  w.alt=img.dataset.cantonCode;
-  w.src=img.dataset.wappen;
-  p.appendChild(w);
-  var s=document.createElement('span');
-  s.className='str-ww-num-sm';
-  s.textContent='K'+assigned+'-'+img.dataset.cantonCode;
-  p.appendChild(s);
+  if(p)p.remove();
 }
 
 /* ══════════════════════════════════════
@@ -870,9 +846,7 @@ function parseRouteName(name){
     } else {
       /* National / Regional / Lokal — kein Kategorie-Text */
       var emblem='';
-       if(d.kategorie==='Wanderland national'){
-        emblem='<div class="str-ww-flag"><div class="str-ww-fh"></div><div class="str-ww-fv"></div></div>';
-       } else if(
+       if(
          (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
          cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)
        ){
@@ -889,9 +863,9 @@ function parseRouteName(name){
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
-       green='<div class="str-ww-numrow" style="height:100%">'+emblem
-         +(officialLogo?'':'<span class="str-ww-num">'+esc(d.nummer)+'</span>')
-         +'</div>';
+        if(officialLogo){
+          green='<div class="str-ww-numrow" style="height:100%">'+emblem+'</div>';
+        }
     }
   }
   /* Beschriftung */
@@ -907,7 +881,7 @@ function parseRouteName(name){
     +'</div>';
   return '<div class="str-ww" style="height:'+h+'px">'
     +'<div class="str-ww-body" style="height:'+h+'px">'
-     +(d.nummer?'<div class="str-ww-green'+(officialLogo?' str-ww-official':'')+'" style="min-width:'+(h-8)+'px;height:'+(h-8)+'px;padding:'+(officialLogo?'0':'5px 7px 4px')+'">'+green+'</div>':'')
+     +(green?'<div class="str-ww-green'+(officialLogo?' str-ww-official':'')+'" style="min-width:'+(h-8)+'px;height:'+(h-8)+'px;padding:'+(officialLogo?'0':'5px 7px 4px')+'">'+green+'</div>':'')
     +'<div class="str-ww-text">'+txt+'</div>'
     +'</div>'
     +tip
@@ -976,7 +950,6 @@ var _strRouteIndex=[];
 
 function renderRoutes(){
   var vis=filtered();
-  strPrepareKantonFallbacks();
   _strRouteIndex=vis;
   var badge=document.getElementById('str-results-badge');
   var list=document.getElementById('str-route-list');
