@@ -394,6 +394,8 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-ww{display:flex;flex-direction:row;align-items:center;align-self:flex-start;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
 .str-ww-body{display:flex;flex-direction:row;align-items:center;background:rgba(255,204,0,.55);padding-left:6px;padding-right:8px;gap:8px;overflow:hidden}
 .str-ww-green{background:#7FB73F;padding:5px 5px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.str-ww-green.str-ww-official{padding:0;background:transparent}
+.str-ww-official-logo{display:block;width:46px;height:46px;object-fit:contain}
 .str-ww-kat{color:#141412;font-size:7px;line-height:8.5px;font-weight:700;font-style:italic;white-space:pre-line}
 .str-ww-numrow{display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;width:100%}
 /* Schweizer Flagge */
@@ -661,6 +663,11 @@ var STR_WAPPEN=<?php
   foreach($str_kantone as $k){ $jw[$k['api']]='https://commons.wikimedia.org/wiki/Special:FilePath/'.$k['svg']; }
   echo wp_json_encode($jw,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 ?>;
+var STR_KANTON_CODES=<?php
+  $jc=[];
+  foreach($str_kantone as $k){ $jc[$k['api']]=$k['code']; }
+  echo wp_json_encode($jc,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+?>;
 
 /* ── Übersetzungen (PHP-generiert) ── */
 var STR_L10N=<?php echo wp_json_encode(array_filter($t,function($k){return strpos($k,'js_')===0;},ARRAY_FILTER_USE_KEY),JSON_UNESCAPED_UNICODE); ?>;
@@ -808,7 +815,7 @@ function parseRouteName(name){
 /* ══════════════════════════════════════════════════════════
    makeWegweiser — HTML-Äquivalent des RN-Wegweiser
    ══════════════════════════════════════════════════════════ */
-function makeWegweiser(name,sac,wpUrl){
+ function makeWegweiser(name,sac,wpUrl,cantonCode){
   var d=parseRouteName(name);
   var h=54, sw=Math.round(h*0.55); // kompakt
   /* Pfeilfarbe */
@@ -816,7 +823,8 @@ function makeWegweiser(name,sac,wpUrl){
   var balken=sacN>=5?'#005EB8':sacN>=3?'#E30613':null;
   var tipClr=balken?'rgba(255,255,255,0.55)':'rgba(255,204,0,0.55)';
   /* Grünes Feld */
-  var green='';
+   var green='';
+   var officialLogo=false;
   if(d.nummer){
     if(d.kategorie&&d.kategorie.length===2){
       /* Kantonal: Wappen + "K{n}-{code}" */
@@ -825,8 +833,15 @@ function makeWegweiser(name,sac,wpUrl){
     } else {
       /* National / Regional / Lokal — kein Kategorie-Text */
       var emblem='';
-      if(d.kategorie==='Wanderland national'){
+       if(d.kategorie==='Wanderland national'){
         emblem='<div class="str-ww-flag"><div class="str-ww-fh"></div><div class="str-ww-fv"></div></div>';
+       } else if(
+         (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
+         cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)
+       ){
+         officialLogo=true;
+         emblem='<img class="str-ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_'
+           +esc(cantonCode)+'_'+esc(d.nummer)+'_075.svg" alt="Offizielles SchweizMobil-Logo">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
@@ -846,7 +861,7 @@ function makeWegweiser(name,sac,wpUrl){
     +'</div>';
   return '<div class="str-ww" style="height:'+h+'px">'
     +'<div class="str-ww-body" style="height:'+h+'px">'
-    +(d.nummer?'<div class="str-ww-green" style="min-width:'+(h-8)+'px;height:'+(h-8)+'px;padding:5px 7px 4px">'+green+'</div>':'')
+     +(d.nummer?'<div class="str-ww-green'+(officialLogo?' str-ww-official':'')+'" style="min-width:'+(h-8)+'px;height:'+(h-8)+'px;padding:'+(officialLogo?'0':'5px 7px 4px')+'">'+green+'</div>':'')
     +'<div class="str-ww-text">'+txt+'</div>'
     +'</div>'
     +tip
@@ -947,7 +962,7 @@ function renderRoutes(){
       :'<div class="str-rc-img-ph">🏔️</div>';
     return '<div class="str-route-card" onclick="strOpenRoute('+i+')" role="button" tabindex="0">'
       +photo
-      +'<div class="str-rc-content">'+makeWegweiser(r.name,r.sac,S.kantonWappen)+'</div>'
+      +'<div class="str-rc-content">'+makeWegweiser(r.name,r.sac,S.kantonWappen,STR_KANTON_CODES[S.kanton]||'')+'</div>'
       +'<div class="str-rc-bar">'+esc(bar)+'</div>'
       +'</div>';
   }).join('');
