@@ -504,6 +504,9 @@ export default function LiveHike() {
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
   const announcedPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
+  /** Partner mit laufender Anpreisungs-Anfrage — verhindert Doppelrequests,
+   * ohne einen fehlgeschlagenen Aufruf dauerhaft als erledigt zu markieren. */
+  const announcingPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
@@ -1150,6 +1153,7 @@ export default function LiveHike() {
     setRouteWaypoints(wps);
     waypointAnnouncedRef.current = new Set();
     announcedPremiumPartnerIdsRef.current = new Set();
+    announcingPremiumPartnerIdsRef.current = new Set();
     setReachedWaypointIds(new Set());
   }, [route?.geometry, partners, pois]);
 
@@ -1517,9 +1521,13 @@ export default function LiveHike() {
     if (!current) return;
     const PARTNER_NEARBY_KM = 0.5;
     for (const partner of premiumPartners) {
-      if (announcedPremiumPartnerIdsRef.current.has(String(partner.id))) continue;
+      const partnerId = String(partner.id);
+      if (
+        announcedPremiumPartnerIdsRef.current.has(partnerId) ||
+        announcingPremiumPartnerIdsRef.current.has(partnerId)
+      ) continue;
       if (haversineKm(current, { lat: partner.lat, lng: partner.lng }) > PARTNER_NEARBY_KM) continue;
-      announcedPremiumPartnerIdsRef.current.add(String(partner.id));
+      announcingPremiumPartnerIdsRef.current.add(partnerId);
       const base = getApiBaseUrl() ?? "";
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
@@ -1540,15 +1548,24 @@ export default function LiveHike() {
         .then((data: { text?: string }) => {
           clearTimeout(timeout);
           const text = data?.text?.trim();
+          announcingPremiumPartnerIdsRef.current.delete(partnerId);
+          // Während einer Entscheidungsfrage nichts verwerfen: Der Effekt
+          // läuft erneut, sobald die Frage beantwortet ist, und versucht die
+          // Anpreisung dann nochmals. So geht ein erfolgreicher Text nicht
+          // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
+            announcedPremiumPartnerIdsRef.current.add(partnerId);
             speakRef.current?.(text, undefined, { useOpenAI: true });
           }
         })
         .catch(() => {
           clearTimeout(timeout);
+          // Fehler/Timeouts sind nicht endgültig: der nächste GPS-Fix im
+          // Radius darf die Anfrage erneut auslösen.
+          announcingPremiumPartnerIdsRef.current.delete(partnerId);
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing]);
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
