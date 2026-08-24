@@ -27,6 +27,20 @@ const SCHWARZ = "#141412";
 const ROT = "#E30613";
 const BLAU = "#005EB8";
 
+// Diese nummerierten Wege sind kantonale Routen, obwohl ihr Name nicht mit
+// "K..." beginnt. Die Zuordnung ist auf den offiziellen Startkanton begrenzt.
+const KANTONALE_ROUTE_KEYS = new Set([
+  "GR-164",
+  "GR-167",
+  "GR-168",
+  "GR-670",
+  "GR-671",
+  "GR-697",
+  "GR-718",
+  "TI-108",
+  "TI-207",
+]);
+
 export interface WegweiserDaten {
   nummer: string | null;       // z.B. "60" oder "K11"
   kategorie: string | null;    // "Wanderland national" | "Wanderland regional" | "Wanderland lokal" | "kantonal" | null
@@ -171,6 +185,11 @@ export function Wegweiser({
   kanton?: string | null;
 }) {
   const d = parseRouteName(name);
+  const routeNumber = d.nummer && /^\d+$/.test(d.nummer) ? String(parseInt(d.nummer, 10)) : null;
+  const routeCantonCode = kanton ? kantonsKuerzel(kanton).toUpperCase() : "";
+  if (routeNumber && KANTONALE_ROUTE_KEYS.has(`${routeCantonCode}-${routeNumber}`)) {
+    d.kategorie = routeCantonCode;
+  }
   if (umgekehrt && d.strecke) {
     const teile = d.strecke.split(/\s[-–]\s/);
     if (teile.length === 2) d.strecke = `${teile[1]} - ${teile[0]}`;
