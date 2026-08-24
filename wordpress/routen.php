@@ -840,12 +840,18 @@ function parseRouteName(name){
          cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)
        ){
          officialLogo=true;
-         emblem='<img class="str-ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_'
-           +esc(cantonCode)+'_'+esc(d.nummer)+'_075.svg" alt="Offizielles SchweizMobil-Logo">';
+         var logoBase='https://images.schweizmobil.ch/image-svg/WL_'
+           +esc(cantonCode)+'_'+esc(d.nummer);
+         emblem='<img class="str-ww-official-logo" src="'+logoBase+'_075.svg"'
+           +' data-fallback="'+logoBase+'.svg"'
+           +' alt="Offizielles SchweizMobil-Logo"'
+           +' onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.style.display=\'none\';}">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
-      green='<div class="str-ww-numrow" style="height:100%">'+emblem+'<span class="str-ww-num">'+esc(d.nummer)+'</span></div>';
+       green='<div class="str-ww-numrow" style="height:100%">'+emblem
+         +(officialLogo?'':'<span class="str-ww-num">'+esc(d.nummer)+'</span>')
+         +'</div>';
     }
   }
   /* Beschriftung */
