@@ -508,7 +508,11 @@ export default function LiveHike() {
    * ohne einen fehlgeschlagenen Aufruf dauerhaft als erledigt zu markieren. */
   const announcingPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
-  const nearbyPoiDistanceRef = useRef<{ id: string; distanceKm: number } | null>(null);
+  const nearbyPoiDistanceRef = useRef<{
+    id: string;
+    distanceKm: number;
+    increasingReadings: number;
+  } | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -1342,9 +1346,9 @@ export default function LiveHike() {
   }, [nearbyPoi, selectedPoi]);
 
   // Die automatisch geöffnete POI-Kachel bleibt nur während der Annäherung
-  // offen. Sobald der Abstand nach dem Öffnen wieder zunimmt, wird sie
-  // geschlossen (z. B. 300 → 280 → 220 → 240 m). So bleibt sie nicht bis zu
-  // einem festen 500-m-Abstand offen.
+  // offen. GPS-Rauschen darf sie aber nicht sofort schließen: Dafür muss der
+  // Abstand mindestens 5 m und drei GPS-Messungen hintereinander zunehmen
+  // (z. B. 220 → 240 → 260 → 280 m).
   useEffect(() => {
     if (!nearbyPoi || !livePos) {
       nearbyPoiDistanceRef.current = null;
@@ -1353,15 +1357,25 @@ export default function LiveHike() {
     const dist = haversineKm(livePos, { lat: nearbyPoi.lat, lng: nearbyPoi.lng });
     const previous = nearbyPoiDistanceRef.current;
     if (!previous || previous.id !== nearbyPoi.id) {
-      nearbyPoiDistanceRef.current = { id: nearbyPoi.id, distanceKm: dist };
+      nearbyPoiDistanceRef.current = {
+        id: nearbyPoi.id,
+        distanceKm: dist,
+        increasingReadings: 0,
+      };
       return;
     }
-    if (dist > previous.distanceKm) {
+    const increased = dist > previous.distanceKm + 0.005;
+    const increasingReadings = increased ? previous.increasingReadings + 1 : 0;
+    if (increasingReadings >= 3) {
       nearbyPoiDistanceRef.current = null;
       setNearbyPoi(null);
       return;
     }
-    nearbyPoiDistanceRef.current = { id: nearbyPoi.id, distanceKm: dist };
+    nearbyPoiDistanceRef.current = {
+      id: nearbyPoi.id,
+      distanceKm: dist,
+      increasingReadings,
+    };
   }, [livePos, nearbyPoi]);
 
   // Abbiege-Mitteilungen: markante Abzweigungen der Route (echte Geometrie,
