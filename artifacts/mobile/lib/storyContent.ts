@@ -32,6 +32,44 @@ export function resolveLang(code: string | undefined): Lang {
 }
 
 /**
+ * Distances used in spoken narration must not contain abbreviated units or a
+ * locale-ambiguous decimal point. Keep the decimal separator as a spoken word
+ * so the same text is understandable in TTS and in the UI.
+ */
+export function formatSpokenDistance(distanceKm: number, language: string): string {
+  const lang = resolveLang(language);
+  if (distanceKm < 1) {
+    const meters = Math.max(1, Math.round(distanceKm * 1000));
+    const unit = lang === "zh" ? "米" : lang === "ru" ? "метров" : lang === "fr" ? "mètres" : lang === "it" ? "metri" : lang === "es" ? "metros" : lang === "pt" ? "metros" : "Meter";
+    return `${meters} ${unit}`;
+  }
+
+  const tenths = Math.max(1, Math.round(distanceKm * 10));
+  const whole = Math.floor(tenths / 10);
+  const decimal = tenths % 10;
+  const unit =
+    lang === "en" ? "kilometers" :
+    lang === "fr" ? "kilomètres" :
+    lang === "it" ? "chilometri" :
+    lang === "es" ? "kilómetros" :
+    lang === "pt" ? "quilômetros" :
+    lang === "ru" ? "километров" :
+    lang === "zh" ? "公里" :
+    "Kilometer";
+  if (decimal === 0) return `${whole} ${unit}`;
+  const separator =
+    lang === "en" ? "point" :
+    lang === "zh" ? "点" :
+    lang === "it" ? "virgola" :
+    lang === "fr" ? "virgule" :
+    lang === "es" ? "coma" :
+    lang === "pt" ? "vírgula" :
+    lang === "ru" ? "запятая" :
+    "Komma";
+  return `${whole} ${separator} ${decimal} ${unit}`;
+}
+
+/**
  * Sprache, in der Story-Text tatsaechlich angefordert/angezeigt werden soll.
  *
  * Fuer gsw (Schweizerdeutsch) wird der Sagen-Text als echter Mundarttext
@@ -290,7 +328,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Gewitter im Anzug — bleib unter der Baumgrenze, Jacke griffbereit${long ? " und Proviant im Rucksack verstaut" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss genug Wasser und Proviant für die Strecke nicht." : "";
-      return `${n}${diff} Route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff} Route: ${formatSpokenDistance(p.distanceKm, "de")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Wenn du bereit bist, können wir jetzt loswandern.",
   },
@@ -453,7 +491,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Gwitter im Azug — bliib unterm Baumgrenz, Juppä parat${long ? " und Proviant im Rucksack verstaut" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Vergiss gnueg Wasser und Proviant für d Sträck nid." : "";
-      return `${n}${diff} Wäg: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff} Wäg: ${formatSpokenDistance(p.distanceKm, "gsw")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Wenn du parat bisch, chöme mir jetzt loswandere.",
   },
@@ -616,7 +654,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Orage en vue — reste sous la limite des arbres, garde la veste à portée${long ? " et les provisions dans le sac" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " N'oublie pas suffisamment d'eau et de provisions pour le parcours." : "";
-      return `${n}${diff} : ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff} : ${formatSpokenDistance(p.distanceKm, "zh")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Quand tu es prêt, nous pouvons partir.",
   },
@@ -779,7 +817,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Temporale in arrivo — resta sotto la linea degli alberi, giacca a portata${long ? " e provviste nello zaino" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Non dimenticare acqua e provviste sufficienti per il percorso." : "";
-      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff}: ${formatSpokenDistance(p.distanceKm, "it")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Quando sei pronto, possiamo partire.",
   },
@@ -942,7 +980,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Storm approaching — stay below the treeline, keep your jacket handy${long ? " and food stowed in your pack" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Don't forget enough water and food for the trail." : "";
-      return `${n}${diff} route: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff} route: ${formatSpokenDistance(p.distanceKm, "en")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Whenever you're ready, let's head out.",
   },
@@ -1101,7 +1139,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: `雷暴将至 — 保持在林线以下，备好外套${long ? "，食物放入背包" : ""}。`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? "别忘了携带足够的水和食物。" : "";
-      return `${n}${diff}路线：${p.distanceKm.toFixed(1)}公里，${dur}。${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff}路线：${formatSpokenDistance(p.distanceKm, "zh")}，${dur}。${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "准备好了，我们出发吧。",
   },
@@ -1264,7 +1302,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Tormenta en camino — mantente bajo la línea de árboles, chaqueta a mano${long ? " y provisiones en la mochila" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " No olvides suficiente agua y provisiones para el recorrido." : "";
-      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff}: ${formatSpokenDistance(p.distanceKm, "es")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Cuando estés listo, nos ponemos en marcha.",
   },
@@ -1427,7 +1465,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Trovoada a caminho — fica abaixo da linha das árvores, jaqueta à mão${long ? " e provisões na mochila" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Não te esqueças de água e provisões suficientes para o percurso." : "";
-      return `${n}${diff}: ${p.distanceKm.toFixed(1)} km, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff}: ${formatSpokenDistance(p.distanceKm, "pt")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Quando estiveres pronto, podemos partir.",
   },
@@ -1590,7 +1628,7 @@ export const STORY_PACKS: Record<Lang, StoryPack> = {
         gewitter: ` Гроза приближается — держись ниже линии деревьев, куртка под рукой${long ? " и еда в рюкзаке" : ""}.`,
       };
       const gear = wk ? (gearMap[wk] ?? "") : long ? " Не забудь взять достаточно воды и еды на маршрут." : "";
-      return `${n}${diff}: ${p.distanceKm.toFixed(1)} км, ${dur}.${steep}${surf}${poi}${gear}`.trim();
+      return `${n}${diff}: ${formatSpokenDistance(p.distanceKm, "ru")}, ${dur}.${steep}${surf}${poi}${gear}`.trim();
     },
     hikeStartCue: "Когда будешь готов — отправляемся.",
   },

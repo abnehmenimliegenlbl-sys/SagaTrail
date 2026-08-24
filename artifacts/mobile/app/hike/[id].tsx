@@ -65,6 +65,7 @@ import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZ
 import { computeRouteWaypoints, type RouteWaypoint } from "@/lib/routeWaypoints";
 import {
   effectiveStoryLanguage,
+  formatSpokenDistance,
   resolveLang,
   SPEECH_LOCALE,
   STORY_PACKS,
@@ -2479,10 +2480,9 @@ export default function LiveHike() {
     const distKm = haversineKm(livePos, start);
     if (distKm <= START_NEARBY_KM) return null;
     const dir = t.compassDirections[compassIndex(bearingDeg(livePos, start))];
-    const distText =
-      distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} ${t.unitKm}`;
+    const distText = formatSpokenDistance(distKm, storyLanguage);
     return { distKm, distText, dir };
-  }, [livePos, route?.geometry, t]);
+  }, [livePos, route?.geometry, storyLanguage, t]);
 
   // Sobald der User einmal innerhalb des Start-Radius war (walkToStart === null),
   // als "start reached" markieren — damit das Banner nach dem Passieren nicht
