@@ -119,6 +119,7 @@ interface OverpassTagsElement {
 
 interface OverpassGeomMember {
   type: string;
+  ref?: number;
   role?: string;
   geometry?: { lat: number; lon: number }[];
 }
@@ -1498,6 +1499,44 @@ export async function fetchRouteGeometries(
     "Overpass: Geometrie geladen",
   );
   return routes;
+}
+
+/** OSM-Metadaten für den Rückwärtsschleifen-Report. Die Geometrie wird
+ * absichtlich nicht gestitcht: für die Erklärung eines Befunds sind die
+ * originalen Way-Referenzen und ihre Wiederholungen maßgeblich. */
+export interface RouteLoopAuditOsm {
+  osmId: number;
+  roundtrip: string | null;
+  wayRefs: number[];
+}
+
+export async function fetchRouteLoopAuditOsm(
+  osmIds: number[],
+  log: Logger,
+): Promise<RouteLoopAuditOsm[]> {
+  if (osmIds.length === 0) return [];
+  const BATCH = 40;
+  const result: RouteLoopAuditOsm[] = [];
+  for (let i = 0; i < osmIds.length; i += BATCH) {
+    const chunk = osmIds.slice(i, i + BATCH);
+    const query = `[out:json][timeout:40];relation(id:${chunk.join(",")});out body geom;`;
+    const elements = await runOverpass<OverpassGeomElement>(query, 45_000).catch((err) => {
+      log.warn({ err, chunk: chunk.slice(0, 5) }, "fetchRouteLoopAuditOsm: Overpass-Fehler");
+      return [] as OverpassGeomElement[];
+    });
+    for (const el of elements) {
+      if (el.type !== "relation") continue;
+      result.push({
+        osmId: el.id,
+        roundtrip: el.tags?.roundtrip ?? null,
+        wayRefs: (el.members ?? [])
+          .filter((member) => member.type === "way" && typeof member.ref === "number")
+          .map((member) => member.ref as number),
+      });
+    }
+    if (i + BATCH < osmIds.length) await sleep(500);
+  }
+  return result;
 }
 
 const NUMBERED_INDEX_TTL_MS = 60 * 60_000;
