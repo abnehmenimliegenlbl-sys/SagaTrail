@@ -673,6 +673,21 @@ window.switchTab = function(name, btn) {
       <div id="enrich-text" class="hint" style="font-size:12px;line-height:1.8">Wird geladen…</div>
     </div>
 
+    <!-- RÜCKWÄRTSSCHLEIFEN-REPORT -->
+    <div class="card" id="reverse-loop-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <h2 style="margin:0">&#128260; Verdächtige Rücksprünge</h2>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="reverse-loop-badge" class="badge badge-gray">Wird geladen…</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadReverseLoopReport()">&#8635; Aktualisieren</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:12px">
+        Schreibgeschützter Geometrie-Report. Echte Rundwege und Hin-und-zurück-Strecken können ebenfalls symmetrische Abschnitte enthalten und müssen von künstlichen Rücksprüngen unterschieden werden.
+      </p>
+      <div id="reverse-loop-body"><p class="loading">Wird geladen…</p></div>
+    </div>
+
     <!-- NICHT ANREICHERBARE ROUTEN — NAMENSSUCHE (#25) -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
@@ -2143,6 +2158,51 @@ async function loadEnrichStatus() {
   }
 }
 
+async function loadReverseLoopReport() {
+  var badge = document.getElementById('reverse-loop-badge');
+  var body = document.getElementById('reverse-loop-body');
+  if (!badge || !body) return;
+  badge.className = 'badge badge-gray';
+  badge.textContent = 'Wird geladen…';
+  body.innerHTML = '<p class="loading">Prüfe Routengeometrien…</p>';
+  try {
+    var d = await api('/api/admin/routes/reverse-loop-report');
+    var findings = d.findings || [];
+    badge.className = findings.length ? 'badge badge-orange' : 'badge badge-green';
+    badge.textContent = findings.length
+      ? findings.length + ' Abschnitt' + (findings.length === 1 ? '' : 'e') + ' prüfen'
+      : 'Keine verdächtigen Abschnitte';
+    if (!findings.length) {
+      body.innerHTML = '<p class="hint" style="color:var(--green)">✓ Keine ungeklärten Rücksprünge in den geprüften Geometrien gefunden. (' +
+        esc(d.scannedRoutes) + ' Routen geprüft)</p>';
+      return;
+    }
+    body.innerHTML = '<div style="overflow-x:auto"><table class="tbl">' +
+      '<thead><tr><th>Route</th><th>Kanton</th><th>Abschnitt</th><th>Länge</th><th>Bewertung</th></tr></thead><tbody>' +
+      findings.map(function(f) {
+        var r = f.route || {};
+        var s = f.section || {};
+        var section = s.startPoint + '–' + s.endPoint + ' ↔ ' + s.reverseStartPoint + '–' + s.reverseEndPoint;
+        var reasons = (f.reasons || []).join(' ');
+        var rating = f.expectedExplanation
+          ? '<span class="badge badge-blue">OSM-Erklärung vorhanden</span>'
+          : '<span class="badge badge-orange">Manuell prüfen</span>';
+        return '<tr>' +
+          '<td><strong>' + esc(r.name) + '</strong><br><span class="mono">' + esc(r.id) + '</span></td>' +
+          '<td>' + esc(r.canton || '—') + '</td>' +
+          '<td class="mono">' + esc(section) + '</td>' +
+          '<td>' + esc(String(f.lengthM ?? '—')) + ' m</td>' +
+          '<td>' + rating + '<div class="hint" style="margin-top:4px;max-width:360px">' + esc(reasons) + '</div></td>' +
+          '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<p class="hint" style="margin-top:10px">Geprüft: ' + esc(d.scannedRoutes) + ' Routen · Report-Zeitpunkt: ' + esc(d.generatedAt || '—') + '</p>';
+  } catch(e) {
+    badge.className = 'badge badge-red';
+    badge.textContent = 'Fehler';
+    body.innerHTML = '<p class="err">Report konnte nicht geladen werden: ' + esc(e.message) + '</p>';
+  }
+}
+
 async function loadWikiItaly() {
   var badge = document.getElementById('wiki-italy-badge');
   var body  = document.getElementById('wiki-italy-body');
@@ -2320,6 +2380,7 @@ async function initRoutenTab() {
   loadUnenrichable();
   loadWikiItaly();
   loadEnrichStatus();
+  loadReverseLoopReport();
   loadWikiStraight();
   if (_enrichInterval) clearInterval(_enrichInterval);
   _enrichInterval = setInterval(loadEnrichStatus, 10000);
