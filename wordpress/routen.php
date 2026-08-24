@@ -849,12 +849,18 @@ function parseRouteName(name){
          emblem='<img class="str-ww-official-logo" src="'+logoBase+'_075.svg"'
            +' data-fallback="'+logoBase+'.svg"'
            +' data-number="'+esc(d.nummer)+'"'
+           +' data-canton-code="'+esc(cantonCode)+'"'
+           +' data-wappen="'+esc(wpUrl||'')+'"'
            +' alt="Offizielles SchweizMobil-Logo"'
            +' onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}'
            +'else{var p=this.closest(\'.str-ww-green\');p.classList.remove(\'str-ww-official\');'
            +'p.style.padding=\'5px 7px 4px\';p.style.background=\'#7FB73F\';'
-           +'var s=document.createElement(\'span\');s.className=\'str-ww-num\';'
-           +'s.textContent=this.dataset.number;p.innerHTML=\'\';p.appendChild(s);}">';
+           +'p.innerHTML=\'\';var w=document.createElement(\'img\');'
+           +'w.className=\'str-ww-wp-lg\';w.alt=this.dataset.cantonCode;'
+           +'w.src=this.dataset.wappen;p.appendChild(w);'
+           +'var s=document.createElement(\'span\');s.className=\'str-ww-num-sm\';'
+           +'s.textContent=\'K\'+this.dataset.number+\'-\'+this.dataset.cantonCode;'
+           +'p.appendChild(s);}">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
