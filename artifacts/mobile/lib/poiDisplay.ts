@@ -59,6 +59,9 @@ export function poiDisplayName(name: string, kind: string | undefined): string {
 export const POI_APPROACH_KINDS = new Set([
   "natural=cave_entrance",
   "natural=arch",
+  // Grenzsteine werden wie andere historische Wegpunkte gestaffelt
+  // angekündigt: 300 m Karte, 200 m Hinweis, 50 m Geschichte.
+  "historic=boundary_stone",
   "historic=castle",
   "historic=ruins",
   "historic=archaeological_site",

@@ -95,3 +95,4 @@
 - [Official SchweizMobil route logos](sagatrail-official-route-logos.md) — national Wanderland SVGs come from the official image host; routes 1–7 stay unchanged and separate from cantonal emblems.
 - [Local regional route logos](sagatrail-local-route-logos.md) — Expo must bundle available regional/local SVGs locally; images.schweizmobil.ch returns 403 to runtime SvgUri requests.
 - [Route 28 geometry source](sagatrail-route28-geometry.md) — current dev track is the real Freiburg Tourismus Saane-Trails GPX fallback; replace when an authoritative SchweizMobil export is available.
+- [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
