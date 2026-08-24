@@ -62,6 +62,7 @@
 - [SagaTrail Herzfrequenz-basierte Pausen](sagatrail-heartrate-pause.md) — Stufe 1 (GPS/Kadenz, kein Framework) vs Stufe 2 (HealthKit/Apple Watch live HR); Garmin/Fitbit liefern KEIN Real-time HR während Workout.
 - [Routenfoto Geo-Filter + Dedupe](sagatrail-photo-geo-dedupe.md) — Commons-Textsuche braucht CH/FL-Bbox-Filter + URL-Dedupe; sonst landet 1 generisches Bild auf hunderten Code-Routen (K11…).
 - [SagaTrail route photo DB writeback](sagatrail-route-photo-writeback.md) — photos found via /routes/photo persist to external_routes.photo_url; routes now serve photoUrl inline → zero extra requests for cached routes.
+- [Driving decision gate](sagatrail-driving-decision-gate.md) — GPS chapter progression pauses while a perception decision is open, preventing duplicate prompts during fast-distance jumps.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
 - [Panorama-Assets als JPEG](sagatrail-panorama-jpeg.md) — 8 Panorama-PNGs (13MB) zu JPEG Q82 konvertiert (→1.4MB); panorama.ts referenziert jetzt .jpg; .easignore schließt .tsbuildinfo/server/scripts/build.js aus.

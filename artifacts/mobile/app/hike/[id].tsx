@@ -2508,10 +2508,18 @@ export default function LiveHike() {
   // offen ist. Entscheidungen sind freiwillig — wer nicht antwortet, gehoert
   // trotzdem das naechste Kapitel, sobald GPS oder Distanz es vorgibt.
   // Wird ein Entscheidungs-Kapitel durch den Fortschritt verlassen, schliesst
-  // sich das Panel automatisch (setAwaitingDecision(false)).
+  // sich das Panel automatisch (setAwaitingDecision(false)). Das darf aber
+  // nicht passieren, solange die Entscheidung noch offen ist: Bei einer
+  // schnellen Autofahrt kann die GPS-Distanz mehrere Kapitelgrenzen in einem
+  // einzigen Update überschreiten. Dann würde der Entscheidungs-Prompt
+  // parallel zur noch laufenden Antwort-/Bestätigungslogik weiterlaufen.
   useEffect(() => {
     if (locState !== "granted") return;
     if (preparing || finished || chapters.length === 0) return;
+    // Die bereits gefahrene Strecke bleibt in `distance` erhalten. Sobald
+    // chooseOption (oder der Timeout) die Entscheidung schließt, läuft dieser
+    // Effekt erneut und holt den Kapitelindex kontrolliert nach.
+    if (awaitingDecisionRef.current) return;
     const steps = chapters.length - 1;
     if (steps <= 0) {
       setFinished(true);
@@ -2547,6 +2555,7 @@ export default function LiveHike() {
     finished,
     chapters.length,
     currentIndex,
+    awaitingDecision,
     totalKm,
   ]);
 
