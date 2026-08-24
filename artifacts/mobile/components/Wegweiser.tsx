@@ -1,9 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { SvgUri, SvgXml } from "react-native-svg";
+import { SvgXml } from "react-native-svg";
 import { fonts } from "@/constants/typography";
 import { CantonWappen } from "@/components/brand/CantonWappen";
 import { NATIONAL_ROUTE_LOGOS } from "@/constants/nationalRouteLogos";
+import { REGIONAL_LOCAL_ROUTE_LOGOS } from "@/constants/regionalLocalRouteLogos";
 import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 
 /**
@@ -122,7 +123,7 @@ function spitzenFarben(sac: string | null | undefined): { balken: string | null 
   return { balken: null }; // T1/T2 oder unbekannt → ganz gelb
 }
 
-function offiziellesLogoUri(kategorie: string | null, nummer: string | null, kanton?: string | null): string | null {
+function offiziellesLogoXml(kategorie: string | null, nummer: string | null, kanton?: string | null): string | null {
   if (
     (kategorie !== "Wanderland regional" && kategorie !== "Wanderland lokal") ||
     !nummer ||
@@ -132,7 +133,7 @@ function offiziellesLogoUri(kategorie: string | null, nummer: string | null, kan
   }
   const code = kantonsKuerzel(kanton).toUpperCase();
   if (!/^[A-Z]{2}$/.test(code) || !/^\d{2,3}$/.test(nummer)) return null;
-  return `https://images.schweizmobil.ch/image-svg/WL_${code}_${nummer}_075.svg`;
+  return REGIONAL_LOCAL_ROUTE_LOGOS[`${code}-${nummer}`] ?? null;
 }
 
 export function Wegweiser({
@@ -161,17 +162,17 @@ export function Wegweiser({
   const nationalLogo = d.kategorie === "Wanderland national"
     ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""] ?? (d.nummer?.toLowerCase() === "4a" ? NATIONAL_ROUTE_LOGOS["4"] : undefined)
     : undefined;
-  const regionalLocalLogoUri = offiziellesLogoUri(d.kategorie, d.nummer, kanton);
+  const regionalLocalLogoXml = offiziellesLogoXml(d.kategorie, d.nummer, kanton);
   const istKantonaleRoute = !!d.kategorie && d.kategorie.length === 2;
 
   return (
     <View style={[styles.reihe, { height: hoehe }]}>
       {/* Gelber Körper */}
       <View style={[styles.koerper, { height: hoehe }]}>
-        {d.nummer && (nationalLogo || regionalLocalLogoUri || istKantonaleRoute) && (
+        {d.nummer && (nationalLogo || regionalLocalLogoXml || istKantonaleRoute) && (
           <View style={[
             styles.gruenFeld,
-            regionalLocalLogoUri || nationalLogo ? styles.offiziellesFeld : null,
+            regionalLocalLogoXml || nationalLogo ? styles.offiziellesFeld : null,
             { width: hoehe - 8, height: hoehe - 8 },
           ]}>
             {nationalLogo ? (
@@ -180,9 +181,9 @@ export function Wegweiser({
                 width={hoehe - 8}
                 height={hoehe - 8}
               />
-            ) : regionalLocalLogoUri ? (
-              <SvgUri
-                uri={regionalLocalLogoUri}
+            ) : regionalLocalLogoXml ? (
+              <SvgXml
+                xml={regionalLocalLogoXml}
                 width={hoehe - 8}
                 height={hoehe - 8}
               />
