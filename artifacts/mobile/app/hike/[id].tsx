@@ -1434,7 +1434,19 @@ export default function LiveHike() {
     // Solange ein POI aktiv angezeigt/erzaehlt wird, keinen neuen suchen:
     // mehrere POIs in 300-m-Naehe wuerden sonst die laufende Ansage
     // unterbrechen und den POI mehrfach vorgelesen klingen lassen.
-    if (nearbyPoi) return;
+    //
+    // Ausnahme: Ein POI ohne spezifischen Kontext darf die Route nicht
+    // blockieren. Sobald seine Detailabfrage abgeschlossen ist und weder
+    // osmContext noch Wikipedia-Text vorhanden sind, darf ein nachfolgender
+    // relevanter POI die Kachel ersetzen und seinen eigenen 200-/50-m-Flow
+    // starten. Waehrend die Abfrage noch laeuft (nearbyPoiWiki === undefined)
+    // bleibt der alte Schutz aktiv.
+    const nearbyPoiIsContextless =
+      nearbyPoi != null &&
+      nearbyPoiWiki !== undefined &&
+      !nearbyPoi.osmContext?.trim() &&
+      !nearbyPoiWiki?.extract;
+    if (nearbyPoi && !nearbyPoiIsContextless) return;
     const geo = route?.geometry;
     const current: LatLng | null =
       livePos ??
@@ -1468,7 +1480,7 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi]);
+  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi, nearbyPoiWiki]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
