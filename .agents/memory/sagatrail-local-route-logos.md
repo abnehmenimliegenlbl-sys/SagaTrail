@@ -6,4 +6,4 @@ Regional and local SchweizMobil SVGs must be bundled into the mobile app instead
 
 **Why:** Native Expo sessions produced repeated fetch errors for direct `images.schweizmobil.ch` SVG requests, and many numbered combinations have no corresponding official file at either the `_075.svg` or unsuffixed URL.
 
-**How to apply:** When new routes are added, download verified official SVGs during development, add them to the local asset map, and keep the runtime component free of external logo URLs.
+**How to apply:** When new routes are added, download verified official SVGs or JPGs during development, add them to the local asset map, and keep the runtime component free of external logo URLs. The public SharePoint Routenfelder download is the authoritative source for JPG-only routes; files may use `WL_086_SG.jpg` rather than the older `WL_SG_86.svg` naming pattern.

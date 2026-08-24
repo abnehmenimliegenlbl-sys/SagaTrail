@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { fonts } from "@/constants/typography";
 import { CantonWappen } from "@/components/brand/CantonWappen";
 import { NATIONAL_ROUTE_LOGOS } from "@/constants/nationalRouteLogos";
 import { REGIONAL_LOCAL_ROUTE_LOGOS } from "@/constants/regionalLocalRouteLogos";
+import { REGIONAL_LOCAL_ROUTE_LOGO_IMAGES } from "@/constants/regionalLocalRouteLogoImages";
 import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 
 /**
@@ -136,6 +137,24 @@ function offiziellesLogoXml(kategorie: string | null, nummer: string | null, kan
   return REGIONAL_LOCAL_ROUTE_LOGOS[`${code}-${nummer}`] ?? null;
 }
 
+function offiziellesLogoImage(kategorie: string | null, nummer: string | null, kanton?: string | null) {
+  if (
+    (kategorie !== "Wanderland regional" && kategorie !== "Wanderland lokal") ||
+    !nummer ||
+    !kanton ||
+    !/^\d{2,3}$/.test(nummer)
+  ) {
+    return null;
+  }
+  const code = kantonsKuerzel(kanton).toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return null;
+  return (
+    REGIONAL_LOCAL_ROUTE_LOGO_IMAGES[`${code}-${nummer}`] ??
+    REGIONAL_LOCAL_ROUTE_LOGO_IMAGES[`__GLOBAL__-${nummer}`] ??
+    null
+  );
+}
+
 export function Wegweiser({
   name,
   sac,
@@ -163,16 +182,17 @@ export function Wegweiser({
     ? NATIONAL_ROUTE_LOGOS[d.nummer ?? ""] ?? (d.nummer?.toLowerCase() === "4a" ? NATIONAL_ROUTE_LOGOS["4"] : undefined)
     : undefined;
   const regionalLocalLogoXml = offiziellesLogoXml(d.kategorie, d.nummer, kanton);
+  const regionalLocalLogoImage = offiziellesLogoImage(d.kategorie, d.nummer, kanton);
   const istKantonaleRoute = !!d.kategorie && d.kategorie.length === 2;
 
   return (
     <View style={[styles.reihe, { height: hoehe }]}>
       {/* Gelber Körper */}
       <View style={[styles.koerper, { height: hoehe }]}>
-        {d.nummer && (nationalLogo || regionalLocalLogoXml || istKantonaleRoute) && (
+        {d.nummer && (nationalLogo || regionalLocalLogoXml || regionalLocalLogoImage || istKantonaleRoute) && (
           <View style={[
             styles.gruenFeld,
-            regionalLocalLogoXml || nationalLogo ? styles.offiziellesFeld : null,
+            regionalLocalLogoXml || nationalLogo || regionalLocalLogoImage ? styles.offiziellesFeld : null,
             { width: hoehe - 8, height: hoehe - 8 },
           ]}>
             {nationalLogo ? (
@@ -186,6 +206,12 @@ export function Wegweiser({
                 xml={regionalLocalLogoXml}
                 width={hoehe - 8}
                 height={hoehe - 8}
+              />
+            ) : regionalLocalLogoImage ? (
+              <Image
+                source={regionalLocalLogoImage}
+                style={{ width: hoehe - 8, height: hoehe - 8 }}
+                resizeMode="contain"
               />
             ) : istKantonaleRoute ? (
               // Kantonale Route: Wappen links oben, Nummer "K1-BE" darunter
