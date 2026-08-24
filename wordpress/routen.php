@@ -676,6 +676,15 @@ var STR_L10N=<?php echo wp_json_encode(array_filter($t,function($k){return strpo
 var S={kanton:null,kantonWappen:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
 var cache={};
 function strHandleOfficialLogoError(img){
+  if(img.dataset.candidates){
+    var candidates=img.dataset.candidates.split('|').filter(Boolean);
+    if(candidates.length){
+      img.src=candidates.shift();
+      img.dataset.candidates=candidates.join('|');
+      return;
+    }
+    img.dataset.candidates='';
+  }
   if(img.dataset.fallback){
     img.src=img.dataset.fallback;
     img.dataset.fallback='';
@@ -683,6 +692,27 @@ function strHandleOfficialLogoError(img){
   }
   var p=img.closest('.str-ww-green');
   if(p)p.remove();
+}
+function strOfficialLogoCandidates(number,cantonCode,specialFile){
+  var n=('000'+number).slice(-3), files=[], seen={};
+  function add(file){
+    if(file&&!seen[file]){seen[file]=true;files.push(STR_ROUTE_LOGO_BASE+file);}
+  }
+  if(specialFile)add(specialFile);
+  add('WL_'+n+'.jpg');
+  if(cantonCode&&/^[A-Z]{2}$/.test(cantonCode))add('WL_'+n+'_'+cantonCode+'.jpg');
+  Object.keys(STR_KANTON_CODES).forEach(function(name){
+    var code=STR_KANTON_CODES[name];
+    if(code!==cantonCode)add('WL_'+n+'_'+code+'.jpg');
+  });
+  return files;
+}
+function strOfficialLogoImg(candidates){
+  var first=candidates.shift()||'';
+  return '<img class="str-ww-official-logo" src="'+esc(first)+'"'
+    +(candidates.length?' data-candidates="'+esc(candidates.join('|'))+'"':'')
+    +' alt="Offizielles SchweizMobil-Logo"'
+    +' onerror="strHandleOfficialLogoError(this)">';
 }
 
 /* ══════════════════════════════════════
@@ -862,29 +892,17 @@ function parseRouteName(name){
          /* Lokale SchweizMobil-Routen: offizielle JPGs aus dem gemeinsamen
             Asset-Bestand. Keine separate Nummer neben dem Logo anzeigen. */
          officialLogo=true;
-         emblem='<img class="str-ww-official-logo" src="'+STR_ROUTE_LOGO_BASE
-           +'WL_'+esc(('000'+d.nummer).slice(-3))+'.jpg"'
-           +' alt="Offizielles SchweizMobil-Logo"'
-           +' onerror="strHandleOfficialLogoError(this)">'; 
+          emblem=strOfficialLogoImg(strOfficialLogoCandidates(d.nummer,cantonCode,null));
        } else if(
          (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
          /^\d{2,3}$/.test(d.nummer)
        ){
          officialLogo=true;
-         var regionalNum=('000'+d.nummer).slice(-3);
-         var regionalFile='WL_'+regionalNum+'.jpg';
-         var regionalFallback='';
-         if(d.nummer==='43' && cantonCode==='GR') regionalFile='WL_043_GR.jpg';
-         else if(d.nummer==='64') regionalFile='WL_064_de.jpg';
-         else if(d.nummer==='62') regionalFile='WL_062_TI.jpg';
-         else if(cantonCode && /^[A-Z]{2}$/.test(cantonCode)){
-           regionalFallback='WL_'+regionalNum+'_'+cantonCode+'.jpg';
-         }
-         emblem='<img class="str-ww-official-logo" src="'+STR_ROUTE_LOGO_BASE
-           +esc(regionalFile)+'"'
-           +(regionalFallback?' data-fallback="'+STR_ROUTE_LOGO_BASE+esc(regionalFallback)+'"':'')
-           +' alt="Offizielles SchweizMobil-Logo"'
-           +' onerror="strHandleOfficialLogoError(this)">';
+          var specialFile=null;
+          if(d.nummer==='43' && cantonCode==='GR') specialFile='WL_043_GR.jpg';
+          else if(d.nummer==='64') specialFile='WL_064_de.jpg';
+          else if(d.nummer==='62') specialFile='WL_062_TI.jpg';
+          emblem=strOfficialLogoImg(strOfficialLogoCandidates(d.nummer,cantonCode,specialFile));
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
