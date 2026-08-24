@@ -140,6 +140,13 @@ app.use(
     maxAge: "30d",
   }),
 );
+app.use(
+  "/api/route-logos",
+  express.static(path.join(__dirname, "../../mobile/assets/schweizmobil"), {
+    immutable: true,
+    maxAge: "30d",
+  }),
+);
 app.use("/routen", routesExplorerRouter);
 app.use("/api", router);
 

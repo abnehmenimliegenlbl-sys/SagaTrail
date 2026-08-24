@@ -852,8 +852,8 @@ function parseRouteName(name){
        if(d.kategorie==='Wanderland national' && /^\d{1,2}[a-z]?$/.test(d.nummer)){
          officialLogo=true;
          var nationalNum=d.nummer.toLowerCase()==='4a'?'4':d.nummer;
-         emblem='<img class="str-ww-official-logo" src="https://images.schweizmobil.ch/image-svg/WL_'
-           +esc(nationalNum)+'.svg" alt="Offizielles SchweizMobil-Logo"'
+         emblem='<img class="str-ww-official-logo" src="'+STR_ROUTE_LOGO_BASE
+           +'national/'+esc(nationalNum)+'.svg" alt="Offizielles SchweizMobil-Logo"'
            +' onerror="strHandleOfficialLogoError(this)">';
        } else if(
          d.kategorie==='Wanderland lokal' &&
@@ -868,16 +868,21 @@ function parseRouteName(name){
            +' onerror="strHandleOfficialLogoError(this)">'; 
        } else if(
          (d.kategorie==='Wanderland regional'||d.kategorie==='Wanderland lokal') &&
-         cantonCode && /^[A-Z]{2}$/.test(cantonCode) && /^\d{2,3}$/.test(d.nummer)
+         /^\d{2,3}$/.test(d.nummer)
        ){
          officialLogo=true;
-         var logoBase='https://images.schweizmobil.ch/image-svg/WL_'
-           +esc(cantonCode)+'_'+esc(d.nummer);
-         emblem='<img class="str-ww-official-logo" src="'+logoBase+'_075.svg"'
-           +' data-fallback="'+logoBase+'.svg"'
-           +' data-number="'+esc(d.nummer)+'"'
-           +' data-canton-code="'+esc(cantonCode)+'"'
-           +' data-wappen="'+esc(wpUrl||'')+'"'
+         var regionalNum=('000'+d.nummer).slice(-3);
+         var regionalFile='WL_'+regionalNum+'.jpg';
+         var regionalFallback='';
+         if(d.nummer==='43' && cantonCode==='GR') regionalFile='WL_043_GR.jpg';
+         else if(d.nummer==='64') regionalFile='WL_064_de.jpg';
+         else if(d.nummer==='62') regionalFile='WL_062_TI.jpg';
+         else if(cantonCode && /^[A-Z]{2}$/.test(cantonCode)){
+           regionalFallback='WL_'+regionalNum+'_'+cantonCode+'.jpg';
+         }
+         emblem='<img class="str-ww-official-logo" src="'+STR_ROUTE_LOGO_BASE
+           +esc(regionalFile)+'"'
+           +(regionalFallback?' data-fallback="'+STR_ROUTE_LOGO_BASE+esc(regionalFallback)+'"':'')
            +' alt="Offizielles SchweizMobil-Logo"'
            +' onerror="strHandleOfficialLogoError(this)">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
