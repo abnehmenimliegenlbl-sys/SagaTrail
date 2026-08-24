@@ -7,4 +7,4 @@ The voice decision flow must synchronously claim a chapter choice before startin
 
 **Why:** A speech result and a fast tap can arrive in the same render window, while iOS may still be in the recognition recording session. Without both guards, prompts or feedback can play twice and other apps can remain ducked.
 
-**How to apply:** Keep the chapter-level chosen-option guard in the shared decision handler, and await native audio-mode changes on every device-TTS path before starting Speech.speak.
+**How to apply:** Keep the chapter-level chosen-option guard in the shared decision handler, await native audio-mode changes on every device-TTS path before starting Speech.speak, and wait briefly after recognition.stop() before starting any confirmation playback because iOS releases PlayAndRecord asynchronously.

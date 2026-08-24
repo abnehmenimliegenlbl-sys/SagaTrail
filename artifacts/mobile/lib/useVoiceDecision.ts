@@ -75,18 +75,26 @@ export function useVoiceDecision(
   const langRef = useRef(lang);
   langRef.current = lang;
 
-  const stopListening = useCallback(() => {
+  const stopListening = useCallback(async () => {
     try {
       ExpoSpeechRecognitionModule?.stop();
     } catch {
       // Best effort — Erkennung koennte bereits beendet sein.
     }
     setListening(false);
+    // `stop()` ist bei expo-speech-recognition nur ein Request. Auf iOS
+    // bleibt die PlayAndRecord-Session noch kurz aktiv, bis das native
+    // "end"-Event verarbeitet wurde. Die aufrufende Entscheidung darf die
+    // Bestaetigung erst danach starten, sonst wird die Audiosession der
+    // anderen App weiter unterbrochen bzw. die Bestaetigung leise.
+    if (NATIVE_SPEECH_AVAILABLE) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+    }
   }, []);
 
   useEffect(() => {
     if (!active || !supported || !ExpoSpeechRecognitionModule) {
-      stopListening();
+      void stopListening();
       return;
     }
 
@@ -126,7 +134,7 @@ export function useVoiceDecision(
 
     return () => {
       cancelled = true;
-      stopListening();
+      void stopListening();
     };
   }, [active, supported, stopListening]);
 
@@ -140,8 +148,12 @@ export function useVoiceDecision(
       const index = matchDecisionOption(transcript, langRef.current, optionsRef.current);
       if (index != null) {
         matchedRef.current = true;
-        stopListening();
-        onMatchRef.current(index);
+        // Native Recognition und Playback duerfen nicht gleichzeitig um die
+        // iOS-Audiosession kaempfen. Erst nach dem kurzen Release-Fenster die
+        // Auswahl bestaetigen und die Ack-Ansage starten.
+        void stopListening().then(() => {
+          onMatchRef.current(index);
+        });
         return;
       }
     }
