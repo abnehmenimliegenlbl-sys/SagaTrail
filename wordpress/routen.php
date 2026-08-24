@@ -660,7 +660,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 /* ── Kanton→Wappen-URL (PHP-generiert) ── */
 var STR_WAPPEN=<?php
   $jw=[];
-  foreach($str_kantone as $k){ $jw[$k['api']]='https://commons.wikimedia.org/wiki/Special:FilePath/'.$k['svg']; }
+  foreach($str_kantone as $k){ $jw[$k['api']]='https://api.sagatrail.ch/api/canton-wappen/'.$k['code'].'.svg'; }
   echo wp_json_encode($jw,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 ?>;
 var STR_KANTON_CODES=<?php

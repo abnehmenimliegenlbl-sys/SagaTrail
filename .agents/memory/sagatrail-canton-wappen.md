@@ -7,4 +7,4 @@ Real Wappen (coat of arms) for all 26 cantons are bundled locally as inline SVG 
 
 **Why:** `commons.wikimedia.org` and `upload.wikimedia.org` return HTTP 429 ("Wikimedia Error") for every request from this sandbox/workspace network — both the API and CDN, consistently, not a transient rate limit. Do not spend time retrying Wikimedia fetches for image assets; it doesn't recover.
 
-**How to apply:** Source used instead: GitHub repo `nzzdev/ch-canton-symbols` (CC BY-SA 4.0), raw files at `symbols/13x13/<code>.svg` (lowercase 2-letter code, e.g. `zh.svg`). `raw.githubusercontent.com` is not blocked. If more coat-of-arms formats/sizes are needed later, pull from that same repo rather than Wikimedia.
+**How to apply:** Source used instead: GitHub repo `nzzdev/ch-canton-symbols` (CC BY-SA 4.0), raw files at `symbols/13x13/<code>.svg` (lowercase 2-letter code, e.g. `zh.svg`). `raw.githubusercontent.com` is not blocked. If more coat-of-arms formats/sizes are needed later, pull from that same repo rather than Wikimedia. WordPress should use the SagaTrail API's stable canton-wappen endpoint, not Wikimedia runtime URLs.

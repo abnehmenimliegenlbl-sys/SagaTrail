@@ -15,8 +15,25 @@ import {
 import { WebhookHandlers } from "./lib/webhookHandlers";
 import { handleStripeEvent } from "./lib/partnerWebhookHandler";
 import Stripe from "stripe";
+import { CANTON_WAPPEN_SVG } from "../../mobile/constants/cantonWappenSvg";
 
 const app: Express = express();
+
+// Offizielle Kantonswappen für die WordPress-Routenansicht.
+// Die SVGs stammen aus dem stabilen SagaTrail-Assetbestand; Wikimedia wird
+// hier bewusst nicht als Laufzeitabhängigkeit verwendet.
+app.get("/api/canton-wappen/:code.svg", (req, res) => {
+  const code = String(req.params.code ?? "").toUpperCase();
+  const svg = /^[A-Z]{2}$/.test(code) ? CANTON_WAPPEN_SVG[code] : undefined;
+  if (!svg) {
+    res.status(404).type("text/plain").send("Canton emblem not found");
+    return;
+  }
+  res
+    .type("image/svg+xml")
+    .set("Cache-Control", "public, max-age=2592000, immutable")
+    .send(svg);
+});
 
 app.use(
   pinoHttp({
