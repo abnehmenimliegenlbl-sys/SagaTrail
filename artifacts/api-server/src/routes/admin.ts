@@ -30,10 +30,11 @@ import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
 import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
-import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
+import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
 import type { Logger } from "pino";
 import { CANTON_ISO } from "../lib/cantonIso";
 import { sendVerbandWillkommen } from "../lib/verbandEmail";
+import { findReverseLoops, type AuditPoint } from "../lib/reverseLoopAudit";
 import {
   fetchLeadsFromWp, fetchOrgsFromWp,
   fetchLeadsFromDb, fetchOrgsFromDb, upsertLeadsToDb,
@@ -866,8 +867,6 @@ router.patch("/admin/sagas/:id/koordinaten", async (req, res): Promise<void> => 
 // ROUTEN-FOTOS
 // -------------------------------------------------------------------
 
-type AuditPoint = { lat: number; lng: number };
-
 function auditGeometry(value: unknown): AuditPoint[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -886,67 +885,6 @@ function auditGeometry(value: unknown): AuditPoint[] {
       return null;
     })
     .filter((point): point is AuditPoint => point !== null);
-}
-
-function auditDistanceM(a: AuditPoint, b: AuditPoint): number {
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const dLat = lat2 - lat1;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 6_371_000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
-interface ReverseLoopFinding {
-  startPoint: number;
-  endPoint: number;
-  reverseStartPoint: number;
-  reverseEndPoint: number;
-  lengthM: number;
-}
-
-/**
- * Findet längere, nahezu identische Punktfolgen in umgekehrter Richtung.
- * Anders als ein Vergleich nur am Anfang/Ende wird jedes mögliche Paar in der
- * Geometriemitte geprüft. Die Toleranz berücksichtigt das Ausdünnen der
- * gespeicherten Karten-Geometrie; die Geometrie selbst bleibt unverändert.
- */
-function findReverseLoops(points: AuditPoint[]): ReverseLoopFinding[] {
-  const toleranceM = 35;
-  const minPoints = 5;
-  const minLengthM = 200;
-  const findings: ReverseLoopFinding[] = [];
-
-  for (let i = 0; i <= points.length - minPoints; i++) {
-    for (let j = i + minPoints - 1; j < points.length; j++) {
-      if (j - i < minPoints - 1) continue;
-      let run = 0;
-      let lengthM = 0;
-      while (i + run < points.length && j - run >= 0) {
-        if (auditDistanceM(points[i + run], points[j - run]) > toleranceM) break;
-        if (run > 0) lengthM += auditDistanceM(points[i + run - 1], points[i + run]);
-        run++;
-      }
-      if (run >= minPoints && lengthM >= minLengthM) {
-        findings.push({
-          startPoint: i,
-          endPoint: i + run - 1,
-          reverseStartPoint: j - run + 1,
-          reverseEndPoint: j,
-          lengthM: Math.round(lengthM),
-        });
-        // Einen längeren Treffer enthält oft mehrere kürzere Treffer. Den
-        // Start überspringen, damit der Admin einen verständlichen Befund
-        // statt einer Trefferflut erhält.
-        break;
-      }
-    }
-  }
-
-  return findings.filter((finding, index) => {
-    const previous = findings[index - 1];
-    return !previous || finding.startPoint > previous.endPoint || finding.reverseStartPoint > previous.reverseEndPoint;
-  });
 }
 
 /**
@@ -1002,14 +940,7 @@ router.get("/admin/routes/reverse-loop-report", async (req, res): Promise<void> 
     for (const { row, loops } of routeLoops) {
       const osmId = /^osm-(\d+)$/.exec(row.id)?.[1];
       const metadata = osmId ? osmById.get(Number(osmId)) : undefined;
-      const duplicateWays = metadata
-        ? [...new Set(metadata.wayRefs.filter((way, index) => metadata.wayRefs.indexOf(way) !== index))]
-        : [];
-      const reasons: string[] = [];
-      if (metadata?.roundtrip?.toLowerCase() === "yes") reasons.push("OSM roundtrip=yes");
-      if (duplicateWays.length > 0) {
-        reasons.push(`OSM-Way mehrfach referenziert (${duplicateWays.length}: ${duplicateWays.slice(0, 5).join(", ")})`);
-      }
+      const reasons = metadata ? reverseLoopExplanation(metadata.roundtrip, metadata.wayRefs) : [];
       for (const loop of loops) {
         const expectedExplanation = reasons.length > 0;
         findings.push({

@@ -89,3 +89,4 @@
 - [SagaTrail Leads in Postgres](sagatrail-leads-postgres.md) — partner_leads Tabelle ist single source of truth; WP MySQL nicht mehr Quelle; Import via POST /admin/leads/import-wp; OSM-Suche speichert direkt in PG.
 - [Nominatim jsonv2 category](nominatim-jsonv2-category.md) — format=jsonv2 liefert "category" statt "class"; Filter auf r.class verwirft lautlos alle Treffer.
 - [Prod-Routen und -Sagen verboten](prod-routes-sagas-forbidden.md) — external_routes + sagas in Prod NIEMALS schreiben; kein push-script, kein warm-all, kein import ohne explizite Freigabe.
+- [Reverse-loop overlap guard](reverse-loop-overlap.md) — symmetric matching must stop at the shared turning point or palindromic out-and-back routes self-overlap in the report.

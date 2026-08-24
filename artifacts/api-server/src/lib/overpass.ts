@@ -1510,6 +1510,21 @@ export interface RouteLoopAuditOsm {
   wayRefs: number[];
 }
 
+/** Returns repeated OSM way references in encounter order, without duplicates. */
+export function findDuplicateWayRefs(wayRefs: number[]): number[] {
+  return [...new Set(wayRefs.filter((way, index) => wayRefs.indexOf(way) !== index))];
+}
+
+export function reverseLoopExplanation(roundtrip: string | null, wayRefs: number[]): string[] {
+  const reasons: string[] = [];
+  if (roundtrip?.toLowerCase() === "yes") reasons.push("OSM roundtrip=yes");
+  const duplicateWays = findDuplicateWayRefs(wayRefs);
+  if (duplicateWays.length > 0) {
+    reasons.push(`OSM-Way mehrfach referenziert (${duplicateWays.length}: ${duplicateWays.slice(0, 5).join(", ")})`);
+  }
+  return reasons;
+}
+
 export async function fetchRouteLoopAuditOsm(
   osmIds: number[],
   log: Logger,
