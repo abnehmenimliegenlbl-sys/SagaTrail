@@ -675,6 +675,39 @@ var STR_L10N=<?php echo wp_json_encode(array_filter($t,function($k){return strpo
 /* ── State ── */
 var S={kanton:null,kantonWappen:null,routes:[],distLo:0,distHi:50,ascLo:0,ascHi:3000,sacLo:1,sacHi:6,gj:false,loading:false};
 var cache={};
+var STR_KANTONAL_NEXT=1;
+
+function strPrepareKantonFallbacks(){
+  var max=0;
+  (S.routes||[]).forEach(function(r){
+    var m=/^K(\d+)(?:\s+[A-Z]{2})?\s/.exec(String(r.name||''));
+    if(m)max=Math.max(max,parseInt(m[1],10)||0);
+  });
+  STR_KANTONAL_NEXT=max+1;
+}
+function strHandleOfficialLogoError(img){
+  if(img.dataset.fallback){
+    img.src=img.dataset.fallback;
+    img.dataset.fallback='';
+    return;
+  }
+  var p=img.closest('.str-ww-green');
+  if(!p)return;
+  var assigned=STR_KANTONAL_NEXT++;
+  p.classList.remove('str-ww-official');
+  p.style.padding='5px 7px 4px';
+  p.style.background='#7FB73F';
+  p.innerHTML='';
+  var w=document.createElement('img');
+  w.className='str-ww-wp-lg';
+  w.alt=img.dataset.cantonCode;
+  w.src=img.dataset.wappen;
+  p.appendChild(w);
+  var s=document.createElement('span');
+  s.className='str-ww-num-sm';
+  s.textContent='K'+assigned+'-'+img.dataset.cantonCode;
+  p.appendChild(s);
+}
 
 /* ══════════════════════════════════════
    CUSTOM DUAL-RANGE SLIDER
@@ -852,15 +885,7 @@ function parseRouteName(name){
            +' data-canton-code="'+esc(cantonCode)+'"'
            +' data-wappen="'+esc(wpUrl||'')+'"'
            +' alt="Offizielles SchweizMobil-Logo"'
-           +' onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}'
-           +'else{var p=this.closest(\'.str-ww-green\');p.classList.remove(\'str-ww-official\');'
-           +'p.style.padding=\'5px 7px 4px\';p.style.background=\'#7FB73F\';'
-           +'p.innerHTML=\'\';var w=document.createElement(\'img\');'
-           +'w.className=\'str-ww-wp-lg\';w.alt=this.dataset.cantonCode;'
-           +'w.src=this.dataset.wappen;p.appendChild(w);'
-           +'var s=document.createElement(\'span\');s.className=\'str-ww-num-sm\';'
-           +'s.textContent=\'K\'+this.dataset.number+\'-\'+this.dataset.cantonCode;'
-           +'p.appendChild(s);}">';
+           +' onerror="strHandleOfficialLogoError(this)">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
@@ -951,6 +976,7 @@ var _strRouteIndex=[];
 
 function renderRoutes(){
   var vis=filtered();
+  strPrepareKantonFallbacks();
   _strRouteIndex=vis;
   var badge=document.getElementById('str-results-badge');
   var list=document.getElementById('str-route-list');
