@@ -1,6 +1,6 @@
 # Fehlende offizielle SchweizMobil-Routen
 
-Diese 47 verbleibenden Routennummern sind offizielle SchweizMobil-Routen. Für sie gibt
+Diese 32 verbleibenden Routennummern sind offizielle SchweizMobil-Routen. Für sie gibt
 es im aktuellen Entwicklungsbestand noch keine passende National-,
 Regional- oder Lokalroute (`nwr`, `rwr` oder `lwr`) mit dieser Nummer.
 Zu allen Nummern ist ein offizielles JPG-Logo vorhanden.
@@ -11,18 +11,12 @@ kantonale Logo-Dateien mit derselben Nummer zählen nur einmal.
 ## Fehlende Routennummern
 
 ```text
-28, 121, 255, 257,
-441, 442, 451, 485, 486,
-566, 629, 631, 647, 651,
-678, 699, 757, 783, 792, 796,
-804, 806, 811, 813, 816, 817,
-819, 821, 822, 823, 824, 827,
-828, 832, 872, 888, 889, 894,
-896, 902, 929, 960, 969, 974,
-975, 986, 990
+28, 121, 486, 566, 678, 699, 757, 783, 792,
+804, 806, 811, 816, 817, 821, 823, 827, 828,
+889, 902, 960, 974, 975, 990
 ```
 
-**Anzahl:** 47
+**Anzahl:** 32
 
 ## Bereits besonders bestätigte Routen
 
