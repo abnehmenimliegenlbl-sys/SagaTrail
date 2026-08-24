@@ -791,6 +791,10 @@ function parseRouteName(name){
       var nl=parseInt(m[1],10).toString().length;
       kategorie=nl===1?'Wanderland national':nl===2?'Wanderland regional':'Wanderland lokal';
       rest=m[2];
+       /* Einige API-Namen enthalten die offizielle Nummer doppelt:
+          "108 108 3V ..." — nur die erste Nummer gehört ins Logo. */
+       var duplicatePrefix=new RegExp('^'+m[1].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s+');
+       rest=rest.replace(duplicatePrefix,'');
     }
   }
   var es=rest.match(/^(Etappe\s+(\d+))\s*[:\s]\s*(.+?)\s*[-–]\s*(.+)$/i);
@@ -844,8 +848,13 @@ function parseRouteName(name){
            +esc(cantonCode)+'_'+esc(d.nummer);
          emblem='<img class="str-ww-official-logo" src="'+logoBase+'_075.svg"'
            +' data-fallback="'+logoBase+'.svg"'
+           +' data-number="'+esc(d.nummer)+'"'
            +' alt="Offizielles SchweizMobil-Logo"'
-           +' onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.style.display=\'none\';}">';
+           +' onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}'
+           +'else{var p=this.closest(\'.str-ww-green\');p.classList.remove(\'str-ww-official\');'
+           +'p.style.padding=\'5px 7px 4px\';p.style.background=\'#7FB73F\';'
+           +'var s=document.createElement(\'span\');s.className=\'str-ww-num\';'
+           +'s.textContent=this.dataset.number;p.innerHTML=\'\';p.appendChild(s);}">';
       } else if(wpUrl&&d.kategorie!=='Wanderland lokal'){
         emblem='<img class="str-ww-wp" src="'+esc(wpUrl)+'" alt="">';
       }
