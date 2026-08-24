@@ -39,15 +39,48 @@ const DEBOUNCE_MS = 350;
 const MIN_QUERY_LEN = 3;
 
 function reverseGpxTrack(gpx: string): string {
-  // Trkpt-Tags in umgekehrter Reihenfolge zurückgeben.
-  const trkptRe = /<trkpt[\s\S]*?<\/trkpt>/g;
-  const matches = gpx.match(trkptRe);
-  if (!matches || matches.length === 0) return gpx;
-  let result = gpx;
-  const combined = matches.join("");
-  const reversedCombined = [...matches].reverse().join("");
-  result = result.replace(combined, reversedCombined);
-  return result;
+  // GPX-Dateien enthalten zwischen den <trkpt>-Blöcken normalerweise
+  // Zeilenumbrüche/Einrückungen. Deshalb darf nicht der zusammengeklebte
+  // String ersetzt werden: Die Zwischenräume müssen erhalten bleiben.
+  const reversePointsInBlock = (block: string, tagName: "trkpt" | "rtept"): string => {
+    const pointRe = new RegExp(`<${tagName}\\b[\\s\\S]*?<\\/${tagName}>`, "gi");
+    const matches = [...block.matchAll(pointRe)];
+    if (matches.length < 2) return block;
+
+    const firstIndex = matches[0].index ?? 0;
+    const last = matches[matches.length - 1];
+    const lastEnd = (last.index ?? 0) + last[0].length;
+    const prefix = block.slice(0, firstIndex);
+    const suffix = block.slice(lastEnd);
+    const separators = matches.slice(0, -1).map((match, index) => {
+      const start = (match.index ?? 0) + match[0].length;
+      const end = matches[index + 1].index ?? start;
+      return block.slice(start, end);
+    });
+
+    return (
+      prefix +
+      [...matches]
+        .reverse()
+        .map((match, index) => match[0] + (separators[index] ?? ""))
+        .join("") +
+      suffix
+    );
+  };
+
+  // Trackpunkte pro <trkseg> umkehren, damit mehrere GPX-Tracks ihre
+  // Segmentstruktur behalten. Falls kein <trkseg> vorhanden ist, greift der
+  // Fallback auf eine globale Track-/Routenpunkt-Umkehrung.
+  const segmentRe = /(<trkseg\b[^>]*>)([\s\S]*?)(<\/trkseg>)/gi;
+  let hadSegments = false;
+  const withSegments = gpx.replace(segmentRe, (_full, open: string, body: string, close: string) => {
+    hadSegments = true;
+    return open + reversePointsInBlock(body, "trkpt") + close;
+  });
+  if (hadSegments) return withSegments;
+
+  const reversedTrack = reversePointsInBlock(gpx, "trkpt");
+  return reversedTrack === gpx ? reversePointsInBlock(gpx, "rtept") : reversedTrack;
 }
 
 interface Point {
