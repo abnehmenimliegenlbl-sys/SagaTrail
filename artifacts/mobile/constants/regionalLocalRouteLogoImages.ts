@@ -498,4 +498,5 @@ export const REGIONAL_LOCAL_ROUTE_LOGO_IMAGES: Record<string, ImageSourcePropTyp
   'GR-997': require("../assets/schweizmobil/regional-local/WL_997_GR.jpg"),
   '__GLOBAL__-998': require("../assets/schweizmobil/regional-local/WL_998.jpg"),
   '__GLOBAL__-999': require("../assets/schweizmobil/regional-local/WL_999.jpg"),
+  '__GLOBAL__-64': require("../assets/schweizmobil/regional-local/WL_064_de.jpg"),
 };
