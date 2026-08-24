@@ -93,3 +93,4 @@
 - [Voice decision confirmation audio](sagatrail-voice-confirmation-audio.md) — claim choices once and await the native DuckOthers transition before device TTS to avoid duplicate feedback and stuck ducking.
 - [Official SchweizMobil route logos](sagatrail-official-route-logos.md) — national Wanderland SVGs come from the official image host; routes 1–7 stay unchanged and separate from cantonal emblems.
 - [Local regional route logos](sagatrail-local-route-logos.md) — Expo must bundle available regional/local SVGs locally; images.schweizmobil.ch returns 403 to runtime SvgUri requests.
+- [Route 28 geometry source](sagatrail-route28-geometry.md) — current dev track is the real Freiburg Tourismus Saane-Trails GPX fallback; replace when an authoritative SchweizMobil export is available.
