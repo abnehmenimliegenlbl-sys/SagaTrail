@@ -20,7 +20,7 @@ import { kantonsKuerzel } from "@/constants/cantonKuerzel";
 const GELB = "#FFCC00";
 const GELB_TRANSPARENT = "rgba(255,204,0,0.55)";
 // Wanderland-Grasgrün wie im offiziellen Routenlogo (z. B. Jura-Höhenweg)
-const GRUEN = "#7FB73F";
+const KANTON_BLAU = "#005EB8";
 const SCHWARZ = "#141412";
 const ROT = "#E30613";
 const BLAU = "#005EB8";
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   gruenFeld: {
-    backgroundColor: GRUEN,
+    backgroundColor: KANTON_BLAU,
     paddingHorizontal: 5,
     paddingVertical: 4,
     alignItems: "flex-start",

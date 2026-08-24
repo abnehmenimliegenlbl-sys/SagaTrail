@@ -393,7 +393,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 /* ── Wegweiser (Schweizer Wanderwegschild) ── */
 .str-ww{display:flex;flex-direction:row;align-items:center;align-self:flex-start;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
 .str-ww-body{display:flex;flex-direction:row;align-items:center;background:rgba(255,204,0,.55);padding-left:6px;padding-right:8px;gap:8px;overflow:hidden}
-.str-ww-green{background:#7FB73F;padding:5px 5px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.str-ww-green{background:#005EB8;padding:5px 5px 4px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;flex-shrink:0}
 .str-ww-green.str-ww-official{padding:0;background:transparent}
 .str-ww-official-logo{display:block;width:46px;height:46px;object-fit:contain}
 .str-ww-kat{color:#141412;font-size:7px;line-height:8.5px;font-weight:700;font-style:italic;white-space:pre-line}
@@ -403,7 +403,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-ww-fh,.str-ww-fv{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff}
 .str-ww-fh{width:62%;height:20%}
 .str-ww-fv{width:20%;height:62%}
-/* Kantonswappen im grünen Feld */
+/* Kantonswappen im blauen Feld */
 .str-ww-wp{width:12px;height:12px;object-fit:contain;margin-bottom:3px;flex-shrink:0}
 .str-ww-wp-lg{width:16px;height:16px;object-fit:contain;margin-bottom:2px}
 /* Nummer */
