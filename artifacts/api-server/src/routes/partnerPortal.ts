@@ -309,7 +309,7 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
     try {
       session = await stripe.billingPortal.sessions.create({
         customer:   customerId,
-        return_url: "https://sagatrail.ch/portal",
+        return_url: "https://sagatrail.ch/portal/",
       });
     } catch (stripeErr: any) {
       if (stripeErr.code === "resource_missing") {
@@ -327,7 +327,7 @@ router.post("/partner/portal/billing-portal", async (req, res): Promise<void> =>
           .where(eq(partnersTable.id, partner.id));
         session = await stripe.billingPortal.sessions.create({
           customer:   liveCustomerId,
-          return_url: "https://sagatrail.ch/portal",
+          return_url: "https://sagatrail.ch/portal/",
         });
       } else {
         throw stripeErr;

@@ -29,7 +29,7 @@ function createTransporter() {
   });
 }
 
-const PORTAL_BASE = "https://sagatrail.ch/portal";
+const PORTAL_BASE = "https://sagatrail.ch";
 
 // ─── Magic-Link senden ────────────────────────────────────────────────────────
 
@@ -44,14 +44,13 @@ export async function sendMagicLink(partnerId: string, partnerName: string, emai
     expiresAt,
   });
 
-  const portalUrl = `${PORTAL_BASE}?token=${token}`;
-
   const envelopeFrom = process.env.SMTP_FROM ?? "info@sagatrail.ch";
   const transporter = createTransporter();
 
   const LANGS = [
     {
       code: "DE",
+      portalPath: "/portal/",
       subject:  isTrial ? "Ihr 30-tägiger SagaTrail-Test beginnt jetzt" : "Ihr SagaTrail-Partner-Portal ist bereit",
       greeting: `Guten Tag ${partnerName},`,
       intro:    isTrial
@@ -64,6 +63,7 @@ export async function sendMagicLink(partnerId: string, partnerName: string, emai
     },
     {
       code: "FR",
+      portalPath: "/fr/portail/",
       subject:  isTrial ? "Votre période d'essai SagaTrail de 30 jours commence maintenant" : "Votre portail partenaire SagaTrail est prêt",
       greeting: `Bonjour ${partnerName},`,
       intro:    isTrial
@@ -76,6 +76,7 @@ export async function sendMagicLink(partnerId: string, partnerName: string, emai
     },
     {
       code: "IT",
+      portalPath: "/it/portale/",
       subject:  isTrial ? "Il tuo periodo di prova SagaTrail di 30 giorni inizia ora" : "Il tuo portale partner SagaTrail è pronto",
       greeting: `Buongiorno ${partnerName},`,
       intro:    isTrial
@@ -96,7 +97,7 @@ export async function sendMagicLink(partnerId: string, partnerName: string, emai
       <p style="margin:0 0 8px">${l.greeting}</p>
       <p style="margin:0 0 16px">${l.intro}</p>
       <p style="text-align:center;margin:20px 0">
-        <a href="${portalUrl}" style="display:inline-block;padding:12px 26px;background:#CC0000;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px">${l.btn}</a>
+        <a href="${PORTAL_BASE}${l.portalPath}?token=${token}" style="display:inline-block;padding:12px 26px;background:#CC0000;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px">${l.btn}</a>
       </p>
       <p style="font-size:13px;color:#777">${l.validity}</p>
       <p style="font-size:13px">${l.features}</p>
@@ -106,7 +107,7 @@ export async function sendMagicLink(partnerId: string, partnerName: string, emai
   `).join("");
 
   const textBody = LANGS.map(l =>
-    `--- ${l.code} ---\n\n${l.greeting}\n\n${l.intro}\n\n${portalUrl}\n\n${l.validity.replace(/<[^>]+>/g, "")}\n\n${l.features}\n\n${l.signoff}`
+    `--- ${l.code} ---\n\n${l.greeting}\n\n${l.intro}\n\n${PORTAL_BASE}${l.portalPath}?token=${token}\n\n${l.validity.replace(/<[^>]+>/g, "")}\n\n${l.features}\n\n${l.signoff}`
   ).join("\n\n");
 
   await transporter.sendMail({
