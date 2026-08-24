@@ -2603,6 +2603,11 @@ export default function LiveHike() {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
     if (folgtGruppenleitung) return;
+    // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
+    // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
+    // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
+    // starten und die Audio-Session bleibt im Aufnahme-Modus.
+    awaitingDecisionRef.current = false;
     hapticMedium();
     const gewaehlt = chapters[currentIndex]?.decision?.options[optionIndex]?.label;
     if (gewaehlt) {
@@ -2617,12 +2622,15 @@ export default function LiveHike() {
         sendeAbbiegeMitteilung(t.perception, gewaehlt);
       }
     }
-    setChapters((prev) => {
-      const next = [...prev];
-      next[currentIndex] = { ...next[currentIndex], chosenOptionIndex: optionIndex };
-      decisionsRef.current = next;
-      return next;
-    });
+    const nextChapters = [...chapters];
+    nextChapters[currentIndex] = {
+      ...nextChapters[currentIndex],
+      chosenOptionIndex: optionIndex,
+    };
+    // Ebenfalls sofort aktualisieren, damit der Prompt-Effekt auch vor dem
+    // nächsten React-Render sicher erkennt, dass die Frage beantwortet ist.
+    decisionsRef.current = nextChapters;
+    setChapters(nextChapters);
     setAwaitingDecision(false);
     // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
     // Zweistufig: sofortige Geraetestimmen-Bestaetigung (< 500 ms, kein Netz
@@ -2669,6 +2677,7 @@ export default function LiveHike() {
     // chapters-Aenderung (z. B. chosenOptionIndex nach Wahl, Group-Sync) den
     // Effekt erneut aus und die Frage wird ein zweites Mal vorgelesen.
     const decision = decisionsRef.current[currentIndex]?.decision;
+    if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) return;
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
     speakRef.current?.(pack.buildDecisionPrompt(opts, question));
@@ -2724,17 +2733,15 @@ export default function LiveHike() {
   // Session im Record-Modus und jede nachfolgende Erzaehlung klingt
   // wesentlich leiser.
   //
-  // KEIN awaitingDecision-Guard mehr: der fruehre Guard sollte verhindern,
-  // dass der Reset zwischen automatischen Erkennungs-Neustarts (voiceListening
-  // flackert false) das Mikrofon lahmlegt. Seit dem Neustarts-Fix (MAX_LISTEN_
-  // RESTARTS=40) setzt der "end"-Handler listening NIE auf false — er startet
-  // direkt neu ohne setListening(false). Damit gibt es kein Flackern mehr.
-  // Der Guard blockiert jetzt stattdessen den ECHTEN Reset nach der Entschei-
-  // dung: voiceListening geht false, awaitingDecision ist noch true (nicht
-  // gebatcht) → Guard greift → Session bleibt in PlayAndRecord → leise.
+  // Nur echte Zustandswechsel dürfen die Session zurücksetzen. Während einer
+  // laufenden Erkennung bleibt voiceListening normalerweise true; nach einem
+  // Treffer wird jedoch gleichzeitig die Bestätigungsansage gestartet. Der
+  // synchrone Ref-Guard verhindert, dass der alte Erkennungs-Callback danach
+  // die neue Ansage wieder auf PlayAndRecord/MixWithOthers zurücksetzt.
   useEffect(() => {
     if (Platform.OS === "web") return;
     if (voiceListening) return;
+    if (awaitingDecisionRef.current || speakingRef.current) return;
     // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
     // PlayAndRecord): Session zurueck auf MixWithOthers/Playback.
     // DuckOthers wird erst wieder gesetzt wenn die naechste Erzaehlung startet.
@@ -2746,7 +2753,7 @@ export default function LiveHike() {
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
       shouldDuckAndroid: false,
     }).catch(() => {});
-  }, [voiceListening]);
+  }, [voiceListening, awaitingDecision, speaking]);
 
   async function submitConditionHike() {
     if (!selectedCondition || !id) return;

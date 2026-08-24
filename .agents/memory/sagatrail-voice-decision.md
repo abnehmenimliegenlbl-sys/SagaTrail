@@ -63,3 +63,11 @@ Ordinale (gsw "zwöiti", fr "première", pt "três") matchten deshalb NIE.
 Beide Seiten durch dieselbe normalize() schicken. Matcher-Logik laesst sich
 ohne Test-Framework verifizieren: Datei mit gestubbtem Lang-Typ nach /tmp
 kopieren + `node --experimental-strip-types`.
+
+**Pitfall (fixed 2026-08-24):** Nach einem korrekt erkannten Treffer konnten
+Prompt-Effekt und Audio-Session noch den alten offenen Zustand sehen, weil
+`setAwaitingDecision` und `setChapters` erst beim nächsten React-Render wirksam
+werden. Die Entscheidung deshalb beim Auswählen sofort über
+`awaitingDecisionRef` und `decisionsRef` abschließen; der Prompt-Effekt muss
+zusätzlich `chosenOptionIndex` prüfen. Der Session-Reset darf während der
+Bestätigungsansage nicht laufen (`awaitingDecisionRef` oder `speakingRef`).
