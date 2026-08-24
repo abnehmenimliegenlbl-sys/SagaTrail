@@ -2859,6 +2859,45 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
   }
 });
 
+// POST /admin/sagas/photos/import — überträgt nur fehlende Commons-Fotos aus Dev nach Prod
+router.post("/admin/sagas/photos/import", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const rows = req.body as Array<{ id?: unknown; fotoUrl?: unknown; fotoAttribution?: unknown }>;
+  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 200) {
+    res.status(400).json({ error: "Erwartet wird ein Array mit 1 bis 200 Saga-Fotos" });
+    return;
+  }
+
+  try {
+    let updated = 0;
+    let skipped = 0;
+    const invalid: string[] = [];
+    for (const row of rows) {
+      const id = typeof row.id === "string" ? row.id.trim() : "";
+      const fotoUrl = typeof row.fotoUrl === "string" ? row.fotoUrl.trim() : "";
+      const fotoAttribution =
+        typeof row.fotoAttribution === "string" ? row.fotoAttribution.trim() : null;
+      if (!id || !fotoUrl || !/^https?:\/\//i.test(fotoUrl)) {
+        invalid.push(id || "(ohne id)");
+        continue;
+      }
+
+      const result = await db
+        .update(catalogSagasTable)
+        .set({ fotoUrl, fotoAttribution })
+        .where(and(eq(catalogSagasTable.id, id), isNull(catalogSagasTable.fotoUrl)))
+        .returning({ id: catalogSagasTable.id });
+      if (result.length > 0) updated++;
+      else skipped++;
+    }
+
+    res.json({ ok: true, received: rows.length, updated, skipped, invalid });
+  } catch (err: any) {
+    req.log.error({ err }, "Sagenfoto-Import fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /**
  * POST /admin/routes/prune
  * Löscht alle Routen deren id NICHT in keepIds ist (Abschluss des Abgleichs).
