@@ -328,7 +328,7 @@ a{color:var(--red);text-decoration:none}
           <span id="sagen-count" class="hint"></span>
         </div>
       </div>
-      <p class="hint" style="margin-bottom:12px">Foto-URL direkt in die Zeile eingeben und mit &#10003; speichern. Leer lassen um das Foto zu entfernen.</p>
+      <p class="hint" style="margin-bottom:12px">Foto-URL direkt in die Zeile eingeben und mit &#10003; speichern. Leer lassen um das Foto zu entfernen. Die vollständigen deutschen Texte sind direkt in der Tabelle sichtbar.</p>
       <div id="sagen-body"><p class="loading">Verbinde...</p></div>
     </div>
   </div>
@@ -2043,6 +2043,16 @@ function securityBadgeClass(value) {
   if (value === 'Muss GPS Verifiziert werden') return 'badge-orange';
   return 'badge-gray';
 }
+function germanSagaSummary(saga) {
+  var summaries = saga.summaries;
+  if (!summaries) return '';
+  if (typeof summaries === 'string') {
+    try { summaries = JSON.parse(summaries); } catch (e) { return summaries; }
+  }
+  var de = summaries.de;
+  if (typeof de === 'string') return de;
+  return de && (de.text || de.summary || de.inhalt) || '';
+}
 function renderSagen(list) {
   var el = document.getElementById('sagen-body');
   var cnt = document.getElementById('sagen-count');
@@ -2055,19 +2065,21 @@ function renderSagen(list) {
     '<th style="width:48px">Kanton</th>' +
      '<th style="width:145px">Koordinatensicherheit</th>' +
     '<th style="width:180px">Titel</th>' +
-    '<th>Kurzbeschreibung</th>' +
+     '<th style="width:320px">Deutsche Sagenzusammenfassung</th>' +
+     '<th style="width:260px">Summary</th>' +
     '<th style="width:320px">Foto-URL</th>' +
     '<th style="width:72px">Foto</th>' +
     '<th style="width:60px"></th>' +
     '</tr></thead><tbody>';
   list.forEach(function(s) {
     var sid = s.id.replace(/[^a-zA-Z0-9_-]/g, '_');
-    var summary = s.summary ? (s.summary.length > 120 ? s.summary.slice(0,118) + '\u2026' : s.summary) : '';
+    var germanSummary = germanSagaSummary(s);
     html += '<tr id="sr-' + sid + '">' +
       '<td><span class="badge badge-gray">' + esc(s.canton) + '</span></td>' +
        '<td><span class="badge ' + securityBadgeClass(s.koordinatenSicherheit) + '">' + esc(s.koordinatenSicherheit || 'unbekannt') + '</span></td>' +
       '<td style="font-weight:600;font-size:12px">' + esc(s.title) + '</td>' +
-      '<td style="font-size:12px;color:var(--mid);line-height:1.4">' + esc(summary) + '</td>' +
+       '<td style="font-size:12px;color:var(--mid);line-height:1.45;white-space:pre-wrap;min-width:280px;max-width:320px">' + esc(germanSummary || '—') + '</td>' +
+       '<td style="font-size:12px;color:var(--mid);line-height:1.45;white-space:pre-wrap;min-width:220px;max-width:260px">' + esc(s.summary || '—') + '</td>' +
       '<td>' +
         '<input id="sf-url-' + sid + '" type="url" value="' + esc(s.fotoUrl||'') + '" ' +
           'style="width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:monospace" ' +
