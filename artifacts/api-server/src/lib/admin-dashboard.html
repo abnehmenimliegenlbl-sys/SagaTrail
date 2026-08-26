@@ -315,8 +315,8 @@ a{color:var(--red);text-decoration:none}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <h2 style="margin:0">&#128218; Sagen-Fotos kuratieren</h2>
         <div style="display:flex;gap:8px;align-items:center">
-          <input id="sagen-search" type="text" placeholder="Suchen (Titel, Kanton)..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px" oninput="filterSagen(this.value)">
-          <select id="sagen-security-filter" aria-label="Koordinatensicherheit filtern" onchange="filterSagen(document.getElementById('sagen-search').value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff">
+          <input id="sagen-search" type="text" placeholder="Suchen (Titel, Kanton)..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px" oninput="filterSagen()">
+          <select id="sagen-security-filter" aria-label="Koordinatensicherheit filtern" onchange="filterSagen()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff">
             <option value="alle">Alle Sicherheitsstufen</option>
             <option value="exakt">✅ exakt</option>
             <option value="Ort identifiziert">📍 Ort identifiziert</option>
@@ -2020,27 +2020,37 @@ async function loadSagen() {
   if (!token()) return;
   try {
     _sagen = await api('/api/admin/sagas');
-    renderSagen(_sagen);
+    filterSagen();
   } catch(e) {
     document.getElementById('sagen-body').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
   }
 }
-function filterSagen(q) {
-  var f = q.toLowerCase();
+function sagaSecurityValue(saga) {
+  // Unterstützt sowohl die aktuelle camelCase-Antwort als auch ältere
+  // snake_case-Antworten und entfernt unsichtbare/versehentliche Leerzeichen.
+  return String(saga.koordinatenSicherheit || saga.koordinaten_sicherheit || '').trim();
+}
+function filterSagen() {
+  var searchEl = document.getElementById('sagen-search');
   var securityEl = document.getElementById('sagen-security-filter');
+  var f = String(searchEl ? searchEl.value : '').trim().toLocaleLowerCase();
   _sagenSecurityFilter = securityEl ? securityEl.value : 'alle';
   var filtered = _sagen.filter(function(s){
-    var textMatch = !f || s.title.toLowerCase().includes(f) || s.canton.toLowerCase().includes(f);
-    var securityMatch = _sagenSecurityFilter === 'alle' || s.koordinatenSicherheit === _sagenSecurityFilter;
+    var title = String(s.title || '').toLocaleLowerCase();
+    var canton = String(s.canton || '').toLocaleLowerCase();
+    var textMatch = !f || title.includes(f) || canton.includes(f);
+    var securityMatch = _sagenSecurityFilter === 'alle' ||
+      sagaSecurityValue(s) === String(_sagenSecurityFilter).trim();
     return textMatch && securityMatch;
   });
   renderSagen(filtered);
 }
 function securityBadgeClass(value) {
-  if (value === 'exakt') return 'badge-green';
-  if (value === 'Ort identifiziert') return 'badge-blue';
-  if (value === 'Region identifiziert') return 'badge-yellow';
-  if (value === 'Muss GPS Verifiziert werden') return 'badge-orange';
+  var normalized = String(value || '').trim();
+  if (normalized === 'exakt') return 'badge-green';
+  if (normalized === 'Ort identifiziert') return 'badge-blue';
+  if (normalized === 'Region identifiziert') return 'badge-yellow';
+  if (normalized === 'Muss GPS Verifiziert werden') return 'badge-orange';
   return 'badge-gray';
 }
 function germanSagaSummary(saga) {
