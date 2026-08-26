@@ -2543,8 +2543,11 @@ export default function LiveHike() {
   }, [walkToStart, preparing, locState, speak, t]);
 
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
-  // (routeProgress); ohne GPS-Fix oder Geometrie faellt es auf die reine
-  // zurueckgelegte Distanz zurueck (bisheriges Verhalten).
+  // (routeProgress); ohne verlaesslichen GPS-Fix oder Geometrie faellt es
+  // auf die reine zurueckgelegte Distanz zurueck. Die Projektion ist am
+  // Ziel robuster als die aufsummierten GPS-Abstaende, weil einzelne Fixes
+  // fehlen oder die offizielle Routenlaenge leicht von der tatsaechlich
+  // gelaufenen Strecke abweichen kann.
   // Kapitelfortschritt laeuft unabhaengig davon, ob gerade eine Entscheidung
   // offen ist. Entscheidungen sind freiwillig — wer nicht antwortet, gehoert
   // trotzdem das naechste Kapitel, sobald GPS oder Distanz es vorgibt.
@@ -2566,10 +2569,10 @@ export default function LiveHike() {
       setFinished(true);
       return;
     }
-    // Kapitelfortschritt immer ueber zurueckgelegte Strecke (nie ueber GPS-
-    // Projektion), damit man unabhaengig vom Startpunkt immer bei Kapitel 0
-    // beginnt — auch wenn man mitten auf der Route einsteigt.
-    const ratio = totalKm > 0 ? distance / totalKm : 0;
+    // Mit verlaesslicher GPS-Position den Fortschritt direkt auf der
+    // Routen-Geometrie bestimmen. Die kumulierte Distanz bleibt der Rueckfall
+    // fuer fehlendes GPS oder eine Position ausserhalb der Route.
+    const ratio = routeProgress ?? (totalKm > 0 ? distance / totalKm : 0);
     // Letztes Kapitel schon ab ~70 % des letzten Streckenabschnitts ausloesen:
     // GPS-Distanz bleibt in der Praxis meistens etwas unter der offiziellen
     // Routenlaenge (Drift, abweichendes Routenende), weshalb ratio selten
@@ -2598,6 +2601,7 @@ export default function LiveHike() {
     currentIndex,
     awaitingDecision,
     totalKm,
+    routeProgress,
   ]);
 
   // Simulierter Fortschritt als Rueckfall — nur in den ausdruecklichen
