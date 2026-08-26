@@ -375,6 +375,11 @@ a{color:var(--red);text-decoration:none}
       <div style="font-weight:700;font-size:13px;margin-bottom:8px" id="gps-save-title">Saga-Titel</div>
       <div style="font-size:11px;color:var(--mid);margin-bottom:10px" id="gps-save-coords"></div>
       <div style="margin-bottom:10px">
+        <label for="gps-save-coords-input" style="font-size:11px;font-weight:600;color:var(--mid);display:block;margin-bottom:4px">Koordinaten (Breite, Länge)</label>
+        <input id="gps-save-coords-input" type="text" inputmode="decimal" placeholder="47.50064893225904, 7.682379173205325" autocomplete="off" style="width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace" />
+        <div style="font-size:10px;color:var(--mid);margin-top:4px">Format: Breitengrad, Längengrad</div>
+      </div>
+      <div style="margin-bottom:10px">
         <label style="font-size:11px;font-weight:600;color:var(--mid);display:block;margin-bottom:4px">Koordinatensicherheit</label>
         <select id="gps-save-sicherheit" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
           <option value="exakt">✅ exakt</option>
@@ -648,6 +653,7 @@ function openGpsSavePanel(id, title, lat, lng) {
   _gpsCurrentEdit = {id:id, title:title, lat:lat, lng:lng};
   document.getElementById('gps-save-title').textContent = title;
   document.getElementById('gps-save-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  document.getElementById('gps-save-coords-input').value = lat + ', ' + lng;
   var sel = document.getElementById('gps-save-sicherheit');
   sel.value = 'exakt';
   document.getElementById('gps-save-panel').style.display = 'block';
@@ -673,6 +679,23 @@ window.focusGpsSaga = function(id) {
 window.saveGpsCoord = async function() {
   if (!_gpsCurrentEdit) return;
   var btn = document.querySelector('#gps-save-panel .btn-primary');
+  var input = document.getElementById('gps-save-coords-input');
+  var rawCoords = input ? input.value.trim() : '';
+  var match = rawCoords.match(/^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*$/);
+  if (!match) {
+    alert('Bitte Koordinaten im Format „47.50064893225904, 7.682379173205325“ eingeben.');
+    if (input) input.focus();
+    return;
+  }
+  var lat = Number(match[1]);
+  var lng = Number(match[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    alert('Die Koordinaten liegen ausserhalb des gültigen Bereichs.');
+    if (input) input.focus();
+    return;
+  }
+  _gpsCurrentEdit.lat = lat;
+  _gpsCurrentEdit.lng = lng;
   btn.textContent = 'Speichere…';
   btn.disabled = true;
   var sicherheit = document.getElementById('gps-save-sicherheit').value;
@@ -684,8 +707,8 @@ window.saveGpsCoord = async function() {
     // Update local data
     var saga = _gpsPending.find(function(s){ return s.id===_gpsCurrentEdit.id; });
     if (saga) {
-      saga.lat = _gpsCurrentEdit.lat;
-      saga.lng = _gpsCurrentEdit.lng;
+      saga.lat = lat;
+      saga.lng = lng;
       saga.koordinatenSicherheit = sicherheit;
     }
     // Remove from pending list if now verified
@@ -699,6 +722,7 @@ window.saveGpsCoord = async function() {
     }
     // Update marker icon
     if (_gpsMarkers[_gpsCurrentEdit.id]) {
+      _gpsMarkers[_gpsCurrentEdit.id].setLatLng([lat, lng]);
       _gpsMarkers[_gpsCurrentEdit.id].setIcon(makeMarkerIcon(sicherheit));
     }
     document.getElementById('gps-save-panel').style.display = 'none';
