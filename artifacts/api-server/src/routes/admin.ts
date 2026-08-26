@@ -800,6 +800,7 @@ router.get("/admin/sagas/gps-pending", async (req, res): Promise<void> => {
         koordinatenSicherheit: s.koordinatenSicherheit,
         bildmotiv: s.bildmotiv ?? null,
         summary: s.summary ?? null,
+        summaries: s.summaries ?? null,
       }))
       .sort((a, b) => (a.canton + a.title).localeCompare(b.canton + b.title));
     res.json(rows);

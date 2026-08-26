@@ -25,6 +25,7 @@ a{color:var(--red);text-decoration:none}
 #content{padding:20px;max-width:1100px;margin:0 auto}
 .tab-pane{display:none}.tab-pane.active{display:block}
 #tab-sagen > .card{position:relative;left:50%;width:calc(100vw - 4em);max-width:none;transform:translateX(-50%)}
+#tab-gps-check{position:relative;left:50%;width:calc(100vw - 4em);max-width:none;transform:translateX(-50%)}
 /* --- CARDS --- */
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
 .card h2{font-size:15px;margin-bottom:16px;color:var(--dark)}
@@ -499,7 +500,7 @@ function renderGpsList() {
     if (s.koordinatenSicherheit === 'exakt') sichHtml = '<span style="color:var(--green)">✅</span>';
     else if (s.koordinatenSicherheit === 'Ort identifiziert') sichHtml = '<span>📍</span>';
     else sichHtml = '<span style="color:var(--orange)">⏳</span>';
-    return '<div class="gps-item" id="gps-item-'+s.id+'" onclick="focusGpsSaga(\''+s.id+'\')">' +
+    return '<div class="gps-item" id="gps-item-'+s.id+'" onclick="openGpsSagaModal(\''+s.id+'\')">' +
       '<span class="gps-item-status">'+sichHtml+'</span>' +
       '<div style="font-weight:600">'+escHtml(s.title)+'</div>' +
       '<div class="gps-item-canton">'+escHtml(s.canton)+(s.lat ? ' · '+s.lat.toFixed(4)+', '+s.lng.toFixed(4) : ' · keine Koordinaten')+'</div>' +
@@ -508,6 +509,30 @@ function renderGpsList() {
 }
 
 function escHtml(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function gpsGermanSagaText(saga) {
+  var summaries = saga.summaries;
+  if (typeof summaries === 'string') {
+    try { summaries = JSON.parse(summaries); } catch (e) { summaries = null; }
+  }
+  var german = summaries && summaries.de;
+  if (german && typeof german === 'object') german = german.text || german.summary || german.inhalt || '';
+  if (typeof german !== 'string' || !german.trim()) german = saga.summary || 'Kein deutscher Sagentext hinterlegt.';
+  var summary = saga.summary && saga.summary !== german ? '\n\nSummary:\n' + saga.summary : '';
+  var coords = saga.lat != null && saga.lng != null
+    ? '\n\nKoordinaten: ' + Number(saga.lat).toFixed(6) + ', ' + Number(saga.lng).toFixed(6)
+    : '\n\nKoordinaten: nicht vorhanden';
+  return german + summary + coords;
+}
+
+window.openGpsSagaModal = function(id) {
+  var saga = _gpsPending.find(function(s){ return s.id === id; });
+  if (!saga) return;
+  highlightGpsItem(id);
+  document.getElementById('modal-title').textContent = saga.title + ' · ' + saga.canton;
+  document.getElementById('modal-text').textContent = gpsGermanSagaText(saga);
+  document.getElementById('modal-overlay').classList.add('open');
+};
 
 function initGpsMap() {
   if (_gpsLoaded) return;
