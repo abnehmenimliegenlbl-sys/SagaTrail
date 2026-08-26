@@ -784,13 +784,14 @@ function curatedSagasJsonPath(): string {
   throw new Error("curatedSagas.json nicht gefunden");
 }
 
-/** GET /admin/sagas/gps-pending — alle Sagen mit "Muss GPS Verifiziert werden" (aus JSON) */
+/** GET /admin/sagas/gps-pending — GPS-relevante Sagen; includeVerified=true enthält auch bereits verifizierte */
 router.get("/admin/sagas/gps-pending", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
     const sagas: any[] = JSON.parse(readFileSync(curatedSagasJsonPath(), "utf-8"));
+    const includeVerified = req.query.includeVerified === "true";
     const rows = sagas
-      .filter((s) => s.koordinatenSicherheit === "Muss GPS Verifiziert werden")
+      .filter((s) => includeVerified || s.koordinatenSicherheit === "Muss GPS Verifiziert werden")
       .map((s) => ({
         id: s.id,
         title: s.title,

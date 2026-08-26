@@ -357,6 +357,15 @@ a{color:var(--red);text-decoration:none}
       <div class="card" style="padding:12px">
         <div id="gps-canton-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px"></div>
         <input id="gps-search" type="text" placeholder="Suchen…" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;margin-bottom:8px" oninput="filterGpsList(this.value)">
+        <label for="gps-security-filter" style="display:block;font-size:11px;font-weight:600;color:var(--mid);margin-bottom:4px">Koordinatensicherheit</label>
+        <select id="gps-security-filter" aria-label="Koordinatensicherheit im GPS-Check" onchange="filterGpsSecurity(this.value)" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;margin-bottom:8px">
+          <option value="Muss GPS Verifiziert werden">⏳ GPS-Verifizierung offen</option>
+          <option value="exakt">✅ exakt</option>
+          <option value="Ort identifiziert">📍 Ort identifiziert</option>
+          <option value="Region identifiziert">🗺 Region identifiziert</option>
+          <option value="Nur Kanton identifiziert">🏷 Nur Kanton identifiziert</option>
+          <option value="alle">Alle Sicherheitsstufen</option>
+        </select>
         <div id="gps-list" style="max-height:calc(100vh - 340px);overflow-y:auto"></div>
       </div>
 
@@ -416,11 +425,13 @@ var _gpsBaseLayer = null;
 var _gpsSatelliteLayer = null;
 var _gpsMapLayerMode = 'standard';
 var _gpsMarkers = {}; // id -> L.marker
-var _gpsPending = []; // all pending sagas from server
+var _gpsPending = []; // all sagas available for GPS editing
 var _gpsFiltered = []; // currently shown in list
 var _gpsActiveCanton = 'alle';
 var _gpsActiveSearch = '';
+var _gpsActiveSecurity = 'Muss GPS Verifiziert werden';
 var _gpsCurrentEdit = null; // {id, title, lat, lng}
+var _gpsModalSagaId = null;
 var _gpsTotalPending = 0;
 var _gpsVerifiedCount = 0;
 
@@ -428,8 +439,8 @@ window.loadGpsCheck = async function() {
   if (!token()) { return; }
   document.getElementById('gps-list').innerHTML = '<p class="loading" style="font-size:12px;padding:8px">Wird geladen…</p>';
   try {
-    _gpsPending = await api('/api/admin/sagas/gps-pending');
-    _gpsTotalPending = _gpsPending.length;
+    _gpsPending = await api('/api/admin/sagas/gps-pending?includeVerified=true');
+    _gpsTotalPending = _gpsPending.filter(function(s){ return s.koordinatenSicherheit === 'Muss GPS Verifiziert werden'; }).length;
     // Also fetch all sagas to get verified count
     try {
       var all = await api('/api/admin/sagas');
@@ -479,11 +490,17 @@ window.filterGpsList = function(q) {
   applyGpsFilter();
 };
 
+window.filterGpsSecurity = function(value) {
+  _gpsActiveSecurity = value;
+  applyGpsFilter();
+};
+
 function applyGpsFilter() {
   _gpsFiltered = _gpsPending.filter(function(s){
     var cantonOk = _gpsActiveCanton === 'alle' || s.canton === _gpsActiveCanton;
     var searchOk = !_gpsActiveSearch || s.title.toLowerCase().includes(_gpsActiveSearch);
-    return cantonOk && searchOk;
+    var securityOk = _gpsActiveSecurity === 'alle' || s.koordinatenSicherheit === _gpsActiveSecurity;
+    return cantonOk && searchOk && securityOk;
   });
   renderGpsList();
   // Show/hide markers
@@ -504,6 +521,8 @@ function renderGpsList() {
     var sichHtml = '';
     if (s.koordinatenSicherheit === 'exakt') sichHtml = '<span style="color:var(--green)">✅</span>';
     else if (s.koordinatenSicherheit === 'Ort identifiziert') sichHtml = '<span>📍</span>';
+    else if (s.koordinatenSicherheit === 'Region identifiziert') sichHtml = '<span style="color:var(--orange)">🗺</span>';
+    else if (s.koordinatenSicherheit === 'Nur Kanton identifiziert') sichHtml = '<span>🏷</span>';
     else sichHtml = '<span style="color:var(--orange)">⏳</span>';
     return '<div class="gps-item" id="gps-item-'+s.id+'" onclick="openGpsSagaModal(\''+s.id+'\')">' +
       '<span class="gps-item-status">'+sichHtml+'</span>' +
@@ -533,10 +552,28 @@ function gpsGermanSagaText(saga) {
 window.openGpsSagaModal = function(id) {
   var saga = _gpsPending.find(function(s){ return s.id === id; });
   if (!saga) return;
+  _gpsModalSagaId = id;
   highlightGpsItem(id);
   document.getElementById('modal-title').textContent = saga.title + ' · ' + saga.canton;
   document.getElementById('modal-text').textContent = gpsGermanSagaText(saga);
+  var editButton = document.getElementById('modal-gps-edit');
+  if (editButton) editButton.style.display = '';
   document.getElementById('modal-overlay').classList.add('open');
+};
+
+window.editGpsSagaFromModal = function() {
+  var saga = _gpsPending.find(function(s){ return s.id === _gpsModalSagaId; });
+  if (!saga) return;
+  var marker = _gpsMarkers[saga.id];
+  var point = marker && marker.getLatLng ? marker.getLatLng() : null;
+  var lat = point ? point.lat : Number(saga.lat);
+  var lng = point ? point.lng : Number(saga.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    lat = 46.8;
+    lng = 8.2;
+  }
+  closeModal();
+  openGpsSavePanel(saga.id, saga.title, lat, lng);
 };
 
 function initGpsMap() {
@@ -1190,6 +1227,7 @@ window.switchTab = function(name, btn) {
     <h3 id="modal-title"></h3>
     <pre id="modal-text"></pre>
     <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="modal-gps-edit" class="btn btn-ghost" style="display:none" onclick="editGpsSagaFromModal()">Koordinaten bearbeiten</button>
       <button class="btn btn-primary" onclick="copyModal()">Kopieren</button>
       <button class="btn btn-ghost" onclick="closeModal()">Schliessen</button>
     </div>
@@ -2093,7 +2131,11 @@ function mahnText(name, email, preis, stufe) {
   return 'Betreff: Zahlungserinnerung – SagaTrail Partnerschaft\\n\\nSehr geehrte Damen und Herren\\n\\nVielen Dank für Ihre Partnerschaft mit SagaTrail. Wir möchten Sie freundlich an den ausstehenden Jahresbeitrag erinnern.\\n\\nPartner-Eintrag: ' + name + '\\nJahresbeitrag: ' + preis + '\\n\\nBitte überweisen Sie den Betrag auf unser Konto (IBAN auf Rechnung). Bei bereits erfolgter Zahlung bitten wir Sie, diese Erinnerung zu ignorieren.\\n\\nBei Fragen steht Ihnen unser Team gerne zur Verfügung: info@sagatrail.ch\\n\\nFreundliche Grüsse\\nRolf Koch\\nSagaTrail\\ninfo@sagatrail.ch\\n\\n– ' + datum;
 }
 
-function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  var gpsEditButton = document.getElementById('modal-gps-edit');
+  if (gpsEditButton) gpsEditButton.style.display = 'none';
+}
 function copyModal() {
   var t = document.getElementById('modal-text').textContent;
   navigator.clipboard.writeText(t).then(function(){ alert('Kopiert!'); }).catch(function(){ });
