@@ -449,8 +449,7 @@ window.loadGpsCheck = async function() {
     updateGpsProgress();
     buildGpsCantonChips();
     if (!_gpsLoaded) { initGpsMap(); }
-    _gpsFiltered = _gpsPending;
-    renderGpsList();
+    applyGpsFilter();
     placeAllMarkers();
   } catch(e) {
     document.getElementById('gps-list').innerHTML = '<p class="loading" style="color:red;font-size:12px;padding:8px">Fehler: '+e+'</p>';
@@ -748,15 +747,10 @@ window.saveGpsCoord = async function() {
       saga.lng = lng;
       saga.koordinatenSicherheit = sicherheit;
     }
-    // Remove from pending list if now verified
-    if (sicherheit !== 'Muss GPS Verifiziert werden') {
-      _gpsPending = _gpsPending.filter(function(s){ return s.id!==_gpsCurrentEdit.id; });
-      _gpsVerifiedCount++;
-      updateGpsProgress();
-      applyGpsFilter();
-    } else {
-      renderGpsList();
-    }
+    // Update progress and list membership after changing the security level
+    _gpsVerifiedCount = _gpsPending.filter(function(s){ return s.koordinatenSicherheit !== 'Muss GPS Verifiziert werden'; }).length;
+    updateGpsProgress();
+    applyGpsFilter();
     // Update marker icon
     if (_gpsMarkers[_gpsCurrentEdit.id]) {
       _gpsMarkers[_gpsCurrentEdit.id].setLatLng([lat, lng]);
