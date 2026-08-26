@@ -360,7 +360,13 @@ a{color:var(--red);text-decoration:none}
       </div>
 
       <!-- MAP -->
-      <div id="gps-map" style="height:calc(100vh - 240px);min-height:500px;border-radius:12px;border:1px solid var(--border);overflow:hidden;background:#e8e0d8"></div>
+      <div id="gps-map-wrap" style="position:relative">
+        <div id="gps-map-toggle" role="group" aria-label="Kartenansicht" style="position:absolute;top:10px;right:10px;z-index:1000;display:flex;background:#fff;border:1px solid var(--border);border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.2);overflow:hidden">
+          <button id="gps-map-standard" type="button" class="gps-map-toggle-btn active" aria-pressed="true" onclick="setGpsMapLayer('standard',this)">Karte</button>
+          <button id="gps-map-satellite" type="button" class="gps-map-toggle-btn" aria-pressed="false" onclick="setGpsMapLayer('satellite',this)">Satellit</button>
+        </div>
+        <div id="gps-map" style="height:calc(100vh - 240px);min-height:500px;border-radius:12px;border:1px solid var(--border);overflow:hidden;background:#e8e0d8"></div>
+      </div>
     </div>
 
     <!-- SAVE PANEL (hidden, shown on drag) -->
@@ -390,12 +396,19 @@ a{color:var(--red);text-decoration:none}
 #gps-list .gps-item.active{background:#fce8e8;font-weight:600}
 #gps-list .gps-item-canton{font-size:10px;color:var(--mid);margin-top:2px}
 #gps-list .gps-item-status{float:right;margin-left:8px}
+.gps-map-toggle-btn{border:0;background:#fff;color:var(--mid);padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer}
+.gps-map-toggle-btn + .gps-map-toggle-btn{border-left:1px solid var(--border)}
+.gps-map-toggle-btn:hover{background:#f7f5f2}
+.gps-map-toggle-btn.active{background:var(--dark);color:#fff}
 </style>
 
 <script>
 (function(){
 var _gpsLoaded = false;
 var _gpsMap = null;
+var _gpsBaseLayer = null;
+var _gpsSatelliteLayer = null;
+var _gpsMapLayerMode = 'standard';
 var _gpsMarkers = {}; // id -> L.marker
 var _gpsPending = []; // all pending sagas from server
 var _gpsFiltered = []; // currently shown in list
@@ -509,14 +522,37 @@ function initGpsMap() {
   script.onload = function(){
     _gpsLoaded = true;
     _gpsMap = L.map('gps-map').setView([46.8, 8.2], 8);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    _gpsBaseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://carto.com">CARTO</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
       maxZoom: 18
-    }).addTo(_gpsMap);
+    });
+    _gpsSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri'
+    });
+    setGpsMapLayer(_gpsMapLayerMode);
     placeAllMarkers();
   };
   document.head.appendChild(script);
 }
+
+window.setGpsMapLayer = function(mode) {
+  _gpsMapLayerMode = mode === 'satellite' ? 'satellite' : 'standard';
+  var standardBtn = document.getElementById('gps-map-standard');
+  var satelliteBtn = document.getElementById('gps-map-satellite');
+  if (standardBtn) {
+    standardBtn.classList.toggle('active', _gpsMapLayerMode === 'standard');
+    standardBtn.setAttribute('aria-pressed', _gpsMapLayerMode === 'standard' ? 'true' : 'false');
+  }
+  if (satelliteBtn) {
+    satelliteBtn.classList.toggle('active', _gpsMapLayerMode === 'satellite');
+    satelliteBtn.setAttribute('aria-pressed', _gpsMapLayerMode === 'satellite' ? 'true' : 'false');
+  }
+  if (!_gpsMap) return;
+  var nextLayer = _gpsMapLayerMode === 'satellite' ? _gpsSatelliteLayer : _gpsBaseLayer;
+  var otherLayer = _gpsMapLayerMode === 'satellite' ? _gpsBaseLayer : _gpsSatelliteLayer;
+  if (otherLayer && _gpsMap.hasLayer(otherLayer)) _gpsMap.removeLayer(otherLayer);
+  if (nextLayer && !_gpsMap.hasLayer(nextLayer)) nextLayer.addTo(_gpsMap);
+};
 
 function makeMarkerIcon(sicherheit) {
   var color = sicherheit === 'exakt' ? '#2e7d52'
