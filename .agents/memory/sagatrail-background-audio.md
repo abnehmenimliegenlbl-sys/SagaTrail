@@ -10,6 +10,6 @@ Background continuation of narration + live GPS during a hike requires two indep
 
 **Why:** iOS/Android suspend JS timers and location callbacks in the background by default; only an OS-registered background task + audio session flag survive backgrounding/lock screen.
 
-**How to apply:** Wire the background location task through a small pub/sub module imported as a side effect in the root layout (`_layout.tsx`) so the task definition registers before any navigation. Feature-detect and gracefully fall back to foreground `watchPositionAsync` if `startLocationUpdatesAsync` throws (e.g., unsupported in Expo Go on iOS) — do not hard-require it.
+**How to apply:** Wire the background location task through a small pub/sub module imported as a side effect in the root layout (`_layout.tsx`) so the task definition registers before any navigation. Keep a foreground `watchPositionAsync` active while the hike screen is visible even when the background task starts; the background task is an additional locked-screen channel, not a replacement. Recover the foreground watcher after a stale period, and still fall back gracefully if `startLocationUpdatesAsync` throws (e.g., unsupported in Expo Go on iOS).
 
 **Caveat:** TaskManager-based background location + foreground service does NOT work in Expo Go — it requires a custom dev client or an EAS production build. Communicate this honestly rather than implying it works out of the box in the Expo Go preview.

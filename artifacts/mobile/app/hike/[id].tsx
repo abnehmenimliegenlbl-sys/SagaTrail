@@ -25,6 +25,7 @@ import { Pedometer } from "expo-sensors";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
   Image,
   Linking,
 
@@ -569,6 +570,8 @@ export default function LiveHike() {
   /** Aufgezeichneter GPS-Track: [lat, lng]-Paare im zeitlichen Abstand >= TRACK_LOG_INTERVAL_MS */
   const posLogRef = useRef<[number, number][]>([]);
   const lastTrackLogTimeRef = useRef<number>(0);
+  /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
+  const lastLocationAtRef = useRef<number>(0);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
@@ -1183,6 +1186,8 @@ export default function LiveHike() {
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren,
   // Track-Punkt loggen und Off-Route-Status ueberpruefen.
   const handleFix = useCallback((lat: number, lng: number, accuracy: number | null = null) => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    lastLocationAtRef.current = Date.now();
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
     setLivePosAccuracy(accuracy);
@@ -1772,6 +1777,8 @@ export default function LiveHike() {
     let sub: Location.LocationSubscription | null = null;
     let webId: number | null = null;
     let unsubscribeBackground: (() => void) | null = null;
+    let watchdog: ReturnType<typeof setInterval> | null = null;
+    let restartingForegroundWatch = false;
     let cancelled = false;
 
     (async () => {
@@ -1801,25 +1808,58 @@ export default function LiveHike() {
           return;
         }
         setLocState("granted");
-        // Sofort einen ersten Fix holen, damit auch ein stillstehendes Geraet
-        // (z. B. zuhause beim Testen) direkt einen Positionsmarker zeigt — der
-        // watchPositionAsync-distanceInterval liefert sonst erst nach Bewegung.
-        try {
-          const first = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          if (!cancelled)
-            handleFix(first.coords.latitude, first.coords.longitude, first.coords.accuracy ?? null);
-        } catch {
-          // Kein Sofort-Fix moeglich — watchPositionAsync uebernimmt.
-        }
-        if (cancelled) return;
-
         // Energiesparmodus: groebere GPS-Genauigkeit und seltenere Fixes
         // schonen den Akku spuerbar auf langen Touren.
         const trackingOptions: Location.LocationOptions = energiesparmodus
           ? { accuracy: Location.Accuracy.Low, distanceInterval: 20, timeInterval: 10000 }
           : { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 };
+
+        // Der erste Fix darf den laufenden Watcher nicht blockieren: Auf
+        // einzelnen Geraeten kann getCurrentPositionAsync ohne Timeout sehr
+        // lange offen bleiben. Beide Anfragen laufen deshalb unabhaengig.
+        lastLocationAtRef.current = Date.now();
+        void Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        })
+          .then((first) => {
+            if (!cancelled) {
+              handleFix(first.coords.latitude, first.coords.longitude, first.coords.accuracy ?? null);
+            }
+          })
+          .catch(() => {
+            // Der Vordergrund-Watcher liefert den ersten Fix nach.
+          });
+
+        // Der Vordergrund-Watcher bleibt immer aktiv, auch wenn der
+        // Hintergrund-Task gestartet werden kann. So bleibt die Karte bei
+        // geoeffneter App unabhaengig vom TaskManager-Kanal live.
+        const startForegroundWatch = async (): Promise<void> => {
+          if (cancelled || restartingForegroundWatch) return;
+          restartingForegroundWatch = true;
+          try {
+            sub?.remove();
+            const nextSub = await Location.watchPositionAsync(
+              trackingOptions,
+              (p) => {
+                if (!cancelled) {
+                  handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null);
+                }
+              }
+            );
+            if (cancelled) {
+              nextSub.remove();
+            } else {
+              sub = nextSub;
+            }
+          } catch {
+            // Der Watchdog versucht den Vordergrund-Watcher spaeter erneut.
+          } finally {
+            restartingForegroundWatch = false;
+          }
+        };
+
+        await startForegroundWatch();
+        if (cancelled) return;
 
         // "Immer"-Freigabe ist optional (nur fuer echten Hintergrundbetrieb
         // noetig) — ohne sie funktioniert die Wanderung weiterhin normal,
@@ -1842,14 +1882,24 @@ export default function LiveHike() {
         if (backgroundStarted) {
           // TaskManager liefert Fixes ueber ein modulweites Pub/Sub, auch
           // wenn die App im Hintergrund ist oder der Bildschirm gesperrt ist.
+          // Der Vordergrund-Watcher laeuft parallel und ist bei sichtbarer App
+          // der primaere Kanal.
           unsubscribeBackground = subscribeToBackgroundLocation(handleFix);
-        } else {
-          // Rueckfall: normale Vordergrund-Verfolgung (stoppt beim
-          // Backgrounding, aber besser als gar kein Live-Tracking).
-          sub = await Location.watchPositionAsync(trackingOptions, (p) =>
-            handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null)
-          );
         }
+
+        // Manche native Location-Subscriptions liefern nach langer Laufzeit
+        // keine Fehler, aber auch keine Callbacks mehr. Solange die App
+        // sichtbar ist, wird der Watcher nach 45 Sekunden ohne Fix erneuert.
+        watchdog = setInterval(() => {
+          if (
+            cancelled ||
+            AppState.currentState !== "active" ||
+            Date.now() - lastLocationAtRef.current < 45_000
+          ) {
+            return;
+          }
+          void startForegroundWatch();
+        }, 15_000);
       } catch {
         if (!cancelled) setLocState("denied");
       }
@@ -1857,6 +1907,7 @@ export default function LiveHike() {
 
     return () => {
       cancelled = true;
+      if (watchdog) clearInterval(watchdog);
       sub?.remove();
       unsubscribeBackground?.();
       stopBackgroundLocationTracking();

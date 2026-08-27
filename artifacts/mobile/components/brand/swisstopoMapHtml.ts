@@ -982,7 +982,10 @@ ${legendHtml}
       if (!ll) return;
       if (!liveMarker) { liveMarker = new maplibregl.Marker({ element: liveEl, zIndex: 40 }).setLngLat([ll[1], ll[0]]).addTo(map); }
       else { liveMarker.setLngLat([ll[1], ll[0]]); }
-      map.panTo([ll[1], ll[0]], { animate: true });
+       /* GPS-Fixes koennen waehrend einer laufenden Kartenanimation eintreffen.
+          Ohne Animation sammelt MapLibre keine alten panTo-Animationen an und
+          der Karten-/JS-Thread bleibt auch bei langen Wanderungen fluessig. */
+       map.panTo([ll[1], ll[0]], { animate: false });
     };
     var early = window.__sttGetPending && window.__sttGetPending();
     if (early) window.__sttApply(early);

@@ -19,7 +19,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   const last = locations?.[locations.length - 1];
   if (!last) return;
   for (const listener of listeners) {
-    listener(last.coords.latitude, last.coords.longitude, last.coords.accuracy ?? null);
+    try {
+      listener(last.coords.latitude, last.coords.longitude, last.coords.accuracy ?? null);
+    } catch {
+      // Ein fehlerhafter Listener darf die Zustellung an andere Abonnenten
+      // und den naechsten nativen Standort-Fix nicht abbrechen.
+    }
   }
 });
 
