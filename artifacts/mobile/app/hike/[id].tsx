@@ -2720,7 +2720,12 @@ export default function LiveHike() {
     };
   }, [preparing, finished]);
 
-  const chooseOption = (optionIndex: number) => {
+  // Wird vom Voice-Decision-Hook nach seiner Deklaration befuellt. Der Ref
+  // erlaubt auch den Button-Pfad, die native Aufnahme-Session vor dem
+  // Bestaetigungs-Audio abzuwarten.
+  const stopVoiceDecisionRef = useRef<() => Promise<void>>(() => Promise.resolve());
+
+  const chooseOption = async (optionIndex: number) => {
     // Mitglieder einer Gruppenwanderung entscheiden nicht selbst — sie
     // warten auf die Entscheidung der Gruppenleitung.
     if (folgtGruppenleitung) return;
@@ -2772,6 +2777,10 @@ export default function LiveHike() {
       // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
       const ackUri = ackAudioUriRef.current ?? undefined;
+      // Bei Button-Taps beendet die Hook-Cleanup-Funktion die Erkennung erst
+      // nach diesem Render. Auch dieser Pfad muss die PlayAndRecord-Session
+      // freigeben, sonst bleibt der folgende Text auf iOS dauerhaft leiser.
+      await stopVoiceDecisionRef.current();
       speakRef.current?.(
         ackPack.decisionAck,
         () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: useOpenAIForFeedback }); },
@@ -2844,12 +2853,18 @@ export default function LiveHike() {
   // Erzaehlstimme das Mikrofon stoeren. Faellt still auf die Buttons zurueck,
   // wenn Spracherkennung nicht verfuegbar/erlaubt ist (z. B. Expo Go, Web).
   const decisionOptions = chapters[currentIndex]?.decision?.options ?? [];
-  const { listening: voiceListening, supported: voiceSupported, lastTranscript: voiceTranscript } = useVoiceDecision(
+  const {
+    listening: voiceListening,
+    supported: voiceSupported,
+    lastTranscript: voiceTranscript,
+    stopListening: stopVoiceDecision,
+  } = useVoiceDecision(
     awaitingDecision && !speaking && decisionOptions.length > 0 && !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
     chooseOption
   );
+  stopVoiceDecisionRef.current = stopVoiceDecision;
 
   // Wenn die Spracherkennung endet (voiceListening: true → false), stellt
   // dieser Effekt die Audio-Session explizit zurueck. expo-speech-recognition

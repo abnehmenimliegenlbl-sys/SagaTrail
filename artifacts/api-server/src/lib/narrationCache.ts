@@ -121,7 +121,7 @@ function narrationObjectName(hash: string): string {
 // alten OpenAI-Narrations-Caches automatisch invalidiert (anderer Hash),
 // ohne ElevenLabs-Eintraege zu beruehren. Erhoehen, wenn sich OpenAI-
 // Synthesis-Parameter aendern (z.B. Lautstaerke, Tempo, Stimme).
-const OPENAI_CACHE_VERSION = "v2";
+const OPENAI_CACHE_VERSION = "v3";
 
 export function hashNarrationText(
   text: string,

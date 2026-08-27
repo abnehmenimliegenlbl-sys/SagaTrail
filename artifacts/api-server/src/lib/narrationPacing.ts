@@ -6,9 +6,10 @@ import { join } from "path";
 import type { Logger } from "pino";
 import { textToSpeech as openaiTextToSpeech } from "@workspace/integrations-openai-ai-server/audio";
 
-// Lautstaerke-Boost fuer die OpenAI-Fallback-Stimme (relativ zu ElevenLabs).
-// 1.5 = 50 % lauter. Ueberschreibbar per Env-Variable OPENAI_NARRATION_VOLUME.
-const OPENAI_VOLUME_BOOST = parseFloat(process.env.OPENAI_NARRATION_VOLUME ?? "1.5");
+// Lautstaerke-Boost fuer OpenAI-Narration (relativ zu ElevenLabs).
+// 2.0 = doppelte Signal-Amplitude. Ueberschreibbar per Env-Variable
+// OPENAI_NARRATION_VOLUME.
+const OPENAI_VOLUME_BOOST = parseFloat(process.env.OPENAI_NARRATION_VOLUME ?? "2.0");
 
 /**
  * Zerlegt Erzaehltext in Saetze und erkennt "dramatische" Saetze (Ausrufe,

@@ -60,7 +60,12 @@ export function useVoiceDecision(
   lang: Lang,
   options: VoiceMatchOption[],
   onMatch: (index: number) => void
-): { listening: boolean; supported: boolean; lastTranscript: string | null } {
+): {
+  listening: boolean;
+  supported: boolean;
+  lastTranscript: string | null;
+  stopListening: () => Promise<void>;
+} {
   const [listening, setListening] = useState(false);
   const [lastTranscript, setLastTranscript] = useState<string | null>(null);
   const [supported, setSupported] = useState(
@@ -88,7 +93,11 @@ export function useVoiceDecision(
     // Bestaetigung erst danach starten, sonst wird die Audiosession der
     // anderen App weiter unterbrochen bzw. die Bestaetigung leise.
     if (NATIVE_SPEECH_AVAILABLE) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+      // iOS releases the PlayAndRecord session asynchronously after stop().
+      // Give it enough time before the next playback starts, including when
+      // a button tap closes the decision and its effect cleanup runs in
+      // parallel with the confirmation audio.
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
     }
   }, []);
 
@@ -194,5 +203,5 @@ export function useVoiceDecision(
     // Fehler, bei dem die App scheinbar "nicht zuhoert".
   });
 
-  return { listening, supported, lastTranscript };
+  return { listening, supported, lastTranscript, stopListening };
 }
