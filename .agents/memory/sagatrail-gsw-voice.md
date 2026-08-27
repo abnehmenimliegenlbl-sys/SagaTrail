@@ -15,3 +15,7 @@ Regel: gsw = **Heidi-Stimme** (Schweizer Akzent, GSW_NARRATOR_VOICE_ID) + **Text
 Cache-Invalidierung nach dieser Änderung nötig: `DELETE /admin/stories/gsw` (x-admin-token) löscht gecachte Dialekt-Storys, damit neue Hochdeutsch-Versionen generiert werden. Wurde 2026-08-05 ausgeführt (9 Stories gelöscht).
 
 Constraint: ElevenLabs-Community-Stimmen brauchen Bezahlplan (402 auf Gratis). Heidi ist erster Kandidat, fällt bei 401/402/403/404 auf Standardstimme zurück.
+
+Entscheidung: Das Persönlichkeits-Feedback nach einer Wahrnehmungsentscheidung läuft immer über OpenAI, auch bei `gsw`.
+**Why:** Der Feedbacktext ist Hochdeutsch und OpenAI war im betroffenen Ablauf ausreichend laut; ein Wechsel auf ElevenLabs würde die Lautstärkepräferenz des Nutzers verletzen.
+**How to apply:** Die kurze Bestätigung darf weiterhin vorgeladen über Heidi/ElevenLabs oder lokal gesprochen werden; nur der anschließende Feedback-Text erhält `provider: "openai"`.
