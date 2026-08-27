@@ -98,3 +98,4 @@
 - [Premium partner proximity](sagatrail-premium-partner-proximity.md) — mark partner announcements completed only after a successful generated text; transient failures must remain retryable.
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
+- [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
