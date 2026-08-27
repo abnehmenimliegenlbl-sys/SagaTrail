@@ -12,3 +12,9 @@ scripts/build.js
 
 # Replit workspace metadata
 .replit-artifact
+
+# Generated export and native build files — not needed for EAS Update
+dist/
+.expo/
+ios/
+android/
