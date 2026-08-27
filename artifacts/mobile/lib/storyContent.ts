@@ -13,10 +13,10 @@ export type Lang = "de" | "gsw" | "fr" | "it" | "en" | "zh" | "es" | "pt" | "ru"
 
 const KNOWN_LANGS: Lang[] = ["de", "gsw", "fr", "it", "en", "zh", "es", "pt", "ru"];
 
-/** Ordnet den Sprachcode einer BCP-47-Stimme fuer expo-speech zu. */
+/** Ordnet den Sprachcode einer BCP-47-Sprache fuer die Spracherkennung zu. */
 export const SPEECH_LOCALE: Record<Lang, string> = {
   de: "de-DE",
-  gsw: "de-CH", // Kein echtes Schweizerdeutsch-TTS — de-CH ist die naechste Stimme
+  gsw: "de-CH",
   fr: "fr-FR",
   it: "it-IT",
   en: "en-US",
@@ -112,7 +112,7 @@ export interface StoryPack {
   // natuerlichen Konjunktionen auf, damit Wandernde ohne Blick aufs Display
   // verstehen, was zur Wahl steht.
   buildDecisionPrompt: (options: string[], question?: string) => string;
-  // Sofortige Geraetestimmen-Bestaetigung nach der Wahl (< 500 ms),
+  // Sofortige OpenAI-Bestaetigung nach der Wahl (aus dem Cache),
   // bevor das KI-generierte Feedback geladen wird.
   decisionAck: string;
   // Wohlwollendes Persoenlichkeits-Feedback, das unmittelbar nach der

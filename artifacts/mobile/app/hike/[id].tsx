@@ -67,7 +67,6 @@ import {
   effectiveStoryLanguage,
   formatSpokenDistance,
   resolveLang,
-  SPEECH_LOCALE,
   STORY_PACKS,
   trimForNarration,
   type Lang,
@@ -1954,13 +1953,10 @@ export default function LiveHike() {
   // darauf startete. await stop() vor speak() vermeidet zudem, dass die
   // vorherige Aeusserung noch in der nativen Warteschlange haengt.
   //
-  // Premium: KI-Erzaehlstimme (ElevenLabs, ueber den Server) — online-only.
-  // Schlaegt sie fehl (offline, Serverfehler), uebernimmt die on-device
-  // Stimme (expo-speech), damit die Erzaehlung unterwegs nie verstummt;
-  // zusaetzlich erscheint ein sichtbarer "KI-Stimme nicht verfuegbar"-Hinweis
-  // (kein stiller Ersatz). Die kostenlose erste Wanderung nutzt bewusst
-  // weiterhin ausschliesslich die on-device Stimme und ruft die KI-Stimme
-  // nie auf.
+  // KI-Erzaehlstimme (ElevenLabs oder explizit OpenAI, ueber den Server) —
+  // online-only. Schlaegt sie fehl (offline, Serverfehler), gibt es keinen
+  // Wechsel auf eine lokale Gerätestimme; stattdessen erscheint ein
+  // sichtbarer "KI-Stimme nicht verfuegbar"-Hinweis.
   // onFinished feuert NUR bei natuerlichem Ende (onDone/didJustFinish), nie
   // bei manuellem Stopp oder wenn eine andere speak()-Aeusserung dazwischen-
   // funkt (stopNarration loest dann onStopped/onError aus). So kann man
@@ -1968,7 +1964,7 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
+    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -1977,8 +1973,6 @@ export default function LiveHike() {
           // Sound pausieren statt stoppen — Abspielposition bleibt erhalten.
           navInterruptingRef.current = true;
           try { await soundToResume.pauseAsync(); } catch {}
-        } else {
-          try { Speech.stop(); } catch {}
         }
 
         // Vorab gerenderten Clip abspielen (kein Netzwerk, kein Geraete-TTS).
@@ -2005,22 +1999,16 @@ export default function LiveHike() {
               });
             });
           } catch {
-            // Gerätestimme als letzter Fallback wenn Clip nicht ladbar.
-            const locale = SPEECH_LOCALE[lang];
-            await new Promise<void>((resolve) => {
-              Speech.speak(text, {
-                language: locale,
-                onDone: resolve,
-                onStopped: resolve,
-                onError: () => resolve(),
-              });
-            });
+            // Wenn der vorbereitete Abbiegeclip fehlt, denselben Hinweis als
+            // OpenAI-Audio erzeugen. Es gibt bewusst keinen Gerätestimmen-
+            // Fallback mehr.
+            navInterruptingRef.current = false;
+            await speakRef.current?.(text, undefined, { interrupt: true, useOpenAI: true });
+            return;
           } finally {
             try { await turnSound?.unloadAsync(); } catch {}
           }
-          // Audio-Session IMMER zurücksetzen — auch wenn der Clip via catch
-          // mit Speech.speak abgespielt wurde. DuckOthers bleibt sonst aktiv
-          // und korrumpiert den Bluetooth-A2DP-Stream der Narration danach.
+          // Audio-Session nach dem kurzen Abbiegeclip zurücksetzen.
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: false,
             playsInSilentModeIOS: true,
@@ -2044,7 +2032,7 @@ export default function LiveHike() {
       if (opts?.sagaInterrupt) {
         if (navInterruptingRef.current) {
           // Abbiegehinweis laeuft gerade — dahinter einreihen, nicht unterbrechen.
-          narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
+          narrationQueueRef.current.push({ text, onFinished, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
           return;
         }
         // Alles andere (Kapitel, POI, Meilenstein): Queue leeren, sofort starten.
@@ -2053,14 +2041,13 @@ export default function LiveHike() {
         const prev = narrationSoundRef.current;
         narrationSoundRef.current = null;
         if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
-        try { Speech.stop(); } catch {}
       }
 
       // PRIO 3 — ohne interrupt: in die Warteschlange einreihen, wenn gerade
       // gesprochen wird — so unterbrechen POI, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
       if (!opts?.interrupt && !opts?.sagaInterrupt && speakingRef.current) {
-        narrationQueueRef.current.push({ text, onFinished, useDevice: opts?.useDevice, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
+        narrationQueueRef.current.push({ text, onFinished, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
         return;
       }
       // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren
@@ -2083,82 +2070,7 @@ export default function LiveHike() {
       // sofort unterbricht.
       speakingRef.current = true;
 
-      if (opts?.useDevice) {
-        // Geraetestimme (expo-speech) — kostenlos, kein ElevenLabs-Kontingent.
-        // Genutzt fuer dynamische/kurze Texte (Navigation, Entscheidungs-
-        // Feedback), die entweder immer andere Zeichen enthalten (Distanz)
-        // oder per Math.random() nie gecacht werden koennen.
-        const prevSound = narrationSoundRef.current;
-        narrationSoundRef.current = null;
-        if (prevSound) {
-          try { await prevSound.stopAsync(); await prevSound.unloadAsync(); } catch {}
-        }
-        try { Speech.stop(); } catch {}
-        const locale = SPEECH_LOCALE[resolveLang((profile?.language ?? "de") as Lang)];
-        const restoreAudioMode = () => Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: false,
-        }).catch(() => {});
-        // Vor dem Sprechen auf DuckOthers wechseln.
-        // WICHTIG: auf nativen Geraeten muss dieser Wechsel abgeschlossen sein,
-        // bevor AVSpeechSynthesizer startet. Andernfalls kann die noch aktive
-        // Aufnahme-Session der Spracherkennung die Bestaetigung leiser machen
-        // oder die Audio-Session anderer Apps dauerhaft geduckt lassen.
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: true,
-        }).catch(() => {});
-        Speech.speak(text, {
-          language: locale,
-          onDone: () => {
-            if (gen !== narrationGenRef.current) return;
-            setSpeaking(false);
-            speakingRef.current = false;
-            onFinished?.();
-            // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
-            // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
-            // soeben gestartete Ausgabe abwuergen (Race-Condition bei Meilensteinen).
-            if (!speakingRef.current) {
-              const next = narrationQueueRef.current.shift();
-              if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-              // Kein Audio-Session-Reset waehrend Entscheidungspunkt: gleich
-              // danach startet die Spracherkennung und setzt allowsRecordingIOS:true.
-              // Der feuervergessene Reset koennte die Erkennung killen (Race).
-              else if (!awaitingDecisionRef.current) restoreAudioMode();
-            }
-          },
-          onStopped: () => {
-            if (gen !== narrationGenRef.current) return;
-            setSpeaking(false);
-            speakingRef.current = false;
-            restoreAudioMode();
-          },
-          onError: () => {
-            if (gen !== narrationGenRef.current) return;
-            setSpeaking(false);
-            speakingRef.current = false;
-            onFinished?.();
-            if (!speakingRef.current) {
-              const next = narrationQueueRef.current.shift();
-              if (next) speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI });
-              else restoreAudioMode();
-            }
-          },
-        });
-        return;
-      }
-
       try {
-        // Laufende Geraetestimme stoppen, bevor der ElevenLabs-Request startet.
-        try { Speech.stop(); } catch {}
         // TTS-Anfrage VOR dem Stopp des laufenden Audios: solange der
         // Netzwerk-Request laeuft, spielt das vorherige Audio weiter —
         // die iOS-Audiosession bleibt aktiv und der JS-Thread wird im
@@ -2210,7 +2122,7 @@ export default function LiveHike() {
             if (!speakingRef.current) {
               const next = narrationQueueRef.current.shift();
               if (next) {
-                speakRef.current?.(next.text, next.onFinished, { useDevice: next.useDevice, useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
+                speakRef.current?.(next.text, next.onFinished, { useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
               } else if (!awaitingDecisionRef.current) {
                 // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
                 // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
@@ -2239,10 +2151,32 @@ export default function LiveHike() {
         });
       } catch (err) {
         if (gen !== narrationGenRef.current) return;
-        // Bei jedem Fehler (Rate-Limit, Netzwerkfehler, Server-Fehler, Offline):
-        // still auf Geraetestimme ausweichen statt abbrechen — so laeuft die
-        // Erzaehlung auch ohne Netz oder bei vollem ElevenLabs-Kontingent weiter.
-        speakRef.current?.(text, onFinished, { useDevice: true });
+        // Bei jedem Fehler (Rate-Limit, Netzwerkfehler, Server-Fehler, Offline)
+        // nicht auf die Gerätestimme wechseln. Der sichtbare Hinweis macht den
+        // fehlenden KI-Clip nachvollziehbar; ein Feedback-Callback darf
+        // trotzdem die Queue bzw. den nächsten Schritt fortsetzen.
+        setNarrationUnavailable(true);
+        setSpeaking(false);
+        speakingRef.current = false;
+        onFinished?.();
+        if (!speakingRef.current) {
+          const next = narrationQueueRef.current.shift();
+          if (next) {
+            speakRef.current?.(next.text, next.onFinished, {
+              useOpenAI: next.useOpenAI,
+              preFetchedUri: next.preFetchedUri,
+            });
+          } else if (!awaitingDecisionRef.current) {
+            Audio.setAudioModeAsync({
+              allowsRecordingIOS: false,
+              playsInSilentModeIOS: true,
+              staysActiveInBackground: true,
+              interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+              shouldDuckAndroid: false,
+            }).catch(() => {});
+          }
+        }
       }
     },
     [profile?.language]
@@ -2250,10 +2184,9 @@ export default function LiveHike() {
   speakRef.current = speak;
 
   // Entscheidungs-Ack ("Ich verstehe." etc.) vorausladen sobald die Wanderung
-  // startet. Der Text ist je Sprache fix, wird genau einmal synthesiert und
-  // bleibt dauerhaft im GCS-Narrations-Cache — kein ElevenLabs-Anruf beim
-  // naechsten Wanderer. Das stellt sicher, dass bei der Wahl (Kapitel 3/5)
-  // sofort die richtige ElevenLabs-Stimme ertönt, ohne Netzwerk-Latenz.
+  // startet. Der Text ist je Sprache fix, wird genau einmal synthetisiert und
+  // bleibt dauerhaft im Narrations-Cache. Das stellt sicher, dass bei der
+  // Wahl (Kapitel 3/5) sofort OpenAI-Audio ertönt, ohne Netzwerk-Latenz.
   useEffect(() => {
     if (preparing) return;
     const lang = profile?.language;
@@ -2268,12 +2201,12 @@ export default function LiveHike() {
     let cancelled = false;
     (async () => {
       try {
-        const blob = await createNarration({ text: ackText, language: ackLang });
+        const blob = await createNarration({ text: ackText, language: ackLang, provider: "openai" });
         if (cancelled) return;
         const uri = await blobToTempFileUri(blob);
         if (!cancelled) ackAudioUriRef.current = uri;
       } catch {
-        // Stummes Scheitern — Fallback bleibt ElevenLabs-Aufruf zur Laufzeit.
+        // Stummes Scheitern — bei der Wahl erfolgt ein OpenAI-Aufruf zur Laufzeit.
       }
     })();
     return () => { cancelled = true; };
@@ -2465,7 +2398,7 @@ export default function LiveHike() {
   }, [nearbyPoi, nearbyPoiWiki, storyLanguage, speak, t]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
-  // 200 m → einmaliger Richtungshinweis per Geraetestimme
+  // 200 m → einmaliger OpenAI-Richtungshinweis
   // 50 m  → volle Geschichte in Erzaehlstimme (identisch zum normalen POI-Flow)
   useEffect(() => {
     if (!nearbyPoi || !livePos) return;
@@ -2760,16 +2693,16 @@ export default function LiveHike() {
     setChapters(nextChapters);
     setAwaitingDecision(false);
     // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
-    // Zweistufig: sofortige Geraetestimmen-Bestaetigung (< 500 ms, kein Netz
-    // noetig), danach das vollstaendige KI-Feedback via OpenAI.
+    // Zweistufig: sofortige OpenAI-Bestaetigung aus dem Cache (kein Netz
+    // waehrend der Wahl noetig), danach das vollstaendige KI-Feedback via OpenAI.
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const ackPack = STORY_PACKS[resolveLang(cueLanguage)];
       // feedbackPack: cueLanguage ist bereits gsw→de gemappt; DE-Template passt zu Hochdeutsch-Text
       const feedbackPack = STORY_PACKS[resolveLang(cueLanguage)];
       const feedbackText = feedbackPack.decisionFeedback(archetypeHint, gewaehlt ?? "");
-      // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
-      // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
+      // Vorgeladene URI verwenden (falls verfuegbar) — OpenAI-Stimme startet
+      // sofort ohne Netzwerk-Latenz. Fallback: OpenAI-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
       const ackUri = ackAudioUriRef.current ?? undefined;
       // Bei Button-Taps beendet die Hook-Cleanup-Funktion die Erkennung erst
@@ -2779,7 +2712,7 @@ export default function LiveHike() {
       speakRef.current?.(
         ackPack.decisionAck,
         () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
-        { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useDevice: true }) },
+        { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }) },
       );
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.

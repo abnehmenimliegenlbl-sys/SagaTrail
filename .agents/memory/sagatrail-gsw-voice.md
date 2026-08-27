@@ -18,4 +18,4 @@ Constraint: ElevenLabs-Community-Stimmen brauchen Bezahlplan (402 auf Gratis). H
 
 Entscheidung: Das Persönlichkeits-Feedback nach einer Wahrnehmungsentscheidung läuft immer über OpenAI, auch bei `gsw`.
 **Why:** Der Feedbacktext ist Hochdeutsch und OpenAI war im betroffenen Ablauf ausreichend laut; ein Wechsel auf ElevenLabs würde die Lautstärkepräferenz des Nutzers verletzen.
-**How to apply:** Die kurze Bestätigung darf weiterhin vorgeladen über Heidi/ElevenLabs oder lokal gesprochen werden; nur der anschließende Feedback-Text erhält `provider: "openai"`.
+**How to apply:** Entscheidungsbestätigung und anschließender Feedback-Text erhalten `provider: "openai"`; die gsw-Sagenerzählung selbst darf weiterhin die Heidi-/ElevenLabs-Stimme verwenden.

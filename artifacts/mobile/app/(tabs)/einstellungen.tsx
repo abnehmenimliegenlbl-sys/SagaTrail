@@ -43,7 +43,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
-import { resolveLang, SPEECH_LOCALE } from "@/lib/storyContent";
+import { resolveLang } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
