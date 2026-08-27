@@ -18,7 +18,6 @@ import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
-import * as Speech from "expo-speech";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
 
@@ -609,10 +608,10 @@ export default function LiveHike() {
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
-  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string }>>([]);
-  // Vorgeladene ElevenLabs-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
+  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useOpenAI?: boolean; preFetchedUri?: string }>>([]);
+  // Vorgeladene OpenAI-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
-  // Netzwerk-Latenz anfaellt und die ElevenLabs-Stimme sofort ertönt.
+  // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
   const ackAudioUriRef = useRef<string | null>(null);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
@@ -742,15 +741,12 @@ export default function LiveHike() {
   }, [storyLanguage, timeOfDay, hikeWeather, surfacePoints, pois, totalKm, totalMin, sac, ascentM, route, inGruppe]);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
-  // aktiviertem Stummschalter (iOS) hoerbar ist. Ohne diese Einstellung
-  // bleibt AVSpeechSynthesizer auf manchen Geraeten komplett lautlos, obwohl
-  // die Wiedergabe technisch laeuft (Button/Status wirken dann funktionslos).
+  // aktiviertem Stummschalter (iOS) hoerbar ist.
   // staysActiveInBackground: true ist die eigentliche Voraussetzung dafuer,
-  // dass die Erzaehlung (KI-Stimme via expo-av UND die on-device Stimme via
-  // expo-speech, die dieselbe iOS-Audiosession nutzt) weiterlaeuft, wenn die
-  // App in den Hintergrund geht oder das Display gesperrt wird — zusammen
-  // mit UIBackgroundModes "audio" (app.json) und, fuer echte GPS-Fortschritte
-  // im Hintergrund, dem Standort-Foreground-Service (siehe unten).
+  // dass die KI-Erzaehlung via expo-av weiterlaeuft, wenn die App in den
+  // Hintergrund geht oder das Display gesperrt wird — zusammen mit
+  // UIBackgroundModes "audio" (app.json) und, fuer echte GPS-Fortschritte im
+  // Hintergrund, dem Standort-Foreground-Service (siehe unten).
   // DuckOthers statt MixWithOthers: laeuft im Hintergrund z. B. Musik/ein
   // Podcast, wird diese waehrend der Erzaehlung leiser gedreht statt in
   // voller Lautstaerke weiterzulaufen, und danach wieder normal laut.
@@ -1399,7 +1395,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useDevice?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
