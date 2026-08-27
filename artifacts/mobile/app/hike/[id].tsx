@@ -2765,14 +2765,13 @@ export default function LiveHike() {
     setAwaitingDecision(false);
     // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
     // Zweistufig: sofortige Geraetestimmen-Bestaetigung (< 500 ms, kein Netz
-    // noetig), danach das vollstaendige KI-Feedback via ElevenLabs/OpenAI.
+    // noetig), danach das vollstaendige KI-Feedback via OpenAI.
     const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const ackPack = STORY_PACKS[resolveLang(cueLanguage)];
       // feedbackPack: cueLanguage ist bereits gsw→de gemappt; DE-Template passt zu Hochdeutsch-Text
       const feedbackPack = STORY_PACKS[resolveLang(cueLanguage)];
       const feedbackText = feedbackPack.decisionFeedback(archetypeHint, gewaehlt ?? "");
-      const useOpenAIForFeedback = storyLanguage !== "gsw";
       // Vorgeladene URI verwenden (falls verfuegbar) — ElevenLabs-Stimme startet
       // sofort ohne Netzwerk-Latenz. Fallback: ElevenLabs-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
@@ -2783,7 +2782,7 @@ export default function LiveHike() {
       await stopVoiceDecisionRef.current();
       speakRef.current?.(
         ackPack.decisionAck,
-        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: useOpenAIForFeedback }); },
+        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
         { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useDevice: true }) },
       );
     }
