@@ -40,6 +40,45 @@ const SOLOTHURN_REPLACEMENT_SUMMARIES = {
   },
 } satisfies Record<string, Record<string, { text: string; reviewEmpfohlen: boolean }>>;
 
+const ATTINGHAUSEN_SUMMARIES = {
+  de: {
+    text: "Der genaue Ort: Der historische Wohnturm der Burgruine Attinghausen bei Altdorf. Auf der stolzen Burg Attinghausen residierten im Mittelalter die mächtigen Freiherren von Attinghausen, die über weite Teile des Urnerlandes herrschten. Die Sage erzählt von der letzten Tochter des Hauses, einem aussergewöhnlich schönen, aber hochmütigen Fräulein. Sie wies jeden rechtschaffenen Freier aus dem Lande hochmütig zurück und verschwendete das Geld der Familie für Prunk und rauschende Feste, während die Bauern im Tal Hunger litten. Als die Burg in den Schweizer Befreiungskriegen schliesslich belagert und zerstört wurde, kam die stolze Jungfrau in den Flammen des Wohnturms ums Leben. Da sie jedoch vor ihrem Tod keine Reue zeigte, fand ihre Seele keine Ruhe. Sie wurde dazu verdammt, als «Weisse Frau» oder verwandelte Schlange die tiefen, unterirdischen Gewölbe und den alten Burgbrunnen zu bewachen, in denen der Familienschatz vergraben liegt. Die Sage besagt, dass sie alle hundert Jahre in den Ruinen erscheint und darauf wartet, von einem Jüngling reinen Herzens durch einen furchtlosen Kuss erlöst zu werden. Bis heute meiden viele Einheimische die dunklen Ecken der Ruine in stürmischen Neumondnächten.",
+    reviewEmpfohlen: false,
+  },
+  gsw: {
+    text: "Der genaue Ort: Der historische Wohnturm der Burgruine Attinghausen bei Altdorf. Auf der stolzen Burg Attinghausen residierten im Mittelalter die mächtigen Freiherren von Attinghausen, die über weite Teile des Urnerlandes herrschten. Die Sage erzählt von der letzten Tochter des Hauses, einem aussergewöhnlich schönen, aber hochmütigen Fräulein. Sie wies jeden rechtschaffenen Freier aus dem Lande hochmütig zurück und verschwendete das Geld der Familie für Prunk und rauschende Feste, während die Bauern im Tal Hunger litten. Als die Burg in den Schweizer Befreiungskriegen schliesslich belagert und zerstört wurde, kam die stolze Jungfrau in den Flammen des Wohnturms ums Leben. Da sie jedoch vor ihrem Tod keine Reue zeigte, fand ihre Seele keine Ruhe. Sie wurde dazu verdammt, als «Weisse Frau» oder verwandelte Schlange die tiefen, unterirdischen Gewölbe und den alten Burgbrunnen zu bewachen, in denen der Familienschatz vergraben liegt. Die Sage besagt, dass sie alle hundert Jahre in den Ruinen erscheint und darauf wartet, von einem Jüngling reinen Herzens durch einen furchtlosen Kuss erlöst zu werden. Bis heute meiden viele Einheimische die dunklen Ecken der Ruine in stürmischen Neumondnächten.",
+    reviewEmpfohlen: false,
+  },
+  fr: {
+    text: "Lieu exact : la tour résidentielle historique des ruines du château d’Attinghausen, près d’Altdorf. Au Moyen Âge, les puissants barons d’Attinghausen régnaient depuis leur fière forteresse sur une grande partie de la vallée d’Uri. La légende parle de la dernière fille de la famille, une demoiselle d’une beauté exceptionnelle mais orgueilleuse. Elle repoussait avec mépris tout prétendant honnête du pays et dépensait la fortune familiale en faste et en fêtes somptueuses, tandis que les paysans de la vallée souffraient de la faim. Lorsque le château fut finalement assiégé et détruit pendant les guerres de libération suisses, la jeune femme orgueilleuse mourut dans les flammes de la tour. Comme elle n’avait montré aucun repentir avant sa mort, son âme ne trouva pas le repos. Elle fut condamnée à garder, sous la forme d’une Dame blanche ou d’un serpent métamorphosé, les profondes voûtes souterraines et l’ancien puits du château où le trésor familial est enfoui. La légende raconte qu’elle apparaît tous les cent ans dans les ruines, attendant qu’un jeune homme au cœur pur la délivre par un baiser courageux. Encore aujourd’hui, de nombreux habitants évitent les recoins sombres des ruines les nuits de nouvelle lune orageuses.",
+    reviewEmpfohlen: false,
+  },
+  it: {
+    text: "Luogo esatto: la storica torre residenziale delle rovine del castello di Attinghausen, presso Altdorf. Nel Medioevo i potenti baroni di Attinghausen governavano da questa fiera fortezza gran parte della valle di Uri. La leggenda parla dell’ultima figlia della casata, una fanciulla di straordinaria bellezza ma superba. Respingeva con arroganza ogni onesto pretendente della regione e sperperava il patrimonio della famiglia in sfarzo e feste sfrenate, mentre i contadini della valle soffrivano la fame. Quando il castello fu infine assediato e distrutto durante le guerre di liberazione svizzere, la giovane superba morì tra le fiamme della torre. Poiché prima di morire non aveva mostrato alcun pentimento, la sua anima non trovò pace. Fu condannata a sorvegliare, nelle sembianze di una Dama Bianca o di un serpente trasformato, le profonde volte sotterranee e l’antico pozzo del castello dove è sepolto il tesoro di famiglia. La leggenda narra che appaia tra le rovine ogni cento anni, aspettando che un giovane dal cuore puro la liberi con un bacio intrepido. Ancora oggi molti abitanti evitano gli angoli bui delle rovine nelle tempestose notti di luna nuova.",
+    reviewEmpfohlen: false,
+  },
+  en: {
+    text: "Exact location: the historic residential tower of Attinghausen Castle ruins near Altdorf. In the Middle Ages, the powerful barons of Attinghausen ruled large parts of the Uri valley from their proud castle. The legend tells of the last daughter of the house, an exceptionally beautiful but haughty young woman. She arrogantly rejected every honest suitor from the land and squandered the family’s money on finery and lavish celebrations while the farmers in the valley went hungry. When the castle was finally besieged and destroyed during the Swiss Wars of Liberation, the proud maiden died in the flames of the residential tower. Since she had shown no remorse before her death, her soul found no rest. She was condemned to guard the deep underground vaults and the old castle well, where the family treasure lies buried, in the form of a White Lady or a transformed serpent. The legend says that she appears in the ruins every hundred years, waiting to be freed by a fearless kiss from a pure-hearted young man. To this day, many locals avoid the dark corners of the ruins on stormy nights of the new moon.",
+    reviewEmpfohlen: false,
+  },
+  zh: {
+    text: "确切地点：阿尔特多夫附近阿廷格豪森城堡遗址的历史居住塔。中世纪时，强大的阿廷格豪森男爵从这座骄傲的城堡统治着乌里谷的大部分地区。传说家族最后一位女儿美貌非凡，却十分傲慢。她傲然拒绝当地每一位正直的求婚者，把家产挥霍在奢华装饰和喧闹宴会上，而山谷里的农民却忍饥挨饿。瑞士解放战争期间，城堡最终遭到围攻并被摧毁，骄傲的少女死在居住塔的火焰中。由于临死前毫无悔意，她的灵魂不得安息。她被诅咒化作白衣女鬼或变形的蛇，守护着深邃的地下拱顶和古老的城堡井，家族的宝藏就埋藏在那里。传说她每隔一百年便会出现在废墟中，等待一位心地纯洁的年轻人用无畏的一吻将她解救。直到今天，许多当地人仍避开暴风雨新月之夜里废墟的阴暗角落。",
+    reviewEmpfohlen: false,
+  },
+  es: {
+    text: "Lugar exacto: la torre residencial histórica de las ruinas del castillo de Attinghausen, cerca de Altdorf. En la Edad Media, los poderosos barones de Attinghausen gobernaban desde su orgulloso castillo gran parte del valle de Uri. La leyenda habla de la última hija de la casa, una joven de extraordinaria belleza pero muy orgullosa. Rechazaba con arrogancia a todos los pretendientes honrados de la región y malgastaba el dinero de la familia en lujos y fiestas desenfrenadas, mientras los campesinos del valle pasaban hambre. Cuando el castillo fue finalmente sitiado y destruido durante las guerras de liberación suizas, la orgullosa doncella murió entre las llamas de la torre residencial. Como no mostró arrepentimiento antes de morir, su alma no encontró descanso. Fue condenada a custodiar, convertida en una Dama Blanca o en una serpiente transformada, las profundas bóvedas subterráneas y el antiguo pozo del castillo, donde está enterrado el tesoro familiar. La leyenda dice que aparece entre las ruinas cada cien años, esperando que un joven de corazón puro la libere con un beso valiente. Hasta hoy, muchos habitantes evitan los rincones oscuros de las ruinas en las noches tormentosas de luna nueva.",
+    reviewEmpfohlen: false,
+  },
+  pt: {
+    text: "Local exato: a histórica torre residencial das ruínas do castelo de Attinghausen, perto de Altdorf. Na Idade Média, os poderosos barões de Attinghausen governavam grande parte do vale de Uri a partir do seu orgulhoso castelo. A lenda fala da última filha da casa, uma jovem de beleza extraordinária, mas altiva. Rejeitava com arrogância todos os pretendentes honestos da região e esbanjava o dinheiro da família em luxo e festas exuberantes, enquanto os camponeses do vale passavam fome. Quando o castelo foi finalmente cercado e destruído durante as guerras de libertação suíças, a jovem orgulhosa morreu nas chamas da torre residencial. Como não demonstrou arrependimento antes de morrer, a sua alma não encontrou descanso. Foi condenada a guardar, sob a forma de uma Dama Branca ou de uma serpente transformada, as profundas abóbadas subterrâneas e o antigo poço do castelo, onde está enterrado o tesouro da família. Diz a lenda que ela aparece nas ruínas a cada cem anos, à espera de ser libertada por um beijo destemido de um jovem de coração puro. Até hoje, muitos habitantes evitam os recantos escuros das ruínas nas noites tempestuosas de lua nova.",
+    reviewEmpfohlen: false,
+  },
+  ru: {
+    text: "Точное место: историческая жилая башня руин замка Аттингаузен недалеко от Альтдорфа. В Средние века могущественные бароны Аттингаузена правили из этого гордого замка значительной частью долины Ури. Легенда рассказывает о последней дочери рода — необыкновенно красивой, но надменной девушке. Она высокомерно отвергала каждого достойного жениха из края и расточала семейные деньги на роскошь и шумные пиры, пока крестьяне в долине голодали. Когда во время швейцарских освободительных войн замок наконец осадили и разрушили, гордая девушка погибла в огне жилой башни. Поскольку перед смертью она не раскаялась, её душа не обрела покоя. Она была обречена в облике Белой Дамы или превращённой змеи охранять глубокие подземные своды и старый замковый колодец, где зарыт семейный клад. Говорят, что каждые сто лет она появляется среди руин и ждёт юношу с чистым сердцем, который освободит её бесстрашным поцелуем. До сих пор многие местные жители избегают тёмных уголков руин в бурные безлунные ночи.",
+    reviewEmpfohlen: false,
+  },
+} satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
+
 export const SAGAS: Saga[] = ([
 {
   "id": "die-beute-von-grandson-solot",
@@ -155,6 +194,27 @@ export const SAGAS: Saga[] = ([
   },
   "source": "Alois Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten Lucern, Uri, Schwyz, Unterwalden und Zug (1862)",
   "coordinates": { "lat": 46.6529, "lng": 8.5837 },
+  "koordinatenSicherheit": "exakt",
+  "isAnchorPlace": true
+},
+{
+  "id": "das-verzauberte-fraeulein-von-attinghausen-uri",
+  "title": "Das verzauberte Fräulein von Attinghausen",
+  "canton": "Uri",
+  "coreMotif": "Hochmut bindet eine ruhelose Hüterin an ihre Burgruine",
+  "bildmotiv": "Burgruine Attinghausen, Wohnturm, Weisse Frau",
+  "mood": "Unheimlich und romantisch",
+  "summary": "Der genaue Ort: Der historische Wohnturm der Burgruine Attinghausen bei Altdorf. Auf der stolzen Burg Attinghausen residierten im Mittelalter die mächtigen Freiherren von Attinghausen, die über weite Teile des Urnerlandes herrschten. Die Sage erzählt von der letzten Tochter des Hauses, einem aussergewöhnlich schönen, aber hochmütigen Fräulein. Sie wies jeden rechtschaffenen Freier aus dem Lande hochmütig zurück und verschwendete das Geld der Familie für Prunk und rauschende Feste, während die Bauern im Tal Hunger litten. Als die Burg in den Schweizer Befreiungskriegen schliesslich belagert und zerstört wurde, kam die stolze Jungfrau in den Flammen des Wohnturms ums Leben. Da sie jedoch vor ihrem Tod keine Reue zeigte, fand ihre Seele keine Ruhe. Sie wurde dazu verdammt, als «Weisse Frau» oder verwandelte Schlange die tiefen, unterirdischen Gewölbe und den alten Burgbrunnen zu bewachen, in denen der Familienschatz vergraben liegt. Die Sage besagt, dass sie alle hundert Jahre in den Ruinen erscheint und darauf wartet, von einem Jüngling reinen Herzens durch einen furchtlosen Kuss erlöst zu werden. Bis heute meiden viele Einheimische die dunklen Ecken der Ruine in stürmischen Neumondnächten.",
+  "summaries": ATTINGHAUSEN_SUMMARIES,
+  "altersstufenHinweis": "Hochmut, Tod im Feuer und die verwandelte Schlange für jüngere Kinder behutsam erzählen; die Erlösungssuche in den Vordergrund stellen.",
+  "quelle": {
+    "autor": "M. Lütolf; Franz Josef Vonmatt",
+    "werk": "Sagen, Bräuche und Legenden aus den fünf Orten; Sagen des Kantons Uri",
+    "jahr": "1862; 19. Jahrhundert",
+    "fundstelleUrl": "https://reader.digitale-sammlungen.de/resolve/display/bsb10453839.html"
+  },
+  "source": "M. Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862) sowie Franz Josef Vonmatt: Sagen des Kantons Uri (19. Jahrhundert)",
+  "coordinates": { "lat": 46.862417, "lng": 8.629881 },
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
