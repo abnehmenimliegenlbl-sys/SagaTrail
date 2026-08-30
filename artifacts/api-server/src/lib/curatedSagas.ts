@@ -798,8 +798,24 @@ const BERN_NEW_SAGAS: InsertCatalogSaga[] = [
   },
 ];
 
+const PRESERVED_TITLE_PARENTHETICALS = new Set([
+  "Der Riese vom Säntis",
+  "Die Escalade von 1602",
+  "Der Sturz des Goldauer Bergsturzes",
+  "Die Errettung vor der Flut",
+  "Die verschobene Stunde",
+  "Die Nixe vom Laufen",
+  "Der Riese von Balm",
+  "Gründung des Fraumünsters",
+  "Der gepeitschte Geist",
+]);
+
 function cleanSagaTitle(title: string): string {
-  return title.replace(/\s*\([^()]*\)/g, "").trim();
+  return title
+    .replace(/\s*\(([^()]*)\)/g, (full, content: string) =>
+      PRESERVED_TITLE_PARENTHETICALS.has(content.trim()) ? full : "",
+    )
+    .trim();
 }
 
 const RETIRED_SAGA_IDS = new Set([
