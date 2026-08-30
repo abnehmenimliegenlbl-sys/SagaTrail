@@ -820,6 +820,14 @@ const ZURICH_MARTYRS_SUMMARIES: NonNullable<InsertCatalogSaga["summaries"]> = {
   },
 };
 
+const FEES_GROTTE_SUMMARIES: NonNullable<InsertCatalogSaga["summaries"]> = {
+  de: {
+    text:
+      "Tief in den Wäldern oberhalb von Môtiers liegt eine geheimnisvolle Höhle: die Grotte aux Fées. Die Sage erzählt, dass dort vor Jahrhunderten ein Volk winziger, leuchtender Feen hauste. Diese Wesen waren den Menschen wohlgesonnen. Im Tal war es feste Tradition, vor dem Bau eines neuen Hauses zur Höhle zu wandern und die Feen um ihren Segen zu bitten. Im Gegenzug liessen die Feen die Häuser feuerfest werden und sorgten dafür, dass stets genug Korn in den Speichern lag.\n\nDas Glück endete, als zwei habgierige Holzhacker beschlossen, eine der Feen einzufangen, um sie auf dem Markt zu verkaufen. Sie schlichen in die Höhle und bestrichen die Felsen am Ausgang mit klebrigem Baumharz. Tatsächlich verfing sich eine kleine Fee darin. Zwar gelang es ihren Schwestern, sie unter lautem Wehklagen zu befreien, doch der Vertrauensbruch war zu gross.\n\nDie Feen verliessen die Grotte für immer und zogen sich tief in das Erdinnere zurück. Seit diesem Tag liegt kein magischer Schutz mehr auf den Häusern des Tals. Zur Zeit der Christianisierung wurde das Betreten der Höhle wegen des anhaltenden «heidnischen» Glaubens an die Geister sogar unter Todesstrafe gestellt. Doch das Rauschen des unterirdischen Wasserfalls in der Höhle erinnert bis heute an das Murmeln der vertriebenen Feen.",
+    reviewEmpfohlen: false,
+  },
+};
+
 /**
  * Redaktionelle Ersatztexte für falsch zugeordnete Solothurn-Einträge.
  * Die bestehenden IDs bleiben erhalten, damit gespeicherte Routen und
@@ -897,6 +905,27 @@ const REPLACEMENTS: Record<string, Partial<InsertCatalogSaga>> = {
       "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/20260620_Hasenmatt-6.tif/lossy-page1-1280px-20260620-Hasenmatt-6.tif.jpg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     fotoAttribution: "Wikimedia Commons",
     ortName: "Hasenmatt, Selzach",
+  },
+  "die-schweizer-in-fremden-kriegsdiensten-neuen": {
+    title: "Die Feen der Grotte aux Fées",
+    canton: "Neuenburg",
+    coreMotif: "Gier vertreibt die wohlgesonnenen Feen aus dem Tal",
+    bildmotiv: "Grotte aux Fées bei Môtiers, unterirdischer Wasserfall",
+    mood: "Zauberhaft und melancholisch",
+    summary:
+      "Tief in den Wäldern oberhalb von Môtiers liegt eine geheimnisvolle Höhle: die Grotte aux Fées. Die Sage erzählt, dass dort vor Jahrhunderten ein Volk winziger, leuchtender Feen hauste. Diese Wesen waren den Menschen wohlgesonnen. Im Tal war es feste Tradition, vor dem Bau eines neuen Hauses zur Höhle zu wandern und die Feen um ihren Segen zu bitten. Im Gegenzug liessen die Feen die Häuser feuerfest werden und sorgten dafür, dass stets genug Korn in den Speichern lag.\n\nDas Glück endete, als zwei habgierige Holzhacker beschlossen, eine der Feen einzufangen, um sie auf dem Markt zu verkaufen. Sie schlichen in die Höhle und bestrichen die Felsen am Ausgang mit klebrigem Baumharz. Tatsächlich verfing sich eine kleine Fee darin. Zwar gelang es ihren Schwestern, sie unter lautem Wehklagen zu befreien, doch der Vertrauensbruch war zu gross.\n\nDie Feen verliessen die Grotte für immer und zogen sich tief in das Erdinnere zurück. Seit diesem Tag liegt kein magischer Schutz mehr auf den Häusern des Tals. Zur Zeit der Christianisierung wurde das Betreten der Höhle wegen des anhaltenden «heidnischen» Glaubens an die Geister sogar unter Todesstrafe gestellt. Doch das Rauschen des unterirdischen Wasserfalls in der Höhle erinnert bis heute an das Murmeln der vertriebenen Feen.",
+    summaries: FEES_GROTTE_SUMMARIES,
+    quelle: null,
+    source:
+      "Les mystérieuses légendes de la Grotte aux Fées, historische Berichte aus dem 17. und 18. Jahrhundert über den regionalen Volksglauben im Val-de-Travers",
+    lat: 46.90560268254607,
+    lng: 6.620234725267246,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/M%C3%B4tiers_grotte_Cascade.jpg/1280px-M%C3%B4tiers_grotte_Cascade.jpg?utm_source=de.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    fotoAttribution: "Wikimedia Commons",
+    ortName: "Grotte aux Fées, Môtiers, Val-de-Travers",
   },
 };
 
