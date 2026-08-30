@@ -100,3 +100,4 @@
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
 - [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
 - [Persistente GPS-Prüfung](sagatrail-gps-persistence.md) — GPS-Status liegt dauerhaft in catalog_sagas; Startup-Seeding darf Koordinaten und Sicherheitsstatus nicht überschreiben.
+- [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
