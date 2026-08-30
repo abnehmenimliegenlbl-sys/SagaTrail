@@ -79,6 +79,18 @@ const ATTINGHAUSEN_SUMMARIES = {
   },
 } satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
 
+const PRESERVED_TITLE_PARENTHETICALS = new Set([
+  "Der Riese vom Säntis",
+  "Die Escalade von 1602",
+  "Der Sturz des Goldauer Bergsturzes",
+  "Die Errettung vor der Flut",
+  "Die verschobene Stunde",
+  "Die Nixe vom Laufen",
+  "Der Riese von Balm",
+  "Gründung des Fraumünsters",
+  "Der gepeitschte Geist",
+]);
+
 export const SAGAS: Saga[] = ([
 {
   "id": "die-beute-von-grandson-solot",
@@ -1891,21 +1903,7 @@ export const SAGAS: Saga[] = ([
   "isAnchorPlace": true
 },
 
-const PRESERVED_TITLE_PARENTHETICALS = new Set([
-  "Der Riese vom Säntis",
-  "Die Escalade von 1602",
-  "Der Sturz des Goldauer Bergsturzes",
-  "Die Errettung vor der Flut",
-  "Die verschobene Stunde",
-  "Die Nixe vom Laufen",
-  "Der Riese von Balm",
-  "Gründung des Fraumünsters",
-  "Der gepeitschte Geist",
-]);
-
-export const SAGAS: Saga[] = ([
-  ...([] as Saga[]),
-] as Saga[])
+ ] as Saga[])
   .map((saga) => ({
     ...saga,
     title: saga.title.replace(/\s*\(([^()]*)\)/g, (full, content: string) =>
