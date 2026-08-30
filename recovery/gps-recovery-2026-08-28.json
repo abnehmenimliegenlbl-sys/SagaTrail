@@ -1,0 +1,338 @@
+[
+  {
+    "timestamp": "2026-08-28T09:09:19.284Z",
+    "id": "badwirt-von-baden",
+    "lat": 47.47163295251042,
+    "lng": 8.310406257187935,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T09:12:00.723Z",
+    "id": "drei-legenden3-das-schlimme-kr-glein-aarga",
+    "lat": 47.47631573870609,
+    "lng": 8.213588420885719,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T09:14:26.837Z",
+    "id": "die-sch-ne-k-ngold-und-der-tanz-am-looweiher-oder-wie-das-do-aarg",
+    "lat": 47.33343953914843,
+    "lng": 7.919115654728509,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T09:25:04.547Z",
+    "id": "teufelsbr-cke-ein-schweizer-hirte-der-fters-sein-m-dche-aarg",
+    "lat": 47.350355860533554,
+    "lng": 8.340381883564085,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T09:59:39.273Z",
+    "id": "das-toggenburger-mandli-und-die-grenzwand",
+    "lat": 47.26565916555729,
+    "lng": 9.423627619517504,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T10:44:19.061Z",
+    "id": "das-verlorene-kind-von-der-ruine-schauenburg-frenkendorf",
+    "lat": 47.49576035783276,
+    "lng": 7.672961926410793,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T10:51:04.639Z",
+    "id": "das-wundervoegelin-im-bruderholz",
+    "lat": 47.52628424337865,
+    "lng": 7.5818931098481706,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T10:54:43.509Z",
+    "id": "die-versunkene-stadt-auf-dem-geissberg-gelterkinden",
+    "lat": 47.4478119258297,
+    "lng": 7.87789045473352,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T10:56:47.441Z",
+    "id": "der-ruhelose-torwaechter",
+    "lat": 47.55963736707495,
+    "lng": 7.588677381736254,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T10:57:05.647Z",
+    "id": "das-laellekoening-geheimnis-am-rheintor",
+    "lat": 47.55961565360701,
+    "lng": 7.588655931085479,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:10:47.067Z",
+    "id": "ochsen-zeigen-die-heilige-st-tte-bei-matten-einem-dorfe-bern",
+    "lat": 46.49642823853069,
+    "lng": 7.424027989027641,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:17:41.597Z",
+    "id": "die-beschneite-frau-bern",
+    "lat": 46.4872979868114,
+    "lng": 7.800327540774501,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:19:51.006Z",
+    "id": "die-altels-bern",
+    "lat": 46.429301720817776,
+    "lng": 7.678426940388922,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:26:51.948Z",
+    "id": "das-rothtal-eine-alpenh-lle-bern",
+    "lat": 46.52522429563918,
+    "lng": 7.945128918324704,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:31:06.355Z",
+    "id": "das-drachenloch-bern",
+    "lat": 47.05462918116155,
+    "lng": 7.6327871420548865,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:35:54.766Z",
+    "id": "das-wunder-von-der-kathedrale-st-nikolaus-freiburg",
+    "lat": 46.80629902424912,
+    "lng": 7.1626875816960265,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:52:30.158Z",
+    "id": "der-alchemist-von-der-rue-grimaldi-genf",
+    "lat": 46.20192998248484,
+    "lng": 6.145644948221536,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T11:58:46.091Z",
+    "id": "der-basilisk-von-der-rue-taconnerie-genf",
+    "lat": 46.20081406669731,
+    "lng": 6.147968541473806,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:02:46.095Z",
+    "id": "das-weisse-frauelein-vom-schloss-jussy",
+    "lat": 46.257628516117265,
+    "lng": 6.251211333552579,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:05:10.465Z",
+    "id": "die-heldentat-der-mere-royaume-escalade-1602",
+    "lat": 46.20378101002966,
+    "lng": 6.142944326984606,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:11:26.318Z",
+    "id": "die-zwerge-vom-freiberg-kaerpf",
+    "lat": 46.95101975988694,
+    "lng": 8.983429414331074,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:15:28.128Z",
+    "id": "der-feurige-stier-vom-kloentalersee",
+    "lat": 47.01916582846504,
+    "lng": 8.96206518825474,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:23:30.116Z",
+    "id": "das-kopflose-ro-der-gei-er-der-f-yer-glar",
+    "lat": 46.964078711557434,
+    "lng": 9.034506920384976,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:30:02.234Z",
+    "id": "das-verlorene-tal-grau",
+    "lat": 45.962163004584745,
+    "lng": 7.8651796456303416,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:32:52.600Z",
+    "id": "johannes-chaldar-grau",
+    "lat": 46.59369663930122,
+    "lng": 9.422112315688066,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:37:25.592Z",
+    "id": "der-schatz-auf-der-hohen-rialt-grau",
+    "lat": 46.691820745988835,
+    "lng": 9.444299997030543,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:41:29.017Z",
+    "id": "der-riese-von-mont-terri",
+    "lat": 47.39145308840947,
+    "lng": 7.161199286499128,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:48:27.104Z",
+    "id": "das-wunder-vom-pilatussee-der-gepeitschte-geist",
+    "lat": 46.97323301598309,
+    "lng": 8.205387632807161,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:50:08.899Z",
+    "id": "selbstmord-des-pilatus-luze",
+    "lat": 46.973437995564254,
+    "lng": 8.205173056109576,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:53:55.618Z",
+    "id": "das-verbot-am-pilatussee-und-der-geist-des-pontius-pilatus",
+    "lat": 46.97277913982568,
+    "lng": 8.205167697431227,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T12:57:45.753Z",
+    "id": "die-rache-des-t-rst-oder-wie-sich-die-kobolde-des-santenberg-luze",
+    "lat": 47.19202976483554,
+    "lng": 8.015102316993493,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:02:54.529Z",
+    "id": "der-verschwundene-herzog-neuen",
+    "lat": 46.80834518172996,
+    "lng": 6.633625486317936,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:08:09.587Z",
+    "id": "die-geister-der-allweg-kapelle-ennetmoos",
+    "lat": 46.958168559470316,
+    "lng": 8.33825498435864,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:12:20.900Z",
+    "id": "das-wunder-von-truebesee",
+    "lat": 46.793220373031176,
+    "lng": 8.388633835563864,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:15:06.138Z",
+    "id": "der-unheimliche-jaeger-vom-bannalpsee",
+    "lat": 46.86990683936539,
+    "lng": 8.425887441335167,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:18:16.339Z",
+    "id": "das-gespenst-von-der-ruine-landenberg-sarnen",
+    "lat": 46.89686253219989,
+    "lng": 8.243866788447706,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:24:20.326Z",
+    "id": "die-kirche-zu-st-wolfgang-zug",
+    "lat": 47.1870911984857,
+    "lng": 8.427996607892043,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:27:34.910Z",
+    "id": "das-teufelsbr-ckli-am-etzelpass",
+    "lat": 47.16753401394181,
+    "lng": 8.767109517860408,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:31:28.164Z",
+    "id": "das-wunder-am-lauerzersee-goldauer-bergsturz",
+    "lat": 47.050798120587395,
+    "lng": 8.557807660363844,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:40:50.814Z",
+    "id": "der-bund-in-r-tli-schw",
+    "lat": 46.969223225120516,
+    "lng": 8.592388966949947,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:50:25.837Z",
+    "id": "die-weisse-dame-von-schloss-schauensee-kuessnacht",
+    "lat": 47.08207852920442,
+    "lng": 8.448686597047613,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T13:53:19.664Z",
+    "id": "das-gespenst-von-schloss-buchegg",
+    "lat": 47.141324845607166,
+    "lng": 7.5099010817107335,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T14:28:06.157Z",
+    "id": "spielmann-steucheler-paracelsus-stga",
+    "lat": 47.42380445343121,
+    "lng": 9.374343997062702,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T14:33:56.535Z",
+    "id": "die-sage-vom-brueckenmaennlein-von-rapperswil-hurden",
+    "lat": 47.223414437252536,
+    "lng": 8.815306139372057,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T14:38:28.459Z",
+    "id": "die-feen-der-piora-hochebene",
+    "lat": 46.53511683709449,
+    "lng": 8.681311522841877,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T14:43:15.835Z",
+    "id": "die-hexe-vom-monte-lema",
+    "lat": 46.04060903734679,
+    "lng": 8.832840714531288,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T15:04:25.867Z",
+    "id": "der-geschundene-senn-uri",
+    "lat": 46.899968247610055,
+    "lng": 8.70996774158226,
+    "status": "exakt"
+  },
+  {
+    "timestamp": "2026-08-28T15:13:12.270Z",
+    "id": "der-grenzlauf-uri",
+    "lat": 46.88080591182267,
+    "lng": 8.957639694096837,
+    "status": "exakt"
+  }
+]
