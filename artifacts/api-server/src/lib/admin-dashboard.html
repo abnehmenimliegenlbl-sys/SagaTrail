@@ -965,7 +965,10 @@ window.cancelGpsSave = function() {
 var _origSwitchTab = window.switchTab;
 window.switchTab = function(name, btn) {
   _origSwitchTab(name, btn);
-  if (name === 'gps-check' && token()) loadGpsCheck();
+  if (name === 'gps-check' && token()) {
+    loadGpsCheck();
+    setTimeout(function(){ if (_gpsMap) _gpsMap.invalidateSize(); }, 100);
+  }
 };
 })();
 </script>
