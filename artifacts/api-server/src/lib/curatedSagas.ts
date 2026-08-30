@@ -597,8 +597,8 @@ const URI_NEW_SAGAS: InsertCatalogSaga[] = [
     quelle: null,
     source:
       "Aegidius Tschudi: Chronicon Helveticum (geschrieben im 16. Jahrhundert, gedruckt 1734) sowie Johannes von Müller: Geschichten Schweizerischer Eidgenossenschaft (1786).",
-    lat: 46.881666,
-    lng: 8.644166,
+    lat: 46.881840595752934,
+    lng: 8.643962146602012,
     koordinatenSicherheit: "exakt",
     isAnchorPlace: true,
     fotoUrl: null,
@@ -685,8 +685,8 @@ const URI_NEW_SAGAS: InsertCatalogSaga[] = [
     quelle: null,
     source:
       "Eduard Hoffmann-Krayer: Schriften zur Schweizer Volkskunde (spätes 19. Jahrhundert).",
-    lat: 46.875277,
-    lng: 8.663055,
+    lat: 46.874962984919144,
+    lng: 8.662427328486002,
     koordinatenSicherheit: "exakt",
     isAnchorPlace: true,
     fotoUrl: null,
@@ -713,8 +713,8 @@ const URI_NEW_SAGAS: InsertCatalogSaga[] = [
     },
     source:
       "M. Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862) sowie Franz Josef Vonmatt: Sagen des Kantons Uri (19. Jahrhundert).",
-    lat: 46.862417,
-    lng: 8.629881,
+    lat: 46.862226238198744,
+    lng: 8.629795166358955,
     koordinatenSicherheit: "exakt",
     isAnchorPlace: true,
     fotoUrl: null,

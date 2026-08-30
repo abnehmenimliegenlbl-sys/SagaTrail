@@ -214,7 +214,7 @@ export const SAGAS: Saga[] = ([
     "fundstelleUrl": "https://reader.digitale-sammlungen.de/resolve/display/bsb10453839.html"
   },
   "source": "M. Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862) sowie Franz Josef Vonmatt: Sagen des Kantons Uri (19. Jahrhundert)",
-  "coordinates": { "lat": 46.862417, "lng": 8.629881 },
+  "coordinates": { "lat": 46.862226238198744, "lng": 8.629795166358955 },
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
@@ -268,7 +268,7 @@ export const SAGAS: Saga[] = ([
     "fundstelleUrl": "https://de.wikipedia.org/wiki/Weisses_Buch_von_Sarnen"
   },
   "source": "Hans Schriber: Das Weisse Buch von Sarnen (um 1470)",
-  "coordinates": { "lat": 46.9726, "lng": 8.6112 },
+  "coordinates": { "lat": 46.881840595752934, "lng": 8.643962146602012 },
   "koordinatenSicherheit": "exakt",
   "isAnchorPlace": true
 },
