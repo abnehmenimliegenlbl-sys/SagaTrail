@@ -80,9 +80,7 @@ const ATTINGHAUSEN_SUMMARIES = {
 } satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
 
 const PRESERVED_TITLE_PARENTHETICALS = new Set([
-  "Der Riese vom Säntis",
   "Die Nixe vom Laufen",
-  "Der Riese von Balm",
   "Gründung des Fraumünsters",
 ]);
 
