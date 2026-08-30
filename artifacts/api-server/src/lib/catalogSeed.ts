@@ -1,5 +1,8 @@
 import { db, catalogRoutesTable, catalogSagasTable } from "@workspace/db";
-import { CURATED_SAGAS } from "./curatedSagas";
+import {
+  CURATED_SAGA_REPLACEMENT_IDS,
+  CURATED_SAGAS,
+} from "./curatedSagas";
 import { notInArray, sql } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -16,20 +19,25 @@ const BATCH_SIZE = 20;
  */
 /** Normalisiert einen Saga-Eintrag aus der JSON so dass alle NOT-NULL-Felder belegt sind. */
 function normalizeForInsert(s: (typeof CURATED_SAGAS)[number]) {
+  const rawSummaries = (s as Record<string, unknown>).summaries;
   return {
     ...s,
     // mood ist NOT NULL in der DB; JSON-Einträge können es weglassen
     mood: (s as Record<string, unknown>).mood as string ?? "",
-    // summaries: im JSON ein Objekt, in der DB TEXT (JSON-serialisiert)
-    summaries:
-      typeof s.summaries === "string"
-        ? s.summaries
-        : JSON.stringify(s.summaries ?? {}),
+    // summaries bleibt als JSON-Objekt für die jsonb-Spalte erhalten.
+    summaries: (typeof rawSummaries === "string"
+      ? JSON.parse(rawSummaries)
+      : rawSummaries ?? {}) as typeof s.summaries,
   };
 }
 
 export async function seedCatalog(): Promise<void> {
   const normalized = CURATED_SAGAS.map(normalizeForInsert);
+  const replacementIds = sql.join(
+    CURATED_SAGA_REPLACEMENT_IDS.map((id) => sql`${id}`),
+    sql`, `,
+  );
+  const isContentReplacement = sql`${catalogSagasTable.id} IN (${replacementIds})`;
   for (let i = 0; i < normalized.length; i += BATCH_SIZE) {
     const batch = normalized.slice(i, i + BATCH_SIZE);
     await db
@@ -51,8 +59,15 @@ export async function seedCatalog(): Promise<void> {
           // Koordinaten und Sicherheitsstatus sind redaktionelle Laufzeitdaten.
           // Nicht aus dem Bundle überschreiben: Admin-Verifizierungen müssen
           // einen Server-Neustart und ein erneutes Seeding überleben.
-          isAnchorPlace: sql`excluded.is_anchor_place`,
-          ortName: sql`excluded.ort_name`,
+          // Eine ausdrücklich ersetzte Sage ist die Ausnahme: Ihre neuen
+          // Ortsdaten und das neue Foto gehören zum neuen redaktionellen Inhalt.
+          lat: sql`CASE WHEN ${isContentReplacement} THEN excluded.lat ELSE ${catalogSagasTable.lat} END`,
+          lng: sql`CASE WHEN ${isContentReplacement} THEN excluded.lng ELSE ${catalogSagasTable.lng} END`,
+          koordinatenSicherheit: sql`CASE WHEN ${isContentReplacement} THEN excluded.koordinaten_sicherheit ELSE ${catalogSagasTable.koordinatenSicherheit} END`,
+          fotoUrl: sql`CASE WHEN ${isContentReplacement} THEN excluded.foto_url ELSE ${catalogSagasTable.fotoUrl} END`,
+          fotoAttribution: sql`CASE WHEN ${isContentReplacement} THEN excluded.foto_attribution ELSE ${catalogSagasTable.fotoAttribution} END`,
+          isAnchorPlace: sql`CASE WHEN ${isContentReplacement} THEN excluded.is_anchor_place ELSE ${catalogSagasTable.isAnchorPlace} END`,
+          ortName: sql`CASE WHEN ${isContentReplacement} THEN excluded.ort_name ELSE ${catalogSagasTable.ortName} END`,
         },
       });
   }
