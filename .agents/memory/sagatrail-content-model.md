@@ -11,9 +11,15 @@ Saga data is intentionally duplicated in two leaf packages (they cannot import e
 1. Server: `artifacts/api-server/src/lib/curatedSagas.ts` (`CURATED_SAGAS`) — the authoritative catalog seed.
 2. Mobile: `artifacts/mobile/constants/sagas.ts` — the offline bundled fallback.
 
-Both must stay in sync. Each saga needs per-language `summaries` (all 8 languages) inline on the saga object — NOT in a separate storyContent map anymore.
+Both must stay in sync. Each saga needs per-language `summaries` (all 9 supported languages, including `gsw`) inline on the saga object — NOT in a separate storyContent map anymore.
 
 **Why:** `storyEngine` reads `saga.summaries[lang]?.text ?? saga.summary`; a missing language key silently serves the German summary inside an otherwise-localized narration. So fill all 8 language summaries in lockstep.
+
+When a saga is editorially replaced by unrelated content, use a new stable ID and retire the old ID from the active catalog rather than mapping the new story onto a semantically unrelated record. This intentionally leaves old saved references orphaned instead of showing the wrong legend.
+
+**Why:** IDs are internal references, but preserving a misleading ID makes routes, cached stories, and user history appear to point to the wrong saga.
+
+**How to apply:** Keep old IDs only when the replacement is the same saga/content lineage. For a complete unrelated replacement, add a new ID, remove the old ID from `CURATED_SAGAS`, and preserve explicitly exempted entries.
 
 ## Routes are online-only (NO route seed)
 - Sagas have a bundled offline seed; ROUTES DO NOT. There is no route seed in the mobile bundle and no offline route fallback — routes come exclusively live per canton from the connected sources (OSM + swisstopo). `constants/routes.ts` is types-only (`HikingRoute`, `CantonWithRoutes`).
