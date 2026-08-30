@@ -798,9 +798,7 @@ const BERN_NEW_SAGAS: InsertCatalogSaga[] = [
   },
 ];
 
-const PRESERVED_TITLE_PARENTHETICALS = new Set([
-  "Die Nixe vom Laufen",
-  "Gründung des Fraumünsters",
+const PRESERVED_TITLE_PARENTHETICALS = new Set<string>([
 ]);
 
 function cleanSagaTitle(title: string): string {

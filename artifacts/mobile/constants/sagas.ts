@@ -79,9 +79,7 @@ const ATTINGHAUSEN_SUMMARIES = {
   },
 } satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
 
-const PRESERVED_TITLE_PARENTHETICALS = new Set([
-  "Die Nixe vom Laufen",
-  "Gründung des Fraumünsters",
+const PRESERVED_TITLE_PARENTHETICALS = new Set<string>([
 ]);
 
 export const SAGAS: Saga[] = ([
