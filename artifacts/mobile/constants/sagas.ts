@@ -1846,6 +1846,28 @@ export const SAGAS: Saga[] = ([
   "isAnchorPlace": true
 },
 {
+  "id": "die-herkunft-der-schwyzer-schwy",
+  "title": "Das Gespenst im Ital-Reding-Hof",
+  "canton": "Schwyz",
+  "coreMotif": "Späte Reue verfolgt den stolzen Hausherrn als Gespenst",
+  "bildmotiv": "Ital-Reding-Hofstatt Schwyz, Gartensaal, Patrizierhaus",
+  "mood": "Unheimlich und bedrückend",
+  "summary": "Der prächtige Ital-Reding-Hof in Schwyz gehört zu den bedeutendsten Patrizierhäusern der Schweiz. Erbaut wurde das Herrenhaus im 17. Jahrhundert von Ital Reding, einem mächtigen und strengen Militärführer (Landammann). Reding war bekannt für seine eiserne Disziplin, aber auch für seinen unermesslichen Stolz. Er duldete im Haus keinen Widerspruch, weder von seinen Bediensteten noch von seinen eigenen Söhnen.\n\nEiner seiner Diener wurde fälschlicherweise beschuldigt, ein wertvolles Silberbesteck aus der Prunkstube gestohlen zu haben. Obwohl der junge Mann seine Unschuld beteurte, liess der unbarmherzige Hausherr ihn ohne ordentliches Gericht im tiefen Keller des Hauses an die Wand ketten und bei Wasser und Brot vergessen. Der Diener verstarb schliesslich in der feuchten Dunkelheit. Monate später fand man das Besteck durch Zufall hinter einer losen Wandverkleidung – es war lediglich verlegt worden. Ital Reding zeigte jedoch keine Reue.\n\nNach Redings Tod begann der Spuk im Herrenhaus. Bedienstete berichteten, dass in den prachtvollen, holzgetäfelten Zimmern (wie dem berühmten Gartensaal) nachts plötzlich Schritte zu hören waren, obwohl niemand dort war. Bis heute soll der Geist des stolzen Ital Reding in einer altmodischen Rüstung durch das Gebäude wandern. Er öffnet lautlos Türen, bläst brennende Kerzen aus und seufzt schwer in den Ecken der Räume – geplagt von der späten Reue über das Unrecht, das er in seinem stolzen Haus zugelassen hat.",
+  "summaries": {
+    "de": {
+      "text": "Der prächtige Ital-Reding-Hof in Schwyz gehört zu den bedeutendsten Patrizierhäusern der Schweiz. Erbaut wurde das Herrenhaus im 17. Jahrhundert von Ital Reding, einem mächtigen und strengen Militärführer (Landammann). Reding war bekannt für seine eiserne Disziplin, aber auch für seinen unermesslichen Stolz. Er duldete im Haus keinen Widerspruch, weder von seinen Bediensteten noch von seinen eigenen Söhnen.\n\nEiner seiner Diener wurde fälschlicherweise beschuldigt, ein wertvolles Silberbesteck aus der Prunkstube gestohlen zu haben. Obwohl der junge Mann seine Unschuld beteurte, liess der unbarmherzige Hausherr ihn ohne ordentliches Gericht im tiefen Keller des Hauses an die Wand ketten und bei Wasser und Brot vergessen. Der Diener verstarb schliesslich in der feuchten Dunkelheit. Monate später fand man das Besteck durch Zufall hinter einer losen Wandverkleidung – es war lediglich verlegt worden. Ital Reding zeigte jedoch keine Reue.\n\nNach Redings Tod begann der Spuk im Herrenhaus. Bedienstete berichteten, dass in den prachtvollen, holzgetäfelten Zimmern (wie dem berühmten Gartensaal) nachts plötzlich Schritte zu hören waren, obwohl niemand dort war. Bis heute soll der Geist des stolzen Ital Reding in einer altmodischen Rüstung durch das Gebäude wandern. Er öffnet lautlos Türen, bläst brennende Kerzen aus und seufzt schwer in den Ecken der Räume – geplagt von der späten Reue über das Unrecht, das er in seinem stolzen Haus zugelassen hat.",
+      "reviewEmpfohlen": false
+    }
+  },
+  "altersstufenHinweis": "Die ungerechte Behandlung des Dieners nicht ausschmücken; den Spuk und die späte Reue als unheimliche Folge erzählen.",
+  "source": "Sagen der Innerschweiz / Archiv der Stiftung Ital Reding-Hof.",
+  "coordinates": { "lat": 47.02178722446387, "lng": 8.655794545200784 },
+  "koordinatenSicherheit": "exakt",
+  "isAnchorPlace": true,
+  "fotoUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6d/Ital-Reding-Hofstatt_Schwyz_%282022%29.jpg/1280px-Ital-Reding-Hofstatt_Schwyz_%282022%29.jpg?utm_source=de.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "fotoAttribution": "Wikimedia Commons"
+},
+{
   "id": "die-schweizer-in-fremden-kriegsdiensten-neuen",
   "title": "Die Feen der Grotte aux Fées",
   "canton": "Neuenburg",
