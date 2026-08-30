@@ -798,6 +798,10 @@ const BERN_NEW_SAGAS: InsertCatalogSaga[] = [
   },
 ];
 
+function cleanSagaTitle(title: string): string {
+  return title.replace(/\s*\([^()]*\)/g, "").trim();
+}
+
 const RETIRED_SAGA_IDS = new Set([
   "bl-melisalp-mehr-als-eine-gegend-der-schweiz-erz-hlt-di-bern",
   "wilhelm-tell-uri",
@@ -889,4 +893,7 @@ export const CURATED_SAGAS: InsertCatalogSaga[] = [
 ].map((saga) => ({
   ...saga,
   ...(REPLACEMENTS[saga.id] ?? {}),
+})).map((saga) => ({
+  ...saga,
+  title: cleanSagaTitle(saga.title),
 }));

@@ -1891,4 +1891,9 @@ export const SAGAS: Saga[] = ([
   "isAnchorPlace": true
 },
 
-] as Saga[]).filter((saga) => saga.id !== "die-rose-von-mariastein");
+] as Saga[])
+  .map((saga) => ({
+    ...saga,
+    title: saga.title.replace(/\s*\([^()]*\)/g, "").trim(),
+  }))
+  .filter((saga) => saga.id !== "die-rose-von-mariastein");
