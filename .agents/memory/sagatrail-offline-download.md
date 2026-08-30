@@ -7,7 +7,7 @@ description: How the server catalog, offline-first story resolution, and offline
 
 ## Catalog data flow (CatalogContext)
 - Sagas/cantons come from the API `getCatalog()` (baked `/api` prefix; only the host is set once via `configureApiClient()` from `EXPO_PUBLIC_DOMAIN`). `/catalog` returns `routes: []` — routes are NOT part of the catalog anymore.
-- SAGAS are three-tier offline-first, surfaced as `source`: `server` -> cache to AsyncStorage -> `cache` -> bundled `seed` (constants/sagas only). The cache-freshness gate keys on `sagas.length`. ROUTES have no seed and no offline fallback (see the content-model memory). Screens consume `useCatalog()` helpers (getRoute, getSagaForRoute, getRouteBySaga, getRoutesByCanton, getSaga, cantons); the route helpers now read from the dynamic per-canton cache, not a bundled route seed.
+- SAGAS are three-tier offline-first, surfaced as `source`: `server` -> cache to AsyncStorage -> `cache` -> bundled `seed` (constants/sagas only). The cache key must be versioned when catalog content changes; saga count is not a sufficient freshness signal because editorial replacements can keep the same count. ROUTES have no seed and no offline fallback (see the content-model memory). Screens consume `useCatalog()` helpers (getRoute, getSagaForRoute, getRouteBySaga, getRoutesByCanton, getSaga, cantons); the route helpers now read from the dynamic per-canton cache, not a bundled route seed.
 - **Why:** server DTOs (CatalogSaga/StoryChapter) are structurally identical to the app types, so mapping is an identity cast — do not re-model.
 
 ## Dynamic per-canton catalog (real OSM routes + nearest curated saga)
