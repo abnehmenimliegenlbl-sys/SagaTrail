@@ -100,8 +100,58 @@ const DEVILS_STONE_SUMMARIES: NonNullable<InsertCatalogSaga["summaries"]> = {
   },
 };
 
+const HASENMATT_DWARFS_SUMMARIES: NonNullable<
+  InsertCatalogSaga["summaries"]
+> = {
+  de: {
+    text:
+      "Unterhalb des Hasenmatt-Gipfels lebten einst hilfsbereite Erdmännlein, die kranken Bergbauern halfen und das Vieh vor Unwettern schützten. Als übermütige Burschen die Wichtel verspotteten und vertrieben, zogen sie sich für immer in die Tiefen des Berges zurück.",
+    reviewEmpfohlen: false,
+  },
+  gsw: {
+    text:
+      "Unterhalb des Hasenmatt-Gipfels lebten einst hilfsbereite Erdmännlein, die den Bergbauern und Sennen heimlich halfen. Sie molken das Vieh, schützten es vor Unwettern und verlangten nur eine Schale Milch oder Nidle. Nachdem übermütige Burschen sie verspottet und vertrieben hatten, verschwanden sie für immer in den Tiefen des Berges.",
+    reviewEmpfohlen: false,
+  },
+  fr: {
+    text:
+      "Sous le sommet de la Hasenmatt vivaient autrefois de petits êtres bienveillants qui aidaient les paysans de montagne malades et protégeaient le bétail des orages. Après que de jeunes garçons les eurent ridiculisés et chassés, ils se retirèrent pour toujours dans les profondeurs de la montagne.",
+    reviewEmpfohlen: false,
+  },
+  it: {
+    text:
+      "Sotto la vetta della Hasenmatt vivevano un tempo piccoli esseri benevoli che aiutavano i contadini di montagna malati e proteggevano il bestiame dai temporali. Dopo essere stati derisi e cacciati da alcuni giovani, si ritirarono per sempre nelle profondità della montagna.",
+    reviewEmpfohlen: false,
+  },
+  en: {
+    text:
+      "Long ago, kind little earth folk lived beneath the summit of Hasenmatt, helping sick mountain farmers and protecting their livestock from storms. After some reckless young men mocked and drove them away, the little people withdrew forever into the depths of the mountain.",
+    reviewEmpfohlen: false,
+  },
+  zh: {
+    text:
+      "很久以前，哈森马特山顶下住着一群善良的小精灵，他们帮助生病的山民，也在暴风雨来临前保护牲畜。几个轻浮的年轻人嘲笑并驱赶了他们，于是这些小精灵永远退回了山的深处。",
+    reviewEmpfohlen: false,
+  },
+  es: {
+    text:
+      "Hace mucho tiempo, unos pequeños seres bondadosos vivían bajo la cima de Hasenmatt, ayudando a los campesinos de montaña enfermos y protegiendo el ganado de las tormentas. Después de que unos jóvenes imprudentes se burlaran de ellos y los expulsaran, se retiraron para siempre a las profundidades de la montaña.",
+    reviewEmpfohlen: false,
+  },
+  pt: {
+    text:
+      "Há muito tempo, pequenos seres bondosos viviam sob o cume de Hasenmatt, ajudando os camponeses das montanhas doentes e protegendo o gado das trovoadas. Depois de alguns jovens imprudentes troçarem deles e os expulsarem, retiraram-se para sempre para as profundezas da montanha.",
+    reviewEmpfohlen: false,
+  },
+  ru: {
+    text:
+      "Когда-то под вершиной Хазенматт жили добрые маленькие духи, которые помогали заболевшим горным крестьянам и защищали скот от гроз. После того как несколько легкомысленных юношей стали насмехаться над ними и прогнали их, духи навсегда скрылись в глубинах горы.",
+    reviewEmpfohlen: false,
+  },
+};
+
 /**
- * Redaktionelle Ersatztexte für zwei falsch zugeordnete Solothurn-Einträge.
+ * Redaktionelle Ersatztexte für falsch zugeordnete Solothurn-Einträge.
  * Die bestehenden IDs bleiben erhalten, damit gespeicherte Routen und
  * Nutzerfortschritte weiterhin auf dieselben Sagen zeigen.
  */
@@ -143,6 +193,26 @@ const REPLACEMENTS: Record<string, Partial<InsertCatalogSaga>> = {
       "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Kellerwald_008.jpg/1280px-Kellerwald_008.jpg?utm_source=de.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     fotoAttribution: "Wikimedia Commons",
     ortName: "Teufelsstein, Bellacher Wald",
+  },
+  "die-durstigen-eidgenossen-solot": {
+    title: "Die Erdmännlein auf der Hasenmatt",
+    canton: "Solothurn",
+    coreMotif: "Undank vertreibt hilfreiche Berggeister",
+    bildmotiv: "Hasenmatt, Jura, Erdmännlein, Höhlen und Felsspalten",
+    mood: "Mystisch und melancholisch",
+    summary:
+      "Der genaue Ort: Die Höhlen, Felsspalten und Karstlöcher direkt unterhalb des Gipfels der Hasenmatt (1445 m ü. M.), dem höchsten Punkt des Kantons Solothurn in der Gemeinde Selzach. Tief im Inneren der Hasenmatt, verborgen in finsteren Felsklüften, lebte vor langen Zeiten ein kleines, friedliches Volk von Erdmännlein (Wichteln). Sie waren scheu und zeigten sich den Menschen nur selten, doch sie besassen ein ausserordentlich gutes Herz für die Bergbauern und Sennen. War ein Bauer krank, erledigten die Wichtel nachts heimlich das Melken. Drohte ein schweres Sommergewitter, trieben sie das Vieh rechtzeitig in den sicheren Stall oder schichteten das frisch gemähte Heu zu Schobern auf, bevor der Regen es verderben konnte. Als Dank verlangten sie nie Geld; die Bauern stellten ihnen lediglich abends eine Schale frische Nidle (Rahm) oder Milch vor die Höhleneingänge. Das friedliche Zusammenleben endete, als eine Gruppe junger, übermütiger Burschen aus dem Tal beschloss, sich über die kleinen Wesen lustig zu machen. Sie versteckten sich hinter den Felsen, streuten Asche auf die Wege, um die Spuren der Wichtel zu verraten, und bewarfen die Höhleneingänge mit Steinen. Als die Erdmännlein heraustraten, wurden sie mit lautem Spott und gellendem Gelächter vertrieben. Tief gekränkt über diesen Undank der Menschen zogen sich die Wichtel in derselben Nacht komplett zurück. Sie sammelten ihre wenigen Habseligkeiten und wanderten für immer durch die tiefsten Spalten in das Herz des Berges. Seit diesem Tag hat kein Mensch auf der Hasenmatt je wieder ein Erdmännlein gesehen, und die Bauern mussten ihre schwere Arbeit fortan ganz alleine bewältigen.",
+    summaries: HASENMATT_DWARFS_SUMMARIES,
+    source:
+      "Schweizerische Gesellschaft für Volkskunde (SGV): Archivierte Feldaufnahmen zu den Jura-Erdmännlein.",
+    lat: 47.242107407634336,
+    lng: 7.450791968901107,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/20260620_Hasenmatt-6.tif/lossy-page1-1280px-20260620-Hasenmatt-6.tif.jpg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    fotoAttribution: "Wikimedia Commons",
+    ortName: "Hasenmatt, Selzach",
   },
 };
 
