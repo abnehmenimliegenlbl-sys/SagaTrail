@@ -150,6 +150,578 @@ const HASENMATT_DWARFS_SUMMARIES: NonNullable<
   },
 };
 
+const URI_NEW_SAGA_SUMMARIES: Record<
+  string,
+  NonNullable<InsertCatalogSaga["summaries"]>
+> = {
+  teufelsbruecke: {
+    de: {
+      text:
+        "An der Teufelsbrücke in der Schöllenenschlucht baute der Teufel den Urnern eine steinerne Brücke und verlangte dafür die Seele des ersten Menschen, der sie überquerte. Die listigen Urner schickten jedoch einen Geissbock hinüber. Als der Teufel die Brücke zerstören wollte, nahm ihm ein eingeritztes Kreuz seine Kraft.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "An der Teufelsbrücke in der Schöllenenschlucht baute der Teufel den Urnern eine steinerne Brücke und verlangte dafür die Seele des ersten Menschen, der sie überquerte. Die listigen Urner schickten jedoch einen Geissbock hinüber. Als der Teufel die Brücke zerstören wollte, nahm ihm ein eingeritztes Kreuz seine Kraft.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Au pont du Diable dans les gorges de Schöllenen, le diable construisit un pont de pierre pour les Uranais et exigea en échange l’âme du premier être humain qui le traverserait. Les Uranais rusés envoyèrent toutefois un bouc. Lorsque le diable voulut détruire le pont, une croix gravée lui ôta ses forces.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Sul Ponte del Diavolo nella gola della Schöllenen, il diavolo costruì per gli urani un ponte di pietra e chiese in cambio l’anima del primo essere umano che lo avrebbe attraversato. Gli astuti urani fecero però passare un caprone. Quando il diavolo volle distruggere il ponte, una croce incisa gli tolse ogni forza.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "At the Devil’s Bridge in the Schöllenen Gorge, the devil built the people of Uri a stone bridge and demanded the soul of the first human to cross it as payment. The cunning people of Uri sent a billy goat instead. When the devil tried to destroy the bridge, a carved cross robbed him of his strength.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "在舍勒嫩峡谷的魔鬼桥，魔鬼为乌里人建造了一座石桥，并要求第一个过桥的人以灵魂作为报酬。然而，机智的乌里人让一只公山羊先过了桥。当魔鬼想摧毁桥梁时，岩石上刻下的十字架使他失去了力量。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "En el Puente del Diablo, en la garganta de Schöllenen, el diablo construyó un puente de piedra para los habitantes de Uri y exigió como pago el alma del primer ser humano que lo cruzara. Los astutos uraneses enviaron en su lugar un macho cabrío. Cuando el diablo quiso destruir el puente, una cruz grabada le arrebató sus fuerzas.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Na Ponte do Diabo, no desfiladeiro de Schöllenen, o diabo construiu uma ponte de pedra para os habitantes de Uri e exigiu como pagamento a alma do primeiro ser humano que a atravessasse. Os astutos uraneses fizeram passar um bode em seu lugar. Quando o diabo quis destruir a ponte, uma cruz gravada tirou-lhe as forças.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "На Чёртовом мосту в ущелье Шёлленен дьявол построил для жителей Ури каменный мост и потребовал в награду душу первого человека, который по нему пройдёт. Хитрые урицы вместо этого провели через мост козла. Когда дьявол захотел разрушить мост, высеченный крест лишил его силы.",
+      reviewEmpfohlen: false,
+    },
+  },
+  stier: {
+    de: {
+      text:
+        "Ein Ungeheuer im Seelisbergsee bedrohte die Herden von Uri. Die Bauern zogen deshalb sieben Jahre lang einen erstgeborenen Stier mit bester Milch auf. Der gewaltige Stier besiegte das Monster, starb aber selbst an seinen Wunden; sein Kopf wurde zum Symbol im Urner Kantonswappen.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "Ein Ungeheuer im Seelisbergsee bedrohte die Herden von Uri. Die Bauern zogen deshalb sieben Jahre lang einen erstgeborenen Stier mit bester Milch auf. Der gewaltige Stier besiegte das Monster, starb aber selbst an seinen Wunden; sein Kopf wurde zum Symbol im Urner Kantonswappen.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Un monstre du lac de Seelisberg terrorisait les troupeaux d’Uri. Les paysans élevèrent donc pendant sept ans un premier veau mâle avec le meilleur lait. Le taureau colossal vainquit le monstre, mais mourut lui-même de ses blessures; sa tête devint un symbole des armoiries du canton d’Uri.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Un mostro del lago di Seelisberg terrorizzava le mandrie di Uri. I contadini allevarono quindi per sette anni un vitello maschio primogenito con il latte migliore. Il toro gigantesco sconfisse il mostro, ma morì a sua volta per le ferite; la sua testa divenne un simbolo dello stemma del canton Uri.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "A monster in Lake Seelisberg threatened Uri’s herds. The farmers therefore raised a firstborn bull for seven years on the finest milk. The mighty bull defeated the beast but died from its wounds; its head became a symbol on the coat of arms of Uri.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "塞利斯贝格湖中的怪物威胁着乌里的牲畜。于是农民用最好的母乳喂养一头头生公牛，整整七年。强壮的公牛击败了怪物，却也因伤势死去；它的头颅后来成为乌里州徽上的象征。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "Un monstruo del lago de Seelisberg amenazaba los rebaños de Uri. Por ello, los campesinos criaron durante siete años un toro primogénito alimentado únicamente con la mejor leche. El poderoso toro venció a la bestia, pero murió por sus heridas; su cabeza se convirtió en un símbolo del escudo de Uri.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Um monstro no lago de Seelisberg ameaçava os rebanhos de Uri. Por isso, os camponeses criaram durante sete anos um touro primogénito, alimentado apenas com o melhor leite. O poderoso touro derrotou a criatura, mas morreu devido aos ferimentos; a sua cabeça tornou-se um símbolo do brasão de Uri.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "Чудовище в озере Зелисберг угрожало стадам Ури. Поэтому крестьяне семь лет выкармливали первородного быка лучшим молоком. Могучий бык победил чудовище, но сам умер от ран; его голова стала символом на гербе кантона Ури.",
+      reviewEmpfohlen: false,
+    },
+  },
+  tell: {
+    de: {
+      text:
+        "In Altdorf musste Wilhelm Tell vor dem Hut des Landvogts nicht niederknien. Zur Strafe sollte er seinem Sohn einen Apfel vom Kopf schiessen. Der Meisterschütze traf den Apfel, verriet aber mit einem zweiten Pfeil seinen Widerstand gegen Gesslers Herrschaft.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "In Altdorf musste Wilhelm Tell vor dem Hut des Landvogts nicht niederknien. Zur Strafe sollte er seinem Sohn einen Apfel vom Kopf schiessen. Der Meisterschütze traf den Apfel, verriet aber mit einem zweiten Pfeil seinen Widerstand gegen Gesslers Herrschaft.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "À Altdorf, Guillaume Tell refusa de s’agenouiller devant le chapeau du bailli. Pour le punir, celui-ci lui ordonna de tirer une pomme posée sur la tête de son fils. Le maître arbalétrier atteignit la pomme, mais révéla sa résistance à Gessler avec une seconde flèche.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Ad Altdorf, Guglielmo Tell rifiutò di inginocchiarsi davanti al cappello del balivo. Per punirlo, il balivo gli ordinò di colpire con la balestra una mela posta sulla testa del figlio. Il tiratore centrò la mela, ma con una seconda freccia rivelò la sua resistenza a Gessler.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "In Altdorf, William Tell refused to kneel before the bailiff’s hat. As punishment, he was ordered to shoot an apple from his son’s head. The master marksman hit the apple, but a second arrow revealed his defiance of Gessler’s rule.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "在阿尔特多夫，威廉·泰尔拒绝向总督的帽子下跪。作为惩罚，他被命令用弩射下儿子头上的苹果。这位神射手击中了苹果，却用第二支箭表明了自己反抗盖斯勒统治的决心。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "En Altdorf, Guillermo Tell se negó a arrodillarse ante el sombrero del gobernador. Como castigo, le ordenaron disparar una manzana colocada sobre la cabeza de su hijo. El maestro tirador acertó, pero una segunda flecha reveló su resistencia al dominio de Gessler.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Em Altdorf, Guilherme Tell recusou-se a ajoelhar-se diante do chapéu do governador. Como castigo, ordenaram-lhe que disparasse uma maçã colocada sobre a cabeça do filho. O exímio atirador acertou, mas uma segunda flecha revelou a sua resistência ao domínio de Gessler.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "В Альтдорфе Вильгельм Телль отказался преклонить колено перед шляпой наместника. В наказание ему приказали сбить яблоко с головы сына. Искусный стрелок попал в яблоко, но второй стрелой показал своё сопротивление власти Гесслера.",
+      reviewEmpfohlen: false,
+    },
+  },
+  tellensprung: {
+    de: {
+      text:
+        "Nachdem Gessler Wilhelm Tell gefesselt hatte, geriet das Schiff auf dem Vierwaldstättersee in einen Föhnsturm. Tell übernahm das Steuer, sprang bei einer Felsplatte ans Ufer und stiess das Boot mit den Häschern zurück in die Fluten. So gewann er seine Freiheit.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "Nachdem Gessler Wilhelm Tell gefesselt hatte, geriet das Schiff auf dem Vierwaldstättersee in einen Föhnsturm. Tell übernahm das Steuer, sprang bei einer Felsplatte ans Ufer und stiess das Boot mit den Häschern zurück in die Fluten. So gewann er seine Freiheit.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Après que Gessler eut fait enchaîner Guillaume Tell, le bateau fut pris dans une tempête de foehn sur le lac des Quatre-Cantons. Tell prit la barre, sauta sur un rocher près du rivage et repoussa le bateau avec ses poursuivants dans les flots. Il retrouva ainsi sa liberté.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Dopo che Gessler fece incatenare Guglielmo Tell, la barca fu sorpresa da una tempesta di föhn sul lago dei Quattro Cantoni. Tell prese il timone, saltò su una lastra rocciosa vicino alla riva e respinse la barca con i suoi inseguitori tra i flutti. Così riconquistò la libertà.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "After Gessler had Tell bound, their boat was caught in a foehn storm on Lake Lucerne. Tell took the helm, leapt onto a rock near the shore, and pushed the boat with his captors back into the waves. In this way he won his freedom.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "盖斯勒把威廉·泰尔绑起来后，船在卢塞恩湖上遭遇了焚风暴。泰尔接过船舵，在靠近岸边的岩板上跳下船，并用脚把载着追捕者的船推回汹涌的湖水中。就这样，他重获了自由。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "Después de que Gessler encadenara a Guillermo Tell, la barca quedó atrapada en una tormenta de föhn en el lago de los Cuatro Cantones. Tell tomó el timón, saltó sobre una roca junto a la orilla y empujó la barca con sus captores de vuelta a las aguas. Así recuperó la libertad.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Depois de Gessler mandar prender Guilherme Tell, o barco foi apanhado por uma tempestade de föhn no lago dos Quatro Cantões. Tell tomou o leme, saltou para uma rocha junto à margem e empurrou o barco com os seus perseguidores de volta para as ondas. Assim conquistou a liberdade.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "После того как Гесслер заковал Вильгельма Телля, лодка попала на Фирвальдштетском озере в бурю фёна. Телль взялся за руль, прыгнул на скалу у берега и ногой оттолкнул лодку с преследователями обратно в волны. Так он обрёл свободу.",
+      reviewEmpfohlen: false,
+    },
+  },
+  schloss: {
+    de: {
+      text:
+        "Über Andermatt stand einst eine reiche, hochmütige Burg. Als ihre Herren einen frierenden Bettler abwiesen, begrub eine gewaltige Lawine das Schloss. Auf seinen Trümmern wuchs der Bannwald, der das Dorf seither vor weiteren Lawinen schützt.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "Über Andermatt stand einst eine reiche, hochmütige Burg. Als ihre Herren einen frierenden Bettler abwiesen, begrub eine gewaltige Lawine das Schloss. Auf seinen Trümmern wuchs der Bannwald, der das Dorf seither vor weiteren Lawinen schützt.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Au-dessus d’Andermatt se dressait autrefois un château riche et orgueilleux. Lorsque ses seigneurs rejetèrent un mendiant transi de froid, une avalanche gigantesque ensevelit le château. La forêt protectrice poussa sur ses ruines et protège depuis le village d’autres avalanches.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Sopra Andermatt sorgeva un tempo un castello ricco e superbo. Quando i suoi signori respinsero un mendicante infreddolito, una gigantesca valanga seppellì il castello. Sulle sue rovine crebbe il bosco protettivo che da allora difende il paese da altre valanghe.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "A wealthy, proud castle once stood above Andermatt. When its lords turned away a freezing beggar, a huge avalanche buried the castle. A protective forest grew over its ruins and has shielded the village from further avalanches ever since.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "安德马特上方曾有一座富有而傲慢的城堡。当城堡主人拒绝了一位冻得瑟瑟发抖的乞丐后，一场巨大的雪崩将城堡掩埋。废墟上长出了禁伐林，从此保护村庄免受更多雪崩侵袭。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "Sobre Andermatt se alzaba antaño un castillo rico y orgulloso. Cuando sus señores rechazaron a un mendigo aterido de frío, una enorme avalancha sepultó el castillo. Sobre sus ruinas creció el bosque protector que desde entonces resguarda al pueblo de nuevas avalanchas.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Acima de Andermatt erguia-se outrora um castelo rico e orgulhoso. Quando os seus senhores recusaram abrigo a um mendigo gelado, uma enorme avalanche sepultou o castelo. Sobre as ruínas cresceu a floresta protetora que desde então protege a aldeia de novas avalanches.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "Когда-то над Андерматтом стоял богатый и гордый замок. После того как его господа отвергли замерзающего нищего, огромная лавина погребла замок. На его руинах вырос защитный лес, который с тех пор оберегает деревню от новых лавин.",
+      reviewEmpfohlen: false,
+    },
+  },
+  schlangengeli: {
+    de: {
+      text:
+        "Am Sustenpass bewachte das Schlangengeli, eine riesige silberne Schlange mit goldener Krone, einen Schatz. Ehrliche Wanderer liess es in Ruhe, doch Schatzsucher wurden von giftigen Dämpfen und Steinschlägen vertrieben. Später zog sich das Wesen in den Steingletscher zurück.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "Am Sustenpass bewachte das Schlangengeli, eine riesige silberne Schlange mit goldener Krone, einen Schatz. Ehrliche Wanderer liess es in Ruhe, doch Schatzsucher wurden von giftigen Dämpfen und Steinschlägen vertrieben. Später zog sich das Wesen in den Steingletscher zurück.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Au col du Susten, le Schlangengeli, un serpent argenté gigantesque portant une petite couronne d’or, gardait un trésor. Il épargnait les voyageurs honnêtes, mais chassait les chercheurs d’or avec des vapeurs toxiques et des éboulements. Plus tard, la créature se retira dans le glacier de pierre.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Sul passo del Susten, lo Schlangengeli, un enorme serpente d’argento con una piccola corona d’oro, custodiva un tesoro. Lasciava in pace i viandanti onesti, ma cacciava i cercatori con vapori velenosi e frane. In seguito la creatura si ritirò nel ghiacciaio dello Stein.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "At the Susten Pass, Schlangengeli, a huge silver snake with a little golden crown, guarded a treasure. It left honest travelers alone but drove treasure hunters away with poisonous vapors and falling rocks. Later the creature withdrew into the Stein Glacier.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "在苏斯滕山口，一条戴着小金冠的巨大银色蛇怪“施朗根格利”守护着宝藏。它不会伤害诚实的旅人，却用毒雾和落石驱赶寻宝者。后来，这个神秘生物退回了施泰因冰川深处。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "En el puerto de Susten, Schlangengeli, una enorme serpiente plateada con una pequeña corona de oro, custodiaba un tesoro. Dejaba tranquilos a los viajeros honrados, pero ahuyentaba a los buscadores con vapores venenosos y desprendimientos. Más tarde, la criatura se retiró al glaciar Stein.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "No passo de Susten, Schlangengeli, uma enorme serpente prateada com uma pequena coroa dourada, guardava um tesouro. Deixava os viajantes honestos em paz, mas expulsava os caçadores de tesouros com vapores venenosos e deslizamentos de pedras. Mais tarde, a criatura retirou-se para o glaciar Stein.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "На перевале Зустен сокровище охраняла Шлангенгели — огромная серебряная змея с маленькой золотой короной. Честных путников она не трогала, но отпугивала кладоискателей ядовитыми испарениями и камнепадами. Позже существо скрылась в леднике Штайн.",
+      reviewEmpfohlen: false,
+    },
+  },
+  totenvogt: {
+    de: {
+      text:
+        "In Bürglen fand ein tyrannischer Vogt nach seinem Tod keine Ruhe. Sein Grab wurde von Kettenrasseln und Klagen heimgesucht, bis der Pfarrer den Geist zum Geständnis zwang und die niedergeschriebene Schuld auf dem Grab verbrannte.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "In Bürglen fand ein tyrannischer Vogt nach seinem Tod keine Ruhe. Sein Grab wurde von Kettenrasseln und Klagen heimgesucht, bis der Pfarrer den Geist zum Geständnis zwang und die niedergeschriebene Schuld auf dem Grab verbrannte.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "À Bürglen, un bailli tyrannique ne trouva pas le repos après sa mort. Son tombeau fut hanté par le cliquetis des chaînes et les lamentations jusqu’à ce que le curé force l’esprit à avouer ses fautes et brûle l’aveu sur la tombe.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "A Bürglen, un balivo tirannico non trovò pace dopo la morte. La sua tomba fu tormentata dal tintinnio delle catene e dai lamenti, finché il parroco costrinse lo spirito a confessare le sue colpe e bruciò la confessione sulla tomba.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "In Bürglen, a tyrannical bailiff found no peace after his death. The rattling of chains and mournful cries haunted his grave until the priest forced the spirit to confess its sins and burned the written confession on the grave.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "在比尔格伦，一名暴虐的总督死后不得安宁。他的坟墓不断传出铁链声和哀号，直到牧师迫使鬼魂承认罪过，并在墓上焚烧写下的罪状。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "En Bürglen, un gobernador tiránico no encontró descanso después de morir. El tintineo de cadenas y los lamentos atormentaban su tumba, hasta que el párroco obligó al espíritu a confesar sus pecados y quemó la confesión escrita sobre la sepultura.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "Em Bürglen, um governador tirânico não encontrou descanso depois de morrer. O tilintar de correntes e os lamentos assombravam a sua sepultura, até o pároco obrigar o espírito a confessar os pecados e queimar a confissão escrita sobre o túmulo.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "В Бюрглене жестокий наместник не обрёл покоя после смерти. Его могилу преследовали звон цепей и стоны, пока священник не заставил дух признаться в грехах и не сжёг записанную исповедь на могиле.",
+      reviewEmpfohlen: false,
+    },
+  },
+  brudermord: {
+    de: {
+      text:
+        "Im Schächental erschlug ein eifersüchtiger Bruder seinen jüngeren Bruder auf einer Brücke. Danach stöhnte das Holz bei jedem Überqueren und der Mörder hörte die Stimme des Toten, bis er dem Wahnsinn verfiel und aus Uri floh.",
+      reviewEmpfohlen: false,
+    },
+    gsw: {
+      text:
+        "Im Schächental erschlug ein eifersüchtiger Bruder seinen jüngeren Bruder auf einer Brücke. Danach stöhnte das Holz bei jedem Überqueren und der Mörder hörte die Stimme des Toten, bis er dem Wahnsinn verfiel und aus Uri floh.",
+      reviewEmpfohlen: false,
+    },
+    fr: {
+      text:
+        "Dans la vallée de Schächen, un frère jaloux tua son cadet sur un pont. Ensuite, le bois gémissait chaque fois qu’il le traversait et le meurtrier entendait la voix du mort, jusqu’à sombrer dans la folie et fuir Uri.",
+      reviewEmpfohlen: false,
+    },
+    it: {
+      text:
+        "Nella valle dello Schächen, un fratello geloso uccise il fratello minore su un ponte. Da allora il legno gemeva ogni volta che lo attraversava e l’assassino udiva la voce del morto, finché impazzì e fuggì da Uri.",
+      reviewEmpfohlen: false,
+    },
+    en: {
+      text:
+        "In the Schächen Valley, a jealous brother killed his younger brother on a bridge. Afterward the wood groaned whenever he crossed it and the murderer heard the dead man’s voice, until he went mad and fled Uri.",
+      reviewEmpfohlen: false,
+    },
+    zh: {
+      text:
+        "在沙赫滕谷，一名嫉妒的哥哥在桥上杀死了弟弟。此后，每当他过桥，木头都会发出呻吟，他也会听见死者的声音，最终陷入疯狂并逃离了乌里。",
+      reviewEmpfohlen: false,
+    },
+    es: {
+      text:
+        "En el valle de Schächen, un hermano celoso mató a su hermano menor en un puente. Desde entonces, la madera gemía cada vez que lo cruzaba y el asesino oía la voz del muerto, hasta que enloqueció y huyó de Uri.",
+      reviewEmpfohlen: false,
+    },
+    pt: {
+      text:
+        "No vale de Schächen, um irmão ciumento matou o irmão mais novo numa ponte. Depois disso, a madeira gemia sempre que ele a atravessava e o assassino ouvia a voz do morto, até enlouquecer e fugir de Uri.",
+      reviewEmpfohlen: false,
+    },
+    ru: {
+      text:
+        "В долине Шехен ревнивый брат убил младшего брата на мосту. После этого дерево стонало каждый раз, когда убийца переходил мост, а сам он слышал голос мёртвого, пока не сошёл с ума и не бежал из Ури.",
+      reviewEmpfohlen: false,
+    },
+  },
+};
+
+const URI_NEW_SAGAS: InsertCatalogSaga[] = [
+  {
+    id: "der-teufel-an-der-teufelsbruecke-uri",
+    title: "Der Teufel an der Teufelsbrücke",
+    canton: "Uri",
+    coreMotif: "List und ein Kreuz vereiteln den teuflischen Handel",
+    bildmotiv: "Teufelsbrücke, Schöllenenschlucht, Reuss, Uri",
+    mood: "Dramatisch und unheimlich",
+    summary:
+      "Der genaue Ort: Die historische, steinerne Teufelsbrücke in der Schöllenenschlucht. Das obere Reusstal war im Mittelalter durch die senkrechten Felswände der Schöllenenschlucht komplett vom Urserental abgeschnitten. Die Urner versuchten über Generationen hinweg verzweifelt, eine feste Brücke über die tosende Reuss zu schlagen, doch die ungezähmten Wassermassen und heftigen Winde rissen jeden Holzsteg sogleich in den Abgrund. Als der Urner Landammann eines Tages am Flussufer schier verzweifelte, rief er wütend aus: «Soll doch der Teufel eine Brücke bauen!» Kaum war das Wort verhallt, stand der Satan in Gestalt eines fremden, stolzen Baumeisters vor ihm. Er bot an, die Brücke binnen drei Tagen aus solidem Stein zu errichten. Als Lohn forderte er jedoch die Seele desjenigen, der das Bauwerk als allererstes überqueren würde. Die Urner willigten in ihrer Not ein. Der Teufel hielt sein Wort: Am vierten Morgen spannte sich eine mächtige, bogenförmige Steinbrücke über den Abgrund. Nun sollte der Teufel seinen Lohn erhalten. Doch die listigen Urner trieben statt eines Menschen einen kräftigen Geissbock über den Fluss. Als der Teufel merkte, dass er um die erhoffte Menschenseele betrogen worden war, packte ihn rasender Zorn. Er zerriss das Tier an Ort und Stelle und flog davon, um im fernen Wallis einen tonnenschweren Felsblock zu holen. Mit diesem wollte er die Brücke wieder zerschmettern. Als er den Stein nahe Göschenen kurz absetzte, um zu verschnaufen, schlich sich eine fromme Frau heran und ritzte mit einem Kiesel ein Kreuz in den Fels. Als der Satan zurückkehrte und das heilige Zeichen sah, verliess ihn augenblicklich jede Kraft. Er konnte den Stein nicht mehr anheben und floh unter Geheul in die Hölle.",
+    summaries: URI_NEW_SAGA_SUMMARIES.teufelsbruecke,
+    altersstufenHinweis: "Die Darstellung des gerissenen Tieres kann für jüngere Kinder abgemildert werden.",
+    quelle: null,
+    source:
+      "Ernst Ludwig Rochholz: Schweizersagen aus dem Aargau und den Waldstätten (1856) sowie M. Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862).",
+    lat: 46.647334,
+    lng: 8.590327,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Teufelsbrücke, Schöllenenschlucht",
+  },
+  {
+    id: "der-stier-von-uri-und-das-ungeheuer-im-seelisbergsee-uri",
+    title: "Der Stier von Uri und das Ungeheuer im Seelisbergsee",
+    canton: "Uri",
+    coreMotif: "Opferbereitschaft besiegt ein Ungeheuer",
+    bildmotiv: "Seelisbergsee, Urner Stier, Seeungeheuer",
+    mood: "Heldenhaft und düster",
+    summary:
+      "Der genaue Ort: Die Wasserfläche des Seelisbergsees. Im finsteren, kalten Wasser des Seelisbergsees hauste vor langen Zeiten ein grausiges Ungeheuer, das die Einheimischen nur das «Elb» nannten. Das Monster stieg nachts aus den tiefen Fluten empor, riss das Vieh von den saftigen Bergweiden und versetzte das ganze Dorf in Angst und Schrecken. Jeder Versuch der Urner Jäger, die Bestie mit Speeren oder Pfeilen zu erlegen, schlug fehl, da die Haut des Wesens unzerstörbar schien. In ihrer Not befragten die Bauern einen weisen Einsiedler. Dieser riet ihnen, ein makelloses, erstgeborenes Stierkalb aufzuziehen. Dieses Kalb müsse sieben Jahre lang ausschliesslich mit der besten Muttermilch genährt werden, ohne je Gras oder Heu zu fressen. Die Urner folgten dem Rat gewissenhaft. Nach sieben Jahren war das Tier zu einem kolossalen, vor Kraft strotzenden Kampfstier mit eisernen Muskeln und mächtigen Hörnern herangewachsen. Als das Ungeheuer kurz darauf erneut aus dem See brach und nach den Herden griff, liessen die Bauern den gewaltigen Stier von der Kette. Es kam zu einem epischen, stundenlangen Kampf am Seeufer, bei dem die Erde bebte und das Wasser sich rot färbte. Mit letzter Kraft gelang es dem Stier, das Monstrum zu Boden zu werfen und dessen Brust mit den Hörnern zu durchbohren. Das Ungeheuer war tot, doch auch der treue Stier brach vor Erschöpfung und aufgrund seiner schweren Wunden tot zusammen. Seither ist der See friedlich, und das stolze Urner Volk setzte den Kopf des rettenden Stiers als ewiges Symbol in sein Kantonswappen.",
+    summaries: URI_NEW_SAGA_SUMMARIES.stier,
+    altersstufenHinweis: "Der Kampf und die Verletzungen können für jüngere Kinder abgemildert werden.",
+    quelle: null,
+    source:
+      "Franz Josef Vonmatt: Sagen des Kantons Uri (gesammelt im 19. Jahrhundert) / Brüder Grimm: Deutsche Sagen, Band 1, Nr. 222 «Der Stier von Uri» (1816).",
+    lat: 46.958611,
+    lng: 8.571944,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Seelisbergsee",
+  },
+  {
+    id: "wilhelm-tells-apfelschuss-uri",
+    title: "Wilhelm Tells Apfelschuss",
+    canton: "Uri",
+    coreMotif: "Mut widersteht der Tyrannei",
+    bildmotiv: "Tell-Denkmal, Altdorf, Apfel, Armbrust",
+    mood: "Spannend und mutig",
+    summary:
+      "Der genaue Ort: Das Tell-Denkmal auf dem Rathausplatz in Altdorf. Im Spätherbst des Jahres 1307 errichtete der habsburgische Landvogt Hermann Gessler auf dem Marktplatz von Altdorf eine Stange und hängte seinen herzoglichen Hut daran auf. Er befahl, dass jeder Passant vor dem Hut niederknien und ihn grüssen müsse, um die absolute Unterwerfung unter das Haus Habsburg zu beweisen. Als der angesehene Jäger und Bergbauer Wilhelm Tell aus Bürglen mit seinem kleinen Sohn Walterli am Platz vorbeiging, ignorierte er den Hut mit stolzem Blick. Die kaiserlichen Wachen nahmen ihn sofort fest. Der herbeigerufene Landvogt beschloss, Tell für seinen Ungehorsam auf grausame Weise zu bestrafen: Da Tell als meisterhafter Schütze bekannt war, sollte er mit seiner Armbrust einen Apfel vom Kopf seines eigenen Sohnes schiessen. Sollte er sich weigern oder verfehlen, drohte beiden der sofortige Tod. Tell flehte um Gnade für sein Kind, doch Gessler blieb eisig. Mit zitternden Händen, aber festem Blick spannte Tell die Armbrust, legte einen Bolzen ein und zielte. Der Schuss löste sich, sauste durch die Luft und spaltete den Apfel exakt in zwei Hälften, ohne das Kind auch nur zu streifen. Während das Volk jubelte, bemerkte der misstrauische Gessler, dass Tell heimlich einen zweiten Pfeil unter seinen Rock gesteckt hatte. Auf die Frage nach dem Grund antwortete Tell furchtlos: «Hätte mein erster Pfeil das eigene Kind getroffen, so wäre der zweite für Euer Herz bestimmt gewesen!»",
+    summaries: URI_NEW_SAGA_SUMMARIES.tell,
+    altersstufenHinweis: "Die Drohung gegen das Kind kann für jüngere Kinder behutsam erzählt werden.",
+    quelle: null,
+    source:
+      "Aegidius Tschudi: Chronicon Helveticum (geschrieben im 16. Jahrhundert, gedruckt 1734) sowie Johannes von Müller: Geschichten Schweizerischer Eidgenossenschaft (1786).",
+    lat: 46.881666,
+    lng: 8.644166,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Tell-Denkmal, Altdorf",
+  },
+  {
+    id: "der-tellensprung-am-axen-uri",
+    title: "Der Tellensprung am Axen",
+    canton: "Uri",
+    coreMotif: "Geistesgegenwart schenkt einem Gefangenen die Freiheit",
+    bildmotiv: "Tellskapelle, Axen, Vierwaldstättersee, Felsplatte",
+    mood: "Abenteuerlich und befreiend",
+    summary:
+      "Der genaue Ort: Die historische Tellskapelle am Seeufer bei Sisikon. Nach dem Vorfall in Altdorf liess der erzürnte Landvogt Gessler Wilhelm Tell fesseln. Da er ihn im Kanton Uri wegen der aufgebrachten Stimmung im Volk nicht direkt hinrichten lassen wollte, sollte Tell per Schiff über den Vierwaldstättersee in die Festung Küssnacht überführt werden. Als das Boot die steilen Felswände des Axens passierte, brach plötzlich ein schwerer Föhnsturm los. Die Wellen peitschten hoch auf, und die habsburgischen Schiffsleute verloren im dichten Nebel und der Gischt die Kontrolle über das Fahrzeug. In Todesangst erinnerte sich der Vogt daran, dass Tell ein erfahrener Steuermann war. Gessler befahl, die Fesseln des Gefangenen zu lösen, damit dieser das Ruder übernehme und sie vor dem Zerschellen an den Klippen rette. Tell stellte sich ans Heck, steuerte das Boot geschickt durch die Brandung und hielt direkt auf eine flache Felsplatte zu, die aus dem Wasser ragte. Als das Schiff nah genug war, packte Tell seine Armbrust, die auf dem Deck lag, und sprang mit einem mächtigen Satz auf den sicheren Felsen. Im selben Moment stiess er das Boot mit dem Fuss zurück in die tobenden Fluten des Sees, sodass die Häscher hilflos abtrieben. Tell war frei und floh über die Berge des Axens weiter, um sein Schicksal zu erfüllen.",
+    summaries: URI_NEW_SAGA_SUMMARIES.tellensprung,
+    altersstufenHinweis: null,
+    quelle: null,
+    source:
+      "Aegidius Tschudi: Chronicon Helveticum (Standardwerk der Schweizer Befreiungstradition).",
+    lat: 46.932663,
+    lng: 8.611816,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Tellskapelle am Axen, Sisikon",
+  },
+  {
+    id: "das-versunkene-schloss-im-bannwald-von-andermatt-uri",
+    title: "Das versunkene Schloss im Bannwald von Andermatt",
+    canton: "Uri",
+    coreMotif: "Hochmut und Hartherzigkeit rufen die Naturgewalt herbei",
+    bildmotiv: "Bannwald, Andermatt, Lawine, verschüttete Burg",
+    mood: "Düster und mahnend",
+    summary:
+      "Der genaue Ort: Das Zentrum des steilen Bannwalds oberhalb der Kirche von Andermatt. Hoch oben über dem heutigen Talboden von Andermatt, dort wo heute der dichte und steile Nadelwald wächst, stand im frühen Mittelalter eine prachtvolle, uneinnehmbare Burg. Die dortigen Schlossherren waren unermesslich reich, aber im gleichen Masse geizig, hochmütig und hartherzig gegenüber den einfachen Bauern im Urserental. In einem bitterkalten, schneereichen Winter klopfte ein entkräfteter, hungernder Greis an das Burgtor und bettelte im Namen Gottes um eine warme Suppe und ein kurzes Nachtlager. Die Schlossherren lachten den Alten jedoch nur aus, schütteten eine Schale eiskaltes Wasser über ihm aus und liessen ihn von ihren Hunden vertreiben. Der Bettler schleppte sich ins Tal hinab und prophezeite den Untergang des stolzen Hauses. In der folgenden Nacht erwachte der Berg. Ein dumpfes Grollen erschütterte das Tal, und eine gigantische Lawine aus Schnee, Eis und Felsmassen brach los. Sie begrub das Schloss samt seinen Bewohnern und Schätzen spurlos unter sich. Als das Frühjahr kam, wuchsen auf den Trümmern junge Bäume, die im Laufe der Jahrhunderte zu einem dichten Wald heranreiften. Die Urner erkannten, dass dieser spezifische Wald das darunterliegende Dorf vor zukünftigen Lawinen schützte, und erklärten ihn zum heiligen «Bannwald». Seither schützt der Wald das Dorf – und die Reste des sündigen Schlosses ruhen für immer tief unter seinen Wurzeln.",
+    summaries: URI_NEW_SAGA_SUMMARIES.schloss,
+    altersstufenHinweis: "Die Lawine und die Strafe können für jüngere Kinder weniger bedrohlich erzählt werden.",
+    quelle: null,
+    source:
+      "Karl Meyer: Urserner Sagen und Altertümer (19. Jahrhundert) / Schweizerische Gesellschaft für Volkskunde (SGV).",
+    lat: 46.632222,
+    lng: 8.596944,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Bannwald, Andermatt",
+  },
+  {
+    id: "das-schlangengeli-auf-dem-sustenpass-uri",
+    title: "Das Schlangengeli auf dem Sustenpass",
+    canton: "Uri",
+    coreMotif: "Ehrlichkeit schützt vor der Versuchung des Schatzes",
+    bildmotiv: "Sustenpass, Schlangengeli, Steingletscher, Schatz",
+    mood: "Mystisch und geheimnisvoll",
+    summary:
+      "Der genaue Ort: Der historische Susten-Passweg auf der Urner Seite nahe der Passhöhe. Die Säumer und Händler, die im Mittelalter schwere Waren über den rauen Sustenpass transportierten, mieden die Abendstunden in einer bestimmten Felsgegend des Meientals. Dort hauste das «Schlangengeli» – eine riesige, silbern schimmernde Schlange, die auf ihrem Kopf ein kleines, goldenes Krönchen trug. Das Fabelwesen bewachte einen sagenhaften Hort aus alten Silbermünzen und Edelsteinen, der in einer tiefen Erdspalte verborgen lag. Das Schlangengeli war keineswegs grundlos bösartig: Fleissige Säumer, arme Hirten oder ehrliche Wanderer liess es gewähren und wärmte sich manchmal friedlich an deren Lagerfeuern. Doch wehe dem, der von Gier getrieben wurde und versuchte, sich dem Silberschatz zu nähern. Sobald ein Dieb die Felsspalte inspizierte, schwoll die Schlange zu ungeheurer Grösse an, stiess giftige, grüne Dämpfe aus und peitschte mit ihrem Schwanz so heftig gegen die Felsen, dass Steinschläge die Schatzsucher in die Tiefe rissen. Erst als die Route im 19. Jahrhundert modern ausgebaut und ein christlicher Bildstock errichtet wurde, zog sich das geheimnisvolle Wesen tief in das ewige Eis des Steingletschers zurück, wo der Schatz bis heute verborgen liegt.",
+    summaries: URI_NEW_SAGA_SUMMARIES.schlangengeli,
+    altersstufenHinweis: "Die Steinschläge und giftigen Dämpfe können für jüngere Kinder abgeschwächt werden.",
+    quelle: null,
+    source:
+      "M. Lütolf: Sagen, Bräuche und Legenden aus den fünf Orten (1862), Kapitel «Alp- und Passdämonen».",
+    lat: 46.729166,
+    lng: 8.445833,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Sustenpass, Urner Seite",
+  },
+  {
+    id: "die-sage-vom-totenvogt-in-buerglen-uri",
+    title: "Die Sage vom Totenvogt in Bürglen",
+    canton: "Uri",
+    coreMotif: "Schuld findet erst durch ein Geständnis Ruhe",
+    bildmotiv: "Friedhof Bürglen, Totenvogt, Pfarrkirche",
+    mood: "Unheimlich und mahnend",
+    summary:
+      "Der genaue Ort: Der historische Friedhofsbereich direkt neben der Pfarrkirche St. Peter und Paul in Bürglen. In Bürglen lebte einst ein tyrannischer Gemeindevogt, der während seiner Amtszeit die armen Witwen und Waisen skrupellos ausbeutete, Grenzen zu seinen Gunsten verschob und sogar Gelder aus der Kirchenkasse veruntreute. Er starb plötzlich eines unnatürlichen Todes, ohne dass ihm ein Priester die letzte Ölung geben oder er seine Sünden beichten konnte. Die Dorfbewohner begruben ihn auf dem lokalen Friedhof. Doch schon in der ersten Nacht nach dem Begräbnis fand der Vogt keine Ruhe im geweihten Boden. Unheimliche Geräusche, das Rasseln von schweren Ketten und ein markerschütterndes Wehklagen drangen fortan jede Nacht aus seinem Grab und raubten den Anwohnern den Schlaf. Die Geister der anderen Verstorbenen schienen den Sünder aus ihrer Mitte vertreiben zu wollen. Schliesslich hielt der Ortspfarrer um Mitternacht eine feierliche Seelenmesse ab. Er trat auf den Friedhof und beschwor den Geist des Vogtes, der in Flammengestalt vor ihm erschien. Der Pfarrer zwang den Geist, seine Sünden zu gestehen, schrieb diese auf ein Pergament und verbrannte es direkt auf der Grabstätte, während er den Exorzismus sprach. Erst durch dieses rituelle Verbrennen der Schuld fand der Totenvogt seine Ruhe, und auf dem Friedhof von Bürglen war fortan kein Klagen mehr zu hören.",
+    summaries: URI_NEW_SAGA_SUMMARIES.totenvogt,
+    altersstufenHinweis: "Geist, Grab und Exorzismus können für jüngere Kinder behutsam abgemildert werden.",
+    quelle: null,
+    source:
+      "Eduard Hoffmann-Krayer: Schriften zur Schweizer Volkskunde (spätes 19. Jahrhundert).",
+    lat: 46.875277,
+    lng: 8.663055,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Pfarrkirche St. Peter und Paul, Bürglen",
+  },
+  {
+    id: "der-brudermord-an-der-suworow-bruecke-uri",
+    title: "Der Brudermord an der Suworow-Brücke",
+    canton: "Uri",
+    coreMotif: "Schuld verfolgt den Täter bis in den Wahnsinn",
+    bildmotiv: "Suworow-Brücke, Schächental, Schächenbach",
+    mood: "Düster und tragisch",
+    summary:
+      "Der genaue Ort: Die historische Holzbrücke über den Schächenbach im Riedertal bei Spiringen. Tief im waldigen Schächental lebten zwei Brüder auf einem abgelegenen Berghof. Beide verliebten sich unsterblich in dieselbe hübsche Müllerstochter aus dem Dorf. Während der jüngere Bruder fleissig, bescheiden und von mildem Wesen war und schliesslich die Zusage des Mädchens für die Hochzeit erhielt, zerfrass den älteren Bruder eine dunkle, hasserfüllte Eifersucht. Eines Abends, als der jüngere Bruder von der Alp ins Tal zurückkehrte, lauerte ihm der Ältere auf der schmalen, hölzernen Brücke auf, die in schwindelerregender Höhe den reissenden Schächenbach überspannte. Es kam zu einem heftigen Wortgefecht, das schnell in ein wildes Handgemenge überging. Der ältere Bruder, von Sinnen vor Wut, packte den Jüngeren und stiess ihn skrupellos über das hölzerne Geländer in die Tiefe. Der unschuldige Junge zerschellte an den Felsen und wurde von den Fluten fortgerissen. Niemand sah die Tat, doch der Mörder fand keine Ruhe mehr. Jedes Mal, wenn er die Brücke überquerte, schien das Holz unter seinen Füssen laut zu stöhnen, und im Rauschen des Baches hörte er die Stimme des Toten. Schliesslich verfiel er dem Wahnsinn, floh aus dem Kanton Uri und wurde nie wieder gesehen. Alte Leute im Tal erzählten sich noch lange, dass die Balken der Brücke an der Stelle des Kampfes dauerhaft dunkel verfärbt blieben.",
+    summaries: URI_NEW_SAGA_SUMMARIES.brudermord,
+    altersstufenHinweis: "Der Mord und der Sturz können für jüngere Kinder deutlich abgemildert werden.",
+    quelle: null,
+    source:
+      "Sagen und Traditionen des Schächenthals, dokumentiert in den Urner Wochenblättern des 19. Jahrhunderts.",
+    lat: 46.873333,
+    lng: 8.718055,
+    koordinatenSicherheit: "exakt",
+    isAnchorPlace: true,
+    fotoUrl: null,
+    fotoAttribution: null,
+    ortName: "Suworow-Brücke, Riedertal bei Spiringen",
+  },
+];
+
+const RETIRED_URI_SAGA_IDS = new Set([
+  "wilhelm-tell-uri",
+  "der-grenzlauf-uri",
+  "der-zuschauer-bei-der-totenprozession-uri",
+  "liebeszauber-uri",
+  "der-geschundene-senn-uri",
+  "die-vergebung-der-schuld-uri",
+  "die-b-ssenden-seelen-im-eis-uri",
+  "sturz-des-mandlisers-uri",
+]);
+
 /**
  * Redaktionelle Ersatztexte für falsch zugeordnete Solothurn-Einträge.
  * Die bestehenden IDs bleiben erhalten, damit gespeicherte Routen und
@@ -218,7 +790,14 @@ const REPLACEMENTS: Record<string, Partial<InsertCatalogSaga>> = {
 
 export const CURATED_SAGA_REPLACEMENT_IDS = Object.keys(REPLACEMENTS);
 
-export const CURATED_SAGAS: InsertCatalogSaga[] = bundledSagas.map((saga) => ({
+const activeBundledSagas = bundledSagas.filter(
+  (saga) => !RETIRED_URI_SAGA_IDS.has(saga.id),
+);
+
+export const CURATED_SAGAS: InsertCatalogSaga[] = [
+  ...activeBundledSagas,
+  ...URI_NEW_SAGAS,
+].map((saga) => ({
   ...saga,
   ...(REPLACEMENTS[saga.id] ?? {}),
 }));
