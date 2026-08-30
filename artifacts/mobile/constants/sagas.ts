@@ -40,6 +40,15 @@ const SOLOTHURN_REPLACEMENT_SUMMARIES = {
   },
 } satisfies Record<string, Record<string, { text: string; reviewEmpfohlen: boolean }>>;
 
+const ZURICH_MARTYRS_TEXT = "Im späten 3. Jahrhundert n. Chr. flohen die Geschwister Felix und Regula zusammen mit ihrem Diener Exuperantius aus der römischen Legion, weil sie sich zum Christentum bekannten. Ihre Flucht führte sie an die Limmat, an den Ort, wo heute die Stadt Zürich steht. Dort bauten sie sich eine kleine Hütte, beteten und halfen den Einheimischen. Doch der römische Statthalter Decius erfuhr von ihrem Versteck und schickte Soldaten, um sie gefangen zu nehmen. Da sie sich weigerten, ihren Glauben aufzugeben und den römischen Göttern zu opfern, wurden sie auf einer kleinen Insel in der Limmat (dem heutigen Standort der Wasserkirche) zum Tode verurteilt. Die Soldaten schlugen den drei Märtyrern mit dem Schwert die Köpfe ab. Da geschah das Unfassbare, das die Henker vor Schreck erstarren liess: Die leblosen Körper standen wieder auf. Sie bückten sich, nahmen ihre eigenen, blutenden Köpfe in die Hände und schritten mit festem Schritt den steilen Hügel hinauf. Genau 40 Schritte weit gingen sie bergan, legten sich dort friedlich auf die Erde und verstarben endgültig. An genau dieser Stelle, wo sie ihre Köpfe ablegten, wurde später das Grossmünster errichtet. Bis heute sind die drei kopflosen Heiligen im offiziellen Siegel und Wappen der Stadt Zürich zu sehen.";
+
+const ZURICH_MARTYRS_SUMMARIES = {
+  de: {
+    text: ZURICH_MARTYRS_TEXT,
+    reviewEmpfohlen: false,
+  },
+} satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
+
 const ATTINGHAUSEN_SUMMARIES = {
   de: {
     text: "Der genaue Ort: Der historische Wohnturm der Burgruine Attinghausen bei Altdorf. Auf der stolzen Burg Attinghausen residierten im Mittelalter die mächtigen Freiherren von Attinghausen, die über weite Teile des Urnerlandes herrschten. Die Sage erzählt von der letzten Tochter des Hauses, einem aussergewöhnlich schönen, aber hochmütigen Fräulein. Sie wies jeden rechtschaffenen Freier aus dem Lande hochmütig zurück und verschwendete das Geld der Familie für Prunk und rauschende Feste, während die Bauern im Tal Hunger litten. Als die Burg in den Schweizer Befreiungskriegen schliesslich belagert und zerstört wurde, kam die stolze Jungfrau in den Flammen des Wohnturms ums Leben. Da sie jedoch vor ihrem Tod keine Reue zeigte, fand ihre Seele keine Ruhe. Sie wurde dazu verdammt, als «Weisse Frau» oder verwandelte Schlange die tiefen, unterirdischen Gewölbe und den alten Burgbrunnen zu bewachen, in denen der Familienschatz vergraben liegt. Die Sage besagt, dass sie alle hundert Jahre in den Ruinen erscheint und darauf wartet, von einem Jüngling reinen Herzens durch einen furchtlosen Kuss erlöst zu werden. Bis heute meiden viele Einheimische die dunklen Ecken der Ruine in stürmischen Neumondnächten.",
@@ -1841,56 +1850,17 @@ export const SAGAS: Saga[] = ([
 },
 {
   "id": "das-goldene-tor",
-  "title": "Felix und Regula, die kopflosen Stadtheiligen",
+  "title": "Die enthaupteten Stadtheiligen",
   "canton": "Zürich",
-  "coreMotif": "Martyrium und Wunder",
-  "bildmotiv": "Grossmünster Zürich",
+  "coreMotif": "Felix, Regula und Exuperantius begründen Zürichs Stadtwappen.",
+  "bildmotiv": "Felix und Regula, Grossmünster, Zürich, Stadtheilige",
   "mood": "Feierlich, ergreifend",
-  "summary": "Felix und Regula, Geschwister und Soldaten der Thebäischen Legion, wurden der Legende nach um 300 in Zürich wegen ihres christlichen Glaubens enthauptet. Der Überlieferung nach erhoben sich die beiden nach der Hinrichtung, nahmen ihre eigenen Köpfe in die Hände und stiegen den Hügel hinauf, um an der Stelle begraben zu werden, wo heute das Grossmünster steht.",
-  "summaries": {
-    "gsw": {
-      "text": "Felix und Regula, Gschwüschterti und Soldate vo dr Thebäische Legion, sind dr Sag nach um s Jahr 300 z Züri wäg ihrem christliche Glaube enthauptet worde. Nachher händ si sich erhobe und sind mit ihrne Chöpf i dr Hand dr Hügel ufe zoge.",
-      "reviewEmpfohlen": true
-    },
-    "de": {
-      "text": "Felix und Regula, Geschwister und Soldaten der Thebäischen Legion, wurden der Legende nach um 300 in Zürich wegen ihres christlichen Glaubens enthauptet. Der Überlieferung nach erhoben sich die beiden nach der Hinrichtung, nahmen ihre eigenen Köpfe in die Hände und stiegen den Hügel hinauf, um an der Stelle begraben zu werden, wo heute das Grossmünster steht.",
-      "reviewEmpfohlen": false
-    },
-    "fr": {
-      "text": "Félix et Régule, frère et sœur, soldats de la Légion thébaine, furent selon la légende décapités à Zurich vers 300 pour leur foi chrétienne. La tradition raconte qu'après leur exécution, ils se relevèrent, prirent leurs propres têtes dans leurs mains et gravirent la colline pour être enterrés à l'endroit où se dresse aujourd'hui le Grossmünster.",
-      "reviewEmpfohlen": true
-    },
-    "it": {
-      "text": "Felice e Regola, fratello e sorella, soldati della Legione tebana, furono secondo la leggenda decapitati a Zurigo verso il 300 per la loro fede cristiana. La tradizione narra che dopo l'esecuzione i due si rialzarono, presero le proprie teste tra le mani e salirono la collina per essere sepolti nel luogo dove oggi sorge il Grossmünster.",
-      "reviewEmpfohlen": true
-    },
-    "en": {
-      "text": "Felix and Regula, brother and sister, soldiers of the Theban Legion, were according to legend beheaded in Zurich around the year 300 for their Christian faith. Tradition tells that after their execution the two rose, took their own heads in their hands, and climbed the hill to be buried at the spot where the Grossmünster now stands.",
-      "reviewEmpfohlen": false
-    },
-    "zh": {
-      "text": "费利克斯与雷古拉是一对兄妹，也是忒拜军团的士兵，传说约在公元300年因信仰基督教而在苏黎世被斩首。传说处决后二人站起身来，双手捧着自己的头颅，登上山丘，最终葬于如今大教堂所在之处。",
-      "reviewEmpfohlen": true
-    },
-    "es": {
-      "text": "Félix y Régula, hermano y hermana, soldados de la Legión Tebana, fueron según la leyenda decapitados en Zúrich hacia el año 300 por su fe cristiana. La tradición cuenta que tras la ejecución ambos se levantaron, tomaron sus propias cabezas entre las manos y subieron la colina para ser enterrados en el lugar donde hoy se alza el Grossmünster.",
-      "reviewEmpfohlen": true
-    },
-    "pt": {
-      "text": "Félix e Régula, irmão e irmã, soldados da Legião Tebana, foram segundo a lenda decapitados em Zurique por volta do ano 300 por sua fé cristã. A tradição conta que após a execução os dois se ergueram, tomaram suas próprias cabeças nas mãos e subiram a colina para serem sepultados no local onde hoje se ergue o Grossmünster.",
-      "reviewEmpfohlen": true
-    }
-  },
+  "summary": ZURICH_MARTYRS_TEXT,
+  "summaries": ZURICH_MARTYRS_SUMMARIES,
   "altersstufenHinweis": "Die Enthauptung nicht drastisch schildern; das Wunder des Weges auf den Hügel als zentrales Bild erzählen.",
-  "quelle": {
-    "autor": "frühmittelalterliche Passio",
-    "werk": "Passio Feliciani (Felix-und-Regula-Legende)",
-    "jahr": "9. Jahrhundert",
-    "fundstelleUrl": "https://de.wikipedia.org/wiki/Felix_und_Regula"
-  },
-  "source": "Frühmittelalterliche Passio Feliciani, Felix-und-Regula-Legende (9. Jh.)",
-  "coordinates": { "lat": 47.3707, "lng": 8.5411 },
-  "koordinatenSicherheit": "exakt",
+  "source": "Legenda Aurea und frühneuzeitliche Zürcher Chroniken",
+  "coordinates": { "lat": 47.37022386283477, "lng": 8.544032539390582 },
+  "koordinatenSicherheit": "Muss GPS Verifiziert werden",
   "isAnchorPlace": true
 },
 

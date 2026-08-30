@@ -18,7 +18,14 @@ export interface Profile {
   subscriptionTier?: string;
 }
 
-export type KoordinatenSicherheit = "exakt" | "ungefaehr" | "nicht_lokalisierbar";
+export type KoordinatenSicherheit =
+  | "exakt"
+  | "ungefaehr"
+  | "nicht_lokalisierbar"
+  | "Ort identifiziert"
+  | "Region identifiziert"
+  | "Muss GPS Verifiziert werden"
+  | "Nur Kanton identifiziert";
 
 // Je Zielsprache eigenstaendig verfasste Zusammenfassung. `reviewEmpfohlen`
 // markiert Sprachen, deren Qualitaet noch geprueft werden sollte.

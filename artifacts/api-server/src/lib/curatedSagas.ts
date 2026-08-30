@@ -821,12 +821,36 @@ const RETIRED_SAGA_IDS = new Set([
   "sturz-des-mandlisers-uri",
 ]);
 
+const ZURICH_MARTYRS_TEXT =
+  "Im späten 3. Jahrhundert n. Chr. flohen die Geschwister Felix und Regula zusammen mit ihrem Diener Exuperantius aus der römischen Legion, weil sie sich zum Christentum bekannten. Ihre Flucht führte sie an die Limmat, an den Ort, wo heute die Stadt Zürich steht. Dort bauten sie sich eine kleine Hütte, beteten und halfen den Einheimischen. Doch der römische Statthalter Decius erfuhr von ihrem Versteck und schickte Soldaten, um sie gefangen zu nehmen. Da sie sich weigerten, ihren Glauben aufzugeben und den römischen Göttern zu opfern, wurden sie auf einer kleinen Insel in der Limmat (dem heutigen Standort der Wasserkirche) zum Tode verurteilt. Die Soldaten schlugen den drei Märtyrern mit dem Schwert die Köpfe ab. Da geschah das Unfassbare, das die Henker vor Schreck erstarren liess: Die leblosen Körper standen wieder auf. Sie bückten sich, nahmen ihre eigenen, blutenden Köpfe in die Hände und schritten mit festem Schritt den steilen Hügel hinauf. Genau 40 Schritte weit gingen sie bergan, legten sich dort friedlich auf die Erde und verstarben endgültig. An genau dieser Stelle, wo sie ihre Köpfe ablegten, wurde später das Grossmünster errichtet. Bis heute sind die drei kopflosen Heiligen im offiziellen Siegel und Wappen der Stadt Zürich zu sehen.";
+
+const ZURICH_MARTYRS_SUMMARIES: NonNullable<InsertCatalogSaga["summaries"]> = {
+  de: {
+    text: ZURICH_MARTYRS_TEXT,
+    reviewEmpfohlen: false,
+  },
+};
+
 /**
  * Redaktionelle Ersatztexte für falsch zugeordnete Solothurn-Einträge.
  * Die bestehenden IDs bleiben erhalten, damit gespeicherte Routen und
  * Nutzerfortschritte weiterhin auf dieselben Sagen zeigen.
  */
 const REPLACEMENTS: Record<string, Partial<InsertCatalogSaga>> = {
+  "der-kaiser-und-die-schlange-zuer": {
+    title: "Die enthaupteten Stadtheiligen",
+    canton: "Zürich",
+    coreMotif: "Felix, Regula und Exuperantius begründen Zürichs Stadtwappen.",
+    bildmotiv: "Felix und Regula, Grossmünster, Zürich, Stadtheilige",
+    summary: ZURICH_MARTYRS_TEXT,
+    summaries: ZURICH_MARTYRS_SUMMARIES,
+    quelle: null,
+    source: "Legenda Aurea und frühneuzeitliche Zürcher Chroniken",
+    lat: 47.37022386283477,
+    lng: 8.544032539390582,
+    koordinatenSicherheit: "Muss GPS Verifiziert werden",
+    isAnchorPlace: true,
+  },
   "die-beute-von-grandson-solot": {
     title: "Das versteckte Kreuz am Zeitglockenturm",
     canton: "Solothurn",
