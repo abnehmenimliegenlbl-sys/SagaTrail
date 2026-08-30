@@ -651,6 +651,60 @@ export const SAGAS: Saga[] = ([
   "isAnchorPlace": true
 },
 {
+  "id": "das-chindlifresser-maennli-bern",
+  "title": "Das Chindlifresser-Männli",
+  "canton": "Bern",
+  "coreMotif": "Eine steinerne Schreckgestalt bewacht die Berner Altstadt",
+  "bildmotiv": "Chindlifresserbrunnen Bern, Kindlifresser, Kornhausplatz",
+  "mood": "Unheimlich und eindrücklich",
+  "summary": "Mitten in der Berner Altstadt steht seit dem 16. Jahrhundert ein Brunnen, dessen Figur den Menschen seit Generationen Rätsel aufgibt und Schauer über den Rücken jagt. Sie zeigt einen überlebensgrossen, wild blickenden Riesen in farbenfroher Tracht. In seiner rechten Hand hält er ein nacktes, schreiendes Kleinkind, dessen Kopf er bereits tief in seinen weit aufgerissenen Mund geschoben hat. In seinem linken Arm hält er einen Sack umklammert, aus dem die Köpfe von drei weiteren verängstigten Kindern ragen, die auf ihr schreckliches Schicksal warten. Die Sage um diesen Brunnen entstand als Erziehungsmethode für die Berner Stadtkinder. Wenn die Dunkelheit über die Gassen hereinbrach und die Kinder sich weigerten, ins Bett zu gehen, erzählten die Eltern von der schrecklichen Verwandlung um Mitternacht: Sobald die Uhr des Zytglogge-Turms den zwölften Schlag verkündet, erwachen die steinernen Glieder des Riesen zum Leben. Er steigt mit schwerem Schritt von seinem Brunnensockel herab. Mit seinem gierigen Blick sucht er die Fenster der Häuser ab. Er schleicht durch die dunklen Lauben der Altstadt und lauscht an den Türen. Hört er ein Kind, das trotzig ist, nicht schlafen will oder tagsüber den Eltern ungehorsam war, bricht er die Tür auf. Er packt das Kind lautlos, steckt es in seinen Sack und trägt es zum Brunnen zurück, um es dort bei lebendigem Leib zu verschlingen. Erst beim ersten Hahnenkrähen des Morgens versteinert das Chindlifresser-Männli wieder – bis zur nächsten Nacht.",
+  "summaries": {
+    "gsw": {
+      "text": "Mitten i dr Bärner Altstadt steit sit em 16. Jahrhundert dr Chindlifresserbrunne. D Figur zeigt en wild luegende Riese, wo es Chind verschlingt und drei wiiteri Chind i mene Sack feschthebt. Der Sag nach wird er um Mitternacht läbig, schliicht dür d dunkle Laube und holt unghorsami Chind. Erst bim erschte Hahnechräie wird er wieder zu Stei.",
+      "reviewEmpfohlen": true
+    },
+    "de": {
+      "text": "Mitten in der Berner Altstadt steht seit dem 16. Jahrhundert der Chindlifresserbrunnen. Seine Figur zeigt einen wild blickenden Riesen, der ein Kind verschlingt und drei weitere Kinder in einem Sack festhält. Die Sage erzählt, dass der Riese um Mitternacht lebendig wird, durch die dunklen Lauben schleicht und ungehorsame Kinder holt. Erst beim ersten Hahnenkrähen versteinert er wieder.",
+      "reviewEmpfohlen": false
+    },
+    "fr": {
+      "text": "Au cœur de la vieille ville de Berne se trouve depuis le XVIe siècle la fontaine du Mangeur d’enfants. Sa statue représente un géant au regard sauvage qui dévore un enfant et en retient trois autres dans un sac. La légende raconte qu’il prend vie à minuit, parcourt les arcades sombres et emporte les enfants désobéissants. Il redevient pierre au premier chant du coq.",
+      "reviewEmpfohlen": true
+    },
+    "it": {
+      "text": "Nel cuore della città vecchia di Berna si trova dal XVI secolo la fontana del Mangiatore di bambini. La figura mostra un gigante dallo sguardo selvaggio che divora un bambino e ne tiene altri tre in un sacco. Secondo la leggenda, a mezzanotte prende vita, percorre i portici bui e rapisce i bambini disobbedienti. Torna di pietra al primo canto del gallo.",
+      "reviewEmpfohlen": true
+    },
+    "en": {
+      "text": "In Bern’s old town, the Child Eater Fountain has stood since the sixteenth century. Its statue shows a wild-eyed giant devouring one child and holding three more in a sack. Legend says that at midnight he comes alive, prowls through the dark arcades, and carries away disobedient children. He turns to stone again at the first crowing of the rooster.",
+      "reviewEmpfohlen": true
+    },
+    "zh": {
+      "text": "伯尔尼老城中心矗立着一座建于16世纪的“吃孩子的人”喷泉。雕像是一名目光凶狠的巨人，正在吞食一个孩子，袋子里还装着另外三个孩子。传说午夜时他会活过来，在黑暗的拱廊中徘徊，带走不听话的孩子。公鸡第一次啼鸣时，他才会重新变回石头。",
+      "reviewEmpfohlen": true
+    },
+    "es": {
+      "text": "En el casco antiguo de Berna se encuentra desde el siglo XVI la fuente del Come-niños. La estatua muestra a un gigante de mirada salvaje que devora a un niño y sostiene a otros tres en un saco. Según la leyenda, a medianoche cobra vida, recorre las oscuras arcadas y se lleva a los niños desobedientes. Se convierte de nuevo en piedra al primer canto del gallo.",
+      "reviewEmpfohlen": true
+    },
+    "pt": {
+      "text": "No centro histórico de Berna encontra-se desde o século XVI a fonte do Comedor de Crianças. A figura mostra um gigante de olhar selvagem que devora uma criança e segura outras três num saco. Segundo a lenda, à meia-noite ele ganha vida, percorre as arcadas escuras e leva as crianças desobedientes. Volta a ser pedra ao primeiro canto do galo.",
+      "reviewEmpfohlen": true
+    },
+    "ru": {
+      "text": "В старом городе Берна с XVI века стоит фонтан Пожирателя детей. На статуе изображён дикий великан, пожирающий одного ребёнка и держащий ещё троих в мешке. По легенде, в полночь он оживает, бродит по тёмным аркадам и уносит непослушных детей. С первым криком петуха он снова превращается в камень.",
+      "reviewEmpfohlen": true
+    }
+  },
+  "altersstufenHinweis": "Die drastische Darstellung des Kindlifressers und die Drohung gegenüber Kindern für jüngere Kinder deutlich abmildern; den Brunnen als historisches Angstbild einordnen.",
+  "source": "Überlieferung zum Chindlifresserbrunnen in der Berner Altstadt; die Brunnenfigur stammt aus dem 16. Jahrhundert.",
+  "coordinates": { "lat": 46.94850380844444, "lng": 7.4474838816787665 },
+  "koordinatenSicherheit": "exakt",
+  "isAnchorPlace": true,
+  "fotoUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/KindlifresserBrunnen01.jpg/250px-KindlifresserBrunnen01.jpg?utm_source=de.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+  "fotoAttribution": "Wikimedia Commons"
+},
+{
   "id": "ochsen-zeigen-die-heilige-statte",
   "title": "Die Bärensage von Bern",
   "canton": "Bern",
