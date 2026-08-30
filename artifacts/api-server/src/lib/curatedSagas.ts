@@ -799,7 +799,7 @@ const BERN_NEW_SAGAS: InsertCatalogSaga[] = [
 ];
 
 const RETIRED_SAGA_IDS = new Set([
-  "bl-melisalp-mehr-als-eine-gegend-der-schweiz-erz-h-lt-di-bern",
+  "bl-melisalp-mehr-als-eine-gegend-der-schweiz-erz-hlt-di-bern",
   "wilhelm-tell-uri",
   "der-grenzlauf-uri",
   "der-zuschauer-bei-der-totenprozession-uri",
