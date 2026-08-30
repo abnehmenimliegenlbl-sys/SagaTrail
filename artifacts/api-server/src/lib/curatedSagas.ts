@@ -913,7 +913,4 @@ export const CURATED_SAGAS: InsertCatalogSaga[] = [
 ].map((saga) => ({
   ...saga,
   ...(REPLACEMENTS[saga.id] ?? {}),
-})).map((saga) => ({
-  ...saga,
-  title: cleanSagaTitle(saga.title),
 }));
