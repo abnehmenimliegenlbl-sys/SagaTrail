@@ -48,9 +48,9 @@ export async function seedCatalog(): Promise<void> {
           altersstufenHinweis: sql`excluded.altersstufen_hinweis`,
           quelle: sql`excluded.quelle`,
           source: sql`excluded.source`,
-          koordinatenSicherheit: sql`excluded.koordinaten_sicherheit`,
-          lat: sql`excluded.lat`,
-          lng: sql`excluded.lng`,
+          // Koordinaten und Sicherheitsstatus sind redaktionelle Laufzeitdaten.
+          // Nicht aus dem Bundle überschreiben: Admin-Verifizierungen müssen
+          // einen Server-Neustart und ein erneutes Seeding überleben.
           isAnchorPlace: sql`excluded.is_anchor_place`,
           ortName: sql`excluded.ort_name`,
         },

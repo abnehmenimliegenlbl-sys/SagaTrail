@@ -1,6 +1,4 @@
 import { randomUUID, randomBytes, timingSafeEqual } from "crypto";
-import { readFileSync, writeFileSync, renameSync, existsSync } from "fs";
-import { resolve } from "path";
 import { sendPartnerVertrag } from "../lib/partnerEmail";
 import { sendMagicLink } from "../lib/partnerWebhookHandler";
 import { Router, type IRouter, type Request, type Response } from "express";
@@ -770,40 +768,30 @@ router.patch("/admin/sagas/:id/foto", async (req, res): Promise<void> => {
 // SAGEN GPS-VERIFIKATION
 // -------------------------------------------------------------------
 
-/** Pfad zur JSON-Quelldatei (Quelle der Wahrheit für Sagen-Koordinaten) */
-function curatedSagasJsonPath(): string {
-  const candidates = [
-    resolve(process.cwd(), "src/lib/curatedSagas.json"),
-    resolve(process.cwd(), "artifacts/api-server/src/lib/curatedSagas.json"),
-    resolve(__dirname, "../lib/curatedSagas.json"),
-    resolve(__dirname, "curatedSagas.json"), // gebündelter dist-Build (build.mjs kopiert die Datei dorthin)
-  ];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
-  }
-  throw new Error("curatedSagas.json nicht gefunden");
-}
-
 /** GET /admin/sagas/gps-pending — GPS-relevante Sagen; includeVerified=true enthält auch bereits verifizierte */
 router.get("/admin/sagas/gps-pending", async (req, res): Promise<void> => {
   if (!requireAdminToken(req, res)) return;
   try {
-    const sagas: any[] = JSON.parse(readFileSync(curatedSagasJsonPath(), "utf-8"));
     const includeVerified = req.query.includeVerified === "true";
-    const rows = sagas
-      .filter((s) => includeVerified || s.koordinatenSicherheit === "Muss GPS Verifiziert werden")
-      .map((s) => ({
-        id: s.id,
-        title: s.title,
-        canton: s.canton,
-        lat: s.lat ?? null,
-        lng: s.lng ?? null,
-        koordinatenSicherheit: s.koordinatenSicherheit,
-        bildmotiv: s.bildmotiv ?? null,
-        summary: s.summary ?? null,
-        summaries: s.summaries ?? null,
-      }))
-      .sort((a, b) => (a.canton + a.title).localeCompare(b.canton + b.title));
+    const rows = await db
+      .select({
+        id: catalogSagasTable.id,
+        title: catalogSagasTable.title,
+        canton: catalogSagasTable.canton,
+        lat: catalogSagasTable.lat,
+        lng: catalogSagasTable.lng,
+        koordinatenSicherheit: catalogSagasTable.koordinatenSicherheit,
+        bildmotiv: catalogSagasTable.bildmotiv,
+        summary: catalogSagasTable.summary,
+        summaries: catalogSagasTable.summaries,
+      })
+      .from(catalogSagasTable)
+      .then((all) =>
+        (includeVerified
+          ? all
+          : all.filter((s) => s.koordinatenSicherheit === "Muss GPS Verifiziert werden")
+        ).sort((a, b) => (a.canton + a.title).localeCompare(b.canton + b.title))
+      );
     res.json(rows);
   } catch (err) {
     req.log.error({ err }, "Admin sagas gps-pending fehlgeschlagen");
@@ -832,34 +820,40 @@ router.patch("/admin/sagas/:id/koordinaten", async (req, res): Promise<void> => 
     return;
   }
   try {
-    // 1. JSON-Quelldatei aktualisieren (Quelle der Wahrheit)
-    const jsonPath = curatedSagasJsonPath();
-    const sagas: any[] = JSON.parse(readFileSync(jsonPath, "utf-8"));
-    const entry = sagas.find((s: any) => s.id === id);
-    if (!entry) {
-      res.status(404).json({ error: `Saga '${id}' nicht in curatedSagas.json gefunden` });
-      return;
-    }
-    if (lat !== undefined) entry.lat = lat;
-    if (lng !== undefined) entry.lng = lng;
-    entry.koordinatenSicherheit = koordinatenSicherheit;
-    // Atomar schreiben: erst Temp-Datei, dann rename (verhindert kaputte JSON bei Abbruch)
-    const tmpPath = jsonPath + ".tmp";
-    writeFileSync(tmpPath, JSON.stringify(sagas, null, 2), "utf-8");
-    renameSync(tmpPath, jsonPath);
+    // Die Datenbank ist die dauerhafte Quelle: das Server-Dateisystem und das
+    // gebündelte JSON-Asset sind nach Neustarts/Deployments nicht persistent.
+    const update: Record<string, unknown> = {
+      koordinatenSicherheit,
+    };
+    if (lat !== undefined) update.lat = lat;
+    if (lng !== undefined) update.lng = lng;
 
-    // 2. DB sofort mitziehen (damit die App die Änderung ohne Neustart sieht)
     await db
       .update(catalogSagasTable)
-      .set({
-        lat: entry.lat ?? null,
-        lng: entry.lng ?? null,
-        koordinatenSicherheit: koordinatenSicherheit ?? null,
-      } as any)
+      .set(update as any)
       .where(eq(catalogSagasTable.id, id));
+    const [entry] = await db
+      .select({
+        id: catalogSagasTable.id,
+        lat: catalogSagasTable.lat,
+        lng: catalogSagasTable.lng,
+        koordinatenSicherheit: catalogSagasTable.koordinatenSicherheit,
+      })
+      .from(catalogSagasTable)
+      .where(eq(catalogSagasTable.id, id));
+    if (!entry) {
+      res.status(404).json({ error: `Saga '${id}' nicht in catalog_sagas gefunden` });
+      return;
+    }
 
-    req.log.info({ id, lat, lng, koordinatenSicherheit }, "Saga-Koordinaten aktualisiert (JSON + DB)");
-    res.json({ ok: true, id, lat: entry.lat, lng: entry.lng, koordinatenSicherheit });
+    req.log.info({ id, lat, lng, koordinatenSicherheit }, "Saga-Koordinaten dauerhaft in DB aktualisiert");
+    res.json({
+      ok: true,
+      id,
+      lat: entry.lat,
+      lng: entry.lng,
+      koordinatenSicherheit: entry.koordinatenSicherheit,
+    });
   } catch (err) {
     req.log.error({ err, id }, "Admin saga koordinaten update fehlgeschlagen");
     res.status(500).json({ error: "Interner Fehler" });
