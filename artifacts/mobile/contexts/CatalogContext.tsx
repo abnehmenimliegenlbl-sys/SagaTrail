@@ -41,7 +41,9 @@ import { nearestSaga, nearestNSagas } from "@/lib/sagaMatch";
  */
 export type CatalogSource = "server" | "cache" | "seed" | "error";
 
-const CACHE_KEY = "sagatrail:catalogCache";
+// Inhaltsänderungen bei gleichbleibender Saga-Anzahl müssen alte Geräte-Caches
+// verwerfen können (z. B. redaktionelle Ersatzsagen).
+const CACHE_KEY = "sagatrail:catalogCache:v2";
 const DYNAMIC_KEY = "sagatrail:dynamicCache";
 
 interface CatalogData {
