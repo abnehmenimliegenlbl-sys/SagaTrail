@@ -798,17 +798,6 @@ const BERN_NEW_SAGAS: InsertCatalogSaga[] = [
   },
 ];
 
-const PRESERVED_TITLE_PARENTHETICALS = new Set<string>([
-]);
-
-function cleanSagaTitle(title: string): string {
-  return title
-    .replace(/\s*\(([^()]*)\)/g, (full, content: string) =>
-      PRESERVED_TITLE_PARENTHETICALS.has(content.trim()) ? full : "",
-    )
-    .trim();
-}
-
 const RETIRED_SAGA_IDS = new Set([
   "bl-melisalp-mehr-als-eine-gegend-der-schweiz-erz-hlt-di-bern",
   "wilhelm-tell-uri",

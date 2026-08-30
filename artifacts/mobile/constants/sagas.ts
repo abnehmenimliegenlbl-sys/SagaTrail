@@ -88,9 +88,6 @@ const ATTINGHAUSEN_SUMMARIES = {
   },
 } satisfies Record<string, { text: string; reviewEmpfohlen: boolean }>;
 
-const PRESERVED_TITLE_PARENTHETICALS = new Set<string>([
-]);
-
 export const SAGAS: Saga[] = ([
 {
   "id": "die-beute-von-grandson-solot",
@@ -1864,11 +1861,5 @@ export const SAGAS: Saga[] = ([
   "isAnchorPlace": true
 },
 
- ] as Saga[])
-  .map((saga) => ({
-    ...saga,
-    title: saga.title.replace(/\s*\(([^()]*)\)/g, (full, content: string) =>
-      PRESERVED_TITLE_PARENTHETICALS.has(content.trim()) ? full : "",
-    ).trim(),
-  }))
+  ] as Saga[])
   .filter((saga) => saga.id !== "die-rose-von-mariastein");
