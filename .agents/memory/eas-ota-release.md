@@ -14,3 +14,9 @@ Use `eas update` directly on the `production` branch for OTA releases when the E
 **Why:** A production app publish can create a local `main` commit without authenticating the workspace for the separate GitHub remote.
 
 **How to apply:** If the OTA workflow is push-triggered and GitHub rejects the push, do not ask for a token in chat; use the Replit GitHub connection flow or leave the OTA pending.
+
+**Additional verification rule:** A successful GitHub push does not prove the OTA ran; compare the production-channel manifest `createdAt` with the pushed commit time and verify the update content.
+
+**Why:** The production channel can continue serving an older update when the push-trigger workflow is not linked or does not execute.
+
+**How to apply:** Treat the OTA as pending until the production manifest is newer than the commit. If the manifest stays older, manually trigger the supported Expo/EAS update flow instead of retrying Git pushes.
