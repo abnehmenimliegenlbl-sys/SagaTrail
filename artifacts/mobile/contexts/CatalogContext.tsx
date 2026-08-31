@@ -20,6 +20,7 @@ import { HikingRoute, CantonWithRoutes } from "@/constants/routes";
 import { SAGAS } from "@/constants/sagas";
 import { Saga } from "@/types";
 import { nearestSaga, nearestNSagas } from "@/lib/sagaMatch";
+import { normalizeSagaTitle, normalizeSagaTitles } from "@/lib/sagaTitle";
 
 /**
  * Katalog-Datenschicht: Sagen kommen vom Server, werden lokal
@@ -125,7 +126,7 @@ const CatalogContext = createContext<CatalogContextValue | null>(null);
 // Routen kommen ausschliesslich live pro Kanton (OSM/swisstopo); es gibt keinen
 // gebuendelten Routen-Seed mehr. Nur die kuratierten Sagen bleiben als
 // Offline-Rueckfall erhalten.
-const SEED: CatalogData = { routes: [], sagas: SAGAS };
+const SEED: CatalogData = { routes: [], sagas: normalizeSagaTitles(SAGAS) };
 const EMPTY_DYNAMIC: DynamicData = { cantonRoutes: {}, routeSagas: {}, customRoutes: {} };
 
 /**
@@ -198,7 +199,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         const next: CatalogData = {
           routes: res.routes as HikingRoute[],
-          sagas: res.sagas as Saga[],
+          sagas: normalizeSagaTitles(res.sagas as Saga[]),
         };
         setData(next);
         setSource("server");
@@ -216,7 +217,8 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         if (raw) {
           const parsed = JSON.parse(raw) as CatalogData;
           if (parsed.sagas?.length) {
-            setData(parsed);
+            const normalized = { ...parsed, sagas: normalizeSagaTitles(parsed.sagas) };
+            setData(normalized);
             setSource("cache");
             setReady(true);
             return;
@@ -323,7 +325,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
       const request = (async (): Promise<Saga | undefined> => {
         try {
-          return (await getRouteSaga(routeId)) as Saga;
+          return normalizeSagaTitle((await getRouteSaga(routeId)) as Saga);
         } catch {
           return undefined;
         } finally {

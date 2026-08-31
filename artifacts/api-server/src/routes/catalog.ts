@@ -25,9 +25,17 @@ function toRoute(row: CatalogRouteRow & { photoUrl?: string | null; photoAttribu
 }
 
 function toSaga(row: CatalogSagaRow) {
+  const cleanTitle = (title: string): string => {
+    let cleaned = title.trim();
+    while (/\([^()]*\)/.test(cleaned)) {
+      cleaned = cleaned.replace(/\s*\([^()]*\)/g, "");
+    }
+    return cleaned.replace(/\s{2,}/g, " ").trim() || title.trim();
+  };
+
   return {
     id: row.id,
-    title: row.title,
+    title: cleanTitle(row.title),
     canton: row.canton,
     coreMotif: row.coreMotif,
     bildmotiv: row.bildmotiv ?? undefined,
