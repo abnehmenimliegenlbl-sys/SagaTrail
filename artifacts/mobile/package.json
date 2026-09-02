@@ -65,6 +65,7 @@
     "@expo-google-fonts/big-shoulders-display": "^0.2.3",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/karla": "^0.4.2",
+    "@reactvision/react-viro": "2.54.0",
     "expo": "~54.0.36",
     "expo-apple-authentication": "^8.0.8",
     "expo-application": "^57.0.2",
