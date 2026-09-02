@@ -19,7 +19,7 @@ import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pedometer } from "expo-sensors";
+import { Magnetometer, Pedometer } from "expo-sensors";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -251,6 +251,14 @@ function buildKeepaliveWavBase64(): string {
 }
 
 type LocState = "idle" | "granted" | "denied" | "simulated";
+
+function smoothCompassHeading(previous: number | null, next: number, factor = 0.2): number {
+  if (previous == null) return next;
+  // Den kürzesten Weg über den 0°/360°-Übergang nehmen, damit die Anzeige
+  // nicht einmal quer über das Zifferblatt springt.
+  const delta = ((next - previous + 540) % 360) - 180;
+  return (previous + delta * factor + 360) % 360;
+}
 
 export default function LiveHike() {
   const colors = useColors();
@@ -495,6 +503,8 @@ export default function LiveHike() {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
+  const [compassHeading, setCompassHeading] = useState<number | null>(null);
+  const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
@@ -576,6 +586,7 @@ export default function LiveHike() {
   const lastTrackLogTimeRef = useRef<number>(0);
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
+  const compassHeadingRef = useRef<number | null>(null);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
@@ -1966,6 +1977,48 @@ export default function LiveHike() {
       }
     };
   }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
+
+  // Gerätekompass: auf iOS/Android aus dem Magnetometer lesen. Web und Geräte
+  // ohne Sensor zeigen später nur den deaktivierten Zustand; die GPS-basierte
+  // Richtung zum Wegstart bleibt davon unabhängig.
+  useEffect(() => {
+    let cancelled = false;
+    let subscription: ReturnType<typeof Magnetometer.addListener> | null = null;
+
+    if (Platform.OS === "web") {
+      setCompassAvailable(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void Magnetometer.isAvailableAsync()
+      .then((available) => {
+        if (cancelled) return;
+        setCompassAvailable(available);
+        if (!available) return;
+
+        Magnetometer.setUpdateInterval(200);
+        subscription = Magnetometer.addListener(({ x, y }) => {
+          if (cancelled || !Number.isFinite(x) || !Number.isFinite(y)) return;
+          // In Portraitausrichtung zeigt atan2(x, y) bei x=0/y>0 nach Norden.
+          const rawHeading = (Math.atan2(x, y) * 180) / Math.PI;
+          const normalized = (rawHeading + 360) % 360;
+          const smoothed = smoothCompassHeading(compassHeadingRef.current, normalized);
+          compassHeadingRef.current = smoothed;
+          setCompassHeading(smoothed);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setCompassAvailable(false);
+      });
+
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+      subscription = null;
+    };
+  }, []);
 
   const stopNarration = useCallback(async () => {
     const sound = narrationSoundRef.current;
@@ -3368,6 +3421,14 @@ export default function LiveHike() {
           />
         </View>
 
+        <CompassCard
+          heading={compassHeading}
+          available={compassAvailable}
+          direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
+          title={t.compass}
+          unavailable={t.compassUnavailable}
+        />
+
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
         {nearbyPoi && (
           <Animated.View entering={FadeIn}>
@@ -4123,6 +4184,76 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
   );
 }
 
+function CompassCard({
+  heading,
+  available,
+  direction,
+  title,
+  unavailable,
+}: {
+  heading: number | null;
+  available: boolean | null;
+  direction: string | null;
+  title: string;
+  unavailable: string;
+}) {
+  const colors = useColors();
+  const ready = available === true && heading != null && direction != null;
+  const roseRotation = heading == null ? 0 : -heading;
+
+  return (
+    <View
+      style={[
+        styles.compassCard,
+        { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+      ]}
+      accessibilityLabel={ready ? `${title}: ${direction}, ${Math.round(heading!)}°` : unavailable}
+    >
+      <View style={styles.compassHeader}>
+        <View style={styles.compassTitleRow}>
+          <Feather name="compass" size={16} color={colors.accent} />
+          <Text style={[styles.compassTitle, { color: colors.accent }]}>{title}</Text>
+        </View>
+        {ready && (
+          <Text style={[styles.compassDegrees, { color: colors.foreground }]}>
+            {Math.round(heading!)}°
+          </Text>
+        )}
+      </View>
+
+      {ready ? (
+        <View style={styles.compassBody}>
+          <View style={styles.compassDial}>
+            <View
+              style={[
+                styles.compassRose,
+                { borderColor: colors.glassBorder, transform: [{ rotate: `${roseRotation}deg` }] },
+              ]}
+            >
+              <Text style={[styles.compassNorth, { color: colors.accent }]}>N</Text>
+              <Text style={[styles.compassEast, { color: colors.foreground }]}>E</Text>
+              <Text style={[styles.compassSouth, { color: colors.foreground }]}>S</Text>
+              <Text style={[styles.compassWest, { color: colors.foreground }]}>W</Text>
+            </View>
+            <View style={[styles.compassAhead, { borderBottomColor: colors.accent }]} />
+            <View style={[styles.compassCenter, { backgroundColor: colors.foreground }]} />
+          </View>
+          <View style={styles.compassReadout}>
+            <Text style={[styles.compassDirection, { color: colors.foreground }]}>{direction}</Text>
+          </View>
+        </View>
+      ) : available === null ? (
+        <View style={styles.compassUnavailableRow}>
+          <ActivityIndicator size="small" color={colors.accent} />
+          <Text style={[styles.compassHint, { color: colors.mutedForeground }]}>…</Text>
+        </View>
+      ) : (
+        <Text style={[styles.compassHint, { color: colors.mutedForeground }]}>{unavailable}</Text>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   banner: {
@@ -4205,6 +4336,60 @@ const styles = StyleSheet.create({
   metricValRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 },
   metricVal: { fontFamily: fonts.monoBold, fontSize: 20 },
   metricUnit: { fontFamily: fonts.mono, fontSize: 11 },
+  compassCard: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+  },
+  compassHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  compassTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  compassTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
+  compassDegrees: { fontFamily: fonts.monoBold, fontSize: 14 },
+  compassBody: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 10,
+  },
+  compassDial: {
+    width: 84,
+    height: 84,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  compassRose: {
+    position: "absolute",
+    width: 84,
+    height: 84,
+    borderWidth: 1,
+    borderRadius: 42,
+  },
+  compassNorth: { position: "absolute", top: 5, alignSelf: "center", fontFamily: fonts.monoBold, fontSize: 13 },
+  compassEast: { position: "absolute", right: 7, top: 35, fontFamily: fonts.monoBold, fontSize: 12 },
+  compassSouth: { position: "absolute", bottom: 5, alignSelf: "center", fontFamily: fonts.monoBold, fontSize: 12 },
+  compassWest: { position: "absolute", left: 7, top: 35, fontFamily: fonts.monoBold, fontSize: 12 },
+  compassAhead: {
+    position: "absolute",
+    top: 3,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 9,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+  },
+  compassCenter: { width: 7, height: 7, borderRadius: 4 },
+  compassReadout: { flex: 1, gap: 5 },
+  compassDirection: { fontFamily: fonts.titleBold, fontSize: 20 },
+  compassHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  compassUnavailableRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },

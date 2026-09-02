@@ -12,6 +12,8 @@ export interface HikeStrings {
   walkToStartHint: (distance: string, direction: string) => string;
   walkToStartSpoken: (distance: string, direction: string) => string;
   compassDirections: [string, string, string, string, string, string, string, string];
+  compass: string;
+  compassUnavailable: string;
   live: string;
   discoveredNearby: string;
   metricDistance: string;
@@ -127,6 +129,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
     compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
+    compass: "KOMPASS",
+    compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
     live: "LIVE",
     discoveredNearby: "ENTDECKT IN DER NÄHE",
     metricDistance: "DISTANZ",
@@ -251,6 +255,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Du bist noch ${distance} vom Wegstart entfernt, Richtung ${direction}.`,
     compassDirections: ["Norden", "Nordosten", "Osten", "Südosten", "Süden", "Südwesten", "Westen", "Nordwesten"],
+    compass: "KOMPASS",
+    compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
     live: "LIVE",
     discoveredNearby: "I DE NÄCHI ENTDECKT",
     metricDistance: "DISTANZ",
@@ -375,6 +381,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `You're still ${distance} from the trailhead, heading ${direction}.`,
     compassDirections: ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"],
+    compass: "COMPASS",
+    compassUnavailable: "Compass unavailable on this device",
     live: "LIVE",
     discoveredNearby: "DISCOVERED NEARBY",
     metricDistance: "DISTANCE",
@@ -499,6 +507,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Il te reste ${distance} vers le ${direction} pour atteindre le départ.`,
     compassDirections: ["nord", "nord-est", "est", "sud-est", "sud", "sud-ouest", "ouest", "nord-ouest"],
+    compass: "BOUSSOLE",
+    compassUnavailable: "Boussole indisponible sur cet appareil",
     live: "LIVE",
     discoveredNearby: "DÉCOUVERT À PROXIMITÉ",
     metricDistance: "DISTANCE",
@@ -623,6 +633,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Sei ancora a ${distance} dalla partenza, verso ${direction}.`,
     compassDirections: ["nord", "nord-est", "est", "sud-est", "sud", "sud-ovest", "ovest", "nord-ovest"],
+    compass: "BUSSOLA",
+    compassUnavailable: "Bussola non disponibile su questo dispositivo",
     live: "LIVE",
     discoveredNearby: "SCOPERTO NELLE VICINANZE",
     metricDistance: "DISTANZA",
@@ -747,6 +759,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Todavía estás a ${distance} del inicio, hacia el ${direction}.`,
     compassDirections: ["norte", "noreste", "este", "sureste", "sur", "suroeste", "oeste", "noroeste"],
+    compass: "BRÚJULA",
+    compassUnavailable: "Brújula no disponible en este dispositivo",
     live: "LIVE",
     discoveredNearby: "DESCUBIERTO CERCA",
     metricDistance: "DISTANCIA",
@@ -871,6 +885,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `Ainda estás a ${distance} do início, rumo a ${direction}.`,
     compassDirections: ["norte", "nordeste", "leste", "sudeste", "sul", "sudoeste", "oeste", "noroeste"],
+    compass: "BÚSSOLA",
+    compassUnavailable: "Bússola indisponível neste dispositivo",
     live: "LIVE",
     discoveredNearby: "DESCOBERTO NAS PROXIMIDADES",
     metricDistance: "DISTÂNCIA",
@@ -995,6 +1011,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `你距离起点还有 ${distance}，方向是${direction}。`,
     compassDirections: ["北", "东北", "东", "东南", "南", "西南", "西", "西北"],
+    compass: "指南针",
+    compassUnavailable: "此设备不支持指南针",
     live: "实时",
     discoveredNearby: "在附近发现",
     metricDistance: "距离",
@@ -1119,6 +1137,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     walkToStartSpoken: (distance, direction) =>
       `До начала маршрута ещё ${distance}, направление ${direction}.`,
     compassDirections: ["север", "северо-восток", "восток", "юго-восток", "юг", "юго-запад", "запад", "северо-запад"],
+    compass: "КОМПАС",
+    compassUnavailable: "Компас недоступен на этом устройстве",
     live: "LIVE",
     discoveredNearby: "ОБНАРУЖЕНО РЯДОМ",
     metricDistance: "ДИСТАНЦИЯ",
