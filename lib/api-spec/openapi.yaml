@@ -2054,6 +2054,21 @@ components:
       required:
         - analysisNote
         - candidates
+    ObjectRecognitionLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          enum: [OBJECT_RECOGNITION_DAILY_LIMIT]
+        limit:
+          type: integer
+          example: 5
+      required:
+        - error
+        - code
+        - limit
     ObjectRecognitionCandidate:
       type: object
       properties:

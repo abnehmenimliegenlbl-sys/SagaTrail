@@ -19,3 +19,4 @@ export * from "./partnerEmailLog";
 export * from "./partnerLeads";
 export * from "./referrals";
 export * from "./androidBetaTesters";
+export * from "./objectRecognitionUsage";
