@@ -698,6 +698,8 @@ function buildPrompt(input: ObjectRecognitionInput): string {
     "Personen, Gesichter und Identitaeten duerfen NICHT erkannt oder beschrieben werden. Wenn das Bild primaer Personen/Gesichter zeigt, gib ein leeres candidates-Array zurueck.",
     "Behaupte keine sichere Identitaet. Nutze Unsicherheit und gib nur Kandidaten zurueck, die visuell plausibel sind.",
     "GPS, Blickrichtung und OSM-Kontext sind nur Zusatzhinweise. Sie duerfen niemals eine unpassende visuelle Erkennung erzwingen.",
+    "Ortsbezogene Eigennamen duerfen nur fuer Objekte innerhalb von 500 m verwendet werden. OSM-Objekte ausserhalb dieser Entfernung sind zu ignorieren. Wenn kein passender lokaler Name sichtbar und plausibel ist, beschreibe das Objekt allgemein statt einen entfernten Namen zu raten.",
+    "Pflanzen und Tiere im aufgenommenen Bild gelten als unmittelbar vor der Kamera; die 500-m-Regel bezieht sich bei ihnen nicht auf einen entfernten OSM-Namen.",
     `Antworte in ${LANGUAGE_LABEL[input.language] ?? "Deutsch"}.`,
     location,
     direction,

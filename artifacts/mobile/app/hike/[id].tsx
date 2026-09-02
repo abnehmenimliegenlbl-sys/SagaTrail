@@ -2722,6 +2722,54 @@ export default function LiveHike() {
     () => erkenneGipfel(pois, livePos, compassHeading),
     [pois, livePos, compassHeading],
   );
+  const objectRecognitionContext = useMemo(() => {
+    if (!livePos) return "";
+
+    const nearby = [...liveRecognitionPois, ...pois]
+      .filter((poi) => poi.name.trim().length > 0)
+      .map((poi) => {
+        const target = { lat: poi.lat, lng: poi.lng };
+        return {
+          poi,
+          distanceKm: haversineKm(livePos, target),
+          bearing: bearingDeg(livePos, target),
+        };
+      })
+      .filter((entry) => entry.distanceKm <= 0.5)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+
+    const seen = new Set<string>();
+    const context: string[] = [];
+    if (livePlace) {
+      context.push(`Aktueller GPS-Ort (ungefähr): ${livePlace}`);
+    }
+    for (const entry of nearby) {
+      const key = `${entry.poi.name.trim().toLocaleLowerCase()}|${entry.poi.kind}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      context.push(
+        `OSM-Objekt in ${entry.distanceKm.toFixed(2)} km Entfernung, Peilung ${Math.round(entry.bearing)}°: ${entry.poi.name.trim()} (${entry.poi.kind})`,
+      );
+      if (context.length >= 8) break;
+    }
+
+    // nearbyPoi stammt aus der routenbezogenen Liste. Es darf nur als
+    // Foto-Kontext dienen, wenn es ebenfalls innerhalb der 500-m-Grenze liegt.
+    if (nearbyPoi) {
+      const nearbyPoiDistance = haversineKm(livePos, {
+        lat: nearbyPoi.lat,
+        lng: nearbyPoi.lng,
+      });
+      const key = `${nearbyPoi.name.trim().toLocaleLowerCase()}|${nearbyPoi.kind}`;
+      if (nearbyPoiDistance <= 0.5 && !seen.has(key)) {
+        context.push(
+          `OSM-POI in ${nearbyPoiDistance.toFixed(2)} km Entfernung: ${nearbyPoi.name.trim()} (${nearbyPoi.kind})`,
+        );
+      }
+    }
+
+    return context.join("; ");
+  }, [livePlace, livePos, liveRecognitionPois, nearbyPoi, pois]);
   const terrainSections = useMemo(
     () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
     [terrainProfile],
@@ -3614,10 +3662,7 @@ export default function LiveHike() {
                   lat={livePos?.lat}
                   lng={livePos?.lng}
                   heading={compassHeading}
-                  nearbyContext={[
-                    ...panoramaPeaks.slice(0, 8).map((peak) => `OSM-Gipfel: ${peak.name}`),
-                    ...(nearbyPoi ? [`OSM-POI: ${nearbyPoi.name}`] : []),
-                  ].join("; ")}
+                  nearbyContext={objectRecognitionContext}
                 />
               ),
             },
