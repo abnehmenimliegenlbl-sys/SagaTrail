@@ -100,6 +100,12 @@
       "expo-font",
       "expo-web-browser",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "SagaTrail möchte deine Kamera nutzen, um Gipfel direkt im Kamerabild anzuzeigen."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "SagaTrail möchte deine Kamera nutzen, damit du Erinnerungsfotos von deiner Wanderung aufnehmen kannst."

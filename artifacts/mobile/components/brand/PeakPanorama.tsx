@@ -1,7 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 import {
   ImageBackground,
+  Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -22,6 +26,9 @@ export interface PeakPanoramaStrings {
   noPeaks: string;
   detected: string;
   distance: (distance: string) => string;
+  camera: string;
+  cameraOff: string;
+  cameraPermission: string;
 }
 
 interface PeakPanoramaProps {
@@ -45,6 +52,9 @@ export function PeakPanorama({
   strings,
 }: PeakPanoramaProps) {
   const colors = useColors();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
   const visiblePeaks =
     heading == null
       ? []
@@ -64,6 +74,24 @@ export function PeakPanorama({
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
+  if (cameraBlocked) status = strings.cameraPermission;
+
+  const toggleCamera = async () => {
+    if (cameraEnabled) {
+      setCameraEnabled(false);
+      return;
+    }
+    if (Platform.OS === "web") return;
+    const permission = cameraPermission?.granted
+      ? cameraPermission
+      : await requestCameraPermission();
+    if (permission.granted) {
+      setCameraBlocked(false);
+      setCameraEnabled(true);
+    } else {
+      setCameraBlocked(true);
+    }
+  };
 
   return (
     <View
@@ -80,11 +108,49 @@ export function PeakPanorama({
             {strings.title}
           </Text>
         </View>
-        {heading != null && (
-          <Text style={[styles.heading, { color: colors.foreground }]}>
-            {Math.round(heading)}°
-          </Text>
-        )}
+        <View style={styles.headerActions}>
+          {heading != null && (
+            <Text style={[styles.heading, { color: colors.foreground }]}>
+              {Math.round(heading)}°
+            </Text>
+          )}
+          {Platform.OS !== "web" && (
+            <Pressable
+              onPress={toggleCamera}
+              style={[
+                styles.cameraButton,
+                {
+                  backgroundColor: cameraEnabled
+                    ? colors.primary
+                    : colors.glassBgStrong,
+                  borderColor: cameraEnabled
+                    ? colors.primary
+                    : colors.glassBorder,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={cameraEnabled ? strings.cameraOff : strings.camera}
+            >
+              <Feather
+                name={cameraEnabled ? "x" : "camera"}
+                size={14}
+                color={cameraEnabled ? colors.primaryForeground : colors.foreground}
+              />
+              <Text
+                style={[
+                  styles.cameraButtonText,
+                  {
+                    color: cameraEnabled
+                      ? colors.primaryForeground
+                      : colors.foreground,
+                  },
+                ]}
+              >
+                {cameraEnabled ? strings.cameraOff : strings.camera}
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <Text style={[styles.hint, { color: colors.mutedForeground }]}>
@@ -92,86 +158,89 @@ export function PeakPanorama({
       </Text>
 
       <View style={styles.imageFrame}>
-        <ImageBackground
-          source={source}
-          resizeMode="cover"
-          style={styles.image}
-          imageStyle={styles.imageRadius}
-        >
-          <View style={styles.imageScrim} />
-          <View style={styles.horizon} />
-          {visiblePeaks.map((peak, index) => (
+        {cameraEnabled && cameraPermission?.granted ? (
+          <CameraView facing="back" style={styles.camera} />
+        ) : (
+          <ImageBackground
+            source={source}
+            resizeMode="cover"
+            style={styles.image}
+            imageStyle={styles.imageRadius}
+          />
+        )}
+        <View style={styles.imageScrim} />
+        <View style={styles.horizon} />
+        {visiblePeaks.map((peak, index) => (
+          <View
+            key={peak.id}
+            style={[
+              styles.marker,
+              {
+                left: markerLeft(peak.relativeBearingDeg ?? 0),
+                top: 16 + (index % 3) * 26,
+              },
+            ]}
+          >
             <View
-              key={peak.id}
               style={[
-                styles.marker,
+                styles.markerLabel,
                 {
-                  left: markerLeft(peak.relativeBearingDeg ?? 0),
-                  top: 16 + (index % 3) * 26,
+                  backgroundColor: colors.glassBgStrong,
+                  borderColor:
+                    focusedPeak?.id === peak.id
+                      ? colors.primary
+                      : colors.glassBorder,
                 },
               ]}
             >
-              <View
-                style={[
-                  styles.markerLabel,
-                  {
-                    backgroundColor: colors.glassBgStrong,
-                    borderColor:
-                      focusedPeak?.id === peak.id
-                        ? colors.primary
-                        : colors.glassBorder,
-                  },
-                ]}
+              <Text
+                style={[styles.markerName, { color: colors.photoScrimText }]}
+                numberOfLines={1}
               >
-                <Text
-                  style={[styles.markerName, { color: colors.photoScrimText }]}
-                  numberOfLines={1}
-                >
-                  {peak.name}
-                </Text>
-                <Text
-                  style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
-                >
-                  {strings.distance(peak.distanceKm.toFixed(1))}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.markerStem,
-                  {
-                    backgroundColor:
-                      focusedPeak?.id === peak.id
-                        ? colors.primary
-                        : colors.photoScrimText,
-                  },
-                ]}
-              />
+                {peak.name}
+              </Text>
+              <Text
+                style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
+              >
+                {strings.distance(peak.distanceKm.toFixed(1))}
+              </Text>
             </View>
-          ))}
-          {heading != null && (
             <View
               style={[
-                styles.centerLine,
-                { backgroundColor: colors.primary },
+                styles.markerStem,
+                {
+                  backgroundColor:
+                    focusedPeak?.id === peak.id
+                      ? colors.primary
+                      : colors.photoScrimText,
+                },
               ]}
             />
-          )}
-          <View style={styles.imageFooter}>
-            <Feather
-              name={focusedPeak ? "crosshair" : "compass"}
-              size={13}
-              color={colors.photoScrimText}
-            />
-            <Text
-              style={[styles.status, { color: colors.photoScrimText }]}
-              numberOfLines={1}
-            >
-              {focusedPeak
-                ? `${strings.detected}: ${focusedPeak.name}`
-                : status}
-            </Text>
           </View>
-        </ImageBackground>
+        ))}
+        {heading != null && (
+          <View
+            style={[
+              styles.centerLine,
+              { backgroundColor: colors.primary },
+            ]}
+          />
+        )}
+        <View style={styles.imageFooter}>
+          <Feather
+            name={focusedPeak ? "crosshair" : "compass"}
+            size={13}
+            color={colors.photoScrimText}
+          />
+          <Text
+            style={[styles.status, { color: colors.photoScrimText }]}
+            numberOfLines={1}
+          >
+            {focusedPeak
+              ? `${strings.detected}: ${focusedPeak.name}`
+              : status}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -190,11 +259,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   heading: { fontFamily: fonts.monoBold, fontSize: 14 },
+  cameraButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  cameraButtonText: { fontFamily: fonts.mono, fontSize: 9 },
   hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 7 },
   imageFrame: { marginTop: 11, height: 190, borderRadius: 12, overflow: "hidden" },
   image: { flex: 1, justifyContent: "flex-end" },
+  camera: { ...StyleSheet.absoluteFillObject },
   imageRadius: { borderRadius: 12 },
   imageScrim: {
     ...StyleSheet.absoluteFillObject,
@@ -234,6 +315,10 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   imageFooter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     minHeight: 32,
     flexDirection: "row",
     alignItems: "center",

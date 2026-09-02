@@ -3517,6 +3517,9 @@ export default function LiveHike() {
             noPeaks: t.panoramaNoPeaks,
             detected: t.panoramaDetected,
             distance: t.panoramaDistance,
+            camera: t.camera,
+            cameraOff: t.cameraOff,
+            cameraPermission: t.cameraPermission,
           }}
         />
 
