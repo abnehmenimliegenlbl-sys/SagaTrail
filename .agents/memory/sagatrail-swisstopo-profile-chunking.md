@@ -7,7 +7,7 @@ The SwissTopo profile endpoint receives GeoJSON through a GET query parameter, s
 
 **Why:** Raising the point cap alone turns normal 500-point routes into HTTP 400/414 failures and leaves the app without a profile.
 
-**How to apply:** Keep each request below the measured safe size, overlap adjacent chunks by one route point, omit the duplicate profile sample at joins, and use original cumulative route distance for map alignment.
+**How to apply:** Keep each request below the measured safe size, overlap adjacent chunks by one route point, omit duplicate or slightly backward profile samples at joins, and use original cumulative route distance for map alignment.
 
 SwissTopo-Ausfälle werden pro Chunk mit wenigen Backoff-Versuchen abgefangen; erst erfolgreiche, vollständige Chunks dürfen zusammengeführt werden.
 

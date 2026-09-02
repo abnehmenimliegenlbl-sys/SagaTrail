@@ -195,7 +195,7 @@ async function fetchSwisstopoProfile(
     // them explicitly so the merged profile starts at zero even if the
     // service returns a small non-zero distance for the first sample.
     const chunkStartDistanceKm = chunk[0].distanceKm;
-    const mergedChunk = chunk
+    const rebasedChunk = chunk
       .slice(chunkIndex > 0 ? 1 : 0)
       .map((point) => ({
         distanceKm: routeDistancesKm[start] + point.distanceKm - chunkStartDistanceKm,
@@ -203,6 +203,22 @@ async function fetchSwisstopoProfile(
       }));
 
     const previousDistanceKm = result.at(-1)?.distanceKm;
+    // Die Entfernung des SwissTopo-Profils und die Haversine-Entfernung der
+    // Originalgeometrie unterscheiden sich an Chunk-Grenzen gelegentlich um
+    // wenige Zentimeter. Solche bereits abgedeckten Grenzpunkte überspringen,
+    // statt ein ansonsten gültiges Gesamtprofil mit 502 abzulehnen.
+    const mergedChunk = previousDistanceKm == null
+      ? rebasedChunk
+      : rebasedChunk.filter((point) => point.distanceKm > previousDistanceKm);
+    if (mergedChunk.length < rebasedChunk.length) {
+      log.debug(
+        {
+          points: chunk.length,
+          skippedOverlapPoints: rebasedChunk.length - mergedChunk.length,
+        },
+        "swisstopo-Profil: überlappende Chunk-Grenzpunkte übersprungen",
+      );
+    }
     if (
       mergedChunk.some(
         (point, index) =>
