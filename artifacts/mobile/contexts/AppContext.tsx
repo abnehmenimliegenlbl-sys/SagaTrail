@@ -55,6 +55,7 @@ const KEYS = {
   freieSagen: "sagatrail:freieSagen",
   themeMode: "sagatrail:themeMode",
   groupLocationSharing: "sagatrail:groupLocationSharing",
+  groupSessionCodePrefix: "sagatrail:groupSessionCode:",
 } as const;
 
 export interface EmergencyContact {
@@ -240,6 +241,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     event: HikeSyncEvent;
     receivedAt: number;
   } | null>(null);
+  const [persistedGroupCode, setPersistedGroupCode] = useState<string | null>(null);
   const [freieSagen, setFreieSagen] = useState<Record<string, string>>({});
   const [savedSagaIds, setSavedSagaIds] = useState<string[]>([]);
   const [pushWeatherEnabled, setPushWeatherEnabledState] = useState(true);
@@ -274,16 +276,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const socket = new GroupSocket(getGroupToken, {
       onStatusChange: setGroupConnectionStatus,
-      onJoined: (code, members, rendezvous) => {
+      onJoined: (code, members, rendezvous, hikeState) => {
         setGroupError(null);
+        if (selfIdRef.current) {
+          void AsyncStorage.setItem(
+            `${KEYS.groupSessionCodePrefix}${selfIdRef.current}`,
+            code,
+          );
+          setPersistedGroupCode(code);
+        }
         setGroupSession({
           code,
           members,
           isLeader: members.some(
             (m) => m.id === selfIdRef.current && m.isLeader
           ),
-           rendezvous: rendezvous ?? null,
+          rendezvous: rendezvous ?? null,
         });
+        if (hikeState?.event) {
+          setGroupHikeEvent({ event: hikeState.event, receivedAt: Date.now() });
+        }
       },
       onMembers: (members) => {
         setGroupSession((prev) => {
@@ -298,10 +310,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       onClosedByLeader: () => {
+        if (selfIdRef.current) {
+          void AsyncStorage.removeItem(
+            `${KEYS.groupSessionCodePrefix}${selfIdRef.current}`,
+          );
+        }
+        setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
       },
       onKicked: () => {
+        if (selfIdRef.current) {
+          void AsyncStorage.removeItem(
+            `${KEYS.groupSessionCodePrefix}${selfIdRef.current}`,
+          );
+        }
+        setPersistedGroupCode(null);
         setGroupSession(null);
         setGroupHikeEvent(null);
       },
@@ -324,6 +348,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupSocketRef.current = null;
     };
   }, [getGroupToken]);
+
+  // Ein laufender Gruppenraum wird beim App-Start automatisch wieder
+  // aufgenommen. Der Code ist pro Clerk-User getrennt, damit ein
+  // Kontowechsel nie versehentlich der vorherigen Gruppe beitritt.
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || !userId || !hydrated) return;
+    const key = `${KEYS.groupSessionCodePrefix}${userId}`;
+    let cancelled = false;
+    void AsyncStorage.getItem(key).then((code) => {
+      if (!cancelled) setPersistedGroupCode(code?.trim().toUpperCase() || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoaded, isSignedIn, userId, hydrated]);
+
+  useEffect(() => {
+    if (!isSignedIn || !persistedGroupCode) return;
+    groupSocketRef.current?.join(persistedGroupCode);
+  }, [isSignedIn, persistedGroupCode]);
 
   // Standort wird ausschliesslich waehrend einer aktiven Wanderung und nur
   // ueber echte Vordergrund-GPS-Fixes geteilt. Keine Hintergrund-Tracking-
@@ -460,6 +504,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const currentUserId = userId ?? null;
     if (currentUserId !== lastUserId) {
       setLastUserId(currentUserId);
+      groupSocketRef.current?.disconnect();
+      setGroupSession(null);
+      setPersistedGroupCode(null);
+      setGroupHikeEvent(null);
       setProfile(null);
       setPremium(false);
       setFreeHikeUsed(false);
@@ -986,7 +1034,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetAll = useCallback(async () => {
     groupSocketRef.current?.disconnect();
-    await AsyncStorage.multiRemove(Object.values(KEYS));
+    const groupCodeKey = userId
+      ? `${KEYS.groupSessionCodePrefix}${userId}`
+      : null;
+    await AsyncStorage.multiRemove([
+      ...Object.values(KEYS).filter((key) => key !== KEYS.groupSessionCodePrefix),
+      ...(groupCodeKey ? [groupCodeKey] : []),
+    ]);
     setProfile(null);
     setPremium(false);
     setFreeHikeUsed(false);
@@ -997,11 +1051,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHikeHistory([]);
     setActiveHike(null);
     setGroupSession(null);
+    setPersistedGroupCode(null);
     setGroupError(null);
     setSavedSagaIds([]);
     setPushWeatherEnabledState(true);
     pushTokenSyncedForUserRef.current = null;
-  }, []);
+  }, [userId]);
 
   const deleteAccount = useCallback(async () => {
     try {
@@ -1078,6 +1133,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const leaveGroupSession = useCallback(() => {
     groupSocketRef.current?.leave();
+    if (selfIdRef.current) {
+      void AsyncStorage.removeItem(
+        `${KEYS.groupSessionCodePrefix}${selfIdRef.current}`,
+      );
+    }
+    setPersistedGroupCode(null);
     setGroupSession(null);
     setGroupError(null);
     setGroupHikeEvent(null);

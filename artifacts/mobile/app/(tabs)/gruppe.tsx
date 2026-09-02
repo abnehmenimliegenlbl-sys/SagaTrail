@@ -126,6 +126,12 @@ export default function Gruppe() {
   const errorLabel = groupError
     ? groupError === "not_found"
       ? t.errorNotFound
+      : groupError === "full"
+        ? "Diese Gruppe ist voll."
+        : groupError === "already_in_group"
+          ? "Du bist bereits in einer anderen Gruppe."
+          : groupError === "expired"
+            ? "Diese Gruppe ist abgelaufen. Bitte erstelle eine neue."
       : groupError === "network"
         ? t.errorNetwork
         : t.errorUnknown
@@ -345,6 +351,7 @@ export default function Gruppe() {
                     {m.activity.type === "wandert"
                       ? `  ·  ${t.activityWandering(m.activity.sagaTitle)}`
                       : `  ·  ${t.activityReady}`}
+                    {m.connected === false ? "  ·  offline" : ""}
                   </Text>
                    <Text style={[styles.locationStatus, {
                      color: m.location
@@ -393,7 +400,7 @@ export default function Gruppe() {
                       </Text>
                     </Pressable>
                   )}
-                {memberOutOfSync(m.id) && (
+                {(m.connected === false || memberOutOfSync(m.id)) && (
                   <Feather
                     name="wifi-off"
                     size={14}

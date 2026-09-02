@@ -8,7 +8,9 @@ import { istPremiumAktiv } from "../lib/premiumStatus";
 import {
   broadcastHikeEvent,
   createRoom,
+  disconnectRoom,
   getRoomMemberIds,
+  initializeGroupSessions,
   joinRoom,
   kickMember,
   leaveRoom,
@@ -186,7 +188,11 @@ function parseClientMessage(raw: unknown): ClientMessage | null {
       return { type: "create" };
     case "join":
       if (typeof data.code !== "string") return null;
-      return { type: "join", code: data.code.trim().toUpperCase() };
+      {
+        const code = data.code.trim().toUpperCase();
+        if (!/^[A-Z2-9]{6}$/.test(code)) return null;
+        return { type: "join", code };
+      }
     case "leave":
       return { type: "leave" };
     case "kick":
@@ -260,6 +266,7 @@ export function attachGroupsSocket(server: HttpServer): void {
 
   wss.on("connection", (ws, req) => {
     void (async () => {
+      await initializeGroupSessions();
       const url = new URL(req.url ?? "", "http://internal");
       const token = url.searchParams.get("token");
       const profile = await authenticate(token);
@@ -269,8 +276,20 @@ export function attachGroupsSocket(server: HttpServer): void {
         return;
       }
 
+      let messageWindowStartedAt = Date.now();
+      let messageCountInWindow = 0;
       ws.on("message", (raw) => {
         void (async () => {
+          const now = Date.now();
+          if (now - messageWindowStartedAt >= 10_000) {
+            messageWindowStartedAt = now;
+            messageCountInWindow = 0;
+          }
+          messageCountInWindow += 1;
+          if (messageCountInWindow > 120) {
+            send(ws, { type: "error", code: "rate_limited" });
+            return;
+          }
           let parsed: unknown;
           try {
             parsed = JSON.parse(raw.toString());
@@ -290,7 +309,7 @@ export function attachGroupsSocket(server: HttpServer): void {
                 send(ws, { type: "error", code: "premium_required" });
                 return;
               }
-              const room = createRoom({
+              const room = await createRoom({
                 userId: profile.userId,
                 name: profile.name,
                 ageTier: profile.ageTier,
@@ -300,7 +319,7 @@ export function attachGroupsSocket(server: HttpServer): void {
               return;
             }
             case "join": {
-              const result = joinRoom({
+              const result = await joinRoom({
                 code: message.code,
                 userId: profile.userId,
                 name: profile.name,
@@ -317,11 +336,11 @@ export function attachGroupsSocket(server: HttpServer): void {
               return;
             }
             case "leave": {
-              leaveRoom(profile.userId, ws);
+              await leaveRoom(profile.userId, ws);
               return;
             }
             case "kick": {
-              const result = kickMember({
+              const result = await kickMember({
                 leaderId: profile.userId,
                 targetUserId: message.targetUserId,
               });
@@ -331,18 +350,18 @@ export function attachGroupsSocket(server: HttpServer): void {
               return;
             }
             case "activity": {
-              setActivity(profile.userId, message.activity);
+              await setActivity(profile.userId, message.activity);
               return;
             }
             case "rendezvous": {
-              const result = setRendezvous(profile.userId, message.location);
+              const result = await setRendezvous(profile.userId, message.location);
               if (!result.ok) send(ws, { type: "error", code: result.reason });
               return;
             }
             case "hike": {
               // Nur die Gruppenleitung darf Wander-Sync-Ereignisse (inkl.
               // Entscheidungen) senden — wird in broadcastHikeEvent erzwungen.
-              const result = broadcastHikeEvent(profile.userId, message.event);
+              const result = await broadcastHikeEvent(profile.userId, message.event);
               if (!result.ok) {
                 send(ws, { type: "error", code: result.reason });
               }
@@ -363,7 +382,7 @@ export function attachGroupsSocket(server: HttpServer): void {
       });
 
       ws.on("close", () => {
-        leaveRoom(profile.userId, ws);
+        void disconnectRoom(profile.userId, ws);
       });
     })().catch((err) => {
       logger.error({ err }, "Fehler beim Aufbau einer Gruppen-WebSocket-Verbindung");
@@ -371,5 +390,6 @@ export function attachGroupsSocket(server: HttpServer): void {
     });
   });
 
+  void initializeGroupSessions();
   logger.info({ path: GROUPS_WS_PATH }, "Gruppen-WebSocket-Server bereit");
 }

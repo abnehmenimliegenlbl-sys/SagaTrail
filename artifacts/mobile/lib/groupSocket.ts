@@ -43,6 +43,7 @@ export interface GroupMember {
   name: string;
   ageTier: string;
   isLeader: boolean;
+  connected: boolean;
   activity: GroupActivity;
   location?: GroupLocation;
 }
@@ -53,11 +54,23 @@ export type GroupConnectionStatus =
   | "verbunden"
   | "fehler";
 
-export type GroupSocketError = "premium_required" | "not_found" | "network" | "unbekannt";
+export type GroupSocketError =
+  | "premium_required"
+  | "not_found"
+  | "full"
+  | "already_in_group"
+  | "expired"
+  | "network"
+  | "unbekannt";
 
 export interface GroupSocketEvents {
   onStatusChange: (status: GroupConnectionStatus) => void;
-  onJoined: (code: string, members: GroupMember[], rendezvous?: GroupLocation | null) => void;
+  onJoined: (
+    code: string,
+    members: GroupMember[],
+    rendezvous?: GroupLocation | null,
+    hikeState?: { event: HikeSyncEvent; updatedAt: number } | null,
+  ) => void;
   onMembers: (members: GroupMember[]) => void;
   onClosedByLeader: () => void;
   onKicked: () => void;
@@ -75,6 +88,7 @@ interface WireMember {
   name: string;
   ageTier: string;
   isLeader: boolean;
+  connected?: boolean;
   activity: GroupActivity;
   location?: GroupLocation;
 }
@@ -86,6 +100,7 @@ function normalizeMembers(raw: unknown): GroupMember[] {
     name: m.name,
     ageTier: m.ageTier,
     isLeader: m.isLeader,
+    connected: m.connected !== false,
     activity: m.activity,
     location: m.location,
   }));
@@ -212,7 +227,12 @@ export class GroupSocket {
         const members = normalizeMembers(data.members);
         const code = data.code as string;
         this.lastAction = { type: "join", code };
-        this.events.onJoined(code, members, (data.rendezvous as GroupLocation | null) ?? null);
+        this.events.onJoined(
+          code,
+          members,
+          (data.rendezvous as GroupLocation | null) ?? null,
+          (data.hikeState as { event: HikeSyncEvent; updatedAt: number } | null) ?? null,
+        );
         return;
       }
       case "members": {
@@ -222,6 +242,12 @@ export class GroupSocket {
       }
       case "closed": {
         this.lastAction = null;
+        this.events.onClosedByLeader();
+        return;
+      }
+      case "expired": {
+        this.lastAction = null;
+        this.events.onError("expired");
         this.events.onClosedByLeader();
         return;
       }
@@ -249,6 +275,11 @@ export class GroupSocket {
         if (code === "not_leader" || code === "invalid_message") {
           return;
         }
+        if (code === "rate_limited") {
+          // Die Verbindung bleibt offen; nur die zu häufige Nachricht wird
+          // verworfen.
+          return;
+        }
         this.closedByUser = true;
         this.clearReconnectTimer();
         this.lastAction = null;
@@ -257,7 +288,12 @@ export class GroupSocket {
         this.closedByUser = false;
         this.reconnectAttempt = 0;
         this.setStatus("fehler");
-        if (code === "premium_required" || code === "not_found") {
+        if (
+          code === "premium_required" ||
+          code === "not_found" ||
+          code === "full" ||
+          code === "already_in_group"
+        ) {
           this.events.onError(code);
         } else {
           this.events.onError("unbekannt");

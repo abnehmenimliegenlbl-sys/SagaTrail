@@ -10,6 +10,7 @@
 - [opendata arrivals at small stops](sagatrail-opendata-arrivals.md) — type=arrival gives arrival=null at small stops; must fall back to departure time or board is empty; lookups use route coords, not user GPS.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
+- [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
 - [Python i18n batch-insert double-comma](sagatrail-python-i18n-insert.md) — inserting after `},` with a string starting with `,` creates `},,`; fix by omitting the leading comma in the insert string.
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.
 - [SagaTrail map & live GPS](sagatrail-map-gps.md) — Carto Voyager + Waymarked Trails Leaflet map (not swisstopo) in WebView/iframe + real GPS narration; OSM overlays must be fetched server-side, not from the client.
