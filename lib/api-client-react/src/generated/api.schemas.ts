@@ -460,6 +460,51 @@ export interface PoiStory {
   text: string;
 }
 
+export type AnalyzeObjectRequestMediaType = typeof AnalyzeObjectRequestMediaType[keyof typeof AnalyzeObjectRequestMediaType];
+
+
+export const AnalyzeObjectRequestMediaType = {
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+  'image/webp': 'image/webp',
+} as const;
+
+export interface AnalyzeObjectRequest {
+  /** JPEG/PNG/WebP ohne Data-URL-Prefix. */
+  imageBase64: string;
+  mediaType: AnalyzeObjectRequestMediaType;
+  lat?: number | null;
+  lng?: number | null;
+  /** Blickrichtung in Grad, 0 = Norden. */
+  heading?: number | null;
+  language: string;
+  /** Kuratierter OSM-Kontext aus der aktuellen Umgebung. */
+  nearbyContext?: string | null;
+}
+
+export interface ObjectRecognitionCandidate {
+  id: string;
+  title: string;
+  category: string;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  confidence: number;
+  description: string;
+  whyLikely: string;
+  sourceUrl?: string | null;
+  sourceTitle?: string | null;
+  sourceExtract?: string | null;
+  sourceImage?: string | null;
+}
+
+export interface AnalyzeObjectResponse {
+  analysisNote: string;
+  /** @maxItems 3 */
+  candidates: ObjectRecognitionCandidate[];
+}
+
 export interface LocalizedSummary {
   text: string;
   reviewEmpfohlen: boolean;

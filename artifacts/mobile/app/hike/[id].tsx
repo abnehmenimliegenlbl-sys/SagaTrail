@@ -49,6 +49,7 @@ import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
+import { ObjectRecognition } from "@/components/brand/ObjectRecognition";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { fonts } from "@/constants/typography";
@@ -57,6 +58,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
+import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import {
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
@@ -269,6 +271,7 @@ export default function LiveHike() {
   // fast deckendes Weiss statt Milchglas, sonst wirken sie zu dunkel.
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const t = useHikeStrings();
+  const objectRecognitionT = useObjectRecognitionStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId, resume } = useLocalSearchParams<{
@@ -3519,6 +3522,20 @@ export default function LiveHike() {
             cameraPermission: t.cameraPermission,
             arUnavailable: t.arUnavailable,
           }}
+        />
+
+        <ObjectRecognition
+          premium={premium}
+          strings={objectRecognitionT}
+          getToken={() => getTokenRef.current()}
+          language={storyLanguage}
+          lat={livePos?.lat}
+          lng={livePos?.lng}
+          heading={compassHeading}
+          nearbyContext={[
+            ...panoramaPeaks.slice(0, 8).map((peak) => `OSM-Gipfel: ${peak.name}`),
+            ...(nearbyPoi ? [`OSM-POI: ${nearbyPoi.name}`] : []),
+          ].join("; ")}
         />
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}

@@ -302,6 +302,44 @@ export const GetPoiStoryResponse = zod.object({
 
 
 /**
+ * Premium-Funktion fuer eine einmalige Fotoanalyse unterwegs. Das Bild wird nur zur laufenden Analyse verwendet und nicht dauerhaft gespeichert. Die Antwort liefert hoechstens drei unsichere Kandidaten zur Bestaetigung durch die Nutzerin oder den Nutzer. Personen und Gesichter werden nicht erkannt.
+ * @summary Ein Foto eines beliebigen Objekts analysieren
+ */
+export const AnalyzeObjectBody = zod.object({
+  "imageBase64": zod.string().describe('JPEG\/PNG\/WebP ohne Data-URL-Prefix.'),
+  "mediaType": zod.enum(['image/jpeg', 'image/png', 'image/webp']),
+  "lat": zod.number().nullish(),
+  "lng": zod.number().nullish(),
+  "heading": zod.number().nullish().describe('Blickrichtung in Grad, 0 = Norden.'),
+  "language": zod.string(),
+  "nearbyContext": zod.string().nullish().describe('Kuratierter OSM-Kontext aus der aktuellen Umgebung.')
+})
+
+export const analyzeObjectResponseCandidatesItemConfidenceMin = 0;
+export const analyzeObjectResponseCandidatesItemConfidenceMax = 1;
+
+export const analyzeObjectResponseCandidatesMax = 3;
+
+
+
+export const AnalyzeObjectResponse = zod.object({
+  "analysisNote": zod.string(),
+  "candidates": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "category": zod.string(),
+  "confidence": zod.number().min(analyzeObjectResponseCandidatesItemConfidenceMin).max(analyzeObjectResponseCandidatesItemConfidenceMax),
+  "description": zod.string(),
+  "whyLikely": zod.string(),
+  "sourceUrl": zod.string().nullish(),
+  "sourceTitle": zod.string().nullish(),
+  "sourceExtract": zod.string().nullish(),
+  "sourceImage": zod.string().nullish()
+})).max(analyzeObjectResponseCandidatesMax)
+})
+
+
+/**
  * Liefert das aktuelle EAWS-Lawinenbulletin (Gefahrenstufe 1–5) fuer den angegebenen Kanton. Nicht-alpine Kantone und Sommerhalbjahr geben available=false zurueck. Daten werden 1 Stunde gecacht.
  * @summary Aktuelles Lawinenbulletin fuer einen Schweizer Kanton
  */

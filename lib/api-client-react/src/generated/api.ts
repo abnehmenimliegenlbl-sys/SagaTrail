@@ -21,6 +21,8 @@ import type {
 
 import type {
   Aerialway,
+  AnalyzeObjectRequest,
+  AnalyzeObjectResponse,
   AvalancheBulletin,
   CatalogResponse,
   CatalogRoute,
@@ -837,6 +839,77 @@ export function useGetPoiStory<TData = Awaited<ReturnType<typeof getPoiStory>>, 
 
 
 
+
+export const getAnalyzeObjectUrl = () => {
+
+
+
+
+  return `/api/object-recognition/analyze`
+}
+
+/**
+ * Premium-Funktion fuer eine einmalige Fotoanalyse unterwegs. Das Bild wird nur zur laufenden Analyse verwendet und nicht dauerhaft gespeichert. Die Antwort liefert hoechstens drei unsichere Kandidaten zur Bestaetigung durch die Nutzerin oder den Nutzer. Personen und Gesichter werden nicht erkannt.
+ * @summary Ein Foto eines beliebigen Objekts analysieren
+ */
+export const analyzeObject = async (analyzeObjectRequest: AnalyzeObjectRequest, options?: RequestInit): Promise<AnalyzeObjectResponse> => {
+
+  return customFetch<AnalyzeObjectResponse>(getAnalyzeObjectUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(analyzeObjectRequest)
+  }
+);}
+
+
+
+
+export const getAnalyzeObjectMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext> => {
+
+const mutationKey = ['analyzeObject'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof analyzeObject>>, {data: BodyType<AnalyzeObjectRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  analyzeObject(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AnalyzeObjectMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeObject>>>
+    export type AnalyzeObjectMutationBody = BodyType<AnalyzeObjectRequest>
+    export type AnalyzeObjectMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Ein Foto eines beliebigen Objekts analysieren
+ */
+export const useAnalyzeObject = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof analyzeObject>>,
+        TError,
+        {data: BodyType<AnalyzeObjectRequest>},
+        TContext
+      > => {
+      return useMutation(getAnalyzeObjectMutationOptions(options));
+    }
 
 export const getGetAvalancheBulletinUrl = (params: GetAvalancheBulletinParams,) => {
   const normalizedParams = new URLSearchParams();

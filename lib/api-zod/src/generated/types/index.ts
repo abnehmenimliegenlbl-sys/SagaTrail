@@ -8,6 +8,9 @@
 
 export * from './achievement';
 export * from './aerialway';
+export * from './analyzeObjectRequest';
+export * from './analyzeObjectRequestMediaType';
+export * from './analyzeObjectResponse';
 export * from './avalancheBulletin';
 export * from './avalancheBulletinReason';
 export * from './catalogCanton';
@@ -46,6 +49,7 @@ export * from './hikeSession';
 export * from './localizedSummary';
 export * from './narrationInput';
 export * from './narrationInputProvider';
+export * from './objectRecognitionCandidate';
 export * from './partner';
 export * from './partnerKategorie';
 export * from './partnerPaket';
