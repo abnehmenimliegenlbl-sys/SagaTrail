@@ -91,6 +91,18 @@
         }
       ],
       [
+        "@reactvision/react-viro",
+        {
+          "android": {
+            "xRMode": "AR"
+          },
+          "ios": {
+            "cameraUsagePermission": "SagaTrail möchte deine Kamera für die AR-Gipfelansicht verwenden."
+          },
+          "iosLinkage": "static"
+        }
+      ],
+      [
         "expo-router",
         {
           "origin": "https://replit.com/"

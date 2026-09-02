@@ -24,6 +24,7 @@ export interface HikeStrings {
   camera: string;
   cameraOff: string;
   cameraPermission: string;
+  arUnavailable: string;
   coordinates: string;
   place: string;
   altitude: string;
@@ -155,6 +156,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "KAMERA",
     cameraOff: "SCHLIESSEN",
     cameraPermission: "Kameraberechtigung wird benötigt.",
+    arUnavailable: "AR ist auf diesem Gerät nicht verfügbar.",
     coordinates: "KOORDINATEN",
     place: "ORT",
     altitude: "HÖHE",
@@ -295,6 +297,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "KAMERA",
     cameraOff: "ZUE",
     cameraPermission: "Kameraberechtigung wird bruucht.",
+    arUnavailable: "AR isch uf dem Gerät nöd verfügbar.",
     coordinates: "KOORDINATE",
     place: "ORT",
     altitude: "HÖCHI",
@@ -435,6 +438,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "CAMERA",
     cameraOff: "CLOSE",
     cameraPermission: "Camera permission is needed.",
+    arUnavailable: "AR is not available on this device.",
     coordinates: "COORDINATES",
     place: "PLACE",
     altitude: "ALTITUDE",
@@ -575,6 +579,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "CAMÉRA",
     cameraOff: "FERMER",
     cameraPermission: "L'autorisation de la caméra est nécessaire.",
+    arUnavailable: "La réalité augmentée n'est pas disponible sur cet appareil.",
     coordinates: "COORDONNÉES",
     place: "LIEU",
     altitude: "ALTITUDE",
@@ -715,6 +720,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "FOTOCAMERA",
     cameraOff: "CHIUDI",
     cameraPermission: "È necessaria l'autorizzazione della fotocamera.",
+    arUnavailable: "La realtà aumentata non è disponibile su questo dispositivo.",
     coordinates: "COORDINATE",
     place: "LUOGO",
     altitude: "ALTITUDINE",
@@ -855,6 +861,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "CÁMARA",
     cameraOff: "CERRAR",
     cameraPermission: "Se necesita permiso para usar la cámara.",
+    arUnavailable: "La realidad aumentada no está disponible en este dispositivo.",
     coordinates: "COORDENADAS",
     place: "LUGAR",
     altitude: "ALTITUD",
@@ -995,6 +1002,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "CÂMARA",
     cameraOff: "FECHAR",
     cameraPermission: "É necessária a permissão da câmara.",
+    arUnavailable: "A realidade aumentada não está disponível neste dispositivo.",
     coordinates: "COORDENADAS",
     place: "LOCAL",
     altitude: "ALTITUDE",
@@ -1135,6 +1143,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "相机",
     cameraOff: "关闭",
     cameraPermission: "需要相机权限。",
+    arUnavailable: "此设备不支持增强现实。",
     coordinates: "坐标",
     place: "地点",
     altitude: "海拔",
@@ -1275,6 +1284,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     camera: "КАМЕРА",
     cameraOff: "ЗАКРЫТЬ",
     cameraPermission: "Требуется разрешение на камеру.",
+    arUnavailable: "Дополненная реальность недоступна на этом устройстве.",
     coordinates: "КООРДИНАТЫ",
     place: "МЕСТО",
     altitude: "ВЫСОТА",

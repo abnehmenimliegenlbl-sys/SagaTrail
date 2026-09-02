@@ -3517,6 +3517,7 @@ export default function LiveHike() {
             camera: t.camera,
             cameraOff: t.cameraOff,
             cameraPermission: t.cameraPermission,
+            arUnavailable: t.arUnavailable,
           }}
         />
 

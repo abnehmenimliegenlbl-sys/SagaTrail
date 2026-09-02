@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
+import { PeakArNavigator } from "./PeakArNavigator";
 
 const PANORAMA_VIEW_DEGREES = 140;
 
@@ -29,6 +30,7 @@ export interface PeakPanoramaStrings {
   camera: string;
   cameraOff: string;
   cameraPermission: string;
+  arUnavailable: string;
 }
 
 interface PeakPanoramaProps {
@@ -54,6 +56,7 @@ export function PeakPanorama({
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
+  const [arUnavailable, setArUnavailable] = useState(false);
   const visiblePeaks =
     heading == null
       ? []
@@ -74,6 +77,7 @@ export function PeakPanorama({
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
   if (cameraBlocked) status = strings.cameraPermission;
+  else if (arUnavailable) status = strings.arUnavailable;
 
   const toggleCamera = async () => {
     if (cameraEnabled) {
@@ -86,6 +90,7 @@ export function PeakPanorama({
       : await requestCameraPermission();
     if (permission.granted) {
       setCameraBlocked(false);
+      setArUnavailable(false);
       setCameraEnabled(true);
     } else {
       setCameraBlocked(true);
@@ -181,57 +186,65 @@ export function PeakPanorama({
         onRequestClose={() => setCameraEnabled(false)}
       >
         <View style={styles.fullscreenCamera}>
-          <CameraView facing="back" style={styles.camera} />
+          {arUnavailable ? (
+            <CameraView facing="back" style={styles.camera} />
+          ) : (
+            <PeakArNavigator
+              peaks={visiblePeaks}
+              onError={() => setArUnavailable(true)}
+            />
+          )}
           <View style={styles.imageScrim} />
           <View style={styles.horizon} />
-          {visiblePeaks.map((peak, index) => (
-            <View
-              key={peak.id}
-              style={[
-                styles.marker,
-                {
-                  left: markerLeft(peak.relativeBearingDeg ?? 0),
-                  top: insets.top + 82 + (index % 3) * 42,
-                },
-              ]}
-            >
+          {arUnavailable &&
+            visiblePeaks.map((peak, index) => (
               <View
+                key={peak.id}
                 style={[
-                  styles.markerLabel,
+                  styles.marker,
                   {
-                    backgroundColor: colors.glassBgStrong,
-                    borderColor:
-                      focusedPeak?.id === peak.id
-                        ? colors.primary
-                        : colors.glassBorder,
+                    left: markerLeft(peak.relativeBearingDeg ?? 0),
+                    top: insets.top + 82 + (index % 3) * 42,
                   },
                 ]}
               >
-                <Text
-                  style={[styles.markerName, { color: colors.photoScrimText }]}
-                  numberOfLines={1}
+                <View
+                  style={[
+                    styles.markerLabel,
+                    {
+                      backgroundColor: colors.glassBgStrong,
+                      borderColor:
+                        focusedPeak?.id === peak.id
+                          ? colors.primary
+                          : colors.glassBorder,
+                    },
+                  ]}
                 >
-                  {peak.name}
-                </Text>
-                <Text
-                  style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
-                >
-                  {strings.distance(peak.distanceKm.toFixed(1))}
-                </Text>
+                  <Text
+                    style={[styles.markerName, { color: colors.photoScrimText }]}
+                    numberOfLines={1}
+                  >
+                    {peak.name}
+                  </Text>
+                  <Text
+                    style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
+                  >
+                    {strings.distance(peak.distanceKm.toFixed(1))}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.markerStem,
+                    {
+                      backgroundColor:
+                        focusedPeak?.id === peak.id
+                          ? colors.primary
+                          : colors.photoScrimText,
+                    },
+                  ]}
+                />
               </View>
-              <View
-                style={[
-                  styles.markerStem,
-                  {
-                    backgroundColor:
-                      focusedPeak?.id === peak.id
-                        ? colors.primary
-                        : colors.photoScrimText,
-                  },
-                ]}
-              />
-            </View>
-          ))}
+            ))}
           {heading != null && (
             <View
               style={[styles.centerLine, { backgroundColor: colors.primary }]}
@@ -280,7 +293,7 @@ export function PeakPanorama({
               style={[styles.status, { color: colors.photoScrimText }]}
               numberOfLines={2}
             >
-              {focusedPeak
+                {arUnavailable && focusedPeak
                 ? `${strings.detected}: ${focusedPeak.name}`
                 : status}
             </Text>
