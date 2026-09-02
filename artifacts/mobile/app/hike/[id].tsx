@@ -4728,8 +4728,8 @@ const styles = StyleSheet.create({
   sagaNeedleIcon: {
     position: "absolute",
     top: 0,
-    width: 15,
-    height: 27,
+    width: 23,
+    height: 41,
     alignItems: "center",
     justifyContent: "center",
   },
