@@ -18,6 +18,7 @@ export function SwisstopoMap({
   label = "Start",
   height = 220,
   geometry,
+  elevationProfile,
   offlineTiles,
   aerialways,
   pois,
@@ -43,6 +44,10 @@ export function SwisstopoMap({
         {
           title: t.legendTitle,
           route: t.legendRoute,
+          routeFlat: t.legendRouteFlat,
+          routeGrade10to20: t.legendRouteGrade10to20,
+          routeGrade20to30: t.legendRouteGrade20to30,
+          routeGrade30plus: t.legendRouteGrade30plus,
           altRoute: t.legendAltRoute,
           start: t.legendStart,
           ziel: t.legendZiel,
@@ -66,9 +71,10 @@ export function SwisstopoMap({
         undefined,
         waterSources,
         undefined,
-        parkingSpots
+        parkingSpots,
+        elevationProfile
       ),
-    [center.lat, center.lng, label, geometry, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, t]
+    [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

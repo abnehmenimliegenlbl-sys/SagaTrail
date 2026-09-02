@@ -77,6 +77,7 @@ import { getTurnAudio } from "@/lib/turnAudio";
 import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
 import * as FileSystem from "expo-file-system/legacy";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
+import { buildTerrainSections, type TerrainProfilePoint } from "@/lib/terrainCues";
 import {
   bereiteAbbiegeMitteilungenVor,
   sendeAbbiegeMitteilung,
@@ -490,6 +491,7 @@ export default function LiveHike() {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
+  const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
   const [aerialways, setAerialways] = useState<
@@ -596,6 +598,10 @@ export default function LiveHike() {
   const hintedPoiIdRef = useRef<string | null>(null);
   /** Bereits mit voller Geschichte (50 m) erzaehlte POI-IDs (Annaeherungs-Flow). */
   const poiStoryToldRef = useRef<string | null>(null);
+  /** Terrain-Abschnitte werden pro Wanderung jeweils nur einmal angesagt. */
+  const terrainStartedRef = useRef<Set<string>>(new Set());
+  const terrainProgressRef = useRef<Set<string>>(new Set());
+  const terrainEndedRef = useRef<Set<string>>(new Set());
   const narrationSoundRef = useRef<Audio.Sound | null>(null);
   const keepaliveSoundRef = useRef<Audio.Sound | null>(null);
   // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
@@ -670,6 +676,51 @@ export default function LiveHike() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [route?.coordinates?.lat, route?.coordinates?.lng]);
+
+  // Höhenprofil einmalig pro Route laden. Die Profilpunkte werden nicht nur
+  // gezeichnet: terrainCues.ts verdichtet sie für die gesprochenen
+  // Aufstiegs-/Gefällehinweise und die Sicherheitswarnung ab 30 Prozent.
+  useEffect(() => {
+    const geometry = route?.geometry;
+    terrainStartedRef.current.clear();
+    terrainProgressRef.current.clear();
+    terrainEndedRef.current.clear();
+    if (!geometry || geometry.length < 2) {
+      setTerrainProfile(null);
+      return;
+    }
+    let cancelled = false;
+    setTerrainProfile(null);
+    const requestGeometry =
+      geometry.length <= 2000
+        ? geometry
+        : geometry.filter(
+            (_, index) =>
+              index === 0 ||
+              index === geometry.length - 1 ||
+              index % Math.ceil(geometry.length / 2000) === 0,
+          );
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/elevation-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geometry: requestGeometry }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Höhenprofil nicht verfügbar");
+        return response.json() as Promise<{ profile?: TerrainProfilePoint[] }>;
+      })
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.profile)) setTerrainProfile(data.profile);
+      })
+      .catch(() => {
+        // Ohne Profil bleibt die Wanderung unverändert nutzbar; es gibt dann
+        // lediglich keine Terrain-Ansagen.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, route?.geometry]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
   // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
@@ -2490,6 +2541,122 @@ export default function LiveHike() {
     return match.fraction;
   }, [livePos, livePosAccuracy, route?.geometry]);
 
+  const terrainSections = useMemo(
+    () => buildTerrainSections(terrainProfile),
+    [terrainProfile],
+  );
+
+  // Geländeansagen: 150 m vorher ankündigen, bei langen Abschnitten einmal
+  // über den Rest informieren und 100 m vor dem Ende abschliessen. Abschnitte
+  // ab 30 Prozent enthalten zusätzlich eine klare Sicherheitswarnung und
+  // erhalten eine starke lokale Mitteilung für gesperrte Bildschirme/Uhren.
+  useEffect(() => {
+    if (
+      preparing ||
+      finished ||
+      terrainSections.length === 0 ||
+      profile?.navAnnouncementsEnabled === false
+    ) {
+      return;
+    }
+    const profileLengthKm = terrainProfile
+      ? Math.max(
+          0,
+          terrainProfile[terrainProfile.length - 1].distanceKm -
+            terrainProfile[0].distanceKm,
+        )
+      : 0;
+    if (profileLengthKm <= 0) return;
+
+    const fraction =
+      routeProgress ??
+      (totalKm > 0 ? Math.max(0, Math.min(1, distance / totalKm)) : 0);
+    const currentKm = Math.max(0, Math.min(profileLengthKm, fraction * profileLengthKm));
+
+    for (const section of terrainSections) {
+      const leadKm = Math.max(0, section.startKm - currentKm);
+      const inOrBeforeSection =
+        currentKm <= section.endKm + 0.05 && currentKm >= section.startKm - 0.15;
+
+      if (!terrainStartedRef.current.has(section.id) && inOrBeforeSection) {
+        terrainStartedRef.current.add(section.id);
+        const averageGrade = Math.max(1, Math.round(Math.abs(section.averageGradePct)));
+        const sectionDistance = formatSpokenDistance(section.lengthKm, cueLanguage);
+        const warningGrade = Math.max(30, Math.round(section.peakGradePct));
+        const warning = section.isVerySteep
+          ? t.terrainWarning(section.direction, warningGrade, sectionDistance)
+          : null;
+        const text =
+          currentKm < section.startKm
+            ? `${warning ? `${warning} ` : ""}${t.terrainAdvance(
+                section.direction,
+                formatSpokenDistance(leadKm, cueLanguage),
+                sectionDistance,
+                averageGrade,
+              )}`
+            : warning ??
+              t.terrainProgress(
+                section.direction,
+                formatSpokenDistance(Math.max(0, section.endKm - currentKm), cueLanguage),
+                averageGrade,
+              );
+
+        if (section.isVerySteep && turnNotifsReadyRef.current) {
+          sendeAbbiegeMitteilung(t.terrainWarningTitle, warning ?? text);
+        }
+        speakRef.current?.(text, undefined, {
+          useOpenAI: true,
+          ...(section.isVerySteep ? { sagaInterrupt: true } : {}),
+        });
+      }
+
+      // Eine Zwischenansage gibt es nur bei wirklich langen Abschnitten, damit
+      // normale Wanderungen nicht mit zu vielen Meldungen überladen werden.
+      if (
+        section.lengthKm >= 0.35 &&
+        !section.isVerySteep &&
+        !terrainProgressRef.current.has(section.id) &&
+        currentKm >= section.startKm + section.lengthKm * 0.5 &&
+        currentKm <= section.endKm + 0.05
+      ) {
+        terrainProgressRef.current.add(section.id);
+        speakRef.current?.(
+          t.terrainProgress(
+            section.direction,
+            formatSpokenDistance(Math.max(0, section.endKm - currentKm), cueLanguage),
+            Math.max(1, Math.round(Math.abs(section.averageGradePct))),
+          ),
+          undefined,
+          { useOpenAI: true },
+        );
+      }
+
+      if (
+        section.lengthKm >= 0.25 &&
+        !terrainEndedRef.current.has(section.id) &&
+        currentKm >= section.endKm - 0.1 &&
+        currentKm <= section.endKm + 0.08
+      ) {
+        terrainEndedRef.current.add(section.id);
+        speakRef.current?.(t.terrainEnd(section.direction), undefined, {
+          useOpenAI: true,
+        });
+      }
+    }
+  }, [
+    livePos,
+    distance,
+    totalKm,
+    routeProgress,
+    terrainProfile,
+    terrainSections,
+    preparing,
+    finished,
+    profile?.navAnnouncementsEnabled,
+    cueLanguage,
+    t,
+  ]);
+
   // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
   // dessen Naehe ist (z. B. beim Start ab Bahnhof/Parkplatz statt direkt am
   // Trailhead). Bewusst einfach: keine echte Fusswegroute dorthin, nur
@@ -3154,6 +3321,7 @@ export default function LiveHike() {
                   label={saga.title}
                   height={hoehe}
                   geometry={followingRecalc ? (recalcGeom ?? route?.geometry) : route?.geometry}
+                  elevationProfile={!followingRecalc ? terrainProfile : null}
                   altGeometry={!followingRecalc ? recalcGeom : null}
                   offlineTiles={offlineTiles}
                   aerialways={aerialways}

@@ -955,6 +955,7 @@ export default function Routenplanung() {
                   label={route.name}
                   height={hoehe}
                   geometry={effectiveGeom.length > 0 ? effectiveGeom : route.geometry}
+                  elevationProfile={elevProfile}
                   aerialways={aerialways}
                   pois={pois.length > 0 ? pois : null}
                   partners={partners}

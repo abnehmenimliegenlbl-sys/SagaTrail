@@ -16,6 +16,10 @@ import { createUseStrings, StringsDict } from "../createStrings";
 export interface MapStrings {
   legendTitle: string;
   legendRoute: string;
+  legendRouteFlat: string;
+  legendRouteGrade10to20: string;
+  legendRouteGrade20to30: string;
+  legendRouteGrade30plus: string;
   legendAltRoute: string;
   legendStart: string;
   legendZiel: string;
@@ -39,6 +43,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   de: {
     legendTitle: "Legende",
     legendRoute: "Routenverlauf",
+    legendRouteFlat: "Route unter 10 %",
+    legendRouteGrade10to20: "Steigung 10–<20 %",
+    legendRouteGrade20to30: "Steigung 20–<30 %",
+    legendRouteGrade30plus: "Steigung ab 30 %",
     legendAltRoute: "Neu berechnete Route",
     legendStart: "Startpunkt",
     legendZiel: "Ziel",
@@ -60,6 +68,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   gsw: {
     legendTitle: "Legände",
     legendRoute: "Routeverlauf",
+    legendRouteFlat: "Route unter 10 %",
+    legendRouteGrade10to20: "Stiigig 10–<20 %",
+    legendRouteGrade20to30: "Stiigig 20–<30 %",
+    legendRouteGrade30plus: "Stiigig ab 30 %",
     legendAltRoute: "Neu berecchete Route",
     legendStart: "Startpunkt",
     legendZiel: "Ziil",
@@ -81,6 +93,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   fr: {
     legendTitle: "Légende",
     legendRoute: "Tracé de l'itinéraire",
+    legendRouteFlat: "Itinéraire sous 10 %",
+    legendRouteGrade10to20: "Pente 10–<20 %",
+    legendRouteGrade20to30: "Pente 20–<30 %",
+    legendRouteGrade30plus: "Pente dès 30 %",
     legendAltRoute: "Itinéraire recalculé",
     legendStart: "Point de départ",
     legendZiel: "Arrivée",
@@ -102,6 +118,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   it: {
     legendTitle: "Legenda",
     legendRoute: "Tracciato del percorso",
+    legendRouteFlat: "Percorso sotto il 10 %",
+    legendRouteGrade10to20: "Pendenza 10–<20 %",
+    legendRouteGrade20to30: "Pendenza 20–<30 %",
+    legendRouteGrade30plus: "Pendenza dal 30 %",
     legendAltRoute: "Percorso ricalcolato",
     legendStart: "Punto di partenza",
     legendZiel: "Arrivo",
@@ -123,6 +143,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   en: {
     legendTitle: "Legend",
     legendRoute: "Route line",
+    legendRouteFlat: "Route under 10%",
+    legendRouteGrade10to20: "Grade 10–<20%",
+    legendRouteGrade20to30: "Grade 20–<30%",
+    legendRouteGrade30plus: "Grade 30% and above",
     legendAltRoute: "Recalculated route",
     legendStart: "Starting point",
     legendZiel: "Destination",
@@ -144,6 +168,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   zh: {
     legendTitle: "图例",
     legendRoute: "路线走向",
+    legendRouteFlat: "坡度低于 10%",
+    legendRouteGrade10to20: "坡度 10–<20%",
+    legendRouteGrade20to30: "坡度 20–<30%",
+    legendRouteGrade30plus: "坡度达到 30%",
     legendAltRoute: "重新计算的路线",
     legendStart: "起点",
     legendZiel: "终点",
@@ -165,6 +193,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   es: {
     legendTitle: "Leyenda",
     legendRoute: "Trazado de la ruta",
+    legendRouteFlat: "Ruta inferior al 10 %",
+    legendRouteGrade10to20: "Pendiente 10–<20 %",
+    legendRouteGrade20to30: "Pendiente 20–<30 %",
+    legendRouteGrade30plus: "Pendiente desde 30 %",
     legendAltRoute: "Ruta recalculada",
     legendStart: "Punto de partida",
     legendZiel: "Destino",
@@ -186,6 +218,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   pt: {
     legendTitle: "Legenda",
     legendRoute: "Traçado da rota",
+    legendRouteFlat: "Rota abaixo de 10%",
+    legendRouteGrade10to20: "Inclinação 10–<20%",
+    legendRouteGrade20to30: "Inclinação 20–<30%",
+    legendRouteGrade30plus: "Inclinação a partir de 30%",
     legendAltRoute: "Rota recalculada",
     legendStart: "Ponto de partida",
     legendZiel: "Destino",
@@ -207,6 +243,10 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
   ru: {
     legendTitle: "Легенда",
     legendRoute: "Линия маршрута",
+    legendRouteFlat: "Маршрут менее 10%",
+    legendRouteGrade10to20: "Уклон 10–<20%",
+    legendRouteGrade20to30: "Уклон 20–<30%",
+    legendRouteGrade30plus: "Уклон от 30%",
     legendAltRoute: "Пересчитанный маршрут",
     legendStart: "Начальная точка",
     legendZiel: "Цель",

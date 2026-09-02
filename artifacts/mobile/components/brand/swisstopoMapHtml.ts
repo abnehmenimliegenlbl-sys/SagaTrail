@@ -1,4 +1,5 @@
 import { LatLng } from "@/types";
+import { buildRouteGradeSegments, type TerrainProfilePoint } from "@/lib/terrainCues";
 
 /** Base64-kodiertes SagaTrail-Pin-Icon (rotes Berg-Symbol, transparent). */
 const SAGA_PIN_B64 =
@@ -116,6 +117,7 @@ export interface SwisstopoMapProps {
   label?: string;
   height?: number;
   geometry?: number[][] | null;
+  elevationProfile?: TerrainProfilePoint[] | null;
   altGeometry?: number[][] | null;
   offlineTiles?: Record<string, string> | null;
   aerialways?: { id: string; geometry: number[][] }[] | null;
@@ -139,6 +141,10 @@ export interface SwisstopoMapProps {
 export interface MapLegendLabels {
   title: string;
   route: string;
+  routeFlat: string;
+  routeGrade10to20: string;
+  routeGrade20to30: string;
+  routeGrade30plus: string;
   altRoute: string;
   start: string;
   ziel: string;
@@ -179,13 +185,17 @@ export function buildSwisstopoHtml(
   altGeometry?: number[][] | null,
   waterSources?: MapPoi[] | null,
   safeAreaInsetTop?: number,
-  parkingSpots?: MapPoi[] | null
+  parkingSpots?: MapPoi[] | null,
+  elevationProfile?: TerrainProfilePoint[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
   const title = JSON.stringify(label ?? "Start");
   const geometryJson =
     geometry && geometry.length > 1 ? JSON.stringify(geometry) : "null";
+  const routeGradeSegments = buildRouteGradeSegments(geometry, elevationProfile);
+  const routeGradeJson =
+    routeGradeSegments.length > 0 ? JSON.stringify(routeGradeSegments) : "null";
   const offlineJson =
     offlineTiles && Object.keys(offlineTiles).length > 0
       ? JSON.stringify(offlineTiles)
@@ -212,7 +222,10 @@ export function buildSwisstopoHtml(
   const legendHtml = legend ? (() => {
     let rows = "";
     if (geometry && geometry.length > 1) {
-      rows += legendZeile('<span class="stt-linie-route"></span>', legend.route);
+      rows += legendZeile('<span class="stt-linie-route-gruen"></span>', legend.routeFlat);
+      rows += legendZeile('<span class="stt-linie-route-gelb"></span>', legend.routeGrade10to20);
+      rows += legendZeile('<span class="stt-linie-route-orange"></span>', legend.routeGrade20to30);
+      rows += legendZeile('<span class="stt-linie-route-rot"></span>', legend.routeGrade30plus);
       if (altGeometry && altGeometry.length > 1)
         rows += legendZeile('<span class="stt-linie-altroute"></span>', legend.altRoute);
       rows += legendZeile('<svg width="14" height="18" viewBox="0 0 30 38" style="display:block"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>', legend.start);
@@ -299,7 +312,11 @@ export function buildSwisstopoHtml(
   #stt-legende.zu .stt-legende-inhalt { display: none; }
   .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
   .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
-  .stt-linie-route  { width: 18px; height: 4px; border-radius: 2px; background: #DA291C; }
+  .stt-linie-route  { width: 18px; height: 4px; border-radius: 2px; background: #3E9B46; }
+  .stt-linie-route-gruen { width: 18px; height: 4px; border-radius: 2px; background: #3E9B46; }
+  .stt-linie-route-gelb { width: 18px; height: 4px; border-radius: 2px; background: #F2C94C; }
+  .stt-linie-route-orange { width: 18px; height: 4px; border-radius: 2px; background: #F2994A; }
+  .stt-linie-route-rot { width: 18px; height: 4px; border-radius: 2px; background: #DA291C; }
   .stt-linie-altroute { width: 18px; height: 3px; border-image: repeating-linear-gradient(90deg,#2EC4B6 0 5px,transparent 5px 8px) 1; border-top: 3px solid; }
   .stt-linie-iwn    { width: 18px; height: 3px; border-radius: 2px; background: #9C5AC8; }
   .stt-linie-nwn    { width: 18px; height: 3px; border-radius: 2px; background: #D9442E; }
@@ -353,6 +370,7 @@ ${legendHtml}
 (function () {
   var offline   = ${offlineJson};
   var geometry  = ${geometryJson};
+  var routeGrades = ${routeGradeJson};
   var altGeom   = ${altGeometryJson};
   var aerialways = ${aerialwaysJson};
   var pois      = ${poisJson};
@@ -559,12 +577,29 @@ ${legendHtml}
     /* Routengeometrie */
     if (geometry && geometry.length > 1) {
       var coords = geometry.map(function(p){ return [p[1],p[0]]; });
-      map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } } });
+      var routeData = routeGrades && routeGrades.length
+        ? { type: 'FeatureCollection', features: routeGrades.map(function(segment) {
+            return {
+              type: 'Feature',
+              properties: { band: segment.band },
+              geometry: {
+                type: 'LineString',
+                coordinates: segment.coordinates.map(function(p){ return [p[1],p[0]]; })
+              }
+            };
+          }) }
+        : { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } };
+      map.addSource('route', { type: 'geojson', data: routeData, lineMetrics: true });
       map.addLayer({ id: 'route-shadow', type: 'line', source: 'route',
         paint: { 'line-color': '#10181A', 'line-width': 7, 'line-opacity': 0.55,
           'line-blur': 1 }, layout: { 'line-join': 'round', 'line-cap': 'round' } });
       map.addLayer({ id: 'route-line', type: 'line', source: 'route',
-        paint: { 'line-color': '#DA291C', 'line-width': 4, 'line-opacity': 0.95 },
+        paint: { 'line-color': ['match', ['get', 'band'],
+          'yellow', '#F2C94C',
+          'orange', '#F2994A',
+          'red', '#DA291C',
+          '#3E9B46'
+        ], 'line-width': 4, 'line-opacity': 0.95 },
         layout: { 'line-join': 'round', 'line-cap': 'round' } });
 
       new maplibregl.Marker({ element: makeFahneEl('start'), anchor: 'bottom-left', zIndex: 30 })

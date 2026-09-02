@@ -33,6 +33,11 @@ export interface HikeStrings {
   turnNotifLeft: string;
   turnNotifRight: string;
   surfaceChangeTitle: string;
+  terrainAdvance: (direction: "up" | "down", leadDistance: string, sectionDistance: string, gradePct: number) => string;
+  terrainProgress: (direction: "up" | "down", remainingDistance: string, gradePct: number) => string;
+  terrainEnd: (direction: "up" | "down") => string;
+  terrainWarning: (direction: "up" | "down", gradePct: number, sectionDistance: string) => string;
+  terrainWarningTitle: string;
   milestoneTitle: string;
   waypointReached: string;
   poiNotifBody: string;
@@ -143,6 +148,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Gleich links halten",
     turnNotifRight: "Gleich rechts halten",
     surfaceChangeTitle: "Wegwechsel",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `In ${leadDistance} beginnt ein längerer Anstieg: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`
+        : `In ${leadDistance} folgt ein längeres Gefälle: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Noch ${remainingDistance} bis zum Ende des Anstiegs, durchschnittlich ${gradePct} Prozent.`
+        : `Noch ${remainingDistance} bis zum Ende des Gefälles, durchschnittlich ${gradePct} Prozent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "Der Anstieg endet in etwa 100 Metern." : "Das Gefälle endet in etwa 100 Metern.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Achtung: sehr steiler Anstieg mit bis zu ${gradePct} Prozent auf ${sectionDistance}.`
+        : `Achtung: sehr steiles Gefälle mit bis zu ${gradePct} Prozent auf ${sectionDistance}.`,
+    terrainWarningTitle: "Achtung: sehr steiler Abschnitt",
     milestoneTitle: "Meilenstein",
     waypointReached: "Zwischenziel erreicht",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
@@ -252,6 +272,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Grad links halte",
     turnNotifRight: "Grad rächts halte",
     surfaceChangeTitle: "Wägwächsel",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `I ${leadDistance} fangt en längere Ufstieg aa: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`
+        : `I ${leadDistance} chunnt es längers Gfäll: ${sectionDistance} mit durchschnittlich ${gradePct} Prozent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `No ${remainingDistance} bis zum Ändi vom Ufstieg, durchschnittlich ${gradePct} Prozent.`
+        : `No ${remainingDistance} bis zum Ändi vom Gfäll, durchschnittlich ${gradePct} Prozent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "De Ufstieg isch i öppe 100 Meter fertig." : "S Gfäll isch i öppe 100 Meter fertig.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Achtung: sehr steile Ufstieg mit bis zu ${gradePct} Prozent uf ${sectionDistance}.`
+        : `Achtung: sehr steils Gfäll mit bis zu ${gradePct} Prozent uf ${sectionDistance}.`,
+    terrainWarningTitle: "Achtung: sehr steile Abschnitt",
     milestoneTitle: "Miileschtei",
     waypointReached: "Zwischeziel erreicht",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
@@ -361,6 +396,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Keep left shortly",
     turnNotifRight: "Keep right shortly",
     surfaceChangeTitle: "Trail surface",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `In ${leadDistance}, a longer climb begins: ${sectionDistance} at an average of ${gradePct} percent.`
+        : `In ${leadDistance}, a longer descent follows: ${sectionDistance} at an average of ${gradePct} percent.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `${remainingDistance} to the end of the climb, averaging ${gradePct} percent.`
+        : `${remainingDistance} to the end of the descent, averaging ${gradePct} percent.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "The climb ends in about 100 meters." : "The descent ends in about 100 meters.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Caution: very steep climb of up to ${gradePct} percent over ${sectionDistance}.`
+        : `Caution: very steep descent of up to ${gradePct} percent over ${sectionDistance}.`,
+    terrainWarningTitle: "Caution: very steep section",
     milestoneTitle: "Milestone",
     waypointReached: "Waypoint reached",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
@@ -470,6 +520,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Serrez à gauche",
     turnNotifRight: "Serrez à droite",
     surfaceChangeTitle: "Surface du chemin",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `Dans ${leadDistance}, une montée plus longue commence : ${sectionDistance} à ${gradePct} pour cent en moyenne.`
+        : `Dans ${leadDistance}, une descente plus longue suit : ${sectionDistance} à ${gradePct} pour cent en moyenne.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Encore ${remainingDistance} jusqu'à la fin de la montée, ${gradePct} pour cent en moyenne.`
+        : `Encore ${remainingDistance} jusqu'à la fin de la descente, ${gradePct} pour cent en moyenne.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "La montée se termine dans environ 100 mètres." : "La descente se termine dans environ 100 mètres.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Attention : montée très raide jusqu'à ${gradePct} pour cent sur ${sectionDistance}.`
+        : `Attention : descente très raide jusqu'à ${gradePct} pour cent sur ${sectionDistance}.`,
+    terrainWarningTitle: "Attention : passage très raide",
     milestoneTitle: "Borne",
     waypointReached: "Étape atteinte",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
@@ -579,6 +644,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Tieni la sinistra",
     turnNotifRight: "Tieni la destra",
     surfaceChangeTitle: "Cambio di fondo",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `Tra ${leadDistance} inizia una salita più lunga: ${sectionDistance} con una media del ${gradePct} percento.`
+        : `Tra ${leadDistance} segue una discesa più lunga: ${sectionDistance} con una media del ${gradePct} percento.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Ancora ${remainingDistance} alla fine della salita, media del ${gradePct} percento.`
+        : `Ancora ${remainingDistance} alla fine della discesa, media del ${gradePct} percento.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "La salita finisce tra circa 100 metri." : "La discesa finisce tra circa 100 metri.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Attenzione: salita molto ripida, fino al ${gradePct} percento per ${sectionDistance}.`
+        : `Attenzione: discesa molto ripida, fino al ${gradePct} percento per ${sectionDistance}.`,
+    terrainWarningTitle: "Attenzione: tratto molto ripido",
     milestoneTitle: "Traguardo",
     waypointReached: "Tappa raggiunta",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
@@ -688,6 +768,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Mantente a la izquierda",
     turnNotifRight: "Mantente a la derecha",
     surfaceChangeTitle: "Cambio de superficie",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `En ${leadDistance} comienza una subida larga: ${sectionDistance} con un promedio del ${gradePct} por ciento.`
+        : `En ${leadDistance} sigue una bajada larga: ${sectionDistance} con un promedio del ${gradePct} por ciento.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Quedan ${remainingDistance} hasta el final de la subida, con un promedio del ${gradePct} por ciento.`
+        : `Quedan ${remainingDistance} hasta el final de la bajada, con un promedio del ${gradePct} por ciento.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "La subida termina en unos 100 metros." : "La bajada termina en unos 100 metros.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Atención: subida muy pronunciada, de hasta un ${gradePct} por ciento durante ${sectionDistance}.`
+        : `Atención: bajada muy pronunciada, de hasta un ${gradePct} por ciento durante ${sectionDistance}.`,
+    terrainWarningTitle: "Atención: tramo muy pronunciado",
     milestoneTitle: "Hito",
     waypointReached: "Punto intermedio alcanzado",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
@@ -797,6 +892,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Mantenha-se à esquerda",
     turnNotifRight: "Mantenha-se à direita",
     surfaceChangeTitle: "Mudança de piso",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `Em ${leadDistance}, começa uma subida mais longa: ${sectionDistance} com uma média de ${gradePct} por cento.`
+        : `Em ${leadDistance}, segue-se uma descida mais longa: ${sectionDistance} com uma média de ${gradePct} por cento.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `Faltam ${remainingDistance} para o fim da subida, com uma média de ${gradePct} por cento.`
+        : `Faltam ${remainingDistance} para o fim da descida, com uma média de ${gradePct} por cento.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "A subida termina dentro de cerca de 100 metros." : "A descida termina dentro de cerca de 100 metros.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Atenção: subida muito íngreme, até ${gradePct} por cento durante ${sectionDistance}.`
+        : `Atenção: descida muito íngreme, até ${gradePct} por cento durante ${sectionDistance}.`,
+    terrainWarningTitle: "Atenção: trecho muito íngreme",
     milestoneTitle: "Marco",
     waypointReached: "Ponto intermediário atingido",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
@@ -906,6 +1016,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "即将靠左",
     turnNotifRight: "即将靠右",
     surfaceChangeTitle: "路面变换",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `${leadDistance}后开始一段较长的上坡：${sectionDistance}，平均坡度${gradePct}%。`
+        : `${leadDistance}后是一段较长的下坡：${sectionDistance}，平均坡度${gradePct}%。`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `距离上坡结束还有${remainingDistance}，平均坡度${gradePct}%。`
+        : `距离下坡结束还有${remainingDistance}，平均坡度${gradePct}%。`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "上坡将在大约100米后结束。" : "下坡将在大约100米后结束。",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `注意：前方是非常陡的上坡，坡度最高达${gradePct}%，持续${sectionDistance}。`
+        : `注意：前方是非常陡的下坡，坡度最高达${gradePct}%，持续${sectionDistance}。`,
+    terrainWarningTitle: "注意：非常陡的路段",
     milestoneTitle: "里程碑",
     waypointReached: "已到达途经点",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
@@ -1015,6 +1140,21 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     turnNotifLeft: "Скоро держитесь левее",
     turnNotifRight: "Скоро держитесь правее",
     surfaceChangeTitle: "Смена покрытия",
+    terrainAdvance: (direction, leadDistance, sectionDistance, gradePct) =>
+      direction === "up"
+        ? `Через ${leadDistance} начинается длинный подъём: ${sectionDistance}, в среднем ${gradePct} процентов.`
+        : `Через ${leadDistance} начинается длинный спуск: ${sectionDistance}, в среднем ${gradePct} процентов.`,
+    terrainProgress: (direction, remainingDistance, gradePct) =>
+      direction === "up"
+        ? `До конца подъёма осталось ${remainingDistance}, в среднем ${gradePct} процентов.`
+        : `До конца спуска осталось ${remainingDistance}, в среднем ${gradePct} процентов.`,
+    terrainEnd: (direction) =>
+      direction === "up" ? "Подъём закончится примерно через 100 метров." : "Спуск закончится примерно через 100 метров.",
+    terrainWarning: (direction, gradePct, sectionDistance) =>
+      direction === "up"
+        ? `Внимание: очень крутой подъём до ${gradePct} процентов на протяжении ${sectionDistance}.`
+        : `Внимание: очень крутой спуск до ${gradePct} процентов на протяжении ${sectionDistance}.`,
+    terrainWarningTitle: "Внимание: очень крутой участок",
     milestoneTitle: "Веха",
     waypointReached: "Промежуточная точка достигнута",
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
