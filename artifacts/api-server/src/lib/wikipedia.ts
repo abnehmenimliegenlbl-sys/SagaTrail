@@ -26,6 +26,12 @@ export interface WikiSummary {
   image: string | null;
 }
 
+export interface CommonsImageMatch {
+  url: string;
+  description: string | null;
+  descriptionUrl: string;
+}
+
 async function fetchJson<T>(url: string): Promise<T | null> {
   let result: T | null = null;
   const request = wikimediaRequestQueue.then(async () => {
@@ -417,7 +423,7 @@ export async function fetchCommonsImageByName(
   name: string,
   widthPx = 600,
   locationHint?: string,
-): Promise<string | null> {
+): Promise<CommonsImageMatch | null> {
   // Keywords generisch extrahieren: jedes Nicht-Wort-Zeichen (Bindestrich,
   // Punkt, Klammer, Schrägstrich …) ist Wort-Trenner. Stopwords und sehr
   // kurze Token (≤2 Zeichen) werden ignoriert.
@@ -475,6 +481,7 @@ export async function fetchCommonsImageByName(
           imageinfo?: {
             thumburl?: string;
             url?: string;
+            descriptionurl?: string;
             extmetadata?: {
               Categories?: { value?: string };
               ImageDescription?: { value?: string };
@@ -526,7 +533,15 @@ export async function fetchCommonsImageByName(
     if (best) {
       const info = best.imageinfo?.[0];
       const thumb = info?.thumburl ?? info?.url;
-      if (thumb) return thumb;
+      if (thumb) {
+        const description = info?.extmetadata?.ImageDescription?.value
+          ? stripHtml(info.extmetadata.ImageDescription.value).replace(/\s+/g, " ").trim()
+          : null;
+        const descriptionUrl =
+          info?.descriptionurl ??
+          `https://commons.wikimedia.org/wiki/${encodeURIComponent(best.title.replace(/^File:/i, ""))}`;
+        return { url: thumb, description: description || null, descriptionUrl };
+      }
     }
   }
   return null;

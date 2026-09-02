@@ -328,7 +328,7 @@ async function enrichPoiWithWikipedia(
             wiki.image ??
             p18Image ??
             (await fetchWikidataCommonsCategory(poi.wikidataTag)) ??
-            (await fetchCommonsImageByName(poi.name)) ??
+            (await fetchCommonsImageByName(poi.name))?.url ??
             (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
           return { ...poi, wiki: { ...wiki, image } };
         }
@@ -339,7 +339,7 @@ async function enrichPoiWithWikipedia(
           (async () =>
             p18Image ??
             (poi.wikidataTag ? await fetchWikidataCommonsCategory(poi.wikidataTag) : null) ??
-            (await fetchCommonsImageByName(poi.name)) ??
+            ((await fetchCommonsImageByName(poi.name))?.url) ??
             (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name)))(),
           poi.wikidataTag ? fetchWikidataFacts(poi.wikidataTag) : Promise.resolve(null),
           searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
@@ -360,7 +360,7 @@ async function enrichPoiWithWikipedia(
       } else {
         // Kein Wikipedia-Eintrag: Wikidata-Fakten + Bild + KI parallel.
         // Wikidata-Fakten haben Vorrang vor searchAiPoiKnowledge.
-        const [p18Image, p373Image, nameImage, geoImage, wikidataFactsB, aiTextWiki] = await Promise.all([
+        const [p18Image, p373Image, nameMatch, geoImage, wikidataFactsB, aiTextWiki] = await Promise.all([
           fetchWikidataImage(poi.wikidataTag),
           fetchWikidataCommonsCategory(poi.wikidataTag),
           fetchCommonsImageByName(poi.name),
@@ -368,15 +368,15 @@ async function enrichPoiWithWikipedia(
           fetchWikidataFacts(poi.wikidataTag),
           searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
-        const image = p18Image ?? p373Image ?? nameImage ?? geoImage;
-        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? "";
+        const image = p18Image ?? p373Image ?? nameMatch?.url ?? geoImage;
+        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? nameMatch?.description ?? "";
         if (image || extractB) {
           return {
             ...poi,
             wiki: {
               title: aiTextWiki?.title ?? poi.name,
               extract: extractB,
-              url: aiTextWiki?.url ?? "",
+              url: aiTextWiki?.url ?? nameMatch?.descriptionUrl ?? "",
               lang: "de",
               image: image ?? aiTextWiki?.image ?? null,
             },
@@ -396,8 +396,9 @@ async function enrichPoiWithWikipedia(
         // auch wenn der Artikel ueber die Person handelt und nur ein Portrait als
         // Thumbnail hat). Danach Artikel-interne Bildersuche, dann Thumbnail,
         // dann Geo-Fallback.
+        const commonsMatch = await fetchCommonsImageByName(poi.name);
         const image =
-          (await fetchCommonsImageByName(poi.name)) ??
+          commonsMatch?.url ??
           (await fetchWikipediaArticleImageByPoiName(wiki.title, poi.name)) ??
           wiki.image ??
           (await fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name));
@@ -409,21 +410,22 @@ async function enrichPoiWithWikipedia(
     // spezifisch genug fuer gleichnamige POIs in verschiedenen Orten.
     const placeHint = await getPoiPlaceHint(poi.lat, poi.lng, log);
     const searchTerm = commonsSearchTerm(poi.name, poi.kind);
-    const [nameImage, geoImage, aiWiki] = await Promise.all([
+    const [nameMatch, geoImage, aiWiki] = await Promise.all([
       placeHint && searchTerm
         ? fetchCommonsImageByName(searchTerm, 600, placeHint)
         : Promise.resolve(null),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
       searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
-    const commonsImage = nameImage ?? geoImage;
-    if (commonsImage || aiWiki) {
+    const commonsImage = nameMatch?.url ?? geoImage;
+    const commonsDescription = nameMatch?.description ?? "";
+    if (commonsImage || aiWiki || commonsDescription) {
       return {
         ...poi,
         wiki: {
           title: aiWiki?.title ?? poi.name,
-          extract: aiWiki?.extract ?? "",
-          url: aiWiki?.url ?? "",
+          extract: aiWiki?.extract ?? commonsDescription,
+          url: aiWiki?.url ?? nameMatch?.descriptionUrl ?? "",
           lang: aiWiki?.lang ?? "de",
           image: commonsImage ?? aiWiki?.image ?? null,
         },
