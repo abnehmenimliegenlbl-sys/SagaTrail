@@ -7,14 +7,18 @@ import { downsample, wgs84ToLV95, type LatLng } from "./geo";
  * (api3.geo.admin.ch/rest/services/profile.json).
  *
  * Der Dienst akzeptiert nur Schweizer Bezugssysteme (LV95 = EPSG:2056), daher
- * werden die WGS84-Punkte vorher umgerechnet. Zur Begrenzung der Anfragegroesse
- * wird der Verlauf auf wenige Stuetzpunkte ausgeduennt; swisstopo interpoliert
- * das Feinprofil dazwischen selbst.
+ * werden die WGS84-Punkte vorher umgerechnet. Bis zur API-Grenze werden alle
+ * Routenpunkte uebertragen, damit Kehren und Richtungswechsel erhalten bleiben.
+ * Nur groessere Geometrien werden zum Schutz vor uebergrossen Anfragen
+ * ausgeduennt; swisstopo interpoliert das Feinprofil dazwischen selbst.
  */
 
 const PROFILE_URL = "https://api3.geo.admin.ch/rest/services/profile.json";
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion)";
-const MAX_INPUT_POINTS = 100;
+// Entspricht der maximalen Geometriegroesse des /elevation-profile-Endpunkts.
+// Die gespeicherten Routen haben typischerweise bis zu 500 Punkte und gehen
+// damit vollstaendig an swisstopo; sehr grosse Sonderfaelle werden begrenzt.
+const MAX_INPUT_POINTS = 2000;
 
 interface ProfilePoint {
   dist?: number;
