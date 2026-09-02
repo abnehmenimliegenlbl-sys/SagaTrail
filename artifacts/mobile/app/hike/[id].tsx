@@ -4458,10 +4458,10 @@ function CompassCard({
               </View>
               {sagaName ? (
                 <View style={[styles.compassLegendItem, { flex: 1 }]}>
-                  <SparkMountain
-                    size={18}
-                    mountainColor="#E7C67A"
-                    sparkColor="#D8A84E"
+                  <Image
+                    source={require("../../assets/images/compass-saga-pointer.png")}
+                    style={styles.compassSagaLegendIcon}
+                    resizeMode="contain"
                   />
                   <Text style={styles.compassSagaName} numberOfLines={1}>
                     {sagaName}
@@ -4805,6 +4805,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#B22A2E",
   },
   compassLegendText: { color: COMPASS_GOLD, fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 10 },
+  compassSagaLegendIcon: {
+    width: 12,
+    height: 22,
+  },
   compassSagaName: {
     color: COMPASS_GOLD,
     fontFamily: COMPASS_ANTIQUE_FONT,
