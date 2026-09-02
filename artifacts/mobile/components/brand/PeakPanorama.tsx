@@ -124,12 +124,8 @@ export function PeakPanorama({
               style={[
                 styles.cameraButton,
                 {
-                  backgroundColor: cameraEnabled
-                    ? colors.primary
-                    : colors.glassBgStrong,
-                  borderColor: cameraEnabled
-                    ? colors.primary
-                    : colors.glassBorder,
+                  backgroundColor: colors.primary,
+                  borderColor: colors.primary,
                 },
               ]}
               accessibilityRole="button"
@@ -138,15 +134,13 @@ export function PeakPanorama({
               <Feather
                 name={cameraEnabled ? "x" : "camera"}
                 size={14}
-                color={cameraEnabled ? colors.primaryForeground : colors.foreground}
+                color={colors.primaryForeground}
               />
               <Text
                 style={[
                   styles.cameraButtonText,
                   {
-                    color: cameraEnabled
-                      ? colors.primaryForeground
-                      : colors.foreground,
+                    color: colors.primaryForeground,
                   },
                 ]}
               >
