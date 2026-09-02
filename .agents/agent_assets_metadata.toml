@@ -444,3 +444,17 @@ mtime_ms = 1788359431029
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/66a5628a-9509-4a0a-a56b-96c09c415276/43bd27d8-d963-4dde-8bb2-34816222185c"
 storage_version_token = "1788359605847383"
 content_type = "image/png"
+
+[[outputs]]
+id = "kol7uyAx3epA_xHqWYvRi"
+uri = "file://artifacts/mobile/assets/images/antique-saga-compass-full-wood.jpg"
+type = "image"
+title = "Vollflächiger Holz-Kompass"
+description = "Der gesamte braune Bereich ist durchgehend fotorealistische Holzmaserung — ohne Deckel, ohne transparente Ränder und ohne einfarbige Restflächen."
+logical_id = "50d1c95d-3e66-4f2a-8df1-b5069cb06254"
+content_hash = "sha256:429d4e972d4ad1f4887ba124ebe8e6611a7ab510f31b5c79d60e54bb8476f188"
+size = 280700
+mtime_ms = 1788359920692
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/50d1c95d-3e66-4f2a-8df1-b5069cb06254/ddf5a2c1-6d72-454c-a89a-e98c12604234"
+storage_version_token = "1788360008164255"
+content_type = "image/jpeg"

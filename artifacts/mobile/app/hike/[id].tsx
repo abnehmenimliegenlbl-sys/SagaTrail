@@ -4394,7 +4394,7 @@ function CompassCard({
         <View style={styles.compassBody}>
           <View style={styles.compassPhotoStage}>
             <Image
-              source={require("../../assets/images/antique-saga-compass.png")}
+              source={require("../../assets/images/antique-saga-compass-full-wood.jpg")}
               style={styles.compassPhoto}
               resizeMode="contain"
             />
