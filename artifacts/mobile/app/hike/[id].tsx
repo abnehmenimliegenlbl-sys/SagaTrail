@@ -90,7 +90,7 @@ import {
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
-import { erkenneGipfel, panoramaFuerRoute } from "@/lib/panorama";
+import { erkenneGipfel } from "@/lib/panorama";
 import * as ImagePicker from "expo-image-picker";
 import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
@@ -2664,8 +2664,6 @@ export default function LiveHike() {
     () => erkenneGipfel(pois, livePos, compassHeading),
     [pois, livePos, compassHeading],
   );
-  const panoramaImage = panoramaFuerRoute(route?.maxElevationM);
-
   const terrainSections = useMemo(
     () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
     [terrainProfile],
@@ -3505,7 +3503,6 @@ export default function LiveHike() {
         />
 
         <PeakPanorama
-          source={panoramaImage}
           peaks={panoramaPeaks}
           heading={compassHeading}
           hasGps={livePos !== null}

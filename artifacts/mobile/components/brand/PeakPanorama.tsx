@@ -1,9 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
-import type { ImageSourcePropType } from "react-native";
 import {
-  ImageBackground,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   View,
 } from "react-native";
 import type { DimensionValue } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -32,7 +32,6 @@ export interface PeakPanoramaStrings {
 }
 
 interface PeakPanoramaProps {
-  source: ImageSourcePropType;
   peaks: PanoramaGipfel[];
   heading: number | null;
   hasGps: boolean;
@@ -45,13 +44,13 @@ function markerLeft(relativeBearingDeg: number): DimensionValue {
 }
 
 export function PeakPanorama({
-  source,
   peaks,
   heading,
   hasGps,
   strings,
 }: PeakPanoramaProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
@@ -157,91 +156,137 @@ export function PeakPanorama({
         {strings.hint}
       </Text>
 
-      <View style={styles.imageFrame}>
-        {cameraEnabled && cameraPermission?.granted ? (
+      <View
+        style={[
+          styles.cameraPrompt,
+          {
+            backgroundColor: colors.glassBgStrong,
+            borderColor: colors.glassBorder,
+          },
+        ]}
+      >
+        <Feather name="camera" size={22} color={colors.accent} />
+        <Text style={[styles.promptTitle, { color: colors.foreground }]}>
+          {strings.camera}
+        </Text>
+        <Text style={[styles.promptStatus, { color: colors.mutedForeground }]}>
+          {status}
+        </Text>
+      </View>
+
+      <Modal
+        visible={cameraEnabled && cameraPermission?.granted === true}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setCameraEnabled(false)}
+      >
+        <View style={styles.fullscreenCamera}>
           <CameraView facing="back" style={styles.camera} />
-        ) : (
-          <ImageBackground
-            source={source}
-            resizeMode="cover"
-            style={styles.image}
-            imageStyle={styles.imageRadius}
-          />
-        )}
-        <View style={styles.imageScrim} />
-        <View style={styles.horizon} />
-        {visiblePeaks.map((peak, index) => (
-          <View
-            key={peak.id}
-            style={[
-              styles.marker,
-              {
-                left: markerLeft(peak.relativeBearingDeg ?? 0),
-                top: 16 + (index % 3) * 26,
-              },
-            ]}
-          >
+          <View style={styles.imageScrim} />
+          <View style={styles.horizon} />
+          {visiblePeaks.map((peak, index) => (
             <View
+              key={peak.id}
               style={[
-                styles.markerLabel,
+                styles.marker,
                 {
-                  backgroundColor: colors.glassBgStrong,
-                  borderColor:
-                    focusedPeak?.id === peak.id
-                      ? colors.primary
-                      : colors.glassBorder,
+                  left: markerLeft(peak.relativeBearingDeg ?? 0),
+                  top: insets.top + 82 + (index % 3) * 42,
                 },
               ]}
             >
-              <Text
-                style={[styles.markerName, { color: colors.photoScrimText }]}
-                numberOfLines={1}
+              <View
+                style={[
+                  styles.markerLabel,
+                  {
+                    backgroundColor: colors.glassBgStrong,
+                    borderColor:
+                      focusedPeak?.id === peak.id
+                        ? colors.primary
+                        : colors.glassBorder,
+                  },
+                ]}
               >
-                {peak.name}
-              </Text>
-              <Text
-                style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
-              >
-                {strings.distance(peak.distanceKm.toFixed(1))}
-              </Text>
+                <Text
+                  style={[styles.markerName, { color: colors.photoScrimText }]}
+                  numberOfLines={1}
+                >
+                  {peak.name}
+                </Text>
+                <Text
+                  style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
+                >
+                  {strings.distance(peak.distanceKm.toFixed(1))}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.markerStem,
+                  {
+                    backgroundColor:
+                      focusedPeak?.id === peak.id
+                        ? colors.primary
+                        : colors.photoScrimText,
+                  },
+                ]}
+              />
             </View>
+          ))}
+          {heading != null && (
             <View
-              style={[
-                styles.markerStem,
-                {
-                  backgroundColor:
-                    focusedPeak?.id === peak.id
-                      ? colors.primary
-                      : colors.photoScrimText,
-                },
-              ]}
+              style={[styles.centerLine, { backgroundColor: colors.primary }]}
             />
-          </View>
-        ))}
-        {heading != null && (
+          )}
           <View
             style={[
-              styles.centerLine,
-              { backgroundColor: colors.primary },
+              styles.fullscreenTopBar,
+              { paddingTop: insets.top + 12 },
             ]}
-          />
-        )}
-        <View style={styles.imageFooter}>
-          <Feather
-            name={focusedPeak ? "crosshair" : "compass"}
-            size={13}
-            color={colors.photoScrimText}
-          />
-          <Text
-            style={[styles.status, { color: colors.photoScrimText }]}
-            numberOfLines={1}
           >
-            {focusedPeak
-              ? `${strings.detected}: ${focusedPeak.name}`
-              : status}
-          </Text>
+            <View>
+              <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
+                {strings.title}
+              </Text>
+              {heading != null && (
+                <Text style={[styles.fullscreenHeading, { color: colors.photoScrimMuted }]}>
+                  {Math.round(heading)}°
+                </Text>
+              )}
+            </View>
+            <Pressable
+              onPress={() => setCameraEnabled(false)}
+              style={[
+                styles.closeButton,
+                { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={strings.cameraOff}
+            >
+              <Feather name="x" size={20} color={colors.foreground} />
+            </Pressable>
+          </View>
+          <View
+            style={[
+              styles.imageFooter,
+              { paddingBottom: insets.bottom + 12 },
+            ]}
+          >
+            <Feather
+              name={focusedPeak ? "crosshair" : "compass"}
+              size={15}
+              color={colors.photoScrimText}
+            />
+            <Text
+              style={[styles.status, { color: colors.photoScrimText }]}
+              numberOfLines={2}
+            >
+              {focusedPeak
+                ? `${strings.detected}: ${focusedPeak.name}`
+                : status}
+            </Text>
+          </View>
         </View>
-      </View>
+      </Modal>
     </View>
   );
 }
@@ -273,10 +318,19 @@ const styles = StyleSheet.create({
   },
   cameraButtonText: { fontFamily: fonts.mono, fontSize: 9 },
   hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 7 },
-  imageFrame: { marginTop: 11, height: 190, borderRadius: 12, overflow: "hidden" },
-  image: { flex: 1, justifyContent: "flex-end" },
+  cameraPrompt: {
+    minHeight: 94,
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+  },
+  promptTitle: { fontFamily: fonts.titleBold, fontSize: 14 },
+  promptStatus: { fontFamily: fonts.body, fontSize: 11, textAlign: "center", paddingHorizontal: 16 },
+  fullscreenCamera: { flex: 1, backgroundColor: "#000" },
   camera: { ...StyleSheet.absoluteFillObject },
-  imageRadius: { borderRadius: 12 },
   imageScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.17)",
@@ -288,6 +342,27 @@ const styles = StyleSheet.create({
     top: "54%",
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.45)",
+  },
+  fullscreenTopBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(0,0,0,0.24)",
+  },
+  fullscreenTitle: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 1.5 },
+  fullscreenHeading: { fontFamily: fonts.monoBold, fontSize: 14, marginTop: 4 },
+  closeButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   marker: {
     position: "absolute",
@@ -326,6 +401,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 7,
     backgroundColor: "rgba(0,0,0,0.38)",
+    paddingTop: 10,
   },
   status: { flex: 1, fontFamily: fonts.body, fontSize: 12 },
 });
