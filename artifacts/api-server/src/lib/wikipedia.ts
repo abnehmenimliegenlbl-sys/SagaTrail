@@ -403,6 +403,7 @@ export async function fetchNearbyCommonsImage(
 export async function fetchCommonsImageByName(
   name: string,
   widthPx = 600,
+  locationHint?: string,
 ): Promise<string | null> {
   // Keywords generisch extrahieren: jedes Nicht-Wort-Zeichen (Bindestrich,
   // Punkt, Klammer, Schrägstrich …) ist Wort-Trenner. Stopwords und sehr
@@ -422,22 +423,46 @@ export async function fetchCommonsImageByName(
 
   if (tokens.length === 0) return null;
 
-  // Suchbegriffe: alle Keywords (AND-Suche in MediaWiki) → engste Suche;
-  // dann nur die ersten 2 (bei ≥3 Keywords) → breiter Fallback.
-  const suchbegriffe: string[] = [tokens.join(" ")];
+  // Suchbegriffe: zuerst Name + Ortskontext (entspricht der erfolgreichen
+  // Google-Suche "Hindenburg Denkmal Lörrach"), danach der reine Name.
+  // Der Ortskontext kommt aus Nominatim und wird nur on-demand beim Öffnen
+  // eines POIs ermittelt.
+  const nameSearch = tokens.join(" ");
+  const suchbegriffe: string[] = [
+    ...(locationHint?.trim() ? [`${nameSearch} ${locationHint.trim()}`] : []),
+    nameSearch,
+  ];
   if (tokens.length > 2) {
     suchbegriffe.push(tokens.slice(0, 2).join(" "));
   }
+  const locationTokens = (locationHint ?? "")
+    .toLowerCase()
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .split(/[\s\-_\.\/\\,;:()\[\]]+/)
+    .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
 
   for (const begriff of suchbegriffe) {
     const url =
       `https://commons.wikimedia.org/w/api.php?action=query` +
       `&generator=search&gsrsearch=${encodeURIComponent(begriff)}` +
       `&gsrnamespace=6&gsrlimit=5` +
-      `&prop=imageinfo&iiprop=url&iiurlwidth=${widthPx}` +
+      `&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=${widthPx}` +
       `&format=json&origin=*`;
     const json = await fetchJson<{
-      query?: { pages?: Record<string, { title: string; index?: number; imageinfo?: { thumburl?: string; url?: string }[] }> };
+      query?: {
+        pages?: Record<string, {
+          title: string;
+          index?: number;
+          imageinfo?: {
+            thumburl?: string;
+            url?: string;
+            extmetadata?: {
+              Categories?: { value?: string };
+              ImageDescription?: { value?: string };
+            };
+          }[];
+        }>;
+      };
     }>(url);
     // Nach Suchrelevanz (index) sortieren, NICHT nach Page-ID. Object.values()
     // liefert Seiten in numerisch aufsteigender Page-ID-Reihenfolge (aeltere Dateien
@@ -452,11 +477,33 @@ export async function fetchCommonsImageByName(
         .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
         .replace(/[^a-z0-9]/g, "");
     const withThumb = pages.filter((p) => p.imageinfo?.[0]?.thumburl ?? p.imageinfo?.[0]?.url);
+    const stripHtml = (value: string) => value.replace(/<[^>]+>/g, " ");
+    const hasLocationHint = (p: (typeof pages)[number]) => {
+      if (locationTokens.length === 0) return true;
+      const info = p.imageinfo?.[0]?.extmetadata;
+      const searchable = norm([
+        p.title,
+        info?.Categories?.value ?? "",
+        stripHtml(info?.ImageDescription?.value ?? ""),
+      ].join(" "));
+      return locationTokens.some((token) => searchable.includes(token));
+    };
+    const hasNameToken = (p: (typeof pages)[number]) => {
+      const fn = norm(p.title.replace(/^File:/i, ""));
+      return tokens.some((t) => fn.includes(t));
+    };
+    // Bei einer ortsbezogenen Suche muss der Ort auch in Dateiname,
+    // Kategorie oder Beschreibung vorkommen. So wird ein Suchmaschinen-
+    // Treffer aus einem anderen Ort nicht als vermeintlich passend akzeptiert.
+    const locationMatch = withThumb.filter(hasLocationHint);
+    if (locationTokens.length > 0 && locationMatch.length === 0) continue;
     const keywordMatch = withThumb.find((p) => {
       const fn = norm(p.title.replace(/^File:/i, ""));
       return tokens.some((t) => fn.includes(t));
     });
-    const best = keywordMatch ?? withThumb[0];
+    const best =
+      locationMatch.find(hasNameToken) ??
+      (locationTokens.length === 0 ? keywordMatch ?? withThumb[0] : undefined);
     if (best) {
       const info = best.imageinfo?.[0];
       const thumb = info?.thumburl ?? info?.url;
