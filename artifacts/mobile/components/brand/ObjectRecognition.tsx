@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -54,6 +54,8 @@ export function ObjectRecognition({
   const [confirmed, setConfirmed] = useState<ObjectRecognitionCandidate | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const busyRef = useRef(false);
+  const runIdRef = useRef(0);
 
   const deleteTemporaryPhoto = useCallback(async (uri: string | null) => {
     if (!uri) return;
@@ -69,6 +71,9 @@ export function ObjectRecognition({
   }, [deleteTemporaryPhoto, photoUri]);
 
   const closeResults = useCallback(() => {
+    runIdRef.current += 1;
+    busyRef.current = false;
+    setState("idle");
     setModalVisible(false);
     setConfirmed(null);
     setCandidates([]);
@@ -79,32 +84,32 @@ export function ObjectRecognition({
   }, [deleteTemporaryPhoto, photoUri]);
 
   const openCamera = useCallback(async () => {
-    if (!premium || state !== "idle") return;
+    if (!premium || busyRef.current) return;
+    const runId = runIdRef.current + 1;
+    runIdRef.current = runId;
+    busyRef.current = true;
     setError(null);
     setState("capturing");
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      setState("idle");
-      setError(strings.cameraPermissionMessage);
-      setModalVisible(true);
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      quality: 0.72,
-      exif: false,
-    });
-    if (result.canceled || !result.assets[0]?.uri) {
-      setState("idle");
-      return;
-    }
-
-    const uri = result.assets[0].uri;
-    setPhotoUri(uri);
-    setModalVisible(true);
-    setState("analyzing");
     try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        setError(strings.cameraPermissionMessage);
+        setModalVisible(true);
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.72,
+        exif: false,
+      });
+      if (result.canceled || !result.assets[0]?.uri) return;
+      if (runId !== runIdRef.current) return;
+
+      const uri = result.assets[0].uri;
+      setPhotoUri(uri);
+      setModalVisible(true);
+      setState("analyzing");
       const imageBase64 = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
@@ -129,6 +134,7 @@ export function ObjectRecognition({
           nearbyContext: nearbyContext || null,
         }),
       });
+      if (runId !== runIdRef.current) return;
       if (!response.ok) {
         if (response.status === 403) throw new Error(strings.premiumTitle);
         throw new Error(strings.analysisError);
@@ -140,9 +146,15 @@ export function ObjectRecognition({
       setNote(payload.analysisNote ?? "");
       setCandidates(Array.isArray(payload.candidates) ? payload.candidates.slice(0, 3) : []);
     } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : strings.analysisError);
+      if (runId === runIdRef.current) {
+        setError(err instanceof Error && err.message ? err.message : strings.analysisError);
+        setModalVisible(true);
+      }
     } finally {
-      setState("idle");
+      if (runId === runIdRef.current) {
+        busyRef.current = false;
+        setState("idle");
+      }
     }
   }, [
     getToken,
@@ -152,7 +164,6 @@ export function ObjectRecognition({
     lng,
     nearbyContext,
     premium,
-    state,
     strings.analysisError,
     strings.cameraPermissionMessage,
     strings.premiumTitle,
