@@ -109,3 +109,4 @@
 - [Object recognition premium](sagatrail-object-recognition-premium.md) — Foto-basierte Erkennung beliebiger Objekte ist Premium, on-demand und zeigt bestätigbare Treffer statt automatischer Gewissheiten.
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.
 - [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.
+- [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.

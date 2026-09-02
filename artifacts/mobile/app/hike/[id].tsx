@@ -102,7 +102,6 @@ import { uploadWaypointPhoto, waypointPhotoUrl } from "@/lib/waypointPhotoUpload
 import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
-const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
 const COMPASS_GOLD = "#D8A84E";
 const COMPASS_ANTIQUE_FONT = Platform.select({
   web: "Georgia, Times New Roman, serif",
@@ -263,7 +262,7 @@ function buildKeepaliveWavBase64(): string {
   return typeof btoa !== 'undefined' ? btoa(s) : Buffer.from(buf).toString('base64');
 }
 
-type LocState = "idle" | "granted" | "denied" | "simulated";
+type LocState = "idle" | "granted" | "denied";
 
 function smoothCompassHeading(previous: number | null, next: number, factor = 0.2): number {
   if (previous == null) return next;
@@ -519,6 +518,9 @@ export default function LiveHike() {
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [liveAltitude, setLiveAltitude] = useState<number | null>(null);
   const [livePlace, setLivePlace] = useState<string | null>(null);
+  // Tickt regelmässig weiter, damit ein ausbleibendes GPS-Signal auch ohne
+  // neuen Fix sichtbar wird und Fortschritt/Navigationslogik pausieren können.
+  const [locationNow, setLocationNow] = useState(() => Date.now());
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
@@ -600,7 +602,6 @@ export default function LiveHike() {
     });
   }, []);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
   const startTimeRef = useRef<number>(Date.now());
   const lastFixRef = useRef<LatLng | null>(null);
@@ -624,6 +625,10 @@ export default function LiveHike() {
   const followingRecalcRef = useRef(false);
   /** Zaehler aufeinanderfolgender GPS-Fixes ausserhalb der Route. */
   const offRouteCountRef = useRef(0);
+  const hasFreshGps =
+    locState === "granted" &&
+    livePos !== null &&
+    locationNow - lastLocationAtRef.current <= 45_000;
   const lastNarratedRef = useRef<number>(-1);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
    *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
@@ -1590,7 +1595,13 @@ export default function LiveHike() {
     };
   }, []);
   useEffect(() => {
+    const interval = setInterval(() => setLocationNow(Date.now()), 5_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
+    if (!hasFreshGps) return;
     const geo = route?.geometry;
     const current: LatLng | null =
       livePos ??
@@ -1630,13 +1641,14 @@ export default function LiveHike() {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { navInterrupt: true, turnAudio: treffer.cue.direction });
     }
-  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage]);
+  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
   // einmal je Wanderung als Karte an ("live entlang der Route entdeckt").
   useEffect(() => {
     if (pois.length === 0) return;
+    if (!hasFreshGps) return;
     // Solange ein POI aktiv angezeigt/erzaehlt wird, keinen neuen suchen:
     // mehrere POIs in 300-m-Naehe wuerden sonst die laufende Ansage
     // unterbrechen und den POI mehrfach vorgelesen klingen lassen.
@@ -1686,7 +1698,7 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi, nearbyPoiWiki]);
+  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
@@ -1707,6 +1719,7 @@ export default function LiveHike() {
   // Nur aktive Partner, nur einmal pro Hike, nur wenn nicht gerade am Vorbereiten.
   useEffect(() => {
     if (preparing || !saga) return;
+    if (!hasFreshGps) return;
     const premiumPartners = partners.filter((p) => p.paket === "premium");
     if (premiumPartners.length === 0) return;
     const geo = route?.geometry;
@@ -1766,13 +1779,13 @@ export default function LiveHike() {
           announcingPremiumPartnerIdsRef.current.delete(partnerId);
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision]);
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
   // Aufforderung, diesen besonderen Ort zu fotografieren.
   useEffect(() => {
-    if (!livePos || !saga?.coordinates || photoChallengeShownRef.current) return;
+    if (!hasFreshGps || !livePos || !saga?.coordinates || photoChallengeShownRef.current) return;
     const dist = haversineKm(livePos, saga.coordinates);
     if (dist <= 0.15) {
       photoChallengeShownRef.current = true;
@@ -1780,13 +1793,13 @@ export default function LiveHike() {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       speakRef.current?.(pack.photoChallengePrompt);
     }
-  }, [livePos, saga?.coordinates, storyLanguage]);
+  }, [livePos, saga?.coordinates, storyLanguage, hasFreshGps]);
 
   // Sagenmittelpunkt-Ankunft: einmalige kurze Ansage wenn GPS < 10 m entfernt (GPS-bestätigt,
   // daher darf die Phrase "du stehst hier" sagen). Nur für Sagen mit exakten Koordinaten —
   // der saga=heart-POI wurde dort bereits auf koordinatenSicherheit='exakt' beschränkt.
   useEffect(() => {
-    if (!livePos || !saga?.coordinates || saga.koordinatenSicherheit !== "exakt") return;
+    if (!hasFreshGps || !livePos || !saga?.coordinates || saga.koordinatenSicherheit !== "exakt") return;
     if (sagaArrivalSpokenRef.current) return;
     const dist = haversineKm(livePos, saga.coordinates);
     if (dist <= 0.01) {
@@ -1794,14 +1807,14 @@ export default function LiveHike() {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       speakRef.current?.(pack.sagaHeartArrival, undefined, { sagaInterrupt: true });
     }
-  }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage]);
+  }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage, hasFreshGps]);
 
   // Wegoberflaechenansage: sobald der Wanderer einen neuen Oberflaechenabschnitt betritt,
   // wird ein saga-atmosphaerischer Satz gesprochen (und optional als Push-Notif gesendet).
   useEffect(() => {
     // Erst nach dem ersten Meter ansagen — GPS gibt sonst sofort eine Route-Position
     // zurueck (z. B. Fraction 0.15) und loest alle Wechsel davor auf einmal aus.
-    if (surfacePoints.length === 0 || preparing || distance === 0) return;
+    if (!hasFreshGps || surfacePoints.length === 0 || preparing || distance === 0) return;
     const currentFraction = (() => {
       if (livePos && route?.geometry && route.geometry.length >= 2) {
         const match = fortschrittAufRoute(livePos, route.geometry);
@@ -1825,7 +1838,7 @@ export default function LiveHike() {
         }
       }
     }
-  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry]);
+  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry, hasFreshGps]);
 
   // Verstrichene Zeit: alle 15 Sekunden aktualisieren (fuer ETA-Berechnung).
   useEffect(() => {
@@ -1839,7 +1852,7 @@ export default function LiveHike() {
   // Meilenstein-Ansage bei 25/50/75 % der Wanderung — per KI im Sagen-Stil,
   // Fallback auf atmosphaerische Standardphrase aus STORY_PACKS.
   useEffect(() => {
-    if (preparing || totalKm <= 0) return;
+    if (!hasFreshGps || preparing || totalKm <= 0) return;
     const fraction = Math.min(1, distance / totalKm);
     const milestones = [25, 50, 75] as const;
     for (const pct of milestones) {
@@ -1898,7 +1911,7 @@ export default function LiveHike() {
         }
       }
     }
-  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t]);
+  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t, hasFreshGps]);
 
   const takePhoto = async () => {
     setShowPhotoChallenge(false);
@@ -1968,12 +1981,12 @@ export default function LiveHike() {
               );
             },
             () => {
-              if (!cancelled) setLocState("simulated");
+      if (!cancelled) setLocState("denied");
             },
             { enableHighAccuracy: true, maximumAge: 2000, timeout: 8000 }
           );
         } else {
-          setLocState("simulated");
+          setLocState("denied");
         }
         return;
       }
@@ -2638,7 +2651,7 @@ export default function LiveHike() {
   // 200 m → einmaliger OpenAI-Richtungshinweis
   // 50 m  → volle Geschichte in Erzaehlstimme (identisch zum normalen POI-Flow)
   useEffect(() => {
-    if (!nearbyPoi || !livePos) return;
+    if (!hasFreshGps || !nearbyPoi || !livePos) return;
     if (!POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "")) return;
     if (!isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
     // Pruefe ob spezifischer Inhalt vorhanden ist — reine KI-Generierung
@@ -2700,7 +2713,7 @@ export default function LiveHike() {
           });
       })();
     }
-  }, [livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak]);
+  }, [livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
@@ -2720,12 +2733,13 @@ export default function LiveHike() {
   const ROUTE_PROGRESS_MAX_ACCURACY_M = 30;
   const ROUTE_PROGRESS_MAX_DIST_KM = 1;
   const routeProgress = useMemo(() => {
-    if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
+    if (!hasFreshGps || !livePos || !route?.geometry || route.geometry.length < 2) return null;
+    if (locState === "granted" && locationNow - lastLocationAtRef.current > 45_000) return null;
     if (livePosAccuracy != null && livePosAccuracy > ROUTE_PROGRESS_MAX_ACCURACY_M) return null;
     const match = fortschrittAufRoute(livePos, route.geometry);
     if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
     return match.fraction;
-  }, [livePos, livePosAccuracy, route?.geometry]);
+  }, [livePos, livePosAccuracy, route?.geometry, locState, locationNow]);
 
   const panoramaPeaks = useMemo(
     () => erkenneGipfel(pois, livePos, compassHeading),
@@ -2797,6 +2811,7 @@ export default function LiveHike() {
     ) {
       return;
     }
+    if (locState === "granted" && !hasFreshGps) return;
     const profileLengthKm = terrainProfile
       ? Math.max(
           0,
@@ -2893,6 +2908,8 @@ export default function LiveHike() {
     profile?.navAnnouncementsEnabled,
     cueLanguage,
     t,
+    locState,
+    hasFreshGps,
   ]);
 
   // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
@@ -2908,24 +2925,25 @@ export default function LiveHike() {
     const dir = t.compassDirections[compassIndex(bearingDeg(livePos, start))];
     const distText = formatSpokenDistance(distKm, storyLanguage);
     return { distKm, distText, dir };
-  }, [livePos, route?.geometry, storyLanguage, t]);
+  }, [livePos, route?.geometry, storyLanguage, t, hasFreshGps]);
 
   // Sobald der User einmal innerhalb des Start-Radius war (walkToStart === null),
   // als "start reached" markieren — damit das Banner nach dem Passieren nicht
   // erneut erscheint, wenn der User sich von geometry[0] entfernt.
   useEffect(() => {
     if (preparing || startReached) return;
+    if (!hasFreshGps) return;
     if (walkToStart === null) setStartReached(true);
-  }, [walkToStart, preparing, startReached]);
+  }, [walkToStart, preparing, startReached, hasFreshGps]);
 
   const walkToStartAnnouncedRef = useRef(false);
   useEffect(() => {
     if (!walkToStart) return;
     if (walkToStartAnnouncedRef.current) return;
-    if (preparing || locState !== "granted") return;
+    if (preparing || locState !== "granted" || !hasFreshGps) return;
     walkToStartAnnouncedRef.current = true;
     speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useOpenAI: true });
-  }, [walkToStart, preparing, locState, speak, t]);
+  }, [walkToStart, preparing, locState, speak, t, hasFreshGps]);
 
   // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
   // (routeProgress); ohne verlaesslichen GPS-Fix oder Geometrie faellt es
@@ -2945,6 +2963,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (locState !== "granted") return;
     if (preparing || finished || chapters.length === 0) return;
+    if (!hasFreshGps) return;
     // Die bereits gefahrene Strecke bleibt in `distance` erhalten. Sobald
     // chooseOption (oder der Timeout) die Entscheidung schließt, läuft dieser
     // Effekt erneut und holt den Kapitelindex kontrolliert nach.
@@ -2957,7 +2976,7 @@ export default function LiveHike() {
     // Mit verlaesslicher GPS-Position den Fortschritt direkt auf der
     // Routen-Geometrie bestimmen. Die kumulierte Distanz bleibt der Rueckfall
     // fuer fehlendes GPS oder eine Position ausserhalb der Route.
-    const ratio = routeProgress ?? (totalKm > 0 ? distance / totalKm : 0);
+    const ratio = routeProgress ?? 0;
     // Letztes Kapitel schon ab ~70 % des letzten Streckenabschnitts ausloesen:
     // GPS-Distanz bleibt in der Praxis meistens etwas unter der offiziellen
     // Routenlaenge (Drift, abweichendes Routenende), weshalb ratio selten
@@ -2987,32 +3006,11 @@ export default function LiveHike() {
     awaitingDecision,
     totalKm,
     routeProgress,
+    hasFreshGps,
   ]);
 
-  // Simulierter Fortschritt als Rueckfall — nur in den ausdruecklichen
-  // Ersatzzustaenden, damit die Erlaubnisabfrage keinen Fortschritt vortaeuscht.
-  useEffect(() => {
-    if (locState !== "denied" && locState !== "simulated") return;
-    if (preparing || finished) return;
-    timerRef.current = setTimeout(() => {
-      setAwaitingDecision(false);
-      setDistance((d) => Math.min(totalKm, d + totalKm / Math.max(1, chapters.length)));
-      setCurrentIndex((i) => {
-        if (i + 1 >= chapters.length) {
-          setFinished(true);
-          return i;
-        }
-        return i + 1;
-      });
-    }, TICK_MS);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [currentIndex, preparing, finished, chapters.length, locState, totalKm]);
-
   // Konsistente Haptik: jedes abgeschlossene Kapitel gibt ein leichtes
-  // Vibrationsfeedback — unabhaengig davon, ob GPS oder Simulation den
-  // Fortschritt treibt.
+  // Vibrationsfeedback — nur nach echtem GPS-Fortschritt.
   const lastHapticIndexRef = useRef(0);
   useEffect(() => {
     if (preparing || currentIndex <= lastHapticIndexRef.current) return;
@@ -3341,7 +3339,7 @@ export default function LiveHike() {
   // WICHTIG: dieser Hook muss VOR dem "!saga || !profile"-Early-Return stehen,
   // sonst aendert sich die Hook-Reihenfolge zwischen Renders (React-Crash).
   const recalcProgress = useMemo(() => {
-    if (!followingRecalc || !recalcGeom || recalcGeom.length < 2 || !livePos) return null;
+    if (!hasFreshGps || !followingRecalc || !recalcGeom || recalcGeom.length < 2 || !livePos) return null;
     if (recalcRejoinFraction == null || totalKm <= 0) return null;
     const match = fortschrittAufRoute(livePos, recalcGeom);
     if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
@@ -3356,7 +3354,7 @@ export default function LiveHike() {
     const restOriginalKm = totalKm * (1 - recalcRejoinFraction);
     const remainingKm = restUmleitungKm + restOriginalKm;
     return Math.max(0, Math.min(1, 1 - remainingKm / totalKm));
-  }, [followingRecalc, recalcGeom, recalcRejoinFraction, livePos, totalKm]);
+  }, [followingRecalc, recalcGeom, recalcRejoinFraction, livePos, totalKm, hasFreshGps]);
 
   if (!saga || !profile) {
     return (
@@ -3378,25 +3376,23 @@ export default function LiveHike() {
   // Kapitelgrenzen springenden Story-Fortschritt — sonst zeigt die Restzeit
   // direkt nach einem Start mitten auf der Route faelschlich die volle
   // Wanderdauer an, bis das erste Kapitel erreicht ist.
-  const timeProgress = recalcProgress ?? routeProgress ?? (totalKm > 0 ? Math.min(1, distance / totalKm) : progress);
+  const timeProgress =
+    hasFreshGps
+      ? (recalcProgress ?? routeProgress ?? 0)
+      : locState === "granted"
+        ? 0
+        : (totalKm > 0 ? Math.min(1, distance / totalKm) : progress);
   const currentChapter = chapters[currentIndex];
 
-  // Angezeigte Position auf der Karte: bei echtem GPS die Live-Position, sonst
-  // (Simulation/kein Zugriff, z. B. Web-Vorschau) ein entlang des Wegverlaufs
-  // interpolierter Punkt, damit der Fortschritt sichtbar wird.
-  const geo = route?.geometry;
-  const simPos: LatLng | null =
-    geo && geo.length > 1
-      ? (() => {
-          const f = totalKm > 0 ? Math.max(0, Math.min(1, distance / totalKm)) : 0;
-          const p = geo[Math.round(f * (geo.length - 1))];
-          return { lat: p[0], lng: p[1] };
-        })()
-      : null;
-  // Es soll immer ein Positionsmarker sichtbar sein: bevorzugt die echte
-  // GPS-Position; solange noch kein Fix vorliegt (oder GPS nicht verfuegbar
-  // ist, z. B. Web-Vorschau) der entlang des Weges interpolierte Punkt.
-  const shownPos = livePos ?? simPos;
+  // Eine simulierte Position darf niemals wie ein echter Live-Standort
+  // aussehen. Ohne gültigen Fix bleibt der Positionsmarker daher leer.
+  const shownPos = hasFreshGps ? livePos : null;
+  const hudTop =
+    topPad +
+    (locState === "denied" ? 154 : !startReached && walkToStart && !preparing ? 98 : 4);
+  const gpsAgeSec = lastLocationAtRef.current > 0
+    ? Math.max(0, Math.round((locationNow - lastLocationAtRef.current) / 1000))
+    : null;
 
   return (
     <Background>
@@ -4119,6 +4115,58 @@ export default function LiveHike() {
         </View>
       </ScrollView>
 
+      {/* Permanenter Navigations-HUD: GPS-Zustand bleibt sichtbar, auch wenn
+          der Nutzer im Story-/Kartenbereich scrollt. */}
+      <View
+        style={[
+          styles.hikeHud,
+          { top: hudTop, backgroundColor: colors.card, borderColor: colors.glassBorder },
+        ]}
+      >
+        <View style={styles.hikeHudStatus}>
+          <View
+            style={[
+              styles.gpsDot,
+              { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
+            ]}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.hikeHudTitle, { color: colors.foreground }]}>
+              {hasFreshGps ? `GPS · ${t.live}` : t.noLocationAccess}
+            </Text>
+            <Text style={[styles.hikeHudMeta, { color: colors.mutedForeground }]}>
+              {hasFreshGps
+                ? `${gpsAgeSec ?? 0}s · ±${Math.round(livePosAccuracy ?? 0)} m`
+                : t.locationDeniedHint}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              if (speaking) cancelNarration();
+              else if (currentChapter) speak(currentChapter.text, undefined, { interrupt: true });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={speaking ? t.pause : t.readAloud}
+            style={[styles.hikeHudAction, { borderColor: colors.glassBorder }]}
+          >
+            <Feather name={speaking ? "pause" : "play"} size={15} color={colors.foreground} />
+          </Pressable>
+          <Pressable
+            onPress={() => setSosOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`${t.sos} — ${t.emergency}`}
+            style={[styles.hikeHudSos, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.hikeHudSosText, { color: colors.primaryForeground }]}>{t.sos}</Text>
+          </Pressable>
+        </View>
+        {hasFreshGps && livePlace ? (
+          <Text style={[styles.hikeHudPlace, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {livePlace}
+          </Text>
+        ) : null}
+      </View>
+
       {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
       {!!selectedPoi && (
         <Pressable
@@ -4383,7 +4431,7 @@ export default function LiveHike() {
 
             <Pressable
               onPress={() => {
-                const point = livePos ?? route?.coordinates ?? saga.coordinates;
+                const point = (hasFreshGps ? livePos : null) ?? route?.coordinates ?? saga.coordinates;
                 const coords = point
                   ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
                   : t.unknown;
@@ -4607,6 +4655,38 @@ function CompassCard({
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  hikeHud: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    zIndex: 18,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  hikeHudStatus: { flexDirection: "row", alignItems: "center", gap: 8 },
+  gpsDot: { width: 9, height: 9, borderRadius: 5 },
+  hikeHudTitle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  hikeHudMeta: { fontFamily: fonts.mono, fontSize: 10, marginTop: 2 },
+  hikeHudPlace: { fontFamily: fonts.body, fontSize: 11, marginTop: 5, marginLeft: 17 },
+  hikeHudAction: {
+    width: 34,
+    height: 30,
+    borderWidth: 1,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hikeHudSos: {
+    minWidth: 42,
+    height: 30,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  hikeHudSosText: { fontFamily: fonts.bodyBold, fontSize: 11 },
   banner: {
     position: "absolute",
     left: 16,

@@ -98,6 +98,7 @@ export default function Sammlung() {
   const { isElite } = useSubscription();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
+  const [viewMode, setViewMode] = React.useState<"collection" | "diary">("collection");
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
   const unlockedIds = new Set(achievements.map((a) => a.id));
@@ -187,6 +188,73 @@ export default function Sammlung() {
       >
         <ScreenHeader eyebrow={t.eyebrow} title={t.title} />
 
+        <View
+          style={[
+            styles.viewToggle,
+            { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+          ]}
+          accessibilityRole="tablist"
+        >
+          <Pressable
+            onPress={() => {
+              hapticSelection();
+              setViewMode("collection");
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: viewMode === "collection" }}
+            style={[
+              styles.viewToggleItem,
+              viewMode === "collection" && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+          >
+            <Feather
+              name="award"
+              size={15}
+              color={viewMode === "collection" ? colors.accentForeground : colors.mutedForeground}
+            />
+            <Text
+              style={[
+                styles.viewToggleText,
+                { color: viewMode === "collection" ? colors.accentForeground : colors.mutedForeground },
+              ]}
+            >
+              {t.albumTitle}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              hapticSelection();
+              setViewMode("diary");
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: viewMode === "diary" }}
+            style={[
+              styles.viewToggleItem,
+              viewMode === "diary" && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+          >
+            <Feather
+              name="book-open"
+              size={15}
+              color={viewMode === "diary" ? colors.accentForeground : colors.mutedForeground}
+            />
+            <Text
+              style={[
+                styles.viewToggleText,
+                { color: viewMode === "diary" ? colors.accentForeground : colors.mutedForeground },
+              ]}
+            >
+              {t.diaryTitle}
+            </Text>
+          </Pressable>
+        </View>
+
+        {viewMode === "collection" && (
+          <>
         <View
           style={[
             styles.rankCard,
@@ -461,8 +529,10 @@ export default function Sammlung() {
             </Animated.View>
           );
         })}
+          </>
+        )}
 
-        {tagebuchMonate.length > 0 && (
+        {viewMode === "diary" && tagebuchMonate.length > 0 && (
           <>
             <Text
               style={[
@@ -551,6 +621,25 @@ export default function Sammlung() {
 }
 
 const styles = StyleSheet.create({
+  viewToggle: {
+    flexDirection: "row",
+    padding: 4,
+    borderWidth: 1,
+    borderRadius: 14,
+    marginTop: 18,
+    gap: 4,
+  },
+  viewToggleItem: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 8,
+  },
+  viewToggleText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   rankCard: {
     ...GLAS_3D,
     borderWidth: 1,

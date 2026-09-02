@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -37,7 +38,17 @@ export default function Entdecken() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, language, activeHike, clearActiveHike, premium, freeHikeUsed, pendingPackRewards } = useApp();
+  const {
+    profile,
+    language,
+    activeHike,
+    clearActiveHike,
+    lastHike,
+    hikeHistory,
+    premium,
+    freeHikeUsed,
+    pendingPackRewards,
+  } = useApp();
   const { isElite } = useSubscription();
   const t = useHomeStrings();
 
@@ -48,6 +59,22 @@ export default function Entdecken() {
     : "";
 
   const { cantons, ready, sagas } = useCatalog();
+  const [cantonQuery, setCantonQuery] = React.useState("");
+  const visibleCantons = React.useMemo(() => {
+    const query = cantonQuery.trim().toLocaleLowerCase();
+    const filtered = query
+      ? cantons.filter((entry) =>
+          translateCanton(entry.canton, language as LanguageCode)
+            .toLocaleLowerCase()
+            .includes(query),
+        )
+      : cantons;
+    return [...filtered].sort((a, b) => {
+      const aHome = a.canton === profile?.homeCanton ? 0 : 1;
+      const bHome = b.canton === profile?.homeCanton ? 0 : 1;
+      return aHome - bHome || a.canton.localeCompare(b.canton, "de");
+    });
+  }, [cantonQuery, cantons, language, profile?.homeCanton]);
 
   return (
     <Background>
@@ -137,6 +164,34 @@ export default function Entdecken() {
           </Animated.View>
         )}
 
+        {lastHike && (
+          <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <Pressable
+              onPress={() => router.push(`/hike-history/${encodeURIComponent(lastHike.id)}`)}
+              style={[
+                styles.lastHikeCard,
+                { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, borderRadius: colors.radius },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Letzte Wanderung öffnen"
+            >
+              <View style={styles.lastHikeIcon}>
+                <Feather name="book-open" size={17} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.resumeEyebrow, { color: colors.accent }]}>LETZTE WANDERUNG</Text>
+                <Text style={[styles.resumeName, { color: colors.foreground }]} numberOfLines={1}>
+                  {lastHike.routeName}
+                </Text>
+                <Text style={[styles.resumeHint, { color: colors.mutedForeground }]}>
+                  {hikeHistory.length} Eintrag{hikeHistory.length === 1 ? "" : "e"} im Wandertagebuch
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
+            </Pressable>
+          </Animated.View>
+        )}
+
         {freeHikeUsed && !premium && !isElite && (
           <Animated.View entering={FadeInDown.duration(400)} style={{ paddingHorizontal: 20, marginTop: 20 }}>
             <PremiumUpsellBanner
@@ -178,12 +233,30 @@ export default function Entdecken() {
           </Text>
         </View>
 
+        <View style={[styles.searchBox, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder, borderRadius: colors.radius }]}>
+          <Feather name="search" size={17} color={colors.mutedForeground} />
+          <TextInput
+            value={cantonQuery}
+            onChangeText={setCantonQuery}
+            placeholder="Kanton suchen"
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.searchInput, { color: colors.foreground }]}
+            accessibilityLabel="Kanton suchen"
+            returnKeyType="search"
+          />
+          {cantonQuery.length > 0 && (
+            <Pressable onPress={() => setCantonQuery("")} hitSlop={10} accessibilityLabel="Suche löschen">
+              <Feather name="x-circle" size={17} color={colors.mutedForeground} />
+            </Pressable>
+          )}
+        </View>
+
         <View style={{ paddingHorizontal: 20 }}>
           {!ready
             ? [0, 1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} height={76} radius={colors.radius} style={{ marginBottom: 12 }} />
               ))
-            : cantons.map((entry, i) => (
+            : visibleCantons.map((entry, i) => (
                 <CantonCard
                   key={entry.canton}
                   entry={entry}
@@ -198,7 +271,7 @@ export default function Entdecken() {
         <SparkDivider style={{ marginHorizontal: 20, marginVertical: 24 }} />
 
         <View style={{ paddingHorizontal: 20 }}>
-          <Animated.View entering={FadeInDown.delay(cantons.length * 60)}>
+             <Animated.View entering={FadeInDown.delay(visibleCantons.length * 60)}>
             <Pressable
               onPress={() => { hapticSelection(); router.push("/eigene-route"); }}
               accessibilityRole="button"
@@ -333,6 +406,33 @@ const styles = StyleSheet.create({
   resumeCtaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
   resumeCta: { fontFamily: fonts.bodyBold, fontSize: 14 },
   resumeClose: { padding: 2 },
+  lastHikeCard: {
+    ...GLAS_3D,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    padding: 14,
+  },
+  lastHikeIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(216,168,78,0.12)",
+  },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginHorizontal: 20,
+    marginBottom: 14,
+    paddingHorizontal: 14,
+    minHeight: 48,
+    borderWidth: 1,
+  },
+  searchInput: { flex: 1, fontFamily: fonts.body, fontSize: 15, paddingVertical: 10 },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",

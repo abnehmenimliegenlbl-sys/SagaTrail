@@ -239,6 +239,7 @@ export default function KantonRouten() {
   const [startH, setStartH] = useState(9);
   const [startMin, setStartMin] = useState(0);
   const [sliderAktiv, setSliderAktiv] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
   const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;
@@ -263,6 +264,7 @@ export default function KantonRouten() {
     setSunsetFilter(false);
     setStartH(9);
     setStartMin(0);
+    setShowAdvancedFilters(false);
     setRoutes([]);
     setSearched(false);
     setSearching(false);
@@ -332,6 +334,32 @@ export default function KantonRouten() {
     }
   }, [cantonName, loadCantonRoutes, buildFilter]);
 
+  // Ein Kanton zeigt nach dem Öffnen sofort seine aktuellen Standardrouten.
+  // Die Filter bleiben optional und können danach gezielt verfeinert werden.
+  useEffect(() => {
+    if (!cantonName) return;
+    let cancelled = false;
+    setSearching(true);
+    loadCantonRoutes(cantonName, {})
+      .then((res) => {
+        if (cancelled) return;
+        setRoutes(res.routes);
+        setRouteSource(res.source);
+        setSearched(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setRouteSource("error");
+        setSearched(true);
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cantonName, loadCantonRoutes]);
+
   const loadError = routeSource === "error";
 
   return (
@@ -399,39 +427,56 @@ export default function KantonRouten() {
             formatValue={(v) => t.distanceUnit(v, v === DIST_MAX)}
             onDraggingChange={setSliderAktiv}
           />
-          <RangeSlider
-            label={t.elevationLabel}
-            min={ASC_MIN}
-            max={ASC_MAX}
-            step={50}
-            values={ascFilter}
-            onChange={setAscFilter}
-            formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
-            onDraggingChange={setSliderAktiv}
-          />
-          <RangeSlider
-            label={t.difficultyLabel}
-            min={DIFF_MIN}
-            max={DIFF_MAX}
-            step={1}
-            values={diffFilter}
-            onChange={setDiffFilter}
-            formatValue={(v) => t.difficultyUnit(v)}
-            onDraggingChange={setSliderAktiv}
-          />
 
-          <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
-            <Text style={[styles.switchLabel, { color: colors.foreground }]}>
-              {t.yearRoundLabel}
+          <Pressable
+            onPress={() => setShowAdvancedFilters((visible) => !visible)}
+            accessibilityRole="button"
+            accessibilityLabel={showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
+            style={[styles.moreFiltersButton, { borderColor: colors.glassBorder }]}
+          >
+            <Feather name={showAdvancedFilters ? "chevron-up" : "sliders"} size={14} color={colors.accent} />
+            <Text style={[styles.moreFiltersText, { color: colors.accent }]}>
+              {showAdvancedFilters ? "Weniger Filter" : "Weitere Filter"}
             </Text>
-            <Switch
-              value={ganzjaehrigFilter}
-              onValueChange={setGanzjaehrigFilter}
-              trackColor={{ true: colors.accent, false: colors.muted }}
-              ios_backgroundColor={colors.muted}
-              thumbColor={colors.foreground}
-            />
-          </View>
+          </Pressable>
+
+          {showAdvancedFilters && (
+            <>
+              <RangeSlider
+                label={t.elevationLabel}
+                min={ASC_MIN}
+                max={ASC_MAX}
+                step={50}
+                values={ascFilter}
+                onChange={setAscFilter}
+                formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
+                onDraggingChange={setSliderAktiv}
+              />
+              <RangeSlider
+                label={t.difficultyLabel}
+                min={DIFF_MIN}
+                max={DIFF_MAX}
+                step={1}
+                values={diffFilter}
+                onChange={setDiffFilter}
+                formatValue={(v) => t.difficultyUnit(v)}
+                onDraggingChange={setSliderAktiv}
+              />
+
+              <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+                <Text style={[styles.switchLabel, { color: colors.foreground }]}>
+                  {t.yearRoundLabel}
+                </Text>
+                <Switch
+                  value={ganzjaehrigFilter}
+                  onValueChange={setGanzjaehrigFilter}
+                  trackColor={{ true: colors.accent, false: colors.muted }}
+                  ios_backgroundColor={colors.muted}
+                  thumbColor={colors.foreground}
+                />
+              </View>
+            </>
+          )}
 
           <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
             <View style={{ flex: 1 }}>
@@ -464,7 +509,7 @@ export default function KantonRouten() {
             />
           </View>
 
-          <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
+          {showAdvancedFilters && <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.switchLabel, { color: colors.foreground }]}>
                 {t.sunsetFilterLabel}
@@ -480,9 +525,9 @@ export default function KantonRouten() {
               ios_backgroundColor={colors.muted}
               thumbColor={colors.foreground}
             />
-          </View>
+          </View>}
 
-          {sunsetFilter && (
+          {showAdvancedFilters && sunsetFilter && (
             <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
               <Text style={[styles.switchLabel, { color: colors.foreground }]}>
                 {t.sunsetStartLabel}
@@ -782,6 +827,16 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     overflow: "hidden",
   },
+  moreFiltersButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    borderTopWidth: 1,
+    paddingVertical: 12,
+    marginTop: 2,
+  },
+  moreFiltersText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   filterHighlight: {
     position: "absolute",
     top: 0,

@@ -18,7 +18,7 @@ import { Background } from "@/components/brand/Background";
 import { PermissionsStep } from "@/components/brand/PermissionsStep";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
-import { AGE_TIERS, ARCHETYPES } from "@/constants/onboarding";
+import { AGE_TIERS, ARCHETYPES, CANTONS } from "@/constants/onboarding";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -29,6 +29,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from "@/lib/i18n/languageCode";
 import { AgeTier, Archetype } from "@/types";
+import { translateCanton } from "@/lib/i18n/cantonNames";
 
 const WEB_TOP = 67;
 
@@ -42,12 +43,13 @@ export default function Onboarding() {
   const [name, setName] = useState("");
   const [archetype, setArchetype] = useState<Archetype | null>(null);
   const [language, setLanguage] = useState<LanguageCode>(activeLanguage);
+  const [homeCanton, setHomeCanton] = useState("");
   const [ageTier, setAgeTier] = useState<AgeTier | null>(null);
   const [consent, setConsent] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 12;
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const canAdvance = () => {
     switch (step) {
@@ -58,8 +60,10 @@ export default function Onboarding() {
       case 2:
         return true;
       case 3:
-        return ageTier !== null && (ageTier !== "kinder" || consent);
+        return homeCanton.length > 0;
       case 4:
+        return ageTier !== null && (ageTier !== "kinder" || consent);
+      case 5:
         return true;
       default:
         return false;
@@ -83,6 +87,7 @@ export default function Onboarding() {
           name: name.trim(),
           archetype,
           language,
+          homeCanton,
           ageTier,
         });
       } catch {
@@ -240,7 +245,38 @@ export default function Onboarding() {
         )}
 
         {step === 3 && (
-          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(4, totalSteps)}>
+          <StepFrame title={t.cantonTitle} eyebrow={t.stepOf(4, totalSteps)}>
+            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+              {t.cantonHint}
+            </Text>
+            <View style={styles.cantonGrid}>
+              {CANTONS.map((canton) => {
+                const active = homeCanton === canton;
+                return (
+                  <Pressable
+                    key={canton}
+                    onPress={() => setHomeCanton(canton)}
+                    style={[
+                      styles.cantonChip,
+                      {
+                        borderColor: active ? colors.accent : colors.glassBorder,
+                        backgroundColor: active ? colors.glassBgStrong : colors.glassBg,
+                        borderRadius: colors.radius,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.cantonChipText, { color: active ? colors.accent : colors.foreground }]}>
+                      {translateCanton(canton, language)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </StepFrame>
+        )}
+
+        {step === 4 && (
+          <StepFrame title={t.ageTierTitle} eyebrow={t.stepOf(5, totalSteps)}>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               {t.ageTierHint}
             </Text>
@@ -303,8 +339,8 @@ export default function Onboarding() {
           </StepFrame>
         )}
 
-        {step === 4 && (
-          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(5, totalSteps)}>
+        {step === 5 && (
+          <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(6, totalSteps)}>
             <PermissionsStep />
           </StepFrame>
         )}
@@ -444,6 +480,9 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   chipText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
+  cantonGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  cantonChip: { borderWidth: 1, paddingHorizontal: 11, paddingVertical: 10, minWidth: "30%" },
+  cantonChipText: { fontFamily: fonts.bodyMedium, fontSize: 13, textAlign: "center" },
   langRow: { ...GLAS_3D,
     borderWidth: 1,
     padding: 16,
