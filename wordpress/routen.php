@@ -735,12 +735,15 @@ function strOfficialLogoCandidates(number,cantonCode,specialFile){
     if(file&&!seen[file]){seen[file]=true;files.push(STR_ROUTE_LOGO_BASE+file);}
   }
   if(specialFile)add(specialFile);
+  if(cantonCode&&/^[A-Z]{2}$/.test(cantonCode)){
+    /* Der Resolver kennt auch Routen ohne allgemeine WL_XXX.jpg-Datei,
+       z. B. 85 (GR/UR) und 99 (SZ/UR). */
+    add('resolve/'+encodeURIComponent(number)+'/'+encodeURIComponent(cantonCode));
+  } else {
+    add('WL_'+n+'.jpg');
+  }
   add('WL_'+n+'.jpg');
   if(cantonCode&&/^[A-Z]{2}$/.test(cantonCode))add('WL_'+n+'_'+cantonCode+'.jpg');
-  Object.keys(STR_KANTON_CODES).forEach(function(name){
-    var code=STR_KANTON_CODES[name];
-    if(code!==cantonCode)add('WL_'+n+'_'+code+'.jpg');
-  });
   return files;
 }
 function strOfficialLogoImg(candidates){

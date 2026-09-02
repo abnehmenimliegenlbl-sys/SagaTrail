@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import fs from "fs";
 import path from "path";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
@@ -150,9 +151,41 @@ app.use("/api/partner-fotos", express.static(path.join(__dirname, "../public/par
 // Offizielle, unveränderte SchweizMobil-Logos für die WordPress-Routenansicht.
 // Die Dateien stammen aus dem gebündelten Mobile-Asset-Verzeichnis und werden
 // ausschließlich lesend ausgeliefert.
+const regionalLocalLogoDir = path.join(
+  __dirname,
+  "../../mobile/assets/schweizmobil/regional-local",
+);
+const regionalLocalLogoFiles = new Set(
+  fs.readdirSync(regionalLocalLogoDir).filter((file) => /^WL_\d{3}(?:_[A-Z]{2})?\.jpg$/.test(file)),
+);
+// Liefert für eine regionale/lokale Route die erste tatsächlich vorhandene
+// offizielle Datei. Einige Routen (z. B. 85 und 99) existieren ausschließlich
+// als kantonsbezogene JPGs und haben keine WL_XXX.jpg-Datei.
+app.get("/api/route-logos/resolve/:number/:canton", (req, res): void => {
+  const number = String(req.params.number ?? "");
+  const canton = String(req.params.canton ?? "").toUpperCase();
+  if (!/^\d{2,3}$/.test(number) || !/^[A-Z]{2}$/.test(canton)) {
+    res.status(400).type("text/plain").send("Invalid route logo parameters");
+    return;
+  }
+
+  const padded = number.padStart(3, "0");
+  const candidates = [`WL_${padded}_${canton}.jpg`, `WL_${padded}.jpg`];
+  const file = candidates.find((candidate) => regionalLocalLogoFiles.has(candidate));
+  if (!file) {
+    res.status(404).end();
+    return;
+  }
+
+  res
+    .type("image/jpeg")
+    .set("Cache-Control", "public, max-age=2592000, immutable")
+    .sendFile(path.join(regionalLocalLogoDir, file));
+});
+
 app.use(
   "/api/route-logos",
-  express.static(path.join(__dirname, "../../mobile/assets/schweizmobil/regional-local"), {
+  express.static(regionalLocalLogoDir, {
     immutable: true,
     maxAge: "30d",
   }),
