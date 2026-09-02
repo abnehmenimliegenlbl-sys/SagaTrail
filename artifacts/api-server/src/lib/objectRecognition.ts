@@ -32,6 +32,18 @@ export interface ObjectRecognitionResult {
 const MODEL = "claude-sonnet-4-6";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_CANDIDATES = 3;
+const ALLOWED_OBJECT_TYPES = new Set([
+  "mountain",
+  "landform",
+  "geology",
+  "plant",
+  "animal",
+  "building",
+  "landmark",
+  "trail-sign",
+  "trail-infrastructure",
+  "water-feature",
+]);
 
 const LANGUAGE_LABEL: Record<string, string> = {
   de: "Deutsch",
@@ -78,6 +90,12 @@ function extractJson(raw: string): string {
 
 function text(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
+}
+
+function isAllowedCandidate(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== "object") return false;
+  const objectType = (value as Record<string, unknown>).objectType;
+  return typeof objectType === "string" && ALLOWED_OBJECT_TYPES.has(objectType);
 }
 
 function normalizeCandidate(value: unknown, index: number): ObjectRecognitionCandidate | null {
@@ -178,8 +196,10 @@ function buildPrompt(input: ObjectRecognitionInput): string {
 
   return [
     "Du bist eine vorsichtige Bildanalyse fuer eine Schweizer Wander-App.",
-    "Analysiere das Foto und nenne hoechstens drei moegliche sichtbare Objekte.",
-    "Es duerfen beliebige sichtbare Outdoor-Objekte sein: Berge, Bauwerke, Pflanzen, Tiere, Felsen, Wegzeichen oder andere Gegenstaende.",
+    "Analysiere das Foto und nenne hoechstens drei moegliche sichtbare Objekte, die fuer Wandernde oder die Landschaft relevant sind.",
+    "Erlaubt sind ausschliesslich: Berge/Gipfel, markante Landschafts- oder geologische Formen, Pflanzen, Tiere, Bauwerke/Sehenswuerdigkeiten, Wegzeichen, Wanderinfrastruktur oder Gewaesser.",
+    "Alltagsgegenstaende und beliebiger anderer Unsinn sind auszuschliessen, insbesondere Rucksaecke, Schuhe, Kleidung, Flaschen, Essen, Fahrzeuge, technische Geraete und normale Gebrauchsgegenstaende. Wenn kein erlaubtes Objekt sichtbar ist, gib candidates = [].",
+    "Jeder Kandidat muss objectType exakt als einen dieser Werte angeben: mountain, landform, geology, plant, animal, building, landmark, trail-sign, trail-infrastructure oder water-feature. Es gibt keinen Wert fuer sonstige Objekte.",
     "Personen, Gesichter und Identitaeten duerfen NICHT erkannt oder beschrieben werden. Wenn das Bild primaer Personen/Gesichter zeigt, gib ein leeres candidates-Array zurueck.",
     "Behaupte keine sichere Identitaet. Nutze Unsicherheit und gib nur Kandidaten zurueck, die visuell plausibel sind.",
     "GPS, Blickrichtung und OSM-Kontext sind nur Zusatzhinweise. Sie duerfen niemals eine unpassende visuelle Erkennung erzwingen.",
@@ -189,7 +209,7 @@ function buildPrompt(input: ObjectRecognitionInput): string {
     context,
     "",
     "Antworte AUSSCHLIESSLICH als JSON ohne Markdown in genau dieser Form:",
-    '{"analysisNote":"kurzer Hinweis zur Sicherheit der Analyse","candidates":[{"title":"Name oder sachliche Bezeichnung","category":"Berg, Bauwerk, Pflanze, Tier oder anderes","confidence":0.0,"description":"vorsichtige Beschreibung","whyLikely":"sichtbarer Grund","searchQuery":"kurzer Suchbegriff"}]}',
+    '{"analysisNote":"kurzer Hinweis zur Sicherheit der Analyse","candidates":[{"objectType":"mountain","title":"Name oder sachliche Bezeichnung","category":"lokalisierte Kategorie","confidence":0.0,"description":"vorsichtige Beschreibung","whyLikely":"sichtbarer Grund","searchQuery":"kurzer Suchbegriff"}]}',
     "confidence ist eine Zahl zwischen 0 und 1. Wenn kein plausibler Kandidat erkennbar ist, candidates = [].",
   ].join("\n");
 }
@@ -239,7 +259,9 @@ export async function recognizeObject(
     analysisNote?: unknown;
     candidates?: unknown;
   };
-  const rawCandidates = Array.isArray(parsed.candidates) ? parsed.candidates : [];
+  const rawCandidates = Array.isArray(parsed.candidates)
+    ? parsed.candidates.filter(isAllowedCandidate)
+    : [];
   const candidates = rawCandidates
     .slice(0, MAX_CANDIDATES)
     .map((candidate, index) => normalizeCandidate(candidate, index))
