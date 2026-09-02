@@ -1,3 +1,4 @@
+- [Route grade smoothing](sagatrail-route-grade-smoothing.md) — map slope colors must use smoothed ~50 m windows; point-to-point DTM values can create false red segments.
 - [Xcode MARKETING_VERSION sync](xcode-marketing-version.md) — EAS ignoriert app.json version wenn ios/ vorhanden; MARKETING_VERSION im pbxproj per sed setzen (Edit-Tool versagt wegen Tab-Mix).
 - [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
 - [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
