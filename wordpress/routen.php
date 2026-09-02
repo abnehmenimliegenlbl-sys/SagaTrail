@@ -53,6 +53,11 @@ $str_i18n = [
     'js_season_esun'  => 'Eher Sommer',
     'js_sac_unk'      => 'SAC unbekannt',
     'js_min'          => 'Min.',
+    'map_grade_flat'  => 'Route unter 10 %',
+    'map_grade_10_20' => 'Steigung 10–<20 %',
+    'map_grade_20_30' => 'Steigung 20–<30 %',
+    'map_grade_30'    => 'Steigung ab 30 %',
+    'map_legend_label'=> 'Steigungslegende',
   ],
   'fr' => [
     'hero_badge'      => '🇨🇭 Itinéraires suisses',
@@ -90,6 +95,11 @@ $str_i18n = [
     'js_season_esun'  => 'Plutôt en été',
     'js_sac_unk'      => 'SAC inconnu',
     'js_min'          => 'min.',
+    'map_grade_flat'  => 'Itinéraire sous 10 %',
+    'map_grade_10_20' => 'Pente 10–<20 %',
+    'map_grade_20_30' => 'Pente 20–<30 %',
+    'map_grade_30'    => 'Pente dès 30 %',
+    'map_legend_label'=> 'Légende des pentes',
   ],
   'en' => [
     'hero_badge'      => '🇨🇭 Swiss Hiking Routes',
@@ -127,6 +137,11 @@ $str_i18n = [
     'js_season_esun'  => 'Mostly summer',
     'js_sac_unk'      => 'SAC unknown',
     'js_min'          => 'min.',
+    'map_grade_flat'  => 'Route under 10%',
+    'map_grade_10_20' => 'Grade 10–<20%',
+    'map_grade_20_30' => 'Grade 20–<30%',
+    'map_grade_30'    => 'Grade 30% and above',
+    'map_legend_label'=> 'Grade legend',
   ],
   'it' => [
     'hero_badge'      => '🇨🇭 Percorsi svizzeri',
@@ -164,6 +179,11 @@ $str_i18n = [
     'js_season_esun'  => 'Prevalentemente estate',
     'js_sac_unk'      => 'SAC sconosciuto',
     'js_min'          => 'min.',
+    'map_grade_flat'  => 'Percorso sotto il 10 %',
+    'map_grade_10_20' => 'Pendenza 10–<20 %',
+    'map_grade_20_30' => 'Pendenza 20–<30 %',
+    'map_grade_30'    => 'Pendenza dal 30 %',
+    'map_legend_label'=> 'Legenda delle pendenze',
   ],
 ];
 $t = $str_i18n[ $str_lang ];
@@ -439,6 +459,14 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
 .str-modal-map{flex-shrink:0;height:260px;background:#e8ede8;position:relative}
 @media(min-width:640px){.str-modal-map{height:320px}}
 #str-map{width:100%;height:100%}
+.str-map-legend{position:absolute;left:10px;bottom:10px;z-index:500;background:rgba(255,255,255,.94);border-radius:10px;padding:8px 10px;box-shadow:0 2px 9px rgba(0,0,0,.2);font-size:11px;line-height:1.35;color:#333}
+.str-map-legend-row{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.str-map-legend-row+.str-map-legend-row{margin-top:3px}
+.str-map-legend-swatch{display:inline-block;width:20px;height:4px;border-radius:3px;flex-shrink:0}
+.str-map-legend-green{background:#3E9B46}
+.str-map-legend-yellow{background:#F2C94C}
+.str-map-legend-orange{background:#F2994A}
+.str-map-legend-red{background:#DA291C}
 .str-modal-body{overflow-y:auto;padding:16px 20px 28px;flex:1}
 .str-modal-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
 .str-modal-desc{font-size:.88rem;color:#555;line-height:1.65;margin-bottom:18px}
@@ -614,7 +642,15 @@ echo '<script type="application/ld+json">' . wp_json_encode( [
       <h2 class="str-modal-title" id="str-modal-title"></h2>
       <button class="str-modal-close" onclick="strCloseModal()" aria-label="<?php echo esc_attr( $t['modal_close_lbl'] ); ?>">✕</button>
     </div>
-    <div class="str-modal-map"><div id="str-map"></div></div>
+    <div class="str-modal-map">
+      <div id="str-map"></div>
+      <div class="str-map-legend" aria-label="<?php echo esc_attr( $t['map_legend_label'] ); ?>">
+        <div class="str-map-legend-row"><span class="str-map-legend-swatch str-map-legend-green"></span><?php echo esc_html( $t['map_grade_flat'] ); ?></div>
+        <div class="str-map-legend-row"><span class="str-map-legend-swatch str-map-legend-yellow"></span><?php echo esc_html( $t['map_grade_10_20'] ); ?></div>
+        <div class="str-map-legend-row"><span class="str-map-legend-swatch str-map-legend-orange"></span><?php echo esc_html( $t['map_grade_20_30'] ); ?></div>
+        <div class="str-map-legend-row"><span class="str-map-legend-swatch str-map-legend-red"></span><?php echo esc_html( $t['map_grade_30'] ); ?></div>
+      </div>
+    </div>
     <div class="str-modal-body">
       <div class="str-modal-tags" id="str-modal-tags"></div>
       <p class="str-modal-desc" id="str-modal-desc"></p>
@@ -1064,6 +1100,8 @@ var _leafletCallbacks=[];
 var _strMap=null;
 var _strPolyline=null;
 var _strExtras=[];  /* POI + Partner Layer */
+var _strRouteMarkers=[];
+var _strMapRequest=0;
 
 /* POI-Kind → Emoji */
 function strPinIcon(open){
@@ -1153,9 +1191,84 @@ function latLng(pt){
   return[pt.lat,pt.lng];
 }
 
+/* ── Höhenprofil-Farbsegmente ── */
+function strDistanceKm(a,b){
+  var rad=Math.PI/180, lat1=a[0]*rad, lat2=b[0]*rad;
+  var dLat=(b[0]-a[0])*rad, dLng=(b[1]-a[1])*rad;
+  var h=Math.sin(dLat/2)*Math.sin(dLat/2)
+    +Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+function strInterpolateProfile(profile,distance){
+  if(distance<=profile[0].distanceKm)return profile[0].altM;
+  var last=profile[profile.length-1];
+  if(distance>=last.distanceKm)return last.altM;
+  for(var i=1;i<profile.length;i++){
+    if(profile[i].distanceKm>=distance){
+      var a=profile[i-1],b=profile[i],span=b.distanceKm-a.distanceKm;
+      return span>0?a.altM+(b.altM-a.altM)*(distance-a.distanceKm)/span:a.altM;
+    }
+  }
+  return last.altM;
+}
+function strGradeBand(grade){
+  var absolute=Math.abs(grade);
+  return absolute>=30?'red':absolute>=20?'orange':absolute>=10?'yellow':'green';
+}
+function strBuildGradeSegments(pts,profile){
+  if(!pts||pts.length<2)return[];
+  var distances=[0];
+  for(var i=1;i<pts.length;i++)distances.push(distances[i-1]+strDistanceKm(pts[i-1],pts[i]));
+  var routeKm=distances[distances.length-1];
+  if(routeKm<=0)return[{points:pts,color:'#3E9B46'}];
+  var clean=(Array.isArray(profile)?profile:[]).filter(function(p){
+    return p&&isFinite(Number(p.distanceKm))&&isFinite(Number(p.altM));
+  }).sort(function(a,b){return Number(a.distanceKm)-Number(b.distanceKm);});
+  if(clean.length<2)return[{points:pts,color:'#3E9B46'}];
+  var first=Number(clean[0].distanceKm);
+  clean=clean.map(function(p){return{distanceKm:Number(p.distanceKm)-first,altM:Number(p.altM)};});
+  var profileKm=clean[clean.length-1].distanceKm;
+  if(profileKm<=0)return[{points:pts,color:'#3E9B46'}];
+  var scale=profileKm/routeKm;
+  var colors={green:'#3E9B46',yellow:'#F2C94C',orange:'#F2994A',red:'#DA291C'};
+  return pts.slice(1).map(function(point,index){
+    var horizontal=distances[index+1]-distances[index];
+    var from=strInterpolateProfile(clean,distances[index]*scale);
+    var to=strInterpolateProfile(clean,distances[index+1]*scale);
+    var grade=horizontal>0?((to-from)/(horizontal*1000))*100:0;
+    var band=strGradeBand(grade);
+    return{points:[pts[index],point],color:colors[band]};
+  });
+}
+function strLoadElevationProfile(pts,done){
+  if(!pts||pts.length<2){done(null);return;}
+  var geometry=pts;
+  if(geometry.length>2000){
+    var step=(geometry.length-1)/1999, reduced=[];
+    for(var i=0;i<2000;i++)reduced.push(geometry[Math.min(geometry.length-1,Math.round(i*step))]);
+    geometry=reduced;
+  }
+  fetch('https://saga-trail.replit.app/api/elevation-profile',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({geometry:geometry})
+  }).then(function(r){return r.ok?r.json():null;})
+    .then(function(data){done(data&&Array.isArray(data.profile)?data.profile:null);})
+    .catch(function(){done(null);});
+}
+function strDrawGradeRoute(pts,profile){
+  if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
+  var layers=strBuildGradeSegments(pts,profile).map(function(segment){
+    return L.polyline(segment.points,{color:segment.color,weight:5,opacity:.9,lineJoin:'round',lineCap:'round'});
+  });
+  _strPolyline=L.featureGroup(layers).addTo(_strMap);
+  return _strPolyline;
+}
+
 window.strOpenRoute=function(idx){
   var r=_strRouteIndex[idx];
   if(!r)return;
+  var mapRequest=++_strMapRequest;
   /* Meta */
   document.getElementById('str-modal-title').textContent=r.name||'Route';
   /* Tags */
@@ -1194,19 +1307,25 @@ window.strOpenRoute=function(idx){
     } else {
       if(_strPolyline){_strMap.removeLayer(_strPolyline);_strPolyline=null;}
       _strExtras.forEach(function(l){_strMap.removeLayer(l);});_strExtras=[];
+      _strRouteMarkers.forEach(function(l){_strMap.removeLayer(l);});_strRouteMarkers=[];
       mapEl.style.display='block';
     }
     /* Kurz warten bis Modal sichtbar, dann Leaflet-Größe korrigieren */
     setTimeout(function(){
       _strMap.invalidateSize();
       if(pts.length>1){
-        _strPolyline=L.polyline(pts,{color:'#CC0000',weight:5,opacity:.9}).addTo(_strMap);
-        var _bounds=_strPolyline.getBounds();
-        _strMap.fitBounds(_bounds,{padding:[28,28]});
-        strLoadMapExtras(_bounds);
-        /* Start- und Zielpunkt als Fahnen */
-        L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap);
-        L.marker(pts[pts.length-1],{icon:strMapFahne('ziel')}).addTo(_strMap);
+        strLoadElevationProfile(pts,function(profile){
+          if(mapRequest!==_strMapRequest||!_strMap)return;
+          _strPolyline=strDrawGradeRoute(pts,profile);
+          var _bounds=_strPolyline.getBounds();
+          _strMap.fitBounds(_bounds,{padding:[28,28]});
+          strLoadMapExtras(_bounds);
+          /* Start- und Zielpunkt als Fahnen */
+          _strRouteMarkers=[
+            L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap),
+            L.marker(pts[pts.length-1],{icon:strMapFahne('ziel')}).addTo(_strMap)
+          ];
+        });
       } else if(pts.length===1){
         _strMap.setView(pts[0],13);
         L.marker(pts[0],{icon:strMapFahne('start')}).addTo(_strMap);
