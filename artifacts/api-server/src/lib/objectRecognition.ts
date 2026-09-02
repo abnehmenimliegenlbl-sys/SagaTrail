@@ -32,6 +32,8 @@ export interface ObjectRecognitionResult {
 const MODEL = "claude-sonnet-4-6";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_CANDIDATES = 3;
+const PLANTNET_API_URL = "https://my-api.plantnet.org/v2/identify/all";
+const PLANTNET_TIMEOUT_MS = 12_000;
 const ALLOWED_OBJECT_TYPES = new Set([
   "mountain",
   "landform",
@@ -130,6 +132,179 @@ interface WikipediaPage {
   extract?: string;
   fullurl?: string;
   thumbnail?: { source?: string };
+}
+
+interface PlantNetSpecies {
+  scientificName?: unknown;
+  scientificNameWithoutAuthor?: unknown;
+  commonNames?: unknown;
+}
+
+interface PlantNetResult {
+  score?: unknown;
+  species?: PlantNetSpecies;
+}
+
+interface PlantNetResponse {
+  bestMatch?: unknown;
+  results?: unknown;
+  predictedOrgans?: unknown;
+  remainingIdentificationRequests?: unknown;
+}
+
+function plantNetLanguage(language: string): string {
+  const normalized = language === "gsw" ? "de" : language;
+  return new Set(["de", "en", "fr", "it", "es", "pt", "zh"]).has(normalized)
+    ? normalized
+    : "en";
+}
+
+function multipartPart(boundary: string, name: string, value: string): Buffer {
+  return Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`,
+    "utf8",
+  );
+}
+
+function multipartImage(
+  boundary: string,
+  image: Buffer,
+  mediaType: "image/jpeg" | "image/png",
+): Buffer {
+  const extension = mediaType === "image/png" ? "png" : "jpg";
+  return Buffer.concat([
+    Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="images"; filename="sagatrail.${extension}"\r\nContent-Type: ${mediaType}\r\n\r\n`,
+      "utf8",
+    ),
+    image,
+    Buffer.from("\r\n", "utf8"),
+  ]);
+}
+
+function plantNetText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function plantNetScore(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : 0;
+}
+
+function plantNetScientificName(species: PlantNetSpecies | undefined): string {
+  return (
+    plantNetText(species?.scientificName) ||
+    plantNetText(species?.scientificNameWithoutAuthor)
+  );
+}
+
+function plantNetCommonName(species: PlantNetSpecies | undefined): string {
+  if (!Array.isArray(species?.commonNames)) return "";
+  return (
+    species.commonNames.find(
+      (name): name is string => typeof name === "string" && name.trim().length > 0,
+    )?.trim() ?? ""
+  );
+}
+
+interface PlantMatch {
+  title: string;
+  confidence: number;
+  scientificName: string;
+  organ: string;
+}
+
+async function identifyPlantWithPlantNet(
+  input: ObjectRecognitionInput,
+  log: Logger,
+): Promise<PlantMatch[] | null> {
+  const apiKey = process.env.PLANTNET_API_KEY?.trim();
+  if (!apiKey) {
+    log.warn("Pl@ntNet-Abgleich übersprungen: PLANTNET_API_KEY fehlt");
+    return null;
+  }
+  if (input.mediaType === "image/webp") {
+    log.info("Pl@ntNet-Abgleich übersprungen: WebP wird von Pl@ntNet nicht unterstützt");
+    return null;
+  }
+
+  const image = Buffer.from(input.imageBase64, "base64");
+  const boundary = "----SagaTrailPlantNetBoundary";
+  const body = Buffer.concat([
+    multipartImage(boundary, image, input.mediaType),
+    multipartPart(boundary, "organs", "auto"),
+    Buffer.from(`--${boundary}--\r\n`, "utf8"),
+  ]);
+  const params = new URLSearchParams({
+    "api-key": apiKey,
+    lang: plantNetLanguage(input.language),
+    "nb-results": String(MAX_CANDIDATES),
+    "include-related-images": "false",
+  });
+
+  try {
+    const response = await fetch(`${PLANTNET_API_URL}?${params.toString()}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": String(body.byteLength),
+        "User-Agent": "SagaTrail/1.0 (plant-recognition)",
+      },
+      body,
+      signal: AbortSignal.timeout(PLANTNET_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      log.warn({ status: response.status }, "Pl@ntNet-Abgleich nicht erfolgreich");
+      return null;
+    }
+
+    const payload = (await response.json()) as PlantNetResponse;
+    const results = Array.isArray(payload.results) ? payload.results : [];
+    const predictedOrgan =
+      Array.isArray(payload.predictedOrgans) &&
+      payload.predictedOrgans[0] &&
+      typeof payload.predictedOrgans[0] === "object"
+        ? plantNetText(
+            (payload.predictedOrgans[0] as Record<string, unknown>).organ,
+          )
+        : "";
+    const normalized = results
+      .map((value): PlantMatch | null => {
+        if (!value || typeof value !== "object") return null;
+        const result = value as PlantNetResult;
+        const scientificName = plantNetScientificName(result.species);
+        if (!scientificName) return null;
+        const commonName = plantNetCommonName(result.species);
+        return {
+          title: commonName ? `${commonName} (${scientificName})` : scientificName,
+          confidence: plantNetScore(result.score),
+          scientificName,
+          organ: predictedOrgan,
+        };
+      })
+      .filter((value): value is PlantMatch => value !== null)
+      .slice(0, MAX_CANDIDATES);
+
+    log.info(
+      {
+        candidates: normalized.length,
+        bestMatch: plantNetText(payload.bestMatch) || null,
+        remainingRequests:
+          typeof payload.remainingIdentificationRequests === "number"
+            ? payload.remainingIdentificationRequests
+            : null,
+      },
+      "Pl@ntNet-Abgleich abgeschlossen",
+    );
+    return normalized;
+  } catch (err) {
+    log.warn(
+      { error: err instanceof Error ? err.name : "unknown" },
+      "Pl@ntNet-Abgleich fehlgeschlagen; Claude-Ergebnis bleibt aktiv",
+    );
+    return null;
+  }
 }
 
 async function lookupWikipedia(
@@ -262,19 +437,73 @@ export async function recognizeObject(
   const rawCandidates = Array.isArray(parsed.candidates)
     ? parsed.candidates.filter(isAllowedCandidate)
     : [];
-  const candidates = rawCandidates
+  const candidateEntries = rawCandidates
     .slice(0, MAX_CANDIDATES)
     .map((candidate, index) => normalizeCandidate(candidate, index))
-    .filter((candidate): candidate is ObjectRecognitionCandidate => candidate !== null);
+    .map((candidate, index) => {
+      if (!candidate) return null;
+      const raw = rawCandidates[index];
+      const rawSearchQuery =
+        raw && typeof raw.searchQuery === "string" ? raw.searchQuery.trim() : "";
+      return {
+        candidate,
+        objectType: raw.objectType,
+        searchQuery: rawSearchQuery || candidate.title,
+      };
+    })
+    .filter(
+      (
+        entry,
+      ): entry is {
+        candidate: ObjectRecognitionCandidate;
+        objectType: string;
+        searchQuery: string;
+      } => entry !== null,
+    );
+  let candidates = candidateEntries.map((entry) => entry.candidate);
+
+  const plantEntry = candidateEntries.find((entry) => entry.objectType === "plant");
+  if (plantEntry) {
+    const plantMatches = await identifyPlantWithPlantNet(input, log);
+    if (plantMatches && plantMatches.length > 0) {
+      const originalPlantCandidate = plantEntry.candidate;
+      const plantCandidates = plantMatches.map((match, index) => ({
+        candidate: {
+          id: `plantnet-${index + 1}`,
+          title: match.title,
+          category: originalPlantCandidate.category || "Pflanze",
+          confidence: match.confidence,
+          description:
+            index === 0
+              ? originalPlantCandidate.description
+              : "Pl@ntNet führt diese Art als möglichen visuellen Treffer.",
+          whyLikely:
+            index === 0
+              ? originalPlantCandidate.whyLikely
+              : "Die Art gehört zu den wahrscheinlichsten Pl@ntNet-Treffern für dieses Foto.",
+          sourceUrl: null,
+          sourceTitle: null,
+          sourceExtract: null,
+          sourceImage: null,
+        },
+        objectType: "plant",
+        searchQuery: match.scientificName,
+      }));
+      const nonPlantCandidates = candidateEntries.filter(
+        (entry) => entry.objectType !== "plant",
+      );
+      const enrichedEntries = [...plantCandidates, ...nonPlantCandidates].slice(
+        0,
+        MAX_CANDIDATES,
+      );
+      candidates = enrichedEntries.map((entry) => entry.candidate);
+      candidateEntries.splice(0, candidateEntries.length, ...enrichedEntries);
+    }
+  }
 
   const enriched = await Promise.all(
-    candidates.map(async (candidate, index) => {
+    candidateEntries.map(async ({ candidate, searchQuery }) => {
       try {
-        const raw = rawCandidates[index];
-        const searchQuery =
-          raw && typeof raw === "object" && typeof (raw as Record<string, unknown>).searchQuery === "string"
-            ? ((raw as Record<string, unknown>).searchQuery as string).trim()
-            : candidate.title;
         if (!searchQuery) return candidate;
         return { ...candidate, ...(await lookupWikipedia(searchQuery, input.language, input.lat, input.lng)) };
       } catch (err) {
