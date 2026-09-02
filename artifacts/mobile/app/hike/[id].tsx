@@ -4642,7 +4642,12 @@ const styles = StyleSheet.create({
     top: "17.5%",
     marginLeft: -7,
     color: "#D8A84E",
-    fontFamily: fonts.titleBold,
+    fontFamily: Platform.select({
+      web: "Lucida Calligraphy, cursive",
+      ios: "SnellRoundhand",
+      android: "cursive",
+      default: "cursive",
+    }),
     fontSize: 17,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
