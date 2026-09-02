@@ -3,6 +3,7 @@ import Svg, {
   Circle as SvgCircle,
   Ellipse as SvgEllipse,
   Path as SvgPath,
+  Rect as SvgRect,
 } from "react-native-svg";
 import {
   createNarration,
@@ -4383,6 +4384,64 @@ function CompassCard({
           : unavailable
       }
     >
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 360 560"
+        preserveAspectRatio="none"
+        style={styles.caseTexture}
+      >
+        <SvgRect x="0" y="0" width="360" height="560" fill="#351B10" />
+        <SvgRect x="7" y="7" width="346" height="546" fill="#5B301A" opacity={0.92} />
+        <SvgPath
+          d="M-10 42 C42 8 74 56 123 27 S207 20 252 43 S314 61 370 24"
+          fill="none"
+          stroke="#32160C"
+          strokeWidth="7"
+          opacity={0.7}
+        />
+        <SvgPath
+          d="M-10 54 C45 22 75 68 125 39 S207 31 252 54 S315 73 370 37"
+          fill="none"
+          stroke="#9A5C2D"
+          strokeWidth="2"
+          opacity={0.65}
+        />
+        <SvgPath
+          d="M-10 315 C44 276 81 332 132 301 S210 288 258 315 S319 338 370 292"
+          fill="none"
+          stroke="#2E150B"
+          strokeWidth="8"
+          opacity={0.65}
+        />
+        <SvgPath
+          d="M-10 330 C40 294 83 348 134 316 S212 304 260 330 S320 353 370 309"
+          fill="none"
+          stroke="#A66534"
+          strokeWidth="2"
+          opacity={0.55}
+        />
+        <SvgPath
+          d="M-12 474 C36 442 80 495 128 466 S208 449 254 479 S316 493 372 454"
+          fill="none"
+          stroke="#2D140A"
+          strokeWidth="6"
+          opacity={0.7}
+        />
+        <SvgEllipse cx="48" cy="102" rx="22" ry="11" fill="none" stroke="#2B1309" strokeWidth="4" opacity={0.7} />
+        <SvgEllipse cx="48" cy="102" rx="8" ry="4" fill="#2B1309" opacity={0.8} />
+        <SvgEllipse cx="308" cy="448" rx="25" ry="13" fill="none" stroke="#2B1309" strokeWidth="4" opacity={0.7} />
+        <SvgEllipse cx="308" cy="448" rx="9" ry="4" fill="#2B1309" opacity={0.8} />
+      </Svg>
+      <View style={styles.caseHardware}>
+        <View style={styles.caseHinge}>
+          <View style={styles.caseHingePin} />
+          <View style={styles.caseHingePin} />
+        </View>
+        <View style={styles.caseLatch}>
+          <View style={styles.caseLatchPin} />
+        </View>
+      </View>
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
           <Feather name="compass" size={16} color="#E4B879" />
@@ -4680,11 +4739,13 @@ const styles = StyleSheet.create({
   metricVal: { fontFamily: fonts.monoBold, fontSize: 20 },
   metricUnit: { fontFamily: fonts.mono, fontSize: 11 },
   compassCard: {
+    position: "relative",
     marginTop: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: 22,
     padding: 16,
-    backgroundColor: "#2A1B11",
+    backgroundColor: "#351B10",
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.42,
     shadowRadius: 16,
@@ -4692,6 +4753,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   compassHeader: {
+    position: "relative",
+    zIndex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -4700,6 +4763,8 @@ const styles = StyleSheet.create({
   compassTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   compassDegrees: { fontFamily: fonts.monoBold, fontSize: 14 },
   compassBody: {
+    position: "relative",
+    zIndex: 1,
     alignItems: "center",
     gap: 12,
     marginTop: 14,
@@ -4708,7 +4773,9 @@ const styles = StyleSheet.create({
     width: 236,
     height: 236,
     borderRadius: 118,
-    backgroundColor: "#4A2818",
+    borderWidth: 6,
+    borderColor: "#806B43",
+    backgroundColor: "#261B16",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -4722,6 +4789,55 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     top: 0,
+  },
+  caseTexture: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+  },
+  caseHardware: {
+    position: "relative",
+    zIndex: 1,
+    height: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  caseHinge: {
+    width: 70,
+    height: 9,
+    borderWidth: 1,
+    borderColor: "#2B1A13",
+    borderRadius: 3,
+    backgroundColor: "#80603A",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  caseHingePin: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#C0964F",
+    borderWidth: 1,
+    borderColor: "#3E2918",
+  },
+  caseLatch: {
+    width: 32,
+    height: 12,
+    borderWidth: 1,
+    borderColor: "#2B1A13",
+    borderRadius: 3,
+    backgroundColor: "#9A713C",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  caseLatchPin: {
+    width: 8,
+    height: 5,
+    borderRadius: 2,
+    backgroundColor: "#382217",
   },
   brassScrew: {
     position: "absolute",
@@ -4937,6 +5053,8 @@ const styles = StyleSheet.create({
   compassHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
   compassUnavailableRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
   compassLocationData: {
+    position: "relative",
+    zIndex: 1,
     borderTopWidth: 1,
     marginTop: 12,
     paddingTop: 10,
