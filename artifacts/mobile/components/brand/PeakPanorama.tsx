@@ -297,6 +297,11 @@ export function PeakPanorama({
             />
           )}
           <View style={styles.imageScrim} />
+          <View pointerEvents="none" style={styles.scanLines}>
+            <View style={styles.scanLineTop} />
+            <View style={styles.scanLineMiddle} />
+            <View style={styles.scanLineBottom} />
+          </View>
           <View style={styles.horizon} />
           {arUnavailable &&
             visiblePeaks.map((peak, index) => (
@@ -322,6 +327,23 @@ export function PeakPanorama({
                     },
                   ]}
                 >
+                  <View
+                    style={[
+                      styles.markerPeak,
+                      {
+                        backgroundColor:
+                          focusedPeak?.id === peak.id
+                            ? colors.primary
+                            : colors.glassBgStrong,
+                        borderColor:
+                          focusedPeak?.id === peak.id
+                            ? colors.primary
+                            : colors.glassBorder,
+                      },
+                    ]}
+                  >
+                    <Feather name="triangle" size={11} color={colors.photoScrimText} />
+                  </View>
                   <Text
                     style={[styles.markerName, { color: colors.photoScrimText }]}
                     numberOfLines={1}
@@ -362,23 +384,42 @@ export function PeakPanorama({
               <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
                 {strings.title}
               </Text>
-              {heading != null && (
+              <View style={styles.fullscreenSubline}>
+                <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
                 <Text style={[styles.fullscreenHeading, { color: colors.photoScrimMuted }]}>
-                  {Math.round(heading)}°
+                  {heading != null ? `${Math.round(heading)}°` : status}
                 </Text>
-              )}
+              </View>
             </View>
-            <Pressable
-              onPress={() => setCameraEnabled(false)}
-              style={[
-                styles.closeButton,
-                { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={strings.cameraOff}
-            >
-              <Feather name="x" size={20} color={colors.foreground} />
-            </Pressable>
+            <View style={styles.fullscreenTopActions}>
+              {heading != null && (
+                <View
+                  style={[
+                    styles.fullscreenHeadingBadge,
+                    {
+                      backgroundColor: colors.glassBgStrong,
+                      borderColor: colors.glassBorder,
+                    },
+                  ]}
+                >
+                  <Feather name="navigation" size={12} color={colors.tint} />
+                  <Text style={[styles.fullscreenHeadingBadgeText, { color: colors.photoScrimText }]}>
+                    {Math.round(heading)}°
+                  </Text>
+                </View>
+              )}
+              <Pressable
+                onPress={() => setCameraEnabled(false)}
+                style={[
+                  styles.closeButton,
+                  { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={strings.cameraOff}
+              >
+                <Feather name="x" size={20} color={colors.photoScrimText} />
+              </Pressable>
+            </View>
           </View>
           <View
             style={[
@@ -392,29 +433,31 @@ export function PeakPanorama({
               color={colors.photoScrimText}
             />
             <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
-                {arUnavailable && focusedPeak
+              {arUnavailable && focusedPeak
                 ? `${strings.detected}: ${focusedPeak.name}`
                 : status}
             </Text>
-            <Pressable
-              onPress={() => void capturePeakRecognition()}
-              disabled={capturing || visiblePeaks.length === 0}
-              style={[
-                styles.captureButton,
-                {
-                  backgroundColor: colors.primary,
-                  borderColor: colors.primary,
-                  opacity: capturing || visiblePeaks.length === 0 ? 0.45 : 1,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={strings.capture}
-            >
-              <Feather name="camera" size={14} color={colors.primaryForeground} />
-              <Text style={[styles.captureButtonText, { color: colors.primaryForeground }]}>
-                {capturing ? "…" : strings.capture}
-              </Text>
-            </Pressable>
+            <View style={styles.captureArea}>
+              <Pressable
+                onPress={() => void capturePeakRecognition()}
+                disabled={capturing || visiblePeaks.length === 0}
+                style={[
+                  styles.captureButton,
+                  {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                    opacity: capturing || visiblePeaks.length === 0 ? 0.45 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={strings.capture}
+              >
+                <View style={[styles.captureButtonInner, { borderColor: colors.primaryForeground }]} />
+                <Text style={[styles.captureButtonText, { color: colors.primaryForeground }]}>
+                  {capturing ? "…" : strings.capture}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
@@ -566,6 +609,34 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.17)",
   },
+  scanLines: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.25,
+  },
+  scanLineTop: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "28%",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.35)",
+  },
+  scanLineMiddle: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "54%",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.25)",
+  },
+  scanLineBottom: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "78%",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.18)",
+  },
   horizon: {
     position: "absolute",
     left: 0,
@@ -586,7 +657,20 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.24)",
   },
   fullscreenTitle: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 1.5 },
-  fullscreenHeading: { fontFamily: fonts.monoBold, fontSize: 14, marginTop: 4 },
+  fullscreenSubline: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  fullscreenHeading: { fontFamily: fonts.monoBold, fontSize: 11 },
+  fullscreenTopActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  fullscreenHeadingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+  },
+  fullscreenHeadingBadgeText: { fontFamily: fonts.monoBold, fontSize: 11 },
   closeButton: {
     width: 42,
     height: 42,
@@ -608,6 +692,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     alignItems: "center",
+  },
+  markerPeak: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 5,
   },
   markerName: { fontFamily: fonts.titleBold, fontSize: 12 },
   markerDistance: { fontFamily: fonts.mono, fontSize: 9, marginTop: 2 },
@@ -634,6 +727,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.38)",
     paddingTop: 10,
   },
+  captureArea: { alignItems: "center", justifyContent: "center" },
   captureButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -642,6 +736,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 9,
     paddingVertical: 7,
+  },
+  captureButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1,
   },
   captureButtonText: { fontFamily: fonts.mono, fontSize: 9 },
   status: { flex: 1, fontFamily: fonts.body, fontSize: 12 },
