@@ -590,6 +590,7 @@ export default function LiveHike() {
   const lastLocationAtRef = useRef<number>(0);
   const compassHeadingRef = useRef<number | null>(null);
   const livePlaceLookupRef = useRef<{ lat: number; lng: number; requestedAt: number } | null>(null);
+  const livePlaceLookupGenerationRef = useRef(0);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
@@ -1311,22 +1312,23 @@ export default function LiveHike() {
     if (previous && movedKm < 0.1 && elapsedMs < 60_000) return;
 
     livePlaceLookupRef.current = { ...livePos, requestedAt: Date.now() };
-    let cancelled = false;
+    const requestGeneration = ++livePlaceLookupGenerationRef.current;
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/api/routes/reverse-geocode?lat=${livePos.lat}&lng=${livePos.lng}`)
       .then((response) => {
         if (!response.ok) throw new Error("Ortsbestimmung nicht verfügbar");
-        return response.json() as Promise<{ place?: string | null; found?: boolean }>;
+        return response.json() as Promise<{ place?: string | null }>;
       })
       .then((data) => {
-        if (!cancelled && data.found) setLivePlace(data.place ?? null);
+        if (requestGeneration !== livePlaceLookupGenerationRef.current) return;
+        const place = typeof data.place === "string" && data.place.trim()
+          ? data.place.trim()
+          : null;
+        setLivePlace(place);
       })
       .catch(() => {
         // Der letzte bekannte Ort bleibt bei einem kurzen Netzfehler erhalten.
       });
-    return () => {
-      cancelled = true;
-    };
   }, [livePos?.lat, livePos?.lng]);
 
   // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per

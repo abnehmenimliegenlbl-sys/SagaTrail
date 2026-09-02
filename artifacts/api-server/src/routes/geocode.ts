@@ -30,6 +30,9 @@ router.get("/routes/reverse-geocode", async (req, res): Promise<void> => {
   }
   try {
     const result = await reverseGeocode(lat, lng, req.log);
+    // Live-GPS-Abfragen brauchen immer den aktuellen JSON-Body. Ein 304 ohne
+    // Body wird von fetch nicht als erfolgreiche Ortsantwort behandelt.
+    res.set("Cache-Control", "no-store");
     res.json({ place: result.place, found: result.found });
   } catch (err) {
     req.log.error({ err }, "Reverse-Geocoding fehlgeschlagen");
