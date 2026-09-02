@@ -4655,7 +4655,7 @@ const styles = StyleSheet.create({
   },
   photoEast: {
     position: "absolute",
-    right: "17%",
+    right: "16%",
     top: "48%",
     color: "#D8A84E",
     fontFamily: Platform.select({
