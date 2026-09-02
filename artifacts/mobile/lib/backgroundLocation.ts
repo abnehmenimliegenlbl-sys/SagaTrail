@@ -10,7 +10,12 @@ import * as TaskManager from "expo-task-manager";
  */
 export const BACKGROUND_LOCATION_TASK = "sagatrail-background-location";
 
-type Listener = (lat: number, lng: number, accuracy: number | null) => void;
+type Listener = (
+  lat: number,
+  lng: number,
+  accuracy: number | null,
+  altitude: number | null,
+) => void;
 const listeners = new Set<Listener>();
 
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
@@ -20,7 +25,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (!last) return;
   for (const listener of listeners) {
     try {
-      listener(last.coords.latitude, last.coords.longitude, last.coords.accuracy ?? null);
+      listener(
+        last.coords.latitude,
+        last.coords.longitude,
+        last.coords.accuracy ?? null,
+        last.coords.altitude ?? null,
+      );
     } catch {
       // Ein fehlerhafter Listener darf die Zustellung an andere Abonnenten
       // und den naechsten nativen Standort-Fix nicht abbrechen.

@@ -503,6 +503,7 @@ export default function LiveHike() {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
+  const [liveAltitude, setLiveAltitude] = useState<number | null>(null);
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
@@ -1246,12 +1247,20 @@ export default function LiveHike() {
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren,
   // Track-Punkt loggen und Off-Route-Status ueberpruefen.
-  const handleFix = useCallback((lat: number, lng: number, accuracy: number | null = null) => {
+  const handleFix = useCallback((
+    lat: number,
+    lng: number,
+    accuracy: number | null = null,
+    altitude: number | null = null,
+  ) => {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
     lastLocationAtRef.current = Date.now();
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
     setLivePosAccuracy(accuracy);
+    if (altitude != null && Number.isFinite(altitude)) {
+      setLiveAltitude(altitude);
+    }
     const prev = lastFixRef.current;
     if (prev) {
       const d = haversineKm(prev, cur);
@@ -1849,7 +1858,12 @@ export default function LiveHike() {
             (p) => {
               if (cancelled) return;
               setLocState("granted");
-              handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null);
+              handleFix(
+                p.coords.latitude,
+                p.coords.longitude,
+                p.coords.accuracy ?? null,
+                p.coords.altitude ?? null,
+              );
             },
             () => {
               if (!cancelled) setLocState("simulated");
@@ -1884,7 +1898,12 @@ export default function LiveHike() {
         })
           .then((first) => {
             if (!cancelled) {
-              handleFix(first.coords.latitude, first.coords.longitude, first.coords.accuracy ?? null);
+                  handleFix(
+                    first.coords.latitude,
+                    first.coords.longitude,
+                    first.coords.accuracy ?? null,
+                    first.coords.altitude ?? null,
+                  );
             }
           })
           .catch(() => {
@@ -1903,7 +1922,12 @@ export default function LiveHike() {
               trackingOptions,
               (p) => {
                 if (!cancelled) {
-                  handleFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy ?? null);
+                  handleFix(
+                    p.coords.latitude,
+                    p.coords.longitude,
+                    p.coords.accuracy ?? null,
+                    p.coords.altitude ?? null,
+                  );
                 }
               }
             );
@@ -3428,8 +3452,13 @@ export default function LiveHike() {
           heading={compassHeading}
           available={compassAvailable}
           direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
+          coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
+          altitude={liveAltitude}
           title={t.compass}
           unavailable={t.compassUnavailable}
+          coordinatesLabel={t.coordinates}
+          altitudeLabel={t.altitude}
+          altitudeUnit={t.altitudeUnit}
         />
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
@@ -4191,18 +4220,31 @@ function CompassCard({
   heading,
   available,
   direction,
+  coordinates,
+  altitude,
   title,
   unavailable,
+  coordinatesLabel,
+  altitudeLabel,
+  altitudeUnit,
 }: {
   heading: number | null;
   available: boolean | null;
   direction: string | null;
+  coordinates: string | null;
+  altitude: number | null;
   title: string;
   unavailable: string;
+  coordinatesLabel: string;
+  altitudeLabel: string;
+  altitudeUnit: string;
 }) {
   const colors = useColors();
   const ready = available === true && heading != null && direction != null;
   const roseRotation = heading == null ? 0 : -heading;
+  const altitudeText = altitude == null
+    ? "—"
+    : `${Math.round(altitude).toLocaleString()} ${altitudeUnit}`;
 
   return (
     <View
@@ -4210,7 +4252,11 @@ function CompassCard({
         styles.compassCard,
         { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
       ]}
-      accessibilityLabel={ready ? `${title}: ${direction}, ${Math.round(heading!)}°` : unavailable}
+      accessibilityLabel={
+        ready
+          ? `${title}: ${direction}, ${Math.round(heading!)}°, ${coordinatesLabel} ${coordinates ?? "—"}, ${altitudeLabel} ${altitudeText}`
+          : unavailable
+      }
     >
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
@@ -4253,6 +4299,25 @@ function CompassCard({
       ) : (
         <Text style={[styles.compassHint, { color: colors.mutedForeground }]}>{unavailable}</Text>
       )}
+
+      <View style={[styles.compassLocationData, { borderTopColor: colors.glassBorder }]}>
+        <View style={styles.compassLocationRow}>
+          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+            {coordinatesLabel}
+          </Text>
+          <Text style={[styles.compassDataValue, { color: colors.foreground }]} numberOfLines={1}>
+            {coordinates ?? "—"}
+          </Text>
+        </View>
+        <View style={styles.compassLocationRow}>
+          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+            {altitudeLabel}
+          </Text>
+          <Text style={[styles.compassDataValue, { color: colors.foreground }]}>
+            {altitudeText}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -4393,6 +4458,20 @@ const styles = StyleSheet.create({
   compassDirection: { fontFamily: fonts.titleBold, fontSize: 20 },
   compassHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
   compassUnavailableRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+  compassLocationData: {
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 10,
+    gap: 7,
+  },
+  compassLocationRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  compassDataLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
+  compassDataValue: { fontFamily: fonts.monoBold, fontSize: 12, flexShrink: 1, textAlign: "right" },
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
