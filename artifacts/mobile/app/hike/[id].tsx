@@ -4401,6 +4401,7 @@ function CompassCard({
 
       {ready ? (
         <View style={styles.compassBody}>
+          <Text style={styles.compassAltitudeTop}>{altitudeText}</Text>
           <View style={styles.compassPhotoStage}>
             <Image
               source={require("../../assets/images/antique-saga-compass-full-wood.jpg")}
@@ -4491,14 +4492,6 @@ function CompassCard({
           </Text>
           <Text style={[styles.compassDataValue, { color: COMPASS_GOLD }]} numberOfLines={1}>
             {coordinates ?? "—"}
-          </Text>
-        </View>
-        <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: COMPASS_GOLD }]}>
-            {altitudeLabel}
-          </Text>
-          <Text style={[styles.compassDataValue, { color: COMPASS_GOLD }]}>
-            {altitudeText}
           </Text>
         </View>
       </View>
@@ -4624,6 +4617,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginTop: 14,
+  },
+  compassAltitudeTop: {
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
+    fontSize: 30,
+    lineHeight: 34,
+    textAlign: "center",
   },
   compassPhotoStage: {
     position: "relative",
