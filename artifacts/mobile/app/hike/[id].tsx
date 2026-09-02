@@ -1,10 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import Svg, {
-  Circle as SvgCircle,
-  Ellipse as SvgEllipse,
-  Path as SvgPath,
-  Rect as SvgRect,
-} from "react-native-svg";
 import {
   createNarration,
   getAerialways,
@@ -4384,64 +4378,6 @@ function CompassCard({
           : unavailable
       }
     >
-      <Svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 360 560"
-        preserveAspectRatio="none"
-        style={styles.caseTexture}
-      >
-        <SvgRect x="0" y="0" width="360" height="560" fill="#351B10" />
-        <SvgRect x="7" y="7" width="346" height="546" fill="#5B301A" opacity={0.92} />
-        <SvgPath
-          d="M-10 42 C42 8 74 56 123 27 S207 20 252 43 S314 61 370 24"
-          fill="none"
-          stroke="#32160C"
-          strokeWidth="7"
-          opacity={0.7}
-        />
-        <SvgPath
-          d="M-10 54 C45 22 75 68 125 39 S207 31 252 54 S315 73 370 37"
-          fill="none"
-          stroke="#9A5C2D"
-          strokeWidth="2"
-          opacity={0.65}
-        />
-        <SvgPath
-          d="M-10 315 C44 276 81 332 132 301 S210 288 258 315 S319 338 370 292"
-          fill="none"
-          stroke="#2E150B"
-          strokeWidth="8"
-          opacity={0.65}
-        />
-        <SvgPath
-          d="M-10 330 C40 294 83 348 134 316 S212 304 260 330 S320 353 370 309"
-          fill="none"
-          stroke="#A66534"
-          strokeWidth="2"
-          opacity={0.55}
-        />
-        <SvgPath
-          d="M-12 474 C36 442 80 495 128 466 S208 449 254 479 S316 493 372 454"
-          fill="none"
-          stroke="#2D140A"
-          strokeWidth="6"
-          opacity={0.7}
-        />
-        <SvgEllipse cx="48" cy="102" rx="22" ry="11" fill="none" stroke="#2B1309" strokeWidth="4" opacity={0.7} />
-        <SvgEllipse cx="48" cy="102" rx="8" ry="4" fill="#2B1309" opacity={0.8} />
-        <SvgEllipse cx="308" cy="448" rx="25" ry="13" fill="none" stroke="#2B1309" strokeWidth="4" opacity={0.7} />
-        <SvgEllipse cx="308" cy="448" rx="9" ry="4" fill="#2B1309" opacity={0.8} />
-      </Svg>
-      <View style={styles.caseHardware}>
-        <View style={styles.caseHinge}>
-          <View style={styles.caseHingePin} />
-          <View style={styles.caseHingePin} />
-        </View>
-        <View style={styles.caseLatch}>
-          <View style={styles.caseLatchPin} />
-        </View>
-      </View>
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
           <Feather name="compass" size={16} color="#E4B879" />
@@ -4456,143 +4392,53 @@ function CompassCard({
 
       {ready ? (
         <View style={styles.compassBody}>
-          <View style={styles.compassDial}>
-            <Svg width={236} height={236} viewBox="0 0 236 236" style={styles.woodTexture}>
-              <SvgCircle cx="118" cy="118" r="116" fill="#4A2818" />
-              <SvgCircle cx="118" cy="118" r="112" fill="#704326" stroke="#C18B52" strokeWidth="2" />
-              <SvgCircle cx="118" cy="118" r="103" fill="none" stroke="#3B1E12" strokeWidth="3" opacity={0.8} />
-              <SvgEllipse
-                cx="118"
-                cy="118"
-                rx="102"
-                ry="57"
-                fill="none"
-                stroke="#9A6235"
-                strokeWidth="3"
-                opacity={0.5}
-                transform="rotate(18 118 118)"
-              />
-              <SvgEllipse
-                cx="118"
-                cy="118"
-                rx="94"
-                ry="43"
-                fill="none"
-                stroke="#32180E"
-                strokeWidth="2"
-                opacity={0.7}
-                transform="rotate(18 118 118)"
-              />
-              <SvgPath
-                d="M-8 75 C28 47 50 72 80 57 S137 36 170 57 S207 70 244 48"
-                fill="none"
-                stroke="#3C1D10"
-                strokeWidth="3"
-                opacity={0.7}
-              />
-              <SvgPath
-                d="M-12 94 C24 74 50 98 78 81 S136 62 169 81 S213 96 248 73"
-                fill="none"
-                stroke="#B37642"
-                strokeWidth="2"
-                opacity={0.55}
-              />
-              <SvgPath
-                d="M-10 153 C27 127 54 153 83 137 S138 119 170 139 S213 153 246 128"
-                fill="none"
-                stroke="#32180E"
-                strokeWidth="3"
-                opacity={0.65}
-              />
-              <SvgPath
-                d="M-4 177 C29 151 55 178 86 161 S139 144 175 162 S211 178 241 155"
-                fill="none"
-                stroke="#A86D3C"
-                strokeWidth="2"
-                opacity={0.5}
-              />
-              <SvgEllipse cx="35" cy="61" rx="13" ry="7" fill="none" stroke="#32180E" strokeWidth="3" opacity={0.7} />
-              <SvgEllipse cx="35" cy="61" rx="5" ry="2.5" fill="#32180E" opacity={0.75} />
-              <SvgEllipse cx="205" cy="174" rx="15" ry="8" fill="none" stroke="#32180E" strokeWidth="3" opacity={0.7} />
-              <SvgEllipse cx="205" cy="174" rx="6" ry="3" fill="#32180E" opacity={0.75} />
-            </Svg>
-            {[
-              styles.brassScrewTop,
-              styles.brassScrewRight,
-              styles.brassScrewBottom,
-              styles.brassScrewLeft,
-            ].map((positionStyle, index) => (
-              <View key={index} style={[styles.brassScrew, positionStyle]}>
-                <View
-                  style={[
-                    styles.brassScrewSlot,
-                    index % 2 === 0 && { transform: [{ rotate: "35deg" }] },
-                  ]}
-                />
-              </View>
-            ))}
-            <View style={styles.compassFace}>
-              <View style={styles.compassFaceInnerRing} />
-              <View style={styles.compassRoseAxis} />
-              <View style={[styles.compassRoseAxis, { transform: [{ rotate: "45deg" }] }]} />
-              {Array.from({ length: 24 }).map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.compassTickWrap,
-                    { transform: [{ rotate: `${index * 15}deg` }] },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.compassTick,
-                      index % 6 === 0 && styles.compassTickMajor,
-                    ]}
-                  />
-                </View>
-              ))}
-              <Text style={[styles.compassNorth, { color: colors.accent }]}>N</Text>
-              <Text style={styles.compassEast}>E</Text>
-              <Text style={styles.compassSouth}>S</Text>
-              <Text style={styles.compassWest}>W</Text>
+          <View style={styles.compassPhotoStage}>
+            <Image
+              source={require("../../assets/images/antique-saga-compass.png")}
+              style={styles.compassPhoto}
+              resizeMode="contain"
+            />
+            <Text style={styles.photoNorth}>N</Text>
+            <Text style={styles.photoEast}>E</Text>
+            <Text style={styles.photoSouth}>S</Text>
+            <Text style={styles.photoWest}>W</Text>
 
+            <View
+              style={[
+                styles.needleLayer,
+                { transform: [{ rotate: `${northNeedleRotation}deg` }] },
+              ]}
+            >
+              <View style={styles.northNeedleTip} />
+              <View style={styles.northNeedleShaft} />
+              <View style={styles.northNeedleTail} />
+            </View>
+
+            {sagaBearing != null && (
               <View
                 style={[
                   styles.needleLayer,
-                  { transform: [{ rotate: `${northNeedleRotation}deg` }] },
+                  { transform: [{ rotate: `${sagaNeedleRotation}deg` }] },
                 ]}
               >
-                <View style={styles.northNeedleTip} />
-                <View style={styles.northNeedleShaft} />
-                <View style={styles.northNeedleTail} />
-              </View>
-
-              {sagaBearing != null && (
+                <View style={styles.sagaNeedleShaft} />
                 <View
                   style={[
-                    styles.needleLayer,
-                    { transform: [{ rotate: `${sagaNeedleRotation}deg` }] },
+                    styles.sagaNeedleIcon,
+                    { transform: [{ rotate: `${-sagaNeedleRotation}deg` }] },
                   ]}
                 >
-                  <View style={styles.sagaNeedleShaft} />
-                  <View
-                    style={[
-                      styles.sagaNeedleIcon,
-                      { transform: [{ rotate: `${-sagaNeedleRotation}deg` }] },
-                    ]}
-                  >
-                    <SparkMountain
-                      size={24}
-                      mountainColor="#4A2C19"
-                      sparkColor="#F4C96A"
-                    />
-                  </View>
+                  <SparkMountain
+                    size={24}
+                    mountainColor="#4A2C19"
+                    sparkColor="#F4C96A"
+                  />
                 </View>
-              )}
-
-              <View style={styles.compassCenterOuter}>
-                <View style={styles.compassCenterInner} />
               </View>
+            )}
+
+            <View style={styles.compassCenterOuter}>
+              <View style={styles.compassCenterInner} />
             </View>
           </View>
           <View style={styles.compassReadout}>
@@ -4769,176 +4615,60 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 14,
   },
-  compassDial: {
-    width: 236,
-    height: 236,
-    borderRadius: 118,
-    borderWidth: 6,
-    borderColor: "#806B43",
-    backgroundColor: "#261B16",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.55,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 5,
-  },
-  woodTexture: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-  },
-  caseTexture: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-  },
-  caseHardware: {
+  compassPhotoStage: {
     position: "relative",
-    zIndex: 1,
-    height: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  caseHinge: {
-    width: 70,
-    height: 9,
-    borderWidth: 1,
-    borderColor: "#2B1A13",
-    borderRadius: 3,
-    backgroundColor: "#80603A",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-  },
-  caseHingePin: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "#C0964F",
-    borderWidth: 1,
-    borderColor: "#3E2918",
-  },
-  caseLatch: {
-    width: 32,
-    height: 12,
-    borderWidth: 1,
-    borderColor: "#2B1A13",
-    borderRadius: 3,
-    backgroundColor: "#9A713C",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  caseLatchPin: {
-    width: 8,
-    height: 5,
-    borderRadius: 2,
-    backgroundColor: "#382217",
-  },
-  brassScrew: {
-    position: "absolute",
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#6B451B",
-    backgroundColor: "#C79647",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-  },
-  brassScrewSlot: {
-    width: 7,
-    height: 1,
-    backgroundColor: "#6B451B",
-    transform: [{ rotate: "-20deg" }],
-  },
-  brassScrewTop: { top: 8, left: 112 },
-  brassScrewRight: { right: 8, top: 112 },
-  brassScrewBottom: { bottom: 8, left: 112 },
-  brassScrewLeft: { left: 8, top: 112 },
-  compassFace: {
-    width: 184,
-    height: 184,
-    borderRadius: 92,
-    borderWidth: 3,
-    borderColor: "#3B281C",
-    backgroundColor: "#EFE0BC",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#2A1609",
-    shadowOpacity: 0.6,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  compassFaceInnerRing: {
-    position: "absolute",
-    width: 164,
-    height: 164,
-    borderRadius: 82,
-    borderWidth: 1,
-    borderColor: "rgba(89,61,36,0.45)",
-  },
-  compassRoseAxis: {
-    position: "absolute",
-    width: 1,
-    height: 120,
-    backgroundColor: "rgba(100,72,45,0.16)",
-  },
-  compassTickWrap: {
-    position: "absolute",
-    width: 184,
-    height: 184,
-    alignItems: "center",
-  },
-  compassTick: {
-    width: 1,
-    height: 7,
-    marginTop: 5,
-    backgroundColor: "#765B3F",
-  },
-  compassTickMajor: {
-    width: 2,
-    height: 12,
-    backgroundColor: "#37271D",
-  },
-  compassNorth: {
-    position: "absolute",
-    top: 20,
+    width: "100%",
+    maxWidth: 330,
+    aspectRatio: 1,
     alignSelf: "center",
-    fontFamily: fonts.monoBold,
-    fontSize: 18,
   },
-  compassEast: {
-    position: "absolute",
-    right: 24,
-    top: 83,
-    color: "#4B392B",
-    fontFamily: fonts.monoBold,
-    fontSize: 14,
+  compassPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
-  compassSouth: {
+  photoNorth: {
     position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-    color: "#4B392B",
-    fontFamily: fonts.monoBold,
-    fontSize: 14,
+    left: "50%",
+    top: "43.5%",
+    marginLeft: -7,
+    color: "#9A2428",
+    fontFamily: fonts.titleBold,
+    fontSize: 15,
+    textShadowColor: "rgba(255,244,214,0.9)",
+    textShadowRadius: 2,
   },
-  compassWest: {
+  photoEast: {
     position: "absolute",
-    left: 24,
-    top: 83,
-    color: "#4B392B",
-    fontFamily: fonts.monoBold,
-    fontSize: 14,
+    right: "25%",
+    top: "63%",
+    color: "#34261C",
+    fontFamily: fonts.titleBold,
+    fontSize: 13,
+  },
+  photoSouth: {
+    position: "absolute",
+    left: "50%",
+    top: "82.5%",
+    marginLeft: -6,
+    color: "#34261C",
+    fontFamily: fonts.titleBold,
+    fontSize: 13,
+  },
+  photoWest: {
+    position: "absolute",
+    left: "25%",
+    top: "63%",
+    color: "#34261C",
+    fontFamily: fonts.titleBold,
+    fontSize: 13,
   },
   needleLayer: {
     position: "absolute",
+    left: "50%",
+    top: "64.8%",
+    marginLeft: -78,
+    marginTop: -78,
     width: 156,
     height: 156,
     alignItems: "center",
@@ -4999,6 +4729,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   compassCenterOuter: {
+    position: "absolute",
+    left: "50%",
+    top: "64.8%",
+    marginLeft: -11,
+    marginTop: -11,
     width: 22,
     height: 22,
     borderRadius: 11,

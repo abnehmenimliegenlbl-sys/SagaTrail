@@ -113,273 +113,334 @@ id = "o-PK8_4dt13VcbC4pK3RD"
 uri = "file://.local/tmp_map_preview/1_pixelkarte-farbe_aktuell.jpeg"
 type = "image"
 title = "Aktuell: Landeskarte farbig (Höhenlinien, viele Details)"
+logical_id = "035c2c07-4d69-4e5f-8830-a2966d97d5ad"
 
 [[outputs]]
 id = "rUeEUIIox5Dn_JfzUvZYx"
 uri = "file://.local/tmp_map_preview/2_pixelkarte-grau.jpeg"
 type = "image"
 title = "Alternative 1: Landeskarte grau (gleiche Details, entsättigt)"
+logical_id = "c5d53e79-7998-4a97-b7b2-1712a1be8624"
 
 [[outputs]]
 id = "HEpxG4_cxVmZeek-pd6Vv"
 uri = "file://.local/tmp_map_preview/3_swisstlm3d-karte-grau.png"
 type = "image"
 title = "Alternative 2: swissTLM3D-Karte grau (deutlich reduziert)"
+logical_id = "7efeeb0e-1645-4a88-90a7-8edb7e7d2212"
 
 [[outputs]]
 id = "jN0ia9Vb-Cyaf-mSKsC6m"
 uri = "file://.local/tmp_map_preview2/1_osm_standard.png"
 type = "image"
 title = "OSM Standard (Wege/Pfade klar sichtbar, viele Labels)"
+logical_id = "47818fdc-8f32-47c0-8ac2-153fd1fbd003"
 
 [[outputs]]
 id = "_q5yOecpyf1y4GJtsEm72"
 uri = "file://.local/tmp_map_preview2/2_carto_positron.png"
 type = "image"
 title = "Carto Positron (sehr clean, minimal, Wege dezent)"
+logical_id = "1cddb693-6b48-43b8-8d24-6906234b6857"
 
 [[outputs]]
 id = "DOIS-heIHjgLQlSqFJXpC"
 uri = "file://.local/tmp_map_preview2/3_carto_voyager.png"
 type = "image"
 title = "Carto Voyager (clean + etwas mehr Kontext/Farbe)"
+logical_id = "bd41828d-da09-4b5d-9cdc-1a5bab92bd90"
 
 [[outputs]]
 id = "cIb5rzwTjOlNcYEQhXntQ"
 uri = "file://.local/tmp_map_preview2/4_waymarked_hiking_overlay.png"
 type = "image"
 title = "Waymarked Trails Overlay (offizielle Wanderrouten farbig, transparent — wird UEBER einer Basiskarte gelegt)"
+logical_id = "fc52d663-f558-4679-8e5c-54efec3a012c"
 
 [[outputs]]
 id = "5BWEUkb5w66AwWNdIYC6y"
 uri = "file://artifacts/mobile/store/app-store-texte.md"
 type = "text"
 title = "App-Store-Texte DE/EN"
+logical_id = "f35eb8ef-f42d-4624-b8d9-18cbbcf0242d"
 
 [[outputs]]
 id = "7-jZUmL-H52nBsutoXZYH"
 uri = "file://attached_assets/samples/probe_dialekttext.mp3"
 type = "audio"
 title = "Hörprobe NEU: Stimme liest echten Dialekttext"
+logical_id = "d88e522a-4ede-4b31-82ce-60972e612d90"
 
 [[outputs]]
 id = "mirbfr0CxtNJ0244XC-Vj"
 uri = "file://attached_assets/samples/probe_aktuell_hochdeutsch.mp3"
 type = "audio"
 title = "Hörprobe AKTUELL: Stimme liest Hochdeutsch"
+logical_id = "869ba409-d326-438c-9276-d8a75254fb95"
 
 [[outputs]]
 id = "xov9phHWrkgUCWci2DjKW"
 uri = "file://attached_assets/expo-qr.png"
 type = "image"
 title = "Expo Go QR Code"
+logical_id = "5e00b289-a056-4d92-ba93-2f888a0dfb6e"
 
 [[outputs]]
 id = "zkUAAnXzfqSXGkSlz9YmL"
 uri = "file://attached_assets/IMG_7232_1783608256538.png"
 type = "image"
 title = "SagaTrail Premium Paywall Screenshot"
+logical_id = "1dd17c11-ca6f-478a-80a6-f2b5429bde88"
 
 [[outputs]]
 id = "4f27mu4VLFrp1MQ4L_XX4"
 uri = "file://artifacts/mobile/assets/images/icon.png"
 type = "image"
 title = "SagaTrail App-Icon (1024x1024)"
+logical_id = "d919820c-b307-4af7-9b40-aa85829e4088"
 
 [[outputs]]
 id = "uvSzS-gJjeVZjVjN4smrr"
 uri = "file://SagaTrail-Features.md"
 type = "text"
 title = "SagaTrail – Features & Mehrwert"
+logical_id = "af96bc33-f3f7-4ba1-9905-7ba62584896c"
 
 [[outputs]]
 id = "ytKqJh2hgKOk8C8odlWhp"
 uri = "file://marketing/sagatrail-wpcode.zip"
 type = "unspecified"
 title = "SagaTrail WPCode Snippet (Weiss/Rot)"
+logical_id = "96e6311c-0afc-4732-966b-5014f0ee6ae2"
 
 [[outputs]]
 id = "TVUWqQDAYuq-4pCYb5Ax7"
 uri = "file://wordpress/sagatrail-partner-snippets.zip"
 type = "unspecified"
 title = "SagaTrail Partner-Snippets — mit Foto-Upload (515 KB)"
+logical_id = "b1483b09-156c-44dd-b9cd-1a5fac394a62"
 
 [[outputs]]
 id = "ANdBIutRD7MKzS4v8PwW8"
 uri = "file://wordpress/sagatrail-partner-snippets-neu.zip"
 type = "unspecified"
 title = "SagaTrail Partner-Snippets (aktualisiert)"
+logical_id = "d1960bec-4cd4-43ef-aca7-13ea57df4de6"
 
 [[outputs]]
 id = "XIXl00UgAyjosK7aGBcaZ"
 uri = "file://wordpress/sagatrail-alle-snippets.zip"
 type = "unspecified"
 title = "SagaTrail – Alle Snippets inkl. home.html"
+logical_id = "920e39b2-b37c-4e05-9810-ef6ea4886743"
 
 [[outputs]]
 id = "tfRzZgmWzE3-g22vi0Mu4"
 uri = "file://expo-qr.png"
 type = "image"
 title = "Expo QR Code"
+logical_id = "a69cf3f0-1f73-4925-96db-9738e98fc0c4"
 
 [[outputs]]
 id = "pnANnCJthp8TvE4b9xpOX"
 uri = "file://sagatrail-partner-leads.csv"
 type = "table"
 title = "SagaTrail Partner Leads – 439 Betriebe, alle 26 Kantone"
+logical_id = "e2b8cef2-9433-45b6-9526-4f61d9b410c1"
 
 [[outputs]]
 id = "u55BMPXJHtD74aOo2SSOy"
 uri = "file://screenshots_ipad/ipad_screen1.png"
 type = "image"
 title = "iPad 13\" – Kantone"
+logical_id = "3e8292c2-9979-46cd-b907-ac58f14220ef"
 
 [[outputs]]
 id = "5JOe3S3vfz3DltBLEKngC"
 uri = "file://screenshots_ipad/ipad_screen2.png"
 type = "image"
 title = "iPad 13\" – Routen"
+logical_id = "e7184047-e017-4598-a75f-9f1a0fd75a67"
 
 [[outputs]]
 id = "-pQaEjL5DHxSkVv307rvm"
 uri = "file://screenshots_ipad/ipad_screen3.png"
 type = "image"
 title = "iPad 13\" – Routenplanung"
+logical_id = "31af1f02-2568-4c2b-a606-7b9df48f28ba"
 
 [[outputs]]
 id = "ey44fVAT7Ex7QB9xtNpiE"
 uri = "file://screenshots_ipad/ipad_en_screen1.png"
 type = "image"
 title = "iPad 13\" EN – Cantons"
+logical_id = "793b58fd-9b10-45a6-9c89-efac78cb118e"
 
 [[outputs]]
 id = "N74bCMgo7zc3shvduephB"
 uri = "file://screenshots_ipad/ipad_en_screen2.png"
 type = "image"
 title = "iPad 13\" EN – Routes"
+logical_id = "6aa6a60f-5d36-4f94-9bfe-e377539d3641"
 
 [[outputs]]
 id = "7tArOdkerH7sMx2OD5oC8"
 uri = "file://screenshots_ipad/ipad_en_screen3.png"
 type = "image"
 title = "iPad 13\" EN – Route Planning"
+logical_id = "75399bb7-92c1-41a8-90e8-bb190acd399e"
 
 [[outputs]]
 id = "1oeyJs4XnEB3KXw8bD-Gm"
 uri = "file://sagatrail-wp-export.zip"
 type = "unspecified"
 title = "sagatrail-wordpress.sql + osm-harvest.php + ANLEITUNG.txt"
+logical_id = "ac408b44-623e-4bc3-ac37-b7ca043a5498"
 
 [[outputs]]
 id = "gb01VAxdQdHyfOPNPciXC"
 uri = "file://sagatrail-komplett.zip"
 type = "unspecified"
 title = "WP Cron Plugin + SQL + Anleitung"
+logical_id = "fd6fa7da-e0a7-4312-8453-4c1db1790411"
 
 [[outputs]]
 id = "5azj_7bugWJt5M56q6ZDq"
 uri = "file://sagatrail-osm-cron.zip"
 type = "unspecified"
 title = "sagatrail-osm-cron Plugin ZIP"
+logical_id = "8485096d-547a-4b99-ad6d-8161d09fef5e"
 
 [[outputs]]
 id = "FSZonFutZMkdOmCqUoGgO"
 uri = "file://wpcrontrol-event.zip"
 type = "unspecified"
 title = "wpcrontrol-event.php – 8 Routen, 15 Min Intervall"
+logical_id = "66cba8d4-ef2e-4959-bbe6-146a6f18af4e"
 
 [[outputs]]
 id = "xkdVSO5RH4z3HOZq6tpGM"
 uri = "file://wpcrontrol-google-enrich.zip"
 type = "unspecified"
 title = "wpcrontrol-google-enrich.php – Google Places Enrichment"
+logical_id = "81a348a6-b06d-4587-908d-9979d6a8e1bc"
 
 [[outputs]]
 id = "1Nsm6T5NbHyeLMTNZPQVI"
 uri = "file://sagatrail-wordpress.zip"
 type = "unspecified"
 title = "sagatrail-wordpress.sql (1296 Routen, ZIP)"
+logical_id = "4d706d51-12bf-4dfc-ae4b-06aa4a7a1589"
 
 [[outputs]]
 id = "Z7lzOIQO9Js5Uxt2y4tTo"
 uri = "file://sagatrail-leads.zip"
 type = "unspecified"
 title = "sagatrail-leads.zip"
+logical_id = "da21e01b-1655-4355-8587-09ef6d580062"
 
 [[outputs]]
 id = "sz8DHgGcYDhISQzThed6n"
 uri = "file://SagaTrail_Features.md"
 type = "text"
 title = "SagaTrail Features – vollständige Übersicht"
+logical_id = "0c900bd5-03db-4369-ba6c-1a070b4aeca4"
 
 [[outputs]]
 id = "IJjYgCnAF5AOKrI3q5gYb"
 uri = "file://attached_assets/partner-page-v2.zip"
 type = "unspecified"
 title = "partner-page-v2.zip (aktualisiertes WPCode-Snippet)"
+logical_id = "31f64d85-396f-439a-995f-d8b0da4a0a82"
 
 [[outputs]]
 id = "MIuYFJO2IexZ6OfbcMu2g"
 uri = "file://screenshots/stoos-mythen-karte.jpg"
 type = "image"
 title = "Großer Mythen – SagaTrail Karte"
+logical_id = "9ffaf42d-1d89-4020-87de-031f8dc78b97"
 
 [[outputs]]
 id = "vl3vXFytO4NEzXVPbKV_d"
 uri = "file://screenshots/stoos-mythen-karte-v2.jpg"
 type = "image"
 title = "Großer Mythen – SagaTrail Karte (swisstopo)"
+logical_id = "56927385-8daf-46c9-8435-29b9aa925a42"
 
 [[outputs]]
 id = "vOJBahBXmzMTpsr-NV83A"
 uri = "file://screenshots/stoos-mythen-karte-v3.jpg"
 type = "image"
 title = "Großer Mythen – SagaTrail Karte (final)"
+logical_id = "1440d3d8-3d07-4dd8-b9d4-a86f3459bbb9"
 
 [[outputs]]
 id = "f0hz5nBAHebxat_3hsz9H"
 uri = "file://screenshots/beatus-hoehlen-karte.jpg"
 type = "image"
 title = "St. Beatus-Höhlen – SagaTrail Karte"
+logical_id = "05a3b820-c47d-49f0-a553-e9e8e2b7b8c1"
 
 [[outputs]]
 id = "YJ3XEvDY7qqQRJY2ea9Z5"
 uri = "file://screenshots/beatus-hoehlen-karte-v2.jpg"
 type = "image"
 title = "St. Beatus-Höhlen – SagaTrail Karte (fix)"
+logical_id = "f1e51145-a1e6-4f67-962c-7835a4d9f8a5"
 
 [[outputs]]
 id = "LmX9J-9YFDu750nH2m_aJ"
 uri = "file://screenshots/beatus-hoehlen-karte-v3.jpg"
 type = "image"
 title = "St. Beatus-Höhlen – SagaTrail Karte (korrekte Route)"
+logical_id = "d906f711-1deb-45c4-9459-35a2fd9eb1a8"
 
 [[outputs]]
 id = "QzqyNOFhdpmRwE-stO4iw"
 uri = "file://screenshots/rigi-kulm-karte.jpg"
 type = "image"
 title = "Rigi Kulm – SagaTrail Karte"
+logical_id = "0acdb595-1590-4759-87df-8a1f734763f6"
 
 [[outputs]]
 id = "nlrmnE3UsNcDjVcdsVip9"
 uri = "file://screenshots/rigi-v2.jpg"
 type = "image"
 title = "Rigi Kulm – POI + 2D Karte"
+logical_id = "aeaf3294-1b9b-47d2-9426-b3e89ecec639"
 
 [[outputs]]
 id = "F5-W0cPUWnPprG4XFMGCl"
 uri = "file://screenshots/rigi-v3.jpg"
 type = "image"
 title = "Rigi Kulm – aktueller Stand"
+logical_id = "fa383217-0fd8-4ce9-8ca3-ef4eca88da7f"
 
 [[outputs]]
 id = "X5xz4Ocw1bhZIHy6-yR8W"
 uri = "file://attached_assets/partner-seite-updated.html"
-type = "unspecified"
+type = "text"
 title = "Partner-Seite – aktualisiert (1. Monat kostenlos + Button-Ausrichtung)"
+logical_id = "5ce3540a-ac3a-41a1-9b7f-082312bfc419"
+content_type = "text/html"
 
 [[outputs]]
 id = "prMpN9I_L6tfGmph5qEv5"
 uri = "file://attached_assets/share_card_senda_segantini_et3.jpg"
 type = "image"
 title = "Share-Karte: Senda Segantini Etappe 3"
+logical_id = "152ad5d1-8910-4691-9d0d-418a43fdc5f5"
+
+[[outputs]]
+id = "s4GGaTA3vCBwYEjSdpVHF"
+uri = "file://artifacts/mobile/assets/images/antique-saga-compass.png"
+type = "image"
+title = "Fotorealistischer SagaTrail-Kompass"
+description = "Antike Walnussholz-Schatulle mit Messingfassung und gealtertem Zifferblatt; die dynamischen Nadeln werden in der App darübergelegt."
+logical_id = "66a5628a-9509-4a0a-a56b-96c09c415276"
+content_hash = "sha256:b1b884980589672a8e77e0fc2d9810dc15c3dc20c8702c88c111c9d16545a1bf"
+size = 1611992
+mtime_ms = 1788359431029
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/66a5628a-9509-4a0a-a56b-96c09c415276/43bd27d8-d963-4dde-8bb2-34816222185c"
+storage_version_token = "1788359605847383"
+content_type = "image/png"
