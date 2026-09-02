@@ -186,13 +186,25 @@ function normalizePoiName(name: string): string {
 /**
  * Entfernt gleichnamige Duplikate aus der POI-Liste (z. B. mehrere
  * "Basiliskenbrunnen" in Basel). Pro normalisiertem Name bleibt genau ein
- * Eintrag — bevorzugt derjenige mit dem reichhaltigsten Inhalt:
- *   extract vorhanden (2) > nur Bild (1) > kein Wikipedia (0).
- * Reihenfolge der Originalliste bleibt sonst erhalten.
+ * Eintrag — bevorzugt derjenige mit dem reichhaltigsten bereits verfügbaren
+ * Inhalt. Die Reihenfolge der Originalliste bleibt bei gleicher Reichhaltigkeit
+ * erhalten.
+ *
+ * Die initiale POI-Suche lädt Wikipedia absichtlich noch nicht. Deshalb müssen
+ * OSM-Kontext und vorhandene Wikipedia-/Wikidata-Verweise schon hier in die
+ * Auswahl einfliessen; nur `wiki` zu bewerten würde beim initialen Laden immer
+ * zu einem Gleichstand führen.
  */
 function deduplicatePois(pois: EnrichedPoi[]): EnrichedPoi[] {
-  const richness = (p: EnrichedPoi) =>
-    p.wiki?.extract ? 2 : p.wiki?.image ? 1 : 0;
+  const richness = (p: EnrichedPoi) => {
+    let score = 0;
+    if (p.wiki?.extract?.trim()) score += 1000;
+    if (p.wiki?.image) score += 500;
+    if (p.osmContext?.trim()) score += 100;
+    if (p.wikipediaTag) score += 50;
+    if (p.wikidataTag) score += 25;
+    return score;
+  };
   const best = new Map<string, EnrichedPoi>();
   for (const poi of pois) {
     const key = normalizePoiName(poi.name);

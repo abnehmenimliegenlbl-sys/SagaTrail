@@ -19,3 +19,9 @@ Two distinct, independently-fixable causes were found for the "keine POI gefunde
 **Why:** A successful Overpass refresh and populated server cache can coexist with an empty mobile map when the final response is a bodyless 304.
 
 **How to apply:** For live POI JSON, force a 200 response with the complete array; verify both an ordinary request and one carrying `If-None-Match`.
+
+Initial POI deduplication must score available OSM context and Wikipedia/Wikidata references as well as already-loaded wiki text, because detail enrichment is intentionally lazy.
+
+**Why:** Evaluating only the `wiki` field makes every initial POI tie at zero and keeps the first duplicate even when another OSM element already carries a description or article reference.
+
+**How to apply:** Keep first-occurrence order only as the tie-breaker; choose the richer record before the on-demand POI detail request.
