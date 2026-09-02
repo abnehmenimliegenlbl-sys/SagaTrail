@@ -151,6 +151,72 @@ test("honors a valid Retry-After seconds value for HTTP 429", async () => {
   }
 });
 
+test("honors a valid Retry-After HTTP date for HTTP 429", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalDateNow = Date.now;
+  const fixedNow = Date.parse("Wed, 02 Sep 2026 12:00:00 GMT");
+  let requestCount = 0;
+
+  Date.now = () => fixedNow;
+  globalThis.fetch = async (request) => {
+    requestCount++;
+    if (requestCount === 1) {
+      return new Response("rate limited", {
+        status: 429,
+        headers: {
+          "Retry-After": new Date(fixedNow + 4000).toUTCString(),
+        },
+      });
+    }
+    return profileResponse(request, 0);
+  };
+
+  try {
+    const delays = await captureRetryDelays(() =>
+      computeElevationProfile(routePoints(2), log),
+    );
+
+    assert.deepEqual(delays, [4000]);
+    assert.equal(requestCount, 2);
+  } finally {
+    Date.now = originalDateNow;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("does not add a fallback delay for an expired Retry-After HTTP date", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalDateNow = Date.now;
+  const fixedNow = Date.parse("Wed, 02 Sep 2026 12:00:00 GMT");
+  let requestCount = 0;
+
+  Date.now = () => fixedNow;
+  globalThis.fetch = async (request) => {
+    requestCount++;
+    if (requestCount === 1) {
+      return new Response("rate limited", {
+        status: 429,
+        headers: {
+          "Retry-After": new Date(fixedNow - 4000).toUTCString(),
+        },
+      });
+    }
+    return profileResponse(request, 0);
+  };
+
+  try {
+    const delays = await captureRetryDelays(() =>
+      computeElevationProfile(routePoints(2), log),
+    );
+
+    assert.deepEqual(delays, []);
+    assert.equal(requestCount, 2);
+  } finally {
+    Date.now = originalDateNow;
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("uses the bounded fallback delay when Retry-After is missing", async () => {
   const originalFetch = globalThis.fetch;
   let requestCount = 0;
