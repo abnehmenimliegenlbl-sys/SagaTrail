@@ -31,8 +31,8 @@ import { normalizeSagaTitle, normalizeSagaTitles } from "@/lib/sagaTitle";
  * Zusaetzlich lassen sich pro Kanton echte Wanderrouten (OpenStreetMap, mit
  * swisstopo-Hoehenmetern) nachladen; jeder Route wird die naechstgelegene
  * kuratierte, gemeinfrei belegte Sage zugeordnet (keine frei erzeugten Sagen).
- * Die Kantonsrouten werden dynamisch gecacht; ohne Verbindung gibt es fuer
- * Routen KEINEN Seed-Rueckfall — die Suche liefert dann Quelle "error".
+ * Die Kantonsrouten werden dynamisch gecacht; ohne Verbindung wird dieser
+ * Cache mit lokal angewendetem Filter verwendet, sofern vorhanden.
  *
  * `source` macht die Herkunft transparent:
  * - "server": frisch vom API-Server geladen
@@ -90,6 +90,33 @@ export interface RouteSearchFilter {
   nearLng?: number;
 }
 
+function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): HikingRoute[] {
+  if (!filter) return routes;
+  const inRange = (value: number | null | undefined, min?: number, max?: number) =>
+    (min == null || (value != null && value >= min)) &&
+    (max == null || (value != null && value <= max));
+  let result = routes.filter((r) =>
+    inRange(r.distanceKm, filter.distMin, filter.distMax) &&
+    inRange(r.ascentM, filter.ascMin, filter.ascMax) &&
+    inRange(r.sac ? Number.parseFloat(r.sac.replace(",", ".")) : null, filter.diffMin, filter.diffMax)
+  );
+  if (filter.ganzjaehrigNur) {
+    result = result.filter((r) =>
+      (r.maxElevationM ?? 0) < 1800 &&
+      (!r.sac || Number.parseFloat(r.sac.replace(",", ".")) <= 3)
+    );
+  }
+  if (filter.nearLat != null && filter.nearLng != null) {
+    const distance = (r: HikingRoute) => {
+      const dLat = r.coordinates.lat - filter.nearLat!;
+      const dLng = r.coordinates.lng - filter.nearLng!;
+      return dLat * dLat + dLng * dLng;
+    };
+    result.sort((a, b) => distance(a) - distance(b));
+  }
+  return result;
+}
+
 interface CatalogContextValue {
   ready: boolean;
   source: CatalogSource;
@@ -105,8 +132,8 @@ interface CatalogContextValue {
   /**
    * Sucht passende Routen des Kantons direkt an der externen Quelle (Server/OSM,
    * mit swisstopo-Hoehenmetern); der optionale Filter grenzt die Suche ein.
-   * Ohne Verbindung liefert die Suche eine leere Liste mit Quelle "error" —
-   * es gibt keinen Routen-Seed als Rueckfall mehr.
+  * Ohne Verbindung wird der lokale Kanton-Cache mit Quelle "cache" verwendet;
+  * nur wenn kein Cache existiert, liefert die Suche Quelle "error".
    */
   loadCantonRoutes: (
     canton: string,
@@ -282,9 +309,10 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         persistDynamic();
         return { routes, source: "server" };
       } catch {
-        // Server/OSM nicht erreichbar. Es gibt keinen Routen-Seed als Rueckfall
-        // mehr — eine leere Liste mit Quelle "error" signalisiert der UI, dass
-        // sie einen Verbindungshinweis anzeigen soll.
+        const cached = dynamicRef.current.cantonRoutes[canton];
+        if (cached?.length) {
+          return { routes: filterCachedRoutes(cached, filter), source: "cache" };
+        }
         return { routes: [], source: "error" };
       }
     },

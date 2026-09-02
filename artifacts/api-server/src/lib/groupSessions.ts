@@ -19,7 +19,15 @@ export type GroupActivity =
       /** Saga/Route der Wanderung — erlaubt Mitgliedern das Mitwandern. */
       sagaId?: string;
       routeId?: string;
+      location?: GroupLocation;
     };
+
+export interface GroupLocation {
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  updatedAt: number;
+}
 
 /**
  * Live-Sync-Ereignisse einer Gruppenwanderung. Nur die Gruppenleitung darf
@@ -39,6 +47,7 @@ export interface GroupMemberInfo {
   ageTier: string;
   isLeader: boolean;
   activity: GroupActivity;
+  location?: GroupLocation;
 }
 
 interface RoomMember {
@@ -46,6 +55,7 @@ interface RoomMember {
   name: string;
   ageTier: string;
   activity: GroupActivity;
+  location?: GroupLocation;
   ws: WebSocket;
 }
 
@@ -54,6 +64,7 @@ interface Room {
   leaderId: string;
   createdAt: number;
   members: Map<string, RoomMember>;
+  rendezvous: GroupLocation | null;
 }
 
 const rooms = new Map<string, Room>();
@@ -82,6 +93,7 @@ function toMemberInfo(room: Room, member: RoomMember): GroupMemberInfo {
     ageTier: member.ageTier,
     isLeader: member.userId === room.leaderId,
     activity: member.activity,
+    location: member.location,
   };
 }
 
@@ -122,6 +134,7 @@ export function createRoom(params: {
     leaderId: params.userId,
     createdAt: Date.now(),
     members: new Map(),
+    rendezvous: null,
   };
   room.members.set(params.userId, {
     userId: params.userId,
@@ -160,6 +173,7 @@ export function joinRoom(params: {
     name: params.name,
     ageTier: params.ageTier,
     activity: existing?.activity ?? { type: "idle" },
+    location: existing?.location,
     ws: params.ws,
   });
   return { ok: true, room };
@@ -229,7 +243,24 @@ export function setActivity(userId: string, activity: GroupActivity): void {
   const member = room.members.get(userId);
   if (!member) return;
   member.activity = activity;
+  if (activity.type === "wandert") {
+    member.location = activity.location;
+  }
   broadcastMembers(room);
+}
+
+export type RendezvousResult = { ok: true } | { ok: false; reason: "not_leader" | "not_found" };
+
+export function setRendezvous(
+  userId: string,
+  location: GroupLocation | null,
+): RendezvousResult {
+  const room = findRoomByUser(userId);
+  if (!room) return { ok: false, reason: "not_found" };
+  if (room.leaderId !== userId) return { ok: false, reason: "not_leader" };
+  room.rendezvous = location;
+  for (const member of room.members.values()) send(member.ws, { type: "rendezvous", code: room.code, location });
+  return { ok: true };
 }
 
 export type HikeEventResult =
@@ -259,6 +290,7 @@ export function notifyJoined(room: Room, ws: WebSocket): void {
     type: "joined",
     code: room.code,
     members: roomMembers(room),
+    rendezvous: room.rendezvous,
   });
   broadcastMembers(room);
 }

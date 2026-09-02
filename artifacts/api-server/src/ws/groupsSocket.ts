@@ -14,6 +14,8 @@ import {
   leaveRoom,
   notifyJoined,
   setActivity,
+  setRendezvous,
+  type GroupLocation,
   type GroupActivity,
   type HikeSyncEvent,
 } from "../lib/groupSessions";
@@ -131,6 +133,7 @@ type ClientMessage =
   | { type: "leave" }
   | { type: "kick"; targetUserId: string }
   | { type: "activity"; activity: GroupActivity }
+  | { type: "rendezvous"; location: GroupLocation | null }
   | { type: "hike"; event: HikeSyncEvent };
 
 function parseHikeEvent(raw: unknown): HikeSyncEvent | null {
@@ -195,6 +198,21 @@ function parseClientMessage(raw: unknown): ClientMessage | null {
       const a = activity as Record<string, unknown>;
       if (a.type === "idle") return { type: "activity", activity: { type: "idle" } };
       if (a.type === "wandert" && typeof a.sagaTitle === "string") {
+        const location = a.location;
+        const validLocation =
+          typeof location === "object" && location !== null &&
+          typeof (location as Record<string, unknown>).lat === "number" &&
+          typeof (location as Record<string, unknown>).lng === "number" &&
+          Number.isFinite((location as Record<string, unknown>).lat as number) &&
+          Number.isFinite((location as Record<string, unknown>).lng as number) &&
+          Math.abs((location as Record<string, unknown>).lat as number) <= 90 &&
+          Math.abs((location as Record<string, unknown>).lng as number) <= 180 &&
+          typeof (location as Record<string, unknown>).updatedAt === "number" &&
+          Number.isFinite((location as Record<string, unknown>).updatedAt as number) &&
+          ((location as Record<string, unknown>).accuracy == null ||
+            (typeof (location as Record<string, unknown>).accuracy === "number" &&
+              Number.isFinite((location as Record<string, unknown>).accuracy as number) &&
+              (location as Record<string, unknown>).accuracy as number >= 0));
         return {
           type: "activity",
           activity: {
@@ -203,10 +221,24 @@ function parseClientMessage(raw: unknown): ClientMessage | null {
             startedAt: Date.now(),
             ...(typeof a.sagaId === "string" ? { sagaId: a.sagaId } : {}),
             ...(typeof a.routeId === "string" ? { routeId: a.routeId } : {}),
+            ...(validLocation ? { location: location as GroupLocation } : {}),
           },
         };
       }
       return null;
+    }
+    case "rendezvous": {
+      if (data.location === null) return { type: "rendezvous", location: null };
+      const l = data.location;
+      if (typeof l !== "object" || l === null) return null;
+      const value = l as Record<string, unknown>;
+      if (typeof value.lat !== "number" || typeof value.lng !== "number" ||
+          !Number.isFinite(value.lat) || !Number.isFinite(value.lng) ||
+          Math.abs(value.lat) > 90 || Math.abs(value.lng) > 180 ||
+          typeof value.updatedAt !== "number" || !Number.isFinite(value.updatedAt) ||
+          (value.accuracy != null &&
+            (typeof value.accuracy !== "number" || !Number.isFinite(value.accuracy) || value.accuracy < 0))) return null;
+      return { type: "rendezvous", location: value as unknown as GroupLocation };
     }
     case "hike": {
       const event = parseHikeEvent(data.event);
@@ -217,7 +249,6 @@ function parseClientMessage(raw: unknown): ClientMessage | null {
       return null;
   }
 }
-
 /**
  * Haengt den Gruppen-WebSocket-Server an den bestehenden HTTP-Server.
  * Auth erfolgt per `?token=<Clerk-Session-Token>` in der Verbindungs-URL, da
@@ -301,6 +332,11 @@ export function attachGroupsSocket(server: HttpServer): void {
             }
             case "activity": {
               setActivity(profile.userId, message.activity);
+              return;
+            }
+            case "rendezvous": {
+              const result = setRendezvous(profile.userId, message.location);
+              if (!result.ok) send(ws, { type: "error", code: result.reason });
               return;
             }
             case "hike": {

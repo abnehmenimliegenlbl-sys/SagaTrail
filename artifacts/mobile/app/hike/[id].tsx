@@ -48,6 +48,7 @@ import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { SafetyCheckin } from "@/components/brand/SafetyCheckin";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { ObjectRecognition } from "@/components/brand/ObjectRecognition";
@@ -4431,13 +4432,18 @@ export default function LiveHike() {
 
             <Pressable
               onPress={() => {
-                const point = (hasFreshGps ? livePos : null) ?? route?.coordinates ?? saga.coordinates;
-                const coords = point
-                  ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
-                  : t.unknown;
+                if (!hasFreshGps || !livePos) {
+                  alert(t.emergency, "Eine aktuelle GPS-Position ist erforderlich, bevor dein Standort geteilt werden kann.");
+                  return;
+                }
+                if (!emergencyContact?.phone?.trim()) {
+                  alert(t.emergency, "Bitte hinterlege zuerst einen Notfallkontakt.");
+                  return;
+                }
+                const coords = `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}`;
                 const senderName = profile?.name?.trim() || undefined;
                 const body = t.emergencySmsBody(coords, senderName);
-                const phone = emergencyContact?.phone?.replace(/\s+/g, "") ?? "";
+                const phone = emergencyContact.phone.replace(/\s+/g, "");
                 openUrlSafely(
                   `sms:${phone}&body=${encodeURIComponent(body)}`,
                   t.smsNotAvailable
@@ -4466,6 +4472,29 @@ export default function LiveHike() {
           </Animated.View>
         </View>
       )}
+      <SafetyCheckin
+        routeName={route?.name ?? t.unknown}
+        emergencyContact={emergencyContact}
+        livePosition={livePos}
+        hasFreshGps={hasFreshGps}
+        labels={{
+          button: t.safetyCheckinButton ?? "Safety check-in",
+          title: t.safetyCheckinTitle ?? "Safety check-in",
+          explanation: t.safetyCheckinExplanation ?? "Set a local timer. This does not provide monitoring or live tracking.",
+          chooseDuration: t.safetyCheckinChooseDuration ?? "Check in again after",
+          minutes: t.safetyCheckinMinutes ?? "min",
+          start: t.safetyCheckinStart ?? "Start timer",
+          cancel: t.close,
+          confirm: t.safetyCheckinConfirm ?? "I'm safe — stop timer",
+          active: t.safetyCheckinActive ?? "Check-in timer",
+          overdue: t.safetyCheckinOverdue ?? "Timer overdue",
+          share: t.sendLocationToContact,
+          noGps: t.safetyCheckinNoGps ?? "A fresh GPS position is required before sharing your location.",
+          noContact: t.safetyCheckinNoContact ?? "Set an emergency contact before sharing your location.",
+          shareUnavailable: t.smsNotAvailable,
+          safeMessage: t.safetyCheckinMessage ?? "Safety check-in location",
+        }}
+      />
     </Background>
   );
 }

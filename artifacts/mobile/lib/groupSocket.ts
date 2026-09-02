@@ -17,7 +17,15 @@ export type GroupActivity =
       // das Mitwandern auf derselben Route.
       sagaId?: string;
       routeId?: string;
+      location?: GroupLocation;
     };
+
+export interface GroupLocation {
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  updatedAt: number;
+}
 
 /**
  * Live-Sync-Ereignisse einer Gruppenwanderung. Nur die Gruppenleitung darf
@@ -36,6 +44,7 @@ export interface GroupMember {
   ageTier: string;
   isLeader: boolean;
   activity: GroupActivity;
+  location?: GroupLocation;
 }
 
 export type GroupConnectionStatus =
@@ -48,12 +57,13 @@ export type GroupSocketError = "premium_required" | "not_found" | "network" | "u
 
 export interface GroupSocketEvents {
   onStatusChange: (status: GroupConnectionStatus) => void;
-  onJoined: (code: string, members: GroupMember[]) => void;
+  onJoined: (code: string, members: GroupMember[], rendezvous?: GroupLocation | null) => void;
   onMembers: (members: GroupMember[]) => void;
   onClosedByLeader: () => void;
   onKicked: () => void;
   onError: (error: GroupSocketError) => void;
   onHikeEvent?: (event: HikeSyncEvent) => void;
+  onRendezvous?: (location: GroupLocation | null) => void;
 }
 
 type PendingAction =
@@ -66,6 +76,7 @@ interface WireMember {
   ageTier: string;
   isLeader: boolean;
   activity: GroupActivity;
+  location?: GroupLocation;
 }
 
 function normalizeMembers(raw: unknown): GroupMember[] {
@@ -76,6 +87,7 @@ function normalizeMembers(raw: unknown): GroupMember[] {
     ageTier: m.ageTier,
     isLeader: m.isLeader,
     activity: m.activity,
+    location: m.location,
   }));
 }
 
@@ -200,7 +212,7 @@ export class GroupSocket {
         const members = normalizeMembers(data.members);
         const code = data.code as string;
         this.lastAction = { type: "join", code };
-        this.events.onJoined(code, members);
+        this.events.onJoined(code, members, (data.rendezvous as GroupLocation | null) ?? null);
         return;
       }
       case "members": {
@@ -223,6 +235,10 @@ export class GroupSocket {
         if (event && typeof event.kind === "string") {
           this.events.onHikeEvent?.(event);
         }
+        return;
+      }
+      case "rendezvous": {
+        this.events.onRendezvous?.((data.location as GroupLocation | null) ?? null);
         return;
       }
       case "error": {
@@ -253,7 +269,7 @@ export class GroupSocket {
     }
   }
 
-  private send(action: PendingAction | { type: "leave" | "kick"; targetUserId?: string } | { type: "activity"; activity: GroupActivity } | { type: "hike"; event: HikeSyncEvent }): void {
+  private send(action: PendingAction | { type: "leave" | "kick"; targetUserId?: string } | { type: "activity"; activity: GroupActivity } | { type: "rendezvous"; location: GroupLocation | null } | { type: "hike"; event: HikeSyncEvent }): void {
     if (!this.ws || this.ws.readyState !== this.ws.OPEN) return;
     this.ws.send(JSON.stringify(action));
   }
@@ -272,6 +288,10 @@ export class GroupSocket {
 
   setActivity(activity: GroupActivity): void {
     this.send({ type: "activity", activity });
+  }
+
+  setRendezvous(location: GroupLocation | null): void {
+    this.send({ type: "rendezvous", location });
   }
 
   sendHikeEvent(event: HikeSyncEvent): void {

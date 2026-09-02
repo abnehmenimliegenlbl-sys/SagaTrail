@@ -805,6 +805,7 @@ export default function Routenplanung() {
     (sagaId ? sagas.find((s) => s.id === sagaId)?.canton ?? null : null);
   const downloaded = isDownloaded(sagaId);
   const record = getRecord(sagaId);
+  const partialDownload = record?.status === "partial" || record?.status === "failed";
   const downloading = progress?.sagaId === sagaId;
   const progressText = downloading
     ? progress?.phase === "tiles"
@@ -1339,23 +1340,25 @@ export default function Routenplanung() {
             style={[
               styles.downloadCard,
               {
-                borderColor: downloaded ? colors.accent : colors.glassBorder,
+                borderColor: downloaded && !partialDownload ? colors.accent : colors.glassBorder,
                 backgroundColor: colors.glassBg,
               },
             ]}
           >
             <View style={styles.downloadHead}>
               <Feather
-                name={downloaded ? "check-circle" : "download-cloud"}
+                name={downloaded && !partialDownload ? "check-circle" : partialDownload ? "alert-triangle" : "download-cloud"}
                 size={18}
-                color={downloaded ? colors.accent : colors.foreground}
+                color={downloaded && !partialDownload ? colors.accent : partialDownload ? colors.destructive : colors.foreground}
               />
               <Text style={[styles.downloadTitle, { color: colors.foreground }]}>
-                {downloaded ? t.offlineAvailable : t.saveForOffline}
+                {partialDownload ? t.downloadFailed : downloaded ? t.offlineAvailable : t.saveForOffline}
               </Text>
             </View>
             <Text style={[styles.downloadHint, { color: colors.mutedForeground }]}>
-              {downloaded
+              {partialDownload
+                ? t.downloadFailedText
+                : downloaded
                 ? t.offlineStatusActive(sizeLabel)
                 : t.offlineStatusInactive}
             </Text>
@@ -1436,7 +1439,7 @@ export default function Routenplanung() {
                   {progressText}
                 </Text>
               </View>
-            ) : downloaded ? (
+            ) : downloaded && !partialDownload ? (
               <PrimaryButton
                 label={t.removeDownload}
                 variant="secondary"

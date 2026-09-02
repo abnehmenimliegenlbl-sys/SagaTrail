@@ -22,9 +22,9 @@ import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { useColors } from "@/hooks/useColors";
 import type { ObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import { persistJournalImage } from "@/lib/journalMedia";
-import type { RecognitionJournalEntry } from "@/types";
+import type { RecognitionJournalEntry, RecognitionJournalEntryKind } from "@/types";
 
-interface Props {
+export interface ObjectRecognitionProps {
   premium: boolean;
   strings: ObjectRecognitionStrings;
   getToken: () => Promise<string | null>;
@@ -33,6 +33,10 @@ interface Props {
   lng?: number | null;
   heading?: number | null;
   nearbyContext?: string;
+  /** Additional guardrails for a specialised recognition entry (for example peaks). */
+  recognitionContext?: string;
+  journalKind?: RecognitionJournalEntryKind;
+  journalTitle?: string;
   onAnalyzed?: (entry: RecognitionJournalEntry) => void | Promise<void>;
 }
 
@@ -47,8 +51,11 @@ export function ObjectRecognition({
   lng,
   heading,
   nearbyContext,
+  recognitionContext,
+  journalKind = "object",
+  journalTitle,
   onAnalyzed,
-}: Props) {
+}: ObjectRecognitionProps) {
   const colors = useColors();
   const [state, setState] = useState<RecognitionState>("idle");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -57,6 +64,8 @@ export function ObjectRecognition({
   const [confirmed, setConfirmed] = useState<ObjectRecognitionCandidate | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [persisting, setPersisting] = useState(false);
+  const persistedRef = useRef(false);
   const busyRef = useRef(false);
   const runIdRef = useRef(0);
 
@@ -84,6 +93,7 @@ export function ObjectRecognition({
     setError(null);
     void deleteTemporaryPhoto(photoUri);
     setPhotoUri(null);
+    persistedRef.current = false;
   }, [deleteTemporaryPhoto, photoUri]);
 
   const openCamera = useCallback(async () => {
@@ -134,7 +144,9 @@ export function ObjectRecognition({
           lng: lng ?? null,
           heading: heading ?? null,
           language,
-          nearbyContext: nearbyContext || null,
+          nearbyContext: [recognitionContext, nearbyContext]
+            .filter((value): value is string => Boolean(value?.trim()))
+            .join("\n"),
         }),
       });
       if (runId !== runIdRef.current) return;
@@ -148,46 +160,18 @@ export function ObjectRecognition({
         candidates?: ObjectRecognitionCandidate[];
       };
       const analyzedCandidates = Array.isArray(payload.candidates)
-        ? payload.candidates.slice(0, 3)
+        ? payload.candidates
+            .filter((candidate) => (
+              candidate &&
+              typeof candidate.title === "string" &&
+              typeof candidate.confidence === "number" &&
+              Number.isFinite(candidate.confidence)
+            ))
+            .slice(0, 3)
         : [];
       const analysisNote = payload.analysisNote ?? "";
       setNote(analysisNote);
       setCandidates(analyzedCandidates);
-      // Das Ergebnis wird sofort als Tagebuchbild gesichert. Die Kandidaten
-      // bleiben bewusst als vorsichtige Kandidaten formuliert; die Analyse
-      // muss nicht erst bestaetigt werden, damit kein aufgenommenes Bild
-      // verloren geht.
-      if (onAnalyzed) {
-        try {
-          const persistentUri = await persistJournalImage(uri, "object");
-          const candidateText = analyzedCandidates
-            .map(
-              (candidate, index) =>
-                `${index + 1}. ${candidate.title} (${Math.round(candidate.confidence * 100)} %): ${candidate.description} ${candidate.whyLikely}`,
-            )
-            .join("\n\n");
-          await onAnalyzed({
-            id: `recognition-object-${Date.now()}`,
-            kind: "object",
-            photoUri: persistentUri,
-            title: analyzedCandidates[0]?.title ?? strings.title,
-            text: [analysisNote, candidateText || strings.noCandidates]
-              .filter(Boolean)
-              .join("\n\n"),
-            capturedAt: Date.now(),
-            confidence: analyzedCandidates[0]?.confidence,
-            ...(analyzedCandidates[0]?.sourceUrl
-              ? { sourceUrl: analyzedCandidates[0].sourceUrl }
-              : {}),
-            ...(analyzedCandidates[0]?.sourceTitle
-              ? { sourceTitle: analyzedCandidates[0].sourceTitle }
-              : {}),
-          });
-        } catch {
-          // Die Analyse bleibt sichtbar, auch wenn das lokale Kopieren
-          // wegen eines vollen/gesperrten Dateisystems nicht gelingt.
-        }
-      }
     } catch (err) {
       if (runId === runIdRef.current) {
         setError(err instanceof Error && err.message ? err.message : strings.analysisError);
@@ -206,12 +190,55 @@ export function ObjectRecognition({
     lat,
     lng,
     nearbyContext,
+    recognitionContext,
     onAnalyzed,
     premium,
     strings.analysisError,
     strings.cameraPermissionMessage,
     strings.dailyLimitReached,
     strings.premiumTitle,
+  ]);
+
+  const confirmCandidate = useCallback(async (candidate: ObjectRecognitionCandidate) => {
+    setConfirmed(candidate);
+    if (!onAnalyzed || !photoUri || persistedRef.current) return;
+    setPersisting(true);
+    try {
+      const persistentUri = await persistJournalImage(photoUri, journalKind);
+      const candidateText = candidates
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.title} (${Math.round(item.confidence * 100)} %): ${item.description} ${item.whyLikely}`,
+        )
+        .join("\n\n");
+      await onAnalyzed({
+        id: `recognition-${journalKind}-${Date.now()}`,
+        kind: journalKind,
+        photoUri: persistentUri,
+        title: journalTitle ?? candidate.title,
+        text: [note, candidateText || strings.noCandidates]
+          .filter(Boolean)
+          .join("\n\n"),
+        capturedAt: Date.now(),
+        confidence: candidate.confidence,
+        ...(candidate.sourceUrl ? { sourceUrl: candidate.sourceUrl } : {}),
+        ...(candidate.sourceTitle ? { sourceTitle: candidate.sourceTitle } : {}),
+      });
+      persistedRef.current = true;
+    } catch {
+      setError(strings.analysisError);
+    } finally {
+      setPersisting(false);
+    }
+  }, [
+    candidates,
+    journalKind,
+    journalTitle,
+    note,
+    onAnalyzed,
+    photoUri,
+    strings.analysisError,
+    strings.noCandidates,
   ]);
 
   const modalMessage = error
@@ -298,6 +325,11 @@ export function ObjectRecognition({
                         {candidate.category}
                       </Text>
                       <Text style={[styles.candidateTitle, { color: colors.foreground }]}>{candidate.title}</Text>
+                       {candidate.sourceTitle ? (
+                         <Text style={[styles.candidateSource, { color: colors.mutedForeground }]} numberOfLines={1}>
+                           {strings.source}: {candidate.sourceTitle}
+                         </Text>
+                       ) : null}
                     </View>
                     <Text style={[styles.confidence, { color: colors.accent }]}>
                       {strings.confidence(Math.round(candidate.confidence * 100))}
@@ -306,10 +338,13 @@ export function ObjectRecognition({
                   {!isConfirmed ? (
                     <Pressable
                       accessibilityRole="button"
-                      onPress={() => setConfirmed(candidate)}
+                       onPress={() => void confirmCandidate(candidate)}
+                       disabled={persisting}
                       style={[styles.confirmButton, { backgroundColor: colors.primary }]}
                     >
-                      <Text style={[styles.confirmButtonText, { color: colors.primaryForeground }]}>{strings.confirm}</Text>
+                       <Text style={[styles.confirmButtonText, { color: colors.primaryForeground }]}>
+                         {persisting ? strings.analyzing : strings.confirm}
+                       </Text>
                     </Pressable>
                   ) : (
                     <View style={[styles.confirmedBadge, { backgroundColor: colors.primary + "20" }]}>
@@ -367,6 +402,7 @@ const styles = StyleSheet.create({
   candidateTop: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   candidateCategory: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase" },
   candidateTitle: { fontFamily: fonts.titleBold, fontSize: 17, marginTop: 3 },
+  candidateSource: { fontFamily: fonts.body, fontSize: 11, marginTop: 3 },
   confidence: { fontFamily: fonts.bodyBold, fontSize: 11, textAlign: "right", maxWidth: 92 },
   confirmButton: { alignItems: "center", borderRadius: 9, marginTop: 11, paddingVertical: 10, paddingHorizontal: 12 },
   confirmButtonText: { fontFamily: fonts.bodyBold, fontSize: 13 },

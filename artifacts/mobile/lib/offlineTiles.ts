@@ -150,6 +150,9 @@ function tileKey(t: TileCoord): string {
 export interface TileDownloadResult {
   tileCount: number;
   sizeBytes: number;
+  totalCount: number;
+  failedCount: number;
+  complete: boolean;
 }
 
 /** Laedt eine Liste von Kacheln herunter und legt sie lokal ab. Interne Hilfsfunktion. */
@@ -164,6 +167,7 @@ async function downloadTileList(
   let done = 0;
   let sizeBytes = 0;
   let tileCount = 0;
+  let failedCount = 0;
 
   for (const t of tiles) {
     const dest = tileFile(sagaId, t);
@@ -180,14 +184,22 @@ async function downloadTileList(
           tileCount += 1;
         }
       }
+      if (!(await FileSystem.getInfoAsync(dest)).exists) failedCount += 1;
     } catch {
+      failedCount += 1;
       // Einzelne fehlende Kachel ist unkritisch — online faellt sie spaeter zurueck.
     }
     done += 1;
     onProgress?.(done, tiles.length);
   }
 
-  return { tileCount, sizeBytes };
+  return {
+    tileCount,
+    sizeBytes,
+    totalCount: tiles.length,
+    failedCount,
+    complete: failedCount === 0,
+  };
 }
 
 /**
@@ -200,7 +212,7 @@ export async function downloadTiles(
   center: LatLng,
   onProgress?: (done: number, total: number) => void
 ): Promise<TileDownloadResult> {
-  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0 };
+  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0, totalCount: 0, failedCount: 0, complete: true };
   return downloadTileList(sagaId, tilesForCorridor(center), onProgress);
 }
 
@@ -214,8 +226,8 @@ export async function downloadTilesAlongRoute(
   points: LatLng[],
   onProgress?: (done: number, total: number) => void
 ): Promise<TileDownloadResult> {
-  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0 };
-  if (points.length === 0) return { tileCount: 0, sizeBytes: 0 };
+  if (Platform.OS === "web") return { tileCount: 0, sizeBytes: 0, totalCount: 0, failedCount: 0, complete: true };
+  if (points.length === 0) return { tileCount: 0, sizeBytes: 0, totalCount: 0, failedCount: 0, complete: true };
   return downloadTileList(sagaId, tilesForRoute(points), onProgress);
 }
 

@@ -30,6 +30,13 @@ export interface GruppeStrings {
   inviteLabel: string;
   inviteText: (code: string) => string;
   ageTiers: Record<AgeTier, string>;
+  locationFresh?: string;
+  locationStale?: string;
+  locationUnavailable?: string;
+  locationSharingTitle?: string;
+  locationSharingBody?: string;
+  rendezvousLabel?: string;
+  setRendezvousButton?: string;
 }
 
 const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
@@ -66,6 +73,13 @@ const GRUPPE_STRINGS: StringsDict<GruppeStrings> = {
       jugendliche: "Jugendliche",
       erwachsene: "Erwachsene",
     },
+    locationFresh: "Standort aktuell",
+    locationStale: "Standort veraltet",
+    locationUnavailable: "Kein GPS-Standort geteilt",
+    locationSharingTitle: "Standort in der Gruppe teilen",
+    locationSharingBody: "Nur während einer aktiven Wanderung und nur mit deiner Zustimmung.",
+    rendezvousLabel: "Treffpunkt",
+    setRendezvousButton: "Treffpunkt hier setzen",
   },
   gsw: {
     eyebrow: "Zäme wandere",

@@ -110,3 +110,4 @@
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.
 - [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.
 - [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.
+- [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.

@@ -29,12 +29,14 @@ import {
   type GroupMember,
   type GroupSocketError,
   type HikeSyncEvent,
+  type GroupLocation,
 } from "@/lib/groupSocket";
 import type { ThemeMode } from "@/constants/colors";
 import { DEFAULT_LANGUAGE, LanguageCode } from "@/lib/i18n/languageCode";
 import { detectSystemLanguage } from "@/lib/i18n/systemLocale";
 import { iapLog, useSubscription } from "@/lib/revenuecat";
 import * as Notifications from "expo-notifications";
+import * as Location from "expo-location";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 
 // Persistente Schluessel im AsyncStorage — dienen als Offline-Cache,
@@ -52,6 +54,7 @@ const KEYS = {
   uiLanguage: "sagatrail:uiLanguage",
   freieSagen: "sagatrail:freieSagen",
   themeMode: "sagatrail:themeMode",
+  groupLocationSharing: "sagatrail:groupLocationSharing",
 } as const;
 
 export interface EmergencyContact {
@@ -83,6 +86,7 @@ export interface GroupSession {
   code: string;
   members: GroupMember[];
   isLeader: boolean;
+  rendezvous: GroupLocation | null;
 }
 
 interface AppContextValue {
@@ -116,6 +120,7 @@ interface AppContextValue {
   hikeHistory: HikeSession[];
   activeHike: ActiveHike | null;
   groupSession: GroupSession | null;
+  groupLocationSharingEnabled: boolean;
   groupConnectionStatus: GroupConnectionStatus;
   groupError: GroupSocketError | null;
   /**
@@ -175,6 +180,8 @@ interface AppContextValue {
   setGroupActivity: (activity: GroupActivity) => void;
   /** Sendet ein Wander-Sync-Ereignis an die Gruppe (nur als Leitung wirksam). */
   sendGroupHikeEvent: (event: HikeSyncEvent) => void;
+  setGroupRendezvous: (location: GroupLocation | null) => void;
+  setGroupLocationSharingEnabled: (enabled: boolean) => void;
   clearGroupError: () => void;
 
   /** Gespeicherte Saga-IDs (Lesezeichen) des Nutzers. */
@@ -225,6 +232,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [pendingLanguage, setPendingLanguageState] =
     useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [groupSession, setGroupSession] = useState<GroupSession | null>(null);
+  const [groupLocationSharingEnabled, setGroupLocationSharingEnabledState] = useState(false);
   const [groupConnectionStatus, setGroupConnectionStatus] =
     useState<GroupConnectionStatus>("getrennt");
   const [groupError, setGroupError] = useState<GroupSocketError | null>(null);
@@ -266,7 +274,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const socket = new GroupSocket(getGroupToken, {
       onStatusChange: setGroupConnectionStatus,
-      onJoined: (code, members) => {
+      onJoined: (code, members, rendezvous) => {
         setGroupError(null);
         setGroupSession({
           code,
@@ -274,6 +282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           isLeader: members.some(
             (m) => m.id === selfIdRef.current && m.isLeader
           ),
+           rendezvous: rendezvous ?? null,
         });
       },
       onMembers: (members) => {
@@ -305,6 +314,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // ausloesen.
         setGroupHikeEvent({ event, receivedAt: Date.now() });
       },
+      onRendezvous: (location) => {
+        setGroupSession((prev) => prev ? { ...prev, rendezvous: location } : prev);
+      },
     });
     groupSocketRef.current = socket;
     return () => {
@@ -312,6 +324,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       groupSocketRef.current = null;
     };
   }, [getGroupToken]);
+
+  // Standort wird ausschliesslich waehrend einer aktiven Wanderung und nur
+  // ueber echte Vordergrund-GPS-Fixes geteilt. Keine Hintergrund-Tracking-
+  // Schleife wird fuer die Gruppensichtbarkeit eingerichtet.
+  useEffect(() => {
+    const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
+    if (!groupLocationSharingEnabled || !own || own.activity.type !== "wandert") return;
+    const wandering = own.activity;
+    let cancelled = false;
+    let subscription: Location.LocationSubscription | null = null;
+    void (async () => {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (cancelled || permission.status !== Location.PermissionStatus.GRANTED) return;
+      subscription = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Balanced, timeInterval: 30_000, distanceInterval: 25 },
+        (fix) => {
+          const { latitude: lat, longitude: lng, accuracy } = fix.coords;
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+          groupSocketRef.current?.setActivity({
+            type: "wandert",
+            sagaTitle: wandering.sagaTitle,
+            startedAt: wandering.startedAt,
+            ...(wandering.sagaId ? { sagaId: wandering.sagaId } : {}),
+            ...(wandering.routeId ? { routeId: wandering.routeId } : {}),
+            location: { lat, lng, accuracy: accuracy ?? null, updatedAt: Date.now() },
+          });
+        },
+      );
+    })();
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
+  }, [
+    groupSession?.code,
+    groupLocationSharingEnabled,
+    groupSession?.members.some(
+      (m) => m.id === selfIdRef.current && m.activity.type === "wandert",
+    ),
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -329,6 +381,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.uiLanguage,
           KEYS.freieSagen,
           KEYS.themeMode,
+          KEYS.groupLocationSharing,
         ]);
         const map = Object.fromEntries(entries);
         if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
@@ -350,6 +403,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setFreieSagen(JSON.parse(map[KEYS.freieSagen]!));
         if (map[KEYS.themeMode] === "hell" || map[KEYS.themeMode] === "dunkel") {
           setThemeModeState(map[KEYS.themeMode] as ThemeMode);
+        }
+        if (map[KEYS.groupLocationSharing]) {
+          setGroupLocationSharingEnabledState(map[KEYS.groupLocationSharing] === "true");
         }
         if (map[KEYS.uiLanguage]) {
           // Sprache wurde schon einmal festgelegt (System-Erkennung oder
@@ -1035,6 +1091,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     groupSocketRef.current?.setActivity(activity);
   }, []);
 
+  const setGroupRendezvous = useCallback((location: GroupLocation | null) => {
+    groupSocketRef.current?.setRendezvous(location);
+  }, []);
+
+  const setGroupLocationSharingEnabled = useCallback((enabled: boolean) => {
+    setGroupLocationSharingEnabledState(enabled);
+    AsyncStorage.setItem(KEYS.groupLocationSharing, enabled ? "true" : "false").catch(() => {});
+    if (!enabled) {
+      const own = groupSession?.members.find((m) => m.id === selfIdRef.current);
+      if (own?.activity.type === "wandert") {
+        groupSocketRef.current?.setActivity({ ...own.activity, location: undefined });
+      }
+    }
+  }, [groupSession]);
+
   // Wander-Sync-Ereignis an die Gruppe senden — nur sinnvoll als Leitung;
   // der Server weist Ereignisse von Nicht-Leitern ohnehin ab.
   const sendGroupHikeEvent = useCallback((event: HikeSyncEvent) => {
@@ -1060,6 +1131,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       hikeHistory,
       activeHike,
       groupSession,
+      groupLocationSharingEnabled,
       groupConnectionStatus,
       groupError,
       groupHikeEvent,
@@ -1088,6 +1160,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leaveGroupSession,
       kickMember,
       setGroupActivity,
+      setGroupRendezvous,
+      setGroupLocationSharingEnabled,
       sendGroupHikeEvent,
       clearGroupError,
       savedSagaIds,
@@ -1110,6 +1184,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       hikeHistory,
       activeHike,
       groupSession,
+      groupLocationSharingEnabled,
       groupConnectionStatus,
       groupError,
       groupHikeEvent,
@@ -1138,6 +1213,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       leaveGroupSession,
       kickMember,
       setGroupActivity,
+      setGroupRendezvous,
+      setGroupLocationSharingEnabled,
       sendGroupHikeEvent,
       clearGroupError,
       savedSagaIds,

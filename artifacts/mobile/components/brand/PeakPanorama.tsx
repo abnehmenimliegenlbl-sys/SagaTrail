@@ -12,12 +12,16 @@ import {
 } from "react-native";
 import type { DimensionValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@clerk/expo";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
+import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import { persistJournalImage } from "@/lib/journalMedia";
+import { useApp } from "@/contexts/AppContext";
 import type { RecognitionJournalEntry } from "@/types";
+import { ObjectRecognition, type ObjectRecognitionProps } from "./ObjectRecognition";
 import { PeakArNavigator } from "./PeakArNavigator";
 
 const PANORAMA_VIEW_DEGREES = 140;
@@ -43,6 +47,8 @@ interface PeakPanoramaProps {
   hasGps: boolean;
   strings: PeakPanoramaStrings;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
+  /** Authenticated visual recognition entry shown directly in the panorama card. */
+  recognition?: Omit<ObjectRecognitionProps, "onAnalyzed" | "nearbyContext" | "recognitionContext" | "journalKind">;
 }
 
 function markerLeft(relativeBearingDeg: number): DimensionValue {
@@ -56,9 +62,13 @@ export function PeakPanorama({
   hasGps,
   strings,
   onCaptured,
+  recognition,
 }: PeakPanoramaProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { premium, language } = useApp();
+  const { getToken } = useAuth();
+  const objectRecognitionStrings = useObjectRecognitionStrings();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
@@ -86,6 +96,13 @@ export function PeakPanorama({
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
+  const peakRecognition = recognition ?? {
+    premium,
+    strings: objectRecognitionStrings,
+    getToken,
+    language,
+    heading,
+  };
 
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
@@ -112,7 +129,7 @@ export function PeakPanorama({
   };
 
   const capturePeakRecognition = async () => {
-    if (capturing || visiblePeaks.length === 0 || !onCaptured) return;
+    if (recognition || capturing || visiblePeaks.length === 0 || !onCaptured) return;
     setCapturing(true);
     try {
       // Das gesamte AR-/Kamera-Bild mit den eingeblendeten Hinweisen
@@ -498,13 +515,13 @@ export function PeakPanorama({
             <View style={styles.captureArea}>
               <Pressable
                 onPress={() => void capturePeakRecognition()}
-                disabled={capturing || visiblePeaks.length === 0}
+                disabled={Boolean(recognition) || capturing || visiblePeaks.length === 0}
                 style={[
                   styles.captureButton,
                   {
                     backgroundColor: colors.primary,
                     borderColor: colors.primary,
-                    opacity: capturing || visiblePeaks.length === 0 ? 0.45 : 1,
+                    opacity: recognition || capturing || visiblePeaks.length === 0 ? 0.45 : 1,
                   },
                 ]}
                 accessibilityRole="button"
@@ -519,6 +536,24 @@ export function PeakPanorama({
           </View>
         </View>
       </Modal>
+      {Platform.OS !== "web" && peakRecognition ? (
+        <ObjectRecognition
+          {...peakRecognition}
+          journalKind="peak"
+          recognitionContext={[
+            "Mountain peak recognition only.",
+            "Return at most three cautious candidates.",
+            "Use only peaks plausibly visible from the current position and heading; do not use distant POIs as proof.",
+            peaks.length > 0
+              ? `Nearby mapped peak hints (not proof): ${peaks
+                  .slice(0, 3)
+                  .map((peak) => `${peak.name} (${peak.distanceKm.toFixed(1)} km)`)
+                  .join(", ")}`
+              : "",
+          ].join(" ")}
+          onAnalyzed={onCaptured}
+        />
+      ) : null}
     </View>
   );
 }

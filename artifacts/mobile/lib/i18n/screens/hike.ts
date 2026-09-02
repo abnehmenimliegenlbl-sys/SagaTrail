@@ -75,6 +75,18 @@ export interface HikeStrings {
   sendLocationToContact: string;
   smsNotAvailable: string;
   emergencySmsBody: (coords: string, name?: string) => string;
+  safetyCheckinButton?: string;
+  safetyCheckinTitle?: string;
+  safetyCheckinExplanation?: string;
+  safetyCheckinChooseDuration?: string;
+  safetyCheckinMinutes?: string;
+  safetyCheckinStart?: string;
+  safetyCheckinConfirm?: string;
+  safetyCheckinActive?: string;
+  safetyCheckinOverdue?: string;
+  safetyCheckinNoGps?: string;
+  safetyCheckinNoContact?: string;
+  safetyCheckinMessage?: string;
   unknown: string;
   close: string;
   narrationUnavailable: string;
@@ -218,6 +230,18 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     smsNotAvailable: "SMS ist auf diesem Gerät nicht verfügbar.",
     emergencySmsBody: (coords, name) =>
       `${name ? `${name}: ` : ""}Notfall auf Wanderung. Ungefährer Standort: ${coords}`,
+    safetyCheckinButton: "Sicherheits-Check-in",
+    safetyCheckinTitle: "Sicherheits-Check-in",
+    safetyCheckinExplanation: "Setze einen lokalen Timer für deine Wanderung. Das ist keine Überwachung und kein Live-Tracking.",
+    safetyCheckinChooseDuration: "Erneut melden nach",
+    safetyCheckinMinutes: "Min.",
+    safetyCheckinStart: "Timer starten",
+    safetyCheckinConfirm: "Mir geht es gut — Timer stoppen",
+    safetyCheckinActive: "Check-in-Timer",
+    safetyCheckinOverdue: "Timer überfällig",
+    safetyCheckinNoGps: "Zum Teilen des Standorts ist ein frischer GPS-Fix erforderlich.",
+    safetyCheckinNoContact: "Bitte hinterlege zuerst einen Notfallkontakt.",
+    safetyCheckinMessage: "Sicherheits-Check-in auf der Wanderung",
     unknown: "unbekannt",
     close: "Schliessen",
     narrationUnavailable: "KI-Erzählstimme gerade nicht verfügbar (Internet prüfen).",

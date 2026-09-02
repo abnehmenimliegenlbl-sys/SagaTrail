@@ -74,6 +74,10 @@ export interface DownloadRecord {
   downloadedAt: number;
   hasAudio?: boolean;
   hasPois?: boolean;
+  /** Der Download kann offline nutzbar sein, auch wenn einzelne Phasen fehlen. */
+  status?: "complete" | "partial" | "failed";
+  phaseStatus?: Partial<Record<DownloadPhase, "complete" | "partial" | "failed">>;
+  failedPhase?: DownloadPhase;
 }
 
 export type DownloadPhase = "story" | "audio" | "pois" | "tiles";
@@ -161,6 +165,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       setProgress({ sagaId: saga.id, phase: "story", done: 0, total: 1 });
       let chapters: StoryChapter[];
       let storySource = "seed";
+      const phaseStatus: Partial<Record<DownloadPhase, "complete" | "partial" | "failed">> = {};
       try {
         const res = await createStory({
           sagaId: saga.id,
@@ -179,9 +184,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         JSON.stringify(chapters)
       ).catch(() => {});
       setProgress({ sagaId: saga.id, phase: "story", done: 1, total: 1 });
+      phaseStatus.story = "complete";
 
       // 2. Kapitel-Audio vorladen (nur Premium; bei Fehler stumm ueberspringen).
       let hasAudio = false;
+      let audioFailed = false;
       if (premium && chapters.length > 0) {
         for (let i = 0; i < chapters.length; i++) {
           setProgress({ sagaId: saga.id, phase: "audio", done: i, total: chapters.length });
@@ -190,14 +197,16 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
             await downloadChapterAudio(saga.id, i, blob);
             hasAudio = true;
           } catch {
-            // Audio fuer dieses Kapitel nicht verfuegbar — kein Blocker.
+            audioFailed = true;
           }
         }
         setProgress({ sagaId: saga.id, phase: "audio", done: chapters.length, total: chapters.length });
+        phaseStatus.audio = audioFailed ? (hasAudio ? "partial" : "failed") : "complete";
       }
 
       // 3. POIs laden, Detail und Story fuer jeden POI vorladen.
       let hasPois = false;
+      let poisFailed = false;
       const center = route.coordinates ?? saga.coordinates ?? null;
       if (center) {
         try {
@@ -225,6 +234,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                 await cachePoiDetail(poi.id, detail.wiki ?? null);
               } catch {
                 await cachePoiDetail(poi.id, null);
+                poisFailed = true;
               }
               done++;
               // Story (KI-Text in Download-Sprache)
@@ -240,14 +250,16 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                 await cachePoiStory(poi.id, lang, story.text);
               } catch {
                 // Story nicht verfuegbar — online Fallback im Hike.
+                poisFailed = true;
               }
               done++;
             }
             setProgress({ sagaId: saga.id, phase: "pois", done: total, total });
           }
         } catch {
-          // POIs konnten nicht gecacht werden — im Hike wird online nachgeladen.
+          poisFailed = true;
         }
+        phaseStatus.pois = poisFailed ? "failed" : "complete";
       }
 
       // 4. Kartenkacheln laden — gesamte Route wenn Geometrie vorhanden,
@@ -255,21 +267,29 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       let tileCount = 0;
       let sizeBytes = 0;
       if (center) {
-        if (route.geometry && route.geometry.length > 1) {
-          // Konvertiere [lat, lng][] → LatLng[]
-          const points = route.geometry.map(([lat, lng]) => ({ lat, lng }));
-          const res = await downloadTilesAlongRoute(saga.id, points, (done, total) => {
-            setProgress({ sagaId: saga.id, phase: "tiles", done, total });
-          });
-          tileCount = res.tileCount;
-          sizeBytes = res.sizeBytes;
-        } else {
-          const res = await downloadTiles(saga.id, center, (done, total) => {
-            setProgress({ sagaId: saga.id, phase: "tiles", done, total });
-          });
-          tileCount = res.tileCount;
-          sizeBytes = res.sizeBytes;
+        try {
+          if (route.geometry && route.geometry.length > 1) {
+            // Konvertiere [lat, lng][] → LatLng[]
+            const points = route.geometry.map(([lat, lng]) => ({ lat, lng }));
+            const res = await downloadTilesAlongRoute(saga.id, points, (done, total) => {
+              setProgress({ sagaId: saga.id, phase: "tiles", done, total });
+            });
+            tileCount = res.tileCount;
+            sizeBytes = res.sizeBytes;
+          phaseStatus.tiles = res.complete ? "complete" : res.tileCount > 0 ? "partial" : "failed";
+          } else {
+            const res = await downloadTiles(saga.id, center, (done, total) => {
+              setProgress({ sagaId: saga.id, phase: "tiles", done, total });
+            });
+            tileCount = res.tileCount;
+            sizeBytes = res.sizeBytes;
+            phaseStatus.tiles = res.complete ? "complete" : res.tileCount > 0 ? "partial" : "failed";
+          }
+        } catch {
+          phaseStatus.tiles = "failed";
         }
+      } else {
+        phaseStatus.tiles = "failed";
       }
 
       const record: DownloadRecord = {
@@ -287,6 +307,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         hasAudio,
         hasPois,
         downloadedAt: Date.now(),
+        status: Object.values(phaseStatus).some((s) => s === "failed" || s === "partial")
+          ? "partial"
+          : "complete",
+        phaseStatus,
+        failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
       };
       await persist({ ...downloads, [saga.id]: record });
       setProgress(null);

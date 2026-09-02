@@ -24,6 +24,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useGruppeStrings } from "@/lib/i18n/screens/gruppe";
 import { AgeTier } from "@/types";
+import * as Location from "expo-location";
 
 const WEB_TOP = 67;
 
@@ -42,6 +43,9 @@ export default function Gruppe() {
     leaveGroupSession,
     kickMember,
     clearGroupError,
+    setGroupRendezvous,
+    groupLocationSharingEnabled,
+    setGroupLocationSharingEnabled,
   } = useApp();
 
   const [joinCode, setJoinCode] = useState("");
@@ -245,6 +249,26 @@ export default function Gruppe() {
               <Text style={[styles.tierNote, { color: colors.accent }]}>
                 {t.tierNote(t.ageTiers[youngest as AgeTier] ?? t.ageTiers.erwachsene)}
               </Text>
+              <Pressable
+                onPress={() => setGroupLocationSharingEnabled(!groupLocationSharingEnabled)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: groupLocationSharingEnabled }}
+                style={[styles.locationConsent, { borderColor: colors.glassBorder }]}
+              >
+                <Feather
+                  name={groupLocationSharingEnabled ? "check-square" : "square"}
+                  size={18}
+                  color={groupLocationSharingEnabled ? colors.accent : colors.mutedForeground}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.locationConsentTitle, { color: colors.foreground }]}>
+                    {t.locationSharingTitle ?? "Standort in der Gruppe teilen"}
+                  </Text>
+                  <Text style={[styles.locationConsentBody, { color: colors.mutedForeground }]}>
+                    {t.locationSharingBody ?? "Nur während einer aktiven Wanderung und nur mit deiner Zustimmung."}
+                  </Text>
+                </View>
+              </Pressable>
               {groupSession.isLeader && (
                 <PrimaryButton
                   variant="secondary"
@@ -259,6 +283,35 @@ export default function Gruppe() {
                     }
                   }}
                   style={{ marginTop: 14 }}
+                />
+              )}
+              {groupSession.rendezvous && (
+                <Text style={[styles.rendezvous, { color: colors.accent }]}>
+                  {t.rendezvousLabel ?? "Rendezvous"}: {groupSession.rendezvous.lat.toFixed(5)},{" "}
+                  {groupSession.rendezvous.lng.toFixed(5)}
+                </Text>
+              )}
+              {groupSession.isLeader && (
+                <PrimaryButton
+                  variant="secondary"
+                  label={t.setRendezvousButton ?? "Set rendezvous here"}
+                  onPress={async () => {
+                    const permission = await Location.requestForegroundPermissionsAsync();
+                    if (permission.status !== Location.PermissionStatus.GRANTED) return;
+                    const fix = await Location.getCurrentPositionAsync({
+                      accuracy: Location.Accuracy.Balanced,
+                    });
+                    const { latitude: lat, longitude: lng, accuracy } = fix.coords;
+                    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                      setGroupRendezvous({
+                        lat,
+                        lng,
+                        accuracy: accuracy ?? null,
+                        updatedAt: Date.now(),
+                      });
+                    }
+                  }}
+                  style={{ marginTop: 10 }}
                 />
               )}
             </View>
@@ -293,6 +346,18 @@ export default function Gruppe() {
                       ? `  ·  ${t.activityWandering(m.activity.sagaTitle)}`
                       : `  ·  ${t.activityReady}`}
                   </Text>
+                   <Text style={[styles.locationStatus, {
+                     color: m.location
+                       ? (Date.now() - m.location.updatedAt > 120_000
+                           ? colors.destructive : colors.accent)
+                       : colors.mutedForeground,
+                   }]}>
+                     {m.location
+                       ? (Date.now() - m.location.updatedAt > 120_000
+                           ? (t.locationStale ?? "Location stale")
+                           : (t.locationFresh ?? "Location current"))
+                       : (t.locationUnavailable ?? "No GPS location shared")}
+                   </Text>
                 </View>
                 {!groupSession.isLeader &&
                   m.isLeader &&
@@ -426,6 +491,11 @@ const styles = StyleSheet.create({
   avatarText: { fontFamily: fonts.titleBold, fontSize: 18 },
   memberName: { fontFamily: fonts.bodyBold, fontSize: 15 },
   memberTier: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
+  locationStatus: { fontFamily: fonts.mono, fontSize: 10, marginTop: 4 },
+  locationConsent: { flexDirection: "row", alignItems: "flex-start", gap: 10, width: "100%", borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12 },
+  locationConsentTitle: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  locationConsentBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  rendezvous: { fontFamily: fonts.mono, fontSize: 11, marginTop: 10 },
   joinHikeBtn: {
     borderWidth: 1,
     borderRadius: 10,
