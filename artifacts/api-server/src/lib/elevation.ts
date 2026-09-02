@@ -23,6 +23,8 @@ const MAX_INPUT_POINTS = 2000;
 // SwissTopo antwortet ab ca. 126 LV95-Punkten mit "Request Line too large".
 // 120 laesst Sicherheitsabstand fuer unterschiedlich lange Zahlenwerte.
 const MAX_POINTS_PER_REQUEST = 120;
+const MAX_CHUNK_ATTEMPTS = 3;
+const RETRY_DELAYS_MS = [200, 600] as const;
 
 interface ProfilePoint {
   dist?: number;
@@ -32,6 +34,20 @@ interface ProfilePoint {
 interface ElevationProfilePoint {
   distanceKm: number;
   altM: number;
+}
+
+function isRetryableHttpStatus(status: number): boolean {
+  return (
+    status === 408 ||
+    status === 425 ||
+    status === 429 ||
+    (status >= 500 && status < 600)
+  );
+}
+
+function waitBeforeRetry(attempt: number): Promise<void> {
+  const delay = RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS.at(-1)!;
+  return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 export interface ElevationStats {
@@ -57,39 +73,64 @@ async function fetchSwisstopoChunk(
   const geom = JSON.stringify({ type: "LineString", coordinates });
   const url = `${PROFILE_URL}?sr=2056&geom=${encodeURIComponent(geom)}`;
 
-  try {
-    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-    if (!res.ok) {
-      log.warn({ status: res.status, points: points.length }, "swisstopo-Profil: HTTP-Fehler");
-      return null;
-    }
-    const data = (await res.json()) as ProfilePoint[];
-    if (!Array.isArray(data) || data.length !== points.length) {
-      log.warn(
-        { receivedPoints: Array.isArray(data) ? data.length : null, points: points.length },
-        "swisstopo-Profil: unvollstaendige Antwort",
-      );
-      return null;
-    }
+  for (let attempt = 0; attempt < MAX_CHUNK_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+      if (!res.ok) {
+        const retryable = isRetryableHttpStatus(res.status);
+        log.warn(
+          {
+            status: res.status,
+            points: points.length,
+            attempt: attempt + 1,
+            retryable,
+          },
+          "swisstopo-Profil: HTTP-Fehler",
+        );
+        if (!retryable || attempt === MAX_CHUNK_ATTEMPTS - 1) return null;
+        await waitBeforeRetry(attempt);
+        continue;
+      }
+      const data = (await res.json()) as ProfilePoint[];
+      if (!Array.isArray(data) || data.length !== points.length) {
+        log.warn(
+          {
+            receivedPoints: Array.isArray(data) ? data.length : null,
+            points: points.length,
+          },
+          "swisstopo-Profil: unvollstaendige Antwort",
+        );
+        return null;
+      }
 
-    const profile = data.map((p) => {
-      const alt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
-      return typeof alt === "number" &&
-        Number.isFinite(alt) &&
-        typeof p.dist === "number" &&
-        Number.isFinite(p.dist)
-        ? [{ distanceKm: p.dist / 1000, altM: Math.round(alt) }]
-        : null;
-    });
-    if (profile.some((point) => point === null)) {
-      log.warn({ points: points.length }, "swisstopo-Profil: unvollstaendiger Hoehenwert");
-      return null;
+      const profile = data.map((p) => {
+        const alt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
+        return typeof alt === "number" &&
+          Number.isFinite(alt) &&
+          typeof p.dist === "number" &&
+          Number.isFinite(p.dist)
+          ? [{ distanceKm: p.dist / 1000, altM: Math.round(alt) }]
+          : null;
+      });
+      if (profile.some((point) => point === null)) {
+        log.warn(
+          { points: points.length },
+          "swisstopo-Profil: unvollstaendiger Hoehenwert",
+        );
+        return null;
+      }
+      return profile.flat() as ElevationProfilePoint[];
+    } catch (err) {
+      log.warn(
+        { err, points: points.length, attempt: attempt + 1 },
+        "swisstopo-Profil: Anfrage fehlgeschlagen",
+      );
+      if (attempt === MAX_CHUNK_ATTEMPTS - 1) return null;
+      await waitBeforeRetry(attempt);
     }
-    return profile.flat() as ElevationProfilePoint[];
-  } catch (err) {
-    log.warn({ err, points: points.length }, "swisstopo-Profil: Anfrage fehlgeschlagen");
-    return null;
   }
+
+  return null;
 }
 
 /**
