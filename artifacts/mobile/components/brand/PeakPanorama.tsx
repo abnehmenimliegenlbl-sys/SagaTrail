@@ -64,6 +64,7 @@ export function PeakPanorama({
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [arUnavailable, setArUnavailable] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const visiblePeaks =
@@ -81,6 +82,10 @@ export function PeakPanorama({
       peak.relativeBearingDeg != null &&
       Math.abs(peak.relativeBearingDeg) <= 18,
   );
+  const targetPeak =
+    visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
+    focusedPeak ??
+    visiblePeaks[0];
 
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
@@ -145,7 +150,7 @@ export function PeakPanorama({
         id: `recognition-peak-${Date.now()}`,
         kind: "peak",
         photoUri: persistentUri,
-        title: focusedPeak?.name ?? strings.title,
+        title: targetPeak?.name ?? strings.title,
         text: peakText,
         capturedAt: Date.now(),
       });
@@ -251,6 +256,56 @@ export function PeakPanorama({
         )}
       </View>
 
+      {visiblePeaks.length > 0 && (
+        <View style={styles.peakRail}>
+          {visiblePeaks.slice(0, 3).map((peak, index) => {
+            const isSelected = targetPeak?.id === peak.id;
+            return (
+              <Pressable
+                key={peak.id}
+                onPress={() => setSelectedPeakId(peak.id)}
+                style={[
+                  styles.peakChip,
+                  {
+                    backgroundColor: isSelected
+                      ? colors.glassHighlight
+                      : colors.glassBgStrong,
+                    borderColor: isSelected ? colors.primary : colors.glassBorder,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}`}
+              >
+                <View
+                  style={[
+                    styles.peakChipIndex,
+                    {
+                      backgroundColor: isSelected ? colors.primary : colors.glassHighlight,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.peakChipIndexText, { color: colors.primaryForeground }]}>
+                    {index + 1}
+                  </Text>
+                </View>
+                <View style={styles.peakChipCopy}>
+                  <Text
+                    style={[styles.peakChipName, { color: colors.foreground }]}
+                    numberOfLines={1}
+                  >
+                    {peak.name}
+                  </Text>
+                  <Text style={[styles.peakChipDistance, { color: colors.mutedForeground }]}>
+                    {strings.distance(peak.distanceKm.toFixed(1))}
+                  </Text>
+                </View>
+                {isSelected && <Feather name="crosshair" size={13} color={colors.primary} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
       <View
         style={[
           styles.cameraPrompt,
@@ -305,7 +360,7 @@ export function PeakPanorama({
           <View style={styles.horizon} />
           {arUnavailable &&
             visiblePeaks.map((peak, index) => (
-              <View
+              <Pressable
                 key={peak.id}
                 style={[
                   styles.marker,
@@ -314,6 +369,9 @@ export function PeakPanorama({
                     top: insets.top + 82 + (index % 3) * 42,
                   },
                 ]}
+                onPress={() => setSelectedPeakId(peak.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}`}
               >
                 <View
                   style={[
@@ -321,7 +379,7 @@ export function PeakPanorama({
                     {
                       backgroundColor: colors.glassBgStrong,
                       borderColor:
-                        focusedPeak?.id === peak.id
+                        targetPeak?.id === peak.id
                           ? colors.primary
                           : colors.glassBorder,
                     },
@@ -332,11 +390,11 @@ export function PeakPanorama({
                       styles.markerPeak,
                       {
                         backgroundColor:
-                          focusedPeak?.id === peak.id
+                          targetPeak?.id === peak.id
                             ? colors.primary
                             : colors.glassBgStrong,
                         borderColor:
-                          focusedPeak?.id === peak.id
+                          targetPeak?.id === peak.id
                             ? colors.primary
                             : colors.glassBorder,
                       },
@@ -367,7 +425,7 @@ export function PeakPanorama({
                     },
                   ]}
                 />
-              </View>
+              </Pressable>
             ))}
           {heading != null && (
             <View
@@ -428,13 +486,13 @@ export function PeakPanorama({
             ]}
           >
             <Feather
-              name={focusedPeak ? "crosshair" : "compass"}
+              name={targetPeak ? "crosshair" : "compass"}
               size={15}
               color={colors.photoScrimText}
             />
             <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
-              {arUnavailable && focusedPeak
-                ? `${strings.detected}: ${focusedPeak.name}`
+              {targetPeak
+                ? `${strings.detected}: ${targetPeak.name}`
                 : status}
             </Text>
             <View style={styles.captureArea}>
