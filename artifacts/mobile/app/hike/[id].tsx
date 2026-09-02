@@ -48,6 +48,7 @@ import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
+import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { fonts } from "@/constants/typography";
@@ -89,6 +90,7 @@ import {
 } from "@/lib/turnNotifications";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
+import { erkenneGipfel, panoramaFuerRoute } from "@/lib/panorama";
 import * as ImagePicker from "expo-image-picker";
 import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
@@ -2658,6 +2660,12 @@ export default function LiveHike() {
     return match.fraction;
   }, [livePos, livePosAccuracy, route?.geometry]);
 
+  const panoramaPeaks = useMemo(
+    () => erkenneGipfel(pois, livePos, compassHeading),
+    [pois, livePos, compassHeading],
+  );
+  const panoramaImage = panoramaFuerRoute(route?.maxElevationM);
+
   const terrainSections = useMemo(
     () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
     [terrainProfile],
@@ -3494,6 +3502,22 @@ export default function LiveHike() {
           placeLabel={t.place}
           altitudeLabel={t.altitude}
           altitudeUnit={t.altitudeUnit}
+        />
+
+        <PeakPanorama
+          source={panoramaImage}
+          peaks={panoramaPeaks}
+          heading={compassHeading}
+          hasGps={livePos !== null}
+          strings={{
+            title: t.panorama,
+            hint: t.panoramaHint,
+            needCompass: t.panoramaNeedCompass,
+            noGps: t.panoramaNoGps,
+            noPeaks: t.panoramaNoPeaks,
+            detected: t.panoramaDetected,
+            distance: t.panoramaDistance,
+          }}
         />
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}

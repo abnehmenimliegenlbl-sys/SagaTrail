@@ -4,6 +4,9 @@
  * sind gebuendelt, damit die Auswahl auch offline funktioniert.
  */
 
+import { bearingDeg, haversineKm } from "@/lib/geo";
+import type { LatLng } from "@/types";
+
 const BILDER = {
   fruehling: {
     tal: require("@/assets/images/panorama/fruehling-tal.jpg"),
@@ -43,4 +46,62 @@ export function panoramaFuerRoute(
   const jahreszeit = aktuelleJahreszeit(datum);
   const lage = (maxElevationM ?? 0) >= ALPIN_AB_M ? "alpin" : "tal";
   return BILDER[jahreszeit][lage];
+}
+
+export interface PanoramaGipfel {
+  id: string;
+  name: string;
+  distanceKm: number;
+  bearingDeg: number;
+  /** Relative Richtung zum aktuellen Telefonkurs (-180 bis 180 Grad). */
+  relativeBearingDeg: number | null;
+}
+
+interface GipfelPoi {
+  id: string;
+  name: string;
+  kind: string;
+  lat: number;
+  lng: number;
+}
+
+function signedBearingDifference(target: number, heading: number): number {
+  return ((target - heading + 540) % 360) - 180;
+}
+
+/**
+ * Ermittelt echte OSM-Gipfel im Umfeld der aktuellen Position und berechnet
+ * ihre Lage im Sichtfeld. Das ist bewusst eine geografische Erkennung, keine
+ * visuelle KI-Bildanalyse: Es werden nur Gipfel angezeigt, die der Server als
+ * natural=peak geliefert hat.
+ */
+export function erkenneGipfel(
+  pois: readonly GipfelPoi[],
+  position: LatLng | null,
+  heading: number | null,
+): PanoramaGipfel[] {
+  if (!position) return [];
+
+  return pois
+    .filter((poi) => poi.kind === "natural=peak" && poi.name.trim().length > 0)
+    .map((poi): PanoramaGipfel => {
+      const target: LatLng = { lat: poi.lat, lng: poi.lng };
+      const distanceKm = haversineKm(position, target);
+      const targetBearing = bearingDeg(position, target);
+      return {
+        id: poi.id,
+        name: poi.name.trim(),
+        distanceKm,
+        bearingDeg: targetBearing,
+        relativeBearingDeg:
+          heading == null ? null : signedBearingDifference(targetBearing, heading),
+      };
+    })
+    .filter((peak) => peak.distanceKm <= 20)
+    .sort((a, b) => {
+      const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
+      const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
+      return aAngle - bAngle || a.distanceKm - b.distanceKm;
+    })
+    .slice(0, 8);
 }
