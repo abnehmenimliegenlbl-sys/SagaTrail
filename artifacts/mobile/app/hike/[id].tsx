@@ -3501,6 +3501,12 @@ export default function LiveHike() {
               content: (
                 <CompassCard
                   heading={compassHeading}
+                  sagaBearing={
+                    livePos && saga?.coordinates
+                      ? bearingDeg(livePos, saga.coordinates)
+                      : null
+                  }
+                  sagaName={saga?.title ?? ""}
                   available={compassAvailable}
                   direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                   coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
@@ -4320,6 +4326,8 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
 
 function CompassCard({
   heading,
+  sagaBearing,
+  sagaName,
   available,
   direction,
   coordinates,
@@ -4333,6 +4341,8 @@ function CompassCard({
   altitudeUnit,
 }: {
   heading: number | null;
+  sagaBearing: number | null;
+  sagaName: string;
   available: boolean | null;
   direction: string | null;
   coordinates: string | null;
@@ -4347,7 +4357,11 @@ function CompassCard({
 }) {
   const colors = useColors();
   const ready = available === true && heading != null && direction != null;
-  const roseRotation = heading == null ? 0 : -heading;
+  const northNeedleRotation = heading == null ? 0 : -heading;
+  const sagaNeedleRotation =
+    heading == null || sagaBearing == null
+      ? 0
+      : ((sagaBearing - heading + 540) % 360) - 180;
   const altitudeText = altitude == null
     ? "—"
     : `${Math.round(altitude).toLocaleString()} ${altitudeUnit}`;
@@ -4356,7 +4370,7 @@ function CompassCard({
     <View
       style={[
         styles.compassCard,
-        { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+        { borderColor: "#8A5C34" },
       ]}
       accessibilityLabel={
         ready
@@ -4366,11 +4380,11 @@ function CompassCard({
     >
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
-          <Feather name="compass" size={16} color={colors.accent} />
-          <Text style={[styles.compassTitle, { color: colors.accent }]}>{title}</Text>
+          <Feather name="compass" size={16} color="#E4B879" />
+          <Text style={[styles.compassTitle, { color: "#E4B879" }]}>{title}</Text>
         </View>
         {ready && (
-          <Text style={[styles.compassDegrees, { color: colors.foreground }]}>
+          <Text style={[styles.compassDegrees, { color: "#F6E7CC" }]}>
             {Math.round(heading!)}°
           </Text>
         )}
@@ -4379,55 +4393,114 @@ function CompassCard({
       {ready ? (
         <View style={styles.compassBody}>
           <View style={styles.compassDial}>
-            <View
-              style={[
-                styles.compassRose,
-                { borderColor: colors.glassBorder, transform: [{ rotate: `${roseRotation}deg` }] },
-              ]}
-            >
+            <View style={[styles.woodGrain, styles.woodGrainOne]} />
+            <View style={[styles.woodGrain, styles.woodGrainTwo]} />
+            <View style={styles.compassFace}>
+              {Array.from({ length: 24 }).map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.compassTickWrap,
+                    { transform: [{ rotate: `${index * 15}deg` }] },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.compassTick,
+                      index % 6 === 0 && styles.compassTickMajor,
+                    ]}
+                  />
+                </View>
+              ))}
               <Text style={[styles.compassNorth, { color: colors.accent }]}>N</Text>
-              <Text style={[styles.compassEast, { color: colors.foreground }]}>E</Text>
-              <Text style={[styles.compassSouth, { color: colors.foreground }]}>S</Text>
-              <Text style={[styles.compassWest, { color: colors.foreground }]}>W</Text>
+              <Text style={styles.compassEast}>E</Text>
+              <Text style={styles.compassSouth}>S</Text>
+              <Text style={styles.compassWest}>W</Text>
+
+              <View
+                style={[
+                  styles.needleLayer,
+                  { transform: [{ rotate: `${northNeedleRotation}deg` }] },
+                ]}
+              >
+                <View style={styles.northNeedleTip} />
+                <View style={styles.northNeedleShaft} />
+                <View style={styles.northNeedleTail} />
+              </View>
+
+              {sagaBearing != null && (
+                <View
+                  style={[
+                    styles.needleLayer,
+                    { transform: [{ rotate: `${sagaNeedleRotation}deg` }] },
+                  ]}
+                >
+                  <View style={styles.sagaNeedleShaft} />
+                  <View
+                    style={[
+                      styles.sagaNeedleIcon,
+                      { transform: [{ rotate: `${-sagaNeedleRotation}deg` }] },
+                    ]}
+                  >
+                    <Feather name="book-open" size={15} color="#2A1B11" />
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.compassCenterOuter}>
+                <View style={styles.compassCenterInner} />
+              </View>
             </View>
-            <View style={[styles.compassAhead, { borderBottomColor: colors.accent }]} />
-            <View style={[styles.compassCenter, { backgroundColor: colors.foreground }]} />
           </View>
           <View style={styles.compassReadout}>
-            <Text style={[styles.compassDirection, { color: colors.foreground }]}>{direction}</Text>
+            <Text style={styles.compassDirection}>{direction}</Text>
+            <View style={styles.compassLegend}>
+              <View style={styles.compassLegendItem}>
+                <View style={styles.northLegendMark} />
+                <Text style={styles.compassLegendText}>N</Text>
+              </View>
+              {sagaName ? (
+                <View style={[styles.compassLegendItem, { flex: 1 }]}>
+                  <Feather name="book-open" size={13} color="#D8A84E" />
+                  <Text style={styles.compassSagaName} numberOfLines={1}>
+                    {sagaName}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
       ) : available === null ? (
         <View style={styles.compassUnavailableRow}>
           <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={[styles.compassHint, { color: colors.mutedForeground }]}>…</Text>
+          <Text style={[styles.compassHint, { color: "#C6A77B" }]}>…</Text>
         </View>
       ) : (
-        <Text style={[styles.compassHint, { color: colors.mutedForeground }]}>{unavailable}</Text>
+        <Text style={[styles.compassHint, { color: "#C6A77B" }]}>{unavailable}</Text>
       )}
 
-      <View style={[styles.compassLocationData, { borderTopColor: colors.glassBorder }]}>
+      <View style={[styles.compassLocationData, { borderTopColor: "#704725" }]}>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
             {placeLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]} numberOfLines={1}>
             {place ?? "—"}
           </Text>
         </View>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
             {coordinatesLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]} numberOfLines={1}>
             {coordinates ?? "—"}
           </Text>
         </View>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
             {altitudeLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: colors.foreground }]}>
+          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]}>
             {altitudeText}
           </Text>
         </View>
@@ -4521,8 +4594,14 @@ const styles = StyleSheet.create({
   compassCard: {
     marginTop: 12,
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 22,
+    padding: 16,
+    backgroundColor: "#2A1B11",
+    shadowColor: "#000",
+    shadowOpacity: 0.42,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 9 },
+    elevation: 4,
   },
   compassHeader: {
     flexDirection: "row",
@@ -4533,43 +4612,217 @@ const styles = StyleSheet.create({
   compassTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   compassDegrees: { fontFamily: fonts.monoBold, fontSize: 14 },
   compassBody: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    marginTop: 10,
+    gap: 12,
+    marginTop: 14,
   },
   compassDial: {
-    width: 84,
-    height: 84,
+    width: 226,
+    height: 226,
+    borderRadius: 113,
+    borderWidth: 5,
+    borderColor: "#B9824D",
+    backgroundColor: "#6D4328",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.55,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 5,
   },
-  compassRose: {
+  woodGrain: {
     position: "absolute",
-    width: 84,
-    height: 84,
-    borderWidth: 1,
-    borderRadius: 42,
+    borderWidth: 2,
+    borderColor: "rgba(44,23,11,0.38)",
+    borderRadius: 999,
   },
-  compassNorth: { position: "absolute", top: 5, alignSelf: "center", fontFamily: fonts.monoBold, fontSize: 13 },
-  compassEast: { position: "absolute", right: 7, top: 35, fontFamily: fonts.monoBold, fontSize: 12 },
-  compassSouth: { position: "absolute", bottom: 5, alignSelf: "center", fontFamily: fonts.monoBold, fontSize: 12 },
-  compassWest: { position: "absolute", left: 7, top: 35, fontFamily: fonts.monoBold, fontSize: 12 },
-  compassAhead: {
+  woodGrainOne: {
+    width: 248,
+    height: 112,
+    transform: [{ rotate: "22deg" }],
+  },
+  woodGrainTwo: {
+    width: 116,
+    height: 252,
+    transform: [{ rotate: "-31deg" }],
+  },
+  compassFace: {
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    borderWidth: 3,
+    borderColor: "#3B281C",
+    backgroundColor: "#EFE0BC",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#2A1609",
+    shadowOpacity: 0.6,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  compassTickWrap: {
     position: "absolute",
-    top: 3,
+    width: 184,
+    height: 184,
+    alignItems: "center",
+  },
+  compassTick: {
+    width: 1,
+    height: 7,
+    marginTop: 5,
+    backgroundColor: "#765B3F",
+  },
+  compassTickMajor: {
+    width: 2,
+    height: 12,
+    backgroundColor: "#37271D",
+  },
+  compassNorth: {
+    position: "absolute",
+    top: 20,
+    alignSelf: "center",
+    fontFamily: fonts.monoBold,
+    fontSize: 18,
+  },
+  compassEast: {
+    position: "absolute",
+    right: 24,
+    top: 83,
+    color: "#4B392B",
+    fontFamily: fonts.monoBold,
+    fontSize: 14,
+  },
+  compassSouth: {
+    position: "absolute",
+    bottom: 20,
+    alignSelf: "center",
+    color: "#4B392B",
+    fontFamily: fonts.monoBold,
+    fontSize: 14,
+  },
+  compassWest: {
+    position: "absolute",
+    left: 24,
+    top: 83,
+    color: "#4B392B",
+    fontFamily: fonts.monoBold,
+    fontSize: 14,
+  },
+  needleLayer: {
+    position: "absolute",
+    width: 156,
+    height: 156,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  northNeedleTip: {
+    position: "absolute",
+    top: 13,
     width: 0,
     height: 0,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderBottomWidth: 9,
+    borderLeftWidth: 7,
+    borderRightWidth: 7,
+    borderBottomWidth: 17,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
+    borderBottomColor: "#B22A2E",
   },
-  compassCenter: { width: 7, height: 7, borderRadius: 4 },
-  compassReadout: { flex: 1, gap: 5 },
-  compassDirection: { fontFamily: fonts.titleBold, fontSize: 20 },
+  northNeedleShaft: {
+    position: "absolute",
+    top: 28,
+    width: 4,
+    height: 51,
+    backgroundColor: "#B22A2E",
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+  },
+  northNeedleTail: {
+    position: "absolute",
+    top: 78,
+    width: 4,
+    height: 46,
+    backgroundColor: "#E7D8B8",
+    borderWidth: 1,
+    borderColor: "#5C4938",
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  sagaNeedleShaft: {
+    position: "absolute",
+    top: 24,
+    width: 3,
+    height: 55,
+    backgroundColor: "#D8A84E",
+    shadowColor: "#6B4316",
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+  },
+  sagaNeedleIcon: {
+    position: "absolute",
+    top: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: "#8B5B20",
+    backgroundColor: "#E8C774",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  compassCenterOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 3,
+    borderColor: "#6B4316",
+    backgroundColor: "#D8A84E",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#2A1609",
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+  },
+  compassCenterInner: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#2A1B11",
+  },
+  compassReadout: { width: "100%", alignItems: "center", gap: 8 },
+  compassDirection: {
+    color: "#F6E7CC",
+    fontFamily: fonts.titleBold,
+    fontSize: 24,
+  },
+  compassLegend: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  compassLegendItem: {
+    minWidth: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  northLegendMark: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: "#B22A2E",
+  },
+  compassLegendText: { color: "#E8D7B9", fontFamily: fonts.monoBold, fontSize: 10 },
+  compassSagaName: {
+    color: "#E8D7B9",
+    fontFamily: fonts.story,
+    fontSize: 13,
+    flexShrink: 1,
+  },
   compassHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
   compassUnavailableRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
   compassLocationData: {
