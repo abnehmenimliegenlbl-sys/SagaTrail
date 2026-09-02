@@ -527,6 +527,7 @@ export default function LiveHike() {
     { id: string; geometry: number[][] }[] | null
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
+  const [liveRecognitionPois, setLiveRecognitionPois] = useState<Poi[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
@@ -604,6 +605,7 @@ export default function LiveHike() {
   const compassHeadingRef = useRef<number | null>(null);
   const livePlaceLookupRef = useRef<{ lat: number; lng: number; requestedAt: number } | null>(null);
   const livePlaceLookupGenerationRef = useRef(0);
+  const liveRecognitionPoiLookupRef = useRef<{ lat: number; lng: number; requestedAt: number } | null>(null);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
@@ -1342,6 +1344,51 @@ export default function LiveHike() {
       .catch(() => {
         // Der letzte bekannte Ort bleibt bei einem kurzen Netzfehler erhalten.
       });
+  }, [livePos?.lat, livePos?.lng]);
+
+  // Fuer die Fotoanalyse werden POIs direkt um die echte Telefonposition
+  // nachgeladen. Die normale POI-Liste folgt dem Routen-Korridor und kann
+  // deshalb bei einem Start abseits der Route falsche, weit entfernte Berge
+  // enthalten. Ein Abruf pro 400 m bzw. spaetestens pro Minute reicht aus.
+  useEffect(() => {
+    if (!livePos) return;
+    const position = livePos;
+    const previous = liveRecognitionPoiLookupRef.current;
+    const movedKm = previous ? haversineKm(previous, position) : Number.POSITIVE_INFINITY;
+    const elapsedMs = previous ? Date.now() - previous.requestedAt : Number.POSITIVE_INFINITY;
+    if (previous && movedKm < 0.4 && elapsedMs < 60_000) return;
+
+    liveRecognitionPoiLookupRef.current = { ...position, requestedAt: Date.now() };
+    const bbox = bboxAroundGeometry(null, position, 0.5);
+    let cancelled = false;
+    let attempt = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const tryLoad = () => {
+      getPois(bbox)
+        .then((result) => {
+          if (cancelled) return;
+          setLiveRecognitionPois(result);
+          // Bei einer kalten Server-Cache-Abfrage kommt zunächst [] zurück,
+          // während Overpass im Hintergrund lädt.
+          if (result.length === 0 && attempt < 4 && !cancelled) {
+            attempt++;
+            retryTimer = setTimeout(tryLoad, 8_000);
+          }
+        })
+        .catch(() => {
+          if (attempt < 4 && !cancelled) {
+            attempt++;
+            retryTimer = setTimeout(tryLoad, 8_000);
+          }
+        });
+    };
+
+    tryLoad();
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) clearTimeout(retryTimer);
+    };
   }, [livePos?.lat, livePos?.lng]);
 
   // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per
