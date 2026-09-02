@@ -4392,10 +4392,6 @@ function CompassCard({
       />
       <View style={styles.compassCardShade} />
       <View style={styles.compassHeader}>
-        <View style={styles.compassTitleRow}>
-          <Feather name="compass" size={16} color="#E4B879" />
-          <Text style={[styles.compassTitle, { color: COMPASS_GOLD }]}>{title}</Text>
-        </View>
         {ready && (
           <Text style={[styles.compassDegrees, { color: COMPASS_GOLD }]}>
             {Math.round(heading!)}°
@@ -4619,10 +4615,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
   },
-  compassTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  compassTitle: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 11, letterSpacing: 1.5 },
   compassDegrees: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 14 },
   compassBody: {
     position: "relative",
