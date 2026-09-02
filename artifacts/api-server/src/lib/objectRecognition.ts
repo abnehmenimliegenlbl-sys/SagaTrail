@@ -34,6 +34,8 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_CANDIDATES = 3;
 const PLANTNET_API_URL = "https://my-api.plantnet.org/v2/identify/all";
 const PLANTNET_TIMEOUT_MS = 12_000;
+const ANIMAL_DETECT_API_URL = "https://api.animaldetect.com/v1/detect";
+const ANIMAL_DETECT_TIMEOUT_MS = 15_000;
 const ALLOWED_OBJECT_TYPES = new Set([
   "mountain",
   "landform",
@@ -152,6 +154,32 @@ interface PlantNetResponse {
   remainingIdentificationRequests?: unknown;
 }
 
+interface AnimalTaxonomy {
+  id?: unknown;
+  class?: unknown;
+  order?: unknown;
+  family?: unknown;
+  genus?: unknown;
+  species?: unknown;
+}
+
+interface AnimalAnnotation {
+  score?: unknown;
+  label?: unknown;
+  taxonomy?: AnimalTaxonomy;
+}
+
+interface AnimalDetectResponse {
+  annotations?: unknown;
+}
+
+interface AnimalMatch {
+  label: string;
+  scientificName: string;
+  confidence: number;
+  count: number;
+}
+
 function plantNetLanguage(language: string): string {
   const normalized = language === "gsw" ? "de" : language;
   return new Set(["de", "en", "fr", "it", "es", "pt", "zh"]).has(normalized)
@@ -169,9 +197,10 @@ function multipartPart(boundary: string, name: string, value: string): Buffer {
 function multipartImage(
   boundary: string,
   image: Buffer,
-  mediaType: "image/jpeg" | "image/png",
+  mediaType: ObjectRecognitionInput["mediaType"],
 ): Buffer {
-  const extension = mediaType === "image/png" ? "png" : "jpg";
+  const extension =
+    mediaType === "image/png" ? "png" : mediaType === "image/webp" ? "webp" : "jpg";
   return Buffer.concat([
     Buffer.from(
       `--${boundary}\r\nContent-Disposition: form-data; name="images"; filename="sagatrail.${extension}"\r\nContent-Type: ${mediaType}\r\n\r\n`,
@@ -302,6 +331,107 @@ async function identifyPlantWithPlantNet(
     log.warn(
       { error: err instanceof Error ? err.name : "unknown" },
       "Pl@ntNet-Abgleich fehlgeschlagen; Claude-Ergebnis bleibt aktiv",
+    );
+    return null;
+  }
+}
+
+function animalText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function animalScore(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : 0;
+}
+
+function animalScientificName(taxonomy: AnimalTaxonomy | undefined): string {
+  const genus = animalText(taxonomy?.genus);
+  const species = animalText(taxonomy?.species);
+  if (genus && species) return `${genus} ${species}`;
+  return species || genus;
+}
+
+async function identifyAnimalWithAnimalDetect(
+  input: ObjectRecognitionInput,
+  log: Logger,
+): Promise<AnimalMatch[] | null> {
+  const apiKey = process.env.ANIMAL_DETECT_API_KEY?.trim();
+  if (!apiKey) {
+    log.warn("Animal-Detect-Abgleich übersprungen: ANIMAL_DETECT_API_KEY fehlt");
+    return null;
+  }
+
+  const image = Buffer.from(input.imageBase64, "base64");
+  const boundary = "----SagaTrailAnimalDetectBoundary";
+  const body = Buffer.concat([
+    multipartImage(boundary, image, input.mediaType),
+    multipartPart(boundary, "country", "CHE"),
+    multipartPart(boundary, "threshold", "0.2"),
+    multipartPart(boundary, "classify", "true"),
+    multipartPart(boundary, "top_candidate", String(MAX_CANDIDATES)),
+    ...(input.lat != null && input.lng != null
+      ? [
+          multipartPart(boundary, "latitude", String(input.lat)),
+          multipartPart(boundary, "longitude", String(input.lng)),
+        ]
+      : []),
+    Buffer.from(`--${boundary}--\r\n`, "utf8"),
+  ]);
+
+  try {
+    const response = await fetch(ANIMAL_DETECT_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": String(body.byteLength),
+        "User-Agent": "SagaTrail/1.0 (animal-recognition)",
+      },
+      body,
+      signal: AbortSignal.timeout(ANIMAL_DETECT_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      log.warn({ status: response.status }, "Animal-Detect-Abgleich nicht erfolgreich");
+      return null;
+    }
+
+    const payload = (await response.json()) as AnimalDetectResponse;
+    const annotations = Array.isArray(payload.annotations) ? payload.annotations : [];
+    const grouped = new Map<string, AnimalMatch>();
+    for (const value of annotations) {
+      if (!value || typeof value !== "object") continue;
+      const annotation = value as AnimalAnnotation;
+      const label = animalText(annotation.label);
+      if (!label || ["animal", "human", "vehicle", "blank"].includes(label.toLowerCase())) {
+        continue;
+      }
+      const scientificName = animalScientificName(annotation.taxonomy);
+      const taxonId = animalText(annotation.taxonomy?.id);
+      const key = taxonId || `${scientificName}|${label.toLowerCase()}`;
+      const confidence = animalScore(annotation.score);
+      const existing = grouped.get(key);
+      if (!existing) {
+        grouped.set(key, { label, scientificName, confidence, count: 1 });
+      } else {
+        existing.count += 1;
+        existing.confidence = Math.max(existing.confidence, confidence);
+      }
+    }
+
+    const normalized = [...grouped.values()]
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, MAX_CANDIDATES);
+    log.info(
+      { annotations: annotations.length, species: normalized.length },
+      "Animal-Detect-Abgleich abgeschlossen",
+    );
+    return normalized;
+  } catch (err) {
+    log.warn(
+      { error: err instanceof Error ? err.name : "unknown" },
+      "Animal-Detect-Abgleich fehlgeschlagen; Claude-Ergebnis bleibt aktiv",
     );
     return null;
   }
@@ -493,6 +623,47 @@ export async function recognizeObject(
         (entry) => entry.objectType !== "plant",
       );
       const enrichedEntries = [...plantCandidates, ...nonPlantCandidates].slice(
+        0,
+        MAX_CANDIDATES,
+      );
+      candidates = enrichedEntries.map((entry) => entry.candidate);
+      candidateEntries.splice(0, candidateEntries.length, ...enrichedEntries);
+    }
+  }
+
+  const animalEntry = candidateEntries.find((entry) => entry.objectType === "animal");
+  if (animalEntry) {
+    const animalMatches = await identifyAnimalWithAnimalDetect(input, log);
+    if (animalMatches && animalMatches.length > 0) {
+      const originalAnimalCandidate = animalEntry.candidate;
+      const animalCandidates = animalMatches.map((match, index) => ({
+        candidate: {
+          id: `animal-detect-${index + 1}`,
+          title: match.scientificName
+            ? `${match.label} (${match.scientificName})`
+            : match.label,
+          category: originalAnimalCandidate.category || "Tier",
+          confidence: match.confidence,
+          description:
+            index === 0
+              ? originalAnimalCandidate.description
+              : "Animal Detect führt diese Art als möglichen visuellen Treffer.",
+          whyLikely:
+            index === 0
+              ? originalAnimalCandidate.whyLikely
+              : "Die Art gehört zu den wahrscheinlichsten Animal-Detect-Treffern für dieses Foto.",
+          sourceUrl: null,
+          sourceTitle: null,
+          sourceExtract: null,
+          sourceImage: null,
+        },
+        objectType: "animal",
+        searchQuery: match.scientificName || match.label,
+      }));
+      const nonAnimalCandidates = candidateEntries.filter(
+        (entry) => entry.objectType !== "animal",
+      );
+      const enrichedEntries = [...animalCandidates, ...nonAnimalCandidates].slice(
         0,
         MAX_CANDIDATES,
       );
