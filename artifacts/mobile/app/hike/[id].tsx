@@ -4655,7 +4655,7 @@ const styles = StyleSheet.create({
   },
   photoEast: {
     position: "absolute",
-    right: "22%",
+    right: "17%",
     top: "48%",
     color: "#D8A84E",
     fontFamily: Platform.select({
@@ -4672,7 +4672,7 @@ const styles = StyleSheet.create({
   photoSouth: {
     position: "absolute",
     left: "50%",
-    top: "73%",
+    top: "83%",
     marginLeft: -6,
     color: "#D8A84E",
     fontFamily: Platform.select({
@@ -4688,7 +4688,7 @@ const styles = StyleSheet.create({
   },
   photoWest: {
     position: "absolute",
-    left: "22%",
+    left: "17%",
     top: "48%",
     color: "#D8A84E",
     fontFamily: Platform.select({
