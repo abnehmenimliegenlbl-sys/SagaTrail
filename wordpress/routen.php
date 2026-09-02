@@ -1213,7 +1213,23 @@ function strInterpolateProfile(profile,distance){
 }
 function strGradeBand(grade){
   var absolute=Math.abs(grade);
-  return absolute>=30?'red':absolute>=20?'orange':absolute>=10?'yellow':'green';
+  return absolute>=30-.000001?'red':absolute>=20-.000001?'orange':absolute>=10-.000001?'yellow':'green';
+}
+function strSmoothIsolatedProfileSpikes(points){
+  if(points.length<3)return points;
+  return points.map(function(point,index){
+    if(index===0||index===points.length-1)return point;
+    var previous=points[index-1],next=points[index+1];
+    var surroundingWidth=next.distanceKm-previous.distanceKm;
+    var isLocalExtremum=(point.altM>previous.altM&&point.altM>next.altM)
+      ||(point.altM<previous.altM&&point.altM<next.altM);
+    if(!isLocalExtremum||surroundingWidth>.05*2+.001)return point;
+    return{
+      distanceKm:point.distanceKm,
+      altM:previous.altM+(next.altM-previous.altM)
+        *(point.distanceKm-previous.distanceKm)/(next.distanceKm-previous.distanceKm)
+    };
+  });
 }
 function strPointAtDistance(pts,distances,distance){
   if(distance<=0)return pts[0];
@@ -1256,6 +1272,7 @@ function strBuildGradeSegments(pts,profile){
   var profileKm=clean[clean.length-1].distanceKm;
   if(profileKm<=0)return[{points:pts,color:'#3E9B46'}];
   var scale=profileKm/routeKm;
+  var gradingProfile=strSmoothIsolatedProfileSpikes(clean);
   var breaks=distances.slice();
   for(var distance=.05;distance<routeKm;distance+=.05)breaks.push(distance);
   breaks.sort(function(a,b){return a-b;});
@@ -1266,7 +1283,7 @@ function strBuildGradeSegments(pts,profile){
   var colors={green:'#3E9B46',yellow:'#F2C94C',orange:'#F2994A',red:'#DA291C'};
   return unique.slice(1).map(function(end,index){
     var start=unique[index];
-    var grade=strGradeAtDistance(clean,(start+end)/2,routeKm,scale);
+    var grade=strGradeAtDistance(gradingProfile,(start+end)/2,routeKm,scale);
     var band=strGradeBand(grade);
     return{points:[
       strPointAtDistance(pts,distances,start),

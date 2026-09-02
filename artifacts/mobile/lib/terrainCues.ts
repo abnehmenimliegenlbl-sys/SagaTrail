@@ -26,6 +26,7 @@ export interface RouteGradeSegment {
 
 const ANALYSIS_STEP_KM = 0.05;
 const GRADE_WINDOW_KM = 0.05;
+const GRADE_THRESHOLD_EPSILON_PCT = 0.000001;
 const ANNOUNCE_GRADE_PCT = 6;
 const VERY_STEEP_GRADE_PCT = 30;
 
@@ -46,10 +47,46 @@ function profileAltitude(points: TerrainProfilePoint[], distanceKmValue: number)
 
 function gradeBand(gradePct: number): RouteGradeBand {
   const absoluteGrade = Math.abs(gradePct);
-  if (absoluteGrade >= 30) return "red";
-  if (absoluteGrade >= 20) return "orange";
-  if (absoluteGrade >= 10) return "yellow";
+  if (absoluteGrade >= 30 - GRADE_THRESHOLD_EPSILON_PCT) return "red";
+  if (absoluteGrade >= 20 - GRADE_THRESHOLD_EPSILON_PCT) return "orange";
+  if (absoluteGrade >= 10 - GRADE_THRESHOLD_EPSILON_PCT) return "yellow";
   return "green";
+}
+
+/**
+ * Removes isolated local extrema from the elevation profile before grading.
+ * A single DTM sample can otherwise sit exactly on a 50 m bin boundary and
+ * make both neighbouring bins look steep even though the route is flat.
+ */
+function smoothIsolatedProfileSpikes(
+  points: TerrainProfilePoint[],
+): TerrainProfilePoint[] {
+  if (points.length < 3) return points;
+
+  return points.map((point, index) => {
+    if (index === 0 || index === points.length - 1) return point;
+    const previous = points[index - 1];
+    const next = points[index + 1];
+    const surroundingWidthKm = next.distanceKm - previous.distanceKm;
+    const isLocalExtremum =
+      (point.altM > previous.altM && point.altM > next.altM) ||
+      (point.altM < previous.altM && point.altM < next.altM);
+
+    if (
+      !isLocalExtremum ||
+      surroundingWidthKm > GRADE_WINDOW_KM * 2 + 0.001
+    ) {
+      return point;
+    }
+
+    return {
+      distanceKm: point.distanceKm,
+      altM:
+        previous.altM +
+        ((next.altM - previous.altM) * (point.distanceKm - previous.distanceKm)) /
+          (next.distanceKm - previous.distanceKm),
+    };
+  });
 }
 
 function pointAtDistance(
@@ -135,6 +172,7 @@ export function buildRouteGradeSegments(
   const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
   if (profileLengthKm <= 0) return [{ coordinates: coords, band: "green" }];
   const profileScale = profileLengthKm / routeLengthKm;
+  const gradingProfile = smoothIsolatedProfileSpikes(normalizedProfile);
 
   const breakDistances = [...routeDistances];
   for (let distanceKmValue = GRADE_WINDOW_KM; distanceKmValue < routeLengthKm; distanceKmValue += GRADE_WINDOW_KM) {
@@ -149,7 +187,7 @@ export function buildRouteGradeSegments(
   return uniqueBreakDistances.slice(1).map((endDistanceKm, index) => {
     const startDistanceKm = uniqueBreakDistances[index];
     const gradePct = gradeAtDistance(
-      normalizedProfile,
+      gradingProfile,
       (startDistanceKm + endDistanceKm) / 2,
       routeLengthKm,
       profileScale,
