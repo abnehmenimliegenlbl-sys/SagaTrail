@@ -4378,6 +4378,12 @@ function CompassCard({
           : unavailable
       }
     >
+      <Image
+        source={require("../../assets/images/antique-compass-card-wood.jpg")}
+        style={styles.compassCardWood}
+        resizeMode="cover"
+      />
+      <View style={styles.compassCardShade} />
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
           <Feather name="compass" size={16} color="#E4B879" />
@@ -4425,13 +4431,12 @@ function CompassCard({
                 <View
                   style={[
                     styles.sagaNeedleIcon,
-                    { transform: [{ rotate: `${-sagaNeedleRotation}deg` }] },
                   ]}
                 >
-                  <SparkMountain
-                    size={24}
-                    mountainColor="#4A2C19"
-                    sparkColor="#F4C96A"
+                  <Image
+                    source={require("../../assets/images/compass-saga-pointer.png")}
+                    style={styles.sagaNeedleImage}
+                    resizeMode="contain"
                   />
                 </View>
               </View>
@@ -4598,6 +4603,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 9 },
     elevation: 4,
   },
+  compassCardWood: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.9,
+  },
+  compassCardShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(38,18,11,0.48)",
+  },
   compassHeader: {
     position: "relative",
     zIndex: 1,
@@ -4630,7 +4643,7 @@ const styles = StyleSheet.create({
   photoNorth: {
     position: "absolute",
     left: "50%",
-    top: "43.5%",
+    top: "20.5%",
     marginLeft: -7,
     color: "#9A2428",
     fontFamily: fonts.titleBold,
@@ -4640,8 +4653,8 @@ const styles = StyleSheet.create({
   },
   photoEast: {
     position: "absolute",
-    right: "25%",
-    top: "63%",
+    right: "18%",
+    top: "48%",
     color: "#34261C",
     fontFamily: fonts.titleBold,
     fontSize: 13,
@@ -4649,7 +4662,7 @@ const styles = StyleSheet.create({
   photoSouth: {
     position: "absolute",
     left: "50%",
-    top: "82.5%",
+    top: "77%",
     marginLeft: -6,
     color: "#34261C",
     fontFamily: fonts.titleBold,
@@ -4657,8 +4670,8 @@ const styles = StyleSheet.create({
   },
   photoWest: {
     position: "absolute",
-    left: "25%",
-    top: "63%",
+    left: "18%",
+    top: "48%",
     color: "#34261C",
     fontFamily: fonts.titleBold,
     fontSize: 13,
@@ -4666,7 +4679,7 @@ const styles = StyleSheet.create({
   needleLayer: {
     position: "absolute",
     left: "50%",
-    top: "64.8%",
+    top: "50.2%",
     marginLeft: -78,
     marginTop: -78,
     width: 156,
@@ -4718,20 +4731,20 @@ const styles = StyleSheet.create({
   },
   sagaNeedleIcon: {
     position: "absolute",
-    top: 2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "#8B5B20",
-    backgroundColor: "#E8C774",
+    top: -5,
+    width: 62,
+    height: 58,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sagaNeedleImage: {
+    width: "100%",
+    height: "100%",
   },
   compassCenterOuter: {
     position: "absolute",
     left: "50%",
-    top: "64.8%",
+    top: "50.2%",
     marginLeft: -11,
     marginTop: -11,
     width: 22,

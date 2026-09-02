@@ -43,6 +43,7 @@
 - [Zwei RN Modals gleichzeitig offen](rn-double-modal-stacking.md) — Vollbildkarte + POI-Detail als separate RN `Modal`s ueberlappen sich plattformabhaengig; vor Oeffnen des zweiten immer das erste per Callback schliessen.
 - [Replit AI Integrations Proxy Ausfall](ai-integrations-proxy-fallback.md) — Anthropic-Proxy kann "not configured" liefern trotz korrekt gesetzter Env-Vars und 3x Neuprovisionierung; Fallback auf direkten ANTHROPIC_API_KEY im Client eingebaut.
 - [SagaTrail walk-to-trailhead hint](sagatrail-walk-to-start.md) — pre-hike banner is straight-line distance+compass to route start, deliberately not real pedestrian routing (that's a separate, bigger feature).
+- [SagaTrail compass pointer](sagatrail-compass-pointer.md) — dedicated star-and-mountain needle rotates as one unit so the star always points outward; do not substitute SparkMountain.
 - [SagaTrail Kantonswappen-Assets](sagatrail-canton-wappen.md) — Wikimedia blockiert diese Sandbox komplett (429 überall); echte Wappen-SVGs kommen von GitHub `nzzdev/ch-canton-symbols`.
 - [SagaTrail step counter](sagatrail-step-counter.md) — expo-sensors Pedometer, per-hike only, silent no-op fallback when sensor unavailable (mirrors GPS-unavailable pattern).
 - [SagaTrail TTS OpenAI-Rueckfall](sagatrail-tts-openai-fallback.md) — wenn ALLE ElevenLabs-Stimmen scheitern (Kontingent/Key), springt OpenAI (gpt-audio, neutral, kein Akzent) automatisch ein.
