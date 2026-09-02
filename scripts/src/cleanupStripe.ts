@@ -1,4 +1,4 @@
-import { getUncachableStripeClient } from "../../artifacts/api-server/src/lib/stripeClient";
+import { getUncachableStripeClient } from "./stripeClient";
 
 async function cleanup() {
   const stripe = await getUncachableStripeClient();

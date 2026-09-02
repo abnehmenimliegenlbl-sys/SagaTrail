@@ -17,18 +17,30 @@ async function main() {
   console.log("Starte RC-Customer-Reset …\n");
 
   do {
-    const { data, error } = await listCustomers({
-      client,
-      path: { project_id: PROJECT_ID },
-      query: { limit: 100, ...(nextPage ? { starting_after: nextPage } : {}) },
-    });
+    const response: {
+      data?: {
+        items?: Array<{ id: string }>;
+        next_page?: string | null;
+      };
+      error?: unknown;
+    } = await listCustomers({
+        client,
+        path: { project_id: PROJECT_ID },
+        query: { limit: 100, ...(nextPage ? { starting_after: nextPage } : {}) },
+      }) as {
+        data?: {
+          items?: Array<{ id: string }>;
+          next_page?: string | null;
+        };
+        error?: unknown;
+      };
 
-    if (error || !data) {
-      console.error("Fehler beim Laden der Customer-Liste:", JSON.stringify(error));
+    if (response.error || !response.data) {
+      console.error("Fehler beim Laden der Customer-Liste:", JSON.stringify(response.error));
       process.exit(1);
     }
 
-    const items = data.items ?? [];
+    const items = response.data.items ?? [];
     console.log(`Seite ${seite}: ${items.length} Customers geladen`);
 
     for (const customer of items) {
@@ -55,7 +67,7 @@ async function main() {
       await new Promise((r) => setTimeout(r, 100));
     }
 
-    nextPage = data.next_page ?? null;
+    nextPage = response.data.next_page ?? null;
     seite++;
   } while (nextPage);
 

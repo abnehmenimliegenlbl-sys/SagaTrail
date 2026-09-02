@@ -4,7 +4,7 @@
  *
  * Ausführen: pnpm --filter @workspace/scripts exec tsx src/seedStripeProducts.ts
  */
-import { getUncachableStripeClient } from "../../artifacts/api-server/src/lib/stripeClient";
+import { getUncachableStripeClient } from "./stripeClient";
 
 const PRODUCTS = [
   {
