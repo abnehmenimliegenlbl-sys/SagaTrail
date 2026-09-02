@@ -136,23 +136,28 @@ async function fetchSwisstopoChunk(
         return null;
       }
 
-      const profile = data.map((p) => {
-        const alt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
-        return typeof alt === "number" &&
-          Number.isFinite(alt) &&
-          typeof p.dist === "number" &&
-          Number.isFinite(p.dist)
-          ? [{ distanceKm: p.dist / 1000, altM: Math.round(alt) }]
-          : null;
+      const profile = data.flatMap((p) => {
+        const rawAlt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
+        const alt = typeof rawAlt === "number" ? rawAlt : Number(rawAlt);
+        const distance = typeof p.dist === "number" ? p.dist : Number(p.dist);
+        return Number.isFinite(alt) && Number.isFinite(distance)
+          ? [{ distanceKm: distance / 1000, altM: Math.round(alt) }]
+          : [];
       });
-      if (profile.some((point) => point === null)) {
+      if (profile.length < 2) {
         log.warn(
-          { points: points.length },
-          "swisstopo-Profil: unvollstaendiger Hoehenwert",
+          { points: points.length, receivedPoints: data.length, validPoints: profile.length },
+          "swisstopo-Profil: zu wenige gueltige Hoehenwerte",
         );
         return null;
       }
-      return profile.flat() as ElevationProfilePoint[];
+      if (profile.length < data.length) {
+        log.warn(
+          { points: points.length, receivedPoints: data.length, validPoints: profile.length },
+          "swisstopo-Profil: einzelne Hoehenwerte fehlen — gueltige Punkte werden verwendet",
+        );
+      }
+      return profile;
     } catch (err) {
       log.warn(
         { err, points: points.length, attempt: attempt + 1 },

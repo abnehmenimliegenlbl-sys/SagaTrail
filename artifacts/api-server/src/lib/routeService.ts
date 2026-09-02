@@ -369,7 +369,9 @@ async function enrichPoiWithWikipedia(
           searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
         ]);
         const image = p18Image ?? p373Image ?? nameMatch?.url ?? geoImage;
-        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? nameMatch?.description ?? "";
+        // Die unbeschränkte Namenssuche hat hier keinen Ortsabgleich; ihre
+        // Bildbeschreibung darf deshalb nicht als POI-Fakt verwendet werden.
+        const extractB = wikidataFactsB ?? aiTextWiki?.extract ?? "";
         if (image || extractB) {
           return {
             ...poi,
@@ -419,12 +421,15 @@ async function enrichPoiWithWikipedia(
     ]);
     const commonsImage = nameMatch?.url ?? geoImage;
     const commonsDescription = nameMatch?.description ?? "";
-    if (commonsImage || aiWiki || commonsDescription) {
+    const verifiedExtract = [commonsDescription, aiWiki?.extract]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n");
+    if (commonsImage || verifiedExtract) {
       return {
         ...poi,
         wiki: {
           title: aiWiki?.title ?? poi.name,
-          extract: aiWiki?.extract ?? commonsDescription,
+          extract: verifiedExtract,
           url: aiWiki?.url ?? nameMatch?.descriptionUrl ?? "",
           lang: aiWiki?.lang ?? "de",
           image: commonsImage ?? aiWiki?.image ?? null,
