@@ -4672,7 +4672,7 @@ const styles = StyleSheet.create({
   photoSouth: {
     position: "absolute",
     left: "50%",
-    top: "77%",
+    top: "78%",
     marginLeft: -6,
     color: "#D8A84E",
     fontFamily: Platform.select({
