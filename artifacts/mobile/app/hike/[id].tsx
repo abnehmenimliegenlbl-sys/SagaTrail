@@ -504,6 +504,7 @@ export default function LiveHike() {
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [liveAltitude, setLiveAltitude] = useState<number | null>(null);
+  const [livePlace, setLivePlace] = useState<string | null>(null);
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
@@ -588,6 +589,7 @@ export default function LiveHike() {
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
   const compassHeadingRef = useRef<number | null>(null);
+  const livePlaceLookupRef = useRef<{ lat: number; lng: number; requestedAt: number } | null>(null);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
   const routeGeomRef = useRef<number[][] | null | undefined>(null);
   /** true waehrend der Nutzer als "vom Weg" gilt — verhindert doppeltes Ausloesen. */
@@ -1297,6 +1299,35 @@ export default function LiveHike() {
       }
     }
   }, []);
+
+  // Den naechsten Ort nicht bei jedem GPS-Fix abfragen: Nominatim erlaubt nur
+  // eine Anfrage pro Sekunde, und beim Wandern reicht ein Update alle 100 m
+  // bzw. spaetestens nach einer Minute.
+  useEffect(() => {
+    if (!livePos) return;
+    const previous = livePlaceLookupRef.current;
+    const movedKm = previous ? haversineKm(previous, livePos) : Number.POSITIVE_INFINITY;
+    const elapsedMs = previous ? Date.now() - previous.requestedAt : Number.POSITIVE_INFINITY;
+    if (previous && movedKm < 0.1 && elapsedMs < 60_000) return;
+
+    livePlaceLookupRef.current = { ...livePos, requestedAt: Date.now() };
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/routes/reverse-geocode?lat=${livePos.lat}&lng=${livePos.lng}`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Ortsbestimmung nicht verfügbar");
+        return response.json() as Promise<{ place?: string | null; found?: boolean }>;
+      })
+      .then((data) => {
+        if (!cancelled && data.found) setLivePlace(data.place ?? null);
+      })
+      .catch(() => {
+        // Der letzte bekannte Ort bleibt bei einem kurzen Netzfehler erhalten.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [livePos?.lat, livePos?.lng]);
 
   // Beim Antippen eines POI-Markers wird der rohe Wikipedia-Auszug live per
   // KI in denselben Erzaehlton wie die Sagen umgeschrieben. Schlaegt das
@@ -3453,10 +3484,12 @@ export default function LiveHike() {
           available={compassAvailable}
           direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
           coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
+          place={livePlace}
           altitude={liveAltitude}
           title={t.compass}
           unavailable={t.compassUnavailable}
           coordinatesLabel={t.coordinates}
+          placeLabel={t.place}
           altitudeLabel={t.altitude}
           altitudeUnit={t.altitudeUnit}
         />
@@ -4221,10 +4254,12 @@ function CompassCard({
   available,
   direction,
   coordinates,
+  place,
   altitude,
   title,
   unavailable,
   coordinatesLabel,
+  placeLabel,
   altitudeLabel,
   altitudeUnit,
 }: {
@@ -4232,10 +4267,12 @@ function CompassCard({
   available: boolean | null;
   direction: string | null;
   coordinates: string | null;
+  place: string | null;
   altitude: number | null;
   title: string;
   unavailable: string;
   coordinatesLabel: string;
+  placeLabel: string;
   altitudeLabel: string;
   altitudeUnit: string;
 }) {
@@ -4254,7 +4291,7 @@ function CompassCard({
       ]}
       accessibilityLabel={
         ready
-          ? `${title}: ${direction}, ${Math.round(heading!)}°, ${coordinatesLabel} ${coordinates ?? "—"}, ${altitudeLabel} ${altitudeText}`
+          ? `${title}: ${direction}, ${Math.round(heading!)}°, ${placeLabel} ${place ?? "—"}, ${coordinatesLabel} ${coordinates ?? "—"}, ${altitudeLabel} ${altitudeText}`
           : unavailable
       }
     >
@@ -4301,6 +4338,14 @@ function CompassCard({
       )}
 
       <View style={[styles.compassLocationData, { borderTopColor: colors.glassBorder }]}>
+        <View style={styles.compassLocationRow}>
+          <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
+            {placeLabel}
+          </Text>
+          <Text style={[styles.compassDataValue, { color: colors.foreground }]} numberOfLines={1}>
+            {place ?? "—"}
+          </Text>
+        </View>
         <View style={styles.compassLocationRow}>
           <Text style={[styles.compassDataLabel, { color: colors.mutedForeground }]}>
             {coordinatesLabel}

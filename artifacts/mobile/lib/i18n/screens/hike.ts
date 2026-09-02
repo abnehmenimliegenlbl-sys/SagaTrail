@@ -15,6 +15,7 @@ export interface HikeStrings {
   compass: string;
   compassUnavailable: string;
   coordinates: string;
+  place: string;
   altitude: string;
   altitudeUnit: string;
   live: string;
@@ -135,6 +136,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "KOMPASS",
     compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
     coordinates: "KOORDINATEN",
+    place: "ORT",
     altitude: "HÖHE",
     altitudeUnit: "m ü. M.",
     live: "LIVE",
@@ -264,6 +266,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "KOMPASS",
     compassUnavailable: "Kompass auf diesem Gerät nicht verfügbar",
     coordinates: "KOORDINATE",
+    place: "ORT",
     altitude: "HÖCHI",
     altitudeUnit: "m ü. M.",
     live: "LIVE",
@@ -393,6 +396,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "COMPASS",
     compassUnavailable: "Compass unavailable on this device",
     coordinates: "COORDINATES",
+    place: "PLACE",
     altitude: "ALTITUDE",
     altitudeUnit: "m a.s.l.",
     live: "LIVE",
@@ -522,6 +526,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "BOUSSOLE",
     compassUnavailable: "Boussole indisponible sur cet appareil",
     coordinates: "COORDONNÉES",
+    place: "LIEU",
     altitude: "ALTITUDE",
     altitudeUnit: "m s. m.",
     live: "LIVE",
@@ -651,6 +656,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "BUSSOLA",
     compassUnavailable: "Bussola non disponibile su questo dispositivo",
     coordinates: "COORDINATE",
+    place: "LUOGO",
     altitude: "ALTITUDINE",
     altitudeUnit: "m s.l.m.",
     live: "LIVE",
@@ -780,6 +786,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "BRÚJULA",
     compassUnavailable: "Brújula no disponible en este dispositivo",
     coordinates: "COORDENADAS",
+    place: "LUGAR",
     altitude: "ALTITUD",
     altitudeUnit: "m s. n. m.",
     live: "LIVE",
@@ -909,6 +916,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "BÚSSOLA",
     compassUnavailable: "Bússola indisponível neste dispositivo",
     coordinates: "COORDENADAS",
+    place: "LOCAL",
     altitude: "ALTITUDE",
     altitudeUnit: "m a.n.m.",
     live: "LIVE",
@@ -1038,6 +1046,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "指南针",
     compassUnavailable: "此设备不支持指南针",
     coordinates: "坐标",
+    place: "地点",
     altitude: "海拔",
     altitudeUnit: "米",
     live: "实时",
@@ -1167,6 +1176,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     compass: "КОМПАС",
     compassUnavailable: "Компас недоступен на этом устройстве",
     coordinates: "КООРДИНАТЫ",
+    place: "МЕСТО",
     altitude: "ВЫСОТА",
     altitudeUnit: "м н.у.м.",
     live: "LIVE",

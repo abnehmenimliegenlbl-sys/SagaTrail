@@ -23,6 +23,12 @@ export interface GeocodePlace {
 }
 
 interface NominatimAddress {
+  city?: string;
+  town?: string;
+  village?: string;
+  municipality?: string;
+  suburb?: string;
+  hamlet?: string;
   state?: string;
   county?: string;
   /** ISO 3166-2 Kantonskuerzel, z.B. "CH-BL" oder "CH-ZH" */
@@ -107,7 +113,22 @@ function cantonFromAddress(address: NominatimAddress | undefined): string | null
 
 export interface ReverseGeocodeResult {
   label: string;
+  place: string | null;
   canton: string | null;
+  found: boolean;
+}
+
+function placeFromAddress(address: NominatimAddress | undefined): string | null {
+  if (!address) return null;
+  return (
+    address.city ??
+    address.town ??
+    address.village ??
+    address.municipality ??
+    address.suburb ??
+    address.hamlet ??
+    null
+  );
 }
 
 /**
@@ -134,15 +155,27 @@ export async function reverseGeocode(
     });
     if (!res.ok) {
       log.warn({ status: res.status }, "Nominatim-Reverse: HTTP-Fehler");
-      return { label: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, canton: null };
+      return {
+        label: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+        place: null,
+        canton: null,
+        found: false,
+      };
     }
     const data = (await res.json()) as NominatimResult;
     return {
       label: data.display_name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+      place: placeFromAddress(data.address),
       canton: cantonFromAddress(data.address),
+      found: Boolean(data.display_name),
     };
   } catch (err) {
     log.warn({ err }, "Nominatim-Reverse: Anfrage fehlgeschlagen");
-    return { label: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, canton: null };
+    return {
+      label: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+      place: null,
+      canton: null,
+      found: false,
+    };
   }
 }
