@@ -68,6 +68,33 @@ catalogs:
       version: 3.25.76
 
 overrides:
+  '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
+  '@reactvision/react-viro>react': 19.1.0
+  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-win32-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-android-arm64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-arm64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-freebsd-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm-gnueabihf': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-gnu': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-win32-x64-msvc': '-'
+  esbuild: 0.27.3
+  esbuild>@esbuild/aix-ppc64: '-'
+  esbuild>@esbuild/android-arm: '-'
+  esbuild>@esbuild/android-arm64: '-'
+  esbuild>@esbuild/android-x64: '-'
   esbuild>@esbuild/darwin-arm64: '-'
   esbuild>@esbuild/darwin-x64: '-'
   esbuild>@esbuild/freebsd-arm64: '-'
@@ -84,15 +111,11 @@ overrides:
   esbuild>@esbuild/netbsd-x64: '-'
   esbuild>@esbuild/openbsd-arm64: '-'
   esbuild>@esbuild/openbsd-x64: '-'
+  esbuild>@esbuild/openharmony-arm64: '-'
   esbuild>@esbuild/sunos-x64: '-'
   esbuild>@esbuild/win32-arm64: '-'
   esbuild>@esbuild/win32-ia32: '-'
   esbuild>@esbuild/win32-x64: '-'
-  esbuild>@esbuild/aix-ppc64: '-'
-  esbuild>@esbuild/android-arm: '-'
-  esbuild>@esbuild/android-arm64: '-'
-  esbuild>@esbuild/android-x64: '-'
-  esbuild>@esbuild/openharmony-arm64: '-'
   lightningcss>lightningcss-android-arm64: '-'
   lightningcss>lightningcss-darwin-arm64: '-'
   lightningcss>lightningcss-darwin-x64: '-'
@@ -103,16 +126,6 @@ overrides:
   lightningcss>lightningcss-linux-x64-musl: '-'
   lightningcss>lightningcss-win32-arm64-msvc: '-'
   lightningcss>lightningcss-win32-x64-msvc: '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-android-arm64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-arm64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-x64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-freebsd-x64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm-gnueabihf': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-gnu': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-win32-x64-msvc': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl': '-'
   rollup>@rollup/rollup-android-arm-eabi: '-'
   rollup>@rollup/rollup-android-arm64: '-'
   rollup>@rollup/rollup-darwin-arm64: '-'
@@ -137,18 +150,6 @@ overrides:
   rollup>@rollup/rollup-win32-ia32-msvc: '-'
   rollup>@rollup/rollup-win32-x64-gnu: '-'
   rollup>@rollup/rollup-win32-x64-msvc: '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-win32-x64': '-'
-  '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
-  esbuild: 0.27.3
 
 patchedDependencies:
   '@clerk/expo@3.6.5':
@@ -189,10 +190,10 @@ importers:
         version: 3.1092.0
       '@clerk/express':
         specifier: ^2.1.35
-        version: 2.1.35(express@5.2.1)(react@19.2.8)
+        version: 2.1.35(express@5.2.1)
       '@clerk/shared':
         specifier: ^4.23.0
-        version: 4.23.0(react@19.2.8)
+        version: 4.23.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@google-cloud/storage':
         specifier: ^7.21.0
         version: 7.21.0
@@ -704,7 +705,7 @@ importers:
     dependencies:
       '@tanstack/react-query':
         specifier: 'catalog:'
-        version: 5.101.0(react@19.2.8)
+        version: 5.101.0(react@19.1.0)
 
   lib/api-spec:
     devDependencies:
@@ -1515,7 +1516,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@54.0.23':
     resolution: {integrity: sha512-km0h72SFfQCmVycH/JtPFTVy69w6Lx1cHNDmfLfQqgKFYeeHTjx7LVDP4POHCtNxFP2UeRazrygJhlh4zz498g==}
@@ -7193,10 +7194,6 @@ packages:
     resolution: {integrity: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==}
     engines: {node: '>=0.10.0'}
 
-  react@19.2.8:
-    resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
-    engines: {node: '>=0.10.0'}
-
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
     engines: {node: '>= 6'}
@@ -9155,9 +9152,9 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/backend@3.10.0(react@19.2.8)':
+  '@clerk/backend@3.10.0':
     dependencies:
-      '@clerk/shared': 4.23.0(react@19.2.8)
+      '@clerk/shared': 4.23.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       standardwebhooks: 1.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -9229,10 +9226,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/express@2.1.35(express@5.2.1)(react@19.2.8)':
+  '@clerk/express@2.1.35(express@5.2.1)':
     dependencies:
-      '@clerk/backend': 3.10.0(react@19.2.8)
-      '@clerk/shared': 4.23.0(react@19.2.8)
+      '@clerk/backend': 3.10.0
+      '@clerk/shared': 4.23.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       express: 5.2.1
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -9255,15 +9252,6 @@ snapshots:
     optionalDependencies:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
-
-  '@clerk/shared@4.23.0(react@19.2.8)':
-    dependencies:
-      '@tanstack/query-core': 5.101.0
-      dequal: 2.0.3
-      glob-to-regexp: 0.4.1
-      js-cookie: 3.0.7
-    optionalDependencies:
-      react: 19.2.8
 
   '@coinbase/wallet-sdk@4.3.7(typescript@5.9.3)(zod@3.25.76)':
     dependencies:
@@ -11553,7 +11541,7 @@ snapshots:
   '@reactvision/react-viro@2.54.0(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))':
     dependencies:
       '@expo/config-plugins': 9.0.17
-      react: 19.2.8
+      react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0)
       react-native-gradle-plugin: 0.71.19
     optionalDependencies:
@@ -12414,11 +12402,6 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.101.0
       react: 19.1.0
-
-  '@tanstack/react-query@5.101.0(react@19.2.8)':
-    dependencies:
-      '@tanstack/query-core': 5.101.0
-      react: 19.2.8
 
   '@tootallnate/once@2.0.1': {}
 
@@ -16628,8 +16611,6 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
 
   react@19.1.0: {}
-
-  react@19.2.8: {}
 
   readable-stream@3.6.2:
     dependencies:
