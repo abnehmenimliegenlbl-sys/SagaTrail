@@ -31,3 +31,9 @@ Wikipedia POI matching must require a name match except for explicitly archaeolo
 **Why:** A Lörrach memorial was paired with the nearby "Sender Lörrach" article and a same-named memorial photo from another town.
 
 **How to apply:** Prefer verified OSM Wikipedia/Wikidata links and geographically matched media; when uncertain, show no enrichment rather than an unrelated fact or image.
+
+Commons image discovery can use the reverse-geocoded locality as a search term, but Wikimedia requests must be globally throttled and cached; otherwise API 429s look like missing images.
+
+**Why:** Google resolves the POI through a large indexed query such as name + locality, while direct Commons API calls are rate-limited and the exact file may not have a geotag.
+
+**How to apply:** Search name plus broad locality, validate locality in Commons metadata, and serialize Wikimedia requests with a small inter-request gap.

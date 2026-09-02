@@ -14,6 +14,9 @@ import { haversineM } from "./geo";
 const USER_AGENT = "SagaTrail/1.0 (Swiss hiking companion; contact: none)";
 const REQUEST_TIMEOUT_MS = 8000;
 const DEFAULT_LANG = "de";
+const WIKIMEDIA_MIN_GAP_MS = 400;
+let lastWikimediaRequestAt = 0;
+let wikimediaRequestQueue: Promise<void> = Promise.resolve();
 
 export interface WikiSummary {
   title: string;
@@ -24,20 +27,30 @@ export interface WikiSummary {
 }
 
 async function fetchJson<T>(url: string): Promise<T | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
+  let result: T | null = null;
+  const request = wikimediaRequestQueue.then(async () => {
+    const waitMs = Math.max(0, WIKIMEDIA_MIN_GAP_MS - (Date.now() - lastWikimediaRequestAt));
+    if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+    lastWikimediaRequestAt = Date.now();
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+        signal: controller.signal,
+      });
+      if (res.ok) result = (await res.json()) as T;
+    } catch {
+      result = null;
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+  // Die Queue muss auch nach einem Fehler weiterlaufen.
+  wikimediaRequestQueue = request.then(() => undefined, () => undefined);
+  await request;
+  return result;
 }
 
 interface WikiRestSummary {
@@ -428,14 +441,20 @@ export async function fetchCommonsImageByName(
   // Der Ortskontext kommt aus Nominatim und wird nur on-demand beim Öffnen
   // eines POIs ermittelt.
   const nameSearch = tokens.join(" ");
+  // Nominatim kann Verwaltungszusätze wie "(Kernstadt)" zurückgeben. Diese
+  // sind für Commons-Suchbegriffe zu speziell und stehen meist nicht in
+  // Dateiname, Kategorie oder Bildbeschreibung.
+  const broadLocationHint = (locationHint ?? "")
+    .replace(/\s*\([^)]*\)/g, "")
+    .trim();
   const suchbegriffe: string[] = [
-    ...(locationHint?.trim() ? [`${nameSearch} ${locationHint.trim()}`] : []),
+    ...(broadLocationHint ? [`${nameSearch} ${broadLocationHint}`] : []),
     nameSearch,
   ];
   if (tokens.length > 2) {
     suchbegriffe.push(tokens.slice(0, 2).join(" "));
   }
-  const locationTokens = (locationHint ?? "")
+  const locationTokens = broadLocationHint
     .toLowerCase()
     .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
     .split(/[\s\-_\.\/\\,;:()\[\]]+/)

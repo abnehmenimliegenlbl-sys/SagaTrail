@@ -68,6 +68,22 @@ function commonsSearchTerm(name: string, kind: string | undefined): string | nul
   if (!isCodeName(name)) return name;
   return kind ? (KIND_SEARCH_LABEL[kind] ?? null) : null;
 }
+
+// Orts-Hinweis fuer die Commons-Suche: grobe Zellen reichen als Suchkontext
+// aus und verhindern eine Nominatim-Anfrage pro POI in derselben Ortschaft.
+const poiPlaceHintCache = new Map<string, Promise<string | null>>();
+
+async function getPoiPlaceHint(lat: number, lng: number, log: Logger): Promise<string | null> {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+  const cached = poiPlaceHintCache.get(key);
+  if (cached) return cached;
+  const pending = reverseGeocode(lat, lng, log)
+    .then((result) => result.place)
+    .catch(() => null);
+  poiPlaceHintCache.set(key, pending);
+  return pending;
+}
+
 import { logger as rootLogger } from "./logger";
 import { deriveSeason } from "./season";
 import {
@@ -388,15 +404,19 @@ async function enrichPoiWithWikipedia(
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
-    // Vierte + Fuenfte Stufe parallel: geografisch passendes Commons-Bild UND
-    // Claude-Text gleichzeitig suchen. Eine reine Namenssuche wird hier
-    // bewusst nicht verwendet: "Hindenburg-Denkmal" kann z.B. ein Bild eines
-    // gleichnamigen Denkmals in einem anderen Ort liefern.
-    const [geoImage, aiWiki] = await Promise.all([
+    // Vierte + Fuenfte Stufe parallel: Commons-Bild mit Ortskontext UND
+    // Claude-Text gleichzeitig suchen. Der Ortskontext macht die Suche
+    // spezifisch genug fuer gleichnamige POIs in verschiedenen Orten.
+    const placeHint = await getPoiPlaceHint(poi.lat, poi.lng, log);
+    const searchTerm = commonsSearchTerm(poi.name, poi.kind);
+    const [nameImage, geoImage, aiWiki] = await Promise.all([
+      placeHint && searchTerm
+        ? fetchCommonsImageByName(searchTerm, 600, placeHint)
+        : Promise.resolve(null),
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
       searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
-    const commonsImage = geoImage;
+    const commonsImage = nameImage ?? geoImage;
     if (commonsImage || aiWiki) {
       return {
         ...poi,
