@@ -29,6 +29,7 @@ const GRADE_WINDOW_KM = 0.05;
 const GRADE_THRESHOLD_EPSILON_PCT = 0.000001;
 const ANNOUNCE_GRADE_PCT = 6;
 const VERY_STEEP_GRADE_PCT = 30;
+const TERRAIN_SPEECH_MIN_GAP_KM = 0.45;
 
 function distanceKm(a: number[], b: number[]): number {
   const lat1 = (a[0] * Math.PI) / 180;
@@ -334,4 +335,47 @@ export function buildTerrainSections(
   }
   flush();
   return sections;
+}
+
+/**
+ * Reduces dense terrain sections for speech only. The map still keeps every
+ * 50 m color segment, but a winding route must not trigger a new voice cue at
+ * every small grade change. Within a 450 m window the strongest section wins;
+ * very steep sections are prioritized so the safety warning is not hidden.
+ */
+export function limitTerrainSectionsForSpeech(
+  input: TerrainSection[] | null | undefined,
+): TerrainSection[] {
+  if (!input || input.length < 2) return input ?? [];
+
+  const sorted = [...input].sort((a, b) => a.startKm - b.startKm);
+  const selected: TerrainSection[] = [];
+  const strength = (section: TerrainSection): number =>
+    (section.isVerySteep ? 1000 : 0) +
+    section.peakGradePct * 2 +
+    section.lengthKm +
+    Math.abs(section.elevationChangeM) / 100;
+
+  for (const section of sorted) {
+    const previous = selected[selected.length - 1];
+    if (
+      !previous ||
+      section.startKm - previous.startKm >= TERRAIN_SPEECH_MIN_GAP_KM
+    ) {
+      selected.push(section);
+      continue;
+    }
+
+    if (strength(section) > strength(previous)) {
+      const beforePrevious = selected[selected.length - 2];
+      if (
+        !beforePrevious ||
+        section.startKm - beforePrevious.startKm >= TERRAIN_SPEECH_MIN_GAP_KM
+      ) {
+        selected[selected.length - 1] = section;
+      }
+    }
+  }
+
+  return selected;
 }

@@ -77,7 +77,11 @@ import { getTurnAudio } from "@/lib/turnAudio";
 import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
 import * as FileSystem from "expo-file-system/legacy";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
-import { buildTerrainSections, type TerrainProfilePoint } from "@/lib/terrainCues";
+import {
+  buildTerrainSections,
+  limitTerrainSectionsForSpeech,
+  type TerrainProfilePoint,
+} from "@/lib/terrainCues";
 import {
   bereiteAbbiegeMitteilungenVor,
   sendeAbbiegeMitteilung,
@@ -2542,7 +2546,7 @@ export default function LiveHike() {
   }, [livePos, livePosAccuracy, route?.geometry]);
 
   const terrainSections = useMemo(
-    () => buildTerrainSections(terrainProfile),
+    () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
     [terrainProfile],
   );
 

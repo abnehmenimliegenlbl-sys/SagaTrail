@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
-import { buildRouteGradeSegments, type RouteGradeBand, type TerrainProfilePoint } from "./terrainCues";
+import {
+  buildRouteGradeSegments,
+  limitTerrainSectionsForSpeech,
+  type RouteGradeBand,
+  type TerrainProfilePoint,
+  type TerrainSection,
+} from "./terrainCues";
 
 const ROUTE_GEOMETRY = [
   [46, 7],
@@ -81,5 +87,38 @@ test("keeps the WordPress map viewer in sync with the mobile classifier", () => 
     (segment) => segment.color,
   );
   assert.ok(colors.length > 0);
-  assert.ok(colors.every((color) => color === "#DA291C"), colors.join(", "));
+  assert.ok(colors.every((color) => color === "#FF3030"), colors.join(", "));
+});
+
+function terrainSection(
+  id: string,
+  startKm: number,
+  peakGradePct: number,
+  isVerySteep = false,
+): TerrainSection {
+  return {
+    id,
+    startKm,
+    endKm: startKm + 0.2,
+    lengthKm: 0.2,
+    direction: "up",
+    elevationChangeM: peakGradePct * 2,
+    averageGradePct: peakGradePct,
+    peakGradePct,
+    isVerySteep,
+  };
+}
+
+test("limits dense terrain voice cues while retaining the strongest section", () => {
+  const selected = limitTerrainSectionsForSpeech([
+    terrainSection("mild", 0.1, 12),
+    terrainSection("stronger", 0.35, 18),
+    terrainSection("safety", 0.52, 31, true),
+    terrainSection("later", 1.05, 14),
+  ]);
+
+  assert.deepEqual(
+    selected.map((section) => section.id),
+    ["safety", "later"],
+  );
 });
