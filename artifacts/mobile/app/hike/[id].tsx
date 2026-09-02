@@ -102,6 +102,13 @@ import { HikeSession, LatLng, StoryChapter } from "@/types";
 
 const WEB_TOP = 67;
 const TICK_MS = 4500; // Simulierter Fortschritt pro Wegpunkt (nur ohne echtes GPS)
+const COMPASS_GOLD = "#D8A84E";
+const COMPASS_ANTIQUE_FONT = Platform.select({
+  web: "Georgia, Times New Roman, serif",
+  ios: "Georgia",
+  android: "serif",
+  default: "serif",
+});
 
 // Lokalisierte Wochentagnamen für die Partner-Öffnungszeiten-Anzeige.
 const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
@@ -4387,10 +4394,10 @@ function CompassCard({
       <View style={styles.compassHeader}>
         <View style={styles.compassTitleRow}>
           <Feather name="compass" size={16} color="#E4B879" />
-          <Text style={[styles.compassTitle, { color: "#E4B879" }]}>{title}</Text>
+          <Text style={[styles.compassTitle, { color: COMPASS_GOLD }]}>{title}</Text>
         </View>
         {ready && (
-          <Text style={[styles.compassDegrees, { color: "#F6E7CC" }]}>
+          <Text style={[styles.compassDegrees, { color: COMPASS_GOLD }]}>
             {Math.round(heading!)}°
           </Text>
         )}
@@ -4467,34 +4474,34 @@ function CompassCard({
       ) : available === null ? (
         <View style={styles.compassUnavailableRow}>
           <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={[styles.compassHint, { color: "#C6A77B" }]}>…</Text>
+          <Text style={[styles.compassHint, { color: COMPASS_GOLD }]}>…</Text>
         </View>
       ) : (
-        <Text style={[styles.compassHint, { color: "#C6A77B" }]}>{unavailable}</Text>
+        <Text style={[styles.compassHint, { color: COMPASS_GOLD }]}>{unavailable}</Text>
       )}
 
       <View style={[styles.compassLocationData, { borderTopColor: "#704725" }]}>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
+          <Text style={[styles.compassDataLabel, { color: COMPASS_GOLD }]}>
             {placeLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]} numberOfLines={1}>
+          <Text style={[styles.compassDataValue, { color: COMPASS_GOLD }]} numberOfLines={1}>
             {place ?? "—"}
           </Text>
         </View>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
+          <Text style={[styles.compassDataLabel, { color: COMPASS_GOLD }]}>
             {coordinatesLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]} numberOfLines={1}>
+          <Text style={[styles.compassDataValue, { color: COMPASS_GOLD }]} numberOfLines={1}>
             {coordinates ?? "—"}
           </Text>
         </View>
         <View style={styles.compassLocationRow}>
-          <Text style={[styles.compassDataLabel, { color: "#C6A77B" }]}>
+          <Text style={[styles.compassDataLabel, { color: COMPASS_GOLD }]}>
             {altitudeLabel}
           </Text>
-          <Text style={[styles.compassDataValue, { color: "#F6E7CC" }]}>
+          <Text style={[styles.compassDataValue, { color: COMPASS_GOLD }]}>
             {altitudeText}
           </Text>
         </View>
@@ -4615,8 +4622,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   compassTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  compassTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  compassDegrees: { fontFamily: fonts.monoBold, fontSize: 14 },
+  compassTitle: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 11, letterSpacing: 1.5 },
+  compassDegrees: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 14 },
   compassBody: {
     position: "relative",
     zIndex: 1,
@@ -4641,13 +4648,8 @@ const styles = StyleSheet.create({
     left: "50%",
     top: "17.5%",
     marginLeft: -7,
-    color: "#D8A84E",
-    fontFamily: Platform.select({
-      web: "Georgia, Times New Roman, serif",
-      ios: "Georgia",
-      android: "serif",
-      default: "serif",
-    }),
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 17,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
@@ -4657,13 +4659,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: "16%",
     top: "48%",
-    color: "#D8A84E",
-    fontFamily: Platform.select({
-      web: "Georgia, Times New Roman, serif",
-      ios: "Georgia",
-      android: "serif",
-      default: "serif",
-    }),
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 15,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
@@ -4674,13 +4671,8 @@ const styles = StyleSheet.create({
     left: "50%",
     top: "78%",
     marginLeft: -6,
-    color: "#D8A84E",
-    fontFamily: Platform.select({
-      web: "Georgia, Times New Roman, serif",
-      ios: "Georgia",
-      android: "serif",
-      default: "serif",
-    }),
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 15,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
@@ -4690,13 +4682,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: "17%",
     top: "48%",
-    color: "#D8A84E",
-    fontFamily: Platform.select({
-      web: "Georgia, Times New Roman, serif",
-      ios: "Georgia",
-      android: "serif",
-      default: "serif",
-    }),
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 15,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
@@ -4793,8 +4780,8 @@ const styles = StyleSheet.create({
   },
   compassReadout: { width: "100%", alignItems: "center", gap: 8 },
   compassDirection: {
-    color: "#F6E7CC",
-    fontFamily: fonts.titleBold,
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 24,
   },
   compassLegend: {
@@ -4817,14 +4804,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#B22A2E",
   },
-  compassLegendText: { color: "#E8D7B9", fontFamily: fonts.monoBold, fontSize: 10 },
+  compassLegendText: { color: COMPASS_GOLD, fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 10 },
   compassSagaName: {
-    color: "#E8D7B9",
-    fontFamily: fonts.story,
+    color: COMPASS_GOLD,
+    fontFamily: COMPASS_ANTIQUE_FONT,
     fontSize: 13,
     flexShrink: 1,
   },
-  compassHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  compassHint: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 13, lineHeight: 18 },
   compassUnavailableRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
   compassLocationData: {
     position: "relative",
@@ -4840,8 +4827,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  compassDataLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
-  compassDataValue: { fontFamily: fonts.monoBold, fontSize: 12, flexShrink: 1, textAlign: "right" },
+  compassDataLabel: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 9, letterSpacing: 1 },
+  compassDataValue: { fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 12, flexShrink: 1, textAlign: "right" },
   preparing: { alignItems: "center", paddingVertical: 50, gap: 16 },
   preparingText: { fontFamily: fonts.story, fontSize: 16 },
   poiRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
