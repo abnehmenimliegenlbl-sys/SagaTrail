@@ -388,18 +388,15 @@ async function enrichPoiWithWikipedia(
         return { ...poi, wiki: { ...wiki, image } };
       }
     }
-    // Vierte + Fuenfte Stufe parallel: Commons-Bild UND Claude-Text gleichzeitig
-    // suchen und kombinieren. Bei reinen Codes/Zahlen ("42") wird statt dem
-    // bedeutungslosen Namen der Typ als Suchbegriff verwendet ("Grenzstein");
-    // ist kein Typbegriff verfuegbar, entfaellt die Namens-Suche und nur die
-    // Geo-Suche bleibt.
-    const searchTerm = commonsSearchTerm(poi.name, poi.kind);
-    const [nameImage, geoImage, aiWiki] = await Promise.all([
-      searchTerm ? fetchCommonsImageByName(searchTerm) : Promise.resolve(null),
+    // Vierte + Fuenfte Stufe parallel: geografisch passendes Commons-Bild UND
+    // Claude-Text gleichzeitig suchen. Eine reine Namenssuche wird hier
+    // bewusst nicht verwendet: "Hindenburg-Denkmal" kann z.B. ein Bild eines
+    // gleichnamigen Denkmals in einem anderen Ort liefern.
+    const [geoImage, aiWiki] = await Promise.all([
       fetchNearbyCommonsImage(poi.lat, poi.lng, 500, 600, poi.name),
       searchAiPoiKnowledge(poi.name, poi.kind, "de", poi.lat, poi.lng),
     ]);
-    const commonsImage = nameImage ?? geoImage;
+    const commonsImage = geoImage;
     if (commonsImage || aiWiki) {
       return {
         ...poi,

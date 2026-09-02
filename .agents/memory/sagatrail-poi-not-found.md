@@ -25,3 +25,9 @@ Initial POI deduplication must score available OSM context and Wikipedia/Wikidat
 **Why:** Evaluating only the `wiki` field makes every initial POI tie at zero and keeps the first duplicate even when another OSM element already carries a description or article reference.
 
 **How to apply:** Keep first-occurrence order only as the tie-breaker; choose the richer record before the on-demand POI detail request.
+
+Wikipedia POI matching must require a name match except for explicitly archaeological object types; nearby articles and Commons name-only images can describe a different local landmark.
+
+**Why:** A Lörrach memorial was paired with the nearby "Sender Lörrach" article and a same-named memorial photo from another town.
+
+**How to apply:** Prefer verified OSM Wikipedia/Wikidata links and geographically matched media; when uncertain, show no enrichment rather than an unrelated fact or image.

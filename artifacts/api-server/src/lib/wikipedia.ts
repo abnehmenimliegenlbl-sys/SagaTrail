@@ -64,10 +64,17 @@ export async function fetchWikipediaSummary(
   refLat?: number,
   refLng?: number,
   maxDistKm: number = 50,
+  requireCoordinates: boolean = false,
 ): Promise<WikiSummary | null> {
   const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   const json = await fetchJson<WikiRestSummary>(url);
   if (!json || !json.extract || json.type === "disambiguation") return null;
+  if (
+    requireCoordinates &&
+    (json.coordinates?.lat === undefined || json.coordinates?.lon === undefined)
+  ) {
+    return null;
+  }
   if (
     refLat !== undefined && refLng !== undefined &&
     json.coordinates?.lat !== undefined && json.coordinates?.lon !== undefined
@@ -605,16 +612,21 @@ export async function searchNearbyWikipedia(
     if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
-  // Zweite Geo-Runde: sehr nahe Artikel (< 100m) ohne Namensabgleich akzeptieren.
-  // Archäologische Stätten heissen in OSM und Wikipedia oft komplett anders
-  // (z.B. OSM "Römische Warte Au-hard" → Wikipedia "Burgus Au-hard").
+  // Zweite Geo-Runde: sehr nahe Artikel (< 100m) ohne Namensabgleich nur bei
+  // archäologischen Stätten akzeptieren. Dort heissen OSM- und Wikipedia-
+  // Objekte oft komplett anders (z.B. "Römische Warte Au-hard" → "Burgus
+  // Au-hard"). Bei Denkmälern, Aussichtspunkten usw. wäre diese Regel zu
+  // großzügig: Ein benachbarter Sender oder ein anderes Bauwerk könnte sonst
+  // als Beschreibung des angeklickten POIs erscheinen.
   // Bei < 100m Abstand ist es praktisch sicher dasselbe Objekt.
-  const veryNearHits = allGeoHits.filter(
-    (h) => h.dist < 100 && !nameMatchedHits.some((m) => m.title === h.title),
-  );
-  for (const hit of veryNearHits) {
-    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
-    if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
+  if (kind === "historic=archaeological_site") {
+    const veryNearHits = allGeoHits.filter(
+      (h) => h.dist < 100 && !nameMatchedHits.some((m) => m.title === h.title),
+    );
+    for (const hit of veryNearHits) {
+      const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng);
+      if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
+    }
   }
 
   // Dritte Stufe: Titelsuche nach dem Namen — greift, wenn der Artikel keine
@@ -662,7 +674,14 @@ export async function searchNearbyWikipedia(
     // maxDistKm=5 grundsätzlich; bei Titelübereinstimmung 5 km genug,
     // bei reinem Geo-Treffer (archäologische Objekte etc.) max 2 km.
     const maxDist = titleMatches ? 5 : 2;
-    const summary = await fetchWikipediaSummary(hit.title, lang, lat, lng, maxDist);
+    const summary = await fetchWikipediaSummary(
+      hit.title,
+      lang,
+      lat,
+      lng,
+      maxDist,
+      !titleMatches,
+    );
     if (summary && isExtractDomainCoherent(summary.extract, kind)) return summary;
   }
 
