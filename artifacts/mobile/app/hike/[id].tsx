@@ -4642,7 +4642,12 @@ const styles = StyleSheet.create({
     top: "17.5%",
     marginLeft: -7,
     color: "#D8A84E",
-    fontFamily: fonts.story,
+    fontFamily: Platform.select({
+      web: "Georgia, Times New Roman, serif",
+      ios: "Georgia",
+      android: "serif",
+      default: "serif",
+    }),
     fontSize: 17,
     textShadowColor: "rgba(42,22,9,0.9)",
     textShadowRadius: 1,
