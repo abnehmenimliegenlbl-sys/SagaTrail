@@ -92,13 +92,17 @@ async function fetchSwisstopoChunk(
         continue;
       }
       const data = (await res.json()) as ProfilePoint[];
-      if (!Array.isArray(data) || data.length !== points.length) {
+      // SwissTopo resampelt die angefragte Linie auf eine eigene Anzahl von
+      // Profilpunkten (typischerweise etwa 200) und liefert deshalb nicht
+      // zwingend einen Wert pro Eingangspunkt. Entscheidend ist ein
+      // chronologisch vollständiges Profil, nicht die gleiche Punktzahl.
+      if (!Array.isArray(data) || data.length < 2) {
         log.warn(
           {
             receivedPoints: Array.isArray(data) ? data.length : null,
             points: points.length,
           },
-          "swisstopo-Profil: unvollstaendige Antwort",
+          "swisstopo-Profil: zu wenige Profilpunkte",
         );
         return null;
       }

@@ -14,3 +14,9 @@ SwissTopo-Ausfälle werden pro Chunk mit wenigen Backoff-Versuchen abgefangen; e
 **Why:** Ein Retry auf dem bereits teilweise zusammengeführten Profil könnte bei einem späteren Chunk weiterhin unvollständige oder falsch ausgerichtete Daten ausliefern.
 
 **How to apply:** Temporäre HTTP-/Netzwerkfehler begrenzt wiederholen, dauerhafte Fehler direkt abbrechen und bei jedem fehlenden Chunk das gesamte Profil als `null` behandeln.
+
+SwissTopo resampelt jede Anfrage auf eine eigene Profilpunktzahl (oft ungefähr 200 Punkte), die nicht der Anzahl der Eingangspunkte entspricht.
+
+**Why:** Eine Prüfung auf `response.length === requestPointCount` verwirft auch gültige Höhenprofile und lässt die Kartenfarbgebung lautlos auf Grün zurückfallen.
+
+**How to apply:** Mindestens zwei gültige, monotone Profilpunkte verlangen; die Antwortlänge nicht an die Eingangspunktzahl koppeln.
