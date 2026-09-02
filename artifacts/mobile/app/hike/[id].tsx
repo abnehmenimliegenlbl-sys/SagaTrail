@@ -50,6 +50,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { ObjectRecognition } from "@/components/brand/ObjectRecognition";
+import { FeatureTileDeck } from "@/components/brand/FeatureTileDeck";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import { fonts } from "@/constants/typography";
@@ -3490,52 +3491,76 @@ export default function LiveHike() {
           />
         </View>
 
-        <CompassCard
-          heading={compassHeading}
-          available={compassAvailable}
-          direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
-          coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
-          place={livePlace}
-          altitude={liveAltitude}
-          title={t.compass}
-          unavailable={t.compassUnavailable}
-          coordinatesLabel={t.coordinates}
-          placeLabel={t.place}
-          altitudeLabel={t.altitude}
-          altitudeUnit={t.altitudeUnit}
-        />
-
-        <PeakPanorama
-          peaks={panoramaPeaks}
-          heading={compassHeading}
-          hasGps={livePos !== null}
-          strings={{
-            title: t.panorama,
-            hint: t.panoramaHint,
-            needCompass: t.panoramaNeedCompass,
-            noGps: t.panoramaNoGps,
-            noPeaks: t.panoramaNoPeaks,
-            detected: t.panoramaDetected,
-            distance: t.panoramaDistance,
-            camera: t.camera,
-            cameraOff: t.cameraOff,
-            cameraPermission: t.cameraPermission,
-            arUnavailable: t.arUnavailable,
-          }}
-        />
-
-        <ObjectRecognition
-          premium={premium}
-          strings={objectRecognitionT}
-          getToken={() => getTokenRef.current()}
-          language={storyLanguage}
-          lat={livePos?.lat}
-          lng={livePos?.lng}
-          heading={compassHeading}
-          nearbyContext={[
-            ...panoramaPeaks.slice(0, 8).map((peak) => `OSM-Gipfel: ${peak.name}`),
-            ...(nearbyPoi ? [`OSM-POI: ${nearbyPoi.name}`] : []),
-          ].join("; ")}
+        <FeatureTileDeck
+          initialActiveId="compass"
+          tiles={[
+            {
+              id: "compass",
+              title: t.compass,
+              icon: "compass",
+              content: (
+                <CompassCard
+                  heading={compassHeading}
+                  available={compassAvailable}
+                  direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
+                  coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
+                  place={livePlace}
+                  altitude={liveAltitude}
+                  title={t.compass}
+                  unavailable={t.compassUnavailable}
+                  coordinatesLabel={t.coordinates}
+                  placeLabel={t.place}
+                  altitudeLabel={t.altitude}
+                  altitudeUnit={t.altitudeUnit}
+                />
+              ),
+            },
+            {
+              id: "panorama",
+              title: t.panorama,
+              icon: "triangle",
+              content: (
+                <PeakPanorama
+                  peaks={panoramaPeaks}
+                  heading={compassHeading}
+                  hasGps={livePos !== null}
+                  strings={{
+                    title: t.panorama,
+                    hint: t.panoramaHint,
+                    needCompass: t.panoramaNeedCompass,
+                    noGps: t.panoramaNoGps,
+                    noPeaks: t.panoramaNoPeaks,
+                    detected: t.panoramaDetected,
+                    distance: t.panoramaDistance,
+                    camera: t.camera,
+                    cameraOff: t.cameraOff,
+                    cameraPermission: t.cameraPermission,
+                    arUnavailable: t.arUnavailable,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "object-recognition",
+              title: objectRecognitionT.title,
+              icon: "maximize",
+              content: (
+                <ObjectRecognition
+                  premium={premium}
+                  strings={objectRecognitionT}
+                  getToken={() => getTokenRef.current()}
+                  language={storyLanguage}
+                  lat={livePos?.lat}
+                  lng={livePos?.lng}
+                  heading={compassHeading}
+                  nearbyContext={[
+                    ...panoramaPeaks.slice(0, 8).map((peak) => `OSM-Gipfel: ${peak.name}`),
+                    ...(nearbyPoi ? [`OSM-POI: ${nearbyPoi.name}`] : []),
+                  ].join("; ")}
+                />
+              ),
+            },
+          ]}
         />
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
