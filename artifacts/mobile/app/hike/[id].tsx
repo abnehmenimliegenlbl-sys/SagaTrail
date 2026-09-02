@@ -4717,9 +4717,9 @@ const styles = StyleSheet.create({
   },
   sagaNeedleShaft: {
     position: "absolute",
-    top: 43,
+    top: 35,
     width: 3,
-    height: 37,
+    height: 45,
     backgroundColor: "#D8A84E",
     shadowColor: "#6B4316",
     shadowOpacity: 0.7,
