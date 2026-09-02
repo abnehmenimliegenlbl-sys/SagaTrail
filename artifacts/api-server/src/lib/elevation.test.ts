@@ -83,27 +83,30 @@ test("does not return a partial profile when one chunk fails", async () => {
   }
 });
 
-test("retries a temporary HTTP failure before returning a complete profile", async () => {
-  const originalFetch = globalThis.fetch;
-  let requestCount = 0;
+for (const status of [408, 425, 429, 500, 502, 503, 504]) {
+  test(`retries temporary HTTP ${status} before returning a complete profile`, async () => {
+    const originalFetch = globalThis.fetch;
+    let requestCount = 0;
 
-  globalThis.fetch = async (request) => {
-    requestCount++;
-    if (requestCount === 1)
-      return new Response("upstream failure", { status: 503 });
-    return profileResponse(request, 0);
-  };
+    globalThis.fetch = async (request) => {
+      requestCount++;
+      if (requestCount === 1) {
+        return new Response("temporary upstream failure", { status });
+      }
+      return profileResponse(request, 0);
+    };
 
-  try {
-    const profile = await computeElevationProfile(routePoints(2), log);
+    try {
+      const profile = await computeElevationProfile(routePoints(2), log);
 
-    assert.ok(profile);
-    assert.equal(requestCount, 2);
-    assert.equal(profile.length, 2);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
+      assert.ok(profile);
+      assert.equal(requestCount, 2);
+      assert.equal(profile.length, 2);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
 
 test("retries a network failure before returning a complete profile", async () => {
   const originalFetch = globalThis.fetch;
@@ -125,24 +128,26 @@ test("retries a network failure before returning a complete profile", async () =
   }
 });
 
-test("does not retry a permanent HTTP failure", async () => {
-  const originalFetch = globalThis.fetch;
-  let requestCount = 0;
+for (const status of [400, 401, 403, 404, 409, 422, 451, 499]) {
+  test(`does not retry permanent HTTP ${status} failure`, async () => {
+    const originalFetch = globalThis.fetch;
+    let requestCount = 0;
 
-  globalThis.fetch = async () => {
-    requestCount++;
-    return new Response("invalid geometry", { status: 400 });
-  };
+    globalThis.fetch = async () => {
+      requestCount++;
+      return new Response("permanent upstream failure", { status });
+    };
 
-  try {
-    const profile = await computeElevationProfile(routePoints(2), log);
+    try {
+      const profile = await computeElevationProfile(routePoints(2), log);
 
-    assert.equal(profile, null);
-    assert.equal(requestCount, 1);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
+      assert.equal(profile, null);
+      assert.equal(requestCount, 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
 
 test("returns null after the bounded retry limit for a persistent HTTP failure", async () => {
   const originalFetch = globalThis.fetch;
