@@ -3492,7 +3492,7 @@ export default function LiveHike() {
         </View>
 
         <FeatureTileDeck
-          initialActiveId="compass"
+          closeLabel={t.close}
           tiles={[
             {
               id: "compass",
