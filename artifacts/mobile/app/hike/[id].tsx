@@ -4799,10 +4799,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   northLegendMark: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: "#B22A2E",
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 10,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#B22A2E",
   },
   compassLegendText: { color: COMPASS_GOLD, fontFamily: COMPASS_ANTIQUE_FONT, fontSize: 10 },
   compassSagaLegendIcon: {
