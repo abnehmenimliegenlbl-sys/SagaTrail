@@ -107,3 +107,4 @@
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
 - [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — Expo 54/RN0.81 nutzt Viro 2.54.0; native AR braucht einen Development-/EAS-Build, nicht Expo Go.
 - [Object recognition premium](sagatrail-object-recognition-premium.md) — Foto-basierte Erkennung beliebiger Objekte ist Premium, on-demand und zeigt bestätigbare Treffer statt automatischer Gewissheiten.
+- [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.

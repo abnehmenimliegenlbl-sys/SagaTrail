@@ -1,4 +1,5 @@
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { GoogleAuth } from "google-auth-library";
 import type { Logger } from "pino";
 
 export interface ObjectRecognitionInput {
@@ -36,6 +37,8 @@ const PLANTNET_API_URL = "https://my-api.plantnet.org/v2/identify/all";
 const PLANTNET_TIMEOUT_MS = 12_000;
 const ANIMAL_DETECT_API_URL = "https://api.animaldetect.com/v1/detect";
 const ANIMAL_DETECT_TIMEOUT_MS = 15_000;
+const CLOUD_VISION_API_URL = "https://vision.googleapis.com/v1/images:annotate";
+const CLOUD_VISION_TIMEOUT_MS = 15_000;
 const ALLOWED_OBJECT_TYPES = new Set([
   "mountain",
   "landform",
@@ -178,6 +181,29 @@ interface AnimalMatch {
   scientificName: string;
   confidence: number;
   count: number;
+}
+
+interface CloudVisionLandmark {
+  description?: unknown;
+  score?: unknown;
+}
+
+interface CloudVisionLocalizedObject {
+  name?: unknown;
+  score?: unknown;
+}
+
+interface CloudVisionResponse {
+  responses?: Array<{
+    landmarkAnnotations?: unknown;
+    localizedObjectAnnotations?: unknown;
+    error?: { message?: unknown };
+  }>;
+}
+
+interface CloudVisionResult {
+  landmarks: Array<{ title: string; confidence: number }>;
+  buildingConfidence: number | null;
 }
 
 function plantNetLanguage(language: string): string {
@@ -437,6 +463,170 @@ async function identifyAnimalWithAnimalDetect(
   }
 }
 
+const BUILDING_OBJECT_LABELS = new Set([
+  "building",
+  "house",
+  "church",
+  "castle",
+  "tower",
+  "bridge",
+  "monument",
+  "palace",
+  "fortress",
+  "lighthouse",
+  "cabin",
+  "barn",
+]);
+
+function cloudVisionText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function cloudVisionScore(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : 0;
+}
+
+function cloudVisionLanguage(language: string): string {
+  return language === "gsw" ? "de" : new Set(["de", "en", "fr", "it", "es", "pt", "zh"]).has(language)
+    ? language
+    : "de";
+}
+
+function parseCloudVisionCredentials(log: Logger): Record<string, unknown> | null {
+  const raw = process.env.GOOGLE_CLOUD_VISION_SERVICE_ACCOUNT_JSON?.trim();
+  if (!raw) {
+    log.warn(
+      "Cloud-Vision-Abgleich übersprungen: GOOGLE_CLOUD_VISION_SERVICE_ACCOUNT_JSON fehlt",
+    );
+    return null;
+  }
+
+  try {
+    const credentials = JSON.parse(raw) as Record<string, unknown>;
+    if (
+      typeof credentials.client_email !== "string" ||
+      typeof credentials.private_key !== "string"
+    ) {
+      log.warn("Cloud-Vision-Abgleich übersprungen: Service-Account-JSON ist unvollständig");
+      return null;
+    }
+    return credentials;
+  } catch {
+    log.warn("Cloud-Vision-Abgleich übersprungen: Service-Account-JSON ist ungültig");
+    return null;
+  }
+}
+
+async function identifyBuildingOrLandmarkWithCloudVision(
+  input: ObjectRecognitionInput,
+  log: Logger,
+): Promise<CloudVisionResult | null> {
+  const credentials = parseCloudVisionCredentials(log);
+  if (!credentials) return null;
+
+  try {
+    const auth = new GoogleAuth({
+      credentials,
+      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+    });
+    const client = await auth.getClient();
+    const accessTokenResponse = await client.getAccessToken();
+    const accessToken =
+      typeof accessTokenResponse === "string"
+        ? accessTokenResponse
+        : accessTokenResponse?.token;
+    if (!accessToken) {
+      log.warn("Cloud-Vision-Abgleich fehlgeschlagen: kein Access Token erhalten");
+      return null;
+    }
+
+    const response = await fetch(CLOUD_VISION_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "User-Agent": "SagaTrail/1.0 (cloud-vision)",
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            image: { content: input.imageBase64 },
+            imageContext: { languageHints: [cloudVisionLanguage(input.language)] },
+            features: [
+              { type: "LANDMARK_DETECTION", maxResults: MAX_CANDIDATES },
+              { type: "OBJECT_LOCALIZATION", maxResults: 10 },
+            ],
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(CLOUD_VISION_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      log.warn({ status: response.status }, "Cloud-Vision-Abgleich nicht erfolgreich");
+      return null;
+    }
+
+    const payload = (await response.json()) as CloudVisionResponse;
+    const result = payload.responses?.[0];
+    if (result?.error) {
+      log.warn(
+        { message: cloudVisionText(result.error.message) || "unbekannter Fehler" },
+        "Cloud-Vision-Abgleich meldet einen Fehler",
+      );
+      return null;
+    }
+
+    const landmarks = new Map<string, { title: string; confidence: number }>();
+    const rawLandmarks = Array.isArray(result?.landmarkAnnotations)
+      ? result.landmarkAnnotations
+      : [];
+    for (const value of rawLandmarks) {
+      if (!value || typeof value !== "object") continue;
+      const annotation = value as CloudVisionLandmark;
+      const title = cloudVisionText(annotation.description);
+      if (!title) continue;
+      const key = title.toLocaleLowerCase();
+      const confidence = cloudVisionScore(annotation.score);
+      const existing = landmarks.get(key);
+      if (!existing || confidence > existing.confidence) {
+        landmarks.set(key, { title, confidence });
+      }
+    }
+
+    let buildingConfidence: number | null = null;
+    const rawObjects = Array.isArray(result?.localizedObjectAnnotations)
+      ? result.localizedObjectAnnotations
+      : [];
+    for (const value of rawObjects) {
+      if (!value || typeof value !== "object") continue;
+      const object = value as CloudVisionLocalizedObject;
+      const name = cloudVisionText(object.name).toLocaleLowerCase();
+      if (!BUILDING_OBJECT_LABELS.has(name)) continue;
+      buildingConfidence = Math.max(
+        buildingConfidence ?? 0,
+        cloudVisionScore(object.score),
+      );
+    }
+
+    const normalized = [...landmarks.values()]
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, MAX_CANDIDATES);
+    log.info(
+      { landmarks: normalized.length, buildingConfidence },
+      "Cloud-Vision-Abgleich abgeschlossen",
+    );
+    return { landmarks: normalized, buildingConfidence };
+  } catch (err) {
+    log.warn(
+      { error: err instanceof Error ? err.name : "unknown" },
+      "Cloud-Vision-Abgleich fehlgeschlagen; Claude-Ergebnis bleibt aktiv",
+    );
+    return null;
+  }
+}
+
 async function lookupWikipedia(
   query: string,
   language: string,
@@ -664,6 +854,47 @@ export async function recognizeObject(
         (entry) => entry.objectType !== "animal",
       );
       const enrichedEntries = [...animalCandidates, ...nonAnimalCandidates].slice(
+        0,
+        MAX_CANDIDATES,
+      );
+      candidates = enrichedEntries.map((entry) => entry.candidate);
+      candidateEntries.splice(0, candidateEntries.length, ...enrichedEntries);
+    }
+  }
+
+  const landmarkEntry = candidateEntries.find(
+    (entry) => entry.objectType === "building" || entry.objectType === "landmark",
+  );
+  if (landmarkEntry) {
+    const visionResult = await identifyBuildingOrLandmarkWithCloudVision(input, log);
+    if (visionResult && visionResult.landmarks.length > 0) {
+      const originalLandmarkCandidate = landmarkEntry.candidate;
+      const landmarkCandidates = visionResult.landmarks.map((match, index) => ({
+        candidate: {
+          id: `cloud-vision-landmark-${index + 1}`,
+          title: match.title,
+          category: originalLandmarkCandidate.category || "Sehenswürdigkeit",
+          confidence: match.confidence,
+          description:
+            index === 0
+              ? originalLandmarkCandidate.description
+              : "Cloud Vision führt diese Sehenswürdigkeit als möglichen visuellen Treffer.",
+          whyLikely:
+            index === 0
+              ? originalLandmarkCandidate.whyLikely
+              : "Die Sehenswürdigkeit wurde durch Googles Landmark Detection im Bild erkannt.",
+          sourceUrl: null,
+          sourceTitle: null,
+          sourceExtract: null,
+          sourceImage: null,
+        },
+        objectType: "landmark",
+        searchQuery: match.title,
+      }));
+      const nonLandmarkCandidates = candidateEntries.filter(
+        (entry) => entry.objectType !== "building" && entry.objectType !== "landmark",
+      );
+      const enrichedEntries = [...landmarkCandidates, ...nonLandmarkCandidates].slice(
         0,
         MAX_CANDIDATES,
       );
