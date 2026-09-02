@@ -1215,6 +1215,32 @@ function strGradeBand(grade){
   var absolute=Math.abs(grade);
   return absolute>=30?'red':absolute>=20?'orange':absolute>=10?'yellow':'green';
 }
+function strPointAtDistance(pts,distances,distance){
+  if(distance<=0)return pts[0];
+  var last=pts.length-1;
+  if(distance>=distances[last])return pts[last];
+  var low=0,high=last;
+  while(low+1<high){
+    var middle=Math.floor((low+high)/2);
+    if(distances[middle]<=distance)low=middle;else high=middle;
+  }
+  var span=distances[high]-distances[low];
+  if(span<=0)return pts[low];
+  var fraction=(distance-distances[low])/span;
+  return[
+    pts[low][0]+(pts[high][0]-pts[low][0])*fraction,
+    pts[low][1]+(pts[high][1]-pts[low][1])*fraction
+  ];
+}
+function strGradeAtDistance(profile,distance,routeKm,scale){
+  var half=Math.min(.05/2,routeKm/2);
+  var start=Math.max(0,distance-half),end=Math.min(routeKm,distance+half);
+  var horizontal=end-start;
+  if(horizontal<=0)return 0;
+  var from=strInterpolateProfile(profile,start*scale);
+  var to=strInterpolateProfile(profile,end*scale);
+  return((to-from)/(horizontal*1000))*100;
+}
 function strBuildGradeSegments(pts,profile){
   if(!pts||pts.length<2)return[];
   var distances=[0];
@@ -1230,14 +1256,22 @@ function strBuildGradeSegments(pts,profile){
   var profileKm=clean[clean.length-1].distanceKm;
   if(profileKm<=0)return[{points:pts,color:'#3E9B46'}];
   var scale=profileKm/routeKm;
+  var breaks=distances.slice();
+  for(var distance=.05;distance<routeKm;distance+=.05)breaks.push(distance);
+  breaks.sort(function(a,b){return a-b;});
+  var unique=[];
+  breaks.forEach(function(distance){
+    if(!unique.length||distance-unique[unique.length-1]>.000001)unique.push(distance);
+  });
   var colors={green:'#3E9B46',yellow:'#F2C94C',orange:'#F2994A',red:'#DA291C'};
-  return pts.slice(1).map(function(point,index){
-    var horizontal=distances[index+1]-distances[index];
-    var from=strInterpolateProfile(clean,distances[index]*scale);
-    var to=strInterpolateProfile(clean,distances[index+1]*scale);
-    var grade=horizontal>0?((to-from)/(horizontal*1000))*100:0;
+  return unique.slice(1).map(function(end,index){
+    var start=unique[index];
+    var grade=strGradeAtDistance(clean,(start+end)/2,routeKm,scale);
     var band=strGradeBand(grade);
-    return{points:[pts[index],point],color:colors[band]};
+    return{points:[
+      strPointAtDistance(pts,distances,start),
+      strPointAtDistance(pts,distances,end)
+    ],color:colors[band]};
   });
 }
 function strLoadElevationProfile(pts,done){

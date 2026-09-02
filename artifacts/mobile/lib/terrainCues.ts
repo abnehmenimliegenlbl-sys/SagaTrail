@@ -25,6 +25,7 @@ export interface RouteGradeSegment {
 }
 
 const ANALYSIS_STEP_KM = 0.05;
+const GRADE_WINDOW_KM = 0.05;
 const ANNOUNCE_GRADE_PCT = 6;
 const VERY_STEEP_GRADE_PCT = 30;
 
@@ -51,10 +52,51 @@ function gradeBand(gradePct: number): RouteGradeBand {
   return "green";
 }
 
+function pointAtDistance(
+  coords: number[][],
+  distances: number[],
+  distanceKmValue: number,
+): number[] {
+  if (distanceKmValue <= 0) return coords[0];
+  const lastIndex = coords.length - 1;
+  if (distanceKmValue >= distances[lastIndex]) return coords[lastIndex];
+  let low = 0;
+  let high = lastIndex;
+  while (low + 1 < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (distances[middle] <= distanceKmValue) low = middle;
+    else high = middle;
+  }
+  const span = distances[high] - distances[low];
+  if (span <= 0) return coords[low];
+  const fraction = (distanceKmValue - distances[low]) / span;
+  return [
+    coords[low][0] + (coords[high][0] - coords[low][0]) * fraction,
+    coords[low][1] + (coords[high][1] - coords[low][1]) * fraction,
+  ];
+}
+
+function gradeAtDistance(
+  profile: TerrainProfilePoint[],
+  distanceKmValue: number,
+  routeLengthKm: number,
+  profileScale: number,
+): number {
+  const halfWindow = Math.min(GRADE_WINDOW_KM / 2, routeLengthKm / 2);
+  const startKm = Math.max(0, distanceKmValue - halfWindow);
+  const endKm = Math.min(routeLengthKm, distanceKmValue + halfWindow);
+  const horizontalKm = endKm - startKm;
+  if (horizontalKm <= 0) return 0;
+  const startAltitude = profileAltitude(profile, startKm * profileScale);
+  const endAltitude = profileAltitude(profile, endKm * profileScale);
+  return ((endAltitude - startAltitude) / (horizontalKm * 1000)) * 100;
+}
+
 /**
- * Splits a route into adjacent LineStrings so MapLibre can color every
- * segment independently. The absolute grade is used, therefore steep
- * descents are visible as well as steep climbs.
+ * Splits a route into smoothed, approximately 50 m LineStrings so MapLibre
+ * can color every section independently. The absolute grade is used, therefore
+ * steep descents are visible as well as steep climbs. A fixed analysis window
+ * prevents short DTM/profile fluctuations from creating false red sections.
  */
 export function buildRouteGradeSegments(
   geometry: number[][] | null | undefined,
@@ -94,24 +136,29 @@ export function buildRouteGradeSegments(
   if (profileLengthKm <= 0) return [{ coordinates: coords, band: "green" }];
   const profileScale = profileLengthKm / routeLengthKm;
 
-  return coords.slice(1).map((point, index) => {
-    const startDistanceKm = routeDistances[index];
-    const endDistanceKm = routeDistances[index + 1];
-    const horizontalKm = endDistanceKm - startDistanceKm;
-    const startAltitude = profileAltitude(
+  const breakDistances = [...routeDistances];
+  for (let distanceKmValue = GRADE_WINDOW_KM; distanceKmValue < routeLengthKm; distanceKmValue += GRADE_WINDOW_KM) {
+    breakDistances.push(distanceKmValue);
+  }
+  breakDistances.sort((a, b) => a - b);
+
+  const uniqueBreakDistances = breakDistances.filter(
+    (distanceKmValue, index) =>
+      index === 0 || distanceKmValue - breakDistances[index - 1] > 0.000001,
+  );
+  return uniqueBreakDistances.slice(1).map((endDistanceKm, index) => {
+    const startDistanceKm = uniqueBreakDistances[index];
+    const gradePct = gradeAtDistance(
       normalizedProfile,
-      startDistanceKm * profileScale,
+      (startDistanceKm + endDistanceKm) / 2,
+      routeLengthKm,
+      profileScale,
     );
-    const endAltitude = profileAltitude(
-      normalizedProfile,
-      endDistanceKm * profileScale,
-    );
-    const gradePct =
-      horizontalKm > 0
-        ? ((endAltitude - startAltitude) / (horizontalKm * 1000)) * 100
-        : 0;
     return {
-      coordinates: [coords[index], point],
+      coordinates: [
+        pointAtDistance(coords, routeDistances, startDistanceKm),
+        pointAtDistance(coords, routeDistances, endDistanceKm),
+      ],
       band: gradeBand(gradePct),
     };
   });
