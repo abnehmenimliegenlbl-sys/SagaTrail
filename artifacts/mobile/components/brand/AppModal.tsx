@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import React, { useEffect } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
@@ -29,6 +29,8 @@ interface AppModalProps {
   message?: string;
   buttons: AppModalButton[];
   children?: React.ReactNode;
+  backdropStyle?: StyleProp<ViewStyle>;
+  cardStyle?: StyleProp<ViewStyle>;
 }
 
 export function AppModal({
@@ -39,6 +41,8 @@ export function AppModal({
   message,
   buttons,
   children,
+  backdropStyle,
+  cardStyle,
 }: AppModalProps) {
   const colors = useColors();
 
@@ -55,7 +59,7 @@ export function AppModal({
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop]}
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onRequestClose} />
         <Animated.View
@@ -63,6 +67,7 @@ export function AppModal({
           exiting={FadeOut.duration(150)}
           style={[
             styles.card,
+            cardStyle,
             GLAS_3D_STARK,
             {
               borderRadius: colors.radius,

@@ -222,6 +222,8 @@ export function ObjectRecognition({
             ? [{ text: strings.retake, onPress: () => { closeResults(); setTimeout(() => void openCamera(), 120); } }]
             : []),
         ]}
+        backdropStyle={styles.recognitionModalBackdrop}
+        cardStyle={styles.recognitionModalCard}
       >
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />
@@ -309,6 +311,8 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.titleBold, fontSize: 12, letterSpacing: 1.1 },
   intro: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 3 },
   analyzeButton: { marginTop: 14 },
+  recognitionModalBackdrop: { paddingHorizontal: 12, paddingVertical: 16 },
+  recognitionModalCard: { maxWidth: 620, maxHeight: "94%" },
   preview: { width: "100%", height: 130, borderRadius: 12, marginTop: 14, backgroundColor: "#10181A" },
   results: { width: "100%", maxHeight: 340, marginTop: 14 },
   resultsContent: { gap: 10, paddingBottom: 2 },
