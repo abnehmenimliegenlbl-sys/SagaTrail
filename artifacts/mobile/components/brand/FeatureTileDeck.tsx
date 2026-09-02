@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import React, { useState } from "react";
 import {
   LayoutAnimation,
@@ -11,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { GLAS_3D } from "@/constants/depth";
+import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -104,13 +105,37 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
               {
                 marginTop: Math.max(18, insets.top),
                 marginBottom: Math.max(12, insets.bottom),
-                backgroundColor: colors.background,
+                backgroundColor: "transparent",
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
               },
+              GLAS_3D_STARK,
             ]}
           >
-            <View style={styles.modalHeader}>
+            <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.glassBgStrong },
+              ]}
+            />
+            <View style={[styles.modalAccent, { backgroundColor: colors.primary }]} />
+            <View style={[styles.modalHeader, { borderBottomColor: colors.glassBorder }]}>
+              <View
+                style={[
+                  styles.modalIcon,
+                  {
+                    backgroundColor: colors.primary + "18",
+                    borderColor: colors.primary + "66",
+                  },
+                ]}
+              >
+                <Feather
+                  name={activeTile?.icon ?? "triangle"}
+                  size={19}
+                  color={colors.primary}
+                />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.modalEyebrow, { color: colors.primary }]}>SAGATRAIL</Text>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>
@@ -170,13 +195,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
   },
+  modalAccent: { height: 3, width: "100%" },
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 18,
     paddingTop: 16,
-    paddingBottom: 10,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+  },
+  modalIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalEyebrow: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.4 },
   modalTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 3 },
