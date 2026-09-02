@@ -359,6 +359,41 @@ export default function Summary() {
           </View>
         )}
 
+        {lastHike.recognitionEntries && lastHike.recognitionEntries.length > 0 && (
+          <View style={{ marginTop: 30 }}>
+            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+              {t.visitedPoisTitle}
+            </Text>
+            {lastHike.recognitionEntries.map((entry) => (
+              <View
+                key={entry.id}
+                style={[styles.poiCard, { borderColor: colors.glassBorder, ...GLAS_3D }]}
+              >
+                <Image
+                  source={{ uri: entry.photoUri }}
+                  style={styles.poiThumb}
+                  resizeMode="cover"
+                />
+                <View style={styles.poiContent}>
+                  <View style={styles.recognitionTitleRow}>
+                    <Feather
+                      name={entry.kind === "peak" ? "triangle" : "maximize"}
+                      size={14}
+                      color={colors.accent}
+                    />
+                    <Text style={[styles.poiName, { color: colors.foreground }]}>
+                      {entry.title}
+                    </Text>
+                  </View>
+                  <Text style={[styles.poiExtract, { color: colors.mutedForeground }]}>
+                    {entry.text}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={{ marginTop: 30 }}>
           <Text style={[styles.blockTitle, { color: colors.foreground }]}>
             {t.photoTitle}
@@ -588,4 +623,5 @@ const styles = StyleSheet.create({
   poiContent: { flex: 1, padding: 12 },
   poiName: { fontFamily: fonts.titleBold, fontSize: 15, marginBottom: 4 },
   poiExtract: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
+  recognitionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
 });

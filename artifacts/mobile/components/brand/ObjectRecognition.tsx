@@ -22,6 +22,8 @@ import { fonts } from "@/constants/typography";
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { useColors } from "@/hooks/useColors";
 import type { ObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
+import { persistJournalImage } from "@/lib/journalMedia";
+import type { RecognitionJournalEntry } from "@/types";
 
 interface Props {
   premium: boolean;
@@ -32,6 +34,7 @@ interface Props {
   lng?: number | null;
   heading?: number | null;
   nearbyContext?: string;
+  onAnalyzed?: (entry: RecognitionJournalEntry) => void | Promise<void>;
 }
 
 type RecognitionState = "idle" | "capturing" | "analyzing";
@@ -45,6 +48,7 @@ export function ObjectRecognition({
   lng,
   heading,
   nearbyContext,
+  onAnalyzed,
 }: Props) {
   const colors = useColors();
   const [state, setState] = useState<RecognitionState>("idle");
@@ -143,8 +147,47 @@ export function ObjectRecognition({
         analysisNote?: string;
         candidates?: ObjectRecognitionCandidate[];
       };
-      setNote(payload.analysisNote ?? "");
-      setCandidates(Array.isArray(payload.candidates) ? payload.candidates.slice(0, 3) : []);
+      const analyzedCandidates = Array.isArray(payload.candidates)
+        ? payload.candidates.slice(0, 3)
+        : [];
+      const analysisNote = payload.analysisNote ?? "";
+      setNote(analysisNote);
+      setCandidates(analyzedCandidates);
+      // Das Ergebnis wird sofort als Tagebuchbild gesichert. Die Kandidaten
+      // bleiben bewusst als vorsichtige Kandidaten formuliert; die Analyse
+      // muss nicht erst bestaetigt werden, damit kein aufgenommenes Bild
+      // verloren geht.
+      if (onAnalyzed) {
+        try {
+          const persistentUri = await persistJournalImage(uri, "object");
+          const candidateText = analyzedCandidates
+            .map(
+              (candidate, index) =>
+                `${index + 1}. ${candidate.title} (${Math.round(candidate.confidence * 100)} %): ${candidate.description} ${candidate.whyLikely}`,
+            )
+            .join("\n\n");
+          await onAnalyzed({
+            id: `recognition-object-${Date.now()}`,
+            kind: "object",
+            photoUri: persistentUri,
+            title: analyzedCandidates[0]?.title ?? strings.title,
+            text: [analysisNote, candidateText || strings.noCandidates]
+              .filter(Boolean)
+              .join("\n\n"),
+            capturedAt: Date.now(),
+            confidence: analyzedCandidates[0]?.confidence,
+            ...(analyzedCandidates[0]?.sourceUrl
+              ? { sourceUrl: analyzedCandidates[0].sourceUrl }
+              : {}),
+            ...(analyzedCandidates[0]?.sourceTitle
+              ? { sourceTitle: analyzedCandidates[0].sourceTitle }
+              : {}),
+          });
+        } catch {
+          // Die Analyse bleibt sichtbar, auch wenn das lokale Kopieren
+          // wegen eines vollen/gesperrten Dateisystems nicht gelingt.
+        }
+      }
     } catch (err) {
       if (runId === runIdRef.current) {
         setError(err instanceof Error && err.message ? err.message : strings.analysisError);
@@ -163,6 +206,7 @@ export function ObjectRecognition({
     lat,
     lng,
     nearbyContext,
+    onAnalyzed,
     premium,
     strings.analysisError,
     strings.cameraPermissionMessage,

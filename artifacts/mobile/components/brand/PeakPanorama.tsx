@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useState } from "react";
+import { captureRef } from "react-native-view-shot";
+import { useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -15,6 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
+import { persistJournalImage } from "@/lib/journalMedia";
+import type { RecognitionJournalEntry } from "@/types";
 import { PeakArNavigator } from "./PeakArNavigator";
 
 const PANORAMA_VIEW_DEGREES = 140;
@@ -29,6 +32,7 @@ export interface PeakPanoramaStrings {
   distance: (distance: string) => string;
   camera: string;
   cameraOff: string;
+  capture: string;
   cameraPermission: string;
   arUnavailable: string;
 }
@@ -38,6 +42,7 @@ interface PeakPanoramaProps {
   heading: number | null;
   hasGps: boolean;
   strings: PeakPanoramaStrings;
+  onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
 }
 
 function markerLeft(relativeBearingDeg: number): DimensionValue {
@@ -50,6 +55,7 @@ export function PeakPanorama({
   heading,
   hasGps,
   strings,
+  onCaptured,
 }: PeakPanoramaProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -57,6 +63,9 @@ export function PeakPanorama({
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [arUnavailable, setArUnavailable] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
+  const cameraFrameRef = useRef<View>(null);
   const visiblePeaks =
     heading == null
       ? []
@@ -94,6 +103,54 @@ export function PeakPanorama({
       setCameraEnabled(true);
     } else {
       setCameraBlocked(true);
+    }
+  };
+
+  const capturePeakRecognition = async () => {
+    if (capturing || visiblePeaks.length === 0 || !onCaptured) return;
+    setCapturing(true);
+    try {
+      // Das gesamte AR-/Kamera-Bild mit den eingeblendeten Hinweisen
+      // festhalten. Falls die native AR-Oberflaeche keinen View-Snapshot
+      // erlaubt, liefert die Fallback-Kamera ihr Rohbild.
+      let snapshotUri: string | null = null;
+      try {
+        if (cameraFrameRef.current) {
+          snapshotUri = await captureRef(cameraFrameRef, {
+            format: "jpg",
+            quality: 0.82,
+            result: "tmpfile",
+          });
+        }
+      } catch {
+        snapshotUri = null;
+      }
+      if (!snapshotUri && cameraRef.current) {
+        const picture = await cameraRef.current.takePictureAsync({
+          quality: 0.82,
+          skipProcessing: true,
+        });
+        snapshotUri = picture?.uri ?? null;
+      }
+      if (!snapshotUri) return;
+
+      const persistentUri = await persistJournalImage(snapshotUri, "peak");
+      const peakText = visiblePeaks
+        .map(
+          (peak) =>
+            `${peak.name} — ${strings.distance(peak.distanceKm.toFixed(1))}`,
+        )
+        .join("\n");
+      await onCaptured({
+        id: `recognition-peak-${Date.now()}`,
+        kind: "peak",
+        photoUri: persistentUri,
+        title: focusedPeak?.name ?? strings.title,
+        text: peakText,
+        capturedAt: Date.now(),
+      });
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -179,9 +236,9 @@ export function PeakPanorama({
         presentationStyle="fullScreen"
         onRequestClose={() => setCameraEnabled(false)}
       >
-        <View style={styles.fullscreenCamera}>
+        <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
           {arUnavailable ? (
-            <CameraView facing="back" style={styles.camera} />
+            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
           ) : (
             <PeakArNavigator
               peaks={visiblePeaks}
@@ -283,14 +340,30 @@ export function PeakPanorama({
               size={15}
               color={colors.photoScrimText}
             />
-            <Text
-              style={[styles.status, { color: colors.photoScrimText }]}
-              numberOfLines={2}
-            >
+            <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
                 {arUnavailable && focusedPeak
                 ? `${strings.detected}: ${focusedPeak.name}`
                 : status}
             </Text>
+            <Pressable
+              onPress={() => void capturePeakRecognition()}
+              disabled={capturing || visiblePeaks.length === 0}
+              style={[
+                styles.captureButton,
+                {
+                  backgroundColor: colors.primary,
+                  borderColor: colors.primary,
+                  opacity: capturing || visiblePeaks.length === 0 ? 0.45 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={strings.capture}
+            >
+              <Feather name="camera" size={14} color={colors.primaryForeground} />
+              <Text style={[styles.captureButtonText, { color: colors.primaryForeground }]}>
+                {capturing ? "…" : strings.capture}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -410,5 +483,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.38)",
     paddingTop: 10,
   },
+  captureButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+  },
+  captureButtonText: { fontFamily: fonts.mono, fontSize: 9 },
   status: { flex: 1, fontFamily: fonts.body, fontSize: 12 },
 });

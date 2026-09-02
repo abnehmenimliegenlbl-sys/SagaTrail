@@ -14,6 +14,7 @@ import {
 } from "@workspace/api-client-react";
 import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherReport, WikiSummary } from "@workspace/api-client-react";
 import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
+import type { RecognitionJournalEntry } from "@/types";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
@@ -578,6 +579,7 @@ export default function LiveHike() {
   // Feature: Foto-Challenge + Waypoint-Fotos
   const [hikePhotos, setHikePhotos] = useState<string[]>([]);
   const [photoObjectPaths, setPhotoObjectPaths] = useState<string[]>([]);
+  const [recognitionEntries, setRecognitionEntries] = useState<RecognitionJournalEntry[]>([]);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUploadFeedback, setPhotoUploadFeedback] = useState<"ok" | "error" | null>(null);
   const [showPhotoChallenge, setShowPhotoChallenge] = useState(false);
@@ -590,6 +592,13 @@ export default function LiveHike() {
   const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
   // Live-Wetter am Wanderungsstart — wird einmalig geladen, sobald Route-Koordinaten bekannt sind.
   const [hikeWeather, setHikeWeather] = useState<WeatherReport | null>(null);
+
+  const addRecognitionEntry = useCallback((entry: RecognitionJournalEntry) => {
+    setRecognitionEntries((current) => {
+      if (current.some((existing) => existing.id === entry.id)) return current;
+      return [...current, entry];
+    });
+  }, []);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const decisionsRef = useRef<StoryChapter[]>([]);
@@ -3273,6 +3282,7 @@ export default function LiveHike() {
       visitedPois: visitedPoisRef.current.size > 0
         ? Array.from(visitedPoisRef.current.values())
         : undefined,
+      recognitionEntries: recognitionEntries.length > 0 ? recognitionEntries : undefined,
     };
     await Promise.all([
       saveHike(session),
@@ -3293,7 +3303,7 @@ export default function LiveHike() {
         }
       }, 1500);
     }
-  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
@@ -3642,9 +3652,11 @@ export default function LiveHike() {
                     distance: t.panoramaDistance,
                     camera: t.camera,
                     cameraOff: t.cameraOff,
+                     capture: t.camera,
                     cameraPermission: t.cameraPermission,
                     arUnavailable: t.arUnavailable,
                   }}
+                   onCaptured={addRecognitionEntry}
                 />
               ),
             },
@@ -3663,6 +3675,7 @@ export default function LiveHike() {
                   lng={livePos?.lng}
                   heading={compassHeading}
                   nearbyContext={objectRecognitionContext}
+                   onAnalyzed={addRecognitionEntry}
                 />
               ),
             },

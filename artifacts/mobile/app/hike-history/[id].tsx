@@ -229,6 +229,42 @@ export default function HikeHistoryDetail() {
             </Section>
           )}
 
+          {hike.recognitionEntries && hike.recognitionEntries.length > 0 && (
+            <Section title={t.diaryDetailPois} colors={colors}>
+              {hike.recognitionEntries.map((entry) => (
+                <View
+                  key={entry.id}
+                  style={[
+                    styles.poiCard,
+                    { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
+                    GLAS_3D,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: entry.photoUri }}
+                    style={styles.poiPhoto}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.poiBody}>
+                    <View style={styles.recognitionTitleRow}>
+                      <Feather
+                        name={entry.kind === "peak" ? "triangle" : "maximize"}
+                        size={14}
+                        color={colors.accent}
+                      />
+                      <Text style={[styles.poiName, { color: colors.foreground }]}>
+                        {entry.title}
+                      </Text>
+                    </View>
+                    <Text style={[styles.poiExtract, { color: colors.mutedForeground }]}>
+                      {entry.text}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </Section>
+          )}
+
           {/* Kapitel / Geschichte */}
           {hike.chapters && hike.chapters.length > 0 && (
             <Section title={t.diaryDetailChapters} colors={colors}>
@@ -443,6 +479,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  recognitionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   chapterCard: {
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,

@@ -84,6 +84,22 @@ export interface StoryChapter {
   chosenOptionIndex?: number;
 }
 
+export type RecognitionJournalEntryKind = "object" | "peak";
+
+export interface RecognitionJournalEntry {
+  id: string;
+  kind: RecognitionJournalEntryKind;
+  /** Dauerhafte lokale Datei-URI des aufgenommenen Erkennungsbildes. */
+  photoUri: string;
+  title: string;
+  /** Vollständiger sichtbarer Erkennungstext für das Wandertagebuch. */
+  text: string;
+  capturedAt: number;
+  confidence?: number;
+  sourceUrl?: string;
+  sourceTitle?: string;
+}
+
 export interface HikeSession {
   id: string;
   sagaId: string;
@@ -108,6 +124,8 @@ export interface HikeSession {
   geometry?: number[][];
   /** Waehrend der Wanderung getippte POIs fuer das Wandertagebuch (Name, Text, Bild) */
   visitedPois?: { id: string; name: string; extract?: string; photoUrl?: string }[];
+  /** Aufbewahrte Bilder und Texte der Objekt- und Gipfelerkennung. */
+  recognitionEntries?: RecognitionJournalEntry[];
 }
 
 export interface Achievement {
