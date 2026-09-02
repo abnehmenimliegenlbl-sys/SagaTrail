@@ -1,4 +1,9 @@
 import { Feather } from "@expo/vector-icons";
+import Svg, {
+  Circle as SvgCircle,
+  Ellipse as SvgEllipse,
+  Path as SvgPath,
+} from "react-native-svg";
 import {
   createNarration,
   getAerialways,
@@ -4393,9 +4398,84 @@ function CompassCard({
       {ready ? (
         <View style={styles.compassBody}>
           <View style={styles.compassDial}>
-            <View style={[styles.woodGrain, styles.woodGrainOne]} />
-            <View style={[styles.woodGrain, styles.woodGrainTwo]} />
+            <Svg width={236} height={236} viewBox="0 0 236 236" style={styles.woodTexture}>
+              <SvgCircle cx="118" cy="118" r="116" fill="#4A2818" />
+              <SvgCircle cx="118" cy="118" r="112" fill="#704326" stroke="#C18B52" strokeWidth="2" />
+              <SvgCircle cx="118" cy="118" r="103" fill="none" stroke="#3B1E12" strokeWidth="3" opacity={0.8} />
+              <SvgEllipse
+                cx="118"
+                cy="118"
+                rx="102"
+                ry="57"
+                fill="none"
+                stroke="#9A6235"
+                strokeWidth="3"
+                opacity={0.5}
+                transform="rotate(18 118 118)"
+              />
+              <SvgEllipse
+                cx="118"
+                cy="118"
+                rx="94"
+                ry="43"
+                fill="none"
+                stroke="#32180E"
+                strokeWidth="2"
+                opacity={0.7}
+                transform="rotate(18 118 118)"
+              />
+              <SvgPath
+                d="M-8 75 C28 47 50 72 80 57 S137 36 170 57 S207 70 244 48"
+                fill="none"
+                stroke="#3C1D10"
+                strokeWidth="3"
+                opacity={0.7}
+              />
+              <SvgPath
+                d="M-12 94 C24 74 50 98 78 81 S136 62 169 81 S213 96 248 73"
+                fill="none"
+                stroke="#B37642"
+                strokeWidth="2"
+                opacity={0.55}
+              />
+              <SvgPath
+                d="M-10 153 C27 127 54 153 83 137 S138 119 170 139 S213 153 246 128"
+                fill="none"
+                stroke="#32180E"
+                strokeWidth="3"
+                opacity={0.65}
+              />
+              <SvgPath
+                d="M-4 177 C29 151 55 178 86 161 S139 144 175 162 S211 178 241 155"
+                fill="none"
+                stroke="#A86D3C"
+                strokeWidth="2"
+                opacity={0.5}
+              />
+              <SvgEllipse cx="35" cy="61" rx="13" ry="7" fill="none" stroke="#32180E" strokeWidth="3" opacity={0.7} />
+              <SvgEllipse cx="35" cy="61" rx="5" ry="2.5" fill="#32180E" opacity={0.75} />
+              <SvgEllipse cx="205" cy="174" rx="15" ry="8" fill="none" stroke="#32180E" strokeWidth="3" opacity={0.7} />
+              <SvgEllipse cx="205" cy="174" rx="6" ry="3" fill="#32180E" opacity={0.75} />
+            </Svg>
+            {[
+              styles.brassScrewTop,
+              styles.brassScrewRight,
+              styles.brassScrewBottom,
+              styles.brassScrewLeft,
+            ].map((positionStyle, index) => (
+              <View key={index} style={[styles.brassScrew, positionStyle]}>
+                <View
+                  style={[
+                    styles.brassScrewSlot,
+                    index % 2 === 0 && { transform: [{ rotate: "35deg" }] },
+                  ]}
+                />
+              </View>
+            ))}
             <View style={styles.compassFace}>
+              <View style={styles.compassFaceInnerRing} />
+              <View style={styles.compassRoseAxis} />
+              <View style={[styles.compassRoseAxis, { transform: [{ rotate: "45deg" }] }]} />
               {Array.from({ length: 24 }).map((_, index) => (
                 <View
                   key={index}
@@ -4442,7 +4522,11 @@ function CompassCard({
                       { transform: [{ rotate: `${-sagaNeedleRotation}deg` }] },
                     ]}
                   >
-                    <Feather name="book-open" size={15} color="#2A1B11" />
+                    <SparkMountain
+                      size={24}
+                      mountainColor="#4A2C19"
+                      sparkColor="#F4C96A"
+                    />
                   </View>
                 </View>
               )}
@@ -4461,7 +4545,11 @@ function CompassCard({
               </View>
               {sagaName ? (
                 <View style={[styles.compassLegendItem, { flex: 1 }]}>
-                  <Feather name="book-open" size={13} color="#D8A84E" />
+                  <SparkMountain
+                    size={18}
+                    mountainColor="#E7C67A"
+                    sparkColor="#D8A84E"
+                  />
                   <Text style={styles.compassSagaName} numberOfLines={1}>
                     {sagaName}
                   </Text>
@@ -4617,12 +4705,10 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   compassDial: {
-    width: 226,
-    height: 226,
-    borderRadius: 113,
-    borderWidth: 5,
-    borderColor: "#B9824D",
-    backgroundColor: "#6D4328",
+    width: 236,
+    height: 236,
+    borderRadius: 118,
+    backgroundColor: "#4A2818",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -4632,26 +4718,37 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 7 },
     elevation: 5,
   },
-  woodGrain: {
+  woodTexture: {
     position: "absolute",
-    borderWidth: 2,
-    borderColor: "rgba(44,23,11,0.38)",
-    borderRadius: 999,
+    left: 0,
+    top: 0,
   },
-  woodGrainOne: {
-    width: 248,
-    height: 112,
-    transform: [{ rotate: "22deg" }],
+  brassScrew: {
+    position: "absolute",
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#6B451B",
+    backgroundColor: "#C79647",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
   },
-  woodGrainTwo: {
-    width: 116,
-    height: 252,
-    transform: [{ rotate: "-31deg" }],
+  brassScrewSlot: {
+    width: 7,
+    height: 1,
+    backgroundColor: "#6B451B",
+    transform: [{ rotate: "-20deg" }],
   },
+  brassScrewTop: { top: 8, left: 112 },
+  brassScrewRight: { right: 8, top: 112 },
+  brassScrewBottom: { bottom: 8, left: 112 },
+  brassScrewLeft: { left: 8, top: 112 },
   compassFace: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
+    width: 184,
+    height: 184,
+    borderRadius: 92,
     borderWidth: 3,
     borderColor: "#3B281C",
     backgroundColor: "#EFE0BC",
@@ -4661,6 +4758,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },
+  },
+  compassFaceInnerRing: {
+    position: "absolute",
+    width: 164,
+    height: 164,
+    borderRadius: 82,
+    borderWidth: 1,
+    borderColor: "rgba(89,61,36,0.45)",
+  },
+  compassRoseAxis: {
+    position: "absolute",
+    width: 1,
+    height: 120,
+    backgroundColor: "rgba(100,72,45,0.16)",
   },
   compassTickWrap: {
     position: "absolute",
