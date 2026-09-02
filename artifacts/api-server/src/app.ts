@@ -15,6 +15,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import { WebhookHandlers } from "./lib/webhookHandlers";
 import { handleStripeEvent } from "./lib/partnerWebhookHandler";
+import { resolveRegionalLocalLogoFile } from "./lib/routeLogoResolver";
 import Stripe from "stripe";
 import { CANTON_WAPPEN_SVG } from "../../mobile/constants/cantonWappenSvg";
 
@@ -158,6 +159,7 @@ const regionalLocalLogoDir = path.join(
 const regionalLocalLogoFiles = new Set(
   fs.readdirSync(regionalLocalLogoDir).filter((file) => /^WL_\d{3}(?:_[A-Z]{2})?\.jpg$/.test(file)),
 );
+const knownCantonCodes = new Set(Object.keys(CANTON_WAPPEN_SVG));
 // Liefert für eine regionale/lokale Route die erste tatsächlich vorhandene
 // offizielle Datei. Einige Routen (z. B. 85 und 99) existieren ausschließlich
 // als kantonsbezogene JPGs und haben keine WL_XXX.jpg-Datei.
@@ -169,9 +171,12 @@ app.get("/api/route-logos/resolve/:number/:canton", (req, res): void => {
     return;
   }
 
-  const padded = number.padStart(3, "0");
-  const candidates = [`WL_${padded}_${canton}.jpg`, `WL_${padded}.jpg`];
-  const file = candidates.find((candidate) => regionalLocalLogoFiles.has(candidate));
+  const file = resolveRegionalLocalLogoFile(
+    number,
+    canton,
+    regionalLocalLogoFiles,
+    knownCantonCodes,
+  );
   if (!file) {
     res.status(404).end();
     return;
