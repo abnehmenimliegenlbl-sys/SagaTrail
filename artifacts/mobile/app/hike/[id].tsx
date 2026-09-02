@@ -4427,6 +4427,7 @@ function CompassCard({
                   { transform: [{ rotate: `${sagaNeedleRotation}deg` }] },
                 ]}
               >
+                <View style={styles.sagaNeedleShaft} />
                 <View style={styles.sagaNeedleIcon}>
                   <Image
                     source={require("../../assets/images/compass-saga-pointer.png")}
@@ -4714,11 +4715,21 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
   },
+  sagaNeedleShaft: {
+    position: "absolute",
+    top: 43,
+    width: 3,
+    height: 37,
+    backgroundColor: "#D8A84E",
+    shadowColor: "#6B4316",
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+  },
   sagaNeedleIcon: {
     position: "absolute",
-    top: 67,
-    width: 9,
-    height: 16,
+    top: 0,
+    width: 30,
+    height: 53,
     alignItems: "center",
     justifyContent: "center",
   },
