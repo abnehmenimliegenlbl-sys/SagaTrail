@@ -164,16 +164,29 @@ export function PeakPanorama({
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Feather name="triangle" size={16} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.accent }]}>
-            {strings.title}
-          </Text>
+          <View style={[styles.titleIcon, { backgroundColor: colors.glassHighlight }]}>
+            <Feather name="triangle" size={14} color={colors.accent} />
+          </View>
+          <View>
+            <Text style={[styles.kicker, { color: colors.mutedForeground }]}>
+              {strings.detected}
+            </Text>
+            <Text style={[styles.title, { color: colors.accent }]}>{strings.title}</Text>
+          </View>
         </View>
         <View style={styles.headerActions}>
           {heading != null && (
-            <Text style={[styles.heading, { color: colors.foreground }]}>
-              {Math.round(heading)}°
-            </Text>
+            <View
+              style={[
+                styles.headingBadge,
+                { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+              ]}
+            >
+              <Feather name="navigation" size={12} color={colors.tint} />
+              <Text style={[styles.heading, { color: colors.foreground }]}>
+                {Math.round(heading)}°
+              </Text>
+            </View>
           )}
           {Platform.OS !== "web" && (
             <Pressable
@@ -212,6 +225,32 @@ export function PeakPanorama({
         {strings.hint}
       </Text>
 
+      <View style={styles.signalRow}>
+        <View
+          style={[
+            styles.signalPill,
+            { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+          ]}
+        >
+          <View
+            style={[
+              styles.signalDot,
+              { backgroundColor: visiblePeaks.length > 0 ? colors.accent : colors.mutedForeground },
+            ]}
+          />
+          <Text style={[styles.signalText, { color: colors.foreground }]} numberOfLines={1}>
+            {visiblePeaks.length > 0 ? `${visiblePeaks.length} · ${strings.detected}` : status}
+          </Text>
+        </View>
+        {heading == null ? (
+          <Feather name="compass" size={16} color={colors.mutedForeground} />
+        ) : (
+          <Text style={[styles.viewAngle, { color: colors.mutedForeground }]}>
+            {PANORAMA_VIEW_DEGREES}°
+          </Text>
+        )}
+      </View>
+
       <View
         style={[
           styles.cameraPrompt,
@@ -221,13 +260,25 @@ export function PeakPanorama({
           },
         ]}
       >
-        <Feather name="camera" size={22} color={colors.accent} />
-        <Text style={[styles.promptTitle, { color: colors.foreground }]}>
-          {strings.camera}
-        </Text>
-        <Text style={[styles.promptStatus, { color: colors.mutedForeground }]}>
-          {status}
-        </Text>
+        <View style={styles.previewSky}>
+          <View style={[styles.mountainFar, { borderBottomColor: colors.glassHighlight }]} />
+          <View style={[styles.mountainNear, { borderBottomColor: colors.accent }]} />
+          <View style={[styles.previewSun, { backgroundColor: colors.tint }]} />
+          <View style={[styles.previewCrosshair, { borderColor: colors.glassHighlight }]}>
+            <View style={[styles.previewCrosshairDot, { backgroundColor: colors.accent }]} />
+          </View>
+        </View>
+        <View style={styles.promptCopy}>
+          <View style={styles.promptTitleRow}>
+            <Feather name="camera" size={16} color={colors.accent} />
+            <Text style={[styles.promptTitle, { color: colors.foreground }]}>
+              {strings.camera}
+            </Text>
+          </View>
+          <Text style={[styles.promptStatus, { color: colors.mutedForeground }]} numberOfLines={2}>
+            {status}
+          </Text>
+        </View>
       </View>
 
       <Modal
@@ -383,10 +434,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  titleIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kicker: {
+    fontFamily: fonts.mono,
+    fontSize: 8,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
-  heading: { fontFamily: fonts.monoBold, fontSize: 14 },
+  headingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  heading: { fontFamily: fonts.monoBold, fontSize: 12 },
   cameraButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -397,18 +470,96 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   cameraButtonText: { fontFamily: fonts.mono, fontSize: 9 },
-  hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 7 },
+  hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 9 },
+  signalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 11,
+    marginBottom: 1,
+  },
+  signalPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    maxWidth: "84%",
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  signalDot: { width: 6, height: 6, borderRadius: 3 },
+  signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
+  viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
   cameraPrompt: {
-    minHeight: 94,
+    minHeight: 116,
     marginTop: 12,
     borderWidth: 1,
     borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "stretch",
+    overflow: "hidden",
+  },
+  previewSky: {
+    width: 112,
+    minHeight: 116,
+    overflow: "hidden",
+    position: "relative",
+    justifyContent: "flex-end",
+  },
+  previewSun: {
+    position: "absolute",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    top: 17,
+    right: 18,
+    opacity: 0.8,
+  },
+  mountainFar: {
+    position: "absolute",
+    bottom: -20,
+    left: -14,
+    width: 92,
+    height: 92,
+    borderLeftWidth: 46,
+    borderRightWidth: 46,
+    borderBottomWidth: 92,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    opacity: 0.24,
+    transform: [{ rotate: "-7deg" }],
+  },
+  mountainNear: {
+    position: "absolute",
+    bottom: -29,
+    right: -18,
+    width: 108,
+    height: 108,
+    borderLeftWidth: 54,
+    borderRightWidth: 54,
+    borderBottomWidth: 108,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    opacity: 0.18,
+    transform: [{ rotate: "8deg" }],
+  },
+  previewCrosshair: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    left: 35,
+    top: 36,
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
   },
-  promptTitle: { fontFamily: fonts.titleBold, fontSize: 14 },
-  promptStatus: { fontFamily: fonts.body, fontSize: 11, textAlign: "center", paddingHorizontal: 16 },
+  previewCrosshairDot: { width: 5, height: 5, borderRadius: 3 },
+  promptCopy: { flex: 1, justifyContent: "center", paddingHorizontal: 14, gap: 5 },
+  promptTitleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  promptTitle: { fontFamily: fonts.titleBold, fontSize: 15 },
+  promptStatus: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, paddingRight: 4 },
   fullscreenCamera: { flex: 1, backgroundColor: "#000" },
   camera: { ...StyleSheet.absoluteFillObject },
   imageScrim: {
