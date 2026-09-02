@@ -464,6 +464,12 @@ paths:
           description: Anmeldung erforderlich
         "403":
           description: Premium erforderlich
+        "429":
+          description: Tageslimit von fünf Objekterkennungen pro Nutzer und Schweizer Kalendertag erreicht
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectRecognitionLimitError"
         "502":
           description: Analyse momentan nicht verfuegbar
           content:

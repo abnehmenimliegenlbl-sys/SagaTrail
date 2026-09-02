@@ -51,6 +51,7 @@ import type {
   GpxImportBody,
   HealthStatus,
   NarrationInput,
+  ObjectRecognitionLimitError,
   Partner,
   Poi,
   PoiDetailResponse,
@@ -866,7 +867,7 @@ export const analyzeObject = async (analyzeObjectRequest: AnalyzeObjectRequest, 
 
 
 
-export const getAnalyzeObjectMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+export const getAnalyzeObjectMutationOptions = <TError = ErrorType<ErrorResponse | void | ObjectRecognitionLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext> => {
 
@@ -895,12 +896,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AnalyzeObjectMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeObject>>>
     export type AnalyzeObjectMutationBody = BodyType<AnalyzeObjectRequest>
-    export type AnalyzeObjectMutationError = ErrorType<ErrorResponse | void>
+    export type AnalyzeObjectMutationError = ErrorType<ErrorResponse | void | ObjectRecognitionLimitError>
 
     /**
  * @summary Ein Foto eines beliebigen Objekts analysieren
  */
-export const useAnalyzeObject = <TError = ErrorType<ErrorResponse | void>,
+export const useAnalyzeObject = <TError = ErrorType<ErrorResponse | void | ObjectRecognitionLimitError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeObject>>, TError,{data: BodyType<AnalyzeObjectRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof analyzeObject>>,

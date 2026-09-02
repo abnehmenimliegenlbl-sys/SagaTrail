@@ -140,6 +140,7 @@ export function ObjectRecognition({
       if (runId !== runIdRef.current) return;
       if (!response.ok) {
         if (response.status === 403) throw new Error(strings.premiumTitle);
+        if (response.status === 429) throw new Error(strings.dailyLimitReached);
         throw new Error(strings.analysisError);
       }
       const payload = (await response.json()) as {
@@ -209,6 +210,7 @@ export function ObjectRecognition({
     premium,
     strings.analysisError,
     strings.cameraPermissionMessage,
+    strings.dailyLimitReached,
     strings.premiumTitle,
   ]);
 

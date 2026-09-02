@@ -505,6 +505,19 @@ export interface AnalyzeObjectResponse {
   candidates: ObjectRecognitionCandidate[];
 }
 
+export type ObjectRecognitionLimitErrorCode = typeof ObjectRecognitionLimitErrorCode[keyof typeof ObjectRecognitionLimitErrorCode];
+
+
+export const ObjectRecognitionLimitErrorCode = {
+  OBJECT_RECOGNITION_DAILY_LIMIT: 'OBJECT_RECOGNITION_DAILY_LIMIT',
+} as const;
+
+export interface ObjectRecognitionLimitError {
+  error: string;
+  code: ObjectRecognitionLimitErrorCode;
+  limit: number;
+}
+
 export interface LocalizedSummary {
   text: string;
   reviewEmpfohlen: boolean;

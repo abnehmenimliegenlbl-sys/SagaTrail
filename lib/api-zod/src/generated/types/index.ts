@@ -50,6 +50,8 @@ export * from './localizedSummary';
 export * from './narrationInput';
 export * from './narrationInputProvider';
 export * from './objectRecognitionCandidate';
+export * from './objectRecognitionLimitError';
+export * from './objectRecognitionLimitErrorCode';
 export * from './partner';
 export * from './partnerKategorie';
 export * from './partnerPaket';

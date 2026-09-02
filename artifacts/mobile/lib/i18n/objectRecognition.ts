@@ -22,6 +22,7 @@ export interface ObjectRecognitionStrings {
   analysisError: string;
   close: string;
   retake: string;
+  dailyLimitReached: string;
   noPhoto: string;
   personNotRecognized: string;
 }
@@ -48,6 +49,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "Die Analyse konnte gerade nicht durchgeführt werden. Bitte versuche es nochmals.",
     close: "Schliessen",
     retake: "Neues Foto",
+    dailyLimitReached: "Du hast das Tageslimit von 5 Objekterkennungen erreicht. Morgen ist es wieder verfügbar.",
     noPhoto: "Kein Foto ausgewählt.",
     personNotRecognized: "Personen und Gesichter werden von SagaTrail nicht erkannt.",
   },
@@ -72,6 +74,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "D Analyse het grad nöd chöne duregführt werde. Bitte probiers nomal.",
     close: "Schliesse",
     retake: "Nöis Foto",
+    dailyLimitReached: "Du hesch s Tageslimit vo 5 Objekterkennige erreicht. Morn isch es wieder verfügbar.",
     noPhoto: "Kei Foto usgwählt.",
     personNotRecognized: "Persone und Gsichter werde vo SagaTrail nöd erkannt.",
   },
@@ -96,6 +99,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "L'analyse n'est pas disponible pour le moment. Réessayez.",
     close: "Fermer",
     retake: "Nouvelle photo",
+    dailyLimitReached: "Vous avez atteint la limite quotidienne de 5 reconnaissances d'objets. Réessayez demain.",
     noPhoto: "Aucune photo sélectionnée.",
     personNotRecognized: "SagaTrail ne reconnaît pas les personnes ni les visages.",
   },
@@ -120,6 +124,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "L'analisi non è disponibile al momento. Riprova.",
     close: "Chiudi",
     retake: "Nuova foto",
+    dailyLimitReached: "Hai raggiunto il limite giornaliero di 5 riconoscimenti di oggetti. Riprova domani.",
     noPhoto: "Nessuna foto selezionata.",
     personNotRecognized: "SagaTrail non riconosce persone o volti.",
   },
@@ -144,6 +149,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "The analysis is unavailable right now. Please try again.",
     close: "Close",
     retake: "New photo",
+    dailyLimitReached: "You have reached the daily limit of 5 object recognitions. Try again tomorrow.",
     noPhoto: "No photo selected.",
     personNotRecognized: "SagaTrail does not recognize people or faces.",
   },
@@ -168,6 +174,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "暂时无法分析，请稍后重试。",
     close: "关闭",
     retake: "重新拍摄",
+    dailyLimitReached: "您已达到每天 5 次物体识别的上限。请明天再试。",
     noPhoto: "未选择照片。",
     personNotRecognized: "SagaTrail 不识别人或面孔。",
   },
@@ -192,6 +199,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "El análisis no está disponible ahora. Inténtalo de nuevo.",
     close: "Cerrar",
     retake: "Nueva foto",
+    dailyLimitReached: "Has alcanzado el límite diario de 5 reconocimientos de objetos. Inténtalo mañana.",
     noPhoto: "No se ha seleccionado ninguna foto.",
     personNotRecognized: "SagaTrail no reconoce personas ni rostros.",
   },
@@ -216,6 +224,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "A análise está indisponível no momento. Tente novamente.",
     close: "Fechar",
     retake: "Nova foto",
+    dailyLimitReached: "Atingiu o limite diário de 5 reconhecimentos de objetos. Tente novamente amanhã.",
     noPhoto: "Nenhuma foto selecionada.",
     personNotRecognized: "O SagaTrail não reconhece pessoas nem rostos.",
   },
@@ -240,6 +249,7 @@ const STRINGS: StringsDict<ObjectRecognitionStrings> = {
     analysisError: "Анализ сейчас недоступен. Попробуйте еще раз.",
     close: "Закрыть",
     retake: "Новое фото",
+    dailyLimitReached: "Вы достигли дневного лимита в 5 распознаваний объектов. Попробуйте завтра.",
     noPhoto: "Фото не выбрано.",
     personNotRecognized: "SagaTrail не распознает людей и лица.",
   },
