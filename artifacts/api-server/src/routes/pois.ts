@@ -30,7 +30,16 @@ router.get("/routes/pois", async (req, res): Promise<void> => {
   }
   const { south, west, north, east } = parsed.data;
   try {
+    // Express kann anhand alter If-None-Match/If-Modified-Since-Header noch
+    // vor dem JSON-Body auf 304 wechseln. Für Live-POIs ist diese Antwort
+    // unbrauchbar, weil React Native den leeren 304-Body als Fehler behandelt.
+    delete req.headers["if-none-match"];
+    delete req.headers["if-modified-since"];
     const pois = await getPois({ south, west, north, east }, req.log);
+    // Der mobile Client braucht bei jeder Live-Abfrage den vollständigen
+    // POI-Body. Eine zwischengeschaltete 304-Antwort enthält keinen JSON-Body
+    // und lässt die POI-Liste in React Native fälschlich leer erscheinen.
+    res.set("Cache-Control", "no-store");
     res.json(GetPoisResponse.parse(pois.map(toPoi)));
   } catch (err) {
     req.log.error({ err }, "POIs konnten nicht geladen werden");

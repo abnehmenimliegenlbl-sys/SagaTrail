@@ -13,3 +13,9 @@ Two distinct, independently-fixable causes were found for the "keine POI gefunde
 **Why this matters:** any future "map/POIs look wrong or empty" report on this screen should check both (a) whether `route.geometry` was actually populated before POI effects ran (watch `useEffect` deps — must include `route?.geometry`, not just `route?.id`), and (b) whether the Overpass call is even completing before the user gives up.
 
 3. **"POI has no context/summary" is usually the AI rewrite endpoint failing, not missing Wikipedia data.** POI detail text always goes through `poi-story` (Anthropic rewrite of the Wikipedia extract, or a no-extract fallback describing the OSM `kind`) — a raw Wikipedia extract is never shown directly. If nearly ALL POIs show no context (not just genuinely obscure ones), check the `poi-story` endpoint response directly with curl before assuming Wikipedia enrichment is broken; a Wikipedia geosearch miss for one specific POI is expected and not a bug on its own.
+
+4. **Live POI responses must bypass conditional HTTP caching.** The POI endpoint can receive stale `If-None-Match` headers; Express then returns `304` without a JSON body, which the mobile API client cannot use and turns the visible POI list empty. `Cache-Control: no-store` alone is insufficient, so remove conditional request headers for this endpoint before sending the body.
+
+**Why:** A successful Overpass refresh and populated server cache can coexist with an empty mobile map when the final response is a bodyless 304.
+
+**How to apply:** For live POI JSON, force a 200 response with the complete array; verify both an ordinary request and one carrying `If-None-Match`.
