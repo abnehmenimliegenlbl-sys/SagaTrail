@@ -25,6 +25,7 @@ const MAX_INPUT_POINTS = 2000;
 const MAX_POINTS_PER_REQUEST = 120;
 const MAX_CHUNK_ATTEMPTS = 3;
 const RETRY_DELAYS_MS = [200, 600] as const;
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 interface ProfilePoint {
   dist?: number;
@@ -45,9 +46,35 @@ function isRetryableHttpStatus(status: number): boolean {
   );
 }
 
-function waitBeforeRetry(attempt: number): Promise<void> {
-  const delay = RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS.at(-1)!;
-  return new Promise((resolve) => setTimeout(resolve, delay));
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = Number(trimmed);
+    return Number.isSafeInteger(seconds) ? seconds * 1000 : null;
+  }
+
+  const retryAt = Date.parse(trimmed);
+  return Number.isNaN(retryAt) ? null : Math.max(0, retryAt - Date.now());
+}
+
+function waitForMs(delay: number): Promise<void> {
+  if (delay <= 0) return Promise.resolve();
+  const timerDelay = Math.min(delay, MAX_TIMER_DELAY_MS);
+  return new Promise((resolve) =>
+    setTimeout(() => {
+      if (delay > timerDelay) {
+        void waitForMs(delay - timerDelay).then(resolve);
+      } else {
+        resolve();
+      }
+    }, timerDelay),
+  );
+}
+
+function waitBeforeRetry(attempt: number, retryAfterMs: number | null = null): Promise<void> {
+  const delay = retryAfterMs ?? RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS.at(-1)!;
+  return waitForMs(delay);
 }
 
 export interface ElevationStats {
@@ -88,7 +115,9 @@ async function fetchSwisstopoChunk(
           "swisstopo-Profil: HTTP-Fehler",
         );
         if (!retryable || attempt === MAX_CHUNK_ATTEMPTS - 1) return null;
-        await waitBeforeRetry(attempt);
+        const retryAfterMs =
+          res.status === 429 ? parseRetryAfterMs(res.headers.get("retry-after")) : null;
+        await waitBeforeRetry(attempt, retryAfterMs);
         continue;
       }
       const data = (await res.json()) as ProfilePoint[];

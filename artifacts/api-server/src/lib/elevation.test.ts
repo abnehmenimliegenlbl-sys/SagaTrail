@@ -7,6 +7,22 @@ const log = {
   warn: () => undefined,
 } as unknown as Logger;
 
+async function captureRetryDelays(action: () => Promise<unknown>): Promise<number[]> {
+  const originalSetTimeout = globalThis.setTimeout;
+  const delays: number[] = [];
+  globalThis.setTimeout = ((callback: () => void, delay?: number) => {
+    delays.push(delay ?? 0);
+    callback();
+    return 0 as unknown as ReturnType<typeof setTimeout>;
+  }) as typeof setTimeout;
+  try {
+    await action();
+  } finally {
+    globalThis.setTimeout = originalSetTimeout;
+  }
+  return delays;
+}
+
 function routePoints(count: number): { lat: number; lng: number }[] {
   return Array.from({ length: count }, (_, index) => ({
     lat: 46 + index * 0.001,
@@ -107,6 +123,82 @@ for (const status of [408, 425, 429, 500, 502, 503, 504]) {
     }
   });
 }
+
+test("honors a valid Retry-After seconds value for HTTP 429", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+
+  globalThis.fetch = async (request) => {
+    requestCount++;
+    if (requestCount === 1) {
+      return new Response("rate limited", {
+        status: 429,
+        headers: { "Retry-After": "1" },
+      });
+    }
+    return profileResponse(request, 0);
+  };
+
+  try {
+    const delays = await captureRetryDelays(() =>
+      computeElevationProfile(routePoints(2), log),
+    );
+
+    assert.deepEqual(delays, [1000]);
+    assert.equal(requestCount, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("uses the bounded fallback delay when Retry-After is missing", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+
+  globalThis.fetch = async (request) => {
+    requestCount++;
+    if (requestCount === 1) return new Response("rate limited", { status: 429 });
+    return profileResponse(request, 0);
+  };
+
+  try {
+    const delays = await captureRetryDelays(() =>
+      computeElevationProfile(routePoints(2), log),
+    );
+
+    assert.deepEqual(delays, [200]);
+    assert.equal(requestCount, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("uses the bounded fallback delay when Retry-After is invalid", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+
+  globalThis.fetch = async (request) => {
+    requestCount++;
+    if (requestCount === 1) {
+      return new Response("rate limited", {
+        status: 429,
+        headers: { "Retry-After": "later" },
+      });
+    }
+    return profileResponse(request, 0);
+  };
+
+  try {
+    const delays = await captureRetryDelays(() =>
+      computeElevationProfile(routePoints(2), log),
+    );
+
+    assert.deepEqual(delays, [200]);
+    assert.equal(requestCount, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("retries a network failure before returning a complete profile", async () => {
   const originalFetch = globalThis.fetch;
