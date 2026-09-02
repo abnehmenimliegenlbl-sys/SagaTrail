@@ -161,7 +161,7 @@ function toRoute(row: ExternalRouteRow) {
     sagaId: row.sagaId,
     name: row.name,
     ref: row.ref ?? null,
-    network: row.network ?? null,
+    network: row.routeType ?? null,
     region: row.canton,
     distanceKm: row.distanceKm,
     distanceTagKm: row.distanceTagKm ?? row.distanceKm,

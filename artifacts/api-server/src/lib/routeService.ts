@@ -1189,6 +1189,7 @@ function sagaFromWikiSummary(
     source: "Wikipedia (CC BY-SA)",
     lat,
     lng,
+    ortName: null,
     koordinatenSicherheit: "ungefaehr",
     isAnchorPlace: false,
     fotoUrl: null,

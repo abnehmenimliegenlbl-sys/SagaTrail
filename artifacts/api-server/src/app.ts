@@ -17,7 +17,7 @@ import { WebhookHandlers } from "./lib/webhookHandlers";
 import { handleStripeEvent } from "./lib/partnerWebhookHandler";
 import { resolveRegionalLocalLogoFile } from "./lib/routeLogoResolver";
 import Stripe from "stripe";
-import { CANTON_WAPPEN_SVG } from "../../mobile/constants/cantonWappenSvg";
+import { CANTON_WAPPEN_SVG } from "./lib/cantonWappenSvg";
 
 const app: Express = express();
 
