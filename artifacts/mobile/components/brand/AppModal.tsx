@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import React, { useEffect } from "react";
-import { Platform, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Platform, Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
@@ -31,6 +31,7 @@ interface AppModalProps {
   children?: React.ReactNode;
   backdropStyle?: StyleProp<ViewStyle>;
   cardStyle?: StyleProp<ViewStyle>;
+  scrollable?: boolean;
 }
 
 export function AppModal({
@@ -43,6 +44,7 @@ export function AppModal({
   children,
   backdropStyle,
   cardStyle,
+  scrollable = false,
 }: AppModalProps) {
   const colors = useColors();
 
@@ -85,19 +87,43 @@ export function AppModal({
             <View
               style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassBgStrong }]}
             />
-            <View style={styles.content}>
-              {icon && (
-                <Animated.View entering={FadeIn.delay(80)} style={styles.icon}>
-                  {icon}
-                </Animated.View>
+            <View style={[styles.content, scrollable && styles.scrollableContent]}>
+              {scrollable ? (
+                <ScrollView
+                  style={styles.scrollBody}
+                  contentContainerStyle={styles.scrollBodyContent}
+                  showsVerticalScrollIndicator
+                  nestedScrollEnabled
+                >
+                  {icon && (
+                    <Animated.View entering={FadeIn.delay(80)} style={styles.icon}>
+                      {icon}
+                    </Animated.View>
+                  )}
+                  <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+                  {message && (
+                    <Text style={[styles.message, { color: colors.mutedForeground }]}>
+                      {message}
+                    </Text>
+                  )}
+                  {children}
+                </ScrollView>
+              ) : (
+                <>
+                  {icon && (
+                    <Animated.View entering={FadeIn.delay(80)} style={styles.icon}>
+                      {icon}
+                    </Animated.View>
+                  )}
+                  <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+                  {message && (
+                    <Text style={[styles.message, { color: colors.mutedForeground }]}>
+                      {message}
+                    </Text>
+                  )}
+                  {children}
+                </>
               )}
-              <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-              {message && (
-                <Text style={[styles.message, { color: colors.mutedForeground }]}>
-                  {message}
-                </Text>
-              )}
-              {children}
               <View style={styles.buttonRow}>
                 {buttons.map((btn, i) => {
                   const destructive = btn.style === "destructive";
@@ -175,6 +201,9 @@ const styles = StyleSheet.create({
   card: { width: "100%", maxWidth: 400, borderWidth: 1 },
   clip: { borderRadius: 17, overflow: "hidden" },
   content: { padding: 22, alignItems: "center" },
+  scrollableContent: { flex: 1, minHeight: 0 },
+  scrollBody: { width: "100%", flex: 1 },
+  scrollBodyContent: { alignItems: "center", paddingBottom: 4 },
   icon: { marginBottom: 12 },
   title: {
     fontFamily: fonts.titleBold,

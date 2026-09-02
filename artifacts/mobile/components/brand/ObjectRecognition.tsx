@@ -7,7 +7,6 @@ import {
   Image,
   Linking,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -268,6 +267,7 @@ export function ObjectRecognition({
         ]}
         backdropStyle={styles.recognitionModalBackdrop}
         cardStyle={styles.recognitionModalCard}
+        scrollable
       >
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />
@@ -277,7 +277,7 @@ export function ObjectRecognition({
         ) : error ? null : candidates.length === 0 ? (
           <Text style={[styles.noCandidates, { color: colors.mutedForeground }]}>{strings.noCandidates}</Text>
         ) : (
-          <ScrollView style={styles.results} contentContainerStyle={styles.resultsContent}>
+          <View style={styles.results}>
             <Text style={[styles.confirmHint, { color: colors.mutedForeground }]}>{strings.confirmHint}</Text>
             {candidates.map((candidate) => {
               const isConfirmed = confirmed?.id === candidate.id;
@@ -340,7 +340,7 @@ export function ObjectRecognition({
                 </View>
               );
             })}
-          </ScrollView>
+          </View>
         )}
       </AppModal>
     </>
@@ -356,10 +356,9 @@ const styles = StyleSheet.create({
   intro: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginTop: 3 },
   analyzeButton: { marginTop: 14 },
   recognitionModalBackdrop: { paddingHorizontal: 12, paddingVertical: 16 },
-  recognitionModalCard: { maxWidth: 620, minHeight: "82%", maxHeight: "94%" },
+  recognitionModalCard: { maxWidth: 620, height: "94%", maxHeight: "94%" },
   preview: { width: "100%", height: 130, borderRadius: 12, marginTop: 14, backgroundColor: "#10181A" },
-  results: { width: "100%", maxHeight: 340, marginTop: 14 },
-  resultsContent: { gap: 10, paddingBottom: 2 },
+  results: { width: "100%", marginTop: 14, gap: 10, paddingBottom: 2 },
   confirmHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, textAlign: "left" },
   noCandidates: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 16 },
   candidate: { borderWidth: 1, borderRadius: 13, padding: 13 },
