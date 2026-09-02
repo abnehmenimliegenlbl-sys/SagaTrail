@@ -2001,8 +2001,11 @@ export default function LiveHike() {
         Magnetometer.setUpdateInterval(200);
         subscription = Magnetometer.addListener(({ x, y }) => {
           if (cancelled || !Number.isFinite(x) || !Number.isFinite(y)) return;
-          // In Portraitausrichtung zeigt atan2(x, y) bei x=0/y>0 nach Norden.
-          const rawHeading = (Math.atan2(x, y) * 180) / Math.PI;
+          // In Portraitausrichtung zeigt atan2(-x, y) bei x=0/y>0 nach Norden.
+          // Das Minus auf X gleicht die Spiegelung der Magnetometer-Achse aus:
+          // Eine Drehung des Telefons nach rechts muss den Kurs ebenfalls
+          // im Uhrzeigersinn von Norden nach Osten bewegen.
+          const rawHeading = (Math.atan2(-x, y) * 180) / Math.PI;
           const normalized = (rawHeading + 360) % 360;
           const smoothed = smoothCompassHeading(compassHeadingRef.current, normalized);
           compassHeadingRef.current = smoothed;
