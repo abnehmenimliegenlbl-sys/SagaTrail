@@ -64,13 +64,28 @@ async function fetchSwisstopoChunk(
       return null;
     }
     const data = (await res.json()) as ProfilePoint[];
-    if (!Array.isArray(data)) return null;
-    return data.flatMap((p) => {
+    if (!Array.isArray(data) || data.length !== points.length) {
+      log.warn(
+        { receivedPoints: Array.isArray(data) ? data.length : null, points: points.length },
+        "swisstopo-Profil: unvollstaendige Antwort",
+      );
+      return null;
+    }
+
+    const profile = data.map((p) => {
       const alt = p.alts?.COMB ?? p.alts?.DTM2 ?? p.alts?.DTM25;
-      return typeof alt === "number" && typeof p.dist === "number"
+      return typeof alt === "number" &&
+        Number.isFinite(alt) &&
+        typeof p.dist === "number" &&
+        Number.isFinite(p.dist)
         ? [{ distanceKm: p.dist / 1000, altM: Math.round(alt) }]
-        : [];
+        : null;
     });
+    if (profile.some((point) => point === null)) {
+      log.warn({ points: points.length }, "swisstopo-Profil: unvollstaendiger Hoehenwert");
+      return null;
+    }
+    return profile.flat() as ElevationProfilePoint[];
   } catch (err) {
     log.warn({ err, points: points.length }, "swisstopo-Profil: Anfrage fehlgeschlagen");
     return null;
@@ -97,12 +112,32 @@ async function fetchSwisstopoProfile(
     const chunk = await fetchSwisstopoChunk(points.slice(start, end + 1), log);
     if (!chunk || chunk.length < 2) return null;
 
-    for (let index = chunkIndex > 0 ? 1 : 0; index < chunk.length; index++) {
-      result.push({
-        distanceKm: routeDistancesKm[start] + chunk[index].distanceKm,
-        altM: chunk[index].altM,
-      });
+    // SwissTopo distances are relative to the start of each request. Rebase
+    // them explicitly so the merged profile starts at zero even if the
+    // service returns a small non-zero distance for the first sample.
+    const chunkStartDistanceKm = chunk[0].distanceKm;
+    const mergedChunk = chunk
+      .slice(chunkIndex > 0 ? 1 : 0)
+      .map((point) => ({
+        distanceKm: routeDistancesKm[start] + point.distanceKm - chunkStartDistanceKm,
+        altM: point.altM,
+      }));
+
+    const previousDistanceKm = result.at(-1)?.distanceKm;
+    if (
+      mergedChunk.some(
+        (point, index) =>
+          !Number.isFinite(point.distanceKm) ||
+          (index > 0 && point.distanceKm < mergedChunk[index - 1]!.distanceKm) ||
+          (index === 0 &&
+            previousDistanceKm != null &&
+            point.distanceKm < previousDistanceKm),
+      )
+    ) {
+      log.warn({ points: chunk.length }, "swisstopo-Profil: Distanzen nicht monoton");
+      return null;
     }
+    result.push(...mergedChunk);
     chunkIndex++;
     if (end === points.length - 1) break;
   }
