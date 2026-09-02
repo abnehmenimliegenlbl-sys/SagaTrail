@@ -312,11 +312,11 @@ export function buildSwisstopoHtml(
   #stt-legende.zu .stt-legende-inhalt { display: none; }
   .stt-legende-zeile { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
   .stt-legende-symbol { flex: 0 0 18px; display: flex; align-items: center; justify-content: center; }
-  .stt-linie-route  { width: 18px; height: 4px; border-radius: 2px; background: #3E9B46; }
-  .stt-linie-route-gruen { width: 18px; height: 4px; border-radius: 2px; background: #3E9B46; }
-  .stt-linie-route-gelb { width: 18px; height: 4px; border-radius: 2px; background: #F2C94C; }
-  .stt-linie-route-orange { width: 18px; height: 4px; border-radius: 2px; background: #F2994A; }
-  .stt-linie-route-rot { width: 18px; height: 4px; border-radius: 2px; background: #DA291C; }
+  .stt-linie-route  { width: 18px; height: 4px; border-radius: 2px; background: #20D466; }
+  .stt-linie-route-gruen { width: 18px; height: 4px; border-radius: 2px; background: #20D466; }
+  .stt-linie-route-gelb { width: 18px; height: 4px; border-radius: 2px; background: #FFD000; }
+  .stt-linie-route-orange { width: 18px; height: 4px; border-radius: 2px; background: #FF8500; }
+  .stt-linie-route-rot { width: 18px; height: 4px; border-radius: 2px; background: #FF3030; }
   .stt-linie-altroute { width: 18px; height: 3px; border-image: repeating-linear-gradient(90deg,#2EC4B6 0 5px,transparent 5px 8px) 1; border-top: 3px solid; }
   .stt-linie-iwn    { width: 18px; height: 3px; border-radius: 2px; background: #9C5AC8; }
   .stt-linie-nwn    { width: 18px; height: 3px; border-radius: 2px; background: #D9442E; }
@@ -595,10 +595,10 @@ ${legendHtml}
           'line-blur': 1 }, layout: { 'line-join': 'round', 'line-cap': 'round' } });
       map.addLayer({ id: 'route-line', type: 'line', source: 'route',
         paint: { 'line-color': ['match', ['get', 'band'],
-          'yellow', '#F2C94C',
-          'orange', '#F2994A',
-          'red', '#DA291C',
-          '#3E9B46'
+          'yellow', '#FFD000',
+          'orange', '#FF8500',
+          'red', '#FF3030',
+          '#20D466'
         ], 'line-width': 4, 'line-opacity': 0.95 },
         layout: { 'line-join': 'round', 'line-cap': 'round' } });
 
