@@ -3557,6 +3557,7 @@ export default function LiveHike() {
               id: "object-recognition",
               title: objectRecognitionT.title,
               icon: "maximize",
+              modalSize: "large",
               content: (
                 <ObjectRecognition
                   premium={premium}

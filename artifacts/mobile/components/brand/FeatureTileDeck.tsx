@@ -22,6 +22,7 @@ export interface FeatureTile {
   title: string;
   icon: React.ComponentProps<typeof Feather>["name"];
   content: React.ReactNode;
+  modalSize?: "large";
 }
 
 interface Props {
@@ -102,6 +103,7 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
           <SafeAreaView
             style={[
               styles.modalCard,
+               activeTile?.modalSize === "large" ? styles.modalCardLarge : null,
               {
                 marginTop: Math.max(18, insets.top),
                 marginBottom: Math.max(12, insets.bottom),
@@ -152,7 +154,14 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
                 <Feather name="x" size={20} color={colors.foreground} />
               </Pressable>
             </View>
-            <View style={styles.modalContent}>{activeTile?.content}</View>
+            <View
+              style={[
+                styles.modalContent,
+                activeTile?.modalSize === "large" ? styles.modalContentLarge : null,
+              ]}
+            >
+              {activeTile?.content}
+            </View>
           </SafeAreaView>
         </View>
       </Modal>
@@ -195,6 +204,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
   },
+  modalCardLarge: {
+    minHeight: "82%",
+    maxHeight: "94%",
+  },
   modalAccent: { height: 3, width: "100%" },
   modalHeader: {
     flexDirection: "row",
@@ -224,4 +237,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modalContent: { width: "100%", paddingHorizontal: 6, paddingBottom: 4 },
+  modalContentLarge: { flex: 1 },
 });
