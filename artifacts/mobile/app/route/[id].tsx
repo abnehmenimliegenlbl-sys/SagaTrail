@@ -153,7 +153,6 @@ export default function Routenplanung() {
 
   // Strecke umkehren – tauscht Start und Ziel lokal aus (kein Server-Request)
   const [reversed, setReversed] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [sbbOpen, setSbbOpen] = useState(false);
 
   // Effektive Geometrie: umgekehrt wenn reversed=true (keine Mutation des Originals).
@@ -1174,8 +1173,9 @@ export default function Routenplanung() {
                 ? "nurSommer"
                 : "eherSommer"
           ]}
-          open={detailsOpen}
-          onPress={() => setDetailsOpen((open) => !open)}
+          open
+          onPress={() => {}}
+          collapsible={false}
         >
           <View style={styles.checkRow}>
             <Feather name="sun" size={16} color={colors.mutedForeground} />
