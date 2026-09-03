@@ -62,6 +62,7 @@ import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
+import { useMapStrings } from "@/lib/i18n/screens/map";
 import {
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
@@ -380,6 +381,25 @@ function buildKeepaliveWavBase64(): string {
 
 type LocState = "idle" | "granted" | "denied";
 
+const SAFETY_POI_CATEGORIES = [
+  { category: "toilet", code: "TO" },
+  { category: "pharmacy", code: "PH" },
+  { category: "hospital", code: "H" },
+  { category: "clinic", code: "CL" },
+  { category: "police", code: "P" },
+  { category: "fire", code: "F" },
+  { category: "defibrillator", code: "DE" },
+  { category: "assembly_point", code: "A" },
+  { category: "emergency_phone", code: "!" },
+  { category: "shelter", code: "S" },
+] as const;
+
+type SafetyPoiCategory = (typeof SAFETY_POI_CATEGORIES)[number]["category"];
+
+const DEFAULT_SAFETY_POI_FILTERS = Object.fromEntries(
+  SAFETY_POI_CATEGORIES.map(({ category }) => [category, true]),
+) as Record<SafetyPoiCategory, boolean>;
+
 function smoothCompassHeading(previous: number | null, next: number, factor = 0.2): number {
   if (previous == null) return next;
   // Den kürzesten Weg über den 0°/360°-Übergang nehmen, damit die Anzeige
@@ -395,6 +415,7 @@ export default function LiveHike() {
   // fast deckendes Weiss statt Milchglas, sonst wirken sie zu dunkel.
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const t = useHikeStrings();
+  const mapT = useMapStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId, resume } = useLocalSearchParams<{
@@ -714,6 +735,30 @@ export default function LiveHike() {
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
   const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
+  const [safetyPoiFiltersOpen, setSafetyPoiFiltersOpen] = useState(false);
+  const [enabledSafetyPoiCategories, setEnabledSafetyPoiCategories] = useState<Record<SafetyPoiCategory, boolean>>(
+    DEFAULT_SAFETY_POI_FILTERS,
+  );
+  const safetyPoiFilterLabels = useMemo(() => {
+    const descriptions = mapT.legendSafetyCodes.split(" · ");
+    return SAFETY_POI_CATEGORIES.map((entry, index) => ({
+      ...entry,
+      label: descriptions[index]?.replace(/^(TO|PH|H|CL|P|F|DE|A|!|S)\s+/, "") ?? entry.code,
+    }));
+  }, [mapT.legendSafetyCodes]);
+  const enabledSafetyPoiCount = SAFETY_POI_CATEGORIES.filter(
+    ({ category }) => enabledSafetyPoiCategories[category],
+  ).length;
+  const allSafetyPoiCategoriesEnabled = enabledSafetyPoiCount === SAFETY_POI_CATEGORIES.length;
+  const visibleSafetyPois = useMemo(
+    () =>
+      safetyPois.filter((poi) => {
+        const category = poi.category as SafetyPoiCategory | undefined;
+        if (!category || !(category in DEFAULT_SAFETY_POI_FILTERS)) return true;
+        return enabledSafetyPoiCategories[category];
+      }),
+    [enabledSafetyPoiCategories, safetyPois],
+  );
   const [routeWaypoints, setRouteWaypoints] = useState<RouteWaypoint[]>([]);
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
@@ -3901,7 +3946,7 @@ export default function LiveHike() {
                   pois={pois}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
-                  safetyPois={safetyPois.length > 0 ? safetyPois : null}
+                  safetyPois={visibleSafetyPois.length > 0 ? visibleSafetyPois : null}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {
@@ -4473,6 +4518,122 @@ export default function LiveHike() {
             )}
           </Animated.View>
         )}
+
+        {/* ── Sicherheits-POIs filtern ───────────────────────────────── */}
+        <View
+          style={[
+            styles.safetyFilterTile,
+            { borderColor: colors.glassBorder, backgroundColor: colors.glassBgStrong },
+          ]}
+        >
+          <Pressable
+            onPress={() => setSafetyPoiFiltersOpen((open) => !open)}
+            style={styles.safetyFilterHeader}
+            accessibilityRole="button"
+            accessibilityLabel={mapT.safetyPoiFilterTitle}
+            accessibilityState={{ expanded: safetyPoiFiltersOpen }}
+          >
+            <View style={styles.safetyFilterHeaderText}>
+              <Feather name="shield" size={18} color={colors.destructive} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.safetyFilterTitle, { color: colors.foreground }]}>
+                  {mapT.safetyPoiFilterTitle}
+                </Text>
+                <Text style={[styles.safetyFilterCount, { color: colors.mutedForeground }]}>
+                  {enabledSafetyPoiCount}/{SAFETY_POI_CATEGORIES.length}
+                </Text>
+              </View>
+            </View>
+            <Feather
+              name={safetyPoiFiltersOpen ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={colors.mutedForeground}
+            />
+          </Pressable>
+
+          {safetyPoiFiltersOpen && (
+            <Animated.View
+              entering={FadeIn.duration(180)}
+              style={[styles.safetyFilterBody, { borderTopColor: colors.glassBorder }]}
+            >
+              <Text style={[styles.safetyFilterHint, { color: colors.mutedForeground }]}>
+                {mapT.safetyPoiFilterHint}
+              </Text>
+              <View style={styles.safetyFilterGrid}>
+                {safetyPoiFilterLabels.map(({ category, code, label }) => {
+                  const enabled = enabledSafetyPoiCategories[category];
+                  return (
+                    <Pressable
+                      key={category}
+                      onPress={() =>
+                        setEnabledSafetyPoiCategories((current) => ({
+                          ...current,
+                          [category]: !current[category],
+                        }))
+                      }
+                      style={[
+                        styles.safetyFilterOption,
+                        {
+                          borderColor: enabled ? colors.destructive : colors.glassBorder,
+                          backgroundColor: enabled ? `${colors.destructive}18` : colors.glassBg,
+                        },
+                      ]}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: enabled }}
+                      accessibilityLabel={`${code} ${label}`}
+                    >
+                      <Text
+                        style={[
+                          styles.safetyFilterCode,
+                          {
+                            color: enabled ? colors.destructive : colors.mutedForeground,
+                            borderColor: enabled ? colors.destructive : colors.glassBorder,
+                          },
+                        ]}
+                      >
+                        {code}
+                      </Text>
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.safetyFilterLabel, { color: colors.foreground }]}
+                      >
+                        {label}
+                      </Text>
+                      <Feather
+                        name={enabled ? "check-circle" : "circle"}
+                        size={15}
+                        color={enabled ? colors.destructive : colors.mutedForeground}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <Pressable
+                onPress={() =>
+                  setEnabledSafetyPoiCategories(
+                    allSafetyPoiCategoriesEnabled
+                      ? Object.fromEntries(
+                          SAFETY_POI_CATEGORIES.map(({ category }) => [category, false]),
+                        ) as Record<SafetyPoiCategory, boolean>
+                      : DEFAULT_SAFETY_POI_FILTERS,
+                  )
+                }
+                style={[styles.safetyFilterAll, { borderTopColor: colors.glassBorder }]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: allSafetyPoiCategoriesEnabled }}
+              >
+                <Feather
+                  name={allSafetyPoiCategoriesEnabled ? "check-square" : "square"}
+                  size={16}
+                  color={colors.accent}
+                />
+                <Text style={[styles.safetyFilterAllText, { color: colors.accent }]}>
+                  {mapT.safetyPoiFilterAll}
+                </Text>
+              </Pressable>
+            </Animated.View>
+          )}
+        </View>
 
         {/* ── Wegbedingungen melden ─────────────────────────────────── */}
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 }}>
@@ -5631,6 +5792,66 @@ const styles = StyleSheet.create({
   conditionInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontFamily: fonts.body, fontSize: 13, minHeight: 72, textAlignVertical: "top", marginTop: 4 },
   conditionSuccess: { fontFamily: fonts.bodyMedium, fontSize: 13, marginTop: 8, textAlign: "center" },
   conditionError: { fontFamily: fonts.body, fontSize: 12, marginTop: 8 },
+  safetyFilterTile: {
+    ...GLAS_3D,
+    borderWidth: 1,
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    overflow: "hidden",
+  },
+  safetyFilterHeader: {
+    minHeight: 60,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  safetyFilterHeaderText: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  safetyFilterTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  safetyFilterCount: { fontFamily: fonts.mono, fontSize: 11, marginTop: 2 },
+  safetyFilterBody: {
+    borderTopWidth: 1,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  safetyFilterHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  safetyFilterGrid: { gap: 8, marginTop: 12 },
+  safetyFilterOption: {
+    minHeight: 42,
+    borderWidth: 1,
+    borderRadius: 11,
+    paddingHorizontal: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  safetyFilterCode: {
+    minWidth: 30,
+    height: 24,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    textAlign: "center",
+    textAlignVertical: "center",
+  },
+  safetyFilterLabel: { fontFamily: fonts.bodyMedium, fontSize: 13, flex: 1 },
+  safetyFilterAll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  safetyFilterAllText: { fontFamily: fonts.bodyBold, fontSize: 13 },
   choiceFeedbackWrap: { marginTop: 16 },
   choiceFeedbackPanel: { ...GLAS_3D,
     borderWidth: 1,

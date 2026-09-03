@@ -38,6 +38,9 @@ export interface MapStrings {
   legendPoi: string;
   legendPartner: string;
   legendSafetyCodes: string;
+  safetyPoiFilterTitle: string;
+  safetyPoiFilterHint: string;
+  safetyPoiFilterAll: string;
 }
 
 const MAP_STRINGS: StringsDict<MapStrings> = {
@@ -66,6 +69,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Sehenswürdigkeit",
     legendPartner: "Partnerbetrieb",
     legendSafetyCodes: "TO Toilette · PH Apotheke · H Spital · CL Arztpraxis · P Polizei · F Feuerwehr · DE Defibrillator · A Sammelpunkt · ! Notruftelefon · S Unterstand",
+    safetyPoiFilterTitle: "Sicherheits-POIs auf der Karte",
+    safetyPoiFilterHint: "Wähle aus, welche Sicherheitspunkte sichtbar sind.",
+    safetyPoiFilterAll: "Alle Sicherheits-POIs",
   },
   gsw: {
     legendTitle: "Legände",
@@ -92,6 +98,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Sehenswürdigkeit",
     legendPartner: "Partnerbetrieb",
     legendSafetyCodes: "TO Toilette · PH Apotheke · H Spital · CL Arztpraxis · P Polizei · F Feuerwehr · DE Defibrillator · A Sammelpunkt · ! Notruftelefon · S Unterstand",
+    safetyPoiFilterTitle: "Sicherheits-POIs uf de Charte",
+    safetyPoiFilterHint: "Wähl, weli Sicherheitspunkt sichtbar sind.",
+    safetyPoiFilterAll: "Alli Sicherheits-POIs",
   },
   fr: {
     legendTitle: "Légende",
@@ -118,6 +127,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Curiosité",
     legendPartner: "Partenaire",
     legendSafetyCodes: "TO toilettes · PH pharmacie · H hôpital · CL cabinet médical · P police · F pompiers · DE défibrillateur · A rassemblement · ! téléphone d'urgence · S abri",
+    safetyPoiFilterTitle: "POI de sécurité sur la carte",
+    safetyPoiFilterHint: "Choisissez les points de sécurité visibles.",
+    safetyPoiFilterAll: "Tous les POI de sécurité",
   },
   it: {
     legendTitle: "Legenda",
@@ -144,6 +156,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Punto d'interesse",
     legendPartner: "Partner convenzionato",
     legendSafetyCodes: "TO toilette · PH farmacia · H ospedale · CL studio medico · P polizia · F pompieri · DE defibrillatore · A punto di raccolta · ! telefono d'emergenza · S riparo",
+    safetyPoiFilterTitle: "POI di sicurezza sulla mappa",
+    safetyPoiFilterHint: "Scegli quali punti di sicurezza mostrare.",
+    safetyPoiFilterAll: "Tutti i POI di sicurezza",
   },
   en: {
     legendTitle: "Legend",
@@ -170,6 +185,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Point of interest",
     legendPartner: "Partner business",
     legendSafetyCodes: "TO toilet · PH pharmacy · H hospital · CL clinic · P police · F fire · DE defibrillator · A assembly point · ! emergency phone · S shelter",
+    safetyPoiFilterTitle: "Safety POIs on the map",
+    safetyPoiFilterHint: "Choose which safety points are visible.",
+    safetyPoiFilterAll: "All safety POIs",
   },
   zh: {
     legendTitle: "图例",
@@ -196,6 +214,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "景点",
     legendPartner: "合作商家",
     legendSafetyCodes: "TO 厕所 · PH 药房 · H 医院 · CL 诊所 · P 警察 · F 消防 · DE 除颤器 · A 集合点 · ! 紧急电话 · S 避难所",
+    safetyPoiFilterTitle: "地图上的安全兴趣点",
+    safetyPoiFilterHint: "选择要显示的安全点。",
+    safetyPoiFilterAll: "所有安全兴趣点",
   },
   es: {
     legendTitle: "Leyenda",
@@ -222,6 +243,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Punto de interés",
     legendPartner: "Comercio asociado",
     legendSafetyCodes: "TO aseo · PH farmacia · H hospital · CL clínica · P policía · F bomberos · DE desfibrilador · A punto de reunión · ! teléfono de emergencia · S refugio",
+    safetyPoiFilterTitle: "POI de seguridad en el mapa",
+    safetyPoiFilterHint: "Elige qué puntos de seguridad mostrar.",
+    safetyPoiFilterAll: "Todos los POI de seguridad",
   },
   pt: {
     legendTitle: "Legenda",
@@ -248,6 +272,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Ponto de interesse",
     legendPartner: "Estabelecimento parceiro",
     legendSafetyCodes: "TO casa de banho · PH farmácia · H hospital · CL clínica · P polícia · F bombeiros · DE desfibrilador · A ponto de reunião · ! telefone de emergência · S abrigo",
+    safetyPoiFilterTitle: "POI de segurança no mapa",
+    safetyPoiFilterHint: "Escolhe quais os pontos de segurança visíveis.",
+    safetyPoiFilterAll: "Todos os POI de segurança",
   },
   ru: {
     legendTitle: "Легенда",
@@ -274,6 +301,9 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendPoi: "Достопримечательность",
     legendPartner: "Партнёрское заведение",
     legendSafetyCodes: "TO туалет · PH аптека · H больница · CL клиника · P полиция · F пожарная служба · DE дефибриллятор · A место сбора · ! телефон экстренной помощи · S укрытие",
+    safetyPoiFilterTitle: "Точки безопасности на карте",
+    safetyPoiFilterHint: "Выберите видимые точки безопасности.",
+    safetyPoiFilterAll: "Все точки безопасности",
   },
 };
 
