@@ -184,7 +184,7 @@ export function buildLeafletMapHtml(
     .flag { width: 30px; height: 38px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
     .poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25); }
     .poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-    .poi-cluster { width: 32px; height: 32px; border-radius: 50%; background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25), 0 2px 7px rgba(0,0,0,.35); color: #F5F3EC; font: 700 11px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; }
+    .poi-cluster { width: 16px; height: 16px; border-radius: 50%; background: #2563A8; border: 1px solid #F5F3EC; box-shadow: 0 0 0 1.5px rgba(37,99,168,.25), 0 1px 4px rgba(0,0,0,.35); color: #F5F3EC; font: 700 6px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .5; }
     .live { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #fffaf0; box-shadow: 0 0 0 6px rgba(47,111,237,.28); box-sizing: border-box; }
     .partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
     .partner-pin { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
@@ -197,7 +197,7 @@ export function buildLeafletMapHtml(
     .water { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #fffaf0; box-sizing: border-box; }
     .parking, .safety { min-width: 20px; height: 20px; padding: 0 3px; border-radius: 5px; background: #2563A8; border: 2px solid #fffaf0; box-sizing: border-box; color: #fff; font: 800 10px -apple-system,system-ui,sans-serif; text-align: center; line-height: 16px; }
     .safety { background: #B21F2D; }
-    .safety-cluster { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 50%; background: #B21F2D; border: 2px solid #fffaf0; box-shadow: 0 0 0 3px rgba(178,31,45,.25), 0 2px 7px rgba(0,0,0,.35); box-sizing: border-box; color: #fff; font: 800 11px -apple-system,system-ui,sans-serif; text-align: center; line-height: 30px; }
+    .safety-cluster { min-width: 17px; height: 17px; padding: 0 3px; border-radius: 50%; background: #B21F2D; border: 1px solid #fffaf0; box-shadow: 0 0 0 1.5px rgba(178,31,45,.25), 0 1px 4px rgba(0,0,0,.35); box-sizing: border-box; color: #fff; font: 800 6px -apple-system,system-ui,sans-serif; text-align: center; line-height: 15px; opacity: .5; }
     .saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background: rgba(255,255,255,.6); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
     #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
@@ -430,7 +430,7 @@ export function buildLeafletMapHtml(
         var lat = group.reduce(function (sum, p) { return sum + p.lat; }, 0) / group.length;
         var lng = group.reduce(function (sum, p) { return sum + p.lng; }, 0) / group.length;
         var cluster = L.marker([lat, lng], {
-          icon: icon("poi-cluster", String(group.length), [36,36]),
+          icon: icon("poi-cluster", String(group.length), [18,18]),
           zIndexOffset: 500
         }).addTo(map);
         cluster.on("click", function () {
@@ -513,7 +513,7 @@ export function buildLeafletMapHtml(
         var lat = group.reduce(function (sum, p) { return sum + p.lat; }, 0) / group.length;
         var lng = group.reduce(function (sum, p) { return sum + p.lng; }, 0) / group.length;
         var cluster = L.marker([lat, lng], {
-          icon: icon("safety-cluster", group.length > 99 ? "99+" : String(group.length), [42,42]),
+          icon: icon("safety-cluster", group.length > 99 ? "99+" : String(group.length), [21,21]),
           zIndexOffset: 700
         }).addTo(map);
         cluster.bindPopup(safetyClusterText(group));
