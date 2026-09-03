@@ -1981,6 +1981,10 @@ components:
           type: number
         lng:
           type: number
+        elevation:
+          type: number
+          nullable: true
+          description: "OSM-Höhe in Metern über Meer, sofern am Gipfel gepflegt."
         wiki:
           $ref: "#/components/schemas/WikiSummary"
         wikipediaTag:

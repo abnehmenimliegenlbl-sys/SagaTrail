@@ -78,6 +78,7 @@ import {
   type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
+import type { OfflinePanoramaDatenbank } from "@/lib/panorama";
 import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
 import { getTurnAudio } from "@/lib/turnAudio";
 import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
@@ -347,7 +348,14 @@ export default function LiveHike() {
     isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
   const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
-  const { resolveStory, loadOfflineTiles, loadOfflinePois, isDownloaded, getRecord } = useDownloads();
+  const {
+    resolveStory,
+    loadOfflineTiles,
+    loadOfflinePois,
+    loadOfflinePanorama,
+    isDownloaded,
+    getRecord,
+  } = useDownloads();
 
   const offlineRecord = getRecord(id);
   const saga = getSaga(id) ?? offlineRecord?.sagaSnapshot;
@@ -538,6 +546,7 @@ export default function LiveHike() {
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
+  const [offlinePanorama, setOfflinePanorama] = useState<OfflinePanoramaDatenbank | null>(null);
   const [aerialways, setAerialways] = useState<
     { id: string; geometry: number[][] }[] | null
   >(null);
@@ -1310,6 +1319,22 @@ export default function LiveHike() {
     };
   }, [saga, isDownloaded, loadOfflineTiles]);
 
+  // Die Gipfeldatenbank ist separat vom historischen POI-Cache versioniert.
+  // So bleibt das Panorama auch dann nachvollziehbar, wenn andere POIs fehlen.
+  useEffect(() => {
+    if (!route?.id || !saga || !isDownloaded(saga.id)) {
+      setOfflinePanorama(null);
+      return;
+    }
+    let cancelled = false;
+    loadOfflinePanorama(route.id).then((data) => {
+      if (!cancelled) setOfflinePanorama(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.id, saga, isDownloaded, loadOfflinePanorama]);
+
   // routeGeomRef wird synchron gehalten damit handleFix (leere Deps)
   // die aktuelle Geometrie immer per Ref lesen kann.
   useEffect(() => {
@@ -1329,9 +1354,11 @@ export default function LiveHike() {
     const cur: LatLng = { lat, lng };
     setLivePos(cur);
     setLivePosAccuracy(accuracy);
-    if (altitude != null && Number.isFinite(altitude)) {
-      setLiveAltitude(altitude);
-    }
+    // Ein Fix ohne Höhenwert darf keinen alten Messwert weiterverwenden:
+    // sonst würde der Höhenwinkel mit einer früheren Beobachterhöhe berechnet.
+    setLiveAltitude(
+      altitude != null && Number.isFinite(altitude) ? altitude : null,
+    );
     const prev = lastFixRef.current;
     if (prev) {
       const d = haversineKm(prev, cur);
@@ -2809,9 +2836,28 @@ export default function LiveHike() {
     return match.fraction;
   }, [livePos, livePosAccuracy, route?.geometry, locState, locationNow]);
 
+  const panoramaPois = useMemo(
+    () => [
+      ...pois,
+      ...(offlinePanorama?.peaks ?? []).map((peak) => ({
+        id: peak.id,
+        name: peak.name,
+        kind: "natural=peak",
+        lat: peak.lat,
+        lng: peak.lng,
+        elevation: peak.elevationM,
+      })),
+    ],
+    [pois, offlinePanorama],
+  );
   const panoramaPeaks = useMemo(
-    () => erkenneGipfel(pois, livePos, compassHeading),
-    [pois, livePos, compassHeading],
+    () => erkenneGipfel(
+      panoramaPois,
+      hasFreshGps ? livePos : null,
+      compassHeading,
+      hasFreshGps ? liveAltitude : null,
+    ),
+    [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );
   const objectRecognitionContext = useMemo(() => {
     if (!livePos) return "";
@@ -3706,7 +3752,17 @@ export default function LiveHike() {
                 <PeakPanorama
                   peaks={panoramaPeaks}
                   heading={compassHeading}
-                  hasGps={livePos !== null}
+                  observerElevationM={hasFreshGps ? liveAltitude : null}
+                  hasGps={hasFreshGps}
+                  dataStatus={
+                    offlinePanorama
+                      ? {
+                          source: "offline",
+                          version: offlinePanorama.version,
+                          peakCount: offlinePanorama.peaks.length,
+                        }
+                      : { source: "online", peakCount: panoramaPeaks.length }
+                  }
                   strings={{
                     title: t.panorama,
                     hint: t.panoramaHint,
@@ -3720,6 +3776,11 @@ export default function LiveHike() {
                      capture: t.camera,
                     cameraPermission: t.cameraPermission,
                     arUnavailable: t.arUnavailable,
+                    offlineData: t.panoramaOfflineData,
+                    onlineData: t.panoramaOnlineData,
+                    heightUnknown: t.panoramaHeightUnknown,
+                    dragPanorama: t.panoramaDrag,
+                    elevationAngle: t.panoramaElevationAngle,
                   }}
                    onCaptured={addRecognitionEntry}
                 />

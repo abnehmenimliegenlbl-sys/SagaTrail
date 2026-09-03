@@ -1,9 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { captureRef } from "react-native-view-shot";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   View,
 } from "react-native";
 import type { DimensionValue } from "react-native";
+import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 
@@ -39,27 +41,35 @@ export interface PeakPanoramaStrings {
   capture: string;
   cameraPermission: string;
   arUnavailable: string;
+  offlineData: string;
+  onlineData: string;
+  heightUnknown: string;
+  dragPanorama: string;
+  elevationAngle: (angle: string) => string;
 }
 
 interface PeakPanoramaProps {
   peaks: PanoramaGipfel[];
   heading: number | null;
+  observerElevationM?: number | null;
   hasGps: boolean;
+  dataStatus?: {
+    source: "online" | "offline";
+    version?: number;
+    peakCount?: number;
+  } | null;
   strings: PeakPanoramaStrings;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
   /** Authenticated visual recognition entry shown directly in the panorama card. */
   recognition?: Omit<ObjectRecognitionProps, "onAnalyzed" | "nearbyContext" | "recognitionContext" | "journalKind">;
 }
 
-function markerLeft(relativeBearingDeg: number): DimensionValue {
-  const percentage = 50 + (relativeBearingDeg / PANORAMA_VIEW_DEGREES) * 100;
-  return `${Math.max(8, Math.min(92, percentage))}%`;
-}
-
 export function PeakPanorama({
   peaks,
   heading,
+  observerElevationM = null,
   hasGps,
+  dataStatus = null,
   strings,
   onCaptured,
   recognition,
@@ -75,6 +85,8 @@ export function PeakPanorama({
   const [arUnavailable, setArUnavailable] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
+  const [panOffsetDeg, setPanOffsetDeg] = useState(0);
+  const panStartOffsetRef = useRef(0);
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const visiblePeaks =
@@ -84,9 +96,26 @@ export function PeakPanorama({
           .filter(
             (peak) =>
               peak.relativeBearingDeg != null &&
-              Math.abs(peak.relativeBearingDeg) <= PANORAMA_VIEW_DEGREES / 2,
+              Math.abs(peak.relativeBearingDeg - panOffsetDeg) <= PANORAMA_VIEW_DEGREES / 2,
           )
           .slice(0, 4);
+  const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => visiblePeaks.length > 0,
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4,
+        onPanResponderGrant: () => {
+          panStartOffsetRef.current = panOffsetDeg;
+        },
+        onPanResponderMove: (_, gesture) => {
+          // Eine Fingerbewegung nach links zeigt den Ausschnitt weiter rechts.
+          const next = panStartOffsetRef.current - gesture.dx * 0.28;
+          setPanOffsetDeg(Math.max(-70, Math.min(70, next)));
+        },
+      }),
+    [panOffsetDeg, visiblePeaks.length],
+  );
   const focusedPeak = visiblePeaks.find(
     (peak) =>
       peak.relativeBearingDeg != null &&
@@ -96,6 +125,18 @@ export function PeakPanorama({
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
+  const markerPosition = (relativeBearingDeg: number): DimensionValue => {
+    const percentage =
+      50 + ((relativeBearingDeg - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 100;
+    return `${Math.max(8, Math.min(92, percentage))}%`;
+  };
+  const skylinePeaks = visiblePeaks.slice(0, 6);
+  const skylineX = (peak: PanoramaGipfel) =>
+    180 + (((peak.relativeBearingDeg ?? 0) - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 360;
+  const skylineY = (peak: PanoramaGipfel) => {
+    const angle = peak.elevationAngleDeg ?? 0;
+    return Math.max(43, Math.min(149, 129 - angle * 5.2));
+  };
   const peakRecognition = recognition ?? {
     premium,
     strings: objectRecognitionStrings,
@@ -272,6 +313,22 @@ export function PeakPanorama({
           </Text>
         )}
       </View>
+      <View style={styles.dataRow}>
+        <View style={[styles.dataBadge, { borderColor: colors.glassBorder }]}>
+          <Feather
+            name={dataStatus?.source === "offline" ? "download-cloud" : "database"}
+            size={11}
+            color={colors.tint}
+          />
+          <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
+            {dataStatus?.source === "offline" ? strings.offlineData : strings.onlineData}
+            {dataStatus?.version ? ` · v${dataStatus.version}` : ""}
+          </Text>
+        </View>
+        <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
+          {dataStatus?.peakCount ?? peaks.length} {strings.detected.toLocaleLowerCase()}
+        </Text>
+      </View>
 
       {visiblePeaks.length > 0 && (
         <View style={styles.peakRail}>
@@ -322,6 +379,68 @@ export function PeakPanorama({
           })}
         </View>
       )}
+
+      <View
+        style={[
+          styles.skylineCard,
+          { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+        ]}
+        {...panResponder.panHandlers}
+        accessibilityLabel={strings.title}
+      >
+        <Svg width="100%" height={220} viewBox="0 0 360 220">
+          <Rect x="0" y="0" width="360" height="220" fill={colors.glassBg} />
+          <Line x1="0" y1="129" x2="360" y2="129" stroke={colors.glassBorder} strokeWidth="1" />
+          <Line x1="0" y1="166" x2="360" y2="166" stroke={colors.glassBorder} strokeWidth="1" />
+          <G opacity={0.34}>
+            <Line x1="90" y1="0" x2="90" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
+            <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
+            <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
+          </G>
+          {skylinePeaks
+            .slice()
+            .sort((a, b) => skylineX(a) - skylineX(b))
+            .map((peak, index) => {
+              const x = skylineX(peak);
+              const y = skylineY(peak);
+              const width = Math.max(24, Math.min(62, 50 - peak.distanceKm * 1.2));
+              const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
+              return (
+                <G key={peak.id}>
+                  <Polygon
+                    points={`${x - width},166 ${x},${y} ${x + width},166`}
+                    fill={fill}
+                    stroke={colors.accent}
+                    strokeOpacity={0.5}
+                    strokeWidth="1"
+                  />
+                  <Line x1={x} y1={y} x2={x} y2="166" stroke={colors.accent} strokeOpacity={0.45} />
+                  <Circle cx={x} cy={y} r="3.5" fill={colors.primary} />
+                  {x > -18 && x < 378 && (
+                    <SvgText
+                      x={x}
+                      y={Math.max(30, y - 10)}
+                      fill={colors.foreground}
+                      fontSize="9"
+                      fontWeight="600"
+                      textAnchor="middle"
+                    >
+                      {peak.name.length > 16 ? `${peak.name.slice(0, 15)}…` : peak.name}
+                    </SvgText>
+                  )}
+                </G>
+              );
+            })}
+          <SvgText x="180" y="191" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
+            {panoramaHasHeight && targetPeak?.elevationAngleDeg != null
+              ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
+              : strings.heightUnknown}
+          </SvgText>
+          <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
+            {strings.dragPanorama}
+          </SvgText>
+        </Svg>
+      </View>
 
       <View
         style={[
@@ -382,7 +501,7 @@ export function PeakPanorama({
                 style={[
                   styles.marker,
                   {
-                    left: markerLeft(peak.relativeBearingDeg ?? 0),
+                    left: markerPosition(peak.relativeBearingDeg ?? 0),
                     top: insets.top + 82 + (index % 3) * 42,
                   },
                 ]}
@@ -615,6 +734,22 @@ const styles = StyleSheet.create({
     marginTop: 11,
     marginBottom: 1,
   },
+  dataRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 7,
+  },
+  dataBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+  },
+  dataText: { fontFamily: fonts.mono, fontSize: 8 },
   signalPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -628,6 +763,13 @@ const styles = StyleSheet.create({
   signalDot: { width: 6, height: 6, borderRadius: 3 },
   signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
   viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
+  skylineCard: {
+    height: 220,
+    marginTop: 11,
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
   peakRail: {
     flexDirection: "row",
     gap: 7,

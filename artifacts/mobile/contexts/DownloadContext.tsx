@@ -28,6 +28,11 @@ import {
   loadTilesBase64,
 } from "@/lib/offlineTiles";
 import {
+  createOfflinePanoramaDatenbank,
+  isOfflinePanoramaDatenbank,
+  type OfflinePanoramaDatenbank,
+} from "@/lib/panorama";
+import {
   downloadChapterAudio,
   deleteNarrationAudio,
 } from "@/lib/narrationAudio";
@@ -58,6 +63,7 @@ const INDEX_KEY = "sagatrail:downloads";
 // Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
 const storyKeyPrefix = "sagatrail:story:v2:";
 const poisKeyPrefix = "sagatrail:pois:v1:";
+const panoramaKeyPrefix = "sagatrail:panorama:v1:";
 
 export interface DownloadRecord {
   sagaId: string;
@@ -74,6 +80,10 @@ export interface DownloadRecord {
   downloadedAt: number;
   hasAudio?: boolean;
   hasPois?: boolean;
+  /** Eigenständiger, versionierter Gipfelbestand im Offline-Paket. */
+  peakCount?: number;
+  panoramaDatabaseVersion?: number;
+  panoramaSource?: string;
   /** Der Download kann offline nutzbar sein, auch wenn einzelne Phasen fehlen. */
   status?: "complete" | "partial" | "failed";
   phaseStatus?: Partial<Record<DownloadPhase, "complete" | "partial" | "failed">>;
@@ -105,6 +115,7 @@ interface DownloadContextValue {
   remove: (sagaId: string) => Promise<void>;
   loadOfflineTiles: (sagaId: string) => Promise<Record<string, string>>;
   loadOfflinePois: (routeId: string) => Promise<unknown[] | null>;
+  loadOfflinePanorama: (routeId: string) => Promise<OfflinePanoramaDatenbank | null>;
   resolveStory: (
     saga: Saga,
     profile: Profile,
@@ -120,6 +131,10 @@ function storyKey(sagaId: string, archetype: string, ageTier: string, language: 
 
 function poisKey(routeId: string): string {
   return `${poisKeyPrefix}${routeId}`;
+}
+
+function panoramaKey(routeId: string): string {
+  return `${panoramaKeyPrefix}${routeId}`;
 }
 
 async function readStory(
@@ -213,12 +228,28 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // 3. POIs laden, Detail und Story fuer jeden POI vorladen.
       let hasPois = false;
       let poisFailed = false;
+      let panoramaDatabase: OfflinePanoramaDatenbank | null = null;
       const center = route.coordinates ?? saga.coordinates ?? null;
       if (center) {
         try {
           const bbox = bboxAroundGeometry(route.geometry ?? null, center, 0.5);
           setProgress({ sagaId: saga.id, phase: "pois", done: 0, total: 1 });
           const pois = await getPois(bbox);
+          // Das Panorama braucht einen größeren Radius als historische
+          // Weg-POIs. Die zweite Abfrage bleibt vom Detail-Preload getrennt;
+          // fällt sie aus, bleibt zumindest der kleinere POI-Bestand nutzbar.
+          try {
+            const panoramaPois = await getPois(
+              bboxAroundGeometry(route.geometry ?? null, center, 2.0),
+            );
+            panoramaDatabase = createOfflinePanoramaDatenbank(panoramaPois);
+          } catch {
+            panoramaDatabase = createOfflinePanoramaDatenbank(pois);
+          }
+          await AsyncStorage.setItem(
+            panoramaKey(route.id),
+            JSON.stringify(panoramaDatabase),
+          ).catch(() => {});
           if (pois.length > 0) {
             await AsyncStorage.setItem(poisKey(route.id), JSON.stringify(pois)).catch(() => {});
             hasPois = true;
@@ -312,6 +343,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         storySource,
         hasAudio,
         hasPois,
+        peakCount: panoramaDatabase?.peaks.length ?? 0,
+        panoramaDatabaseVersion: panoramaDatabase?.version,
+        panoramaSource: panoramaDatabase?.source,
         downloadedAt: Date.now(),
         status: Object.values(phaseStatus).some((s) => s === "failed" || s === "partial")
           ? "partial"
@@ -320,7 +354,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
         routeSnapshot: route,
         sagaSnapshot: saga,
-        offlinePackageVersion: 2,
+        offlinePackageVersion: 3,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
       await persist({ ...downloads, [saga.id]: record });
@@ -345,6 +379,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {}
       await AsyncStorage.removeItem(poisKey(rec.routeId)).catch(() => {});
+      await AsyncStorage.removeItem(panoramaKey(rec.routeId)).catch(() => {});
       }
       await deleteTiles(sagaId);
       await deleteNarrationAudio(sagaId);
@@ -418,6 +453,20 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const loadOfflinePanorama = useCallback(
+    async (routeId: string): Promise<OfflinePanoramaDatenbank | null> => {
+      try {
+        const raw = await AsyncStorage.getItem(panoramaKey(routeId));
+        if (!raw) return null;
+        const parsed: unknown = JSON.parse(raw);
+        return isOfflinePanoramaDatenbank(parsed) ? parsed : null;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
   const value = useMemo<DownloadContextValue>(
     () => ({
       ready,
@@ -429,6 +478,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       remove,
       loadOfflineTiles,
       loadOfflinePois,
+      loadOfflinePanorama,
       resolveStory,
     }),
     [
@@ -441,6 +491,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       remove,
       loadOfflineTiles,
       loadOfflinePois,
+      loadOfflinePanorama,
       resolveStory,
     ]
   );

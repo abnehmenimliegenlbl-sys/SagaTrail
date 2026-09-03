@@ -19,13 +19,19 @@ interface PeakArSceneProps {
   };
 }
 
-function positionForPeak(peak: PanoramaGipfel, index: number): [number, number, number] {
+function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
   const bearing = ((peak.relativeBearingDeg ?? 0) * Math.PI) / 180;
   // AR scenes are local spaces. Compress long mountain distances logarithmically
   // so nearby and distant peaks are both readable without putting nodes outside
   // the useful tracking range.
   const depth = Math.max(4, Math.min(24, 4 + Math.sqrt(peak.distanceKm) * 2.4));
-  const height = 1.35 + (index % 3) * 0.24;
+  // Nur der echte Höhenwinkel bestimmt die vertikale Lage. Bei fehlender
+  // Beobachter- oder Gipfelhöhe bleibt der Marker auf dem Horizont, statt eine
+  // künstliche Höhe als Messwert auszugeben.
+  const height =
+    peak.elevationAngleDeg == null
+      ? 1.35
+      : Math.max(0.35, Math.min(5.5, 1.35 + peak.elevationAngleDeg * 0.12));
 
   return [Math.sin(bearing) * depth, height, -Math.cos(bearing) * depth];
 }
@@ -45,14 +51,16 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     <ViroARScene
       onError={() => appProps?.onError?.()}
     >
-      {visiblePeaks.map((peak, index) => (
+      {visiblePeaks.map((peak) => (
         <ViroNode
           key={peak.id}
-          position={positionForPeak(peak, index)}
+          position={positionForPeak(peak)}
           transformBehaviors="billboard"
         >
           <ViroText
-            text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km`}
+            text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
+              peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
+            }`}
             color="#FFFFFF"
             outerStroke={{
               type: "Outline",

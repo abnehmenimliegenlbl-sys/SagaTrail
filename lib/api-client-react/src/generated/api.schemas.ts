@@ -362,6 +362,8 @@ export interface Poi {
   kind: string;
   lat: number;
   lng: number;
+  /** OSM-Höhe in Metern über Meer, sofern am Gipfel gepflegt. */
+  elevation?: number | null;
   wiki?: WikiSummary;
   /** OSM wikipedia-Tag (z.B. 'de:Basiliskenbrunnen Basel'), fuer on-demand-Anreicherung. */
   wikipediaTag?: string | null;

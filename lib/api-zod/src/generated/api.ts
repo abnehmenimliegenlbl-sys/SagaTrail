@@ -226,6 +226,7 @@ export const GetPoisResponseItem = zod.object({
   "kind": zod.string().describe('OSM-Tag, z.B. historic=ruins oder tourism=attraction'),
   "lat": zod.number(),
   "lng": zod.number(),
+  "elevation": zod.number().nullish().describe('OSM-Höhe in Metern über Meer, sofern am Gipfel gepflegt.'),
   "wiki": zod.object({
   "title": zod.string(),
   "extract": zod.string(),

@@ -51,13 +51,36 @@ export function panoramaFuerRoute(
 export interface PanoramaGipfel {
   id: string;
   name: string;
+  lat: number;
+  lng: number;
   distanceKm: number;
   bearingDeg: number;
   /** Relative Richtung zum aktuellen Telefonkurs (-180 bis 180 Grad). */
   relativeBearingDeg: number | null;
   /** OSM-Höhe des Gipfels; null wenn nicht gepflegt. */
   elevationM: number | null;
+  /** Echter Höhenwinkel vom aktuellen Standort; null bei fehlender Höhe. */
+  elevationAngleDeg: number | null;
 }
+
+export interface PanoramaGipfelDatensatz {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  elevationM: number | null;
+}
+
+export interface OfflinePanoramaDatenbank {
+  version: number;
+  source: string;
+  downloadedAt: number;
+  peaks: PanoramaGipfelDatensatz[];
+}
+
+export const PANORAMA_OFFLINE_VERSION = 1;
+export const PANORAMA_OFFLINE_SOURCE =
+  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele";
 
 interface GipfelPoi {
   id: string;
@@ -66,6 +89,64 @@ interface GipfelPoi {
   lat: number;
   lng: number;
   elevation?: number | null;
+  elevationM?: number | null;
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Erstellt aus dem OSM-POI-Download einen eigenständigen, kleinen Offline-
+ * Datensatz. Die Quelle und Version reisen mit, damit alte lokale Datensätze
+ * nicht stillschweigend als aktuell ausgegeben werden.
+ */
+export function createOfflinePanoramaDatenbank(
+  pois: readonly GipfelPoi[],
+  downloadedAt: number = Date.now(),
+): OfflinePanoramaDatenbank {
+  const seen = new Set<string>();
+  const peaks: PanoramaGipfelDatensatz[] = [];
+  for (const poi of pois) {
+    if (
+      poi.kind !== "natural=peak" ||
+      typeof poi.id !== "string" ||
+      typeof poi.name !== "string" ||
+      poi.name.trim().length === 0 ||
+      !Number.isFinite(poi.lat) ||
+      !Number.isFinite(poi.lng) ||
+      seen.has(poi.id)
+    ) {
+      continue;
+    }
+    seen.add(poi.id);
+    peaks.push({
+      id: poi.id,
+      name: poi.name.trim(),
+      lat: poi.lat,
+      lng: poi.lng,
+      elevationM: finiteNumber(poi.elevation ?? poi.elevationM),
+    });
+  }
+  return {
+    version: PANORAMA_OFFLINE_VERSION,
+    source: PANORAMA_OFFLINE_SOURCE,
+    downloadedAt,
+    peaks,
+  };
+}
+
+export function isOfflinePanoramaDatenbank(
+  value: unknown,
+): value is OfflinePanoramaDatenbank {
+  if (!value || typeof value !== "object") return false;
+  const data = value as Partial<OfflinePanoramaDatenbank>;
+  return (
+    data.version === PANORAMA_OFFLINE_VERSION &&
+    data.source === PANORAMA_OFFLINE_SOURCE &&
+    typeof data.downloadedAt === "number" &&
+    Array.isArray(data.peaks)
+  );
 }
 
 function signedBearingDifference(target: number, heading: number): number {
@@ -82,24 +163,44 @@ export function erkenneGipfel(
   pois: readonly GipfelPoi[],
   position: LatLng | null,
   heading: number | null,
+  observerElevationM: number | null = null,
 ): PanoramaGipfel[] {
   if (!position) return [];
 
+  const seen = new Set<string>();
   return pois
     .filter((poi) => poi.kind === "natural=peak" && poi.name.trim().length > 0)
     .map((poi): PanoramaGipfel => {
       const target: LatLng = { lat: poi.lat, lng: poi.lng };
       const distanceKm = haversineKm(position, target);
       const targetBearing = bearingDeg(position, target);
+      const elevationM = finiteNumber(poi.elevation ?? poi.elevationM);
+      const elevationAngleDeg =
+        elevationM != null && finiteNumber(observerElevationM) != null
+          ? (Math.atan2(
+              elevationM - (observerElevationM as number),
+              Math.max(1, distanceKm * 1000),
+            ) *
+              180) /
+            Math.PI
+          : null;
       return {
         id: poi.id,
         name: poi.name.trim(),
+        lat: poi.lat,
+        lng: poi.lng,
         distanceKm,
         bearingDeg: targetBearing,
-        elevationM: poi.elevation ?? null,
+        elevationM,
+        elevationAngleDeg,
         relativeBearingDeg:
           heading == null ? null : signedBearingDifference(targetBearing, heading),
       };
+    })
+    .filter((peak) => {
+      if (seen.has(peak.id)) return false;
+      seen.add(peak.id);
+      return true;
     })
     .filter((peak) => peak.distanceKm <= 20)
     .sort((a, b) => {
