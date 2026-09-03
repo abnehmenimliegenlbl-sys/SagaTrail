@@ -3,7 +3,8 @@ import { StyleSheet, View } from "react-native";
 
 import colors from "@/constants/colors";
 import { useMapStrings } from "@/lib/i18n/screens/map";
-import { buildSwisstopoHtml, SwisstopoMapProps } from "./swisstopoMapHtml";
+import { buildLeafletMapHtml } from "./leafletMapHtml";
+import { SwisstopoMapProps } from "./swisstopoMapHtml";
 
 type MapWindow = Window & { sttSetPosition?: (lat: number, lng: number) => void };
 
@@ -35,13 +36,23 @@ export function SwisstopoMap({
   const t = useMapStrings();
   const html = useMemo(
     () =>
-      buildSwisstopoHtml(
-        center,
-        label,
-        geometry,
-        offlineTiles,
-        aerialways,
-        pois,
+      buildLeafletMapHtml(
+        {
+          center,
+          label,
+          geometry,
+          offlineTiles,
+          aerialways,
+          pois,
+          partners,
+          pickerMode: false,
+          altGeometry: null,
+          waterSources,
+          parkingSpots,
+          elevationProfile,
+          safetyPois,
+          sagaPin: _sagaPin,
+        },
         {
           title: t.legendTitle,
           route: t.legendRoute,
@@ -67,14 +78,6 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
         },
-        partners,
-        undefined,
-        undefined,
-        waterSources,
-        undefined,
-        parkingSpots,
-        elevationProfile,
-        safetyPois
       ),
     [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, t]
   );

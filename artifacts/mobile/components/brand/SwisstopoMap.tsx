@@ -4,7 +4,8 @@ import { WebView } from "react-native-webview";
 
 import { useColors } from "@/hooks/useColors";
 import { useMapStrings } from "@/lib/i18n/screens/map";
-import { buildSwisstopoHtml, SwisstopoMapProps } from "./swisstopoMapHtml";
+import { buildLeafletMapHtml } from "./leafletMapHtml";
+import { SwisstopoMapProps } from "./swisstopoMapHtml";
 
 /**
  * Native Kartenansicht (iOS/Android): rendert die swisstopo-Leaflet-Karte in
@@ -46,13 +47,24 @@ export function SwisstopoMap({
   // HTML erzeugen — OHNE pois/partners/aerialways (die werden per inject nachgeliefert).
   const html = useMemo(
     () =>
-      buildSwisstopoHtml(
-        center,
-        label,
-        geometry,
-        offlineTiles,
-        null,   // aerialways — per sttSetAerialways injiziert
-        null,   // pois      — per sttSetPois injiziert
+      buildLeafletMapHtml(
+        {
+          center,
+          label,
+          geometry,
+          offlineTiles,
+          aerialways,
+          pois,
+          partners,
+          pickerMode,
+          altGeometry,
+          waterSources,
+          parkingSpots,
+          elevationProfile,
+          safetyPois,
+          sagaPin,
+          safeAreaInsetTop,
+        },
         {
           title: t.legendTitle,
           route: t.legendRoute,
@@ -78,14 +90,6 @@ export function SwisstopoMap({
           poi: t.legendPoi,
           partner: t.legendPartner,
         },
-        null,   // partners  — per sttSetPartners injiziert
-        pickerMode,
-        altGeometry,
-        waterSources,
-        safeAreaInsetTop,
-        parkingSpots,
-        elevationProfile,
-        safetyPois
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
