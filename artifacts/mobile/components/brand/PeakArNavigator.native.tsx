@@ -8,16 +8,10 @@ import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
-import {
-  terrainVisibilityForPeak,
-  type LocalTerrainModel,
-} from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 interface PeakArSceneProps {
   peaks: readonly PanoramaGipfel[];
-  terrainModel?: LocalTerrainModel | null;
-  observerElevationM?: number | null;
   onError?: () => void;
 }
 
@@ -37,56 +31,38 @@ function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
 
 function PeakArScene({
   peaks,
-  terrainModel,
-  observerElevationM,
   onError,
 }: PeakArSceneProps) {
-  const peakStates = useMemo(
-    () =>
-      peaks
-        .filter((peak) => peak.relativeBearingDeg != null)
-        .map((peak) => ({
-          peak,
-          visibility: terrainVisibilityForPeak(
-            terrainModel,
-            peak,
-            observerElevationM,
-          ),
-        }))
-        .slice(0, 6),
-    [peaks, terrainModel, observerElevationM],
+  const renderablePeaks = useMemo(
+    () => peaks.filter((peak) => peak.relativeBearingDeg != null).slice(0, 6),
+    [peaks],
   );
 
   return (
     <ViroARScene onError={() => onError?.()}>
-      {peakStates
-        .filter(({ visibility }) => visibility !== "occluded")
-        .map(({ peak, visibility }) => (
-          <ViroText
-            key={peak.id}
-            position={positionForPeak(peak)}
-            transformBehaviors="billboard"
-            text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
-              peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
-            }${visibility === "unknown" ? "\nGelände unbekannt" : ""}`}
-            color="#FFFFFF"
-            outerStroke={{
-              type: "Outline",
-              width: 2,
-              color: "#10251D",
-            }}
-            style={styles.peakLabel}
-          />
-        ))}
+      {renderablePeaks.map((peak) => (
+        <ViroText
+          key={peak.id}
+          position={positionForPeak(peak)}
+          transformBehaviors="billboard"
+          text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
+            peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
+          }`}
+          color="#FFFFFF"
+          outerStroke={{
+            type: "Outline",
+            width: 2,
+            color: "#10251D",
+          }}
+          style={styles.peakLabel}
+        />
+      ))}
     </ViroARScene>
   );
 }
 
 export function PeakArNavigator({
   peaks,
-  terrainModel,
-  heading,
-  observerElevationM,
   onError,
 }: PeakArNavigatorProps) {
   const [supportState, setSupportState] = useState<
@@ -122,13 +98,11 @@ export function PeakArNavigator({
       scene: () => (
         <PeakArScene
           peaks={peaks}
-          terrainModel={terrainModel}
-          observerElevationM={observerElevationM}
           onError={onError}
         />
       ),
     }),
-    [peaks, terrainModel, observerElevationM, onError],
+    [peaks, onError],
   );
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
@@ -140,7 +114,6 @@ export function PeakArNavigator({
     <ViroARSceneNavigator
       style={StyleSheet.absoluteFillObject}
       initialScene={initialScene}
-      viroAppProps={{ peaks, terrainModel, heading, observerElevationM, onError }}
       autofocus
       worldAlignment="GravityAndHeading"
     />
