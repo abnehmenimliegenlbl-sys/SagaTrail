@@ -177,6 +177,8 @@ const TRACK_LOG_INTERVAL_MS = 8000;
 const OFF_ROUTE_THRESHOLD_KM = 0.08;
 /** Abstand in km ab dem die Warnung automatisch wieder erlischt. */
 const OFF_ROUTE_RECOVER_KM = 0.04;
+/** Abstand zum offiziellen Wegstart, ab dem beim Wanderungsbeginn eine Auswahl erscheint. */
+const START_NEARBY_KM = 0.05;
 /** Anzahl aufeinanderfolgender GPS-Fixes, die ueberschritten sein muessen, bevor gewarnt wird. */
 const OFF_ROUTE_CONFIRM_FIXES = 3;
 /** Eigene Statusfarbe fuer ein gueltiges Live-GPS-Signal — nicht mit dem roten Markenakzent vermischen. */
@@ -423,6 +425,9 @@ export default function LiveHike() {
   // verhindert, dass das "Zum Start laufen"-Banner nach dem Passieren
   // wieder auftaucht (User ist dann einfach weiter von geometry[0] weg).
   const [startReached, setStartReached] = useState(false);
+  /** Verhindert, dass die Startauswahl bei jedem GPS-Render erneut erscheint. */
+  const startRecalcChoiceShownRef = useRef(false);
+  const [startRecalcChoice, setStartRecalcChoice] = useState<"start" | "fastest" | "later" | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
@@ -442,6 +447,8 @@ export default function LiveHike() {
   // (followingRecalcRef), dann bleibt recalcGeom als Hauptroute erhalten.
   useEffect(() => {
     if (!offRoutePos) {
+      setStartRecalcChoice(null);
+      startRecalcChoiceShownRef.current = false;
       if (!followingRecalcRef.current) {
         setRecalcGeom(null);
         setRecalcRejoinFraction(null);
@@ -466,7 +473,36 @@ export default function LiveHike() {
     const nearestIdx = proj ? Math.floor(proj.fraction * (geom.length - 1)) : 0;
     const lookahead = Math.max(10, Math.floor(geom.length * 0.1));
     const destIdx = Math.min(geom.length - 1, nearestIdx + lookahead);
-    const dest = geom[destIdx];
+    const distanceToStartKm = haversineKm(
+      offRoutePos,
+      { lat: geom[0][0], lng: geom[0][1] },
+    );
+    const needsStartChoice = !startReached && distanceToStartKm > START_NEARBY_KM;
+    if (needsStartChoice && !startRecalcChoiceShownRef.current && startRecalcChoice == null) {
+      startRecalcChoiceShownRef.current = true;
+      alert(
+        t.offRouteStartChoiceTitle,
+        t.offRouteStartChoiceMessage,
+        [
+          { text: t.offRouteToStart, onPress: () => setStartRecalcChoice("start") },
+          { text: t.offRouteFastestToRoute, onPress: () => setStartRecalcChoice("fastest") },
+          {
+            text: t.offRouteChoiceLater,
+            style: "cancel",
+            onPress: () => setStartRecalcChoice("later"),
+          },
+        ],
+      );
+      return;
+    }
+    if (needsStartChoice && startRecalcChoice === "later") return;
+    const targetIdx =
+      needsStartChoice && startRecalcChoice === "start"
+        ? 0
+        : needsStartChoice && startRecalcChoice === "fastest"
+          ? nearestIdx
+          : destIdx;
+    const dest = geom[targetIdx];
     setIsRecalculating(true);
     setRecalcFailed(false);
     setRecalcGeom(null);
@@ -494,7 +530,7 @@ export default function LiveHike() {
           setRecalcGeom(decodePolyline6(shape));
           // Merken, wo die Alternativroute wieder auf die Originalroute trifft —
           // noetig, um Restkilometer/Restzeit waehrend der Umleitung zu berechnen.
-          setRecalcRejoinFraction(geom.length > 1 ? destIdx / (geom.length - 1) : null);
+          setRecalcRejoinFraction(geom.length > 1 ? targetIdx / (geom.length - 1) : null);
         } else {
           setRecalcFailed(true);
         }
@@ -507,7 +543,7 @@ export default function LiveHike() {
       }
     })();
     return () => controller.abort();
-  }, [offRoutePos]);
+  }, [offRoutePos, startRecalcChoice]);
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
