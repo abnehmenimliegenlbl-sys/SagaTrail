@@ -446,6 +446,28 @@ export default function KantonRouten() {
             onDraggingChange={setSliderAktiv}
           />
 
+          <RangeSlider
+            label={t.elevationLabel}
+            min={ASC_MIN}
+            max={ASC_MAX}
+            step={50}
+            values={ascFilter}
+            onChange={setAscFilter}
+            formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
+            onDraggingChange={setSliderAktiv}
+          />
+
+          <RangeSlider
+            label={t.difficultyLabel}
+            min={DIFF_MIN}
+            max={DIFF_MAX}
+            step={1}
+            values={diffFilter}
+            onChange={setDiffFilter}
+            formatValue={(v) => t.difficultyUnit(v)}
+            onDraggingChange={setSliderAktiv}
+          />
+
           <Pressable
             onPress={() => setShowAdvancedFilters((visible) => !visible)}
             accessibilityRole="button"
@@ -460,17 +482,6 @@ export default function KantonRouten() {
 
           {showAdvancedFilters && (
             <>
-              <RangeSlider
-                label={t.elevationLabel}
-                min={ASC_MIN}
-                max={ASC_MAX}
-                step={50}
-                values={ascFilter}
-                onChange={setAscFilter}
-                formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
-                onDraggingChange={setSliderAktiv}
-              />
-
               <View style={[styles.suitabilityBox, { borderColor: colors.glassBorder }]}>
                 <Text style={[styles.suitabilityTitle, { color: colors.foreground }]}>
                   {suitabilityCopy.title}
@@ -496,17 +507,6 @@ export default function KantonRouten() {
                   </View>
                 ))}
               </View>
-              <RangeSlider
-                label={t.difficultyLabel}
-                min={DIFF_MIN}
-                max={DIFF_MAX}
-                step={1}
-                values={diffFilter}
-                onChange={setDiffFilter}
-                formatValue={(v) => t.difficultyUnit(v)}
-                onDraggingChange={setSliderAktiv}
-              />
-
               <View style={[styles.switchRow, { borderTopColor: colors.glassBorder }]}>
                 <Text style={[styles.switchLabel, { color: colors.foreground }]}>
                   {t.yearRoundLabel}
