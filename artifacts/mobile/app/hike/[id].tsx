@@ -1621,6 +1621,25 @@ export default function LiveHike() {
     return () => clearInterval(interval);
   }, []);
 
+  // Live-Status auf der gekoppelten Watch. Die Hilfsfunktion drosselt auf
+  // maximal eine Statusmitteilung pro 45 Sekunden und verlangt einen echten
+  // frischen GPS-Fix; dadurch werden weder simulierte Positionen noch
+  // Benachrichtigungs-Spam an die Watch weitergegeben.
+  useEffect(() => {
+    if (watchReady !== true || !hasFreshGps) return;
+    const progressFromDistance = totalKm > 0 ? Math.min(1, distance / totalKm) : 0;
+    const remainingKm = Math.max(0, totalKm * (1 - progressFromDistance));
+    void sendWatchStatus({
+      direction: compassHeading == null
+        ? "Richtung unbekannt"
+        : t.compassDirections[compassIndex(compassHeading)],
+      heading: compassHeading,
+      remainingKm,
+      heartRateBpm: null,
+      hasFreshGps,
+    });
+  }, [watchReady, hasFreshGps, compassHeading, distance, totalKm, t]);
+
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
     if (!hasFreshGps) return;
@@ -3798,6 +3817,18 @@ export default function LiveHike() {
 
         </Glass>
 
+        {Platform.OS !== "web" && (
+          <WatchCompanionCard
+            ready={watchReady}
+            direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
+            remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
+            heartRateBpm={null}
+            onEnable={() => {
+              void prepareWatchCompanion().then(setWatchReady);
+            }}
+          />
+        )}
+
         {/* Story-Bereich */}
         {preparing ? (
           <View style={styles.preparing}>
@@ -4401,7 +4432,10 @@ export default function LiveHike() {
 
       {/* SOS — bewusst KEIN Glas, immer sichtbar und deckend */}
       <Pressable
-        onPress={() => setSosOpen(true)}
+        onPress={() => {
+          setSosOpen(true);
+          void sendWatchSos(hasFreshGps && livePos ? livePos : null);
+        }}
         accessibilityRole="button"
         accessibilityLabel={`${t.sos} — ${t.emergency}`}
         style={[styles.sosBtn, { bottom: insets.bottom + 20, backgroundColor: colors.primary }]}
@@ -4536,6 +4570,75 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
         ) : null}
       </View>
     </View>
+  );
+}
+
+function WatchCompanionCard({
+  ready,
+  direction,
+  remainingKm,
+  heartRateBpm,
+  onEnable,
+}: {
+  ready: boolean | null;
+  direction: string | null;
+  remainingKm: number;
+  heartRateBpm: number | null;
+  onEnable: () => void;
+}) {
+  const colors = useColors();
+  const enabled = ready === true;
+  const status = enabled
+    ? "Watch-Mitteilungen aktiv"
+    : ready === false
+      ? "Watch-Mitteilungen nicht erlaubt"
+      : "Watch wird verbunden …";
+  return (
+    <Glass style={{ marginTop: 14 }}>
+      <View style={styles.watchCardHead}>
+        <View style={[styles.watchIcon, { backgroundColor: enabled ? colors.accent + "22" : colors.glassBg }]}>
+          <Feather name="watch" size={18} color={enabled ? colors.accent : colors.mutedForeground} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.watchTitle, { color: colors.foreground }]}>Watch-Begleitung</Text>
+          <Text style={[styles.watchStatus, { color: enabled ? colors.accent : colors.mutedForeground }]}>
+            {status}
+          </Text>
+        </View>
+        {!enabled && ready === false && (
+          <Pressable
+            onPress={onEnable}
+            accessibilityRole="button"
+            accessibilityLabel="Watch-Mitteilungen erlauben"
+            style={[styles.watchEnable, { borderColor: colors.glassBorder }]}
+          >
+            <Text style={[styles.watchEnableText, { color: colors.foreground }]}>Erlauben</Text>
+          </Pressable>
+        )}
+      </View>
+      <View style={[styles.watchMetrics, { borderTopColor: colors.glassBorder }]}>
+        <View style={styles.watchMetric}>
+          <Feather name="navigation" size={14} color={colors.accent} />
+          <Text style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}>Richtung</Text>
+          <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>{direction ?? "—"}</Text>
+        </View>
+        <View style={styles.watchMetric}>
+          <Feather name="map-pin" size={14} color={colors.accent} />
+          <Text style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}>Rest</Text>
+          <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>{remainingKm.toFixed(1)} km</Text>
+        </View>
+        <View style={styles.watchMetric}>
+          <Feather name="heart" size={14} color={colors.accent} />
+          <Text style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}>Puls</Text>
+          <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>
+            {heartRateBpm == null ? "—" : `${Math.round(heartRateBpm)} bpm`}
+          </Text>
+        </View>
+      </View>
+      <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
+        SOS, Richtung und Distanz erscheinen als native Mitteilungen auf der gekoppelten Watch. Live-Pulsdaten sind verfügbar, sobald ein nativer Health-Sensor verbunden ist.
+      </Text>
+    </Glass>
   );
 }
 
@@ -4797,6 +4900,17 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
+  watchCardHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+  watchIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  watchTitle: { fontFamily: fonts.bodyBold, fontSize: 15 },
+  watchStatus: { fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  watchEnable: { borderWidth: 1, borderRadius: 9, paddingVertical: 8, paddingHorizontal: 10 },
+  watchEnableText: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  watchMetrics: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, marginTop: 12, paddingTop: 12 },
+  watchMetric: { alignItems: "center", gap: 3, flex: 1 },
+  watchMetricLabel: { fontFamily: fonts.body, fontSize: 11 },
+  watchMetricValue: { fontFamily: fonts.monoBold, fontSize: 14, marginTop: 1 },
+  watchHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 12 },
   waypointsRow: {
     flexDirection: "row",
     flexWrap: "wrap",

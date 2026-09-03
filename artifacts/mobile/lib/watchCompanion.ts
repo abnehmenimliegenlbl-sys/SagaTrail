@@ -65,7 +65,6 @@ export async function sendWatchStatus(
         title: `SagaTrail · ${snapshot.direction}`,
         body: `${snapshot.remainingKm.toFixed(1)} km übrig · ${pulse}`,
         sound: false,
-        threadIdentifier: "sagatrail-watch-status",
         data: {
           kind: "watch-status",
           heading: snapshot.heading,

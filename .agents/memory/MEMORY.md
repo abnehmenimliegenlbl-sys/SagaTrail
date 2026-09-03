@@ -114,3 +114,4 @@
 - [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
+- [Watch companion](sagatrail-watch-companion.md) — native notification mirroring covers direction, distance and SOS; heart rate stays unavailable until a real health bridge exists.
