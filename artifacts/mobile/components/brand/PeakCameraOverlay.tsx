@@ -21,7 +21,6 @@ import type { LocalTerrainModel } from "@/lib/terrainModel";
 import { persistJournalImage } from "@/lib/journalMedia";
 import type { RecognitionJournalEntry } from "@/types";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
-import { PeakArNavigator } from "./PeakArNavigator";
 
 interface PeakCameraOverlayProps {
   visible: boolean;
@@ -38,10 +37,7 @@ interface PeakCameraOverlayProps {
 export function PeakCameraOverlay({
   visible,
   peaks,
-  terrainProfile = null,
-  terrainModel = null,
   heading,
-  observerElevationM = null,
   strings,
   onClose,
   onCaptured,
@@ -49,11 +45,6 @@ export function PeakCameraOverlay({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [cameraPermission] = useCameraPermissions();
-  // Viro's native AR navigator can terminate the whole process on devices or
-  // development builds where AR tracking is unavailable; React cannot catch
-  // that kind of native crash. Start with the stable camera-only overlay.
-  // The GPS/compass peak markers remain fully available without camera AR.
-  const [arUnavailable, setArUnavailable] = useState(true);
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
@@ -81,7 +72,6 @@ export function PeakCameraOverlay({
   useEffect(() => {
     if (!visible) {
       setContentMounted(false);
-      setArUnavailable(false);
       setSelectedPeakId(null);
     }
   }, [visible]);
@@ -152,19 +142,9 @@ export function PeakCameraOverlay({
       onDismiss={() => setContentMounted(false)}
     >
       <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
-        {contentMounted &&
-          (arUnavailable ? (
-            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
-          ) : (
-            <PeakArNavigator
-              peaks={visiblePeaks}
-              terrainProfile={terrainProfile}
-              terrainModel={terrainModel}
-              heading={heading}
-              observerElevationM={observerElevationM}
-              onError={() => setArUnavailable(true)}
-            />
-          ))}
+        {contentMounted && (
+          <CameraView ref={cameraRef} facing="back" style={styles.camera} />
+        )}
         <View style={styles.imageScrim} />
         <View pointerEvents="none" style={styles.scanLines}>
           <View style={styles.scanLineTop} />
@@ -173,7 +153,6 @@ export function PeakCameraOverlay({
         </View>
         <View style={styles.horizon} />
         {contentMounted &&
-          arUnavailable &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}
