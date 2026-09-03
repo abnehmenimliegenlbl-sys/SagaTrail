@@ -131,6 +131,95 @@ function geometryLengthKm(geometry: number[][] | null | undefined): number {
   return lengthKm;
 }
 
+function createTimedSignal(parentSignal: AbortSignal, timeoutMs: number) {
+  const controller = new AbortController();
+  const abortFromParent = () => controller.abort();
+  if (parentSignal.aborted) {
+    controller.abort();
+  } else {
+    parentSignal.addEventListener("abort", abortFromParent, { once: true });
+  }
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timeoutId);
+      parentSignal.removeEventListener("abort", abortFromParent);
+    },
+  };
+}
+
+/**
+ * Holt eine Fussweg-Geometrie. Valhalla bleibt der bevorzugte Router; der
+ * zweite Dienst wird genutzt, wenn Valhalla im Netz nicht erreichbar ist.
+ * Beide Antworten werden auf das app-interne [lat, lng]-Format vereinheitlicht.
+ */
+async function requestWalkingRoute(
+  start: LatLng,
+  end: LatLng,
+  parentSignal: AbortSignal,
+): Promise<number[][]> {
+  let primaryError: unknown;
+  const primary = createTimedSignal(parentSignal, 8000);
+  try {
+    const res = await fetch(VALHALLA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locations: [
+          { lon: start.lng, lat: start.lat },
+          { lon: end.lng, lat: end.lat },
+        ],
+        costing: "pedestrian",
+        shape_format: "polyline6",
+      }),
+      signal: primary.signal,
+    });
+    if (!res.ok) throw new Error(`Valhalla HTTP ${res.status}`);
+    const data = await res.json() as { trip?: { legs?: { shape?: string }[] } };
+    const shape = data.trip?.legs?.[0]?.shape;
+    if (!shape) throw new Error("Valhalla ohne Routengeometrie");
+    return decodePolyline6(shape);
+  } catch (error) {
+    if ((error as Error).name === "AbortError" && parentSignal.aborted) throw error;
+    primaryError = error;
+  } finally {
+    primary.cleanup();
+  }
+
+  const fallback = createTimedSignal(parentSignal, 15000);
+  try {
+    const coordinates = `${start.lng},${start.lat};${end.lng},${end.lat}`;
+    const url =
+      `${OSM_FOOT_ROUTER_URL}/${coordinates}` +
+      "?overview=full&geometries=geojson&steps=false";
+    const res = await fetch(url, { signal: fallback.signal });
+    if (!res.ok) throw new Error(`OSM-Fussweg-Router HTTP ${res.status}`);
+    const data = await res.json() as {
+      routes?: { geometry?: { coordinates?: unknown } }[];
+    };
+    const rawCoordinates = data.routes?.[0]?.geometry?.coordinates;
+    if (!Array.isArray(rawCoordinates)) throw new Error("OSM-Router ohne Routengeometrie");
+    const geometry = rawCoordinates
+      .filter((point): point is [number, number] =>
+        Array.isArray(point) &&
+        point.length >= 2 &&
+        Number.isFinite(point[0]) &&
+        Number.isFinite(point[1]),
+      )
+      .map(([lng, lat]) => [lat, lng]);
+    if (geometry.length < 2) throw new Error("OSM-Router mit zu kurzer Geometrie");
+    return geometry;
+  } catch (error) {
+    if ((error as Error).name === "AbortError" && parentSignal.aborted) throw error;
+    throw new Error(
+      `Keine Fusswegroute verfuegbar (primaer: ${String(primaryError)}, fallback: ${String(error)})`,
+    );
+  } finally {
+    fallback.cleanup();
+  }
+}
+
 // Lokalisierte Wochentagnamen für die Partner-Öffnungszeiten-Anzeige.
 const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
   de:  { montag: "Montag", dienstag: "Dienstag", mittwoch: "Mittwoch", donnerstag: "Donnerstag", freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" },
@@ -198,6 +287,8 @@ const OFF_ROUTE_CONFIRM_FIXES = 3;
 const GPS_LIVE_COLOR = "#00E676";
 /** Valhalla-Fussweg-Routing (FOSSGIS, kein API-Key noetig). */
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
+/** Fallback: routing.openstreetmap.de stellt ein direktes Fusswegprofil bereit. */
+const OSM_FOOT_ROUTER_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/driving";
 /** RDP-Epsilon in Grad (≈ 8 m bei Schweizer Breitengraden). */
 const RDP_EPSILON = 0.00007;
 /** Mindestanzahl Punkte damit der Live-Track statt der Routen-Geometrie verwendet wird.
@@ -551,29 +642,13 @@ export default function LiveHike() {
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch(VALHALLA_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            locations: [
-              { lon: offRoutePos.lng, lat: offRoutePos.lat },
-              { lon: dest[1], lat: dest[0] },
-            ],
-            costing: "pedestrian",
-            shape_format: "polyline6",
-          }),
-          signal: controller.signal,
-        });
-        const data = await res.json() as { trip?: { legs?: { shape?: string }[] } };
-        const shape = data?.trip?.legs?.[0]?.shape;
-        if (shape) {
-          setRecalcGeom(decodePolyline6(shape));
-          // Merken, wo die Alternativroute wieder auf die Originalroute trifft —
-          // noetig, um Restkilometer/Restzeit waehrend der Umleitung zu berechnen.
-          setRecalcRejoinFraction(geom.length > 1 ? targetIdx / (geom.length - 1) : null);
-        } else {
-          setRecalcFailed(true);
-        }
+        const geometry = await requestWalkingRoute(
+          offRoutePos,
+          { lat: dest[0], lng: dest[1] },
+          controller.signal,
+        );
+        setRecalcGeom(geometry);
+        setRecalcRejoinFraction(geom.length > 1 ? targetIdx / (geom.length - 1) : null);
       } catch (e) {
         if ((e as Error).name !== "AbortError") {
           setRecalcFailed(true);
@@ -4206,7 +4281,7 @@ export default function LiveHike() {
             <View style={styles.photoRow}>
               <PrimaryButton
                 variant="secondary"
-                style={{ flex: 1 }}
+                style={styles.hikeActionButton}
                 label={
                   photoUploading
                     ? t.photoUploading
@@ -4382,17 +4457,18 @@ export default function LiveHike() {
             {finished && (
               <PrimaryButton
                 label={t.finishHike}
+                variant="secondary"
                 onPress={finishHike}
-                style={{ marginTop: 24 }}
+                style={[styles.hikeActionButton, { marginTop: 12 }]}
               />
             )}
 
             {!finished && !preparing && (
               <PrimaryButton
                 label={t.finishEarlyButton}
-                variant="ghost"
+                variant="secondary"
                 onPress={finishHikeEarly}
-                style={{ marginTop: 12 }}
+                style={[styles.hikeActionButton, { marginTop: 12 }]}
               />
             )}
           </Animated.View>
@@ -4470,7 +4546,7 @@ export default function LiveHike() {
                 setConditionSubmitResult(null);
                 setShowConditionForm(true);
               }}
-              style={{ marginTop: 8 }}
+              style={styles.hikeActionButton}
             />
           )}
         </View>
@@ -5574,7 +5650,8 @@ const styles = StyleSheet.create({
   optionBtn: { ...GLAS_3D, borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
-  photoRow: { flexDirection: "row", alignItems: "center", marginTop: 20, gap: 10, flexWrap: "wrap" },
+  photoRow: { alignItems: "stretch", marginTop: 20, gap: 8 },
+  hikeActionButton: { width: "100%", minHeight: 56 },
   photoFab: {
     flexDirection: "row",
     alignItems: "center",
@@ -5585,7 +5662,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   photoFabText: { fontFamily: fonts.bodyMedium, fontSize: 13 },
-  photoStrip: { flex: 1, maxHeight: 52 },
+  photoStrip: { width: "100%", flexGrow: 0, maxHeight: 52 },
   photoStripContent: { gap: 6 },
   photoThumbWrap: { position: "relative", width: 48, height: 48 },
   photoThumb: { width: 48, height: 48, borderRadius: 8 },

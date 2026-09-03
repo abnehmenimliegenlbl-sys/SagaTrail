@@ -15,3 +15,9 @@ the "foot" OSRM URL silently returned car routes.
 (`https://valhalla1.openstreetmap.de/route`, POST JSON, `costing:
 "pedestrian"`). Legs return `shape` as encoded polyline with precision 1e6
 (polyline6), not the usual 1e5.
+
+In the SagaTrail runtime, `valhalla1.openstreetmap.de` can be unreachable even
+when the OSM routing service is available. Live rerouting therefore needs a
+fallback to `https://routing.openstreetmap.de/routed-foot/route/v1/driving`
+with GET parameters `overview=full&geometries=geojson&steps=false`; convert its
+`[lng, lat]` coordinates to the app's `[lat, lng]` format.
