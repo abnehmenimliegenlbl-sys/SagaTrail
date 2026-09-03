@@ -129,7 +129,11 @@ export default function Routenplanung() {
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, getRoutesByCanton, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
-  const route = getRoute(id);
+  // Ein vollständiges Offline-Paket enthält einen Routensnapshot. Der
+  // Katalog darf online-only bleiben; nach einem Kaltstart kommt die Detail-
+  // ansicht trotzdem ohne Netz wieder hoch.
+  const offlineRecord = getRecord(id);
+  const route = getRoute(id) ?? offlineRecord?.routeSnapshot;
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 8;
 
   // Routentyp aus der Geometrie ableiten: liegen Start und Ziel nahe

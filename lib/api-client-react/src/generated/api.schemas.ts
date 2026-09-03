@@ -13,6 +13,62 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface CreateSafetyShareRequest {
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  routeName: string;
+  /**
+     * @minimum 15
+     * @maximum 1440
+     */
+  durationMinutes: number;
+}
+
+export type SafetySharePublicStatusStatus = typeof SafetySharePublicStatusStatus[keyof typeof SafetySharePublicStatusStatus];
+
+
+export const SafetySharePublicStatusStatus = {
+  active: 'active',
+  ended: 'ended',
+  expired: 'expired',
+} as const;
+
+export interface SafetyShareLocation {
+  /**
+     * @minimum -90
+     * @maximum 90
+     */
+  lat: number;
+  /**
+     * @minimum -180
+     * @maximum 180
+     */
+  lng: number;
+  /** @minimum 0 */
+  accuracy?: number | null;
+}
+
+export type SafetySharePublicStatusLatestLocation = SafetyShareLocation & ({
+  updatedAt: string;
+} | null) | null;
+
+export interface SafetySharePublicStatus {
+  status: SafetySharePublicStatusStatus;
+  routeName: string;
+  startedAt: string;
+  expiresAt: string;
+  endedAt: string | null;
+  latestLocation: SafetySharePublicStatusLatestLocation;
+}
+
+export type SafetyShare = SafetySharePublicStatus & {
+  id: string;
+  token: string;
+  path: string;
+};
+
 export interface GpxImportBody {
   /**
      * Kompletter Inhalt der GPX-Datei (XML als Text)

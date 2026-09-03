@@ -78,6 +78,12 @@ export interface DownloadRecord {
   status?: "complete" | "partial" | "failed";
   phaseStatus?: Partial<Record<DownloadPhase, "complete" | "partial" | "failed">>;
   failedPhase?: DownloadPhase;
+  /** Vollständige lokale Katalog-Snapshots — damit Navigation auch nach
+   * einem Kaltstart ohne Online-Katalog möglich bleibt. */
+  routeSnapshot?: HikingRoute;
+  sagaSnapshot?: Saga;
+  offlinePackageVersion?: number;
+  emergencyNumbers?: string[];
 }
 
 export type DownloadPhase = "story" | "audio" | "pois" | "tiles";
@@ -312,6 +318,10 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           : "complete",
         phaseStatus,
         failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
+        routeSnapshot: route,
+        sagaSnapshot: saga,
+        offlinePackageVersion: 2,
+        emergencyNumbers: ["1414", "144", "117", "112"],
       };
       await persist({ ...downloads, [saga.id]: record });
       setProgress(null);

@@ -292,6 +292,7 @@ export default function LiveHike() {
   const { getToken: clerkGetToken } = useAuth();
   const getTokenRef = React.useRef(clerkGetToken);
   getTokenRef.current = clerkGetToken;
+  const getSafetyAuthToken = useCallback(() => getTokenRef.current(), []);
   const {
     profile,
     emergencyContact,
@@ -340,14 +341,17 @@ export default function LiveHike() {
     isResume && activeHike && activeHike.sagaId === id ? (activeHike.route ?? null) : null,
   );
   const { getSaga, getRoute, getRouteBySaga, loadCantonRoutes } = useCatalog();
-  const { resolveStory, loadOfflineTiles, loadOfflinePois, isDownloaded } = useDownloads();
+  const { resolveStory, loadOfflineTiles, loadOfflinePois, isDownloaded, getRecord } = useDownloads();
 
-  const saga = getSaga(id);
+  const offlineRecord = getRecord(id);
+  const saga = getSaga(id) ?? offlineRecord?.sagaSnapshot;
   // Die konkret gewaehlte Route (mit Wegverlauf) hat Vorrang; nur wenn keine
   // Route-Id durchgereicht wurde (z. B. Start aus der Sammlung), wird ueber die
   // Sage die naechste bekannte Route gesucht. Als letzter Rueckhalt dient die
   // im unterbrochenen Wanderstand mitgespeicherte Route.
-  const route = getRoute(routeId) ?? getRouteBySaga(id) ?? resumeRouteRef.current ?? undefined;
+  const route = getRoute(routeId) ?? getRouteBySaga(id) ?? resumeRouteRef.current
+    ?? (routeId ? getRecord(routeId)?.routeSnapshot : offlineRecord?.routeSnapshot)
+    ?? undefined;
 
   // Wurde eine konkrete routeId uebergeben, ist die Route aber (noch) nicht im
   // Katalog-Cache (z. B. Direktstart ohne vorherige Kantonssuche, oder nach
@@ -4477,6 +4481,7 @@ export default function LiveHike() {
         emergencyContact={emergencyContact}
         livePosition={livePos}
         hasFreshGps={hasFreshGps}
+        getAuthToken={getSafetyAuthToken}
         labels={{
           button: t.safetyCheckinButton ?? "Safety check-in",
           title: t.safetyCheckinTitle ?? "Safety check-in",
@@ -4493,6 +4498,9 @@ export default function LiveHike() {
           noContact: t.safetyCheckinNoContact ?? "Set an emergency contact before sharing your location.",
           shareUnavailable: t.smsNotAvailable,
           safeMessage: t.safetyCheckinMessage ?? "Safety check-in location",
+          externalShare: "Live-Link teilen",
+          externalShareActive: "Live-Link aktiv",
+          shareFailed: "Der Live-Sicherheitslink konnte nicht gestartet werden.",
         }}
       />
     </Background>

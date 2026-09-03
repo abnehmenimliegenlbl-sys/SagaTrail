@@ -880,3 +880,117 @@ export const CreateNarrationBody = zod.object({
 export const CreateNarrationResponse = zod.unknown()
 
 
+/**
+ * @summary Zeitlich begrenzten Sicherheitslink starten
+ */
+export const createSafetyShareBodyRouteNameMax = 180;
+
+export const createSafetyShareBodyDurationMinutesMin = 15;
+export const createSafetyShareBodyDurationMinutesMax = 1440;
+
+
+
+export const CreateSafetyShareBody = zod.object({
+  "routeName": zod.string().min(1).max(createSafetyShareBodyRouteNameMax),
+  "durationMinutes": zod.number().min(createSafetyShareBodyDurationMinutesMin).max(createSafetyShareBodyDurationMinutesMax)
+})
+
+export const createSafetyShareResponseOneLatestLocationOneLatMin = -90;
+export const createSafetyShareResponseOneLatestLocationOneLatMax = 90;
+
+export const createSafetyShareResponseOneLatestLocationOneLngMin = -180;
+export const createSafetyShareResponseOneLatestLocationOneLngMax = 180;
+
+export const createSafetyShareResponseOneLatestLocationOneAccuracyMin = 0;
+
+
+
+export const CreateSafetyShareResponse = zod.object({
+  "status": zod.enum(['active', 'ended', 'expired']),
+  "routeName": zod.string(),
+  "startedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "endedAt": zod.coerce.date().nullable(),
+  "latestLocation": zod.object({
+  "lat": zod.number().min(createSafetyShareResponseOneLatestLocationOneLatMin).max(createSafetyShareResponseOneLatestLocationOneLatMax),
+  "lng": zod.number().min(createSafetyShareResponseOneLatestLocationOneLngMin).max(createSafetyShareResponseOneLatestLocationOneLngMax),
+  "accuracy": zod.number().min(createSafetyShareResponseOneLatestLocationOneAccuracyMin).nullish()
+}).and(zod.object({
+  "updatedAt": zod.coerce.date()
+})).nullable()
+}).and(zod.object({
+  "id": zod.string(),
+  "token": zod.string(),
+  "path": zod.string()
+}))
+
+
+/**
+ * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ */
+export const UpdateSafetyShareLocationParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const updateSafetyShareLocationBodyLatMin = -90;
+export const updateSafetyShareLocationBodyLatMax = 90;
+
+export const updateSafetyShareLocationBodyLngMin = -180;
+export const updateSafetyShareLocationBodyLngMax = 180;
+
+export const updateSafetyShareLocationBodyAccuracyMin = 0;
+
+
+
+export const UpdateSafetyShareLocationBody = zod.object({
+  "lat": zod.number().min(updateSafetyShareLocationBodyLatMin).max(updateSafetyShareLocationBodyLatMax),
+  "lng": zod.number().min(updateSafetyShareLocationBodyLngMin).max(updateSafetyShareLocationBodyLngMax),
+  "accuracy": zod.number().min(updateSafetyShareLocationBodyAccuracyMin).nullish()
+})
+
+export const UpdateSafetyShareLocationResponse = zod.unknown()
+
+
+/**
+ * @summary Öffentlichen Sicherheitsstatus per Token laden
+ */
+export const GetSafetyShareByTokenParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const getSafetyShareByTokenResponseLatestLocationOneLatMin = -90;
+export const getSafetyShareByTokenResponseLatestLocationOneLatMax = 90;
+
+export const getSafetyShareByTokenResponseLatestLocationOneLngMin = -180;
+export const getSafetyShareByTokenResponseLatestLocationOneLngMax = 180;
+
+export const getSafetyShareByTokenResponseLatestLocationOneAccuracyMin = 0;
+
+
+
+export const GetSafetyShareByTokenResponse = zod.object({
+  "status": zod.enum(['active', 'ended', 'expired']),
+  "routeName": zod.string(),
+  "startedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "endedAt": zod.coerce.date().nullable(),
+  "latestLocation": zod.object({
+  "lat": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneLatMin).max(getSafetyShareByTokenResponseLatestLocationOneLatMax),
+  "lng": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneLngMin).max(getSafetyShareByTokenResponseLatestLocationOneLngMax),
+  "accuracy": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneAccuracyMin).nullish()
+}).and(zod.object({
+  "updatedAt": zod.coerce.date()
+})).nullable()
+})
+
+
+/**
+ * @summary Eigene Sicherheitsfreigabe beenden
+ */
+export const EndSafetyShareParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const EndSafetyShareResponse = zod.unknown()
+
+

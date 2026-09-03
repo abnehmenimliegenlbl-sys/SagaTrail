@@ -32,6 +32,7 @@ import type {
   ClaimPackRewardBody,
   ClaimReferralCode200,
   ClaimReferralCodeBody,
+  CreateSafetyShareRequest,
   ErrorResponse,
   GeocodePlace,
   GetAerialwaysParams,
@@ -63,6 +64,9 @@ import type {
   ProgressSyncResponse,
   RoutePhoto,
   RouteSurfacesResponse,
+  SafetyShare,
+  SafetyShareLocation,
+  SafetySharePublicStatus,
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
@@ -2681,5 +2685,293 @@ export const useCreateNarration = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCreateNarrationMutationOptions(options));
+    }
+
+export const getCreateSafetyShareUrl = () => {
+
+
+
+
+  return `/api/safety-shares`
+}
+
+/**
+ * @summary Zeitlich begrenzten Sicherheitslink starten
+ */
+export const createSafetyShare = async (createSafetyShareRequest: CreateSafetyShareRequest, options?: RequestInit): Promise<SafetyShare> => {
+
+  return customFetch<SafetyShare>(getCreateSafetyShareUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createSafetyShareRequest)
+  }
+);}
+
+
+
+
+export const getCreateSafetyShareMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSafetyShare>>, TError,{data: BodyType<CreateSafetyShareRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSafetyShare>>, TError,{data: BodyType<CreateSafetyShareRequest>}, TContext> => {
+
+const mutationKey = ['createSafetyShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSafetyShare>>, {data: BodyType<CreateSafetyShareRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSafetyShare(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSafetyShareMutationResult = NonNullable<Awaited<ReturnType<typeof createSafetyShare>>>
+    export type CreateSafetyShareMutationBody = BodyType<CreateSafetyShareRequest>
+    export type CreateSafetyShareMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Zeitlich begrenzten Sicherheitslink starten
+ */
+export const useCreateSafetyShare = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSafetyShare>>, TError,{data: BodyType<CreateSafetyShareRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSafetyShare>>,
+        TError,
+        {data: BodyType<CreateSafetyShareRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateSafetyShareMutationOptions(options));
+    }
+
+export const getUpdateSafetyShareLocationUrl = (token: string,) => {
+
+
+
+
+  return `/api/safety-shares/${token}/location`
+}
+
+/**
+ * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ */
+export const updateSafetyShareLocation = async (token: string,
+    safetyShareLocation: SafetyShareLocation, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getUpdateSafetyShareLocationUrl(token),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(safetyShareLocation)
+  }
+);}
+
+
+
+
+export const getUpdateSafetyShareLocationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSafetyShareLocation>>, TError,{token: string;data: BodyType<SafetyShareLocation>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSafetyShareLocation>>, TError,{token: string;data: BodyType<SafetyShareLocation>}, TContext> => {
+
+const mutationKey = ['updateSafetyShareLocation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSafetyShareLocation>>, {token: string;data: BodyType<SafetyShareLocation>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  updateSafetyShareLocation(token,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSafetyShareLocationMutationResult = NonNullable<Awaited<ReturnType<typeof updateSafetyShareLocation>>>
+    export type UpdateSafetyShareLocationMutationBody = BodyType<SafetyShareLocation>
+    export type UpdateSafetyShareLocationMutationError = ErrorType<void>
+
+    /**
+ * @summary Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+ */
+export const useUpdateSafetyShareLocation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSafetyShareLocation>>, TError,{token: string;data: BodyType<SafetyShareLocation>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSafetyShareLocation>>,
+        TError,
+        {token: string;data: BodyType<SafetyShareLocation>},
+        TContext
+      > => {
+      return useMutation(getUpdateSafetyShareLocationMutationOptions(options));
+    }
+
+export const getGetSafetyShareByTokenUrl = (token: string,) => {
+
+
+
+
+  return `/api/safety-shares/${token}`
+}
+
+/**
+ * @summary Öffentlichen Sicherheitsstatus per Token laden
+ */
+export const getSafetyShareByToken = async (token: string, options?: RequestInit): Promise<SafetySharePublicStatus> => {
+
+  return customFetch<SafetySharePublicStatus>(getGetSafetyShareByTokenUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSafetyShareByTokenQueryKey = (token: string,) => {
+    return [
+    `/api/safety-shares/${token}`
+    ] as const;
+    }
+
+
+export const getGetSafetyShareByTokenQueryOptions = <TData = Awaited<ReturnType<typeof getSafetyShareByToken>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSafetyShareByToken>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSafetyShareByTokenQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSafetyShareByToken>>> = ({ signal }) => getSafetyShareByToken(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSafetyShareByToken>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSafetyShareByTokenQueryResult = NonNullable<Awaited<ReturnType<typeof getSafetyShareByToken>>>
+export type GetSafetyShareByTokenQueryError = ErrorType<void>
+
+
+/**
+ * @summary Öffentlichen Sicherheitsstatus per Token laden
+ */
+
+export function useGetSafetyShareByToken<TData = Awaited<ReturnType<typeof getSafetyShareByToken>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSafetyShareByToken>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSafetyShareByTokenQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getEndSafetyShareUrl = (token: string,) => {
+
+
+
+
+  return `/api/safety-shares/${token}`
+}
+
+/**
+ * @summary Eigene Sicherheitsfreigabe beenden
+ */
+export const endSafetyShare = async (token: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getEndSafetyShareUrl(token),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getEndSafetyShareMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endSafetyShare>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof endSafetyShare>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['endSafetyShare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof endSafetyShare>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  endSafetyShare(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EndSafetyShareMutationResult = NonNullable<Awaited<ReturnType<typeof endSafetyShare>>>
+
+    export type EndSafetyShareMutationError = ErrorType<void>
+
+    /**
+ * @summary Eigene Sicherheitsfreigabe beenden
+ */
+export const useEndSafetyShare = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endSafetyShare>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof endSafetyShare>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+      return useMutation(getEndSafetyShareMutationOptions(options));
     }
 

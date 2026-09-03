@@ -1321,7 +1321,102 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /safety-shares:
+    post:
+      operationId: createSafetyShare
+      tags: [safety]
+      summary: Zeitlich begrenzten Sicherheitslink starten
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSafetyShareRequest"
+      responses:
+        "201":
+          description: Sicherheitslink
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SafetyShare"
+        "400":
+          description: Ungültige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Nicht authentifiziert
+  /safety-shares/{token}/location:
+    post:
+      operationId: updateSafetyShareLocation
+      tags: [safety]
+      summary: Frischen GPS-Standort eines Sicherheitslinks aktualisieren
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SafetyShareLocation"
+      responses:
+        "200":
+          description: Standort gespeichert
+        "400":
+          description: Ungültige Position
+        "410":
+          description: Link abgelaufen
+  /safety-shares/{token}:
+    get:
+      operationId: getSafetyShareByToken
+      tags: [safety]
+      summary: Öffentlichen Sicherheitsstatus per Token laden
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Öffentlicher Status ohne Kontodaten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SafetySharePublicStatus"
+        "404":
+          description: Nicht gefunden
+    delete:
+      operationId: endSafetyShare
+      tags: [safety]
+      summary: Eigene Sicherheitsfreigabe beenden
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Freigabe beendet
+        "401":
+          description: Nicht authentifiziert
+        "404":
+          description: Nicht gefunden
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
@@ -1337,6 +1432,75 @@ components:
           type: string
       required:
         - error
+    CreateSafetyShareRequest:
+      type: object
+      properties:
+        routeName:
+          type: string
+          minLength: 1
+          maxLength: 180
+        durationMinutes:
+          type: integer
+          minimum: 15
+          maximum: 1440
+      required: [routeName, durationMinutes]
+    SafetyShare:
+      allOf:
+        - $ref: "#/components/schemas/SafetySharePublicStatus"
+        - type: object
+          properties:
+            id:
+              type: string
+            token:
+              type: string
+            path:
+              type: string
+          required: [id, token, path]
+    SafetySharePublicStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, ended, expired]
+        routeName:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        latestLocation:
+          allOf:
+            - $ref: "#/components/schemas/SafetyShareLocation"
+            - type: object
+              properties:
+                updatedAt:
+                  type: string
+                  format: date-time
+              required: [updatedAt]
+          nullable: true
+      required: [status, routeName, startedAt, expiresAt, endedAt, latestLocation]
+    SafetyShareLocation:
+      type: object
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
+        accuracy:
+          type: number
+          minimum: 0
+          nullable: true
+      required: [lat, lng]
     GpxImportBody:
       type: object
       properties:

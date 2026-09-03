@@ -21,3 +21,4 @@ export * from "./referrals";
 export * from "./androidBetaTesters";
 export * from "./objectRecognitionUsage";
 export * from "./groupSessions";
+export * from "./safetyShares";

@@ -18,6 +18,7 @@ import { handleStripeEvent } from "./lib/partnerWebhookHandler";
 import { resolveRegionalLocalLogoFile } from "./lib/routeLogoResolver";
 import Stripe from "stripe";
 import { CANTON_WAPPEN_SVG } from "./lib/cantonWappenSvg";
+import safetyPublicRouter from "./routes/safetyPublic";
 
 const app: Express = express();
 
@@ -203,6 +204,7 @@ app.use(
   }),
 );
 app.use("/routen", routesExplorerRouter);
+app.use("/safety", safetyPublicRouter);
 app.use("/api", router);
 
 export default app;

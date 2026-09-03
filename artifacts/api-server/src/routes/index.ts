@@ -41,6 +41,7 @@ import parkingRouter from "./parking";
 import routesExplorerRouter from "./routesExplorer";
 import androidBetaRouter from "./androidBeta";
 import objectRecognitionRouter from "./objectRecognition";
+import safetySharesRouter from "./safetyShares";
 
 const router: IRouter = Router();
 
@@ -86,5 +87,6 @@ router.use(parkingRouter);
 router.use("/routen", routesExplorerRouter);
 router.use(androidBetaRouter);
 router.use(objectRecognitionRouter);
+router.use(safetySharesRouter);
 
 export default router;
