@@ -1,11 +1,10 @@
 import {
   ViroARScene,
   ViroARSceneNavigator,
-  ViroNode,
   ViroText,
   isARSupportedOnDevice,
 } from "@reactvision/react-viro";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
@@ -16,15 +15,10 @@ import {
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 interface PeakArSceneProps {
-  sceneNavigator?: {
-    viroAppProps?: {
-      peaks?: readonly PanoramaGipfel[];
-      terrainModel?: LocalTerrainModel | null;
-      heading?: number | null;
-      observerElevationM?: number | null;
-      onError?: () => void;
-    };
-  };
+  peaks: readonly PanoramaGipfel[];
+  terrainModel?: LocalTerrainModel | null;
+  observerElevationM?: number | null;
+  onError?: () => void;
 }
 
 function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
@@ -41,9 +35,12 @@ function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
   return [Math.sin(bearing) * depth, height, -Math.cos(bearing) * depth];
 }
 
-function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
-  const appProps = sceneNavigator?.viroAppProps;
-  const peaks = appProps?.peaks ?? [];
+function PeakArScene({
+  peaks,
+  terrainModel,
+  observerElevationM,
+  onError,
+}: PeakArSceneProps) {
   const peakStates = useMemo(
     () =>
       peaks
@@ -51,40 +48,35 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         .map((peak) => ({
           peak,
           visibility: terrainVisibilityForPeak(
-            appProps?.terrainModel,
+            terrainModel,
             peak,
-            appProps?.observerElevationM,
+            observerElevationM,
           ),
         }))
         .slice(0, 6),
-    [peaks, appProps?.terrainModel, appProps?.observerElevationM],
+    [peaks, terrainModel, observerElevationM],
   );
 
   return (
-    <ViroARScene
-      onError={() => appProps?.onError?.()}
-    >
+    <ViroARScene onError={() => onError?.()}>
       {peakStates
         .filter(({ visibility }) => visibility !== "occluded")
         .map(({ peak, visibility }) => (
-          <ViroNode
+          <ViroText
             key={peak.id}
             position={positionForPeak(peak)}
             transformBehaviors="billboard"
-          >
-            <ViroText
-              text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
-                peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
-              }${visibility === "unknown" ? "\nGelände unbekannt" : ""}`}
-              color="#FFFFFF"
-              outerStroke={{
-                type: "Outline",
-                width: 2,
-                color: "#10251D",
-              }}
-              style={styles.peakLabel}
-            />
-          </ViroNode>
+            text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
+              peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
+            }${visibility === "unknown" ? "\nGelände unbekannt" : ""}`}
+            color="#FFFFFF"
+            outerStroke={{
+              type: "Outline",
+              width: 2,
+              color: "#10251D",
+            }}
+            style={styles.peakLabel}
+          />
         ))}
     </ViroARScene>
   );
@@ -125,6 +117,20 @@ export function PeakArNavigator({
     };
   }, [onError]);
 
+  const initialScene = useMemo(
+    () => ({
+      scene: () => (
+        <PeakArScene
+          peaks={peaks}
+          terrainModel={terrainModel}
+          observerElevationM={observerElevationM}
+          onError={onError}
+        />
+      ),
+    }),
+    [peaks, terrainModel, observerElevationM, onError],
+  );
+
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
   // that this device can run it. Unsupported devices otherwise fail during
   // native camera-session creation, before Viro can report onError.
@@ -133,11 +139,7 @@ export function PeakArNavigator({
   return (
     <ViroARSceneNavigator
       style={StyleSheet.absoluteFillObject}
-      // Viro injects sceneNavigator at runtime, but its type currently declares
-      // the scene callback without the injected props.
-      initialScene={{
-        scene: PeakArScene as unknown as () => JSX.Element,
-      }}
+      initialScene={initialScene}
       viroAppProps={{ peaks, terrainModel, heading, observerElevationM, onError }}
       autofocus
       worldAlignment="GravityAndHeading"
