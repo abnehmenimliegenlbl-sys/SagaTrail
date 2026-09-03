@@ -189,18 +189,24 @@ export function FeatureTileDeck({
 
 const styles = StyleSheet.create({
   deck: { marginTop: 14 },
-  tileRow: { flexDirection: "row", gap: 8 },
+  tileRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
   tile: {
     flex: 1,
-    minHeight: 78,
+    height: 86,
     borderWidth: 1,
-    paddingHorizontal: 7,
+    paddingHorizontal: 9,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "space-between",
     gap: 5,
   },
-  tileText: { alignItems: "center", justifyContent: "center", minWidth: 0, flex: 1 },
+  tileText: {
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 0,
+    minHeight: 34,
+    flex: 1,
+  },
   tileTitle: {
     fontFamily: fonts.monoBold,
     fontSize: 10,
