@@ -232,7 +232,7 @@ export function buildLeafletMapHtml(
   ${legendHtml}
   <div id="copyright-info">
     <button id="copyright-toggle" type="button" aria-label="Karten-Copyrights" aria-expanded="false">i</button>
-    <div id="copyright-panel">© swisstopo<br>© OpenStreetMap<br>Wanderwege: Waymarked Trails</div>
+    <div id="copyright-panel">© swisstopo<br>© OpenStreetMap</div>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -292,10 +292,6 @@ export function buildLeafletMapHtml(
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
     var active = carto.addTo(map);
-    var trails = L.tileLayer("https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png", {
-      maxZoom: 18, opacity: .85,
-      attribution: 'Wanderwege: &copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
-    }).addTo(map);
     if (offline && Object.keys(offline).length) {
       var offlineLayer = L.TileLayer.extend({
         getTileUrl: function (coords) {
@@ -330,14 +326,12 @@ export function buildLeafletMapHtml(
       isSat = false;
       if (map.hasLayer(satellite)) map.removeLayer(satellite);
       if (!map.hasLayer(active)) active.addTo(map);
-      if (!map.hasLayer(trails)) trails.addTo(map);
       updateModeButtons();
     };
     document.getElementById("btn-sat").onclick = function () {
       isSat = true;
       if (map.hasLayer(active)) map.removeLayer(active);
       satellite.addTo(map);
-      if (map.hasLayer(trails)) map.removeLayer(trails);
       updateModeButtons();
     };
 
