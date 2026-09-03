@@ -166,6 +166,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="saga/[id]" />
       <Stack.Screen name="route/[id]" />
+      <Stack.Screen name="route/[id]/saga" />
       <Stack.Screen name="hike/[id]" options={{ animation: "slide_from_bottom" }} />
       <Stack.Screen name="summary" />
       <Stack.Screen

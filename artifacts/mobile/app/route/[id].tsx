@@ -47,6 +47,7 @@ import { poiDisplayName } from "@/lib/poiDisplay";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
+import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 import { Wegweiser } from "@/components/Wegweiser";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
@@ -126,7 +127,7 @@ export default function Routenplanung() {
   // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const { isElite } = useSubscription();
-  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, getRoutesByCanton, sagas } = useCatalog();
+  const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
   // Ein vollständiges Offline-Paket enthält einen Routensnapshot. Der
@@ -152,6 +153,9 @@ export default function Routenplanung() {
 
   // Strecke umkehren – tauscht Start und Ziel lokal aus (kein Server-Request)
   const [reversed, setReversed] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [sbbOpen, setSbbOpen] = useState(false);
+  const [offlineOpen, setOfflineOpen] = useState(false);
 
   // Effektive Geometrie: umgekehrt wenn reversed=true (keine Mutation des Originals).
   const effectiveGeom = useMemo(() => {
@@ -164,17 +168,6 @@ export default function Routenplanung() {
   const [saga, setSaga] = useState<Saga | undefined>(
     route ? getSagaForRoute(route) : undefined,
   );
-  const similarRoutes = useMemo(() => {
-    if (!saga?.canton || route?.distanceKm == null || !route?.id) return [];
-    return getRoutesByCanton(saga.canton)
-      .filter((r) => r.id !== route.id)
-      .sort(
-        (a, b) =>
-          Math.abs(a.distanceKm - route.distanceKm) -
-          Math.abs(b.distanceKm - route.distanceKm),
-      )
-      .slice(0, 3);
-  }, [route?.id, route?.distanceKm, saga?.canton, getRoutesByCanton]);
   const [sagaLoading, setSagaLoading] = useState(!saga);
   const [sagaRetryCount, setSagaRetryCount] = useState(0);
   // Alle Sagen des Kantons, sortiert nach Proximity-Kategorie + Distanz.
@@ -941,9 +934,9 @@ export default function Routenplanung() {
             <Feather name="share-2" size={14} color={colors.accent} />
             <Text style={[styles.actionChipText, { color: colors.accent }]}>{t.shareRoute}</Text>
           </Pressable>
-          {saga && (
+          {false && saga && (
             <Pressable
-              onPress={() => { hapticMedium(); void toggleBookmark(saga.id); }}
+              onPress={() => { hapticMedium(); void toggleBookmark(saga!.id); }}
               style={[styles.actionChip, {
                 borderColor: isBookmarked ? colors.accent : colors.glassBorder,
                 backgroundColor: isBookmarked ? colors.accent + "22" : colors.glassBg,
@@ -1117,10 +1110,10 @@ export default function Routenplanung() {
           </View>
         )}
 
-        {/* ── Sage-Teaser ───────────────────────────────────────────── */}
-        {saga && !sagaLoading && (
+        {/* Die Sage wird auf dem separaten Auswahl-Screen gewählt. */}
+        {false && saga && !sagaLoading && (
           <Pressable
-            onPress={() => router.push(locked ? "/paywall" : `/saga/${saga.id}?routeId=${route.id}`)}
+            onPress={() => router.push(locked ? "/paywall" : `/saga/${saga!.id}?routeId=${route!.id}`)}
             style={[styles.sagaTeaserCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
             accessibilityRole="button"
           >
@@ -1132,7 +1125,7 @@ export default function Routenplanung() {
                 {t.matchingSaga.toUpperCase()}
               </Text>
               <Text style={[styles.sagaTeaserTitle, { color: colors.foreground }]} numberOfLines={2}>
-                {saga.title}
+                {saga!.title}
               </Text>
             </View>
             <Feather name="chevron-right" size={18} color={colors.accent} />
@@ -1191,77 +1184,93 @@ export default function Routenplanung() {
           );
         })()}
 
-        <View style={styles.checkRow}>
-          <Feather
-            name={meta.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
-            size={16}
-            color={colors.mutedForeground}
-          />
-          <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.seasonLabel}</Text>
-          <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
-            {t.season[
-              meta.season === "ganzjaehrig"
-                ? "ganzjaehrig"
-                : meta.season === "nur_sommer"
-                  ? "nurSommer"
-                  : "eherSommer"
-            ]}
-          </Text>
-        </View>
-        <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.seasonNote}</Text>
-
-        {routentyp && (
-          <>
-            <View style={styles.checkRow}>
-              <Feather
-                name={routentyp === "rundweg" ? "rotate-cw" : "arrow-right"}
-                size={16}
-                color={colors.mutedForeground}
-              />
-              <Text style={[styles.checkLabel, { color: colors.foreground }]}>
-                {t.routeTypeLabel}
-              </Text>
-              <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
-                {routentyp === "rundweg" ? t.routeTypeRundweg : t.routeTypeStrecke}
-              </Text>
-            </View>
-            {routentyp === "strecke" && (
-              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
-                {t.streckeHint}
-              </Text>
-            )}
-          </>
-        )}
-
-        {/* SBB-Anreise-Button — für alle Routentypen sichtbar */}
-        <Pressable
-          onPress={oeffneAnreise}
-          style={[
-            styles.rueckreiseButton,
-            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 14 },
+        <RouteAccordionCard
+          icon={meta.season === "ganzjaehrig" ? "sun" : "cloud-snow"}
+          title={t.seasonLabel}
+          summary={t.season[
+            meta.season === "ganzjaehrig"
+              ? "ganzjaehrig"
+              : meta.season === "nur_sommer"
+                ? "nurSommer"
+                : "eherSommer"
           ]}
+          open={detailsOpen}
+          onPress={() => setDetailsOpen((open) => !open)}
         >
-          <Feather name="send" size={15} color={colors.accent} />
-          <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
-            {t.planOutward}
-          </Text>
-        </Pressable>
+          <View style={styles.checkRow}>
+            <Feather name="sun" size={16} color={colors.mutedForeground} />
+            <Text style={[styles.checkLabel, { color: colors.foreground }]}>{t.seasonLabel}</Text>
+            <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
+              {t.season[
+                meta.season === "ganzjaehrig"
+                  ? "ganzjaehrig"
+                  : meta.season === "nur_sommer"
+                    ? "nurSommer"
+                    : "eherSommer"
+              ]}
+            </Text>
+          </View>
+          <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>{t.seasonNote}</Text>
+          {routentyp ? (
+            <>
+              <View style={styles.checkRow}>
+                <Feather
+                  name={routentyp === "rundweg" ? "rotate-cw" : "arrow-right"}
+                  size={16}
+                  color={colors.mutedForeground}
+                />
+                <Text style={[styles.checkLabel, { color: colors.foreground }]}>
+                  {t.routeTypeLabel}
+                </Text>
+                <Text style={[styles.checkValue, { color: colors.mutedForeground }]}>
+                  {routentyp === "rundweg" ? t.routeTypeRundweg : t.routeTypeStrecke}
+                </Text>
+              </View>
+              {routentyp === "strecke" ? (
+                <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
+                  {t.streckeHint}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+        </RouteAccordionCard>
 
-        {/* SBB-Rückreise-Button — nur für Streckenwanderungen, unter der Anreise */}
-        {routentyp === "strecke" && (
+        <RouteAccordionCard
+          icon="send"
+          title={t.transportLive}
+          summary={routentyp === "strecke" ? `${t.planOutward} · ${t.planReturn}` : t.planOutward}
+          open={sbbOpen}
+          onPress={() => setSbbOpen((open) => !open)}
+        >
+          {/* SBB-Anreise-Button — für alle Routentypen sichtbar */}
           <Pressable
-            onPress={oeffneRueckreise}
+            onPress={oeffneAnreise}
             style={[
               styles.rueckreiseButton,
-              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 8 },
+              { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 0 },
             ]}
           >
             <Feather name="send" size={15} color={colors.accent} />
             <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
-              {t.planReturn}
+              {t.planOutward}
             </Text>
           </Pressable>
-        )}
+
+          {/* SBB-Rückreise-Button — nur für Streckenwanderungen */}
+          {routentyp === "strecke" ? (
+            <Pressable
+              onPress={oeffneRueckreise}
+              style={[
+                styles.rueckreiseButton,
+                { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 8 },
+              ]}
+            >
+              <Feather name="send" size={15} color={colors.accent} />
+              <Text style={[styles.rueckreiseText, { color: colors.accent }]}>
+                {t.planReturn}
+              </Text>
+            </Pressable>
+          ) : null}
 
         {/* ── SBB live am Start (Abfahrten vom aktuellen Standort) ──── */}
         <View style={[styles.checkCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg, marginTop: 12 }]}>
@@ -1369,10 +1378,11 @@ export default function Routenplanung() {
           )}
         </View>
 
-        {/* ── Fahrplan-Disclaimer ─────────────────────────────────── */}
-        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 6, textAlign: "center", opacity: 0.7 }}>
-          {t.transportDisclaimer}
-        </Text>
+          {/* ── Fahrplan-Disclaimer ─────────────────────────────────── */}
+          <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 6, textAlign: "center", opacity: 0.7 }}>
+            {t.transportDisclaimer}
+          </Text>
+        </RouteAccordionCard>
 
         {/* ── SAC-Hütten in der Nähe ──────────────────────────────── */}
         <SacHuettenSection
@@ -1381,9 +1391,24 @@ export default function Routenplanung() {
           error={sacHuettenError}
         />
 
-        {/* Offline-Karte erst zeigen, wenn eine Sage zur Route feststeht —
-            vorher ergibt "Sage & Route herunterladen" keinen Sinn. */}
-        {!!saga && (
+        <RouteAccordionCard
+          icon="download-cloud"
+          title={t.saveForOffline}
+          summary={t.downloadInfoTime}
+          open={offlineOpen}
+          onPress={() => setOfflineOpen((open) => !open)}
+        >
+          <Text style={[styles.downloadHint, { color: colors.mutedForeground, marginTop: 0 }]}>
+            {t.sagaPickerHint}
+          </Text>
+          <PrimaryButton
+            label={t.continueToSaga}
+            variant="secondary"
+            onPress={() => router.push(`/route/${encodeURIComponent(id)}/saga`)}
+            style={{ marginTop: 14 }}
+          />
+        </RouteAccordionCard>
+        {false && !!saga && (
           <View
             style={[
               styles.downloadCard,
@@ -1722,11 +1747,12 @@ export default function Routenplanung() {
           />
         </View>
 
-        <SparkDivider style={{ marginVertical: 22 }} />
+        <View style={{ display: "none" }}>
+          <SparkDivider style={{ marginVertical: 22 }} />
 
-        <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-          {t.matchingSaga}
-        </Text>
+          <Text style={[styles.blockTitle, { color: colors.foreground }]}>
+            {t.matchingSaga}
+          </Text>
 
         {showPicker ? (
           <>
@@ -1937,37 +1963,15 @@ export default function Routenplanung() {
           </>
         )}
 
-        {similarRoutes.length > 0 && (
-          <>
-            <SparkDivider style={{ marginVertical: 22 }} />
-            <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-              {t.similarRoutes}
-            </Text>
-            {similarRoutes.map((r) => (
-              <Pressable
-                key={r.id}
-                onPress={() => router.push(`/route/${encodeURIComponent(r.id)}`)}
-                style={[
-                  styles.similarRouteCard,
-                  { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-                ]}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[styles.similarRouteName, { color: colors.foreground }]}
-                    numberOfLines={2}
-                  >
-                    {r.name}
-                  </Text>
-                  <Text style={[styles.similarRouteMeta, { color: colors.mutedForeground }]}>
-                    {r.distanceKm.toFixed(1)} km · {r.region}
-                  </Text>
-                </View>
-                <Feather name="chevron-right" size={18} color={colors.accent} />
-              </Pressable>
-            ))}
-          </>
-        )}
+        </View>
+
+        <PrimaryButton
+          label={t.selectRoute}
+          variant="primary"
+          onPress={() => router.push(`/route/${encodeURIComponent(id)}/saga`)}
+          style={{ marginTop: 22 }}
+        />
+
         {/* Verstecktes ShareCard für captureRef (off-screen Export) */}
         {route && saga && (
           <View
