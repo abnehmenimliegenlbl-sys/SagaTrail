@@ -135,9 +135,8 @@ export function buildLeafletMapHtml(
           rows += row('<span class="legend-partner">⌂</span>', legend.partner);
         }
         return `<div id="legend" class="collapsed">
-          <button id="legend-toggle" type="button" aria-label="Karteninfo" aria-expanded="false">i</button>
+          <button id="legend-toggle" type="button" aria-label="${escapeHtml(legend.title)}" aria-expanded="false">${escapeHtml(legend.title)} <span class="legend-chevron">⌄</span></button>
           <div id="legend-panel">
-            <div class="legend-title">${escapeHtml(legend.title)}</div>
             <div class="legend-content">${rows}</div>
           </div>
         </div>`;
@@ -156,8 +155,7 @@ export function buildLeafletMapHtml(
     #map { position: absolute; inset: 0; background: #10181A; }
     .leaflet-container { background: #10181A; font-family: -apple-system, system-ui, sans-serif; }
     .leaflet-control-zoom { display: none; }
-    .leaflet-control-attribution { background: rgba(16,24,26,.7); color: #6B7568; max-width: 55vw; font-size: 9px; }
-    .leaflet-control-attribution a { color: #DA291C; }
+    .leaflet-control-attribution { display: none; }
     #controls { position: absolute; top: ${Math.max(8, safeAreaInsetTop) + 8}px; left: 10px; z-index: 1000; display: flex; gap: 6px; }
     .control-group { display: flex; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
     button { border: 0; border-right: 1px solid rgba(255,255,255,.08); padding: 6px 11px; background: rgba(16,24,26,.9); color: #8A9BA8; font: 600 12px -apple-system,system-ui,sans-serif; }
@@ -194,12 +192,12 @@ export function buildLeafletMapHtml(
     .saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background: rgba(255,255,255,.6); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
     #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
-    #legend-toggle { width: 28px; height: 28px; padding: 0; border: 1px solid rgba(245,243,236,.7); border-radius: 50%; background: rgba(16,24,26,.9); color: #F5F3EC; font: italic 700 17px Georgia,serif; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+    #legend-toggle { width: auto; min-width: 76px; height: 28px; padding: 0 10px; border: 0; border-radius: 15px; background: rgba(16,24,26,.92); color: #F5F3EC; font: 600 12px -apple-system,system-ui,sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
     #legend-toggle:active { background: #DA291C; }
-    #legend-panel { display: none; width: max-content; max-width: min(300px, 78vw); margin-bottom: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(16,24,26,.9); box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+    .legend-chevron { display: inline-block; margin-left: 4px; color: #9EAAA5; font-size: 13px; }
+    #legend-panel { display: none; width: max-content; max-width: min(300px, 78vw); margin-bottom: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(16,24,26,.92); box-shadow: 0 2px 10px rgba(0,0,0,.4); }
     #legend.expanded #legend-panel { display: block; }
-    #legend.expanded #legend-toggle { background: #DA291C; }
-    .legend-title { margin-bottom: 4px; color: #DA291C; font-weight: 700; }
+    #legend.expanded #legend-toggle { background: rgba(16,24,26,.98); }
     .legend-row { display: flex; align-items: center; gap: 8px; min-height: 20px; white-space: normal; }
     .legend-symbol { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; }
     .legend-line { display: block; width: 18px; height: 4px; border-radius: 2px; }
@@ -213,6 +211,10 @@ export function buildLeafletMapHtml(
     .legend-poi { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 1px solid #F5F3EC; box-sizing: border-box; }
     .legend-partner { width: 16px; height: 16px; border-radius: 5px; background: #fff; color: #cc0000; text-align: center; line-height: 16px; font-weight: 700; }
     .legend-cable-station { width: 8px; height: 8px; border-radius: 2px; background: #5B6B78; border: 1px solid #F5F3EC; box-sizing: border-box; }
+    #copyright-info { position: absolute; right: 8px; bottom: 10px; z-index: 1000; color: #d5ddd8; font-size: 10px; line-height: 1.3; }
+    #copyright-toggle { width: 22px; height: 22px; padding: 0; border: 1px solid rgba(245,243,236,.7); border-radius: 50%; background: rgba(16,24,26,.78); color: #F5F3EC; font: 700 13px Georgia,serif; box-shadow: 0 1px 5px rgba(0,0,0,.35); }
+    #copyright-panel { display: none; position: absolute; right: 0; bottom: 28px; width: max-content; max-width: 210px; padding: 6px 8px; border-radius: 7px; background: rgba(16,24,26,.88); color: #d5ddd8; text-align: right; }
+    #copyright-info.expanded #copyright-panel { display: block; }
   </style>
 </head>
 <body>
@@ -228,6 +230,10 @@ export function buildLeafletMapHtml(
     </div>
   </div>
   ${legendHtml}
+  <div id="copyright-info">
+    <button id="copyright-toggle" type="button" aria-label="Karten-Copyrights" aria-expanded="false">i</button>
+    <div id="copyright-panel">© swisstopo<br>© OpenStreetMap<br>Wanderwege: Waymarked Trails</div>
+  </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
   (function () {
@@ -238,6 +244,14 @@ export function buildLeafletMapHtml(
         var expanded = legend.classList.toggle("expanded");
         legend.classList.toggle("collapsed", !expanded);
         legendToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      };
+    }
+    var copyrightInfo = document.getElementById("copyright-info");
+    var copyrightToggle = document.getElementById("copyright-toggle");
+    if (copyrightInfo && copyrightToggle) {
+      copyrightToggle.onclick = function () {
+        var expanded = copyrightInfo.classList.toggle("expanded");
+        copyrightToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
       };
     }
     var center = [${safeCenter.lat}, ${safeCenter.lng}];
@@ -253,7 +267,7 @@ export function buildLeafletMapHtml(
     var safety = ${safetyData};
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
-    var map = L.map("map", { zoomControl: false, attributionControl: true, tap: false }).setView(center, 14);
+    var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
 
     function post(value) {
       var payload = JSON.stringify(value);
