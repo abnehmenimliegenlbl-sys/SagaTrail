@@ -20,6 +20,7 @@ import { useColors } from "@/hooks/useColors";
 import { fonts } from "@/constants/typography";
 import { GLAS_3D } from "@/constants/depth";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
+import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 
 export interface SacHuette {
   osmId: string;
@@ -221,14 +222,14 @@ export default function SacHuettenSection({ huetten, loading, error }: Props) {
   }
 
   return (
-    <View style={{ marginTop: 20 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        <Feather name="home" size={16} color={colors.accent} />
-        <Text style={{ color: colors.foreground, fontFamily: fonts.bodyBold, fontSize: 15 }}>
-          {t.sacHuettenTitle}
-        </Text>
-      </View>
-
+    <>
+      <RouteAccordionCard
+        icon="home"
+        title={t.sacHuettenTitle}
+        open
+        onPress={() => {}}
+        collapsible={false}
+      >
       {loading && (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10 }}>
           <ActivityIndicator size="small" color={colors.accent} />
@@ -319,11 +320,11 @@ export default function SacHuettenSection({ huetten, loading, error }: Props) {
           })}
         </ScrollView>
       )}
-
+      </RouteAccordionCard>
       {selected && (
         <DetailModal huette={selected} onClose={() => setSelected(null)} t={t} />
       )}
-    </View>
+    </>
   );
 }
 

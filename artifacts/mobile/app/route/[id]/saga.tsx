@@ -17,6 +17,7 @@ import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
+import { GLAS_3D } from "@/constants/depth";
 import { SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -351,13 +352,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   sagaCard: {
+    ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    minHeight: 88,
+    marginBottom: 12,
   },
   sagaCanton: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
   sagaTitle: { fontFamily: fonts.titleBold, fontSize: 18, marginTop: 3 },

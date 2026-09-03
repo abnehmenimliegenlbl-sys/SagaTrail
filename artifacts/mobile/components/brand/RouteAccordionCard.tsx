@@ -14,6 +14,7 @@ interface RouteAccordionCardProps {
   summary?: string;
   open: boolean;
   onPress: () => void;
+  collapsible?: boolean;
   children: React.ReactNode;
 }
 
@@ -23,23 +24,64 @@ export function RouteAccordionCard({
   summary,
   open,
   onPress,
+  collapsible = true,
   children,
 }: RouteAccordionCardProps) {
   const colors = useColors();
+  const bodyVisible = !collapsible || open;
 
   return (
     <View
       style={[
         styles.card,
-        { borderColor: open ? colors.accent : colors.glassBorder, backgroundColor: colors.glassBg },
+        {
+          borderColor: open && collapsible ? colors.accent : colors.glassBorder,
+          backgroundColor: colors.glassBg,
+        },
       ]}
     >
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        style={styles.header}
-      >
+      {collapsible ? (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          style={styles.header}
+        >
+          <HeaderContent
+            icon={icon}
+            title={title}
+            summary={summary}
+            open={open}
+            collapsible
+          />
+        </Pressable>
+      ) : (
+        <View style={styles.header}>
+          <HeaderContent icon={icon} title={title} summary={summary} open />
+        </View>
+      )}
+      {bodyVisible ? <View style={styles.body}>{children}</View> : null}
+    </View>
+  );
+}
+
+function HeaderContent({
+  icon,
+  title,
+  summary,
+  open,
+  collapsible = false,
+}: {
+  icon: FeatherName;
+  title: string;
+  summary?: string;
+  open: boolean;
+  collapsible?: boolean;
+}) {
+  const colors = useColors();
+
+  return (
+    <>
         <View style={[styles.icon, { backgroundColor: colors.accent + "1A" }]}>
           <Feather name={icon} size={17} color={colors.accent} />
         </View>
@@ -51,14 +93,14 @@ export function RouteAccordionCard({
             </Text>
           ) : null}
         </View>
-        <Feather
-          name={open ? "chevron-up" : "chevron-down"}
-          size={18}
-          color={open ? colors.accent : colors.mutedForeground}
-        />
-      </Pressable>
-      {open ? <View style={styles.body}>{children}</View> : null}
-    </View>
+        {collapsible ? (
+          <Feather
+            name={open ? "chevron-up" : "chevron-down"}
+            size={18}
+            color={open ? colors.accent : colors.mutedForeground}
+          />
+        ) : null}
+    </>
   );
 }
 
