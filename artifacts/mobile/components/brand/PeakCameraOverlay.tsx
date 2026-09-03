@@ -21,6 +21,7 @@ import type { LocalTerrainModel } from "@/lib/terrainModel";
 import { persistJournalImage } from "@/lib/journalMedia";
 import type { RecognitionJournalEntry } from "@/types";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
+import { PeakArNavigator } from "./PeakArNavigator";
 
 interface PeakCameraOverlayProps {
   visible: boolean;
@@ -37,7 +38,10 @@ interface PeakCameraOverlayProps {
 export function PeakCameraOverlay({
   visible,
   peaks,
+  terrainProfile = null,
+  terrainModel = null,
   heading,
+  observerElevationM = null,
   strings,
   onClose,
   onCaptured,
@@ -45,11 +49,13 @@ export function PeakCameraOverlay({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [cameraPermission] = useCameraPermissions();
+  const [arEnabled, setArEnabled] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
+  const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const visiblePeaks =
     heading == null
@@ -72,15 +78,45 @@ export function PeakCameraOverlay({
   useEffect(() => {
     if (!visible) {
       setContentMounted(false);
+      setArEnabled(false);
       setSelectedPeakId(null);
+      if (arActivationTimerRef.current) {
+        clearTimeout(arActivationTimerRef.current);
+        arActivationTimerRef.current = null;
+      }
     }
+    return () => {
+      if (arActivationTimerRef.current) {
+        clearTimeout(arActivationTimerRef.current);
+        arActivationTimerRef.current = null;
+      }
+    };
   }, [visible]);
 
   const closeCamera = () => {
     // Unmount the native camera/AR surface before dismissing the only native
     // modal. This avoids tearing down Viro during the UIKit transition.
     setContentMounted(false);
+    setArEnabled(false);
     onClose();
+  };
+
+  const toggleAr = () => {
+    if (arActivationTimerRef.current) {
+      clearTimeout(arActivationTimerRef.current);
+      arActivationTimerRef.current = null;
+    }
+    if (arEnabled) {
+      setArEnabled(false);
+      return;
+    }
+    // Let CameraView release its native capture session before Viro starts
+    // its own AR camera session.
+    setArEnabled(false);
+    arActivationTimerRef.current = setTimeout(() => {
+      arActivationTimerRef.current = null;
+      setArEnabled(true);
+    }, 450);
   };
 
   const markerPosition = (relativeBearingDeg: number) => {
@@ -143,7 +179,18 @@ export function PeakCameraOverlay({
     >
       <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
         {contentMounted && (
-          <CameraView ref={cameraRef} facing="back" style={styles.camera} />
+          arEnabled ? (
+            <PeakArNavigator
+              peaks={visiblePeaks}
+              terrainProfile={terrainProfile}
+              terrainModel={terrainModel}
+              heading={heading}
+              observerElevationM={observerElevationM}
+              onError={() => setArEnabled(false)}
+            />
+          ) : (
+            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
+          )
         )}
         <View style={styles.imageScrim} />
         <View pointerEvents="none" style={styles.scanLines}>
@@ -153,6 +200,7 @@ export function PeakCameraOverlay({
         </View>
         <View style={styles.horizon} />
         {contentMounted &&
+          !arEnabled &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}
@@ -243,6 +291,32 @@ export function PeakCameraOverlay({
                 </Text>
               </View>
             )}
+            <Pressable
+              onPress={toggleAr}
+              style={[
+                styles.arButton,
+                {
+                  backgroundColor: arEnabled ? colors.primary : colors.glassBgStrong,
+                  borderColor: arEnabled ? colors.primary : colors.glassBorder,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={arEnabled ? "AR ausschalten" : "AR einschalten"}
+            >
+              <Feather
+                name="layers"
+                size={14}
+                color={arEnabled ? colors.primaryForeground : colors.photoScrimText}
+              />
+              <Text
+                style={[
+                  styles.arButtonText,
+                  { color: arEnabled ? colors.primaryForeground : colors.photoScrimText },
+                ]}
+              >
+                AR
+              </Text>
+            </Pressable>
             <Pressable
               onPress={closeCamera}
               style={[
@@ -358,6 +432,16 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   fullscreenHeadingBadgeText: { fontFamily: fonts.monoBold, fontSize: 11 },
+  arButton: {
+    height: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 21,
+    borderWidth: 1,
+    paddingHorizontal: 11,
+  },
+  arButtonText: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 0.8 },
   closeButton: {
     width: 42,
     height: 42,

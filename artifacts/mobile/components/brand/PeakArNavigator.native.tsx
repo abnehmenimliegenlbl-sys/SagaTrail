@@ -1,8 +1,6 @@
 import {
-  ViroGeometry,
   ViroARScene,
   ViroARSceneNavigator,
-  ViroMaterials,
   ViroNode,
   ViroText,
 } from "@reactvision/react-viro";
@@ -11,7 +9,6 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
-  buildLocalTerrainMesh,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
@@ -28,16 +25,6 @@ interface PeakArSceneProps {
     };
   };
 }
-
-const TERRAIN_MATERIAL = "sagatrailTerrain";
-
-ViroMaterials.createMaterials({
-  [TERRAIN_MATERIAL]: {
-    lightingModel: "Lambert",
-    diffuseColor: "rgba(76, 128, 92, 0.76)",
-    cullMode: "None",
-  },
-});
 
 function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
   const bearing = ((peak.relativeBearingDeg ?? 0) * Math.PI) / 180;
@@ -56,10 +43,6 @@ function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const appProps = sceneNavigator?.viroAppProps;
   const peaks = appProps?.peaks ?? [];
-  const terrainMesh = useMemo(
-    () => buildLocalTerrainMesh(appProps?.terrainModel, appProps?.heading),
-    [appProps?.terrainModel, appProps?.heading],
-  );
   const peakStates = useMemo(
     () =>
       peaks
@@ -80,16 +63,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     <ViroARScene
       onError={() => appProps?.onError?.()}
     >
-      {terrainMesh && (
-        <ViroNode>
-          <ViroGeometry
-            vertices={terrainMesh.vertices}
-            normals={terrainMesh.normals}
-            triangleIndices={terrainMesh.triangleIndices}
-            materials={TERRAIN_MATERIAL}
-          />
-        </ViroNode>
-      )}
       {peakStates
         .filter(({ visibility }) => visibility !== "occluded")
         .map(({ peak, visibility }) => (
