@@ -4,6 +4,7 @@ import {
   createStory,
   getPoiDetail,
   getPoiStory,
+  getPeakPois,
   getPois,
   StoryRequestAgeTier,
   StoryRequestArchetype,
@@ -296,7 +297,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           // Weg-POIs. Die zweite Abfrage bleibt vom Detail-Preload getrennt;
           // fällt sie aus, bleibt zumindest der kleinere POI-Bestand nutzbar.
           try {
-            const panoramaPois = await getPois(
+            const panoramaPois = await getPeakPois(
               bboxAroundGeometry(
                 route.geometry ?? null,
                 center,

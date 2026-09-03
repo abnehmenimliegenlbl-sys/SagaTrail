@@ -21,6 +21,7 @@ import {
   resolveNumberedRouteOsmId,
   fetchAerialways,
   fetchHistoricPois,
+  fetchPeakPois,
   searchOsmRouteByFromTo,
   fetchOsmRouteDifficulties,
   type RouteIndexEntry,
@@ -284,6 +285,11 @@ const POI_ERROR_CACHE_MAX = 100;
 const poiErrorCache = new Map<string, number>();
 // Verhindert parallele Hintergrund-Refreshes fuer dieselbe BBox.
 const poiRefreshInFlight = new Set<string>();
+// Gipfel werden separat gecacht, weil ihre Abfrage einen anderen Radius und
+// einen anderen Lebenszyklus als die normalen Weg-POIs hat.
+const PEAK_TTL_MS = 24 * 60 * 60 * 1000;
+const PEAK_CACHE_MAX = 80;
+const peakCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
 // On-demand-Cache fuer einzelne POI-Anreicherungen.
 const POI_DETAIL_CACHE_MAX = 200;
 const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
@@ -513,6 +519,32 @@ export async function getPois(
   // Ende der Overpass-Kette abbricht und der Client nie POIs sieht.
   void refreshPoisBackground(bbox, key, log);
   return [];
+}
+
+/**
+ * Liefert ausschliesslich benannte Gipfel in einer Bounding Box. Die Abfrage
+ * ist absichtlich vom allgemeinen POI-Cache getrennt, damit der 20-km-Radius
+ * des Panoramas keine historische/touristische Overpass-Abfrage vergroessert.
+ */
+export async function getPeakPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+  around?: { lat: number; lng: number; radiusKm: number },
+): Promise<EnrichedPoi[]> {
+  const key = around
+    ? `around:${Math.round(around.lat * 1000)},${Math.round(around.lng * 1000)},${Math.round(around.radiusKm * 10)}`
+    : `bbox:${bboxCacheKey(bbox)}`;
+  const hit = peakCache.get(key);
+  if (hit && Date.now() - hit.at < PEAK_TTL_MS) return hit.entries;
+
+  const raw = await fetchPeakPois(bbox, log, around);
+  const entries = raw.map((poi) => ({ ...poi, wiki: null }));
+  if (peakCache.size >= PEAK_CACHE_MAX) {
+    const oldestKey = peakCache.keys().next().value;
+    if (oldestKey !== undefined) peakCache.delete(oldestKey);
+  }
+  peakCache.set(key, { at: Date.now(), entries });
+  return entries;
 }
 
 /**

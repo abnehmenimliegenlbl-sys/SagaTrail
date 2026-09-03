@@ -16,6 +16,7 @@ export interface Profile {
   homeCanton?: string;
   language: string;
   ageTier: ProfileAgeTier;
+  /** Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden. */
   navAnnouncementsEnabled: boolean;
   premium: boolean;
   /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */

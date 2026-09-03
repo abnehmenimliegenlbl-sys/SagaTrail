@@ -41,6 +41,7 @@ import type {
   GetCustomRouteParams,
   GetMyReferralCode200,
   GetPartnersParams,
+  GetPeakPoisParams,
   GetPoiDetailParams,
   GetPoiStoryParams,
   GetPoisParams,
@@ -578,6 +579,91 @@ export function useGetPois<TData = Awaited<ReturnType<typeof getPois>>, TError =
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPoisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPeakPoisUrl = (params: GetPeakPoisParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/routes/peaks?${stringifiedParams}` : `/api/routes/peaks`
+}
+
+/**
+ * Liefert ausschliesslich benannte OpenStreetMap-Gipfel (natural=peak) innerhalb einer Bounding Box. Die Abfrage ist fuer das Panorama getrennt vom normalen POI-Download und kann deshalb einen groesseren Radius verwenden.
+ * @summary Benannte Gipfel in einer Bounding Box
+ */
+export const getPeakPois = async (params: GetPeakPoisParams, options?: RequestInit): Promise<Poi[]> => {
+
+  return customFetch<Poi[]>(getGetPeakPoisUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPeakPoisQueryKey = (params?: GetPeakPoisParams,) => {
+    return [
+    `/api/routes/peaks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPeakPoisQueryOptions = <TData = Awaited<ReturnType<typeof getPeakPois>>, TError = ErrorType<ErrorResponse>>(params: GetPeakPoisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPeakPois>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPeakPoisQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPeakPois>>> = ({ signal }) => getPeakPois(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPeakPois>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPeakPoisQueryResult = NonNullable<Awaited<ReturnType<typeof getPeakPois>>>
+export type GetPeakPoisQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Benannte Gipfel in einer Bounding Box
+ */
+
+export function useGetPeakPois<TData = Awaited<ReturnType<typeof getPeakPois>>, TError = ErrorType<ErrorResponse>>(
+ params: GetPeakPoisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPeakPois>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPeakPoisQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

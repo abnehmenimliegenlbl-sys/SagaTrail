@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import {
   createNarration,
   getAerialways,
+  getPeakPois,
   getPartners,
   getPois,
   getPoiDetail,
@@ -551,6 +552,9 @@ export default function LiveHike() {
     { id: string; geometry: number[][] }[] | null
   >(null);
   const [pois, setPois] = useState<Poi[]>([]);
+  const [panoramaOnlinePois, setPanoramaOnlinePois] = useState<Poi[]>([]);
+  const [panoramaTileOpen, setPanoramaTileOpen] = useState(false);
+  const panoramaPeaksRequestedRef = useRef(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
@@ -1128,9 +1132,8 @@ export default function LiveHike() {
     let cancelled = false;
     // Der Gipfelkorridor entspricht der maximalen Erkennungsdistanz. Andere
     // POI-Typen werden danach weiterhin mit ihren engeren Korridoren gefiltert.
-    const bbox = bboxAroundGeometry(route?.geometry, center, PANORAMA_ROUTE_CORRIDOR_KM);
-    // Gipfel, Pässe, Gletscher, Schluchten und geologische Merkmale dürfen
-    // bis 20 km vom Routenverlauf entfernt sein.
+    const bbox = bboxAroundGeometry(route?.geometry, center, 2.0);
+    // Alpine Naturmerkmale dürfen bis 2 km vom Routenverlauf entfernt sein.
     // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
     // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
     const ALPINE_KINDS = new Set([
@@ -1144,7 +1147,7 @@ export default function LiveHike() {
       "historic=roman_building", "historic=battlefield",
     ]);
     const korridorKm = (kind: string): number => {
-      if (ALPINE_KINDS.has(kind)) return PANORAMA_ROUTE_CORRIDOR_KM;
+      if (ALPINE_KINDS.has(kind)) return 2.0;
       if (RUIN_KINDS.has(kind)) return 1.0;
       return 0.5;
     };
@@ -1241,6 +1244,42 @@ export default function LiveHike() {
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
   }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng, loadOfflinePois]);
+
+  // Gipfel werden erst bei geöffneter Panorama-Kachel geladen. Die Abfrage
+  // verwendet den aktuellen, frischen GPS-Standort und enthält ausschließlich
+  // natural=peak — ein 20-km-Radius darf die normalen POIs nicht aufblasen.
+  useEffect(() => {
+    if (
+      !panoramaTileOpen ||
+      panoramaPeaksRequestedRef.current ||
+      !hasFreshGps ||
+      !livePos ||
+      offlinePanorama
+    ) {
+      return;
+    }
+    panoramaPeaksRequestedRef.current = true;
+    let cancelled = false;
+    const bbox = bboxAroundGeometry(null, livePos, PANORAMA_ROUTE_CORRIDOR_KM);
+    getPeakPois({
+      ...bbox,
+      centerLat: livePos.lat,
+      centerLng: livePos.lng,
+      radiusKm: PANORAMA_ROUTE_CORRIDOR_KM,
+    })
+      .then((result) => {
+        if (!cancelled) setPanoramaOnlinePois(result);
+      })
+      .catch(() => {
+        if (!cancelled) setPanoramaOnlinePois([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    panoramaTileOpen,
+    hasFreshGps,
+  ]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im Kartenausschnitt
   // laden — gleiche Bounding Box wie die Seilbahnen, kein Korridorfilter noetig,
@@ -2823,6 +2862,7 @@ export default function LiveHike() {
   const panoramaPois = useMemo(
     () => [
       ...pois,
+      ...panoramaOnlinePois,
       ...(offlinePanorama?.peaks ?? []).map((peak) => ({
         id: peak.id,
         name: peak.name,
@@ -2832,7 +2872,7 @@ export default function LiveHike() {
         elevation: peak.elevationM,
       })),
     ],
-    [pois, offlinePanorama],
+    [pois, panoramaOnlinePois, offlinePanorama],
   );
   const panoramaPeaks = useMemo(
     () => erkenneGipfel(
@@ -3649,6 +3689,9 @@ export default function LiveHike() {
 
         <FeatureTileDeck
           closeLabel={t.close}
+          onTileOpen={(tileId) => {
+            if (tileId === "panorama") setPanoramaTileOpen(true);
+          }}
           tiles={[
             {
               id: "compass",

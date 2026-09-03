@@ -248,6 +248,45 @@ export const GetPoisResponse = zod.array(GetPoisResponseItem)
 
 
 /**
+ * Liefert ausschliesslich benannte OpenStreetMap-Gipfel (natural=peak) innerhalb einer Bounding Box. Die Abfrage ist fuer das Panorama getrennt vom normalen POI-Download und kann deshalb einen groesseren Radius verwenden.
+ * @summary Benannte Gipfel in einer Bounding Box
+ */
+export const getPeakPoisQueryRadiusKmMax = 50;
+
+
+
+export const GetPeakPoisQueryParams = zod.object({
+  "south": zod.coerce.number(),
+  "west": zod.coerce.number(),
+  "north": zod.coerce.number(),
+  "east": zod.coerce.number(),
+  "centerLat": zod.coerce.number().optional().describe('Mittelpunkt der Live-Abfrage; zusammen mit centerLng und radiusKm wird eine Kreisabfrage verwendet.'),
+  "centerLng": zod.coerce.number().optional().describe('Mittelpunkt der Live-Abfrage.'),
+  "radiusKm": zod.coerce.number().min(1).max(getPeakPoisQueryRadiusKmMax).optional().describe('Radius der Live-Abfrage in Kilometern.')
+})
+
+export const GetPeakPoisResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "kind": zod.string().describe('OSM-Tag, z.B. historic=ruins oder tourism=attraction'),
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "elevation": zod.number().nullish().describe('OSM-Höhe in Metern über Meer, sofern am Gipfel gepflegt.'),
+  "wiki": zod.object({
+  "title": zod.string(),
+  "extract": zod.string(),
+  "url": zod.string(),
+  "lang": zod.string(),
+  "image": zod.string().nullish().describe('Vorschaubild-URL des Wikipedia-Artikels, sofern vorhanden.')
+}).optional().describe('Live von Wikipedia geladene Kurzzusammenfassung (CC BY-SA).'),
+  "wikipediaTag": zod.string().nullish().describe('OSM wikipedia-Tag (z.B. \'de:Basiliskenbrunnen Basel\'), fuer on-demand-Anreicherung.'),
+  "wikidataTag": zod.string().nullish().describe('OSM wikidata-Tag (z.B. \'Q123456\'), fuer on-demand-Anreicherung.'),
+  "osmContext": zod.string().nullish().describe('Kuratierter OSM-Kontext (note, inscription, alt_name …) als formatierter String fuer den KI-Prompt.')
+}).describe('Historischer oder touristischer Ort aus OpenStreetMap, optional live mit einer Wikipedia-Zusammenfassung angereichert.\n')
+export const GetPeakPoisResponse = zod.array(GetPeakPoisResponseItem)
+
+
+/**
  * Laedt Wikipedia-Zusammenfassung und Bild fuer einen einzelnen Point of Interest. Wird erst aufgerufen wenn der Nutzer den POI oeffnet (lazy), nicht beim initialen Karten-Laden. Ergebnis wird 24 h serverseitig gecacht.
  * @summary Wikipedia/Commons-Anreicherung eines einzelnen POI on demand
  */
@@ -643,6 +682,7 @@ export const GetRouteSagaResponse = zod.object({
  * Liefert das Profil des authentifizierten Nutzers. 404, wenn nach dem Onboarding noch kein Profil angelegt wurde.
  * @summary Eigenes Profil laden
  */
+export const getMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const getMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const GetMyProfileResponse = zod.object({
@@ -652,7 +692,7 @@ export const GetMyProfileResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "navAnnouncementsEnabled": zod.boolean(),
+  "navAnnouncementsEnabled": zod.boolean().default(getMyProfileResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -670,7 +710,7 @@ export const saveMyProfileBodyNameMin = 2;
 
 export const saveMyProfileBodyLanguageMin = 2;
 
-
+export const saveMyProfileBodyNavAnnouncementsEnabledDefault = true;
 
 export const SaveMyProfileBody = zod.object({
   "name": zod.string().min(saveMyProfileBodyNameMin),
@@ -678,9 +718,10 @@ export const SaveMyProfileBody = zod.object({
   "homeCanton": zod.string().min(1).optional(),
   "language": zod.string().min(saveMyProfileBodyLanguageMin),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "navAnnouncementsEnabled": zod.boolean().optional()
+  "navAnnouncementsEnabled": zod.boolean().default(saveMyProfileBodyNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.')
 })
 
+export const saveMyProfileResponseNavAnnouncementsEnabledDefault = true;
 export const saveMyProfileResponsePendingPackRewardsDefault = 0;
 
 export const SaveMyProfileResponse = zod.object({
@@ -690,7 +731,7 @@ export const SaveMyProfileResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
-  "navAnnouncementsEnabled": zod.boolean(),
+  "navAnnouncementsEnabled": zod.boolean().default(saveMyProfileResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -707,6 +748,7 @@ export const UpdateMyPremiumBody = zod.object({
   "premium": zod.boolean()
 })
 
+export const updateMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const updateMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const UpdateMyPremiumResponse = zod.object({
@@ -716,6 +758,7 @@ export const UpdateMyPremiumResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().default(updateMyPremiumResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -728,6 +771,7 @@ export const UpdateMyPremiumResponse = zod.object({
  * Prueft serverseitig bei RevenueCat, ob der authentifizierte Nutzer (Customer-ID = Nutzer-ID) ein aktives "premium"-Entitlement besitzt, und setzt das Premium-Flag entsprechend. Nur Upgrades werden uebernommen; ein fehlendes Entitlement fuehrt NICHT zum Entzug (Downgrade bleibt Self-Service ueber PATCH /me/premium).
  * @summary Premium-Status verifiziert mit RevenueCat abgleichen
  */
+export const syncMyPremiumResponseNavAnnouncementsEnabledDefault = true;
 export const syncMyPremiumResponsePendingPackRewardsDefault = 0;
 
 export const SyncMyPremiumResponse = zod.object({
@@ -737,6 +781,7 @@ export const SyncMyPremiumResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().default(syncMyPremiumResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -790,6 +835,7 @@ export const ClaimKantonspackResponse = zod.object({
  * Markiert die einmalige kostenlose Wanderung des authentifizierten Nutzers als verbraucht. Wird beim Start der ersten Wanderung aufgerufen (nicht-Premium-Nutzer).
  * @summary Kostenlose Wanderung verbrauchen
  */
+export const consumeMyFreeHikeResponseNavAnnouncementsEnabledDefault = true;
 export const consumeMyFreeHikeResponsePendingPackRewardsDefault = 0;
 
 export const ConsumeMyFreeHikeResponse = zod.object({
@@ -799,6 +845,7 @@ export const ConsumeMyFreeHikeResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().default(consumeMyFreeHikeResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -841,6 +888,7 @@ export const ClaimPackRewardBody = zod.object({
   "packSlug": zod.string().min(1)
 })
 
+export const claimPackRewardResponseNavAnnouncementsEnabledDefault = true;
 export const claimPackRewardResponsePendingPackRewardsDefault = 0;
 
 export const ClaimPackRewardResponse = zod.object({
@@ -850,6 +898,7 @@ export const ClaimPackRewardResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().default(claimPackRewardResponseNavAnnouncementsEnabledDefault).describe('Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.'),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),

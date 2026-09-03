@@ -36,6 +36,7 @@ export * from './getCantonRoutesParams';
 export * from './getCustomRouteParams';
 export * from './getMyReferralCode200';
 export * from './getPartnersParams';
+export * from './getPeakPoisParams';
 export * from './getPoiDetailParams';
 export * from './getPoisParams';
 export * from './getPoiStoryParams';

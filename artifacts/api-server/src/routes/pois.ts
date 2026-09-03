@@ -1,8 +1,12 @@
 import { Router, type IRouter } from "express";
-import { GetPoisResponse, GetPoisQueryParams } from "@workspace/api-zod";
+import {
+  GetPeakPoisQueryParams,
+  GetPoisResponse,
+  GetPoisQueryParams,
+} from "@workspace/api-zod";
 import { z } from "zod";
 import type { EnrichedPoi } from "../lib/routeService";
-import { getPois, getPoiDetail } from "../lib/routeService";
+import { getPois, getPeakPois, getPoiDetail } from "../lib/routeService";
 
 const router: IRouter = Router();
 
@@ -44,6 +48,32 @@ router.get("/routes/pois", async (req, res): Promise<void> => {
     res.json(GetPoisResponse.parse(pois.map(toPoi)));
   } catch (err) {
     req.log.error({ err }, "POIs konnten nicht geladen werden");
+    res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
+  }
+});
+
+// Ausschliesslich benannte natural=peak-Punkte fuer das Panorama. Der Endpunkt
+// bleibt vom allgemeinen POI-Download getrennt, damit der 20-km-Radius keine
+// breite historische/touristische Overpass-Abfrage ausloest.
+router.get("/routes/peaks", async (req, res): Promise<void> => {
+  const parsed = GetPeakPoisQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ungueltige Bounding Box" });
+    return;
+  }
+  const { south, west, north, east, centerLat, centerLng, radiusKm } = parsed.data;
+  try {
+    delete req.headers["if-none-match"];
+    delete req.headers["if-modified-since"];
+    const around =
+      centerLat != null && centerLng != null && radiusKm != null
+        ? { lat: centerLat, lng: centerLng, radiusKm }
+        : undefined;
+    const peaks = await getPeakPois({ south, west, north, east }, req.log, around);
+    res.set("Cache-Control", "no-store");
+    res.json(GetPoisResponse.parse(peaks.map(toPoi)));
+  } catch (err) {
+    req.log.error({ err }, "Gipfel konnten nicht geladen werden");
     res.status(502).json({ error: "Externe Datenquelle nicht erreichbar" });
   }
 });

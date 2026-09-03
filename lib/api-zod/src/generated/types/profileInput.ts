@@ -17,5 +17,6 @@ export interface ProfileInput {
   /** @minLength 2 */
   language: string;
   ageTier: ProfileInputAgeTier;
+  /** Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden. */
   navAnnouncementsEnabled?: boolean;
 }

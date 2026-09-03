@@ -28,9 +28,14 @@ export interface FeatureTile {
 interface Props {
   tiles: FeatureTile[];
   closeLabel?: string;
+  onTileOpen?: (tileId: string) => void;
 }
 
-export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
+export function FeatureTileDeck({
+  tiles,
+  closeLabel = "Schliessen",
+  onTileOpen,
+}: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -41,6 +46,7 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
     setActiveId(id);
+    onTileOpen?.(id);
   };
 
   const closeModal = () => setActiveId(null);

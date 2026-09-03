@@ -120,6 +120,7 @@ export interface Profile {
   homeCanton?: string;
   language: string;
   ageTier: ProfileAgeTier;
+  /** Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden. */
   navAnnouncementsEnabled: boolean;
   premium: boolean;
   /** Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet. */
@@ -160,6 +161,7 @@ export interface ProfileInput {
   /** @minLength 2 */
   language: string;
   ageTier: ProfileInputAgeTier;
+  /** Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden. */
   navAnnouncementsEnabled?: boolean;
 }
 
@@ -778,6 +780,27 @@ south: number;
 west: number;
 north: number;
 east: number;
+};
+
+export type GetPeakPoisParams = {
+south: number;
+west: number;
+north: number;
+east: number;
+/**
+ * Mittelpunkt der Live-Abfrage; zusammen mit centerLng und radiusKm wird eine Kreisabfrage verwendet.
+ */
+centerLat?: number;
+/**
+ * Mittelpunkt der Live-Abfrage.
+ */
+centerLng?: number;
+/**
+ * Radius der Live-Abfrage in Kilometern.
+ * @minimum 1
+ * @maximum 50
+ */
+radiusKm?: number;
 };
 
 export type GetPoiDetailParams = {

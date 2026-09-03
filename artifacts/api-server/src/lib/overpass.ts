@@ -631,8 +631,8 @@ function buildOsmContext(tags: Record<string, string>): string | null {
  * Abgedeckte Kategorien:
  *  • historic=*          — Burgen, Ruinen, Denkmäler, Wegkreuze, …
  *  • tourism=attraction|viewpoint|artwork|information — Sehenswürdigkeiten, Infotafeln
- *  • natural=peak|saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
- *                        — Gipfel, Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
+ *  • natural=saddle|waterfall|cave_entrance|glacier|rock|arch|gorge
+ *                        — Pässe, Wasserfälle, Höhlen, Gletscher, Schluchten
  *  • man_made=cross|obelisk — Gipfel-/Wegkreuze (auch ohne Namen → «Wegkreuz»)
  *  • amenity=place_of_worship + chapel/shrine — Kapellen
  *  • amenity=shelter      — Alpine Unterstände / Biwakschachteln
@@ -660,8 +660,8 @@ export async function fetchHistoricPois(
     // Tourismus: Sehenswürdigkeiten, Aussichtspunkte, Kunstwerke, Infotafeln
     `node["tourism"~"^(attraction|viewpoint|artwork|information)$"]["name"](${b});`,
     `way["tourism"~"^(attraction|viewpoint)$"]["name"](${b});`,
-    // Alpine Naturmerkmale
-    `node["natural"~"^(peak|saddle|waterfall|cave_entrance|glacier|rock|arch|spring|gorge)$"]["name"](${b});`,
+    // Alpine Naturmerkmale (Gipfel werden separat ueber /routes/peaks geladen)
+    `node["natural"~"^(saddle|waterfall|cave_entrance|glacier|rock|arch|spring|gorge)$"]["name"](${b});`,
     `way["natural"~"^(waterfall|glacier|cave_entrance|gorge)$"]["name"](${b});`,
     // Gipfel-/Wegkreuze und Obelisken — OHNE Namen-Filter, Fallback «Wegkreuz»
     `node["man_made"~"^(cross|obelisk)$"](${b});`,
@@ -738,6 +738,48 @@ export async function fetchHistoricPois(
     });
   }
   log.info({ bbox, count: result.length }, "Overpass: POIs geladen");
+  return result;
+}
+
+/**
+ * Laedt ausschliesslich benannte Gipfel aus OpenStreetMap. Diese schmale
+ * Abfrage ist fuer den 20-km-Panorama-Radius gedacht und darf nicht mit der
+ * deutlich groesseren historischen/touristischen POI-Abfrage vermischt werden.
+ */
+export async function fetchPeakPois(
+  bbox: { south: number; west: number; north: number; east: number },
+  log: Logger,
+  around?: { lat: number; lng: number; radiusKm: number },
+): Promise<RawPoi[]> {
+  const queryArea = around
+    ? `(around:${Math.round(around.radiusKm * 1000)},${around.lat},${around.lng})`
+    : `(${bbox.south},${bbox.west},${bbox.north},${bbox.east})`;
+  const query = [
+    "[out:json][timeout:22];",
+    `node["natural"="peak"]["name"]${queryArea};`,
+    "out tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query, 26_000);
+  const result: RawPoi[] = [];
+  for (const e of elements) {
+    const tags = e.tags ?? {};
+    const lat = e.lat;
+    const lng = e.lon;
+    const name = tags.name || tags.alt_name || tags.old_name || "";
+    if (lat == null || lng == null || !name.trim()) continue;
+    result.push({
+      id: `${e.type}-${e.id}`,
+      name: name.trim(),
+      kind: "natural=peak",
+      lat,
+      lng,
+      elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
+      wikipediaTag: tags.wikipedia ?? null,
+      wikidataTag: tags.wikidata ?? null,
+      osmContext: buildOsmContext(tags),
+    });
+  }
+  log.info({ bbox, count: result.length }, "Overpass: Gipfel geladen");
   return result;
 }
 

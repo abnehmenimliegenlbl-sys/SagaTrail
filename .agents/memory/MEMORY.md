@@ -118,3 +118,4 @@
 - [Offline peak database](sagatrail-offline-peak-database.md) — versioned OSM peak data powers honest offline panorama angles; missing heights stay unknown, never simulated.
 - [Local terrain AR](sagatrail-local-terrain-ar.md) — observer-centered SwissTopo terrain is live-refreshed with throttling; offline downloads keep one route-start model and never hide peaks without evidence.
 - [Transparent modal safe area](rn-transparent-modal-safe-area.md) — explicit top/bottom margins are needed because iOS transparent Modals may ignore native SafeAreaView insets.
+- [Lazy panorama peaks](sagatrail-panorama-peaks-lazy.md) — query named peaks separately on panorama open around live GPS; keep normal POIs small and offline peak downloads independent.
