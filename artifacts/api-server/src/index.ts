@@ -243,6 +243,20 @@ const server = app.listen(port, async (err) => {
     logger.warn({ err: colErr }, "Spalten-Migration ort_name fehlgeschlagen (nicht kritisch)");
   }
 
+  // Difficulty provenance is additive so existing production route caches
+  // remain readable during rollout.
+  try {
+    await db.execute(sql`
+      ALTER TABLE external_routes
+        ADD COLUMN IF NOT EXISTS sac_source TEXT NOT NULL DEFAULT 'unknown',
+        ADD COLUMN IF NOT EXISTS schweizmobil_condition TEXT,
+        ADD COLUMN IF NOT EXISTS schweizmobil_technique TEXT
+    `);
+    logger.info("Schema-Migration: Difficulty-Quellen sichergestellt");
+  } catch (colErr) {
+    logger.warn({ err: colErr }, "Spalten-Migration Difficulty fehlgeschlagen (nicht kritisch)");
+  }
+
   // Katalog beim Start idempotent seeden, damit die App sofort Daten sieht.
   try {
     await seedCatalog();

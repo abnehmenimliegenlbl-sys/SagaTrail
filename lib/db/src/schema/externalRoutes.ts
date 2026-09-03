@@ -35,6 +35,13 @@ export const externalRoutesTable = pgTable("external_routes", {
   maxElevationM: doublePrecision("max_elevation_m").notNull().default(0),
   minutes: doublePrecision("minutes").notNull(),
   sac: text("sac").notNull().default("unbekannt"),
+  // Herkunft der SAC-Angabe: exakter OSM-Tag, amtliche swissTLM3D-Ableitung,
+  // oder unbekannt/noch nicht klassifiziert. SchweizMobil-Kategorien stehen
+  // bewusst in den beiden separaten Feldern darunter und werden nicht in SAC
+  // umgerechnet.
+  sacSource: text("sac_source").notNull().default("unknown"),
+  schweizMobilCondition: text("schweizmobil_condition"),
+  schweizMobilTechnique: text("schweizmobil_technique"),
   terrain: text("terrain").notNull(),
   // Nur explizit redaktionell/autorisiert bestätigte Eignungsmerkmale.
   // NULL bedeutet unbekannt und darf nicht als "nein" interpretiert werden.

@@ -1776,6 +1776,55 @@ export async function fetchOsmRelationsByRef(
   });
 }
 
+export interface OsmRouteDifficulty {
+  osmId: number;
+  ref: string;
+  name: string | null;
+  network: string | null;
+  sacScale: string | null;
+}
+
+/**
+ * Holt die SAC-Tags aller Wanderrouten-Relationen für mehrere refs in wenigen
+ * Overpass-Abfragen. Ein ref kann Parent und Etappen haben; der Aufrufer muss
+ * widersprüchliche Werte daher als Konflikt behandeln.
+ */
+export async function fetchOsmRouteDifficulties(
+  refs: string[],
+  log: Logger,
+): Promise<OsmRouteDifficulty[]> {
+  const numericRefs = [...new Set(refs.map((ref) => ref.trim()).filter((ref) => /^\d+$/.test(ref)))];
+  if (numericRefs.length === 0) return [];
+  const BATCH = 60;
+  const result: OsmRouteDifficulty[] = [];
+  for (let i = 0; i < numericRefs.length; i += BATCH) {
+    const batch = numericRefs.slice(i, i + BATCH);
+    const refPattern = batch.join("|");
+    const query = [
+      "[out:json][timeout:60];",
+      `relation["route"="hiking"]["ref"~"^(${refPattern})$"][bbox:45.8,5.95,47.85,10.5];`,
+      "out tags;",
+    ].join("");
+    const elements = await runOverpass<OverpassTagsElement>(query, 65_000).catch((err) => {
+      log.warn({ err, batch: batch.slice(0, 5) }, "fetchOsmRouteDifficulties: Overpass-Fehler");
+      return [] as OverpassTagsElement[];
+    });
+    for (const el of elements) {
+      const tags = el.tags ?? {};
+      if (!tags.ref || !numericRefs.includes(tags.ref)) continue;
+      result.push({
+        osmId: el.id,
+        ref: tags.ref,
+        name: tags["name:de"] ?? tags.name ?? null,
+        network: tags.network ?? null,
+        sacScale: tags.sac_scale ?? null,
+      });
+    }
+    if (i + BATCH < numericRefs.length) await sleep(700);
+  }
+  return result;
+}
+
 /**
  * Holt Tags (from, to, name, ref) fuer eine Liste von OSM-Relations-IDs direkt
  * per Overpass. Wird vom fill-vonbis-Endpoint genutzt, um fehlende Von-Bis-

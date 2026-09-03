@@ -6,7 +6,13 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-function toRoute(row: CatalogRouteRow & { photoUrl?: string | null; photoAttribution?: string | null }) {
+function toRoute(row: CatalogRouteRow & {
+  photoUrl?: string | null;
+  photoAttribution?: string | null;
+  sacSource?: string | null;
+  schweizMobilCondition?: string | null;
+  schweizMobilTechnique?: string | null;
+}) {
   return {
     id: row.id,
     sagaId: row.sagaId,
@@ -16,6 +22,9 @@ function toRoute(row: CatalogRouteRow & { photoUrl?: string | null; photoAttribu
     ascentM: row.ascentM,
     minutes: row.minutes,
     sac: row.sac,
+    sacSource: row.sacSource ?? null,
+    schweizMobilCondition: row.schweizMobilCondition ?? null,
+    schweizMobilTechnique: row.schweizMobilTechnique ?? null,
     terrain: row.terrain,
     coordinates: { lat: row.lat, lng: row.lng },
     featured: row.featured,
@@ -75,6 +84,9 @@ router.get("/catalog", async (_req, res): Promise<void> => {
         featured: catalogRoutesTable.featured,
         photoUrl: externalRoutesTable.photoUrl,
         photoAttribution: externalRoutesTable.photoAttribution,
+        sacSource: externalRoutesTable.sacSource,
+        schweizMobilCondition: externalRoutesTable.schweizMobilCondition,
+        schweizMobilTechnique: externalRoutesTable.schweizMobilTechnique,
       })
       .from(catalogRoutesTable)
       .leftJoin(externalRoutesTable, eq(catalogRoutesTable.id, externalRoutesTable.id)),

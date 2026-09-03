@@ -7,6 +7,7 @@ description: What geo.admin/swisstopo/ASTRA layers are usable for route + diffic
 
 ## Difficulty (SAC T-grade) comes from swissTLM3D, not OSM
 - OSM (Overpass) is used only to DISCOVER the named Wanderland-network routes per canton; its `sac_scale` tag is frequently missing → difficulty was "unbekannt".
+- SchweizMobil `wander.gpkg` supplies separate official `KonditionR` and `TechnikR` categories (easy/medium/difficult); they are useful evidence but must not be converted into an SAC T-grade. Keep exact OSM SAC, swissTLM3D-derived SAC, and official categories separately.
 - Authoritative difficulty is derived from `ch.swisstopo.swisstlm3d-wanderwege` via the geo.admin REST `identify` endpoint. Its `hikingtype` attribute is the yellow/red-white/blue class: `Wanderweg` (or `null`) = plain path ≈ T1, `Bergwanderweg` ≈ T2-T3, `Alpinwanderweg` ≈ T4-T6.
 - **`hikingtype: null` means an ordinary Wanderweg, not "no data".** Only conclude "unbekannt" when the identify returns ZERO features (route outside the mapped net / service error). Features-present-but-all-null → T1.
 - Route difficulty = HARDEST class touched along the route (one Alpinwanderweg segment tags the whole route). This is intentional (warn by the worst section) but can overstate long national routes.

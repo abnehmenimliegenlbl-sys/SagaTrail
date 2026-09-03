@@ -1778,6 +1778,18 @@ components:
           type: number
         sac:
           type: string
+        sacSource:
+          type: string
+          nullable: true
+          description: Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt.
+        schweizMobilCondition:
+          type: string
+          nullable: true
+          description: Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet.
+        schweizMobilTechnique:
+          type: string
+          nullable: true
+          description: Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.
         terrain:
           type: string
         familyFriendly:

@@ -26,6 +26,35 @@ ROUTE_REFS = (
 ).split()
 
 
+def extract_difficulty() -> list[dict[str, object]]:
+    """Exportiert die offiziellen SchweizMobil-Routen-Kategorien ohne Geometrie.
+
+    KonditionR und TechnikR sind die von SchweizMobil gepflegten Kategorien.
+    Sie sind absichtlich keine SAC-Werte und werden im API-Datenmodell getrennt
+    von `sac` gespeichert.
+    """
+    db, _ = open_database()
+    try:
+        rows = db.execute(
+            "SELECT NrR, KonditionR, TechnikR, Typ_TR, LvArt FROM Route "
+            "WHERE NrR IS NOT NULL"
+        ).fetchall()
+        return [
+            {
+                "ref": str(ref),
+                "condition": str(condition) if condition else None,
+                "technique": str(technique) if technique else None,
+                "routeType": str(route_type) if route_type else None,
+                "level": str(level) if level else None,
+                "source": "SchweizMobil Open Data · wander.gpkg",
+                "sourceUrl": SOURCE_URL,
+            }
+            for ref, condition, technique, route_type, level in rows
+        ]
+    finally:
+        db.close()
+
+
 def unpack_geometry(blob: bytes) -> list[list[tuple[float, float]]]:
     if blob[:2] != b"GP":
         raise ValueError("not a GeoPackage geometry")
@@ -196,4 +225,5 @@ def extract() -> list[dict[str, object]]:
 
 
 if __name__ == "__main__":
-    json.dump(extract(), sys.stdout, separators=(",", ":"), ensure_ascii=False)
+    payload = extract_difficulty() if len(sys.argv) > 1 and sys.argv[1] == "--difficulty" else extract()
+    json.dump(payload, sys.stdout, separators=(",", ":"), ensure_ascii=False)

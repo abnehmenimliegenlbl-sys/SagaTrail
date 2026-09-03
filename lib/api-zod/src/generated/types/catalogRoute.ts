@@ -24,6 +24,12 @@ export interface CatalogRoute {
   season: CatalogRouteSeason;
   minutes: number;
   sac: string;
+  /** Herkunft des SAC-Werts; osm_exact ist ein exakter OSM-Tag, swisstopo_derived eine amtliche Ableitung, unknown unbekannt. */
+  sacSource?: string | null;
+  /** Offizielle SchweizMobil-Kategorie für Kondition (easy, medium oder difficult), nicht auf SAC umgerechnet. */
+  schweizMobilCondition?: string | null;
+  /** Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet. */
+  schweizMobilTechnique?: string | null;
   terrain: string;
   /** Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt. */
   familyFriendly?: boolean | null;

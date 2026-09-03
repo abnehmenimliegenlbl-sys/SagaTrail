@@ -22,6 +22,7 @@ import {
   fetchAerialways,
   fetchHistoricPois,
   searchOsmRouteByFromTo,
+  fetchOsmRouteDifficulties,
   type RouteIndexEntry,
   type RawHikingRoute,
   type RawAerialway,
@@ -29,7 +30,7 @@ import {
 } from "./overpass";
 import { computeElevationStats } from "./elevation";
 import { istPoiBildPassend } from "./poiImageCheck";
-import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
+import { assessSac, deriveSacFromSwissTlm3d } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
 import { reverseGeocode } from "./geocoding";
 import { execFile } from "node:child_process";
@@ -655,6 +656,199 @@ type OfficialSchweizMobilGeometry = {
 const execFileAsync = promisify(execFile);
 let officialGeometryPromise: Promise<OfficialSchweizMobilGeometry[]> | null = null;
 
+export type OfficialSchweizMobilDifficulty = {
+  ref: string;
+  condition: string | null;
+  technique: string | null;
+  routeType: string | null;
+  level: string | null;
+  source: string;
+  sourceUrl: string;
+};
+
+let officialDifficultyPromise: Promise<OfficialSchweizMobilDifficulty[]> | null = null;
+
+/**
+ * Lädt die offiziellen SchweizMobil-Bewertungen. Kondition und Technik sind
+ * eine eigene, amtliche Skala und werden nicht als SAC ausgegeben.
+ */
+export async function loadOfficialSchweizMobilDifficulties(
+  log: Logger,
+): Promise<OfficialSchweizMobilDifficulty[]> {
+  if (!officialDifficultyPromise) {
+    officialDifficultyPromise = execFileAsync(
+      "python3",
+      [officialExtractorPath(), "--difficulty"],
+      { maxBuffer: 20 * 1024 * 1024 },
+    )
+      .then(({ stdout }) => JSON.parse(stdout) as OfficialSchweizMobilDifficulty[])
+      .catch((err) => {
+        officialDifficultyPromise = null;
+        log.error({ err }, "SchweizMobil-Schwierigkeitsdaten konnten nicht gelesen werden");
+        throw err;
+      });
+  }
+  return officialDifficultyPromise;
+}
+
+export type SchweizMobilDifficultyAuditRow = {
+  id: string;
+  name: string;
+  ref: string | null;
+  currentSac: string;
+  currentSacSource: string;
+  osm: {
+    relationCount: number;
+    sacValues: string[];
+    conflict: boolean;
+  };
+  schweizMobil: OfficialSchweizMobilDifficulty | null;
+  decision: {
+    sac: string;
+    sacSource: string;
+    exact: boolean;
+    status: "exact_sac" | "official_categories_only" | "unknown" | "conflict";
+  };
+  updated: boolean;
+};
+
+/**
+ * Vergleicht gespeicherte SchweizMobil-Routen mit OSM-Relationstags und dem
+ * offiziellen Wanderland-Export. Ein OSM-sac_scale wird nur bei eindeutigem
+ * Ergebnis als exakter SAC-Wert übernommen. SchweizMobil-Kategorien bleiben
+ * separat; bei fehlendem Beleg bleibt SAC unbekannt.
+ */
+export async function auditSchweizMobilDifficulties(
+  log: Logger,
+  opts: { dryRun?: boolean } = {},
+): Promise<{
+  scanned: number;
+  exactSac: number;
+  officialCategories: number;
+  unknown: number;
+  conflicts: number;
+  updated: number;
+  routes: SchweizMobilDifficultyAuditRow[];
+}> {
+  const rows = await db
+    .select({
+      id: externalRoutesTable.id,
+      name: externalRoutesTable.name,
+      ref: externalRoutesTable.ref,
+      sac: externalRoutesTable.sac,
+      sacSource: externalRoutesTable.sacSource,
+      schweizMobilCondition: externalRoutesTable.schweizMobilCondition,
+      schweizMobilTechnique: externalRoutesTable.schweizMobilTechnique,
+      routeType: externalRoutesTable.routeType,
+    })
+    .from(externalRoutesTable)
+    .where(
+      sql`id LIKE 'schweizmobil-%' AND geometry_version > 0 AND ref IS NOT NULL AND sac = 'unbekannt'`,
+    )
+    .orderBy(externalRoutesTable.id);
+  const refs = rows.map((row) => row.ref).filter((ref): ref is string => !!ref);
+  const [official, osm] = await Promise.all([
+    loadOfficialSchweizMobilDifficulties(log),
+    fetchOsmRouteDifficulties(refs, log),
+  ]);
+  const officialByRef = new Map(official.map((item) => [item.ref, item]));
+  const osmByRef = new Map<string, typeof osm>();
+  for (const item of osm) {
+    const list = osmByRef.get(item.ref) ?? [];
+    list.push(item);
+    osmByRef.set(item.ref, list);
+  }
+
+  let exactSac = 0;
+  let officialCategories = 0;
+  let unknown = 0;
+  let conflicts = 0;
+  let updated = 0;
+  const auditRows: SchweizMobilDifficultyAuditRow[] = [];
+
+  for (const row of rows) {
+    const officialItem = row.ref ? officialByRef.get(row.ref) ?? null : null;
+    const osmMatches = row.ref ? osmByRef.get(row.ref) ?? [] : [];
+    const sacValues = [
+      ...new Set(
+        osmMatches
+          .map((item) => assessSac(item.sacScale, null).value)
+          .filter((value) => value !== "unbekannt"),
+      ),
+    ];
+    const conflict = sacValues.length > 1;
+    const hasOfficialCategories = !!(officialItem?.condition || officialItem?.technique);
+    if (conflict) conflicts++;
+    else if (sacValues.length === 1) exactSac++;
+    else if (hasOfficialCategories) officialCategories++;
+    else unknown++;
+
+    const nextSac = !conflict && sacValues.length === 1 ? sacValues[0]! : row.sac;
+    const nextSource =
+      !conflict && sacValues.length === 1
+        ? "osm_exact"
+        : row.sacSource ?? "unknown";
+    const changed =
+      nextSac !== row.sac ||
+      nextSource !== row.sacSource ||
+      (officialItem?.condition ?? null) !== row.schweizMobilCondition ||
+      (officialItem?.technique ?? null) !== row.schweizMobilTechnique;
+
+    if (!opts.dryRun && changed) {
+      const terrain = terrainLabel(row.ref, row.routeType, nextSac);
+      await db
+        .update(externalRoutesTable)
+        .set({
+          sac: nextSac,
+          sacSource: nextSource,
+          schweizMobilCondition: officialItem?.condition ?? null,
+          schweizMobilTechnique: officialItem?.technique ?? null,
+          terrain,
+        })
+        .where(eq(externalRoutesTable.id, row.id))
+        .execute();
+      updated++;
+    }
+
+    auditRows.push({
+      id: row.id,
+      name: row.name,
+      ref: row.ref,
+      currentSac: row.sac,
+      currentSacSource: row.sacSource ?? "unknown",
+      osm: {
+        relationCount: osmMatches.length,
+        sacValues,
+        conflict,
+      },
+      schweizMobil: officialItem,
+      decision: {
+        sac: nextSac,
+        sacSource: nextSource,
+        exact: !conflict && sacValues.length === 1,
+        status: conflict
+          ? "conflict"
+          : sacValues.length === 1
+            ? "exact_sac"
+            : hasOfficialCategories
+              ? "official_categories_only"
+              : "unknown",
+      },
+      updated: !opts.dryRun && changed,
+    });
+  }
+
+  return {
+    scanned: rows.length,
+    exactSac,
+    officialCategories,
+    unknown,
+    conflicts,
+    updated,
+    routes: auditRows,
+  };
+}
+
 function officialExtractorPath(): string {
   return new URL("./extract_schweizmobil_wanderland.py", import.meta.url).pathname;
 }
@@ -944,8 +1138,8 @@ export async function enrichAndStore(
     const maxElevationM = elevation?.maxElevationM ?? 0;
     // Schwierigkeit: OSM-`sac_scale` normalisieren; fehlt sie, aus dem amtlichen
     // swissTLM3D-Wanderwegnetz ableiten; sonst bleibt sie unbekannt.
-    const sac =
-      sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
+    const sacAssessment = assessSac(r.sac, await deriveSacFromSwissTlm3d(r.points, log));
+    const sac = sacAssessment.value;
     const start = r.points[0];
     const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
       (p: LatLng) => [p.lat, p.lng],
@@ -1012,6 +1206,7 @@ export async function enrichAndStore(
       maxElevationM,
       minutes: estimateMinutes(minutesKm, ascentM),
       sac,
+      sacSource: sacAssessment.source,
       terrain: terrainLabel(r.ref, r.network, sac),
       lat: start.lat,
       lng: start.lng,
@@ -1039,6 +1234,7 @@ export async function enrichAndStore(
           maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
           sac: sql`excluded.sac`,
+          sacSource: sql`excluded.sac_source`,
           terrain: sql`excluded.terrain`,
           geometry: sql`excluded.geometry`,
           geometryVersion: sql`excluded.geometry_version`,
@@ -1680,8 +1876,8 @@ export async function syncSwissNumberedRoutes(
       const minutesKm2 = distanceTagKm2 ?? distanceKm2;
       const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
       const maxElevationM = elevation?.maxElevationM ?? 0;
-      const sac =
-        sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
+      const sacAssessment = assessSac(r.sac, await deriveSacFromSwissTlm3d(r.points, log));
+      const sac = sacAssessment.value;
       const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
         (p: LatLng) => [p.lat, p.lng],
       );
@@ -1702,6 +1898,7 @@ export async function syncSwissNumberedRoutes(
         maxElevationM,
         minutes: estimateMinutes(minutesKm2, ascentM),
         sac,
+        sacSource: sacAssessment.source,
         terrain: terrainLabel(r.ref, r.network, sac),
         lat: start.lat,
         lng: start.lng,
@@ -1727,6 +1924,7 @@ export async function syncSwissNumberedRoutes(
             maxElevationM: sql`excluded.max_elevation_m`,
             minutes: sql`excluded.minutes`,
             sac: sql`excluded.sac`,
+            sacSource: sql`excluded.sac_source`,
             terrain: sql`excluded.terrain`,
             geometry: sql`excluded.geometry`,
             geometryVersion: sql`excluded.geometry_version`,
@@ -1840,7 +2038,8 @@ export async function enrichOneRoute(
   const elevation = await computeElevationStats(r.points, log);
   const ascentM = r.ascentTagM ?? elevation?.ascentM ?? 0;
   const maxElevationM = elevation?.maxElevationM ?? 0;
-  const sac = sacScaleToT(r.sac) ?? (await deriveSacFromSwissTlm3d(r.points, log)) ?? "unbekannt";
+  const sacAssessment = assessSac(r.sac, await deriveSacFromSwissTlm3d(r.points, log));
+  const sac = sacAssessment.value;
   const start = r.points[0]!;
   const geometry: [number, number][] = rdpSimplify(r.points, 5, STORED_GEOMETRY_POINTS).map(
     (p) => [p.lat, p.lng],
@@ -1931,6 +2130,7 @@ export async function enrichOneRoute(
       maxElevationM,
       minutes,
       sac,
+      sacSource: sacAssessment.source,
       terrain,
       canton: finalCanton,
       cantons,

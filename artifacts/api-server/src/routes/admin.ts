@@ -25,7 +25,7 @@ import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE, auditSchweizMobilDifficulties } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
@@ -4258,6 +4258,27 @@ router.post("/admin/routes/tag-sweep", async (req, res): Promise<void> => {
     res.json({ ok: true, swept: rows.length, updated, noTag, dryRun });
   } catch (err: any) {
     req.log.error({ err }, "tag-sweep fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/difficulty-audit
+ * Vergleicht die offiziellen SchweizMobil-Kategorien mit OSM-sac_scale.
+ * Body: { dryRun?: boolean }
+ *
+ * SchweizMobil liefert Kondition/Technik, aber keine SAC-Skala. Diese Werte
+ * werden deshalb separat gespeichert. Nur ein eindeutiger OSM-sac_scale wird
+ * als exakter SAC-Wert übernommen; sonst bleibt SAC unbekannt.
+ */
+router.post("/admin/routes/difficulty-audit", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  const dryRun = req.body?.dryRun !== false;
+  try {
+    const result = await auditSchweizMobilDifficulties(req.log, { dryRun });
+    res.json({ ok: true, dryRun, ...result });
+  } catch (err: any) {
+    req.log.error({ err }, "difficulty-audit fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });

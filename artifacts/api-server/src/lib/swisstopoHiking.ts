@@ -67,6 +67,29 @@ export function sacScaleToT(raw: string | null | undefined): string | null {
   return map[value] ?? null;
 }
 
+export type SacSource = "osm_exact" | "swisstopo_derived" | "unknown";
+
+export interface SacAssessment {
+  value: string;
+  source: SacSource;
+}
+
+/**
+ * Trennt belegte SAC-Tags von einer amtlichen, aber abgeleiteten
+ * swissTLM3D-Klassifizierung. Eine SchweizMobil-Konditions-/Technik-Kategorie
+ * wird absichtlich nicht in einen SAC-Grad umgerechnet: Beide Skalen messen
+ * unterschiedliche Dinge.
+ */
+export function assessSac(
+  osmSac: string | null | undefined,
+  derivedSac: string | null | undefined,
+): SacAssessment {
+  const exact = sacScaleToT(osmSac);
+  if (exact) return { value: exact, source: "osm_exact" };
+  if (derivedSac) return { value: derivedSac, source: "swisstopo_derived" };
+  return { value: "unbekannt", source: "unknown" };
+}
+
 /**
  * Quadratisches umschliessendes Rechteck (LV95) der Punkte. Ein Quadrat haelt die
  * Bodenaufloesung in x und y gleich, damit der Fangradius (Pixel-Toleranz)
