@@ -3501,9 +3501,6 @@ export default function LiveHike() {
   // Eine simulierte Position darf niemals wie ein echter Live-Standort
   // aussehen. Ohne gültigen Fix bleibt der Positionsmarker daher leer.
   const shownPos = hasFreshGps ? livePos : null;
-  const hudTop =
-    topPad +
-    (locState === "denied" ? 154 : !startReached && walkToStart && !preparing ? 98 : 4);
   const gpsAgeSec = lastLocationAtRef.current > 0
     ? Math.max(0, Math.round((locationNow - lastLocationAtRef.current) / 1000))
     : null;
@@ -3829,6 +3826,36 @@ export default function LiveHike() {
                   ),
                 }]
               : []),
+            {
+              id: "gps-live",
+              title: "GPS LIVE",
+              icon: "map-pin",
+              preview: (
+                <View
+                  style={[
+                    styles.gpsTileDot,
+                    { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
+                  ]}
+                />
+              ),
+              content: (
+                <GpsLiveCard
+                  hasFreshGps={hasFreshGps}
+                  gpsAgeSec={gpsAgeSec}
+                  accuracyM={livePosAccuracy}
+                  place={livePlace}
+                  coordinates={livePos ? `${livePos.lat.toFixed(5)}, ${livePos.lng.toFixed(5)}` : null}
+                  altitude={liveAltitude}
+                  liveLabel={`GPS · ${t.live}`}
+                  noLocationLabel={t.noLocationAccess}
+                  locationHint={t.locationDeniedHint}
+                  altitudeUnit={t.altitudeUnit}
+                  coordinatesLabel={t.coordinates}
+                  placeLabel={t.place}
+                  altitudeLabel={t.altitude}
+                />
+              ),
+            },
           ]}
         />
 
@@ -4269,58 +4296,6 @@ export default function LiveHike() {
         </View>
       </ScrollView>
 
-      {/* Permanenter Navigations-HUD: GPS-Zustand bleibt sichtbar, auch wenn
-          der Nutzer im Story-/Kartenbereich scrollt. */}
-      <View
-        style={[
-          styles.hikeHud,
-          { top: hudTop, backgroundColor: colors.card, borderColor: colors.glassBorder },
-        ]}
-      >
-        <View style={styles.hikeHudStatus}>
-          <View
-            style={[
-              styles.gpsDot,
-              { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
-            ]}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.hikeHudTitle, { color: colors.foreground }]}>
-              {hasFreshGps ? `GPS · ${t.live}` : t.noLocationAccess}
-            </Text>
-            <Text style={[styles.hikeHudMeta, { color: colors.mutedForeground }]}>
-              {hasFreshGps
-                ? `${gpsAgeSec ?? 0}s · ±${Math.round(livePosAccuracy ?? 0)} m`
-                : t.locationDeniedHint}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => {
-              if (speaking) cancelNarration();
-              else if (currentChapter) speak(currentChapter.text, undefined, { interrupt: true });
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={speaking ? t.pause : t.readAloud}
-            style={[styles.hikeHudAction, { borderColor: colors.glassBorder }]}
-          >
-            <Feather name={speaking ? "pause" : "play"} size={15} color={colors.foreground} />
-          </Pressable>
-          <Pressable
-            onPress={() => setSosOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`${t.sos} — ${t.emergency}`}
-            style={[styles.hikeHudSos, { backgroundColor: colors.primary }]}
-          >
-            <Text style={[styles.hikeHudSosText, { color: colors.primaryForeground }]}>{t.sos}</Text>
-          </Pressable>
-        </View>
-        {hasFreshGps && livePlace ? (
-          <Text style={[styles.hikeHudPlace, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {livePlace}
-          </Text>
-        ) : null}
-      </View>
-
       {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
       {!!selectedPoi && (
         <Pressable
@@ -4674,6 +4649,83 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
   );
 }
 
+function GpsLiveCard({
+  hasFreshGps,
+  gpsAgeSec,
+  accuracyM,
+  place,
+  coordinates,
+  altitude,
+  liveLabel,
+  noLocationLabel,
+  locationHint,
+  altitudeUnit,
+  coordinatesLabel,
+  placeLabel,
+  altitudeLabel,
+}: {
+  hasFreshGps: boolean;
+  gpsAgeSec: number | null;
+  accuracyM: number | null;
+  place: string | null;
+  coordinates: string | null;
+  altitude: number | null;
+  liveLabel: string;
+  noLocationLabel: string;
+  locationHint: string;
+  altitudeUnit: string;
+  coordinatesLabel: string;
+  placeLabel: string;
+  altitudeLabel: string;
+}) {
+  const colors = useColors();
+  const values = [
+    { label: "Signalalter", value: hasFreshGps && gpsAgeSec != null ? `${gpsAgeSec} s` : "—" },
+    { label: "Genauigkeit", value: accuracyM != null ? `±${Math.round(accuracyM)} m` : "—" },
+    { label: placeLabel, value: hasFreshGps ? place ?? "—" : "—" },
+    { label: coordinatesLabel, value: coordinates ?? "—" },
+    {
+      label: altitudeLabel,
+      value: altitude != null ? `${Math.round(altitude)} ${altitudeUnit}` : "—",
+    },
+    { label: "Satelliten", value: "—" },
+  ];
+
+  return (
+    <View style={styles.gpsCard}>
+      <View style={styles.gpsCardStatus}>
+        <View
+          style={[
+            styles.gpsCardDot,
+            { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
+          ]}
+        />
+        <Text style={[styles.gpsCardTitle, { color: colors.foreground }]}>
+          {hasFreshGps ? liveLabel : noLocationLabel}
+        </Text>
+      </View>
+      <View style={[styles.gpsValueList, { borderTopColor: colors.glassBorder }]}>
+        {values.map(({ label, value }) => (
+          <View key={label} style={styles.gpsValueRow}>
+            <Text style={[styles.gpsValueLabel, { color: colors.mutedForeground }]}>{label}</Text>
+            <Text style={[styles.gpsValue, { color: colors.foreground }]} numberOfLines={1}>
+              {value}
+            </Text>
+          </View>
+        ))}
+      </View>
+      {!hasFreshGps && (
+        <Text style={[styles.gpsCardHint, { color: colors.mutedForeground }]}>
+          {locationHint}
+        </Text>
+      )}
+      <Text style={[styles.gpsCardHint, { color: colors.mutedForeground }]}>
+        Satellitenzahl wird von der iOS-Location-API nicht bereitgestellt.
+      </Text>
+    </View>
+  );
+}
+
 function WatchCompanionCard({
   ready,
   direction,
@@ -4913,38 +4965,22 @@ function CompassCard({
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
-  hikeHud: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    zIndex: 18,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  hikeHudStatus: { flexDirection: "row", alignItems: "center", gap: 8 },
-  gpsDot: { width: 9, height: 9, borderRadius: 5 },
-  hikeHudTitle: { fontFamily: fonts.bodyBold, fontSize: 12 },
-  hikeHudMeta: { fontFamily: fonts.mono, fontSize: 10, marginTop: 2 },
-  hikeHudPlace: { fontFamily: fonts.body, fontSize: 11, marginTop: 5, marginLeft: 17 },
-  hikeHudAction: {
-    width: 34,
-    height: 30,
-    borderWidth: 1,
-    borderRadius: 9,
+  gpsTileDot: { width: 11, height: 11, borderRadius: 6, marginTop: 3 },
+  gpsCard: { paddingHorizontal: 12, paddingVertical: 12 },
+  gpsCardStatus: { flexDirection: "row", alignItems: "center", gap: 9 },
+  gpsCardDot: { width: 11, height: 11, borderRadius: 6 },
+  gpsCardTitle: { fontFamily: fonts.bodyBold, fontSize: 15, flex: 1 },
+  gpsValueList: { borderTopWidth: 1, marginTop: 13, paddingTop: 8 },
+  gpsValueRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingVertical: 6,
   },
-  hikeHudSos: {
-    minWidth: 42,
-    height: 30,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 8,
-  },
-  hikeHudSosText: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  gpsValueLabel: { fontFamily: fonts.body, fontSize: 12 },
+  gpsValue: { fontFamily: fonts.monoBold, fontSize: 12, flexShrink: 1, textAlign: "right" },
+  gpsCardHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 10 },
   banner: {
     position: "absolute",
     left: 16,
