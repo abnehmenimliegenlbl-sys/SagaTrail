@@ -189,6 +189,7 @@ export function buildLeafletMapHtml(
     .water { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #fffaf0; box-sizing: border-box; }
     .parking, .safety { min-width: 20px; height: 20px; padding: 0 3px; border-radius: 5px; background: #2563A8; border: 2px solid #fffaf0; box-sizing: border-box; color: #fff; font: 800 10px -apple-system,system-ui,sans-serif; text-align: center; line-height: 16px; }
     .safety { background: #B21F2D; }
+    .safety-cluster { min-width: 34px; height: 34px; padding: 0 7px; border-radius: 50%; background: #B21F2D; border: 2px solid #fffaf0; box-shadow: 0 0 0 3px rgba(178,31,45,.25), 0 2px 7px rgba(0,0,0,.35); box-sizing: border-box; color: #fff; font: 800 11px -apple-system,system-ui,sans-serif; text-align: center; line-height: 30px; }
     .saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background: rgba(255,255,255,.6); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
     #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
@@ -451,7 +452,72 @@ export function buildLeafletMapHtml(
     });
     (waters || []).forEach(function (p) { addMarker(p, icon("water", "", [12,12]), null); });
     (parking || []).forEach(function (p) { addMarker(p, icon("parking", "P", [24,24]), null); });
-    (safety || []).forEach(function (p) { addMarker(p, icon("safety", (p.category || "!").slice(0, 2).toUpperCase(), [28,24]), null); });
+    var safetyDisplayMarkers = [];
+    var safetyClusterMarkers = [];
+    function clearSafetyClusters() {
+      safetyDisplayMarkers.forEach(function (marker) { marker.remove(); });
+      safetyClusterMarkers.forEach(function (marker) { marker.remove(); });
+      safetyDisplayMarkers = [];
+      safetyClusterMarkers = [];
+    }
+    function safetyCategoryLabel(category) {
+      var labels = { toilet: "WC", pharmacy: "+", hospital: "H", clinic: "+", police: "P", fire: "F", defibrillator: "D", assembly_point: "A", emergency_phone: "!", shelter: "S" };
+      return labels[category] || "!";
+    }
+    function safetyClusterText(group) {
+      var counts = {};
+      group.forEach(function (p) {
+        var label = safetyCategoryLabel(p.category);
+        counts[label] = (counts[label] || 0) + 1;
+      });
+      return "Sicherheitspunkte: " + group.length + "\\n" +
+        Object.keys(counts).map(function (key) { return key + ": " + counts[key]; }).join(" · ");
+    }
+    function addSafetyMarker(p) {
+      var marker = L.marker([p.lat, p.lng], {
+        icon: icon("safety", safetyCategoryLabel(p.category), [28,24])
+      }).addTo(map);
+      if (p.name || p.description) marker.bindPopup(popupText(p));
+      safetyDisplayMarkers.push(marker);
+    }
+    function renderSafetyClusters() {
+      clearSafetyClusters();
+      if (!safety || !safety.length) return;
+      if (map.getZoom() > 15) {
+        safety.forEach(addSafetyMarker);
+        return;
+      }
+      var buckets = {};
+      safety.forEach(function (p) {
+        if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return;
+        var pixel = map.latLngToLayerPoint([p.lat, p.lng]);
+        var key = Math.floor(pixel.x / 64) + ":" + Math.floor(pixel.y / 64);
+        if (!buckets[key]) buckets[key] = [];
+        buckets[key].push(p);
+      });
+      Object.keys(buckets).forEach(function (key) {
+        var group = buckets[key];
+        if (group.length === 1) {
+          addSafetyMarker(group[0]);
+          return;
+        }
+        var lat = group.reduce(function (sum, p) { return sum + p.lat; }, 0) / group.length;
+        var lng = group.reduce(function (sum, p) { return sum + p.lng; }, 0) / group.length;
+        var cluster = L.marker([lat, lng], {
+          icon: icon("safety-cluster", group.length > 99 ? "99+" : String(group.length), [42,42]),
+          zIndexOffset: 700
+        }).addTo(map);
+        cluster.bindPopup(safetyClusterText(group));
+        cluster.on("click", function () {
+          var bounds = L.latLngBounds(group.map(function (p) { return [p.lat, p.lng]; }));
+          if (bounds.isValid() && map.getZoom() < 17) map.fitBounds(bounds, { padding: [40,40], maxZoom: 16 });
+          else cluster.openPopup();
+        });
+        safetyClusterMarkers.push(cluster);
+      });
+    }
+    map.on("zoomend moveend", renderSafetyClusters);
+    renderSafetyClusters();
     if (sagaPin && Number.isFinite(sagaPin.lat) && Number.isFinite(sagaPin.lng)) {
       var sagaHtml = '<div class="saga-tipp"><img src="data:image/png;base64,${SAGA_PIN_B64}" alt="Sage"></div>';
       addMarker(sagaPin, L.divIcon({ className: "", html: sagaHtml, iconSize: [38,38], iconAnchor: [19,35] }), null);

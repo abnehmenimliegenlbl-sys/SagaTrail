@@ -55,3 +55,9 @@ Safety and water layers must be filtered against route geometry on the client be
 **Why:** A 10-km midpoint query for route 67 returned 1835 safety records, making toilets, shelters, and defibrillators appear across a huge area unrelated to the trail.
 
 **How to apply:** Use a narrow corridor (currently 750 m) for safety/water markers, rerun when geometry arrives or changes, and keep the route POI filter from falling back to the raw result.
+
+Safety markers are clustered in the map renderer rather than in the API payload: MapLibre uses a clustered GeoJSON source, while Leaflet uses viewport pixel buckets and expands them on zoom.
+
+**Why:** The map still needs each real safety record for accurate local display and details, but rendering hundreds of nearby markers individually overwhelms the route view.
+
+**How to apply:** Keep cluster counts visible at overview zoom, show category-coded individual markers only after zooming in, and preserve a detail popup for each individual point.

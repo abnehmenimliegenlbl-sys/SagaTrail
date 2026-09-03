@@ -279,6 +279,7 @@ export function buildSwisstopoHtml(
   html, body { margin: 0; padding: 0; height: 100%; background: #10181A; }
   #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #10181A; }
   .stt-cluster-badge { position: absolute; transform: translate(-50%, -50%); color: #F5F3EC; font-size: 11px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; pointer-events: none; z-index: 10; }
+  .stt-safety-cluster { width: 34px; height: 34px; border-radius: 50%; background: #B21F2D; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(178,31,45,.25), 0 2px 7px rgba(0,0,0,.35); color: #F5F3EC; font: 800 11px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; }
   /* --- Kartenmarker (unveraendert) --- */
   .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
   .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
@@ -946,28 +947,129 @@ ${legendHtml}
 
     var _safetyApplied = false;
     _sttApply.safety = function(safetyData) {
-      if (!safetyData || !safetyData.length || _safetyApplied) return;
-      _safetyApplied = true;
+      if (!safetyData || !safetyData.length) return;
       var labels = {
         toilet: 'WC', pharmacy: '+', hospital: 'H', clinic: '+',
         police: 'P', fire: 'F', defibrillator: 'D',
         assembly_point: 'A', emergency_phone: '!', shelter: 'S'
       };
-      var markerEls = [];
-      safetyData.forEach(function(p) {
-        var el = document.createElement('div');
-        el.className = 'stt-safety stt-safety--' + (p.category || 'default');
-        el.textContent = labels[p.category] || '!';
-        var lines = [p.name];
+      var features = safetyData
+        .filter(function(p) { return p && Number.isFinite(p.lat) && Number.isFinite(p.lng); })
+        .map(function(p) {
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+            properties: {
+              name: p.name || 'Sicherheitspunkt',
+              description: p.description || '',
+              phone: p.phone || '',
+              openingHours: p.openingHours || '',
+              category: p.category || 'default',
+              label: labels[p.category] || '!'
+            }
+          };
+        });
+      if (!features.length) return;
+      var safetyGeojson = { type: 'FeatureCollection', features: features };
+      var existingSource = map.getSource('stt-safety');
+      if (existingSource) {
+        existingSource.setData(safetyGeojson);
+        return;
+      }
+      _safetyApplied = true;
+      map.addSource('stt-safety', {
+        type: 'geojson',
+        data: safetyGeojson,
+        cluster: true,
+        clusterMaxZoom: 15,
+        clusterRadius: 55
+      });
+      map.addLayer({
+        id: 'stt-safety-clusters',
+        type: 'circle',
+        source: 'stt-safety',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#B21F2D',
+          'circle-radius': ['step', ['get', 'point_count'], 15, 10, 18, 30, 22, 100, 26],
+          'circle-stroke-color': '#F5F3EC',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.94
+        }
+      });
+      map.addLayer({
+        id: 'stt-safety-cluster-count',
+        type: 'symbol',
+        source: 'stt-safety',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 11,
+          'text-allow-overlap': true
+        },
+        paint: { 'text-color': '#F5F3EC' }
+      });
+      map.addLayer({
+        id: 'stt-safety-points',
+        type: 'circle',
+        source: 'stt-safety',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': [
+            'match', ['get', 'category'],
+            'toilet', '#2563A8',
+            'pharmacy', '#16804A',
+            'clinic', '#16804A',
+            'hospital', '#16804A',
+            'shelter', '#8B5E34',
+            '#B21F2D'
+          ],
+          'circle-radius': 11,
+          'circle-stroke-color': '#F5F3EC',
+          'circle-stroke-width': 2
+        }
+      });
+      map.addLayer({
+        id: 'stt-safety-point-label',
+        type: 'symbol',
+        source: 'stt-safety',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 9,
+          'text-allow-overlap': true
+        },
+        paint: { 'text-color': '#FFFFFF' }
+      });
+      map.on('click', 'stt-safety-clusters', function(e) {
+        var feature = e.features && e.features[0];
+        var source = map.getSource('stt-safety');
+        if (!feature || !source || feature.properties.cluster_id == null) return;
+        source.getClusterExpansionZoom(feature.properties.cluster_id)
+          .then(function(z) {
+            map.easeTo({ center: feature.geometry.coordinates, zoom: Math.min(18, z + 0.5) });
+          })
+          .catch(function() {});
+      });
+      map.on('click', 'stt-safety-points', function(e) {
+        var feature = e.features && e.features[0];
+        if (!feature || !feature.properties) return;
+        var p = feature.properties;
+        var lines = [p.name || 'Sicherheitspunkt'];
         if (p.description) lines.push(p.description);
         if (p.phone) lines.push('Tel. ' + p.phone);
         if (p.openingHours) lines.push(p.openingHours);
-        var popup = new maplibregl.Popup({ offset: 12, maxWidth: '220px' }).setText(lines.join('\n'));
-        new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([p.lng, p.lat]).setPopup(popup).addTo(map);
-        markerEls.push(el);
+        new maplibregl.Popup({ offset: 12, maxWidth: '220px' })
+          .setLngLat(e.lngLat)
+          .setText(lines.join('\n'))
+          .addTo(map);
       });
-      if (markerEls.length) zoomGroups.push({ els: markerEls, minZoom: 12 });
+      map.on('mouseenter', 'stt-safety-clusters', function() { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'stt-safety-clusters', function() { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'stt-safety-points', function() { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'stt-safety-points', function() { map.getCanvas().style.cursor = ''; });
     };
 
     /* Gepufferte Daten anwenden, die VOR map-load injiziert wurden — erst
