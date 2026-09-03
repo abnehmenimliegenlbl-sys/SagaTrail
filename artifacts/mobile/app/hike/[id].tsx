@@ -78,6 +78,7 @@ import {
   type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
+import { weaveNavigationCues } from "@/lib/storyEngine";
 import type { OfflinePanoramaDatenbank } from "@/lib/panorama";
 import { isLocalTerrainModel, type LocalTerrainModel } from "@/lib/terrainModel";
 import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
@@ -117,6 +118,18 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
   android: "serif",
   default: "serif",
 });
+
+function geometryLengthKm(geometry: number[][] | null | undefined): number {
+  if (!geometry || geometry.length < 2) return 0;
+  let lengthKm = 0;
+  for (let i = 1; i < geometry.length; i++) {
+    lengthKm += haversineKm(
+      { lat: geometry[i - 1][0], lng: geometry[i - 1][1] },
+      { lat: geometry[i][0], lng: geometry[i][1] },
+    );
+  }
+  return lengthKm;
+}
 
 // Lokalisierte Wochentagnamen für die Partner-Öffnungszeiten-Anzeige.
 const PARTNER_WOCHENTAGE: Record<string, Record<string, string>> = {
@@ -386,8 +399,16 @@ export default function LiveHike() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeId, saga?.canton]);
 
+  // Nach dem Akzeptieren einer Umleitung ist die zusammengesetzte Geometrie
+  // die aktive Wanderroute: zuerst der Zubringer, danach der verbleibende
+  // Originalweg. Damit werden auch Routenfortschritt und Kapitel auf genau
+  // diese neue Route verteilt.
+  const [acceptedRouteGeometry, setAcceptedRouteGeometry] = useState<number[][] | null>(null);
+  const navigationGeometry = acceptedRouteGeometry ?? route?.geometry;
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
-  const totalKm = route?.distanceKm ?? 6.4;
+  const totalKm = acceptedRouteGeometry
+    ? Math.max(0.01, geometryLengthKm(acceptedRouteGeometry))
+    : (route?.distanceKm ?? 6.4);
   const ascentM = route?.ascentM ?? 480;
   const totalMin = route?.minutes ?? 165;
   const sac = route?.sac ?? "T3";
@@ -1037,11 +1058,17 @@ export default function LiveHike() {
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
-      setChapters(story);
-      decisionsRef.current = story;
+      const routeStory = weaveNavigationCues(
+        story,
+        saga,
+        route?.geometry ? { geometry: route.geometry } : null,
+        storyLanguage,
+      );
+      setChapters(routeStory);
+      decisionsRef.current = routeStory;
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
-      if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
+      if (resumeAt != null && resumeAt > 0 && resumeAt < routeStory.length) {
         setCurrentIndex(resumeAt);
       }
       setPreparing(false);
@@ -1481,8 +1508,8 @@ export default function LiveHike() {
   // routeGeomRef wird synchron gehalten damit handleFix (leere Deps)
   // die aktuelle Geometrie immer per Ref lesen kann.
   useEffect(() => {
-    routeGeomRef.current = route?.geometry;
-  });
+    routeGeomRef.current = navigationGeometry;
+  }, [navigationGeometry]);
 
   // Neue GPS-Position verarbeiten: real zurueckgelegte Strecke aufaddieren,
   // Track-Punkt loggen und Off-Route-Status ueberpruefen.
@@ -1729,8 +1756,8 @@ export default function LiveHike() {
   // Mitteilung aus. iOS spiegelt diese auf eine gekoppelte Smartwatch (inkl.
   // Vibration), sobald das iPhone gesperrt ist. Web: No-op.
   const turnCues = useMemo<NavigationCue[]>(
-    () => detectNavigationCues(route?.geometry, 50),
-    [route?.geometry]
+    () => detectNavigationCues(navigationGeometry, 50),
+    [navigationGeometry]
   );
   const notifiedTurnsRef = useRef<Set<number>>(new Set());
   const [turnNotifsReady, setTurnNotifsReady] = useState(false);
@@ -1771,7 +1798,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
     if (!hasFreshGps) return;
-    const geo = route?.geometry;
+    const geo = navigationGeometry;
     const current: LatLng | null =
       livePos ??
       (geo && geo.length > 1 && totalKm > 0
@@ -1810,7 +1837,7 @@ export default function LiveHike() {
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
       speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { navInterrupt: true, turnAudio: treffer.cue.direction });
     }
-  }, [livePos, distance, totalKm, route?.geometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, navigationGeometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
@@ -2902,13 +2929,13 @@ export default function LiveHike() {
   const ROUTE_PROGRESS_MAX_ACCURACY_M = 30;
   const ROUTE_PROGRESS_MAX_DIST_KM = 1;
   const routeProgress = useMemo(() => {
-    if (!hasFreshGps || !livePos || !route?.geometry || route.geometry.length < 2) return null;
+    if (!hasFreshGps || !livePos || !navigationGeometry || navigationGeometry.length < 2) return null;
     if (locState === "granted" && locationNow - lastLocationAtRef.current > 45_000) return null;
     if (livePosAccuracy != null && livePosAccuracy > ROUTE_PROGRESS_MAX_ACCURACY_M) return null;
-    const match = fortschrittAufRoute(livePos, route.geometry);
+    const match = fortschrittAufRoute(livePos, navigationGeometry);
     if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
     return match.fraction;
-  }, [livePos, livePosAccuracy, route?.geometry, locState, locationNow]);
+  }, [livePos, livePosAccuracy, navigationGeometry, locState, locationNow]);
 
   const panoramaPois = useMemo(
     () => [
@@ -3390,6 +3417,86 @@ export default function LiveHike() {
     }
   }
 
+  // Die akzeptierte Valhalla-Route wird zur neuen aktiven Wanderroute:
+  // Zubringer bis zum gewählten Wiedereinstiegspunkt plus der verbleibende
+  // Teil der bisherigen Route. Die Story wird dabei bewusst neu auf Kapitel 1
+  // gesetzt und mit der neuen Geometrie verwoben — auch wenn der Einstieg
+  // mitten in der ursprünglichen Strecke liegt.
+  const followRecalculatedRoute = useCallback(async () => {
+    if (!recalcGeom || recalcGeom.length < 2 || !navigationGeometry || navigationGeometry.length < 2) {
+      return;
+    }
+
+    const rejoinIndex = recalcRejoinFraction == null
+      ? null
+      : Math.max(
+          0,
+          Math.min(
+            navigationGeometry.length - 1,
+            Math.round(recalcRejoinFraction * (navigationGeometry.length - 1)),
+          ),
+        );
+    const originalTail = rejoinIndex == null
+      ? []
+      : navigationGeometry.slice(rejoinIndex);
+    const combinedGeometry = [...recalcGeom];
+    if (originalTail.length > 0) {
+      const lastDetourPoint = combinedGeometry[combinedGeometry.length - 1];
+      const firstTailPoint = originalTail[0];
+      const tailStartsAtDetourEnd =
+        haversineKm(
+          { lat: lastDetourPoint[0], lng: lastDetourPoint[1] },
+          { lat: firstTailPoint[0], lng: firstTailPoint[1] },
+        ) < 0.02;
+      combinedGeometry.push(...(tailStartsAtDetourEnd ? originalTail.slice(1) : originalTail));
+    }
+    if (combinedGeometry.length < 2) return;
+
+    await cancelNarration();
+    setPreparing(true);
+    setAcceptedRouteGeometry(combinedGeometry);
+    setRecalcGeom(combinedGeometry);
+    setRecalcRejoinFraction(null);
+    followingRecalcRef.current = true;
+    setFollowingRecalc(true);
+    setStartReached(true);
+    setOffRoutePos(null);
+    setCurrentIndex(0);
+    setAwaitingDecision(false);
+    awaitingDecisionRef.current = false;
+    lastNarratedRef.current = -1;
+    lastDecisionTriggeredRef.current = -1;
+    notifiedTurnsRef.current.clear();
+    terrainStartedRef.current.clear();
+    terrainProgressRef.current.clear();
+    terrainEndedRef.current.clear();
+
+    try {
+      if (!saga || !profile) return;
+      const { chapters: story } = await resolveStory(saga, profile, premium);
+      const routeStory = weaveNavigationCues(
+        story,
+        saga,
+        { geometry: combinedGeometry },
+        storyLanguage,
+      );
+      setChapters(routeStory);
+      decisionsRef.current = routeStory;
+    } finally {
+      setPreparing(false);
+    }
+  }, [
+    cancelNarration,
+    navigationGeometry,
+    premium,
+    profile,
+    recalcGeom,
+    recalcRejoinFraction,
+    resolveStory,
+    saga,
+    storyLanguage,
+  ]);
+
   const finishHike = useCallback(async () => {
     await cancelNarration();
     hapticSuccess();
@@ -3415,7 +3522,7 @@ export default function LiveHike() {
         if (raw.length >= MIN_TRACK_POINTS) {
           return rdpThin(raw, RDP_EPSILON);
         }
-        return route?.geometry;
+        return navigationGeometry;
       })(),
       photoUris: hikePhotos.length > 0 ? hikePhotos : undefined,
       visitedPois: visitedPoisRef.current.size > 0
@@ -3442,7 +3549,7 @@ export default function LiveHike() {
         }
       }, 1500);
     }
-  }, [saga, route, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
+  }, [saga, route, navigationGeometry, distance, ascentM, sac, steps, hikePhotos, recognitionEntries, hikeHistory, saveHike, addAchievement, clearActiveHike, router, cancelNarration]);
 
   // Erlaubt den Abschluss, auch wenn die Route noch nicht ganz zurueckgelegt
   // wurde — damit Nutzer trotzdem zum Album und zum Social-Media-Posting
@@ -3640,14 +3747,12 @@ export default function LiveHike() {
                 <Feather name="x" size={18} color={colors.mutedForeground} />
               </Pressable>
             </View>
-            {recalcGeom && !isRecalculating && (
+            {recalcGeom && !isRecalculating && !followingRecalc && (
               <Pressable
                 onPress={() => {
-                  followingRecalcRef.current = true;
-                  setFollowingRecalc(true);
                   isOffRouteRef.current = false;
                   offRouteCountRef.current = 0;
-                  setOffRoutePos(null);
+                  void followRecalculatedRoute();
                 }}
                 style={[
                   styles.offRouteFollowBtn,
@@ -3693,7 +3798,7 @@ export default function LiveHike() {
                   position={shownPos}
                   label={saga.title}
                   height={hoehe}
-                  geometry={followingRecalc ? (recalcGeom ?? route?.geometry) : route?.geometry}
+                  geometry={followingRecalc ? (acceptedRouteGeometry ?? recalcGeom ?? navigationGeometry) : navigationGeometry}
                   elevationProfile={!followingRecalc ? terrainProfile : null}
                   altGeometry={!followingRecalc ? recalcGeom : null}
                   offlineTiles={offlineTiles}
