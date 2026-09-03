@@ -1,7 +1,16 @@
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import React, { useEffect } from "react";
-import { Platform, Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
@@ -57,7 +66,10 @@ export function AppModal({
   if (!visible) return null;
 
   return (
-    <View style={[StyleSheet.absoluteFillObject, styles.root]} pointerEvents="box-none">
+    <View
+      style={[StyleSheet.absoluteFillObject, styles.root]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
@@ -78,16 +90,21 @@ export function AppModal({
             },
           ]}
         >
-          <View style={styles.clip}>
+          <View style={[styles.clip, scrollable && styles.scrollableClip]}>
             <BlurView
               intensity={40}
               tint="dark"
               style={StyleSheet.absoluteFill}
             />
             <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassBgStrong }]}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.glassBgStrong },
+              ]}
             />
-            <View style={[styles.content, scrollable && styles.scrollableContent]}>
+            <View
+              style={[styles.content, scrollable && styles.scrollableContent]}
+            >
               {scrollable ? (
                 <ScrollView
                   style={styles.scrollBody}
@@ -96,13 +113,23 @@ export function AppModal({
                   nestedScrollEnabled
                 >
                   {icon && (
-                    <Animated.View entering={FadeIn.delay(80)} style={styles.icon}>
+                    <Animated.View
+                      entering={FadeIn.delay(80)}
+                      style={styles.icon}
+                    >
                       {icon}
                     </Animated.View>
                   )}
-                  <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+                  <Text style={[styles.title, { color: colors.foreground }]}>
+                    {title}
+                  </Text>
                   {message && (
-                    <Text style={[styles.message, { color: colors.mutedForeground }]}>
+                    <Text
+                      style={[
+                        styles.message,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
                       {message}
                     </Text>
                   )}
@@ -111,13 +138,23 @@ export function AppModal({
               ) : (
                 <>
                   {icon && (
-                    <Animated.View entering={FadeIn.delay(80)} style={styles.icon}>
+                    <Animated.View
+                      entering={FadeIn.delay(80)}
+                      style={styles.icon}
+                    >
                       {icon}
                     </Animated.View>
                   )}
-                  <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+                  <Text style={[styles.title, { color: colors.foreground }]}>
+                    {title}
+                  </Text>
                   {message && (
-                    <Text style={[styles.message, { color: colors.mutedForeground }]}>
+                    <Text
+                      style={[
+                        styles.message,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
                       {message}
                     </Text>
                   )}
@@ -200,6 +237,7 @@ const styles = StyleSheet.create({
   },
   card: { width: "100%", maxWidth: 400, borderWidth: 1 },
   clip: { borderRadius: 17, overflow: "hidden" },
+  scrollableClip: { flex: 1, minHeight: 0 },
   content: { padding: 22, alignItems: "center" },
   scrollableContent: { flex: 1, minHeight: 0 },
   scrollBody: { width: "100%", flex: 1 },
