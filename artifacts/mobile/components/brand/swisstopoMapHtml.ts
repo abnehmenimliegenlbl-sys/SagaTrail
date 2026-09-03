@@ -167,7 +167,6 @@ export interface MapLegendLabels {
   seilbahnStation: string;
   poi: string;
   partner: string;
-  safety: string;
   safetyCodes: string;
 }
 
@@ -251,8 +250,15 @@ export function buildSwisstopoHtml(
     if (pois && pois.length > 0)
       rows += legendZeile('<div class="stt-poi"></div>', legend.poi);
     if (safetyPois && safetyPois.length > 0) {
-      rows += legendZeile('<div class="stt-safety stt-safety--legend">!</div>', legend.safety);
-      rows += legendZeile('<span class="stt-safety-codes">TO · S · DE</span>', legend.safetyCodes);
+      const safetySymbols = ["TO", "PH", "H", "CL", "P", "F", "DE", "A", "!", "S"];
+      rows += legend.safetyCodes.split(" · ").map((entry, index) => {
+        const symbol = safetySymbols[index] ?? "!";
+        const description = entry.replace(/^(TO|PH|H|CL|P|F|DE|A|!|S)\s+/, "");
+        return legendZeile(
+          `<div class="stt-safety stt-safety--legend">${symbol}</div>`,
+          description,
+        );
+      }).join("");
     }
     if (partners && partners.length > 0)
       rows += legendZeile('<div class="stt-partner-pin stt-partner-pin--standard" style="width:16px;height:16px;border-radius:5px;flex-shrink:0"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#cc0000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>', legend.partner);
@@ -311,8 +317,8 @@ export function buildSwisstopoHtml(
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-safety { width: 22px; height: 22px; border-radius: 7px; background: #F5F3EC; border: 2px solid #B21F2D; display: flex; align-items: center; justify-content: center; color: #B21F2D; font-size: 9px; font-weight: 800; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(178,31,45,0.22); }
   .stt-safety--toilet, .stt-safety--pharmacy, .stt-safety--clinic,
-  .stt-safety--hospital, .stt-safety--shelter, .stt-safety--legend { border-color: #B21F2D; color: #B21F2D; }
-  .stt-safety-codes { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; color: #F5F3EC; font-size: 10px; font-weight: 800; letter-spacing: .2px; }
+  .stt-safety--hospital, .stt-safety--shelter { border-color: #B21F2D; color: #B21F2D; }
+  .stt-safety--legend { width: 24px; height: 20px; border-radius: 6px; background: #B21F2D; border-color: #F5F3EC; color: #F5F3EC; font-size: 8px; box-shadow: none; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* Saga-Pin */
   .stt-saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(255,255,255,0.60); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }

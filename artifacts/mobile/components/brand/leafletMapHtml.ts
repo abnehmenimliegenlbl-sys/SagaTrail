@@ -132,8 +132,12 @@ export function buildLeafletMapHtml(
           rows += row('<span class="legend-poi"></span>', legend.poi);
         }
         if (safetyPois && safetyPois.length > 0) {
-          rows += row('<span class="legend-safety">!</span>', legend.safety);
-          rows += row('<span class="legend-safety-codes">TO · S · DE</span>', legend.safetyCodes);
+          const safetySymbols = ["TO", "PH", "H", "CL", "P", "F", "DE", "A", "!", "S"];
+          rows += legend.safetyCodes.split(" · ").map((entry, index) => {
+            const symbol = safetySymbols[index] ?? "!";
+            const description = entry.replace(/^(TO|PH|H|CL|P|F|DE|A|!|S)\s+/, "");
+            return row(`<span class="legend-safety">${symbol}</span>`, description);
+          }).join("");
         }
         if (partners && partners.length > 0) {
           rows += row('<span class="legend-partner">⌂</span>', legend.partner);
@@ -214,8 +218,7 @@ export function buildLeafletMapHtml(
     .legend-line.cable { height: 0; border-top: 2px dashed #5B6B78; }
     .legend-live { width: 11px; height: 11px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-sizing: border-box; }
     .legend-poi { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 1px solid #F5F3EC; box-sizing: border-box; }
-    .legend-safety { width: 18px; height: 18px; border-radius: 5px; background: #B21F2D; border: 1px solid #F5F3EC; color: #fff; text-align: center; line-height: 17px; font-size: 10px; font-weight: 800; box-sizing: border-box; }
-    .legend-safety-codes { color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .2px; }
+    .legend-safety { min-width: 28px; height: 20px; padding: 0 3px; border-radius: 5px; background: #B21F2D; border: 1px solid #F5F3EC; color: #fff; text-align: center; line-height: 18px; font-size: 9px; font-weight: 800; box-sizing: border-box; }
     .legend-partner { width: 16px; height: 16px; border-radius: 5px; background: #fff; color: #cc0000; text-align: center; line-height: 16px; font-weight: 700; }
     .legend-cable-station { width: 8px; height: 8px; border-radius: 2px; background: #5B6B78; border: 1px solid #F5F3EC; box-sizing: border-box; }
     #copyright-info { position: absolute; right: 8px; bottom: 10px; z-index: 1000; color: #d5ddd8; font-size: 10px; line-height: 1.3; }
