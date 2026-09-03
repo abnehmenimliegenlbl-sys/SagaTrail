@@ -97,7 +97,6 @@ import {
   clearWatchStatus,
   prepareWatchCompanion,
   sendWatchSos,
-  sendWatchStatus,
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
@@ -1673,12 +1672,7 @@ export default function LiveHike() {
     };
   }, []);
   useEffect(() => {
-    let cancelled = false;
-    prepareWatchCompanion().then((ok) => {
-      if (!cancelled) setWatchReady(ok);
-    });
     return () => {
-      cancelled = true;
       void clearWatchStatus();
     };
   }, []);
@@ -1686,25 +1680,6 @@ export default function LiveHike() {
     const interval = setInterval(() => setLocationNow(Date.now()), 5_000);
     return () => clearInterval(interval);
   }, []);
-
-  // Live-Status auf der gekoppelten Watch. Die Hilfsfunktion drosselt auf
-  // maximal eine Statusmitteilung pro 45 Sekunden und verlangt einen echten
-  // frischen GPS-Fix; dadurch werden weder simulierte Positionen noch
-  // Benachrichtigungs-Spam an die Watch weitergegeben.
-  useEffect(() => {
-    if (watchReady !== true || !hasFreshGps) return;
-    const progressFromDistance = totalKm > 0 ? Math.min(1, distance / totalKm) : 0;
-    const remainingKm = Math.max(0, totalKm * (1 - progressFromDistance));
-    void sendWatchStatus({
-      direction: compassHeading == null
-        ? "Richtung unbekannt"
-        : t.compassDirections[compassIndex(compassHeading)],
-      heading: compassHeading,
-      remainingKm,
-      heartRateBpm: null,
-      hasFreshGps,
-    });
-  }, [watchReady, hasFreshGps, compassHeading, distance, totalKm, t]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -4688,7 +4663,7 @@ function WatchCompanionCard({
     ? "Watch-Mitteilungen aktiv"
     : ready === false
       ? "Watch-Mitteilungen nicht erlaubt"
-      : "Watch wird verbunden …";
+      : "Watch-Mitteilungen nicht aktiviert";
   return (
     <Glass style={{ marginTop: 14 }}>
       <View style={styles.watchCardHead}>
@@ -4701,7 +4676,7 @@ function WatchCompanionCard({
             {status}
           </Text>
         </View>
-        {!enabled && ready === false && (
+        {!enabled && (
           <Pressable
             onPress={onEnable}
             accessibilityRole="button"
@@ -4732,7 +4707,7 @@ function WatchCompanionCard({
         </View>
       </View>
       <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
-        SOS, Richtung und Distanz erscheinen als native Mitteilungen auf der gekoppelten Watch. Live-Pulsdaten sind verfügbar, sobald ein nativer Health-Sensor verbunden ist.
+        Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung, Distanz oder Puls sind deaktiviert.
       </Text>
     </Glass>
   );
