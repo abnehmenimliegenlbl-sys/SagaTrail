@@ -43,3 +43,9 @@ The Swiss Overpass mirror `https://overpass.osm.ch/api/interpreter` is reachable
 **Why:** A successful peak query can otherwise still produce no usable records: the mirror returns named nodes without coordinates for `out tags`, which the POI parser correctly discards.
 
 **How to apply:** Keep the Swiss mirror ahead of the slower generic mirrors for Swiss map data, and request body fields whenever node coordinates are required.
+
+Peak discovery is protected in-process by a spatial grid, in-flight request coalescing, and a small upstream concurrency limit. This is sufficient for a single API process, but a horizontally scaled deployment needs a shared cache and distributed rate limit to avoid one upstream request set per instance.
+
+**Why:** Memory caches and queues are process-local; multiple instances otherwise repeat the same regional Overpass work even though each instance is individually protected.
+
+**How to apply:** Preserve the 20-km response filtering after any shared-cache lookup, and share both the regional peak payload and the upstream admission control before scaling the API horizontally.

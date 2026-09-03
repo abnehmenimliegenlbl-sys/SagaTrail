@@ -610,9 +610,14 @@ export async function getPeakPois(
       return raw.map((poi) => ({ ...poi, wiki: null }));
     });
     peakFetchInFlight.set(key, pending);
-    void pending.finally(() => {
-      if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
-    });
+    void pending.then(
+      () => {
+        if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
+      },
+      () => {
+        if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
+      },
+    );
   }
   const entries = await pending;
   if (peakCache.size >= PEAK_CACHE_MAX) {
