@@ -129,6 +129,7 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
   await Promise.all([
     copyFile(path.join(srcLib, "curatedSagas.json"),       path.join(distDir, "curatedSagas.json")),
     copyFile(path.join(srcLib, "admin-dashboard.html"),    path.join(distDir, "admin-dashboard.html")),
+    copyFile(path.join(srcLib, "extract_schweizmobil_wanderland.py"), path.join(distDir, "extract_schweizmobil_wanderland.py")),
   ]);
   console.log("✓ Runtime data files copied to dist/");
 }

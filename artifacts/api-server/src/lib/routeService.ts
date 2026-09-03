@@ -1,5 +1,5 @@
 import type { Logger } from "pino";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import {
   db,
   externalRoutesTable,
@@ -32,6 +32,8 @@ import { istPoiBildPassend } from "./poiImageCheck";
 import { deriveSacFromSwissTlm3d, sacScaleToT } from "./swisstopoHiking";
 import { getCachedRoutePhoto } from "./commonsPhoto";
 import { reverseGeocode } from "./geocoding";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 // ---------------------------------------------------------------------------
 // POI-Such-Hilfsfunktionen
@@ -629,6 +631,161 @@ function terrainLabel(ref: string | null, network: string | null, sac: string): 
 // stitchGeometry). Aeltere Cache-Eintraege wurden mit der fehlerhaften
 // Zickzack-Verkettung erzeugt und gelten als abgelaufen.
 export const GEOMETRY_VERSION = 5; // v5: amtliche SchweizMobil-Werte (OSM-Tags distance/ascent) + Lückenüberbrückung statt nur längster Kette
+
+export const MISSING_SCHWEIZMOBIL_LWN_REFS = [
+  "447", "458", "459", "463", "464", "472", "483", "583", "584", "701",
+  "737", "738", "739", "748", "749", "751", "753", "754", "759", "763",
+  "769", "787", "789", "826", "848", "857", "858", "864", "866", "899",
+  "931", "932", "933", "966", "967", "968", "973", "976", "979", "981",
+  "994", "995", "996", "998", "999",
+] as const;
+
+export const SCHWEIZMOBIL_WANDERLAND_SOURCE =
+  "https://data.schweizmobil.ch/gpkg_export/wander.gpkg";
+
+type OfficialSchweizMobilGeometry = {
+  ref: string;
+  points: [number, number][];
+  officialDistanceKm: number | null;
+  source: string;
+  sourceUrl: string;
+};
+
+const execFileAsync = promisify(execFile);
+let officialGeometryPromise: Promise<OfficialSchweizMobilGeometry[]> | null = null;
+
+function officialExtractorPath(): string {
+  return new URL("./extract_schweizmobil_wanderland.py", import.meta.url).pathname;
+}
+
+async function loadOfficialSchweizMobilGeometries(
+  log: Logger,
+): Promise<OfficialSchweizMobilGeometry[]> {
+  if (!officialGeometryPromise) {
+    officialGeometryPromise = execFileAsync(
+      "python3",
+      [officialExtractorPath()],
+      { timeout: 240_000, maxBuffer: 20 * 1024 * 1024 },
+    )
+      .then(({ stdout }) => JSON.parse(stdout) as OfficialSchweizMobilGeometry[])
+      .catch((err) => {
+        officialGeometryPromise = null;
+        log.error({ err }, "SchweizMobil Open Data konnte nicht gelesen werden");
+        throw err;
+      });
+  }
+  return officialGeometryPromise;
+}
+
+function isPlausibleOfficialGeometry(points: unknown): points is [number, number][] {
+  if (!Array.isArray(points) || points.length < 2) return false;
+  const validPoints = points.every((point) => {
+    if (!Array.isArray(point) || point.length !== 2) return false;
+    const [lat, lng] = point;
+    return (
+      typeof lat === "number" &&
+      typeof lng === "number" &&
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      lat >= 45 &&
+      lat <= 48.5 &&
+      lng >= 5 &&
+      lng <= 11.5
+    );
+  });
+  if (!validPoints) return false;
+  for (let i = 1; i < points.length; i++) {
+    const [lat1, lng1] = points[i - 1]!;
+    const [lat2, lng2] = points[i]!;
+    if (haversineM({ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }) > 2_000) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Restores the official SchweizMobil local-route rows that have no geometry.
+ * The extractor returns only validated WGS84 points. Existing route metadata
+ * (name, saga, photos, etc.) is deliberately preserved.
+ */
+export async function restoreMissingSchweizMobilGeometries(log: Logger): Promise<{
+  expected: number;
+  restored: string[];
+  skipped: { id: string; reason: string }[];
+  source: string;
+}> {
+  const official = await loadOfficialSchweizMobilGeometries(log);
+  const byRef = new Map(official.map((route) => [route.ref, route]));
+  const ids = MISSING_SCHWEIZMOBIL_LWN_REFS.map((ref) => `schweizmobil-lwn-${ref}`);
+  const existing = await db
+    .select({
+      id: externalRoutesTable.id,
+      distanceKm: externalRoutesTable.distanceKm,
+      distanceTagKm: externalRoutesTable.distanceTagKm,
+      ascentM: externalRoutesTable.ascentM,
+      geometry: externalRoutesTable.geometry,
+      geometryVersion: externalRoutesTable.geometryVersion,
+    })
+    .from(externalRoutesTable)
+    .where(inArray(externalRoutesTable.id, ids));
+  const existingById = new Map(existing.map((row) => [row.id, row]));
+  const restored: string[] = [];
+  const skipped: { id: string; reason: string }[] = [];
+
+  for (const ref of MISSING_SCHWEIZMOBIL_LWN_REFS) {
+    const id = `schweizmobil-lwn-${ref}`;
+    const route = byRef.get(ref);
+    const row = existingById.get(id);
+    if (!route) {
+      skipped.push({ id, reason: "official route missing from GeoPackage" });
+      continue;
+    }
+    if (!row) {
+      skipped.push({ id, reason: "database row missing" });
+      continue;
+    }
+    if (row.geometryVersion >= GEOMETRY_VERSION && isPlausibleOfficialGeometry(row.geometry)) {
+      skipped.push({ id, reason: "geometry already restored" });
+      continue;
+    }
+    if (!isPlausibleOfficialGeometry(route.points)) {
+      skipped.push({ id, reason: "official geometry failed validation" });
+      continue;
+    }
+
+    // Keep the two distance meanings separate: distanceKm is measured from
+    // the stored geometry, while distanceTagKm is the official label value.
+    const distanceKm = pathDistanceKm(route.points.map(([lat, lng]) => ({ lat, lng })));
+    const start = route.points[0]!;
+    await db
+      .update(externalRoutesTable)
+      .set({
+        geometry: route.points as any,
+        geometryVersion: GEOMETRY_VERSION,
+        distanceKm: Math.round(distanceKm * 10) / 10,
+        distanceTagKm: route.officialDistanceKm ?? row.distanceTagKm,
+        lat: start[0],
+        lng: start[1],
+        fetchedAt: new Date(),
+        source: "SchweizMobil Open Data · swisstopo",
+      })
+      .where(eq(externalRoutesTable.id, id))
+      .execute();
+    restored.push(id);
+  }
+
+  log.info(
+    { expected: ids.length, restored: restored.length, skipped: skipped.length },
+    "SchweizMobil-Geometrien wiederhergestellt",
+  );
+  return {
+    expected: ids.length,
+    restored,
+    skipped,
+    source: SCHWEIZMOBIL_WANDERLAND_SOURCE,
+  };
+}
 
 function isFresh(row: ExternalRouteRow): boolean {
   return (

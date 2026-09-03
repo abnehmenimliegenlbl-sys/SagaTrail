@@ -25,7 +25,7 @@ import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
@@ -3361,6 +3361,50 @@ router.post("/admin/routes/enrich-all", async (req, res): Promise<void> => {
   }
   runEnrichAllLoop(req.log);
   res.json({ ok: true, message: "Anreicherung gestartet — Fortschritt via enrich-status" });
+});
+
+/**
+ * POST /admin/routes/restore-schweizmobil-geometries
+ *
+ * Restores the known missing local Wanderland routes from the official
+ * SchweizMobil GeoPackage. The job is protected and runs asynchronously
+ * because the official export is large on a cold cache.
+ */
+let schweizMobilRestoreRunning = false;
+let schweizMobilRestoreResult: unknown = null;
+
+router.post("/admin/routes/restore-schweizmobil-geometries", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  if (schweizMobilRestoreRunning) {
+    res.json({ ok: true, running: true, expected: MISSING_SCHWEIZMOBIL_LWN_REFS.length });
+    return;
+  }
+  schweizMobilRestoreRunning = true;
+  schweizMobilRestoreResult = null;
+  res.status(202).json({
+    ok: true,
+    running: true,
+    expected: MISSING_SCHWEIZMOBIL_LWN_REFS.length,
+    source: SCHWEIZMOBIL_WANDERLAND_SOURCE,
+  });
+  restoreMissingSchweizMobilGeometries(req.log)
+    .then((result) => { schweizMobilRestoreResult = result; })
+    .catch((err) => {
+      req.log.error({ err }, "SchweizMobil-Geometrie-Wiederherstellung fehlgeschlagen");
+      schweizMobilRestoreResult = { error: String(err) };
+    })
+    .finally(() => { schweizMobilRestoreRunning = false; });
+});
+
+router.get("/admin/routes/restore-schweizmobil-geometries-status", (req, res): void => {
+  if (!requireAdminToken(req, res)) return;
+  res.json({
+    ok: true,
+    running: schweizMobilRestoreRunning,
+    expected: MISSING_SCHWEIZMOBIL_LWN_REFS.length,
+    source: SCHWEIZMOBIL_WANDERLAND_SOURCE,
+    result: schweizMobilRestoreResult,
+  });
 });
 
 /**
