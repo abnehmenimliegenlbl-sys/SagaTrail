@@ -170,7 +170,12 @@ export function PeakCameraOverlay({
 
   return (
     <Modal
-      visible={visible && cameraPermission?.granted === true}
+      // PeakPanorama requests permission before opening this modal. Do not
+      // gate the native modal on a second useCameraPermissions() snapshot:
+      // on iOS that hook can still contain the pre-request value for the
+      // first render, which makes the parent modal close while this one never
+      // appears.
+      visible={visible}
       animationType="fade"
       presentationStyle="fullScreen"
       onShow={() => setContentMounted(true)}
