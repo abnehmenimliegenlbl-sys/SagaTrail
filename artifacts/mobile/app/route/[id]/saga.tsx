@@ -74,6 +74,21 @@ export default function RouteSagaSelection() {
   const record = selectedSaga ? getRecord(selectedSaga.id) : undefined;
   const downloading = Boolean(selectedSaga && progress?.sagaId === selectedSaga.id);
   const partialDownload = record?.status === "partial" || record?.status === "failed";
+  const downloadProgress = downloading && progress
+    ? progress.total > 0
+      ? Math.min(progress.done / progress.total, 1)
+      : 0.03
+    : 0;
+  const downloadProgressText = downloading
+    ? progress?.phase === "tiles"
+      ? t.loadingMap(progress.done, progress.total)
+      : progress?.phase === "audio"
+        ? t.loadingAudio(progress.done, progress.total)
+        : progress?.phase === "pois"
+          ? t.loadingPois
+          : t.loadingSaga
+    : "";
+  const downloadPhaseIndex = ["story", "audio", "pois", "tiles"].indexOf(progress?.phase ?? "story");
 
   const selectSaga = (saga: Saga) => {
     if (isLocked(saga)) {
@@ -170,14 +185,11 @@ export default function RouteSagaSelection() {
                 style={[
                   styles.sagaCard,
                   {
-                    borderColor: selected ? colors.accent : colors.glassBorder,
-                    backgroundColor: selected ? colors.accent + "16" : colors.glassBg,
+                    borderColor: colors.glassBorder,
+                    backgroundColor: colors.glassBg,
                   },
                 ]}
               >
-                <View style={[styles.sagaIcon, { backgroundColor: colors.accent + "1A" }]}>
-                  <Text style={{ fontSize: 21 }}>🧚</Text>
-                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.sagaCanton, { color: colors.accent }]}>
                     {saga.canton.toUpperCase()}
@@ -234,6 +246,22 @@ export default function RouteSagaSelection() {
             </Text>
           ) : (
             <>
+              <View style={styles.downloadInfoBox}>
+                {t.downloadInfoItems.map((item, index) => (
+                  <View key={index} style={styles.downloadInfoRow}>
+                    <Feather name="check" size={12} color={colors.accent} />
+                    <Text style={[styles.downloadInfoItem, { color: colors.mutedForeground }]}>
+                      {item}
+                    </Text>
+                  </View>
+                ))}
+                <View style={styles.downloadInfoTimeRow}>
+                  <Feather name="clock" size={11} color={colors.mutedForeground} />
+                  <Text style={[styles.downloadInfoTime, { color: colors.mutedForeground }]}>
+                    {t.downloadInfoTime}
+                  </Text>
+                </View>
+              </View>
               <Text style={[styles.offlineHint, { color: colors.mutedForeground }]}>
                 {partialDownload
                   ? t.downloadFailedText
@@ -242,11 +270,42 @@ export default function RouteSagaSelection() {
                     : t.downloadInfoTime}
               </Text>
               {downloading ? (
-                <View style={styles.downloadStatus}>
-                  <ActivityIndicator size="small" color={colors.accent} />
-                  <Text style={[styles.offlineHint, { color: colors.mutedForeground }]}>
-                    {t.loadingSaga}
-                  </Text>
+                <View style={styles.downloadProgress}>
+                  <View style={styles.downloadProgressHeader}>
+                    <Text style={[styles.offlineHint, { color: colors.mutedForeground }]}>
+                      {downloadProgressText}
+                    </Text>
+                    <Text style={[styles.downloadPercent, { color: colors.mutedForeground }]}>
+                      {Math.round(downloadProgress * 100)}%
+                    </Text>
+                  </View>
+                  <View style={[styles.downloadBarTrack, { backgroundColor: colors.glassBorder }]}>
+                    <View
+                      style={[
+                        styles.downloadBarFill,
+                        {
+                          backgroundColor: colors.accent,
+                          width: `${Math.max(3, Math.round(downloadProgress * 100))}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.downloadPhaseRow}>
+                    {t.downloadPhaseLabels.map((label, index) => {
+                      const active = index <= downloadPhaseIndex;
+                      return (
+                        <Text
+                          key={label}
+                          style={[
+                            styles.downloadPhaseLabel,
+                            { color: active ? colors.accent : colors.mutedForeground },
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      );
+                    })}
+                  </View>
                 </View>
               ) : downloaded && !partialDownload ? (
                 <PrimaryButton
@@ -297,16 +356,20 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
   },
-  sagaIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   sagaCanton: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.2 },
   sagaTitle: { fontFamily: fonts.titleBold, fontSize: 18, marginTop: 3 },
   sagaStatus: { fontFamily: fonts.body, fontSize: 12, marginTop: 4 },
   offlineHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
-  downloadStatus: { flexDirection: "row", alignItems: "center", gap: 9, marginTop: 14 },
+  downloadInfoBox: { marginTop: 2, gap: 5 },
+  downloadInfoRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  downloadInfoItem: { flex: 1, fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  downloadInfoTimeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
+  downloadInfoTime: { flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, fontStyle: "italic" },
+  downloadProgress: { marginTop: 14 },
+  downloadProgressHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  downloadPercent: { fontFamily: fonts.mono, fontSize: 13 },
+  downloadBarTrack: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 8 },
+  downloadBarFill: { height: 5, borderRadius: 3 },
+  downloadPhaseRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+  downloadPhaseLabel: { fontFamily: fonts.mono, fontSize: 10 },
 });

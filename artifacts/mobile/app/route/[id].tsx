@@ -155,7 +155,6 @@ export default function Routenplanung() {
   const [reversed, setReversed] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [sbbOpen, setSbbOpen] = useState(false);
-  const [offlineOpen, setOfflineOpen] = useState(false);
 
   // Effektive Geometrie: umgekehrt wenn reversed=true (keine Mutation des Originals).
   const effectiveGeom = useMemo(() => {
@@ -1110,28 +1109,6 @@ export default function Routenplanung() {
           </View>
         )}
 
-        {/* Die Sage wird auf dem separaten Auswahl-Screen gewählt. */}
-        {false && saga && !sagaLoading && (
-          <Pressable
-            onPress={() => router.push(locked ? "/paywall" : `/saga/${saga!.id}?routeId=${route!.id}`)}
-            style={[styles.sagaTeaserCard, { borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
-            accessibilityRole="button"
-          >
-            <View style={[styles.sagaTeaserEmoji, { backgroundColor: colors.accent + "22" }]}>
-              <Text style={{ fontSize: 22 }}>🧚</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.sagaTeaserEyebrow, { color: colors.accent }]}>
-                {t.matchingSaga.toUpperCase()}
-              </Text>
-              <Text style={[styles.sagaTeaserTitle, { color: colors.foreground }]} numberOfLines={2}>
-                {saga!.title}
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.accent} />
-          </Pressable>
-        )}
-
         {/* ── Strecke umkehren ──────────────────────────────────────── */}
         {effectiveGeom.length >= 2 && routentyp === "strecke" && (
           <Pressable
@@ -1237,7 +1214,7 @@ export default function Routenplanung() {
 
         <RouteAccordionCard
           icon="send"
-          title={t.transportLive}
+          title="SBB Live"
           summary={routentyp === "strecke" ? `${t.planOutward} · ${t.planReturn}` : t.planOutward}
           open={sbbOpen}
           onPress={() => setSbbOpen((open) => !open)}
@@ -1391,23 +1368,6 @@ export default function Routenplanung() {
           error={sacHuettenError}
         />
 
-        <RouteAccordionCard
-          icon="download-cloud"
-          title={t.saveForOffline}
-          summary={t.downloadInfoTime}
-          open={offlineOpen}
-          onPress={() => setOfflineOpen((open) => !open)}
-        >
-          <Text style={[styles.downloadHint, { color: colors.mutedForeground, marginTop: 0 }]}>
-            {t.sagaPickerHint}
-          </Text>
-          <PrimaryButton
-            label={t.continueToSaga}
-            variant="secondary"
-            onPress={() => router.push(`/route/${encodeURIComponent(id)}/saga`)}
-            style={{ marginTop: 14 }}
-          />
-        </RouteAccordionCard>
         {false && !!saga && (
           <View
             style={[
@@ -1602,6 +1562,49 @@ export default function Routenplanung() {
               </Text>
             </>
           )}
+          <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glassBorder }}>
+            <Text style={[styles.checkLabel, { color: colors.foreground, marginBottom: 4 }]}>
+              {t.communityConditions}
+            </Text>
+            {conditionsLoading ? (
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+            ) : !trailConditions || trailConditions.length === 0 ? (
+              <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
+                {t.conditionNoReports}
+              </Text>
+            ) : (
+              trailConditions.map((r) => {
+                const level = r.condition as keyof typeof t.conditions;
+                const emoji = t.conditionEmoji[level] ?? "";
+                const relTime = (() => {
+                  const diff = Date.now() - new Date(r.reportedAt).getTime();
+                  const mins = Math.floor(diff / 60000);
+                  if (mins < 60) return `${mins} min`;
+                  const hrs = Math.floor(mins / 60);
+                  if (hrs < 24) return `${hrs} h`;
+                  return `${Math.floor(hrs / 24)} d`;
+                })();
+                return (
+                  <View key={r.id} style={styles.conditionRow}>
+                    <Text style={styles.conditionEmoji}>{emoji}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.conditionLabel, { color: colors.foreground }]}>
+                        {t.conditions[level] ?? r.condition}
+                      </Text>
+                      {r.note ? (
+                        <Text style={[styles.conditionNote, { color: colors.mutedForeground }]}>
+                          {r.note}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Text style={[styles.conditionTime, { color: colors.mutedForeground }]}>
+                      {t.conditionReportedAgo(relTime)}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
+          </View>
         </View>
 
         {/* ── Lawinenbulletin (EAWS) ───────────────────────────────── */}
@@ -1670,58 +1673,6 @@ export default function Routenplanung() {
             ))}
           </View>
         ) : null}
-
-        {/* ── Community Trail Conditions ────────────────────────────── */}
-        <SparkDivider style={{ marginVertical: 22 }} />
-        <Text style={[styles.blockTitle, { color: colors.foreground }]}>
-          {t.communityConditions}
-        </Text>
-        <View
-          style={[
-            styles.checkCard,
-            { borderColor: colors.glassBorder, backgroundColor: colors.glassBg },
-          ]}
-        >
-          {conditionsLoading ? (
-            <ActivityIndicator size="small" color={colors.mutedForeground} />
-          ) : !trailConditions || trailConditions.length === 0 ? (
-            <Text style={[styles.checkNote, { color: colors.mutedForeground }]}>
-              {t.conditionNoReports}
-            </Text>
-          ) : (
-            trailConditions.map((r) => {
-              const level = r.condition as keyof typeof t.conditions;
-              const emoji = t.conditionEmoji[level] ?? "";
-              const relTime = (() => {
-                const diff = Date.now() - new Date(r.reportedAt).getTime();
-                const mins = Math.floor(diff / 60000);
-                if (mins < 60) return `${mins} min`;
-                const hrs = Math.floor(mins / 60);
-                if (hrs < 24) return `${hrs} h`;
-                return `${Math.floor(hrs / 24)} d`;
-              })();
-              return (
-                <View key={r.id} style={styles.conditionRow}>
-                  <Text style={styles.conditionEmoji}>{emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.conditionLabel, { color: colors.foreground }]}>
-                      {t.conditions[level] ?? r.condition}
-                    </Text>
-                    {r.note ? (
-                      <Text style={[styles.conditionNote, { color: colors.mutedForeground }]}>
-                        {r.note}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Text style={[styles.conditionTime, { color: colors.mutedForeground }]}>
-                    {t.conditionReportedAgo(relTime)}
-                  </Text>
-                </View>
-              );
-            })
-          )}
-        </View>
-
 
         <View
           style={[
