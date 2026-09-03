@@ -546,6 +546,7 @@ export default function LiveHike() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
+  const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
   const [routeWaypoints, setRouteWaypoints] = useState<RouteWaypoint[]>([]);
   const [reachedWaypointIds, setReachedWaypointIds] = useState<ReadonlySet<string>>(new Set());
   const waypointAnnouncedRef = useRef<Set<string>>(new Set());
@@ -1220,6 +1221,32 @@ export default function LiveHike() {
           .filter((w) => w?.osmId)
           .map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng, description: null }));
         setWaterSources(mapped);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+
+  // Toiletten und Sicherheitsinfrastruktur als sachliche Kartenebene laden.
+  // Diese POIs werden absichtlich nicht in den Erzähl-/Wikipedia-Flow gegeben.
+  useEffect(() => {
+    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    if (!center) return;
+    let cancelled = false;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: unknown) => {
+        if (cancelled || !Array.isArray(data)) return;
+        setSafetyPois(data
+          .filter((p): p is { osmId: string; category: string; name: string; lat: number; lng: number; description?: string | null; phone?: string | null; openingHours?: string | null } => Boolean(p && typeof p.osmId === "string"))
+          .map((p) => ({
+            id: p.osmId,
+            name: p.name,
+            lat: p.lat,
+            lng: p.lng,
+            category: p.category,
+            description: [p.description, p.phone ? `Tel. ${p.phone}` : null, p.openingHours].filter(Boolean).join(" · ") || null,
+          })));
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -3604,6 +3631,7 @@ export default function LiveHike() {
                   pois={pois}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
+                  safetyPois={safetyPois.length > 0 ? safetyPois : null}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {

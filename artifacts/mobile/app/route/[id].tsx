@@ -310,6 +310,8 @@ export default function Routenplanung() {
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
+  // Toiletten und sicherheitsrelevante Einrichtungen entlang der Route
+  const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
   // Historische / touristische POIs entlang der Route (für die Karte)
   const [pois, setPois] = useState<MapPoi[]>([]);
   // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
@@ -417,6 +419,37 @@ export default function Routenplanung() {
       cancelled = true;
     };
   }, [route?.id]);
+
+  // Toiletten und Sicherheitsinfrastruktur separat laden — ohne Wiki-/Story-
+  // Anreicherung. Der Mittelpunkt-Radius ist bewusst begrenzt, damit
+  // Overpass-Abfragen auf langen Routen schnell und best effort bleiben.
+  useEffect(() => {
+    if (!route?.coordinates) return;
+    let cancelled = false;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
+    const center = midIdx >= 0
+      ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
+      : route.coordinates;
+    const base = getApiBaseUrl() ?? "";
+    fetch(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: unknown) => {
+        if (cancelled || !Array.isArray(data)) return;
+        setSafetyPois(data
+          .filter((p): p is { osmId: string; category: string; name: string; lat: number; lng: number; description?: string | null; phone?: string | null; openingHours?: string | null } => Boolean(p && typeof p.osmId === "string"))
+          .map((p) => ({
+            id: p.osmId,
+            name: p.name,
+            lat: p.lat,
+            lng: p.lng,
+            category: p.category,
+            description: [p.description, p.phone ? `Tel. ${p.phone}` : null, p.openingHours].filter(Boolean).join(" · ") || null,
+          })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [route?.id, effectiveGeom.length]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
   // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
@@ -966,6 +999,7 @@ export default function Routenplanung() {
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
+                  safetyPois={safetyPois.length > 0 ? safetyPois : null}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {

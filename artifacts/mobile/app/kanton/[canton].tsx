@@ -232,6 +232,10 @@ export default function KantonRouten() {
   const [ascFilter, setAscFilter] = useState<[number, number]>([ASC_MIN, ASC_MAX]);
   const [diffFilter, setDiffFilter] = useState<[number, number]>([DIFF_MIN, DIFF_MAX]);
   const [ganzjaehrigFilter, setGanzjaehrigFilter] = useState(false);
+  const [familyFilter, setFamilyFilter] = useState(false);
+  const [childFilter, setChildFilter] = useState(false);
+  const [dogsFilter, setDogsFilter] = useState(false);
+  const [accessibleFilter, setAccessibleFilter] = useState(false);
   const [nearbyPos, setNearbyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyLocating, setNearbyLocating] = useState(false);
   const [nearbyDenied, setNearbyDenied] = useState(false);
@@ -240,6 +244,12 @@ export default function KantonRouten() {
   const [startMin, setStartMin] = useState(0);
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const suitabilityCopy = useMemo(() => {
+    if (language === "fr") return { title: "Adéquation confirmée", family: "Pour les familles", child: "Adapté aux enfants", dogs: "Chiens autorisés", accessible: "Accès sans barrières confirmé", note: "Seules les indications explicitement confirmées sont utilisées." };
+    if (language === "it") return { title: "Idoneità confermata", family: "Per famiglie", child: "Adatto ai bambini", dogs: "Cani ammessi", accessible: "Accesso senza barriere confermato", note: "Vengono usate solo indicazioni esplicitamente confermate." };
+    if (language === "en") return { title: "Confirmed suitability", family: "Family-friendly", child: "Suitable for children", dogs: "Dogs allowed", accessible: "Step-free access confirmed", note: "Only explicitly confirmed information is used." };
+    return { title: "Bestätigte Eignung", family: "Für Familien", child: "Für Kinder geeignet", dogs: "Hunde erlaubt", accessible: "Barrierearmer Zugang bestätigt", note: "Es werden nur ausdrücklich bestätigte Angaben verwendet." };
+  }, [language]);
 
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
   const sunsetTimeStr = `${String(sunsetTime.h).padStart(2, "0")}:${String(sunsetTime.m).padStart(2, "0")}`;
@@ -258,6 +268,10 @@ export default function KantonRouten() {
     setAscFilter([ASC_MIN, ASC_MAX]);
     setDiffFilter([DIFF_MIN, DIFF_MAX]);
     setGanzjaehrigFilter(false);
+    setFamilyFilter(false);
+    setChildFilter(false);
+    setDogsFilter(false);
+    setAccessibleFilter(false);
     setNearbyPos(null);
     setNearbyLocating(false);
     setNearbyDenied(false);
@@ -310,12 +324,16 @@ export default function KantonRouten() {
       filter.diffMax = diffMax;
     }
     if (ganzjaehrigFilter) filter.ganzjaehrigNur = true;
+    if (familyFilter) filter.familyFriendly = true;
+    if (childFilter) filter.childFriendly = true;
+    if (dogsFilter) filter.dogsAllowed = true;
+    if (accessibleFilter) filter.wheelchairAccessible = true;
     if (nearbyPos) {
       filter.nearLat = nearbyPos.lat;
       filter.nearLng = nearbyPos.lng;
     }
     return filter;
-  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter, nearbyPos]);
+  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter, familyFilter, childFilter, dogsFilter, accessibleFilter, nearbyPos]);
 
   const onSearch = useCallback(async () => {
     if (!cantonName) return;
@@ -452,6 +470,32 @@ export default function KantonRouten() {
                 formatValue={(v) => t.elevationUnit(v, v === ASC_MAX)}
                 onDraggingChange={setSliderAktiv}
               />
+
+              <View style={[styles.suitabilityBox, { borderColor: colors.glassBorder }]}>
+                <Text style={[styles.suitabilityTitle, { color: colors.foreground }]}>
+                  {suitabilityCopy.title}
+                </Text>
+                <Text style={[styles.switchHint, { color: colors.mutedForeground }]}>
+                  {suitabilityCopy.note}
+                </Text>
+                {([
+                  [suitabilityCopy.family, familyFilter, setFamilyFilter],
+                  [suitabilityCopy.child, childFilter, setChildFilter],
+                  [suitabilityCopy.dogs, dogsFilter, setDogsFilter],
+                  [suitabilityCopy.accessible, accessibleFilter, setAccessibleFilter],
+                ] as const).map(([label, value, setter]) => (
+                  <View key={label} style={styles.suitabilityRow}>
+                    <Text style={[styles.switchLabel, { color: colors.foreground }]}>{label}</Text>
+                    <Switch
+                      value={value}
+                      onValueChange={setter}
+                      trackColor={{ true: colors.accent, false: colors.muted }}
+                      ios_backgroundColor={colors.muted}
+                      thumbColor={colors.foreground}
+                    />
+                  </View>
+                ))}
+              </View>
               <RangeSlider
                 label={t.difficultyLabel}
                 min={DIFF_MIN}
@@ -618,6 +662,10 @@ export default function KantonRouten() {
                     setAscFilter([ASC_MIN, ASC_MAX]);
                     setDiffFilter([DIFF_MIN, DIFF_MAX]);
                     setGanzjaehrigFilter(false);
+                    setFamilyFilter(false);
+                    setChildFilter(false);
+                    setDogsFilter(false);
+                    setAccessibleFilter(false);
                     setSunsetFilter(false);
                     setStartH(9);
                     setStartMin(0);
@@ -873,6 +921,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderTopWidth: 1,
     paddingBottom: 14,
+  },
+  suitabilityBox: {
+    marginTop: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  suitabilityTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  suitabilityRow: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(255,255,255,0.08)",
+    marginTop: 6,
+    paddingTop: 6,
   },
   switchLabel: { fontFamily: fonts.bodyMedium, fontSize: 14 },
   switchHint: { fontFamily: fonts.body, fontSize: 12, marginTop: 3 },

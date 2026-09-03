@@ -36,6 +36,13 @@ export const externalRoutesTable = pgTable("external_routes", {
   minutes: doublePrecision("minutes").notNull(),
   sac: text("sac").notNull().default("unbekannt"),
   terrain: text("terrain").notNull(),
+  // Nur explizit redaktionell/autorisiert bestätigte Eignungsmerkmale.
+  // NULL bedeutet unbekannt und darf nicht als "nein" interpretiert werden.
+  familyFriendly: boolean("family_friendly"),
+  childFriendly: boolean("child_friendly"),
+  dogsAllowed: boolean("dogs_allowed"),
+  wheelchairAccessible: boolean("wheelchair_accessible"),
+  technicalDifficulty: text("technical_difficulty"),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   geometry: jsonb("geometry").notNull(),

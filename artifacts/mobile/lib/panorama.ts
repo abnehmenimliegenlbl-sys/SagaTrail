@@ -55,6 +55,8 @@ export interface PanoramaGipfel {
   bearingDeg: number;
   /** Relative Richtung zum aktuellen Telefonkurs (-180 bis 180 Grad). */
   relativeBearingDeg: number | null;
+  /** OSM-Höhe des Gipfels; null wenn nicht gepflegt. */
+  elevationM: number | null;
 }
 
 interface GipfelPoi {
@@ -63,6 +65,7 @@ interface GipfelPoi {
   kind: string;
   lat: number;
   lng: number;
+  elevation?: number | null;
 }
 
 function signedBearingDifference(target: number, heading: number): number {
@@ -93,6 +96,7 @@ export function erkenneGipfel(
         name: poi.name.trim(),
         distanceKm,
         bearingDeg: targetBearing,
+        elevationM: poi.elevation ?? null,
         relativeBearingDeg:
           heading == null ? null : signedBearingDifference(targetBearing, heading),
       };

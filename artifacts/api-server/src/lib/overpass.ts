@@ -574,6 +574,7 @@ export interface RawPoi {
   kind: string;
   lat: number;
   lng: number;
+  elevation: number | null;
   wikipediaTag: string | null;
   wikidataTag: string | null;
   /** Kuratierter Kontext aus OSM-Tags (note, description, inscription, alt_name …)
@@ -730,6 +731,7 @@ export async function fetchHistoricPois(
       kind,
       lat,
       lng,
+      elevation: tags.ele != null ? (parseFloat(tags.ele) || null) : null,
       wikipediaTag: tags.wikipedia ?? null,
       wikidataTag: tags.wikidata ?? null,
       osmContext: buildOsmContext(tags),
@@ -1100,6 +1102,93 @@ export async function fetchDrinkingWater(
     });
   }
   log.info({ count: result.length, radiusM }, "Overpass: Trinkwasser geladen");
+  return result;
+}
+
+export interface RawSafetyPoi {
+  osmId: string;
+  category: "toilet" | "pharmacy" | "hospital" | "clinic" | "police" | "fire" | "defibrillator" | "assembly_point" | "emergency_phone" | "shelter";
+  name: string;
+  lat: number;
+  lng: number;
+  description: string | null;
+  phone: string | null;
+  website: string | null;
+  openingHours: string | null;
+}
+
+/** Sicherheitsrelevante Infrastruktur getrennt von den erzählbaren POIs. */
+export async function fetchSafetyPois(
+  center: { lat: number; lng: number },
+  radiusM: number,
+  log: Logger,
+): Promise<RawSafetyPoi[]> {
+  const deltaLat = radiusM / 111_000;
+  const deltaLng = radiusM / (111_000 * Math.max(0.2, Math.cos((center.lat * Math.PI) / 180)));
+  const b = `${center.lat - deltaLat},${center.lng - deltaLng},${center.lat + deltaLat},${center.lng + deltaLng}`;
+  const query = [
+    "[out:json][timeout:18];(",
+    `node["amenity"~"^(toilets|pharmacy|hospital|police|fire_station)$"](${b});`,
+    `way["amenity"~"^(toilets|pharmacy|hospital|police|fire_station)$"](${b});`,
+    `node["healthcare"](${b});`,
+    `way["healthcare"](${b});`,
+    `node["emergency"~"^(defibrillator|assembly_point|phone)$"](${b});`,
+    `way["emergency"~"^(defibrillator|assembly_point|phone)$"](${b});`,
+    `node["amenity"="shelter"](${b});`,
+    `way["amenity"="shelter"](${b});`,
+    ");out center tags;",
+  ].join("");
+  const elements = await runOverpass<OverpassPoiElement>(query, 22_000);
+  const names: Record<RawSafetyPoi["category"], string> = {
+    toilet: "Toilette",
+    pharmacy: "Apotheke",
+    hospital: "Spital",
+    clinic: "Gesundheitszentrum",
+    police: "Polizei",
+    fire: "Feuerwehr",
+    defibrillator: "Defibrillator",
+    assembly_point: "Notfall-Sammelpunkt",
+    emergency_phone: "Notruftelefon",
+    shelter: "Unterstand",
+  };
+  const result: RawSafetyPoi[] = [];
+  const seen = new Set<string>();
+  for (const e of elements) {
+    const tags = e.tags ?? {};
+    const lat = e.lat ?? e.center?.lat;
+    const lng = e.lon ?? e.center?.lon;
+    if (lat == null || lng == null) continue;
+    const category: RawSafetyPoi["category"] =
+      tags.amenity === "toilets" ? "toilet"
+      : tags.amenity === "pharmacy" ? "pharmacy"
+      : tags.amenity === "hospital" || tags.healthcare === "hospital" ? "hospital"
+      : tags.healthcare ? "clinic"
+      : tags.amenity === "police" ? "police"
+      : tags.amenity === "fire_station" ? "fire"
+      : tags.emergency === "defibrillator" ? "defibrillator"
+      : tags.emergency === "assembly_point" ? "assembly_point"
+      : tags.emergency === "phone" ? "emergency_phone"
+      : "shelter";
+    const osmId = `${e.type}-${e.id}`;
+    if (seen.has(osmId)) continue;
+    seen.add(osmId);
+    result.push({
+      osmId,
+      category,
+      name: tags.name || tags["name:de"] || names[category],
+      lat,
+      lng,
+      description: [
+        tags.description,
+        tags.operator,
+        tags.access && tags.access !== "yes" ? `Zugang: ${tags.access}` : null,
+      ].filter(Boolean).join(" · ") || null,
+      phone: tags.phone ?? tags["contact:phone"] ?? null,
+      website: tags.website ?? tags["contact:website"] ?? null,
+      openingHours: tags.opening_hours ?? null,
+    });
+  }
+  log.info({ center, radiusM, count: result.length }, "Overpass: Sicherheits-POIs geladen");
   return result;
 }
 

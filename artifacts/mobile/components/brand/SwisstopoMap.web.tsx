@@ -27,6 +27,7 @@ export function SwisstopoMap({
   onPartnerPress,
   waterSources,
   parkingSpots,
+  safetyPois,
   sagaPin: _sagaPin, // Web-Variante: Pin wird via inline-HTML baked (kein inject nötig)
 }: SwisstopoMapProps) {
   const ref = useRef<HTMLIFrameElement>(null);
@@ -72,9 +73,10 @@ export function SwisstopoMap({
         waterSources,
         undefined,
         parkingSpots,
-        elevationProfile
+        elevationProfile,
+        safetyPois
       ),
-    [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, t]
+    [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen, damit die

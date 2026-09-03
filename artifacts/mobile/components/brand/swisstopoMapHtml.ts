@@ -98,6 +98,10 @@ export interface MapPoi {
   lng: number;
   /** Optionale Zusatzinfo fuer den Popup (z. B. Adresse, Typ). */
   description?: string | null;
+  category?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  openingHours?: string | null;
 }
 
 /**
@@ -127,6 +131,7 @@ export interface SwisstopoMapProps {
   onPartnerPress?: (id: string) => void;
   waterSources?: MapPoi[] | null;
   parkingSpots?: MapPoi[] | null;
+  safetyPois?: MapPoi[] | null;
   pickerMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   legend?: MapLegendLabels | null;
@@ -186,7 +191,8 @@ export function buildSwisstopoHtml(
   waterSources?: MapPoi[] | null,
   safeAreaInsetTop?: number,
   parkingSpots?: MapPoi[] | null,
-  elevationProfile?: TerrainProfilePoint[] | null
+  elevationProfile?: TerrainProfilePoint[] | null,
+  safetyPois?: MapPoi[] | null
 ): string {
   const lat = center.lat;
   const lng = center.lng;
@@ -211,6 +217,8 @@ export function buildSwisstopoHtml(
     waterSources && waterSources.length > 0 ? JSON.stringify(waterSources) : "null";
   const parkingJson =
     parkingSpots && parkingSpots.length > 0 ? JSON.stringify(parkingSpots) : "null";
+  const safetyJson =
+    safetyPois && safetyPois.length > 0 ? JSON.stringify(safetyPois) : "null";
   const altGeometryJson =
     altGeometry && altGeometry.length > 1 ? JSON.stringify(altGeometry) : "null";
   const pickerJs = pickerMode ? "true" : "false";
@@ -294,6 +302,10 @@ export function buildSwisstopoHtml(
   .stt-partner-tipp--premium  { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.30)); }
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
+  .stt-safety { width: 22px; height: 22px; border-radius: 7px; background: #F5F3EC; border: 2px solid #B21F2D; display: flex; align-items: center; justify-content: center; color: #B21F2D; font-size: 9px; font-weight: 800; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(178,31,45,0.22); }
+  .stt-safety--toilet { border-color: #2563A8; color: #2563A8; }
+  .stt-safety--pharmacy, .stt-safety--clinic { border-color: #16804A; color: #16804A; }
+  .stt-safety--shelter { border-color: #8B5E34; color: #8B5E34; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* Saga-Pin */
   .stt-saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(255,255,255,0.60); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
@@ -377,6 +389,7 @@ ${legendHtml}
   var partners  = ${partnersJson};
   var waters    = ${waterSourcesJson};
   var parking   = ${parkingJson};
+  var safety    = ${safetyJson};
   var picker    = ${pickerJs};
   var centerLng = ${lng};
   var centerLat = ${lat};
@@ -385,8 +398,12 @@ ${legendHtml}
   /* Injektions-Puffer: sttSet* darf JEDERZEIT aufgerufen werden — auch bevor
      die Karte fertig geladen ist. Daten werden gepuffert und beim map-load
      angewendet. Ohne Puffer verpufft ein frueher injectJavaScript-Aufruf. */
-  var _sttPending = { pois: null, partners: null, aerialways: null, sagaPin: null };
-  var _sttApply   = { pois: null, partners: null, aerialways: null, sagaPin: null };
+   var _sttPending = { pois: null, partners: null, aerialways: null, sagaPin: null, safety: safety };
+   var _sttApply   = { pois: null, partners: null, aerialways: null, sagaPin: null, safety: null };
+   window.sttSetSafetyPois = function(d) {
+     _sttPending.safety = d;
+     if (_sttApply.safety) _sttApply.safety(d);
+   };
   window.sttSetPois = function(d) {
     _sttPending.pois = d;
     if (_sttApply.pois) _sttApply.pois(d);
@@ -927,6 +944,32 @@ ${legendHtml}
       if (seilbahnEls.length) zoomGroups.push({ els: seilbahnEls, minZoom: 11 });
     };
 
+    var _safetyApplied = false;
+    _sttApply.safety = function(safetyData) {
+      if (!safetyData || !safetyData.length || _safetyApplied) return;
+      _safetyApplied = true;
+      var labels = {
+        toilet: 'WC', pharmacy: '+', hospital: 'H', clinic: '+',
+        police: 'P', fire: 'F', defibrillator: 'D',
+        assembly_point: 'A', emergency_phone: '!', shelter: 'S'
+      };
+      var markerEls = [];
+      safetyData.forEach(function(p) {
+        var el = document.createElement('div');
+        el.className = 'stt-safety stt-safety--' + (p.category || 'default');
+        el.textContent = labels[p.category] || '!';
+        var lines = [p.name];
+        if (p.description) lines.push(p.description);
+        if (p.phone) lines.push('Tel. ' + p.phone);
+        if (p.openingHours) lines.push(p.openingHours);
+        var popup = new maplibregl.Popup({ offset: 12, maxWidth: '220px' }).setText(lines.join('\n'));
+        new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([p.lng, p.lat]).setPopup(popup).addTo(map);
+        markerEls.push(el);
+      });
+      if (markerEls.length) zoomGroups.push({ els: markerEls, minZoom: 12 });
+    };
+
     /* Gepufferte Daten anwenden, die VOR map-load injiziert wurden — erst
        danach Bereitschaft melden. onLoadEnd der WebView ist als Trigger
        unzuverlaessig (feuert auch fuer Zwischen-Dokumente). */
@@ -934,6 +977,7 @@ ${legendHtml}
     if (_sttPending.partners)   _sttApply.partners(_sttPending.partners);
     if (_sttPending.aerialways) _sttApply.aerialways(_sttPending.aerialways);
     if (_sttPending.sagaPin)    _sttApply.sagaPin(_sttPending.sagaPin);
+    if (_sttPending.safety)     _sttApply.safety(_sttPending.safety);
     post(JSON.stringify({ type: 'stt-html-ready' }));
     /* ------------------------------------------------------------------------------- */
 

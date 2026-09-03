@@ -41,11 +41,13 @@ export interface SafetyShareLocation {
      * @maximum 90
      */
   lat: number;
+  lng: number;
   /**
+     * OSM-Höhe in Metern über Meer, sofern am POI gepflegt.
      * @minimum -180
      * @maximum 180
      */
-  lng: number;
+  elevation?: number | null;
   /** @minimum 0 */
   accuracy?: number | null;
 }
@@ -249,6 +251,15 @@ export interface CatalogRoute {
   minutes: number;
   sac: string;
   terrain: string;
+  /** Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt. */
+  familyFriendly?: boolean | null;
+  /** Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt. */
+  childFriendly?: boolean | null;
+  /** Explizite Hunde-Erlaubnis; null bedeutet unbekannt. */
+  dogsAllowed?: boolean | null;
+  /** Explizit bestätigte Barrierearmut; null bedeutet unbekannt. */
+  wheelchairAccessible?: boolean | null;
+  technicalDifficulty?: string | null;
   coordinates: CatalogCoordinates;
   /** Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden). */
   geometry?: number[][];
@@ -727,6 +738,22 @@ nearLat?: number;
  * Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
  */
 nearLng?: number;
+/**
+ * Nur redaktionell als familienfreundlich bestätigte Routen.
+ */
+familyFriendly?: boolean;
+/**
+ * Nur redaktionell als kinderfreundlich bestätigte Routen.
+ */
+childFriendly?: boolean;
+/**
+ * Nur Routen mit explizit bestätigter Hunde-Erlaubnis.
+ */
+dogsAllowed?: boolean;
+/**
+ * Nur Routen mit explizit bestätigtem barrierearmem Zugang.
+ */
+wheelchairAccessible?: boolean;
 };
 
 export type GetAerialwaysParams = {

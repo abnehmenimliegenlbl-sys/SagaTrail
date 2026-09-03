@@ -388,7 +388,7 @@ export function PeakPanorama({
                 ]}
                 onPress={() => setSelectedPeakId(peak.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}`}
+                  accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}${peak.elevationM != null ? `, ${Math.round(peak.elevationM)} m ü. M.` : ""}`}
               >
                 <View
                   style={[
@@ -429,6 +429,7 @@ export function PeakPanorama({
                     style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
                   >
                     {strings.distance(peak.distanceKm.toFixed(1))}
+                    {peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""}
                   </Text>
                 </View>
                 <View

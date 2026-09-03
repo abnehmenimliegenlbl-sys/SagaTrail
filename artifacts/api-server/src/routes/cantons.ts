@@ -171,6 +171,11 @@ function toRoute(row: ExternalRouteRow) {
     minutes: row.minutes,
     sac: row.sac,
     terrain: row.terrain,
+    familyFriendly: row.familyFriendly ?? null,
+    childFriendly: row.childFriendly ?? null,
+    dogsAllowed: row.dogsAllowed ?? null,
+    wheelchairAccessible: row.wheelchairAccessible ?? null,
+    technicalDifficulty: row.technicalDifficulty ?? null,
     coordinates: { lat: row.lat, lng: row.lng },
     geometry: parseGeometry(row.geometry),
     featured: row.featured,
@@ -219,6 +224,10 @@ interface RouteFilter {
   ganzjaehrigNur: boolean | null;
   nearLat: number | null;
   nearLng: number | null;
+  familyFriendly: boolean | null;
+  childFriendly: boolean | null;
+  dogsAllowed: boolean | null;
+  wheelchairAccessible: boolean | null;
 }
 
 /**
@@ -241,6 +250,10 @@ function applyFilter(row: ExternalRouteRow, f: RouteFilter): boolean {
     const season = deriveSeason(row.maxElevationM, row.sac);
     if (season !== "ganzjaehrig") return false;
   }
+  if (f.familyFriendly === true && row.familyFriendly !== true) return false;
+  if (f.childFriendly === true && row.childFriendly !== true) return false;
+  if (f.dogsAllowed === true && row.dogsAllowed !== true) return false;
+  if (f.wheelchairAccessible === true && row.wheelchairAccessible !== true) return false;
   return true;
 }
 
@@ -258,6 +271,10 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     ganzjaehrigNur: boolParam(req.query.ganzjaehrigNur),
     nearLat: numParam(req.query.nearLat),
     nearLng: numParam(req.query.nearLng),
+    familyFriendly: boolParam(req.query.familyFriendly),
+    childFriendly: boolParam(req.query.childFriendly),
+    dogsAllowed: boolParam(req.query.dogsAllowed),
+    wheelchairAccessible: boolParam(req.query.wheelchairAccessible),
   };
   try {
     const rawRows = await loadCachedRoutes(canton);

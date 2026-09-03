@@ -12,11 +12,13 @@ export interface SafetyShareLocation {
      * @maximum 90
      */
   lat: number;
+  lng: number;
   /**
+     * OSM-Höhe in Metern über Meer, sofern am POI gepflegt.
      * @minimum -180
      * @maximum 180
      */
-  lng: number;
+  elevation?: number | null;
   /** @minimum 0 */
   accuracy?: number | null;
 }

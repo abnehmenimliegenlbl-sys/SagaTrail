@@ -25,6 +25,15 @@ export interface CatalogRoute {
   minutes: number;
   sac: string;
   terrain: string;
+  /** Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt. */
+  familyFriendly?: boolean | null;
+  /** Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt. */
+  childFriendly?: boolean | null;
+  /** Explizite Hunde-Erlaubnis; null bedeutet unbekannt. */
+  dogsAllowed?: boolean | null;
+  /** Explizit bestätigte Barrierearmut; null bedeutet unbekannt. */
+  wheelchairAccessible?: boolean | null;
+  technicalDifficulty?: string | null;
   coordinates: CatalogCoordinates;
   /** Ausgeduennter Wegverlauf als [lat, lng]-Paare (nur bei realen OSM-Routen vorhanden). */
   geometry?: number[][];

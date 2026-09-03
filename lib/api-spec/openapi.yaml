@@ -172,6 +172,30 @@ paths:
             Routenstart aufsteigend zu sortieren.
           schema:
             type: number
+        - name: familyFriendly
+          in: query
+          required: false
+          description: Nur redaktionell als familienfreundlich bestätigte Routen.
+          schema:
+            type: boolean
+        - name: childFriendly
+          in: query
+          required: false
+          description: Nur redaktionell als kinderfreundlich bestätigte Routen.
+          schema:
+            type: boolean
+        - name: dogsAllowed
+          in: query
+          required: false
+          description: Nur Routen mit explizit bestätigter Hunde-Erlaubnis.
+          schema:
+            type: boolean
+        - name: wheelchairAccessible
+          in: query
+          required: false
+          description: Nur Routen mit explizit bestätigtem barrierearmem Zugang.
+          schema:
+            type: boolean
       responses:
         "200":
           description: Routen
@@ -1494,6 +1518,10 @@ components:
           maximum: 90
         lng:
           type: number
+        elevation:
+          type: number
+          nullable: true
+          description: OSM-Höhe in Metern über Meer, sofern am POI gepflegt.
           minimum: -180
           maximum: 180
         accuracy:
@@ -1752,6 +1780,25 @@ components:
           type: string
         terrain:
           type: string
+        familyFriendly:
+          type: boolean
+          nullable: true
+          description: Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.
+        childFriendly:
+          type: boolean
+          nullable: true
+          description: Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.
+        dogsAllowed:
+          type: boolean
+          nullable: true
+          description: Explizite Hunde-Erlaubnis; null bedeutet unbekannt.
+        wheelchairAccessible:
+          type: boolean
+          nullable: true
+          description: Explizit bestätigte Barrierearmut; null bedeutet unbekannt.
+        technicalDifficulty:
+          type: string
+          nullable: true
         coordinates:
           $ref: "#/components/schemas/CatalogCoordinates"
         geometry:

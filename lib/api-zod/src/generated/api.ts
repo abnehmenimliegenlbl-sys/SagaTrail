@@ -39,6 +39,11 @@ export const GetCatalogResponse = zod.object({
   "minutes": zod.number(),
   "sac": zod.string(),
   "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.'),
+  "childFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizite Hunde-Erlaubnis; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Explizit bestätigte Barrierearmut; null bedeutet unbekannt.'),
+  "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
@@ -146,7 +151,11 @@ export const GetCantonRoutesQueryParams = zod.object({
   "diffMax": zod.coerce.number().min(1).max(getCantonRoutesQueryDiffMaxMax).optional().describe('Maximaler SAC-Grad (6 = T6). Nur Routen mit bekanntem Grad.'),
   "ganzjaehrigNur": zod.coerce.boolean().optional().describe('Wenn true, nur Routen mit ganzjaehriger Begehbarkeit (tiefe Lage, einfacher Schwierigkeitsgrad) liefern.\n'),
   "nearLat": zod.coerce.number().optional().describe('Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
-  "nearLng": zod.coerce.number().optional().describe('Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n')
+  "nearLng": zod.coerce.number().optional().describe('Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
+  "familyFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als familienfreundlich bestätigte Routen.'),
+  "childFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als kinderfreundlich bestätigte Routen.'),
+  "dogsAllowed": zod.coerce.boolean().optional().describe('Nur Routen mit explizit bestätigter Hunde-Erlaubnis.'),
+  "wheelchairAccessible": zod.coerce.boolean().optional().describe('Nur Routen mit explizit bestätigtem barrierearmem Zugang.')
 })
 
 export const GetCantonRoutesResponseItem = zod.object({
@@ -162,6 +171,11 @@ export const GetCantonRoutesResponseItem = zod.object({
   "minutes": zod.number(),
   "sac": zod.string(),
   "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.'),
+  "childFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizite Hunde-Erlaubnis; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Explizit bestätigte Barrierearmut; null bedeutet unbekannt.'),
+  "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
@@ -512,6 +526,11 @@ export const GetCustomRouteResponse = zod.object({
   "minutes": zod.number(),
   "sac": zod.string(),
   "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.'),
+  "childFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizite Hunde-Erlaubnis; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Explizit bestätigte Barrierearmut; null bedeutet unbekannt.'),
+  "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
@@ -550,6 +569,11 @@ export const ImportGpxRouteResponse = zod.object({
   "minutes": zod.number(),
   "sac": zod.string(),
   "terrain": zod.string(),
+  "familyFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.'),
+  "childFriendly": zod.boolean().nullish().describe('Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizite Hunde-Erlaubnis; null bedeutet unbekannt.'),
+  "wheelchairAccessible": zod.boolean().nullish().describe('Explizit bestätigte Barrierearmut; null bedeutet unbekannt.'),
+  "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
   "lat": zod.number(),
   "lng": zod.number()
@@ -898,8 +922,8 @@ export const CreateSafetyShareBody = zod.object({
 export const createSafetyShareResponseOneLatestLocationOneLatMin = -90;
 export const createSafetyShareResponseOneLatestLocationOneLatMax = 90;
 
-export const createSafetyShareResponseOneLatestLocationOneLngMin = -180;
-export const createSafetyShareResponseOneLatestLocationOneLngMax = 180;
+export const createSafetyShareResponseOneLatestLocationOneElevationMin = -180;
+export const createSafetyShareResponseOneLatestLocationOneElevationMax = 180;
 
 export const createSafetyShareResponseOneLatestLocationOneAccuracyMin = 0;
 
@@ -913,7 +937,8 @@ export const CreateSafetyShareResponse = zod.object({
   "endedAt": zod.coerce.date().nullable(),
   "latestLocation": zod.object({
   "lat": zod.number().min(createSafetyShareResponseOneLatestLocationOneLatMin).max(createSafetyShareResponseOneLatestLocationOneLatMax),
-  "lng": zod.number().min(createSafetyShareResponseOneLatestLocationOneLngMin).max(createSafetyShareResponseOneLatestLocationOneLngMax),
+  "lng": zod.number(),
+  "elevation": zod.number().min(createSafetyShareResponseOneLatestLocationOneElevationMin).max(createSafetyShareResponseOneLatestLocationOneElevationMax).nullish().describe('OSM-Höhe in Metern über Meer, sofern am POI gepflegt.'),
   "accuracy": zod.number().min(createSafetyShareResponseOneLatestLocationOneAccuracyMin).nullish()
 }).and(zod.object({
   "updatedAt": zod.coerce.date()
@@ -935,8 +960,8 @@ export const UpdateSafetyShareLocationParams = zod.object({
 export const updateSafetyShareLocationBodyLatMin = -90;
 export const updateSafetyShareLocationBodyLatMax = 90;
 
-export const updateSafetyShareLocationBodyLngMin = -180;
-export const updateSafetyShareLocationBodyLngMax = 180;
+export const updateSafetyShareLocationBodyElevationMin = -180;
+export const updateSafetyShareLocationBodyElevationMax = 180;
 
 export const updateSafetyShareLocationBodyAccuracyMin = 0;
 
@@ -944,7 +969,8 @@ export const updateSafetyShareLocationBodyAccuracyMin = 0;
 
 export const UpdateSafetyShareLocationBody = zod.object({
   "lat": zod.number().min(updateSafetyShareLocationBodyLatMin).max(updateSafetyShareLocationBodyLatMax),
-  "lng": zod.number().min(updateSafetyShareLocationBodyLngMin).max(updateSafetyShareLocationBodyLngMax),
+  "lng": zod.number(),
+  "elevation": zod.number().min(updateSafetyShareLocationBodyElevationMin).max(updateSafetyShareLocationBodyElevationMax).nullish().describe('OSM-Höhe in Metern über Meer, sofern am POI gepflegt.'),
   "accuracy": zod.number().min(updateSafetyShareLocationBodyAccuracyMin).nullish()
 })
 
@@ -961,8 +987,8 @@ export const GetSafetyShareByTokenParams = zod.object({
 export const getSafetyShareByTokenResponseLatestLocationOneLatMin = -90;
 export const getSafetyShareByTokenResponseLatestLocationOneLatMax = 90;
 
-export const getSafetyShareByTokenResponseLatestLocationOneLngMin = -180;
-export const getSafetyShareByTokenResponseLatestLocationOneLngMax = 180;
+export const getSafetyShareByTokenResponseLatestLocationOneElevationMin = -180;
+export const getSafetyShareByTokenResponseLatestLocationOneElevationMax = 180;
 
 export const getSafetyShareByTokenResponseLatestLocationOneAccuracyMin = 0;
 
@@ -976,7 +1002,8 @@ export const GetSafetyShareByTokenResponse = zod.object({
   "endedAt": zod.coerce.date().nullable(),
   "latestLocation": zod.object({
   "lat": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneLatMin).max(getSafetyShareByTokenResponseLatestLocationOneLatMax),
-  "lng": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneLngMin).max(getSafetyShareByTokenResponseLatestLocationOneLngMax),
+  "lng": zod.number(),
+  "elevation": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneElevationMin).max(getSafetyShareByTokenResponseLatestLocationOneElevationMax).nullish().describe('OSM-Höhe in Metern über Meer, sofern am POI gepflegt.'),
   "accuracy": zod.number().min(getSafetyShareByTokenResponseLatestLocationOneAccuracyMin).nullish()
 }).and(zod.object({
   "updatedAt": zod.coerce.date()

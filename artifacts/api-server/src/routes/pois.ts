@@ -13,6 +13,7 @@ function toPoi(p: EnrichedPoi) {
     kind: p.kind,
     lat: p.lat,
     lng: p.lng,
+    elevation: p.elevation ?? null,
     wiki: p.wiki ?? undefined,
     wikipediaTag: p.wikipediaTag ?? undefined,
     wikidataTag: p.wikidataTag ?? undefined,

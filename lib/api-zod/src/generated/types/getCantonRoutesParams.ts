@@ -51,4 +51,20 @@ nearLat?: number;
  * Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.
  */
 nearLng?: number;
+/**
+ * Nur redaktionell als familienfreundlich bestätigte Routen.
+ */
+familyFriendly?: boolean;
+/**
+ * Nur redaktionell als kinderfreundlich bestätigte Routen.
+ */
+childFriendly?: boolean;
+/**
+ * Nur Routen mit explizit bestätigter Hunde-Erlaubnis.
+ */
+dogsAllowed?: boolean;
+/**
+ * Nur Routen mit explizit bestätigtem barrierearmem Zugang.
+ */
+wheelchairAccessible?: boolean;
 };

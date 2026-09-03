@@ -33,6 +33,7 @@ export function SwisstopoMap({
   onPartnerPress,
   waterSources,
   parkingSpots,
+  safetyPois,
   pickerMode,
   onMapClick,
   safeAreaInsetTop = 0,
@@ -83,11 +84,12 @@ export function SwisstopoMap({
         waterSources,
         safeAreaInsetTop,
         parkingSpots,
-        elevationProfile
+        elevationProfile,
+        safetyPois
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
+    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, safetyPois, pickerMode, safeAreaInsetTop, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen.
@@ -129,6 +131,16 @@ export function SwisstopoMap({
       `window.sttSetAerialways && window.sttSetAerialways(${json}); true;`
     );
   }, [ready, aerialways]);
+
+  // Sicherheits-POIs werden nachgeladen, damit die Karte bei Overpass-Latenz
+  // nicht neu aufgebaut werden muss.
+  useEffect(() => {
+    if (!ready) return;
+    const json = safetyPois && safetyPois.length > 0 ? JSON.stringify(safetyPois) : "null";
+    ref.current?.injectJavaScript(
+      `window.sttSetSafetyPois && window.sttSetSafetyPois(${json}); true;`
+    );
+  }, [ready, safetyPois]);
 
   // Saga-Pin per injectJavaScript einspielen.
   useEffect(() => {
