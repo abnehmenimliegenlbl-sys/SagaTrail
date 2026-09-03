@@ -167,6 +167,8 @@ export interface MapLegendLabels {
   seilbahnStation: string;
   poi: string;
   partner: string;
+  safety: string;
+  safetyCodes: string;
 }
 
 /**
@@ -248,6 +250,10 @@ export function buildSwisstopoHtml(
     }
     if (pois && pois.length > 0)
       rows += legendZeile('<div class="stt-poi"></div>', legend.poi);
+    if (safetyPois && safetyPois.length > 0) {
+      rows += legendZeile('<div class="stt-safety stt-safety--legend">!</div>', legend.safety);
+      rows += legendZeile('<span class="stt-safety-codes">TO · S · DE</span>', legend.safetyCodes);
+    }
     if (partners && partners.length > 0)
       rows += legendZeile('<div class="stt-partner-pin stt-partner-pin--standard" style="width:16px;height:16px;border-radius:5px;flex-shrink:0"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#cc0000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>', legend.partner);
     return (
@@ -286,7 +292,7 @@ export function buildSwisstopoHtml(
   .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #00E676; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(0,230,118,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-  .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,0.25); }
+  .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,0.25); }
   /* PARTNER PINS — weisse Kachel + Marken-Rot Icon (#cc0000) */
   .stt-partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
   .stt-partner-pin  { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
@@ -304,9 +310,9 @@ export function buildSwisstopoHtml(
   .stt-wasser  { width: 10px; height: 10px; border-radius: 50%; background: #38BDF8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(56,189,248,0.28); }
   .stt-parking { width: 20px; height: 20px; border-radius: 4px; background: #1E6FB5; border: 2px solid #F5F3EC; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F5F3EC; font-size: 12px; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(30,111,181,0.28); cursor: default; }
   .stt-safety { width: 22px; height: 22px; border-radius: 7px; background: #F5F3EC; border: 2px solid #B21F2D; display: flex; align-items: center; justify-content: center; color: #B21F2D; font-size: 9px; font-weight: 800; font-family: -apple-system,system-ui,sans-serif; box-shadow: 0 0 0 3px rgba(178,31,45,0.22); }
-  .stt-safety--toilet { border-color: #2563A8; color: #2563A8; }
-  .stt-safety--pharmacy, .stt-safety--clinic { border-color: #16804A; color: #16804A; }
-  .stt-safety--shelter { border-color: #8B5E34; color: #8B5E34; }
+  .stt-safety--toilet, .stt-safety--pharmacy, .stt-safety--clinic,
+  .stt-safety--hospital, .stt-safety--shelter, .stt-safety--legend { border-color: #B21F2D; color: #B21F2D; }
+  .stt-safety-codes { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; color: #F5F3EC; font-size: 10px; font-weight: 800; letter-spacing: .2px; }
   .stt-picker  { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #DA291C; border: 2.5px solid #F5F3EC; box-shadow: 0 2px 10px rgba(0,0,0,0.45); cursor: crosshair; }
   /* Saga-Pin */
   .stt-saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; background: rgba(255,255,255,0.60); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
@@ -721,7 +727,7 @@ ${legendHtml}
         source: 'stt-pois',
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': '#cc0000',
+          'circle-color': '#2563A8',
           'circle-radius': ['step', ['get', 'point_count'], 13, 10, 17, 30, 21],
           'circle-stroke-color': '#F5F3EC',
           'circle-stroke-width': 2,
@@ -740,7 +746,7 @@ ${legendHtml}
           'circle-radius': 24,
           'circle-opacity': 0,
           'circle-stroke-opacity': 0,
-          'circle-color': '#cc0000'
+          'circle-color': '#2563A8'
         }
       });
       /* Alle Einzel-Marker sofort erstellen.
@@ -815,7 +821,7 @@ ${legendHtml}
         cx.arc(cxc, cyc, R, Math.PI, 0, false); /* Halbkreis oben links→rechts */
         cx.bezierCurveTo(W-1, cyc+R+2, W/2+3, H-7, W/2, H-1); /* rechte Kurve runter */
         cx.closePath();
-        cx.fillStyle = '#DA291C'; cx.fill();
+        cx.fillStyle = '#2563A8'; cx.fill();
         cx.strokeStyle = '#F5F3EC'; cx.lineWidth = 2; cx.stroke();
         /* kleiner weisser Innenkreis */
         cx.beginPath(); cx.arc(cxc, cyc, R*0.38, 0, Math.PI*2);
@@ -835,7 +841,7 @@ ${legendHtml}
       });
       map.addLayer({ id: 'stt-poi-clusters', type: 'circle', source: 'stt-pois',
         filter: ['has', 'point_count'],
-        paint: { 'circle-color': '#cc0000',
+        paint: { 'circle-color': '#2563A8',
           'circle-radius': ['step', ['get', 'point_count'], 13, 10, 17, 30, 21],
           'circle-stroke-color': '#F5F3EC', 'circle-stroke-width': 2, 'circle-opacity': 0.9 }
       });
@@ -864,7 +870,7 @@ ${legendHtml}
       /* Unsichtbare, grosse Klick-Zielflaeche fuer Finger-Taps */
       map.addLayer({ id: 'stt-poi-click-target', type: 'circle', source: 'stt-pois',
         filter: ['!', ['has', 'point_count']],
-        paint: { 'circle-radius': 24, 'circle-opacity': 0, 'circle-stroke-opacity': 0, 'circle-color': '#cc0000' }
+        paint: { 'circle-radius': 24, 'circle-opacity': 0, 'circle-stroke-opacity': 0, 'circle-color': '#2563A8' }
       });
       poisData.forEach(function(p) { poiCoords[p.id] = [p.lng, p.lat]; });
     };
@@ -949,8 +955,8 @@ ${legendHtml}
     _sttApply.safety = function(safetyData) {
       if (!safetyData || !safetyData.length) return;
       var labels = {
-        toilet: 'WC', pharmacy: '+', hospital: 'H', clinic: '+',
-        police: 'P', fire: 'F', defibrillator: 'D',
+        toilet: 'TO', pharmacy: 'PH', hospital: 'H', clinic: 'CL',
+        police: 'P', fire: 'F', defibrillator: 'DE',
         assembly_point: 'A', emergency_phone: '!', shelter: 'S'
       };
       var features = safetyData
@@ -1016,15 +1022,7 @@ ${legendHtml}
         source: 'stt-safety',
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': [
-            'match', ['get', 'category'],
-            'toilet', '#2563A8',
-            'pharmacy', '#16804A',
-            'clinic', '#16804A',
-            'hospital', '#16804A',
-            'shelter', '#8B5E34',
-            '#B21F2D'
-          ],
+          'circle-color': '#B21F2D',
           'circle-radius': 11,
           'circle-stroke-color': '#F5F3EC',
           'circle-stroke-width': 2

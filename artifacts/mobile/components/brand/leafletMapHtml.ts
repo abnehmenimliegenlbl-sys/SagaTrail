@@ -131,6 +131,10 @@ export function buildLeafletMapHtml(
         if (pois && pois.length > 0) {
           rows += row('<span class="legend-poi"></span>', legend.poi);
         }
+        if (safetyPois && safetyPois.length > 0) {
+          rows += row('<span class="legend-safety">!</span>', legend.safety);
+          rows += row('<span class="legend-safety-codes">TO · S · DE</span>', legend.safetyCodes);
+        }
         if (partners && partners.length > 0) {
           rows += row('<span class="legend-partner">⌂</span>', legend.partner);
         }
@@ -174,9 +178,9 @@ export function buildLeafletMapHtml(
     #map:not(.view-3d) .leaflet-shadow-pane,
     #map:not(.view-3d) .leaflet-marker-pane { transition: transform .45s ease; }
     .flag { width: 30px; height: 38px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
-    .poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(107,126,168,.25); }
+    .poi { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25); }
     .poi-tipp { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
-    .poi-cluster { width: 32px; height: 32px; border-radius: 50%; background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,.25), 0 2px 7px rgba(0,0,0,.35); color: #F5F3EC; font: 700 11px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; }
+    .poi-cluster { width: 32px; height: 32px; border-radius: 50%; background: #2563A8; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(37,99,168,.25), 0 2px 7px rgba(0,0,0,.35); color: #F5F3EC; font: 700 11px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; }
     .live { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #fffaf0; box-shadow: 0 0 0 6px rgba(47,111,237,.28); box-sizing: border-box; }
     .partner-tipp { width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; box-sizing: border-box; cursor: pointer; }
     .partner-pin { display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; position: relative; }
@@ -209,7 +213,9 @@ export function buildLeafletMapHtml(
     .legend-line.alternate { height: 3px; background: repeating-linear-gradient(90deg,#2EC4B6 0 5px,transparent 5px 8px); }
     .legend-line.cable { height: 0; border-top: 2px dashed #5B6B78; }
     .legend-live { width: 11px; height: 11px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-sizing: border-box; }
-    .legend-poi { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 1px solid #F5F3EC; box-sizing: border-box; }
+    .legend-poi { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2563A8; border: 1px solid #F5F3EC; box-sizing: border-box; }
+    .legend-safety { width: 18px; height: 18px; border-radius: 5px; background: #B21F2D; border: 1px solid #F5F3EC; color: #fff; text-align: center; line-height: 17px; font-size: 10px; font-weight: 800; box-sizing: border-box; }
+    .legend-safety-codes { color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .2px; }
     .legend-partner { width: 16px; height: 16px; border-radius: 5px; background: #fff; color: #cc0000; text-align: center; line-height: 16px; font-weight: 700; }
     .legend-cable-station { width: 8px; height: 8px; border-radius: 2px; background: #5B6B78; border: 1px solid #F5F3EC; box-sizing: border-box; }
     #copyright-info { position: absolute; right: 8px; bottom: 10px; z-index: 1000; color: #d5ddd8; font-size: 10px; line-height: 1.3; }
@@ -461,7 +467,7 @@ export function buildLeafletMapHtml(
       safetyClusterMarkers = [];
     }
     function safetyCategoryLabel(category) {
-      var labels = { toilet: "WC", pharmacy: "+", hospital: "H", clinic: "+", police: "P", fire: "F", defibrillator: "D", assembly_point: "A", emergency_phone: "!", shelter: "S" };
+      var labels = { toilet: "TO", pharmacy: "PH", hospital: "H", clinic: "CL", police: "P", fire: "F", defibrillator: "DE", assembly_point: "A", emergency_phone: "!", shelter: "S" };
       return labels[category] || "!";
     }
     function safetyClusterText(group) {

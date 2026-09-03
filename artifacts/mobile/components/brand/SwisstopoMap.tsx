@@ -89,6 +89,8 @@ export function SwisstopoMap({
           seilbahnStation: t.legendSeilbahnStation,
           poi: t.legendPoi,
           partner: t.legendPartner,
+          safety: t.legendSafety,
+          safetyCodes: t.legendSafetyCodes,
         },
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.

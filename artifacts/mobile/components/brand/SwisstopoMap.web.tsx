@@ -77,6 +77,8 @@ export function SwisstopoMap({
           seilbahnStation: t.legendSeilbahnStation,
           poi: t.legendPoi,
           partner: t.legendPartner,
+          safety: t.legendSafety,
+          safetyCodes: t.legendSafetyCodes,
         },
       ),
     [center.lat, center.lng, label, geometry, elevationProfile, offlineTiles, aerialways, pois, partners, waterSources, parkingSpots, safetyPois, t]

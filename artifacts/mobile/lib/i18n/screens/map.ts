@@ -37,6 +37,8 @@ export interface MapStrings {
   legendSeilbahnStation: string;
   legendPoi: string;
   legendPartner: string;
+  legendSafety: string;
+  legendSafetyCodes: string;
 }
 
 const MAP_STRINGS: StringsDict<MapStrings> = {
@@ -64,6 +66,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
     legendPartner: "Partnerbetrieb",
+    legendSafety: "Sicherheits-POI",
+    legendSafetyCodes: "TO Toilette · PH Apotheke · H Spital · CL Arztpraxis · P Polizei · F Feuerwehr · DE Defibrillator · A Sammelpunkt · ! Notruftelefon · S Unterstand",
   },
   gsw: {
     legendTitle: "Legände",
@@ -89,6 +93,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Seilbahnstation",
     legendPoi: "Sehenswürdigkeit",
     legendPartner: "Partnerbetrieb",
+    legendSafety: "Sicherheits-POI",
+    legendSafetyCodes: "TO Toilette · PH Apotheke · H Spital · CL Arztpraxis · P Polizei · F Feuerwehr · DE Defibrillator · A Sammelpunkt · ! Notruftelefon · S Unterstand",
   },
   fr: {
     legendTitle: "Légende",
@@ -114,6 +120,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Station de téléphérique",
     legendPoi: "Curiosité",
     legendPartner: "Partenaire",
+    legendSafety: "Point de sécurité",
+    legendSafetyCodes: "TO toilettes · PH pharmacie · H hôpital · CL cabinet médical · P police · F pompiers · DE défibrillateur · A rassemblement · ! téléphone d'urgence · S abri",
   },
   it: {
     legendTitle: "Legenda",
@@ -139,6 +147,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Stazione della funivia",
     legendPoi: "Punto d'interesse",
     legendPartner: "Partner convenzionato",
+    legendSafety: "Punto di sicurezza",
+    legendSafetyCodes: "TO toilette · PH farmacia · H ospedale · CL studio medico · P polizia · F pompieri · DE defibrillatore · A punto di raccolta · ! telefono d'emergenza · S riparo",
   },
   en: {
     legendTitle: "Legend",
@@ -164,6 +174,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Cable car station",
     legendPoi: "Point of interest",
     legendPartner: "Partner business",
+    legendSafety: "Safety point",
+    legendSafetyCodes: "TO toilet · PH pharmacy · H hospital · CL clinic · P police · F fire · DE defibrillator · A assembly point · ! emergency phone · S shelter",
   },
   zh: {
     legendTitle: "图例",
@@ -189,6 +201,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "缆车站",
     legendPoi: "景点",
     legendPartner: "合作商家",
+    legendSafety: "安全设施",
+    legendSafetyCodes: "TO 厕所 · PH 药房 · H 医院 · CL 诊所 · P 警察 · F 消防 · DE 除颤器 · A 集合点 · ! 紧急电话 · S 避难所",
   },
   es: {
     legendTitle: "Leyenda",
@@ -214,6 +228,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Estación del teleférico",
     legendPoi: "Punto de interés",
     legendPartner: "Comercio asociado",
+    legendSafety: "Punto de seguridad",
+    legendSafetyCodes: "TO aseo · PH farmacia · H hospital · CL clínica · P policía · F bomberos · DE desfibrilador · A punto de reunión · ! teléfono de emergencia · S refugio",
   },
   pt: {
     legendTitle: "Legenda",
@@ -239,6 +255,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Estação do teleférico",
     legendPoi: "Ponto de interesse",
     legendPartner: "Estabelecimento parceiro",
+    legendSafety: "Ponto de segurança",
+    legendSafetyCodes: "TO casa de banho · PH farmácia · H hospital · CL clínica · P polícia · F bombeiros · DE desfibrilador · A ponto de reunião · ! telefone de emergência · S abrigo",
   },
   ru: {
     legendTitle: "Легенда",
@@ -264,6 +282,8 @@ const MAP_STRINGS: StringsDict<MapStrings> = {
     legendSeilbahnStation: "Станция канатной дороги",
     legendPoi: "Достопримечательность",
     legendPartner: "Партнёрское заведение",
+    legendSafety: "Точка безопасности",
+    legendSafetyCodes: "TO туалет · PH аптека · H больница · CL клиника · P полиция · F пожарная служба · DE дефибриллятор · A место сбора · ! телефон экстренной помощи · S укрытие",
   },
 };
 

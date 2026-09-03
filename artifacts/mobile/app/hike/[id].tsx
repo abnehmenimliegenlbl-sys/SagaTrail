@@ -403,7 +403,26 @@ export default function LiveHike() {
   // die aktive Wanderroute: zuerst der Zubringer, danach der verbleibende
   // Originalweg. Damit werden auch Routenfortschritt und Kapitel auf genau
   // diese neue Route verteilt.
-  const [acceptedRouteGeometry, setAcceptedRouteGeometry] = useState<number[][] | null>(null);
+  const [acceptedRouteGeometry, setAcceptedRouteGeometry] = useState<number[][] | null>(() => {
+    const savedGeometry =
+      isResume && activeHike?.sagaId === id ? activeHike.activeGeometry : null;
+    return savedGeometry && savedGeometry.length > 1 ? savedGeometry : null;
+  });
+  // Der Context kann den gespeicherten Hike beim ersten Render noch laden.
+  // Eine bereits akzeptierte Umleitung darf dann nachtraeglich als aktive
+  // Geometrie uebernommen werden, aber nie eine laufende neue Route ersetzen.
+  useEffect(() => {
+    if (
+      acceptedRouteGeometry ||
+      !isResume ||
+      activeHike?.sagaId !== id ||
+      !activeHike.activeGeometry ||
+      activeHike.activeGeometry.length < 2
+    ) {
+      return;
+    }
+    setAcceptedRouteGeometry(activeHike.activeGeometry);
+  }, [acceptedRouteGeometry, activeHike, id, isResume]);
   const navigationGeometry = acceptedRouteGeometry ?? route?.geometry;
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
   const totalKm = acceptedRouteGeometry
@@ -2725,8 +2744,9 @@ export default function LiveHike() {
       // Route komplett mitspeichern, damit die Wanderung nach einem Absturz
       // auch ohne (erneut) geladenen Katalog fortgesetzt werden kann.
       route: route ?? undefined,
+      activeGeometry: acceptedRouteGeometry ?? undefined,
     });
-  }, [currentIndex, preparing, finished, chapters.length, saga, route, saveActiveHike]);
+  }, [currentIndex, preparing, finished, chapters.length, saga, route, acceptedRouteGeometry, saveActiveHike]);
 
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei

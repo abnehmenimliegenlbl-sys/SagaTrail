@@ -81,6 +81,9 @@ export interface ActiveHike {
   // online-only ohne Seed — stuerzt die App unterwegs ab, waere die Route
   // beim Fortsetzen sonst weg, wenn der Katalog (noch) nicht geladen ist.
   route?: HikingRoute;
+  // Falls waehrend der Wanderung eine Umleitung akzeptiert wurde, ist dies
+  // die tatsaechlich aktive zusammengesetzte Geometrie.
+  activeGeometry?: number[][];
 }
 
 export interface GroupSession {
