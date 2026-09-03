@@ -1,9 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import { captureRef } from "react-native-view-shot";
+import { useCameraPermissions } from "expo-camera";
 import { useMemo, useRef, useState } from "react";
 import {
-  Modal,
   PanResponder,
   Platform,
   Pressable,
@@ -13,16 +11,13 @@ import {
 } from "react-native";
 import type { DimensionValue } from "react-native";
 import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from "react-native-svg";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
-import { persistJournalImage } from "@/lib/journalMedia";
 import type { RecognitionJournalEntry } from "@/types";
-import { PeakArNavigator } from "./PeakArNavigator";
 
 const PANORAMA_VIEW_DEGREES = 140;
 
@@ -60,6 +55,7 @@ interface PeakPanoramaProps {
   } | null;
   strings: PeakPanoramaStrings;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
+  onCameraOpen?: () => void;
 }
 
 export function PeakPanorama({
@@ -72,19 +68,14 @@ export function PeakPanorama({
   dataStatus = null,
   strings,
   onCaptured,
+  onCameraOpen,
 }: PeakPanoramaProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
-  const [arUnavailable, setArUnavailable] = useState(false);
-  const [capturing, setCapturing] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
   const panStartOffsetRef = useRef(0);
-  const cameraRef = useRef<CameraView>(null);
-  const cameraFrameRef = useRef<View>(null);
   const visiblePeaks =
     heading == null
       ? []
@@ -137,71 +128,17 @@ export function PeakPanorama({
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
   if (cameraBlocked) status = strings.cameraPermission;
-  else if (arUnavailable) status = strings.arUnavailable;
 
   const toggleCamera = async () => {
-    if (cameraEnabled) {
-      setCameraEnabled(false);
-      return;
-    }
     if (Platform.OS === "web") return;
     const permission = cameraPermission?.granted
       ? cameraPermission
       : await requestCameraPermission();
     if (permission.granted) {
       setCameraBlocked(false);
-      setArUnavailable(false);
-      setCameraEnabled(true);
+      onCameraOpen?.();
     } else {
       setCameraBlocked(true);
-    }
-  };
-
-  const capturePeakRecognition = async () => {
-    if (capturing || visiblePeaks.length === 0 || !onCaptured) return;
-    setCapturing(true);
-    try {
-      // Das gesamte AR-/Kamera-Bild mit den eingeblendeten Hinweisen
-      // festhalten. Falls die native AR-Oberflaeche keinen View-Snapshot
-      // erlaubt, liefert die Fallback-Kamera ihr Rohbild.
-      let snapshotUri: string | null = null;
-      try {
-        if (cameraFrameRef.current) {
-          snapshotUri = await captureRef(cameraFrameRef, {
-            format: "jpg",
-            quality: 0.82,
-            result: "tmpfile",
-          });
-        }
-      } catch {
-        snapshotUri = null;
-      }
-      if (!snapshotUri && cameraRef.current) {
-        const picture = await cameraRef.current.takePictureAsync({
-          quality: 0.82,
-          skipProcessing: true,
-        });
-        snapshotUri = picture?.uri ?? null;
-      }
-      if (!snapshotUri) return;
-
-      const persistentUri = await persistJournalImage(snapshotUri, "peak");
-      const peakText = visiblePeaks
-        .map(
-          (peak) =>
-            `${peak.name} — ${strings.distance(peak.distanceKm.toFixed(1))}`,
-        )
-        .join("\n");
-      await onCaptured({
-        id: `recognition-peak-${Date.now()}`,
-        kind: "peak",
-        photoUri: persistentUri,
-        title: targetPeak?.name ?? strings.title,
-        text: peakText,
-        capturedAt: Date.now(),
-      });
-    } finally {
-      setCapturing(false);
     }
   };
 
@@ -250,10 +187,10 @@ export function PeakPanorama({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={cameraEnabled ? strings.cameraOff : strings.camera}
+                 accessibilityLabel={strings.camera}
             >
-              <Feather
-                name={cameraEnabled ? "x" : "camera"}
+                 <Feather
+                name="camera"
                 size={14}
                 color={colors.primaryForeground}
               />
@@ -265,7 +202,7 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                {cameraEnabled ? strings.cameraOff : strings.camera}
+                {strings.camera}
               </Text>
             </Pressable>
           )}
@@ -460,194 +397,6 @@ export function PeakPanorama({
         </View>
       </View>
 
-      <Modal
-        visible={cameraEnabled && cameraPermission?.granted === true}
-        animationType="fade"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setCameraEnabled(false)}
-      >
-        <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
-          {arUnavailable ? (
-            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
-          ) : (
-            <PeakArNavigator
-              peaks={visiblePeaks}
-              terrainProfile={terrainProfile}
-              terrainModel={terrainModel}
-              heading={heading}
-              observerElevationM={observerElevationM}
-              onError={() => setArUnavailable(true)}
-            />
-          )}
-          <View style={styles.imageScrim} />
-          <View pointerEvents="none" style={styles.scanLines}>
-            <View style={styles.scanLineTop} />
-            <View style={styles.scanLineMiddle} />
-            <View style={styles.scanLineBottom} />
-          </View>
-          <View style={styles.horizon} />
-          {arUnavailable &&
-            visiblePeaks.map((peak, index) => (
-              <Pressable
-                key={peak.id}
-                style={[
-                  styles.marker,
-                  {
-                    left: markerPosition(peak.relativeBearingDeg ?? 0),
-                    top: insets.top + 82 + (index % 3) * 42,
-                  },
-                ]}
-                onPress={() => setSelectedPeakId(peak.id)}
-                accessibilityRole="button"
-                  accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}${peak.elevationM != null ? `, ${Math.round(peak.elevationM)} m ü. M.` : ""}`}
-              >
-                <View
-                  style={[
-                    styles.markerLabel,
-                    {
-                      backgroundColor: colors.glassBgStrong,
-                      borderColor:
-                        targetPeak?.id === peak.id
-                          ? colors.primary
-                          : colors.glassBorder,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.markerPeak,
-                      {
-                        backgroundColor:
-                          targetPeak?.id === peak.id
-                            ? colors.primary
-                            : colors.glassBgStrong,
-                        borderColor:
-                          targetPeak?.id === peak.id
-                            ? colors.primary
-                            : colors.glassBorder,
-                      },
-                    ]}
-                  >
-                    <Feather name="triangle" size={11} color={colors.photoScrimText} />
-                  </View>
-                  <Text
-                    style={[styles.markerName, { color: colors.photoScrimText }]}
-                    numberOfLines={1}
-                  >
-                    {peak.name}
-                  </Text>
-                  <Text
-                    style={[styles.markerDistance, { color: colors.photoScrimMuted }]}
-                  >
-                    {strings.distance(peak.distanceKm.toFixed(1))}
-                    {peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.markerStem,
-                    {
-                      backgroundColor:
-                        focusedPeak?.id === peak.id
-                          ? colors.primary
-                          : colors.photoScrimText,
-                    },
-                  ]}
-                />
-              </Pressable>
-            ))}
-          {heading != null && (
-            <View
-              style={[styles.centerLine, { backgroundColor: colors.primary }]}
-            />
-          )}
-          <View
-            style={[
-              styles.fullscreenTopBar,
-              { paddingTop: insets.top + 12 },
-            ]}
-          >
-            <View>
-              <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
-                {strings.title}
-              </Text>
-              <View style={styles.fullscreenSubline}>
-                <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
-                <Text style={[styles.fullscreenHeading, { color: colors.photoScrimMuted }]}>
-                  {heading != null ? `${Math.round(heading)}°` : status}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.fullscreenTopActions}>
-              {heading != null && (
-                <View
-                  style={[
-                    styles.fullscreenHeadingBadge,
-                    {
-                      backgroundColor: colors.glassBgStrong,
-                      borderColor: colors.glassBorder,
-                    },
-                  ]}
-                >
-                  <Feather name="navigation" size={12} color={colors.tint} />
-                  <Text style={[styles.fullscreenHeadingBadgeText, { color: colors.photoScrimText }]}>
-                    {Math.round(heading)}°
-                  </Text>
-                </View>
-              )}
-              <Pressable
-                onPress={() => setCameraEnabled(false)}
-                style={[
-                  styles.closeButton,
-                  { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={strings.cameraOff}
-              >
-                <Feather name="x" size={20} color={colors.photoScrimText} />
-              </Pressable>
-            </View>
-          </View>
-          <View
-            style={[
-              styles.imageFooter,
-              { paddingBottom: insets.bottom + 12 },
-            ]}
-          >
-            <Feather
-              name={targetPeak ? "crosshair" : "compass"}
-              size={15}
-              color={colors.photoScrimText}
-            />
-            <Text style={[styles.status, { color: colors.photoScrimText }]} numberOfLines={2}>
-              {targetPeak
-                ? `${strings.detected}: ${targetPeak.name}`
-                : status}
-            </Text>
-            <View style={styles.captureArea}>
-              <Pressable
-                onPress={() => void capturePeakRecognition()}
-                disabled={capturing || visiblePeaks.length === 0}
-                style={[
-                  styles.captureButton,
-                  {
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                    opacity: capturing || visiblePeaks.length === 0 ? 0.45 : 1,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={strings.capture}
-              >
-                <View style={[styles.captureButtonInner, { borderColor: colors.primaryForeground }]} />
-                <Text style={[styles.captureButtonText, { color: colors.primaryForeground }]}>
-                  {capturing ? "…" : strings.capture}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

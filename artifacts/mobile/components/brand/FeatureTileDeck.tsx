@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Modal,
@@ -29,17 +29,23 @@ interface Props {
   tiles: FeatureTile[];
   closeLabel?: string;
   onTileOpen?: (tileId: string) => void;
+  closeSignal?: number;
 }
 
 export function FeatureTileDeck({
   tiles,
   closeLabel = "Schliessen",
   onTileOpen,
+  closeSignal = 0,
 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeTile = tiles.find((tile) => tile.id === activeId);
+
+  useEffect(() => {
+    if (closeSignal > 0) setActiveId(null);
+  }, [closeSignal]);
 
   const selectTile = (id: string) => {
     if (Platform.OS !== "web") {

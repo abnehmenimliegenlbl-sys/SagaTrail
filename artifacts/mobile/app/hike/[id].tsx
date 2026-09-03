@@ -52,6 +52,7 @@ import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SafetyCheckin } from "@/components/brand/SafetyCheckin";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
+import { PeakCameraOverlay } from "@/components/brand/PeakCameraOverlay";
 import { FeatureTileDeck } from "@/components/brand/FeatureTileDeck";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
@@ -554,6 +555,9 @@ export default function LiveHike() {
   const [pois, setPois] = useState<Poi[]>([]);
   const [panoramaOnlinePois, setPanoramaOnlinePois] = useState<Poi[]>([]);
   const [panoramaTileOpen, setPanoramaTileOpen] = useState(false);
+  const [panoramaCameraOpen, setPanoramaCameraOpen] = useState(false);
+  const [panoramaTileCloseSignal, setPanoramaTileCloseSignal] = useState(0);
+  const panoramaCameraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panoramaPeaksRequestedRef = useRef(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
@@ -3689,6 +3693,7 @@ export default function LiveHike() {
 
         <FeatureTileDeck
           closeLabel={t.close}
+          closeSignal={panoramaTileCloseSignal}
           onTileOpen={(tileId) => {
             if (tileId === "panorama") setPanoramaTileOpen(true);
           }}
@@ -3760,6 +3765,17 @@ export default function LiveHike() {
                     dragPanorama: t.panoramaDrag,
                     elevationAngle: t.panoramaElevationAngle,
                   }}
+                  onCameraOpen={() => {
+                    setPanoramaTileOpen(false);
+                    setPanoramaTileCloseSignal((signal) => signal + 1);
+                    if (panoramaCameraTimerRef.current) {
+                      clearTimeout(panoramaCameraTimerRef.current);
+                    }
+                    panoramaCameraTimerRef.current = setTimeout(() => {
+                      setPanoramaCameraOpen(true);
+                      panoramaCameraTimerRef.current = null;
+                    }, 350);
+                  }}
                    onCaptured={addRecognitionEntry}
                 />
               ),
@@ -3819,6 +3835,36 @@ export default function LiveHike() {
               ),
             },
           ]}
+        />
+
+        <PeakCameraOverlay
+          visible={panoramaCameraOpen}
+          peaks={panoramaPeaks}
+          terrainProfile={terrainProfile}
+          terrainModel={terrainModel}
+          heading={compassHeading}
+          observerElevationM={hasFreshGps ? liveAltitude : null}
+          strings={{
+            title: t.panorama,
+            hint: t.panoramaHint,
+            needCompass: t.panoramaNeedCompass,
+            noGps: t.panoramaNoGps,
+            noPeaks: t.panoramaNoPeaks,
+            detected: t.panoramaDetected,
+            distance: t.panoramaDistance,
+            camera: t.camera,
+            cameraOff: t.cameraOff,
+            capture: t.camera,
+            cameraPermission: t.cameraPermission,
+            arUnavailable: t.arUnavailable,
+            offlineData: t.panoramaOfflineData,
+            onlineData: t.panoramaOnlineData,
+            heightUnknown: t.panoramaHeightUnknown,
+            dragPanorama: t.panoramaDrag,
+            elevationAngle: t.panoramaElevationAngle,
+          }}
+          onClose={() => setPanoramaCameraOpen(false)}
+          onCaptured={addRecognitionEntry}
         />
 
         {/* Live entdeckter Ort in der Naehe (Wikipedia/OSM) */}
