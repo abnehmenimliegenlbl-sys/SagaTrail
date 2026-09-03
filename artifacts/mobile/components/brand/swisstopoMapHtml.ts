@@ -2,7 +2,7 @@ import { LatLng } from "@/types";
 import { buildRouteGradeSegments, type TerrainProfilePoint } from "@/lib/terrainCues";
 
 /** Base64-kodiertes SagaTrail-Pin-Icon (rotes Berg-Symbol, transparent). */
-const SAGA_PIN_B64 =
+export const SAGA_PIN_B64 =
   "iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8" +
   "YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCA1LjEuMTITAUd0" +
   "AAAAuGVYSWZJSSoACAAAAAUAGgEFAAEAAABKAAAAGwEFAAEAAABSAAAAKAEDAAEAAAACAAAAMQECABEA" +

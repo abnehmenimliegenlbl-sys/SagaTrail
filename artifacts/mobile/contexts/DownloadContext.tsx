@@ -354,7 +354,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         failedPhase: Object.entries(phaseStatus).find(([, status]) => status !== "complete")?.[0] as DownloadPhase | undefined,
         routeSnapshot: route,
         sagaSnapshot: saga,
-        offlinePackageVersion: 3,
+        offlinePackageVersion: 4,
         emergencyNumbers: ["1414", "144", "117", "112"],
       };
       await persist({ ...downloads, [saga.id]: record });
@@ -435,8 +435,14 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loadOfflineTiles = useCallback(
-    (sagaId: string) => loadTilesBase64(sagaId),
-    []
+    (sagaId: string) => {
+      // Tile-Dateien aus älteren Paketen stammen noch aus der CARTO-Zeit.
+      // Nicht als swisstopo-Kacheln anzeigen — erst nach einem neuen Download
+      // mit der aktuellen Paketversion wieder aktivieren.
+      if (downloads[sagaId]?.offlinePackageVersion !== 4) return Promise.resolve({});
+      return loadTilesBase64(sagaId);
+    },
+    [downloads]
   );
 
   const loadOfflinePois = useCallback(

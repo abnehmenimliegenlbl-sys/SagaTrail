@@ -4,9 +4,9 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LatLng } from "@/types";
 
 /**
- * Offline-Kartenkacheln (Carto Voyager) fuer eine Wanderung.
+ * Offline-Kartenkacheln (amtliche swisstopo-Pixelkarte) fuer eine Wanderung.
  *
- * Es werden dieselben hellen Carto-Voyager-Basiskacheln (EPSG:3857,
+ * Es werden dieselben amtlichen swisstopo-Pixelkarten-Kacheln (EPSG:3857,
  * Standard-XYZ, kein API-Schluessel) wie in der Live-Kartenansicht
  * heruntergeladen und lokal via expo-file-system abgelegt.
  *
@@ -26,7 +26,7 @@ import { LatLng } from "@/types";
 
 // Feste Subdomain fuer deterministische, cachebare Download-URLs.
 const TILE_URL = (z: number, x: number, y: number) =>
-  `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+  `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/${z}/${x}/${y}.jpeg`;
 
 // Zoomstufen und jeweiliger Radius (in Kacheln) fuer den Startpunkt-Korridor.
 const LEVELS: { zoom: number; radius: number }[] = [
