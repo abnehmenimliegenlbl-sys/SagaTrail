@@ -93,6 +93,12 @@ import {
   sendeAbbiegeMitteilung,
   sendePoiMitteilung,
 } from "@/lib/turnNotifications";
+import {
+  clearWatchStatus,
+  prepareWatchCompanion,
+  sendWatchSos,
+  sendWatchStatus,
+} from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
 import { erkenneGipfel } from "@/lib/panorama";
@@ -528,6 +534,7 @@ export default function LiveHike() {
   const [locationNow, setLocationNow] = useState(() => Date.now());
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
+  const [watchReady, setWatchReady] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
@@ -1597,6 +1604,16 @@ export default function LiveHike() {
     });
     return () => {
       cancelled = true;
+    };
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    prepareWatchCompanion().then((ok) => {
+      if (!cancelled) setWatchReady(ok);
+    });
+    return () => {
+      cancelled = true;
+      void clearWatchStatus();
     };
   }, []);
   useEffect(() => {
