@@ -3,8 +3,9 @@ import {
   ViroARSceneNavigator,
   ViroNode,
   ViroText,
+  isARSupportedOnDevice,
 } from "@reactvision/react-viro";
-import { useMemo, type JSX } from "react";
+import { useEffect, useMemo, useState, type JSX } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
@@ -96,6 +97,39 @@ export function PeakArNavigator({
   observerElevationM,
   onError,
 }: PeakArNavigatorProps) {
+  const [supportState, setSupportState] = useState<
+    "checking" | "supported" | "unsupported"
+  >("checking");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    isARSupportedOnDevice()
+      .then(({ isARSupported }) => {
+        if (cancelled) return;
+        if (isARSupported) {
+          setSupportState("supported");
+        } else {
+          setSupportState("unsupported");
+          onError?.();
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSupportState("unsupported");
+        onError?.();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onError]);
+
+  // Do not create the native Viro surface until ARKit/ARCore has confirmed
+  // that this device can run it. Unsupported devices otherwise fail during
+  // native camera-session creation, before Viro can report onError.
+  if (supportState !== "supported") return null;
+
   return (
     <ViroARSceneNavigator
       style={StyleSheet.absoluteFillObject}
