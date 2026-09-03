@@ -652,6 +652,7 @@ export const GetMyProfileResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean(),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),
@@ -676,7 +677,8 @@ export const SaveMyProfileBody = zod.object({
   "archetype": zod.enum(['reisende', 'hueterin', 'gewitzte', 'senn']),
   "homeCanton": zod.string().min(1).optional(),
   "language": zod.string().min(saveMyProfileBodyLanguageMin),
-  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene'])
+  "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean().optional()
 })
 
 export const saveMyProfileResponsePendingPackRewardsDefault = 0;
@@ -688,6 +690,7 @@ export const SaveMyProfileResponse = zod.object({
   "homeCanton": zod.string().optional(),
   "language": zod.string(),
   "ageTier": zod.enum(['kinder', 'jugendliche', 'erwachsene']),
+  "navAnnouncementsEnabled": zod.boolean(),
   "premium": zod.boolean(),
   "freeHikeUsed": zod.boolean().describe('Ob die einmalige kostenlose Wanderung bereits verbraucht wurde. Solange false, ist genau eine Wanderung (egal welcher Kanton) auch ohne Premium freigeschaltet.'),
   "purchasedPacks": zod.array(zod.string()).describe('Liste der DB-Pack-Slugs, die dieser Nutzer freigeschaltet hat (z.B. \"schwyz\", \"bern_2\"). Autoritaetive Quelle fuer Saga-Pack-Zugang.'),

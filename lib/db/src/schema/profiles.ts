@@ -14,6 +14,7 @@ export const profilesTable = pgTable("profiles", {
   homeCanton: text("home_canton").notNull(),
   language: text("language").notNull(),
   ageTier: text("age_tier").notNull(),
+  navAnnouncementsEnabled: boolean("nav_announcements_enabled").notNull().default(true),
   premium: boolean("premium").notNull().default(false),
   // Befristetes Premium (z. B. manuell freigeschaltet): aktiv solange in der Zukunft.
   premiumBis: timestamp("premium_bis", { withTimezone: true }),

@@ -535,6 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...(serverProfile.homeCanton ? { homeCanton: serverProfile.homeCanton } : {}),
         language: serverProfile.language,
         ageTier: serverProfile.ageTier,
+        navAnnouncementsEnabled: serverProfile.navAnnouncementsEnabled ?? true,
         purchasedPacks: serverProfile.purchasedPacks ?? [],
         ...(serverProfile.subscriptionTier ? { subscriptionTier: serverProfile.subscriptionTier } : {}),
       };
@@ -707,6 +708,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       homeCanton?: string;
       language: string;
       ageTier: string;
+      navAnnouncementsEnabled?: boolean;
       premium: boolean;
       freeHikeUsed: boolean;
       purchasedPacks?: string[];
@@ -725,6 +727,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...(result.homeCanton ? { homeCanton: result.homeCanton } : {}),
         language: result.language,
         ageTier: result.ageTier,
+        navAnnouncementsEnabled:
+          result.navAnnouncementsEnabled ??
+          profileRef.current?.navAnnouncementsEnabled ??
+          true,
         purchasedPacks:
           result.purchasedPacks ?? profileRef.current?.purchasedPacks ?? [],
         ...(result.subscriptionTier ? { subscriptionTier: result.subscriptionTier } : {}),
@@ -753,6 +759,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...(next.homeCanton ? { homeCanton: next.homeCanton } : {}),
           language: next.language,
           ageTier: next.ageTier,
+          ...(next.navAnnouncementsEnabled !== undefined
+            ? { navAnnouncementsEnabled: next.navAnnouncementsEnabled }
+            : {}),
         },
       });
       await applyServerProfile(result);
@@ -771,6 +780,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...(merged.homeCanton ? { homeCanton: merged.homeCanton } : {}),
           language: merged.language,
           ageTier: merged.ageTier,
+          ...(merged.navAnnouncementsEnabled !== undefined
+            ? { navAnnouncementsEnabled: merged.navAnnouncementsEnabled }
+            : {}),
         },
       });
       await applyServerProfile(result);

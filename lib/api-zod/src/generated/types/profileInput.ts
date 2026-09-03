@@ -17,4 +17,5 @@ export interface ProfileInput {
   /** @minLength 2 */
   language: string;
   ageTier: ProfileInputAgeTier;
+  navAnnouncementsEnabled?: boolean;
 }

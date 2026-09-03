@@ -69,6 +69,7 @@ function toProfile(row: typeof profilesTable.$inferSelect) {
     homeCanton: row.homeCanton,
     language: row.language,
     ageTier: row.ageTier,
+    navAnnouncementsEnabled: row.navAnnouncementsEnabled,
     premium: istPremiumAktiv(row),
     freeHikeUsed: row.freeHikeUsed,
     purchasedPacks: row.purchasedPacks ?? [],
@@ -102,7 +103,7 @@ router.put("/me", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { name, archetype, homeCanton, language, ageTier } = parsed.data;
+  const { name, archetype, homeCanton, language, ageTier, navAnnouncementsEnabled } = parsed.data;
 
   const [row] = await db
     .insert(profilesTable)
@@ -113,6 +114,7 @@ router.put("/me", async (req, res): Promise<void> => {
       homeCanton: homeCanton ?? "",
       language,
       ageTier,
+      navAnnouncementsEnabled: navAnnouncementsEnabled ?? true,
     })
     .onConflictDoUpdate({
       target: profilesTable.id,
@@ -122,6 +124,7 @@ router.put("/me", async (req, res): Promise<void> => {
         homeCanton: homeCanton ?? "",
         language,
         ageTier,
+        ...(navAnnouncementsEnabled !== undefined ? { navAnnouncementsEnabled } : {}),
         updatedAt: new Date(),
       },
     })

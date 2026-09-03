@@ -1579,6 +1579,10 @@ components:
         ageTier:
           type: string
           enum: [kinder, jugendliche, erwachsene]
+        navAnnouncementsEnabled:
+          type: boolean
+          description: Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.
+          default: true
         premium:
           type: boolean
         freeHikeUsed:
@@ -1611,6 +1615,7 @@ components:
         - archetype
         - language
         - ageTier
+        - navAnnouncementsEnabled
         - premium
         - freeHikeUsed
         - purchasedPacks
@@ -1633,6 +1638,10 @@ components:
         ageTier:
           type: string
           enum: [kinder, jugendliche, erwachsene]
+        navAnnouncementsEnabled:
+          type: boolean
+          description: Ob automatische Navigationsanweisungen waehrend der Wanderung abgespielt werden.
+          default: true
       required:
         - name
         - archetype
