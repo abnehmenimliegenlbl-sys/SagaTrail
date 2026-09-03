@@ -6,7 +6,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -104,13 +103,16 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
       >
         <View style={styles.modalRoot}>
           <Pressable style={styles.modalBackdrop} onPress={closeModal} />
-          <SafeAreaView
+          <View
             style={[
               styles.modalCard,
-               activeTile?.modalSize === "large" ? styles.modalCardLarge : null,
+              activeTile?.modalSize === "large" ? styles.modalCardLarge : null,
               {
-                marginTop: Math.max(18, insets.top),
-                marginBottom: Math.max(12, insets.bottom),
+                // Transparent Modals do not consistently apply the native
+                // SafeAreaView inset on every iOS version. Keep the header
+                // below the status bar explicitly.
+                marginTop: Math.max(18, insets.top + 12),
+                marginBottom: Math.max(12, insets.bottom + 8),
                 backgroundColor: "transparent",
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
@@ -166,7 +168,7 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
             >
               {activeTile?.content}
             </View>
-          </SafeAreaView>
+          </View>
         </View>
       </Modal>
     </View>
