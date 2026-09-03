@@ -1,6 +1,11 @@
 # EAS Upload Exclusions
 # EAS respects .gitignore automatically; this file adds additional exclusions.
 
+# pnpm workspace dependencies and repository metadata are never needed by EAS.
+node_modules/
+../../node_modules/
+.git/
+
 # TypeScript incremental build cache — not needed by EAS build machines
 .tsbuildinfo
 
