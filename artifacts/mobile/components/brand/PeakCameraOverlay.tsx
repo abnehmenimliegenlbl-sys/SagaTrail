@@ -49,7 +49,11 @@ export function PeakCameraOverlay({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [cameraPermission] = useCameraPermissions();
-  const [arUnavailable, setArUnavailable] = useState(false);
+  // Viro's native AR navigator can terminate the whole process on devices or
+  // development builds where AR tracking is unavailable; React cannot catch
+  // that kind of native crash. Start with the stable camera-only overlay.
+  // The GPS/compass peak markers remain fully available without camera AR.
+  const [arUnavailable, setArUnavailable] = useState(true);
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
