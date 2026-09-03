@@ -61,7 +61,10 @@ export default function RouteSagaSelection() {
       if (index >= SAGEN_PRO_PACK) return true;
       const packSlug = sagaPackSlug(slug, index);
       if ((profile?.purchasedPacks ?? []).includes(packSlug)) return false;
-      return !saga.isAnchorPlace;
+      // `isAnchorPlace` ist ein Orts-/Katalogmerkmal und kein
+      // Freischaltmerkmal. Ohne Kantonspack ist nur die erste Sage des
+      // Kantons als Premium-Vorschau zugänglich.
+      return index !== 0;
     },
     [freeHikeUsed, hikeHistory, isElite, premium, profile, sagas],
   );

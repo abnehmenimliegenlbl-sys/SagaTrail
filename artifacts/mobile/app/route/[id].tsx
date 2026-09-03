@@ -198,7 +198,10 @@ export default function Routenplanung() {
       if (!isInPack1) return true;
       const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
       if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
-      return !s.isAnchorPlace;
+      // `isAnchorPlace` beschreibt die Verankerung am Ort, nicht den
+      // Zugriffsstatus. Ohne gekauftes Kantonspaket ist nur die erste Sage
+      // des Kantons als Premium-Vorschau frei.
+      return sagaIdx !== 0;
     },
     [premium, isElite, freeHikeUsed, profile, sagas, hikeHistory],
   );

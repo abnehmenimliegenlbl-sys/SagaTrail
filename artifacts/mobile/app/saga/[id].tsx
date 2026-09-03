@@ -24,7 +24,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { kantonSlug } from "@/lib/kantonSlug";
+import { SAGEN_PRO_PACK, kantonSlug } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -122,10 +122,16 @@ export default function SagaDetail() {
   // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
   const packSlug = kantonSlug(saga.canton);
   const sagasInCanton = sagas.filter((s) => s.canton === saga.canton);
+  const sagaIndexInCanton = sagasInCanton.findIndex((s) => s.id === saga.id);
   // Pack-Button-Regel: Premium (nicht Elite), Kanton hat >= 8 Sagen, Pack noch nicht gekauft.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
-  const packLocked = premium && !isElite && sagasInCanton.length >= 8 && !dbPackUnlocked;
+  const packLocked =
+    premium &&
+    !isElite &&
+    sagasInCanton.length >= 8 &&
+    sagaIndexInCanton !== 0 &&
+    (!dbPackUnlocked || sagaIndexInCanton >= SAGEN_PRO_PACK);
   // Kaufoption: einziges RC-Produkt KANTONSPACK_PACKAGE im "packs"-Offering.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
     (p) => p.identifier === KANTONSPACK_PACKAGE
