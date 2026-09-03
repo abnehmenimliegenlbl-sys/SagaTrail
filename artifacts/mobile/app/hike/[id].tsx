@@ -178,6 +178,8 @@ const OFF_ROUTE_THRESHOLD_KM = 0.08;
 const OFF_ROUTE_RECOVER_KM = 0.04;
 /** Anzahl aufeinanderfolgender GPS-Fixes, die ueberschritten sein muessen, bevor gewarnt wird. */
 const OFF_ROUTE_CONFIRM_FIXES = 3;
+/** Eigene Statusfarbe fuer ein gueltiges Live-GPS-Signal — nicht mit dem roten Markenakzent vermischen. */
+const GPS_LIVE_COLOR = "#00E676";
 /** Valhalla-Fussweg-Routing (FOSSGIS, kein API-Key noetig). */
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
 /** RDP-Epsilon in Grad (≈ 8 m bei Schweizer Breitengraden). */
@@ -3779,7 +3781,7 @@ export default function LiveHike() {
                 <View
                   style={[
                     styles.gpsTileDot,
-                    { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
+                    { backgroundColor: hasFreshGps ? GPS_LIVE_COLOR : colors.destructive },
                   ]}
                 />
               ),
@@ -4633,7 +4635,6 @@ function GpsLiveCard({
       label: altitudeLabel,
       value: altitude != null ? `${Math.round(altitude)} ${altitudeUnit}` : "—",
     },
-    { label: "Satelliten", value: "—" },
   ];
 
   return (
@@ -4642,7 +4643,7 @@ function GpsLiveCard({
         <View
           style={[
             styles.gpsCardDot,
-            { backgroundColor: hasFreshGps ? colors.accent : colors.destructive },
+            { backgroundColor: hasFreshGps ? GPS_LIVE_COLOR : colors.destructive },
           ]}
         />
         <Text style={[styles.gpsCardTitle, { color: colors.foreground }]}>
@@ -4664,9 +4665,6 @@ function GpsLiveCard({
           {locationHint}
         </Text>
       )}
-      <Text style={[styles.gpsCardHint, { color: colors.mutedForeground }]}>
-        Satellitenzahl wird von der iOS-Location-API nicht bereitgestellt.
-      </Text>
     </View>
   );
 }

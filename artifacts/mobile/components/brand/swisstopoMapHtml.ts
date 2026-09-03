@@ -282,7 +282,7 @@ export function buildSwisstopoHtml(
   /* --- Kartenmarker (unveraendert) --- */
   .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
   .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
-  .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(47,111,237,0.30); }
+  .stt-live  { width: 16px; height: 16px; border-radius: 50%; background: #00E676; border: 2px solid #F5F3EC; box-shadow: 0 0 0 6px rgba(0,230,118,0.30); }
   .stt-seilbahn-station { width: 9px; height: 9px; border-radius: 2px; background: #5B6B78; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(91,107,120,0.25); }
   .stt-poi-tipp     { width: 36px; height: 36px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 3px; box-sizing: border-box; cursor: pointer; }
   .stt-poi          { width: 13px; height: 13px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #cc0000; border: 2px solid #F5F3EC; box-shadow: 0 0 0 3px rgba(204,0,0,0.25); }
