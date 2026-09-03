@@ -4459,7 +4459,7 @@ export default function LiveHike() {
                 label={t.finishHike}
                 variant="secondary"
                 onPress={finishHike}
-                style={[styles.hikeActionButton, { marginTop: 12 }]}
+                style={{ ...styles.hikeActionButton, marginTop: 12 }}
               />
             )}
 
@@ -4468,7 +4468,7 @@ export default function LiveHike() {
                 label={t.finishEarlyButton}
                 variant="secondary"
                 onPress={finishHikeEarly}
-                style={[styles.hikeActionButton, { marginTop: 12 }]}
+                style={{ ...styles.hikeActionButton, marginTop: 12 }}
               />
             )}
           </Animated.View>
