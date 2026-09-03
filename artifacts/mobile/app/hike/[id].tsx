@@ -1328,7 +1328,12 @@ export default function LiveHike() {
     }
     let cancelled = false;
     loadOfflinePanorama(route.id).then((data) => {
-      if (!cancelled) setOfflinePanorama(data);
+      if (!cancelled) {
+        setOfflinePanorama(data);
+        if (data?.terrainProfile && data.terrainProfile.length >= 2) {
+          setTerrainProfile(data.terrainProfile);
+        }
+      }
     });
     return () => {
       cancelled = true;
@@ -3748,6 +3753,7 @@ export default function LiveHike() {
               content: (
                 <PeakPanorama
                   peaks={panoramaPeaks}
+                  terrainProfile={terrainProfile}
                   heading={compassHeading}
                   observerElevationM={hasFreshGps ? liveAltitude : null}
                   hasGps={hasFreshGps}

@@ -21,6 +21,8 @@ import { HikingRoute } from "@/constants/routes";
 import { generateStory } from "@/lib/storyEngine";
 import { effectiveStoryLanguage } from "@/lib/storyContent";
 import { bboxAroundGeometry } from "@/lib/geo";
+import { getApiBaseUrl } from "@/lib/apiConfig";
+import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import {
   deleteTiles,
   downloadTiles,
@@ -63,7 +65,7 @@ const INDEX_KEY = "sagatrail:downloads";
 // Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
 const storyKeyPrefix = "sagatrail:story:v2:";
 const poisKeyPrefix = "sagatrail:pois:v1:";
-const panoramaKeyPrefix = "sagatrail:panorama:v1:";
+const panoramaKeyPrefix = "sagatrail:panorama:v2:";
 
 export interface DownloadRecord {
   sagaId: string;
@@ -135,6 +137,36 @@ function poisKey(routeId: string): string {
 
 function panoramaKey(routeId: string): string {
   return `${panoramaKeyPrefix}${routeId}`;
+}
+
+async function loadTerrainProfileForDownload(
+  geometry: number[][] | null | undefined,
+): Promise<TerrainProfilePoint[] | null> {
+  if (!geometry || geometry.length < 2) return null;
+  const requestGeometry =
+    geometry.length <= 2000
+      ? geometry
+      : geometry.filter(
+          (_, index) =>
+            index === 0 ||
+            index === geometry.length - 1 ||
+            index % Math.ceil(geometry.length / 2000) === 0,
+        );
+  try {
+    const response = await fetch(`${getApiBaseUrl() ?? ""}/api/elevation-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geometry: requestGeometry }),
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { profile?: TerrainProfilePoint[] };
+    const profile = (data.profile ?? []).filter(
+      (point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+    );
+    return profile.length >= 2 ? profile : null;
+  } catch {
+    return null;
+  }
 }
 
 async function readStory(
@@ -242,9 +274,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
             const panoramaPois = await getPois(
               bboxAroundGeometry(route.geometry ?? null, center, 2.0),
             );
-            panoramaDatabase = createOfflinePanoramaDatenbank(panoramaPois);
+            const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
+            panoramaDatabase = createOfflinePanoramaDatenbank(panoramaPois, terrainProfile);
           } catch {
-            panoramaDatabase = createOfflinePanoramaDatenbank(pois);
+            const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
+            panoramaDatabase = createOfflinePanoramaDatenbank(pois, terrainProfile);
           }
           await AsyncStorage.setItem(
             panoramaKey(route.id),

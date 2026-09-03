@@ -19,6 +19,7 @@ import { useAuth } from "@clerk/expo";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
+import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import { persistJournalImage } from "@/lib/journalMedia";
 import { useApp } from "@/contexts/AppContext";
@@ -27,6 +28,8 @@ import { ObjectRecognition, type ObjectRecognitionProps } from "./ObjectRecognit
 import { PeakArNavigator } from "./PeakArNavigator";
 
 const PANORAMA_VIEW_DEGREES = 140;
+const TERRAIN_PREVIEW_WIDTH = 360;
+const TERRAIN_PREVIEW_HEIGHT = 190;
 
 export interface PeakPanoramaStrings {
   title: string;
@@ -50,6 +53,7 @@ export interface PeakPanoramaStrings {
 
 interface PeakPanoramaProps {
   peaks: PanoramaGipfel[];
+  terrainProfile?: readonly TerrainProfilePoint[] | null;
   heading: number | null;
   observerElevationM?: number | null;
   hasGps: boolean;
@@ -64,8 +68,134 @@ interface PeakPanoramaProps {
   recognition?: Omit<ObjectRecognitionProps, "onAnalyzed" | "nearbyContext" | "recognitionContext" | "journalKind">;
 }
 
+function Terrain3DPreview({ profile }: { profile: readonly TerrainProfilePoint[] }) {
+  const colors = useColors();
+  const samples = useMemo(() => {
+    const valid = profile
+      .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM))
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+    if (valid.length <= 24) return valid;
+    const step = (valid.length - 1) / 23;
+    return Array.from({ length: 24 }, (_, index) => valid[Math.round(index * step)]);
+  }, [profile]);
+
+  if (samples.length < 2) return null;
+
+  const minElevation = Math.min(...samples.map((point) => point.altM));
+  const maxElevation = Math.max(...samples.map((point) => point.altM));
+  const elevationRange = Math.max(1, maxElevation - minElevation);
+  const startDistance = samples[0].distanceKm;
+  const endDistance = samples[samples.length - 1].distanceKm;
+  const distanceRange = Math.max(0.01, endDistance - startDistance);
+  const front = samples.map((point) => ({
+    x: 16 + ((point.distanceKm - startDistance) / distanceRange) * 328,
+    y: 147 - ((point.altM - minElevation) / elevationRange) * 92,
+  }));
+  const back = front.map((point) => ({ x: point.x + 28, y: point.y + 23 }));
+  const terrainSurface = [
+    ...front.map((point) => `${point.x},${point.y}`),
+    ...back.slice().reverse().map((point) => `${point.x},${point.y}`),
+  ].join(" ");
+
+  return (
+    <View
+      style={[
+        styles.terrain3dCard,
+        { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
+      ]}
+    >
+      <View style={styles.terrain3dHeader}>
+        <View style={styles.terrain3dTitleRow}>
+          <Feather name="layers" size={14} color={colors.accent} />
+          <Text style={[styles.terrain3dTitle, { color: colors.foreground }]}>3D TERRAIN</Text>
+        </View>
+        <Text style={[styles.terrain3dMeta, { color: colors.mutedForeground }]}>
+          SwissTopo · {Math.round(minElevation)}–{Math.round(maxElevation)} m
+        </Text>
+      </View>
+      <Svg
+        width="100%"
+        height={TERRAIN_PREVIEW_HEIGHT}
+        viewBox={`0 0 ${TERRAIN_PREVIEW_WIDTH} ${TERRAIN_PREVIEW_HEIGHT}`}
+        accessibilityLabel="3D-Terrain-Höhenprofil"
+      >
+        <Rect
+          x="0"
+          y="0"
+          width={TERRAIN_PREVIEW_WIDTH}
+          height={TERRAIN_PREVIEW_HEIGHT}
+          fill={colors.glassBg}
+        />
+        <G opacity={0.28}>
+          {[55, 101, 147].map((y) => (
+            <Line
+              key={y}
+              x1="0"
+              y1={y}
+              x2={TERRAIN_PREVIEW_WIDTH}
+              y2={y}
+              stroke={colors.glassBorder}
+              strokeWidth="1"
+            />
+          ))}
+        </G>
+        <Polygon points={terrainSurface} fill={colors.glassHighlight} opacity={0.72} />
+        {front.slice(0, -1).map((point, index) => {
+          const next = front[index + 1];
+          const nextBack = back[index + 1];
+          const backPoint = back[index];
+          return (
+            <Polygon
+              key={`terrain-segment-${index}`}
+              points={`${point.x},${point.y} ${next.x},${next.y} ${nextBack.x},${nextBack.y} ${backPoint.x},${backPoint.y}`}
+              fill={index % 2 === 0 ? colors.primary : colors.accent}
+              opacity={0.14}
+            />
+          );
+        })}
+        <Line
+          x1={front[0].x}
+          y1={front[0].y}
+          x2={front[front.length - 1].x}
+          y2={front[front.length - 1].y}
+          stroke={colors.primary}
+          strokeWidth="2"
+        />
+        {front.map((point, index) => (
+          <Line
+            key={`terrain-depth-${index}`}
+            x1={point.x}
+            y1={point.y}
+            x2={back[index].x}
+            y2={back[index].y}
+            stroke={colors.accent}
+            strokeOpacity={0.42}
+            strokeWidth="1"
+          />
+        ))}
+        <Line
+          x1={back[0].x}
+          y1={back[0].y}
+          x2={back[back.length - 1].x}
+          y2={back[back.length - 1].y}
+          stroke={colors.accent}
+          strokeOpacity={0.62}
+          strokeWidth="1"
+        />
+        <SvgText x="16" y="178" fill={colors.mutedForeground} fontSize="8">
+          ROUTE
+        </SvgText>
+        <SvgText x="344" y="178" fill={colors.mutedForeground} fontSize="8" textAnchor="end">
+          {endDistance.toFixed(1)} km
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
 export function PeakPanorama({
   peaks,
+  terrainProfile = null,
   heading,
   observerElevationM = null,
   hasGps,
@@ -380,6 +510,10 @@ export function PeakPanorama({
         </View>
       )}
 
+      {terrainProfile && terrainProfile.length >= 2 && (
+        <Terrain3DPreview profile={terrainProfile} />
+      )}
+
       <View
         style={[
           styles.skylineCard,
@@ -484,6 +618,7 @@ export function PeakPanorama({
           ) : (
             <PeakArNavigator
               peaks={visiblePeaks}
+              terrainProfile={terrainProfile}
               onError={() => setArUnavailable(true)}
             />
           )}
@@ -770,6 +905,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
   },
+  terrain3dCard: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  terrain3dHeader: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  terrain3dTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  terrain3dTitle: { fontFamily: fonts.monoBold, fontSize: 9, letterSpacing: 1.2 },
+  terrain3dMeta: { fontFamily: fonts.mono, fontSize: 8, flexShrink: 1, textAlign: "right" },
   peakRail: {
     flexDirection: "row",
     gap: 7,

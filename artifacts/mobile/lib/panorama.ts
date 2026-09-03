@@ -5,6 +5,7 @@
  */
 
 import { bearingDeg, haversineKm } from "@/lib/geo";
+import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LatLng } from "@/types";
 
 const BILDER = {
@@ -76,11 +77,13 @@ export interface OfflinePanoramaDatenbank {
   source: string;
   downloadedAt: number;
   peaks: PanoramaGipfelDatensatz[];
+  /** Optionales SwissTopo-Routenprofil für die lokale 3D-Terrainansicht. */
+  terrainProfile?: TerrainProfilePoint[];
 }
 
-export const PANORAMA_OFFLINE_VERSION = 1;
+export const PANORAMA_OFFLINE_VERSION = 2;
 export const PANORAMA_OFFLINE_SOURCE =
-  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele";
+  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route terrain";
 
 interface GipfelPoi {
   id: string;
@@ -103,6 +106,7 @@ function finiteNumber(value: unknown): number | null {
  */
 export function createOfflinePanoramaDatenbank(
   pois: readonly GipfelPoi[],
+  terrainProfile?: readonly TerrainProfilePoint[] | null,
   downloadedAt: number = Date.now(),
 ): OfflinePanoramaDatenbank {
   const seen = new Set<string>();
@@ -128,11 +132,23 @@ export function createOfflinePanoramaDatenbank(
       elevationM: finiteNumber(poi.elevation ?? poi.elevationM),
     });
   }
+  const validTerrainProfile = (terrainProfile ?? [])
+    .filter(
+      (point) =>
+        Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+    )
+    .map((point) => ({
+      distanceKm: point.distanceKm,
+      altM: point.altM,
+    }));
   return {
     version: PANORAMA_OFFLINE_VERSION,
     source: PANORAMA_OFFLINE_SOURCE,
     downloadedAt,
     peaks,
+    ...(validTerrainProfile.length >= 2
+      ? { terrainProfile: validTerrainProfile }
+      : {}),
   };
 }
 
@@ -145,7 +161,8 @@ export function isOfflinePanoramaDatenbank(
     data.version === PANORAMA_OFFLINE_VERSION &&
     data.source === PANORAMA_OFFLINE_SOURCE &&
     typeof data.downloadedAt === "number" &&
-    Array.isArray(data.peaks)
+    Array.isArray(data.peaks) &&
+    (data.terrainProfile === undefined || Array.isArray(data.terrainProfile))
   );
 }
 
