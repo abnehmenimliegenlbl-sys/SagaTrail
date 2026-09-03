@@ -37,3 +37,9 @@ Commons image discovery can use the reverse-geocoded locality as a search term, 
 **Why:** Google resolves the POI through a large indexed query such as name + locality, while direct Commons API calls are rate-limited and the exact file may not have a geotag.
 
 **How to apply:** Search name plus broad locality, validate locality in Commons metadata, and serialize Wikimedia requests with a small inter-request gap.
+
+The Swiss Overpass mirror `https://overpass.osm.ch/api/interpreter` is reachable from the Replit runtime when the configured proxy and common public mirrors time out. Its node response needs `out body;` (not only `out tags;`) to include `lat`/`lon`.
+
+**Why:** A successful peak query can otherwise still produce no usable records: the mirror returns named nodes without coordinates for `out tags`, which the POI parser correctly discards.
+
+**How to apply:** Keep the Swiss mirror ahead of the slower generic mirrors for Swiss map data, and request body fields whenever node coordinates are required.

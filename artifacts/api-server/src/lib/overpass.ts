@@ -29,6 +29,9 @@ import sacHuettenSeed from "./sacHuettenSeed.json" assert { type: "json" };
 const OVERPASS_PROXY_URL = process.env.OVERPASS_PROXY_URL?.trim() ?? "";
 const OVERPASS_PROXY_TOKEN = process.env.OVERPASS_PROXY_TOKEN?.trim() ?? "";
 const OVERPASS_MIRRORS = [
+  // Schweizer Mirror: aus dem Replit-Netz erreichbar und für den 20-km-
+  // Panorama-Ausschnitt deutlich schneller als die allgemeinen Mirrors.
+  "https://overpass.osm.ch/api/interpreter",
   ...(OVERPASS_PROXY_URL ? [OVERPASS_PROXY_URL] : []),
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
@@ -757,7 +760,9 @@ export async function fetchPeakPois(
   const query = [
     "[out:json][timeout:22];",
     `node["natural"="peak"]["name"]${queryArea};`,
-    "out tags;",
+    // Bei overpass.osm.ch enthält `out tags` bei Nodes keine lat/lon-Felder.
+    // `out body` hält die Antwort weiterhin klein und liefert die Positionen.
+    "out body;",
   ].join("");
   const elements = await runOverpass<OverpassPoiElement>(query, 26_000);
   const result: RawPoi[] = [];

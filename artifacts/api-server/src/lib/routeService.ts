@@ -288,8 +288,64 @@ const poiRefreshInFlight = new Set<string>();
 // Gipfel werden separat gecacht, weil ihre Abfrage einen anderen Radius und
 // einen anderen Lebenszyklus als die normalen Weg-POIs hat.
 const PEAK_TTL_MS = 24 * 60 * 60 * 1000;
-const PEAK_CACHE_MAX = 80;
+const PEAK_CACHE_MAX = 256;
 const peakCache = new Map<string, { at: number; entries: EnrichedPoi[] }>();
+const PEAK_GRID_DEGREES = 0.1;
+const PEAK_QUERY_PADDING_KM = 8;
+const PEAK_FETCH_MAX_CONCURRENT = 2;
+const peakFetchInFlight = new Map<string, Promise<EnrichedPoi[]>>();
+const peakFetchQueue: Array<{
+  task: () => Promise<EnrichedPoi[]>;
+  resolve: (entries: EnrichedPoi[]) => void;
+  reject: (reason: unknown) => void;
+}> = [];
+let peakFetchActive = 0;
+
+function drainPeakFetchQueue(): void {
+  while (peakFetchActive < PEAK_FETCH_MAX_CONCURRENT && peakFetchQueue.length > 0) {
+    const queued = peakFetchQueue.shift()!;
+    peakFetchActive++;
+    queued.task().then(queued.resolve, queued.reject).finally(() => {
+      peakFetchActive--;
+      drainPeakFetchQueue();
+    });
+  }
+}
+
+function schedulePeakFetch(task: () => Promise<EnrichedPoi[]>): Promise<EnrichedPoi[]> {
+  return new Promise((resolve, reject) => {
+    peakFetchQueue.push({ task, resolve, reject });
+    drainPeakFetchQueue();
+  });
+}
+
+function peakCellKey(
+  around: { lat: number; lng: number; radiusKm: number },
+): {
+  key: string;
+  queryCenter: { lat: number; lng: number };
+} {
+  const latCell = Math.floor(around.lat / PEAK_GRID_DEGREES);
+  const lngCell = Math.floor(around.lng / PEAK_GRID_DEGREES);
+  return {
+    key: `cell:${latCell}:${lngCell}:${Math.round(around.radiusKm * 10)}`,
+    queryCenter: {
+      lat: (latCell + 0.5) * PEAK_GRID_DEGREES,
+      lng: (lngCell + 0.5) * PEAK_GRID_DEGREES,
+    },
+  };
+}
+
+function peaksInRequestedRadius(
+  entries: EnrichedPoi[],
+  around: { lat: number; lng: number; radiusKm: number },
+): EnrichedPoi[] {
+  const center = { lat: around.lat, lng: around.lng };
+  const radiusM = around.radiusKm * 1000;
+  return entries.filter((entry) =>
+    haversineM(center, { lat: entry.lat, lng: entry.lng }) <= radiusM,
+  );
+}
 // On-demand-Cache fuer einzelne POI-Anreicherungen.
 const POI_DETAIL_CACHE_MAX = 200;
 const poiDetailCache = new Map<string, { at: number; wiki: WikiSummary | null }>();
@@ -531,20 +587,40 @@ export async function getPeakPois(
   log: Logger,
   around?: { lat: number; lng: number; radiusKm: number },
 ): Promise<EnrichedPoi[]> {
-  const key = around
-    ? `around:${Math.round(around.lat * 1000)},${Math.round(around.lng * 1000)},${Math.round(around.radiusKm * 10)}`
+  const cell = around ? peakCellKey(around) : null;
+  const key = cell
+    ? cell.key
     : `bbox:${bboxCacheKey(bbox)}`;
   const hit = peakCache.get(key);
-  if (hit && Date.now() - hit.at < PEAK_TTL_MS) return hit.entries;
+  if (hit && Date.now() - hit.at < PEAK_TTL_MS) {
+    return around ? peaksInRequestedRadius(hit.entries, around) : hit.entries;
+  }
 
-  const raw = await fetchPeakPois(bbox, log, around);
-  const entries = raw.map((poi) => ({ ...poi, wiki: null }));
+  let pending = peakFetchInFlight.get(key);
+  if (!pending) {
+    const queryAround = cell
+      ? {
+          lat: cell.queryCenter.lat,
+          lng: cell.queryCenter.lng,
+          radiusKm: (around?.radiusKm ?? 20) + PEAK_QUERY_PADDING_KM,
+        }
+      : undefined;
+    pending = schedulePeakFetch(async () => {
+      const raw = await fetchPeakPois(bbox, log, queryAround);
+      return raw.map((poi) => ({ ...poi, wiki: null }));
+    });
+    peakFetchInFlight.set(key, pending);
+    void pending.finally(() => {
+      if (peakFetchInFlight.get(key) === pending) peakFetchInFlight.delete(key);
+    });
+  }
+  const entries = await pending;
   if (peakCache.size >= PEAK_CACHE_MAX) {
     const oldestKey = peakCache.keys().next().value;
     if (oldestKey !== undefined) peakCache.delete(oldestKey);
   }
   peakCache.set(key, { at: Date.now(), entries });
-  return entries;
+  return around ? peaksInRequestedRadius(entries, around) : entries;
 }
 
 /**
