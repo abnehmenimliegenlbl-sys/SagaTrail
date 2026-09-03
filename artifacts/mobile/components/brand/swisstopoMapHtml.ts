@@ -290,8 +290,8 @@ export function buildSwisstopoHtml(
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #10181A; }
   #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #10181A; }
-  .stt-cluster-badge { position: absolute; transform: translate(-50%, -50%); color: #F5F3EC; font-size: 6px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; pointer-events: none; z-index: 10; opacity: .5; }
-  .stt-safety-cluster { width: 17px; height: 17px; border-radius: 50%; background: #B21F2D; border: 1px solid #F5F3EC; box-shadow: 0 0 0 1.5px rgba(178,31,45,.25), 0 1px 4px rgba(0,0,0,.35); color: #F5F3EC; font: 800 6px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .5; }
+  .stt-cluster-badge { position: absolute; transform: translate(-50%, -50%); color: #F5F3EC; font-size: 9px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; pointer-events: none; z-index: 10; opacity: .75; }
+  .stt-safety-cluster { width: 26px; height: 26px; border-radius: 50%; background: #B21F2D; border: 1.5px solid #F5F3EC; box-shadow: 0 0 0 2.25px rgba(178,31,45,.25), 0 1.5px 6px rgba(0,0,0,.35); color: #F5F3EC; font: 800 9px -apple-system,system-ui,sans-serif; display: flex; align-items: center; justify-content: center; opacity: .75; }
   /* --- Kartenmarker (unveraendert) --- */
   .stt-start { width: 16px; height: 16px; border-radius: 50%; background: #DA291C; border: 2px solid #F5F3EC; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
   .stt-ziel  { width: 16px; height: 16px; border-radius: 50%; background: #F5F3EC; border: 3px solid #DA291C; box-shadow: 0 0 0 4px rgba(218,41,28,0.25); }
@@ -734,10 +734,10 @@ ${legendHtml}
         filter: ['has', 'point_count'],
         paint: {
           'circle-color': '#2563A8',
-          'circle-radius': ['step', ['get', 'point_count'], 6.5, 10, 8.5, 30, 10.5],
+          'circle-radius': ['step', ['get', 'point_count'], 9.75, 10, 12.75, 30, 15.75],
           'circle-stroke-color': '#F5F3EC',
-          'circle-stroke-width': 1,
-          'circle-opacity': 0.5
+          'circle-stroke-width': 1.5,
+          'circle-opacity': 0.75
         }
       });
       /* Unsichtbare Click-Target-Schicht fuer unklustrierte POIs.
@@ -848,8 +848,8 @@ ${legendHtml}
       map.addLayer({ id: 'stt-poi-clusters', type: 'circle', source: 'stt-pois',
         filter: ['has', 'point_count'],
         paint: { 'circle-color': '#2563A8',
-          'circle-radius': ['step', ['get', 'point_count'], 6.5, 10, 8.5, 30, 10.5],
-          'circle-stroke-color': '#F5F3EC', 'circle-stroke-width': 1, 'circle-opacity': 0.5 }
+          'circle-radius': ['step', ['get', 'point_count'], 9.75, 10, 12.75, 30, 15.75],
+          'circle-stroke-color': '#F5F3EC', 'circle-stroke-width': 1.5, 'circle-opacity': 0.75 }
       });
       /* Cluster-Anzahl als Text-Layer (Glyphs kommen vom Style) */
       map.addLayer({ id: 'stt-poi-cluster-count', type: 'symbol', source: 'stt-pois',
@@ -857,9 +857,9 @@ ${legendHtml}
         layout: {
           'text-field': ['get', 'point_count_abbreviated'],
           'text-font': ['Noto Sans Regular'],
-          'text-size': 6
+          'text-size': 9
         },
-        paint: { 'text-color': '#F5F3EC', 'text-opacity': 0.5 }
+        paint: { 'text-color': '#F5F3EC', 'text-opacity': 0.75 }
       });
       /* Einzel-POIs als Stecknadel-Symbol — MapLibre blendet sie beim
          Clustern automatisch aus (kein DOM-Marker, kein Render-Loop noetig) */
@@ -1003,10 +1003,10 @@ ${legendHtml}
         filter: ['has', 'point_count'],
         paint: {
           'circle-color': '#B21F2D',
-          'circle-radius': ['step', ['get', 'point_count'], 7.5, 10, 9, 30, 11, 100, 13],
+          'circle-radius': ['step', ['get', 'point_count'], 11.25, 10, 13.5, 30, 16.5, 100, 19.5],
           'circle-stroke-color': '#F5F3EC',
-          'circle-stroke-width': 1,
-          'circle-opacity': 0.5
+          'circle-stroke-width': 1.5,
+          'circle-opacity': 0.75
         }
       });
       map.addLayer({
@@ -1017,10 +1017,10 @@ ${legendHtml}
         layout: {
           'text-field': ['get', 'point_count_abbreviated'],
           'text-font': ['Noto Sans Regular'],
-          'text-size': 6,
+          'text-size': 9,
           'text-allow-overlap': true
         },
-        paint: { 'text-color': '#F5F3EC', 'text-opacity': 0.5 }
+        paint: { 'text-color': '#F5F3EC', 'text-opacity': 0.75 }
       });
       map.addLayer({
         id: 'stt-safety-points',
