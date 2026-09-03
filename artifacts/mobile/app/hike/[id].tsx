@@ -67,7 +67,7 @@ import {
   stopBackgroundLocationTracking,
   subscribeToBackgroundLocation,
 } from "@/lib/backgroundLocation";
-import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, fortschrittAufRoute, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, bearingDeg, compassIndex, decodePolyline6, distanzZuSegmentKm, filterByRouteCorridor, fortschrittAufRoute, haversineKm } from "@/lib/geo";
 import { computeRouteWaypoints, type RouteWaypoint } from "@/lib/routeWaypoints";
 import {
   effectiveStoryLanguage,
@@ -1176,7 +1176,7 @@ export default function LiveHike() {
               }
               return false;
             })
-          : result;
+          : [];
       // Sagenmittelpunkt als synthetischen POI einfügen — nur wenn die
       // Koordinaten als "exakt" klassifiziert sind (99 von 236 Sagen).
       // "ungefaehr"-Koordinaten liegen nur grob im Gemeindegebiet und
@@ -1309,6 +1309,11 @@ export default function LiveHike() {
   useEffect(() => {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
     if (!center) return;
+    const geometry = route?.geometry;
+    if (!geometry || geometry.length < 2) {
+      setWaterSources([]);
+      return;
+    }
     let cancelled = false;
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/api/trinkwasser?lat=${center.lat}&lng=${center.lng}&radius=8000`)
@@ -1318,24 +1323,29 @@ export default function LiveHike() {
         const mapped: MapPoi[] = (data as { osmId: string; lat: number; lng: number; name: string | null }[])
           .filter((w) => w?.osmId)
           .map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng, description: null }));
-        setWaterSources(mapped);
+        setWaterSources(filterByRouteCorridor(mapped, geometry, 0.75));
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Toiletten und Sicherheitsinfrastruktur als sachliche Kartenebene laden.
   // Diese POIs werden absichtlich nicht in den Erzähl-/Wikipedia-Flow gegeben.
   useEffect(() => {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
     if (!center) return;
+    const geometry = route?.geometry;
+    if (!geometry || geometry.length < 2) {
+      setSafetyPois([]);
+      return;
+    }
     let cancelled = false;
     const base = getApiBaseUrl() ?? "";
     fetch(`${base}/api/safety-pois?lat=${center.lat}&lng=${center.lng}&radius=10000`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: unknown) => {
         if (cancelled || !Array.isArray(data)) return;
-        setSafetyPois(data
+         const mapped = data
           .filter((p): p is { osmId: string; category: string; name: string; lat: number; lng: number; description?: string | null; phone?: string | null; openingHours?: string | null } => Boolean(p && typeof p.osmId === "string"))
           .map((p) => ({
             id: p.osmId,
@@ -1344,11 +1354,12 @@ export default function LiveHike() {
             lng: p.lng,
             category: p.category,
             description: [p.description, p.phone ? `Tel. ${p.phone}` : null, p.openingHours].filter(Boolean).join(" · ") || null,
-          })));
+           }));
+         setSafetyPois(filterByRouteCorridor(mapped, geometry, 0.75));
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {

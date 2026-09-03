@@ -61,7 +61,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useRouteStrings } from "@/lib/i18n/screens/route";
 import { useSharedStrings } from "@/lib/i18n/screens/shared";
-import { bboxAroundGeometry, distanzZuSegmentKm, haversineKm } from "@/lib/geo";
+import { bboxAroundGeometry, distanzZuSegmentKm, filterByRouteCorridor, haversineKm } from "@/lib/geo";
 import { sagaLokalisierung, allCantonSagasSorted, SagaWithMeta, SagaProximityCategory } from "@/lib/sagaMatch";
 import { Saga } from "@/types";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
@@ -427,6 +427,10 @@ export default function Routenplanung() {
     if (!route?.coordinates) return;
     let cancelled = false;
     const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) {
+      setSafetyPois([]);
+      return;
+    }
     const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
     const center = midIdx >= 0
       ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
@@ -436,7 +440,7 @@ export default function Routenplanung() {
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: unknown) => {
         if (cancelled || !Array.isArray(data)) return;
-        setSafetyPois(data
+        const mapped = data
           .filter((p): p is { osmId: string; category: string; name: string; lat: number; lng: number; description?: string | null; phone?: string | null; openingHours?: string | null } => Boolean(p && typeof p.osmId === "string"))
           .map((p) => ({
             id: p.osmId,
@@ -445,11 +449,12 @@ export default function Routenplanung() {
             lng: p.lng,
             category: p.category,
             description: [p.description, p.phone ? `Tel. ${p.phone}` : null, p.openingHours].filter(Boolean).join(" · ") || null,
-          })));
+          }));
+        setSafetyPois(filterByRouteCorridor(mapped, geom, 0.75));
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id, effectiveGeom.length]);
+  }, [route?.id, effectiveGeom, route?.geometry]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
   // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
@@ -518,7 +523,7 @@ export default function Routenplanung() {
               }
               return false;
             })
-          : result;
+          : [];
       if (!cancelled) {
         poisVollRef.current = new Map(gefiltert.map((p) => [p.id, p]));
         setPois(gefiltert.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng })));
@@ -616,6 +621,10 @@ export default function Routenplanung() {
     if (!route?.coordinates) return;
     let cancelled = false;
     const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    if (geom.length < 2) {
+      setWaterSources([]);
+      return;
+    }
     const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
     const center = midIdx >= 0
       ? { lat: geom[midIdx][0], lng: geom[midIdx][1] }
@@ -625,12 +634,13 @@ export default function Routenplanung() {
       .then((r) => r.json())
       .then((data: { osmId: string; lat: number; lng: number; name: string | null }[]) => {
         if (!cancelled && Array.isArray(data)) {
-          setWaterSources(data.map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng })));
+          const mapped = data.map((w) => ({ id: w.osmId, name: w.name ?? "Trinkwasser", lat: w.lat, lng: w.lng }));
+          setWaterSources(filterByRouteCorridor(mapped, geom, 0.75));
         }
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id]);
+  }, [route?.id, effectiveGeom, route?.geometry]);
 
   // Parkplaetze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {

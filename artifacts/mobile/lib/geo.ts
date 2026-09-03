@@ -42,6 +42,35 @@ export function distanzZuSegmentKm(p: LatLng, a: LatLng, b: LatLng): number {
 }
 
 /**
+ * Filtert Kartenobjekte auf einen Korridor um die tatsächliche Route.
+ * Ohne Geometrie wird bewusst nichts zurückgegeben: Ein Mittelpunkt-Radius
+ * würde bei langen oder noch nicht geladenen Routen weit entfernte POIs auf
+ * die Karte bringen.
+ */
+export function filterByRouteCorridor<T extends LatLng>(
+  items: readonly T[],
+  geometry: number[][] | null | undefined,
+  maxKm: number,
+): T[] {
+  if (!geometry || geometry.length < 2) return [];
+  return items.filter((item) => {
+    if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) return false;
+    for (let i = 0; i < geometry.length - 1; i++) {
+      if (
+        distanzZuSegmentKm(
+          item,
+          { lat: geometry[i][0], lng: geometry[i][1] },
+          { lat: geometry[i + 1][0], lng: geometry[i + 1][1] },
+        ) <= maxKm
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+/**
  * Projiziert einen Punkt auf die Routen-Geometrie und liefert den
  * Streckenanteil (0..1) bis zur naechstgelegenen Stelle sowie deren
  * Abstand in km. Damit laesst sich der Kapitel-/Story-Fortschritt an die

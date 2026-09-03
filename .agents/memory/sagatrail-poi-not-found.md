@@ -49,3 +49,9 @@ Peak discovery is protected in-process by a spatial grid, in-flight request coal
 **Why:** Memory caches and queues are process-local; multiple instances otherwise repeat the same regional Overpass work even though each instance is individually protected.
 
 **How to apply:** Preserve the 20-km response filtering after any shared-cache lookup, and share both the regional peak payload and the upstream admission control before scaling the API horizontally.
+
+Safety and water layers must be filtered against route geometry on the client before reaching the map; midpoint-radius responses are only fetch envelopes, not display regions. If geometry is unavailable, show no route POIs rather than the unfiltered fallback.
+
+**Why:** A 10-km midpoint query for route 67 returned 1835 safety records, making toilets, shelters, and defibrillators appear across a huge area unrelated to the trail.
+
+**How to apply:** Use a narrow corridor (currently 750 m) for safety/water markers, rerun when geometry arrives or changes, and keep the route POI filter from falling back to the raw result.
