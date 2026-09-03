@@ -93,7 +93,56 @@ export function buildLeafletMapHtml(
   const parkingData = markerData(parkingSpots);
   const safetyData = markerData(safetyPois);
   const sagaData = sagaPin ? json(sagaPin) : "null";
-  const legendData = json(legend);
+  const escapeHtml = (value: string): string =>
+    value.replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[character] ?? character);
+  const legendHtml = legend
+    ? (() => {
+        const row = (symbol: string, text: string) =>
+          `<div class="legend-row"><span class="legend-symbol">${symbol}</span><span>${escapeHtml(text)}</span></div>`;
+        const startFlag =
+          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+        const finishFlag =
+          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>';
+        let rows = "";
+        if (geometry && geometry.length > 1) {
+          rows += row('<span class="legend-line green"></span>', legend.routeFlat);
+          rows += row('<span class="legend-line yellow"></span>', legend.routeGrade10to20);
+          rows += row('<span class="legend-line orange"></span>', legend.routeGrade20to30);
+          rows += row('<span class="legend-line red"></span>', legend.routeGrade30plus);
+          if (altGeometry && altGeometry.length > 1) {
+            rows += row('<span class="legend-line alternate"></span>', legend.altRoute);
+          }
+          rows += row(startFlag, legend.start);
+          rows += row(finishFlag, legend.ziel);
+        } else {
+          rows += row(startFlag, legend.start);
+        }
+        rows += row('<span class="legend-live"></span>', legend.position);
+        if (aerialways && aerialways.length > 0) {
+          rows += row('<span class="legend-line cable"></span>', legend.seilbahn);
+          rows += row('<span class="legend-cable-station"></span>', legend.seilbahnStation);
+        }
+        if (pois && pois.length > 0) {
+          rows += row('<span class="legend-poi"></span>', legend.poi);
+        }
+        if (partners && partners.length > 0) {
+          rows += row('<span class="legend-partner">⌂</span>', legend.partner);
+        }
+        return `<div id="legend" class="collapsed">
+          <button id="legend-toggle" type="button" aria-label="Karteninfo" aria-expanded="false">i</button>
+          <div id="legend-panel">
+            <div class="legend-title">${escapeHtml(legend.title)}</div>
+            <div class="legend-content">${rows}</div>
+          </div>
+        </div>`;
+      })()
+    : "";
 
   return `<!doctype html>
 <html lang="de">
@@ -144,9 +193,26 @@ export function buildLeafletMapHtml(
     .safety { background: #B21F2D; }
     .saga-tipp { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background: rgba(255,255,255,.6); border-radius: 20px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
-    #legend { position: absolute; bottom: 8px; left: 8px; z-index: 1000; max-width: 78%; padding: 7px 9px; border-radius: 9px; background: rgba(16,24,26,.88); color: #f5f3ec; font-size: 11px; line-height: 1.35; }
-    #legend strong { color: #DA291C; }
-    #legend.hidden { display: none; }
+    #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
+    #legend-toggle { width: 28px; height: 28px; padding: 0; border: 1px solid rgba(245,243,236,.7); border-radius: 50%; background: rgba(16,24,26,.9); color: #F5F3EC; font: italic 700 17px Georgia,serif; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+    #legend-toggle:active { background: #DA291C; }
+    #legend-panel { display: none; width: max-content; max-width: min(300px, 78vw); margin-bottom: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(16,24,26,.9); box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+    #legend.expanded #legend-panel { display: block; }
+    #legend.expanded #legend-toggle { background: #DA291C; }
+    .legend-title { margin-bottom: 4px; color: #DA291C; font-weight: 700; }
+    .legend-row { display: flex; align-items: center; gap: 8px; min-height: 20px; white-space: normal; }
+    .legend-symbol { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; }
+    .legend-line { display: block; width: 18px; height: 4px; border-radius: 2px; }
+    .legend-line.green { background: #20D466; }
+    .legend-line.yellow { background: #FFD000; }
+    .legend-line.orange { background: #FF8500; }
+    .legend-line.red { background: #FF3030; }
+    .legend-line.alternate { height: 3px; background: repeating-linear-gradient(90deg,#2EC4B6 0 5px,transparent 5px 8px); }
+    .legend-line.cable { height: 0; border-top: 2px dashed #5B6B78; }
+    .legend-live { width: 11px; height: 11px; border-radius: 50%; background: #2F6FED; border: 2px solid #F5F3EC; box-sizing: border-box; }
+    .legend-poi { width: 11px; height: 11px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #6B7EA8; border: 1px solid #F5F3EC; box-sizing: border-box; }
+    .legend-partner { width: 16px; height: 16px; border-radius: 5px; background: #fff; color: #cc0000; text-align: center; line-height: 16px; font-weight: 700; }
+    .legend-cable-station { width: 8px; height: 8px; border-radius: 2px; background: #5B6B78; border: 1px solid #F5F3EC; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -161,10 +227,19 @@ export function buildLeafletMapHtml(
       <button id="btn-sat">Sat</button>
     </div>
   </div>
-  ${legend ? `<div id="legend"><strong>${json(legend.title).slice(1, -1)}</strong>${geometry && geometry.length > 1 ? `<br><span style="color:#20D466">━</span> ${json(legend.routeFlat).slice(1, -1)} · <span style="color:#FFD000">━</span> ${json(legend.routeGrade10to20).slice(1, -1)} · <span style="color:#FF8500">━</span> ${json(legend.routeGrade20to30).slice(1, -1)} · <span style="color:#FF3030">━</span> ${json(legend.routeGrade30plus).slice(1, -1)}` : ""}<br>● ${json(legend.position).slice(1, -1)}</div>` : ""}
+  ${legendHtml}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
   (function () {
+    var legend = document.getElementById("legend");
+    var legendToggle = document.getElementById("legend-toggle");
+    if (legend && legendToggle) {
+      legendToggle.onclick = function () {
+        var expanded = legend.classList.toggle("expanded");
+        legend.classList.toggle("collapsed", !expanded);
+        legendToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      };
+    }
     var center = [${safeCenter.lat}, ${safeCenter.lng}];
     var route = ${route};
     var routeGrades = ${routeGrades};
