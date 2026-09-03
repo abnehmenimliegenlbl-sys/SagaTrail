@@ -7,4 +7,4 @@ SagaTrail's Expo 54 / React Native 0.81 stack should use `@reactvision/react-vir
 
 **Why:** Viro's ARKit/ARCore module is native and cannot run in Expo Go. The current app also has several native integrations, so an Expo SDK upgrade would widen the build risk without being required for the first AR implementation.
 
-**How to apply:** Keep the Viro config plugin enabled with New Architecture and validate AR on iOS/Android Development or EAS builds. Treat web and Expo Go as non-native fallbacks only.
+**How to apply:** Keep the Viro config plugin enabled with New Architecture and validate AR on iOS/Android Development or EAS builds. Treat web and Expo Go as non-native fallbacks only. The user-facing peak camera should start with expo-camera's stable camera-only overlay; do not mount Viro automatically because a native AR initialization failure can terminate the app before JavaScript receives `onError`.
