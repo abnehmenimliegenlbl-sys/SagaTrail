@@ -37,6 +37,28 @@ interface ElevationProfilePoint {
   altM: number;
 }
 
+export interface LocalTerrainSample {
+  distanceM: number;
+  elevationM: number;
+}
+
+export interface LocalTerrainRay {
+  bearingDeg: number;
+  samples: LocalTerrainSample[];
+}
+
+export interface LocalTerrainModel {
+  version: 1;
+  source: "SwissTopo DTM radial profiles";
+  center: LatLng;
+  radiusM: number;
+  sectors: number;
+  rings: number;
+  fetchedAt: number;
+  observerElevationM: number | null;
+  rays: LocalTerrainRay[];
+}
+
 function isRetryableHttpStatus(status: number): boolean {
   return (
     status === 408 ||
@@ -90,6 +112,47 @@ function routeCumulativeDistancesKm(points: LatLng[]): number[] {
     distances.push(distances[i - 1] + haversineM(points[i - 1], points[i]) / 1000);
   }
   return distances;
+}
+
+function destinationPoint(center: LatLng, bearingDeg: number, distanceM: number): LatLng {
+  const angularDistance = distanceM / 6_371_000;
+  const bearing = (bearingDeg * Math.PI) / 180;
+  const latitude = (center.lat * Math.PI) / 180;
+  const longitude = (center.lng * Math.PI) / 180;
+  const destinationLatitude = Math.asin(
+    Math.sin(latitude) * Math.cos(angularDistance) +
+      Math.cos(latitude) * Math.sin(angularDistance) * Math.cos(bearing),
+  );
+  const destinationLongitude =
+    longitude +
+    Math.atan2(
+      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latitude),
+      Math.cos(angularDistance) - Math.sin(latitude) * Math.sin(destinationLatitude),
+    );
+  return {
+    lat: (destinationLatitude * 180) / Math.PI,
+    lng: (destinationLongitude * 180) / Math.PI,
+  };
+}
+
+function interpolateElevation(
+  profile: ElevationProfilePoint[],
+  distanceKm: number,
+): number | null {
+  if (profile.length === 0) return null;
+  if (distanceKm <= profile[0].distanceKm) return profile[0].altM;
+  const last = profile[profile.length - 1];
+  if (distanceKm >= last.distanceKm) return last.altM;
+  for (let index = 1; index < profile.length; index++) {
+    const previous = profile[index - 1];
+    const current = profile[index];
+    if (distanceKm > current.distanceKm) continue;
+    const span = current.distanceKm - previous.distanceKm;
+    if (span <= 0) return current.altM;
+    const fraction = (distanceKm - previous.distanceKm) / span;
+    return previous.altM + (current.altM - previous.altM) * fraction;
+  }
+  return null;
 }
 
 async function fetchSwisstopoChunk(
@@ -253,6 +316,68 @@ export async function computeElevationProfile(
   if (points.length < 2) return null;
   const reduced = downsample(points, MAX_INPUT_POINTS);
   return fetchSwisstopoProfile(reduced, log);
+}
+
+/**
+ * Erzeugt ein lokales, observer-zentriertes Terrainmodell aus radialen
+ * SwissTopo-Profilen. Es werden keine Höhen interpoliert, die ausserhalb der
+ * gelieferten Profilgrenzen liegen; die Interpolation erfolgt nur zwischen
+ * tatsächlichen SwissTopo-Messpunkten auf demselben Strahl.
+ */
+export async function computeLocalTerrainModel(
+  center: LatLng,
+  log: Logger,
+  options: { radiusM?: number; sectors?: number; rings?: number } = {},
+): Promise<LocalTerrainModel | null> {
+  const radiusM = Math.max(100, Math.min(1000, options.radiusM ?? 500));
+  const sectors = Math.max(8, Math.min(16, Math.round(options.sectors ?? 12)));
+  const rings = Math.max(4, Math.min(8, Math.round(options.rings ?? 6)));
+  const ringDistancesM = Array.from({ length: rings }, (_, index) => {
+    if (index === 0) return 0;
+    const progress = index / (rings - 1);
+    return Math.round(radiusM * progress ** 1.15);
+  });
+
+  const rayResults = await Promise.all(
+    Array.from({ length: sectors }, async (_, sectorIndex) => {
+      const bearingDeg = (sectorIndex * 360) / sectors;
+      const points = ringDistancesM.map((distanceM) =>
+        destinationPoint(center, bearingDeg, distanceM),
+      );
+      const profile = await computeElevationProfile(points, log);
+      if (!profile || profile.length < 2) return null;
+      const samples = ringDistancesM
+        .map((distanceM) => {
+          const elevationM = interpolateElevation(profile, distanceM / 1000);
+          return elevationM == null ? null : { distanceM, elevationM };
+        })
+        .filter((sample): sample is LocalTerrainSample => sample !== null);
+      return samples.length >= 2 ? { bearingDeg, samples } : null;
+    }),
+  );
+  const rays = rayResults.filter((ray): ray is LocalTerrainRay => ray !== null);
+  if (rays.length < Math.max(4, Math.floor(sectors / 2))) return null;
+
+  const observerElevations = rays
+    .map((ray) => ray.samples.find((sample) => sample.distanceM === 0)?.elevationM ?? null)
+    .filter((elevation): elevation is number => elevation != null && Number.isFinite(elevation))
+    .sort((a, b) => a - b);
+  const observerElevationM =
+    observerElevations.length === 0
+      ? null
+      : observerElevations[Math.floor(observerElevations.length / 2)];
+
+  return {
+    version: 1,
+    source: "SwissTopo DTM radial profiles",
+    center,
+    radiusM,
+    sectors,
+    rings,
+    fetchedAt: Date.now(),
+    observerElevationM,
+    rays,
+  };
 }
 
 /** Aufstieg + maximale Hoehe einer Route, oder null bei Fehler/leerem Profil. */

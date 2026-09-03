@@ -6,6 +6,8 @@
 
 import { bearingDeg, haversineKm } from "@/lib/geo";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
+import type { LocalTerrainModel } from "@/lib/terrainModel";
+import { isLocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng } from "@/types";
 
 const BILDER = {
@@ -79,11 +81,13 @@ export interface OfflinePanoramaDatenbank {
   peaks: PanoramaGipfelDatensatz[];
   /** Optionales SwissTopo-Routenprofil für die lokale 3D-Terrainansicht. */
   terrainProfile?: TerrainProfilePoint[];
+  /** Observer-zentriertes SwissTopo-Modell für AR-Ausrichtung und Verdeckung. */
+  terrainModel?: LocalTerrainModel;
 }
 
-export const PANORAMA_OFFLINE_VERSION = 2;
+export const PANORAMA_OFFLINE_VERSION = 3;
 export const PANORAMA_OFFLINE_SOURCE =
-  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route terrain";
+  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain";
 
 interface GipfelPoi {
   id: string;
@@ -107,6 +111,7 @@ function finiteNumber(value: unknown): number | null {
 export function createOfflinePanoramaDatenbank(
   pois: readonly GipfelPoi[],
   terrainProfile?: readonly TerrainProfilePoint[] | null,
+  terrainModel?: LocalTerrainModel | null,
   downloadedAt: number = Date.now(),
 ): OfflinePanoramaDatenbank {
   const seen = new Set<string>();
@@ -149,6 +154,9 @@ export function createOfflinePanoramaDatenbank(
     ...(validTerrainProfile.length >= 2
       ? { terrainProfile: validTerrainProfile }
       : {}),
+    ...(terrainModel && isLocalTerrainModel(terrainModel)
+      ? { terrainModel }
+      : {}),
   };
 }
 
@@ -162,7 +170,8 @@ export function isOfflinePanoramaDatenbank(
     data.source === PANORAMA_OFFLINE_SOURCE &&
     typeof data.downloadedAt === "number" &&
     Array.isArray(data.peaks) &&
-    (data.terrainProfile === undefined || Array.isArray(data.terrainProfile))
+    (data.terrainProfile === undefined || Array.isArray(data.terrainProfile)) &&
+    (data.terrainModel === undefined || isLocalTerrainModel(data.terrainModel))
   );
 }
 

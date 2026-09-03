@@ -79,6 +79,7 @@ import {
   type WetterKlasse,
 } from "@/lib/storyContent";
 import type { OfflinePanoramaDatenbank } from "@/lib/panorama";
+import { isLocalTerrainModel, type LocalTerrainModel } from "@/lib/terrainModel";
 import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
 import { getTurnAudio } from "@/lib/turnAudio";
 import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
@@ -544,6 +545,7 @@ export default function LiveHike() {
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [watchReady, setWatchReady] = useState<boolean | null>(null);
   const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
+  const [terrainModel, setTerrainModel] = useState<LocalTerrainModel | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
   const [offlinePanorama, setOfflinePanorama] = useState<OfflinePanoramaDatenbank | null>(null);
@@ -688,6 +690,11 @@ export default function LiveHike() {
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
   // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
   const ackAudioUriRef = useRef<string | null>(null);
+  const terrainModelRequestRef = useRef<{
+    lat: number;
+    lng: number;
+    requestedAt: number;
+  } | null>(null);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -791,6 +798,52 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [route?.id, route?.geometry]);
+
+  // Lokales Terrainmodell observer-zentriert nachladen. Ein Modell bleibt für
+  // kurze GPS-Strecken bestehen; erst nach 120 m oder zwei Minuten wird neu
+  // gefragt. So erhält die AR-Ansicht reale lokale Daten ohne einen Request pro
+  // GPS-Fix zu erzeugen.
+  useEffect(() => {
+    if (!hasFreshGps || !livePos) return;
+    const previous = terrainModelRequestRef.current;
+    if (
+      previous &&
+      Date.now() - previous.requestedAt < 120_000 &&
+      haversineKm(previous, livePos) < 0.12
+    ) {
+      return;
+    }
+    const requestPosition = { lat: livePos.lat, lng: livePos.lng };
+    terrainModelRequestRef.current = {
+      ...requestPosition,
+      requestedAt: Date.now(),
+    };
+    let cancelled = false;
+    fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        center: requestPosition,
+        radiusM: 500,
+        sectors: 16,
+        rings: 7,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Lokales Terrain nicht verfügbar");
+        return response.json() as Promise<unknown>;
+      })
+      .then((data) => {
+        if (!cancelled && isLocalTerrainModel(data)) setTerrainModel(data);
+      })
+      .catch(() => {
+        // Offline-Fallback bleibt erhalten; ohne gültiges Modell wird nichts
+        // verdeckt und die Gipfel bleiben sichtbar.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasFreshGps, livePos?.lat, livePos?.lng]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
   // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
@@ -1322,6 +1375,7 @@ export default function LiveHike() {
   // Die Gipfeldatenbank ist separat vom historischen POI-Cache versioniert.
   // So bleibt das Panorama auch dann nachvollziehbar, wenn andere POIs fehlen.
   useEffect(() => {
+    setTerrainModel(null);
     if (!route?.id || !saga || !isDownloaded(saga.id)) {
       setOfflinePanorama(null);
       return;
@@ -1330,6 +1384,7 @@ export default function LiveHike() {
     loadOfflinePanorama(route.id).then((data) => {
       if (!cancelled) {
         setOfflinePanorama(data);
+        if (data?.terrainModel) setTerrainModel(data.terrainModel);
         if (data?.terrainProfile && data.terrainProfile.length >= 2) {
           setTerrainProfile(data.terrainProfile);
         }
@@ -3754,6 +3809,7 @@ export default function LiveHike() {
                 <PeakPanorama
                   peaks={panoramaPeaks}
                   terrainProfile={terrainProfile}
+                  terrainModel={terrainModel}
                   heading={compassHeading}
                   observerElevationM={hasFreshGps ? liveAltitude : null}
                   hasGps={hasFreshGps}

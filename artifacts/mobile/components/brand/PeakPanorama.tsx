@@ -20,6 +20,7 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
+import type { LocalTerrainModel } from "@/lib/terrainModel";
 import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import { persistJournalImage } from "@/lib/journalMedia";
 import { useApp } from "@/contexts/AppContext";
@@ -54,6 +55,7 @@ export interface PeakPanoramaStrings {
 interface PeakPanoramaProps {
   peaks: PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
+  terrainModel?: LocalTerrainModel | null;
   heading: number | null;
   observerElevationM?: number | null;
   hasGps: boolean;
@@ -196,6 +198,7 @@ function Terrain3DPreview({ profile }: { profile: readonly TerrainProfilePoint[]
 export function PeakPanorama({
   peaks,
   terrainProfile = null,
+  terrainModel = null,
   heading,
   observerElevationM = null,
   hasGps,
@@ -619,6 +622,9 @@ export function PeakPanorama({
             <PeakArNavigator
               peaks={visiblePeaks}
               terrainProfile={terrainProfile}
+              terrainModel={terrainModel}
+              heading={heading}
+              observerElevationM={observerElevationM}
               onError={() => setArUnavailable(true)}
             />
           )}

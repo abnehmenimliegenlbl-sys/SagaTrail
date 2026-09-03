@@ -539,6 +539,7 @@ export async function getPoiDetail(
     kind: params.kind,
     lat: params.lat,
     lng: params.lng,
+    elevation: null,
     wikipediaTag: params.wikipediaTag ?? null,
     wikidataTag: params.wikidataTag ?? null,
     osmContext: null,

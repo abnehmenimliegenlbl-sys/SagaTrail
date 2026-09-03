@@ -35,6 +35,10 @@ import {
   type OfflinePanoramaDatenbank,
 } from "@/lib/panorama";
 import {
+  isLocalTerrainModel,
+  type LocalTerrainModel,
+} from "@/lib/terrainModel";
+import {
   downloadChapterAudio,
   deleteNarrationAudio,
 } from "@/lib/narrationAudio";
@@ -65,7 +69,7 @@ const INDEX_KEY = "sagatrail:downloads";
 // Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
 const storyKeyPrefix = "sagatrail:story:v2:";
 const poisKeyPrefix = "sagatrail:pois:v1:";
-const panoramaKeyPrefix = "sagatrail:panorama:v2:";
+const panoramaKeyPrefix = "sagatrail:panorama:v3:";
 
 export interface DownloadRecord {
   sagaId: string;
@@ -169,6 +173,24 @@ async function loadTerrainProfileForDownload(
   }
 }
 
+async function loadLocalTerrainModelForDownload(
+  center: { lat: number; lng: number } | null | undefined,
+): Promise<LocalTerrainModel | null> {
+  if (!center) return null;
+  try {
+    const response = await fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ center, radiusM: 500, sectors: 16, rings: 7 }),
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as unknown;
+    return isLocalTerrainModel(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 async function readStory(
   sagaId: string,
   profile: Profile
@@ -267,6 +289,8 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           const bbox = bboxAroundGeometry(route.geometry ?? null, center, 0.5);
           setProgress({ sagaId: saga.id, phase: "pois", done: 0, total: 1 });
           const pois = await getPois(bbox);
+          const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
+          const terrainModel = await loadLocalTerrainModelForDownload(center);
           // Das Panorama braucht einen größeren Radius als historische
           // Weg-POIs. Die zweite Abfrage bleibt vom Detail-Preload getrennt;
           // fällt sie aus, bleibt zumindest der kleinere POI-Bestand nutzbar.
@@ -274,11 +298,17 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
             const panoramaPois = await getPois(
               bboxAroundGeometry(route.geometry ?? null, center, 2.0),
             );
-            const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
-            panoramaDatabase = createOfflinePanoramaDatenbank(panoramaPois, terrainProfile);
+            panoramaDatabase = createOfflinePanoramaDatenbank(
+              panoramaPois,
+              terrainProfile,
+              terrainModel,
+            );
           } catch {
-            const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
-            panoramaDatabase = createOfflinePanoramaDatenbank(pois, terrainProfile);
+            panoramaDatabase = createOfflinePanoramaDatenbank(
+              pois,
+              terrainProfile,
+              terrainModel,
+            );
           }
           await AsyncStorage.setItem(
             panoramaKey(route.id),

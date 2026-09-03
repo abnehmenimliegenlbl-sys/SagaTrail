@@ -116,3 +116,4 @@
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
 - [Watch companion](sagatrail-watch-companion.md) — native notification mirroring covers direction, distance and SOS; heart rate stays unavailable until a real health bridge exists.
 - [Offline peak database](sagatrail-offline-peak-database.md) — versioned OSM peak data powers honest offline panorama angles; missing heights stay unknown, never simulated.
+- [Local terrain AR](sagatrail-local-terrain-ar.md) — observer-centered SwissTopo terrain is live-refreshed with throttling; offline downloads keep one route-start model and never hide peaks without evidence.
