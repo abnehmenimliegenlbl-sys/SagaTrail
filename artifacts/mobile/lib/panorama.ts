@@ -85,9 +85,10 @@ export interface OfflinePanoramaDatenbank {
   terrainModel?: LocalTerrainModel;
 }
 
-export const PANORAMA_OFFLINE_VERSION = 3;
+export const PANORAMA_ROUTE_CORRIDOR_KM = 20;
+export const PANORAMA_OFFLINE_VERSION = 4;
 export const PANORAMA_OFFLINE_SOURCE =
-  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain";
+  "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain; 20 km route corridor";
 
 interface GipfelPoi {
   id: string;

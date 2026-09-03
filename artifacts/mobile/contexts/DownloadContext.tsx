@@ -32,6 +32,7 @@ import {
 import {
   createOfflinePanoramaDatenbank,
   isOfflinePanoramaDatenbank,
+  PANORAMA_ROUTE_CORRIDOR_KM,
   type OfflinePanoramaDatenbank,
 } from "@/lib/panorama";
 import {
@@ -291,12 +292,16 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           const pois = await getPois(bbox);
           const terrainProfile = await loadTerrainProfileForDownload(route.geometry);
           const terrainModel = await loadLocalTerrainModelForDownload(center);
-          // Das Panorama braucht einen größeren Radius als historische
+          // Das Panorama braucht einen größeren Korridor als historische
           // Weg-POIs. Die zweite Abfrage bleibt vom Detail-Preload getrennt;
           // fällt sie aus, bleibt zumindest der kleinere POI-Bestand nutzbar.
           try {
             const panoramaPois = await getPois(
-              bboxAroundGeometry(route.geometry ?? null, center, 2.0),
+              bboxAroundGeometry(
+                route.geometry ?? null,
+                center,
+                PANORAMA_ROUTE_CORRIDOR_KM,
+              ),
             );
             panoramaDatabase = createOfflinePanoramaDatenbank(
               panoramaPois,

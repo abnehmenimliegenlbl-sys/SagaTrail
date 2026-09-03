@@ -100,7 +100,7 @@ import {
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
-import { erkenneGipfel } from "@/lib/panorama";
+import { erkenneGipfel, PANORAMA_ROUTE_CORRIDOR_KM } from "@/lib/panorama";
 import * as ImagePicker from "expo-image-picker";
 import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
@@ -1126,14 +1126,11 @@ export default function LiveHike() {
     const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
     if (!center) return;
     let cancelled = false;
-    // Enger Rand (0.5 km statt 3 km): behalten werden ohnehin nur POIs im
-    // 300-m-Korridor, und eine grosse Box macht die Overpass-Abfrage in
-    // dichten Staedten (z. B. Basel) so teuer, dass sie in ein Timeout laeuft.
-    // 2 km Rand damit alpine Gipfel/Pässe auch dann gefetcht werden wenn sie
-    // etwas abseits der Route liegen.
-    const bbox = bboxAroundGeometry(route?.geometry, center, 2.0);
+    // Der Gipfelkorridor entspricht der maximalen Erkennungsdistanz. Andere
+    // POI-Typen werden danach weiterhin mit ihren engeren Korridoren gefiltert.
+    const bbox = bboxAroundGeometry(route?.geometry, center, PANORAMA_ROUTE_CORRIDOR_KM);
     // Gipfel, Pässe, Gletscher, Schluchten und geologische Merkmale dürfen
-    // bis 2 km vom Routenverlauf entfernt sein.
+    // bis 20 km vom Routenverlauf entfernt sein.
     // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
     // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
     const ALPINE_KINDS = new Set([
@@ -1147,7 +1144,7 @@ export default function LiveHike() {
       "historic=roman_building", "historic=battlefield",
     ]);
     const korridorKm = (kind: string): number => {
-      if (ALPINE_KINDS.has(kind)) return 2.0;
+      if (ALPINE_KINDS.has(kind)) return PANORAMA_ROUTE_CORRIDOR_KM;
       if (RUIN_KINDS.has(kind)) return 1.0;
       return 0.5;
     };
