@@ -4,11 +4,11 @@ import * as FileSystem from "expo-file-system/legacy";
 import { LatLng } from "@/types";
 
 /**
- * Offline-Kartenkacheln (amtliche swisstopo-Pixelkarte) fuer eine Wanderung.
+ * Offline-Kartenkacheln (OpenTopoMap) fuer eine Wanderung.
  *
- * Es werden dieselben amtlichen swisstopo-Pixelkarten-Kacheln (EPSG:3857,
- * Standard-XYZ, kein API-Schluessel) wie in der Live-Kartenansicht
- * heruntergeladen und lokal via expo-file-system abgelegt.
+ * Es werden dieselben OpenTopoMap-Kacheln (Standard-XYZ, kein API-Schluessel)
+ * wie in der Live-Kartenansicht heruntergeladen und lokal via expo-file-system
+ * abgelegt.
  *
  * Zwei Download-Modi:
  * - downloadTiles(sagaId, center): klassischer Startpunkt-Korridor (einzelner
@@ -26,7 +26,7 @@ import { LatLng } from "@/types";
 
 // Feste Subdomain fuer deterministische, cachebare Download-URLs.
 const TILE_URL = (z: number, x: number, y: number) =>
-  `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/${z}/${x}/${y}.jpeg`;
+  `https://a.tile.opentopomap.org/${z}/${x}/${y}.png`;
 
 // Zoomstufen und jeweiliger Radius (in Kacheln) fuer den Startpunkt-Korridor.
 const LEVELS: { zoom: number; radius: number }[] = [

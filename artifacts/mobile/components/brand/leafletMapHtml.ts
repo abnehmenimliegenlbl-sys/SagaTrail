@@ -283,10 +283,10 @@ export function buildLeafletMapHtml(
       if (item.phone) text += "\\nTel. " + item.phone;
       return text;
     }
-    var topoUrl = "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
+    var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
     var carto = L.tileLayer(topoUrl, {
-      maxZoom: 19, tileSize: 256,
-      attribution: '&copy; <a href="https://www.swisstopo.admin.ch">swisstopo</a>'
+      subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, tileSize: 256,
+      attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
@@ -300,7 +300,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-      active = new offlineLayer(topoUrl, { maxZoom: 19, attribution: "Offline + swisstopo" }).addTo(map);
+      active = new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" }).addTo(map);
     }
     var is3d = false;
     var isSat = false;
