@@ -22,6 +22,7 @@ export interface FeatureTile {
   title: string;
   icon: React.ComponentProps<typeof Feather>["name"];
   content: React.ReactNode;
+  preview?: React.ReactNode;
   modalSize?: "large";
 }
 
@@ -73,15 +74,18 @@ export function FeatureTileDeck({ tiles, closeLabel = "Schliessen" }: Props) {
                 size={19}
                 color={selected ? colors.primary : colors.mutedForeground}
               />
-              <Text
-                numberOfLines={2}
-                style={[
-                  styles.tileTitle,
-                  { color: selected ? colors.primary : colors.foreground },
-                ]}
-              >
-                {tile.title}
-              </Text>
+              <View style={styles.tileText}>
+                <Text
+                  numberOfLines={2}
+                  style={[
+                    styles.tileTitle,
+                    { color: selected ? colors.primary : colors.foreground },
+                  ]}
+                >
+                  {tile.title}
+                </Text>
+                {tile.preview}
+              </View>
               <Feather
                 name={selected ? "chevron-up" : "chevron-down"}
                 size={14}
@@ -182,6 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 5,
   },
+  tileText: { alignItems: "center", justifyContent: "center", minWidth: 0, flex: 1 },
   tileTitle: {
     fontFamily: fonts.monoBold,
     fontSize: 10,

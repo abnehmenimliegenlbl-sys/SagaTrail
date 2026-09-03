@@ -3805,6 +3805,30 @@ export default function LiveHike() {
                 />
               ),
             },
+            ...(Platform.OS !== "web"
+              ? [{
+                  id: "watch",
+                  title: "WATCH",
+                  icon: "watch" as const,
+                  modalSize: "large" as const,
+                  preview: (
+                    <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
+                      Puls —
+                    </Text>
+                  ),
+                  content: (
+                    <WatchCompanionCard
+                      ready={watchReady}
+                      direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
+                      remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
+                      heartRateBpm={null}
+                      onEnable={() => {
+                        void prepareWatchCompanion().then(setWatchReady);
+                      }}
+                    />
+                  ),
+                }]
+              : []),
           ]}
         />
 
@@ -3905,18 +3929,6 @@ export default function LiveHike() {
           )}
 
         </Glass>
-
-        {Platform.OS !== "web" && (
-          <WatchCompanionCard
-            ready={watchReady}
-            direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
-            remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
-            heartRateBpm={null}
-            onEnable={() => {
-              void prepareWatchCompanion().then(setWatchReady);
-            }}
-          />
-        )}
 
         {/* Story-Bereich */}
         {preparing ? (
@@ -5000,6 +5012,7 @@ const styles = StyleSheet.create({
   watchMetricLabel: { fontFamily: fonts.body, fontSize: 11 },
   watchMetricValue: { fontFamily: fonts.monoBold, fontSize: 14, marginTop: 1 },
   watchHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 12 },
+  watchTilePulse: { fontFamily: fonts.monoBold, fontSize: 10, lineHeight: 12, marginTop: 2 },
   waypointsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
