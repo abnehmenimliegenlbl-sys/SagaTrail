@@ -44,7 +44,7 @@ export type CatalogSource = "server" | "cache" | "seed" | "error";
 
 // Inhaltsänderungen bei gleichbleibender Saga-Anzahl müssen alte Geräte-Caches
 // verwerfen können (z. B. redaktionelle Ersatzsagen).
-const CACHE_KEY = "sagatrail:catalogCache:v3";
+const CACHE_KEY = "sagatrail:catalogCache:v4";
 const DYNAMIC_KEY = "sagatrail:dynamicCache";
 
 interface CatalogData {

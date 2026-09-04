@@ -29,6 +29,11 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+} from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
@@ -317,7 +322,8 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
-  const { achievements, language } = useApp();
+  const { achievements, language, profile, purchasedPacks } = useApp();
+  const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
 
   // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
@@ -325,6 +331,19 @@ function CantonCard({
   const discovered = cantonSagas.filter((s) =>
     achievements.some((a) => a.id === s.id)
   ).length;
+  const availablePurchasedPacks = Array.from(
+    new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]),
+  );
+  const packSlug = kantonSlug(entry.canton);
+  const packUnlocked =
+    isElite ||
+    hasPurchasedPack(availablePurchasedPacks, packSlug) ||
+    hatEntitlement(packEntitlementFuerKanton(packSlug));
+  const accessibleTotal = packUnlocked
+    ? cantonSagas.length
+    : Math.min(1, cantonSagas.length);
+  const progressDiscovered = Math.min(discovered, accessibleTotal);
+
   const cantonLabel = translateCanton(entry.canton, language as LanguageCode);
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
@@ -365,10 +384,10 @@ function CantonCard({
             <Text
               style={[
                 styles.cantonMeta,
-                { color: discovered > 0 ? colors.accent : colors.mutedForeground },
+                 { color: progressDiscovered > 0 ? colors.accent : colors.mutedForeground },
               ]}
             >
-              {t.sagaProgress(discovered, cantonSagas.length)}
+              {t.sagaProgress(progressDiscovered, accessibleTotal)}
             </Text>
           )}
         </View>

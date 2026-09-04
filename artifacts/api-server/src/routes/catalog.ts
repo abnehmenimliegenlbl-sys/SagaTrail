@@ -3,8 +3,12 @@ import { db, catalogRoutesTable, catalogSagasTable, externalRoutesTable } from "
 import type { CatalogRouteRow, CatalogSagaRow } from "@workspace/db";
 import { GetCatalogResponse } from "@workspace/api-zod";
 import { eq } from "drizzle-orm";
+import { CURATED_SAGAS } from "../lib/curatedSagas";
 
 const router: IRouter = Router();
+const curatedSagaOrder = new Map(
+  CURATED_SAGAS.map((saga, index) => [saga.id, index]),
+);
 
 function toRoute(row: CatalogRouteRow & {
   photoUrl?: string | null;
@@ -66,7 +70,7 @@ function toSaga(row: CatalogSagaRow) {
 }
 
 router.get("/catalog", async (_req, res): Promise<void> => {
-  const [routeRows, sagaRows] = await Promise.all([
+  const [routeRows, unsortedSagaRows] = await Promise.all([
     db
       .select({
         id: catalogRoutesTable.id,
@@ -93,6 +97,15 @@ router.get("/catalog", async (_req, res): Promise<void> => {
     db.select().from(catalogSagasTable),
   ]);
 
+  // PostgreSQL garantiert ohne ORDER BY keine stabile Reihenfolge. Die
+  // redaktionelle Bundle-Reihenfolge ist deshalb die kanonische Reihenfolge
+  // für die inklusive Sage und die Zuordnung zu Sagen-Pack-Stufen.
+  const sagaRows = [...unsortedSagaRows].sort(
+    (a, b) =>
+      (curatedSagaOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (curatedSagaOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER) ||
+      a.id.localeCompare(b.id),
+  );
   const routes = routeRows.map(toRoute);
   const sagas = sagaRows.map(toSaga);
 

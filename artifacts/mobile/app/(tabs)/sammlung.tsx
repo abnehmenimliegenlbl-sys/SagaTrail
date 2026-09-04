@@ -16,12 +16,18 @@ import { AchievementMarker, SparkDivider } from "@/components/brand/SparkMountai
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
+import { useSubscription } from "@/lib/revenuecat";
 import { useColors } from "@/hooks/useColors";
 import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
 import { CollectionStrings } from "@/lib/i18n/screens/collection";
 import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+} from "@/lib/kantonSlug";
 import { computeRankStatus, computeSparkPoints } from "@/lib/rank";
 import { HikeSession } from "@/types";
 import { hapticSelection } from "@/lib/haptics";
@@ -92,7 +98,8 @@ export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { achievements, hikeHistory, language } = useApp();
+  const { achievements, hikeHistory, language, profile, purchasedPacks } = useApp();
+  const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
   const [viewMode, setViewMode] = React.useState<"collection" | "diary">("collection");
@@ -441,7 +448,20 @@ export default function Sammlung() {
         {cantons.map((canton, ci) => {
           const cantonSagas = sagas.filter((s) => s.canton === canton);
           const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
-          const complete = discovered >= cantonSagas.length && cantonSagas.length > 0;
+          const availablePurchasedPacks = Array.from(
+            new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]),
+          );
+          const packSlug = kantonSlug(canton);
+          const packUnlocked =
+            isElite ||
+            hasPurchasedPack(availablePurchasedPacks, packSlug) ||
+            hatEntitlement(packEntitlementFuerKanton(packSlug));
+          const accessibleTotal = packUnlocked
+            ? cantonSagas.length
+            : Math.min(1, cantonSagas.length);
+          const progressDiscovered = Math.min(discovered, accessibleTotal);
+          const complete =
+            progressDiscovered >= accessibleTotal && accessibleTotal > 0;
           return (
             <Animated.View
               key={canton}
@@ -472,7 +492,7 @@ export default function Sammlung() {
                   <Text
                     style={[styles.cantonProgress, { color: colors.mutedForeground }]}
                   >
-                    {t.cantonProgress(discovered, cantonSagas.length, canton)}
+                    {t.cantonProgress(progressDiscovered, accessibleTotal, canton)}
                   </Text>
                 </View>
                 {complete && (
@@ -487,8 +507,8 @@ export default function Sammlung() {
                     {
                       backgroundColor: colors.accent,
                       width: `${
-                        cantonSagas.length > 0
-                          ? Math.round((discovered / cantonSagas.length) * 100)
+                        accessibleTotal > 0
+                          ? Math.round((progressDiscovered / accessibleTotal) * 100)
                           : 0
                       }%`,
                     },
