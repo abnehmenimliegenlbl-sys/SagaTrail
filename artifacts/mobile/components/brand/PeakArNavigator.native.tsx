@@ -54,6 +54,35 @@ const clamp = (value: number, min: number, max: number) =>
  * moves; feeding the changing relative phone heading back into the node
  * position would rotate the marker twice.
  */
+const PEAK_DEPTH_ANCHORS: ReadonlyArray<readonly [number, number]> = [
+  [0.5, 7],
+  [2, 11],
+  [5, 16],
+  [10, 21],
+  [30, 28],
+];
+
+function peakVirtualDistance(distanceKm: number): number {
+  if (distanceKm <= PEAK_DEPTH_ANCHORS[0][0]) {
+    return PEAK_DEPTH_ANCHORS[0][1];
+  }
+
+  for (let index = 1; index < PEAK_DEPTH_ANCHORS.length; index += 1) {
+    const [upperKm, upperVirtualM] = PEAK_DEPTH_ANCHORS[index];
+    const [lowerKm, lowerVirtualM] = PEAK_DEPTH_ANCHORS[index - 1];
+    if (distanceKm <= upperKm) {
+      const logarithmicRatio =
+        Math.log(distanceKm / lowerKm) / Math.log(upperKm / lowerKm);
+      return (
+        lowerVirtualM +
+        logarithmicRatio * (upperVirtualM - lowerVirtualM)
+      );
+    }
+  }
+
+  return PEAK_DEPTH_ANCHORS[PEAK_DEPTH_ANCHORS.length - 1][1];
+}
+
 function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
   if (
     !Number.isFinite(peak.bearingDeg) ||
@@ -63,7 +92,7 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
     return null;
   }
 
-  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
+  const distanceM = peakVirtualDistance(peak.distanceKm);
   const bearingRad = (peak.bearingDeg * Math.PI) / 180;
   const elevationRad =
     peak.elevationAngleDeg != null && Number.isFinite(peak.elevationAngleDeg)
@@ -78,11 +107,10 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
 }
 
 function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
-  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
-  const distanceRatio = (distanceM - 7) / 7;
-  // Do not fully cancel Viro's perspective: nearby peaks should look larger.
-  // A narrow scale range keeps distant labels readable.
-  const scale = 0.7 + distanceRatio * 0.2;
+  const distanceM = peakVirtualDistance(peak.distanceKm);
+  // Partially compensate for perspective so distant labels stay readable,
+  // while nearby peaks still appear up to roughly twice as large.
+  const scale = Math.sqrt(distanceM / 28);
   return [scale, scale, scale];
 }
 
