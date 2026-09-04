@@ -804,6 +804,87 @@ export async function loadOfficialSchweizMobilDifficulties(
   return officialDifficultyPromise;
 }
 
+/**
+ * Persistiert die offizielle SchweizMobil-Handicap-Klassifikation anhand
+ * exakter Routenreferenzen. Nicht gefundene Referenzen werden nicht angelegt
+ * und nicht über Namen, Nähe oder Geometrie erraten.
+ */
+export async function syncOfficialSchweizMobilHandicap(
+  log: Logger,
+): Promise<{
+  officialRoutes: number;
+  handicapRoutes: number;
+  matchedRefs: number;
+  matchedRows: number;
+  missingRefs: string[];
+  updatedRows: number;
+}> {
+  // Der Admin-Sync ist der explizite Aktualisierungspunkt; danach darf ein
+  // neuer offizieller Export erneut geladen werden.
+  officialDifficultyPromise = null;
+  const official = await loadOfficialSchweizMobilDifficulties(log);
+  const officialByRef = new Map(official.map((item) => [item.ref, item]));
+  const handicapRefs = new Set(
+    official.filter((item) => item.routeType === "handicap").map((item) => item.ref),
+  );
+  const rows = await db
+    .select({
+      id: externalRoutesTable.id,
+      ref: externalRoutesTable.ref,
+      wheelchairAccessibleSource: externalRoutesTable.wheelchairAccessibleSource,
+      wheelchairAccessibleCheckedAt: externalRoutesTable.wheelchairAccessibleCheckedAt,
+    })
+    .from(externalRoutesTable)
+    .where(isNotNull(externalRoutesTable.ref));
+
+  const matchedRefs = new Set<string>();
+  let matchedRows = 0;
+  let updatedRows = 0;
+  const checkedAt = new Date();
+  const sourceUrl = official.find((item) => item.sourceUrl)?.sourceUrl ?? null;
+
+  for (const row of rows) {
+    const ref = row.ref;
+    if (!ref) continue;
+    const officialItem = officialByRef.get(ref);
+    const wasImported = row.wheelchairAccessibleSource === sourceUrl;
+    if (!officialItem && !wasImported) continue;
+
+    if (officialItem) {
+      matchedRefs.add(ref);
+      matchedRows++;
+    }
+    const nextAccessible = officialItem && handicapRefs.has(ref) ? true : null;
+    const nextSource = officialItem ? sourceUrl : null;
+    const nextCheckedAt = officialItem ? checkedAt : null;
+    const changed =
+      row.wheelchairAccessibleSource !== nextSource ||
+      (row.wheelchairAccessibleCheckedAt?.getTime() ?? null) !== nextCheckedAt?.getTime();
+
+    if (changed) {
+      await db
+        .update(externalRoutesTable)
+        .set({
+          wheelchairAccessible: nextAccessible,
+          wheelchairAccessibleSource: nextSource,
+          wheelchairAccessibleCheckedAt: nextCheckedAt,
+        })
+        .where(eq(externalRoutesTable.id, row.id))
+        .execute();
+      updatedRows++;
+    }
+  }
+
+  return {
+    officialRoutes: official.length,
+    handicapRoutes: handicapRefs.size,
+    matchedRefs: matchedRefs.size,
+    matchedRows,
+    missingRefs: [...handicapRefs].filter((ref) => !matchedRefs.has(ref)).sort(),
+    updatedRows,
+  };
+}
+
 export type SchweizMobilDifficultyAuditRow = {
   id: string;
   name: string;
@@ -1559,7 +1640,7 @@ async function warmAllCantonCachesInner(log: Logger): Promise<void> {
 }
 
 /** Millisekunden bis zur nächsten 02:00 Uhr MEZ/MESZ (Europe/Zurich). */
-function millisUntilNext2amMez(): number {
+function millisUntilNextMezHour(hour: number): number {
   const now = new Date();
   // Zurich-Wanduhr als "UTC-Fake" parsen: toLocaleString gibt die lokale Uhrzeit
   // in Zürich zurück, new Date() interpretiert sie als UTC → getTime() ist falsch
@@ -1567,9 +1648,13 @@ function millisUntilNext2amMez(): number {
   const zurichWall = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Zurich" }));
   const offsetMs = now.getTime() - zurichWall.getTime(); // UTC-Offset in ms (negativ im Sommer)
   const target = new Date(zurichWall);
-  target.setHours(2, 0, 0, 0);
+  target.setHours(hour, 0, 0, 0);
   if (target <= zurichWall) target.setDate(target.getDate() + 1);
   return target.getTime() + offsetMs - now.getTime();
+}
+
+function millisUntilNext2amMez(): number {
+  return millisUntilNextMezHour(2);
 }
 
 /**
@@ -1600,6 +1685,35 @@ export function startDailyCantonSync(): void {
   const scheduleNext = () => {
     const delay = millisUntilNext2amMez();
     log.info({ inMinutes: Math.round(delay / 60_000) }, "Naechster Kanton-Sync geplant");
+    setTimeout(() => {
+      void runSync();
+      setInterval(() => void runSync(), 24 * 60 * 60 * 1000);
+    }, delay);
+  };
+
+  scheduleNext();
+}
+
+/**
+ * Taeglicher Abgleich der offiziellen SchweizMobil-Handicap-Klassifikation.
+ * Läuft nach dem Kantons-Sync um 03:00 Uhr Europe/Zurich und schreibt nur
+ * exakte Ref-Zuordnungen; unbekannte lokale Routen bleiben unverändert.
+ */
+export function startDailySchweizMobilHandicapSync(): void {
+  const log = rootLogger.child({ cron: "dailySchweizMobilHandicapSync" });
+
+  const runSync = async () => {
+    try {
+      const result = await syncOfficialSchweizMobilHandicap(log);
+      log.info(result, "Taeglicher SchweizMobil-Handicap-Sync abgeschlossen");
+    } catch (err) {
+      log.warn({ err }, "Taeglicher SchweizMobil-Handicap-Sync fehlgeschlagen");
+    }
+  };
+
+  const scheduleNext = () => {
+    const delay = millisUntilNextMezHour(3);
+    log.info({ inMinutes: Math.round(delay / 60_000) }, "Naechster SchweizMobil-Handicap-Sync geplant");
     setTimeout(() => {
       void runSync();
       setInterval(() => void runSync(), 24 * 60 * 60 * 1000);

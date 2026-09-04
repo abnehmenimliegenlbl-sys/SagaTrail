@@ -25,7 +25,7 @@ import { translatePush } from "../lib/pushTranslator";
 import { KANTON_SLUGS } from "../lib/kantonspackClaim";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { startPartnerLeadsExport, jobState } from "../lib/partnerLeads";
-import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE, auditSchweizMobilDifficulties } from "../lib/routeService";
+import { warmAllCantonCaches, getCantonRoutes, syncSwissNumberedRoutes, enrichOneRoute, enrichAndStore, fillMissingRoutePhotos, tryReplaceWikiRoute, GEOMETRY_VERSION, restoreMissingSchweizMobilGeometries, MISSING_SCHWEIZMOBIL_LWN_REFS, SCHWEIZMOBIL_WANDERLAND_SOURCE, auditSchweizMobilDifficulties, syncOfficialSchweizMobilHandicap } from "../lib/routeService";
 import { reverseGeocode } from "../lib/geocoding";
 import { estimateMinutes } from "../lib/geo";
 import { fetchOsmRelationTags, fetchSubRelations, fetchOsmRelationsByRef, fetchRouteGeometries, fetchRouteLoopAuditOsm, fetchWikiEtappen, reverseLoopExplanation, type WikiEtappe, searchOsmRouteByFromTo, searchOsmRouteByName } from "../lib/overpass";
@@ -4279,6 +4279,22 @@ router.post("/admin/routes/difficulty-audit", async (req, res): Promise<void> =>
     res.json({ ok: true, dryRun, ...result });
   } catch (err: any) {
     req.log.error({ err }, "difficulty-audit fehlgeschlagen");
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/routes/sync-schweizmobil-handicap
+ * Persistiert Typ_TR=handicap aus dem offiziellen Wanderland-Export.
+ * Die Zuordnung erfolgt ausschließlich über die exakte offizielle ref.
+ */
+router.post("/admin/routes/sync-schweizmobil-handicap", async (req, res): Promise<void> => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const result = await syncOfficialSchweizMobilHandicap(req.log);
+    res.json({ ok: true, ...result });
+  } catch (err: any) {
+    req.log.error({ err }, "SchweizMobil-Handicap-Sync fehlgeschlagen");
     res.status(500).json({ error: err.message });
   }
 });

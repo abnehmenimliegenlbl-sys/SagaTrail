@@ -47,7 +47,12 @@ export const externalRoutesTable = pgTable("external_routes", {
   // für fehlende Werte konservative technische Empfehlungen ergänzen.
   // NULL bedeutet weiterhin unbekannt und darf nicht als "nein" interpretiert werden.
   familyFriendly: boolean("family_friendly"),
+  // Legacy-Speicherfelder; nicht mehr Teil von App- oder API-Filtern.
+  childFriendly: boolean("child_friendly"),
+  dogsAllowed: boolean("dogs_allowed"),
   wheelchairAccessible: boolean("wheelchair_accessible"),
+  wheelchairAccessibleSource: text("wheelchair_accessible_source"),
+  wheelchairAccessibleCheckedAt: timestamp("wheelchair_accessible_checked_at", { withTimezone: true }),
   technicalDifficulty: text("technical_difficulty"),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
