@@ -200,6 +200,7 @@ export function PeakCameraOverlay({
               terrainModel={terrainModel}
               heading={heading}
               observerElevationM={observerElevationM}
+                onPeakPress={setSelectedPeakId}
               onError={handleArError}
             />
           ) : (
@@ -214,6 +215,7 @@ export function PeakCameraOverlay({
         </View>
         <View style={styles.horizon} />
         {contentMounted &&
+          !arEnabled &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}

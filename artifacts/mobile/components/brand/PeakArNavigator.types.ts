@@ -8,5 +8,6 @@ export interface PeakArNavigatorProps {
   terrainModel?: LocalTerrainModel | null;
   heading?: number | null;
   observerElevationM?: number | null;
+  onPeakPress?: (peakId: string) => void;
   onError?: () => void;
 }
