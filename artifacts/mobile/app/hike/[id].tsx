@@ -735,6 +735,13 @@ export default function LiveHike() {
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
   const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
+  const [detourPois, setDetourPois] = useState<Poi[]>([]);
+  const detourPoiSearchKeyRef = useRef<string | null>(null);
+  const displayedPois = useMemo(() => {
+    if (detourPois.length === 0) return pois;
+    const existingIds = new Set(pois.map((poi) => poi.id));
+    return [...pois, ...detourPois.filter((poi) => !existingIds.has(poi.id))];
+  }, [detourPois, pois]);
   const [safetyPoiFiltersOpen, setSafetyPoiFiltersOpen] = useState(false);
   const [enabledSafetyPoiCategories, setEnabledSafetyPoiCategories] = useState<Record<SafetyPoiCategory, boolean>>(
     DEFAULT_SAFETY_POI_FILTERS,
@@ -1093,7 +1100,7 @@ export default function LiveHike() {
           : "mittel";
     const hasSteepSections = totalKm > 0 && ascentM / totalKm > 80;
     const mainSurfaces = [...new Set(surfacePoints.map((sp) => sp.surface))].slice(0, 2);
-    const poiNamesList = pois
+    const poiNamesList = displayedPois
       .slice(0, 3)
       .map((poi) => poi.name)
       .filter((n): n is string => Boolean(n));
@@ -1111,7 +1118,7 @@ export default function LiveHike() {
       : "";
     return `${wetterSatz} ${personal}${tod} ${briefing}`.trim();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyLanguage, timeOfDay, hikeWeather, surfacePoints, pois, totalKm, totalMin, sac, ascentM, route, inGruppe]);
+  }, [storyLanguage, timeOfDay, hikeWeather, surfacePoints, displayedPois, totalKm, totalMin, sac, ascentM, route, inGruppe]);
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist.
@@ -1600,14 +1607,14 @@ export default function LiveHike() {
   useEffect(() => {
     const geom = route?.geometry;
     if (!geom || geom.length < 2) return;
-    if (pois.length === 0 && partners.length === 0) return;
-    const wps = computeRouteWaypoints(geom, partners, pois);
+    if (displayedPois.length === 0 && partners.length === 0) return;
+    const wps = computeRouteWaypoints(geom, partners, displayedPois);
     setRouteWaypoints(wps);
     waypointAnnouncedRef.current = new Set();
     announcedPremiumPartnerIdsRef.current = new Set();
     announcingPremiumPartnerIdsRef.current = new Set();
     setReachedWaypointIds(new Set());
-  }, [route?.geometry, partners, pois]);
+  }, [route?.geometry, partners, displayedPois]);
 
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {
@@ -1982,7 +1989,7 @@ export default function LiveHike() {
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
   // einmal je Wanderung als Karte an ("live entlang der Route entdeckt").
   useEffect(() => {
-    if (pois.length === 0) return;
+    if (displayedPois.length === 0) return;
     if (!hasFreshGps) return;
     // Solange ein POI aktiv angezeigt/erzaehlt wird, keinen neuen suchen:
     // mehrere POIs in 300-m-Naehe wuerden sonst die laufende Ansage
@@ -2014,7 +2021,7 @@ export default function LiveHike() {
     // Doppel-Schutz: (1) per ID, (2) per Koordinaten (derselbe Ort kann als
     // node-NNN und als way-MMM in Overpass auftauchen — gleicher Ort, zwei IDs).
     const DEDUP_KM = 0.1;
-    const hit = pois.find(
+    const hit = displayedPois.find(
       (poi) => {
         // Sagenmittelpunkt: 500 m Radius (Herzort der laufenden Sage ist
         // immer relevant, auch auf dem Land). Normale POIs: 300 m.
@@ -2033,7 +2040,7 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, route?.geometry, pois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, route?.geometry, displayedPois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
@@ -3079,7 +3086,7 @@ export default function LiveHike() {
 
   const panoramaPois = useMemo(
     () => [
-      ...pois,
+      ...displayedPois,
       ...panoramaOnlinePois,
       ...(offlinePanorama?.peaks ?? []).map((peak) => ({
         id: peak.id,
@@ -3090,7 +3097,7 @@ export default function LiveHike() {
         elevation: peak.elevationM,
       })),
     ],
-    [pois, panoramaOnlinePois, offlinePanorama],
+    [displayedPois, panoramaOnlinePois, offlinePanorama],
   );
   const panoramaPeaks = useMemo(
     () => erkenneGipfel(
@@ -3557,6 +3564,35 @@ export default function LiveHike() {
     }
   }
 
+  // Nach einer akzeptierten Umleitung nur den neuen Zubringer online nach
+  // POIs durchsuchen. Die ursprüngliche POI-Abfrage bleibt unverändert und
+  // liefert weiterhin die POIs der offiziellen Route.
+  const searchDetourPois = useCallback(
+    (geometry: number[][]) => {
+      if (isOffline || geometry.length < 2) return;
+      const first = geometry[0];
+      const last = geometry[geometry.length - 1];
+      const searchKey = `${geometry.length}:${first[0].toFixed(6)},${first[1].toFixed(6)}:${last[0].toFixed(6)},${last[1].toFixed(6)}`;
+      if (detourPoiSearchKeyRef.current === searchKey) return;
+      detourPoiSearchKeyRef.current = searchKey;
+
+      const bbox = bboxAroundGeometry(
+        geometry,
+        { lat: first[0], lng: first[1] },
+        1.0,
+      );
+      getPois(bbox)
+        .then((result) => {
+          if (detourPoiSearchKeyRef.current !== searchKey) return;
+          setDetourPois(filterByRouteCorridor(result, geometry, 0.75));
+        })
+        .catch(() => {
+          if (detourPoiSearchKeyRef.current === searchKey) setDetourPois([]);
+        });
+    },
+    [isOffline],
+  );
+
   // Die akzeptierte Valhalla-Route wird zur neuen aktiven Wanderroute:
   // Zubringer bis zum gewählten Wiedereinstiegspunkt plus der verbleibende
   // Teil der bisherigen Route. Die Story wird dabei bewusst neu auf Kapitel 1
@@ -3591,6 +3627,10 @@ export default function LiveHike() {
       combinedGeometry.push(...(tailStartsAtDetourEnd ? originalTail.slice(1) : originalTail));
     }
     if (combinedGeometry.length < 2) return;
+
+    setDetourPois([]);
+    detourPoiSearchKeyRef.current = null;
+    if (!isOffline) searchDetourPois(recalcGeom);
 
     await cancelNarration();
     setPreparing(true);
@@ -3633,6 +3673,8 @@ export default function LiveHike() {
     recalcGeom,
     recalcRejoinFraction,
     resolveStory,
+    searchDetourPois,
+    isOffline,
     saga,
     storyLanguage,
   ]);
@@ -3943,14 +3985,14 @@ export default function LiveHike() {
                   altGeometry={!followingRecalc ? recalcGeom : null}
                   offlineTiles={offlineTiles}
                   aerialways={aerialways}
-                  pois={pois}
+                  pois={displayedPois}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safetyPois={visibleSafetyPois.length > 0 ? visibleSafetyPois : null}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {
-                    const poi = pois.find((p) => p.id === id);
+                    const poi = displayedPois.find((p) => p.id === id);
                     if (!poi) return;
                     if (karteVollbild) {
                       // Vollbild: erst schliessen, dann nach Fade-Ende oeffnen.
