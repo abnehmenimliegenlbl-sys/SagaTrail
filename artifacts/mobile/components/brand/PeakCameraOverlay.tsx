@@ -241,13 +241,12 @@ export function PeakCameraOverlay({
                   },
                 ]}
               >
-                <Text style={[styles.markerName, { color: colors.destructive }]} numberOfLines={3}>
-                  {peak.name}
-                </Text>
-                <Text style={[styles.markerHeight, { color: colors.destructive }]}>
-                  {peak.elevationM != null
-                    ? `${Math.round(peak.elevationM)} m`
-                    : strings.heightUnknown}
+                <Text style={[styles.markerName, { color: colors.destructive }]} numberOfLines={1}>
+                  {`${peak.name} · ${
+                    peak.elevationM != null
+                      ? `${Math.round(peak.elevationM)} m`
+                      : strings.heightUnknown
+                  }`}
                 </Text>
               </View>
             </Pressable>
@@ -445,17 +444,17 @@ const styles = StyleSheet.create({
   },
   marker: {
     position: "absolute",
-    width: 66,
+    width: 34,
     alignItems: "center",
-    transform: [{ translateX: -33 }],
+    transform: [{ translateX: -17 }],
   },
   markerLabel: {
-    width: 66,
-    minHeight: 148,
+    width: 34,
+    minHeight: 140,
     borderWidth: 1,
-    borderRadius: 33,
-    paddingHorizontal: 7,
-    paddingVertical: 14,
+    borderRadius: 17,
+    paddingHorizontal: 2,
+    paddingVertical: 7,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -464,13 +463,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     textAlign: "center",
-  },
-  markerHeight: {
-    fontFamily: fonts.monoBold,
-    fontSize: 10,
-    lineHeight: 13,
-    textAlign: "center",
-    marginTop: 9,
+    width: 126,
+    transform: [{ rotate: "-90deg" }],
   },
   centerLine: {
     position: "absolute",
