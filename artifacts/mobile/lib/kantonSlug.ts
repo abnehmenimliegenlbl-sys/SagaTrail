@@ -34,3 +34,12 @@ export function kantonSlug(name: string): string {
 export function packEntitlementFuerKanton(kanton: string): string {
   return `pack_${kantonSlug(kanton)}`;
 }
+
+/** Erkennt sowohl den aktuellen DB-Slug als auch den früher gespeicherten
+ * Entitlement-Schlüssel eines Kantonspacks. */
+export function hasPurchasedPack(
+  purchasedPacks: readonly string[] | null | undefined,
+  slug: string,
+): boolean {
+  return purchasedPacks?.some((pack) => pack === slug || pack === `pack_${slug}`) ?? false;
+}

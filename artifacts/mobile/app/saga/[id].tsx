@@ -24,7 +24,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { SAGEN_PRO_PACK, kantonSlug } from "@/lib/kantonSlug";
+import { hasPurchasedPack, SAGEN_PRO_PACK, sagaPackSlug, kantonSlug } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -113,25 +113,26 @@ export default function SagaDetail() {
   // Ausnahme: bereits gehoerte Sagen bleiben immer wiederholbar — dass man
   // eine Sage schon gehoert hat, sperrt sie nicht fuer weitere Wanderungen.
   const sagaHeard = hikeHistory.some((h) => h.sagaId === saga.id);
-  const locked = !premium && !isElite && freeHikeUsed && !sagaHeard;
+  const packSlug = kantonSlug(saga.canton);
+  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+  const locked = !premium && !isElite && freeHikeUsed && !sagaHeard && !dbPackUnlocked;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder
   // Elite (alle Packs inklusive).
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   // RC-Entitlements werden bewusst NICHT geprueft (s. Kommentar in kanton/[canton].tsx).
-  const packSlug = kantonSlug(saga.canton);
   const sagasInCanton = sagas.filter((s) => s.canton === saga.canton);
   const sagaIndexInCanton = sagasInCanton.findIndex((s) => s.id === saga.id);
+  const sagaPackKey = sagaPackSlug(packSlug, sagaIndexInCanton);
   // Pack-Button-Regel: Premium (nicht Elite), Kanton hat >= 8 Sagen, Pack noch nicht gekauft.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
-  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
   const packLocked =
     premium &&
     !isElite &&
     sagasInCanton.length >= 8 &&
     sagaIndexInCanton !== 0 &&
-    (!dbPackUnlocked || sagaIndexInCanton >= SAGEN_PRO_PACK);
+    !hasPurchasedPack(profile?.purchasedPacks, sagaPackKey);
   // Kaufoption: einziges RC-Produkt KANTONSPACK_PACKAGE im "packs"-Offering.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
     (p) => p.identifier === KANTONSPACK_PACKAGE

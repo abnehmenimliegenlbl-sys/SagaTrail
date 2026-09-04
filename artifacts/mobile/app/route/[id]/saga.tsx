@@ -18,7 +18,7 @@ import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { GLAS_3D } from "@/constants/depth";
-import { SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
+import { hasPurchasedPack, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
@@ -55,13 +55,14 @@ export default function RouteSagaSelection() {
     (saga: Saga) => {
       if (hikeHistory.some((h) => h.sagaId === saga.id)) return false;
       if (isElite) return false;
-      if (!premium) return freeHikeUsed;
       const slug = kantonSlug(saga.canton);
       const inCanton = sagas.filter((item) => item.canton === saga.canton);
       const index = inCanton.findIndex((item) => item.id === saga.id);
-      if (index >= SAGEN_PRO_PACK) return true;
       const packSlug = sagaPackSlug(slug, index);
-      if ((profile?.purchasedPacks ?? []).includes(packSlug)) return false;
+      const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+      if (!premium) return freeHikeUsed && !packUnlocked;
+      if (packUnlocked) return false;
+      if (index >= SAGEN_PRO_PACK) return true;
       // `isAnchorPlace` ist ein Orts-/Katalogmerkmal und kein
       // Freischaltmerkmal. Ohne Kantonspack ist nur die erste Sage des
       // Kantons als Premium-Vorschau zugänglich.
