@@ -77,10 +77,6 @@ export function PeakArNavigator({
 
   return (
     <ViroARSceneNavigator
-      // Viro stores initialScene internally. Remount only when the actual
-      // peak set changes (for example when the live request finishes), not on
-      // every compass update.
-      key={peaks.map((peak) => peak.id).join("|")}
       style={StyleSheet.absoluteFillObject}
       initialScene={initialScene}
       autofocus
