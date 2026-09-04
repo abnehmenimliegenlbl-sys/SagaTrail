@@ -79,7 +79,10 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
 
 function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
   const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
-  const scale = distanceM / 14;
+  const distanceRatio = (distanceM - 7) / 7;
+  // Do not fully cancel Viro's perspective: nearby peaks should look larger.
+  // A narrow scale range keeps distant labels readable.
+  const scale = 0.7 + distanceRatio * 0.2;
   return [scale, scale, scale];
 }
 
