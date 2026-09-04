@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
-import { isViroIos26CrashGuardActive } from "@/lib/arSupport";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
@@ -57,7 +56,6 @@ export function PeakCameraOverlay({
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const viroIos26CrashGuard = isViroIos26CrashGuardActive();
 
   const visiblePeaks =
     heading == null
@@ -104,7 +102,6 @@ export function PeakCameraOverlay({
   };
 
   const toggleAr = () => {
-    if (viroIos26CrashGuard) return;
     if (arActivationTimerRef.current) {
       clearTimeout(arActivationTimerRef.current);
       arActivationTimerRef.current = null;
@@ -301,23 +298,15 @@ export function PeakCameraOverlay({
             )}
             <Pressable
               onPress={toggleAr}
-              disabled={viroIos26CrashGuard}
               style={[
                 styles.arButton,
                 {
                   backgroundColor: arEnabled ? colors.primary : colors.glassBgStrong,
                   borderColor: arEnabled ? colors.primary : colors.glassBorder,
-                  opacity: viroIos26CrashGuard ? 0.45 : 1,
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={
-                viroIos26CrashGuard
-                  ? strings.arUnavailable
-                  : arEnabled
-                    ? "AR ausschalten"
-                    : "AR einschalten"
-              }
+              accessibilityLabel={arEnabled ? "AR ausschalten" : "AR einschalten"}
             >
               <Feather
                 name="layers"

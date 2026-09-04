@@ -7,7 +7,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
-import { isViroIos26CrashGuardActive } from "@/lib/arSupport";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
@@ -69,18 +68,9 @@ export function PeakArNavigator({
   const [supportState, setSupportState] = useState<
     "checking" | "supported" | "unsupported"
   >("checking");
-  const viroIos26CrashGuard = isViroIos26CrashGuardActive();
 
   useEffect(() => {
     let cancelled = false;
-
-    if (viroIos26CrashGuard) {
-      setSupportState("unsupported");
-      onError?.();
-      return () => {
-        cancelled = true;
-      };
-    }
 
     isARSupportedOnDevice()
       .then(({ isARSupported }) => {
@@ -101,7 +91,7 @@ export function PeakArNavigator({
     return () => {
       cancelled = true;
     };
-  }, [onError, viroIos26CrashGuard]);
+  }, [onError]);
 
   const initialScene = useMemo(
     () => ({
@@ -129,6 +119,10 @@ export function PeakArNavigator({
       style={StyleSheet.absoluteFillObject}
       initialScene={initialScene}
       autofocus
+      // iOS 26 rejects ViroKit's default photo-output dimensions on some
+      // camera formats. Low selects a smaller supported ARKit format while
+      // keeping the Viro scene and tracking enabled.
+      videoQuality="Low"
       worldAlignment="GravityAndHeading"
     />
   );
