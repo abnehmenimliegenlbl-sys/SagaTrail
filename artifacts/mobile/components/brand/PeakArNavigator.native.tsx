@@ -1,7 +1,6 @@
 import {
   ViroARScene,
   ViroARSceneNavigator,
-  ViroText,
   isARSupportedOnDevice,
 } from "@reactvision/react-viro";
 import { useEffect, useMemo, useState } from "react";
@@ -11,52 +10,20 @@ import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 interface PeakArSceneProps {
-  peaks: readonly PanoramaGipfel[];
   onError?: () => void;
 }
 
-function positionForPeak(peak: PanoramaGipfel): [number, number, number] {
-  const bearing = ((peak.relativeBearingDeg ?? 0) * Math.PI) / 180;
-  // Terrain und Marker verwenden dieselbe Anzeige-Skalierung. Die absolute
-  // Distanz bleibt im Datenmodell erhalten; nur die AR-Szene wird für die
-  // begrenzte Tracking-Reichweite proportional verkleinert.
-  const depth = Math.max(1.5, Math.min(40, peak.distanceKm * 1000 * 0.04));
-  const height =
-    peak.elevationAngleDeg == null
-      ? 0
-      : Math.tan((peak.elevationAngleDeg * Math.PI) / 180) * depth;
-
-  return [Math.sin(bearing) * depth, height, -Math.cos(bearing) * depth];
-}
-
 function PeakArScene({
-  peaks,
   onError,
 }: PeakArSceneProps) {
-  const renderablePeaks = useMemo(
-    () => peaks.filter((peak) => peak.relativeBearingDeg != null).slice(0, 6),
-    [peaks],
-  );
-
   return (
     <ViroARScene onError={() => onError?.()}>
-      {renderablePeaks.map((peak) => (
-        <ViroText
-          key={peak.id}
-          position={positionForPeak(peak)}
-          transformBehaviors="billboard"
-          text={`${peak.name}\n${peak.distanceKm.toFixed(1)} km${
-            peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""
-          }`}
-          color="#FFFFFF"
-          outerStroke={{
-            type: "Outline",
-            width: 2,
-            color: "#10251D",
-          }}
-          style={styles.peakLabel}
-        />
-      ))}
+      {/*
+       * Deliberately empty. ViroText used ViroKit's OpenGL geometry/material
+       * path, which crashes natively on iOS 26 in ViroKit 2.56.0. The
+       * React-Native marker overlay in PeakCameraOverlay renders the labels
+       * above this AR camera instead.
+       */}
     </ViroARScene>
   );
 }
@@ -97,7 +64,6 @@ export function PeakArNavigator({
     () => ({
       scene: () => (
         <PeakArScene
-          peaks={peaks}
           onError={onError}
         />
       ),
@@ -138,12 +104,3 @@ export function PeakArNavigator({
     />
   );
 }
-
-const styles = StyleSheet.create({
-  peakLabel: {
-    fontSize: 0.18,
-    fontWeight: "700",
-    textAlign: "center",
-    textAlignVertical: "center",
-  },
-});

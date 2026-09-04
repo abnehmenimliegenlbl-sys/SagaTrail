@@ -205,7 +205,6 @@ export function PeakCameraOverlay({
         </View>
         <View style={styles.horizon} />
         {contentMounted &&
-          !arEnabled &&
           visiblePeaks.map((peak, index) => (
             <Pressable
               key={peak.id}
