@@ -579,7 +579,7 @@ export default function LiveHike() {
   const [startReached, setStartReached] = useState(false);
   /** Verhindert, dass die Startauswahl bei jedem GPS-Render erneut erscheint. */
   const startRecalcChoiceShownRef = useRef(false);
-  const [startRecalcChoice, setStartRecalcChoice] = useState<"start" | "fastest" | "later" | null>(null);
+  const [startRecalcChoice, setStartRecalcChoice] = useState<"start" | "fastest" | null>(null);
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
@@ -641,16 +641,10 @@ export default function LiveHike() {
         [
           { text: t.offRouteToStart, onPress: () => setStartRecalcChoice("start") },
           { text: t.offRouteFastestToRoute, onPress: () => setStartRecalcChoice("fastest") },
-          {
-            text: t.offRouteChoiceLater,
-            style: "cancel",
-            onPress: () => setStartRecalcChoice("later"),
-          },
         ],
       );
       return;
     }
-    if (needsStartChoice && startRecalcChoice === "later") return;
     const targetIdx =
       needsStartChoice && startRecalcChoice === "start"
         ? 0
@@ -2853,14 +2847,6 @@ export default function LiveHike() {
             startRecalcChoiceShownRef.current = true;
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("fastest");
-          },
-        },
-        {
-          text: t.offRouteChoiceLater,
-          style: "cancel",
-          onPress: () => {
-            startChoicePendingRef.current = false;
-            setStartChoicePending(false);
           },
         },
       ],
