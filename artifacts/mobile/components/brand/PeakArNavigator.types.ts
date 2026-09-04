@@ -4,6 +4,7 @@ import type { TerrainProfilePoint } from "@/lib/terrainCues";
 
 export interface PeakArNavigatorProps {
   peaks: readonly PanoramaGipfel[];
+  visiblePeakIds?: readonly string[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   heading?: number | null;

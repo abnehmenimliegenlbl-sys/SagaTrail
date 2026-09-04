@@ -3174,6 +3174,17 @@ export default function LiveHike() {
     ),
     [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );
+  const panoramaArCandidates = useMemo(
+    () =>
+      erkenneGipfel(
+        panoramaPois,
+        hasFreshGps ? livePos : null,
+        null,
+        hasFreshGps ? liveAltitude : null,
+        200,
+      ),
+    [panoramaPois, hasFreshGps, livePos, liveAltitude],
+  );
   const terrainSections = useMemo(
     () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
     [terrainProfile],
@@ -4294,6 +4305,7 @@ export default function LiveHike() {
         <PeakCameraOverlay
           visible={panoramaCameraOpen}
           peaks={panoramaPeaks}
+          arCandidates={panoramaArCandidates}
           terrainProfile={terrainProfile}
           terrainModel={terrainModel}
           heading={compassHeading}

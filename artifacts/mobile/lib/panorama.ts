@@ -191,6 +191,7 @@ export function erkenneGipfel(
   position: LatLng | null,
   heading: number | null,
   observerElevationM: number | null = null,
+  maxPeaks: number = 8,
 ): PanoramaGipfel[] {
   if (!position) return [];
 
@@ -235,5 +236,5 @@ export function erkenneGipfel(
       const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
       return aAngle - bAngle || a.distanceKm - b.distanceKm;
     })
-    .slice(0, 8);
+    .slice(0, Math.max(0, maxPeaks));
 }

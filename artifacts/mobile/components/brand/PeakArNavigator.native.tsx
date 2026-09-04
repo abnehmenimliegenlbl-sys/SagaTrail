@@ -34,6 +34,7 @@ interface PeakArSceneProps {
 
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
+  visiblePeakIds: readonly string[];
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
 }
@@ -74,8 +75,9 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
 }
 
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
-  const { peaks = [], onPeakPress, onError } =
+  const { peaks = [], visiblePeakIds = [], onPeakPress, onError } =
     sceneNavigator?.viroAppProps ?? {};
+  const visiblePeakIdSet = new Set(visiblePeakIds);
 
   useEffect(() => {
     console.log("[PeakAR] Viro markers updated", {
@@ -93,6 +95,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
           <ViroNode
             key={peak.id}
             position={position}
+            visible={visiblePeakIdSet.has(peak.id)}
             transformBehaviors="billboard"
             renderingOrder={100}
             onClick={() => onPeakPress?.(peak.id)}
@@ -122,6 +125,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
 export function PeakArNavigator({
   peaks,
+  visiblePeakIds = [],
   onPeakPress,
   onError,
 }: PeakArNavigatorProps) {
@@ -162,8 +166,8 @@ export function PeakArNavigator({
     [],
   );
   const viroAppProps = useMemo<PeakArSceneAppProps>(
-    () => ({ peaks, onPeakPress, onError }),
-    [onError, onPeakPress, peaks],
+    () => ({ peaks, visiblePeakIds, onPeakPress, onError }),
+    [onError, onPeakPress, peaks, visiblePeakIds],
   );
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed

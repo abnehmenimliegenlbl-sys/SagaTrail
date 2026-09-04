@@ -26,6 +26,7 @@ import { PeakArNavigator } from "./PeakArNavigator";
 interface PeakCameraOverlayProps {
   visible: boolean;
   peaks: readonly PanoramaGipfel[];
+  arCandidates?: readonly PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   heading: number | null;
@@ -38,6 +39,7 @@ interface PeakCameraOverlayProps {
 export function PeakCameraOverlay({
   visible,
   peaks,
+  arCandidates = peaks,
   terrainProfile = null,
   terrainModel = null,
   heading,
@@ -123,15 +125,26 @@ export function PeakCameraOverlay({
     onClose();
   };
 
+  const arVisiblePeakIds =
+    heading == null
+      ? []
+      : arPeaks
+          .filter((peak) => {
+            const relative = ((peak.bearingDeg - heading + 540) % 360) - 180;
+            return Math.abs(relative) <= 70;
+          })
+          .sort((a, b) => a.distanceKm - b.distanceKm)
+          .slice(0, 4)
+          .map((peak) => peak.id);
+
   const toggleAr = () => {
     if (arEnabled) {
       switchNativeSurface("camera");
       return;
     }
-    // Keep the native Viro scene graph stable while the phone is moving.
-    // `visiblePeaks` is re-sorted from the live compass heading; passing it
-    // directly would remove and insert Viro nodes during every slow pan.
-    setArPeaks(visiblePeaks);
+    // Keep every candidate as a stable native Viro node. While panning, only
+    // visibility changes; removing/reinserting nodes crashes Viro on iOS 26.
+    setArPeaks(arCandidates);
     switchNativeSurface("ar");
   };
 
@@ -203,6 +216,7 @@ export function PeakCameraOverlay({
           arEnabled ? (
             <PeakArNavigator
               peaks={arPeaks}
+              visiblePeakIds={arVisiblePeakIds}
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               heading={heading}
