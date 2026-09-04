@@ -60,7 +60,6 @@ export function PeakCameraOverlay({
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
   const lockPulse = useRef(new Animated.Value(0)).current;
-  const scanProgress = useRef(new Animated.Value(0)).current;
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,24 +146,6 @@ export function PeakCameraOverlay({
     animation.start();
     return () => animation.stop();
   }, [arEnabled, lockPulse, targetPeak?.id]);
-
-  useEffect(() => {
-    if (!arEnabled || !contentMounted) {
-      scanProgress.stopAnimation();
-      scanProgress.setValue(0);
-      return;
-    }
-    const animation = Animated.loop(
-      Animated.timing(scanProgress, {
-        toValue: 1,
-        duration: 2400,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [arEnabled, contentMounted, scanProgress]);
 
   const closeCamera = () => {
     // Unmount the native camera/AR surface before dismissing the only native
@@ -273,36 +254,13 @@ export function PeakCameraOverlay({
             <CameraView ref={cameraRef} facing="back" style={styles.camera} />
           )
         )}
-        <View style={styles.imageScrim} />
+        <View pointerEvents="none" style={styles.imageScrim} />
         <View pointerEvents="none" style={styles.scanLines}>
           <View style={styles.scanLineTop} />
           <View style={styles.scanLineMiddle} />
           <View style={styles.scanLineBottom} />
         </View>
-        {arEnabled && contentMounted && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.scanSweep,
-              {
-                backgroundColor: colors.accent,
-                opacity: scanProgress.interpolate({
-                  inputRange: [0, 0.12, 0.5, 0.88, 1],
-                  outputRange: [0, 0.8, 0.95, 0.8, 0],
-                }),
-                transform: [
-                  {
-                    translateY: scanProgress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-220, 420],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-        )}
-        <View style={styles.horizon} />
+        <View pointerEvents="none" style={styles.horizon} />
         {arEnabled && contentMounted && targetPeak && (
           <Animated.View
             style={[
@@ -375,7 +333,10 @@ export function PeakCameraOverlay({
             </Pressable>
           ))}
         {heading != null && (
-          <View style={[styles.centerLine, { backgroundColor: colors.primary }]} />
+          <View
+            pointerEvents="none"
+            style={[styles.centerLine, { backgroundColor: colors.primary }]}
+          />
         )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
           <View>
@@ -489,16 +450,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.17)",
   },
   scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
-  scanSweep: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "32%",
-    height: 2,
-    shadowColor: "#FFFFFF",
-    shadowOpacity: 0.9,
-    shadowRadius: 8,
-  },
   scanLineTop: {
     position: "absolute",
     left: 0,

@@ -2,6 +2,7 @@ import {
   ViroARScene,
   ViroARSceneNavigator,
   ViroBox,
+  ViroGeometry,
   ViroMaterials,
   ViroNode,
   ViroSphere,
@@ -13,13 +14,16 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
+  buildLocalTerrainMesh,
   terrainVisibilityForPeak,
+  type LocalTerrainMesh,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
+const TERRAIN_MATERIAL = "sagatrailTerrainHologram";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
 
@@ -31,6 +35,14 @@ ViroMaterials.createMaterials({
   [PEAK_WHITE_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
+  },
+  [TERRAIN_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#D71920",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
   },
 });
 
@@ -47,6 +59,31 @@ interface PeakArSceneAppProps {
   selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
+}
+
+function TerrainHologram({
+  model,
+}: {
+  model: LocalTerrainModel | null | undefined;
+}) {
+  const mesh = useMemo<LocalTerrainMesh | null>(
+    () => buildLocalTerrainMesh(model, 0),
+    [model],
+  );
+
+  if (!mesh) return null;
+
+  return (
+    <ViroGeometry
+      vertices={mesh.vertices}
+      normals={mesh.normals}
+      triangleIndices={mesh.triangleIndices}
+      materials={TERRAIN_MATERIAL}
+      opacity={0.28}
+      renderingOrder={10}
+      shadowCastingBitMask={0}
+    />
+  );
 }
 
 const clamp = (value: number, min: number, max: number) =>
@@ -139,6 +176,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
   return (
     <ViroARScene onError={() => onError?.()}>
+      {/* The model is observer-centred and uses geographic bearings. With
+          GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
+      <TerrainHologram model={terrainModel} />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
         if (!position) return null;
