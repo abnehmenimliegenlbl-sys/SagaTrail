@@ -1,34 +1,118 @@
 import {
   ViroARScene,
   ViroARSceneNavigator,
+  ViroBox,
+  ViroMaterials,
+  ViroNode,
+  ViroSphere,
   isARSupportedOnDevice,
 } from "@reactvision/react-viro";
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
+import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
+const PEAK_MATERIAL = "sagatrailPeakMarker";
+
+// Keep the first Viro marker deliberately simple. ViroText previously exercised
+// ViroKit's text/OpenGL path that could abort natively on iOS 26. A constant
+// colored sphere + stem gives us a real AR-world marker without that risk.
+ViroMaterials.createMaterials({
+  [PEAK_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#ff6b35",
+    bloomThreshold: 0.35,
+  },
+});
+
 interface PeakArSceneProps {
+  peaks: readonly PanoramaGipfel[];
+  onPeakPress?: (peakId: string) => void;
   onError?: () => void;
 }
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));
+
+/**
+ * Projects geographic peak data into the local Viro world.
+ *
+ * Viro's GravityAndHeading world uses +x to the right, +y upward and -z
+ * forward. We compress real GPS distances to a useful AR range while keeping
+ * each peak's bearing and elevation angle intact; a 20 km peak must not be
+ * placed 800 m away from the camera just because the terrain model uses a
+ * 0.04 display scale.
+ */
+function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
+  if (
+    peak.relativeBearingDeg == null ||
+    !Number.isFinite(peak.relativeBearingDeg) ||
+    !Number.isFinite(peak.distanceKm) ||
+    peak.distanceKm < 0
+  ) {
+    return null;
+  }
+
+  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 8, 28);
+  const bearingRad = (peak.relativeBearingDeg * Math.PI) / 180;
+  const elevationRad =
+    peak.elevationAngleDeg != null && Number.isFinite(peak.elevationAngleDeg)
+      ? (peak.elevationAngleDeg * Math.PI) / 180
+      : 0;
+
+  return [
+    Math.sin(bearingRad) * distanceM,
+    clamp(Math.tan(elevationRad) * distanceM, -8, 8),
+    -Math.cos(bearingRad) * distanceM,
+  ];
+}
+
 function PeakArScene({
+  peaks,
+  onPeakPress,
   onError,
 }: PeakArSceneProps) {
   return (
     <ViroARScene onError={() => onError?.()}>
-      {/*
-       * Deliberately empty. ViroText used ViroKit's OpenGL geometry/material
-       * path, which crashes natively on iOS 26 in ViroKit 2.56.0. The
-       * React-Native marker overlay in PeakCameraOverlay renders the labels
-       * above this AR camera instead.
-       */}
+      {peaks.map((peak) => {
+        const position = peakPosition(peak);
+        if (!position) return null;
+
+        return (
+          <ViroNode
+            key={peak.id}
+            position={position}
+            transformBehaviors="billboard"
+            renderingOrder={100}
+            onClick={() => onPeakPress?.(peak.id)}
+            viroTag={`peak:${peak.id}`}
+          >
+            <ViroBox
+              position={[0, -0.42, 0]}
+              width={0.07}
+              height={0.84}
+              length={0.07}
+              materials={PEAK_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+            <ViroSphere
+              radius={0.2}
+              widthSegmentCount={12}
+              heightSegmentCount={8}
+              materials={PEAK_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+          </ViroNode>
+        );
+      })}
     </ViroARScene>
   );
 }
 
 export function PeakArNavigator({
   peaks,
+  onPeakPress,
   onError,
 }: PeakArNavigatorProps) {
   const [supportState, setSupportState] = useState<
@@ -63,11 +147,13 @@ export function PeakArNavigator({
     () => ({
       scene: () => (
         <PeakArScene
+          peaks={peaks}
+          onPeakPress={onPeakPress}
           onError={onError}
         />
       ),
     }),
-    [onError],
+    [onError, onPeakPress, peaks],
   );
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
