@@ -30,6 +30,8 @@ export interface HikeStrings {
   panoramaHeightUnknown: string;
   panoramaDrag: string;
   panoramaElevationAngle: (angle: string) => string;
+  panoramaTerrainModel: string;
+  panoramaTerrainModelDetail: (radius: string) => string;
   coordinates: string;
   place: string;
   altitude: string;
@@ -184,6 +186,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Höhenwinkel unbekannt",
     panoramaDrag: "Wischen für 3D-Blick",
     panoramaElevationAngle: (angle) => `Höhenwinkel ${angle}`,
+    panoramaTerrainModel: "3D-GELÄNDE",
+    panoramaTerrainModelDetail: (radius) => `Höhenrelief · Radius ${radius}`,
     coordinates: "KOORDINATEN",
     place: "ORT",
     altitude: "HÖHE",
@@ -347,6 +351,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Höhewinkel unbekannt",
     panoramaDrag: "Wüsche für 3D-Blick",
     panoramaElevationAngle: (angle) => `Höhewinkel ${angle}`,
+    panoramaTerrainModel: "3D-GELÄNDE",
+    panoramaTerrainModelDetail: (radius) => `Höherelief · Radius ${radius}`,
     coordinates: "KOORDINATE",
     place: "ORT",
     altitude: "HÖCHI",
@@ -498,6 +504,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Elevation angle unknown",
     panoramaDrag: "Swipe for 3D view",
     panoramaElevationAngle: (angle) => `Elevation angle ${angle}`,
+    panoramaTerrainModel: "3D TERRAIN",
+    panoramaTerrainModelDetail: (radius) => `Elevation relief · ${radius} radius`,
     coordinates: "COORDINATES",
     place: "PLACE",
     altitude: "ALTITUDE",
@@ -649,6 +657,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Angle d'élévation inconnu",
     panoramaDrag: "Glissez pour la vue 3D",
     panoramaElevationAngle: (angle) => `Angle d'élévation ${angle}`,
+    panoramaTerrainModel: "TERRAIN 3D",
+    panoramaTerrainModelDetail: (radius) => `Relief d'altitude · rayon ${radius}`,
     coordinates: "COORDONNÉES",
     place: "LIEU",
     altitude: "ALTITUDE",
@@ -800,6 +810,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Angolo di elevazione sconosciuto",
     panoramaDrag: "Scorri per la vista 3D",
     panoramaElevationAngle: (angle) => `Angolo di elevazione ${angle}`,
+    panoramaTerrainModel: "TERRENO 3D",
+    panoramaTerrainModelDetail: (radius) => `Rilievo altimetrico · raggio ${radius}`,
     coordinates: "COORDINATE",
     place: "LUOGO",
     altitude: "ALTITUDINE",
@@ -951,6 +963,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Ángulo de elevación desconocido",
     panoramaDrag: "Desliza para la vista 3D",
     panoramaElevationAngle: (angle) => `Ángulo de elevación ${angle}`,
+    panoramaTerrainModel: "TERRENO 3D",
+    panoramaTerrainModelDetail: (radius) => `Relieve de altura · radio ${radius}`,
     coordinates: "COORDENADAS",
     place: "LUGAR",
     altitude: "ALTITUD",
@@ -1102,6 +1116,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Ângulo de elevação desconhecido",
     panoramaDrag: "Deslize para a vista 3D",
     panoramaElevationAngle: (angle) => `Ângulo de elevação ${angle}`,
+    panoramaTerrainModel: "TERRENO 3D",
+    panoramaTerrainModelDetail: (radius) => `Relevo de altitude · raio ${radius}`,
     coordinates: "COORDENADAS",
     place: "LOCAL",
     altitude: "ALTITUDE",
@@ -1253,6 +1269,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "高度角未知",
     panoramaDrag: "滑动查看三维全景",
     panoramaElevationAngle: (angle) => `高度角 ${angle}`,
+    panoramaTerrainModel: "三维地形",
+    panoramaTerrainModelDetail: (radius) => `高程地形 · 半径 ${radius}`,
     coordinates: "坐标",
     place: "地点",
     altitude: "海拔",
@@ -1404,6 +1422,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     panoramaHeightUnknown: "Угол возвышения неизвестен",
     panoramaDrag: "Проведите для 3D-вида",
     panoramaElevationAngle: (angle) => `Угол возвышения ${angle}`,
+    panoramaTerrainModel: "3D-РЕЛЬЕФ",
+    panoramaTerrainModelDetail: (radius) => `Высотный рельеф · радиус ${radius}`,
     coordinates: "КООРДИНАТЫ",
     place: "МЕСТО",
     altitude: "ВЫСОТА",

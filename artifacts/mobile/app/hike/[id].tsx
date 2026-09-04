@@ -4228,6 +4228,8 @@ export default function LiveHike() {
                     heightUnknown: t.panoramaHeightUnknown,
                     dragPanorama: t.panoramaDrag,
                     elevationAngle: t.panoramaElevationAngle,
+                     terrainModel: t.panoramaTerrainModel,
+                     terrainModelDetail: t.panoramaTerrainModelDetail,
                   }}
                   onCameraOpen={() => {
                     setPanoramaTileOpen(false);
@@ -4328,6 +4330,8 @@ export default function LiveHike() {
             heightUnknown: t.panoramaHeightUnknown,
             dragPanorama: t.panoramaDrag,
             elevationAngle: t.panoramaElevationAngle,
+            terrainModel: t.panoramaTerrainModel,
+            terrainModelDetail: t.panoramaTerrainModelDetail,
           }}
           onClose={() => setPanoramaCameraOpen(false)}
           onCaptured={addRecognitionEntry}

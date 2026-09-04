@@ -5,6 +5,7 @@ import {
   ViroGeometry,
   ViroMaterials,
   ViroNode,
+  ViroPolyline,
   ViroSphere,
   ViroText,
   isARSupportedOnDevice,
@@ -23,7 +24,8 @@ import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
-const TERRAIN_MATERIAL = "sagatrailTerrainHologram";
+const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
+const TERRAIN_GRID_MATERIAL = "sagatrailTerrainGrid";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
 
@@ -36,9 +38,17 @@ ViroMaterials.createMaterials({
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
   },
-  [TERRAIN_MATERIAL]: {
+  [TERRAIN_SURFACE_MATERIAL]: {
     lightingModel: "Constant",
-    diffuseColor: "#D71920",
+    diffuseColor: "#24D6C2",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_GRID_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#B7FFF7",
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -77,6 +87,29 @@ function TerrainHologram({
 
   if (!mesh) return null;
 
+  const terrainRays = model?.rays
+    .filter((ray) => ray.samples.length >= 2)
+    .slice()
+    .sort((a, b) => a.bearingDeg - b.bearingDeg);
+  const rayCount = terrainRays?.length ?? 0;
+  const ringCount = rayCount > 0 ? mesh.vertices.length / rayCount : 0;
+  const gridLines: LocalTerrainMesh["vertices"][] = [];
+
+  if (rayCount >= 4 && Number.isInteger(ringCount) && ringCount >= 2) {
+    for (let rayIndex = 0; rayIndex < rayCount; rayIndex += 1) {
+      gridLines.push(
+        mesh.vertices.slice(rayIndex * ringCount, (rayIndex + 1) * ringCount),
+      );
+    }
+    for (let ringIndex = 1; ringIndex < ringCount; ringIndex += 1) {
+      gridLines.push(
+        Array.from({ length: rayCount }, (_, rayIndex) =>
+          mesh.vertices[rayIndex * ringCount + ringIndex],
+        ),
+      );
+    }
+  }
+
   const headingRad = (stableHeading * Math.PI) / 180;
   const distanceM = 4;
 
@@ -97,10 +130,19 @@ function TerrainHologram({
         vertices={mesh.vertices}
         normals={mesh.normals}
         triangleIndices={mesh.triangleIndices}
-        materials={TERRAIN_MATERIAL}
-        opacity={0.7}
+        materials={TERRAIN_SURFACE_MATERIAL}
+        opacity={0.2}
         shadowCastingBitMask={0}
       />
+      {gridLines.map((points, index) => (
+        <ViroPolyline
+          key={`terrain-grid-${index}`}
+          points={points}
+          thickness={0.012}
+          materials={TERRAIN_GRID_MATERIAL}
+          opacity={0.8}
+        />
+      ))}
     </ViroNode>
   );
 }

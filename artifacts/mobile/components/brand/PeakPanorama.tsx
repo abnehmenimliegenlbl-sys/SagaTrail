@@ -39,6 +39,8 @@ export interface PeakPanoramaStrings {
   heightUnknown: string;
   dragPanorama: string;
   elevationAngle: (angle: string) => string;
+  terrainModel: string;
+  terrainModelDetail: (radius: string) => string;
 }
 
 interface PeakPanoramaProps {

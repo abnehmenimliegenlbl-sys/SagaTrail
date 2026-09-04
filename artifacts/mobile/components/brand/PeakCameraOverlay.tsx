@@ -338,6 +338,33 @@ export function PeakCameraOverlay({
             style={[styles.centerLine, { backgroundColor: colors.primary }]}
           />
         )}
+        {arEnabled && contentMounted && terrainModel && (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.terrainLegend,
+              {
+                top: insets.top + 76,
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.glassBorder,
+              },
+            ]}
+          >
+            <View style={styles.terrainLegendTitle}>
+              <View style={[styles.terrainLegendDot, { backgroundColor: "#24D6C2" }]} />
+              <Text style={[styles.terrainLegendTitleText, { color: colors.photoScrimText }]}>
+                {strings.terrainModel}
+              </Text>
+            </View>
+            <Text style={[styles.terrainLegendDetail, { color: colors.photoScrimMuted }]}>
+              {strings.terrainModelDetail(
+                terrainModel.radiusM >= 1000
+                  ? `${(terrainModel.radiusM / 1000).toFixed(1)} km`
+                  : `${Math.round(terrainModel.radiusM)} m`,
+              )}
+            </Text>
+          </View>
+        )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
           <View>
             <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
@@ -580,6 +607,34 @@ const styles = StyleSheet.create({
     left: "50%",
     width: 1,
     opacity: 0.9,
+  },
+  terrainLegend: {
+    position: "absolute",
+    left: 18,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  terrainLegendTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  terrainLegendDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  terrainLegendTitleText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  terrainLegendDetail: {
+    marginTop: 3,
+    fontFamily: fonts.mono,
+    fontSize: 9,
   },
   imageFooter: {
     position: "absolute",
