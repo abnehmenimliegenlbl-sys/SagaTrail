@@ -2,7 +2,6 @@ import {
   ViroARScene,
   ViroARSceneNavigator,
   ViroBox,
-  ViroGeometry,
   ViroMaterials,
   ViroNode,
   ViroSphere,
@@ -14,16 +13,13 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
-  buildLocalTerrainMesh,
   terrainVisibilityForPeak,
-  type LocalTerrainMesh,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
-const TERRAIN_MATERIAL = "sagatrailTerrainHologram";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
 
@@ -35,14 +31,6 @@ ViroMaterials.createMaterials({
   [PEAK_WHITE_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
-  },
-  [TERRAIN_MATERIAL]: {
-    lightingModel: "Constant",
-    diffuseColor: "rgba(215, 25, 32, 0.18)",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
   },
 });
 
@@ -60,20 +48,6 @@ interface PeakArSceneAppProps {
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
 }
-
-const EMPTY_TERRAIN_MESH: LocalTerrainMesh = {
-  vertices: [
-    [0, -100, 0],
-    [0, -100, 0],
-    [0, -100, 0],
-  ],
-  normals: [
-    [0, 1, 0],
-    [0, 1, 0],
-    [0, 1, 0],
-  ],
-  triangleIndices: [[0, 1, 2]],
-};
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -157,12 +131,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     onError,
   } =
     sceneNavigator?.viroAppProps ?? {};
-  const terrainMesh =
-    useMemo(
-      () => buildLocalTerrainMesh(terrainModel, 0),
-      [terrainModel],
-    ) ?? EMPTY_TERRAIN_MESH;
-
   useEffect(() => {
     console.log("[PeakAR] Viro markers updated", {
       peakCount: peaks.length,
@@ -171,16 +139,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
   return (
     <ViroARScene onError={() => onError?.()}>
-      {/* This node is always mounted. Updating its vertices keeps the native
-          Viro tree stable when the local SwissTopo model arrives. */}
-      <ViroGeometry
-        vertices={terrainMesh.vertices}
-        normals={terrainMesh.normals}
-        triangleIndices={terrainMesh.triangleIndices}
-        materials={TERRAIN_MATERIAL}
-        opacity={terrainMesh === EMPTY_TERRAIN_MESH ? 0 : 1}
-        renderingOrder={1}
-      />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
         if (!position) return null;
