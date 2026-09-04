@@ -221,55 +221,35 @@ export function PeakCameraOverlay({
                 styles.marker,
                 {
                   left: markerPosition(peak.relativeBearingDeg ?? 0),
-                  top: insets.top + 82 + (index % 3) * 42,
+                  top: insets.top + 88 + (index % 3) * 12,
                 },
               ]}
               onPress={() => setSelectedPeakId(peak.id)}
               accessibilityRole="button"
-              accessibilityLabel={`${peak.name}, ${strings.distance(peak.distanceKm.toFixed(1))}${peak.elevationM != null ? `, ${Math.round(peak.elevationM)} m ü. M.` : ""}`}
+              accessibilityLabel={`${peak.name}, ${
+                peak.elevationM != null
+                  ? `${Math.round(peak.elevationM)} m ü. M.`
+                  : strings.heightUnknown
+              }`}
             >
               <View
                 style={[
                   styles.markerLabel,
                   {
-                    backgroundColor: colors.glassBgStrong,
-                    borderColor:
-                      targetPeak?.id === peak.id ? colors.primary : colors.glassBorder,
+                    backgroundColor: "rgba(255,255,255,0.75)",
+                    borderColor: colors.destructive,
                   },
                 ]}
               >
-                <View
-                  style={[
-                    styles.markerPeak,
-                    {
-                      backgroundColor:
-                        targetPeak?.id === peak.id ? colors.primary : colors.glassBgStrong,
-                      borderColor:
-                        targetPeak?.id === peak.id ? colors.primary : colors.glassBorder,
-                    },
-                  ]}
-                >
-                  <Feather name="triangle" size={11} color={colors.photoScrimText} />
-                </View>
-                <Text style={[styles.markerName, { color: colors.photoScrimText }]} numberOfLines={1}>
+                <Text style={[styles.markerName, { color: colors.destructive }]} numberOfLines={3}>
                   {peak.name}
                 </Text>
-                <Text style={[styles.markerDistance, { color: colors.photoScrimMuted }]}>
-                  {strings.distance(peak.distanceKm.toFixed(1))}
-                  {peak.elevationM != null ? ` · ${Math.round(peak.elevationM)} m` : ""}
+                <Text style={[styles.markerHeight, { color: colors.destructive }]}>
+                  {peak.elevationM != null
+                    ? `${Math.round(peak.elevationM)} m`
+                    : strings.heightUnknown}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.markerStem,
-                  {
-                    backgroundColor:
-                      focusedPeak?.id === peak.id
-                        ? colors.primary
-                        : colors.photoScrimText,
-                  },
-                ]}
-              />
             </Pressable>
           ))}
         {heading != null && (
@@ -465,30 +445,33 @@ const styles = StyleSheet.create({
   },
   marker: {
     position: "absolute",
-    width: 130,
+    width: 66,
     alignItems: "center",
-    transform: [{ translateX: -65 }],
+    transform: [{ translateX: -33 }],
   },
   markerLabel: {
-    maxWidth: 130,
+    width: 66,
+    minHeight: 148,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    alignItems: "center",
-  },
-  markerPeak: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 33,
+    paddingHorizontal: 7,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 5,
   },
-  markerName: { fontFamily: fonts.titleBold, fontSize: 12 },
-  markerDistance: { fontFamily: fonts.mono, fontSize: 9, marginTop: 2 },
-  markerStem: { width: 1, height: 42, opacity: 0.9 },
+  markerName: {
+    fontFamily: fonts.titleBold,
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "center",
+  },
+  markerHeight: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    lineHeight: 13,
+    textAlign: "center",
+    marginTop: 9,
+  },
   centerLine: {
     position: "absolute",
     top: 0,
