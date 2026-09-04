@@ -1,5 +1,33 @@
-# Exclude non-mobile artifacts from EAS upload (saves ~50 MB)
+# EAS uses this file instead of the repository .gitignore when it exists.
+# Keep the archive limited to the mobile app and the workspace libraries it
+# actually needs. The generated mobile/ios directory stays included because
+# the native ARSession hook is present there for this build.
+
+# Workspace dependencies and VCS metadata
+node_modules/
+scripts/node_modules/
+.git/
+
+# Workspace-only caches, tooling and local data
+.cache/
+.config/
+.pythonlibs/
+.upm/
+.local/
+.agents/
+attached_assets/
+screenshots/
+screenshots_ipad/
+
+# Non-mobile artifacts
 artifacts/api-server/
 artifacts/mockup-sandbox/
 /scripts/
-.agents/
+
+# Mobile-only generated output that must not be uploaded
+artifacts/mobile/dist/
+artifacts/mobile/.expo/
+artifacts/mobile/static-build/
+artifacts/mobile/server/
+artifacts/mobile/scripts/build.js
+artifacts/mobile/*.tsbuildinfo
