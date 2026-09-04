@@ -5,6 +5,7 @@ import {
   ViroMaterials,
   ViroNode,
   ViroSphere,
+  ViroText,
   isARSupportedOnDevice,
 } from "@reactvision/react-viro";
 import { useEffect, useMemo, useState } from "react";
@@ -13,16 +14,19 @@ import { StyleSheet } from "react-native";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
-const PEAK_MATERIAL = "sagatrailPeakMarker";
+const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
+const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
+const PEAK_RED = "#D71920";
+const PEAK_WHITE = "#FFFFFF";
 
-// Keep the first Viro marker deliberately simple. ViroText previously exercised
-// ViroKit's text/OpenGL path that could abort natively on iOS 26. A constant
-// colored sphere + stem gives us a real AR-world marker without that risk.
 ViroMaterials.createMaterials({
-  [PEAK_MATERIAL]: {
+  [PEAK_RED_MATERIAL]: {
     lightingModel: "Constant",
-    diffuseColor: "#ff6b35",
-    bloomThreshold: 0.35,
+    diffuseColor: PEAK_RED,
+  },
+  [PEAK_WHITE_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: PEAK_WHITE,
   },
 });
 
@@ -73,6 +77,12 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
   ];
 }
 
+function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
+  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
+  const scale = distanceM / 14;
+  return [scale, scale, scale];
+}
+
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const { peaks = [], onPeakPress, onError } =
     sceneNavigator?.viroAppProps ?? {};
@@ -93,28 +103,90 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
           <ViroNode
             key={peak.id}
             position={position}
+            scale={peakMarkerScale(peak)}
             transformBehaviors="billboard"
             renderingOrder={100}
             onClick={() => onPeakPress?.(peak.id)}
             viroTag={`peak:${peak.id}`}
           >
+            {/* Red outer capsule. Its lower edge is the exact summit target. */}
             <ViroBox
-              // The node origin is the calculated summit position. Keep the
-              // entire marker above it so the stem's lower end is the pointer.
-              position={[0, 0.72, 0]}
-              width={0.12}
-              height={1.44}
-              length={0.12}
-              materials={PEAK_MATERIAL}
+              position={[0, 1.55, 0]}
+              width={0.5}
+              height={2.6}
+              length={0.08}
+              materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 1.44, 0]}
-              radius={0.36}
+              position={[0, 0.25, 0]}
+              radius={0.25}
               widthSegmentCount={12}
               heightSegmentCount={8}
-              materials={PEAK_MATERIAL}
+              materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
+            />
+            <ViroSphere
+              position={[0, 2.85, 0]}
+              radius={0.25}
+              widthSegmentCount={12}
+              heightSegmentCount={8}
+              materials={PEAK_RED_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+
+            {/* White inset body leaves a narrow red outline and red height cap. */}
+            <ViroBox
+              position={[0, 1.34, 0.015]}
+              width={0.38}
+              height={2.12}
+              length={0.09}
+              materials={PEAK_WHITE_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+            <ViroSphere
+              position={[0, 0.28, 0.015]}
+              radius={0.19}
+              widthSegmentCount={12}
+              heightSegmentCount={8}
+              materials={PEAK_WHITE_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+
+            <ViroText
+              text={peak.name.toUpperCase()}
+              position={[0, 1.34, 0.075]}
+              rotation={[0, 0, -90]}
+              width={1.92}
+              height={0.28}
+              color={PEAK_RED}
+              maxLines={1}
+              textClipMode="ClipToBounds"
+              textLineBreakMode="None"
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                textAlign: "center",
+                textAlignVertical: "center",
+              }}
+            />
+
+            <ViroText
+              text={peak.elevationM == null ? "— M" : `${Math.round(peak.elevationM)} M`}
+              position={[0, 2.75, 0.075]}
+              rotation={[0, 0, -90]}
+              width={0.62}
+              height={0.25}
+              color={PEAK_WHITE}
+              maxLines={1}
+              textClipMode="ClipToBounds"
+              textLineBreakMode="None"
+              style={{
+                fontSize: 16,
+                fontWeight: "700",
+                textAlign: "center",
+                textAlignVertical: "center",
+              }}
             />
           </ViroNode>
         );
