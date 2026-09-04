@@ -67,7 +67,7 @@ export function PeakArNavigator({
         />
       ),
     }),
-    [peaks, onError],
+    [onError],
   );
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
@@ -88,13 +88,11 @@ export function PeakArNavigator({
       // camera formats. Low selects a smaller supported ARKit format while
       // keeping the Viro scene and tracking enabled.
       videoQuality="Low"
-      // This scene only renders text labels. Disabling HDR prevents ViroKit's
-      // OpenGL tone-mapping pass, which aborts on iOS 26 while loading its
-      // shader pipeline (VROToneMappingRenderPass).
+      // Keep ViroKit's OpenGL tone-mapping pass disabled on iOS 26. The AR
+      // camera/tracking surface is retained, while all labels are rendered
+      // by the React-Native overlay outside this scene.
       hdrEnabled={false}
-      // Keep this text-only scene on Viro's simplest OpenGL material path.
-      // These features are not needed for labels and add shader variants that
-      // can trigger iOS 26 Metal assertions in ViroKit 2.56.
+      // These optional renderer features are not needed for the empty scene.
       pbrEnabled={false}
       bloomEnabled={false}
       shadowsEnabled={false}

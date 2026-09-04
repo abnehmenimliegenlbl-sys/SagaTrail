@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { captureRef } from "react-native-view-shot";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -56,6 +56,7 @@ export function PeakCameraOverlay({
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleArError = useCallback(() => setArEnabled(false), []);
 
   const visiblePeaks =
     heading == null
@@ -191,7 +192,7 @@ export function PeakCameraOverlay({
               terrainModel={terrainModel}
               heading={heading}
               observerElevationM={observerElevationM}
-              onError={() => setArEnabled(false)}
+              onError={handleArError}
             />
           ) : (
             <CameraView ref={cameraRef} facing="back" style={styles.camera} />
