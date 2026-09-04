@@ -55,6 +55,7 @@ interface PeakArSceneProps {
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
   terrainModel?: LocalTerrainModel | null;
+  heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
@@ -63,26 +64,44 @@ interface PeakArSceneAppProps {
 
 function TerrainHologram({
   model,
+  heading,
 }: {
   model: LocalTerrainModel | null | undefined;
+  heading: number | null | undefined;
 }) {
+  const stableHeading = heading ?? 0;
   const mesh = useMemo<LocalTerrainMesh | null>(
-    () => buildLocalTerrainMesh(model, 0),
-    [model],
+    () => buildLocalTerrainMesh(model, stableHeading),
+    [model, stableHeading],
   );
 
   if (!mesh) return null;
 
+  const headingRad = (stableHeading * Math.PI) / 180;
+  const distanceM = 4;
+
   return (
-    <ViroGeometry
-      vertices={mesh.vertices}
-      normals={mesh.normals}
-      triangleIndices={mesh.triangleIndices}
-      materials={TERRAIN_MATERIAL}
-      opacity={0.28}
+    <ViroNode
+      position={[
+        Math.sin(headingRad) * distanceM,
+        -0.8,
+        -Math.cos(headingRad) * distanceM,
+      ]}
+      rotation={[0, -stableHeading, 0]}
+      scale={[0.075, 0.075, 0.075]}
       renderingOrder={10}
-      shadowCastingBitMask={0}
-    />
+      opacity={0.78}
+      viroTag="terrain-hologram"
+    >
+      <ViroGeometry
+        vertices={mesh.vertices}
+        normals={mesh.normals}
+        triangleIndices={mesh.triangleIndices}
+        materials={TERRAIN_MATERIAL}
+        opacity={0.7}
+        shadowCastingBitMask={0}
+      />
+    </ViroNode>
   );
 }
 
@@ -162,6 +181,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const {
     peaks = [],
     terrainModel = null,
+    heading = null,
     observerElevationM = null,
     selectedPeakId = null,
     onPeakPress,
@@ -178,7 +198,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     <ViroARScene onError={() => onError?.()}>
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
-      <TerrainHologram model={terrainModel} />
+      <TerrainHologram model={terrainModel} heading={heading} />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
         if (!position) return null;
@@ -311,6 +331,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 export function PeakArNavigator({
   peaks,
   terrainModel = null,
+  heading = null,
   observerElevationM = null,
   selectedPeakId = null,
   onPeakPress,
@@ -356,6 +377,7 @@ export function PeakArNavigator({
     () => ({
       peaks,
       terrainModel,
+      heading,
       observerElevationM,
       selectedPeakId,
       onPeakPress,
@@ -363,6 +385,7 @@ export function PeakArNavigator({
     }),
     [
       onError,
+      heading,
       observerElevationM,
       onPeakPress,
       peaks,
