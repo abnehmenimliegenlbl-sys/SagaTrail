@@ -24,7 +24,13 @@ import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useColors } from "@/hooks/useColors";
 import { useSagaStrings } from "@/lib/i18n/screens/saga";
-import { hasPurchasedPack, SAGEN_PRO_PACK, sagaPackSlug, kantonSlug } from "@/lib/kantonSlug";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+  SAGEN_PRO_PACK,
+  sagaPackSlug,
+} from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -47,6 +53,7 @@ export default function SagaDetail() {
   const {
     isElite,
     isSubscribed,
+    hatEntitlement,
     offerings,
     purchase,
     isPurchasing,
@@ -116,7 +123,9 @@ export default function SagaDetail() {
   // eine Sage schon gehoert hat, sperrt sie nicht fuer weitere Wanderungen.
   const sagaHeard = hikeHistory.some((h) => h.sagaId === saga.id);
   const packSlug = kantonSlug(saga.canton);
-  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+  const dbPackUnlocked =
+    hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+    hatEntitlement(packEntitlementFuerKanton(packSlug));
   const locked = !hasPremiumAccess && freeHikeUsed && !sagaHeard && !dbPackUnlocked;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
@@ -135,7 +144,8 @@ export default function SagaDetail() {
     !isElite &&
     sagasInCanton.length >= 8 &&
     sagaIndexInCanton > 0 &&
-    !hasPurchasedPack(profile?.purchasedPacks, sagaPackKey);
+    !hasPurchasedPack(profile?.purchasedPacks, sagaPackKey) &&
+    !hatEntitlement(packEntitlementFuerKanton(sagaPackKey));
   // Kaufoption: einziges RC-Produkt KANTONSPACK_PACKAGE im "packs"-Offering.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
     (p) => p.identifier === KANTONSPACK_PACKAGE

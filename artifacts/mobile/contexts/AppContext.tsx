@@ -528,6 +528,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // fuehren — resetAll() bei explizitem Logout uebernimmt das Aufraeumen.
       return;
     }
+    // Erst den lokalen Cache hydratisieren, danach das Serverprofil anwenden.
+    // Sonst kann ein langsamer AsyncStorage-Read das bereits geladene
+    // Serverprofil (inklusive purchasedPacks) wieder überschreiben.
+    if (!hydrated) return;
     if (!profileFetched) return;
 
     if (serverProfile) {
@@ -568,7 +572,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // bewusst NICHT als "kein Profil" behandeln — lokaler Cache/Zustand
     // bleibt erhalten, damit angemeldete Nutzer nicht faelschlich ins
     // Onboarding geschickt werden oder ihr Offline-Cache geloescht wird.
-  }, [authLoaded, isSignedIn, profileFetched, serverProfile, profileError]);
+  }, [authLoaded, isSignedIn, hydrated, profileFetched, serverProfile, profileError]);
 
   const { mutateAsync: saveMyProfileMutation } = useSaveMyProfile();
   const { mutateAsync: updateMyPremiumMutation } = useUpdateMyPremium();

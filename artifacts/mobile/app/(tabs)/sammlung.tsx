@@ -17,7 +17,12 @@ import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { hasPurchasedPack, kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+  SAGEN_PRO_PACK,
+} from "@/lib/kantonSlug";
 import { useColors } from "@/hooks/useColors";
 import { alert } from "@/lib/appAlert";
 import { useCollectionStrings } from "@/lib/i18n/screens/collection";
@@ -95,7 +100,7 @@ export default function Sammlung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { achievements, hikeHistory, language, profile } = useApp();
-  const { isElite } = useSubscription();
+  const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
   const [viewMode, setViewMode] = React.useState<"collection" | "diary">("collection");
@@ -444,7 +449,11 @@ export default function Sammlung() {
         {cantons.map((canton, ci) => {
           const cantonSagas = sagas.filter((s) => s.canton === canton);
           const discovered = cantonSagas.filter((s) => unlockedIds.has(s.id)).length;
-          const packUnlocked = isElite || hasPurchasedPack(profile?.purchasedPacks, kantonSlug(canton));
+          const packSlug = kantonSlug(canton);
+          const packUnlocked =
+            isElite ||
+            hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+            hatEntitlement(packEntitlementFuerKanton(packSlug));
           const accessibleTotal = packUnlocked
             ? Math.min(SAGEN_PRO_PACK + 1, cantonSagas.length)
             : Math.min(1, cantonSagas.length);

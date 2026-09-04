@@ -29,7 +29,12 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
-import { hasPurchasedPack, kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
+import {
+  hasPurchasedPack,
+  kantonSlug,
+  packEntitlementFuerKanton,
+  SAGEN_PRO_PACK,
+} from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
@@ -319,7 +324,7 @@ function CantonCard({
   const colors = useColors();
   const t = useHomeStrings();
   const { achievements, language, premium, profile } = useApp();
-  const { isElite } = useSubscription();
+  const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
 
   // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
@@ -330,7 +335,9 @@ function CantonCard({
   // Zugaengliche Sagen: Premium ohne Pack/Elite → nur 1 inklusive Sage.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const packSlug = kantonSlug(entry.canton);
-  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+  const dbPackUnlocked =
+    hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+    hatEntitlement(packEntitlementFuerKanton(packSlug));
   // Pack 1 deckt maximal SAGEN_PRO_PACK Sagen ab; Pack 2+ noch nicht verfuegbar.
   const pack1Count = Math.min(SAGEN_PRO_PACK, cantonSagas.length);
   const accessibleTotal = isElite

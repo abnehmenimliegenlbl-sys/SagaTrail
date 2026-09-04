@@ -43,7 +43,7 @@ import { LanguageCode } from "@/lib/i18n/languageCode";
 import { haversineKm } from "@/lib/geo";
 import { useRouteFoto, clearRouteFotoCache } from "@/lib/useRouteFoto";
 import { useColors } from "@/hooks/useColors";
-import { hasPurchasedPack, kantonSlug } from "@/lib/kantonSlug";
+import { hasPurchasedPack, kantonSlug, packEntitlementFuerKanton } from "@/lib/kantonSlug";
 import {
   KANTONSPACK_PACKAGE,
   REVENUECAT_PACKS_OFFERING,
@@ -117,6 +117,7 @@ export default function KantonRouten() {
   const {
     isElite,
     isSubscribed,
+    hatEntitlement,
     offerings,
     purchase,
     isPurchasing,
@@ -170,7 +171,9 @@ export default function KantonRouten() {
   // (Fehl-)Grant trotzdem alle pack_<kanton>-Entitlements aktivieren, wuerden
   // faelschlicherweise alle Kantone freigeschaltet.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
-  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+  const dbPackUnlocked =
+    hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+    hatEntitlement(packEntitlementFuerKanton(packSlug));
   const packUnlocked = isElite || dbPackUnlocked;
   const sagasInCanton = sagas.filter((s) => s.canton === cantonName);
   // Pack-Banner: nur fuer Premium (nicht Elite) sichtbar, wenn Pack noch nicht

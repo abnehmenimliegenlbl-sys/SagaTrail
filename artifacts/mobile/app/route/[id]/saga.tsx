@@ -18,7 +18,12 @@ import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
 import { GLAS_3D } from "@/constants/depth";
-import { hasPurchasedPack, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
+import {
+  hasPurchasedPack,
+  packEntitlementFuerKanton,
+  SAGEN_PRO_PACK,
+  sagaPackSlug,
+} from "@/lib/kantonSlug";
 import { useApp } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
@@ -38,7 +43,7 @@ export default function RouteSagaSelection() {
   const params = useLocalSearchParams<{ id: string }>();
   const routeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { profile, premium, freeHikeUsed, hikeHistory } = useApp();
-  const { isElite, isSubscribed } = useSubscription();
+  const { hatEntitlement, isElite, isSubscribed } = useSubscription();
   const hasPremiumSubscription = premium || isSubscribed;
   const hasPremiumAccess = premium || isSubscribed || isElite;
   const { getRoute, sagas } = useCatalog();
@@ -61,7 +66,9 @@ export default function RouteSagaSelection() {
       const inCanton = sagas.filter((item) => item.canton === saga.canton);
       const index = inCanton.findIndex((item) => item.id === saga.id);
       const packSlug = index >= 0 ? sagaPackSlug(slug, index) : slug;
-      const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
+      const packUnlocked =
+        hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+        hatEntitlement(packEntitlementFuerKanton(packSlug));
       if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
       if (index < 0) return false;
@@ -71,7 +78,7 @@ export default function RouteSagaSelection() {
       // Kantons als Premium-Vorschau zugänglich.
       return index !== 0;
     },
-    [freeHikeUsed, hikeHistory, hasPremiumSubscription, isElite, profile, sagas],
+    [freeHikeUsed, hikeHistory, hasPremiumSubscription, hatEntitlement, isElite, profile, sagas],
   );
 
   const selectedSaga = selectedSagaId
