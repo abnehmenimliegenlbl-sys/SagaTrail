@@ -109,26 +109,36 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             onClick={() => onPeakPress?.(peak.id)}
             viroTag={`peak:${peak.id}`}
           >
-            {/* Red outer capsule. Its lower edge is the exact summit target. */}
+            {/* Thin pointer: its lower edge is the exact summit target. */}
             <ViroBox
-              position={[0, 1.55, 0]}
-              width={0.5}
+              position={[0, 0.2, 0]}
+              width={0.035}
+              height={0.4}
+              length={0.035}
+              materials={PEAK_RED_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+
+            {/* Red outer capsule, lifted above the pointer. */}
+            <ViroBox
+              position={[0, 1.93, 0]}
+              width={0.4}
               height={2.6}
               length={0.08}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 0.25, 0]}
-              radius={0.25}
+              position={[0, 0.63, 0]}
+              radius={0.2}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_RED_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 2.85, 0]}
-              radius={0.25}
+              position={[0, 3.23, 0]}
+              radius={0.2}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_RED_MATERIAL}
@@ -137,16 +147,16 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
             {/* White inset body leaves a narrow red outline and red height cap. */}
             <ViroBox
-              position={[0, 1.34, 0.015]}
-              width={0.38}
+              position={[0, 1.72, 0.015]}
+              width={0.36}
               height={2.12}
               length={0.09}
               materials={PEAK_WHITE_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              position={[0, 0.28, 0.015]}
-              radius={0.19}
+              position={[0, 0.66, 0.015]}
+              radius={0.18}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_WHITE_MATERIAL}
@@ -155,10 +165,10 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
             <ViroText
               text={peak.name.toUpperCase()}
-              position={[0, 1.34, 0.075]}
+              position={[0, 1.72, 0.075]}
               rotation={[0, 0, -90]}
               width={1.92}
-              height={0.28}
+              height={0.26}
               color={PEAK_RED}
               maxLines={1}
               textClipMode="ClipToBounds"
@@ -172,17 +182,17 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             />
 
             <ViroText
-              text={peak.elevationM == null ? "— M" : `${Math.round(peak.elevationM)} M`}
-              position={[0, 2.75, 0.075]}
+              text={peak.elevationM == null ? "—" : `${Math.round(peak.elevationM)}m`}
+              position={[0, 3.12, 0.075]}
               rotation={[0, 0, -90]}
-              width={0.62}
-              height={0.25}
+              width={0.82}
+              height={0.22}
               color={PEAK_WHITE}
               maxLines={1}
               textClipMode="ClipToBounds"
               textLineBreakMode="None"
               style={{
-                fontSize: 16,
+                fontSize: 12,
                 fontWeight: "700",
                 textAlign: "center",
                 textAlignVertical: "center",
