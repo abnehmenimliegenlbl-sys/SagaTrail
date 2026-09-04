@@ -263,8 +263,6 @@ export interface CatalogRoute {
   terrain: string;
   /** Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt. */
   familyFriendly?: boolean | null;
-  /** Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt. */
-  childFriendly?: boolean | null;
   /** Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet. */
   wheelchairAccessible?: boolean | null;
   technicalDifficulty?: string | null;
@@ -752,10 +750,6 @@ nearLng?: number;
  * Nur redaktionell als familienfreundlich bestätigte Routen.
  */
 familyFriendly?: boolean;
-/**
- * Nur redaktionell als kinderfreundlich bestätigte Routen.
- */
-childFriendly?: boolean;
 /**
  * Nur Routen mit explizit bestätigtem barrierearmem Zugang.
  */

@@ -43,7 +43,6 @@ export const GetCatalogResponse = zod.object({
   "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -155,7 +154,6 @@ export const GetCantonRoutesQueryParams = zod.object({
   "nearLat": zod.coerce.number().optional().describe('Breitengrad des Nutzer-Standorts. Wird zusammen mit nearLng verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
   "nearLng": zod.coerce.number().optional().describe('Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
   "familyFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als familienfreundlich bestätigte Routen.'),
-  "childFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als kinderfreundlich bestätigte Routen.'),
   "wheelchairAccessible": zod.coerce.boolean().optional().describe('Nur Routen mit explizit bestätigtem barrierearmem Zugang.')
 })
 
@@ -176,7 +174,6 @@ export const GetCantonRoutesResponseItem = zod.object({
   "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -573,7 +570,6 @@ export const GetCustomRouteResponse = zod.object({
   "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -618,7 +614,6 @@ export const ImportGpxRouteResponse = zod.object({
   "schweizMobilTechnique": zod.string().nullish().describe('Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet.'),
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({

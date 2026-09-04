@@ -56,10 +56,6 @@ nearLng?: number;
  */
 familyFriendly?: boolean;
 /**
- * Nur redaktionell als kinderfreundlich bestätigte Routen.
- */
-childFriendly?: boolean;
-/**
  * Nur Routen mit explizit bestätigtem barrierearmem Zugang.
  */
 wheelchairAccessible?: boolean;
