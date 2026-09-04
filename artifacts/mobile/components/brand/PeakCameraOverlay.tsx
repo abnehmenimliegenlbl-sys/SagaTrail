@@ -1,8 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as Haptics from "expo-haptics";
 import { captureRef } from "react-native-view-shot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
@@ -56,6 +59,8 @@ export function PeakCameraOverlay({
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
+  const lockPulse = useRef(new Animated.Value(0)).current;
+  const scanProgress = useRef(new Animated.Value(0)).current;
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,10 +95,11 @@ export function PeakCameraOverlay({
       peak.relativeBearingDeg != null &&
       Math.abs(peak.relativeBearingDeg) <= 18,
   );
+  const selectablePeaks = arEnabled ? arPeaks : visiblePeaks;
   const targetPeak =
-    visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
+    selectablePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
-    visiblePeaks[0];
+    selectablePeaks[0];
   const status =
     visiblePeaks.length > 0 ? `${strings.detected}: ${targetPeak?.name ?? ""}` : strings.noPeaks;
 
@@ -116,6 +122,50 @@ export function PeakCameraOverlay({
     };
   }, [visible]);
 
+  useEffect(() => {
+    if (!arEnabled || !targetPeak) {
+      lockPulse.stopAnimation();
+      lockPulse.setValue(0);
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(lockPulse, {
+          toValue: 1,
+          duration: 850,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(lockPulse, {
+          toValue: 0,
+          duration: 850,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [arEnabled, lockPulse, targetPeak?.id]);
+
+  useEffect(() => {
+    if (!arEnabled || !contentMounted) {
+      scanProgress.stopAnimation();
+      scanProgress.setValue(0);
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.timing(scanProgress, {
+        toValue: 1,
+        duration: 2400,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [arEnabled, contentMounted, scanProgress]);
+
   const closeCamera = () => {
     // Unmount the native camera/AR surface before dismissing the only native
     // modal. This avoids tearing down Viro during the UIKit transition.
@@ -134,6 +184,13 @@ export function PeakCameraOverlay({
     // visibility changes; removing/reinserting nodes crashes Viro on iOS 26.
     setArPeaks(arCandidates);
     switchNativeSurface("ar");
+  };
+
+  const handlePeakPress = (peakId: string) => {
+    setSelectedPeakId(peakId);
+    if (Platform.OS !== "web") {
+      void Haptics.selectionAsync().catch(() => {});
+    }
   };
 
   const markerPosition = (relativeBearingDeg: number) => {
@@ -208,7 +265,8 @@ export function PeakCameraOverlay({
               terrainModel={terrainModel}
               heading={heading}
               observerElevationM={observerElevationM}
-                onPeakPress={setSelectedPeakId}
+              selectedPeakId={selectedPeakId}
+              onPeakPress={handlePeakPress}
               onError={handleArError}
             />
           ) : (
@@ -221,7 +279,62 @@ export function PeakCameraOverlay({
           <View style={styles.scanLineMiddle} />
           <View style={styles.scanLineBottom} />
         </View>
+        {arEnabled && contentMounted && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.scanSweep,
+              {
+                backgroundColor: colors.accent,
+                opacity: scanProgress.interpolate({
+                  inputRange: [0, 0.12, 0.5, 0.88, 1],
+                  outputRange: [0, 0.8, 0.95, 0.8, 0],
+                }),
+                transform: [
+                  {
+                    translateY: scanProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-220, 420],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+        )}
         <View style={styles.horizon} />
+        {arEnabled && contentMounted && targetPeak && (
+          <Animated.View
+            style={[
+              styles.lockOnBadge,
+              {
+                borderColor: colors.accent,
+                backgroundColor: colors.glassBgStrong,
+                transform: [
+                  {
+                    scale: lockPulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.06],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Feather name="crosshair" size={14} color={colors.accent} />
+            <View>
+              <Text style={[styles.lockOnTitle, { color: colors.accent }]}>
+                {targetPeak.name}
+              </Text>
+              <Text style={[styles.lockOnDetail, { color: colors.photoScrimMuted }]}>
+                {targetPeak.distanceKm.toFixed(1)} km ·{" "}
+                {targetPeak.elevationM != null
+                  ? `${Math.round(targetPeak.elevationM)} m ü. M.`
+                  : strings.heightUnknown}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
         {contentMounted &&
           !arEnabled &&
           visiblePeaks.map((peak, index) => (
@@ -376,6 +489,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.17)",
   },
   scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
+  scanSweep: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "32%",
+    height: 2,
+    shadowColor: "#FFFFFF",
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
+  },
   scanLineTop: {
     position: "absolute",
     left: 0,
@@ -407,6 +530,29 @@ const styles = StyleSheet.create({
     top: "54%",
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.45)",
+  },
+  lockOnBadge: {
+    position: "absolute",
+    top: "61%",
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    maxWidth: "86%",
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  lockOnTitle: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  lockOnDetail: {
+    marginTop: 2,
+    fontFamily: fonts.mono,
+    fontSize: 9,
   },
   fullscreenTopBar: {
     position: "absolute",

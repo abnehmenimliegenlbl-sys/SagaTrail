@@ -2,6 +2,7 @@ import {
   ViroARScene,
   ViroARSceneNavigator,
   ViroBox,
+  ViroGeometry,
   ViroMaterials,
   ViroNode,
   ViroSphere,
@@ -12,10 +13,17 @@ import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
+import {
+  buildLocalTerrainMesh,
+  terrainVisibilityForPeak,
+  type LocalTerrainMesh,
+  type LocalTerrainModel,
+} from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
+const TERRAIN_MATERIAL = "sagatrailTerrainHologram";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
 
@@ -28,6 +36,14 @@ ViroMaterials.createMaterials({
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
   },
+  [TERRAIN_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "rgba(215, 25, 32, 0.18)",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
 });
 
 interface PeakArSceneProps {
@@ -38,9 +54,26 @@ interface PeakArSceneProps {
 
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
+  terrainModel?: LocalTerrainModel | null;
+  observerElevationM?: number | null;
+  selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
 }
+
+const EMPTY_TERRAIN_MESH: LocalTerrainMesh = {
+  vertices: [
+    [0, -100, 0],
+    [0, -100, 0],
+    [0, -100, 0],
+  ],
+  normals: [
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+  ],
+  triangleIndices: [[0, 1, 2]],
+};
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -115,8 +148,20 @@ function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
 }
 
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
-  const { peaks = [], onPeakPress, onError } =
+  const {
+    peaks = [],
+    terrainModel = null,
+    observerElevationM = null,
+    selectedPeakId = null,
+    onPeakPress,
+    onError,
+  } =
     sceneNavigator?.viroAppProps ?? {};
+  const terrainMesh =
+    useMemo(
+      () => buildLocalTerrainMesh(terrainModel, 0),
+      [terrainModel],
+    ) ?? EMPTY_TERRAIN_MESH;
 
   useEffect(() => {
     console.log("[PeakAR] Viro markers updated", {
@@ -126,20 +171,49 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
   return (
     <ViroARScene onError={() => onError?.()}>
+      {/* This node is always mounted. Updating its vertices keeps the native
+          Viro tree stable when the local SwissTopo model arrives. */}
+      <ViroGeometry
+        vertices={terrainMesh.vertices}
+        normals={terrainMesh.normals}
+        triangleIndices={terrainMesh.triangleIndices}
+        materials={TERRAIN_MATERIAL}
+        opacity={terrainMesh === EMPTY_TERRAIN_MESH ? 0 : 1}
+        renderingOrder={1}
+      />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
         if (!position) return null;
+        const terrainVisibility = terrainVisibilityForPeak(
+          terrainModel,
+          peak,
+          observerElevationM,
+        );
+        const isSelected = peak.id === selectedPeakId;
 
         return (
           <ViroNode
             key={peak.id}
             position={position}
             scale={peakMarkerScale(peak)}
+            // Keep occluded markers in the native tree. Only their opacity
+            // changes, avoiding the iOS 26 removeReactSubview crash.
+            opacity={terrainVisibility === "occluded" ? 0 : 1}
             transformBehaviors="billboard"
             renderingOrder={100}
             onClick={() => onPeakPress?.(peak.id)}
             viroTag={`peak:${peak.id}`}
           >
+            {/* Always mounted selection halo; opacity alone changes on tap. */}
+            <ViroSphere
+              position={[0, 1.95, 0.01]}
+              radius={0.34}
+              widthSegmentCount={16}
+              heightSegmentCount={10}
+              materials={PEAK_RED_MATERIAL}
+              opacity={isSelected ? 0.32 : 0}
+              shadowCastingBitMask={0}
+            />
             {/* Thin pointer: its lower edge is the exact summit target. */}
             <ViroBox
               position={[0, 0.2, 0]}
@@ -238,6 +312,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
 export function PeakArNavigator({
   peaks,
+  terrainModel = null,
+  observerElevationM = null,
+  selectedPeakId = null,
   onPeakPress,
   onError,
 }: PeakArNavigatorProps) {
@@ -278,8 +355,22 @@ export function PeakArNavigator({
     [],
   );
   const viroAppProps = useMemo<PeakArSceneAppProps>(
-    () => ({ peaks, onPeakPress, onError }),
-    [onError, onPeakPress, peaks],
+    () => ({
+      peaks,
+      terrainModel,
+      observerElevationM,
+      selectedPeakId,
+      onPeakPress,
+      onError,
+    }),
+    [
+      onError,
+      observerElevationM,
+      onPeakPress,
+      peaks,
+      selectedPeakId,
+      terrainModel,
+    ],
   );
 
   // Do not create the native Viro surface until ARKit/ARCore has confirmed
