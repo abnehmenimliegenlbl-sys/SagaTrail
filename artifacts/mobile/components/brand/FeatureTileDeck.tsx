@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export interface FeatureTile {
   id: string;
   title: string;
+  subtitle?: string;
   icon: React.ComponentProps<typeof Feather>["name"];
   content: React.ReactNode;
   preview?: React.ReactNode;
@@ -67,7 +68,7 @@ export function FeatureTileDeck({
               key={tile.id}
               accessibilityRole="button"
               accessibilityState={{ expanded: selected }}
-              accessibilityLabel={tile.title}
+              accessibilityLabel={[tile.title, tile.subtitle].filter(Boolean).join(", ")}
               onPress={() => selectTile(tile.id)}
               style={({ pressed }) => [
                 styles.tile,
@@ -95,6 +96,17 @@ export function FeatureTileDeck({
                 >
                   {tile.title}
                 </Text>
+                {tile.subtitle ? (
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tileSubtitle,
+                      { color: selected ? colors.primary : colors.mutedForeground },
+                    ]}
+                  >
+                    {tile.subtitle}
+                  </Text>
+                ) : null}
                 {tile.preview}
               </View>
               <Feather
@@ -214,6 +226,13 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     textAlign: "center",
     textTransform: "uppercase",
+  },
+  tileSubtitle: {
+    marginTop: 2,
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "center",
   },
   modalRoot: {
     flex: 1,

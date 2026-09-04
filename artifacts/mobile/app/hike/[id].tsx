@@ -4143,6 +4143,7 @@ export default function LiveHike() {
             {
               id: "compass",
               title: t.compass,
+              subtitle: compassHeading == null ? "—°" : `${Math.round(compassHeading)}°`,
               icon: "compass",
               content: (
                 <CompassCard
@@ -4169,7 +4170,12 @@ export default function LiveHike() {
             },
             {
               id: "panorama",
-              title: t.panorama,
+              title: "Panorama",
+              subtitle: `${
+                panoramaOnlinePois.length > 0
+                  ? panoramaOnlinePois.length
+                  : offlinePanorama?.peaks.length ?? panoramaPeaks.length
+              } Gipfel`,
               icon: "triangle",
               content: (
                 <PeakPanorama
