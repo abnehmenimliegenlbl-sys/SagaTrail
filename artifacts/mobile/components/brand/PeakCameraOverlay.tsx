@@ -56,7 +56,25 @@ export function PeakCameraOverlay({
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleArError = useCallback(() => setArEnabled(false), []);
+  const switchNativeSurface = useCallback((nextMode: "camera" | "ar") => {
+    if (arActivationTimerRef.current) {
+      clearTimeout(arActivationTimerRef.current);
+      arActivationTimerRef.current = null;
+    }
+
+    // Never replace CameraView and Viro in the same render pass. CameraView
+    // releases AVCaptureSession asynchronously, so the old native surface
+    // must stay unmounted while the next one is created.
+    setContentMounted(false);
+    setArEnabled(nextMode === "ar");
+    arActivationTimerRef.current = setTimeout(() => {
+      arActivationTimerRef.current = null;
+      setContentMounted(true);
+    }, 700);
+  }, []);
+  const handleArError = useCallback(() => {
+    switchNativeSurface("camera");
+  }, [switchNativeSurface]);
 
   const visiblePeaks =
     heading == null
@@ -103,21 +121,11 @@ export function PeakCameraOverlay({
   };
 
   const toggleAr = () => {
-    if (arActivationTimerRef.current) {
-      clearTimeout(arActivationTimerRef.current);
-      arActivationTimerRef.current = null;
-    }
     if (arEnabled) {
-      setArEnabled(false);
+      switchNativeSurface("camera");
       return;
     }
-    // Let CameraView release its native capture session before Viro starts
-    // its own AR camera session.
-    setArEnabled(false);
-    arActivationTimerRef.current = setTimeout(() => {
-      arActivationTimerRef.current = null;
-      setArEnabled(true);
-    }, 450);
+    switchNativeSurface("ar");
   };
 
   const markerPosition = (relativeBearingDeg: number) => {
