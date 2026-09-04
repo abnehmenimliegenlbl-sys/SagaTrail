@@ -125,18 +125,6 @@ export function PeakCameraOverlay({
     onClose();
   };
 
-  const arVisiblePeakIds =
-    heading == null
-      ? []
-      : arPeaks
-          .filter((peak) => {
-            const relative = ((peak.bearingDeg - heading + 540) % 360) - 180;
-            return Math.abs(relative) <= 70;
-          })
-          .sort((a, b) => a.distanceKm - b.distanceKm)
-          .slice(0, 4)
-          .map((peak) => peak.id);
-
   const toggleAr = () => {
     if (arEnabled) {
       switchNativeSurface("camera");
@@ -216,7 +204,6 @@ export function PeakCameraOverlay({
           arEnabled ? (
             <PeakArNavigator
               peaks={arPeaks}
-              visiblePeakIds={arVisiblePeakIds}
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               heading={heading}
