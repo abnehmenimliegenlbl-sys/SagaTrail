@@ -61,7 +61,6 @@ export function PeakCameraOverlay({
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
-  const [mapLayer, setMapLayer] = useState<"topo" | "sat">("topo");
   const lockPulse = useRef(new Animated.Value(0)).current;
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
@@ -111,7 +110,6 @@ export function PeakCameraOverlay({
       setArEnabled(false);
       setArPeaks([]);
       setSelectedPeakId(null);
-      setMapLayer("topo");
       if (arActivationTimerRef.current) {
         clearTimeout(arActivationTimerRef.current);
         arActivationTimerRef.current = null;
@@ -249,7 +247,6 @@ export function PeakCameraOverlay({
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               routeGeometry={routeGeometry}
-              mapLayer={mapLayer}
               heading={heading}
               observerElevationM={observerElevationM}
               selectedPeakId={selectedPeakId}
@@ -343,62 +340,6 @@ export function PeakCameraOverlay({
             pointerEvents="none"
             style={[styles.centerLine, { backgroundColor: colors.primary }]}
           />
-        )}
-        {arEnabled && contentMounted && terrainModel && (
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.terrainLegend,
-              {
-                top: insets.top + 76,
-                backgroundColor: colors.glassBgStrong,
-                borderColor: colors.glassBorder,
-              },
-            ]}
-          >
-            <View style={styles.terrainLegendTitle}>
-              <View style={[styles.terrainLegendDot, { backgroundColor: "#24D6C2" }]} />
-              <Text style={[styles.terrainLegendTitleText, { color: colors.photoScrimText }]}>
-                {strings.terrainModel}
-              </Text>
-            </View>
-            <Text style={[styles.terrainLegendDetail, { color: colors.photoScrimMuted }]}>
-              {strings.terrainModelDetail(
-                terrainModel.radiusM >= 1000
-                  ? `${(terrainModel.radiusM / 1000).toFixed(1)} km`
-                  : `${Math.round(terrainModel.radiusM)} m`,
-              )}
-            </Text>
-            <View style={styles.mapLayerSwitch}>
-              {(["topo", "sat"] as const).map((layer) => {
-                const active = mapLayer === layer;
-                return (
-                  <Pressable
-                    key={layer}
-                    onPress={() => setMapLayer(layer)}
-                    style={[
-                      styles.mapLayerButton,
-                      {
-                        backgroundColor: active ? colors.primary : "transparent",
-                        borderColor: active ? colors.primary : colors.glassBorder,
-                      },
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={layer === "topo" ? "SwissTopo-Karte" : "Satellitenkarte"}
-                  >
-                    <Text
-                      style={[
-                        styles.mapLayerButtonText,
-                        { color: active ? colors.primaryForeground : colors.photoScrimMuted },
-                      ]}
-                    >
-                      {layer === "topo" ? "TOPO" : "SAT"}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
         )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
           <View>

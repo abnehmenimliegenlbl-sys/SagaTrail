@@ -261,9 +261,10 @@ export function buildLocalTerrainMesh(
 }
 
 /**
- * Projects the route geometry into the same local frame as the terrain mesh.
- * The route is split whenever it leaves the local model so a distant segment
- * is never drawn as a misleading straight line across the hologram.
+ * Projects route geometry into a local Viro frame. When headingDeg is set,
+ * coordinates are camera-relative (used by the retained map-card renderer).
+ * When it is null, coordinates stay in the geographic GravityAndHeading frame
+ * (used by the live AR route).
  */
 export function buildLocalTerrainRouteLines(
   model: LocalTerrainModel | null | undefined,
@@ -274,7 +275,6 @@ export function buildLocalTerrainRouteLines(
   if (
     !model ||
     observerElevation == null ||
-    headingDeg == null ||
     !Array.isArray(routeGeometry) ||
     routeGeometry.length < 2
   ) {
@@ -283,7 +283,6 @@ export function buildLocalTerrainRouteLines(
 
   const earthRadiusM = 6_371_000;
   const centerLatRad = (model.center.lat * Math.PI) / 180;
-  const headingRad = (headingDeg * Math.PI) / 180;
   const maxPoints = 160;
   const stride = Math.max(1, Math.ceil(routeGeometry.length / maxPoints));
   const lines: TerrainRouteLine[] = [];
@@ -321,7 +320,9 @@ export function buildLocalTerrainRouteLines(
     const bearingDeg =
       ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
     const relativeBearing =
-      ((bearingDeg - headingDeg + 540) % 360) - 180;
+      headingDeg == null
+        ? bearingDeg
+        : ((bearingDeg - headingDeg + 540) % 360) - 180;
     const angle = (relativeBearing * Math.PI) / 180;
     const ray = nearestRay(model, bearingDeg);
     const terrainElevation =
@@ -340,6 +341,18 @@ export function buildLocalTerrainRouteLines(
 
   flush();
   return lines;
+}
+
+/**
+ * Route overlay for the live AR world. GravityAndHeading already aligns Viro
+ * with geographic north, so these coordinates must not be rotated by the
+ * phone's current compass heading a second time.
+ */
+export function buildGeographicTerrainRouteLines(
+  model: LocalTerrainModel | null | undefined,
+  routeGeometry: readonly number[][] | null | undefined,
+): TerrainRouteLine[] {
+  return buildLocalTerrainRouteLines(model, routeGeometry, null);
 }
 
 /**

@@ -16,6 +16,7 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
+  buildGeographicTerrainRouteLines,
   buildLocalMapRouteLines,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -75,7 +76,12 @@ interface PeakArSceneAppProps {
   onError?: () => void;
 }
 
-function TerrainHologram({
+/**
+ * Kept for a future non-AR map presentation. This card is deliberately not
+ * mounted in the live panorama because a floating map texture does not blend
+ * into the camera landscape.
+ */
+function TerrainMapHologram({
   model,
   routeGeometry,
   mapLayer,
@@ -204,6 +210,43 @@ function TerrainHologram({
   );
 }
 
+function TerrainHologram({
+  model,
+  routeGeometry,
+}: {
+  model: LocalTerrainModel | null | undefined;
+  routeGeometry: readonly number[][] | null | undefined;
+}) {
+  const routeLines = useMemo<TerrainRouteLine[]>(
+    () => buildGeographicTerrainRouteLines(model, routeGeometry),
+    [model, routeGeometry],
+  );
+
+  if (routeLines.length === 0) return null;
+
+  return (
+    <ViroNode
+      renderingOrder={20}
+      opacity={0.96}
+      viroTag="terrain-route-ar"
+    >
+      {routeLines.map((points, index) => (
+        <ViroPolyline
+          key={`terrain-route-ar-${index}`}
+          points={points.map(([east, elevation, north]) => [
+            east,
+            elevation + 0.035,
+            north,
+          ])}
+          thickness={0.08}
+          materials={TERRAIN_ROUTE_MATERIAL}
+          opacity={1}
+        />
+      ))}
+    </ViroNode>
+  );
+}
+
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
@@ -281,7 +324,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     peaks = [],
     terrainModel = null,
     routeGeometry = null,
-      mapLayer = "topo",
     heading = null,
     observerElevationM = null,
     selectedPeakId = null,
@@ -302,8 +344,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
-        mapLayer={mapLayer}
-        heading={heading}
       />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
@@ -503,7 +543,6 @@ export function PeakArNavigator({
       mapLayer,
       selectedPeakId,
       terrainModel,
-      mapLayer,
     ],
   );
 
