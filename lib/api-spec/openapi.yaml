@@ -1878,7 +1878,7 @@ components:
         dogsAllowed:
           type: boolean
           nullable: true
-          description: Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.
+          description: Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.
         wheelchairAccessible:
           type: boolean
           nullable: true
