@@ -341,3 +341,21 @@ export function buildLocalTerrainRouteLines(
   flush();
   return lines;
 }
+
+/**
+ * Converts the same route geometry into a north-up map-card coordinate system.
+ * The map card uses x=east and y=north, while the AR terrain frame uses x=east
+ * and z=north. Elevation is intentionally discarded for this flat map view.
+ */
+export function buildLocalMapRouteLines(
+  model: LocalTerrainModel | null | undefined,
+  routeGeometry: readonly number[][] | null | undefined,
+): TerrainRouteLine[] {
+  return buildLocalTerrainRouteLines(model, routeGeometry, 0).map((line) =>
+    line.map(([east, _elevation, northFacing]) => [
+      east / AR_WORLD_SCALE,
+      -northFacing / AR_WORLD_SCALE,
+      0.04,
+    ]),
+  );
+}

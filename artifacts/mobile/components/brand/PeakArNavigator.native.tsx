@@ -3,6 +3,7 @@ import {
   ViroARSceneNavigator,
   ViroBox,
   ViroGeometry,
+  ViroImage,
   ViroMaterials,
   ViroNode,
   ViroPolyline,
@@ -15,10 +16,8 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
-  buildLocalTerrainRouteLines,
-  buildLocalTerrainMesh,
+  buildLocalMapRouteLines,
   terrainVisibilityForPeak,
-  type LocalTerrainMesh,
   type LocalTerrainModel,
   type TerrainRouteLine,
 } from "@/lib/terrainModel";
@@ -26,8 +25,6 @@ import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
-const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
-const TERRAIN_GRID_MATERIAL = "sagatrailTerrainGrid";
 const TERRAIN_ROUTE_MATERIAL = "sagatrailTerrainRoute";
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const PEAK_RED = "#D71920";
@@ -41,22 +38,6 @@ ViroMaterials.createMaterials({
   [PEAK_WHITE_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
-  },
-  [TERRAIN_SURFACE_MATERIAL]: {
-    lightingModel: "Constant",
-    diffuseColor: "#24D6C2",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
-  },
-  [TERRAIN_GRID_MATERIAL]: {
-    lightingModel: "Constant",
-    diffuseColor: "#B7FFF7",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
   },
   [TERRAIN_ROUTE_MATERIAL]: {
     lightingModel: "Constant",
@@ -86,6 +67,7 @@ interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
+  mapLayer?: "topo" | "sat";
   heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;
@@ -96,46 +78,54 @@ interface PeakArSceneAppProps {
 function TerrainHologram({
   model,
   routeGeometry,
+  mapLayer,
   heading,
 }: {
   model: LocalTerrainModel | null | undefined;
   routeGeometry: readonly number[][] | null | undefined;
+  mapLayer: "topo" | "sat";
   heading: number | null | undefined;
 }) {
   const stableHeading = heading ?? 0;
-  const mesh = useMemo<LocalTerrainMesh | null>(
-    () => buildLocalTerrainMesh(model, stableHeading),
-    [model, stableHeading],
-  );
   const routeLines = useMemo<TerrainRouteLine[]>(
-    () => buildLocalTerrainRouteLines(model, routeGeometry, stableHeading),
-    [model, routeGeometry, stableHeading],
+    () => buildLocalMapRouteLines(model, routeGeometry),
+    [model, routeGeometry],
   );
 
-  if (!mesh) return null;
+  const mapTile = useMemo(() => {
+    if (!model) return null;
+    const zoom = 14;
+    const latitudeRad = (model.center.lat * Math.PI) / 180;
+    const scale = 2 ** zoom;
+    const x = ((model.center.lng + 180) / 360) * scale;
+    const sinLatitude = Math.sin(latitudeRad);
+    const y =
+      ((1 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (2 * Math.PI)) / 2) *
+      scale;
+    const tileX = Math.floor(x);
+    const tileY = Math.floor(y);
+    const metersPerTile =
+      (156543.03392804097 * Math.cos(latitudeRad)) / scale;
+    const tileCenterEastM = (tileX + 0.5 - x) * metersPerTile;
+    const tileCenterNorthM = (y - (tileY + 0.5)) * metersPerTile;
+    const cardSize = 3.2;
+    const cardScale = cardSize / metersPerTile;
+    const base =
+      mapLayer === "sat"
+        ? "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857"
+        : "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857";
+    return {
+      url: `${base}/${zoom}/${tileX}/${tileY}.${mapLayer === "sat" ? "jpeg" : "jpeg"}`,
+      cardSize,
+      cardScale,
+      offset: [
+        -tileCenterEastM * cardScale,
+        -tileCenterNorthM * cardScale,
+      ] as [number, number],
+    };
+  }, [model, mapLayer]);
 
-  const terrainRays = model?.rays
-    .filter((ray) => ray.samples.length >= 2)
-    .slice()
-    .sort((a, b) => a.bearingDeg - b.bearingDeg);
-  const rayCount = terrainRays?.length ?? 0;
-  const ringCount = rayCount > 0 ? mesh.vertices.length / rayCount : 0;
-  const gridLines: LocalTerrainMesh["vertices"][] = [];
-
-  if (rayCount >= 4 && Number.isInteger(ringCount) && ringCount >= 2) {
-    for (let rayIndex = 0; rayIndex < rayCount; rayIndex += 1) {
-      gridLines.push(
-        mesh.vertices.slice(rayIndex * ringCount, (rayIndex + 1) * ringCount),
-      );
-    }
-    for (let ringIndex = 1; ringIndex < ringCount; ringIndex += 1) {
-      gridLines.push(
-        Array.from({ length: rayCount }, (_, rayIndex) =>
-          mesh.vertices[rayIndex * ringCount + ringIndex],
-        ),
-      );
-    }
-  }
+  if (!model || !mapTile) return null;
 
   const headingRad = (stableHeading * Math.PI) / 180;
   const distanceM = 4;
@@ -152,28 +142,27 @@ function TerrainHologram({
       renderingOrder={10}
       opacity={0.78}
       viroTag="terrain-hologram"
+      transformBehaviors="billboard"
     >
-      <ViroGeometry
-        vertices={mesh.vertices}
-        normals={mesh.normals}
-        triangleIndices={mesh.triangleIndices}
-        materials={TERRAIN_SURFACE_MATERIAL}
-        opacity={0.2}
-        shadowCastingBitMask={0}
+      <ViroImage
+        source={{ uri: mapTile.url }}
+        style={{
+          width: mapTile.cardSize,
+          height: mapTile.cardSize,
+        }}
+        resizeMode="StretchToFill"
+        opacity={0.92}
+        position={[mapTile.offset[0], mapTile.offset[1], 0]}
+        viroTag="terrain-map-image"
       />
-      {gridLines.map((points, index) => (
-        <ViroPolyline
-          key={`terrain-grid-${index}`}
-          points={points}
-          thickness={0.012}
-          materials={TERRAIN_GRID_MATERIAL}
-          opacity={0.8}
-        />
-      ))}
       {routeLines.map((points, index) => (
         <ViroPolyline
           key={`terrain-route-${index}`}
-          points={points}
+          points={points.map(([east, north]) => [
+            east * mapTile.cardScale,
+            north * mapTile.cardScale,
+            0.06,
+          ])}
           thickness={0.045}
           materials={TERRAIN_ROUTE_MATERIAL}
           opacity={1}
@@ -181,16 +170,16 @@ function TerrainHologram({
       ))}
       <ViroPolyline
         points={[
-          [0, 0, 0],
-          [0, 1.8, 0],
+          [0, 0, 0.08],
+          [0, 0.22, 0.08],
         ]}
-        thickness={0.055}
+        thickness={0.025}
         materials={TERRAIN_USER_MATERIAL}
         opacity={1}
       />
       <ViroSphere
-        position={[0, 0.06, 0]}
-        radius={0.38}
+        position={[0, 0, 0.08]}
+        radius={0.06}
         widthSegmentCount={12}
         heightSegmentCount={8}
         materials={TERRAIN_USER_MATERIAL}
@@ -198,9 +187,9 @@ function TerrainHologram({
       />
       <ViroText
         text="DU"
-        position={[0, 2.15, 0]}
-        width={1.6}
-        height={0.34}
+        position={[0, 0.3, 0.08]}
+        width={0.35}
+        height={0.1}
         color="#FFFFFF"
         maxLines={1}
         style={{
@@ -291,6 +280,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     peaks = [],
     terrainModel = null,
     routeGeometry = null,
+      mapLayer = "topo",
     heading = null,
     observerElevationM = null,
     selectedPeakId = null,
@@ -311,6 +301,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
+        mapLayer={mapLayer}
         heading={heading}
       />
       {peaks.map((peak) => {
@@ -446,6 +437,7 @@ export function PeakArNavigator({
   peaks,
   terrainModel = null,
   routeGeometry = null,
+  mapLayer = "topo",
   heading = null,
   observerElevationM = null,
   selectedPeakId = null,
@@ -493,6 +485,7 @@ export function PeakArNavigator({
       peaks,
       terrainModel,
       routeGeometry,
+      mapLayer,
       heading,
       observerElevationM,
       selectedPeakId,
@@ -506,8 +499,10 @@ export function PeakArNavigator({
       onPeakPress,
       peaks,
       routeGeometry,
+      mapLayer,
       selectedPeakId,
       terrainModel,
+      mapLayer,
     ],
   );
 

@@ -7,6 +7,7 @@ export interface PeakArNavigatorProps {
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
+  mapLayer?: "topo" | "sat";
   heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;

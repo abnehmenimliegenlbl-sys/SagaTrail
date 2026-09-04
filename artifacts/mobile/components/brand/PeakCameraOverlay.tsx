@@ -61,6 +61,7 @@ export function PeakCameraOverlay({
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
+  const [mapLayer, setMapLayer] = useState<"topo" | "sat">("topo");
   const lockPulse = useRef(new Animated.Value(0)).current;
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
@@ -110,6 +111,7 @@ export function PeakCameraOverlay({
       setArEnabled(false);
       setArPeaks([]);
       setSelectedPeakId(null);
+      setMapLayer("topo");
       if (arActivationTimerRef.current) {
         clearTimeout(arActivationTimerRef.current);
         arActivationTimerRef.current = null;
@@ -247,6 +249,7 @@ export function PeakCameraOverlay({
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               routeGeometry={routeGeometry}
+              mapLayer={mapLayer}
               heading={heading}
               observerElevationM={observerElevationM}
               selectedPeakId={selectedPeakId}
@@ -343,7 +346,7 @@ export function PeakCameraOverlay({
         )}
         {arEnabled && contentMounted && terrainModel && (
           <View
-            pointerEvents="none"
+            pointerEvents="box-none"
             style={[
               styles.terrainLegend,
               {
@@ -366,6 +369,35 @@ export function PeakCameraOverlay({
                   : `${Math.round(terrainModel.radiusM)} m`,
               )}
             </Text>
+            <View style={styles.mapLayerSwitch}>
+              {(["topo", "sat"] as const).map((layer) => {
+                const active = mapLayer === layer;
+                return (
+                  <Pressable
+                    key={layer}
+                    onPress={() => setMapLayer(layer)}
+                    style={[
+                      styles.mapLayerButton,
+                      {
+                        backgroundColor: active ? colors.primary : "transparent",
+                        borderColor: active ? colors.primary : colors.glassBorder,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={layer === "topo" ? "SwissTopo-Karte" : "Satellitenkarte"}
+                  >
+                    <Text
+                      style={[
+                        styles.mapLayerButtonText,
+                        { color: active ? colors.primaryForeground : colors.photoScrimMuted },
+                      ]}
+                    >
+                      {layer === "topo" ? "TOPO" : "SAT"}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
@@ -638,6 +670,22 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontFamily: fonts.mono,
     fontSize: 9,
+  },
+  mapLayerSwitch: {
+    flexDirection: "row",
+    gap: 5,
+    marginTop: 7,
+  },
+  mapLayerButton: {
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  mapLayerButtonText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 0.6,
   },
   imageFooter: {
     position: "absolute",
