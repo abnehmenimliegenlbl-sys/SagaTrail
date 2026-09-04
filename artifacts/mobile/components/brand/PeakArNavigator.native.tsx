@@ -123,6 +123,10 @@ export function PeakArNavigator({
       // camera formats. Low selects a smaller supported ARKit format while
       // keeping the Viro scene and tracking enabled.
       videoQuality="Low"
+      // This scene only renders text labels. Disabling HDR prevents ViroKit's
+      // OpenGL tone-mapping pass, which aborts on iOS 26 while loading its
+      // shader pipeline (VROToneMappingRenderPass).
+      hdrEnabled={false}
       worldAlignment="GravityAndHeading"
     />
   );
