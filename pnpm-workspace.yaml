@@ -34,13 +34,29 @@ minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@replit/*'
+  - '@clerk/expo'
+  - '@clerk/react'
+  - '@expo/cli'
+  - '@expo/ui'
+  - expo
+  - expo-build-properties
+  - expo-image-picker
+  - expo-location
+  - expo-modules-core
+  - expo-modules-jsi
+  - expo-notifications
+  - expo-router
+  - expo-sharing
+  - expo-task-manager
   - stripe-replit-sync
 
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - unrs-resolver
+allowBuilds:
+  browser-tabs-lock: true
+  core-js: true
+  '@swc/core': true
+  esbuild: true
+  msw: true
+  unrs-resolver: true
 
 overrides:
   '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
