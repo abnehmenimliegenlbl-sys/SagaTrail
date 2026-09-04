@@ -6,7 +6,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
-import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 interface PeakArSceneProps {
