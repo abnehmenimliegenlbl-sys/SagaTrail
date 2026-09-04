@@ -60,10 +60,11 @@ export default function RouteSagaSelection() {
       const slug = kantonSlug(saga.canton);
       const inCanton = sagas.filter((item) => item.canton === saga.canton);
       const index = inCanton.findIndex((item) => item.id === saga.id);
-      const packSlug = sagaPackSlug(slug, index);
+      const packSlug = index >= 0 ? sagaPackSlug(slug, index) : slug;
       const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
       if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
+      if (index < 0) return false;
       if (index >= SAGEN_PRO_PACK) return true;
       // `isAnchorPlace` ist ein Orts-/Katalogmerkmal und kein
       // Freischaltmerkmal. Ohne Kantonspack ist nur die erste Sage des

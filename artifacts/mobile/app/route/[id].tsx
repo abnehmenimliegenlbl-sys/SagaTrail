@@ -198,6 +198,7 @@ export default function Routenplanung() {
       const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, effectiveSlug);
       if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
+      if (sagaIdx < 0) return false;
       if (sagaIdx >= SAGEN_PRO_PACK) return true;
       // `isAnchorPlace` beschreibt die Verankerung am Ort, nicht den
       // Zugriffsstatus. Ohne gekauftes Kantonspaket ist nur die erste Sage

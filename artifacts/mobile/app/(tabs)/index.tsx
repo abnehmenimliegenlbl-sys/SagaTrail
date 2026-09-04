@@ -29,7 +29,7 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
-import { kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
+import { hasPurchasedPack, kantonSlug, SAGEN_PRO_PACK } from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
@@ -330,7 +330,7 @@ function CantonCard({
   // Zugaengliche Sagen: Premium ohne Pack/Elite → nur 1 inklusive Sage.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const packSlug = kantonSlug(entry.canton);
-  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(packSlug);
+  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
   // Pack 1 deckt maximal SAGEN_PRO_PACK Sagen ab; Pack 2+ noch nicht verfuegbar.
   const pack1Count = Math.min(SAGEN_PRO_PACK, cantonSagas.length);
   const accessibleTotal = isElite
