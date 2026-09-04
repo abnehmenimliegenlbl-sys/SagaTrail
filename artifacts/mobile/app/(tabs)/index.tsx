@@ -323,7 +323,8 @@ function CantonCard({
   const colors = useColors();
   const t = useHomeStrings();
   const { achievements, language, profile, purchasedPacks } = useApp();
-  const { hatEntitlement, isElite } = useSubscription();
+  const subscription = useSubscription();
+  const { isElite } = subscription;
   const { sagas } = useCatalog();
 
   // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
@@ -338,7 +339,7 @@ function CantonCard({
   const packUnlocked =
     isElite ||
     hasPurchasedPack(availablePurchasedPacks, packSlug) ||
-    hatEntitlement(packEntitlementFuerKanton(packSlug));
+    (subscription.hatEntitlement?.(packEntitlementFuerKanton(packSlug)) ?? false);
   const accessibleTotal = packUnlocked
     ? cantonSagas.length
     : Math.min(1, cantonSagas.length);
