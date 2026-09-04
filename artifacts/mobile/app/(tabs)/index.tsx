@@ -323,7 +323,7 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
-  const { achievements, language, premium, profile } = useApp();
+  const { achievements, language, premium, profile, purchasedPacks } = useApp();
   const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
 
@@ -336,7 +336,7 @@ function CantonCard({
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const packSlug = kantonSlug(entry.canton);
   const dbPackUnlocked =
-    hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+    hasPurchasedPack(purchasedPacks, packSlug) ||
     hatEntitlement(packEntitlementFuerKanton(packSlug));
   // Pack 1 deckt maximal SAGEN_PRO_PACK Sagen ab; Pack 2+ noch nicht verfuegbar.
   const pack1Count = Math.min(SAGEN_PRO_PACK, cantonSagas.length);

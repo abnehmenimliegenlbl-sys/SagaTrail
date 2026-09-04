@@ -128,7 +128,7 @@ export default function Routenplanung() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { energiesparmodus, setEnergiesparmodus, profile, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
+  const { energiesparmodus, setEnergiesparmodus, profile, purchasedPacks, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
   // POI-Infokacheln liegen ueber duesteren Karten — im Hellmodus fast
   // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
@@ -202,7 +202,7 @@ export default function Routenplanung() {
       const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);
       const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
       const packUnlocked =
-        hasPurchasedPack(profile?.purchasedPacks, effectiveSlug) ||
+        hasPurchasedPack(purchasedPacks, effectiveSlug) ||
         hatEntitlement(packEntitlementFuerKanton(effectiveSlug));
       if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
@@ -213,7 +213,7 @@ export default function Routenplanung() {
       // des Kantons als Premium-Vorschau frei.
       return sagaIdx !== 0;
     },
-    [freeHikeUsed, hasPremiumSubscription, hatEntitlement, isElite, profile, sagas, hikeHistory],
+    [freeHikeUsed, hasPremiumSubscription, hatEntitlement, isElite, purchasedPacks, profile, sagas, hikeHistory],
   );
 
   // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie
@@ -831,7 +831,7 @@ export default function Routenplanung() {
   const routeEffectivePackSlug =
     routeSagaIdx >= 0 ? sagaPackSlug(routePackSlug, routeSagaIdx) : routePackSlug;
   const dbPackUnlocked =
-    hasPurchasedPack(profile?.purchasedPacks, routeEffectivePackSlug) ||
+    hasPurchasedPack(purchasedPacks, routeEffectivePackSlug) ||
     hatEntitlement(packEntitlementFuerKanton(routeEffectivePackSlug));
   // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
   const canAccess = hasPremiumAccess || dbPackUnlocked;

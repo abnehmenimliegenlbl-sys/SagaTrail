@@ -99,7 +99,7 @@ export default function Sammlung() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { achievements, hikeHistory, language, profile } = useApp();
+  const { achievements, hikeHistory, language, profile, purchasedPacks } = useApp();
   const { hatEntitlement, isElite } = useSubscription();
   const { sagas } = useCatalog();
   const t = useCollectionStrings();
@@ -452,7 +452,7 @@ export default function Sammlung() {
           const packSlug = kantonSlug(canton);
           const packUnlocked =
             isElite ||
-            hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+            hasPurchasedPack(purchasedPacks, packSlug) ||
             hatEntitlement(packEntitlementFuerKanton(packSlug));
           const accessibleTotal = packUnlocked
             ? Math.min(SAGEN_PRO_PACK + 1, cantonSagas.length)

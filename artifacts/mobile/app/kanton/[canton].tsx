@@ -112,7 +112,7 @@ export default function KantonRouten() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { canton } = useLocalSearchParams<{ canton: string }>();
-  const { profile, premium, language, freeHikeUsed } = useApp();
+  const { profile, purchasedPacks, premium, language, freeHikeUsed } = useApp();
   const { loadCantonRoutes, sagas, addCustomRoute } = useCatalog();
   const {
     isElite,
@@ -172,7 +172,7 @@ export default function KantonRouten() {
   // faelschlicherweise alle Kantone freigeschaltet.
   const packSlug = cantonName ? kantonSlug(cantonName) : "";
   const dbPackUnlocked =
-    hasPurchasedPack(profile?.purchasedPacks, packSlug) ||
+    hasPurchasedPack(purchasedPacks, packSlug) ||
     hatEntitlement(packEntitlementFuerKanton(packSlug));
   const packUnlocked = isElite || dbPackUnlocked;
   const sagasInCanton = sagas.filter((s) => s.canton === cantonName);

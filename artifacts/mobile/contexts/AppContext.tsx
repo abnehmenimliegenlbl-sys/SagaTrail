@@ -96,6 +96,7 @@ export interface GroupSession {
 interface AppContextValue {
   hydrated: boolean;
   profile: Profile | null;
+  purchasedPacks: string[];
   /**
    * Aktive UI-/Erzaehlsprache: `profile.language`, falls ein Profil
    * existiert, sonst die einmalig erkannte Systemsprache (Fallback
@@ -217,6 +218,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [hydrated, setHydrated] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [purchasedPacks, setPurchasedPacks] = useState<string[]>([]);
   // Aktueller Profil-Stand fuer Callbacks ohne `profile`-Abhaengigkeit
   // (z.B. applyServerProfile muss purchasedPacks erhalten koennen).
   const profileRef = useRef<Profile | null>(null);
@@ -431,7 +433,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           KEYS.groupLocationSharing,
         ]);
         const map = Object.fromEntries(entries);
-        if (map[KEYS.profile]) setProfile(JSON.parse(map[KEYS.profile]!));
+        if (map[KEYS.profile]) {
+          const cachedProfile = JSON.parse(map[KEYS.profile]!) as Profile;
+          setProfile(cachedProfile);
+          setPurchasedPacks(cachedProfile.purchasedPacks ?? []);
+        }
         if (map[KEYS.premium]) setPremium(map[KEYS.premium] === "true");
         if (map[KEYS.freeHikeUsed])
           setFreeHikeUsed(map[KEYS.freeHikeUsed] === "true");
@@ -512,6 +518,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPersistedGroupCode(null);
       setGroupHikeEvent(null);
       setProfile(null);
+      setPurchasedPacks([]);
       setPremium(false);
       setFreeHikeUsed(false);
       AsyncStorage.removeItem(KEYS.profile);
@@ -546,6 +553,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         purchasedPacks: serverProfile.purchasedPacks ?? [],
         ...(serverProfile.subscriptionTier ? { subscriptionTier: serverProfile.subscriptionTier } : {}),
       };
+      setPurchasedPacks(serverProfile.purchasedPacks ?? []);
       setProfile(next);
       setPremium(serverProfile.premium);
       setFreeHikeUsed(serverProfile.freeHikeUsed);
@@ -562,6 +570,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ) {
       // Echtes 404: noch kein Profil auf dem Server — Onboarding erforderlich.
       setProfile(null);
+      setPurchasedPacks([]);
       setPremium(false);
       setFreeHikeUsed(false);
       AsyncStorage.removeItem(KEYS.profile);
@@ -742,6 +751,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           result.purchasedPacks ?? profileRef.current?.purchasedPacks ?? [],
         ...(result.subscriptionTier ? { subscriptionTier: result.subscriptionTier } : {}),
       } as Profile;
+      setPurchasedPacks(next.purchasedPacks ?? []);
       setProfile(next);
       setPremium(result.premium);
       setFreeHikeUsed(result.freeHikeUsed);
@@ -1061,6 +1071,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...(groupCodeKey ? [groupCodeKey] : []),
     ]);
     setProfile(null);
+    setPurchasedPacks([]);
     setPremium(false);
     setFreeHikeUsed(false);
     setAchievements([]);
@@ -1200,6 +1211,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     () => ({
       hydrated,
       profile,
+      purchasedPacks,
       language,
       premium,
       freeHikeUsed,
@@ -1253,6 +1265,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [
       hydrated,
       profile,
+      purchasedPacks,
       language,
       premium,
       freeHikeUsed,
