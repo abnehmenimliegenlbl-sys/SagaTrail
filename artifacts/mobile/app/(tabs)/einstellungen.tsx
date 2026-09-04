@@ -1,7 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { createNarration } from "@workspace/api-client-react";
-import { Audio } from "expo-av";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as StoreReview from "expo-store-review";
@@ -42,6 +41,7 @@ import {
 } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { resolveLang } from "@/lib/storyContent";
 import { AgeTier, Archetype } from "@/types";
@@ -154,9 +154,9 @@ export default function Einstellungen() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.name ?? "");
 
-  // Vorschau-Sound (KI-Stimme via expo-av); Generation-Zaehler verhindert,
+  // Vorschau-Sound (KI-Stimme via expo-audio); Generation-Zaehler verhindert,
   // dass eine langsame alte Anfrage eine neuere Vorschau ueberschreibt.
-  const previewSoundRef = useRef<Audio.Sound | null>(null);
+  const previewSoundRef = useRef<AudioSound | null>(null);
   const previewGenRef = useRef(0);
 
   const stopPreview = useCallback(async () => {
@@ -214,7 +214,7 @@ export default function Einstellungen() {
       const blob = await createNarration({ text: sample, language: profile?.language });
       const uri = await blobToTempFileUri(blob);
       if (gen !== previewGenRef.current) return;
-      const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+      const { sound } = await createAudioSound({ uri }, { shouldPlay: true });
       if (gen !== previewGenRef.current) {
         void sound.unloadAsync();
         return;

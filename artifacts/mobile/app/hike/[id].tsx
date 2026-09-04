@@ -17,7 +17,8 @@ import type { Partner, Poi, RouteSurfacePoint, TrailConditionReport, WeatherRepo
 import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
 import type { RecognitionJournalEntry } from "@/types";
 import { getApiBaseUrl } from "../../lib/apiConfig";
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
+import { setAudioModeAsync } from "expo-audio";
+import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -883,8 +884,8 @@ export default function LiveHike() {
   const terrainStartedRef = useRef<Set<string>>(new Set());
   const terrainProgressRef = useRef<Set<string>>(new Set());
   const terrainEndedRef = useRef<Set<string>>(new Set());
-  const narrationSoundRef = useRef<Audio.Sound | null>(null);
-  const keepaliveSoundRef = useRef<Audio.Sound | null>(null);
+  const narrationSoundRef = useRef<AudioSound | null>(null);
+  const keepaliveSoundRef = useRef<AudioSound | null>(null);
   // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
   // erhoeht ihn; nach jedem await prueft der Aufruf, ob er noch die aktuelle
   // Generation ist. Ein schneller Doppel-Tipp auf "Wiederholen" startet sonst
@@ -1124,8 +1125,8 @@ export default function LiveHike() {
 
   // Audiosession so konfigurieren, dass die Sprachausgabe auch bei
   // aktiviertem Stummschalter (iOS) hoerbar ist.
-  // staysActiveInBackground: true ist die eigentliche Voraussetzung dafuer,
-  // dass die KI-Erzaehlung via expo-av weiterlaeuft, wenn die App in den
+  // shouldPlayInBackground: true ist die eigentliche Voraussetzung dafuer,
+  // dass die KI-Erzaehlung via expo-audio weiterlaeuft, wenn die App in den
   // Hintergrund geht oder das Display gesperrt wird — zusammen mit
   // UIBackgroundModes "audio" (app.json) und, fuer echte GPS-Fortschritte im
   // Hintergrund, dem Standort-Foreground-Service (siehe unten).
@@ -1136,19 +1137,17 @@ export default function LiveHike() {
     // Grundmodus: MixWithOthers — der stille Keepalive-Loop darf andere Apps
     // (Musik, Podcasts) nicht dauerhaft ducken. DuckOthers wird nur waehrend
     // aktiver Erzaehlung gesetzt und danach sofort zurueckgenommen.
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
+    setAudioModeAsync({
+      allowsRecording: false,
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: "mixWithOthers",
     }).catch(() => {});
   }, []);
 
   // Stiller Audio-Keepalive — haelt die iOS-Audiosession zwischen zwei Kapiteln
   // aktiv. Ohne laufendes Audio suspendiert iOS den JS-Thread, selbst wenn
-  // staysActiveInBackground:true gesetzt ist; der naechste GPS-Event aus dem
+  // shouldPlayInBackground:true gesetzt ist; der naechste GPS-Event aus dem
   // Background-Task weckt den Thread dann nicht zuverlaessig genug, um das
   // naechste Kapitel zu starten. Ein unhoerabarer (volume:0) WAV-Loop
   // signalisiert iOS, dass die App Audio "spielt", und haelt den Thread wach.
@@ -1160,7 +1159,7 @@ export default function LiveHike() {
     // und sperrt den Bildschirm den Benutzer, bevor der Keepalive startet.
     if (Platform.OS === "web") return;
     let mounted = true;
-    let sound: Audio.Sound | null = null;
+    let sound: AudioSound | null = null;
     (async () => {
       try {
         const base64 = buildKeepaliveWavBase64();
@@ -1169,7 +1168,7 @@ export default function LiveHike() {
           encoding: FileSystem.EncodingType.Base64,
         });
         if (!mounted) return;
-        const result = await Audio.Sound.createAsync(
+        const result = await createAudioSound(
           { uri },
           // volume: 0.015 — 80-Hz-Ton bei ~0.1 % Amplitude (absolut unhoerbar).
           // Hoeher als zuvor (0.008) damit SBC-Encoder des Auto-Radios den
@@ -2533,13 +2532,11 @@ export default function LiveHike() {
       }
     }
     // Zurueck auf MixWithOthers — andere Apps duerfen wieder ungedimmt spielen.
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
+    setAudioModeAsync({
+      allowsRecording: false,
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: "mixWithOthers",
     }).catch(() => {});
     setSpeaking(false);
   }, []);
@@ -2588,18 +2585,16 @@ export default function LiveHike() {
         if (opts.turnAudio) {
           const lang = resolveLang((profile?.language ?? "de") as Lang);
           const source = getTurnAudio(lang, opts.turnAudio);
-          let turnSound: import("expo-av").Audio.Sound | null = null;
+          let turnSound: AudioSound | null = null;
           try {
             // Audio-Session auf DuckOthers schalten, damit Clip hörbar ist.
-            await Audio.setAudioModeAsync({
-              allowsRecordingIOS: false,
-              playsInSilentModeIOS: true,
-              staysActiveInBackground: true,
-              interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-              shouldDuckAndroid: true,
+            await setAudioModeAsync({
+              allowsRecording: false,
+              playsInSilentMode: true,
+              shouldPlayInBackground: true,
+              interruptionMode: "duckOthers",
             }).catch(() => {});
-            const { sound } = await Audio.Sound.createAsync(source);
+            const { sound } = await createAudioSound(source);
             turnSound = sound;
             await sound.playAsync();
             await new Promise<void>((resolve) => {
@@ -2618,13 +2613,11 @@ export default function LiveHike() {
             try { await turnSound?.unloadAsync(); } catch {}
           }
           // Audio-Session nach dem kurzen Abbiegeclip zurücksetzen.
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: true,
-            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            shouldDuckAndroid: false,
+          await setAudioModeAsync({
+            allowsRecording: false,
+            playsInSilentMode: true,
+            shouldPlayInBackground: true,
+            interruptionMode: "mixWithOthers",
           }).catch(() => {});
         }
 
@@ -2702,15 +2695,13 @@ export default function LiveHike() {
         }
         if (gen !== narrationGenRef.current) return;
         // Vor dem Abspielen auf DuckOthers wechseln — nur waehrend aktiver Erzaehlung.
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: true,
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "duckOthers",
         }).catch(() => {});
-        const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+        const { sound } = await createAudioSound({ uri }, { shouldPlay: true });
         if (gen !== narrationGenRef.current) {
           sound.unloadAsync().catch(() => {});
           return;
@@ -2735,15 +2726,13 @@ export default function LiveHike() {
               } else if (!awaitingDecisionRef.current) {
                 // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
                 // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
-                // startet die Spracherkennung und benoetigt allowsRecordingIOS:true.
+                // startet die Spracherkennung und benoetigt allowsRecording:true.
                 // Der fire-and-forget-Reset koennte die Erkennung killen (Race-Condition).
-                Audio.setAudioModeAsync({
-                  allowsRecordingIOS: false,
-                  playsInSilentModeIOS: true,
-                  staysActiveInBackground: true,
-                  interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-                  interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-                  shouldDuckAndroid: false,
+                setAudioModeAsync({
+                  allowsRecording: false,
+                  playsInSilentMode: true,
+                  shouldPlayInBackground: true,
+                  interruptionMode: "mixWithOthers",
                 }).catch(() => {});
               }
             }
@@ -2776,13 +2765,11 @@ export default function LiveHike() {
               preFetchedUri: next.preFetchedUri,
             });
           } else if (!awaitingDecisionRef.current) {
-            Audio.setAudioModeAsync({
-              allowsRecordingIOS: false,
-              playsInSilentModeIOS: true,
-              staysActiveInBackground: true,
-              interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-              interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-              shouldDuckAndroid: false,
+            setAudioModeAsync({
+              allowsRecording: false,
+              playsInSilentMode: true,
+              shouldPlayInBackground: true,
+              interruptionMode: "mixWithOthers",
             }).catch(() => {});
           }
         }
@@ -3594,7 +3581,7 @@ export default function LiveHike() {
 
   // Wenn die Spracherkennung endet (voiceListening: true → false), stellt
   // dieser Effekt die Audio-Session explizit zurueck. expo-speech-recognition
-  // setzt intern allowsRecordingIOS (iOS Audio-Session wechselt auf
+    // setzt intern allowsRecording (iOS Audio-Session wechselt auf
   // PlayAndRecord), was den Lautsprecherausgang stark reduziert — iOS dreht
   // ihn zum Schutz vor Rueckkopplung runter. Ohne diesen Reset bleibt die
   // Session im Record-Modus und jede nachfolgende Erzaehlung klingt
@@ -3612,13 +3599,11 @@ export default function LiveHike() {
     // Nach Spracherkennung (expo-speech-recognition wechselt intern auf
     // PlayAndRecord): Session zurueck auf MixWithOthers/Playback.
     // DuckOthers wird erst wieder gesetzt wenn die naechste Erzaehlung startet.
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      shouldDuckAndroid: false,
+    setAudioModeAsync({
+      allowsRecording: false,
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: "mixWithOthers",
     }).catch(() => {});
   }, [voiceListening, awaitingDecision, speaking]);
 

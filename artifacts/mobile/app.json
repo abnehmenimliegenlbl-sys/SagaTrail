@@ -130,6 +130,7 @@
           "color": "#CC0000"
         }
       ],
+      "expo-audio",
       [
         "expo-location",
         {

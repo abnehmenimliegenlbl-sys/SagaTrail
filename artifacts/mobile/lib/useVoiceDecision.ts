@@ -114,9 +114,9 @@ export function useVoiceDecision(
 
     (async () => {
       try {
-        // Kurze Pause damit laufende fire-and-forget Audio.setAudioModeAsync()-
+        // Kurze Pause damit laufende fire-and-forget setAudioModeAsync()-
         // Aufrufe (aus speak/didJustFinish) abgeschlossen sind, bevor die
-        // Spracherkennung allowsRecordingIOS:true setzt. Ohne diese Pause kann
+        // Spracherkennung allowsRecording:true setzt. Ohne diese Pause kann
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
         if (cancelled) return;
@@ -198,7 +198,7 @@ export function useVoiceDecision(
     // Transiente Fehler ("no-speech", "network", "aborted" bei Session-Ende)
     // NICHT als "Zuhoeren beendet" werten: gleich danach feuert "end" und
     // startet die Erkennung neu. setListening(false) wuerde hier den
-    // Audio-Session-Reset im Hike-Screen ausloesen (allowsRecordingIOS:false)
+    // Audio-Session-Reset im Hike-Screen ausloesen (allowsRecording:false)
     // und das Mikrofon mitten im Entscheidungspunkt lahmlegen — genau der
     // Fehler, bei dem die App scheinbar "nicht zuhoert".
   });
