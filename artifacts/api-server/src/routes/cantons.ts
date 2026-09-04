@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetCantonRoutesResponse } from "@workspace/api-zod";
 import type { ExternalRouteRow } from "@workspace/db";
-import { loadCachedRoutes } from "../lib/routeService";
+import { loadCachedRoutes, loadOfficialSchweizMobilDifficulties } from "../lib/routeService";
 import { deriveSeason } from "../lib/season";
 import { haversineM } from "../lib/geo";
 
@@ -155,7 +155,51 @@ function harmonisiereBeschreibung(
   return out;
 }
 
-function toRoute(row: ExternalRouteRow) {
+type RouteSuitability = {
+  familyFriendly: boolean | null;
+  childFriendly: boolean | null;
+  dogsAllowed: boolean | null;
+  wheelchairAccessible: boolean | null;
+};
+
+/**
+ * Erzeugt bewusst nur technische Empfehlungen, keine redaktionellen
+ * Tatsachenbehauptungen:
+ * - Familien/Kinder/Hunde: SAC, Streckenlänge und Aufstieg begrenzen die
+ *   technische Belastung, sagen aber nichts über Spielplätze, Leinenpflicht
+ *   oder einzelne Hindernisse aus.
+ * - Barrierearmut: nur der offizielle SchweizMobil-Routentyp "handicap" darf
+ *   diesen Wert setzen. Aus Höhe, Distanz oder SAC wird das nie abgeleitet.
+ *
+ * Bereits redaktionell gesetzte Werte haben immer Vorrang. Unbekannte Werte
+ * bleiben null, damit die API sie nicht als explizites Nein ausgibt.
+ */
+function deriveSuitability(
+  row: ExternalRouteRow,
+  officialTypeByRef: ReadonlyMap<string, string> = new Map(),
+): RouteSuitability {
+  const stufe = sacStufe(row.sac);
+  const km = row.distanceTagKm ?? row.distanceKm;
+  const ascent = row.ascentM;
+  const officialType = row.ref ? officialTypeByRef.get(row.ref) : undefined;
+
+  return {
+    familyFriendly:
+      row.familyFriendly ??
+      (stufe !== null && stufe <= 2 && km <= 15 && ascent <= 600 ? true : null),
+    childFriendly:
+      row.childFriendly ??
+      (stufe !== null && stufe <= 1 && km <= 10 && ascent <= 350 ? true : null),
+    dogsAllowed:
+      row.dogsAllowed ??
+      (stufe !== null && stufe <= 2 && km <= 20 && ascent <= 800 ? true : null),
+    wheelchairAccessible:
+      row.wheelchairAccessible ??
+      (officialType === "handicap" ? true : null),
+  };
+}
+
+function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
   return {
     id: row.id,
     sagaId: row.sagaId,
@@ -174,10 +218,10 @@ function toRoute(row: ExternalRouteRow) {
     schweizMobilCondition: row.schweizMobilCondition,
     schweizMobilTechnique: row.schweizMobilTechnique,
     terrain: row.terrain,
-    familyFriendly: row.familyFriendly ?? null,
-    childFriendly: row.childFriendly ?? null,
-    dogsAllowed: row.dogsAllowed ?? null,
-    wheelchairAccessible: row.wheelchairAccessible ?? null,
+    familyFriendly: suitability.familyFriendly,
+    childFriendly: suitability.childFriendly,
+    dogsAllowed: suitability.dogsAllowed,
+    wheelchairAccessible: suitability.wheelchairAccessible,
     technicalDifficulty: row.technicalDifficulty ?? null,
     coordinates: { lat: row.lat, lng: row.lng },
     geometry: parseGeometry(row.geometry),
@@ -281,6 +325,22 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
   };
   try {
     const rawRows = await loadCachedRoutes(canton);
+    // Die amtliche SchweizMobil-Datei ist nur für diesen Zusatzklassifikator
+    // nötig. Sie wird deshalb nicht bei jeder normalen Kantonsabfrage
+    // heruntergeladen, sondern erst beim Barrierefreiheitsfilter.
+    const officialTypeByRef = new Map<string, string>();
+    if (filter.wheelchairAccessible === true) {
+      try {
+        const official = await loadOfficialSchweizMobilDifficulties(req.log);
+        for (const item of official) {
+          if (item.routeType) officialTypeByRef.set(item.ref, item.routeType);
+        }
+      } catch (err) {
+        // Die technische Empfehlung für die anderen Filter bleibt verfügbar.
+        // Ohne offiziellen Export darf Barrierearmut nicht geraten werden.
+        req.log.warn({ err }, "SchweizMobil-Typen für Barrierefreiheitsfilter nicht verfügbar");
+      }
+    }
     const userPos =
       filter.nearLat !== null && filter.nearLng !== null
         ? { lat: filter.nearLat, lng: filter.nearLng }
@@ -317,8 +377,12 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     const rowsMitLabels = rows.map((row) =>
       etappenNames.has(row.id) ? { ...row, name: etappenNames.get(row.id)! } : row,
     );
+    const rowsMitEignung = rowsMitLabels.map((row) => ({
+      ...row,
+      ...deriveSuitability(row, officialTypeByRef),
+    }));
 
-    const matched = rowsMitLabels
+    const matched = rowsMitEignung
       .filter((row) => applyFilter(row, filter))
       .sort(userPos
         ? (a, b) =>
@@ -326,7 +390,7 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
             haversineM({ lat: b.lat, lng: b.lng }, userPos)
         : byRelevance)
       .slice(0, RESULT_LIMIT);
-    res.json(GetCantonRoutesResponse.parse(matched.map(toRoute)));
+    res.json(GetCantonRoutesResponse.parse(matched.map((row) => toRoute(row))));
   } catch (err) {
     req.log.error({ err, canton }, "Kanton-Routen konnten nicht geladen werden");
     res.status(502).json({ error: "Routen konnten nicht geladen werden" });

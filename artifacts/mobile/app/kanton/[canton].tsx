@@ -250,10 +250,10 @@ export default function KantonRouten() {
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const suitabilityCopy = useMemo(() => {
-    if (language === "fr") return { title: "Adéquation confirmée", family: "Pour les familles", child: "Adapté aux enfants", dogs: "Chiens autorisés", accessible: "Accès sans barrières confirmé", note: "Seules les indications explicitement confirmées sont utilisées." };
-    if (language === "it") return { title: "Idoneità confermata", family: "Per famiglie", child: "Adatto ai bambini", dogs: "Cani ammessi", accessible: "Accesso senza barriere confermato", note: "Vengono usate solo indicazioni esplicitamente confermate." };
-    if (language === "en") return { title: "Confirmed suitability", family: "Family-friendly", child: "Suitable for children", dogs: "Dogs allowed", accessible: "Step-free access confirmed", note: "Only explicitly confirmed information is used." };
-    return { title: "Bestätigte Eignung", family: "Für Familien", child: "Für Kinder geeignet", dogs: "Hunde erlaubt", accessible: "Barrierearmer Zugang bestätigt", note: "Es werden nur ausdrücklich bestätigte Angaben verwendet." };
+    if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux familles", child: "Adapté aux enfants", dogs: "Adapté aux chiens", accessible: "Accès sans barrières officiel", note: "Les trois premiers filtres sont des recommandations techniques; l'accès sans barrières repose uniquement sur la classification officielle de SuisseMobile." };
+    if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto alle famiglie", child: "Adatto ai bambini", dogs: "Adatto ai cani", accessible: "Accesso senza barriere ufficiale", note: "I primi tre filtri sono raccomandazioni tecniche; l'accesso senza barriere si basa solo sulla classificazione ufficiale di SvizzeraMobile." };
+    if (language === "en") return { title: "Technical recommendation", family: "Suitable for families", child: "Suitable for children", dogs: "Suitable for dogs", accessible: "Official step-free route", note: "The first three filters are technical recommendations; step-free access uses only SwitzerlandMobility's official classification." };
+    return { title: "Technische Empfehlung", family: "Für Familien geeignet", child: "Für Kinder geeignet", dogs: "Für Hunde geeignet", accessible: "Offiziell barrierearme Route", note: "Die ersten drei Filter sind technische Empfehlungen; Barrierearmut nutzt nur die offizielle SchweizMobil-Klassifikation." };
   }, [language]);
 
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);

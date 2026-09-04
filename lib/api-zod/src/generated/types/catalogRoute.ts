@@ -31,13 +31,13 @@ export interface CatalogRoute {
   /** Offizielle SchweizMobil-Kategorie für Technik (easy, medium oder difficult), nicht auf SAC umgerechnet. */
   schweizMobilTechnique?: string | null;
   terrain: string;
-  /** Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt. */
+  /** Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt. */
   familyFriendly?: boolean | null;
-  /** Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt. */
+  /** Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt. */
   childFriendly?: boolean | null;
-  /** Explizite Hunde-Erlaubnis; null bedeutet unbekannt. */
+  /** Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt. */
   dogsAllowed?: boolean | null;
-  /** Explizit bestätigte Barrierearmut; null bedeutet unbekannt. */
+  /** Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet. */
   wheelchairAccessible?: boolean | null;
   technicalDifficulty?: string | null;
   coordinates: CatalogCoordinates;

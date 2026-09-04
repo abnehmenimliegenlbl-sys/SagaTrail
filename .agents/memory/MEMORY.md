@@ -122,3 +122,4 @@
 - [Transparent modal safe area](rn-transparent-modal-safe-area.md) — explicit top/bottom margins are needed because iOS transparent Modals may ignore native SafeAreaView insets.
 - [Lazy panorama peaks](sagatrail-panorama-peaks-lazy.md) — query named peaks separately on panorama open around live GPS; keep normal POIs small and offline peak downloads independent.
 - [Saga pack order](sagatrail-saga-pack-order.md) — canton progress is x/1 by default and x/9 with a pack; pack indices must follow curated catalog order.
+- [Route suitability sources](sagatrail-route-suitability-sources.md) — OSM lacks dependable suitability flags; SchweizMobil `Typ_TR=handicap` is authoritative for accessibility, other filters stay recommendations.

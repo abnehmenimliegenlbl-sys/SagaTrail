@@ -44,8 +44,8 @@ export type CatalogSource = "server" | "cache" | "seed" | "error";
 
 // Inhaltsänderungen bei gleichbleibender Saga-Anzahl müssen alte Geräte-Caches
 // verwerfen können (z. B. redaktionelle Ersatzsagen).
-const CACHE_KEY = "sagatrail:catalogCache:v4";
-const DYNAMIC_KEY = "sagatrail:dynamicCache";
+const CACHE_KEY = "sagatrail:catalogCache:v5";
+const DYNAMIC_KEY = "sagatrail:dynamicCache:v2";
 
 interface CatalogData {
   routes: HikingRoute[];
@@ -88,9 +88,13 @@ export interface RouteSearchFilter {
   nearLat?: number;
   /** Laengengrad des Nutzer-Standorts — sortiert Ergebnisse nach Naehe. */
   nearLng?: number;
+  /** Technische Empfehlung für Familien, nicht redaktionelle Tatsache. */
   familyFriendly?: boolean;
+  /** Technische Empfehlung für Kinder, nicht redaktionelle Tatsache. */
   childFriendly?: boolean;
+  /** Technische Empfehlung für Hunde, keine Aussage zu Leinenpflicht/Regeln. */
   dogsAllowed?: boolean;
+  /** Nur offiziell als hindernisfrei klassifizierte SchweizMobil-Route. */
   wheelchairAccessible?: boolean;
 }
 

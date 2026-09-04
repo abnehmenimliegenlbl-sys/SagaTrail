@@ -1870,19 +1870,19 @@ components:
         familyFriendly:
           type: boolean
           nullable: true
-          description: Redaktionell bestätigte Familien-Eignung; null bedeutet unbekannt.
+          description: Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.
         childFriendly:
           type: boolean
           nullable: true
-          description: Redaktionell bestätigte Kinder-Eignung; null bedeutet unbekannt.
+          description: Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.
         dogsAllowed:
           type: boolean
           nullable: true
-          description: Explizite Hunde-Erlaubnis; null bedeutet unbekannt.
+          description: Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.
         wheelchairAccessible:
           type: boolean
           nullable: true
-          description: Explizit bestätigte Barrierearmut; null bedeutet unbekannt.
+          description: Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.
         technicalDifficulty:
           type: string
           nullable: true

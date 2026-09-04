@@ -43,8 +43,9 @@ export const externalRoutesTable = pgTable("external_routes", {
   schweizMobilCondition: text("schweizmobil_condition"),
   schweizMobilTechnique: text("schweizmobil_technique"),
   terrain: text("terrain").notNull(),
-  // Nur explizit redaktionell/autorisiert bestätigte Eignungsmerkmale.
-  // NULL bedeutet unbekannt und darf nicht als "nein" interpretiert werden.
+  // Eignungswerte: redaktionelle Angaben haben Vorrang; der API-Filter darf
+  // für fehlende Werte konservative technische Empfehlungen ergänzen.
+  // NULL bedeutet weiterhin unbekannt und darf nicht als "nein" interpretiert werden.
   familyFriendly: boolean("family_friendly"),
   childFriendly: boolean("child_friendly"),
   dogsAllowed: boolean("dogs_allowed"),
