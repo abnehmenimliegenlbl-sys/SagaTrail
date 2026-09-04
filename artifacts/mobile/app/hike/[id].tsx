@@ -1572,7 +1572,7 @@ export default function LiveHike() {
 
   // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {
-    const geom = route?.geometry;
+    const geom = navigationGeometry;
     if (!geom || geom.length < 2) return;
     let cancelled = false;
     const base = getApiBaseUrl() ?? "";
@@ -1614,7 +1614,7 @@ export default function LiveHike() {
     announcedPremiumPartnerIdsRef.current = new Set();
     announcingPremiumPartnerIdsRef.current = new Set();
     setReachedWaypointIds(new Set());
-  }, [route?.geometry, partners, displayedPois]);
+  }, [navigationGeometry, partners, displayedPois]);
 
   // Heruntergeladene Offline-Kacheln laden, falls diese Wanderung verfuegbar ist.
   useEffect(() => {
@@ -2007,7 +2007,7 @@ export default function LiveHike() {
       !nearbyPoi.osmContext?.trim() &&
       !nearbyPoiWiki?.extract;
     if (nearbyPoi && !nearbyPoiIsContextless) return;
-    const geo = route?.geometry;
+    const geo = navigationGeometry;
     const current: LatLng | null =
       livePos ??
       (geo && geo.length > 1 && totalKm > 0
@@ -2040,7 +2040,7 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, route?.geometry, displayedPois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, navigationGeometry, displayedPois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
@@ -3581,14 +3581,24 @@ export default function LiveHike() {
         { lat: first[0], lng: first[1] },
         1.0,
       );
-      getPois(bbox)
-        .then((result) => {
-          if (detourPoiSearchKeyRef.current !== searchKey) return;
-          setDetourPois(filterByRouteCorridor(result, geometry, 0.75));
-        })
-        .catch(() => {
-          if (detourPoiSearchKeyRef.current === searchKey) setDetourPois([]);
-        });
+      let attempt = 0;
+      const tryLoad = () => {
+        getPois(bbox)
+          .then((result) => {
+            if (detourPoiSearchKeyRef.current !== searchKey) return;
+            setDetourPois(filterByRouteCorridor(result, geometry, 0.75));
+            if (result.length === 0 && attempt < 4) {
+              attempt += 1;
+              setTimeout(tryLoad, 35_000);
+            }
+          })
+          .catch(() => {
+            if (detourPoiSearchKeyRef.current !== searchKey || attempt >= 4) return;
+            attempt += 1;
+            setTimeout(tryLoad, 35_000);
+          });
+      };
+      tryLoad();
     },
     [isOffline],
   );
