@@ -580,6 +580,9 @@ export default function LiveHike() {
   /** Verhindert, dass die Startauswahl bei jedem GPS-Render erneut erscheint. */
   const startRecalcChoiceShownRef = useRef(false);
   const [startRecalcChoice, setStartRecalcChoice] = useState<"start" | "fastest" | "later" | null>(null);
+  const [startChoicePending, setStartChoicePending] = useState(false);
+  const startChoicePendingRef = useRef(false);
+  const startChoiceHandledRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
@@ -2804,11 +2807,79 @@ export default function LiveHike() {
     return () => { cancelled = true; };
   }, [preparing, profile?.language]);
 
+  // Beim Start zuerst klären, ob der Nutzer zum offiziellen Startpunkt oder
+  // direkt zur Route möchte. Die Entscheidung basiert bewusst ausschließlich
+  // auf der Entfernung zum offiziellen Startpunkt — nicht auf einer
+  // zusätzlichen "nahe an der Route"-Prüfung.
+  useEffect(() => {
+    if (
+      isResume ||
+      preparing ||
+      !hasFreshGps ||
+      !livePos ||
+      startReached ||
+      startChoicePendingRef.current ||
+      startChoiceHandledRef.current ||
+      !navigationGeometry ||
+      navigationGeometry.length < 2
+    ) {
+      return;
+    }
+    const start = {
+      lat: navigationGeometry[0][0],
+      lng: navigationGeometry[0][1],
+    };
+    if (haversineKm(livePos, start) <= START_NEARBY_KM) return;
+
+    const positionAtPrompt = livePos;
+    startChoiceHandledRef.current = true;
+    startChoicePendingRef.current = true;
+    setStartChoicePending(true);
+    alert(
+      t.offRouteStartChoiceTitle,
+      t.offRouteStartChoiceMessage,
+      [
+        {
+          text: t.offRouteToStart,
+          onPress: () => {
+            startRecalcChoiceShownRef.current = true;
+            setOffRoutePos(positionAtPrompt);
+            setStartRecalcChoice("start");
+          },
+        },
+        {
+          text: t.offRouteFastestToRoute,
+          onPress: () => {
+            startRecalcChoiceShownRef.current = true;
+            setOffRoutePos(positionAtPrompt);
+            setStartRecalcChoice("fastest");
+          },
+        },
+        {
+          text: t.offRouteChoiceLater,
+          style: "cancel",
+          onPress: () => {
+            startChoicePendingRef.current = false;
+            setStartChoicePending(false);
+          },
+        },
+      ],
+    );
+  }, [
+    hasFreshGps,
+    isResume,
+    livePos,
+    navigationGeometry,
+    preparing,
+    startReached,
+    t,
+  ]);
+
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
   // oder den Entscheidungsmoment erneut sperrt.
   useEffect(() => {
-    if (preparing || chapters.length === 0) return;
+    if (preparing || startChoicePendingRef.current || chapters.length === 0) return;
     const ch = chapters[currentIndex];
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
@@ -2854,7 +2925,7 @@ export default function LiveHike() {
       lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
+  }, [currentIndex, preparing, startChoicePending, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -3277,7 +3348,7 @@ export default function LiveHike() {
   // parallel zur noch laufenden Antwort-/Bestätigungslogik weiterlaufen.
   useEffect(() => {
     if (locState !== "granted") return;
-    if (preparing || finished || chapters.length === 0) return;
+    if (preparing || startChoicePendingRef.current || finished || chapters.length === 0) return;
     if (!hasFreshGps) return;
     // Die bereits gefahrene Strecke bleibt in `distance` erhalten. Sobald
     // chooseOption (oder der Timeout) die Entscheidung schließt, läuft dieser
@@ -3319,6 +3390,7 @@ export default function LiveHike() {
     chapters.length,
     currentIndex,
     awaitingDecision,
+    startChoicePending,
     totalKm,
     routeProgress,
     hasFreshGps,
@@ -3650,6 +3722,8 @@ export default function LiveHike() {
     followingRecalcRef.current = true;
     setFollowingRecalc(true);
     setStartReached(true);
+    startChoicePendingRef.current = false;
+    setStartChoicePending(false);
     setOffRoutePos(null);
     setCurrentIndex(0);
     setAwaitingDecision(false);
