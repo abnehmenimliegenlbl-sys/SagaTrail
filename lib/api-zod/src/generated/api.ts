@@ -44,7 +44,6 @@ export const GetCatalogResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -157,7 +156,6 @@ export const GetCantonRoutesQueryParams = zod.object({
   "nearLng": zod.coerce.number().optional().describe('Laengengrad des Nutzer-Standorts. Wird zusammen mit nearLat verwendet, um Ergebnisse nach Luftlinien-Entfernung zum Routenstart aufsteigend zu sortieren.\n'),
   "familyFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als familienfreundlich bestätigte Routen.'),
   "childFriendly": zod.coerce.boolean().optional().describe('Nur redaktionell als kinderfreundlich bestätigte Routen.'),
-  "dogsAllowed": zod.coerce.boolean().optional().describe('Nur Routen mit explizit bestätigter Hunde-Erlaubnis.'),
   "wheelchairAccessible": zod.coerce.boolean().optional().describe('Nur Routen mit explizit bestätigtem barrierearmem Zugang.')
 })
 
@@ -179,7 +177,6 @@ export const GetCantonRoutesResponseItem = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -577,7 +574,6 @@ export const GetCustomRouteResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -623,7 +619,6 @@ export const ImportGpxRouteResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({

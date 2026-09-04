@@ -92,8 +92,6 @@ export interface RouteSearchFilter {
   familyFriendly?: boolean;
   /** Technische Empfehlung für Kinder, nicht redaktionelle Tatsache. */
   childFriendly?: boolean;
-  /** Technische Empfehlung für Hunde, keine Aussage zu Leinenpflicht/Regeln. */
-  dogsAllowed?: boolean;
   /** Nur offiziell als hindernisfrei klassifizierte SchweizMobil-Route. */
   wheelchairAccessible?: boolean;
 }
@@ -110,7 +108,6 @@ function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): 
   );
   if (filter.familyFriendly) result = result.filter((r) => r.familyFriendly === true);
   if (filter.childFriendly) result = result.filter((r) => r.childFriendly === true);
-  if (filter.dogsAllowed) result = result.filter((r) => r.dogsAllowed === true);
   if (filter.wheelchairAccessible) result = result.filter((r) => r.wheelchairAccessible === true);
   if (filter.ganzjaehrigNur) {
     result = result.filter((r) =>
@@ -298,7 +295,6 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       if (filter?.nearLng != null) params.nearLng = filter.nearLng;
       if (filter?.familyFriendly != null) params.familyFriendly = filter.familyFriendly;
       if (filter?.childFriendly != null) params.childFriendly = filter.childFriendly;
-      if (filter?.dogsAllowed != null) params.dogsAllowed = filter.dogsAllowed;
       if (filter?.wheelchairAccessible != null) params.wheelchairAccessible = filter.wheelchairAccessible;
 
       try {

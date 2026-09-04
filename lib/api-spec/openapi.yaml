@@ -184,12 +184,6 @@ paths:
           description: Nur redaktionell als kinderfreundlich bestätigte Routen.
           schema:
             type: boolean
-        - name: dogsAllowed
-          in: query
-          required: false
-          description: Nur Routen mit explizit bestätigter Hunde-Erlaubnis.
-          schema:
-            type: boolean
         - name: wheelchairAccessible
           in: query
           required: false
@@ -1875,10 +1869,6 @@ components:
           type: boolean
           nullable: true
           description: Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.
-        dogsAllowed:
-          type: boolean
-          nullable: true
-          description: Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.
         wheelchairAccessible:
           type: boolean
           nullable: true

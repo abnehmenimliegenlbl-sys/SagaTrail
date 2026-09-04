@@ -158,7 +158,6 @@ function harmonisiereBeschreibung(
 type RouteSuitability = {
   familyFriendly: boolean | null;
   childFriendly: boolean | null;
-  dogsAllowed: boolean | null;
   wheelchairAccessible: boolean | null;
 };
 
@@ -167,8 +166,6 @@ type RouteSuitability = {
  * Tatsachenbehauptungen:
  * - Familien/Kinder: SAC, Streckenlänge und Aufstieg begrenzen die technische
  *   Belastung, sind aber keine redaktionelle Zusage.
- * - Hunde: keine Ableitung. Eine Hundefreigabe braucht eine explizite Quelle,
- *   da Leinenpflichten und lokale Verbote nicht aus Routendaten folgen.
  * - Barrierearmut: nur der offizielle SchweizMobil-Routentyp "handicap" darf
  *   diesen Wert setzen. Aus Höhe, Distanz oder SAC wird das nie abgeleitet.
  *
@@ -191,7 +188,6 @@ function deriveSuitability(
     childFriendly:
       row.childFriendly ??
       (stufe !== null && stufe <= 1 && km <= 10 && ascent <= 350 ? true : null),
-    dogsAllowed: row.dogsAllowed ?? null,
     wheelchairAccessible:
       row.wheelchairAccessible ??
       (officialType === "handicap" ? true : null),
@@ -219,7 +215,6 @@ function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
     terrain: row.terrain,
     familyFriendly: suitability.familyFriendly,
     childFriendly: suitability.childFriendly,
-    dogsAllowed: suitability.dogsAllowed,
     wheelchairAccessible: suitability.wheelchairAccessible,
     technicalDifficulty: row.technicalDifficulty ?? null,
     coordinates: { lat: row.lat, lng: row.lng },
@@ -272,7 +267,6 @@ interface RouteFilter {
   nearLng: number | null;
   familyFriendly: boolean | null;
   childFriendly: boolean | null;
-  dogsAllowed: boolean | null;
   wheelchairAccessible: boolean | null;
 }
 
@@ -298,7 +292,6 @@ function applyFilter(row: ExternalRouteRow, f: RouteFilter): boolean {
   }
   if (f.familyFriendly === true && row.familyFriendly !== true) return false;
   if (f.childFriendly === true && row.childFriendly !== true) return false;
-  if (f.dogsAllowed === true && row.dogsAllowed !== true) return false;
   if (f.wheelchairAccessible === true && row.wheelchairAccessible !== true) return false;
   return true;
 }
@@ -319,7 +312,6 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     nearLng: numParam(req.query.nearLng),
     familyFriendly: boolParam(req.query.familyFriendly),
     childFriendly: boolParam(req.query.childFriendly),
-    dogsAllowed: boolParam(req.query.dogsAllowed),
     wheelchairAccessible: boolParam(req.query.wheelchairAccessible),
   };
   try {

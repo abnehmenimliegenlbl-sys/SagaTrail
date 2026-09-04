@@ -239,7 +239,6 @@ export default function KantonRouten() {
   const [ganzjaehrigFilter, setGanzjaehrigFilter] = useState(false);
   const [familyFilter, setFamilyFilter] = useState(false);
   const [childFilter, setChildFilter] = useState(false);
-  const [dogsFilter, setDogsFilter] = useState(false);
   const [accessibleFilter, setAccessibleFilter] = useState(false);
   const [nearbyPos, setNearbyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyLocating, setNearbyLocating] = useState(false);
@@ -250,10 +249,10 @@ export default function KantonRouten() {
   const [sliderAktiv, setSliderAktiv] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const suitabilityCopy = useMemo(() => {
-    if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux familles", child: "Adapté aux enfants", dogs: "Chiens autorisés (confirmé)", accessible: "Accès sans barrières officiel", note: "Les recommandations pour familles et enfants sont techniques. L'autorisation des chiens exige une indication explicite; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
-    if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto alle famiglie", child: "Adatto ai bambini", dogs: "Cani ammessi (confermato)", accessible: "Accesso senza barriere ufficiale", note: "Le raccomandazioni per famiglie e bambini sono tecniche. L'autorizzazione dei cani richiede un'indicazione esplicita; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
-    if (language === "en") return { title: "Technical recommendation", family: "Suitable for families", child: "Suitable for children", dogs: "Dogs allowed (confirmed)", accessible: "Official step-free route", note: "Family and child results are technical recommendations. Dog permission requires an explicit source; step-free access uses only SwitzerlandMobility's official classification." };
-    return { title: "Technische Empfehlung", family: "Für Familien geeignet", child: "Für Kinder geeignet", dogs: "Hunde erlaubt (bestätigt)", accessible: "Offiziell barrierearme Route", note: "Familien- und Kinderfilter sind technische Empfehlungen. Hundefreigabe gibt es nur mit expliziter Quelle; Barrierearmut nutzt die offizielle SchweizMobil-Klassifikation." };
+    if (language === "fr") return { title: "Recommandation technique", family: "Adapté aux familles", child: "Adapté aux enfants", accessible: "Accès sans barrières officiel", note: "Les recommandations pour familles et enfants sont techniques; l'accès sans barrières repose sur la classification officielle de SuisseMobile." };
+    if (language === "it") return { title: "Raccomandazione tecnica", family: "Adatto alle famiglie", child: "Adatto ai bambini", accessible: "Accesso senza barriere ufficiale", note: "Le raccomandazioni per famiglie e bambini sono tecniche; l'accesso senza barriere si basa sulla classificazione ufficiale di SvizzeraMobile." };
+    if (language === "en") return { title: "Technical recommendation", family: "Suitable for families", child: "Suitable for children", accessible: "Official step-free route", note: "Family and child results are technical recommendations; step-free access uses only SwitzerlandMobility's official classification." };
+    return { title: "Technische Empfehlung", family: "Für Familien geeignet", child: "Für Kinder geeignet", accessible: "Offiziell barrierearme Route", note: "Familien- und Kinderfilter sind technische Empfehlungen; Barrierearmut nutzt die offizielle SchweizMobil-Klassifikation." };
   }, [language]);
 
   const sunsetTime = useMemo(() => calcSunsetCH(new Date()), []);
@@ -331,14 +330,13 @@ export default function KantonRouten() {
     if (ganzjaehrigFilter) filter.ganzjaehrigNur = true;
     if (familyFilter) filter.familyFriendly = true;
     if (childFilter) filter.childFriendly = true;
-    if (dogsFilter) filter.dogsAllowed = true;
     if (accessibleFilter) filter.wheelchairAccessible = true;
     if (nearbyPos) {
       filter.nearLat = nearbyPos.lat;
       filter.nearLng = nearbyPos.lng;
     }
     return filter;
-  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter, familyFilter, childFilter, dogsFilter, accessibleFilter, nearbyPos]);
+  }, [distFilter, ascFilter, diffFilter, ganzjaehrigFilter, familyFilter, childFilter, accessibleFilter, nearbyPos]);
 
   const onSearch = useCallback(async () => {
     if (!cantonName) return;

@@ -60,10 +60,6 @@ familyFriendly?: boolean;
  */
 childFriendly?: boolean;
 /**
- * Nur Routen mit explizit bestätigter Hunde-Erlaubnis.
- */
-dogsAllowed?: boolean;
-/**
  * Nur Routen mit explizit bestätigtem barrierearmem Zugang.
  */
 wheelchairAccessible?: boolean;
