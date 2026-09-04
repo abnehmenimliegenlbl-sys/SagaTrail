@@ -46,11 +46,13 @@ export default function SagaDetail() {
   const { getSaga, ensureRouteSaga, sagas } = useCatalog();
   const {
     isElite,
+    isSubscribed,
     offerings,
     purchase,
     isPurchasing,
     refreshCustomerInfo,
   } = useSubscription();
+  const hasPremiumAccess = premium || isSubscribed || isElite;
   const [packBusy, setPackBusy] = useState(false);
   const [fotoFehler, setFotoFehler] = useState(false);
 
@@ -115,7 +117,7 @@ export default function SagaDetail() {
   const sagaHeard = hikeHistory.some((h) => h.sagaId === saga.id);
   const packSlug = kantonSlug(saga.canton);
   const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
-  const locked = !premium && !isElite && freeHikeUsed && !sagaHeard && !dbPackUnlocked;
+  const locked = !hasPremiumAccess && freeHikeUsed && !sagaHeard && !dbPackUnlocked;
 
   // Sagen-Pack-Regel fuer Premium-Kundschaft: die erste entdeckte Sage pro
   // Kanton ist inklusive; weitere Sagen des Kantons brauchen das passende Pack oder
@@ -128,7 +130,7 @@ export default function SagaDetail() {
   // Pack-Button-Regel: Premium (nicht Elite), Kanton hat >= 8 Sagen, Pack noch nicht gekauft.
   // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
   const packLocked =
-    premium &&
+    hasPremiumAccess &&
     !isElite &&
     sagasInCanton.length >= 8 &&
     sagaIndexInCanton !== 0 &&

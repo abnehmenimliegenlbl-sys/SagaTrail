@@ -56,7 +56,7 @@ import { ShareCard } from "@/components/brand/ShareCard";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
 import { useSubscription } from "@/lib/revenuecat";
-import { kantonSlug, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
+import { hasPurchasedPack, kantonSlug, SAGEN_PRO_PACK, sagaPackSlug } from "@/lib/kantonSlug";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
@@ -126,7 +126,9 @@ export default function Routenplanung() {
   // POI-Infokacheln liegen ueber duesteren Karten — im Hellmodus fast
   // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
-  const { isElite } = useSubscription();
+  const { isElite, isSubscribed } = useSubscription();
+  const hasPremiumSubscription = premium || isSubscribed;
+  const hasPremiumAccess = premium || isSubscribed || isElite;
   const { getRoute, getSagaForRoute, getSagasForRoute, ensureRouteSaga, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
 
@@ -189,20 +191,20 @@ export default function Routenplanung() {
       // koennte noch nicht synchronisiert sein (Erstinstall, Restore), aber
       // das RC-Entitlement ist sofort verfuegbar und muss Vorrang haben.
       if (isElite) return false;
-      if (!premium) return freeHikeUsed;
       const slug = kantonSlug(s.canton);
       const sagasInCanton = sagas.filter((cs) => cs.canton === s.canton);
       const sagaIdx = sagasInCanton.findIndex((cs) => cs.id === s.id);
-      const isInPack1 = sagaIdx < 0 || sagaIdx < SAGEN_PRO_PACK;
-      if (!isInPack1) return true;
       const effectiveSlug = sagaIdx >= 0 ? sagaPackSlug(slug, sagaIdx) : slug;
-      if ((profile?.purchasedPacks ?? []).includes(effectiveSlug)) return false;
+      const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, effectiveSlug);
+      if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
+      if (packUnlocked) return false;
+      if (sagaIdx >= SAGEN_PRO_PACK) return true;
       // `isAnchorPlace` beschreibt die Verankerung am Ort, nicht den
       // Zugriffsstatus. Ohne gekauftes Kantonspaket ist nur die erste Sage
       // des Kantons als Premium-Vorschau frei.
       return sagaIdx !== 0;
     },
-    [premium, isElite, freeHikeUsed, profile, sagas, hikeHistory],
+    [freeHikeUsed, hasPremiumSubscription, isElite, profile, sagas, hikeHistory],
   );
 
   // Zugaengliche Sagen mit Metadaten. Innerhalb jeder Proximity-Kategorie
@@ -817,12 +819,11 @@ export default function Routenplanung() {
   // Position der aktuellen Sage im Kanton bestimmen
   const routeSagasInCanton = saga?.canton ? sagas.filter((s) => s.canton === saga.canton) : [];
   const routeSagaIdx = saga ? routeSagasInCanton.findIndex((s) => s.id === saga.id) : -1;
-  const routeSagaIsInPack1 = routeSagaIdx < 0 || routeSagaIdx < SAGEN_PRO_PACK;
   const routeEffectivePackSlug =
     routeSagaIdx >= 0 ? sagaPackSlug(routePackSlug, routeSagaIdx) : routePackSlug;
-  const dbPackUnlocked = (profile?.purchasedPacks ?? []).includes(routeEffectivePackSlug);
+  const dbPackUnlocked = hasPurchasedPack(profile?.purchasedPacks, routeEffectivePackSlug);
   // Premium schaltet alles frei; Pack entsperrt Gratis-Usern diesen Kanton
-  const canAccess = premium || isElite || dbPackUnlocked;
+  const canAccess = hasPremiumAccess || dbPackUnlocked;
   // Nur gesperrt wenn kein Zugang UND Gratis-Hike bereits verbraucht.
   // Ausnahme: bereits gehoerte Sagen bleiben immer wiederholbar.
   const routeSagaHeard = saga
@@ -886,7 +887,7 @@ export default function Routenplanung() {
     if (!profile || !saga || downloading || busy) return;
     setBusy(true);
     try {
-      await download(saga, route, profile, premium);
+      await download(saga, route, profile, hasPremiumAccess);
     } catch {
       alert(
         t.downloadFailed,

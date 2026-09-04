@@ -38,7 +38,9 @@ export default function RouteSagaSelection() {
   const params = useLocalSearchParams<{ id: string }>();
   const routeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { profile, premium, freeHikeUsed, hikeHistory } = useApp();
-  const { isElite } = useSubscription();
+  const { isElite, isSubscribed } = useSubscription();
+  const hasPremiumSubscription = premium || isSubscribed;
+  const hasPremiumAccess = premium || isSubscribed || isElite;
   const { getRoute, sagas } = useCatalog();
   const { download, remove, isDownloaded, getRecord, progress } = useDownloads();
   const route = getRoute(routeId) ?? getRecord(routeId)?.routeSnapshot;
@@ -60,7 +62,7 @@ export default function RouteSagaSelection() {
       const index = inCanton.findIndex((item) => item.id === saga.id);
       const packSlug = sagaPackSlug(slug, index);
       const packUnlocked = hasPurchasedPack(profile?.purchasedPacks, packSlug);
-      if (!premium) return freeHikeUsed && !packUnlocked;
+      if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
       if (index >= SAGEN_PRO_PACK) return true;
       // `isAnchorPlace` ist ein Orts-/Katalogmerkmal und kein
@@ -68,7 +70,7 @@ export default function RouteSagaSelection() {
       // Kantons als Premium-Vorschau zugänglich.
       return index !== 0;
     },
-    [freeHikeUsed, hikeHistory, isElite, premium, profile, sagas],
+    [freeHikeUsed, hikeHistory, hasPremiumSubscription, isElite, profile, sagas],
   );
 
   const selectedSaga = selectedSagaId
@@ -112,7 +114,7 @@ export default function RouteSagaSelection() {
     if (!profile || !route || !selectedSaga || downloading || busy || selectedLocked) return;
     setBusy(true);
     try {
-      await download(selectedSaga, route, profile, premium);
+      await download(selectedSaga, route, profile, hasPremiumAccess);
     } catch {
       alert(t.downloadFailed, t.downloadFailedText);
     } finally {

@@ -116,11 +116,13 @@ export default function KantonRouten() {
   const { loadCantonRoutes, sagas, addCustomRoute } = useCatalog();
   const {
     isElite,
+    isSubscribed,
     offerings,
     purchase,
     isPurchasing,
     refreshCustomerInfo,
   } = useSubscription();
+  const hasPremiumAccess = premium || isSubscribed || isElite;
   const [packBusy, setPackBusy] = useState(false);
   const [importing, setImporting] = useState(false);
 
@@ -173,7 +175,7 @@ export default function KantonRouten() {
   const sagasInCanton = sagas.filter((s) => s.canton === cantonName);
   // Pack-Banner: nur fuer Premium (nicht Elite) sichtbar, wenn Pack noch nicht
   // gekauft wurde und der Kanton >= 8 Sagen hat.
-  const packLocked = premium && !isElite && !!packSlug && !packUnlocked && sagasInCanton.length >= 8;
+  const packLocked = hasPremiumAccess && !isElite && !!packSlug && !packUnlocked && sagasInCanton.length >= 8;
   // Alle Kantonspakete werden ueber ein einziges RC-Produkt (KANTONSPACK_PACKAGE)
   // gekauft; der Server schreibt den Grant in profiles.purchased_packs.
   const packPaket = packSlug
@@ -616,7 +618,7 @@ export default function KantonRouten() {
           disabled={searching}
         />
 
-        {freeHikeUsed && !premium && !isElite && (
+        {freeHikeUsed && !hasPremiumAccess && (
           <PremiumUpsellBanner
             title={t.premiumCta}
             body={t.premiumCtaBody}
@@ -704,7 +706,7 @@ export default function KantonRouten() {
                 // Premium oder Pack schaltet alles frei.
                 // Ohne Premium: eine beliebige Route ist gratis (solange freeHikeUsed=false).
                 // Sobald die erste Wanderung stattgefunden hat, sind alle weiteren gesperrt.
-                const canAccess = premium || packUnlocked;
+                const canAccess = hasPremiumAccess || packUnlocked;
                 const locked = !canAccess && freeHikeUsed;
                 return (
                   <RouteCard
