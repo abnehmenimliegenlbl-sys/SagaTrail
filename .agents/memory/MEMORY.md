@@ -111,6 +111,7 @@
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
 - [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — main uses Viro 2.54.0; isolated Expo57/RN0.86 uses 2.58.1 plus plugin-based config and native-build validation.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.
+- [Viro initial scene data](viro-initial-scene-data.md) — initialScene is captured only once; live marker data must flow through viroAppProps without remounting the AR navigator.
 - [Object recognition premium](sagatrail-object-recognition-premium.md) — Foto-basierte Erkennung beliebiger Objekte ist Premium, on-demand und zeigt bestätigbare Treffer statt automatischer Gewissheiten.
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.
 - [Cloud Vision authentication](sagatrail-cloud-vision-auth.md) — Cloud Vision uses a dedicated service account; keep it separate from EAS/Google Play submission credentials.

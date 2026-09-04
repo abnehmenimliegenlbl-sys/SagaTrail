@@ -27,6 +27,12 @@ ViroMaterials.createMaterials({
 });
 
 interface PeakArSceneProps {
+  sceneNavigator?: {
+    viroAppProps?: PeakArSceneAppProps;
+  };
+}
+
+interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
@@ -54,7 +60,7 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
     return null;
   }
 
-  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 8, 28);
+  const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
   const bearingRad = (peak.relativeBearingDeg * Math.PI) / 180;
   const elevationRad =
     peak.elevationAngleDeg != null && Number.isFinite(peak.elevationAngleDeg)
@@ -68,11 +74,16 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
   ];
 }
 
-function PeakArScene({
-  peaks,
-  onPeakPress,
-  onError,
-}: PeakArSceneProps) {
+function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
+  const { peaks = [], onPeakPress, onError } =
+    sceneNavigator?.viroAppProps ?? {};
+
+  useEffect(() => {
+    console.log("[PeakAR] Viro markers updated", {
+      peakCount: peaks.length,
+    });
+  }, [peaks]);
+
   return (
     <ViroARScene onError={() => onError?.()}>
       {peaks.map((peak) => {
@@ -89,15 +100,15 @@ function PeakArScene({
             viroTag={`peak:${peak.id}`}
           >
             <ViroBox
-              position={[0, -0.42, 0]}
-              width={0.07}
-              height={0.84}
-              length={0.07}
+              position={[0, -0.72, 0]}
+              width={0.12}
+              height={1.44}
+              length={0.12}
               materials={PEAK_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroSphere
-              radius={0.2}
+              radius={0.36}
               widthSegmentCount={12}
               heightSegmentCount={8}
               materials={PEAK_MATERIAL}
@@ -145,14 +156,14 @@ export function PeakArNavigator({
 
   const initialScene = useMemo(
     () => ({
-      scene: () => (
-        <PeakArScene
-          peaks={peaks}
-          onPeakPress={onPeakPress}
-          onError={onError}
-        />
-      ),
+      // React Viro's declaration omits the sceneNavigator prop that its runtime
+      // injects into every scene component.
+      scene: PeakArScene as unknown as () => ReturnType<typeof PeakArScene>,
     }),
+    [],
+  );
+  const viroAppProps = useMemo<PeakArSceneAppProps>(
+    () => ({ peaks, onPeakPress, onError }),
     [onError, onPeakPress, peaks],
   );
 
@@ -165,6 +176,7 @@ export function PeakArNavigator({
     <ViroARSceneNavigator
       style={StyleSheet.absoluteFill}
       initialScene={initialScene}
+      viroAppProps={viroAppProps}
       autofocus
       // iOS 26 rejects ViroKit's default photo-output dimensions on some
       // camera formats. Low selects a smaller supported ARKit format while
