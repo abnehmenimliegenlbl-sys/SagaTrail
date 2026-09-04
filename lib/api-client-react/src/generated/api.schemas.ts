@@ -265,7 +265,7 @@ export interface CatalogRoute {
   familyFriendly?: boolean | null;
   /** Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt. */
   childFriendly?: boolean | null;
-  /** Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt. */
+  /** Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden. */
   dogsAllowed?: boolean | null;
   /** Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet. */
   wheelchairAccessible?: boolean | null;

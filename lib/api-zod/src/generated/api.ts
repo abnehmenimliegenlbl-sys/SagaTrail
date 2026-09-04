@@ -44,7 +44,7 @@ export const GetCatalogResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -179,7 +179,7 @@ export const GetCantonRoutesResponseItem = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -577,7 +577,7 @@ export const GetCustomRouteResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
@@ -623,7 +623,7 @@ export const ImportGpxRouteResponse = zod.object({
   "terrain": zod.string(),
   "familyFriendly": zod.boolean().nullish().describe('Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
   "childFriendly": zod.boolean().nullish().describe('Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.'),
-  "dogsAllowed": zod.boolean().nullish().describe('Konservative technische Hunde-Empfehlung; keine Aussage zu Leinenpflicht oder lokalen Regeln; null bedeutet unbekannt.'),
+  "dogsAllowed": zod.boolean().nullish().describe('Explizit bestätigte Hunde-Erlaubnis; null bedeutet unbekannt. Darf nicht aus Distanz, Höhe oder SAC abgeleitet werden.'),
   "wheelchairAccessible": zod.boolean().nullish().describe('Offizielle SchweizMobil-Klassifikation handicap; wird nicht aus Distanz, Höhe oder SAC abgeleitet.'),
   "technicalDifficulty": zod.string().nullish(),
   "coordinates": zod.object({
