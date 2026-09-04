@@ -53,6 +53,7 @@ export function PeakCameraOverlay({
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
+  const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
   const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
   const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,6 +99,7 @@ export function PeakCameraOverlay({
     if (!visible) {
       setContentMounted(false);
       setArEnabled(false);
+      setArPeaks([]);
       setSelectedPeakId(null);
       if (arActivationTimerRef.current) {
         clearTimeout(arActivationTimerRef.current);
@@ -117,6 +119,7 @@ export function PeakCameraOverlay({
     // modal. This avoids tearing down Viro during the UIKit transition.
     setContentMounted(false);
     setArEnabled(false);
+    setArPeaks([]);
     onClose();
   };
 
@@ -125,6 +128,10 @@ export function PeakCameraOverlay({
       switchNativeSurface("camera");
       return;
     }
+    // Keep the native Viro scene graph stable while the phone is moving.
+    // `visiblePeaks` is re-sorted from the live compass heading; passing it
+    // directly would remove and insert Viro nodes during every slow pan.
+    setArPeaks(visiblePeaks);
     switchNativeSurface("ar");
   };
 
@@ -195,7 +202,7 @@ export function PeakCameraOverlay({
         {contentMounted && (
           arEnabled ? (
             <PeakArNavigator
-              peaks={visiblePeaks}
+              peaks={arPeaks}
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               heading={heading}

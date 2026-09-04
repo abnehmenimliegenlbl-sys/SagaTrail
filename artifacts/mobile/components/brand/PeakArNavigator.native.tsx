@@ -44,16 +44,15 @@ const clamp = (value: number, min: number, max: number) =>
 /**
  * Projects geographic peak data into the local Viro world.
  *
- * Viro's GravityAndHeading world uses +x to the right, +y upward and -z
- * forward. We compress real GPS distances to a useful AR range while keeping
- * each peak's bearing and elevation angle intact; a 20 km peak must not be
- * placed 800 m away from the camera just because the terrain model uses a
- * 0.04 display scale.
+ * With GravityAndHeading, Viro keeps the world aligned to the compass:
+ * +x points east and -z north. Peaks therefore use their absolute geographic
+ * bearing. ARKit rotates the camera through this fixed world while the phone
+ * moves; feeding the changing relative phone heading back into the node
+ * position would rotate the marker twice.
  */
 function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
   if (
-    peak.relativeBearingDeg == null ||
-    !Number.isFinite(peak.relativeBearingDeg) ||
+    !Number.isFinite(peak.bearingDeg) ||
     !Number.isFinite(peak.distanceKm) ||
     peak.distanceKm < 0
   ) {
@@ -61,7 +60,7 @@ function peakPosition(peak: PanoramaGipfel): [number, number, number] | null {
   }
 
   const distanceM = clamp(peak.distanceKm * 1000 * 0.04, 7, 14);
-  const bearingRad = (peak.relativeBearingDeg * Math.PI) / 180;
+  const bearingRad = (peak.bearingDeg * Math.PI) / 180;
   const elevationRad =
     peak.elevationAngleDeg != null && Number.isFinite(peak.elevationAngleDeg)
       ? (peak.elevationAngleDeg * Math.PI) / 180
