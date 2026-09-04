@@ -127,6 +127,13 @@ export function PeakArNavigator({
       // OpenGL tone-mapping pass, which aborts on iOS 26 while loading its
       // shader pipeline (VROToneMappingRenderPass).
       hdrEnabled={false}
+      // Keep this text-only scene on Viro's simplest OpenGL material path.
+      // These features are not needed for labels and add shader variants that
+      // can trigger iOS 26 Metal assertions in ViroKit 2.56.
+      pbrEnabled={false}
+      bloomEnabled={false}
+      shadowsEnabled={false}
+      multisamplingEnabled={false}
       worldAlignment="GravityAndHeading"
     />
   );
