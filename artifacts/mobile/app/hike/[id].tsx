@@ -728,7 +728,11 @@ export default function LiveHike() {
   const [panoramaCameraOpen, setPanoramaCameraOpen] = useState(false);
   const [panoramaTileCloseSignal, setPanoramaTileCloseSignal] = useState(0);
   const panoramaCameraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const panoramaPeaksRequestedRef = useRef(false);
+  const panoramaPeakRequestRef = useRef<{
+    lat: number;
+    lng: number;
+    requestedAt: number;
+  } | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
@@ -1462,14 +1466,24 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       !panoramaTileOpen ||
-      panoramaPeaksRequestedRef.current ||
       !hasFreshGps ||
-      !livePos ||
-      offlinePanorama
+      !livePos
     ) {
       return;
     }
-    panoramaPeaksRequestedRef.current = true;
+    const previous = panoramaPeakRequestRef.current;
+    if (
+      previous &&
+      Date.now() - previous.requestedAt < 120_000 &&
+      haversineKm(previous, livePos) < 0.5
+    ) {
+      return;
+    }
+    panoramaPeakRequestRef.current = {
+      lat: livePos.lat,
+      lng: livePos.lng,
+      requestedAt: Date.now(),
+    };
     let cancelled = false;
     const bbox = bboxAroundGeometry(null, livePos, PANORAMA_ROUTE_CORRIDOR_KM);
     getPeakPois({
@@ -1482,7 +1496,10 @@ export default function LiveHike() {
         if (!cancelled) setPanoramaOnlinePois(result);
       })
       .catch(() => {
-        if (!cancelled) setPanoramaOnlinePois([]);
+        if (!cancelled) {
+          panoramaPeakRequestRef.current = null;
+          setPanoramaOnlinePois([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -1490,6 +1507,8 @@ export default function LiveHike() {
   }, [
     panoramaTileOpen,
     hasFreshGps,
+    livePos?.lat,
+    livePos?.lng,
   ]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) im Kartenausschnitt
@@ -4130,7 +4149,10 @@ export default function LiveHike() {
           closeLabel={t.close}
           closeSignal={panoramaTileCloseSignal}
           onTileOpen={(tileId) => {
-            if (tileId === "panorama") setPanoramaTileOpen(true);
+            if (tileId === "panorama") {
+              panoramaPeakRequestRef.current = null;
+              setPanoramaTileOpen(true);
+            }
           }}
           tiles={[
             {
@@ -4173,7 +4195,12 @@ export default function LiveHike() {
                   observerElevationM={hasFreshGps ? liveAltitude : null}
                   hasGps={hasFreshGps}
                   dataStatus={
-                    offlinePanorama
+                    panoramaOnlinePois.length > 0
+                      ? {
+                          source: "online",
+                          peakCount: panoramaOnlinePois.length,
+                        }
+                      : offlinePanorama
                       ? {
                           source: "offline",
                           version: offlinePanorama.version,
@@ -4202,6 +4229,7 @@ export default function LiveHike() {
                   }}
                   onCameraOpen={() => {
                     setPanoramaTileOpen(false);
+                    panoramaPeakRequestRef.current = null;
                     setPanoramaTileCloseSignal((signal) => signal + 1);
                     if (panoramaCameraTimerRef.current) {
                       clearTimeout(panoramaCameraTimerRef.current);
