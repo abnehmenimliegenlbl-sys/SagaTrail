@@ -90,8 +90,6 @@ export interface RouteSearchFilter {
   nearLng?: number;
   /** Technische Empfehlung für Familien, nicht redaktionelle Tatsache. */
   familyFriendly?: boolean;
-  /** Technische Empfehlung für Kinder, nicht redaktionelle Tatsache. */
-  childFriendly?: boolean;
   /** Nur offiziell als hindernisfrei klassifizierte SchweizMobil-Route. */
   wheelchairAccessible?: boolean;
 }
@@ -107,7 +105,6 @@ function filterCachedRoutes(routes: HikingRoute[], filter?: RouteSearchFilter): 
     inRange(r.sac ? Number.parseFloat(r.sac.replace(",", ".")) : null, filter.diffMin, filter.diffMax)
   );
   if (filter.familyFriendly) result = result.filter((r) => r.familyFriendly === true);
-  if (filter.childFriendly) result = result.filter((r) => r.childFriendly === true);
   if (filter.wheelchairAccessible) result = result.filter((r) => r.wheelchairAccessible === true);
   if (filter.ganzjaehrigNur) {
     result = result.filter((r) =>
@@ -294,7 +291,6 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       if (filter?.nearLat != null) params.nearLat = filter.nearLat;
       if (filter?.nearLng != null) params.nearLng = filter.nearLng;
       if (filter?.familyFriendly != null) params.familyFriendly = filter.familyFriendly;
-      if (filter?.childFriendly != null) params.childFriendly = filter.childFriendly;
       if (filter?.wheelchairAccessible != null) params.wheelchairAccessible = filter.wheelchairAccessible;
 
       try {

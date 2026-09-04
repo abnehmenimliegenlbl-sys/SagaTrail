@@ -157,7 +157,6 @@ function harmonisiereBeschreibung(
 
 type RouteSuitability = {
   familyFriendly: boolean | null;
-  childFriendly: boolean | null;
   wheelchairAccessible: boolean | null;
 };
 
@@ -185,9 +184,6 @@ function deriveSuitability(
     familyFriendly:
       row.familyFriendly ??
       (stufe !== null && stufe <= 2 && km <= 15 && ascent <= 600 ? true : null),
-    childFriendly:
-      row.childFriendly ??
-      (stufe !== null && stufe <= 1 && km <= 10 && ascent <= 350 ? true : null),
     wheelchairAccessible:
       row.wheelchairAccessible ??
       (officialType === "handicap" ? true : null),
@@ -214,7 +210,6 @@ function toRoute(row: ExternalRouteRow, suitability = deriveSuitability(row)) {
     schweizMobilTechnique: row.schweizMobilTechnique,
     terrain: row.terrain,
     familyFriendly: suitability.familyFriendly,
-    childFriendly: suitability.childFriendly,
     wheelchairAccessible: suitability.wheelchairAccessible,
     technicalDifficulty: row.technicalDifficulty ?? null,
     coordinates: { lat: row.lat, lng: row.lng },
@@ -266,7 +261,6 @@ interface RouteFilter {
   nearLat: number | null;
   nearLng: number | null;
   familyFriendly: boolean | null;
-  childFriendly: boolean | null;
   wheelchairAccessible: boolean | null;
 }
 
@@ -291,7 +285,6 @@ function applyFilter(row: ExternalRouteRow, f: RouteFilter): boolean {
     if (season !== "ganzjaehrig") return false;
   }
   if (f.familyFriendly === true && row.familyFriendly !== true) return false;
-  if (f.childFriendly === true && row.childFriendly !== true) return false;
   if (f.wheelchairAccessible === true && row.wheelchairAccessible !== true) return false;
   return true;
 }
@@ -311,7 +304,6 @@ router.get("/cantons/:canton/routes", async (req, res): Promise<void> => {
     nearLat: numParam(req.query.nearLat),
     nearLng: numParam(req.query.nearLng),
     familyFriendly: boolParam(req.query.familyFriendly),
-    childFriendly: boolParam(req.query.childFriendly),
     wheelchairAccessible: boolParam(req.query.wheelchairAccessible),
   };
   try {

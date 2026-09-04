@@ -47,7 +47,6 @@ export const externalRoutesTable = pgTable("external_routes", {
   // für fehlende Werte konservative technische Empfehlungen ergänzen.
   // NULL bedeutet weiterhin unbekannt und darf nicht als "nein" interpretiert werden.
   familyFriendly: boolean("family_friendly"),
-  childFriendly: boolean("child_friendly"),
   wheelchairAccessible: boolean("wheelchair_accessible"),
   technicalDifficulty: text("technical_difficulty"),
   lat: doublePrecision("lat").notNull(),

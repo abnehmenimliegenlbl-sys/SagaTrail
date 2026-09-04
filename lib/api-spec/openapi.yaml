@@ -178,12 +178,6 @@ paths:
           description: Nur redaktionell als familienfreundlich bestätigte Routen.
           schema:
             type: boolean
-        - name: childFriendly
-          in: query
-          required: false
-          description: Nur redaktionell als kinderfreundlich bestätigte Routen.
-          schema:
-            type: boolean
         - name: wheelchairAccessible
           in: query
           required: false
@@ -1865,10 +1859,6 @@ components:
           type: boolean
           nullable: true
           description: Konservative technische Familien-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.
-        childFriendly:
-          type: boolean
-          nullable: true
-          description: Konservative technische Kinder-Empfehlung aus SAC, Distanz und Aufstieg; null bedeutet unbekannt.
         wheelchairAccessible:
           type: boolean
           nullable: true

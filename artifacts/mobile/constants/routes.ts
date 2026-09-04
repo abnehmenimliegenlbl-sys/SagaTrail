@@ -35,7 +35,6 @@ export interface HikingRoute {
   terrain: string;
   /** Explizit bestätigte Eignung; null/undefined ist unbekannt, nicht ungeeignet. */
   familyFriendly?: boolean | null;
-  childFriendly?: boolean | null;
   wheelchairAccessible?: boolean | null;
   technicalDifficulty?: string | null;
   /** Ausgangspunkt der Route (Kartenmittelpunkt) */
