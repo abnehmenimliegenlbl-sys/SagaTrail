@@ -66,7 +66,7 @@
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/karla": "^0.4.2",
     "@reactvision/react-viro": "2.56.0",
-    "expo": "~54.0.36",
+    "expo": "~57.0.19",
     "expo-apple-authentication": "^8.0.8",
     "expo-application": "^57.0.2",
     "expo-av": "^16.0.8",
