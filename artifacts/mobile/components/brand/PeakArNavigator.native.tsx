@@ -99,7 +99,9 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             viroTag={`peak:${peak.id}`}
           >
             <ViroBox
-              position={[0, -0.72, 0]}
+              // The node origin is the calculated summit position. Keep the
+              // entire marker above it so the stem's lower end is the pointer.
+              position={[0, 0.72, 0]}
               width={0.12}
               height={1.44}
               length={0.12}
@@ -107,6 +109,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
               shadowCastingBitMask={0}
             />
             <ViroSphere
+              position={[0, 1.44, 0]}
               radius={0.36}
               widthSegmentCount={12}
               heightSegmentCount={8}
