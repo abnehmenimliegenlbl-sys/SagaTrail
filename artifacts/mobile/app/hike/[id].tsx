@@ -583,6 +583,7 @@ export default function LiveHike() {
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
+  const autoFollowRecalcStartedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
@@ -2837,6 +2838,7 @@ export default function LiveHike() {
           text: t.offRouteToStart,
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
+            autoFollowRecalcStartedRef.current = false;
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("start");
           },
@@ -2845,6 +2847,7 @@ export default function LiveHike() {
           text: t.offRouteFastestToRoute,
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
+            autoFollowRecalcStartedRef.current = false;
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("fastest");
           },
@@ -3747,6 +3750,30 @@ export default function LiveHike() {
     isOffline,
     saga,
     storyLanguage,
+  ]);
+
+  // Eine Neuberechnung, die direkt aus der Startauswahl stammt, wird nach
+  // erfolgreicher Routenantwort automatisch übernommen. Der manuelle
+  // "Dieser Route folgen"-Schritt bleibt für spätere Off-Route-Fälle bestehen.
+  useEffect(() => {
+    if (
+      !startChoicePending ||
+      isRecalculating ||
+      followingRecalc ||
+      !recalcGeom ||
+      recalcGeom.length < 2 ||
+      autoFollowRecalcStartedRef.current
+    ) {
+      return;
+    }
+    autoFollowRecalcStartedRef.current = true;
+    void followRecalculatedRoute();
+  }, [
+    followRecalculatedRoute,
+    followingRecalc,
+    isRecalculating,
+    recalcGeom,
+    startChoicePending,
   ]);
 
   const finishHike = useCallback(async () => {
