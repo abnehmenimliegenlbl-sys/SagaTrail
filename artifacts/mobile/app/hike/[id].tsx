@@ -1572,7 +1572,7 @@ export default function LiveHike() {
 
   // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {
-    const geom = navigationGeometry;
+    const geom = route?.geometry;
     if (!geom || geom.length < 2) return;
     let cancelled = false;
     const base = getApiBaseUrl() ?? "";
@@ -1605,7 +1605,7 @@ export default function LiveHike() {
   // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
   // max. 3, innerhalb 100 m Routenabstand.
   useEffect(() => {
-    const geom = route?.geometry;
+    const geom = navigationGeometry;
     if (!geom || geom.length < 2) return;
     if (displayedPois.length === 0 && partners.length === 0) return;
     const wps = computeRouteWaypoints(geom, partners, displayedPois);
