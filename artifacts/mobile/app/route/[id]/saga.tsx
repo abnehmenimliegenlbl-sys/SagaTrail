@@ -43,6 +43,8 @@ export default function RouteSagaSelection() {
   const params = useLocalSearchParams<{ id: string }>();
   const routeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { profile, purchasedPacks, premium, freeHikeUsed, hikeHistory } = useApp();
+  const availablePurchasedPacks =
+    purchasedPacks.length > 0 ? purchasedPacks : profile?.purchasedPacks ?? [];
   const { hatEntitlement, isElite, isSubscribed } = useSubscription();
   const hasPremiumSubscription = premium || isSubscribed;
   const hasPremiumAccess = premium || isSubscribed || isElite;
@@ -67,7 +69,7 @@ export default function RouteSagaSelection() {
       const index = inCanton.findIndex((item) => item.id === saga.id);
       const packSlug = index >= 0 ? sagaPackSlug(slug, index) : slug;
       const packUnlocked =
-        hasPurchasedPack(purchasedPacks, packSlug) ||
+        hasPurchasedPack(availablePurchasedPacks, packSlug) ||
         hatEntitlement(packEntitlementFuerKanton(packSlug));
       if (!hasPremiumSubscription) return freeHikeUsed && !packUnlocked;
       if (packUnlocked) return false;
@@ -78,7 +80,15 @@ export default function RouteSagaSelection() {
       // Kantons als Premium-Vorschau zugänglich.
       return index !== 0;
     },
-    [freeHikeUsed, hikeHistory, hasPremiumSubscription, hatEntitlement, isElite, purchasedPacks, profile, sagas],
+    [
+      freeHikeUsed,
+      hikeHistory,
+      hasPremiumSubscription,
+      hatEntitlement,
+      isElite,
+      availablePurchasedPacks,
+      sagas,
+    ],
   );
 
   const selectedSaga = selectedSagaId
