@@ -7,6 +7,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
+import { isViroIos26CrashGuardActive } from "@/lib/arSupport";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
@@ -68,9 +69,18 @@ export function PeakArNavigator({
   const [supportState, setSupportState] = useState<
     "checking" | "supported" | "unsupported"
   >("checking");
+  const viroIos26CrashGuard = isViroIos26CrashGuardActive();
 
   useEffect(() => {
     let cancelled = false;
+
+    if (viroIos26CrashGuard) {
+      setSupportState("unsupported");
+      onError?.();
+      return () => {
+        cancelled = true;
+      };
+    }
 
     isARSupportedOnDevice()
       .then(({ isARSupported }) => {
@@ -91,7 +101,7 @@ export function PeakArNavigator({
     return () => {
       cancelled = true;
     };
-  }, [onError]);
+  }, [onError, viroIos26CrashGuard]);
 
   const initialScene = useMemo(
     () => ({
