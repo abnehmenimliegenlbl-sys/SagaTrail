@@ -57,7 +57,7 @@ export default function SagaDetail() {
   } =
     useApp();
   const availablePurchasedPacks =
-    purchasedPacks.length > 0 ? purchasedPacks : profile?.purchasedPacks ?? [];
+    Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
   const { getSaga, ensureRouteSaga, sagas } = useCatalog();
   const {
     isElite,

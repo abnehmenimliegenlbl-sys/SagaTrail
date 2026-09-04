@@ -14,3 +14,9 @@ Additional rule: keep purchased pack slugs in an independent authenticated sync 
 **Why:** The visible route Saga picker can render without a fresh profile-query response; a stale or missing query result otherwise turns a valid DB pack grant into a false lock.
 
 **How to apply:** On an authenticated hydrated app start, read the pack list from `/api/me`, update only the pack state/profile field, and leave existing cache data intact on request failure.
+
+Additional rule: when pack state is available from both the independent sync and the profile cache, combine the lists instead of letting a non-empty stale list replace the other source.
+
+**Why:** The two sources can become temporarily inconsistent during hydration or account changes; priority fallback can hide a valid pack and show a false lock.
+
+**How to apply:** Use the union of both pack lists anywhere access is checked, while keeping the independent `/api/me` sync as the authoritative refresh.

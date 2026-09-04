@@ -29,12 +29,6 @@ import { translateCanton } from "@/lib/i18n/cantonNames";
 import { LanguageCode } from "@/lib/i18n/languageCode";
 import { useColors } from "@/hooks/useColors";
 import { useSubscription } from "@/lib/revenuecat";
-import {
-  hasPurchasedPack,
-  kantonSlug,
-  packEntitlementFuerKanton,
-  SAGEN_PRO_PACK,
-} from "@/lib/kantonSlug";
 import { hapticSelection } from "@/lib/haptics";
 
 const WEB_TOP = 67;
@@ -323,8 +317,7 @@ function CantonCard({
 }) {
   const colors = useColors();
   const t = useHomeStrings();
-  const { achievements, language, premium, profile, purchasedPacks } = useApp();
-  const { hatEntitlement, isElite } = useSubscription();
+  const { achievements, language } = useApp();
   const { sagas } = useCatalog();
 
   // Sagen-Fortschritt des Kantons — nur wenn der Kanton kuratierte Sagen hat.
@@ -332,20 +325,6 @@ function CantonCard({
   const discovered = cantonSagas.filter((s) =>
     achievements.some((a) => a.id === s.id)
   ).length;
-  // Zugaengliche Sagen: Premium ohne Pack/Elite → nur 1 inklusive Sage.
-  // Autoritaetive Quelle: profiles.purchased_packs (server-seitiger Claim).
-  const packSlug = kantonSlug(entry.canton);
-  const dbPackUnlocked =
-    hasPurchasedPack(purchasedPacks, packSlug) ||
-    hatEntitlement(packEntitlementFuerKanton(packSlug));
-  // Pack 1 deckt maximal SAGEN_PRO_PACK Sagen ab; Pack 2+ noch nicht verfuegbar.
-  const pack1Count = Math.min(SAGEN_PRO_PACK, cantonSagas.length);
-  const accessibleTotal = isElite
-    ? cantonSagas.length
-    : dbPackUnlocked
-      ? pack1Count
-      : Math.min(1, cantonSagas.length);
-
   const cantonLabel = translateCanton(entry.canton, language as LanguageCode);
   return (
     <Animated.View entering={FadeInDown.delay(index * 60)}>
@@ -389,7 +368,7 @@ function CantonCard({
                 { color: discovered > 0 ? colors.accent : colors.mutedForeground },
               ]}
             >
-              {t.sagaProgress(discovered, accessibleTotal)}
+              {t.sagaProgress(discovered, cantonSagas.length)}
             </Text>
           )}
         </View>

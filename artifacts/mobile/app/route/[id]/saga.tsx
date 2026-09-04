@@ -44,7 +44,7 @@ export default function RouteSagaSelection() {
   const routeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { profile, purchasedPacks, premium, freeHikeUsed, hikeHistory } = useApp();
   const availablePurchasedPacks =
-    purchasedPacks.length > 0 ? purchasedPacks : profile?.purchasedPacks ?? [];
+    Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
   const { hatEntitlement, isElite, isSubscribed } = useSubscription();
   const hasPremiumSubscription = premium || isSubscribed;
   const hasPremiumAccess = premium || isSubscribed || isElite;

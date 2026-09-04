@@ -130,7 +130,7 @@ export default function Routenplanung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { energiesparmodus, setEnergiesparmodus, profile, purchasedPacks, premium, freeHikeUsed, freieSagen, hikeHistory, istSageInklusive, language, savedSagaIds, toggleBookmark, themeMode } = useApp();
   const availablePurchasedPacks =
-    purchasedPacks.length > 0 ? purchasedPacks : profile?.purchasedPacks ?? [];
+    Array.from(new Set([...purchasedPacks, ...(profile?.purchasedPacks ?? [])]));
   // POI-Infokacheln liegen ueber duesteren Karten — im Hellmodus fast
   // deckendes Weiss statt Milchglas (identisch zum Hike-Screen).
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
