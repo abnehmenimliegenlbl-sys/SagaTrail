@@ -32,6 +32,7 @@ interface PeakCameraOverlayProps {
   arCandidates?: readonly PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
+  routeGeometry?: readonly number[][] | null;
   heading: number | null;
   observerElevationM?: number | null;
   strings: PeakPanoramaStrings;
@@ -45,6 +46,7 @@ export function PeakCameraOverlay({
   arCandidates = peaks,
   terrainProfile = null,
   terrainModel = null,
+  routeGeometry = null,
   heading,
   observerElevationM = null,
   strings,
@@ -244,6 +246,7 @@ export function PeakCameraOverlay({
               peaks={arPeaks}
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
+              routeGeometry={routeGeometry}
               heading={heading}
               observerElevationM={observerElevationM}
               selectedPeakId={selectedPeakId}

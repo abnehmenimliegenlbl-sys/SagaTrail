@@ -26,6 +26,7 @@ export interface LocalTerrainModel {
 export type TerrainVisibility = "visible" | "occluded" | "unknown";
 export type TerrainVertex = [number, number, number];
 export type TerrainTriangle = [number, number, number];
+export type TerrainRouteLine = TerrainVertex[];
 
 export interface LocalTerrainMesh {
   vertices: TerrainVertex[];
@@ -257,4 +258,86 @@ export function buildLocalTerrainMesh(
   return triangleIndices.length > 0
     ? { vertices, normals, triangleIndices }
     : null;
+}
+
+/**
+ * Projects the route geometry into the same local frame as the terrain mesh.
+ * The route is split whenever it leaves the local model so a distant segment
+ * is never drawn as a misleading straight line across the hologram.
+ */
+export function buildLocalTerrainRouteLines(
+  model: LocalTerrainModel | null | undefined,
+  routeGeometry: readonly number[][] | null | undefined,
+  headingDeg: number | null | undefined,
+): TerrainRouteLine[] {
+  const observerElevation = model?.observerElevationM;
+  if (
+    !model ||
+    observerElevation == null ||
+    headingDeg == null ||
+    !Array.isArray(routeGeometry) ||
+    routeGeometry.length < 2
+  ) {
+    return [];
+  }
+
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (model.center.lat * Math.PI) / 180;
+  const headingRad = (headingDeg * Math.PI) / 180;
+  const maxPoints = 160;
+  const stride = Math.max(1, Math.ceil(routeGeometry.length / maxPoints));
+  const lines: TerrainRouteLine[] = [];
+  let currentLine: TerrainRouteLine = [];
+
+  const flush = () => {
+    if (currentLine.length >= 2) lines.push(currentLine);
+    currentLine = [];
+  };
+
+  for (let index = 0; index < routeGeometry.length; index += stride) {
+    const point = routeGeometry[index];
+    const lat = point?.[0];
+    const lng = point?.[1];
+    if (
+      typeof lat !== "number" ||
+      typeof lng !== "number" ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      flush();
+      continue;
+    }
+
+    const deltaLat = ((lat - model.center.lat) * Math.PI) / 180;
+    const deltaLng = ((lng - model.center.lng) * Math.PI) / 180;
+    const northM = deltaLat * earthRadiusM;
+    const eastM = deltaLng * earthRadiusM * Math.cos(centerLatRad);
+    const distanceM = Math.hypot(northM, eastM);
+    if (distanceM > model.radiusM + 1) {
+      flush();
+      continue;
+    }
+
+    const bearingDeg =
+      ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
+    const relativeBearing =
+      ((bearingDeg - headingDeg + 540) % 360) - 180;
+    const angle = (relativeBearing * Math.PI) / 180;
+    const ray = nearestRay(model, bearingDeg);
+    const terrainElevation =
+      ray == null
+        ? observerElevation
+        : interpolateRayElevation(ray, distanceM) ?? observerElevation;
+    const distance = distanceM * AR_WORLD_SCALE;
+    const elevation = (terrainElevation - observerElevation) * AR_WORLD_SCALE;
+
+    currentLine.push([
+      Math.sin(angle) * distance,
+      elevation,
+      -Math.cos(angle) * distance,
+    ]);
+  }
+
+  flush();
+  return lines;
 }

@@ -6,6 +6,7 @@ export interface PeakArNavigatorProps {
   peaks: readonly PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
+  routeGeometry?: readonly number[][] | null;
   heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;

@@ -15,10 +15,12 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import {
+  buildLocalTerrainRouteLines,
   buildLocalTerrainMesh,
   terrainVisibilityForPeak,
   type LocalTerrainMesh,
   type LocalTerrainModel,
+  type TerrainRouteLine,
 } from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
@@ -26,6 +28,8 @@ const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const TERRAIN_GRID_MATERIAL = "sagatrailTerrainGrid";
+const TERRAIN_ROUTE_MATERIAL = "sagatrailTerrainRoute";
+const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
 
@@ -54,6 +58,22 @@ ViroMaterials.createMaterials({
     writesToDepthBuffer: false,
     readsFromDepthBuffer: false,
   },
+  [TERRAIN_ROUTE_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FFD166",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_USER_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FFFFFF",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
 });
 
 interface PeakArSceneProps {
@@ -65,6 +85,7 @@ interface PeakArSceneProps {
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
   terrainModel?: LocalTerrainModel | null;
+  routeGeometry?: readonly number[][] | null;
   heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;
@@ -74,15 +95,21 @@ interface PeakArSceneAppProps {
 
 function TerrainHologram({
   model,
+  routeGeometry,
   heading,
 }: {
   model: LocalTerrainModel | null | undefined;
+  routeGeometry: readonly number[][] | null | undefined;
   heading: number | null | undefined;
 }) {
   const stableHeading = heading ?? 0;
   const mesh = useMemo<LocalTerrainMesh | null>(
     () => buildLocalTerrainMesh(model, stableHeading),
     [model, stableHeading],
+  );
+  const routeLines = useMemo<TerrainRouteLine[]>(
+    () => buildLocalTerrainRouteLines(model, routeGeometry, stableHeading),
+    [model, routeGeometry, stableHeading],
   );
 
   if (!mesh) return null;
@@ -143,6 +170,46 @@ function TerrainHologram({
           opacity={0.8}
         />
       ))}
+      {routeLines.map((points, index) => (
+        <ViroPolyline
+          key={`terrain-route-${index}`}
+          points={points}
+          thickness={0.045}
+          materials={TERRAIN_ROUTE_MATERIAL}
+          opacity={1}
+        />
+      ))}
+      <ViroPolyline
+        points={[
+          [0, 0, 0],
+          [0, 1.8, 0],
+        ]}
+        thickness={0.055}
+        materials={TERRAIN_USER_MATERIAL}
+        opacity={1}
+      />
+      <ViroSphere
+        position={[0, 0.06, 0]}
+        radius={0.38}
+        widthSegmentCount={12}
+        heightSegmentCount={8}
+        materials={TERRAIN_USER_MATERIAL}
+        shadowCastingBitMask={0}
+      />
+      <ViroText
+        text="DU"
+        position={[0, 2.15, 0]}
+        width={1.6}
+        height={0.34}
+        color="#FFFFFF"
+        maxLines={1}
+        style={{
+          fontSize: 14,
+          fontWeight: "700",
+          textAlign: "center",
+          textAlignVertical: "center",
+        }}
+      />
     </ViroNode>
   );
 }
@@ -223,6 +290,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const {
     peaks = [],
     terrainModel = null,
+    routeGeometry = null,
     heading = null,
     observerElevationM = null,
     selectedPeakId = null,
@@ -240,7 +308,11 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     <ViroARScene onError={() => onError?.()}>
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
-      <TerrainHologram model={terrainModel} heading={heading} />
+      <TerrainHologram
+        model={terrainModel}
+        routeGeometry={routeGeometry}
+        heading={heading}
+      />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
         if (!position) return null;
@@ -373,6 +445,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 export function PeakArNavigator({
   peaks,
   terrainModel = null,
+  routeGeometry = null,
   heading = null,
   observerElevationM = null,
   selectedPeakId = null,
@@ -419,6 +492,7 @@ export function PeakArNavigator({
     () => ({
       peaks,
       terrainModel,
+      routeGeometry,
       heading,
       observerElevationM,
       selectedPeakId,
@@ -431,6 +505,7 @@ export function PeakArNavigator({
       observerElevationM,
       onPeakPress,
       peaks,
+      routeGeometry,
       selectedPeakId,
       terrainModel,
     ],

@@ -3,7 +3,7 @@ name: Local terrain AR
 description: Durable rules for observer-centered SwissTopo terrain meshes, occlusion, and offline coverage in SagaTrail.
 ---
 
-The native AR scene uses an observer-centered radial SwissTopo model. Its local coordinates are aligned by subtracting the current compass heading, and peak labels use the same proportional display scale as the mesh. The user-facing terrain hologram should use a lightly tinted surface plus a cyan wireframe/grid and an explicit radius legend; a solid red translucent plane is visually ambiguous.
+The native AR scene uses an observer-centered radial SwissTopo model. Its local coordinates are aligned by subtracting the current compass heading, and peak labels use the same proportional display scale as the mesh. The user-facing terrain hologram should use a lightly tinted surface plus a cyan wireframe/grid and an explicit radius legend; a solid red translucent plane is visually ambiguous. The route overlay is projected into the same frame, shows only portions inside the local terrain radius, and uses a distinct line plus a central “DU” marker.
 
 **Why:** A route elevation profile is not a surrounding digital elevation model. Using it as one produced false terrain surfaces and could make a peak appear blocked without evidence.
 
