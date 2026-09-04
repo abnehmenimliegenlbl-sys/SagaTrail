@@ -669,6 +669,60 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     pushProgressSync,
   ]);
 
+  // Der Packzugriff ist sicherheitsrelevant fuer die Sperrlogik. Er wird
+  // deshalb zusaetzlich zum Profil-Query direkt aus der authentifizierten
+  // /api/me-Antwort gespiegelt. So bleibt ein veralteter Query-/Profilcache
+  // ohne Einfluss auf gekaufte Sagenpakete.
+  const packSyncedForUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authLoaded || !isSignedIn || !userId || !hydrated) {
+      if (!isSignedIn) packSyncedForUserRef.current = null;
+      return;
+    }
+    if (packSyncedForUserRef.current === userId) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (!token || cancelled) return;
+        const response = await fetch(`${getApiBaseUrl()}api/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { purchasedPacks?: unknown };
+        if (!Array.isArray(data.purchasedPacks)) return;
+        const packs = data.purchasedPacks.filter(
+          (pack): pack is string => typeof pack === "string",
+        );
+        if (cancelled) return;
+        packSyncedForUserRef.current = userId;
+        setPurchasedPacks(packs);
+        setProfile((current) =>
+          current ? { ...current, purchasedPacks: packs } : current,
+        );
+        void AsyncStorage.getItem(KEYS.profile).then((raw) => {
+          if (!raw || cancelled) return;
+          try {
+            const cached = JSON.parse(raw) as Profile;
+            return AsyncStorage.setItem(
+              KEYS.profile,
+              JSON.stringify({ ...cached, purchasedPacks: packs }),
+            );
+          } catch {
+            return undefined;
+          }
+        });
+      } catch {
+        // Netzwerkfehler: Query- und lokaler Cache bleiben als Fallback aktiv.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoaded, isSignedIn, userId, hydrated, getToken]);
+
   // Lesezeichen + Benachrichtigungseinstellungen laden + Push-Token registrieren
   const pushTokenSyncedForUserRef = useRef<string | null>(null);
   useEffect(() => {

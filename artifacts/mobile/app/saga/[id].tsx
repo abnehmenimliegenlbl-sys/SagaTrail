@@ -56,6 +56,8 @@ export default function SagaDetail() {
     registriereSagenEntdeckung,
   } =
     useApp();
+  const availablePurchasedPacks =
+    purchasedPacks.length > 0 ? purchasedPacks : profile?.purchasedPacks ?? [];
   const { getSaga, ensureRouteSaga, sagas } = useCatalog();
   const {
     isElite,
@@ -131,7 +133,7 @@ export default function SagaDetail() {
   const sagaHeard = hikeHistory.some((h) => h.sagaId === saga.id);
   const packSlug = kantonSlug(saga.canton);
   const dbPackUnlocked =
-    hasPurchasedPack(purchasedPacks, packSlug) ||
+    hasPurchasedPack(availablePurchasedPacks, packSlug) ||
     hatEntitlement(packEntitlementFuerKanton(packSlug));
   const locked = !hasPremiumAccess && freeHikeUsed && !sagaHeard && !dbPackUnlocked;
 
@@ -151,7 +153,7 @@ export default function SagaDetail() {
     !isElite &&
     sagasInCanton.length >= 8 &&
     sagaIndexInCanton > 0 &&
-    !hasPurchasedPack(purchasedPacks, sagaPackKey) &&
+    !hasPurchasedPack(availablePurchasedPacks, sagaPackKey) &&
     !hatEntitlement(packEntitlementFuerKanton(sagaPackKey));
   // Kaufoption: einziges RC-Produkt KANTONSPACK_PACKAGE im "packs"-Offering.
   const packPaket = offerings?.all?.[REVENUECAT_PACKS_OFFERING]?.availablePackages.find(
