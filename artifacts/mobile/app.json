@@ -79,6 +79,7 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
+      "./plugins/withViroIOS26VideoFormatFix",
       "./plugins/withPodfileXcode26Fix",
       "./plugins/withAndroidPackagingFix",
       [
