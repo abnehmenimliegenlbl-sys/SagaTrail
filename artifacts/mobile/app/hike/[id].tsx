@@ -4006,6 +4006,10 @@ export default function LiveHike() {
                 onPress={() => {
                   isOffRouteRef.current = false;
                   offRouteCountRef.current = 0;
+                  if (startChoicePendingRef.current) {
+                    startChoicePendingRef.current = false;
+                    setStartChoicePending(false);
+                  }
                   setOffRoutePos(null);
                 }}
                 hitSlop={10}
