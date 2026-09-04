@@ -108,7 +108,9 @@ function TerrainHologram({
       (156543.03392804097 * Math.cos(latitudeRad)) / scale;
     const tileCenterEastM = (tileX + 0.5 - x) * metersPerTile;
     const tileCenterNorthM = (y - (tileY + 0.5)) * metersPerTile;
-    const cardSize = 3.2;
+    // This is a real Viro-world card now; do not apply the old terrain-mesh
+    // scale to it or the tile collapses to a thumbnail.
+    const cardSize = 2.4;
     const cardScale = cardSize / metersPerTile;
     const base =
       mapLayer === "sat"
@@ -138,7 +140,6 @@ function TerrainHologram({
         -Math.cos(headingRad) * distanceM,
       ]}
       rotation={[0, -stableHeading, 0]}
-      scale={[0.075, 0.075, 0.075]}
       renderingOrder={10}
       opacity={0.78}
       viroTag="terrain-hologram"
