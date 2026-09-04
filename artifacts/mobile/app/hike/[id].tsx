@@ -5672,11 +5672,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   compassCardWood: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.9,
   },
   compassCardShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(38,18,11,0.48)",
   },
   compassHeader: {
@@ -5709,7 +5709,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   compassPhoto: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: "100%",
     height: "100%",
   },
@@ -6108,7 +6108,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   sosOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "flex-end",
     zIndex: 50,

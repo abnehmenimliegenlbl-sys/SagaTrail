@@ -360,12 +360,12 @@ export function PeakCameraOverlay({
 
 const styles = StyleSheet.create({
   fullscreenCamera: { flex: 1, backgroundColor: "#000" },
-  camera: { ...StyleSheet.absoluteFillObject },
+  camera: { ...StyleSheet.absoluteFill },
   imageScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.17)",
   },
-  scanLines: { ...StyleSheet.absoluteFillObject, opacity: 0.25 },
+  scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
   scanLineTop: {
     position: "absolute",
     left: 0,

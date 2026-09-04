@@ -67,13 +67,13 @@ export function AppModal({
 
   return (
     <View
-      style={[StyleSheet.absoluteFillObject, styles.root]}
+      style={[StyleSheet.absoluteFill, styles.root]}
       pointerEvents="box-none"
     >
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
+        style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onRequestClose} />
         <Animated.View

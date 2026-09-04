@@ -7,12 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
@@ -70,10 +64,6 @@
         "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.RECORD_AUDIO"
       ],
-      "notification": {
-        "icon": "./assets/images/notification-icon.png",
-        "color": "#CC0000"
-      }
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -109,6 +99,14 @@
           "origin": "https://replit.com/"
         }
       ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
       "expo-updates",
       "expo-font",
       "expo-web-browser",
@@ -127,7 +125,9 @@
       [
         "expo-notifications",
         {
-          "iosDisplayInForeground": true
+          "iosDisplayInForeground": true,
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#CC0000"
         }
       ],
       [
@@ -148,7 +148,8 @@
             "com.google.android.googlequicksearchbox"
           ]
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "updates": {
       "url": "https://u.expo.dev/5df5021d-8b4d-4168-8247-1094f2e4c216",
@@ -167,10 +168,6 @@
       }
     },
     "owner": "inster",
-    "notification": {
-      "icon": "./assets/images/notification-icon.png",
-      "color": "#CC0000",
-      "androidMode": "default"
-    }
+    "owner": "inster"
   }
 }

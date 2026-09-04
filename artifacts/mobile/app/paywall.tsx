@@ -417,7 +417,7 @@ export default function Paywall() {
 
 const styles = StyleSheet.create({
   successOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.45)",

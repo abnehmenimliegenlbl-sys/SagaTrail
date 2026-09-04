@@ -77,7 +77,7 @@ export function PeakArNavigator({
 
   return (
     <ViroARSceneNavigator
-      style={StyleSheet.absoluteFillObject}
+      style={StyleSheet.absoluteFill}
       initialScene={initialScene}
       autofocus
       // iOS 26 rejects ViroKit's default photo-output dimensions on some

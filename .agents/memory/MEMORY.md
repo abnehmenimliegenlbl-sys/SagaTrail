@@ -109,7 +109,7 @@
 - [EAS workspace archive exclusions](sagatrail-eas-workspace-ignore.md) — builds from artifacts/mobile can archive the Git root; root .easignore must exclude workspace caches and local data.
 - [Persistente GPS-Prüfung](sagatrail-gps-persistence.md) — GPS-Status liegt dauerhaft in catalog_sagas; Startup-Seeding darf Koordinaten und Sicherheitsstatus nicht überschreiben.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
-- [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — Expo 54/RN0.81 nutzt Viro 2.54.0; native AR braucht einen Development-/EAS-Build, nicht Expo Go.
+- [Viro/Expo compatibility](sagatrail-viro-expo-compatibility.md) — main uses Viro 2.54.0; isolated Expo57/RN0.86 uses 2.58.1 plus plugin-based config and native-build validation.
 - [Viro iOS 26 camera crash](sagatrail-viro-ios26-crash.md) — ARKit can abort natively before JS errors; verify the physical-device crash report before further Viro changes.
 - [Object recognition premium](sagatrail-object-recognition-premium.md) — Foto-basierte Erkennung beliebiger Objekte ist Premium, on-demand und zeigt bestätigbare Treffer statt automatischer Gewissheiten.
 - [Object recognition geo context](sagatrail-object-recognition-geo-context.md) — Foto-Kontext darf nur Live-POIs im 500-m-Radius verwenden, nie entfernte POIs aus dem Routen-Korridor.

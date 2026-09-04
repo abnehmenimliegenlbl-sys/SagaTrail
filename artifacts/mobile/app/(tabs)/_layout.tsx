@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View, type ColorValue } from "react-native";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -19,7 +19,7 @@ export default function TabLayout() {
 
   const icon =
     (name: FeatherName) =>
-    ({ color }: { color: string }) => <Feather name={name} size={22} color={color} />;
+    ({ color }: { color: ColorValue }) => <Feather name={name} size={22} color={color} />;
 
   return (
     <Tabs

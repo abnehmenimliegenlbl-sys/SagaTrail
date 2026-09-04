@@ -99,7 +99,7 @@ function DetailModal({ huette, onClose, t }: { huette: SacHuette; onClose: () =>
       <Animated.View
         entering={FadeIn.duration(160)}
         exiting={FadeOut.duration(160)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop]}
+        style={[StyleSheet.absoluteFill, styles.backdrop]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
