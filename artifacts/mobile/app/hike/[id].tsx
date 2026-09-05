@@ -4387,8 +4387,6 @@ export default function LiveHike() {
                     cameraPermission: t.cameraPermission,
                     arUnavailable: t.arUnavailable,
                     heightUnknown: t.panoramaHeightUnknown,
-                    dragPanorama: t.panoramaDrag,
-                    elevationAngle: t.panoramaElevationAngle,
                      terrainModel: t.panoramaTerrainModel,
                      terrainModelDetail: t.panoramaTerrainModelDetail,
                   }}
@@ -4491,11 +4489,7 @@ export default function LiveHike() {
             capture: t.camera,
             cameraPermission: t.cameraPermission,
             arUnavailable: t.arUnavailable,
-            offlineData: t.panoramaOfflineData,
-            onlineData: t.panoramaOnlineData,
             heightUnknown: t.panoramaHeightUnknown,
-            dragPanorama: t.panoramaDrag,
-            elevationAngle: t.panoramaElevationAngle,
             terrainModel: t.panoramaTerrainModel,
             terrainModelDetail: t.panoramaTerrainModelDetail,
           }}

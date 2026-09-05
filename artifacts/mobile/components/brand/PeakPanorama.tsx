@@ -51,11 +51,7 @@ export interface PeakPanoramaStrings {
   capture: string;
   cameraPermission: string;
   arUnavailable: string;
-  offlineData: string;
-  onlineData: string;
   heightUnknown: string;
-  dragPanorama: string;
-  elevationAngle: (angle: string) => string;
   terrainModel: string;
   terrainModelDetail: (radius: string) => string;
 }
@@ -68,11 +64,6 @@ interface PeakPanoramaProps {
   heading: number | null;
   observerElevationM?: number | null;
   hasGps: boolean;
-  dataStatus?: {
-    source: "online" | "offline";
-    version?: number;
-    peakCount?: number;
-  } | null;
   strings: PeakPanoramaStrings;
   onCaptured?: (entry: RecognitionJournalEntry) => void | Promise<void>;
   onCameraOpen?: () => void;
@@ -186,7 +177,7 @@ function buildPanoramaMesh(
   const minAltitude = Math.min(...allAltitudes.map((altitude) => altitude - datum));
   const maxAltitude = Math.max(...allAltitudes.map((altitude) => altitude - datum));
   const altitudeSpan = Math.max(40, maxAltitude - minAltitude);
-  const baselineY = 164;
+  const baselineY = 274;
   const topY = 44;
   const sampleCount = 16;
 
@@ -239,7 +230,7 @@ function buildPanoramaMesh(
         peakPoint,
         lowerPoints: sampled.map((point) => ({
           x: point.x,
-          y: Math.min(176, point.y + depth),
+          y: Math.min(286, point.y + depth),
         })),
       };
     });
@@ -292,7 +283,6 @@ export function PeakPanorama({
   heading,
   observerElevationM = null,
   hasGps,
-  dataStatus = null,
   strings,
   onCaptured,
   onCameraOpen,
@@ -302,10 +292,12 @@ export function PeakPanorama({
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
+  const panOffsetValueRef = useRef(0);
   const profileCacheRef = useRef<Map<string, CachedPanoramaProfile>>(new Map());
   const profileRequestsRef = useRef<Set<string>>(new Set());
   const [profileRevision, setProfileRevision] = useState(0);
   const panStartOffsetRef = useRef(0);
+  panOffsetValueRef.current = panOffsetDeg;
   const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
   const displayBearing = (peak: PanoramaGipfel): number | null =>
     peak.relativeBearingDeg == null
@@ -323,7 +315,14 @@ export function PeakPanorama({
           )
           .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
           .map(({ peak }) => peak);
-  const profileCandidates = visiblePeaks.slice(0, PANORAMA_PROFILE_LIMIT);
+  const profileCandidates = useMemo(
+    () =>
+      peaks
+        .slice()
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .slice(0, PANORAMA_PROFILE_LIMIT),
+    [peaks],
+  );
   const observerKey = observerPosition
     ? `${observerPosition.lat.toFixed(4)}:${observerPosition.lng.toFixed(4)}`
     : null;
@@ -395,23 +394,13 @@ export function PeakPanorama({
     };
   }, [observerKey, profileCandidateIds, profileRevision]);
 
-  const loadedProfileCount = useMemo(
-    () =>
-      profileCandidates.filter((peak) =>
-        observerKey
-          ? profileCacheRef.current.has(profileCacheKey(observerKey, peak.id))
-          : false,
-      ).length,
-    [observerKey, profileCandidateIds, profileRevision],
-  );
-  const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => heading != null && peaks.length > 0,
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4,
         onPanResponderGrant: () => {
-          panStartOffsetRef.current = panOffsetDeg;
+          panStartOffsetRef.current = panOffsetValueRef.current;
         },
         onPanResponderMove: (_, gesture) => {
           // Eine Fingerbewegung nach links zeigt den Ausschnitt weiter rechts.
@@ -424,7 +413,7 @@ export function PeakPanorama({
           );
         },
       }),
-    [heading, panOffsetDeg, peaks.length],
+    [heading, peaks.length],
   );
   const focusedPeak = visiblePeaks.find(
     (peak) =>
@@ -584,23 +573,6 @@ export function PeakPanorama({
           </Text>
         )}
       </View>
-      <View style={styles.dataRow}>
-        <View style={[styles.dataBadge, { borderColor: colors.glassBorder }]}>
-          <Feather
-            name={dataStatus?.source === "offline" ? "download-cloud" : "database"}
-            size={11}
-            color={colors.tint}
-          />
-          <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
-            {dataStatus?.source === "offline" ? strings.offlineData : strings.onlineData}
-            {dataStatus?.version ? ` · v${dataStatus.version}` : ""}
-          </Text>
-        </View>
-        <Text style={[styles.dataText, { color: colors.mutedForeground }]}>
-          {dataStatus?.peakCount ?? peaks.length} {strings.detected.toLocaleLowerCase()}
-        </Text>
-      </View>
-
       {visiblePeaks.length > 0 && (
         <View style={styles.peakRail}>
           {visiblePeaks.slice(0, 3).map((peak, index) => {
@@ -659,14 +631,14 @@ export function PeakPanorama({
         {...panResponder.panHandlers}
         accessibilityLabel={strings.title}
       >
-        <Svg width="100%" height={220} viewBox="0 0 360 220">
-          <Rect x="0" y="0" width="360" height="220" fill={colors.glassBg} />
-          <Line x1="0" y1="129" x2="360" y2="129" stroke={colors.glassBorder} strokeWidth="1" />
-          <Line x1="0" y1="166" x2="360" y2="166" stroke={colors.glassBorder} strokeWidth="1" />
+        <Svg width="100%" height={350} viewBox="0 0 360 350">
+          <Rect x="0" y="0" width="360" height="350" fill={colors.glassBg} />
+          <Line x1="0" y1="205" x2="360" y2="205" stroke={colors.glassBorder} strokeWidth="1" />
+          <Line x1="0" y1="274" x2="360" y2="274" stroke={colors.glassBorder} strokeWidth="1" />
           <G opacity={0.34}>
-            <Line x1="90" y1="0" x2="90" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
-            <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
-            <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
+            <Line x1="90" y1="0" x2="90" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
+            <Line x1="180" y1="0" x2="180" y2="350" stroke={colors.accent} strokeWidth="1" />
+            <Line x1="270" y1="0" x2="270" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
            {panoramaMesh.elevationRangeM && (
              <>
@@ -687,7 +659,7 @@ export function PeakPanorama({
                 x1={direction.x}
                 y1="22"
                 x2={direction.x}
-                y2="166"
+                 y2="274"
                 stroke={colors.tint}
                 strokeOpacity={0.24}
                 strokeWidth="1"
@@ -736,7 +708,7 @@ export function PeakPanorama({
                     x1={peakPoint.x}
                     y1={peakPoint.y}
                     x2={peakPoint.x}
-                    y2={Math.min(176, peakPoint.y + 7)}
+                    y2={Math.min(286, peakPoint.y + 7)}
                    stroke={colors.accent}
                    strokeOpacity={0.65}
                    strokeWidth="1"
@@ -769,7 +741,7 @@ export function PeakPanorama({
              x1="180"
              y1="23"
              x2="180"
-             y2="166"
+              y2="274"
              stroke={colors.primary}
              strokeOpacity={0.72}
              strokeWidth="1"
@@ -777,19 +749,6 @@ export function PeakPanorama({
            <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
              BLICK
            </SvgText>
-          <SvgText x="180" y="191" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-            {panoramaHasHeight && targetPeak?.elevationAngleDeg != null
-              ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
-              : strings.heightUnknown}
-          </SvgText>
-             {profileCandidates.length > 0 && (
-             <SvgText x="180" y="177" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-                {`${loadedProfileCount}/${profileCandidates.length} SwissTopo-Höhenprofile`}
-             </SvgText>
-           )}
-          <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-            {strings.dragPanorama}
-          </SvgText>
         </Svg>
       </View>
 
@@ -853,22 +812,6 @@ const styles = StyleSheet.create({
     marginTop: 11,
     marginBottom: 1,
   },
-  dataRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 7,
-  },
-  dataBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-  },
-  dataText: { fontFamily: fonts.mono, fontSize: 8 },
   signalPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -883,7 +826,7 @@ const styles = StyleSheet.create({
   signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
   viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
   skylineCard: {
-    height: 220,
+    height: 350,
     marginTop: 11,
     borderWidth: 1,
     borderRadius: 12,
