@@ -164,23 +164,6 @@ function TerrainMesh({
           side={DoubleSide}
         />
       </mesh>
-      {texture && (
-        <mesh
-          geometry={geometry}
-          rotation={rotation}
-          scale={terrainScale}
-          position={[0, 0.012, 0]}
-        >
-          <meshBasicMaterial
-            color="#B42323"
-            wireframe
-            transparent
-            opacity={0.07}
-            depthWrite={false}
-            side={DoubleSide}
-          />
-        </mesh>
-      )}
     </>
   );
 }
