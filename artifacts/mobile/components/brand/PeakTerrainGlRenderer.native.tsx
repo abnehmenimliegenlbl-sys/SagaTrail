@@ -44,10 +44,10 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
       model.center.lat + latitudeRadiusDeg,
       model.center.lng + longitudeRadiusDeg,
     ].join(","),
-    // Use a Retina-grade source for the tall native panorama. The complete
+    // Use a high-resolution source for the tall native panorama. The complete
     // terrain mesh receives one image at one scale, avoiding mixed zoom levels.
-    WIDTH: "2048",
-    HEIGHT: "2048",
+    WIDTH: "3072",
+    HEIGHT: "3072",
     FORMAT: "image/jpeg",
   });
   return `https://wms.geo.admin.ch/?${params.toString()}`;
@@ -145,6 +145,7 @@ function TerrainMesh({
   PeakTerrainGlProps,
   "terrainModel" | "bearingDeg" | "fallbackColor"
 >) {
+  const renderer = useThree((state) => state.gl);
   const localMesh = useMemo(
     () => buildLocalTerrainMesh(terrainModel, 0),
     [terrainModel],
@@ -166,6 +167,8 @@ function TerrainMesh({
           loadedTexture.dispose();
           return;
         }
+        loadedTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        loadedTexture.needsUpdate = true;
         setTexture(loadedTexture);
       })
       .catch((error) => {
@@ -174,7 +177,7 @@ function TerrainMesh({
     return () => {
       active = false;
     };
-  }, [terrainModel]);
+  }, [renderer, terrainModel]);
 
   useEffect(
     () => () => {
