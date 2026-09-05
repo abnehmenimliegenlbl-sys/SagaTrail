@@ -83,7 +83,7 @@ function toWorld(
   const centerLat = (south + north) / 2;
   return new Vector3(
     (lng - (west + east) / 2) * 111_320 * Math.cos(centerLat * radians),
-    elevationM * 1.35,
+    elevationM * 3,
     -(lat - (south + north) / 2) * 111_320,
   );
 }
@@ -351,12 +351,12 @@ function Scene({
       const distance = Math.max(
         overview.height / (2 * Math.tan(verticalFov / 2)),
         overview.width / (2 * Math.tan(horizontalFov / 2)),
-      ) * 0.98;
-      camera.up.set(0, 0, -1);
+      ) * 0.88;
+      camera.up.set(0, 1, 0);
       camera.position.set(
         overview.target.x,
-        overview.top + distance,
-        overview.target.z,
+        overview.top + distance * 0.72,
+        overview.target.z + distance * 0.3,
       );
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
@@ -394,14 +394,17 @@ function Scene({
       <color attach="background" args={["#101A16"]} />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
-      <mesh geometry={terrain}>
-        <meshStandardMaterial
-          map={texture}
-          color={texture ? "#fff" : "#75966d"}
-          roughness={0.95}
-          side={DoubleSide}
-        />
-      </mesh>
+      {texture && (
+        <mesh geometry={terrain}>
+          <meshStandardMaterial
+            map={texture}
+            color="#fff"
+            roughness={1}
+            metalness={0}
+            side={DoubleSide}
+          />
+        </mesh>
+      )}
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
