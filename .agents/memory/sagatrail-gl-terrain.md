@@ -69,8 +69,8 @@ The normal panorama's satellite mode uses tiled imagery: keep a lower-resolution
 
 **How to apply:** Align overview tiles to shared terrain-mesh boundaries, preload nearby detail tiles, evict passed tiles, and leave the overview visible when detail loading fails. This belongs in `PeakTerrainGl`/`PeakPanorama`, not the AR renderer.
 
-Keep the panorama detail layer as one static 4×4 foreground set committed atomically with the overview unless a replacement is proven visually superior on a physical device.
+Keep the panorama detail layer as one static symmetric foreground set committed atomically with the overview unless a replacement is proven visually superior on a physical device.
 
-**Why:** The static 16-tile version produced a visible partial sharpness improvement. Switching to bearing-dependent partial loading removed that improvement even though every requested texture reported successful loading.
+**Why:** The user confirmed the static 64-tile version produced a visible partial sharpness improvement. Switching to bearing-dependent partial loading removed that improvement even though every requested texture reported successful loading.
 
-**How to apply:** Treat dynamic tile selection and progressive commits as a rejected optimization for this renderer. Six overview plus sixteen 1024px detail textures without mipmaps are the accepted upper memory envelope; dispose incomplete generations instead of showing them.
+**How to apply:** Treat dynamic tile selection and progressive commits as a rejected optimization for this renderer. Use 32 square detail tiles (a 6×6 grid without the four corners), load without mipmaps, and dispose incomplete generations instead of showing them.

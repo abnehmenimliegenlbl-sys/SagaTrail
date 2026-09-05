@@ -64,19 +64,31 @@ const PANORAMA_BASE_TILES: PanoramaTile[] = Array.from(
 ).flat();
 
 const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
-  { length: 4 },
+  { length: 6 },
   (_, row) =>
-    Array.from({ length: 4 }, (_, column) => ({
-      key: `detail-${row}-${column}`,
-      bounds: {
-        uMin: 0.4 + column * 0.05,
-        uMax: 0.4 + (column + 1) * 0.05,
-        vMin: 0.4 + row * 0.05,
-        vMax: 0.4 + (row + 1) * 0.05,
-      },
-      size: 1024,
-      detail: true,
-    })),
+    Array.from({ length: 6 }, (_, column) => ({
+      row,
+      column,
+      tile: {
+        key: `detail-${row}-${column}`,
+        bounds: {
+          uMin: 0.35 + column * 0.05,
+          uMax: 0.35 + (column + 1) * 0.05,
+          vMin: 0.35 + row * 0.05,
+          vMax: 0.35 + (row + 1) * 0.05,
+        },
+        size: 1024,
+        detail: true,
+      } satisfies PanoramaTile,
+    }))
+      .filter(
+        ({ row: tileRow, column }) =>
+          !(
+            (tileRow === 0 || tileRow === 5) &&
+            (column === 0 || column === 5)
+          ),
+      )
+      .map(({ tile }) => tile),
 ).flat();
 
 function swissTopoTextureUrl(
