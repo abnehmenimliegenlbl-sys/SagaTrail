@@ -122,6 +122,7 @@ type PanoramaMesh = {
   triangles: PanoramaMeshTriangle[];
   elevationRangeM: { min: number; max: number } | null;
 };
+type PanoramaAltitudeRange = { minM: number; maxM: number };
 
 function pointString(points: readonly MeshPoint[]): string {
   return points.map((point) => `${point.x},${point.y}`).join(" ");
@@ -153,6 +154,7 @@ function buildPanoramaMesh(
   }[],
   displayBearing: (peak: PanoramaGipfel) => number | null,
   observerElevationM: number | null,
+  fixedAltitudeRangeM: PanoramaAltitudeRange | null,
 ): PanoramaMesh {
   const validEntries = entries
     .map((entry) => ({
@@ -170,12 +172,19 @@ function buildPanoramaMesh(
     return { peaks: [], triangles: [], elevationRangeM: null };
   }
 
-  const allAltitudes = validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
+  const allAltitudes = fixedAltitudeRangeM
+    ? []
+    : validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
   const datum = Number.isFinite(observerElevationM)
     ? (observerElevationM as number)
+    : fixedAltitudeRangeM?.minM
     : allAltitudes[0] ?? 0;
-  const minAltitude = Math.min(...allAltitudes.map((altitude) => altitude - datum));
-  const maxAltitude = Math.max(...allAltitudes.map((altitude) => altitude - datum));
+  const minAltitude = fixedAltitudeRangeM
+    ? fixedAltitudeRangeM.minM - datum
+    : Math.min(...allAltitudes.map((altitude) => altitude - datum));
+  const maxAltitude = fixedAltitudeRangeM
+    ? fixedAltitudeRangeM.maxM - datum
+    : Math.max(...allAltitudes.map((altitude) => altitude - datum));
   const altitudeSpan = Math.max(40, maxAltitude - minAltitude);
   const baselineY = 274;
   const topY = 44;
