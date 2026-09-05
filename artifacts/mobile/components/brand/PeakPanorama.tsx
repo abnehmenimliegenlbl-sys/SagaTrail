@@ -240,8 +240,8 @@ function buildTerrainSurface(
       faces.push({
         points: pointString([nearLeft, nearRight, farRight, farLeft]),
         opacity:
-          0.16 +
-          (ringIndex / Math.max(1, ringCount - 2)) * 0.38,
+          0.38 +
+          (ringIndex / Math.max(1, ringCount - 2)) * 0.34,
         tone: leftRise + rightRise >= 0 ? "light" : "dark",
       });
     }
@@ -952,9 +952,11 @@ export function PeakPanorama({
              <Polygon
                key={`terrain-face-${index}`}
                points={face.points}
-               fill={face.tone === "light" ? colors.glassHighlight : colors.accent}
+               fill={face.tone === "light" ? colors.primary : colors.accent}
                fillOpacity={face.opacity}
-               stroke="none"
+               stroke={colors.accent}
+               strokeOpacity={0.16}
+               strokeWidth="0.35"
              />
            ))}
            {panoramaMesh.terrainLines.map((line, index) => (
