@@ -730,6 +730,31 @@ export function PeakPanorama({
                </G>
              );
            })}
+            {panoramaMesh.peaks.slice(0, -1).map((leftPeak, index) => {
+              const rightPeak = panoramaMesh.peaks[index + 1];
+              const leftTip = leftPeak?.points[leftPeak.points.length - 1];
+              const rightTip = rightPeak?.points[rightPeak.points.length - 1];
+              if (
+                !rightPeak ||
+                !leftTip ||
+                !rightTip ||
+                rightPeak.centerX - leftPeak.centerX > 132
+              ) {
+                return null;
+              }
+              return (
+                <Line
+                  key={`ridge-${leftPeak.peak.id}-${rightPeak.peak.id}`}
+                  x1={leftTip.x}
+                  y1={leftTip.y}
+                  x2={rightTip.x}
+                  y2={rightTip.y}
+                  stroke={colors.accent}
+                  strokeOpacity={0.5}
+                  strokeWidth="1"
+                />
+              );
+            })}
            <Line
              x1="180"
              y1="23"
