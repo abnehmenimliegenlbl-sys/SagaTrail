@@ -38,8 +38,10 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
       model.center.lat + latitudeRadiusDeg,
       model.center.lng + longitudeRadiusDeg,
     ].join(","),
-    WIDTH: "1024",
-    HEIGHT: "1024",
+    // Use a Retina-grade source for the tall native panorama. The complete
+    // terrain mesh receives one image at one scale, avoiding mixed zoom levels.
+    WIDTH: "2048",
+    HEIGHT: "2048",
     FORMAT: "image/jpeg",
   });
   return `https://wms.geo.admin.ch/?${params.toString()}`;
@@ -82,9 +84,10 @@ function CameraRig() {
     // Panorama viewpoint: the observer is the geographic origin of the radial
     // DTM mesh and looks outward, rather than looking down at that origin.
     camera.position.set(0, 0.8, 0);
-    // Aim slightly above horizontal so nearby ground does not consume the
-    // lower half of the compact panorama; distant terrain stays in view.
-    camera.lookAt(0, 14, -70);
+    // The 400 m inner cutout already removes the oversized foreground. Keep
+    // the remaining terrain closer to the vertical centre so it uses the
+    // available modal height instead of leaving large empty bands.
+    camera.lookAt(0, 7, -70);
     camera.updateProjectionMatrix();
   }, [camera]);
   return null;
@@ -181,7 +184,7 @@ export default function PeakTerrainGlRenderer({
         style={styles.canvas}
         camera={{
           position: [0, 0.8, 0],
-          fov: 65,
+          fov: 42,
           near: 0.03,
           far: 500,
         }}
