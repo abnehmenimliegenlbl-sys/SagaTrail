@@ -19,7 +19,7 @@ const BodySchema = z.object({
       }),
     )
     .min(1)
-    .max(8),
+    .max(40),
 });
 
 function sampleLine(
@@ -46,7 +46,7 @@ router.post("/panorama-profiles", async (req: Request, res: Response): Promise<v
   const parsed = BodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
-      error: "observer und höchstens acht Gipfel mit gültigen Koordinaten erwartet.",
+      error: "observer und höchstens 40 Gipfel mit gültigen Koordinaten erwartet.",
     });
     return;
   }

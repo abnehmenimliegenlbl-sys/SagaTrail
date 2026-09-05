@@ -22,7 +22,7 @@ const PANORAMA_VIEW_DEGREES = 140;
 const PANORAMA_TOTAL_DEGREES = 140;
 const PANORAMA_MAX_DRAG_DEGREES = 180;
 const PANORAMA_PROFILE_BATCH_SIZE = 8;
-const PANORAMA_PROFILE_LIMIT = 8;
+const PANORAMA_PROFILE_LIMIT = 40;
 const CARDINAL_DIRECTIONS = [
   { label: "N", bearing: 0 },
   { label: "O", bearing: 90 },
