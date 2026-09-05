@@ -369,36 +369,6 @@ export function PeakPanorama({
         </Svg>
       </View>
 
-      <View
-        style={[
-          styles.cameraPrompt,
-          {
-            backgroundColor: colors.glassBgStrong,
-            borderColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <View style={styles.previewSky}>
-          <View style={[styles.mountainFar, { borderBottomColor: colors.glassHighlight }]} />
-          <View style={[styles.mountainNear, { borderBottomColor: colors.accent }]} />
-          <View style={[styles.previewSun, { backgroundColor: colors.tint }]} />
-          <View style={[styles.previewCrosshair, { borderColor: colors.glassHighlight }]}>
-            <View style={[styles.previewCrosshairDot, { backgroundColor: colors.accent }]} />
-          </View>
-        </View>
-        <View style={styles.promptCopy}>
-          <View style={styles.promptTitleRow}>
-            <Feather name="camera" size={16} color={colors.accent} />
-            <Text style={[styles.promptTitle, { color: colors.foreground }]}>
-              {strings.camera}
-            </Text>
-          </View>
-          <Text style={[styles.promptStatus, { color: colors.mutedForeground }]} numberOfLines={2}>
-            {status}
-          </Text>
-        </View>
-      </View>
-
     </View>
   );
 }
@@ -523,75 +493,6 @@ const styles = StyleSheet.create({
   peakChipCopy: { flex: 1, minWidth: 0 },
   peakChipName: { fontFamily: fonts.bodyBold, fontSize: 10 },
   peakChipDistance: { fontFamily: fonts.mono, fontSize: 8, marginTop: 2 },
-  cameraPrompt: {
-    minHeight: 116,
-    marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "stretch",
-    overflow: "hidden",
-  },
-  previewSky: {
-    width: 112,
-    minHeight: 116,
-    overflow: "hidden",
-    position: "relative",
-    justifyContent: "flex-end",
-  },
-  previewSun: {
-    position: "absolute",
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    top: 17,
-    right: 18,
-    opacity: 0.8,
-  },
-  mountainFar: {
-    position: "absolute",
-    bottom: -20,
-    left: -14,
-    width: 92,
-    height: 92,
-    borderLeftWidth: 46,
-    borderRightWidth: 46,
-    borderBottomWidth: 92,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    opacity: 0.24,
-    transform: [{ rotate: "-7deg" }],
-  },
-  mountainNear: {
-    position: "absolute",
-    bottom: -29,
-    right: -18,
-    width: 108,
-    height: 108,
-    borderLeftWidth: 54,
-    borderRightWidth: 54,
-    borderBottomWidth: 108,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    opacity: 0.18,
-    transform: [{ rotate: "8deg" }],
-  },
-  previewCrosshair: {
-    position: "absolute",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    left: 35,
-    top: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  previewCrosshairDot: { width: 5, height: 5, borderRadius: 3 },
-  promptCopy: { flex: 1, justifyContent: "center", paddingHorizontal: 14, gap: 5 },
-  promptTitleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
-  promptTitle: { fontFamily: fonts.titleBold, fontSize: 15 },
-  promptStatus: { fontFamily: fonts.body, fontSize: 11, lineHeight: 15, paddingRight: 4 },
   fullscreenCamera: { flex: 1, backgroundColor: "#000" },
   camera: { ...StyleSheet.absoluteFill },
   imageScrim: {
