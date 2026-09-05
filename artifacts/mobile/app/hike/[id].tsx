@@ -89,6 +89,7 @@ import { getOfflinePoiDetail, getOfflinePoiStory } from "@/lib/offlinePois";
 import * as FileSystem from "expo-file-system/legacy";
 import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
+  buildRouteGradeSegments,
   buildTerrainSections,
   limitTerrainSectionsForSpeech,
   type TerrainProfilePoint,
@@ -1074,7 +1075,28 @@ export default function LiveHike() {
         return response.json() as Promise<{ profile?: TerrainProfilePoint[] }>;
       })
       .then((data) => {
-        if (!cancelled && Array.isArray(data.profile)) setTerrainProfile(data.profile);
+        if (!cancelled && Array.isArray(data.profile)) {
+          if (__DEV__) {
+            const profile = data.profile.filter(
+              (point) =>
+                Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+            );
+            const profileStart = profile[0] ?? null;
+            const profileEnd = profile[profile.length - 1] ?? null;
+            const firstBands = buildRouteGradeSegments(geometry, profile)
+              .slice(0, 4)
+              .map((segment) => segment.band);
+            console.info("[TerrainProfile] active geometry aligned", {
+              geometryPoints: geometry.length,
+              geometryLengthKm: Number(geometryLengthKm(geometry).toFixed(3)),
+              profilePoints: profile.length,
+              profileStart,
+              profileEnd,
+              firstBands,
+            });
+          }
+          setTerrainProfile(data.profile);
+        }
       })
       .catch(() => {
         // Ohne Profil bleibt die Wanderung unverändert nutzbar; es gibt dann
@@ -1733,7 +1755,14 @@ export default function LiveHike() {
       if (!cancelled) {
         setOfflinePanorama(data);
         if (data?.terrainModel) setTerrainModel(data.terrainModel);
-        if (data?.terrainProfile && data.terrainProfile.length >= 2) {
+        // An offline profile belongs to the catalog geometry. After accepting
+        // a start detour, the network effect above fetches a new profile for
+        // navigationGeometry; never let the old offline profile overwrite it.
+        if (
+          !acceptedRouteGeometry &&
+          data?.terrainProfile &&
+          data.terrainProfile.length >= 2
+        ) {
           setTerrainProfile(data.terrainProfile);
         }
       }
@@ -1741,7 +1770,13 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, saga, isDownloaded, loadOfflinePanorama]);
+  }, [
+    acceptedRouteGeometry,
+    route?.id,
+    saga,
+    isDownloaded,
+    loadOfflinePanorama,
+  ]);
 
   // routeGeomRef wird synchron gehalten damit handleFix (leere Deps)
   // die aktuelle Geometrie immer per Ref lesen kann.

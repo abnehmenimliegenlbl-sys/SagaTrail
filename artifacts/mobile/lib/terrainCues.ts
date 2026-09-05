@@ -118,15 +118,18 @@ function gradeAtDistance(
   profile: TerrainProfilePoint[],
   distanceKmValue: number,
   routeLengthKm: number,
-  profileScale: number,
 ): number {
   const halfWindow = Math.min(GRADE_WINDOW_KM / 2, routeLengthKm / 2);
   const startKm = Math.max(0, distanceKmValue - halfWindow);
   const endKm = Math.min(routeLengthKm, distanceKmValue + halfWindow);
   const horizontalKm = endKm - startKm;
   if (horizontalKm <= 0) return 0;
-  const startAltitude = profileAltitude(profile, startKm * profileScale);
-  const endAltitude = profileAltitude(profile, endKm * profileScale);
+  // The API profile distances are cumulative distances along the submitted
+  // geometry. Do not normalize them to the route's total length: that would
+  // move a profile from a different/stale geometry onto the active route and
+  // can colour a flat start detour with the original route's steep gradient.
+  const startAltitude = profileAltitude(profile, startKm);
+  const endAltitude = profileAltitude(profile, endKm);
   return ((endAltitude - startAltitude) / (horizontalKm * 1000)) * 100;
 }
 
@@ -172,7 +175,6 @@ export function buildRouteGradeSegments(
   }));
   const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
   if (profileLengthKm <= 0) return [{ coordinates: coords, band: "green" }];
-  const profileScale = profileLengthKm / routeLengthKm;
   const gradingProfile = smoothIsolatedProfileSpikes(normalizedProfile);
 
   const breakDistances = [...routeDistances];
@@ -191,7 +193,6 @@ export function buildRouteGradeSegments(
       gradingProfile,
       (startDistanceKm + endDistanceKm) / 2,
       routeLengthKm,
-      profileScale,
     );
     return {
       coordinates: [

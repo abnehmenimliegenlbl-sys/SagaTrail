@@ -1251,13 +1251,13 @@ function strPointAtDistance(pts,distances,distance){
     pts[low][1]+(pts[high][1]-pts[low][1])*fraction
   ];
 }
-function strGradeAtDistance(profile,distance,routeKm,scale){
+function strGradeAtDistance(profile,distance,routeKm){
   var half=Math.min(.05/2,routeKm/2);
   var start=Math.max(0,distance-half),end=Math.min(routeKm,distance+half);
   var horizontal=end-start;
   if(horizontal<=0)return 0;
-  var from=strInterpolateProfile(profile,start*scale);
-  var to=strInterpolateProfile(profile,end*scale);
+  var from=strInterpolateProfile(profile,start);
+  var to=strInterpolateProfile(profile,end);
   return((to-from)/(horizontal*1000))*100;
 }
 function strBuildGradeSegments(pts,profile){
@@ -1274,7 +1274,6 @@ function strBuildGradeSegments(pts,profile){
   clean=clean.map(function(p){return{distanceKm:Number(p.distanceKm)-first,altM:Number(p.altM)};});
   var profileKm=clean[clean.length-1].distanceKm;
   if(profileKm<=0)return[{points:pts,color:'#20D466'}];
-  var scale=profileKm/routeKm;
   var gradingProfile=strSmoothIsolatedProfileSpikes(clean);
   var breaks=distances.slice();
   for(var distance=.05;distance<routeKm;distance+=.05)breaks.push(distance);
@@ -1286,7 +1285,7 @@ function strBuildGradeSegments(pts,profile){
   var colors={green:'#20D466',yellow:'#FFD000',orange:'#FF8500',red:'#FF3030'};
   return unique.slice(1).map(function(end,index){
     var start=unique[index];
-    var grade=strGradeAtDistance(gradingProfile,(start+end)/2,routeKm,scale);
+    var grade=strGradeAtDistance(gradingProfile,(start+end)/2,routeKm);
     var band=strGradeBand(grade);
     return{points:[
       strPointAtDistance(pts,distances,start),

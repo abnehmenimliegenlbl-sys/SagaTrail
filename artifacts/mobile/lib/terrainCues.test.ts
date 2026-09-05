@@ -19,15 +19,16 @@ const ROUTE_GEOMETRY = [
 ];
 
 function routeDistanceKm(): number {
-  const lat1 = (ROUTE_GEOMETRY[0]![0] * Math.PI) / 180;
-  const lat2 = (ROUTE_GEOMETRY[1]![0] * Math.PI) / 180;
-  const deltaLat = ((ROUTE_GEOMETRY[1]![0] - ROUTE_GEOMETRY[0]![0]) * Math.PI) / 180;
-  const haversine = Math.sin(deltaLat / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  return ROUTE_GEOMETRY.slice(1).reduce((total, point, index) => {
+    const previous = ROUTE_GEOMETRY[index]!;
+    const deltaLat = ((point[0] - previous[0]) * Math.PI) / 180;
+    const haversine = Math.sin(deltaLat / 2) ** 2;
+    return total + 6371 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  }, 0);
 }
 
 function linearProfile(gradePct: number): TerrainProfilePoint[] {
-  const lengthKm = routeDistanceKm() * 4;
+  const lengthKm = routeDistanceKm();
   return [0, 1, 2, 3, 4].map((index) => ({
     distanceKm: (lengthKm * index) / 4,
     altM: (gradePct * 10 * lengthKm * index) / 4,
@@ -66,6 +67,35 @@ test("does not turn a single short elevation spike into red map segments", () =>
 
 test("uses the absolute grade for descents as well as climbs", () => {
   assertEveryBand(ROUTE_GEOMETRY, linearProfile(-30), "red");
+});
+
+test("keeps a flat feeder green before a steep route section", () => {
+  const geometry = [
+    [46, 7],
+    [46.00045, 7],
+    [46.0009, 7],
+    [46.00135, 7],
+    [46.0018, 7],
+    [46.00225, 7],
+  ];
+  const lengthKm = geometry.reduce((total, point, index) => {
+    if (index === 0) return total;
+    const previous = geometry[index - 1]!;
+    const deltaLat = ((point[0] - previous[0]) * Math.PI) / 180;
+    const haversine = Math.sin(deltaLat / 2) ** 2;
+    return total + 6371 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  }, 0);
+  const feederLengthKm = lengthKm * 0.4;
+  const profile: TerrainProfilePoint[] = [
+    { distanceKm: 0, altM: 0 },
+    { distanceKm: feederLengthKm, altM: 0 },
+    { distanceKm: lengthKm, altM: 120 },
+  ];
+
+  const bands = bandsFor(geometry, profile);
+  assert.ok(bands.length >= 3);
+  assert.deepEqual(bands.slice(0, 2), ["green", "green"]);
+  assert.ok(bands.slice(2).some((band) => band === "red"));
 });
 
 test("keeps the WordPress map viewer in sync with the mobile classifier", () => {
