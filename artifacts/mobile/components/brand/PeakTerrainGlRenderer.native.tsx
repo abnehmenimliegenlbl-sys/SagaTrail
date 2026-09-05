@@ -188,7 +188,7 @@ function TerrainMesh({
 
   const rotation: [number, number, number] = [
     0,
-    (-bearingDeg * Math.PI) / 180,
+    (bearingDeg * Math.PI) / 180,
     0,
   ];
   // The real elevation differences are preserved, but a modest vertical
