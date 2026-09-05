@@ -14,3 +14,9 @@ For the full-route view, build the terrain corridor from several parallel SwissT
 **Why:** The observer-centered radial panorama model cannot cover a long route and would flatten points outside its radius. Parallel route lanes cover the complete corridor with a bounded number of official profile requests while preserving gaps as gaps.
 
 **How to apply:** Use cumulative route distance for resampling, animation, grade lookup, and camera following. Use geographic bounds only for UV mapping—not to reconstruct cell positions.
+
+The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
+
+**Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
+
+**How to apply:** Keep the mesh centered at zero, rotate it by the compass bearing, and use a forward horizon target. Route-wide overview/follow cameras remain separate.
