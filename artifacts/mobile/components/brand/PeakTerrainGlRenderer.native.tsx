@@ -536,6 +536,13 @@ function TerrainMesh({
     const requested = selectedDetailTiles.filter(
       (tile) => !retained.has(tile.key),
     );
+    console.info("[TerrainGL] detail stream start", {
+      mode: textureMode,
+      bearingBucket: detailBearingBucket,
+      selected: selectedDetailTiles.length,
+      retained: retained.size - PANORAMA_BASE_TILES.length,
+      requested: requested.length,
+    });
 
     const loadDetailTile = async (tile: PanoramaTile): Promise<Texture> => {
       let lastError: unknown = null;
@@ -600,6 +607,24 @@ function TerrainMesh({
           });
           texturesRef.current = next;
           setTextures(next);
+          console.info("[TerrainGL] detail pair committed", {
+            mode: textureMode,
+            keys: fulfilled.map(([key]) => key),
+            imageSizes: fulfilled.map(([, texture]) => {
+              const image = texture.image as
+                | { width?: number; height?: number }
+                | undefined;
+              return {
+                width: Number(image?.width ?? 0),
+                height: Number(image?.height ?? 0),
+              };
+            }),
+            geometryVertices: fulfilled.map(([key]) =>
+              geometries.get(key)?.getAttribute("position").count ?? 0,
+            ),
+            residentDetails:
+              next.size - PANORAMA_BASE_TILES.length,
+          });
         }
       } catch (error) {
         if (active) {
@@ -613,6 +638,8 @@ function TerrainMesh({
     };
   }, [
     currentGenerationKey,
+    detailBearingBucket,
+    geometries,
     renderer,
     selectedDetailKey,
     selectedDetailTiles,
