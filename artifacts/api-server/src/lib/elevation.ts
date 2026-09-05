@@ -95,7 +95,6 @@ export interface TerrainCorridorOptions {
   rows: number;
   columns: number;
   halfWidthM: number;
-  fullArea?: boolean;
 }
 
 function isRetryableHttpStatus(status: number): boolean {
@@ -239,54 +238,17 @@ export async function computeTerrainCorridor(
   }
 
   const centreLine = resampled.points;
-  let effectiveHalfWidthM = options.halfWidthM;
-  const laneGeometries = options.fullArea
-    ? (() => {
-        const minimumLat = Math.min(...route.map((point) => point.lat));
-        const maximumLat = Math.max(...route.map((point) => point.lat));
-        const minimumLng = Math.min(...route.map((point) => point.lng));
-        const maximumLng = Math.max(...route.map((point) => point.lng));
-        const centerLat = (minimumLat + maximumLat) / 2;
-        const centerLng = (minimumLng + maximumLng) / 2;
-        const latitudeHalfSpanM = ((maximumLat - minimumLat) * 111_320) / 2;
-        const longitudeHalfSpanM =
-          ((maximumLng - minimumLng) *
-            111_320 *
-            Math.cos(centerLat * (Math.PI / 180))) /
-          2;
-        // The map deliberately extends beyond the route-framed camera so no
-        // dark corridor edges are visible in the overview.
-        effectiveHalfWidthM =
-          Math.max(1_500, latitudeHalfSpanM, longitudeHalfSpanM) * 1.35 + 500;
-        const latitudeRadius = effectiveHalfWidthM / 111_320;
-        const longitudeRadius =
-          effectiveHalfWidthM /
-          Math.max(1, 111_320 * Math.cos(centerLat * (Math.PI / 180)));
-        return Array.from({ length: options.columns }, (_, column) => {
-          const columnProgress = column / (options.columns - 1);
-          const lng = centerLng - longitudeRadius + 2 * longitudeRadius * columnProgress;
-          return Array.from({ length: options.rows }, (_, row) => {
-            const rowProgress = row / (options.rows - 1);
-            return {
-              lat: centerLat - latitudeRadius + 2 * latitudeRadius * rowProgress,
-              lng,
-            };
-          });
-        });
-      })()
-    : (() => {
-        const offsets = laneOffsets(options.columns, options.halfWidthM);
-        return offsets.map((offsetM) =>
-          centreLine.map((point, row) => {
-            const before = centreLine[Math.max(0, row - 1)]!;
-            const after = centreLine[Math.min(centreLine.length - 1, row + 1)]!;
-            const bearingDeg = initialBearingDeg(before, after);
-            // A positive offset is to the route's right; this orientation is stable
-            // for all rows and gives callers a predictable column order.
-            return destinationPoint(point, bearingDeg + 90, offsetM);
-          }),
-        );
-      })();
+  const offsets = laneOffsets(options.columns, options.halfWidthM);
+  const laneGeometries = offsets.map((offsetM) =>
+    centreLine.map((point, row) => {
+      const before = centreLine[Math.max(0, row - 1)]!;
+      const after = centreLine[Math.min(centreLine.length - 1, row + 1)]!;
+      const bearingDeg = initialBearingDeg(before, after);
+      // A positive offset is to the route's right; this orientation is stable
+      // for all rows and gives callers a predictable column order.
+      return destinationPoint(point, bearingDeg + 90, offsetM);
+    }),
+  );
 
   const laneProfiles: Array<ElevationProfilePoint[] | null> = Array(options.columns).fill(null);
   const concurrency = Math.min(3, laneGeometries.length);
@@ -328,7 +290,7 @@ export async function computeTerrainCorridor(
     source: "SwissTopo DTM corridor profiles",
     rows: options.rows,
     columns: options.columns,
-    halfWidthM: effectiveHalfWidthM,
+    halfWidthM: options.halfWidthM,
     routeLengthM: Math.round(resampled.lengthM),
     origin: centreLine[0]!,
     bounds: {

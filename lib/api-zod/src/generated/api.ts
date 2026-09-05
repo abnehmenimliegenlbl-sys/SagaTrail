@@ -1094,7 +1094,7 @@ export const createTerrainCorridorBodyOptionsHalfWidthMDefault = 500;
 export const createTerrainCorridorBodyOptionsHalfWidthMMin = 100;
 export const createTerrainCorridorBodyOptionsHalfWidthMMax = 1500;
 
-export const createTerrainCorridorBodyOptionsFullAreaDefault = false;
+
 
 export const CreateTerrainCorridorBody = zod.object({
   "geometry": zod.array(zod.tuple([zod.number(),
@@ -1102,8 +1102,7 @@ zod.number()])).min(createTerrainCorridorBodyGeometryMin).max(createTerrainCorri
   "options": zod.object({
   "rows": zod.number().min(createTerrainCorridorBodyOptionsRowsMin).max(createTerrainCorridorBodyOptionsRowsMax).default(createTerrainCorridorBodyOptionsRowsDefault),
   "columns": zod.number().min(createTerrainCorridorBodyOptionsColumnsMin).max(createTerrainCorridorBodyOptionsColumnsMax).default(createTerrainCorridorBodyOptionsColumnsDefault),
-  "halfWidthM": zod.number().min(createTerrainCorridorBodyOptionsHalfWidthMMin).max(createTerrainCorridorBodyOptionsHalfWidthMMax).default(createTerrainCorridorBodyOptionsHalfWidthMDefault),
-  "fullArea": zod.boolean().default(createTerrainCorridorBodyOptionsFullAreaDefault)
+  "halfWidthM": zod.number().min(createTerrainCorridorBodyOptionsHalfWidthMMin).max(createTerrainCorridorBodyOptionsHalfWidthMMax).default(createTerrainCorridorBodyOptionsHalfWidthMDefault)
 }).optional()
 })
 

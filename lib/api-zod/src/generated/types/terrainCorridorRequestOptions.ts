@@ -22,5 +22,4 @@ export type TerrainCorridorRequestOptions = {
      * @maximum 1500
      */
   halfWidthM?: number;
-  fullArea?: boolean;
 };
