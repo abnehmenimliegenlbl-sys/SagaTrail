@@ -124,21 +124,49 @@ function TerrainMesh({
 
   if (!geometry) return null;
 
+  const rotation: [number, number, number] = [
+    0,
+    (-bearingDeg * Math.PI) / 180,
+    0,
+  ];
+  // The real elevation differences are preserved, but a modest vertical
+  // exaggeration makes the terrain silhouette readable in the small panorama.
+  const terrainScale: [number, number, number] = [0.48, 1.05, 0.48];
+
   return (
-    <mesh
-      geometry={geometry}
-      rotation={[0, (-bearingDeg * Math.PI) / 180, 0]}
-      scale={[0.48, 0.48, 0.48]}
-      position={[0, 0, 0]}
-    >
-      <meshStandardMaterial
-        map={texture}
-        color={texture ? "#FFFFFF" : fallbackColor}
-        roughness={0.94}
-        metalness={0}
-        side={DoubleSide}
-      />
-    </mesh>
+    <>
+      <mesh
+        geometry={geometry}
+        rotation={rotation}
+        scale={terrainScale}
+        position={[0, 0, 0]}
+      >
+        <meshStandardMaterial
+          map={texture}
+          color={texture ? "#FFFFFF" : fallbackColor}
+          roughness={0.9}
+          metalness={0}
+          side={DoubleSide}
+        />
+      </mesh>
+      {texture && (
+        <mesh
+          geometry={geometry}
+          rotation={rotation}
+          scale={terrainScale}
+          position={[0, 0.012, 0]}
+        >
+          <meshBasicMaterial
+            color="#B42323"
+            wireframe
+            transparent
+            opacity={0.16}
+            depthWrite={false}
+            side={DoubleSide}
+          />
+        </mesh>
+      )}
+    </>
   );
 }
 
@@ -162,8 +190,8 @@ export default function PeakTerrainGlRenderer({
         onCreated={() => onReady?.()}
       >
         <color attach="background" args={[backgroundColor]} />
-        <ambientLight intensity={1.55} />
-        <directionalLight position={[70, 110, 80]} intensity={2.1} />
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[70, 110, 80]} intensity={2.8} />
         <CameraRig />
         <TerrainMesh
           terrainModel={terrainModel}
