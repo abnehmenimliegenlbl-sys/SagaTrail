@@ -40,6 +40,11 @@ type Model = {
   profile: TerrainProfilePoint[];
 };
 
+type TerrainFieldRequest = {
+  geometry: [number, number][];
+  halfWidthM: number;
+};
+
 const gradeColors = {
   green: "#34D399",
   yellow: "#FACC15",
@@ -175,6 +180,36 @@ function routeDistances(route: number[][]): number[] {
   return distances;
 }
 
+function terrainFieldForRoute(route: number[][]): TerrainFieldRequest {
+  const latitudes = route.map((point) => point[0]);
+  const longitudes = route.map((point) => point[1]);
+  const south = Math.min(...latitudes);
+  const north = Math.max(...latitudes);
+  const west = Math.min(...longitudes);
+  const east = Math.max(...longitudes);
+  const centerLat = (south + north) / 2;
+  const centerLng = (west + east) / 2;
+  const northSouthM = Math.max(1, (north - south) * 111_320);
+  const eastWestM = Math.max(
+    1,
+    (east - west) * 111_320 * Math.cos(centerLat * radians),
+  );
+  // Overscan the route bounds deliberately. The camera frames the route, not
+  // this larger field, so textured terrain extends beyond every screen edge.
+  const halfSizeM = Math.min(
+    100_000,
+    Math.max(1_200, Math.max(northSouthM, eastWestM) * 1.5),
+  );
+  const latitudeRadius = halfSizeM / 111_320;
+  return {
+    geometry: [
+      [centerLat - latitudeRadius, centerLng],
+      [centerLat + latitudeRadius, centerLng],
+    ],
+    halfWidthM: halfSizeM,
+  };
+}
+
 /** Distance along a polyline, including projection onto an interpolated segment. */
 function distanceAlongRoute(
   point: number[],
@@ -217,6 +252,72 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
     <ThreeLine geometry={geometry}>
       <lineBasicMaterial color={color} linewidth={4} />
     </ThreeLine>
+  );
+}
+
+function RouteFlag({
+  position,
+  kind,
+  height,
+}: {
+  position: Vector3;
+  kind: "start" | "finish";
+  height: number;
+}) {
+  const poleRadius = Math.max(1.4, height * 0.018);
+  const flagWidth = height * 0.56;
+  const flagHeight = height * 0.38;
+  const startGeometry = useMemo(() => {
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new BufferAttribute(
+        new Float32Array([
+          0, height, 0,
+          flagWidth, height - flagHeight / 2, 0,
+          0, height - flagHeight, 0,
+        ]),
+        3,
+      ),
+    );
+    geometry.setIndex([0, 1, 2]);
+    geometry.computeVertexNormals();
+    return geometry;
+  }, [flagHeight, flagWidth, height]);
+  useEffect(() => () => startGeometry.dispose(), [startGeometry]);
+
+  return (
+    <group position={[position.x, position.y, position.z]}>
+      <mesh position={[0, height / 2, 0]}>
+        <cylinderGeometry args={[poleRadius, poleRadius, height, 10]} />
+        <meshBasicMaterial color="#D8D8D8" />
+      </mesh>
+      {kind === "start" ? (
+        <mesh geometry={startGeometry}>
+          <meshBasicMaterial color="#DA291C" side={DoubleSide} />
+        </mesh>
+      ) : (
+        Array.from({ length: 2 }, (_, row) =>
+          Array.from({ length: 3 }, (_, column) => (
+            <mesh
+              key={`finish-${row}-${column}`}
+              position={[
+                ((column + 0.5) * flagWidth) / 3,
+                height - ((row + 0.5) * flagHeight) / 2,
+                0,
+              ]}
+            >
+              <boxGeometry
+                args={[flagWidth / 3, flagHeight / 2, poleRadius * 1.2]}
+              />
+              <meshBasicMaterial
+                color={(row + column) % 2 === 0 ? "#111111" : "#FFFFFF"}
+              />
+            </mesh>
+          )),
+        )
+      )}
+    </group>
   );
 }
 
@@ -326,24 +427,40 @@ function Scene({
       minZ = Math.min(minZ, positions.getZ(index));
       maxZ = Math.max(maxZ, positions.getZ(index));
     }
-    const extent = Math.max(maxX - minX, maxZ - minZ, 300);
+    const terrainExtent = Math.max(maxX - minX, maxZ - minZ, 300);
+    const routeXs = route.map((point) => point.x);
+    const routeZs = route.map((point) => point.z);
+    const routeExtent = Math.max(
+      Math.max(...routeXs) - Math.min(...routeXs),
+      Math.max(...routeZs) - Math.min(...routeZs),
+      300,
+    );
+    const routeCenterX =
+      routeXs.length > 0
+        ? (Math.min(...routeXs) + Math.max(...routeXs)) / 2
+        : (minX + maxX) / 2;
+    const routeCenterZ =
+      routeZs.length > 0
+        ? (Math.min(...routeZs) + Math.max(...routeZs)) / 2
+        : (minZ + maxZ) / 2;
     return {
       target: new Vector3(
-        (minX + maxX) / 2,
+        routeCenterX,
         (minY + maxY) / 2,
-        (minZ + maxZ) / 2,
+        routeCenterZ,
       ),
-      extent,
+      routeExtent,
+      terrainExtent,
       top: maxY,
     };
-  }, [terrain]);
+  }, [route, terrain]);
 
   useEffect(() => {
     if (!follow) {
       camera.position.set(
-        overview.extent * 0.8,
-        overview.top + overview.extent * 0.95,
-        overview.extent * 1.1,
+        overview.target.x + overview.routeExtent * 0.72,
+        overview.top + overview.routeExtent * 1.8,
+        overview.target.z + overview.routeExtent * 1.05,
       );
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
@@ -375,6 +492,12 @@ function Scene({
         Math.floor(progress * Math.max(0, route.length - 1)),
       )
     ];
+  const start = route[0];
+  const finish = route.at(-1);
+  const flagHeight = Math.max(
+    65,
+    Math.min(320, overview.routeExtent * 0.045),
+  );
   return (
     <>
       <color attach="background" args={["#101A16"]} />
@@ -391,6 +514,10 @@ function Scene({
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
+      {start && <RouteFlag position={start} kind="start" height={flagHeight} />}
+      {finish && (
+        <RouteFlag position={finish} kind="finish" height={flagHeight} />
+      )}
       {marker && (
         <mesh position={[marker.x, marker.y, marker.z]}>
           <sphereGeometry args={[9, 16, 16]} />
@@ -450,10 +577,15 @@ export default function RouteTerrain3D({
       return;
     }
     let active = true;
-    const corridorGeometry = geometry.map(
-      (point) => [point[0], point[1]] as [number, number],
-    );
-    createTerrainCorridor({ geometry: corridorGeometry })
+    const terrainField = terrainFieldForRoute(geometry);
+    createTerrainCorridor({
+      geometry: terrainField.geometry,
+      options: {
+        rows: 60,
+        columns: 13,
+        halfWidthM: terrainField.halfWidthM,
+      },
+    })
       .then((data) => {
         const grid = parseTerrainCorridor(data);
         if (!grid) throw new Error();

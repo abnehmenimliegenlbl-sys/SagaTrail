@@ -1092,7 +1092,7 @@ export const createTerrainCorridorBodyOptionsColumnsMax = 13;
 
 export const createTerrainCorridorBodyOptionsHalfWidthMDefault = 500;
 export const createTerrainCorridorBodyOptionsHalfWidthMMin = 100;
-export const createTerrainCorridorBodyOptionsHalfWidthMMax = 1500;
+export const createTerrainCorridorBodyOptionsHalfWidthMMax = 100000;
 
 
 
