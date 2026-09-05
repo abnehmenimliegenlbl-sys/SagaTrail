@@ -64,46 +64,20 @@ const PANORAMA_BASE_TILES: PanoramaTile[] = Array.from(
 ).flat();
 
 const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
-  { length: 8 },
+  { length: 4 },
   (_, row) =>
-    Array.from({ length: 8 }, (_, column) => ({
+    Array.from({ length: 4 }, (_, column) => ({
       key: `detail-${row}-${column}`,
       bounds: {
-        uMin: 0.3 + column * 0.05,
-        uMax: 0.3 + (column + 1) * 0.05,
-        vMin: 0.3 + row * 0.05,
-        vMax: 0.3 + (row + 1) * 0.05,
+        uMin: 0.4 + column * 0.05,
+        uMax: 0.4 + (column + 1) * 0.05,
+        vMin: 0.4 + row * 0.05,
+        vMax: 0.4 + (row + 1) * 0.05,
       },
       size: 1024,
       detail: true,
     })),
 ).flat();
-
-function bearingDifferenceDeg(left: number, right: number): number {
-  return Math.abs(((left - right + 540) % 360) - 180);
-}
-
-function visibleDetailTiles(bearingDeg: number): PanoramaTile[] {
-  return PANORAMA_DETAIL_TILES.map((tile) => {
-    const east = (tile.bounds.uMin + tile.bounds.uMax) / 2 - 0.5;
-    const north = (tile.bounds.vMin + tile.bounds.vMax) / 2 - 0.5;
-    const distance = Math.hypot(east, north);
-    const tileBearing =
-      ((Math.atan2(east, north) * 180) / Math.PI + 360) % 360;
-    return {
-      tile,
-      distance,
-      difference: bearingDifferenceDeg(tileBearing, bearingDeg),
-    };
-  })
-    .filter(({ distance, difference }) => distance < 0.071 || difference <= 85)
-    .sort(
-      (left, right) =>
-        left.distance - right.distance || left.difference - right.difference,
-    )
-    .slice(0, 24)
-    .map(({ tile }) => tile);
-}
 
 function swissTopoTextureUrl(
   model: LocalTerrainModel,
@@ -341,15 +315,10 @@ function TerrainMesh({
     () => buildLocalTerrainMesh(terrainModel, 0),
     [terrainModel],
   );
-  const detailBearingBucket = Math.round(bearingDeg / 15) * 15;
-  const selectedDetailTiles = useMemo(
-    () => visibleDetailTiles(detailBearingBucket),
-    [detailBearingBucket],
-  );
   const baseTiles = PANORAMA_BASE_TILES;
   const tiles = useMemo<PanoramaTile[]>(
-    () => [...baseTiles, ...selectedDetailTiles],
-    [baseTiles, selectedDetailTiles],
+    () => [...baseTiles, ...PANORAMA_DETAIL_TILES],
+    [baseTiles],
   );
   const geometries = useMemo(
     () =>
@@ -480,14 +449,14 @@ function TerrainMesh({
 
     const loadTextures = async () => {
       try {
-        const base = await loadInPairs(baseTiles);
-        if (!active || base.size !== baseTiles.length) {
-          base.forEach((texture) => texture.dispose());
+        const complete = await loadInPairs(tiles);
+        if (!active || complete.size !== tiles.length) {
+          complete.forEach((texture) => texture.dispose());
           return;
         }
         const previous = texturesRef.current;
-        texturesRef.current = base;
-        setTextures(base);
+        texturesRef.current = complete;
+        setTextures(complete);
         setTextureGenerationKey(currentGenerationKey);
         setTextureTerrainModel(terrainModel);
         previous.forEach((texture) => texture.dispose());
@@ -495,7 +464,7 @@ function TerrainMesh({
 
       } catch (error) {
         console.warn(
-          "[TerrainGL] panorama base textures failed after retries",
+          "[TerrainGL] panorama textures failed after retries",
           error,
         );
       }
@@ -510,150 +479,7 @@ function TerrainMesh({
     terrainModel,
     textureMode,
     baseTiles,
-  ]);
-
-  const selectedDetailKey = selectedDetailTiles
-    .map((tile) => tile.key)
-    .join(",");
-
-  useEffect(() => {
-    if (
-      textureTerrainModel !== terrainModel ||
-      textureGenerationKey !== currentGenerationKey
-    ) {
-      return;
-    }
-    let active = true;
-    const selectedKeys = new Set(selectedDetailTiles.map((tile) => tile.key));
-    const retained = new Map<string, Texture>();
-    texturesRef.current.forEach((texture, key) => {
-      if (key.startsWith("base-") || selectedKeys.has(key)) {
-        retained.set(key, texture);
-      } else {
-        texture.dispose();
-      }
-    });
-    if (retained.size !== texturesRef.current.size) {
-      texturesRef.current = retained;
-      setTextures(retained);
-    }
-    const requested = selectedDetailTiles.filter(
-      (tile) => !retained.has(tile.key),
-    );
-    console.info("[TerrainGL] detail stream start", {
-      mode: textureMode,
-      bearingBucket: detailBearingBucket,
-      selected: selectedDetailTiles.length,
-      retained: retained.size - PANORAMA_BASE_TILES.length,
-      requested: requested.length,
-    });
-
-    const loadDetailTile = async (tile: PanoramaTile): Promise<Texture> => {
-      let lastError: unknown = null;
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        if (!active) throw new Error("Panorama detail load cancelled");
-        try {
-          const loaded = await loadNativeThreeTexture(
-            swissTopoTextureUrl(terrainModel, textureMode, tile),
-          );
-          loaded.anisotropy = renderer.capabilities.getMaxAnisotropy();
-           loaded.generateMipmaps = false;
-           loaded.minFilter = LinearFilter;
-           loaded.magFilter = LinearFilter;
-          loaded.needsUpdate = true;
-          return loaded;
-        } catch (error) {
-          lastError = error;
-          if (attempt < 2 && active) {
-            await new Promise((resolve) =>
-              setTimeout(resolve, 1_500 * (attempt + 1)),
-            );
-          }
-        }
-      }
-      throw lastError;
-    };
-
-    const streamDetails = async () => {
-      try {
-        for (let index = 0; index < requested.length; index += 2) {
-          if (!active) break;
-          const pair = requested.slice(index, index + 2);
-          const results = await Promise.allSettled(
-            pair.map(async (tile) => [
-              tile.key,
-              await loadDetailTile(tile),
-            ] as const),
-          );
-          const fulfilled = results
-            .filter(
-              (
-                result,
-              ): result is PromiseFulfilledResult<readonly [string, Texture]> =>
-                result.status === "fulfilled",
-            )
-            .map((result) => result.value);
-          if (results.some((result) => result.status === "rejected")) {
-            fulfilled.forEach(([, texture]) => texture.dispose());
-            if (active) {
-              console.warn("[TerrainGL] panorama detail pair failed");
-            }
-            continue;
-          }
-          if (!active) {
-            fulfilled.forEach(([, texture]) => texture.dispose());
-            break;
-          }
-          const next = new Map(texturesRef.current);
-          fulfilled.forEach(([key, texture]) => {
-            if (selectedKeys.has(key)) {
-              next.set(key, texture);
-            } else {
-              texture.dispose();
-            }
-          });
-          texturesRef.current = next;
-          setTextures(next);
-          console.info("[TerrainGL] detail pair committed", {
-            mode: textureMode,
-            keys: fulfilled.map(([key]) => key),
-            imageSizes: fulfilled.map(([, texture]) => {
-              const image = texture.image as
-                | { width?: number; height?: number }
-                | undefined;
-              return {
-                width: Number(image?.width ?? 0),
-                height: Number(image?.height ?? 0),
-              };
-            }),
-            geometryVertices: fulfilled.map(([key]) =>
-              geometries.get(key)?.getAttribute("position").count ?? 0,
-            ),
-            residentDetails:
-              next.size - PANORAMA_BASE_TILES.length,
-          });
-        }
-      } catch (error) {
-        if (active) {
-          console.warn("[TerrainGL] panorama detail streaming failed", error);
-        }
-      }
-    };
-    void streamDetails();
-    return () => {
-      active = false;
-    };
-  }, [
-    currentGenerationKey,
-    detailBearingBucket,
-    geometries,
-    renderer,
-    selectedDetailKey,
-    selectedDetailTiles,
-    terrainModel,
-    textureGenerationKey,
-    textureMode,
-    textureTerrainModel,
+    tiles,
   ]);
 
   useEffect(
