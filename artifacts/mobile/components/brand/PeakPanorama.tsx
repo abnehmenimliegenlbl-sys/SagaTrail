@@ -492,8 +492,10 @@ export function PeakPanorama({
   }, [terrainModel, hasGps]);
 
   useEffect(() => {
-    setTerrainGlReady(false);
-  }, [terrainModel?.fetchedAt]);
+    // Keep an already-created GL surface visible while a refreshed terrain
+    // model arrives. Reset only when there is no model to render at all.
+    if (!terrainModel) setTerrainGlReady(false);
+  }, [terrainModel]);
 
   const displayBearing = (peak: PanoramaGipfel): number | null =>
     peak.relativeBearingDeg == null

@@ -95,7 +95,9 @@ function TerrainMesh({
 
   useEffect(() => {
     let active = true;
-    setTexture(null);
+    // Keep the previous geographic texture visible until its replacement has
+    // fully downloaded and reached Expo GL. Fast pan/heading updates must not
+    // expose the solid-color loading material between valid textures.
     loadNativeThreeTexture(swissTopoTextureUrl(terrainModel))
       .then((loadedTexture) => {
         if (!active) {
