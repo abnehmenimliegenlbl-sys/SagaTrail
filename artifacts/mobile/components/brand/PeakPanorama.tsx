@@ -11,10 +11,7 @@ import {
 } from "react-native";
 import Svg, {
   Circle,
-  ClipPath,
-  Defs,
   G,
-  Image as SvgImage,
   Line,
   Polygon,
   Polyline,
@@ -708,33 +705,6 @@ export function PeakPanorama({
       heading,
     ],
   );
-  const terrainTextureUrl = useMemo(() => {
-    if (!terrainModel) return null;
-    const latitudeRadiusDeg = terrainModel.radiusM / 111_320;
-    const longitudeRadiusDeg =
-      terrainModel.radiusM /
-      Math.max(
-        1,
-        111_320 * Math.cos((terrainModel.center.lat * Math.PI) / 180),
-      );
-    const minLat = terrainModel.center.lat - latitudeRadiusDeg;
-    const maxLat = terrainModel.center.lat + latitudeRadiusDeg;
-    const minLng = terrainModel.center.lng - longitudeRadiusDeg;
-    const maxLng = terrainModel.center.lng + longitudeRadiusDeg;
-    const params = new URLSearchParams({
-      SERVICE: "WMS",
-      REQUEST: "GetMap",
-      VERSION: "1.3.0",
-      LAYERS: "ch.swisstopo.pixelkarte-farbe",
-      STYLES: "default",
-      CRS: "EPSG:4326",
-      BBOX: `${minLat},${minLng},${maxLat},${maxLng}`,
-      WIDTH: "1024",
-      HEIGHT: "640",
-      FORMAT: "image/jpeg",
-    });
-    return `https://wms.geo.admin.ch/?${params.toString()}`;
-  }, [terrainModel]);
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
     const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
     return {
@@ -986,44 +956,14 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-           {terrainTextureUrl && panoramaMesh.terrainFaces.length > 0 && (
-             <>
-               <Defs>
-                 <ClipPath id="swisstopo-terrain-clip">
-                   {panoramaMesh.terrainFaces.map((face, index) => (
-                     <Polygon
-                       key={`terrain-clip-${index}`}
-                       points={face.points}
-                     />
-                   ))}
-                 </ClipPath>
-               </Defs>
-               <SvgImage
-                 href={{ uri: terrainTextureUrl }}
-                 x="0"
-                 y="36"
-                 width="360"
-                 height="242"
-                 preserveAspectRatio="xMidYMid slice"
-                 clipPath="url(#swisstopo-terrain-clip)"
-                 opacity={0.94}
-               />
-             </>
-           )}
            {panoramaMesh.terrainFaces.map((face, index) => (
              <Polygon
                key={`terrain-face-${index}`}
                points={face.points}
-               fill={face.tone === "light" ? "#FFFFFF" : "#121212"}
-               fillOpacity={
-                 terrainTextureUrl
-                   ? face.tone === "light"
-                     ? 0.06
-                     : 0.12
-                   : face.opacity
-               }
+               fill={face.tone === "light" ? colors.primary : colors.accent}
+               fillOpacity={face.opacity}
                stroke={colors.accent}
-               strokeOpacity={terrainTextureUrl ? 0.22 : 0.16}
+               strokeOpacity={0.16}
                strokeWidth="0.35"
              />
            ))}

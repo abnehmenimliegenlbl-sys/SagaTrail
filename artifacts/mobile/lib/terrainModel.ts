@@ -30,6 +30,7 @@ export interface LocalTerrainModel {
 
 export type TerrainVisibility = "visible" | "occluded" | "unknown";
 export type TerrainVertex = [number, number, number];
+export type TerrainTextureCoordinate = [number, number];
 export type TerrainTriangle = [number, number, number];
 export type TerrainRouteLine = TerrainVertex[];
 export interface TerrainRouteSegment {
@@ -48,6 +49,7 @@ export interface GeographicRouteDisplayOptions {
 export interface LocalTerrainMesh {
   vertices: TerrainVertex[];
   normals: TerrainVertex[];
+  texcoords: TerrainTextureCoordinate[];
   triangleIndices: TerrainTriangle[];
 }
 
@@ -247,6 +249,7 @@ export function buildLocalTerrainMesh(
 
   const vertices: TerrainVertex[] = [];
   const normals: TerrainVertex[] = [];
+  const texcoords: TerrainTextureCoordinate[] = [];
   for (const ray of rays) {
     const relativeBearing =
       ((ray.bearingDeg - headingDeg + 540) % 360) - 180;
@@ -259,6 +262,13 @@ export function buildLocalTerrainMesh(
         -Math.cos(angle) * distance,
       ]);
       normals.push([0, 1, 0]);
+      const geographicAngle = (ray.bearingDeg * Math.PI) / 180;
+      const eastM = Math.sin(geographicAngle) * sample.distanceM;
+      const northM = Math.cos(geographicAngle) * sample.distanceM;
+      texcoords.push([
+        clampNumber(0.5 + eastM / (model.radiusM * 2), 0, 1),
+        clampNumber(0.5 - northM / (model.radiusM * 2), 0, 1),
+      ]);
     }
   }
 
@@ -281,7 +291,7 @@ export function buildLocalTerrainMesh(
   }
 
   return triangleIndices.length > 0
-    ? { vertices, normals, triangleIndices }
+    ? { vertices, normals, texcoords, triangleIndices }
     : null;
 }
 

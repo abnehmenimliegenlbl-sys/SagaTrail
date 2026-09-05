@@ -471,10 +471,62 @@ function TerrainSurface({
 }: {
   model: LocalTerrainModel | null | undefined;
 }) {
+  const [textureMaterial, setTextureMaterial] = useState<string | null>(null);
   const mesh = useMemo<LocalTerrainMesh | null>(
     () => buildLocalTerrainMesh(model, 0),
     [model],
   );
+  useEffect(() => {
+    if (!model) {
+      setTextureMaterial(null);
+      return;
+    }
+    const latitudeRadiusDeg = model.radiusM / 111_320;
+    const longitudeRadiusDeg =
+      model.radiusM /
+      Math.max(
+        1,
+        111_320 * Math.cos((model.center.lat * Math.PI) / 180),
+      );
+    const params = new URLSearchParams({
+      SERVICE: "WMS",
+      REQUEST: "GetMap",
+      VERSION: "1.3.0",
+      LAYERS: "ch.swisstopo.pixelkarte-farbe",
+      STYLES: "default",
+      CRS: "EPSG:4326",
+      BBOX: [
+        model.center.lat - latitudeRadiusDeg,
+        model.center.lng - longitudeRadiusDeg,
+        model.center.lat + latitudeRadiusDeg,
+        model.center.lng + longitudeRadiusDeg,
+      ].join(","),
+      WIDTH: "1024",
+      HEIGHT: "1024",
+      FORMAT: "image/jpeg",
+    });
+    const materialName = `${TERRAIN_SURFACE_MATERIAL}-${Math.round(
+      model.center.lat * 10_000,
+    )}-${Math.round(model.center.lng * 10_000)}`;
+    ViroMaterials.createMaterials({
+      [materialName]: {
+        lightingModel: "Lambert",
+        diffuseTexture: {
+          uri: `https://wms.geo.admin.ch/?${params.toString()}`,
+        },
+        diffuseIntensity: 0.9,
+        cullMode: "None",
+        wrapS: "Clamp",
+        wrapT: "Clamp",
+        minificationFilter: "Linear",
+        magnificationFilter: "Linear",
+        mipFilter: "Linear",
+        writesToDepthBuffer: true,
+        readsFromDepthBuffer: true,
+      },
+    });
+    setTextureMaterial(materialName);
+  }, [model]);
 
   useEffect(() => {
     console.log("[PeakAR] SwissTopo terrain mesh", {
@@ -491,9 +543,10 @@ function TerrainSurface({
     <ViroGeometry
       vertices={mesh.vertices}
       normals={mesh.normals}
+      texcoords={mesh.texcoords}
       triangleIndices={mesh.triangleIndices}
-      materials={TERRAIN_SURFACE_MATERIAL}
-      opacity={0.32}
+      materials={textureMaterial ?? TERRAIN_SURFACE_MATERIAL}
+      opacity={textureMaterial ? 0.92 : 0.32}
       position={[0, AR_ROUTE_GROUND_OFFSET, 0]}
       renderingOrder={5}
       shadowCastingBitMask={0}
