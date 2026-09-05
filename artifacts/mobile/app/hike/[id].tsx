@@ -102,8 +102,12 @@ import {
 } from "@/lib/turnNotifications";
 import {
   clearWatchStatus,
+  publishHikeLiveState,
   prepareWatchCompanion,
   sendWatchSos,
+  sendWatchStatus,
+  subscribeToCompanionEvents,
+  type HikeLiveState,
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
@@ -790,6 +794,11 @@ export default function LiveHike() {
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [heartRate, setHeartRate] = useState<{
+    bpm: number;
+    measuredAt: number;
+    source: "watch" | "phone";
+  } | null>(null);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
   const [liveAltitude, setLiveAltitude] = useState<number | null>(null);
@@ -933,6 +942,8 @@ export default function LiveHike() {
   const lastTrackLogTimeRef = useRef<number>(0);
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
+  const liveSnapshotSequenceRef = useRef(0);
+  const lastCriticalWatchAlertRef = useRef<string | null>(null);
   const compassHeadingRef = useRef<number | null>(null);
   const compassGravityRef = useRef<CompassVector | null>(null);
   const compassSamplesRef = useRef<number[]>([]);
@@ -951,6 +962,12 @@ export default function LiveHike() {
     locState === "granted" &&
     livePos !== null &&
     locationNow - lastLocationAtRef.current <= 45_000;
+  const requestPhoneSideSos = useCallback(() => {
+    // A request from a wrist device deliberately opens the established phone
+    // emergency flow. It does not imply that emergency services were reached.
+    setSosOpen(true);
+    void sendWatchSos(null);
+  }, []);
   const lastNarratedRef = useRef<number>(-1);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
    *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
@@ -2082,10 +2099,77 @@ export default function LiveHike() {
       void clearWatchStatus();
     };
   }, []);
+  // The optional native companion emits only these namespaced events. Native
+  // absence is a supported no-op, including in Expo Go.
+  useEffect(() => subscribeToCompanionEvents({
+    onHeartRate: (event) => setHeartRate(event),
+    onSosRequest: () => requestPhoneSideSos(),
+  }), [requestPhoneSideSos]);
   useEffect(() => {
     const interval = setInterval(() => setLocationNow(Date.now()), 5_000);
     return () => clearInterval(interval);
   }, []);
+
+  const nextWatchNavigation = useMemo(() => {
+    if (!hasFreshGps || !livePos) return null;
+    const fraction = navigationGeometry
+      ? fortschrittAufRoute(livePos, navigationGeometry)?.fraction
+      : null;
+    const cue = turnCues.find((item, index) =>
+      !notifiedTurnsRef.current.has(index) &&
+      (fraction == null || item.distanceFraction >= fraction - 0.01),
+    );
+    if (!cue) return null;
+    return {
+      direction: cue.direction === "links" ? "left" as const : "right" as const,
+      bearingDeg: bearingDeg(livePos, cue.point),
+      distanceM: Math.round(haversineKm(livePos, cue.point) * 1000),
+    };
+  }, [hasFreshGps, livePos, navigationGeometry, turnCues]);
+
+  useEffect(() => {
+    const now = Date.now();
+    const heartRateFreshness = !heartRate ? null
+      : now - heartRate.measuredAt <= 30_000 ? "fresh" as const
+      : "stale" as const;
+    const activeAlert = sosOpen
+      ? { kind: "sos" as const, text: "SOS requested on phone", critical: true }
+      : offRoutePos
+        ? { kind: "safety" as const, text: "Off route", critical: true }
+        : speaking
+          ? { kind: "narration" as const, text: "Narration playing", critical: false }
+          : null;
+    const state: HikeLiveState = {
+      version: 1,
+      sequence: ++liveSnapshotSequenceRef.current,
+      timestamp: now,
+      gpsFreshness: hasFreshGps ? "fresh" : livePos ? "stale" : "unavailable",
+      nextNavigation: nextWatchNavigation,
+      elapsedSec: preparing ? null : elapsedSec,
+      walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
+      // The route's planned ascent is not passed off as measured ascent.
+      ascentM: null,
+      steps: steps > 0 ? steps : null,
+      heartRate: heartRate && heartRateFreshness
+        ? { ...heartRate, freshness: heartRateFreshness }
+        : null,
+      activeAlert,
+      sessionStatus: sosOpen ? "sos_requested" : finished ? "finished" : preparing ? "preparing" : "active",
+    };
+    const criticalKey = activeAlert?.critical ? `${activeAlert.kind}:${activeAlert.text}` : null;
+    const force = criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current;
+    lastCriticalWatchAlertRef.current = criticalKey;
+    void publishHikeLiveState(state, { force });
+    // Notification mirroring intentionally stays lower frequency than the
+    // private native snapshot channel and contains no location data.
+    void sendWatchStatus({
+      direction: nextWatchNavigation?.direction === "left" ? "Links" : nextWatchNavigation?.direction === "right" ? "Rechts" : "Navigation",
+      heading: nextWatchNavigation?.bearingDeg ?? null,
+      remainingKm: Math.max(0, totalKm - distance),
+      heartRateBpm: heartRate?.bpm ?? null,
+      hasFreshGps,
+    }, { force });
+  }, [distance, elapsedSec, finished, hasFreshGps, heartRate, livePos, nextWatchNavigation, offRoutePos, preparing, sosOpen, speaking, steps, totalKm]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -4476,7 +4560,7 @@ export default function LiveHike() {
                   modalSize: "large" as const,
                   preview: (
                     <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
-                      Puls —
+                      {heartRate ? `Puls ${Math.round(heartRate.bpm)} bpm` : "Puls —"}
                     </Text>
                   ),
                   content: (
@@ -4484,7 +4568,7 @@ export default function LiveHike() {
                       ready={watchReady}
                       direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                       remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
-                      heartRateBpm={null}
+                      heartRateBpm={heartRate?.bpm ?? null}
                       onEnable={() => {
                         void prepareWatchCompanion().then(setWatchReady);
                       }}
@@ -5326,8 +5410,7 @@ export default function LiveHike() {
       {/* SOS — bewusst KEIN Glas, immer sichtbar und deckend */}
       <Pressable
         onPress={() => {
-          setSosOpen(true);
-          void sendWatchSos(hasFreshGps && livePos ? livePos : null);
+          requestPhoneSideSos();
         }}
         accessibilityRole="button"
         accessibilityLabel={`${t.sos} — ${t.emergency}`}

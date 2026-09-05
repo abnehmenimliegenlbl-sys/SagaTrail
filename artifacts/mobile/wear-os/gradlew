@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# This deliberately delegates to an installed Gradle when the wrapper JAR is not
+# vendored. CI should use `gradle wrapper` once, then commit only the generated
+# wrapper JAR if its supply-chain policy permits binary wrapper files.
+if command -v gradle >/dev/null 2>&1; then
+  exec gradle "$@"
+fi
+echo "Gradle is required. Install Gradle 8.9+ or generate the standard wrapper with 'gradle wrapper'." >&2
+exit 1
