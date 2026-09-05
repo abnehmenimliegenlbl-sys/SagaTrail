@@ -44,6 +44,7 @@ type Model = {
   geometry: number[][];
   profile: TerrainProfilePoint[];
 };
+type ViewMode = "overview" | "walk" | "flight";
 
 const gradeColors = {
   green: "#39FF14",
@@ -248,6 +249,24 @@ function routeDistances(route: number[][]): number[] {
   return distances;
 }
 
+function pointAtRouteDistance(
+  points: Vector3[],
+  distances: number[],
+  distance: number,
+): Vector3 | undefined {
+  const lastIndex = Math.min(points.length, distances.length) - 1;
+  if (lastIndex < 0) return undefined;
+  if (distance <= 0) return points[0];
+  if (distance >= distances[lastIndex]) return points[lastIndex];
+  let high = 1;
+  while (high <= lastIndex && distances[high] < distance) high += 1;
+  const low = Math.max(0, high - 1);
+  const span = distances[high] - distances[low];
+  const fraction =
+    span > 0 ? (distance - distances[low]) / span : 0;
+  return points[low].clone().lerp(points[high], fraction);
+}
+
 /** Distance along a polyline, including projection onto an interpolated segment. */
 function distanceAlongRoute(
   point: number[],
@@ -384,13 +403,15 @@ function RouteEndpointFlag({
 
 function Scene({
   model,
-  playing,
-  follow,
+  mode,
+  runId,
+  onFlightComplete,
   onMapLoadState,
 }: {
   model: Model;
-  playing: boolean;
-  follow: boolean;
+  mode: ViewMode;
+  runId: number;
+  onFlightComplete: () => void;
   onMapLoadState: (state: "loading" | "ready" | "error") => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
@@ -400,7 +421,9 @@ function Scene({
   );
   const [texture, setTexture] = useState<Texture | null>(null);
   const [reliefTexture, setReliefTexture] = useState<Texture | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
+  const revealedDistanceRef = useRef(0);
+  const flightCompleted = useRef(false);
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
 
@@ -510,6 +533,8 @@ function Scene({
           if (startElevation == null || endElevation == null) return null;
           return {
             color: gradeColors[segment.band],
+            startDistance,
+            endDistance,
             points: [
               toWorld(
                 model.grid,
@@ -527,7 +552,14 @@ function Scene({
           };
         })
         .filter(
-          (line): line is { color: string; points: Vector3[] } => line != null,
+          (
+            line,
+          ): line is {
+            color: string;
+            startDistance: number;
+            endDistance: number;
+            points: Vector3[];
+          } => line != null,
         ),
     [model, routeDistanceList],
   );
@@ -575,7 +607,7 @@ function Scene({
   }, [route, terrain]);
 
   useEffect(() => {
-    if (!follow) {
+    if (mode !== "flight") {
       const tilt = (48 * Math.PI) / 180;
       const verticalFov = (48 * Math.PI) / 180;
       const aspect = Math.max(0.1, viewport.width / viewport.height);
@@ -607,18 +639,39 @@ function Scene({
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
     }
-  }, [camera, follow, overview, viewport.height, viewport.width]);
+  }, [camera, mode, overview, viewport.height, viewport.width]);
+
+  const routeLengthKm = routeDistanceList.at(-1) ?? 0;
+  useEffect(() => {
+    flightCompleted.current = false;
+    const initialDistance = mode === "overview" ? routeLengthKm : 0;
+    revealedDistanceRef.current = initialDistance;
+    setRevealedDistanceKm(initialDistance);
+  }, [mode, routeLengthKm, runId]);
 
   useFrame((_, delta) => {
-    if (playing) setProgress((value) => (value + delta / 24) % 1);
-    const marker =
-      route[
-        Math.min(
-          route.length - 1,
-          Math.floor(progress * Math.max(0, route.length - 1)),
-        )
-      ];
-    if (follow && marker) {
+    if (mode !== "overview") {
+      const next = Math.min(
+        routeLengthKm,
+        revealedDistanceRef.current + delta * 0.5,
+      );
+      revealedDistanceRef.current = next;
+      setRevealedDistanceKm(next);
+      if (
+        mode === "flight" &&
+        next >= routeLengthKm &&
+        !flightCompleted.current
+      ) {
+        flightCompleted.current = true;
+        onFlightComplete();
+      }
+    }
+    const marker = pointAtRouteDistance(
+      route,
+      routeDistanceList,
+      revealedDistanceRef.current,
+    );
+    if (mode === "flight" && marker) {
       camera.up.set(0, 1, 0);
       camera.position.lerp(
         new Vector3(marker.x + 75, marker.y + 90, marker.z + 120),
@@ -628,13 +681,28 @@ function Scene({
     }
   });
 
-  const marker =
-    route[
-      Math.min(
-        route.length - 1,
-        Math.floor(progress * Math.max(0, route.length - 1)),
-      )
-    ];
+  const marker = pointAtRouteDistance(
+    route,
+    routeDistanceList,
+    revealedDistanceKm,
+  );
+  const visibleGradeLines = gradeLines
+    .map((line) => {
+      if (revealedDistanceKm <= line.startDistance) return null;
+      if (revealedDistanceKm >= line.endDistance) return line;
+      const fraction =
+        (revealedDistanceKm - line.startDistance) /
+        Math.max(0.000001, line.endDistance - line.startDistance);
+      return {
+        ...line,
+        points: [
+          line.points[0],
+          line.points[0].clone().lerp(line.points[1], fraction),
+        ],
+      };
+    })
+    .filter((line): line is NonNullable<typeof line> => line != null);
+
   return (
     <>
       <color attach="background" args={["#101A16"]} />
@@ -665,14 +733,14 @@ function Scene({
           />
         </mesh>
       )}
-      {gradeLines.map((line, index) => (
+      {visibleGradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
-      {marker && (
+      {mode === "flight" && marker && (
         <mesh position={[marker.x, marker.y, marker.z]}>
           <sphereGeometry args={[9, 16, 16]} />
           <meshStandardMaterial
@@ -697,8 +765,8 @@ export default function RouteTerrain3D({
   const [ready, setReady] = useState<boolean | null>(null);
   const [model, setModel] = useState<Model | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(true);
-  const [follow, setFollow] = useState(false);
+  const [mode, setMode] = useState<ViewMode>("overview");
+  const [runId, setRunId] = useState(0);
   const [loadProgress, setLoadProgress] = useState(0);
   const mapLoadState = useMemo(
     () => (state: "loading" | "ready" | "error") => {
@@ -710,6 +778,11 @@ export default function RouteTerrain3D({
     },
     [],
   );
+  const flightComplete = useMemo(() => () => setMode("overview"), []);
+  const selectMode = (nextMode: ViewMode) => {
+    setMode(nextMode);
+    setRunId((value) => value + 1);
+  };
 
   useEffect(() => {
     if (loadProgress < 70 || loadProgress >= 100 || error) return;
@@ -726,6 +799,7 @@ export default function RouteTerrain3D({
     setReady(null);
     setModel(null);
     setError(null);
+    setMode("overview");
     setLoadProgress(5);
     GLView.createContextAsync()
       .then((context) => GLView.destroyContextAsync(context).then(() => true))
@@ -813,8 +887,9 @@ export default function RouteTerrain3D({
           >
             <Scene
               model={model}
-              playing={playing}
-              follow={follow}
+              mode={mode}
+              runId={runId}
+              onFlightComplete={flightComplete}
               onMapLoadState={mapLoadState}
             />
           </Canvas>
@@ -871,32 +946,38 @@ export default function RouteTerrain3D({
         </Pressable>
         {model && loadProgress === 100 && !error && (
           <View style={styles.controls}>
-            <Pressable
-              onPress={() => setPlaying((value) => !value)}
-              style={styles.control}
-            >
-              <Feather
-                name={playing ? "pause" : "play"}
-                size={20}
-                color="#fff"
-              />
-              <Text style={styles.controlText}>
-                {playing ? "Pause" : "Start"}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFollow((value) => !value)}
-              style={styles.control}
-            >
-              <Feather
-                name={follow ? "navigation" : "map"}
-                size={20}
-                color="#fff"
-              />
-              <Text style={styles.controlText}>
-                {follow ? "Folgen" : "Übersicht"}
-              </Text>
-            </Pressable>
+            {(
+              [
+                ["overview", "map", "Übersicht"],
+                ["walk", "edit-3", "Gehen"],
+                ["flight", "navigation", "Flug"],
+              ] as const
+            ).map(([value, icon, label]) => {
+              const active = mode === value;
+              return (
+                <Pressable
+                  key={value}
+                  onPress={() => selectMode(value)}
+                  style={[styles.control, active && styles.controlActive]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Feather
+                    name={icon}
+                    size={20}
+                    color={active ? "#FFFFFF" : "#F4EBDD"}
+                  />
+                  <Text
+                    style={[
+                      styles.controlText,
+                      active && styles.controlTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         )}
       </View>
@@ -942,20 +1023,27 @@ const styles = StyleSheet.create({
   },
   controls: {
     position: "absolute",
-    bottom: 38,
-    left: 20,
-    right: 20,
+    bottom: 24,
+    left: 16,
+    right: 16,
     flexDirection: "row",
-    gap: 10,
+    gap: 6,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "#F4EBDD33",
+    borderRadius: 24,
+    backgroundColor: "#15231DEE",
   },
   control: {
-    flexDirection: "row",
+    flex: 1,
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#15231ddd",
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 11,
+    justifyContent: "center",
+    gap: 5,
+    borderRadius: 18,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
   },
-  controlText: { color: "#fff", fontWeight: "700" },
+  controlActive: { backgroundColor: "#DA291C" },
+  controlText: { color: "#F4EBDD", fontSize: 12, fontWeight: "700" },
+  controlTextActive: { color: "#FFFFFF" },
 });
