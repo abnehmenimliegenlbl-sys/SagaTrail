@@ -23,6 +23,7 @@ import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
 const TERRAIN_MINIMUM_RADIUS_M = 0;
+const CAMERA_FRAMING_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
@@ -258,7 +259,7 @@ function terrainCameraFraming(terrainModel: LocalTerrainModel): {
   if (!mesh) return { targetY: 7, fov: 42 };
 
   const minimumRadius =
-    TERRAIN_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
+    CAMERA_FRAMING_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
   const angles = mesh.vertices
     .filter(
       ([x, , z]) => Math.hypot(x, z) >= minimumRadius,
