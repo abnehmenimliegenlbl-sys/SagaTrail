@@ -63,15 +63,15 @@ const PANORAMA_BASE_TILES: PanoramaTile[] = Array.from(
 ).flat();
 
 const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
-  { length: 2 },
+  { length: 4 },
   (_, row) =>
-    Array.from({ length: 2 }, (_, column) => ({
+    Array.from({ length: 4 }, (_, column) => ({
       key: `detail-${row}-${column}`,
       bounds: {
-        uMin: 0.45 + column * 0.05,
-        uMax: 0.45 + (column + 1) * 0.05,
-        vMin: 0.45 + row * 0.05,
-        vMax: 0.45 + (row + 1) * 0.05,
+        uMin: 0.4 + column * 0.05,
+        uMax: 0.4 + (column + 1) * 0.05,
+        vMin: 0.4 + row * 0.05,
+        vMax: 0.4 + (row + 1) * 0.05,
       },
       size: 1024,
       detail: true,
