@@ -180,6 +180,10 @@ function signedBearingDifference(target: number, heading: number): number {
   return ((target - heading + 540) % 360) - 180;
 }
 
+function normalizedBearing(bearing: number): number {
+  return ((bearing % 360) + 360) % 360;
+}
+
 /**
  * Ermittelt echte OSM-Gipfel im Umfeld der aktuellen Position und berechnet
  * ihre Lage im Sichtfeld. Das ist bewusst eine geografische Erkennung, keine
@@ -196,7 +200,7 @@ export function erkenneGipfel(
   if (!position) return [];
 
   const seen = new Set<string>();
-  return pois
+  const candidates = pois
     .filter((poi) => poi.kind === "natural=peak" && poi.name.trim().length > 0)
     .map((poi): PanoramaGipfel => {
       const target: LatLng = { lat: poi.lat, lng: poi.lng };
@@ -231,10 +235,37 @@ export function erkenneGipfel(
       return true;
     })
     .filter((peak) => peak.distanceKm <= 20)
-    .sort((a, b) => {
-      const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
-      const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
-      return aAngle - bAngle || a.distanceKm - b.distanceKm;
-    })
-    .slice(0, Math.max(0, maxPeaks));
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const limit = Math.max(0, maxPeaks);
+  if (limit === 0 || candidates.length <= limit) return candidates;
+
+  // Einen gleichmässigen 360°-Grundstock bilden: jeder Sektor bekommt
+  // zunächst seinen nächstgelegenen echten Gipfel. So verdrängen viele
+  // nahe Gipfel aus einer Richtung nicht den gesamten übrigen Horizont.
+  const selectedBySector = new Map<number, PanoramaGipfel>();
+  for (const peak of candidates) {
+    const sector = Math.min(
+      limit - 1,
+      Math.floor((normalizedBearing(peak.bearingDeg) / 360) * limit),
+    );
+    if (!selectedBySector.has(sector)) selectedBySector.set(sector, peak);
+  }
+
+  const selectedIds = new Set(
+    Array.from(selectedBySector.values(), (peak) => peak.id),
+  );
+  const selected = Array.from(selectedBySector.values());
+  for (const peak of candidates) {
+    if (selected.length >= limit) break;
+    if (selectedIds.has(peak.id)) continue;
+    selected.push(peak);
+    selectedIds.add(peak.id);
+  }
+
+  return selected.sort((a, b) => {
+    const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
+    const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
+    return aAngle - bAngle || a.distanceKm - b.distanceKm;
+  });
 }

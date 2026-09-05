@@ -249,8 +249,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   modalCardLarge: {
-    minHeight: "90%",
-    maxHeight: "97%",
+    minHeight: "96%",
+    maxHeight: "99%",
   },
   modalAccent: { height: 3, width: "100%" },
   modalHeader: {
