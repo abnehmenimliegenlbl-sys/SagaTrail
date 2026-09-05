@@ -5,6 +5,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
+  type PerspectiveCamera,
   Texture,
 } from "three";
 
@@ -15,6 +16,11 @@ import {
 } from "@/lib/terrainModel";
 import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import type { PeakTerrainGlProps } from "./PeakTerrainGl.types";
+
+const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
+const TERRAIN_MINIMUM_RADIUS_M = 400;
+const TERRAIN_HORIZONTAL_SCALE = 0.48;
+const TERRAIN_VERTICAL_SCALE = 1.05;
 
 function swissTopoTextureUrl(model: LocalTerrainModel): string {
   const latitudeRadiusDeg = model.radiusM / 111_320;
@@ -52,7 +58,8 @@ function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
   // buildLocalTerrainMesh uses 0.04 world units per metre. Omitting only the
   // innermost 400 m reduces the oversized foreground without losing nearby
   // terrain silhouettes.
-  const minimumPanoramaRadius = 400 * 0.04;
+  const minimumPanoramaRadius =
+    TERRAIN_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
   const visibleTriangles = mesh.triangleIndices.filter((triangle) =>
     triangle.every((vertexIndex) => {
       const vertex = mesh.vertices[vertexIndex];
@@ -78,18 +85,55 @@ function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
   return geometry;
 }
 
-function CameraRig() {
+function terrainCameraFraming(terrainModel: LocalTerrainModel): {
+  targetY: number;
+  fov: number;
+} {
+  const mesh = buildLocalTerrainMesh(terrainModel, 0);
+  if (!mesh) return { targetY: 7, fov: 42 };
+
+  const minimumRadius =
+    TERRAIN_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
+  const angles = mesh.vertices
+    .filter(
+      ([x, , z]) => Math.hypot(x, z) >= minimumRadius,
+    )
+    .map(([x, y, z]) => {
+      const horizontalDistance =
+        Math.hypot(x, z) * TERRAIN_HORIZONTAL_SCALE;
+      const verticalDistance = y * TERRAIN_VERTICAL_SCALE - 0.8;
+      return Math.atan2(verticalDistance, horizontalDistance);
+    })
+    .filter(Number.isFinite);
+
+  if (angles.length < 2) return { targetY: 7, fov: 42 };
+  const minimumAngle = Math.min(...angles);
+  const maximumAngle = Math.max(...angles);
+  const centreAngle = (minimumAngle + maximumAngle) / 2;
+  const angleSpanDeg = ((maximumAngle - minimumAngle) * 180) / Math.PI;
+  return {
+    targetY: Math.tan(centreAngle) * 70,
+    fov: Math.max(22, Math.min(52, angleSpanDeg + 12)),
+  };
+}
+
+function CameraRig({ terrainModel }: { terrainModel: LocalTerrainModel }) {
   const camera = useThree((state) => state.camera);
+  const framing = useMemo(
+    () => terrainCameraFraming(terrainModel),
+    [terrainModel],
+  );
   useEffect(() => {
     // Panorama viewpoint: the observer is the geographic origin of the radial
     // DTM mesh and looks outward, rather than looking down at that origin.
     camera.position.set(0, 0.8, 0);
-    // The 400 m inner cutout already removes the oversized foreground. Keep
-    // the remaining terrain closer to the vertical centre so it uses the
-    // available modal height instead of leaving large empty bands.
-    camera.lookAt(0, 7, -70);
+    camera.lookAt(0, framing.targetY, -70);
+    const perspectiveCamera = camera as PerspectiveCamera;
+    if (perspectiveCamera.isPerspectiveCamera) {
+      perspectiveCamera.fov = framing.fov;
+    }
     camera.updateProjectionMatrix();
-  }, [camera]);
+  }, [camera, framing]);
   return null;
 }
 
@@ -149,7 +193,11 @@ function TerrainMesh({
   ];
   // The real elevation differences are preserved, but a modest vertical
   // exaggeration makes the terrain silhouette readable in the small panorama.
-  const terrainScale: [number, number, number] = [0.48, 1.05, 0.48];
+  const terrainScale: [number, number, number] = [
+    TERRAIN_HORIZONTAL_SCALE,
+    TERRAIN_VERTICAL_SCALE,
+    TERRAIN_HORIZONTAL_SCALE,
+  ];
 
   return (
     <>
@@ -189,7 +237,7 @@ export default function PeakTerrainGlRenderer({
         onCreated={() => onReady?.()}
       >
         <color attach="background" args={[backgroundColor]} />
-        <CameraRig />
+        <CameraRig terrainModel={terrainModel} />
         <TerrainMesh
           terrainModel={terrainModel}
           bearingDeg={bearingDeg}
