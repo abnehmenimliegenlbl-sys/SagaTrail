@@ -22,7 +22,7 @@ import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Magnetometer, Pedometer } from "expo-sensors";
+import { DeviceMotion, Magnetometer, Pedometer } from "expo-sensors";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -407,6 +407,80 @@ function smoothCompassHeading(previous: number | null, next: number, factor = 0.
   // nicht einmal quer über das Zifferblatt springt.
   const delta = ((next - previous + 540) % 360) - 180;
   return (previous + delta * factor + 360) % 360;
+}
+
+type CompassVector = { x: number; y: number; z: number };
+
+function compassVectorLength(vector: CompassVector): number {
+  return Math.hypot(vector.x, vector.y, vector.z);
+}
+
+/**
+ * Reduces the magnetometer to the horizontal plane before calculating the
+ * azimuth. A plain x/y atan2 becomes very noisy as soon as the phone is held
+ * upright, because gravity then changes which part of the magnetic field is
+ * visible on the x/y axes.
+ *
+ * The -90° offset preserves the portrait convention used by the previous
+ * compass card: a positive y magnetic vector represents north.
+ */
+function tiltCompensatedCompassHeading(
+  magnetic: CompassVector,
+  gravity: CompassVector,
+): number | null {
+  const gravityLength = compassVectorLength(gravity);
+  const magneticLength = compassVectorLength(magnetic);
+  if (
+    !Number.isFinite(gravityLength) ||
+    !Number.isFinite(magneticLength) ||
+    gravityLength < 6 ||
+    gravityLength > 14 ||
+    magneticLength < 10 ||
+    magneticLength > 120
+  ) {
+    return null;
+  }
+
+  const gx = gravity.x / gravityLength;
+  const gy = gravity.y / gravityLength;
+  const gz = gravity.z / gravityLength;
+
+  // Standard tilt compensation for the device coordinate system. The
+  // magnetometer is projected onto the plane perpendicular to gravity, so
+  // portrait tilt no longer turns into a fake compass rotation.
+  const pitch = Math.asin(Math.max(-1, Math.min(1, -gx)));
+  const roll = Math.atan2(gy, gz);
+  const cosPitch = Math.cos(pitch);
+  const sinPitch = Math.sin(pitch);
+  const cosRoll = Math.cos(roll);
+  const sinRoll = Math.sin(roll);
+  const horizontalX =
+    magnetic.x * cosPitch + magnetic.z * sinPitch;
+  const horizontalY =
+    magnetic.x * sinRoll * sinPitch +
+    magnetic.y * cosRoll -
+    magnetic.z * sinRoll * cosPitch;
+
+  if (!Number.isFinite(horizontalX) || !Number.isFinite(horizontalY)) {
+    return null;
+  }
+
+  const rawHeading =
+    (Math.atan2(horizontalY, horizontalX) * 180) / Math.PI - 90;
+  return (rawHeading + 360) % 360;
+}
+
+function circularMeanHeading(values: readonly number[]): number | null {
+  if (values.length === 0) return null;
+  let sine = 0;
+  let cosine = 0;
+  for (const value of values) {
+    const radians = (value * Math.PI) / 180;
+    sine += Math.sin(radians);
+    cosine += Math.cos(radians);
+  }
+  if (Math.hypot(sine, cosine) < 0.001) return null;
+  return ((Math.atan2(sine, cosine) * 180) / Math.PI + 360) % 360;
 }
 
 export default function LiveHike() {
@@ -848,6 +922,8 @@ export default function LiveHike() {
   /** Zeitpunkt des letzten akzeptierten GPS-Fixes fuer die Watcher-Wiederherstellung. */
   const lastLocationAtRef = useRef<number>(0);
   const compassHeadingRef = useRef<number | null>(null);
+  const compassGravityRef = useRef<CompassVector | null>(null);
+  const compassSamplesRef = useRef<number[]>([]);
   const livePlaceLookupRef = useRef<{ lat: number; lng: number; requestedAt: number } | null>(null);
   const livePlaceLookupGenerationRef = useRef(0);
   /** Ref auf die aktuelle Routen-Geometrie — ermoeglicht Zugriff aus handleFix (leere Deps). */
@@ -2480,7 +2556,8 @@ export default function LiveHike() {
   // Richtung zum Wegstart bleibt davon unabhängig.
   useEffect(() => {
     let cancelled = false;
-    let subscription: ReturnType<typeof Magnetometer.addListener> | null = null;
+    let magnetometerSubscription: ReturnType<typeof Magnetometer.addListener> | null = null;
+    let motionSubscription: ReturnType<typeof DeviceMotion.addListener> | null = null;
 
     if (Platform.OS === "web") {
       setCompassAvailable(false);
@@ -2489,22 +2566,77 @@ export default function LiveHike() {
       };
     }
 
-    void Magnetometer.isAvailableAsync()
-      .then((available) => {
-        if (cancelled) return;
-        setCompassAvailable(available);
-        if (!available) return;
+    compassHeadingRef.current = null;
+    compassGravityRef.current = null;
+    compassSamplesRef.current = [];
 
-        Magnetometer.setUpdateInterval(200);
-        subscription = Magnetometer.addListener(({ x, y }) => {
-          if (cancelled || !Number.isFinite(x) || !Number.isFinite(y)) return;
-          // In Portraitausrichtung zeigt atan2(-x, y) bei x=0/y>0 nach Norden.
-          // Das Minus auf X gleicht die Spiegelung der Magnetometer-Achse aus:
-          // Eine Drehung des Telefons nach rechts muss den Kurs ebenfalls
-          // im Uhrzeigersinn von Norden nach Osten bewegen.
-          const rawHeading = (Math.atan2(-x, y) * 180) / Math.PI;
-          const normalized = (rawHeading + 360) % 360;
-          const smoothed = smoothCompassHeading(compassHeadingRef.current, normalized);
+    void Promise.all([
+      Magnetometer.isAvailableAsync(),
+      DeviceMotion.isAvailableAsync(),
+    ])
+      .then(([magnetometerAvailable, motionAvailable]) => {
+        if (cancelled) return;
+        setCompassAvailable(magnetometerAvailable);
+        if (!magnetometerAvailable) return;
+
+        Magnetometer.setUpdateInterval(120);
+        if (motionAvailable) {
+          DeviceMotion.setUpdateInterval(120);
+          motionSubscription = DeviceMotion.addListener(
+            ({ accelerationIncludingGravity }) => {
+              const { x, y, z } = accelerationIncludingGravity;
+              if (
+                cancelled ||
+                !Number.isFinite(x) ||
+                !Number.isFinite(y) ||
+                !Number.isFinite(z)
+              ) {
+                return;
+              }
+              const previous = compassGravityRef.current;
+              const factor = previous == null ? 1 : 0.18;
+              compassGravityRef.current = previous
+                ? {
+                    x: previous.x + (x - previous.x) * factor,
+                    y: previous.y + (y - previous.y) * factor,
+                    z: previous.z + (z - previous.z) * factor,
+                  }
+                : { x, y, z };
+            },
+          );
+        }
+
+        magnetometerSubscription = Magnetometer.addListener(({ x, y, z }) => {
+          if (
+            cancelled ||
+            !Number.isFinite(x) ||
+            !Number.isFinite(y) ||
+            !Number.isFinite(z)
+          ) {
+            return;
+          }
+
+          const magnetic = { x, y, z };
+          const heading =
+            motionAvailable && compassGravityRef.current
+              ? tiltCompensatedCompassHeading(magnetic, compassGravityRef.current)
+              : tiltCompensatedCompassHeading(
+                  magnetic,
+                  { x: 0, y: 0, z: 9.80665 },
+                );
+          if (heading == null) return;
+
+          const samples = compassSamplesRef.current;
+          samples.push(heading);
+          if (samples.length > 7) samples.shift();
+          const robustHeading = circularMeanHeading(samples);
+          if (robustHeading == null) return;
+
+          const smoothed = smoothCompassHeading(
+            compassHeadingRef.current,
+            robustHeading,
+            0.18,
+          );
           compassHeadingRef.current = smoothed;
           setCompassHeading(smoothed);
         });
@@ -2515,8 +2647,10 @@ export default function LiveHike() {
 
     return () => {
       cancelled = true;
-      subscription?.remove();
-      subscription = null;
+      magnetometerSubscription?.remove();
+      motionSubscription?.remove();
+      magnetometerSubscription = null;
+      motionSubscription = null;
     };
   }, []);
 

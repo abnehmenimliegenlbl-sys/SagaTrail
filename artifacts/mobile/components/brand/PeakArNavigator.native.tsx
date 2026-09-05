@@ -75,7 +75,6 @@ interface PeakArSceneAppProps {
   routeGeometry?: readonly number[][] | null;
   observerPosition?: LatLng | null;
   mapLayer?: "topo" | "sat";
-  heading?: number | null;
   observerElevationM?: number | null;
   selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
@@ -342,7 +341,6 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     terrainModel = null,
     routeGeometry = null,
     observerPosition = null,
-    heading = null,
     observerElevationM = null,
     selectedPeakId = null,
     onPeakPress,
@@ -499,7 +497,6 @@ export function PeakArNavigator({
   routeGeometry = null,
   observerPosition = null,
   mapLayer = "topo",
-  heading = null,
   observerElevationM = null,
   selectedPeakId = null,
   onPeakPress,
@@ -548,7 +545,6 @@ export function PeakArNavigator({
       routeGeometry,
       observerPosition,
       mapLayer,
-      heading,
       observerElevationM,
       selectedPeakId,
       onPeakPress,
@@ -556,7 +552,6 @@ export function PeakArNavigator({
     }),
     [
       onError,
-      heading,
       observerElevationM,
       onPeakPress,
       peaks,
