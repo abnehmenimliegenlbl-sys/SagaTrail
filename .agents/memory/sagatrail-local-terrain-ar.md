@@ -52,3 +52,9 @@ The panorama card is a compass-driven 360° horizon view, not a 3D camera replac
 **Why:** The old card claimed a “3D view” while showing only a small heading-sorted 2D slice, and peaks outside that slice could not be discovered by swiping.
 
 **How to apply:** Keep the live compass as the automatic center, apply wrapped bearing math at the 0°/360° seam, load enough peaks for the full horizon, and keep the visible viewport narrower than the navigable 360° panorama.
+
+Wide geographic features such as rivers require dense real DTM sampling; texture resolution alone cannot make a coarse radial triangle follow a valley.
+
+**Why:** A coarse 5 km radial mesh draped the geographically correct Rhine texture across broad sloped triangles, making the river appear to climb the terrain.
+
+**How to apply:** Increase real SwissTopo sector/ring density within service limits and retain the missing-sector gap guard. Never invent intermediate heights or bridge missing rays for visual smoothness.

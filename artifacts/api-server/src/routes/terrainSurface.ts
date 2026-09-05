@@ -11,8 +11,8 @@ const BodySchema = z.object({
     lng: z.number().finite().min(5).max(11),
   }),
   radiusM: z.number().finite().min(100).max(5000).optional(),
-  sectors: z.number().int().min(8).max(36).optional(),
-  rings: z.number().int().min(4).max(16).optional(),
+  sectors: z.number().int().min(8).max(72).optional(),
+  rings: z.number().int().min(4).max(24).optional(),
 });
 
 const SwissCoordinateSchema = z.tuple([
