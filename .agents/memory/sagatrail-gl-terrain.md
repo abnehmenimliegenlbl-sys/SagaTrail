@@ -26,3 +26,9 @@ Use the label-free SwissTopo SWISSIMAGE orthophoto for the panorama texture, not
 **Why:** Place names and map symbols compete with terrain silhouettes and peak labels. The physical-iPhone comparison confirmed SWISSIMAGE is markedly clearer in the panorama.
 
 **How to apply:** Keep the normal SwissTopo map available for route-oriented views where paths and labels aid navigation; this choice is specific to the panorama.
+
+Keep the last successfully loaded panorama texture visible while refreshed terrain or imagery loads. Do not reset GL readiness merely because `fetchedAt` changes, and do not clear the current texture before its replacement is ready.
+
+**Why:** Fast panning and terrain refreshes exposed the red SVG/material fallback for a frame. Physical-iPhone testing confirmed stale-while-revalidate removes the flash without interrupting movement.
+
+**How to apply:** Reset GL readiness only when there is no terrain model at all. Swap textures atomically after the new native texture has completed loading.
