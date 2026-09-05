@@ -619,7 +619,9 @@ export function PeakPanorama({
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => heading != null && peaks.length > 0,
+        // Do not claim taps immediately: controls inside the panorama (such as
+        // Karte/Sat) must receive them. Claim only an actual horizontal drag.
+        onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4,
         onPanResponderGrant: () => {
           panStartOffsetRef.current = panOffsetValueRef.current;
