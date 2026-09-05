@@ -25,6 +25,7 @@ import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng, RecognitionJournalEntry } from "@/types";
+import { PeakTerrainPreview } from "./PeakTerrainPreview";
 
 const PANORAMA_VIEW_DEGREES = 140;
 const PANORAMA_TOTAL_DEGREES = 140;
@@ -705,6 +706,7 @@ export function PeakPanorama({
       heading,
     ],
   );
+  const usesViroTerrain = Platform.OS !== "web" && terrainModel != null;
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
     const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
     return {
@@ -910,8 +912,20 @@ export function PeakPanorama({
         {...panResponder.panHandlers}
         accessibilityLabel={strings.title}
       >
+        {usesViroTerrain && terrainModel && (
+          <PeakTerrainPreview
+            terrainModel={terrainModel}
+            bearingDeg={viewCenterBearing}
+          />
+        )}
         <Svg width="100%" height="100%" viewBox="0 0 360 350">
-          <Rect x="0" y="0" width="360" height="350" fill={colors.glassBg} />
+          <Rect
+            x="0"
+            y="0"
+            width="360"
+            height="350"
+            fill={usesViroTerrain ? "transparent" : colors.glassBg}
+          />
           <Line x1="0" y1="205" x2="360" y2="205" stroke={colors.glassBorder} strokeWidth="1" />
           <Line x1="0" y1="274" x2="360" y2="274" stroke={colors.glassBorder} strokeWidth="1" />
           <G opacity={0.34}>
@@ -956,7 +970,7 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-           {panoramaMesh.terrainFaces.map((face, index) => (
+           {!usesViroTerrain && panoramaMesh.terrainFaces.map((face, index) => (
              <Polygon
                key={`terrain-face-${index}`}
                points={face.points}
@@ -967,7 +981,7 @@ export function PeakPanorama({
                strokeWidth="0.35"
              />
            ))}
-           {panoramaMesh.terrainLines.map((line, index) => (
+           {!usesViroTerrain && panoramaMesh.terrainLines.map((line, index) => (
              <Polyline
                key={`terrain-${index}`}
                points={line.points}
