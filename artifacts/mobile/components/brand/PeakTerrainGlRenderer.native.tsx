@@ -550,10 +550,13 @@ function TerrainMesh({
           >
             <meshBasicMaterial
               map={texture}
-              color={tile.detail ? "#FF00FF" : "#FFFFFF"}
+              color="#FFFFFF"
               side={DoubleSide}
-              depthTest={!tile.detail}
-              depthWrite={!tile.detail}
+              depthTest
+              depthWrite
+              polygonOffset={tile.detail}
+              polygonOffsetFactor={tile.detail ? -2 : 0}
+              polygonOffsetUnits={tile.detail ? -4 : 0}
             />
           </mesh>
         );
