@@ -84,7 +84,7 @@ function CameraRig() {
     camera.position.set(0, 0.8, 0);
     // Aim slightly above horizontal so nearby ground does not consume the
     // lower half of the compact panorama; distant terrain stays in view.
-    camera.lookAt(0, 11, -70);
+    camera.lookAt(0, 14, -70);
     camera.updateProjectionMatrix();
   }, [camera]);
   return null;
