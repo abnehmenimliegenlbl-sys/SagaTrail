@@ -1135,7 +1135,6 @@ export default function LiveHike() {
       ...requestPosition,
       requestedAt: Date.now(),
     };
-    let cancelled = false;
     fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1151,15 +1150,21 @@ export default function LiveHike() {
         return response.json() as Promise<unknown>;
       })
       .then((data) => {
-        if (!cancelled && isLocalTerrainModel(data)) setTerrainModel(data);
+        if (isLocalTerrainModel(data)) {
+          setTerrainModel(data);
+          return;
+        }
+        throw new Error("Ungültiges lokales Terrainmodell");
       })
       .catch(() => {
-        // Offline-Fallback bleibt erhalten; ohne gültiges Modell wird nichts
-        // verdeckt und die Gipfel bleiben sichtbar.
+        const activeRequest = terrainModelRequestRef.current;
+        if (
+          activeRequest?.lat === requestPosition.lat &&
+          activeRequest.lng === requestPosition.lng
+        ) {
+          terrainModelRequestRef.current = null;
+        }
       });
-    return () => {
-      cancelled = true;
-    };
   }, [hasFreshGps, livePos?.lat, livePos?.lng]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
