@@ -19,6 +19,7 @@ import type {
   PeakTerrainGlProps,
   PeakTerrainTextureMode,
 } from "./PeakTerrainGl.types";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
 const TERRAIN_MINIMUM_RADIUS_M = 300;
@@ -29,6 +30,14 @@ function swissTopoTextureUrl(
   model: LocalTerrainModel,
   textureMode: PeakTerrainTextureMode,
 ): string {
+  if (textureMode === "map") {
+    const params = new URLSearchParams({
+      lat: String(model.center.lat),
+      lng: String(model.center.lng),
+      radiusM: String(model.radiusM),
+    });
+    return `${getApiBaseUrl() ?? ""}/api/terrain-map?${params.toString()}`;
+  }
   const latitudeRadiusDeg = model.radiusM / 111_320;
   const longitudeRadiusDeg =
     model.radiusM /
@@ -40,10 +49,7 @@ function swissTopoTextureUrl(
     SERVICE: "WMS",
     REQUEST: "GetMap",
     VERSION: "1.3.0",
-    LAYERS:
-      textureMode === "satellite"
-        ? "ch.swisstopo.swissimage"
-        : "ch.swisstopo.pixelkarte-farbe",
+    LAYERS: "ch.swisstopo.swissimage",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: [

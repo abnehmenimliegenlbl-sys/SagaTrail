@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 
 import { computeLocalTerrainModel, computeTerrainCorridor } from "../lib/elevation";
+import { createOpenTopoPanoramaMap } from "../lib/openTopoMosaic";
 
 const router: IRouter = Router();
 
@@ -31,6 +32,12 @@ const CorridorBodySchema = z.object({
     .default({}),
 });
 
+const PanoramaMapQuerySchema = z.object({
+  lat: z.coerce.number().finite().min(45).max(48.5),
+  lng: z.coerce.number().finite().min(5).max(11),
+  radiusM: z.coerce.number().finite().min(100).max(5000).default(5000),
+});
+
 /**
  * POST /terrain-surface
  * Liefert ein observer-zentriertes, radial abgetastetes SwissTopo-Modell.
@@ -54,6 +61,27 @@ router.post("/terrain-surface", async (req: Request, res: Response): Promise<voi
   } catch (err) {
     req.log.error({ err }, "Lokales Terrainmodell fehlgeschlagen");
     res.status(502).json({ error: "Lokales Terrainmodell konnte nicht geladen werden." });
+  }
+});
+
+router.get("/terrain-map", async (req: Request, res: Response): Promise<void> => {
+  const parsed = PanoramaMapQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Gültige Schweizer Kartenkoordinaten erwartet." });
+    return;
+  }
+  try {
+    const png = await createOpenTopoPanoramaMap(
+      parsed.data.lat,
+      parsed.data.lng,
+      parsed.data.radiusM,
+    );
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=600");
+    res.send(png);
+  } catch (err) {
+    req.log.error({ err }, "OpenTopoMap-Panoramatextur fehlgeschlagen");
+    res.status(502).json({ error: "OpenTopoMap-Panoramatextur konnte nicht geladen werden." });
   }
 });
 

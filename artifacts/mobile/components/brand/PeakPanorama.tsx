@@ -13,8 +13,6 @@ import Svg, {
   Circle,
   G,
   Line,
-  Polygon,
-  Polyline,
   Rect,
   Text as SvgText,
 } from "react-native-svg";
@@ -1012,27 +1010,6 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-           {!terrainGlReady && panoramaMesh.terrainFaces.map((face, index) => (
-             <Polygon
-               key={`terrain-face-${index}`}
-               points={face.points}
-               fill={face.tone === "light" ? colors.primary : colors.accent}
-               fillOpacity={face.opacity}
-               stroke={colors.accent}
-               strokeOpacity={0.16}
-               strokeWidth="0.35"
-             />
-           ))}
-           {!terrainGlReady && panoramaMesh.terrainLines.map((line, index) => (
-             <Polyline
-               key={`terrain-${index}`}
-               points={line.points}
-               fill="none"
-               stroke={colors.accent}
-               strokeOpacity={line.opacity}
-               strokeWidth="1.15"
-             />
-           ))}
            <Line
              x1="180"
               y1="12"
