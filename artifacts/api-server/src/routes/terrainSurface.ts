@@ -27,7 +27,7 @@ const CorridorBodySchema = z.object({
     .object({
       rows: z.number().int().min(12).max(80).default(32),
       columns: z.number().int().min(5).max(13).default(9),
-      halfWidthM: z.number().finite().min(100).max(100_000).default(500),
+      halfWidthM: z.number().finite().min(100).max(1500).default(500),
     })
     .default({}),
 });

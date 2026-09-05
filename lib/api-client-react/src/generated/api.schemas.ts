@@ -18,7 +18,7 @@ export type TerrainCorridorRequestOptions = {
   columns?: number;
   /**
      * @minimum 100
-     * @maximum 100000
+     * @maximum 1500
      */
   halfWidthM?: number;
 };
