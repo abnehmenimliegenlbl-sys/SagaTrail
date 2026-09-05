@@ -26,6 +26,8 @@ const TERRAIN_MINIMUM_RADIUS_M = 0;
 const CAMERA_FRAMING_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
+const CAMERA_LOOK_TARGET_WORLD_DISTANCE = 70;
+const PANORAMA_DETAIL_TILE_COUNT = 20;
 
 type TextureBounds = {
   uMin: number;
@@ -64,15 +66,15 @@ const PANORAMA_BASE_TILES: PanoramaTile[] = Array.from(
 ).flat();
 
 const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
-  { length: 8 },
+  { length: PANORAMA_DETAIL_TILE_COUNT },
   (_, row) =>
-    Array.from({ length: 8 }, (_, column) => ({
+    Array.from({ length: PANORAMA_DETAIL_TILE_COUNT }, (_, column) => ({
       key: `detail-${row}-${column}`,
       bounds: {
-        uMin: 0.3 + column * 0.05,
-        uMax: 0.3 + (column + 1) * 0.05,
-        vMin: 0.3 + row * 0.05,
-        vMax: 0.3 + (row + 1) * 0.05,
+        uMin: column / PANORAMA_DETAIL_TILE_COUNT,
+        uMax: (column + 1) / PANORAMA_DETAIL_TILE_COUNT,
+        vMin: row / PANORAMA_DETAIL_TILE_COUNT,
+        vMax: (row + 1) / PANORAMA_DETAIL_TILE_COUNT,
       },
       size: 1024,
       detail: true,
@@ -83,8 +85,21 @@ function bearingDifferenceDeg(left: number, right: number): number {
   return Math.abs(((left - right + 540) % 360) - 180);
 }
 
-function visibleDetailTiles(bearingDeg: number): PanoramaTile[] {
-  return PANORAMA_DETAIL_TILES.map((tile) => {
+function visibleDetailTiles(
+  bearingDeg: number,
+  terrainRadiusM: number,
+): PanoramaTile[] {
+  const targetDistance =
+    CAMERA_LOOK_TARGET_WORLD_DISTANCE /
+    (TERRAIN_WORLD_UNITS_PER_METRE * TERRAIN_HORIZONTAL_SCALE);
+  const targetUvDistance = Math.min(
+    0.48,
+    targetDistance / Math.max(1, terrainRadiusM * 2),
+  );
+  const bearingRad = (bearingDeg * Math.PI) / 180;
+  const targetEast = Math.sin(bearingRad) * targetUvDistance;
+  const targetNorth = Math.cos(bearingRad) * targetUvDistance;
+  const ranked = PANORAMA_DETAIL_TILES.map((tile) => {
     const east = (tile.bounds.uMin + tile.bounds.uMax) / 2 - 0.5;
     const north = (tile.bounds.vMin + tile.bounds.vMax) / 2 - 0.5;
     const distance = Math.hypot(east, north);
@@ -94,15 +109,28 @@ function visibleDetailTiles(bearingDeg: number): PanoramaTile[] {
       tile,
       distance,
       difference: bearingDifferenceDeg(tileBearing, bearingDeg),
+      targetDistance: Math.hypot(
+        east - targetEast,
+        north - targetNorth,
+      ),
     };
-  })
-    .filter(({ distance, difference }) => distance < 0.071 || difference <= 85)
+  });
+  const immediate = ranked
+    .filter(({ distance }) => distance < 0.071)
+    .sort((left, right) => left.distance - right.distance)
+    .slice(0, 4);
+  const focal = ranked
+    .filter(
+      ({ distance, difference }) =>
+        distance >= 0.071 && difference <= 55,
+    )
     .sort(
       (left, right) =>
-        left.distance - right.distance || left.difference - right.difference,
+        left.targetDistance - right.targetDistance ||
+        left.difference - right.difference,
     )
-    .slice(0, 24)
-    .map(({ tile }) => tile);
+    .slice(0, 20);
+  return [...immediate, ...focal].map(({ tile }) => tile);
 }
 
 function swissTopoTextureUrl(
@@ -314,7 +342,11 @@ function CameraRig({ terrainModel }: { terrainModel: LocalTerrainModel }) {
     // Panorama viewpoint: the observer is the geographic origin of the radial
     // DTM mesh and looks outward, rather than looking down at that origin.
     camera.position.set(0, 0.8, 0);
-    camera.lookAt(0, framing.targetY, -70);
+    camera.lookAt(
+      0,
+      framing.targetY,
+      -CAMERA_LOOK_TARGET_WORLD_DISTANCE,
+    );
     const perspectiveCamera = camera as PerspectiveCamera;
     if (perspectiveCamera.isPerspectiveCamera) {
       perspectiveCamera.fov = framing.fov;
@@ -343,8 +375,8 @@ function TerrainMesh({
   );
   const detailBearingBucket = Math.round(bearingDeg / 15) * 15;
   const selectedDetailTiles = useMemo(
-    () => visibleDetailTiles(detailBearingBucket),
-    [detailBearingBucket],
+    () => visibleDetailTiles(detailBearingBucket, terrainModel.radiusM),
+    [detailBearingBucket, terrainModel.radiusM],
   );
   const baseTiles = PANORAMA_BASE_TILES;
   const tiles = useMemo<PanoramaTile[]>(

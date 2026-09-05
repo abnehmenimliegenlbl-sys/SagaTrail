@@ -63,8 +63,8 @@ Use one uniform 2048Ã—2048 WMS texture for both panorama modes rather than 3072Ã
 
 **How to apply:** Keep map and satellite dimensions identical. Re-measure both layers before increasing them, and account for native download and texture-upload memory rather than validating only HTTP status.
 
-The normal panorama's satellite mode uses tiled imagery: keep a lower-resolution overview layer, then load higher-resolution SWISSIMAGE tiles near the observer while retaining the existing peak markers and elevation profiles.
+The normal panorama uses tiled imagery: keep a lower-resolution overview layer, then load higher-resolution tiles from a full-terrain grid around the current camera focal footprint while retaining peak markers and elevation profiles.
 
-**Why:** A single texture spread across the full panorama radius becomes visibly soft nearby. The route-wide GL view showed that aligned base tiles plus a small moving set of detail tiles can improve close-range sharpness without keeping every high-resolution image in GPU memory.
+**Why:** A central-only detail pool can load successfully yet never cover the visible focal terrain: the outward panorama camera focuses several kilometres ahead. Aligned base tiles plus a small moving detail set improve sharpness without keeping the full grid in GPU memory.
 
-**How to apply:** Align overview tiles to shared terrain-mesh boundaries, preload nearby detail tiles, evict passed tiles, and leave the overview visible when detail loading fails. This belongs in `PeakTerrainGl`/`PeakPanorama`, not the AR renderer.
+**How to apply:** Define descriptors across the complete terrain UV domain, retain a few observer-adjacent tiles, and choose the rest around the bearing-dependent camera target. Cap resident details, disable mipmaps for memory safety, evict deselected tiles, and leave the overview visible on failures.
