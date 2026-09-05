@@ -927,7 +927,12 @@ export function PeakPanorama({
             onReady={() => setTerrainGlReady(true)}
           />
         )}
-        <Svg width="100%" height="100%" viewBox="0 0 360 350">
+        <Svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 360 350"
+          preserveAspectRatio="none"
+        >
           <Rect
             x="0"
             y="0"

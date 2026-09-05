@@ -32,3 +32,9 @@ Keep the last successfully loaded panorama texture visible while refreshed terra
 **Why:** Fast panning and terrain refreshes exposed the red SVG/material fallback for a frame. Physical-iPhone testing confirmed stale-while-revalidate removes the flash without interrupting movement.
 
 **How to apply:** Reset GL readiness only when there is no terrain model at all. Swap textures atomically after the new native texture has completed loading.
+
+The panorama SVG overlay must use `preserveAspectRatio="none"` when it fills the tall, flexible native panorama container.
+
+**Why:** The default SVG `meet` behavior preserved the old 360×350 aspect ratio and vertically centered it, creating large apparent gaps above and below guide lines even though the container itself already filled the modal.
+
+**How to apply:** Keep the overlay viewBox for its coordinate system, but disable aspect-ratio preservation whenever the panorama height is flexible. Otherwise line-coordinate changes cannot remove the letterboxing.
