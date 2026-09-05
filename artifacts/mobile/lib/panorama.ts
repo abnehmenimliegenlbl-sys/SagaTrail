@@ -74,6 +74,47 @@ export interface PanoramaGipfelDatensatz {
   elevationM: number | null;
 }
 
+export function selectPanoramaPeaks(
+  candidates: readonly PanoramaGipfel[],
+  maxPeaks: number,
+): PanoramaGipfel[] {
+  const limit = Math.max(0, maxPeaks);
+  if (limit === 0) return [];
+  if (candidates.length <= limit) return [...candidates];
+
+  const selected = [candidates[0]];
+  const selectedIds = new Set([candidates[0]?.id]);
+  while (selected.length < limit) {
+    let bestCandidate: PanoramaGipfel | null = null;
+    let bestAngularDistance = -1;
+    for (const candidate of candidates) {
+      if (selectedIds.has(candidate.id)) continue;
+      const nearestDistance = selected.reduce((minimum, chosen) => {
+        const distance = Math.abs(
+          ((candidate.bearingDeg - chosen.bearingDeg + 540) % 360) - 180,
+        );
+        return Math.min(minimum, distance);
+      }, 180);
+      if (
+        nearestDistance > bestAngularDistance ||
+        (nearestDistance === bestAngularDistance &&
+          (!bestCandidate || candidate.distanceKm < bestCandidate.distanceKm))
+      ) {
+        bestCandidate = candidate;
+        bestAngularDistance = nearestDistance;
+      }
+    }
+    if (!bestCandidate) break;
+    selected.push(bestCandidate);
+    selectedIds.add(bestCandidate.id);
+  }
+  return selected.sort((a, b) => {
+    const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
+    const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
+    return aAngle - bAngle || a.distanceKm - b.distanceKm;
+  });
+}
+
 export interface OfflinePanoramaDatenbank {
   version: number;
   source: string;
@@ -239,38 +280,5 @@ export function erkenneGipfel(
   // Immer den noch grössten vorhandenen Winkelabstand besetzen. Damit
   // kommen echte Gipfel in unterrepräsentierte Richtungen, statt dass viele
   // nahe Gipfel aus einer einzigen Richtung alle Plätze verbrauchen.
-  const selected = [candidates[0]];
-  const selectedIds = new Set([candidates[0]?.id]);
-  for (const peak of candidates) {
-    if (selected.length >= limit) break;
-    if (selectedIds.has(peak.id)) continue;
-    let bestCandidate = peak;
-    let bestAngularDistance = -1;
-    for (const candidate of candidates) {
-      if (selectedIds.has(candidate.id)) continue;
-      const candidateAngle = candidate.bearingDeg;
-      const nearestDistance = selected.reduce((minimum, chosen) => {
-        const distance = Math.abs(
-          ((candidateAngle - chosen.bearingDeg + 540) % 360) - 180,
-        );
-        return Math.min(minimum, distance);
-      }, 180);
-      if (
-        nearestDistance > bestAngularDistance ||
-        (nearestDistance === bestAngularDistance &&
-          candidate.distanceKm < bestCandidate.distanceKm)
-      ) {
-        bestCandidate = candidate;
-        bestAngularDistance = nearestDistance;
-      }
-    }
-    selected.push(bestCandidate);
-    selectedIds.add(bestCandidate.id);
-  }
-
-  return selected.sort((a, b) => {
-    const aAngle = a.relativeBearingDeg == null ? 180 : Math.abs(a.relativeBearingDeg);
-    const bAngle = b.relativeBearingDeg == null ? 180 : Math.abs(b.relativeBearingDeg);
-    return aAngle - bAngle || a.distanceKm - b.distanceKm;
-  });
+  return selectPanoramaPeaks(candidates, limit);
 }

@@ -106,7 +106,11 @@ import {
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
-import { erkenneGipfel, PANORAMA_ROUTE_CORRIDOR_KM } from "@/lib/panorama";
+import {
+  erkenneGipfel,
+  PANORAMA_ROUTE_CORRIDOR_KM,
+  selectPanoramaPeaks,
+} from "@/lib/panorama";
 import * as ImagePicker from "expo-image-picker";
 import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
@@ -3340,13 +3344,17 @@ export default function LiveHike() {
     [displayedPois, panoramaOnlinePois, offlinePanorama],
   );
   const panoramaPeaks = useMemo(
-    () => erkenneGipfel(
-      panoramaPois,
-      hasFreshGps ? livePos : null,
-      compassHeading,
-      hasFreshGps ? liveAltitude : null,
+    () =>
+      selectPanoramaPeaks(
+        erkenneGipfel(
+          panoramaPois,
+          hasFreshGps ? livePos : null,
+          compassHeading,
+          hasFreshGps ? liveAltitude : null,
+          80,
+        ),
         40,
-    ),
+      ),
     [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );
   const panoramaArCandidates = useMemo(
