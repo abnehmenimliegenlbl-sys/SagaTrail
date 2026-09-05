@@ -271,13 +271,16 @@ export function buildLocalTerrainRouteLines(
   routeGeometry: readonly number[][] | null | undefined,
   headingDeg: number | null | undefined,
   centerOverride?: LatLng | null,
+  maxDisplayRadiusM?: number,
 ): TerrainRouteLine[] {
   const observerElevation = model?.observerElevationM;
   // The live GPS position is the actual Viro observer origin. The terrain
   // model can be up to two minutes / 120 m old, so preferring model.center
   // here can move the route outside the local radius and yield no line at all.
   const center = centerOverride ?? model?.center;
-  const radiusM = model?.radiusM ?? 500;
+  // The displayed route may extend beyond the DTM coverage. Outside that
+  // coverage the route stays level; terrain elevation is never fabricated.
+  const radiusM = maxDisplayRadiusM ?? model?.radiusM ?? 500;
   if (
     !center ||
     !Array.isArray(routeGeometry) ||
@@ -370,8 +373,15 @@ export function buildGeographicTerrainRouteLines(
   model: LocalTerrainModel | null | undefined,
   routeGeometry: readonly number[][] | null | undefined,
   centerOverride?: LatLng | null,
+  maxDisplayRadiusM?: number,
 ): TerrainRouteLine[] {
-  return buildLocalTerrainRouteLines(model, routeGeometry, null, centerOverride);
+  return buildLocalTerrainRouteLines(
+    model,
+    routeGeometry,
+    null,
+    centerOverride,
+    maxDisplayRadiusM,
+  );
 }
 
 /**

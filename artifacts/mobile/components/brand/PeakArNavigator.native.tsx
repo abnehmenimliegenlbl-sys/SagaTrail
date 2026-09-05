@@ -29,8 +29,11 @@ const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
 const TERRAIN_ROUTE_MATERIAL = "sagatrailTerrainRoute";
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
-const PEAK_RED = "#D71920";
+const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
+// Keep the visible AR route longer than the observer-centred DTM. Only the
+// first 500 m have real terrain samples; farther sections stay level.
+const AR_ROUTE_DISPLAY_RADIUS_M = 2_000;
 // Viro's AR origin is near the camera, while the visible landscape starts at
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
@@ -47,7 +50,7 @@ ViroMaterials.createMaterials({
   },
   [TERRAIN_ROUTE_MATERIAL]: {
     lightingModel: "Constant",
-    diffuseColor: "#FFD166",
+    diffuseColor: PEAK_RED,
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -225,7 +228,13 @@ function TerrainHologram({
   observerPosition: LatLng | null | undefined;
 }) {
   const routeLines = useMemo<TerrainRouteLine[]>(
-    () => buildGeographicTerrainRouteLines(model, routeGeometry, observerPosition),
+    () =>
+      buildGeographicTerrainRouteLines(
+        model,
+        routeGeometry,
+        observerPosition,
+        AR_ROUTE_DISPLAY_RADIUS_M,
+      ),
     [model, routeGeometry, observerPosition],
   );
 
@@ -235,6 +244,7 @@ function TerrainHologram({
       observerElevationM: model?.observerElevationM ?? null,
       routePointCount: routeGeometry?.length ?? 0,
       lineCount: routeLines.length,
+      displayRadiusM: AR_ROUTE_DISPLAY_RADIUS_M,
     });
   }, [model, routeGeometry, routeLines.length]);
 
