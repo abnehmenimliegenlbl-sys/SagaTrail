@@ -456,9 +456,31 @@ export function PeakPanorama({
   const fixedElevationRangeRef = useRef<PanoramaAltitudeRange | null>(null);
   const [profileRevision, setProfileRevision] = useState(0);
   const [profilesComplete, setProfilesComplete] = useState(false);
+  const [terrainLoadPercent, setTerrainLoadPercent] = useState(
+    terrainModel ? 100 : 8,
+  );
   const panStartOffsetRef = useRef(0);
   panOffsetValueRef.current = panOffsetDeg;
   const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
+
+  useEffect(() => {
+    if (terrainModel) {
+      setTerrainLoadPercent(100);
+      return;
+    }
+    if (!hasGps) {
+      setTerrainLoadPercent(0);
+      return;
+    }
+    setTerrainLoadPercent(8);
+    const timer = setInterval(() => {
+      setTerrainLoadPercent((current) =>
+        Math.min(92, current + Math.max(1, Math.round((92 - current) * 0.12))),
+      );
+    }, 300);
+    return () => clearInterval(timer);
+  }, [terrainModel, hasGps]);
+
   const displayBearing = (peak: PanoramaGipfel): number | null =>
     peak.relativeBearingDeg == null
       ? null
@@ -797,24 +819,26 @@ export function PeakPanorama({
           </Text>
         )}
       </View>
-      {profileObserver && profileCandidates.length > 0 && !profilesComplete && (
+      {hasGps && !terrainModel && (
         <View
           style={styles.profileProgress}
-          accessibilityLabel={`${loadedProfileCount}/${profileCandidates.length} Topo-Profile geladen`}
+          accessibilityLabel="Höhenprofil wird geladen"
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: terrainLoadPercent }}
         >
           <View style={styles.profileProgressHeader}>
             <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
-              TOPO-PROFILE
+              HÖHENPROFIL WIRD GELADEN
             </Text>
             <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
-              {loadedProfileCount}/{profileCandidates.length}
+              {terrainLoadPercent}%
             </Text>
           </View>
           <View style={[styles.profileProgressTrack, { backgroundColor: colors.glassHighlight }]}>
             <View
               style={[
                 styles.profileProgressFill,
-                { width: `${profileLoadPercent}%`, backgroundColor: colors.accent },
+                { width: `${terrainLoadPercent}%`, backgroundColor: colors.accent },
               ]}
             />
           </View>
@@ -943,11 +967,6 @@ export function PeakPanorama({
                strokeWidth="1.15"
              />
            ))}
-           {panoramaMesh.terrainLines.length === 0 && (
-             <SvgText x="180" y="164" fill={colors.mutedForeground} fontSize="9" textAnchor="middle">
-               {terrainModel ? "Keine gültigen SwissTopo-DTM-Daten" : "SwissTopo-DTM wird geladen …"}
-             </SvgText>
-           )}
            <Line
              x1="180"
              y1="23"
