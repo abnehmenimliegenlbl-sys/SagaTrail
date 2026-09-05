@@ -22,3 +22,9 @@ For the live route projection, prefer the current GPS observer position over `te
 **Why:** A valid route with 166 points produced zero Viro polylines because all points were evaluated against a stale terrain-model center, so the route silently disappeared.
 
 **How to apply:** Keep `terrainModel.center` as the fallback only when no live observer position exists. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.
+
+AR route input must use the active `navigationGeometry`, not the original catalog `route.geometry`. After a start detour is accepted, `navigationGeometry` contains the combined detour plus remaining official route and is the same geometry used by map, progress, and narration.
+
+**Why:** Passing the catalog geometry to AR made the overlay continue pointing at the old route even though the app had already accepted and followed a newly calculated route from the user's current location.
+
+**How to apply:** At every AR entry point pass the active geometry; keep the original route only for catalog metadata and fallback before a detour exists.

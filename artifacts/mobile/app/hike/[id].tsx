@@ -4444,7 +4444,10 @@ export default function LiveHike() {
           arCandidates={panoramaArCandidates}
           terrainProfile={terrainProfile}
           terrainModel={terrainModel}
-          routeGeometry={route?.geometry}
+          // AR muss dieselbe aktive Geometrie wie Karte, Navigation und
+          // Fortschritt verwenden — nach einer Start-Umleitung ist das die
+          // kombinierte navigationGeometry und nicht mehr route.geometry.
+          routeGeometry={navigationGeometry}
           observerPosition={livePos}
           heading={compassHeading}
           observerElevationM={hasFreshGps ? liveAltitude : null}
