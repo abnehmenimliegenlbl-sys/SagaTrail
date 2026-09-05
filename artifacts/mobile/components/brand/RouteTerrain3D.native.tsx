@@ -15,6 +15,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
+  MultiplyBlending,
   Texture,
   Vector3,
 } from "three";
@@ -70,6 +71,24 @@ function swissTopoTextureUrl(grid: TerrainGrid): string {
     WIDTH: "1024",
     HEIGHT: "1024",
     FORMAT: "image/jpeg",
+  }).toString()}`;
+}
+
+function swissSurfaceReliefUrl(grid: TerrainGrid): string {
+  const { south, west, north, east } = grid.bounds;
+  return `https://wms.geo.admin.ch/?${new URLSearchParams({
+    SERVICE: "WMS",
+    REQUEST: "GetMap",
+    VERSION: "1.3.0",
+    LAYERS:
+      "ch.swisstopo.swisssurface3d-reliefschattierung-multidirektional",
+    STYLES: "default",
+    CRS: "EPSG:4326",
+    BBOX: `${south},${west},${north},${east}`,
+    WIDTH: "1024",
+    HEIGHT: "1024",
+    FORMAT: "image/png",
+    TRANSPARENT: "TRUE",
   }).toString()}`;
 }
 
@@ -236,6 +255,7 @@ function Scene({
     [model.geometry],
   );
   const [texture, setTexture] = useState<Texture | null>(null);
+  const [reliefTexture, setReliefTexture] = useState<Texture | null>(null);
   const [progress, setProgress] = useState(0);
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
@@ -257,8 +277,26 @@ function Scene({
       active = false;
     };
   }, [model.grid]);
+  useEffect(() => {
+    let active = true;
+    loadNativeThreeTexture(swissSurfaceReliefUrl(model.grid))
+      .then((loaded) => {
+        if (!active) {
+          loaded.dispose();
+          return;
+        }
+        setReliefTexture(loaded);
+      })
+      .catch((error) => {
+        console.warn("[RouteTerrain3D] swissSURFACE3D relief failed", error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [model.grid]);
   useEffect(() => () => terrain.dispose(), [terrain]);
   useEffect(() => () => texture?.dispose(), [texture]);
+  useEffect(() => () => reliefTexture?.dispose(), [reliefTexture]);
 
   const route = useMemo(() => {
     return model.geometry
@@ -402,6 +440,21 @@ function Scene({
             roughness={1}
             metalness={0}
             side={DoubleSide}
+          />
+        </mesh>
+      )}
+      {texture && reliefTexture && (
+        <mesh geometry={terrain}>
+          <meshBasicMaterial
+            map={reliefTexture}
+            transparent
+            opacity={0.3}
+            blending={MultiplyBlending}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-1}
+            side={DoubleSide}
+            toneMapped={false}
           />
         </mesh>
       )}

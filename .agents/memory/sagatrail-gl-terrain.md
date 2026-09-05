@@ -15,6 +15,12 @@ For the full-screen route view, use an axis-aligned rectangular SwissTopo terrai
 
 **How to apply:** Sample the rectangle row-by-row with bounded concurrency. Never pass this area through the generic profile interpolation, which can bridge missing samples; retain nulls at interior and coverage-edge gaps. Use route distance separately for animation and grade lookup.
 
+Keep swissALTI3D-derived DTM values as the authoritative ground geometry in the full-route view. Add visual surface detail by multiplying the official multidirectional swissSURFACE3D Raster hillshade over SWISSIMAGE; do not treat vegetation or building tops as hiking elevation.
+
+**Why:** Raw swissSURFACE3D Raster is delivered as large 1 km COG tiles and is impractical across a full mobile route. Its official WMS hillshade adds forest, rock, and built-surface depth without replacing honest ground heights.
+
+**How to apply:** Load SWISSIMAGE as the required base texture and `ch.swisstopo.swisssurface3d-reliefschattierung-multidirektional` as an optional transparent overlay. If the overlay fails, keep the satellite texture visible.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
