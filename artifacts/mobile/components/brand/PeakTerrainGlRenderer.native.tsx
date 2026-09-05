@@ -1,5 +1,5 @@
 import { Canvas, useThree } from "@react-three/fiber/native";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   BufferAttribute,
@@ -141,11 +141,14 @@ function TerrainMesh({
   terrainModel,
   bearingDeg,
   fallbackColor,
+  onReady,
 }: Pick<
   PeakTerrainGlProps,
-  "terrainModel" | "bearingDeg" | "fallbackColor"
+  "terrainModel" | "bearingDeg" | "fallbackColor" | "onReady"
 >) {
   const renderer = useThree((state) => state.gl);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const localMesh = useMemo(
     () => buildLocalTerrainMesh(terrainModel, 0),
     [terrainModel],
@@ -161,19 +164,40 @@ function TerrainMesh({
     // Keep the previous geographic texture visible until its replacement has
     // fully downloaded and reached Expo GL. Fast pan/heading updates must not
     // expose the solid-color loading material between valid textures.
-    loadNativeThreeTexture(swissTopoTextureUrl(terrainModel))
-      .then((loadedTexture) => {
-        if (!active) {
-          loadedTexture.dispose();
+    const loadTexture = async () => {
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < 3 && active; attempt += 1) {
+        try {
+          const loadedTexture = await loadNativeThreeTexture(
+            swissTopoTextureUrl(terrainModel),
+          );
+          if (!active) {
+            loadedTexture.dispose();
+            return;
+          }
+          loadedTexture.anisotropy =
+            renderer.capabilities.getMaxAnisotropy();
+          loadedTexture.needsUpdate = true;
+          setTexture(loadedTexture);
+          onReadyRef.current?.();
           return;
+        } catch (error) {
+          lastError = error;
+          if (attempt < 2 && active) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1_500 * (attempt + 1)),
+            );
+          }
         }
-        loadedTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        loadedTexture.needsUpdate = true;
-        setTexture(loadedTexture);
-      })
-      .catch((error) => {
-        console.warn("[TerrainGL] SwissTopo texture failed", error);
-      });
+      }
+      if (active) {
+        console.warn(
+          "[TerrainGL] SwissTopo texture failed after retries",
+          lastError,
+        );
+      }
+    };
+    void loadTexture();
     return () => {
       active = false;
     };
@@ -237,7 +261,6 @@ export default function PeakTerrainGlRenderer({
           near: 0.03,
           far: 500,
         }}
-        onCreated={() => onReady?.()}
       >
         <color attach="background" args={[backgroundColor]} />
         <CameraRig terrainModel={terrainModel} />
@@ -245,6 +268,7 @@ export default function PeakTerrainGlRenderer({
           terrainModel={terrainModel}
           bearingDeg={bearingDeg}
           fallbackColor={fallbackColor}
+          onReady={onReady}
         />
       </Canvas>
     </View>

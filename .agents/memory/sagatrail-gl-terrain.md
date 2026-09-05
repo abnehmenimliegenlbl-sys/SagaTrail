@@ -38,3 +38,9 @@ The panorama SVG overlay must use `preserveAspectRatio="none"` when it fills the
 **Why:** The default SVG `meet` behavior preserved the old 360×350 aspect ratio and vertically centered it, creating large apparent gaps above and below guide lines even though the container itself already filled the modal.
 
 **How to apply:** Keep the overlay viewBox for its coordinate system, but disable aspect-ratio preservation whenever the panorama height is flexible. Otherwise line-coordinate changes cannot remove the letterboxing.
+
+The panorama renderer is ready only after the geographic texture has loaded, not when the GL canvas is created. Initial texture failures retry while the modal remains open.
+
+**Why:** A canvas-level ready callback hid the fallback before SWISSIMAGE arrived, and a transient first-load failure required closing and reopening the panorama because no retry existed.
+
+**How to apply:** Fire readiness from the successful texture-load path and retain the previous/fallback visual until then. Retry transient texture failures without remounting the modal.
