@@ -631,7 +631,7 @@ export function PeakPanorama({
         {...panResponder.panHandlers}
         accessibilityLabel={strings.title}
       >
-        <Svg width="100%" height={350} viewBox="0 0 360 350">
+        <Svg width="100%" height="100%" viewBox="0 0 360 350">
           <Rect x="0" y="0" width="360" height="350" fill={colors.glassBg} />
           <Line x1="0" y1="205" x2="360" y2="205" stroke={colors.glassBorder} strokeWidth="1" />
           <Line x1="0" y1="274" x2="360" y2="274" stroke={colors.glassBorder} strokeWidth="1" />
@@ -648,7 +648,7 @@ export function PeakPanorama({
                <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
                  {`+${Math.round(panoramaMesh.elevationRangeM.max)} m`}
                </SvgText>
-               <SvgText x="7" y="162" fill={colors.mutedForeground} fontSize="7">
+                <SvgText x="7" y="272" fill={colors.mutedForeground} fontSize="7">
                  {`${Math.round(panoramaMesh.elevationRangeM.min)} m`}
                </SvgText>
              </>
@@ -720,15 +720,15 @@ export function PeakPanorama({
                    fill={isAnnotated ? colors.primary : colors.accent}
                    fillOpacity={isAnnotated ? 1 : 0.72}
                  />
-                 {isAnnotated && meshPeak.centerX > -18 && meshPeak.centerX < 378 && (
+                  {isAnnotated && peakPoint.x > -18 && peakPoint.x < 378 && (
                    <SvgText
-                     x={meshPeak.centerX}
-                      y={Math.max(30, peakPoint.y - 9)}
-                      transform={`rotate(-45 ${meshPeak.centerX} ${Math.max(30, peakPoint.y - 9)})`}
+                      x={peakPoint.x}
+                      y={Math.max(30, peakPoint.y - 7)}
+                      transform={`rotate(-45 ${peakPoint.x} ${Math.max(30, peakPoint.y - 7)})`}
                      fill={colors.foreground}
                      fontSize="8"
                      fontWeight="600"
-                     textAnchor="middle"
+                      textAnchor="start"
                    >
                      {meshPeak.peak.name.length > 15
                        ? `${meshPeak.peak.name.slice(0, 14)}…`
@@ -759,6 +759,7 @@ export function PeakPanorama({
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     marginTop: 12,
     borderWidth: 1,
     borderRadius: 16,
@@ -827,7 +828,8 @@ const styles = StyleSheet.create({
   signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
   viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
   skylineCard: {
-    height: 350,
+    flex: 1,
+    minHeight: 350,
     marginTop: 11,
     borderWidth: 1,
     borderRadius: 12,
