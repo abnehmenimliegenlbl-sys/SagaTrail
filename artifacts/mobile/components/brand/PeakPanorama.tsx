@@ -178,7 +178,8 @@ function buildPanoramaMesh(
   const datum = Number.isFinite(observerElevationM)
     ? (observerElevationM as number)
     : fixedAltitudeRangeM?.minM
-    : allAltitudes[0] ?? 0;
+      ?? allAltitudes[0]
+      ?? 0;
   const minAltitude = fixedAltitudeRangeM
     ? fixedAltitudeRangeM.minM - datum
     : Math.min(...allAltitudes.map((altitude) => altitude - datum));
@@ -305,7 +306,9 @@ export function PeakPanorama({
   const profileCacheRef = useRef<Map<string, CachedPanoramaProfile>>(new Map());
   const profileRequestsRef = useRef<Set<string>>(new Set());
   const profileObserverRef = useRef<LatLng | null>(null);
+  const fixedElevationRangeRef = useRef<PanoramaAltitudeRange | null>(null);
   const [profileRevision, setProfileRevision] = useState(0);
+  const [profilesComplete, setProfilesComplete] = useState(false);
   const panStartOffsetRef = useRef(0);
   panOffsetValueRef.current = panOffsetDeg;
   const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
@@ -348,6 +351,8 @@ export function PeakPanorama({
     const requestObserverKey = observerKey;
     let cancelled = false;
     let activeController: AbortController | null = null;
+    setProfilesComplete(false);
+    fixedElevationRangeRef.current = null;
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN
       ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
       : "";
@@ -360,7 +365,10 @@ export function PeakPanorama({
             return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
           })
           .slice(0, PANORAMA_PROFILE_BATCH_SIZE);
-        if (missingPeaks.length === 0) break;
+        if (missingPeaks.length === 0) {
+          setProfilesComplete(true);
+          break;
+        }
 
         const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
         requestKeys.forEach((key) => profileRequestsRef.current.add(key));
@@ -471,9 +479,34 @@ export function PeakPanorama({
       }),
     [observerKey, profileCandidateIds, profileCandidates, profileRevision],
   );
+  if (profilesComplete && !fixedElevationRangeRef.current && profileEntries.length > 0) {
+    const allAltitudes = profileEntries.flatMap((entry) =>
+      entry.profile.map((point) => point.altM),
+    );
+    const summitAltitudes = profileEntries.map((entry) => {
+      if (Number.isFinite(entry.peak.elevationM)) return entry.peak.elevationM as number;
+      const fallbackDistance = entry.profile[entry.profile.length - 1]?.distanceKm ?? 0;
+      const peakDistance = Number.isFinite(entry.peakDistanceKm)
+        ? (entry.peakDistanceKm as number)
+        : fallbackDistance;
+      return interpolateProfileAltitude(entry.profile, peakDistance, fallbackDistance);
+    });
+    const minM = Math.min(...allAltitudes);
+    const maxSummitM = Math.max(...summitAltitudes);
+    fixedElevationRangeRef.current = {
+      minM,
+      maxM: Math.max(maxSummitM, minM + 40),
+    };
+  }
+  const fixedElevationRange = fixedElevationRangeRef.current;
   const panoramaMesh = useMemo(
-    () => buildPanoramaMesh(profileEntries, displayBearing, observerElevationM),
-    [profileEntries, panOffsetDeg, observerElevationM],
+    () => buildPanoramaMesh(
+      profileEntries,
+      displayBearing,
+      observerElevationM,
+      fixedElevationRange,
+    ),
+    [profileEntries, panOffsetDeg, observerElevationM, fixedElevationRange],
   );
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
     const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
@@ -539,18 +572,18 @@ export function PeakPanorama({
             <Pressable
               onPress={toggleCamera}
               style={[
-                styles.cameraButton,
+                 styles.cameraButton,
                 {
                   backgroundColor: colors.primary,
                   borderColor: colors.primary,
                 },
               ]}
               accessibilityRole="button"
-                 accessibilityLabel="AR öffnen"
+              accessibilityLabel="Gipfel-AR öffnen"
             >
                <Feather
                  name="layers"
-                size={14}
+                 size={17}
                 color={colors.primaryForeground}
               />
               <Text
@@ -561,7 +594,7 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                AR
+                Gipfel-AR
               </Text>
             </Pressable>
           )}
@@ -825,11 +858,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderRadius: 11,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  cameraButtonText: { fontFamily: fonts.mono, fontSize: 9 },
+  cameraButtonText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 0.4,
+  },
   hint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 9 },
   signalRow: {
     flexDirection: "row",
