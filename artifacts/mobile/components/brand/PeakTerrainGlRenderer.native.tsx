@@ -561,7 +561,6 @@ function TerrainMesh({
     };
 
     const streamDetails = async () => {
-      const loaded = new Map<string, Texture>();
       try {
         for (let index = 0; index < requested.length; index += 2) {
           if (!active) break;
@@ -582,31 +581,27 @@ function TerrainMesh({
             .map((result) => result.value);
           if (results.some((result) => result.status === "rejected")) {
             fulfilled.forEach(([, texture]) => texture.dispose());
-            throw new Error("Panorama detail pair failed");
+            if (active) {
+              console.warn("[TerrainGL] panorama detail pair failed");
+            }
+            continue;
           }
           if (!active) {
             fulfilled.forEach(([, texture]) => texture.dispose());
             break;
           }
-          fulfilled.forEach(([key, texture]) => loaded.set(key, texture));
+          const next = new Map(texturesRef.current);
+          fulfilled.forEach(([key, texture]) => {
+            if (selectedKeys.has(key)) {
+              next.set(key, texture);
+            } else {
+              texture.dispose();
+            }
+          });
+          texturesRef.current = next;
+          setTextures(next);
         }
-        if (!active) {
-          loaded.forEach((texture) => texture.dispose());
-          return;
-        }
-        const next = new Map<string, Texture>();
-        texturesRef.current.forEach((texture, key) => {
-          if (key.startsWith("base-") || selectedKeys.has(key)) {
-            next.set(key, texture);
-          } else {
-            texture.dispose();
-          }
-        });
-        loaded.forEach((texture, key) => next.set(key, texture));
-        texturesRef.current = next;
-        setTextures(next);
       } catch (error) {
-        loaded.forEach((texture) => texture.dispose());
         if (active) {
           console.warn("[TerrainGL] panorama detail streaming failed", error);
         }
