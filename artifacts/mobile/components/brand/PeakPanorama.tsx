@@ -282,6 +282,28 @@ function buildPanoramaMesh(
       );
     }
   }
+  // Die 0°-Naht darf nur bei wirklich benachbarten Profilen geschlossen
+  // werden. Eine grössere Lücke bleibt als echte Datenlücke sichtbar.
+  const first = meshPeaks[0];
+  const last = meshPeaks[meshPeaks.length - 1];
+  if (first && last && meshPeaks.length > 1) {
+    const firstBearing = (first.bearing + 360) % 360;
+    const lastBearing = (last.bearing + 360) % 360;
+    const seamGap = firstBearing + 360 - lastBearing;
+    if (seamGap <= 45) {
+      for (let pointIndex = 0; pointIndex < sampleCount - 1; pointIndex += 1) {
+        const a = last.points[pointIndex];
+        const b = first.points[pointIndex];
+        const c = first.points[pointIndex + 1];
+        const d = last.points[pointIndex + 1];
+        if (!a || !b || !c || !d) continue;
+        triangles.push(
+          { points: pointString([a, b, c]), tone: "bridge" },
+          { points: pointString([a, c, d]), tone: "bridge" },
+        );
+      }
+    }
+  }
   return {
     peaks: meshPeaks,
     triangles,

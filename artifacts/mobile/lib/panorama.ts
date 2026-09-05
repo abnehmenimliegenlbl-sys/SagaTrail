@@ -180,10 +180,6 @@ function signedBearingDifference(target: number, heading: number): number {
   return ((target - heading + 540) % 360) - 180;
 }
 
-function normalizedBearing(bearing: number): number {
-  return ((bearing % 360) + 360) % 360;
-}
-
 /**
  * Ermittelt echte OSM-Gipfel im Umfeld der aktuellen Position und berechnet
  * ihre Lage im Sichtfeld. Das ist bewusst eine geografische Erkennung, keine
@@ -240,27 +236,36 @@ export function erkenneGipfel(
   const limit = Math.max(0, maxPeaks);
   if (limit === 0 || candidates.length <= limit) return candidates;
 
-  // Einen gleichmässigen 360°-Grundstock bilden: jeder Sektor bekommt
-  // zunächst seinen nächstgelegenen echten Gipfel. So verdrängen viele
-  // nahe Gipfel aus einer Richtung nicht den gesamten übrigen Horizont.
-  const selectedBySector = new Map<number, PanoramaGipfel>();
-  for (const peak of candidates) {
-    const sector = Math.min(
-      limit - 1,
-      Math.floor((normalizedBearing(peak.bearingDeg) / 360) * limit),
-    );
-    if (!selectedBySector.has(sector)) selectedBySector.set(sector, peak);
-  }
-
-  const selectedIds = new Set(
-    Array.from(selectedBySector.values(), (peak) => peak.id),
-  );
-  const selected = Array.from(selectedBySector.values());
+  // Immer den noch grössten vorhandenen Winkelabstand besetzen. Damit
+  // kommen echte Gipfel in unterrepräsentierte Richtungen, statt dass viele
+  // nahe Gipfel aus einer einzigen Richtung alle Plätze verbrauchen.
+  const selected = [candidates[0]];
+  const selectedIds = new Set([candidates[0]?.id]);
   for (const peak of candidates) {
     if (selected.length >= limit) break;
     if (selectedIds.has(peak.id)) continue;
-    selected.push(peak);
-    selectedIds.add(peak.id);
+    let bestCandidate = peak;
+    let bestAngularDistance = -1;
+    for (const candidate of candidates) {
+      if (selectedIds.has(candidate.id)) continue;
+      const candidateAngle = candidate.bearingDeg;
+      const nearestDistance = selected.reduce((minimum, chosen) => {
+        const distance = Math.abs(
+          ((candidateAngle - chosen.bearingDeg + 540) % 360) - 180,
+        );
+        return Math.min(minimum, distance);
+      }, 180);
+      if (
+        nearestDistance > bestAngularDistance ||
+        (nearestDistance === bestAngularDistance &&
+          candidate.distanceKm < bestCandidate.distanceKm)
+      ) {
+        bestCandidate = candidate;
+        bestAngularDistance = nearestDistance;
+      }
+    }
+    selected.push(bestCandidate);
+    selectedIds.add(bestCandidate.id);
   }
 
   return selected.sort((a, b) => {
