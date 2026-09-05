@@ -5,9 +5,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
-  SRGBColorSpace,
   Texture,
-  TextureLoader,
 } from "three";
 
 import {
@@ -15,6 +13,7 @@ import {
   type LocalTerrainMesh,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
+import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import type { PeakTerrainGlProps } from "./PeakTerrainGl.types";
 
 function swissTopoTextureUrl(model: LocalTerrainModel): string {
@@ -93,23 +92,17 @@ function TerrainMesh({
   useEffect(() => {
     let active = true;
     setTexture(null);
-    const loader = new TextureLoader();
-    loader.load(
-      swissTopoTextureUrl(terrainModel),
-      (loadedTexture) => {
+    loadNativeThreeTexture(swissTopoTextureUrl(terrainModel))
+      .then((loadedTexture) => {
         if (!active) {
           loadedTexture.dispose();
           return;
         }
-        loadedTexture.colorSpace = SRGBColorSpace;
-        loadedTexture.needsUpdate = true;
         setTexture(loadedTexture);
-      },
-      undefined,
-      (error) => {
+      })
+      .catch((error) => {
         console.warn("[TerrainGL] SwissTopo texture failed", error);
-      },
-    );
+      });
     return () => {
       active = false;
     };

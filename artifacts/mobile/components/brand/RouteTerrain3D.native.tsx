@@ -14,14 +14,13 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
-  SRGBColorSpace,
   Texture,
-  TextureLoader,
   Vector3,
 } from "three";
 
 import { createTerrainCorridor } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import {
   buildRouteGradeSegments,
   type TerrainProfilePoint,
@@ -240,17 +239,18 @@ function Scene({
   const camera = useThree((state) => state.camera);
 
   useEffect(() => {
-    const loader = new TextureLoader();
     let active = true;
-    loader.load(swissTopoTextureUrl(model.grid), (loaded) => {
-      if (!active) {
-        loaded.dispose();
-        return;
-      }
-      loaded.colorSpace = SRGBColorSpace;
-      loaded.needsUpdate = true;
-      setTexture(loaded);
-    });
+    loadNativeThreeTexture(swissTopoTextureUrl(model.grid))
+      .then((loaded) => {
+        if (!active) {
+          loaded.dispose();
+          return;
+        }
+        setTexture(loaded);
+      })
+      .catch((error) => {
+        console.warn("[RouteTerrain3D] SwissTopo texture failed", error);
+      });
     return () => {
       active = false;
     };
