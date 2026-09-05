@@ -18,11 +18,11 @@ import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng, RecognitionJournalEntry } from "@/types";
 
-const PANORAMA_VIEW_DEGREES = 360;
-const PANORAMA_TOTAL_DEGREES = 360;
+const PANORAMA_VIEW_DEGREES = 140;
+const PANORAMA_TOTAL_DEGREES = 140;
 const PANORAMA_MAX_DRAG_DEGREES = 180;
 const PANORAMA_PROFILE_BATCH_SIZE = 8;
-const PANORAMA_PROFILE_LIMIT = 16;
+const PANORAMA_PROFILE_LIMIT = 8;
 const CARDINAL_DIRECTIONS = [
   { label: "N", bearing: 0 },
   { label: "O", bearing: 90 },
@@ -120,6 +120,11 @@ type PanoramaMeshPeak = {
   points: MeshPoint[];
   lowerPoints: MeshPoint[];
 };
+type PanoramaMesh = {
+  peaks: PanoramaMeshPeak[];
+  triangles: PanoramaMeshTriangle[];
+  elevationRangeM: { min: number; max: number } | null;
+};
 
 function pointString(points: readonly MeshPoint[]): string {
   return points.map((point) => `${point.x},${point.y}`).join(" ");
@@ -147,7 +152,7 @@ function buildPanoramaMesh(
   entries: readonly { peak: PanoramaGipfel; profile: PanoramaProfilePoint[] }[],
   displayBearing: (peak: PanoramaGipfel) => number | null,
   observerElevationM: number | null,
-): { peaks: PanoramaMeshPeak[]; triangles: PanoramaMeshTriangle[] } {
+): PanoramaMesh {
   const validEntries = entries
     .map((entry) => ({
       ...entry,
@@ -160,7 +165,9 @@ function buildPanoramaMesh(
       (entry): entry is typeof entry & { bearing: number } =>
         entry.profile.length >= 2 && entry.bearing != null,
     );
-  if (validEntries.length === 0) return { peaks: [], triangles: [] };
+  if (validEntries.length === 0) {
+    return { peaks: [], triangles: [], elevationRangeM: null };
+  }
 
   const allAltitudes = validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
   const datum = Number.isFinite(observerElevationM)
@@ -183,12 +190,8 @@ function buildPanoramaMesh(
       const firstDistance = points[0]?.distanceKm ?? 0;
       const lastDistance = points[points.length - 1]?.distanceKm ?? 0;
       const distanceSpan = Math.max(0.001, lastDistance - firstDistance);
-      const centerX =
-        ((bearing + PANORAMA_VIEW_DEGREES / 2 + PANORAMA_VIEW_DEGREES) %
-          PANORAMA_VIEW_DEGREES) /
-        PANORAMA_VIEW_DEGREES *
-        360;
-      const width = Math.max(9, Math.min(27, 25 - peak.distanceKm * 0.45));
+      const centerX = 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360;
+      const width = Math.max(48, Math.min(104, 108 - peak.distanceKm * 2.2));
       const sampled = Array.from({ length: sampleCount }, (_, index) => {
         const fraction = index / (sampleCount - 1);
         const targetDistance = firstDistance + fraction * distanceSpan;
@@ -198,7 +201,7 @@ function buildPanoramaMesh(
           baselineY -
           ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY);
         return {
-          x: centerX - width + fraction * width,
+          x: centerX - width / 2 + fraction * width,
           y: Math.max(topY, Math.min(baselineY, y)),
         };
       });
@@ -235,7 +238,7 @@ function buildPanoramaMesh(
   for (let index = 0; index < meshPeaks.length - 1; index += 1) {
     const left = meshPeaks[index];
     const right = meshPeaks[index + 1];
-    if (!left || !right || right.centerX - left.centerX > 72) continue;
+    if (!left || !right || right.centerX - left.centerX > 132) continue;
     for (let pointIndex = 0; pointIndex < sampleCount - 1; pointIndex += 1) {
       const a = left.points[pointIndex];
       const b = right.points[pointIndex];
@@ -248,7 +251,11 @@ function buildPanoramaMesh(
       );
     }
   }
-  return { peaks: meshPeaks, triangles };
+  return {
+    peaks: meshPeaks,
+    triangles,
+    elevationRangeM: { min: minAltitude, max: maxAltitude },
+  };
 }
 
 export function PeakPanorama({
@@ -285,7 +292,8 @@ export function PeakPanorama({
           .map((peak) => ({ peak, relative: displayBearing(peak) }))
           .filter(
             (entry): entry is { peak: PanoramaGipfel; relative: number } =>
-              entry.relative != null,
+              entry.relative != null &&
+              Math.abs(entry.relative) <= PANORAMA_VIEW_DEGREES / 2,
           )
           .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
           .map(({ peak }) => peak);
@@ -431,15 +439,6 @@ export function PeakPanorama({
       x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
     };
   }).filter((direction) => Math.abs(direction.relative) <= PANORAMA_VIEW_DEGREES / 2 + 8);
-  const degreeTicks = Array.from({ length: 8 }, (_, index) => {
-    const bearing = index * 45;
-    const relative = signedAngleDifference(bearing, viewCenterBearing);
-    return {
-      bearing,
-      relative,
-      x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
-    };
-  });
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
@@ -638,20 +637,19 @@ export function PeakPanorama({
             <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
             <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
-           <G opacity={0.18}>
-             {degreeTicks.map((tick) => (
-               <Line
-                 key={`degree-${tick.bearing}`}
-                 x1={tick.x}
-                 y1="31"
-                 x2={tick.x}
-                 y2="166"
-                 stroke={colors.tint}
-                 strokeWidth="0.7"
-                 strokeDasharray="2 5"
-               />
-             ))}
-           </G>
+           {panoramaMesh.elevationRangeM && (
+             <>
+               <SvgText x="7" y="42" fill={colors.mutedForeground} fontSize="7" fontWeight="700">
+                 HÖHENPROFIL
+               </SvgText>
+               <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
+                 {`+${Math.round(panoramaMesh.elevationRangeM.max)} m`}
+               </SvgText>
+               <SvgText x="7" y="162" fill={colors.mutedForeground} fontSize="7">
+                 {`${Math.round(panoramaMesh.elevationRangeM.min)} m`}
+               </SvgText>
+             </>
+           )}
           {compassTicks.map((direction) => (
             <G key={direction.label}>
               <Line
