@@ -1,5 +1,10 @@
 import type { LatLng } from "@/types";
 import type { PanoramaGipfel } from "@/lib/panorama";
+import {
+  buildRouteGradeSegments,
+  type RouteGradeBand,
+  type TerrainProfilePoint,
+} from "@/lib/terrainCues";
 
 export interface LocalTerrainSample {
   distanceM: number;
@@ -27,6 +32,10 @@ export type TerrainVisibility = "visible" | "occluded" | "unknown";
 export type TerrainVertex = [number, number, number];
 export type TerrainTriangle = [number, number, number];
 export type TerrainRouteLine = TerrainVertex[];
+export interface TerrainRouteSegment {
+  points: TerrainRouteLine;
+  band: RouteGradeBand;
+}
 
 export interface LocalTerrainMesh {
   vertices: TerrainVertex[];
@@ -382,6 +391,36 @@ export function buildGeographicTerrainRouteLines(
     centerOverride,
     maxDisplayRadiusM,
   );
+}
+
+/**
+ * Splits the live AR route into the same grade bands as the map. The route
+ * projection remains geographic; only the material changes per smoothed
+ * approximately-50 m segment.
+ */
+export function buildGeographicTerrainRouteSegments(
+  model: LocalTerrainModel | null | undefined,
+  routeGeometry: readonly number[][] | null | undefined,
+  centerOverride?: LatLng | null,
+  maxDisplayRadiusM?: number,
+  terrainProfile?: readonly TerrainProfilePoint[] | null,
+): TerrainRouteSegment[] {
+  if (!routeGeometry || routeGeometry.length < 2) return [];
+
+  const geometry = routeGeometry.map((point) => [point[0], point[1]]);
+  const gradeSegments = buildRouteGradeSegments(
+    geometry,
+    terrainProfile ? terrainProfile.map((point) => ({ ...point })) : null,
+  );
+  return gradeSegments.flatMap((segment) => {
+    const lines = buildGeographicTerrainRouteLines(
+      model,
+      segment.coordinates,
+      centerOverride,
+      maxDisplayRadiusM,
+    );
+    return lines.map((points) => ({ points, band: segment.band }));
+  });
 }
 
 /**

@@ -28,3 +28,9 @@ AR route input must use the active `navigationGeometry`, not the original catalo
 **Why:** Passing the catalog geometry to AR made the overlay continue pointing at the old route even though the app had already accepted and followed a newly calculated route from the user's current location.
 
 **How to apply:** At every AR entry point pass the active geometry; keep the original route only for catalog metadata and fallback before a detour exists.
+
+AR route materials must follow the map's smoothed grade bands: green below 10%, yellow from 10% to under 20%, orange from 20% to under 30%, and red from 30% upward, using absolute grade so steep descents are visible too.
+
+**Why:** A single global AR route color hid the route's existing slope semantics and contradicted the map legend.
+
+**How to apply:** Build colored approximately-50 m segments from the active route's elevation profile; keep missing-profile sections green rather than inventing a grade.

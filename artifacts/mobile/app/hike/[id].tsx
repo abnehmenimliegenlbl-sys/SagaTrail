@@ -1044,7 +1044,7 @@ export default function LiveHike() {
   // gezeichnet: terrainCues.ts verdichtet sie für die gesprochenen
   // Aufstiegs-/Gefällehinweise und die Sicherheitswarnung ab 30 Prozent.
   useEffect(() => {
-    const geometry = route?.geometry;
+    const geometry = navigationGeometry;
     terrainStartedRef.current.clear();
     terrainProgressRef.current.clear();
     terrainEndedRef.current.clear();
@@ -1083,7 +1083,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, route?.geometry]);
+  }, [route?.id, navigationGeometry]);
 
   // Lokales Terrainmodell observer-zentriert nachladen. Ein Modell bleibt für
   // kurze GPS-Strecken bestehen; erst nach 120 m oder zwei Minuten wird neu

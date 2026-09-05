@@ -16,18 +16,25 @@ import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { LatLng } from "@/types";
+import type { TerrainProfilePoint, RouteGradeBand } from "@/lib/terrainCues";
 import {
-  buildGeographicTerrainRouteLines,
+  buildGeographicTerrainRouteSegments,
   buildLocalMapRouteLines,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
   type TerrainRouteLine,
+  type TerrainRouteSegment,
 } from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
-const TERRAIN_ROUTE_MATERIAL = "sagatrailTerrainRoute";
+const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
+  green: "sagatrailTerrainRouteGreen",
+  yellow: "sagatrailTerrainRouteYellow",
+  orange: "sagatrailTerrainRouteOrange",
+  red: "sagatrailTerrainRouteRed",
+};
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
@@ -48,9 +55,33 @@ ViroMaterials.createMaterials({
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
   },
-  [TERRAIN_ROUTE_MATERIAL]: {
+  [TERRAIN_ROUTE_MATERIALS.green]: {
     lightingModel: "Constant",
-    diffuseColor: PEAK_RED,
+    diffuseColor: "#20D466",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.yellow]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FFD000",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.orange]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FF8500",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_MATERIALS.red]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FF3030",
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -74,6 +105,7 @@ interface PeakArSceneProps {
 
 interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
+  terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
   observerPosition?: LatLng | null;
@@ -179,7 +211,7 @@ function TerrainMapHologram({
             0.06,
           ])}
           thickness={0.045}
-          materials={TERRAIN_ROUTE_MATERIAL}
+          materials={TERRAIN_ROUTE_MATERIALS.green}
           opacity={1}
         />
       ))}
@@ -222,20 +254,23 @@ function TerrainHologram({
   model,
   routeGeometry,
   observerPosition,
+  terrainProfile,
 }: {
   model: LocalTerrainModel | null | undefined;
   routeGeometry: readonly number[][] | null | undefined;
   observerPosition: LatLng | null | undefined;
+  terrainProfile: readonly TerrainProfilePoint[] | null | undefined;
 }) {
-  const routeLines = useMemo<TerrainRouteLine[]>(
+  const routeSegments = useMemo<TerrainRouteSegment[]>(
     () =>
-      buildGeographicTerrainRouteLines(
+      buildGeographicTerrainRouteSegments(
         model,
         routeGeometry,
         observerPosition,
         AR_ROUTE_DISPLAY_RADIUS_M,
+        terrainProfile,
       ),
-    [model, routeGeometry, observerPosition],
+    [model, routeGeometry, observerPosition, terrainProfile],
   );
 
   useEffect(() => {
@@ -243,12 +278,12 @@ function TerrainHologram({
       hasModel: Boolean(model),
       observerElevationM: model?.observerElevationM ?? null,
       routePointCount: routeGeometry?.length ?? 0,
-      lineCount: routeLines.length,
+      lineCount: routeSegments.length,
       displayRadiusM: AR_ROUTE_DISPLAY_RADIUS_M,
     });
-  }, [model, routeGeometry, routeLines.length]);
+  }, [model, routeGeometry, routeSegments.length]);
 
-  if (routeLines.length === 0) return null;
+  if (routeSegments.length === 0) return null;
 
   return (
     <ViroNode
@@ -256,16 +291,16 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
-      {routeLines.map((points, index) => (
+      {routeSegments.map((segment, index) => (
         <ViroPolyline
           key={`terrain-route-ar-${index}`}
-          points={points.map(([east, elevation, north]) => [
+          points={segment.points.map(([east, elevation, north]) => [
             east,
             AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
             north,
           ])}
           thickness={0.08}
-          materials={TERRAIN_ROUTE_MATERIAL}
+          materials={TERRAIN_ROUTE_MATERIALS[segment.band]}
           opacity={1}
         />
       ))}
@@ -348,6 +383,7 @@ function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
 function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   const {
     peaks = [],
+    terrainProfile = null,
     terrainModel = null,
     routeGeometry = null,
     observerPosition = null,
@@ -371,6 +407,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         model={terrainModel}
         routeGeometry={routeGeometry}
         observerPosition={observerPosition}
+        terrainProfile={terrainProfile}
       />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
@@ -503,6 +540,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
 
 export function PeakArNavigator({
   peaks,
+  terrainProfile = null,
   terrainModel = null,
   routeGeometry = null,
   observerPosition = null,
@@ -551,6 +589,7 @@ export function PeakArNavigator({
   const viroAppProps = useMemo<PeakArSceneAppProps>(
     () => ({
       peaks,
+      terrainProfile,
       terrainModel,
       routeGeometry,
       observerPosition,
@@ -565,6 +604,7 @@ export function PeakArNavigator({
       observerElevationM,
       onPeakPress,
       peaks,
+      terrainProfile,
       routeGeometry,
       observerPosition,
       mapLayer,
