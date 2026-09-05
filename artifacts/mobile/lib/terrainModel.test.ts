@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   buildLocalTerrainMesh,
+  buildGeographicTerrainRouteDestination,
+  buildGeographicTerrainRouteSegments,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
 } from "./terrainModel";
@@ -84,4 +86,47 @@ test("builds a compass-aligned mesh only with a known observer height", () => {
   assert.ok(mesh.vertices.some(([x, y, z]) => x > 0 && z < 0 && y > 0));
   assert.equal(buildLocalTerrainMesh(model({ observerElevationM: null }), 0), null);
   assert.equal(buildLocalTerrainMesh(model(), null), null);
+});
+
+const ROUTE_CENTER = { lat: 46, lng: 7 };
+const LONG_ROUTE = [
+  [46, 7],
+  [46.005, 7],
+  [46.01, 7],
+  [46.015, 7],
+  [46.02, 7],
+];
+
+test("projects the complete route into compressed AR depth", () => {
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    LONG_ROUTE,
+    ROUTE_CENTER,
+    500,
+    null,
+    { maxSegments: 96, maxVirtualDistanceM: 2_000 },
+  );
+
+  assert.ok(segments.length > 1);
+  assert.ok(segments.length <= 96);
+  const points = segments.flatMap((segment) => segment.points);
+  assert.ok(points.length > 2);
+  assert.ok(
+    points.every(([east, _elevation, north]) => Math.hypot(east, north) <= 80.001),
+  );
+  assert.ok(segments[0]!.thickness > segments.at(-1)!.thickness);
+});
+
+test("places the destination flag at the final route point", () => {
+  const destination = buildGeographicTerrainRouteDestination(
+    null,
+    LONG_ROUTE,
+    ROUTE_CENTER,
+    500,
+    { maxVirtualDistanceM: 2_000 },
+  );
+
+  assert.ok(destination);
+  assert.ok(Math.hypot(destination[0], destination[2]) > 0);
+  assert.ok(Math.hypot(destination[0], destination[2]) <= 80.001);
 });

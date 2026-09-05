@@ -34,3 +34,9 @@ AR route materials must follow the map's smoothed grade bands: green below 10%, 
 **Why:** A single global AR route color hid the route's existing slope semantics and contradicted the map legend.
 
 **How to apply:** Build colored approximately-50 m segments from the active route's elevation profile; keep missing-profile sections green rather than inventing a grade.
+
+Live AR now projects the entire active route into a bounded virtual depth: the first ~500 m retain geographic scale and real DTM elevation, while farther sections are logarithmically compressed, rendered with progressively thinner lines, and end in a fixed small destination-flag slot.
+
+**Why:** A hard 2 km cutoff hid the destination and made the AR overlay incomplete, while uncompressed long routes placed the end outside a useful AR viewing distance.
+
+**How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and never use the compression as evidence for terrain outside the DTM radius; those sections stay level.

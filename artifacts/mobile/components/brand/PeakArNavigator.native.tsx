@@ -25,6 +25,7 @@ import type { LatLng } from "@/types";
 import type { TerrainProfilePoint, RouteGradeBand } from "@/lib/terrainCues";
 import {
   buildGeographicTerrainRouteSegments,
+  buildGeographicTerrainRouteDestination,
   buildLocalMapRouteLines,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -44,9 +45,11 @@ const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
-// Keep the visible AR route longer than the observer-centred DTM. Only the
-// first 500 m have real terrain samples; farther sections stay level.
-const AR_ROUTE_DISPLAY_RADIUS_M = 2_000;
+// The DTM remains observer-centred at 500 m. The complete route is projected
+// into a compressed 2 km virtual AR depth so the destination remains visible;
+// beyond the DTM radius it stays level rather than inventing terrain.
+const AR_ROUTE_TERRAIN_RADIUS_M = 500;
+const AR_ROUTE_MAX_VIRTUAL_DISTANCE_M = 2_000;
 // Viro's AR origin is near the camera, while the visible landscape starts at
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
@@ -283,10 +286,25 @@ function TerrainHologram({
         model,
         routeGeometry,
         observerPosition,
-        AR_ROUTE_DISPLAY_RADIUS_M,
+        AR_ROUTE_TERRAIN_RADIUS_M,
         terrainProfile,
+        {
+          maxSegments: MAX_AR_ROUTE_SEGMENT_SLOTS,
+          maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+        },
       ),
     [model, routeGeometry, observerPosition, terrainProfile],
+  );
+  const destinationPosition = useMemo(
+    () =>
+      buildGeographicTerrainRouteDestination(
+        model,
+        routeGeometry,
+        observerPosition,
+        AR_ROUTE_TERRAIN_RADIUS_M,
+        { maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M },
+      ),
+    [model, routeGeometry, observerPosition],
   );
 
   useEffect(() => {
@@ -295,9 +313,11 @@ function TerrainHologram({
       observerElevationM: model?.observerElevationM ?? null,
       routePointCount: routeGeometry?.length ?? 0,
       lineCount: routeSegments.length,
-      displayRadiusM: AR_ROUTE_DISPLAY_RADIUS_M,
+      terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
+      maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+      hasDestination: destinationPosition != null,
     });
-  }, [model, routeGeometry, routeSegments.length]);
+  }, [model, routeGeometry, routeSegments.length, destinationPosition]);
 
   if (routeSegments.length === 0) return null;
 
@@ -318,12 +338,43 @@ function TerrainHologram({
             AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
             north,
           ])}
-          thickness={0.08}
+           thickness={segment?.thickness ?? 0.08}
           materials={TERRAIN_ROUTE_MATERIALS[segment?.band ?? "green"]}
           opacity={segment ? 1 : 0}
         />
         );
       })}
+      <ViroNode
+        position={
+          destinationPosition
+            ? [
+                destinationPosition[0],
+                AR_ROUTE_GROUND_OFFSET + destinationPosition[1] + 0.035,
+                destinationPosition[2],
+              ]
+            : [0, -1000, 0]
+        }
+        opacity={destinationPosition ? 1 : 0}
+        renderingOrder={30}
+        viroTag="terrain-route-destination"
+      >
+        <ViroBox
+          position={[0, 0.38, 0]}
+          width={0.025}
+          height={0.76}
+          length={0.025}
+          materials={PEAK_RED_MATERIAL}
+          shadowCastingBitMask={0}
+        />
+        <ViroBox
+          position={[0.14, 0.68, 0]}
+          width={0.28}
+          height={0.18}
+          length={0.035}
+          materials={PEAK_RED_MATERIAL}
+          shadowCastingBitMask={0}
+        />
+      </ViroNode>
     </ViroNode>
   );
 }

@@ -4,7 +4,7 @@ import {
   buildRouteGradeSegments,
   type RouteGradeBand,
   type TerrainProfilePoint,
-} from "@/lib/terrainCues";
+} from "./terrainCues";
 
 export interface LocalTerrainSample {
   distanceM: number;
@@ -59,6 +59,8 @@ const DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M = 80;
 const DEFAULT_MAX_ROUTE_SEGMENTS = 96;
 const MIN_ROUTE_THICKNESS = 0.018;
 const MAX_ROUTE_THICKNESS = 0.08;
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
 
 function normalizeBearing(degrees: number): number {
   return ((degrees % 360) + 360) % 360;
@@ -405,10 +407,135 @@ export function buildGeographicTerrainRouteLines(
   );
 }
 
+interface ProjectedGeographicRoutePoint {
+  point: TerrainVertex;
+  displayDistanceM: number;
+}
+
+function geographicDistanceM(point: readonly number[], center: LatLng): number | null {
+  const lat = point[0];
+  const lng = point[1];
+  if (
+    typeof lat !== "number" ||
+    typeof lng !== "number" ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
+    return null;
+  }
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (center.lat * Math.PI) / 180;
+  const northM = ((lat - center.lat) * Math.PI * earthRadiusM) / 180;
+  const eastM =
+    ((lng - center.lng) * Math.PI * earthRadiusM * Math.cos(centerLatRad)) / 180;
+  return Math.hypot(northM, eastM);
+}
+
+function compressedRouteDistanceM(
+  distanceM: number,
+  terrainRadiusM: number,
+  maxRouteDistanceM: number,
+  maxVirtualDistanceM: number,
+): number {
+  if (distanceM <= terrainRadiusM || maxRouteDistanceM <= terrainRadiusM) {
+    return distanceM;
+  }
+  const farDistanceM = maxRouteDistanceM - terrainRadiusM;
+  const farProgress =
+    Math.log1p((distanceM - terrainRadiusM) / Math.max(1, terrainRadiusM)) /
+    Math.log1p(farDistanceM / Math.max(1, terrainRadiusM));
+  return (
+    terrainRadiusM +
+      clampNumber(farProgress, 0, 1) *
+      Math.max(0, maxVirtualDistanceM - terrainRadiusM)
+  );
+}
+
+function projectGeographicRoutePoint(
+  model: LocalTerrainModel | null | undefined,
+  point: readonly number[],
+  center: LatLng,
+  terrainRadiusM: number,
+  maxRouteDistanceM: number,
+  maxVirtualDistanceM: number,
+): ProjectedGeographicRoutePoint | null {
+  const distanceM = geographicDistanceM(point, center);
+  if (distanceM == null) return null;
+
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (center.lat * Math.PI) / 180;
+  const northM = ((point[0] - center.lat) * Math.PI * earthRadiusM) / 180;
+  const eastM =
+    ((point[1] - center.lng) * Math.PI * earthRadiusM * Math.cos(centerLatRad)) /
+    180;
+  const bearingDeg =
+    ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
+  const observerElevation = model?.observerElevationM ?? null;
+  const ray = model == null ? null : nearestRay(model, bearingDeg);
+  const terrainElevation =
+    observerElevation == null || ray == null || distanceM > terrainRadiusM + 1
+      ? observerElevation
+      : interpolateRayElevation(ray, distanceM) ?? observerElevation;
+  const elevation =
+    terrainElevation == null || observerElevation == null
+      ? 0
+      : (terrainElevation - observerElevation) * AR_WORLD_SCALE;
+  const displayDistanceM = compressedRouteDistanceM(
+    distanceM,
+    terrainRadiusM,
+    maxRouteDistanceM,
+    maxVirtualDistanceM,
+  );
+  const distance = displayDistanceM * AR_WORLD_SCALE;
+  const angle = (bearingDeg * Math.PI) / 180;
+
+  return {
+    point: [
+      Math.sin(angle) * distance,
+      elevation,
+      -Math.cos(angle) * distance,
+    ],
+    displayDistanceM,
+  };
+}
+
+function mergeRouteGradeSegments(
+  segments: Array<{ coordinates: number[][]; band: RouteGradeBand }>,
+  maxSegments: number,
+): Array<{ coordinates: number[][]; band: RouteGradeBand }> {
+  if (segments.length <= maxSegments) return segments;
+  const groupSize = Math.ceil(segments.length / maxSegments);
+  const merged: Array<{ coordinates: number[][]; band: RouteGradeBand }> = [];
+
+  for (let start = 0; start < segments.length; start += groupSize) {
+    const group = segments.slice(start, start + groupSize);
+    const coordinates = group.flatMap((segment, index) =>
+      index === 0 ? segment.coordinates : segment.coordinates.slice(1),
+    );
+    merged.push({
+      coordinates,
+      band: group.reduce<RouteGradeBand>(
+        (strongest, segment) => {
+          const rank: Record<RouteGradeBand, number> = {
+            green: 0,
+            yellow: 1,
+            orange: 2,
+            red: 3,
+          };
+          return rank[segment.band] > rank[strongest] ? segment.band : strongest;
+        },
+        "green",
+      ),
+    });
+  }
+  return merged;
+}
+
 /**
- * Splits the live AR route into the same grade bands as the map. The route
- * projection remains geographic; only the material changes per smoothed
- * approximately-50 m segment.
+ * Splits and projects the complete live AR route. The nearby part retains
+ * geographic scale, while distant parts are logarithmically compressed so the
+ * destination remains in the AR world. Each slot gets a distance-based line
+ * thickness, and the route remains capped to the fixed native slot count.
  */
 export function buildGeographicTerrainRouteSegments(
   model: LocalTerrainModel | null | undefined,
@@ -416,23 +543,98 @@ export function buildGeographicTerrainRouteSegments(
   centerOverride?: LatLng | null,
   maxDisplayRadiusM?: number,
   terrainProfile?: readonly TerrainProfilePoint[] | null,
+  displayOptions: GeographicRouteDisplayOptions = {},
 ): TerrainRouteSegment[] {
   if (!routeGeometry || routeGeometry.length < 2) return [];
 
+  const center = centerOverride ?? model?.center;
+  if (!center) return [];
+  const terrainRadiusM = maxDisplayRadiusM ?? model?.radiusM ?? 500;
+  const maxVirtualDistanceM =
+    displayOptions.maxVirtualDistanceM ?? DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M;
+  const maxSegments =
+    displayOptions.maxSegments ?? DEFAULT_MAX_ROUTE_SEGMENTS;
   const geometry = routeGeometry.map((point) => [point[0], point[1]]);
-  const gradeSegments = buildRouteGradeSegments(
-    geometry,
-    terrainProfile ? terrainProfile.map((point) => ({ ...point })) : null,
+  const gradeSegments = mergeRouteGradeSegments(
+    buildRouteGradeSegments(
+      geometry,
+      terrainProfile ? terrainProfile.map((point) => ({ ...point })) : null,
+    ),
+    maxSegments,
   );
+  const maxRouteDistanceM = geometry.reduce((maximum, point) => {
+    const distanceM = geographicDistanceM(point, center);
+    return distanceM == null ? maximum : Math.max(maximum, distanceM);
+  }, 0);
+
   return gradeSegments.flatMap((segment) => {
-    const lines = buildGeographicTerrainRouteLines(
-      model,
-      segment.coordinates,
-      centerOverride,
-      maxDisplayRadiusM,
+    const projected = segment.coordinates
+      .map((point) =>
+        projectGeographicRoutePoint(
+          model,
+          point,
+          center,
+          terrainRadiusM,
+          maxRouteDistanceM,
+          maxVirtualDistanceM,
+        ),
+      )
+      .filter((point): point is ProjectedGeographicRoutePoint => point !== null);
+    if (projected.length < 2) return [];
+    const displayDistanceM =
+      projected.reduce((sum, point) => sum + point.displayDistanceM, 0) /
+      projected.length;
+    const distanceProgress =
+      maxVirtualDistanceM <= 0
+        ? 1
+        : clampNumber(displayDistanceM / maxVirtualDistanceM, 0, 1);
+    const thickness = Math.max(
+      MIN_ROUTE_THICKNESS,
+      MAX_ROUTE_THICKNESS * (1 - 0.72 * distanceProgress),
     );
-    return lines.map((points) => ({ points, band: segment.band }));
+    return [
+      {
+        points: projected.map(({ point }) => point),
+        band: segment.band,
+        thickness,
+      },
+    ];
   });
+}
+
+/**
+ * Returns the projected final route point used by the small destination flag.
+ * It uses the same compression and terrain rules as the route polylines.
+ */
+export function buildGeographicTerrainRouteDestination(
+  model: LocalTerrainModel | null | undefined,
+  routeGeometry: readonly number[][] | null | undefined,
+  centerOverride?: LatLng | null,
+  maxDisplayRadiusM?: number,
+  displayOptions: GeographicRouteDisplayOptions = {},
+): TerrainVertex | null {
+  if (!routeGeometry || routeGeometry.length < 2) return null;
+  const center = centerOverride ?? model?.center;
+  if (!center) return null;
+  const terrainRadiusM = maxDisplayRadiusM ?? model?.radiusM ?? 500;
+  const maxVirtualDistanceM =
+    displayOptions.maxVirtualDistanceM ?? DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M;
+  const maxRouteDistanceM = routeGeometry.reduce((maximum, point) => {
+    const distanceM = geographicDistanceM(point, center);
+    return distanceM == null ? maximum : Math.max(maximum, distanceM);
+  }, 0);
+  for (let index = routeGeometry.length - 1; index >= 0; index -= 1) {
+    const projected = projectGeographicRoutePoint(
+      model,
+      routeGeometry[index]!,
+      center,
+      terrainRadiusM,
+      maxRouteDistanceM,
+      maxVirtualDistanceM,
+    );
+    if (projected) return projected.point;
+  }
+  return null;
 }
 
 /**
