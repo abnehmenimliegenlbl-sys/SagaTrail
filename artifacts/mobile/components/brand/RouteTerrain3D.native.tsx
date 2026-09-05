@@ -318,6 +318,10 @@ function RouteEndpointFlag({
   useEffect(() => () => startFlagGeometry.dispose(), [startFlagGeometry]);
   useFrame(() => {
     if (!group.current) return;
+    const distance = camera.position.distanceTo(position);
+    group.current.scale.setScalar(
+      Math.max(2, Math.min(10, distance / 2_500)),
+    );
     group.current.rotation.y = Math.atan2(
       camera.position.x - position.x,
       camera.position.z - position.z,
@@ -325,14 +329,27 @@ function RouteEndpointFlag({
   });
 
   return (
-    <group ref={group} position={[position.x, position.y, position.z]}>
-      <mesh position={[0, 22, 0]}>
+    <group
+      ref={group}
+      position={[position.x, position.y, position.z]}
+      frustumCulled={false}
+    >
+      <mesh position={[0, 22, 0]} renderOrder={20}>
         <cylinderGeometry args={[1.5, 1.5, 44, 8]} />
-        <meshStandardMaterial color="#D1D5DB" metalness={0.65} roughness={0.35} />
+        <meshStandardMaterial
+          color="#D1D5DB"
+          metalness={0.65}
+          roughness={0.35}
+          depthTest={false}
+        />
       </mesh>
       {kind === "start" ? (
-        <mesh geometry={startFlagGeometry}>
-          <meshStandardMaterial color="#DA291C" side={DoubleSide} />
+        <mesh geometry={startFlagGeometry} renderOrder={21}>
+          <meshStandardMaterial
+            color="#DA291C"
+            side={DoubleSide}
+            depthTest={false}
+          />
         </mesh>
       ) : (
         Array.from({ length: 2 }, (_, row) =>
@@ -340,10 +357,12 @@ function RouteEndpointFlag({
             <mesh
               key={`finish-${row}-${column}`}
               position={[5 + column * 10, 40.5 - row * 7, 0]}
+              renderOrder={21}
             >
               <boxGeometry args={[10, 7, 0.8]} />
               <meshStandardMaterial
                 color={(row + column) % 2 === 0 ? "#111111" : "#FFFFFF"}
+                depthTest={false}
               />
             </mesh>
           )),
@@ -636,6 +655,7 @@ function Scene({
           />
         </mesh>
       )}
+      {route.length >= 2 && <RouteLine color="#DA291C" points={route} />}
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
