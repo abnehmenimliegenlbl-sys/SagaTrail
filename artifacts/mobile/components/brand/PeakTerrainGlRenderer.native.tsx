@@ -700,16 +700,15 @@ function TerrainMesh({
             geometry={geometry}
             rotation={rotation}
             scale={terrainScale}
-            position={[0, tile.detail ? 0.02 : 0, 0]}
+            position={[0, 0, 0]}
             renderOrder={tile.detail ? 2 : 1}
           >
             <meshBasicMaterial
               map={texture}
               color="#FFFFFF"
               side={DoubleSide}
-              polygonOffset={tile.detail}
-              polygonOffsetFactor={tile.detail ? -2 : 0}
-              polygonOffsetUnits={tile.detail ? -4 : 0}
+              depthTest={!tile.detail}
+              depthWrite={!tile.detail}
             />
           </mesh>
         );
