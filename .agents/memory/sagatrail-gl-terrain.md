@@ -62,3 +62,9 @@ Use one uniform 2048Ã—2048 WMS texture for both panorama modes rather than 3072Ã
 **Why:** For the same 5 km area, 3072px SWISSIMAGE took about 85 seconds to return while 2048px took about 11 seconds; the map improved from roughly 3.4 to 2 seconds. Reliability outweighs the marginal resolution gain.
 
 **How to apply:** Keep map and satellite dimensions identical. Re-measure both layers before increasing them, and account for native download and texture-upload memory rather than validating only HTTP status.
+
+Upgrade the normal panorama to tiled imagery when its texture quality is revisited: keep a lower-resolution overview layer, then load higher-resolution SWISSIMAGE tiles near the observer while retaining the existing peak markers and elevation profiles.
+
+**Why:** A single texture spread across the full panorama radius becomes visibly soft nearby. The route-wide GL view showed that aligned base tiles plus a small moving set of detail tiles can improve close-range sharpness without keeping every high-resolution image in GPU memory.
+
+**How to apply:** Align overview tiles to shared terrain-mesh boundaries, preload nearby detail tiles, evict passed tiles, and leave the overview visible when detail loading fails. This belongs in `PeakTerrainGl`/`PeakPanorama`, not the AR renderer.
