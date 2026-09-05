@@ -386,7 +386,7 @@ function Scene({
       target: new Vector3(
         (frame.minX + frame.maxX) / 2,
         (minY + maxY) / 2,
-        (frame.minZ + frame.maxZ) / 2,
+        (frame.minZ + frame.maxZ) / 2 + height * 0.16,
       ),
       extent,
       width,
