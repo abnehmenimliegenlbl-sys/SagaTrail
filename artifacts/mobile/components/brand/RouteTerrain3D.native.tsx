@@ -46,10 +46,10 @@ type Model = {
 };
 
 const gradeColors = {
-  green: "#34D399",
-  yellow: "#FACC15",
-  orange: "#FB923C",
-  red: "#F43F5E",
+  green: "#39FF14",
+  yellow: "#FFF700",
+  orange: "#FF7A00",
+  red: "#FF1744",
 };
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
@@ -668,7 +668,6 @@ function Scene({
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
-      {route.length >= 2 && <RouteLine color="#00F5FF" points={route} />}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
