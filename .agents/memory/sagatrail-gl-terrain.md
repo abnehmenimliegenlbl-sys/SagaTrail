@@ -20,3 +20,9 @@ The panorama camera belongs at the radial mesh origin near eye level and must lo
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
 
 **How to apply:** Keep the mesh centered at zero, rotate it by the compass bearing, and use a forward horizon target. Route-wide overview/follow cameras remain separate.
+
+Use the label-free SwissTopo SWISSIMAGE orthophoto for the panorama texture, not the text-heavy pixel map.
+
+**Why:** Place names and map symbols compete with terrain silhouettes and peak labels. The physical-iPhone comparison confirmed SWISSIMAGE is markedly clearer in the panorama.
+
+**How to apply:** Keep the normal SwissTopo map available for route-oriented views where paths and labels aid navigation; this choice is specific to the panorama.
