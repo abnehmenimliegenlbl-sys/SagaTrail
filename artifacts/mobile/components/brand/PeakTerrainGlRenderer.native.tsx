@@ -43,7 +43,7 @@ function swissTopoTextureUrl(
     LAYERS:
       textureMode === "satellite"
         ? "ch.swisstopo.swissimage"
-        : "ch.swisstopo.leichte-basiskarte_reliefschattierung",
+        : "ch.swisstopo.swisstlm3d-karte-farbe",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: [

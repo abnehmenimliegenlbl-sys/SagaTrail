@@ -44,3 +44,9 @@ The panorama renderer is ready only after the geographic texture has loaded, not
 **Why:** A canvas-level ready callback hid the fallback before SWISSIMAGE arrived, and a transient first-load failure required closing and reopening the panorama because no retry existed.
 
 **How to apply:** Fire readiness from the successful texture-load path and retain the previous/fallback visual until then. Retry transient texture failures without remounting the modal.
+
+For the panorama's low-label map mode, use the complete `swisstlm3d-karte-farbe` WMS layer. Do not use `leichte-basiskarte_reliefschattierung` as a standalone map.
+
+**Why:** Despite its name, the lightweight-base-map WMS layer contains only gray relief shading; it appeared as an untextured gray terrain surface. The swisstlm3d color map is complete and has few labels.
+
+**How to apply:** Keep SWISSIMAGE for satellite mode and switch map mode to the complete swisstlm3d color layer. Validate requested WMS dimensions as an actual JPEG before adopting another layer.
