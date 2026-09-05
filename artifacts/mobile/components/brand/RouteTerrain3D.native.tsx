@@ -392,7 +392,7 @@ function Scene({
         <RouteLine key={index} {...line} />
       ))}
       {marker && (
-        <mesh position={marker}>
+        <mesh position={[marker.x, marker.y, marker.z]}>
           <sphereGeometry args={[9, 16, 16]} />
           <meshStandardMaterial
             color="#fff"
