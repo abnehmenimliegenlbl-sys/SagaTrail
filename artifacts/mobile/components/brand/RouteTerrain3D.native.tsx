@@ -15,7 +15,6 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
-  MultiplyBlending,
   Texture,
   Vector3,
 } from "three";
@@ -448,8 +447,7 @@ function Scene({
           <meshBasicMaterial
             map={reliefTexture}
             transparent
-            opacity={0.3}
-            blending={MultiplyBlending}
+            opacity={0.16}
             depthWrite={false}
             polygonOffset
             polygonOffsetFactor={-1}
