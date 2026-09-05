@@ -48,9 +48,9 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
 function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
   const geometry = new BufferGeometry();
   // buildLocalTerrainMesh uses 0.04 world units per metre. Omitting only the
-  // innermost 200 m reduces the oversized foreground without losing nearby
+  // innermost 400 m reduces the oversized foreground without losing nearby
   // terrain silhouettes.
-  const minimumPanoramaRadius = 200 * 0.04;
+  const minimumPanoramaRadius = 400 * 0.04;
   const visibleTriangles = mesh.triangleIndices.filter((triangle) =>
     triangle.every((vertexIndex) => {
       const vertex = mesh.vertices[vertexIndex];
