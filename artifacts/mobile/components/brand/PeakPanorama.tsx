@@ -506,6 +506,15 @@ export function PeakPanorama({
       }),
     [observerKey, profileCandidateIds, profileCandidates, profileRevision],
   );
+  const loadedProfileCount = profileCandidates.filter((peak) =>
+    observerKey
+      ? profileCacheRef.current.has(profileCacheKey(observerKey, peak.id))
+      : false,
+  ).length;
+  const profileLoadPercent =
+    profileCandidates.length > 0
+      ? Math.round((loadedProfileCount / profileCandidates.length) * 100)
+      : 0;
   if (profilesComplete && !fixedElevationRangeRef.current && profileEntries.length > 0) {
     const allAltitudes = profileEntries.flatMap((entry) =>
       entry.profile.map((point) => point.altM),
@@ -657,6 +666,29 @@ export function PeakPanorama({
           </Text>
         )}
       </View>
+      {profileObserver && profileCandidates.length > 0 && !profilesComplete && (
+        <View
+          style={styles.profileProgress}
+          accessibilityLabel={`${loadedProfileCount}/${profileCandidates.length} Topo-Profile geladen`}
+        >
+          <View style={styles.profileProgressHeader}>
+            <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
+              TOPO-PROFILE
+            </Text>
+            <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
+              {loadedProfileCount}/{profileCandidates.length}
+            </Text>
+          </View>
+          <View style={[styles.profileProgressTrack, { backgroundColor: colors.glassHighlight }]}>
+            <View
+              style={[
+                styles.profileProgressFill,
+                { width: `${profileLoadPercent}%`, backgroundColor: colors.accent },
+              ]}
+            />
+          </View>
+        </View>
+      )}
       {visiblePeaks.length > 0 && (
         <View style={styles.peakRail}>
           {visiblePeaks.slice(0, 3).map((peak, index) => {
@@ -916,6 +948,24 @@ const styles = StyleSheet.create({
   signalDot: { width: 6, height: 6, borderRadius: 3 },
   signalText: { fontFamily: fonts.bodyMedium, fontSize: 11 },
   viewAngle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8 },
+  profileProgress: { marginTop: 9, gap: 5 },
+  profileProgressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  profileProgressLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  profileProgressCount: { fontFamily: fonts.monoBold, fontSize: 9 },
+  profileProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  profileProgressFill: { height: "100%", borderRadius: 3 },
   skylineCard: {
     flex: 1,
     minHeight: 350,
