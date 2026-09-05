@@ -63,7 +63,7 @@ Use one uniform 2048Ã—2048 WMS texture for both panorama modes rather than 3072Ã
 
 **How to apply:** Keep map and satellite dimensions identical. Re-measure both layers before increasing them, and account for native download and texture-upload memory rather than validating only HTTP status.
 
-Upgrade the normal panorama to tiled imagery when its texture quality is revisited: keep a lower-resolution overview layer, then load higher-resolution SWISSIMAGE tiles near the observer while retaining the existing peak markers and elevation profiles.
+The normal panorama's satellite mode uses tiled imagery: keep a lower-resolution overview layer, then load higher-resolution SWISSIMAGE tiles near the observer while retaining the existing peak markers and elevation profiles.
 
 **Why:** A single texture spread across the full panorama radius becomes visibly soft nearby. The route-wide GL view showed that aligned base tiles plus a small moving set of detail tiles can improve close-range sharpness without keeping every high-resolution image in GPU memory.
 

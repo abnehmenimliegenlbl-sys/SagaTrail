@@ -26,9 +26,62 @@ const TERRAIN_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
+type TextureBounds = {
+  uMin: number;
+  uMax: number;
+  vMin: number;
+  vMax: number;
+};
+
+type PanoramaTile = {
+  key: string;
+  bounds: TextureBounds;
+  size: number;
+  detail?: boolean;
+};
+
+const FULL_TEXTURE_BOUNDS: TextureBounds = {
+  uMin: 0,
+  uMax: 1,
+  vMin: 0,
+  vMax: 1,
+};
+
+const PANORAMA_BASE_TILES: PanoramaTile[] = Array.from(
+  { length: 2 },
+  (_, row) =>
+    Array.from({ length: 3 }, (_, column) => ({
+      key: `base-${row}-${column}`,
+      bounds: {
+        uMin: column / 3,
+        uMax: (column + 1) / 3,
+        vMin: row / 2,
+        vMax: (row + 1) / 2,
+      },
+      size: 1024,
+    })),
+).flat();
+
+const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
+  { length: 2 },
+  (_, row) =>
+    Array.from({ length: 2 }, (_, column) => ({
+      key: `detail-${row}-${column}`,
+      bounds: {
+        uMin: 0.35 + column * 0.15,
+        uMax: 0.35 + (column + 1) * 0.15,
+        vMin: 0.35 + row * 0.15,
+        vMax: 0.35 + (row + 1) * 0.15,
+      },
+      size: 768,
+      detail: true,
+    })),
+).flat();
+
 function swissTopoTextureUrl(
   model: LocalTerrainModel,
   textureMode: PeakTerrainTextureMode,
+  tile: PanoramaTile | null = null,
 ): string {
   if (textureMode === "map") {
     const params = new URLSearchParams({
@@ -45,6 +98,16 @@ function swissTopoTextureUrl(
       1,
       111_320 * Math.cos((model.center.lat * Math.PI) / 180),
     );
+  const bounds = tile?.bounds ?? FULL_TEXTURE_BOUNDS;
+  const south =
+    model.center.lat + (bounds.vMin - 0.5) * latitudeRadiusDeg * 2;
+  const north =
+    model.center.lat + (bounds.vMax - 0.5) * latitudeRadiusDeg * 2;
+  const west =
+    model.center.lng + (bounds.uMin - 0.5) * longitudeRadiusDeg * 2;
+  const east =
+    model.center.lng + (bounds.uMax - 0.5) * longitudeRadiusDeg * 2;
+  const size = tile?.size ?? 2048;
   const params = new URLSearchParams({
     SERVICE: "WMS",
     REQUEST: "GetMap",
@@ -52,22 +115,95 @@ function swissTopoTextureUrl(
     LAYERS: "ch.swisstopo.swissimage",
     STYLES: "default",
     CRS: "EPSG:4326",
-    BBOX: [
-      model.center.lat - latitudeRadiusDeg,
-      model.center.lng - longitudeRadiusDeg,
-      model.center.lat + latitudeRadiusDeg,
-      model.center.lng + longitudeRadiusDeg,
-    ].join(","),
-    // Keep both modes uniformly high-resolution without the extreme native
-    // download time and memory pressure observed with 3072px SWISSIMAGE.
-    WIDTH: "2048",
-    HEIGHT: "2048",
+    BBOX: [south, west, north, east].join(","),
+    WIDTH: String(size),
+    HEIGHT: String(size),
     FORMAT: "image/jpeg",
   });
   return `https://wms.geo.admin.ch/?${params.toString()}`;
 }
 
-function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
+type ClippedVertex = {
+  position: [number, number, number];
+  uv: [number, number];
+};
+
+function clipPolygon(
+  polygon: ClippedVertex[],
+  inside: (vertex: ClippedVertex) => boolean,
+  intersection: (from: ClippedVertex, to: ClippedVertex) => ClippedVertex,
+): ClippedVertex[] {
+  const output: ClippedVertex[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const from = polygon[index];
+    const to = polygon[(index + 1) % polygon.length];
+    const fromInside = inside(from);
+    const toInside = inside(to);
+    if (fromInside && toInside) output.push(to);
+    else if (fromInside) output.push(intersection(from, to));
+    else if (toInside) {
+      output.push(intersection(from, to));
+      output.push(to);
+    }
+  }
+  return output;
+}
+
+function interpolateVertex(
+  from: ClippedVertex,
+  to: ClippedVertex,
+  fraction: number,
+): ClippedVertex {
+  return {
+    position: [
+      from.position[0] + (to.position[0] - from.position[0]) * fraction,
+      from.position[1] + (to.position[1] - from.position[1]) * fraction,
+      from.position[2] + (to.position[2] - from.position[2]) * fraction,
+    ],
+    uv: [
+      from.uv[0] + (to.uv[0] - from.uv[0]) * fraction,
+      from.uv[1] + (to.uv[1] - from.uv[1]) * fraction,
+    ],
+  };
+}
+
+function clipTriangleToBounds(
+  triangle: ClippedVertex[],
+  bounds: TextureBounds,
+): ClippedVertex[] {
+  let polygon = triangle;
+  const clip = (
+    axis: 0 | 1,
+    limit: number,
+    keepGreater: boolean,
+  ) => {
+    polygon = clipPolygon(
+      polygon,
+      (vertex) =>
+        keepGreater
+          ? vertex.uv[axis] >= limit
+          : vertex.uv[axis] <= limit,
+      (from, to) => {
+        const denominator = to.uv[axis] - from.uv[axis];
+        const fraction =
+          Math.abs(denominator) < 1e-9
+            ? 0
+            : (limit - from.uv[axis]) / denominator;
+        return interpolateVertex(from, to, fraction);
+      },
+    );
+  };
+  clip(0, bounds.uMin, true);
+  clip(0, bounds.uMax, false);
+  clip(1, bounds.vMin, true);
+  clip(1, bounds.vMax, false);
+  return polygon;
+}
+
+function terrainGeometry(
+  mesh: LocalTerrainMesh,
+  textureBounds: TextureBounds = FULL_TEXTURE_BOUNDS,
+): BufferGeometry {
   const geometry = new BufferGeometry();
   // buildLocalTerrainMesh uses 0.04 world units per metre. Omitting only the
   // innermost 300 m reduces the oversized foreground without losing nearby
@@ -83,17 +219,33 @@ function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
       );
     }),
   );
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const uSpan = textureBounds.uMax - textureBounds.uMin;
+  const vSpan = textureBounds.vMax - textureBounds.vMin;
+  for (const triangle of visibleTriangles) {
+    const clipped = clipTriangleToBounds(
+      triangle.map((vertexIndex) => ({
+        position: mesh.vertices[vertexIndex],
+        uv: mesh.texcoords[vertexIndex],
+      })),
+      textureBounds,
+    );
+    for (let index = 1; index < clipped.length - 1; index += 1) {
+      for (const vertex of [clipped[0], clipped[index], clipped[index + 1]]) {
+        positions.push(...vertex.position);
+        uvs.push(
+          (vertex.uv[0] - textureBounds.uMin) / uSpan,
+          (vertex.uv[1] - textureBounds.vMin) / vSpan,
+        );
+      }
+    }
+  }
   geometry.setAttribute(
     "position",
-    new BufferAttribute(new Float32Array(mesh.vertices.flat()), 3),
+    new BufferAttribute(new Float32Array(positions), 3),
   );
-  geometry.setAttribute(
-    "uv",
-    new BufferAttribute(new Float32Array(mesh.texcoords.flat()), 2),
-  );
-  geometry.setIndex(
-    new BufferAttribute(new Uint32Array(visibleTriangles.flat()), 1),
-  );
+  geometry.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), 2));
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
   return geometry;
@@ -168,15 +320,59 @@ function TerrainMesh({
     () => buildLocalTerrainMesh(terrainModel, 0),
     [terrainModel],
   );
-  const geometry = useMemo(
-    () => (localMesh ? terrainGeometry(localMesh) : null),
-    [localMesh],
+  const tiles = useMemo<PanoramaTile[]>(
+    () =>
+      textureMode === "satellite"
+        ? [...PANORAMA_BASE_TILES, ...PANORAMA_DETAIL_TILES]
+        : [
+            {
+              key: "map-full",
+              bounds: FULL_TEXTURE_BOUNDS,
+              size: 2048,
+            },
+          ],
+    [textureMode],
   );
-  const [texture, setTexture] = useState<Texture | null>(null);
+  const geometries = useMemo(
+    () =>
+      localMesh
+        ? new Map(
+            tiles.map((tile) => [
+              tile.key,
+              terrainGeometry(localMesh, tile.bounds),
+            ]),
+          )
+        : new Map<string, BufferGeometry>(),
+    [localMesh, tiles],
+  );
+  const [textures, setTextures] = useState(new Map<string, Texture>());
+  const [textureGenerationKey, setTextureGenerationKey] = useState<
+    string | null
+  >(null);
+  const [textureTerrainModel, setTextureTerrainModel] =
+    useState<LocalTerrainModel | null>(null);
+  const texturesRef = useRef(textures);
+  texturesRef.current = textures;
   const pendingReadyFramesRef = useRef(-1);
+  const baseTileCount = textureMode === "satellite" ? PANORAMA_BASE_TILES.length : 1;
+  const currentGenerationKey = [
+    textureMode,
+    terrainModel.center.lat,
+    terrainModel.center.lng,
+    terrainModel.radiusM,
+    terrainModel.fetchedAt,
+    terrainModel.sectors,
+    terrainModel.rings,
+    terrainModel.rays.length,
+  ].join(":");
 
   useFrame(() => {
-    if (!texture || pendingReadyFramesRef.current < 0) return;
+    if (
+      textures.size < baseTileCount ||
+      pendingReadyFramesRef.current < 0
+    ) {
+      return;
+    }
     pendingReadyFramesRef.current += 1;
     if (pendingReadyFramesRef.current < 2) return;
     pendingReadyFramesRef.current = -1;
@@ -185,26 +381,37 @@ function TerrainMesh({
 
   useEffect(() => {
     let active = true;
-    // Keep the previous geographic texture visible until its replacement has
-    // fully downloaded and reached Expo GL. Fast pan/heading updates must not
-    // expose the solid-color loading material between valid textures.
-    const loadTexture = async () => {
+    pendingReadyFramesRef.current = -1;
+    const previousGeneration = texturesRef.current;
+    const emptyGeneration = new Map<string, Texture>();
+    texturesRef.current = emptyGeneration;
+    setTextures(emptyGeneration);
+    setTextureGenerationKey(null);
+    setTextureTerrainModel(null);
+    previousGeneration.forEach((texture) => texture.dispose());
+
+    const baseTiles =
+      textureMode === "satellite"
+        ? PANORAMA_BASE_TILES
+        : tiles;
+    const detailTiles =
+      textureMode === "satellite" ? PANORAMA_DETAIL_TILES : [];
+
+    const loadTile = async (tile: PanoramaTile): Promise<Texture> => {
       let lastError: unknown = null;
-      for (let attempt = 0; attempt < 3 && active; attempt += 1) {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        if (!active) throw new Error("Panorama texture load cancelled");
         try {
-          const loadedTexture = await loadNativeThreeTexture(
-            swissTopoTextureUrl(terrainModel, textureMode),
+          const loaded = await loadNativeThreeTexture(
+            swissTopoTextureUrl(
+              terrainModel,
+              textureMode,
+              textureMode === "satellite" ? tile : null,
+            ),
           );
-          if (!active) {
-            loadedTexture.dispose();
-            return;
-          }
-          loadedTexture.anisotropy =
-            renderer.capabilities.getMaxAnisotropy();
-          loadedTexture.needsUpdate = true;
-          setTexture(loadedTexture);
-          pendingReadyFramesRef.current = 0;
-          return;
+          loaded.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          loaded.needsUpdate = true;
+          return loaded;
         } catch (error) {
           lastError = error;
           if (attempt < 2 && active) {
@@ -214,30 +421,124 @@ function TerrainMesh({
           }
         }
       }
-      if (active) {
+      throw lastError;
+    };
+
+    const loadInPairs = async (
+      requestedTiles: PanoramaTile[],
+    ): Promise<Map<string, Texture>> => {
+      const loaded = new Map<string, Texture>();
+      try {
+        for (let index = 0; index < requestedTiles.length; index += 2) {
+          if (!active) break;
+          const pair = requestedTiles.slice(index, index + 2);
+          const results = await Promise.allSettled(
+            pair.map(async (tile) => [tile.key, await loadTile(tile)] as const),
+          );
+          const fulfilled = results
+            .filter(
+              (
+                result,
+              ): result is PromiseFulfilledResult<readonly [string, Texture]> =>
+                result.status === "fulfilled",
+            )
+            .map((result) => result.value);
+          const failed = results.find(
+            (result): result is PromiseRejectedResult =>
+              result.status === "rejected",
+          );
+          if (failed) {
+            fulfilled.forEach(([, texture]) => texture.dispose());
+            throw failed.reason;
+          }
+          if (!active) {
+            fulfilled.forEach(([, texture]) => texture.dispose());
+            break;
+          }
+          fulfilled.forEach(([key, texture]) => loaded.set(key, texture));
+        }
+        return loaded;
+      } catch (error) {
+        loaded.forEach((texture) => texture.dispose());
+        throw error;
+      }
+    };
+
+    const loadTextures = async () => {
+      try {
+        const base = await loadInPairs(baseTiles);
+        if (!active || base.size !== baseTiles.length) {
+          base.forEach((texture) => texture.dispose());
+          return;
+        }
+        const previous = texturesRef.current;
+        texturesRef.current = base;
+        setTextures(base);
+        setTextureGenerationKey(currentGenerationKey);
+        setTextureTerrainModel(terrainModel);
+        previous.forEach((texture) => texture.dispose());
+        pendingReadyFramesRef.current = 0;
+
+        try {
+          const details = await loadInPairs(detailTiles);
+          if (!active) {
+            details.forEach((texture) => texture.dispose());
+            return;
+          }
+          const complete = new Map(texturesRef.current);
+          details.forEach((texture, key) => complete.set(key, texture));
+          texturesRef.current = complete;
+          setTextures(complete);
+        } catch (error) {
+          console.warn(
+            "[TerrainGL] panorama detail textures failed",
+            error,
+          );
+        }
+      } catch (error) {
         console.warn(
-          "[TerrainGL] SwissTopo texture failed after retries",
-          lastError,
+          "[TerrainGL] panorama base textures failed after retries",
+          error,
         );
       }
     };
-    void loadTexture();
+    void loadTextures();
     return () => {
       active = false;
     };
-  }, [renderer, terrainModel, textureMode]);
+  }, [
+    currentGenerationKey,
+    renderer,
+    terrainModel,
+    textureMode,
+    tiles,
+  ]);
 
   useEffect(
     () => () => {
-      geometry?.dispose();
-      texture?.dispose();
+      geometries.forEach((geometry) => geometry.dispose());
     },
-    [geometry, texture],
+    [geometries],
+  );
+
+  useEffect(
+    () => () => {
+      texturesRef.current.forEach((texture) => texture.dispose());
+      texturesRef.current.clear();
+    },
+    [],
   );
 
   // Never expose the solid fallback mesh. Until the geographic texture has
   // successfully reached Expo GL, PeakPanorama shows its loading surface.
-  if (!geometry || !texture) return null;
+  if (
+    !localMesh ||
+    textureTerrainModel !== terrainModel ||
+    textureGenerationKey !== currentGenerationKey ||
+    textures.size < baseTileCount
+  ) {
+    return null;
+  }
 
   const rotation: [number, number, number] = [
     0,
@@ -254,18 +555,29 @@ function TerrainMesh({
 
   return (
     <>
-      <mesh
-        geometry={geometry}
-        rotation={rotation}
-        scale={terrainScale}
-        position={[0, 0, 0]}
-      >
-        <meshBasicMaterial
-          map={texture}
-          color="#FFFFFF"
-          side={DoubleSide}
-        />
-      </mesh>
+      {tiles.map((tile) => {
+        const texture = textures.get(tile.key);
+        const geometry = geometries.get(tile.key);
+        if (!texture || !geometry) return null;
+        return (
+          <mesh
+            key={tile.key}
+            geometry={geometry}
+            rotation={rotation}
+            scale={terrainScale}
+            position={[0, 0, 0]}
+            renderOrder={tile.detail ? 2 : 1}
+          >
+            <meshBasicMaterial
+              map={texture}
+              color="#FFFFFF"
+              side={DoubleSide}
+              polygonOffset={tile.detail}
+              polygonOffsetFactor={tile.detail ? -2 : 0}
+            />
+          </mesh>
+        );
+      })}
     </>
   );
 }
