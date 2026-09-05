@@ -226,7 +226,6 @@ export function PeakCameraOverlay({
           <View style={styles.scanLineMiddle} />
           <View style={styles.scanLineBottom} />
         </View>
-        <View pointerEvents="none" style={styles.horizon} />
         {arEnabled && contentMounted && targetPeak && (
           <Animated.View
             style={[
@@ -245,7 +244,7 @@ export function PeakCameraOverlay({
               },
             ]}
           >
-            <Feather name="crosshair" size={14} color={colors.accent} />
+            <Feather name="triangle" size={14} color={colors.accent} />
             <View>
               <Text style={[styles.lockOnTitle, { color: colors.accent }]}>
                 {targetPeak.name}
@@ -298,12 +297,6 @@ export function PeakCameraOverlay({
               </View>
             </Pressable>
           ))}
-        {heading != null && (
-          <View
-            pointerEvents="none"
-            style={[styles.centerLine, { backgroundColor: colors.primary }]}
-          />
-        )}
         <View style={[styles.fullscreenTopBar, { paddingTop: insets.top + 12 }]}>
           <View>
             <Text style={[styles.fullscreenTitle, { color: colors.photoScrimText }]}>
@@ -348,7 +341,7 @@ export function PeakCameraOverlay({
         </View>
         <View style={[styles.imageFooter, { paddingBottom: insets.bottom + 12 }]}>
           <Feather
-            name={targetPeak ? "crosshair" : "compass"}
+            name={targetPeak ? "triangle" : "compass"}
             size={15}
             color={colors.photoScrimText}
           />
@@ -413,14 +406,6 @@ const styles = StyleSheet.create({
     top: "78%",
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.18)",
-  },
-  horizon: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "54%",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.45)",
   },
   lockOnBadge: {
     position: "absolute",
@@ -512,14 +497,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     width: 126,
     transform: [{ rotate: "-90deg" }],
-  },
-  centerLine: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: "50%",
-    width: 1,
-    opacity: 0.9,
   },
   terrainLegend: {
     position: "absolute",
