@@ -271,26 +271,27 @@ export function PeakPanorama({
           .map((peak) => ({ peak, relative: displayBearing(peak) }))
           .filter(
             (entry): entry is { peak: PanoramaGipfel; relative: number } =>
-              entry.relative != null &&
-              Math.abs(entry.relative) <= PANORAMA_VIEW_DEGREES / 2,
+              entry.relative != null,
           )
           .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
-          .map(({ peak }) => peak)
-          .slice(0, 8);
+          .map(({ peak }) => peak);
+  const profileCandidates = visiblePeaks.slice(0, PANORAMA_PROFILE_LIMIT);
   const observerKey = observerPosition
     ? `${observerPosition.lat.toFixed(4)}:${observerPosition.lng.toFixed(4)}`
     : null;
-  const visiblePeakIds = visiblePeaks.map((peak) => peak.id).join("|");
+  const profileCandidateIds = profileCandidates.map((peak) => peak.id).join("|");
 
   useEffect(() => {
-    if (!observerPosition || !observerKey || visiblePeaks.length === 0) return;
+    if (!observerPosition || !observerKey || profileCandidates.length === 0) return;
     const requestObserver = observerPosition;
     const requestObserverKey = observerKey;
 
-    const missingPeaks = visiblePeaks.filter((peak) => {
-      const key = profileCacheKey(requestObserverKey, peak.id);
-      return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
-    });
+    const missingPeaks = profileCandidates
+      .filter((peak) => {
+        const key = profileCacheKey(requestObserverKey, peak.id);
+        return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
+      })
+      .slice(0, PANORAMA_PROFILE_BATCH_SIZE);
     if (missingPeaks.length === 0) return;
 
     const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
@@ -340,16 +341,16 @@ export function PeakPanorama({
       cancelled = true;
       controller?.abort();
     };
-  }, [observerKey, visiblePeakIds]);
+  }, [observerKey, profileCandidateIds, profileRevision]);
 
   const loadedProfileCount = useMemo(
     () =>
-      visiblePeaks.filter((peak) =>
+      profileCandidates.filter((peak) =>
         observerKey
           ? profileCacheRef.current.has(profileCacheKey(observerKey, peak.id))
           : false,
       ).length,
-    [observerKey, visiblePeakIds, profileRevision],
+    [observerKey, profileCandidateIds, profileRevision],
   );
   const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
   const panResponder = useMemo(
@@ -381,7 +382,21 @@ export function PeakPanorama({
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
-  const skylinePeaks = visiblePeaks.slice(0, 6);
+  const profileEntries = useMemo(
+    () =>
+      profileCandidates.flatMap((peak) => {
+        const profile = observerKey
+          ? profileCacheRef.current.get(profileCacheKey(observerKey, peak.id))
+          : undefined;
+        return profile ? [{ peak, profile }] : [];
+      }),
+    [observerKey, profileCandidateIds, profileRevision],
+  );
+  const panoramaMesh = useMemo(
+    () => buildPanoramaMesh(profileEntries, displayBearing, observerElevationM),
+    [profileEntries, panOffsetDeg, observerElevationM],
+  );
+  const skylinePeaks = visiblePeaks;
   const skylineX = (peak: PanoramaGipfel) =>
     180 + ((displayBearing(peak) ?? 0) / PANORAMA_VIEW_DEGREES) * 360;
   const skylineScale = (peak: PanoramaGipfel) =>
@@ -616,107 +631,114 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
+           {panoramaMesh.triangles.map((triangle, index) => (
+             <Polygon
+               key={`mesh-${index}`}
+               points={triangle.points}
+               fill={
+                 triangle.tone === "bridge"
+                   ? colors.tint
+                   : triangle.tone === "light"
+                     ? colors.glassHighlight
+                     : colors.accent
+               }
+               fillOpacity={triangle.tone === "bridge" ? 0.13 : 0.38}
+               stroke={colors.accent}
+               strokeOpacity={triangle.tone === "bridge" ? 0.18 : 0.42}
+               strokeWidth="0.55"
+             />
+           ))}
+           {panoramaMesh.peaks.map((meshPeak) => {
+             const tip = meshPeak.points[meshPeak.points.length - 1];
+             if (!tip) return null;
+             return (
+               <G key={`profile-${meshPeak.peak.id}`}>
+                 <Polyline
+                   points={pointString(meshPeak.points)}
+                   fill="none"
+                   stroke={colors.accent}
+                   strokeOpacity={0.95}
+                   strokeWidth="1.4"
+                 />
+                 <Line
+                   x1={tip.x}
+                   y1={tip.y}
+                   x2={meshPeak.lowerPoints[meshPeak.lowerPoints.length - 1]?.x ?? tip.x}
+                   y2={meshPeak.lowerPoints[meshPeak.lowerPoints.length - 1]?.y ?? tip.y}
+                   stroke={colors.accent}
+                   strokeOpacity={0.65}
+                   strokeWidth="1"
+                 />
+                 <Circle cx={tip.x} cy={tip.y} r="3.5" fill={colors.primary} />
+                 {meshPeak.centerX > -18 && meshPeak.centerX < 378 && (
+                   <SvgText
+                     x={meshPeak.centerX}
+                     y={Math.max(30, tip.y - 9)}
+                     fill={colors.foreground}
+                     fontSize="8"
+                     fontWeight="600"
+                     textAnchor="middle"
+                   >
+                     {meshPeak.peak.name.length > 15
+                       ? `${meshPeak.peak.name.slice(0, 14)}…`
+                       : meshPeak.peak.name}
+                   </SvgText>
+                 )}
+               </G>
+             );
+           })}
            {skylinePeaks
-            .slice()
-            .sort((a, b) => skylineX(a) - skylineX(b))
-            .map((peak, index) => {
-              const x = skylineX(peak);
-              const scale = skylineScale(peak);
-               const width = Math.max(34, Math.min(118, 104 * scale));
-               const profile = observerKey
-                 ? profileCacheRef.current.get(profileCacheKey(observerKey, peak.id))
-                 : undefined;
-               const geometry = profile
-                 ? buildProfileBand(profile, x, width, observerElevationM)
-                 : null;
-               const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
-              return (
-                <G key={peak.id}>
-                   {geometry ? (
-                     <>
-                       <Polygon
-                         points={`${geometry.upper} ${geometry.lower}`}
-                         fill={fill}
-                         fillOpacity={0.78}
-                         stroke={colors.accent}
-                         strokeOpacity={0.4}
-                         strokeWidth="1"
-                       />
-                       <Polygon
-                         points={`${geometry.upperEnd} ${geometry.lowerEnd} ${geometry.lowerEndDepth} ${geometry.upperEndDepth}`}
-                         fill={colors.accent}
-                         fillOpacity={0.2}
-                         stroke={colors.accent}
-                         strokeOpacity={0.38}
-                         strokeWidth="1"
-                       />
-                       <Polyline
-                         points={geometry.upper}
-                         fill="none"
-                         stroke={colors.accent}
-                         strokeWidth="1.7"
-                         strokeOpacity={0.95}
-                       />
-                       <Polyline
-                         points={geometry.lower}
-                         fill="none"
-                         stroke={colors.accent}
-                         strokeWidth="1"
-                         strokeOpacity={0.32}
-                       />
-                       <Line
-                         x1={geometry.upperEndX}
-                         y1={geometry.upperEndY}
-                         x2={geometry.lowerEndX}
-                         y2={geometry.lowerEndY}
-                         stroke={colors.accent}
-                         strokeOpacity={0.6}
-                         strokeWidth="1"
-                       />
-                       <Circle
-                         cx={geometry.upperEndX}
-                         cy={geometry.upperEndY}
-                         r={Math.max(3, 4 * scale)}
-                         fill={colors.primary}
-                       />
-                     </>
-                   ) : (
-                     <>
-                       <Line
-                         x1={x}
-                         y1="139"
-                         x2={x}
-                         y2="166"
-                         stroke={colors.mutedForeground}
-                         strokeOpacity={0.6}
-                         strokeDasharray="2 3"
-                       />
-                       <Circle cx={x} cy="136" r={Math.max(3, 4 * scale)} fill={colors.primary} />
-                     </>
+             .filter((peak) => !panoramaMesh.peaks.some((meshPeak) => meshPeak.peak.id === peak.id))
+             .map((peak, index) => {
+               const x = skylineX(peak);
+               const scale = skylineScale(peak);
+               return (
+                 <G key={`marker-${peak.id}`}>
+                   <Line
+                     x1={x}
+                     y1="143"
+                     x2={x}
+                     y2="166"
+                     stroke={colors.mutedForeground}
+                     strokeOpacity={0.55}
+                     strokeDasharray="2 3"
+                   />
+                   <Circle cx={x} cy="140" r={Math.max(3, 4 * scale)} fill={colors.primary} />
+                   {index < 12 && x > -18 && x < 378 && (
+                     <SvgText
+                       x={x}
+                       y="130"
+                       fill={colors.foreground}
+                       fontSize="8"
+                       fontWeight="600"
+                       textAnchor="middle"
+                     >
+                       {peak.name.length > 15 ? `${peak.name.slice(0, 14)}…` : peak.name}
+                     </SvgText>
                    )}
-                  {x > -18 && x < 378 && (
-                    <SvgText
-                      x={x}
-                       y={geometry ? Math.max(30, geometry.upperEndY - 10) : 124}
-                      fill={colors.foreground}
-                      fontSize="9"
-                      fontWeight="600"
-                      textAnchor="middle"
-                    >
-                      {peak.name.length > 16 ? `${peak.name.slice(0, 15)}…` : peak.name}
-                    </SvgText>
-                  )}
-                </G>
-              );
-            })}
+                 </G>
+               );
+             })}
+           <Line
+             x1="180"
+             y1="23"
+             x2="180"
+             y2="166"
+             stroke={colors.primary}
+             strokeOpacity={0.72}
+             strokeWidth="1"
+           />
+           <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
+             BLICK
+           </SvgText>
           <SvgText x="180" y="191" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
             {panoramaHasHeight && targetPeak?.elevationAngleDeg != null
               ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
               : strings.heightUnknown}
           </SvgText>
-           {visiblePeaks.length > 0 && loadedProfileCount < Math.min(visiblePeaks.length, 6) && (
+            {profileCandidates.length > 0 && loadedProfileCount < profileCandidates.length && (
              <SvgText x="180" y="177" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-               {`${loadedProfileCount}/${Math.min(visiblePeaks.length, 6)} SwissTopo`}
+               {`${loadedProfileCount}/${profileCandidates.length} SwissTopo-Mesh`}
              </SvgText>
            )}
           <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
