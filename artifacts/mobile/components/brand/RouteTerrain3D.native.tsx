@@ -1,11 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import { Canvas, useFrame, useThree } from "@react-three/fiber/native";
+import * as FileSystem from "expo-file-system/legacy";
 import { GLView } from "expo-gl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -17,13 +18,13 @@ import {
   BufferGeometry,
   DoubleSide,
   Group,
+  SRGBColorSpace,
   Texture,
   Vector3,
 } from "three";
 
 import { createTerrainArea } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
-import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import {
   buildRouteGradeSegments,
   type TerrainProfilePoint,
@@ -51,8 +52,56 @@ const gradeColors = {
 };
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
-const mapTextureSizes: readonly number[] =
-  Platform.OS === "ios" ? [2048] : [3072, 2048];
+const mapTextureSizes: readonly number[] = [1536, 1024];
+
+function imageSize(uri: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    Image.getSize(
+      uri,
+      (width, height) => resolve({ width, height }),
+      reject,
+    );
+  });
+}
+
+async function loadRouteMapTexture(
+  url: string,
+  cacheName: string,
+): Promise<Texture> {
+  const cacheDirectory = FileSystem.cacheDirectory;
+  if (!cacheDirectory) throw new Error("Kein Textur-Cache verfügbar.");
+  const localUri = `${cacheDirectory}${cacheName}.jpg`;
+  await FileSystem.deleteAsync(localUri, { idempotent: true }).catch(
+    () => undefined,
+  );
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const result = await Promise.race([
+    FileSystem.downloadAsync(url, localUri),
+    new Promise<never>((_, reject) => {
+      timeout = setTimeout(
+        () => reject(new Error("Textur-Download hat zu lange gedauert.")),
+        25_000,
+      );
+    }),
+  ]).finally(() => {
+    if (timeout) clearTimeout(timeout);
+  });
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Textur-Download fehlgeschlagen (${result.status}).`);
+  }
+  const { width, height } = await imageSize(result.uri);
+  const texture = new Texture();
+  texture.image = {
+    data: { localUri: result.uri },
+    width,
+    height,
+  };
+  texture.flipY = true;
+  texture.colorSpace = SRGBColorSpace;
+  texture.needsUpdate = true;
+  (texture as Texture & { isDataTexture: boolean }).isDataTexture = true;
+  return texture;
+}
 
 function distanceKm(a: number[], b: number[]): number {
   const deltaLat = (b[0] - a[0]) * radians;
@@ -334,7 +383,10 @@ function Scene({
       let lastError: unknown;
       for (const size of mapTextureSizes) {
         try {
-          return await loadNativeThreeTexture(swissTopoTextureUrl(model.grid, size));
+          return await loadRouteMapTexture(
+            swissTopoTextureUrl(model.grid, size),
+            `route-terrain-basemap-${size}`,
+          );
         } catch (error) {
           lastError = error;
           console.warn(
@@ -363,12 +415,14 @@ function Scene({
     };
   }, [model.grid, onMapLoadState]);
   useEffect(() => {
+    if (!texture) return;
     let active = true;
     const loadRelief = async () => {
       for (const size of mapTextureSizes) {
         try {
-          return await loadNativeThreeTexture(
+          return await loadRouteMapTexture(
             swissSurfaceReliefUrl(model.grid, size),
+            `route-terrain-relief-${size}`,
           );
         } catch (error) {
           console.warn(
@@ -392,7 +446,7 @@ function Scene({
     return () => {
       active = false;
     };
-  }, [model.grid]);
+  }, [model.grid, texture]);
   useEffect(() => () => terrain.dispose(), [terrain]);
   useEffect(() => () => texture?.dispose(), [texture]);
   useEffect(() => () => reliefTexture?.dispose(), [reliefTexture]);
