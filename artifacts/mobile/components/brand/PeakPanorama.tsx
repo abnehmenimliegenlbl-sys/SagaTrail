@@ -82,6 +82,11 @@ type PanoramaProfilePoint = { distanceKm: number; altM: number };
 type PanoramaProfile = {
   peakId: string;
   profile: PanoramaProfilePoint[];
+  peakDistanceKm?: number;
+};
+type CachedPanoramaProfile = {
+  points: PanoramaProfilePoint[];
+  peakDistanceKm: number | null;
 };
 
 function profileCacheKey(
@@ -119,6 +124,7 @@ type PanoramaMeshPeak = {
   centerX: number;
   points: MeshPoint[];
   lowerPoints: MeshPoint[];
+  peakPoint: MeshPoint;
 };
 type PanoramaMesh = {
   peaks: PanoramaMeshPeak[];

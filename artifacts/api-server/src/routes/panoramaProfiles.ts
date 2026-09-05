@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 
 import { computeElevationProfile } from "../lib/elevation";
+import { haversineM } from "../lib/geo";
 
 const router: IRouter = Router();
 
@@ -36,11 +37,22 @@ function sampleLine(
   });
 }
 
+function extendBeyondPeak(
+  observer: { lat: number; lng: number },
+  peak: { lat: number; lng: number },
+  factor = 0.35,
+): { lat: number; lng: number } {
+  return {
+    lat: peak.lat + (peak.lat - observer.lat) * factor,
+    lng: peak.lng + (peak.lng - observer.lng) * factor,
+  };
+}
+
 /**
  * POST /panorama-profiles
- * Liefert echte SwissTopo-DTM-Profile vom aktuellen Beobachter bis zu den
- * sichtbaren Gipfeln. Einzelne nicht verfügbare Profile werden ausgelassen,
- * damit die übrigen Gipfel weiterhin dargestellt werden können.
+ * Liefert echte SwissTopo-DTM-Profile vom aktuellen Beobachter über die
+ * sichtbaren Gipfel hinaus. Einzelne nicht verfügbare Profile werden
+ * ausgelassen, damit die übrigen Gipfel weiterhin dargestellt werden können.
  */
 router.post("/panorama-profiles", async (req: Request, res: Response): Promise<void> => {
   const parsed = BodySchema.safeParse(req.body);
@@ -57,6 +69,7 @@ router.post("/panorama-profiles", async (req: Request, res: Response): Promise<v
   const profiles: Array<{
     peakId: string;
     profile: Array<{ distanceKm: number; altM: number }>;
+    peakDistanceKm: number;
   }> = [];
   let nextIndex = 0;
 
@@ -65,12 +78,17 @@ router.post("/panorama-profiles", async (req: Request, res: Response): Promise<v
       const peak = uniquePeaks[nextIndex++];
       if (!peak) return;
       try {
+        const profileEnd = extendBeyondPeak(parsed.data.observer, peak);
         const profile = await computeElevationProfile(
-          sampleLine(parsed.data.observer, peak),
+          sampleLine(parsed.data.observer, profileEnd),
           req.log,
         );
         if (profile && profile.length >= 2) {
-          profiles.push({ peakId: peak.id, profile });
+          profiles.push({
+            peakId: peak.id,
+            profile,
+            peakDistanceKm: haversineM(parsed.data.observer, peak) / 1000,
+          });
         }
       } catch (err) {
         // Ein einzelnes SwissTopo-Profil darf die sichtbaren Nachbarn nicht
