@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -50,6 +51,8 @@ const gradeColors = {
 };
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
+const mapTextureSizes: readonly number[] =
+  Platform.OS === "ios" ? [2048] : [3072, 2048];
 
 function distanceKm(a: number[], b: number[]): number {
   const deltaLat = (b[0] - a[0]) * radians;
@@ -58,7 +61,7 @@ function distanceKm(a: number[], b: number[]): number {
   return 6371 * Math.sqrt(deltaLat * deltaLat + longitude * longitude);
 }
 
-function swissTopoTextureUrl(grid: TerrainGrid): string {
+function swissTopoTextureUrl(grid: TerrainGrid, size: number): string {
   const { south, west, north, east } = grid.bounds;
   return `https://wms.geo.admin.ch/?${new URLSearchParams({
     SERVICE: "WMS",
@@ -68,13 +71,13 @@ function swissTopoTextureUrl(grid: TerrainGrid): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: "3072",
-    HEIGHT: "3072",
+    WIDTH: String(size),
+    HEIGHT: String(size),
     FORMAT: "image/jpeg",
   }).toString()}`;
 }
 
-function swissSurfaceReliefUrl(grid: TerrainGrid): string {
+function swissSurfaceReliefUrl(grid: TerrainGrid, size: number): string {
   const { south, west, north, east } = grid.bounds;
   return `https://wms.geo.admin.ch/?${new URLSearchParams({
     SERVICE: "WMS",
@@ -85,8 +88,8 @@ function swissSurfaceReliefUrl(grid: TerrainGrid): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: "3072",
-    HEIGHT: "3072",
+    WIDTH: String(size),
+    HEIGHT: String(size),
     FORMAT: "image/png",
     TRANSPARENT: "TRUE",
   }).toString()}`;
@@ -305,10 +308,12 @@ function Scene({
   model,
   playing,
   follow,
+  onMapLoadState,
 }: {
   model: Model;
   playing: boolean;
   follow: boolean;
+  onMapLoadState: (state: "loading" | "ready" | "error") => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
   const routeDistanceList = useMemo(
@@ -323,34 +328,67 @@ function Scene({
 
   useEffect(() => {
     let active = true;
-    loadNativeThreeTexture(swissTopoTextureUrl(model.grid))
+    setTexture(null);
+    onMapLoadState("loading");
+    const loadBaseMap = async () => {
+      let lastError: unknown;
+      for (const size of mapTextureSizes) {
+        try {
+          return await loadNativeThreeTexture(swissTopoTextureUrl(model.grid, size));
+        } catch (error) {
+          lastError = error;
+          console.warn(
+            `[RouteTerrain3D] SwissTopo texture ${size}x${size} failed`,
+            error,
+          );
+        }
+      }
+      throw lastError;
+    };
+    loadBaseMap()
       .then((loaded) => {
         if (!active) {
           loaded.dispose();
           return;
         }
         setTexture(loaded);
+        onMapLoadState("ready");
       })
       .catch((error) => {
         console.warn("[RouteTerrain3D] SwissTopo texture failed", error);
+        if (active) onMapLoadState("error");
       });
     return () => {
       active = false;
     };
-  }, [model.grid]);
+  }, [model.grid, onMapLoadState]);
   useEffect(() => {
     let active = true;
-    loadNativeThreeTexture(swissSurfaceReliefUrl(model.grid))
+    const loadRelief = async () => {
+      for (const size of mapTextureSizes) {
+        try {
+          return await loadNativeThreeTexture(
+            swissSurfaceReliefUrl(model.grid, size),
+          );
+        } catch (error) {
+          console.warn(
+            `[RouteTerrain3D] swissSURFACE3D relief ${size}x${size} failed`,
+            error,
+          );
+        }
+      }
+      return null;
+    };
+    loadRelief()
       .then((loaded) => {
+        if (!loaded) return;
         if (!active) {
           loaded.dispose();
           return;
         }
         setReliefTexture(loaded);
       })
-      .catch((error) => {
-        console.warn("[RouteTerrain3D] swissSURFACE3D relief failed", error);
-      });
+      .catch(() => undefined);
     return () => {
       active = false;
     };
@@ -578,6 +616,26 @@ export default function RouteTerrain3D({
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(true);
   const [follow, setFollow] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const mapLoadState = useMemo(
+    () => (state: "loading" | "ready" | "error") => {
+      if (state === "loading") setLoadProgress((value) => Math.max(value, 70));
+      if (state === "ready") setLoadProgress(100);
+      if (state === "error") {
+        setError("Die Satellitenkarte konnte nicht geladen werden.");
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (loadProgress < 70 || loadProgress >= 100 || error) return;
+    const timer = setInterval(
+      () => setLoadProgress((value) => Math.min(95, value + 1)),
+      220,
+    );
+    return () => clearInterval(timer);
+  }, [error, loadProgress]);
 
   useEffect(() => {
     if (!visible) return;
@@ -585,9 +643,14 @@ export default function RouteTerrain3D({
     setReady(null);
     setModel(null);
     setError(null);
+    setLoadProgress(5);
     GLView.createContextAsync()
       .then((context) => GLView.destroyContextAsync(context).then(() => true))
-      .then((available) => active && setReady(available))
+      .then((available) => {
+        if (!active) return;
+        setReady(available);
+        if (available) setLoadProgress(20);
+      })
       .catch(() => active && setReady(false));
     return () => {
       active = false;
@@ -611,6 +674,11 @@ export default function RouteTerrain3D({
       return;
     }
     let active = true;
+    setLoadProgress(30);
+    const progressTimer = setInterval(
+      () => setLoadProgress((value) => Math.min(65, value + 2)),
+      180,
+    );
     const corridorGeometry = geometry.map(
       (point) => [point[0], point[1]] as [number, number],
     );
@@ -629,13 +697,19 @@ export default function RouteTerrain3D({
       .then((data) => {
         const grid = parseTerrainCorridor(data);
         if (!grid) throw new Error();
-        if (active) setModel({ grid, geometry, profile: terrainProfile });
+        if (active) {
+          clearInterval(progressTimer);
+          setLoadProgress(70);
+          setModel({ grid, geometry, profile: terrainProfile });
+        }
       })
-      .catch(
-        () => active && setError("Das 3D-Gelände konnte nicht geladen werden."),
-      );
+      .catch(() => {
+        clearInterval(progressTimer);
+        if (active) setError("Das 3D-Gelände konnte nicht geladen werden.");
+      });
     return () => {
       active = false;
+      clearInterval(progressTimer);
     };
   }, [
     visible,
@@ -654,10 +728,15 @@ export default function RouteTerrain3D({
             style={styles.canvas}
             camera={{ position: [0, 500, 700], fov: 48, near: 1, far: 100000 }}
           >
-            <Scene model={model} playing={playing} follow={follow} />
+            <Scene
+              model={model}
+              playing={playing}
+              follow={follow}
+              onMapLoadState={mapLoadState}
+            />
           </Canvas>
         )}
-        {!model && (
+        {(!model || loadProgress < 100 || error) && (
           <View style={[styles.status, { backgroundColor: colors.background }]}>
             {error ? (
               <>
@@ -674,7 +753,27 @@ export default function RouteTerrain3D({
               <>
                 <ActivityIndicator color={colors.accent} />
                 <Text style={[styles.statusText, { color: colors.foreground }]}>
-                  3D-Gelände wird geladen …
+                  {loadProgress < 20
+                    ? "3D-Grafik wird vorbereitet …"
+                    : loadProgress < 70
+                      ? "3D-Gelände wird geladen …"
+                      : "Satellitenkarte wird geladen …"}
+                </Text>
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${loadProgress}%`,
+                        backgroundColor: colors.accent,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text
+                  style={[styles.statusHint, { color: colors.mutedForeground }]}
+                >
+                  {Math.round(loadProgress)} %
                 </Text>
               </>
             )}
@@ -687,7 +786,7 @@ export default function RouteTerrain3D({
         >
           <Feather name="x" size={25} color="#fff" />
         </Pressable>
-        {model && (
+        {model && loadProgress === 100 && !error && (
           <View style={styles.controls}>
             <Pressable
               onPress={() => setPlaying((value) => !value)}
@@ -726,7 +825,11 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#101A16" },
   canvas: { flex: 1 },
   status: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: "center",
     justifyContent: "center",
     padding: 32,
@@ -734,6 +837,18 @@ const styles = StyleSheet.create({
   },
   statusText: { fontSize: 17, fontWeight: "600", textAlign: "center" },
   statusHint: { fontSize: 14, textAlign: "center" },
+  progressTrack: {
+    width: "78%",
+    maxWidth: 320,
+    height: 8,
+    overflow: "hidden",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF22",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
   close: {
     position: "absolute",
     top: 52,
