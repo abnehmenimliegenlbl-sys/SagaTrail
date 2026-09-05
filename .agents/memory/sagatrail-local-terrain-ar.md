@@ -58,3 +58,9 @@ Wide geographic features such as rivers require dense real DTM sampling; texture
 **Why:** A coarse 5 km radial mesh draped the geographically correct Rhine texture across broad sloped triangles, making the river appear to climb the terrain.
 
 **How to apply:** Increase real SwissTopo sector/ring density within service limits and retain the missing-sector gap guard. Never invent intermediate heights or bridge missing rays for visual smoothness.
+
+On iOS, panorama heading must come from Core Location's calibrated heading, not from the custom magnetometer transform or a fixed 180-degree correction. Native WMS textures with flipY map geographic north to increasing V.
+
+**Why:** The custom transform contained an explicit 180-degree offset yet still differed from Apple Maps by about 66 degrees on the same physical phone orientation. The old UV sign separately mirrored the WMS texture north/south.
+
+**How to apply:** Prefer trueHeading, falling back to magHeading only when unavailable; keep Android's sensor fallback separate. Validate mesh rotation algebraically and texture axes independently instead of compensating one with the other.

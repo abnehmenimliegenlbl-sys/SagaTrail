@@ -84,6 +84,12 @@ test("builds a compass-aligned mesh only with a known observer height", () => {
   assert.equal(mesh.vertices.length, 12);
   assert.equal(mesh.triangleIndices.length, 16);
   assert.ok(mesh.vertices.some(([x, y, z]) => x > 0 && z < 0 && y > 0));
+  assert.ok(
+    mesh.texcoords.slice(0, 3).every(([, v], index) =>
+      index === 0 ? v === 0.5 : v > 0.5,
+    ),
+    "north-facing terrain must sample the northern half of a flipY WMS texture",
+  );
   assert.equal(buildLocalTerrainMesh(model({ observerElevationM: null }), 0), null);
   assert.equal(buildLocalTerrainMesh(model(), null), null);
 });

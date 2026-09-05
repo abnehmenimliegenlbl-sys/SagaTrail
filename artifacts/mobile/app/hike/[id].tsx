@@ -2602,13 +2602,14 @@ export default function LiveHike() {
     };
   }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
 
-  // Gerätekompass: auf iOS/Android aus dem Magnetometer lesen. Web und Geräte
-  // ohne Sensor zeigen später nur den deaktivierten Zustand; die GPS-basierte
-  // Richtung zum Wegstart bleibt davon unabhängig.
+  // iOS uses Core Location's calibrated heading so Panorama and Apple Maps
+  // share the same device reference. Android retains the tilt-compensated
+  // magnetometer path below.
   useEffect(() => {
     let cancelled = false;
     let magnetometerSubscription: ReturnType<typeof Magnetometer.addListener> | null = null;
     let motionSubscription: ReturnType<typeof DeviceMotion.addListener> | null = null;
+    let headingSubscription: Location.LocationSubscription | null = null;
 
     if (Platform.OS === "web") {
       setCompassAvailable(false);
@@ -2620,6 +2621,42 @@ export default function LiveHike() {
     compassHeadingRef.current = null;
     compassGravityRef.current = null;
     compassSamplesRef.current = [];
+
+    const acceptHeading = (heading: number) => {
+      if (cancelled || !Number.isFinite(heading)) return;
+      const normalized = ((heading % 360) + 360) % 360;
+      const samples = compassSamplesRef.current;
+      samples.push(normalized);
+      if (samples.length > 7) samples.shift();
+      const robustHeading = circularMeanHeading(samples);
+      if (robustHeading == null) return;
+
+      const smoothed = smoothCompassHeading(
+        compassHeadingRef.current,
+        robustHeading,
+        0.18,
+      );
+      compassHeadingRef.current = smoothed;
+      setCompassHeading(smoothed);
+    };
+
+    if (Platform.OS === "ios") {
+      setCompassAvailable(true);
+      void Location.watchHeadingAsync(({ trueHeading, magHeading }) => {
+        acceptHeading(trueHeading >= 0 ? trueHeading : magHeading);
+      })
+        .then((subscription) => {
+          if (cancelled) subscription.remove();
+          else headingSubscription = subscription;
+        })
+        .catch(() => {
+          if (!cancelled) setCompassAvailable(false);
+        });
+      return () => {
+        cancelled = true;
+        headingSubscription?.remove();
+      };
+    }
 
     void Promise.all([
       Magnetometer.isAvailableAsync(),
@@ -2677,19 +2714,7 @@ export default function LiveHike() {
                 );
           if (heading == null) return;
 
-          const samples = compassSamplesRef.current;
-          samples.push(heading);
-          if (samples.length > 7) samples.shift();
-          const robustHeading = circularMeanHeading(samples);
-          if (robustHeading == null) return;
-
-          const smoothed = smoothCompassHeading(
-            compassHeadingRef.current,
-            robustHeading,
-            0.18,
-          );
-          compassHeadingRef.current = smoothed;
-          setCompassHeading(smoothed);
+          acceptHeading(heading);
         });
       })
       .catch(() => {
@@ -2700,8 +2725,10 @@ export default function LiveHike() {
       cancelled = true;
       magnetometerSubscription?.remove();
       motionSubscription?.remove();
+      headingSubscription?.remove();
       magnetometerSubscription = null;
       motionSubscription = null;
+      headingSubscription = null;
     };
   }, []);
 

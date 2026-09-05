@@ -267,7 +267,9 @@ export function buildLocalTerrainMesh(
       const northM = Math.cos(geographicAngle) * sample.distanceM;
       texcoords.push([
         clampNumber(0.5 + eastM / (model.radiusM * 2), 0, 1),
-        clampNumber(0.5 - northM / (model.radiusM * 2), 0, 1),
+        // Native Three textures are uploaded with flipY=true: the northern
+        // (top) edge of the WMS image therefore lives at larger V values.
+        clampNumber(0.5 + northM / (model.radiusM * 2), 0, 1),
       ]);
     }
   }
