@@ -126,7 +126,10 @@ export interface OfflinePanoramaDatenbank {
   terrainModel?: LocalTerrainModel;
 }
 
-export const PANORAMA_ROUTE_CORRIDOR_KM = 20;
+// Das Panorama zeigt die lokale Höhenverteilung. Entfernte Gipfel würden die
+// Winkelverteilung dominieren, obwohl sie für das Gelände direkt vor dem
+// Wanderer nicht repräsentativ sind.
+export const PANORAMA_ROUTE_CORRIDOR_KM = 5;
 export const PANORAMA_OFFLINE_VERSION = 4;
 export const PANORAMA_OFFLINE_SOURCE =
   "OpenStreetMap natural=peak via Overpass; Höhe aus OSM ele; SwissTopo route and local terrain; 20 km route corridor";
@@ -271,7 +274,7 @@ export function erkenneGipfel(
       seen.add(peak.id);
       return true;
     })
-    .filter((peak) => peak.distanceKm <= 20)
+    .filter((peak) => peak.distanceKm <= PANORAMA_ROUTE_CORRIDOR_KM)
     .sort((a, b) => a.distanceKm - b.distanceKm);
 
   const limit = Math.max(0, maxPeaks);
