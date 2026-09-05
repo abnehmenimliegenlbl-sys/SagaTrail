@@ -5,6 +5,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
+  LinearFilter,
   type PerspectiveCamera,
   Texture,
 } from "three";
@@ -420,6 +421,9 @@ function TerrainMesh({
             ),
           );
           loaded.anisotropy = renderer.capabilities.getMaxAnisotropy();
+           loaded.generateMipmaps = false;
+           loaded.minFilter = LinearFilter;
+           loaded.magFilter = LinearFilter;
           loaded.needsUpdate = true;
           return loaded;
         } catch (error) {
@@ -553,6 +557,9 @@ function TerrainMesh({
             swissTopoTextureUrl(terrainModel, textureMode, tile),
           );
           loaded.anisotropy = renderer.capabilities.getMaxAnisotropy();
+           loaded.generateMipmaps = false;
+           loaded.minFilter = LinearFilter;
+           loaded.magFilter = LinearFilter;
           loaded.needsUpdate = true;
           return loaded;
         } catch (error) {
@@ -707,8 +714,11 @@ function TerrainMesh({
               map={texture}
               color="#FFFFFF"
               side={DoubleSide}
-              depthTest={!tile.detail}
-              depthWrite={!tile.detail}
+              depthTest
+              depthWrite
+              polygonOffset={tile.detail}
+              polygonOffsetFactor={tile.detail ? -2 : 0}
+              polygonOffsetUnits={tile.detail ? -4 : 0}
             />
           </mesh>
         );
