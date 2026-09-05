@@ -27,11 +27,11 @@ Use the label-free SwissTopo SWISSIMAGE orthophoto for the panorama texture, not
 
 **How to apply:** Keep the normal SwissTopo map available for route-oriented views where paths and labels aid navigation; this choice is specific to the panorama.
 
-Keep the last successfully loaded panorama texture visible while refreshed terrain or imagery loads. Do not reset GL readiness merely because `fetchedAt` changes, and do not clear the current texture before its replacement is ready.
+Never show an untextured colored panorama mesh. While the initial texture or a newly selected map/satellite mode loads, cover the GL surface and show a labeled progress bar.
 
-**Why:** Fast panning and terrain refreshes exposed the red SVG/material fallback for a frame. Physical-iPhone testing confirmed stale-while-revalidate removes the flash without interrupting movement.
+**Why:** Fast panning and failed texture loads exposed a red material fallback, and the user explicitly rejected showing that mesh. A progress state is clearer than stale or untextured terrain during a deliberate layer switch.
 
-**How to apply:** Reset GL readiness only when there is no terrain model at all. Swap textures atomically after the new native texture has completed loading.
+**How to apply:** Render no Three mesh until a real texture exists. Reset readiness immediately when map/satellite mode changes, keep the loading cover above GL, and reveal terrain only from the successful texture-load callback.
 
 The panorama SVG overlay must use `preserveAspectRatio="none"` when it fills the tall, flexible native panorama container.
 
@@ -43,10 +43,16 @@ The panorama renderer is ready only after the geographic texture has loaded, not
 
 **Why:** A canvas-level ready callback hid the fallback before SWISSIMAGE arrived, and a transient first-load failure required closing and reopening the panorama because no retry existed.
 
-**How to apply:** Fire readiness from the successful texture-load path and retain the previous/fallback visual until then. Retry transient texture failures without remounting the modal.
+**How to apply:** Fire readiness from the successful texture-load path and retain the progress surface until then. Retry transient texture failures without remounting the modal.
 
-For the panorama's low-label map mode, use the complete `swisstlm3d-karte-farbe` WMS layer. Do not use `leichte-basiskarte_reliefschattierung` as a standalone map.
+For panorama map mode, use the complete `pixelkarte-farbe` WMS layer. Do not use `leichte-basiskarte_reliefschattierung` or `swisstlm3d-karte-farbe` as a standalone full-coverage map.
 
-**Why:** Despite its name, the lightweight-base-map WMS layer contains only gray relief shading; it appeared as an untextured gray terrain surface. The swisstlm3d color map is complete and has few labels.
+**Why:** The lightweight-base-map WMS layer contains only gray relief shading. The swisstlm3d color image has large white/gray coverage holes around Basel despite returning a valid JPEG, so some headings showed only a blank surface.
 
-**How to apply:** Keep SWISSIMAGE for satellite mode and switch map mode to the complete swisstlm3d color layer. Validate requested WMS dimensions as an actual JPEG before adopting another layer.
+**How to apply:** Keep SWISSIMAGE for satellite mode and pixelkarte-farbe for map mode. Validate the full image visually for geographic coverage; HTTP 200 and JPEG dimensions alone are insufficient.
+
+Use one uniform 2048×2048 WMS texture for both panorama modes rather than 3072×3072.
+
+**Why:** For the same 5 km area, 3072px SWISSIMAGE took about 85 seconds to return while 2048px took about 11 seconds; the map improved from roughly 3.4 to 2 seconds. Reliability outweighs the marginal resolution gain.
+
+**How to apply:** Keep map and satellite dimensions identical. Re-measure both layers before increasing them, and account for native download and texture-upload memory rather than validating only HTTP status.

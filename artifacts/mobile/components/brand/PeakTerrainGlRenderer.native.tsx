@@ -1,4 +1,4 @@
-import { Canvas, useThree } from "@react-three/fiber/native";
+import { Canvas, useFrame, useThree } from "@react-three/fiber/native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
@@ -43,7 +43,7 @@ function swissTopoTextureUrl(
     LAYERS:
       textureMode === "satellite"
         ? "ch.swisstopo.swissimage"
-        : "ch.swisstopo.swisstlm3d-karte-farbe",
+        : "ch.swisstopo.pixelkarte-farbe",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: [
@@ -52,10 +52,10 @@ function swissTopoTextureUrl(
       model.center.lat + latitudeRadiusDeg,
       model.center.lng + longitudeRadiusDeg,
     ].join(","),
-    // Use a high-resolution source for the tall native panorama. The complete
-    // terrain mesh receives one image at one scale, avoiding mixed zoom levels.
-    WIDTH: "3072",
-    HEIGHT: "3072",
+    // Keep both modes uniformly high-resolution without the extreme native
+    // download time and memory pressure observed with 3072px SWISSIMAGE.
+    WIDTH: "2048",
+    HEIGHT: "2048",
     FORMAT: "image/jpeg",
   });
   return `https://wms.geo.admin.ch/?${params.toString()}`;
@@ -167,6 +167,15 @@ function TerrainMesh({
     [localMesh],
   );
   const [texture, setTexture] = useState<Texture | null>(null);
+  const pendingReadyFramesRef = useRef(-1);
+
+  useFrame(() => {
+    if (!texture || pendingReadyFramesRef.current < 0) return;
+    pendingReadyFramesRef.current += 1;
+    if (pendingReadyFramesRef.current < 2) return;
+    pendingReadyFramesRef.current = -1;
+    onReadyRef.current?.();
+  });
 
   useEffect(() => {
     let active = true;
@@ -188,7 +197,7 @@ function TerrainMesh({
             renderer.capabilities.getMaxAnisotropy();
           loadedTexture.needsUpdate = true;
           setTexture(loadedTexture);
-          onReadyRef.current?.();
+          pendingReadyFramesRef.current = 0;
           return;
         } catch (error) {
           lastError = error;
@@ -220,7 +229,9 @@ function TerrainMesh({
     [geometry, texture],
   );
 
-  if (!geometry) return null;
+  // Never expose the solid fallback mesh. Until the geographic texture has
+  // successfully reached Expo GL, PeakPanorama shows its loading surface.
+  if (!geometry || !texture) return null;
 
   const rotation: [number, number, number] = [
     0,
@@ -245,7 +256,7 @@ function TerrainMesh({
       >
         <meshBasicMaterial
           map={texture}
-          color={texture ? "#FFFFFF" : fallbackColor}
+          color="#FFFFFF"
           side={DoubleSide}
         />
       </mesh>

@@ -469,6 +469,7 @@ export function PeakPanorama({
   const [terrainTextureMode, setTerrainTextureMode] = useState<
     "map" | "satellite"
   >("satellite");
+  const [terrainTextureLoadPercent, setTerrainTextureLoadPercent] = useState(0);
   const [terrainLoadPercent, setTerrainLoadPercent] = useState(
     terrainModel ? 100 : 8,
   );
@@ -499,6 +500,24 @@ export function PeakPanorama({
     // model arrives. Reset only when there is no model to render at all.
     if (!terrainModel) setTerrainGlReady(false);
   }, [terrainModel]);
+
+  useEffect(() => {
+    if (!terrainModel) {
+      setTerrainTextureLoadPercent(0);
+      setTerrainGlReady(false);
+      return;
+    }
+    setTerrainGlReady(false);
+    setTerrainTextureLoadPercent(8);
+    const timer = setInterval(() => {
+      setTerrainTextureLoadPercent((current) =>
+        current >= 92
+          ? current
+          : Math.min(92, current + Math.max(1, Math.round((92 - current) * 0.12))),
+      );
+    }, 300);
+    return () => clearInterval(timer);
+  }, [terrainModel, terrainTextureMode]);
 
   const displayBearing = (peak: PanoramaGipfel): number | null =>
     peak.relativeBearingDeg == null
@@ -929,8 +948,11 @@ export function PeakPanorama({
             bearingDeg={viewCenterBearing}
             textureMode={terrainTextureMode}
             backgroundColor={colors.glassBg}
-            fallbackColor={colors.primary}
-            onReady={() => setTerrainGlReady(true)}
+            fallbackColor="transparent"
+            onReady={() => {
+              setTerrainTextureLoadPercent(100);
+              setTerrainGlReady(true);
+            }}
           />
         )}
         <Svg
@@ -1024,6 +1046,56 @@ export function PeakPanorama({
              BLICK
            </SvgText>
         </Svg>
+         {terrainModel && !terrainGlReady && (
+           <View
+             style={[
+               styles.terrainTextureProgress,
+               {
+                 backgroundColor: colors.glassBgStrong,
+                 borderColor: colors.glassBorder,
+               },
+             ]}
+             pointerEvents="none"
+             accessibilityLabel={
+               terrainTextureMode === "map"
+                 ? "Karte wird geladen"
+                 : "Satellitenbild wird geladen"
+             }
+             accessibilityRole="progressbar"
+             accessibilityValue={{
+               min: 0,
+               max: 100,
+               now: terrainTextureLoadPercent,
+             }}
+           >
+             <View style={styles.profileProgressHeader}>
+               <Text style={[styles.profileProgressLabel, { color: colors.mutedForeground }]}>
+                 {terrainTextureMode === "map"
+                   ? "KARTE WIRD GELADEN"
+                   : "SATELLITENBILD WIRD GELADEN"}
+               </Text>
+               <Text style={[styles.profileProgressCount, { color: colors.tint }]}>
+                 {terrainTextureLoadPercent}%
+               </Text>
+             </View>
+             <View
+               style={[
+                 styles.profileProgressTrack,
+                 { backgroundColor: colors.glassHighlight },
+               ]}
+             >
+               <View
+                 style={[
+                   styles.profileProgressFill,
+                   {
+                     width: `${terrainTextureLoadPercent}%`,
+                     backgroundColor: colors.accent,
+                   },
+                 ]}
+               />
+             </View>
+           </View>
+         )}
         <View
           style={[
             styles.terrainModeSwitch,
@@ -1041,7 +1113,12 @@ export function PeakPanorama({
             return (
               <Pressable
                 key={mode}
-                onPress={() => setTerrainTextureMode(mode)}
+                onPress={() => {
+                  if (mode === terrainTextureMode) return;
+                  setTerrainGlReady(false);
+                  setTerrainTextureLoadPercent(8);
+                  setTerrainTextureMode(mode);
+                }}
                 style={[
                   styles.terrainModeButton,
                   active && { backgroundColor: colors.primary },
@@ -1195,6 +1272,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.monoBold,
     fontSize: 9,
     letterSpacing: 0.3,
+  },
+  terrainTextureProgress: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    top: "46%",
+    zIndex: 4,
+    gap: 7,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   peakRail: {
     flexDirection: "row",
