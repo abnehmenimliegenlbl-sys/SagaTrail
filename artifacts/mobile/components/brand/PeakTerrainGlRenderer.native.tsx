@@ -22,7 +22,7 @@ import type {
 import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
-const TERRAIN_MINIMUM_RADIUS_M = 100;
+const TERRAIN_MINIMUM_RADIUS_M = 0;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
@@ -205,9 +205,8 @@ function terrainGeometry(
   textureBounds: TextureBounds = FULL_TEXTURE_BOUNDS,
 ): BufferGeometry {
   const geometry = new BufferGeometry();
-  // buildLocalTerrainMesh uses 0.04 world units per metre. Omitting only the
-  // innermost 300 m reduces the oversized foreground without losing nearby
-  // terrain silhouettes.
+  // Keep the terrain closed up to the observer. With the dense progressive
+  // SwissTopo rings, the foreground no longer needs an artificial hole.
   const minimumPanoramaRadius =
     TERRAIN_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
   const visibleTriangles = mesh.triangleIndices.filter((triangle) =>

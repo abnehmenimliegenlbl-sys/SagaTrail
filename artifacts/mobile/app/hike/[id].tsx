@@ -1125,8 +1125,11 @@ export default function LiveHike() {
   useEffect(() => {
     if (!hasFreshGps || !livePos) return;
     const previous = terrainModelRequestRef.current;
+    const needsDensePanoramaTerrain =
+      terrainModel != null && terrainModel.rings < 96;
     if (
       previous &&
+      !needsDensePanoramaTerrain &&
       Date.now() - previous.requestedAt < 120_000 &&
       haversineKm(previous, livePos) < 0.12
     ) {
@@ -1144,7 +1147,7 @@ export default function LiveHike() {
         center: requestPosition,
         radiusM: 5000,
         sectors: 72,
-        rings: 24,
+        rings: 96,
       }),
     })
       .then((response) => {
@@ -1167,7 +1170,7 @@ export default function LiveHike() {
           terrainModelRequestRef.current = null;
         }
       });
-  }, [hasFreshGps, livePos?.lat, livePos?.lng]);
+  }, [hasFreshGps, livePos?.lat, livePos?.lng, terrainModel?.rings]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
   // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
