@@ -453,7 +453,10 @@ export default function RouteTerrain3D({
     const corridorGeometry = geometry.map(
       (point) => [point[0], point[1]] as [number, number],
     );
-    createTerrainCorridor({ geometry: corridorGeometry })
+    createTerrainCorridor({
+      geometry: corridorGeometry,
+      options: { halfWidthM: 1500 },
+    })
       .then((data) => {
         const grid = parseTerrainCorridor(data);
         if (!grid) throw new Error();
