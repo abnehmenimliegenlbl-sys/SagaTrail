@@ -16,3 +16,9 @@ When live AR data can change after startup, keep fixed native slot counts for bo
 **Why:** New peak or terrain data arriving during an active session can make React remove native Viro subviews; on iOS this has caused the camera surface to turn black or the session to fail.
 
 **How to apply:** Render a fixed 40-marker pool and a bounded route-segment pool with stable slot keys. New data may replace slot contents, but the Viro navigator and its native child structure must not remount.
+
+Fast device motion can legitimately put Viro into limited/unavailable tracking; recover with the navigator's native `resetARSession(true, false)` after a sustained loss rather than remounting the React camera surface.
+
+**Why:** A rapid phone movement can leave the AR camera black even when React has not changed the scene tree; remounting the navigator risks the separate native remove-subview failure.
+
+**How to apply:** Observe `onTrackingUpdated`; tolerate brief excessive-motion states, then reset the AR tracking session once after a short sustained timeout with a cooldown. Keep anchors and the mounted navigator intact.

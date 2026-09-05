@@ -9,9 +9,15 @@ import {
   ViroPolyline,
   ViroSphere,
   ViroText,
+  ViroARTrackingReasonConstants,
+  ViroTrackingStateConstants,
   isARSupportedOnDevice,
 } from "@reactvision/react-viro";
-import { useEffect, useMemo, useState } from "react";
+import type {
+  ViroTrackingReason,
+  ViroTrackingState,
+} from "@reactvision/react-viro";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
@@ -120,6 +126,10 @@ interface PeakArSceneAppProps {
   selectedPeakId?: string | null;
   onPeakPress?: (peakId: string) => void;
   onError?: () => void;
+  onTrackingUpdated?: (
+    state: ViroTrackingState,
+    reason: ViroTrackingReason,
+  ) => void;
 }
 
 /**
@@ -401,6 +411,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     selectedPeakId = null,
     onPeakPress,
     onError,
+    onTrackingUpdated,
   } =
     sceneNavigator?.viroAppProps ?? {};
   useEffect(() => {
@@ -410,7 +421,10 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
   }, [peaks]);
 
   return (
-    <ViroARScene onError={() => onError?.()}>
+    <ViroARScene
+      onError={() => onError?.()}
+      onTrackingUpdated={onTrackingUpdated}
+    >
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
       <TerrainHologram
@@ -568,6 +582,67 @@ export function PeakArNavigator({
   const [supportState, setSupportState] = useState<
     "checking" | "supported" | "unsupported"
   >("checking");
+  const navigatorRef = useRef<{
+    _resetARSession?: (resetTracking: boolean, removeAnchors: boolean) => void;
+  } | null>(null);
+  const trackingStateRef = useRef<ViroTrackingState | null>(null);
+  const trackingReasonRef = useRef<ViroTrackingReason | null>(null);
+  const trackingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTrackingResetAtRef = useRef(0);
+
+  const clearTrackingResetTimer = useCallback(() => {
+    if (trackingResetTimerRef.current) {
+      clearTimeout(trackingResetTimerRef.current);
+      trackingResetTimerRef.current = null;
+    }
+  }, []);
+
+  const handleTrackingUpdated = useCallback(
+    (state: ViroTrackingState, reason: ViroTrackingReason) => {
+      const changed =
+        trackingStateRef.current !== state ||
+        trackingReasonRef.current !== reason;
+      trackingStateRef.current = state;
+      trackingReasonRef.current = reason;
+
+      if (changed) {
+        console.log("[PeakAR] tracking", { state, reason });
+      }
+
+      if (state === ViroTrackingStateConstants.TRACKING_NORMAL) {
+        clearTrackingResetTimer();
+        return;
+      }
+
+      const needsRecovery =
+        state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE ||
+        (state === ViroTrackingStateConstants.TRACKING_LIMITED &&
+          reason === ViroARTrackingReasonConstants.TRACKING_REASON_EXCESSIVE_MOTION);
+      if (!needsRecovery || trackingResetTimerRef.current) return;
+
+      const delayMs =
+        state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE ? 1200 : 2400;
+      trackingResetTimerRef.current = setTimeout(() => {
+        trackingResetTimerRef.current = null;
+        const stillUnstable =
+          trackingStateRef.current === state &&
+          trackingReasonRef.current === reason;
+        const cooldownElapsed =
+          Date.now() - lastTrackingResetAtRef.current > 5000;
+        if (!stillUnstable || !cooldownElapsed) return;
+
+        lastTrackingResetAtRef.current = Date.now();
+        console.warn("[PeakAR] resetting AR tracking after sustained loss", {
+          state,
+          reason,
+        });
+        navigatorRef.current?._resetARSession?.(true, false);
+      }, delayMs);
+    },
+    [clearTrackingResetTimer],
+  );
+
+  useEffect(() => clearTrackingResetTimer, [clearTrackingResetTimer]);
 
   useEffect(() => {
     let cancelled = false;
@@ -613,6 +688,7 @@ export function PeakArNavigator({
       selectedPeakId,
       onPeakPress,
       onError,
+      onTrackingUpdated: handleTrackingUpdated,
     }),
     [
       onError,
@@ -625,6 +701,7 @@ export function PeakArNavigator({
       mapLayer,
       selectedPeakId,
       terrainModel,
+      handleTrackingUpdated,
     ],
   );
 
@@ -635,6 +712,9 @@ export function PeakArNavigator({
 
   return (
     <ViroARSceneNavigator
+      ref={(instance) => {
+        navigatorRef.current = instance as typeof navigatorRef.current;
+      }}
       style={StyleSheet.absoluteFill}
       initialScene={initialScene}
       viroAppProps={viroAppProps}
