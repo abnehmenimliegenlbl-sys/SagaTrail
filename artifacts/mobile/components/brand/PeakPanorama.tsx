@@ -875,67 +875,11 @@ export function PeakPanorama({
                strokeWidth="1.15"
              />
            ))}
-           {panoramaMesh.terrainLines.length === 0 && panoramaMesh.triangles.map((triangle, index) => (
-             <Polygon
-               key={`mesh-${index}`}
-               points={triangle.points}
-               fill={
-                 triangle.tone === "bridge"
-                   ? colors.tint
-                   : triangle.tone === "light"
-                     ? colors.glassHighlight
-                     : colors.accent
-               }
-               fillOpacity={triangle.tone === "bridge" ? 0.13 : 0.38}
-                stroke="none"
-             />
-           ))}
-            {panoramaMesh.terrainLines.length === 0 && panoramaMesh.peaks.map((meshPeak) => {
-              const peakPoint = meshPeak.peakPoint;
-             const isAnnotated = annotatedPeakIds.has(meshPeak.peak.id);
-             return (
-               <G key={`profile-${meshPeak.peak.id}`}>
-                 <Polyline
-                   points={pointString(meshPeak.points)}
-                   fill="none"
-                   stroke={colors.accent}
-                   strokeOpacity={isAnnotated ? 0.9 : 0.3}
-                   strokeWidth={isAnnotated ? 1.5 : 0.65}
-                 />
-                 <Line
-                    x1={peakPoint.x}
-                    y1={peakPoint.y}
-                    x2={peakPoint.x}
-                    y2={Math.min(286, peakPoint.y + 7)}
-                   stroke={colors.accent}
-                   strokeOpacity={0.65}
-                   strokeWidth="1"
-                 />
-                 <Circle
-                    cx={peakPoint.x}
-                    cy={peakPoint.y}
-                   r={isAnnotated ? 4 : 2.2}
-                   fill={isAnnotated ? colors.primary : colors.accent}
-                   fillOpacity={isAnnotated ? 1 : 0.72}
-                 />
-                  {isAnnotated && peakPoint.x > -18 && peakPoint.x < 378 && (
-                   <SvgText
-                      x={peakPoint.x}
-                      y={Math.max(30, peakPoint.y - 7)}
-                      transform={`rotate(-45 ${peakPoint.x} ${Math.max(30, peakPoint.y - 7)})`}
-                     fill={colors.foreground}
-                     fontSize="8"
-                     fontWeight="600"
-                      textAnchor="start"
-                   >
-                     {meshPeak.peak.name.length > 15
-                       ? `${meshPeak.peak.name.slice(0, 14)}…`
-                       : meshPeak.peak.name}
-                   </SvgText>
-                 )}
-               </G>
-             );
-           })}
+           {panoramaMesh.terrainLines.length === 0 && (
+             <SvgText x="180" y="164" fill={colors.mutedForeground} fontSize="9" textAnchor="middle">
+               {terrainModel ? "Keine gültigen SwissTopo-DTM-Daten" : "SwissTopo-DTM wird geladen …"}
+             </SvgText>
+           )}
            <Line
              x1="180"
              y1="23"
