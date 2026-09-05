@@ -106,6 +106,8 @@ export interface RouteTerrainAreaOptions {
   columns: number;
   /** Geographic padding around the complete route bounds. */
   paddingM: number;
+  /** Target ground-plane width divided by height. */
+  viewportAspect: number;
 }
 
 export interface RouteTerrainAreaResponse {
@@ -114,6 +116,7 @@ export interface RouteTerrainAreaResponse {
   rows: number;
   columns: number;
   paddingM: number;
+  viewportAspect: number;
   origin: LatLng;
   bounds: TerrainCorridorBounds;
   fetchedAt: number;
@@ -280,6 +283,56 @@ export function createRouteTerrainAreaCoordinateGrid(
   });
 }
 
+function fitTerrainBoundsToAspect(
+  bounds: TerrainCorridorBounds,
+  viewportAspect: number,
+): TerrainCorridorBounds | null {
+  if (!Number.isFinite(viewportAspect) || viewportAspect <= 0) return null;
+  const centerLat = (bounds.south + bounds.north) / 2;
+  const centerLng = (bounds.west + bounds.east) / 2;
+  const widthM = haversineM(
+    { lat: centerLat, lng: bounds.west },
+    { lat: centerLat, lng: bounds.east },
+  );
+  const heightM = haversineM(
+    { lat: bounds.south, lng: centerLng },
+    { lat: bounds.north, lng: centerLng },
+  );
+  if (widthM <= 0 || heightM <= 0) return null;
+
+  if (widthM / heightM > viewportAspect) {
+    const extraPerSideM = (widthM / viewportAspect - heightM) / 2;
+    return {
+      ...bounds,
+      south: destinationPoint(
+        { lat: bounds.south, lng: centerLng },
+        180,
+        extraPerSideM,
+      ).lat,
+      north: destinationPoint(
+        { lat: bounds.north, lng: centerLng },
+        0,
+        extraPerSideM,
+      ).lat,
+    };
+  }
+
+  const extraPerSideM = (heightM * viewportAspect - widthM) / 2;
+  return {
+    ...bounds,
+    west: destinationPoint(
+      { lat: centerLat, lng: bounds.west },
+      270,
+      extraPerSideM,
+    ).lng,
+    east: destinationPoint(
+      { lat: centerLat, lng: bounds.east },
+      90,
+      extraPerSideM,
+    ).lng,
+  };
+}
+
 function initialBearingDeg(from: LatLng, to: LatLng): number {
   const fromLat = (from.lat * Math.PI) / 180;
   const toLat = (to.lat * Math.PI) / 180;
@@ -409,6 +462,169 @@ export async function computeTerrainCorridor(
     fetchedAt: Date.now(),
     grid,
   };
+}
+
+export async function computeRouteTerrainArea(
+  route: LatLng[],
+  log: Logger,
+  options: RouteTerrainAreaOptions,
+): Promise<RouteTerrainAreaResponse | null> {
+  const paddedBounds = computeRouteTerrainAreaBounds(route, options.paddingM);
+  if (!paddedBounds) return null;
+  const bounds = fitTerrainBoundsToAspect(
+    paddedBounds,
+    options.viewportAspect,
+  );
+  if (!bounds) return null;
+  const coordinateGrid = createRouteTerrainAreaCoordinateGrid(
+    bounds,
+    options.rows,
+    options.columns,
+  );
+  if (!coordinateGrid) return null;
+
+  const sampledRows: Array<Array<number | null> | null> = Array(
+    options.rows,
+  ).fill(null);
+  let nextRow = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(3, options.rows) }, async () => {
+      for (;;) {
+        const row = nextRow++;
+        if (row >= options.rows) return;
+        sampledRows[row] = await fetchSwissTopoAreaRow(
+          coordinateGrid[row]!.map(({ lat, lng }) => ({ lat, lng })),
+          log,
+        );
+      }
+    }),
+  );
+
+  const grid = coordinateGrid.map((cells, row) => {
+    const elevations = sampledRows[row];
+    if (!elevations) return cells;
+    return cells.map((cell, column) => ({
+      ...cell,
+      elevationM: elevations[column] ?? null,
+    }));
+  });
+  const cells = grid.flat();
+  const realCellCount = cells.filter((cell) => cell.elevationM != null).length;
+  if (realCellCount < Math.ceil(cells.length / 2)) {
+    log.warn(
+      {
+        rows: options.rows,
+        columns: options.columns,
+        realCellCount,
+        totalCells: cells.length,
+      },
+      "Rechteckiges Routengelände: zu wenige echte Höhenwerte",
+    );
+    return null;
+  }
+
+  return {
+    version: 1,
+    source: "SwissTopo DTM rectangular route area",
+    rows: options.rows,
+    columns: options.columns,
+    paddingM: options.paddingM,
+    viewportAspect: options.viewportAspect,
+    origin: route[0]!,
+    bounds,
+    fetchedAt: Date.now(),
+    grid,
+  };
+}
+
+async function fetchSwissTopoAreaRow(
+  points: LatLng[],
+  log: Logger,
+): Promise<Array<number | null> | null> {
+  const coordinates = points.map((point) => wgs84ToLV95(point.lat, point.lng));
+  const geom = JSON.stringify({ type: "LineString", coordinates });
+  const url = `${PROFILE_URL}?sr=2056&geom=${encodeURIComponent(geom)}`;
+
+  for (let attempt = 0; attempt < MAX_CHUNK_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT },
+      });
+      if (!response.ok) {
+        const retryable = isRetryableHttpStatus(response.status);
+        if (!retryable || attempt === MAX_CHUNK_ATTEMPTS - 1) return null;
+        await waitBeforeRetry(
+          attempt,
+          response.status === 429
+            ? parseRetryAfterMs(response.headers.get("retry-after"))
+            : null,
+        );
+        continue;
+      }
+      const data = (await response.json()) as ProfilePoint[];
+      if (!Array.isArray(data) || data.length < 2) return null;
+      const samples = data.flatMap((point) => {
+        const distance =
+          typeof point.dist === "number" ? point.dist : Number(point.dist);
+        if (!Number.isFinite(distance)) return [];
+        const rawAltitude =
+          point.alts?.COMB ?? point.alts?.DTM2 ?? point.alts?.DTM25;
+        const altitude =
+          typeof rawAltitude === "number"
+            ? rawAltitude
+            : Number(rawAltitude);
+        return [
+          {
+            distanceM: distance,
+            elevationM: Number.isFinite(altitude)
+              ? Math.round(altitude)
+              : null,
+          },
+        ];
+      });
+      if (samples.length < 2) return null;
+
+      const targetDistancesM = routeCumulativeDistancesKm(points).map(
+        (distanceKm) => distanceKm * 1000,
+      );
+      let upperIndex = 1;
+      return targetDistancesM.map((targetM) => {
+        if (
+          targetM < samples[0]!.distanceM ||
+          targetM > samples.at(-1)!.distanceM
+        ) {
+          return null;
+        }
+        while (
+          upperIndex < samples.length - 1 &&
+          samples[upperIndex]!.distanceM < targetM
+        ) {
+          upperIndex += 1;
+        }
+        const upper = samples[upperIndex]!;
+        if (Math.abs(upper.distanceM - targetM) < 0.001) {
+          return upper.elevationM;
+        }
+        const lower = samples[upperIndex - 1]!;
+        if (lower.elevationM == null || upper.elevationM == null) return null;
+        const spanM = upper.distanceM - lower.distanceM;
+        if (spanM <= 0) return null;
+        const fraction = (targetM - lower.distanceM) / spanM;
+        return Math.round(
+          lower.elevationM +
+            (upper.elevationM - lower.elevationM) * fraction,
+        );
+      });
+    } catch (err) {
+      log.warn(
+        { err, points: points.length, attempt: attempt + 1 },
+        "Rechteckiges Routengelände: SwissTopo-Zeile fehlgeschlagen",
+      );
+      if (attempt === MAX_CHUNK_ATTEMPTS - 1) return null;
+      await waitBeforeRetry(attempt);
+    }
+  }
+  return null;
 }
 
 function interpolateElevation(

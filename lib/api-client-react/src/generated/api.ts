@@ -71,6 +71,8 @@ import type {
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
+  TerrainAreaRequest,
+  TerrainAreaResponse,
   TerrainCorridorRequest,
   TerrainCorridorResponse,
   TrailConditionInput,
@@ -3131,5 +3133,75 @@ export const useCreateTerrainCorridor = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateTerrainCorridorMutationOptions(options));
+    }
+
+export const getCreateTerrainAreaUrl = () => {
+
+
+
+
+  return `/api/terrain-area`
+}
+
+/**
+ * @summary Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+ */
+export const createTerrainArea = async (terrainAreaRequest: TerrainAreaRequest, options?: RequestInit): Promise<TerrainAreaResponse> => {
+
+  return customFetch<TerrainAreaResponse>(getCreateTerrainAreaUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(terrainAreaRequest)
+  }
+);}
+
+
+
+
+export const getCreateTerrainAreaMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTerrainArea>>, TError,{data: BodyType<TerrainAreaRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTerrainArea>>, TError,{data: BodyType<TerrainAreaRequest>}, TContext> => {
+
+const mutationKey = ['createTerrainArea'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTerrainArea>>, {data: BodyType<TerrainAreaRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTerrainArea(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTerrainAreaMutationResult = NonNullable<Awaited<ReturnType<typeof createTerrainArea>>>
+    export type CreateTerrainAreaMutationBody = BodyType<TerrainAreaRequest>
+    export type CreateTerrainAreaMutationError = ErrorType<void>
+
+    /**
+ * @summary Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+ */
+export const useCreateTerrainArea = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTerrainArea>>, TError,{data: BodyType<TerrainAreaRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTerrainArea>>,
+        TError,
+        {data: BodyType<TerrainAreaRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateTerrainAreaMutationOptions(options));
     }
 

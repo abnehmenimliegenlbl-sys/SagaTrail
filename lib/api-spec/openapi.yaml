@@ -1512,6 +1512,28 @@ paths:
           description: Ungültige Routengeometrie
         "502":
           description: Zu wenige verfügbare SwissTopo-Höhenwerte
+  /terrain-area:
+    post:
+      operationId: createTerrainArea
+      tags: [routes]
+      summary: Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainAreaRequest"
+      responses:
+        "200":
+          description: Bildschirmfüllende Route-Terrainfläche mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainAreaResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
 components:
   securitySchemes:
     bearerAuth:
@@ -1551,6 +1573,44 @@ components:
               minimum: 100
               maximum: 1500
               default: 500
+    TerrainAreaRequest:
+      type: object
+      required: [geometry]
+      properties:
+        geometry:
+          type: array
+          minItems: 2
+          maxItems: 500
+          items:
+            type: array
+            prefixItems:
+              - type: number
+              - type: number
+            minItems: 2
+            maxItems: 2
+        options:
+          type: object
+          properties:
+            rows:
+              type: integer
+              minimum: 12
+              maximum: 40
+              default: 24
+            columns:
+              type: integer
+              minimum: 12
+              maximum: 40
+              default: 24
+            paddingM:
+              type: number
+              minimum: 500
+              maximum: 5000
+              default: 2000
+            viewportAspect:
+              type: number
+              minimum: 0.4
+              maximum: 1
+              default: 0.4615384615
     TerrainCorridorCell:
       type: object
       required: [lat, lng, elevationM]
@@ -1579,6 +1639,53 @@ components:
         halfWidthM:
           type: number
         routeLengthM:
+          type: number
+        origin:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        bounds:
+          type: object
+          required: [north, south, east, west]
+          properties:
+            north:
+              type: number
+            south:
+              type: number
+            east:
+              type: number
+            west:
+              type: number
+        fetchedAt:
+          type: number
+        grid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/TerrainCorridorCell"
+    TerrainAreaResponse:
+      type: object
+      required:
+        [version, source, rows, columns, paddingM, viewportAspect, origin, bounds, fetchedAt, grid]
+      properties:
+        version:
+          type: integer
+          const: 1
+        source:
+          type: string
+          const: SwissTopo DTM rectangular route area
+        rows:
+          type: integer
+        columns:
+          type: integer
+        paddingM:
+          type: number
+        viewportAspect:
           type: number
         origin:
           type: object

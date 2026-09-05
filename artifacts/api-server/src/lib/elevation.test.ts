@@ -3,6 +3,7 @@ import test from "node:test";
 import type { Logger } from "pino";
 import {
   computeElevationProfile,
+  computeRouteTerrainArea,
   computeRouteTerrainAreaBounds,
   createRouteTerrainAreaCoordinateGrid,
 } from "./elevation";
@@ -126,6 +127,61 @@ test("rejects invalid rectangular coordinate grids", () => {
     ),
     null,
   );
+});
+
+test("preserves interior, leading, and trailing SwissTopo gaps in route terrain areas", async () => {
+  const originalFetch = globalThis.fetch;
+  const route = [
+    { lat: 47.5, lng: 7.5 },
+    { lat: 47.51, lng: 7.52 },
+  ];
+
+  try {
+    for (const gap of ["leading", "interior", "trailing"] as const) {
+      globalThis.fetch = async (request) => {
+        const url = new URL(request.toString());
+        const geometry = JSON.parse(url.searchParams.get("geom") ?? "{}") as {
+          coordinates: [number, number][];
+        };
+        const [start, end] = [
+          geometry.coordinates[0]!,
+          geometry.coordinates.at(-1)!,
+        ];
+        const totalM = Math.hypot(end[0] - start[0], end[1] - start[1]);
+        return new Response(
+          JSON.stringify(
+            [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.2].map(
+              (fraction) => ({
+                dist: totalM * fraction,
+                alts:
+                  (gap === "leading" && fraction === 0) ||
+                  (gap === "interior" && fraction === 0.5) ||
+                  (gap === "trailing" && fraction === 1.2)
+                    ? {}
+                    : { COMB: 500 + fraction * 20 },
+              }),
+            ),
+          ),
+          { headers: { "content-type": "application/json" } },
+        );
+      };
+
+      const area = await computeRouteTerrainArea(route, log, {
+        rows: 2,
+        columns: 5,
+        paddingM: 100,
+        viewportAspect: 0.5,
+      });
+      assert.ok(area, `${gap} gap should leave enough real cells`);
+      for (const row of area.grid) {
+        if (gap === "leading") assert.equal(row[0]!.elevationM, null);
+        if (gap === "interior") assert.equal(row[2]!.elevationM, null);
+        if (gap === "trailing") assert.equal(row[4]!.elevationM, null);
+      }
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("splits long routes into overlapping chunks and merges them from zero", async () => {

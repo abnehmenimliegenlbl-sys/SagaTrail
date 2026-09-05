@@ -1,7 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 
-import { computeLocalTerrainModel, computeTerrainCorridor } from "../lib/elevation";
+import {
+  computeLocalTerrainModel,
+  computeRouteTerrainArea,
+  computeTerrainCorridor,
+} from "../lib/elevation";
 import { createOpenTopoPanoramaMap } from "../lib/openTopoMosaic";
 
 const router: IRouter = Router();
@@ -28,6 +32,18 @@ const CorridorBodySchema = z.object({
       rows: z.number().int().min(12).max(80).default(32),
       columns: z.number().int().min(5).max(13).default(9),
       halfWidthM: z.number().finite().min(100).max(1500).default(500),
+    })
+    .default({}),
+});
+
+const RouteTerrainAreaBodySchema = z.object({
+  geometry: z.array(SwissCoordinateSchema).min(2).max(500),
+  options: z
+    .object({
+      rows: z.number().int().min(12).max(40).default(24),
+      columns: z.number().int().min(12).max(40).default(24),
+      paddingM: z.number().finite().min(500).max(5000).default(2000),
+      viewportAspect: z.number().finite().min(0.4).max(1).default(9 / 19.5),
     })
     .default({}),
 });
@@ -109,6 +125,26 @@ router.post("/terrain-corridor", async (req: Request, res: Response): Promise<vo
   } catch (err) {
     req.log.error({ err, points: route.length }, "Terrainkorridor fehlgeschlagen");
     res.status(502).json({ error: "Terrainkorridor konnte nicht geladen werden." });
+  }
+});
+
+router.post("/terrain-area", async (req: Request, res: Response): Promise<void> => {
+  const parsed = RouteTerrainAreaBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Schweizer Routengeometrie erwartet." });
+    return;
+  }
+  const route = parsed.data.geometry.map(([lat, lng]) => ({ lat, lng }));
+  try {
+    const area = await computeRouteTerrainArea(route, req.log, parsed.data.options);
+    if (!area) {
+      res.status(502).json({ error: "Rechteckiges Routengelände enthält zu wenige Höhenwerte." });
+      return;
+    }
+    res.json(area);
+  } catch (err) {
+    req.log.error({ err }, "Rechteckiges Routengelände fehlgeschlagen");
+    res.status(502).json({ error: "Rechteckiges Routengelände konnte nicht geladen werden." });
   }
 });
 

@@ -8,6 +8,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
@@ -18,7 +19,7 @@ import {
   Vector3,
 } from "three";
 
-import { createTerrainCorridor } from "@workspace/api-client-react";
+import { createTerrainArea } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import {
@@ -237,6 +238,7 @@ function Scene({
   const [texture, setTexture] = useState<Texture | null>(null);
   const [progress, setProgress] = useState(0);
   const camera = useThree((state) => state.camera);
+  const viewport = useThree((state) => state.size);
 
   useEffect(() => {
     let active = true;
@@ -334,21 +336,32 @@ function Scene({
         (minZ + maxZ) / 2,
       ),
       extent,
+      width: maxX - minX,
+      height: maxZ - minZ,
       top: maxY,
     };
   }, [terrain]);
 
   useEffect(() => {
     if (!follow) {
+      const verticalFov = (48 * Math.PI) / 180;
+      const aspect = Math.max(0.1, viewport.width / viewport.height);
+      const horizontalFov =
+        2 * Math.atan(Math.tan(verticalFov / 2) * aspect);
+      const distance = Math.max(
+        overview.height / (2 * Math.tan(verticalFov / 2)),
+        overview.width / (2 * Math.tan(horizontalFov / 2)),
+      ) * 0.98;
+      camera.up.set(0, 0, -1);
       camera.position.set(
-        overview.extent * 0.8,
-        overview.top + overview.extent * 0.95,
-        overview.extent * 1.1,
+        overview.target.x,
+        overview.top + distance,
+        overview.target.z,
       );
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
     }
-  }, [camera, follow, overview]);
+  }, [camera, follow, overview, viewport.height, viewport.width]);
 
   useFrame((_, delta) => {
     if (playing) setProgress((value) => (value + delta / 24) % 1);
@@ -360,6 +373,7 @@ function Scene({
         )
       ];
     if (follow && marker) {
+      camera.up.set(0, 1, 0);
       camera.position.lerp(
         new Vector3(marker.x + 75, marker.y + 90, marker.z + 120),
         0.035,
@@ -412,6 +426,7 @@ export default function RouteTerrain3D({
   terrainProfile,
 }: Props) {
   const colors = useColors();
+  const window = useWindowDimensions();
   const [ready, setReady] = useState<boolean | null>(null);
   const [model, setModel] = useState<Model | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -453,7 +468,18 @@ export default function RouteTerrain3D({
     const corridorGeometry = geometry.map(
       (point) => [point[0], point[1]] as [number, number],
     );
-    createTerrainCorridor({ geometry: corridorGeometry })
+    createTerrainArea({
+      geometry: corridorGeometry,
+      options: {
+        rows: 24,
+        columns: 24,
+        paddingM: 2000,
+        viewportAspect: Math.max(
+          0.4,
+          Math.min(1, window.width / window.height),
+        ),
+      },
+    })
       .then((data) => {
         const grid = parseTerrainCorridor(data);
         if (!grid) throw new Error();
@@ -465,7 +491,14 @@ export default function RouteTerrain3D({
     return () => {
       active = false;
     };
-  }, [visible, ready, geometry, terrainProfile]);
+  }, [
+    visible,
+    ready,
+    geometry,
+    terrainProfile,
+    window.height,
+    window.width,
+  ]);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>

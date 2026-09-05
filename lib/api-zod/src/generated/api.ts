@@ -1132,3 +1132,64 @@ export const CreateTerrainCorridorResponse = zod.object({
 })
 
 
+/**
+ * @summary Rechteckiges SwissTopo-DTM-Gelände um eine vollständige Route laden
+ */
+export const createTerrainAreaBodyGeometryMin = 2;
+export const createTerrainAreaBodyGeometryMax = 500;
+
+export const createTerrainAreaBodyOptionsRowsDefault = 24;
+export const createTerrainAreaBodyOptionsRowsMin = 12;
+export const createTerrainAreaBodyOptionsRowsMax = 40;
+
+export const createTerrainAreaBodyOptionsColumnsDefault = 24;
+export const createTerrainAreaBodyOptionsColumnsMin = 12;
+export const createTerrainAreaBodyOptionsColumnsMax = 40;
+
+export const createTerrainAreaBodyOptionsPaddingMDefault = 2000;
+export const createTerrainAreaBodyOptionsPaddingMMin = 500;
+export const createTerrainAreaBodyOptionsPaddingMMax = 5000;
+
+export const createTerrainAreaBodyOptionsViewportAspectDefault = 0.4615384615;
+export const createTerrainAreaBodyOptionsViewportAspectMin = 0.4;
+export const createTerrainAreaBodyOptionsViewportAspectMax = 1;
+
+
+
+export const CreateTerrainAreaBody = zod.object({
+  "geometry": zod.array(zod.tuple([zod.number(),
+zod.number()])).min(createTerrainAreaBodyGeometryMin).max(createTerrainAreaBodyGeometryMax),
+  "options": zod.object({
+  "rows": zod.number().min(createTerrainAreaBodyOptionsRowsMin).max(createTerrainAreaBodyOptionsRowsMax).default(createTerrainAreaBodyOptionsRowsDefault),
+  "columns": zod.number().min(createTerrainAreaBodyOptionsColumnsMin).max(createTerrainAreaBodyOptionsColumnsMax).default(createTerrainAreaBodyOptionsColumnsDefault),
+  "paddingM": zod.number().min(createTerrainAreaBodyOptionsPaddingMMin).max(createTerrainAreaBodyOptionsPaddingMMax).default(createTerrainAreaBodyOptionsPaddingMDefault),
+  "viewportAspect": zod.number().min(createTerrainAreaBodyOptionsViewportAspectMin).max(createTerrainAreaBodyOptionsViewportAspectMax).default(createTerrainAreaBodyOptionsViewportAspectDefault)
+}).optional()
+})
+
+export const CreateTerrainAreaResponse = zod.object({
+  "version": zod.number(),
+  "source": zod.literal("SwissTopo DTM rectangular route area"),
+  "rows": zod.number(),
+  "columns": zod.number(),
+  "paddingM": zod.number(),
+  "viewportAspect": zod.number(),
+  "origin": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "bounds": zod.object({
+  "north": zod.number(),
+  "south": zod.number(),
+  "east": zod.number(),
+  "west": zod.number()
+}),
+  "fetchedAt": zod.number(),
+  "grid": zod.array(zod.array(zod.object({
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "elevationM": zod.number().nullable()
+})))
+})
+
+

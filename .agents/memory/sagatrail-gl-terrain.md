@@ -9,11 +9,11 @@ Use Expo GL with Three.js as the shared terrain-rendering foundation for the nor
 
 **How to apply:** Feed both panorama and route-wide views from geographic terrain meshes with real SwissTopo DTM heights and UV coordinates. Change camera and route overlays per view instead of creating separate rendering engines. Use SVG terrain only when native GL is unavailable, never as a texture-loading placeholder.
 
-For the full-route view, build the terrain corridor from several parallel SwissTopo profile lanes along a distance-resampled route. Keep each returned cell's real latitude and longitude; do not force curved lanes into a rectangular geographic grid. Missing elevations stay null, and triangles that touch them must be omitted.
+For the full-screen route view, use an axis-aligned rectangular SwissTopo terrain area around the complete route, expanded to the device viewport aspect. A bent route corridor is forbidden because it leaves visible background beside the route instead of filling the screen. Missing elevations stay null, and triangles that touch them must be omitted.
 
-**Why:** The observer-centered radial panorama model cannot cover a long route and would flatten points outside its radius. Parallel route lanes cover the complete corridor with a bounded number of official profile requests while preserving gaps as gaps.
+**Why:** The observer-centered radial panorama model cannot cover a long route, while the former parallel route corridor remained a narrow textured band. A strict rectangular grid covers the full portrait view and still preserves SwissTopo gaps.
 
-**How to apply:** Use cumulative route distance for resampling, animation, grade lookup, and camera following. Use geographic bounds only for UV mapping—not to reconstruct cell positions.
+**How to apply:** Sample the rectangle row-by-row with bounded concurrency. Never pass this area through the generic profile interpolation, which can bridge missing samples; retain nulls at interior and coverage-edge gaps. Use route distance separately for animation and grade lookup.
 
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 

@@ -34,6 +34,40 @@ export interface TerrainCorridorRequest {
   options?: TerrainCorridorRequestOptions;
 }
 
+export type TerrainAreaRequestOptions = {
+  /**
+     * @minimum 12
+     * @maximum 40
+     */
+  rows?: number;
+  /**
+     * @minimum 12
+     * @maximum 40
+     */
+  columns?: number;
+  /**
+     * @minimum 500
+     * @maximum 5000
+     */
+  paddingM?: number;
+  /**
+     * @minimum 0.4
+     * @maximum 1
+     */
+  viewportAspect?: number;
+};
+
+export interface TerrainAreaRequest {
+  /**
+     * @minItems 2
+     * @maxItems 500
+     * @items.minItems 2
+     * @items.maxItems 2
+     */
+  geometry: [number, number][];
+  options?: TerrainAreaRequestOptions;
+}
+
 export interface TerrainCorridorCell {
   lat: number;
   lng: number;
@@ -62,6 +96,31 @@ export interface TerrainCorridorResponse {
   routeLengthM: number;
   origin: TerrainCorridorResponseOrigin;
   bounds: TerrainCorridorResponseBounds;
+  fetchedAt: number;
+  grid: TerrainCorridorCell[][];
+}
+
+export type TerrainAreaResponseOrigin = {
+  lat: number;
+  lng: number;
+};
+
+export type TerrainAreaResponseBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export interface TerrainAreaResponse {
+  version: 1;
+  source: 'SwissTopo DTM rectangular route area';
+  rows: number;
+  columns: number;
+  paddingM: number;
+  viewportAspect: number;
+  origin: TerrainAreaResponseOrigin;
+  bounds: TerrainAreaResponseBounds;
   fetchedAt: number;
   grid: TerrainCorridorCell[][];
 }
