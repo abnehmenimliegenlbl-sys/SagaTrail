@@ -155,7 +155,11 @@ function interpolateProfileAltitude(
 }
 
 function buildPanoramaMesh(
-  entries: readonly { peak: PanoramaGipfel; profile: PanoramaProfilePoint[] }[],
+  entries: readonly {
+    peak: PanoramaGipfel;
+    profile: PanoramaProfilePoint[];
+    peakDistanceKm?: number | null;
+  }[],
   displayBearing: (peak: PanoramaGipfel) => number | null,
   observerElevationM: number | null,
 ): PanoramaMesh {
@@ -188,7 +192,7 @@ function buildPanoramaMesh(
 
   const meshPeaks = validEntries
     .sort((a, b) => a.bearing - b.bearing)
-    .map(({ peak, profile, bearing }) => {
+    .map(({ peak, profile, peakDistanceKm, bearing }) => {
       const points = profile
         .slice()
         .sort((a, b) => a.distanceKm - b.distanceKm)
@@ -196,27 +200,43 @@ function buildPanoramaMesh(
       const firstDistance = points[0]?.distanceKm ?? 0;
       const lastDistance = points[points.length - 1]?.distanceKm ?? 0;
       const distanceSpan = Math.max(0.001, lastDistance - firstDistance);
+      const measuredPeakDistance = Number.isFinite(peakDistanceKm)
+        ? Math.max(firstDistance, Math.min(lastDistance, peakDistanceKm as number))
+        : lastDistance;
+      const peakFraction = (measuredPeakDistance - firstDistance) / distanceSpan;
       const centerX = 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360;
       const width = Math.max(48, Math.min(104, 108 - peak.distanceKm * 2.2));
+      const yForDistance = (targetDistance: number) => {
+        const sampledAltitude = interpolateProfileAltitude(points, targetDistance, datum);
+        const relativeAltitude = sampledAltitude - datum;
+        return Math.max(
+          topY,
+          Math.min(
+            baselineY,
+            baselineY -
+              ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY),
+          ),
+        );
+      };
       const sampled = Array.from({ length: sampleCount }, (_, index) => {
         const fraction = index / (sampleCount - 1);
         const targetDistance = firstDistance + fraction * distanceSpan;
-        const sampledAltitude = interpolateProfileAltitude(points, targetDistance, datum);
-        const relativeAltitude = sampledAltitude - datum;
-        const y =
-          baselineY -
-          ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY);
         return {
           x: centerX - width / 2 + fraction * width,
-          y: Math.max(topY, Math.min(baselineY, y)),
+          y: yForDistance(targetDistance),
         };
       });
       const depth = Math.max(4, Math.min(8, width * 0.24));
+      const peakPoint = {
+        x: centerX - width / 2 + peakFraction * width,
+        y: yForDistance(measuredPeakDistance),
+      };
       return {
         peak,
         profile,
         centerX,
         points: sampled,
+        peakPoint,
         lowerPoints: sampled.map((point) => ({
           x: point.x,
           y: Math.min(176, point.y + depth),
@@ -282,7 +302,7 @@ export function PeakPanorama({
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
-  const profileCacheRef = useRef<Map<string, PanoramaProfilePoint[]>>(new Map());
+  const profileCacheRef = useRef<Map<string, CachedPanoramaProfile>>(new Map());
   const profileRequestsRef = useRef<Set<string>>(new Set());
   const [profileRevision, setProfileRevision] = useState(0);
   const panStartOffsetRef = useRef(0);
@@ -353,7 +373,11 @@ export function PeakPanorama({
         for (const result of payload.profiles) {
           const profile = finiteProfile(result.profile);
           if (!profile || typeof result.peakId !== "string") continue;
-          profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), profile);
+          const peakDistanceKm = Number(result.peakDistanceKm);
+          profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), {
+            points: profile,
+            peakDistanceKm: Number.isFinite(peakDistanceKm) ? peakDistanceKm : null,
+          });
           added = true;
         }
         if (added) setProfileRevision((revision) => revision + 1);
@@ -421,10 +445,16 @@ export function PeakPanorama({
   const profileEntries = useMemo(
     () =>
       profileCandidates.flatMap((peak) => {
-        const profile = observerKey
+        const cachedProfile = observerKey
           ? profileCacheRef.current.get(profileCacheKey(observerKey, peak.id))
           : undefined;
-        return profile ? [{ peak, profile }] : [];
+        return cachedProfile
+          ? [{
+              peak,
+              profile: cachedProfile.points,
+              peakDistanceKm: cachedProfile.peakDistanceKm,
+            }]
+          : [];
       }),
     [observerKey, profileCandidateIds, profileRevision],
   );
@@ -691,8 +721,7 @@ export function PeakPanorama({
              />
            ))}
            {panoramaMesh.peaks.map((meshPeak) => {
-             const tip = meshPeak.points[meshPeak.points.length - 1];
-             if (!tip) return null;
+              const peakPoint = meshPeak.peakPoint;
              const isAnnotated = annotatedPeakIds.has(meshPeak.peak.id);
              return (
                <G key={`profile-${meshPeak.peak.id}`}>
@@ -704,17 +733,17 @@ export function PeakPanorama({
                    strokeWidth={isAnnotated ? 1.5 : 0.65}
                  />
                  <Line
-                   x1={tip.x}
-                   y1={tip.y}
-                   x2={meshPeak.lowerPoints[meshPeak.lowerPoints.length - 1]?.x ?? tip.x}
-                   y2={meshPeak.lowerPoints[meshPeak.lowerPoints.length - 1]?.y ?? tip.y}
+                    x1={peakPoint.x}
+                    y1={peakPoint.y}
+                    x2={peakPoint.x}
+                    y2={Math.min(176, peakPoint.y + 7)}
                    stroke={colors.accent}
                    strokeOpacity={0.65}
                    strokeWidth="1"
                  />
                  <Circle
-                   cx={tip.x}
-                   cy={tip.y}
+                    cx={peakPoint.x}
+                    cy={peakPoint.y}
                    r={isAnnotated ? 4 : 2.2}
                    fill={isAnnotated ? colors.primary : colors.accent}
                    fillOpacity={isAnnotated ? 1 : 0.72}
@@ -722,7 +751,7 @@ export function PeakPanorama({
                  {isAnnotated && meshPeak.centerX > -18 && meshPeak.centerX < 378 && (
                    <SvgText
                      x={meshPeak.centerX}
-                     y={Math.max(30, tip.y - 9)}
+                      y={Math.max(30, peakPoint.y - 9)}
                      fill={colors.foreground}
                      fontSize="8"
                      fontWeight="600"
@@ -736,31 +765,6 @@ export function PeakPanorama({
                </G>
              );
            })}
-            {panoramaMesh.peaks.slice(0, -1).map((leftPeak, index) => {
-              const rightPeak = panoramaMesh.peaks[index + 1];
-              const leftTip = leftPeak?.points[leftPeak.points.length - 1];
-              const rightTip = rightPeak?.points[rightPeak.points.length - 1];
-              if (
-                !rightPeak ||
-                !leftTip ||
-                !rightTip ||
-                rightPeak.centerX - leftPeak.centerX > 132
-              ) {
-                return null;
-              }
-              return (
-                <Line
-                  key={`ridge-${leftPeak.peak.id}-${rightPeak.peak.id}`}
-                  x1={leftTip.x}
-                  y1={leftTip.y}
-                  x2={rightTip.x}
-                  y2={rightTip.y}
-                  stroke={colors.accent}
-                  strokeOpacity={0.5}
-                  strokeWidth="1"
-                />
-              );
-            })}
            <Line
              x1="180"
              y1="23"
