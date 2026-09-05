@@ -120,6 +120,7 @@ type PanoramaMeshPeak = {
 type PanoramaMesh = {
   peaks: PanoramaMeshPeak[];
   triangles: PanoramaMeshTriangle[];
+  terrainLines: string[];
   elevationRangeM: { min: number; max: number } | null;
 };
 type PanoramaAltitudeRange = { minM: number; maxM: number };
@@ -146,6 +147,74 @@ function interpolateProfileAltitude(
   return points[points.length - 1]?.altM ?? fallbackAltM;
 }
 
+function buildTerrainSurface(
+  terrainModel: LocalTerrainModel,
+  terrainBearing: (bearing: number) => number | null,
+): { lines: string[]; elevationRangeM: { min: number; max: number } | null } {
+  const allSamples = terrainModel.rays.flatMap((ray) =>
+    ray.samples.filter(
+      (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
+    ),
+  );
+  if (allSamples.length === 0) return { lines: [], elevationRangeM: null };
+
+  const minM = Math.min(...allSamples.map((sample) => sample.elevationM));
+  const maxM = Math.max(...allSamples.map((sample) => sample.elevationM));
+  const observerElevation =
+    terrainModel.observerElevationM ?? allSamples[0]?.elevationM ?? minM;
+  const minRelative = minM - observerElevation;
+  const maxRelative = maxM - observerElevation;
+  const span = Math.max(40, maxRelative - minRelative);
+  const topY = 44;
+  const baselineY = 274;
+  const candidates = terrainModel.rays
+    .map((ray) => {
+      const bearing = terrainBearing(ray.bearingDeg);
+      const samples = ray.samples.filter(
+        (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
+      );
+      if (bearing == null || samples.length === 0) return null;
+      const visibleSample = samples.reduce((best, sample) => {
+        const bestAngle = Math.atan2(
+          best.elevationM - observerElevation,
+          Math.max(1, best.distanceM),
+        );
+        const sampleAngle = Math.atan2(
+          sample.elevationM - observerElevation,
+          Math.max(1, sample.distanceM),
+        );
+        return sampleAngle > bestAngle ? sample : best;
+      });
+      return {
+        bearing,
+        x: 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360,
+        y:
+          baselineY -
+          ((visibleSample.elevationM - observerElevation - minRelative) / span) *
+            (baselineY - topY),
+      };
+    })
+    .filter((point): point is { bearing: number; x: number; y: number } => point !== null)
+    .sort((a, b) => a.x - b.x);
+
+  const maxAngularGap = 360 / Math.max(8, terrainModel.sectors) * 1.8;
+  const lines: string[] = [];
+  let current: { x: number; y: number }[] = [];
+  for (const point of candidates) {
+    const previous = current[current.length - 1];
+    const angularGap = previous
+      ? ((point.x - previous.x) / 360) * PANORAMA_VIEW_DEGREES
+      : 0;
+    if (previous && angularGap > maxAngularGap) {
+      if (current.length >= 2) lines.push(pointString(current));
+      current = [];
+    }
+    current.push({ x: point.x, y: Math.max(topY, Math.min(baselineY, point.y)) });
+  }
+  if (current.length >= 2) lines.push(pointString(current));
+  return { lines, elevationRangeM: { min: minM, max: maxM } };
+}
+
 function buildPanoramaMesh(
   entries: readonly {
     peak: PanoramaGipfel;
@@ -155,7 +224,12 @@ function buildPanoramaMesh(
   displayBearing: (peak: PanoramaGipfel) => number | null,
   observerElevationM: number | null,
   fixedAltitudeRangeM: PanoramaAltitudeRange | null,
+  terrainModel: LocalTerrainModel | null,
+  terrainBearing: (bearing: number) => number | null,
 ): PanoramaMesh {
+  const terrainSurface = terrainModel
+    ? buildTerrainSurface(terrainModel, terrainBearing)
+    : { lines: [], elevationRangeM: null };
   const validEntries = entries
     .map((entry) => ({
       ...entry,
@@ -169,7 +243,12 @@ function buildPanoramaMesh(
         entry.profile.length >= 2 && entry.bearing != null,
     );
   if (validEntries.length === 0) {
-    return { peaks: [], triangles: [], elevationRangeM: null };
+    return {
+      peaks: [],
+      triangles: [],
+      terrainLines: terrainSurface.lines,
+      elevationRangeM: terrainSurface.elevationRangeM,
+    };
   }
 
   const allAltitudes = fixedAltitudeRangeM
@@ -267,7 +346,11 @@ function buildPanoramaMesh(
   return {
     peaks: meshPeaks,
     triangles,
-    elevationRangeM: { min: minAltitude, max: maxAltitude },
+    terrainLines: terrainSurface.lines,
+    elevationRangeM: terrainSurface.elevationRangeM ?? {
+      min: minAltitude + datum,
+      max: maxAltitude + datum,
+    },
   };
 }
 
@@ -302,6 +385,8 @@ export function PeakPanorama({
     peak.relativeBearingDeg == null
       ? null
       : signedAngleDifference(peak.relativeBearingDeg - panOffsetDeg, 0);
+  const terrainBearing = (bearing: number): number | null =>
+    heading == null ? null : signedAngleDifference(bearing - heading - panOffsetDeg, 0);
   const visiblePeaks =
     heading == null
       ? []
@@ -500,8 +585,17 @@ export function PeakPanorama({
       displayBearing,
       observerElevationM,
       fixedElevationRange,
+      terrainModel,
+      terrainBearing,
     ),
-    [profileEntries, panOffsetDeg, observerElevationM, fixedElevationRange],
+    [
+      profileEntries,
+      panOffsetDeg,
+      observerElevationM,
+      fixedElevationRange,
+      terrainModel,
+      heading,
+    ],
   );
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
     const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
@@ -721,10 +815,10 @@ export function PeakPanorama({
                  HÖHENPROFIL
                </SvgText>
                <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
-                 {`+${Math.round(panoramaMesh.elevationRangeM.max)} m`}
+                  {`${Math.round(panoramaMesh.elevationRangeM.max)} m ü. M.`}
                </SvgText>
                 <SvgText x="7" y="272" fill={colors.mutedForeground} fontSize="7">
-                 {`${Math.round(panoramaMesh.elevationRangeM.min)} m`}
+                  {`${Math.round(panoramaMesh.elevationRangeM.min)} m ü. M.`}
                </SvgText>
              </>
            )}
@@ -752,7 +846,17 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-           {panoramaMesh.triangles.map((triangle, index) => (
+           {panoramaMesh.terrainLines.map((line, index) => (
+             <Polyline
+               key={`terrain-${index}`}
+               points={line}
+               fill="none"
+               stroke={colors.accent}
+               strokeOpacity={0.92}
+               strokeWidth="2"
+             />
+           ))}
+           {panoramaMesh.terrainLines.length === 0 && panoramaMesh.triangles.map((triangle, index) => (
              <Polygon
                key={`mesh-${index}`}
                points={triangle.points}
@@ -767,7 +871,7 @@ export function PeakPanorama({
                 stroke="none"
              />
            ))}
-           {panoramaMesh.peaks.map((meshPeak) => {
+            {panoramaMesh.terrainLines.length === 0 && panoramaMesh.peaks.map((meshPeak) => {
               const peakPoint = meshPeak.peakPoint;
              const isAnnotated = annotatedPeakIds.has(meshPeak.peak.id);
              return (
