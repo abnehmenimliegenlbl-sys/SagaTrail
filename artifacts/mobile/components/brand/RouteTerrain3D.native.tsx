@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import {
+  AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
@@ -287,7 +288,16 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
     <ThreeLine geometry={geometry}>
-      <lineBasicMaterial color={color} linewidth={4} />
+      <lineBasicMaterial
+        color={color}
+        linewidth={6}
+        transparent
+        opacity={0.98}
+        blending={AdditiveBlending}
+        depthTest={false}
+        depthWrite={false}
+        toneMapped={false}
+      />
     </ThreeLine>
   );
 }
@@ -320,7 +330,7 @@ function RouteEndpointFlag({
     if (!group.current) return;
     const distance = camera.position.distanceTo(position);
     group.current.scale.setScalar(
-      Math.max(2, Math.min(10, distance / 2_500)),
+      Math.max(4, Math.min(20, distance / 1_250)),
     );
     group.current.rotation.y = Math.atan2(
       camera.position.x - position.x,
@@ -655,10 +665,10 @@ function Scene({
           />
         </mesh>
       )}
-      {route.length >= 2 && <RouteLine color="#DA291C" points={route} />}
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
+      {route.length >= 2 && <RouteLine color="#00F5FF" points={route} />}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
