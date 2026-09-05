@@ -26,9 +26,11 @@ import type { TerrainProfilePoint, RouteGradeBand } from "@/lib/terrainCues";
 import {
   buildGeographicTerrainRouteSegments,
   buildGeographicTerrainRouteDestination,
+  buildLocalTerrainMesh,
   buildLocalMapRouteLines,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
+  type LocalTerrainMesh,
   type TerrainRouteLine,
   type TerrainRouteSegment,
 } from "@/lib/terrainModel";
@@ -46,6 +48,7 @@ const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
 };
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const TERRAIN_ROUTE_UNDERLAY_MATERIAL = "sagatrailTerrainRouteUnderlay";
+const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
 // The DTM remains observer-centred at 500 m. The complete route is projected
@@ -138,6 +141,14 @@ ViroMaterials.createMaterials({
     cullMode: "None",
     writesToDepthBuffer: false,
     readsFromDepthBuffer: false,
+  },
+  [TERRAIN_SURFACE_MATERIAL]: {
+    lightingModel: "Lambert",
+    diffuseColor: "#DCE7E0",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: true,
+    readsFromDepthBuffer: true,
   },
 });
 
@@ -455,6 +466,42 @@ function TerrainHologram({
   );
 }
 
+function TerrainSurface({
+  model,
+}: {
+  model: LocalTerrainModel | null | undefined;
+}) {
+  const mesh = useMemo<LocalTerrainMesh | null>(
+    () => buildLocalTerrainMesh(model, 0),
+    [model],
+  );
+
+  useEffect(() => {
+    console.log("[PeakAR] SwissTopo terrain mesh", {
+      hasModel: Boolean(model),
+      vertexCount: mesh?.vertices.length ?? 0,
+      triangleCount: mesh?.triangleIndices.length ?? 0,
+      radiusM: model?.radiusM ?? null,
+    });
+  }, [mesh, model]);
+
+  if (!mesh) return null;
+
+  return (
+    <ViroGeometry
+      vertices={mesh.vertices}
+      normals={mesh.normals}
+      triangleIndices={mesh.triangleIndices}
+      materials={TERRAIN_SURFACE_MATERIAL}
+      opacity={0.32}
+      position={[0, AR_ROUTE_GROUND_OFFSET, 0]}
+      renderingOrder={5}
+      shadowCastingBitMask={0}
+      viroTag="swisstopo-terrain-surface"
+    />
+  );
+}
+
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
@@ -554,6 +601,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     >
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
+      <TerrainSurface model={terrainModel} />
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
