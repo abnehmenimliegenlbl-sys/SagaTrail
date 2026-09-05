@@ -388,7 +388,7 @@ function Scene({
       const distance = Math.max(
         overview.height / (2 * Math.tan(verticalFov / 2)),
         overview.width / (2 * Math.tan(horizontalFov / 2)),
-      ) * 0.72;
+      ) * 0.45;
       camera.up.set(0, 1, 0);
       camera.position.set(
         overview.target.x,
