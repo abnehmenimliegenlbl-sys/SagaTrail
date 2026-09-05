@@ -160,7 +160,7 @@ function TerrainMesh({
             color="#B42323"
             wireframe
             transparent
-            opacity={0.16}
+            opacity={0.07}
             depthWrite={false}
             side={DoubleSide}
           />
