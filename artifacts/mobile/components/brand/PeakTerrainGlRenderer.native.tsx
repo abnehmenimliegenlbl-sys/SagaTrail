@@ -69,7 +69,9 @@ function CameraRig() {
     // Panorama viewpoint: the observer is the geographic origin of the radial
     // DTM mesh and looks outward, rather than looking down at that origin.
     camera.position.set(0, 0.8, 0);
-    camera.lookAt(0, 0.15, -70);
+    // Aim slightly above horizontal so nearby ground does not consume the
+    // lower half of the compact panorama; distant terrain stays in view.
+    camera.lookAt(0, 8, -70);
     camera.updateProjectionMatrix();
   }, [camera]);
   return null;
