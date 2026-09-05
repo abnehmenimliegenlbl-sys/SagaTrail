@@ -426,11 +426,6 @@ export function PeakPanorama({
     () => buildPanoramaMesh(profileEntries, displayBearing, observerElevationM),
     [profileEntries, panOffsetDeg, observerElevationM],
   );
-  const skylinePeaks = visiblePeaks;
-  const skylineX = (peak: PanoramaGipfel) =>
-    180 + ((displayBearing(peak) ?? 0) / PANORAMA_VIEW_DEGREES) * 360;
-  const skylineScale = (peak: PanoramaGipfel) =>
-    Math.max(0.55, Math.min(1.1, 1.12 - peak.distanceKm / 32));
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
     const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
     return {
@@ -686,9 +681,7 @@ export function PeakPanorama({
                      : colors.accent
                }
                fillOpacity={triangle.tone === "bridge" ? 0.13 : 0.38}
-               stroke={colors.accent}
-               strokeOpacity={triangle.tone === "bridge" ? 0.18 : 0.42}
-               strokeWidth="0.55"
+                stroke="none"
              />
            ))}
            {panoramaMesh.peaks.map((meshPeak) => {
@@ -737,38 +730,6 @@ export function PeakPanorama({
                </G>
              );
            })}
-           {skylinePeaks
-             .filter((peak) => !panoramaMesh.peaks.some((meshPeak) => meshPeak.peak.id === peak.id))
-             .map((peak, index) => {
-               const x = skylineX(peak);
-               const scale = skylineScale(peak);
-               return (
-                 <G key={`marker-${peak.id}`}>
-                   <Line
-                     x1={x}
-                     y1="143"
-                     x2={x}
-                     y2="166"
-                     stroke={colors.mutedForeground}
-                     strokeOpacity={0.55}
-                     strokeDasharray="2 3"
-                   />
-                   <Circle cx={x} cy="140" r={Math.max(3, 4 * scale)} fill={colors.primary} />
-                   {annotatedPeakIds.has(peak.id) && x > -18 && x < 378 && (
-                     <SvgText
-                       x={x}
-                       y="130"
-                       fill={colors.foreground}
-                       fontSize="8"
-                       fontWeight="600"
-                       textAnchor="middle"
-                     >
-                       {peak.name.length > 15 ? `${peak.name.slice(0, 14)}…` : peak.name}
-                     </SvgText>
-                   )}
-                 </G>
-               );
-             })}
            <Line
              x1="180"
              y1="23"
@@ -786,9 +747,9 @@ export function PeakPanorama({
               ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
               : strings.heightUnknown}
           </SvgText>
-            {profileCandidates.length > 0 && loadedProfileCount < profileCandidates.length && (
+             {profileCandidates.length > 0 && (
              <SvgText x="180" y="177" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
-               {`${loadedProfileCount}/${profileCandidates.length} SwissTopo-Mesh`}
+                {`${loadedProfileCount}/${profileCandidates.length} SwissTopo-Höhenprofile`}
              </SvgText>
            )}
           <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
