@@ -120,7 +120,7 @@ type PanoramaMeshPeak = {
 type PanoramaMesh = {
   peaks: PanoramaMeshPeak[];
   triangles: PanoramaMeshTriangle[];
-  terrainLines: string[];
+  terrainLines: Array<{ points: string; opacity: number }>;
   elevationRangeM: { min: number; max: number } | null;
 };
 type PanoramaAltitudeRange = { minM: number; maxM: number };
@@ -150,7 +150,10 @@ function interpolateProfileAltitude(
 function buildTerrainSurface(
   terrainModel: LocalTerrainModel,
   terrainBearing: (bearing: number) => number | null,
-): { lines: string[]; elevationRangeM: { min: number; max: number } | null } {
+): {
+  lines: Array<{ points: string; opacity: number }>;
+  elevationRangeM: { min: number; max: number } | null;
+} {
   const allSamples = terrainModel.rays.flatMap((ray) =>
     ray.samples.filter(
       (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
@@ -167,51 +170,67 @@ function buildTerrainSurface(
   const span = Math.max(40, maxRelative - minRelative);
   const topY = 44;
   const baselineY = 274;
-  const candidates = terrainModel.rays
+  const rays = terrainModel.rays
     .map((ray) => {
       const bearing = terrainBearing(ray.bearingDeg);
       const samples = ray.samples.filter(
         (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
       );
       if (bearing == null || samples.length === 0) return null;
-      const visibleSample = samples.reduce((best, sample) => {
-        const bestAngle = Math.atan2(
-          best.elevationM - observerElevation,
-          Math.max(1, best.distanceM),
-        );
-        const sampleAngle = Math.atan2(
-          sample.elevationM - observerElevation,
-          Math.max(1, sample.distanceM),
-        );
-        return sampleAngle > bestAngle ? sample : best;
-      });
       return {
         bearing,
-        x: 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360,
-        y:
-          baselineY -
-          ((visibleSample.elevationM - observerElevation - minRelative) / span) *
-            (baselineY - topY),
+        samples: samples.sort((a, b) => a.distanceM - b.distanceM),
       };
     })
-    .filter((point): point is { bearing: number; x: number; y: number } => point !== null)
-    .sort((a, b) => a.x - b.x);
+    .filter((ray): ray is { bearing: number; samples: LocalTerrainModel["rays"][number]["samples"] } =>
+      ray !== null,
+    )
+    .sort((a, b) => a.bearing - b.bearing);
 
   const maxAngularGap = 360 / Math.max(8, terrainModel.sectors) * 1.8;
-  const lines: string[] = [];
-  let current: { x: number; y: number }[] = [];
-  for (const point of candidates) {
-    const previous = current[current.length - 1];
-    const angularGap = previous
-      ? ((point.x - previous.x) / 360) * PANORAMA_VIEW_DEGREES
-      : 0;
-    if (previous && angularGap > maxAngularGap) {
-      if (current.length >= 2) lines.push(pointString(current));
-      current = [];
+  const ringCount = Math.max(...rays.map((ray) => ray.samples.length), 0);
+  const lines: Array<{ points: string; opacity: number }> = [];
+  for (let ringIndex = 1; ringIndex < ringCount; ringIndex += 1) {
+    const ringPoints = rays
+      .map((ray) => {
+        const sample = ray.samples[ringIndex];
+        if (!sample) return null;
+        return {
+          bearing: ray.bearing,
+          x: 180 + (ray.bearing / PANORAMA_VIEW_DEGREES) * 360,
+          y:
+            baselineY -
+            ((sample.elevationM - observerElevation - minRelative) / span) *
+              (baselineY - topY),
+        };
+      })
+      .filter(
+        (point): point is { bearing: number; x: number; y: number } => point !== null,
+      );
+    let current: { x: number; y: number }[] = [];
+    for (const point of ringPoints) {
+      const previous = current[current.length - 1];
+      const angularGap = previous
+        ? ((point.x - previous.x) / 360) * PANORAMA_VIEW_DEGREES
+        : 0;
+      if (previous && angularGap > maxAngularGap) {
+        if (current.length >= 2) {
+          lines.push({
+            points: pointString(current),
+            opacity: 0.18 + (ringIndex / Math.max(1, ringCount - 1)) * 0.5,
+          });
+        }
+        current = [];
+      }
+      current.push({ x: point.x, y: Math.max(topY, Math.min(baselineY, point.y)) });
     }
-    current.push({ x: point.x, y: Math.max(topY, Math.min(baselineY, point.y)) });
+    if (current.length >= 2) {
+      lines.push({
+        points: pointString(current),
+        opacity: 0.18 + (ringIndex / Math.max(1, ringCount - 1)) * 0.5,
+      });
+    }
   }
-  if (current.length >= 2) lines.push(pointString(current));
   return { lines, elevationRangeM: { min: minM, max: maxM } };
 }
 
@@ -811,8 +830,8 @@ export function PeakPanorama({
           </G>
            {panoramaMesh.elevationRangeM && (
              <>
-               <SvgText x="7" y="42" fill={colors.mutedForeground} fontSize="7" fontWeight="700">
-                 HÖHENPROFIL
+                <SvgText x="7" y="42" fill={colors.mutedForeground} fontSize="7" fontWeight="700">
+                  SWISSTOPO DTM · 5 KM
                </SvgText>
                <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
                   {`${Math.round(panoramaMesh.elevationRangeM.max)} m ü. M.`}
@@ -849,11 +868,11 @@ export function PeakPanorama({
            {panoramaMesh.terrainLines.map((line, index) => (
              <Polyline
                key={`terrain-${index}`}
-               points={line}
+               points={line.points}
                fill="none"
                stroke={colors.accent}
-               strokeOpacity={0.92}
-               strokeWidth="2"
+               strokeOpacity={line.opacity}
+               strokeWidth="1.15"
              />
            ))}
            {panoramaMesh.terrainLines.length === 0 && panoramaMesh.triangles.map((triangle, index) => (
