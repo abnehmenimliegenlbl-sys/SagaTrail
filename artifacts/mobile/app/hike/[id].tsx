@@ -4363,6 +4363,7 @@ export default function LiveHike() {
                   : offlinePanorama?.peaks.length ?? panoramaPeaks.length
               } Gipfel`,
               icon: "triangle",
+              modalSize: "large",
               content: (
                 <PeakPanorama
                   peaks={panoramaPeaks}
@@ -4372,20 +4373,6 @@ export default function LiveHike() {
                   heading={compassHeading}
                   observerElevationM={hasFreshGps ? liveAltitude : null}
                   hasGps={hasFreshGps}
-                  dataStatus={
-                    panoramaOnlinePois.length > 0
-                      ? {
-                          source: "online",
-                          peakCount: panoramaOnlinePois.length,
-                        }
-                      : offlinePanorama
-                      ? {
-                          source: "offline",
-                          version: offlinePanorama.version,
-                          peakCount: offlinePanorama.peaks.length,
-                        }
-                      : { source: "online", peakCount: panoramaPeaks.length }
-                  }
                   strings={{
                     title: t.panorama,
                     hint: t.panoramaHint,
@@ -4399,8 +4386,6 @@ export default function LiveHike() {
                      capture: t.camera,
                     cameraPermission: t.cameraPermission,
                     arUnavailable: t.arUnavailable,
-                    offlineData: t.panoramaOfflineData,
-                    onlineData: t.panoramaOnlineData,
                     heightUnknown: t.panoramaHeightUnknown,
                     dragPanorama: t.panoramaDrag,
                     elevationAngle: t.panoramaElevationAngle,
