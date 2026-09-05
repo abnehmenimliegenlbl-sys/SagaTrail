@@ -101,7 +101,11 @@ export function PeakCameraOverlay({
       setArPeaks(arCandidates);
       setContentMounted(false);
     }
-  }, [arCandidates, visible]);
+    // arCandidates is intentionally not a dependency. The native Viro scene
+    // must keep a stable peak snapshot while the camera is running; updating
+    // the candidate list here would unmount/remount the camera surface.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   useEffect(() => {
     if (!arEnabled || !targetPeak) {
