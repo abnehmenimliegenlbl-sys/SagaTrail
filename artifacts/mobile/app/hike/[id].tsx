@@ -4356,38 +4356,6 @@ export default function LiveHike() {
               )
             }
           />
-          <Pressable
-            onPress={() => {
-              // Native Modals must never overlap: close the map modal first.
-              if (karteVollbild) {
-                setKarteVollbild(false);
-                setKarteCloseSignal((n) => n + 1);
-                setTimeout(() => setRouteTerrain3dOpen(true), 320);
-              } else {
-                setRouteTerrain3dOpen(true);
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Route in 3D anzeigen"
-            style={{
-              alignSelf: "flex-end",
-              marginTop: 10,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 7,
-              paddingHorizontal: 13,
-              paddingVertical: 9,
-              borderRadius: 18,
-              backgroundColor: colors.card,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: colors.border,
-            }}
-          >
-            <Feather name="box" size={16} color={colors.accent} />
-            <Text style={{ color: colors.foreground, fontWeight: "700" }}>
-              Route in 3D
-            </Text>
-          </Pressable>
         </View>
         <RouteTerrain3D
           visible={routeTerrain3dOpen}
@@ -4403,6 +4371,9 @@ export default function LiveHike() {
             if (tileId === "panorama") {
               panoramaPeakRequestRef.current = null;
               setPanoramaTileOpen(true);
+            }
+            if (tileId === "route-3d") {
+              setRouteTerrain3dOpen(true);
             }
           }}
           tiles={[
@@ -4485,6 +4456,14 @@ export default function LiveHike() {
                    onCaptured={addRecognitionEntry}
                 />
               ),
+            },
+            {
+              id: "route-3d",
+              title: "3D ROUTE",
+              subtitle: "Gelände & Flug",
+              icon: "box",
+              action: true,
+              content: null,
             },
             ...(Platform.OS !== "web"
               ? [{

@@ -24,6 +24,7 @@ export interface FeatureTile {
   content: React.ReactNode;
   preview?: React.ReactNode;
   modalSize?: "large";
+  action?: boolean;
 }
 
 interface Props {
@@ -52,7 +53,8 @@ export function FeatureTileDeck({
     if (Platform.OS !== "web") {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
-    setActiveId(id);
+    const tile = tiles.find((candidate) => candidate.id === id);
+    if (!tile?.action) setActiveId(id);
     onTileOpen?.(id);
   };
 
@@ -109,11 +111,19 @@ export function FeatureTileDeck({
                 ) : null}
                 {tile.preview}
               </View>
-              <Feather
-                name={selected ? "chevron-up" : "chevron-down"}
-                size={14}
-                color={selected ? colors.primary : colors.mutedForeground}
-              />
+              {tile.action ? (
+                <Feather
+                  name="chevron-right"
+                  size={14}
+                  color={colors.mutedForeground}
+                />
+              ) : (
+                <Feather
+                  name={selected ? "chevron-up" : "chevron-down"}
+                  size={14}
+                  color={selected ? colors.primary : colors.mutedForeground}
+                />
+              )}
             </Pressable>
           );
         })}
