@@ -545,21 +545,15 @@ function TerrainMesh({
             geometry={geometry}
             rotation={rotation}
             scale={terrainScale}
-            position={[
-              0,
-              tile.detail
-                ? 2 * TERRAIN_WORLD_UNITS_PER_METRE
-                : 0,
-              0,
-            ]}
+            position={[0, 0, 0]}
             renderOrder={tile.detail ? 2 : 1}
           >
             <meshBasicMaterial
               map={texture}
-              color="#FFFFFF"
+              color={tile.detail ? "#FF00FF" : "#FFFFFF"}
               side={DoubleSide}
-              depthTest
-              depthWrite
+              depthTest={!tile.detail}
+              depthWrite={!tile.detail}
             />
           </mesh>
         );
