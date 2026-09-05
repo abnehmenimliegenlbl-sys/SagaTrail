@@ -965,7 +965,7 @@ export default function RouteTerrain3D({
                   <Feather
                     name={icon}
                     size={20}
-                    color={active ? "#FFFFFF" : "#F4EBDD"}
+                    color={active ? "#FFFFFF" : "#15231D"}
                   />
                   <Text
                     style={[
@@ -1030,9 +1030,14 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 6,
     borderWidth: 1,
-    borderColor: "#F4EBDD33",
+    borderColor: "#E8E2D9",
     borderRadius: 24,
-    backgroundColor: "#15231DEE",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
   control: {
     flex: 1,
@@ -1044,6 +1049,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   controlActive: { backgroundColor: "#DA291C" },
-  controlText: { color: "#F4EBDD", fontSize: 12, fontWeight: "700" },
+  controlText: { color: "#15231D", fontSize: 12, fontWeight: "700" },
   controlTextActive: { color: "#FFFFFF" },
 });
