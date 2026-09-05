@@ -183,7 +183,11 @@ function buildPanoramaMesh(
       const firstDistance = points[0]?.distanceKm ?? 0;
       const lastDistance = points[points.length - 1]?.distanceKm ?? 0;
       const distanceSpan = Math.max(0.001, lastDistance - firstDistance);
-      const centerX = 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360;
+      const centerX =
+        ((bearing + PANORAMA_VIEW_DEGREES / 2 + PANORAMA_VIEW_DEGREES) %
+          PANORAMA_VIEW_DEGREES) /
+        PANORAMA_VIEW_DEGREES *
+        360;
       const width = Math.max(9, Math.min(27, 25 - peak.distanceKm * 0.45));
       const sampled = Array.from({ length: sampleCount }, (_, index) => {
         const fraction = index / (sampleCount - 1);
@@ -398,7 +402,7 @@ export function PeakPanorama({
         ...visiblePeaks.slice(0, 3).map((peak) => peak.id),
         ...(targetPeak ? [targetPeak.id] : []),
       ]),
-    [visiblePeakIds, targetPeak?.id],
+    [profileCandidateIds, targetPeak?.id],
   );
   const profileEntries = useMemo(
     () =>
@@ -427,6 +431,15 @@ export function PeakPanorama({
       x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
     };
   }).filter((direction) => Math.abs(direction.relative) <= PANORAMA_VIEW_DEGREES / 2 + 8);
+  const degreeTicks = Array.from({ length: 8 }, (_, index) => {
+    const bearing = index * 45;
+    const relative = signedAngleDifference(bearing, viewCenterBearing);
+    return {
+      bearing,
+      relative,
+      x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
+    };
+  });
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
@@ -625,6 +638,20 @@ export function PeakPanorama({
             <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
             <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
+           <G opacity={0.18}>
+             {degreeTicks.map((tick) => (
+               <Line
+                 key={`degree-${tick.bearing}`}
+                 x1={tick.x}
+                 y1="31"
+                 x2={tick.x}
+                 y2="166"
+                 stroke={colors.tint}
+                 strokeWidth="0.7"
+                 strokeDasharray="2 5"
+               />
+             ))}
+           </G>
           {compassTicks.map((direction) => (
             <G key={direction.label}>
               <Line
