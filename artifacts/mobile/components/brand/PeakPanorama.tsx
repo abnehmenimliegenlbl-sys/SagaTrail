@@ -192,7 +192,11 @@ function buildPanoramaMesh(
   const sampleCount = 16;
 
   const meshPeaks = validEntries
-    .sort((a, b) => a.bearing - b.bearing)
+    .sort((a, b) => {
+      const aBearing = (a.bearing + 360) % 360;
+      const bBearing = (b.bearing + 360) % 360;
+      return aBearing - bBearing;
+    })
     .map(({ peak, profile, peakDistanceKm, bearing }) => {
       const points = profile
         .slice()
@@ -276,6 +280,29 @@ function buildPanoramaMesh(
         { points: pointString([a, b, c]), tone: "bridge" },
         { points: pointString([a, c, d]), tone: "bridge" },
       );
+    }
+  }
+  // 0° und 360° sind derselbe Horizontpunkt. Wenn die beiden Profile
+  // tatsächlich nahe beieinander liegen, wird auch diese Naht verbunden.
+  // Grosse echte Datenlücken bleiben weiterhin offen.
+  const first = meshPeaks[0];
+  const last = meshPeaks[meshPeaks.length - 1];
+  if (first && last && meshPeaks.length > 1) {
+    const firstBearing = (first.peak.bearingDeg + 360) % 360;
+    const lastBearing = (last.peak.bearingDeg + 360) % 360;
+    const seamGap = firstBearing + 360 - lastBearing;
+    if (seamGap <= 132) {
+      for (let pointIndex = 0; pointIndex < sampleCount - 1; pointIndex += 1) {
+        const a = last.points[pointIndex];
+        const b = first.points[pointIndex];
+        const c = first.points[pointIndex + 1];
+        const d = last.points[pointIndex + 1];
+        if (!a || !b || !c || !d) continue;
+        triangles.push(
+          { points: pointString([a, b, c]), tone: "bridge" },
+          { points: pointString([a, c, d]), tone: "bridge" },
+        );
+      }
     }
   }
   return {
