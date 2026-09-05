@@ -4363,6 +4363,7 @@ export default function LiveHike() {
                   peaks={panoramaPeaks}
                   terrainProfile={terrainProfile}
                   terrainModel={terrainModel}
+                  observerPosition={hasFreshGps ? livePos : null}
                   heading={compassHeading}
                   observerElevationM={hasFreshGps ? liveAltitude : null}
                   hasGps={hasFreshGps}

@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useCameraPermissions } from "expo-camera";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PanResponder,
   Platform,
@@ -9,14 +9,14 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, G, Line, Polygon, Polyline, Rect, Text as SvgText } from "react-native-svg";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
-import type { RecognitionJournalEntry } from "@/types";
+import type { LatLng, RecognitionJournalEntry } from "@/types";
 
 const PANORAMA_VIEW_DEGREES = 140;
 const PANORAMA_TOTAL_DEGREES = 360;
@@ -62,6 +62,7 @@ interface PeakPanoramaProps {
   peaks: PanoramaGipfel[];
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
+  observerPosition?: LatLng | null;
   heading: number | null;
   observerElevationM?: number | null;
   hasGps: boolean;
@@ -75,10 +76,118 @@ interface PeakPanoramaProps {
   onCameraOpen?: () => void;
 }
 
+type PanoramaProfilePoint = { distanceKm: number; altM: number };
+type PanoramaProfile = {
+  peakId: string;
+  profile: PanoramaProfilePoint[];
+};
+
+function profileCacheKey(
+  observerKey: string,
+  peakId: string,
+): string {
+  return `${observerKey}|${peakId}`;
+}
+
+function finiteProfile(
+  value: unknown,
+): PanoramaProfilePoint[] | null {
+  if (!Array.isArray(value)) return null;
+  const profile = value
+    .filter(
+      (point): point is { distanceKm: unknown; altM: unknown } =>
+        !!point && typeof point === "object" && "distanceKm" in point && "altM" in point,
+    )
+    .map((point) => ({
+      distanceKm: Number(point.distanceKm),
+      altM: Number(point.altM),
+    }))
+    .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM));
+  return profile.length >= 2 ? profile : null;
+}
+
+function buildProfileBand(
+  profile: readonly PanoramaProfilePoint[],
+  centerX: number,
+  width: number,
+  observerElevationM: number | null,
+): {
+  upper: string;
+  lower: string;
+  upperEnd: string;
+  lowerEnd: string;
+  upperEndDepth: string;
+  lowerEndDepth: string;
+  upperEndX: number;
+  upperEndY: number;
+  lowerEndX: number;
+  lowerEndY: number;
+} | null {
+  const points = profile.filter(
+    (point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+  );
+  if (points.length < 2) return null;
+
+  const firstDistance = points[0].distanceKm;
+  const lastDistance = points[points.length - 1].distanceKm;
+  const distanceSpan = lastDistance - firstDistance;
+  if (distanceSpan <= 0) return null;
+
+  const datum = Number.isFinite(observerElevationM)
+    ? (observerElevationM as number)
+    : points[0].altM;
+  const relativeAltitudes = points.map((point) => point.altM - datum);
+  const minAltitude = Math.min(...relativeAltitudes);
+  const maxAltitude = Math.max(...relativeAltitudes);
+  const altitudeSpan = Math.max(25, maxAltitude - minAltitude);
+  const baselineY = 166;
+  const topY = 42;
+  const depth = Math.max(7, Math.min(16, width * 0.11));
+  const startX = centerX - width;
+
+  const upperPoints = points.map((point, index) => {
+    const fraction = Math.max(
+      0,
+      Math.min(1, (point.distanceKm - firstDistance) / distanceSpan),
+    );
+    const relativeAltitude = relativeAltitudes[index] ?? 0;
+    const x = startX + fraction * width;
+    const y =
+      baselineY -
+      ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY);
+    return { x, y: Math.max(topY, Math.min(baselineY, y)) };
+  });
+  const lowerPoints = upperPoints.map(({ x, y }) => ({
+    x,
+    y: Math.min(178, y + depth),
+  }));
+  const upperEnd = upperPoints[upperPoints.length - 1];
+  const lowerEnd = lowerPoints[lowerPoints.length - 1];
+  if (!upperEnd || !lowerEnd) return null;
+
+  return {
+    upper: upperPoints.map((point) => `${point.x},${point.y}`).join(" "),
+    lower: lowerPoints
+      .slice()
+      .reverse()
+      .map((point) => `${point.x},${point.y}`)
+      .join(" "),
+    upperEnd: `${upperEnd.x},${upperEnd.y}`,
+    lowerEnd: `${lowerEnd.x},${lowerEnd.y}`,
+    upperEndDepth: `${upperEnd.x + depth * 0.7},${upperEnd.y + depth * 0.35}`,
+    lowerEndDepth: `${lowerEnd.x + depth * 0.7},${lowerEnd.y + depth * 0.35}`,
+    upperEndX: upperEnd.x,
+    upperEndY: upperEnd.y,
+    lowerEndX: lowerEnd.x,
+    lowerEndY: lowerEnd.y,
+  };
+}
+
 export function PeakPanorama({
   peaks,
   terrainProfile = null,
   terrainModel = null,
+  observerPosition = null,
   heading,
   observerElevationM = null,
   hasGps,
@@ -92,6 +201,9 @@ export function PeakPanorama({
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
+  const profileCacheRef = useRef<Map<string, PanoramaProfilePoint[]>>(new Map());
+  const profileRequestsRef = useRef<Set<string>>(new Set());
+  const [profileRevision, setProfileRevision] = useState(0);
   const panStartOffsetRef = useRef(0);
   const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
   const displayBearing = (peak: PanoramaGipfel): number | null =>
@@ -111,6 +223,80 @@ export function PeakPanorama({
           .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
           .map(({ peak }) => peak)
           .slice(0, 8);
+  const observerKey = observerPosition
+    ? `${observerPosition.lat.toFixed(4)}:${observerPosition.lng.toFixed(4)}`
+    : null;
+  const visiblePeakIds = visiblePeaks.map((peak) => peak.id).join("|");
+
+  useEffect(() => {
+    if (!observerPosition || !observerKey || visiblePeaks.length === 0) return;
+    const requestObserver = observerPosition;
+    const requestObserverKey = observerKey;
+
+    const missingPeaks = visiblePeaks.filter((peak) => {
+      const key = profileCacheKey(requestObserverKey, peak.id);
+      return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
+    });
+    if (missingPeaks.length === 0) return;
+
+    const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
+    requestKeys.forEach((key) => profileRequestsRef.current.add(key));
+    let cancelled = false;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const apiBase = process.env.EXPO_PUBLIC_DOMAIN
+      ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : "";
+
+    void fetch(`${apiBase}/api/panorama-profiles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller?.signal,
+      body: JSON.stringify({
+        observer: { lat: requestObserver.lat, lng: requestObserver.lng },
+        peaks: missingPeaks.map((peak) => ({
+          id: peak.id,
+          lat: peak.lat,
+          lng: peak.lng,
+        })),
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as { profiles?: PanoramaProfile[] };
+      })
+      .then((payload) => {
+        if (cancelled || !payload?.profiles) return;
+        let added = false;
+        for (const result of payload.profiles) {
+          const profile = finiteProfile(result.profile);
+          if (!profile || typeof result.peakId !== "string") continue;
+          profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), profile);
+          added = true;
+        }
+        if (added) setProfileRevision((revision) => revision + 1);
+      })
+      .catch(() => {
+        // Fehlende Profile sind ein zulässiger Teilzustand; der Marker bleibt sichtbar.
+      })
+      .finally(() => {
+        requestKeys.forEach((key) => profileRequestsRef.current.delete(key));
+      });
+
+    return () => {
+      cancelled = true;
+      controller?.abort();
+    };
+  }, [observerKey, visiblePeakIds]);
+
+  const loadedProfileCount = useMemo(
+    () =>
+      visiblePeaks.filter((peak) =>
+        observerKey
+          ? profileCacheRef.current.has(profileCacheKey(observerKey, peak.id))
+          : false,
+      ).length,
+    [observerKey, visiblePeakIds, profileRevision],
+  );
   const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
   const panResponder = useMemo(
     () =>
@@ -144,11 +330,6 @@ export function PeakPanorama({
   const skylinePeaks = visiblePeaks.slice(0, 6);
   const skylineX = (peak: PanoramaGipfel) =>
     180 + ((displayBearing(peak) ?? 0) / PANORAMA_VIEW_DEGREES) * 360;
-  const skylineY = (peak: PanoramaGipfel) => {
-    const angle = peak.elevationAngleDeg ?? 0;
-    const mountainHeight = Math.max(28, Math.min(112, 44 + angle * 7));
-    return 166 - mountainHeight;
-  };
   const skylineScale = (peak: PanoramaGipfel) =>
     Math.max(0.55, Math.min(1.1, 1.12 - peak.distanceKm / 32));
   const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
@@ -381,39 +562,88 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-          {skylinePeaks
+           {skylinePeaks
             .slice()
             .sort((a, b) => skylineX(a) - skylineX(b))
             .map((peak, index) => {
               const x = skylineX(peak);
-              const y = skylineY(peak);
               const scale = skylineScale(peak);
-              const width = Math.max(22, Math.min(58, 50 * scale));
-              const sideWidth = width * 0.68;
-              const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
+               const width = Math.max(34, Math.min(118, 104 * scale));
+               const profile = observerKey
+                 ? profileCacheRef.current.get(profileCacheKey(observerKey, peak.id))
+                 : undefined;
+               const geometry = profile
+                 ? buildProfileBand(profile, x, width, observerElevationM)
+                 : null;
+               const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
               return (
                 <G key={peak.id}>
-                  <Polygon
-                    points={`${x - width},166 ${x},${y} ${x + sideWidth},166`}
-                    fill={fill}
-                    stroke={colors.accent}
-                    strokeOpacity={0.5}
-                    strokeWidth="1"
-                  />
-                  <Polygon
-                    points={`${x},${y} ${x + sideWidth},166 ${x + width},166 ${x + width * 0.34},${y + 16}`}
-                    fill={colors.accent}
-                    fillOpacity={0.16}
-                    stroke={colors.accent}
-                    strokeOpacity={0.32}
-                    strokeWidth="1"
-                  />
-                  <Line x1={x} y1={y} x2={x} y2="166" stroke={colors.accent} strokeOpacity={0.45} />
-                  <Circle cx={x} cy={y} r={Math.max(3, 4 * scale)} fill={colors.primary} />
+                   {geometry ? (
+                     <>
+                       <Polygon
+                         points={`${geometry.upper} ${geometry.lower}`}
+                         fill={fill}
+                         fillOpacity={0.78}
+                         stroke={colors.accent}
+                         strokeOpacity={0.4}
+                         strokeWidth="1"
+                       />
+                       <Polygon
+                         points={`${geometry.upperEnd} ${geometry.lowerEnd} ${geometry.lowerEndDepth} ${geometry.upperEndDepth}`}
+                         fill={colors.accent}
+                         fillOpacity={0.2}
+                         stroke={colors.accent}
+                         strokeOpacity={0.38}
+                         strokeWidth="1"
+                       />
+                       <Polyline
+                         points={geometry.upper}
+                         fill="none"
+                         stroke={colors.accent}
+                         strokeWidth="1.7"
+                         strokeOpacity={0.95}
+                       />
+                       <Polyline
+                         points={geometry.lower}
+                         fill="none"
+                         stroke={colors.accent}
+                         strokeWidth="1"
+                         strokeOpacity={0.32}
+                       />
+                       <Line
+                         x1={geometry.upperEndX}
+                         y1={geometry.upperEndY}
+                         x2={geometry.lowerEndX}
+                         y2={geometry.lowerEndY}
+                         stroke={colors.accent}
+                         strokeOpacity={0.6}
+                         strokeWidth="1"
+                       />
+                       <Circle
+                         cx={geometry.upperEndX}
+                         cy={geometry.upperEndY}
+                         r={Math.max(3, 4 * scale)}
+                         fill={colors.primary}
+                       />
+                     </>
+                   ) : (
+                     <>
+                       <Line
+                         x1={x}
+                         y1="139"
+                         x2={x}
+                         y2="166"
+                         stroke={colors.mutedForeground}
+                         strokeOpacity={0.6}
+                         strokeDasharray="2 3"
+                       />
+                       <Circle cx={x} cy="136" r={Math.max(3, 4 * scale)} fill={colors.primary} />
+                     </>
+                   )}
                   {x > -18 && x < 378 && (
                     <SvgText
                       x={x}
-                      y={Math.max(30, y - 10)}
+                       y={geometry ? Math.max(30, geometry.upperEndY - 10) : 124}
                       fill={colors.foreground}
                       fontSize="9"
                       fontWeight="600"
@@ -430,6 +660,11 @@ export function PeakPanorama({
               ? strings.elevationAngle(`${targetPeak.elevationAngleDeg.toFixed(1)}°`)
               : strings.heightUnknown}
           </SvgText>
+           {visiblePeaks.length > 0 && loadedProfileCount < Math.min(visiblePeaks.length, 6) && (
+             <SvgText x="180" y="177" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
+               {`${loadedProfileCount}/${Math.min(visiblePeaks.length, 6)} SwissTopo`}
+             </SvgText>
+           )}
           <SvgText x="180" y="207" fill={colors.mutedForeground} fontSize="8" textAnchor="middle">
             {strings.dragPanorama}
           </SvgText>

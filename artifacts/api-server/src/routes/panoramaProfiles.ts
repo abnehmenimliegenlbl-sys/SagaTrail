@@ -64,12 +64,18 @@ router.post("/panorama-profiles", async (req: Request, res: Response): Promise<v
     while (nextIndex < uniquePeaks.length) {
       const peak = uniquePeaks[nextIndex++];
       if (!peak) return;
-      const profile = await computeElevationProfile(
-        sampleLine(parsed.data.observer, peak),
-        req.log,
-      );
-      if (profile && profile.length >= 2) {
-        profiles.push({ peakId: peak.id, profile });
+      try {
+        const profile = await computeElevationProfile(
+          sampleLine(parsed.data.observer, peak),
+          req.log,
+        );
+        if (profile && profile.length >= 2) {
+          profiles.push({ peakId: peak.id, profile });
+        }
+      } catch (err) {
+        // Ein einzelnes SwissTopo-Profil darf die sichtbaren Nachbarn nicht
+        // ausblenden. Der Client zeigt für diesen Gipfel nur den Marker.
+        req.log.warn({ err, peakId: peak.id }, "Panorama-Profil für Gipfel nicht verfügbar");
       }
     }
   };
