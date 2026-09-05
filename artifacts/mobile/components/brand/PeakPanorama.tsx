@@ -332,67 +332,77 @@ export function PeakPanorama({
     if (!observerPosition || !observerKey || profileCandidates.length === 0) return;
     const requestObserver = observerPosition;
     const requestObserverKey = observerKey;
-
-    const missingPeaks = profileCandidates
-      .filter((peak) => {
-        const key = profileCacheKey(requestObserverKey, peak.id);
-        return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
-      })
-      .slice(0, PANORAMA_PROFILE_BATCH_SIZE);
-    if (missingPeaks.length === 0) return;
-
-    const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
-    requestKeys.forEach((key) => profileRequestsRef.current.add(key));
     let cancelled = false;
-    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    let activeController: AbortController | null = null;
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN
       ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
       : "";
 
-    void fetch(`${apiBase}/api/panorama-profiles`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller?.signal,
-      body: JSON.stringify({
-        observer: { lat: requestObserver.lat, lng: requestObserver.lng },
-        peaks: missingPeaks.map((peak) => ({
-          id: peak.id,
-          lat: peak.lat,
-          lng: peak.lng,
-        })),
-      }),
-    })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return (await response.json()) as { profiles?: PanoramaProfile[] };
-      })
-      .then((payload) => {
-        if (cancelled || !payload?.profiles) return;
-        let added = false;
-        for (const result of payload.profiles) {
-          const profile = finiteProfile(result.profile);
-          if (!profile || typeof result.peakId !== "string") continue;
-          const peakDistanceKm = Number(result.peakDistanceKm);
-          profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), {
-            points: profile,
-            peakDistanceKm: Number.isFinite(peakDistanceKm) ? peakDistanceKm : null,
-          });
-          added = true;
-        }
-        if (added) setProfileRevision((revision) => revision + 1);
-      })
-      .catch(() => {
-        // Fehlende Profile sind ein zulässiger Teilzustand; der Marker bleibt sichtbar.
-      })
-      .finally(() => {
-        requestKeys.forEach((key) => profileRequestsRef.current.delete(key));
-      });
+    const loadAllProfiles = async () => {
+      while (!cancelled) {
+        const missingPeaks = profileCandidates
+          .filter((peak) => {
+            const key = profileCacheKey(requestObserverKey, peak.id);
+            return !profileCacheRef.current.has(key) && !profileRequestsRef.current.has(key);
+          })
+          .slice(0, PANORAMA_PROFILE_BATCH_SIZE);
+        if (missingPeaks.length === 0) break;
 
+        const requestKeys = missingPeaks.map((peak) => profileCacheKey(requestObserverKey, peak.id));
+        requestKeys.forEach((key) => profileRequestsRef.current.add(key));
+        activeController =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+
+        try {
+          // Der erste Netzwerkaufruf passiert direkt; Schwenken kann diese
+          // Schleife nicht abbrechen, weil panOffset nicht in den Dependencies
+          // dieses Effekts liegt.
+          const response = await fetch(`${apiBase}/api/panorama-profiles`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: activeController?.signal,
+            body: JSON.stringify({
+              observer: { lat: requestObserver.lat, lng: requestObserver.lng },
+              peaks: missingPeaks.map((peak) => ({
+                id: peak.id,
+                lat: peak.lat,
+                lng: peak.lng,
+              })),
+            }),
+          });
+          if (!response.ok) break;
+          const payload = (await response.json()) as { profiles?: PanoramaProfile[] };
+          if (cancelled || !payload.profiles) break;
+
+          let added = false;
+          for (const result of payload.profiles) {
+            const profile = finiteProfile(result.profile);
+            if (!profile || typeof result.peakId !== "string") continue;
+            const peakDistanceKm = Number(result.peakDistanceKm);
+            profileCacheRef.current.set(profileCacheKey(requestObserverKey, result.peakId), {
+              points: profile,
+              peakDistanceKm: Number.isFinite(peakDistanceKm) ? peakDistanceKm : null,
+            });
+            added = true;
+          }
+          if (added) setProfileRevision((revision) => revision + 1);
+        } catch {
+          // Ein fehlgeschlagener Batch beendet nur diesen Ladevorgang;
+          // vorhandene Profile bleiben im Speicher und zeichnen weiter.
+          break;
+        } finally {
+          requestKeys.forEach((key) => profileRequestsRef.current.delete(key));
+          activeController = null;
+        }
+      }
+    };
+
+    void loadAllProfiles();
     return () => {
       cancelled = true;
-      controller?.abort();
+      activeController?.abort();
     };
-  }, [observerKey, profileCandidateIds, profileRevision]);
+  }, [observerKey, profileCandidateIds, profileCandidates]);
 
   const panResponder = useMemo(
     () =>
