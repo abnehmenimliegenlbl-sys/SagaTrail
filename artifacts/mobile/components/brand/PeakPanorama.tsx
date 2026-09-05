@@ -18,9 +18,11 @@ import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng, RecognitionJournalEntry } from "@/types";
 
-const PANORAMA_VIEW_DEGREES = 140;
+const PANORAMA_VIEW_DEGREES = 360;
 const PANORAMA_TOTAL_DEGREES = 360;
 const PANORAMA_MAX_DRAG_DEGREES = 180;
+const PANORAMA_PROFILE_BATCH_SIZE = 8;
+const PANORAMA_PROFILE_LIMIT = 16;
 const CARDINAL_DIRECTIONS = [
   { label: "N", bearing: 0 },
   { label: "O", bearing: 90 },
@@ -106,81 +108,133 @@ function finiteProfile(
   return profile.length >= 2 ? profile : null;
 }
 
-function buildProfileBand(
-  profile: readonly PanoramaProfilePoint[],
-  centerX: number,
-  width: number,
+type MeshPoint = { x: number; y: number };
+type PanoramaMeshTriangle = {
+  points: string;
+  tone: "light" | "dark" | "bridge";
+};
+type PanoramaMeshPeak = {
+  peak: PanoramaGipfel;
+  profile: PanoramaProfilePoint[];
+  centerX: number;
+  points: MeshPoint[];
+  lowerPoints: MeshPoint[];
+};
+
+function pointString(points: readonly MeshPoint[]): string {
+  return points.map((point) => `${point.x},${point.y}`).join(" ");
+}
+
+function buildPanoramaMesh(
+  entries: readonly { peak: PanoramaGipfel; profile: PanoramaProfilePoint[] }[],
+  displayBearing: (peak: PanoramaGipfel) => number | null,
   observerElevationM: number | null,
-): {
-  upper: string;
-  lower: string;
-  upperEnd: string;
-  lowerEnd: string;
-  upperEndDepth: string;
-  lowerEndDepth: string;
-  upperEndX: number;
-  upperEndY: number;
-  lowerEndX: number;
-  lowerEndY: number;
-} | null {
-  const points = profile.filter(
-    (point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
-  );
-  if (points.length < 2) return null;
+): { peaks: PanoramaMeshPeak[]; triangles: PanoramaMeshTriangle[] } {
+  const validEntries = entries
+    .map((entry) => ({
+      ...entry,
+      profile: entry.profile.filter(
+        (point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM),
+      ),
+      bearing: displayBearing(entry.peak),
+    }))
+    .filter(
+      (entry): entry is typeof entry & { bearing: number } =>
+        entry.profile.length >= 2 && entry.bearing != null,
+    );
+  if (validEntries.length === 0) return { peaks: [], triangles: [] };
 
-  const firstDistance = points[0].distanceKm;
-  const lastDistance = points[points.length - 1].distanceKm;
-  const distanceSpan = lastDistance - firstDistance;
-  if (distanceSpan <= 0) return null;
-
+  const allAltitudes = validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
   const datum = Number.isFinite(observerElevationM)
     ? (observerElevationM as number)
-    : points[0].altM;
-  const relativeAltitudes = points.map((point) => point.altM - datum);
-  const minAltitude = Math.min(...relativeAltitudes);
-  const maxAltitude = Math.max(...relativeAltitudes);
-  const altitudeSpan = Math.max(25, maxAltitude - minAltitude);
-  const baselineY = 166;
-  const topY = 42;
-  const depth = Math.max(7, Math.min(16, width * 0.11));
-  const startX = centerX - width;
+    : allAltitudes[0] ?? 0;
+  const minAltitude = Math.min(...allAltitudes.map((altitude) => altitude - datum));
+  const maxAltitude = Math.max(...allAltitudes.map((altitude) => altitude - datum));
+  const altitudeSpan = Math.max(40, maxAltitude - minAltitude);
+  const baselineY = 164;
+  const topY = 44;
+  const sampleCount = 14;
 
-  const upperPoints = points.map((point, index) => {
-    const fraction = Math.max(
-      0,
-      Math.min(1, (point.distanceKm - firstDistance) / distanceSpan),
-    );
-    const relativeAltitude = relativeAltitudes[index] ?? 0;
-    const x = startX + fraction * width;
-    const y =
-      baselineY -
-      ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY);
-    return { x, y: Math.max(topY, Math.min(baselineY, y)) };
-  });
-  const lowerPoints = upperPoints.map(({ x, y }) => ({
-    x,
-    y: Math.min(178, y + depth),
-  }));
-  const upperEnd = upperPoints[upperPoints.length - 1];
-  const lowerEnd = lowerPoints[lowerPoints.length - 1];
-  if (!upperEnd || !lowerEnd) return null;
+  const meshPeaks = validEntries
+    .sort((a, b) => a.bearing - b.bearing)
+    .map(({ peak, profile, bearing }) => {
+      const points = profile
+        .slice()
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .filter((point) => point.distanceKm >= 0);
+      const firstDistance = points[0]?.distanceKm ?? 0;
+      const lastDistance = points[points.length - 1]?.distanceKm ?? 0;
+      const distanceSpan = Math.max(0.001, lastDistance - firstDistance);
+      const centerX = 180 + (bearing / PANORAMA_VIEW_DEGREES) * 360;
+      const width = Math.max(9, Math.min(27, 25 - peak.distanceKm * 0.45));
+      const sampled = Array.from({ length: sampleCount }, (_, index) => {
+        const fraction = index / (sampleCount - 1);
+        const targetDistance = firstDistance + fraction * distanceSpan;
+        let nearest = points[0] ?? { distanceKm: 0, altM: datum };
+        for (const point of points) {
+          if (
+            Math.abs(point.distanceKm - targetDistance) <
+            Math.abs(nearest.distanceKm - targetDistance)
+          ) {
+            nearest = point;
+          }
+        }
+        const relativeAltitude = nearest.altM - datum;
+        const y =
+          baselineY -
+          ((relativeAltitude - minAltitude) / altitudeSpan) * (baselineY - topY);
+        return {
+          x: centerX - width + fraction * width,
+          y: Math.max(topY, Math.min(baselineY, y)),
+        };
+      });
+      const depth = Math.max(4, Math.min(8, width * 0.24));
+      return {
+        peak,
+        profile,
+        centerX,
+        points: sampled,
+        lowerPoints: sampled.map((point) => ({
+          x: point.x,
+          y: Math.min(176, point.y + depth),
+        })),
+      };
+    });
 
-  return {
-    upper: upperPoints.map((point) => `${point.x},${point.y}`).join(" "),
-    lower: lowerPoints
-      .slice()
-      .reverse()
-      .map((point) => `${point.x},${point.y}`)
-      .join(" "),
-    upperEnd: `${upperEnd.x},${upperEnd.y}`,
-    lowerEnd: `${lowerEnd.x},${lowerEnd.y}`,
-    upperEndDepth: `${upperEnd.x + depth * 0.7},${upperEnd.y + depth * 0.35}`,
-    lowerEndDepth: `${lowerEnd.x + depth * 0.7},${lowerEnd.y + depth * 0.35}`,
-    upperEndX: upperEnd.x,
-    upperEndY: upperEnd.y,
-    lowerEndX: lowerEnd.x,
-    lowerEndY: lowerEnd.y,
-  };
+  const triangles: PanoramaMeshTriangle[] = [];
+  for (const meshPeak of meshPeaks) {
+    for (let index = 0; index < meshPeak.points.length - 1; index += 1) {
+      const a = meshPeak.points[index];
+      const b = meshPeak.points[index + 1];
+      const c = meshPeak.lowerPoints[index + 1];
+      const d = meshPeak.lowerPoints[index];
+      if (!a || !b || !c || !d) continue;
+      triangles.push(
+        { points: pointString([a, b, c]), tone: index % 2 === 0 ? "light" : "dark" },
+        { points: pointString([a, c, d]), tone: index % 2 === 0 ? "dark" : "light" },
+      );
+    }
+  }
+
+  // Zwischen nahen Sichtlinien entsteht ein echtes, zurückhaltendes Mesh.
+  // Große Winkel-Lücken bleiben offen, damit keine Landschaft erfunden wird.
+  for (let index = 0; index < meshPeaks.length - 1; index += 1) {
+    const left = meshPeaks[index];
+    const right = meshPeaks[index + 1];
+    if (!left || !right || right.centerX - left.centerX > 72) continue;
+    for (let pointIndex = 0; pointIndex < sampleCount - 1; pointIndex += 1) {
+      const a = left.points[pointIndex];
+      const b = right.points[pointIndex];
+      const c = right.points[pointIndex + 1];
+      const d = left.points[pointIndex + 1];
+      if (!a || !b || !c || !d) continue;
+      triangles.push(
+        { points: pointString([a, b, c]), tone: "bridge" },
+        { points: pointString([a, c, d]), tone: "bridge" },
+      );
+    }
+  }
+  return { peaks: meshPeaks, triangles };
 }
 
 export function PeakPanorama({
