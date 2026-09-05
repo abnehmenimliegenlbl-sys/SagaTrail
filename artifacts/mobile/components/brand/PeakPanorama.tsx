@@ -724,6 +724,7 @@ export function PeakPanorama({
                    <SvgText
                      x={meshPeak.centerX}
                       y={Math.max(30, peakPoint.y - 9)}
+                      transform={`rotate(-45 ${meshPeak.centerX} ${Math.max(30, peakPoint.y - 9)})`}
                      fill={colors.foreground}
                      fontSize="8"
                      fontWeight="600"
