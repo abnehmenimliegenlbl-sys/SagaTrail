@@ -25,6 +25,7 @@ import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { LatLng, RecognitionJournalEntry } from "@/types";
+import { PeakTerrainGl } from "./PeakTerrainGl";
 
 const PANORAMA_VIEW_DEGREES = 140;
 const PANORAMA_TOTAL_DEGREES = 140;
@@ -464,6 +465,7 @@ export function PeakPanorama({
   const fixedElevationRangeRef = useRef<PanoramaAltitudeRange | null>(null);
   const [profileRevision, setProfileRevision] = useState(0);
   const [profilesComplete, setProfilesComplete] = useState(false);
+  const [terrainGlReady, setTerrainGlReady] = useState(false);
   const [terrainLoadPercent, setTerrainLoadPercent] = useState(
     terrainModel ? 100 : 8,
   );
@@ -488,6 +490,10 @@ export function PeakPanorama({
     }, 300);
     return () => clearInterval(timer);
   }, [terrainModel, hasGps]);
+
+  useEffect(() => {
+    setTerrainGlReady(false);
+  }, [terrainModel?.fetchedAt]);
 
   const displayBearing = (peak: PanoramaGipfel): number | null =>
     peak.relativeBearingDeg == null
@@ -910,8 +916,23 @@ export function PeakPanorama({
         {...panResponder.panHandlers}
         accessibilityLabel={strings.title}
       >
+        {terrainModel && (
+          <PeakTerrainGl
+            terrainModel={terrainModel}
+            bearingDeg={viewCenterBearing}
+            backgroundColor={colors.glassBg}
+            fallbackColor={colors.primary}
+            onReady={() => setTerrainGlReady(true)}
+          />
+        )}
         <Svg width="100%" height="100%" viewBox="0 0 360 350">
-          <Rect x="0" y="0" width="360" height="350" fill={colors.glassBg} />
+          <Rect
+            x="0"
+            y="0"
+            width="360"
+            height="350"
+            fill={terrainGlReady ? "transparent" : colors.glassBg}
+          />
           <Line x1="0" y1="205" x2="360" y2="205" stroke={colors.glassBorder} strokeWidth="1" />
           <Line x1="0" y1="274" x2="360" y2="274" stroke={colors.glassBorder} strokeWidth="1" />
           <G opacity={0.34}>
@@ -956,7 +977,7 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
-           {panoramaMesh.terrainFaces.map((face, index) => (
+           {!terrainGlReady && panoramaMesh.terrainFaces.map((face, index) => (
              <Polygon
                key={`terrain-face-${index}`}
                points={face.points}
@@ -967,7 +988,7 @@ export function PeakPanorama({
                strokeWidth="0.35"
              />
            ))}
-           {panoramaMesh.terrainLines.map((line, index) => (
+           {!terrainGlReady && panoramaMesh.terrainLines.map((line, index) => (
              <Polyline
                key={`terrain-${index}`}
                points={line.points}
