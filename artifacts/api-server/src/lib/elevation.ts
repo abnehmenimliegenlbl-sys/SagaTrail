@@ -200,6 +200,52 @@ function destinationPoint(center: LatLng, bearingDeg: number, distanceM: number)
   };
 }
 
+export function computeRouteTerrainAreaBounds(
+  points: LatLng[],
+  paddingM: number,
+): TerrainCorridorBounds | null {
+  if (
+    points.length < 2 ||
+    !Number.isFinite(paddingM) ||
+    paddingM < 0 ||
+    points.some(
+      (point) => !Number.isFinite(point.lat) || !Number.isFinite(point.lng),
+    )
+  ) {
+    return null;
+  }
+
+  const routeSouth = Math.min(...points.map((point) => point.lat));
+  const routeNorth = Math.max(...points.map((point) => point.lat));
+  const routeWest = Math.min(...points.map((point) => point.lng));
+  const routeEast = Math.max(...points.map((point) => point.lng));
+  const centerLat = (routeSouth + routeNorth) / 2;
+  const centerLng = (routeWest + routeEast) / 2;
+
+  return {
+    south: destinationPoint(
+      { lat: routeSouth, lng: centerLng },
+      180,
+      paddingM,
+    ).lat,
+    north: destinationPoint(
+      { lat: routeNorth, lng: centerLng },
+      0,
+      paddingM,
+    ).lat,
+    west: destinationPoint(
+      { lat: centerLat, lng: routeWest },
+      270,
+      paddingM,
+    ).lng,
+    east: destinationPoint(
+      { lat: centerLat, lng: routeEast },
+      90,
+      paddingM,
+    ).lng,
+  };
+}
+
 function initialBearingDeg(from: LatLng, to: LatLng): number {
   const fromLat = (from.lat * Math.PI) / 180;
   const toLat = (to.lat * Math.PI) / 180;

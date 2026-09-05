@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Logger } from "pino";
-import { computeElevationProfile } from "./elevation";
+import {
+  computeElevationProfile,
+  computeRouteTerrainAreaBounds,
+} from "./elevation";
 
 const log = {
   warn: () => undefined,
@@ -46,6 +49,39 @@ function profileResponse(request: string | URL | Request, altitudeOffset: number
     { headers: { "content-type": "application/json" } },
   );
 }
+
+test("computes rectangular route bounds with a real metre padding", () => {
+  const bounds = computeRouteTerrainAreaBounds(
+    [
+      { lat: 47.5, lng: 7.5 },
+      { lat: 47.52, lng: 7.54 },
+      { lat: 47.51, lng: 7.48 },
+    ],
+    1000,
+  );
+
+  assert.ok(bounds);
+  assert.ok(bounds.south < 47.5);
+  assert.ok(bounds.north > 47.52);
+  assert.ok(bounds.west < 7.48);
+  assert.ok(bounds.east > 7.54);
+  assert.ok(Math.abs((47.5 - bounds.south) - 0.009) < 0.0002);
+  assert.ok(Math.abs((7.48 - bounds.west) - 0.0133) < 0.0004);
+});
+
+test("rejects invalid rectangular route bounds", () => {
+  assert.equal(computeRouteTerrainAreaBounds([{ lat: 47.5, lng: 7.5 }], 1000), null);
+  assert.equal(
+    computeRouteTerrainAreaBounds(
+      [
+        { lat: 47.5, lng: 7.5 },
+        { lat: Number.NaN, lng: 7.6 },
+      ],
+      1000,
+    ),
+    null,
+  );
+});
 
 test("splits long routes into overlapping chunks and merges them from zero", async () => {
   const originalFetch = globalThis.fetch;
