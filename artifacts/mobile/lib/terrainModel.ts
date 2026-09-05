@@ -35,6 +35,14 @@ export type TerrainRouteLine = TerrainVertex[];
 export interface TerrainRouteSegment {
   points: TerrainRouteLine;
   band: RouteGradeBand;
+  thickness: number;
+}
+
+export interface GeographicRouteDisplayOptions {
+  /** Maximum number of native route polylines used for the complete route. */
+  maxSegments?: number;
+  /** Maximum virtual distance from the observer in the AR world, in metres. */
+  maxVirtualDistanceM?: number;
 }
 
 export interface LocalTerrainMesh {
@@ -47,6 +55,10 @@ const AR_WORLD_SCALE = 0.04;
 const MIN_RAY_DISTANCE_M = 12;
 const MAX_OCCLUSION_GAP_DEG = 8;
 const OCCLUSION_MARGIN_DEG = 0.5;
+const DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M = 80;
+const DEFAULT_MAX_ROUTE_SEGMENTS = 96;
+const MIN_ROUTE_THICKNESS = 0.018;
+const MAX_ROUTE_THICKNESS = 0.08;
 
 function normalizeBearing(degrees: number): number {
   return ((degrees % 360) + 360) % 360;

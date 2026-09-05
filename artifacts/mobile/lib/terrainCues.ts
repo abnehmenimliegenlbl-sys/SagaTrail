@@ -162,11 +162,34 @@ export function buildRouteGradeSegments(
   const routeLengthKm = routeDistances[routeDistances.length - 1];
   if (routeLengthKm <= 0) return [];
 
+  const flatSegments = () => {
+    const breakDistances = [...routeDistances];
+    for (
+      let distanceKmValue = GRADE_WINDOW_KM;
+      distanceKmValue < routeLengthKm;
+      distanceKmValue += GRADE_WINDOW_KM
+    ) {
+      breakDistances.push(distanceKmValue);
+    }
+    breakDistances.sort((a, b) => a - b);
+    const uniqueBreakDistances = breakDistances.filter(
+      (distanceKmValue, index) =>
+        index === 0 || distanceKmValue - breakDistances[index - 1] > 0.000001,
+    );
+    return uniqueBreakDistances.slice(1).map((endDistanceKm, index) => ({
+      coordinates: [
+        pointAtDistance(coords, routeDistances, uniqueBreakDistances[index]),
+        pointAtDistance(coords, routeDistances, endDistanceKm),
+      ],
+      band: "green" as const,
+    }));
+  };
+
   const profile = (inputProfile ?? [])
     .filter((point) => Number.isFinite(point.distanceKm) && Number.isFinite(point.altM))
     .sort((a, b) => a.distanceKm - b.distanceKm);
   if (profile.length < 2) {
-    return [{ coordinates: coords, band: "green" }];
+    return flatSegments();
   }
   const firstProfileDistance = profile[0].distanceKm;
   const normalizedProfile = profile.map((point) => ({
@@ -174,7 +197,7 @@ export function buildRouteGradeSegments(
     altM: point.altM,
   }));
   const profileLengthKm = normalizedProfile[normalizedProfile.length - 1].distanceKm;
-  if (profileLengthKm <= 0) return [{ coordinates: coords, band: "green" }];
+  if (profileLengthKm <= 0) return flatSegments();
   const gradingProfile = smoothIsolatedProfileSpikes(normalizedProfile);
 
   const breakDistances = [...routeDistances];
