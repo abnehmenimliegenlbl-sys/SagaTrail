@@ -47,6 +47,16 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
 
 function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
   const geometry = new BufferGeometry();
+  const minimumPanoramaRadius = 34;
+  const visibleTriangles = mesh.triangleIndices.filter((triangle) =>
+    triangle.every((vertexIndex) => {
+      const vertex = mesh.vertices[vertexIndex];
+      return (
+        vertex != null &&
+        Math.hypot(vertex[0], vertex[2]) >= minimumPanoramaRadius
+      );
+    }),
+  );
   geometry.setAttribute(
     "position",
     new BufferAttribute(new Float32Array(mesh.vertices.flat()), 3),
@@ -56,7 +66,7 @@ function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
     new BufferAttribute(new Float32Array(mesh.texcoords.flat()), 2),
   );
   geometry.setIndex(
-    new BufferAttribute(new Uint32Array(mesh.triangleIndices.flat()), 1),
+    new BufferAttribute(new Uint32Array(visibleTriangles.flat()), 1),
   );
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
