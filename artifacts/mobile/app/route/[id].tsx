@@ -46,6 +46,7 @@ import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { poiDisplayName } from "@/lib/poiDisplay";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { RouteMap } from "@/components/brand/RouteMap";
+import RouteTerrain3D from "@/components/brand/RouteTerrain3D";
 import { ScreenHeader } from "@/components/brand/ScreenHeader";
 import { RouteAccordionCard } from "@/components/brand/RouteAccordionCard";
 import { Wegweiser } from "@/components/Wegweiser";
@@ -313,6 +314,7 @@ export default function Routenplanung() {
   // Höhenprofil der Route
   const [elevProfile, setElevProfile] = useState<ElevationPoint[] | null>(null);
   const [elevProfileLoading, setElevProfileLoading] = useState(false);
+  const [routeTerrain3dOpen, setRouteTerrain3dOpen] = useState(false);
   // Trinkwasserquellen entlang der Route (für die Karte)
   const [waterSources, setWaterSources] = useState<MapPoi[]>([]);
   // Parkplaetze am Start- und Endpunkt der Route (für die Karte)
@@ -1058,6 +1060,86 @@ export default function Routenplanung() {
           <StatTile icon="clock"       label={t.duration} value={`${h}:${String(m).padStart(2, "0")}`}         unit="h"  />
           <StatTile icon="shield"      label={t.sacScale} value={meta.sac}                                     unit=""   />
         </Animated.View>
+
+        <Pressable
+          onPress={() => setRouteTerrain3dOpen(true)}
+          disabled={
+            (effectiveGeom.length < 2 && (route.geometry?.length ?? 0) < 2) ||
+            !elevProfile ||
+            elevProfile.length < 2
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Diese Route virtuell ansehen"
+          accessibilityHint="Öffnet die Route als dreidimensionale Landschaft"
+          style={({ pressed }) => [
+            styles.virtualRouteCard,
+            {
+              borderColor: colors.glassBorder,
+              backgroundColor: colors.glassBg,
+              opacity:
+                !elevProfile || elevProfile.length < 2
+                  ? 0.58
+                  : pressed
+                    ? 0.82
+                    : 1,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.virtualRouteIcon,
+              { backgroundColor: colors.accent + "1F" },
+            ]}
+          >
+            <Feather name="box" size={22} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[
+                styles.virtualRouteEyebrow,
+                { color: colors.accent },
+              ]}
+            >
+              3D ROUTE
+            </Text>
+            <Text
+              style={[
+                styles.virtualRouteTitle,
+                { color: colors.foreground },
+              ]}
+            >
+              Diese Route virtuell ansehen
+            </Text>
+            <Text
+              style={[
+                styles.virtualRouteSubtitle,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              {elevProfile && elevProfile.length >= 2
+                ? "Übersicht, Gehen und Flug"
+                : "Wird vorbereitet …"}
+            </Text>
+          </View>
+          {elevProfileLoading && !elevProfile ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <Feather
+              name="chevron-right"
+              size={20}
+              color={colors.mutedForeground}
+            />
+          )}
+        </Pressable>
+
+        <RouteTerrain3D
+          visible={routeTerrain3dOpen}
+          onClose={() => setRouteTerrain3dOpen(false)}
+          geometry={
+            effectiveGeom.length >= 2 ? effectiveGeom : route.geometry ?? []
+          }
+          terrainProfile={elevProfile}
+        />
 
         {/* ── Höhenprofil ────────────────────────────────────────────── */}
         {(elevProfile || elevProfileLoading) && (
@@ -2265,6 +2347,39 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   elevChartTitle: { fontFamily: fonts.bodyBold, fontSize: 14, marginBottom: 10 },
+  virtualRouteCard: {
+    ...GLAS_3D,
+    marginTop: 14,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  virtualRouteIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  virtualRouteEyebrow: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  virtualRouteTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    lineHeight: 19,
+  },
+  virtualRouteSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    marginTop: 2,
+  },
   stat: { ...GLAS_3D,
     width: "47.5%",
     borderWidth: 1,
