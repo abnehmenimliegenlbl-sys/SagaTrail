@@ -120,6 +120,11 @@ type PanoramaMeshPeak = {
 type PanoramaMesh = {
   peaks: PanoramaMeshPeak[];
   triangles: PanoramaMeshTriangle[];
+  terrainFaces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }>;
   terrainLines: Array<{ points: string; opacity: number }>;
   elevationRangeM: { min: number; max: number } | null;
 };
@@ -151,6 +156,11 @@ function buildTerrainSurface(
   terrainModel: LocalTerrainModel,
   terrainBearing: (bearing: number) => number | null,
 ): {
+  faces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }>;
   lines: Array<{ points: string; opacity: number }>;
   elevationRangeM: { min: number; max: number } | null;
 } {
@@ -159,7 +169,9 @@ function buildTerrainSurface(
       (sample) => Number.isFinite(sample.distanceM) && Number.isFinite(sample.elevationM),
     ),
   );
-  if (allSamples.length === 0) return { lines: [], elevationRangeM: null };
+  if (allSamples.length === 0) {
+    return { faces: [], lines: [], elevationRangeM: null };
+  }
 
   const minM = Math.min(...allSamples.map((sample) => sample.elevationM));
   const maxM = Math.max(...allSamples.map((sample) => sample.elevationM));
@@ -189,6 +201,51 @@ function buildTerrainSurface(
 
   const maxAngularGap = 360 / Math.max(8, terrainModel.sectors) * 1.8;
   const ringCount = Math.max(...rays.map((ray) => ray.samples.length), 0);
+  const projectSample = (
+    ray: (typeof rays)[number],
+    ringIndex: number,
+  ): MeshPoint | null => {
+    const sample = ray.samples[ringIndex];
+    if (!sample) return null;
+    return {
+      x: 180 + (ray.bearing / PANORAMA_VIEW_DEGREES) * 360,
+      y: Math.max(
+        topY,
+        Math.min(
+          baselineY,
+          baselineY -
+            ((sample.elevationM - observerElevation - minRelative) / span) *
+              (baselineY - topY),
+        ),
+      ),
+    };
+  };
+  const faces: Array<{
+    points: string;
+    opacity: number;
+    tone: "light" | "dark";
+  }> = [];
+  for (let ringIndex = 1; ringIndex < ringCount - 1; ringIndex += 1) {
+    for (let rayIndex = 0; rayIndex < rays.length - 1; rayIndex += 1) {
+      const leftRay = rays[rayIndex];
+      const rightRay = rays[rayIndex + 1];
+      if (rightRay.bearing - leftRay.bearing > maxAngularGap) continue;
+      const nearLeft = projectSample(leftRay, ringIndex);
+      const nearRight = projectSample(rightRay, ringIndex);
+      const farLeft = projectSample(leftRay, ringIndex + 1);
+      const farRight = projectSample(rightRay, ringIndex + 1);
+      if (!nearLeft || !nearRight || !farLeft || !farRight) continue;
+      const leftRise = nearLeft.y - farLeft.y;
+      const rightRise = nearRight.y - farRight.y;
+      faces.push({
+        points: pointString([nearLeft, nearRight, farRight, farLeft]),
+        opacity:
+          0.16 +
+          (ringIndex / Math.max(1, ringCount - 2)) * 0.38,
+        tone: leftRise + rightRise >= 0 ? "light" : "dark",
+      });
+    }
+  }
   const lines: Array<{ points: string; opacity: number }> = [];
   for (let ringIndex = 1; ringIndex < ringCount; ringIndex += 1) {
     const ringPoints = rays
@@ -231,7 +288,7 @@ function buildTerrainSurface(
       });
     }
   }
-  return { lines, elevationRangeM: { min: minM, max: maxM } };
+  return { faces, lines, elevationRangeM: { min: minM, max: maxM } };
 }
 
 function buildPanoramaMesh(
@@ -248,7 +305,7 @@ function buildPanoramaMesh(
 ): PanoramaMesh {
   const terrainSurface = terrainModel
     ? buildTerrainSurface(terrainModel, terrainBearing)
-    : { lines: [], elevationRangeM: null };
+    : { faces: [], lines: [], elevationRangeM: null };
   const validEntries = entries
     .map((entry) => ({
       ...entry,
@@ -265,6 +322,7 @@ function buildPanoramaMesh(
     return {
       peaks: [],
       triangles: [],
+      terrainFaces: terrainSurface.faces,
       terrainLines: terrainSurface.lines,
       elevationRangeM: terrainSurface.elevationRangeM,
     };
@@ -365,6 +423,7 @@ function buildPanoramaMesh(
   return {
     peaks: meshPeaks,
     triangles,
+    terrainFaces: terrainSurface.faces,
     terrainLines: terrainSurface.lines,
     elevationRangeM: terrainSurface.elevationRangeM ?? {
       min: minAltitude + datum,
@@ -865,6 +924,15 @@ export function PeakPanorama({
               </SvgText>
             </G>
           ))}
+           {panoramaMesh.terrainFaces.map((face, index) => (
+             <Polygon
+               key={`terrain-face-${index}`}
+               points={face.points}
+               fill={face.tone === "light" ? colors.glassHighlight : colors.accent}
+               fillOpacity={face.opacity}
+               stroke="none"
+             />
+           ))}
            {panoramaMesh.terrainLines.map((line, index) => (
              <Polyline
                key={`terrain-${index}`}
