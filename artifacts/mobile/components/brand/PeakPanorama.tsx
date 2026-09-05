@@ -466,6 +466,9 @@ export function PeakPanorama({
   const [profileRevision, setProfileRevision] = useState(0);
   const [profilesComplete, setProfilesComplete] = useState(false);
   const [terrainGlReady, setTerrainGlReady] = useState(false);
+  const [terrainTextureMode, setTerrainTextureMode] = useState<
+    "map" | "satellite"
+  >("satellite");
   const [terrainLoadPercent, setTerrainLoadPercent] = useState(
     terrainModel ? 100 : 8,
   );
@@ -922,6 +925,7 @@ export function PeakPanorama({
           <PeakTerrainGl
             terrainModel={terrainModel}
             bearingDeg={viewCenterBearing}
+            textureMode={terrainTextureMode}
             backgroundColor={colors.glassBg}
             fallbackColor={colors.primary}
             onReady={() => setTerrainGlReady(true)}
@@ -1018,6 +1022,48 @@ export function PeakPanorama({
              BLICK
            </SvgText>
         </Svg>
+        <View
+          style={[
+            styles.terrainModeSwitch,
+            {
+              backgroundColor: colors.glassBgStrong,
+              borderColor: colors.glassBorder,
+            },
+          ]}
+        >
+          {([
+            ["map", "Karte"],
+            ["satellite", "Sat"],
+          ] as const).map(([mode, label]) => {
+            const active = terrainTextureMode === mode;
+            return (
+              <Pressable
+                key={mode}
+                onPress={() => setTerrainTextureMode(mode)}
+                style={[
+                  styles.terrainModeButton,
+                  active && { backgroundColor: colors.primary },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${label} als Geländeoberfläche`}
+              >
+                <Text
+                  style={[
+                    styles.terrainModeLabel,
+                    {
+                      color: active
+                        ? colors.primaryForeground
+                        : colors.foreground,
+                    },
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
     </View>
@@ -1124,6 +1170,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     overflow: "hidden",
+  },
+  terrainModeSwitch: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 5,
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 9,
+    padding: 2,
+  },
+  terrainModeButton: {
+    minWidth: 45,
+    minHeight: 28,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 7,
+  },
+  terrainModeLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    letterSpacing: 0.3,
   },
   peakRail: {
     flexDirection: "row",

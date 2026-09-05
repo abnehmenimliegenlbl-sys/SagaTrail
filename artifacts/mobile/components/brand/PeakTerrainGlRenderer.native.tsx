@@ -15,14 +15,20 @@ import {
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
 import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
-import type { PeakTerrainGlProps } from "./PeakTerrainGl.types";
+import type {
+  PeakTerrainGlProps,
+  PeakTerrainTextureMode,
+} from "./PeakTerrainGl.types";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
 const TERRAIN_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
-function swissTopoTextureUrl(model: LocalTerrainModel): string {
+function swissTopoTextureUrl(
+  model: LocalTerrainModel,
+  textureMode: PeakTerrainTextureMode,
+): string {
   const latitudeRadiusDeg = model.radiusM / 111_320;
   const longitudeRadiusDeg =
     model.radiusM /
@@ -34,8 +40,10 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
     SERVICE: "WMS",
     REQUEST: "GetMap",
     VERSION: "1.3.0",
-    // Orthophoto without place names or map symbols keeps the panorama legible.
-    LAYERS: "ch.swisstopo.swissimage",
+    LAYERS:
+      textureMode === "satellite"
+        ? "ch.swisstopo.swissimage"
+        : "ch.swisstopo.pixelkarte-farbe",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: [
@@ -140,11 +148,12 @@ function CameraRig({ terrainModel }: { terrainModel: LocalTerrainModel }) {
 function TerrainMesh({
   terrainModel,
   bearingDeg,
+  textureMode,
   fallbackColor,
   onReady,
 }: Pick<
   PeakTerrainGlProps,
-  "terrainModel" | "bearingDeg" | "fallbackColor" | "onReady"
+  "terrainModel" | "bearingDeg" | "textureMode" | "fallbackColor" | "onReady"
 >) {
   const renderer = useThree((state) => state.gl);
   const onReadyRef = useRef(onReady);
@@ -169,7 +178,7 @@ function TerrainMesh({
       for (let attempt = 0; attempt < 3 && active; attempt += 1) {
         try {
           const loadedTexture = await loadNativeThreeTexture(
-            swissTopoTextureUrl(terrainModel),
+            swissTopoTextureUrl(terrainModel, textureMode),
           );
           if (!active) {
             loadedTexture.dispose();
@@ -201,7 +210,7 @@ function TerrainMesh({
     return () => {
       active = false;
     };
-  }, [renderer, terrainModel]);
+  }, [renderer, terrainModel, textureMode]);
 
   useEffect(
     () => () => {
@@ -247,6 +256,7 @@ function TerrainMesh({
 export default function PeakTerrainGlRenderer({
   terrainModel,
   bearingDeg,
+  textureMode,
   backgroundColor,
   fallbackColor,
   onReady,
@@ -267,6 +277,7 @@ export default function PeakTerrainGlRenderer({
         <TerrainMesh
           terrainModel={terrainModel}
           bearingDeg={bearingDeg}
+          textureMode={textureMode}
           fallbackColor={fallbackColor}
           onReady={onReady}
         />
