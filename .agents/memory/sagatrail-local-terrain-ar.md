@@ -16,3 +16,9 @@ The live AR scene must not receive the UI compass heading as a frequently changi
 **Why:** A raw magnetometer x/y calculation becomes unstable when the phone is held upright, while passing that changing value into an already north-aligned Viro scene creates unnecessary native updates.
 
 **How to apply:** Keep `heading` available to compass cards and overlays, but exclude it from `PeakArSceneAppProps`/`viroAppProps`. If the AR markers still drift after this separation, investigate Viro/ARKit/ARCore world alignment on a physical device rather than tightening the UI heading filter.
+
+For the live route projection, prefer the current GPS observer position over `terrainModel.center`. The radial terrain model is intentionally refreshed less often than GPS and may be stale while the AR observer has moved; using its center as the route origin can filter every route point outside the local radius.
+
+**Why:** A valid route with 166 points produced zero Viro polylines because all points were evaluated against a stale terrain-model center, so the route silently disappeared.
+
+**How to apply:** Keep `terrainModel.center` as the fallback only when no live observer position exists. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.

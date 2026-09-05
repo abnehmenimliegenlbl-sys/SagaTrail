@@ -273,7 +273,10 @@ export function buildLocalTerrainRouteLines(
   centerOverride?: LatLng | null,
 ): TerrainRouteLine[] {
   const observerElevation = model?.observerElevationM;
-  const center = model?.center ?? centerOverride;
+  // The live GPS position is the actual Viro observer origin. The terrain
+  // model can be up to two minutes / 120 m old, so preferring model.center
+  // here can move the route outside the local radius and yield no line at all.
+  const center = centerOverride ?? model?.center;
   const radiusM = model?.radiusM ?? 500;
   if (
     !center ||
@@ -295,7 +298,15 @@ export function buildLocalTerrainRouteLines(
     currentLine = [];
   };
 
+  const sampledIndices: number[] = [];
   for (let index = 0; index < routeGeometry.length; index += stride) {
+    sampledIndices.push(index);
+  }
+  if (sampledIndices[sampledIndices.length - 1] !== routeGeometry.length - 1) {
+    sampledIndices.push(routeGeometry.length - 1);
+  }
+
+  for (const index of sampledIndices) {
     const point = routeGeometry[index];
     const lat = point?.[0];
     const lng = point?.[1];
