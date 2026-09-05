@@ -18,7 +18,7 @@ import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import type { PeakTerrainGlProps } from "./PeakTerrainGl.types";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
-const TERRAIN_MINIMUM_RADIUS_M = 200;
+const TERRAIN_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
@@ -56,7 +56,7 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
 function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
   const geometry = new BufferGeometry();
   // buildLocalTerrainMesh uses 0.04 world units per metre. Omitting only the
-  // innermost 200 m reduces the oversized foreground without losing nearby
+  // innermost 300 m reduces the oversized foreground without losing nearby
   // terrain silhouettes.
   const minimumPanoramaRadius =
     TERRAIN_MINIMUM_RADIUS_M * TERRAIN_WORLD_UNITS_PER_METRE;
