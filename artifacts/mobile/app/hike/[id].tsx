@@ -278,8 +278,9 @@ const PARTNER_KAT_DEFAULT: { icon: FeatherIconName; label: string } = { icon: "c
 /** Minimaler Zeitabstand zwischen zwei geloggten Track-Punkten (ms). */
 const TRACK_LOG_INTERVAL_MS = 8000;
 // Die Expo-Magnetometerachsen liefern in der verwendeten Portrait-Konvention
-// den Gegenkurs zur geografischen Blickrichtung. Einmal zentral korrigieren,
-// damit CompassCard, Panorama und AR dieselbe Nordreferenz verwenden.
+// eine gespiegelte Drehrichtung und den Gegenkurs zur geografischen
+// Blickrichtung. Invertierung und Offset bleiben zentral, damit CompassCard,
+// Panorama und AR dieselbe Nordreferenz verwenden.
 const COMPASS_HEADING_OFFSET_DEG = 180;
 
 /** Abstand in km ab dem eine Warnung "vom Weg abgekommen" ausgeloest wird. */
@@ -472,7 +473,7 @@ function tiltCompensatedCompassHeading(
 
   const rawHeading =
     (Math.atan2(horizontalY, horizontalX) * 180) / Math.PI - 90;
-  return (rawHeading + COMPASS_HEADING_OFFSET_DEG + 360) % 360;
+  return (COMPASS_HEADING_OFFSET_DEG - rawHeading + 360) % 360;
 }
 
 function circularMeanHeading(values: readonly number[]): number | null {
