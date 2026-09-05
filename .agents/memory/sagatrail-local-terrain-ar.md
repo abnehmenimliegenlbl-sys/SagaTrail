@@ -40,3 +40,9 @@ Live AR now projects the entire active route into a bounded virtual depth: the f
 **Why:** A hard 2 km cutoff hid the destination and made the AR overlay incomplete, while uncompressed long routes placed the end outside a useful AR viewing distance.
 
 **How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and never use the compression as evidence for terrain outside the DTM radius; those sections stay level.
+
+Compressed route segments need a continuous centerline beneath the colored grade polylines, and the finish marker must use a fixed readable minimum size plus billboard orientation. The finish design is the 3×2 black-and-white Formula 1 chequered flag, not a solid red placeholder.
+
+**Why:** At the compressed far end, separately rendered thin polylines can show hairline gaps and a physically small flag becomes unreadable in the camera view.
+
+**How to apply:** Keep the centerline as one stable native Viro polyline, preserve colored grade segments above it, and size the flag in AR-world units independently of route distance.

@@ -36,6 +36,8 @@ import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
 const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
+const FINISH_FLAG_BLACK_MATERIAL = "sagatrailFinishFlagBlack";
+const FINISH_FLAG_POLE_MATERIAL = "sagatrailFinishFlagPole";
 const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
   green: "sagatrailTerrainRouteGreen",
   yellow: "sagatrailTerrainRouteYellow",
@@ -43,6 +45,7 @@ const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
   red: "sagatrailTerrainRouteRed",
 };
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
+const TERRAIN_ROUTE_UNDERLAY_MATERIAL = "sagatrailTerrainRouteUnderlay";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
 // The DTM remains observer-centred at 500 m. The complete route is projected
@@ -56,6 +59,16 @@ const AR_ROUTE_MAX_VIRTUAL_DISTANCE_M = 2_000;
 const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
+// The flag is intentionally a fixed, readable minimum in AR metres. It must
+// remain recognizable even when the route endpoint is at the maximum virtual
+// distance, where a physically scaled pin would become a few pixels wide.
+const FINISH_FLAG_POLE_HEIGHT = 1.25;
+const FINISH_FLAG_WIDTH = 0.7;
+const FINISH_FLAG_HEIGHT = 0.45;
+const FINISH_FLAG_CELL_WIDTH = FINISH_FLAG_WIDTH / 3;
+const FINISH_FLAG_CELL_HEIGHT = FINISH_FLAG_HEIGHT / 2;
+const FINISH_FLAG_CENTER_Y =
+  FINISH_FLAG_POLE_HEIGHT - FINISH_FLAG_HEIGHT / 2;
 const HIDDEN_ROUTE_POINTS: TerrainRouteLine = [
   [0, AR_ROUTE_GROUND_OFFSET, 0],
   [0, AR_ROUTE_GROUND_OFFSET, 0],
@@ -69,6 +82,14 @@ ViroMaterials.createMaterials({
   [PEAK_WHITE_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: PEAK_WHITE,
+  },
+  [FINISH_FLAG_BLACK_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#111111",
+  },
+  [FINISH_FLAG_POLE_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#222222",
   },
   [TERRAIN_ROUTE_MATERIALS.green]: {
     lightingModel: "Constant",
@@ -103,6 +124,14 @@ ViroMaterials.createMaterials({
     readsFromDepthBuffer: false,
   },
   [TERRAIN_USER_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#FFFFFF",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_UNDERLAY_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: "#FFFFFF",
     blendMode: "Alpha",
@@ -306,6 +335,23 @@ function TerrainHologram({
       ),
     [model, routeGeometry, observerPosition],
   );
+  const continuousRoutePoints = useMemo<TerrainRouteLine>(() => {
+    const points: TerrainRouteLine = [];
+    for (const segment of routeSegments) {
+      for (const point of segment.points) {
+        const previous = points[points.length - 1];
+        if (
+          !previous ||
+          previous[0] !== point[0] ||
+          previous[1] !== point[1] ||
+          previous[2] !== point[2]
+        ) {
+          points.push(point);
+        }
+      }
+    }
+    return points;
+  }, [routeSegments]);
 
   useEffect(() => {
     console.log("[PeakAR] route overlay", {
@@ -327,6 +373,19 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
+      {continuousRoutePoints.length >= 2 && (
+        <ViroPolyline
+          points={continuousRoutePoints.map(([east, elevation, north]) => [
+            east,
+            AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
+            north,
+          ])}
+          thickness={0.036}
+          materials={TERRAIN_ROUTE_UNDERLAY_MATERIAL}
+          opacity={0.42}
+          viroTag="terrain-route-continuity"
+        />
+      )}
       {Array.from({ length: MAX_AR_ROUTE_SEGMENT_SLOTS }, (_, index) => {
         const segment = routeSegments[index];
         const points = segment?.points ?? HIDDEN_ROUTE_POINTS;
@@ -356,24 +415,41 @@ function TerrainHologram({
         }
         opacity={destinationPosition ? 1 : 0}
         renderingOrder={30}
+        transformBehaviors="billboard"
         viroTag="terrain-route-destination"
       >
         <ViroBox
-          position={[0, 0.38, 0]}
-          width={0.025}
-          height={0.76}
-          length={0.025}
-          materials={PEAK_RED_MATERIAL}
+          position={[0, FINISH_FLAG_POLE_HEIGHT / 2, 0]}
+          width={0.045}
+          height={FINISH_FLAG_POLE_HEIGHT}
+          length={0.045}
+          materials={FINISH_FLAG_POLE_MATERIAL}
           shadowCastingBitMask={0}
         />
-        <ViroBox
-          position={[0.14, 0.68, 0]}
-          width={0.28}
-          height={0.18}
-          length={0.035}
-          materials={PEAK_RED_MATERIAL}
-          shadowCastingBitMask={0}
-        />
+        {Array.from({ length: 2 }, (_, row) =>
+          Array.from({ length: 3 }, (_, column) => {
+            const isBlack = (row + column) % 2 === 0;
+            return (
+              <ViroBox
+                key={`finish-flag-cell-${row}-${column}`}
+                position={[
+                  (column + 0.5) * FINISH_FLAG_CELL_WIDTH,
+                  FINISH_FLAG_CENTER_Y - row * FINISH_FLAG_CELL_HEIGHT,
+                  0,
+                ]}
+                width={FINISH_FLAG_CELL_WIDTH}
+                height={FINISH_FLAG_CELL_HEIGHT}
+                length={0.055}
+                materials={
+                  isBlack
+                    ? FINISH_FLAG_BLACK_MATERIAL
+                    : PEAK_WHITE_MATERIAL
+                }
+                shadowCastingBitMask={0}
+              />
+            );
+          }),
+        )}
       </ViroNode>
     </ViroNode>
   );

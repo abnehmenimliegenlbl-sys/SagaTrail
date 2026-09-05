@@ -57,8 +57,10 @@ const MAX_OCCLUSION_GAP_DEG = 8;
 const OCCLUSION_MARGIN_DEG = 0.5;
 const DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M = 80;
 const DEFAULT_MAX_ROUTE_SEGMENTS = 96;
-const MIN_ROUTE_THICKNESS = 0.018;
-const MAX_ROUTE_THICKNESS = 0.08;
+// Keep a visible minimum at the compressed end of the route. A very thin
+// final segment makes otherwise touching Viro polylines look disconnected.
+const MIN_ROUTE_THICKNESS = 0.032;
+const MAX_ROUTE_THICKNESS = 0.09;
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
 
@@ -590,7 +592,7 @@ export function buildGeographicTerrainRouteSegments(
         : clampNumber(displayDistanceM / maxVirtualDistanceM, 0, 1);
     const thickness = Math.max(
       MIN_ROUTE_THICKNESS,
-      MAX_ROUTE_THICKNESS * (1 - 0.72 * distanceProgress),
+      MAX_ROUTE_THICKNESS * (1 - 0.45 * distanceProgress),
     );
     return [
       {

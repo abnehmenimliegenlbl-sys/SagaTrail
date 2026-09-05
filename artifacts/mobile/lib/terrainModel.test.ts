@@ -115,6 +115,13 @@ test("projects the complete route into compressed AR depth", () => {
     points.every(([east, _elevation, north]) => Math.hypot(east, north) <= 80.001),
   );
   assert.ok(segments[0]!.thickness > segments.at(-1)!.thickness);
+  assert.ok(segments.at(-1)!.thickness >= 0.032);
+  for (let index = 1; index < segments.length; index++) {
+    assert.deepEqual(
+      segments[index - 1]!.points.at(-1),
+      segments[index]!.points[0],
+    );
+  }
 });
 
 test("places the destination flag at the final route point", () => {
