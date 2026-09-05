@@ -22,7 +22,7 @@ import type {
 import { getApiBaseUrl } from "@/lib/apiConfig";
 
 const TERRAIN_WORLD_UNITS_PER_METRE = 0.04;
-const TERRAIN_MINIMUM_RADIUS_M = 300;
+const TERRAIN_MINIMUM_RADIUS_M = 100;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
 
@@ -68,12 +68,12 @@ const PANORAMA_DETAIL_TILES: PanoramaTile[] = Array.from(
     Array.from({ length: 2 }, (_, column) => ({
       key: `detail-${row}-${column}`,
       bounds: {
-        uMin: 0.35 + column * 0.15,
-        uMax: 0.35 + (column + 1) * 0.15,
-        vMin: 0.35 + row * 0.15,
-        vMax: 0.35 + (row + 1) * 0.15,
+        uMin: 0.45 + column * 0.05,
+        uMax: 0.45 + (column + 1) * 0.05,
+        vMin: 0.45 + row * 0.05,
+        vMax: 0.45 + (row + 1) * 0.05,
       },
-      size: 768,
+      size: 1024,
       detail: true,
     })),
 ).flat();
