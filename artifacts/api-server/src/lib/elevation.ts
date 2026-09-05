@@ -97,6 +97,33 @@ export interface TerrainCorridorOptions {
   halfWidthM: number;
 }
 
+/**
+ * Axis-aligned rectangular DTM coverage for the full-screen route landscape.
+ * Unlike TerrainCorridorResponse, rows do not follow or bend with the route.
+ */
+export interface RouteTerrainAreaOptions {
+  rows: number;
+  columns: number;
+  /** Geographic padding around the complete route bounds. */
+  paddingM: number;
+}
+
+export interface RouteTerrainAreaResponse {
+  version: 1;
+  source: "SwissTopo DTM rectangular route area";
+  rows: number;
+  columns: number;
+  paddingM: number;
+  origin: LatLng;
+  bounds: TerrainCorridorBounds;
+  fetchedAt: number;
+  /**
+   * Axis-aligned row-major grid: north-to-south rows and west-to-east columns.
+   * Missing official elevations remain null.
+   */
+  grid: TerrainCorridorCell[][];
+}
+
 function isRetryableHttpStatus(status: number): boolean {
   return (
     status === 408 ||
