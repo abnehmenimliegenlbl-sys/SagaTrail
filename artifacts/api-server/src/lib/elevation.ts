@@ -329,9 +329,9 @@ export async function computeLocalTerrainModel(
   log: Logger,
   options: { radiusM?: number; sectors?: number; rings?: number } = {},
 ): Promise<LocalTerrainModel | null> {
-  const radiusM = Math.max(100, Math.min(1000, options.radiusM ?? 500));
-  const sectors = Math.max(8, Math.min(16, Math.round(options.sectors ?? 12)));
-  const rings = Math.max(4, Math.min(8, Math.round(options.rings ?? 6)));
+  const radiusM = Math.max(100, Math.min(5000, options.radiusM ?? 500));
+  const sectors = Math.max(8, Math.min(36, Math.round(options.sectors ?? 12)));
+  const rings = Math.max(4, Math.min(16, Math.round(options.rings ?? 6)));
   const ringDistancesM = Array.from({ length: rings }, (_, index) => {
     if (index === 0) return 0;
     const progress = index / (rings - 1);

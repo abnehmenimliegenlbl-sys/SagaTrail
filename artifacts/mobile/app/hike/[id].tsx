@@ -1141,9 +1141,9 @@ export default function LiveHike() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         center: requestPosition,
-        radiusM: 500,
-        sectors: 16,
-        rings: 7,
+        radiusM: 5000,
+        sectors: 24,
+        rings: 12,
       }),
     })
       .then((response) => {

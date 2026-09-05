@@ -10,9 +10,9 @@ const BodySchema = z.object({
     lat: z.number().finite().min(45).max(48.5),
     lng: z.number().finite().min(5).max(11),
   }),
-  radiusM: z.number().finite().min(100).max(1000).optional(),
-  sectors: z.number().int().min(8).max(16).optional(),
-  rings: z.number().int().min(4).max(8).optional(),
+  radiusM: z.number().finite().min(100).max(5000).optional(),
+  sectors: z.number().int().min(8).max(36).optional(),
+  rings: z.number().int().min(4).max(16).optional(),
 });
 
 /**
