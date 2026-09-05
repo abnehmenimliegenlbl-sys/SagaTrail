@@ -4311,6 +4311,7 @@ export default function LiveHike() {
           terrainProfile={terrainProfile}
           terrainModel={terrainModel}
           routeGeometry={route?.geometry}
+          observerPosition={livePos}
           heading={compassHeading}
           observerElevationM={hasFreshGps ? liveAltitude : null}
           strings={{

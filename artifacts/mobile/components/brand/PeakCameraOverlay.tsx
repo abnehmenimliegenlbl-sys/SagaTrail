@@ -21,6 +21,7 @@ import { useColors } from "@/hooks/useColors";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
+import type { LatLng } from "@/types";
 import { persistJournalImage } from "@/lib/journalMedia";
 import type { RecognitionJournalEntry } from "@/types";
 import type { PeakPanoramaStrings } from "./PeakPanorama";
@@ -33,6 +34,7 @@ interface PeakCameraOverlayProps {
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
+  observerPosition?: LatLng | null;
   heading: number | null;
   observerElevationM?: number | null;
   strings: PeakPanoramaStrings;
@@ -47,6 +49,7 @@ export function PeakCameraOverlay({
   terrainProfile = null,
   terrainModel = null,
   routeGeometry = null,
+  observerPosition = null,
   heading,
   observerElevationM = null,
   strings,
@@ -247,6 +250,7 @@ export function PeakCameraOverlay({
               terrainProfile={terrainProfile}
               terrainModel={terrainModel}
               routeGeometry={routeGeometry}
+              observerPosition={observerPosition}
               heading={heading}
               observerElevationM={observerElevationM}
               selectedPeakId={selectedPeakId}

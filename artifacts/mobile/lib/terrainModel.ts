@@ -270,11 +270,13 @@ export function buildLocalTerrainRouteLines(
   model: LocalTerrainModel | null | undefined,
   routeGeometry: readonly number[][] | null | undefined,
   headingDeg: number | null | undefined,
+  centerOverride?: LatLng | null,
 ): TerrainRouteLine[] {
   const observerElevation = model?.observerElevationM;
+  const center = model?.center ?? centerOverride;
+  const radiusM = model?.radiusM ?? 500;
   if (
-    !model ||
-    observerElevation == null ||
+    !center ||
     !Array.isArray(routeGeometry) ||
     routeGeometry.length < 2
   ) {
@@ -282,7 +284,7 @@ export function buildLocalTerrainRouteLines(
   }
 
   const earthRadiusM = 6_371_000;
-  const centerLatRad = (model.center.lat * Math.PI) / 180;
+  const centerLatRad = (center.lat * Math.PI) / 180;
   const maxPoints = 160;
   const stride = Math.max(1, Math.ceil(routeGeometry.length / maxPoints));
   const lines: TerrainRouteLine[] = [];
@@ -307,12 +309,12 @@ export function buildLocalTerrainRouteLines(
       continue;
     }
 
-    const deltaLat = ((lat - model.center.lat) * Math.PI) / 180;
-    const deltaLng = ((lng - model.center.lng) * Math.PI) / 180;
+    const deltaLat = ((lat - center.lat) * Math.PI) / 180;
+    const deltaLng = ((lng - center.lng) * Math.PI) / 180;
     const northM = deltaLat * earthRadiusM;
     const eastM = deltaLng * earthRadiusM * Math.cos(centerLatRad);
     const distanceM = Math.hypot(northM, eastM);
-    if (distanceM > model.radiusM + 1) {
+    if (distanceM > radiusM + 1) {
       flush();
       continue;
     }
@@ -324,13 +326,18 @@ export function buildLocalTerrainRouteLines(
         ? bearingDeg
         : ((bearingDeg - headingDeg + 540) % 360) - 180;
     const angle = (relativeBearing * Math.PI) / 180;
-    const ray = nearestRay(model, bearingDeg);
+    const ray = model == null ? null : nearestRay(model, bearingDeg);
     const terrainElevation =
-      ray == null
+      observerElevation == null || ray == null
         ? observerElevation
         : interpolateRayElevation(ray, distanceM) ?? observerElevation;
     const distance = distanceM * AR_WORLD_SCALE;
-    const elevation = (terrainElevation - observerElevation) * AR_WORLD_SCALE;
+    // The route is still useful without an absolute observer elevation. In
+    // that case keep it level rather than dropping the complete AR overlay.
+    const elevation =
+      terrainElevation == null || observerElevation == null
+        ? 0
+        : (terrainElevation - observerElevation) * AR_WORLD_SCALE;
 
     currentLine.push([
       Math.sin(angle) * distance,
@@ -351,8 +358,9 @@ export function buildLocalTerrainRouteLines(
 export function buildGeographicTerrainRouteLines(
   model: LocalTerrainModel | null | undefined,
   routeGeometry: readonly number[][] | null | undefined,
+  centerOverride?: LatLng | null,
 ): TerrainRouteLine[] {
-  return buildLocalTerrainRouteLines(model, routeGeometry, null);
+  return buildLocalTerrainRouteLines(model, routeGeometry, null, centerOverride);
 }
 
 /**

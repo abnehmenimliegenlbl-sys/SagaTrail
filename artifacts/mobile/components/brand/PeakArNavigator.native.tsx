@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
+import type { LatLng } from "@/types";
 import {
   buildGeographicTerrainRouteLines,
   buildLocalMapRouteLines,
@@ -30,6 +31,10 @@ const TERRAIN_ROUTE_MATERIAL = "sagatrailTerrainRoute";
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const PEAK_RED = "#D71920";
 const PEAK_WHITE = "#FFFFFF";
+// Viro's AR origin is near the camera, while the visible landscape starts at
+// the user's feet. Keep the geographic route on that ground plane and let the
+// local DTM elevation differences lift it above/below the plane.
+const AR_ROUTE_GROUND_OFFSET = -1.25;
 
 ViroMaterials.createMaterials({
   [PEAK_RED_MATERIAL]: {
@@ -68,6 +73,7 @@ interface PeakArSceneAppProps {
   peaks: readonly PanoramaGipfel[];
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
+  observerPosition?: LatLng | null;
   mapLayer?: "topo" | "sat";
   heading?: number | null;
   observerElevationM?: number | null;
@@ -213,14 +219,25 @@ function TerrainMapHologram({
 function TerrainHologram({
   model,
   routeGeometry,
+  observerPosition,
 }: {
   model: LocalTerrainModel | null | undefined;
   routeGeometry: readonly number[][] | null | undefined;
+  observerPosition: LatLng | null | undefined;
 }) {
   const routeLines = useMemo<TerrainRouteLine[]>(
-    () => buildGeographicTerrainRouteLines(model, routeGeometry),
-    [model, routeGeometry],
+    () => buildGeographicTerrainRouteLines(model, routeGeometry, observerPosition),
+    [model, routeGeometry, observerPosition],
   );
+
+  useEffect(() => {
+    console.log("[PeakAR] route overlay", {
+      hasModel: Boolean(model),
+      observerElevationM: model?.observerElevationM ?? null,
+      routePointCount: routeGeometry?.length ?? 0,
+      lineCount: routeLines.length,
+    });
+  }, [model, routeGeometry, routeLines.length]);
 
   if (routeLines.length === 0) return null;
 
@@ -235,7 +252,7 @@ function TerrainHologram({
           key={`terrain-route-ar-${index}`}
           points={points.map(([east, elevation, north]) => [
             east,
-            elevation + 0.035,
+            AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
             north,
           ])}
           thickness={0.08}
@@ -324,6 +341,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     peaks = [],
     terrainModel = null,
     routeGeometry = null,
+    observerPosition = null,
     heading = null,
     observerElevationM = null,
     selectedPeakId = null,
@@ -344,6 +362,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
+        observerPosition={observerPosition}
       />
       {peaks.map((peak) => {
         const position = peakPosition(peak);
@@ -478,6 +497,7 @@ export function PeakArNavigator({
   peaks,
   terrainModel = null,
   routeGeometry = null,
+  observerPosition = null,
   mapLayer = "topo",
   heading = null,
   observerElevationM = null,
@@ -526,6 +546,7 @@ export function PeakArNavigator({
       peaks,
       terrainModel,
       routeGeometry,
+      observerPosition,
       mapLayer,
       heading,
       observerElevationM,
@@ -540,6 +561,7 @@ export function PeakArNavigator({
       onPeakPress,
       peaks,
       routeGeometry,
+      observerPosition,
       mapLayer,
       selectedPeakId,
       terrainModel,
