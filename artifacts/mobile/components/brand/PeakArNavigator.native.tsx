@@ -45,6 +45,12 @@ const AR_ROUTE_DISPLAY_RADIUS_M = 2_000;
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
 const AR_ROUTE_GROUND_OFFSET = -1.25;
+const MAX_AR_PEAK_SLOTS = 40;
+const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
+const HIDDEN_ROUTE_POINTS: TerrainRouteLine = [
+  [0, AR_ROUTE_GROUND_OFFSET, 0],
+  [0, AR_ROUTE_GROUND_OFFSET, 0],
+];
 
 ViroMaterials.createMaterials({
   [PEAK_RED_MATERIAL]: {
@@ -291,19 +297,23 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
-      {routeSegments.map((segment, index) => (
+      {Array.from({ length: MAX_AR_ROUTE_SEGMENT_SLOTS }, (_, index) => {
+        const segment = routeSegments[index];
+        const points = segment?.points ?? HIDDEN_ROUTE_POINTS;
+        return (
         <ViroPolyline
           key={`terrain-route-ar-${index}`}
-          points={segment.points.map(([east, elevation, north]) => [
+          points={points.map(([east, elevation, north]) => [
             east,
             AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
             north,
           ])}
           thickness={0.08}
-          materials={TERRAIN_ROUTE_MATERIALS[segment.band]}
-          opacity={1}
+          materials={TERRAIN_ROUTE_MATERIALS[segment?.band ?? "green"]}
+          opacity={segment ? 1 : 0}
         />
-      ))}
+        );
+      })}
     </ViroNode>
   );
 }
@@ -409,28 +419,29 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         observerPosition={observerPosition}
         terrainProfile={terrainProfile}
       />
-      {peaks.map((peak) => {
-        const position = peakPosition(peak);
-        if (!position) return null;
-        const terrainVisibility = terrainVisibilityForPeak(
-          terrainModel,
-          peak,
-          observerElevationM,
-        );
-        const isSelected = peak.id === selectedPeakId;
+      {Array.from({ length: MAX_AR_PEAK_SLOTS }, (_, slotIndex) => {
+        const peak = peaks[slotIndex] ?? null;
+        const position: [number, number, number] = peak
+          ? peakPosition(peak) ?? [0, -1000, 0]
+          : [0, -1000, 0];
+        const terrainVisibility = peak
+          ? terrainVisibilityForPeak(terrainModel, peak, observerElevationM)
+          : "unknown";
+        const isSelected = peak != null && peak.id === selectedPeakId;
 
         return (
           <ViroNode
-            key={peak.id}
+            key={`peak-slot-${slotIndex}`}
             position={position}
-            scale={peakMarkerScale(peak)}
+            scale={peak ? peakMarkerScale(peak) : [1, 1, 1]}
             // Keep occluded markers in the native tree. Only their opacity
-            // changes, avoiding the iOS 26 removeReactSubview crash.
-            opacity={terrainVisibility === "occluded" ? 0 : 1}
+            // changes, avoiding the iOS 26 removeReactSubview crash. Empty
+            // slots stay mounted as invisible nodes when new data arrives.
+            opacity={peak && terrainVisibility !== "occluded" ? 1 : 0}
             transformBehaviors="billboard"
             renderingOrder={100}
-            onClick={() => onPeakPress?.(peak.id)}
-            viroTag={`peak:${peak.id}`}
+            onClick={peak ? () => onPeakPress?.(peak.id) : undefined}
+            viroTag={`peak-slot:${slotIndex}`}
           >
             {/* Always mounted selection halo; opacity alone changes on tap. */}
             <ViroSphere
@@ -497,7 +508,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             />
 
             <ViroText
-              text={peak.name.toUpperCase()}
+              text={peak?.name.toUpperCase() ?? ""}
               position={[0, 1.72, 0.075]}
               rotation={[0, 0, -90]}
               width={1.92}
@@ -515,7 +526,11 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
             />
 
             <ViroText
-              text={peak.elevationM == null ? "—" : `${Math.round(peak.elevationM)}m`}
+              text={
+                peak?.elevationM == null
+                  ? "—"
+                  : `${Math.round(peak.elevationM)}m`
+              }
               position={[0, 3.12, 0.075]}
               rotation={[0, 0, -90]}
               width={0.82}

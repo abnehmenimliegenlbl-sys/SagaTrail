@@ -10,3 +10,9 @@ Do not feed a compass-sorted peak subset into the Viro scene while the phone is 
 **Why:** Gipfel loaded after AR startup remained invisible when React recomputed `initialScene`. Later, continuously replacing the compass-sorted top-four markers while panning caused an iOS `NSInvalidArgumentException` in `VRTView/VRTNode/VRTScene removeReactSubview:`.
 
 **How to apply:** Pass the candidate snapshot through `viroAppProps` and keep its identity/membership stable for the active AR session. Do not use JS heading changes to add, remove, or hide markers; do not key/remount the navigator.
+
+When live AR data can change after startup, keep fixed native slot counts for both peak markers and route segments. Update slot position, text, material, and opacity in place instead of mapping a changing array of Viro children.
+
+**Why:** New peak or terrain data arriving during an active session can make React remove native Viro subviews; on iOS this has caused the camera surface to turn black or the session to fail.
+
+**How to apply:** Render a fixed 40-marker pool and a bounded route-segment pool with stable slot keys. New data may replace slot contents, but the Viro navigator and its native child structure must not remount.
