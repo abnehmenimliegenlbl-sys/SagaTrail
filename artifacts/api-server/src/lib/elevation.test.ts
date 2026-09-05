@@ -4,6 +4,7 @@ import type { Logger } from "pino";
 import {
   computeElevationProfile,
   computeRouteTerrainAreaBounds,
+  createRouteTerrainAreaCoordinateGrid,
 } from "./elevation";
 
 const log = {
@@ -78,6 +79,50 @@ test("rejects invalid rectangular route bounds", () => {
         { lat: Number.NaN, lng: 7.6 },
       ],
       1000,
+    ),
+    null,
+  );
+});
+
+test("creates a north-to-south and west-to-east rectangular coordinate grid", () => {
+  const grid = createRouteTerrainAreaCoordinateGrid(
+    { north: 47.52, south: 47.48, west: 7.46, east: 7.54 },
+    3,
+    5,
+  );
+
+  assert.ok(grid);
+  assert.equal(grid.length, 3);
+  assert.equal(grid[0]!.length, 5);
+  assert.deepEqual(grid[0]![0], {
+    lat: 47.52,
+    lng: 7.46,
+    elevationM: null,
+  });
+  assert.deepEqual(grid[2]![4], {
+    lat: 47.48,
+    lng: 7.54,
+    elevationM: null,
+  });
+  assert.equal(grid[1]![2]!.lat, 47.5);
+  assert.equal(grid[1]![2]!.lng, 7.5);
+  assert.ok(grid.every((row) => row.every((cell) => cell.elevationM === null)));
+});
+
+test("rejects invalid rectangular coordinate grids", () => {
+  assert.equal(
+    createRouteTerrainAreaCoordinateGrid(
+      { north: 47.48, south: 47.52, west: 7.46, east: 7.54 },
+      3,
+      5,
+    ),
+    null,
+  );
+  assert.equal(
+    createRouteTerrainAreaCoordinateGrid(
+      { north: 47.52, south: 47.48, west: 7.46, east: 7.54 },
+      1,
+      5,
     ),
     null,
   );

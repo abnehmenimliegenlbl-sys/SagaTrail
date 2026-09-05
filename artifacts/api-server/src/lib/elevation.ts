@@ -246,6 +246,40 @@ export function computeRouteTerrainAreaBounds(
   };
 }
 
+export function createRouteTerrainAreaCoordinateGrid(
+  bounds: TerrainCorridorBounds,
+  rows: number,
+  columns: number,
+): TerrainCorridorCell[][] | null {
+  if (
+    !Number.isInteger(rows) ||
+    !Number.isInteger(columns) ||
+    rows < 2 ||
+    columns < 2 ||
+    !Number.isFinite(bounds.north) ||
+    !Number.isFinite(bounds.south) ||
+    !Number.isFinite(bounds.east) ||
+    !Number.isFinite(bounds.west) ||
+    bounds.north <= bounds.south ||
+    bounds.east <= bounds.west
+  ) {
+    return null;
+  }
+
+  return Array.from({ length: rows }, (_, row) => {
+    const latitude =
+      bounds.north -
+      ((bounds.north - bounds.south) * row) / (rows - 1);
+    return Array.from({ length: columns }, (_, column) => ({
+      lat: latitude,
+      lng:
+        bounds.west +
+        ((bounds.east - bounds.west) * column) / (columns - 1),
+      elevationM: null,
+    }));
+  });
+}
+
 function initialBearingDeg(from: LatLng, to: LatLng): number {
   const fromLat = (from.lat * Math.PI) / 180;
   const toLat = (to.lat * Math.PI) / 180;
