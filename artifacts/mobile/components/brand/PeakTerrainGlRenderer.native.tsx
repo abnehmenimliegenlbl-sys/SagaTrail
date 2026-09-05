@@ -159,11 +159,9 @@ function TerrainMesh({
         scale={terrainScale}
         position={[0, 0, 0]}
       >
-        <meshStandardMaterial
+        <meshBasicMaterial
           map={texture}
           color={texture ? "#FFFFFF" : fallbackColor}
-          roughness={0.9}
-          metalness={0}
           side={DoubleSide}
         />
       </mesh>
@@ -191,8 +189,6 @@ export default function PeakTerrainGlRenderer({
         onCreated={() => onReady?.()}
       >
         <color attach="background" args={[backgroundColor]} />
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[70, 110, 80]} intensity={2.8} />
         <CameraRig />
         <TerrainMesh
           terrainModel={terrainModel}

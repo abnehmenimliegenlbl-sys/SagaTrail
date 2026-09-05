@@ -959,9 +959,9 @@ export function PeakPanorama({
             <G key={direction.label}>
               <Line
                 x1={direction.x}
-                y1="22"
+                y1="0"
                 x2={direction.x}
-                 y2="274"
+                y2="350"
                 stroke={colors.tint}
                 strokeOpacity={0.24}
                 strokeWidth="1"
@@ -1002,9 +1002,9 @@ export function PeakPanorama({
            ))}
            <Line
              x1="180"
-             y1="23"
+              y1="0"
              x2="180"
-              y2="274"
+              y2="350"
              stroke={colors.primary}
              strokeOpacity={0.72}
              strokeWidth="1"
