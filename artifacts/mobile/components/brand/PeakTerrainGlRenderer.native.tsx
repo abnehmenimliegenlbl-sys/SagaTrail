@@ -65,7 +65,10 @@ function terrainGeometry(mesh: LocalTerrainMesh): BufferGeometry {
 function CameraRig() {
   const camera = useThree((state) => state.camera);
   useEffect(() => {
-    camera.lookAt(0, 0, 0);
+    // Panorama viewpoint: the observer is the geographic origin of the radial
+    // DTM mesh and looks outward, rather than looking down at that origin.
+    camera.position.set(0, 0.8, 0);
+    camera.lookAt(0, 0.15, -70);
     camera.updateProjectionMatrix();
   }, [camera]);
   return null;
@@ -123,7 +126,7 @@ function TerrainMesh({
       geometry={geometry}
       rotation={[0, (-bearingDeg * Math.PI) / 180, 0]}
       scale={[0.48, 0.48, 0.48]}
-      position={[0, -10, 0]}
+      position={[0, 0, 0]}
     >
       <meshStandardMaterial
         map={texture}
@@ -148,10 +151,10 @@ export default function PeakTerrainGlRenderer({
       <Canvas
         style={styles.canvas}
         camera={{
-          position: [0, 62, 138],
-          fov: 50,
-          near: 0.1,
-          far: 1_000,
+          position: [0, 0.8, 0],
+          fov: 65,
+          near: 0.03,
+          far: 500,
         }}
         onCreated={() => onReady?.()}
       >
