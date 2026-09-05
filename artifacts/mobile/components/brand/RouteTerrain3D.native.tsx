@@ -388,12 +388,12 @@ function Scene({
       const distance = Math.max(
         overview.height / (2 * Math.tan(verticalFov / 2)),
         overview.width / (2 * Math.tan(horizontalFov / 2)),
-      ) * 0.88;
+      ) * 0.72;
       camera.up.set(0, 1, 0);
       camera.position.set(
         overview.target.x,
-        overview.top + distance * 0.72,
-        overview.target.z + distance * 0.3,
+        overview.top + distance * 0.7,
+        overview.target.z + distance * 0.82,
       );
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
