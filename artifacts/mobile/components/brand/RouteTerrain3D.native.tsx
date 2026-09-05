@@ -351,33 +351,49 @@ function Scene({
 
   const overview = useMemo(() => {
     const positions = terrain.getAttribute("position") as BufferAttribute;
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
+    let minY = Infinity,
       maxY = -Infinity,
-      minZ = Infinity,
-      maxZ = -Infinity;
+      terrainMinX = Infinity,
+      terrainMaxX = -Infinity,
+      terrainMinZ = Infinity,
+      terrainMaxZ = -Infinity;
     for (let index = 0; index < positions.count; index++) {
-      minX = Math.min(minX, positions.getX(index));
-      maxX = Math.max(maxX, positions.getX(index));
+      terrainMinX = Math.min(terrainMinX, positions.getX(index));
+      terrainMaxX = Math.max(terrainMaxX, positions.getX(index));
       minY = Math.min(minY, positions.getY(index));
       maxY = Math.max(maxY, positions.getY(index));
-      minZ = Math.min(minZ, positions.getZ(index));
-      maxZ = Math.max(maxZ, positions.getZ(index));
+      terrainMinZ = Math.min(terrainMinZ, positions.getZ(index));
+      terrainMaxZ = Math.max(terrainMaxZ, positions.getZ(index));
     }
-    const extent = Math.max(maxX - minX, maxZ - minZ, 300);
+    const frame = route.length >= 2
+      ? {
+          minX: Math.min(...route.map((point) => point.x)),
+          maxX: Math.max(...route.map((point) => point.x)),
+          minZ: Math.min(...route.map((point) => point.z)),
+          maxZ: Math.max(...route.map((point) => point.z)),
+        }
+      : {
+          minX: terrainMinX,
+          maxX: terrainMaxX,
+          minZ: terrainMinZ,
+          maxZ: terrainMaxZ,
+        };
+    const routeMarginM = 600;
+    const width = Math.max(frame.maxX - frame.minX + routeMarginM * 2, 300);
+    const height = Math.max(frame.maxZ - frame.minZ + routeMarginM * 2, 300);
+    const extent = Math.max(width, height);
     return {
       target: new Vector3(
-        (minX + maxX) / 2,
+        (frame.minX + frame.maxX) / 2,
         (minY + maxY) / 2,
-        (minZ + maxZ) / 2,
+        (frame.minZ + frame.maxZ) / 2,
       ),
       extent,
-      width: maxX - minX,
-      height: maxZ - minZ,
+      width,
+      height,
       top: maxY,
     };
-  }, [terrain]);
+  }, [route, terrain]);
 
   useEffect(() => {
     if (!follow) {
@@ -388,7 +404,7 @@ function Scene({
       const distance = Math.max(
         overview.height / (2 * Math.tan(verticalFov / 2)),
         overview.width / (2 * Math.tan(horizontalFov / 2)),
-      ) * 0.45;
+      );
       camera.up.set(0, 1, 0);
       camera.position.set(
         overview.target.x,
