@@ -63,7 +63,7 @@ function swissTopoTextureUrl(grid: TerrainGrid): string {
     SERVICE: "WMS",
     REQUEST: "GetMap",
     VERSION: "1.3.0",
-    LAYERS: "ch.swisstopo.pixelkarte-farbe",
+    LAYERS: "ch.swisstopo.swissimage",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
