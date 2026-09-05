@@ -46,7 +46,14 @@ type Model = {
 };
 type ViewMode = "overview" | "walk" | "flight";
 type MapBounds = TerrainGrid["bounds"];
-type MapTile = { bounds: MapBounds; key: string };
+type MapTile = {
+  bounds: MapBounds;
+  key: string;
+  rowStart?: number;
+  rowEnd?: number;
+  columnStart?: number;
+  columnEnd?: number;
+};
 type LoadedFlightTile = {
   tile: MapTile;
   texture: Texture;
@@ -63,19 +70,40 @@ const ThreeLine: any = "line";
 const radians = Math.PI / 180;
 const mapTextureSizes: readonly number[] = [1024, 768];
 
-function mapTiles(bounds: MapBounds): MapTile[] {
-  const latitudeStep = (bounds.north - bounds.south) / 2;
-  const longitudeStep = (bounds.east - bounds.west) / 3;
+function mapTiles(grid: TerrainGrid): MapTile[] {
+  const rowBreaks = [0, Math.floor((grid.rows - 1) / 2), grid.rows - 1];
+  const columnBreaks = [
+    0,
+    Math.floor((grid.columns - 1) / 3),
+    Math.floor(((grid.columns - 1) * 2) / 3),
+    grid.columns - 1,
+  ];
   return Array.from({ length: 2 }, (_, row) =>
-    Array.from({ length: 3 }, (_, column) => ({
-      key: `${row}-${column}`,
-      bounds: {
-        south: bounds.south + row * latitudeStep,
-        north: bounds.south + (row + 1) * latitudeStep,
-        west: bounds.west + column * longitudeStep,
-        east: bounds.west + (column + 1) * longitudeStep,
-      },
-    })),
+    Array.from({ length: 3 }, (_, column) => {
+      const rowStart = rowBreaks[row];
+      const rowEnd = rowBreaks[row + 1];
+      const columnStart = columnBreaks[column];
+      const columnEnd = columnBreaks[column + 1];
+      const corners = [
+        grid.grid[rowStart][columnStart],
+        grid.grid[rowStart][columnEnd],
+        grid.grid[rowEnd][columnStart],
+        grid.grid[rowEnd][columnEnd],
+      ];
+      return {
+        key: `${row}-${column}`,
+        rowStart,
+        rowEnd,
+        columnStart,
+        columnEnd,
+        bounds: {
+          south: Math.min(...corners.map((cell) => cell.lat)),
+          north: Math.max(...corners.map((cell) => cell.lat)),
+          west: Math.min(...corners.map((cell) => cell.lng)),
+          east: Math.max(...corners.map((cell) => cell.lng)),
+        },
+      };
+    }),
   ).flat();
 }
 
@@ -187,6 +215,7 @@ function toWorld(
 function buildTerrainGeometry(
   grid: TerrainGrid,
   textureBounds: MapBounds = grid.bounds,
+  tile?: MapTile,
 ): BufferGeometry {
   const positions: number[] = [];
   const uvs: number[] = [];
@@ -212,6 +241,21 @@ function buildTerrainGeometry(
     grid.grid[row][column].elevationM != null;
   for (let row = 0; row < grid.rows - 1; row++) {
     for (let column = 0; column < grid.columns - 1; column++) {
+      if (
+        tile?.rowStart != null &&
+        tile.rowEnd != null &&
+        tile.columnStart != null &&
+        tile.columnEnd != null
+      ) {
+        if (
+          row < tile.rowStart ||
+          row >= tile.rowEnd ||
+          column < tile.columnStart ||
+          column >= tile.columnEnd
+        ) {
+          continue;
+        }
+      } else {
       const cellCenterLat =
         (grid.grid[row][column].lat + grid.grid[row + 1][column + 1].lat) / 2;
       const cellCenterLng =
@@ -223,6 +267,7 @@ function buildTerrainGeometry(
         cellCenterLng >= textureBounds.east
       ) {
         continue;
+      }
       }
       const topLeft = row * grid.columns + column;
       const topRight = topLeft + 1;
@@ -503,9 +548,12 @@ function Scene({
   onMapLoadState: (state: "loading" | "ready" | "error") => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
-  const tiles = useMemo(() => mapTiles(model.grid.bounds), [model.grid.bounds]);
+  const tiles = useMemo(() => mapTiles(model.grid), [model.grid]);
   const tileTerrains = useMemo(
-    () => tiles.map((tile) => buildTerrainGeometry(model.grid, tile.bounds)),
+    () =>
+      tiles.map((tile) =>
+        buildTerrainGeometry(model.grid, tile.bounds, tile),
+      ),
     [model.grid, tiles],
   );
   const routeDistanceList = useMemo(
