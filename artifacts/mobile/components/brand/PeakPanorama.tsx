@@ -295,6 +295,7 @@ export function PeakPanorama({
   const panOffsetValueRef = useRef(0);
   const profileCacheRef = useRef<Map<string, CachedPanoramaProfile>>(new Map());
   const profileRequestsRef = useRef<Set<string>>(new Set());
+  const profileObserverRef = useRef<LatLng | null>(null);
   const [profileRevision, setProfileRevision] = useState(0);
   const panStartOffsetRef = useRef(0);
   panOffsetValueRef.current = panOffsetDeg;
@@ -323,14 +324,18 @@ export function PeakPanorama({
         .slice(0, PANORAMA_PROFILE_LIMIT),
     [peaks],
   );
-  const observerKey = observerPosition
-    ? `${observerPosition.lat.toFixed(4)}:${observerPosition.lng.toFixed(4)}`
+  if (!profileObserverRef.current && observerPosition) {
+    profileObserverRef.current = observerPosition;
+  }
+  const profileObserver = profileObserverRef.current;
+  const observerKey = profileObserver
+    ? `${profileObserver.lat.toFixed(4)}:${profileObserver.lng.toFixed(4)}`
     : null;
   const profileCandidateIds = profileCandidates.map((peak) => peak.id).join("|");
 
   useEffect(() => {
-    if (!observerPosition || !observerKey || profileCandidates.length === 0) return;
-    const requestObserver = observerPosition;
+    if (!profileObserver || !observerKey || profileCandidates.length === 0) return;
+    const requestObserver = profileObserver;
     const requestObserverKey = observerKey;
     let cancelled = false;
     let activeController: AbortController | null = null;
@@ -402,7 +407,7 @@ export function PeakPanorama({
       cancelled = true;
       activeController?.abort();
     };
-  }, [observerKey, profileCandidateIds, profileCandidates]);
+  }, [observerKey, profileCandidateIds]);
 
   const panResponder = useMemo(
     () =>
@@ -455,7 +460,7 @@ export function PeakPanorama({
             }]
           : [];
       }),
-    [observerKey, profileCandidateIds, profileRevision],
+    [observerKey, profileCandidateIds, profileCandidates, profileRevision],
   );
   const panoramaMesh = useMemo(
     () => buildPanoramaMesh(profileEntries, displayBearing, observerElevationM),
