@@ -189,10 +189,10 @@ export function PeakPanorama({
                 },
               ]}
               accessibilityRole="button"
-                 accessibilityLabel={strings.camera}
+                 accessibilityLabel="AR öffnen"
             >
-                 <Feather
-                name="camera"
+               <Feather
+                 name="layers"
                 size={14}
                 color={colors.primaryForeground}
               />
@@ -204,7 +204,7 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                {strings.camera}
+                AR
               </Text>
             </Pressable>
           )}

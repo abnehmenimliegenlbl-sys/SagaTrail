@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
 import { captureRef } from "react-native-view-shot";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -58,35 +57,19 @@ export function PeakCameraOverlay({
 }: PeakCameraOverlayProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [cameraPermission] = useCameraPermissions();
-  const [arEnabled, setArEnabled] = useState(false);
+  const [arEnabled, setArEnabled] = useState(true);
   const [capturing, setCapturing] = useState(false);
   const [contentMounted, setContentMounted] = useState(false);
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [arPeaks, setArPeaks] = useState<readonly PanoramaGipfel[]>([]);
   const lockPulse = useRef(new Animated.Value(0)).current;
-  const cameraRef = useRef<CameraView>(null);
   const cameraFrameRef = useRef<View>(null);
-  const arActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const switchNativeSurface = useCallback((nextMode: "camera" | "ar") => {
-    if (arActivationTimerRef.current) {
-      clearTimeout(arActivationTimerRef.current);
-      arActivationTimerRef.current = null;
-    }
-
-    // Never replace CameraView and Viro in the same render pass. CameraView
-    // releases AVCaptureSession asynchronously, so the old native surface
-    // must stay unmounted while the next one is created.
-    setContentMounted(false);
-    setArEnabled(nextMode === "ar");
-    arActivationTimerRef.current = setTimeout(() => {
-      arActivationTimerRef.current = null;
-      setContentMounted(true);
-    }, 700);
-  }, []);
   const handleArError = useCallback(() => {
-    switchNativeSurface("camera");
-  }, [switchNativeSurface]);
+    setContentMounted(false);
+    setArEnabled(false);
+    setArPeaks([]);
+    onClose();
+  }, [onClose]);
 
   const visiblePeaks =
     heading == null
@@ -113,18 +96,12 @@ export function PeakCameraOverlay({
       setArEnabled(false);
       setArPeaks([]);
       setSelectedPeakId(null);
-      if (arActivationTimerRef.current) {
-        clearTimeout(arActivationTimerRef.current);
-        arActivationTimerRef.current = null;
-      }
+    } else {
+      setArEnabled(true);
+      setArPeaks(arCandidates);
+      setContentMounted(false);
     }
-    return () => {
-      if (arActivationTimerRef.current) {
-        clearTimeout(arActivationTimerRef.current);
-        arActivationTimerRef.current = null;
-      }
-    };
-  }, [visible]);
+  }, [arCandidates, visible]);
 
   useEffect(() => {
     if (!arEnabled || !targetPeak) {
@@ -161,17 +138,6 @@ export function PeakCameraOverlay({
     onClose();
   };
 
-  const toggleAr = () => {
-    if (arEnabled) {
-      switchNativeSurface("camera");
-      return;
-    }
-    // Keep every candidate as a stable native Viro node. While panning, only
-    // visibility changes; removing/reinserting nodes crashes Viro on iOS 26.
-    setArPeaks(arCandidates);
-    switchNativeSurface("ar");
-  };
-
   const handlePeakPress = (peakId: string) => {
     setSelectedPeakId(peakId);
     if (Platform.OS !== "web") {
@@ -200,13 +166,6 @@ export function PeakCameraOverlay({
       } catch {
         snapshotUri = null;
       }
-      if (!snapshotUri && cameraRef.current) {
-        const picture = await cameraRef.current.takePictureAsync({
-          quality: 0.82,
-          skipProcessing: true,
-        });
-        snapshotUri = picture?.uri ?? null;
-      }
       if (!snapshotUri) return;
 
       const persistentUri = await persistJournalImage(snapshotUri, "peak");
@@ -231,35 +190,35 @@ export function PeakCameraOverlay({
   return (
     <Modal
       // PeakPanorama requests permission before opening this modal. Do not
-      // gate the native modal on a second useCameraPermissions() snapshot:
-      // on iOS that hook can still contain the pre-request value for the
-      // first render, which makes the parent modal close while this one never
-      // appears.
+      // The native modal owns the complete AR surface. Camera permission is
+      // requested by PeakPanorama before this modal is opened.
       visible={visible}
       animationType="fade"
       presentationStyle="fullScreen"
-      onShow={() => setContentMounted(true)}
+       onShow={() => {
+         // Keep every candidate as a stable native Viro node. Do not
+         // replace/remove nodes while the AR session is running.
+         setArPeaks(arCandidates);
+         setArEnabled(true);
+         setContentMounted(true);
+       }}
       onRequestClose={closeCamera}
       onDismiss={() => setContentMounted(false)}
     >
       <View ref={cameraFrameRef} style={styles.fullscreenCamera} collapsable={false}>
         {contentMounted && (
-          arEnabled ? (
-            <PeakArNavigator
-              peaks={arPeaks}
-              terrainProfile={terrainProfile}
-              terrainModel={terrainModel}
-              routeGeometry={routeGeometry}
-              observerPosition={observerPosition}
-              heading={heading}
-              observerElevationM={observerElevationM}
-              selectedPeakId={selectedPeakId}
-              onPeakPress={handlePeakPress}
-              onError={handleArError}
-            />
-          ) : (
-            <CameraView ref={cameraRef} facing="back" style={styles.camera} />
-          )
+          <PeakArNavigator
+            peaks={arPeaks}
+            terrainProfile={terrainProfile}
+            terrainModel={terrainModel}
+            routeGeometry={routeGeometry}
+            observerPosition={observerPosition}
+            heading={heading}
+            observerElevationM={observerElevationM}
+            selectedPeakId={selectedPeakId}
+            onPeakPress={handlePeakPress}
+            onError={handleArError}
+          />
         )}
         <View pointerEvents="none" style={styles.imageScrim} />
         <View pointerEvents="none" style={styles.scanLines}>
@@ -374,32 +333,6 @@ export function PeakCameraOverlay({
                 </Text>
               </View>
             )}
-            <Pressable
-              onPress={toggleAr}
-              style={[
-                styles.arButton,
-                {
-                  backgroundColor: arEnabled ? colors.primary : colors.glassBgStrong,
-                  borderColor: arEnabled ? colors.primary : colors.glassBorder,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={arEnabled ? "AR ausschalten" : "AR einschalten"}
-            >
-              <Feather
-                name="layers"
-                size={14}
-                color={arEnabled ? colors.primaryForeground : colors.photoScrimText}
-              />
-              <Text
-                style={[
-                  styles.arButtonText,
-                  { color: arEnabled ? colors.primaryForeground : colors.photoScrimText },
-                ]}
-              >
-                AR
-              </Text>
-            </Pressable>
             <Pressable
               onPress={closeCamera}
               style={[
