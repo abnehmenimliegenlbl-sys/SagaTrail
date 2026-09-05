@@ -3340,6 +3340,7 @@ export default function LiveHike() {
       hasFreshGps ? livePos : null,
       compassHeading,
       hasFreshGps ? liveAltitude : null,
+        40,
     ),
     [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );

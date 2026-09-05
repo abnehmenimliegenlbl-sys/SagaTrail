@@ -46,3 +46,9 @@ Compressed route segments need a continuous centerline beneath the colored grade
 **Why:** At the compressed far end, separately rendered thin polylines can show hairline gaps and a physically small flag becomes unreadable in the camera view.
 
 **How to apply:** Keep the centerline as one stable native Viro polyline, preserve colored grade segments above it, and size the flag in AR-world units independently of route distance.
+
+The panorama card is a compass-driven 360° horizon view, not a 3D camera replacement: all nearby named peaks are retained, the current heading is the viewport center, and swiping explores the full circle. Perspective is conveyed with depth-scaled, shaded mountain faces; actual spatial AR remains behind the AR button.
+
+**Why:** The old card claimed a “3D view” while showing only a small heading-sorted 2D slice, and peaks outside that slice could not be discovered by swiping.
+
+**How to apply:** Keep the live compass as the automatic center, apply wrapped bearing math at the 0°/360° seam, load enough peaks for the full horizon, and keep the visible viewport narrower than the navigable 360° panorama.

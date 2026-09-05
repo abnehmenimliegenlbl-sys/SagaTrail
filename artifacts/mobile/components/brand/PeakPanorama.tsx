@@ -9,7 +9,6 @@ import {
   Text,
   View,
 } from "react-native";
-import type { DimensionValue } from "react-native";
 import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from "react-native-svg";
 
 import { fonts } from "@/constants/typography";
@@ -20,6 +19,22 @@ import type { LocalTerrainModel } from "@/lib/terrainModel";
 import type { RecognitionJournalEntry } from "@/types";
 
 const PANORAMA_VIEW_DEGREES = 140;
+const PANORAMA_TOTAL_DEGREES = 360;
+const PANORAMA_MAX_DRAG_DEGREES = 180;
+const CARDINAL_DIRECTIONS = [
+  { label: "N", bearing: 0 },
+  { label: "O", bearing: 90 },
+  { label: "S", bearing: 180 },
+  { label: "W", bearing: 270 },
+] as const;
+
+function signedAngleDifference(target: number, reference: number): number {
+  return ((target - reference + 540) % 360) - 180;
+}
+
+function normalizeBearing(degrees: number): number {
+  return ((degrees % 360) + 360) % 360;
+}
 
 export interface PeakPanoramaStrings {
   title: string;
@@ -78,21 +93,29 @@ export function PeakPanorama({
   const [selectedPeakId, setSelectedPeakId] = useState<string | null>(null);
   const [panOffsetDeg, setPanOffsetDeg] = useState(0);
   const panStartOffsetRef = useRef(0);
+  const viewCenterBearing = normalizeBearing((heading ?? 0) + panOffsetDeg);
+  const displayBearing = (peak: PanoramaGipfel): number | null =>
+    peak.relativeBearingDeg == null
+      ? null
+      : signedAngleDifference(peak.relativeBearingDeg - panOffsetDeg, 0);
   const visiblePeaks =
     heading == null
       ? []
       : peaks
+          .map((peak) => ({ peak, relative: displayBearing(peak) }))
           .filter(
-            (peak) =>
-              peak.relativeBearingDeg != null &&
-              Math.abs(peak.relativeBearingDeg - panOffsetDeg) <= PANORAMA_VIEW_DEGREES / 2,
+            (entry): entry is { peak: PanoramaGipfel; relative: number } =>
+              entry.relative != null &&
+              Math.abs(entry.relative) <= PANORAMA_VIEW_DEGREES / 2,
           )
-          .slice(0, 4);
+          .sort((a, b) => a.peak.distanceKm - b.peak.distanceKm)
+          .map(({ peak }) => peak)
+          .slice(0, 8);
   const panoramaHasHeight = visiblePeaks.some((peak) => peak.elevationAngleDeg != null);
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => visiblePeaks.length > 0,
+        onStartShouldSetPanResponder: () => heading != null && peaks.length > 0,
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 4,
         onPanResponderGrant: () => {
           panStartOffsetRef.current = panOffsetDeg;
@@ -100,32 +123,42 @@ export function PeakPanorama({
         onPanResponderMove: (_, gesture) => {
           // Eine Fingerbewegung nach links zeigt den Ausschnitt weiter rechts.
           const next = panStartOffsetRef.current - gesture.dx * 0.28;
-          setPanOffsetDeg(Math.max(-70, Math.min(70, next)));
+          setPanOffsetDeg(
+            Math.max(
+              -PANORAMA_MAX_DRAG_DEGREES,
+              Math.min(PANORAMA_MAX_DRAG_DEGREES, next),
+            ),
+          );
         },
       }),
-    [panOffsetDeg, visiblePeaks.length],
+    [heading, panOffsetDeg, peaks.length],
   );
   const focusedPeak = visiblePeaks.find(
     (peak) =>
-      peak.relativeBearingDeg != null &&
-      Math.abs(peak.relativeBearingDeg) <= 18,
+      displayBearing(peak) != null && Math.abs(displayBearing(peak) ?? 180) <= 18,
   );
   const targetPeak =
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
-  const markerPosition = (relativeBearingDeg: number): DimensionValue => {
-    const percentage =
-      50 + ((relativeBearingDeg - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 100;
-    return `${Math.max(8, Math.min(92, percentage))}%`;
-  };
   const skylinePeaks = visiblePeaks.slice(0, 6);
   const skylineX = (peak: PanoramaGipfel) =>
-    180 + (((peak.relativeBearingDeg ?? 0) - panOffsetDeg) / PANORAMA_VIEW_DEGREES) * 360;
+    180 + ((displayBearing(peak) ?? 0) / PANORAMA_VIEW_DEGREES) * 360;
   const skylineY = (peak: PanoramaGipfel) => {
     const angle = peak.elevationAngleDeg ?? 0;
-    return Math.max(43, Math.min(149, 129 - angle * 5.2));
+    const mountainHeight = Math.max(28, Math.min(112, 44 + angle * 7));
+    return 166 - mountainHeight;
   };
+  const skylineScale = (peak: PanoramaGipfel) =>
+    Math.max(0.55, Math.min(1.1, 1.12 - peak.distanceKm / 32));
+  const compassTicks = CARDINAL_DIRECTIONS.map((direction) => {
+    const relative = signedAngleDifference(direction.bearing, viewCenterBearing);
+    return {
+      ...direction,
+      relative,
+      x: 180 + (relative / PANORAMA_VIEW_DEGREES) * 360,
+    };
+  }).filter((direction) => Math.abs(direction.relative) <= PANORAMA_VIEW_DEGREES / 2 + 8);
   let status = strings.noPeaks;
   if (!hasGps) status = strings.noGps;
   else if (heading == null) status = strings.needCompass;
@@ -236,7 +269,7 @@ export function PeakPanorama({
           <Feather name="compass" size={16} color={colors.mutedForeground} />
         ) : (
           <Text style={[styles.viewAngle, { color: colors.mutedForeground }]}>
-            {PANORAMA_VIEW_DEGREES}°
+            {PANORAMA_TOTAL_DEGREES}°
           </Text>
         )}
       </View>
@@ -324,25 +357,59 @@ export function PeakPanorama({
             <Line x1="180" y1="0" x2="180" y2="220" stroke={colors.accent} strokeWidth="1" />
             <Line x1="270" y1="0" x2="270" y2="220" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
+          {compassTicks.map((direction) => (
+            <G key={direction.label}>
+              <Line
+                x1={direction.x}
+                y1="22"
+                x2={direction.x}
+                y2="166"
+                stroke={colors.tint}
+                strokeOpacity={0.24}
+                strokeWidth="1"
+                strokeDasharray="3 4"
+              />
+              <SvgText
+                x={direction.x}
+                y="16"
+                fill={colors.tint}
+                fontSize="9"
+                fontWeight="700"
+                textAnchor="middle"
+              >
+                {direction.label}
+              </SvgText>
+            </G>
+          ))}
           {skylinePeaks
             .slice()
             .sort((a, b) => skylineX(a) - skylineX(b))
             .map((peak, index) => {
               const x = skylineX(peak);
               const y = skylineY(peak);
-              const width = Math.max(24, Math.min(62, 50 - peak.distanceKm * 1.2));
+              const scale = skylineScale(peak);
+              const width = Math.max(22, Math.min(58, 50 * scale));
+              const sideWidth = width * 0.68;
               const fill = index % 2 === 0 ? colors.glassHighlight : colors.glassBgStrong;
               return (
                 <G key={peak.id}>
                   <Polygon
-                    points={`${x - width},166 ${x},${y} ${x + width},166`}
+                    points={`${x - width},166 ${x},${y} ${x + sideWidth},166`}
                     fill={fill}
                     stroke={colors.accent}
                     strokeOpacity={0.5}
                     strokeWidth="1"
                   />
+                  <Polygon
+                    points={`${x},${y} ${x + sideWidth},166 ${x + width},166 ${x + width * 0.34},${y + 16}`}
+                    fill={colors.accent}
+                    fillOpacity={0.16}
+                    stroke={colors.accent}
+                    strokeOpacity={0.32}
+                    strokeWidth="1"
+                  />
                   <Line x1={x} y1={y} x2={x} y2="166" stroke={colors.accent} strokeOpacity={0.45} />
-                  <Circle cx={x} cy={y} r="3.5" fill={colors.primary} />
+                  <Circle cx={x} cy={y} r={Math.max(3, 4 * scale)} fill={colors.primary} />
                   {x > -18 && x < 378 && (
                     <SvgText
                       x={x}
