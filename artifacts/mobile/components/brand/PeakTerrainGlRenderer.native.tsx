@@ -28,7 +28,8 @@ function swissTopoTextureUrl(model: LocalTerrainModel): string {
     SERVICE: "WMS",
     REQUEST: "GetMap",
     VERSION: "1.3.0",
-    LAYERS: "ch.swisstopo.pixelkarte-farbe",
+    // Orthophoto without place names or map symbols keeps the panorama legible.
+    LAYERS: "ch.swisstopo.swissimage",
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: [
