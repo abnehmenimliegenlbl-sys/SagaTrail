@@ -1022,10 +1022,10 @@ export function PeakPanorama({
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    marginTop: 12,
+    marginTop: 6,
     borderWidth: 1,
     borderRadius: 16,
-    padding: 14,
+    padding: 10,
   },
   header: {
     flexDirection: "row",
@@ -1115,7 +1115,7 @@ const styles = StyleSheet.create({
   skylineCard: {
     flex: 1,
     minHeight: 350,
-    marginTop: 11,
+    marginTop: 7,
     borderWidth: 1,
     borderRadius: 12,
     overflow: "hidden",
