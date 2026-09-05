@@ -1490,12 +1490,124 @@ paths:
           description: Nicht authentifiziert
         "404":
           description: Nicht gefunden
+  /terrain-corridor:
+    post:
+      operationId: createTerrainCorridor
+      tags: [routes]
+      summary: Echten SwissTopo-DTM-Korridor entlang einer Route laden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TerrainCorridorRequest"
+      responses:
+        "200":
+          description: Routenkorridor mit echten DTM-Höhen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainCorridorResponse"
+        "400":
+          description: Ungültige Routengeometrie
+        "502":
+          description: Zu wenige verfügbare SwissTopo-Höhenwerte
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
+    TerrainCorridorRequest:
+      type: object
+      required: [geometry]
+      properties:
+        geometry:
+          type: array
+          minItems: 2
+          maxItems: 500
+          items:
+            type: array
+            prefixItems:
+              - type: number
+              - type: number
+            minItems: 2
+            maxItems: 2
+        options:
+          type: object
+          properties:
+            rows:
+              type: integer
+              minimum: 12
+              maximum: 80
+              default: 32
+            columns:
+              type: integer
+              minimum: 5
+              maximum: 13
+              default: 9
+            halfWidthM:
+              type: number
+              minimum: 100
+              maximum: 1500
+              default: 500
+    TerrainCorridorCell:
+      type: object
+      required: [lat, lng, elevationM]
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+        elevationM:
+          type: [number, "null"]
+    TerrainCorridorResponse:
+      type: object
+      required:
+        [version, source, rows, columns, halfWidthM, routeLengthM, origin, bounds, fetchedAt, grid]
+      properties:
+        version:
+          type: integer
+          const: 1
+        source:
+          type: string
+          const: SwissTopo DTM corridor profiles
+        rows:
+          type: integer
+        columns:
+          type: integer
+        halfWidthM:
+          type: number
+        routeLengthM:
+          type: number
+        origin:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        bounds:
+          type: object
+          required: [north, south, east, west]
+          properties:
+            north:
+              type: number
+            south:
+              type: number
+            east:
+              type: number
+            west:
+              type: number
+        fetchedAt:
+          type: number
+        grid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/TerrainCorridorCell"
     HealthStatus:
       type: object
       properties:

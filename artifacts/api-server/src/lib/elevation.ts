@@ -59,6 +59,44 @@ export interface LocalTerrainModel {
   rays: LocalTerrainRay[];
 }
 
+export interface TerrainCorridorCell {
+  lat: number;
+  lng: number;
+  /**
+   * A value sampled from the SwissTopo profile for this lane. A missing or
+   * failed lane deliberately remains null; it is never filled from neighbours.
+   */
+  elevationM: number | null;
+}
+
+export interface TerrainCorridorBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface TerrainCorridorResponse {
+  version: 1;
+  source: "SwissTopo DTM corridor profiles";
+  rows: number;
+  columns: number;
+  halfWidthM: number;
+  routeLengthM: number;
+  /** The first centre-line sample, used as the local corridor origin. */
+  origin: LatLng;
+  bounds: TerrainCorridorBounds;
+  fetchedAt: number;
+  /** Row-major: route progress first, then left-to-right cross-route lanes. */
+  grid: TerrainCorridorCell[][];
+}
+
+export interface TerrainCorridorOptions {
+  rows: number;
+  columns: number;
+  halfWidthM: number;
+}
+
 function isRetryableHttpStatus(status: number): boolean {
   return (
     status === 408 ||
@@ -132,6 +170,137 @@ function destinationPoint(center: LatLng, bearingDeg: number, distanceM: number)
   return {
     lat: (destinationLatitude * 180) / Math.PI,
     lng: (destinationLongitude * 180) / Math.PI,
+  };
+}
+
+function initialBearingDeg(from: LatLng, to: LatLng): number {
+  const fromLat = (from.lat * Math.PI) / 180;
+  const toLat = (to.lat * Math.PI) / 180;
+  const deltaLng = ((to.lng - from.lng) * Math.PI) / 180;
+  const y = Math.sin(deltaLng) * Math.cos(toLat);
+  const x =
+    Math.cos(fromLat) * Math.sin(toLat) -
+    Math.sin(fromLat) * Math.cos(toLat) * Math.cos(deltaLng);
+  return (((Math.atan2(y, x) * 180) / Math.PI + 360) % 360);
+}
+
+function resampleRoute(points: LatLng[], rows: number): { points: LatLng[]; lengthM: number } | null {
+  const cumulativeM = [0];
+  for (let index = 1; index < points.length; index++) {
+    cumulativeM.push(cumulativeM[index - 1]! + haversineM(points[index - 1]!, points[index]!));
+  }
+  const lengthM = cumulativeM.at(-1)!;
+  if (!Number.isFinite(lengthM) || lengthM <= 0) return null;
+
+  let segmentIndex = 1;
+  const samples = Array.from({ length: rows }, (_, row) => {
+    const targetM = (lengthM * row) / (rows - 1);
+    while (
+      segmentIndex < cumulativeM.length - 1 &&
+      cumulativeM[segmentIndex]! < targetM
+    ) {
+      segmentIndex++;
+    }
+    const start = points[segmentIndex - 1]!;
+    const end = points[segmentIndex]!;
+    const segmentLengthM = cumulativeM[segmentIndex]! - cumulativeM[segmentIndex - 1]!;
+    const fraction = segmentLengthM <= 0 ? 0 : (targetM - cumulativeM[segmentIndex - 1]!) / segmentLengthM;
+    return {
+      lat: start.lat + (end.lat - start.lat) * fraction,
+      lng: start.lng + (end.lng - start.lng) * fraction,
+    };
+  });
+  return { points: samples, lengthM };
+}
+
+function laneOffsets(columns: number, halfWidthM: number): number[] {
+  return Array.from(
+    { length: columns },
+    (_, column) => -halfWidthM + (2 * halfWidthM * column) / (columns - 1),
+  );
+}
+
+/**
+ * Samples a full-route DTM corridor. Each parallel lane is sent through the
+ * regular chunked profile service; elevation values are only interpolated
+ * within that lane's returned SwissTopo profile, never inferred from another
+ * lane or a synthetic terrain model.
+ */
+export async function computeTerrainCorridor(
+  route: LatLng[],
+  log: Logger,
+  options: TerrainCorridorOptions,
+): Promise<TerrainCorridorResponse | null> {
+  const resampled = resampleRoute(route, options.rows);
+  if (!resampled) {
+    log.warn({ points: route.length }, "Terrainkorridor: Route hat keine auswertbare Länge");
+    return null;
+  }
+
+  const centreLine = resampled.points;
+  const offsets = laneOffsets(options.columns, options.halfWidthM);
+  const laneGeometries = offsets.map((offsetM) =>
+    centreLine.map((point, row) => {
+      const before = centreLine[Math.max(0, row - 1)]!;
+      const after = centreLine[Math.min(centreLine.length - 1, row + 1)]!;
+      const bearingDeg = initialBearingDeg(before, after);
+      // A positive offset is to the route's right; this orientation is stable
+      // for all rows and gives callers a predictable column order.
+      return destinationPoint(point, bearingDeg + 90, offsetM);
+    }),
+  );
+
+  const laneProfiles: Array<ElevationProfilePoint[] | null> = Array(options.columns).fill(null);
+  const concurrency = Math.min(3, laneGeometries.length);
+  let nextLane = 0;
+  await Promise.all(
+    Array.from({ length: concurrency }, async () => {
+      while (true) {
+        const lane = nextLane++;
+        if (lane >= laneGeometries.length) return;
+        laneProfiles[lane] = await computeElevationProfile(laneGeometries[lane]!, log);
+      }
+    }),
+  );
+
+  const laneDistancesKm = laneGeometries.map((lane) => routeCumulativeDistancesKm(lane));
+  const grid = centreLine.map((_, row) =>
+    laneGeometries.map((lane, column) => ({
+      lat: lane[row]!.lat,
+      lng: lane[row]!.lng,
+      elevationM: laneProfiles[column]
+        ? interpolateElevation(laneProfiles[column]!, laneDistancesKm[column]![row]!)
+        : null,
+    })),
+  );
+  const cells = grid.flat();
+  const realCellCount = cells.filter((cell) => cell.elevationM != null).length;
+  // A partial corridor remains useful, but do not present a mostly unavailable
+  // SwissTopo response as terrain data.
+  if (realCellCount < Math.ceil(cells.length / 2)) {
+    log.warn(
+      { rows: options.rows, columns: options.columns, realCellCount, totalCells: cells.length },
+      "Terrainkorridor: zu wenige echte Höhenwerte",
+    );
+    return null;
+  }
+
+  return {
+    version: 1,
+    source: "SwissTopo DTM corridor profiles",
+    rows: options.rows,
+    columns: options.columns,
+    halfWidthM: options.halfWidthM,
+    routeLengthM: Math.round(resampled.lengthM),
+    origin: centreLine[0]!,
+    bounds: {
+      north: Math.max(...cells.map((cell) => cell.lat)),
+      south: Math.min(...cells.map((cell) => cell.lat)),
+      east: Math.max(...cells.map((cell) => cell.lng)),
+      west: Math.min(...cells.map((cell) => cell.lng)),
+    },
+    fetchedAt: Date.now(),
+    grid,
   };
 }
 

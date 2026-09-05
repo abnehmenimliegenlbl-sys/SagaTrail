@@ -1076,3 +1076,59 @@ export const EndSafetyShareParams = zod.object({
 export const EndSafetyShareResponse = zod.unknown()
 
 
+/**
+ * @summary Echten SwissTopo-DTM-Korridor entlang einer Route laden
+ */
+export const createTerrainCorridorBodyGeometryMin = 2;
+export const createTerrainCorridorBodyGeometryMax = 500;
+
+export const createTerrainCorridorBodyOptionsRowsDefault = 32;
+export const createTerrainCorridorBodyOptionsRowsMin = 12;
+export const createTerrainCorridorBodyOptionsRowsMax = 80;
+
+export const createTerrainCorridorBodyOptionsColumnsDefault = 9;
+export const createTerrainCorridorBodyOptionsColumnsMin = 5;
+export const createTerrainCorridorBodyOptionsColumnsMax = 13;
+
+export const createTerrainCorridorBodyOptionsHalfWidthMDefault = 500;
+export const createTerrainCorridorBodyOptionsHalfWidthMMin = 100;
+export const createTerrainCorridorBodyOptionsHalfWidthMMax = 1500;
+
+
+
+export const CreateTerrainCorridorBody = zod.object({
+  "geometry": zod.array(zod.tuple([zod.number(),
+zod.number()])).min(createTerrainCorridorBodyGeometryMin).max(createTerrainCorridorBodyGeometryMax),
+  "options": zod.object({
+  "rows": zod.number().min(createTerrainCorridorBodyOptionsRowsMin).max(createTerrainCorridorBodyOptionsRowsMax).default(createTerrainCorridorBodyOptionsRowsDefault),
+  "columns": zod.number().min(createTerrainCorridorBodyOptionsColumnsMin).max(createTerrainCorridorBodyOptionsColumnsMax).default(createTerrainCorridorBodyOptionsColumnsDefault),
+  "halfWidthM": zod.number().min(createTerrainCorridorBodyOptionsHalfWidthMMin).max(createTerrainCorridorBodyOptionsHalfWidthMMax).default(createTerrainCorridorBodyOptionsHalfWidthMDefault)
+}).optional()
+})
+
+export const CreateTerrainCorridorResponse = zod.object({
+  "version": zod.number(),
+  "source": zod.literal("SwissTopo DTM corridor profiles"),
+  "rows": zod.number(),
+  "columns": zod.number(),
+  "halfWidthM": zod.number(),
+  "routeLengthM": zod.number(),
+  "origin": zod.object({
+  "lat": zod.number(),
+  "lng": zod.number()
+}),
+  "bounds": zod.object({
+  "north": zod.number(),
+  "south": zod.number(),
+  "east": zod.number(),
+  "west": zod.number()
+}),
+  "fetchedAt": zod.number(),
+  "grid": zod.array(zod.array(zod.object({
+  "lat": zod.number(),
+  "lng": zod.number(),
+  "elevationM": zod.number().nullable()
+})))
+})
+
+

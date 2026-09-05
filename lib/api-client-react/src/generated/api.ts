@@ -71,6 +71,8 @@ import type {
   SearchPlacesParams,
   StoryRequest,
   StoryResponse,
+  TerrainCorridorRequest,
+  TerrainCorridorResponse,
   TrailConditionInput,
   TrailConditionReport,
   TransportStationboard,
@@ -3059,5 +3061,75 @@ export const useEndSafetyShare = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getEndSafetyShareMutationOptions(options));
+    }
+
+export const getCreateTerrainCorridorUrl = () => {
+
+
+
+
+  return `/api/terrain-corridor`
+}
+
+/**
+ * @summary Echten SwissTopo-DTM-Korridor entlang einer Route laden
+ */
+export const createTerrainCorridor = async (terrainCorridorRequest: TerrainCorridorRequest, options?: RequestInit): Promise<TerrainCorridorResponse> => {
+
+  return customFetch<TerrainCorridorResponse>(getCreateTerrainCorridorUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(terrainCorridorRequest)
+  }
+);}
+
+
+
+
+export const getCreateTerrainCorridorMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTerrainCorridor>>, TError,{data: BodyType<TerrainCorridorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTerrainCorridor>>, TError,{data: BodyType<TerrainCorridorRequest>}, TContext> => {
+
+const mutationKey = ['createTerrainCorridor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTerrainCorridor>>, {data: BodyType<TerrainCorridorRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTerrainCorridor(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTerrainCorridorMutationResult = NonNullable<Awaited<ReturnType<typeof createTerrainCorridor>>>
+    export type CreateTerrainCorridorMutationBody = BodyType<TerrainCorridorRequest>
+    export type CreateTerrainCorridorMutationError = ErrorType<void>
+
+    /**
+ * @summary Echten SwissTopo-DTM-Korridor entlang einer Route laden
+ */
+export const useCreateTerrainCorridor = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTerrainCorridor>>, TError,{data: BodyType<TerrainCorridorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTerrainCorridor>>,
+        TError,
+        {data: BodyType<TerrainCorridorRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateTerrainCorridorMutationOptions(options));
     }
 

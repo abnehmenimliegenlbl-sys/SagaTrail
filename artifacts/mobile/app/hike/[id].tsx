@@ -57,6 +57,7 @@ import { PeakCameraOverlay } from "@/components/brand/PeakCameraOverlay";
 import { FeatureTileDeck } from "@/components/brand/FeatureTileDeck";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
+import RouteTerrain3D from "@/components/brand/RouteTerrain3D";
 import { fonts } from "@/constants/typography";
 import { useApp, useThemeModeSafe } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
@@ -875,6 +876,7 @@ export default function LiveHike() {
   const [partnerTranslation, setPartnerTranslation] = useState<{ beschreibung: string | null; angebot: string | null } | null>(null);
   const [karteVollbild, setKarteVollbild] = useState(false);
   const [karteCloseSignal, setKarteCloseSignal] = useState(0);
+  const [routeTerrain3dOpen, setRouteTerrain3dOpen] = useState(false);
   // Aktion, die nach vollstaendigem Schliessen der Vollbild-Karte ausgefuehrt
   // werden soll (z. B. POI- oder Partner-Detail oeffnen). onDismiss des nativen
   // iOS-Modals faengt beim zweiten Schliessen nicht zuverlaessig — stattdessen
@@ -4327,7 +4329,45 @@ export default function LiveHike() {
               )
             }
           />
+          <Pressable
+            onPress={() => {
+              // Native Modals must never overlap: close the map modal first.
+              if (karteVollbild) {
+                setKarteVollbild(false);
+                setKarteCloseSignal((n) => n + 1);
+                setTimeout(() => setRouteTerrain3dOpen(true), 320);
+              } else {
+                setRouteTerrain3dOpen(true);
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Route in 3D anzeigen"
+            style={{
+              alignSelf: "flex-end",
+              marginTop: 10,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 7,
+              paddingHorizontal: 13,
+              paddingVertical: 9,
+              borderRadius: 18,
+              backgroundColor: colors.card,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            }}
+          >
+            <Feather name="box" size={16} color={colors.accent} />
+            <Text style={{ color: colors.foreground, fontWeight: "700" }}>
+              Route in 3D
+            </Text>
+          </Pressable>
         </View>
+        <RouteTerrain3D
+          visible={routeTerrain3dOpen}
+          onClose={() => setRouteTerrain3dOpen(false)}
+          geometry={navigationGeometry}
+          terrainProfile={terrainProfile}
+        />
 
         <FeatureTileDeck
           closeLabel={t.close}

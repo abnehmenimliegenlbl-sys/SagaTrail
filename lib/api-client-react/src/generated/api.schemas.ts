@@ -5,6 +5,67 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type TerrainCorridorRequestOptions = {
+  /**
+     * @minimum 12
+     * @maximum 80
+     */
+  rows?: number;
+  /**
+     * @minimum 5
+     * @maximum 13
+     */
+  columns?: number;
+  /**
+     * @minimum 100
+     * @maximum 1500
+     */
+  halfWidthM?: number;
+};
+
+export interface TerrainCorridorRequest {
+  /**
+     * @minItems 2
+     * @maxItems 500
+     * @items.minItems 2
+     * @items.maxItems 2
+     */
+  geometry: [number, number][];
+  options?: TerrainCorridorRequestOptions;
+}
+
+export interface TerrainCorridorCell {
+  lat: number;
+  lng: number;
+  /** @nullable */
+  elevationM: number | null;
+}
+
+export type TerrainCorridorResponseOrigin = {
+  lat: number;
+  lng: number;
+};
+
+export type TerrainCorridorResponseBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export interface TerrainCorridorResponse {
+  version: 1;
+  source: 'SwissTopo DTM corridor profiles';
+  rows: number;
+  columns: number;
+  halfWidthM: number;
+  routeLengthM: number;
+  origin: TerrainCorridorResponseOrigin;
+  bounds: TerrainCorridorResponseBounds;
+  fetchedAt: number;
+  grid: TerrainCorridorCell[][];
+}
+
 export interface HealthStatus {
   status: string;
 }
