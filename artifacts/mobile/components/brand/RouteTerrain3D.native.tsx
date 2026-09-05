@@ -47,6 +47,11 @@ type Model = {
 type ViewMode = "overview" | "walk" | "flight";
 type MapBounds = TerrainGrid["bounds"];
 type MapTile = { bounds: MapBounds; key: string };
+type LoadedFlightTile = {
+  tile: MapTile;
+  texture: Texture;
+  geometry: BufferGeometry;
+};
 
 const gradeColors = {
   green: "#39FF14",
@@ -283,6 +288,55 @@ function routeDistances(route: number[][]): number[] {
   return distances;
 }
 
+function geoPointAtRouteDistance(
+  points: number[][],
+  distances: number[],
+  distance: number,
+): number[] | undefined {
+  const lastIndex = Math.min(points.length, distances.length) - 1;
+  if (lastIndex < 0) return undefined;
+  if (distance <= 0) return points[0];
+  if (distance >= distances[lastIndex]) return points[lastIndex];
+  let high = 1;
+  while (high <= lastIndex && distances[high] < distance) high += 1;
+  const low = Math.max(0, high - 1);
+  const span = distances[high] - distances[low];
+  const fraction = span > 0 ? (distance - distances[low]) / span : 0;
+  return [
+    points[low][0] + (points[high][0] - points[low][0]) * fraction,
+    points[low][1] + (points[high][1] - points[low][1]) * fraction,
+  ];
+}
+
+function flightDetailTiles(
+  geometry: number[][],
+  distances: number[],
+  bounds: MapBounds,
+): MapTile[] {
+  const routeLengthKm = distances.at(-1) ?? 0;
+  const spacingKm = 1.2;
+  const radiusM = 900;
+  const count = Math.max(1, Math.ceil(routeLengthKm / spacingKm) + 1);
+  return Array.from({ length: count }, (_, index) => {
+    const distanceKm = Math.min(routeLengthKm, index * spacingKm);
+    const center =
+      geoPointAtRouteDistance(geometry, distances, distanceKm) ?? geometry[0];
+    const latitudeRadius = radiusM / 111_320;
+    const longitudeRadius =
+      radiusM /
+      (111_320 * Math.max(0.2, Math.cos(center[0] * radians)));
+    return {
+      key: `flight-${index}`,
+      bounds: {
+        south: Math.max(bounds.south, center[0] - latitudeRadius),
+        north: Math.min(bounds.north, center[0] + latitudeRadius),
+        west: Math.max(bounds.west, center[1] - longitudeRadius),
+        east: Math.min(bounds.east, center[1] + longitudeRadius),
+      },
+    };
+  });
+}
+
 function pointAtRouteDistance(
   points: Vector3[],
   distances: number[],
@@ -458,8 +512,20 @@ function Scene({
     () => routeDistances(model.geometry),
     [model.geometry],
   );
+  const flightTiles = useMemo(
+    () =>
+      flightDetailTiles(
+        model.geometry,
+        routeDistanceList,
+        model.grid.bounds,
+      ),
+    [model.geometry, model.grid.bounds, routeDistanceList],
+  );
   const [textures, setTextures] = useState<Texture[]>([]);
   const [reliefTexture, setReliefTexture] = useState<Texture | null>(null);
+  const [flightTileVersion, setFlightTileVersion] = useState(0);
+  const loadedFlightTiles = useRef(new Map<number, LoadedFlightTile>());
+  const loadingFlightTiles = useRef(new Set<number>());
   const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
   const revealedDistanceRef = useRef(0);
   const flightCompleted = useRef(false);
@@ -695,12 +761,100 @@ function Scene({
   }, [camera, mode, overview, viewport.height, viewport.width]);
 
   const routeLengthKm = routeDistanceList.at(-1) ?? 0;
+  const activeFlightTileIndex = Math.min(
+    flightTiles.length - 1,
+    Math.max(0, Math.floor(revealedDistanceKm / 1.2)),
+  );
   useEffect(() => {
     flightCompleted.current = false;
     const initialDistance = mode === "overview" ? routeLengthKm : 0;
     revealedDistanceRef.current = initialDistance;
     setRevealedDistanceKm(initialDistance);
   }, [mode, routeLengthKm, runId]);
+
+  useEffect(() => {
+    const disposeAll = () => {
+      loadedFlightTiles.current.forEach(({ texture, geometry }) => {
+        texture.dispose();
+        geometry.dispose();
+      });
+      loadedFlightTiles.current.clear();
+      loadingFlightTiles.current.clear();
+      setFlightTileVersion((value) => value + 1);
+    };
+    if (mode !== "flight") {
+      disposeAll();
+      return;
+    }
+
+    let active = true;
+    const wanted = new Set(
+      [activeFlightTileIndex, activeFlightTileIndex + 1].filter(
+        (index) => index >= 0 && index < flightTiles.length,
+      ),
+    );
+    loadedFlightTiles.current.forEach((loaded, index) => {
+      if (wanted.has(index)) return;
+      loaded.texture.dispose();
+      loaded.geometry.dispose();
+      loadedFlightTiles.current.delete(index);
+    });
+    setFlightTileVersion((value) => value + 1);
+
+    for (const index of wanted) {
+      if (
+        loadedFlightTiles.current.has(index) ||
+        loadingFlightTiles.current.has(index)
+      ) {
+        continue;
+      }
+      loadingFlightTiles.current.add(index);
+      const tile = flightTiles[index];
+      const load = async () => {
+        let lastError: unknown;
+        for (const size of mapTextureSizes) {
+          try {
+            const texture = await loadRouteMapTexture(
+              swissTopoTextureUrl(tile.bounds, size),
+              `route-terrain-detail-${index}-${size}`,
+            );
+            if (!active) {
+              texture.dispose();
+              return;
+            }
+            loadedFlightTiles.current.set(index, {
+              tile,
+              texture,
+              geometry: buildTerrainGeometry(model.grid, tile.bounds),
+            });
+            setFlightTileVersion((value) => value + 1);
+            return;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        console.warn(
+          `[RouteTerrain3D] flight detail tile ${index} failed`,
+          lastError,
+        );
+      };
+      void load().finally(() => loadingFlightTiles.current.delete(index));
+    }
+    return () => {
+      active = false;
+    };
+  }, [activeFlightTileIndex, flightTiles, mode, model.grid]);
+
+  useEffect(
+    () => () => {
+      loadedFlightTiles.current.forEach(({ texture, geometry }) => {
+        texture.dispose();
+        geometry.dispose();
+      });
+      loadedFlightTiles.current.clear();
+    },
+    [],
+  );
 
   useFrame((_, delta) => {
     if (mode !== "overview") {
@@ -755,6 +909,10 @@ function Scene({
       };
     })
     .filter((line): line is NonNullable<typeof line> => line != null);
+  const visibleFlightTiles = useMemo(
+    () => Array.from(loadedFlightTiles.current.values()),
+    [flightTileVersion],
+  );
 
   return (
     <>
@@ -769,6 +927,17 @@ function Scene({
             roughness={1}
             metalness={0}
             side={DoubleSide}
+          />
+        </mesh>
+      ))}
+      {visibleFlightTiles.map(({ tile, texture, geometry }) => (
+        <mesh key={tile.key} geometry={geometry} renderOrder={2}>
+          <meshBasicMaterial
+            map={texture}
+            side={DoubleSide}
+            polygonOffset
+            polygonOffsetFactor={-2}
+            toneMapped={false}
           />
         </mesh>
       ))}
