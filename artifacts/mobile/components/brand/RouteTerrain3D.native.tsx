@@ -45,6 +45,8 @@ type Model = {
   profile: TerrainProfilePoint[];
 };
 type ViewMode = "overview" | "walk" | "flight";
+type MapBounds = TerrainGrid["bounds"];
+type MapTile = { bounds: MapBounds; key: string };
 
 const gradeColors = {
   green: "#39FF14",
@@ -54,7 +56,23 @@ const gradeColors = {
 };
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
-const mapTextureSizes: readonly number[] = [1536, 1024];
+const mapTextureSizes: readonly number[] = [1024, 768];
+
+function mapTiles(bounds: MapBounds): MapTile[] {
+  const latitudeStep = (bounds.north - bounds.south) / 2;
+  const longitudeStep = (bounds.east - bounds.west) / 3;
+  return Array.from({ length: 2 }, (_, row) =>
+    Array.from({ length: 3 }, (_, column) => ({
+      key: `${row}-${column}`,
+      bounds: {
+        south: bounds.south + row * latitudeStep,
+        north: bounds.south + (row + 1) * latitudeStep,
+        west: bounds.west + column * longitudeStep,
+        east: bounds.west + (column + 1) * longitudeStep,
+      },
+    })),
+  ).flat();
+}
 
 function imageSize(uri: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
@@ -112,8 +130,8 @@ function distanceKm(a: number[], b: number[]): number {
   return 6371 * Math.sqrt(deltaLat * deltaLat + longitude * longitude);
 }
 
-function swissTopoTextureUrl(grid: TerrainGrid, size: number): string {
-  const { south, west, north, east } = grid.bounds;
+function swissTopoTextureUrl(bounds: MapBounds, size: number): string {
+  const { south, west, north, east } = bounds;
   return `https://wms.geo.admin.ch/?${new URLSearchParams({
     SERVICE: "WMS",
     REQUEST: "GetMap",
@@ -161,7 +179,10 @@ function toWorld(
   );
 }
 
-function buildTerrainGeometry(grid: TerrainGrid): BufferGeometry {
+function buildTerrainGeometry(
+  grid: TerrainGrid,
+  textureBounds: MapBounds = grid.bounds,
+): BufferGeometry {
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
@@ -173,10 +194,11 @@ function buildTerrainGeometry(grid: TerrainGrid): BufferGeometry {
       const position = toWorld(grid, cell.lat, cell.lng, cell.elevationM ?? 0);
       positions.push(position.x, position.y, position.z);
       const u =
-        (cell.lng - grid.bounds.west) / (grid.bounds.east - grid.bounds.west);
+        (cell.lng - textureBounds.west) /
+        (textureBounds.east - textureBounds.west);
       const v =
-        (cell.lat - grid.bounds.south) /
-        (grid.bounds.north - grid.bounds.south);
+        (cell.lat - textureBounds.south) /
+        (textureBounds.north - textureBounds.south);
       uvs.push(u, v);
     }
   }
@@ -185,6 +207,18 @@ function buildTerrainGeometry(grid: TerrainGrid): BufferGeometry {
     grid.grid[row][column].elevationM != null;
   for (let row = 0; row < grid.rows - 1; row++) {
     for (let column = 0; column < grid.columns - 1; column++) {
+      const cellCenterLat =
+        (grid.grid[row][column].lat + grid.grid[row + 1][column + 1].lat) / 2;
+      const cellCenterLng =
+        (grid.grid[row][column].lng + grid.grid[row + 1][column + 1].lng) / 2;
+      if (
+        cellCenterLat < textureBounds.south ||
+        cellCenterLat >= textureBounds.north ||
+        cellCenterLng < textureBounds.west ||
+        cellCenterLng >= textureBounds.east
+      ) {
+        continue;
+      }
       const topLeft = row * grid.columns + column;
       const topRight = topLeft + 1;
       const bottomLeft = topLeft + grid.columns;
@@ -415,11 +449,16 @@ function Scene({
   onMapLoadState: (state: "loading" | "ready" | "error") => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
+  const tiles = useMemo(() => mapTiles(model.grid.bounds), [model.grid.bounds]);
+  const tileTerrains = useMemo(
+    () => tiles.map((tile) => buildTerrainGeometry(model.grid, tile.bounds)),
+    [model.grid, tiles],
+  );
   const routeDistanceList = useMemo(
     () => routeDistances(model.geometry),
     [model.geometry],
   );
-  const [texture, setTexture] = useState<Texture | null>(null);
+  const [textures, setTextures] = useState<Texture[]>([]);
   const [reliefTexture, setReliefTexture] = useState<Texture | null>(null);
   const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
   const revealedDistanceRef = useRef(0);
@@ -429,33 +468,40 @@ function Scene({
 
   useEffect(() => {
     let active = true;
-    setTexture(null);
+    setTextures([]);
     onMapLoadState("loading");
-    const loadBaseMap = async () => {
+    const loadTile = async (tile: MapTile) => {
       let lastError: unknown;
       for (const size of mapTextureSizes) {
         try {
           return await loadRouteMapTexture(
-            swissTopoTextureUrl(model.grid, size),
-            `route-terrain-basemap-${size}`,
+            swissTopoTextureUrl(tile.bounds, size),
+            `route-terrain-basemap-${tile.key}-${size}`,
           );
         } catch (error) {
           lastError = error;
           console.warn(
-            `[RouteTerrain3D] SwissTopo texture ${size}x${size} failed`,
+            `[RouteTerrain3D] SwissTopo tile ${tile.key} ${size}x${size} failed`,
             error,
           );
         }
       }
       throw lastError;
     };
+    const loadBaseMap = async () => {
+      const loaded: Texture[] = [];
+      for (let index = 0; index < tiles.length; index += 2) {
+        loaded.push(...(await Promise.all(tiles.slice(index, index + 2).map(loadTile))));
+      }
+      return loaded;
+    };
     loadBaseMap()
       .then((loaded) => {
         if (!active) {
-          loaded.dispose();
+          loaded.forEach((texture) => texture.dispose());
           return;
         }
-        setTexture(loaded);
+        setTextures(loaded);
         onMapLoadState("ready");
       })
       .catch((error) => {
@@ -465,9 +511,9 @@ function Scene({
     return () => {
       active = false;
     };
-  }, [model.grid, onMapLoadState]);
+  }, [onMapLoadState, tiles]);
   useEffect(() => {
-    if (!texture) return;
+    if (textures.length !== tiles.length) return;
     let active = true;
     const loadRelief = async () => {
       for (const size of mapTextureSizes) {
@@ -498,9 +544,16 @@ function Scene({
     return () => {
       active = false;
     };
-  }, [model.grid, texture]);
+  }, [model.grid, textures.length, tiles.length]);
   useEffect(() => () => terrain.dispose(), [terrain]);
-  useEffect(() => () => texture?.dispose(), [texture]);
+  useEffect(
+    () => () => tileTerrains.forEach((geometry) => geometry.dispose()),
+    [tileTerrains],
+  );
+  useEffect(
+    () => () => textures.forEach((texture) => texture.dispose()),
+    [textures],
+  );
   useEffect(() => () => reliefTexture?.dispose(), [reliefTexture]);
 
   const route = useMemo(() => {
@@ -708,8 +761,8 @@ function Scene({
       <color attach="background" args={["#101A16"]} />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
-      {texture && (
-        <mesh geometry={terrain}>
+      {textures.map((texture, index) => (
+        <mesh key={tiles[index].key} geometry={tileTerrains[index]}>
           <meshStandardMaterial
             map={texture}
             color="#fff"
@@ -718,8 +771,8 @@ function Scene({
             side={DoubleSide}
           />
         </mesh>
-      )}
-      {texture && reliefTexture && (
+      ))}
+      {textures.length === tiles.length && reliefTexture && (
         <mesh geometry={terrain}>
           <meshBasicMaterial
             map={reliefTexture}
