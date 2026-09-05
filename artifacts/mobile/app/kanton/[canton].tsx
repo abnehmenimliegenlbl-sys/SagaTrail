@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -381,6 +381,12 @@ export default function KantonRouten() {
 
   return (
     <Background>
+      <Stack.Screen
+        options={{
+          gestureEnabled: false,
+          fullScreenGestureEnabled: false,
+        }}
+      />
       <ScrollView
         contentContainerStyle={{
           paddingTop: topPad,
