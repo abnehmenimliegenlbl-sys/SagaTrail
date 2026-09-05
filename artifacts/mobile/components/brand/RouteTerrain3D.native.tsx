@@ -312,20 +312,19 @@ function Scene({
 
   const overview = useMemo(() => {
     const positions = terrain.getAttribute("position") as BufferAttribute;
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity,
-      minZ = Infinity,
-      maxZ = -Infinity;
+    let minY = Infinity,
+      maxY = -Infinity;
     for (let index = 0; index < positions.count; index++) {
-      minX = Math.min(minX, positions.getX(index));
-      maxX = Math.max(maxX, positions.getX(index));
       minY = Math.min(minY, positions.getY(index));
       maxY = Math.max(maxY, positions.getY(index));
-      minZ = Math.min(minZ, positions.getZ(index));
-      maxZ = Math.max(maxZ, positions.getZ(index));
     }
+    const routePositions = model.geometry.map((point) =>
+      toWorld(model.grid, point[0], point[1], 0),
+    );
+    const minX = Math.min(...routePositions.map((point) => point.x));
+    const maxX = Math.max(...routePositions.map((point) => point.x));
+    const minZ = Math.min(...routePositions.map((point) => point.z));
+    const maxZ = Math.max(...routePositions.map((point) => point.z));
     const extent = Math.max(maxX - minX, maxZ - minZ, 300);
     return {
       target: new Vector3(
@@ -336,7 +335,7 @@ function Scene({
       extent,
       top: maxY,
     };
-  }, [terrain]);
+  }, [model.geometry, model.grid, terrain]);
 
   useEffect(() => {
     if (!follow) {
@@ -380,14 +379,16 @@ function Scene({
       <color attach="background" args={["#101A16"]} />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
-      <mesh geometry={terrain}>
-        <meshStandardMaterial
-          map={texture}
-          color={texture ? "#fff" : "#75966d"}
-          roughness={0.95}
-          side={DoubleSide}
-        />
-      </mesh>
+      {texture && (
+        <mesh geometry={terrain}>
+          <meshStandardMaterial
+            map={texture}
+            color="#fff"
+            roughness={0.95}
+            side={DoubleSide}
+          />
+        </mesh>
+      )}
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
@@ -453,7 +454,10 @@ export default function RouteTerrain3D({
     const corridorGeometry = geometry.map(
       (point) => [point[0], point[1]] as [number, number],
     );
-    createTerrainCorridor({ geometry: corridorGeometry })
+    createTerrainCorridor({
+      geometry: corridorGeometry,
+      options: { rows: 40, columns: 13, halfWidthM: 500, fullArea: true },
+    })
       .then((data) => {
         const grid = parseTerrainCorridor(data);
         if (!grid) throw new Error();

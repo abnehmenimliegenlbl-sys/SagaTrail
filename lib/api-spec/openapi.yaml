@@ -1551,6 +1551,9 @@ components:
               minimum: 100
               maximum: 1500
               default: 500
+            fullArea:
+              type: boolean
+              default: false
     TerrainCorridorCell:
       type: object
       required: [lat, lng, elevationM]
