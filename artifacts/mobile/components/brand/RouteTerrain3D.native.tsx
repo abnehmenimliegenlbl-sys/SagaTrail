@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Canvas, useFrame, useThree } from "@react-three/fiber/native";
 import { GLView } from "expo-gl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -15,6 +15,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
+  Group,
   Texture,
   Vector3,
 } from "three";
@@ -67,8 +68,8 @@ function swissTopoTextureUrl(grid: TerrainGrid): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: "1024",
-    HEIGHT: "1024",
+    WIDTH: "3072",
+    HEIGHT: "3072",
     FORMAT: "image/jpeg",
   }).toString()}`;
 }
@@ -84,8 +85,8 @@ function swissSurfaceReliefUrl(grid: TerrainGrid): string {
     STYLES: "default",
     CRS: "EPSG:4326",
     BBOX: `${south},${west},${north},${east}`,
-    WIDTH: "1024",
-    HEIGHT: "1024",
+    WIDTH: "3072",
+    HEIGHT: "3072",
     FORMAT: "image/png",
     TRANSPARENT: "TRUE",
   }).toString()}`;
@@ -239,6 +240,67 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
   );
 }
 
+function RouteEndpointFlag({
+  position,
+  kind,
+}: {
+  position: Vector3;
+  kind: "start" | "finish";
+}) {
+  const group = useRef<Group>(null);
+  const camera = useThree((state) => state.camera);
+  const startFlagGeometry = useMemo(() => {
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new BufferAttribute(
+        new Float32Array([0, 44, 0, 32, 36, 0, 0, 28, 0]),
+        3,
+      ),
+    );
+    geometry.setIndex([0, 1, 2]);
+    geometry.computeVertexNormals();
+    return geometry;
+  }, []);
+
+  useEffect(() => () => startFlagGeometry.dispose(), [startFlagGeometry]);
+  useFrame(() => {
+    if (!group.current) return;
+    group.current.rotation.y = Math.atan2(
+      camera.position.x - position.x,
+      camera.position.z - position.z,
+    );
+  });
+
+  return (
+    <group ref={group} position={[position.x, position.y, position.z]}>
+      <mesh position={[0, 22, 0]}>
+        <cylinderGeometry args={[1.5, 1.5, 44, 8]} />
+        <meshStandardMaterial color="#D1D5DB" metalness={0.65} roughness={0.35} />
+      </mesh>
+      {kind === "start" ? (
+        <mesh geometry={startFlagGeometry}>
+          <meshStandardMaterial color="#DA291C" side={DoubleSide} />
+        </mesh>
+      ) : (
+        Array.from({ length: 2 }, (_, row) =>
+          Array.from({ length: 3 }, (_, column) => (
+            <mesh
+              key={`finish-${row}-${column}`}
+              position={[5 + column * 10, 40.5 - row * 7, 0]}
+            >
+              <boxGeometry args={[10, 7, 0.8]} />
+              <meshStandardMaterial
+                color={(row + column) % 2 === 0 ? "#111111" : "#FFFFFF"}
+              />
+            </mesh>
+          )),
+        )
+      )}
+    </group>
+  );
+}
+
 function Scene({
   model,
   playing,
@@ -351,17 +413,17 @@ function Scene({
 
   const overview = useMemo(() => {
     const positions = terrain.getAttribute("position") as BufferAttribute;
-    let minY = Infinity,
-      maxY = -Infinity,
-      terrainMinX = Infinity,
+    let terrainMinX = Infinity,
       terrainMaxX = -Infinity,
+      terrainMinY = Infinity,
+      terrainMaxY = -Infinity,
       terrainMinZ = Infinity,
       terrainMaxZ = -Infinity;
     for (let index = 0; index < positions.count; index++) {
       terrainMinX = Math.min(terrainMinX, positions.getX(index));
       terrainMaxX = Math.max(terrainMaxX, positions.getX(index));
-      minY = Math.min(minY, positions.getY(index));
-      maxY = Math.max(maxY, positions.getY(index));
+      terrainMinY = Math.min(terrainMinY, positions.getY(index));
+      terrainMaxY = Math.max(terrainMaxY, positions.getY(index));
       terrainMinZ = Math.min(terrainMinZ, positions.getZ(index));
       terrainMaxZ = Math.max(terrainMaxZ, positions.getZ(index));
     }
@@ -369,47 +431,57 @@ function Scene({
       ? {
           minX: Math.min(...route.map((point) => point.x)),
           maxX: Math.max(...route.map((point) => point.x)),
+          minY: Math.min(...route.map((point) => point.y)),
+          maxY: Math.max(...route.map((point) => point.y)),
           minZ: Math.min(...route.map((point) => point.z)),
           maxZ: Math.max(...route.map((point) => point.z)),
         }
       : {
           minX: terrainMinX,
           maxX: terrainMaxX,
+          minY: terrainMinY,
+          maxY: terrainMaxY,
           minZ: terrainMinZ,
           maxZ: terrainMaxZ,
         };
-    const routeMarginM = 600;
-    const width = Math.max(frame.maxX - frame.minX + routeMarginM * 2, 300);
-    const height = Math.max(frame.maxZ - frame.minZ + routeMarginM * 2, 300);
-    const extent = Math.max(width, height);
     return {
       target: new Vector3(
         (frame.minX + frame.maxX) / 2,
-        (minY + maxY) / 2,
-        (frame.minZ + frame.maxZ) / 2 + height * 0.16,
+        (frame.minY + frame.maxY) / 2,
+        (frame.minZ + frame.maxZ) / 2,
       ),
-      extent,
-      width,
-      height,
-      top: maxY,
     };
   }, [route, terrain]);
 
   useEffect(() => {
     if (!follow) {
+      const tilt = (48 * Math.PI) / 180;
       const verticalFov = (48 * Math.PI) / 180;
       const aspect = Math.max(0.1, viewport.width / viewport.height);
       const horizontalFov =
         2 * Math.atan(Math.tan(verticalFov / 2) * aspect);
-      const distance = Math.max(
-        overview.height / (2 * Math.tan(verticalFov / 2)),
-        overview.width / (2 * Math.tan(horizontalFov / 2)),
-      );
+      const sinTilt = Math.sin(tilt);
+      const cosTilt = Math.cos(tilt);
+      const tanVertical = Math.tan(verticalFov / 2) * 0.94;
+      const tanHorizontal = Math.tan(horizontalFov / 2) * 0.94;
+      let distance = 300;
+      for (const point of route) {
+        const relativeX = point.x - overview.target.x;
+        const relativeY = point.y - overview.target.y;
+        const relativeZ = point.z - overview.target.z;
+        const projectedY = relativeY * cosTilt - relativeZ * sinTilt;
+        const towardCamera = relativeY * sinTilt + relativeZ * cosTilt;
+        distance = Math.max(
+          distance,
+          towardCamera + Math.abs(relativeX) / tanHorizontal,
+          towardCamera + Math.abs(projectedY) / tanVertical,
+        );
+      }
       camera.up.set(0, 1, 0);
       camera.position.set(
         overview.target.x,
-        overview.top + distance * 0.7,
-        overview.target.z + distance * 0.82,
+        overview.target.y + distance * sinTilt,
+        overview.target.z + distance * cosTilt,
       );
       camera.lookAt(overview.target);
       camera.updateProjectionMatrix();
@@ -475,6 +547,10 @@ function Scene({
       {gradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
+      {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
+      {route.at(-1) && (
+        <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
+      )}
       {marker && (
         <mesh position={[marker.x, marker.y, marker.z]}>
           <sphereGeometry args={[9, 16, 16]} />
@@ -541,9 +617,9 @@ export default function RouteTerrain3D({
     createTerrainArea({
       geometry: corridorGeometry,
       options: {
-        rows: 24,
-        columns: 24,
-        paddingM: 2000,
+        rows: 40,
+        columns: 40,
+        paddingM: 5000,
         viewportAspect: Math.max(
           0.4,
           Math.min(1, window.width / window.height),
