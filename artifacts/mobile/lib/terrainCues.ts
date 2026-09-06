@@ -90,6 +90,30 @@ function smoothIsolatedProfileSpikes(
   });
 }
 
+/** Total positive climb after removing isolated short DTM spikes. */
+export function calculateProfileAscentM(
+  points: readonly TerrainProfilePoint[],
+): number {
+  const valid: TerrainProfilePoint[] = [];
+  for (const point of points) {
+    if (
+      !Number.isFinite(point.distanceKm) ||
+      !Number.isFinite(point.altM) ||
+      (valid.length > 0 &&
+        point.distanceKm <= valid[valid.length - 1]!.distanceKm)
+    ) {
+      continue;
+    }
+    valid.push(point);
+  }
+  const smoothed = smoothIsolatedProfileSpikes(valid);
+  let ascentM = 0;
+  for (let index = 1; index < smoothed.length; index += 1) {
+    ascentM += Math.max(0, smoothed[index]!.altM - smoothed[index - 1]!.altM);
+  }
+  return Math.round(ascentM);
+}
+
 function pointAtDistance(
   coords: number[][],
   distances: number[],

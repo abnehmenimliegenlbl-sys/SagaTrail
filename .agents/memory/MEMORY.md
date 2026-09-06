@@ -128,3 +128,4 @@
 - [Shared GL terrain renderer](sagatrail-gl-terrain.md) — normal panorama and future full-route animation share Expo GL/Three; Viro stays AR-only and SVG remains fallback.
 - [Native Three texture and props](native-three-texture-props.md) — avoid browser TextureLoader and mutable Vector3 JSX props in Expo GL; both fail only on physical devices.
 - [Swissimage border coverage](sagatrail-swissimage-border.md) — near borders, SwissTopo detail can be sharp toward Switzerland and weaker across the national border despite complete 360° meshes.
+- [SagaTrail exclusive speech](sagatrail-exclusive-speech.md) — audible narration and navigation clips must share one exclusive channel; route changes await complete cancellation.

@@ -92,9 +92,11 @@ import { detectNavigationCues, NavigationCue } from "@/lib/navigationCues";
 import {
   buildRouteGradeSegments,
   buildTerrainSections,
+  calculateProfileAscentM,
   limitTerrainSectionsForSpeech,
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
+import { estimateRouteMinutes } from "@/lib/waypointEta";
 import {
   bereiteAbbiegeMitteilungenVor,
   sendeAbbiegeMitteilung,
@@ -630,8 +632,21 @@ export default function LiveHike() {
   const totalKm = acceptedRouteGeometry
     ? Math.max(0.01, geometryLengthKm(acceptedRouteGeometry))
     : (route?.distanceKm ?? 6.4);
-  const ascentM = route?.ascentM ?? 480;
-  const totalMin = route?.minutes ?? 165;
+  const [terrainProfile, setTerrainProfile] =
+    useState<TerrainProfilePoint[] | null>(null);
+  const [terrainProfileGeometry, setTerrainProfileGeometry] =
+    useState<number[][] | null>(null);
+  const activeProfileReady =
+    !!acceptedRouteGeometry &&
+    terrainProfileGeometry === navigationGeometry &&
+    !!terrainProfile &&
+    terrainProfile.length >= 2;
+  const ascentM = activeProfileReady
+    ? calculateProfileAscentM(terrainProfile)
+    : (route?.ascentM ?? 480);
+  const totalMin = activeProfileReady
+    ? estimateRouteMinutes(totalKm, ascentM)
+    : (route?.minutes ?? 165);
   const sac = route?.sac ?? "T3";
   // Einmalig beim Mount gesetzt — aendert sich danach nicht mehr, um einen
   // sichtbaren Kartensprung zu vermeiden, wenn die Route kurz nach der Saga
@@ -809,7 +824,6 @@ export default function LiveHike() {
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [watchReady, setWatchReady] = useState<boolean | null>(null);
-  const [terrainProfile, setTerrainProfile] = useState<TerrainProfilePoint[] | null>(null);
   const [terrainModel, setTerrainModel] = useState<LocalTerrainModel | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
@@ -990,6 +1004,9 @@ export default function LiveHike() {
   const terrainProgressRef = useRef<Set<string>>(new Set());
   const terrainEndedRef = useRef<Set<string>>(new Set());
   const narrationSoundRef = useRef<AudioSound | null>(null);
+  const turnSoundRef = useRef<AudioSound | null>(null);
+  const turnCompletionRef = useRef<(() => void) | null>(null);
+  const turnGenRef = useRef(0);
   const keepaliveSoundRef = useRef<AudioSound | null>(null);
   // Generationszaehler gegen ueberlappende Sprecher: jeder speak()-Aufruf
   // erhoeht ihn; nach jedem await prueft der Aufruf, ob er noch die aktuelle
@@ -1079,10 +1096,12 @@ export default function LiveHike() {
     terrainEndedRef.current.clear();
     if (!geometry || geometry.length < 2) {
       setTerrainProfile(null);
+      setTerrainProfileGeometry(null);
       return;
     }
     let cancelled = false;
     setTerrainProfile(null);
+    setTerrainProfileGeometry(null);
     const requestGeometry =
       geometry.length <= 2000
         ? geometry
@@ -1123,6 +1142,7 @@ export default function LiveHike() {
               firstBands,
             });
           }
+          setTerrainProfileGeometry(geometry);
           setTerrainProfile(data.profile);
         }
       })
@@ -1453,13 +1473,13 @@ export default function LiveHike() {
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
   useEffect(() => {
-    // mapCenter ist ein einmalig beim Mount gesetzter Snapshot. Falls die Route
-    // beim Mount noch nicht im Cache war (Direktstart), ist mapCenter null —
-    // dann auf die nachgeladen Routen-/Sagen-Koordinaten zurueckfallen.
-    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    const first = navigationGeometry?.[0];
+    const center = first
+      ? { lat: first[0], lng: first[1] }
+      : (route?.coordinates ?? saga?.coordinates ?? mapCenter);
     if (!center) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, center);
+    const bbox = bboxAroundGeometry(navigationGeometry, center);
     getAerialways(bbox)
       .then((result) => {
         if (!cancelled) setAerialways(result);
@@ -1470,17 +1490,20 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Historische/touristische Orte im Kartenausschnitt laden, live mit
   // Wikipedia-Zusammenfassungen angereichert — best effort, kein Blocker.
   useEffect(() => {
-    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    const first = navigationGeometry?.[0];
+    const center = first
+      ? { lat: first[0], lng: first[1] }
+      : (route?.coordinates ?? saga?.coordinates ?? mapCenter);
     if (!center) return;
     let cancelled = false;
     // Der Gipfelkorridor entspricht der maximalen Erkennungsdistanz. Andere
     // POI-Typen werden danach weiterhin mit ihren engeren Korridoren gefiltert.
-    const bbox = bboxAroundGeometry(route?.geometry, center, 2.0);
+    const bbox = bboxAroundGeometry(navigationGeometry, center, 2.0);
     // Alpine Naturmerkmale dürfen bis 2 km vom Routenverlauf entfernt sein.
     // Ruinen/archäologische Fundstätten: 1 km (oft etwas abseits des Weges).
     // Alle anderen POIs (Kreuze, Kapellen, Brunnen, …): 0.5 km.
@@ -1499,9 +1522,13 @@ export default function LiveHike() {
       if (RUIN_KINDS.has(kind)) return 1.0;
       return 0.5;
     };
-    const geo = route?.geometry;
+    const geo = navigationGeometry;
 
     const filterAndSet = (result: Awaited<ReturnType<typeof getPois>>) => {
+      // Ein leeres Resultat kann der kurzfristige Overpass-Warm-up sein.
+      // Vorhandene Original-/Offline-POIs bleiben bis zum erfolgreichen
+      // Nachladen des aktiven Zubringerkorridors erhalten.
+      if (result.length === 0) return;
       const gefiltert =
         geo && geo.length > 1
           ? result.filter((p) => {
@@ -1574,15 +1601,20 @@ export default function LiveHike() {
 
     // Offline-Cache bevorzugen wenn heruntergeladen — kein Netzwerk noetig.
     (async () => {
+      let offlineLoaded = false;
       if (route?.id) {
         try {
           const offlinePois = await loadOfflinePois(route.id);
           if (offlinePois && !cancelled) {
             filterAndSet(offlinePois as Awaited<ReturnType<typeof getPois>>);
-            return;
+            offlineLoaded = true;
           }
         } catch {}
       }
+      if (cancelled || isOffline) return;
+      // Der Offline-Cache gehört zur Katalogroute. Nach einem Zubringer muss
+      // online zusätzlich der neue aktive Gesamtkorridor geladen werden.
+      if (offlineLoaded && !acceptedRouteGeometry) return;
       // Immer laden — cancelled-Check ist in filterAndSet/retry enthalten.
       tryLoad();
     })();
@@ -1591,7 +1623,17 @@ export default function LiveHike() {
       cancelled = true;
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng, loadOfflinePois]);
+  }, [
+    acceptedRouteGeometry,
+    navigationGeometry,
+    route?.id,
+    route?.coordinates,
+    saga?.coordinates,
+    mapCenter?.lat,
+    mapCenter?.lng,
+    loadOfflinePois,
+    isOffline,
+  ]);
 
   // Gipfel werden erst bei geöffneter Panorama-Kachel geladen. Die Abfrage
   // verwendet den aktuellen, frischen GPS-Standort und enthält ausschließlich
@@ -1648,10 +1690,13 @@ export default function LiveHike() {
   // laden — gleiche Bounding Box wie die Seilbahnen, kein Korridorfilter noetig,
   // da Partner ohnehin nur vereinzelt gepflegt werden.
   useEffect(() => {
-    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    const first = navigationGeometry?.[0];
+    const center = first
+      ? { lat: first[0], lng: first[1] }
+      : (route?.coordinates ?? saga?.coordinates ?? mapCenter);
     if (!center) return;
     let cancelled = false;
-    const bbox = bboxAroundGeometry(route?.geometry, center, 5.0);
+    const bbox = bboxAroundGeometry(navigationGeometry, center, 5.0);
     getPartners(bbox)
       .then((result) => {
         if (!cancelled) setPartners(result);
@@ -1662,13 +1707,16 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Trinkwasser im Umkreis der Route laden (Mittelpunkt, 8 km Radius).
   useEffect(() => {
-    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    const first = navigationGeometry?.[0];
+    const center = first
+      ? { lat: first[0], lng: first[1] }
+      : (route?.coordinates ?? saga?.coordinates ?? mapCenter);
     if (!center) return;
-    const geometry = route?.geometry;
+    const geometry = navigationGeometry;
     if (!geometry || geometry.length < 2) {
       setWaterSources([]);
       return;
@@ -1686,14 +1734,17 @@ export default function LiveHike() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Toiletten und Sicherheitsinfrastruktur als sachliche Kartenebene laden.
   // Diese POIs werden absichtlich nicht in den Erzähl-/Wikipedia-Flow gegeben.
   useEffect(() => {
-    const center = route?.coordinates ?? saga?.coordinates ?? mapCenter;
+    const first = navigationGeometry?.[0];
+    const center = first
+      ? { lat: first[0], lng: first[1] }
+      : (route?.coordinates ?? saga?.coordinates ?? mapCenter);
     if (!center) return;
-    const geometry = route?.geometry;
+    const geometry = navigationGeometry;
     if (!geometry || geometry.length < 2) {
       setSafetyPois([]);
       return;
@@ -1718,11 +1769,11 @@ export default function LiveHike() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [route?.id, route?.geometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
+  }, [navigationGeometry, route?.coordinates, saga?.coordinates, mapCenter?.lat, mapCenter?.lng]);
 
   // Parkplätze am Start- und Endpunkt der Route laden (je 800 m Radius).
   useEffect(() => {
-    const geom = route?.geometry;
+    const geom = navigationGeometry;
     if (!geom || geom.length < 2) return;
     let cancelled = false;
     const base = getApiBaseUrl() ?? "";
@@ -1750,7 +1801,7 @@ export default function LiveHike() {
         setParkingSpots(merged);
       });
     return () => { cancelled = true; };
-  }, [route?.id, route?.geometry]);
+  }, [navigationGeometry]);
 
   // Zwischenziele entlang der Route berechnen: Partner (Prio) + POIs,
   // max. 3, innerhalb 100 m Routenabstand.
@@ -2819,17 +2870,38 @@ export default function LiveHike() {
     };
   }, []);
 
-  const stopNarration = useCallback(async () => {
-    const sound = narrationSoundRef.current;
-    narrationSoundRef.current = null;
+  const stopTurnAudio = useCallback(async () => {
+    const sound = turnSoundRef.current;
+    turnSoundRef.current = null;
+    const complete = turnCompletionRef.current;
+    turnCompletionRef.current = null;
+    complete?.();
     if (sound) {
       try {
         await sound.stopAsync();
         await sound.unloadAsync();
       } catch {
-        // Best effort — Sound koennte bereits entladen sein.
+        // Best effort — der kurze Clip koennte bereits beendet sein.
       }
     }
+  }, []);
+
+  const stopNarration = useCallback(async () => {
+    const sound = narrationSoundRef.current;
+    narrationSoundRef.current = null;
+    navInterruptingRef.current = false;
+    await Promise.all([
+      stopTurnAudio(),
+      (async () => {
+        if (!sound) return;
+        try {
+          await sound.stopAsync();
+          await sound.unloadAsync();
+        } catch {
+          // Best effort — Sound koennte bereits entladen sein.
+        }
+      })(),
+    ]);
     // Zurueck auf MixWithOthers — andere Apps duerfen wieder ungedimmt spielen.
     setAudioModeAsync({
       allowsRecording: false,
@@ -2838,7 +2910,8 @@ export default function LiveHike() {
       interruptionMode: "mixWithOthers",
     }).catch(() => {});
     setSpeaking(false);
-  }, []);
+    speakingRef.current = false;
+  }, [stopTurnAudio]);
 
   // Manueller Stopp (Pause-Button, Abschluss, Verlassen des Screens):
   // erhoeht zusaetzlich die Generation, damit auch noch in-flight laufende
@@ -2847,6 +2920,7 @@ export default function LiveHike() {
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
     narrationGenRef.current++;
+    turnGenRef.current++;
     await stopNarration();
   }, [stopNarration]);
 
@@ -2873,6 +2947,15 @@ export default function LiveHike() {
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
+        const turnGen = ++turnGenRef.current;
+        const narrationGen = narrationGenRef.current;
+        // Zwei kurz nacheinander eintreffende Abbiegehinweise duerfen niemals
+        // zwei Clip-Player gleichzeitig offen halten.
+        await stopTurnAudio();
+        if (
+          turnGen !== turnGenRef.current ||
+          narrationGen !== narrationGenRef.current
+        ) return;
         const soundToResume = narrationSoundRef.current;
         if (soundToResume && speakingRef.current) {
           // Sound pausieren statt stoppen — Abspielposition bleibt erhalten.
@@ -2895,20 +2978,45 @@ export default function LiveHike() {
             }).catch(() => {});
             const { sound } = await createAudioSound(source);
             turnSound = sound;
-            await sound.playAsync();
-            await new Promise<void>((resolve) => {
+            if (
+              turnGen !== turnGenRef.current ||
+              narrationGen !== narrationGenRef.current
+            ) {
+              await sound.unloadAsync().catch(() => {});
+              return;
+            }
+            turnSoundRef.current = sound;
+            const completion = new Promise<void>((resolve) => {
+              let completed = false;
+              const complete = () => {
+                if (completed) return;
+                completed = true;
+                resolve();
+              };
+              turnCompletionRef.current = complete;
               sound.setOnPlaybackStatusUpdate((status) => {
-                if (!status.isLoaded || status.didJustFinish) resolve();
+                if (!status.isLoaded || status.didJustFinish) complete();
               });
             });
+            await sound.playAsync();
+            await completion;
           } catch {
             // Wenn der vorbereitete Abbiegeclip fehlt, denselben Hinweis als
             // OpenAI-Audio erzeugen. Es gibt bewusst keinen Gerätestimmen-
             // Fallback mehr.
-            navInterruptingRef.current = false;
-            await speakRef.current?.(text, undefined, { interrupt: true, useOpenAI: true });
+            if (
+              turnGen === turnGenRef.current &&
+              narrationGen === narrationGenRef.current
+            ) {
+              navInterruptingRef.current = false;
+              await speakRef.current?.(text, undefined, { interrupt: true, useOpenAI: true });
+            }
             return;
           } finally {
+            if (turnSoundRef.current === turnSound) {
+              turnSoundRef.current = null;
+              turnCompletionRef.current = null;
+            }
             try { await turnSound?.unloadAsync(); } catch {}
           }
           // Audio-Session nach dem kurzen Abbiegeclip zurücksetzen.
@@ -2921,8 +3029,13 @@ export default function LiveHike() {
         }
 
         // Nav-Ansage fertig: Narration fortsetzen, falls noch derselbe Sound aktiv.
+        if (turnGen !== turnGenRef.current) return;
         navInterruptingRef.current = false;
-        if (soundToResume && narrationSoundRef.current === soundToResume) {
+        if (
+          narrationGen === narrationGenRef.current &&
+          soundToResume &&
+          narrationSoundRef.current === soundToResume
+        ) {
           try { await soundToResume.playAsync(); } catch {}
         }
         return;
@@ -2985,6 +3098,13 @@ export default function LiveHike() {
           return blobToTempFileUri(blob);
         })();
         if (gen !== narrationGenRef.current) return;
+        // Normale Narration und Abbiegeclip teilen denselben exklusiven
+        // Ausgabekanal. Vor einem neuen Sprecher wird ein laufender Clip
+        // vollstaendig gestoppt und entladen.
+        turnGenRef.current++;
+        await stopTurnAudio();
+        navInterruptingRef.current = false;
+        if (gen !== narrationGenRef.current) return;
         // Vorheriges Audio direkt stoppen — kein setState, damit speaking=true
         // fuer den Ladeindikator erhalten bleibt.
         const prevSound = narrationSoundRef.current;
@@ -3000,13 +3120,18 @@ export default function LiveHike() {
           shouldPlayInBackground: true,
           interruptionMode: "duckOthers",
         }).catch(() => {});
-        const { sound } = await createAudioSound({ uri }, { shouldPlay: true });
+        if (gen !== narrationGenRef.current) return;
+        const { sound } = await createAudioSound({ uri });
         if (gen !== narrationGenRef.current) {
-          sound.unloadAsync().catch(() => {});
+          await sound.unloadAsync().catch(() => {});
           return;
         }
         narrationSoundRef.current = sound;
         sound.setOnPlaybackStatusUpdate((status) => {
+          if (
+            gen !== narrationGenRef.current ||
+            narrationSoundRef.current !== sound
+          ) return;
           if (!status.isLoaded) return;
           if (status.didJustFinish) {
             setSpeaking(false);
@@ -3046,6 +3171,14 @@ export default function LiveHike() {
             sound.playAsync().catch(() => {});
           }
         });
+        if (
+          gen !== narrationGenRef.current ||
+          narrationSoundRef.current !== sound
+        ) {
+          await sound.unloadAsync().catch(() => {});
+          return;
+        }
+        await sound.playAsync();
       } catch (err) {
         if (gen !== narrationGenRef.current) return;
         // Bei jedem Fehler (Rate-Limit, Netzwerkfehler, Server-Fehler, Offline)
@@ -3074,7 +3207,7 @@ export default function LiveHike() {
         }
       }
     },
-    [profile?.language]
+    [profile?.language, stopTurnAudio]
   );
   speakRef.current = speak;
 
@@ -3946,9 +4079,9 @@ export default function LiveHike() {
     }
   }
 
-  // Nach einer akzeptierten Umleitung nur den neuen Zubringer online nach
-  // POIs durchsuchen. Die ursprüngliche POI-Abfrage bleibt unverändert und
-  // liefert weiterhin die POIs der offiziellen Route.
+  // Nach einer akzeptierten Umleitung den neuen aktiven Gesamtkorridor sofort
+  // zusätzlich durchsuchen. Der allgemeine POI-Effekt lädt denselben Korridor
+  // mit den typabhängigen Reichweiten nach.
   const searchDetourPois = useCallback(
     (geometry: number[][]) => {
       if (isOffline || geometry.length < 2) return;
@@ -4020,9 +4153,8 @@ export default function LiveHike() {
     }
     if (combinedGeometry.length < 2) return;
 
-    setDetourPois([]);
     detourPoiSearchKeyRef.current = null;
-    if (!isOffline) searchDetourPois(recalcGeom);
+    if (!isOffline) searchDetourPois(combinedGeometry);
 
     await cancelNarration();
     setPreparing(true);

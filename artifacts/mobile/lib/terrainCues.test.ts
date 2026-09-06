@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import {
   buildRouteGradeSegments,
+  calculateProfileAscentM,
   limitTerrainSectionsForSpeech,
   type RouteGradeBand,
   type TerrainProfilePoint,
@@ -63,6 +64,29 @@ test("does not turn a single short elevation spike into red map segments", () =>
   const profile = linearProfile(0);
   profile[1]!.altM = 40;
   assertEveryBand(ROUTE_GEOMETRY, profile, "green");
+});
+
+test("calculates total ascent from real climbs without counting descents", () => {
+  assert.equal(
+    calculateProfileAscentM([
+      { distanceKm: 0, altM: 100 },
+      { distanceKm: 0.1, altM: 160 },
+      { distanceKm: 0.2, altM: 140 },
+      { distanceKm: 0.3, altM: 220 },
+    ]),
+    140,
+  );
+});
+
+test("does not count an isolated short DTM spike as ascent", () => {
+  assert.equal(
+    calculateProfileAscentM([
+      { distanceKm: 0, altM: 100 },
+      { distanceKm: 0.05, altM: 180 },
+      { distanceKm: 0.1, altM: 100 },
+    ]),
+    0,
+  );
 });
 
 test("uses the absolute grade for descents as well as climbs", () => {
