@@ -2816,9 +2816,16 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
     return;
   }
   try {
+    const values = rows.map((row) => ({
+      ...row,
+      wheelchairAccessibleCheckedAt:
+        typeof row.wheelchairAccessibleCheckedAt === "string"
+          ? new Date(row.wheelchairAccessibleCheckedAt)
+          : row.wheelchairAccessibleCheckedAt,
+    }));
     await db
       .insert(externalRoutesTable)
-      .values(rows as any)
+      .values(values as any)
       .onConflictDoUpdate({
         target: externalRoutesTable.id,
         set: {
@@ -2833,13 +2840,25 @@ router.post("/admin/routes/import", async (req, res): Promise<void> => {
           maxElevationM: sql`excluded.max_elevation_m`,
           minutes: sql`excluded.minutes`,
           sac: sql`excluded.sac`,
+          sacSource: sql`excluded.sac_source`,
+          schweizMobilCondition: sql`excluded.schweizmobil_condition`,
+          schweizMobilTechnique: sql`excluded.schweizmobil_technique`,
           terrain: sql`excluded.terrain`,
+          familyFriendly: sql`excluded.family_friendly`,
+          childFriendly: sql`excluded.child_friendly`,
+          dogsAllowed: sql`excluded.dogs_allowed`,
+          wheelchairAccessible: sql`excluded.wheelchair_accessible`,
+          wheelchairAccessibleSource: sql`excluded.wheelchair_accessible_source`,
+          wheelchairAccessibleCheckedAt: sql`excluded.wheelchair_accessible_checked_at`,
+          technicalDifficulty: sql`excluded.technical_difficulty`,
           lat: sql`excluded.lat`,
           lng: sql`excluded.lng`,
           geometry: sql`excluded.geometry`,
           geometryVersion: sql`excluded.geometry_version`,
           source: sql`excluded.source`,
           featured: sql`excluded.featured`,
+          routeType: sql`excluded.route_type`,
+          isEtappe: sql`excluded.is_etappe`,
           photoUrl: sql`COALESCE(excluded.photo_url, ${externalRoutesTable.photoUrl})`,
           photoAttribution: sql`COALESCE(excluded.photo_attribution, ${externalRoutesTable.photoAttribution})`,
           description: sql`COALESCE(excluded.description, ${externalRoutesTable.description})`,

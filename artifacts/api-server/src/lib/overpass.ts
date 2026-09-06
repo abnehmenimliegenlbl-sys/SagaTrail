@@ -1,6 +1,6 @@
 import type { Logger } from "pino";
 import { haversineM, type LatLng } from "./geo";
-import sacHuettenSeed from "./sacHuettenSeed.json" assert { type: "json" };
+import sacHuettenSeed from "./sacHuettenSeed.json" with { type: "json" };
 
 /**
  * Laedt reale Wanderrouten je Kanton aus OpenStreetMap ueber die Overpass-API.

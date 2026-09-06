@@ -17,9 +17,12 @@ if (!DRY && (!PROD_URL || !TOKEN)) {
   // Nur fertig angereicherte Routen übertragen
   const { rows } = await c.query(
     `SELECT id, saga_id, canton, cantons, name, ref, distance_km, distance_tag_km, ascent_m,
-            max_elevation_m, minutes, sac, terrain, lat, lng, geometry,
+             max_elevation_m, minutes, sac, sac_source, schweizmobil_condition,
+             schweizmobil_technique, terrain, family_friendly, child_friendly,
+             dogs_allowed, wheelchair_accessible, wheelchair_accessible_source,
+             wheelchair_accessible_checked_at, technical_difficulty, lat, lng, geometry,
             geometry_version, source, featured, photo_url, photo_attribution,
-            description, description_source
+             route_type, is_etappe, description, description_source
      FROM external_routes WHERE geometry_version > 0 ORDER BY id`,
   );
   await c.end();
@@ -45,9 +48,19 @@ if (!DRY && (!PROD_URL || !TOKEN)) {
       id: r.id, sagaId: r.saga_id, canton: r.canton, cantons: r.cantons, name: r.name,
       ref: r.ref, distanceKm: r.distance_km, distanceTagKm: r.distance_tag_km,
       ascentM: r.ascent_m, maxElevationM: r.max_elevation_m,
-      minutes, sac: r.sac, terrain: r.terrain, lat: r.lat, lng: r.lng,
+       minutes, sac: r.sac, sacSource: r.sac_source,
+       schweizMobilCondition: r.schweizmobil_condition,
+       schweizMobilTechnique: r.schweizmobil_technique,
+       terrain: r.terrain, familyFriendly: r.family_friendly,
+       childFriendly: r.child_friendly, dogsAllowed: r.dogs_allowed,
+       wheelchairAccessible: r.wheelchair_accessible,
+       wheelchairAccessibleSource: r.wheelchair_accessible_source,
+       wheelchairAccessibleCheckedAt: r.wheelchair_accessible_checked_at,
+       technicalDifficulty: r.technical_difficulty,
+       lat: r.lat, lng: r.lng,
       geometry: r.geometry, geometryVersion: r.geometry_version, source: r.source,
       featured: r.featured, photoUrl: r.photo_url, photoAttribution: r.photo_attribution,
+       routeType: r.route_type, isEtappe: r.is_etappe,
       description: r.description, descriptionSource: r.description_source,
     };
   };

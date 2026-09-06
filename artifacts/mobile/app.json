@@ -63,7 +63,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.RECORD_AUDIO"
-      ],
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -168,7 +168,6 @@
         "projectId": "5df5021d-8b4d-4168-8247-1094f2e4c216"
       }
     },
-    "owner": "inster",
     "owner": "inster"
   }
 }
