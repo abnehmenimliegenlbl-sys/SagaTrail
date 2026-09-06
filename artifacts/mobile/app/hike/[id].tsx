@@ -1022,6 +1022,8 @@ export default function LiveHike() {
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
   // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
   const ackAudioUriRef = useRef<string | null>(null);
+  const startupSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startupSequenceGenRef = useRef(0);
   const terrainModelRequestRef = useRef<{
     lat: number;
     lng: number;
@@ -2919,6 +2921,11 @@ export default function LiveHike() {
   // nach dem Stopp nicht doch noch zu sprechen beginnen.
   const cancelNarration = useCallback(async () => {
     narrationQueueRef.current = [];
+    startupSequenceGenRef.current++;
+    if (startupSequenceTimerRef.current !== null) {
+      clearTimeout(startupSequenceTimerRef.current);
+      startupSequenceTimerRef.current = null;
+    }
     narrationGenRef.current++;
     turnGenRef.current++;
     await stopNarration();
@@ -3320,18 +3327,38 @@ export default function LiveHike() {
       // diese Pruefung wuerde speak(..., {interrupt:true}) den Ack unterbrechen
       // und den Kapiteltext erneut abspielen — das ist Bug "Frage zweimal gestellt".
       const capturedIndex = currentIndex;
+      const startupSequenceGen = ++startupSequenceGenRef.current;
+      if (startupSequenceTimerRef.current !== null) {
+        clearTimeout(startupSequenceTimerRef.current);
+        startupSequenceTimerRef.current = null;
+      }
       (async () => {
         const offlineUri = saga?.id
           ? await getOfflineAudioUri(saga.id, capturedIndex).catch(() => null)
           : null;
         // Abbrechen wenn GPS oder Entscheidung diesen Kapitel-Index bereits
         // verlassen hat waehrend das Offline-Audio geladen wurde.
-        if (currentIndexRef.current !== capturedIndex) return;
+        if (
+          startupSequenceGen !== startupSequenceGenRef.current ||
+          currentIndexRef.current !== capturedIndex
+        ) return;
         if (capturedIndex === 0) {
           const packForCue = STORY_PACKS[resolveLang(cueLanguage)];
           speak(
             `${greetingPrefix} ${packForCue.hikeStartCue}`,
-            () => { setTimeout(() => speak(ch.text, undefined, { preFetchedUri: offlineUri ?? undefined }), 1500); },
+            () => {
+              if (startupSequenceGen !== startupSequenceGenRef.current) return;
+              startupSequenceTimerRef.current = setTimeout(() => {
+                startupSequenceTimerRef.current = null;
+                if (
+                  startupSequenceGen !== startupSequenceGenRef.current ||
+                  currentIndexRef.current !== capturedIndex
+                ) return;
+                speak(ch.text, undefined, {
+                  preFetchedUri: offlineUri ?? undefined,
+                });
+              }, 1500);
+            },
             { interrupt: true, useOpenAI: true }
           );
         } else {
