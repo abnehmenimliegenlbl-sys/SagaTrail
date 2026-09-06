@@ -84,10 +84,10 @@ export function generateStory(
 
 /**
  * Flechtet Navigationshinweise ("an der naechsten Weggabelung links/rechts")
- * nahtlos in bereits erzeugte Kapitel ein — egal ob diese lokal, vom Server
- * oder als Download geladen wurden. Die Hinweise stammen ausschliesslich aus
- * echter Routen-Geometrie (siehe navigationCues.ts); ohne Geometrie bleiben
- * die Kapitel unveraendert. Ankunfts- und Schlusskapitel bleiben frei davon.
+ * nahtlos in bereits erzeugte Kapitel ein. Solange die Route keine
+ * autoritativ bestaetigten Weggabelungen mit angeschlossenen Alternativwegen
+ * enthaelt, liefert navigationCues.ts bewusst keine Hinweise. Eine blosse
+ * Kurve der Routengeometrie darf nie als Wahlmoeglichkeit ausgegeben werden.
  */
 export function weaveNavigationCues(
   chapters: StoryChapter[],
