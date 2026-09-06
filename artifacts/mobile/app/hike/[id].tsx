@@ -703,6 +703,16 @@ export default function LiveHike() {
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
+  // Neue Wanderungen bleiben stumm, bis der erste verlässliche GPS-Fix
+  // bestätigt, dass der offizielle Start erreicht ist, oder der Nutzer im
+  // Start-Umleitungsdialog eine Option gewählt hat. Damit kann die asynchron
+  // vorbereitete Begrüssung nicht vor dem Dialog zu spielen beginnen.
+  const [startAudioReleased, setStartAudioReleased] = useState(isResume);
+  const startAudioReleasedRef = useRef(isResume);
+  const releaseStartAudio = useCallback(() => {
+    startAudioReleasedRef.current = true;
+    setStartAudioReleased(true);
+  }, []);
   const autoFollowRecalcStartedRef = useRef(false);
 
   useEffect(() => {
@@ -2980,6 +2990,9 @@ export default function LiveHike() {
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
     async (text: string, onFinished?: () => void, opts?: SpeakOptions) => {
+      // Vor der Startentscheidung darf keinerlei Audioausgabe beginnen:
+      // weder Begrüssung/Einführung, Sage, POI noch Navigationshinweis.
+      if (!startAudioReleasedRef.current) return;
       const enqueueNarration = () => {
         const entry: NarrationQueueItem = {
           text,
@@ -3313,7 +3326,11 @@ export default function LiveHike() {
       lat: navigationGeometry[0][0],
       lng: navigationGeometry[0][1],
     };
-    if (haversineKm(livePos, start) <= START_NEARBY_KM) return;
+    if (haversineKm(livePos, start) <= START_NEARBY_KM) {
+      startChoiceHandledRef.current = true;
+      releaseStartAudio();
+      return;
+    }
 
     const positionAtPrompt = livePos;
     startChoiceHandledRef.current = true;
@@ -3328,6 +3345,9 @@ export default function LiveHike() {
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
             autoFollowRecalcStartedRef.current = false;
+            startChoicePendingRef.current = false;
+            setStartChoicePending(false);
+            releaseStartAudio();
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("start");
           },
@@ -3337,6 +3357,9 @@ export default function LiveHike() {
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
             autoFollowRecalcStartedRef.current = false;
+            startChoicePendingRef.current = false;
+            setStartChoicePending(false);
+            releaseStartAudio();
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("fastest");
           },
@@ -3349,6 +3372,7 @@ export default function LiveHike() {
     livePos,
     navigationGeometry,
     preparing,
+    releaseStartAudio,
     startReached,
     t,
   ]);
@@ -3357,7 +3381,12 @@ export default function LiveHike() {
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
   // oder den Entscheidungsmoment erneut sperrt.
   useEffect(() => {
-    if (preparing || startChoicePendingRef.current || chapters.length === 0) return;
+    if (
+      preparing ||
+      !startAudioReleasedRef.current ||
+      startChoicePendingRef.current ||
+      chapters.length === 0
+    ) return;
     const ch = chapters[currentIndex];
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
@@ -3423,7 +3452,7 @@ export default function LiveHike() {
       lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, startChoicePending, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
+  }, [currentIndex, preparing, startAudioReleased, startChoicePending, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -4239,6 +4268,7 @@ export default function LiveHike() {
     followingRecalcRef.current = true;
     setFollowingRecalc(true);
     setStartReached(true);
+    releaseStartAudio();
     startChoicePendingRef.current = false;
     setStartChoicePending(false);
     setOffRoutePos(null);
@@ -4271,6 +4301,7 @@ export default function LiveHike() {
     navigationGeometry,
     premium,
     profile,
+    releaseStartAudio,
     recalcGeom,
     recalcRejoinFraction,
     resolveStory,
