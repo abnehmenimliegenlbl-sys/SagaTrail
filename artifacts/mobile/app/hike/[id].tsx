@@ -2239,6 +2239,7 @@ export default function LiveHike() {
       remainingKm: Math.max(0, totalKm - distance),
       heartRateBpm: heartRate?.bpm ?? null,
       hasFreshGps,
+      position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
   }, [distance, elapsedSec, finished, hasFreshGps, heartRate, livePos, nextWatchNavigation, offRoutePos, preparing, sosOpen, speaking, steps, totalKm]);
 
@@ -5328,7 +5329,7 @@ export default function LiveHike() {
         </View>
 
         {/* ── Wegbedingungen melden ─────────────────────────────────── */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20 }}>
+        <View style={styles.conditionSection}>
           <View style={[styles.conditionDivider, { backgroundColor: colors.glassBorder }]} />
           {conditionSubmitResult === "ok" && (
             <Text style={[styles.conditionSuccess, { color: colors.accent }]}>
@@ -6478,6 +6479,7 @@ const styles = StyleSheet.create({
   storyText: { fontFamily: fonts.story, fontSize: 20, lineHeight: 32 },
   narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
+  conditionSection: { paddingTop: 8, paddingBottom: 20 },
   conditionDivider: { height: 1, marginVertical: 16 },
   conditionChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   conditionChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12 },
@@ -6490,7 +6492,7 @@ const styles = StyleSheet.create({
     ...GLAS_3D,
     borderWidth: 1,
     borderRadius: 16,
-    marginHorizontal: 20,
+    marginTop: 12,
     marginBottom: 12,
     overflow: "hidden",
   },

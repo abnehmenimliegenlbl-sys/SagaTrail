@@ -1,5 +1,9 @@
 import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import {
+  isMeaningfulWatchStatusUpdate,
+  type WatchStatusGateSnapshot,
+} from "./watchStatusGate";
 
 /** Wire format shared with the optional SagaTrailCompanion native module. */
 export const HIKE_LIVE_STATE_VERSION = 1 as const;
@@ -44,6 +48,7 @@ export interface WatchLiveSnapshot {
   remainingKm: number;
   heartRateBpm: number | null;
   hasFreshGps: boolean;
+  position: { lat: number; lng: number } | null;
 }
 
 type CompanionModule = {
@@ -57,11 +62,16 @@ let permissionGranted: boolean | null = null;
 let statusNotificationId: string | null = null;
 let lastStatusSentAt = 0;
 let lastLiveStateSentAt = 0;
+let lastStatusSnapshot: WatchStatusGateSnapshot | null = null;
 
 function companionModule(): CompanionModule | null {
   if (Platform.OS === "web") return null;
   const module = NativeModules.SagaTrailCompanion as CompanionModule | undefined;
   return module?.publishLiveState ? module : null;
+}
+
+export function hasNativeWatchCompanion(): boolean {
+  return companionModule() !== null;
 }
 
 function finiteOrNull(value: unknown): number | null {
@@ -148,9 +158,20 @@ export async function prepareWatchCompanion(): Promise<boolean> {
 
 /** Notification mirror for companions without the optional native protocol module. */
 export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { force?: boolean }): Promise<boolean> {
-  if (Platform.OS === "web" || !snapshot.hasFreshGps || !(await prepareWatchCompanion())) return false;
+  // A real companion receives the private live-state channel. Scheduling a
+  // phone notification as well would visibly notify the user every cycle.
+  if (
+    Platform.OS === "web" ||
+    hasNativeWatchCompanion() ||
+    !snapshot.hasFreshGps
+  ) return false;
   const now = Date.now();
-  if (!options?.force && now - lastStatusSentAt < 45_000) return true;
+  if (
+    !options?.force &&
+    (!isMeaningfulWatchStatusUpdate(lastStatusSnapshot, snapshot) ||
+      now - lastStatusSentAt < 45_000)
+  ) return true;
+  if (!(await prepareWatchCompanion())) return false;
   lastStatusSentAt = now;
   if (statusNotificationId) await Notifications.cancelScheduledNotificationAsync(statusNotificationId).catch(() => {});
   const pulse = snapshot.heartRateBpm == null ? "Puls —" : `Puls ${Math.round(snapshot.heartRateBpm)} bpm`;
@@ -163,6 +184,12 @@ export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { f
         data: { kind: "watch-status", heading: snapshot.heading, remainingKm: snapshot.remainingKm, heartRateBpm: snapshot.heartRateBpm },
       }, trigger: null,
     });
+    lastStatusSnapshot = {
+      direction: snapshot.direction,
+      remainingKm: snapshot.remainingKm,
+      heartRateBpm: snapshot.heartRateBpm,
+      position: snapshot.position,
+    };
     return true;
   } catch { return false; }
 }
@@ -184,4 +211,5 @@ export async function clearWatchStatus(): Promise<void> {
   statusNotificationId = null;
   lastStatusSentAt = 0;
   lastLiveStateSentAt = 0;
+  lastStatusSnapshot = null;
 }
