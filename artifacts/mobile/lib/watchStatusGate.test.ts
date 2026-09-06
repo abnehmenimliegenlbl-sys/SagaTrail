@@ -6,11 +6,10 @@ import { isMeaningfulWatchStatusUpdate } from "./watchStatusGate";
 const stationary = {
   direction: "Links",
   remainingKm: 5,
-  heartRateBpm: null,
   position: { lat: 47.3769, lng: 8.5417 },
 };
 
-test("suppresses stationary updates without heart rate", () => {
+test("suppresses stationary updates", () => {
   assert.equal(isMeaningfulWatchStatusUpdate(stationary, stationary), false);
   assert.equal(
     isMeaningfulWatchStatusUpdate(stationary, {
@@ -21,7 +20,7 @@ test("suppresses stationary updates without heart rate", () => {
   );
 });
 
-test("allows meaningful movement, direction and heart-rate changes", () => {
+test("allows meaningful movement and direction changes", () => {
   assert.equal(
     isMeaningfulWatchStatusUpdate(stationary, {
       ...stationary,
@@ -34,13 +33,6 @@ test("allows meaningful movement, direction and heart-rate changes", () => {
       ...stationary,
       direction: "Rechts",
     }),
-    true,
-  );
-  assert.equal(
-    isMeaningfulWatchStatusUpdate(
-      { ...stationary, heartRateBpm: 100 },
-      { ...stationary, heartRateBpm: 106 },
-    ),
     true,
   );
 });

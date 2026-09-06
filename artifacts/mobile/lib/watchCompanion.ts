@@ -46,7 +46,6 @@ export interface WatchLiveSnapshot {
   direction: string;
   heading: number | null;
   remainingKm: number;
-  heartRateBpm: number | null;
   hasFreshGps: boolean;
   position: { lat: number; lng: number } | null;
 }
@@ -174,20 +173,18 @@ export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { f
   if (!(await prepareWatchCompanion())) return false;
   lastStatusSentAt = now;
   if (statusNotificationId) await Notifications.cancelScheduledNotificationAsync(statusNotificationId).catch(() => {});
-  const pulse = snapshot.heartRateBpm == null ? "Puls —" : `Puls ${Math.round(snapshot.heartRateBpm)} bpm`;
   try {
     statusNotificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: `SagaTrail · ${snapshot.direction}`,
-        body: `${snapshot.remainingKm.toFixed(1)} km übrig · ${pulse}`,
+        body: `${snapshot.remainingKm.toFixed(1)} km übrig`,
         sound: false,
-        data: { kind: "watch-status", heading: snapshot.heading, remainingKm: snapshot.remainingKm, heartRateBpm: snapshot.heartRateBpm },
+        data: { kind: "watch-status", heading: snapshot.heading, remainingKm: snapshot.remainingKm },
       }, trigger: null,
     });
     lastStatusSnapshot = {
       direction: snapshot.direction,
       remainingKm: snapshot.remainingKm,
-      heartRateBpm: snapshot.heartRateBpm,
       position: snapshot.position,
     };
     return true;

@@ -2247,7 +2247,6 @@ export default function LiveHike() {
       direction: nextWatchNavigation?.direction === "left" ? "Links" : nextWatchNavigation?.direction === "right" ? "Rechts" : "Navigation",
       heading: nextWatchNavigation?.bearingDeg ?? null,
       remainingKm: Math.max(0, totalKm - distance),
-      heartRateBpm: heartRate?.bpm ?? null,
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
@@ -4799,8 +4798,8 @@ export default function LiveHike() {
                   icon: "watch" as const,
                   modalSize: "large" as const,
                   preview: (
-                    <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
-                      {heartRate ? `Puls ${Math.round(heartRate.bpm)} bpm` : "Puls —"}
+                     <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
+                       Navigation
                     </Text>
                   ),
                   content: (
@@ -4808,7 +4807,6 @@ export default function LiveHike() {
                       ready={watchReady}
                       direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                       remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
-                      heartRateBpm={heartRate?.bpm ?? null}
                       onEnable={() => {
                         void prepareWatchCompanion().then(setWatchReady);
                       }}
@@ -5866,13 +5864,11 @@ function WatchCompanionCard({
   ready,
   direction,
   remainingKm,
-  heartRateBpm,
   onEnable,
 }: {
   ready: boolean | null;
   direction: string | null;
   remainingKm: number;
-  heartRateBpm: number | null;
   onEnable: () => void;
 }) {
   const colors = useColors();
@@ -5919,16 +5915,9 @@ function WatchCompanionCard({
           <Text style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}>Rest</Text>
           <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>{remainingKm.toFixed(1)} km</Text>
         </View>
-        <View style={styles.watchMetric}>
-          <Feather name="heart" size={14} color={colors.accent} />
-          <Text style={[styles.watchMetricLabel, { color: colors.mutedForeground }]}>Puls</Text>
-          <Text style={[styles.watchMetricValue, { color: colors.foreground }]}>
-            {heartRateBpm == null ? "—" : `${Math.round(heartRateBpm)} bpm`}
-          </Text>
-        </View>
       </View>
       <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
-        Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung, Distanz oder Puls sind deaktiviert.
+        Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung oder Distanz sind deaktiviert.
       </Text>
     </Glass>
   );
