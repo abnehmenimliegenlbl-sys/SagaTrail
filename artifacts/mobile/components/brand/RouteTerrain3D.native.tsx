@@ -19,6 +19,7 @@ import {
   BufferGeometry,
   DoubleSide,
   Group,
+  Shape,
   SRGBColorSpace,
   Texture,
   Vector3,
@@ -31,7 +32,6 @@ import {
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
 import { hapticRigid, hapticSelection } from "@/lib/haptics";
-import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
 
 type Props = {
@@ -73,7 +73,6 @@ const radians = Math.PI / 180;
 const mapTextureSizes: readonly number[] = [1024, 768];
 const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
-const flightMarkerAsset = require("../../assets/images/route-flight-marker.png");
 
 function stableUrlHash(value: string): string {
   let hash = 2166136261;
@@ -415,41 +414,30 @@ function FlightMarker({
   position: Vector3;
   direction: Vector3;
 }) {
-  const [texture, setTexture] = useState<Texture | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    loadNativeThreeTexture(flightMarkerAsset)
-      .then((loaded) => {
-        if (!active) {
-          loaded.dispose();
-          return;
-        }
-        setTexture(loaded);
-      })
-      .catch((error) =>
-        console.warn("[RouteTerrain3D] flight marker texture failed", error),
-      );
-    return () => {
-      active = false;
-    };
+  const markerShape = useMemo(() => {
+    const shape = new Shape();
+    // Spitze zeigt in lokaler +Y-Richtung. Die hintere Kerbe macht auch bei
+    // kleiner Darstellung sofort deutlich, welche Seite vorne ist.
+    shape.moveTo(0, 30);
+    shape.lineTo(19, -20);
+    shape.lineTo(0, -11);
+    shape.lineTo(-19, -20);
+    shape.closePath();
+    return shape;
   }, []);
-
-  useEffect(() => () => texture?.dispose(), [texture]);
-  if (!texture) return null;
 
   const heading = Math.atan2(-direction.x, -direction.z);
   return (
     <mesh
-      position={[position.x, position.y + 22, position.z]}
+      position={[position.x, position.y + 28, position.z]}
       rotation={[-Math.PI / 2, heading, 0]}
-      renderOrder={5}
+      renderOrder={10}
     >
-      <planeGeometry args={[48, 48]} />
+      <shapeGeometry args={[markerShape]} />
       <meshBasicMaterial
-        map={texture}
-        transparent
-        alphaTest={0.04}
+        color="#FFD45A"
+        side={DoubleSide}
+        depthTest={false}
         depthWrite={false}
         toneMapped={false}
       />
