@@ -16,8 +16,14 @@ function imageSize(uri: string): Promise<{ width: number; height: number }> {
  * Loads a remote image without Three's browser-only TextureLoader.
  * Expo GL recognizes the localUri payload through EXGLImageUtils.
  */
-export async function loadNativeThreeTexture(url: string): Promise<Texture> {
-  const asset = await Asset.fromURI(url).downloadAsync();
+export async function loadNativeThreeTexture(
+  source: string | number,
+): Promise<Texture> {
+  const asset =
+    typeof source === "number"
+      ? Asset.fromModule(source)
+      : Asset.fromURI(source);
+  await asset.downloadAsync();
   const uri = asset.localUri ?? asset.uri;
   if (!uri) throw new Error("Textur konnte nicht lokal gespeichert werden.");
 

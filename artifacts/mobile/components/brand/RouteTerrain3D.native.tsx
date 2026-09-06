@@ -30,6 +30,7 @@ import {
   buildRouteGradeSegments,
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
+import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
 
 type Props = {
@@ -69,6 +70,18 @@ const gradeColors = {
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
 const mapTextureSizes: readonly number[] = [1024, 768];
+const flightSpeedKmPerSecond = 0.32;
+const flightTileSpacingKm = 1.2;
+const flightMarkerAsset = require("../../assets/images/route-flight-marker.png");
+
+function stableUrlHash(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
 
 function mapTiles(grid: TerrainGrid): MapTile[] {
   const rowBreaks = [0, Math.floor((grid.rows - 1) / 2), grid.rows - 1];
@@ -123,29 +136,41 @@ async function loadRouteMapTexture(
 ): Promise<Texture> {
   const cacheDirectory = FileSystem.cacheDirectory;
   if (!cacheDirectory) throw new Error("Kein Textur-Cache verfügbar.");
-  const localUri = `${cacheDirectory}${cacheName}.jpg`;
-  await FileSystem.deleteAsync(localUri, { idempotent: true }).catch(
-    () => undefined,
-  );
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  const result = await Promise.race([
-    FileSystem.downloadAsync(url, localUri),
-    new Promise<never>((_, reject) => {
-      timeout = setTimeout(
-        () => reject(new Error("Textur-Download hat zu lange gedauert.")),
-        25_000,
-      );
-    }),
-  ]).finally(() => {
-    if (timeout) clearTimeout(timeout);
-  });
-  if (result.status < 200 || result.status >= 300) {
-    throw new Error(`Textur-Download fehlgeschlagen (${result.status}).`);
+  const localUri = `${cacheDirectory}${cacheName}-${stableUrlHash(url)}.jpg`;
+  const cached = await FileSystem.getInfoAsync(localUri);
+  let imageUri = localUri;
+  if (!cached.exists || cached.size === 0) {
+    if (cached.exists) {
+      await FileSystem.deleteAsync(localUri, { idempotent: true });
+    }
+    const temporaryUri = `${localUri}.download`;
+    await FileSystem.deleteAsync(temporaryUri, { idempotent: true });
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        FileSystem.downloadAsync(url, temporaryUri),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error("Textur-Download hat zu lange gedauert.")),
+            25_000,
+          );
+        }),
+      ]);
+      if (result.status < 200 || result.status >= 300) {
+        throw new Error(`Textur-Download fehlgeschlagen (${result.status}).`);
+      }
+      await FileSystem.moveAsync({ from: temporaryUri, to: localUri });
+    } catch (error) {
+      await FileSystem.deleteAsync(temporaryUri, { idempotent: true });
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
   }
-  const { width, height } = await imageSize(result.uri);
+  const { width, height } = await imageSize(imageUri);
   const texture = new Texture();
   texture.image = {
-    data: { localUri: result.uri },
+    data: { localUri: imageUri },
     width,
     height,
   };
@@ -359,7 +384,7 @@ function flightDetailTiles(
   bounds: MapBounds,
 ): MapTile[] {
   const routeLengthKm = distances.at(-1) ?? 0;
-  const spacingKm = 1.2;
+  const spacingKm = flightTileSpacingKm;
   const radiusM = 900;
   const count = Math.max(1, Math.ceil(routeLengthKm / spacingKm) + 1);
   return Array.from({ length: count }, (_, index) => {
@@ -380,6 +405,55 @@ function flightDetailTiles(
       },
     };
   });
+}
+
+function FlightMarker({
+  position,
+  direction,
+}: {
+  position: Vector3;
+  direction: Vector3;
+}) {
+  const [texture, setTexture] = useState<Texture | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    loadNativeThreeTexture(flightMarkerAsset)
+      .then((loaded) => {
+        if (!active) {
+          loaded.dispose();
+          return;
+        }
+        setTexture(loaded);
+      })
+      .catch((error) =>
+        console.warn("[RouteTerrain3D] flight marker texture failed", error),
+      );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => () => texture?.dispose(), [texture]);
+  if (!texture) return null;
+
+  const heading = Math.atan2(-direction.x, -direction.z);
+  return (
+    <mesh
+      position={[position.x, position.y + 22, position.z]}
+      rotation={[-Math.PI / 2, heading, 0]}
+      renderOrder={5}
+    >
+      <planeGeometry args={[48, 48]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        alphaTest={0.04}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
 }
 
 function pointAtRouteDistance(
@@ -574,6 +648,7 @@ function Scene({
   const [flightTileVersion, setFlightTileVersion] = useState(0);
   const loadedFlightTiles = useRef(new Map<number, LoadedFlightTile>());
   const loadingFlightTiles = useRef(new Set<number>());
+  const wantedFlightTiles = useRef(new Set<number>());
   const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
   const revealedDistanceRef = useRef(0);
   const flightCompleted = useRef(false);
@@ -811,7 +886,7 @@ function Scene({
   const routeLengthKm = routeDistanceList.at(-1) ?? 0;
   const activeFlightTileIndex = Math.min(
     flightTiles.length - 1,
-    Math.max(0, Math.floor(revealedDistanceKm / 1.2)),
+    Math.max(0, Math.floor(revealedDistanceKm / flightTileSpacingKm)),
   );
   useEffect(() => {
     flightCompleted.current = false;
@@ -830,17 +905,27 @@ function Scene({
       loadingFlightTiles.current.clear();
       setFlightTileVersion((value) => value + 1);
     };
-    if (mode !== "flight") {
+    if (mode === "walk") {
+      wantedFlightTiles.current = new Set();
       disposeAll();
       return;
     }
 
-    let active = true;
+    const wantedIndices =
+      mode === "flight"
+        ? Array.from(
+            { length: 7 },
+            (_, offset) => activeFlightTileIndex + offset - 2,
+          )
+        : textures.length === tiles.length
+          ? [0, 1, 2]
+          : [];
     const wanted = new Set(
-      [activeFlightTileIndex, activeFlightTileIndex + 1].filter(
+      wantedIndices.filter(
         (index) => index >= 0 && index < flightTiles.length,
       ),
     );
+    wantedFlightTiles.current = wanted;
     loadedFlightTiles.current.forEach((loaded, index) => {
       if (wanted.has(index)) return;
       loaded.texture.dispose();
@@ -866,7 +951,7 @@ function Scene({
               swissTopoTextureUrl(tile.bounds, size),
               `route-terrain-detail-${index}-${size}`,
             );
-            if (!active) {
+            if (!wantedFlightTiles.current.has(index)) {
               texture.dispose();
               return;
             }
@@ -888,13 +973,18 @@ function Scene({
       };
       void load().finally(() => loadingFlightTiles.current.delete(index));
     }
-    return () => {
-      active = false;
-    };
-  }, [activeFlightTileIndex, flightTiles, mode, model.grid]);
+  }, [
+    activeFlightTileIndex,
+    flightTiles,
+    mode,
+    model.grid,
+    textures.length,
+    tiles.length,
+  ]);
 
   useEffect(
     () => () => {
+      wantedFlightTiles.current = new Set();
       loadedFlightTiles.current.forEach(({ texture, geometry }) => {
         texture.dispose();
         geometry.dispose();
@@ -908,7 +998,7 @@ function Scene({
     if (mode !== "overview") {
       const next = Math.min(
         routeLengthKm,
-        revealedDistanceRef.current + delta * 0.5,
+        revealedDistanceRef.current + delta * flightSpeedKmPerSecond,
       );
       revealedDistanceRef.current = next;
       setRevealedDistanceKm(next);
@@ -941,6 +1031,15 @@ function Scene({
     routeDistanceList,
     revealedDistanceKm,
   );
+  const markerAhead = pointAtRouteDistance(
+    route,
+    routeDistanceList,
+    Math.min(routeLengthKm, revealedDistanceKm + 0.03),
+  );
+  const markerDirection =
+    marker && markerAhead
+      ? markerAhead.clone().sub(marker).setY(0).normalize()
+      : null;
   const visibleGradeLines = gradeLines
     .map((line) => {
       if (revealedDistanceKm <= line.startDistance) return null;
@@ -1010,15 +1109,8 @@ function Scene({
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
-      {mode === "flight" && marker && (
-        <mesh position={[marker.x, marker.y, marker.z]}>
-          <sphereGeometry args={[9, 16, 16]} />
-          <meshStandardMaterial
-            color="#fff"
-            emissive="#f4b942"
-            emissiveIntensity={1.5}
-          />
-        </mesh>
+      {mode === "flight" && marker && markerDirection && (
+        <FlightMarker position={marker} direction={markerDirection} />
       )}
     </>
   );
