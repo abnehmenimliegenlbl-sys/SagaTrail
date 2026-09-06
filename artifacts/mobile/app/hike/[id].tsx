@@ -3608,20 +3608,22 @@ export default function LiveHike() {
     hasFreshGps,
   ]);
 
-  // Luftlinien-Hinweis zum offiziellen Wegstart, solange man noch nicht in
-  // dessen Naehe ist (z. B. beim Start ab Bahnhof/Parkplatz statt direkt am
-  // Trailhead). Bewusst einfach: keine echte Fusswegroute dorthin, nur
-  // Distanz + grobe Himmelsrichtung als Orientierung.
+  // Luftlinien-Hinweis zum Beginn der aktuell aktiven Geometrie. Nach dem
+  // Uebernehmen eines Zubringers ist dessen Anfang der neue Wegstart; der
+  // urspruengliche Katalog-Start darf dann nicht mehr angesagt werden.
   const START_NEARBY_KM = 0.05;
   const walkToStart = useMemo(() => {
-    if (!livePos || !route?.geometry || route.geometry.length < 2) return null;
-    const start: LatLng = { lat: route.geometry[0][0], lng: route.geometry[0][1] };
+    if (!livePos || !navigationGeometry || navigationGeometry.length < 2) return null;
+    const start: LatLng = {
+      lat: navigationGeometry[0][0],
+      lng: navigationGeometry[0][1],
+    };
     const distKm = haversineKm(livePos, start);
     if (distKm <= START_NEARBY_KM) return null;
     const dir = t.compassDirections[compassIndex(bearingDeg(livePos, start))];
     const distText = formatSpokenDistance(distKm, storyLanguage);
     return { distKm, distText, dir };
-  }, [livePos, route?.geometry, storyLanguage, t, hasFreshGps]);
+  }, [livePos, navigationGeometry, storyLanguage, t, hasFreshGps]);
 
   // Sobald der User einmal innerhalb des Start-Radius war (walkToStart === null),
   // als "start reached" markieren — damit das Banner nach dem Passieren nicht
