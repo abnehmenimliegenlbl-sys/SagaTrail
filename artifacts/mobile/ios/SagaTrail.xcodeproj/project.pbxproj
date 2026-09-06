@@ -14,7 +14,39 @@
 		B52ECD143A3740EEADB92DEF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9A26567D4D534926A3161BE7 /* PrivacyInfo.xcprivacy */; };
 		A1A2A3A4A5A6A7A8A9AA0001 /* SagaTrailWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A2A3A4A5A6A7A8A9AA0002 /* SagaTrailWatchBridge.swift */; };
 		A1A2A3A4A5A6A7A8A9AA0003 /* SagaTrailWatchBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A2A3A4A5A6A7A8A9AA0004 /* SagaTrailWatchBridge.m */; };
+		B10000000000000000000001 /* SagaTrailWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* SagaTrailWatchApp.swift */; };
+		B10000000000000000000002 /* WatchHikeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* WatchHikeModel.swift */; };
+		B10000000000000000000003 /* WatchHikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* WatchHikeView.swift */; };
+		B10000000000000000000004 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* WatchProtocol.swift */; };
+		B10000000000000000000005 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000017 /* HealthKit.framework */; };
+		B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000018 /* WatchConnectivity.framework */; };
+		B10000000000000000000007 /* SagaTrailWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* SagaTrailWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10000000000000000000008 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B10000000000000000000026 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B10000000000000000000022;
+			remoteInfo = SagaTrailWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B10000000000000000000025 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B10000000000000000000007 /* SagaTrailWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* SagaTrail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SagaTrail.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -28,6 +60,15 @@
 		9A26567D4D534926A3161BE7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; name = "PrivacyInfo.xcprivacy"; path = "SagaTrail/PrivacyInfo.xcprivacy"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		A1A2A3A4A5A6A7A8A9AA0002 /* SagaTrailWatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrail/WatchConnectivity/SagaTrailWatchBridge.swift; sourceTree = "<group>"; };
 		A1A2A3A4A5A6A7A8A9AA0004 /* SagaTrailWatchBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SagaTrail/WatchConnectivity/SagaTrailWatchBridge.m; sourceTree = "<group>"; };
+		B10000000000000000000010 /* SagaTrailWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SagaTrailWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000011 /* SagaTrailWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrailWatchApp.swift; sourceTree = "<group>"; };
+		B10000000000000000000012 /* WatchHikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHikeModel.swift; sourceTree = "<group>"; };
+		B10000000000000000000013 /* WatchHikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHikeView.swift; sourceTree = "<group>"; };
+		B10000000000000000000014 /* WatchProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
+		B10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B10000000000000000000016 /* SagaTrailWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SagaTrailWatch.entitlements; sourceTree = "<group>"; };
+		B10000000000000000000017 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		B10000000000000000000018 /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +76,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000005 /* HealthKit.framework in Frameworks */,
+				B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,6 +111,8 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				B10000000000000000000017 /* HealthKit.framework */,
+				B10000000000000000000018 /* WatchConnectivity.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -76,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* SagaTrail */,
+				B10000000000000000000021 /* SagaTrailWatch */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -89,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* SagaTrail.app */,
+				B10000000000000000000010 /* SagaTrailWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,6 +156,19 @@
 			path = SagaTrail/Supporting;
 			sourceTree = "<group>";
 		};
+		B10000000000000000000021 /* SagaTrailWatch */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000011 /* SagaTrailWatchApp.swift */,
+				B10000000000000000000012 /* WatchHikeModel.swift */,
+				B10000000000000000000013 /* WatchHikeView.swift */,
+				B10000000000000000000014 /* WatchProtocol.swift */,
+				B10000000000000000000015 /* Info.plist */,
+				B10000000000000000000016 /* SagaTrailWatch.entitlements */,
+			);
+			path = SagaTrailWatch;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -113,17 +180,36 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				B10000000000000000000025 /* Embed Watch Content */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B10000000000000000000027 /* PBXTargetDependency */,
 			);
 			name = SagaTrail;
 			productName = SagaTrail;
 			productReference = 13B07F961A680F5B00A75B9A /* SagaTrail.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B10000000000000000000022 /* SagaTrailWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B10000000000000000000030 /* Build configuration list for PBXNativeTarget "SagaTrailWatch" */;
+			buildPhases = (
+				B10000000000000000000024 /* Sources */,
+				B10000000000000000000020 /* Frameworks */,
+				B10000000000000000000023 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SagaTrailWatch;
+			productName = SagaTrailWatch;
+			productReference = B10000000000000000000010 /* SagaTrailWatch.app */;
+			productType = "com.apple.product-type.application.watchapp2";
 		};
 /* End PBXNativeTarget section */
 
@@ -135,6 +221,11 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
+					};
+					B10000000000000000000022 = {
+						CreatedOnToolsVersion = 26.0;
+						DevelopmentTeam = R4254XKT8S;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -152,6 +243,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* SagaTrail */,
+				B10000000000000000000022 /* SagaTrailWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +257,14 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				B52ECD143A3740EEADB92DEF /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000023 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000008 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,9 +345,83 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000000000000000000024 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000001 /* SagaTrailWatchApp.swift in Sources */,
+				B10000000000000000000002 /* WatchHikeModel.swift in Sources */,
+				B10000000000000000000003 /* WatchHikeView.swift in Sources */,
+				B10000000000000000000004 /* WatchProtocol.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B10000000000000000000027 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B10000000000000000000022 /* SagaTrailWatch */;
+			targetProxy = B10000000000000000000026 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		B10000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SagaTrailWatch/SagaTrailWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R4254XKT8S;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SagaTrailWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sagatrail2.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		B10000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SagaTrailWatch/SagaTrailWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R4254XKT8S;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SagaTrailWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sagatrail2.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -428,6 +602,15 @@ MARKETING_VERSION = 1.1.0;
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B10000000000000000000030 /* Build configuration list for PBXNativeTarget "SagaTrailWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000000000000000000028 /* Debug */,
+				B10000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SagaTrail" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

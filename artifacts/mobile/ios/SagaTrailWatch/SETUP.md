@@ -1,27 +1,29 @@
 # SagaTrail Apple Watch MVP setup
 
-The iPhone bridge is included in the checked-in `SagaTrail` target. The watch
-target is intentionally **not** injected into `project.pbxproj`: creating a
-watch extension/product relationship and provisioning settings in an
-Expo-managed project is not deterministic without selecting a development team
-and signing profile. No Pods or Viro build phase has been changed.
+The checked-in Xcode project contains both sides of the integration:
 
-## One-time Xcode target step
+- `SagaTrail` embeds `SagaTrailWatch.app` and depends on the Watch target.
+- `SagaTrailWatch` compiles all SwiftUI sources in this directory.
+- Both targets use the same development team and marketing/build versions.
+- The Watch target links HealthKit and WatchConnectivity, enables HealthKit,
+  and supports watchOS 10 or newer.
 
-1. Open `SagaTrail.xcworkspace` (not the `.xcodeproj`) in Xcode.
-2. Add a **watchOS App** target named `SagaTrailWatch`, with companion app
-   `SagaTrail` and bundle identifier `com.sagatrail2.app.watchkitapp`.
-3. Replace the generated SwiftUI files with every `.swift` file in
-   `SagaTrailWatch/`; set `Info.plist` and `SagaTrailWatch.entitlements` from
-   this directory on that target.
-4. In Signing & Capabilities select the same development team as the phone,
-   enable HealthKit, and enable the **Workout Processing** background mode.
-   Set the watch deployment target to watchOS 10.0 or newer.
-5. Add `HealthKit.framework` and `WatchConnectivity.framework` to the watch
-   target. Xcode links both system frameworks automatically in most templates.
-6. Build the paired phone and watch targets on a real paired device, accept the
-   Health permission prompt, and start the live heart-rate session from the
-   watch.
+No Pods or Viro build phase is shared with the Watch target.
+
+## Device validation
+
+Before the first non-interactive EAS build, create or upload a provisioning
+profile for `com.sagatrail2.app.watchkitapp` in the project's iOS credentials.
+The phone and Watch targets may share the distribution certificate, but each
+bundle identifier requires its own provisioning profile.
+
+1. Install a development or TestFlight build on a paired iPhone and Apple Watch.
+2. Open SagaTrail on both devices and start a hike on the iPhone.
+3. Confirm route status and navigation updates appear on the Watch.
+4. Accept the Health permission prompt and start the live heart-rate session
+   from the Watch.
+5. Confirm SOS on the Watch and verify the iPhone opens the existing emergency
+   flow without exposing coordinates on the Watch.
 
 ## Protocol v1
 
