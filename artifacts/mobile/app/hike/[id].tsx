@@ -98,6 +98,11 @@ import {
 } from "@/lib/terrainCues";
 import { estimateRouteMinutes } from "@/lib/waypointEta";
 import {
+  enqueueNarrationItem,
+  type NarrationQueueItem,
+  type ReplaceableNarrationCategory,
+} from "@/lib/narrationQueue";
+import {
   bereiteAbbiegeMitteilungenVor,
   sendeAbbiegeMitteilung,
   sendePoiMitteilung,
@@ -132,6 +137,16 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
   android: "serif",
   default: "serif",
 });
+
+type SpeakOptions = {
+  interrupt?: boolean;
+  sagaInterrupt?: boolean;
+  useOpenAI?: boolean;
+  preFetchedUri?: string;
+  navInterrupt?: boolean;
+  turnAudio?: "links" | "rechts";
+  replaceQueuedCategory?: ReplaceableNarrationCategory;
+};
 
 function geometryLengthKm(geometry: number[][] | null | undefined): number {
   if (!geometry || geometry.length < 2) return 0;
@@ -1017,7 +1032,7 @@ export default function LiveHike() {
   // Warteschlange fuer Sprachausgaben: POI, Navigation, Wegoberflaech,
   // Meilenstein etc. unterbrechen keine laufende Erzaehlung, sondern reihen
   // sich ein und spielen ab, sobald das aktuelle Audio zu Ende ist.
-  const narrationQueueRef = useRef<Array<{ text: string; onFinished?: () => void; useOpenAI?: boolean; preFetchedUri?: string }>>([]);
+  const narrationQueueRef = useRef<NarrationQueueItem[]>([]);
   // Vorgeladene OpenAI-URI fuer den Entscheidungs-Ack ("Ich verstehe.").
   // Wird beim Hike-Start im Hintergrund erzeugt, damit bei der Wahl zero
   // Netzwerk-Latenz anfaellt und das OpenAI-Audio sofort ertönt.
@@ -1225,10 +1240,13 @@ export default function LiveHike() {
   // Wegoberflaechenpunkte → fraktionsbasierte Abschnitte (0–1) entlang der Route.
   // Dedupliziert konsekutive gleiche Kategorien, filtert Startbereich heraus.
   const surfacePoints = useMemo(() => {
-    if (!route?.geometry || route.geometry.length < 2 || rawSurfacePoints.length === 0) return [];
+    if (!navigationGeometry || navigationGeometry.length < 2 || rawSurfacePoints.length === 0) return [];
     return rawSurfacePoints
       .map((p) => {
-        const match = fortschrittAufRoute({ lat: p.lat, lng: p.lng }, route.geometry!);
+        const match = fortschrittAufRoute(
+          { lat: p.lat, lng: p.lng },
+          navigationGeometry,
+        );
         if (!match || match.distKm > 0.5) return null;
         return { fraction: match.fraction, surface: normalizeSurface(p.surface) };
       })
@@ -1236,7 +1254,7 @@ export default function LiveHike() {
       .sort((a, b) => a.fraction - b.fraction)
       .filter((p, i, arr) => i === 0 || p.surface !== arr[i - 1].surface);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawSurfacePoints, route?.geometry]);
+  }, [rawSurfacePoints, navigationGeometry]);
 
   // Begruessung (Wetter + Solo-Name + Tageszeit + Routen-Einleitung),
   // die dem ersten Kapitel vorangestellt wird.
@@ -2129,7 +2147,7 @@ export default function LiveHike() {
   const turnNotifsReadyRef = useRef(false);
   // Forward-Ref fuer speak() — wird nach der speak-useCallback-Deklaration
   // befuellt, damit der Turn-Proximity-Effekt (der vor speak liegt) es nutzen kann.
-  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => Promise<void>) | null>(null);
+  const speakRef = useRef<((text: string, onFinished?: () => void, opts?: SpeakOptions) => Promise<void>) | null>(null);
   // Mitteilungs-Berechtigung beim Start EINMALIG anfragen — unabhaengig davon,
   // ob die Route Navigation-Cues hat. Bisher war die Abfrage hinter
   // `turnCues.length > 0` versteckt: auf einfachen Routen ohne erkannte
@@ -2441,29 +2459,39 @@ export default function LiveHike() {
     // zurueck (z. B. Fraction 0.15) und loest alle Wechsel davor auf einmal aus.
     if (!hasFreshGps || surfacePoints.length === 0 || preparing || distance === 0) return;
     const currentFraction = (() => {
-      if (livePos && route?.geometry && route.geometry.length >= 2) {
-        const match = fortschrittAufRoute(livePos, route.geometry);
+      if (livePos && navigationGeometry && navigationGeometry.length >= 2) {
+        const match = fortschrittAufRoute(livePos, navigationGeometry);
         if (match && match.distKm <= 1) return match.fraction;
       }
       return totalKm > 0 ? distance / totalKm : 0;
     })();
+    let latestReachedSurface: (typeof surfacePoints)[number] | null = null;
     for (const sp of surfacePoints) {
       if (sp.fraction < 0.05) continue; // Startbereich ueberspringen
       const key = Math.round(sp.fraction * 100);
       if (notifiedSurfaceFractionsRef.current.has(key)) continue;
       if (currentFraction >= sp.fraction - 0.02) {
         notifiedSurfaceFractionsRef.current.add(key);
-        const pack = STORY_PACKS[resolveLang(cueLanguage)];
-        const text = pack.surfaceTransitionPhrase(sp.surface);
-        if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
-          sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
-        }
-        if (!awaitingDecisionRef.current) {
-          speakRef.current?.(text, undefined, { useOpenAI: true });
-        }
+        latestReachedSurface = sp;
       }
     }
-  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, route?.geometry, hasFreshGps]);
+    // Bei einem GPS-Sprung nur den aktuellen, zuletzt erreichten Zustand
+    // melden. Uebersprungene Asphalt/Kies-Wechsel duerfen keinen Audio-Stack
+    // bilden, der spaeter als veraltete Historie abgespielt wird.
+    if (latestReachedSurface) {
+      const pack = STORY_PACKS[resolveLang(cueLanguage)];
+      const text = pack.surfaceTransitionPhrase(latestReachedSurface.surface);
+      if (turnNotifsReadyRef.current && profile?.navAnnouncementsEnabled !== false) {
+        sendeAbbiegeMitteilung(t.surfaceChangeTitle, text);
+      }
+      if (!awaitingDecisionRef.current) {
+        speakRef.current?.(text, undefined, {
+          useOpenAI: true,
+          replaceQueuedCategory: "surface",
+        });
+      }
+    }
+  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, navigationGeometry, hasFreshGps]);
 
   // Verstrichene Zeit: alle 15 Sekunden aktualisieren (fuer ETA-Berechnung).
   useEffect(() => {
@@ -2950,7 +2978,17 @@ export default function LiveHike() {
   // automatisch fortsetzen, ohne dass die Wanderung dafuer eine Beruehrung
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
-    async (text: string, onFinished?: () => void, opts?: { interrupt?: boolean; sagaInterrupt?: boolean; useOpenAI?: boolean; preFetchedUri?: string; navInterrupt?: boolean; turnAudio?: "links" | "rechts" }) => {
+    async (text: string, onFinished?: () => void, opts?: SpeakOptions) => {
+      const enqueueNarration = () => {
+        const entry: NarrationQueueItem = {
+          text,
+          onFinished,
+          useOpenAI: opts?.useOpenAI,
+          preFetchedUri: opts?.preFetchedUri,
+          replaceQueuedCategory: opts?.replaceQueuedCategory,
+        };
+        enqueueNarrationItem(narrationQueueRef.current, entry);
+      };
       // NAV-INTERRUPT: Navigationsanweisung unterbricht sofort und setzt die
       // laufende Erzaehlung danach an derselben Stelle fort.
       if (opts?.navInterrupt) {
@@ -3053,7 +3091,7 @@ export default function LiveHike() {
       if (opts?.sagaInterrupt) {
         if (navInterruptingRef.current) {
           // Abbiegehinweis laeuft gerade — dahinter einreihen, nicht unterbrechen.
-          narrationQueueRef.current.push({ text, onFinished, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
+          enqueueNarration();
           return;
         }
         // Alles andere (Kapitel, POI, Meilenstein): Queue leeren, sofort starten.
@@ -3068,7 +3106,7 @@ export default function LiveHike() {
       // gesprochen wird — so unterbrechen POI, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
       if (!opts?.interrupt && !opts?.sagaInterrupt && speakingRef.current) {
-        narrationQueueRef.current.push({ text, onFinished, useOpenAI: opts?.useOpenAI, preFetchedUri: opts?.preFetchedUri });
+        enqueueNarration();
         return;
       }
       // Expliziter Interrupt (Kapitel-Wechsel, Wiederholen-Button): Queue leeren
@@ -3153,7 +3191,11 @@ export default function LiveHike() {
             if (!speakingRef.current) {
               const next = narrationQueueRef.current.shift();
               if (next) {
-                speakRef.current?.(next.text, next.onFinished, { useOpenAI: next.useOpenAI, preFetchedUri: next.preFetchedUri });
+                speakRef.current?.(next.text, next.onFinished, {
+                  useOpenAI: next.useOpenAI,
+                  preFetchedUri: next.preFetchedUri,
+                  replaceQueuedCategory: next.replaceQueuedCategory,
+                });
               } else if (!awaitingDecisionRef.current) {
                 // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
                 // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
@@ -3202,6 +3244,7 @@ export default function LiveHike() {
             speakRef.current?.(next.text, next.onFinished, {
               useOpenAI: next.useOpenAI,
               preFetchedUri: next.preFetchedUri,
+              replaceQueuedCategory: next.replaceQueuedCategory,
             });
           } else if (!awaitingDecisionRef.current) {
             setAudioModeAsync({
@@ -3716,6 +3759,9 @@ export default function LiveHike() {
         speakRef.current?.(text, undefined, {
           useOpenAI: true,
           ...(section.isVerySteep ? { sagaInterrupt: true } : {}),
+          ...(!section.isVerySteep
+            ? { replaceQueuedCategory: "terrain" as const }
+            : {}),
         });
       }
 
@@ -3736,7 +3782,7 @@ export default function LiveHike() {
             Math.max(1, Math.round(Math.abs(section.averageGradePct))),
           ),
           undefined,
-          { useOpenAI: true },
+          { useOpenAI: true, replaceQueuedCategory: "terrain" },
         );
       }
 
@@ -3749,6 +3795,7 @@ export default function LiveHike() {
         terrainEndedRef.current.add(section.id);
         speakRef.current?.(t.terrainEnd(section.direction), undefined, {
           useOpenAI: true,
+          replaceQueuedCategory: "terrain",
         });
       }
     }

@@ -7,4 +7,4 @@ Only one audible SagaTrail speech source may play at any time. Narration and sho
 
 **Why:** Route transitions such as accepting a feeder can trigger new narration while an existing chapter or navigation clip is still active, causing two speakers to overlap.
 
-**How to apply:** Invalidate pending synthesis and delayed sequence callbacks, stop and unload every active audible player, and await that barrier before route-state changes or new playback. Timers need cancellation plus a generation check. After every asynchronous setup boundary, reject stale playback before calling play. Silent keepalive audio is exempt.
+**How to apply:** Invalidate pending synthesis and delayed sequence callbacks, stop and unload every active audible player, and await that barrier before route-state changes or new playback. Timers need cancellation plus a generation check. Replaceable route-status cues such as surface and ordinary terrain changes must coalesce to the newest pending state rather than accumulate in FIFO. After every asynchronous setup boundary, reject stale playback before calling play. Silent keepalive audio is exempt.
