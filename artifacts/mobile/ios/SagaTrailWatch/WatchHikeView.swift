@@ -58,7 +58,16 @@ struct WatchHikeView: View {
     String(format: "%02d:%02d:%02d", Int(seconds) / 3600, (Int(seconds) / 60) % 60, Int(seconds) % 60)
   }
   private func arrow(for direction: String) -> String {
-    ["left": "arrow.turn.up.left", "right": "arrow.turn.up.right", "uturn": "arrow.uturn.up"].contains(where: { direction.lowercased().contains($0.replacingOccurrences(of: "arrow.", with: "").replacingOccurrences(of: ".", with: "")) }) ? "arrow.up" :
-      (direction.lowercased().contains("left") ? "arrow.turn.up.left" : direction.lowercased().contains("right") ? "arrow.turn.up.right" : "arrow.up")
+    let normalized = direction.lowercased()
+    if normalized.contains("uturn") || normalized.contains("u-turn") {
+      return "arrow.uturn.up"
+    }
+    if normalized.contains("left") {
+      return "arrow.turn.up.left"
+    }
+    if normalized.contains("right") {
+      return "arrow.turn.up.right"
+    }
+    return "arrow.up"
   }
 }

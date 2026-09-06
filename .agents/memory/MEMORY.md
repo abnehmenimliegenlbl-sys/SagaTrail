@@ -131,3 +131,4 @@
 - [Swissimage border coverage](sagatrail-swissimage-border.md) — near borders, SwissTopo detail can be sharp toward Switzerland and weaker across the national border despite complete 360° meshes.
 - [SagaTrail exclusive speech](sagatrail-exclusive-speech.md) — audible narration and navigation clips must share one exclusive channel; route changes await complete cancellation.
 - [Watch target provisioning](sagatrail-watch-provisioning.md) — embedded Watch apps need their own provisioning profile; non-interactive EAS cannot create the first one.
+- [Modern watchOS product type](modern-watchos-product-type.md) — single-target SwiftUI Watch apps use application + watchOS SDK; legacy watchapp2 causes duplicate executable output.
