@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { hapticSelection } from "@/lib/haptics";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 
 type Props = {
@@ -16,7 +17,14 @@ export default function RouteTerrain3D({ visible, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Pressable onPress={onClose} style={styles.close} accessibilityLabel="3D-Ansicht schliessen">
+        <Pressable
+          onPress={() => {
+            hapticSelection();
+            onClose();
+          }}
+          style={styles.close}
+          accessibilityLabel="3D-Ansicht schliessen"
+        >
           <Feather name="x" size={24} color={colors.foreground} />
         </Pressable>
         <View style={styles.message}>

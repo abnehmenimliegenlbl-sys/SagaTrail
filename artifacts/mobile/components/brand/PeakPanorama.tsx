@@ -19,6 +19,7 @@ import Svg, {
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { hapticMedium, hapticRigid, hapticSelection } from "@/lib/haptics";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
@@ -797,7 +798,10 @@ export function PeakPanorama({
           )}
           {Platform.OS !== "web" && (
             <Pressable
-              onPress={toggleCamera}
+              onPress={() => {
+                hapticMedium();
+                toggleCamera();
+              }}
               style={[
                  styles.cameraButton,
                 {
@@ -889,7 +893,10 @@ export function PeakPanorama({
             return (
               <Pressable
                 key={peak.id}
-                onPress={() => setSelectedPeakId(peak.id)}
+                onPress={() => {
+                  hapticSelection();
+                  setSelectedPeakId(peak.id);
+                }}
                 style={[
                   styles.peakChip,
                   {
@@ -1092,6 +1099,7 @@ export function PeakPanorama({
                 key={mode}
                 onPress={() => {
                   if (mode === terrainTextureMode) return;
+                   hapticRigid();
                   setTerrainGlReady(false);
                   setTerrainTextureLoadPercent(8);
                   setTerrainTextureMode(mode);

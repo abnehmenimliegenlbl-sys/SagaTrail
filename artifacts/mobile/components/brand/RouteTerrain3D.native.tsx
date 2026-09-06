@@ -30,6 +30,7 @@ import {
   buildRouteGradeSegments,
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
+import { hapticRigid, hapticSelection } from "@/lib/haptics";
 import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
 
@@ -1300,7 +1301,10 @@ export default function RouteTerrain3D({
           </View>
         )}
         <Pressable
-          onPress={onClose}
+          onPress={() => {
+            hapticSelection();
+            onClose();
+          }}
           style={styles.close}
           accessibilityLabel="3D-Ansicht schliessen"
         >
@@ -1319,7 +1323,10 @@ export default function RouteTerrain3D({
               return (
                 <Pressable
                   key={value}
-                  onPress={() => selectMode(value)}
+                  onPress={() => {
+                    hapticRigid();
+                    selectMode(value);
+                  }}
                   style={[styles.control, active && styles.controlActive]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}

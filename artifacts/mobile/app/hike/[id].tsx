@@ -19,7 +19,7 @@ import type { RecognitionJournalEntry } from "@/types";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { setAudioModeAsync } from "expo-audio";
 import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
-import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticSuccess } from "@/lib/haptics";
+import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticRigid, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { DeviceMotion, Magnetometer, Pedometer } from "expo-sensors";
@@ -5656,7 +5656,10 @@ function WatchCompanionCard({
         </View>
         {!enabled && (
           <Pressable
-            onPress={onEnable}
+            onPress={() => {
+              hapticRigid();
+              onEnable();
+            }}
             accessibilityRole="button"
             accessibilityLabel="Watch-Mitteilungen erlauben"
             style={[styles.watchEnable, { borderColor: colors.glassBorder }]}

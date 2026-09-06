@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { captureRef } from "react-native-view-shot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -17,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import type { LocalTerrainModel } from "@/lib/terrainModel";
@@ -140,10 +140,8 @@ export function PeakCameraOverlay({
   };
 
   const handlePeakPress = (peakId: string) => {
+    hapticSelection();
     setSelectedPeakId(peakId);
-    if (Platform.OS !== "web") {
-      void Haptics.selectionAsync().catch(() => {});
-    }
   };
 
   const markerPosition = (relativeBearingDeg: number) => {
@@ -271,7 +269,7 @@ export function PeakCameraOverlay({
                   top: insets.top + 88 + (index % 3) * 12,
                 },
               ]}
-              onPress={() => setSelectedPeakId(peak.id)}
+              onPress={() => handlePeakPress(peak.id)}
               accessibilityRole="button"
               accessibilityLabel={`${peak.name}, ${
                 peak.elevationM != null
@@ -328,7 +326,10 @@ export function PeakCameraOverlay({
               </View>
             )}
             <Pressable
-              onPress={closeCamera}
+              onPress={() => {
+                hapticSelection();
+                closeCamera();
+              }}
               style={[
                 styles.closeButton,
                 { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
@@ -351,7 +352,10 @@ export function PeakCameraOverlay({
           </Text>
           <View style={styles.captureArea}>
             <Pressable
-              onPress={() => void capturePeakRecognition()}
+              onPress={() => {
+                hapticMedium();
+                void capturePeakRecognition();
+              }}
               disabled={capturing || visiblePeaks.length === 0}
               style={[
                 styles.captureButton,
