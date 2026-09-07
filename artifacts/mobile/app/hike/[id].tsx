@@ -18,7 +18,11 @@ import type { MapPoi } from "@/components/brand/swisstopoMapHtml";
 import type { RecognitionJournalEntry } from "@/types";
 import { getApiBaseUrl } from "../../lib/apiConfig";
 import { setAudioModeAsync } from "expo-audio";
-import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
+import {
+  createAudioSound,
+  isAudioPlaybackFinished,
+  type AudioSound,
+} from "@/lib/audioPlayer";
 import { hapticDoublePulse, hapticHeavy, hapticMedium, hapticRigid, hapticSuccess } from "@/lib/haptics";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -3458,43 +3462,58 @@ export default function LiveHike() {
           return;
         }
         narrationSoundRef.current = sound;
+        let playbackFinished = false;
+        const finishPlayback = () => {
+          if (playbackFinished) return;
+          playbackFinished = true;
+          setSpeaking(false);
+          speakingRef.current = false;
+          onFinished?.();
+          // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
+          // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
+          // soeben gestartete Ausgabe abwuergen (Race-Condition: Meilenstein-
+          // Fetch loest sich genau dann auf, wenn die Entscheidungs-Ack endet,
+          // und liegt im Queue — ohne diesen Guard wuerde er die Feedback-
+          // Erzaehlung mit einem Gen-Bump abwuergen).
+          if (!speakingRef.current) {
+            const next = narrationQueueRef.current.shift();
+            if (next) {
+              speakRef.current?.(next.text, next.onFinished, {
+                useOpenAI: next.useOpenAI,
+                preFetchedUri: next.preFetchedUri,
+                replaceQueuedCategory: next.replaceQueuedCategory,
+              });
+            } else if (!awaitingDecisionRef.current) {
+              // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
+              // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
+              // startet die Spracherkennung und benoetigt allowsRecording:true.
+              // Der fire-and-forget-Reset koennte die Erkennung killen (Race-Condition).
+              setAudioModeAsync({
+                allowsRecording: false,
+                playsInSilentMode: true,
+                shouldPlayInBackground: true,
+                interruptionMode: "mixWithOthers",
+              }).catch(() => {});
+            }
+          }
+        };
         sound.setOnPlaybackStatusUpdate((status) => {
           if (
             gen !== narrationGenRef.current ||
             narrationSoundRef.current !== sound
           ) return;
-          if (!status.isLoaded) return;
-          if (status.didJustFinish) {
-            setSpeaking(false);
-            speakingRef.current = false;
-            onFinished?.();
-            // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
-            // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
-            // soeben gestartete Ausgabe abwuergen (Race-Condition: Meilenstein-
-            // Fetch loest sich genau dann auf, wenn die Entscheidungs-Ack endet,
-            // und liegt im Queue — ohne diesen Guard wuerde er die Feedback-
-            // Erzaehlung mit einem Gen-Bump abwuergen).
-            if (!speakingRef.current) {
-              const next = narrationQueueRef.current.shift();
-              if (next) {
-                speakRef.current?.(next.text, next.onFinished, {
-                  useOpenAI: next.useOpenAI,
-                  preFetchedUri: next.preFetchedUri,
-                  replaceQueuedCategory: next.replaceQueuedCategory,
-                });
-              } else if (!awaitingDecisionRef.current) {
-                // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
-                // NICHT zuruecksetzen wenn Entscheidungspunkt aktiv: gleich danach
-                // startet die Spracherkennung und benoetigt allowsRecording:true.
-                // Der fire-and-forget-Reset koennte die Erkennung killen (Race-Condition).
-                setAudioModeAsync({
-                  allowsRecording: false,
-                  playsInSilentMode: true,
-                  shouldPlayInBackground: true,
-                  interruptionMode: "mixWithOthers",
-                }).catch(() => {});
-              }
-            }
+          // Playback errors must release the chapter/decision state too;
+          // otherwise one broken clip blocks all later narration forever.
+          if (status.error) {
+            setNarrationUnavailable(true);
+            finishPlayback();
+            return;
+          }
+          if (!status.isLoaded) {
+            return;
+          }
+          if (isAudioPlaybackFinished(status)) {
+            finishPlayback();
           } else if (!status.isPlaying && !status.isBuffering && status.positionMillis > 0) {
             // Unerwarteter Stopp (z. B. Bluetooth-Verbindung unterbricht die
             // Audio-Session): iOS pausiert das Audio automatisch bei einer

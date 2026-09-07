@@ -20,6 +20,8 @@ export type AudioPlaybackStatus = {
   isPlaying: boolean;
   isBuffering: boolean;
   positionMillis: number;
+  durationMillis: number;
+  error: string | null;
 };
 
 export type AudioCreateOptions = {
@@ -35,7 +37,33 @@ function toPlaybackStatus(status: AudioStatus): AudioPlaybackStatus {
     isPlaying: status.playing,
     isBuffering: status.isBuffering,
     positionMillis: Math.round(status.currentTime * 1000),
+    durationMillis: Math.round(status.duration * 1000),
+    error: status.error,
   };
+}
+
+/**
+ * expo-audio normally reports `didJustFinish`, but on some native playback
+ * paths it only emits a final paused status at the end of the file. Treat
+ * that end position as completion too, otherwise the hike flow can remain
+ * stuck in `speaking=true` and never release a decision point.
+ */
+export function isAudioPlaybackFinished(status: AudioPlaybackStatus): boolean {
+  if (status.didJustFinish) return true;
+  if (
+    !status.isLoaded ||
+    status.isPlaying ||
+    status.isBuffering ||
+    status.positionMillis <= 0 ||
+    status.durationMillis <= 0
+  ) {
+    return false;
+  }
+  const endTolerance = Math.max(
+    750,
+    Math.min(1_500, Math.round(status.durationMillis * 0.05)),
+  );
+  return status.durationMillis - status.positionMillis <= endTolerance;
 }
 
 export class AudioSound {
@@ -92,6 +120,9 @@ export async function createAudioSound(
     // Keep the session alive between narration clips. The global audio mode
     // still controls whether other apps are mixed or ducked.
     keepAudioSessionActive: true,
+    // A final paused status can be the only end signal on native playback.
+    // Keep the update interval short enough to catch it reliably.
+    updateInterval: 250,
   });
   if (options.isLooping !== undefined) player.loop = options.isLooping;
   if (options.volume !== undefined) player.volume = options.volume;
