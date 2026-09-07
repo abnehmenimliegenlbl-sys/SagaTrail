@@ -1820,7 +1820,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_190_39_19
     }
     [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 200; @symbol_functiondef = [title,200,13,18]; @symbol_param<0> = [dc,200,19,21]; @symbol_param<1> = [width,200,23,28]; @symbol_param<2> = [y,200,30,31]; @symbol_param<3> = [text,200,33,37]; ]
     function title(dc, width, y, text) {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_202_4_start:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_203_4_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 201 8 ]
         %tmp.1 = lgetv %dc;
         symbol [ dc %tmp.1 201 8 10 ];
@@ -1834,150 +1834,178 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_20
         symbol [ y %tmp.6 201 31 32 ];
         symbol [ Graphics %tmp.7 201 34 42 ];
         %tmp.7 = getm $.Toybox.Graphics;
-        symbol [ FONT_SMALL %tmp.8 201 43 53 ];
-        %tmp.8 = getv %tmp.7 :FONT_SMALL;
-        %tmp.9 = lgetv %text;
-        symbol [ text %tmp.9 201 55 59 ];
-        symbol [ Graphics %tmp.10 201 61 69 ];
-        %tmp.10 = getm $.Toybox.Graphics;
-        symbol [ TEXT_JUSTIFY_CENTER %tmp.11 201 70 89 ];
-        %tmp.11 = getv %tmp.10 :TEXT_JUSTIFY_CENTER;
-        invoke %tmp.1 %tmp.2(%tmp.5, %tmp.6, %tmp.8, %tmp.9, %tmp.11);
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_202_4_stop:
+        symbol [ FONT_TINY %tmp.8 201 43 52 ];
+        %tmp.8 = getv %tmp.7 :FONT_TINY;
+        %tmp.9 = self;
+        symbol [ shortText %tmp.10 201 54 63 ];
+        %tmp.10 = getv function %tmp.9 :shortText;
+        %tmp.11 = lgetv %text;
+        symbol [ text %tmp.11 201 64 68 ];
+        %tmp.12 = 20;
+        %tmp.13 = invoke %tmp.9 %tmp.10(%tmp.11, %tmp.12);
+        symbol [ Graphics %tmp.14 202 12 20 ];
+        %tmp.14 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.15 202 21 40 ];
+        %tmp.15 = getv %tmp.14 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.1 %tmp.2(%tmp.5, %tmp.6, %tmp.8, %tmp.13, %tmp.15);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_203_4_stop:
     }
-    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 204; @symbol_functiondef = [line,204,13,17]; @symbol_param<0> = [dc,204,18,20]; @symbol_param<1> = [x,204,22,23]; @symbol_param<2> = [y,204,25,26]; @symbol_param<3> = [text,204,28,32]; ]
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 205; @symbol_functiondef = [line,205,13,17]; @symbol_param<0> = [dc,205,18,20]; @symbol_param<1> = [x,205,22,23]; @symbol_param<2> = [y,205,25,26]; @symbol_param<3> = [text,205,28,32]; ]
     function line(dc, x, y, text) {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_204_34_206_4_start:
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 205 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_205_34_208_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 206 8 ]
         %tmp.1 = lgetv %dc;
-        symbol [ dc %tmp.1 205 8 10 ];
-        symbol [ drawText %tmp.2 205 11 19 ];
+        symbol [ dc %tmp.1 206 8 10 ];
+        symbol [ drawText %tmp.2 206 11 19 ];
         %tmp.2 = getv function %tmp.1 :drawText;
-        %tmp.3 = lgetv %x;
-        symbol [ x %tmp.3 205 20 21 ];
-        %tmp.4 = lgetv %y;
-        symbol [ y %tmp.4 205 23 24 ];
-        symbol [ Graphics %tmp.5 205 26 34 ];
-        %tmp.5 = getm $.Toybox.Graphics;
-        symbol [ FONT_SMALL %tmp.6 205 35 45 ];
-        %tmp.6 = getv %tmp.5 :FONT_SMALL;
-        %tmp.7 = lgetv %text;
-        symbol [ text %tmp.7 205 47 51 ];
-        symbol [ Graphics %tmp.8 205 53 61 ];
-        %tmp.8 = getm $.Toybox.Graphics;
-        symbol [ TEXT_JUSTIFY_LEFT %tmp.9 205 62 79 ];
-        %tmp.9 = getv %tmp.8 :TEXT_JUSTIFY_LEFT;
-        invoke %tmp.1 %tmp.2(%tmp.3, %tmp.4, %tmp.6, %tmp.7, %tmp.9);
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_204_34_206_4_stop:
+        %tmp.3 = lgetv %dc;
+        symbol [ dc %tmp.3 206 20 22 ];
+        symbol [ getWidth %tmp.4 206 23 31 ];
+        %tmp.4 = getv function %tmp.3 :getWidth;
+        %tmp.5 = invoke %tmp.3 %tmp.4();
+        %tmp.6 = 2;
+        %tmp.7 = div %tmp.5 %tmp.6;
+        %tmp.8 = lgetv %y;
+        symbol [ y %tmp.8 206 39 40 ];
+        symbol [ Graphics %tmp.9 206 42 50 ];
+        %tmp.9 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.10 206 51 60 ];
+        %tmp.10 = getv %tmp.9 :FONT_TINY;
+        %tmp.11 = self;
+        symbol [ shortText %tmp.12 206 62 71 ];
+        %tmp.12 = getv function %tmp.11 :shortText;
+        %tmp.13 = lgetv %text;
+        symbol [ text %tmp.13 206 72 76 ];
+        %tmp.14 = 24;
+        %tmp.15 = invoke %tmp.11 %tmp.12(%tmp.13, %tmp.14);
+        symbol [ Graphics %tmp.16 207 12 20 ];
+        %tmp.16 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.17 207 21 40 ];
+        %tmp.17 = getv %tmp.16 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.1 %tmp.2(%tmp.7, %tmp.8, %tmp.10, %tmp.15, %tmp.17);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_205_34_208_4_stop:
     }
-    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 208; @symbol_functiondef = [large,208,13,18]; @symbol_param<0> = [dc,208,19,21]; @symbol_param<1> = [x,208,23,24]; @symbol_param<2> = [y,208,26,27]; @symbol_param<3> = [text,208,29,33]; ]
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 210; @symbol_functiondef = [large,210,13,18]; @symbol_param<0> = [dc,210,19,21]; @symbol_param<1> = [x,210,23,24]; @symbol_param<2> = [y,210,26,27]; @symbol_param<3> = [text,210,29,33]; ]
     function large(dc, x, y, text) {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_208_35_210_4_start:
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 209 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_210_35_213_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 211 8 ]
         %tmp.1 = lgetv %dc;
-        symbol [ dc %tmp.1 209 8 10 ];
-        symbol [ drawText %tmp.2 209 11 19 ];
+        symbol [ dc %tmp.1 211 8 10 ];
+        symbol [ drawText %tmp.2 211 11 19 ];
         %tmp.2 = getv function %tmp.1 :drawText;
-        %tmp.3 = lgetv %x;
-        symbol [ x %tmp.3 209 20 21 ];
-        %tmp.4 = lgetv %y;
-        symbol [ y %tmp.4 209 23 24 ];
-        symbol [ Graphics %tmp.5 209 26 34 ];
-        %tmp.5 = getm $.Toybox.Graphics;
-        symbol [ FONT_MEDIUM %tmp.6 209 35 46 ];
-        %tmp.6 = getv %tmp.5 :FONT_MEDIUM;
-        %tmp.7 = lgetv %text;
-        symbol [ text %tmp.7 209 48 52 ];
-        symbol [ Graphics %tmp.8 209 54 62 ];
-        %tmp.8 = getm $.Toybox.Graphics;
-        symbol [ TEXT_JUSTIFY_LEFT %tmp.9 209 63 80 ];
-        %tmp.9 = getv %tmp.8 :TEXT_JUSTIFY_LEFT;
-        invoke %tmp.1 %tmp.2(%tmp.3, %tmp.4, %tmp.6, %tmp.7, %tmp.9);
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_208_35_210_4_stop:
+        %tmp.3 = lgetv %dc;
+        symbol [ dc %tmp.3 211 20 22 ];
+        symbol [ getWidth %tmp.4 211 23 31 ];
+        %tmp.4 = getv function %tmp.3 :getWidth;
+        %tmp.5 = invoke %tmp.3 %tmp.4();
+        %tmp.6 = 2;
+        %tmp.7 = div %tmp.5 %tmp.6;
+        %tmp.8 = lgetv %y;
+        symbol [ y %tmp.8 211 39 40 ];
+        symbol [ Graphics %tmp.9 211 42 50 ];
+        %tmp.9 = getm $.Toybox.Graphics;
+        symbol [ FONT_MEDIUM %tmp.10 211 51 62 ];
+        %tmp.10 = getv %tmp.9 :FONT_MEDIUM;
+        %tmp.11 = lgetv %text;
+        symbol [ text %tmp.11 211 64 68 ];
+        symbol [ Graphics %tmp.12 212 12 20 ];
+        %tmp.12 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.13 212 21 40 ];
+        %tmp.13 = getv %tmp.12 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.1 %tmp.2(%tmp.7, %tmp.8, %tmp.10, %tmp.11, %tmp.13);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_210_35_213_4_stop:
     }
-    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 212; @symbol_functiondef = [inverse,212,13,20]; @symbol_param<0> = [dc,212,21,23]; @symbol_param<1> = [x,212,25,26]; @symbol_param<2> = [y,212,28,29]; @symbol_param<3> = [width,212,31,36]; @symbol_param<4> = [text,212,38,42]; ]
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 215; @symbol_functiondef = [inverse,215,13,20]; @symbol_param<0> = [dc,215,21,23]; @symbol_param<1> = [x,215,25,26]; @symbol_param<2> = [y,215,28,29]; @symbol_param<3> = [width,215,31,36]; @symbol_param<4> = [text,215,38,42]; ]
     function inverse(dc, x, y, width, text) {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_212_44_218_4_start:
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 213 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_44_222_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 216 8 ]
         %tmp.1 = lgetv %dc;
-        symbol [ dc %tmp.1 213 8 10 ];
-        symbol [ setColor %tmp.2 213 11 19 ];
+        symbol [ dc %tmp.1 216 8 10 ];
+        symbol [ setColor %tmp.2 216 11 19 ];
         %tmp.2 = getv function %tmp.1 :setColor;
-        symbol [ Graphics %tmp.3 213 20 28 ];
+        symbol [ Graphics %tmp.3 216 20 28 ];
         %tmp.3 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.4 213 29 40 ];
+        symbol [ COLOR_WHITE %tmp.4 216 29 40 ];
         %tmp.4 = getv %tmp.3 :COLOR_WHITE;
-        symbol [ Graphics %tmp.5 213 42 50 ];
+        symbol [ Graphics %tmp.5 216 42 50 ];
         %tmp.5 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.6 213 51 62 ];
+        symbol [ COLOR_BLACK %tmp.6 216 51 62 ];
         %tmp.6 = getv %tmp.5 :COLOR_BLACK;
         invoke %tmp.1 %tmp.2(%tmp.4, %tmp.6);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 214 8 ]
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 217 8 ]
         %tmp.7 = lgetv %dc;
-        symbol [ dc %tmp.7 214 8 10 ];
-        symbol [ fillRectangle %tmp.8 214 11 24 ];
+        symbol [ dc %tmp.7 217 8 10 ];
+        symbol [ fillRectangle %tmp.8 217 11 24 ];
         %tmp.8 = getv function %tmp.7 :fillRectangle;
         %tmp.9 = lgetv %x;
-        symbol [ x %tmp.9 214 25 26 ];
+        symbol [ x %tmp.9 217 25 26 ];
         %tmp.10 = lgetv %y;
-        symbol [ y %tmp.10 214 28 29 ];
+        symbol [ y %tmp.10 217 28 29 ];
         %tmp.11 = lgetv %width;
-        symbol [ width %tmp.11 214 31 36 ];
+        symbol [ width %tmp.11 217 31 36 ];
         %tmp.12 = 20;
         invoke %tmp.7 %tmp.8(%tmp.9, %tmp.10, %tmp.11, %tmp.12);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 215 8 ]
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 218 8 ]
         %tmp.13 = lgetv %dc;
-        symbol [ dc %tmp.13 215 8 10 ];
-        symbol [ setColor %tmp.14 215 11 19 ];
+        symbol [ dc %tmp.13 218 8 10 ];
+        symbol [ setColor %tmp.14 218 11 19 ];
         %tmp.14 = getv function %tmp.13 :setColor;
-        symbol [ Graphics %tmp.15 215 20 28 ];
+        symbol [ Graphics %tmp.15 218 20 28 ];
         %tmp.15 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.16 215 29 40 ];
+        symbol [ COLOR_BLACK %tmp.16 218 29 40 ];
         %tmp.16 = getv %tmp.15 :COLOR_BLACK;
-        symbol [ Graphics %tmp.17 215 42 50 ];
+        symbol [ Graphics %tmp.17 218 42 50 ];
         %tmp.17 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.18 215 51 62 ];
+        symbol [ COLOR_WHITE %tmp.18 218 51 62 ];
         %tmp.18 = getv %tmp.17 :COLOR_WHITE;
         invoke %tmp.13 %tmp.14(%tmp.16, %tmp.18);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 216 8 ]
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 219 8 ]
         %tmp.19 = lgetv %dc;
-        symbol [ dc %tmp.19 216 8 10 ];
-        symbol [ drawText %tmp.20 216 11 19 ];
+        symbol [ dc %tmp.19 219 8 10 ];
+        symbol [ drawText %tmp.20 219 11 19 ];
         %tmp.20 = getv function %tmp.19 :drawText;
         %tmp.21 = lgetv %x;
-        symbol [ x %tmp.21 216 20 21 ];
-        %tmp.22 = 3;
-        %tmp.23 = add %tmp.21 %tmp.22;
-        %tmp.24 = lgetv %y;
-        symbol [ y %tmp.24 216 27 28 ];
-        %tmp.25 = 3;
-        %tmp.26 = add %tmp.24 %tmp.25;
-        symbol [ Graphics %tmp.27 216 34 42 ];
-        %tmp.27 = getm $.Toybox.Graphics;
-        symbol [ FONT_SMALL %tmp.28 216 43 53 ];
-        %tmp.28 = getv %tmp.27 :FONT_SMALL;
-        %tmp.29 = lgetv %text;
-        symbol [ text %tmp.29 216 55 59 ];
-        symbol [ Graphics %tmp.30 216 61 69 ];
-        %tmp.30 = getm $.Toybox.Graphics;
-        symbol [ TEXT_JUSTIFY_LEFT %tmp.31 216 70 87 ];
-        %tmp.31 = getv %tmp.30 :TEXT_JUSTIFY_LEFT;
-        invoke %tmp.19 %tmp.20(%tmp.23, %tmp.26, %tmp.28, %tmp.29, %tmp.31);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 217 8 ]
-        %tmp.32 = lgetv %dc;
-        symbol [ dc %tmp.32 217 8 10 ];
-        symbol [ setColor %tmp.33 217 11 19 ];
-        %tmp.33 = getv function %tmp.32 :setColor;
-        symbol [ Graphics %tmp.34 217 20 28 ];
-        %tmp.34 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.35 217 29 40 ];
-        %tmp.35 = getv %tmp.34 :COLOR_WHITE;
-        symbol [ Graphics %tmp.36 217 42 50 ];
+        symbol [ x %tmp.21 219 20 21 ];
+        %tmp.22 = lgetv %width;
+        symbol [ width %tmp.22 219 24 29 ];
+        %tmp.23 = 2;
+        %tmp.24 = div %tmp.22 %tmp.23;
+        %tmp.25 = add %tmp.21 %tmp.24;
+        %tmp.26 = lgetv %y;
+        symbol [ y %tmp.26 219 35 36 ];
+        %tmp.27 = 3;
+        %tmp.28 = add %tmp.26 %tmp.27;
+        symbol [ Graphics %tmp.29 219 42 50 ];
+        %tmp.29 = getm $.Toybox.Graphics;
+        symbol [ FONT_TINY %tmp.30 219 51 60 ];
+        %tmp.30 = getv %tmp.29 :FONT_TINY;
+        %tmp.31 = self;
+        symbol [ shortText %tmp.32 219 62 71 ];
+        %tmp.32 = getv function %tmp.31 :shortText;
+        %tmp.33 = lgetv %text;
+        symbol [ text %tmp.33 219 72 76 ];
+        %tmp.34 = 24;
+        %tmp.35 = invoke %tmp.31 %tmp.32(%tmp.33, %tmp.34);
+        symbol [ Graphics %tmp.36 220 12 20 ];
         %tmp.36 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.37 217 51 62 ];
-        %tmp.37 = getv %tmp.36 :COLOR_BLACK;
-        invoke %tmp.32 %tmp.33(%tmp.35, %tmp.37);
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_212_44_218_4_stop:
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.37 220 21 40 ];
+        %tmp.37 = getv %tmp.36 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.19 %tmp.20(%tmp.25, %tmp.28, %tmp.30, %tmp.35, %tmp.37);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 221 8 ]
+        %tmp.38 = lgetv %dc;
+        symbol [ dc %tmp.38 221 8 10 ];
+        symbol [ setColor %tmp.39 221 11 19 ];
+        %tmp.39 = getv function %tmp.38 :setColor;
+        symbol [ Graphics %tmp.40 221 20 28 ];
+        %tmp.40 = getm $.Toybox.Graphics;
+        symbol [ COLOR_WHITE %tmp.41 221 29 40 ];
+        %tmp.41 = getv %tmp.40 :COLOR_WHITE;
+        symbol [ Graphics %tmp.42 221 42 50 ];
+        %tmp.42 = getm $.Toybox.Graphics;
+        symbol [ COLOR_BLACK %tmp.43 221 51 62 ];
+        %tmp.43 = getv %tmp.42 :COLOR_BLACK;
+        invoke %tmp.38 %tmp.39(%tmp.41, %tmp.43);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_44_222_4_stop:
     }
 }
 [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 1; ]
