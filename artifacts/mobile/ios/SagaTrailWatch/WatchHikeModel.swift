@@ -21,6 +21,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var workoutSession: HKWorkoutSession?
   private var workoutBuilder: HKLiveWorkoutBuilder?
   private var workoutFinishInProgress = false
+  private var workoutAuthorizationInFlight = false
+  private var automaticWorkoutStartBlocked = false
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var batteryObserver: NSObjectProtocol?
@@ -124,18 +126,34 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func startHeartRate() {
+    automaticWorkoutStartBlocked = false
+    requestWorkoutAuthorizationAndStart(automatic: false)
+  }
+
+  private func requestWorkoutAuthorizationAndStart(automatic: Bool) {
+    guard workoutSession == nil,
+          !workoutAuthorizationInFlight,
+          !(automatic && automaticWorkoutStartBlocked) else { return }
     guard HKHealthStore.isHealthDataAvailable() else {
       healthStatus = "HealthKit nicht verfügbar"
       return
     }
+    workoutAuthorizationInFlight = true
     let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate)!
     healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [heartRate]) { [weak self] success, error in
       Task { @MainActor in
+        guard let self else { return }
+        self.workoutAuthorizationInFlight = false
         guard success else {
-          self?.healthStatus = error?.localizedDescription ?? "HealthKit-Zugriff erforderlich"
+          if automatic { self.automaticWorkoutStartBlocked = true }
+          self.healthStatus = error?.localizedDescription ?? "HealthKit-Zugriff erforderlich"
           return
         }
-        self?.beginWorkout()
+        guard self.state?.sessionStatus == "active" || !automatic else {
+          self.healthStatus = "Workout bereit"
+          return
+        }
+        self.beginWorkout()
       }
     }
   }
@@ -166,15 +184,18 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   private func syncWorkout(with sessionStatus: String) {
-    guard workoutSession != nil else { return }
     switch sessionStatus {
+    case "preparing":
+      automaticWorkoutStartBlocked = false
+    case "active":
+      if workoutSession == nil {
+        requestWorkoutAuthorizationAndStart(automatic: true)
+      } else if workoutSession?.state == .paused {
+        workoutSession?.resume()
+      }
     case "paused":
       if workoutSession?.state == .running {
         workoutSession?.pause()
-      }
-    case "active":
-      if workoutSession?.state == .paused {
-        workoutSession?.resume()
       }
     case "finished":
       finishWorkout()
