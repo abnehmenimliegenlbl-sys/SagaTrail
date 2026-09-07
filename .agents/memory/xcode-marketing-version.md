@@ -11,9 +11,9 @@ Wenn ein natives `ios/` Verzeichnis existiert, liest EAS Build die App-Version *
 
 **Fix (einmalig durchgeführt):** `ios/SagaTrail/Info.plist` → `CFBundleShortVersionString` auf `$(MARKETING_VERSION)` gesetzt (Xcode-Variable). Damit liest Xcode die Version ausschliesslich aus dem pbxproj.
 
-**How to apply:** Bei jedem Versions-Bump nur noch zwei Stellen anpassen:
+**How to apply:** Bei jedem Versions-Bump nur noch diese Stellen anpassen:
 1. `app.json` → `"version": "x.y.z"`
-2. `ios/SagaTrail.xcodeproj/project.pbxproj` → `MARKETING_VERSION = x.y.z;` (kommt zweimal vor: Debug + Release), per `sed -i 's/MARKETING_VERSION = OLD;/MARKETING_VERSION = NEW;/g'` — Edit-Tool schlägt wegen Tab/Space-Mix fehl.
+2. `ios/SagaTrail.xcodeproj/project.pbxproj` → alle `MARKETING_VERSION = x.y.z;`-Einträge für iPhone-App und eingebettete Watch-App, per `sed -i 's/MARKETING_VERSION = OLD;/MARKETING_VERSION = NEW;/g'` — Edit-Tool schlägt wegen Tab/Space-Mix fehl.
 
 Info.plist muss **nicht** mehr manuell geändert werden (liest jetzt via `$(MARKETING_VERSION)` automatisch aus pbxproj).
 

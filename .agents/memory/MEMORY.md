@@ -2,6 +2,7 @@
 - [Terrain speech density](sagatrail-terrain-speech-density.md) — keep detailed map coloring separate from voice density; nearby terrain cues are thinned, with very steep sections prioritized.
 - [SwissTopo profile request size](sagatrail-swisstopo-profile-chunking.md) — the profile GET URL breaks above roughly 125 LV95 points; preserve geometry with overlapping chunks and rebased distances.
 - [Xcode MARKETING_VERSION sync](xcode-marketing-version.md) — EAS ignoriert app.json version wenn ios/ vorhanden; MARKETING_VERSION im pbxproj per sed setzen (Edit-Tool versagt wegen Tab-Mix).
+- [App Store Connect version train](sagatrail-asc-version-train.md) — bei CLOSED_VERSION_TRAIN den versteckten JobRun-Fehler abfragen, Version erhöhen, native Targets synchronisieren und neu bauen.
 - [async-IIFE cancelled race](async-iife-cancelled-race.md) — await vor Netzwerk-Call in useEffect IIFE lässt React canceln bevor Call startet; nie `if(cancelled) return` vor dem Call, nur in .then/.finally.
 - [API server route path prefix](sagatrail-api-route-prefix.md) — routes/**.ts use paths WITHOUT /api/ prefix (e.g. "/transport"); main router mounts at /api so full URL is /api/transport.
 - [Canton geocoding robustness](sagatrail-canton-geocoding.md) — Nominatim can return canton via ISO3166-2-lvl4 ("CH-BL") even when address.state is absent/unparseable; always check ISO code first, then state, then county; + midpoint fallback in buildRouteFromPoints when start canton is null.
