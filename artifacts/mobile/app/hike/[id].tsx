@@ -87,7 +87,6 @@ import {
   type Lang,
   type WetterKlasse,
 } from "@/lib/storyContent";
-import { weaveNavigationCues } from "@/lib/storyEngine";
 import type { OfflinePanoramaDatenbank } from "@/lib/panorama";
 import { isLocalTerrainModel, type LocalTerrainModel } from "@/lib/terrainModel";
 import { blobToTempFileUri, getOfflineAudioUri } from "@/lib/narrationAudio";
@@ -1568,14 +1567,8 @@ export default function LiveHike() {
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
-      const routeStory = weaveNavigationCues(
-        story,
-        saga,
-        route?.geometry ? { geometry: route.geometry } : null,
-        storyLanguage,
-      );
-      setChapters(routeStory);
-      decisionsRef.current = routeStory;
+      setChapters(story);
+      decisionsRef.current = story;
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
       if (resumeAt != null && resumeAt > 0 && resumeAt < routeStory.length) {
@@ -4759,14 +4752,8 @@ export default function LiveHike() {
     try {
       if (!saga || !profile) return;
       const { chapters: story } = await resolveStory(saga, profile, premium);
-      const routeStory = weaveNavigationCues(
-        story,
-        saga,
-        { geometry: combinedGeometry },
-        storyLanguage,
-      );
-      setChapters(routeStory);
-      decisionsRef.current = routeStory;
+      setChapters(story);
+      decisionsRef.current = story;
     } finally {
       setPreparing(false);
     }
