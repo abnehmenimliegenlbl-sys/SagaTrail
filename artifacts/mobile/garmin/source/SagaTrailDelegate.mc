@@ -27,6 +27,14 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
             app.setSosConfirmation(false);
             return true;
         }
+        if (key == WatchUi.KEY_UP) {
+            app.changeInfoPage(-1);
+            return true;
+        }
+        if (key == WatchUi.KEY_DOWN) {
+            app.changeInfoPage(1);
+            return true;
+        }
         return false;
     }
 

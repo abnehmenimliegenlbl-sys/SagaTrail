@@ -238,6 +238,12 @@ class SagaTrailApp extends Application.AppBase {
         }
     }
 
+    function changeInfoPage(delta) {
+        if (view != null) {
+            view.changePage(delta);
+        }
+    }
+
     function refresh() {
         if (view != null) {
             view.requestUpdate();
