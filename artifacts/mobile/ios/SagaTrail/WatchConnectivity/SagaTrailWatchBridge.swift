@@ -161,6 +161,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let map = state["map"] as? [String: Any] {
       guard validMapPayload(map) else { throw ProtocolError.invalidMapPayload }
     }
+    if let offRoute = state["offRoute"] as? [String: Any], !validOffRoutePayload(offRoute) {
+      throw ProtocolError.invalidOffRoutePayload
+    }
+    if let weather = state["weather"] as? [String: Any], !validWeatherPayload(weather) {
+      throw ProtocolError.invalidWeatherPayload
+    }
+    if let daylight = state["daylight"] as? [String: Any], !validDaylightPayload(daylight) {
+      throw ProtocolError.invalidDaylightPayload
+    }
     let navigation = state["nextNavigation"] as? [String: Any]
     let upcomingNavigations = state["upcomingNavigations"] as? [[String: Any]] ?? []
     let alert = state["activeAlert"] as? [String: Any]
@@ -207,6 +216,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     if let map = state["map"] as? [String: Any] {
       watchState["map"] = map
+    }
+    if let offRoute = state["offRoute"] as? [String: Any] {
+      watchState["offRoute"] = offRoute
+    }
+    if let weather = state["weather"] as? [String: Any] {
+      watchState["weather"] = weather
+    }
+    if let daylight = state["daylight"] as? [String: Any] {
+      watchState["daylight"] = daylight
     }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
@@ -277,6 +295,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let map = input["map"] as? [String: Any], !validMapPayload(map) {
       throw ProtocolError.invalidMapPayload
     }
+    if let offRoute = input["offRoute"] as? [String: Any], !validOffRoutePayload(offRoute) {
+      throw ProtocolError.invalidOffRoutePayload
+    }
+    if let weather = input["weather"] as? [String: Any], !validWeatherPayload(weather) {
+      throw ProtocolError.invalidWeatherPayload
+    }
+    if let daylight = input["daylight"] as? [String: Any], !validDaylightPayload(daylight) {
+      throw ProtocolError.invalidDaylightPayload
+    }
     guard let updatedAt = input["updatedAt"] as? NSNumber else { throw ProtocolError.missingUpdatedAt }
     var result: [String: Any] = ["updatedAt": updatedAt]
     let fields = ["routeName", "nextInstruction", "navigationDirection", "sessionStatus", "isHiking",
@@ -285,7 +312,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
                   "upcomingNavigations", "plannedAscentM", "remainingAscentM",
                    "terrainSection", "map"]
-    for field in fields { if let value = input[field] { result[field] = value } }
+    let optionalFields = ["offRoute", "weather", "daylight"]
+    for field in fields + optionalFields { if let value = input[field] { result[field] = value } }
     return result
   }
 
@@ -309,6 +337,28 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       return false
     }
     return map["current"] == nil || map["current"] is [String: Any] || map["current"] is NSNull
+  }
+
+  private func validOffRoutePayload(_ value: [String: Any]) -> Bool {
+    guard let distance = (value["distanceM"] as? NSNumber)?.doubleValue else { return false }
+    return distance.isFinite && distance >= 0 && distance <= 100_000
+  }
+
+  private func validWeatherPayload(_ value: [String: Any]) -> Bool {
+    guard let temperature = (value["temperatureC"] as? NSNumber)?.doubleValue,
+          let weatherCode = (value["weatherCode"] as? NSNumber)?.intValue else {
+      return false
+    }
+    return temperature.isFinite && temperature >= -90 && temperature <= 70 &&
+      weatherCode >= 0 && weatherCode <= 999
+  }
+
+  private func validDaylightPayload(_ value: [String: Any]) -> Bool {
+    guard let sunset = (value["sunsetAtEpochMs"] as? NSNumber)?.doubleValue,
+          value["arrivalAfterSunset"] is Bool else {
+      return false
+    }
+    return sunset.isFinite && sunset > 0
   }
 
   private func containsForbiddenCoordinates(in value: Any, allowingMapPayload: Bool = false) -> Bool {
@@ -349,7 +399,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   private enum ProtocolError: LocalizedError {
-    case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState, invalidMapPayload
+    case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState,
+         invalidMapPayload, invalidOffRoutePayload, invalidWeatherPayload, invalidDaylightPayload
     var errorDescription: String? {
       switch self {
       case .coordinatesNotAllowed: return "Coordinates are not allowed in the watch protocol."
@@ -357,6 +408,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       case .invalidAlert: return "An alert needs display text and cannot contain coordinates."
       case .invalidCanonicalState: return "The HikeLiveState protocol v1 payload is invalid."
       case .invalidMapPayload: return "The watch map payload is invalid."
+      case .invalidOffRoutePayload: return "The watch off-route payload is invalid."
+      case .invalidWeatherPayload: return "The watch weather payload is invalid."
+      case .invalidDaylightPayload: return "The watch daylight payload is invalid."
       }
     }
   }

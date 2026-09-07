@@ -44,6 +44,20 @@ export interface WatchMapState {
   gpsFresh: boolean;
 }
 
+export interface WatchOffRoute {
+  distanceM: number;
+}
+
+export interface WatchWeather {
+  temperatureC: number;
+  weatherCode: number;
+}
+
+export interface WatchDaylight {
+  sunsetAtEpochMs: number;
+  arrivalAfterSunset: boolean;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -56,6 +70,9 @@ export interface HikeLiveState {
   terrainSection?: WatchTerrainSection | null;
   safetyCheckin?: WatchSafetyCheckin | null;
   map?: WatchMapState | null;
+  offRoute?: WatchOffRoute | null;
+  weather?: WatchWeather | null;
+  daylight?: WatchDaylight | null;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
@@ -214,6 +231,19 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       typeof map.gpsFresh !== "boolean"
     ) return false;
   }
+  if (state.offRoute !== undefined && state.offRoute !== null &&
+      (typeof state.offRoute.distanceM !== "number" ||
+       !Number.isFinite(state.offRoute.distanceM) ||
+       state.offRoute.distanceM < 0)) return false;
+  if (state.weather !== undefined && state.weather !== null &&
+      (typeof state.weather.temperatureC !== "number" ||
+       !Number.isFinite(state.weather.temperatureC) ||
+       typeof state.weather.weatherCode !== "number" ||
+       !Number.isFinite(state.weather.weatherCode))) return false;
+  if (state.daylight !== undefined && state.daylight !== null &&
+      (typeof state.daylight.sunsetAtEpochMs !== "number" ||
+       !Number.isFinite(state.daylight.sunsetAtEpochMs) ||
+       typeof state.daylight.arrivalAfterSunset !== "boolean")) return false;
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {
     if (plannedValue !== undefined && plannedValue !== null &&
         (typeof plannedValue !== "number" || !Number.isFinite(plannedValue) || plannedValue < 0)) {

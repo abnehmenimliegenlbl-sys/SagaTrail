@@ -36,6 +36,20 @@ enum SagaTrailWatchProtocol {
     let gpsFresh: Bool
   }
 
+  struct OffRoute {
+    let distanceMeters: Double
+  }
+
+  struct Weather {
+    let temperatureCelsius: Double
+    let weatherCode: Int
+  }
+
+  struct Daylight {
+    let sunsetAt: Date
+    let arrivalAfterSunset: Bool
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -58,6 +72,9 @@ enum SagaTrailWatchProtocol {
     let terrainSection: TerrainSection?
     let safetyCheckin: SafetyCheckin?
     let map: RouteMap?
+    let offRoute: OffRoute?
+    let weather: Weather?
+    let daylight: Daylight?
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -137,6 +154,35 @@ enum SagaTrailWatchProtocol {
         }()
         return RouteMap(route: route, current: current, gpsFresh: gpsFresh)
       }()
+      let offRoute: OffRoute? = {
+        guard let value = dictionary["offRoute"] as? [String: Any],
+              let distanceMeters = (value["distanceM"] as? NSNumber)?.doubleValue,
+              distanceMeters >= 0,
+              distanceMeters.isFinite else {
+          return nil
+        }
+        return OffRoute(distanceMeters: distanceMeters)
+      }()
+      let weather: Weather? = {
+        guard let value = dictionary["weather"] as? [String: Any],
+              let temperatureCelsius = (value["temperatureC"] as? NSNumber)?.doubleValue,
+              let weatherCode = (value["weatherCode"] as? NSNumber)?.intValue,
+              temperatureCelsius.isFinite else {
+          return nil
+        }
+        return Weather(temperatureCelsius: temperatureCelsius, weatherCode: weatherCode)
+      }()
+      let daylight: Daylight? = {
+        guard let value = dictionary["daylight"] as? [String: Any],
+              let sunsetAtEpochMs = (value["sunsetAtEpochMs"] as? NSNumber)?.doubleValue,
+              let arrivalAfterSunset = value["arrivalAfterSunset"] as? Bool else {
+          return nil
+        }
+        return Daylight(
+          sunsetAt: Date(timeIntervalSince1970: sunsetAtEpochMs / 1000),
+          arrivalAfterSunset: arrivalAfterSunset
+        )
+      }()
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -157,6 +203,9 @@ enum SagaTrailWatchProtocol {
         terrainSection: terrainSection,
         safetyCheckin: safetyCheckin,
         map: map,
+        offRoute: offRoute,
+        weather: weather,
+        daylight: daylight,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }

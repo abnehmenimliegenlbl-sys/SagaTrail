@@ -241,6 +241,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
     case "liveState":
       guard let decoded = SagaTrailWatchProtocol.LiveState.decode(payload) else { return }
       playTurnHapticIfNeeded(decoded)
+      if decoded.offRoute != nil && state?.offRoute == nil {
+        WKInterfaceDevice.current().play(.failure)
+      } else if decoded.offRoute == nil && state?.offRoute != nil {
+        WKInterfaceDevice.current().play(.success)
+      }
       state = decoded
       receivedAt = Date()
       syncWorkout(with: decoded.sessionStatus)
@@ -298,11 +303,17 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private func persistComplication(_ state: SagaTrailWatchProtocol.LiveState) {
     let turnDistance = state.distanceToTurnMeters.map { "\(Int($0)) m" } ?? "—"
     let remaining = state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—"
+    let status = state.offRoute.map { "ABWEG \(Int($0.distanceMeters)) m" }
+      ?? (state.isHiking ? state.navigationDirection : "Pause")
     UserDefaults.standard.set([
-      "direction": state.navigationDirection,
+      "direction": status,
       "turnDistance": turnDistance,
       "remaining": remaining,
       "active": state.isHiking,
+      "offRoute": state.offRoute != nil,
+      "weatherTemperature": state.weather?.temperatureCelsius,
+      "sunsetAt": state.daylight?.sunsetAt.timeIntervalSince1970,
+      "arrivalAfterSunset": state.daylight?.arrivalAfterSunset ?? false,
       "updatedAt": state.updatedAt.timeIntervalSince1970
     ], forKey: "sagatrail.complication.snapshot")
   }

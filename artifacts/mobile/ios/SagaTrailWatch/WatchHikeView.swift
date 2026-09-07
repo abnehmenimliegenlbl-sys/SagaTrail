@@ -10,7 +10,16 @@ struct WatchHikeView: View {
         connectionBanner
         if let state = hike.state {
           if let map = state.map {
-            WatchRouteMap(map: map)
+            WatchRouteMap(map: map, offline: !hike.isReachable || hike.isStale)
+          }
+          if let offRoute = state.offRoute {
+            offRouteCard(offRoute)
+          }
+          if let weather = state.weather {
+            weatherCard(weather, daylight: state.daylight)
+          }
+          if state.sessionStatus == "finished" {
+            hikeSummary(state)
           }
           Image(systemName: arrow(for: state.navigationDirection))
             .font(.system(size: 44, weight: .bold))
@@ -72,15 +81,17 @@ struct WatchHikeView: View {
            }
           metric("Schritte", "\(state.steps)")
           heartRate(state)
-           Button {
-             hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
-           } label: {
-             Label(state.isHiking ? "Pause" : (state.sessionStatus == "preparing" ? "Start" : "Fortsetzen"),
-                   systemImage: state.isHiking ? "pause.fill" : "play.fill")
-           }.buttonStyle(.bordered)
-          Button(role: .destructive, action: hike.requestSOSConfirmation) {
-            Label("SOS", systemImage: "exclamationmark.triangle.fill")
-          }.buttonStyle(.borderedProminent)
+           if state.sessionStatus != "finished" {
+             Button {
+                hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
+              } label: {
+                Label(state.isHiking ? "Pause" : (state.sessionStatus == "preparing" ? "Start" : "Fortsetzen"),
+                      systemImage: state.isHiking ? "pause.fill" : "play.fill")
+              }.buttonStyle(.bordered)
+             Button(role: .destructive, action: hike.requestSOSConfirmation) {
+               Label("SOS", systemImage: "exclamationmark.triangle.fill")
+             }.buttonStyle(.borderedProminent)
+           }
         } else {
           Image(systemName: "iphone.slash").font(.largeTitle)
           Text("Warte auf dein iPhone").multilineTextAlignment(.center)
@@ -110,6 +121,10 @@ struct WatchHikeView: View {
     HStack(spacing: 5) {
       Text(!hike.isReachable ? "iPhone nicht erreichbar" : hike.isStale ? "Daten veraltet" : "Live vom iPhone")
       Spacer()
+      if let receivedAt = hike.receivedAt {
+        let age = max(0, Int(Date().timeIntervalSince(receivedAt)))
+        Text(age < 5 ? "jetzt" : "vor \(age)s").monospacedDigit()
+      }
       if let battery = hike.batteryLevel {
         Image(systemName: batteryIcon(for: battery, charging: hike.isCharging))
         Text("\(Int((battery * 100).rounded())) %").monospacedDigit()
@@ -117,6 +132,78 @@ struct WatchHikeView: View {
     }
     .font(.caption2)
     .foregroundStyle((!hike.isReachable || hike.isStale) ? .orange : .green)
+  }
+  private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
+    VStack(alignment: .leading, spacing: 3) {
+      Label("Route verlassen", systemImage: "location.slash.fill")
+        .foregroundStyle(.orange)
+      Text("Mindestens \(Int(offRoute.distanceMeters)) m vom geplanten Weg entfernt")
+        .foregroundStyle(.secondary)
+      Text("Zurück zur markierten Route gehen.")
+        .foregroundStyle(.secondary)
+    }
+    .font(.caption2)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(7)
+    .background(.orange.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+  }
+  private func weatherCard(
+    _ weather: SagaTrailWatchProtocol.Weather,
+    daylight: SagaTrailWatchProtocol.Daylight?,
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 3) {
+      HStack {
+        Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
+        Spacer()
+        Text("\(Int(weather.temperatureCelsius.rounded())) °C").monospacedDigit()
+      }
+      if let daylight {
+        Text("Sonnenuntergang \(daylight.sunsetAt.formatted(date: .omitted, time: .shortened))")
+          .foregroundStyle(daylight.arrivalAfterSunset ? .orange : .secondary)
+        if daylight.arrivalAfterSunset {
+          Text("Voraussichtliche Ankunft nach Sonnenuntergang")
+            .foregroundStyle(.orange)
+        }
+      }
+    }
+    .font(.caption2)
+  }
+  private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Label("Wanderung abgeschlossen", systemImage: "checkmark.circle.fill")
+        .foregroundStyle(.green)
+      metric("Gesamtzeit", duration(state.elapsedSeconds))
+      metric("Gesamtdistanz", String(format: "%.2f km", state.distanceMeters / 1000))
+      if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
+        metric("Letzter Puls", "\(Int(bpm.rounded())) bpm")
+      }
+      Text(hike.healthStatus)
+        .foregroundStyle(.secondary)
+    }
+    .font(.caption2)
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+  private func weatherIcon(_ code: Int) -> String {
+    switch code {
+    case 0: return "sun.max.fill"
+    case 1...3: return "cloud.sun.fill"
+    case 45...48: return "cloud.fog.fill"
+    case 51...67, 80...82: return "cloud.rain.fill"
+    case 71...77, 85...86: return "snowflake"
+    case 95...99: return "cloud.bolt.rain.fill"
+    default: return "cloud.fill"
+    }
+  }
+  private func weatherLabel(_ code: Int) -> String {
+    switch code {
+    case 0: return "Klar"
+    case 1...3: return "Bewölkt"
+    case 45...48: return "Nebel"
+    case 51...67, 80...82: return "Regen"
+    case 71...77, 85...86: return "Schnee"
+    case 95...99: return "Gewitter"
+    default: return "Wetter"
+    }
   }
   private func metric(_ label: String, _ value: String) -> some View {
     HStack { Text(label); Spacer(); Text(value).monospacedDigit() }.font(.footnote)
@@ -203,6 +290,10 @@ struct WatchHikeView: View {
 
 private struct WatchRouteMap: View {
   let map: SagaTrailWatchProtocol.RouteMap
+  let offline: Bool
+  @State private var position: MapCameraPosition = .automatic
+  @State private var zoom: Double = 1
+  @State private var routeUp = false
 
   private var coordinates: [CLLocationCoordinate2D] {
     map.route.map {
@@ -210,11 +301,57 @@ private struct WatchRouteMap: View {
     }
   }
 
+  private var center: CLLocationCoordinate2D {
+    if let current = map.current {
+      return CLLocationCoordinate2D(latitude: current.latitude, longitude: current.longitude)
+    }
+    let lat = map.route.map(\.latitude).reduce(0, +) / Double(map.route.count)
+    let lng = map.route.map(\.longitude).reduce(0, +) / Double(map.route.count)
+    return CLLocationCoordinate2D(latitude: lat, longitude: lng)
+  }
+
+  private var baseDistance: CLLocationDistance {
+    let latitudes = map.route.map(\.latitude)
+    let longitudes = map.route.map(\.longitude)
+    let span = max(
+      (latitudes.max() ?? 0) - (latitudes.min() ?? 0),
+      (longitudes.max() ?? 0) - (longitudes.min() ?? 0),
+    )
+    return max(400, span * 111_000 * 1.6)
+  }
+
+  private var routeHeading: CLLocationDirection {
+    guard let first = coordinates.first, let second = coordinates.dropFirst().first else { return 0 }
+    let lat1 = first.latitude * .pi / 180
+    let lat2 = second.latitude * .pi / 180
+    let deltaLng = (second.longitude - first.longitude) * .pi / 180
+    let y = sin(deltaLng) * cos(lat2)
+    let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLng)
+    return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+  }
+
+  private func recenter() {
+    position = .camera(MapCamera(
+      centerCoordinate: center,
+      distance: baseDistance / zoom,
+      heading: routeUp ? routeHeading : 0,
+      pitch: 0
+    ))
+  }
+
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      Map(initialPosition: .automatic) {
+      Map(position: $position) {
         MapPolyline(coordinates: coordinates)
           .stroke(.blue, lineWidth: 4)
+        if let start = coordinates.first {
+          Marker("Start", systemImage: "flag.fill", coordinate: start)
+            .tint(.green)
+        }
+        if let finish = coordinates.last {
+          Marker("Ziel", systemImage: "flag.checkered", coordinate: finish)
+            .tint(.red)
+        }
         if let current = map.current {
           Annotation("Du", coordinate: CLLocationCoordinate2D(
             latitude: current.latitude,
@@ -230,14 +367,35 @@ private struct WatchRouteMap: View {
       .mapStyle(.standard)
       .frame(height: 145)
       .clipShape(RoundedRectangle(cornerRadius: 12))
-      if !map.gpsFresh {
-        Label("GPS pausiert", systemImage: "location.slash")
-          .font(.caption2)
-          .padding(.horizontal, 6)
-          .padding(.vertical, 3)
-          .background(.black.opacity(0.7), in: Capsule())
-          .padding(6)
+      VStack(alignment: .leading, spacing: 3) {
+        if !map.gpsFresh {
+          Label("GPS pausiert", systemImage: "location.slash")
+        } else if offline {
+          Label("Letzte Route", systemImage: "wifi.slash")
+        }
+        HStack(spacing: 8) {
+          Button {
+            routeUp.toggle()
+            recenter()
+          } label: {
+            Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
+          }
+          Text(routeUp ? "Route" : "Nord")
+            .font(.caption2)
+        }
       }
+      .foregroundStyle(.white)
+      .font(.caption2)
+      .padding(.horizontal, 6)
+      .padding(.vertical, 4)
+      .background(.black.opacity(0.7), in: Capsule())
+      .padding(6)
+    }
+    .digitalCrownRotation($zoom, from: 0.5, through: 2.0, by: 0.1, sensitivity: .medium, isContinuous: false)
+    .onAppear { recenter() }
+    .onChange(of: zoom) { _, _ in recenter() }
+    .onChange(of: map.current?.latitude) { _, _ in
+      if map.current != nil { recenter() }
     }
     .overlay(
       RoundedRectangle(cornerRadius: 12)

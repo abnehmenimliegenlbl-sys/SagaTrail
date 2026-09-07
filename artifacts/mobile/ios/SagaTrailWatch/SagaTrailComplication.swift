@@ -63,11 +63,18 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     let turnDistance = snapshot["turnDistance"] as? String ?? "—"
     let remaining = snapshot["remaining"] as? String ?? "Wanderung"
     let active = snapshot["active"] as? Bool ?? false
-    let status = active ? direction : "Pause"
+    let offRoute = snapshot["offRoute"] as? Bool ?? false
+    let arrivalAfterSunset = snapshot["arrivalAfterSunset"] as? Bool ?? false
+    let temperature = snapshot["weatherTemperature"] as? Double
+    let status = offRoute ? "ABWEG" : (active ? direction : "Pause")
 
     let line1 = CLKSimpleTextProvider(text: status)
-    let line2 = CLKSimpleTextProvider(text: turnDistance)
-    let body = CLKSimpleTextProvider(text: remaining)
+    let line2 = CLKSimpleTextProvider(text: offRoute ? "Zurück" : turnDistance)
+    let body = CLKSimpleTextProvider(
+      text: arrivalAfterSunset
+        ? "Nach Sonnenuntergang"
+        : temperature.map { "\(Int($0.rounded()))° · \(remaining)" } ?? remaining
+    )
 
     switch family {
     case .modularSmall:

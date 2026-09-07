@@ -118,7 +118,9 @@ import {
   subscribeToCompanionEvents,
   type HikeLiveState,
   type WatchMapPoint,
+  type WatchOffRoute,
   type WatchSafetyCheckin,
+  type WatchWeather,
   type WatchNavigation,
   type WatchTerrainSection,
 } from "@/lib/watchCompanion";
@@ -340,6 +342,42 @@ const RDP_EPSILON = 0.00007;
  *  Bewusst niedrig: auch bei vorzeitigem Abbruch oder Routenaenderung soll die
  *  Share-Karte die TATSAECHLICH gelaufene Strecke zeigen, nicht die geplante. */
 const MIN_TRACK_POINTS = 2;
+
+function estimateSunsetEpochMs(lat: number, lng: number, date: Date): number | null {
+  const day = Math.floor(
+    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
+      Date.UTC(date.getUTCFullYear(), 0, 0)) / 86_400_000,
+  );
+  const lngHour = lng / 15;
+  const t = day + ((18 - lngHour) / 24);
+  const rad = Math.PI / 180;
+  const mod360 = (value: number) => ((value % 360) + 360) % 360;
+  const meanAnomaly = 0.9856 * t - 3.289;
+  const longitude = mod360(
+    meanAnomaly +
+      1.916 * Math.sin(meanAnomaly * rad) +
+      0.020 * Math.sin(2 * meanAnomaly * rad) +
+      282.634,
+  );
+  let rightAscension = Math.atan(0.91764 * Math.tan(longitude * rad)) / rad;
+  rightAscension = mod360(rightAscension);
+  rightAscension += 90 * Math.floor(longitude / 90) - 90 * Math.floor(rightAscension / 90);
+  rightAscension /= 15;
+  const declinationSin = 0.39782 * Math.sin(longitude * rad);
+  const declinationCos = Math.cos(Math.asin(declinationSin));
+  const cosHourAngle =
+    (Math.cos(90.833 * rad) - declinationSin * Math.sin(lat * rad)) /
+    (declinationCos * Math.cos(lat * rad));
+  if (cosHourAngle > 1 || cosHourAngle < -1) return null;
+  const hourAngle = Math.acos(cosHourAngle) / rad / 15;
+  const localMeanTime = hourAngle + rightAscension - 0.06571 * t - 6.622;
+  const utcHour = ((localMeanTime - lngHour) % 24 + 24) % 24;
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  ) + utcHour * 3_600_000;
+}
 
 /** Senkrechter Abstand eines Punkts von der Gerade start→end (in Grad). */
 function rdpPerpendicularDist(
@@ -655,6 +693,11 @@ export default function LiveHike() {
     setAcceptedRouteGeometry(activeHike.activeGeometry);
   }, [acceptedRouteGeometry, activeHike, id, isResume]);
   const navigationGeometry = acceptedRouteGeometry ?? route?.geometry;
+  const watchSunsetAtEpochMs = useMemo(() => {
+    const coordinates = route?.coordinates;
+    if (!coordinates) return null;
+    return estimateSunsetEpochMs(coordinates.lat, coordinates.lng, new Date());
+  }, [route?.coordinates]);
   const watchMapRoute = useMemo<WatchMapPoint[] | null>(() => {
     if (!navigationGeometry || navigationGeometry.length < 2) return null;
     const maxPoints = 100;
@@ -713,6 +756,11 @@ export default function LiveHike() {
   const [isOffline, setIsOffline] = useState<boolean>(false);
   /** GPS-Position zum Zeitpunkt der Off-Route-Erkennung — treibt die Neuberechnung. */
   const [offRoutePos, setOffRoutePos] = useState<LatLng | null>(null);
+  const watchOffRoute = useMemo<WatchOffRoute | null>(() => {
+    if (!offRoutePos || !navigationGeometry || navigationGeometry.length < 2) return null;
+    const projection = fortschrittAufRoute(offRoutePos, navigationGeometry);
+    return projection ? { distanceM: Math.round(projection.distKm * 1000) } : null;
+  }, [navigationGeometry, offRoutePos]);
   /** Neuberechnete Alternativroute von Valhalla (gestrichelte Linie auf der Karte). */
   const [recalcGeom, setRecalcGeom] = useState<number[][] | null>(null);
   /** true waehrend die Valhalla-Anfrage laeuft. */
@@ -1019,6 +1067,11 @@ export default function LiveHike() {
   const [decisionCountdown, setDecisionCountdown] = useState<number | null>(null);
   // Live-Wetter am Wanderungsstart — wird einmalig geladen, sobald Route-Koordinaten bekannt sind.
   const [hikeWeather, setHikeWeather] = useState<WeatherReport | null>(null);
+  const watchWeather = useMemo<WatchWeather | null>(() => (
+    hikeWeather && Number.isFinite(hikeWeather.temperatureC) && Number.isFinite(hikeWeather.weatherCode)
+      ? { temperatureC: hikeWeather.temperatureC, weatherCode: hikeWeather.weatherCode }
+      : null
+  ), [hikeWeather]);
 
   const addRecognitionEntry = useCallback((entry: RecognitionJournalEntry) => {
     setRecognitionEntries((current) => {
@@ -2030,6 +2083,8 @@ export default function LiveHike() {
         if (offRouteCountRef.current >= OFF_ROUTE_CONFIRM_FIXES && !isOffRouteRef.current) {
           isOffRouteRef.current = true;
           setOffRoutePos(cur);
+        } else if (isOffRouteRef.current) {
+          setOffRoutePos(cur);
         }
       } else if (distKm < OFF_ROUTE_RECOVER_KM) {
         offRouteCountRef.current = 0;
@@ -2378,6 +2433,17 @@ export default function LiveHike() {
             gpsFresh: hasFreshGps,
           }
         : null,
+      offRoute: watchOffRoute,
+      weather: watchWeather,
+      daylight: watchSunsetAtEpochMs
+        ? {
+            sunsetAtEpochMs: watchSunsetAtEpochMs,
+            arrivalAfterSunset: now + Math.max(
+              0,
+              Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
+            ) * 1000 > watchSunsetAtEpochMs,
+          }
+        : null,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
@@ -2425,7 +2491,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchRouteProgress, watchTerrainSection]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
