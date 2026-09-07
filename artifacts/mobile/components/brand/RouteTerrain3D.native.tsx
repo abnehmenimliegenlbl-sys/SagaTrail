@@ -20,7 +20,6 @@ import {
   BufferGeometry,
   DoubleSide,
   Group,
-  Shape,
   SRGBColorSpace,
   Texture,
   Vector3,
@@ -34,7 +33,6 @@ import {
 } from "@/lib/terrainCues";
 import { hapticRigid, hapticSelection } from "@/lib/haptics";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
-import { estimateRouteMinutes } from "@/lib/waypointEta";
 
 type Props = {
   visible: boolean;
@@ -49,6 +47,12 @@ type Model = {
   profile: TerrainProfilePoint[];
 };
 type ViewMode = "overview" | "walk" | "flight";
+type WalkProgress = {
+  distanceM: number;
+  ascentM: number;
+  minutes: number;
+  bearingDeg: number;
+};
 type MapBounds = TerrainGrid["bounds"];
 type MapTile = {
   bounds: MapBounds;
@@ -360,6 +364,74 @@ function routeDistances(route: number[][]): number[] {
   return distances;
 }
 
+function cumulativeAscent(
+  profile: TerrainProfilePoint[],
+  distances: number[],
+): number[] {
+  const values = [0];
+  let total = 0;
+  for (let index = 1; index < distances.length; index += 1) {
+    const previous = altitudeAt(profile, distances[index - 1]);
+    const current = altitudeAt(profile, distances[index]);
+    if (previous != null && current != null && current > previous) {
+      total += current - previous;
+    }
+    values.push(total);
+  }
+  return values;
+}
+
+function valueAtDistance(
+  values: number[],
+  distances: number[],
+  distance: number,
+): number {
+  const lastIndex = Math.min(values.length, distances.length) - 1;
+  if (lastIndex < 0) return 0;
+  if (distance <= 0) return values[0] ?? 0;
+  if (distance >= distances[lastIndex]) return values[lastIndex] ?? 0;
+  let high = 1;
+  while (high <= lastIndex && distances[high] < distance) high += 1;
+  const low = Math.max(0, high - 1);
+  const span = distances[high] - distances[low];
+  const fraction = span > 0 ? (distance - distances[low]) / span : 0;
+  return (
+    (values[low] ?? 0) +
+    ((values[high] ?? values[low] ?? 0) - (values[low] ?? 0)) * fraction
+  );
+}
+
+function routeBearingAtDistance(
+  geometry: number[][],
+  distances: number[],
+  distance: number,
+): number {
+  const next = geoPointAtRouteDistance(
+    geometry,
+    distances,
+    Math.min(distances.at(-1) ?? 0, distance + 0.03),
+  );
+  const current = geoPointAtRouteDistance(geometry, distances, distance);
+  if (!current || !next) return 0;
+  const deltaLng = (next[1] - current[1]) * radians;
+  const lat1 = current[0] * radians;
+  const lat2 = next[0] * radians;
+  const y = Math.sin(deltaLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+  return (Math.atan2(y, x) / radians + 360) % 360;
+}
+
+function estimatedWalkedMinutes(distanceKm: number, ascentM: number): number {
+  const horizontalHours = Math.max(0, distanceKm) / 4;
+  const verticalHours = Math.max(0, ascentM) / 400;
+  const hours =
+    Math.max(horizontalHours, verticalHours) +
+    Math.min(horizontalHours, verticalHours) / 2;
+  return Math.max(0, Math.round(hours * 60));
+}
+
 function geoPointAtRouteDistance(
   points: number[][],
   distances: number[],
@@ -411,33 +483,17 @@ function flightDetailTiles(
 
 function FlightMarker({
   position,
-  direction,
 }: {
   position: Vector3;
-  direction: Vector3;
 }) {
-  const markerShape = useMemo(() => {
-    const shape = new Shape();
-    // Spitze zeigt in lokaler +Y-Richtung. Die hintere Kerbe macht auch bei
-    // kleiner Darstellung sofort deutlich, welche Seite vorne ist.
-    shape.moveTo(0, 30);
-    shape.lineTo(19, -20);
-    shape.lineTo(0, -11);
-    shape.lineTo(-19, -20);
-    shape.closePath();
-    return shape;
-  }, []);
-
-  const heading = Math.atan2(-direction.x, -direction.z);
   return (
     <mesh
-      position={[position.x, position.y + 28, position.z]}
-      rotation={[-Math.PI / 2, heading, 0]}
+      position={[position.x, position.y + 8, position.z]}
       renderOrder={10}
     >
-      <shapeGeometry args={[markerShape]} />
+      <sphereGeometry args={[6, 16, 10]} />
       <meshBasicMaterial
-        color="#FFD45A"
+        color="#39FF14"
         side={DoubleSide}
         depthTest={false}
         depthWrite={false}
@@ -605,12 +661,14 @@ function Scene({
   runId,
   onFlightComplete,
   onMapLoadState,
+  onWalkProgress,
 }: {
   model: Model;
   mode: ViewMode;
   runId: number;
   onFlightComplete: () => void;
   onMapLoadState: (state: "loading" | "ready" | "error") => void;
+  onWalkProgress: (progress: WalkProgress) => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
   const tiles = useMemo(() => mapTiles(model.grid), [model.grid]);
@@ -624,6 +682,10 @@ function Scene({
   const routeDistanceList = useMemo(
     () => routeDistances(model.geometry),
     [model.geometry],
+  );
+  const ascentList = useMemo(
+    () => cumulativeAscent(model.profile, routeDistanceList),
+    [model.profile, routeDistanceList],
   );
   const flightTiles = useMemo(
     () =>
@@ -642,6 +704,7 @@ function Scene({
   const wantedFlightTiles = useRef(new Set<number>());
   const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
   const revealedDistanceRef = useRef(0);
+  const lastWalkProgress = useRef("");
   const flightCompleted = useRef(false);
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
@@ -884,7 +947,16 @@ function Scene({
     const initialDistance = mode === "overview" ? routeLengthKm : 0;
     revealedDistanceRef.current = initialDistance;
     setRevealedDistanceKm(initialDistance);
-  }, [mode, routeLengthKm, runId]);
+    lastWalkProgress.current = "";
+    if (mode === "walk") {
+      onWalkProgress({
+        distanceM: 0,
+        ascentM: 0,
+        minutes: 0,
+        bearingDeg: routeBearingAtDistance(model.geometry, routeDistanceList, 0),
+      });
+    }
+  }, [mode, model.geometry, onWalkProgress, routeDistanceList, routeLengthKm, runId]);
 
   useEffect(() => {
     const disposeAll = () => {
@@ -993,6 +1065,21 @@ function Scene({
       );
       revealedDistanceRef.current = next;
       setRevealedDistanceKm(next);
+      if (mode === "walk") {
+        const distanceM = Math.round(next * 1000);
+        const ascentM = Math.round(valueAtDistance(ascentList, routeDistanceList, next));
+        const progress: WalkProgress = {
+          distanceM,
+          ascentM,
+          minutes: estimatedWalkedMinutes(distanceM / 1000, ascentM),
+          bearingDeg: routeBearingAtDistance(model.geometry, routeDistanceList, next),
+        };
+        const progressKey = `${distanceM}:${ascentM}:${progress.minutes}:${Math.round(progress.bearingDeg)}`;
+        if (progressKey !== lastWalkProgress.current) {
+          lastWalkProgress.current = progressKey;
+          onWalkProgress(progress);
+        }
+      }
       if (
         mode === "flight" &&
         next >= routeLengthKm &&
@@ -1022,15 +1109,6 @@ function Scene({
     routeDistanceList,
     revealedDistanceKm,
   );
-  const markerAhead = pointAtRouteDistance(
-    route,
-    routeDistanceList,
-    Math.min(routeLengthKm, revealedDistanceKm + 0.03),
-  );
-  const markerDirection =
-    marker && markerAhead
-      ? markerAhead.clone().sub(marker).setY(0).normalize()
-      : null;
   const visibleGradeLines = gradeLines
     .map((line) => {
       if (revealedDistanceKm <= line.startDistance) return null;
@@ -1100,10 +1178,28 @@ function Scene({
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
-      {mode === "flight" && marker && markerDirection && (
-        <FlightMarker position={marker} direction={markerDirection} />
+      {mode === "flight" && marker && (
+        <FlightMarker position={marker} />
       )}
     </>
+  );
+}
+
+function WalkMetric({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: any;
+}) {
+  return (
+    <View style={styles.walkMetric}>
+      <Feather name={icon} size={17} color="#15231D" />
+      <Text style={styles.walkMetricLabel}>{label}</Text>
+      <Text style={styles.walkMetricValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -1115,12 +1211,18 @@ export default function RouteTerrain3D({
 }: Props) {
   const colors = useColors();
   const window = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [ready, setReady] = useState<boolean | null>(null);
   const [model, setModel] = useState<Model | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ViewMode>("overview");
   const [runId, setRunId] = useState(0);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [walkProgress, setWalkProgress] = useState<WalkProgress | null>(null);
+  const updateWalkProgress = useMemo(
+    () => (progress: WalkProgress) => setWalkProgress(progress),
+    [],
+  );
   const mapLoadState = useMemo(
     () => (state: "loading" | "ready" | "error") => {
       if (state === "loading") setLoadProgress((value) => Math.max(value, 70));
@@ -1135,6 +1237,16 @@ export default function RouteTerrain3D({
   const selectMode = (nextMode: ViewMode) => {
     setMode(nextMode);
     setRunId((value) => value + 1);
+    if (nextMode !== "walk") {
+      setWalkProgress(null);
+    } else {
+      setWalkProgress({
+        distanceM: 0,
+        ascentM: 0,
+        minutes: 0,
+        bearingDeg: 0,
+      });
+    }
   };
 
   useEffect(() => {
@@ -1153,6 +1265,7 @@ export default function RouteTerrain3D({
     setModel(null);
     setError(null);
     setMode("overview");
+    setWalkProgress(null);
     setLoadProgress(5);
     GLView.createContextAsync()
       .then((context) => GLView.destroyContextAsync(context).then(() => true))
@@ -1244,6 +1357,7 @@ export default function RouteTerrain3D({
               runId={runId}
               onFlightComplete={flightComplete}
               onMapLoadState={mapLoadState}
+              onWalkProgress={updateWalkProgress}
             />
           </Canvas>
         )}
@@ -1290,18 +1404,62 @@ export default function RouteTerrain3D({
             )}
           </View>
         )}
+        {mode === "walk" && model && walkProgress && (
+          <View style={[styles.walkStatus, { top: insets.top }]}>
+            <Pressable
+              onPress={onClose}
+              style={styles.walkBack}
+              accessibilityRole="button"
+              accessibilityLabel="Zurück zur Übersicht"
+            >
+              <Feather name="chevron-left" size={18} color="#15231D" />
+              <Text style={styles.walkBackText}>Zurück</Text>
+            </Pressable>
+            <View style={styles.walkMetricRow}>
+              <WalkMetric label="Gegangene Distanz" value={`${walkProgress.distanceM} m`} icon="map" />
+              <WalkMetric label="Höhenmeter" value={`${walkProgress.ascentM} m`} icon="trending-up" />
+              <WalkMetric label="Gehzeit" value={`${walkProgress.minutes} min`} icon="clock" />
+              <View style={styles.walkMetric}>
+                <Feather
+                  name="navigation"
+                  size={18}
+                  color="#15231D"
+                  style={{ transform: [{ rotate: `${walkProgress.bearingDeg}deg` }] }}
+                />
+                <Text style={styles.walkMetricLabel}>Richtung</Text>
+                <Text style={styles.walkMetricValue}>
+                  {Math.round(walkProgress.bearingDeg)}°
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+        {mode !== "walk" && model && !error && (
+          <Pressable
+            onPress={onClose}
+            style={[styles.backButton, { top: insets.top + 8 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Zurück zur App"
+          >
+            <Feather name="chevron-left" size={18} color="#FFFFFF" />
+            <Text style={styles.backButtonText}>Zurück</Text>
+          </Pressable>
+        )}
         <Pressable
           onPress={() => {
             hapticSelection();
             onClose();
           }}
-          style={styles.close}
+          style={[
+            styles.close,
+            mode === "walk" && { top: insets.top + 8, right: 10 },
+          ]}
           accessibilityLabel="3D-Ansicht schliessen"
         >
           <Feather name="x" size={25} color="#fff" />
         </Pressable>
         {model && loadProgress === 100 && !error && (
-          <View style={styles.controls}>
+          <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 6) }]}>
             {(
               [
                 ["overview", "map", "Übersicht"],
@@ -1380,34 +1538,112 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: "#15231dbb",
   },
-  controls: {
+  walkStatus: {
     position: "absolute",
-    bottom: 24,
-    left: 16,
-    right: 16,
-    flexDirection: "row",
-    gap: 6,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: "#E8E2D9",
-    borderRadius: 24,
+    left: 0,
+    right: 0,
+    paddingTop: 8,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     backgroundColor: "#FFFFFF",
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 7,
+    zIndex: 10,
+  },
+  walkBack: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 1,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
+  },
+  walkBackText: {
+    color: "#15231D",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  backButton: {
+    position: "absolute",
+    left: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 18,
+    backgroundColor: "#15231DCC",
+    zIndex: 10,
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  walkMetricRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    justifyContent: "space-between",
+    gap: 6,
+    marginTop: 5,
+  },
+  walkMetric: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+    paddingVertical: 5,
+    borderRadius: 11,
+    backgroundColor: "#F3F5F1",
+  },
+  walkMetricLabel: {
+    color: "#647067",
+    fontSize: 10,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  walkMetricValue: {
+    color: "#15231D",
+    fontSize: 13,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+  },
+  controls: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    gap: 2,
+    paddingHorizontal: 8,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: "#E8E2D9",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 10,
   },
   control: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
-    borderRadius: 18,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    gap: 3,
+    borderRadius: 14,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
   },
   controlActive: { backgroundColor: "#DA291C" },
-  controlText: { color: "#15231D", fontSize: 12, fontWeight: "700" },
+  controlText: { color: "#15231D", fontSize: 11, fontWeight: "700" },
   controlTextActive: { color: "#FFFFFF" },
 });
