@@ -942,6 +942,7 @@ export default function LiveHike() {
   const announcingPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
   const announcedWatchPeakIdsRef = useRef<Set<string>>(new Set());
+  const notifiedPoiIdsRef = useRef<Set<string>>(new Set());
   const nearbyPoiDistanceRef = useRef<{
     id: string;
     distanceKm: number;
@@ -3663,6 +3664,44 @@ export default function LiveHike() {
     return () => { cancelled = true; };
   }, [nearbyPoi?.id]);
 
+  // Erst nach Abschluss der POI-Anreicherung benachrichtigen. So kann die
+  // iOS-Mitteilung das Bild als lokalen Anhang laden; bei fehlendem Inhalt
+  // bleibt die Textmitteilung trotzdem garantiert erhalten.
+  useEffect(() => {
+    if (
+      !nearbyPoi ||
+      nearbyPoi.kind === "saga=heart" ||
+      !turnNotifsReady ||
+      notifiedPoiIdsRef.current.has(nearbyPoi.id)
+    ) {
+      return;
+    }
+
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    const send = (wiki: WikiSummary | null) => {
+      if (notifiedPoiIdsRef.current.has(nearbyPoi.id)) return;
+      notifiedPoiIdsRef.current.add(nearbyPoi.id);
+      void sendePoiMitteilung(
+        nearbyPoi.name,
+        wiki?.extract ? trimForNarration(wiki.extract) : t.poiNotifBody,
+        wiki?.image ?? null,
+      );
+    };
+
+    if (nearbyPoiWiki !== undefined) {
+      send(nearbyPoiWiki);
+    } else {
+      // Netzwerk-/Wiki-Ausfälle dürfen die Mitteilung nicht endlos blockieren.
+      // Kommt die Anreicherung später, ist die bereits gesendete Textmitteilung
+      // besser als eine doppelte Benachrichtigung.
+      fallbackTimer = setTimeout(() => send(null), 5_000);
+    }
+
+    return () => {
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [nearbyPoi, nearbyPoiWiki, t.poiNotifBody, turnNotifsReady]);
+
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
   // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; sobald der
   // POI-Einschub natuerlich zu Ende ist, wird das aktuelle Kapitel
@@ -3680,9 +3719,6 @@ export default function LiveHike() {
     // Spuerbarer Hinweis, dass gleich ein Ort erzaehlt wird — wer aufs
     // Panorama schaut statt aufs Handy, merkt es trotzdem.
     hapticHeavy();
-    // Parallel zur Erzaehlung eine Mitteilung mit dem Wikipedia-Bild des Ortes
-    // senden — iOS spiegelt sie samt Bild auf eine gekoppelte Watch. Best
-    // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
     const isSagaHeart = nearbyPoi.kind === "saga=heart";
     const poiName = nearbyPoi.name;
     if (!isSagaHeart) {
@@ -3690,16 +3726,6 @@ export default function LiveHike() {
         text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
         haptic: "notification",
       });
-    }
-    // Wiki ist bei GPS-Trigger noch nicht geladen (lazy) — Notif ohne Bild
-    // ist besser als warten; das Bild erscheint spaeter im Modal.
-    // Sagenmittelpunkt: keine Push-Mitteilung (ist kein "Unterbrechungs"-POI).
-    if (!isSagaHeart && turnNotifsReadyRef.current) {
-      const poiBild = nearbyPoiWiki?.image ?? null;
-      const poiText = nearbyPoiWiki?.extract
-        ? trimForNarration(nearbyPoiWiki.extract)
-        : t.poiNotifBody;
-      sendePoiMitteilung(poiName, poiText, poiBild);
     }
     const pack = STORY_PACKS[resolveLang(cueLanguage)];
     const rawExtract = nearbyPoiWiki?.extract ?? null;
