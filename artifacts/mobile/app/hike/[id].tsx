@@ -55,6 +55,7 @@ import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { PeakCameraOverlay } from "@/components/brand/PeakCameraOverlay";
 import { FeatureTileDeck } from "@/components/brand/FeatureTileDeck";
+import { ObjectRecognition } from "@/components/brand/ObjectRecognition";
 import { SparkMountain } from "@/components/brand/SparkMountain";
 import { SwisstopoMap } from "@/components/brand/SwisstopoMap";
 import RouteTerrain3D from "@/components/brand/RouteTerrain3D";
@@ -65,6 +66,7 @@ import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
 import { useMapStrings } from "@/lib/i18n/screens/map";
+import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
 import {
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
@@ -523,6 +525,7 @@ export default function LiveHike() {
   const poiOverlay = themeMode === "hell" ? "rgba(255,255,255,0.94)" : undefined;
   const t = useHikeStrings();
   const mapT = useMapStrings();
+  const objectRecognitionT = useObjectRecognitionStrings();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, routeId, resume } = useLocalSearchParams<{
@@ -4851,6 +4854,28 @@ export default function LiveHike() {
               icon: "box",
               action: true,
               content: null,
+            },
+            {
+              id: "object-recognition",
+              title: objectRecognitionT.title,
+              subtitle: "Premium",
+              icon: "camera",
+              modalSize: "large",
+              content: (
+                <ObjectRecognition
+                  premium={premium}
+                  strings={objectRecognitionT}
+                  getToken={() => getTokenRef.current()}
+                  language={profile?.language ?? "de"}
+                  lat={hasFreshGps ? livePos?.lat : null}
+                  lng={hasFreshGps ? livePos?.lng : null}
+                  heading={compassHeading}
+                  nearbyContext={[livePlace, nearbyPoiKontext]
+                    .filter((value): value is string => Boolean(value?.trim()))
+                    .join("\n")}
+                  onAnalyzed={addRecognitionEntry}
+                />
+              ),
             },
             ...(Platform.OS !== "web"
               ? [{
