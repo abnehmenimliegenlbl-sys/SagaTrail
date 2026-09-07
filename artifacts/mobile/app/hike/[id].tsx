@@ -1182,6 +1182,16 @@ export default function LiveHike() {
   const hintedPoiIdRef = useRef<string | null>(null);
   /** Bereits mit voller Geschichte (50 m) erzaehlte POI-IDs (Annaeherungs-Flow). */
   const poiStoryToldRef = useRef<string | null>(null);
+  /** POI-Erzaehlungen, die geladen werden oder bereits in der Audio-Queue stehen. */
+  const poiNarrationPendingRef = useRef<Set<number>>(new Set());
+  const poiNarrationTokenRef = useRef(0);
+  const beginPoiNarration = useCallback(() => {
+    const token = ++poiNarrationTokenRef.current;
+    poiNarrationPendingRef.current.add(token);
+    return () => {
+      poiNarrationPendingRef.current.delete(token);
+    };
+  }, []);
   /** Terrain-Abschnitte werden pro Wanderung jeweils nur einmal angesagt. */
   const terrainStartedRef = useRef<Set<string>>(new Set());
   const terrainProgressRef = useRef<Set<string>>(new Set());
@@ -3383,6 +3393,13 @@ export default function LiveHike() {
       // PRIO 2 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
       // Eingesetzt fuer die 10-m-Sagenmittelpunkt-Ansage.
       if (opts?.sagaInterrupt) {
+        if (poiNarrationPendingRef.current.size > 0) {
+          // Eine POI-Geschichte hat Vorrang, auch wenn ihr Audio noch
+          // asynchron geladen wird. Sonst leert die Sage die Queue und
+          // schneidet den POI ab.
+          enqueueNarration();
+          return;
+        }
         if (navInterruptingRef.current) {
           // Abbiegehinweis laeuft gerade — dahinter einreihen, nicht unterbrechen.
           enqueueNarration();
@@ -3727,10 +3744,16 @@ export default function LiveHike() {
                 });
               }, 1500);
             },
-            { interrupt: true, useOpenAI: true }
+            {
+              ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
+              useOpenAI: true,
+            }
           );
         } else {
-          speak(ch.text, undefined, { interrupt: true, preFetchedUri: offlineUri ?? undefined });
+          speak(ch.text, undefined, {
+            ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
+            preFetchedUri: offlineUri ?? undefined,
+          });
         }
       })();
       // Kapitelwechsel als Mitteilung (Uhr-Spiegelung, wenn iPhone gesperrt).
@@ -3881,6 +3904,8 @@ export default function LiveHike() {
     hapticHeavy();
     const isSagaHeart = nearbyPoi.kind === "saga=heart";
     const poiName = nearbyPoi.name;
+    const releasePoiNarration = beginPoiNarration();
+    let poiAudioStarted = false;
     if (!isSagaHeart) {
       raiseWatchDiscoveryAlert({
         text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
@@ -3891,7 +3916,12 @@ export default function LiveHike() {
     const rawExtract = nearbyPoiWiki?.extract ?? null;
     let cancelled = false;
     const erzaehle = (text: string) => {
-      if (!cancelled) speak(text, undefined, { useOpenAI: true });
+      if (cancelled) {
+        releasePoiNarration();
+        return;
+      }
+      poiAudioStarted = true;
+      speak(text, releasePoiNarration, { useOpenAI: true });
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
@@ -3927,8 +3957,9 @@ export default function LiveHike() {
     })();
     return () => {
       cancelled = true;
+      if (!poiAudioStarted) releasePoiNarration();
     };
-  }, [nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
+  }, [beginPoiNarration, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
@@ -3955,6 +3986,7 @@ export default function LiveHike() {
     if (distKm <= 0.2 && hintedPoiIdRef.current !== nearbyPoi.id) {
       hintedPoiIdRef.current = nearbyPoi.id;
       const pack = STORY_PACKS[resolveLang(cueLanguage)];
+      const releasePoiHint = beginPoiNarration();
       // Bewegungsrichtung aus zwei aufeinanderfolgenden GPS-Fixes ableiten
       let dir: "links" | "rechts" | "geradeaus" = "geradeaus";
       if (prevLivePosRef.current) {
@@ -3963,7 +3995,7 @@ export default function LiveHike() {
         const rel = ((bear - heading) + 360) % 360;
         dir = rel < 45 || rel > 315 ? "geradeaus" : rel <= 135 ? "rechts" : "links";
       }
-      speak(pack.poiApproachHint(dir), undefined, { useOpenAI: true });
+      speak(pack.poiApproachHint(dir), releasePoiHint, { useOpenAI: true });
     }
 
     // 50 m: volle Geschichte (einmalig pro POI)
@@ -3973,11 +4005,17 @@ export default function LiveHike() {
       const rawExtract = nearbyPoiWiki?.extract ?? null;
       hapticHeavy();
       const capturedPoi = nearbyPoi;
+      const releasePoiNarration = beginPoiNarration();
+      let poiAudioStarted = false;
+      const erzaehle = (text: string) => {
+        poiAudioStarted = true;
+        speak(text, releasePoiNarration, { useOpenAI: true });
+      };
       (async () => {
         const cached = await getOfflinePoiStory(capturedPoi.id, cueLanguage);
         if (cached !== null) {
           if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(cached);
-          speak(pack.poiAside(capturedPoi.name, cached), undefined, { useOpenAI: true });
+          erzaehle(pack.poiAside(capturedPoi.name, cached));
           return;
         }
         getPoiStory({
@@ -3989,14 +4027,14 @@ export default function LiveHike() {
         })
           .then((r) => {
             if (!nearbyPoiWiki?.extract) setNearbyPoiKontext(r.text);
-            speak(pack.poiAside(capturedPoi.name, r.text), undefined, { useOpenAI: true });
+            erzaehle(pack.poiAside(capturedPoi.name, r.text));
           })
           .catch(() => {
-            speak(pack.poiAside(capturedPoi.name, rawExtract ? trimForNarration(rawExtract) : null), undefined, { useOpenAI: true });
+            erzaehle(pack.poiAside(capturedPoi.name, rawExtract ? trimForNarration(rawExtract) : null));
           });
       })();
     }
-  }, [livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
+  }, [beginPoiNarration, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
@@ -4402,7 +4440,10 @@ export default function LiveHike() {
       speakRef.current?.(
         ackPack.decisionAck,
         () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
-        { interrupt: true, ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }) },
+          {
+            ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
+            ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
+          },
       );
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
