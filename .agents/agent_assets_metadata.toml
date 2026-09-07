@@ -472,3 +472,17 @@ mtime_ms = 1788802130550
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/f207f670-6bd8-4994-a28d-eb6b3a7745fa/2edbeec3-89ab-4170-ab7f-fcf94792e2f8"
 storage_version_token = "1788803048002047"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XRREg5oCmm2SRx8Tvgci9"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-garmin-simulator.zip"
+type = "unspecified"
+title = "SagaTrail Garmin Simulator ZIP"
+description = "ZIP-Datei mit der signierten SagaTrail.prg für den Garmin Connect IQ Device Simulator."
+logical_id = "ba735d78-e50d-4ae1-b73e-d4f12fae1175"
+content_hash = "sha256:ae7c698a64dc7aeb20280348a9d1a9e60b5c907925c83528bedcebc918d085cc"
+size = 49705
+mtime_ms = 1788803125120
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/ba735d78-e50d-4ae1-b73e-d4f12fae1175/a5ebd097-bc2c-44d4-be29-7b546ec4b959"
+storage_version_token = "1788803129544569"
+content_type = "application/octet-stream"
