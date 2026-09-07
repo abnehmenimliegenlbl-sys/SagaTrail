@@ -2418,7 +2418,10 @@ export default function LiveHike() {
       if (haversineKm(livePos, { lat: wp.lat, lng: wp.lng }) <= 0.05) {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
-        sendeAbbiegeMitteilung(t.waypointReached, wp.name);
+        sendeAbbiegeMitteilung(
+          wp.type === "partner" ? t.partnerNearby : t.waypointReached,
+          wp.name,
+        );
       }
     }
   }, [livePos, routeWaypoints, t]);

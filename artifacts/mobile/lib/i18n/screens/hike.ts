@@ -64,6 +64,7 @@ export interface HikeStrings {
   terrainWarningTitle: string;
   milestoneTitle: string;
   waypointReached: string;
+  partnerNearby: string;
   poiNotifBody: string;
   perception: string;
   finishHike: string;
@@ -230,6 +231,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Achtung: sehr steiler Abschnitt",
     milestoneTitle: "Meilenstein",
     waypointReached: "Zwischenziel erreicht",
+    partnerNearby: "Du befindest dich in der Nähe eines SagaTrail-Partners.",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
     finishHike: "Wanderung abschliessen",
@@ -395,6 +397,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Achtung: sehr steile Abschnitt",
     milestoneTitle: "Miileschtei",
     waypointReached: "Zwischeziel erreicht",
+    partnerNearby: "Du bisch i de Nöchi vo eme SagaTrail-Partner.",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
     finishHike: "Wanderig abschliesse",
@@ -548,6 +551,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Caution: very steep section",
     milestoneTitle: "Milestone",
     waypointReached: "Waypoint reached",
+    partnerNearby: "You are near a SagaTrail partner.",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
     finishHike: "Finish hike",
@@ -701,6 +705,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Attention : passage très raide",
     milestoneTitle: "Borne",
     waypointReached: "Étape atteinte",
+    partnerNearby: "Vous êtes à proximité d’un partenaire SagaTrail.",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
     finishHike: "Terminer la randonnée",
@@ -854,6 +859,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Attenzione: tratto molto ripido",
     milestoneTitle: "Traguardo",
     waypointReached: "Tappa raggiunta",
+    partnerNearby: "Ti trovi vicino a un partner SagaTrail.",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
     finishHike: "Termina escursione",
@@ -1007,6 +1013,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Atención: tramo muy pronunciado",
     milestoneTitle: "Hito",
     waypointReached: "Punto intermedio alcanzado",
+    partnerNearby: "Estás cerca de un socio de SagaTrail.",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
     finishHike: "Terminar excursión",
@@ -1160,6 +1167,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Atenção: trecho muito íngreme",
     milestoneTitle: "Marco",
     waypointReached: "Ponto intermediário atingido",
+    partnerNearby: "Você está perto de um parceiro SagaTrail.",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
     finishHike: "Terminar caminhada",
@@ -1313,6 +1321,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "注意：非常陡的路段",
     milestoneTitle: "里程碑",
     waypointReached: "已到达途经点",
+    partnerNearby: "你正在 SagaTrail 合作伙伴附近。",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
     finishHike: "完成徒步",
@@ -1466,6 +1475,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     terrainWarningTitle: "Внимание: очень крутой участок",
     milestoneTitle: "Веха",
     waypointReached: "Промежуточная точка достигнута",
+    partnerNearby: "Вы находитесь рядом с партнёром SagaTrail.",
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
     perception: "ВОСПРИЯТИЕ",
     finishHike: "Завершить поход",
