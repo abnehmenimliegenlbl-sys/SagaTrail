@@ -1466,9 +1466,9 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_236_26_238
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_236_8_238_8_if_end:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_235_39_239_4_stop:
     }
-    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc"; @line = 241; @symbol_functiondef = [refresh,241,13,20]; ]
-    function refresh() {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_241_23_245_4_start:
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc"; @line = 241; @symbol_functiondef = [changeInfoPage,241,13,27]; @symbol_param<0> = [delta,241,28,33]; ]
+    function changeInfoPage(delta) {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_241_35_245_4_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" 242 8 ]
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_242_8_244_8_if_stmt:
         symbol [ view %tmp.2 242 12 16 ];
@@ -1482,13 +1482,39 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_242_26_244
         symbol [ view %tmp.6 243 12 16 ];
         %tmp.6 = getv ? :view;
         %tmp.7 = as %tmp.6 { (!Null) };
-        symbol [ requestUpdate %tmp.8 243 17 30 ];
-        %tmp.8 = getv function %tmp.7 :requestUpdate;
-        invoke %tmp.7 %tmp.8();
+        symbol [ changePage %tmp.8 243 17 27 ];
+        %tmp.8 = getv function %tmp.7 :changePage;
+        %tmp.9 = lgetv %delta;
+        symbol [ delta %tmp.9 243 28 33 ];
+        invoke %tmp.7 %tmp.8(%tmp.9);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_242_26_244_8_stop:
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_242_8_244_8_if_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_242_8_244_8_if_end:
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_241_23_245_4_stop:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_241_35_245_4_stop:
+    }
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc"; @line = 247; @symbol_functiondef = [refresh,247,13,20]; ]
+    function refresh() {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_247_23_251_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" 248 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_8_250_8_if_stmt:
+        symbol [ view %tmp.2 248 12 16 ];
+        %tmp.2 = getv ? :view;
+        %tmp.3 = null;
+        %tmp.4 = ne %tmp.2 %tmp.3;
+        bf %tmp.4 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_8_250_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_8_250_8_if_true:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_26_250_8_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc" 249 12 ]
+        symbol [ view %tmp.6 249 12 16 ];
+        %tmp.6 = getv ? :view;
+        %tmp.7 = as %tmp.6 { (!Null) };
+        symbol [ requestUpdate %tmp.8 249 17 30 ];
+        %tmp.8 = getv function %tmp.7 :requestUpdate;
+        invoke %tmp.7 %tmp.8();
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_26_250_8_stop:
+        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_8_250_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_248_8_250_8_if_end:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailApp_mc_247_23_251_4_stop:
     }
 }
 [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailApp.mc"; @line = 1; ]
