@@ -51,6 +51,7 @@ export interface WatchLiveSnapshot {
 }
 
 type CompanionModule = {
+  activate?: () => void;
   publishLiveState?: (state: HikeLiveState) => void | Promise<void>;
 };
 
@@ -58,6 +59,7 @@ type HeartRateEvent = { bpm?: unknown; measuredAt?: unknown; source?: unknown };
 type SosRequestEvent = { requestedAt?: unknown };
 
 let permissionGranted: boolean | null = null;
+let nativeCompanionActivated = false;
 let statusNotificationId: string | null = null;
 let lastStatusSentAt = 0;
 let lastLiveStateSentAt = 0;
@@ -67,6 +69,19 @@ function companionModule(): CompanionModule | null {
   if (Platform.OS === "web") return null;
   const module = NativeModules.SagaTrailCompanion as CompanionModule | undefined;
   return module?.publishLiveState ? module : null;
+}
+
+function activateNativeCompanion(module: CompanionModule): void {
+  if (nativeCompanionActivated) return;
+  try {
+    // The iPhone half owns its WCSession too. Without this call the first
+    // application-context update can happen before the phone session is
+    // activated, leaving the watch on its initial "waiting for iPhone" view.
+    module.activate?.();
+    nativeCompanionActivated = true;
+  } catch {
+    // Native activation must never interrupt the hike.
+  }
 }
 
 export function hasNativeWatchCompanion(): boolean {
@@ -118,6 +133,7 @@ export async function publishHikeLiveState(
   lastLiveStateSentAt = now;
   const module = companionModule();
   if (!module) return false;
+  activateNativeCompanion(module);
   try {
     await module.publishLiveState!(state);
     return true;
