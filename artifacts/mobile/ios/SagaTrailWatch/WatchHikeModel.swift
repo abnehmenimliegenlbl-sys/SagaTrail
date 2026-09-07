@@ -20,6 +20,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private let healthStore = HKHealthStore()
   private var workoutSession: HKWorkoutSession?
   private var workoutBuilder: HKLiveWorkoutBuilder?
+  private var workoutFinishInProgress = false
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var batteryObserver: NSObjectProtocol?
@@ -164,6 +165,53 @@ final class WatchHikeModel: NSObject, ObservableObject {
     }
   }
 
+  private func syncWorkout(with sessionStatus: String) {
+    guard workoutSession != nil else { return }
+    switch sessionStatus {
+    case "paused":
+      if workoutSession?.state == .running {
+        workoutSession?.pause()
+      }
+    case "active":
+      if workoutSession?.state == .paused {
+        workoutSession?.resume()
+      }
+    case "finished":
+      finishWorkout()
+    default:
+      break
+    }
+  }
+
+  private func finishWorkout() {
+    guard let session = workoutSession else { return }
+    guard !workoutFinishInProgress else { return }
+    workoutFinishInProgress = true
+    let builder = workoutBuilder
+    if session.state == .running || session.state == .paused {
+      session.end()
+    }
+    guard let builder else {
+      workoutSession = nil
+      workoutFinishInProgress = false
+      return
+    }
+    let end = Date()
+    builder.endCollection(withEnd: end) { [weak self, weak builder] success, error in
+      guard let builder else { return }
+      builder.finishWorkout { [weak self] _, finishError in
+        Task { @MainActor in
+          self?.healthStatus = finishError?.localizedDescription
+            ?? error?.localizedDescription
+            ?? (success ? "Workout gespeichert" : "Workout konnte nicht gespeichert werden")
+          self?.workoutSession = nil
+          self?.workoutBuilder = nil
+          self?.workoutFinishInProgress = false
+        }
+      }
+    }
+  }
+
   private func apply(envelope: [String: Any]) {
     guard (envelope["v"] as? NSNumber)?.intValue == SagaTrailWatchProtocol.version,
           let type = envelope["type"] as? String,
@@ -174,6 +222,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       playTurnHapticIfNeeded(decoded)
       state = decoded
       receivedAt = Date()
+      syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()
     case "alert":

@@ -120,7 +120,11 @@ struct WatchHikeView: View {
   private func heartRate(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let bpm = hike.currentHeartRate ?? state.heartRateBpm
     return Button { hike.startHeartRate() } label: {
-      HStack { Label("Puls", systemImage: "heart.fill"); Spacer(); Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start") }
+      HStack {
+        Label("Apple Workout", systemImage: "figure.hiking")
+        Spacer()
+        Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start")
+      }
     }.font(.footnote).tint(.red)
   }
   private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
