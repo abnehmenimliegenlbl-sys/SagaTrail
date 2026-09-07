@@ -247,144 +247,84 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_48_8_58_8
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_48_24_50_8_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 49 12 ]
         %tmp.52 = self;
-        symbol [ inverse %tmp.53 49 12 19 ];
-        %tmp.53 = getv function %tmp.52 :inverse;
+        symbol [ footer %tmp.53 49 12 18 ];
+        %tmp.53 = getv function %tmp.52 :footer;
         %tmp.54 = lgetv %dc;
-        symbol [ dc %tmp.54 49 20 22 ];
-        %tmp.55 = 2;
-        %tmp.56 = lgetv %dc;
-        symbol [ dc %tmp.56 49 27 29 ];
-        symbol [ getHeight %tmp.57 49 30 39 ];
-        %tmp.57 = getv function %tmp.56 :getHeight;
-        %tmp.58 = invoke %tmp.56 %tmp.57();
-        %tmp.59 = 26;
-        %tmp.60 = sub %tmp.58 %tmp.59;
-        %tmp.61 = lgetv %width.2;
-        symbol [ width %tmp.61 49 48 53 ];
-        %tmp.62 = 4;
-        %tmp.63 = sub %tmp.61 %tmp.62;
-        %tmp.64 = "ENTER CONFIRM SOS";
-        invoke %tmp.52 %tmp.53(%tmp.54, %tmp.55, %tmp.60, %tmp.63, %tmp.64);
+        symbol [ dc %tmp.54 49 19 21 ];
+        %tmp.55 = "ENTER CONFIRM SOS";
+        invoke %tmp.52 %tmp.53(%tmp.54, %tmp.55);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_48_24_50_8_stop:
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_48_8_58_8_if_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_48_8_58_8_if_false:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 50 15 ]
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_stmt:
-        %tmp.65 = lgetv %sos.4;
-        symbol [ sos %tmp.65 50 19 22 ];
-        %tmp.66 = "pending";
-        %tmp.67 = eq %tmp.65 %tmp.66;
-        bf %tmp.67 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_false;
+        %tmp.56 = lgetv %sos.4;
+        symbol [ sos %tmp.56 50 19 22 ];
+        %tmp.57 = "pending";
+        %tmp.58 = eq %tmp.56 %tmp.57;
+        bf %tmp.58 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_false;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_true:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_37_52_8_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 51 12 ]
-        %tmp.68 = self;
-        symbol [ inverse %tmp.69 51 12 19 ];
-        %tmp.69 = getv function %tmp.68 :inverse;
-        %tmp.70 = lgetv %dc;
-        symbol [ dc %tmp.70 51 20 22 ];
-        %tmp.71 = 2;
-        %tmp.72 = lgetv %dc;
-        symbol [ dc %tmp.72 51 27 29 ];
-        symbol [ getHeight %tmp.73 51 30 39 ];
-        %tmp.73 = getv function %tmp.72 :getHeight;
-        %tmp.74 = invoke %tmp.72 %tmp.73();
-        %tmp.75 = 26;
-        %tmp.76 = sub %tmp.74 %tmp.75;
-        %tmp.77 = lgetv %width.2;
-        symbol [ width %tmp.77 51 48 53 ];
-        %tmp.78 = 4;
-        %tmp.79 = sub %tmp.77 %tmp.78;
-        %tmp.80 = "SOS PENDING PHONE";
-        invoke %tmp.68 %tmp.69(%tmp.70, %tmp.71, %tmp.76, %tmp.79, %tmp.80);
+        %tmp.59 = self;
+        symbol [ footer %tmp.60 51 12 18 ];
+        %tmp.60 = getv function %tmp.59 :footer;
+        %tmp.61 = lgetv %dc;
+        symbol [ dc %tmp.61 51 19 21 ];
+        %tmp.62 = "SOS PENDING";
+        invoke %tmp.59 %tmp.60(%tmp.61, %tmp.62);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_37_52_8_stop:
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_50_15_58_8_if_false:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 52 15 ]
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_stmt:
-        %tmp.81 = lgetv %sos.4;
-        symbol [ sos %tmp.81 52 19 22 ];
-        %tmp.82 = "failed";
-        %tmp.83 = eq %tmp.81 %tmp.82;
-        bf %tmp.83 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_false;
+        %tmp.63 = lgetv %sos.4;
+        symbol [ sos %tmp.63 52 19 22 ];
+        %tmp.64 = "failed";
+        %tmp.65 = eq %tmp.63 %tmp.64;
+        bf %tmp.65 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_false;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_true:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_36_54_8_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 53 12 ]
-        %tmp.84 = self;
-        symbol [ inverse %tmp.85 53 12 19 ];
-        %tmp.85 = getv function %tmp.84 :inverse;
-        %tmp.86 = lgetv %dc;
-        symbol [ dc %tmp.86 53 20 22 ];
-        %tmp.87 = 2;
-        %tmp.88 = lgetv %dc;
-        symbol [ dc %tmp.88 53 27 29 ];
-        symbol [ getHeight %tmp.89 53 30 39 ];
-        %tmp.89 = getv function %tmp.88 :getHeight;
-        %tmp.90 = invoke %tmp.88 %tmp.89();
-        %tmp.91 = 26;
-        %tmp.92 = sub %tmp.90 %tmp.91;
-        %tmp.93 = lgetv %width.2;
-        symbol [ width %tmp.93 53 48 53 ];
-        %tmp.94 = 4;
-        %tmp.95 = sub %tmp.93 %tmp.94;
-        %tmp.96 = "SOS FAILED - RETRY";
-        invoke %tmp.84 %tmp.85(%tmp.86, %tmp.87, %tmp.92, %tmp.95, %tmp.96);
+        %tmp.66 = self;
+        symbol [ footer %tmp.67 53 12 18 ];
+        %tmp.67 = getv function %tmp.66 :footer;
+        %tmp.68 = lgetv %dc;
+        symbol [ dc %tmp.68 53 19 21 ];
+        %tmp.69 = "SOS FAILED RETRY";
+        invoke %tmp.66 %tmp.67(%tmp.68, %tmp.69);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_36_54_8_stop:
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_false:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 54 15 ]
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_stmt:
-        %tmp.97 = lgetv %sos.4;
-        symbol [ sos %tmp.97 54 19 22 ];
-        %tmp.98 = "acknowledged";
-        %tmp.99 = eq %tmp.97 %tmp.98;
-        bf %tmp.99 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_else_false;
+        %tmp.70 = lgetv %sos.4;
+        symbol [ sos %tmp.70 54 19 22 ];
+        %tmp.71 = "acknowledged";
+        %tmp.72 = eq %tmp.70 %tmp.71;
+        bf %tmp.72 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_else_false;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_true:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_42_56_8_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 55 12 ]
-        %tmp.100 = self;
-        symbol [ inverse %tmp.101 55 12 19 ];
-        %tmp.101 = getv function %tmp.100 :inverse;
-        %tmp.102 = lgetv %dc;
-        symbol [ dc %tmp.102 55 20 22 ];
-        %tmp.103 = 2;
-        %tmp.104 = lgetv %dc;
-        symbol [ dc %tmp.104 55 27 29 ];
-        symbol [ getHeight %tmp.105 55 30 39 ];
-        %tmp.105 = getv function %tmp.104 :getHeight;
-        %tmp.106 = invoke %tmp.104 %tmp.105();
-        %tmp.107 = 26;
-        %tmp.108 = sub %tmp.106 %tmp.107;
-        %tmp.109 = lgetv %width.2;
-        symbol [ width %tmp.109 55 48 53 ];
-        %tmp.110 = 4;
-        %tmp.111 = sub %tmp.109 %tmp.110;
-        %tmp.112 = "SOS ACKNOWLEDGED";
-        invoke %tmp.100 %tmp.101(%tmp.102, %tmp.103, %tmp.108, %tmp.111, %tmp.112);
+        %tmp.73 = self;
+        symbol [ footer %tmp.74 55 12 18 ];
+        %tmp.74 = getv function %tmp.73 :footer;
+        %tmp.75 = lgetv %dc;
+        symbol [ dc %tmp.75 55 19 21 ];
+        %tmp.76 = "SOS ACKNOWLEDGED";
+        invoke %tmp.73 %tmp.74(%tmp.75, %tmp.76);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_42_56_8_stop:
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_else_false:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_56_15_58_8_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 57 12 ]
-        %tmp.113 = self;
-        symbol [ inverse %tmp.114 57 12 19 ];
-        %tmp.114 = getv function %tmp.113 :inverse;
-        %tmp.115 = lgetv %dc;
-        symbol [ dc %tmp.115 57 20 22 ];
-        %tmp.116 = 2;
-        %tmp.117 = lgetv %dc;
-        symbol [ dc %tmp.117 57 27 29 ];
-        symbol [ getHeight %tmp.118 57 30 39 ];
-        %tmp.118 = getv function %tmp.117 :getHeight;
-        %tmp.119 = invoke %tmp.117 %tmp.118();
-        %tmp.120 = 26;
-        %tmp.121 = sub %tmp.119 %tmp.120;
-        %tmp.122 = lgetv %width.2;
-        symbol [ width %tmp.122 57 48 53 ];
-        %tmp.123 = 4;
-        %tmp.124 = sub %tmp.122 %tmp.123;
-        %tmp.125 = "UP/DOWN INFO  ENTER SOS";
-        invoke %tmp.113 %tmp.114(%tmp.115, %tmp.116, %tmp.121, %tmp.124, %tmp.125);
+        %tmp.77 = self;
+        symbol [ footer %tmp.78 57 12 18 ];
+        %tmp.78 = getv function %tmp.77 :footer;
+        %tmp.79 = lgetv %dc;
+        symbol [ dc %tmp.79 57 19 21 ];
+        %tmp.80 = "UP/DOWN INFO";
+        invoke %tmp.77 %tmp.78(%tmp.79, %tmp.80);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_56_15_58_8_stop:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_54_15_58_8_if_end:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_52_15_58_8_if_end:
@@ -410,19 +350,19 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_61_46_106
         [ "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_61_46_106_4_start" "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_61_46_106_4_stop" ]
         %status.2 = local;
         symbol [ status %status.2 63 12 18 ];
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_begin:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_begin:
         %tmp.5 = lgetv %companionReady.1;
         symbol [ companionReady %tmp.5 63 21 35 ];
-        bf %tmp.5 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_else_false;
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_true:
-        %tmp.6 = "MOBILE CONNECTED";
+        bf %tmp.5 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_else_false;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_true:
+        %tmp.6 = "MOBILE OK";
         push %tmp.6;
-        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_end;
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_else_false:
-        %tmp.7 = "MOBILE COMPANION NEEDED";
+        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_else_false:
+        %tmp.7 = "PHONE WAITING";
         push %tmp.7;
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_end:
-        %tmp.8 = phi [%tmp.5 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_begin] [%tmp.6 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_true] [%tmp.7 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_else_false] [%tmp.8 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_59_end];
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_end:
+        %tmp.8 = phi [%tmp.5 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_begin] [%tmp.6 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_true] [%tmp.7 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_else_false] [%tmp.8 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_63_21_63_52_end];
         lputv %status.2 %tmp.8;
         symbol [ status %status.2 63 12 18 ];
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 64 8 ]
@@ -563,25 +503,25 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_
         symbol [ state %tmp.73 74 22 27 ];
         %tmp.75 = const :direction;
         symbol [ direction %tmp.75 74 30 39 const ];
-        %tmp.76 = "Awaiting direction";
+        %tmp.76 = "AWAIT DIRECTION";
         %tmp.77 = invoke %tmp.71 %tmp.72(%tmp.73, %tmp.75, %tmp.76);
         push %tmp.77;
         goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_end;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_else_false:
-        %tmp.78 = "Awaiting real phone companion";
+        %tmp.78 = "AWAIT PHONE";
         push %tmp.78;
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_end:
         %tmp.79 = phi [%tmp.70 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_begin] [%tmp.77 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_true] [%tmp.78 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_else_false] [%tmp.79 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_73_37_75_16_end];
-        %tmp.80 = 29;
+        %tmp.80 = 18;
         %tmp.81 = invoke %tmp.68 %tmp.69(%tmp.79, %tmp.80);
         invoke %tmp.63 %tmp.64(%tmp.65, %tmp.66, %tmp.67, %tmp.81);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 75 55 ]
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 75 37 ]
         %tmp.82 = lgetv %y;
-        symbol [ y %tmp.82 75 55 56 ];
+        symbol [ y %tmp.82 75 37 38 ];
         %tmp.83 = 19;
         %tmp.84 = add %tmp.82 %tmp.83;
         lputv %y %tmp.84;
-        symbol [ y %y 75 55 56 ];
+        symbol [ y %y 75 37 38 ];
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_72_15_76_8_stop:
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_70_8_76_8_if_end:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 78 8 ]
@@ -603,18 +543,18 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_70_8_76_8
         symbol [ state %tmp.94 78 39 44 ];
         %tmp.96 = const :nextInstruction;
         symbol [ nextInstruction %tmp.96 78 47 62 const ];
-        %tmp.97 = "Continue on route";
+        %tmp.97 = "CONTINUE ROUTE";
         %tmp.98 = invoke %tmp.92 %tmp.93(%tmp.94, %tmp.96, %tmp.97);
-        %tmp.99 = 29;
+        %tmp.99 = 18;
         %tmp.100 = invoke %tmp.90 %tmp.91(%tmp.98, %tmp.99);
         invoke %tmp.85 %tmp.86(%tmp.87, %tmp.88, %tmp.89, %tmp.100);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 78 92 ]
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 78 89 ]
         %tmp.101 = lgetv %y;
-        symbol [ y %tmp.101 78 92 93 ];
+        symbol [ y %tmp.101 78 89 90 ];
         %tmp.102 = 20;
         %tmp.103 = add %tmp.101 %tmp.102;
         lputv %y %tmp.103;
-        symbol [ y %y 78 92 93 ];
+        symbol [ y %y 78 89 90 ];
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 79 8 ]
         [ "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_61_46_106_4_start" "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_61_46_106_4_stop" ]
         %remainingKm.4 = local;
@@ -970,7 +910,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_100_33_10
         %tmp.304 = lgetv %alertText.9;
         symbol [ alertText %tmp.304 101 52 61 ];
         %tmp.305 = add %tmp.303 %tmp.304;
-        %tmp.306 = 29;
+        %tmp.306 = 18;
         %tmp.307 = invoke %tmp.301 %tmp.302(%tmp.305, %tmp.306);
         invoke %tmp.296 %tmp.297(%tmp.298, %tmp.299, %tmp.300, %tmp.307);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_100_33_102_12_stop:
@@ -1001,7 +941,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_102_37_10
         %tmp.319 = lgetv %safety.8;
         symbol [ safety %tmp.319 103 53 59 ];
         %tmp.320 = add %tmp.318 %tmp.319;
-        %tmp.321 = 29;
+        %tmp.321 = 18;
         %tmp.322 = invoke %tmp.316 %tmp.317(%tmp.320, %tmp.321);
         invoke %tmp.311 %tmp.312(%tmp.313, %tmp.314, %tmp.315, %tmp.322);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_102_37_104_12_stop:
@@ -1097,7 +1037,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_110_29_11
         %tmp.53 = invoke %tmp.46 %tmp.47(%tmp.49, %tmp.51, %tmp.52);
         %tmp.54 = invoke %tmp.44 %tmp.45(%tmp.53);
         %tmp.55 = add %tmp.43 %tmp.54;
-        %tmp.56 = 29;
+        %tmp.56 = 18;
         %tmp.57 = invoke %tmp.16 %tmp.17(%tmp.55, %tmp.56);
         invoke %tmp.11 %tmp.12(%tmp.13, %tmp.14, %tmp.15, %tmp.57);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_110_29_114_8_stop:
@@ -1359,7 +1299,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_137_29_14
         %tmp.194 = invoke %tmp.187 %tmp.188(%tmp.190, %tmp.192, %tmp.193);
         %tmp.195 = invoke %tmp.185 %tmp.186(%tmp.194);
         %tmp.196 = add %tmp.184 %tmp.195;
-        %tmp.197 = 29;
+        %tmp.197 = 18;
         %tmp.198 = invoke %tmp.171 %tmp.172(%tmp.196, %tmp.197);
         invoke %tmp.166 %tmp.167(%tmp.168, %tmp.169, %tmp.170, %tmp.198);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_137_29_140_8_stop:
@@ -1426,7 +1366,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_146_29_14
         %tmp.226 = lgetv %narration.5;
         symbol [ narration %tmp.226 147 52 61 ];
         %tmp.227 = add %tmp.225 %tmp.226;
-        %tmp.228 = 29;
+        %tmp.228 = 18;
         %tmp.229 = invoke %tmp.223 %tmp.224(%tmp.227, %tmp.228);
         invoke %tmp.218 %tmp.219(%tmp.220, %tmp.221, %tmp.222, %tmp.229);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_146_29_148_8_stop:
@@ -1529,7 +1469,7 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_154_33_15
         %tmp.280 = invoke %tmp.274 %tmp.275(%tmp.276, %tmp.278, %tmp.279);
         %tmp.281 = invoke %tmp.272 %tmp.273(%tmp.280);
         %tmp.282 = add %tmp.271 %tmp.281;
-        %tmp.283 = 29;
+        %tmp.283 = 18;
         %tmp.284 = invoke %tmp.259 %tmp.260(%tmp.282, %tmp.283);
         invoke %tmp.254 %tmp.255(%tmp.256, %tmp.257, %tmp.258, %tmp.284);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_154_33_158_8_stop:
@@ -1834,14 +1774,14 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_200_39_20
         symbol [ y %tmp.6 201 31 32 ];
         symbol [ Graphics %tmp.7 201 34 42 ];
         %tmp.7 = getm $.Toybox.Graphics;
-        symbol [ FONT_TINY %tmp.8 201 43 52 ];
-        %tmp.8 = getv %tmp.7 :FONT_TINY;
+        symbol [ FONT_XTINY %tmp.8 201 43 53 ];
+        %tmp.8 = getv %tmp.7 :FONT_XTINY;
         %tmp.9 = self;
-        symbol [ shortText %tmp.10 201 54 63 ];
+        symbol [ shortText %tmp.10 201 55 64 ];
         %tmp.10 = getv function %tmp.9 :shortText;
         %tmp.11 = lgetv %text;
-        symbol [ text %tmp.11 201 64 68 ];
-        %tmp.12 = 20;
+        symbol [ text %tmp.11 201 65 69 ];
+        %tmp.12 = 18;
         %tmp.13 = invoke %tmp.9 %tmp.10(%tmp.11, %tmp.12);
         symbol [ Graphics %tmp.14 202 12 20 ];
         %tmp.14 = getm $.Toybox.Graphics;
@@ -1869,14 +1809,14 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_205_34_20
         symbol [ y %tmp.8 206 39 40 ];
         symbol [ Graphics %tmp.9 206 42 50 ];
         %tmp.9 = getm $.Toybox.Graphics;
-        symbol [ FONT_TINY %tmp.10 206 51 60 ];
-        %tmp.10 = getv %tmp.9 :FONT_TINY;
+        symbol [ FONT_XTINY %tmp.10 206 51 61 ];
+        %tmp.10 = getv %tmp.9 :FONT_XTINY;
         %tmp.11 = self;
-        symbol [ shortText %tmp.12 206 62 71 ];
+        symbol [ shortText %tmp.12 206 63 72 ];
         %tmp.12 = getv function %tmp.11 :shortText;
         %tmp.13 = lgetv %text;
-        symbol [ text %tmp.13 206 72 76 ];
-        %tmp.14 = 24;
+        symbol [ text %tmp.13 206 73 77 ];
+        %tmp.14 = 18;
         %tmp.15 = invoke %tmp.11 %tmp.12(%tmp.13, %tmp.14);
         symbol [ Graphics %tmp.16 207 12 20 ];
         %tmp.16 = getm $.Toybox.Graphics;
@@ -1915,97 +1855,45 @@ _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_210_35_21
         invoke %tmp.1 %tmp.2(%tmp.7, %tmp.8, %tmp.10, %tmp.11, %tmp.13);
 _home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_210_35_213_4_stop:
     }
-    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 215; @symbol_functiondef = [inverse,215,13,20]; @symbol_param<0> = [dc,215,21,23]; @symbol_param<1> = [x,215,25,26]; @symbol_param<2> = [y,215,28,29]; @symbol_param<3> = [width,215,31,36]; @symbol_param<4> = [text,215,38,42]; ]
-    function inverse(dc, x, y, width, text) {
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_44_222_4_start:
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 215; @symbol_functiondef = [footer,215,13,19]; @symbol_param<0> = [dc,215,20,22]; @symbol_param<1> = [text,215,24,28]; ]
+    function footer(dc, text) {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_30_218_4_start:
 [ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 216 8 ]
         %tmp.1 = lgetv %dc;
         symbol [ dc %tmp.1 216 8 10 ];
-        symbol [ setColor %tmp.2 216 11 19 ];
-        %tmp.2 = getv function %tmp.1 :setColor;
-        symbol [ Graphics %tmp.3 216 20 28 ];
-        %tmp.3 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.4 216 29 40 ];
-        %tmp.4 = getv %tmp.3 :COLOR_WHITE;
-        symbol [ Graphics %tmp.5 216 42 50 ];
-        %tmp.5 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.6 216 51 62 ];
-        %tmp.6 = getv %tmp.5 :COLOR_BLACK;
-        invoke %tmp.1 %tmp.2(%tmp.4, %tmp.6);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 217 8 ]
-        %tmp.7 = lgetv %dc;
-        symbol [ dc %tmp.7 217 8 10 ];
-        symbol [ fillRectangle %tmp.8 217 11 24 ];
-        %tmp.8 = getv function %tmp.7 :fillRectangle;
-        %tmp.9 = lgetv %x;
-        symbol [ x %tmp.9 217 25 26 ];
-        %tmp.10 = lgetv %y;
-        symbol [ y %tmp.10 217 28 29 ];
-        %tmp.11 = lgetv %width;
-        symbol [ width %tmp.11 217 31 36 ];
-        %tmp.12 = 20;
-        invoke %tmp.7 %tmp.8(%tmp.9, %tmp.10, %tmp.11, %tmp.12);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 218 8 ]
-        %tmp.13 = lgetv %dc;
-        symbol [ dc %tmp.13 218 8 10 ];
-        symbol [ setColor %tmp.14 218 11 19 ];
-        %tmp.14 = getv function %tmp.13 :setColor;
-        symbol [ Graphics %tmp.15 218 20 28 ];
-        %tmp.15 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.16 218 29 40 ];
-        %tmp.16 = getv %tmp.15 :COLOR_BLACK;
-        symbol [ Graphics %tmp.17 218 42 50 ];
-        %tmp.17 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.18 218 51 62 ];
-        %tmp.18 = getv %tmp.17 :COLOR_WHITE;
-        invoke %tmp.13 %tmp.14(%tmp.16, %tmp.18);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 219 8 ]
-        %tmp.19 = lgetv %dc;
-        symbol [ dc %tmp.19 219 8 10 ];
-        symbol [ drawText %tmp.20 219 11 19 ];
-        %tmp.20 = getv function %tmp.19 :drawText;
-        %tmp.21 = lgetv %x;
-        symbol [ x %tmp.21 219 20 21 ];
-        %tmp.22 = lgetv %width;
-        symbol [ width %tmp.22 219 24 29 ];
-        %tmp.23 = 2;
-        %tmp.24 = div %tmp.22 %tmp.23;
-        %tmp.25 = add %tmp.21 %tmp.24;
-        %tmp.26 = lgetv %y;
-        symbol [ y %tmp.26 219 35 36 ];
-        %tmp.27 = 3;
-        %tmp.28 = add %tmp.26 %tmp.27;
-        symbol [ Graphics %tmp.29 219 42 50 ];
-        %tmp.29 = getm $.Toybox.Graphics;
-        symbol [ FONT_TINY %tmp.30 219 51 60 ];
-        %tmp.30 = getv %tmp.29 :FONT_TINY;
-        %tmp.31 = self;
-        symbol [ shortText %tmp.32 219 62 71 ];
-        %tmp.32 = getv function %tmp.31 :shortText;
-        %tmp.33 = lgetv %text;
-        symbol [ text %tmp.33 219 72 76 ];
-        %tmp.34 = 24;
-        %tmp.35 = invoke %tmp.31 %tmp.32(%tmp.33, %tmp.34);
-        symbol [ Graphics %tmp.36 220 12 20 ];
-        %tmp.36 = getm $.Toybox.Graphics;
-        symbol [ TEXT_JUSTIFY_CENTER %tmp.37 220 21 40 ];
-        %tmp.37 = getv %tmp.36 :TEXT_JUSTIFY_CENTER;
-        invoke %tmp.19 %tmp.20(%tmp.25, %tmp.28, %tmp.30, %tmp.35, %tmp.37);
-[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc" 221 8 ]
-        %tmp.38 = lgetv %dc;
-        symbol [ dc %tmp.38 221 8 10 ];
-        symbol [ setColor %tmp.39 221 11 19 ];
-        %tmp.39 = getv function %tmp.38 :setColor;
-        symbol [ Graphics %tmp.40 221 20 28 ];
-        %tmp.40 = getm $.Toybox.Graphics;
-        symbol [ COLOR_WHITE %tmp.41 221 29 40 ];
-        %tmp.41 = getv %tmp.40 :COLOR_WHITE;
-        symbol [ Graphics %tmp.42 221 42 50 ];
-        %tmp.42 = getm $.Toybox.Graphics;
-        symbol [ COLOR_BLACK %tmp.43 221 51 62 ];
-        %tmp.43 = getv %tmp.42 :COLOR_BLACK;
-        invoke %tmp.38 %tmp.39(%tmp.41, %tmp.43);
-_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_44_222_4_stop:
+        symbol [ drawText %tmp.2 216 11 19 ];
+        %tmp.2 = getv function %tmp.1 :drawText;
+        %tmp.3 = lgetv %dc;
+        symbol [ dc %tmp.3 216 20 22 ];
+        symbol [ getWidth %tmp.4 216 23 31 ];
+        %tmp.4 = getv function %tmp.3 :getWidth;
+        %tmp.5 = invoke %tmp.3 %tmp.4();
+        %tmp.6 = 2;
+        %tmp.7 = div %tmp.5 %tmp.6;
+        %tmp.8 = lgetv %dc;
+        symbol [ dc %tmp.8 216 39 41 ];
+        symbol [ getHeight %tmp.9 216 42 51 ];
+        %tmp.9 = getv function %tmp.8 :getHeight;
+        %tmp.10 = invoke %tmp.8 %tmp.9();
+        %tmp.11 = 40;
+        %tmp.12 = sub %tmp.10 %tmp.11;
+        symbol [ Graphics %tmp.13 216 60 68 ];
+        %tmp.13 = getm $.Toybox.Graphics;
+        symbol [ FONT_XTINY %tmp.14 216 69 79 ];
+        %tmp.14 = getv %tmp.13 :FONT_XTINY;
+        %tmp.15 = self;
+        symbol [ shortText %tmp.16 217 12 21 ];
+        %tmp.16 = getv function %tmp.15 :shortText;
+        %tmp.17 = lgetv %text;
+        symbol [ text %tmp.17 217 22 26 ];
+        %tmp.18 = 18;
+        %tmp.19 = invoke %tmp.15 %tmp.16(%tmp.17, %tmp.18);
+        symbol [ Graphics %tmp.20 217 33 41 ];
+        %tmp.20 = getm $.Toybox.Graphics;
+        symbol [ TEXT_JUSTIFY_CENTER %tmp.21 217 42 61 ];
+        %tmp.21 = getv %tmp.20 :TEXT_JUSTIFY_CENTER;
+        invoke %tmp.1 %tmp.2(%tmp.7, %tmp.12, %tmp.14, %tmp.19, %tmp.21);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailView_mc_215_30_218_4_stop:
     }
 }
 [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailView.mc"; @line = 1; ]

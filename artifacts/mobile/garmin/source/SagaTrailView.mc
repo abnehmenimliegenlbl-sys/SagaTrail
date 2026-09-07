@@ -46,21 +46,21 @@ class SagaTrailView extends WatchUi.View {
 
         var sos = app.getSosState();
         if (confirmSos) {
-            inverse(dc, 2, dc.getHeight() - 26, width - 4, "ENTER CONFIRM SOS");
+            footer(dc, "ENTER CONFIRM SOS");
         } else if (sos == "pending") {
-            inverse(dc, 2, dc.getHeight() - 26, width - 4, "SOS PENDING PHONE");
+            footer(dc, "SOS PENDING");
         } else if (sos == "failed") {
-            inverse(dc, 2, dc.getHeight() - 26, width - 4, "SOS FAILED - RETRY");
+            footer(dc, "SOS FAILED RETRY");
         } else if (sos == "acknowledged") {
-            inverse(dc, 2, dc.getHeight() - 26, width - 4, "SOS ACKNOWLEDGED");
+            footer(dc, "SOS ACKNOWLEDGED");
         } else {
-            inverse(dc, 2, dc.getHeight() - 26, width - 4, "UP/DOWN INFO  ENTER SOS");
+            footer(dc, "UP/DOWN INFO");
         }
     }
 
     function drawNavigationPage(dc, state, y) {
         var companionReady = app.isPhoneCompanionReady();
-        var status = companionReady ? "MOBILE CONNECTED" : "MOBILE COMPANION NEEDED";
+        var status = companionReady ? "MOBILE OK" : "PHONE WAITING";
         var fresh = value(state, :freshnessS, null);
         if (fresh != null) {
             status += " " + fresh.format("%d") + "s";
@@ -71,11 +71,11 @@ class SagaTrailView extends WatchUi.View {
             line(dc, 4, y, "GPS STATE STALE"); y += 19;
         } else {
             line(dc, 4, y, shortText(companionReady ?
-                value(state, :direction, "Awaiting direction") :
-                "Awaiting real phone companion", 29)); y += 19;
+                value(state, :direction, "AWAIT DIRECTION") :
+                "AWAIT PHONE", 18)); y += 19;
         }
 
-        line(dc, 4, y, shortText(value(state, :nextInstruction, "Continue on route"), 29)); y += 20;
+        line(dc, 4, y, shortText(value(state, :nextInstruction, "CONTINUE ROUTE"), 18)); y += 20;
         var remainingKm = value(state, :remainingKm, null);
         var distanceText = remainingKm == null ? "--" : remainingKm.format("%.1f") + " km";
         large(dc, 4, y, distanceText); y += 31;
@@ -98,9 +98,9 @@ class SagaTrailView extends WatchUi.View {
             var safety = value(state, :safetyText, "");
             var alertText = value(state, :alertText, "");
             if (alertText != "") {
-                line(dc, 4, y, shortText("ALERT " + alertText, 29));
+                line(dc, 4, y, shortText("ALERT " + alertText, 18));
             } else if (safety != "") {
-                line(dc, 4, y, shortText("SAFETY " + safety, 29));
+                line(dc, 4, y, shortText("SAFETY " + safety, 18));
             }
         }
     }
@@ -110,7 +110,7 @@ class SagaTrailView extends WatchUi.View {
         if (terrain != null) {
             line(dc, 4, y, shortText("TERRAIN " + value(terrain, :direction, "") + " " +
                 value(terrain, :gradePct, 0).format("%d") + "% " +
-                formatDistance(value(terrain, :remainingM, 0)), 29));
+                formatDistance(value(terrain, :remainingM, 0)), 18));
         } else {
             line(dc, 4, y, "TERRAIN --");
         }
@@ -136,7 +136,7 @@ class SagaTrailView extends WatchUi.View {
         var checkin = value(state, :safetyCheckin, null);
         if (checkin != null) {
             line(dc, 4, y, shortText("CHECK-IN " + value(checkin, :status, "idle") +
-                " " + formatTime(value(checkin, :remainingSec, 0)), 29));
+                " " + formatTime(value(checkin, :remainingSec, 0)), 18));
         } else {
             line(dc, 4, y, "CHECK-IN NONE");
         }
@@ -144,7 +144,7 @@ class SagaTrailView extends WatchUi.View {
 
         var narration = value(state, :narrationText, "");
         if (narration != "") {
-            line(dc, 4, y, shortText("NARRATION " + narration, 29));
+            line(dc, 4, y, shortText("NARRATION " + narration, 18));
         } else {
             line(dc, 4, y, "NARRATION --");
         }
@@ -154,7 +154,7 @@ class SagaTrailView extends WatchUi.View {
         if (upcoming.size() > 1) {
             var next = upcoming[1];
             line(dc, 4, y, shortText("THEN " + value(next, :direction, "") + " " +
-                formatDistance(value(next, :distanceM, 0)), 29));
+                formatDistance(value(next, :distanceM, 0)), 18));
         } else {
             line(dc, 4, y, "THEN --");
         }
@@ -198,12 +198,12 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function title(dc, width, y, text) {
-        dc.drawText(width / 2, y, Graphics.FONT_TINY, shortText(text, 20),
+        dc.drawText(width / 2, y, Graphics.FONT_XTINY, shortText(text, 18),
             Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function line(dc, x, y, text) {
-        dc.drawText(dc.getWidth() / 2, y, Graphics.FONT_TINY, shortText(text, 24),
+        dc.drawText(dc.getWidth() / 2, y, Graphics.FONT_XTINY, shortText(text, 18),
             Graphics.TEXT_JUSTIFY_CENTER);
     }
 
@@ -212,12 +212,8 @@ class SagaTrailView extends WatchUi.View {
             Graphics.TEXT_JUSTIFY_CENTER);
     }
 
-    function inverse(dc, x, y, width, text) {
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
-        dc.fillRectangle(x, y, width, 20);
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
-        dc.drawText(x + width / 2, y + 3, Graphics.FONT_TINY, shortText(text, 24),
-            Graphics.TEXT_JUSTIFY_CENTER);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+    function footer(dc, text) {
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 40, Graphics.FONT_XTINY,
+            shortText(text, 18), Graphics.TEXT_JUSTIFY_CENTER);
     }
 }
