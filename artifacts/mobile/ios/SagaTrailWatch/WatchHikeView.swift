@@ -18,9 +18,21 @@ struct WatchHikeView: View {
           Divider()
           metric("Zeit", duration(state.elapsedSeconds))
           metric("Distanz", String(format: "%.2f km", state.distanceMeters / 1000))
+           if let remaining = state.remainingDistanceMeters {
+             metric("Rest", String(format: "%.1f km", remaining / 1000))
+           }
+           if let remainingSeconds = state.remainingSeconds {
+             metric("Ankunft", eta(remainingSeconds, arrivalAt: state.arrivalAtEpochMs))
+           }
           metric("Aufstieg", String(format: "%.0f m", state.ascentMeters))
           metric("Schritte", "\(state.steps)")
           heartRate(state)
+           Button {
+             hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
+           } label: {
+             Label(state.isHiking ? "Pause" : (state.sessionStatus == "preparing" ? "Start" : "Fortsetzen"),
+                   systemImage: state.isHiking ? "pause.fill" : "play.fill")
+           }.buttonStyle(.bordered)
           Button(role: .destructive, action: hike.requestSOSConfirmation) {
             Label("SOS", systemImage: "exclamationmark.triangle.fill")
           }.buttonStyle(.borderedProminent)
@@ -56,6 +68,13 @@ struct WatchHikeView: View {
   }
   private func duration(_ seconds: Double) -> String {
     String(format: "%02d:%02d:%02d", Int(seconds) / 3600, (Int(seconds) / 60) % 60, Int(seconds) % 60)
+  }
+  private func eta(_ seconds: Double, arrivalAt: Double?) -> String {
+    if let arrivalAt {
+      let date = Date(timeIntervalSince1970: arrivalAt / 1000)
+      return date.formatted(date: .omitted, time: .shortened)
+    }
+    return duration(seconds)
   }
   private func arrow(for direction: String) -> String {
     let normalized = direction.lowercased()

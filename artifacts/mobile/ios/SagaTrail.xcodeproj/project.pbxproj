@@ -18,8 +18,10 @@
 		B10000000000000000000002 /* WatchHikeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* WatchHikeModel.swift */; };
 		B10000000000000000000003 /* WatchHikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* WatchHikeView.swift */; };
 		B10000000000000000000004 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* WatchProtocol.swift */; };
+		B10000000000000000000009 /* SagaTrailComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000019 /* SagaTrailComplication.swift */; };
 		B10000000000000000000005 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000017 /* HealthKit.framework */; };
 		B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000018 /* WatchConnectivity.framework */; };
+		B1000000000000000000000A /* ClockKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1000000000000000000001A /* ClockKit.framework */; };
 		B10000000000000000000007 /* SagaTrailWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* SagaTrailWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B10000000000000000000008 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 /* End PBXBuildFile section */
@@ -65,10 +67,12 @@
 		B10000000000000000000012 /* WatchHikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHikeModel.swift; sourceTree = "<group>"; };
 		B10000000000000000000013 /* WatchHikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHikeView.swift; sourceTree = "<group>"; };
 		B10000000000000000000014 /* WatchProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
+		B10000000000000000000019 /* SagaTrailComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrailComplication.swift; sourceTree = "<group>"; };
 		B10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10000000000000000000016 /* SagaTrailWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SagaTrailWatch.entitlements; sourceTree = "<group>"; };
 		B10000000000000000000017 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		B10000000000000000000018 /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
+		B1000000000000000000001A /* ClockKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClockKit.framework; path = System/Library/Frameworks/ClockKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +89,7 @@
 			files = (
 				B10000000000000000000005 /* HealthKit.framework in Frameworks */,
 				B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */,
+				B1000000000000000000000A /* ClockKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +118,7 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				B10000000000000000000017 /* HealthKit.framework */,
 				B10000000000000000000018 /* WatchConnectivity.framework */,
+				B1000000000000000000001A /* ClockKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -163,6 +169,7 @@
 				B10000000000000000000012 /* WatchHikeModel.swift */,
 				B10000000000000000000013 /* WatchHikeView.swift */,
 				B10000000000000000000014 /* WatchProtocol.swift */,
+				B10000000000000000000019 /* SagaTrailComplication.swift */,
 				B10000000000000000000015 /* Info.plist */,
 				B10000000000000000000016 /* SagaTrailWatch.entitlements */,
 			);
@@ -353,6 +360,7 @@
 				B10000000000000000000002 /* WatchHikeModel.swift in Sources */,
 				B10000000000000000000003 /* WatchHikeView.swift in Sources */,
 				B10000000000000000000004 /* WatchProtocol.swift in Sources */,
+				B10000000000000000000009 /* SagaTrailComplication.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

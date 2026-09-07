@@ -834,6 +834,7 @@ export default function LiveHike() {
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [hikePaused, setHikePaused] = useState(false);
   const [heartRate, setHeartRate] = useState<{
     bpm: number;
     measuredAt: number;
@@ -973,6 +974,9 @@ export default function LiveHike() {
 
   const decisionsRef = useRef<StoryChapter[]>([]);
   const startTimeRef = useRef<number>(Date.now());
+  const hikePausedRef = useRef(false);
+  const pauseStartedAtRef = useRef<number | null>(null);
+  const pausedDurationMsRef = useRef(0);
   const lastFixRef = useRef<LatLng | null>(null);
   /** Vorherige GPS-Position vor dem letzten signifikanten Schritt — fuer Himmelsrichtungsberechnung zum POI. */
   const prevLivePosRef = useRef<LatLng | null>(null);
@@ -1006,6 +1010,26 @@ export default function LiveHike() {
     // emergency flow. It does not imply that emergency services were reached.
     setSosOpen(true);
     void sendWatchSos(null);
+  }, []);
+
+  const setHikePause = useCallback((paused: boolean) => {
+    if (paused) {
+      if (hikePausedRef.current) return;
+      hikePausedRef.current = true;
+      pauseStartedAtRef.current = Date.now();
+      setElapsedSec(Math.max(
+        0,
+        Math.round((Date.now() - startTimeRef.current - pausedDurationMsRef.current) / 1000),
+      ));
+      setHikePaused(true);
+      return;
+    }
+    if (!hikePausedRef.current) return;
+    const pausedAt = pauseStartedAtRef.current;
+    if (pausedAt != null) pausedDurationMsRef.current += Math.max(0, Date.now() - pausedAt);
+    pauseStartedAtRef.current = null;
+    hikePausedRef.current = false;
+    setHikePaused(false);
   }, []);
   const lastNarratedRef = useRef<number>(-1);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
@@ -1920,6 +1944,12 @@ export default function LiveHike() {
       altitude != null && Number.isFinite(altitude) ? altitude : null,
     );
     const prev = lastFixRef.current;
+    if (hikePausedRef.current) {
+      // Keep the reference fresh while paused so resuming does not count the
+      // whole pause interval as walked distance or trigger a false detour.
+      lastFixRef.current = cur;
+      return;
+    }
     if (prev) {
       const d = haversineKm(prev, cur);
       // GPS-Rauschen (<3 m) und unrealistische Spruenge (>500 m) ignorieren
@@ -2185,7 +2215,14 @@ export default function LiveHike() {
   useEffect(() => subscribeToCompanionEvents({
     onHeartRate: (event) => setHeartRate(event),
     onSosRequest: () => requestPhoneSideSos(),
-  }), [requestPhoneSideSos]);
+    onHikeCommand: ({ command }) => {
+      if (command === "pause") {
+        setHikePause(true);
+      } else {
+        setHikePause(false);
+      }
+    },
+  }), [requestPhoneSideSos, setHikePause]);
   useEffect(() => {
     const interval = setInterval(() => setLocationNow(Date.now()), 5_000);
     return () => clearInterval(interval);
@@ -2235,7 +2272,24 @@ export default function LiveHike() {
         ? { ...heartRate, freshness: heartRateFreshness }
         : null,
       activeAlert,
-      sessionStatus: sosOpen ? "sos_requested" : finished ? "finished" : preparing ? "preparing" : "active",
+      remainingDistanceM: Math.max(0, totalKm - distance) * 1000,
+      remainingSeconds: Math.max(
+        0,
+        Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
+      ),
+      arrivalAtEpochMs: now + Math.max(
+        0,
+        Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
+      ) * 1000,
+      sessionStatus: sosOpen
+        ? "sos_requested"
+        : finished
+          ? "finished"
+          : hikePaused
+            ? "paused"
+            : preparing
+              ? "preparing"
+              : "active",
     };
     const criticalKey = activeAlert?.critical ? `${activeAlert.kind}:${activeAlert.text}` : null;
     const force = criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current;
@@ -2250,7 +2304,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [distance, elapsedSec, finished, hasFreshGps, heartRate, livePos, nextWatchNavigation, offRoutePos, preparing, sosOpen, speaking, steps, totalKm]);
+  }, [distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -2505,12 +2559,15 @@ export default function LiveHike() {
 
   // Verstrichene Zeit: alle 15 Sekunden aktualisieren (fuer ETA-Berechnung).
   useEffect(() => {
-    if (preparing || finished) return;
+    if (preparing || finished || hikePaused) return;
     const id = setInterval(() => {
-      setElapsedSec(Math.round((Date.now() - startTimeRef.current) / 1000));
+      setElapsedSec(Math.max(
+        0,
+        Math.round((Date.now() - startTimeRef.current - pausedDurationMsRef.current) / 1000),
+      ));
     }, 15_000);
     return () => clearInterval(id);
-  }, [preparing, finished]);
+  }, [preparing, finished, hikePaused]);
 
   // Meilenstein-Ansage bei 25/50/75 % der Wanderung — per KI im Sagen-Stil,
   // Fallback auf atmosphaerische Standardphrase aus STORY_PACKS.
@@ -2968,6 +3025,10 @@ export default function LiveHike() {
     turnGenRef.current++;
     await stopNarration();
   }, [stopNarration]);
+
+  useEffect(() => {
+    if (hikePaused) void cancelNarration();
+  }, [hikePaused, cancelNarration]);
 
   // UI-Status wird optimistisch sofort auf "spricht" gesetzt, statt auf das
   // native onStart-Event zu warten: auf manchen Geraeten (v. a. Android mit

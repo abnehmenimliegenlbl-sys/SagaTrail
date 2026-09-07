@@ -39,6 +39,9 @@ export interface HikeLiveState {
     text: string;
     critical: boolean;
   } | null;
+  remainingDistanceM?: number | null;
+  remainingSeconds?: number | null;
+  arrivalAtEpochMs?: number | null;
   sessionStatus: HikeSessionStatus;
 }
 
@@ -57,6 +60,7 @@ type CompanionModule = {
 
 type HeartRateEvent = { bpm?: unknown; measuredAt?: unknown; source?: unknown };
 type SosRequestEvent = { requestedAt?: unknown };
+type HikeCommandEvent = { command?: unknown };
 
 let permissionGranted: boolean | null = null;
 let nativeCompanionActivated = false;
@@ -145,6 +149,7 @@ export async function publishHikeLiveState(
 export function subscribeToCompanionEvents(handlers: {
   onHeartRate: (event: { bpm: number; measuredAt: number; source: HeartRateSource }) => void;
   onSosRequest: (event: { requestedAt: number }) => void;
+  onHikeCommand: (event: { command: "start" | "pause" | "resume" }) => void;
 }): () => void {
   if (Platform.OS === "web" || !companionModule()) return () => {};
   const heartRate = DeviceEventEmitter.addListener("SagaTrailCompanion.heartRate", (event: HeartRateEvent) => {
@@ -155,7 +160,12 @@ export function subscribeToCompanionEvents(handlers: {
   const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
     handlers.onSosRequest({ requestedAt: finiteOrNull(event?.requestedAt) ?? Date.now() });
   });
-  return () => { heartRate.remove(); sos.remove(); };
+  const command = DeviceEventEmitter.addListener("SagaTrailCompanion.hikeCommand", (event: HikeCommandEvent) => {
+    if (event?.command === "start" || event?.command === "pause" || event?.command === "resume") {
+      handlers.onHikeCommand({ command: event.command });
+    }
+  });
+  return () => { heartRate.remove(); sos.remove(); command.remove(); };
 }
 
 export async function prepareWatchCompanion(): Promise<boolean> {

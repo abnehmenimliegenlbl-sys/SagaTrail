@@ -16,6 +16,18 @@
   <array>
     <string>workout-processing</string>
   </array>
+  <key>CLKComplicationPrincipalClass</key>
+  <string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
+  <key>CLKComplicationSupportedFamilies</key>
+  <array>
+    <string>CLKComplicationFamilyModularSmall</string>
+    <string>CLKComplicationFamilyModularLarge</string>
+    <string>CLKComplicationFamilyUtilitarianSmall</string>
+    <string>CLKComplicationFamilyUtilitarianSmallFlat</string>
+    <string>CLKComplicationFamilyCircularSmall</string>
+    <string>CLKComplicationFamilyGraphicCircular</string>
+    <string>CLKComplicationFamilyGraphicRectangular</string>
+  </array>
   <key>NSHealthShareUsageDescription</key><string>SagaTrail reads live heart rate during your hike when you start it on your watch.</string>
   <key>NSHealthUpdateUsageDescription</key><string>SagaTrail saves the watch workout you explicitly start.</string>
 </dict>

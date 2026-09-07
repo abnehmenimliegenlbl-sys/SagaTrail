@@ -1,6 +1,8 @@
 import Foundation
 import HealthKit
 import WatchConnectivity
+import WatchKit
+import ClockKit
 
 @MainActor
 final class WatchHikeModel: NSObject, ObservableObject {
@@ -15,6 +17,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private let healthStore = HKHealthStore()
   private var workoutSession: HKWorkoutSession?
   private var workoutBuilder: HKLiveWorkoutBuilder?
+  private var turnHapticArmed = true
+  private var lastAlertKey: String?
 
   var isStale: Bool {
     guard let receivedAt else { return true }
@@ -35,6 +39,20 @@ final class WatchHikeModel: NSObject, ObservableObject {
     showSOSConfirmation = false
     let message = SagaTrailWatchProtocol.envelope(type: "sosConfirmed", payload: [
       "source": "watch",
+      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+    ])
+    let session = WCSession.default
+    if session.isReachable {
+      session.sendMessage(message, replyHandler: nil)
+    } else {
+      session.transferUserInfo(message)
+    }
+  }
+
+  func sendHikeCommand(_ command: String) {
+    guard ["start", "pause", "resume"].contains(command) else { return }
+    let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
+      "command": command,
       "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
     ])
     let session = WCSession.default
@@ -94,15 +112,66 @@ final class WatchHikeModel: NSObject, ObservableObject {
     switch type {
     case "liveState":
       guard let decoded = SagaTrailWatchProtocol.LiveState.decode(payload) else { return }
+      playTurnHapticIfNeeded(decoded)
       state = decoded
       receivedAt = Date()
+      persistComplication(decoded)
+      ComplicationController.reload()
     case "alert":
       // The protocol deliberately carries display text only, never coordinates.
-      activeAlert = WatchAlert(title: payload["title"] as? String ?? "SagaTrail",
-                               body: payload["body"] as? String ?? "")
+      let title = payload["title"] as? String ?? "SagaTrail"
+      let body = payload["body"] as? String ?? ""
+      let haptic = payload["haptic"] as? String
+      let alertKey = "\(title)|\(body)|\(haptic ?? "")"
+      if alertKey != lastAlertKey {
+        lastAlertKey = alertKey
+        playAlertHaptic(haptic)
+      }
+      activeAlert = WatchAlert(title: title, body: body)
     default:
       break
     }
+  }
+
+  private func playTurnHapticIfNeeded(_ state: SagaTrailWatchProtocol.LiveState) {
+    guard state.isHiking,
+          let distance = state.distanceToTurnMeters,
+          distance >= 0,
+          distance <= 120 else {
+      if state.distanceToTurnMeters == nil || (state.distanceToTurnMeters ?? 0) > 150 {
+        turnHapticArmed = true
+      }
+      return
+    }
+    guard turnHapticArmed else { return }
+    turnHapticArmed = false
+    let direction = state.navigationDirection.lowercased()
+    WKInterfaceDevice.current().play(direction.contains("left") ? .directionUp : .directionDown)
+  }
+
+  private func playAlertHaptic(_ haptic: String?) {
+    switch haptic {
+    case "warning":
+      WKInterfaceDevice.current().play(.notification)
+    case "failure":
+      WKInterfaceDevice.current().play(.failure)
+    case "click":
+      WKInterfaceDevice.current().play(.click)
+    default:
+      break
+    }
+  }
+
+  private func persistComplication(_ state: SagaTrailWatchProtocol.LiveState) {
+    let turnDistance = state.distanceToTurnMeters.map { "\(Int($0)) m" } ?? "—"
+    let remaining = state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—"
+    UserDefaults.standard.set([
+      "direction": state.navigationDirection,
+      "turnDistance": turnDistance,
+      "remaining": remaining,
+      "active": state.isHiking,
+      "updatedAt": state.updatedAt.timeIntervalSince1970
+    ], forKey: "sagatrail.complication.snapshot")
   }
 }
 

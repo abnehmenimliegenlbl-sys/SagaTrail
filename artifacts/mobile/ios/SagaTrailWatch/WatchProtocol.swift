@@ -9,6 +9,7 @@ enum SagaTrailWatchProtocol {
     let routeName: String
     let nextInstruction: String
     let navigationDirection: String
+    let sessionStatus: String
     let isHiking: Bool
     let elapsedSeconds: Double
     let distanceMeters: Double
@@ -17,6 +18,9 @@ enum SagaTrailWatchProtocol {
     let heartRateBpm: Double?
     let bearingDegrees: Double?
     let distanceToTurnMeters: Double?
+    let remainingDistanceMeters: Double?
+    let remainingSeconds: Double?
+    let arrivalAtEpochMs: Double?
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -26,12 +30,16 @@ enum SagaTrailWatchProtocol {
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
         navigationDirection: dictionary["navigationDirection"] as? String ?? "straight",
+        sessionStatus: dictionary["sessionStatus"] as? String ?? ((dictionary["isHiking"] as? Bool) == true ? "active" : "preparing"),
         isHiking: (dictionary["isHiking"] as? Bool) ?? false,
         elapsedSeconds: number("elapsedSeconds"), distanceMeters: number("distanceMeters"),
         ascentMeters: number("ascentMeters"), steps: Int(number("steps")),
         heartRateBpm: (dictionary["heartRateBpm"] as? NSNumber)?.doubleValue,
         bearingDegrees: (dictionary["bearingDegrees"] as? NSNumber)?.doubleValue,
         distanceToTurnMeters: (dictionary["distanceToTurnMeters"] as? NSNumber)?.doubleValue,
+        remainingDistanceMeters: (dictionary["remainingDistanceMeters"] as? NSNumber)?.doubleValue,
+        remainingSeconds: (dictionary["remainingSeconds"] as? NSNumber)?.doubleValue,
+        arrivalAtEpochMs: (dictionary["arrivalAtEpochMs"] as? NSNumber)?.doubleValue,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }

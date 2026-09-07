@@ -27,7 +27,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
   @objc override static func requiresMainQueueSetup() -> Bool { false }
 
   override func supportedEvents() -> [String] {
-    ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest"]
+    ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest", "SagaTrailCompanion.hikeCommand"]
   }
 
   @objc func activate() {
@@ -94,6 +94,10 @@ final class SagaTrailCompanion: RCTEventEmitter {
       sendEvent(withName: "SagaTrailCompanion.sosRequest", body: [
         "requestedAt": payload["requestedAt"] ?? Int(Date().timeIntervalSince1970 * 1000)
       ])
+    case "hikeCommand":
+      if let command = payload["command"] as? String {
+        sendEvent(withName: "SagaTrailCompanion.hikeCommand", body: ["command": command])
+      }
     default:
       break
     }
@@ -169,6 +173,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       "distanceMeters": state["walkedDistanceM"] ?? 0,
       "ascentMeters": state["ascentM"] ?? 0,
       "steps": state["steps"] ?? 0,
+      "sessionStatus": status,
       "navigationDirection": direction ?? "straight",
       "nextInstruction": alert?["text"] as? String ?? (status == "active" ? "Weiter auf der Route" : "Hike nicht aktiv")
     ]
@@ -176,10 +181,22 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
       watchState["distanceToTurnMeters"] = navigation["distanceM"]
     }
+    if let remainingDistance = state["remainingDistanceM"] {
+      watchState["remainingDistanceMeters"] = remainingDistance
+    }
+    if let remainingSeconds = state["remainingSeconds"] {
+      watchState["remainingSeconds"] = remainingSeconds
+    }
+    if let arrivalAt = state["arrivalAtEpochMs"] {
+      watchState["arrivalAtEpochMs"] = arrivalAt
+    }
     if let heartRate { watchState["heartRateBpm"] = heartRate["bpm"] }
     try sendLiveState(watchState)
     if let alert, let text = alert["text"] as? String, !text.isEmpty {
-      try sendAlert(["title": "SagaTrail", "body": text])
+      let haptic = (alert["kind"] as? String) == "safety"
+        ? "warning"
+        : ((alert["kind"] as? String) == "sos" ? "failure" : "click")
+      try sendAlert(["title": "SagaTrail", "body": text, "haptic": haptic])
     }
   }
 
@@ -190,7 +207,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       throw ProtocolError.invalidAlert
     }
     // Alerts cross a lock-screen boundary: retain only human-readable text.
-    send(envelope(type: "alert", payload: ["title": title, "body": body]), preferApplicationContext: false)
+    var payload: [String: Any] = ["title": title, "body": body]
+    if let haptic = alert["haptic"] as? String { payload["haptic"] = haptic }
+    send(envelope(type: "alert", payload: payload), preferApplicationContext: false)
   }
 
   private func send(_ message: [String: Any], preferApplicationContext: Bool) {
@@ -225,9 +244,10 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     guard let updatedAt = input["updatedAt"] as? NSNumber else { throw ProtocolError.missingUpdatedAt }
     var result: [String: Any] = ["updatedAt": updatedAt]
-    let fields = ["routeName", "nextInstruction", "navigationDirection", "isHiking",
+    let fields = ["routeName", "nextInstruction", "navigationDirection", "sessionStatus", "isHiking",
                   "elapsedSeconds", "distanceMeters", "ascentMeters", "steps",
-                  "heartRateBpm", "bearingDegrees", "distanceToTurnMeters"]
+                  "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
+                  "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs"]
     for field in fields { if let value = input[field] { result[field] = value } }
     return result
   }
@@ -258,7 +278,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private func receive(_ message: [String: Any]) {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
           let type = message["type"] as? String,
-          ["sosConfirmed", "heartRate"].contains(type) else { return }
+           ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
     // JS / the phone owns the actual SOS action and any location sharing.
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
   }
