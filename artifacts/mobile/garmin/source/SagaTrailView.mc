@@ -198,22 +198,26 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function title(dc, width, y, text) {
-        dc.drawText(width / 2, y, Graphics.FONT_SMALL, text, Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, y, Graphics.FONT_TINY, shortText(text, 20),
+            Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function line(dc, x, y, text) {
-        dc.drawText(x, y, Graphics.FONT_SMALL, text, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(dc.getWidth() / 2, y, Graphics.FONT_TINY, shortText(text, 24),
+            Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function large(dc, x, y, text) {
-        dc.drawText(x, y, Graphics.FONT_MEDIUM, text, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(dc.getWidth() / 2, y, Graphics.FONT_MEDIUM, text,
+            Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     function inverse(dc, x, y, width, text) {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.fillRectangle(x, y, width, 20);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
-        dc.drawText(x + 3, y + 3, Graphics.FONT_SMALL, text, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(x + width / 2, y + 3, Graphics.FONT_TINY, shortText(text, 24),
+            Graphics.TEXT_JUSTIFY_CENTER);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
     }
 }
