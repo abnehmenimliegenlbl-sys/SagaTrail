@@ -820,7 +820,9 @@ export default function LiveHike() {
     };
   }, []);
 
-  // Valhalla-Neuberechnung: laeuft immer wenn offRoutePos sich aendert.
+  // Valhalla-Neuberechnung: laeuft einmal pro Off-Route-Episode. Weitere
+  // GPS-Fixes waehrend derselben Episode duerfen keine neue Anfrage starten
+  // oder die laufende Anfrage abbrechen.
   // Bei null (wieder auf der Route): alle Off-Route-States zuruecksetzen —
   // AUSSER wenn der Nutzer gerade "Dieser Route folgen" akzeptiert hat
   // (followingRecalcRef), dann bleibt recalcGeom als Hauptroute erhalten.
@@ -2104,8 +2106,6 @@ export default function LiveHike() {
         offRouteCountRef.current += 1;
         if (offRouteCountRef.current >= OFF_ROUTE_CONFIRM_FIXES && !isOffRouteRef.current) {
           isOffRouteRef.current = true;
-          setOffRoutePos(cur);
-        } else if (isOffRouteRef.current) {
           setOffRoutePos(cur);
         }
       } else if (distKm < OFF_ROUTE_RECOVER_KM) {
@@ -4618,6 +4618,8 @@ export default function LiveHike() {
     releaseStartAudio();
     startChoicePendingRef.current = false;
     setStartChoicePending(false);
+    isOffRouteRef.current = false;
+    offRouteCountRef.current = 0;
     setOffRoutePos(null);
     setCurrentIndex(0);
     setAwaitingDecision(false);
