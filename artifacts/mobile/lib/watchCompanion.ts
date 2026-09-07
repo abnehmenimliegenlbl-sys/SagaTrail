@@ -33,6 +33,17 @@ export interface WatchSafetyCheckin {
   liveLinkActive: boolean;
 }
 
+export interface WatchMapPoint {
+  lat: number;
+  lng: number;
+}
+
+export interface WatchMapState {
+  route: WatchMapPoint[];
+  current: WatchMapPoint | null;
+  gpsFresh: boolean;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -44,6 +55,7 @@ export interface HikeLiveState {
   remainingAscentM?: number | null;
   terrainSection?: WatchTerrainSection | null;
   safetyCheckin?: WatchSafetyCheckin | null;
+  map?: WatchMapState | null;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
@@ -175,6 +187,31 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       !Number.isFinite(checkin.remainingSec) ||
       checkin.remainingSec < 0 ||
       typeof checkin.liveLinkActive !== "boolean"
+    ) return false;
+  }
+  if (state.map !== undefined && state.map !== null) {
+    const map = state.map;
+    const validPoint = (point: unknown): point is WatchMapPoint => {
+      if (!point || typeof point !== "object") return false;
+      const candidate = point as Partial<WatchMapPoint>;
+      return (
+        typeof candidate.lat === "number" &&
+        Number.isFinite(candidate.lat) &&
+        candidate.lat >= -90 &&
+        candidate.lat <= 90 &&
+        typeof candidate.lng === "number" &&
+        Number.isFinite(candidate.lng) &&
+        candidate.lng >= -180 &&
+        candidate.lng <= 180
+      );
+    };
+    if (
+      !Array.isArray(map.route) ||
+      map.route.length < 2 ||
+      map.route.length > 120 ||
+      !map.route.every(validPoint) ||
+      (map.current !== null && !validPoint(map.current)) ||
+      typeof map.gpsFresh !== "boolean"
     ) return false;
   }
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {

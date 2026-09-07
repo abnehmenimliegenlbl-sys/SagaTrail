@@ -155,7 +155,12 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
           ["fresh", "stale", "unavailable"].contains(freshness) else {
       throw ProtocolError.invalidCanonicalState
     }
-    guard !containsForbiddenCoordinates(in: state) else { throw ProtocolError.coordinatesNotAllowed }
+    guard !containsForbiddenCoordinates(in: state, allowingMapPayload: true) else {
+      throw ProtocolError.coordinatesNotAllowed
+    }
+    if let map = state["map"] as? [String: Any] {
+      guard validMapPayload(map) else { throw ProtocolError.invalidMapPayload }
+    }
     let navigation = state["nextNavigation"] as? [String: Any]
     let upcomingNavigations = state["upcomingNavigations"] as? [[String: Any]] ?? []
     let alert = state["activeAlert"] as? [String: Any]
@@ -199,6 +204,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     if let safetyCheckin = state["safetyCheckin"] as? [String: Any] {
       watchState["safetyCheckin"] = safetyCheckin
+    }
+    if let map = state["map"] as? [String: Any] {
+      watchState["map"] = map
     }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
@@ -263,8 +271,11 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   private func validatedLiveState(_ input: [String: Any]) throws -> [String: Any] {
-    guard !containsForbiddenCoordinates(in: input) else {
+    guard !containsForbiddenCoordinates(in: input, allowingMapPayload: true) else {
       throw ProtocolError.coordinatesNotAllowed
+    }
+    if let map = input["map"] as? [String: Any], !validMapPayload(map) {
+      throw ProtocolError.invalidMapPayload
     }
     guard let updatedAt = input["updatedAt"] as? NSNumber else { throw ProtocolError.missingUpdatedAt }
     var result: [String: Any] = ["updatedAt": updatedAt]
@@ -273,17 +284,45 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
                   "upcomingNavigations", "plannedAscentM", "remainingAscentM",
-                  "terrainSection"]
+                   "terrainSection", "map"]
     for field in fields { if let value = input[field] { result[field] = value } }
     return result
   }
 
-  private func containsForbiddenCoordinates(in value: Any) -> Bool {
+  private func validMapPayload(_ map: [String: Any]) -> Bool {
+    guard let route = map["route"] as? [[String: Any]],
+          route.count >= 2,
+          route.count <= 120,
+          let gpsFresh = map["gpsFresh"] as? Bool else {
+      return false
+    }
+    func validPoint(_ point: [String: Any]) -> Bool {
+      guard let lat = (point["lat"] as? NSNumber)?.doubleValue,
+            let lng = (point["lng"] as? NSNumber)?.doubleValue else {
+        return false
+      }
+      return lat.isFinite && lat >= -90 && lat <= 90 &&
+        lng.isFinite && lng >= -180 && lng <= 180
+    }
+    guard route.allSatisfy(validPoint) else { return false }
+    if let current = map["current"] as? [String: Any], !validPoint(current) {
+      return false
+    }
+    return map["current"] == nil || map["current"] is [String: Any] || map["current"] is NSNull
+  }
+
+  private func containsForbiddenCoordinates(in value: Any, allowingMapPayload: Bool = false) -> Bool {
     let forbidden = Set(["latitude", "longitude", "lat", "lng", "coordinate", "coordinates"])
     if let dictionary = value as? [String: Any] {
-      return dictionary.contains { forbidden.contains($0.key.lowercased()) || containsForbiddenCoordinates(in: $0.value) }
+      return dictionary.contains {
+        if allowingMapPayload && $0.key.lowercased() == "map" { return false }
+        return forbidden.contains($0.key.lowercased())
+          || containsForbiddenCoordinates(in: $0.value, allowingMapPayload: allowingMapPayload)
+      }
     }
-    if let array = value as? [Any] { return array.contains(where: { containsForbiddenCoordinates(in: $0) }) }
+    if let array = value as? [Any] {
+      return array.contains(where: { containsForbiddenCoordinates(in: $0, allowingMapPayload: allowingMapPayload) })
+    }
     return false
   }
 
@@ -310,13 +349,14 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   private enum ProtocolError: LocalizedError {
-    case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState
+    case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState, invalidMapPayload
     var errorDescription: String? {
       switch self {
       case .coordinatesNotAllowed: return "Coordinates are not allowed in the watch protocol."
       case .missingUpdatedAt: return "HikeLiveState.updatedAt is required."
       case .invalidAlert: return "An alert needs display text and cannot contain coordinates."
       case .invalidCanonicalState: return "The HikeLiveState protocol v1 payload is invalid."
+      case .invalidMapPayload: return "The watch map payload is invalid."
       }
     }
   }

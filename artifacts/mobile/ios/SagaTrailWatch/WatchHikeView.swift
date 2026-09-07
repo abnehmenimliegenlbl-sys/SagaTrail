@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct WatchHikeView: View {
   @EnvironmentObject private var hike: WatchHikeModel
@@ -8,6 +9,9 @@ struct WatchHikeView: View {
       VStack(spacing: 9) {
         connectionBanner
         if let state = hike.state {
+          if let map = state.map {
+            WatchRouteMap(map: map)
+          }
           Image(systemName: arrow(for: state.navigationDirection))
             .font(.system(size: 44, weight: .bold))
             .rotationEffect(.degrees(state.bearingDegrees ?? 0))
@@ -194,5 +198,50 @@ struct WatchHikeView: View {
     if level >= 0.25 { return "battery.50" }
     if level > 0.1 { return "battery.25" }
     return "battery.0"
+  }
+}
+
+private struct WatchRouteMap: View {
+  let map: SagaTrailWatchProtocol.RouteMap
+
+  private var coordinates: [CLLocationCoordinate2D] {
+    map.route.map {
+      CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+    }
+  }
+
+  var body: some View {
+    ZStack(alignment: .bottomLeading) {
+      Map(initialPosition: .automatic) {
+        MapPolyline(coordinates: coordinates)
+          .stroke(.blue, lineWidth: 4)
+        if let current = map.current {
+          Annotation("Du", coordinate: CLLocationCoordinate2D(
+            latitude: current.latitude,
+            longitude: current.longitude
+          )) {
+            ZStack {
+              Circle().fill(.white).frame(width: 15, height: 15)
+              Circle().fill(.blue).frame(width: 10, height: 10)
+            }
+          }
+        }
+      }
+      .mapStyle(.standard)
+      .frame(height: 145)
+      .clipShape(RoundedRectangle(cornerRadius: 12))
+      if !map.gpsFresh {
+        Label("GPS pausiert", systemImage: "location.slash")
+          .font(.caption2)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 3)
+          .background(.black.opacity(0.7), in: Capsule())
+          .padding(6)
+      }
+    }
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .stroke(.white.opacity(0.2), lineWidth: 1)
+    )
   }
 }

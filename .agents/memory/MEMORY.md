@@ -119,7 +119,7 @@
 - [Live-GPS safety gate](sagatrail-gps-safety.md) — stale or unavailable GPS must pause route progress, POI triggers, turn cues, and terrain narration; never show a simulated point as live.
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
-- [Watch companion](sagatrail-watch-companion.md) — native notification mirroring covers direction, distance and SOS; heart rate stays unavailable until a real health bridge exists.
+- [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.
 - [Offline peak database](sagatrail-offline-peak-database.md) — versioned OSM peak data powers honest offline panorama angles; missing heights stay unknown, never simulated.
 - [Local terrain AR](sagatrail-local-terrain-ar.md) — observer-centered SwissTopo terrain is live-refreshed with throttling; offline downloads keep one route-start model and never hide peaks without evidence.
 - [Transparent modal safe area](rn-transparent-modal-safe-area.md) — explicit top/bottom margins are needed because iOS transparent Modals may ignore native SafeAreaView insets.

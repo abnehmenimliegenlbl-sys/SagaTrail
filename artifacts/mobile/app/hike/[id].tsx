@@ -117,6 +117,7 @@ import {
   sendWatchStatus,
   subscribeToCompanionEvents,
   type HikeLiveState,
+  type WatchMapPoint,
   type WatchSafetyCheckin,
   type WatchNavigation,
   type WatchTerrainSection,
@@ -654,6 +655,20 @@ export default function LiveHike() {
     setAcceptedRouteGeometry(activeHike.activeGeometry);
   }, [acceptedRouteGeometry, activeHike, id, isResume]);
   const navigationGeometry = acceptedRouteGeometry ?? route?.geometry;
+  const watchMapRoute = useMemo<WatchMapPoint[] | null>(() => {
+    if (!navigationGeometry || navigationGeometry.length < 2) return null;
+    const maxPoints = 100;
+    const lastIndex = navigationGeometry.length - 1;
+    const sampleCount = Math.min(maxPoints, navigationGeometry.length);
+    return Array.from({ length: sampleCount }, (_, index) => {
+      const sourceIndex = Math.min(
+        lastIndex,
+        Math.round((index * lastIndex) / Math.max(1, sampleCount - 1)),
+      );
+      const [lat, lng] = navigationGeometry[sourceIndex];
+      return { lat, lng };
+    });
+  }, [navigationGeometry]);
   // Kennwerte der Route (mit sinnvollen Rueckfallwerten)
   const totalKm = acceptedRouteGeometry
     ? Math.max(0.01, geometryLengthKm(acceptedRouteGeometry))
@@ -2354,6 +2369,15 @@ export default function LiveHike() {
         : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
       terrainSection: watchTerrainSection,
       safetyCheckin: safetyCheckinState,
+      map: watchMapRoute
+        ? {
+            route: watchMapRoute,
+            current: hasFreshGps && livePos
+              ? { lat: livePos.lat, lng: livePos.lng }
+              : null,
+            gpsFresh: hasFreshGps,
+          }
+        : null,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
@@ -2401,7 +2425,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchRouteProgress, watchTerrainSection]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchRouteProgress, watchTerrainSection]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;

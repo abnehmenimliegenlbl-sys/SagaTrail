@@ -25,6 +25,17 @@ enum SagaTrailWatchProtocol {
     let liveLinkActive: Bool
   }
 
+  struct MapPoint {
+    let latitude: Double
+    let longitude: Double
+  }
+
+  struct RouteMap {
+    let route: [MapPoint]
+    let current: MapPoint?
+    let gpsFresh: Bool
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -46,6 +57,7 @@ enum SagaTrailWatchProtocol {
     let remainingAscentMeters: Double?
     let terrainSection: TerrainSection?
     let safetyCheckin: SafetyCheckin?
+    let map: RouteMap?
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -96,6 +108,35 @@ enum SagaTrailWatchProtocol {
           liveLinkActive: liveLinkActive
         )
       }()
+      let map: RouteMap? = {
+        guard let value = dictionary["map"] as? [String: Any],
+              let rawRoute = value["route"] as? [[String: Any]],
+              rawRoute.count >= 2,
+              rawRoute.count <= 120,
+              let gpsFresh = value["gpsFresh"] as? Bool else {
+          return nil
+        }
+        func point(_ raw: [String: Any]) -> MapPoint? {
+          guard let latitude = (raw["lat"] as? NSNumber)?.doubleValue,
+                let longitude = (raw["lng"] as? NSNumber)?.doubleValue,
+                latitude.isFinite,
+                latitude >= -90,
+                latitude <= 90,
+                longitude.isFinite,
+                longitude >= -180,
+                longitude <= 180 else {
+            return nil
+          }
+          return MapPoint(latitude: latitude, longitude: longitude)
+        }
+        let route = rawRoute.compactMap(point)
+        guard route.count == rawRoute.count else { return nil }
+        let current: MapPoint? = {
+          guard let rawCurrent = value["current"] as? [String: Any] else { return nil }
+          return point(rawCurrent)
+        }()
+        return RouteMap(route: route, current: current, gpsFresh: gpsFresh)
+      }()
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -115,6 +156,7 @@ enum SagaTrailWatchProtocol {
         remainingAscentMeters: (dictionary["remainingAscentMeters"] as? NSNumber)?.doubleValue,
         terrainSection: terrainSection,
         safetyCheckin: safetyCheckin,
+        map: map,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }
