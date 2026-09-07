@@ -950,6 +950,7 @@ export default function LiveHike() {
   } | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
+  const [nearbyPoiWikiPoiId, setNearbyPoiWikiPoiId] = useState<string | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
@@ -3640,14 +3641,19 @@ export default function LiveHike() {
   useEffect(() => {
     if (!nearbyPoi) {
       setNearbyPoiWiki(undefined);
+      setNearbyPoiWikiPoiId(null);
       return;
     }
     setNearbyPoiWiki(undefined);
+    setNearbyPoiWikiPoiId(null);
     let cancelled = false;
     (async () => {
       const cached = await getOfflinePoiDetail(nearbyPoi.id);
       if (cached !== undefined) {
-        if (!cancelled) setNearbyPoiWiki(cached);
+        if (!cancelled) {
+          setNearbyPoiWiki(cached);
+          setNearbyPoiWikiPoiId(nearbyPoi.id);
+        }
         return;
       }
       getPoiDetail({
@@ -3658,8 +3664,18 @@ export default function LiveHike() {
         ...(nearbyPoi.wikipediaTag ? { wikipediaTag: nearbyPoi.wikipediaTag } : {}),
         ...(nearbyPoi.wikidataTag ? { wikidataTag: nearbyPoi.wikidataTag } : {}),
       })
-        .then((r) => { if (!cancelled) setNearbyPoiWiki(r.wiki ?? null); })
-        .catch(() => { if (!cancelled) setNearbyPoiWiki(null); });
+        .then((r) => {
+          if (!cancelled) {
+            setNearbyPoiWiki(r.wiki ?? null);
+            setNearbyPoiWikiPoiId(nearbyPoi.id);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setNearbyPoiWiki(null);
+            setNearbyPoiWikiPoiId(nearbyPoi.id);
+          }
+        });
     })();
     return () => { cancelled = true; };
   }, [nearbyPoi?.id]);
@@ -3672,6 +3688,7 @@ export default function LiveHike() {
       !nearbyPoi ||
       nearbyPoi.kind === "saga=heart" ||
       !turnNotifsReady ||
+      nearbyPoiWikiPoiId !== nearbyPoi.id ||
       notifiedPoiIdsRef.current.has(nearbyPoi.id)
     ) {
       return;
@@ -3700,7 +3717,7 @@ export default function LiveHike() {
     return () => {
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  }, [nearbyPoi, nearbyPoiWiki, t.poiNotifBody, turnNotifsReady]);
+  }, [nearbyPoi, nearbyPoiWiki, nearbyPoiWikiPoiId, t.poiNotifBody, turnNotifsReady]);
 
   // geladenen Wikipedia-Auszug, in derselben Sprache/Stimme wie die Sage.
   // Das unterbricht kurz eine laufende Kapitel-Erzaehlung; sobald der
