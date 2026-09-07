@@ -140,6 +140,31 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       state.upcomingNavigations.length > 3 ||
       !state.upcomingNavigations.every(isValidNavigation))
   ) return false;
+  const isValidTerrainSection = (value: unknown): value is WatchTerrainSection => {
+    if (!value || typeof value !== "object") return false;
+    const terrain = value as Partial<WatchTerrainSection>;
+    return (
+      (terrain.direction === "up" || terrain.direction === "down") &&
+      typeof terrain.gradePct === "number" &&
+      Number.isFinite(terrain.gradePct) &&
+      terrain.gradePct >= 0 &&
+      typeof terrain.remainingM === "number" &&
+      Number.isFinite(terrain.remainingM) &&
+      terrain.remainingM >= 0 &&
+      typeof terrain.startsInM === "number" &&
+      Number.isFinite(terrain.startsInM) &&
+      terrain.startsInM >= 0
+    );
+  };
+  if (state.terrainSection !== undefined && state.terrainSection !== null && !isValidTerrainSection(state.terrainSection)) {
+    return false;
+  }
+  for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {
+    if (plannedValue !== undefined && plannedValue !== null &&
+        (typeof plannedValue !== "number" || !Number.isFinite(plannedValue) || plannedValue < 0)) {
+      return false;
+    }
+  }
   if (state.heartRate && (
     !Number.isFinite(state.heartRate.bpm) || state.heartRate.bpm <= 0 ||
     !Number.isFinite(state.heartRate.measuredAt) ||

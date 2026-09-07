@@ -12,6 +12,13 @@ enum SagaTrailWatchProtocol {
 
   }
 
+  struct TerrainSection {
+    let direction: String
+    let gradePercent: Double
+    let remainingMeters: Double
+    let startsInMeters: Double
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -29,6 +36,9 @@ enum SagaTrailWatchProtocol {
     let remainingSeconds: Double?
     let arrivalAtEpochMs: Double?
     let upcomingNavigations: [NavigationHint]
+    let plannedAscentMeters: Double?
+    let remainingAscentMeters: Double?
+    let terrainSection: TerrainSection?
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -48,6 +58,22 @@ enum SagaTrailWatchProtocol {
       }
       let upcomingNavigations = (dictionary["upcomingNavigations"] as? [[String: Any]] ?? [])
         .compactMap { navigationHint($0) }
+      let terrainSection: TerrainSection? = {
+        guard let value = dictionary["terrainSection"] as? [String: Any],
+              let direction = value["direction"] as? String,
+              direction == "up" || direction == "down",
+              let gradePercent = (value["gradePct"] as? NSNumber)?.doubleValue,
+              let remainingMeters = (value["remainingM"] as? NSNumber)?.doubleValue,
+              let startsInMeters = (value["startsInM"] as? NSNumber)?.doubleValue else {
+          return nil
+        }
+        return TerrainSection(
+          direction: direction,
+          gradePercent: gradePercent,
+          remainingMeters: remainingMeters,
+          startsInMeters: startsInMeters
+        )
+      }()
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -63,6 +89,9 @@ enum SagaTrailWatchProtocol {
         remainingSeconds: (dictionary["remainingSeconds"] as? NSNumber)?.doubleValue,
         arrivalAtEpochMs: (dictionary["arrivalAtEpochMs"] as? NSNumber)?.doubleValue,
         upcomingNavigations: upcomingNavigations,
+        plannedAscentMeters: (dictionary["plannedAscentMeters"] as? NSNumber)?.doubleValue,
+        remainingAscentMeters: (dictionary["remainingAscentMeters"] as? NSNumber)?.doubleValue,
+        terrainSection: terrainSection,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }

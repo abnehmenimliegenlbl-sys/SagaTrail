@@ -118,6 +118,7 @@ import {
   subscribeToCompanionEvents,
   type HikeLiveState,
   type WatchNavigation,
+  type WatchTerrainSection,
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
@@ -2255,6 +2256,36 @@ export default function LiveHike() {
       }));
   }, [hasFreshGps, livePos, navigationGeometry, turnCues]);
   const nextWatchNavigation = nextWatchNavigations[0] ?? null;
+  const watchRouteProgress = useMemo<number | null>(() => {
+    if (!hasFreshGps || !livePos) return null;
+    const projected = navigationGeometry
+      ? fortschrittAufRoute(livePos, navigationGeometry)?.fraction
+      : null;
+    return projected ?? (totalKm > 0 ? Math.min(1, Math.max(0, distance / totalKm)) : null);
+  }, [hasFreshGps, livePos, navigationGeometry, totalKm, distance]);
+  const watchTerrainSection = useMemo<WatchTerrainSection | null>(() => {
+    if (watchRouteProgress == null || terrainSections.length === 0 || !terrainProfile || terrainProfile.length < 2) {
+      return null;
+    }
+    const profileLengthKm = Math.max(
+      0,
+      terrainProfile[terrainProfile.length - 1].distanceKm - terrainProfile[0].distanceKm,
+    );
+    if (profileLengthKm <= 0) return null;
+    const currentKm = watchRouteProgress * profileLengthKm;
+    const section = terrainSections.find(
+      (candidate) =>
+        currentKm >= candidate.startKm - 0.15 &&
+        currentKm <= candidate.endKm + 0.05,
+    );
+    if (!section) return null;
+    return {
+      direction: section.direction,
+      gradePct: Math.max(1, Math.round(Math.abs(section.averageGradePct))),
+      remainingM: Math.max(0, Math.round((section.endKm - currentKm) * 1000)),
+      startsInM: Math.max(0, Math.round((section.startKm - currentKm) * 1000)),
+    };
+  }, [terrainProfile, terrainSections, watchRouteProgress]);
 
   useEffect(() => {
     const now = Date.now();
@@ -2275,6 +2306,11 @@ export default function LiveHike() {
       gpsFreshness: hasFreshGps ? "fresh" : livePos ? "stale" : "unavailable",
       nextNavigation: nextWatchNavigation,
       upcomingNavigations: nextWatchNavigations,
+      plannedAscentM: Number.isFinite(ascentM) ? Math.max(0, Math.round(ascentM)) : null,
+      remainingAscentM: watchRouteProgress == null
+        ? null
+        : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
+      terrainSection: watchTerrainSection,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
@@ -2316,7 +2352,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin, watchRouteProgress, watchTerrainSection]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;

@@ -33,6 +33,23 @@ struct WatchHikeView: View {
             }
             .padding(.top, 2)
           }
+          if let terrain = state.terrainSection {
+            VStack(alignment: .leading, spacing: 3) {
+              HStack {
+                Label(terrain.direction == "up" ? "Anstieg" : "Gefälle",
+                      systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+                Spacer()
+                Text("\(Int(terrain.gradePercent)) %").monospacedDigit()
+              }
+              Text(
+                terrain.startsInMeters > 0
+                  ? "Beginnt in \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
+                  : "Noch \(Int(terrain.remainingMeters)) m"
+              )
+              .foregroundStyle(.secondary)
+            }
+            .font(.caption2)
+          }
           Divider()
           metric("Zeit", duration(state.elapsedSeconds))
           metric("Distanz", String(format: "%.2f km", state.distanceMeters / 1000))
@@ -42,7 +59,12 @@ struct WatchHikeView: View {
            if let remainingSeconds = state.remainingSeconds {
              metric("Ankunft", eta(remainingSeconds, arrivalAt: state.arrivalAtEpochMs))
            }
-          metric("Aufstieg", String(format: "%.0f m", state.ascentMeters))
+           if let plannedAscent = state.plannedAscentMeters {
+             metric("Höhenmeter", String(format: "%.0f m", plannedAscent))
+           }
+           if let remainingAscent = state.remainingAscentMeters {
+             metric("Restanstieg", String(format: "%.0f m", remainingAscent))
+           }
           metric("Schritte", "\(state.steps)")
           heartRate(state)
            Button {

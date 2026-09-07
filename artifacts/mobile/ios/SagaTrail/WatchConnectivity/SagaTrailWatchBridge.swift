@@ -188,6 +188,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if !upcomingNavigations.isEmpty {
       watchState["upcomingNavigations"] = upcomingNavigations
     }
+    if let plannedAscent = state["plannedAscentM"] {
+      watchState["plannedAscentMeters"] = plannedAscent
+    }
+    if let remainingAscent = state["remainingAscentM"] {
+      watchState["remainingAscentMeters"] = remainingAscent
+    }
+    if let terrainSection = state["terrainSection"] as? [String: Any] {
+      watchState["terrainSection"] = terrainSection
+    }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
       watchState["distanceToTurnMeters"] = navigation["distanceM"]
@@ -259,7 +268,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
                   "elapsedSeconds", "distanceMeters", "ascentMeters", "steps",
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
-                  "upcomingNavigations"]
+                  "upcomingNavigations", "plannedAscentM", "remainingAscentM",
+                  "terrainSection"]
     for field in fields { if let value = input[field] { result[field] = value } }
     return result
   }
