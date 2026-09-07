@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AdditiveBlending,
   BufferAttribute,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/terrainCues";
 import { hapticRigid, hapticSelection } from "@/lib/haptics";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
+import { estimateRouteMinutes } from "@/lib/waypointEta";
 
 type Props = {
   visible: boolean;
