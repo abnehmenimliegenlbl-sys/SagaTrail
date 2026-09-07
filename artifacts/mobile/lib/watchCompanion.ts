@@ -48,9 +48,10 @@ export interface HikeLiveState {
     source: HeartRateSource;
   } | null;
   activeAlert: {
-    kind: "safety" | "narration" | "sos";
+    kind: "safety" | "narration" | "sos" | "discovery";
     text: string;
     critical: boolean;
+    haptic?: "click" | "notification" | "success";
   } | null;
   remainingDistanceM?: number | null;
   remainingSeconds?: number | null;

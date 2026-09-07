@@ -213,9 +213,10 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let heartRate { watchState["heartRateBpm"] = heartRate["bpm"] }
     try sendLiveState(watchState)
     if let alert, let text = alert["text"] as? String, !text.isEmpty {
-      let haptic = (alert["kind"] as? String) == "safety"
-        ? "warning"
-        : ((alert["kind"] as? String) == "sos" ? "failure" : "click")
+      let haptic = (alert["haptic"] as? String)
+        ?? ((alert["kind"] as? String) == "safety"
+          ? "warning"
+          : ((alert["kind"] as? String) == "sos" ? "failure" : "click"))
       try sendAlert(["title": "SagaTrail", "body": text, "haptic": haptic])
     }
   }

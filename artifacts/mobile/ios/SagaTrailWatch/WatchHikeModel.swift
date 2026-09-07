@@ -157,6 +157,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
       WKInterfaceDevice.current().play(.failure)
     case "click":
       WKInterfaceDevice.current().play(.click)
+    case "notification":
+      WKInterfaceDevice.current().play(.notification)
+    case "success":
+      WKInterfaceDevice.current().play(.success)
     default:
       break
     }

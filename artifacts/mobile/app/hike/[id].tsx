@@ -152,6 +152,11 @@ type SpeakOptions = {
   replaceQueuedCategory?: ReplaceableNarrationCategory;
 };
 
+type WatchDiscoveryAlert = {
+  text: string;
+  haptic: "notification" | "success";
+};
+
 function geometryLengthKm(geometry: number[][] | null | undefined): number {
   if (!geometry || geometry.length < 2) return 0;
   let lengthKm = 0;
@@ -859,6 +864,22 @@ export default function LiveHike() {
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [watchReady, setWatchReady] = useState<boolean | null>(null);
+  const [watchDiscoveryAlert, setWatchDiscoveryAlert] = useState<WatchDiscoveryAlert | null>(null);
+  const watchDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastWatchDiscoveryAlertRef = useRef<string | null>(null);
+  const raiseWatchDiscoveryAlert = useCallback((alert: WatchDiscoveryAlert) => {
+    setWatchDiscoveryAlert(alert);
+    if (watchDiscoveryTimerRef.current) clearTimeout(watchDiscoveryTimerRef.current);
+    watchDiscoveryTimerRef.current = setTimeout(() => {
+      watchDiscoveryTimerRef.current = null;
+      setWatchDiscoveryAlert(null);
+    }, 12_000);
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (watchDiscoveryTimerRef.current) clearTimeout(watchDiscoveryTimerRef.current);
+    };
+  }, []);
   const [terrainModel, setTerrainModel] = useState<LocalTerrainModel | null>(null);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
@@ -920,6 +941,7 @@ export default function LiveHike() {
    * ohne einen fehlgeschlagenen Aufruf dauerhaft als erledigt zu markieren. */
   const announcingPremiumPartnerIdsRef = useRef<Set<string>>(new Set());
   const [nearbyPoi, setNearbyPoi] = useState<Poi | null>(null);
+  const announcedWatchPeakIdsRef = useRef<Set<string>>(new Set());
   const nearbyPoiDistanceRef = useRef<{
     id: string;
     distanceKm: number;
@@ -2296,6 +2318,13 @@ export default function LiveHike() {
       ? { kind: "sos" as const, text: "SOS requested on phone", critical: true }
       : offRoutePos
         ? { kind: "safety" as const, text: "Off route", critical: true }
+        : watchDiscoveryAlert
+          ? {
+              kind: "discovery" as const,
+              text: watchDiscoveryAlert.text,
+              haptic: watchDiscoveryAlert.haptic,
+              critical: false,
+            }
         : speaking
           ? { kind: "narration" as const, text: "Narration playing", critical: false }
           : null;
@@ -2340,8 +2369,14 @@ export default function LiveHike() {
               : "active",
     };
     const criticalKey = activeAlert?.critical ? `${activeAlert.kind}:${activeAlert.text}` : null;
-    const force = criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current;
+    const discoveryKey = activeAlert?.kind === "discovery"
+      ? `${activeAlert.text}:${activeAlert.haptic ?? ""}`
+      : null;
+    const force =
+      (criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current) ||
+      (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current);
     lastCriticalWatchAlertRef.current = criticalKey;
+    lastWatchDiscoveryAlertRef.current = discoveryKey;
     void publishHikeLiveState(state, { force });
     // Notification mirroring intentionally stays lower frequency than the
     // private native snapshot channel and contains no location data.
@@ -2352,7 +2387,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin, watchRouteProgress, watchTerrainSection]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchRouteProgress, watchTerrainSection]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -2463,13 +2498,17 @@ export default function LiveHike() {
       if (haversineKm(livePos, { lat: wp.lat, lng: wp.lng }) <= 0.05) {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
+        raiseWatchDiscoveryAlert({
+          text: `${wp.type === "partner" ? "Partner" : "Sehenswürdigkeit"} in der Nähe: ${wp.name}`,
+          haptic: "notification",
+        });
         sendeAbbiegeMitteilung(
           wp.type === "partner" ? t.partnerNearby : t.poiNearby,
           wp.name,
         );
       }
     }
-  }, [livePos, routeWaypoints, t]);
+  }, [livePos, raiseWatchDiscoveryAlert, routeWaypoints, t]);
 
   // Premium-Partner-Anpreisung: sobald der Wanderer auf 500 m an einen
   // Premium-Partner herankommt, wird einmalig ein KI-generierter Text
@@ -3646,6 +3685,12 @@ export default function LiveHike() {
     // effort: ohne Berechtigung oder Bild passiert einfach nichts Stoerendes.
     const isSagaHeart = nearbyPoi.kind === "saga=heart";
     const poiName = nearbyPoi.name;
+    if (!isSagaHeart) {
+      raiseWatchDiscoveryAlert({
+        text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
+        haptic: "notification",
+      });
+    }
     // Wiki ist bei GPS-Trigger noch nicht geladen (lazy) — Notif ohne Bild
     // ist besser als warten; das Bild erscheint spaeter im Modal.
     // Sagenmittelpunkt: keine Push-Mitteilung (ist kein "Unterbrechungs"-POI).
@@ -3697,7 +3742,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [nearbyPoi, nearbyPoiWiki, storyLanguage, speak, t]);
+  }, [nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
@@ -3822,6 +3867,20 @@ export default function LiveHike() {
       ),
     [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );
+  useEffect(() => {
+    if (preparing || !hasFreshGps) return;
+    const nearbyPeak = panoramaPeaks.find(
+      (peak) =>
+        peak.distanceKm <= 0.1 &&
+        !announcedWatchPeakIdsRef.current.has(peak.id),
+    );
+    if (!nearbyPeak) return;
+    announcedWatchPeakIdsRef.current.add(nearbyPeak.id);
+    raiseWatchDiscoveryAlert({
+      text: `Gipfel in der Nähe: ${nearbyPeak.name}`,
+      haptic: "success",
+    });
+  }, [hasFreshGps, panoramaPeaks, preparing, raiseWatchDiscoveryAlert]);
   const panoramaArCandidates = useMemo(
     () =>
       erkenneGipfel(
