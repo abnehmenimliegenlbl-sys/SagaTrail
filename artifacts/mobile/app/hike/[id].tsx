@@ -152,6 +152,7 @@ const COMPASS_ANTIQUE_FONT = Platform.select({
 
 type SpeakOptions = {
   interrupt?: boolean;
+  partnerInterrupt?: boolean;
   sagaInterrupt?: boolean;
   useOpenAI?: boolean;
   preFetchedUri?: string;
@@ -2606,6 +2607,15 @@ export default function LiveHike() {
           })()
         : null);
     if (!current) return;
+    // Premium-Partner werden im separaten 500-m-Flow aktiv beworben.
+    // Solange ein solcher Partner in der Nähe ist, darf ein normaler POI
+    // nicht gleichzeitig als Erzählziel ausgewählt werden.
+    const premiumPartnerNearby = partners.some(
+      (partner) =>
+        partner.paket === "premium" &&
+        haversineKm(current, { lat: partner.lat, lng: partner.lng }) <= 0.5,
+    );
+    if (premiumPartnerNearby) return;
     // Doppel-Schutz: (1) per ID, (2) per Koordinaten (derselbe Ort kann als
     // node-NNN und als way-MMM in Overpass auftauchen — gleicher Ort, zwei IDs).
     const DEDUP_KM = 0.1;
@@ -2628,7 +2638,7 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, navigationGeometry, displayedPois, nearbyPoi, nearbyPoiWiki, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, navigationGeometry, displayedPois, nearbyPoi, nearbyPoiWiki, partners, locState, hasFreshGps]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
@@ -2706,7 +2716,7 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
-            speakRef.current?.(text, undefined, { useOpenAI: true });
+            speakRef.current?.(text, undefined, { useOpenAI: true, partnerInterrupt: true });
           }
         })
         .catch(() => {
@@ -3390,7 +3400,21 @@ export default function LiveHike() {
         return;
       }
 
-      // PRIO 2 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
+      // PRIO 2 — PARTNER: Premium-Partner haben gegen normale POI- und
+      // Kapitelansagen Vorrang. Ein Abbiegehinweis darf aber nicht abgeschnitten
+      // werden; danach wird die Partneransage abgespielt.
+      if (opts?.partnerInterrupt) {
+        if (navInterruptingRef.current) {
+          enqueueNarration();
+          return;
+        }
+        narrationQueueRef.current = [];
+        const prev = narrationSoundRef.current;
+        narrationSoundRef.current = null;
+        if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
+      }
+
+      // PRIO 3 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
       // Eingesetzt fuer die 10-m-Sagenmittelpunkt-Ansage.
       if (opts?.sagaInterrupt) {
         if (poiNarrationPendingRef.current.size > 0) {
@@ -3413,10 +3437,10 @@ export default function LiveHike() {
         if (prev) { try { await prev.stopAsync(); await prev.unloadAsync(); } catch {} }
       }
 
-      // PRIO 3 — ohne interrupt: in die Warteschlange einreihen, wenn gerade
+      // PRIO 4 — ohne interrupt: in die Warteschlange einreihen, wenn gerade
       // gesprochen wird — so unterbrechen POI, Meilenstein etc. keine laufende
       // Kapitel-Erzaehlung, sondern warten auf deren natuerliches Ende.
-      if (!opts?.interrupt && !opts?.sagaInterrupt && speakingRef.current) {
+      if (!opts?.interrupt && !opts?.partnerInterrupt && !opts?.sagaInterrupt && speakingRef.current) {
         enqueueNarration();
         return;
       }
