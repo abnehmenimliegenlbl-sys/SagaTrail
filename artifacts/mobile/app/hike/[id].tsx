@@ -5039,30 +5039,6 @@ export default function LiveHike() {
             )}
           </View>
 
-          {routeWaypoints.length > 0 && (
-            <View style={[styles.waypointsRow, { borderTopColor: colors.glassBorder }]}>
-              {routeWaypoints.map((wp) => {
-                const reached = reachedWaypointIds.has(wp.id);
-                return (
-                  <View key={wp.id} style={styles.waypointChip}>
-                    <Feather
-                      name={wp.type === "partner" ? "coffee" : "map-pin"}
-                      size={11}
-                      color={reached ? colors.accent : colors.mutedForeground}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.waypointName, { color: reached ? colors.accent : colors.mutedForeground }]}
-                    >
-                      {wp.name}
-                    </Text>
-                    {reached && <Feather name="check" size={11} color={colors.accent} />}
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
         </Glass>
 
         {/* Story-Bereich */}
@@ -6263,25 +6239,6 @@ const styles = StyleSheet.create({
   watchMetricValue: { fontFamily: fonts.monoBold, fontSize: 14, marginTop: 1 },
   watchHint: { fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 12 },
   watchTilePulse: { fontFamily: fonts.monoBold, fontSize: 10, lineHeight: 12, marginTop: 2 },
-  waypointsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    borderTopWidth: 1,
-    marginTop: 10,
-    paddingTop: 10,
-  },
-  waypointChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    maxWidth: "48%",
-  },
-  waypointName: {
-    fontFamily: fonts.body,
-    fontSize: 11,
-    flex: 1,
-  },
   metric: { alignItems: "flex-start" },
   metricLabel: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1 },
   metricValRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 },
