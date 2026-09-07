@@ -1,0 +1,247 @@
+[ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 1; @symbol_usingdef<0> = [Toybox,1,6,12]; @symbol_usingdef<1> = [Attention,1,13,22]; @symbol_usingAlias = [Attention,1,26,35]; ]
+using Toybox.Attention as :Attention;
+[ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 2; @symbol_usingdef<0> = [Toybox,2,6,12]; @symbol_usingdef<1> = [WatchUi,2,13,20]; @symbol_usingAlias = [WatchUi,2,24,31]; ]
+using Toybox.WatchUi as :WatchUi;
+[ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 4; @symbol_classdef = [SagaTrailDelegate,4,6,23]; @symbol_extends<0> = [WatchUi,4,32,39]; @symbol_extends<1> = [BehaviorDelegate,4,40,56]; ]
+class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 4; ]
+    <init> {
+    }
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 4; ]
+    static
+    <init> {
+    }
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 5; @position = 8; @symbol_vardef = [app,5,8,11]; ]
+    var app;
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 6; @position = 8; @symbol_vardef = [confirmSos,6,8,18]; ]
+    var confirmSos = false;
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 8; @symbol_functiondef = [initialize,8,13,23]; @symbol_param<0> = [appRef,8,24,30]; ]
+    function initialize(appRef) as Void {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_8_32_11_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 9 8 ]
+        symbol [ BehaviorDelegate %tmp.2 9 8 24 ];
+        %tmp.2 = getv ? :BehaviorDelegate;
+        symbol [ initialize %tmp.3 9 25 35 ];
+        %tmp.3 = getv function %tmp.2 :initialize;
+        invoke %tmp.2 %tmp.3();
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 10 8 ]
+        %tmp.4 = lgetv %appRef;
+        symbol [ appRef %tmp.4 10 14 20 ];
+        symbol [ app ? 10 8 11 ];
+        putv self :app %tmp.4;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_8_32_11_4_stop:
+    }
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 13; @symbol_functiondef = [onKey,13,13,18]; @symbol_param<0> = [key,13,19,22]; ]
+    function onKey(key) {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_13_24_31_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 14 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_8_24_8_if_stmt:
+        %tmp.1 = lgetv %key;
+        symbol [ key %tmp.1 14 12 15 ];
+        symbol [ WatchUi %tmp.2 14 19 26 ];
+        %tmp.2 = getm $.Toybox.WatchUi;
+        symbol [ KEY_ENTER %tmp.3 14 27 36 ];
+        %tmp.3 = getv %tmp.2 :KEY_ENTER;
+        %tmp.4 = eq %tmp.1 %tmp.3;
+        bf %tmp.4 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_8_24_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_8_24_8_if_true:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_38_24_8_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 15 12 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_stmt:
+        symbol [ confirmSos %tmp.6 15 16 26 ];
+        %tmp.6 = getv ? :confirmSos;
+        bf %tmp.6 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_else_false;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_true:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_28_18_12_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 16 16 ]
+        %tmp.7 = false;
+        symbol [ confirmSos ? 16 16 26 ];
+        putv self :confirmSos %tmp.7;
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 17 16 ]
+        symbol [ app %tmp.9 17 16 19 ];
+        %tmp.9 = getv ? :app;
+        symbol [ requestSos %tmp.10 17 20 30 ];
+        %tmp.10 = getv function %tmp.9 :requestSos;
+        invoke %tmp.9 %tmp.10();
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_28_18_12_stop:
+        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_else_false:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_18_19_22_12_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 19 16 ]
+        %tmp.11 = true;
+        symbol [ confirmSos ? 19 16 26 ];
+        putv self :confirmSos %tmp.11;
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 20 16 ]
+        symbol [ Attention %tmp.12 20 16 25 ];
+        %tmp.12 = getm $.Toybox.Attention;
+        symbol [ vibrate %tmp.13 20 26 33 ];
+        %tmp.13 = getv function %tmp.12 :vibrate;
+        %tmp.14 = newa 1;
+        symbol [ Attention %tmp.17 20 39 48 ];
+        %tmp.17 = getm $.Toybox.Attention;
+        symbol [ VibeProfile %tmp.18 20 49 60 ];
+        %tmp.18 = getv function ? %tmp.17 :VibeProfile;
+        %tmp.19 = 50;
+        %tmp.20 = 100;
+        %tmp.15 = newc %tmp.18 (%tmp.19, %tmp.20);
+        %tmp.21 = dup %tmp.14;
+        %tmp.22 = aputv %tmp.21 0 %tmp.15;
+        invoke %tmp.12 %tmp.13(%tmp.22);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 21 16 ]
+        symbol [ app %tmp.24 21 16 19 ];
+        %tmp.24 = getv ? :app;
+        symbol [ setSosConfirmation %tmp.25 21 20 38 ];
+        %tmp.25 = getv function %tmp.24 :setSosConfirmation;
+        %tmp.26 = true;
+        invoke %tmp.24 %tmp.25(%tmp.26);
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_18_19_22_12_stop:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_15_12_22_12_if_end:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 23 12 ]
+        %tmp.27 = true;
+        ret %tmp.27;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_38_24_8_stop:
+        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_8_24_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_14_8_24_8_if_end:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 25 8 ]
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_stmt:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_12_25_38_begin:
+        %tmp.28 = lgetv %key;
+        symbol [ key %tmp.28 25 12 15 ];
+        symbol [ WatchUi %tmp.29 25 19 26 ];
+        %tmp.29 = getm $.Toybox.WatchUi;
+        symbol [ KEY_ESC %tmp.30 25 27 34 ];
+        %tmp.30 = getv %tmp.29 :KEY_ESC;
+        %tmp.31 = eq %tmp.28 %tmp.30;
+        bf %tmp.31 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_38_25_38_true:
+        symbol [ confirmSos %tmp.33 25 38 48 ];
+        %tmp.33 = getv ? :confirmSos;
+        push %tmp.33;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_38_25_38_end:
+        %tmp.34 = phi [%tmp.31 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_12_25_38_begin] [%tmp.33 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_38_25_38_true] [%tmp.34 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_38_25_38_end];
+        bf %tmp.34 @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_true:
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_50_29_8_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 26 12 ]
+        %tmp.35 = false;
+        symbol [ confirmSos ? 26 12 22 ];
+        putv self :confirmSos %tmp.35;
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 27 12 ]
+        symbol [ app %tmp.37 27 12 15 ];
+        %tmp.37 = getv ? :app;
+        symbol [ setSosConfirmation %tmp.38 27 16 34 ];
+        %tmp.38 = getv function %tmp.37 :setSosConfirmation;
+        %tmp.39 = false;
+        invoke %tmp.37 %tmp.38(%tmp.39);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 28 12 ]
+        %tmp.40 = true;
+        ret %tmp.40;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_50_29_8_stop:
+        goto @_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_end;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_25_8_29_8_if_end:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 30 8 ]
+        %tmp.41 = false;
+        ret %tmp.41;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_13_24_31_4_stop:
+    }
+    [ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 33; @symbol_functiondef = [onMenu,33,13,19]; ]
+    function onMenu() {
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_33_22_44_4_start:
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 34 8 ]
+        [ "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_33_22_44_4_start" "_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_33_22_44_4_stop" ]
+        %menu.1 = local;
+        symbol [ menu %menu.1 34 12 16 ];
+        symbol [ WatchUi %tmp.3 34 23 30 ];
+        %tmp.3 = getm $.Toybox.WatchUi;
+        symbol [ Menu %tmp.4 34 31 35 ];
+        %tmp.4 = getv function ? %tmp.3 :Menu;
+        %tmp.1 = newc %tmp.4 ();
+        lputv %menu.1 %tmp.1;
+        symbol [ menu %menu.1 34 12 16 ];
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 35 8 ]
+        %tmp.5 = lgetv %menu.1;
+        symbol [ menu %tmp.5 35 8 12 ];
+        symbol [ setTitle %tmp.6 35 13 21 ];
+        %tmp.6 = getv function %tmp.5 :setTitle;
+        %tmp.7 = "SagaTrail";
+        invoke %tmp.5 %tmp.6(%tmp.7);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 36 8 ]
+        %tmp.8 = lgetv %menu.1;
+        symbol [ menu %tmp.8 36 8 12 ];
+        symbol [ addItem %tmp.9 36 13 20 ];
+        %tmp.9 = getv function %tmp.8 :addItem;
+        %tmp.10 = "Start / Pause / Resume";
+        %tmp.12 = const :hike;
+        symbol [ hike %tmp.12 36 48 52 const ];
+        invoke %tmp.8 %tmp.9(%tmp.10, %tmp.12);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 37 8 ]
+        %tmp.13 = lgetv %menu.1;
+        symbol [ menu %tmp.13 37 8 12 ];
+        symbol [ addItem %tmp.14 37 13 20 ];
+        %tmp.14 = getv function %tmp.13 :addItem;
+        %tmp.15 = "Check-in 30 min";
+        %tmp.17 = const :safety30;
+        symbol [ safety30 %tmp.17 37 41 49 const ];
+        invoke %tmp.13 %tmp.14(%tmp.15, %tmp.17);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 38 8 ]
+        %tmp.18 = lgetv %menu.1;
+        symbol [ menu %tmp.18 38 8 12 ];
+        symbol [ addItem %tmp.19 38 13 20 ];
+        %tmp.19 = getv function %tmp.18 :addItem;
+        %tmp.20 = "Check-in 60 min";
+        %tmp.22 = const :safety60;
+        symbol [ safety60 %tmp.22 38 41 49 const ];
+        invoke %tmp.18 %tmp.19(%tmp.20, %tmp.22);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 39 8 ]
+        %tmp.23 = lgetv %menu.1;
+        symbol [ menu %tmp.23 39 8 12 ];
+        symbol [ addItem %tmp.24 39 13 20 ];
+        %tmp.24 = getv function %tmp.23 :addItem;
+        %tmp.25 = "Check-in 120 min";
+        %tmp.27 = const :safety120;
+        symbol [ safety120 %tmp.27 39 42 51 const ];
+        invoke %tmp.23 %tmp.24(%tmp.25, %tmp.27);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 40 8 ]
+        %tmp.28 = lgetv %menu.1;
+        symbol [ menu %tmp.28 40 8 12 ];
+        symbol [ addItem %tmp.29 40 13 20 ];
+        %tmp.29 = getv function %tmp.28 :addItem;
+        %tmp.30 = "Check-in bestätigen";
+        %tmp.32 = const :safetyConfirm;
+        symbol [ safetyConfirm %tmp.32 40 45 58 const ];
+        invoke %tmp.28 %tmp.29(%tmp.30, %tmp.32);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 41 8 ]
+        %tmp.33 = lgetv %menu.1;
+        symbol [ menu %tmp.33 41 8 12 ];
+        symbol [ addItem %tmp.34 41 13 20 ];
+        %tmp.34 = getv function %tmp.33 :addItem;
+        %tmp.35 = "SOS";
+        %tmp.37 = const :sos;
+        symbol [ sos %tmp.37 41 29 32 const ];
+        invoke %tmp.33 %tmp.34(%tmp.35, %tmp.37);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 42 8 ]
+        symbol [ WatchUi %tmp.38 42 8 15 ];
+        %tmp.38 = getm $.Toybox.WatchUi;
+        symbol [ pushView %tmp.39 42 16 24 ];
+        %tmp.39 = getv function %tmp.38 :pushView;
+        %tmp.40 = lgetv %menu.1;
+        symbol [ menu %tmp.40 42 25 29 ];
+        symbol [ SagaTrailMenuDelegate %tmp.44 42 35 56 ];
+        %tmp.44 = getv ? :SagaTrailMenuDelegate;
+        symbol [ app %tmp.46 42 57 60 ];
+        %tmp.46 = getv ? :app;
+        %tmp.41 = newc %tmp.44 (%tmp.46);
+        symbol [ WatchUi %tmp.47 42 63 70 ];
+        %tmp.47 = getm $.Toybox.WatchUi;
+        symbol [ SLIDE_IMMEDIATE %tmp.48 42 71 86 ];
+        %tmp.48 = getv %tmp.47 :SLIDE_IMMEDIATE;
+        invoke %tmp.38 %tmp.39(%tmp.40, %tmp.41, %tmp.48);
+[ "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc" 43 8 ]
+        %tmp.49 = true;
+        ret %tmp.49;
+_home_runner_workspace_artifacts_mobile_garmin_source_SagaTrailDelegate_mc_33_22_44_4_stop:
+    }
+}
+[ @file = "/home/runner/workspace/artifacts/mobile/garmin/source/SagaTrailDelegate.mc"; @line = 1; ]
+<init> {
+}
