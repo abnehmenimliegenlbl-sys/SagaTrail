@@ -197,6 +197,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let terrainSection = state["terrainSection"] as? [String: Any] {
       watchState["terrainSection"] = terrainSection
     }
+    if let safetyCheckin = state["safetyCheckin"] as? [String: Any] {
+      watchState["safetyCheckin"] = safetyCheckin
+    }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
       watchState["distanceToTurnMeters"] = navigation["distanceM"]

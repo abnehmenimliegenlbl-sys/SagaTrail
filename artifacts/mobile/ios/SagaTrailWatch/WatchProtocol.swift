@@ -19,6 +19,12 @@ enum SagaTrailWatchProtocol {
     let startsInMeters: Double
   }
 
+  struct SafetyCheckin {
+    let status: String
+    let remainingSeconds: Double
+    let liveLinkActive: Bool
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -39,6 +45,7 @@ enum SagaTrailWatchProtocol {
     let plannedAscentMeters: Double?
     let remainingAscentMeters: Double?
     let terrainSection: TerrainSection?
+    let safetyCheckin: SafetyCheckin?
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -74,6 +81,21 @@ enum SagaTrailWatchProtocol {
           startsInMeters: startsInMeters
         )
       }()
+      let safetyCheckin: SafetyCheckin? = {
+        guard let value = dictionary["safetyCheckin"] as? [String: Any],
+              let status = value["status"] as? String,
+              status == "idle" || status == "active" || status == "overdue",
+              let remainingSeconds = (value["remainingSec"] as? NSNumber)?.doubleValue,
+              remainingSeconds >= 0,
+              let liveLinkActive = value["liveLinkActive"] as? Bool else {
+          return nil
+        }
+        return SafetyCheckin(
+          status: status,
+          remainingSeconds: remainingSeconds,
+          liveLinkActive: liveLinkActive
+        )
+      }()
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -92,6 +114,7 @@ enum SagaTrailWatchProtocol {
         plannedAscentMeters: (dictionary["plannedAscentMeters"] as? NSNumber)?.doubleValue,
         remainingAscentMeters: (dictionary["remainingAscentMeters"] as? NSNumber)?.doubleValue,
         terrainSection: terrainSection,
+        safetyCheckin: safetyCheckin,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }

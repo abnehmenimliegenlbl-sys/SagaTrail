@@ -50,7 +50,7 @@ import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
-import { SafetyCheckin } from "@/components/brand/SafetyCheckin";
+import { SafetyCheckin, type SafetyCheckinHandle } from "@/components/brand/SafetyCheckin";
 import { RouteMap } from "@/components/brand/RouteMap";
 import { PeakPanorama } from "@/components/brand/PeakPanorama";
 import { PeakCameraOverlay } from "@/components/brand/PeakCameraOverlay";
@@ -117,6 +117,7 @@ import {
   sendWatchStatus,
   subscribeToCompanionEvents,
   type HikeLiveState,
+  type WatchSafetyCheckin,
   type WatchNavigation,
   type WatchTerrainSection,
 } from "@/lib/watchCompanion";
@@ -864,6 +865,12 @@ export default function LiveHike() {
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [watchReady, setWatchReady] = useState<boolean | null>(null);
+  const safetyCheckinRef = useRef<SafetyCheckinHandle>(null);
+  const [safetyCheckinState, setSafetyCheckinState] = useState<WatchSafetyCheckin | null>(null);
+  const handleSafetyCheckinStatus = useCallback(
+    (status: WatchSafetyCheckin) => setSafetyCheckinState(status),
+    [],
+  );
   const [watchDiscoveryAlert, setWatchDiscoveryAlert] = useState<WatchDiscoveryAlert | null>(null);
   const watchDiscoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWatchDiscoveryAlertRef = useRef<string | null>(null);
@@ -2248,11 +2255,15 @@ export default function LiveHike() {
   useEffect(() => subscribeToCompanionEvents({
     onHeartRate: (event) => setHeartRate(event),
     onSosRequest: () => requestPhoneSideSos(),
-    onHikeCommand: ({ command }) => {
+    onHikeCommand: ({ command, durationMinutes }) => {
       if (command === "pause") {
         setHikePause(true);
-      } else {
+      } else if (command === "resume" || command === "start") {
         setHikePause(false);
+      } else if (command === "safetyStart" && durationMinutes) {
+        safetyCheckinRef.current?.startFromWatch(durationMinutes);
+      } else if (command === "safetyConfirm") {
+        safetyCheckinRef.current?.confirmFromWatch();
       }
     },
   }), [requestPhoneSideSos, setHikePause]);
@@ -2342,6 +2353,7 @@ export default function LiveHike() {
         ? null
         : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
       terrainSection: watchTerrainSection,
+      safetyCheckin: safetyCheckinState,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
@@ -2389,7 +2401,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchRouteProgress, watchTerrainSection]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchRouteProgress, watchTerrainSection]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -5949,11 +5961,13 @@ export default function LiveHike() {
         </View>
       )}
       <SafetyCheckin
+        ref={safetyCheckinRef}
         routeName={route?.name ?? t.unknown}
         emergencyContact={emergencyContact}
         livePosition={livePos}
         hasFreshGps={hasFreshGps}
         getAuthToken={getSafetyAuthToken}
+        onStatusChange={handleSafetyCheckinStatus}
         labels={{
           button: t.safetyCheckinButton ?? "Safety check-in",
           title: t.safetyCheckinTitle ?? "Safety check-in",

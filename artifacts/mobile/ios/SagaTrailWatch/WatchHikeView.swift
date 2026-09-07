@@ -50,6 +50,7 @@ struct WatchHikeView: View {
             }
             .font(.caption2)
           }
+          safetyCheckin(state)
           Divider()
           metric("Zeit", duration(state.elapsedSeconds))
           metric("Distanz", String(format: "%.2f km", state.distanceMeters / 1000))
@@ -88,6 +89,14 @@ struct WatchHikeView: View {
     } message: {
       Text("Dein iPhone startet den Notfallablauf. Keine Position wird auf der Watch angezeigt.")
     }
+    .confirmationDialog("Sicherheits-Check-in", isPresented: $hike.showSafetyCheckinOptions) {
+      Button("30 Minuten") { hike.sendSafetyCheckin(durationMinutes: 30) }
+      Button("60 Minuten") { hike.sendSafetyCheckin(durationMinutes: 60) }
+      Button("120 Minuten") { hike.sendSafetyCheckin(durationMinutes: 120) }
+      Button("Abbrechen", role: .cancel) {}
+    } message: {
+      Text("Das iPhone startet den bestehenden Sicherheitslink. Die Watch überträgt keine Position.")
+    }
     .alert(item: $hike.activeAlert) { alert in
       Alert(title: Text(alert.title), message: Text(alert.body), dismissButton: .default(Text("OK")))
     }
@@ -105,6 +114,40 @@ struct WatchHikeView: View {
     return Button { hike.startHeartRate() } label: {
       HStack { Label("Puls", systemImage: "heart.fill"); Spacer(); Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start") }
     }.font(.footnote).tint(.red)
+  }
+  private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    let checkin = state.safetyCheckin
+    let active = checkin?.status == "active"
+    let overdue = checkin?.status == "overdue"
+    return VStack(alignment: .leading, spacing: 4) {
+      HStack {
+        Label(
+          overdue ? "Check-in überfällig" : (active ? "Check-in aktiv" : "Sicherheits-Check-in"),
+          systemImage: overdue ? "exclamationmark.triangle.fill" : "checkmark.shield"
+        )
+        Spacer()
+        if let checkin, active || overdue {
+          Text(formatCheckinTime(checkin.remainingSeconds)).monospacedDigit()
+        }
+      }
+      if let checkin, active || overdue {
+        Text(checkin.liveLinkActive ? "Live-Link aktiv" : "Nur lokaler Timer")
+          .foregroundStyle(overdue ? .orange : .secondary)
+      }
+      Button(active || overdue ? "Sicher — Timer stoppen" : "Check-in starten") {
+        if active || overdue {
+          hike.confirmSafetyCheckin()
+        } else {
+          hike.requestSafetyCheckin()
+        }
+      }
+      .buttonStyle(.bordered)
+    }
+    .font(.caption)
+  }
+  private func formatCheckinTime(_ seconds: Double) -> String {
+    let total = max(0, Int(seconds))
+    return String(format: "%02d:%02d", total / 60, total % 60)
   }
   private func duration(_ seconds: Double) -> String {
     String(format: "%02d:%02d:%02d", Int(seconds) / 3600, (Int(seconds) / 60) % 60, Int(seconds) % 60)

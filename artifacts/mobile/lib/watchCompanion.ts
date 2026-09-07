@@ -12,6 +12,7 @@ export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 7_500;
 export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
 export type HeartRateSource = "watch" | "phone";
+export type SafetyCheckinStatus = "idle" | "active" | "overdue";
 
 export interface WatchNavigation {
   direction: "left" | "right";
@@ -26,6 +27,12 @@ export interface WatchTerrainSection {
   startsInM: number;
 }
 
+export interface WatchSafetyCheckin {
+  status: SafetyCheckinStatus;
+  remainingSec: number;
+  liveLinkActive: boolean;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -36,6 +43,7 @@ export interface HikeLiveState {
   plannedAscentM?: number | null;
   remainingAscentM?: number | null;
   terrainSection?: WatchTerrainSection | null;
+  safetyCheckin?: WatchSafetyCheckin | null;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
@@ -74,7 +82,7 @@ type CompanionModule = {
 
 type HeartRateEvent = { bpm?: unknown; measuredAt?: unknown; source?: unknown };
 type SosRequestEvent = { requestedAt?: unknown };
-type HikeCommandEvent = { command?: unknown };
+type HikeCommandEvent = { command?: unknown; durationMinutes?: unknown };
 
 let permissionGranted: boolean | null = null;
 let nativeCompanionActivated = false;
@@ -160,6 +168,15 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   if (state.terrainSection !== undefined && state.terrainSection !== null && !isValidTerrainSection(state.terrainSection)) {
     return false;
   }
+  if (state.safetyCheckin !== undefined && state.safetyCheckin !== null) {
+    const checkin = state.safetyCheckin;
+    if (
+      !["idle", "active", "overdue"].includes(checkin.status) ||
+      !Number.isFinite(checkin.remainingSec) ||
+      checkin.remainingSec < 0 ||
+      typeof checkin.liveLinkActive !== "boolean"
+    ) return false;
+  }
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {
     if (plannedValue !== undefined && plannedValue !== null &&
         (typeof plannedValue !== "number" || !Number.isFinite(plannedValue) || plannedValue < 0)) {
@@ -202,7 +219,10 @@ export async function publishHikeLiveState(
 export function subscribeToCompanionEvents(handlers: {
   onHeartRate: (event: { bpm: number; measuredAt: number; source: HeartRateSource }) => void;
   onSosRequest: (event: { requestedAt: number }) => void;
-  onHikeCommand: (event: { command: "start" | "pause" | "resume" }) => void;
+  onHikeCommand: (event: {
+    command: "start" | "pause" | "resume" | "safetyStart" | "safetyConfirm";
+    durationMinutes?: 30 | 60 | 120;
+  }) => void;
 }): () => void {
   if (Platform.OS === "web" || !companionModule()) return () => {};
   const heartRate = DeviceEventEmitter.addListener("SagaTrailCompanion.heartRate", (event: HeartRateEvent) => {
@@ -216,6 +236,13 @@ export function subscribeToCompanionEvents(handlers: {
   const command = DeviceEventEmitter.addListener("SagaTrailCompanion.hikeCommand", (event: HikeCommandEvent) => {
     if (event?.command === "start" || event?.command === "pause" || event?.command === "resume") {
       handlers.onHikeCommand({ command: event.command });
+    } else if (event?.command === "safetyConfirm") {
+      handlers.onHikeCommand({ command: event.command });
+    } else if (
+      event?.command === "safetyStart" &&
+      (event.durationMinutes === 30 || event.durationMinutes === 60 || event.durationMinutes === 120)
+    ) {
+      handlers.onHikeCommand({ command: event.command, durationMinutes: event.durationMinutes });
     }
   });
   return () => { heartRate.remove(); sos.remove(); command.remove(); };

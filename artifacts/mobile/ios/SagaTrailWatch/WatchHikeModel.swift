@@ -12,6 +12,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var currentHeartRate: Double?
   @Published private(set) var healthStatus = "Puls nicht gestartet"
   @Published var showSOSConfirmation = false
+  @Published var showSafetyCheckinOptions = false
   @Published var activeAlert: WatchAlert?
 
   private let healthStore = HKHealthStore()
@@ -34,6 +35,37 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func requestSOSConfirmation() { showSOSConfirmation = true }
+
+  func requestSafetyCheckin() { showSafetyCheckinOptions = true }
+
+  func sendSafetyCheckin(durationMinutes: Int) {
+    guard [30, 60, 120].contains(durationMinutes) else { return }
+    showSafetyCheckinOptions = false
+    let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
+      "command": "safetyStart",
+      "durationMinutes": durationMinutes,
+      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+    ])
+    let session = WCSession.default
+    if session.isReachable {
+      session.sendMessage(message, replyHandler: nil)
+    } else {
+      session.transferUserInfo(message)
+    }
+  }
+
+  func confirmSafetyCheckin() {
+    let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
+      "command": "safetyConfirm",
+      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+    ])
+    let session = WCSession.default
+    if session.isReachable {
+      session.sendMessage(message, replyHandler: nil)
+    } else {
+      session.transferUserInfo(message)
+    }
+  }
 
   func confirmSOS() {
     showSOSConfirmation = false

@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Linking, Platform, Pressable, Share, StyleSheet, Text, View } from "react-native";
 
 import { AppModal } from "./AppModal";
@@ -38,21 +38,32 @@ export interface SafetyCheckinProps {
     linkCopied?: string;
     shareFailed?: string;
   };
+  onStatusChange?: (status: {
+    status: "idle" | "active" | "overdue";
+    remainingSec: number;
+    liveLinkActive: boolean;
+  }) => void;
 }
 
-type Duration = 30 | 60 | 120;
+export type SafetyCheckinDuration = 30 | 60 | 120;
 
-export function SafetyCheckin({
+export interface SafetyCheckinHandle {
+  startFromWatch: (duration: SafetyCheckinDuration) => void;
+  confirmFromWatch: () => void;
+}
+
+export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckinProps>(function SafetyCheckin({
   routeName,
   emergencyContact,
   livePosition,
   hasFreshGps,
   getAuthToken,
   labels,
-}: SafetyCheckinProps) {
+  onStatusChange,
+}: SafetyCheckinProps, ref) {
   const colors = useColors();
   const [open, setOpen] = useState(false);
-  const [duration, setDuration] = useState<Duration>(60);
+  const [duration, setDuration] = useState<SafetyCheckinDuration>(60);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -130,6 +141,15 @@ export function SafetyCheckin({
     const secs = remaining % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, [remaining]);
+
+  useEffect(() => {
+    if (!storageHydrated) return;
+    onStatusChange?.({
+      status: expiresAt == null ? "idle" : overdue ? "overdue" : "active",
+      remainingSec: remaining,
+      liveLinkActive: Boolean(shareToken),
+    });
+  }, [expiresAt, overdue, onStatusChange, remaining, shareToken, storageHydrated]);
 
   const shareLocation = async () => {
     // Deliberately require both a recent fix and a configured contact. Never
@@ -219,6 +239,15 @@ export function SafetyCheckin({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    startFromWatch: (watchDuration) => {
+      if (![30, 60, 120].includes(watchDuration)) return;
+      setDuration(watchDuration);
+      void startShare();
+    },
+    confirmFromWatch: cancelTimer,
+  }), [cancelTimer, startShare]);
+
   const shareExternalLink = async () => {
     if (!sharePath) return;
     try {
@@ -275,7 +304,7 @@ export function SafetyCheckin({
           <>
             <Text style={[styles.choose, { color: colors.mutedForeground }]}>{labels.chooseDuration}</Text>
             <View style={styles.choices}>
-              {([30, 60, 120] as Duration[]).map((value) => (
+              {([30, 60, 120] as SafetyCheckinDuration[]).map((value) => (
                 <Pressable
                   key={value}
                   onPress={() => setDuration(value)}
@@ -324,7 +353,7 @@ export function SafetyCheckin({
       </AppModal>
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   trigger: { ...GLAS_3D, flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 14, padding: 16, marginTop: 12 },
