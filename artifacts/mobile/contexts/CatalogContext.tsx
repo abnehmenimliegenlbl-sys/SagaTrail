@@ -194,6 +194,9 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   // Laufende Server-Anfragen bündeln, damit parallel geöffnete Screens
   // (Route + Sage) nicht dieselbe Abfrage doppelt anstoßen.
   const sagaInFlight = useRef<Map<string, Promise<Saga | undefined>>>(new Map());
+  // Initiales Laden und ein direkt danach gedrückter Suchbutton dürfen nicht
+  // denselben Kanton zweimal parallel anfragen.
+  const cantonRoutesInFlight = useRef<Map<string, Promise<CantonRoutesResult>>>(new Map());
 
   const persistDynamic = useCallback(() => {
     // customRoutes bewusst NICHT persistieren: sie sind pro Sitzung ephemer
@@ -293,9 +296,24 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       if (filter?.familyFriendly != null) params.familyFriendly = filter.familyFriendly;
       if (filter?.wheelchairAccessible != null) params.wheelchairAccessible = filter.wheelchairAccessible;
 
+      const requestKey = `${canton}:${JSON.stringify(params)}`;
+      const existing = cantonRoutesInFlight.current.get(requestKey);
+      if (existing) return existing;
+
+      const request = (async (): Promise<CantonRoutesResult> => {
       try {
-        // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
-        const res = await getCantonRoutes(canton, params);
+        // Die Routendaten liegen serverseitig im DB-Cache. Der Timeout schützt
+        // nur gegen eine festhängende mobile Verbindung; bei einem normalen
+        // Produktions-Request kommt die Antwort deutlich früher.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12_000);
+        let res;
+        try {
+          // Suche stets an der externen Quelle ausloesen (kein Cache-Kurzschluss).
+          res = await getCantonRoutes(canton, params, { signal: controller.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
         const routes = res as HikingRoute[];
         // Fuer die spaetere Id-Suche (getRoute/ensureRouteSaga) einen Index ueber
         // ALLE bisher gesehenen Routen des Kantons pflegen (Vereinigung nach Id),
@@ -323,6 +341,14 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
         }
         return { routes: [], source: "error" };
       }
+      })();
+      cantonRoutesInFlight.current.set(requestKey, request);
+      void request.finally(() => {
+        if (cantonRoutesInFlight.current.get(requestKey) === request) {
+          cantonRoutesInFlight.current.delete(requestKey);
+        }
+      });
+      return request;
     },
     [persistDynamic],
   );
