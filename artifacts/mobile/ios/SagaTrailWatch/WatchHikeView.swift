@@ -103,8 +103,16 @@ struct WatchHikeView: View {
   }
 
   private var connectionBanner: some View {
-    Text(!hike.isReachable ? "iPhone nicht erreichbar" : hike.isStale ? "Daten veraltet" : "Live vom iPhone")
-      .font(.caption2).foregroundStyle((!hike.isReachable || hike.isStale) ? .orange : .green)
+    HStack(spacing: 5) {
+      Text(!hike.isReachable ? "iPhone nicht erreichbar" : hike.isStale ? "Daten veraltet" : "Live vom iPhone")
+      Spacer()
+      if let battery = hike.batteryLevel {
+        Image(systemName: batteryIcon(for: battery, charging: hike.isCharging))
+        Text("\(Int((battery * 100).rounded())) %").monospacedDigit()
+      }
+    }
+    .font(.caption2)
+    .foregroundStyle((!hike.isReachable || hike.isStale) ? .orange : .green)
   }
   private func metric(_ label: String, _ value: String) -> some View {
     HStack { Text(label); Spacer(); Text(value).monospacedDigit() }.font(.footnote)
@@ -174,5 +182,13 @@ struct WatchHikeView: View {
   }
   private func directionLabel(_ direction: String) -> String {
     direction.lowercased().contains("left") ? "Links" : "Rechts"
+  }
+  private func batteryIcon(for level: Float, charging: Bool) -> String {
+    if charging { return "battery.100.bolt" }
+    if level >= 0.75 { return "battery.100" }
+    if level >= 0.5 { return "battery.75" }
+    if level >= 0.25 { return "battery.50" }
+    if level > 0.1 { return "battery.25" }
+    return "battery.0"
   }
 }

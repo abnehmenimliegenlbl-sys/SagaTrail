@@ -9,6 +9,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var state: SagaTrailWatchProtocol.LiveState?
   @Published private(set) var isReachable = false
   @Published private(set) var receivedAt: Date?
+  @Published private(set) var batteryLevel: Float?
+  @Published private(set) var isCharging = false
   @Published private(set) var currentHeartRate: Double?
   @Published private(set) var healthStatus = "Puls nicht gestartet"
   @Published var showSOSConfirmation = false
@@ -20,6 +22,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var workoutBuilder: HKLiveWorkoutBuilder?
   private var turnHapticArmed = true
   private var lastAlertKey: String?
+  private var batteryObserver: NSObjectProtocol?
 
   var isStale: Bool {
     guard let receivedAt else { return true }
@@ -28,10 +31,34 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   func activate() {
     guard WCSession.isSupported() else { return }
+    let device = WKInterfaceDevice.current()
+    device.isBatteryMonitoringEnabled = true
+    updateBattery()
+    if batteryObserver == nil {
+      batteryObserver = NotificationCenter.default.addObserver(
+        forName: WKInterfaceDevice.batteryLevelDidChange,
+        object: device,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in self?.updateBattery() }
+      }
+    }
     let session = WCSession.default
     session.delegate = self
     session.activate()
     apply(envelope: session.receivedApplicationContext)
+  }
+
+  deinit {
+    if let batteryObserver {
+      NotificationCenter.default.removeObserver(batteryObserver)
+    }
+  }
+
+  private func updateBattery() {
+    let device = WKInterfaceDevice.current()
+    batteryLevel = device.batteryLevel >= 0 ? device.batteryLevel : nil
+    isCharging = device.batteryState == .charging || device.batteryState == .full
   }
 
   func requestSOSConfirmation() { showSOSConfirmation = true }
