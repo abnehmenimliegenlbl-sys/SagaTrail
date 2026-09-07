@@ -382,35 +382,37 @@ private struct WatchRouteMap: View {
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      if offline {
-        OfflineRouteSketch(map: map, language: language)
-          .frame(height: 145)
-      } else {
-        Map(position: $position) {
-          MapPolyline(coordinates: coordinates)
-            .stroke(.blue, lineWidth: 4)
-          if let start = coordinates.first {
-            Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
-              .tint(.green)
-          }
-          if let finish = coordinates.last {
-            Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
-              .tint(.red)
-          }
-          if let current = map.current {
-            Annotation("Du", coordinate: CLLocationCoordinate2D(
-              latitude: current.latitude,
-              longitude: current.longitude
-            )) {
-              ZStack {
-                Circle().fill(.white).frame(width: 15, height: 15)
-                Circle().fill(.blue).frame(width: 10, height: 10)
+      ZStack {
+        if offline {
+          OfflineRouteSketch(map: map, language: language)
+            .frame(height: 145)
+        } else {
+          Map(position: $position) {
+            MapPolyline(coordinates: coordinates)
+              .stroke(.blue, lineWidth: 4)
+            if let start = coordinates.first {
+              Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
+                .tint(.green)
+            }
+            if let finish = coordinates.last {
+              Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
+                .tint(.red)
+            }
+            if let current = map.current {
+              Annotation("Du", coordinate: CLLocationCoordinate2D(
+                latitude: current.latitude,
+                longitude: current.longitude
+              )) {
+                ZStack {
+                  Circle().fill(.white).frame(width: 15, height: 15)
+                  Circle().fill(.blue).frame(width: 10, height: 10)
+                }
               }
             }
           }
+          .mapStyle(.standard)
+          .frame(height: 145)
         }
-        .mapStyle(.standard)
-        .frame(height: 145)
       }
       .clipShape(RoundedRectangle(cornerRadius: 12))
       VStack(alignment: .leading, spacing: 3) {

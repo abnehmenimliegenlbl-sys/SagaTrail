@@ -137,3 +137,4 @@
 - [Connect IQ SDK 9.2 Linux build](sagatrail-connectiq-sdk-92-build.md) — Windows SDK needs CRLF-safe launcher handling; jungle keeps only project.manifest and Garmin transmit APIs require typed listeners.
 - [Garmin Android companion callbacks](sagatrail-garmin-android-sdk.md) — SDK 2.2.0 app messages arrive as List<Object>; unwrap the first map before parsing SOS payloads.
 - [Garmin Connect IQ signing](sagatrail-garmin-signing.md) — PRG packaging needs the actual private DER key; secret aliases alone are not evidence that a valid signing key is available.
+- [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.

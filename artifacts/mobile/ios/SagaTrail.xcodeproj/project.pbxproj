@@ -25,7 +25,7 @@
 		B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000018 /* WatchConnectivity.framework */; };
 		B1000000000000000000000A /* ClockKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1000000000000000000001A /* ClockKit.framework */; };
 		B10000000000000000000007 /* SagaTrailWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* SagaTrailWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B10000000000000000000008 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		B10000000000000000000008 /* Images.xcassets in Watch Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -261,15 +261,15 @@
 				B10000000000000000000022 /* SagaTrailWatch */,
 			);
 			packageReferences = (
-				C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */,
+		C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */ = {
+		C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/garmin/connectiq-companion-app-sdk";
+			repositoryURL = "https://github.com/garmin/connectiq-companion-app-sdk-ios";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.8.0;
@@ -280,7 +280,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		C10000000000000000000002 /* ConnectIQ */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */;
+			package = C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */;
 			productName = ConnectIQ;
 		};
 /* End XCSwiftPackageProductDependency section */
@@ -301,7 +301,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B10000000000000000000008 /* Images.xcassets in Resources */,
+				B10000000000000000000008 /* Images.xcassets in Watch Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

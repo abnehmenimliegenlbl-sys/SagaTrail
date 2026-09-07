@@ -29,7 +29,6 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
-  private var batteryObserver: NSObjectProtocol?
 
   var isStale: Bool {
     guard let receivedAt else { return true }
@@ -41,25 +40,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
     let device = WKInterfaceDevice.current()
     device.isBatteryMonitoringEnabled = true
     updateBattery()
-    if batteryObserver == nil {
-      batteryObserver = NotificationCenter.default.addObserver(
-        forName: WKInterfaceDevice.batteryLevelDidChangeNotification,
-        object: device,
-        queue: .main
-      ) { [weak self] _ in
-        Task { @MainActor in self?.updateBattery() }
-      }
-    }
     let session = WCSession.default
     session.delegate = self
     session.activate()
     apply(envelope: session.receivedApplicationContext)
-  }
-
-  deinit {
-    if let batteryObserver {
-      NotificationCenter.default.removeObserver(batteryObserver)
-    }
   }
 
   private func updateBattery() {

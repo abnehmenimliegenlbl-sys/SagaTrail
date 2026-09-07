@@ -22,6 +22,7 @@ const fs = require('fs');
 const path = require('path');
 
 const pbxproj = path.join(__dirname, '..', 'ios', 'Pods', 'Pods.xcodeproj', 'project.pbxproj');
+const nativeAppProject = path.join(__dirname, '..', 'ios', 'SagaTrail.xcodeproj', 'project.pbxproj');
 
 if (!fs.existsSync(pbxproj)) {
   console.log('[eas-post-install] Pods.xcodeproj not found — skipping integrity check');
@@ -66,3 +67,35 @@ if (blockMatch[1] !== 'PBXProject') {
 }
 
 console.log(`[eas-post-install] OK: Pods.xcodeproj intact — rootObject ${rootUuid} is PBXProject`);
+
+// Keep the embedded Watch target on the same build/version pair as the iPhone
+// target. EAS remote versioning updates the main target, but Xcode does not
+// automatically propagate that value to a manually embedded Watch target.
+if (fs.existsSync(nativeAppProject)) {
+	let nativeProject = fs.readFileSync(nativeAppProject, 'utf8');
+	const buildConfigBlocks = nativeProject.match(/\n\t\t[A-F0-9]+ \/\* (?:Debug|Release) \*\/ = \{[\s\S]*?\n\t\t\};/g) ?? [];
+	const mainConfig = buildConfigBlocks.find((block) =>
+		block.includes('PRODUCT_BUNDLE_IDENTIFIER = "com.sagatrail2.app";') &&
+		block.includes('CURRENT_PROJECT_VERSION =')
+	);
+	const mainBuildNumber = mainConfig?.match(/CURRENT_PROJECT_VERSION = ([^;]+);/)?.[1];
+	const mainMarketingVersion = mainConfig?.match(/MARKETING_VERSION = ([^;]+);/)?.[1];
+
+	if (mainBuildNumber && mainMarketingVersion) {
+		let watchBlocksUpdated = 0;
+		nativeProject = nativeProject.replace(
+			/(\n\t\t[A-F0-9]+ \/\* (?:Debug|Release) \*\/ = \{[\s\S]*?PRODUCT_BUNDLE_IDENTIFIER = com\.sagatrail2\.app\.watchkitapp;[\s\S]*?\n\t\t\};)/g,
+			(block) => {
+				if (!block.includes('CURRENT_PROJECT_VERSION =')) return block;
+				watchBlocksUpdated += 1;
+				return block
+					.replace(/CURRENT_PROJECT_VERSION = [^;]+;/, `CURRENT_PROJECT_VERSION = ${mainBuildNumber};`)
+					.replace(/MARKETING_VERSION = [^;]+;/, `MARKETING_VERSION = ${mainMarketingVersion};`);
+			},
+		);
+		fs.writeFileSync(nativeAppProject, nativeProject, 'utf8');
+		console.log(`[eas-post-install] Synced Watch version ${mainMarketingVersion} (${mainBuildNumber}) across ${watchBlocksUpdated} build configurations`);
+	} else {
+		console.warn('[eas-post-install] Could not determine the main iOS version; Watch version was not changed');
+	}
+}
