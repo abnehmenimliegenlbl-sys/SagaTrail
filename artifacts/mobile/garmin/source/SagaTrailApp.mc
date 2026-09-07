@@ -3,7 +3,9 @@ using Toybox.Application.Storage as Storage;
 using Toybox.Attention as Attention;
 using Toybox.Communications as Communications;
 using Toybox.Lang;
+using Toybox.SensorHistory as SensorHistory;
 using Toybox.System;
+using Toybox.Time;
 
 class SagaTrailTransmitListener extends Communications.ConnectionListener {
     var app;
@@ -55,11 +57,14 @@ class SagaTrailApp extends Application.AppBase {
 
         var previousSafety = liveState[:safetyText];
         var previousNarration = liveState[:narrationText];
+        var previousAlert = liveState[:alertText];
         // This is the coordinate-free adapter for the canonical JS HikeLiveState.
         var next = {};
         next[:protocolVersion] = 1;
         next[:updatedAtMs] = payload["updatedAtMs"];
         next[:direction] = payload["direction"];
+        next[:sessionStatus] = payload["sessionStatus"];
+        next[:nextInstruction] = payload["nextInstruction"];
         next[:heading] = payload["heading"];
         next[:remainingKm] = payload["remainingKm"];
         next[:heartRateBpm] = payload["heartRateBpm"];
@@ -71,16 +76,33 @@ class SagaTrailApp extends Application.AppBase {
         next[:freshnessS] = payload["freshnessS"];
         next[:safetyText] = payload["safetyText"];
         next[:narrationText] = payload["narrationText"];
+        next[:alertKind] = payload["alertKind"];
+        next[:alertText] = payload["alertText"];
         next[:sosAcknowledgement] = payload["sosAcknowledgement"];
+        next[:remainingDistanceM] = payload["remainingDistanceM"];
+        next[:remainingSeconds] = payload["remainingSeconds"];
+        next[:arrivalAtEpochMs] = payload["arrivalAtEpochMs"];
+        next[:plannedAscentM] = payload["plannedAscentM"];
+        next[:remainingAscentM] = payload["remainingAscentM"];
+        next[:upcomingNavigations] = payload["upcomingNavigations"];
+        next[:terrainSection] = payload["terrainSection"];
+        next[:safetyCheckin] = payload["safetyCheckin"];
+        next[:offRoute] = payload["offRoute"];
+        next[:weather] = payload["weather"];
+        next[:daylight] = payload["daylight"];
+        next[:language] = payload["language"];
         // A cache alone must never claim that a phone bridge is connected.
         phoneCompanionReady = payload["bridge"] == "connectIqMobile" &&
             payload["companionStatus"] == "connected";
         liveState = next;
+        transmitLocalHeartRate();
 
         if ((next[:safetyText] != null && next[:safetyText] != "" &&
             next[:safetyText] != previousSafety) ||
             (next[:narrationText] != null && next[:narrationText] != "" &&
-            next[:narrationText] != previousNarration)) {
+            next[:narrationText] != previousNarration) ||
+            (next[:alertText] != null && next[:alertText] != "" &&
+            next[:alertText] != previousAlert)) {
             Attention.vibrate([new Attention.VibeProfile(60, 90)]);
         }
 
@@ -110,6 +132,79 @@ class SagaTrailApp extends Application.AppBase {
         };
         Communications.transmit(request, null, new SagaTrailTransmitListener(self));
         refresh();
+    }
+
+    function sendHikeCommand(command) {
+        var request = {
+            "protocolVersion" => 1,
+            "type" => "hikeCommand",
+            "command" => command,
+            "requestedAt" => System.getTimer()
+        };
+        Communications.transmit(request, null, new SagaTrailCommandTransmitListener());
+    }
+
+    function toggleHike() {
+        var status = liveState[:sessionStatus];
+        if (status == "active") {
+            sendHikeCommand("pause");
+        } else if (status == "paused") {
+            sendHikeCommand("resume");
+        } else if (status == "preparing") {
+            sendHikeCommand("start");
+        }
+    }
+
+    function startSafetyCheckin(durationMinutes) {
+        if (durationMinutes != 30 && durationMinutes != 60 && durationMinutes != 120) {
+            return;
+        }
+        sendHikeCommandWithDuration("safetyStart", durationMinutes);
+    }
+
+    function confirmSafetyCheckin() {
+        sendHikeCommand("safetyConfirm");
+    }
+
+    function sendHikeCommandWithDuration(command, durationMinutes) {
+        var request = {
+            "protocolVersion" => 1,
+            "type" => "hikeCommand",
+            "command" => command,
+            "durationMinutes" => durationMinutes,
+            "requestedAt" => System.getTimer()
+        };
+        Communications.transmit(request, null, new SagaTrailCommandTransmitListener());
+    }
+
+    function transmitLocalHeartRate() {
+        if (!(Toybox has :SensorHistory) || !(Toybox.SensorHistory has :getHeartRateHistory)) {
+            return;
+        }
+        var history = SensorHistory.getHeartRateHistory({});
+        var sample = history == null ? null : history.next();
+        if (sample == null || sample.data == null) {
+            return;
+        }
+        var bpm = sample.data;
+        if (bpm <= 0) {
+            return;
+        }
+        var lastSent = Storage.getValue("lastHeartRateBpm");
+        var lastAt = Storage.getValue("lastHeartRateAt");
+        var now = System.getTimer();
+        if (lastSent != null && lastAt != null &&
+            lastSent == bpm && now - lastAt < 15000) {
+            return;
+        }
+        Storage.setValue("lastHeartRateBpm", bpm);
+        Storage.setValue("lastHeartRateAt", now);
+        Communications.transmit({
+            "protocolVersion" => 1,
+            "type" => "heartRate",
+            "bpm" => bpm,
+            "measuredAt" => Time.now().value() * 1000
+        }, null, new SagaTrailCommandTransmitListener());
     }
 
     function onSosTransport(success) {

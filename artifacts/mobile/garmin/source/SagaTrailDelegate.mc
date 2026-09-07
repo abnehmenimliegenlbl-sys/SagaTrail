@@ -29,4 +29,17 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
         }
         return false;
     }
+
+    function onMenu() {
+        var menu = new WatchUi.Menu();
+        menu.setTitle("SagaTrail");
+        menu.addItem("Start / Pause / Resume", :hike);
+        menu.addItem("Check-in 30 min", :safety30);
+        menu.addItem("Check-in 60 min", :safety60);
+        menu.addItem("Check-in 120 min", :safety120);
+        menu.addItem("Check-in bestätigen", :safetyConfirm);
+        menu.addItem("SOS", :sos);
+        WatchUi.pushView(menu, new SagaTrailMenuDelegate(app), WatchUi.SLIDE_IMMEDIATE);
+        return true;
+    }
 }

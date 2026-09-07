@@ -17,6 +17,8 @@ exact names; it does not use a compact-key transport.
 | Canonical JS field / wire key | Type | Garmin use |
 | --- | --- | --- |
 | `direction` | string | Next-turn instruction. |
+| `sessionStatus` | string | `preparing`, `active`, `paused`, `finished`, or `sos_requested`. |
+| `nextInstruction` | string | Short display instruction for the current screen. |
 | `heading` | number/null | Canonical heading; retained but not rendered in this MVP. |
 | `remainingKm` | number | Next-instruction distance, rendered in km. |
 | `heartRateBpm` | number/null | Retained only; not rendered as phone HR. Watch HR is labeled local. |
@@ -30,9 +32,22 @@ exact names; it does not use a compact-key transport.
 | `totalDistanceM` | number | Optional hike distance in meters. |
 | `ascentM` | number | Optional ascended meters. |
 | `steps` | number | Optional phone-supplied step count. |
+| `remainingDistanceM` | number | Remaining route distance. |
+| `remainingSeconds` | number | Estimated time to arrival. |
+| `arrivalAtEpochMs` | number | Estimated arrival timestamp. |
+| `plannedAscentM` | number | Planned route ascent. |
+| `remainingAscentM` | number | Estimated ascent remaining. |
+| `upcomingNavigations` | array | Up to three coordinate-free upcoming turns. |
+| `terrainSection` | object | Current uphill/downhill grade and distance. |
+| `safetyCheckin` | object | Check-in status, remaining time, and live-link state. |
+| `offRoute` | object | Distance and return bearing, never a position. |
+| `weather` | object | Current temperature, wind, precipitation, and storm flag. |
+| `daylight` | object | Sunset timestamp and after-sunset arrival warning. |
+| `language` | string | Current app language for watch display. |
 | `freshnessS` | number | Optional age of the source state in seconds. |
 | `safetyText` | string | Brief safety warning; empty when absent. |
 | `narrationText` | string | Brief narration cue; empty when absent. |
+| `alertKind` / `alertText` | string | Current short alert and its category, including discovery and SOS. |
 | `sosAcknowledgement` | string | `none`, `acknowledged`, or `failed`. |
 
 The fields through `hasFreshGps` are the exact fields in the current
@@ -56,7 +71,28 @@ Keep strings short for round watch screens.
 Changing a non-empty `safetyText` or `narrationText` triggers one short local
 vibration while the watch app is active.
 
-## Watch → phone: confirmed SOS request
+## Watch → phone: hike controls and confirmed SOS request
+
+The Garmin app exposes the same phone-authoritative hike controls as the Apple
+Watch companion through its SagaTrail menu:
+
+```json
+{ "protocolVersion": 1, "type": "hikeCommand", "command": "pause", "requestedAt": 123456 }
+```
+
+`command` is one of `start`, `pause`, `resume`, `safetyStart`, or
+`safetyConfirm`. `safetyStart` additionally carries `durationMinutes` with one
+of `30`, `60`, or `120`. The phone remains authoritative and may reject or
+ignore a command when the hike state does not allow it.
+
+When the watch exposes a local heart-rate sample, it may send:
+
+```json
+{ "protocolVersion": 1, "type": "heartRate", "bpm": 138, "measuredAt": 1234567890000 }
+```
+
+The phone labels that source as Garmin and applies the same freshness rules as
+the Apple Watch source.
 
 After the wearer presses Select twice *and the real bridge is connected*, the
 watch transmits:

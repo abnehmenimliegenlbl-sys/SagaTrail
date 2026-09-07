@@ -130,6 +130,19 @@ final class SagaTrailCompanion: RCTEventEmitter {
         "requestId": payload["requestId"] ?? NSNull(),
         "source": "garmin_connect_iq"
       ])
+    } else if type == "heartRate" {
+      sendEvent(withName: "SagaTrailCompanion.heartRate", body: [
+        "bpm": payload["bpm"] ?? 0,
+        "measuredAt": payload["measuredAt"] ?? Int(Date().timeIntervalSince1970 * 1000),
+        "source": "garmin"
+      ])
+    } else if type == "hikeCommand",
+              let command = payload["command"] as? String {
+      var event: [String: Any] = ["command": command, "source": "garmin_connect_iq"]
+      if let durationMinutes = payload["durationMinutes"] {
+        event["durationMinutes"] = durationMinutes
+      }
+      sendEvent(withName: "SagaTrailCompanion.hikeCommand", body: event)
     }
     sendEvent(withName: "SagaTrailWatchStatus", body: [
       "v": 1,

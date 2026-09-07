@@ -18,11 +18,17 @@ connected state. Until a real handshake is received, the watch UI fails closed
 with **CIQ MOBILE COMPANION REQUIRED** and will not transmit SOS.
 
 The foreground app displays the last accepted `HikeLiveState`: next direction
-and distance, elapsed time, distance, ascent, steps, freshness, phone
-connection state, safety text, and narration text. It stores that
+and distance, upcoming turns, terrain, off-route warning, weather and sunset
+warning, elapsed time, distance, ascent, remaining route, steps, freshness,
+phone connection state, safety check-in, safety text, and narration text. It stores that
 coordinate-free snapshot in Connect IQ storage so it can still show the latest
 cached instruction after the view is reopened.
 New non-empty safety or narration text receives a short local vibration alert.
+
+Open the Garmin menu for the phone-authoritative Start/Pause/Resume controls,
+30/60/120-minute safety check-ins, and check-in confirmation. Local Garmin
+heart rate is shown on the watch and forwarded to the phone when the device
+provides a current sample.
 
 Press **Select** once to arm SOS and a second time to confirm it; **Back**
 cancels while armed. A confirmed request is *pending* until a phone message

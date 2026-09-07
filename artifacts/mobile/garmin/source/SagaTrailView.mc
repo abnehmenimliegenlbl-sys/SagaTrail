@@ -41,24 +41,62 @@ class SagaTrailView extends WatchUi.View {
         var direction = companionReady ? value(state, :direction, "Awaiting next direction") :
             "Awaiting real phone companion";
         line(dc, 4, y, direction); y += 18;
+        line(dc, 4, y, value(state, :nextInstruction, "Continue on route")); y += 16;
         var remainingKm = value(state, :remainingKm, null);
         var distanceText = remainingKm == null ? "--" : remainingKm.format("%.1f") + " km";
         large(dc, 4, y, distanceText); y += 31;
 
         line(dc, 4, y, "Elapsed " + formatTime(value(state, :elapsedS, 0)) +
             "  Distance " + formatDistance(value(state, :totalDistanceM, 0))); y += 16;
+        line(dc, 4, y, "Rest " + formatDistance(value(state, :remainingDistanceM, 0)) +
+            "  ETA " + formatTime(value(state, :remainingSeconds, 0))); y += 16;
         line(dc, 4, y, "Ascent " + value(state, :ascentM, 0).format("%d") +
             "m  Steps " + value(state, :steps, 0).format("%d")); y += 17;
+        line(dc, 4, y, "Climb left " + value(state, :remainingAscentM, 0).format("%d") + "m"); y += 16;
 
         var hr = getLocalHeartRate();
         line(dc, 4, y, hr == null ? "HR local: unavailable" : "HR local: " + hr.format("%d") + " bpm"); y += 17;
+        var upcoming = value(state, :upcomingNavigations, []);
+        if (upcoming.size() > 1) {
+            var next = upcoming[1];
+            line(dc, 4, y, "Then " + value(next, :direction, "") + " " +
+                formatDistance(value(next, :distanceM, 0))); y += 16;
+        }
+        var terrain = value(state, :terrainSection, null);
+        if (terrain != null) {
+            line(dc, 4, y, value(terrain, :direction, "Terrain") + " " +
+                value(terrain, :gradePct, 0).format("%d") + "% " +
+                formatDistance(value(terrain, :remainingM, 0))); y += 16;
+        }
+        var offRoute = value(state, :offRoute, null);
+        if (offRoute != null) {
+            line(dc, 4, y, "OFF ROUTE " + formatDistance(value(offRoute, :distanceM, 0))); y += 16;
+        }
+        var weather = value(state, :weather, null);
+        if (weather != null) {
+            line(dc, 4, y, "Weather " + value(weather, :temperatureC, 0).format("%d") +
+                "C  Wind " + value(weather, :windKmh, 0).format("%d") + " km/h"); y += 16;
+        }
+        var daylight = value(state, :daylight, null);
+        if (daylight != null && value(daylight, :arrivalAfterSunset, false) == true) {
+            line(dc, 4, y, "ARRIVAL AFTER SUNSET"); y += 16;
+        }
         var safety = value(state, :safetyText, "");
         var narration = value(state, :narrationText, "");
+        var checkin = value(state, :safetyCheckin, null);
+        if (checkin != null) {
+            line(dc, 4, y, "Check-in " + value(checkin, :status, "idle") +
+                " " + formatTime(value(checkin, :remainingSec, 0))); y += 16;
+        }
         if (safety != "") {
             line(dc, 4, y, "Safety: " + safety); y += 16;
         }
         if (narration != "") {
             line(dc, 4, y, "Narration: " + narration); y += 16;
+        }
+        var alertText = value(state, :alertText, "");
+        if (alertText != "" && alertText != safety && alertText != narration) {
+            line(dc, 4, y, "Alert: " + alertText); y += 16;
         }
 
         var sos = app.getSosState();
@@ -71,7 +109,7 @@ class SagaTrailView extends WatchUi.View {
         } else if (sos == "acknowledged") {
             inverse(dc, 2, dc.getHeight() - 38, width - 4, "SOS ACKNOWLEDGED");
         } else {
-            inverse(dc, 2, dc.getHeight() - 38, width - 4, "ENTER: SOS");
+            inverse(dc, 2, dc.getHeight() - 38, width - 4, "MENU: CONTROLS  ENTER: SOS");
         }
     }
 

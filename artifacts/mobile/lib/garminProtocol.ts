@@ -9,6 +9,8 @@ export interface GarminHikeLiveState {
   companionStatus: "connected" | "disconnected";
   updatedAtMs: number;
   direction: string;
+  sessionStatus: "preparing" | "active" | "paused" | "finished" | "sos_requested";
+  nextInstruction: string;
   heading?: number;
   remainingKm: number;
   heartRateBpm?: number;
@@ -17,9 +19,49 @@ export interface GarminHikeLiveState {
   totalDistanceM?: number;
   ascentM?: number;
   steps?: number;
+  remainingDistanceM?: number;
+  remainingSeconds?: number;
+  arrivalAtEpochMs?: number;
+  plannedAscentM?: number;
+  remainingAscentM?: number;
+  upcomingNavigations?: Array<{
+    direction: "left" | "right";
+    heading?: number;
+    distanceM?: number;
+  }>;
+  terrainSection?: {
+    direction: "up" | "down";
+    gradePct: number;
+    remainingM: number;
+    startsInM: number;
+  };
+  safetyCheckin?: {
+    status: "idle" | "active" | "overdue";
+    remainingSec: number;
+    liveLinkActive: boolean;
+  };
+  offRoute?: {
+    distanceM: number;
+    bearingToRouteDeg?: number;
+  };
+  weather?: {
+    temperatureC: number;
+    weatherCode: number;
+    windKmh: number;
+    windGustsKmh: number;
+    precipitationMm: number;
+    isThunderstorm: boolean;
+  };
+  daylight?: {
+    sunsetAtEpochMs: number;
+    arrivalAfterSunset: boolean;
+  };
+  language?: string;
   freshnessS: number;
   safetyText: string;
   narrationText: string;
+  alertKind?: "safety" | "narration" | "sos" | "discovery";
+  alertText?: string;
   sosAcknowledgement: GarminSosAcknowledgement;
 }
 
@@ -53,11 +95,14 @@ export function toGarminHikeLiveState(
     companionStatus,
     updatedAtMs: state.timestamp,
     direction: navigation?.direction ?? "none",
+    sessionStatus: state.sessionStatus,
+    nextInstruction: alert?.text ?? (navigation ? `Turn ${navigation.direction}` : "Continue on route"),
     remainingKm: Math.max(0, (navigation?.distanceM ?? state.remainingDistanceM ?? 0) / 1000),
     hasFreshGps: state.gpsFreshness === "fresh",
     freshnessS: Math.max(0, (nowMs - state.timestamp) / 1000),
     safetyText: alert?.kind === "safety" ? alert.text : "",
     narrationText: alert?.kind === "narration" ? alert.text : "",
+    ...(alert ? { alertKind: alert.kind, alertText: alert.text } : {}),
     // A canonical live state has no phone-side SOS result. Never infer one
     // from sessionStatus; only the phone emergency flow may send an ack.
     sosAcknowledgement: state.sosAcknowledgement ?? "none",
@@ -68,6 +113,29 @@ export function toGarminHikeLiveState(
   if (state.walkedDistanceM != null) payload.totalDistanceM = state.walkedDistanceM;
   if (state.ascentM != null) payload.ascentM = state.ascentM;
   if (state.steps != null) payload.steps = state.steps;
+  if (state.remainingDistanceM != null) payload.remainingDistanceM = state.remainingDistanceM;
+  if (state.remainingSeconds != null) payload.remainingSeconds = state.remainingSeconds;
+  if (state.arrivalAtEpochMs != null) payload.arrivalAtEpochMs = state.arrivalAtEpochMs;
+  if (state.plannedAscentM != null) payload.plannedAscentM = state.plannedAscentM;
+  if (state.remainingAscentM != null) payload.remainingAscentM = state.remainingAscentM;
+  if (state.upcomingNavigations?.length) {
+    payload.upcomingNavigations = state.upcomingNavigations.map((item) => ({
+      direction: item.direction,
+      ...(item.bearingDeg == null ? {} : { heading: item.bearingDeg }),
+      ...(item.distanceM == null ? {} : { distanceM: item.distanceM }),
+    }));
+  }
+  if (state.terrainSection != null) payload.terrainSection = state.terrainSection;
+  if (state.safetyCheckin != null) payload.safetyCheckin = state.safetyCheckin;
+  if (state.offRoute != null) {
+    payload.offRoute = {
+      distanceM: state.offRoute.distanceM,
+      ...(state.offRoute.bearingToRouteDeg == null ? {} : { bearingToRouteDeg: state.offRoute.bearingToRouteDeg }),
+    };
+  }
+  if (state.weather != null) payload.weather = state.weather;
+  if (state.daylight != null) payload.daylight = state.daylight;
+  if (state.language) payload.language = state.language;
   return payload;
 }
 
@@ -88,6 +156,8 @@ export function isValidGarminHikeLiveState(value: unknown): value is GarminHikeL
     (payload.companionStatus === "connected" || payload.companionStatus === "disconnected") &&
     finiteNumber(payload.updatedAtMs) &&
     typeof payload.direction === "string" &&
+    ["preparing", "active", "paused", "finished", "sos_requested"].includes(payload.sessionStatus as string) &&
+    typeof payload.nextInstruction === "string" &&
     finiteNumber(payload.remainingKm) &&
     typeof payload.hasFreshGps === "boolean" &&
     finiteNumber(payload.freshnessS) &&

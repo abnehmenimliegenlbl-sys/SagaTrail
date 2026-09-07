@@ -12,7 +12,7 @@ export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 7_500;
 export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
 export type SosAcknowledgement = "none" | "acknowledged" | "failed";
-export type HeartRateSource = "watch" | "phone";
+export type HeartRateSource = "watch" | "garmin" | "phone";
 export type SafetyCheckinStatus = "idle" | "active" | "overdue";
 
 export interface WatchNavigation {
@@ -292,7 +292,7 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
     !Number.isFinite(state.heartRate.bpm) || state.heartRate.bpm <= 0 ||
     !Number.isFinite(state.heartRate.measuredAt) ||
     !["fresh", "stale", "unavailable"].includes(state.heartRate.freshness) ||
-    !["watch", "phone"].includes(state.heartRate.source)
+    !["watch", "garmin", "phone"].includes(state.heartRate.source)
   )) return false;
   if (
     state.sosAcknowledgement !== undefined &&
@@ -337,7 +337,14 @@ export function subscribeToCompanionEvents(handlers: {
   const heartRate = DeviceEventEmitter.addListener("SagaTrailCompanion.heartRate", (event: HeartRateEvent) => {
     const bpm = finiteOrNull(event?.bpm);
     const measuredAt = finiteOrNull(event?.measuredAt) ?? Date.now();
-    if (bpm !== null && bpm > 0) handlers.onHeartRate({ bpm, measuredAt, source: event?.source === "phone" ? "phone" : "watch" });
+    if (bpm !== null && bpm > 0) {
+      const source = event?.source === "phone"
+        ? "phone"
+        : event?.source === "garmin"
+          ? "garmin"
+          : "watch";
+      handlers.onHeartRate({ bpm, measuredAt, source });
+    }
   });
   const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
     handlers.onSosRequest({ requestedAt: finiteOrNull(event?.requestedAt) ?? Date.now() });

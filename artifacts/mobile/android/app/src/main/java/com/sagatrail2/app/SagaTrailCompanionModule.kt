@@ -4,6 +4,7 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
 import com.facebook.react.bridge.ReactApplicationContext
@@ -225,15 +226,32 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
       connectIQ.unregisterForApplicationEvents(device, garminApp)
       connectIQ.registerForAppEvents(device, garminApp) { _, _, messageData, _ ->
         val message = messageData.firstOrNull() as? Map<*, *>
-        if (message != null &&
-          (message["protocolVersion"] as? Number)?.toInt() == 1 &&
-          message["type"] == "sosRequest"
-        ) {
-          emit(SOS_REQUEST_EVENT, Arguments.createMap().apply {
+        if (message == null || (message["protocolVersion"] as? Number)?.toInt() != 1) return@registerForAppEvents
+        when (message["type"]) {
+          "sosRequest" -> emit(SOS_REQUEST_EVENT, Arguments.createMap().apply {
             putDouble("requestedAt", System.currentTimeMillis().toDouble())
             putString("requestId", message["requestId"]?.toString())
             putString("source", "garmin_connect_iq")
           })
+          "heartRate" -> {
+            val bpm = (message["bpm"] as? Number)?.toDouble() ?: 0.0
+            if (bpm > 0) emit(HEART_RATE_EVENT, Arguments.createMap().apply {
+              putDouble("bpm", bpm)
+              putDouble("measuredAt", (message["measuredAt"] as? Number)?.toDouble() ?: System.currentTimeMillis().toDouble())
+              putString("source", "garmin")
+            })
+          }
+          "hikeCommand" -> {
+            val command = message["command"]?.toString()
+            val duration = (message["durationMinutes"] as? Number)?.toInt()
+            if (command != null && command in setOf("start", "pause", "resume", "safetyStart", "safetyConfirm")) {
+              emit(HIKE_COMMAND_EVENT, Arguments.createMap().apply {
+                putString("command", command)
+                if (duration != null && duration in setOf(30, 60, 120)) putInt("durationMinutes", duration)
+                putString("source", "garmin_connect_iq")
+              })
+            }
+          }
         }
       }
     }
@@ -306,6 +324,21 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
   private fun ReadableMap.optionalMap(key: String): ReadableMap? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Map) getMap(key) else null
 
+  private fun ReadableMap.optionalArray(key: String): ReadableArray? =
+    if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Array) getArray(key) else null
+
+  private fun ReadableMap.toGarminMap(): Map<String, Any> = linkedMapOf<String, Any>().apply {
+    for (key in keySetIterator()) {
+      if (!hasKey(key) || isNull(key)) continue
+      when (getType(key)) {
+        ReadableType.Boolean -> put(key, getBoolean(key))
+        ReadableType.Number -> put(key, getDouble(key))
+        ReadableType.String -> getString(key)?.let { put(key, it) }
+        else -> Unit
+      }
+    }
+  }
+
   private fun ReadableMap.toGarminPayload(): Map<String, Any> {
     val nextNavigation = optionalMap("nextNavigation")
     val payload = linkedMapOf<String, Any>(
@@ -315,6 +348,12 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
       "companionStatus" to if (activeGarminDevice?.status == IQDevice.IQDeviceStatus.CONNECTED) "connected" else "disconnected",
       "updatedAtMs" to (optionalDouble("timestamp")?.toLong() ?: System.currentTimeMillis()),
       "direction" to (nextNavigation?.optionalString("direction") ?: "none"),
+      "sessionStatus" to (optionalString("sessionStatus") ?: "preparing"),
+      "nextInstruction" to (
+        optionalMap("activeAlert")?.optionalString("text")
+          ?: if (nextNavigation?.optionalString("direction") == null) "Continue on route"
+          else "Turn ${nextNavigation.optionalString("direction")}"
+        ),
       "remainingKm" to (
         nextNavigation?.optionalDouble("distanceM")?.div(1000.0)
           ?: optionalDouble("remainingDistanceM")?.div(1000.0)
@@ -331,6 +370,30 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     optionalDouble("walkedDistanceM")?.let { payload["totalDistanceM"] = it }
     optionalDouble("ascentM")?.let { payload["ascentM"] = it }
     optionalDouble("steps")?.let { payload["steps"] = it }
+    optionalDouble("remainingDistanceM")?.let { payload["remainingDistanceM"] = it }
+    optionalDouble("remainingSeconds")?.let { payload["remainingSeconds"] = it }
+    optionalDouble("arrivalAtEpochMs")?.let { payload["arrivalAtEpochMs"] = it }
+    optionalDouble("plannedAscentM")?.let { payload["plannedAscentM"] = it }
+    optionalDouble("remainingAscentM")?.let { payload["remainingAscentM"] = it }
+    optionalArray("upcomingNavigations")?.let { array ->
+      val navigations = buildList {
+        for (index in 0 until array.size()) {
+          val item = array.getMap(index) ?: continue
+          val direction = item.optionalString("direction") ?: continue
+          val navigation = linkedMapOf<String, Any>("direction" to direction)
+          item.optionalDouble("bearingDeg")?.let { navigation["heading"] = it }
+          item.optionalDouble("distanceM")?.let { navigation["distanceM"] = it }
+          add(navigation)
+        }
+      }
+      if (navigations.isNotEmpty()) payload["upcomingNavigations"] = navigations
+    }
+    optionalMap("terrainSection")?.let { payload["terrainSection"] = it.toGarminMap() }
+    optionalMap("safetyCheckin")?.let { payload["safetyCheckin"] = it.toGarminMap() }
+    optionalMap("offRoute")?.let { payload["offRoute"] = it.toGarminMap() }
+    optionalMap("weather")?.let { payload["weather"] = it.toGarminMap() }
+    optionalMap("daylight")?.let { payload["daylight"] = it.toGarminMap() }
+    optionalString("language")?.let { payload["language"] = it }
     optionalDouble("timestamp")?.let {
       payload["freshnessS"] = ((System.currentTimeMillis() - it) / 1000.0).coerceAtLeast(0.0)
     }
@@ -339,6 +402,8 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
       val text = alert.optionalString("text") ?: ""
       if (kind == "safety") payload["safetyText"] = text
       if (kind == "narration") payload["narrationText"] = text
+      if (kind != null) payload["alertKind"] = kind
+      payload["alertText"] = text
     }
     return payload
   }
@@ -349,6 +414,7 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     const val COMMAND_PATH = "/sagatrail/command/v1"
     const val HEART_RATE_EVENT = "SagaTrailCompanion.heartRate"
     const val SOS_REQUEST_EVENT = "SagaTrailCompanion.sosRequest"
+    const val HIKE_COMMAND_EVENT = "SagaTrailCompanion.hikeCommand"
     const val GARMIN_STATUS_EVENT = "SagaTrailCompanion.garminStatus"
     const val GARMIN_APPLICATION_ID = "1f264eae-ef0d-45ad-9548-ee64460b7d7f"
   }

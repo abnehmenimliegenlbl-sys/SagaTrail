@@ -13,6 +13,25 @@ const canonicalState: HikeLiveState = {
   timestamp: 1_700_000_000_000,
   gpsFreshness: "fresh",
   nextNavigation: { direction: "right", bearingDeg: 92, distanceM: 650 },
+  upcomingNavigations: [
+    { direction: "right", bearingDeg: 92, distanceM: 650 },
+    { direction: "left", bearingDeg: 140, distanceM: 1200 },
+  ],
+  plannedAscentM: 900,
+  remainingAscentM: 490,
+  terrainSection: { direction: "up", gradePct: 12, remainingM: 800, startsInM: 0 },
+  safetyCheckin: { status: "active", remainingSec: 1800, liveLinkActive: true },
+  offRoute: { distanceM: 35, bearingToRouteDeg: 210 },
+  weather: {
+    temperatureC: 18,
+    weatherCode: 2,
+    windKmh: 12,
+    windGustsKmh: 28,
+    precipitationMm: 0,
+    isThunderstorm: false,
+  },
+  daylight: { sunsetAtEpochMs: 1_700_004_000_000, arrivalAfterSunset: false },
+  language: "de",
   elapsedSec: 3600,
   walkedDistanceM: 8200,
   ascentM: 410,
@@ -28,6 +47,10 @@ assert.equal(connected.remainingKm, 0.65);
 assert.equal(connected.companionStatus, "connected");
 assert.equal(connected.sosAcknowledgement, "none");
 assert.equal(connected.freshnessS, 0.5);
+assert.equal(connected.nextInstruction, "Die Alp beginnt hinter dem Wald.");
+assert.equal(connected.upcomingNavigations?.length, 2);
+assert.equal(connected.safetyCheckin?.status, "active");
+assert.equal(connected.weather?.temperatureC, 18);
 assert.equal(isValidGarminHikeLiveState(connected), true);
 
 const disconnected = toGarminHikeLiveState(canonicalState, "disconnected", 1_700_000_000_500);

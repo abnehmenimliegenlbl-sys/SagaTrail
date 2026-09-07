@@ -944,7 +944,7 @@ export default function LiveHike() {
   const [heartRate, setHeartRate] = useState<{
     bpm: number;
     measuredAt: number;
-    source: "watch" | "phone";
+    source: "watch" | "garmin" | "phone";
   } | null>(null);
   const [livePos, setLivePos] = useState<LatLng | null>(null);
   const [livePosAccuracy, setLivePosAccuracy] = useState<number | null>(null);
