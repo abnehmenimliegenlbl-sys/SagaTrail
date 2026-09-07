@@ -752,6 +752,12 @@ export default function LiveHike() {
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
+  const [decisionFeedbackPending, setDecisionFeedbackPending] = useState(false);
+  const decisionFeedbackPendingRef = useRef(false);
+  const setDecisionFeedbackPendingNow = useCallback((pending: boolean) => {
+    decisionFeedbackPendingRef.current = pending;
+    setDecisionFeedbackPending(pending);
+  }, []);
   /** Ref-Spiegel fuer awaitingDecision — erlaubt Zugriff aus asynchronen
    *  Audio-Callbacks (speak/didJustFinish, Meilenstein-Fetch) ohne Closure-
    *  Veraltung. Wird unmittelbar nach dem useState-Setter auf dem Render-Pfad
@@ -3404,7 +3410,7 @@ export default function LiveHike() {
       // Kapitelansagen Vorrang. Ein Abbiegehinweis darf aber nicht abgeschnitten
       // werden; danach wird die Partneransage abgespielt.
       if (opts?.partnerInterrupt) {
-        if (navInterruptingRef.current) {
+        if (navInterruptingRef.current || decisionFeedbackPendingRef.current) {
           enqueueNarration();
           return;
         }
@@ -3417,10 +3423,13 @@ export default function LiveHike() {
       // PRIO 3 — SAGA-INTERRUPT: unterbricht alles ausser einem laufenden navInterrupt.
       // Eingesetzt fuer die 10-m-Sagenmittelpunkt-Ansage.
       if (opts?.sagaInterrupt) {
-        if (poiNarrationPendingRef.current.size > 0) {
+        if (
+          poiNarrationPendingRef.current.size > 0 ||
+          decisionFeedbackPendingRef.current
+        ) {
           // Eine POI-Geschichte hat Vorrang, auch wenn ihr Audio noch
-          // asynchron geladen wird. Sonst leert die Sage die Queue und
-          // schneidet den POI ab.
+          // asynchron geladen wird. Auch ein bereits angenommenes
+          // Entscheidungsfeedback muss atomar zu Ende laufen.
           enqueueNarration();
           return;
         }
@@ -4310,7 +4319,13 @@ export default function LiveHike() {
   // parallel zur noch laufenden Antwort-/Bestätigungslogik weiterlaufen.
   useEffect(() => {
     if (locState !== "granted") return;
-    if (preparing || startChoicePendingRef.current || finished || chapters.length === 0) return;
+    if (
+      preparing ||
+      startChoicePendingRef.current ||
+      decisionFeedbackPendingRef.current ||
+      finished ||
+      chapters.length === 0
+    ) return;
     if (!hasFreshGps) return;
     // Die bereits gefahrene Strecke bleibt in `distance` erhalten. Sobald
     // chooseOption (oder der Timeout) die Entscheidung schließt, läuft dieser
@@ -4352,6 +4367,7 @@ export default function LiveHike() {
     chapters.length,
     currentIndex,
     awaitingDecision,
+    decisionFeedbackPending,
     startChoicePending,
     totalKm,
     routeProgress,
@@ -4414,7 +4430,12 @@ export default function LiveHike() {
     // synchron mit dem State aktualisiert, sodass ein schneller Tap parallel
     // zu einem Sprach-Treffer weder Ack noch Persoenlichkeits-Feedback doppelt
     // startet.
-    if (chapters[currentIndex]?.chosenOptionIndex != null) return;
+    if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) return;
+    // Antwort, Ack und persoenliches Feedback sind EIN atomarer
+    // Entscheidungsabschluss. GPS-Fortschritt darf in diesem Fenster nicht
+    // schon zum naechsten (moeglicherweise ebenfalls entscheidenden) Kapitel
+    // springen und dort eine neue Frage samt Mikrofon starten.
+    setDecisionFeedbackPendingNow(true);
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
     // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
     // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
@@ -4461,14 +4482,33 @@ export default function LiveHike() {
       // nach diesem Render. Auch dieser Pfad muss die PlayAndRecord-Session
       // freigeben, sonst bleibt der folgende Text auf iOS dauerhaft leiser.
       await stopVoiceDecisionRef.current();
-      speakRef.current?.(
-        ackPack.decisionAck,
-        () => { speakRef.current?.(feedbackText, undefined, { useOpenAI: true }); },
+      const speakDecisionFeedback = () => {
+        const speaker = speakRef.current;
+        if (!speaker) {
+          setDecisionFeedbackPendingNow(false);
+          return;
+        }
+        void speaker(
+          feedbackText,
+          () => setDecisionFeedbackPendingNow(false),
+          { useOpenAI: true },
+        );
+      };
+      const speaker = speakRef.current;
+      if (speaker) {
+        void speaker(
+          ackPack.decisionAck,
+          speakDecisionFeedback,
           {
             ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
             ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
           },
-      );
+        );
+      } else {
+        setDecisionFeedbackPendingNow(false);
+      }
+    } else {
+      setDecisionFeedbackPendingNow(false);
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {

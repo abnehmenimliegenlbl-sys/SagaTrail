@@ -3,8 +3,8 @@ name: Voice decision confirmation audio
 description: Native voice decisions must serialize recognition shutdown, confirmation playback, and audio-session restoration.
 ---
 
-The voice decision flow must synchronously claim a chapter choice before starting any confirmation or personality feedback, and native TTS must await the DuckOthers audio-session transition before speaking.
+The voice decision flow must synchronously claim a chapter choice before starting any confirmation or personality feedback, and native TTS must await the DuckOthers audio-session transition before speaking. Chapter progression stays locked until acknowledgement and personality feedback have both finished.
 
-**Why:** A speech result and a fast tap can arrive in the same render window, while iOS may still be in the recognition recording session. Without both guards, prompts or feedback can play twice and other apps can remain ducked.
+**Why:** A speech result and a fast tap can arrive in the same render window, while iOS may still be in the recognition recording session. If awaiting-decision is cleared before delayed feedback finishes, GPS can advance to another decision, reopen listening, and ask a new question before the prior answer is confirmed.
 
-**How to apply:** Keep the chapter-level chosen-option guard in the shared decision handler, await native audio-mode changes on every device-TTS path before starting Speech.speak, and wait briefly after recognition.stop() before starting any confirmation playback because iOS releases PlayAndRecord asynchronously.
+**How to apply:** Read the chosen-option guard from the synchronously updated decision ref, not delayed React state. Hold a separate synchronous feedback-pending gate across recognition shutdown, acknowledgement, and full feedback; progression and stronger non-navigation interrupts must wait. Release the gate on successful or failed playback completion. Await native audio-mode changes on every device-TTS path, and wait briefly after recognition.stop() because iOS releases PlayAndRecord asynchronously.
