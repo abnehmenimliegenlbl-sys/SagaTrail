@@ -12,6 +12,9 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var batteryLevel: Float?
   @Published private(set) var isCharging = false
   @Published private(set) var currentHeartRate: Double?
+  @Published private(set) var workoutAverageHeartRate: Double?
+  @Published private(set) var workoutMaxHeartRate: Double?
+  @Published private(set) var activeEnergyKcal: Double?
   @Published private(set) var healthStatus = "Puls nicht gestartet"
   @Published var showSOSConfirmation = false
   @Published var showSafetyCheckinOptions = false
@@ -25,6 +28,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var automaticWorkoutStartBlocked = false
   private var turnHapticArmed = true
   private var lastAlertKey: String?
+  private var lastSafetyStatus: String?
   private var batteryObserver: NSObjectProtocol?
 
   var isStale: Bool {
@@ -140,7 +144,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
     }
     workoutAuthorizationInFlight = true
     let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate)!
-    healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [heartRate]) { [weak self] success, error in
+    let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!
+    healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [heartRate, activeEnergy]) { [weak self] success, error in
       Task { @MainActor in
         guard let self else { return }
         self.workoutAuthorizationInFlight = false
@@ -160,6 +165,9 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func beginWorkout() {
     guard workoutSession == nil else { return }
+    workoutAverageHeartRate = nil
+    workoutMaxHeartRate = nil
+    activeEnergyKcal = nil
     do {
       let configuration = HKWorkoutConfiguration()
       configuration.activityType = .hiking
@@ -246,6 +254,14 @@ final class WatchHikeModel: NSObject, ObservableObject {
       } else if decoded.offRoute == nil && state?.offRoute != nil {
         WKInterfaceDevice.current().play(.success)
       }
+      let safetyStatus = decoded.safetyCheckin?.status
+      if safetyStatus == "overdue" && lastSafetyStatus != "overdue" {
+        WKInterfaceDevice.current().play(.failure)
+        showSOSConfirmation = true
+      } else if safetyStatus != "overdue" && lastSafetyStatus == "overdue" {
+        WKInterfaceDevice.current().play(.success)
+      }
+      lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
       syncWorkout(with: decoded.sessionStatus)
@@ -352,21 +368,42 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
   nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
   nonisolated func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,
                                   didCollectDataOf collectedTypes: Set<HKSampleType>) {
-    guard let type = HKObjectType.quantityType(forIdentifier: .heartRate), collectedTypes.contains(type),
-          let stats = workoutBuilder.statistics(for: type),
-          let quantity = stats.mostRecentQuantity() else { return }
-    let bpm = quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
-    let envelope = SagaTrailWatchProtocol.envelope(type: "heartRate", payload: [
-      "bpm": bpm,
-      "measuredAt": Int(Date().timeIntervalSince1970 * 1000),
-      "source": "watch"
-    ])
-    let session = WCSession.default
-    if session.isReachable {
-      session.sendMessage(envelope, replyHandler: nil)
-    } else {
-      session.transferUserInfo(envelope)
+    let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
+    let energyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!
+    let heartRateStats = collectedTypes.contains(heartRateType)
+      ? workoutBuilder.statistics(for: heartRateType)
+      : nil
+    let energyStats = collectedTypes.contains(energyType)
+      ? workoutBuilder.statistics(for: energyType)
+      : nil
+    let bpm = heartRateStats?.mostRecentQuantity()?.doubleValue(
+      for: HKUnit.count().unitDivided(by: .minute())
+    )
+    let average = heartRateStats?.averageQuantity()?.doubleValue(
+      for: HKUnit.count().unitDivided(by: .minute())
+    )
+    let maximum = heartRateStats?.maximumQuantity()?.doubleValue(
+      for: HKUnit.count().unitDivided(by: .minute())
+    )
+    let energy = energyStats?.sumQuantity()?.doubleValue(for: .kilocalorie())
+    if let bpm {
+      let envelope = SagaTrailWatchProtocol.envelope(type: "heartRate", payload: [
+        "bpm": bpm,
+        "measuredAt": Int(Date().timeIntervalSince1970 * 1000),
+        "source": "watch"
+      ])
+      let session = WCSession.default
+      if session.isReachable {
+        session.sendMessage(envelope, replyHandler: nil)
+      } else {
+        session.transferUserInfo(envelope)
+      }
     }
-    Task { @MainActor in self.currentHeartRate = bpm }
+    Task { @MainActor in
+      if let bpm { self.currentHeartRate = bpm }
+      if let average { self.workoutAverageHeartRate = average }
+      if let maximum { self.workoutMaxHeartRate = maximum }
+      if let energy { self.activeEnergyKcal = energy }
+    }
   }
 }

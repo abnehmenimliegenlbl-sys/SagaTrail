@@ -46,11 +46,16 @@ export interface WatchMapState {
 
 export interface WatchOffRoute {
   distanceM: number;
+  bearingToRouteDeg: number | null;
 }
 
 export interface WatchWeather {
   temperatureC: number;
   weatherCode: number;
+  windKmh: number;
+  windGustsKmh: number;
+  precipitationMm: number;
+  isThunderstorm: boolean;
 }
 
 export interface WatchDaylight {
@@ -73,6 +78,7 @@ export interface HikeLiveState {
   offRoute?: WatchOffRoute | null;
   weather?: WatchWeather | null;
   daylight?: WatchDaylight | null;
+  language?: string;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
@@ -234,12 +240,22 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   if (state.offRoute !== undefined && state.offRoute !== null &&
       (typeof state.offRoute.distanceM !== "number" ||
        !Number.isFinite(state.offRoute.distanceM) ||
-       state.offRoute.distanceM < 0)) return false;
+       state.offRoute.distanceM < 0 ||
+       (state.offRoute.bearingToRouteDeg !== null &&
+        (typeof state.offRoute.bearingToRouteDeg !== "number" ||
+          !Number.isFinite(state.offRoute.bearingToRouteDeg))))) return false;
   if (state.weather !== undefined && state.weather !== null &&
       (typeof state.weather.temperatureC !== "number" ||
        !Number.isFinite(state.weather.temperatureC) ||
        typeof state.weather.weatherCode !== "number" ||
-       !Number.isFinite(state.weather.weatherCode))) return false;
+       !Number.isFinite(state.weather.weatherCode) ||
+       typeof state.weather.windKmh !== "number" ||
+       !Number.isFinite(state.weather.windKmh) ||
+       typeof state.weather.windGustsKmh !== "number" ||
+       !Number.isFinite(state.weather.windGustsKmh) ||
+       typeof state.weather.precipitationMm !== "number" ||
+       !Number.isFinite(state.weather.precipitationMm) ||
+       typeof state.weather.isThunderstorm !== "boolean")) return false;
   if (state.daylight !== undefined && state.daylight !== null &&
       (typeof state.daylight.sunsetAtEpochMs !== "number" ||
        !Number.isFinite(state.daylight.sunsetAtEpochMs) ||

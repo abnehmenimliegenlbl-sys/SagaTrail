@@ -759,7 +759,18 @@ export default function LiveHike() {
   const watchOffRoute = useMemo<WatchOffRoute | null>(() => {
     if (!offRoutePos || !navigationGeometry || navigationGeometry.length < 2) return null;
     const projection = fortschrittAufRoute(offRoutePos, navigationGeometry);
-    return projection ? { distanceM: Math.round(projection.distKm * 1000) } : null;
+    if (!projection) return null;
+    const targetIndex = Math.min(
+      navigationGeometry.length - 1,
+      Math.max(1, Math.round(projection.fraction * (navigationGeometry.length - 1))),
+    );
+    const target = navigationGeometry[targetIndex];
+    return {
+      distanceM: Math.round(projection.distKm * 1000),
+      bearingToRouteDeg: target
+        ? bearingDeg(offRoutePos, { lat: target[0], lng: target[1] })
+        : null,
+    };
   }, [navigationGeometry, offRoutePos]);
   /** Neuberechnete Alternativroute von Valhalla (gestrichelte Linie auf der Karte). */
   const [recalcGeom, setRecalcGeom] = useState<number[][] | null>(null);
@@ -1069,7 +1080,14 @@ export default function LiveHike() {
   const [hikeWeather, setHikeWeather] = useState<WeatherReport | null>(null);
   const watchWeather = useMemo<WatchWeather | null>(() => (
     hikeWeather && Number.isFinite(hikeWeather.temperatureC) && Number.isFinite(hikeWeather.weatherCode)
-      ? { temperatureC: hikeWeather.temperatureC, weatherCode: hikeWeather.weatherCode }
+      ? {
+          temperatureC: hikeWeather.temperatureC,
+          weatherCode: hikeWeather.weatherCode,
+          windKmh: hikeWeather.windKmh,
+          windGustsKmh: hikeWeather.windGustsKmh,
+          precipitationMm: hikeWeather.precipitationMm,
+          isThunderstorm: hikeWeather.isThunderstorm ?? false,
+        }
       : null
   ), [hikeWeather]);
 

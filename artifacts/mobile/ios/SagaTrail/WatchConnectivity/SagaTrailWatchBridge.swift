@@ -226,6 +226,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let daylight = state["daylight"] as? [String: Any] {
       watchState["daylight"] = daylight
     }
+    if let language = state["language"] as? String, language.count <= 8 {
+      watchState["language"] = language
+    }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
       watchState["distanceToTurnMeters"] = navigation["distanceM"]
@@ -311,7 +314,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
                   "upcomingNavigations", "plannedAscentM", "remainingAscentM",
-                   "terrainSection", "map"]
+                   "terrainSection", "map", "language"]
     let optionalFields = ["offRoute", "weather", "daylight"]
     for field in fields + optionalFields { if let value = input[field] { result[field] = value } }
     return result
@@ -341,7 +344,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   private func validOffRoutePayload(_ value: [String: Any]) -> Bool {
     guard let distance = (value["distanceM"] as? NSNumber)?.doubleValue else { return false }
-    return distance.isFinite && distance >= 0 && distance <= 100_000
+    let bearing = (value["bearingToRouteDeg"] as? NSNumber)?.doubleValue
+    return distance.isFinite && distance >= 0 && distance <= 100_000 &&
+      (bearing == nil || (bearing!.isFinite && bearing! >= 0 && bearing! < 360))
   }
 
   private func validWeatherPayload(_ value: [String: Any]) -> Bool {
@@ -349,8 +354,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
           let weatherCode = (value["weatherCode"] as? NSNumber)?.intValue else {
       return false
     }
+    guard let wind = (value["windKmh"] as? NSNumber)?.doubleValue,
+          let gusts = (value["windGustsKmh"] as? NSNumber)?.doubleValue,
+          let precipitation = (value["precipitationMm"] as? NSNumber)?.doubleValue,
+          value["isThunderstorm"] is Bool else { return false }
     return temperature.isFinite && temperature >= -90 && temperature <= 70 &&
-      weatherCode >= 0 && weatherCode <= 999
+      weatherCode >= 0 && weatherCode <= 999 &&
+      wind.isFinite && wind >= 0 && wind <= 400 &&
+      gusts.isFinite && gusts >= 0 && gusts <= 500 &&
+      precipitation.isFinite && precipitation >= 0 && precipitation <= 1000
   }
 
   private func validDaylightPayload(_ value: [String: Any]) -> Bool {

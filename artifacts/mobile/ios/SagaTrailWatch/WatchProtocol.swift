@@ -38,11 +38,16 @@ enum SagaTrailWatchProtocol {
 
   struct OffRoute {
     let distanceMeters: Double
+    let bearingToRouteDegrees: Double?
   }
 
   struct Weather {
     let temperatureCelsius: Double
     let weatherCode: Int
+    let windKmh: Double
+    let windGustsKmh: Double
+    let precipitationMm: Double
+    let isThunderstorm: Bool
   }
 
   struct Daylight {
@@ -75,6 +80,7 @@ enum SagaTrailWatchProtocol {
     let offRoute: OffRoute?
     let weather: Weather?
     let daylight: Daylight?
+    let language: String
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
@@ -161,16 +167,30 @@ enum SagaTrailWatchProtocol {
               distanceMeters.isFinite else {
           return nil
         }
-        return OffRoute(distanceMeters: distanceMeters)
+        return OffRoute(
+          distanceMeters: distanceMeters,
+          bearingToRouteDegrees: (value["bearingToRouteDeg"] as? NSNumber)?.doubleValue
+        )
       }()
       let weather: Weather? = {
         guard let value = dictionary["weather"] as? [String: Any],
               let temperatureCelsius = (value["temperatureC"] as? NSNumber)?.doubleValue,
               let weatherCode = (value["weatherCode"] as? NSNumber)?.intValue,
+              let windKmh = (value["windKmh"] as? NSNumber)?.doubleValue,
+              let windGustsKmh = (value["windGustsKmh"] as? NSNumber)?.doubleValue,
+              let precipitationMm = (value["precipitationMm"] as? NSNumber)?.doubleValue,
+              let isThunderstorm = value["isThunderstorm"] as? Bool,
               temperatureCelsius.isFinite else {
           return nil
         }
-        return Weather(temperatureCelsius: temperatureCelsius, weatherCode: weatherCode)
+        return Weather(
+          temperatureCelsius: temperatureCelsius,
+          weatherCode: weatherCode,
+          windKmh: windKmh,
+          windGustsKmh: windGustsKmh,
+          precipitationMm: precipitationMm,
+          isThunderstorm: isThunderstorm
+        )
       }()
       let daylight: Daylight? = {
         guard let value = dictionary["daylight"] as? [String: Any],
@@ -206,6 +226,7 @@ enum SagaTrailWatchProtocol {
         offRoute: offRoute,
         weather: weather,
         daylight: daylight,
+        language: dictionary["language"] as? String ?? "de",
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }
