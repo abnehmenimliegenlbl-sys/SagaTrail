@@ -11,6 +11,7 @@ export const LIVE_SNAPSHOT_MIN_INTERVAL_MS = 7_500;
 
 export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
+export type SosAcknowledgement = "none" | "acknowledged" | "failed";
 export type HeartRateSource = "watch" | "phone";
 export type SafetyCheckinStatus = "idle" | "active" | "overdue";
 
@@ -99,6 +100,8 @@ export interface HikeLiveState {
   remainingDistanceM?: number | null;
   remainingSeconds?: number | null;
   arrivalAtEpochMs?: number | null;
+  /** Set only after the phone has handled a companion SOS request. */
+  sosAcknowledgement?: SosAcknowledgement;
   sessionStatus: HikeSessionStatus;
 }
 
@@ -112,6 +115,7 @@ export interface WatchLiveSnapshot {
 
 type CompanionModule = {
   activate?: () => void;
+  selectGarminDevice?: () => void;
   publishLiveState?: (state: HikeLiveState) => void | Promise<void>;
 };
 
@@ -147,6 +151,24 @@ function activateNativeCompanion(module: CompanionModule): void {
 
 export function hasNativeWatchCompanion(): boolean {
   return companionModule() !== null;
+}
+
+/** Opens Garmin Connect Mobile's device-selection flow where the platform supports it. */
+export function selectGarminDevice(): boolean {
+  if (!canSelectGarminDevice()) return false;
+  const module = NativeModules.SagaTrailCompanion as CompanionModule | undefined;
+  try {
+    module!.selectGarminDevice!();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function canSelectGarminDevice(): boolean {
+  if (Platform.OS === "web") return false;
+  const module = NativeModules.SagaTrailCompanion as CompanionModule | undefined;
+  return typeof module?.selectGarminDevice === "function";
 }
 
 function finiteOrNull(value: unknown): number | null {
@@ -272,6 +294,10 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
     !["fresh", "stale", "unavailable"].includes(state.heartRate.freshness) ||
     !["watch", "phone"].includes(state.heartRate.source)
   )) return false;
+  if (
+    state.sosAcknowledgement !== undefined &&
+    !["none", "acknowledged", "failed"].includes(state.sosAcknowledgement)
+  ) return false;
   return true;
 }
 

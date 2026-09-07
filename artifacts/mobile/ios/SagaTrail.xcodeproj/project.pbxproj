@@ -14,6 +14,8 @@
 		B52ECD143A3740EEADB92DEF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9A26567D4D534926A3161BE7 /* PrivacyInfo.xcprivacy */; };
 		A1A2A3A4A5A6A7A8A9AA0001 /* SagaTrailWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A2A3A4A5A6A7A8A9AA0002 /* SagaTrailWatchBridge.swift */; };
 		A1A2A3A4A5A6A7A8A9AA0003 /* SagaTrailWatchBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A2A3A4A5A6A7A8A9AA0004 /* SagaTrailWatchBridge.m */; };
+		C10000000000000000000001 /* ConnectIQ in Frameworks */ = {isa = PBXBuildFile; productRef = C10000000000000000000002 /* ConnectIQ */; };
+		C10000000000000000000005 /* SagaTrailGarminBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000000000000000000003 /* SagaTrailGarminBridge.swift */; };
 		B10000000000000000000001 /* SagaTrailWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* SagaTrailWatchApp.swift */; };
 		B10000000000000000000002 /* WatchHikeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* WatchHikeModel.swift */; };
 		B10000000000000000000003 /* WatchHikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* WatchHikeView.swift */; };
@@ -62,6 +64,7 @@
 		9A26567D4D534926A3161BE7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; name = "PrivacyInfo.xcprivacy"; path = "SagaTrail/PrivacyInfo.xcprivacy"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		A1A2A3A4A5A6A7A8A9AA0002 /* SagaTrailWatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrail/WatchConnectivity/SagaTrailWatchBridge.swift; sourceTree = "<group>"; };
 		A1A2A3A4A5A6A7A8A9AA0004 /* SagaTrailWatchBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SagaTrail/WatchConnectivity/SagaTrailWatchBridge.m; sourceTree = "<group>"; };
+		C10000000000000000000003 /* SagaTrailGarminBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrail/Garmin/SagaTrailGarminBridge.swift; sourceTree = "<group>"; };
 		B10000000000000000000010 /* SagaTrailWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SagaTrailWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000011 /* SagaTrailWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SagaTrailWatchApp.swift; sourceTree = "<group>"; };
 		B10000000000000000000012 /* WatchHikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHikeModel.swift; sourceTree = "<group>"; };
@@ -80,6 +83,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000000000000000000001 /* ConnectIQ in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +112,7 @@
 				9A26567D4D534926A3161BE7 /* PrivacyInfo.xcprivacy */,
 				A1A2A3A4A5A6A7A8A9AA0002 /* SagaTrailWatchBridge.swift */,
 				A1A2A3A4A5A6A7A8A9AA0004 /* SagaTrailWatchBridge.m */,
+				C10000000000000000000003 /* SagaTrailGarminBridge.swift */,
 			);
 			name = SagaTrail;
 			sourceTree = "<group>";
@@ -196,6 +201,9 @@
 			dependencies = (
 				B10000000000000000000027 /* PBXTargetDependency */,
 			);
+			packageProductDependencies = (
+				C10000000000000000000002 /* ConnectIQ */,
+			);
 			name = SagaTrail;
 			productName = SagaTrail;
 			productReference = 13B07F961A680F5B00A75B9A /* SagaTrail.app */;
@@ -252,8 +260,30 @@
 				13B07F861A680F5B00A75B9A /* SagaTrail */,
 				B10000000000000000000022 /* SagaTrailWatch */,
 			);
+			packageReferences = (
+				C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */,
+			);
 		};
 /* End PBXProject section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/garmin/connectiq-companion-app-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C10000000000000000000002 /* ConnectIQ */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C10000000000000000000004 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk" */;
+			productName = ConnectIQ;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin PBXResourcesBuildPhase section */
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
@@ -349,6 +379,7 @@
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				A1A2A3A4A5A6A7A8A9AA0001 /* SagaTrailWatchBridge.swift in Sources */,
 				A1A2A3A4A5A6A7A8A9AA0003 /* SagaTrailWatchBridge.m in Sources */,
+				C10000000000000000000005 /* SagaTrailGarminBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,6 +9,7 @@ import WatchConnectivity
 @objc(SagaTrailCompanion)
 final class SagaTrailCompanion: RCTEventEmitter {
   private let connection = SagaTrailPhoneWatchConnection.shared
+  private let garminConnection = SagaTrailGarminConnection.shared
 
   override init() {
     super.init()
@@ -16,6 +17,12 @@ final class SagaTrailCompanion: RCTEventEmitter {
       self,
       selector: #selector(handleWatchEvent(_:)),
       name: .sagaTrailWatchEvent,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleGarminEvent(_:)),
+      name: .sagaTrailGarminEvent,
       object: nil
     )
   }
@@ -32,7 +39,12 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   @objc func activate() {
     connection.activate()
+    garminConnection.activate()
     emitStatus()
+  }
+
+  @objc func selectGarminDevice() {
+    garminConnection.selectDevice()
   }
 
   /// Accepts a protocol v1 `HikeLiveState` dictionary. Coordinates are
@@ -59,6 +71,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
         "v": 1, "type": "protocolError", "payload": ["message": error.localizedDescription]
       ])
     }
+    garminConnection.sendLiveState(state as? [String: Any] ?? [:])
   }
 
   /// Sends a display-safe alert. Do not place coordinates in title/body.
@@ -74,7 +87,9 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   @objc func getStatus(_ resolve: @escaping RCTPromiseResolveBlock,
                        reject: @escaping RCTPromiseRejectBlock) {
-    resolve(connection.statusPayload)
+    var status = connection.statusPayload
+    status["garmin"] = garminConnection.statusPayload
+    resolve(status)
   }
 
   @objc private func handleWatchEvent(_ notification: Notification) {
@@ -103,6 +118,23 @@ final class SagaTrailCompanion: RCTEventEmitter {
     }
     sendEvent(withName: "SagaTrailWatchEvent", body: envelope)
     emitStatus()
+  }
+
+  @objc private func handleGarminEvent(_ notification: Notification) {
+    guard let envelope = notification.object as? [String: Any],
+          let type = envelope["type"] as? String else { return }
+    let payload = envelope["payload"] as? [String: Any] ?? [:]
+    if type == "sosRequest" {
+      sendEvent(withName: "SagaTrailCompanion.sosRequest", body: [
+        "requestedAt": payload["requestedAt"] ?? Int(Date().timeIntervalSince1970 * 1000),
+        "requestId": payload["requestId"] ?? NSNull(),
+        "source": "garmin_connect_iq"
+      ])
+    }
+    sendEvent(withName: "SagaTrailWatchStatus", body: [
+      "v": 1,
+      "garmin": garminConnection.statusPayload
+    ])
   }
 
   private func emitStatus() {

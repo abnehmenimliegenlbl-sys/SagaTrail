@@ -114,8 +114,10 @@ import {
 } from "@/lib/turnNotifications";
 import {
   clearWatchStatus,
+  canSelectGarminDevice,
   publishHikeLiveState,
   prepareWatchCompanion,
+  selectGarminDevice,
   sendWatchSos,
   sendWatchStatus,
   subscribeToCompanionEvents,
@@ -914,6 +916,7 @@ export default function LiveHike() {
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
   const [sosOpen, setSosOpen] = useState(false);
+  const [sosAcknowledgement, setSosAcknowledgement] = useState<"none" | "acknowledged" | "failed">("none");
   const [showConditionForm, setShowConditionForm] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState<TrailConditionReport["condition"] | null>(null);
   const [conditionNote, setConditionNote] = useState("");
@@ -1127,6 +1130,7 @@ export default function LiveHike() {
   const lastLocationAtRef = useRef<number>(0);
   const liveSnapshotSequenceRef = useRef(0);
   const lastCriticalWatchAlertRef = useRef<string | null>(null);
+  const lastSosAcknowledgementRef = useRef<"none" | "acknowledged" | "failed">("none");
   const compassHeadingRef = useRef<number | null>(null);
   const compassGravityRef = useRef<CompassVector | null>(null);
   const compassSamplesRef = useRef<number[]>([]);
@@ -1148,8 +1152,11 @@ export default function LiveHike() {
   const requestPhoneSideSos = useCallback(() => {
     // A request from a wrist device deliberately opens the established phone
     // emergency flow. It does not imply that emergency services were reached.
+    setSosAcknowledgement("none");
     setSosOpen(true);
-    void sendWatchSos(null);
+    void sendWatchSos(null).then((handled) => {
+      setSosAcknowledgement(handled ? "acknowledged" : "failed");
+    });
   }, []);
 
   const setHikePause = useCallback((paused: boolean) => {
@@ -2501,6 +2508,7 @@ export default function LiveHike() {
         0,
         Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
       ) * 1000,
+      sosAcknowledgement,
       sessionStatus: sosOpen
         ? "sos_requested"
         : finished
@@ -2517,9 +2525,11 @@ export default function LiveHike() {
       : null;
     const force =
       (criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current) ||
-      (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current);
+      (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current) ||
+      sosAcknowledgement !== lastSosAcknowledgementRef.current;
     lastCriticalWatchAlertRef.current = criticalKey;
     lastWatchDiscoveryAlertRef.current = discoveryKey;
+    lastSosAcknowledgementRef.current = sosAcknowledgement;
     void publishHikeLiveState(state, { force });
     // Notification mirroring intentionally stays lower frequency than the
     // private native snapshot channel and contains no location data.
@@ -2530,7 +2540,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -5290,6 +5300,7 @@ export default function LiveHike() {
                       ready={watchReady}
                       direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                       remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
+                      onConnectGarmin={canSelectGarminDevice() ? selectGarminDevice : undefined}
                       onEnable={() => {
                         void prepareWatchCompanion().then(setWatchReady);
                       }}
@@ -6325,11 +6336,13 @@ function WatchCompanionCard({
   ready,
   direction,
   remainingKm,
+  onConnectGarmin,
   onEnable,
 }: {
   ready: boolean | null;
   direction: string | null;
   remainingKm: number;
+  onConnectGarmin?: () => boolean;
   onEnable: () => void;
 }) {
   const colors = useColors();
@@ -6380,6 +6393,19 @@ function WatchCompanionCard({
       <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
         Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung oder Distanz sind deaktiviert.
       </Text>
+      {onConnectGarmin && (
+        <Pressable
+          onPress={() => {
+            hapticRigid();
+            onConnectGarmin();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Garmin Connect Mobile öffnen"
+          style={[styles.watchEnable, { borderColor: colors.glassBorder, alignSelf: "flex-start", marginTop: 10 }]}
+        >
+          <Text style={[styles.watchEnableText, { color: colors.foreground }]}>Garmin verbinden</Text>
+        </Pressable>
+      )}
     </Glass>
   );
 }

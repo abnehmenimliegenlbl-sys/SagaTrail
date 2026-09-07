@@ -1,25 +1,77 @@
 package com.sagatrail2.app
 
-import com.facebook.react.bridge.*
 import com.facebook.react.ReactPackage
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.NativeModule
+import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.ReadableType
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactContextBaseJavaModule
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
-import com.facebook.react.uimanager.ViewManager
+import com.garmin.android.connectiq.ConnectIQ
+import com.garmin.android.connectiq.IQApp
+import com.garmin.android.connectiq.IQDevice
+import com.garmin.android.connectiq.exception.InvalidStateException
+import com.garmin.android.connectiq.exception.ServiceUnavailableException
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Android phone endpoint for the native Wear companion. JS remains the source
- * of truth: this module only transports its snapshots and surfaces requests.
+ * Phone endpoint for the optional Wear OS and Garmin companions.
+ *
+ * JS remains the source of truth. The two transports are deliberately
+ * independent: a missing Garmin watch must not disable Wear OS, and a
+ * disconnected Garmin watch must never be reported as connected.
  */
 class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
   ReactContextBaseJavaModule(context), MessageClient.OnMessageReceivedListener {
 
   private val dataClient = Wearable.getDataClient(context)
   private val messageClient = Wearable.getMessageClient(context)
+  private val connectIQ = ConnectIQ.getInstance(context, ConnectIQ.IQConnectType.WIRELESS)
+  private val garminApp = IQApp(GARMIN_APPLICATION_ID)
+  private val knownGarminDevices = CopyOnWriteArrayList<IQDevice>()
+  private val pendingGarminPublishes = CopyOnWriteArrayList<PendingGarminPublish>()
+  private var garminInitialized = false
+  private var garminSdkReady = false
+  private var activeGarminDevice: IQDevice? = null
 
-  override fun getName() = MODULE_NAME
+  private data class PendingGarminPublish(
+    val payload: Map<String, Any>,
+    val promise: Promise,
+  )
+
+  private val garminListener = object : ConnectIQ.ConnectIQListener {
+    override fun onSdkReady() {
+      garminSdkReady = true
+      refreshGarminDevices()
+      flushPendingGarminPublishes()
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus())
+    }
+
+    override fun onInitializeError(errStatus: ConnectIQ.IQSdkErrorStatus) {
+      garminSdkReady = false
+      rejectPendingGarminPublishes(
+        "GARMIN_INITIALIZATION_FAILED",
+        "Garmin Connect IQ is unavailable: ${errStatus.name}",
+      )
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus(errStatus.name))
+    }
+
+    override fun onSdkShutDown() {
+      garminSdkReady = false
+      activeGarminDevice = null
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus())
+    }
+  }
+
+  override fun getName(): String = MODULE_NAME
 
   override fun initialize() {
     super.initialize()
@@ -28,12 +80,57 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
 
   override fun invalidate() {
     messageClient.removeListener(this)
+    try {
+      connectIQ.unregisterAllForEvents()
+      connectIQ.shutdown(context)
+    } catch (_: Exception) {
+      // React may invalidate this module after the SDK has already stopped.
+    }
     super.invalidate()
   }
 
-  /** Receives the canonical WatchLiveSnapshot fields from JS and writes v1 Wear JSON. */
-  @ReactMethod
+  /** Starts the real Garmin Connect IQ Mobile SDK transport. */
+  @com.facebook.react.bridge.ReactMethod
+  fun activate() {
+    if (garminInitialized) return
+    garminInitialized = true
+    try {
+      // false avoids an SDK-owned dialog during a hike. The status event gives
+      // JS enough information to show its own app-designed explanation.
+      connectIQ.initialize(context, false, garminListener)
+    } catch (error: Exception) {
+      garminInitialized = false
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus(error.javaClass.simpleName))
+    }
+  }
+
+  /**
+   * Publishes to both transports. Garmin receives the constrained
+   * coordinate-free Connect IQ protocol, while Wear keeps its existing JSON
+   * envelope.
+   */
+  @com.facebook.react.bridge.ReactMethod
   fun publishLiveState(snapshot: ReadableMap, promise: Promise) {
+    publishWearLiveState(snapshot)
+    try {
+      activate()
+      val garminPayload = snapshot.toGarminPayload()
+      if (!garminSdkReady) {
+        pendingGarminPublishes.add(PendingGarminPublish(garminPayload, promise))
+        return
+      }
+      sendGarminPayload(garminPayload, promise)
+    } catch (error: Exception) {
+      promise.reject("INVALID_LIVE_STATE", error.message, error)
+    }
+  }
+
+  @com.facebook.react.bridge.ReactMethod
+  fun getStatus(promise: Promise) {
+    promise.resolve(garminStatus())
+  }
+
+  private fun publishWearLiveState(snapshot: ReadableMap) {
     try {
       val hasFreshGps = snapshot.requiredBoolean("hasFreshGps")
       val remainingKm = snapshot.requiredDouble("remainingKm")
@@ -50,8 +147,6 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
         .put("snapshotId", "phone-${System.currentTimeMillis()}")
         .put("receivedAtEpochMs", System.currentTimeMillis())
         .put("metrics", metrics)
-        // A no-GPS snapshot is deliberately transmitted; the watch can explain
-        // stale/unavailable navigation rather than silently showing old guidance.
         .put("hasFreshGps", hasFreshGps)
         .putIfPresent("routeName", snapshot.optionalString("routeName"))
         .put("navigation", navigation)
@@ -64,14 +159,97 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
       val request = PutDataMapRequest.create(SNAPSHOT_PATH)
       request.dataMap.putByteArray("payload", body.toString().toByteArray(Charsets.UTF_8))
       dataClient.putDataItem(request.asPutDataRequest())
-        .addOnSuccessListener { promise.resolve(null) }
-        .addOnFailureListener { promise.reject("WEAR_PUBLISH_FAILED", "Unable to publish Wear snapshot", it) }
-    } catch (error: Exception) {
-      promise.reject("INVALID_LIVE_STATE", error.message, error)
+        .addOnFailureListener { /* Wear is an optional second transport. */ }
+    } catch (_: Exception) {
+      // The canonical Garmin state does not always contain the compact Wear
+      // fields. Garmin validation and delivery remain authoritative.
     }
   }
 
-  override fun onMessageReceived(event: com.google.android.gms.wearable.MessageEvent) {
+  private fun sendGarminPayload(payload: Map<String, Any>, promise: Promise) {
+    val device = activeGarminDevice
+    if (device == null || device.status != IQDevice.IQDeviceStatus.CONNECTED) {
+      promise.reject("GARMIN_DEVICE_UNAVAILABLE", "No connected Garmin device has SagaTrail installed")
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus())
+      return
+    }
+    try {
+      connectIQ.sendMessage(device, garminApp, payload) { _, _, status ->
+        if (status.name == "SUCCESS") {
+          promise.resolve(null)
+        } else {
+          promise.reject("GARMIN_SEND_FAILED", "Garmin rejected the message: ${status.name}")
+        }
+      }
+    } catch (error: InvalidStateException) {
+      promise.reject("GARMIN_INVALID_STATE", error.message, error)
+    } catch (error: ServiceUnavailableException) {
+      promise.reject("GARMIN_SERVICE_UNAVAILABLE", error.message, error)
+    }
+  }
+
+  private fun refreshGarminDevices() {
+    if (!garminSdkReady) return
+    try {
+      val devices = connectIQ.knownDevices ?: emptyList()
+      knownGarminDevices.clear()
+      knownGarminDevices.addAll(devices)
+      devices.forEach { device ->
+        runCatching { connectIQ.unregisterForDeviceEvents(device) }
+        connectIQ.registerForDeviceEvents(device) { changed, status ->
+          changed.status = status
+          if (status == IQDevice.IQDeviceStatus.CONNECTED) {
+            activeGarminDevice = changed
+            registerGarminAppEvents(changed)
+            flushPendingGarminPublishes()
+          } else if (activeGarminDevice?.deviceIdentifier == changed.deviceIdentifier) {
+            activeGarminDevice = null
+          }
+          emitStatus(GARMIN_STATUS_EVENT, garminStatus())
+        }
+        val status = connectIQ.getDeviceStatus(device)
+        device.status = status
+        if (status == IQDevice.IQDeviceStatus.CONNECTED) {
+          activeGarminDevice = device
+          registerGarminAppEvents(device)
+        }
+      }
+    } catch (error: Exception) {
+      activeGarminDevice = null
+      emitStatus(GARMIN_STATUS_EVENT, garminStatus(error.javaClass.simpleName))
+    }
+  }
+
+  private fun registerGarminAppEvents(device: IQDevice) {
+    runCatching {
+      connectIQ.unregisterForApplicationEvents(device, garminApp)
+      connectIQ.registerForAppEvents(device, garminApp) { _, _, messageData, _ ->
+        val message = messageData.firstOrNull() as? Map<*, *>
+        if (message != null &&
+          (message["protocolVersion"] as? Number)?.toInt() == 1 &&
+          message["type"] == "sosRequest"
+        ) {
+          emit(SOS_REQUEST_EVENT, Arguments.createMap().apply {
+            putDouble("requestedAt", System.currentTimeMillis().toDouble())
+            putString("requestId", message["requestId"]?.toString())
+            putString("source", "garmin_connect_iq")
+          })
+        }
+      }
+    }
+  }
+
+  private fun garminStatus(error: String? = null): WritableMap =
+    Arguments.createMap().apply {
+      putString("platform", "android")
+      putBoolean("sdkReady", garminSdkReady)
+      putBoolean("connected", activeGarminDevice?.status == IQDevice.IQDeviceStatus.CONNECTED)
+      putString("deviceName", activeGarminDevice?.friendlyName)
+      putString("error", error)
+      putString("bridge", "connectIqMobile")
+    }
+
+  override fun onMessageReceived(event: MessageEvent) {
     if (event.path != COMMAND_PATH) return
     runCatching { JSONObject(event.data.toString(Charsets.UTF_8)) }.onSuccess { command ->
       when (command.optString("type")) {
@@ -88,30 +266,82 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     }
   }
 
+  private fun emitStatus(event: String, data: WritableMap) {
+    if (context.hasActiveReactInstance()) {
+      context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit(event, data)
+    }
+  }
+
   private fun emit(event: String, data: WritableMap) {
     if (context.hasActiveReactInstance()) {
       context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit(event, data)
     }
   }
 
-  @ReactMethod fun addListener(eventName: String) = Unit
-  @ReactMethod fun removeListeners(count: Double) = Unit
+  @com.facebook.react.bridge.ReactMethod
+  fun addListener(eventName: String) = Unit
+
+  @com.facebook.react.bridge.ReactMethod
+  fun removeListeners(count: Double) = Unit
 
   private fun ReadableMap.requiredString(key: String): String =
     optionalString(key) ?: throw IllegalArgumentException("$key is required")
+
   private fun ReadableMap.requiredBoolean(key: String): Boolean {
-    if (!hasKey(key) || isNull(key) || getType(key) != ReadableType.Boolean) throw IllegalArgumentException("$key is required")
+    if (!hasKey(key) || isNull(key) || getType(key) != ReadableType.Boolean) {
+      throw IllegalArgumentException("$key is required")
+    }
     return getBoolean(key)
   }
+
   private fun ReadableMap.requiredDouble(key: String): Double =
     optionalDouble(key) ?: throw IllegalArgumentException("$key is required")
+
   private fun ReadableMap.optionalString(key: String): String? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.String) getString(key) else null
+
   private fun ReadableMap.optionalDouble(key: String): Double? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Number) getDouble(key) else null
+
   private fun ReadableMap.optionalMap(key: String): ReadableMap? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Map) getMap(key) else null
-  private fun JSONObject.putIfPresent(key: String, value: Any?): JSONObject = apply { if (value != null) put(key, value) }
+
+  private fun ReadableMap.toGarminPayload(): Map<String, Any> {
+    val nextNavigation = optionalMap("nextNavigation")
+    val payload = linkedMapOf<String, Any>(
+      "protocolVersion" to 1,
+      "type" to "hikeLiveState",
+      "bridge" to "connectIqMobile",
+      "companionStatus" to if (activeGarminDevice?.status == IQDevice.IQDeviceStatus.CONNECTED) "connected" else "disconnected",
+      "updatedAtMs" to (optionalDouble("timestamp")?.toLong() ?: System.currentTimeMillis()),
+      "direction" to (nextNavigation?.optionalString("direction") ?: "none"),
+      "remainingKm" to (
+        nextNavigation?.optionalDouble("distanceM")?.div(1000.0)
+          ?: optionalDouble("remainingDistanceM")?.div(1000.0)
+          ?: 0.0
+        ),
+      "hasFreshGps" to (optionalString("gpsFreshness") == "fresh"),
+      "sosAcknowledgement" to optionalString("sosAcknowledgement")
+        ?.takeIf { it == "acknowledged" || it == "failed" }
+        ?: "none",
+    )
+    nextNavigation?.optionalDouble("bearingDeg")?.let { payload["heading"] = it }
+    optionalMap("heartRate")?.optionalDouble("bpm")?.let { payload["heartRateBpm"] = it }
+    optionalDouble("elapsedSec")?.let { payload["elapsedS"] = it }
+    optionalDouble("walkedDistanceM")?.let { payload["totalDistanceM"] = it }
+    optionalDouble("ascentM")?.let { payload["ascentM"] = it }
+    optionalDouble("steps")?.let { payload["steps"] = it }
+    optionalDouble("timestamp")?.let {
+      payload["freshnessS"] = ((System.currentTimeMillis() - it) / 1000.0).coerceAtLeast(0.0)
+    }
+    optionalMap("activeAlert")?.let { alert ->
+      val kind = alert.optionalString("kind")
+      val text = alert.optionalString("text") ?: ""
+      if (kind == "safety") payload["safetyText"] = text
+      if (kind == "narration") payload["narrationText"] = text
+    }
+    return payload
+  }
 
   companion object {
     const val MODULE_NAME = "SagaTrailCompanion"
@@ -119,11 +349,15 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
     const val COMMAND_PATH = "/sagatrail/command/v1"
     const val HEART_RATE_EVENT = "SagaTrailCompanion.heartRate"
     const val SOS_REQUEST_EVENT = "SagaTrailCompanion.sosRequest"
+    const val GARMIN_STATUS_EVENT = "SagaTrailCompanion.garminStatus"
+    const val GARMIN_APPLICATION_ID = "1f264eae-ef0d-45ad-9548-ee64460b7d7f"
   }
 }
 
 class SagaTrailCompanionPackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =
     listOf(SagaTrailCompanionModule(reactContext))
-  override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> = emptyList()
+
+  override fun createViewManagers(reactContext: ReactApplicationContext) =
+    emptyList<com.facebook.react.uimanager.ViewManager<*, *>>()
 }

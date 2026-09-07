@@ -1,10 +1,9 @@
 # Phone message protocol: canonical `HikeLiveState` v1 adapter
 
-This is the contract for a **future native Garmin Connect Mobile SDK
-companion**. `artifacts/mobile/lib/watchCompanion.ts` is currently an Expo
-notification-mirroring helper, not a Connect IQ Mobile SDK transport. It cannot
-send any of the messages documented here. This Garmin project therefore does
-not claim a working phone transport.
+This is the contract between the Connect IQ watch app and the native
+`SagaTrailCompanion` phone module. `artifacts/mobile/lib/watchCompanion.ts`
+remains the JavaScript source of truth; Android and iOS only adapt and
+transport its coordinate-free snapshot through Garmin's Connect IQ Mobile SDK.
 
 Messages are Connect IQ dictionaries; key names below map to Monkey C symbols
 (for example, `protocolVersion` is read as `message[:protocolVersion]`).
@@ -76,9 +75,13 @@ acknowledgement.
 
 ## Communication expectations
 
-There is no implemented native Garmin Connect Mobile SDK bridge in this
-repository and no promise of background delivery, persistent connection,
-continuous navigation updates, or continuous HR upload. A future companion
-should send full canonical-key latest-state snapshots when its own platform
-permits and make delayed or absent communication visible through `freshnessS`
-and a disconnected `companionStatus`.
+The native bridge is implemented on Android and iOS. It makes no promise of
+background delivery, persistent connection, continuous navigation updates, or
+continuous HR upload. The bridge sends the latest full snapshot when the
+platform permits and makes delayed or absent communication visible through
+`freshnessS` and a disconnected `companionStatus`.
+
+Android requires Garmin Connect Mobile to be installed. iOS additionally
+requires device selection through Garmin Connect Mobile; the callback is
+handled through the `sagatrail-connectiq` URL scheme. A successful SDK send is
+only delivery to the watch app and is never treated as SOS acknowledgement.

@@ -84,10 +84,10 @@ class SagaTrailApp extends Application.AppBase {
             Attention.vibrate([new Attention.VibeProfile(60, 90)]);
         }
 
-        if (message[:sosAcknowledgement] == "acknowledged") {
+        if (next[:sosAcknowledgement] == "acknowledged") {
             sosState = "acknowledged";
             sosMessage = "Phone acknowledged SOS";
-        } else if (message[:sosAcknowledgement] == "failed") {
+        } else if (next[:sosAcknowledgement] == "failed") {
             sosState = "failed";
             sosMessage = "Phone could not send SOS";
         }

@@ -1,15 +1,21 @@
 # SagaTrail Garmin Connect IQ MVP
 
-This is a standalone Connect IQ watch-app project. It does not change the Expo,
-iOS, Android, or Wear OS projects.
+This is the Connect IQ watch-app project used by the Expo phone app. The native
+phone bridge lives in the existing Expo iOS and Android targets and sends the
+same coordinate-free protocol described below.
 
 ## What it does
 
-The existing Expo `lib/watchCompanion.ts` only mirrors notifications. It is
-**not** a Garmin Connect Mobile SDK companion, so this repository does not
-currently provide working phone-to-watch transport. Until a future native
-bridge sends the documented handshake, the watch UI fails closed with **CIQ
-MOBILE COMPANION REQUIRED** and will not transmit SOS.
+`lib/watchCompanion.ts` publishes the canonical hike state to the native
+`SagaTrailCompanion` module. Android uses Garmin's Connect IQ Mobile SDK
+`2.2.0`; iOS uses Garmin's official
+`connectiq-companion-app-sdk` Swift Package. Both require Garmin Connect
+Mobile and a real paired/connected watch with this app installed.
+
+The bridge reports unavailable when Garmin Connect Mobile, the selected device,
+or the installed watch app is missing. It never promotes cached data to a
+connected state. Until a real handshake is received, the watch UI fails closed
+with **CIQ MOBILE COMPANION REQUIRED** and will not transmit SOS.
 
 The foreground app displays the last accepted `HikeLiveState`: next direction
 and distance, elapsed time, distance, ascent, steps, freshness, phone
@@ -41,6 +47,23 @@ service. The phone is responsible for actual SOS delivery and acknowledgement.
 
 No raw coordinates are accepted, stored, rendered, or sent by this project.
 
+## Phone setup
+
+### Android
+
+Install Garmin Connect Mobile, pair the watch, and install the signed
+`SagaTrail` Connect IQ app on the watch. The Android phone app initializes the
+Companion SDK through `ConnectIQ.IQConnectType.WIRELESS`, listens for the real
+device status, and sends messages only while the device is connected.
+
+### iPhone
+
+Install Garmin Connect Mobile, pair the watch, and use the native
+`selectGarminDevice` action once to grant SagaTrail access to the device. The
+callback uses the `sagatrail-connectiq` URL scheme registered in the iOS
+Info.plist. The iOS package is resolved from Garmin's official GitHub Swift
+Package.
+
 ## Build and simulator
 
 Install Garmin's Connect IQ SDK and make its `bin` directory available on
@@ -53,8 +76,8 @@ connectiq
 
 In the Device Simulator, select a matching product and load
 `bin/SagaTrail.prg`. Tool names and simulator loading UX differ slightly by SDK
-version. This repository does not bundle the SDK or developer key. No CIQ
-tooling was available when this MVP was added, so no executable CIQ test was
-run.
+version. This repository does not bundle the SDK or developer key. The watch
+app has been compiled and signed with Connect IQ SDK 9.2; a physical
+phone/watch transport test still requires a Garmin watch.
 
 See `docs/PHONE_PROTOCOL.md` for the constrained phone-message contract.

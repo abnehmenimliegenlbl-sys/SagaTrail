@@ -157,6 +157,10 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // Garmin Connect IQ Mobile SDK. Garmin Connect Mobile remains a
+    // user-installed runtime requirement; this dependency only provides the
+    // native companion transport.
+    implementation("com.garmin.connectiq:ciq-companion-app-sdk:2.2.0@aar")
     // Phone endpoint for the independently built Wear OS companion.
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
     // ========================================================================

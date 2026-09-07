@@ -17,6 +17,7 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:garmin": "rm -rf /tmp/sagatrail-garmin-check && tsc --ignoreConfig scripts/garmin-protocol-check.ts --target ES2022 --module commonjs --moduleResolution node --ignoreDeprecations 6.0 --types node --outDir /tmp/sagatrail-garmin-check --skipLibCheck --esModuleInterop && node /tmp/sagatrail-garmin-check/scripts/garmin-protocol-check.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "eas-build-post-install": "node scripts/eas-post-install.js"
