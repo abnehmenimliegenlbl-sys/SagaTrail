@@ -43,7 +43,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     updateBattery()
     if batteryObserver == nil {
       batteryObserver = NotificationCenter.default.addObserver(
-        forName: WKInterfaceDevice.batteryLevelDidChange,
+        forName: WKInterfaceDevice.batteryLevelDidChangeNotification,
         object: device,
         queue: .main
       ) { [weak self] _ in
