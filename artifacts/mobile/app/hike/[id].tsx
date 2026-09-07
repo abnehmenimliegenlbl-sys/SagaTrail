@@ -1558,8 +1558,7 @@ export default function LiveHike() {
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   // resolveStory wendet effectiveStoryLanguage intern selbst an — hier wird
   // bewusst das UNveraenderte Profil uebergeben, storyProfile dient nur dazu,
-  // die tatsaechlich verwendete Sprache lokal (z. B. fuer weaveNavigationCues)
-  // zu kennen.
+  // die tatsaechlich verwendete Sprache lokal zu kennen.
   useEffect(() => {
     if (!saga || !profile) return;
     let cancelled = false;
@@ -1571,7 +1570,7 @@ export default function LiveHike() {
       decisionsRef.current = story;
       const resumeAt = resumeIndexRef.current;
       resumeIndexRef.current = null;
-      if (resumeAt != null && resumeAt > 0 && resumeAt < routeStory.length) {
+      if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
         setCurrentIndex(resumeAt);
       }
       setPreparing(false);
