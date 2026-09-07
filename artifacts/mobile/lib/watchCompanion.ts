@@ -13,16 +13,19 @@ export type DataFreshness = "fresh" | "stale" | "unavailable";
 export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" | "sos_requested";
 export type HeartRateSource = "watch" | "phone";
 
+export interface WatchNavigation {
+  direction: "left" | "right";
+  bearingDeg: number | null;
+  distanceM: number | null;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
   timestamp: number;
   gpsFreshness: DataFreshness;
-  nextNavigation: {
-    direction: "left" | "right";
-    bearingDeg: number | null;
-    distanceM: number | null;
-  } | null;
+  nextNavigation: WatchNavigation | null;
+  upcomingNavigations?: WatchNavigation[];
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
@@ -108,11 +111,25 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
     if (typeof numericValue !== "number" && numericValue !== null) return false;
     if (numericValue !== null && (!Number.isFinite(numericValue) || numericValue < 0)) return false;
   }
-  if (state.nextNavigation && (
-    !["left", "right"].includes(state.nextNavigation.direction) ||
-    (state.nextNavigation.bearingDeg !== null && !Number.isFinite(state.nextNavigation.bearingDeg)) ||
-    (state.nextNavigation.distanceM !== null && (state.nextNavigation.distanceM < 0 || !Number.isFinite(state.nextNavigation.distanceM)))
-  )) return false;
+  const isValidNavigation = (value: unknown): value is WatchNavigation => {
+    if (!value || typeof value !== "object") return false;
+    const navigation = value as Partial<WatchNavigation>;
+    return (
+      (navigation.direction === "left" || navigation.direction === "right") &&
+      (navigation.bearingDeg === null || Number.isFinite(navigation.bearingDeg)) &&
+      (navigation.distanceM === null ||
+        (typeof navigation.distanceM === "number" &&
+          navigation.distanceM >= 0 &&
+          Number.isFinite(navigation.distanceM)))
+    );
+  };
+  if (state.nextNavigation && !isValidNavigation(state.nextNavigation)) return false;
+  if (
+    state.upcomingNavigations !== undefined &&
+    (!Array.isArray(state.upcomingNavigations) ||
+      state.upcomingNavigations.length > 3 ||
+      !state.upcomingNavigations.every(isValidNavigation))
+  ) return false;
   if (state.heartRate && (
     !Number.isFinite(state.heartRate.bpm) || state.heartRate.bpm <= 0 ||
     !Number.isFinite(state.heartRate.measuredAt) ||

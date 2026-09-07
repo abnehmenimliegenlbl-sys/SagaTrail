@@ -117,6 +117,7 @@ import {
   sendWatchStatus,
   subscribeToCompanionEvents,
   type HikeLiveState,
+  type WatchNavigation,
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
@@ -2231,22 +2232,25 @@ export default function LiveHike() {
     return () => clearInterval(interval);
   }, []);
 
-  const nextWatchNavigation = useMemo(() => {
-    if (!hasFreshGps || !livePos) return null;
+  const nextWatchNavigations = useMemo<WatchNavigation[]>(() => {
+    if (!hasFreshGps || !livePos) return [];
     const fraction = navigationGeometry
       ? fortschrittAufRoute(livePos, navigationGeometry)?.fraction
       : null;
-    const cue = turnCues.find((item, index) =>
-      !notifiedTurnsRef.current.has(index) &&
-      (fraction == null || item.distanceFraction >= fraction - 0.01),
-    );
-    if (!cue) return null;
-    return {
-      direction: cue.direction === "links" ? "left" as const : "right" as const,
-      bearingDeg: bearingDeg(livePos, cue.point),
-      distanceM: Math.round(haversineKm(livePos, cue.point) * 1000),
-    };
+    return turnCues
+      .map((cue, index) => ({ cue, index }))
+      .filter(({ cue, index }) =>
+        !notifiedTurnsRef.current.has(index) &&
+        (fraction == null || cue.distanceFraction >= fraction - 0.01),
+      )
+      .slice(0, 3)
+      .map(({ cue }) => ({
+        direction: cue.direction === "links" ? "left" as const : "right" as const,
+        bearingDeg: bearingDeg(livePos, cue.point),
+        distanceM: Math.round(haversineKm(livePos, cue.point) * 1000),
+      }));
   }, [hasFreshGps, livePos, navigationGeometry, turnCues]);
+  const nextWatchNavigation = nextWatchNavigations[0] ?? null;
 
   useEffect(() => {
     const now = Date.now();
@@ -2266,6 +2270,7 @@ export default function LiveHike() {
       timestamp: now,
       gpsFreshness: hasFreshGps ? "fresh" : livePos ? "stale" : "unavailable",
       nextNavigation: nextWatchNavigation,
+      upcomingNavigations: nextWatchNavigations,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.

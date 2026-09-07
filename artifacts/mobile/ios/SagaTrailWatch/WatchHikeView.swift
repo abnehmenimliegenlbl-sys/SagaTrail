@@ -15,6 +15,24 @@ struct WatchHikeView: View {
           Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
             .font(.title2.monospacedDigit()).bold()
           Text(state.nextInstruction).font(.footnote).multilineTextAlignment(.center)
+          if state.upcomingNavigations.count > 1 {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Danach").font(.caption2).foregroundStyle(.secondary)
+              ForEach(Array(state.upcomingNavigations.dropFirst().enumerated()), id: \.offset) { _, hint in
+                HStack(spacing: 6) {
+                  Image(systemName: arrow(for: hint.direction))
+                    .frame(width: 18)
+                  Text(hint.distanceMeters.map { "\(Int($0)) m" } ?? "—")
+                    .monospacedDigit()
+                  Spacer()
+                  Text(directionLabel(hint.direction))
+                    .foregroundStyle(.secondary)
+                }
+                .font(.caption2)
+              }
+            }
+            .padding(.top, 2)
+          }
           Divider()
           metric("Zeit", duration(state.elapsedSeconds))
           metric("Distanz", String(format: "%.2f km", state.distanceMeters / 1000))
@@ -88,5 +106,8 @@ struct WatchHikeView: View {
       return "arrow.turn.up.right"
     }
     return "arrow.up"
+  }
+  private func directionLabel(_ direction: String) -> String {
+    direction.lowercased().contains("left") ? "Links" : "Rechts"
   }
 }

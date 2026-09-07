@@ -5,6 +5,13 @@ import Foundation
 enum SagaTrailWatchProtocol {
   static let version = 1
 
+  struct NavigationHint {
+    let direction: String
+    let bearingDegrees: Double?
+    let distanceMeters: Double?
+
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -21,11 +28,26 @@ enum SagaTrailWatchProtocol {
     let remainingDistanceMeters: Double?
     let remainingSeconds: Double?
     let arrivalAtEpochMs: Double?
+    let upcomingNavigations: [NavigationHint]
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
       guard let updated = (dictionary["updatedAt"] as? NSNumber)?.doubleValue else { return nil }
       func number(_ key: String) -> Double { (dictionary[key] as? NSNumber)?.doubleValue ?? 0 }
+      func optionalNumber(_ key: String, from value: [String: Any]) -> Double? {
+        (value[key] as? NSNumber)?.doubleValue
+      }
+      func navigationHint(_ value: [String: Any]) -> NavigationHint? {
+        guard let direction = value["direction"] as? String,
+              direction == "left" || direction == "right" else { return nil }
+        return NavigationHint(
+          direction: direction,
+          bearingDegrees: optionalNumber("bearingDeg", from: value),
+          distanceMeters: optionalNumber("distanceM", from: value)
+        )
+      }
+      let upcomingNavigations = (dictionary["upcomingNavigations"] as? [[String: Any]] ?? [])
+        .compactMap { navigationHint($0) }
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -40,6 +62,7 @@ enum SagaTrailWatchProtocol {
         remainingDistanceMeters: (dictionary["remainingDistanceMeters"] as? NSNumber)?.doubleValue,
         remainingSeconds: (dictionary["remainingSeconds"] as? NSNumber)?.doubleValue,
         arrivalAtEpochMs: (dictionary["arrivalAtEpochMs"] as? NSNumber)?.doubleValue,
+        upcomingNavigations: upcomingNavigations,
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
     }

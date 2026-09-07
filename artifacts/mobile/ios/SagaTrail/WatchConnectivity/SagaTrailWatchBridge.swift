@@ -157,10 +157,18 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     guard !containsForbiddenCoordinates(in: state) else { throw ProtocolError.coordinatesNotAllowed }
     let navigation = state["nextNavigation"] as? [String: Any]
+    let upcomingNavigations = state["upcomingNavigations"] as? [[String: Any]] ?? []
     let alert = state["activeAlert"] as? [String: Any]
     let heartRate = state["heartRate"] as? [String: Any]
     let direction = navigation?["direction"] as? String
     guard navigation == nil || ["left", "right"].contains(direction ?? "") else {
+      throw ProtocolError.invalidCanonicalState
+    }
+    guard upcomingNavigations.count <= 3,
+          upcomingNavigations.allSatisfy({ item in
+            guard let direction = item["direction"] as? String else { return false }
+            return direction == "left" || direction == "right"
+          }) else {
       throw ProtocolError.invalidCanonicalState
     }
     if let alertText = alert?["text"] as? String, containsCoordinate(alertText) {
@@ -177,6 +185,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       "navigationDirection": direction ?? "straight",
       "nextInstruction": alert?["text"] as? String ?? (status == "active" ? "Weiter auf der Route" : "Hike nicht aktiv")
     ]
+    if !upcomingNavigations.isEmpty {
+      watchState["upcomingNavigations"] = upcomingNavigations
+    }
     if let navigation {
       watchState["bearingDegrees"] = navigation["bearingDeg"]
       watchState["distanceToTurnMeters"] = navigation["distanceM"]
@@ -247,7 +258,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     let fields = ["routeName", "nextInstruction", "navigationDirection", "sessionStatus", "isHiking",
                   "elapsedSeconds", "distanceMeters", "ascentMeters", "steps",
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
-                  "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs"]
+                  "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
+                  "upcomingNavigations"]
     for field in fields { if let value = input[field] { result[field] = value } }
     return result
   }
