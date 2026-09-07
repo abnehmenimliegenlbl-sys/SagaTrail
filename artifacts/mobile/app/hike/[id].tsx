@@ -663,6 +663,10 @@ export default function LiveHike() {
   const ascentM = activeProfileReady
     ? calculateProfileAscentM(terrainProfile)
     : (route?.ascentM ?? 480);
+  const terrainSections = useMemo(
+    () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
+    [terrainProfile],
+  );
   const totalMin = activeProfileReady
     ? estimateRouteMinutes(totalKm, ascentM)
     : (route?.minutes ?? 165);
@@ -3793,11 +3797,6 @@ export default function LiveHike() {
       ),
     [panoramaPois, hasFreshGps, livePos, liveAltitude],
   );
-  const terrainSections = useMemo(
-    () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
-    [terrainProfile],
-  );
-
   // Geländeansagen: 150 m vorher ankündigen, bei langen Abschnitten einmal
   // über den Rest informieren und 100 m vor dem Ende abschliessen. Abschnitte
   // ab 30 Prozent enthalten zusätzlich eine klare Sicherheitswarnung und

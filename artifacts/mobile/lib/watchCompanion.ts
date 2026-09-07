@@ -19,6 +19,13 @@ export interface WatchNavigation {
   distanceM: number | null;
 }
 
+export interface WatchTerrainSection {
+  direction: "up" | "down";
+  gradePct: number;
+  remainingM: number;
+  startsInM: number;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -26,6 +33,9 @@ export interface HikeLiveState {
   gpsFreshness: DataFreshness;
   nextNavigation: WatchNavigation | null;
   upcomingNavigations?: WatchNavigation[];
+  plannedAscentM?: number | null;
+  remainingAscentM?: number | null;
+  terrainSection?: WatchTerrainSection | null;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
   /** Null when an actual climbed-height measurement is not available. */
