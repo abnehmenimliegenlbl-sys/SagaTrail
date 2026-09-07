@@ -4799,7 +4799,7 @@ export default function LiveHike() {
                   modalSize: "large" as const,
                   preview: (
                      <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
-                       Navigation
+                        {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Puls —"}
                     </Text>
                   ),
                   content: (
