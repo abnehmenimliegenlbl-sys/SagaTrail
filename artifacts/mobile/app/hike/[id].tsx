@@ -2419,7 +2419,7 @@ export default function LiveHike() {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
         sendeAbbiegeMitteilung(
-          wp.type === "partner" ? t.partnerNearby : t.waypointReached,
+          wp.type === "partner" ? t.partnerNearby : t.poiNearby,
           wp.name,
         );
       }

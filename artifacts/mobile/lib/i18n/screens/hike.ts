@@ -63,7 +63,7 @@ export interface HikeStrings {
   terrainWarning: (direction: "up" | "down", gradePct: number, sectionDistance: string) => string;
   terrainWarningTitle: string;
   milestoneTitle: string;
-  waypointReached: string;
+  poiNearby: string;
   partnerNearby: string;
   poiNotifBody: string;
   perception: string;
@@ -230,7 +230,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Achtung: sehr steiles Gefälle mit bis zu ${gradePct} Prozent auf ${sectionDistance}.`,
     terrainWarningTitle: "Achtung: sehr steiler Abschnitt",
     milestoneTitle: "Meilenstein",
-    waypointReached: "Zwischenziel erreicht",
+    poiNearby: "Du befindest dich in der Nähe einer interessanten Sehenswürdigkeit.",
     partnerNearby: "Du befindest dich in der Nähe eines SagaTrail-Partners.",
     poiNotifBody: "Ein besonderer Ort ganz in deiner Nähe — der Erzähler berichtet gerade davon",
     perception: "WAHRNEHMUNG",
@@ -396,7 +396,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Achtung: sehr steils Gfäll mit bis zu ${gradePct} Prozent uf ${sectionDistance}.`,
     terrainWarningTitle: "Achtung: sehr steile Abschnitt",
     milestoneTitle: "Miileschtei",
-    waypointReached: "Zwischeziel erreicht",
+    poiNearby: "Du bisch i de Nöchi vo ere interessante Sehenswürdigkeit.",
     partnerNearby: "Du bisch i de Nöchi vo eme SagaTrail-Partner.",
     poiNotifBody: "En bsundrige Ort grad i dinere Nöchi — dr Verzeller verzellt grad dervo",
     perception: "WAHRNÄHMIG",
@@ -550,7 +550,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Caution: very steep descent of up to ${gradePct} percent over ${sectionDistance}.`,
     terrainWarningTitle: "Caution: very steep section",
     milestoneTitle: "Milestone",
-    waypointReached: "Waypoint reached",
+    poiNearby: "You are near an interesting landmark.",
     partnerNearby: "You are near a SagaTrail partner.",
     poiNotifBody: "A special place right nearby — the narrator is telling its story now",
     perception: "PERCEPTION",
@@ -704,7 +704,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Attention : descente très raide jusqu'à ${gradePct} pour cent sur ${sectionDistance}.`,
     terrainWarningTitle: "Attention : passage très raide",
     milestoneTitle: "Borne",
-    waypointReached: "Étape atteinte",
+    poiNearby: "Vous êtes à proximité d’un site intéressant.",
     partnerNearby: "Vous êtes à proximité d’un partenaire SagaTrail.",
     poiNotifBody: "Un lieu remarquable tout près de toi — le narrateur en parle en ce moment",
     perception: "PERCEPTION",
@@ -858,7 +858,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Attenzione: discesa molto ripida, fino al ${gradePct} percento per ${sectionDistance}.`,
     terrainWarningTitle: "Attenzione: tratto molto ripido",
     milestoneTitle: "Traguardo",
-    waypointReached: "Tappa raggiunta",
+    poiNearby: "Ti trovi vicino a un luogo interessante.",
     partnerNearby: "Ti trovi vicino a un partner SagaTrail.",
     poiNotifBody: "Un luogo speciale proprio vicino a te — il narratore ne sta parlando ora",
     perception: "PERCEZIONE",
@@ -1012,7 +1012,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Atención: bajada muy pronunciada, de hasta un ${gradePct} por ciento durante ${sectionDistance}.`,
     terrainWarningTitle: "Atención: tramo muy pronunciado",
     milestoneTitle: "Hito",
-    waypointReached: "Punto intermedio alcanzado",
+    poiNearby: "Estás cerca de un lugar de interés.",
     partnerNearby: "Estás cerca de un socio de SagaTrail.",
     poiNotifBody: "Un lugar especial muy cerca de ti — el narrador está contando su historia",
     perception: "PERCEPCIÓN",
@@ -1166,7 +1166,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Atenção: descida muito íngreme, até ${gradePct} por cento durante ${sectionDistance}.`,
     terrainWarningTitle: "Atenção: trecho muito íngreme",
     milestoneTitle: "Marco",
-    waypointReached: "Ponto intermediário atingido",
+    poiNearby: "Você está perto de um local interessante.",
     partnerNearby: "Você está perto de um parceiro SagaTrail.",
     poiNotifBody: "Um lugar especial bem perto de você — o narrador está contando sua história",
     perception: "PERCEPÇÃO",
@@ -1320,7 +1320,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `注意：前方是非常陡的下坡，坡度最高达${gradePct}%，持续${sectionDistance}。`,
     terrainWarningTitle: "注意：非常陡的路段",
     milestoneTitle: "里程碑",
-    waypointReached: "已到达途经点",
+    poiNearby: "你正在一处有趣的景点附近。",
     partnerNearby: "你正在 SagaTrail 合作伙伴附近。",
     poiNotifBody: "你身边有一处特别的地方——讲述者正在讲述它的故事",
     perception: "感知",
@@ -1474,7 +1474,7 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
         : `Внимание: очень крутой спуск до ${gradePct} процентов на протяжении ${sectionDistance}.`,
     terrainWarningTitle: "Внимание: очень крутой участок",
     milestoneTitle: "Веха",
-    waypointReached: "Промежуточная точка достигнута",
+    poiNearby: "Вы находитесь рядом с интересной достопримечательностью.",
     partnerNearby: "Вы находитесь рядом с партнёром SagaTrail.",
     poiNotifBody: "Особое место совсем рядом — рассказчик сейчас поведает о нём",
     perception: "ВОСПРИЯТИЕ",
