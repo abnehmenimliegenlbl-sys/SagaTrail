@@ -134,3 +134,4 @@
 - [Production narration ffmpeg fallback](sagatrail-prod-ffmpeg-fallback.md) — published API lacks ffmpeg; pacing falls back to single TTS while requests still return cached audio successfully.
 - [Watch target provisioning](sagatrail-watch-provisioning.md) — embedded Watch apps need their own provisioning profile; non-interactive EAS cannot create the first one.
 - [Modern watchOS product type](modern-watchos-product-type.md) — single-target SwiftUI Watch apps use application + watchOS SDK; legacy watchapp2 causes duplicate executable output.
+- [Connect IQ SDK 9.2 Linux build](sagatrail-connectiq-sdk-92-build.md) — Windows SDK needs CRLF-safe launcher handling; jungle keeps only project.manifest and Garmin transmit APIs require typed listeners.

@@ -11,7 +11,7 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onKey(key) {
-        if (key == WatchUi.KEY_SELECT) {
+        if (key == WatchUi.KEY_ENTER) {
             if (confirmSos) {
                 confirmSos = false;
                 app.requestSos();

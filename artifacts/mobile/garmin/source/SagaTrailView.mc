@@ -1,5 +1,6 @@
 using Toybox.ActivityMonitor as ActivityMonitor;
 using Toybox.Graphics as Graphics;
+using Toybox.SensorHistory as SensorHistory;
 using Toybox.System as System;
 using Toybox.WatchUi as WatchUi;
 
@@ -62,15 +63,15 @@ class SagaTrailView extends WatchUi.View {
 
         var sos = app.getSosState();
         if (confirmSos) {
-            inverse(dc, 2, dc.getHeight() - 38, width - 4, "PRESS SELECT: CONFIRM SOS");
+            inverse(dc, 2, dc.getHeight() - 38, width - 4, "PRESS ENTER: CONFIRM SOS");
         } else if (sos == "pending") {
             inverse(dc, 2, dc.getHeight() - 38, width - 4, "SOS PENDING PHONE ACK");
         } else if (sos == "failed") {
-            inverse(dc, 2, dc.getHeight() - 38, width - 4, "SOS FAILED - RETRY SELECT");
+            inverse(dc, 2, dc.getHeight() - 38, width - 4, "SOS FAILED - RETRY ENTER");
         } else if (sos == "acknowledged") {
             inverse(dc, 2, dc.getHeight() - 38, width - 4, "SOS ACKNOWLEDGED");
         } else {
-            inverse(dc, 2, dc.getHeight() - 38, width - 4, "SELECT: SOS");
+            inverse(dc, 2, dc.getHeight() - 38, width - 4, "ENTER: SOS");
         }
     }
 
@@ -80,8 +81,12 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function getLocalHeartRate() {
-        var info = ActivityMonitor.getInfo();
-        return info == null ? null : info.currentHeartRate;
+        if ((Toybox has :SensorHistory) && (Toybox.SensorHistory has :getHeartRateHistory)) {
+            var history = SensorHistory.getHeartRateHistory({});
+            var sample = history == null ? null : history.next();
+            return sample == null ? null : sample.data;
+        }
+        return null;
     }
 
     function formatDistance(meters) {
