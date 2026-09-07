@@ -1177,6 +1177,10 @@ export default function LiveHike() {
    *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
    *  async Enrichment) den Kapitel-Effekt erneut ausloesen. */
   const lastDecisionTriggeredRef = useRef<number>(-1);
+  /** Wird synchron gesetzt, sobald eine Antwort angenommen wurde. Dadurch
+   *  kann derselbe Entscheidungspunkt auch bei einem verspäteten Render,
+   *  Queue-Eintrag oder Sprach-Callback nicht erneut öffnen. */
+  const resolvedDecisionIndexRef = useRef<number | null>(null);
   // true waehrend eine Navigationsansage laeuft und die Erzaehlung pausiert ist.
   const navInterruptingRef = useRef(false);
   const announcedPoiIdsRef = useRef<Set<string>>(new Set());
@@ -3799,6 +3803,7 @@ export default function LiveHike() {
       }
     }
     if (ch.isDecisionPoint && ch.chosenOptionIndex == null &&
+        resolvedDecisionIndexRef.current !== currentIndex &&
         lastDecisionTriggeredRef.current !== currentIndex) {
       lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
@@ -4430,12 +4435,20 @@ export default function LiveHike() {
     // synchron mit dem State aktualisiert, sodass ein schneller Tap parallel
     // zu einem Sprach-Treffer weder Ack noch Persoenlichkeits-Feedback doppelt
     // startet.
-    if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) return;
+    if (
+      decisionsRef.current[currentIndex]?.chosenOptionIndex != null ||
+      resolvedDecisionIndexRef.current === currentIndex
+    ) {
+      return;
+    }
     // Antwort, Ack und persoenliches Feedback sind EIN atomarer
     // Entscheidungsabschluss. GPS-Fortschritt darf in diesem Fenster nicht
     // schon zum naechsten (moeglicherweise ebenfalls entscheidenden) Kapitel
     // springen und dort eine neue Frage samt Mikrofon starten.
     setDecisionFeedbackPendingNow(true);
+    resolvedDecisionIndexRef.current = currentIndex;
+    // Ein verspäteter Prompt darf nicht hinter dem Antwort-Ack weiterlaufen.
+    narrationQueueRef.current = [];
     // Sofort synchronisieren: Die Sprach-Erkennung kann den Treffer melden,
     // bevor der React-State neu gerendert wurde. Ohne diesen Ref-Abschluss
     // kann der Entscheidungs-Prompt in diesem Zwischenfenster nochmals
@@ -4528,6 +4541,7 @@ export default function LiveHike() {
   const promptedDecisionRef = useRef<number>(-1);
   useEffect(() => {
     if (!awaitingDecision || speaking) return;
+    if (resolvedDecisionIndexRef.current === currentIndex) return;
     if (promptedDecisionRef.current === currentIndex) return;
     promptedDecisionRef.current = currentIndex;
     const pack = STORY_PACKS[resolveLang(storyLanguage)];
@@ -4582,7 +4596,11 @@ export default function LiveHike() {
     lastTranscript: voiceTranscript,
     stopListening: stopVoiceDecision,
   } = useVoiceDecision(
-    awaitingDecision && !speaking && decisionOptions.length > 0 && !folgtGruppenleitung,
+    awaitingDecision &&
+      resolvedDecisionIndexRef.current !== currentIndex &&
+      !speaking &&
+      decisionOptions.length > 0 &&
+      !folgtGruppenleitung,
     resolveLang(storyLanguage),
     decisionOptions,
     chooseOption
