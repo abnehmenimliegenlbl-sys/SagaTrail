@@ -56,6 +56,12 @@ export interface GarminHikeLiveState {
     sunsetAtEpochMs: number;
     arrivalAfterSunset: boolean;
   };
+  poiStory?: {
+    id: string;
+    name: string;
+    text: string;
+    imageUrl?: string;
+  };
   language?: string;
   freshnessS: number;
   safetyText: string;
@@ -135,6 +141,14 @@ export function toGarminHikeLiveState(
   }
   if (state.weather != null) payload.weather = state.weather;
   if (state.daylight != null) payload.daylight = state.daylight;
+  if (state.poiStory != null) {
+    payload.poiStory = {
+      id: state.poiStory.id,
+      name: state.poiStory.name,
+      text: state.poiStory.text,
+      ...(state.poiStory.imageUrl ? { imageUrl: state.poiStory.imageUrl } : {}),
+    };
+  }
   if (state.language) payload.language = state.language;
   return payload;
 }
@@ -163,6 +177,15 @@ export function isValidGarminHikeLiveState(value: unknown): value is GarminHikeL
     finiteNumber(payload.freshnessS) &&
     typeof payload.safetyText === "string" &&
     typeof payload.narrationText === "string" &&
+    (payload.poiStory === undefined ||
+      (typeof payload.poiStory.id === "string" &&
+        payload.poiStory.id.length > 0 &&
+        typeof payload.poiStory.name === "string" &&
+        payload.poiStory.name.length > 0 &&
+        typeof payload.poiStory.text === "string" &&
+        payload.poiStory.text.length > 0 &&
+        payload.poiStory.text.length <= 8_000 &&
+        (payload.poiStory.imageUrl === undefined || typeof payload.poiStory.imageUrl === "string"))) &&
     (payload.sosAcknowledgement === "none" ||
       payload.sosAcknowledgement === "acknowledged" ||
       payload.sosAcknowledgement === "failed")

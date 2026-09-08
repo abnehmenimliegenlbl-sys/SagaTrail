@@ -22,8 +22,8 @@ class SagaTrailView extends WatchUi.View {
     function changePage(delta) {
         page += delta;
         if (page < 0) {
-            page = 1;
-        } else if (page > 1) {
+            page = 2;
+        } else if (page > 2) {
             page = 0;
         }
         requestUpdate();
@@ -36,12 +36,14 @@ class SagaTrailView extends WatchUi.View {
 
         var width = dc.getWidth();
         var y = 4;
-        title(dc, width, y, page == 0 ? "SAGATRAIL" : "SAGATRAIL  INFO"); y += 18;
+        title(dc, width, y, page == 0 ? "SAGATRAIL" : (page == 1 ? "SAGATRAIL  STATUS" : "SAGATRAIL  STORY")); y += 18;
 
         if (page == 0) {
             drawNavigationPage(dc, state, y);
-        } else {
+        } else if (page == 1) {
             drawInfoPage(dc, state, y);
+        } else {
+            drawStoryPage(dc, state, y);
         }
 
         var sos = app.getSosState();
@@ -157,6 +159,29 @@ class SagaTrailView extends WatchUi.View {
                 formatDistance(value(next, :distanceM, 0)), 18));
         } else {
             line(dc, 4, y, "THEN --");
+        }
+    }
+
+    function drawStoryPage(dc, state, y) {
+        var story = value(state, :poiStory, null);
+        if (story == null) {
+            line(dc, 4, y, "NO ACTIVE STORY"); y += 22;
+            line(dc, 4, y, "POI AUDIO ON PHONE");
+            return;
+        }
+        line(dc, 4, y, shortText("POI " + value(story, :name, "PLACE"), 18)); y += 22;
+        var text = value(story, :text, "");
+        if (text == "") {
+            line(dc, 4, y, "AUDIO ACTIVE");
+        } else {
+            line(dc, 4, y, shortText(text, 18)); y += 20;
+            line(dc, 4, y, shortText(text.length() > 18 ? text.substring(18, text.length()) : "", 18));
+        }
+        y += 21;
+        if (value(story, :imageUrl, "") != "") {
+            line(dc, 4, y, "PHOTO ON PHONE");
+        } else {
+            line(dc, 4, y, "AUDIO ACTIVE");
         }
     }
 

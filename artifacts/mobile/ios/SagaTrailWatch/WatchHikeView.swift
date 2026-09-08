@@ -10,6 +10,8 @@ private enum WatchPalette {
 
 struct WatchHikeView: View {
   @EnvironmentObject private var hike: WatchHikeModel
+  @State private var selectedPage = 0
+  @State private var poiTextPage = 0.0
   private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
 
   var body: some View {
@@ -17,102 +19,30 @@ struct WatchHikeView: View {
       VStack(spacing: 9) {
         connectionBanner
         if let state = hike.state {
-          if let map = state.map {
-            WatchRouteMap(
-              map: map,
-              offline: !hike.isReachable || hike.isStale,
-              language: state.language
-            )
-          }
-          if let offRoute = state.offRoute {
-            offRouteCard(offRoute)
-          }
-          if let weather = state.weather {
-            weatherCard(weather, daylight: state.daylight)
-          }
-          if state.sessionStatus == "finished" {
-            hikeSummary(state)
-          }
-          Image(systemName: arrow(for: state.navigationDirection))
-            .font(.system(size: 44, weight: .bold))
-            .rotationEffect(.degrees(state.bearingDegrees ?? 0))
-            .foregroundStyle(WatchPalette.red)
-          Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
-            .font(.title2.monospacedDigit()).bold()
-          Text(state.nextInstruction).font(.footnote).multilineTextAlignment(.center)
-          if state.upcomingNavigations.count > 1 {
-            VStack(alignment: .leading, spacing: 4) {
-              Text(copy.t("next")).font(.caption2).foregroundStyle(WatchPalette.mutedWhite)
-              ForEach(Array(state.upcomingNavigations.dropFirst().enumerated()), id: \.offset) { _, hint in
-                HStack(spacing: 6) {
-                  Image(systemName: arrow(for: hint.direction))
-                    .frame(width: 18)
-                  Text(hint.distanceMeters.map { "\(Int($0)) m" } ?? "—")
-                    .monospacedDigit()
-                  Spacer()
-                  Text(directionLabel(hint.direction))
-                    .foregroundStyle(WatchPalette.mutedWhite)
-                }
-                .font(.caption2)
-              }
+          TabView(selection: $selectedPage) {
+            navigationPage(state).tag(0)
+            statusPage(state).tag(1)
+            safetyPage(state).tag(2)
+            storyPage(state).tag(3)
+            if let poiStory = state.poiStory {
+              poiStoryPage(poiStory).tag(4)
             }
-            .padding(.top, 2)
           }
-          if let terrain = state.terrainSection {
-            VStack(alignment: .leading, spacing: 3) {
-              HStack {
-                Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
-                      systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
-                Spacer()
-                Text("\(Int(terrain.gradePercent)) %").monospacedDigit()
-              }
-              Text(
-                terrain.startsInMeters > 0
-                   ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
-                   : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m"
-              )
-              .foregroundStyle(WatchPalette.mutedWhite)
+          .tabViewStyle(.verticalPage)
+          .frame(minHeight: 310)
+          .onChange(of: state.poiStory?.id) { _, id in
+            if id != nil {
+              selectedPage = 4
+              poiTextPage = 0
+            } else if selectedPage == 4 {
+              selectedPage = 0
             }
-            .font(.caption2)
           }
-          safetyCheckin(state)
-          Divider()
-           metric(copy.t("time"), duration(state.elapsedSeconds))
-           metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
-           if let remaining = state.remainingDistanceMeters {
-             metric(copy.t("remaining"), String(format: "%.1f km", remaining / 1000))
-           }
-           if let remainingSeconds = state.remainingSeconds {
-             metric(copy.t("arrival"), eta(remainingSeconds, arrivalAt: state.arrivalAtEpochMs))
-           }
-           if let plannedAscent = state.plannedAscentMeters {
-             metric(copy.t("elevation"), String(format: "%.0f m", plannedAscent))
-           }
-           if let remainingAscent = state.remainingAscentMeters {
-             metric(copy.t("remainingAscent"), String(format: "%.0f m", remainingAscent))
-           }
-           metric(copy.t("steps"), "\(state.steps)")
-          heartRate(state)
-           if state.sessionStatus != "finished" {
-             Button {
-                hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
-              } label: {
-                Label(state.isHiking ? copy.t("pause") : (state.sessionStatus == "preparing" ? copy.t("start") : copy.t("resume")),
-                      systemImage: state.isHiking ? "pause.fill" : "play.fill")
-              }.buttonStyle(.bordered)
-             Button(role: .destructive, action: hike.requestSOSConfirmation) {
-                Label(copy.t("sos"), systemImage: "exclamationmark.triangle.fill")
-             }.buttonStyle(.borderedProminent)
-           }
-         } else {
-           Image(systemName: "figure.hiking")
-             .font(.largeTitle)
-             .foregroundStyle(WatchPalette.red)
-           Text(copy.t("waitingStart"))
-             .multilineTextAlignment(.center)
-             .foregroundStyle(WatchPalette.white)
+        } else {
+          waitingPage
         }
-      }.padding(.horizontal, 4)
+      }
+      .padding(.horizontal, 4)
     }
       .scrollContentBackground(.hidden)
       .background(WatchPalette.black.ignoresSafeArea())
@@ -454,6 +384,199 @@ private struct WatchRouteMap: View {
                 }
               }
             }
+
+  private func navigationPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    VStack(spacing: 7) {
+      Label(copy.t("navigation"), systemImage: "location.north.line.fill")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      if let offRoute = state.offRoute {
+        offRouteCard(offRoute)
+      }
+      Image(systemName: arrow(for: state.navigationDirection))
+        .font(.system(size: 50, weight: .bold))
+        .rotationEffect(.degrees(state.bearingDegrees ?? 0))
+        .foregroundStyle(WatchPalette.red)
+      Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
+        .font(.title2.monospacedDigit()).bold()
+        .foregroundStyle(WatchPalette.red)
+      Text(state.nextInstruction)
+        .font(.footnote)
+        .multilineTextAlignment(.center)
+        .lineLimit(2)
+      HStack(spacing: 12) {
+        metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
+        metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
+      }
+      if state.sessionStatus != "finished" {
+        hikeControl(state)
+      }
+    }
+  }
+
+  private func statusPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    VStack(spacing: 7) {
+      Label(copy.t("status"), systemImage: "chart.bar.fill")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      if let map = state.map {
+        WatchRouteMap(map: map, offline: !hike.isReachable || hike.isStale, language: state.language)
+      }
+      HStack(spacing: 12) {
+        metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
+        metric(copy.t("steps"), "\(state.steps)")
+      }
+      if let plannedAscent = state.plannedAscentMeters {
+        metric(copy.t("elevation"), String(format: "%.0f m", plannedAscent))
+      }
+      if let remainingAscent = state.remainingAscentMeters {
+        metric(copy.t("remainingAscent"), String(format: "%.0f m", remainingAscent))
+      }
+      metric(copy.t("time"), duration(state.elapsedSeconds))
+      heartRate(state)
+      if let weather = state.weather {
+        weatherCard(weather, daylight: state.daylight)
+      }
+    }
+  }
+
+  private func safetyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    VStack(spacing: 8) {
+      Label(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      safetyCheckin(state)
+      if let terrain = state.terrainSection {
+        VStack(alignment: .leading, spacing: 3) {
+          HStack {
+            Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
+                  systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+            Spacer()
+            Text("\(Int(terrain.gradePercent)) %").monospacedDigit()
+          }
+          Text(terrain.startsInMeters > 0
+            ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
+            : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m")
+            .foregroundStyle(WatchPalette.mutedWhite)
+        }
+        .font(.caption2)
+      }
+      if let offRoute = state.offRoute {
+        offRouteCard(offRoute)
+      }
+      Button(role: .destructive, action: hike.requestSOSConfirmation) {
+        Label(copy.t("sos"), systemImage: "exclamationmark.triangle.fill")
+      }
+      .buttonStyle(.borderedProminent)
+    }
+  }
+
+  private func poiStoryPage(_ story: SagaTrailWatchProtocol.PoiStory) -> some View {
+    let chunks = poiTextChunks(story.text)
+    let page = min(max(0, Int(poiTextPage.rounded())), max(0, chunks.count - 1))
+    return VStack(spacing: 6) {
+      Label(copy.t("poiStory"), systemImage: "mappin.and.ellipse")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      AsyncImage(url: story.imageURL) { phase in
+        if let image = phase.image {
+          image.resizable().scaledToFill()
+        } else {
+          Image(systemName: "photo")
+            .font(.title2)
+            .foregroundStyle(WatchPalette.mutedWhite)
+        }
+      }
+      .frame(height: 88)
+      .frame(maxWidth: .infinity)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
+      Text(story.name)
+        .font(.headline)
+        .multilineTextAlignment(.center)
+        .lineLimit(2)
+      Text(chunks.isEmpty ? story.text : chunks[page])
+        .font(.caption)
+        .foregroundStyle(WatchPalette.mutedWhite)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .lineLimit(7)
+      Text("\(copy.t("turnCrown")) \(page + 1)/\(max(1, chunks.count))")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.red)
+    }
+    .digitalCrownRotation(
+      $poiTextPage,
+      from: 0,
+      through: Double(max(0, chunks.count - 1)),
+      by: 1,
+      sensitivity: .medium,
+      isContinuous: false
+    )
+  }
+
+  private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    VStack(spacing: 9) {
+      Label("Story / Audio", systemImage: "waveform")
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
+        .font(.system(size: 40, weight: .semibold))
+        .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
+      Text(state.storyAudio?.isPlaying == true ? copy.t("audioPlaying") : copy.t("audioPhone"))
+        .font(.headline)
+        .multilineTextAlignment(.center)
+      if let storyAudio = state.storyAudio {
+        Text(storyAudio.text)
+          .font(.caption2)
+          .foregroundStyle(WatchPalette.mutedWhite)
+          .multilineTextAlignment(.center)
+          .lineLimit(3)
+      }
+      Text(copy.t("audioControlPhone"))
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+        .multilineTextAlignment(.center)
+    }
+  }
+
+  private var waitingPage: some View {
+    VStack(spacing: 8) {
+      Image(systemName: "figure.hiking")
+        .font(.largeTitle)
+        .foregroundStyle(WatchPalette.red)
+      Text(copy.t("waitingStart"))
+        .multilineTextAlignment(.center)
+        .foregroundStyle(WatchPalette.white)
+    }
+  }
+
+  private func hikeControl(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
+    Button {
+      hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
+    } label: {
+      Label(
+        state.isHiking ? copy.t("pause") : (state.sessionStatus == "preparing" ? copy.t("start") : copy.t("resume")),
+        systemImage: state.isHiking ? "pause.fill" : "play.fill"
+      )
+    }
+    .buttonStyle(.bordered)
+  }
+
+  private func poiTextChunks(_ text: String) -> [String] {
+    var chunks: [String] = []
+    var current = ""
+    for word in text.split(whereSeparator: { $0.isWhitespace }) {
+      let candidate = current.isEmpty ? String(word) : "\(current) \(word)"
+      if candidate.count > 220, !current.isEmpty {
+        chunks.append(current)
+        current = String(word)
+      } else {
+        current = candidate
+      }
+    }
+    if !current.isEmpty { chunks.append(current) }
+    return chunks.isEmpty ? [text] : chunks
+  }
           }
           .mapStyle(.standard)
           .frame(height: 145)
@@ -506,8 +629,50 @@ private struct WatchCopy {
   }
 
   func t(_ key: String) -> String {
-    Self.words[language]?[key] ?? Self.words["de"]?[key] ?? key
+    Self.words[language]?[key]
+      ?? Self.words["de"]?[key]
+      ?? Self.commonWords[language]?[key]
+      ?? Self.commonWords["de"]?[key]
+      ?? key
   }
+
+  private static let commonWords: [String: [String: String]] = [
+    "de": [
+      "navigation": "Navigation", "status": "Status", "poiStory": "Ortgeschichte",
+      "turnCrown": "Krone drehen", "audioPlaying": "Erzählung läuft",
+      "audioPhone": "Audio bereit auf dem iPhone", "audioControlPhone": "Audio wird am iPhone gesteuert",
+    ],
+    "en": [
+      "navigation": "Navigation", "status": "Status", "poiStory": "Place story",
+      "turnCrown": "Turn crown", "audioPlaying": "Narration playing",
+      "audioPhone": "Audio ready on iPhone", "audioControlPhone": "Audio is controlled on iPhone",
+    ],
+    "fr": [
+      "navigation": "Navigation", "status": "État", "poiStory": "Histoire du lieu",
+      "turnCrown": "Tournez la couronne", "audioPlaying": "Récit en cours",
+      "audioPhone": "Audio prêt sur l’iPhone", "audioControlPhone": "Audio contrôlé sur l’iPhone",
+    ],
+    "it": [
+      "navigation": "Navigazione", "status": "Stato", "poiStory": "Storia del luogo",
+      "turnCrown": "Gira la corona", "audioPlaying": "Narrazione in corso",
+      "audioPhone": "Audio pronto su iPhone", "audioControlPhone": "Audio controllato su iPhone",
+    ],
+    "es": [
+      "navigation": "Navegación", "status": "Estado", "poiStory": "Historia del lugar",
+      "turnCrown": "Gira la corona", "audioPlaying": "Narración en curso",
+      "audioPhone": "Audio listo en iPhone", "audioControlPhone": "Audio controlado en iPhone",
+    ],
+    "nl": [
+      "navigation": "Navigatie", "status": "Status", "poiStory": "Plaatsverhaal",
+      "turnCrown": "Draai de kroon", "audioPlaying": "Vertelling speelt",
+      "audioPhone": "Audio klaar op iPhone", "audioControlPhone": "Audio wordt op iPhone bediend",
+    ],
+    "pt": [
+      "navigation": "Navegação", "status": "Estado", "poiStory": "História do lugar",
+      "turnCrown": "Rode a coroa", "audioPlaying": "Narração em curso",
+      "audioPhone": "Áudio pronto no iPhone", "audioControlPhone": "Áudio controlado no iPhone",
+    ],
+  ]
 
   private static let words: [String: [String: String]] = [
     "de": [

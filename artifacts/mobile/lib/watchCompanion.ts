@@ -64,6 +64,13 @@ export interface WatchDaylight {
   arrivalAfterSunset: boolean;
 }
 
+export interface WatchPoiStory {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  text: string;
+}
+
 export interface HikeLiveState {
   version: typeof HIKE_LIVE_STATE_VERSION;
   sequence: number;
@@ -79,6 +86,7 @@ export interface HikeLiveState {
   offRoute?: WatchOffRoute | null;
   weather?: WatchWeather | null;
   daylight?: WatchDaylight | null;
+  poiStory?: WatchPoiStory | null;
   language?: string;
   elapsedSec: number | null;
   walkedDistanceM: number | null;
@@ -282,6 +290,23 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       (typeof state.daylight.sunsetAtEpochMs !== "number" ||
        !Number.isFinite(state.daylight.sunsetAtEpochMs) ||
        typeof state.daylight.arrivalAfterSunset !== "boolean")) return false;
+  if (state.poiStory !== undefined && state.poiStory !== null) {
+    if (
+      typeof state.poiStory.id !== "string" ||
+      state.poiStory.id.length === 0 ||
+      state.poiStory.id.length > 180 ||
+      typeof state.poiStory.name !== "string" ||
+      state.poiStory.name.length === 0 ||
+      state.poiStory.name.length > 180 ||
+      typeof state.poiStory.text !== "string" ||
+      state.poiStory.text.length === 0 ||
+      state.poiStory.text.length > 8_000 ||
+      (state.poiStory.imageUrl !== null &&
+        (typeof state.poiStory.imageUrl !== "string" ||
+          state.poiStory.imageUrl.length > 2_000 ||
+          !/^https?:\/\//i.test(state.poiStory.imageUrl)))
+    ) return false;
+  }
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {
     if (plannedValue !== undefined && plannedValue !== null &&
         (typeof plannedValue !== "number" || !Number.isFinite(plannedValue) || plannedValue < 0)) {

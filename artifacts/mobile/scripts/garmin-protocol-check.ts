@@ -38,6 +38,12 @@ const canonicalState: HikeLiveState = {
   steps: 12_345,
   heartRate: { bpm: 138, measuredAt: 1_700_000_000_000, freshness: "fresh", source: "phone" },
   activeAlert: { kind: "narration", text: "Die Alp beginnt hinter dem Wald.", critical: false },
+  poiStory: {
+    id: "poi-bergkapelle",
+    name: "Bergkapelle",
+    imageUrl: "https://example.com/bergkapelle.jpg",
+    text: "Die kleine Kapelle wurde im 18. Jahrhundert erbaut.",
+  },
   sessionStatus: "sos_requested",
 };
 
@@ -51,6 +57,8 @@ assert.equal(connected.nextInstruction, "Die Alp beginnt hinter dem Wald.");
 assert.equal(connected.upcomingNavigations?.length, 2);
 assert.equal(connected.safetyCheckin?.status, "active");
 assert.equal(connected.weather?.temperatureC, 18);
+assert.equal(connected.poiStory?.name, "Bergkapelle");
+assert.equal(connected.poiStory?.imageUrl, "https://example.com/bergkapelle.jpg");
 assert.equal(isValidGarminHikeLiveState(connected), true);
 
 const disconnected = toGarminHikeLiveState(canonicalState, "disconnected", 1_700_000_000_500);

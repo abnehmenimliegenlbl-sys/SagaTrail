@@ -125,6 +125,7 @@ import {
   type WatchMapPoint,
   type WatchOffRoute,
   type WatchSafetyCheckin,
+  type WatchPoiStory,
   type WatchWeather,
   type WatchNavigation,
   type WatchTerrainSection,
@@ -1064,6 +1065,7 @@ export default function LiveHike() {
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [nearbyPoiWiki, setNearbyPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
   const [nearbyPoiWikiPoiId, setNearbyPoiWikiPoiId] = useState<string | null>(null);
+  const [watchPoiStory, setWatchPoiStory] = useState<WatchPoiStory | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   // undefined = noch am Laden, null = geladen aber nichts gefunden, WikiSummary = fertig
   const [selectedPoiWiki, setSelectedPoiWiki] = useState<WikiSummary | null | undefined>(undefined);
@@ -2613,6 +2615,7 @@ export default function LiveHike() {
             ) * 1000 > watchSunsetAtEpochMs,
           }
         : null,
+      poiStory: watchPoiStory,
       language: storyLanguage,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
@@ -2664,7 +2667,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchPoiStory, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;
@@ -4038,6 +4041,10 @@ export default function LiveHike() {
     const poiName = nearbyPoi.name;
     const releasePoiNarration = beginPoiNarration();
     let poiAudioStarted = false;
+    const finishPoiNarration = () => {
+      setWatchPoiStory(null);
+      releasePoiNarration();
+    };
     if (!isSagaHeart) {
       raiseWatchDiscoveryAlert({
         text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
@@ -4053,7 +4060,13 @@ export default function LiveHike() {
         return;
       }
       poiAudioStarted = true;
-      speak(text, releasePoiNarration, { useOpenAI: true });
+      setWatchPoiStory({
+        id: nearbyPoi.id,
+        name: nearbyPoi.name,
+        imageUrl: nearbyPoiWiki?.image ?? null,
+        text: text.slice(0, 8_000),
+      });
+      speak(text, finishPoiNarration, { useOpenAI: true });
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
@@ -4140,9 +4153,19 @@ export default function LiveHike() {
       const capturedPoi = nearbyPoi;
       const releasePoiNarration = beginPoiNarration();
       let poiAudioStarted = false;
+      const finishPoiNarration = () => {
+        setWatchPoiStory(null);
+        releasePoiNarration();
+      };
       const erzaehle = (text: string) => {
         poiAudioStarted = true;
-        speak(text, releasePoiNarration, { useOpenAI: true });
+        setWatchPoiStory({
+          id: capturedPoi.id,
+          name: capturedPoi.name,
+          imageUrl: nearbyPoiWiki?.image ?? null,
+          text: text.slice(0, 8_000),
+        });
+        speak(text, finishPoiNarration, { useOpenAI: true });
       };
       (async () => {
         const cached = await getOfflinePoiStory(capturedPoi.id, cueLanguage);
@@ -4166,8 +4189,24 @@ export default function LiveHike() {
             erzaehle(pack.poiAside(capturedPoi.name, rawExtract ? trimForNarration(rawExtract) : null));
           });
       })();
+      return () => {
+        if (!poiAudioStarted) releasePoiNarration();
+      };
     }
   }, [beginPoiNarration, claimPoiStory, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
+
+  useEffect(() => {
+    if (
+      !watchPoiStory ||
+      !nearbyPoi ||
+      watchPoiStory.id !== nearbyPoi.id ||
+      !nearbyPoiWiki?.image ||
+      watchPoiStory.imageUrl === nearbyPoiWiki.image
+    ) return;
+    setWatchPoiStory((current) => current && current.id === nearbyPoi.id
+      ? { ...current, imageUrl: nearbyPoiWiki.image ?? null }
+      : current);
+  }, [nearbyPoi, nearbyPoiWiki?.image, watchPoiStory]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das ist die primaere
@@ -5777,82 +5816,6 @@ export default function LiveHike() {
               </Text>
             )}
 
-            {/* Waypoint-Foto-Button — immer sichtbar */}
-            <View style={styles.photoRow}>
-              <PrimaryButton
-                variant="secondary"
-                style={styles.hikeActionButton}
-                label={
-                  photoUploading
-                    ? t.photoUploading
-                    : photoUploadFeedback === "ok"
-                    ? t.photoUploaded
-                    : photoUploadFeedback === "error"
-                    ? t.photoUploadError
-                    : t.photoAddBtn
-                }
-                onPress={takePhoto}
-                disabled={photoUploading}
-                loading={photoUploading}
-              />
-
-              {/* Thumbnail-Strip der aufgenommenen Fotos */}
-              {hikePhotos.length > 0 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.photoStrip}
-                  contentContainerStyle={styles.photoStripContent}
-                >
-                  {hikePhotos.map((uri, idx) => (
-                    <View key={idx} style={styles.photoThumbWrap}>
-                      <Image source={{ uri }} style={styles.photoThumb} />
-                      {idx >= hikePhotos.length - photoObjectPaths.length && (
-                        <View style={[styles.photoThumbBadge, { backgroundColor: colors.primary }]}>
-                          <Feather name="check" size={8} color="#fff" />
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-
-            {/* GPS-Foto-Challenge */}
-            {showPhotoChallenge && (
-              <Animated.View entering={FadeInUp} exiting={FadeOut} style={styles.photoChallengeWrap}>
-                <View style={[styles.photoChallengePanel, { borderColor: colors.accent, backgroundColor: colors.glassBgStrong }]}>
-                  <View style={styles.photoChallengeHeader}>
-                    <Feather name="camera" size={18} color={colors.accent} />
-                    <Text style={[styles.photoChallengeTitel, { color: colors.accent }]}>
-                      {STORY_PACKS[resolveLang(storyLanguage)].photoChallengePrompt}
-                    </Text>
-                  </View>
-                  <View style={styles.photoChallengeActions}>
-                    <Pressable
-                      onPress={takePhoto}
-                      style={[styles.photoChallengeBtn, { borderColor: colors.accent, backgroundColor: colors.accent }]}
-                      accessibilityRole="button"
-                    >
-                      <Feather name="camera" size={15} color="#fff" />
-                      <Text style={[styles.photoChallengeBtnText, { color: "#fff" }]}>
-                        {t.photoTake}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => setShowPhotoChallenge(false)}
-                      style={[styles.photoChallengeBtn, { borderColor: colors.glassBorder }]}
-                      accessibilityRole="button"
-                    >
-                      <Text style={[styles.photoChallengeBtnText, { color: colors.mutedForeground }]}>
-                        {t.photoSkip}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </Animated.View>
-            )}
-
             {/* Entscheidungspanel */}
             {awaitingDecision && currentChapter?.decision && (
               <Animated.View entering={FadeInUp} style={styles.decisionWrap}>
@@ -5954,26 +5917,103 @@ export default function LiveHike() {
               </Animated.View>
             )}
 
-            {finished && (
-              <PrimaryButton
-                label={t.finishHike}
-                variant="secondary"
-                onPress={finishHike}
-                style={{ ...styles.hikeActionButton, marginTop: 12 }}
-              />
-            )}
-
-            {!finished && !preparing && (
-              <PrimaryButton
-                label={t.finishEarlyButton}
-                variant="secondary"
-                onPress={finishHikeEarly}
-                style={{ ...styles.hikeActionButton, marginTop: 12 }}
-              />
-            )}
           </Animated.View>
           ))}
         </Glass>
+
+        {/* Vollbreite Aktionen unterhalb der Sagentext-Kachel */}
+        <View style={styles.storyActionArea}>
+          <View style={styles.photoRow}>
+            <PrimaryButton
+              variant="secondary"
+              style={styles.hikeActionButton}
+              label={
+                photoUploading
+                  ? t.photoUploading
+                  : photoUploadFeedback === "ok"
+                  ? t.photoUploaded
+                  : photoUploadFeedback === "error"
+                  ? t.photoUploadError
+                  : t.photoAddBtn
+              }
+              onPress={takePhoto}
+              disabled={photoUploading}
+              loading={photoUploading}
+            />
+
+            {hikePhotos.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.photoStrip}
+                contentContainerStyle={styles.photoStripContent}
+              >
+                {hikePhotos.map((uri, idx) => (
+                  <View key={idx} style={styles.photoThumbWrap}>
+                    <Image source={{ uri }} style={styles.photoThumb} />
+                    {idx >= hikePhotos.length - photoObjectPaths.length && (
+                      <View style={[styles.photoThumbBadge, { backgroundColor: colors.primary }]}>
+                        <Feather name="check" size={8} color="#fff" />
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {showPhotoChallenge && (
+            <Animated.View entering={FadeInUp} exiting={FadeOut} style={styles.photoChallengeWrap}>
+              <View style={[styles.photoChallengePanel, { borderColor: colors.accent, backgroundColor: colors.glassBgStrong }]}>
+                <View style={styles.photoChallengeHeader}>
+                  <Feather name="camera" size={18} color={colors.accent} />
+                  <Text style={[styles.photoChallengeTitel, { color: colors.accent }]}>
+                    {STORY_PACKS[resolveLang(storyLanguage)].photoChallengePrompt}
+                  </Text>
+                </View>
+                <View style={styles.photoChallengeActions}>
+                  <Pressable
+                    onPress={takePhoto}
+                    style={[styles.photoChallengeBtn, { borderColor: colors.accent, backgroundColor: colors.accent }]}
+                    accessibilityRole="button"
+                  >
+                    <Feather name="camera" size={15} color="#fff" />
+                    <Text style={[styles.photoChallengeBtnText, { color: "#fff" }]}>
+                      {t.photoTake}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowPhotoChallenge(false)}
+                    style={[styles.photoChallengeBtn, { borderColor: colors.glassBorder }]}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.photoChallengeBtnText, { color: colors.mutedForeground }]}>
+                      {t.photoSkip}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
+          {finished && (
+            <PrimaryButton
+              label={t.finishHike}
+              variant="secondary"
+              onPress={finishHike}
+              style={styles.hikeActionButton}
+            />
+          )}
+
+          {!finished && !preparing && (
+            <PrimaryButton
+              label={t.finishEarlyButton}
+              variant="secondary"
+              onPress={finishHikeEarly}
+              style={styles.hikeActionButton}
+            />
+          )}
+        </View>
 
         {/* ── Sicherheits-POIs filtern ───────────────────────────────── */}
         <View
@@ -7263,6 +7303,7 @@ const styles = StyleSheet.create({
   optionBtn: { ...GLAS_3D, borderWidth: 1, borderRadius: 12, padding: 15, marginBottom: 10 },
   optionLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, lineHeight: 21 },
   optionHint: { fontFamily: fonts.mono, fontSize: 11, marginTop: 5 },
+  storyActionArea: { width: "100%", gap: 10 },
   photoRow: { alignItems: "stretch", marginTop: 20, gap: 8 },
   hikeActionButton: { width: "100%", minHeight: 56 },
   photoFab: {

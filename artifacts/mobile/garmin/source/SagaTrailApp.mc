@@ -58,6 +58,9 @@ class SagaTrailApp extends Application.AppBase {
         var previousSafety = liveState[:safetyText];
         var previousNarration = liveState[:narrationText];
         var previousAlert = liveState[:alertText];
+        var previousPoi = liveState[:poiStory];
+        var previousGpsFresh = valueOrDefault(liveState, :hasFreshGps, true);
+        var previousDirection = valueOrDefault(liveState, :direction, "none");
         // This is the coordinate-free adapter for the canonical JS HikeLiveState.
         var next = {};
         next[:protocolVersion] = 1;
@@ -90,6 +93,7 @@ class SagaTrailApp extends Application.AppBase {
         next[:offRoute] = payload["offRoute"];
         next[:weather] = payload["weather"];
         next[:daylight] = payload["daylight"];
+        next[:poiStory] = payload["poiStory"];
         next[:language] = payload["language"];
         // A cache alone must never claim that a phone bridge is connected.
         phoneCompanionReady = payload["bridge"] == "connectIqMobile" &&
@@ -97,12 +101,17 @@ class SagaTrailApp extends Application.AppBase {
         liveState = next;
         transmitLocalHeartRate();
 
+        var poiChanged = next[:poiStory] != null &&
+            (previousPoi == null || next[:poiStory][:id] != previousPoi[:id]);
+        var gpsWentStale = previousGpsFresh == true && next[:hasFreshGps] != true;
+        var turnChanged = next[:direction] != null &&
+            next[:direction] != "none" && next[:direction] != previousDirection;
         if ((next[:safetyText] != null && next[:safetyText] != "" &&
             next[:safetyText] != previousSafety) ||
             (next[:narrationText] != null && next[:narrationText] != "" &&
             next[:narrationText] != previousNarration) ||
             (next[:alertText] != null && next[:alertText] != "" &&
-            next[:alertText] != previousAlert)) {
+            next[:alertText] != previousAlert) || poiChanged || gpsWentStale || turnChanged) {
             Attention.vibrate([new Attention.VibeProfile(60, 90)]);
         }
 
@@ -218,6 +227,11 @@ class SagaTrailApp extends Application.AppBase {
 
     function getLiveState() {
         return liveState;
+    }
+
+    function valueOrDefault(state, key, fallback) {
+        var candidate = state[key];
+        return candidate == null ? fallback : candidate;
     }
 
     function getSosState() {

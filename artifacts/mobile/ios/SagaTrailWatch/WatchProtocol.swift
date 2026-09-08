@@ -55,6 +55,18 @@ enum SagaTrailWatchProtocol {
     let arrivalAfterSunset: Bool
   }
 
+  struct PoiStory: Equatable {
+    let id: String
+    let name: String
+    let imageURL: URL?
+    let text: String
+  }
+
+  struct StoryAudio: Equatable {
+    let isPlaying: Bool
+    let text: String
+  }
+
   struct LiveState {
     let routeName: String
     let nextInstruction: String
@@ -80,6 +92,8 @@ enum SagaTrailWatchProtocol {
     let offRoute: OffRoute?
     let weather: Weather?
     let daylight: Daylight?
+    let poiStory: PoiStory?
+    let storyAudio: StoryAudio?
     let language: String
     let updatedAt: Date
 
@@ -203,6 +217,31 @@ enum SagaTrailWatchProtocol {
           arrivalAfterSunset: arrivalAfterSunset
         )
       }()
+      let poiStory: PoiStory? = {
+        guard let value = dictionary["poiStory"] as? [String: Any],
+              let id = value["id"] as? String,
+              !id.isEmpty,
+              id.count <= 180,
+              let name = value["name"] as? String,
+              !name.isEmpty,
+              name.count <= 180,
+              let text = value["text"] as? String,
+              !text.isEmpty,
+              text.count <= 8_000 else {
+          return nil
+        }
+        let imageURL = (value["imageUrl"] as? String).flatMap(URL.init(string:))
+        return PoiStory(id: id, name: name, imageURL: imageURL, text: text)
+      }()
+      let storyAudio: StoryAudio? = {
+        guard let value = dictionary["storyAudio"] as? [String: Any],
+              let isPlaying = value["isPlaying"] as? Bool,
+              let text = value["text"] as? String,
+              !text.isEmpty else {
+          return nil
+        }
+        return StoryAudio(isPlaying: isPlaying, text: text)
+      }()
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
@@ -226,6 +265,8 @@ enum SagaTrailWatchProtocol {
         offRoute: offRoute,
         weather: weather,
         daylight: daylight,
+        poiStory: poiStory,
+        storyAudio: storyAudio,
         language: dictionary["language"] as? String ?? "de",
         updatedAt: Date(timeIntervalSince1970: updated / 1000)
       )
