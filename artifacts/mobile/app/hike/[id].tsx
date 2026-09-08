@@ -916,6 +916,7 @@ export default function LiveHike() {
   }, [offRoutePos, startRecalcChoice]);
   const [speaking, setSpeaking] = useState(false);
   const [locState, setLocState] = useState<LocState>("idle");
+  const [locationPermissionRetry, setLocationPermissionRetry] = useState(0);
   const [sosOpen, setSosOpen] = useState(false);
   const [sosAcknowledgement, setSosAcknowledgement] = useState<"none" | "acknowledged" | "failed">("none");
   const [showConditionForm, setShowConditionForm] = useState(false);
@@ -1150,6 +1151,29 @@ export default function LiveHike() {
     locState === "granted" &&
     livePos !== null &&
     locationNow - lastLocationAtRef.current <= 45_000;
+  const requestLocationAccess = useCallback(async () => {
+    if (Platform.OS === "web") return;
+    try {
+      const current = await Location.getForegroundPermissionsAsync();
+      const permission =
+        current.status === Location.PermissionStatus.GRANTED
+          ? current
+          : await Location.requestForegroundPermissionsAsync();
+
+      if (permission.status === Location.PermissionStatus.GRANTED) {
+        setLocState("idle");
+        setLocationPermissionRetry((value) => value + 1);
+        return;
+      }
+
+      setLocState("denied");
+      if (!permission.canAskAgain) {
+        await Linking.openSettings();
+      }
+    } catch {
+      setLocState("denied");
+    }
+  }, []);
   const requestPhoneSideSos = useCallback(() => {
     // A request from a wrist device deliberately opens the established phone
     // emergency flow. It does not imply that emergency services were reached.
@@ -3161,7 +3185,13 @@ export default function LiveHike() {
         navigator.geolocation.clearWatch(webId);
       }
     };
-  }, [handleFix, energiesparmodus, t.backgroundNotificationTitle, t.backgroundNotificationBody]);
+  }, [
+    handleFix,
+    energiesparmodus,
+    t.backgroundNotificationTitle,
+    t.backgroundNotificationBody,
+    locationPermissionRetry,
+  ]);
 
   // iOS uses Core Location's calibrated heading so Panorama and Apple Maps
   // share the same device reference. Android retains the tilt-compensated
@@ -5028,7 +5058,7 @@ export default function LiveHike() {
             {t.locationDeniedHint}
           </Text>
           <Pressable
-            onPress={() => Linking.openSettings?.()}
+            onPress={() => void requestLocationAccess()}
             accessibilityRole="button"
             accessibilityLabel={t.allow}
             style={[styles.bannerBtn, { borderColor: colors.glassBorder }]}
