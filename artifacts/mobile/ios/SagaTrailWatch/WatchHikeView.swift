@@ -1,6 +1,13 @@
 import SwiftUI
 import MapKit
 
+private enum WatchPalette {
+  static let red = Color(red: 204 / 255, green: 0, blue: 0)
+  static let black = Color.black
+  static let white = Color.white
+  static let mutedWhite = Color.white.opacity(0.72)
+}
+
 struct WatchHikeView: View {
   @EnvironmentObject private var hike: WatchHikeModel
   private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
@@ -29,13 +36,13 @@ struct WatchHikeView: View {
           Image(systemName: arrow(for: state.navigationDirection))
             .font(.system(size: 44, weight: .bold))
             .rotationEffect(.degrees(state.bearingDegrees ?? 0))
-            .foregroundStyle(.tint)
+            .foregroundStyle(WatchPalette.red)
           Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
             .font(.title2.monospacedDigit()).bold()
           Text(state.nextInstruction).font(.footnote).multilineTextAlignment(.center)
           if state.upcomingNavigations.count > 1 {
             VStack(alignment: .leading, spacing: 4) {
-              Text(copy.t("next")).font(.caption2).foregroundStyle(.secondary)
+              Text(copy.t("next")).font(.caption2).foregroundStyle(WatchPalette.mutedWhite)
               ForEach(Array(state.upcomingNavigations.dropFirst().enumerated()), id: \.offset) { _, hint in
                 HStack(spacing: 6) {
                   Image(systemName: arrow(for: hint.direction))
@@ -44,7 +51,7 @@ struct WatchHikeView: View {
                     .monospacedDigit()
                   Spacer()
                   Text(directionLabel(hint.direction))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(WatchPalette.mutedWhite)
                 }
                 .font(.caption2)
               }
@@ -64,7 +71,7 @@ struct WatchHikeView: View {
                    ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
                    : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m"
               )
-              .foregroundStyle(.secondary)
+              .foregroundStyle(WatchPalette.mutedWhite)
             }
             .font(.caption2)
           }
@@ -97,12 +104,20 @@ struct WatchHikeView: View {
                 Label(copy.t("sos"), systemImage: "exclamationmark.triangle.fill")
              }.buttonStyle(.borderedProminent)
            }
-        } else {
-          Image(systemName: "iphone.slash").font(.largeTitle)
-           Text(copy.t("waiting")).multilineTextAlignment(.center)
+         } else {
+           Image(systemName: "figure.hiking")
+             .font(.largeTitle)
+             .foregroundStyle(WatchPalette.red)
+           Text(copy.t("waitingStart"))
+             .multilineTextAlignment(.center)
+             .foregroundStyle(WatchPalette.white)
         }
       }.padding(.horizontal, 4)
     }
+      .scrollContentBackground(.hidden)
+      .background(WatchPalette.black.ignoresSafeArea())
+      .tint(WatchPalette.red)
+      .preferredColorScheme(.dark)
      .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
        Button(copy.t("cancel"), role: .cancel) {}
        Button(copy.t("confirmSOS"), role: .destructive, action: hike.confirmSOS)
@@ -123,10 +138,12 @@ struct WatchHikeView: View {
   }
 
   private var connectionBanner: some View {
+    let status = activityStatus
     HStack(spacing: 5) {
-      Text(!hike.isReachable ? copy.t("unreachable") : hike.isStale ? copy.t("stale") : copy.t("live"))
+      Image(systemName: status.icon)
+      Text(copy.t(status.key))
       Spacer()
-      if let receivedAt = hike.receivedAt {
+      if status.key == "live", let receivedAt = hike.receivedAt {
         let age = max(0, Int(Date().timeIntervalSince(receivedAt)))
         Text(age < 5 ? copy.t("now") : "\(copy.t("ago")) \(age)s").monospacedDigit()
       }
@@ -136,7 +153,35 @@ struct WatchHikeView: View {
       }
     }
     .font(.caption2)
-    .foregroundStyle((!hike.isReachable || hike.isStale) ? .orange : .green)
+    .foregroundStyle(status.waiting ? WatchPalette.red : WatchPalette.white)
+    .padding(.horizontal, 7)
+    .padding(.vertical, 5)
+    .background(
+      (status.waiting ? WatchPalette.red : WatchPalette.white).opacity(0.12),
+      in: RoundedRectangle(cornerRadius: 9)
+    )
+  }
+
+  private var activityStatus: (key: String, icon: String, waiting: Bool) {
+    guard let state = hike.state else {
+      return ("waitingStart", "figure.hiking", true)
+    }
+    if state.sessionStatus == "finished" {
+      return ("finishedStatus", "checkmark.circle.fill", false)
+    }
+    if state.sessionStatus == "paused" {
+      return ("pausedStatus", "pause.circle.fill", true)
+    }
+    if state.sessionStatus == "preparing" || !state.isHiking {
+      return ("waitingStart", "play.circle.fill", true)
+    }
+    if !hike.isReachable {
+      return ("waitingPhone", "figure.hiking", true)
+    }
+    if hike.isStale {
+      return ("waitingNext", "figure.walk", true)
+    }
+    return ("live", "figure.walk", false)
   }
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
     VStack(alignment: .leading, spacing: 3) {
