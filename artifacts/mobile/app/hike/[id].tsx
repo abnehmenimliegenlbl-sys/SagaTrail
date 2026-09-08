@@ -5336,6 +5336,7 @@ export default function LiveHike() {
               id: "compass",
               title: t.compass,
               subtitle: compassHeading == null ? "—°" : `${Math.round(compassHeading)}°`,
+              highlightSubtitle: true,
               icon: "compass",
               content: (
                 <CompassCard
@@ -5368,6 +5369,7 @@ export default function LiveHike() {
                   ? panoramaOnlinePois.length
                   : offlinePanorama?.peaks.length ?? panoramaPeaks.length
               } Gipfel`,
+              highlightSubtitle: true,
               icon: "triangle",
               modalSize: "large",
               content: (
@@ -5446,10 +5448,11 @@ export default function LiveHike() {
               ? [{
                   id: "watch",
                   title: "PULS",
+                  highlightSubtitle: true,
                   icon: "watch" as const,
                   modalSize: "large" as const,
                   preview: (
-                     <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
+                      <Text style={[styles.watchTilePulse, { color: colors.destructive }]}>
                          {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Puls starten"}
                     </Text>
                   ),
@@ -5506,6 +5509,7 @@ export default function LiveHike() {
                     ? "Überfällig"
                     : "Starten"
                 : "Check-in",
+              highlightSubtitle: true,
               icon: "clock",
               action: true,
               content: null,
@@ -5695,7 +5699,7 @@ export default function LiveHike() {
                 <Text style={[styles.storyTileTitle, { color: colors.foreground }]}>
                   Sagentext
                 </Text>
-                <Text style={[styles.storyTileSubtitle, { color: colors.mutedForeground }]}>
+                <Text style={[styles.storyTileSubtitle, { color: colors.destructive }]}>
                   {preparing
                     ? t.preparingText
                     : t.chapterMark(currentIndex + 1, chapters.length)}
@@ -6435,7 +6439,7 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
     <View style={styles.metric}>
       <Text style={[styles.metricLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <View style={styles.metricValRow}>
-        <Text style={[styles.metricVal, { color: colors.foreground }]}>{value}</Text>
+        <Text style={[styles.metricVal, { color: colors.destructive }]}>{value}</Text>
         {unit ? (
           <Text style={[styles.metricUnit, { color: colors.accent }]}>{unit}</Text>
         ) : null}
@@ -7138,9 +7142,9 @@ const styles = StyleSheet.create({
   poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   storyWrap: { marginTop: 24 },
   storyTileHeader: {
-    minHeight: 64,
+    minHeight: 54,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 7,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
