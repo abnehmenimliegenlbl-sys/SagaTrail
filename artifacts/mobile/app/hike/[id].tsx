@@ -334,7 +334,7 @@ const OFF_ROUTE_THRESHOLD_KM = 0.08;
 /** Abstand in km ab dem die Warnung automatisch wieder erlischt. */
 const OFF_ROUTE_RECOVER_KM = 0.04;
 /** Abstand zum offiziellen Wegstart, ab dem beim Wanderungsbeginn eine Auswahl erscheint. */
-const START_NEARBY_KM = 0.05;
+const START_NEARBY_KM = 0.1;
 /** Anzahl aufeinanderfolgender GPS-Fixes, die ueberschritten sein muessen, bevor gewarnt wird. */
 const OFF_ROUTE_CONFIRM_FIXES = 3;
 /** Eigene Statusfarbe fuer ein gueltiges Live-GPS-Signal — nicht mit dem roten Markenakzent vermischen. */
