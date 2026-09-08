@@ -294,10 +294,37 @@ export function buildLeafletMapHtml(
       return text;
     }
     var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
+    // OpenTopoMap kann einzelne Kacheln zeitweise mit Netzwerk-/Rate-Limit-
+    // Fehlern beantworten. Leaflet lässt diese Stellen sonst transparent,
+    // wodurch im Kartenbild genau ein dunkler vertikaler Streifen entsteht.
+    // Die Topo-Karte bleibt der Primär-Layer; nur eine fehlende Einzelkachel
+    // wird auf Carto Voyager zurückgesetzt.
+    var tileFallbackUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+    var tileFallbackSubdomains = ["a", "b", "c", "d"];
+    function addTileFallback(layer) {
+      layer.on("tileerror", function (event) {
+        var tile = event && event.tile;
+        var coords = event && event.coords;
+        if (!tile || !coords || tile.getAttribute("data-stt-fallback") === "1") return;
+        tile.setAttribute("data-stt-fallback", "1");
+        var subdomain = tileFallbackSubdomains[
+          Math.abs(coords.x + coords.y) % tileFallbackSubdomains.length
+        ];
+        tile.src = L.Util.template(tileFallbackUrl, {
+          s: subdomain,
+          z: coords.z,
+          x: coords.x,
+          y: coords.y,
+          r: L.Browser.retina ? "@2x" : ""
+        });
+      });
+      return layer;
+    }
     var carto = L.tileLayer(topoUrl, {
       subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, tileSize: 256,
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
+    addTileFallback(carto);
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
@@ -310,7 +337,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-      active = new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" }).addTo(map);
+       active = addTileFallback(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
     }
     var is3d = false;
     var isSat = false;
