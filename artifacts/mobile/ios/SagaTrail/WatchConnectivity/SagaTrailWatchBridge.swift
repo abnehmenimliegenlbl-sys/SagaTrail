@@ -319,11 +319,21 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     guard WCSession.isSupported() else { return }
     let session = WCSession.default
     if preferApplicationContext {
-      do { try session.updateApplicationContext(message) }
-      catch { NSLog("[SagaTrail Watch] Could not update application context: %@", error.localizedDescription) }
-    } else if session.isReachable {
+      if session.activationState == .activated {
+        do {
+          try session.updateApplicationContext(message)
+          return
+        } catch {
+          NSLog("[SagaTrail Watch] Could not update application context: %@", error.localizedDescription)
+        }
+      }
+      // A live-state update can race WCSession activation. Do not leave the
+      // watch on its previous "waiting" state when the direct channel is
+      // already available.
+    }
+    if session.isReachable {
       session.sendMessage(message, replyHandler: nil) { error in
-        NSLog("[SagaTrail Watch] Could not send alert: %@", error.localizedDescription)
+        NSLog("[SagaTrail Watch] Could not send message: %@", error.localizedDescription)
       }
     } else {
       session.transferUserInfo(message)

@@ -366,6 +366,12 @@ export function subscribeToCompanionEvents(handlers: {
 
 export async function prepareWatchCompanion(): Promise<boolean> {
   if (Platform.OS === "web") return false;
+  // The native companion is a persistent device connection, not a per-hike
+  // opt-in. Activate every installed companion as soon as a hike screen uses
+  // the Watch card; notification permission is only needed for the fallback
+  // mirror on devices without the native protocol.
+  const module = companionModule();
+  if (module) activateNativeCompanion(module);
   if (permissionGranted != null) return permissionGranted;
   try {
     const current = await Notifications.getPermissionsAsync();

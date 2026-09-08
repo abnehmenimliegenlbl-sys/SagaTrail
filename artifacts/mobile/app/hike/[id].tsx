@@ -958,6 +958,18 @@ export default function LiveHike() {
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [compassAvailable, setCompassAvailable] = useState<boolean | null>(null);
   const [watchReady, setWatchReady] = useState<boolean | null>(null);
+  // Watch accompaniment is a device-level choice, not a new permission for
+  // every hike. Read the persisted OS permission automatically when this hike
+  // screen mounts so opening the Watch tile does not require a second tap.
+  useEffect(() => {
+    let cancelled = false;
+    void prepareWatchCompanion().then((ready) => {
+      if (!cancelled) setWatchReady(ready);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const safetyCheckinRef = useRef<SafetyCheckinHandle>(null);
   const [safetyCheckinState, setSafetyCheckinState] = useState<WatchSafetyCheckin | null>(null);
   const handleSafetyCheckinStatus = useCallback(
@@ -2553,7 +2565,19 @@ export default function LiveHike() {
               critical: false,
             }
         : speaking
-          ? { kind: "narration" as const, text: "Narration playing", critical: false }
+          ? {
+              kind: "narration" as const,
+              text: storyLanguage === "de" || storyLanguage === "gsw"
+                ? "Erzählung läuft"
+                : storyLanguage === "fr"
+                  ? "Récit en cours"
+                  : storyLanguage === "it"
+                    ? "Narrazione in corso"
+                    : storyLanguage === "en"
+                      ? "Narration playing"
+                      : "Erzählung läuft",
+              critical: false,
+            }
           : null;
     const state: HikeLiveState = {
       version: 1,
@@ -2588,6 +2612,7 @@ export default function LiveHike() {
             ) * 1000 > watchSunsetAtEpochMs,
           }
         : null,
+      language: storyLanguage,
       elapsedSec: preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
@@ -6447,7 +6472,7 @@ function WatchCompanionCard({
     ? "Watch-Mitteilungen aktiv"
     : ready === false
       ? "Watch-Mitteilungen nicht erlaubt"
-      : "Watch-Mitteilungen nicht aktiviert";
+      : "Watch-Begleitung wird geprüft";
   return (
     <Glass style={{ marginTop: 14 }}>
       <View style={styles.watchCardHead}>
@@ -6460,7 +6485,7 @@ function WatchCompanionCard({
             {status}
           </Text>
         </View>
-        {!enabled && (
+        {ready === false && (
           <Pressable
             onPress={() => {
               hapticRigid();
