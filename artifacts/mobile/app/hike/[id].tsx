@@ -752,6 +752,9 @@ export default function LiveHike() {
   const [chapters, setChapters] = useState<StoryChapter[]>([]);
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  /** Route-Fortschritt beim ersten verlässlichen Fix — verhindert einen
+   * Kapitelvorsprung, wenn die Wanderung schon vor dem ersten Fix begonnen hat. */
+  const [storyProgressBaseline, setStoryProgressBaseline] = useState<number | null>(null);
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [decisionFeedbackPending, setDecisionFeedbackPending] = useState(false);
   const decisionFeedbackPendingRef = useRef(false);
@@ -1181,6 +1184,12 @@ export default function LiveHike() {
   const storyCompleteRef = useRef(false);
   /** Die Route kann vor oder nach dem letzten Sagenkapitel enden. */
   const routeCompletedRef = useRef(false);
+  /** Story-Fortschritt bleibt monoton, auch wenn GPS-Fixes schwanken. */
+  const storyProgressMaxRef = useRef(0);
+  /** Hoechstes Kapitel, das die Strecke bereits freigegeben hat. */
+  const storyEligibleChapterRef = useRef(0);
+  /** Hoechstes Kapitel, dessen Audio vollstaendig beendet wurde. */
+  const narratedThroughRef = useRef(-1);
   /** Gruppenmitglieder warten nach einer fremden Entscheidung bis ihr Audio endet. */
   const pendingGroupDecisionAdvanceRef = useRef<number | null>(null);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
