@@ -110,6 +110,7 @@
 - [Premium partner proximity](sagatrail-premium-partner-proximity.md) — mark partner announcements completed only after a successful generated text; transient failures must remain retryable.
 - [POI approach categories](sagatrail-poi-approach-categories.md) — a POI can load and be tappable yet miss the 200/50 m flow when its OSM kind is absent from the mobile approach set.
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
+- [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
 - [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
 - [EAS workspace archive exclusions](sagatrail-eas-workspace-ignore.md) — builds from artifacts/mobile can archive the Git root; root .easignore must exclude workspace caches and local data.
 - [Persistente GPS-Prüfung](sagatrail-gps-persistence.md) — GPS-Status liegt dauerhaft in catalog_sagas; Startup-Seeding darf Koordinaten und Sicherheitsstatus nicht überschreiben.
