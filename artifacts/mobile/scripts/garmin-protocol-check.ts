@@ -44,6 +44,7 @@ const canonicalState: HikeLiveState = {
     imageUrl: "https://example.com/bergkapelle.jpg",
     text: "Die kleine Kapelle wurde im 18. Jahrhundert erbaut.",
   },
+  isHiking: true,
   sessionStatus: "sos_requested",
 };
 
