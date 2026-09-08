@@ -6,7 +6,10 @@ import { useMapStrings } from "@/lib/i18n/screens/map";
 import { buildLeafletMapHtml } from "./leafletMapHtml";
 import { SwisstopoMapProps } from "./swisstopoMapHtml";
 
-type MapWindow = Window & { sttSetPosition?: (lat: number, lng: number) => void };
+type MapWindow = Window & {
+  sttSetPosition?: (lat: number, lng: number) => void;
+  sttMapResize?: () => void;
+};
 
 /**
  * Web-Variante der Kartenansicht: rendert die swisstopo-Leaflet-Karte in einem
@@ -96,6 +99,13 @@ export function SwisstopoMap({
       win.sttSetPosition(position.lat, position.lng);
     }
   }, [ready, position?.lat, position?.lng]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const win = ref.current?.contentWindow as MapWindow | null | undefined;
+    win?.sttMapResize?.();
+    requestAnimationFrame(() => win?.sttMapResize?.());
+  }, [ready]);
 
   // Der iframe teilt sich denselben Ursprung (srcDoc), Klicks auf POI-Marker
   // kommen daher per window.postMessage von seinem contentWindow zurueck.

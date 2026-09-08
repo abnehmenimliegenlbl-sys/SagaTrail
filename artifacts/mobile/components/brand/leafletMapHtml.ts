@@ -278,6 +278,14 @@ export function buildLeafletMapHtml(
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
     var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
+    // Die kleine native WebView kann die finale Breite erst nach dem ersten
+    // Rendern kennen. Ohne explizites invalidateSize lädt Leaflet dann nur
+    // einen Teil des sichtbaren Tile-Rasters; ein manueller Zoom korrigiert
+    // das zufällig. Die React-Native-Hülle ruft diese Funktion bei onLayout
+    // und nach dem Karten-Ready-Signal auf.
+    window.sttMapResize = function () {
+      map.invalidateSize(false);
+    };
 
     function post(value) {
       var payload = JSON.stringify(value);
@@ -337,7 +345,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-       active = addTileFallback(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
+      active = addTileFallback(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
     }
     var is3d = false;
     var isSat = false;
@@ -578,8 +586,8 @@ export function buildLeafletMapHtml(
       map.getContainer().style.cursor = "crosshair";
       map.on("click", function (event) { post({ type: "stt-mapclick", lat: event.latlng.lat, lng: event.latlng.lng }); });
     }
-    setTimeout(function () { map.invalidateSize(false); }, 100);
-    setTimeout(function () { map.invalidateSize(false); }, 500);
+    setTimeout(function () { window.sttMapResize(); }, 100);
+    setTimeout(function () { window.sttMapResize(); }, 500);
     post({ type: "stt-html-ready" });
   })();
   </script>
