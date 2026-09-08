@@ -47,6 +47,19 @@ final class WatchHikeModel: NSObject, ObservableObject {
     apply(envelope: session.receivedApplicationContext)
   }
 
+  private func requestCurrentLiveState() {
+    let session = WCSession.default
+    guard session.isReachable else {
+      NSLog("[SagaTrail Watch] Live-state request skipped: phone is not reachable")
+      return
+    }
+    let message = SagaTrailWatchProtocol.envelope(type: "liveStateRequest")
+    NSLog("[SagaTrail Watch] Requesting current live state from phone")
+    session.sendMessage(message, replyHandler: nil) { error in
+      NSLog("[SagaTrail Watch] Live-state request failed: %@", error.localizedDescription)
+    }
+  }
+
   private func updateBattery() {
     let device = WKInterfaceDevice.current()
     batteryLevel = device.batteryLevel >= 0 ? device.batteryLevel : nil
@@ -230,10 +243,25 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private func apply(envelope: [String: Any]) {
     guard (envelope["v"] as? NSNumber)?.intValue == SagaTrailWatchProtocol.version,
           let type = envelope["type"] as? String,
-          let payload = envelope["payload"] as? [String: Any] else { return }
+          let payload = envelope["payload"] as? [String: Any] else {
+      NSLog("[SagaTrail Watch] Ignored malformed envelope (keys: %@)", Array(envelope.keys).sorted().joined(separator: ","))
+      return
+    }
     switch type {
     case "liveState":
-      guard let decoded = SagaTrailWatchProtocol.LiveState.decode(payload) else { return }
+      guard let decoded = SagaTrailWatchProtocol.LiveState.decode(payload) else {
+        let status = payload["sessionStatus"] as? String ?? "<missing>"
+        let hiking = payload["isHiking"] as? Bool
+        NSLog("[SagaTrail Watch] Rejected live state (status: %@, isHiking: %@, keys: %@)",
+              status,
+              hiking.map { String($0) } ?? "<missing>",
+              Array(payload.keys).sorted().joined(separator: ","))
+        return
+      }
+      NSLog("[SagaTrail Watch] Applied live state (status: %@, isHiking: %@, updatedAt: %@)",
+            decoded.sessionStatus,
+            String(decoded.isHiking),
+            String(decoded.updatedAt.timeIntervalSince1970))
       playTurnHapticIfNeeded(decoded)
       if decoded.offRoute != nil && state?.offRoute == nil {
         WKInterfaceDevice.current().play(.failure)
@@ -331,21 +359,36 @@ extension WatchHikeModel: WCSessionDelegate {
   nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
     let receivedContext = session.receivedApplicationContext
     let reachable = session.isReachable
+    NSLog("[SagaTrail Watch] WC activation completed (state: %ld, reachable: %@, contextKeys: %@, error: %@)",
+          activationState.rawValue,
+          String(reachable),
+          Array(receivedContext.keys).sorted().joined(separator: ","),
+          error?.localizedDescription ?? "none")
     Task { @MainActor in
       self.apply(envelope: receivedContext)
       self.isReachable = reachable
+      if self.state == nil {
+        self.requestCurrentLiveState()
+      }
     }
   }
   nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+    NSLog("[SagaTrail Watch] WC reachability changed: %@", String(session.isReachable))
     Task { @MainActor in self.isReachable = session.isReachable }
   }
   nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+    NSLog("[SagaTrail Watch] Received application context (keys: %@)",
+          Array(applicationContext.keys).sorted().joined(separator: ","))
     Task { @MainActor in self.apply(envelope: applicationContext) }
   }
   nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    NSLog("[SagaTrail Watch] Received direct message (keys: %@)",
+          Array(message.keys).sorted().joined(separator: ","))
     Task { @MainActor in self.apply(envelope: message) }
   }
   nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
+    NSLog("[SagaTrail Watch] Received transferred user info (keys: %@)",
+          Array(userInfo.keys).sorted().joined(separator: ","))
     Task { @MainActor in self.apply(envelope: userInfo) }
   }
 }

@@ -10,3 +10,9 @@ The Watch's native bridge computes `isHiking` from the canonical `sessionStatus 
 **How to apply:** Keep story preparation dependencies limited to story inputs. When diagnosing the Watch, inspect the actual `sessionStatus` transition (`preparing` → `active`) before changing native Watch rendering or payload fields.
 
 The Watch UI also uses the same “waiting for hike start” text when no decoded `LiveState` exists. `WCSession.receivedApplicationContext` must therefore be applied again from `activationDidCompleteWith`; reading it immediately after `session.activate()` can see an empty context and leave the Watch state nil.
+
+The Watch now also requests the latest live-state snapshot after activation when no state was decoded. The iPhone keeps the last validated snapshot and answers that request through WatchConnectivity.
+
+**Why:** A reinstall can leave the Watch without a usable context even though the iPhone has already published an active state; passive context replay alone was not sufficient to prove recovery.
+
+**How to apply:** Keep the request/response handshake and native receipt/rejection logs in place when changing the companion protocol; validate recovery on a physical Watch with a production build.

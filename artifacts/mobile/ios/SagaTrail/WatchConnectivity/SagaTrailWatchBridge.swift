@@ -167,6 +167,7 @@ extension Notification.Name {
 private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   static let shared = SagaTrailPhoneWatchConnection()
   private let protocolVersion = 1
+  private var latestLiveStateEnvelope: [String: Any]?
 
   private override init() {
     super.init()
@@ -192,7 +193,18 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   func sendLiveState(_ state: [String: Any]) throws {
     let payload = try validatedLiveState(state)
-    send(envelope(type: "liveState", payload: payload), preferApplicationContext: true)
+    let message = envelope(type: "liveState", payload: payload)
+    latestLiveStateEnvelope = message
+    send(message, preferApplicationContext: true)
+  }
+
+  func resendLatestLiveState() {
+    guard let latestLiveStateEnvelope else {
+      NSLog("[SagaTrail Watch] Cannot answer live-state request: no snapshot cached")
+      return
+    }
+    NSLog("[SagaTrail Watch] Answering live-state request with cached snapshot")
+    send(latestLiveStateEnvelope, preferApplicationContext: true)
   }
 
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
@@ -510,8 +522,13 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   private func receive(_ message: [String: Any]) {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
-          let type = message["type"] as? String,
-           ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
+          let type = message["type"] as? String else { return }
+    if type == "liveStateRequest" {
+      NSLog("[SagaTrail Watch] Received live-state request from watch")
+      resendLatestLiveState()
+      return
+    }
+    guard ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
     // JS / the phone owns the actual SOS action and any location sharing.
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
   }
