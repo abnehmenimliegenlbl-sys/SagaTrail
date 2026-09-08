@@ -167,7 +167,6 @@ extension Notification.Name {
 private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   static let shared = SagaTrailPhoneWatchConnection()
   private let protocolVersion = 1
-  private var latestLiveStateEnvelope: [String: Any]?
 
   private override init() {
     super.init()
@@ -193,18 +192,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   func sendLiveState(_ state: [String: Any]) throws {
     let payload = try validatedLiveState(state)
-    let message = envelope(type: "liveState", payload: payload)
-    latestLiveStateEnvelope = message
+    let message = try propertyListSafeEnvelope(envelope(type: "liveState", payload: payload))
     send(message, preferApplicationContext: true)
-  }
-
-  func resendLatestLiveState() {
-    guard let latestLiveStateEnvelope else {
-      NSLog("[SagaTrail Watch] Cannot answer live-state request: no snapshot cached")
-      return
-    }
-    NSLog("[SagaTrail Watch] Answering live-state request with cached snapshot")
-    send(latestLiveStateEnvelope, preferApplicationContext: true)
   }
 
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
@@ -339,7 +328,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     // Alerts cross a lock-screen boundary: retain only human-readable text.
     var payload: [String: Any] = ["title": title, "body": body]
     if let haptic = alert["haptic"] as? String { payload["haptic"] = haptic }
-    send(envelope(type: "alert", payload: payload), preferApplicationContext: false)
+    send(try propertyListSafeEnvelope(envelope(type: "alert", payload: payload)), preferApplicationContext: false)
   }
 
   private func send(_ message: [String: Any], preferApplicationContext: Bool) {
@@ -371,6 +360,33 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   private func envelope(type: String, payload: [String: Any]) -> [String: Any] {
     ["v": protocolVersion, "type": type, "timestamp": Int(Date().timeIntervalSince1970 * 1000), "payload": payload]
+  }
+
+  private func propertyListSafeEnvelope(_ message: [String: Any]) throws -> [String: Any] {
+    guard let sanitized = removingNulls(from: message) as? [String: Any],
+          PropertyListSerialization.propertyList(sanitized, isValidFor: .binary) else {
+      throw ProtocolError.invalidPropertyListPayload
+    }
+    return sanitized
+  }
+
+  private func removingNulls(from value: Any) -> Any? {
+    if value is NSNull {
+      return nil
+    }
+    if let dictionary = value as? [String: Any] {
+      var sanitized: [String: Any] = [:]
+      for (key, nestedValue) in dictionary {
+        if let cleanedValue = removingNulls(from: nestedValue) {
+          sanitized[key] = cleanedValue
+        }
+      }
+      return sanitized
+    }
+    if let array = value as? [Any] {
+      return array.compactMap { removingNulls(from: $0) }
+    }
+    return value
   }
 
   private func containsCoordinate(_ text: String) -> Bool {
@@ -522,13 +538,8 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
 
   private func receive(_ message: [String: Any]) {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
-          let type = message["type"] as? String else { return }
-    if type == "liveStateRequest" {
-      NSLog("[SagaTrail Watch] Received live-state request from watch")
-      resendLatestLiveState()
-      return
-    }
-    guard ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
+          let type = message["type"] as? String,
+          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
     // JS / the phone owns the actual SOS action and any location sharing.
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
   }
@@ -536,7 +547,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private enum ProtocolError: LocalizedError {
     case coordinatesNotAllowed, missingUpdatedAt, invalidAlert, invalidCanonicalState,
          invalidMapPayload, invalidOffRoutePayload, invalidWeatherPayload, invalidDaylightPayload,
-         invalidPoiStoryPayload
+         invalidPoiStoryPayload, invalidPropertyListPayload
     var errorDescription: String? {
       switch self {
       case .coordinatesNotAllowed: return "Coordinates are not allowed in the watch protocol."
@@ -548,6 +559,7 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       case .invalidWeatherPayload: return "The watch weather payload is invalid."
       case .invalidDaylightPayload: return "The watch daylight payload is invalid."
       case .invalidPoiStoryPayload: return "The watch POI story payload is invalid."
+      case .invalidPropertyListPayload: return "The watch payload contains a value that WatchConnectivity cannot transport."
       }
     }
   }

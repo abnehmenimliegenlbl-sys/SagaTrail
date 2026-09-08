@@ -47,19 +47,6 @@ final class WatchHikeModel: NSObject, ObservableObject {
     apply(envelope: session.receivedApplicationContext)
   }
 
-  private func requestCurrentLiveState() {
-    let session = WCSession.default
-    guard session.isReachable else {
-      NSLog("[SagaTrail Watch] Live-state request skipped: phone is not reachable")
-      return
-    }
-    let message = SagaTrailWatchProtocol.envelope(type: "liveStateRequest")
-    NSLog("[SagaTrail Watch] Requesting current live state from phone")
-    session.sendMessage(message, replyHandler: nil) { error in
-      NSLog("[SagaTrail Watch] Live-state request failed: %@", error.localizedDescription)
-    }
-  }
-
   private func updateBattery() {
     let device = WKInterfaceDevice.current()
     batteryLevel = device.batteryLevel >= 0 ? device.batteryLevel : nil
@@ -367,9 +354,6 @@ extension WatchHikeModel: WCSessionDelegate {
     Task { @MainActor in
       self.apply(envelope: receivedContext)
       self.isReachable = reachable
-      if self.state == nil {
-        self.requestCurrentLiveState()
-      }
     }
   }
   nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
