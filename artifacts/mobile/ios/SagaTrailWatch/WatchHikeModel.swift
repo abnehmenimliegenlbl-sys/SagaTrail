@@ -329,7 +329,12 @@ struct WatchAlert: Identifiable {
 
 extension WatchHikeModel: WCSessionDelegate {
   nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
-    Task { @MainActor in self.isReachable = session.isReachable }
+    let receivedContext = session.receivedApplicationContext
+    let reachable = session.isReachable
+    Task { @MainActor in
+      self.apply(envelope: receivedContext)
+      self.isReachable = reachable
+    }
   }
   nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
     Task { @MainActor in self.isReachable = session.isReachable }
