@@ -25,7 +25,7 @@ export interface StorySagaInput {
 
 const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 8192;
-const MIN_GENERATED_CHAPTERS = 5;
+const MIN_GENERATED_CHAPTERS = 8;
 
 export interface GeneratedDecisionOption {
   label: string;

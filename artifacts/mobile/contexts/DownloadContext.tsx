@@ -69,8 +69,9 @@ const INDEX_KEY = "sagatrail:downloads";
 // Versionierter Prefix: muss mitbumpen, wenn der Server-Erzaehlstil (STORY_SOURCE
 // in routes/stories.ts) wechselt — sonst bleiben alte, im Stil ueberholte
 // Kapitel auf dem Geraet haengen. Alte v1-Eintraege werden schlicht ignoriert.
-const storyKeyPrefix = "sagatrail:story:v3:";
-const MIN_STORY_CHAPTERS = 5;
+const storyKeyPrefix = "sagatrail:story:v5:";
+const MIN_STORY_CHAPTERS = 8;
+const MIN_SERVER_STORY_CHAPTERS = 8;
 const poisKeyPrefix = "sagatrail:pois:v1:";
 const panoramaKeyPrefix = "sagatrail:panorama:v3:";
 
@@ -252,6 +253,9 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           language: lang,
         });
         chapters = res.chapters as StoryChapter[];
+        if (chapters.length < MIN_SERVER_STORY_CHAPTERS) {
+          throw new Error("Server-Sage enthaelt zu wenige Kapitel");
+        }
         storySource = res.source ?? "server";
       } catch {
         chapters = generateStory(saga, profile.archetype, profile.ageTier, lang);
@@ -481,7 +485,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           language: lang,
         });
         const chapters = res.chapters as StoryChapter[];
-        if (chapters.length < MIN_STORY_CHAPTERS) {
+        if (chapters.length < MIN_SERVER_STORY_CHAPTERS) {
           throw new Error("Server-Sage enthaelt zu wenige Kapitel");
         }
         AsyncStorage.setItem(
