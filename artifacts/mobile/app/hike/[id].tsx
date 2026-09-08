@@ -1212,6 +1212,18 @@ export default function LiveHike() {
   const hintedPoiIdRef = useRef<string | null>(null);
   /** Bereits mit voller Geschichte (50 m) erzaehlte POI-IDs (Annaeherungs-Flow). */
   const poiStoryToldRef = useRef<string | null>(null);
+  /** Gemeinsame Sperre fuer alle vollstaendigen POI-Erzaehlpfade. */
+  const poiStoryClaimsRef = useRef<Array<{ id: string; lat: number; lng: number }>>([]);
+  const claimPoiStory = useCallback((poi: Poi) => {
+    const alreadyClaimed = poiStoryClaimsRef.current.some(
+      (claim) =>
+        claim.id === poi.id ||
+        haversineKm({ lat: claim.lat, lng: claim.lng }, { lat: poi.lat, lng: poi.lng }) <= 0.1,
+    );
+    if (alreadyClaimed) return false;
+    poiStoryClaimsRef.current.push({ id: poi.id, lat: poi.lat, lng: poi.lng });
+    return true;
+  }, []);
   /** POI-Erzaehlungen, die geladen werden oder bereits in der Audio-Queue stehen. */
   const poiNarrationPendingRef = useRef<Set<number>>(new Set());
   const poiNarrationTokenRef = useRef(0);
@@ -1583,6 +1595,9 @@ export default function LiveHike() {
     if (!saga || !profile) return;
     let cancelled = false;
     setPreparing(true);
+    poiStoryClaimsRef.current = [];
+    narratedPoiIdRef.current = null;
+    poiStoryToldRef.current = null;
     (async () => {
       const { chapters: story } = await resolveStory(saga, profile, premium);
       if (cancelled) return;
@@ -3938,6 +3953,10 @@ export default function LiveHike() {
     // Kulturelle/historische POIs mit spezifischem Namen werden durch den
     // progressiven Annaeherungs-Effekt erzaehlt (200 m Hinweis + 50 m Geschichte).
     if (POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "") && isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
+    if (!claimPoiStory(nearbyPoi)) {
+      narratedPoiIdRef.current = nearbyPoi.id;
+      return;
+    }
     narratedPoiIdRef.current = nearbyPoi.id;
     // Kontext des vorherigen POI darf nicht an der neuen Karte kleben.
     setNearbyPoiKontext(null);
@@ -4001,7 +4020,7 @@ export default function LiveHike() {
       cancelled = true;
       if (!poiAudioStarted) releasePoiNarration();
     };
-  }, [beginPoiNarration, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
+  }, [beginPoiNarration, claimPoiStory, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
@@ -4043,6 +4062,7 @@ export default function LiveHike() {
     // 50 m: volle Geschichte (einmalig pro POI)
     if (distKm <= 0.05 && poiStoryToldRef.current !== nearbyPoi.id) {
       poiStoryToldRef.current = nearbyPoi.id;
+      if (!claimPoiStory(nearbyPoi)) return;
       const pack = STORY_PACKS[resolveLang(cueLanguage)];
       const rawExtract = nearbyPoiWiki?.extract ?? null;
       hapticHeavy();
@@ -4076,7 +4096,7 @@ export default function LiveHike() {
           });
       })();
     }
-  }, [beginPoiNarration, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
+  }, [beginPoiNarration, claimPoiStory, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
   // Start zurueckgelegte Luftlinie zu betrachten. Das ist die primaere
