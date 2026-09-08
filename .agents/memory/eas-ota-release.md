@@ -20,3 +20,18 @@ Use `eas update` directly on the `production` branch for OTA releases when the E
 **Why:** The production channel can continue serving an older update when the push-trigger workflow is not linked or does not execute.
 
 **How to apply:** Treat the OTA as pending until the production manifest is newer than the commit. If the manifest stays older, manually trigger the supported Expo/EAS update flow instead of retrying Git pushes.
+
+**Environment constraint:** `eas update --non-interactive` requires
+`--environment production`, but this project does not have the public runtime
+variables populated in EAS's production environment. Export the non-secret
+`build.production.env` values from `eas.json` into the update process before
+running the export; otherwise the bundle can publish successfully while
+`ClerkProvider` receives no publishable key and the app falls into its startup
+error screen.
+
+**Why:** EAS's environment warning is non-fatal, so a missing Clerk key is only
+detected on the device after publication.
+
+**How to apply:** Never print the values. Set them in the shell for each
+platform-specific update, and verify the resulting production group before
+telling the user to restart the app.
