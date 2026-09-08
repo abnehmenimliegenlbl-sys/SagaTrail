@@ -190,6 +190,9 @@ export function SwisstopoMap({
               // Daten — onLoadEnd feuert bei WKWebView auch fuer Zwischen-
               // Dokumente und die Injektion ginge dann verloren.
               setReady(true);
+              ref.current?.injectJavaScript(
+                "window.sttMapResize && window.sttMapResize(); true;"
+              );
             }
             if (data?.type === "stt-poi-press" && typeof data.id === "string") {
               onPoiPress?.(data.id);

@@ -3696,8 +3696,6 @@ export default function LiveHike() {
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
             autoFollowRecalcStartedRef.current = false;
-            startChoicePendingRef.current = false;
-            setStartChoicePending(false);
             releaseStartAudio();
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("start");
@@ -3708,8 +3706,6 @@ export default function LiveHike() {
           onPress: () => {
             startRecalcChoiceShownRef.current = true;
             autoFollowRecalcStartedRef.current = false;
-            startChoicePendingRef.current = false;
-            setStartChoicePending(false);
             releaseStartAudio();
             setOffRoutePos(positionAtPrompt);
             setStartRecalcChoice("fastest");
