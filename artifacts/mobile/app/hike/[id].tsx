@@ -5860,6 +5860,7 @@ export default function LiveHike() {
             )}
           </Animated.View>
           ))}
+        </Glass>
 
         {/* ── Sicherheits-POIs filtern ───────────────────────────────── */}
         <View
@@ -7096,6 +7097,18 @@ const styles = StyleSheet.create({
   },
   poiModalImage: { width: "100%", height: 200, borderRadius: 10, marginBottom: 12 },
   storyWrap: { marginTop: 24 },
+  storyTileHeader: {
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  storyTileHeaderText: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  storyTileTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  storyTileSubtitle: { fontFamily: fonts.mono, fontSize: 11, marginTop: 3 },
   chapterActions: { flexDirection: "row", gap: 8 },
   chapterHead: {
     flexDirection: "row",
