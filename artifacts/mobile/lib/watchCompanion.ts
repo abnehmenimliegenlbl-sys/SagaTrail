@@ -4,6 +4,9 @@ import {
   isMeaningfulWatchStatusUpdate,
   type WatchStatusGateSnapshot,
 } from "./watchStatusGate";
+import { makeLogger } from "./debugLog";
+
+const watchCompanionLog = makeLogger("[WATCH-COMPANION]", "watch_companion");
 
 /** Wire format shared with the optional SagaTrailCompanion native module. */
 export const HIKE_LIVE_STATE_VERSION = 1 as const;
@@ -338,17 +341,42 @@ export async function publishHikeLiveState(
   state: HikeLiveState,
   options?: { force?: boolean; now?: number },
 ): Promise<boolean> {
-  if (!isValidHikeLiveState(state)) return false;
+  if (!isValidHikeLiveState(state)) {
+    watchCompanionLog("publish rejected: invalid state", {
+      sessionStatus: state && typeof state === "object" ? (state as Partial<HikeLiveState>).sessionStatus : null,
+      isHiking: state && typeof state === "object" ? (state as Partial<HikeLiveState>).isHiking : null,
+    });
+    return false;
+  }
   const now = options?.now ?? Date.now();
   if (!options?.force && now - lastLiveStateSentAt < LIVE_SNAPSHOT_MIN_INTERVAL_MS) return false;
   lastLiveStateSentAt = now;
   const module = companionModule();
-  if (!module) return false;
+  if (!module) {
+    watchCompanionLog("publish skipped: native module unavailable", {
+      sessionStatus: state.sessionStatus,
+      isHiking: state.isHiking,
+      sequence: state.sequence,
+      platform: Platform.OS,
+    });
+    return false;
+  }
   activateNativeCompanion(module);
   try {
     await module.publishLiveState!(state);
+    watchCompanionLog("publish accepted by native module", {
+      sessionStatus: state.sessionStatus,
+      isHiking: state.isHiking,
+      sequence: state.sequence,
+    });
     return true;
-  } catch {
+  } catch (error) {
+    watchCompanionLog("publish threw", {
+      sessionStatus: state.sessionStatus,
+      isHiking: state.isHiking,
+      sequence: state.sequence,
+      message: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 }
@@ -389,7 +417,34 @@ export function subscribeToCompanionEvents(handlers: {
       handlers.onHikeCommand({ command: event.command, durationMinutes: event.durationMinutes });
     }
   });
-  return () => { heartRate.remove(); sos.remove(); command.remove(); };
+  const nativeEvent = DeviceEventEmitter.addListener("SagaTrailWatchEvent", (event: {
+    type?: unknown;
+    payload?: { message?: unknown };
+  }) => {
+    if (event?.type === "protocolError") {
+      watchCompanionLog("native protocol error", {
+        message: typeof event.payload?.message === "string" ? event.payload.message : "unknown",
+      });
+    }
+  });
+  const nativeStatus = DeviceEventEmitter.addListener("SagaTrailWatchStatus", (event: {
+    reachable?: unknown;
+    paired?: unknown;
+    watchAppInstalled?: unknown;
+  }) => {
+    watchCompanionLog("native connectivity status", {
+      reachable: event?.reachable === true,
+      paired: event?.paired === true,
+      watchAppInstalled: event?.watchAppInstalled === true,
+    });
+  });
+  return () => {
+    heartRate.remove();
+    sos.remove();
+    command.remove();
+    nativeEvent.remove();
+    nativeStatus.remove();
+  };
 }
 
 export async function prepareWatchCompanion(): Promise<boolean> {
