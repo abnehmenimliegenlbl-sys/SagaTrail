@@ -300,90 +300,6 @@ struct WatchHikeView: View {
     if level > 0.1 { return "battery.25" }
     return "battery.0"
   }
-}
-
-private struct WatchRouteMap: View {
-  let map: SagaTrailWatchProtocol.RouteMap
-  let offline: Bool
-  let language: String
-  @State private var position: MapCameraPosition = .automatic
-  @State private var zoom: Double = 1
-  @State private var routeUp = false
-  private var copy: WatchCopy { WatchCopy(language: language) }
-
-  private var coordinates: [CLLocationCoordinate2D] {
-    map.route.map {
-      CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
-    }
-  }
-
-  private var center: CLLocationCoordinate2D {
-    if let current = map.current {
-      return CLLocationCoordinate2D(latitude: current.latitude, longitude: current.longitude)
-    }
-    let lat = map.route.map(\.latitude).reduce(0, +) / Double(map.route.count)
-    let lng = map.route.map(\.longitude).reduce(0, +) / Double(map.route.count)
-    return CLLocationCoordinate2D(latitude: lat, longitude: lng)
-  }
-
-  private var baseDistance: CLLocationDistance {
-    let latitudes = map.route.map(\.latitude)
-    let longitudes = map.route.map(\.longitude)
-    let span = max(
-      (latitudes.max() ?? 0) - (latitudes.min() ?? 0),
-      (longitudes.max() ?? 0) - (longitudes.min() ?? 0),
-    )
-    return max(400, span * 111_000 * 1.6)
-  }
-
-  private var routeHeading: CLLocationDirection {
-    guard let first = coordinates.first, let second = coordinates.dropFirst().first else { return 0 }
-    let lat1 = first.latitude * .pi / 180
-    let lat2 = second.latitude * .pi / 180
-    let deltaLng = (second.longitude - first.longitude) * .pi / 180
-    let y = sin(deltaLng) * cos(lat2)
-    let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLng)
-    return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
-  }
-
-  private func recenter() {
-    position = .camera(MapCamera(
-      centerCoordinate: center,
-      distance: baseDistance / zoom,
-      heading: routeUp ? routeHeading : 0,
-      pitch: 0
-    ))
-  }
-
-  var body: some View {
-    ZStack(alignment: .bottomLeading) {
-      ZStack {
-        if offline {
-          OfflineRouteSketch(map: map, language: language)
-            .frame(height: 145)
-        } else {
-          Map(position: $position) {
-            MapPolyline(coordinates: coordinates)
-              .stroke(WatchPalette.red, lineWidth: 4)
-            if let start = coordinates.first {
-              Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
-                .tint(WatchPalette.black)
-            }
-            if let finish = coordinates.last {
-              Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
-                .tint(WatchPalette.red)
-            }
-            if let current = map.current {
-              Annotation("Du", coordinate: CLLocationCoordinate2D(
-                latitude: current.latitude,
-                longitude: current.longitude
-              )) {
-                ZStack {
-                  Circle().fill(WatchPalette.white).frame(width: 15, height: 15)
-                  Circle().fill(WatchPalette.red).frame(width: 10, height: 10)
-                }
-              }
-            }
 
   private func navigationPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     VStack(spacing: 7) {
@@ -577,6 +493,91 @@ private struct WatchRouteMap: View {
     if !current.isEmpty { chunks.append(current) }
     return chunks.isEmpty ? [text] : chunks
   }
+}
+
+private struct WatchRouteMap: View {
+  let map: SagaTrailWatchProtocol.RouteMap
+  let offline: Bool
+  let language: String
+  @State private var position: MapCameraPosition = .automatic
+  @State private var zoom: Double = 1
+  @State private var routeUp = false
+  private var copy: WatchCopy { WatchCopy(language: language) }
+
+  private var coordinates: [CLLocationCoordinate2D] {
+    map.route.map {
+      CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+    }
+  }
+
+  private var center: CLLocationCoordinate2D {
+    if let current = map.current {
+      return CLLocationCoordinate2D(latitude: current.latitude, longitude: current.longitude)
+    }
+    let lat = map.route.map(\.latitude).reduce(0, +) / Double(map.route.count)
+    let lng = map.route.map(\.longitude).reduce(0, +) / Double(map.route.count)
+    return CLLocationCoordinate2D(latitude: lat, longitude: lng)
+  }
+
+  private var baseDistance: CLLocationDistance {
+    let latitudes = map.route.map(\.latitude)
+    let longitudes = map.route.map(\.longitude)
+    let span = max(
+      (latitudes.max() ?? 0) - (latitudes.min() ?? 0),
+      (longitudes.max() ?? 0) - (longitudes.min() ?? 0),
+    )
+    return max(400, span * 111_000 * 1.6)
+  }
+
+  private var routeHeading: CLLocationDirection {
+    guard let first = coordinates.first, let second = coordinates.dropFirst().first else { return 0 }
+    let lat1 = first.latitude * .pi / 180
+    let lat2 = second.latitude * .pi / 180
+    let deltaLng = (second.longitude - first.longitude) * .pi / 180
+    let y = sin(deltaLng) * cos(lat2)
+    let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLng)
+    return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+  }
+
+  private func recenter() {
+    position = .camera(MapCamera(
+      centerCoordinate: center,
+      distance: baseDistance / zoom,
+      heading: routeUp ? routeHeading : 0,
+      pitch: 0
+    ))
+  }
+
+  var body: some View {
+    ZStack(alignment: .bottomLeading) {
+      ZStack {
+        if offline {
+          OfflineRouteSketch(map: map, language: language)
+            .frame(height: 145)
+        } else {
+          Map(position: $position) {
+            MapPolyline(coordinates: coordinates)
+              .stroke(WatchPalette.red, lineWidth: 4)
+            if let start = coordinates.first {
+              Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
+                .tint(WatchPalette.black)
+            }
+            if let finish = coordinates.last {
+              Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
+                .tint(WatchPalette.red)
+            }
+            if let current = map.current {
+              Annotation("Du", coordinate: CLLocationCoordinate2D(
+                latitude: current.latitude,
+                longitude: current.longitude
+              )) {
+                ZStack {
+                  Circle().fill(WatchPalette.white).frame(width: 15, height: 15)
+                  Circle().fill(WatchPalette.red).frame(width: 10, height: 10)
+                }
+              }
+            }
+
           }
           .mapStyle(.standard)
           .frame(height: 145)
