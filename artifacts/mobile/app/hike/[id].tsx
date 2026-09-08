@@ -4079,9 +4079,8 @@ export default function LiveHike() {
   }, [beginPoiNarration, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
 
   // Echte Position auf der Routen-Geometrie (0..1), statt nur die seit dem
-  // Start zurueckgelegte Luftlinie zu betrachten. Das sorgt dafuer, dass der
-  // Story-Fortschritt auch dann stimmt, wenn die Wanderung abseits des
-  // offiziellen Startpunkts oder mitten auf der Route begonnen wird.
+  // Start zurueckgelegte Luftlinie zu betrachten. Das ist die primaere
+  // Grundlage fuer die raeumliche Kapitelverteilung.
   // Ein ungenauer erster Fix (z. B. Balanced-Genauigkeit direkt beim Start,
   // oder ein grober Hintergrund-Fix) kann faelschlich auf einen weit
   // entfernten Punkt der Route projiziert werden und so Kapitel ueber-
@@ -4103,6 +4102,84 @@ export default function LiveHike() {
     if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;
     return match.fraction;
   }, [livePos, livePosAccuracy, navigationGeometry, locState, locationNow]);
+
+  // Kapitel werden räumlich über die verbleibende Wanderung verteilt. Der
+  // erste verlässliche Routen-Fix ist der persönliche Startanker; dadurch
+  // zählen die 53 m zwischen offiziellem Start und verspätetem Fix nicht als
+  // bereits erzählter Abschnitt.
+  useEffect(() => {
+    if (
+      preparing ||
+      !hasFreshGps ||
+      routeProgress == null ||
+      storyProgressBaseline != null
+    ) {
+      return;
+    }
+    setStoryProgressBaseline(routeProgress);
+  }, [hasFreshGps, preparing, routeProgress, storyProgressBaseline]);
+
+  const storyProgress = useMemo(() => {
+    const baseline = storyProgressBaseline ?? 0;
+    const remainingRouteFraction = Math.max(0.05, 1 - baseline);
+    const routeBasedProgress =
+      routeProgress == null
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, (routeProgress - baseline) / remainingRouteFraction),
+          );
+    const walkedDistanceProgress =
+      totalKm > 0
+        ? Math.max(
+            0,
+            Math.min(1, distance / Math.max(0.05, totalKm * remainingRouteFraction)),
+          )
+        : 0;
+    const candidate = Math.max(routeBasedProgress, walkedDistanceProgress);
+    storyProgressMaxRef.current = Math.max(storyProgressMaxRef.current, candidate);
+    return storyProgressMaxRef.current;
+  }, [distance, routeProgress, storyProgressBaseline, totalKm]);
+
+  const storyEligibleChapter = useMemo(() => {
+    const lastChapterIndex = Math.max(0, chapters.length - 1);
+    if (lastChapterIndex === 0) return 0;
+    // Das letzte Kapitel wird am Ende der Route auch bei kleinen GPS-
+    // Abweichungen freigegeben; alle anderen Kapitel folgen gleichmässigen
+    // Streckenintervallen.
+    const eligible =
+      storyProgress >= 0.98
+        ? lastChapterIndex
+        : Math.floor(storyProgress * lastChapterIndex);
+    return Math.max(0, Math.min(lastChapterIndex, eligible));
+  }, [chapters.length, storyProgress]);
+  storyEligibleChapterRef.current = storyEligibleChapter;
+
+  // Wenn ein Kapitel vollständig gesprochen und das nächste Streckenintervall
+  // erreicht ist, wird genau ein nächstes Kapitel freigegeben. Dadurch bleibt
+  // die Reihenfolge erhalten, auch wenn GPS mehrere Kapitelziele überspringt.
+  useEffect(() => {
+    if (
+      preparing ||
+      chapters.length === 0 ||
+      storyCompleteRef.current ||
+      awaitingDecisionRef.current ||
+      decisionFeedbackPendingRef.current ||
+      storyEligibleChapter <= currentIndex ||
+      narratedThroughRef.current < currentIndex
+    ) {
+      return;
+    }
+    advanceStoryChapter(currentIndex);
+  }, [
+    advanceStoryChapter,
+    awaitingDecision,
+    chapters.length,
+    currentIndex,
+    decisionFeedbackPending,
+    preparing,
+    storyEligibleChapter,
+  ]);
 
   const panoramaPois = useMemo(
     () => [
@@ -4311,9 +4388,8 @@ export default function LiveHike() {
     speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useOpenAI: true });
   }, [walkToStart, startReached, preparing, locState, speak, t, hasFreshGps]);
 
-  // GPS darf die Sage weder vorspringen noch beenden. Die Route kann kuerzer,
-  // laenger oder bereits begonnen sein — die Kapitel werden ausschliesslich
-  // nach erfolgreichem Audioabschluss nacheinander abgespielt.
+  // Die Route gibt Kapitelziele frei, aber Audio bleibt die Reihenfolge:
+  // kein Kapitel wird uebersprungen oder vor dem vorherigen gestartet.
   useEffect(() => {
     if (preparing || !hasFreshGps || !navigationGeometry || navigationGeometry.length < 2) return;
     if (routeProgress == null) return;
@@ -4684,6 +4760,8 @@ export default function LiveHike() {
     }
     if (combinedGeometry.length < 2) return;
     const preservedChapterIndex = currentIndexRef.current;
+    const currentChapterWasNarrated =
+      narratedThroughRef.current >= preservedChapterIndex;
 
     detourPoiSearchKeyRef.current = null;
     if (!isOffline) searchDetourPois(combinedGeometry);
@@ -4703,13 +4781,18 @@ export default function LiveHike() {
     pendingGroupDecisionAdvanceRef.current = null;
     setFinished(false);
     setOffRoutePos(null);
+    setStoryProgressBaseline(null);
+    storyProgressMaxRef.current = 0;
+    storyEligibleChapterRef.current = preservedChapterIndex;
     if (!storyCompleteRef.current) {
-      // Der laufende Clip wurde oben abgebrochen. Das aktuelle Kapitel wird
-      // nach dem Geometrie-Update einmal sauber neu gestartet.
+      if (!currentChapterWasNarrated) {
+        // Der laufende Clip wurde oben abgebrochen. Das aktuelle Kapitel wird
+        // nach dem Geometrie-Update einmal sauber neu gestartet.
+        lastNarratedRef.current = preservedChapterIndex - 1;
+        lastDecisionTriggeredRef.current = preservedChapterIndex - 1;
+      }
       setAwaitingDecision(false);
       awaitingDecisionRef.current = false;
-      lastNarratedRef.current = preservedChapterIndex - 1;
-      lastDecisionTriggeredRef.current = preservedChapterIndex - 1;
     }
     notifiedTurnsRef.current.clear();
     terrainStartedRef.current.clear();

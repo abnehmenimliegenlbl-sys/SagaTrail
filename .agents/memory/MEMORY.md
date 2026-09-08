@@ -28,7 +28,7 @@
 - [WebSocket testing hits HTTP/2 proxy quirk](websocket-proxy-http2.md) — browser e2e WS tests can fail via the shared proxy even when server WS auth is correct; verify with curl --http1.1 + a minted token before assuming an app bug.
 - [SagaTrail UI-chrome i18n](sagatrail-ui-chrome-i18n.md) — app chrome (all 8 langs) is separate from narration i18n; per-screen strings dict pattern, permanent language override once user picks one.
 - [SagaTrail navigation cues](sagatrail-navigation-cues.md) — turn cues stay separate from saga chapters/TTS and are spoken through the live navigation flow.
-- [SagaTrail story sequencing](sagatrail-story-sequencing.md) — saga chapters advance after narration, never from GPS position, start proximity, or off-route state.
+- [SagaTrail story sequencing](sagatrail-story-sequencing.md) — route distance makes the next chapter eligible; audio completion preserves order and prevents GPS skips.
 - [Clerk OAuth testing block](clerk-oauth-testing-block.md) — `runTest` refuses to proceed past a Clerk login screen with a visible Google/SSO button, even for a programmatic Clerk-auth-only flow; fall back to typecheck + curl + code review.
 - [SagaTrail background narration/GPS](sagatrail-background-audio.md) — audio needs `staysActiveInBackground`, GPS needs expo-task-manager foreground-service task; both require a dev/EAS build, NOT Expo Go.
 - [On-demand AI text rewrite pattern](ai-rewrite-on-demand-cache.md) — rewrite-on-tap (not eager/bulk) + in-memory cache keyed by source-text hash; avoids AI cost for content that's cheap to fetch but expensive to restyle.
