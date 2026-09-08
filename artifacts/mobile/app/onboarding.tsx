@@ -46,6 +46,7 @@ export default function Onboarding() {
   const [homeCanton, setHomeCanton] = useState("");
   const [ageTier, setAgeTier] = useState<AgeTier | null>(null);
   const [consent, setConsent] = useState(false);
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
 
   const topPad = Platform.OS === "web" ? WEB_TOP : insets.top + 12;
 
@@ -64,7 +65,7 @@ export default function Onboarding() {
       case 4:
         return ageTier !== null && (ageTier !== "kinder" || consent);
       case 5:
-        return true;
+        return permissionsGranted;
       default:
         return false;
     }
@@ -341,7 +342,7 @@ export default function Onboarding() {
 
         {step === 5 && (
           <StepFrame title={t.permissionsTitle} eyebrow={t.stepOf(6, totalSteps)}>
-            <PermissionsStep />
+            <PermissionsStep onAllGrantedChange={setPermissionsGranted} />
           </StepFrame>
         )}
       </ScrollView>

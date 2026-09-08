@@ -205,7 +205,7 @@ export default function EigeneRoute() {
   const useLocation = useCallback(async () => {
     setLocating(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.getForegroundPermissionsAsync();
       if (status !== "granted") {
         alert(t.locationDeniedLabel);
         return;

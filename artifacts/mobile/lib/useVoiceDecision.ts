@@ -120,7 +120,7 @@ export function useVoiceDecision(
         // ein verspäteter Reset das Mikrofon nach dem Start wieder deaktivieren.
         await new Promise<void>((r) => setTimeout(r, 250));
         if (cancelled) return;
-        const perm = await ExpoSpeechRecognitionModule!.requestPermissionsAsync();
+        const perm = await ExpoSpeechRecognitionModule!.getPermissionsAsync();
         if (cancelled) return;
         if (!perm.granted) {
           setSupported(false);

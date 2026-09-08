@@ -3028,7 +3028,7 @@ export default function LiveHike() {
         return;
       }
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
+        const { status } = await Location.getForegroundPermissionsAsync();
         if (cancelled) return;
         if (status !== "granted") {
           setLocState("denied");
@@ -3103,7 +3103,7 @@ export default function LiveHike() {
         // nur eben nur im Vordergrund. Kein Fehler, kein Blockieren.
         let backgroundStarted = false;
         try {
-          const bg = await Location.requestBackgroundPermissionsAsync();
+          const bg = await Location.getBackgroundPermissionsAsync();
           if (!cancelled && bg.status === "granted") {
             backgroundStarted = await startBackgroundLocationTracking(trackingOptions, {
               title: t.backgroundNotificationTitle,

@@ -32,6 +32,7 @@ export interface OnboardingStrings {
     motion: { title: string; message: string; allow: string };
     notifications: { title: string; message: string; allow: string };
   };
+  permissionAllowAll: string;
   permissionSkip: string;
   permissionStatusGranted: string;
   permissionStatusDenied: string;

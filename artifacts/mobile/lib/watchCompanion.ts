@@ -369,9 +369,7 @@ export async function prepareWatchCompanion(): Promise<boolean> {
   if (permissionGranted != null) return permissionGranted;
   try {
     const current = await Notifications.getPermissionsAsync();
-    if (current.granted) return (permissionGranted = true);
-    if (!current.canAskAgain) return (permissionGranted = false);
-    return (permissionGranted = (await Notifications.requestPermissionsAsync()).granted);
+    return (permissionGranted = current.granted);
   } catch {
     return (permissionGranted = false);
   }

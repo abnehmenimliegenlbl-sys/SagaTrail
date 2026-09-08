@@ -2,8 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { Pedometer } from "expo-sensors";
-import React, { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -11,14 +11,12 @@ import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { NATIVE_MODULES_AVAILABLE } from "@/lib/nativeEnv";
 import { useOnboardingStrings } from "@/lib/i18n/screens/onboarding";
-import { PermissionModal } from "./PermissionModal";
+import { PrimaryButton } from "./PrimaryButton";
 
 /**
- * Onboarding-Schritt, der VOR den echten OS-Berechtigungsdialogen im
- * App-Design erklaert, wofuer SagaTrail Standort, Mikrofon, Bewegung und
- * Benachrichtigungen braucht. Die eigentliche OS-Anfrage wird erst nach
- * Bestaetigung im gestylten Modal ausgeloest. Kamera wird nicht abgefragt,
- * da die App keine Kamerafunktion hat.
+ * Onboarding-Schritt, der die Pflichtberechtigungen in einer einzigen
+ * sequenziellen Aktion anfordert. Die einzelnen Karten zeigen nur den
+ * Status; Kamera bleibt eine optionale, kontextbezogene Funktion.
  */
 
 type PermissionKey = "location" | "microphone" | "motion" | "notifications";
@@ -31,7 +29,11 @@ const ICONS: Record<PermissionKey, keyof typeof Feather.glyphMap> = {
   notifications: "bell",
 };
 
-export function PermissionsStep() {
+export function PermissionsStep({
+  onAllGrantedChange,
+}: {
+  onAllGrantedChange?: (granted: boolean) => void;
+}) {
   const colors = useColors();
   const t = useOnboardingStrings();
   const [statuses, setStatuses] = useState<Record<PermissionKey, PermissionStatus>>({
@@ -40,7 +42,59 @@ export function PermissionsStep() {
     motion: "pending",
     notifications: "pending",
   });
-  const [activeModal, setActiveModal] = useState<PermissionKey | null>(null);
+  const [requestingAll, setRequestingAll] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const readStatuses = async () => {
+      if (Platform.OS === "web") {
+        setStatuses({
+          location: "granted",
+          microphone: "granted",
+          motion: "granted",
+          notifications: "granted",
+        });
+        return;
+      }
+      try {
+        const foregroundLocation = await Location.getForegroundPermissionsAsync();
+        const backgroundLocation =
+          foregroundLocation.status === Location.PermissionStatus.GRANTED
+            ? await Location.getBackgroundPermissionsAsync()
+            : null;
+        const microphone = NATIVE_MODULES_AVAILABLE
+          ? await (await import("expo-speech-recognition")).ExpoSpeechRecognitionModule.getPermissionsAsync()
+          : { granted: false };
+        const motion = await Pedometer.getPermissionsAsync();
+        const notifications = await Notifications.getPermissionsAsync();
+        if (cancelled) return;
+        setStatuses({
+          location:
+            foregroundLocation.status === Location.PermissionStatus.GRANTED &&
+            backgroundLocation?.status === Location.PermissionStatus.GRANTED
+              ? "granted"
+              : "pending",
+          microphone: microphone.granted ? "granted" : "pending",
+          motion: motion.granted ? "granted" : "pending",
+          notifications: notifications.granted ? "granted" : "pending",
+        });
+      } catch {
+        // Die einzelnen Karten bleiben ausstehend und können erneut gestartet
+        // werden, falls ein Gerät den Status nicht lesen kann.
+      }
+    };
+    void readStatuses();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const keys: PermissionKey[] = ["location", "microphone", "motion", "notifications"];
+  const allGranted = keys.every((key) => statuses[key] === "granted");
+
+  useEffect(() => {
+    onAllGrantedChange?.(allGranted);
+  }, [allGranted, onAllGrantedChange]);
 
   const requestNative = async (key: PermissionKey) => {
     if (Platform.OS === "web") {
@@ -50,8 +104,11 @@ export function PermissionsStep() {
     try {
       let granted = false;
       if (key === "location") {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        granted = status === "granted";
+        const foreground = await Location.requestForegroundPermissionsAsync();
+        if (foreground.status === Location.PermissionStatus.GRANTED) {
+          const background = await Location.requestBackgroundPermissionsAsync();
+          granted = background.status === Location.PermissionStatus.GRANTED;
+        }
       } else if (key === "microphone") {
         if (NATIVE_MODULES_AVAILABLE) {
           const mod = await import("expo-speech-recognition");
@@ -73,9 +130,19 @@ export function PermissionsStep() {
     }
   };
 
-  const keys: PermissionKey[] = ["location", "microphone", "motion", "notifications"];
-
-  const activeStrings = activeModal ? t.permissions[activeModal] : null;
+  const requestAll = async () => {
+    if (requestingAll || allGranted) return;
+    setRequestingAll(true);
+    try {
+      for (const key of keys) {
+        if (statuses[key] !== "granted") {
+          await requestNative(key);
+        }
+      }
+    } finally {
+      setRequestingAll(false);
+    }
+  };
 
   return (
     <View>
@@ -87,9 +154,7 @@ export function PermissionsStep() {
         const strings = t.permissions[key];
         return (
           <Animated.View key={key} entering={FadeInDown.delay(i * 70)}>
-            <Pressable
-              onPress={() => setActiveModal(key)}
-              disabled={status === "granted"}
+            <View
               style={[
                 styles.card,
                 {
@@ -136,28 +201,21 @@ export function PermissionsStep() {
                     ? t.permissionStatusDenied
                     : t.permissionStatusPending}
               </Text>
-            </Pressable>
+            </View>
           </Animated.View>
         );
       })}
 
-      {activeModal && activeStrings && (
-        <PermissionModal
-          visible
-          onRequestClose={() => setActiveModal(null)}
-          icon={ICONS[activeModal]}
-          title={activeStrings.title}
-          message={activeStrings.message}
-          allowLabel={activeStrings.allow}
-          skipLabel={t.permissionSkip}
-          onAllow={() => {
-            const key = activeModal;
-            setActiveModal(null);
-            requestNative(key);
-          }}
-          onSkip={() => setActiveModal(null)}
+      {!allGranted && (
+        <PrimaryButton
+          label={t.permissionAllowAll}
+          onPress={requestAll}
+          loading={requestingAll}
+          disabled={requestingAll}
+          style={{ marginTop: 4 }}
         />
       )}
+
     </View>
   );
 }

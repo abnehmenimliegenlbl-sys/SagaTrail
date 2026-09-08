@@ -302,7 +302,7 @@ export default function Gruppe() {
                   variant="secondary"
                   label={t.setRendezvousButton ?? "Set rendezvous here"}
                   onPress={async () => {
-                    const permission = await Location.requestForegroundPermissionsAsync();
+                    const permission = await Location.getForegroundPermissionsAsync();
                     if (permission.status !== Location.PermissionStatus.GRANTED) return;
                     const fix = await Location.getCurrentPositionAsync({
                       accuracy: Location.Accuracy.Balanced,

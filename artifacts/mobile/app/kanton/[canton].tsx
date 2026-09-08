@@ -294,7 +294,7 @@ export default function KantonRouten() {
     setNearbyLocating(true);
     setNearbyDenied(false);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.getForegroundPermissionsAsync();
       if (status !== "granted") {
         setNearbyDenied(true);
         setNearbyLocating(false);

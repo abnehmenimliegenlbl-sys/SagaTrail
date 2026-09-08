@@ -384,7 +384,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     let subscription: Location.LocationSubscription | null = null;
     void (async () => {
-      const permission = await Location.requestForegroundPermissionsAsync();
+      const permission = await Location.getForegroundPermissionsAsync();
       if (cancelled || permission.status !== Location.PermissionStatus.GRANTED) return;
       subscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Balanced, timeInterval: 30_000, distanceInterval: 25 },
@@ -751,7 +751,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch { /* nicht kritisch */ }
       // Push-Token registrieren (nur auf nativen Plattformen)
       try {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.getPermissionsAsync();
         if (status !== "granted") return;
         const tokenData = await Notifications.getExpoPushTokenAsync();
         await fetch(`${base}api/me/push-token`, {

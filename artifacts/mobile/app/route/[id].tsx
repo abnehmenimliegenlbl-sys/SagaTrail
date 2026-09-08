@@ -765,7 +765,7 @@ export default function Routenplanung() {
       let lng: number | null = null;
 
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
+        const { status } = await Location.getForegroundPermissionsAsync();
         if (status === "granted") {
           const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
           lat = pos.coords.latitude;
