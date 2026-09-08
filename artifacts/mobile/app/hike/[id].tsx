@@ -5308,7 +5308,17 @@ export default function LiveHike() {
         <FeatureTileDeck
           closeLabel={t.close}
           closeSignal={panoramaTileCloseSignal}
-          tileOrder={["compass", "watch", "gps-live", "panorama", "route-3d", "object-recognition"]}
+          columns={4}
+          tileOrder={[
+            "compass",
+            "watch",
+            "gps-live",
+            "safety-checkin",
+            "panorama",
+            "route-3d",
+            "object-recognition",
+            "condition-report",
+          ]}
           onTileOpen={(tileId) => {
             if (tileId === "panorama") {
               panoramaPeakRequestRef.current = null;
@@ -5316,6 +5326,9 @@ export default function LiveHike() {
             }
             if (tileId === "route-3d") {
               setRouteTerrain3dOpen(true);
+            }
+            if (tileId === "safety-checkin") {
+              safetyCheckinRef.current?.open();
             }
           }}
           tiles={[
@@ -5481,6 +5494,102 @@ export default function LiveHike() {
                   placeLabel={t.place}
                   altitudeLabel={t.altitude}
                 />
+              ),
+            },
+            {
+              id: "safety-checkin",
+              title: "SICHERHEIT",
+              subtitle: safetyCheckinState
+                ? safetyCheckinState.status === "active"
+                  ? formatCountdown(safetyCheckinState.remainingSec)
+                  : safetyCheckinState.status === "overdue"
+                    ? "Überfällig"
+                    : "Starten"
+                : "Check-in",
+              icon: "clock",
+              action: true,
+              content: null,
+            },
+            {
+              id: "condition-report",
+              title: "ZUSTAND",
+              subtitle: "Melden",
+              icon: "alert-circle",
+              content: (
+                <View style={styles.conditionTileContent}>
+                  {conditionSubmitResult === "ok" && (
+                    <Text style={[styles.conditionSuccess, { color: colors.accent }]}>
+                      {t.conditionSubmitted}
+                    </Text>
+                  )}
+                  {(conditionSubmitResult === "ratelimit" || conditionSubmitResult === "error") && (
+                    <Text style={[styles.conditionError, { color: colors.destructive }]}>
+                      {conditionSubmitResult === "ratelimit" ? t.conditionRateLimit : t.conditionError}
+                    </Text>
+                  )}
+                  {showConditionForm ? (
+                    <Animated.View entering={FadeIn.duration(200)}>
+                      <View style={styles.conditionChips}>
+                        {(["excellent", "clear", "muddy", "snow", "icy", "blocked"] as const).map((lvl) => (
+                          <Pressable
+                            key={lvl}
+                            onPress={() => setSelectedCondition(lvl)}
+                            style={[
+                              styles.conditionChip,
+                              {
+                                borderColor: selectedCondition === lvl ? colors.accent : colors.glassBorder,
+                                backgroundColor: selectedCondition === lvl ? colors.accent + "22" : colors.glassBg,
+                              },
+                            ]}
+                          >
+                            <Text style={styles.conditionEmojiText}>{t.conditionEmoji[lvl]}</Text>
+                            <Text style={[styles.conditionChipLabel, { color: selectedCondition === lvl ? colors.accent : colors.mutedForeground }]}>
+                              {t.conditions[lvl]}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <TextInput
+                        style={[styles.conditionInput, { color: colors.foreground, borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
+                        placeholder={t.conditionNotePlaceholder}
+                        placeholderTextColor={colors.mutedForeground}
+                        value={conditionNote}
+                        onChangeText={setConditionNote}
+                        maxLength={200}
+                        multiline
+                      />
+                      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                        <PrimaryButton
+                          label={conditionSubmitting ? t.conditionSubmitting : t.conditionSubmit}
+                          onPress={submitConditionHike}
+                          disabled={conditionSubmitting || !selectedCondition}
+                          style={{ flex: 1 }}
+                        />
+                        <PrimaryButton
+                          label="✕"
+                          variant="secondary"
+                          onPress={() => {
+                            setShowConditionForm(false);
+                            setSelectedCondition(null);
+                            setConditionNote("");
+                            setConditionSubmitResult(null);
+                          }}
+                          style={{ flex: 1 }}
+                        />
+                      </View>
+                    </Animated.View>
+                  ) : (
+                    <PrimaryButton
+                      label={t.reportCondition}
+                      variant="secondary"
+                      onPress={() => {
+                        setConditionSubmitResult(null);
+                        setShowConditionForm(true);
+                      }}
+                      style={styles.hikeActionButton}
+                    />
+                  )}
+                </View>
               ),
             },
           ]}
@@ -5978,82 +6087,6 @@ export default function LiveHike() {
           )}
         </View>
 
-        {/* ── Wegbedingungen melden ─────────────────────────────────── */}
-        <View style={styles.conditionSection}>
-          <View style={[styles.conditionDivider, { backgroundColor: colors.glassBorder }]} />
-          {conditionSubmitResult === "ok" && (
-            <Text style={[styles.conditionSuccess, { color: colors.accent }]}>
-              {t.conditionSubmitted}
-            </Text>
-          )}
-          {(conditionSubmitResult === "ratelimit" || conditionSubmitResult === "error") && (
-            <Text style={[styles.conditionError, { color: colors.destructive }]}>
-              {conditionSubmitResult === "ratelimit" ? t.conditionRateLimit : t.conditionError}
-            </Text>
-          )}
-          {showConditionForm ? (
-            <Animated.View entering={FadeIn.duration(200)}>
-              <View style={styles.conditionChips}>
-                {(["excellent", "clear", "muddy", "snow", "icy", "blocked"] as const).map((lvl) => (
-                  <Pressable
-                    key={lvl}
-                    onPress={() => setSelectedCondition(lvl)}
-                    style={[
-                      styles.conditionChip,
-                      {
-                        borderColor: selectedCondition === lvl ? colors.accent : colors.glassBorder,
-                        backgroundColor: selectedCondition === lvl ? colors.accent + "22" : colors.glassBg,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.conditionEmojiText}>{t.conditionEmoji[lvl]}</Text>
-                    <Text style={[styles.conditionChipLabel, { color: selectedCondition === lvl ? colors.accent : colors.mutedForeground }]}>
-                      {t.conditions[lvl]}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-              <TextInput
-                style={[styles.conditionInput, { color: colors.foreground, borderColor: colors.glassBorder, backgroundColor: colors.glassBg }]}
-                placeholder={t.conditionNotePlaceholder}
-                placeholderTextColor={colors.mutedForeground}
-                value={conditionNote}
-                onChangeText={setConditionNote}
-                maxLength={200}
-                multiline
-              />
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-                <PrimaryButton
-                  label={conditionSubmitting ? t.conditionSubmitting : t.conditionSubmit}
-                  onPress={submitConditionHike}
-                  disabled={conditionSubmitting || !selectedCondition}
-                  style={{ flex: 1 }}
-                />
-                <PrimaryButton
-                  label="✕"
-                  variant="secondary"
-                  onPress={() => {
-                    setShowConditionForm(false);
-                    setSelectedCondition(null);
-                    setConditionNote("");
-                    setConditionSubmitResult(null);
-                  }}
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </Animated.View>
-          ) : (
-            <PrimaryButton
-              label={t.reportCondition}
-              variant="secondary"
-              onPress={() => {
-                setConditionSubmitResult(null);
-                setShowConditionForm(true);
-              }}
-              style={styles.hikeActionButton}
-            />
-          )}
-        </View>
       </ScrollView>
 
       {/* POI-Detail — ausserhalb ScrollView damit absoluteFill den ganzen Screen abdeckt */}
@@ -6364,6 +6397,7 @@ export default function LiveHike() {
       )}
       <SafetyCheckin
         ref={safetyCheckinRef}
+        hideTrigger
         routeName={route?.name ?? t.unknown}
         emergencyContact={emergencyContact}
         livePosition={livePos}
@@ -6408,6 +6442,12 @@ function Metric({ label, value, unit }: { label: string; value: string; unit: st
       </View>
     </View>
   );
+}
+
+function formatCountdown(seconds: number) {
+  const mins = Math.floor(Math.max(0, seconds) / 60);
+  const secs = Math.max(0, seconds) % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 function GpsLiveCard({
@@ -7131,6 +7171,7 @@ const styles = StyleSheet.create({
   narrationUnavailable: { fontFamily: fonts.body, fontSize: 13, marginTop: 8 },
   decisionWrap: { marginTop: 24 },
   conditionSection: { paddingTop: 8, paddingBottom: 20 },
+  conditionTileContent: { paddingVertical: 8 },
   conditionDivider: { height: 1, marginVertical: 16 },
   conditionChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   conditionChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12 },

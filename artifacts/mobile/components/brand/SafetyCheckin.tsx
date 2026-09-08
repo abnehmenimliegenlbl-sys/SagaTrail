@@ -43,11 +43,13 @@ export interface SafetyCheckinProps {
     remainingSec: number;
     liveLinkActive: boolean;
   }) => void;
+  hideTrigger?: boolean;
 }
 
 export type SafetyCheckinDuration = 30 | 60 | 120;
 
 export interface SafetyCheckinHandle {
+  open: () => void;
   startFromWatch: (duration: SafetyCheckinDuration) => void;
   confirmFromWatch: () => void;
 }
@@ -60,6 +62,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   getAuthToken,
   labels,
   onStatusChange,
+  hideTrigger = false,
 }: SafetyCheckinProps, ref) {
   const colors = useColors();
   const [open, setOpen] = useState(false);
@@ -240,6 +243,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   };
 
   useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
     startFromWatch: (watchDuration) => {
       if (![30, 60, 120].includes(watchDuration)) return;
       setDuration(watchDuration);
@@ -263,24 +267,26 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
 
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        accessibilityRole="button"
-        accessibilityLabel={labels.button}
-        style={[styles.trigger, { borderColor: colors.glassBorder }]}
-      >
-        <Feather name="clock" size={18} color={colors.foreground} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.triggerText, { color: colors.foreground }]}>
-            {expiresAt == null ? labels.button : overdue ? labels.overdue : labels.active}
-          </Text>
-          {expiresAt != null ? (
-            <Text style={[styles.triggerSubtext, { color: overdue ? colors.destructive : colors.mutedForeground }]}>
-              {displayTime}
+      {!hideTrigger && (
+        <Pressable
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={labels.button}
+          style={[styles.trigger, { borderColor: colors.glassBorder }]}
+        >
+          <Feather name="clock" size={18} color={colors.foreground} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.triggerText, { color: colors.foreground }]}>
+              {expiresAt == null ? labels.button : overdue ? labels.overdue : labels.active}
             </Text>
-          ) : null}
-        </View>
-      </Pressable>
+            {expiresAt != null ? (
+              <Text style={[styles.triggerSubtext, { color: overdue ? colors.destructive : colors.mutedForeground }]}>
+                {displayTime}
+              </Text>
+            ) : null}
+          </View>
+        </Pressable>
+      )}
 
       <AppModal
         visible={open}

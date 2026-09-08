@@ -20,6 +20,7 @@ export interface FeatureTile {
   id: string;
   title: string;
   subtitle?: string;
+  highlightSubtitle?: boolean;
   icon: React.ComponentProps<typeof Feather>["name"];
   content: React.ReactNode;
   preview?: React.ReactNode;
@@ -30,6 +31,7 @@ export interface FeatureTile {
 interface Props {
   tiles: FeatureTile[];
   tileOrder?: readonly string[];
+  columns?: 3 | 4;
   closeLabel?: string;
   onTileOpen?: (tileId: string) => void;
   closeSignal?: number;
@@ -38,6 +40,7 @@ interface Props {
 export function FeatureTileDeck({
   tiles,
   tileOrder,
+  columns = 3,
   closeLabel = "Schliessen",
   onTileOpen,
   closeSignal = 0,
@@ -84,6 +87,7 @@ export function FeatureTileDeck({
               onPress={() => selectTile(tile.id)}
               style={({ pressed }) => [
                 styles.tile,
+                columns === 4 && styles.tileFour,
                 GLAS_3D,
                 {
                   backgroundColor: selected ? colors.primary + "18" : colors.glassBg,
@@ -113,7 +117,13 @@ export function FeatureTileDeck({
                     numberOfLines={1}
                     style={[
                       styles.tileSubtitle,
-                      { color: selected ? colors.primary : colors.mutedForeground },
+                      {
+                        color: tile.highlightSubtitle
+                          ? colors.destructive
+                          : selected
+                            ? colors.primary
+                            : colors.mutedForeground,
+                      },
                     ]}
                   >
                     {tile.subtitle}
@@ -229,14 +239,15 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: "31.5%",
-    height: 86,
+    height: 72,
     borderWidth: 1,
     paddingHorizontal: 9,
-    paddingVertical: 10,
+    paddingVertical: 7,
     alignItems: "center",
     justifyContent: "space-between",
     gap: 5,
   },
+  tileFour: { width: "23%" },
   tileText: {
     alignItems: "center",
     justifyContent: "center",
