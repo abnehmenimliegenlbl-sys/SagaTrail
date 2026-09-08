@@ -139,7 +139,7 @@ struct WatchHikeView: View {
 
   private var connectionBanner: some View {
     let status = activityStatus
-    HStack(spacing: 5) {
+    return HStack(spacing: 5) {
       Image(systemName: status.icon)
       Text(copy.t(status.key))
       Spacer()
