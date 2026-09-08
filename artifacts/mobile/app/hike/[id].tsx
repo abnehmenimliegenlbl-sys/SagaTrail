@@ -867,10 +867,6 @@ export default function LiveHike() {
       { lat: geom[0][0], lng: geom[0][1] },
     );
     const needsStartChoice = !startReached && distanceToStartKm > START_NEARBY_KM;
-    // Die Startauswahl kann in einem separaten Render eintreffen als
-    // offRoutePos. In diesem Zwischenzustand darf keine Standardroute
-    // gestartet werden, sonst laufen zwei Anfragen parallel.
-    if (needsStartChoice && startRecalcChoice == null) return;
     if (needsStartChoice && !startRecalcChoiceShownRef.current && startRecalcChoice == null) {
       startRecalcChoiceShownRef.current = true;
       alert(
@@ -883,6 +879,10 @@ export default function LiveHike() {
       );
       return;
     }
+    // Die Startauswahl kann in einem separaten Render eintreffen als
+    // offRoutePos. In diesem Zwischenzustand darf keine Standardroute
+    // gestartet werden, sonst laufen zwei Anfragen parallel.
+    if (needsStartChoice && startRecalcChoice == null) return;
     const targetIdx =
       needsStartChoice && startRecalcChoice === "start"
         ? 0
