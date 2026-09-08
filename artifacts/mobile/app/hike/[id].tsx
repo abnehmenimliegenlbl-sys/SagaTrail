@@ -794,9 +794,9 @@ export default function LiveHike() {
   const [followingRecalc, setFollowingRecalc] = useState(false);
   /** Anteil (0..1) der Originalroute, an dem die Neuberechnung wieder einmuendet. */
   const [recalcRejoinFraction, setRecalcRejoinFraction] = useState<number | null>(null);
-  // Einmalig true sobald der User den Streckenstart passiert hat —
-  // verhindert, dass das "Zum Start laufen"-Banner nach dem Passieren
-  // wieder auftaucht (User ist dann einfach weiter von geometry[0] weg).
+  // Der Storystart ist nicht an den offiziellen Routenpunkt gebunden. Sobald
+  // die Story geladen ist, gilt die Sage als gestartet — auch wenn der Nutzer
+  // bereits einige Meter weitergelaufen ist.
   const [startReached, setStartReached] = useState(false);
   /** Verhindert, dass die Startauswahl bei jedem GPS-Render erneut erscheint. */
   const startRecalcChoiceShownRef = useRef(false);
@@ -804,10 +804,8 @@ export default function LiveHike() {
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
-  // Neue Wanderungen bleiben stumm, bis der erste verlässliche GPS-Fix
-  // bestätigt, dass der offizielle Start erreicht ist, oder der Nutzer im
-  // Start-Umleitungsdialog eine Option gewählt hat. Damit kann die asynchron
-  // vorbereitete Begrüssung nicht vor dem Dialog zu spielen beginnen.
+  // Die Sage wird nach dem Story-Load freigegeben. Der erste GPS-Fix und ein
+  // exakter offizieller Startpunkt sind dafür nicht erforderlich.
   const [startAudioReleased, setStartAudioReleased] = useState(isResume);
   const startAudioReleasedRef = useRef(isResume);
   const releaseStartAudio = useCallback(() => {
@@ -1179,6 +1177,12 @@ export default function LiveHike() {
     setHikePaused(false);
   }, []);
   const lastNarratedRef = useRef<number>(-1);
+  /** Die Sage laeuft unabhaengig von GPS und Routenposition bis zum letzten Kapitel. */
+  const storyCompleteRef = useRef(false);
+  /** Die Route kann vor oder nach dem letzten Sagenkapitel enden. */
+  const routeCompletedRef = useRef(false);
+  /** Gruppenmitglieder warten nach einer fremden Entscheidung bis ihr Audio endet. */
+  const pendingGroupDecisionAdvanceRef = useRef<number | null>(null);
   /** Verhindert, dass setAwaitingDecision(true) mehrfach fuer denselben
    *  Kapitel-Index aufgerufen wird, wenn chapters-Mutationen (Group-Sync,
    *  async Enrichment) den Kapitel-Effekt erneut ausloesen. */
@@ -1580,6 +1584,11 @@ export default function LiveHike() {
       if (resumeAt != null && resumeAt > 0 && resumeAt < story.length) {
         setCurrentIndex(resumeAt);
       }
+      storyCompleteRef.current = false;
+      routeCompletedRef.current = false;
+      releaseStartAudio();
+      setStartReached(true);
+      setFinished(false);
       setPreparing(false);
     })();
     return () => {
@@ -1641,6 +1650,25 @@ export default function LiveHike() {
   const verarbeitetesEreignisRef = useRef<number>(0);
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
+  const advanceStoryChapter = useCallback(
+    (chapterIndex: number) => {
+      if (
+        storyCompleteRef.current ||
+        chapterIndex !== currentIndexRef.current ||
+        chapters.length === 0
+      ) {
+        return;
+      }
+      if (chapterIndex >= chapters.length - 1) {
+        storyCompleteRef.current = true;
+        if (routeCompletedRef.current) setFinished(true);
+        return;
+      }
+      setAwaitingDecision(false);
+      setCurrentIndex(chapterIndex + 1);
+    },
+    [chapters.length],
+  );
   useEffect(() => {
     if (!folgtGruppenleitung || !groupHikeEvent || preparing) return;
     if (groupHikeEvent.receivedAt === verarbeitetesEreignisRef.current) return;
@@ -1674,9 +1702,14 @@ export default function LiveHike() {
       // Entscheidung tatsaechlich das aktuell angezeigte Kapitel betrifft.
       if (event.chapterIndex === currentIndexRef.current) {
         setAwaitingDecision(false);
+        if (!speakingRef.current) {
+          advanceStoryChapter(event.chapterIndex);
+        } else {
+          pendingGroupDecisionAdvanceRef.current = event.chapterIndex;
+        }
       }
     }
-  }, [folgtGruppenleitung, groupHikeEvent, preparing, chapters, t]);
+  }, [advanceStoryChapter, folgtGruppenleitung, groupHikeEvent, preparing, chapters, t]);
 
   // Seilbahnen/Standseilbahnen im Kartenausschnitt laden (typisches alpines
   // Wander-Verkehrsmittel) — nur mit Kartenmittelpunkt sinnvoll, best effort.
@@ -3302,8 +3335,8 @@ export default function LiveHike() {
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
     async (text: string, onFinished?: () => void, opts?: SpeakOptions) => {
-      // Vor der Startentscheidung darf keinerlei Audioausgabe beginnen:
-      // weder Begrüssung/Einführung, Sage, POI noch Navigationshinweis.
+      // Vor dem Story-Load darf keine Erzaehlung beginnen. Danach ist die Sage
+      // unabhaengig vom offiziellen Startpunkt und vom Off-Route-Zustand.
       if (!startAudioReleasedRef.current) return;
       const enqueueNarration = () => {
         const entry: NarrationQueueItem = {
@@ -3655,74 +3688,22 @@ export default function LiveHike() {
     return () => { cancelled = true; };
   }, [preparing, profile?.language]);
 
-  // Beim Start zuerst klären, ob der Nutzer zum offiziellen Startpunkt oder
-  // direkt zur Route möchte. Die Entscheidung basiert bewusst ausschließlich
-  // auf der Entfernung zum offiziellen Startpunkt — nicht auf einer
-  // zusätzlichen "nahe an der Route"-Prüfung.
+  // Die Sage beginnt, sobald die Story geladen ist. Ein fehlender exakter
+  // Startpunkt darf die Erzaehlung nicht blockieren: Der Nutzer kann am
+  // offiziellen Start bereits losgelaufen sein, waehrend Story und GPS noch
+  // vorbereitet wurden.
   useEffect(() => {
     if (
       isResume ||
       preparing ||
-      !hasFreshGps ||
-      !livePos ||
-      startReached ||
-      startChoicePendingRef.current ||
-      startChoiceHandledRef.current ||
-      !navigationGeometry ||
-      navigationGeometry.length < 2
+      startChoiceHandledRef.current
     ) {
       return;
     }
-    const start = {
-      lat: navigationGeometry[0][0],
-      lng: navigationGeometry[0][1],
-    };
-    if (haversineKm(livePos, start) <= START_NEARBY_KM) {
-      startChoiceHandledRef.current = true;
-      releaseStartAudio();
-      return;
-    }
-
-    const positionAtPrompt = livePos;
     startChoiceHandledRef.current = true;
-    startChoicePendingRef.current = true;
-    setStartChoicePending(true);
-    alert(
-      t.offRouteStartChoiceTitle,
-      t.offRouteStartChoiceMessage,
-      [
-        {
-          text: t.offRouteToStart,
-          onPress: () => {
-            startRecalcChoiceShownRef.current = true;
-            autoFollowRecalcStartedRef.current = false;
-            releaseStartAudio();
-            setOffRoutePos(positionAtPrompt);
-            setStartRecalcChoice("start");
-          },
-        },
-        {
-          text: t.offRouteFastestToRoute,
-          onPress: () => {
-            startRecalcChoiceShownRef.current = true;
-            autoFollowRecalcStartedRef.current = false;
-            releaseStartAudio();
-            setOffRoutePos(positionAtPrompt);
-            setStartRecalcChoice("fastest");
-          },
-        },
-      ],
-    );
-  }, [
-    hasFreshGps,
-    isResume,
-    livePos,
-    navigationGeometry,
-    preparing,
-    releaseStartAudio,
-    startReached,
-    t,
-  ]);
+    releaseStartAudio();
+    setStartReached(true);
+  }, [isResume, preparing, releaseStartAudio]);
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
@@ -3731,23 +3712,32 @@ export default function LiveHike() {
     if (
       preparing ||
       !startAudioReleasedRef.current ||
-      startChoicePendingRef.current ||
       chapters.length === 0
     ) return;
+    if (storyCompleteRef.current) return;
     const ch = chapters[currentIndex];
     if (!ch) return;
     if (lastNarratedRef.current !== currentIndex) {
       lastNarratedRef.current = currentIndex;
       // Erstes Kapitel: Begruessung voranstellen, dann kurze Pause vor Kapitel 1.
-      // interrupt: true — Kapitelwechsel unterbricht immer (inkl. Queue leeren).
       // Offline-Audio bevorzugen wenn vorhanden — kein Netzwerk noetig.
       // capturedIndex sichert den Index zum Zeitpunkt des Effect-Aufrufens.
-      // Nach dem async getOfflineAudioUri-Await kann der User bereits eine
-      // Entscheidung getroffen haben (chooseOption → Ack laeuft). Ohne
-      // diese Pruefung wuerde speak(..., {interrupt:true}) den Ack unterbrechen
-      // und den Kapiteltext erneut abspielen — das ist Bug "Frage zweimal gestellt".
       const capturedIndex = currentIndex;
       const startupSequenceGen = ++startupSequenceGenRef.current;
+      let completionHandled = false;
+      const finishChapter = () => {
+        if (completionHandled) return;
+        completionHandled = true;
+        if (startupSequenceGen !== startupSequenceGenRef.current) return;
+        if (currentIndexRef.current !== capturedIndex) return;
+        const latestChapter = decisionsRef.current[capturedIndex];
+        if (latestChapter?.isDecisionPoint && latestChapter.chosenOptionIndex == null) {
+          setAwaitingDecision(true);
+          return;
+        }
+        pendingGroupDecisionAdvanceRef.current = null;
+        advanceStoryChapter(capturedIndex);
+      };
       if (startupSequenceTimerRef.current !== null) {
         clearTimeout(startupSequenceTimerRef.current);
         startupSequenceTimerRef.current = null;
@@ -3774,19 +3764,17 @@ export default function LiveHike() {
                   startupSequenceGen !== startupSequenceGenRef.current ||
                   currentIndexRef.current !== capturedIndex
                 ) return;
-                speak(ch.text, undefined, {
+                 speak(ch.text, finishChapter, {
                   preFetchedUri: offlineUri ?? undefined,
                 });
               }, 1500);
             },
             {
-              ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
               useOpenAI: true,
             }
           );
         } else {
-          speak(ch.text, undefined, {
-            ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
+          speak(ch.text, finishChapter, {
             preFetchedUri: offlineUri ?? undefined,
           });
         }
@@ -3806,7 +3794,7 @@ export default function LiveHike() {
       lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
     }
-  }, [currentIndex, preparing, startAudioReleased, startChoicePending, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
+  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
@@ -4273,7 +4261,6 @@ export default function LiveHike() {
   // Luftlinien-Hinweis zum Beginn der aktuell aktiven Geometrie. Nach dem
   // Uebernehmen eines Zubringers ist dessen Anfang der neue Wegstart; der
   // urspruengliche Katalog-Start darf dann nicht mehr angesagt werden.
-  const START_NEARBY_KM = 0.05;
   const walkToStart = useMemo(() => {
     if (!livePos || !navigationGeometry || navigationGeometry.length < 2) return null;
     const start: LatLng = {
@@ -4299,81 +4286,26 @@ export default function LiveHike() {
   const walkToStartAnnouncedRef = useRef(false);
   useEffect(() => {
     if (!walkToStart) return;
+    if (startReached) return;
     if (walkToStartAnnouncedRef.current) return;
     if (preparing || locState !== "granted" || !hasFreshGps) return;
     walkToStartAnnouncedRef.current = true;
     speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useOpenAI: true });
-  }, [walkToStart, preparing, locState, speak, t, hasFreshGps]);
+  }, [walkToStart, startReached, preparing, locState, speak, t, hasFreshGps]);
 
-  // Kapitelfortschritt entlang der Route: bevorzugt die echte Position
-  // (routeProgress); ohne verlaesslichen GPS-Fix oder Geometrie faellt es
-  // auf die reine zurueckgelegte Distanz zurueck. Die Projektion ist am
-  // Ziel robuster als die aufsummierten GPS-Abstaende, weil einzelne Fixes
-  // fehlen oder die offizielle Routenlaenge leicht von der tatsaechlich
-  // gelaufenen Strecke abweichen kann.
-  // Kapitelfortschritt laeuft unabhaengig davon, ob gerade eine Entscheidung
-  // offen ist. Entscheidungen sind freiwillig — wer nicht antwortet, gehoert
-  // trotzdem das naechste Kapitel, sobald GPS oder Distanz es vorgibt.
-  // Wird ein Entscheidungs-Kapitel durch den Fortschritt verlassen, schliesst
-  // sich das Panel automatisch (setAwaitingDecision(false)). Das darf aber
-  // nicht passieren, solange die Entscheidung noch offen ist: Bei einer
-  // schnellen Autofahrt kann die GPS-Distanz mehrere Kapitelgrenzen in einem
-  // einzigen Update überschreiten. Dann würde der Entscheidungs-Prompt
-  // parallel zur noch laufenden Antwort-/Bestätigungslogik weiterlaufen.
+  // GPS darf die Sage weder vorspringen noch beenden. Die Route kann kuerzer,
+  // laenger oder bereits begonnen sein — die Kapitel werden ausschliesslich
+  // nach erfolgreichem Audioabschluss nacheinander abgespielt.
   useEffect(() => {
-    if (locState !== "granted") return;
-    if (
-      preparing ||
-      startChoicePendingRef.current ||
-      decisionFeedbackPendingRef.current ||
-      finished ||
-      chapters.length === 0
-    ) return;
-    if (!hasFreshGps) return;
-    // Die bereits gefahrene Strecke bleibt in `distance` erhalten. Sobald
-    // chooseOption (oder der Timeout) die Entscheidung schließt, läuft dieser
-    // Effekt erneut und holt den Kapitelindex kontrolliert nach.
-    if (awaitingDecisionRef.current) return;
-    const steps = chapters.length - 1;
-    if (steps <= 0) {
-      setFinished(true);
-      return;
-    }
-    // Mit verlaesslicher GPS-Position den Fortschritt direkt auf der
-    // Routen-Geometrie bestimmen. Die kumulierte Distanz bleibt der Rueckfall
-    // fuer fehlendes GPS oder eine Position ausserhalb der Route.
-    const ratio = routeProgress ?? 0;
-    // Letztes Kapitel schon ab ~70 % des letzten Streckenabschnitts ausloesen:
-    // GPS-Distanz bleibt in der Praxis meistens etwas unter der offiziellen
-    // Routenlaenge (Drift, abweichendes Routenende), weshalb ratio selten
-    // exakt 1.0 erreicht und das letzte Kapitel sonst nie gefeuert wird.
-    const reached = ratio >= (steps - 0.3) / steps
-      ? steps
-      : Math.min(steps - 1, Math.floor(ratio * steps + 1e-6));
-    if (reached > currentIndex) {
-      // Immer nur einen Schritt weiter — nie springen. So wird jedes Kapitel
-      // (auch Entscheidungskapitel) mindestens einmal als currentIndex gesetzt
-      // und der Narrations-Effect bekommt die Chance, die Frage zu stellen.
-      // Der Effect laeuft erneut sobald currentIndex sich aendert, sodass
-      // schnell aufeinanderfolgende GPS-Updates trotzdem zueegig durch alle
-      // Kapitel durchlaufen — nur eben Schritt fuer Schritt statt mit Sprung.
-      const next = currentIndex + 1;
-      setCurrentIndex(next);
-      setAwaitingDecision(false);
-      if (next >= steps) setFinished(true);
-    }
+    if (preparing || !hasFreshGps || !navigationGeometry || navigationGeometry.length < 2) return;
+    if (routeProgress == null) return;
+    if (routeProgress < 0.98) return;
+    routeCompletedRef.current = true;
+    if (storyCompleteRef.current) setFinished(true);
   }, [
-    distance,
-    locState,
     preparing,
-    finished,
-    chapters.length,
-    currentIndex,
-    awaitingDecision,
-    decisionFeedbackPending,
-    startChoicePending,
-    totalKm,
     routeProgress,
+    navigationGeometry,
     hasFreshGps,
   ]);
 
@@ -4439,6 +4371,7 @@ export default function LiveHike() {
     ) {
       return;
     }
+    const decisionIndex = currentIndex;
     // Antwort, Ack und persoenliches Feedback sind EIN atomarer
     // Entscheidungsabschluss. GPS-Fortschritt darf in diesem Fenster nicht
     // schon zum naechsten (moeglicherweise ebenfalls entscheidenden) Kapitel
@@ -4453,7 +4386,7 @@ export default function LiveHike() {
     // starten und die Audio-Session bleibt im Aufnahme-Modus.
     awaitingDecisionRef.current = false;
     hapticMedium();
-    const gewaehlt = chapters[currentIndex]?.decision?.options[optionIndex]?.label;
+    const gewaehlt = chapters[decisionIndex]?.decision?.options[optionIndex]?.label;
     if (gewaehlt) {
       // Kurze sichtbare Bestaetigung der Wahl, bevor die Geschichte weitergeht
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
@@ -4467,8 +4400,8 @@ export default function LiveHike() {
       }
     }
     const nextChapters = [...chapters];
-    nextChapters[currentIndex] = {
-      ...nextChapters[currentIndex],
+    nextChapters[decisionIndex] = {
+      ...nextChapters[decisionIndex],
       chosenOptionIndex: optionIndex,
     };
     // Ebenfalls sofort aktualisieren, damit der Prompt-Effekt auch vor dem
@@ -4479,7 +4412,7 @@ export default function LiveHike() {
     // Wohlwollendes Persoenlichkeits-Feedback nach der Entscheidung sprechen.
     // Zweistufig: sofortige OpenAI-Bestaetigung aus dem Cache (kein Netz
     // waehrend der Wahl noetig), danach das vollstaendige KI-Feedback via OpenAI.
-    const archetypeHint = chapters[currentIndex]?.decision?.options[optionIndex]?.archetypeHint;
+    const archetypeHint = chapters[decisionIndex]?.decision?.options[optionIndex]?.archetypeHint;
     if (archetypeHint) {
       const ackPack = STORY_PACKS[resolveLang(cueLanguage)];
       // feedbackPack: cueLanguage ist bereits gsw→de gemappt; DE-Template passt zu Hochdeutsch-Text
@@ -4489,6 +4422,10 @@ export default function LiveHike() {
       // sofort ohne Netzwerk-Latenz. Fallback: OpenAI-Aufruf zur Laufzeit
       // (ackAudioUriRef.current ist null, wenn Pre-fetch noch laeuft oder scheiterte).
       const ackUri = ackAudioUriRef.current ?? undefined;
+      const completeDecision = () => {
+        setDecisionFeedbackPendingNow(false);
+        advanceStoryChapter(decisionIndex);
+      };
       // Bei Button-Taps beendet die Hook-Cleanup-Funktion die Erkennung erst
       // nach diesem Render. Auch dieser Pfad muss die PlayAndRecord-Session
       // freigeben, sonst bleibt der folgende Text auf iOS dauerhaft leiser.
@@ -4496,12 +4433,12 @@ export default function LiveHike() {
       const speakDecisionFeedback = () => {
         const speaker = speakRef.current;
         if (!speaker) {
-          setDecisionFeedbackPendingNow(false);
+          completeDecision();
           return;
         }
         void speaker(
           feedbackText,
-          () => setDecisionFeedbackPendingNow(false),
+          completeDecision,
           { useOpenAI: true },
         );
       };
@@ -4516,16 +4453,17 @@ export default function LiveHike() {
           },
         );
       } else {
-        setDecisionFeedbackPendingNow(false);
+        completeDecision();
       }
     } else {
       setDecisionFeedbackPendingNow(false);
+      advanceStoryChapter(decisionIndex);
     }
     // Leitung: Entscheidung an alle Mitglieder verteilen.
     if (istGruppenleitung) {
       sendGroupHikeEvent({
         kind: "decision",
-        chapterIndex: currentIndex,
+        chapterIndex: decisionIndex,
         optionIndex,
       });
     }
@@ -4696,9 +4634,8 @@ export default function LiveHike() {
 
   // Die akzeptierte Valhalla-Route wird zur neuen aktiven Wanderroute:
   // Zubringer bis zum gewählten Wiedereinstiegspunkt plus der verbleibende
-  // Teil der bisherigen Route. Die Story wird dabei bewusst neu auf Kapitel 1
-  // gesetzt und mit der neuen Geometrie verwoben — auch wenn der Einstieg
-  // mitten in der ursprünglichen Strecke liegt.
+  // Teil der bisherigen Route. Die Sage bleibt dabei an ihrem aktuellen
+  // Kapitel — eine Routenumleitung darf sie weder zuruecksetzen noch beenden.
   const followRecalculatedRoute = useCallback(async () => {
     if (!recalcGeom || recalcGeom.length < 2 || !navigationGeometry || navigationGeometry.length < 2) {
       return;
@@ -4728,6 +4665,7 @@ export default function LiveHike() {
       combinedGeometry.push(...(tailStartsAtDetourEnd ? originalTail.slice(1) : originalTail));
     }
     if (combinedGeometry.length < 2) return;
+    const preservedChapterIndex = currentIndexRef.current;
 
     detourPoiSearchKeyRef.current = null;
     if (!isOffline) searchDetourPois(combinedGeometry);
@@ -4743,38 +4681,33 @@ export default function LiveHike() {
     releaseStartAudio();
     startChoicePendingRef.current = false;
     setStartChoicePending(false);
+    routeCompletedRef.current = false;
+    pendingGroupDecisionAdvanceRef.current = null;
+    setFinished(false);
     setOffRoutePos(null);
-    setCurrentIndex(0);
-    setAwaitingDecision(false);
-    awaitingDecisionRef.current = false;
-    lastNarratedRef.current = -1;
-    lastDecisionTriggeredRef.current = -1;
+    if (!storyCompleteRef.current) {
+      // Der laufende Clip wurde oben abgebrochen. Das aktuelle Kapitel wird
+      // nach dem Geometrie-Update einmal sauber neu gestartet.
+      setAwaitingDecision(false);
+      awaitingDecisionRef.current = false;
+      lastNarratedRef.current = preservedChapterIndex - 1;
+      lastDecisionTriggeredRef.current = preservedChapterIndex - 1;
+    }
     notifiedTurnsRef.current.clear();
     terrainStartedRef.current.clear();
     terrainProgressRef.current.clear();
     terrainEndedRef.current.clear();
 
-    try {
-      if (!saga || !profile) return;
-      const { chapters: story } = await resolveStory(saga, profile, premium);
-      setChapters(story);
-      decisionsRef.current = story;
-    } finally {
-      setPreparing(false);
-    }
+    // Die Story bleibt unveraendert; nur die aktive Geometrie wird ersetzt.
+    setPreparing(false);
   }, [
     cancelNarration,
     navigationGeometry,
-    premium,
-    profile,
     releaseStartAudio,
     recalcGeom,
     recalcRejoinFraction,
-    resolveStory,
     searchDetourPois,
     isOffline,
-    saga,
-    storyLanguage,
   ]);
 
   // Eine Neuberechnung, die direkt aus der Startauswahl stammt, wird nach
