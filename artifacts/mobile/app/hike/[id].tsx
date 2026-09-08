@@ -1694,8 +1694,17 @@ export default function LiveHike() {
         return;
       }
       // Die Strecke gibt nur das naechste Kapitel frei; sie darf keine
-      // Kapitel ueberspringen und kein Audio vorzeitig starten.
-      if (storyEligibleChapterRef.current <= chapterIndex) return;
+      // Kapitel ueberspringen und kein Audio vorzeitig starten. Sobald die
+      // Route aber beendet ist, muessen auch die verbleibenden Kapitel
+      // nacheinander abgespielt werden — sonst kann die Sage z. B. bei 6/10
+      // dauerhaft stehen bleiben, wenn der letzte GPS-Fortschritt nicht mehr
+      // als neues Render-Ereignis ankommt.
+      if (
+        storyEligibleChapterRef.current <= chapterIndex &&
+        !routeCompletedRef.current
+      ) {
+        return;
+      }
       setAwaitingDecision(false);
       setCurrentIndex(chapterIndex + 1);
     },
@@ -3768,7 +3777,13 @@ export default function LiveHike() {
           setAwaitingDecision(true);
           return;
         }
+        const pendingGroupDecisionAdvance =
+          pendingGroupDecisionAdvanceRef.current;
         pendingGroupDecisionAdvanceRef.current = null;
+        if (pendingGroupDecisionAdvance === capturedIndex) {
+          advanceStoryChapter(capturedIndex);
+          return;
+        }
         advanceStoryChapter(capturedIndex);
       };
       if (startupSequenceTimerRef.current !== null) {
