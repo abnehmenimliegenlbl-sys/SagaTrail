@@ -1595,6 +1595,10 @@ export default function LiveHike() {
       }
       storyCompleteRef.current = false;
       routeCompletedRef.current = false;
+      storyProgressMaxRef.current = 0;
+      storyEligibleChapterRef.current = 0;
+      narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
+      setStoryProgressBaseline(null);
       releaseStartAudio();
       setStartReached(true);
       setFinished(false);
@@ -1664,7 +1668,8 @@ export default function LiveHike() {
       if (
         storyCompleteRef.current ||
         chapterIndex !== currentIndexRef.current ||
-        chapters.length === 0
+        chapters.length === 0 ||
+        narratedThroughRef.current < chapterIndex
       ) {
         return;
       }
@@ -1673,6 +1678,9 @@ export default function LiveHike() {
         if (routeCompletedRef.current) setFinished(true);
         return;
       }
+      // Die Strecke gibt nur das naechste Kapitel frei; sie darf keine
+      // Kapitel ueberspringen und kein Audio vorzeitig starten.
+      if (storyEligibleChapterRef.current <= chapterIndex) return;
       setAwaitingDecision(false);
       setCurrentIndex(chapterIndex + 1);
     },
@@ -3739,6 +3747,7 @@ export default function LiveHike() {
         completionHandled = true;
         if (startupSequenceGen !== startupSequenceGenRef.current) return;
         if (currentIndexRef.current !== capturedIndex) return;
+        narratedThroughRef.current = Math.max(narratedThroughRef.current, capturedIndex);
         const latestChapter = decisionsRef.current[capturedIndex];
         if (latestChapter?.isDecisionPoint && latestChapter.chosenOptionIndex == null) {
           setAwaitingDecision(true);
