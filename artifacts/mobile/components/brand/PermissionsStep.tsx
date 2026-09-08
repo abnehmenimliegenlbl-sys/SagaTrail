@@ -58,10 +58,6 @@ export function PermissionsStep({
       }
       try {
         const foregroundLocation = await Location.getForegroundPermissionsAsync();
-        const backgroundLocation =
-          foregroundLocation.status === Location.PermissionStatus.GRANTED
-            ? await Location.getBackgroundPermissionsAsync()
-            : null;
         const microphone = NATIVE_MODULES_AVAILABLE
           ? await (await import("expo-speech-recognition")).ExpoSpeechRecognitionModule.getPermissionsAsync()
           : { granted: false };
@@ -70,8 +66,7 @@ export function PermissionsStep({
         if (cancelled) return;
         setStatuses({
           location:
-            foregroundLocation.status === Location.PermissionStatus.GRANTED &&
-            backgroundLocation?.status === Location.PermissionStatus.GRANTED
+            foregroundLocation.status === Location.PermissionStatus.GRANTED
               ? "granted"
               : "pending",
           microphone: microphone.granted ? "granted" : "pending",
@@ -105,10 +100,11 @@ export function PermissionsStep({
       let granted = false;
       if (key === "location") {
         const foreground = await Location.requestForegroundPermissionsAsync();
-        if (foreground.status === Location.PermissionStatus.GRANTED) {
-          const background = await Location.requestBackgroundPermissionsAsync();
-          granted = background.status === Location.PermissionStatus.GRANTED;
-        }
+        // Foreground access is sufficient for live navigation. Background
+        // tracking remains optional and is requested only when needed by an
+        // active hike, so onboarding is not blocked by iOS's separate
+        // "Always" decision.
+        granted = foreground.status === Location.PermissionStatus.GRANTED;
       } else if (key === "microphone") {
         if (NATIVE_MODULES_AVAILABLE) {
           const mod = await import("expo-speech-recognition");
