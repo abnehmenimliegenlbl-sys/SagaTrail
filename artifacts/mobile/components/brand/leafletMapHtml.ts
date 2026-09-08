@@ -303,27 +303,25 @@ export function buildLeafletMapHtml(
     }
     var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
     // OpenTopoMap kann einzelne Kacheln zeitweise mit Netzwerk-/Rate-Limit-
-    // Fehlern beantworten. Leaflet lässt diese Stellen sonst transparent,
-    // wodurch im Kartenbild genau ein dunkler vertikaler Streifen entsteht.
-    // Die Topo-Karte bleibt der Primär-Layer; nur eine fehlende Einzelkachel
-    // wird auf Carto Voyager zurückgesetzt.
-    var tileFallbackUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-    var tileFallbackSubdomains = ["a", "b", "c", "d"];
-    function addTileFallback(layer) {
+    // Fehlern beantworten. Nie auf eine andere Kartenquelle ausweichen:
+    // eine einzelne Carto-Kachel würde im Topo-Bild wie ein falscher Zoom oder
+    // ein anderer Kartenstil aussehen. Stattdessen dieselbe Topo-Kachel
+    // höchstens über die übrigen OpenTopoMap-Subdomains erneut laden.
+    var topoSubdomains = ["a", "b", "c"];
+    function addTileRetry(layer) {
       layer.on("tileerror", function (event) {
         var tile = event && event.tile;
         var coords = event && event.coords;
         if (!tile || !coords || tile.getAttribute("data-stt-fallback") === "1") return;
         tile.setAttribute("data-stt-fallback", "1");
-        var subdomain = tileFallbackSubdomains[
-          Math.abs(coords.x + coords.y) % tileFallbackSubdomains.length
+        var subdomain = topoSubdomains[
+          Math.abs(coords.x + coords.y + coords.z) % topoSubdomains.length
         ];
-        tile.src = L.Util.template(tileFallbackUrl, {
+        tile.src = L.Util.template(topoUrl, {
           s: subdomain,
           z: coords.z,
           x: coords.x,
           y: coords.y,
-          r: L.Browser.retina ? "@2x" : ""
         });
       });
       return layer;
@@ -332,7 +330,7 @@ export function buildLeafletMapHtml(
       subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, tileSize: 256,
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
-    addTileFallback(carto);
+    addTileRetry(carto);
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
@@ -345,7 +343,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-      active = addTileFallback(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
+      active = addTileRetry(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
     }
     var is3d = false;
     var isSat = false;
