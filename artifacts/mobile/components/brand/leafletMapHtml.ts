@@ -303,17 +303,36 @@ export function buildLeafletMapHtml(
     }
     var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
     // OpenTopoMap kann einzelne Kacheln zeitweise mit Netzwerk-/Rate-Limit-
-    // Fehlern beantworten. Nie auf eine andere Kartenquelle ausweichen:
-    // eine einzelne Carto-Kachel würde im Topo-Bild wie ein falscher Zoom oder
-    // ein anderer Kartenstil aussehen. Stattdessen dieselbe Topo-Kachel
-    // höchstens über die übrigen OpenTopoMap-Subdomains erneut laden.
+    // Fehlern beantworten. Nie eine einzelne Kachel durch eine andere Quelle
+    // ersetzen: das sieht wie ein falscher Zoom oder Kartenstil aus. Nach
+    // einem Retry wird bei weiterem Fehler die gesamte Basiskarte einheitlich
+    // auf Carto umgeschaltet, damit kein schwarzes oder gemischtes Raster
+    // sichtbar bleibt.
     var topoSubdomains = ["a", "b", "c"];
+    var cartoFallbackUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+    var cartoFallback = L.tileLayer(cartoFallbackUrl, {
+      subdomains: ["a", "b", "c", "d"],
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    });
+    var baseFallbackActive = false;
+    var active;
+    function switchToConsistentFallback() {
+      if (baseFallbackActive || isSat) return;
+      baseFallbackActive = true;
+      if (active && map.hasLayer(active)) map.removeLayer(active);
+      active = cartoFallback.addTo(map);
+    }
     function addTileRetry(layer) {
       layer.on("tileerror", function (event) {
         var tile = event && event.tile;
         var coords = event && event.coords;
-        if (!tile || !coords || tile.getAttribute("data-stt-fallback") === "1") return;
-        tile.setAttribute("data-stt-fallback", "1");
+        if (!tile || !coords) return;
+        if (tile.getAttribute("data-stt-topo-retry") === "1") {
+          switchToConsistentFallback();
+          return;
+        }
+        tile.setAttribute("data-stt-topo-retry", "1");
         var subdomain = topoSubdomains[
           Math.abs(coords.x + coords.y + coords.z) % topoSubdomains.length
         ];
@@ -334,7 +353,7 @@ export function buildLeafletMapHtml(
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
-    var active = carto.addTo(map);
+    active = carto.addTo(map);
     if (offline && Object.keys(offline).length) {
       var offlineLayer = L.TileLayer.extend({
         getTileUrl: function (coords) {
