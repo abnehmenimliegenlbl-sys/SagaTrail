@@ -186,20 +186,20 @@ struct WatchHikeView: View {
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
     VStack(alignment: .leading, spacing: 3) {
       Label(copy.t("offRoute"), systemImage: "location.slash.fill")
-        .foregroundStyle(.orange)
+        .foregroundStyle(WatchPalette.red)
       Text("\(copy.t("atLeast")) \(Int(offRoute.distanceMeters)) m \(copy.t("fromRoute"))")
-        .foregroundStyle(.secondary)
+        .foregroundStyle(WatchPalette.mutedWhite)
       if let bearing = offRoute.bearingToRouteDegrees {
         Label("\(copy.t("returnDirection")) \(compassPoint(bearing))", systemImage: "location.north.fill")
-          .foregroundStyle(.orange)
+          .foregroundStyle(WatchPalette.red)
       }
       Text(copy.t("returnToRoute"))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(WatchPalette.mutedWhite)
     }
     .font(.caption2)
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(7)
-    .background(.orange.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+    .background(WatchPalette.red.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
   }
   private func weatherCard(
     _ weather: SagaTrailWatchProtocol.Weather,
@@ -213,10 +213,10 @@ struct WatchHikeView: View {
       }
       if let daylight {
         Text("\(copy.t("sunset")) \(daylight.sunsetAt.formatted(date: .omitted, time: .shortened))")
-          .foregroundStyle(daylight.arrivalAfterSunset ? .orange : .secondary)
+          .foregroundStyle(daylight.arrivalAfterSunset ? WatchPalette.red : WatchPalette.mutedWhite)
         if daylight.arrivalAfterSunset {
           Text(copy.t("afterSunset"))
-            .foregroundStyle(.orange)
+            .foregroundStyle(WatchPalette.red)
         }
       }
       HStack(spacing: 8) {
@@ -227,11 +227,11 @@ struct WatchHikeView: View {
       }
       if weather.windGustsKmh >= 35 {
         Text("\(copy.t("gusts")) \(Int(weather.windGustsKmh.rounded())) km/h")
-          .foregroundStyle(.orange)
+          .foregroundStyle(WatchPalette.red)
       }
       if weather.isThunderstorm {
         Label(copy.t("thunderstorm"), systemImage: "cloud.bolt.rain.fill")
-          .foregroundStyle(.red)
+          .foregroundStyle(WatchPalette.red)
       }
     }
     .font(.caption2)
@@ -239,7 +239,7 @@ struct WatchHikeView: View {
   private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Label(copy.t("completed"), systemImage: "checkmark.circle.fill")
-        .foregroundStyle(.green)
+        .foregroundStyle(WatchPalette.red)
       metric(copy.t("totalTime"), duration(state.elapsedSeconds))
       metric(copy.t("totalDistance"), String(format: "%.2f km", state.distanceMeters / 1000))
       if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
@@ -255,7 +255,7 @@ struct WatchHikeView: View {
         metric(copy.t("activeEnergy"), "\(Int(energy.rounded())) kcal")
       }
       Text(hike.healthStatus)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(WatchPalette.mutedWhite)
     }
     .font(.caption2)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -300,7 +300,7 @@ struct WatchHikeView: View {
         Spacer()
         Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start")
       }
-    }.font(.footnote).tint(.red)
+    }.font(.footnote).tint(WatchPalette.red)
   }
   private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let checkin = state.safetyCheckin
@@ -319,7 +319,7 @@ struct WatchHikeView: View {
       }
       if let checkin, active || overdue {
          Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
-          .foregroundStyle(overdue ? .orange : .secondary)
+           .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
       }
        Button(active || overdue ? copy.t("stopTimer") : copy.t("startCheckin")) {
         if active || overdue {
@@ -434,14 +434,14 @@ private struct WatchRouteMap: View {
         } else {
           Map(position: $position) {
             MapPolyline(coordinates: coordinates)
-              .stroke(.blue, lineWidth: 4)
+              .stroke(WatchPalette.red, lineWidth: 4)
             if let start = coordinates.first {
               Marker(copy.t("startMarker"), systemImage: "flag.fill", coordinate: start)
-                .tint(.green)
+                .tint(WatchPalette.black)
             }
             if let finish = coordinates.last {
               Marker(copy.t("finishMarker"), systemImage: "flag.checkered", coordinate: finish)
-                .tint(.red)
+                .tint(WatchPalette.red)
             }
             if let current = map.current {
               Annotation("Du", coordinate: CLLocationCoordinate2D(
@@ -449,8 +449,8 @@ private struct WatchRouteMap: View {
                 longitude: current.longitude
               )) {
                 ZStack {
-                  Circle().fill(.white).frame(width: 15, height: 15)
-                  Circle().fill(.blue).frame(width: 10, height: 10)
+                  Circle().fill(WatchPalette.white).frame(width: 15, height: 15)
+                  Circle().fill(WatchPalette.red).frame(width: 10, height: 10)
                 }
               }
             }
@@ -477,11 +477,11 @@ private struct WatchRouteMap: View {
             .font(.caption2)
         }
       }
-      .foregroundStyle(.white)
+      .foregroundStyle(WatchPalette.white)
       .font(.caption2)
       .padding(.horizontal, 6)
       .padding(.vertical, 4)
-      .background(.black.opacity(0.7), in: Capsule())
+      .background(WatchPalette.black.opacity(0.7), in: Capsule())
       .padding(6)
     }
     .digitalCrownRotation($zoom, from: 0.5, through: 2.0, by: 0.1, sensitivity: .medium, isContinuous: false)
@@ -492,7 +492,7 @@ private struct WatchRouteMap: View {
     }
     .overlay(
       RoundedRectangle(cornerRadius: 12)
-        .stroke(.white.opacity(0.2), lineWidth: 1)
+         .stroke(WatchPalette.white.opacity(0.2), lineWidth: 1)
     )
   }
 }
@@ -655,20 +655,20 @@ private struct OfflineRouteSketch: View {
       for item in route.dropFirst() {
         path.addLine(to: point(item))
       }
-      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.black.opacity(0.82)))
-      context.stroke(path, with: .color(.cyan), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-      context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(.green))
-      context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(.red))
+      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.black.opacity(0.82)))
+      context.stroke(path, with: .color(WatchPalette.red), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+      context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(WatchPalette.white))
+      context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.red))
       if let current = map.current {
-        context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(.white))
-        context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(.blue))
+        context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
+        context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.black))
       }
     }
-    .background(.black)
+    .background(WatchPalette.black)
     .overlay(alignment: .topLeading) {
       Label(copy.t("offlineRoute"), systemImage: "wifi.slash")
         .font(.caption2)
-        .foregroundStyle(.white)
+         .foregroundStyle(WatchPalette.white)
         .padding(6)
     }
   }
