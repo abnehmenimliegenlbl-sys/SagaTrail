@@ -4783,6 +4783,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       !startChoicePending ||
+      !startChoicePendingRef.current ||
       isRecalculating ||
       followingRecalc ||
       !recalcGeom ||
@@ -5055,7 +5056,7 @@ export default function LiveHike() {
                 <Feather name="x" size={18} color={colors.mutedForeground} />
               </Pressable>
             </View>
-            {recalcGeom && !isRecalculating && !followingRecalc && (
+            {recalcGeom && !startChoicePending && !isRecalculating && !followingRecalc && (
               <Pressable
                 onPress={() => {
                   isOffRouteRef.current = false;
