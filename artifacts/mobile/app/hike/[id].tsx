@@ -798,9 +798,9 @@ export default function LiveHike() {
   const [followingRecalc, setFollowingRecalc] = useState(false);
   /** Anteil (0..1) der Originalroute, an dem die Neuberechnung wieder einmuendet. */
   const [recalcRejoinFraction, setRecalcRejoinFraction] = useState<number | null>(null);
-  // Der Storystart ist nicht an den offiziellen Routenpunkt gebunden. Sobald
-  // die Story geladen ist, gilt die Sage als gestartet — auch wenn der Nutzer
-  // bereits einige Meter weitergelaufen ist.
+  // Der Storystart ist nicht an den offiziellen Routenpunkt gebunden. Das
+  // Audio darf nach dem Story-Load beginnen; startReached bleibt davon
+  // getrennt und wird nur durch echte GPS-Nähe zum Routenstart gesetzt.
   const [startReached, setStartReached] = useState(false);
   /** Verhindert, dass die Startauswahl bei jedem GPS-Render erneut erscheint. */
   const startRecalcChoiceShownRef = useRef(false);
@@ -1654,7 +1654,6 @@ export default function LiveHike() {
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
       setStoryProgressBaseline(null);
       releaseStartAudio();
-      setStartReached(true);
       setFinished(false);
       setPreparing(false);
     })();
@@ -3789,9 +3788,8 @@ export default function LiveHike() {
   }, [preparing, profile?.language]);
 
   // Die Sage beginnt, sobald die Story geladen ist. Ein fehlender exakter
-  // Startpunkt darf die Erzaehlung nicht blockieren: Der Nutzer kann am
-  // offiziellen Start bereits losgelaufen sein, waehrend Story und GPS noch
-  // vorbereitet wurden.
+   // Startpunkt darf die Erzählung nicht blockieren; die Startpunkt-Auswahl
+   // bleibt davon unabhängig und wartet auf einen echten GPS-Zustand.
   useEffect(() => {
     if (
       isResume ||
@@ -3802,7 +3800,6 @@ export default function LiveHike() {
     }
     startChoiceHandledRef.current = true;
     releaseStartAudio();
-    setStartReached(true);
   }, [isResume, preparing, releaseStartAudio]);
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
