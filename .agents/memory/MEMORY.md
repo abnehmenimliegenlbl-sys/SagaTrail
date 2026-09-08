@@ -126,6 +126,7 @@
 - [Group location consent](sagatrail-group-location-consent.md) — member location sharing must be explicit opt-in, foreground-only, and immediately clearable.
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
 - [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.
+- [Watch active-state source](sagatrail-watch-active-state.md) — native bridge derives Watch isHiking from sessionStatus; route changes must not restart story preparation and push the Watch back to waiting.
 - [Watch build version synchronization](sagatrail-watch-build-version.md) — set the embedded Watch target to the upcoming EAS iOS build number; remote auto-increment does not advance it automatically.
 - [Offline peak database](sagatrail-offline-peak-database.md) — versioned OSM peak data powers honest offline panorama angles; missing heights stay unknown, never simulated.
 - [Local terrain AR](sagatrail-local-terrain-ar.md) — observer-centered SwissTopo terrain is live-refreshed with throttling; offline downloads keep one route-start model and never hide peaks without evidence.
