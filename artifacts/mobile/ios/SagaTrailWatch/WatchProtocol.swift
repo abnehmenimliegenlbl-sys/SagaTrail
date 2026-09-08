@@ -242,12 +242,15 @@ enum SagaTrailWatchProtocol {
         }
         return StoryAudio(isPlaying: isPlaying, text: text)
       }()
+      let sessionStatus = dictionary["sessionStatus"] as? String
+        ?? ((dictionary["isHiking"] as? Bool) == true ? "active" : "preparing")
+      let isHiking = (dictionary["isHiking"] as? Bool) ?? (sessionStatus == "active")
       return LiveState(
         routeName: dictionary["routeName"] as? String ?? "SagaTrail",
         nextInstruction: dictionary["nextInstruction"] as? String ?? "Warte auf Navigation",
         navigationDirection: dictionary["navigationDirection"] as? String ?? "straight",
-        sessionStatus: dictionary["sessionStatus"] as? String ?? ((dictionary["isHiking"] as? Bool) == true ? "active" : "preparing"),
-        isHiking: (dictionary["isHiking"] as? Bool) ?? false,
+        sessionStatus: sessionStatus,
+        isHiking: isHiking,
         elapsedSeconds: number("elapsedSeconds"), distanceMeters: number("distanceMeters"),
         ascentMeters: number("ascentMeters"), steps: Int(number("steps")),
         heartRateBpm: (dictionary["heartRateBpm"] as? NSNumber)?.doubleValue,

@@ -869,12 +869,18 @@ export default function LiveHike() {
     const needsStartChoice = !startReached && distanceToStartKm > START_NEARBY_KM;
     if (needsStartChoice && !startRecalcChoiceShownRef.current && startRecalcChoice == null) {
       startRecalcChoiceShownRef.current = true;
+      const chooseStartMode = (mode: "start" | "fastest") => {
+        startChoicePendingRef.current = true;
+        autoFollowRecalcStartedRef.current = false;
+        setStartChoicePending(true);
+        setStartRecalcChoice(mode);
+      };
       alert(
         t.offRouteStartChoiceTitle,
         t.offRouteStartChoiceMessage,
         [
-          { text: t.offRouteToStart, onPress: () => setStartRecalcChoice("start") },
-          { text: t.offRouteFastestToRoute, onPress: () => setStartRecalcChoice("fastest") },
+          { text: t.offRouteToStart, onPress: () => chooseStartMode("start") },
+          { text: t.offRouteFastestToRoute, onPress: () => chooseStartMode("fastest") },
         ],
       );
       return;
@@ -2635,6 +2641,7 @@ export default function LiveHike() {
         Math.round(totalMin * 60 * (1 - (totalKm > 0 ? Math.min(1, distance / totalKm) : 0))),
       ) * 1000,
       sosAcknowledgement,
+      isHiking: !sosOpen && !finished && !hikePaused && !preparing,
       sessionStatus: sosOpen
         ? "sos_requested"
         : finished
@@ -3794,13 +3801,19 @@ export default function LiveHike() {
     if (
       isResume ||
       preparing ||
+      startAudioReleasedRef.current ||
+      startChoicePendingRef.current ||
       startChoiceHandledRef.current
     ) {
       return;
     }
+    // Bei einer neuen Wanderung darf die Einleitung erst beginnen, wenn
+    // entweder der echte Startpunkt erreicht wurde oder eine vom Nutzer
+    // gewählte Zubringerroute akzeptiert worden ist.
+    if (!startReached) return;
     startChoiceHandledRef.current = true;
     releaseStartAudio();
-  }, [isResume, preparing, releaseStartAudio]);
+  }, [isResume, preparing, releaseStartAudio, startReached]);
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest

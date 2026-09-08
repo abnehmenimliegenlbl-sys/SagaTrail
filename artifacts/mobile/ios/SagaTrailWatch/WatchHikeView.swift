@@ -102,7 +102,7 @@ struct WatchHikeView: View {
     if state.sessionStatus == "paused" {
       return ("pausedStatus", "pause.circle.fill", true)
     }
-    if state.sessionStatus == "preparing" || !state.isHiking {
+    if state.sessionStatus == "preparing" || (state.sessionStatus != "active" && !state.isHiking) {
       return ("waitingStart", "play.circle.fill", true)
     }
     if !hike.isReachable {

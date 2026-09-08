@@ -110,6 +110,8 @@ export interface HikeLiveState {
   arrivalAtEpochMs?: number | null;
   /** Set only after the phone has handled a companion SOS request. */
   sosAcknowledgement?: SosAcknowledgement;
+  /** Explicitly mirrors the phone's active hiking state for older watch UIs. */
+  isHiking: boolean;
   sessionStatus: HikeSessionStatus;
 }
 
@@ -191,6 +193,7 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   if (!("nextNavigation" in state) || !("heartRate" in state) || !("activeAlert" in state)) return false;
   if (!["fresh", "stale", "unavailable"].includes(state.gpsFreshness as string)) return false;
   if (!["preparing", "active", "paused", "finished", "sos_requested"].includes(state.sessionStatus as string)) return false;
+  if (typeof state.isHiking !== "boolean") return false;
   for (const numericValue of [state.elapsedSec, state.walkedDistanceM, state.ascentM, state.steps]) {
     if (typeof numericValue !== "number" && numericValue !== null) return false;
     if (numericValue !== null && (!Number.isFinite(numericValue) || numericValue < 0)) return false;
