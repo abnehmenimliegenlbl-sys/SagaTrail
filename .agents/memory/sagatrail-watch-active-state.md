@@ -8,3 +8,5 @@ The Watch's native bridge computes `isHiking` from the canonical `sessionStatus 
 **Why:** A story-loading effect once depended on the selected route even though it did not use the route. When route data was loaded or replaced, it set `preparing` again; the resulting `sessionStatus: "preparing"` was validly forwarded to the Watch, which stayed in its waiting state even while other narration or POI flows were active.
 
 **How to apply:** Keep story preparation dependencies limited to story inputs. When diagnosing the Watch, inspect the actual `sessionStatus` transition (`preparing` → `active`) before changing native Watch rendering or payload fields.
+
+The Watch UI also uses the same “waiting for hike start” text when no decoded `LiveState` exists. `WCSession.receivedApplicationContext` must therefore be applied again from `activationDidCompleteWith`; reading it immediately after `session.activate()` can see an empty context and leave the Watch state nil.
