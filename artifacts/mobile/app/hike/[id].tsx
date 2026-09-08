@@ -1004,6 +1004,7 @@ export default function LiveHike() {
   const [panoramaTileOpen, setPanoramaTileOpen] = useState(false);
   const [panoramaCameraOpen, setPanoramaCameraOpen] = useState(false);
   const [panoramaTileCloseSignal, setPanoramaTileCloseSignal] = useState(0);
+  const [storyTileOpen, setStoryTileOpen] = useState(false);
   const panoramaCameraTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panoramaPeakRequestRef = useRef<{
     lat: number;
@@ -5282,9 +5283,32 @@ export default function LiveHike() {
           terrainProfile={terrainProfile}
         />
 
+        {/* Breite Statistik-Kachel direkt unter der Karte */}
+        <Glass style={{ marginTop: 14 }}>
+          <View style={styles.statBar}>
+            <Metric label={t.metricDistance} value={distance.toFixed(1)} unit={t.unitKm} />
+            <Metric label={t.metricHeight} value={`${Math.round(timeProgress * ascentM)}`} unit={t.unitHm} />
+            <Metric
+              label={t.metricTimeLeft}
+              value={`${Math.max(0, Math.round((1 - timeProgress) * totalMin))}`}
+              unit={t.unitMin}
+            />
+            <Metric label={t.metricSac} value={sac} unit="" />
+            <Metric
+              label={t.metricRemaining}
+              value={Math.max(0, totalKm * (1 - timeProgress)).toFixed(1)}
+              unit={t.unitKm}
+            />
+            {steps > 0 && (
+              <Metric label={t.metricSteps} value={`${steps}`} unit="" />
+            )}
+          </View>
+        </Glass>
+
         <FeatureTileDeck
           closeLabel={t.close}
           closeSignal={panoramaTileCloseSignal}
+          tileOrder={["compass", "watch", "gps-live", "panorama", "route-3d", "object-recognition"]}
           onTileOpen={(tileId) => {
             if (tileId === "panorama") {
               panoramaPeakRequestRef.current = null;
@@ -5408,12 +5432,12 @@ export default function LiveHike() {
             ...(Platform.OS !== "web"
               ? [{
                   id: "watch",
-                  title: "WATCH",
+                  title: "PULS",
                   icon: "watch" as const,
                   modalSize: "large" as const,
                   preview: (
                      <Text style={[styles.watchTilePulse, { color: colors.accent }]}>
-                         {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Watch starten"}
+                         {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Puls starten"}
                     </Text>
                   ),
                   content: (
@@ -5547,39 +5571,44 @@ export default function LiveHike() {
 
 
 
-        {/* Statusleiste in Frozen Glass */}
-        <Glass style={{ marginTop: 14 }}>
-          <View style={styles.statBar}>
-            <Metric label={t.metricDistance} value={distance.toFixed(1)} unit={t.unitKm} />
-            <Metric label={t.metricHeight} value={`${Math.round(timeProgress * ascentM)}`} unit={t.unitHm} />
-            <Metric
-              label={t.metricTimeLeft}
-              value={`${Math.max(0, Math.round((1 - timeProgress) * totalMin))}`}
-              unit={t.unitMin}
-            />
-            <Metric label={t.metricSac} value={sac} unit="" />
-            <Metric
-              label={t.metricRemaining}
-              value={Math.max(0, totalKm * (1 - timeProgress)).toFixed(1)}
-              unit={t.unitKm}
-            />
-            {steps > 0 && (
-              <Metric label={t.metricSteps} value={`${steps}`} unit="" />
-            )}
-          </View>
-
-        </Glass>
-
         {/* Story-Bereich */}
-        {preparing ? (
-          <View style={styles.preparing}>
-            <SparkMountain size={90} pulsing />
-            <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
-              {t.preparingText}
-            </Text>
-            <LoadingBar width={160} height={4} />
-          </View>
-        ) : (
+        <Glass style={{ marginTop: 14, overflow: "hidden" }}>
+          <Pressable
+            onPress={() => setStoryTileOpen((open) => !open)}
+            style={styles.storyTileHeader}
+            accessibilityRole="button"
+            accessibilityLabel="Sagentext öffnen"
+            accessibilityState={{ expanded: storyTileOpen }}
+          >
+            <View style={styles.storyTileHeaderText}>
+              <Feather name="book-open" size={18} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.storyTileTitle, { color: colors.foreground }]}>
+                  Sagentext
+                </Text>
+                <Text style={[styles.storyTileSubtitle, { color: colors.mutedForeground }]}>
+                  {preparing
+                    ? t.preparingText
+                    : t.chapterMark(currentIndex + 1, chapters.length)}
+                </Text>
+              </View>
+            </View>
+            <Feather
+              name={storyTileOpen ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={colors.mutedForeground}
+            />
+          </Pressable>
+
+          {storyTileOpen && (preparing ? (
+            <View style={styles.preparing}>
+              <SparkMountain size={90} pulsing />
+              <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
+                {t.preparingText}
+              </Text>
+              <LoadingBar width={160} height={4} />
+            </View>
+          ) : (
           <Animated.View entering={FadeIn} style={styles.storyWrap}>
             <View style={styles.chapterHead}>
               <Text style={[styles.chapterMark, { color: colors.accent }]}>
@@ -5830,7 +5859,7 @@ export default function LiveHike() {
               />
             )}
           </Animated.View>
-        )}
+          ))}
 
         {/* ── Sicherheits-POIs filtern ───────────────────────────────── */}
         <View

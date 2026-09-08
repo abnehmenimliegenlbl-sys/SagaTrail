@@ -29,6 +29,7 @@ export interface FeatureTile {
 
 interface Props {
   tiles: FeatureTile[];
+  tileOrder?: readonly string[];
   closeLabel?: string;
   onTileOpen?: (tileId: string) => void;
   closeSignal?: number;
@@ -36,6 +37,7 @@ interface Props {
 
 export function FeatureTileDeck({
   tiles,
+  tileOrder,
   closeLabel = "Schliessen",
   onTileOpen,
   closeSignal = 0,
@@ -44,6 +46,14 @@ export function FeatureTileDeck({
   const insets = useSafeAreaInsets();
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeTile = tiles.find((tile) => tile.id === activeId);
+  const orderedTiles = tileOrder
+    ? [
+        ...tileOrder
+          .map((id) => tiles.find((tile) => tile.id === id))
+          .filter((tile): tile is FeatureTile => tile != null),
+        ...tiles.filter((tile) => !tileOrder.includes(tile.id)),
+      ]
+    : tiles;
 
   useEffect(() => {
     if (closeSignal > 0) setActiveId(null);
@@ -63,8 +73,8 @@ export function FeatureTileDeck({
   return (
     <View style={styles.deck}>
       <View style={styles.tileRow}>
-        {tiles.map((tile) => {
-              const selected = tile.id === activeId;
+        {orderedTiles.map((tile) => {
+          const selected = tile.id === activeId;
           return (
             <Pressable
               key={tile.id}
@@ -211,9 +221,14 @@ export function FeatureTileDeck({
 
 const styles = StyleSheet.create({
   deck: { marginTop: 14 },
-  tileRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
+  tileRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "stretch",
+    gap: 8,
+  },
   tile: {
-    flex: 1,
+    width: "31.5%",
     height: 86,
     borderWidth: 1,
     paddingHorizontal: 9,
