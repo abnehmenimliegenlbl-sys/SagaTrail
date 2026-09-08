@@ -126,12 +126,16 @@ export interface SwisstopoMapProps {
   offlineTiles?: Record<string, string> | null;
   aerialways?: { id: string; geometry: number[][] }[] | null;
   pois?: MapPoi[] | null;
+  /** Erst true, wenn die aktuelle POI-Abfrage mindestens einmal abgeschlossen ist. */
+  poisReady?: boolean;
   onPoiPress?: (id: string) => void;
   partners?: MapPoi[] | null;
   onPartnerPress?: (id: string) => void;
   waterSources?: MapPoi[] | null;
   parkingSpots?: MapPoi[] | null;
   safetyPois?: MapPoi[] | null;
+  /** Erst true, wenn die aktuelle Sicherheits-POI-Abfrage abgeschlossen ist. */
+  safetyPoisReady?: boolean;
   pickerMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   legend?: MapLegendLabels | null;

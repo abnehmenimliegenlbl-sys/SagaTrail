@@ -29,12 +29,14 @@ export function SwisstopoMap({
   offlineTiles,
   aerialways,
   pois,
+  poisReady = true,
   onPoiPress,
   partners,
   onPartnerPress,
   waterSources,
   parkingSpots,
   safetyPois,
+  safetyPoisReady = true,
   pickerMode,
   onMapClick,
   safeAreaInsetTop = 0,
@@ -64,6 +66,7 @@ export function SwisstopoMap({
           safetyPois,
           sagaPin,
           safeAreaInsetTop,
+          deferDynamicContent: true,
         },
         {
           title: t.legendTitle,
@@ -94,7 +97,7 @@ export function SwisstopoMap({
       ),
     // aerialways/pois/partners BEWUSST NICHT in deps — werden per inject geliefert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, safetyPois, pickerMode, safeAreaInsetTop, t]
+    [center.lat, center.lng, label, geometry, elevationProfile, altGeometry, offlineTiles, waterSources, parkingSpots, pickerMode, safeAreaInsetTop, t]
   );
 
   // Bei neuem Dokument (Kartenwechsel) den Ladezustand zuruecksetzen.
@@ -112,12 +115,12 @@ export function SwisstopoMap({
 
   // POIs per injectJavaScript einspielen (kein Reload).
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !poisReady) return;
     const json = pois && pois.length > 0 ? JSON.stringify(pois) : "null";
     ref.current?.injectJavaScript(
       `window.sttSetPois && window.sttSetPois(${json}); true;`
     );
-  }, [ready, pois]);
+  }, [ready, pois, poisReady]);
 
   // Partner per injectJavaScript einspielen (kein Reload).
   useEffect(() => {
@@ -140,12 +143,12 @@ export function SwisstopoMap({
   // Sicherheits-POIs werden nachgeladen, damit die Karte bei Overpass-Latenz
   // nicht neu aufgebaut werden muss.
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !safetyPoisReady) return;
     const json = safetyPois && safetyPois.length > 0 ? JSON.stringify(safetyPois) : "null";
     ref.current?.injectJavaScript(
       `window.sttSetSafetyPois && window.sttSetSafetyPois(${json}); true;`
     );
-  }, [ready, safetyPois]);
+  }, [ready, safetyPois, safetyPoisReady]);
 
   // Saga-Pin per injectJavaScript einspielen.
   useEffect(() => {
@@ -175,8 +178,7 @@ export function SwisstopoMap({
         source={{ html }}
         // Wenn das native Layout der WebView sich ändert (z.B. Vollbild-Übergang
         // oder erster Render), schicken wir ein explizites map.resize() rein —
-        // MapLibre kennt sonst die tatsächliche Canvas-Grösse nicht und lädt
-        // nur Kacheln für einen falschen (oft 0x0) Viewport.
+        // Leaflet kennt sonst die tatsächliche Kartengrösse nicht zuverlässig.
         onLayout={() => {
           ref.current?.injectJavaScript(
             "if(window.sttMapResize) window.sttMapResize(); true;"

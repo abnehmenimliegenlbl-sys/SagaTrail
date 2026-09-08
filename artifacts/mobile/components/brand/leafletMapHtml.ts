@@ -20,7 +20,10 @@ type LeafletMapArgs = Pick<
   | "elevationProfile"
   | "sagaPin"
   | "safeAreaInsetTop"
->;
+> & {
+  /** Native WebViews erhalten POIs nach dem HTML-Ready-Signal per Injection. */
+  deferDynamicContent?: boolean;
+};
 
 function json(value: unknown): string {
   // Werte stammen teilweise aus externen OSM-Namen. Ein HTML-String darf
@@ -73,6 +76,7 @@ export function buildLeafletMapHtml(
     elevationProfile: _elevationProfile,
     sagaPin,
     safeAreaInsetTop = 0,
+    deferDynamicContent = false,
   }: LeafletMapArgs,
   legend?: MapLegendLabels | null,
 ): string {
@@ -278,13 +282,10 @@ export function buildLeafletMapHtml(
     var sagaPin = ${sagaData};
     var picker = ${pickerMode ? "true" : "false"};
     var map = L.map("map", { zoomControl: false, attributionControl: false, tap: false }).setView(center, 14);
-    // Die kleine native WebView kann die finale Breite erst nach dem ersten
-    // Rendern kennen. Ohne explizites invalidateSize lädt Leaflet dann nur
-    // einen Teil des sichtbaren Tile-Rasters; ein manueller Zoom korrigiert
-    // das zufällig. Die React-Native-Hülle ruft diese Funktion bei onLayout
-    // und nach dem Karten-Ready-Signal auf.
+    // Bei einer echten Größenänderung (z. B. Rotation/Vollbild) muss Leaflet
+    // sein Pixelraster neu berechnen.
     window.sttMapResize = function () {
-      map.invalidateSize(false);
+      map.invalidateSize({ animate: false, pan: false });
     };
 
     function post(value) {
@@ -302,58 +303,77 @@ export function buildLeafletMapHtml(
       return text;
     }
     var topoUrl = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
-    // OpenTopoMap kann einzelne Kacheln zeitweise mit Netzwerk-/Rate-Limit-
-    // Fehlern beantworten. Nie eine einzelne Kachel durch eine andere Quelle
-    // ersetzen: das sieht wie ein falscher Zoom oder Kartenstil aus. Nach
-    // einem Retry wird bei weiterem Fehler die gesamte Basiskarte einheitlich
-    // auf Carto umgeschaltet, damit kein schwarzes oder gemischtes Raster
-    // sichtbar bleibt.
     var topoSubdomains = ["a", "b", "c"];
-    var cartoFallbackUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-    var cartoFallback = L.tileLayer(cartoFallbackUrl, {
-      subdomains: ["a", "b", "c", "d"],
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
-    });
-    var baseFallbackActive = false;
-    var active;
-    function switchToConsistentFallback() {
-      if (baseFallbackActive || isSat) return;
-      baseFallbackActive = true;
-      if (active && map.hasLayer(active)) map.removeLayer(active);
-      active = cartoFallback.addTo(map);
+    var routeDecorationsReady = false;
+    var poiPayloadReceived = ${deferDynamicContent ? "false" : "true"};
+    var safetyPayloadReceived = ${deferDynamicContent ? "false" : "true"};
+    var htmlReady = false;
+    var pendingTileRetries = [];
+    function mapContentReady() {
+      return routeDecorationsReady && poiPayloadReceived && safetyPayloadReceived && htmlReady;
     }
-    function addTileRetry(layer) {
+    function retryTopoTile(tile, coords) {
+      if (!tile || !coords || !tile.parentNode) return;
+      var attempt = Number(tile.getAttribute("data-stt-topo-retry") || "0");
+      if (attempt >= 2) return;
+
+      // OpenTopoMap kann fuer einzelne gecachte Kacheln einen HTTP/1.1-Header
+      // ("Upgrade: h2c") auch ueber HTTP/2 ausliefern. WKWebView verwirft eine
+      // solche nominelle 200-Antwort mit 0 Bildbytes. Die Subdomains teilen
+      // diesen Cache; entscheidend ist deshalb der Query-Parameter, der einen
+      // sauberen Cache-Eintrag fuer exakt dieselbe z/x/y-Kachel erzwingt.
+      var currentSubdomain = "";
+      try {
+        currentSubdomain = new URL(tile.src).hostname.split(".")[0];
+      } catch (_) {}
+      var currentIndex = topoSubdomains.indexOf(currentSubdomain);
+      var nextIndex = currentIndex >= 0
+        ? (currentIndex + 1) % topoSubdomains.length
+        : attempt % topoSubdomains.length;
+      var nextAttempt = attempt + 1;
+      tile.setAttribute("data-stt-topo-retry", String(nextAttempt));
+      setTimeout(function () {
+        if (!tile.parentNode) return;
+        tile.src = L.Util.template(topoUrl, {
+          s: topoSubdomains[nextIndex],
+          z: coords.z,
+          x: coords.x,
+          y: coords.y
+        }) + "?stt_retry=" + nextAttempt;
+      }, nextAttempt * 180);
+    }
+    function flushPendingTileRetries() {
+      if (!mapContentReady() || !pendingTileRetries.length) return;
+      var queued = pendingTileRetries.slice();
+      pendingTileRetries = [];
+      queued.forEach(function (entry) {
+        retryTopoTile(entry.tile, entry.coords);
+      });
+    }
+    function addTopoTileRetry(layer) {
       layer.on("tileerror", function (event) {
         var tile = event && event.tile;
         var coords = event && event.coords;
         if (!tile || !coords) return;
-        if (tile.getAttribute("data-stt-topo-retry") === "1") {
-          switchToConsistentFallback();
+        if (!mapContentReady()) {
+          if (!pendingTileRetries.some(function (entry) { return entry.tile === tile; })) {
+            pendingTileRetries.push({ tile: tile, coords: coords });
+          }
           return;
         }
-        tile.setAttribute("data-stt-topo-retry", "1");
-        var subdomain = topoSubdomains[
-          Math.abs(coords.x + coords.y + coords.z) % topoSubdomains.length
-        ];
-        tile.src = L.Util.template(topoUrl, {
-          s: subdomain,
-          z: coords.z,
-          x: coords.x,
-          y: coords.y,
-        });
+        retryTopoTile(tile, coords);
       });
       return layer;
     }
-    var carto = L.tileLayer(topoUrl, {
+    var topoLayer = L.tileLayer(topoUrl, {
       subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, tileSize: 256,
       attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; OpenStreetMap'
     });
-    addTileRetry(carto);
+    addTopoTileRetry(topoLayer);
     var satellite = L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, tileSize: 256, attribution: '&copy; swisstopo'
     });
-    active = carto.addTo(map);
+    var active = topoLayer.addTo(map);
     if (offline && Object.keys(offline).length) {
       var offlineLayer = L.TileLayer.extend({
         getTileUrl: function (coords) {
@@ -362,7 +382,7 @@ export function buildLeafletMapHtml(
         }
       });
       active.remove();
-      active = addTileRetry(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
+      active = addTopoTileRetry(new offlineLayer(topoUrl, { subdomains: ["a", "b", "c"], maxZoom: 17, maxNativeZoom: 17, attribution: "Offline + OpenTopoMap" })).addTo(map);
     }
     var is3d = false;
     var isSat = false;
@@ -437,6 +457,8 @@ export function buildLeafletMapHtml(
     } else {
       addMarker({ lat: center[0], lng: center[1], name: ${json(label)} }, flagIcon("start"), null);
     }
+    routeDecorationsReady = true;
+    flushPendingTileRetries();
     (aerialways || []).forEach(function (a) {
       if (!a.geometry || a.geometry.length < 2) return;
       L.polyline(a.geometry.map(function (p) { return [p[0], p[1]]; }), { color: "#5B6B78", weight: 2, dashArray: "4 5" }).addTo(map);
@@ -597,7 +619,19 @@ export function buildLeafletMapHtml(
       else liveMarker.setLatLng(position);
       map.panTo(position, { animate: false });
     };
-    window.sttSetPois = window.sttSetPartners = window.sttSetAerialways = window.sttSetSafetyPois = function () {};
+    window.sttSetPois = function (nextPois) {
+      pois = Array.isArray(nextPois) ? nextPois : [];
+      renderPoiClusters();
+      poiPayloadReceived = true;
+      flushPendingTileRetries();
+    };
+    window.sttSetSafetyPois = function (nextSafety) {
+      safety = Array.isArray(nextSafety) ? nextSafety : [];
+      renderSafetyClusters();
+      safetyPayloadReceived = true;
+      flushPendingTileRetries();
+    };
+    window.sttSetPartners = window.sttSetAerialways = function () {};
     if (pending) window.__sttApply(pending);
     if (picker) {
       map.getContainer().style.cursor = "crosshair";
@@ -605,6 +639,8 @@ export function buildLeafletMapHtml(
     }
     setTimeout(function () { window.sttMapResize(); }, 100);
     setTimeout(function () { window.sttMapResize(); }, 500);
+    htmlReady = true;
+    flushPendingTileRetries();
     post({ type: "stt-html-ready" });
   })();
   </script>

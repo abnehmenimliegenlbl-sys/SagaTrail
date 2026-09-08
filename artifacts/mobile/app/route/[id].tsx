@@ -321,8 +321,31 @@ export default function Routenplanung() {
   const [parkingSpots, setParkingSpots] = useState<MapPoi[]>([]);
   // Toiletten und sicherheitsrelevante Einrichtungen entlang der Route
   const [safetyPois, setSafetyPois] = useState<MapPoi[]>([]);
+  const safetyPoisRequestKey = useMemo(() => {
+    if (!route?.coordinates) return null;
+    const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
+    const first = geom[0];
+    const middle = geom[Math.floor(geom.length / 2)];
+    const last = geom[geom.length - 1];
+    return [
+      route.id,
+      geom.length,
+      first?.[0],
+      first?.[1],
+      middle?.[0],
+      middle?.[1],
+      last?.[0],
+      last?.[1],
+    ].join(":");
+  }, [route?.id, route?.coordinates, route?.geometry, effectiveGeom]);
+  const [loadedSafetyPoisKey, setLoadedSafetyPoisKey] = useState<string | null>(null);
+  const safetyPoisReady =
+    safetyPoisRequestKey !== null && loadedSafetyPoisKey === safetyPoisRequestKey;
   // Historische / touristische POIs entlang der Route (für die Karte)
   const [pois, setPois] = useState<MapPoi[]>([]);
+  const poisRequestKey = route?.coordinates ? route.id : null;
+  const [loadedPoisKey, setLoadedPoisKey] = useState<string | null>(null);
+  const poisReady = poisRequestKey !== null && loadedPoisKey === poisRequestKey;
   // Vollständige POI-Objekte (id → Poi) für die Detail-Ansicht beim Antippen
   const poisVollRef = useRef<Map<string, Poi>>(new Map());
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -433,11 +456,15 @@ export default function Routenplanung() {
   // Anreicherung. Der Mittelpunkt-Radius ist bewusst begrenzt, damit
   // Overpass-Abfragen auf langen Routen schnell und best effort bleiben.
   useEffect(() => {
+    setSafetyPois([]);
+    setLoadedSafetyPoisKey(null);
     if (!route?.coordinates) return;
     let cancelled = false;
+    const requestKey = safetyPoisRequestKey;
+    if (requestKey === null) return;
     const geom = effectiveGeom.length > 0 ? effectiveGeom : (route.geometry ?? []);
     if (geom.length < 2) {
-      setSafetyPois([]);
+      setLoadedSafetyPoisKey(requestKey);
       return;
     }
     const midIdx = geom.length > 0 ? Math.floor(geom.length / 2) : -1;
@@ -461,9 +488,12 @@ export default function Routenplanung() {
           }));
         setSafetyPois(filterByRouteCorridor(mapped, geom, 0.75));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadedSafetyPoisKey(requestKey);
+      });
     return () => { cancelled = true; };
-  }, [route?.id, effectiveGeom, route?.geometry]);
+  }, [safetyPoisRequestKey]);
 
   // Aktive Partnerbetriebe (Restaurants, Souvenirlaeden, ...) entlang der Route
   // laden — best effort, gleiche Bounding Box wie die Seilbahnen.
@@ -486,8 +516,12 @@ export default function Routenplanung() {
   // Historische/touristische POIs entlang der Route laden (fire-and-forget:
   // Server gibt sofort [] zurueck und füllt den Cache; nach 35 s Retry).
   useEffect(() => {
+    setPois([]);
+    setLoadedPoisKey(null);
     if (!route?.coordinates) return;
     let cancelled = false;
+    const requestKey = poisRequestKey;
+    if (requestKey === null) return;
     // 0.5 km Rand um die Geometrie (wie im Hike-Screen) — verhindert
     // Overpass-Timeouts in dichten Staedten wie Basel.
     // 2 km Rand damit alpine Gipfel (natural=peak) und Pässe (natural=saddle)
@@ -543,12 +577,16 @@ export default function Routenplanung() {
       getPois(bbox)
         .then((result) => {
           filterAndSet(result);
+          if (!cancelled) setLoadedPoisKey(requestKey);
           if (result.length === 0 && !cancelled) {
             retryTimer = setTimeout(tryLoad, 35_000);
           }
         })
         .catch(() => {
-          if (!cancelled) retryTimer = setTimeout(tryLoad, 35_000);
+          if (!cancelled) {
+            setLoadedPoisKey(requestKey);
+            retryTimer = setTimeout(tryLoad, 35_000);
+          }
         });
     };
     tryLoad();
@@ -557,7 +595,7 @@ export default function Routenplanung() {
       cancelled = true;
       if (retryTimer !== null) clearTimeout(retryTimer);
     };
-  }, [route?.id]);
+  }, [poisRequestKey]);
 
   // Live-Wetter + abgeleiteter Wegzustand fuer den Ausgangspunkt der Route.
   useEffect(() => {
@@ -1016,10 +1054,12 @@ export default function Routenplanung() {
                   elevationProfile={elevProfile}
                   aerialways={aerialways}
                   pois={pois.length > 0 ? pois : null}
+                  poisReady={poisReady}
                   partners={partners}
                   waterSources={waterSources.length > 0 ? waterSources : null}
                   parkingSpots={parkingSpots.length > 0 ? parkingSpots : null}
                   safetyPois={safetyPois.length > 0 ? safetyPois : null}
+                  safetyPoisReady={safetyPoisReady}
                   safeAreaInsetTop={safeAreaTop}
                   sagaPin={saga?.coordinates ? { lat: saga.coordinates.lat, lng: saga.coordinates.lng, name: saga.title } : null}
                   onPoiPress={(id) => {

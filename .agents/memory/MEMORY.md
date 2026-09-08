@@ -8,6 +8,7 @@
 - [Canton geocoding robustness](sagatrail-canton-geocoding.md) — Nominatim can return canton via ISO3166-2-lvl4 ("CH-BL") even when address.state is absent/unparseable; always check ISO code first, then state, then county; + midpoint fallback in buildRouteFromPoints when start canton is null.
 - [Metro cache after orval codegen clean](metro-orval-cache.md) — orval clean:true deletes+recreates generated/*.ts; Metro file watcher sees deletion but misses recreation; always restart Expo workflow after codegen.
 - [SBB Transport API](sagatrail-sbb-transport.md) — transport.opendata.ch ist vom Replit-Netzwerk geblockt; stattdessen timetable.search.ch (latlon + stationboard by name).
+- [OpenTopoMap HTTP/2 tile cache](opentopomap-http2-tile-cache.md) — a cached `Upgrade: h2c` header can break one WKWebView tile; retry same z/x/y with a query cache-buster.
 - [opendata arrivals at small stops](sagatrail-opendata-arrivals.md) — type=arrival gives arrival=null at small stops; must fall back to departure time or board is empty; lookups use route coords, not user GPS.
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
