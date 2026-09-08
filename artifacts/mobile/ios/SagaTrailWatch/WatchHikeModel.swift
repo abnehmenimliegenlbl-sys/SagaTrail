@@ -26,6 +26,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var workoutFinishInProgress = false
   private var workoutAuthorizationInFlight = false
   private var automaticWorkoutStartBlocked = false
+  private var lastHeartRateRelayAt: Date?
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
@@ -152,6 +153,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     workoutAverageHeartRate = nil
     workoutMaxHeartRate = nil
     activeEnergyKcal = nil
+    lastHeartRateRelayAt = nil
     do {
       let configuration = HKWorkoutConfiguration()
       configuration.activityType = .hiking
@@ -370,24 +372,45 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
       for: HKUnit.count().unitDivided(by: .minute())
     )
     let energy = energyStats?.sumQuantity()?.doubleValue(for: .kilocalorie())
-    if let bpm {
-      let envelope = SagaTrailWatchProtocol.envelope(type: "heartRate", payload: [
-        "bpm": bpm,
-        "measuredAt": Int(Date().timeIntervalSince1970 * 1000),
-        "source": "watch"
-      ])
-      let session = WCSession.default
-      if session.isReachable {
-        session.sendMessage(envelope, replyHandler: nil)
-      } else {
-        session.transferUserInfo(envelope)
-      }
-    }
     Task { @MainActor in
-      if let bpm { self.currentHeartRate = bpm }
+      if let bpm {
+        let now = Date()
+        let shouldRelay = self.lastHeartRateRelayAt == nil ||
+          now.timeIntervalSince(self.lastHeartRateRelayAt!) >= 10
+        if shouldRelay {
+          self.lastHeartRateRelayAt = now
+          self.relayHeartRate(bpm, measuredAt: now)
+        }
+        self.currentHeartRate = bpm
+      }
       if let average { self.workoutAverageHeartRate = average }
       if let maximum { self.workoutMaxHeartRate = maximum }
       if let energy { self.activeEnergyKcal = energy }
+    }
+  }
+
+  @MainActor
+  private func relayHeartRate(_ bpm: Double, measuredAt: Date) {
+    let envelope = SagaTrailWatchProtocol.envelope(type: "heartRate", payload: [
+      "bpm": bpm,
+      "measuredAt": Int(measuredAt.timeIntervalSince1970 * 1000),
+      "source": "watch"
+    ])
+    let session = WCSession.default
+    if session.activationState == .activated {
+      do {
+        // Keep the latest sample available even when the phone is
+        // temporarily not reachable. The phone bridge consumes this
+        // context and forwards it to the React Native Hike screen.
+        try session.updateApplicationContext(envelope)
+      } catch {
+        NSLog("[SagaTrail Watch] Could not update heart-rate context: %@", error.localizedDescription)
+      }
+    }
+    if session.isReachable {
+      session.sendMessage(envelope, replyHandler: nil)
+    } else {
+      session.transferUserInfo(envelope)
     }
   }
 }

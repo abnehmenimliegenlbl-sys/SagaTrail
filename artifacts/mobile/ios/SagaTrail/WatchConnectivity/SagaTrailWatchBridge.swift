@@ -10,6 +10,7 @@ import WatchConnectivity
 final class SagaTrailCompanion: RCTEventEmitter {
   private let connection = SagaTrailPhoneWatchConnection.shared
   private let garminConnection = SagaTrailGarminConnection.shared
+  private var lastHeartRateMeasuredAt = 0
 
   override init() {
     super.init()
@@ -98,9 +99,13 @@ final class SagaTrailCompanion: RCTEventEmitter {
     switch envelope["type"] as? String {
     case "heartRate":
       // Exact JS event contract; only the watch originates this event.
+      let measuredAt = (payload["measuredAt"] as? NSNumber)?.intValue
+        ?? Int(Date().timeIntervalSince1970 * 1000)
+      guard measuredAt > lastHeartRateMeasuredAt else { return }
+      lastHeartRateMeasuredAt = measuredAt
       sendEvent(withName: "SagaTrailCompanion.heartRate", body: [
         "bpm": payload["bpm"] ?? 0,
-        "measuredAt": payload["measuredAt"] ?? Int(Date().timeIntervalSince1970 * 1000),
+        "measuredAt": measuredAt,
         "source": "watch"
       ])
     case "sosConfirmed":
@@ -446,6 +451,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) { receive(message) }
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) { receive(userInfo) }
+  func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+    receive(applicationContext)
+  }
 
   private func receive(_ message: [String: Any]) {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
