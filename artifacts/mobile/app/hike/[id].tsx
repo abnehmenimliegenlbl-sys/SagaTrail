@@ -142,6 +142,9 @@ import * as StoreReview from "expo-store-review";
 import { useAuth } from "@clerk/expo";
 import { uploadWaypointPhoto, waypointPhotoUrl } from "@/lib/waypointPhotoUpload";
 import { HikeSession, LatLng, StoryChapter } from "@/types";
+import { makeLogger } from "@/lib/debugLog";
+
+const watchLiveStateLog = makeLogger("[WATCH-STATE]", "watch_state");
 
 const WEB_TOP = 67;
 const COMPASS_GOLD = "#D8A84E";
@@ -1154,6 +1157,7 @@ export default function LiveHike() {
   const liveSnapshotSequenceRef = useRef(0);
   const lastCriticalWatchAlertRef = useRef<string | null>(null);
   const lastSosAcknowledgementRef = useRef<"none" | "acknowledged" | "failed">("none");
+  const lastWatchStateDebugKeyRef = useRef<string | null>(null);
   const compassHeadingRef = useRef<number | null>(null);
   const compassGravityRef = useRef<CompassVector | null>(null);
   const compassSamplesRef = useRef<number[]>([]);
@@ -1666,7 +1670,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, [saga, profile, premium, storyLanguage, resolveStory, route]);
+  }, [saga, profile, premium, storyLanguage, resolveStory]);
 
   // Die einmalige kostenlose Wanderung wird genau dann verbraucht, wenn ein
   // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
@@ -2652,6 +2656,25 @@ export default function LiveHike() {
               ? "preparing"
               : "active",
     };
+    const watchStateDebugKey = [
+      state.sessionStatus,
+      state.isHiking,
+      preparing,
+      hikePaused,
+      finished,
+      sosOpen,
+    ].join(":");
+    if (watchStateDebugKey !== lastWatchStateDebugKeyRef.current) {
+      lastWatchStateDebugKeyRef.current = watchStateDebugKey;
+      watchLiveStateLog("live state transition", {
+        sessionStatus: state.sessionStatus,
+        isHiking: state.isHiking,
+        preparing,
+        hikePaused,
+        finished,
+        sosOpen,
+      });
+    }
     const criticalKey = activeAlert?.critical ? `${activeAlert.kind}:${activeAlert.text}` : null;
     const discoveryKey = activeAlert?.kind === "discovery"
       ? `${activeAlert.text}:${activeAlert.haptic ?? ""}`
