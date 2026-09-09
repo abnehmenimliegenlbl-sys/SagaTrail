@@ -52,10 +52,12 @@ const TERRAIN_ROUTE_UNDERLAY_MATERIAL = "sagatrailTerrainRouteUnderlay";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
-// The DTM remains observer-centred at 500 m. The complete route is projected
-// into a compressed 2 km virtual AR depth so the destination remains visible;
-// beyond the DTM radius it stays level rather than inventing terrain.
+// The DTM remains observer-centred at 500 m. The route is true 1:1 only in
+// the reliable near field; after 50 m the complete route is compressed into a
+// bounded virtual AR depth so distant turns remain orientational, not falsely
+// camera-depth accurate. Beyond the DTM radius it stays level.
 const AR_ROUTE_TERRAIN_RADIUS_M = 500;
+const AR_ROUTE_REAL_SCALE_RADIUS_M = 50;
 const AR_ROUTE_MAX_VIRTUAL_DISTANCE_M = 2_000;
 // Viro's AR origin is near the camera, while the visible landscape starts at
 // the user's feet. Keep the geographic route on that ground plane and let the
@@ -331,6 +333,7 @@ function TerrainHologram({
         terrainProfile,
         {
           maxSegments: MAX_AR_ROUTE_SEGMENT_SLOTS,
+          realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
           maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
         },
       ),
@@ -343,7 +346,10 @@ function TerrainHologram({
         routeGeometry,
         observerPosition,
         AR_ROUTE_TERRAIN_RADIUS_M,
-        { maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M },
+        {
+          realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
+          maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+        },
       ),
     [model, routeGeometry, observerPosition],
   );

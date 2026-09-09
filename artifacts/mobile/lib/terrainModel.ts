@@ -125,6 +125,8 @@ export function routeOriginForAR(
 export interface GeographicRouteDisplayOptions {
   /** Maximum number of native route polylines used for the complete route. */
   maxSegments?: number;
+  /** Real-world 1:1 distance before far route compression starts. */
+  realScaleRadiusM?: number;
   /** Maximum virtual distance from the observer in the AR world, in metres. */
   maxVirtualDistanceM?: number;
 }
@@ -531,21 +533,21 @@ function geographicDistanceM(point: readonly number[], center: LatLng): number |
 
 function compressedRouteDistanceM(
   distanceM: number,
-  terrainRadiusM: number,
+  realScaleRadiusM: number,
   maxRouteDistanceM: number,
   maxVirtualDistanceM: number,
 ): number {
-  if (distanceM <= terrainRadiusM || maxRouteDistanceM <= terrainRadiusM) {
+  if (distanceM <= realScaleRadiusM || maxRouteDistanceM <= realScaleRadiusM) {
     return distanceM;
   }
-  const farDistanceM = maxRouteDistanceM - terrainRadiusM;
+  const farDistanceM = maxRouteDistanceM - realScaleRadiusM;
   const farProgress =
-    Math.log1p((distanceM - terrainRadiusM) / Math.max(1, terrainRadiusM)) /
-    Math.log1p(farDistanceM / Math.max(1, terrainRadiusM));
+    Math.log1p((distanceM - realScaleRadiusM) / Math.max(1, realScaleRadiusM)) /
+    Math.log1p(farDistanceM / Math.max(1, realScaleRadiusM));
   return (
-    terrainRadiusM +
+    realScaleRadiusM +
       clampNumber(farProgress, 0, 1) *
-      Math.max(0, maxVirtualDistanceM - terrainRadiusM)
+      Math.max(0, maxVirtualDistanceM - realScaleRadiusM)
   );
 }
 
@@ -556,6 +558,7 @@ function projectGeographicRoutePoint(
   terrainRadiusM: number,
   maxRouteDistanceM: number,
   maxVirtualDistanceM: number,
+  realScaleRadiusM: number,
 ): ProjectedGeographicRoutePoint | null {
   const distanceM = geographicDistanceM(point, center);
   if (distanceM == null) return null;
@@ -580,7 +583,7 @@ function projectGeographicRoutePoint(
       : (terrainElevation - observerElevation) * AR_WORLD_SCALE;
   const displayDistanceM = compressedRouteDistanceM(
     distanceM,
-    terrainRadiusM,
+    realScaleRadiusM,
     maxRouteDistanceM,
     maxVirtualDistanceM,
   );
@@ -650,6 +653,10 @@ export function buildGeographicTerrainRouteSegments(
   const terrainRadiusM = maxDisplayRadiusM ?? model?.radiusM ?? 500;
   const maxVirtualDistanceM =
     displayOptions.maxVirtualDistanceM ?? DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M;
+  const realScaleRadiusM = Math.max(
+    1,
+    displayOptions.realScaleRadiusM ?? terrainRadiusM,
+  );
   const maxSegments =
     displayOptions.maxSegments ?? DEFAULT_MAX_ROUTE_SEGMENTS;
   const geometry = routeGeometry.map((point) => [point[0], point[1]]);
@@ -675,6 +682,7 @@ export function buildGeographicTerrainRouteSegments(
           terrainRadiusM,
           maxRouteDistanceM,
           maxVirtualDistanceM,
+          realScaleRadiusM,
         ),
       )
       .filter((point): point is ProjectedGeographicRoutePoint => point !== null);
@@ -717,6 +725,10 @@ export function buildGeographicTerrainRouteDestination(
   const terrainRadiusM = maxDisplayRadiusM ?? model?.radiusM ?? 500;
   const maxVirtualDistanceM =
     displayOptions.maxVirtualDistanceM ?? DEFAULT_MAX_VIRTUAL_ROUTE_DISTANCE_M;
+  const realScaleRadiusM = Math.max(
+    1,
+    displayOptions.realScaleRadiusM ?? terrainRadiusM,
+  );
   const maxRouteDistanceM = routeGeometry.reduce((maximum, point) => {
     const distanceM = geographicDistanceM(point, center);
     return distanceM == null ? maximum : Math.max(maximum, distanceM);
@@ -729,6 +741,7 @@ export function buildGeographicTerrainRouteDestination(
       terrainRadiusM,
       maxRouteDistanceM,
       maxVirtualDistanceM,
+      realScaleRadiusM,
     );
     if (projected) return projected.point;
   }
