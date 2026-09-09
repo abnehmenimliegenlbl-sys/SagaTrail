@@ -347,16 +347,11 @@ function peakWorldPosition(
   const coordinateDistanceM = Math.hypot(northM, eastM);
   const coordinateBearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
-  // These values were calculated from the same live observer position as the
-  // panorama. They remain the authoritative display coordinates if the
-  // terrain request is a slightly older GPS sample than the peak list.
-  const distanceM =
-    Number.isFinite(peak.distanceKm) && peak.distanceKm >= 0
-      ? peak.distanceKm * 1000
-      : coordinateDistanceM;
-  const bearingDeg = Number.isFinite(peak.bearingDeg)
-    ? ((peak.bearingDeg % 360) + 360) % 360
-    : coordinateBearingDeg;
+  // The terrain mesh is centered on model.center. Use the same geographic
+  // frame for the marker instead of the peak's previously sampled observer
+  // bearing, which can be stale after a GPS refresh.
+  const distanceM = coordinateDistanceM;
+  const bearingDeg = coordinateBearingDeg;
   // The DTM is the surface that is actually visible below the marker. Prefer
   // it when the peak lies inside the loaded map; OSM's summit height remains
   // the honest fallback for peaks outside a small/offline terrain model.
