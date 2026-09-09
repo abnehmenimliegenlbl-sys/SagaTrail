@@ -31,3 +31,11 @@ and truncated distance/status strings are less glanceable than a state icon.
 
 **How to apply:** Keep distance, weather, and remaining-route text in modular
 or rectangular families; use the symbol-only templates for circular families.
+All Watch complication symbols and text providers use the Watch brand red
+(`RGB 204, 0, 0`) instead of inheriting an arbitrary face tint.
+
+**Why:** The user wants the complication to remain recognizably SagaTrail
+across different watch faces.
+
+**How to apply:** Tint SF Symbol images as original images and set the
+ClockKit text-provider tint for the text-based families.

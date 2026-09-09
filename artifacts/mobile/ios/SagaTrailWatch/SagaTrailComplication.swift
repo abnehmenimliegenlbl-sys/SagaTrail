@@ -5,6 +5,7 @@ import UIKit
 /// Small, glanceable route status for the active watch face.
 final class ComplicationController: NSObject, CLKComplicationDataSource {
   private static let snapshotKey = "sagatrail.complication.snapshot"
+  private static let brandRed = UIColor(red: 204 / 255, green: 0, blue: 0, alpha: 1)
 
   static func reload() {
     let server = CLKComplicationServer.sharedInstance()
@@ -70,10 +71,10 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     let temperature = snapshot["weatherTemperature"] as? Double
     let status = active && !gpsFresh ? "KEIN GPS" : (offRoute ? "ABWEG" : (active ? direction : "Pause"))
 
-    let line1 = CLKSimpleTextProvider(text: status)
-    let line2 = CLKSimpleTextProvider(text: active && !gpsFresh ? "Warten" : (offRoute ? "Zurück" : turnDistance))
-    let body = CLKSimpleTextProvider(
-      text: active && !gpsFresh
+    let line1 = brandText(status)
+    let line2 = brandText(active && !gpsFresh ? "Warten" : (offRoute ? "Zurück" : turnDistance))
+    let body = brandText(
+      active && !gpsFresh
         ? "Neues Signal abwarten"
         : arrivalAfterSunset
         ? "Nach Sonnenuntergang"
@@ -88,7 +89,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
       )
     case .modularLarge:
       return CLKComplicationTemplateModularLargeStandardBody(
-        headerTextProvider: CLKSimpleTextProvider(text: "SagaTrail"),
+        headerTextProvider: brandText("SagaTrail"),
         body1TextProvider: line1,
         body2TextProvider: body
       )
@@ -114,7 +115,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
       )
     case .graphicRectangular:
       return CLKComplicationTemplateGraphicRectangularStandardBody(
-        headerTextProvider: CLKSimpleTextProvider(text: "SagaTrail"),
+        headerTextProvider: brandText("SagaTrail"),
         body1TextProvider: line1,
         body2TextProvider: body
       )
@@ -152,6 +153,14 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     let image = UIImage(systemName: symbolName)
       ?? UIImage(systemName: "figure.walk")
       ?? UIImage()
-    return CLKImageProvider(onePieceImage: image.withRenderingMode(.alwaysTemplate))
+    return CLKImageProvider(
+      onePieceImage: image.withTintColor(Self.brandRed, renderingMode: .alwaysOriginal)
+    )
+  }
+
+  private func brandText(_ text: String) -> CLKSimpleTextProvider {
+    let provider = CLKSimpleTextProvider(text: text)
+    provider.tintColor = Self.brandRed
+    return provider
   }
 }
