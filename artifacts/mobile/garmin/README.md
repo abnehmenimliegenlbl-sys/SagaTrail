@@ -17,12 +17,18 @@ or the installed watch app is missing. It never promotes cached data to a
 connected state. Until a real handshake is received, the watch UI fails closed
 with **CIQ MOBILE COMPANION REQUIRED** and will not transmit SOS.
 
-The foreground app displays the last accepted `HikeLiveState`: next direction
-and distance, upcoming turns, terrain, off-route warning, weather and sunset
-warning, elapsed time, distance, ascent, remaining route, steps, freshness,
-phone connection state, safety check-in, safety text, and narration text. It stores that
-coordinate-free snapshot in Connect IQ storage so it can still show the latest
-cached instruction after the view is reopened.
+The foreground app uses four light SagaTrail pages with the `#CC0000` brand
+accent: Navigation, Status, Safety, and Story/Audio. A persistent green or red
+hiker shows whether the phone bridge and GPS state are fresh. Navigation uses
+explicit left, right, turn-around, and straight-ahead labels, a coordinate-free
+route progress bar, upcoming turns, off-route warning, time, distance, and ETA.
+Status contains ascent, steps, local-or-phone heart rate, terrain, weather,
+daylight, and the following turn. Safety contains check-ins, alerts, off-route
+distance, and the two-step SOS action. Story/Audio mirrors active narration and
+POI text while playback and images remain on the phone.
+
+The app stores the coordinate-free snapshot in Connect IQ storage so it can
+still show the latest cached instruction after the view is reopened.
 New non-empty safety or narration text receives a short local vibration alert.
 
 Open the Garmin menu for the phone-authoritative Start/Pause/Resume controls,
@@ -31,9 +37,11 @@ heart rate is shown on the watch and forwarded to the phone when the device
 provides a current sample.
 
 Press **Select** once to arm SOS and a second time to confirm it; **Back**
-cancels while armed. A confirmed request is *pending* until a phone message
-explicitly acknowledges it. Connect transport success is not treated as SOS
-success. If transport cannot reach the phone, it is shown as failed.
+cancels while armed. Choosing SOS from the menu only arms the same confirmation
+flow and never transmits immediately. A confirmed request is *pending* until a
+phone message explicitly acknowledges it. Connect transport success is not
+treated as SOS success. If transport cannot reach the phone, it is shown as
+failed.
 
 When the device exposes it, heart rate is read through `ActivityMonitor` and is
 always displayed as **HR local**. This MVP neither records nor promises

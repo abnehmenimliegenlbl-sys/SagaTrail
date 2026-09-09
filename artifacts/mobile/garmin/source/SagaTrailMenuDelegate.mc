@@ -20,7 +20,8 @@ class SagaTrailMenuDelegate extends WatchUi.MenuInputDelegate {
         } else if (item == :safetyConfirm) {
             app.confirmSafetyCheckin();
         } else if (item == :sos) {
-            app.requestSos();
+            app.setSosConfirmation(true);
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }
     }
 }

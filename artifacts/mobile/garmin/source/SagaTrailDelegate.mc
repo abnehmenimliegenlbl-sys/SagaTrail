@@ -3,7 +3,6 @@ using Toybox.WatchUi as WatchUi;
 
 class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
     var app;
-    var confirmSos = false;
 
     function initialize(appRef) {
         BehaviorDelegate.initialize();
@@ -12,18 +11,16 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
 
     function onKey(key) {
         if (key == WatchUi.KEY_ENTER) {
-            if (confirmSos) {
-                confirmSos = false;
+            if (app.isSosConfirmationArmed()) {
+                app.setSosConfirmation(false);
                 app.requestSos();
             } else {
-                confirmSos = true;
                 Attention.vibrate([new Attention.VibeProfile(50, 100)]);
                 app.setSosConfirmation(true);
             }
             return true;
         }
-        if (key == WatchUi.KEY_ESC && confirmSos) {
-            confirmSos = false;
+        if (key == WatchUi.KEY_ESC && app.isSosConfirmationArmed()) {
             app.setSosConfirmation(false);
             return true;
         }
@@ -46,7 +43,7 @@ class SagaTrailDelegate extends WatchUi.BehaviorDelegate {
         menu.addItem("Check-in 60 min", :safety60);
         menu.addItem("Check-in 120 min", :safety120);
         menu.addItem("Check-in bestätigen", :safetyConfirm);
-        menu.addItem("SOS", :sos);
+        menu.addItem("SOS (2x bestätigen)", :sos);
         WatchUi.pushView(menu, new SagaTrailMenuDelegate(app), WatchUi.SLIDE_IMMEDIATE);
         return true;
     }

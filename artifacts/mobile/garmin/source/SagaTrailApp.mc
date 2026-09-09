@@ -28,6 +28,7 @@ class SagaTrailApp extends Application.AppBase {
     var liveState;
     var sosState = "idle";
     var sosMessage = "";
+    var sosConfirmationArmed = false;
     var view;
     var phoneCompanionReady = false;
 
@@ -247,9 +248,14 @@ class SagaTrailApp extends Application.AppBase {
     }
 
     function setSosConfirmation(value) {
+        sosConfirmationArmed = value;
         if (view != null) {
             view.setSosConfirmation(value);
         }
+    }
+
+    function isSosConfirmationArmed() {
+        return sosConfirmationArmed;
     }
 
     function changeInfoPage(delta) {
