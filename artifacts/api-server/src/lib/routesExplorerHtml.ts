@@ -27,6 +27,9 @@ body{
   -webkit-overflow-scrolling:touch;
   overflow-y:scroll;
 }
+h1,h2,h3,h4,h5,h6{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;
+}
 a{color:var(--red)!important;text-decoration:none}
 
 /* ── NAV ── */
