@@ -96,21 +96,25 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     case .utilitarianSmall, .utilitarianSmallFlat:
       return CLKComplicationTemplateUtilitarianSmallFlat(textProvider: line2)
     case .circularSmall:
-      return CLKComplicationTemplateCircularSmallImage(
-        imageProvider: imageProvider(
-          direction: direction,
-          active: active,
-          gpsFresh: gpsFresh,
-          offRoute: offRoute
+      return CLKComplicationTemplateCircularSmallSimpleImage(
+        imageProvider: CLKImageProvider(
+          onePieceImage: symbolImage(
+            direction: direction,
+            active: active,
+            gpsFresh: gpsFresh,
+            offRoute: offRoute
+          )
         )
       )
     case .graphicCircular:
       return CLKComplicationTemplateGraphicCircularImage(
-        imageProvider: imageProvider(
-          direction: direction,
-          active: active,
-          gpsFresh: gpsFresh,
-          offRoute: offRoute
+        imageProvider: CLKFullColorImageProvider(
+          fullColorImage: symbolImage(
+            direction: direction,
+            active: active,
+            gpsFresh: gpsFresh,
+            offRoute: offRoute
+          )
         )
       )
     case .graphicRectangular:
@@ -127,12 +131,12 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     }
   }
 
-  private func imageProvider(
+  private func symbolImage(
     direction: String,
     active: Bool,
     gpsFresh: Bool,
     offRoute: Bool
-  ) -> CLKImageProvider {
+  ) -> UIImage {
     let symbolName: String
     if active && !gpsFresh {
       symbolName = "location.slash"
@@ -153,9 +157,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     let image = UIImage(systemName: symbolName)
       ?? UIImage(systemName: "figure.walk")
       ?? UIImage()
-    return CLKImageProvider(
-      onePieceImage: image.withTintColor(Self.brandRed, renderingMode: .alwaysOriginal)
-    )
+    return image.withTintColor(Self.brandRed, renderingMode: .alwaysOriginal)
   }
 
   private func brandText(_ text: String) -> CLKSimpleTextProvider {
