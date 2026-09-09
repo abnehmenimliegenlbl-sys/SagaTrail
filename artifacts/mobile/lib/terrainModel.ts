@@ -793,6 +793,90 @@ export function buildGeographicTerrainRouteSegments(
 }
 
 /**
+ * Returns the remaining route starting at the closest point to the current
+ * GPS fix. Coordinates stay in the original route frame so an AR renderer can
+ * hide walked segments without moving the established AR world origin.
+ */
+export function routeGeometryAheadOfPosition(
+  routeGeometry: readonly number[][] | null | undefined,
+  routeOrigin: LatLng | null | undefined,
+  currentPosition: LatLng | null | undefined,
+  maxSnapDistanceM = 80,
+): number[][] | null {
+  if (
+    !routeGeometry ||
+    routeGeometry.length < 2 ||
+    !routeOrigin ||
+    !currentPosition
+  ) {
+    return null;
+  }
+
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (routeOrigin.lat * Math.PI) / 180;
+  const toLocal = (point: readonly number[]) => ({
+    north: ((point[0] - routeOrigin.lat) * Math.PI * earthRadiusM) / 180,
+    east:
+      ((point[1] - routeOrigin.lng) *
+        Math.PI *
+        earthRadiusM *
+        Math.cos(centerLatRad)) /
+      180,
+  });
+  const current = toLocal([currentPosition.lat, currentPosition.lng]);
+  let closestDistanceM = Infinity;
+  let closestSegmentIndex = -1;
+  let closestFraction = 0;
+
+  for (let index = 1; index < routeGeometry.length; index += 1) {
+    const from = routeGeometry[index - 1];
+    const to = routeGeometry[index];
+    if (!from || !to) continue;
+    const fromLocal = toLocal(from);
+    const toLocalPoint = toLocal(to);
+    const northDelta = toLocalPoint.north - fromLocal.north;
+    const eastDelta = toLocalPoint.east - fromLocal.east;
+    const lengthSquared = northDelta ** 2 + eastDelta ** 2;
+    const fraction =
+      lengthSquared <= 0
+        ? 0
+        : clampNumber(
+            ((current.north - fromLocal.north) * northDelta +
+              (current.east - fromLocal.east) * eastDelta) /
+              lengthSquared,
+            0,
+            1,
+          );
+    const projectedNorth = fromLocal.north + northDelta * fraction;
+    const projectedEast = fromLocal.east + eastDelta * fraction;
+    const distanceM = Math.hypot(
+      current.north - projectedNorth,
+      current.east - projectedEast,
+    );
+    if (distanceM >= closestDistanceM) continue;
+    closestDistanceM = distanceM;
+    closestSegmentIndex = index - 1;
+    closestFraction = fraction;
+  }
+
+  if (
+    closestSegmentIndex < 0 ||
+    closestDistanceM > Math.max(1, maxSnapDistanceM)
+  ) {
+    return null;
+  }
+
+  const from = routeGeometry[closestSegmentIndex];
+  const to = routeGeometry[closestSegmentIndex + 1];
+  if (!from || !to) return null;
+  const projected: number[] = [
+    from[0] + (to[0] - from[0]) * closestFraction,
+    from[1] + (to[1] - from[1]) * closestFraction,
+  ];
+  return [projected, ...routeGeometry.slice(closestSegmentIndex + 1)];
+}
+
+/**
  * Returns the projected final route point used by the small destination flag.
  * It uses the same compression and terrain rules as the route polylines.
  */

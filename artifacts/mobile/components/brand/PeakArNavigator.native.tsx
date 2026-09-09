@@ -22,12 +22,13 @@ import { Dimensions, StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { LatLng } from "@/types";
-import type { TerrainProfilePoint, RouteGradeBand } from "@/lib/terrainCues";
+import type { TerrainProfilePoint } from "@/lib/terrainCues";
 import {
   buildGeographicTerrainRouteSegments,
   buildGeographicTerrainRouteDestination,
   buildLocalTerrainMesh,
   buildLocalMapRouteLines,
+  routeGeometryAheadOfPosition,
   routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -42,14 +43,7 @@ const PEAK_RED_MATERIAL = "sagatrailPeakMarkerRed";
 const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
 const FINISH_FLAG_BLACK_MATERIAL = "sagatrailFinishFlagBlack";
 const FINISH_FLAG_POLE_MATERIAL = "sagatrailFinishFlagPole";
-const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
-  green: "sagatrailTerrainRouteGreen",
-  yellow: "sagatrailTerrainRouteYellow",
-  orange: "sagatrailTerrainRouteOrange",
-  red: "sagatrailTerrainRouteRed",
-};
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
-const TERRAIN_ROUTE_UNDERLAY_MATERIAL = "sagatrailTerrainRouteUnderlay";
 const TERRAIN_ROUTE_CHEVRON_MATERIAL = "sagatrailTerrainRouteChevron";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
@@ -80,10 +74,6 @@ const FINISH_FLAG_CENTER_Y =
   FINISH_FLAG_POLE_HEIGHT - FINISH_FLAG_HEIGHT / 2;
 const MIN_FINISH_FLAG_WIDTH_PX = 30;
 const ESTIMATED_CAMERA_HORIZONTAL_FOV_RAD = (60 * Math.PI) / 180;
-const HIDDEN_ROUTE_POINTS: TerrainRouteLine = [
-  [0, AR_ROUTE_GROUND_OFFSET, 0],
-  [0, AR_ROUTE_GROUND_OFFSET, 0],
-];
 
 ViroMaterials.createMaterials({
   [PEAK_RED_MATERIAL]: {
@@ -179,6 +169,7 @@ interface PeakArSceneAppProps {
   terrainProfile?: readonly TerrainProfilePoint[] | null;
   terrainModel?: LocalTerrainModel | null;
   routeGeometry?: readonly number[][] | null;
+  routeOriginPosition?: LatLng | null;
   observerPosition?: LatLng | null;
   mapLayer?: "topo" | "sat";
   observerElevationM?: number | null;
@@ -328,20 +319,31 @@ function TerrainMapHologram({
 function TerrainHologram({
   model,
   routeGeometry,
+  routeOriginPosition,
   observerPosition,
   terrainProfile,
 }: {
   model: LocalTerrainModel | null | undefined;
   routeGeometry: readonly number[][] | null | undefined;
+  routeOriginPosition: LatLng | null | undefined;
   observerPosition: LatLng | null | undefined;
   terrainProfile: readonly TerrainProfilePoint[] | null | undefined;
 }) {
+  const visibleRouteGeometry = useMemo(
+    () =>
+      routeGeometryAheadOfPosition(
+        routeGeometry,
+        routeOriginPosition,
+        observerPosition,
+      ) ?? routeGeometry,
+    [routeGeometry, routeOriginPosition, observerPosition],
+  );
   const routeSegments = useMemo<TerrainRouteSegment[]>(
     () =>
       buildGeographicTerrainRouteSegments(
         model,
-        routeGeometry,
-        observerPosition,
+        visibleRouteGeometry,
+        routeOriginPosition ?? observerPosition,
         AR_ROUTE_TERRAIN_RADIUS_M,
         terrainProfile,
         {
@@ -351,21 +353,27 @@ function TerrainHologram({
           maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
         },
       ),
-    [model, routeGeometry, observerPosition, terrainProfile],
+    [
+      model,
+      visibleRouteGeometry,
+      routeOriginPosition,
+      observerPosition,
+      terrainProfile,
+    ],
   );
   const destinationPosition = useMemo(
     () =>
       buildGeographicTerrainRouteDestination(
         model,
         routeGeometry,
-        observerPosition,
+        routeOriginPosition ?? observerPosition,
         AR_ROUTE_TERRAIN_RADIUS_M,
         {
           realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
           maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
         },
       ),
-    [model, routeGeometry, observerPosition],
+    [model, routeGeometry, routeOriginPosition, observerPosition],
   );
   const continuousRoutePoints = useMemo<TerrainRouteLine>(() => {
     const points: TerrainRouteLine = [];
@@ -436,13 +444,20 @@ function TerrainHologram({
       hasModel: Boolean(model),
       observerElevationM: model?.observerElevationM ?? null,
       routePointCount: routeGeometry?.length ?? 0,
+      visibleRoutePointCount: visibleRouteGeometry?.length ?? 0,
       lineCount: routeSegments.length,
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
       nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
       destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
       hasDestination: destinationPosition != null,
     });
-  }, [model, routeGeometry, routeSegments.length, destinationPosition]);
+  }, [
+    model,
+    routeGeometry,
+    visibleRouteGeometry,
+    routeSegments.length,
+    destinationPosition,
+  ]);
 
   // The distant destination flag must remain available even when the active
   // route has no sampled points inside the 50 m near field.
@@ -760,6 +775,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     terrainProfile = null,
     terrainModel = null,
     routeGeometry = null,
+    routeOriginPosition = null,
     observerPosition = null,
     observerElevationM = null,
     selectedPeakId = null,
@@ -785,6 +801,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
+        routeOriginPosition={routeOriginPosition}
         observerPosition={observerPosition}
         terrainProfile={terrainProfile}
       />
@@ -1054,7 +1071,8 @@ export function PeakArNavigator({
       terrainProfile,
       terrainModel,
       routeGeometry,
-      observerPosition: worldOriginPosition ?? observerPosition,
+      routeOriginPosition: worldOriginPosition ?? observerPosition,
+      observerPosition,
       mapLayer,
       observerElevationM,
       selectedPeakId,
