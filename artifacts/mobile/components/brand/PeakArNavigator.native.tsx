@@ -50,6 +50,7 @@ const TERRAIN_ROUTE_MATERIALS: Record<RouteGradeBand, string> = {
 };
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const TERRAIN_ROUTE_UNDERLAY_MATERIAL = "sagatrailTerrainRouteUnderlay";
+const TERRAIN_ROUTE_CHEVRON_MATERIAL = "sagatrailTerrainRouteChevron";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
@@ -66,6 +67,8 @@ const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
 const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
+const MAX_AR_ROUTE_CHEVRONS = 24;
+const AR_ROUTE_CHEVRON_SPACING = 0.24;
 // The flag is scaled against projected screen distance so its apparent width
 // stays readable even when the route endpoint is far away.
 const FINISH_FLAG_POLE_HEIGHT = 1.25;
@@ -142,6 +145,14 @@ ViroMaterials.createMaterials({
   [TERRAIN_ROUTE_UNDERLAY_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: "#FFFFFF",
+    blendMode: "Alpha",
+    cullMode: "None",
+    writesToDepthBuffer: false,
+    readsFromDepthBuffer: false,
+  },
+  [TERRAIN_ROUTE_CHEVRON_MATERIAL]: {
+    lightingModel: "Constant",
+    diffuseColor: "#B8FF3B",
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -374,6 +385,52 @@ function TerrainHologram({
     return points;
   }, [routeSegments]);
 
+  const routeChevrons = useMemo(() => {
+    const placements: Array<{
+      position: TerrainVertex;
+      rotationY: number;
+    }> = [];
+    let distanceSinceLastChevron = AR_ROUTE_CHEVRON_SPACING * 0.45;
+
+    for (const segment of routeSegments) {
+      for (let index = 1; index < segment.points.length; index += 1) {
+        if (placements.length >= MAX_AR_ROUTE_CHEVRONS) break;
+        const from = segment.points[index - 1];
+        const to = segment.points[index];
+        let current: TerrainVertex = [...from];
+        let remaining = Math.hypot(to[0] - current[0], to[2] - current[2]);
+        if (remaining < 0.001) continue;
+
+        while (
+          remaining + distanceSinceLastChevron >= AR_ROUTE_CHEVRON_SPACING &&
+          placements.length < MAX_AR_ROUTE_CHEVRONS
+        ) {
+          const travel =
+            AR_ROUTE_CHEVRON_SPACING - distanceSinceLastChevron;
+          const fraction = Math.max(
+            0,
+            Math.min(1, travel / Math.max(remaining, 0.001)),
+          );
+          const position: TerrainVertex = [
+            current[0] + (to[0] - current[0]) * fraction,
+            current[1] + (to[1] - current[1]) * fraction,
+            current[2] + (to[2] - current[2]) * fraction,
+          ];
+          const rotationY =
+            (Math.atan2(-(to[2] - current[2]), to[0] - current[0]) * 180) /
+            Math.PI;
+          placements.push({ position, rotationY });
+          current = position;
+          remaining = Math.hypot(to[0] - current[0], to[2] - current[2]);
+          distanceSinceLastChevron = 0;
+        }
+        distanceSinceLastChevron += remaining;
+      }
+      if (placements.length >= MAX_AR_ROUTE_CHEVRONS) break;
+    }
+    return placements;
+  }, [routeSegments]);
+
   useEffect(() => {
     console.log("[PeakAR] route overlay", {
       hasModel: Boolean(model),
@@ -427,6 +484,44 @@ function TerrainHologram({
         />
         );
       })}
+      <ViroNode
+        renderingOrder={25}
+        opacity={0.9}
+        viroTag="terrain-route-chevrons"
+      >
+        {routeChevrons.map(({ position, rotationY }, index) => (
+          <ViroNode
+            key={`terrain-route-chevron-${index}`}
+            position={[
+              position[0],
+              AR_ROUTE_GROUND_OFFSET + position[1] + 0.06,
+              position[2],
+            ]}
+            rotation={[0, rotationY, 0]}
+            renderingOrder={26}
+            viroTag={`terrain-route-chevron-${index}`}
+          >
+            <ViroBox
+              position={[0.035, 0, -0.075]}
+              rotation={[0, -28, 0]}
+              width={0.32}
+              height={0.035}
+              length={0.075}
+              materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+            <ViroBox
+              position={[0.035, 0, 0.075]}
+              rotation={[0, 28, 0]}
+              width={0.32}
+              height={0.035}
+              length={0.075}
+              materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+              shadowCastingBitMask={0}
+            />
+          </ViroNode>
+        ))}
+      </ViroNode>
       <ViroNode
         position={
           destinationPosition
