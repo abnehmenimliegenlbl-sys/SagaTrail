@@ -5774,7 +5774,10 @@ export default function LiveHike() {
 
 
         {/* Story-Bereich */}
-        <Glass style={{ marginTop: 14, overflow: "hidden" }}>
+        <Glass
+          style={{ marginTop: 14, overflow: "hidden" }}
+          overlayColor={poiOverlay}
+        >
           <View style={styles.storyTileHeader}>
             <Pressable
               onPress={() => setStoryTileOpen((open) => !open)}
