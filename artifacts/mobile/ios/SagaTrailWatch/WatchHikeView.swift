@@ -5,7 +5,10 @@ private enum WatchPalette {
   static let red = Color(red: 204 / 255, green: 0, blue: 0)
   static let black = Color.black
   static let white = Color.white
-  static let mutedWhite = Color.white.opacity(0.72)
+  static let mutedWhite = Color(red: 92 / 255, green: 98 / 255, blue: 108 / 255)
+  static let surface = Color.white
+  static let surfaceAlt = Color(red: 244 / 255, green: 245 / 255, blue: 247 / 255)
+  static let ink = Color(red: 24 / 255, green: 26 / 255, blue: 30 / 255)
 }
 
 struct WatchHikeView: View {
@@ -45,9 +48,9 @@ struct WatchHikeView: View {
       .padding(.horizontal, 4)
     }
       .scrollContentBackground(.hidden)
-      .background(WatchPalette.black.ignoresSafeArea())
+      .background(WatchPalette.surface.ignoresSafeArea())
       .tint(WatchPalette.red)
-      .preferredColorScheme(.dark)
+      .preferredColorScheme(.light)
      .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
        Button(copy.t("cancel"), role: .cancel) {}
        Button(copy.t("confirmSOS"), role: .destructive, action: hike.confirmSOS)
@@ -83,11 +86,11 @@ struct WatchHikeView: View {
       }
     }
     .font(.caption2)
-    .foregroundStyle(status.waiting ? WatchPalette.red : WatchPalette.white)
+    .foregroundStyle(status.waiting ? WatchPalette.red : WatchPalette.ink)
     .padding(.horizontal, 7)
     .padding(.vertical, 5)
     .background(
-      (status.waiting ? WatchPalette.red : WatchPalette.white).opacity(0.12),
+      status.waiting ? WatchPalette.red.opacity(0.12) : WatchPalette.surfaceAlt,
       in: RoundedRectangle(cornerRadius: 9)
     )
   }
@@ -462,7 +465,7 @@ struct WatchHikeView: View {
         .foregroundStyle(WatchPalette.red)
       Text(copy.t("waitingStart"))
         .multilineTextAlignment(.center)
-        .foregroundStyle(WatchPalette.white)
+        .foregroundStyle(WatchPalette.ink)
     }
   }
 
