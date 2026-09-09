@@ -47,6 +47,12 @@ Live AR now renders only the first 50 m of the active route at geographic 1:1 sc
 
 **How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and use the same projection options for route segments and the destination flag. Never use compression as evidence for terrain outside the DTM radius; those sections stay level.
 
+Destination flags need a screen-space minimum, not only a fixed AR-world size: scale the billboard with camera distance so its projected width stays approximately 30 px.
+
+**Why:** A physically sized flag becomes unreadably small at the bounded virtual depth used for distant destinations.
+
+**How to apply:** Compute the billboard scale from estimated camera focal length and viewport width; keep the minimum scale at 1 so nearby flags do not shrink.
+
 Compressed route segments need a continuous centerline beneath the colored grade polylines, and the finish marker must use a fixed readable minimum size plus billboard orientation. The finish design is the 3×2 black-and-white Formula 1 chequered flag, not a solid red placeholder.
 
 **Why:** At the compressed far end, separately rendered thin polylines can show hairline gaps and a physically small flag becomes unreadable in the camera view.

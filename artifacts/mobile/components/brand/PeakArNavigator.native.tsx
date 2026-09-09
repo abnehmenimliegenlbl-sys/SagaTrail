@@ -34,6 +34,7 @@ import {
   type LocalTerrainMesh,
   type TerrainRouteLine,
   type TerrainRouteSegment,
+  type TerrainVertex,
 } from "@/lib/terrainModel";
 import type { PeakArNavigatorProps } from "./PeakArNavigator.types";
 
@@ -65,9 +66,8 @@ const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
 const AR_ROUTE_GROUND_OFFSET = -1.25;
 const MAX_AR_PEAK_SLOTS = 40;
 const MAX_AR_ROUTE_SEGMENT_SLOTS = 96;
-// The flag is intentionally a fixed, readable minimum in AR metres. It must
-// remain recognizable even when the route endpoint is at the maximum virtual
-// distance, where a physically scaled pin would become a few pixels wide.
+// The flag is scaled against projected screen distance so its apparent width
+// stays readable even when the route endpoint is far away.
 const FINISH_FLAG_POLE_HEIGHT = 1.25;
 const FINISH_FLAG_WIDTH = 0.7;
 const FINISH_FLAG_HEIGHT = 0.45;
@@ -436,6 +436,11 @@ function TerrainHologram({
                 destinationPosition[2],
               ]
             : [0, -1000, 0]
+        }
+        scale={
+          destinationPosition
+            ? finishFlagScale(destinationPosition)
+            : [1, 1, 1]
         }
         opacity={destinationPosition ? 1 : 0}
         renderingOrder={30}
