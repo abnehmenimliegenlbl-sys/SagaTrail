@@ -1,5 +1,6 @@
+import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -33,10 +34,7 @@ export function BackButton({ accessibilityLabel, onPress }: BackButtonProps) {
         },
       ]}
     >
-      <View style={styles.chevron} pointerEvents="none">
-        <View style={[styles.arm, styles.armTop, { backgroundColor: colors.accent }]} />
-        <View style={[styles.arm, styles.armBottom, { backgroundColor: colors.accent }]} />
-      </View>
+      <Feather name="chevron-left" size={22} color="#000000" />
     </Pressable>
   );
 }
@@ -49,25 +47,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  chevron: {
-    width: 15,
-    height: 22,
-    position: "relative",
-  },
-  arm: {
-    position: "absolute",
-    left: 1,
-    width: 12,
-    height: 2.5,
-    borderRadius: 2,
-  },
-  armTop: {
-    top: 5,
-    transform: [{ rotate: "-45deg" }],
-  },
-  armBottom: {
-    top: 14,
-    transform: [{ rotate: "45deg" }],
   },
 });
