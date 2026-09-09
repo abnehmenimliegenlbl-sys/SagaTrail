@@ -5305,6 +5305,7 @@ export default function LiveHike() {
           </Animated.View>
         )}
         <View style={styles.headRow}>
+          <BackButton accessibilityLabel={t.back} onPress={() => router.back()} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.eyebrow, { color: colors.accent }]}>
               {saga.canton.toUpperCase()} · {t.live}
@@ -5313,7 +5314,6 @@ export default function LiveHike() {
               {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
             </Text>
           </View>
-          <BackButton accessibilityLabel={t.back} onPress={() => router.back()} />
         </View>
 
         <View style={{ marginTop: 14 }}>
@@ -6941,7 +6941,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   bannerAction: { fontFamily: fonts.bodyBold, fontSize: 13 },
-  headRow: { flexDirection: "row", alignItems: "flex-start" },
+  headRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
