@@ -9,8 +9,8 @@ const GPS_GREEN = 0x1C9B57;
 const BACKGROUND = 0xF4F5F7;
 const CARD = 0xFFFFFF;
 const INK = 0x181A1E;
-const MUTED = 0x6B7280;
-const CARD_BORDER = 0xD7D9DE;
+const MUTED = 0x181A1E;
+const CARD_BORDER = 0xCCCCCC;
 
 class SagaTrailView extends WatchUi.View {
     var app;
@@ -71,16 +71,19 @@ class SagaTrailView extends WatchUi.View {
 
     function drawNavigationPage(dc, state, y) {
         var companionReady = app.isPhoneCompanionReady();
+        var inset = safeInset(dc);
         if (value(state, :sessionStatus, "") == "finished") {
             drawCompletionPage(dc, state, y);
             return;
         }
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 88);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 88);
         var direction = companionReady ?
             directionLabel(value(state, :direction, "none")) :
             "TELEFON VERBINDEN";
-        centered(dc, y + 7, direction, Graphics.FONT_MEDIUM, BRAND_RED);
+        var directionFont = direction.length() > 12 ?
+            Graphics.FONT_XTINY : Graphics.FONT_MEDIUM;
+        centered(dc, y + 7, direction, directionFont, BRAND_RED);
 
         var remainingKm = value(state, :remainingKm, null);
         var distanceText = remainingKm == null ? "--" : remainingKm.format("%.1f") + " km";
@@ -89,10 +92,11 @@ class SagaTrailView extends WatchUi.View {
             charsPerLine(dc)), Graphics.FONT_XTINY, MUTED);
         y += 94;
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 55);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 55);
         var walked = value(state, :totalDistanceM, 0);
         var remaining = value(state, :remainingDistanceM, 0);
-        drawProgress(dc, 17, y + 9, dc.getWidth() - 34, walked, remaining);
+        drawProgress(dc, inset + 9, y + 9,
+            dc.getWidth() - ((inset + 9) * 2), walked, remaining);
         centered(dc, y + 25, formatDistance(walked) + "  |  " +
             formatDistance(remaining), Graphics.FONT_XTINY, INK);
         centered(dc, y + 40, formatTime(value(state, :elapsedS, 0)) + "  |  ETA " +
@@ -101,7 +105,7 @@ class SagaTrailView extends WatchUi.View {
 
         var offRoute = value(state, :offRoute, null);
         if (offRoute != null) {
-            drawCard(dc, 8, y, dc.getWidth() - 16, 29);
+            drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 29);
             centered(dc, y + 7, "ABWEG  " +
                 formatDistance(value(offRoute, :distanceM, 0)),
                 Graphics.FONT_XTINY, BRAND_RED);
@@ -109,7 +113,8 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function drawInfoPage(dc, state, y) {
-        drawCard(dc, 8, y, dc.getWidth() - 16, 62);
+        var inset = safeInset(dc);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 62);
         var hr = displayHeartRate(state);
         centered(dc, y + 7, "DISTANZ  " + formatDistance(value(state, :totalDistanceM, 0)),
             Graphics.FONT_XTINY, INK);
@@ -120,7 +125,7 @@ class SagaTrailView extends WatchUi.View {
             " bpm", Graphics.FONT_XTINY, hr == null ? MUTED : BRAND_RED);
         y += 68;
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 58);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 58);
         var terrain = value(state, :terrainSection, null);
         if (terrain != null) {
             centered(dc, y + 7, shortText("GELAENDE  " +
@@ -149,7 +154,7 @@ class SagaTrailView extends WatchUi.View {
         }
         y += 64;
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 47);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 47);
         var upcoming = value(state, :upcomingNavigations, []);
         if (upcoming.size() > 1) {
             var next = upcoming[1];
@@ -163,7 +168,8 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function drawSafetyPage(dc, state, y) {
-        drawCard(dc, 8, y, dc.getWidth() - 16, 69);
+        var inset = safeInset(dc);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 69);
         centered(dc, y + 7, "SICHERHEITS-CHECK-IN", Graphics.FONT_XTINY, MUTED);
         var checkin = value(state, :safetyCheckin, null);
         if (checkin != null && value(checkin, :status, "idle") != "idle") {
@@ -184,7 +190,7 @@ class SagaTrailView extends WatchUi.View {
         var alertText = value(state, :alertText, "");
         var safetyText = value(state, :safetyText, "");
         var offRoute = value(state, :offRoute, null);
-        drawCard(dc, 8, y, dc.getWidth() - 16, 55);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 55);
         if (offRoute != null) {
             centered(dc, y + 8, "ABWEG", Graphics.FONT_SMALL, BRAND_RED);
             centered(dc, y + 33, formatDistance(value(offRoute, :distanceM, 0)) +
@@ -203,7 +209,7 @@ class SagaTrailView extends WatchUi.View {
         }
         y += 61;
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 42);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 42);
         centered(dc, y + 6, "SELECT 2x: SOS", Graphics.FONT_XTINY, BRAND_RED);
         centered(dc, y + 23, "MENU: CHECK-IN / PAUSE",
             Graphics.FONT_XTINY, INK);
@@ -212,8 +218,9 @@ class SagaTrailView extends WatchUi.View {
     function drawStoryPage(dc, state, y) {
         var story = value(state, :poiStory, null);
         var narration = value(state, :narrationText, "");
+        var inset = safeInset(dc);
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 48);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 48);
         if (narration != "") {
             centered(dc, y + 6, "STORY / AUDIO AKTIV",
                 Graphics.FONT_XTINY, BRAND_RED);
@@ -226,7 +233,7 @@ class SagaTrailView extends WatchUi.View {
         y += 54;
 
         if (story == null) {
-            drawCard(dc, 8, y, dc.getWidth() - 16, 82);
+            drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 82);
             centered(dc, y + 14, "KEINE POI-GESCHICHTE",
                 Graphics.FONT_XTINY, MUTED);
             centered(dc, y + 37, "Naehere dich einem Ort,",
@@ -236,7 +243,7 @@ class SagaTrailView extends WatchUi.View {
             return;
         }
 
-        drawCard(dc, 8, y, dc.getWidth() - 16, 112);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 112);
         centered(dc, y + 7, shortText(value(story, :name, "ORT"),
             charsPerLine(dc)), Graphics.FONT_SMALL, BRAND_RED);
         var text = value(story, :text, "");
@@ -253,7 +260,8 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function drawCompletionPage(dc, state, y) {
-        drawCard(dc, 8, y, dc.getWidth() - 16, 157);
+        var inset = safeInset(dc);
+        drawCard(dc, inset, y, dc.getWidth() - (inset * 2), 157);
         centered(dc, y + 11, "WANDERUNG BEENDET", Graphics.FONT_SMALL, GPS_GREEN);
         centered(dc, y + 43, formatDistance(value(state, :totalDistanceM, 0)),
             Graphics.FONT_MEDIUM, BRAND_RED);
@@ -360,7 +368,11 @@ class SagaTrailView extends WatchUi.View {
     }
 
     function charsPerLine(dc) {
-        return dc.getWidth() >= 260 ? 30 : 24;
+        return dc.getWidth() >= 260 ? 24 : 20;
+    }
+
+    function safeInset(dc) {
+        return dc.getWidth() >= 260 ? 30 : 27;
     }
 
     function drawHeader(dc, state, text) {
@@ -435,7 +447,7 @@ class SagaTrailView extends WatchUi.View {
 
     function footer(dc, text, color) {
         dc.setColor(color, BACKGROUND);
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 18, Graphics.FONT_XTINY,
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 32, Graphics.FONT_XTINY,
             shortText(text, charsPerLine(dc)), Graphics.TEXT_JUSTIFY_CENTER);
     }
 }
