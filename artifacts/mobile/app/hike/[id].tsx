@@ -7335,7 +7335,7 @@ const styles = StyleSheet.create({
   },
   safetyFilterCodeText: {
     fontFamily: fonts.monoBold,
-    fontSize: 11,
+    fontSize: 13,
     lineHeight: 14,
     textAlign: "center",
   },
