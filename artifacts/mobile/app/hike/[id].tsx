@@ -6475,16 +6475,9 @@ export default function LiveHike() {
               </Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => setSosOpen(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t.close}
-              style={styles.sosClose}
-            >
-              <Text style={[styles.sosCloseText, { color: colors.mutedForeground }]}>
-                {t.close}
-              </Text>
-            </Pressable>
+            <View style={styles.sosClose}>
+              <CloseButton accessibilityLabel={t.close} onPress={() => setSosOpen(false)} />
+            </View>
           </Animated.View>
         </View>
       )}
@@ -7460,5 +7453,4 @@ const styles = StyleSheet.create({
   },
   sosSecondaryText: { fontFamily: fonts.bodyMedium, fontSize: 15 },
   sosClose: { alignItems: "center", paddingVertical: 16 },
-  sosCloseText: { fontFamily: fonts.bodyMedium, fontSize: 15 },
 });

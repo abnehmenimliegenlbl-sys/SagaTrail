@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { Skeleton } from "@/components/brand/Skeleton";
 import { SparkDivider, SparkMountain } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -221,14 +222,7 @@ export default function Paywall() {
         }}
       >
         <View style={styles.closeRow}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={ts.close}
-          >
-            <Feather name="x" size={26} color={colors.mutedForeground} />
-          </Pressable>
+          <CloseButton accessibilityLabel={ts.close} onPress={() => router.back()} />
         </View>
 
         <View style={styles.hero}>

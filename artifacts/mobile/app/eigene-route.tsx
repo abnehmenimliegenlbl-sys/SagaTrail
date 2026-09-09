@@ -23,6 +23,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { Glass } from "@/components/brand/Glass";
 import { GLAS_3D } from "@/constants/depth";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
@@ -453,9 +454,10 @@ export default function EigeneRoute() {
               <Text style={[styles.pickerTitle, { color: colors.foreground }]}>
                 {t.pickerTitle}
               </Text>
-              <Pressable onPress={() => setPickerTarget(null)} hitSlop={12}>
-                <Feather name="x" size={22} color={colors.foreground} />
-              </Pressable>
+              <CloseButton
+                accessibilityLabel={t.gpxCancelLabel}
+                onPress={() => setPickerTarget(null)}
+              />
             </View>
             <Text style={[styles.pickerHint, { color: colors.mutedForeground, paddingHorizontal: 20 }]}>
               {t.pickerHint}

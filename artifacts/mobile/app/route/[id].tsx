@@ -41,6 +41,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { Glass } from "@/components/brand/Glass";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { poiDisplayName } from "@/lib/poiDisplay";
@@ -2112,14 +2113,7 @@ export default function Routenplanung() {
                     {poiDisplayName(selectedPoi.name, selectedPoi.kind)}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPoi(null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={ts.close}
-                >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+                <CloseButton accessibilityLabel={ts.close} onPress={() => setSelectedPoi(null)} />
               </View>
               {!!(selectedPoiWiki?.extract) && (
                 <Text style={[styles.poiSummary, { color: colors.foreground, marginTop: 10 }]}>
@@ -2160,14 +2154,10 @@ export default function Routenplanung() {
                     {selectedPartner.name}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPartner(null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
+                <CloseButton
                   accessibilityLabel={ts.close}
-                >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+                  onPress={() => setSelectedPartner(null)}
+                />
               </View>
 
               {selectedPartner.istOffen != null && (

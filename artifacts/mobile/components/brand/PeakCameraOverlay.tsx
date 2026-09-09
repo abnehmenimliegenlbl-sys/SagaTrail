@@ -15,6 +15,7 @@ import type { DimensionValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "@/constants/typography";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { useColors } from "@/hooks/useColors";
 import { hapticMedium, hapticSelection } from "@/lib/haptics";
 import type { PanoramaGipfel } from "@/lib/panorama";
@@ -337,20 +338,14 @@ export function PeakCameraOverlay({
                 </Text>
               </View>
             )}
-            <Pressable
+            <CloseButton
               onPress={() => {
                 hapticSelection();
                 closeCamera();
               }}
-              style={[
-                styles.closeButton,
-                { backgroundColor: colors.glassBgStrong, borderColor: colors.glassBorder },
-              ]}
-              accessibilityRole="button"
+              style={styles.closeButton}
               accessibilityLabel={strings.cameraOff}
-            >
-              <Feather name="x" size={20} color={colors.photoScrimText} />
-            </Pressable>
+            />
           </View>
         </View>
         {nextTurn && (
