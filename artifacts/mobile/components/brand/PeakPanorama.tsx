@@ -1034,12 +1034,22 @@ export function PeakPanorama({
            <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
              BLICK
            </SvgText>
-           {panoramaMesh.peaks
-             .filter((meshPeak) =>
-               markedPeaks.some((peak) => peak.id === meshPeak.peak.id),
-             )
-             .map((meshPeak) => {
-               const { peakPoint, peak } = meshPeak;
+           {markedPeaks.map((peak) => {
+               const meshPeak = panoramaMesh.peaks.find(
+                 (candidate) => candidate.peak.id === peak.id,
+               );
+               const relativeBearing = displayBearing(peak);
+               if (relativeBearing == null) return null;
+               const peakPoint = meshPeak?.peakPoint ?? {
+                 x: 180 + (relativeBearing / PANORAMA_VIEW_DEGREES) * 360,
+                 y: Math.max(
+                   72,
+                   Math.min(
+                     238,
+                     190 - (peak.elevationAngleDeg ?? 0) * 8,
+                   ),
+                 ),
+               };
                const isSelected = targetPeak?.id === peak.id;
                const markerY = Math.max(38, peakPoint.y - 8);
                const label = peak.name.length > 17

@@ -301,6 +301,7 @@ function terrainElevationAt(
   bearingDeg: number,
   distanceM: number,
 ): number | null {
+  if (distanceM < 0 || distanceM > model.radiusM + 1) return null;
   const ray = model.rays.reduce<LocalTerrainModel["rays"][number] | null>(
     (closest, candidate) =>
       !closest || angularDifference(candidate.bearingDeg, bearingDeg) <
@@ -356,8 +357,11 @@ function peakWorldPosition(
   const bearingDeg = Number.isFinite(peak.bearingDeg)
     ? ((peak.bearingDeg % 360) + 360) % 360
     : coordinateBearingDeg;
+  // The DTM is the surface that is actually visible below the marker. Prefer
+  // it when the peak lies inside the loaded map; OSM's summit height remains
+  // the honest fallback for peaks outside a small/offline terrain model.
   const elevationM =
-    peak.elevationM ?? terrainElevationAt(model, bearingDeg, distanceM);
+    terrainElevationAt(model, bearingDeg, distanceM) ?? peak.elevationM;
   if (elevationM == null) return null;
   const angle = (bearingDeg * Math.PI) / 180;
   const distanceWorld = distanceM * TERRAIN_WORLD_UNITS_PER_METRE;
