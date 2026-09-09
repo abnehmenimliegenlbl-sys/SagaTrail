@@ -127,6 +127,8 @@ export interface GeographicRouteDisplayOptions {
   maxSegments?: number;
   /** Real-world 1:1 distance before far route compression starts. */
   realScaleRadiusM?: number;
+  /** Optional near-field cap; farther route points are not rendered. */
+  maxRenderedDistanceM?: number;
   /** Maximum virtual distance from the observer in the AR world, in metres. */
   maxVirtualDistanceM?: number;
 }
@@ -686,10 +688,18 @@ export function buildGeographicTerrainRouteSegments(
         ),
       )
       .filter((point): point is ProjectedGeographicRoutePoint => point !== null);
-    if (projected.length < 2) return [];
+    const maxRenderedDistanceM = displayOptions.maxRenderedDistanceM;
+    const visibleProjected =
+      maxRenderedDistanceM == null
+        ? projected
+        : projected.filter(
+            ({ displayDistanceM }) =>
+              displayDistanceM <= Math.max(1, maxRenderedDistanceM),
+          );
+    if (visibleProjected.length < 2) return [];
     const displayDistanceM =
-      projected.reduce((sum, point) => sum + point.displayDistanceM, 0) /
-      projected.length;
+      visibleProjected.reduce((sum, point) => sum + point.displayDistanceM, 0) /
+      visibleProjected.length;
     const distanceProgress =
       maxVirtualDistanceM <= 0
         ? 1
@@ -700,7 +710,7 @@ export function buildGeographicTerrainRouteSegments(
     );
     return [
       {
-        points: projected.map(({ point }) => point),
+        points: visibleProjected.map(({ point }) => point),
         band: segment.band,
         thickness,
       },
