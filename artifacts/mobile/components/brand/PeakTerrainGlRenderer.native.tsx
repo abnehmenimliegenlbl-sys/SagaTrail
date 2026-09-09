@@ -302,63 +302,54 @@ function terrainElevationAt(
   distanceM: number,
 ): number | null {
   if (distanceM < 0 || distanceM > model.radiusM + 1) return null;
-  const ray = model.rays.reduce<LocalTerrainModel["rays"][number] | null>(
-    (closest, candidate) =>
-      !closest || angularDifference(candidate.bearingDeg, bearingDeg) <
-        angularDifference(closest.bearingDeg, bearingDeg)
-        ? candidate
-        : closest,
-    null,
-  );
-  if (!ray || angularDifference(ray.bearingDeg, bearingDeg) > 8) return null;
-  const samples = ray.samples
+  const rays = model.rays
+    .filter((ray) => ray.samples.length >= 2)
     .slice()
-    .sort((first, second) => first.distanceM - second.distanceM);
-  if (samples.length === 0) return null;
-  if (distanceM <= samples[0].distanceM) return samples[0].elevationM;
-  for (let index = 1; index < samples.length; index += 1) {
-    const previous = samples[index - 1];
-    const next = samples[index];
-    if (distanceM > next.distanceM) continue;
-    const span = next.distanceM - previous.distanceM;
-    if (span <= 0) return next.elevationM;
-    const fraction = (distanceM - previous.distanceM) / span;
-    return previous.elevationM + (next.elevationM - previous.elevationM) * fraction;
-  }
-  return samples.at(-1)?.elevationM ?? null;
-}
+    .sort((first, second) => first.bearingDeg - second.bearingDeg);
+  if (rays.length < 2) return null;
 
-function nearestTerrainVertex(
-  model: LocalTerrainModel,
-  bearingDeg: number,
-  distanceM: number,
-): { bearingDeg: number; distanceM: number; elevationM: number } | null {
-  if (distanceM < 0 || distanceM > model.radiusM + 1) return null;
-  const ray = model.rays.reduce<LocalTerrainModel["rays"][number] | null>(
-    (closest, candidate) =>
-      !closest || angularDifference(candidate.bearingDeg, bearingDeg) <
-        angularDifference(closest.bearingDeg, bearingDeg)
-        ? candidate
-        : closest,
-    null,
-  );
-  if (!ray || angularDifference(ray.bearingDeg, bearingDeg) > 8) return null;
-  const sample = ray.samples.reduce<
-    LocalTerrainModel["rays"][number]["samples"][number] | null
-  >(
-    (closest, candidate) =>
-      !closest || Math.abs(candidate.distanceM - distanceM) <
-        Math.abs(closest.distanceM - distanceM)
-        ? candidate
-        : closest,
-    null,
-  );
-  if (!sample) return null;
-  return {
-    bearingDeg: ray.bearingDeg,
-    distanceM: sample.distanceM,
-    elevationM: sample.elevationM,
+  const interpolateRay = (
+    ray: LocalTerrainModel["rays"][number],
+  ): number | null => {
+    const samples = ray.samples
+      .slice()
+      .sort((first, second) => first.distanceM - second.distanceM);
+    if (distanceM < samples[0].distanceM || distanceM > samples.at(-1)!.distanceM) {
+      return null;
+    }
+    for (let index = 1; index < samples.length; index += 1) {
+      const previous = samples[index - 1];
+      const next = samples[index];
+      if (distanceM > next.distanceM) continue;
+      const span = next.distanceM - previous.distanceM;
+      if (span <= 0) return next.elevationM;
+      const fraction = (distanceM - previous.distanceM) / span;
+      return previous.elevationM + (next.elevationM - previous.elevationM) * fraction;
+    }
+    return null;
   };
+
+  const target = ((bearingDeg % 360) + 360) % 360;
+  const maximumGapDeg =
+    Math.max(8, 360 / Math.max(8, model.sectors) * 1.6);
+  for (let index = 0; index < rays.length; index += 1) {
+    const first = rays[index];
+    const second = rays[(index + 1) % rays.length];
+    let firstBearing = first.bearingDeg;
+    let secondBearing = second.bearingDeg;
+    let targetBearing = target;
+    if (index === rays.length - 1) secondBearing += 360;
+    if (targetBearing < firstBearing) targetBearing += 360;
+    if (secondBearing - firstBearing > maximumGapDeg) continue;
+    if (targetBearing < firstBearing || targetBearing > secondBearing) continue;
+    const firstElevation = interpolateRay(first);
+    const secondElevation = interpolateRay(second);
+    if (firstElevation == null || secondElevation == null) continue;
+    const fraction =
+      (targetBearing - firstBearing) / (secondBearing - firstBearing || 1);
+    return firstElevation + (secondElevation - firstElevation) * fraction;
+  }
+  return null;
 }
 
 function peakWorldPosition(
@@ -380,17 +371,12 @@ function peakWorldPosition(
   const coordinateDistanceM = Math.hypot(northM, eastM);
   const coordinateBearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
-  // Snap the marker base to the same radial DTM vertex that the terrain mesh
-  // renders. This prevents an interpolated point from landing behind an
-  // adjacent terrain triangle in perspective.
-  const terrainVertex = nearestTerrainVertex(
-    model,
-    coordinateBearingDeg,
-    coordinateDistanceM,
-  );
-  const distanceM = terrainVertex?.distanceM ?? coordinateDistanceM;
-  const bearingDeg = terrainVertex?.bearingDeg ?? coordinateBearingDeg;
-  const elevationM = terrainVertex?.elevationM ?? peak.elevationM;
+  // Use the exact geographic X/Z position and interpolate the DTM between the
+  // same neighboring radial rays that form the rendered terrain triangles.
+  const distanceM = coordinateDistanceM;
+  const bearingDeg = coordinateBearingDeg;
+  const elevationM =
+    terrainElevationAt(model, bearingDeg, distanceM) ?? peak.elevationM;
   if (elevationM == null) return null;
   const angle = (bearingDeg * Math.PI) / 180;
   const distanceWorld = distanceM * TERRAIN_WORLD_UNITS_PER_METRE;
