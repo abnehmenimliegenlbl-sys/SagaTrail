@@ -28,6 +28,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var turnHapticArmed = true
   private var lastAlertKey: String?
   private var lastSafetyStatus: String?
+  private var isSceneActive = false
 
   var isStale: Bool {
     guard let receivedAt else { return true }
@@ -40,6 +41,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
     session.delegate = self
     session.activate()
     apply(envelope: session.receivedApplicationContext)
+  }
+
+  func setSceneActive(_ active: Bool) {
+    isSceneActive = active
   }
 
   func requestSOSConfirmation() { showSOSConfirmation = true }
@@ -257,7 +262,6 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
-      WKExtension.shared().isFrontmostTimeoutExtended = decoded.sessionStatus != "finished"
       syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()
@@ -292,7 +296,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     // When the Watch app is visible, use the native turn haptic. If it is
     // not visible, the iPhone's mirrored local notification is the sole
     // notification surface; this prevents a double vibration.
-    guard WKExtension.shared().applicationState == .active else { return }
+    guard isSceneActive else { return }
     turnHapticArmed = false
     let direction = state.navigationDirection.lowercased()
     WKInterfaceDevice.current().play(direction.contains("left") ? .directionUp : .directionDown)

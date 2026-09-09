@@ -150,4 +150,4 @@
 - [Garmin Connect IQ signing](sagatrail-garmin-signing.md) — PRG packaging needs the actual private DER key; secret aliases alone are not evidence that a valid signing key is available.
 - [Garmin Horizon UI](sagatrail-garmin-horizon-ui.md) — selected round-safe design uses a ridge horizon, small brand mark, and only simple left/right/straight/U-turn arrows.
 - [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.
-- [Watch frontmost timeout](sagatrail-watch-frontmost-timeout.md) — set it after the SwiftUI scene activates, never in App.init; refresh it on live-state changes.
+- [Modern Watch app lifecycle](sagatrail-watch-frontmost-timeout.md) — never instantiate WKExtension in a single-target SwiftUI Watch app; use scenePhase for foreground state.

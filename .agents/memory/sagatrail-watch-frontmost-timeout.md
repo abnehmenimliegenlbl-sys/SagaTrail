@@ -1,10 +1,10 @@
 ---
-name: Watch frontmost timeout
-description: How SagaTrail safely extends the watchOS frontmost timeout before its workout session is ready.
+name: Modern Watch app lifecycle
+description: Why SagaTrail's single-target SwiftUI Watch app must not use the legacy WKExtension singleton.
 ---
 
-Set the watchOS extended frontmost timeout from the SwiftUI scene task after `WindowGroup` becomes active, and refresh it from live-state transitions until the hike is finished. Never access `WKExtension.shared()` from the SwiftUI `App.init()`.
+Never instantiate `WKExtension.shared()` in SagaTrail's modern single-target SwiftUI Watch app. Use SwiftUI `scenePhase` to track whether the app is active; rely on the HealthKit workout session for continued hike execution.
 
-**Why:** The HealthKit workout session starts asynchronously after WatchConnectivity delivers the active hike. Without the startup guard, watchOS can return to the watch face too early. But accessing the extension singleton before the SwiftUI scene exists can terminate the Watch app during launch.
+**Why:** watchOS terminates the app with a WATCHKIT API Violation because `WKExtension` may only be instantiated by a legacy WatchKit Extension. Moving the call later in the SwiftUI lifecycle does not make it valid.
 
-**How to apply:** Keep the initial assignment in a scene/view task and the later assignment in live-state handling. Only release the live-state guard after `finished`; do not move the initial access into `App.init()`.
+**How to apply:** Keep all lifecycle checks in SwiftUI scene state. Grep the complete Watch target for `WKExtension` before native releases; there must be no occurrences.
