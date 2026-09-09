@@ -32,7 +32,7 @@ import {
   buildRouteGradeSegments,
   type TerrainProfilePoint,
 } from "@/lib/terrainCues";
-import { hapticRigid, hapticSelection } from "@/lib/haptics";
+import { hapticRigid } from "@/lib/haptics";
 import { parseTerrainCorridor, type TerrainGrid } from "@/lib/routeTerrain3d";
 
 type Props = {
@@ -1437,19 +1437,6 @@ export default function RouteTerrain3D({
             style={[styles.backButton, { top: insets.top + 8 }]}
           />
         )}
-        <Pressable
-          onPress={() => {
-            hapticSelection();
-            onClose();
-          }}
-          style={[
-            styles.close,
-            mode === "walk" && { top: insets.top + 8, right: 10 },
-          ]}
-          accessibilityLabel="3D-Ansicht schliessen"
-        >
-          <Feather name="x" size={25} color="#fff" />
-        </Pressable>
         {model && loadProgress === 100 && !error && (
           <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 6) }]}>
             {(
@@ -1521,14 +1508,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 4,
-  },
-  close: {
-    position: "absolute",
-    top: 52,
-    right: 18,
-    padding: 11,
-    borderRadius: 22,
-    backgroundColor: "#15231dbb",
   },
   walkStatus: {
     position: "absolute",
