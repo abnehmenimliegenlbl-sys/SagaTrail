@@ -378,11 +378,13 @@ class SagaTrailView extends WatchUi.View {
     function drawHeader(dc, state, text) {
         var gpsFresh = app.isPhoneCompanionReady() &&
             value(state, :hasFreshGps, false) == true;
-        drawHiker(dc, 12, 6, gpsFresh ? GPS_GREEN : BRAND_RED);
+        var inset = safeInset(dc);
+        drawHiker(dc, inset + 34, 16, gpsFresh ? GPS_GREEN : BRAND_RED);
         centered(dc, 5, text, Graphics.FONT_XTINY, MUTED);
         dc.setColor(BRAND_RED, BACKGROUND);
-        dc.drawLine(dc.getWidth() - 38, 16, dc.getWidth() - 12, 16);
-        return 25;
+        dc.drawLine(dc.getWidth() - inset - 34, 25,
+            dc.getWidth() - inset - 12, 25);
+        return 35;
     }
 
     function drawHiker(dc, x, y, color) {
