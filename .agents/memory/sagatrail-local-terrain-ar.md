@@ -41,11 +41,11 @@ AR route materials must follow the map's smoothed grade bands: green below 10%, 
 
 **How to apply:** Build colored approximately-50 m segments from the active route's elevation profile; keep missing-profile sections green rather than inventing a grade.
 
-Live AR now projects the entire active route into a bounded virtual depth: the first ~500 m retain geographic scale and real DTM elevation, while farther sections are logarithmically compressed, rendered with progressively thinner lines, and end in a fixed small destination-flag slot.
+Live AR now projects the entire active route into a bounded virtual depth: the first 50 m retain geographic 1:1 scale, while farther sections are logarithmically compressed, rendered with progressively thinner lines, and end in a fixed small destination-flag slot. The 500 m DTM radius remains separate from the 50 m reliable visual-depth radius.
 
 **Why:** A hard 2 km cutoff hid the destination and made the AR overlay incomplete, while uncompressed long routes placed the end outside a useful AR viewing distance.
 
-**How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and never use the compression as evidence for terrain outside the DTM radius; those sections stay level.
+**How to apply:** Keep the complete `navigationGeometry`, cap only the number of stable native polyline slots by merging adjacent grade sections, and use the same projection options for route segments and the destination flag. Never use compression as evidence for terrain outside the DTM radius; those sections stay level.
 
 Compressed route segments need a continuous centerline beneath the colored grade polylines, and the finish marker must use a fixed readable minimum size plus billboard orientation. The finish design is the 3×2 black-and-white Formula 1 chequered flag, not a solid red placeholder.
 
