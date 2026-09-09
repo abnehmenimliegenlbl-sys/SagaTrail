@@ -1,22 +1,22 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
 interface BackButtonProps {
   accessibilityLabel: string;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * SagaTrail standard back control.
  *
- * The chevron is drawn with native Views instead of an icon-font glyph. This
- * keeps the back mark visible even when the Feather font has not finished
- * loading in a native bundle.
+ * The same control is used inside regular headers and image/map tiles. The
+ * optional style only controls where the standard button is embedded.
  */
-export function BackButton({ accessibilityLabel, onPress }: BackButtonProps) {
+export function BackButton({ accessibilityLabel, onPress, style }: BackButtonProps) {
   const colors = useColors();
 
   return (
@@ -27,6 +27,7 @@ export function BackButton({ accessibilityLabel, onPress }: BackButtonProps) {
       hitSlop={12}
       style={({ pressed }) => [
         styles.button,
+        style,
         {
           backgroundColor: colors.primaryForeground,
           borderColor: colors.accent,

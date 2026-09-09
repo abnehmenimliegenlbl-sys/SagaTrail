@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Background } from "@/components/brand/Background";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
+import { BackButton } from "@/components/brand/BackButton";
 import { GLAS_3D } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { useApp } from "@/contexts/AppContext";
@@ -89,15 +90,10 @@ export default function HikeHistoryDetail() {
           { paddingTop: insets.top + 8, backgroundColor: colors.glassBg },
         ]}
       >
-        <Pressable
-          onPress={() => { hapticSelection(); router.back(); }}
-          hitSlop={12}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-          accessibilityRole="button"
+        <BackButton
           accessibilityLabel="Zurück"
-        >
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
-        </Pressable>
+          onPress={() => { hapticSelection(); router.back(); }}
+        />
         <Text
           style={[styles.headerTitle, { color: colors.foreground }]}
           numberOfLines={1}

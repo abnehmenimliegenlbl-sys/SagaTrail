@@ -26,6 +26,7 @@ import {
 } from "three";
 
 import { createTerrainArea } from "@workspace/api-client-react";
+import { BackButton } from "@/components/brand/BackButton";
 import { useColors } from "@/hooks/useColors";
 import {
   buildRouteGradeSegments,
@@ -1406,15 +1407,10 @@ export default function RouteTerrain3D({
         )}
         {mode === "walk" && model && walkProgress && (
           <View style={[styles.walkStatus, { top: insets.top }]}>
-            <Pressable
-              onPress={onClose}
-              style={styles.walkBack}
-              accessibilityRole="button"
+            <BackButton
               accessibilityLabel="Zurück zur Übersicht"
-            >
-              <Feather name="chevron-left" size={18} color="#15231D" />
-              <Text style={styles.walkBackText}>Zurück</Text>
-            </Pressable>
+              onPress={onClose}
+            />
             <View style={styles.walkMetricRow}>
               <WalkMetric label="Gegangene Distanz" value={`${walkProgress.distanceM} m`} icon="map" />
               <WalkMetric label="Höhenmeter" value={`${walkProgress.ascentM} m`} icon="trending-up" />
@@ -1435,15 +1431,11 @@ export default function RouteTerrain3D({
           </View>
         )}
         {mode !== "walk" && model && !error && (
-          <Pressable
+          <BackButton
+            accessibilityLabel="Zurück zur App"
             onPress={onClose}
             style={[styles.backButton, { top: insets.top + 8 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Zurück zur App"
-          >
-            <Feather name="chevron-left" size={18} color="#FFFFFF" />
-            <Text style={styles.backButtonText}>Zurück</Text>
-          </Pressable>
+          />
         )}
         <Pressable
           onPress={() => {
@@ -1555,35 +1547,10 @@ const styles = StyleSheet.create({
     elevation: 7,
     zIndex: 10,
   },
-  walkBack: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 1,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
-  },
-  walkBackText: {
-    color: "#15231D",
-    fontSize: 13,
-    fontWeight: "700",
-  },
   backButton: {
     position: "absolute",
     left: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: "#15231DCC",
     zIndex: 10,
-  },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
   },
   walkMetricRow: {
     flexDirection: "row",

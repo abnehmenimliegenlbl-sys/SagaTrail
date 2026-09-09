@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
 import { Background } from "@/components/brand/Background";
+import { BackButton } from "@/components/brand/BackButton";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
 import { SparkDivider } from "@/components/brand/SparkMountain";
 import { fonts } from "@/constants/typography";
@@ -229,16 +230,11 @@ export default function SagaDetail() {
           />
           {/* Immer heller Pfeil auf dunklem Kreis — das Hero-Bild ist meist
               duester, themeabhaengige Farben waeren darauf schlecht lesbar. */}
-          <Pressable
+          <BackButton
+            accessibilityLabel={t.back}
             onPress={() => router.back()}
-            style={[
-              styles.back,
-              { top: topInset + 6, borderColor: "rgba(255,255,255,0.45)" },
-            ]}
-            hitSlop={10}
-          >
-            <Feather name="chevron-left" size={22} color="#FFFFFF" />
-          </Pressable>
+            style={{ position: "absolute", left: 16, top: topInset + 6 }}
+          />
           <View style={[styles.cantonChip, { backgroundColor: colors.accent, top: topInset + 6 }]}>
             <Text style={[styles.canton, { color: colors.accentForeground }]}>
               {saga.canton.toUpperCase()} · {saga.coreMotif.toUpperCase()}
@@ -397,17 +393,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 11,
     color: "rgba(255,255,255,0.88)",
-  },
-  back: {
-    position: "absolute",
-    left: 16,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(16,24,26,0.62)",
   },
   cantonChip: {
     position: "absolute",
