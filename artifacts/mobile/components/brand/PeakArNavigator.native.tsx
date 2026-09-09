@@ -344,6 +344,27 @@ function TerrainHologram({
       ),
     [model, routeGeometry, routeOriginPosition, observerPosition],
   );
+  const routePoints = useMemo<TerrainRouteLine>(() => {
+    const points: TerrainRouteLine = [];
+    for (const segment of routeSegments) {
+      for (const point of segment.points) {
+        const previous = points[points.length - 1];
+        if (
+          !previous ||
+          previous[0] !== point[0] ||
+          previous[1] !== point[1] ||
+          previous[2] !== point[2]
+        ) {
+          points.push(point);
+        }
+      }
+    }
+    return points;
+  }, [routeSegments]);
+  const directionIndicator = useMemo(
+    () => buildRouteDirectionIndicator(routePoints),
+    [routePoints],
+  );
   const routeChevrons = useMemo(() => {
     const placements: Array<{
       position: TerrainVertex;
@@ -458,6 +479,37 @@ function TerrainHologram({
           </ViroNode>
         ))}
       </ViroNode>
+      {directionIndicator && (
+        <ViroNode
+          position={[
+            directionIndicator.position[0],
+            AR_ROUTE_GROUND_OFFSET + directionIndicator.position[1] + 0.09,
+            directionIndicator.position[2],
+          ]}
+          rotation={[0, directionIndicator.rotationY, 0]}
+          renderingOrder={28}
+          viroTag="terrain-route-direction-indicator"
+        >
+          <ViroBox
+            position={[0.035, 0, -0.065]}
+            rotation={[0, -28, 0]}
+            width={0.24}
+            height={0.024}
+            length={0.045}
+            materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+            shadowCastingBitMask={0}
+          />
+          <ViroBox
+            position={[0.035, 0, 0.065]}
+            rotation={[0, 28, 0]}
+            width={0.24}
+            height={0.024}
+            length={0.045}
+            materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
+            shadowCastingBitMask={0}
+          />
+        </ViroNode>
+      )}
       <ViroNode
         position={
           destinationPosition
