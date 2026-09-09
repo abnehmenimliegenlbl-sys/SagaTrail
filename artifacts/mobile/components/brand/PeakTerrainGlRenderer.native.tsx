@@ -344,7 +344,6 @@ function peakWorldPosition(
       Math.cos(centerLatRad)) /
     180;
   const distanceM = Math.hypot(northM, eastM);
-  if (distanceM > model.radiusM + 100) return null;
   const bearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
   const elevationM =
@@ -394,7 +393,7 @@ function PeakMarkers({
               <coneGeometry args={[selected ? 0.8 : 0.62, height, 4]} />
               <meshBasicMaterial
                 color={selected ? "#B42318" : "#D92D20"}
-                depthTest
+                depthTest={false}
                 depthWrite={false}
                 toneMapped={false}
               />
@@ -403,7 +402,7 @@ function PeakMarkers({
               <sphereGeometry args={[selected ? 0.24 : 0.18, 8, 6]} />
               <meshBasicMaterial
                 color="#FFFFFF"
-                depthTest
+                depthTest={false}
                 depthWrite={false}
                 toneMapped={false}
               />
