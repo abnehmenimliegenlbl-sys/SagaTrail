@@ -17,11 +17,11 @@ The live AR scene must not receive the UI compass heading as a frequently changi
 
 **How to apply:** Keep `heading` available to compass cards and overlays, but exclude it from `PeakArSceneAppProps`/`viroAppProps`. If the AR markers still drift after this separation, investigate Viro/ARKit/ARCore world alignment on a physical device rather than tightening the UI heading filter.
 
-For the live route projection, prefer the current GPS observer position over `terrainModel.center`. The radial terrain model is intentionally refreshed less often than GPS and may be stale while the AR observer has moved; using its center as the route origin can filter every route point outside the local radius.
+For live route projection, capture the GPS position once when the GravityAndHeading AR session starts and keep it as the geographic world origin for that mounted session. The radial terrain model may be refreshed later, but route coordinates must not be re-centered on every moving GPS update.
 
-**Why:** A valid route with 166 points produced zero Viro polylines because all points were evaluated against a stale terrain-model center, so the route silently disappeared.
+**Why:** Viro's geographic world origin stays at AR-session start. Re-centering route coordinates on the moving GPS position makes the virtual line slide relative to the physical landscape, while using only a stale terrain-model center can make the route disappear outside the local radius.
 
-**How to apply:** Keep `terrainModel.center` as the fallback only when no live observer position exists. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.
+**How to apply:** Use the session-start GPS position as the route projection center, retain `terrainModel.center` only as a no-GPS fallback, and reset the captured origin by unmounting the AR navigator when a new session starts. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.
 
 AR route input must use the active `navigationGeometry`, not the original catalog `route.geometry`. After a start detour is accepted, `navigationGeometry` contains the combined detour plus remaining official route and is the same geometry used by map, progress, and narration.
 

@@ -311,9 +311,10 @@ export function buildLocalTerrainRouteLines(
   maxDisplayRadiusM?: number,
 ): TerrainRouteLine[] {
   const observerElevation = model?.observerElevationM;
-  // The live GPS position is the actual Viro observer origin. The terrain
-  // model can be up to two minutes / 120 m old, so preferring model.center
-  // here can move the route outside the local radius and yield no line at all.
+  // The caller supplies the fixed geographic origin captured when the
+  // GravityAndHeading AR session starts. The terrain model can be up to two
+  // minutes / 120 m old, so falling back to model.center can move the route
+  // outside the local radius and yield no line at all.
   const center = centerOverride ?? model?.center;
   // The displayed route may extend beyond the DTM coverage. Outside that
   // coverage the route stays level; terrain elevation is never fabricated.

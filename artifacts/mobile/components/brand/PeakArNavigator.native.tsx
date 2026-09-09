@@ -810,6 +810,13 @@ export function PeakArNavigator({
   const [supportState, setSupportState] = useState<
     "checking" | "supported" | "unsupported"
   >("checking");
+  // GravityAndHeading keeps Viro's world origin at the place where this AR
+  // session starts. The GPS position may continue moving while the user
+  // walks, but re-centering route coordinates on every update would make the
+  // virtual line slide over the real landscape instead of staying on the
+  // visible trail.
+  const [worldOriginPosition, setWorldOriginPosition] =
+    useState<LatLng | null>(null);
   const navigatorRef = useRef<{
     _resetARSession?: (resetTracking: boolean, removeAnchors: boolean) => void;
   } | null>(null);
@@ -817,6 +824,12 @@ export function PeakArNavigator({
   const trackingReasonRef = useRef<ViroTrackingReason | null>(null);
   const trackingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTrackingResetAtRef = useRef(0);
+
+  useEffect(() => {
+    if (worldOriginPosition || !observerPosition) return;
+    setWorldOriginPosition(observerPosition);
+    console.log("[PeakAR] fixed geographic world origin", observerPosition);
+  }, [observerPosition, worldOriginPosition]);
 
   const clearTrackingResetTimer = useCallback(() => {
     if (trackingResetTimerRef.current) {
@@ -910,7 +923,7 @@ export function PeakArNavigator({
       terrainProfile,
       terrainModel,
       routeGeometry,
-      observerPosition,
+      observerPosition: worldOriginPosition ?? observerPosition,
       mapLayer,
       observerElevationM,
       selectedPeakId,
@@ -926,6 +939,7 @@ export function PeakArNavigator({
       terrainProfile,
       routeGeometry,
       observerPosition,
+      worldOriginPosition,
       mapLayer,
       selectedPeakId,
       terrainModel,
