@@ -5317,8 +5317,15 @@ export default function LiveHike() {
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={t.back}
+            style={[
+              styles.hikeBackButton,
+              {
+                backgroundColor: colors.card + "E6",
+                borderColor: colors.glassBorder,
+              },
+            ]}
           >
-            <Feather name="minimize-2" size={22} color={colors.mutedForeground} />
+            <Feather name="arrow-left" size={21} color={colors.foreground} />
           </Pressable>
         </View>
 
@@ -6948,6 +6955,14 @@ const styles = StyleSheet.create({
   },
   bannerAction: { fontFamily: fonts.bodyBold, fontSize: 13 },
   headRow: { flexDirection: "row", alignItems: "flex-start" },
+  hikeBackButton: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
