@@ -15,10 +15,10 @@ import {
   useFonts,
 } from "@expo-google-fonts/karla";
 import {
-  Montserrat_500Medium,
-  Montserrat_700Bold,
-  Montserrat_900Black,
-} from "@expo-google-fonts/montserrat";
+  AlbertSans_500Medium,
+  AlbertSans_700Bold,
+  AlbertSans_900Black,
+} from "@expo-google-fonts/albert-sans";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import {
@@ -188,9 +188,9 @@ export default function RootLayout() {
     BigShouldersDisplay_500Medium,
     BigShouldersDisplay_700Bold,
     BigShouldersDisplay_900Black,
-    Montserrat_500Medium,
-    Montserrat_700Bold,
-    Montserrat_900Black,
+    AlbertSans_500Medium,
+    AlbertSans_700Bold,
+    AlbertSans_900Black,
     Karla_400Regular,
     Karla_400Regular_Italic,
     Karla_500Medium,

@@ -74,10 +74,10 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
+    "@expo-google-fonts/albert-sans": "^0.4.2",
     "@expo-google-fonts/big-shoulders-display": "^0.2.3",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/karla": "^0.4.2",
-    "@expo-google-fonts/montserrat": "^0.4.2",
     "@react-three/fiber": "^9.7.0",
     "@reactvision/react-viro": "2.58.1",
     "babel-preset-expo": "57.0.10",
