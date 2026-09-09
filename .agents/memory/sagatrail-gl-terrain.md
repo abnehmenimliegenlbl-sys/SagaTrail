@@ -85,4 +85,4 @@ For a visible peak pin inside the loaded terrain radius, project its geographic 
 
 **Why:** OSM summit elevations, nearest-ray shortcuts, and independently reconstructed triangles can differ from the rendered ridge. More importantly, a regular 5-degree radial grid is 166–209 m wide at 1.9–2.4 km and can render a summit on a neighboring ray even when its marker uses the true coordinate.
 
-**How to apply:** Build all focus rays with the same ring distances as the base grid, triangulate the combined sorted rays, then find the containing triangle in that returned mesh and interpolate its surface barycentrically. Keep OSM elevation only as fallback outside DTM coverage.
+**How to apply:** Build all focus rays with the same ring distances as the base grid, triangulate the combined sorted rays, then find the containing triangle in that returned mesh and interpolate its surface barycentrically. Keep OSM elevation only as fallback outside DTM coverage. Native foreground marker meshes also need explicit child `renderOrder` in addition to `depthTest={false}`.
