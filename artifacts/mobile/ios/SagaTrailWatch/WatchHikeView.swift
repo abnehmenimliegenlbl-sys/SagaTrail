@@ -2,14 +2,27 @@ import SwiftUI
 import MapKit
 
 private enum WatchPalette {
-  static let red = Color(red: 204 / 255, green: 0, blue: 0)
+  // Shared SagaTrail light-theme tokens, adapted for watchOS contrast.
+  static let red = Color(red: 218 / 255, green: 41 / 255, blue: 28 / 255)
   static let gpsGreen = Color(red: 28 / 255, green: 155 / 255, blue: 87 / 255)
-  static let black = Color.black
+  static let gold = Color(red: 184 / 255, green: 147 / 255, blue: 90 / 255)
+  static let black = Color(red: 16 / 255, green: 18 / 255, blue: 22 / 255)
   static let white = Color.white
-  static let mutedWhite = Color(red: 92 / 255, green: 98 / 255, blue: 108 / 255)
-  static let surface = Color.white
-  static let surfaceAlt = Color(red: 244 / 255, green: 245 / 255, blue: 247 / 255)
+  static let mutedWhite = Color(red: 107 / 255, green: 114 / 255, blue: 128 / 255)
+  static let surface = Color(red: 244 / 255, green: 245 / 255, blue: 247 / 255)
+  static let surfaceAlt = Color.white
   static let ink = Color(red: 24 / 255, green: 26 / 255, blue: 30 / 255)
+  static let border = Color(red: 218 / 255, green: 41 / 255, blue: 28 / 255).opacity(0.28)
+}
+
+private enum WatchType {
+  // These roles mirror Albert Sans / Karla / JetBrains Mono without bundling
+  // another font into the Watch target, keeping small text crisp on-device.
+  static let label = Font.system(size: 9, weight: .bold, design: .monospaced)
+  static let body = Font.system(size: 11, weight: .medium, design: .rounded)
+  static let title = Font.system(size: 14, weight: .bold, design: .rounded)
+  static let display = Font.system(size: 21, weight: .heavy, design: .rounded)
+  static let metric = Font.system(size: 11, weight: .semibold, design: .monospaced)
 }
 
 struct WatchHikeView: View {
@@ -132,11 +145,50 @@ struct WatchHikeView: View {
 
   private var gpsIndicator: some View {
     let hasGPS = hike.state.map { hasFreshGPS($0) } ?? false
-    return Image(systemName: "figure.walk")
-      .font(.system(size: 17, weight: .semibold))
-      .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
-      .frame(maxWidth: .infinity, alignment: .leading)
+    return HStack(spacing: 4) {
+      Image(systemName: "figure.walk")
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+      Circle()
+        .fill(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+        .frame(width: 4, height: 4)
+      Text(copy.t(hasGPS ? "gpsAvailable" : "noGps"))
+        .font(WatchType.label)
+        .tracking(0.6)
+        .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+      Spacer()
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
       .accessibilityLabel(Text(hasGPS ? copy.t("gpsAvailable") : copy.t("noGps")))
+  }
+
+  private func pageHeader(_ title: String, systemImage: String) -> some View {
+    HStack(spacing: 5) {
+      Image(systemName: systemImage)
+        .font(.system(size: 11, weight: .bold))
+        .foregroundStyle(WatchPalette.red)
+      Text(title.uppercased())
+        .font(WatchType.label)
+        .tracking(0.9)
+        .foregroundStyle(WatchPalette.mutedWhite)
+      Spacer(minLength: 0)
+      Rectangle()
+        .fill(WatchPalette.red.opacity(0.35))
+        .frame(width: 24, height: 1)
+    }
+  }
+
+  private func card<Content: View>(
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    content()
+      .padding(8)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(WatchPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: 12))
+      .overlay(
+        RoundedRectangle(cornerRadius: 12)
+          .stroke(WatchPalette.border, lineWidth: 1)
+      )
   }
 
   private func hasFreshGPS(_ state: SagaTrailWatchProtocol.LiveState) -> Bool {
@@ -157,7 +209,7 @@ struct WatchHikeView: View {
           .foregroundStyle(WatchPalette.red)
       }
     }
-    .font(.caption2)
+    .font(WatchType.body)
     .lineLimit(1)
     .padding(.horizontal, 6)
     .padding(.vertical, 4)
@@ -185,39 +237,42 @@ struct WatchHikeView: View {
           .foregroundStyle(WatchPalette.red)
       }
     }
-    .font(.caption2)
+    .font(WatchType.body)
     .lineLimit(1)
     .minimumScaleFactor(0.72)
   }
   private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    return VStack(alignment: .leading, spacing: 4) {
-      Label(copy.t("completed"), systemImage: "checkmark.circle.fill")
-        .foregroundStyle(WatchPalette.red)
-      metric(copy.t("totalTime"), duration(state.elapsedSeconds))
-      metric(copy.t("totalDistance"), String(format: "%.2f km", state.distanceMeters / 1000))
-      metric(copy.t("steps"), "\(state.steps)")
-      if state.ascentMeters > 0 {
-        metric(copy.t("elevation"), "\(Int(state.ascentMeters.rounded())) m")
+    return VStack(alignment: .leading, spacing: 6) {
+      pageHeader(copy.t("completed"), systemImage: "checkmark.circle.fill")
+      card {
+        VStack(alignment: .leading, spacing: 4) {
+          metric(copy.t("totalTime"), duration(state.elapsedSeconds))
+          metric(copy.t("totalDistance"), String(format: "%.2f km", state.distanceMeters / 1000))
+          metric(copy.t("steps"), "\(state.steps)")
+          if state.ascentMeters > 0 {
+            metric(copy.t("elevation"), "\(Int(state.ascentMeters.rounded())) m")
+          }
+          if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
+            metric(copy.t("lastHeartRate"), "\(Int(bpm.rounded())) bpm")
+          }
+          if let average = hike.workoutAverageHeartRate {
+            metric(copy.t("averageHeartRate"), "\(Int(average.rounded())) bpm")
+          }
+          if let maximum = hike.workoutMaxHeartRate {
+            metric(copy.t("maxHeartRate"), "\(Int(maximum.rounded())) bpm")
+          }
+          if let energy = hike.activeEnergyKcal {
+            metric(copy.t("activeEnergy"), "\(Int(energy.rounded())) kcal")
+          }
+          Text(hike.healthStatus)
+            .font(WatchType.body)
+            .foregroundStyle(WatchPalette.mutedWhite)
+          Text(copy.t("summaryPhone"))
+            .font(WatchType.body.bold())
+            .foregroundStyle(WatchPalette.red)
+        }
       }
-      if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
-        metric(copy.t("lastHeartRate"), "\(Int(bpm.rounded())) bpm")
-      }
-      if let average = hike.workoutAverageHeartRate {
-        metric(copy.t("averageHeartRate"), "\(Int(average.rounded())) bpm")
-      }
-      if let maximum = hike.workoutMaxHeartRate {
-        metric(copy.t("maxHeartRate"), "\(Int(maximum.rounded())) bpm")
-      }
-      if let energy = hike.activeEnergyKcal {
-        metric(copy.t("activeEnergy"), "\(Int(energy.rounded())) kcal")
-      }
-      Text(hike.healthStatus)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      Text(copy.t("summaryPhone"))
-        .foregroundStyle(WatchPalette.red)
     }
-    .font(.caption2)
-    .frame(maxWidth: .infinity, alignment: .leading)
   }
   private func weatherIcon(_ code: Int) -> String {
     switch code {
@@ -252,9 +307,11 @@ struct WatchHikeView: View {
     return HStack(spacing: 3) {
       Text(label)
       Spacer(minLength: 2)
-      Text(value).monospacedDigit()
+      Text(value)
+        .font(WatchType.metric)
     }
-    .font(.caption2)
+    .font(WatchType.body)
+    .foregroundStyle(WatchPalette.ink)
     .lineLimit(1)
     .minimumScaleFactor(0.72)
   }
@@ -267,7 +324,7 @@ struct WatchHikeView: View {
         Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start")
       }
     }
-    .font(.caption2)
+    .font(WatchType.body)
     .lineLimit(1)
     .minimumScaleFactor(0.72)
     .tint(WatchPalette.red)
@@ -316,7 +373,7 @@ struct WatchHikeView: View {
         .accessibilityLabel(copy.t("sos"))
       }
     }
-    .font(.caption2)
+    .font(WatchType.body)
   }
   private func formatCheckinTime(_ seconds: Double) -> String {
     let total = max(0, Int(seconds))
@@ -351,32 +408,47 @@ struct WatchHikeView: View {
     if state.sessionStatus == "finished" {
       hikeSummary(state)
     } else {
-      VStack(spacing: 4) {
-        Label(copy.t("current"), systemImage: "location.north.line.fill")
-          .font(.caption2)
-          .foregroundStyle(WatchPalette.mutedWhite)
+      VStack(spacing: 6) {
+        pageHeader(copy.t("current"), systemImage: "location.north.line.fill")
         if hasFreshGPS(state) {
-          if let offRoute = state.offRoute {
-            offRouteCard(offRoute)
+          card {
+            VStack(spacing: 6) {
+              if let offRoute = state.offRoute {
+                offRouteCard(offRoute)
+              }
+              let turn = turnDirection(for: state.navigationDirection)
+              HStack(spacing: 8) {
+                Image(systemName: turn.icon)
+                  .font(.system(size: 32, weight: .bold))
+                Text(copy.t(turn.copyKey))
+                  .font(WatchType.display)
+                  .tracking(0.5)
+              }
+              .foregroundStyle(WatchPalette.red)
+              Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
+                .font(WatchType.display.monospacedDigit())
+                .foregroundStyle(WatchPalette.ink)
+              Text(state.nextInstruction)
+                .font(WatchType.body)
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+              HStack(spacing: 12) {
+                metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
+                metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
+              }
+            }
           }
-          let turn = turnDirection(for: state.navigationDirection)
-          HStack(spacing: 8) {
-            Image(systemName: turn.icon)
-              .font(.system(size: 34, weight: .bold))
-            Text(copy.t(turn.copyKey))
-              .font(.title3.bold())
-          }
-          .foregroundStyle(WatchPalette.red)
-          Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
-            .font(.title3.monospacedDigit()).bold()
-            .foregroundStyle(WatchPalette.red)
-          Text(state.nextInstruction)
-            .font(.caption2)
-            .multilineTextAlignment(.center)
-            .lineLimit(1)
-          HStack(spacing: 12) {
-            metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
-            metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
+        } else {
+          card {
+            HStack(spacing: 6) {
+              Image(systemName: "location.slash.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(copy.t("noGpsDetail"))
+                .font(WatchType.body)
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .lineLimit(2)
+            }
           }
         }
         hikeControl(state)
@@ -393,82 +465,87 @@ struct WatchHikeView: View {
       return "\(Int(planned.rounded())) m"
     }()
 
-    return VStack(spacing: 3) {
-      Label(copy.t("status"), systemImage: "chart.bar.fill")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      if let map = state.map {
-        Button {
-          isMapPresented = true
-        } label: {
-          WatchRouteMap(
-            map: map,
-            offline: !hike.isReachable || hike.isStale,
-            language: state.language,
-            height: 56,
-            showControls: false
-          )
-          .overlay(alignment: .topTrailing) {
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
-              .font(.caption2.bold())
-              .foregroundStyle(WatchPalette.ink)
-              .padding(5)
-              .background(WatchPalette.surface.opacity(0.9), in: Circle())
-              .padding(5)
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("status"), systemImage: "chart.bar.fill")
+      card {
+        VStack(spacing: 6) {
+          if let map = state.map {
+            Button {
+              isMapPresented = true
+            } label: {
+              WatchRouteMap(
+                map: map,
+                offline: !hike.isReachable || hike.isStale,
+                language: state.language,
+                height: 56,
+                showControls: false
+              )
+              .overlay(alignment: .topTrailing) {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                  .font(.caption2.bold())
+                  .foregroundStyle(WatchPalette.ink)
+                  .padding(5)
+                  .background(WatchPalette.surface.opacity(0.9), in: Circle())
+                  .padding(5)
+              }
+            }
+            .buttonStyle(.plain)
+          }
+          if !hasFreshGPS(state) {
+            HStack(spacing: 5) {
+              Image(systemName: "location.slash.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(copy.t("noGps"))
+                .font(WatchType.body.bold())
+                .foregroundStyle(WatchPalette.red)
+              Spacer(minLength: 2)
+            }
+            .lineLimit(1)
+          }
+          HStack(spacing: 12) {
+            metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
+            metric(copy.t("steps"), "\(state.steps)")
+          }
+          HStack(spacing: 12) {
+            metric(copy.t("elevation"), elevationValue)
+            metric(copy.t("time"), duration(state.elapsedSeconds))
+          }
+          heartRate(state)
+          if let weather = state.weather {
+            weatherCard(weather, daylight: state.daylight)
           }
         }
-        .buttonStyle(.plain)
-      }
-      if !hasFreshGPS(state) {
-        HStack(spacing: 5) {
-          Image(systemName: "location.slash.fill")
-            .foregroundStyle(WatchPalette.red)
-          Text(copy.t("noGps"))
-            .foregroundStyle(WatchPalette.red)
-          Spacer(minLength: 2)
-        }
-        .font(.caption2)
-        .lineLimit(1)
-      }
-      HStack(spacing: 12) {
-        metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
-        metric(copy.t("steps"), "\(state.steps)")
-      }
-      HStack(spacing: 12) {
-        metric(copy.t("elevation"), elevationValue)
-        metric(copy.t("time"), duration(state.elapsedSeconds))
-      }
-      heartRate(state)
-      if let weather = state.weather {
-        weatherCard(weather, daylight: state.daylight)
       }
     }
   }
 
   private func safetyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    return VStack(spacing: 4) {
-      Label(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      safetyCheckin(state)
-      if let terrain = state.terrainSection {
-        VStack(alignment: .leading, spacing: 2) {
-          HStack {
-            Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
-                  systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
-            Spacer()
-            Text("\(Int(terrain.gradePercent)) %").monospacedDigit()
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
+      card {
+        VStack(alignment: .leading, spacing: 7) {
+          safetyCheckin(state)
+          if let terrain = state.terrainSection {
+            VStack(alignment: .leading, spacing: 2) {
+              HStack {
+                Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
+                      systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+                Spacer()
+                Text("\(Int(terrain.gradePercent)) %")
+                  .font(WatchType.metric)
+              }
+              Text(terrain.startsInMeters > 0
+                ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
+                : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m")
+                .foregroundStyle(WatchPalette.mutedWhite)
+                .lineLimit(1)
           }
-          Text(terrain.startsInMeters > 0
-            ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
-            : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m")
-            .foregroundStyle(WatchPalette.mutedWhite)
-            .lineLimit(1)
+            .font(WatchType.body)
+          }
+          if let offRoute = state.offRoute {
+            offRouteCard(offRoute)
+          }
         }
-        .font(.caption2)
-      }
-      if let offRoute = state.offRoute {
-        offRouteCard(offRoute)
       }
     }
   }
@@ -476,35 +553,38 @@ struct WatchHikeView: View {
   private func poiStoryPage(_ story: SagaTrailWatchProtocol.PoiStory) -> some View {
     let chunks = poiTextChunks(story.text)
     let page = min(max(0, Int(poiTextPage.rounded())), max(0, chunks.count - 1))
-    return VStack(spacing: 3) {
-      Label(copy.t("poiStory"), systemImage: "mappin.and.ellipse")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      AsyncImage(url: story.imageURL) { phase in
-        if let image = phase.image {
-          image.resizable().scaledToFill()
-        } else {
-          Image(systemName: "photo")
-            .font(.title2)
+    return VStack(spacing: 6) {
+      pageHeader(copy.t("poiStory"), systemImage: "mappin.and.ellipse")
+      card {
+        VStack(spacing: 5) {
+          AsyncImage(url: story.imageURL) { phase in
+            if let image = phase.image {
+              image.resizable().scaledToFill()
+            } else {
+              Image(systemName: "photo")
+                .font(.title2)
+                .foregroundStyle(WatchPalette.mutedWhite)
+            }
+        }
+          .frame(height: 48)
+          .frame(maxWidth: .infinity)
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+          Text(story.name)
+            .font(WatchType.title)
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+          Text(chunks.isEmpty ? story.text : chunks[page])
+            .font(WatchType.body)
             .foregroundStyle(WatchPalette.mutedWhite)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(3)
+          Text("\(copy.t("turnCrown")) \(page + 1)/\(max(1, chunks.count))")
+            .font(WatchType.label)
+            .tracking(0.4)
+            .foregroundStyle(WatchPalette.red)
         }
       }
-      .frame(height: 48)
-      .frame(maxWidth: .infinity)
-      .clipShape(RoundedRectangle(cornerRadius: 10))
-      Text(story.name)
-        .font(.headline)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-      Text(chunks.isEmpty ? story.text : chunks[page])
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-        .multilineTextAlignment(.leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .lineLimit(3)
-      Text("\(copy.t("turnCrown")) \(page + 1)/\(max(1, chunks.count))")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.red)
     }
     .digitalCrownRotation(
       $poiTextPage,
@@ -517,38 +597,47 @@ struct WatchHikeView: View {
   }
 
   private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    return VStack(spacing: 4) {
-      Label("Story / Audio", systemImage: "waveform")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
-        .font(.system(size: 28, weight: .semibold))
-        .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
-      Text(state.storyAudio?.isPlaying == true ? copy.t("audioPlaying") : copy.t("audioPhone"))
-        .font(.headline)
-        .multilineTextAlignment(.center)
-      if let storyAudio = state.storyAudio {
-        Text(storyAudio.text)
-          .font(.caption2)
-          .foregroundStyle(WatchPalette.mutedWhite)
-          .multilineTextAlignment(.center)
-          .lineLimit(2)
+    return VStack(spacing: 6) {
+      pageHeader("Story / Audio", systemImage: "waveform")
+      card {
+        VStack(spacing: 5) {
+          Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
+            .font(.system(size: 28, weight: .semibold))
+            .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
+          Text(state.storyAudio?.isPlaying == true ? copy.t("audioPlaying") : copy.t("audioPhone"))
+            .font(WatchType.title)
+            .multilineTextAlignment(.center)
+          if let storyAudio = state.storyAudio {
+            Text(storyAudio.text)
+              .font(WatchType.body)
+              .foregroundStyle(WatchPalette.mutedWhite)
+              .multilineTextAlignment(.center)
+              .lineLimit(2)
+          }
+          Text(copy.t("audioControlPhone"))
+            .font(WatchType.body)
+            .foregroundStyle(WatchPalette.mutedWhite)
+            .multilineTextAlignment(.center)
+        }
       }
-      Text(copy.t("audioControlPhone"))
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-        .multilineTextAlignment(.center)
     }
   }
 
   private var waitingPage: some View {
-    VStack(spacing: 8) {
-      Image(systemName: "figure.hiking")
-        .font(.largeTitle)
-        .foregroundStyle(WatchPalette.red)
-      Text(copy.t("waitingStart"))
-        .multilineTextAlignment(.center)
-        .foregroundStyle(WatchPalette.ink)
+    VStack(spacing: 6) {
+      pageHeader(copy.t("waiting"), systemImage: "figure.hiking")
+      card {
+        VStack(spacing: 7) {
+          Image(systemName: "figure.hiking")
+            .font(.system(size: 30, weight: .semibold))
+            .foregroundStyle(WatchPalette.red)
+          Text(copy.t("waitingStart"))
+            .font(WatchType.title)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(WatchPalette.ink)
+        }
+        .frame(maxWidth: .infinity)
+      }
     }
   }
 
@@ -561,8 +650,10 @@ struct WatchHikeView: View {
         systemImage: state.isHiking ? "pause.fill" : "play.fill"
       )
     }
-    .buttonStyle(.bordered)
+    .font(WatchType.body.bold())
+    .buttonStyle(.borderedProminent)
     .controlSize(.mini)
+    .tint(WatchPalette.red)
   }
 
   private func poiTextChunks(_ text: String) -> [String] {
