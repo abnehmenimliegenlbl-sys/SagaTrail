@@ -385,6 +385,133 @@ export function buildLocalTerrainMesh(
 }
 
 /**
+ * Projects a geographic point onto the exact radial DTM triangles used by
+ * buildLocalTerrainMesh. The returned point is in the same geographic local
+ * frame (heading 0) as the mesh, before the panorama applies its rotation.
+ */
+export function projectGeographicPointOntoTerrain(
+  model: LocalTerrainModel | null | undefined,
+  point: LatLng,
+): TerrainVertex | null {
+  const observerElevation = model?.observerElevationM;
+  if (!model || observerElevation == null) return null;
+
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (model.center.lat * Math.PI) / 180;
+  const northM =
+    ((point.lat - model.center.lat) * Math.PI * earthRadiusM) / 180;
+  const eastM =
+    ((point.lng - model.center.lng) *
+      Math.PI *
+      earthRadiusM *
+      Math.cos(centerLatRad)) /
+    180;
+  const distanceM = Math.hypot(northM, eastM);
+  if (distanceM > model.radiusM + 1) return null;
+
+  const targetBearingDeg =
+    ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
+  const rays = model.rays
+    .filter((ray) => ray.samples.length >= 2)
+    .slice()
+    .sort((first, second) => first.bearingDeg - second.bearingDeg);
+  if (rays.length < 4) return null;
+
+  const ringCount = Math.min(
+    model.rings,
+    ...rays.map((ray) => ray.samples.length),
+  );
+  if (ringCount < 2) return null;
+
+  const toVertex = (
+    ray: LocalTerrainRay,
+    ringIndex: number,
+  ): TerrainVertex | null => {
+    const sample = ray.samples
+      .slice()
+      .sort((first, second) => first.distanceM - second.distanceM)[ringIndex];
+    if (!sample) return null;
+    const angle = (ray.bearingDeg * Math.PI) / 180;
+    return [
+      Math.sin(angle) * sample.distanceM * AR_WORLD_SCALE,
+      (sample.elevationM - observerElevation) * AR_WORLD_SCALE,
+      -Math.cos(angle) * sample.distanceM * AR_WORLD_SCALE,
+    ];
+  };
+
+  const targetX = Math.sin((targetBearingDeg * Math.PI) / 180) *
+    distanceM *
+    AR_WORLD_SCALE;
+  const targetZ = -Math.cos((targetBearingDeg * Math.PI) / 180) *
+    distanceM *
+    AR_WORLD_SCALE;
+  const containsPoint = (
+    first: TerrainVertex,
+    second: TerrainVertex,
+    third: TerrainVertex,
+  ): [number, number, number] | null => {
+    const denominator =
+      (second[2] - third[2]) * (first[0] - third[0]) +
+      (third[0] - second[0]) * (first[2] - third[2]);
+    if (Math.abs(denominator) < 1e-9) return null;
+    const firstWeight =
+      ((second[2] - third[2]) * (targetX - third[0]) +
+        (third[0] - second[0]) * (targetZ - third[2])) /
+      denominator;
+    const secondWeight =
+      ((third[2] - first[2]) * (targetX - third[0]) +
+        (first[0] - third[0]) * (targetZ - third[2])) /
+      denominator;
+    const thirdWeight = 1 - firstWeight - secondWeight;
+    const tolerance = 0.0001;
+    return firstWeight >= -tolerance &&
+      secondWeight >= -tolerance &&
+      thirdWeight >= -tolerance
+      ? [firstWeight, secondWeight, thirdWeight]
+      : null;
+  };
+
+  const expectedGap = 360 / Math.max(1, model.sectors);
+  for (let rayIndex = 0; rayIndex < rays.length; rayIndex += 1) {
+    const nextRayIndex = (rayIndex + 1) % rays.length;
+    const gap =
+      nextRayIndex === 0
+        ? bearingDifference(rays[rayIndex].bearingDeg, rays[0].bearingDeg)
+        : bearingDifference(
+            rays[rayIndex].bearingDeg,
+            rays[nextRayIndex].bearingDeg,
+          );
+    if (gap > expectedGap * 1.6) continue;
+
+    for (let ringIndex = 0; ringIndex < ringCount - 1; ringIndex += 1) {
+      const first = toVertex(rays[rayIndex], ringIndex);
+      const second = toVertex(rays[nextRayIndex], ringIndex);
+      const third = toVertex(rays[rayIndex], ringIndex + 1);
+      const fourth = toVertex(rays[nextRayIndex], ringIndex + 1);
+      if (!first || !second || !third || !fourth) continue;
+
+      const weights =
+        containsPoint(first, second, third) ??
+        containsPoint(third, second, fourth);
+      if (!weights) continue;
+      const triangle =
+        containsPoint(first, second, third) != null
+          ? [first, second, third]
+          : [third, second, fourth];
+      return [
+        targetX,
+        triangle[0][1] * weights[0] +
+          triangle[1][1] * weights[1] +
+          triangle[2][1] * weights[2],
+        targetZ,
+      ];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Projects route geometry into a local Viro frame. When headingDeg is set,
  * coordinates are camera-relative (used by the retained map-card renderer).
  * When it is null, coordinates stay in the geographic GravityAndHeading frame
