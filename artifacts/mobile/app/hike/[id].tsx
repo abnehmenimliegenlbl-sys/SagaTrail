@@ -6154,8 +6154,9 @@ export default function LiveHike() {
                         style={[
                           styles.safetyFilterCode,
                           {
-                            color: enabled ? colors.destructive : colors.mutedForeground,
-                            borderColor: enabled ? colors.destructive : colors.glassBorder,
+                            color: colors.primaryForeground,
+                            backgroundColor: colors.destructive,
+                            borderColor: colors.primaryForeground,
                           },
                         ]}
                       >
@@ -7323,17 +7324,19 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   safetyFilterCode: {
-    minWidth: 30,
-    height: 24,
+    minWidth: 32,
+    height: 26,
     paddingHorizontal: 4,
     borderWidth: 1,
     borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     fontFamily: fonts.monoBold,
-    fontSize: 10,
+    fontSize: 11,
+    lineHeight: 14,
     textAlign: "center",
     textAlignVertical: "center",
+    includeFontPadding: false,
   },
   safetyFilterLabel: { fontFamily: fonts.bodyMedium, fontSize: 13, flex: 1 },
   safetyFilterAll: {
