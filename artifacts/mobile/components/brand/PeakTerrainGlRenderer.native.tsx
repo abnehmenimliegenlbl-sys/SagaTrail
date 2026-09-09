@@ -328,6 +328,39 @@ function terrainElevationAt(
   return samples.at(-1)?.elevationM ?? null;
 }
 
+function nearestTerrainVertex(
+  model: LocalTerrainModel,
+  bearingDeg: number,
+  distanceM: number,
+): { bearingDeg: number; distanceM: number; elevationM: number } | null {
+  if (distanceM < 0 || distanceM > model.radiusM + 1) return null;
+  const ray = model.rays.reduce<LocalTerrainModel["rays"][number] | null>(
+    (closest, candidate) =>
+      !closest || angularDifference(candidate.bearingDeg, bearingDeg) <
+        angularDifference(closest.bearingDeg, bearingDeg)
+        ? candidate
+        : closest,
+    null,
+  );
+  if (!ray || angularDifference(ray.bearingDeg, bearingDeg) > 8) return null;
+  const sample = ray.samples.reduce<
+    LocalTerrainModel["rays"][number]["samples"][number] | null
+  >(
+    (closest, candidate) =>
+      !closest || Math.abs(candidate.distanceM - distanceM) <
+        Math.abs(closest.distanceM - distanceM)
+        ? candidate
+        : closest,
+    null,
+  );
+  if (!sample) return null;
+  return {
+    bearingDeg: ray.bearingDeg,
+    distanceM: sample.distanceM,
+    elevationM: sample.elevationM,
+  };
+}
+
 function peakWorldPosition(
   model: LocalTerrainModel,
   peak: PanoramaGipfel,
@@ -347,16 +380,17 @@ function peakWorldPosition(
   const coordinateDistanceM = Math.hypot(northM, eastM);
   const coordinateBearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
-  // The terrain mesh is centered on model.center. Use the same geographic
-  // frame for the marker instead of the peak's previously sampled observer
-  // bearing, which can be stale after a GPS refresh.
-  const distanceM = coordinateDistanceM;
-  const bearingDeg = coordinateBearingDeg;
-  // The DTM is the surface that is actually visible below the marker. Prefer
-  // it when the peak lies inside the loaded map; OSM's summit height remains
-  // the honest fallback for peaks outside a small/offline terrain model.
-  const elevationM =
-    terrainElevationAt(model, bearingDeg, distanceM) ?? peak.elevationM;
+  // Snap the marker base to the same radial DTM vertex that the terrain mesh
+  // renders. This prevents an interpolated point from landing behind an
+  // adjacent terrain triangle in perspective.
+  const terrainVertex = nearestTerrainVertex(
+    model,
+    coordinateBearingDeg,
+    coordinateDistanceM,
+  );
+  const distanceM = terrainVertex?.distanceM ?? coordinateDistanceM;
+  const bearingDeg = terrainVertex?.bearingDeg ?? coordinateBearingDeg;
+  const elevationM = terrainVertex?.elevationM ?? peak.elevationM;
   if (elevationM == null) return null;
   const angle = (bearingDeg * Math.PI) / 180;
   const distanceWorld = distanceM * TERRAIN_WORLD_UNITS_PER_METRE;
