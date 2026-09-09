@@ -5775,32 +5775,42 @@ export default function LiveHike() {
 
         {/* Story-Bereich */}
         <Glass style={{ marginTop: 14, overflow: "hidden" }}>
-          <Pressable
-            onPress={() => setStoryTileOpen((open) => !open)}
-            style={styles.storyTileHeader}
-            accessibilityRole="button"
-            accessibilityLabel="Sagentext öffnen"
-            accessibilityState={{ expanded: storyTileOpen }}
-          >
-            <View style={styles.storyTileHeaderText}>
-              <Feather name="book-open" size={18} color={colors.accent} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.storyTileTitle, { color: colors.foreground }]}>
-                  Sagentext
-                </Text>
-                <Text style={[styles.storyTileSubtitle, { color: colors.destructive }]}>
-                  {preparing
-                    ? t.preparingText
-                    : t.chapterMark(currentIndex + 1, chapters.length)}
-                </Text>
+          <View style={styles.storyTileHeader}>
+            <Pressable
+              onPress={() => setStoryTileOpen((open) => !open)}
+              style={styles.storyTileHeaderMain}
+              accessibilityRole="button"
+              accessibilityLabel="Sagentext öffnen"
+              accessibilityState={{ expanded: storyTileOpen }}
+            >
+              <View style={styles.storyTileHeaderText}>
+                <Feather name="book-open" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.storyTileTitle, { color: colors.foreground }]}>
+                    Sagentext
+                  </Text>
+                  <Text style={[styles.storyTileSubtitle, { color: colors.destructive }]}>
+                    {preparing
+                      ? t.preparingText
+                      : t.chapterMark(currentIndex + 1, chapters.length)}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Feather
-              name={storyTileOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color={colors.mutedForeground}
-            />
-          </Pressable>
+              {!storyTileOpen && (
+                <Feather
+                  name="chevron-down"
+                  size={18}
+                  color={colors.mutedForeground}
+                />
+              )}
+            </Pressable>
+            {storyTileOpen && (
+              <CloseButton
+                accessibilityLabel={t.close}
+                onPress={() => setStoryTileOpen(false)}
+              />
+            )}
+          </View>
 
           {storyTileOpen && (preparing ? (
             <View style={styles.preparing}>
