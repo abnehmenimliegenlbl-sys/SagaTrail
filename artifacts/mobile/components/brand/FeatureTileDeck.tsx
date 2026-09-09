@@ -14,6 +14,7 @@ import {
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
 import { CloseButton } from "@/components/brand/CloseButton";
+import { useThemeModeSafe } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -47,7 +48,10 @@ export function FeatureTileDeck({
   closeSignal = 0,
 }: Props) {
   const colors = useColors();
+  const themeMode = useThemeModeSafe();
   const insets = useSafeAreaInsets();
+  const modalOverlay =
+    themeMode === "hell" ? "rgba(255,255,255,0.94)" : colors.glassBgStrong;
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeTile = tiles.find((tile) => tile.id === activeId);
   const orderedTiles = tileOrder
@@ -155,7 +159,7 @@ export function FeatureTileDeck({
                 // below the status bar explicitly.
                 marginTop: Math.max(18, insets.top + 12),
                 marginBottom: Math.max(12, insets.bottom + 8),
-                backgroundColor: "transparent",
+                backgroundColor: modalOverlay,
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radius,
               },
@@ -166,7 +170,7 @@ export function FeatureTileDeck({
             <View
               style={[
                 StyleSheet.absoluteFill,
-                { backgroundColor: colors.glassBgStrong },
+                { backgroundColor: modalOverlay },
               ]}
             />
             <View style={[styles.modalAccent, { backgroundColor: colors.primary }]} />
