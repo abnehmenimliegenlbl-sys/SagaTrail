@@ -1034,7 +1034,8 @@ export function PeakPanorama({
            <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
              BLICK
            </SvgText>
-           {markedPeaks.map((peak) => {
+           {Platform.OS === "web" &&
+             markedPeaks.map((peak) => {
                const meshPeak = panoramaMesh.peaks.find(
                  (candidate) => candidate.peak.id === peak.id,
                );
