@@ -118,6 +118,9 @@ struct WatchHikeView: View {
         Image(systemName: batteryIcon(for: battery, charging: hike.isCharging))
         Text("\(Int((battery * 100).rounded())) %").monospacedDigit()
       }
+      Text("\(min(selectedPage + 1, pageCount))/\(pageCount)")
+        .monospacedDigit()
+        .foregroundStyle(WatchPalette.mutedWhite)
     }
     .font(.caption2)
     .foregroundStyle(status.waiting ? WatchPalette.red : WatchPalette.ink)
@@ -145,10 +148,33 @@ struct WatchHikeView: View {
     if !hike.isReachable {
       return ("waitingPhone", "figure.hiking", true)
     }
-    if hike.isStale {
-      return ("waitingNext", "figure.walk", true)
+    if hike.isStale || state.map?.gpsFresh != true {
+      return ("noGps", "location.slash.fill", true)
     }
     return ("live", "figure.walk", false)
+  }
+
+  private func hasFreshGPS(_ state: SagaTrailWatchProtocol.LiveState) -> Bool {
+    !hike.isStale && state.map?.gpsFresh == true
+  }
+
+  private var noGPSCard: some View {
+    VStack(spacing: 4) {
+      Image(systemName: "location.slash.fill")
+        .font(.title3)
+        .foregroundStyle(WatchPalette.red)
+      Text(copy.t("noGps"))
+        .font(.headline)
+        .foregroundStyle(WatchPalette.red)
+      Text(copy.t("noGpsDetail"))
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.mutedWhite)
+        .multilineTextAlignment(.center)
+        .lineLimit(2)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 8)
+    .background(WatchPalette.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
   }
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
     HStack(spacing: 4) {
@@ -202,6 +228,10 @@ struct WatchHikeView: View {
         .foregroundStyle(WatchPalette.red)
       metric(copy.t("totalTime"), duration(state.elapsedSeconds))
       metric(copy.t("totalDistance"), String(format: "%.2f km", state.distanceMeters / 1000))
+      metric(copy.t("steps"), "\(state.steps)")
+      if state.ascentMeters > 0 {
+        metric(copy.t("elevation"), "\(Int(state.ascentMeters.rounded())) m")
+      }
       if let bpm = hike.currentHeartRate ?? state.heartRateBpm {
         metric(copy.t("lastHeartRate"), "\(Int(bpm.rounded())) bpm")
       }
@@ -216,6 +246,8 @@ struct WatchHikeView: View {
       }
       Text(hike.healthStatus)
         .foregroundStyle(WatchPalette.mutedWhite)
+      Text(copy.t("summaryPhone"))
+        .foregroundStyle(WatchPalette.red)
     }
     .font(.caption2)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -295,15 +327,26 @@ struct WatchHikeView: View {
             .lineLimit(1)
         }
         Spacer(minLength: 2)
-        Button(active || overdue ? copy.t("stopTimer") : copy.t("startCheckin")) {
+        Button {
           if active || overdue {
             hike.confirmSafetyCheckin()
           } else {
             hike.requestSafetyCheckin()
           }
+        } label: {
+          Label(
+            active || overdue ? copy.t("safeNow") : copy.t("startCheckin"),
+            systemImage: active || overdue ? "checkmark" : "timer"
+          )
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.mini)
+        Button(role: .destructive, action: hike.requestSOSConfirmation) {
+          Image(systemName: "exclamationmark.triangle.fill")
         }
         .buttonStyle(.bordered)
         .controlSize(.mini)
+        .accessibilityLabel(copy.t("sos"))
       }
     }
     .font(.caption2)
@@ -347,30 +390,37 @@ struct WatchHikeView: View {
     return "battery.0"
   }
 
+  @ViewBuilder
   private func navigationPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 4) {
-      Label(copy.t("navigation"), systemImage: "location.north.line.fill")
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-      if let offRoute = state.offRoute {
-        offRouteCard(offRoute)
-      }
-      Image(systemName: arrow(for: state.navigationDirection))
-        .font(.system(size: 36, weight: .bold))
-        .rotationEffect(.degrees(state.bearingDegrees ?? 0))
-        .foregroundStyle(WatchPalette.red)
-      Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
-        .font(.title3.monospacedDigit()).bold()
-        .foregroundStyle(WatchPalette.red)
-      Text(state.nextInstruction)
-        .font(.caption2)
-        .multilineTextAlignment(.center)
-        .lineLimit(1)
-      HStack(spacing: 12) {
-        metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
-        metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
-      }
-      if state.sessionStatus != "finished" {
+    if state.sessionStatus == "finished" {
+      hikeSummary(state)
+    } else {
+      VStack(spacing: 4) {
+        Label(copy.t("current"), systemImage: "location.north.line.fill")
+          .font(.caption2)
+          .foregroundStyle(WatchPalette.mutedWhite)
+        if hasFreshGPS(state) {
+          if let offRoute = state.offRoute {
+            offRouteCard(offRoute)
+          }
+          Image(systemName: arrow(for: state.navigationDirection))
+            .font(.system(size: 36, weight: .bold))
+            .rotationEffect(.degrees(state.bearingDegrees ?? 0))
+            .foregroundStyle(WatchPalette.red)
+          Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
+            .font(.title3.monospacedDigit()).bold()
+            .foregroundStyle(WatchPalette.red)
+          Text(state.nextInstruction)
+            .font(.caption2)
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+          HStack(spacing: 12) {
+            metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
+            metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
+          }
+        } else {
+          noGPSCard
+        }
         hikeControl(state)
       }
     }
@@ -410,6 +460,17 @@ struct WatchHikeView: View {
           }
         }
         .buttonStyle(.plain)
+      }
+      if !hasFreshGPS(state) {
+        HStack(spacing: 5) {
+          Image(systemName: "location.slash.fill")
+            .foregroundStyle(WatchPalette.red)
+          Text(copy.t("noGps"))
+            .foregroundStyle(WatchPalette.red)
+          Spacer(minLength: 2)
+        }
+        .font(.caption2)
+        .lineLimit(1)
       }
       HStack(spacing: 12) {
         metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
@@ -451,11 +512,6 @@ struct WatchHikeView: View {
       if let offRoute = state.offRoute {
         offRouteCard(offRoute)
       }
-      Button(role: .destructive, action: hike.requestSOSConfirmation) {
-        Label(copy.t("sos"), systemImage: "exclamationmark.triangle.fill")
-      }
-      .buttonStyle(.borderedProminent)
-      .controlSize(.mini)
     }
   }
 
@@ -716,39 +772,60 @@ private struct WatchCopy {
 
   private static let commonWords: [String: [String: String]] = [
     "de": [
-      "navigation": "Navigation", "status": "Status", "poiStory": "Ortgeschichte",
+      "navigation": "Navigation", "current": "Aktuell", "status": "Status", "poiStory": "Ortgeschichte",
       "turnCrown": "Krone drehen", "audioPlaying": "Erzählung läuft",
       "audioPhone": "Audio bereit auf dem iPhone", "audioControlPhone": "Audio wird am iPhone gesteuert",
+      "noGps": "Kein GPS-Empfang", "noGpsDetail": "Navigation wartet auf ein neues Signal",
+      "safeNow": "Ich bin sicher", "summaryPhone": "Details auf dem iPhone",
+      "gpsPaused": "Kein GPS-Empfang",
     ],
     "en": [
-      "navigation": "Navigation", "status": "Status", "poiStory": "Place story",
+      "navigation": "Navigation", "current": "Now", "status": "Status", "poiStory": "Place story",
       "turnCrown": "Turn crown", "audioPlaying": "Narration playing",
       "audioPhone": "Audio ready on iPhone", "audioControlPhone": "Audio is controlled on iPhone",
+      "noGps": "No GPS reception", "noGpsDetail": "Navigation is waiting for a new signal",
+      "safeNow": "I'm safe", "summaryPhone": "Details on iPhone",
+      "gpsPaused": "No GPS reception",
     ],
     "fr": [
-      "navigation": "Navigation", "status": "État", "poiStory": "Histoire du lieu",
+      "navigation": "Navigation", "current": "Maintenant", "status": "État", "poiStory": "Histoire du lieu",
       "turnCrown": "Tournez la couronne", "audioPlaying": "Récit en cours",
       "audioPhone": "Audio prêt sur l’iPhone", "audioControlPhone": "Audio contrôlé sur l’iPhone",
+      "noGps": "Aucun signal GPS", "noGpsDetail": "La navigation attend un nouveau signal",
+      "safeNow": "Je vais bien", "summaryPhone": "Détails sur l’iPhone",
+      "gpsPaused": "Aucun signal GPS",
     ],
     "it": [
-      "navigation": "Navigazione", "status": "Stato", "poiStory": "Storia del luogo",
+      "navigation": "Navigazione", "current": "Ora", "status": "Stato", "poiStory": "Storia del luogo",
       "turnCrown": "Gira la corona", "audioPlaying": "Narrazione in corso",
       "audioPhone": "Audio pronto su iPhone", "audioControlPhone": "Audio controllato su iPhone",
+      "noGps": "Nessun segnale GPS", "noGpsDetail": "La navigazione attende un nuovo segnale",
+      "safeNow": "Sto bene", "summaryPhone": "Dettagli su iPhone",
+      "gpsPaused": "Nessun segnale GPS",
     ],
     "es": [
-      "navigation": "Navegación", "status": "Estado", "poiStory": "Historia del lugar",
+      "navigation": "Navegación", "current": "Ahora", "status": "Estado", "poiStory": "Historia del lugar",
       "turnCrown": "Gira la corona", "audioPlaying": "Narración en curso",
       "audioPhone": "Audio listo en iPhone", "audioControlPhone": "Audio controlado en iPhone",
+      "noGps": "Sin señal GPS", "noGpsDetail": "La navegación espera una nueva señal",
+      "safeNow": "Estoy bien", "summaryPhone": "Detalles en iPhone",
+      "gpsPaused": "Sin señal GPS",
     ],
     "nl": [
-      "navigation": "Navigatie", "status": "Status", "poiStory": "Plaatsverhaal",
+      "navigation": "Navigatie", "current": "Nu", "status": "Status", "poiStory": "Plaatsverhaal",
       "turnCrown": "Draai de kroon", "audioPlaying": "Vertelling speelt",
       "audioPhone": "Audio klaar op iPhone", "audioControlPhone": "Audio wordt op iPhone bediend",
+      "noGps": "Geen GPS-signaal", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
+      "safeNow": "Ik ben veilig", "summaryPhone": "Details op iPhone",
+      "gpsPaused": "Geen GPS-signaal",
     ],
     "pt": [
-      "navigation": "Navegação", "status": "Estado", "poiStory": "História do lugar",
+      "navigation": "Navegação", "current": "Agora", "status": "Estado", "poiStory": "História do lugar",
       "turnCrown": "Rode a coroa", "audioPlaying": "Narração em curso",
       "audioPhone": "Áudio pronto no iPhone", "audioControlPhone": "Áudio controlado no iPhone",
+      "noGps": "Sem sinal GPS", "noGpsDetail": "A navegação aguarda um novo sinal",
+      "safeNow": "Estou bem", "summaryPhone": "Detalhes no iPhone",
+      "gpsPaused": "Sem sinal GPS",
     ],
   ]
 
@@ -775,7 +852,7 @@ private struct WatchCopy {
       "overdue": "Check-in überfällig", "safetyActive": "Check-in aktiv", "liveLink": "Live-Link aktiv",
       "localTimer": "Nur lokaler Timer", "stopTimer": "Sicher — Timer stoppen", "startCheckin": "Check-in starten",
       "startMarker": "Start", "finishMarker": "Ziel", "offlineRoute": "Offline-Route",
-      "gpsPaused": "GPS pausiert", "lastRoute": "Letzte Route", "north": "Nord", "route": "Route"
+      "gpsPaused": "Kein GPS-Empfang", "lastRoute": "Letzte Route", "north": "Nord", "route": "Route"
     ],
     "en": [
       "live": "Live from iPhone", "unreachable": "iPhone unreachable", "stale": "Data is stale",
@@ -799,7 +876,7 @@ private struct WatchCopy {
       "overdue": "Check-in overdue", "safetyActive": "Check-in active", "liveLink": "Live link active",
       "localTimer": "Local timer only", "stopTimer": "Safe — stop timer", "startCheckin": "Start check-in",
       "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",
-      "gpsPaused": "GPS paused", "lastRoute": "Last route", "north": "North", "route": "Route"
+      "gpsPaused": "No GPS reception", "lastRoute": "Last route", "north": "North", "route": "Route"
     ],
     "fr": [
       "live": "En direct depuis l’iPhone", "unreachable": "iPhone inaccessible", "stale": "Données anciennes",

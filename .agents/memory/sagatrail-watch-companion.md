@@ -14,3 +14,9 @@ The iPhone remains authoritative for route progress, GPS freshness, safety, and 
 **Why:** A Watch can receive an immediate alert while still displaying an older cached session state when the phone publishes during WCSession activation.
 
 **How to apply:** Keep the phone's live-state language explicit in every snapshot and localize alert text before crossing the native bridge; the Watch should normalize `gsw` to German for its UI.
+
+**Turn-haptic mirroring:** Emit the Watch-native turn haptic only while the Watch app is active; when it is inactive, let the iPhone's mirrored local notification be the sole turn-notification surface.
+
+**Why:** The same turn can arrive through the live-state channel and the iPhone notification mirror, causing two wrist vibrations.
+
+**How to apply:** Keep the active-state guard around native turn haptics and re-arm the turn only after the distance leaves the approach window.

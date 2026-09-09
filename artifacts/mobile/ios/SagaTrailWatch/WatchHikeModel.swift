@@ -286,6 +286,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func playTurnHapticIfNeeded(_ state: SagaTrailWatchProtocol.LiveState) {
     guard state.isHiking,
+          state.map?.gpsFresh == true,
           let distance = state.distanceToTurnMeters,
           distance >= 0,
           distance <= 120 else {
@@ -295,6 +296,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
       return
     }
     guard turnHapticArmed else { return }
+    // When the Watch app is visible, use the native turn haptic. If it is
+    // not visible, the iPhone's mirrored local notification is the sole
+    // notification surface; this prevents a double vibration.
+    guard WKExtension.shared().applicationState == .active else { return }
     turnHapticArmed = false
     let direction = state.navigationDirection.lowercased()
     WKInterfaceDevice.current().play(direction.contains("left") ? .directionUp : .directionDown)
@@ -327,6 +332,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "turnDistance": turnDistance,
       "remaining": remaining,
       "active": state.isHiking,
+      "gpsFresh": state.map?.gpsFresh == true && !isStale,
       "offRoute": state.offRoute != nil,
       "weatherTemperature": state.weather?.temperatureCelsius,
       "sunsetAt": state.daylight?.sunsetAt.timeIntervalSince1970,
