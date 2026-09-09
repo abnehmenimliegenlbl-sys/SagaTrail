@@ -149,3 +149,4 @@
 - [Garmin Android companion callbacks](sagatrail-garmin-android-sdk.md) — SDK 2.2.0 app messages arrive as List<Object>; unwrap the first map before parsing SOS payloads.
 - [Garmin Connect IQ signing](sagatrail-garmin-signing.md) — PRG packaging needs the actual private DER key; secret aliases alone are not evidence that a valid signing key is available.
 - [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.
+- [Watch frontmost timeout](sagatrail-watch-frontmost-timeout.md) — set the extended frontmost timeout at app init and on live-state changes; cleanup refactors must not remove either guard.

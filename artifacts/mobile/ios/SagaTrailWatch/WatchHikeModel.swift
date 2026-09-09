@@ -257,6 +257,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
+      WKExtension.shared().isFrontmostTimeoutExtended = decoded.sessionStatus != "finished"
       syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()
