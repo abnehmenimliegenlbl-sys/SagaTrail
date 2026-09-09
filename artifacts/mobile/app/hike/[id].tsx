@@ -68,6 +68,7 @@ import { useApp, useThemeModeSafe } from "@/contexts/AppContext";
 import { useCatalog } from "@/contexts/CatalogContext";
 import { useDownloads } from "@/contexts/DownloadContext";
 import { useColors } from "@/hooks/useColors";
+import { BackButton } from "@/components/brand/BackButton";
 import { useHikeStrings } from "@/lib/i18n/screens/hike";
 import { useMapStrings } from "@/lib/i18n/screens/map";
 import { useObjectRecognitionStrings } from "@/lib/i18n/objectRecognition";
@@ -5312,21 +5313,7 @@ export default function LiveHike() {
               {saga.summaries?.[(profile?.language ?? 'de') as string]?.title ?? saga.title}
             </Text>
           </View>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t.back}
-            style={[
-              styles.hikeBackButton,
-              {
-                backgroundColor: colors.primaryForeground,
-                borderColor: colors.accent,
-              },
-            ]}
-          >
-            <Feather name="chevron-left" size={22} color={colors.accent} />
-          </Pressable>
+          <BackButton accessibilityLabel={t.back} onPress={() => router.back()} />
         </View>
 
         <View style={{ marginTop: 14 }}>
@@ -6955,14 +6942,6 @@ const styles = StyleSheet.create({
   },
   bannerAction: { fontFamily: fonts.bodyBold, fontSize: 13 },
   headRow: { flexDirection: "row", alignItems: "flex-start" },
-  hikeBackButton: {
-    width: 44,
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
   title: { fontFamily: fonts.titleBold, fontSize: 26, marginTop: 2 },
   statBar: { flexDirection: "row", justifyContent: "space-between" },
