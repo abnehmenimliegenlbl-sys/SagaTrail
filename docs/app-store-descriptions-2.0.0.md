@@ -343,6 +343,98 @@ Apple ID settings. The price is shown before purchase.
 Terms of Use:
 https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
+## What's New in This Version / Was ist neu in dieser Version?
+
+### Deutsch
+
+SagaTrail 2.0.0 bringt:
+
+- überarbeitete Geometrien und präzisere Angaben für viele offizielle
+  SchweizMobil-Wanderrouten
+- verbesserte Panorama-, 3D-Terrain- und AR-Ansichten mit Gipfelerkennung
+- Apple-Watch-Begleitung für Navigation, Status, Story, Herzfrequenz und
+  Sicherheit
+- zuverlässigere Hintergrundwiedergabe für Geschichten und Navigation
+- verbesserte Gruppenwanderungen und optionale Sicherheitslinks
+- Fotoerkennung für Pflanzen, Tiere und weitere interessante Objekte
+- flexiblere Auswahl des Einstiegs in eine Route
+- Verbesserungen an GPS, Offline-Inhalten und Stabilität
+
+### Français
+
+SagaTrail 2.0.0 apporte :
+
+- des géométries améliorées et des informations plus précises pour de nombreux
+  itinéraires officiels SchweizMobil
+- de meilleures vues panoramiques, du terrain en 3D et de la réalité augmentée
+  avec reconnaissance des sommets
+- l’accompagnement Apple Watch pour la navigation, le statut, les récits, la
+  fréquence cardiaque et la sécurité
+- une lecture en arrière-plan plus fiable pour les récits et la navigation
+- des randonnées de groupe améliorées et des liens de sécurité facultatifs
+- la reconnaissance par photo des plantes, des animaux et d’autres objets
+- un choix plus flexible du point de départ sur un itinéraire
+- des améliorations du GPS, des contenus hors ligne et de la stabilité
+
+### Italiano
+
+SagaTrail 2.0.0 introduce:
+
+- geometrie aggiornate e informazioni più precise per numerosi percorsi
+  ufficiali SchweizMobil
+- viste panoramiche, terreno 3D e realtà aumentata migliorati con riconoscimento
+  delle vette
+- supporto Apple Watch per navigazione, stato, racconti, frequenza cardiaca e
+  sicurezza
+- riproduzione in background più affidabile per racconti e navigazione
+- escursioni di gruppo migliorate e link di sicurezza facoltativi
+- riconoscimento fotografico di piante, animali e altri oggetti
+- scelta più flessibile del punto di partenza del percorso
+- miglioramenti a GPS, contenuti offline e stabilità
+
+### English
+
+SagaTrail 2.0.0 includes:
+
+- updated route geometry and more precise information for many official
+  SchweizMobil hiking routes
+- improved panorama, 3D terrain and augmented-reality views with summit
+  recognition
+- Apple Watch support for navigation, status, stories, heart rate and safety
+- more reliable background playback for stories and navigation
+- improved group hikes and optional safety links
+- photo recognition for plants, animals and other interesting objects
+- more flexible route-start selection
+- improvements to GPS, offline content and overall stability
+
+## App Review Notes (English)
+
+The following notes are sufficient for App Review; they do not need to be
+translated into all supported app languages.
+
+SagaTrail is an iPhone hiking companion with an optional Apple Watch companion.
+The iPhone remains authoritative for GPS, route progress, narration, safety
+and SOS.
+
+To review the main flow:
+
+1. Open SagaTrail and select a canton, a saga and a hiking route.
+2. Start the hike from the route screen.
+3. Grant location, notification, microphone/speech-recognition and HealthKit
+   permissions when requested. HealthKit is used for step and heart-rate
+   features.
+4. The app can narrate stories and navigation cues in the background. Story
+   choices can be made by tapping or by voice.
+5. If an Apple Watch is available, pair it with the iPhone and open SagaTrail
+   manually on the Watch. The Watch app does not open automatically.
+6. Use the Digital Crown to move between the Watch pages for navigation,
+   status, story/audio and safety. The Watch receives live state from the
+   iPhone.
+
+The app also includes optional group hiking, panorama/3D/AR views, photo
+recognition and safety-sharing links. Premium features are clearly marked in
+the app and are not required to review the core hiking flow.
+
 ## Keyword-Vorschläge
 
 Die Keywords sind absichtlich kurz gehalten und sollten im jeweiligen
