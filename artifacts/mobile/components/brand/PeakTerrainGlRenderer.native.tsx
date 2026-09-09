@@ -12,6 +12,7 @@ import {
 
 import {
   buildLocalTerrainMesh,
+  projectGeographicPointOntoTerrain,
   type LocalTerrainMesh,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
@@ -292,72 +293,20 @@ function terrainCameraFraming(terrainModel: LocalTerrainModel): {
   };
 }
 
-function angularDifference(first: number, second: number): number {
-  return Math.abs(((first - second + 540) % 360) - 180);
-}
-
-function terrainElevationAt(
-  model: LocalTerrainModel,
-  bearingDeg: number,
-  distanceM: number,
-): number | null {
-  if (distanceM < 0 || distanceM > model.radiusM + 1) return null;
-  const rays = model.rays
-    .filter((ray) => ray.samples.length >= 2)
-    .slice()
-    .sort((first, second) => first.bearingDeg - second.bearingDeg);
-  if (rays.length < 2) return null;
-
-  const interpolateRay = (
-    ray: LocalTerrainModel["rays"][number],
-  ): number | null => {
-    const samples = ray.samples
-      .slice()
-      .sort((first, second) => first.distanceM - second.distanceM);
-    if (distanceM < samples[0].distanceM || distanceM > samples.at(-1)!.distanceM) {
-      return null;
-    }
-    for (let index = 1; index < samples.length; index += 1) {
-      const previous = samples[index - 1];
-      const next = samples[index];
-      if (distanceM > next.distanceM) continue;
-      const span = next.distanceM - previous.distanceM;
-      if (span <= 0) return next.elevationM;
-      const fraction = (distanceM - previous.distanceM) / span;
-      return previous.elevationM + (next.elevationM - previous.elevationM) * fraction;
-    }
-    return null;
-  };
-
-  const target = ((bearingDeg % 360) + 360) % 360;
-  const maximumGapDeg =
-    Math.max(8, 360 / Math.max(8, model.sectors) * 1.6);
-  for (let index = 0; index < rays.length; index += 1) {
-    const first = rays[index];
-    const second = rays[(index + 1) % rays.length];
-    let firstBearing = first.bearingDeg;
-    let secondBearing = second.bearingDeg;
-    let targetBearing = target;
-    if (index === rays.length - 1) secondBearing += 360;
-    if (targetBearing < firstBearing) targetBearing += 360;
-    if (secondBearing - firstBearing > maximumGapDeg) continue;
-    if (targetBearing < firstBearing || targetBearing > secondBearing) continue;
-    const firstElevation = interpolateRay(first);
-    const secondElevation = interpolateRay(second);
-    if (firstElevation == null || secondElevation == null) continue;
-    const fraction =
-      (targetBearing - firstBearing) / (secondBearing - firstBearing || 1);
-    return firstElevation + (secondElevation - firstElevation) * fraction;
-  }
-  return null;
-}
-
 function peakWorldPosition(
   model: LocalTerrainModel,
   peak: PanoramaGipfel,
 ): [number, number, number] | null {
   const observerElevationM = model.observerElevationM;
   if (observerElevationM == null) return null;
+  const projected = projectGeographicPointOntoTerrain(model, {
+    lat: peak.lat,
+    lng: peak.lng,
+  });
+  if (projected) return projected;
+
+  // Peaks outside a local/offline DTM still use their real geographic
+  // position and OSM elevation; no terrain surface is invented for them.
   const earthRadiusM = 6_371_000;
   const centerLatRad = (model.center.lat * Math.PI) / 180;
   const northM =
@@ -371,12 +320,9 @@ function peakWorldPosition(
   const coordinateDistanceM = Math.hypot(northM, eastM);
   const coordinateBearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
-  // Use the exact geographic X/Z position and interpolate the DTM between the
-  // same neighboring radial rays that form the rendered terrain triangles.
   const distanceM = coordinateDistanceM;
   const bearingDeg = coordinateBearingDeg;
-  const elevationM =
-    terrainElevationAt(model, bearingDeg, distanceM) ?? peak.elevationM;
+  const elevationM = peak.elevationM;
   if (elevationM == null) return null;
   const angle = (bearingDeg * Math.PI) / 180;
   const distanceWorld = distanceM * TERRAIN_WORLD_UNITS_PER_METRE;
