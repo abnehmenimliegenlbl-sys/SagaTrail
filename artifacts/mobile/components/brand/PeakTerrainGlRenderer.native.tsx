@@ -364,7 +364,7 @@ function PeakMarkers({
             position={position}
             onClick={() => onPeakPress?.(peak.id)}
           >
-            <mesh position={[0, height / 2, 0]}>
+            <mesh position={[0, height / 2, 0]} renderOrder={20}>
               <coneGeometry args={[selected ? 0.8 : 0.62, height, 4]} />
               <meshBasicMaterial
                 color={selected ? "#B42318" : "#D92D20"}
@@ -373,7 +373,7 @@ function PeakMarkers({
                 toneMapped={false}
               />
             </mesh>
-            <mesh position={[0, height + 0.18, 0]}>
+            <mesh position={[0, height + 0.18, 0]} renderOrder={21}>
               <sphereGeometry args={[selected ? 0.24 : 0.18, 8, 6]} />
               <meshBasicMaterial
                 color="#FFFFFF"
