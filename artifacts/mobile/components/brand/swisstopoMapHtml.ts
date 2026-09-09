@@ -379,6 +379,22 @@ export function buildSwisstopoHtml(
   .maplibregl-ctrl-attrib a { color: #DA291C !important; }
   .maplibregl-ctrl-attrib-inner { color: #6B7568 !important; font-size: 9px !important;
     white-space: normal !important; word-break: break-word !important; line-height: 1.3 !important; }
+  /* Sicherheits-POI-Popup: SagaTrail-Schliessenbutton statt MapLibre-Standard-X */
+  .stt-safety-popup .maplibregl-popup-content { padding: 42px 14px 14px 14px !important; }
+  .stt-safety-popup .maplibregl-popup-close-button {
+    top: 7px !important; right: 7px !important; width: 30px !important; height: 30px !important;
+    padding: 0 !important; border: 1.5px solid #DA291C !important; border-radius: 50% !important;
+    background: #F5F3EC !important; color: #000 !important; font-size: 0 !important;
+    line-height: 1 !important; display: flex !important; align-items: center; justify-content: center;
+    box-sizing: border-box; opacity: 1 !important;
+  }
+  .stt-safety-popup .maplibregl-popup-close-button::before,
+  .stt-safety-popup .maplibregl-popup-close-button::after {
+    content: ''; position: absolute; width: 14px; height: 2px; border-radius: 2px;
+    background: #000; left: 7px; top: 13px;
+  }
+  .stt-safety-popup .maplibregl-popup-close-button::before { transform: rotate(45deg); }
+  .stt-safety-popup .maplibregl-popup-close-button::after { transform: rotate(-45deg); }
 </style>
 </head>
 <body>
@@ -1069,7 +1085,7 @@ ${legendHtml}
         if (p.description) lines.push(p.description);
         if (p.phone) lines.push('Tel. ' + p.phone);
         if (p.openingHours) lines.push(p.openingHours);
-        new maplibregl.Popup({ offset: 12, maxWidth: '220px' })
+        new maplibregl.Popup({ offset: 12, maxWidth: '220px', className: 'stt-safety-popup' })
           .setLngLat(e.lngLat)
           .setText(lines.join('\n'))
           .addTo(map);
