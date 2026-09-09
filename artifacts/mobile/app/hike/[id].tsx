@@ -6150,18 +6150,19 @@ export default function LiveHike() {
                       accessibilityState={{ checked: enabled }}
                       accessibilityLabel={`${code} ${label}`}
                     >
-                      <Text
+                      <View
                         style={[
                           styles.safetyFilterCode,
                           {
-                            color: colors.primaryForeground,
                             backgroundColor: colors.destructive,
                             borderColor: colors.primaryForeground,
                           },
                         ]}
                       >
-                        {code}
-                      </Text>
+                        <Text style={[styles.safetyFilterCodeText, { color: colors.primaryForeground }]}>
+                          {code}
+                        </Text>
+                      </View>
                       <Text
                         numberOfLines={1}
                         style={[styles.safetyFilterLabel, { color: colors.foreground }]}
@@ -7331,12 +7332,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
+  },
+  safetyFilterCodeText: {
     fontFamily: fonts.monoBold,
     fontSize: 11,
     lineHeight: 14,
     textAlign: "center",
-    textAlignVertical: "center",
-    includeFontPadding: false,
   },
   safetyFilterLabel: { fontFamily: fonts.bodyMedium, fontSize: 13, flex: 1 },
   safetyFilterAll: {
