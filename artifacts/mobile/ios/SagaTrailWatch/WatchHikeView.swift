@@ -78,7 +78,8 @@ struct WatchHikeView: View {
           map: map,
           offline: !hike.isReachable || hike.isStale,
           language: state.language,
-          height: 190
+          height: 190,
+          showControls: true
         )
         .padding(6)
         .background(WatchPalette.surface.ignoresSafeArea())
@@ -150,57 +151,50 @@ struct WatchHikeView: View {
     return ("live", "figure.walk", false)
   }
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
-    VStack(alignment: .leading, spacing: 3) {
-      Label(copy.t("offRoute"), systemImage: "location.slash.fill")
+    HStack(spacing: 4) {
+      Image(systemName: "location.slash.fill")
         .foregroundStyle(WatchPalette.red)
-      Text("\(copy.t("atLeast")) \(Int(offRoute.distanceMeters)) m \(copy.t("fromRoute"))")
+      Text(copy.t("offRoute"))
+        .foregroundStyle(WatchPalette.red)
+      Spacer(minLength: 2)
+      Text("\(Int(offRoute.distanceMeters)) m")
         .foregroundStyle(WatchPalette.mutedWhite)
       if let bearing = offRoute.bearingToRouteDegrees {
-        Label("\(copy.t("returnDirection")) \(compassPoint(bearing))", systemImage: "location.north.fill")
+        Text("· \(compassPoint(bearing))")
           .foregroundStyle(WatchPalette.red)
       }
-      Text(copy.t("returnToRoute"))
-        .foregroundStyle(WatchPalette.mutedWhite)
     }
     .font(.caption2)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(7)
+    .lineLimit(1)
+    .padding(.horizontal, 6)
+    .padding(.vertical, 4)
     .background(WatchPalette.red.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
   }
   private func weatherCard(
     _ weather: SagaTrailWatchProtocol.Weather,
     daylight: SagaTrailWatchProtocol.Daylight?,
   ) -> some View {
-    VStack(alignment: .leading, spacing: 3) {
-      HStack {
-        Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
-        Spacer()
-        Text("\(Int(weather.temperatureCelsius.rounded())) °C").monospacedDigit()
+    HStack(spacing: 5) {
+      Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
+      Spacer(minLength: 2)
+      Text("\(Int(weather.temperatureCelsius.rounded()))°")
+        .monospacedDigit()
+      Text("\(Int(weather.windKmh.rounded()))")
+        .monospacedDigit()
+      Image(systemName: "wind")
+      if weather.precipitationMm > 0 {
+        Text("\(weather.precipitationMm, specifier: "%.1f")")
+          .monospacedDigit()
+        Image(systemName: "drop.fill")
       }
-      if let daylight {
-        Text("\(copy.t("sunset")) \(daylight.sunsetAt.formatted(date: .omitted, time: .shortened))")
-          .foregroundStyle(daylight.arrivalAfterSunset ? WatchPalette.red : WatchPalette.mutedWhite)
-        if daylight.arrivalAfterSunset {
-          Text(copy.t("afterSunset"))
-            .foregroundStyle(WatchPalette.red)
-        }
-      }
-      HStack(spacing: 8) {
-        Label("\(Int(weather.windKmh.rounded())) km/h", systemImage: "wind")
-        if weather.precipitationMm > 0 {
-          Label("\(weather.precipitationMm, specifier: "%.1f") mm", systemImage: "drop.fill")
-        }
-      }
-      if weather.windGustsKmh >= 35 {
-        Text("\(copy.t("gusts")) \(Int(weather.windGustsKmh.rounded())) km/h")
-          .foregroundStyle(WatchPalette.red)
-      }
-      if weather.isThunderstorm {
-        Label(copy.t("thunderstorm"), systemImage: "cloud.bolt.rain.fill")
+      if weather.windGustsKmh >= 35 || weather.isThunderstorm || daylight?.arrivalAfterSunset == true {
+        Image(systemName: weather.isThunderstorm ? "cloud.bolt.rain.fill" : "exclamationmark.triangle.fill")
           .foregroundStyle(WatchPalette.red)
       }
     }
     .font(.caption2)
+    .lineLimit(1)
+    .minimumScaleFactor(0.72)
   }
   private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -256,7 +250,14 @@ struct WatchHikeView: View {
     return points[index]
   }
   private func metric(_ label: String, _ value: String) -> some View {
-    HStack { Text(label); Spacer(); Text(value).monospacedDigit() }.font(.footnote)
+    HStack(spacing: 3) {
+      Text(label)
+      Spacer(minLength: 2)
+      Text(value).monospacedDigit()
+    }
+    .font(.caption2)
+    .lineLimit(1)
+    .minimumScaleFactor(0.72)
   }
   private func heartRate(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let bpm = hike.currentHeartRate ?? state.heartRateBpm
@@ -266,13 +267,17 @@ struct WatchHikeView: View {
         Spacer()
         Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start")
       }
-    }.font(.footnote).tint(WatchPalette.red)
+    }
+    .font(.caption2)
+    .lineLimit(1)
+    .minimumScaleFactor(0.72)
+    .tint(WatchPalette.red)
   }
   private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let checkin = state.safetyCheckin
     let active = checkin?.status == "active"
     let overdue = checkin?.status == "overdue"
-    return VStack(alignment: .leading, spacing: 4) {
+    return VStack(alignment: .leading, spacing: 3) {
       HStack {
          Label(
            overdue ? copy.t("overdue") : (active ? copy.t("safetyActive") : copy.t("safetyTitle")),
@@ -283,20 +288,25 @@ struct WatchHikeView: View {
           Text(formatCheckinTime(checkin.remainingSeconds)).monospacedDigit()
         }
       }
-      if let checkin, active || overdue {
-         Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
-           .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
-      }
-       Button(active || overdue ? copy.t("stopTimer") : copy.t("startCheckin")) {
-        if active || overdue {
-          hike.confirmSafetyCheckin()
-        } else {
-          hike.requestSafetyCheckin()
+      HStack(spacing: 5) {
+        if let checkin, active || overdue {
+          Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
+            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
+            .lineLimit(1)
         }
+        Spacer(minLength: 2)
+        Button(active || overdue ? copy.t("stopTimer") : copy.t("startCheckin")) {
+          if active || overdue {
+            hike.confirmSafetyCheckin()
+          } else {
+            hike.requestSafetyCheckin()
+          }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.mini)
       }
-      .buttonStyle(.bordered)
     }
-    .font(.caption)
+    .font(.caption2)
   }
   private func formatCheckinTime(_ seconds: Double) -> String {
     let total = max(0, Int(seconds))
@@ -338,7 +348,7 @@ struct WatchHikeView: View {
   }
 
   private func navigationPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 7) {
+    VStack(spacing: 4) {
       Label(copy.t("navigation"), systemImage: "location.north.line.fill")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
@@ -346,16 +356,16 @@ struct WatchHikeView: View {
         offRouteCard(offRoute)
       }
       Image(systemName: arrow(for: state.navigationDirection))
-        .font(.system(size: 50, weight: .bold))
+        .font(.system(size: 36, weight: .bold))
         .rotationEffect(.degrees(state.bearingDegrees ?? 0))
         .foregroundStyle(WatchPalette.red)
       Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
-        .font(.title2.monospacedDigit()).bold()
+        .font(.title3.monospacedDigit()).bold()
         .foregroundStyle(WatchPalette.red)
       Text(state.nextInstruction)
-        .font(.footnote)
+        .font(.caption2)
         .multilineTextAlignment(.center)
-        .lineLimit(2)
+        .lineLimit(1)
       HStack(spacing: 12) {
         metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
         metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
@@ -367,24 +377,48 @@ struct WatchHikeView: View {
   }
 
   private func statusPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 7) {
+    let elevationValue: String = {
+      guard let planned = state.plannedAscentMeters else { return "—" }
+      if let remaining = state.remainingAscentMeters {
+        return "\(Int(planned.rounded())) / \(Int(remaining.rounded())) m"
+      }
+      return "\(Int(planned.rounded())) m"
+    }()
+
+    VStack(spacing: 3) {
       Label(copy.t("status"), systemImage: "chart.bar.fill")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
       if let map = state.map {
-        WatchRouteMap(map: map, offline: !hike.isReachable || hike.isStale, language: state.language)
+        Button {
+          isMapPresented = true
+        } label: {
+          WatchRouteMap(
+            map: map,
+            offline: !hike.isReachable || hike.isStale,
+            language: state.language,
+            height: 56,
+            showControls: false
+          )
+          .overlay(alignment: .topTrailing) {
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+              .font(.caption2.bold())
+              .foregroundStyle(WatchPalette.ink)
+              .padding(5)
+              .background(WatchPalette.surface.opacity(0.9), in: Circle())
+              .padding(5)
+          }
+        }
+        .buttonStyle(.plain)
       }
       HStack(spacing: 12) {
         metric(copy.t("distance"), String(format: "%.2f km", state.distanceMeters / 1000))
         metric(copy.t("steps"), "\(state.steps)")
       }
-      if let plannedAscent = state.plannedAscentMeters {
-        metric(copy.t("elevation"), String(format: "%.0f m", plannedAscent))
+      HStack(spacing: 12) {
+        metric(copy.t("elevation"), elevationValue)
+        metric(copy.t("time"), duration(state.elapsedSeconds))
       }
-      if let remainingAscent = state.remainingAscentMeters {
-        metric(copy.t("remainingAscent"), String(format: "%.0f m", remainingAscent))
-      }
-      metric(copy.t("time"), duration(state.elapsedSeconds))
       heartRate(state)
       if let weather = state.weather {
         weatherCard(weather, daylight: state.daylight)
@@ -393,13 +427,13 @@ struct WatchHikeView: View {
   }
 
   private func safetyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 8) {
+    VStack(spacing: 4) {
       Label(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
       safetyCheckin(state)
       if let terrain = state.terrainSection {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
           HStack {
             Label(terrain.direction == "up" ? copy.t("ascent") : copy.t("descent"),
                   systemImage: terrain.direction == "up" ? "arrow.up.right" : "arrow.down.right")
@@ -410,6 +444,7 @@ struct WatchHikeView: View {
             ? "\(copy.t("startsIn")) \(Int(terrain.startsInMeters)) m · \(Int(terrain.remainingMeters)) m"
             : "\(copy.t("still")) \(Int(terrain.remainingMeters)) m")
             .foregroundStyle(WatchPalette.mutedWhite)
+            .lineLimit(1)
         }
         .font(.caption2)
       }
@@ -420,13 +455,14 @@ struct WatchHikeView: View {
         Label(copy.t("sos"), systemImage: "exclamationmark.triangle.fill")
       }
       .buttonStyle(.borderedProminent)
+      .controlSize(.mini)
     }
   }
 
   private func poiStoryPage(_ story: SagaTrailWatchProtocol.PoiStory) -> some View {
     let chunks = poiTextChunks(story.text)
     let page = min(max(0, Int(poiTextPage.rounded())), max(0, chunks.count - 1))
-    return VStack(spacing: 6) {
+    return VStack(spacing: 3) {
       Label(copy.t("poiStory"), systemImage: "mappin.and.ellipse")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
@@ -439,19 +475,19 @@ struct WatchHikeView: View {
             .foregroundStyle(WatchPalette.mutedWhite)
         }
       }
-      .frame(height: 88)
+      .frame(height: 48)
       .frame(maxWidth: .infinity)
       .clipShape(RoundedRectangle(cornerRadius: 10))
       Text(story.name)
         .font(.headline)
         .multilineTextAlignment(.center)
-        .lineLimit(2)
+        .lineLimit(1)
       Text(chunks.isEmpty ? story.text : chunks[page])
-        .font(.caption)
+        .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
         .multilineTextAlignment(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .lineLimit(7)
+        .lineLimit(3)
       Text("\(copy.t("turnCrown")) \(page + 1)/\(max(1, chunks.count))")
         .font(.caption2)
         .foregroundStyle(WatchPalette.red)
@@ -467,12 +503,12 @@ struct WatchHikeView: View {
   }
 
   private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 9) {
+    VStack(spacing: 4) {
       Label("Story / Audio", systemImage: "waveform")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
       Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
-        .font(.system(size: 40, weight: .semibold))
+        .font(.system(size: 28, weight: .semibold))
         .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
       Text(state.storyAudio?.isPlaying == true ? copy.t("audioPlaying") : copy.t("audioPhone"))
         .font(.headline)
@@ -482,7 +518,7 @@ struct WatchHikeView: View {
           .font(.caption2)
           .foregroundStyle(WatchPalette.mutedWhite)
           .multilineTextAlignment(.center)
-          .lineLimit(3)
+          .lineLimit(2)
       }
       Text(copy.t("audioControlPhone"))
         .font(.caption2)
@@ -512,6 +548,7 @@ struct WatchHikeView: View {
       )
     }
     .buttonStyle(.bordered)
+    .controlSize(.mini)
   }
 
   private func poiTextChunks(_ text: String) -> [String] {
@@ -535,6 +572,8 @@ private struct WatchRouteMap: View {
   let map: SagaTrailWatchProtocol.RouteMap
   let offline: Bool
   let language: String
+  let height: CGFloat
+  let showControls: Bool
   @State private var position: MapCameraPosition = .automatic
   @State private var zoom: Double = 1
   @State private var routeUp = false
@@ -589,7 +628,7 @@ private struct WatchRouteMap: View {
       ZStack {
         if offline {
           OfflineRouteSketch(map: map, language: language)
-            .frame(height: 145)
+            .frame(height: height)
         } else {
           Map(position: $position) {
             MapPolyline(coordinates: coordinates)
@@ -616,33 +655,35 @@ private struct WatchRouteMap: View {
 
           }
           .mapStyle(.standard)
-          .frame(height: 145)
+          .frame(height: height)
         }
       }
       .clipShape(RoundedRectangle(cornerRadius: 12))
-      VStack(alignment: .leading, spacing: 3) {
-        if !map.gpsFresh {
-          Label(copy.t("gpsPaused"), systemImage: "location.slash")
-        } else if offline {
-          Label(copy.t("lastRoute"), systemImage: "wifi.slash")
-        }
-        HStack(spacing: 8) {
-          Button {
-            routeUp.toggle()
-            recenter()
-          } label: {
-            Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
+      if showControls {
+        VStack(alignment: .leading, spacing: 3) {
+          if !map.gpsFresh {
+            Label(copy.t("gpsPaused"), systemImage: "location.slash")
+          } else if offline {
+            Label(copy.t("lastRoute"), systemImage: "wifi.slash")
           }
-          Text(routeUp ? copy.t("route") : copy.t("north"))
-            .font(.caption2)
+          HStack(spacing: 8) {
+            Button {
+              routeUp.toggle()
+              recenter()
+            } label: {
+              Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
+            }
+            Text(routeUp ? copy.t("route") : copy.t("north"))
+              .font(.caption2)
+          }
         }
+        .foregroundStyle(WatchPalette.white)
+        .font(.caption2)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(WatchPalette.black.opacity(0.7), in: Capsule())
+        .padding(6)
       }
-      .foregroundStyle(WatchPalette.white)
-      .font(.caption2)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 4)
-      .background(WatchPalette.black.opacity(0.7), in: Capsule())
-      .padding(6)
     }
     .digitalCrownRotation($zoom, from: 0.5, through: 2.0, by: 0.1, sensitivity: .medium, isContinuous: false)
     .onAppear { recenter() }
