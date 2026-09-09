@@ -45,7 +45,7 @@ class SagaTrailApp extends Application.AppBase {
     }
 
     function getInitialView() {
-        view = new SagaTrailView(self);
+        view = new SagaTrailHorizonView(self);
         return [view, new SagaTrailDelegate(self)];
     }
 
@@ -80,6 +80,7 @@ class SagaTrailApp extends Application.AppBase {
         next[:freshnessS] = payload["freshnessS"];
         next[:safetyText] = payload["safetyText"];
         next[:narrationText] = payload["narrationText"];
+        next[:audioPlaying] = payload["audioPlaying"];
         next[:alertKind] = payload["alertKind"];
         next[:alertText] = payload["alertText"];
         next[:sosAcknowledgement] = payload["sosAcknowledgement"];

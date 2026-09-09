@@ -108,6 +108,8 @@ export interface HikeLiveState {
     critical: boolean;
     haptic?: "click" | "notification" | "success";
   } | null;
+  /** True only while narration audio is actually playing on the phone. */
+  audioPlaying: boolean;
   remainingDistanceM?: number | null;
   remainingSeconds?: number | null;
   arrivalAtEpochMs?: number | null;
@@ -197,6 +199,7 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   if (!["fresh", "stale", "unavailable"].includes(state.gpsFreshness as string)) return false;
   if (!["preparing", "active", "paused", "finished", "sos_requested"].includes(state.sessionStatus as string)) return false;
   if (typeof state.isHiking !== "boolean") return false;
+  if (typeof state.audioPlaying !== "boolean") return false;
   for (const numericValue of [state.elapsedSec, state.walkedDistanceM, state.ascentM, state.steps]) {
     if (typeof numericValue !== "number" && numericValue !== null) return false;
     if (numericValue !== null && (!Number.isFinite(numericValue) || numericValue < 0)) return false;

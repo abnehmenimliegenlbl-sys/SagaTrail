@@ -47,6 +47,7 @@ exact names; it does not use a compact-key transport.
 | `freshnessS` | number | Optional age of the source state in seconds. |
 | `safetyText` | string | Brief safety warning; empty when absent. |
 | `narrationText` | string | Brief narration cue; empty when absent. |
+| `audioPlaying` | boolean | True only while narration audio is actually playing on the phone. |
 | `alertKind` / `alertText` | string | Current short alert and its category, including discovery and SOS. |
 | `sosAcknowledgement` | string | `none`, `acknowledged`, or `failed`. |
 

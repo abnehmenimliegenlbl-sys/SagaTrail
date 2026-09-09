@@ -4,7 +4,7 @@
         type="watch-app"
         name="@Strings.AppName"
         entry="SagaTrailApp"
-        launcherIcon="LauncherIcon"
+        launcherIcon="@Drawables.LauncherIcon"
         minApiLevel="3.2.0">
         <iq:products>
             <iq:product id="fenix7"/>

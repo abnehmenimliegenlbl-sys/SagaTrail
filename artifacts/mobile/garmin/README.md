@@ -17,15 +17,18 @@ or the installed watch app is missing. It never promotes cached data to a
 connected state. Until a real handshake is received, the watch UI fails closed
 with **CIQ MOBILE COMPANION REQUIRED** and will not transmit SOS.
 
-The foreground app uses four light SagaTrail pages with the `#CC0000` brand
-accent: Navigation, Status, Safety, and Story/Audio. A persistent green or red
-hiker shows whether the phone bridge and GPS state are fresh. Navigation uses
-explicit left, right, turn-around, and straight-ahead labels, a coordinate-free
-route progress bar, upcoming turns, off-route warning, time, distance, and ETA.
-Status contains ascent, steps, local-or-phone heart rate, terrain, weather,
-daylight, and the following turn. Safety contains check-ins, alerts, off-route
-distance, and the two-step SOS action. Story/Audio mirrors active narration and
-POI text while playback and images remain on the phone.
+The foreground app uses the round-safe light **Horizon** design on four
+SagaTrail pages with the `#CC0000` brand accent: Navigation, Status, Safety,
+and Story/Audio. A small SagaTrail mountain/star logo and a persistent green
+or red hiker sit inside the safe top arc. Navigation uses large, simple left,
+right, turn-around, and straight-ahead arrows and labels, plus a
+coordinate-free ridge horizon, route progress, off-route warning, time,
+distance, and ETA. Status contains ascent, steps, local-or-phone heart rate,
+terrain, weather, daylight, and the following turn. Safety contains check-ins,
+alerts, off-route distance, and the two-step SOS action. Story/Audio mirrors
+active narration and POI text while playback and images remain on the phone.
+It says that the phone is playing only while the phone's real playback state
+is active.
 
 The app stores the coordinate-free snapshot in Connect IQ storage so it can
 still show the latest cached instruction after the view is reopened.

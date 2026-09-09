@@ -2725,6 +2725,7 @@ export default function LiveHike() {
         ? { ...heartRate, freshness: heartRateFreshness }
         : null,
       activeAlert,
+      audioPlaying: speaking,
       remainingDistanceM: Math.max(0, totalKm - distance) * 1000,
       remainingSeconds: Math.max(
         0,

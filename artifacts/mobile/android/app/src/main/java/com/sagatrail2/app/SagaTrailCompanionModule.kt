@@ -321,6 +321,9 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
   private fun ReadableMap.optionalDouble(key: String): Double? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Number) getDouble(key) else null
 
+  private fun ReadableMap.optionalBoolean(key: String): Boolean? =
+    if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Boolean) getBoolean(key) else null
+
   private fun ReadableMap.optionalMap(key: String): ReadableMap? =
     if (hasKey(key) && !isNull(key) && getType(key) == ReadableType.Map) getMap(key) else null
 
@@ -360,6 +363,7 @@ class SagaTrailCompanionModule(private val context: ReactApplicationContext) :
           ?: 0.0
         ),
       "hasFreshGps" to (optionalString("gpsFreshness") == "fresh"),
+      "audioPlaying" to (optionalBoolean("audioPlaying") == true),
       "sosAcknowledgement" to optionalString("sosAcknowledgement")
         ?.takeIf { it == "acknowledged" || it == "failed" }
         ?: "none",

@@ -66,6 +66,7 @@ export interface GarminHikeLiveState {
   freshnessS: number;
   safetyText: string;
   narrationText: string;
+  audioPlaying: boolean;
   alertKind?: "safety" | "narration" | "sos" | "discovery";
   alertText?: string;
   sosAcknowledgement: GarminSosAcknowledgement;
@@ -108,6 +109,7 @@ export function toGarminHikeLiveState(
     freshnessS: Math.max(0, (nowMs - state.timestamp) / 1000),
     safetyText: alert?.kind === "safety" ? alert.text : "",
     narrationText: alert?.kind === "narration" ? alert.text : "",
+    audioPlaying: state.audioPlaying,
     ...(alert ? { alertKind: alert.kind, alertText: alert.text } : {}),
     // A canonical live state has no phone-side SOS result. Never infer one
     // from sessionStatus; only the phone emergency flow may send an ack.
@@ -177,6 +179,7 @@ export function isValidGarminHikeLiveState(value: unknown): value is GarminHikeL
     finiteNumber(payload.freshnessS) &&
     typeof payload.safetyText === "string" &&
     typeof payload.narrationText === "string" &&
+    typeof payload.audioPlaying === "boolean" &&
     (payload.poiStory === undefined ||
       (typeof payload.poiStory.id === "string" &&
         payload.poiStory.id.length > 0 &&

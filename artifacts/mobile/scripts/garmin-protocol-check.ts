@@ -38,6 +38,7 @@ const canonicalState: HikeLiveState = {
   steps: 12_345,
   heartRate: { bpm: 138, measuredAt: 1_700_000_000_000, freshness: "fresh", source: "phone" },
   activeAlert: { kind: "narration", text: "Die Alp beginnt hinter dem Wald.", critical: false },
+  audioPlaying: true,
   poiStory: {
     id: "poi-bergkapelle",
     name: "Bergkapelle",
@@ -55,6 +56,7 @@ assert.equal(connected.companionStatus, "connected");
 assert.equal(connected.sosAcknowledgement, "none");
 assert.equal(connected.freshnessS, 0.5);
 assert.equal(connected.nextInstruction, "Die Alp beginnt hinter dem Wald.");
+assert.equal(connected.audioPlaying, true);
 assert.equal(connected.upcomingNavigations?.length, 2);
 assert.equal(connected.safetyCheckin?.status, "active");
 assert.equal(connected.weather?.temperatureC, 18);
