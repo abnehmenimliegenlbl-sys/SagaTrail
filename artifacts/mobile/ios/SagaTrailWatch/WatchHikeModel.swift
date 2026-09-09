@@ -57,7 +57,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyStart",
       "durationMinutes": durationMinutes,
-      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+      "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
     let session = WCSession.default
     if session.isReachable {
@@ -70,7 +70,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   func confirmSafetyCheckin() {
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyConfirm",
-      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+      "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
     let session = WCSession.default
     if session.isReachable {
@@ -84,7 +84,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     showSOSConfirmation = false
     let message = SagaTrailWatchProtocol.envelope(type: "sosConfirmed", payload: [
       "source": "watch",
-      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+      "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
     let session = WCSession.default
     if session.isReachable {
@@ -98,7 +98,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
     guard ["start", "pause", "resume"].contains(command) else { return }
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": command,
-      "requestedAt": Int(Date().timeIntervalSince1970 * 1000)
+      "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
     let session = WCSession.default
     if session.isReachable {
@@ -446,7 +446,7 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
   private func relayHeartRate(_ bpm: Double, measuredAt: Date) {
     let envelope = SagaTrailWatchProtocol.envelope(type: "heartRate", payload: [
       "bpm": bpm,
-      "measuredAt": Int(measuredAt.timeIntervalSince1970 * 1000),
+      "measuredAt": SagaTrailWatchProtocol.unixMilliseconds(measuredAt),
       "source": "watch"
     ])
     let session = WCSession.default

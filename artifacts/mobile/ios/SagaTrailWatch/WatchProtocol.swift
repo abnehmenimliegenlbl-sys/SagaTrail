@@ -5,6 +5,10 @@ import Foundation
 enum SagaTrailWatchProtocol {
   static let version = 1
 
+  static func unixMilliseconds(_ date: Date = Date()) -> Int64 {
+    Int64(date.timeIntervalSince1970 * 1000)
+  }
+
   struct NavigationHint {
     let direction: String
     let bearingDegrees: Double?
@@ -389,6 +393,6 @@ enum SagaTrailWatchProtocol {
   }
 
   static func envelope(type: String, payload: [String: Any] = [:]) -> [String: Any] {
-    ["v": version, "type": type, "timestamp": Int(Date().timeIntervalSince1970 * 1000), "payload": payload]
+    ["v": version, "type": type, "timestamp": unixMilliseconds(), "payload": payload]
   }
 }
