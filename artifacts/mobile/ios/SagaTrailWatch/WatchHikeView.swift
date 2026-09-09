@@ -3,7 +3,7 @@ import MapKit
 
 private enum WatchPalette {
   // Shared SagaTrail light-theme tokens, adapted for watchOS contrast.
-  static let red = Color(red: 218 / 255, green: 41 / 255, blue: 28 / 255)
+  static let red = Color(red: 204 / 255, green: 0, blue: 0)
   static let gpsGreen = Color(red: 28 / 255, green: 155 / 255, blue: 87 / 255)
   static let gold = Color(red: 184 / 255, green: 147 / 255, blue: 90 / 255)
   static let black = Color(red: 16 / 255, green: 18 / 255, blue: 22 / 255)
@@ -12,7 +12,7 @@ private enum WatchPalette {
   static let surface = Color(red: 244 / 255, green: 245 / 255, blue: 247 / 255)
   static let surfaceAlt = Color.white
   static let ink = Color(red: 24 / 255, green: 26 / 255, blue: 30 / 255)
-  static let border = Color(red: 218 / 255, green: 41 / 255, blue: 28 / 255).opacity(0.28)
+  static let border = Color(red: 204 / 255, green: 0, blue: 0).opacity(0.28)
 }
 
 private enum WatchType {

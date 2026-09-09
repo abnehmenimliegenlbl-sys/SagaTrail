@@ -110,7 +110,7 @@ export function buildLeafletMapHtml(
         const row = (symbol: string, text: string) =>
           `<div class="legend-row"><span class="legend-symbol">${symbol}</span><span>${escapeHtml(text)}</span></div>`;
         const startFlag =
-          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+          '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>';
         const finishFlag =
           '<svg width="14" height="18" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>';
         let rows = "";
@@ -172,7 +172,7 @@ export function buildLeafletMapHtml(
     .control-group { display: flex; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
     button { border: 0; border-right: 1px solid rgba(255,255,255,.08); padding: 6px 11px; background: rgba(16,24,26,.9); color: #8A9BA8; font: 600 12px -apple-system,system-ui,sans-serif; }
     button:last-child { border-right: 0; }
-    button.active { background: #DA291C; color: #fffaf0; }
+    button.active { background: #CC0000; color: #fffaf0; }
     #map.view-3d .leaflet-tile-pane,
     #map.view-3d .leaflet-overlay-pane,
     #map.view-3d .leaflet-shadow-pane,
@@ -206,7 +206,7 @@ export function buildLeafletMapHtml(
     .saga-tipp img { width: 28px; height: 28px; object-fit: contain; display: block; }
     #legend { position: absolute; bottom: 10px; left: 10px; z-index: 1000; color: #f5f3ec; font-size: 12px; line-height: 1.35; }
     #legend-toggle { width: auto; min-width: 76px; height: 28px; padding: 0 10px; border: 0; border-radius: 15px; background: rgba(16,24,26,.92); color: #F5F3EC; font: 600 12px -apple-system,system-ui,sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
-    #legend-toggle:active { background: #DA291C; }
+    #legend-toggle:active { background: #CC0000; }
     .legend-chevron { display: inline-block; margin-left: 4px; color: #9EAAA5; font-size: 13px; }
     #legend-panel { display: none; width: max-content; max-width: min(300px, 78vw); margin-bottom: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(16,24,26,.92); box-shadow: 0 2px 10px rgba(0,0,0,.4); }
     #legend.expanded #legend-panel { display: block; }
@@ -428,7 +428,7 @@ export function buildLeafletMapHtml(
     function flagIcon(type) {
       var svg = type === "finish"
         ? '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="1" width="24" height="16" fill="#fff" stroke="#777" stroke-width=".5"/><rect x="4" y="1" width="8" height="5.3" fill="#111"/><rect x="20" y="1" width="8" height="5.3" fill="#111"/><rect x="12" y="6.3" width="8" height="5.4" fill="#111"/><rect x="4" y="11.7" width="8" height="5.3" fill="#111"/><rect x="20" y="11.7" width="8" height="5.3" fill="#111"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#DA291C"/></svg>';
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38"><line x1="4" y1="1" x2="4" y2="38" stroke="#ccc" stroke-width="2.5" stroke-linecap="round"/><polygon points="4,1 29,9 4,17" fill="#CC0000"/></svg>';
       return L.divIcon({ className: "", html: '<div class="flag">' + svg + '</div>', iconSize: [30, 38], iconAnchor: [4, 38] });
     }
     function gradeColor(band) {

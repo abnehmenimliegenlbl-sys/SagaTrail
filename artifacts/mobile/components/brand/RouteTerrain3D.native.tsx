@@ -747,7 +747,7 @@ function RouteEndpointFlag({
       {kind === "start" ? (
         <mesh geometry={startFlagGeometry} renderOrder={21}>
           <meshStandardMaterial
-            color="#DA291C"
+            color="#CC0000"
             side={DoubleSide}
             depthTest={false}
           />
@@ -1733,7 +1733,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 6,
   },
-  controlActive: { backgroundColor: "#DA291C" },
+  controlActive: { backgroundColor: "#CC0000" },
   controlText: { color: "#15231D", fontSize: 11, fontWeight: "700" },
   controlTextActive: { color: "#FFFFFF" },
 });

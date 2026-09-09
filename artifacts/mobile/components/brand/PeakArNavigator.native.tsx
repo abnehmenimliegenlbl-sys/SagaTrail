@@ -47,7 +47,7 @@ const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
 const TERRAIN_MAP_ROUTE_MATERIAL = "sagatrailTerrainMapRoute";
 const TERRAIN_ROUTE_CHEVRON_MATERIAL = "sagatrailTerrainRouteChevron";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
-const PEAK_RED = "#DA291C";
+const PEAK_RED = "#CC0000";
 const PEAK_WHITE = "#FFFFFF";
 // The DTM remains observer-centred at 500 m. The route is true 1:1 only in
 // the reliable near field; after 50 m the route line is intentionally omitted.
