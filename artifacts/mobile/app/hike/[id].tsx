@@ -6082,33 +6082,42 @@ export default function LiveHike() {
         <View
           style={[
             styles.safetyFilterTile,
-            { borderColor: colors.glassBorder, backgroundColor: colors.glassBgStrong },
+            {
+              borderColor: colors.glassBorder,
+              backgroundColor: poiOverlay ?? colors.glassBgStrong,
+            },
           ]}
         >
-          <Pressable
-            onPress={() => setSafetyPoiFiltersOpen((open) => !open)}
-            style={styles.safetyFilterHeader}
-            accessibilityRole="button"
-            accessibilityLabel={mapT.safetyPoiFilterTitle}
-            accessibilityState={{ expanded: safetyPoiFiltersOpen }}
-          >
-            <View style={styles.safetyFilterHeaderText}>
-              <Feather name="shield" size={18} color={colors.destructive} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.safetyFilterTitle, { color: colors.foreground }]}>
-                  {mapT.safetyPoiFilterTitle}
-                </Text>
-                <Text style={[styles.safetyFilterCount, { color: colors.mutedForeground }]}>
-                  {enabledSafetyPoiCount}/{SAFETY_POI_CATEGORIES.length}
-                </Text>
+          <View style={styles.safetyFilterHeader}>
+            <Pressable
+              onPress={() => setSafetyPoiFiltersOpen((open) => !open)}
+              style={styles.safetyFilterHeaderMain}
+              accessibilityRole="button"
+              accessibilityLabel={mapT.safetyPoiFilterTitle}
+              accessibilityState={{ expanded: safetyPoiFiltersOpen }}
+            >
+              <View style={styles.safetyFilterHeaderText}>
+                <Feather name="shield" size={18} color={colors.destructive} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.safetyFilterTitle, { color: colors.foreground }]}>
+                    {mapT.safetyPoiFilterTitle}
+                  </Text>
+                  <Text style={[styles.safetyFilterCount, { color: colors.mutedForeground }]}>
+                    {enabledSafetyPoiCount}/{SAFETY_POI_CATEGORIES.length}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Feather
-              name={safetyPoiFiltersOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color={colors.mutedForeground}
-            />
-          </Pressable>
+              {!safetyPoiFiltersOpen && (
+                <Feather name="chevron-down" size={18} color={colors.mutedForeground} />
+              )}
+            </Pressable>
+            {safetyPoiFiltersOpen && (
+              <CloseButton
+                accessibilityLabel={t.close}
+                onPress={() => setSafetyPoiFiltersOpen(false)}
+              />
+            )}
+          </View>
 
           {safetyPoiFiltersOpen && (
             <Animated.View
@@ -7285,6 +7294,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
+  },
+  safetyFilterHeaderMain: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   safetyFilterHeaderText: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
