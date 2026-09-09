@@ -7239,6 +7239,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
+  storyTileHeaderMain: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   storyTileHeaderText: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   storyTileTitle: { fontFamily: fonts.bodyBold, fontSize: 14 },
   storyTileSubtitle: { fontFamily: fonts.mono, fontSize: 11, marginTop: 3 },

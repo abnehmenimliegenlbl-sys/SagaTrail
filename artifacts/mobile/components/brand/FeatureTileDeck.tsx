@@ -132,19 +132,6 @@ export function FeatureTileDeck({
                 ) : null}
                 {tile.preview}
               </View>
-              {tile.action ? (
-                <Feather
-                  name="chevron-right"
-                  size={14}
-                  color={colors.mutedForeground}
-                />
-              ) : (
-                <Feather
-                  name={selected ? "chevron-up" : "chevron-down"}
-                  size={14}
-                  color={selected ? colors.primary : colors.mutedForeground}
-                />
-              )}
             </Pressable>
           );
         })}
