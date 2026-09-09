@@ -343,9 +343,19 @@ function peakWorldPosition(
       earthRadiusM *
       Math.cos(centerLatRad)) /
     180;
-  const distanceM = Math.hypot(northM, eastM);
-  const bearingDeg =
+  const coordinateDistanceM = Math.hypot(northM, eastM);
+  const coordinateBearingDeg =
     ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
+  // These values were calculated from the same live observer position as the
+  // panorama. They remain the authoritative display coordinates if the
+  // terrain request is a slightly older GPS sample than the peak list.
+  const distanceM =
+    Number.isFinite(peak.distanceKm) && peak.distanceKm >= 0
+      ? peak.distanceKm * 1000
+      : coordinateDistanceM;
+  const bearingDeg = Number.isFinite(peak.bearingDeg)
+    ? ((peak.bearingDeg % 360) + 360) % 360
+    : coordinateBearingDeg;
   const elevationM =
     peak.elevationM ?? terrainElevationAt(model, bearingDeg, distanceM);
   if (elevationM == null) return null;
