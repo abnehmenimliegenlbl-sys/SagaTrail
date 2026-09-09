@@ -5320,12 +5320,12 @@ export default function LiveHike() {
             style={[
               styles.hikeBackButton,
               {
-                backgroundColor: colors.card + "E6",
-                borderColor: colors.glassBorder,
+                backgroundColor: colors.primaryForeground,
+                borderColor: colors.accent,
               },
             ]}
           >
-            <Feather name="arrow-left" size={21} color={colors.foreground} />
+            <Feather name="chevron-left" size={22} color={colors.accent} />
           </Pressable>
         </View>
 
@@ -6956,10 +6956,10 @@ const styles = StyleSheet.create({
   bannerAction: { fontFamily: fonts.bodyBold, fontSize: 13 },
   headRow: { flexDirection: "row", alignItems: "flex-start" },
   hikeBackButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
