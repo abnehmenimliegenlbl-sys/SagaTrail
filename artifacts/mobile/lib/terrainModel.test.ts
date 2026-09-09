@@ -6,6 +6,7 @@ import {
   buildGeographicTerrainRouteDestination,
   buildGeographicTerrainRouteSegments,
   projectGeographicPointOntoTerrain,
+  routeGeometryAheadOfPosition,
   routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -173,4 +174,38 @@ test("does not pull an off-route AR origin onto a distant route", () => {
   const origin = routeOriginForAR(gpsFix, LONG_ROUTE);
 
   assert.deepEqual(origin, gpsFix);
+});
+
+test("hides the walked route while preserving the fixed geographic origin", () => {
+  const route = [
+    [46, 7],
+    [46.005, 7],
+    [46.01, 7],
+  ];
+  const remaining = routeGeometryAheadOfPosition(
+    route,
+    { lat: 46, lng: 7 },
+    { lat: 46.006, lng: 7.00001 },
+  );
+
+  assert.ok(remaining);
+  assert.equal(remaining.length, 2);
+  assert.ok(Math.abs(remaining[0]![0] - 46.006) < 0.00001);
+  assert.equal(remaining[1]![0], 46.01);
+});
+
+test("keeps the full route when the GPS fix is too far from it", () => {
+  const route = [
+    [46, 7],
+    [46.005, 7],
+    [46.01, 7],
+  ];
+  assert.equal(
+    routeGeometryAheadOfPosition(
+      route,
+      { lat: 46, lng: 7 },
+      { lat: 46.006, lng: 7.002 },
+    ),
+    null,
+  );
 });
