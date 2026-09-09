@@ -16,64 +16,75 @@ struct WatchHikeView: View {
   @State private var selectedPage = 0
   @State private var pageCrownPosition = 0.0
   @State private var poiTextPage = 0.0
+  @State private var isMapPresented = false
   private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
   private var pageCount: Int { hike.state?.poiStory == nil ? 4 : 5 }
   private var lastPage: Double { Double(max(0, pageCount - 1)) }
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 9) {
-        connectionBanner
-        if let state = hike.state {
-          TabView(selection: $selectedPage) {
-            navigationPage(state).tag(0)
-            statusPage(state).tag(1)
-            safetyPage(state).tag(2)
-            storyPage(state).tag(3)
-            if let poiStory = state.poiStory {
-              poiStoryPage(poiStory).tag(4)
-            }
+    VStack(spacing: 5) {
+      connectionBanner
+      if let state = hike.state {
+        TabView(selection: $selectedPage) {
+          navigationPage(state).tag(0)
+          statusPage(state).tag(1)
+          safetyPage(state).tag(2)
+          storyPage(state).tag(3)
+          if let poiStory = state.poiStory {
+            poiStoryPage(poiStory).tag(4)
           }
-          .tabViewStyle(.verticalPage)
-          .frame(minHeight: 310)
-          .onChange(of: state.poiStory?.id) { _, id in
-            if id != nil {
-              selectedPage = 4
-              poiTextPage = 0
-            } else if selectedPage == 4 {
-              selectedPage = 0
-            }
-          }
-        } else {
-          waitingPage
         }
+        .tabViewStyle(.verticalPage)
+        .frame(maxHeight: .infinity)
+        .onChange(of: state.poiStory?.id) { _, id in
+          if id != nil {
+            selectedPage = 4
+            poiTextPage = 0
+          } else if selectedPage == 4 {
+            selectedPage = 0
+          }
+        }
+      } else {
+        waitingPage
       }
-      .padding(.horizontal, 4)
     }
-      .scrollContentBackground(.hidden)
-      .background(WatchPalette.surface.ignoresSafeArea())
-      .tint(WatchPalette.red)
-      .preferredColorScheme(.light)
-      .focusable(true)
-      .digitalCrownRotation(
-        $pageCrownPosition,
-        from: 0,
-        through: lastPage,
-        by: 1,
-        sensitivity: .medium,
-        isContinuous: false,
-        isHapticFeedbackEnabled: true
-      )
-      .onChange(of: selectedPage) { _, page in
-        pageCrownPosition = Double(min(max(page, 0), pageCount - 1))
+    .padding(.horizontal, 4)
+    .scrollContentBackground(.hidden)
+    .background(WatchPalette.surface.ignoresSafeArea())
+    .tint(WatchPalette.red)
+    .preferredColorScheme(.light)
+    .focusable(true)
+    .digitalCrownRotation(
+      $pageCrownPosition,
+      from: 0,
+      through: lastPage,
+      by: 1,
+      sensitivity: .medium,
+      isContinuous: false,
+      isHapticFeedbackEnabled: true
+    )
+    .onChange(of: selectedPage) { _, page in
+      pageCrownPosition = Double(min(max(page, 0), pageCount - 1))
+    }
+    .onChange(of: pageCrownPosition) { _, position in
+      let page = min(max(Int(position.rounded()), 0), pageCount - 1)
+      if selectedPage != page {
+        selectedPage = page
       }
-      .onChange(of: pageCrownPosition) { _, position in
-        let page = min(max(Int(position.rounded()), 0), pageCount - 1)
-        if selectedPage != page {
-          selectedPage = page
-        }
+    }
+    .sheet(isPresented: $isMapPresented) {
+      if let state = hike.state, let map = state.map {
+        WatchRouteMap(
+          map: map,
+          offline: !hike.isReachable || hike.isStale,
+          language: state.language,
+          height: 190
+        )
+        .padding(6)
+        .background(WatchPalette.surface.ignoresSafeArea())
       }
-     .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
+    }
+    .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
        Button(copy.t("cancel"), role: .cancel) {}
        Button(copy.t("confirmSOS"), role: .destructive, action: hike.confirmSOS)
     } message: {
