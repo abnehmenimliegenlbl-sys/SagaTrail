@@ -18,7 +18,7 @@ import type {
   ViroTrackingState,
 } from "@reactvision/react-viro";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
 
 import type { PanoramaGipfel } from "@/lib/panorama";
 import type { LatLng } from "@/types";
@@ -75,6 +75,8 @@ const FINISH_FLAG_CELL_WIDTH = FINISH_FLAG_WIDTH / 3;
 const FINISH_FLAG_CELL_HEIGHT = FINISH_FLAG_HEIGHT / 2;
 const FINISH_FLAG_CENTER_Y =
   FINISH_FLAG_POLE_HEIGHT - FINISH_FLAG_HEIGHT / 2;
+const MIN_FINISH_FLAG_WIDTH_PX = 30;
+const ESTIMATED_CAMERA_HORIZONTAL_FOV_RAD = (60 * Math.PI) / 180;
 const HIDDEN_ROUTE_POINTS: TerrainRouteLine = [
   [0, AR_ROUTE_GROUND_OFFSET, 0],
   [0, AR_ROUTE_GROUND_OFFSET, 0],
@@ -635,6 +637,20 @@ function peakMarkerScale(peak: PanoramaGipfel): [number, number, number] {
   // Partially compensate for perspective so distant labels stay readable,
   // while nearby peaks still appear up to roughly twice as large.
   const scale = Math.sqrt(distanceM / 28);
+  return [scale, scale, scale];
+}
+
+function finishFlagScale(
+  position: TerrainVertex,
+): [number, number, number] {
+  const distanceM = Math.max(1, Math.hypot(position[0], position[2]));
+  const viewportWidthPx = Math.max(1, Dimensions.get("window").width);
+  const focalLengthPx =
+    viewportWidthPx /
+    (2 * Math.tan(ESTIMATED_CAMERA_HORIZONTAL_FOV_RAD / 2));
+  const minimumWorldWidth =
+    (MIN_FINISH_FLAG_WIDTH_PX * distanceM) / focalLengthPx;
+  const scale = Math.max(1, minimumWorldWidth / FINISH_FLAG_WIDTH);
   return [scale, scale, scale];
 }
 
