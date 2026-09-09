@@ -9,8 +9,6 @@ final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var state: SagaTrailWatchProtocol.LiveState?
   @Published private(set) var isReachable = false
   @Published private(set) var receivedAt: Date?
-  @Published private(set) var batteryLevel: Float?
-  @Published private(set) var isCharging = false
   @Published private(set) var currentHeartRate: Double?
   @Published private(set) var workoutAverageHeartRate: Double?
   @Published private(set) var workoutMaxHeartRate: Double?
@@ -38,19 +36,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   func activate() {
     guard WCSession.isSupported() else { return }
-    let device = WKInterfaceDevice.current()
-    device.isBatteryMonitoringEnabled = true
-    updateBattery()
     let session = WCSession.default
     session.delegate = self
     session.activate()
     apply(envelope: session.receivedApplicationContext)
-  }
-
-  private func updateBattery() {
-    let device = WKInterfaceDevice.current()
-    batteryLevel = device.batteryLevel >= 0 ? device.batteryLevel : nil
-    isCharging = device.batteryState == .charging || device.batteryState == .full
   }
 
   func requestSOSConfirmation() { showSOSConfirmation = true }
@@ -265,6 +254,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
+      WKExtension.shared().isFrontmostTimeoutExtended = decoded.sessionStatus == "active"
       syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()

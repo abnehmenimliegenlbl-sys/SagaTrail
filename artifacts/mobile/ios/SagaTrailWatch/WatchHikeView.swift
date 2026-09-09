@@ -3,6 +3,7 @@ import MapKit
 
 private enum WatchPalette {
   static let red = Color(red: 204 / 255, green: 0, blue: 0)
+  static let gpsGreen = Color(red: 28 / 255, green: 155 / 255, blue: 87 / 255)
   static let black = Color.black
   static let white = Color.white
   static let mutedWhite = Color(red: 92 / 255, green: 98 / 255, blue: 108 / 255)
@@ -21,9 +22,34 @@ struct WatchHikeView: View {
   private var pageCount: Int { hike.state?.poiStory == nil ? 4 : 5 }
   private var lastPage: Double { Double(max(0, pageCount - 1)) }
 
+  private enum TurnDirection {
+    case left
+    case right
+    case uTurn
+    case straight
+
+    var icon: String {
+      switch self {
+      case .left: return "arrow.turn.up.left"
+      case .right: return "arrow.turn.up.right"
+      case .uTurn: return "arrow.uturn.up"
+      case .straight: return "arrow.up"
+      }
+    }
+
+    var copyKey: String {
+      switch self {
+      case .left: return "turnLeft"
+      case .right: return "turnRight"
+      case .uTurn: return "turnAround"
+      case .straight: return "goStraight"
+      }
+    }
+  }
+
   var body: some View {
     VStack(spacing: 5) {
-      connectionBanner
+      gpsIndicator
       if let state = hike.state {
         TabView(selection: $selectedPage) {
           navigationPage(state).tag(0)
@@ -104,78 +130,19 @@ struct WatchHikeView: View {
     }
   }
 
-  private var connectionBanner: some View {
-    let status = activityStatus
-    return HStack(spacing: 5) {
-      Image(systemName: status.icon)
-      Text(copy.t(status.key))
-      Spacer()
-      if status.key == "live", let receivedAt = hike.receivedAt {
-        let age = max(0, Int(Date().timeIntervalSince(receivedAt)))
-        Text(age < 5 ? copy.t("now") : "\(copy.t("ago")) \(age)s").monospacedDigit()
-      }
-      if let battery = hike.batteryLevel {
-        Image(systemName: batteryIcon(for: battery, charging: hike.isCharging))
-        Text("\(Int((battery * 100).rounded())) %").monospacedDigit()
-      }
-      Text("\(min(selectedPage + 1, pageCount))/\(pageCount)")
-        .monospacedDigit()
-        .foregroundStyle(WatchPalette.mutedWhite)
-    }
-    .font(.caption2)
-    .foregroundStyle(status.waiting ? WatchPalette.red : WatchPalette.ink)
-    .padding(.horizontal, 7)
-    .padding(.vertical, 5)
-    .background(
-      status.waiting ? WatchPalette.red.opacity(0.12) : WatchPalette.surfaceAlt,
-      in: RoundedRectangle(cornerRadius: 9)
-    )
-  }
-
-  private var activityStatus: (key: String, icon: String, waiting: Bool) {
-    guard let state = hike.state else {
-      return ("waitingStart", "figure.hiking", true)
-    }
-    if state.sessionStatus == "finished" {
-      return ("finishedStatus", "checkmark.circle.fill", false)
-    }
-    if state.sessionStatus == "paused" {
-      return ("pausedStatus", "pause.circle.fill", true)
-    }
-    if state.sessionStatus == "preparing" || (state.sessionStatus != "active" && !state.isHiking) {
-      return ("waitingStart", "play.circle.fill", true)
-    }
-    if !hike.isReachable {
-      return ("waitingPhone", "figure.hiking", true)
-    }
-    if hike.isStale || state.map?.gpsFresh != true {
-      return ("noGps", "location.slash.fill", true)
-    }
-    return ("live", "figure.walk", false)
+  private var gpsIndicator: some View {
+    let hasGPS = hike.state.map { hasFreshGPS($0) } ?? false
+    return Image(systemName: "figure.walk")
+      .font(.system(size: 17, weight: .semibold))
+      .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityLabel(Text(hasGPS ? copy.t("gpsAvailable") : copy.t("noGps")))
   }
 
   private func hasFreshGPS(_ state: SagaTrailWatchProtocol.LiveState) -> Bool {
     !hike.isStale && state.map?.gpsFresh == true
   }
 
-  private var noGPSCard: some View {
-    VStack(spacing: 4) {
-      Image(systemName: "location.slash.fill")
-        .font(.title3)
-        .foregroundStyle(WatchPalette.red)
-      Text(copy.t("noGps"))
-        .font(.headline)
-        .foregroundStyle(WatchPalette.red)
-      Text(copy.t("noGpsDetail"))
-        .font(.caption2)
-        .foregroundStyle(WatchPalette.mutedWhite)
-        .multilineTextAlignment(.center)
-        .lineLimit(2)
-    }
-    .frame(maxWidth: .infinity)
-    .padding(.vertical, 8)
-    .background(WatchPalette.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-  }
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
     return HStack(spacing: 4) {
       Image(systemName: "location.slash.fill")
@@ -365,29 +332,18 @@ struct WatchHikeView: View {
     }
     return duration(seconds)
   }
-  private func arrow(for direction: String) -> String {
+  private func turnDirection(for direction: String) -> TurnDirection {
     let normalized = direction.lowercased()
     if normalized.contains("uturn") || normalized.contains("u-turn") {
-      return "arrow.uturn.up"
+      return .uTurn
     }
-    if normalized.contains("left") {
-      return "arrow.turn.up.left"
+    if normalized.contains("left") || normalized.contains("links") {
+      return .left
     }
-    if normalized.contains("right") {
-      return "arrow.turn.up.right"
+    if normalized.contains("right") || normalized.contains("rechts") {
+      return .right
     }
-    return "arrow.up"
-  }
-  private func directionLabel(_ direction: String) -> String {
-    direction.lowercased().contains("left") ? "Links" : "Rechts"
-  }
-  private func batteryIcon(for level: Float, charging: Bool) -> String {
-    if charging { return "battery.100.bolt" }
-    if level >= 0.75 { return "battery.100" }
-    if level >= 0.5 { return "battery.75" }
-    if level >= 0.25 { return "battery.50" }
-    if level > 0.1 { return "battery.25" }
-    return "battery.0"
+    return .straight
   }
 
   @ViewBuilder
@@ -403,10 +359,14 @@ struct WatchHikeView: View {
           if let offRoute = state.offRoute {
             offRouteCard(offRoute)
           }
-          Image(systemName: arrow(for: state.navigationDirection))
-            .font(.system(size: 36, weight: .bold))
-            .rotationEffect(.degrees(state.bearingDegrees ?? 0))
-            .foregroundStyle(WatchPalette.red)
+          let turn = turnDirection(for: state.navigationDirection)
+          HStack(spacing: 8) {
+            Image(systemName: turn.icon)
+              .font(.system(size: 34, weight: .bold))
+            Text(copy.t(turn.copyKey))
+              .font(.title3.bold())
+          }
+          .foregroundStyle(WatchPalette.red)
           Text(state.distanceToTurnMeters.map { "\($0, specifier: "%.0f") m" } ?? "—")
             .font(.title3.monospacedDigit()).bold()
             .foregroundStyle(WatchPalette.red)
@@ -418,8 +378,6 @@ struct WatchHikeView: View {
             metric(copy.t("remaining"), state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—")
             metric(copy.t("arrival"), state.remainingSeconds.map { eta($0, arrivalAt: state.arrivalAtEpochMs) } ?? "—")
           }
-        } else {
-          noGPSCard
         }
         hikeControl(state)
       }
@@ -776,6 +734,8 @@ private struct WatchCopy {
       "turnCrown": "Krone drehen", "audioPlaying": "Erzählung läuft",
       "audioPhone": "Audio bereit auf dem iPhone", "audioControlPhone": "Audio wird am iPhone gesteuert",
       "noGps": "Kein GPS-Empfang", "noGpsDetail": "Navigation wartet auf ein neues Signal",
+      "gpsAvailable": "GPS verfügbar", "turnLeft": "LINKS", "turnRight": "RECHTS",
+      "turnAround": "WENDEN", "goStraight": "GERADEAUS",
       "safeNow": "Ich bin sicher", "summaryPhone": "Details auf dem iPhone",
       "gpsPaused": "Kein GPS-Empfang",
     ],
@@ -784,6 +744,8 @@ private struct WatchCopy {
       "turnCrown": "Turn crown", "audioPlaying": "Narration playing",
       "audioPhone": "Audio ready on iPhone", "audioControlPhone": "Audio is controlled on iPhone",
       "noGps": "No GPS reception", "noGpsDetail": "Navigation is waiting for a new signal",
+      "gpsAvailable": "GPS available", "turnLeft": "LEFT", "turnRight": "RIGHT",
+      "turnAround": "TURN AROUND", "goStraight": "STRAIGHT",
       "safeNow": "I'm safe", "summaryPhone": "Details on iPhone",
       "gpsPaused": "No GPS reception",
     ],
@@ -792,6 +754,8 @@ private struct WatchCopy {
       "turnCrown": "Tournez la couronne", "audioPlaying": "Récit en cours",
       "audioPhone": "Audio prêt sur l’iPhone", "audioControlPhone": "Audio contrôlé sur l’iPhone",
       "noGps": "Aucun signal GPS", "noGpsDetail": "La navigation attend un nouveau signal",
+      "gpsAvailable": "GPS disponible", "turnLeft": "GAUCHE", "turnRight": "DROITE",
+      "turnAround": "FAIRE DEMI-TOUR", "goStraight": "TOUT DROIT",
       "safeNow": "Je vais bien", "summaryPhone": "Détails sur l’iPhone",
       "gpsPaused": "Aucun signal GPS",
     ],
@@ -800,6 +764,8 @@ private struct WatchCopy {
       "turnCrown": "Gira la corona", "audioPlaying": "Narrazione in corso",
       "audioPhone": "Audio pronto su iPhone", "audioControlPhone": "Audio controllato su iPhone",
       "noGps": "Nessun segnale GPS", "noGpsDetail": "La navigazione attende un nuovo segnale",
+      "gpsAvailable": "GPS disponibile", "turnLeft": "SINISTRA", "turnRight": "DESTRA",
+      "turnAround": "INVERSIONE", "goStraight": "DRITTO",
       "safeNow": "Sto bene", "summaryPhone": "Dettagli su iPhone",
       "gpsPaused": "Nessun segnale GPS",
     ],
@@ -808,6 +774,8 @@ private struct WatchCopy {
       "turnCrown": "Gira la corona", "audioPlaying": "Narración en curso",
       "audioPhone": "Audio listo en iPhone", "audioControlPhone": "Audio controlado en iPhone",
       "noGps": "Sin señal GPS", "noGpsDetail": "La navegación espera una nueva señal",
+      "gpsAvailable": "GPS disponible", "turnLeft": "IZQUIERDA", "turnRight": "DERECHA",
+      "turnAround": "GIRA", "goStraight": "RECTO",
       "safeNow": "Estoy bien", "summaryPhone": "Detalles en iPhone",
       "gpsPaused": "Sin señal GPS",
     ],
@@ -816,6 +784,8 @@ private struct WatchCopy {
       "turnCrown": "Draai de kroon", "audioPlaying": "Vertelling speelt",
       "audioPhone": "Audio klaar op iPhone", "audioControlPhone": "Audio wordt op iPhone bediend",
       "noGps": "Geen GPS-signaal", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
+      "gpsAvailable": "GPS beschikbaar", "turnLeft": "LINKS", "turnRight": "RECHTS",
+      "turnAround": "OMKEREN", "goStraight": "RECHTDOOR",
       "safeNow": "Ik ben veilig", "summaryPhone": "Details op iPhone",
       "gpsPaused": "Geen GPS-signaal",
     ],
@@ -824,6 +794,8 @@ private struct WatchCopy {
       "turnCrown": "Rode a coroa", "audioPlaying": "Narração em curso",
       "audioPhone": "Áudio pronto no iPhone", "audioControlPhone": "Áudio controlado no iPhone",
       "noGps": "Sem sinal GPS", "noGpsDetail": "A navegação aguarda um novo sinal",
+      "gpsAvailable": "GPS disponível", "turnLeft": "ESQUERDA", "turnRight": "DIREITA",
+      "turnAround": "INVERTER", "goStraight": "EM FRENTE",
       "safeNow": "Estou bem", "summaryPhone": "Detalhes no iPhone",
       "gpsPaused": "Sem sinal GPS",
     ],
