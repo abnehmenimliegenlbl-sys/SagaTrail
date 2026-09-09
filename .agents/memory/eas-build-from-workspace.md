@@ -12,3 +12,5 @@ Bash tool has a hard 120s limit — long `eas` uploads get killed. The notebook 
 **Build numbers:** appVersionSource is "remote", so local ios.buildNumber is ignored for EAS. `eas build:version:set` is prompt-only (fails without TTY, ignores stdin) and can return a generic GraphQL error; prefer autoIncrement in every profile that builds native binaries so the remote counter bumps automatically and the embedded Watch target can be kept in sync.
 
 **Polling:** `timeout 90 npx eas build:view <id> --json` from bash (plain calls can exceed 120s). Log URLs from logFiles expire in 900s; fetch with `curl --compressed`.
+
+**Submission status:** this EAS CLI version has no `submit:view` or `submit:list`; query `submissions.byId(submissionId: ...)` through authenticated GraphQL at `https://api.expo.dev/graphql` and inspect `status`, `error`, and `completedAt`.
