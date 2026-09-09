@@ -229,6 +229,78 @@ function swissSurfaceReliefUrl(grid: TerrainGrid, size: number): string {
   }).toString()}`;
 }
 
+type ClippedTerrainVertex = {
+  position: [number, number, number];
+  uv: [number, number];
+};
+
+function interpolateTerrainVertex(
+  from: ClippedTerrainVertex,
+  to: ClippedTerrainVertex,
+  fraction: number,
+): ClippedTerrainVertex {
+  return {
+    position: [
+      from.position[0] + (to.position[0] - from.position[0]) * fraction,
+      from.position[1] + (to.position[1] - from.position[1]) * fraction,
+      from.position[2] + (to.position[2] - from.position[2]) * fraction,
+    ],
+    uv: [
+      from.uv[0] + (to.uv[0] - from.uv[0]) * fraction,
+      from.uv[1] + (to.uv[1] - from.uv[1]) * fraction,
+    ],
+  };
+}
+
+function clipTerrainPolygon(
+  polygon: ClippedTerrainVertex[],
+  axis: 0 | 1,
+  limit: number,
+  keepGreater: boolean,
+): ClippedTerrainVertex[] {
+  const output: ClippedTerrainVertex[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const from = polygon[index];
+    const to = polygon[(index + 1) % polygon.length];
+    const fromInside = keepGreater
+      ? from.uv[axis] >= limit
+      : from.uv[axis] <= limit;
+    const toInside = keepGreater
+      ? to.uv[axis] >= limit
+      : to.uv[axis] <= limit;
+    if (fromInside && toInside) {
+      output.push(to);
+    } else if (fromInside) {
+      const denominator = to.uv[axis] - from.uv[axis];
+      const fraction =
+        Math.abs(denominator) < 1e-9
+          ? 0
+          : (limit - from.uv[axis]) / denominator;
+      output.push(interpolateTerrainVertex(from, to, fraction));
+    } else if (toInside) {
+      const denominator = to.uv[axis] - from.uv[axis];
+      const fraction =
+        Math.abs(denominator) < 1e-9
+          ? 0
+          : (limit - from.uv[axis]) / denominator;
+      output.push(interpolateTerrainVertex(from, to, fraction));
+      output.push(to);
+    }
+  }
+  return output;
+}
+
+function clipTerrainTriangle(
+  triangle: ClippedTerrainVertex[],
+): ClippedTerrainVertex[] {
+  let polygon = triangle;
+  polygon = clipTerrainPolygon(polygon, 0, 0, true);
+  polygon = clipTerrainPolygon(polygon, 0, 1, false);
+  polygon = clipTerrainPolygon(polygon, 1, 0, true);
+  polygon = clipTerrainPolygon(polygon, 1, 1, false);
+  return polygon;
+}
+
 function toWorld(
   grid: TerrainGrid,
   lat: number,
@@ -252,6 +324,12 @@ function buildTerrainGeometry(
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
+  const clipToTextureBounds =
+    tile != null &&
+    tile.rowStart == null &&
+    tile.rowEnd == null &&
+    tile.columnStart == null &&
+    tile.columnEnd == null;
 
   for (const row of grid.grid) {
     for (const cell of row) {
@@ -268,6 +346,37 @@ function buildTerrainGeometry(
       uvs.push(u, v);
     }
   }
+
+  const sourcePositions = positions.slice();
+  const sourceUvs = uvs.slice();
+  if (clipToTextureBounds) {
+    positions.length = 0;
+    uvs.length = 0;
+  }
+  const appendClippedTriangle = (triangle: [number, number, number]) => {
+    const clipped = clipTerrainTriangle(
+      triangle.map((vertexIndex) => ({
+        position: [
+          sourcePositions[vertexIndex * 3],
+          sourcePositions[vertexIndex * 3 + 1],
+          sourcePositions[vertexIndex * 3 + 2],
+        ],
+        uv: [
+          sourceUvs[vertexIndex * 2],
+          sourceUvs[vertexIndex * 2 + 1],
+        ],
+      })),
+    );
+    if (clipped.length < 3) return;
+    const startIndex = positions.length / 3;
+    for (const vertex of clipped) {
+      positions.push(...vertex.position);
+      uvs.push(...vertex.uv);
+    }
+    for (let index = 1; index < clipped.length - 1; index += 1) {
+      indices.push(startIndex, startIndex + index, startIndex + index + 1);
+    }
+  };
 
   const valid = (row: number, column: number) =>
     grid.grid[row][column].elevationM != null;
@@ -287,19 +396,19 @@ function buildTerrainGeometry(
         ) {
           continue;
         }
-      } else {
-      const cellCenterLat =
-        (grid.grid[row][column].lat + grid.grid[row + 1][column + 1].lat) / 2;
-      const cellCenterLng =
-        (grid.grid[row][column].lng + grid.grid[row + 1][column + 1].lng) / 2;
-      if (
-        cellCenterLat < textureBounds.south ||
-        cellCenterLat >= textureBounds.north ||
-        cellCenterLng < textureBounds.west ||
-        cellCenterLng >= textureBounds.east
-      ) {
-        continue;
-      }
+      } else if (!clipToTextureBounds) {
+        const cellCenterLat =
+          (grid.grid[row][column].lat + grid.grid[row + 1][column + 1].lat) / 2;
+        const cellCenterLng =
+          (grid.grid[row][column].lng + grid.grid[row + 1][column + 1].lng) / 2;
+        if (
+          cellCenterLat < textureBounds.south ||
+          cellCenterLat >= textureBounds.north ||
+          cellCenterLng < textureBounds.west ||
+          cellCenterLng >= textureBounds.east
+        ) {
+          continue;
+        }
       }
       const topLeft = row * grid.columns + column;
       const topRight = topLeft + 1;
@@ -310,14 +419,22 @@ function buildTerrainGeometry(
         valid(row, column + 1) &&
         valid(row + 1, column)
       ) {
-        indices.push(topLeft, bottomLeft, topRight);
+        if (clipToTextureBounds) {
+          appendClippedTriangle([topLeft, bottomLeft, topRight]);
+        } else {
+          indices.push(topLeft, bottomLeft, topRight);
+        }
       }
       if (
         valid(row, column + 1) &&
         valid(row + 1, column) &&
         valid(row + 1, column + 1)
       ) {
-        indices.push(topRight, bottomLeft, bottomRight);
+        if (clipToTextureBounds) {
+          appendClippedTriangle([topRight, bottomLeft, bottomRight]);
+        } else {
+          indices.push(topRight, bottomLeft, bottomRight);
+        }
       }
     }
   }
@@ -1022,7 +1139,7 @@ function Scene({
             loadedFlightTiles.current.set(index, {
               tile,
               texture,
-              geometry: buildTerrainGeometry(model.grid, tile.bounds),
+              geometry: buildTerrainGeometry(model.grid, tile.bounds, tile),
             });
             setFlightTileVersion((value) => value + 1);
             return;
