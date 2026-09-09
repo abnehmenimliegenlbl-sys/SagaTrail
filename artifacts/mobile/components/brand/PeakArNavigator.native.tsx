@@ -53,12 +53,12 @@ const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
 const PEAK_WHITE = "#FFFFFF";
 // The DTM remains observer-centred at 500 m. The route is true 1:1 only in
-// the reliable near field; after 50 m the complete route is compressed into a
-// bounded virtual AR depth so distant turns remain orientational, not falsely
-// camera-depth accurate. Beyond the DTM radius it stays level.
+// the reliable near field; after 50 m the route line is intentionally omitted.
+// The separate destination flag remains visible as a bounded directional
+// marker, rather than pretending that a 5 km route can be camera-depth exact.
 const AR_ROUTE_TERRAIN_RADIUS_M = 500;
 const AR_ROUTE_REAL_SCALE_RADIUS_M = 50;
-const AR_ROUTE_MAX_VIRTUAL_DISTANCE_M = 2_000;
+const AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M = 300;
 // Viro's AR origin is near the camera, while the visible landscape starts at
 // the user's feet. Keep the geographic route on that ground plane and let the
 // local DTM elevation differences lift it above/below the plane.
@@ -334,7 +334,8 @@ function TerrainHologram({
         {
           maxSegments: MAX_AR_ROUTE_SEGMENT_SLOTS,
           realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
-          maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+          maxRenderedDistanceM: AR_ROUTE_REAL_SCALE_RADIUS_M,
+          maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
         },
       ),
     [model, routeGeometry, observerPosition, terrainProfile],
@@ -348,7 +349,7 @@ function TerrainHologram({
         AR_ROUTE_TERRAIN_RADIUS_M,
         {
           realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
-          maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+          maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
         },
       ),
     [model, routeGeometry, observerPosition],
@@ -378,12 +379,15 @@ function TerrainHologram({
       routePointCount: routeGeometry?.length ?? 0,
       lineCount: routeSegments.length,
       terrainRadiusM: AR_ROUTE_TERRAIN_RADIUS_M,
-      maxVirtualDistanceM: AR_ROUTE_MAX_VIRTUAL_DISTANCE_M,
+      nearRouteRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
+      destinationVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
       hasDestination: destinationPosition != null,
     });
   }, [model, routeGeometry, routeSegments.length, destinationPosition]);
 
-  if (routeSegments.length === 0) return null;
+  // The distant destination flag must remain available even when the active
+  // route has no sampled points inside the 50 m near field.
+  if (routeSegments.length === 0 && destinationPosition == null) return null;
 
   return (
     <ViroNode
