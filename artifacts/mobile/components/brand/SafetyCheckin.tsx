@@ -291,6 +291,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       <AppModal
         visible={open}
         onRequestClose={close}
+        closeLabel={labels.cancel}
         title={expiresAt == null ? labels.title : overdue ? labels.overdue : labels.active}
         message={expiresAt == null ? labels.explanation : `${labels.active}: ${displayTime}`}
         icon={<Feather name={overdue ? "alert-triangle" : "clock"} size={28} color={overdue ? colors.destructive : colors.accent} />}

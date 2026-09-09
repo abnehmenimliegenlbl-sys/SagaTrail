@@ -13,6 +13,7 @@ import {
 
 import { GLAS_3D, GLAS_3D_STARK } from "@/constants/depth";
 import { fonts } from "@/constants/typography";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -204,15 +205,7 @@ export function FeatureTileDeck({
                   {activeTile?.title}
                 </Text>
               </View>
-              <Pressable
-                onPress={closeModal}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={closeLabel}
-                style={[styles.closeButton, { borderColor: colors.glassBorder }]}
-              >
-                <Feather name="x" size={20} color={colors.foreground} />
-              </Pressable>
+              <CloseButton accessibilityLabel={closeLabel} onPress={closeModal} />
             </View>
             <View
               style={[
@@ -307,14 +300,6 @@ const styles = StyleSheet.create({
   },
   modalEyebrow: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.4 },
   modalTitle: { fontFamily: fonts.titleBold, fontSize: 20, marginTop: 3 },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   modalContent: { width: "100%", paddingHorizontal: 6, paddingBottom: 4 },
   modalContentLarge: { flex: 1 },
 });

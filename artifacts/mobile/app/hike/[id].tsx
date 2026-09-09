@@ -51,6 +51,7 @@ import { GLAS_3D } from "@/constants/depth";
 import type { HikingRoute } from "@/constants/routes";
 import { Background } from "@/components/brand/Background";
 import { Glass } from "@/components/brand/Glass";
+import { CloseButton } from "@/components/brand/CloseButton";
 import { KarteVollbild } from "@/components/brand/KarteVollbild";
 import { LoadingBar } from "@/components/brand/LoadingBar";
 import { PrimaryButton } from "@/components/brand/PrimaryButton";
@@ -5269,7 +5270,8 @@ export default function LiveHike() {
               {isRecalculating && (
                 <ActivityIndicator size="small" color="#E8A800" />
               )}
-              <Pressable
+              <CloseButton
+                accessibilityLabel={t.close}
                 onPress={() => {
                   isOffRouteRef.current = false;
                   offRouteCountRef.current = 0;
@@ -5279,10 +5281,7 @@ export default function LiveHike() {
                   }
                   setOffRoutePos(null);
                 }}
-                hitSlop={10}
-              >
-                <Feather name="x" size={18} color={colors.mutedForeground} />
-              </Pressable>
+              />
             </View>
             {recalcGeom && !startChoicePending && !isRecalculating && !followingRecalc && (
               <Pressable
@@ -5755,14 +5754,7 @@ export default function LiveHike() {
                     {t.discoveredNearby}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setNearbyPoi(null)}
-                  hitSlop={12}
-                  accessibilityRole="button"
-                  accessibilityLabel={t.close}
-                >
-                  <Feather name="x" size={22} color={colors.mutedForeground} />
-                </Pressable>
+                <CloseButton accessibilityLabel={t.close} onPress={() => setNearbyPoi(null)} />
               </View>
               <Text style={[styles.poiTitle, { color: colors.foreground }]}>
                 {poiDisplayName(nearbyPoi.name, nearbyPoi.kind)}
@@ -6220,14 +6212,7 @@ export default function LiveHike() {
                     {poiDisplayName(selectedPoi.name, selectedPoi.kind)}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPoi(null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={t.close}
-                >
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+                <CloseButton accessibilityLabel={t.close} onPress={() => setSelectedPoi(null)} />
               </View>
               <Text
                 style={[
@@ -6273,14 +6258,10 @@ export default function LiveHike() {
                     {(PARTNER_KATEGORIE[selectedPartner.kategorie ?? ""] ?? PARTNER_KAT_DEFAULT).label}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => setSelectedPartner(null)}
-                  hitSlop={12}
-                  accessibilityRole="button"
+                <CloseButton
                   accessibilityLabel={t.close}
-                >
-                  <Feather name="x" size={22} color={colors.mutedForeground} />
-                </Pressable>
+                  onPress={() => setSelectedPartner(null)}
+                />
               </View>
 
               {/* Titel — identisch mit POI-Karte */}
