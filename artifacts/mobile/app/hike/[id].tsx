@@ -1005,6 +1005,7 @@ export default function LiveHike() {
     };
   }, []);
   const [terrainModel, setTerrainModel] = useState<LocalTerrainModel | null>(null);
+  const [terrainModelRetryKey, setTerrainModelRetryKey] = useState(0);
   const [finished, setFinished] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<Record<string, string> | null>(null);
   const [offlinePanorama, setOfflinePanorama] = useState<OfflinePanoramaDatenbank | null>(null);
@@ -1316,6 +1317,7 @@ export default function LiveHike() {
     requestedAt: number;
     focusBearingKey: string;
   } | null>(null);
+  const terrainModelRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
@@ -4417,9 +4419,15 @@ export default function LiveHike() {
       requestedAt: Date.now(),
       focusBearingKey: terrainFocusBearingKey,
     };
+    let cancelled = false;
+    const controller =
+      typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timeout = setTimeout(() => controller?.abort(), 90_000);
+
     fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller?.signal,
       body: JSON.stringify({
         center: requestPosition,
         radiusM: 5000,
@@ -4433,6 +4441,7 @@ export default function LiveHike() {
         return response.json() as Promise<unknown>;
       })
       .then((data) => {
+        if (cancelled) return;
         if (isLocalTerrainModel(data)) {
           setTerrainModel(data);
           return;
@@ -4440,6 +4449,7 @@ export default function LiveHike() {
         throw new Error("Ungültiges lokales Terrainmodell");
       })
       .catch(() => {
+        if (cancelled) return;
         const activeRequest = terrainModelRequestRef.current;
         if (
           activeRequest?.lat === requestPosition.lat &&
@@ -4447,14 +4457,31 @@ export default function LiveHike() {
           activeRequest.focusBearingKey === terrainFocusBearingKey
         ) {
           terrainModelRequestRef.current = null;
+          terrainModelRetryTimerRef.current = setTimeout(() => {
+            terrainModelRetryTimerRef.current = null;
+            setTerrainModelRetryKey((key) => key + 1);
+          }, 5_000);
         }
+      })
+      .finally(() => {
+        clearTimeout(timeout);
       });
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      controller?.abort();
+      if (terrainModelRetryTimerRef.current) {
+        clearTimeout(terrainModelRetryTimerRef.current);
+        terrainModelRetryTimerRef.current = null;
+      }
+    };
   }, [
     hasFreshGps,
     livePos?.lat,
     livePos?.lng,
     terrainModel?.rings,
     terrainFocusBearingKey,
+    terrainModelRetryKey,
   ]);
   // Geländeansagen: 150 m vorher ankündigen, bei langen Abschnitten einmal
   // über den Rest informieren und 100 m vor dem Ende abschliessen. Abschnitte
