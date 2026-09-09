@@ -39,6 +39,89 @@ export interface TerrainRouteSegment {
   thickness: number;
 }
 
+/**
+ * Returns a route point suitable as the geographic origin of a live AR
+ * session. GPS can be several metres away from the visible trail even while
+ * the user is standing still, so nearby fixes are snapped to the closest
+ * segment. Far-away fixes stay untouched instead of falsely pulling the
+ * route underneath an off-route user.
+ */
+export function routeOriginForAR(
+  position: LatLng,
+  routeGeometry: readonly number[][] | null | undefined,
+  maxSnapDistanceM = 50,
+): LatLng {
+  if (!routeGeometry || routeGeometry.length < 2) return position;
+
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (position.lat * Math.PI) / 180;
+  let bestDistanceM = Infinity;
+  let bestPoint: LatLng | null = null;
+
+  for (let index = 1; index < routeGeometry.length; index += 1) {
+    const previous = routeGeometry[index - 1];
+    const current = routeGeometry[index];
+    if (
+      typeof previous?.[0] !== "number" ||
+      typeof previous?.[1] !== "number" ||
+      typeof current?.[0] !== "number" ||
+      typeof current?.[1] !== "number" ||
+      !Number.isFinite(previous[0]) ||
+      !Number.isFinite(previous[1]) ||
+      !Number.isFinite(current[0]) ||
+      !Number.isFinite(current[1])
+    ) {
+      continue;
+    }
+
+    const previousNorthM =
+      ((previous[0] - position.lat) * Math.PI * earthRadiusM) / 180;
+    const previousEastM =
+      ((previous[1] - position.lng) *
+        Math.PI *
+        earthRadiusM *
+        Math.cos(centerLatRad)) /
+      180;
+    const currentNorthM =
+      ((current[0] - position.lat) * Math.PI * earthRadiusM) / 180;
+    const currentEastM =
+      ((current[1] - position.lng) *
+        Math.PI *
+        earthRadiusM *
+        Math.cos(centerLatRad)) /
+      180;
+    const northDeltaM = currentNorthM - previousNorthM;
+    const eastDeltaM = currentEastM - previousEastM;
+    const lengthSquared = northDeltaM ** 2 + eastDeltaM ** 2;
+    const projection =
+      lengthSquared <= 0
+        ? 0
+        : clampNumber(
+            -(
+              previousNorthM * northDeltaM +
+              previousEastM * eastDeltaM
+            ) / lengthSquared,
+            0,
+            1,
+          );
+    const snappedNorthM = previousNorthM + projection * northDeltaM;
+    const snappedEastM = previousEastM + projection * eastDeltaM;
+    const distanceM = Math.hypot(snappedNorthM, snappedEastM);
+    if (distanceM >= bestDistanceM) continue;
+
+    bestDistanceM = distanceM;
+    bestPoint = {
+      lat: position.lat + (snappedNorthM * 180) / (Math.PI * earthRadiusM),
+      lng:
+        position.lng +
+        (snappedEastM * 180) /
+          (Math.PI * earthRadiusM * Math.max(0.01, Math.cos(centerLatRad))),
+    };
+  }
+
+  return bestPoint && bestDistanceM <= maxSnapDistanceM ? bestPoint : position;
+}
+
 export interface GeographicRouteDisplayOptions {
   /** Maximum number of native route polylines used for the complete route. */
   maxSegments?: number;

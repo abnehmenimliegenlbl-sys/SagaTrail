@@ -28,6 +28,7 @@ import {
   buildGeographicTerrainRouteDestination,
   buildLocalTerrainMesh,
   buildLocalMapRouteLines,
+  routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
   type LocalTerrainMesh,
@@ -827,9 +828,13 @@ export function PeakArNavigator({
 
   useEffect(() => {
     if (worldOriginPosition || !observerPosition) return;
-    setWorldOriginPosition(observerPosition);
-    console.log("[PeakAR] fixed geographic world origin", observerPosition);
-  }, [observerPosition, worldOriginPosition]);
+    const origin = routeOriginForAR(observerPosition, routeGeometry);
+    setWorldOriginPosition(origin);
+    console.log("[PeakAR] fixed geographic world origin", {
+      gps: observerPosition,
+      routeOrigin: origin,
+    });
+  }, [observerPosition, routeGeometry, worldOriginPosition]);
 
   const clearTrackingResetTimer = useCallback(() => {
     if (trackingResetTimerRef.current) {

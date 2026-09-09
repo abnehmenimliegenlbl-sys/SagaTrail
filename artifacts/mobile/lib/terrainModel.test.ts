@@ -5,6 +5,7 @@ import {
   buildLocalTerrainMesh,
   buildGeographicTerrainRouteDestination,
   buildGeographicTerrainRouteSegments,
+  routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
 } from "./terrainModel";
@@ -142,4 +143,19 @@ test("places the destination flag at the final route point", () => {
   assert.ok(destination);
   assert.ok(Math.hypot(destination[0], destination[2]) > 0);
   assert.ok(Math.hypot(destination[0], destination[2]) <= 80.001);
+});
+
+test("snaps a nearby GPS fix to the route for the AR origin", () => {
+  const gpsFix = { lat: 46.004, lng: 7.00012 };
+  const snapped = routeOriginForAR(gpsFix, LONG_ROUTE);
+
+  assert.ok(Math.abs(snapped.lat - gpsFix.lat) < 0.00001);
+  assert.ok(Math.abs(snapped.lng - 7) < 0.00001);
+});
+
+test("does not pull an off-route AR origin onto a distant route", () => {
+  const gpsFix = { lat: 46.004, lng: 7.002 };
+  const origin = routeOriginForAR(gpsFix, LONG_ROUTE);
+
+  assert.deepEqual(origin, gpsFix);
 });

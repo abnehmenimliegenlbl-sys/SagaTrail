@@ -23,6 +23,12 @@ For live route projection, capture the GPS position once when the GravityAndHead
 
 **How to apply:** Use the session-start GPS position as the route projection center, retain `terrainModel.center` only as a no-GPS fallback, and reset the captured origin by unmounting the AR navigator when a new session starts. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.
 
+When opening AR, snap the session origin to the nearest active-route segment only if the GPS fix is within 50 m; leave farther off-route fixes unchanged.
+
+**Why:** A stationary GPS fix can still sit several metres beside the visible trail, which makes an otherwise correct absolute AR line visibly miss the way.
+
+**How to apply:** Use the snapped origin only for the initial AR georeference; never continuously snap or recenter while the session is mounted, and never pull a clearly off-route user onto the route.
+
 AR route input must use the active `navigationGeometry`, not the original catalog `route.geometry`. After a start detour is accepted, `navigationGeometry` contains the combined detour plus remaining official route and is the same geometry used by map, progress, and narration.
 
 **Why:** Passing the catalog geometry to AR made the overlay continue pointing at the old route even though the app had already accepted and followed a newly calculated route from the user's current location.
