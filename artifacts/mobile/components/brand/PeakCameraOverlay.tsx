@@ -35,6 +35,12 @@ interface PeakCameraOverlayProps {
   routeGeometry?: readonly number[][] | null;
   observerPosition?: LatLng | null;
   heading: number | null;
+  nextTurn?: {
+    direction: "left" | "right";
+    distanceM: number;
+    title: string;
+    label: string;
+  } | null;
   observerElevationM?: number | null;
   strings: PeakPanoramaStrings;
   onClose: () => void;
@@ -50,6 +56,7 @@ export function PeakCameraOverlay({
   routeGeometry = null,
   observerPosition = null,
   heading,
+  nextTurn = null,
   observerElevationM = null,
   strings,
   onClose,
@@ -182,6 +189,11 @@ export function PeakCameraOverlay({
     } finally {
       setCapturing(false);
     }
+  };
+
+  const formatTurnDistance = (distanceM: number) => {
+    if (distanceM >= 1000) return `${(distanceM / 1000).toFixed(1)} km`;
+    return `${Math.max(0, Math.round(distanceM))} m`;
   };
 
   if (Platform.OS === "web") return null;
@@ -341,6 +353,31 @@ export function PeakCameraOverlay({
             </Pressable>
           </View>
         </View>
+        {nextTurn && (
+          <View
+            style={[
+              styles.turnHint,
+              {
+                backgroundColor: colors.glassBgStrong,
+                borderColor: colors.accent,
+              },
+            ]}
+          >
+            <Feather
+              name={nextTurn.direction === "left" ? "corner-up-left" : "corner-up-right"}
+              size={20}
+              color={colors.accent}
+            />
+            <View style={styles.turnHintCopy}>
+              <Text style={[styles.turnHintTitle, { color: colors.photoScrimText }]}>
+                {nextTurn.title}
+              </Text>
+              <Text style={[styles.turnHintLabel, { color: colors.photoScrimMuted }]}>
+                {nextTurn.label} · {formatTurnDistance(nextTurn.distanceM)}
+              </Text>
+            </View>
+          </View>
+        )}
         <View style={[styles.imageFooter, { paddingBottom: insets.bottom + 12 }]}>
           <Feather
             name={targetPeak ? "triangle" : "compass"}
@@ -388,6 +425,32 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.17)",
   },
   scanLines: { ...StyleSheet.absoluteFill, opacity: 0.25 },
+  turnHint: {
+    position: "absolute",
+    top: 112,
+    left: 18,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  turnHintCopy: { flex: 1, gap: 2 },
+  turnHintTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  turnHintLabel: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   scanLineTop: {
     position: "absolute",
     left: 0,
