@@ -177,7 +177,7 @@ struct WatchHikeView: View {
     .background(WatchPalette.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
   }
   private func offRouteCard(_ offRoute: SagaTrailWatchProtocol.OffRoute) -> some View {
-    HStack(spacing: 4) {
+    return HStack(spacing: 4) {
       Image(systemName: "location.slash.fill")
         .foregroundStyle(WatchPalette.red)
       Text(copy.t("offRoute"))
@@ -200,7 +200,7 @@ struct WatchHikeView: View {
     _ weather: SagaTrailWatchProtocol.Weather,
     daylight: SagaTrailWatchProtocol.Daylight?,
   ) -> some View {
-    HStack(spacing: 5) {
+    return HStack(spacing: 5) {
       Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
       Spacer(minLength: 2)
       Text("\(Int(weather.temperatureCelsius.rounded()))°")
@@ -223,7 +223,7 @@ struct WatchHikeView: View {
     .minimumScaleFactor(0.72)
   }
   private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
+    return VStack(alignment: .leading, spacing: 4) {
       Label(copy.t("completed"), systemImage: "checkmark.circle.fill")
         .foregroundStyle(WatchPalette.red)
       metric(copy.t("totalTime"), duration(state.elapsedSeconds))
@@ -282,7 +282,7 @@ struct WatchHikeView: View {
     return points[index]
   }
   private func metric(_ label: String, _ value: String) -> some View {
-    HStack(spacing: 3) {
+    return HStack(spacing: 3) {
       Text(label)
       Spacer(minLength: 2)
       Text(value).monospacedDigit()
@@ -435,7 +435,7 @@ struct WatchHikeView: View {
       return "\(Int(planned.rounded())) m"
     }()
 
-    VStack(spacing: 3) {
+    return VStack(spacing: 3) {
       Label(copy.t("status"), systemImage: "chart.bar.fill")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
@@ -488,7 +488,7 @@ struct WatchHikeView: View {
   }
 
   private func safetyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 4) {
+    return VStack(spacing: 4) {
       Label(copy.t("safetyTitle"), systemImage: "checkmark.shield.fill")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
@@ -559,7 +559,7 @@ struct WatchHikeView: View {
   }
 
   private func storyPage(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    VStack(spacing: 4) {
+    return VStack(spacing: 4) {
       Label("Story / Audio", systemImage: "waveform")
         .font(.caption2)
         .foregroundStyle(WatchPalette.mutedWhite)
@@ -595,7 +595,7 @@ struct WatchHikeView: View {
   }
 
   private func hikeControl(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
-    Button {
+    return Button {
       hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
     } label: {
       Label(
