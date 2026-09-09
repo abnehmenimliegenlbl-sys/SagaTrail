@@ -478,6 +478,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cantonName: { fontFamily: fonts.titleBold, fontSize: 19 },
+  // Kantonsnamen bewusst in der nativen Systemschrift:
+  // iOS = San Francisco, Android = Roboto, Web = system-ui.
+  cantonName: { fontSize: 19 },
   cantonMeta: { fontFamily: fonts.mono, fontSize: 12, marginTop: 3 },
 });
