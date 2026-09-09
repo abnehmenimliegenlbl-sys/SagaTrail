@@ -44,7 +44,17 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/lib/appAlert";
-import Animated, { FadeIn, FadeInUp, FadeOut } from "react-native-reanimated";
+import Animated, {
+  cancelAnimation,
+  FadeIn,
+  FadeInUp,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GLAS_3D } from "@/constants/depth";
@@ -106,6 +116,7 @@ import {
 import { estimateRouteMinutes } from "@/lib/waypointEta";
 import {
   enqueueNarrationItem,
+  type NarrationKind,
   type NarrationQueueItem,
   type ReplaceableNarrationCategory,
 } from "@/lib/narrationQueue";
@@ -166,6 +177,15 @@ type SpeakOptions = {
   navInterrupt?: boolean;
   turnAudio?: "links" | "rechts";
   replaceQueuedCategory?: ReplaceableNarrationCategory;
+  kind?: NarrationKind;
+  displayTitle?: string;
+};
+
+type NowPlayingNarration = {
+  kind: NarrationKind;
+  label: string;
+  title?: string;
+  text: string;
 };
 
 type WatchDiscoveryAlert = {
@@ -576,6 +596,61 @@ function circularMeanHeading(values: readonly number[]): number | null {
   return ((Math.atan2(sine, cosine) * 180) / Math.PI + 360) % 360;
 }
 
+const AUDIO_WAVE_HEIGHTS = [10, 20, 14, 28, 18, 24, 12, 22, 16];
+
+function AudioWaveBar({
+  color,
+  height,
+  delay,
+}: {
+  color: string;
+  height: number;
+  delay: number;
+}) {
+  const progress = useSharedValue(0.35);
+
+  useEffect(() => {
+    progress.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 420 + delay }),
+        withTiming(0.3, { duration: 520 + delay }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(progress);
+  }, [delay, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleY: progress.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.audioWaveBar,
+        { backgroundColor: color, height },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
+function AudioWaveform({ color }: { color: string }) {
+  return (
+    <View style={styles.audioWaveform} accessibilityLabel="Audio wird abgespielt">
+      {AUDIO_WAVE_HEIGHTS.map((height, index) => (
+        <AudioWaveBar
+          key={`${height}-${index}`}
+          color={color}
+          height={height}
+          delay={index * 55}
+        />
+      ))}
+    </View>
+  );
+}
+
 export default function LiveHike() {
   const colors = useColors();
   const themeMode = useThemeModeSafe();
@@ -758,6 +833,32 @@ export default function LiveHike() {
   const [chapters, setChapters] = useState<StoryChapter[]>([]);
   const [preparing, setPreparing] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const narrationLabel = useCallback(
+    (kind: NarrationKind): string => {
+      switch (kind) {
+        case "introduction":
+          return t.preparingText;
+        case "poi":
+          return t.poiNearby;
+        case "feedback":
+          return t.perception;
+        case "navigation":
+          return t.turnNotifTitle;
+        case "partner":
+          return t.partnerDetailEyebrow;
+        case "terrain":
+          return t.terrainWarningTitle;
+        case "surface":
+          return t.surfaceChangeTitle;
+        case "walkToStart":
+          return t.walkToStartTitle;
+        case "chapter":
+        default:
+          return t.chapterMark(currentIndex + 1, chapters.length);
+      }
+    },
+    [chapters.length, currentIndex, t],
+  );
   /** Route-Fortschritt beim ersten verlässlichen Fix — verhindert einen
    * Kapitelvorsprung, wenn die Wanderung schon vor dem ersten Fix begonnen hat. */
   const [storyProgressBaseline, setStoryProgressBaseline] = useState<number | null>(null);
@@ -927,6 +1028,14 @@ export default function LiveHike() {
     return () => controller.abort();
   }, [offRoutePos, startRecalcChoice]);
   const [speaking, setSpeaking] = useState(false);
+  const [nowPlaying, setNowPlaying] = useState<NowPlayingNarration | null>(null);
+  const nowPlayingRef = useRef<NowPlayingNarration | null>(null);
+  const nowPlayingVisible =
+    nowPlaying !== null && (speaking || nowPlaying.kind === "navigation");
+  const updateNowPlaying = useCallback((value: NowPlayingNarration | null) => {
+    nowPlayingRef.current = value;
+    setNowPlaying(value);
+  }, []);
   const [locState, setLocState] = useState<LocState>("idle");
   const [locationPermissionRetry, setLocationPermissionRetry] = useState(0);
   const [sosOpen, setSosOpen] = useState(false);
@@ -2719,7 +2828,12 @@ export default function LiveHike() {
       // Sprachansage kurz vor der Abbiegung — unterbricht sofortig und setzt
       // eine laufende Erzaehlung danach an derselben Stelle fort.
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, { navInterrupt: true, turnAudio: treffer.cue.direction });
+       speakRef.current?.(pack.turnVoice(treffer.cue.direction), undefined, {
+         navInterrupt: true,
+         turnAudio: treffer.cue.direction,
+         kind: "navigation",
+         displayTitle: t.turnNotifTitle,
+       });
     }
   }, [livePos, distance, totalKm, navigationGeometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps]);
 
@@ -2865,7 +2979,12 @@ export default function LiveHike() {
           // durch den alten "skip while awaiting" verloren.
           if (text && !awaitingDecisionRef.current) {
             announcedPremiumPartnerIdsRef.current.add(partnerId);
-            speakRef.current?.(text, undefined, { useOpenAI: true, partnerInterrupt: true });
+             speakRef.current?.(text, undefined, {
+               useOpenAI: true,
+               partnerInterrupt: true,
+               kind: "partner",
+               displayTitle: partner.name,
+             });
           }
         })
         .catch(() => {
@@ -2887,7 +3006,10 @@ export default function LiveHike() {
       photoChallengeShownRef.current = true;
       setShowPhotoChallenge(true);
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.photoChallengePrompt);
+      speakRef.current?.(pack.photoChallengePrompt, undefined, {
+        kind: "poi",
+        displayTitle: t.poiNearby,
+      });
     }
   }, [livePos, saga?.coordinates, storyLanguage, hasFreshGps]);
 
@@ -2901,7 +3023,11 @@ export default function LiveHike() {
     if (dist <= 0.01) {
       sagaArrivalSpokenRef.current = true;
       const pack = STORY_PACKS[resolveLang(storyLanguage)];
-      speakRef.current?.(pack.sagaHeartArrival, undefined, { sagaInterrupt: true });
+      speakRef.current?.(pack.sagaHeartArrival, undefined, {
+        sagaInterrupt: true,
+        kind: "poi",
+        displayTitle: t.poiNearby,
+      });
     }
   }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage, hasFreshGps]);
 
@@ -2940,6 +3066,8 @@ export default function LiveHike() {
       if (!awaitingDecisionRef.current) {
         speakRef.current?.(text, undefined, {
           useOpenAI: true,
+          kind: "surface",
+          displayTitle: t.surfaceChangeTitle,
           replaceQueuedCategory: "surface",
         });
       }
@@ -2998,7 +3126,11 @@ export default function LiveHike() {
               // speaking=true setzen → Spracherkennung stoppt → Audio-Session-Reset
               // → Mikrofon tot. Uhr-Mitteilung (oben) wird immer gesendet.
               if (!awaitingDecisionRef.current) {
-                speakRef.current?.(text, undefined, { useOpenAI: true });
+                speakRef.current?.(text, undefined, {
+                  useOpenAI: true,
+                  kind: "chapter",
+                  displayTitle: t.milestoneTitle,
+                });
               }
             })
             .catch(() => {
@@ -3007,7 +3139,11 @@ export default function LiveHike() {
                 sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
               }
               if (!awaitingDecisionRef.current) {
-                speakRef.current?.(fallback, undefined, { useOpenAI: true });
+                speakRef.current?.(fallback, undefined, {
+                  useOpenAI: true,
+                  kind: "chapter",
+                  displayTitle: t.milestoneTitle,
+                });
               }
             });
         } else {
@@ -3015,7 +3151,11 @@ export default function LiveHike() {
             sendeAbbiegeMitteilung(t.milestoneTitle, fallback);
           }
           if (!awaitingDecisionRef.current) {
-            speakRef.current?.(fallback, undefined, { useOpenAI: true });
+            speakRef.current?.(fallback, undefined, {
+              useOpenAI: true,
+              kind: "chapter",
+              displayTitle: t.milestoneTitle,
+            });
           }
         }
       }
@@ -3403,7 +3543,8 @@ export default function LiveHike() {
     }).catch(() => {});
     setSpeaking(false);
     speakingRef.current = false;
-  }, [stopTurnAudio]);
+          updateNowPlaying(null);
+  }, [stopTurnAudio, updateNowPlaying]);
 
   // Manueller Stopp (Pause-Button, Abschluss, Verlassen des Screens):
   // erhoeht zusaetzlich die Generation, damit auch noch in-flight laufende
@@ -3455,6 +3596,8 @@ export default function LiveHike() {
           useOpenAI: opts?.useOpenAI,
           preFetchedUri: opts?.preFetchedUri,
           replaceQueuedCategory: opts?.replaceQueuedCategory,
+          kind: opts?.kind,
+          displayTitle: opts?.displayTitle,
         };
         enqueueNarrationItem(narrationQueueRef.current, entry);
       };
@@ -3476,6 +3619,13 @@ export default function LiveHike() {
           navInterruptingRef.current = true;
           try { await soundToResume.pauseAsync(); } catch {}
         }
+        const previousNowPlaying = nowPlayingRef.current;
+        updateNowPlaying({
+          kind: "navigation",
+          label: narrationLabel("navigation"),
+          title: opts.displayTitle ?? text,
+          text,
+        });
 
         // Vorab gerenderten Clip abspielen (kein Netzwerk, kein Geraete-TTS).
         if (opts.turnAudio) {
@@ -3523,7 +3673,12 @@ export default function LiveHike() {
               narrationGen === narrationGenRef.current
             ) {
               navInterruptingRef.current = false;
-              await speakRef.current?.(text, undefined, { interrupt: true, useOpenAI: true });
+              await speakRef.current?.(text, undefined, {
+                interrupt: true,
+                useOpenAI: true,
+                kind: "navigation",
+                displayTitle: opts.displayTitle ?? text,
+              });
             }
             return;
           } finally {
@@ -3551,6 +3706,9 @@ export default function LiveHike() {
           narrationSoundRef.current === soundToResume
         ) {
           try { await soundToResume.playAsync(); } catch {}
+          updateNowPlaying(previousNowPlaying);
+        } else {
+          updateNowPlaying(null);
         }
         return;
       }
@@ -3614,6 +3772,13 @@ export default function LiveHike() {
       const gen = ++narrationGenRef.current;
       setNarrationUnavailable(false);
       setSpeaking(true);
+      const activeKind = opts?.kind ?? "chapter";
+      updateNowPlaying({
+        kind: activeKind,
+        label: narrationLabel(activeKind),
+        title: opts?.displayTitle,
+        text,
+      });
       // Sofortige Synchronisation des Refs — setSpeaking ist asynchron (React
       // State), der Ref wird sonst erst beim naechsten Render gesetzt. Ohne
       // diese Zeile liegt zwischen setSpeaking(true) und dem naechsten Render
@@ -3671,6 +3836,7 @@ export default function LiveHike() {
           playbackFinished = true;
           setSpeaking(false);
           speakingRef.current = false;
+           updateNowPlaying(null);
           onFinished?.();
           // Queue nur verarbeiten, wenn onFinished keinen neuen speak()-Aufruf
           // ausgeloest hat — sonst wuerde der Queue-Eintrag via Gen-Bump die
@@ -3685,6 +3851,8 @@ export default function LiveHike() {
                 useOpenAI: next.useOpenAI,
                 preFetchedUri: next.preFetchedUri,
                 replaceQueuedCategory: next.replaceQueuedCategory,
+                kind: next.kind,
+                displayTitle: next.displayTitle,
               });
             } else if (!awaitingDecisionRef.current) {
               // Queue leer — zurueck auf MixWithOthers damit andere Apps wieder normal spielen.
@@ -3745,6 +3913,7 @@ export default function LiveHike() {
         setNarrationUnavailable(true);
         setSpeaking(false);
         speakingRef.current = false;
+        updateNowPlaying(null);
         onFinished?.();
         if (!speakingRef.current) {
           const next = narrationQueueRef.current.shift();
@@ -3753,6 +3922,8 @@ export default function LiveHike() {
               useOpenAI: next.useOpenAI,
               preFetchedUri: next.preFetchedUri,
               replaceQueuedCategory: next.replaceQueuedCategory,
+              kind: next.kind,
+              displayTitle: next.displayTitle,
             });
           } else if (!awaitingDecisionRef.current) {
             setAudioModeAsync({
@@ -3765,7 +3936,7 @@ export default function LiveHike() {
         }
       }
     },
-    [profile?.language, stopTurnAudio]
+    [narrationLabel, profile?.language, stopTurnAudio, updateNowPlaying]
   );
   speakRef.current = speak;
 
@@ -3886,17 +4057,23 @@ export default function LiveHike() {
                   currentIndexRef.current !== capturedIndex
                 ) return;
                  speak(ch.text, finishChapter, {
-                  preFetchedUri: offlineUri ?? undefined,
-                });
+                   preFetchedUri: offlineUri ?? undefined,
+                   kind: "chapter",
+                   displayTitle: t.chapterMark(capturedIndex + 1, chapters.length),
+                 });
               }, 1500);
             },
             {
               useOpenAI: true,
+              kind: "introduction",
+              displayTitle: t.preparingText,
             }
           );
         } else {
           speak(ch.text, finishChapter, {
             preFetchedUri: offlineUri ?? undefined,
+            kind: "chapter",
+            displayTitle: t.chapterMark(capturedIndex + 1, chapters.length),
           });
         }
       })();
@@ -4080,7 +4257,11 @@ export default function LiveHike() {
         imageUrl: nearbyPoiWiki?.image ?? null,
         text: text.slice(0, 8_000),
       });
-      speak(text, finishPoiNarration, { useOpenAI: true });
+      speak(text, finishPoiNarration, {
+        useOpenAI: true,
+        kind: "poi",
+        displayTitle: poiName,
+      });
     };
     // Die Geschichte des Ortes wird gleich mit erzaehlt — per KI in denselben
     // Erzaehlton umgeschrieben wie die Sagen. Faellt die Umschreibung aus,
@@ -4154,7 +4335,11 @@ export default function LiveHike() {
         const rel = ((bear - heading) + 360) % 360;
         dir = rel < 45 || rel > 315 ? "geradeaus" : rel <= 135 ? "rechts" : "links";
       }
-      speak(pack.poiApproachHint(dir), releasePoiHint, { useOpenAI: true });
+      speak(pack.poiApproachHint(dir), releasePoiHint, {
+        useOpenAI: true,
+        kind: "poi",
+        displayTitle: nearbyPoi.name,
+      });
     }
 
     // 50 m: volle Geschichte (einmalig pro POI)
@@ -4179,7 +4364,11 @@ export default function LiveHike() {
           imageUrl: nearbyPoiWiki?.image ?? null,
           text: text.slice(0, 8_000),
         });
-        speak(text, finishPoiNarration, { useOpenAI: true });
+        speak(text, finishPoiNarration, {
+          useOpenAI: true,
+          kind: "poi",
+          displayTitle: capturedPoi.name,
+        });
       };
       (async () => {
         const cached = await getOfflinePoiStory(capturedPoi.id, cueLanguage);
@@ -4542,8 +4731,15 @@ export default function LiveHike() {
         if (section.isVerySteep && turnNotifsReadyRef.current) {
           sendeAbbiegeMitteilung(t.terrainWarningTitle, warning ?? text);
         }
-        speakRef.current?.(text, undefined, {
+         speakRef.current?.(text, undefined, {
           useOpenAI: true,
+           kind: "terrain",
+           displayTitle: section.isVerySteep ? t.terrainWarningTitle : t.terrainAdvance(
+             section.direction,
+             formatSpokenDistance(leadKm, cueLanguage),
+             sectionDistance,
+             averageGrade,
+           ),
           ...(section.isVerySteep ? { sagaInterrupt: true } : {}),
           ...(!section.isVerySteep
             ? { replaceQueuedCategory: "terrain" as const }
@@ -4568,7 +4764,12 @@ export default function LiveHike() {
             Math.max(1, Math.round(Math.abs(section.averageGradePct))),
           ),
           undefined,
-          { useOpenAI: true, replaceQueuedCategory: "terrain" },
+           {
+             useOpenAI: true,
+             kind: "terrain",
+             displayTitle: t.terrainWarningTitle,
+             replaceQueuedCategory: "terrain",
+           },
         );
       }
 
@@ -4579,8 +4780,10 @@ export default function LiveHike() {
         currentKm <= section.endKm + 0.08
       ) {
         terrainEndedRef.current.add(section.id);
-        speakRef.current?.(t.terrainEnd(section.direction), undefined, {
+         speakRef.current?.(t.terrainEnd(section.direction), undefined, {
           useOpenAI: true,
+           kind: "terrain",
+           displayTitle: t.terrainWarningTitle,
           replaceQueuedCategory: "terrain",
         });
       }
@@ -4633,7 +4836,11 @@ export default function LiveHike() {
     if (walkToStartAnnouncedRef.current) return;
     if (preparing || locState !== "granted" || !hasFreshGps) return;
     walkToStartAnnouncedRef.current = true;
-    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, { useOpenAI: true });
+    speak(t.walkToStartSpoken(walkToStart.distText, walkToStart.dir), undefined, {
+      useOpenAI: true,
+      kind: "walkToStart",
+      displayTitle: t.walkToStartTitle,
+    });
   }, [walkToStart, startReached, preparing, locState, speak, t, hasFreshGps]);
 
   // Die Route gibt Kapitelziele frei, aber Audio bleibt die Reihenfolge:
@@ -4781,7 +4988,11 @@ export default function LiveHike() {
         void speaker(
           feedbackText,
           completeDecision,
-          { useOpenAI: true },
+          {
+            useOpenAI: true,
+            kind: "feedback",
+            displayTitle: t.perception,
+          },
         );
       };
       const speaker = speakRef.current;
@@ -4792,6 +5003,8 @@ export default function LiveHike() {
           {
             ...(poiNarrationPendingRef.current.size === 0 ? { interrupt: true } : {}),
             ...(ackUri ? { preFetchedUri: ackUri } : { useOpenAI: true }),
+            kind: "feedback",
+            displayTitle: t.perception,
           },
         );
       } else {
@@ -4830,7 +5043,10 @@ export default function LiveHike() {
     if (decisionsRef.current[currentIndex]?.chosenOptionIndex != null) return;
     const opts = decision?.options?.map((o) => o.label) ?? [];
     const question = decision?.question;
-    speakRef.current?.(pack.buildDecisionPrompt(opts, question));
+    speakRef.current?.(pack.buildDecisionPrompt(opts, question), undefined, {
+      kind: "feedback",
+      displayTitle: t.perception,
+    });
   }, [awaitingDecision, speaking, currentIndex, storyLanguage]);
 
   // 30-Sekunden-Countdown fuer Entscheidungspunkte: laeuft automatisch an,
@@ -5846,7 +6062,9 @@ export default function LiveHike() {
                     Sagentext
                   </Text>
                   <Text style={[styles.storyTileSubtitle, { color: colors.destructive }]}>
-                    {preparing
+                    {nowPlayingVisible
+                      ? nowPlaying.label
+                      : preparing
                       ? t.preparingText
                       : t.chapterMark(currentIndex + 1, chapters.length)}
                   </Text>
@@ -5886,7 +6104,11 @@ export default function LiveHike() {
                 <Pressable
                   onPress={() => {
                     if (currentChapter) {
-                      speak(currentChapter.text, undefined, { interrupt: true });
+                      speak(currentChapter.text, undefined, {
+                        interrupt: true,
+                        kind: "chapter",
+                        displayTitle: t.chapterMark(currentIndex + 1, chapters.length),
+                      });
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
@@ -5903,7 +6125,11 @@ export default function LiveHike() {
                     if (speaking) {
                       cancelNarration();
                     } else if (currentChapter) {
-                      speak(currentChapter.text, undefined, { interrupt: true });
+                      speak(currentChapter.text, undefined, {
+                        interrupt: true,
+                        kind: "chapter",
+                        displayTitle: t.chapterMark(currentIndex + 1, chapters.length),
+                      });
                     }
                   }}
                   style={[styles.playBtn, { borderColor: colors.glassBorder }]}
@@ -5921,6 +6147,46 @@ export default function LiveHike() {
                 </Pressable>
               </View>
             </View>
+
+             {nowPlayingVisible && nowPlaying && (
+               <Animated.View
+                 entering={FadeInUp}
+                 style={[
+                   styles.nowPlayingCard,
+                   {
+                     borderColor: colors.accent,
+                     backgroundColor: colors.glassBgStrong,
+                   },
+                 ]}
+                 accessibilityLabel={`${nowPlaying.label}: ${nowPlaying.text}`}
+               >
+                 <View style={styles.nowPlayingTop}>
+                   <View style={styles.nowPlayingMeta}>
+                     <Feather name="volume-2" size={16} color={colors.accent} />
+                     <View style={{ flex: 1 }}>
+                       <Text style={[styles.nowPlayingLabel, { color: colors.accent }]}>
+                         {nowPlaying.label}
+                       </Text>
+                       {nowPlaying.title && nowPlaying.title !== nowPlaying.label && (
+                         <Text
+                           style={[styles.nowPlayingTitle, { color: colors.foreground }]}
+                           numberOfLines={1}
+                         >
+                           {nowPlaying.title}
+                         </Text>
+                       )}
+                     </View>
+                   </View>
+                   <AudioWaveform color={colors.accent} />
+                 </View>
+                 <Text
+                   style={[styles.nowPlayingText, { color: colors.mutedForeground }]}
+                   numberOfLines={2}
+                 >
+                   {nowPlaying.text}
+                 </Text>
+               </Animated.View>
+             )}
 
             <Text style={[styles.storyText, { color: colors.foreground }]}>
               {currentChapter?.text}
@@ -7311,6 +7577,31 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chapterMark: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5 },
+  nowPlayingCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+    gap: 10,
+  },
+  nowPlayingTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  nowPlayingMeta: { flexDirection: "row", alignItems: "center", gap: 9, flex: 1 },
+  nowPlayingLabel: { fontFamily: fonts.monoBold, fontSize: 10, letterSpacing: 1.2 },
+  nowPlayingTitle: { fontFamily: fonts.bodyMedium, fontSize: 13, marginTop: 3 },
+  nowPlayingText: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  audioWaveform: {
+    height: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  audioWaveBar: { width: 3, minHeight: 5, borderRadius: 3 },
   playBtn: { ...GLAS_3D,
     flexDirection: "row",
     alignItems: "center",

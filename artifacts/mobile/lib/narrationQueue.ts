@@ -1,11 +1,24 @@
 export type ReplaceableNarrationCategory = "surface" | "terrain";
 
+export type NarrationKind =
+  | "chapter"
+  | "introduction"
+  | "poi"
+  | "feedback"
+  | "navigation"
+  | "partner"
+  | "terrain"
+  | "surface"
+  | "walkToStart";
+
 export type NarrationQueueItem = {
   text: string;
   onFinished?: () => void;
   useOpenAI?: boolean;
   preFetchedUri?: string;
   replaceQueuedCategory?: ReplaceableNarrationCategory;
+  kind?: NarrationKind;
+  displayTitle?: string;
 };
 
 /**
