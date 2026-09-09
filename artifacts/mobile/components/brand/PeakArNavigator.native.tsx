@@ -44,6 +44,7 @@ const PEAK_WHITE_MATERIAL = "sagatrailPeakMarkerWhite";
 const FINISH_FLAG_BLACK_MATERIAL = "sagatrailFinishFlagBlack";
 const FINISH_FLAG_POLE_MATERIAL = "sagatrailFinishFlagPole";
 const TERRAIN_USER_MATERIAL = "sagatrailTerrainUser";
+const TERRAIN_MAP_ROUTE_MATERIAL = "sagatrailTerrainMapRoute";
 const TERRAIN_ROUTE_CHEVRON_MATERIAL = "sagatrailTerrainRouteChevron";
 const TERRAIN_SURFACE_MATERIAL = "sagatrailTerrainSurface";
 const PEAK_RED = "#DA291C";
@@ -92,38 +93,6 @@ ViroMaterials.createMaterials({
     lightingModel: "Constant",
     diffuseColor: "#222222",
   },
-  [TERRAIN_ROUTE_MATERIALS.green]: {
-    lightingModel: "Constant",
-    diffuseColor: "#20D466",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
-  },
-  [TERRAIN_ROUTE_MATERIALS.yellow]: {
-    lightingModel: "Constant",
-    diffuseColor: "#FFD000",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
-  },
-  [TERRAIN_ROUTE_MATERIALS.orange]: {
-    lightingModel: "Constant",
-    diffuseColor: "#FF8500",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
-  },
-  [TERRAIN_ROUTE_MATERIALS.red]: {
-    lightingModel: "Constant",
-    diffuseColor: "#FF3030",
-    blendMode: "Alpha",
-    cullMode: "None",
-    writesToDepthBuffer: false,
-    readsFromDepthBuffer: false,
-  },
   [TERRAIN_USER_MATERIAL]: {
     lightingModel: "Constant",
     diffuseColor: "#FFFFFF",
@@ -132,9 +101,9 @@ ViroMaterials.createMaterials({
     writesToDepthBuffer: false,
     readsFromDepthBuffer: false,
   },
-  [TERRAIN_ROUTE_UNDERLAY_MATERIAL]: {
+  [TERRAIN_MAP_ROUTE_MATERIAL]: {
     lightingModel: "Constant",
-    diffuseColor: "#FFFFFF",
+    diffuseColor: "#20D466",
     blendMode: "Alpha",
     cullMode: "None",
     writesToDepthBuffer: false,
@@ -277,7 +246,7 @@ function TerrainMapHologram({
             0.06,
           ])}
           thickness={0.045}
-          materials={TERRAIN_ROUTE_MATERIALS.green}
+          materials={TERRAIN_MAP_ROUTE_MATERIAL}
           opacity={1}
         />
       ))}
@@ -375,24 +344,6 @@ function TerrainHologram({
       ),
     [model, routeGeometry, routeOriginPosition, observerPosition],
   );
-  const continuousRoutePoints = useMemo<TerrainRouteLine>(() => {
-    const points: TerrainRouteLine = [];
-    for (const segment of routeSegments) {
-      for (const point of segment.points) {
-        const previous = points[points.length - 1];
-        if (
-          !previous ||
-          previous[0] !== point[0] ||
-          previous[1] !== point[1] ||
-          previous[2] !== point[2]
-        ) {
-          points.push(point);
-        }
-      }
-    }
-    return points;
-  }, [routeSegments]);
-
   const routeChevrons = useMemo(() => {
     const placements: Array<{
       position: TerrainVertex;
@@ -469,36 +420,6 @@ function TerrainHologram({
       opacity={0.96}
       viroTag="terrain-route-ar"
     >
-      {continuousRoutePoints.length >= 2 && (
-        <ViroPolyline
-          points={continuousRoutePoints.map(([east, elevation, north]) => [
-            east,
-            AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
-            north,
-          ])}
-          thickness={0.036}
-          materials={TERRAIN_ROUTE_UNDERLAY_MATERIAL}
-          opacity={0.42}
-          viroTag="terrain-route-continuity"
-        />
-      )}
-      {Array.from({ length: MAX_AR_ROUTE_SEGMENT_SLOTS }, (_, index) => {
-        const segment = routeSegments[index];
-        const points = segment?.points ?? HIDDEN_ROUTE_POINTS;
-        return (
-        <ViroPolyline
-          key={`terrain-route-ar-${index}`}
-          points={points.map(([east, elevation, north]) => [
-            east,
-            AR_ROUTE_GROUND_OFFSET + elevation + 0.035,
-            north,
-          ])}
-           thickness={segment?.thickness ?? 0.08}
-          materials={TERRAIN_ROUTE_MATERIALS[segment?.band ?? "green"]}
-          opacity={segment ? 1 : 0}
-        />
-        );
-      })}
       <ViroNode
         renderingOrder={25}
         opacity={0.9}
@@ -517,20 +438,20 @@ function TerrainHologram({
             viroTag={`terrain-route-chevron-${index}`}
           >
             <ViroBox
-              position={[0.035, 0, -0.075]}
+              position={[0.02, 0, -0.04]}
               rotation={[0, -28, 0]}
-              width={0.32}
-              height={0.035}
-              length={0.075}
+              width={0.18}
+              height={0.018}
+              length={0.04}
               materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
               shadowCastingBitMask={0}
             />
             <ViroBox
-              position={[0.035, 0, 0.075]}
+              position={[0.02, 0, 0.04]}
               rotation={[0, 28, 0]}
-              width={0.32}
-              height={0.035}
-              length={0.075}
+              width={0.18}
+              height={0.018}
+              length={0.04}
               materials={TERRAIN_ROUTE_CHEVRON_MATERIAL}
               shadowCastingBitMask={0}
             />
