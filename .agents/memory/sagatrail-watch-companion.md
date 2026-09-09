@@ -20,3 +20,14 @@ The iPhone remains authoritative for route progress, GPS freshness, safety, and 
 **Why:** The same turn can arrive through the live-state channel and the iPhone notification mirror, causing two wrist vibrations.
 
 **How to apply:** Keep the active-state guard around native turn haptics and re-arm the turn only after the distance leaves the approach window.
+
+Circular Watch complications use a single SF Symbol rather than stacked text:
+turn arrows for navigation, a location-slash symbol for stale GPS, a warning
+triangle for off-route, pause for inactive sessions, and a walking symbol as
+the active fallback.
+
+**Why:** Circular complication families have too little space for route text,
+and truncated distance/status strings are less glanceable than a state icon.
+
+**How to apply:** Keep distance, weather, and remaining-route text in modular
+or rectangular families; use the symbol-only templates for circular families.

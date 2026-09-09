@@ -1,5 +1,6 @@
 import ClockKit
 import Foundation
+import UIKit
 
 /// Small, glanceable route status for the active watch face.
 final class ComplicationController: NSObject, CLKComplicationDataSource {
@@ -94,14 +95,22 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
     case .utilitarianSmall, .utilitarianSmallFlat:
       return CLKComplicationTemplateUtilitarianSmallFlat(textProvider: line2)
     case .circularSmall:
-      return CLKComplicationTemplateCircularSmallStackText(
-        line1TextProvider: line1,
-        line2TextProvider: line2
+      return CLKComplicationTemplateCircularSmallImage(
+        imageProvider: imageProvider(
+          direction: direction,
+          active: active,
+          gpsFresh: gpsFresh,
+          offRoute: offRoute
+        )
       )
     case .graphicCircular:
-      return CLKComplicationTemplateGraphicCircularStackText(
-        line1TextProvider: line1,
-        line2TextProvider: line2
+      return CLKComplicationTemplateGraphicCircularImage(
+        imageProvider: imageProvider(
+          direction: direction,
+          active: active,
+          gpsFresh: gpsFresh,
+          offRoute: offRoute
+        )
       )
     case .graphicRectangular:
       return CLKComplicationTemplateGraphicRectangularStandardBody(
@@ -115,5 +124,34 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
         line2TextProvider: line2
       )
     }
+  }
+
+  private func imageProvider(
+    direction: String,
+    active: Bool,
+    gpsFresh: Bool,
+    offRoute: Bool
+  ) -> CLKImageProvider {
+    let symbolName: String
+    if active && !gpsFresh {
+      symbolName = "location.slash"
+    } else if offRoute {
+      symbolName = "exclamationmark.triangle.fill"
+    } else if !active {
+      symbolName = "pause.fill"
+    } else if direction.lowercased().contains("left") ||
+              direction.lowercased().contains("links") {
+      symbolName = "arrow.turn.up.left"
+    } else if direction.lowercased().contains("right") ||
+              direction.lowercased().contains("rechts") {
+      symbolName = "arrow.turn.up.right"
+    } else {
+      symbolName = "figure.walk"
+    }
+
+    let image = UIImage(systemName: symbolName)
+      ?? UIImage(systemName: "figure.walk")
+      ?? UIImage()
+    return CLKImageProvider(onePieceImage: image.withRenderingMode(.alwaysTemplate))
   }
 }
