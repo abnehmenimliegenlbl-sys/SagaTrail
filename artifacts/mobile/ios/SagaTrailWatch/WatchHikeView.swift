@@ -14,8 +14,11 @@ private enum WatchPalette {
 struct WatchHikeView: View {
   @EnvironmentObject private var hike: WatchHikeModel
   @State private var selectedPage = 0
+  @State private var pageCrownPosition = 0.0
   @State private var poiTextPage = 0.0
   private var copy: WatchCopy { WatchCopy(language: hike.state?.language ?? "de") }
+  private var pageCount: Int { hike.state?.poiStory == nil ? 4 : 5 }
+  private var lastPage: Double { Double(max(0, pageCount - 1)) }
 
   var body: some View {
     ScrollView {
@@ -51,6 +54,25 @@ struct WatchHikeView: View {
       .background(WatchPalette.surface.ignoresSafeArea())
       .tint(WatchPalette.red)
       .preferredColorScheme(.light)
+      .focusable(true)
+      .digitalCrownRotation(
+        $pageCrownPosition,
+        from: 0,
+        through: lastPage,
+        by: 1,
+        sensitivity: .medium,
+        isContinuous: false,
+        isHapticFeedbackEnabled: true
+      )
+      .onChange(of: selectedPage) { _, page in
+        pageCrownPosition = Double(min(max(page, 0), pageCount - 1))
+      }
+      .onChange(of: pageCrownPosition) { _, position in
+        let page = min(max(Int(position.rounded()), 0), pageCount - 1)
+        if selectedPage != page {
+          selectedPage = page
+        }
+      }
      .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
        Button(copy.t("cancel"), role: .cancel) {}
        Button(copy.t("confirmSOS"), role: .destructive, action: hike.confirmSOS)
