@@ -1,10 +1,10 @@
 ---
 name: Watch frontmost timeout
-description: Why SagaTrail must extend the watchOS frontmost timeout before its workout session is ready.
+description: How SagaTrail safely extends the watchOS frontmost timeout before its workout session is ready.
 ---
 
-Set the watchOS extended frontmost timeout immediately during Watch app initialization and refresh it from live-state transitions until the hike is finished.
+Set the watchOS extended frontmost timeout from the SwiftUI scene task after `WindowGroup` becomes active, and refresh it from live-state transitions until the hike is finished. Never access `WKExtension.shared()` from the SwiftUI `App.init()`.
 
-**Why:** The HealthKit workout session starts asynchronously after WatchConnectivity delivers the active hike. Without the startup guard, watchOS can return to the watch face within seconds before the workout keeps the app active. A later cleanup once removed both guards and reintroduced the issue.
+**Why:** The HealthKit workout session starts asynchronously after WatchConnectivity delivers the active hike. Without the startup guard, watchOS can return to the watch face too early. But accessing the extension singleton before the SwiftUI scene exists can terminate the Watch app during launch.
 
-**How to apply:** Preserve both lifecycle points when refactoring the Watch app entry point or hike model. Only release the live-state guard after the session reaches `finished`; do not rely solely on HealthKit authorization or workout startup timing.
+**How to apply:** Keep the initial assignment in a scene/view task and the later assignment in live-state handling. Only release the live-state guard after `finished`; do not move the initial access into `App.init()`.
