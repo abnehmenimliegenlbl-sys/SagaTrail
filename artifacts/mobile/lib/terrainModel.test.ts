@@ -5,6 +5,7 @@ import {
   buildLocalTerrainMesh,
   buildGeographicTerrainRouteDestination,
   buildGeographicTerrainRouteSegments,
+  projectGeographicPointOntoTerrain,
   routeOriginForAR,
   terrainVisibilityForPeak,
   type LocalTerrainModel,
@@ -93,6 +94,20 @@ test("builds a compass-aligned mesh only with a known observer height", () => {
   );
   assert.equal(buildLocalTerrainMesh(model({ observerElevationM: null }), 0), null);
   assert.equal(buildLocalTerrainMesh(model(), null), null);
+});
+
+test("projects a geographic point onto the exact rendered terrain triangle", () => {
+  const terrain = model();
+  const point = {
+    lat: terrain.center.lat + (50 * 180) / (Math.PI * 6_371_000),
+    lng: terrain.center.lng,
+  };
+  const projected = projectGeographicPointOntoTerrain(terrain, point);
+
+  assert.ok(projected);
+  assert.ok(Math.abs(projected[0]) < 0.0001);
+  assert.ok(Math.abs(projected[2] + 2) < 0.001);
+  assert.ok(Math.abs(projected[1] - 0.6) < 0.001);
 });
 
 const ROUTE_CENTER = { lat: 46, lng: 7 };

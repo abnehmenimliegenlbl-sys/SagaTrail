@@ -819,11 +819,30 @@ export async function computeElevationProfile(
 export async function computeLocalTerrainModel(
   center: LatLng,
   log: Logger,
-  options: { radiusM?: number; sectors?: number; rings?: number } = {},
+  options: {
+    radiusM?: number;
+    sectors?: number;
+    rings?: number;
+    focusBearings?: number[];
+  } = {},
 ): Promise<LocalTerrainModel | null> {
   const radiusM = Math.max(100, Math.min(5000, options.radiusM ?? 500));
   const sectors = Math.max(8, Math.min(72, Math.round(options.sectors ?? 12)));
   const rings = Math.max(4, Math.min(96, Math.round(options.rings ?? 6)));
+  const regularBearings = Array.from(
+    { length: sectors },
+    (_, sectorIndex) => (sectorIndex * 360) / sectors,
+  );
+  const bearings = Array.from(
+    new Map(
+      [
+        ...regularBearings,
+        ...(options.focusBearings ?? []).map(
+          (bearing) => ((bearing % 360) + 360) % 360,
+        ),
+      ].map((bearing) => [bearing.toFixed(5), bearing]),
+    ).values(),
+  ).sort((first, second) => first - second);
   const ringDistancesM = Array.from({ length: rings }, (_, index) => {
     if (index === 0) return 0;
     const progress = index / (rings - 1);
@@ -831,8 +850,7 @@ export async function computeLocalTerrainModel(
   });
 
   const rayResults = await Promise.all(
-    Array.from({ length: sectors }, async (_, sectorIndex) => {
-      const bearingDeg = (sectorIndex * 360) / sectors;
+    bearings.map(async (bearingDeg) => {
       const points = ringDistancesM.map((distanceM) =>
         destinationPoint(center, bearingDeg, distanceM),
       );

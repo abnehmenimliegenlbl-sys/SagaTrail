@@ -1314,6 +1314,7 @@ export default function LiveHike() {
     lat: number;
     lng: number;
     requestedAt: number;
+    focusBearingKey: string;
   } | null>(null);
 
   // OSM-Relation-ID aus Route-ID extrahieren (Format: "osm-NNNN")
@@ -1442,60 +1443,6 @@ export default function LiveHike() {
       cancelled = true;
     };
   }, [route?.id, navigationGeometry]);
-
-  // Lokales Terrainmodell observer-zentriert nachladen. Ein Modell bleibt für
-  // kurze GPS-Strecken bestehen; erst nach 120 m oder zwei Minuten wird neu
-  // gefragt. So erhält die AR-Ansicht reale lokale Daten ohne einen Request pro
-  // GPS-Fix zu erzeugen.
-  useEffect(() => {
-    if (!hasFreshGps || !livePos) return;
-    const previous = terrainModelRequestRef.current;
-    const needsDensePanoramaTerrain =
-      terrainModel != null && terrainModel.rings < 96;
-    if (
-      previous &&
-      !needsDensePanoramaTerrain &&
-      Date.now() - previous.requestedAt < 120_000 &&
-      haversineKm(previous, livePos) < 0.12
-    ) {
-      return;
-    }
-    const requestPosition = { lat: livePos.lat, lng: livePos.lng };
-    terrainModelRequestRef.current = {
-      ...requestPosition,
-      requestedAt: Date.now(),
-    };
-    fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        center: requestPosition,
-        radiusM: 5000,
-        sectors: 72,
-        rings: 96,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Lokales Terrain nicht verfügbar");
-        return response.json() as Promise<unknown>;
-      })
-      .then((data) => {
-        if (isLocalTerrainModel(data)) {
-          setTerrainModel(data);
-          return;
-        }
-        throw new Error("Ungültiges lokales Terrainmodell");
-      })
-      .catch(() => {
-        const activeRequest = terrainModelRequestRef.current;
-        if (
-          activeRequest?.lat === requestPosition.lat &&
-          activeRequest.lng === requestPosition.lng
-        ) {
-          terrainModelRequestRef.current = null;
-        }
-      });
-  }, [hasFreshGps, livePos?.lat, livePos?.lng, terrainModel?.rings]);
 
   // Wegoberflaechenpunkte einmalig laden, sobald die OSM-Relation-ID bekannt ist.
   // Schlaegt die Anfrage fehl, bleibt rawSurfacePoints leer — kein Fehlerfall.
@@ -4430,6 +4377,85 @@ export default function LiveHike() {
       ),
     [panoramaPois, hasFreshGps, livePos, liveAltitude],
   );
+  // Das reguläre 72-Strahlen-Modell hat in 2 km Entfernung rund 175 m Abstand
+  // zwischen zwei Strahlen. Deshalb werden die Richtungen echter Gipfel als
+  // zusätzliche DTM-Strahlen aufgenommen. Nur so liegen sichtbarer Gipfel und
+  // geografischer Marker auf derselben Mesh-Geometrie.
+  const terrainFocusPeaks = useMemo(
+    () =>
+      panoramaArCandidates
+        .slice()
+        .sort((first, second) => first.distanceKm - second.distanceKm)
+        .slice(0, 16),
+    [panoramaArCandidates],
+  );
+  const terrainFocusBearings = terrainFocusPeaks.map((peak) => peak.bearingDeg);
+  const terrainFocusBearingKey = terrainFocusPeaks
+    .map((peak) => peak.id)
+    .join(",");
+
+  // Lokales Terrainmodell observer-zentriert nachladen. Ein Modell bleibt für
+  // kurze GPS-Strecken bestehen; neue Gipfelrichtungen lösen jedoch eine
+  // präzise Neuberechnung aus.
+  useEffect(() => {
+    if (!hasFreshGps || !livePos) return;
+    const previous = terrainModelRequestRef.current;
+    const needsDensePanoramaTerrain =
+      terrainModel != null && terrainModel.rings < 96;
+    if (
+      previous &&
+      previous.focusBearingKey === terrainFocusBearingKey &&
+      !needsDensePanoramaTerrain &&
+      Date.now() - previous.requestedAt < 120_000 &&
+      haversineKm(previous, livePos) < 0.12
+    ) {
+      return;
+    }
+    const requestPosition = { lat: livePos.lat, lng: livePos.lng };
+    terrainModelRequestRef.current = {
+      ...requestPosition,
+      requestedAt: Date.now(),
+      focusBearingKey: terrainFocusBearingKey,
+    };
+    fetch(`${getApiBaseUrl() ?? ""}/api/terrain-surface`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        center: requestPosition,
+        radiusM: 5000,
+        sectors: 72,
+        rings: 96,
+        focusBearings: terrainFocusBearings,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Lokales Terrain nicht verfügbar");
+        return response.json() as Promise<unknown>;
+      })
+      .then((data) => {
+        if (isLocalTerrainModel(data)) {
+          setTerrainModel(data);
+          return;
+        }
+        throw new Error("Ungültiges lokales Terrainmodell");
+      })
+      .catch(() => {
+        const activeRequest = terrainModelRequestRef.current;
+        if (
+          activeRequest?.lat === requestPosition.lat &&
+          activeRequest.lng === requestPosition.lng &&
+          activeRequest.focusBearingKey === terrainFocusBearingKey
+        ) {
+          terrainModelRequestRef.current = null;
+        }
+      });
+  }, [
+    hasFreshGps,
+    livePos?.lat,
+    livePos?.lng,
+    terrainModel?.rings,
+    terrainFocusBearingKey,
+  ]);
   // Geländeansagen: 150 m vorher ankündigen, bei langen Abschnitten einmal
   // über den Rest informieren und 100 m vor dem Ende abschliessen. Abschnitte
   // ab 30 Prozent enthalten zusätzlich eine klare Sicherheitswarnung und

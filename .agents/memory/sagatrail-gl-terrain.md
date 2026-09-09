@@ -81,8 +81,8 @@ Geographic peak markers must be rendered inside the same rotated/scaled Three.js
 
 **How to apply:** Convert peak latitude/longitude relative to the terrain center into local east/north coordinates, apply the same terrain group rotation and scale, and place the marker base at the real or terrain-derived elevation. Keep SVG only for non-geographic guides and hit targets.
 
-For a visible peak pin inside the loaded terrain radius, project its geographic point onto the same triangulated radial DTM mesh as the terrain; use DTM elevation before OSM summit height.
+For a visible peak pin inside the loaded terrain radius, project its geographic point onto the exact vertices and triangle indices returned for the rendered radial DTM mesh; use DTM elevation before OSM summit height. Add the bearings of known nearby peaks as dedicated DTM rays alongside the regular sector rays.
 
-**Why:** OSM summit elevations, nearest-ray shortcuts, and interpolated geographic points can differ enough to make a correctly placed pin float behind, above, or below the rendered mountain ridge.
+**Why:** OSM summit elevations, nearest-ray shortcuts, and independently reconstructed triangles can differ from the rendered ridge. More importantly, a regular 5-degree radial grid is 166–209 m wide at 1.9–2.4 km and can render a summit on a neighboring ray even when its marker uses the true coordinate.
 
-**How to apply:** Find the bracketing radial quad and containing DTM triangle, interpolate its surface barycentrically, and keep OSM elevation only as fallback outside DTM coverage.
+**How to apply:** Build all focus rays with the same ring distances as the base grid, triangulate the combined sorted rays, then find the containing triangle in that returned mesh and interpolate its surface barycentrically. Keep OSM elevation only as fallback outside DTM coverage.

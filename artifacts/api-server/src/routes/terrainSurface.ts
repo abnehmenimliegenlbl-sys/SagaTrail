@@ -18,6 +18,10 @@ const BodySchema = z.object({
   radiusM: z.number().finite().min(100).max(5000).optional(),
   sectors: z.number().int().min(8).max(72).optional(),
   rings: z.number().int().min(4).max(96).optional(),
+  focusBearings: z
+    .array(z.number().finite().min(0).lt(360))
+    .max(16)
+    .optional(),
 });
 
 const SwissCoordinateSchema = z.tuple([
