@@ -28,3 +28,13 @@ mutate, story playback.
 flow for standalone navigation audio and watch notifications. Do not call a
 story-text weaving helper, add `navCue()` output to chapter text, or include
 route-specific directions in offline or online saga narration.
+
+The same geometry-derived cue source can also feed a visual AR turn banner;
+the banner should remain separate from saga narration and use route distance
+for its countdown when a live route projection is available.
+
+**Why:** Audio, Watch, and AR must agree on the next real turn instead of
+independently inferring different bends from GPS noise.
+
+**How to apply:** Pass the upcoming cue into the AR overlay as presentation
+data; do not duplicate turn detection inside the camera component.

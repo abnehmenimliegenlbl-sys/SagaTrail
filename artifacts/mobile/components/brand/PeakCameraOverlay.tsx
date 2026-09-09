@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   turnHintCopy: { flex: 1, gap: 2 },
   turnHintTitle: {
-    fontFamily: fonts.heading,
+    fontFamily: fonts.titleBold,
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.4,

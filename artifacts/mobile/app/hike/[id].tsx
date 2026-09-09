@@ -2529,6 +2529,36 @@ export default function LiveHike() {
       }));
   }, [hasFreshGps, livePos, navigationGeometry, turnCues]);
   const nextWatchNavigation = nextWatchNavigations[0] ?? null;
+  const nextArTurn = useMemo(() => {
+    if (!hasFreshGps || !livePos || turnCues.length === 0) return null;
+    const progress = navigationGeometry
+      ? fortschrittAufRoute(livePos, navigationGeometry)?.fraction
+      : null;
+    const upcoming = turnCues
+      .map((cue) => {
+        const routeDistanceM =
+          progress != null && totalKm > 0
+            ? Math.max(0, (cue.distanceFraction - progress) * totalKm * 1000)
+            : haversineKm(livePos, cue.point) * 1000;
+        return { cue, routeDistanceM };
+      })
+      .filter(
+        ({ cue }) =>
+          progress == null || cue.distanceFraction >= progress - 0.005,
+      )
+      .sort((a, b) => a.routeDistanceM - b.routeDistanceM)[0];
+    if (!upcoming || upcoming.routeDistanceM < 1) return null;
+    return {
+      direction:
+        upcoming.cue.direction === "links" ? ("left" as const) : ("right" as const),
+      distanceM: Math.round(upcoming.routeDistanceM),
+      title: t.turnNotifTitle,
+      label:
+        upcoming.cue.direction === "links"
+          ? t.turnNotifLeft
+          : t.turnNotifRight,
+    };
+  }, [hasFreshGps, livePos, navigationGeometry, t, totalKm, turnCues]);
   const watchRouteProgress = useMemo<number | null>(() => {
     if (!hasFreshGps || !livePos) return null;
     const projected = navigationGeometry
@@ -5683,6 +5713,7 @@ export default function LiveHike() {
           routeGeometry={navigationGeometry}
           observerPosition={livePos}
           heading={compassHeading}
+          nextTurn={nextArTurn}
           observerElevationM={hasFreshGps ? liveAltitude : null}
           strings={{
             title: t.panorama,
