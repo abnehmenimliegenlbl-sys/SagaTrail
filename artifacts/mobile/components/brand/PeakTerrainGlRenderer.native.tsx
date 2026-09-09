@@ -15,6 +15,7 @@ import {
   type LocalTerrainMesh,
   type LocalTerrainModel,
 } from "@/lib/terrainModel";
+import type { PanoramaGipfel } from "@/lib/panorama";
 import { loadNativeThreeTexture } from "@/lib/nativeThreeTexture";
 import type {
   PeakTerrainGlProps,
@@ -26,6 +27,7 @@ const TERRAIN_MINIMUM_RADIUS_M = 0;
 const CAMERA_FRAMING_MINIMUM_RADIUS_M = 300;
 const TERRAIN_HORIZONTAL_SCALE = 0.48;
 const TERRAIN_VERTICAL_SCALE = 1.05;
+const PEAK_MARKER_WORLD_HEIGHT = 2.2;
 
 type TextureBounds = {
   uMin: number;
@@ -290,6 +292,129 @@ function terrainCameraFraming(terrainModel: LocalTerrainModel): {
   };
 }
 
+function angularDifference(first: number, second: number): number {
+  return Math.abs(((first - second + 540) % 360) - 180);
+}
+
+function terrainElevationAt(
+  model: LocalTerrainModel,
+  bearingDeg: number,
+  distanceM: number,
+): number | null {
+  const ray = model.rays.reduce<LocalTerrainModel["rays"][number] | null>(
+    (closest, candidate) =>
+      !closest || angularDifference(candidate.bearingDeg, bearingDeg) <
+        angularDifference(closest.bearingDeg, bearingDeg)
+        ? candidate
+        : closest,
+    null,
+  );
+  if (!ray || angularDifference(ray.bearingDeg, bearingDeg) > 8) return null;
+  const samples = ray.samples
+    .slice()
+    .sort((first, second) => first.distanceM - second.distanceM);
+  if (samples.length === 0) return null;
+  if (distanceM <= samples[0].distanceM) return samples[0].elevationM;
+  for (let index = 1; index < samples.length; index += 1) {
+    const previous = samples[index - 1];
+    const next = samples[index];
+    if (distanceM > next.distanceM) continue;
+    const span = next.distanceM - previous.distanceM;
+    if (span <= 0) return next.elevationM;
+    const fraction = (distanceM - previous.distanceM) / span;
+    return previous.elevationM + (next.elevationM - previous.elevationM) * fraction;
+  }
+  return samples.at(-1)?.elevationM ?? null;
+}
+
+function peakWorldPosition(
+  model: LocalTerrainModel,
+  peak: PanoramaGipfel,
+): [number, number, number] | null {
+  const observerElevationM = model.observerElevationM;
+  if (observerElevationM == null) return null;
+  const earthRadiusM = 6_371_000;
+  const centerLatRad = (model.center.lat * Math.PI) / 180;
+  const northM =
+    ((peak.lat - model.center.lat) * Math.PI * earthRadiusM) / 180;
+  const eastM =
+    ((peak.lng - model.center.lng) *
+      Math.PI *
+      earthRadiusM *
+      Math.cos(centerLatRad)) /
+    180;
+  const distanceM = Math.hypot(northM, eastM);
+  if (distanceM > model.radiusM + 100) return null;
+  const bearingDeg =
+    ((Math.atan2(eastM, northM) * 180) / Math.PI + 360) % 360;
+  const elevationM =
+    peak.elevationM ?? terrainElevationAt(model, bearingDeg, distanceM);
+  if (elevationM == null) return null;
+  const angle = (bearingDeg * Math.PI) / 180;
+  const distanceWorld = distanceM * TERRAIN_WORLD_UNITS_PER_METRE;
+  return [
+    Math.sin(angle) * distanceWorld,
+    (elevationM - observerElevationM) * TERRAIN_WORLD_UNITS_PER_METRE,
+    -Math.cos(angle) * distanceWorld,
+  ];
+}
+
+function PeakMarkers({
+  terrainModel,
+  peaks,
+  selectedPeakId,
+  onPeakPress,
+}: {
+  terrainModel: LocalTerrainModel;
+  peaks: readonly PanoramaGipfel[];
+  selectedPeakId?: string | null;
+  onPeakPress?: (peakId: string) => void;
+}) {
+  const markers = useMemo(
+    () =>
+      peaks.flatMap((peak) => {
+        const position = peakWorldPosition(terrainModel, peak);
+        return position ? [{ peak, position }] : [];
+      }),
+    [peaks, terrainModel],
+  );
+
+  return (
+    <>
+      {markers.map(({ peak, position }) => {
+        const selected = peak.id === selectedPeakId;
+        const height = selected ? PEAK_MARKER_WORLD_HEIGHT * 1.2 : PEAK_MARKER_WORLD_HEIGHT;
+        return (
+          <group
+            key={`terrain-peak-${peak.id}`}
+            position={position}
+            onClick={() => onPeakPress?.(peak.id)}
+          >
+            <mesh position={[0, height / 2, 0]}>
+              <coneGeometry args={[selected ? 0.8 : 0.62, height, 4]} />
+              <meshBasicMaterial
+                color={selected ? "#B42318" : "#D92D20"}
+                depthTest
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+            <mesh position={[0, height + 0.18, 0]}>
+              <sphereGeometry args={[selected ? 0.24 : 0.18, 8, 6]} />
+              <meshBasicMaterial
+                color="#FFFFFF"
+                depthTest
+                depthWrite={false}
+                toneMapped={false}
+              />
+            </mesh>
+          </group>
+        );
+      })}
+    </>
+  );
+}
+
 function CameraRig({ terrainModel }: { terrainModel: LocalTerrainModel }) {
   const camera = useThree((state) => state.camera);
   const framing = useMemo(
@@ -315,10 +440,20 @@ function TerrainMesh({
   bearingDeg,
   textureMode,
   fallbackColor,
+  peaks = [],
+  selectedPeakId,
+  onPeakPress,
   onReady,
 }: Pick<
   PeakTerrainGlProps,
-  "terrainModel" | "bearingDeg" | "textureMode" | "fallbackColor" | "onReady"
+  | "terrainModel"
+  | "bearingDeg"
+  | "textureMode"
+  | "fallbackColor"
+  | "peaks"
+  | "selectedPeakId"
+  | "onPeakPress"
+  | "onReady"
 >) {
   const renderer = useThree((state) => state.gl);
   const onReadyRef = useRef(onReady);
@@ -561,6 +696,14 @@ function TerrainMesh({
           </mesh>
         );
       })}
+      <group rotation={rotation} scale={terrainScale} renderOrder={4}>
+        <PeakMarkers
+          terrainModel={terrainModel}
+          peaks={peaks}
+          selectedPeakId={selectedPeakId}
+          onPeakPress={onPeakPress}
+        />
+      </group>
     </>
   );
 }
@@ -571,6 +714,9 @@ export default function PeakTerrainGlRenderer({
   textureMode,
   backgroundColor,
   fallbackColor,
+  peaks = [],
+  selectedPeakId,
+  onPeakPress,
   onReady,
 }: PeakTerrainGlProps) {
   return (
@@ -591,6 +737,9 @@ export default function PeakTerrainGlRenderer({
           bearingDeg={bearingDeg}
           textureMode={textureMode}
           fallbackColor={fallbackColor}
+          peaks={peaks}
+          selectedPeakId={selectedPeakId}
+          onPeakPress={onPeakPress}
           onReady={onReady}
         />
       </Canvas>

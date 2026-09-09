@@ -10,7 +10,6 @@ import {
   View,
 } from "react-native";
 import Svg, {
-  Circle,
   G,
   Line,
   Rect,
@@ -665,14 +664,13 @@ export function PeakPanorama({
     visiblePeaks.find((peak) => peak.id === selectedPeakId) ??
     focusedPeak ??
     visiblePeaks[0];
-  const annotatedPeakIds = useMemo(
-    () =>
-      new Set([
-        ...visiblePeaks.slice(0, 3).map((peak) => peak.id),
-        ...(targetPeak ? [targetPeak.id] : []),
-      ]),
-    [panOffsetDeg, profileCandidateIds, targetPeak?.id],
-  );
+  const markedPeaks = useMemo(() => {
+    const selected = visiblePeaks.slice(0, 3);
+    if (targetPeak && !selected.some((peak) => peak.id === targetPeak.id)) {
+      selected.push(targetPeak);
+    }
+    return selected;
+  }, [targetPeak, visiblePeaks]);
   const profileEntries = useMemo(
     () =>
       profileCandidates.flatMap((peak) => {
@@ -954,6 +952,12 @@ export function PeakPanorama({
             textureMode={terrainTextureMode}
             backgroundColor={colors.glassBg}
             fallbackColor="transparent"
+            peaks={markedPeaks}
+            selectedPeakId={targetPeak?.id ?? null}
+            onPeakPress={(peakId) => {
+              hapticSelection();
+              setSelectedPeakId(peakId);
+            }}
             onReady={() => {
               setTerrainTextureLoadPercent(100);
               setTerrainGlReady(true);
@@ -1029,65 +1033,6 @@ export function PeakPanorama({
            <SvgText x="180" y="29" fill={colors.primary} fontSize="7" fontWeight="700" textAnchor="middle">
              BLICK
            </SvgText>
-           {panoramaMesh.peaks
-             .filter((meshPeak) => annotatedPeakIds.has(meshPeak.peak.id))
-             .map((meshPeak) => {
-               const { peakPoint, peak } = meshPeak;
-               const isSelected = targetPeak?.id === peak.id;
-               const markerY = Math.max(38, peakPoint.y - 8);
-               const label = peak.name.length > 17
-                 ? `${peak.name.slice(0, 16)}…`
-                 : peak.name;
-               const labelWidth = Math.max(54, Math.min(112, label.length * 5.4 + 14));
-               return (
-                 <G
-                   key={`map-peak-${peak.id}`}
-                   onPress={() => {
-                     hapticSelection();
-                     setSelectedPeakId(peak.id);
-                   }}
-                 >
-                   <Line
-                     x1={peakPoint.x}
-                     y1={markerY}
-                     x2={peakPoint.x}
-                     y2={peakPoint.y}
-                     stroke={colors.primary}
-                     strokeOpacity={0.9}
-                     strokeWidth="1"
-                     strokeDasharray="2 2"
-                   />
-                   <Circle
-                     cx={peakPoint.x}
-                     cy={peakPoint.y}
-                     r={isSelected ? 5 : 4}
-                     fill={colors.primary}
-                     stroke={colors.primaryForeground}
-                     strokeWidth="2"
-                   />
-                   <Rect
-                     x={peakPoint.x - labelWidth / 2}
-                     y={markerY - 20}
-                     width={labelWidth}
-                     height="15"
-                     rx="7.5"
-                     fill={colors.glassBgStrong}
-                     stroke={colors.primary}
-                     strokeWidth={isSelected ? "1.5" : "1"}
-                   />
-                   <SvgText
-                     x={peakPoint.x}
-                     y={markerY - 10}
-                     fill={colors.primary}
-                     fontSize="7"
-                     fontWeight="700"
-                     textAnchor="middle"
-                   >
-                     {label}
-                   </SvgText>
-                 </G>
-               );
-             })}
         </Svg>
          {terrainModel && !terrainGlReady && (
            <View

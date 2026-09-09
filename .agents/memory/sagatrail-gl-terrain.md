@@ -74,3 +74,9 @@ Keep the panorama detail layer as one static symmetric foreground set committed 
 **Why:** The user confirmed the static 64-tile version produced a visible partial sharpness improvement. Switching to bearing-dependent partial loading removed that improvement even though every requested texture reported successful loading.
 
 **How to apply:** Treat dynamic tile selection and progressive commits as a rejected optimization for this renderer. Use 32 square detail tiles (a 6×6 grid without the four corners), load without mipmaps, and dispose incomplete generations instead of showing them.
+
+Geographic peak markers must be rendered inside the same rotated/scaled Three.js terrain scene as the map surface; do not use visible screen-space SVG markers for map anchoring.
+
+**Why:** A screen-space overlay can look correct at one heading but drift independently from the geographic terrain while the panorama rotates or pans.
+
+**How to apply:** Convert peak latitude/longitude relative to the terrain center into local east/north coordinates, apply the same terrain group rotation and scale, and place the marker base at the real or terrain-derived elevation. Keep SVG only for non-geographic guides and hit targets.
