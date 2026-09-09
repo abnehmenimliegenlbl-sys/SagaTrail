@@ -285,6 +285,48 @@ function TerrainMapHologram({
   );
 }
 
+function routeHeading(from: TerrainVertex, to: TerrainVertex): number {
+  return (Math.atan2(-(to[2] - from[2]), to[0] - from[0]) * 180) / Math.PI;
+}
+
+function headingChangeDegrees(previous: number, next: number): number {
+  return Math.abs(((next - previous + 540) % 360) - 180);
+}
+
+function buildRouteDirectionIndicator(
+  points: TerrainRouteLine,
+): { position: TerrainVertex; rotationY: number } | null {
+  if (points.length < 2) return null;
+
+  const first = points[0];
+  const second = points[1];
+  const firstHeading = routeHeading(first, second);
+  let previousHeading = firstHeading;
+
+  for (let index = 2; index < points.length; index += 1) {
+    const from = points[index - 1];
+    const to = points[index];
+    if (Math.hypot(to[0] - from[0], to[2] - from[2]) < 0.02) continue;
+    const nextHeading = routeHeading(from, to);
+    if (headingChangeDegrees(previousHeading, nextHeading) >= 22) {
+      return { position: from, rotationY: nextHeading };
+    }
+    previousHeading = nextHeading;
+  }
+
+  const firstLength = Math.hypot(second[0] - first[0], second[2] - first[2]);
+  if (firstLength < 0.02) return null;
+  const lookAhead = 0.22;
+  return {
+    position: [
+      first[0] + ((second[0] - first[0]) / firstLength) * lookAhead,
+      first[1],
+      first[2] + ((second[2] - first[2]) / firstLength) * lookAhead,
+    ],
+    rotationY: firstHeading,
+  };
+}
+
 function TerrainHologram({
   model,
   routeGeometry,
