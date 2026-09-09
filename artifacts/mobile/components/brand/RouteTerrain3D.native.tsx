@@ -819,6 +819,7 @@ function Scene({
   const [flightTileVersion, setFlightTileVersion] = useState(0);
   const loadedFlightTiles = useRef(new Map<number, LoadedFlightTile>());
   const loadingFlightTiles = useRef(new Set<number>());
+  const failedFlightTiles = useRef(new Set<number>());
   const wantedFlightTiles = useRef(new Set<number>());
   const [revealedDistanceKm, setRevealedDistanceKm] = useState(0);
   const revealedDistanceRef = useRef(0);
@@ -1084,6 +1085,7 @@ function Scene({
       });
       loadedFlightTiles.current.clear();
       loadingFlightTiles.current.clear();
+      failedFlightTiles.current.clear();
       setFlightTileVersion((value) => value + 1);
     };
     if (mode === "walk") {
@@ -1123,6 +1125,7 @@ function Scene({
         continue;
       }
       loadingFlightTiles.current.add(index);
+      failedFlightTiles.current.delete(index);
       const tile = flightTiles[index];
       const load = async () => {
         let lastError: unknown;
@@ -1136,6 +1139,7 @@ function Scene({
               texture.dispose();
               return;
             }
+            failedFlightTiles.current.delete(index);
             loadedFlightTiles.current.set(index, {
               tile,
               texture,
@@ -1151,6 +1155,8 @@ function Scene({
           `[RouteTerrain3D] flight detail tile ${index} failed`,
           lastError,
         );
+        failedFlightTiles.current.add(index);
+        setFlightTileVersion((value) => value + 1);
       };
       void load().finally(() => loadingFlightTiles.current.delete(index));
     }
@@ -1175,8 +1181,13 @@ function Scene({
     [],
   );
 
+  const activeFlightTileReady =
+    mode !== "flight" ||
+    loadedFlightTiles.current.has(activeFlightTileIndex) ||
+    failedFlightTiles.current.has(activeFlightTileIndex);
+
   useFrame((_, delta) => {
-    if (mode !== "overview") {
+    if (mode !== "overview" && activeFlightTileReady) {
       const next = Math.min(
         routeLengthKm,
         revealedDistanceRef.current + delta * flightSpeedKmPerSecond,
@@ -1253,6 +1264,13 @@ function Scene({
       <color attach="background" args={["#101A16"]} />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
+      <mesh geometry={terrain} renderOrder={-10}>
+        <meshBasicMaterial
+          color="#263A31"
+          side={DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
       {textures.map((texture, index) => (
         <mesh key={tiles[index].key} geometry={tileTerrains[index]}>
           <meshStandardMaterial
