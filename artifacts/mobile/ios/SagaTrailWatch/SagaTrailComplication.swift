@@ -73,12 +73,16 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
 
     let line1 = brandText(status)
     let line2 = brandText(active && !gpsFresh ? "Warten" : (offRoute ? "Zurück" : turnDistance))
+    let temperatureText = temperature.flatMap { value -> String? in
+      guard value.isFinite, value >= -150, value <= 150 else { return nil }
+      return "\(Int(value.rounded()))° · \(remaining)"
+    }
     let body = brandText(
       active && !gpsFresh
         ? "Neues Signal abwarten"
         : arrivalAfterSunset
         ? "Nach Sonnenuntergang"
-        : temperature.map { "\(Int($0.rounded()))° · \(remaining)" } ?? remaining
+        : temperatureText ?? remaining
     )
 
     switch family {
@@ -93,7 +97,18 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
         body1TextProvider: line1,
         body2TextProvider: body
       )
-    case .utilitarianSmall, .utilitarianSmallFlat:
+    case .utilitarianSmall:
+      return CLKComplicationTemplateUtilitarianSmallSquare(
+        imageProvider: CLKImageProvider(
+          onePieceImage: symbolImage(
+            direction: direction,
+            active: active,
+            gpsFresh: gpsFresh,
+            offRoute: offRoute
+          )
+        )
+      )
+    case .utilitarianSmallFlat:
       return CLKComplicationTemplateUtilitarianSmallFlat(textProvider: line2)
     case .circularSmall:
       return CLKComplicationTemplateCircularSmallSimpleImage(

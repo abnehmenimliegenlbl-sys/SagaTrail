@@ -98,18 +98,104 @@ enum SagaTrailWatchProtocol {
     let updatedAt: Date
 
     static func decode(_ dictionary: [String: Any]) -> LiveState? {
-      guard let updated = (dictionary["updatedAt"] as? NSNumber)?.doubleValue else { return nil }
-      func number(_ key: String) -> Double { (dictionary[key] as? NSNumber)?.doubleValue ?? 0 }
-      func optionalNumber(_ key: String, from value: [String: Any]) -> Double? {
-        (value[key] as? NSNumber)?.doubleValue
+      func validNumber(
+        _ raw: Any?,
+        minimum: Double = -Double.greatestFiniteMagnitude,
+        maximum: Double = Double.greatestFiniteMagnitude
+      ) -> Double? {
+        guard let result = (raw as? NSNumber)?.doubleValue,
+              result.isFinite,
+              result >= minimum,
+              result <= maximum else {
+          return nil
+        }
+        return result
       }
+      func number(
+        _ key: String,
+        fallback defaultValue: Double = 0,
+        minimum: Double = 0,
+        maximum: Double = 1_000_000_000
+      ) -> Double? {
+        guard let raw = dictionary[key] else { return defaultValue }
+        return validNumber(raw, minimum: minimum, maximum: maximum)
+      }
+      func optionalNumber(
+        _ key: String,
+        from value: [String: Any],
+        minimum: Double = -Double.greatestFiniteMagnitude,
+        maximum: Double = Double.greatestFiniteMagnitude
+      ) -> Double? {
+        guard let raw = value[key] else { return nil }
+        return validNumber(raw, minimum: minimum, maximum: maximum)
+      }
+      guard let updated = validNumber(
+              dictionary["updatedAt"],
+              minimum: 0,
+              maximum: 32_503_680_000_000
+            ),
+            let elapsedSeconds = number("elapsedSeconds"),
+            let distanceMeters = number("distanceMeters"),
+            let ascentMeters = number("ascentMeters"),
+            let stepsValue = number("steps", maximum: 1_000_000_000),
+            stepsValue <= Double(Int.max) else {
+        return nil
+      }
+      let heartRateBpm = optionalNumber(
+        "heartRateBpm",
+        from: dictionary,
+        minimum: 0,
+        maximum: 500
+      )
+      let bearingDegrees = optionalNumber("bearingDegrees", from: dictionary)
+      let distanceToTurnMeters = optionalNumber(
+        "distanceToTurnMeters",
+        from: dictionary,
+        minimum: 0,
+        maximum: 1_000_000_000
+      )
+      let remainingDistanceMeters = optionalNumber(
+        "remainingDistanceMeters",
+        from: dictionary,
+        minimum: 0,
+        maximum: 1_000_000_000
+      )
+      let remainingSeconds = optionalNumber(
+        "remainingSeconds",
+        from: dictionary,
+        minimum: 0,
+        maximum: 1_000_000_000
+      )
+      let arrivalAtEpochMs = optionalNumber(
+        "arrivalAtEpochMs",
+        from: dictionary,
+        minimum: 0,
+        maximum: 32_503_680_000_000
+      )
+      let plannedAscentMeters = optionalNumber(
+        "plannedAscentMeters",
+        from: dictionary,
+        minimum: 0,
+        maximum: 1_000_000
+      )
+      let remainingAscentMeters = optionalNumber(
+        "remainingAscentMeters",
+        from: dictionary,
+        minimum: 0,
+        maximum: 1_000_000
+      )
       func navigationHint(_ value: [String: Any]) -> NavigationHint? {
         guard let direction = value["direction"] as? String,
               direction == "left" || direction == "right" else { return nil }
         return NavigationHint(
           direction: direction,
           bearingDegrees: optionalNumber("bearingDeg", from: value),
-          distanceMeters: optionalNumber("distanceM", from: value)
+          distanceMeters: optionalNumber(
+            "distanceM",
+            from: value,
+            minimum: 0,
+            maximum: 1_000_000_000
+          )
         )
       }
       let upcomingNavigations = (dictionary["upcomingNavigations"] as? [[String: Any]] ?? [])
@@ -120,7 +206,16 @@ enum SagaTrailWatchProtocol {
               direction == "up" || direction == "down",
               let gradePercent = (value["gradePct"] as? NSNumber)?.doubleValue,
               let remainingMeters = (value["remainingM"] as? NSNumber)?.doubleValue,
-              let startsInMeters = (value["startsInM"] as? NSNumber)?.doubleValue else {
+              let startsInMeters = (value["startsInM"] as? NSNumber)?.doubleValue,
+              gradePercent.isFinite,
+              gradePercent >= -1_000,
+              gradePercent <= 1_000,
+              remainingMeters.isFinite,
+              remainingMeters >= 0,
+              remainingMeters <= 1_000_000_000,
+              startsInMeters.isFinite,
+              startsInMeters >= 0,
+              startsInMeters <= 1_000_000_000 else {
           return nil
         }
         return TerrainSection(
@@ -135,7 +230,9 @@ enum SagaTrailWatchProtocol {
               let status = value["status"] as? String,
               status == "idle" || status == "active" || status == "overdue",
               let remainingSeconds = (value["remainingSec"] as? NSNumber)?.doubleValue,
+              remainingSeconds.isFinite,
               remainingSeconds >= 0,
+              remainingSeconds <= 1_000_000_000,
               let liveLinkActive = value["liveLinkActive"] as? Bool else {
           return nil
         }
@@ -178,12 +275,13 @@ enum SagaTrailWatchProtocol {
         guard let value = dictionary["offRoute"] as? [String: Any],
               let distanceMeters = (value["distanceM"] as? NSNumber)?.doubleValue,
               distanceMeters >= 0,
-              distanceMeters.isFinite else {
+              distanceMeters.isFinite,
+              distanceMeters <= 1_000_000_000 else {
           return nil
         }
         return OffRoute(
           distanceMeters: distanceMeters,
-          bearingToRouteDegrees: (value["bearingToRouteDeg"] as? NSNumber)?.doubleValue
+          bearingToRouteDegrees: optionalNumber("bearingToRouteDeg", from: value)
         )
       }()
       let weather: Weather? = {
@@ -194,7 +292,18 @@ enum SagaTrailWatchProtocol {
               let windGustsKmh = (value["windGustsKmh"] as? NSNumber)?.doubleValue,
               let precipitationMm = (value["precipitationMm"] as? NSNumber)?.doubleValue,
               let isThunderstorm = value["isThunderstorm"] as? Bool,
-              temperatureCelsius.isFinite else {
+              temperatureCelsius.isFinite,
+              temperatureCelsius >= -150,
+              temperatureCelsius <= 150,
+              windKmh.isFinite,
+              windKmh >= 0,
+              windKmh <= 1_000,
+              windGustsKmh.isFinite,
+              windGustsKmh >= 0,
+              windGustsKmh <= 1_000,
+              precipitationMm.isFinite,
+              precipitationMm >= 0,
+              precipitationMm <= 10_000 else {
           return nil
         }
         return Weather(
@@ -209,6 +318,9 @@ enum SagaTrailWatchProtocol {
       let daylight: Daylight? = {
         guard let value = dictionary["daylight"] as? [String: Any],
               let sunsetAtEpochMs = (value["sunsetAtEpochMs"] as? NSNumber)?.doubleValue,
+              sunsetAtEpochMs.isFinite,
+              sunsetAtEpochMs >= 0,
+              sunsetAtEpochMs <= 32_503_680_000_000,
               let arrivalAfterSunset = value["arrivalAfterSunset"] as? Bool else {
           return nil
         }
@@ -251,17 +363,17 @@ enum SagaTrailWatchProtocol {
         navigationDirection: dictionary["navigationDirection"] as? String ?? "straight",
         sessionStatus: sessionStatus,
         isHiking: isHiking,
-        elapsedSeconds: number("elapsedSeconds"), distanceMeters: number("distanceMeters"),
-        ascentMeters: number("ascentMeters"), steps: Int(number("steps")),
-        heartRateBpm: (dictionary["heartRateBpm"] as? NSNumber)?.doubleValue,
-        bearingDegrees: (dictionary["bearingDegrees"] as? NSNumber)?.doubleValue,
-        distanceToTurnMeters: (dictionary["distanceToTurnMeters"] as? NSNumber)?.doubleValue,
-        remainingDistanceMeters: (dictionary["remainingDistanceMeters"] as? NSNumber)?.doubleValue,
-        remainingSeconds: (dictionary["remainingSeconds"] as? NSNumber)?.doubleValue,
-        arrivalAtEpochMs: (dictionary["arrivalAtEpochMs"] as? NSNumber)?.doubleValue,
+        elapsedSeconds: elapsedSeconds, distanceMeters: distanceMeters,
+        ascentMeters: ascentMeters, steps: Int(stepsValue.rounded(.towardZero)),
+        heartRateBpm: heartRateBpm,
+        bearingDegrees: bearingDegrees,
+        distanceToTurnMeters: distanceToTurnMeters,
+        remainingDistanceMeters: remainingDistanceMeters,
+        remainingSeconds: remainingSeconds,
+        arrivalAtEpochMs: arrivalAtEpochMs,
         upcomingNavigations: upcomingNavigations,
-        plannedAscentMeters: (dictionary["plannedAscentMeters"] as? NSNumber)?.doubleValue,
-        remainingAscentMeters: (dictionary["remainingAscentMeters"] as? NSNumber)?.doubleValue,
+        plannedAscentMeters: plannedAscentMeters,
+        remainingAscentMeters: remainingAscentMeters,
         terrainSection: terrainSection,
         safetyCheckin: safetyCheckin,
         map: map,

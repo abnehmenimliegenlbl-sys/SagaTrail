@@ -116,9 +116,12 @@ final class WatchHikeModel: NSObject, ObservableObject {
       healthStatus = "HealthKit nicht verfügbar"
       return
     }
+    guard let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate),
+          let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+      healthStatus = "HealthKit-Datentypen nicht verfügbar"
+      return
+    }
     workoutAuthorizationInFlight = true
-    let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate)!
-    let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!
     healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [heartRate, activeEnergy]) { [weak self] success, error in
       Task { @MainActor in
         guard let self else { return }
@@ -254,7 +257,6 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
-      WKExtension.shared().isFrontmostTimeoutExtended = decoded.sessionStatus != "finished"
       syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()
@@ -317,18 +319,27 @@ final class WatchHikeModel: NSObject, ObservableObject {
     let remaining = state.remainingDistanceMeters.map { String(format: "%.1f km", $0 / 1000) } ?? "—"
     let status = state.offRoute.map { "ABWEG \(Int($0.distanceMeters)) m" }
       ?? (state.isHiking ? state.navigationDirection : "Pause")
-    UserDefaults.standard.set([
+    var snapshot: [String: Any] = [
       "direction": status,
       "turnDistance": turnDistance,
       "remaining": remaining,
       "active": state.isHiking,
       "gpsFresh": state.map?.gpsFresh == true && !isStale,
       "offRoute": state.offRoute != nil,
-      "weatherTemperature": state.weather?.temperatureCelsius,
-      "sunsetAt": state.daylight?.sunsetAt.timeIntervalSince1970,
       "arrivalAfterSunset": state.daylight?.arrivalAfterSunset ?? false,
       "updatedAt": state.updatedAt.timeIntervalSince1970
-    ], forKey: "sagatrail.complication.snapshot")
+    ]
+    if let temperature = state.weather?.temperatureCelsius {
+      snapshot["weatherTemperature"] = temperature
+    }
+    if let sunsetAt = state.daylight?.sunsetAt.timeIntervalSince1970 {
+      snapshot["sunsetAt"] = sunsetAt
+    }
+    guard PropertyListSerialization.propertyList(snapshot, isValidFor: .binary) else {
+      NSLog("[SagaTrail Watch] Rejected invalid complication snapshot")
+      return
+    }
+    UserDefaults.standard.set(snapshot, forKey: "sagatrail.complication.snapshot")
   }
 }
 
@@ -382,8 +393,10 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
   nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {}
   nonisolated func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,
                                   didCollectDataOf collectedTypes: Set<HKSampleType>) {
-    let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate)!
-    let energyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!
+    guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate),
+          let energyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+      return
+    }
     let heartRateStats = collectedTypes.contains(heartRateType)
       ? workoutBuilder.statistics(for: heartRateType)
       : nil
@@ -401,19 +414,26 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
     )
     let energy = energyStats?.sumQuantity()?.doubleValue(for: .kilocalorie())
     Task { @MainActor in
-      if let bpm {
+      if let bpm, bpm.isFinite, bpm >= 0, bpm <= 500 {
         let now = Date()
-        let shouldRelay = self.lastHeartRateRelayAt == nil ||
-          now.timeIntervalSince(self.lastHeartRateRelayAt!) >= 10
+        let shouldRelay = self.lastHeartRateRelayAt.map {
+          now.timeIntervalSince($0) >= 10
+        } ?? true
         if shouldRelay {
           self.lastHeartRateRelayAt = now
           self.relayHeartRate(bpm, measuredAt: now)
         }
         self.currentHeartRate = bpm
       }
-      if let average { self.workoutAverageHeartRate = average }
-      if let maximum { self.workoutMaxHeartRate = maximum }
-      if let energy { self.activeEnergyKcal = energy }
+      if let average, average.isFinite, average >= 0, average <= 500 {
+        self.workoutAverageHeartRate = average
+      }
+      if let maximum, maximum.isFinite, maximum >= 0, maximum <= 500 {
+        self.workoutMaxHeartRate = maximum
+      }
+      if let energy, energy.isFinite, energy >= 0, energy <= 1_000_000 {
+        self.activeEnergyKcal = energy
+      }
     }
   }
 
