@@ -26,8 +26,7 @@ const nativeAppProject = path.join(__dirname, '..', 'ios', 'SagaTrail.xcodeproj'
 
 if (!fs.existsSync(pbxproj)) {
   console.log('[eas-post-install] Pods.xcodeproj not found — skipping integrity check');
-  process.exit(0);
-}
+} else {
 
 let content = fs.readFileSync(pbxproj, 'utf8');
 
@@ -67,6 +66,7 @@ if (blockMatch[1] !== 'PBXProject') {
 }
 
 console.log(`[eas-post-install] OK: Pods.xcodeproj intact — rootObject ${rootUuid} is PBXProject`);
+}
 
 // Keep the embedded Watch target on the same build/version pair as the iPhone
 // target. EAS remote versioning updates the main target, but Xcode does not
