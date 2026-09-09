@@ -1067,7 +1067,7 @@ function Scene({
     revealedDistanceRef.current = initialDistance;
     setRevealedDistanceKm(initialDistance);
     lastWalkProgress.current = "";
-    if (mode === "walk") {
+    if (mode === "walk" || mode === "flight") {
       onWalkProgress({
         distanceM: 0,
         ascentM: 0,
@@ -1194,7 +1194,7 @@ function Scene({
       );
       revealedDistanceRef.current = next;
       setRevealedDistanceKm(next);
-      if (mode === "walk") {
+      if (mode === "walk" || mode === "flight") {
         const distanceM = Math.round(next * 1000);
         const ascentM = Math.round(valueAtDistance(ascentList, routeDistanceList, next));
         const progress: WalkProgress = {
@@ -1373,7 +1373,7 @@ export default function RouteTerrain3D({
   const selectMode = (nextMode: ViewMode) => {
     setMode(nextMode);
     setRunId((value) => value + 1);
-    if (nextMode !== "walk") {
+    if (nextMode === "overview") {
       setWalkProgress(null);
     } else {
       setWalkProgress({
@@ -1540,11 +1540,12 @@ export default function RouteTerrain3D({
             )}
           </View>
         )}
-        {mode === "walk" && model && walkProgress && (
+        {(mode === "walk" || mode === "flight") && model && walkProgress && (
           <View style={[styles.walkStatus, { top: insets.top }]}>
             <BackButton
               accessibilityLabel="Zurück zur Übersicht"
               onPress={onClose}
+              style={styles.walkBackButton}
             />
             <View style={styles.walkMetricRow}>
               <WalkMetric label="Gegangene Distanz" value={`${walkProgress.distanceM} m`} icon="map" />
@@ -1565,7 +1566,7 @@ export default function RouteTerrain3D({
             </View>
           </View>
         )}
-        {mode !== "walk" && model && !error && (
+        {mode === "overview" && model && !error && (
           <BackButton
             accessibilityLabel="Zurück zur App"
             onPress={onClose}
@@ -1648,6 +1649,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    flexDirection: "row",
+    alignItems: "flex-start",
     paddingTop: 8,
     paddingHorizontal: 10,
     paddingBottom: 10,
@@ -1666,12 +1669,18 @@ const styles = StyleSheet.create({
     left: 12,
     zIndex: 10,
   },
+  walkBackButton: {
+    flexShrink: 0,
+    marginTop: 1,
+    marginRight: 6,
+  },
   walkMetricRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "stretch",
     justifyContent: "space-between",
-    gap: 6,
-    marginTop: 5,
+    gap: 4,
+    marginTop: 0,
   },
   walkMetric: {
     flex: 1,
