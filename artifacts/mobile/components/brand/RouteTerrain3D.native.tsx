@@ -1438,7 +1438,7 @@ export default function RouteTerrain3D({
           />
         )}
         {model && loadProgress === 100 && !error && (
-          <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 6) }]}>
+          <View style={[styles.controls, { paddingBottom: 8 }]}>
             {(
               [
                 ["overview", "map", "Übersicht"],
