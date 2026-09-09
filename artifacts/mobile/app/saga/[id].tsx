@@ -190,7 +190,7 @@ export default function SagaDetail() {
     // Erste entdeckte Sage des Kantons registrieren (No-op, falls schon
     // eine registriert ist) — Grundlage der Inklusiv-Regel.
     registriereSagenEntdeckung(saga.canton, saga.id).catch(() => {});
-    router.replace(
+    router.push(
       routeId ? `/hike/${saga.id}?routeId=${routeId}` : `/hike/${saga.id}`
     );
   };

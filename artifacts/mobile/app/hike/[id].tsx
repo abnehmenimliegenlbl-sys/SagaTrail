@@ -3409,7 +3409,7 @@ export default function LiveHike() {
       motionSubscription = null;
       headingSubscription = null;
     };
-  }, []);
+  }, [locationPermissionRetry]);
 
   const stopTurnAudio = useCallback(async () => {
     const sound = turnSoundRef.current;

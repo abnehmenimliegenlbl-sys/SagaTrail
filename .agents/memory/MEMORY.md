@@ -50,6 +50,7 @@
 - [SagaTrail walk-to-trailhead hint](sagatrail-walk-to-start.md) — pre-hike banner is straight-line distance+compass to route start, deliberately not real pedestrian routing (that's a separate, bigger feature).
 - [Start choice GPS gate](sagatrail-start-choice-gps-gate.md) — story readiness must not set startReached; start-point/fastest-route choice depends on real GPS distance and off-route state.
 - [SagaTrail compass pointer](sagatrail-compass-pointer.md) — dedicated star-and-mountain needle rotates as one unit so the star always points outward; do not substitute SparkMountain.
+- [Compass permission retry](sagatrail-compass-permission-retry.md) — retry native heading after location permission resolves; the initial iOS watch can race the OS permission prompt.
 - [SagaTrail Kantonswappen-Assets](sagatrail-canton-wappen.md) — Wikimedia blockiert diese Sandbox komplett (429 überall); echte Wappen-SVGs kommen von GitHub `nzzdev/ch-canton-symbols`.
 - [SagaTrail step counter](sagatrail-step-counter.md) — expo-sensors Pedometer, per-hike only, silent no-op fallback when sensor unavailable (mirrors GPS-unavailable pattern).
 - [SagaTrail TTS OpenAI-Rueckfall](sagatrail-tts-openai-fallback.md) — wenn ALLE ElevenLabs-Stimmen scheitern (Kontingent/Key), springt OpenAI (gpt-audio, neutral, kein Akzent) automatisch ein.
