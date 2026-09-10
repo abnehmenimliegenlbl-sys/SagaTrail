@@ -399,17 +399,8 @@ struct WatchHikeView: View {
           systemImage: overdue ? "exclamationmark.triangle.fill" : "checkmark.shield"
         )
         Spacer()
-        if let checkin, active || overdue {
-          Text(formatCheckinTime(checkin.remainingSeconds)).monospacedDigit()
-        }
       }
-      HStack(spacing: 5) {
-        if let checkin, active || overdue {
-          Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
-            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
-            .lineLimit(1)
-        }
-        Spacer(minLength: 2)
+      VStack(spacing: 6) {
         Button {
           if active || overdue {
             hike.confirmSafetyCheckin()
@@ -422,12 +413,13 @@ struct WatchHikeView: View {
             systemImage: active || overdue ? "checkmark" : "timer"
           )
           .foregroundStyle(WatchPalette.red)
+          .frame(maxWidth: .infinity)
           .lineLimit(1)
           .minimumScaleFactor(0.65)
         }
         .buttonStyle(.plain)
         .controlSize(.mini)
-        .frame(maxWidth: .infinity, minHeight: 28)
+        .frame(maxWidth: .infinity, minHeight: 32)
         .background(WatchPalette.white, in: Capsule())
         .overlay(
           Capsule()
@@ -442,8 +434,21 @@ struct WatchHikeView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.mini)
         .tint(WatchPalette.red)
-        .frame(maxWidth: .infinity, minHeight: 28)
+        .frame(maxWidth: .infinity, minHeight: 32)
         .accessibilityLabel(copy.t("sos"))
+      }
+      .frame(maxWidth: .infinity)
+      if let checkin, active || overdue {
+        VStack(spacing: 2) {
+          Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
+            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.mutedWhite)
+            .lineLimit(1)
+          Text(formatCheckinTime(checkin.remainingSeconds))
+            .font(WatchType.metric)
+            .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.ink)
+            .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity)
       }
     }
     .font(WatchType.body)
