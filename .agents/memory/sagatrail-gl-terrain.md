@@ -51,6 +51,12 @@ Flight imagery quality depends on keeping the high-resolution detail layer enabl
 
 **How to apply:** Keep base and detail imagery active while investigating camera orientation separately. Do not ship a camera-orientation experiment together with a detail-layer removal.
 
+Die Flugkamera soll direkt dem lokalen Routenabschnitt folgen: weich hinter dem aktuellen Punkt, Zielpunkt voraus und nur ein begrenzter vertikaler Zielversatz aus der lokalen Steigung.
+
+**Why:** Die frühere Korridor-/Euler-Logik machte die Flugbewegung schwer nachvollziehbar und konnte Boden/Himmel invertieren. Eine lokale Route-Richtung ist stabiler und entspricht der gewünschten Nutzererfahrung.
+
+**How to apply:** Position und Ziel glätten, Detail-Luftbilder unverändert aktiv lassen; keine separate Korridorzentrierung, harte Rahmenkorrektur oder manuelle YXZ-Winkel hinzufügen.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.

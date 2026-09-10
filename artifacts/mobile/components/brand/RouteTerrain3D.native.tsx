@@ -268,18 +268,11 @@ function clampNumber(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function shortestAngleDelta(from: number, to: number): number {
-  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
-}
-
 type FlightCameraPlan = {
   cameraPosition: Vector3;
   target: Vector3;
   markerFocus: Vector3;
   horizontalDirection: Vector3;
-  slope: number;
-  cameraOutsideTerrain: boolean;
-  targetOutsideTerrain: boolean;
 };
 
 function flightCorridorCenter(
@@ -351,29 +344,23 @@ function flightCameraPlan(
     revealedDistanceKm,
   );
   if (!marker) return null;
-  const corridorCenter =
-    flightCorridorCenter(route, routeDistanceList, revealedDistanceKm) ??
-    marker;
-
-  // The ball follows the exact route, while the camera follows a broad,
-  // smoothed corridor centerline. Small bends and geometry noise therefore
-  // move the ball inside the frame instead of shaking the whole landscape.
-  const directionSampleDistanceKm = 0.32;
+  const routeLengthKm = routeDistanceList.at(-1) ?? revealedDistanceKm;
+  const directionSampleDistanceKm = 0.18;
   const behind =
-    flightCorridorCenter(
+    pointAtRouteDistance(
       route,
       routeDistanceList,
       Math.max(0, revealedDistanceKm - directionSampleDistanceKm),
-    ) ?? corridorCenter;
+    ) ?? marker;
   const ahead =
-    flightCorridorCenter(
+    pointAtRouteDistance(
       route,
       routeDistanceList,
       Math.min(
-        routeDistanceList.at(-1) ?? revealedDistanceKm,
+        routeLengthKm,
         revealedDistanceKm + directionSampleDistanceKm,
       ),
-    ) ?? corridorCenter;
+    ) ?? marker;
   const horizontalDirection = new Vector3(
     ahead.x - behind.x,
     0,
@@ -382,9 +369,9 @@ function flightCameraPlan(
   const horizontalDistance = horizontalDirection.length();
   if (horizontalDistance < 0.001) {
     horizontalDirection.set(
-      ahead.x - corridorCenter.x,
+      ahead.x - marker.x,
       0,
-      ahead.z - corridorCenter.z,
+      ahead.z - marker.z,
     );
     if (horizontalDirection.length() < 0.001) {
       horizontalDirection.set(0, 0, -1);
@@ -396,23 +383,21 @@ function flightCameraPlan(
     horizontalDirection.set(0, 0, -1);
   }
 
-  // Keep the flight frame independent of route grade. The route elevation is
-  // vertically exaggerated in world space; changing the camera height from
-  // that value makes an ascent-to-descent transition look like an overflight.
+  // Follow the route directly. The camera stays behind the current point and
+  // looks ahead along the local slope.
   const slope =
     (ahead.y - behind.y) / Math.max(1, horizontalDistance);
-  // The previous very low/close framing could put the camera below a nearby
-  // ridge when the route changes from a climb to a descent. Keep this below
-  // the original flight view, but leave a stable clearance above the route.
   const cameraDistance = 130;
   const cameraHeight = 68;
-  const desiredCamera = corridorCenter
+  const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
-  desiredCamera.y = corridorCenter.y + cameraHeight;
+  desiredCamera.y = marker.y + cameraHeight;
 
-  const desiredTarget = corridorCenter.clone();
-  desiredTarget.y = corridorCenter.y - 8;
+  const desiredTarget = marker
+    .clone()
+    .addScaledVector(horizontalDirection, 120);
+  desiredTarget.y = marker.y + clampNumber(slope * 120, -40, 40) - 6;
   const markerFocus = marker.clone();
   markerFocus.y += 8;
 
@@ -432,9 +417,6 @@ function flightCameraPlan(
     target: safeTarget.point,
     markerFocus,
     horizontalDirection: horizontalDirection.clone(),
-    slope,
-    cameraOutsideTerrain: safeCamera.outside,
-    targetOutsideTerrain: safeTarget.outside,
   };
 }
 
@@ -1285,10 +1267,6 @@ function Scene({
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
   const smoothedFlightTarget = useRef<Vector3 | null>(null);
-  const smoothedFlightRotation = useRef<{
-    yaw: number;
-    pitch: number;
-  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1698,93 +1676,21 @@ function Scene({
       const horizontalBlend = 1 - Math.exp(-delta * 1.7);
       const verticalBlend = 1 - Math.exp(-delta * 2.1);
       const targetBlend = 1 - Math.exp(-delta * 1.45);
-      const rotationBlend = 1 - Math.exp(-delta * 2);
       camera.position.x +=
         (cameraPlan.cameraPosition.x - camera.position.x) * horizontalBlend;
       camera.position.z +=
         (cameraPlan.cameraPosition.z - camera.position.z) * horizontalBlend;
       camera.position.y +=
         (cameraPlan.cameraPosition.y - camera.position.y) * verticalBlend;
-      // Position smoothing can otherwise cut across a hairpin and carry the
-      // camera over or in front of the aircraft. Keep a hard trailing plane:
-      // the camera must remain at least 45 m behind the current flight
-      // direction, regardless of how abruptly that direction changes.
-      const cameraOffsetFromTarget = camera.position
-        .clone()
-        .sub(cameraPlan.target);
-      const trailingDistance = -cameraOffsetFromTarget.dot(
-        cameraPlan.horizontalDirection,
-      );
-      const minimumTrailingDistance = 45;
-      if (trailingDistance < minimumTrailingDistance) {
-        camera.position.addScaledVector(
-          cameraPlan.horizontalDirection,
-          -(minimumTrailingDistance - trailingDistance),
-        );
-      }
       if (!smoothedFlightTarget.current) {
         smoothedFlightTarget.current = cameraPlan.target.clone();
       } else {
         smoothedFlightTarget.current.lerp(cameraPlan.target, targetBlend);
       }
-      // Let the exact-route ball move freely inside a stable central corridor.
-      // Only move the view target when the ball reaches the corridor boundary,
-      // so it remains visible without transferring every route kink to the
-      // camera.
-      const targetToMarker = cameraPlan.markerFocus
-        .clone()
-        .sub(smoothedFlightTarget.current);
-      const horizontalMarkerOffset = new Vector3(
-        targetToMarker.x,
-        0,
-        targetToMarker.z,
-      );
-      const horizontalMarkerDistance = horizontalMarkerOffset.length();
-      const horizontalFrameRadius = 14;
-      if (horizontalMarkerDistance > horizontalFrameRadius) {
-        smoothedFlightTarget.current.addScaledVector(
-          horizontalMarkerOffset.normalize(),
-          horizontalMarkerDistance - horizontalFrameRadius,
-        );
-      }
-      const verticalFrameRadius = 20;
-      smoothedFlightTarget.current.y = clampNumber(
-        smoothedFlightTarget.current.y,
-        cameraPlan.markerFocus.y - verticalFrameRadius,
-        cameraPlan.markerFocus.y + verticalFrameRadius,
-      );
-      const viewDirection = smoothedFlightTarget.current
-        .clone()
-        .sub(camera.position)
-        .normalize();
-      const desiredYaw = Math.atan2(-viewDirection.x, -viewDirection.z);
-      const desiredPitch = Math.asin(
-        clampNumber(viewDirection.y, -0.92, 0.92),
-      );
-      if (!smoothedFlightRotation.current) {
-        smoothedFlightRotation.current = {
-          yaw: desiredYaw,
-          pitch: desiredPitch,
-        };
-      } else {
-        smoothedFlightRotation.current.yaw +=
-          shortestAngleDelta(
-            smoothedFlightRotation.current.yaw,
-            desiredYaw,
-          ) * rotationBlend;
-        smoothedFlightRotation.current.pitch +=
-          (desiredPitch - smoothedFlightRotation.current.pitch) *
-          rotationBlend;
-      }
-      camera.rotation.set(
-        smoothedFlightRotation.current.pitch,
-        smoothedFlightRotation.current.yaw,
-        0,
-        "YXZ",
-      );
+      camera.lookAt(smoothedFlightTarget.current);
+      camera.updateMatrixWorld();
     } else if (mode !== "flight") {
       smoothedFlightTarget.current = null;
-      smoothedFlightRotation.current = null;
     }
   });
 
