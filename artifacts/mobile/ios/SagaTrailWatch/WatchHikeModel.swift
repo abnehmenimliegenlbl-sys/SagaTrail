@@ -450,19 +450,30 @@ extension WatchHikeModel: HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate
       "source": "watch"
     ])
     let session = WCSession.default
+    var latestSampleStored = false
     if session.activationState == .activated {
       do {
         // Keep the latest sample available even when the phone is
         // temporarily not reachable. The phone bridge consumes this
         // context and forwards it to the React Native Hike screen.
         try session.updateApplicationContext(envelope)
+        latestSampleStored = true
       } catch {
         NSLog("[SagaTrail Watch] Could not update heart-rate context: %@", error.localizedDescription)
       }
     }
     if session.isReachable {
-      session.sendMessage(envelope, replyHandler: nil)
-    } else {
+      let needsQueuedFallback = !latestSampleStored
+      session.sendMessage(envelope, replyHandler: nil) { error in
+        NSLog("[SagaTrail Watch] Could not send live heart rate: %@", error.localizedDescription)
+        if needsQueuedFallback {
+          session.transferUserInfo(envelope)
+        }
+      }
+    } else if !latestSampleStored {
+      // Use queued user-info only when the replaceable latest-value context
+      // could not be stored. Otherwise every 10-second sample would build a
+      // stale backlog while the phone is disconnected.
       session.transferUserInfo(envelope)
     }
   }

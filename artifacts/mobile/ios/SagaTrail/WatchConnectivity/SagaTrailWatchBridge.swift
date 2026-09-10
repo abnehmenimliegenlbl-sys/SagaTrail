@@ -93,6 +93,11 @@ final class SagaTrailCompanion: RCTEventEmitter {
     resolve(status)
   }
 
+  @objc func getLatestHeartRate(_ resolve: @escaping RCTPromiseResolveBlock,
+                                reject: @escaping RCTPromiseRejectBlock) {
+    resolve(connection.latestHeartRatePayload ?? NSNull())
+  }
+
   @objc private func handleWatchEvent(_ notification: Notification) {
     // WatchConnectivity delegate callbacks may arrive off the main queue.
     // React Native's event emitter must be called on the main queue or the
@@ -182,6 +187,8 @@ extension Notification.Name {
 private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   static let shared = SagaTrailPhoneWatchConnection()
   private let protocolVersion = 1
+  private let latestHeartRateLock = NSLock()
+  private var cachedLatestHeartRate: [String: Any]?
 
   private override init() {
     super.init()
@@ -203,6 +210,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       "watchAppInstalled": session?.isWatchAppInstalled ?? false,
       "phoneAuthoritative": true
     ]
+  }
+
+  var latestHeartRatePayload: [String: Any]? {
+    if WCSession.isSupported() {
+      cacheHeartRate(from: WCSession.default.receivedApplicationContext)
+    }
+    latestHeartRateLock.lock()
+    defer { latestHeartRateLock.unlock() }
+    return cachedLatestHeartRate
   }
 
   func sendLiveState(_ state: [String: Any]) throws {
@@ -555,8 +571,40 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
           let type = message["type"] as? String,
           ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
+    if type == "heartRate" {
+      guard cacheHeartRate(from: message) else { return }
+    }
     // JS / the phone owns the actual SOS action and any location sharing.
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
+  }
+
+  @discardableResult
+  private func cacheHeartRate(from message: [String: Any]) -> Bool {
+    guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
+          message["type"] as? String == "heartRate",
+          let payload = message["payload"] as? [String: Any],
+          let bpm = (payload["bpm"] as? NSNumber)?.doubleValue,
+          bpm.isFinite,
+          bpm > 0,
+          bpm <= 500,
+          let measuredAt = (payload["measuredAt"] as? NSNumber)?.int64Value,
+          measuredAt > 0 else {
+      return false
+    }
+    let latest: [String: Any] = [
+      "bpm": bpm,
+      "measuredAt": measuredAt,
+      "source": "watch"
+    ]
+    latestHeartRateLock.lock()
+    if let previous = (cachedLatestHeartRate?["measuredAt"] as? NSNumber)?.int64Value,
+       previous > measuredAt {
+      latestHeartRateLock.unlock()
+      return true
+    }
+    cachedLatestHeartRate = latest
+    latestHeartRateLock.unlock()
+    return true
   }
 
   private enum ProtocolError: LocalizedError {

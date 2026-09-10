@@ -132,6 +132,7 @@ type CompanionModule = {
   activate?: () => void;
   selectGarminDevice?: () => void;
   publishLiveState?: (state: HikeLiveState) => void | Promise<void>;
+  getLatestHeartRate?: () => Promise<HeartRateEvent | null>;
 };
 
 type HeartRateEvent = { bpm?: unknown; measuredAt?: unknown; source?: unknown };
@@ -392,11 +393,16 @@ export function subscribeToCompanionEvents(handlers: {
     durationMinutes?: 30 | 60 | 120;
   }) => void;
 }): () => void {
-  if (Platform.OS === "web" || !companionModule()) return () => {};
-  const heartRate = DeviceEventEmitter.addListener("SagaTrailCompanion.heartRate", (event: HeartRateEvent) => {
+  const module = companionModule();
+  if (Platform.OS === "web" || !module) return () => {};
+  let active = true;
+  let lastForwardedHeartRateAt = 0;
+  const forwardHeartRate = (event: HeartRateEvent | null | undefined) => {
+    if (!active) return;
     const bpm = finiteOrNull(event?.bpm);
     const measuredAt = finiteOrNull(event?.measuredAt) ?? Date.now();
-    if (bpm !== null && bpm > 0) {
+    if (bpm !== null && bpm > 0 && measuredAt > lastForwardedHeartRateAt) {
+      lastForwardedHeartRateAt = measuredAt;
       const source = event?.source === "phone"
         ? "phone"
         : event?.source === "garmin"
@@ -404,7 +410,16 @@ export function subscribeToCompanionEvents(handlers: {
           : "watch";
       handlers.onHeartRate({ bpm, measuredAt, source });
     }
-  });
+  };
+  const heartRate = DeviceEventEmitter.addListener(
+    "SagaTrailCompanion.heartRate",
+    forwardHeartRate,
+  );
+  // Register the event listener before activation, then explicitly replay the
+  // durable latest Watch sample. RCTEventEmitter does not buffer events that
+  // arrive while the Hike screen is unmounted or JS is still starting.
+  activateNativeCompanion(module);
+  void module.getLatestHeartRate?.().then(forwardHeartRate).catch(() => {});
   const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
     handlers.onSosRequest({ requestedAt: finiteOrNull(event?.requestedAt) ?? Date.now() });
   });
@@ -442,6 +457,7 @@ export function subscribeToCompanionEvents(handlers: {
     });
   });
   return () => {
+    active = false;
     heartRate.remove();
     sos.remove();
     command.remove();

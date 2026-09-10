@@ -9,4 +9,6 @@ RCT_EXTERN_METHOD(updateHikeLiveState:(NSDictionary *)state)
 RCT_EXTERN_METHOD(sendAlert:(NSDictionary *)alert)
 RCT_EXTERN_METHOD(getStatus:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(getLatestHeartRate:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
 @end

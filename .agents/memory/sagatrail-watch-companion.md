@@ -9,6 +9,12 @@ The iPhone remains authoritative for route progress, GPS freshness, safety, and 
 
 **How to apply:** Keep MapKit payloads bounded and validate every point; use `current: nil` whenever GPS is not fresh. Keep navigation, SOS, safety check-in, and notification mirroring functional when map or HealthKit data is unavailable.
 
+**Heart-rate return path:** Cache the latest validated Watch pulse natively on the iPhone and let JavaScript pull it only after installing its event listener. Apply monotonic timestamp deduplication so a delayed replay cannot overwrite a newer live sample.
+
+**Why:** `RCTEventEmitter` does not buffer WatchConnectivity events while the Hike screen is unmounted or JavaScript is starting. Activation can deliver `receivedApplicationContext` before `DeviceEventEmitter` is listening.
+
+**How to apply:** Use Watch `applicationContext` as the durable latest-value channel, `sendMessage` for low latency, and `transferUserInfo` only if context storage and direct delivery fail. Keep bridge emission on the main queue.
+
 **Live-state delivery:** Treat `updateApplicationContext` as the preferred cache, not the only transport. If WCSession is not activated yet or the context update fails, fall back to `sendMessage` when reachable and `transferUserInfo` otherwise; alert delivery alone does not prove that the live hike state arrived.
 
 **Why:** A Watch can receive an immediate alert while still displaying an older cached session state when the phone publishes during WCSession activation.
