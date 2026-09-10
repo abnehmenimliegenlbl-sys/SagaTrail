@@ -335,10 +335,41 @@ function clampFlightPointToTerrain(
   };
 }
 
+function terrainHeightNearPoint(
+  grid: TerrainGrid,
+  point: Vector3,
+  radiusM: number,
+): number | null {
+  let nearestDistance = Infinity;
+  let nearestHeight: number | null = null;
+  let highestNearby = -Infinity;
+  const radiusSquared = radiusM * radiusM;
+
+  for (const row of grid.grid) {
+    for (const cell of row) {
+      if (cell.elevationM == null) continue;
+      const world = toWorld(grid, cell.lat, cell.lng, cell.elevationM);
+      const dx = world.x - point.x;
+      const dz = world.z - point.z;
+      const distanceSquared = dx * dx + dz * dz;
+      if (distanceSquared < nearestDistance) {
+        nearestDistance = distanceSquared;
+        nearestHeight = world.y;
+      }
+      if (distanceSquared <= radiusSquared) {
+        highestNearby = Math.max(highestNearby, world.y);
+      }
+    }
+  }
+
+  return highestNearby > -Infinity ? highestNearby : nearestHeight;
+}
+
 function flightCameraPlan(
   route: Vector3[],
   routeDistanceList: number[],
   revealedDistanceKm: number,
+  grid: TerrainGrid,
   terrainBounds: Box3,
 ): FlightCameraPlan | null {
   const marker = pointAtRouteDistance(
@@ -392,15 +423,22 @@ function flightCameraPlan(
     (ahead.y - behind.y) / Math.max(1, horizontalDistance);
   const cameraDistance = 130;
   const cameraHeight = 68;
+  const nearbyTerrainHeight = terrainHeightNearPoint(grid, marker, 450);
   const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
-  desiredCamera.y = marker.y + cameraHeight;
+  desiredCamera.y = Math.max(
+    marker.y + cameraHeight,
+    (nearbyTerrainHeight ?? marker.y) + 90,
+  );
 
   const desiredTarget = marker
     .clone()
     .addScaledVector(horizontalDirection, 120);
   desiredTarget.y = marker.y + clampNumber(slope * 120, -40, 40) - 6;
+  if (nearbyTerrainHeight != null) {
+    desiredTarget.y = Math.max(desiredTarget.y, nearbyTerrainHeight - 20);
+  }
   const markerFocus = marker.clone();
   markerFocus.y += 8;
 
@@ -1725,6 +1763,7 @@ function Scene({
             route,
             routeDistanceList,
             revealedDistanceRef.current,
+            model.grid,
             terrainBounds,
           )
         : null;
