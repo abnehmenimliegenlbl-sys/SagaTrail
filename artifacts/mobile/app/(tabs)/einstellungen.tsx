@@ -44,6 +44,7 @@ import { getApiBaseUrl } from "@/lib/apiConfig";
 import { createAudioSound, type AudioSound } from "@/lib/audioPlayer";
 import { blobToTempFileUri } from "@/lib/narrationAudio";
 import { resolveLang } from "@/lib/storyContent";
+import { canSelectGarminDevice, selectGarminDevice } from "@/lib/watchCompanion";
 import { AgeTier, Archetype } from "@/types";
 
 const WEB_TOP = 67;
@@ -454,6 +455,32 @@ export default function Einstellungen() {
           </View>
         </Section>
 
+        {Platform.OS !== "web" && canSelectGarminDevice() && (
+          <Section title={t.sectionGeraete}>
+            <View style={[styles.deviceCard, { borderColor: colors.glassBorder }]}>
+              <View style={styles.deviceCardCopy}>
+                <Feather name="watch" size={18} color={colors.accent} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowLabel, { color: colors.foreground }]}>
+                    {t.garminLabel}
+                  </Text>
+                  <Text style={[styles.rowHint, { color: colors.mutedForeground }]}>
+                    {t.garminHint}
+                  </Text>
+                </View>
+              </View>
+              <PrimaryButton
+                label={t.garminConnectButton}
+                variant="secondary"
+                onPress={() => {
+                  hapticRigid();
+                  selectGarminDevice();
+                }}
+              />
+            </View>
+          </Section>
+        )}
+
         <Section title={t.sectionNotfallkontakt}>
           <TextInput
             value={contactName}
@@ -828,6 +855,17 @@ function RowButton({
 
 const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, marginBottom: 8 },
+  deviceCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    gap: 14,
+  },
+  deviceCardCopy: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",

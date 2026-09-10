@@ -127,10 +127,8 @@ import {
 } from "@/lib/turnNotifications";
 import {
   clearWatchStatus,
-  canSelectGarminDevice,
   publishHikeLiveState,
   prepareWatchCompanion,
-  selectGarminDevice,
   sendWatchSos,
   sendWatchStatus,
   subscribeToCompanionEvents,
@@ -5818,7 +5816,7 @@ export default function LiveHike() {
                   modalSize: "large" as const,
                   preview: (
                       <Text style={[styles.watchTilePulse, { color: colors.destructive }]}>
-                         {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Puls starten"}
+                         {heartRate ? `${Math.round(heartRate.bpm)} BPM` : "Warte auf Live-Puls"}
                     </Text>
                   ),
                   content: (
@@ -5826,7 +5824,6 @@ export default function LiveHike() {
                       ready={watchReady}
                       direction={compassHeading == null ? null : t.compassDirections[compassIndex(compassHeading)]}
                       remainingKm={Math.max(0, totalKm * (1 - timeProgress))}
-                      onConnectGarmin={canSelectGarminDevice() ? selectGarminDevice : undefined}
                       onEnable={() => {
                         void prepareWatchCompanion().then(setWatchReady);
                       }}
@@ -6947,19 +6944,17 @@ function WatchCompanionCard({
   ready,
   direction,
   remainingKm,
-  onConnectGarmin,
   onEnable,
 }: {
   ready: boolean | null;
   direction: string | null;
   remainingKm: number;
-  onConnectGarmin?: () => boolean;
   onEnable: () => void;
 }) {
   const colors = useColors();
   const enabled = ready === true;
   const status = enabled
-    ? "Watch-Mitteilungen aktiv"
+    ? "Watch-Verbindung aktiv"
     : ready === false
       ? "Watch-Mitteilungen nicht erlaubt"
       : "Watch-Begleitung wird geprüft";
@@ -7004,19 +6999,6 @@ function WatchCompanionCard({
       <Text style={[styles.watchHint, { color: colors.mutedForeground }]}>
         Nur Abbiegehinweise und SOS werden als native Mitteilungen auf die gekoppelte Watch gespiegelt. Regelmässige Status-Pushes mit Richtung oder Distanz sind deaktiviert.
       </Text>
-      {onConnectGarmin && (
-        <Pressable
-          onPress={() => {
-            hapticRigid();
-            onConnectGarmin();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Garmin Connect Mobile öffnen"
-          style={[styles.watchEnable, { borderColor: colors.glassBorder, alignSelf: "flex-start", marginTop: 10 }]}
-        >
-          <Text style={[styles.watchEnableText, { color: colors.foreground }]}>Garmin verbinden</Text>
-        </Pressable>
-      )}
     </Glass>
   );
 }

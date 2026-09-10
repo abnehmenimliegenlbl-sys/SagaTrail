@@ -457,7 +457,10 @@ export async function prepareWatchCompanion(): Promise<boolean> {
   // the Watch card; notification permission is only needed for the fallback
   // mirror on devices without the native protocol.
   const module = companionModule();
-  if (module) activateNativeCompanion(module);
+  if (module) {
+    activateNativeCompanion(module);
+    return true;
+  }
   if (permissionGranted != null) return permissionGranted;
   try {
     const current = await Notifications.getPermissionsAsync();

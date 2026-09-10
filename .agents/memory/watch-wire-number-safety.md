@@ -8,3 +8,5 @@ Validate every numeric live-state field at the Watch protocol boundary. Required
 **Why:** Swift traps when converting NaN, infinity, or an out-of-range `Double` to `Int`. On the Watch arm64_32 slice, `Int` is 32-bit, so current Unix milliseconds overflow immediately even though the same code is safe on arm64 iPhone.
 
 **How to apply:** Keep finite/range checks centralized in wire decoding, retain defensive checks for locally sourced HealthKit values, use the shared `Int64` Unix-millisecond helper for outbound timestamps, and test the arm64_32 Watch slice before native releases.
+
+The `Int64` timestamp correction was confirmed on 10 September 2026 to keep the physical Watch app stable.
