@@ -10,7 +10,7 @@ import WatchConnectivity
 final class SagaTrailCompanion: RCTEventEmitter {
   private let connection = SagaTrailPhoneWatchConnection.shared
   private let garminConnection = SagaTrailGarminConnection.shared
-  private var lastHeartRateMeasuredAt = 0
+  private var lastHeartRateMeasuredAt: Int64 = 0
 
   override init() {
     super.init()
@@ -94,18 +94,27 @@ final class SagaTrailCompanion: RCTEventEmitter {
   }
 
   @objc private func handleWatchEvent(_ notification: Notification) {
+    // WatchConnectivity delegate callbacks may arrive off the main queue.
+    // React Native's event emitter must be called on the main queue or the
+    // heart-rate event can be dropped before it reaches DeviceEventEmitter.
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { [weak self] in
+        self?.handleWatchEvent(notification)
+      }
+      return
+    }
     guard let envelope = notification.object as? [String: Any] else { return }
     let payload = envelope["payload"] as? [String: Any] ?? [:]
     switch envelope["type"] as? String {
     case "heartRate":
       // Exact JS event contract; only the watch originates this event.
-      let measuredAt = (payload["measuredAt"] as? NSNumber)?.intValue
-        ?? Int(Date().timeIntervalSince1970 * 1000)
+      let measuredAt = (payload["measuredAt"] as? NSNumber)?.int64Value
+        ?? Int64(Date().timeIntervalSince1970 * 1000)
       guard measuredAt > lastHeartRateMeasuredAt else { return }
       lastHeartRateMeasuredAt = measuredAt
       sendEvent(withName: "SagaTrailCompanion.heartRate", body: [
         "bpm": payload["bpm"] ?? 0,
-        "measuredAt": measuredAt,
+         "measuredAt": measuredAt,
         "source": "watch"
       ])
     case "sosConfirmed":
@@ -126,6 +135,12 @@ final class SagaTrailCompanion: RCTEventEmitter {
   }
 
   @objc private func handleGarminEvent(_ notification: Notification) {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { [weak self] in
+        self?.handleGarminEvent(notification)
+      }
+      return
+    }
     guard let envelope = notification.object as? [String: Any],
           let type = envelope["type"] as? String else { return }
     let payload = envelope["payload"] as? [String: Any] ?? [:]
