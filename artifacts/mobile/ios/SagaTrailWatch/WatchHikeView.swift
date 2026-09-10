@@ -632,9 +632,6 @@ struct WatchHikeView: View {
           Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
             .font(.system(size: 28, weight: .semibold))
             .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
-          Text(state.storyAudio?.isPlaying == true ? copy.t("audioPlaying") : copy.t("audioPhone"))
-            .font(WatchType.title)
-            .multilineTextAlignment(.center)
           if let storyAudio = state.storyAudio {
             Text(storyAudio.text)
               .font(WatchType.body)
@@ -642,10 +639,6 @@ struct WatchHikeView: View {
               .multilineTextAlignment(.center)
               .lineLimit(2)
           }
-          Text(copy.t("audioControlPhone"))
-            .font(WatchType.body)
-            .foregroundStyle(WatchPalette.mutedWhite)
-            .multilineTextAlignment(.center)
         }
       }
     }
@@ -932,8 +925,7 @@ private struct WatchCopy {
   private static let commonWords: [String: [String: String]] = [
     "de": [
       "navigation": "Navigation", "current": "Aktuell", "status": "Status", "poiStory": "Ortgeschichte",
-      "turnCrown": "Krone drehen", "audioPlaying": "Erzählung läuft",
-      "audioPhone": "Audio bereit auf dem iPhone", "audioControlPhone": "Audio wird am iPhone gesteuert",
+      "turnCrown": "Krone drehen",
       "noGps": "Kein GPS-Empfang", "noGpsDetail": "Navigation wartet auf ein neues Signal",
       "gpsAvailable": "GPS verfügbar", "turnLeft": "LINKS", "turnRight": "RECHTS",
       "turnAround": "WENDEN", "goStraight": "GERADEAUS",
@@ -942,8 +934,7 @@ private struct WatchCopy {
     ],
     "en": [
       "navigation": "Navigation", "current": "Now", "status": "Status", "poiStory": "Place story",
-      "turnCrown": "Turn crown", "audioPlaying": "Narration playing",
-      "audioPhone": "Audio ready on iPhone", "audioControlPhone": "Audio is controlled on iPhone",
+      "turnCrown": "Turn crown",
       "noGps": "No GPS reception", "noGpsDetail": "Navigation is waiting for a new signal",
       "gpsAvailable": "GPS available", "turnLeft": "LEFT", "turnRight": "RIGHT",
       "turnAround": "TURN AROUND", "goStraight": "STRAIGHT",
@@ -952,8 +943,7 @@ private struct WatchCopy {
     ],
     "fr": [
       "navigation": "Navigation", "current": "Maintenant", "status": "État", "poiStory": "Histoire du lieu",
-      "turnCrown": "Tournez la couronne", "audioPlaying": "Récit en cours",
-      "audioPhone": "Audio prêt sur l’iPhone", "audioControlPhone": "Audio contrôlé sur l’iPhone",
+      "turnCrown": "Tournez la couronne",
       "noGps": "Aucun signal GPS", "noGpsDetail": "La navigation attend un nouveau signal",
       "gpsAvailable": "GPS disponible", "turnLeft": "GAUCHE", "turnRight": "DROITE",
       "turnAround": "FAIRE DEMI-TOUR", "goStraight": "TOUT DROIT",
@@ -962,8 +952,7 @@ private struct WatchCopy {
     ],
     "it": [
       "navigation": "Navigazione", "current": "Ora", "status": "Stato", "poiStory": "Storia del luogo",
-      "turnCrown": "Gira la corona", "audioPlaying": "Narrazione in corso",
-      "audioPhone": "Audio pronto su iPhone", "audioControlPhone": "Audio controllato su iPhone",
+      "turnCrown": "Gira la corona",
       "noGps": "Nessun segnale GPS", "noGpsDetail": "La navigazione attende un nuovo segnale",
       "gpsAvailable": "GPS disponibile", "turnLeft": "SINISTRA", "turnRight": "DESTRA",
       "turnAround": "INVERSIONE", "goStraight": "DRITTO",
@@ -972,8 +961,7 @@ private struct WatchCopy {
     ],
     "es": [
       "navigation": "Navegación", "current": "Ahora", "status": "Estado", "poiStory": "Historia del lugar",
-      "turnCrown": "Gira la corona", "audioPlaying": "Narración en curso",
-      "audioPhone": "Audio listo en iPhone", "audioControlPhone": "Audio controlado en iPhone",
+      "turnCrown": "Gira la corona",
       "noGps": "Sin señal GPS", "noGpsDetail": "La navegación espera una nueva señal",
       "gpsAvailable": "GPS disponible", "turnLeft": "IZQUIERDA", "turnRight": "DERECHA",
       "turnAround": "GIRA", "goStraight": "RECTO",
@@ -982,8 +970,7 @@ private struct WatchCopy {
     ],
     "nl": [
       "navigation": "Navigatie", "current": "Nu", "status": "Status", "poiStory": "Plaatsverhaal",
-      "turnCrown": "Draai de kroon", "audioPlaying": "Vertelling speelt",
-      "audioPhone": "Audio klaar op iPhone", "audioControlPhone": "Audio wordt op iPhone bediend",
+      "turnCrown": "Draai de kroon",
       "noGps": "Geen GPS-signaal", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
       "gpsAvailable": "GPS beschikbaar", "turnLeft": "LINKS", "turnRight": "RECHTS",
       "turnAround": "OMKEREN", "goStraight": "RECHTDOOR",
@@ -992,8 +979,7 @@ private struct WatchCopy {
     ],
     "pt": [
       "navigation": "Navegação", "current": "Agora", "status": "Estado", "poiStory": "História do lugar",
-      "turnCrown": "Rode a coroa", "audioPlaying": "Narração em curso",
-      "audioPhone": "Áudio pronto no iPhone", "audioControlPhone": "Áudio controlado no iPhone",
+      "turnCrown": "Rode a coroa",
       "noGps": "Sem sinal GPS", "noGpsDetail": "A navegação aguarda um novo sinal",
       "gpsAvailable": "GPS disponível", "turnLeft": "ESQUERDA", "turnRight": "DIREITA",
       "turnAround": "INVERTER", "goStraight": "EM FRENTE",
