@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AdditiveBlending,
+  BackSide,
   BufferAttribute,
   BufferGeometry,
   Box3,
@@ -25,6 +26,7 @@ import {
   SRGBColorSpace,
   Texture,
   Vector3,
+  Mesh,
 } from "three";
 
 import { createTerrainArea } from "@workspace/api-client-react";
@@ -84,6 +86,51 @@ const walkSpeedKmPerSecond = 1;
 const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
 const flightSkyColor = "#8EA6AA";
+const flightSkyVertexShader = `
+  varying vec3 vWorldDirection;
+
+  void main() {
+    vWorldDirection = normalize((modelMatrix * vec4(position, 0.0)).xyz);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const flightSkyFragmentShader = `
+  varying vec3 vWorldDirection;
+
+  void main() {
+    vec3 direction = normalize(vWorldDirection);
+    float height = direction.y;
+
+    vec3 horizon = vec3(0.72, 0.80, 0.80);
+    vec3 zenith = vec3(0.19, 0.39, 0.60);
+    float skyBlend = smoothstep(-0.12, 0.72, height);
+    vec3 color = mix(horizon, zenith, skyBlend);
+
+    // Thin atmospheric haze keeps the horizon bright without making the
+    // background look like a flat UI color.
+    float horizonHaze = exp(-max(height, -0.05) * 8.0);
+    color = mix(color, vec3(0.86, 0.88, 0.85), horizonHaze * 0.22);
+
+    // Two low-frequency layers create very soft cloud banks. They are kept
+    // subtle so the route and terrain remain the visual focus.
+    vec2 cloudCoordinates = direction.xz / max(height + 0.16, 0.16);
+    float cloudWave =
+      sin(cloudCoordinates.x * 2.4 + sin(cloudCoordinates.y * 1.7)) * 0.5 +
+      sin(cloudCoordinates.y * 3.1 + sin(cloudCoordinates.x * 1.3)) * 0.3 +
+      sin((cloudCoordinates.x + cloudCoordinates.y) * 5.2) * 0.2;
+    float cloudBand = smoothstep(0.42, 0.82, cloudWave);
+    float cloudVisibility = smoothstep(-0.02, 0.5, height) * 0.12;
+    color = mix(color, vec3(0.94, 0.95, 0.92), cloudBand * cloudVisibility);
+
+    vec3 sunDirection = normalize(vec3(-0.38, 0.72, -0.52));
+    float sunAlignment = max(dot(direction, sunDirection), 0.0);
+    float sunGlow = pow(sunAlignment, 10.0) * 0.16;
+    float sunCore = pow(sunAlignment, 180.0) * 0.72;
+    color += vec3(1.0, 0.88, 0.66) * (sunGlow + sunCore);
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
 
 function stableUrlHash(value: string): string {
   let hash = 2166136261;
@@ -759,6 +806,35 @@ function FlightMarker({
   );
 }
 
+function FlightSky() {
+  const sky = useRef<Mesh>(null);
+  const camera = useThree((state) => state.camera);
+
+  useFrame(() => {
+    // Keep the procedural sky centered on the viewer so the horizon remains
+    // infinitely distant while the terrain and route continue to move.
+    sky.current?.position.copy(camera.position);
+  });
+
+  return (
+    <mesh
+      ref={sky}
+      renderOrder={-100}
+      frustumCulled={false}
+    >
+      <sphereGeometry args={[50_000, 32, 16]} />
+      <shaderMaterial
+        vertexShader={flightSkyVertexShader}
+        fragmentShader={flightSkyFragmentShader}
+        side={BackSide}
+        depthTest={false}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
 function pointAtRouteDistance(
   points: Vector3[],
   distances: number[],
@@ -1078,6 +1154,13 @@ function Scene({
   onWalkProgress: (progress: WalkProgress) => void;
 }) {
   const terrain = useMemo(() => buildTerrainGeometry(model.grid), [model.grid]);
+  const terrainBounds = useMemo(() => {
+    terrain.computeBoundingBox();
+    return (
+      terrain.boundingBox?.clone() ??
+      new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+    );
+  }, [terrain]);
   const tiles = useMemo(() => mapTiles(model.grid), [model.grid]);
   const tileTerrains = useMemo(
     () =>
@@ -1511,18 +1594,19 @@ function Scene({
         onFlightComplete();
       }
     }
-    const marker = pointAtRouteDistance(
-      route,
-      routeDistanceList,
-      revealedDistanceRef.current,
-    );
-    if (mode === "flight" && marker) {
+    const cameraPlan =
+      mode === "flight"
+        ? flightCameraPlan(
+            route,
+            routeDistanceList,
+            revealedDistanceRef.current,
+            terrainBounds,
+          )
+        : null;
+    if (cameraPlan) {
       camera.up.set(0, 1, 0);
-      camera.position.lerp(
-        new Vector3(marker.x + 75, marker.y + 90, marker.z + 120),
-        0.035,
-      );
-      camera.lookAt(marker);
+      camera.position.lerp(cameraPlan.cameraPosition, 0.05);
+      camera.lookAt(cameraPlan.target);
     }
   });
 
@@ -1554,7 +1638,11 @@ function Scene({
 
   return (
     <>
-      <color attach="background" args={["#101A16"]} />
+      {mode === "flight" && <FlightSky />}
+      <color
+        attach="background"
+        args={[mode === "flight" ? flightSkyColor : "#101A16"]}
+      />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
       <mesh geometry={terrain} renderOrder={-10}>
