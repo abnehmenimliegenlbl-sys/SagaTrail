@@ -57,6 +57,12 @@ Die Flugkamera soll direkt dem lokalen Routenabschnitt folgen: weich hinter dem 
 
 **How to apply:** Position und Ziel glätten, Detail-Luftbilder unverändert aktiv lassen; keine separate Korridorzentrierung, harte Rahmenkorrektur oder manuelle YXZ-Winkel hinzufügen.
 
+Bei der sichtbaren Terrain-Geometrie dürfen einzelne fehlende DTM-Zellen keine offenen Dreiecke erzeugen; fehlende Werte nur für den Renderer mit dem nächsten gültigen Nachbarn schließen.
+
+**Why:** Offene DTM-Zellen zeigen den prozeduralen Himmel durch das Modell. Dann schweben Routenlinien im Himmel und einzelne Luftbildflächen erscheinen abgeschnitten, obwohl die Kameraposition korrekt sein kann.
+
+**How to apply:** Autoritative Höhen- und Routendaten unverändert lassen; ausschließlich die gerenderte Mesh-Höhe auffüllen und Navigation/Marker nicht aus diesen Ersatzwerten ableiten.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.

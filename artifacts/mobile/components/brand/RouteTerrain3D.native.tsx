@@ -567,6 +567,54 @@ function toWorld(
   );
 }
 
+function renderTerrainElevations(
+  grid: TerrainGrid,
+): Array<Array<number | null>> {
+  const elevations = grid.grid.map((row) =>
+    row.map((cell) => cell.elevationM),
+  );
+  const maxRadius = Math.max(grid.rows, grid.columns);
+
+  for (let row = 0; row < grid.rows; row += 1) {
+    for (let column = 0; column < grid.columns; column += 1) {
+      if (elevations[row][column] != null) continue;
+
+      let nearest: number | null = null;
+      for (let radius = 1; radius <= maxRadius && nearest == null; radius += 1) {
+        const rowStart = Math.max(0, row - radius);
+        const rowEnd = Math.min(grid.rows - 1, row + radius);
+        const columnStart = Math.max(0, column - radius);
+        const columnEnd = Math.min(grid.columns - 1, column + radius);
+        for (let candidateRow = rowStart; candidateRow <= rowEnd; candidateRow += 1) {
+          for (
+            let candidateColumn = columnStart;
+            candidateColumn <= columnEnd;
+            candidateColumn += 1
+          ) {
+            if (
+              Math.max(
+                Math.abs(candidateRow - row),
+                Math.abs(candidateColumn - column),
+              ) !== radius
+            ) {
+              continue;
+            }
+            const candidate = elevations[candidateRow][candidateColumn];
+            if (candidate != null) {
+              nearest = candidate;
+              break;
+            }
+          }
+          if (nearest != null) break;
+        }
+      }
+      elevations[row][column] = nearest;
+    }
+  }
+
+  return elevations;
+}
+
 function buildTerrainGeometry(
   grid: TerrainGrid,
   textureBounds: MapBounds = grid.bounds,
@@ -575,6 +623,7 @@ function buildTerrainGeometry(
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
+  const elevations = renderTerrainElevations(grid);
   const clipToTextureBounds =
     tile != null &&
     tile.rowStart == null &&
@@ -582,11 +631,16 @@ function buildTerrainGeometry(
     tile.columnStart == null &&
     tile.columnEnd == null;
 
-  for (const row of grid.grid) {
-    for (const cell of row) {
-      // The position always comes from the service cell. A null elevation is
-      // retained only as an unused vertex; it never participates in a face.
-      const position = toWorld(grid, cell.lat, cell.lng, cell.elevationM ?? 0);
+  for (let rowIndex = 0; rowIndex < grid.grid.length; rowIndex += 1) {
+    const row = grid.grid[rowIndex];
+    for (let columnIndex = 0; columnIndex < row.length; columnIndex += 1) {
+      const cell = row[columnIndex];
+      const position = toWorld(
+        grid,
+        cell.lat,
+        cell.lng,
+        elevations[rowIndex][columnIndex] ?? 0,
+      );
       positions.push(position.x, position.y, position.z);
       const u =
         (cell.lng - textureBounds.west) /
@@ -630,7 +684,7 @@ function buildTerrainGeometry(
   };
 
   const valid = (row: number, column: number) =>
-    grid.grid[row][column].elevationM != null;
+    elevations[row][column] != null;
   for (let row = 0; row < grid.rows - 1; row++) {
     for (let column = 0; column < grid.columns - 1; column++) {
       if (
