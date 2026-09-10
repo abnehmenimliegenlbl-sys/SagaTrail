@@ -119,19 +119,18 @@ struct WatchHikeView: View {
       // remains in the compact top-left slot beside it.
       .padding(.top, 48)
 
-      if !isMapPresented {
-        GeometryReader { proxy in
-          let clockWidth = min(72, max(60, proxy.size.width * 0.38))
-          let clockHeight = min(30, max(26, proxy.size.height * 0.07))
-          RoundedRectangle(cornerRadius: clockHeight * 0.4)
-            .fill(WatchPalette.red)
-            .frame(width: clockWidth, height: clockHeight)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .padding(.top, 1)
-            .padding(.trailing, max(2, proxy.size.width * 0.01))
-        }
-        .allowsHitTesting(false)
+      GeometryReader { proxy in
+        let clockWidth = min(72, max(60, proxy.size.width * 0.38))
+        let clockHeight = min(30, max(26, proxy.size.height * 0.07))
+        RoundedRectangle(cornerRadius: clockHeight * 0.4)
+          .fill(WatchPalette.red)
+          .frame(width: clockWidth, height: clockHeight)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+          .padding(.top, 1)
+          .padding(.trailing, max(2, proxy.size.width * 0.01))
       }
+      .allowsHitTesting(false)
+      .zIndex(20)
 
       gpsIndicator
         .padding(.leading, 12)
