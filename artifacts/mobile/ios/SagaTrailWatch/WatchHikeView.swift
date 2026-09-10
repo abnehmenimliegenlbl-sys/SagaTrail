@@ -792,6 +792,12 @@ struct WatchHikeView: View {
 }
 
 private struct WatchRouteMap: View {
+  private struct GradeRun: Identifiable {
+    let id: Int
+    let band: String?
+    let coordinates: [CLLocationCoordinate2D]
+  }
+
   let map: SagaTrailWatchProtocol.RouteMap
   let offline: Bool
   let language: String
@@ -807,6 +813,25 @@ private struct WatchRouteMap: View {
     map.route.map {
       CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
     }
+  }
+
+  private var gradeRuns: [GradeRun] {
+    guard map.route.count >= 2 else { return [] }
+    var runs: [GradeRun] = []
+    var currentBand = map.route[0].gradeBand
+    var currentCoordinates = [coordinate(map.route[0]), coordinate(map.route[1])]
+    for index in 1..<(map.route.count - 1) {
+      let band = map.route[index].gradeBand
+      if band == currentBand {
+        currentCoordinates.append(coordinate(map.route[index + 1]))
+      } else {
+        runs.append(GradeRun(id: runs.count, band: currentBand, coordinates: currentCoordinates))
+        currentBand = band
+        currentCoordinates = [coordinate(map.route[index]), coordinate(map.route[index + 1])]
+      }
+    }
+    runs.append(GradeRun(id: runs.count, band: currentBand, coordinates: currentCoordinates))
+    return runs
   }
 
   private var center: CLLocationCoordinate2D {
@@ -872,12 +897,12 @@ private struct WatchRouteMap: View {
             .frame(height: height)
         } else {
           Map(position: $position) {
-            ForEach(Array(map.route.indices.dropLast()), id: \.self) { index in
-              MapPolyline(coordinates: [
-                coordinate(map.route[index]),
-                coordinate(map.route[index + 1]),
-              ])
-              .stroke(gradeColor(map.route[index].gradeBand), lineWidth: 4)
+            ForEach(gradeRuns) { run in
+              MapPolyline(coordinates: run.coordinates)
+                .stroke(
+                  gradeColor(run.band),
+                  style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                )
             }
             if let start = coordinates.first {
               Annotation(copy.t("startMarker"), coordinate: start) {
