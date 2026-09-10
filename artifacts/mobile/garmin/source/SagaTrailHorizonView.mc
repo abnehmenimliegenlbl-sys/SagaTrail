@@ -63,6 +63,9 @@ class SagaTrailHorizonView extends WatchUi.View {
             drawStatusFooter(dc, state);
         } else if (page == 2) {
             footer(dc, "MENU: CHECK-IN / PAUSE", HORIZON_MID);
+        } else if (page == 0 &&
+            value(state, :sessionStatus, "") == "finished") {
+            // The completion metrics already use the complete safe lower area.
         } else {
             footer(dc, "HOCH / RUNTER", HORIZON_MID);
         }
@@ -78,8 +81,8 @@ class SagaTrailHorizonView extends WatchUi.View {
             centered(dc, 55, "TELEFON", Graphics.FONT_MEDIUM, HORIZON_RED);
             centered(dc, 86, "VERBINDEN", Graphics.FONT_SMALL, HORIZON_INK);
             centered(dc, 116, "GARMIN CONNECT OEFFNEN", Graphics.FONT_XTINY, HORIZON_INK);
-            drawHorizon(dc, 148);
-            centered(dc, 188, "KEINE LIVE-DATEN", Graphics.FONT_XTINY, HORIZON_RED);
+            drawHorizon(dc, 132);
+            centered(dc, 174, "KEINE LIVE-DATEN", Graphics.FONT_XTINY, HORIZON_RED);
             return;
         }
 
@@ -109,11 +112,11 @@ class SagaTrailHorizonView extends WatchUi.View {
         centered(dc, 121, shortText(value(state, :nextInstruction, "Route folgen"),
             charsPerLine(dc)), Graphics.FONT_XTINY, HORIZON_INK);
 
-        drawHorizon(dc, 145);
-        drawRouteProgress(dc, 179, state);
+        drawHorizon(dc, 132);
+        drawRouteProgress(dc, 170, state);
 
-        drawBottomStat(dc, 190, true, formatTime(value(state, :elapsedS, 0)), "ZEIT");
-        drawBottomStat(dc, 190, false, formatTime(value(state, :remainingSeconds, 0)), "ETA");
+        drawBottomStat(dc, 181, true, formatTime(value(state, :elapsedS, 0)), "ZEIT");
+        drawBottomStat(dc, 181, false, formatTime(value(state, :remainingSeconds, 0)), "ETA");
 
         var offRoute = value(state, :offRoute, null);
         if (offRoute != null) {
@@ -129,13 +132,13 @@ class SagaTrailHorizonView extends WatchUi.View {
             Graphics.FONT_MEDIUM, HORIZON_INK);
         drawRouteProgress(dc, 93, state);
 
-        drawStatusMetricRow(dc, 102, "DISTANZ",
+        drawInlineMetricRow(dc, 108, "DISTANZ",
             formatDistance(value(state, :totalDistanceM, 0)),
             "AUFSTIEG", value(state, :ascentM, 0).format("%d") + " m");
-        drawStatusMetricRow(dc, 138, "SCHRITTE",
+        drawInlineMetricRow(dc, 137, "SCHRITTE",
             value(state, :steps, 0).format("%d"),
             "PULS", heartRateText(state));
-        drawStatusMetricRow(dc, 174, "ZEIT",
+        drawInlineMetricRow(dc, 166, "ZEIT",
             formatTime(value(state, :elapsedS, 0)),
             "ETA", formatTime(value(state, :remainingSeconds, 0)));
 
@@ -178,34 +181,34 @@ class SagaTrailHorizonView extends WatchUi.View {
             checkText = formatTime(value(checkin, :remainingSec, 0));
             checkLabel = safetyStatus(value(checkin, :status, ""));
         }
-        centered(dc, 70, checkText, Graphics.FONT_MEDIUM, HORIZON_INK);
-        centered(dc, 99, checkLabel, Graphics.FONT_XTINY, checkColor);
+        centered(dc, 68, checkText, Graphics.FONT_MEDIUM, HORIZON_INK);
+        centered(dc, 94, checkLabel, Graphics.FONT_XTINY, checkColor);
         dc.setColor(HORIZON_LIGHT, HORIZON_PAPER);
-        dc.drawLine(safeInset(dc) + 28, 122, dc.getWidth() - safeInset(dc) - 28, 122);
+        dc.drawLine(safeInset(dc) + 28, 113, dc.getWidth() - safeInset(dc) - 28, 113);
 
         var offRoute = value(state, :offRoute, null);
         var alertText = value(state, :alertText, "");
         var safetyText = value(state, :safetyText, "");
         if (offRoute != null) {
-            centered(dc, 132, "ABWEG", Graphics.FONT_SMALL, HORIZON_RED);
-            centered(dc, 155, formatDistance(value(offRoute, :distanceM, 0)) +
+            centered(dc, 121, "ABWEG", Graphics.FONT_SMALL, HORIZON_RED);
+            centered(dc, 144, formatDistance(value(offRoute, :distanceM, 0)) +
                 " ZUR ROUTE", Graphics.FONT_XTINY, HORIZON_INK);
         } else if (alertText != "") {
-            centered(dc, 134, "HINWEIS", Graphics.FONT_XTINY, HORIZON_RED);
-            centered(dc, 154, shortText(alertText, charsPerLine(dc)),
+            centered(dc, 123, "HINWEIS", Graphics.FONT_XTINY, HORIZON_RED);
+            centered(dc, 143, shortText(alertText, charsPerLine(dc)),
                 Graphics.FONT_XTINY, HORIZON_INK);
         } else if (safetyText != "") {
-            centered(dc, 134, "SICHERHEIT", Graphics.FONT_XTINY, HORIZON_RED);
-            centered(dc, 154, shortText(safetyText, charsPerLine(dc)),
+            centered(dc, 123, "SICHERHEIT", Graphics.FONT_XTINY, HORIZON_RED);
+            centered(dc, 143, shortText(safetyText, charsPerLine(dc)),
                 Graphics.FONT_XTINY, HORIZON_INK);
         } else {
-            centered(dc, 145, "KEINE AKUTE WARNUNG",
+            centered(dc, 135, "KEINE AKUTE WARNUNG",
                 Graphics.FONT_XTINY, HORIZON_GREEN);
         }
 
         dc.setColor(HORIZON_RED, HORIZON_PAPER);
-        dc.drawLine(safeInset(dc) + 14, 180, dc.getWidth() - safeInset(dc) - 14, 180);
-        centered(dc, 187, confirmSos ? "NOCHMALS SELECT" : "SELECT 2x: SOS",
+        dc.drawLine(safeInset(dc) + 14, 163, dc.getWidth() - safeInset(dc) - 14, 163);
+        centered(dc, 171, confirmSos ? "NOCHMALS SELECT" : "SELECT 2x: SOS",
             Graphics.FONT_XTINY, HORIZON_RED);
     }
 
@@ -234,9 +237,9 @@ class SagaTrailHorizonView extends WatchUi.View {
 
         centered(dc, 122, shortText(value(story, :name, "ORT"), charsPerLine(dc)),
             Graphics.FONT_SMALL, HORIZON_RED);
-        drawWrapped(dc, 151, value(story, :text, ""), 2, HORIZON_INK);
+        drawWrapped(dc, 145, value(story, :text, ""), 2, HORIZON_INK);
         if (value(story, :imageUrl, "") != "") {
-            centered(dc, 188, "FOTO AUF DEM TELEFON",
+            centered(dc, 177, "FOTO AUF DEM TELEFON",
                 Graphics.FONT_XTINY, HORIZON_MID);
         }
     }
@@ -345,17 +348,13 @@ class SagaTrailHorizonView extends WatchUi.View {
             Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
-    function drawStatusMetricRow(dc, y, leftLabel, leftValue, rightLabel, rightValue) {
+    function drawInlineMetricRow(dc, y, leftLabel, leftValue, rightLabel, rightValue) {
         var inset = safeInset(dc) + 8;
-        dc.setColor(HORIZON_MID, HORIZON_PAPER);
-        dc.drawText(inset, y, Graphics.FONT_XTINY, leftLabel,
-            Graphics.TEXT_JUSTIFY_LEFT);
-        dc.drawText(dc.getWidth() - inset, y, Graphics.FONT_XTINY, rightLabel,
-            Graphics.TEXT_JUSTIFY_RIGHT);
         dc.setColor(HORIZON_INK, HORIZON_PAPER);
-        dc.drawText(inset, y + 17, Graphics.FONT_XTINY, leftValue,
+        dc.drawText(inset, y, Graphics.FONT_XTINY, leftLabel + " " + leftValue,
             Graphics.TEXT_JUSTIFY_LEFT);
-        dc.drawText(dc.getWidth() - inset, y + 17, Graphics.FONT_XTINY, rightValue,
+        dc.drawText(dc.getWidth() - inset, y, Graphics.FONT_XTINY,
+            rightLabel + " " + rightValue,
             Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
@@ -531,7 +530,7 @@ class SagaTrailHorizonView extends WatchUi.View {
 
     function footer(dc, text, color) {
         dc.setColor(color, HORIZON_PAPER);
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 48,
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 58,
             Graphics.FONT_XTINY, shortText(text, charsPerLine(dc)),
             Graphics.TEXT_JUSTIFY_CENTER);
     }

@@ -514,3 +514,17 @@ mtime_ms = 1789056559472
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/eb411bdf-a968-4f9c-9ab0-437050d8dee2/28543737-ca4d-4981-b4b6-0824dd2b5eab"
 storage_version_token = "1789056567566952"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xgpB4GL5h-wksAn43xhMJ"
+uri = "file://artifacts/mobile/garmin/bin/SagaTrail-prg-round-safe-364f9dfe.zip"
+type = "unspecified"
+title = "SagaTrail Garmin PRG – Round Safe 364f9dfe"
+description = "Neu signierter Build mit einzeiligen STATUS-Messwerten und deutlich höherer Fußzeile auf allen Seiten."
+logical_id = "531a3790-0266-45b0-8564-9b1401d7786d"
+content_hash = "sha256:3eb4dab361894d2b7d96211c67c2f46bb67094726b908c470a1152cb9dc3dfb4"
+size = 54007
+mtime_ms = 1789056746775
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:3a1ec17c-70ab-4dbe-b79c-0ea8465dc34f/531a3790-0266-45b0-8564-9b1401d7786d/036d3ac7-0421-4c6f-b196-db88ad76ef56"
+storage_version_token = "1789056755669934"
+content_type = "application/octet-stream"
