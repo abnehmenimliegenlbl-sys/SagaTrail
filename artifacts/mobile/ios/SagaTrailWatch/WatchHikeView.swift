@@ -96,33 +96,36 @@ struct WatchHikeView: View {
         .padding(.top, 3)
 
       if isMapPresented, let state = hike.state, let map = state.map {
-        ZStack(alignment: .topLeading) {
-          WatchRouteMap(
-            map: map,
-            offline: !hike.isReachable || hike.isStale,
-            language: state.language,
-            height: 190,
-            showControls: true
-          )
-          .padding(6)
-          .background(WatchPalette.surface.ignoresSafeArea())
-          .overlay(alignment: .topLeading) {
-            Button {
-              isMapPresented = false
-            } label: {
-              Image(systemName: "xmark")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(WatchPalette.black)
-                .frame(width: 26, height: 26)
-                .background(WatchPalette.white, in: Circle())
-                .overlay(
-                  Circle()
-                    .stroke(WatchPalette.red, lineWidth: 1)
-                )
+        GeometryReader { proxy in
+          ZStack(alignment: .topLeading) {
+            WatchRouteMap(
+              map: map,
+              offline: !hike.isReachable || hike.isStale,
+              language: state.language,
+              height: max(0, proxy.size.height - 12),
+              showControls: true
+            )
+            .padding(6)
+            .background(WatchPalette.surface.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+              Button {
+                isMapPresented = false
+              } label: {
+                Image(systemName: "xmark")
+                  .font(.system(size: 10, weight: .bold))
+                  .foregroundStyle(WatchPalette.black)
+                  .frame(width: 26, height: 26)
+                  .background(WatchPalette.white, in: Circle())
+                  .overlay(
+                    Circle()
+                      .stroke(WatchPalette.red, lineWidth: 1)
+                  )
+              }
+              .buttonStyle(.plain)
+              .padding(10)
             }
-            .buttonStyle(.plain)
-            .padding(10)
           }
+          .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(WatchPalette.surface.ignoresSafeArea())
