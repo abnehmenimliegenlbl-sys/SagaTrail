@@ -230,6 +230,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private let actionLock = NSLock()
   private var actionHandler: (([String: Any]) -> Void)?
   private var pendingActions: [[String: Any]] = []
+  private var deliveredActionKeys: [String] = []
 
   private override init() {
     super.init()
@@ -671,7 +672,27 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
       guard cacheHeartRate(from: message) else { return false }
       NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
     } else {
+      guard claimAction(message) else { return true }
       deliverAction(message)
+    }
+    return true
+  }
+
+  private func claimAction(_ message: [String: Any]) -> Bool {
+    let payload = message["payload"] as? [String: Any] ?? [:]
+    let timestamp = (message["timestamp"] as? NSNumber)?.int64Value ?? 0
+    let requestedAt = (payload["requestedAt"] as? NSNumber)?.int64Value ?? timestamp
+    let action = payload["action"] as? String ?? ""
+    let key = "\(message["type"] as? String ?? ""):\(action):\(requestedAt)"
+
+    actionLock.lock()
+    defer { actionLock.unlock() }
+    if deliveredActionKeys.contains(key) {
+      return false
+    }
+    deliveredActionKeys.append(key)
+    if deliveredActionKeys.count > 50 {
+      deliveredActionKeys.removeFirst(deliveredActionKeys.count - 50)
     }
     return true
   }

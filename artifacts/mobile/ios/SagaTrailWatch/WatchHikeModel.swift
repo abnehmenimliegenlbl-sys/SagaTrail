@@ -96,8 +96,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func sendToPhone(_ message: [String: Any]) {
     let session = WCSession.default
-    guard session.isReachable else {
-      session.transferUserInfo(message)
+    // Safety/SOS commands are durable actions: always enqueue a background
+    // transfer, then additionally use the low-latency channel when reachable.
+    // The phone deduplicates both deliveries by action + requestedAt.
+    session.transferUserInfo(message)
+    guard session.activationState == .activated, session.isReachable else {
       return
     }
     session.sendMessage(message, replyHandler: { reply in
@@ -106,8 +109,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
         NSLog("[SagaTrail Watch] Phone rejected command")
       }
     }) { error in
-      NSLog("[SagaTrail Watch] Direct command failed, queued instead: %@", error.localizedDescription)
-      WCSession.default.transferUserInfo(message)
+      NSLog("[SagaTrail Watch] Direct command failed; durable transfer remains queued: %@", error.localizedDescription)
     }
   }
 
