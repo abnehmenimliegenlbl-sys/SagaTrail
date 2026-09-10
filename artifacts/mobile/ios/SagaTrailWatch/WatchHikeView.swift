@@ -1226,7 +1226,7 @@ private struct WatchCopy {
       "totalTime": "Gesamtzeit", "totalDistance": "Gesamtdistanz", "lastHeartRate": "Letzter Puls", "pulse": "Puls",
       "averageHeartRate": "Ø Puls", "maxHeartRate": "Max. Puls", "activeEnergy": "Aktive Energie"
       , "sosTitle": "SOS an iPhone senden?", "confirmSOS": "SOS bestätigen", "cancel": "Abbrechen",
-      "sosMessage": "Dein iPhone startet den Notfallablauf. Keine Position wird auf der Watch angezeigt.",
+      "sosMessage": "Dein iPhone startet den Notfallablauf.",
       "safetyTitle": "Sicherheits-Check-in", "safetyMessage": "Das iPhone startet den bestehenden Sicherheitslink. Die Watch überträgt keine Position.",
       "overdue": "Check-in überfällig", "safetyActive": "Check-in aktiv", "liveLink": "Live-Link aktiv",
       "localTimer": "Nur lokaler Timer", "stopTimer": "Sicher — Timer stoppen", "startCheckin": "Check-in starten",
@@ -1253,7 +1253,7 @@ private struct WatchCopy {
       "totalTime": "Total time", "totalDistance": "Total distance", "lastHeartRate": "Last heart rate", "pulse": "Pulse",
       "averageHeartRate": "Avg. heart rate", "maxHeartRate": "Max. heart rate", "activeEnergy": "Active energy"
       , "sosTitle": "Send SOS to iPhone?", "confirmSOS": "Confirm SOS", "cancel": "Cancel",
-      "sosMessage": "Your iPhone starts the emergency flow. No location is shown on the Watch.",
+      "sosMessage": "Your iPhone starts the emergency flow.",
       "safetyTitle": "Safety check-in", "safetyMessage": "The iPhone starts the existing safety link. The Watch does not transmit location.",
       "overdue": "Check-in overdue", "safetyActive": "Check-in active", "liveLink": "Live link active",
       "localTimer": "Local timer only", "stopTimer": "Safe — stop timer", "startCheckin": "Start check-in",
