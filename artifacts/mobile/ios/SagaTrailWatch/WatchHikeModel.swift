@@ -18,7 +18,7 @@ private enum SagaTrailWatchRemoteDiagnostics {
     request.timeoutInterval = 8
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     var eventData = data
-    eventData["atEpochMs"] = Int(Date().timeIntervalSince1970 * 1_000)
+    eventData["atEpochMs"] = SagaTrailWatchProtocol.unixMilliseconds()
     request.httpBody = try? JSONSerialization.data(withJSONObject: [
       "tag": "watch_native",
       "message": message,
