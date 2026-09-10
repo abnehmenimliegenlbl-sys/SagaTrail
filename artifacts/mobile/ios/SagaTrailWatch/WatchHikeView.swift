@@ -190,7 +190,9 @@ struct WatchHikeView: View {
             .fill(WatchPalette.red)
             .frame(width: clockWidth, height: clockHeight)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .padding(.top, 1)
+            // The watchOS clock sits below the physical top edge; align the
+            // red backing with the clock instead of touching the upper bezel.
+            .padding(.top, 6)
             .padding(.trailing, max(2, proxy.size.width * 0.01))
         }
         .allowsHitTesting(false)
