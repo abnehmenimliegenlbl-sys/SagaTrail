@@ -616,9 +616,12 @@ struct WatchHikeView: View {
             if let image = phase.image {
               image.resizable().scaledToFill()
             } else {
-              Image(systemName: "photo")
-                .font(.title2)
-                .foregroundStyle(WatchPalette.mutedWhite)
+              ZStack {
+                WatchPalette.surface
+                Image(systemName: phase.error == nil ? "photo" : "mappin.and.ellipse")
+                  .font(.title2)
+                  .foregroundStyle(WatchPalette.red)
+              }
             }
         }
           .frame(height: 48)
@@ -626,11 +629,12 @@ struct WatchHikeView: View {
           .clipShape(RoundedRectangle(cornerRadius: 10))
           Text(story.name)
             .font(WatchType.title)
+            .foregroundStyle(WatchPalette.ink)
             .multilineTextAlignment(.center)
             .lineLimit(1)
           Text(chunks.isEmpty ? story.text : chunks[page])
             .font(WatchType.body)
-            .foregroundStyle(WatchPalette.mutedWhite)
+            .foregroundStyle(WatchPalette.ink)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(3)
