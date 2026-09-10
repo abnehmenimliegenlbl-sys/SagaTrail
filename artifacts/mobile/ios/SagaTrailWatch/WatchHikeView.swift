@@ -668,6 +668,7 @@ struct WatchHikeView: View {
               .lineLimit(2)
           }
         }
+        .frame(minHeight: 145, maxWidth: .infinity, alignment: .center)
       }
     }
   }
