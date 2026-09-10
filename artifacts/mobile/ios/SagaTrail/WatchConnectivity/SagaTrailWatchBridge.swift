@@ -75,6 +75,14 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override func startObserving() {
     hasJavaScriptListeners = true
+    NSLog("[SagaTrail Watch] JS listeners attached; pending actions stay queued until explicit drain")
+  }
+
+  @objc func drainPendingWatchActions() {
+    guard hasJavaScriptListeners else {
+      NSLog("[SagaTrail Watch] Pending action drain skipped because JS listeners are absent")
+      return
+    }
     let persisted = (UserDefaults.standard.array(forKey: pendingWatchActionsKey) as? [[String: Any]] ?? [])
       .compactMap { item -> (name: String, body: [String: Any])? in
         guard let name = item["name"] as? String,
@@ -86,11 +94,11 @@ final class SagaTrailCompanion: RCTEventEmitter {
     // UserDefaults mirrors the in-memory queue. Prefer it when present so a
     // cold-start replay does not emit the same command twice.
     let pending = persisted.isEmpty ? pendingWatchActions : persisted
-    NSLog("[SagaTrail Watch] JS listeners attached; replaying %ld pending actions (persisted: %ld, memory: %ld)",
+    NSLog("[SagaTrail Watch] Draining %ld pending actions (persisted: %ld, memory: %ld)",
           pending.count, persisted.count, pendingWatchActions.count)
     pendingWatchActions.removeAll()
-    pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
     UserDefaults.standard.removeObject(forKey: pendingWatchActionsKey)
+    pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
   }
 
   override func stopObserving() {

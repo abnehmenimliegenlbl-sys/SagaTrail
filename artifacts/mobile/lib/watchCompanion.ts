@@ -160,6 +160,7 @@ export interface WatchLiveSnapshot {
 
 type CompanionModule = {
   activate?: () => void;
+  drainPendingWatchActions?: () => void;
   selectGarminDevice?: () => void;
   publishLiveState?: (state: HikeLiveState) => void | Promise<void>;
   getLatestHeartRate?: () => Promise<HeartRateEvent | null>;
@@ -651,18 +652,6 @@ export function subscribeToCompanionEvents(handlers: {
     "SagaTrailCompanion.heartRate",
     forwardHeartRate,
   );
-  // Register the event listener before activation, then explicitly replay the
-  // durable latest Watch sample. RCTEventEmitter does not buffer events that
-  // arrive while the Hike screen is unmounted or JS is still starting.
-  activateNativeCompanion(module);
-  void module.getLatestHeartRate?.()
-    .then((event) => {
-      watchCompanionLog("latest heart-rate replay received", { present: event != null });
-      forwardHeartRate(event);
-    })
-    .catch((error) => watchCompanionLog("latest heart-rate replay failed", {
-      message: error instanceof Error ? error.message : String(error),
-    }));
   const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
     const requestedAt = finiteOrNull(event?.requestedAt) ?? Date.now();
     watchCompanionLog("SOS event received by JS", { requestedAt });
@@ -712,6 +701,20 @@ export function subscribeToCompanionEvents(handlers: {
       watchAppInstalled: event?.watchAppInstalled === true,
     });
   });
+  // RCTEventEmitter starts observing after the first listener is registered.
+  // Register every event-specific listener before activation or draining the
+  // native queue so a cold-start safety command cannot be replayed too early.
+  activateNativeCompanion(module);
+  module.drainPendingWatchActions?.();
+  watchCompanionLog("pending watch actions drain requested");
+  void module.getLatestHeartRate?.()
+    .then((event) => {
+      watchCompanionLog("latest heart-rate replay received", { present: event != null });
+      forwardHeartRate(event);
+    })
+    .catch((error) => watchCompanionLog("latest heart-rate replay failed", {
+      message: error instanceof Error ? error.message : String(error),
+    }));
   return () => {
     active = false;
     watchCompanionLog("event subscription detached");

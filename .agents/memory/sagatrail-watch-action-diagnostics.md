@@ -7,4 +7,8 @@ Apple Watch safety actions must emit privacy-safe remote diagnostics at the Watc
 
 **Why:** JavaScript remote logs alone only prove that an action reached React Native. Native `NSLog` entries remain on Apple devices and cannot distinguish a failed Watch tap, queued transfer, phone receipt, or native-to-JS handoff from Replit production logs.
 
-**How to apply:** For check-in and SOS changes, keep each remote event limited to stage, command kind, duration option, connectivity booleans, protocol outcome, and timestamp. Never include coordinates, contact details, story text, or identifiers.
+Queued safety actions must be drained explicitly only after every event-specific JavaScript listener is registered; never drain them directly from `RCTEventEmitter.startObserving()`.
+
+**Why:** `startObserving()` runs when the first listener is attached. If that first listener handles heart rate, a queued safety command can be emitted before the hike-command listener exists and disappear despite successful WatchConnectivity delivery.
+
+**How to apply:** For check-in and SOS changes, register all JS listeners, activate the companion, then request the native pending-action drain. Keep each remote event limited to stage, command kind, duration option, connectivity booleans, protocol outcome, and timestamp. Never include coordinates, contact details, story text, or identifiers.
