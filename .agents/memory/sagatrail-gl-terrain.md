@@ -45,6 +45,12 @@ WMS image dimensions must follow each geographic bounds rectangle's physical met
 
 **How to apply:** Convert longitude span to meters using the center-latitude cosine before choosing WIDTH/HEIGHT. Keep fallback deepest, then base imagery, detail imagery, and transparent relief on successively closer polygon-offset layers.
 
+In flight mode, hide the fallback terrain entirely once all aerial tiles are loaded; do not rely on polygon offset alone to make coplanar fallback and imagery safe on iOS GL.
+
+**Why:** Some iOS/Expo GL devices still show the fallback through imagery despite render order and polygon offsets, so the only reliable fix is to remove the competing mesh after texture readiness.
+
+**How to apply:** Keep the fallback only during tile loading. After the complete tile set is ready, render imagery/detail/relief without any coplanar gray base underneath.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
