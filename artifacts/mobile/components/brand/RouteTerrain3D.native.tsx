@@ -1978,10 +1978,12 @@ function Scene({
             color={line.color}
           />
         ))}
-      {mode !== "flight" && route[0] && (
+      {route[0] && (
         <RouteEndpointFlag position={route[0]} kind="start" />
       )}
-      {mode !== "flight" && route.at(-1) && (
+      {(mode !== "flight" ||
+        revealedDistanceKm >= routeLengthKm - 0.12) &&
+        route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
       {mode === "walk" && marker && <RouteProgressPulse position={marker} />}

@@ -75,6 +75,12 @@ Die Kamera muss zusätzlich über der lokalen DTM-Höhe des aktuellen Routenabsc
 
 **How to apply:** Lokale Terrainhöhe in einem Radius um den Marker bestimmen und die Kamera mindestens mit einem kleinen Clearance-Abstand darüber setzen; globale Maximalhöhe nicht als dauerhafte Kamera-Höhe verwenden.
 
+Im Flugmodus sind Start- und Zielfahne wieder erwünscht; die Zielfahne wird erst im letzten Routenabschnitt eingeblendet.
+
+**Why:** Die Flugansicht soll Anfang und Ende der animierten Route klar markieren, ohne die Darstellung während des gesamten Flugs mit einer permanenten Zielfahne zu überladen.
+
+**How to apply:** Startfahne normal rendern, Zielfahne im letzten kurzen Distanzfenster sowie in Overview/Walk rendern.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
