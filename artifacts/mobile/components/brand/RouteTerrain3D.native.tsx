@@ -695,6 +695,18 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
       <ThreeLine geometry={geometry} renderOrder={21}>
         <lineBasicMaterial
           color={color}
+          linewidth={10}
+          transparent
+          opacity={0.34}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
+      <ThreeLine geometry={geometry} renderOrder={22}>
+        <lineBasicMaterial
+          color={color}
           linewidth={6}
           transparent
           opacity={1}
@@ -704,7 +716,89 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
           toneMapped={false}
         />
       </ThreeLine>
+      <ThreeLine geometry={geometry} renderOrder={23}>
+        <lineBasicMaterial
+          color="#FFFFFF"
+          linewidth={2}
+          transparent
+          opacity={0.9}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
     </>
+  );
+}
+
+function RouteProgressPulse({ position }: { position: Vector3 }) {
+  const group = useRef<Group>(null);
+  const haloMaterial = useRef<any>(null);
+  const phase = useRef(0);
+
+  useFrame((_, delta) => {
+    phase.current = (phase.current + delta * 4.2) % (Math.PI * 2);
+    const wave = (Math.sin(phase.current) + 1) / 2;
+    const scale = 0.82 + wave * 0.58;
+    group.current?.scale.setScalar(scale);
+    if (haloMaterial.current) {
+      haloMaterial.current.opacity = 0.16 + wave * 0.34;
+    }
+  });
+
+  return (
+    <group
+      ref={group}
+      position={[position.x, position.y + 10, position.z]}
+      renderOrder={30}
+    >
+      <mesh>
+        <sphereGeometry args={[13, 16, 10]} />
+        <meshBasicMaterial
+          ref={haloMaterial}
+          color="#B8FF3B"
+          transparent
+          opacity={0.3}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[4.5, 16, 10]} />
+        <meshBasicMaterial
+          color="#FFFFFF"
+          transparent
+          opacity={1}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function RouteTransitionLight({ position }: { position: Vector3 }) {
+  return (
+    <mesh
+      position={[position.x, position.y + 5, position.z]}
+      renderOrder={24}
+    >
+      <sphereGeometry args={[3.5, 12, 8]} />
+      <meshBasicMaterial
+        color="#FFFFFF"
+        transparent
+        opacity={0.86}
+        blending={AdditiveBlending}
+        depthTest={false}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
   );
 }
 
@@ -1325,10 +1419,17 @@ function Scene({
       {visibleGradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
+      {visibleGradeLines.slice(1).map((line, index) => (
+        <RouteTransitionLight
+          key={`transition-${index}`}
+          position={line.points[0]}
+        />
+      ))}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
+      {mode === "walk" && marker && <RouteProgressPulse position={marker} />}
       {mode === "flight" && marker && (
         <FlightMarker position={marker} />
       )}
