@@ -810,6 +810,59 @@ export default function LiveHike() {
     terrainProfileGeometry === navigationGeometry &&
     !!terrainProfile &&
     terrainProfile.length >= 2;
+  const watchMapRouteWithGrades = useMemo<WatchMapPoint[] | null>(() => {
+    if (
+      !watchMapRoute ||
+      !navigationGeometry ||
+      navigationGeometry.length < 2 ||
+      !activeProfileReady ||
+      !terrainProfile ||
+      terrainProfile.length < 2
+    ) {
+      return watchMapRoute;
+    }
+    const gradeSegments = buildRouteGradeSegments(navigationGeometry, terrainProfile);
+    if (gradeSegments.length === 0) return watchMapRoute;
+
+    const routeDistances = [0];
+    for (let index = 1; index < navigationGeometry.length; index++) {
+      routeDistances.push(
+        routeDistances[index - 1] +
+          haversineKm(
+            { lat: navigationGeometry[index - 1][0], lng: navigationGeometry[index - 1][1] },
+            { lat: navigationGeometry[index][0], lng: navigationGeometry[index][1] },
+          ),
+      );
+    }
+    const segmentEnds: number[] = [];
+    let segmentDistance = 0;
+    for (const segment of gradeSegments) {
+      const [start, end] = segment.coordinates;
+      if (!start || !end) continue;
+      segmentDistance += haversineKm(
+        { lat: start[0], lng: start[1] },
+        { lat: end[0], lng: end[1] },
+      );
+      segmentEnds.push(segmentDistance);
+    }
+    if (segmentEnds.length === 0) return watchMapRoute;
+
+    const lastIndex = navigationGeometry.length - 1;
+    return watchMapRoute.map((point, index) => {
+      const sourceIndex = Math.min(
+        lastIndex,
+        Math.round((index * lastIndex) / Math.max(1, watchMapRoute.length - 1)),
+      );
+      const routeDistance = routeDistances[sourceIndex] ?? 0;
+      const matchingSegment = segmentEnds.findIndex(
+        (end) => routeDistance <= end + 0.000001,
+      );
+      const segmentIndex = matchingSegment >= 0
+        ? matchingSegment
+        : gradeSegments.length - 1;
+      return { ...point, gradeBand: gradeSegments[segmentIndex]?.band ?? "green" };
+    });
+  }, [activeProfileReady, navigationGeometry, terrainProfile, watchMapRoute]);
   const ascentM = activeProfileReady
     ? calculateProfileAscentM(terrainProfile)
     : (route?.ascentM ?? 480);
@@ -2692,9 +2745,9 @@ export default function LiveHike() {
         : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
       terrainSection: watchTerrainSection,
       safetyCheckin: safetyCheckinState,
-      map: watchMapRoute
+      map: watchMapRouteWithGrades
         ? {
-            route: watchMapRoute,
+            route: watchMapRouteWithGrades,
             current: hasFreshGps && livePos
               ? { lat: livePos.lat, lng: livePos.lng }
               : null,
@@ -2785,7 +2838,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRoute, watchOffRoute, watchPoiStory, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;

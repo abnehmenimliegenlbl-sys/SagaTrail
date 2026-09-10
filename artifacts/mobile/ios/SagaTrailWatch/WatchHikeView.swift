@@ -723,6 +723,23 @@ private struct WatchRouteMap: View {
     return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
   }
 
+  private func coordinate(_ point: SagaTrailWatchProtocol.MapPoint) -> CLLocationCoordinate2D {
+    CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude)
+  }
+
+  private func gradeColor(_ band: String?) -> Color {
+    switch band {
+    case "yellow":
+      return Color(red: 255 / 255, green: 208 / 255, blue: 0)
+    case "orange":
+      return Color(red: 255 / 255, green: 133 / 255, blue: 0)
+    case "red":
+      return Color(red: 255 / 255, green: 48 / 255, blue: 48 / 255)
+    default:
+      return Color(red: 32 / 255, green: 212 / 255, blue: 102 / 255)
+    }
+  }
+
   private func recenter() {
     position = .camera(MapCamera(
       centerCoordinate: center,
@@ -740,8 +757,13 @@ private struct WatchRouteMap: View {
             .frame(height: height)
         } else {
           Map(position: $position) {
-            MapPolyline(coordinates: coordinates)
-              .stroke(WatchPalette.red, lineWidth: 4)
+            ForEach(Array(map.route.indices.dropLast()), id: \.self) { index in
+              MapPolyline(coordinates: [
+                coordinate(map.route[index]),
+                coordinate(map.route[index + 1]),
+              ])
+              .stroke(gradeColor(map.route[index].gradeBand), lineWidth: 4)
+            }
             if let start = coordinates.first {
               Annotation(copy.t("startMarker"), coordinate: start) {
                 WatchStartMarker()

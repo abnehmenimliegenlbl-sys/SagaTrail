@@ -32,6 +32,7 @@ enum SagaTrailWatchProtocol {
   struct MapPoint {
     let latitude: Double
     let longitude: Double
+    let gradeBand: String?
   }
 
   struct RouteMap {
@@ -265,7 +266,15 @@ enum SagaTrailWatchProtocol {
                 longitude <= 180 else {
             return nil
           }
-          return MapPoint(latitude: latitude, longitude: longitude)
+          let gradeBand = raw["gradeBand"] as? String
+          guard gradeBand == nil ||
+                gradeBand == "green" ||
+                gradeBand == "yellow" ||
+                gradeBand == "orange" ||
+                gradeBand == "red" else {
+            return nil
+          }
+          return MapPoint(latitude: latitude, longitude: longitude, gradeBand: gradeBand)
         }
         let route = rawRoute.compactMap(point)
         guard route.count == rawRoute.count else { return nil }

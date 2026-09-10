@@ -17,6 +17,7 @@ export type HikeSessionStatus = "preparing" | "active" | "paused" | "finished" |
 export type SosAcknowledgement = "none" | "acknowledged" | "failed";
 export type HeartRateSource = "watch" | "garmin" | "phone";
 export type SafetyCheckinStatus = "idle" | "active" | "overdue";
+export type WatchRouteGradeBand = "green" | "yellow" | "orange" | "red";
 
 export interface WatchNavigation {
   direction: "left" | "right";
@@ -40,6 +41,7 @@ export interface WatchSafetyCheckin {
 export interface WatchMapPoint {
   lat: number;
   lng: number;
+  gradeBand?: WatchRouteGradeBand;
 }
 
 export interface WatchMapState {
@@ -265,7 +267,12 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
         typeof candidate.lng === "number" &&
         Number.isFinite(candidate.lng) &&
         candidate.lng >= -180 &&
-        candidate.lng <= 180
+        candidate.lng <= 180 &&
+        (candidate.gradeBand === undefined ||
+          candidate.gradeBand === "green" ||
+          candidate.gradeBand === "yellow" ||
+          candidate.gradeBand === "orange" ||
+          candidate.gradeBand === "red")
       );
     };
     if (
