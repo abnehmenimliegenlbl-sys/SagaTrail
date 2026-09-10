@@ -611,7 +611,7 @@ function FlightMarker({
       position={[position.x, position.y + 8, position.z]}
       renderOrder={10}
     >
-      <sphereGeometry args={[6, 16, 10]} />
+      <sphereGeometry args={[3, 16, 10]} />
       <meshBasicMaterial
         color="#B6FF00"
         side={DoubleSide}
