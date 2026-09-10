@@ -1,10 +1,10 @@
 ---
-name: Garmin simulator SVG rendering
-description: Connect IQ launcher SVG resources are not reliable inputs for runtime drawBitmap calls.
+name: Garmin simulator header rendering
+description: Connect IQ SDK 9.2 can crash on decorative logo rendering during the first header update.
 ---
 
-Garmin UI branding must be rendered with native drawing primitives rather than passing an SVG launcher resource to `drawBitmap()`.
+Keep the first Garmin header render text-only. Do not draw the launcher SVG at runtime, and avoid an extra decorative brand-mark helper in that initial update.
 
-**Why:** The Connect IQ simulator can abort the app with `API code 0x300023b1` during the first header redraw when an SVG resource is used as a bitmap, even though the same SVG is valid as the launcher icon.
+**Why:** The Connect IQ SDK 9.2 simulator aborted with `API code 0x300023b1` at the first header update for both the SVG bitmap call and its replacement decorative mark. Removing that additional render path allowed a clean rebuild.
 
-**How to apply:** Keep SVG resources for the launcher icon, but draw any in-app mark with lines, circles, rectangles, or other supported `Graphics.Dc` primitives.
+**How to apply:** Keep the SVG only as the launcher icon. In the live header, use the existing text, divider, and status indicator calls; add decorative branding only after simulator and physical-device validation.
