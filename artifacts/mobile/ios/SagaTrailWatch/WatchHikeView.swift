@@ -120,7 +120,8 @@ struct WatchHikeView: View {
       .padding(.top, 48)
 
       gpsIndicator
-        .padding(.top, 3)
+        .padding(.leading, 12)
+        .padding(.top, 8)
 
       if isMapPresented, let state = hike.state, let map = state.map {
         GeometryReader { proxy in
