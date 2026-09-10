@@ -140,6 +140,9 @@ import {
   type WatchWeather,
   type WatchNavigation,
   type WatchTerrainSection,
+  type WatchUpcomingAttraction,
+  type WatchUpcomingGradeChange,
+  type WatchUpcomingSurfaceChange,
 } from "@/lib/watchCompanion";
 import { useVoiceDecision } from "@/lib/useVoiceDecision";
 import { poiDisplayName, isPoiNameSpecific, POI_APPROACH_KINDS } from "@/lib/poiDisplay";
@@ -866,9 +869,13 @@ export default function LiveHike() {
   const ascentM = activeProfileReady
     ? calculateProfileAscentM(terrainProfile)
     : (route?.ascentM ?? 480);
-  const terrainSections = useMemo(
-    () => limitTerrainSectionsForSpeech(buildTerrainSections(terrainProfile)),
+  const allTerrainSections = useMemo(
+    () => buildTerrainSections(terrainProfile),
     [terrainProfile],
+  );
+  const terrainSections = useMemo(
+    () => limitTerrainSectionsForSpeech(allTerrainSections),
+    [allTerrainSections],
   );
   const totalMin = activeProfileReady
     ? estimateRouteMinutes(totalKm, ascentM)
@@ -1483,7 +1490,7 @@ export default function LiveHike() {
   const osmId = route?.id?.startsWith("osm-") ? parseInt(route.id.slice(4), 10) : null;
 
   // Wegoberflaechenkategorie normalisieren (OSM-surface-Tag → 5 Klassen)
-  function normalizeSurface(s: string): string {
+  function normalizeSurface(s: string): WatchUpcomingSurfaceChange["surface"] {
     const v = s.toLowerCase();
     if (/^(asphalt|paved|concrete|paving_stones|cobblestone|sett)/.test(v)) return "asphalt";
     if (/^(gravel|compacted|fine_gravel|pebblestone|crushed_limestone)/.test(v)) return "kies";
@@ -1630,7 +1637,10 @@ export default function LiveHike() {
         if (!match || match.distKm > 0.5) return null;
         return { fraction: match.fraction, surface: normalizeSurface(p.surface) };
       })
-      .filter((x): x is { fraction: number; surface: string } => x !== null)
+      .filter((x): x is {
+        fraction: number;
+        surface: WatchUpcomingSurfaceChange["surface"];
+      } => x !== null)
       .sort((a, b) => a.fraction - b.fraction)
       .filter((p, i, arr) => i === 0 || p.surface !== arr[i - 1].surface);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2678,7 +2688,7 @@ export default function LiveHike() {
     return projected ?? (totalKm > 0 ? Math.min(1, Math.max(0, distance / totalKm)) : null);
   }, [hasFreshGps, livePos, navigationGeometry, totalKm, distance]);
   const watchTerrainSection = useMemo<WatchTerrainSection | null>(() => {
-    if (watchRouteProgress == null || terrainSections.length === 0 || !terrainProfile || terrainProfile.length < 2) {
+    if (watchRouteProgress == null || allTerrainSections.length === 0 || !terrainProfile || terrainProfile.length < 2) {
       return null;
     }
     const profileLengthKm = Math.max(
@@ -2687,7 +2697,7 @@ export default function LiveHike() {
     );
     if (profileLengthKm <= 0) return null;
     const currentKm = watchRouteProgress * profileLengthKm;
-    const section = terrainSections.find(
+    const section = allTerrainSections.find(
       (candidate) =>
         currentKm >= candidate.startKm - 0.15 &&
         currentKm <= candidate.endKm + 0.05,
@@ -2699,7 +2709,90 @@ export default function LiveHike() {
       remainingM: Math.max(0, Math.round((section.endKm - currentKm) * 1000)),
       startsInM: Math.max(0, Math.round((section.startKm - currentKm) * 1000)),
     };
-  }, [terrainProfile, terrainSections, watchRouteProgress]);
+  }, [allTerrainSections, terrainProfile, watchRouteProgress]);
+  const watchUpcomingGradeChange = useMemo<WatchUpcomingGradeChange | null>(() => {
+    if (
+      watchRouteProgress == null ||
+      allTerrainSections.length === 0 ||
+      !terrainProfile ||
+      terrainProfile.length < 2
+    ) {
+      return null;
+    }
+    const profileLengthKm = Math.max(
+      0,
+      terrainProfile[terrainProfile.length - 1].distanceKm - terrainProfile[0].distanceKm,
+    );
+    if (profileLengthKm <= 0) return null;
+    const currentKm = watchRouteProgress * profileLengthKm;
+    const nextSection = allTerrainSections.find(
+      (section) => section.startKm > currentKm + 0.025,
+    );
+    if (!nextSection) return null;
+    return {
+      direction: nextSection.direction,
+      gradePct: Math.max(1, Math.round(Math.abs(nextSection.averageGradePct))),
+      distanceM: Math.max(0, Math.round((nextSection.startKm - currentKm) * 1000)),
+    };
+  }, [allTerrainSections, terrainProfile, watchRouteProgress]);
+  const watchUpcomingSurfaceChange = useMemo<WatchUpcomingSurfaceChange | null>(() => {
+    if (watchRouteProgress == null || totalKm <= 0 || surfacePoints.length === 0) {
+      return null;
+    }
+    const firstFutureIndex = surfacePoints.findIndex(
+      (point) => point.fraction > watchRouteProgress + 0.002,
+    );
+    const nextSurface = firstFutureIndex === 0
+      ? surfacePoints[1]
+      : firstFutureIndex > 0
+        ? surfacePoints[firstFutureIndex]
+        : null;
+    if (!nextSurface) return null;
+    return {
+      surface: nextSurface.surface,
+      distanceM: Math.max(
+        0,
+        Math.round((nextSurface.fraction - watchRouteProgress) * totalKm * 1000),
+      ),
+    };
+  }, [surfacePoints, totalKm, watchRouteProgress]);
+  const watchUpcomingAttraction = useMemo<WatchUpcomingAttraction | null>(() => {
+    if (
+      watchRouteProgress == null ||
+      totalKm <= 0 ||
+      !navigationGeometry ||
+      navigationGeometry.length < 2 ||
+      displayedPois.length === 0
+    ) {
+      return null;
+    }
+    const candidates = displayedPois
+      .map((attraction) => {
+        const match = fortschrittAufRoute(
+          { lat: attraction.lat, lng: attraction.lng },
+          navigationGeometry,
+        );
+        if (
+          !match ||
+          match.distKm > 0.5 ||
+          match.fraction <= watchRouteProgress + 0.002
+        ) {
+          return null;
+        }
+        const name = poiDisplayName(attraction.name, attraction.kind).trim();
+        if (!name) return null;
+        return {
+          name,
+          distanceM: Math.max(
+            0,
+            Math.round((match.fraction - watchRouteProgress) * totalKm * 1000),
+          ),
+        };
+      })
+      .filter((candidate): candidate is WatchUpcomingAttraction => candidate !== null)
+      .sort((a, b) => a.distanceM - b.distanceM);
+    return candidates[0] ?? null;
+  }, [displayedPois, navigationGeometry, totalKm, watchRouteProgress]);
   const watchStoryAudio = useMemo(() => {
     const language = storyLanguage.toLowerCase().split("-")[0];
     const labels = {
@@ -2829,6 +2922,9 @@ export default function LiveHike() {
         ? null
         : Math.max(0, Math.round(ascentM * (1 - watchRouteProgress))),
       terrainSection: watchTerrainSection,
+      upcomingGradeChange: watchUpcomingGradeChange,
+      upcomingSurfaceChange: watchUpcomingSurfaceChange,
+      upcomingAttraction: watchUpcomingAttraction,
       safetyCheckin: safetyCheckinState,
       map: watchMapRouteWithGrades
         ? {
@@ -2924,7 +3020,7 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather]);
 
   useEffect(() => {
     if (!turnNotifsReady || turnCues.length === 0) return;

@@ -32,6 +32,22 @@ export interface WatchTerrainSection {
   startsInM: number;
 }
 
+export interface WatchUpcomingGradeChange {
+  direction: "up" | "down";
+  gradePct: number;
+  distanceM: number;
+}
+
+export interface WatchUpcomingSurfaceChange {
+  surface: "asphalt" | "kies" | "fels" | "holz" | "naturweg";
+  distanceM: number;
+}
+
+export interface WatchUpcomingAttraction {
+  name: string;
+  distanceM: number;
+}
+
 export interface WatchSafetyCheckin {
   status: SafetyCheckinStatus;
   remainingSec: number;
@@ -91,6 +107,9 @@ export interface HikeLiveState {
   plannedAscentM?: number | null;
   remainingAscentM?: number | null;
   terrainSection?: WatchTerrainSection | null;
+  upcomingGradeChange?: WatchUpcomingGradeChange | null;
+  upcomingSurfaceChange?: WatchUpcomingSurfaceChange | null;
+  upcomingAttraction?: WatchUpcomingAttraction | null;
   safetyCheckin?: WatchSafetyCheckin | null;
   map?: WatchMapState | null;
   offRoute?: WatchOffRoute | null;
@@ -250,6 +269,34 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   };
   if (state.terrainSection !== undefined && state.terrainSection !== null && !isValidTerrainSection(state.terrainSection)) {
     return false;
+  }
+  if (state.upcomingGradeChange !== undefined && state.upcomingGradeChange !== null) {
+    const change = state.upcomingGradeChange;
+    if (
+      !["up", "down"].includes(change.direction) ||
+      !Number.isFinite(change.gradePct) ||
+      change.gradePct < 0 ||
+      !Number.isFinite(change.distanceM) ||
+      change.distanceM < 0
+    ) return false;
+  }
+  if (state.upcomingSurfaceChange !== undefined && state.upcomingSurfaceChange !== null) {
+    const change = state.upcomingSurfaceChange;
+    if (
+      !["asphalt", "kies", "fels", "holz", "naturweg"].includes(change.surface) ||
+      !Number.isFinite(change.distanceM) ||
+      change.distanceM < 0
+    ) return false;
+  }
+  if (state.upcomingAttraction !== undefined && state.upcomingAttraction !== null) {
+    const attraction = state.upcomingAttraction;
+    if (
+      typeof attraction.name !== "string" ||
+      attraction.name.trim().length === 0 ||
+      attraction.name.length > 180 ||
+      !Number.isFinite(attraction.distanceM) ||
+      attraction.distanceM < 0
+    ) return false;
   }
   if (state.safetyCheckin !== undefined && state.safetyCheckin !== null) {
     const checkin = state.safetyCheckin;

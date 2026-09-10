@@ -23,6 +23,22 @@ enum SagaTrailWatchProtocol {
     let startsInMeters: Double
   }
 
+  struct UpcomingGradeChange {
+    let direction: String
+    let gradePercent: Double
+    let distanceMeters: Double
+  }
+
+  struct UpcomingSurfaceChange {
+    let surface: String
+    let distanceMeters: Double
+  }
+
+  struct UpcomingAttraction {
+    let name: String
+    let distanceMeters: Double
+  }
+
   struct SafetyCheckin {
     let status: String
     let remainingSeconds: Double
@@ -92,6 +108,9 @@ enum SagaTrailWatchProtocol {
     let plannedAscentMeters: Double?
     let remainingAscentMeters: Double?
     let terrainSection: TerrainSection?
+    let upcomingGradeChange: UpcomingGradeChange?
+    let upcomingSurfaceChange: UpcomingSurfaceChange?
+    let upcomingAttraction: UpcomingAttraction?
     let safetyCheckin: SafetyCheckin?
     let map: RouteMap?
     let offRoute: OffRoute?
@@ -229,6 +248,59 @@ enum SagaTrailWatchProtocol {
           remainingMeters: remainingMeters,
           startsInMeters: startsInMeters
         )
+      }()
+      let upcomingGradeChange: UpcomingGradeChange? = {
+        guard let value = dictionary["upcomingGradeChange"] as? [String: Any],
+              let direction = value["direction"] as? String,
+              direction == "up" || direction == "down",
+              let gradePercent = optionalNumber(
+                "gradePct",
+                from: value,
+                minimum: 0,
+                maximum: 1_000
+              ),
+              let distanceMeters = optionalNumber(
+                "distanceM",
+                from: value,
+                minimum: 0,
+                maximum: 1_000_000_000
+              ) else {
+          return nil
+        }
+        return UpcomingGradeChange(
+          direction: direction,
+          gradePercent: gradePercent,
+          distanceMeters: distanceMeters
+        )
+      }()
+      let upcomingSurfaceChange: UpcomingSurfaceChange? = {
+        guard let value = dictionary["upcomingSurfaceChange"] as? [String: Any],
+              let surface = value["surface"] as? String,
+              ["asphalt", "kies", "fels", "holz", "naturweg"].contains(surface),
+              let distanceMeters = optionalNumber(
+                "distanceM",
+                from: value,
+                minimum: 0,
+                maximum: 1_000_000_000
+              ) else {
+          return nil
+        }
+        return UpcomingSurfaceChange(surface: surface, distanceMeters: distanceMeters)
+      }()
+      let upcomingAttraction: UpcomingAttraction? = {
+        guard let value = dictionary["upcomingAttraction"] as? [String: Any],
+              let name = value["name"] as? String,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              name.count <= 180,
+              let distanceMeters = optionalNumber(
+                "distanceM",
+                from: value,
+                minimum: 0,
+                maximum: 1_000_000_000
+              ) else {
+          return nil
+        }
+        return UpcomingAttraction(name: name, distanceMeters: distanceMeters)
       }()
       let safetyCheckin: SafetyCheckin? = {
         guard let value = dictionary["safetyCheckin"] as? [String: Any],
@@ -388,6 +460,9 @@ enum SagaTrailWatchProtocol {
         plannedAscentMeters: plannedAscentMeters,
         remainingAscentMeters: remainingAscentMeters,
         terrainSection: terrainSection,
+        upcomingGradeChange: upcomingGradeChange,
+        upcomingSurfaceChange: upcomingSurfaceChange,
+        upcomingAttraction: upcomingAttraction,
         safetyCheckin: safetyCheckin,
         map: map,
         offRoute: offRoute,

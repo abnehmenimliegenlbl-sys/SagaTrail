@@ -414,6 +414,24 @@ struct WatchHikeView: View {
     .lineLimit(1)
     .minimumScaleFactor(0.72)
   }
+
+  private func routeDistance(_ meters: Double) -> String {
+    if meters >= 1_000 {
+      return String(format: "%.1f km", meters / 1_000)
+    }
+    return "\(Int(meters.rounded())) m"
+  }
+
+  private func surfaceLabel(_ surface: String) -> String {
+    switch surface {
+    case "asphalt": return copy.t("surfaceAsphalt")
+    case "kies": return copy.t("surfaceGravel")
+    case "fels": return copy.t("surfaceRock")
+    case "holz": return copy.t("surfaceWood")
+    default: return copy.t("surfaceNatural")
+    }
+  }
+
   private func heartRate(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let bpm = hike.currentHeartRate ?? state.heartRateBpm
     return Text("\(copy.t("pulse")): \(bpm.map { String(format: "%.0f", $0) } ?? "—") BPM")
@@ -607,6 +625,52 @@ struct WatchHikeView: View {
               }
             }
             .buttonStyle(.plain)
+          }
+          if let change = state.upcomingGradeChange {
+            HStack(spacing: 5) {
+              Image(systemName: change.direction == "up" ? "arrow.up.right" : "arrow.down.right")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(change.distanceMeters)) · "
+                  + "\(change.direction == "up" ? copy.t("ascent") : copy.t("descent")) "
+                  + "\(Int(change.gradePercent.rounded())) %"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+          }
+          if let change = state.upcomingSurfaceChange {
+            HStack(spacing: 5) {
+              Image(systemName: "shoeprints.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(change.distanceMeters)) · "
+                  + "\(copy.t("surfaceAhead")): \(surfaceLabel(change.surface))"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+          }
+          if let attraction = state.upcomingAttraction {
+            HStack(spacing: 5) {
+              Image(systemName: "star.fill")
+                .foregroundStyle(WatchPalette.red)
+              Text(
+                "\(routeDistance(attraction.distanceMeters)) · "
+                  + "\(copy.t("attractionAhead")): \(attraction.name)"
+              )
+              Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(WatchPalette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.62)
           }
           if !hasFreshGPS(state) {
             HStack(spacing: 5) {
@@ -1156,7 +1220,10 @@ private struct WatchCopy {
       "overdue": "Check-in überfällig", "safetyActive": "Check-in aktiv", "liveLink": "Live-Link aktiv",
       "localTimer": "Nur lokaler Timer", "stopTimer": "Sicher — Timer stoppen", "startCheckin": "Check-in starten",
       "startMarker": "Start", "finishMarker": "Ziel", "offlineRoute": "Offline-Route",
-      "gpsPaused": "Kein GPS-Empfang", "lastRoute": "Letzte Route", "north": "Nord", "route": "Route"
+      "gpsPaused": "Kein GPS-Empfang", "lastRoute": "Letzte Route", "north": "Nord", "route": "Route",
+      "surfaceAhead": "Weg", "surfaceAsphalt": "Asphalt", "surfaceGravel": "Kies/Schotter",
+      "surfaceRock": "Fels", "surfaceWood": "Holz", "surfaceNatural": "Naturweg",
+      "attractionAhead": "Sehenswürdigkeit"
     ],
     "en": [
       "live": "Live from iPhone", "unreachable": "iPhone unreachable", "stale": "Data is stale",
@@ -1180,7 +1247,10 @@ private struct WatchCopy {
       "overdue": "Check-in overdue", "safetyActive": "Check-in active", "liveLink": "Live link active",
       "localTimer": "Local timer only", "stopTimer": "Safe — stop timer", "startCheckin": "Start check-in",
       "startMarker": "Start", "finishMarker": "Finish", "offlineRoute": "Offline route",
-      "gpsPaused": "No GPS reception", "lastRoute": "Last route", "north": "North", "route": "Route"
+      "gpsPaused": "No GPS reception", "lastRoute": "Last route", "north": "North", "route": "Route",
+      "surfaceAhead": "Path", "surfaceAsphalt": "Asphalt", "surfaceGravel": "Gravel",
+      "surfaceRock": "Rock", "surfaceWood": "Wood", "surfaceNatural": "Natural trail",
+      "attractionAhead": "Attraction"
     ],
     "fr": [
       "live": "En direct depuis l’iPhone", "unreachable": "iPhone inaccessible", "stale": "Données anciennes",
@@ -1197,7 +1267,10 @@ private struct WatchCopy {
       "sunset": "Coucher du soleil", "afterSunset": "Arrivée prévue après le coucher du soleil",
       "gusts": "Rafales fortes jusqu’à", "thunderstorm": "Risque d’orage", "completed": "Randonnée terminée",
       "totalTime": "Durée totale", "totalDistance": "Distance totale", "lastHeartRate": "Dernier pouls", "pulse": "Pouls",
-      "averageHeartRate": "Pouls moyen", "maxHeartRate": "Pouls max.", "activeEnergy": "Énergie active"
+      "averageHeartRate": "Pouls moyen", "maxHeartRate": "Pouls max.", "activeEnergy": "Énergie active",
+      "surfaceAhead": "Chemin", "surfaceAsphalt": "Asphalte", "surfaceGravel": "Gravier",
+      "surfaceRock": "Rocher", "surfaceWood": "Bois", "surfaceNatural": "Sentier naturel",
+      "attractionAhead": "Curiosité"
     ],
     "it": [
       "live": "Live dall’iPhone", "unreachable": "iPhone non raggiungibile", "stale": "Dati obsoleti",
@@ -1214,7 +1287,10 @@ private struct WatchCopy {
       "sunset": "Tramonto", "afterSunset": "Arrivo previsto dopo il tramonto",
       "gusts": "Raffiche forti fino a", "thunderstorm": "Rischio temporale", "completed": "Escursione completata",
       "totalTime": "Tempo totale", "totalDistance": "Distanza totale", "lastHeartRate": "Ultimo battito", "pulse": "Battito",
-      "averageHeartRate": "Battito medio", "maxHeartRate": "Battito max.", "activeEnergy": "Energia attiva"
+      "averageHeartRate": "Battito medio", "maxHeartRate": "Battito max.", "activeEnergy": "Energia attiva",
+      "surfaceAhead": "Sentiero", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Ghiaia",
+      "surfaceRock": "Roccia", "surfaceWood": "Legno", "surfaceNatural": "Sentiero naturale",
+      "attractionAhead": "Attrazione"
     ],
     "es": [
       "live": "En directo desde iPhone", "unreachable": "iPhone no disponible", "stale": "Datos antiguos",
@@ -1231,7 +1307,10 @@ private struct WatchCopy {
       "sunset": "Puesta de sol", "afterSunset": "Llegada prevista después de la puesta de sol",
       "gusts": "Ráfagas fuertes de hasta", "thunderstorm": "Riesgo de tormenta", "completed": "Ruta completada",
       "totalTime": "Tiempo total", "totalDistance": "Distancia total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
-      "averageHeartRate": "Pulso medio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energía activa"
+      "averageHeartRate": "Pulso medio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energía activa",
+      "surfaceAhead": "Camino", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Grava",
+      "surfaceRock": "Roca", "surfaceWood": "Madera", "surfaceNatural": "Sendero natural",
+      "attractionAhead": "Lugar de interés"
     ],
     "nl": [
       "live": "Live vanaf iPhone", "unreachable": "iPhone niet bereikbaar", "stale": "Gegevens verouderd",
@@ -1248,7 +1327,10 @@ private struct WatchCopy {
       "sunset": "Zonsondergang", "afterSunset": "Verwachte aankomst na zonsondergang",
       "gusts": "Sterke windstoten tot", "thunderstorm": "Onweerrisico", "completed": "Wandeling voltooid",
       "totalTime": "Totale tijd", "totalDistance": "Totale afstand", "lastHeartRate": "Laatste hartslag", "pulse": "Hartslag",
-      "averageHeartRate": "Gem. hartslag", "maxHeartRate": "Max. hartslag", "activeEnergy": "Actieve energie"
+      "averageHeartRate": "Gem. hartslag", "maxHeartRate": "Max. hartslag", "activeEnergy": "Actieve energie",
+      "surfaceAhead": "Pad", "surfaceAsphalt": "Asfalt", "surfaceGravel": "Grind",
+      "surfaceRock": "Rots", "surfaceWood": "Hout", "surfaceNatural": "Natuurpad",
+      "attractionAhead": "Bezienswaardigheid"
     ],
     "pt": [
       "live": "Ao vivo do iPhone", "unreachable": "iPhone indisponível", "stale": "Dados antigos",
@@ -1265,7 +1347,10 @@ private struct WatchCopy {
       "sunset": "Pôr do sol", "afterSunset": "Chegada prevista após o pôr do sol",
       "gusts": "Rajadas fortes até", "thunderstorm": "Risco de trovoada", "completed": "Caminhada concluída",
       "totalTime": "Tempo total", "totalDistance": "Distância total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
-      "averageHeartRate": "Pulso médio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energia ativa"
+      "averageHeartRate": "Pulso médio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energia ativa",
+      "surfaceAhead": "Caminho", "surfaceAsphalt": "Asfalto", "surfaceGravel": "Cascalho",
+      "surfaceRock": "Rocha", "surfaceWood": "Madeira", "surfaceNatural": "Trilho natural",
+      "attractionAhead": "Atração"
     ]
   ]
 }
