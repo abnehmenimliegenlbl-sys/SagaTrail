@@ -135,11 +135,38 @@ type PanoramaMesh = {
   }>;
   terrainLines: Array<{ points: string; opacity: number }>;
   elevationRangeM: { min: number; max: number } | null;
+  observerLineY: number | null;
 };
 type PanoramaAltitudeRange = { minM: number; maxM: number };
 
 function pointString(points: readonly MeshPoint[]): string {
   return points.map((point) => `${point.x},${point.y}`).join(" ");
+}
+
+function projectElevationToY(
+  elevationM: number | null,
+  minElevationM: number,
+  maxElevationM: number,
+): number | null {
+  if (
+    elevationM == null ||
+    !Number.isFinite(elevationM) ||
+    !Number.isFinite(minElevationM) ||
+    !Number.isFinite(maxElevationM)
+  ) {
+    return null;
+  }
+  const topY = 44;
+  const baselineY = 274;
+  const altitudeSpan = Math.max(40, maxElevationM - minElevationM);
+  return Math.max(
+    topY,
+    Math.min(
+      baselineY,
+      baselineY -
+        ((elevationM - minElevationM) / altitudeSpan) * (baselineY - topY),
+    ),
+  );
 }
 
 function interpolateProfileAltitude(
@@ -311,9 +338,20 @@ function buildPanoramaMesh(
   terrainModel: LocalTerrainModel | null,
   terrainBearing: (bearing: number) => number | null,
 ): PanoramaMesh {
+  const effectiveObserverElevationM = Number.isFinite(observerElevationM)
+    ? observerElevationM
+    : terrainModel?.observerElevationM ?? null;
   const terrainSurface = terrainModel
     ? buildTerrainSurface(terrainModel, terrainBearing)
     : { faces: [], lines: [], elevationRangeM: null };
+  const terrainObserverLineY =
+    terrainSurface.elevationRangeM != null
+      ? projectElevationToY(
+          effectiveObserverElevationM,
+          terrainSurface.elevationRangeM.min,
+          terrainSurface.elevationRangeM.max,
+        )
+      : null;
   const validEntries = entries
     .map((entry) => ({
       ...entry,
@@ -333,14 +371,15 @@ function buildPanoramaMesh(
       terrainFaces: terrainSurface.faces,
       terrainLines: terrainSurface.lines,
       elevationRangeM: terrainSurface.elevationRangeM,
+      observerLineY: terrainObserverLineY,
     };
   }
 
   const allAltitudes = fixedAltitudeRangeM
     ? []
     : validEntries.flatMap((entry) => entry.profile.map((point) => point.altM));
-  const datum = Number.isFinite(observerElevationM)
-    ? (observerElevationM as number)
+  const datum = Number.isFinite(effectiveObserverElevationM)
+    ? (effectiveObserverElevationM as number)
     : fixedAltitudeRangeM?.minM
       ?? allAltitudes[0]
       ?? 0;
@@ -354,6 +393,13 @@ function buildPanoramaMesh(
   const baselineY = 274;
   const topY = 44;
   const sampleCount = 16;
+  const observerLineY =
+    terrainObserverLineY ??
+    projectElevationToY(
+      effectiveObserverElevationM,
+      minAltitude + datum,
+      maxAltitude + datum,
+    );
 
   const meshPeaks = validEntries
     .sort((a, b) => {
@@ -437,6 +483,7 @@ function buildPanoramaMesh(
       min: minAltitude + datum,
       max: maxAltitude + datum,
     },
+    observerLineY,
   };
 }
 
@@ -973,8 +1020,18 @@ export function PeakPanorama({
             height="350"
             fill={terrainGlReady ? "transparent" : colors.glassBg}
           />
-          <Line x1="0" y1="205" x2="360" y2="205" stroke={colors.glassBorder} strokeWidth="1" />
-          <Line x1="0" y1="274" x2="360" y2="274" stroke={colors.glassBorder} strokeWidth="1" />
+          {panoramaMesh.observerLineY != null && (
+            <Line
+              x1="0"
+              y1={panoramaMesh.observerLineY}
+              x2="360"
+              y2={panoramaMesh.observerLineY}
+              stroke={colors.primary}
+              strokeOpacity={0.86}
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+            />
+          )}
           <G opacity={0.34}>
             <Line x1="90" y1="0" x2="90" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
             <Line x1="180" y1="0" x2="180" y2="350" stroke={colors.accent} strokeWidth="1" />
