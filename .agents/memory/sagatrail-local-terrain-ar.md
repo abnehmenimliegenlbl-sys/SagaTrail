@@ -17,11 +17,11 @@ The live AR scene must not receive the UI compass heading as a frequently changi
 
 **How to apply:** Keep `heading` available to compass cards and overlays, but exclude it from `PeakArSceneAppProps`/`viroAppProps`. If the AR markers still drift after this separation, investigate Viro/ARKit/ARCore world alignment on a physical device rather than tightening the UI heading filter.
 
-For live route projection, capture the GPS position once when the GravityAndHeading AR session starts and keep it as the geographic world origin for that mounted session. The radial terrain model may be refreshed later, but route coordinates must not be re-centered on every moving GPS update.
+For live route projection, capture the GPS position once when the GravityAndHeading AR session starts and keep it as the fixed geographic world anchor for that mounted session. The 50 m near-field may be reprojected around each fresh GPS position, but it must then be translated back into the fixed AR world by the observer's geographic offset.
 
-**Why:** Viro's geographic world origin stays at AR-session start. Re-centering route coordinates on the moving GPS position makes the virtual line slide relative to the physical landscape, while using only a stale terrain-model center can make the route disappear outside the local radius.
+**Why:** Viro's geographic world origin stays at AR-session start. Re-centering route coordinates without translating them makes the virtual line slide relative to the physical landscape; never refreshing the near-field makes new route sections disappear after the user walks beyond the initial radius.
 
-**How to apply:** Use the session-start GPS position as the route projection center, retain `terrainModel.center` only as a no-GPS fallback, and reset the captured origin by unmounting the AR navigator when a new session starts. Continue limiting the rendered route to the local model radius; do not fabricate a distant route overlay.
+**How to apply:** Keep the session-start position as the stable world anchor, project the live near-field around the current observer, add the geographic anchor offset to route, terrain, and peak coordinates, and reset the captured anchor by unmounting the AR navigator when a new session starts. Continue limiting the rendered route to the local 50 m near-field and DTM radius; do not fabricate a distant route overlay.
 
 When opening AR, snap the session origin to the nearest active-route segment only if the GPS fix is within 50 m; leave farther off-route fixes unchanged.
 
@@ -41,7 +41,7 @@ AR route materials must follow the map's smoothed grade bands: green below 10%, 
 
 **How to apply:** Build colored approximately-50 m segments from the active route's elevation profile; keep missing-profile sections green rather than inventing a grade.
 
-Live AR now renders only the first 50 m of the active route at geographic 1:1 scale; farther route lines are omitted, while the destination is shown as a bounded directional flag. The 500 m DTM radius remains separate from the 50 m reliable visual-depth radius.
+Live AR renders the first 50 m around the current observer at geographic 1:1 scale and refreshes that near-field as the user walks; farther route lines are omitted, while the destination is shown as a bounded directional flag. The 500 m DTM radius remains separate from the 50 m reliable visual-depth radius.
 
 **Why:** A hard 2 km cutoff hid the destination and made the AR overlay incomplete, while uncompressed long routes placed the end outside a useful AR viewing distance. A compressed full-route line also suggested false camera depth for distant turns.
 

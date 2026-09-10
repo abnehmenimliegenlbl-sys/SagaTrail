@@ -5,7 +5,9 @@ import {
   buildLocalTerrainMesh,
   buildGeographicTerrainRouteDestination,
   buildGeographicTerrainRouteSegments,
+  arWorldOffsetForPosition,
   projectGeographicPointOntoTerrain,
+  routeGeometryMaxDistanceM,
   routeGeometryAheadOfPosition,
   routeOriginForAR,
   terrainVisibilityForPeak,
@@ -192,6 +194,37 @@ test("hides the walked route while preserving the fixed geographic origin", () =
   assert.equal(remaining.length, 2);
   assert.ok(Math.abs(remaining[0]![0] - 46.006) < 0.00001);
   assert.equal(remaining[1]![0], 46.01);
+});
+
+test("refreshes the AR route near the moving observer without resetting its world position", () => {
+  const metersPerLatitudeDegree = 180 / (Math.PI * 6_371_000);
+  const route = Array.from({ length: 7 }, (_, index) => [
+    46 + (index * 20 * metersPerLatitudeDegree),
+    7,
+  ]);
+  const origin = { lat: route[0]![0], lng: route[0]![1] };
+  const observer = { lat: route[2]![0], lng: route[2]![1] };
+  const remaining = routeGeometryAheadOfPosition(route, origin, observer);
+  const worldOffset = arWorldOffsetForPosition(origin, observer);
+
+  assert.ok(remaining);
+  const segments = buildGeographicTerrainRouteSegments(
+    null,
+    remaining,
+    observer,
+    500,
+    null,
+    {
+      maxRenderedDistanceM: 50,
+      maxRouteDistanceM: routeGeometryMaxDistanceM(route, observer),
+      worldOffset,
+    },
+  );
+  const points = segments.flatMap((segment) => segment.points);
+
+  assert.ok(points.length >= 2);
+  assert.ok(Math.abs(points[0]![2] - worldOffset[2]) < 0.01);
+  assert.ok(points.some((point) => point[2] < worldOffset[2] - 0.5));
 });
 
 test("keeps the full route when the GPS fix is too far from it", () => {

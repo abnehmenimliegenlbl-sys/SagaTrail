@@ -131,6 +131,10 @@ export interface GeographicRouteDisplayOptions {
   maxRenderedDistanceM?: number;
   /** Maximum virtual distance from the observer in the AR world, in metres. */
   maxVirtualDistanceM?: number;
+  /** Stable full-route distance used to keep compression consistent while walking. */
+  maxRouteDistanceM?: number;
+  /** Translation from the fixed AR origin into the current geographic frame. */
+  worldOffset?: TerrainVertex;
 }
 
 export interface LocalTerrainMesh {
@@ -607,6 +611,42 @@ function geographicDistanceM(point: readonly number[], center: LatLng): number |
   return Math.hypot(northM, eastM);
 }
 
+export function routeGeometryMaxDistanceM(
+  routeGeometry: readonly number[][] | null | undefined,
+  center: LatLng | null | undefined,
+): number {
+  if (!routeGeometry || routeGeometry.length === 0 || !center) return 0;
+  return routeGeometry.reduce((maximum, point) => {
+    const distanceM = geographicDistanceM(point, center);
+    return distanceM == null ? maximum : Math.max(maximum, distanceM);
+  }, 0);
+}
+
+/**
+ * Converts a geographic position into the fixed Viro world frame. The
+ * translation is applied after projecting a point relative to the current
+ * observer, so the near-field route can be refreshed without sliding through
+ * the real landscape.
+ */
+export function arWorldOffsetForPosition(
+  worldOrigin: LatLng | null | undefined,
+  position: LatLng | null | undefined,
+): TerrainVertex {
+  if (!worldOrigin || !position) return [0, 0, 0];
+
+  const earthRadiusM = 6_371_000;
+  const originLatRad = (worldOrigin.lat * Math.PI) / 180;
+  const northM = ((position.lat - worldOrigin.lat) * Math.PI * earthRadiusM) / 180;
+  const eastM =
+    ((position.lng - worldOrigin.lng) *
+      Math.PI *
+      earthRadiusM *
+      Math.cos(originLatRad)) /
+    180;
+
+  return [eastM * AR_WORLD_SCALE, 0, -northM * AR_WORLD_SCALE];
+}
+
 function compressedRouteDistanceM(
   distanceM: number,
   realScaleRadiusM: number,
@@ -743,10 +783,10 @@ export function buildGeographicTerrainRouteSegments(
     ),
     maxSegments,
   );
-  const maxRouteDistanceM = geometry.reduce((maximum, point) => {
-    const distanceM = geographicDistanceM(point, center);
-    return distanceM == null ? maximum : Math.max(maximum, distanceM);
-  }, 0);
+  const maxRouteDistanceM =
+    displayOptions.maxRouteDistanceM ??
+    routeGeometryMaxDistanceM(geometry, center);
+  const worldOffset = displayOptions.worldOffset ?? [0, 0, 0];
 
   return gradeSegments.flatMap((segment) => {
     const projected = segment.coordinates
@@ -784,7 +824,11 @@ export function buildGeographicTerrainRouteSegments(
     );
     return [
       {
-        points: visibleProjected.map(({ point }) => point),
+        points: visibleProjected.map(({ point }) => [
+          point[0] + worldOffset[0],
+          point[1] + worldOffset[1],
+          point[2] + worldOffset[2],
+        ]),
         band: segment.band,
         thickness,
       },
@@ -897,10 +941,10 @@ export function buildGeographicTerrainRouteDestination(
     1,
     displayOptions.realScaleRadiusM ?? terrainRadiusM,
   );
-  const maxRouteDistanceM = routeGeometry.reduce((maximum, point) => {
-    const distanceM = geographicDistanceM(point, center);
-    return distanceM == null ? maximum : Math.max(maximum, distanceM);
-  }, 0);
+  const maxRouteDistanceM =
+    displayOptions.maxRouteDistanceM ??
+    routeGeometryMaxDistanceM(routeGeometry, center);
+  const worldOffset = displayOptions.worldOffset ?? [0, 0, 0];
   for (let index = routeGeometry.length - 1; index >= 0; index -= 1) {
     const projected = projectGeographicRoutePoint(
       model,
@@ -911,7 +955,13 @@ export function buildGeographicTerrainRouteDestination(
       maxVirtualDistanceM,
       realScaleRadiusM,
     );
-    if (projected) return projected.point;
+    if (projected) {
+      return [
+        projected.point[0] + worldOffset[0],
+        projected.point[1] + worldOffset[1],
+        projected.point[2] + worldOffset[2],
+      ];
+    }
   }
   return null;
 }

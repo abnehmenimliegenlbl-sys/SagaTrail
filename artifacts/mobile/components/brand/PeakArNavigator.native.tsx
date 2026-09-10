@@ -28,6 +28,8 @@ import {
   buildGeographicTerrainRouteDestination,
   buildLocalTerrainMesh,
   buildLocalMapRouteLines,
+  arWorldOffsetForPosition,
+  routeGeometryMaxDistanceM,
   routeGeometryAheadOfPosition,
   routeOriginForAR,
   terrainVisibilityForPeak,
@@ -349,12 +351,21 @@ function TerrainHologram({
       ) ?? routeGeometry,
     [routeGeometry, routeOriginPosition, observerPosition],
   );
+  const routeCenter = observerPosition ?? routeOriginPosition;
+  const worldOffset = useMemo(
+    () => arWorldOffsetForPosition(routeOriginPosition ?? observerPosition, observerPosition),
+    [observerPosition, routeOriginPosition],
+  );
+  const maxRouteDistanceM = useMemo(
+    () => routeGeometryMaxDistanceM(routeGeometry, routeCenter),
+    [routeCenter, routeGeometry],
+  );
   const routeSegments = useMemo<TerrainRouteSegment[]>(
     () =>
       buildGeographicTerrainRouteSegments(
         model,
         visibleRouteGeometry,
-        routeOriginPosition ?? observerPosition,
+        routeCenter,
         AR_ROUTE_TERRAIN_RADIUS_M,
         terrainProfile,
         {
@@ -362,14 +373,17 @@ function TerrainHologram({
           realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
           maxRenderedDistanceM: AR_ROUTE_REAL_SCALE_RADIUS_M,
           maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
+          maxRouteDistanceM,
+          worldOffset,
         },
       ),
     [
       model,
       visibleRouteGeometry,
-      routeOriginPosition,
-      observerPosition,
+      routeCenter,
       terrainProfile,
+      maxRouteDistanceM,
+      worldOffset,
     ],
   );
   const destinationPosition = useMemo(
@@ -377,14 +391,16 @@ function TerrainHologram({
       buildGeographicTerrainRouteDestination(
         model,
         routeGeometry,
-        routeOriginPosition ?? observerPosition,
+        routeCenter,
         AR_ROUTE_TERRAIN_RADIUS_M,
         {
           realScaleRadiusM: AR_ROUTE_REAL_SCALE_RADIUS_M,
           maxVirtualDistanceM: AR_ROUTE_DESTINATION_VIRTUAL_DISTANCE_M,
+          maxRouteDistanceM,
+          worldOffset,
         },
       ),
-    [model, routeGeometry, routeOriginPosition, observerPosition],
+    [model, routeGeometry, routeCenter, maxRouteDistanceM, worldOffset],
   );
   const routePoints = useMemo<TerrainRouteLine>(() => {
     const points: TerrainRouteLine = [];
@@ -611,8 +627,10 @@ function TerrainHologram({
 
 function TerrainSurface({
   model,
+  worldOffset,
 }: {
   model: LocalTerrainModel | null | undefined;
+  worldOffset: [number, number, number];
 }) {
   const [textureMaterial, setTextureMaterial] = useState<string | null>(null);
   const mesh = useMemo<LocalTerrainMesh | null>(
@@ -690,7 +708,11 @@ function TerrainSurface({
       triangleIndices={mesh.triangleIndices}
       materials={textureMaterial ?? TERRAIN_SURFACE_MATERIAL}
       opacity={textureMaterial ? 0.92 : 0.32}
-      position={[0, AR_ROUTE_GROUND_OFFSET, 0]}
+      position={[
+        worldOffset[0],
+        AR_ROUTE_GROUND_OFFSET + worldOffset[1],
+        worldOffset[2],
+      ]}
       renderingOrder={5}
       shadowCastingBitMask={0}
       viroTag="swisstopo-terrain-surface"
@@ -799,6 +821,10 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     onTrackingUpdated,
   } =
     sceneNavigator?.viroAppProps ?? {};
+  const worldOffset = arWorldOffsetForPosition(
+    routeOriginPosition ?? observerPosition,
+    observerPosition,
+  );
   useEffect(() => {
     console.log("[PeakAR] Viro markers updated", {
       peakCount: peaks.length,
@@ -812,7 +838,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
     >
       {/* The model is observer-centred and uses geographic bearings. With
           GravityAndHeading, heading 0 is the stable geographic Viro frame. */}
-      <TerrainSurface model={terrainModel} />
+      <TerrainSurface model={terrainModel} worldOffset={worldOffset} />
       <TerrainHologram
         model={terrainModel}
         routeGeometry={routeGeometry}
@@ -825,6 +851,13 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         const position: [number, number, number] = peak
           ? peakPosition(peak) ?? [0, -1000, 0]
           : [0, -1000, 0];
+        const worldPosition: [number, number, number] = peak
+          ? [
+              position[0] + worldOffset[0],
+              position[1] + worldOffset[1],
+              position[2] + worldOffset[2],
+            ]
+          : position;
         const terrainVisibility = peak
           ? terrainVisibilityForPeak(terrainModel, peak, observerElevationM)
           : "unknown";
@@ -833,7 +866,7 @@ function PeakArScene({ sceneNavigator }: PeakArSceneProps) {
         return (
           <ViroNode
             key={`peak-slot-${slotIndex}`}
-            position={position}
+            position={worldPosition}
             scale={peak ? peakMarkerScale(peak) : [1, 1, 1]}
             // Keep occluded markers in the native tree. Only their opacity
             // changes, avoiding the iOS 26 removeReactSubview crash. Empty

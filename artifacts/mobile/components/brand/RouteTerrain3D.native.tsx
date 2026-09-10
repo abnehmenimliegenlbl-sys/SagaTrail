@@ -20,6 +20,7 @@ import {
   BufferGeometry,
   DoubleSide,
   Group,
+  NormalBlending,
   SRGBColorSpace,
   Texture,
   Vector3,
@@ -679,16 +680,30 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
     <ThreeLine geometry={geometry}>
-      <lineBasicMaterial
-        color={color}
-        linewidth={6}
-        transparent
-        opacity={0.98}
-        blending={AdditiveBlending}
-        depthTest={false}
-        depthWrite={false}
-        toneMapped={false}
-      />
+      <ThreeLine geometry={geometry} renderOrder={20}>
+        <lineBasicMaterial
+          color="#061A0B"
+          linewidth={11}
+          transparent
+          opacity={0.94}
+          blending={NormalBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
+      <ThreeLine geometry={geometry} renderOrder={21}>
+        <lineBasicMaterial
+          color={color}
+          linewidth={6}
+          transparent
+          opacity={1}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
     </ThreeLine>
   );
 }
