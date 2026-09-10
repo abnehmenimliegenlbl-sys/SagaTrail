@@ -94,6 +94,36 @@ struct WatchHikeView: View {
 
       gpsIndicator
         .padding(.top, 3)
+
+      if isMapPresented, let state = hike.state, let map = state.map {
+        ZStack(alignment: .topLeading) {
+          WatchRouteMap(
+            map: map,
+            offline: !hike.isReachable || hike.isStale,
+            language: state.language,
+            height: 190,
+            showControls: true
+          )
+          .padding(6)
+          .background(WatchPalette.surface.ignoresSafeArea())
+          .overlay(alignment: .topLeading) {
+            Button {
+              isMapPresented = false
+            } label: {
+              Image(systemName: "xmark")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(WatchPalette.white)
+                .frame(width: 22, height: 22)
+                .background(WatchPalette.black.opacity(0.78), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(10)
+          }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WatchPalette.surface.ignoresSafeArea())
+        .zIndex(10)
+      }
     }
     .padding(.horizontal, 4)
     .scrollContentBackground(.hidden)
@@ -118,19 +148,6 @@ struct WatchHikeView: View {
       let page = min(max(Int(position.rounded()), 0), pageCount - 1)
       if selectedPage != page {
         selectedPage = page
-      }
-    }
-    .sheet(isPresented: $isMapPresented) {
-      if let state = hike.state, let map = state.map {
-        WatchRouteMap(
-          map: map,
-          offline: !hike.isReachable || hike.isStale,
-          language: state.language,
-          height: 190,
-          showControls: true
-        )
-        .padding(6)
-        .background(WatchPalette.surface.ignoresSafeArea())
       }
     }
     .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
