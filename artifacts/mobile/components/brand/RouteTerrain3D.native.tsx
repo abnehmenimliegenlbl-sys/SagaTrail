@@ -679,7 +679,7 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
-    <ThreeLine geometry={geometry}>
+    <>
       <ThreeLine geometry={geometry} renderOrder={20}>
         <lineBasicMaterial
           color="#061A0B"
@@ -704,7 +704,7 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
           toneMapped={false}
         />
       </ThreeLine>
-    </ThreeLine>
+    </>
   );
 }
 
