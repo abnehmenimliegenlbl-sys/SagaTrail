@@ -435,7 +435,7 @@ function flightCameraPlan(
   desiredCamera.y = Math.max(
     marker.y + cameraHeight,
     nearbyTerrainHeight > -Infinity
-      ? nearbyTerrainHeight + 260
+      ? nearbyTerrainHeight + 600
       : marker.y + cameraHeight,
   );
 
