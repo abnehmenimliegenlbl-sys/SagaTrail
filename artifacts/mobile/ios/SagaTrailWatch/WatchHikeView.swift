@@ -615,6 +615,7 @@ struct WatchHikeView: View {
             offRouteCard(offRoute)
           }
         }
+         .frame(minHeight: 145, maxWidth: .infinity, alignment: .topLeading)
       }
     }
   }
