@@ -119,6 +119,16 @@ struct WatchHikeView: View {
       // remains in the compact top-left slot beside it.
       .padding(.top, 48)
 
+      if !isMapPresented {
+        RoundedRectangle(cornerRadius: 12)
+          .fill(WatchPalette.black.opacity(0.82))
+          .frame(width: 72, height: 30)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+          .padding(.top, 1)
+          .padding(.trailing, 2)
+          .allowsHitTesting(false)
+      }
+
       gpsIndicator
         .padding(.leading, 12)
         .padding(.top, 8)
