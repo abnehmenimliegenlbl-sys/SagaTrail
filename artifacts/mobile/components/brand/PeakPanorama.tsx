@@ -831,17 +831,6 @@ export function PeakPanorama({
       accessibilityLabel={strings.title}
     >
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <View style={[styles.titleIcon, { backgroundColor: colors.glassHighlight }]}>
-            <Feather name="triangle" size={14} color={colors.accent} />
-          </View>
-          <View>
-            <Text style={[styles.kicker, { color: colors.mutedForeground }]}>
-              {strings.detected}
-            </Text>
-            <Text style={[styles.title, { color: colors.accent }]}>{strings.title}</Text>
-          </View>
-        </View>
         <View style={styles.headerActions}>
           {heading != null && (
             <View
@@ -1278,7 +1267,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 9 },
   titleIcon: {
