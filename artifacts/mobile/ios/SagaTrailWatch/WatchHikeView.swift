@@ -87,7 +87,9 @@ struct WatchHikeView: View {
           waitingPage
         }
       }
-      .padding(.top, 25)
+      // Keep the page header below the system clock while the GPS status
+      // remains in the compact top-left slot beside it.
+      .padding(.top, 48)
 
       gpsIndicator
         .padding(.top, 3)
@@ -323,17 +325,12 @@ struct WatchHikeView: View {
   }
   private func heartRate(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let bpm = hike.currentHeartRate ?? state.heartRateBpm
-    return Button { hike.startHeartRate() } label: {
-      HStack {
-        Label("Apple Workout", systemImage: "figure.hiking")
-        Spacer()
-        Text(bpm.map { "\($0, specifier: "%.0f")" } ?? "Start")
-      }
-    }
+    return Text("\(copy.t("pulse")): \(bpm.map { String(format: "%.0f", $0) } ?? "—") BPM")
     .font(WatchType.body)
+    .foregroundStyle(WatchPalette.ink)
+    .frame(maxWidth: .infinity, alignment: .leading)
     .lineLimit(1)
     .minimumScaleFactor(0.72)
-    .tint(WatchPalette.red)
   }
   private func safetyCheckin(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     let checkin = state.safetyCheckin
@@ -765,7 +762,12 @@ private struct WatchRouteMap: View {
             }
 
           }
-          .mapStyle(.standard)
+          .mapStyle(.standard(
+            elevation: .flat,
+            pointsOfInterest: .excludingAll,
+            showsTraffic: false
+          ))
+          .colorScheme(.light)
           .frame(height: height)
         }
       }
@@ -913,7 +915,7 @@ private struct WatchCopy {
       "returnDirection": "Zurück Richtung", "returnToRoute": "Zurück zur markierten Route gehen.",
       "sunset": "Sonnenuntergang", "afterSunset": "Voraussichtliche Ankunft nach Sonnenuntergang",
       "gusts": "Starke Böen bis", "thunderstorm": "Gewittergefahr", "completed": "Wanderung abgeschlossen",
-      "totalTime": "Gesamtzeit", "totalDistance": "Gesamtdistanz", "lastHeartRate": "Letzter Puls",
+      "totalTime": "Gesamtzeit", "totalDistance": "Gesamtdistanz", "lastHeartRate": "Letzter Puls", "pulse": "Puls",
       "averageHeartRate": "Ø Puls", "maxHeartRate": "Max. Puls", "activeEnergy": "Aktive Energie"
       , "sosTitle": "SOS an iPhone senden?", "confirmSOS": "SOS bestätigen", "cancel": "Abbrechen",
       "sosMessage": "Dein iPhone startet den Notfallablauf. Keine Position wird auf der Watch angezeigt.",
@@ -937,7 +939,7 @@ private struct WatchCopy {
       "returnDirection": "Return toward", "returnToRoute": "Walk back to the marked route.",
       "sunset": "Sunset", "afterSunset": "Estimated arrival after sunset",
       "gusts": "Strong gusts up to", "thunderstorm": "Thunderstorm risk", "completed": "Hike completed",
-      "totalTime": "Total time", "totalDistance": "Total distance", "lastHeartRate": "Last heart rate",
+      "totalTime": "Total time", "totalDistance": "Total distance", "lastHeartRate": "Last heart rate", "pulse": "Pulse",
       "averageHeartRate": "Avg. heart rate", "maxHeartRate": "Max. heart rate", "activeEnergy": "Active energy"
       , "sosTitle": "Send SOS to iPhone?", "confirmSOS": "Confirm SOS", "cancel": "Cancel",
       "sosMessage": "Your iPhone starts the emergency flow. No location is shown on the Watch.",
@@ -961,7 +963,7 @@ private struct WatchCopy {
       "returnDirection": "Retour vers", "returnToRoute": "Revenez vers l’itinéraire marqué.",
       "sunset": "Coucher du soleil", "afterSunset": "Arrivée prévue après le coucher du soleil",
       "gusts": "Rafales fortes jusqu’à", "thunderstorm": "Risque d’orage", "completed": "Randonnée terminée",
-      "totalTime": "Durée totale", "totalDistance": "Distance totale", "lastHeartRate": "Dernier pouls",
+      "totalTime": "Durée totale", "totalDistance": "Distance totale", "lastHeartRate": "Dernier pouls", "pulse": "Pouls",
       "averageHeartRate": "Pouls moyen", "maxHeartRate": "Pouls max.", "activeEnergy": "Énergie active"
     ],
     "it": [
@@ -978,7 +980,7 @@ private struct WatchCopy {
       "returnDirection": "Torna verso", "returnToRoute": "Torna al percorso indicato.",
       "sunset": "Tramonto", "afterSunset": "Arrivo previsto dopo il tramonto",
       "gusts": "Raffiche forti fino a", "thunderstorm": "Rischio temporale", "completed": "Escursione completata",
-      "totalTime": "Tempo totale", "totalDistance": "Distanza totale", "lastHeartRate": "Ultimo battito",
+      "totalTime": "Tempo totale", "totalDistance": "Distanza totale", "lastHeartRate": "Ultimo battito", "pulse": "Battito",
       "averageHeartRate": "Battito medio", "maxHeartRate": "Battito max.", "activeEnergy": "Energia attiva"
     ],
     "es": [
@@ -995,7 +997,7 @@ private struct WatchCopy {
       "returnDirection": "Volver hacia", "returnToRoute": "Vuelve a la ruta marcada.",
       "sunset": "Puesta de sol", "afterSunset": "Llegada prevista después de la puesta de sol",
       "gusts": "Ráfagas fuertes de hasta", "thunderstorm": "Riesgo de tormenta", "completed": "Ruta completada",
-      "totalTime": "Tiempo total", "totalDistance": "Distancia total", "lastHeartRate": "Último pulso",
+      "totalTime": "Tiempo total", "totalDistance": "Distancia total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
       "averageHeartRate": "Pulso medio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energía activa"
     ],
     "nl": [
@@ -1012,7 +1014,7 @@ private struct WatchCopy {
       "returnDirection": "Terug richting", "returnToRoute": "Ga terug naar de gemarkeerde route.",
       "sunset": "Zonsondergang", "afterSunset": "Verwachte aankomst na zonsondergang",
       "gusts": "Sterke windstoten tot", "thunderstorm": "Onweerrisico", "completed": "Wandeling voltooid",
-      "totalTime": "Totale tijd", "totalDistance": "Totale afstand", "lastHeartRate": "Laatste hartslag",
+      "totalTime": "Totale tijd", "totalDistance": "Totale afstand", "lastHeartRate": "Laatste hartslag", "pulse": "Hartslag",
       "averageHeartRate": "Gem. hartslag", "maxHeartRate": "Max. hartslag", "activeEnergy": "Actieve energie"
     ],
     "pt": [
@@ -1029,7 +1031,7 @@ private struct WatchCopy {
       "returnDirection": "Voltar para", "returnToRoute": "Volte ao percurso marcado.",
       "sunset": "Pôr do sol", "afterSunset": "Chegada prevista após o pôr do sol",
       "gusts": "Rajadas fortes até", "thunderstorm": "Risco de trovoada", "completed": "Caminhada concluída",
-      "totalTime": "Tempo total", "totalDistance": "Distância total", "lastHeartRate": "Último pulso",
+      "totalTime": "Tempo total", "totalDistance": "Distância total", "lastHeartRate": "Último pulso", "pulse": "Pulso",
       "averageHeartRate": "Pulso médio", "maxHeartRate": "Pulso máx.", "activeEnergy": "Energia ativa"
     ]
   ]
@@ -1065,21 +1067,22 @@ private struct OfflineRouteSketch: View {
       for item in route.dropFirst() {
         path.addLine(to: point(item))
       }
-      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.black.opacity(0.82)))
+      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.surface))
       context.stroke(path, with: .color(WatchPalette.red), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
       context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(WatchPalette.white))
       context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.red))
       if let current = map.current {
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
-        context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.black))
+        context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.ink))
       }
     }
-    .background(WatchPalette.black)
+    .background(WatchPalette.surface)
     .overlay(alignment: .topLeading) {
       Label(copy.t("offlineRoute"), systemImage: "wifi.slash")
         .font(.caption2)
-         .foregroundStyle(WatchPalette.white)
+         .foregroundStyle(WatchPalette.ink)
         .padding(6)
+        .background(WatchPalette.surfaceAlt.opacity(0.88), in: Capsule())
     }
   }
 }
