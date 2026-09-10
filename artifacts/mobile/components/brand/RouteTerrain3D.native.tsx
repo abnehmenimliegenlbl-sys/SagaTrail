@@ -79,6 +79,7 @@ const gradeColors = {
 const ThreeLine: any = "line";
 const radians = Math.PI / 180;
 const mapTextureSizes: readonly number[] = [1024, 768];
+const walkSpeedKmPerSecond = 1;
 const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
 
@@ -1299,7 +1300,11 @@ function Scene({
     if (mode !== "overview" && activeFlightTileReady) {
       const next = Math.min(
         routeLengthKm,
-        revealedDistanceRef.current + delta * flightSpeedKmPerSecond,
+        revealedDistanceRef.current +
+          delta *
+            (mode === "walk"
+              ? walkSpeedKmPerSecond
+              : flightSpeedKmPerSecond),
       );
       revealedDistanceRef.current = next;
       setRevealedDistanceKm(next);
