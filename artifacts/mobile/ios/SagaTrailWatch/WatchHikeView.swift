@@ -242,11 +242,13 @@ struct WatchHikeView: View {
       .accessibilityLabel(Text(hasGPS ? "GPS" : copy.t("noGps")))
   }
 
-  private func pageHeader(_ title: String, systemImage: String) -> some View {
+  private func pageHeader(_ title: String, systemImage: String?) -> some View {
     HStack(spacing: 5) {
-      Image(systemName: systemImage)
-        .font(.system(size: 11, weight: .bold))
-        .foregroundStyle(WatchPalette.red)
+      if let systemImage {
+        Image(systemName: systemImage)
+          .font(.system(size: 11, weight: .bold))
+          .foregroundStyle(WatchPalette.red)
+      }
       Text(title.uppercased())
         .font(WatchType.label)
         .tracking(0.9)
@@ -296,26 +298,46 @@ struct WatchHikeView: View {
     _ weather: SagaTrailWatchProtocol.Weather,
     daylight: SagaTrailWatchProtocol.Daylight?,
   ) -> some View {
-    return HStack(spacing: 5) {
-      Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
-      Spacer(minLength: 2)
-      Text("\(Int(weather.temperatureCelsius.rounded()))°")
-        .monospacedDigit()
-      Text("\(Int(weather.windKmh.rounded()))")
-        .monospacedDigit()
-      Image(systemName: "wind")
-      if weather.precipitationMm > 0 {
-        Text("\(weather.precipitationMm, specifier: "%.1f")")
-          .monospacedDigit()
-        Image(systemName: "drop.fill")
+    let warnings: [String] = {
+      var values: [String] = []
+      if weather.isThunderstorm {
+        values.append(copy.t("thunderstorm"))
       }
-      if weather.windGustsKmh >= 35 || weather.isThunderstorm || daylight?.arrivalAfterSunset == true {
-        Image(systemName: weather.isThunderstorm ? "cloud.bolt.rain.fill" : "exclamationmark.triangle.fill")
-          .foregroundStyle(WatchPalette.red)
+      if weather.windGustsKmh >= 35 {
+        values.append("\(copy.t("gusts")) \(Int(weather.windGustsKmh.rounded())) km/h")
+      }
+      if daylight?.arrivalAfterSunset == true {
+        values.append(copy.t("afterSunset"))
+      }
+      return values
+    }()
+    return VStack(alignment: .leading, spacing: 3) {
+      HStack(spacing: 5) {
+        Label(weatherLabel(weather.weatherCode), systemImage: weatherIcon(weather.weatherCode))
+        Spacer(minLength: 2)
+        Text("\(Int(weather.temperatureCelsius.rounded()))°")
+          .monospacedDigit()
+        Text("\(Int(weather.windKmh.rounded()))")
+          .monospacedDigit()
+        Image(systemName: "wind")
+        if weather.precipitationMm > 0 {
+          Text("\(weather.precipitationMm, specifier: "%.1f")")
+            .monospacedDigit()
+          Image(systemName: "drop.fill")
+        }
+      }
+      .lineLimit(1)
+      if !warnings.isEmpty {
+        HStack(alignment: .top, spacing: 4) {
+          Image(systemName: weather.isThunderstorm ? "cloud.bolt.rain.fill" : "exclamationmark.triangle.fill")
+          Text(warnings.joined(separator: " · "))
+            .lineLimit(2)
+        }
+        .font(.caption2)
+        .foregroundStyle(WatchPalette.red)
       }
     }
     .font(WatchType.body)
-    .lineLimit(1)
     .minimumScaleFactor(0.72)
   }
   private func hikeSummary(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
@@ -561,7 +583,7 @@ struct WatchHikeView: View {
     }()
 
     return VStack(spacing: 6) {
-      pageHeader(copy.t("status"), systemImage: "chart.bar.fill")
+      pageHeader(copy.t("status"), systemImage: nil)
       card {
         VStack(spacing: 6) {
           if let map = state.map {
