@@ -744,7 +744,7 @@ private struct WatchRouteMap: View {
               .stroke(WatchPalette.red, lineWidth: 4)
             if let start = coordinates.first {
               Annotation(copy.t("startMarker"), coordinate: start) {
-                WatchRouteMarker(color: WatchPalette.routeStart, systemImage: "flag.fill")
+                WatchStartMarker()
               }
             }
             if let finish = coordinates.last {
@@ -829,6 +829,34 @@ private struct WatchRouteMarker: View {
           .stroke(WatchPalette.white.opacity(0.85), lineWidth: 1)
       )
       .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
+  }
+}
+
+private struct WatchStartMarker: View {
+  var body: some View {
+    ZStack(alignment: .leading) {
+      Rectangle()
+        .fill(WatchPalette.white)
+        .frame(width: 1.5, height: 17)
+        .offset(x: 3, y: 1)
+      TrianglePennant()
+        .fill(WatchPalette.routeStart)
+        .frame(width: 17, height: 11)
+        .offset(x: 4, y: -2)
+    }
+    .frame(width: 22, height: 22)
+    .shadow(color: WatchPalette.black.opacity(0.22), radius: 2, y: 1)
+  }
+}
+
+private struct TrianglePennant: Shape {
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+    path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+    path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+    path.closeSubpath()
+    return path
   }
 }
 
@@ -1090,7 +1118,21 @@ private struct OfflineRouteSketch: View {
       }
       context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.surface))
       context.stroke(path, with: .color(WatchPalette.red), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-      context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(WatchPalette.routeStart))
+      let startPoint = point(route[0])
+      var startFlag = Path()
+      startFlag.move(to: CGPoint(x: startPoint.x, y: startPoint.y - 8))
+      startFlag.addLine(to: CGPoint(x: startPoint.x + 9, y: startPoint.y - 4))
+      startFlag.addLine(to: CGPoint(x: startPoint.x, y: startPoint.y))
+      startFlag.closeSubpath()
+      var pole = Path()
+      pole.move(to: CGPoint(x: startPoint.x, y: startPoint.y - 8))
+      pole.addLine(to: CGPoint(x: startPoint.x, y: startPoint.y + 7))
+      context.stroke(
+        pole,
+        with: .color(WatchPalette.white),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+      )
+      context.fill(startFlag, with: .color(WatchPalette.routeStart))
       context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.black))
       if let current = map.current {
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
