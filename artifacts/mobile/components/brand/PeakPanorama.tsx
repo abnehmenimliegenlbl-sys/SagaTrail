@@ -719,6 +719,20 @@ export function PeakPanorama({
     }
     return selected;
   }, [targetPeak, visiblePeaks]);
+  const directionPeak = markedPeaks
+    .map((peak) => ({
+      peak,
+      relative: displayBearing(peak),
+    }))
+    .filter(
+      (entry): entry is { peak: PanoramaGipfel; relative: number } =>
+        entry.relative != null && Math.abs(entry.relative) <= 30,
+    )
+    .sort(
+      (a, b) =>
+        Math.abs(a.relative) - Math.abs(b.relative) ||
+        a.peak.distanceKm - b.peak.distanceKm,
+    )[0]?.peak;
   const profileEntries = useMemo(
     () =>
       profileCandidates.flatMap((peak) => {
@@ -929,8 +943,8 @@ export function PeakPanorama({
       )}
       {visiblePeaks.length > 0 && (
         <View style={styles.peakRail}>
-          {visiblePeaks.slice(0, 3).map((peak, index) => {
-            const isSelected = targetPeak?.id === peak.id;
+          {markedPeaks.map((peak, index) => {
+            const isSelected = directionPeak?.id === peak.id;
             return (
               <Pressable
                 key={peak.id}
