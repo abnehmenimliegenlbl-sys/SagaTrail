@@ -982,9 +982,6 @@ export function PeakPanorama({
           </G>
            {panoramaMesh.elevationRangeM && (
              <>
-                <SvgText x="7" y="42" fill={colors.mutedForeground} fontSize="7" fontWeight="700">
-                  SWISSTOPO DTM · 5 KM
-               </SvgText>
                <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
                   {`${Math.round(panoramaMesh.elevationRangeM.max)} m ü. M.`}
                </SvgText>
