@@ -115,6 +115,7 @@
 - [POI tile closing](sagatrail-poi-tile-closing.md) — auto-opened POI tiles close after three clear consecutive distance increases, with a 5 m GPS-noise tolerance.
 - [POI story deduplication](sagatrail-poi-story-dedup.md) — general and approach POI flows share one physical-place claim so leaving/re-entering cannot replay a full story.
 - [EAS OTA release](eas-ota-release.md) — direct platform-specific eas update is the reliable fallback when workflow archives or GitHub-linked EAS triggers fail.
+- [EAS OTA concurrent export](eas-ota-concurrent-export.md) — cold-cache iOS and Android exports can SIGKILL when run concurrently; publish platforms sequentially.
 - [EAS workspace archive exclusions](sagatrail-eas-workspace-ignore.md) — builds from artifacts/mobile can archive the Git root; root .easignore must exclude workspace caches and local data.
 - [Persistente GPS-Prüfung](sagatrail-gps-persistence.md) — GPS-Status liegt dauerhaft in catalog_sagas; Startup-Seeding darf Koordinaten und Sicherheitsstatus nicht überschreiben.
 - [Prod-Secret-Dialog-Fallback](prod-secret-dialog-fallback.md) — requestSecrets kann trotz Bestätigung false liefern; gewährte Secrets ggf. nur als Boolean im Workflow-Env prüfen, nie ausgeben.
