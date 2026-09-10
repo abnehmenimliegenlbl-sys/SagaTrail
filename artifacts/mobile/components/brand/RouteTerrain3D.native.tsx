@@ -423,13 +423,20 @@ function flightCameraPlan(
     (ahead.y - behind.y) / Math.max(1, horizontalDistance);
   const cameraDistance = 130;
   const cameraHeight = 68;
-  const nearbyTerrainHeight = terrainHeightNearPoint(grid, marker, 450);
   const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
+  const markerTerrainHeight = terrainHeightNearPoint(grid, marker, 450);
+  const cameraTerrainHeight = terrainHeightNearPoint(grid, desiredCamera, 220);
+  const nearbyTerrainHeight = Math.max(
+    markerTerrainHeight ?? -Infinity,
+    cameraTerrainHeight ?? -Infinity,
+  );
   desiredCamera.y = Math.max(
     marker.y + cameraHeight,
-    (nearbyTerrainHeight ?? marker.y) + 90,
+    nearbyTerrainHeight > -Infinity
+      ? nearbyTerrainHeight + 260
+      : marker.y + cameraHeight,
   );
 
   const desiredTarget = marker
