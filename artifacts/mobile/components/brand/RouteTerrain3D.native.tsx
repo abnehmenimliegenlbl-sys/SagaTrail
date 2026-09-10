@@ -71,7 +71,7 @@ type LoadedFlightTile = {
 };
 
 const gradeColors = {
-  green: "#B6FF00",
+  green: "#39FF14",
   yellow: "#FFFF00",
   orange: "#FF8000",
   red: "#FF003C",
@@ -770,7 +770,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
       <mesh>
         <sphereGeometry args={[96, 16, 10]} />
         <meshBasicMaterial
-          color="#C8FF00"
+          color="#39FF14"
           transparent
           opacity={0.18}
           blending={AdditiveBlending}
@@ -782,7 +782,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
       <mesh>
         <sphereGeometry args={[68, 16, 10]} />
         <meshBasicMaterial
-          color="#C8FF00"
+          color="#39FF14"
           transparent
           opacity={0.28}
           blending={AdditiveBlending}
@@ -795,7 +795,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         <sphereGeometry args={[44, 16, 10]} />
         <meshBasicMaterial
           ref={haloMaterial}
-          color="#E7FF66"
+          color="#8CFF66"
           transparent
           opacity={0.3}
           blending={AdditiveBlending}
