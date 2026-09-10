@@ -125,17 +125,17 @@ class SagaTrailHorizonView extends WatchUi.View {
 
     function drawStatus(dc, state) {
         centered(dc, 43, "UNTERWEGS", Graphics.FONT_SMALL, HORIZON_RED);
-        centered(dc, 67, routeProgress(state).format("%d") + "%",
+        centered(dc, 66, routeProgress(state).format("%d") + "%",
             Graphics.FONT_MEDIUM, HORIZON_INK);
-        drawRouteProgress(dc, 96, state);
+        drawRouteProgress(dc, 93, state);
 
-        drawMetricRow(dc, 111, "DISTANZ",
+        drawStatusMetricRow(dc, 105, "DISTANZ",
             formatDistance(value(state, :totalDistanceM, 0)),
             "AUFSTIEG", value(state, :ascentM, 0).format("%d") + " m");
-        drawMetricRow(dc, 141, "SCHRITTE",
+        drawStatusMetricRow(dc, 137, "SCHRITTE",
             value(state, :steps, 0).format("%d"),
             "PULS", heartRateText(state));
-        drawMetricRow(dc, 163, "ZEIT",
+        drawStatusMetricRow(dc, 169, "ZEIT",
             formatTime(value(state, :elapsedS, 0)),
             "ETA", formatTime(value(state, :remainingSeconds, 0)));
 
@@ -176,37 +176,36 @@ class SagaTrailHorizonView extends WatchUi.View {
             checkText = formatTime(value(checkin, :remainingSec, 0));
             checkLabel = safetyStatus(value(checkin, :status, ""));
         }
-        dc.setColor(checkColor, HORIZON_PAPER);
-        dc.drawCircle(dc.getWidth() / 2, 94, 36);
-        dc.drawCircle(dc.getWidth() / 2, 94, 35);
-        centered(dc, 78, checkText, Graphics.FONT_SMALL, HORIZON_INK);
-        centered(dc, 103, checkLabel, Graphics.FONT_XTINY, checkColor);
+        centered(dc, 70, checkText, Graphics.FONT_MEDIUM, HORIZON_INK);
+        centered(dc, 99, checkLabel, Graphics.FONT_XTINY, checkColor);
+        dc.setColor(HORIZON_LIGHT, HORIZON_PAPER);
+        dc.drawLine(safeInset(dc) + 28, 122, dc.getWidth() - safeInset(dc) - 28, 122);
 
         var offRoute = value(state, :offRoute, null);
         var alertText = value(state, :alertText, "");
         var safetyText = value(state, :safetyText, "");
         if (offRoute != null) {
-            centered(dc, 139, "ABWEG", Graphics.FONT_SMALL, HORIZON_RED);
-            centered(dc, 164, formatDistance(value(offRoute, :distanceM, 0)) +
+            centered(dc, 132, "ABWEG", Graphics.FONT_SMALL, HORIZON_RED);
+            centered(dc, 155, formatDistance(value(offRoute, :distanceM, 0)) +
                 " ZUR ROUTE", Graphics.FONT_XTINY, HORIZON_INK);
         } else if (alertText != "") {
-            centered(dc, 139, "HINWEIS", Graphics.FONT_XTINY, HORIZON_RED);
-            centered(dc, 160, shortText(alertText, charsPerLine(dc)),
+            centered(dc, 134, "HINWEIS", Graphics.FONT_XTINY, HORIZON_RED);
+            centered(dc, 154, shortText(alertText, charsPerLine(dc)),
                 Graphics.FONT_XTINY, HORIZON_INK);
         } else if (safetyText != "") {
-            centered(dc, 139, "SICHERHEIT", Graphics.FONT_XTINY, HORIZON_RED);
-            centered(dc, 160, shortText(safetyText, charsPerLine(dc)),
+            centered(dc, 134, "SICHERHEIT", Graphics.FONT_XTINY, HORIZON_RED);
+            centered(dc, 154, shortText(safetyText, charsPerLine(dc)),
                 Graphics.FONT_XTINY, HORIZON_INK);
         } else {
-            centered(dc, 146, "KEINE AKUTE WARNUNG",
+            centered(dc, 145, "KEINE AKUTE WARNUNG",
                 Graphics.FONT_XTINY, HORIZON_GREEN);
         }
 
         dc.setColor(HORIZON_RED, HORIZON_PAPER);
-        dc.drawLine(safeInset(dc) + 14, 187, dc.getWidth() - safeInset(dc) - 14, 187);
-        centered(dc, 194, confirmSos ? "NOCHMALS SELECT" : "SELECT 2x: SOS",
+        dc.drawLine(safeInset(dc) + 14, 180, dc.getWidth() - safeInset(dc) - 14, 180);
+        centered(dc, 187, confirmSos ? "NOCHMALS SELECT" : "SELECT 2x: SOS",
             Graphics.FONT_XTINY, HORIZON_RED);
-        centered(dc, 213, "MENU: CHECK-IN / PAUSE",
+        centered(dc, 205, "MENU: CHECK-IN / PAUSE",
             Graphics.FONT_XTINY, HORIZON_INK);
     }
 
@@ -343,6 +342,20 @@ class SagaTrailHorizonView extends WatchUi.View {
         dc.drawText(inset, y + 14, Graphics.FONT_SMALL, leftValue,
             Graphics.TEXT_JUSTIFY_LEFT);
         dc.drawText(dc.getWidth() - inset, y + 14, Graphics.FONT_SMALL, rightValue,
+            Graphics.TEXT_JUSTIFY_RIGHT);
+    }
+
+    function drawStatusMetricRow(dc, y, leftLabel, leftValue, rightLabel, rightValue) {
+        var inset = safeInset(dc) + 8;
+        dc.setColor(HORIZON_MID, HORIZON_PAPER);
+        dc.drawText(inset, y, Graphics.FONT_XTINY, leftLabel,
+            Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(dc.getWidth() - inset, y, Graphics.FONT_XTINY, rightLabel,
+            Graphics.TEXT_JUSTIFY_RIGHT);
+        dc.setColor(HORIZON_INK, HORIZON_PAPER);
+        dc.drawText(inset, y + 14, Graphics.FONT_XTINY, leftValue,
+            Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(dc.getWidth() - inset, y + 14, Graphics.FONT_XTINY, rightValue,
             Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
