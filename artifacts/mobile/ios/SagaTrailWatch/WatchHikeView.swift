@@ -360,14 +360,14 @@ struct WatchHikeView: View {
       Circle()
         .fill(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
         .frame(width: 4, height: 4)
-      Text(hasGPS ? "GPS" : copy.t("noGps"))
+      Text(hasGPS ? copy.t("gpsLiveShort") : copy.t("noGpsShort"))
         .font(WatchType.label)
         .tracking(0.6)
         .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
       Spacer()
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-      .accessibilityLabel(Text(hasGPS ? "GPS" : copy.t("noGps")))
+      .accessibilityLabel(Text(hasGPS ? copy.t("gpsLiveShort") : copy.t("noGpsShort")))
   }
 
   private func pageHeader(_ title: String, systemImage: String?) -> some View {
@@ -1277,7 +1277,7 @@ private struct WatchCopy {
     "de": [
       "navigation": "Navigation", "current": "Aktuell", "status": "Status", "poiStory": "Ortgeschichte",
       "turnCrown": "Krone drehen",
-      "noGps": "Kein GPS-Empfang", "noGpsDetail": "Navigation wartet auf ein neues Signal",
+      "noGps": "Kein GPS-Empfang", "noGpsShort": "Kein GPS", "gpsLiveShort": "GPS Live", "noGpsDetail": "Navigation wartet auf ein neues Signal",
       "gpsAvailable": "GPS verfügbar", "turnLeft": "LINKS", "turnRight": "RECHTS",
       "turnAround": "WENDEN", "goStraight": "GERADEAUS",
       "safeNow": "Ich bin sicher", "summaryPhone": "Details auf dem iPhone",
@@ -1286,7 +1286,7 @@ private struct WatchCopy {
     "en": [
       "navigation": "Navigation", "current": "Now", "status": "Status", "poiStory": "Place story",
       "turnCrown": "Turn crown",
-      "noGps": "No GPS reception", "noGpsDetail": "Navigation is waiting for a new signal",
+      "noGps": "No GPS reception", "noGpsShort": "No GPS", "gpsLiveShort": "GPS Live", "noGpsDetail": "Navigation is waiting for a new signal",
       "gpsAvailable": "GPS available", "turnLeft": "LEFT", "turnRight": "RIGHT",
       "turnAround": "TURN AROUND", "goStraight": "STRAIGHT",
       "safeNow": "I'm safe", "summaryPhone": "Details on iPhone",
@@ -1295,7 +1295,7 @@ private struct WatchCopy {
     "fr": [
       "navigation": "Navigation", "current": "Maintenant", "status": "État", "poiStory": "Histoire du lieu",
       "turnCrown": "Tournez la couronne",
-      "noGps": "Aucun signal GPS", "noGpsDetail": "La navigation attend un nouveau signal",
+      "noGps": "Aucun signal GPS", "noGpsShort": "Pas de GPS", "gpsLiveShort": "GPS en direct", "noGpsDetail": "La navigation attend un nouveau signal",
       "gpsAvailable": "GPS disponible", "turnLeft": "GAUCHE", "turnRight": "DROITE",
       "turnAround": "FAIRE DEMI-TOUR", "goStraight": "TOUT DROIT",
       "safeNow": "Je vais bien", "summaryPhone": "Détails sur l’iPhone",
@@ -1304,7 +1304,7 @@ private struct WatchCopy {
     "it": [
       "navigation": "Navigazione", "current": "Ora", "status": "Stato", "poiStory": "Storia del luogo",
       "turnCrown": "Gira la corona",
-      "noGps": "Nessun segnale GPS", "noGpsDetail": "La navigazione attende un nuovo segnale",
+      "noGps": "Nessun segnale GPS", "noGpsShort": "Niente GPS", "gpsLiveShort": "GPS live", "noGpsDetail": "La navigazione attende un nuovo segnale",
       "gpsAvailable": "GPS disponibile", "turnLeft": "SINISTRA", "turnRight": "DESTRA",
       "turnAround": "INVERSIONE", "goStraight": "DRITTO",
       "safeNow": "Sto bene", "summaryPhone": "Dettagli su iPhone",
@@ -1313,7 +1313,7 @@ private struct WatchCopy {
     "es": [
       "navigation": "Navegación", "current": "Ahora", "status": "Estado", "poiStory": "Historia del lugar",
       "turnCrown": "Gira la corona",
-      "noGps": "Sin señal GPS", "noGpsDetail": "La navegación espera una nueva señal",
+      "noGps": "Sin señal GPS", "noGpsShort": "Sin GPS", "gpsLiveShort": "GPS en vivo", "noGpsDetail": "La navegación espera una nueva señal",
       "gpsAvailable": "GPS disponible", "turnLeft": "IZQUIERDA", "turnRight": "DERECHA",
       "turnAround": "GIRA", "goStraight": "RECTO",
       "safeNow": "Estoy bien", "summaryPhone": "Detalles en iPhone",
@@ -1322,7 +1322,7 @@ private struct WatchCopy {
     "nl": [
       "navigation": "Navigatie", "current": "Nu", "status": "Status", "poiStory": "Plaatsverhaal",
       "turnCrown": "Draai de kroon",
-      "noGps": "Geen GPS-signaal", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
+      "noGps": "Geen GPS-signaal", "noGpsShort": "Geen GPS", "gpsLiveShort": "GPS live", "noGpsDetail": "Navigatie wacht op een nieuw signaal",
       "gpsAvailable": "GPS beschikbaar", "turnLeft": "LINKS", "turnRight": "RECHTS",
       "turnAround": "OMKEREN", "goStraight": "RECHTDOOR",
       "safeNow": "Ik ben veilig", "summaryPhone": "Details op iPhone",
@@ -1331,7 +1331,7 @@ private struct WatchCopy {
     "pt": [
       "navigation": "Navegação", "current": "Agora", "status": "Estado", "poiStory": "História do lugar",
       "turnCrown": "Rode a coroa",
-      "noGps": "Sem sinal GPS", "noGpsDetail": "A navegação aguarda um novo sinal",
+      "noGps": "Sem sinal GPS", "noGpsShort": "Sem GPS", "gpsLiveShort": "GPS em direto", "noGpsDetail": "A navegação aguarda um novo sinal",
       "gpsAvailable": "GPS disponível", "turnLeft": "ESQUERDA", "turnRight": "DIREITA",
       "turnAround": "INVERTER", "goStraight": "EM FRENTE",
       "safeNow": "Estou bem", "summaryPhone": "Detalhes no iPhone",
