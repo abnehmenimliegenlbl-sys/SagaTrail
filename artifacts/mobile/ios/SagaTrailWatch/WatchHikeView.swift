@@ -656,7 +656,7 @@ struct WatchHikeView: View {
       pageHeader("Story / Audio", systemImage: "waveform")
       card {
         VStack(spacing: 5) {
-          Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
+          Image(systemName: "speaker.wave.3.fill")
             .font(.system(size: 28, weight: .semibold))
             .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
           AudioWaveform(isActive: state.storyAudio?.isPlaying == true)
