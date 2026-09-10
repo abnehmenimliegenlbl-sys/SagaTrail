@@ -887,10 +887,6 @@ export function PeakPanorama({
         </View>
       </View>
 
-      <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-        {strings.hint}
-      </Text>
-
       <View style={styles.signalRow}>
         <View
           style={[
@@ -908,13 +904,6 @@ export function PeakPanorama({
             {visiblePeaks.length > 0 ? `${visiblePeaks.length} · ${strings.detected}` : status}
           </Text>
         </View>
-        {heading == null ? (
-          <Feather name="compass" size={16} color={colors.mutedForeground} />
-        ) : (
-          <Text style={[styles.viewAngle, { color: colors.mutedForeground }]}>
-            {PANORAMA_TOTAL_DEGREES}°
-          </Text>
-        )}
       </View>
       {hasGps && !terrainModel && (
         <View
