@@ -61,35 +61,41 @@ struct WatchHikeView: View {
   }
 
   var body: some View {
-    VStack(spacing: 5) {
-      gpsIndicator
-      if let state = hike.state {
-        TabView(selection: $selectedPage) {
-          navigationPage(state).tag(0)
-          statusPage(state).tag(1)
-          safetyPage(state).tag(2)
-          storyPage(state).tag(3)
-          if let poiStory = state.poiStory {
-            poiStoryPage(poiStory).tag(4)
+    ZStack(alignment: .topLeading) {
+      VStack(spacing: 5) {
+        if let state = hike.state {
+          TabView(selection: $selectedPage) {
+            navigationPage(state).tag(0)
+            statusPage(state).tag(1)
+            safetyPage(state).tag(2)
+            storyPage(state).tag(3)
+            if let poiStory = state.poiStory {
+              poiStoryPage(poiStory).tag(4)
+            }
           }
-        }
-        .tabViewStyle(.verticalPage)
-        .frame(maxHeight: .infinity)
-        .onChange(of: state.poiStory?.id) { _, id in
-          if id != nil {
-            selectedPage = 4
-            poiTextPage = 0
-          } else if selectedPage == 4 {
-            selectedPage = 0
+          .tabViewStyle(.verticalPage)
+          .frame(maxHeight: .infinity)
+          .onChange(of: state.poiStory?.id) { _, id in
+            if id != nil {
+              selectedPage = 4
+              poiTextPage = 0
+            } else if selectedPage == 4 {
+              selectedPage = 0
+            }
           }
+        } else {
+          waitingPage
         }
-      } else {
-        waitingPage
       }
+      .padding(.top, 25)
+
+      gpsIndicator
+        .padding(.top, 3)
     }
     .padding(.horizontal, 4)
     .scrollContentBackground(.hidden)
     .background(WatchPalette.surface.ignoresSafeArea())
+    .ignoresSafeArea(.container, edges: .top)
     .tint(WatchPalette.red)
     .preferredColorScheme(.light)
     .focusable(true)
@@ -152,14 +158,14 @@ struct WatchHikeView: View {
       Circle()
         .fill(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
         .frame(width: 4, height: 4)
-      Text(copy.t(hasGPS ? "gpsAvailable" : "noGps"))
+      Text(hasGPS ? "GPS" : copy.t("noGps"))
         .font(WatchType.label)
         .tracking(0.6)
         .foregroundStyle(hasGPS ? WatchPalette.gpsGreen : WatchPalette.red)
       Spacer()
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-      .accessibilityLabel(Text(hasGPS ? copy.t("gpsAvailable") : copy.t("noGps")))
+      .accessibilityLabel(Text(hasGPS ? "GPS" : copy.t("noGps")))
   }
 
   private func pageHeader(_ title: String, systemImage: String) -> some View {
@@ -182,7 +188,7 @@ struct WatchHikeView: View {
     @ViewBuilder content: () -> Content
   ) -> some View {
     content()
-      .padding(8)
+      .padding(10)
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(WatchPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: 12))
       .overlay(
