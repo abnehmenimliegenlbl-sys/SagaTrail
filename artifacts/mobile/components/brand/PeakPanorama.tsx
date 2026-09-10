@@ -980,16 +980,6 @@ export function PeakPanorama({
             <Line x1="180" y1="0" x2="180" y2="350" stroke={colors.accent} strokeWidth="1" />
             <Line x1="270" y1="0" x2="270" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
-           {panoramaMesh.elevationRangeM && (
-             <>
-               <SvgText x="7" y="54" fill={colors.mutedForeground} fontSize="7">
-                  {`${Math.round(panoramaMesh.elevationRangeM.max)} m ü. M.`}
-               </SvgText>
-                <SvgText x="7" y="272" fill={colors.mutedForeground} fontSize="7">
-                  {`${Math.round(panoramaMesh.elevationRangeM.min)} m ü. M.`}
-               </SvgText>
-             </>
-           )}
           {compassTicks.map((direction) => (
             <G key={direction.label}>
               <Line
