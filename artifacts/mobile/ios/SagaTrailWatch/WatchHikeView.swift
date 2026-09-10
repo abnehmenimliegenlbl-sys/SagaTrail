@@ -53,6 +53,68 @@ private struct AudioWaveform: View {
   }
 }
 
+private struct SagaTrailAlertOverlay<Actions: View>: View {
+  let title: String
+  let message: String?
+  let isDestructive: Bool
+  let actions: Actions
+
+  init(
+    title: String,
+    message: String?,
+    isDestructive: Bool,
+    @ViewBuilder actions: () -> Actions
+  ) {
+    self.title = title
+    self.message = message
+    self.isDestructive = isDestructive
+    self.actions = actions()
+  }
+
+  var body: some View {
+    ZStack {
+      Color.black.opacity(0.6).ignoresSafeArea()
+
+      ScrollView {
+        VStack(alignment: .leading, spacing: 6) {
+          HStack(spacing: 6) {
+            BrandIcon.image
+              .resizable()
+              .scaledToFit()
+              .frame(width: 18, height: 18)
+              .clipShape(RoundedRectangle(cornerRadius: 4))
+            Text(title)
+              .font(WatchType.title)
+              .foregroundStyle(WatchPalette.black)
+          }
+
+          if let message = message, !message.isEmpty {
+            Text(message)
+              .font(WatchType.body)
+              .foregroundStyle(WatchPalette.black)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+
+          actions
+            .padding(.top, 4)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(WatchPalette.white)
+        .cornerRadius(12)
+        .overlay(
+          RoundedRectangle(cornerRadius: 12)
+            .stroke(WatchPalette.red, lineWidth: isDestructive ? 3 : 2)
+        )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 8)
+      }
+    }
+    .zIndex(100)
+    .transition(.opacity)
+  }
+}
+
 struct WatchHikeView: View {
   @EnvironmentObject private var hike: WatchHikeModel
   @State private var selectedPage = 0
@@ -178,6 +240,8 @@ struct WatchHikeView: View {
         .background(WatchPalette.surface.ignoresSafeArea())
         .zIndex(10)
       }
+
+      customOverlays
     }
     .padding(.horizontal, isMapPresented ? 0 : 4)
     .scrollContentBackground(.hidden)
@@ -204,22 +268,83 @@ struct WatchHikeView: View {
         selectedPage = page
       }
     }
-    .alert(copy.t("sosTitle"), isPresented: $hike.showSOSConfirmation) {
-       Button(copy.t("cancel"), role: .cancel) {}
-       Button(copy.t("confirmSOS"), role: .destructive, action: hike.confirmSOS)
-    } message: {
-       Text(copy.t("sosMessage"))
-    }
-     .confirmationDialog(copy.t("safetyTitle"), isPresented: $hike.showSafetyCheckinOptions) {
-      Button("30 Minuten") { hike.sendSafetyCheckin(durationMinutes: 30) }
-      Button("60 Minuten") { hike.sendSafetyCheckin(durationMinutes: 60) }
-      Button("120 Minuten") { hike.sendSafetyCheckin(durationMinutes: 120) }
-       Button(copy.t("cancel"), role: .cancel) {}
-    } message: {
-       Text(copy.t("safetyMessage"))
-    }
-    .alert(item: $hike.activeAlert) { alert in
-      Alert(title: Text(alert.title), message: Text(alert.body), dismissButton: .default(Text("OK")))
+  }
+
+  @ViewBuilder
+  private var customOverlays: some View {
+    if hike.showSOSConfirmation {
+      SagaTrailAlertOverlay(title: copy.t("sosTitle"), message: copy.t("sosMessage"), isDestructive: true) {
+        VStack(spacing: 6) {
+          Button {
+            hike.confirmSOS()
+          } label: {
+            Text(copy.t("confirmSOS"))
+              .font(WatchType.title)
+              .foregroundStyle(WatchPalette.white)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.red, in: Capsule())
+          }
+          .buttonStyle(.plain)
+
+          Button {
+            hike.showSOSConfirmation = false
+          } label: {
+            Text(copy.t("cancel"))
+              .font(WatchType.body.bold())
+              .foregroundStyle(WatchPalette.black)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.surface, in: Capsule())
+              .overlay(Capsule().stroke(WatchPalette.mutedWhite, lineWidth: 1))
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    } else if hike.showSafetyCheckinOptions {
+      SagaTrailAlertOverlay(title: copy.t("safetyTitle"), message: copy.t("safetyMessage"), isDestructive: false) {
+        VStack(spacing: 6) {
+          ForEach([30, 60, 120], id: \.self) { minutes in
+            Button {
+              hike.sendSafetyCheckin(durationMinutes: minutes)
+            } label: {
+              Text("\(minutes) Minuten")
+                .font(WatchType.title)
+                .foregroundStyle(WatchPalette.white)
+                .frame(maxWidth: .infinity, minHeight: 32)
+                .background(WatchPalette.red, in: Capsule())
+            }
+            .buttonStyle(.plain)
+          }
+
+          Button {
+            hike.showSafetyCheckinOptions = false
+          } label: {
+            Text(copy.t("cancel"))
+              .font(WatchType.body.bold())
+              .foregroundStyle(WatchPalette.black)
+              .frame(maxWidth: .infinity, minHeight: 32)
+              .background(WatchPalette.surface, in: Capsule())
+              .overlay(Capsule().stroke(WatchPalette.mutedWhite, lineWidth: 1))
+          }
+          .buttonStyle(.plain)
+        }
+      }
+    } else if let alert = hike.activeAlert {
+      SagaTrailAlertOverlay(title: alert.title, message: alert.body, isDestructive: false) {
+        Button {
+          hike.activeAlert = nil
+          if alert.action == "openPoiStory", hike.state?.poiStory != nil {
+            selectedPage = 4
+            poiTextPage = 0
+          }
+        } label: {
+          Text("OK")
+            .font(WatchType.title)
+            .foregroundStyle(WatchPalette.white)
+            .frame(maxWidth: .infinity, minHeight: 32)
+            .background(WatchPalette.red, in: Capsule())
+        }
+        .buttonStyle(.plain)
+      }
     }
   }
 

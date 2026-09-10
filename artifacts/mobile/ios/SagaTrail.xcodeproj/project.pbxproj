@@ -21,6 +21,7 @@
 		B10000000000000000000003 /* WatchHikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* WatchHikeView.swift */; };
 		B10000000000000000000004 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* WatchProtocol.swift */; };
 		B10000000000000000000009 /* SagaTrailComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000019 /* SagaTrailComplication.swift */; };
+		B1000000000000000000000B /* BrandIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000001B /* BrandIcon.swift */; };
 		B10000000000000000000005 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000017 /* HealthKit.framework */; };
 		B10000000000000000000006 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000018 /* WatchConnectivity.framework */; };
 		B1000000000000000000000A /* ClockKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1000000000000000000001A /* ClockKit.framework */; };
@@ -76,6 +77,7 @@
 		B10000000000000000000017 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		B10000000000000000000018 /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
 		B1000000000000000000001A /* ClockKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClockKit.framework; path = System/Library/Frameworks/ClockKit.framework; sourceTree = SDKROOT; };
+		B1000000000000000000001B /* BrandIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandIcon.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -175,6 +177,7 @@
 				B10000000000000000000013 /* WatchHikeView.swift */,
 				B10000000000000000000014 /* WatchProtocol.swift */,
 				B10000000000000000000019 /* SagaTrailComplication.swift */,
+				B1000000000000000000001B /* BrandIcon.swift */,
 				B10000000000000000000015 /* Info.plist */,
 				B10000000000000000000016 /* SagaTrailWatch.entitlements */,
 			);
@@ -392,6 +395,7 @@
 				B10000000000000000000003 /* WatchHikeView.swift in Sources */,
 				B10000000000000000000004 /* WatchProtocol.swift in Sources */,
 				B10000000000000000000009 /* SagaTrailComplication.swift in Sources */,
+				B1000000000000000000000B /* BrandIcon.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

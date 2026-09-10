@@ -192,6 +192,7 @@ type NowPlayingNarration = {
 type WatchDiscoveryAlert = {
   text: string;
   haptic: "notification" | "success";
+  action?: "openPoiStory";
 };
 
 function geometryLengthKm(geometry: number[][] | null | undefined): number {
@@ -1328,6 +1329,7 @@ export default function LiveHike() {
   const lastCriticalWatchAlertRef = useRef<string | null>(null);
   const lastSosAcknowledgementRef = useRef<"none" | "acknowledged" | "failed">("none");
   const lastSafetyCheckinKeyRef = useRef<string | null>(null);
+  const lastWatchPoiStoryIdRef = useRef<string | null>(null);
   const lastWatchStateDebugKeyRef = useRef<string | null>(null);
   const compassHeadingRef = useRef<number | null>(null);
   const compassGravityRef = useRef<CompassVector | null>(null);
@@ -2894,6 +2896,7 @@ export default function LiveHike() {
               kind: "discovery" as const,
               text: watchDiscoveryAlert.text,
               haptic: watchDiscoveryAlert.haptic,
+              action: watchDiscoveryAlert.action,
               critical: false,
             }
         : speaking
@@ -3007,14 +3010,17 @@ export default function LiveHike() {
     const safetyCheckinKey = safetyCheckinState
       ? `${safetyCheckinState.status}:${safetyCheckinState.expiresAtEpochMs ?? 0}:${safetyCheckinState.liveLinkActive}`
       : null;
+    const watchPoiStoryId = watchPoiStory?.id ?? null;
     const force =
       (criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current) ||
       (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current) ||
       safetyCheckinKey !== lastSafetyCheckinKeyRef.current ||
+      watchPoiStoryId !== lastWatchPoiStoryIdRef.current ||
       sosAcknowledgement !== lastSosAcknowledgementRef.current;
     lastCriticalWatchAlertRef.current = criticalKey;
     lastWatchDiscoveryAlertRef.current = discoveryKey;
     lastSafetyCheckinKeyRef.current = safetyCheckinKey;
+    lastWatchPoiStoryIdRef.current = watchPoiStoryId;
     lastSosAcknowledgementRef.current = sosAcknowledgement;
     void publishHikeLiveState(state, { force });
     // Notification mirroring intentionally stays lower frequency than the
@@ -4480,6 +4486,7 @@ export default function LiveHike() {
       raiseWatchDiscoveryAlert({
         text: `Sehenswürdigkeit in der Nähe: ${poiName}`,
         haptic: "notification",
+        action: "openPoiStory",
       });
     }
     const pack = STORY_PACKS[resolveLang(cueLanguage)];

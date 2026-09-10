@@ -262,12 +262,13 @@ final class WatchHikeModel: NSObject, ObservableObject {
       let title = payload["title"] as? String ?? "SagaTrail"
       let body = payload["body"] as? String ?? ""
       let haptic = payload["haptic"] as? String
-      let alertKey = "\(title)|\(body)|\(haptic ?? "")"
+      let action = payload["action"] as? String
+      let alertKey = "\(title)|\(body)|\(haptic ?? "")|\(action ?? "")"
       if alertKey != lastAlertKey {
         lastAlertKey = alertKey
         playAlertHaptic(haptic)
+        activeAlert = WatchAlert(title: title, body: body, action: action)
       }
-      activeAlert = WatchAlert(title: title, body: body)
     default:
       break
     }
@@ -344,6 +345,7 @@ struct WatchAlert: Identifiable {
   let id = UUID()
   let title: String
   let body: String
+  let action: String?
 }
 
 extension WatchHikeModel: WCSessionDelegate {

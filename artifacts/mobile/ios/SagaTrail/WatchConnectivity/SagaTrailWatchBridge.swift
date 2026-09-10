@@ -381,7 +381,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
         ?? ((alert["kind"] as? String) == "safety"
           ? "warning"
           : ((alert["kind"] as? String) == "sos" ? "failure" : "click"))
-      try sendAlert(["title": "SagaTrail", "body": text, "haptic": haptic])
+      var watchAlert: [String: Any] = [
+        "title": "SagaTrail",
+        "body": text,
+        "haptic": haptic
+      ]
+      if alert["action"] as? String == "openPoiStory" {
+        watchAlert["action"] = "openPoiStory"
+      }
+      try sendAlert(watchAlert)
     }
   }
 
@@ -394,6 +402,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     // Alerts cross a lock-screen boundary: retain only human-readable text.
     var payload: [String: Any] = ["title": title, "body": body]
     if let haptic = alert["haptic"] as? String { payload["haptic"] = haptic }
+    if alert["action"] as? String == "openPoiStory" {
+      payload["action"] = "openPoiStory"
+    }
     send(try propertyListSafeEnvelope(envelope(type: "alert", payload: payload)), preferApplicationContext: false)
   }
 

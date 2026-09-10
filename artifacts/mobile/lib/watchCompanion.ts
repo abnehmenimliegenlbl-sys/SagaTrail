@@ -135,6 +135,7 @@ export interface HikeLiveState {
     text: string;
     critical: boolean;
     haptic?: "click" | "notification" | "success";
+    action?: "openPoiStory";
   } | null;
   /** True only while narration audio is actually playing on the phone. */
   audioPlaying: boolean;
@@ -389,6 +390,10 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       state.storyAudio.text.length > 2_000
     ) return false;
   }
+  if (
+    state.activeAlert?.action !== undefined &&
+    state.activeAlert.action !== "openPoiStory"
+  ) return false;
   for (const plannedValue of [state.plannedAscentM, state.remainingAscentM]) {
     if (plannedValue !== undefined && plannedValue !== null &&
         (typeof plannedValue !== "number" || !Number.isFinite(plannedValue) || plannedValue < 0)) {
