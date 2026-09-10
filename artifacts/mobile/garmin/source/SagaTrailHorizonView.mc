@@ -256,13 +256,10 @@ class SagaTrailHorizonView extends WatchUi.View {
     function drawHeader(dc, state) {
         var inset = safeInset(dc);
         dc.setColor(HORIZON_INK, HORIZON_PAPER);
-        dc.drawText(inset, 10, Graphics.FONT_XTINY,
-            "SAGATRAIL", Graphics.TEXT_JUSTIFY_LEFT);
-        centered(dc, 10, pageTitle(), Graphics.FONT_XTINY, HORIZON_MID);
-        drawHiker(dc, dc.getWidth() - inset - 12, 6,
-            gpsFresh(state) ? HORIZON_GREEN : HORIZON_RED);
+        centered(dc, 16, "SAGATRAIL  " + pageTitle(),
+            Graphics.FONT_XTINY, HORIZON_INK);
         dc.setColor(HORIZON_LIGHT, HORIZON_PAPER);
-        dc.drawLine(inset + 12, 31, dc.getWidth() - inset - 12, 31);
+        dc.drawLine(inset + 12, 34, dc.getWidth() - inset - 12, 34);
     }
 
     function drawDirectionArrow(dc, x, y, direction, color) {
