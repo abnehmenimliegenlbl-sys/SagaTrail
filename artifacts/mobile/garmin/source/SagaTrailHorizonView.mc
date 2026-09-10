@@ -59,6 +59,10 @@ class SagaTrailHorizonView extends WatchUi.View {
             footer(dc, "SOS FEHLER", HORIZON_RED);
         } else if (sos == "acknowledged") {
             footer(dc, "SOS BESTAETIGT", HORIZON_GREEN);
+        } else if (page == 1) {
+            drawStatusFooter(dc, state);
+        } else if (page == 2) {
+            footer(dc, "MENU: CHECK-IN / PAUSE", HORIZON_MID);
         } else {
             footer(dc, "HOCH / RUNTER", HORIZON_MID);
         }
@@ -75,7 +79,7 @@ class SagaTrailHorizonView extends WatchUi.View {
             centered(dc, 86, "VERBINDEN", Graphics.FONT_SMALL, HORIZON_INK);
             centered(dc, 116, "GARMIN CONNECT OEFFNEN", Graphics.FONT_XTINY, HORIZON_INK);
             drawHorizon(dc, 148);
-            centered(dc, 198, "KEINE LIVE-DATEN", Graphics.FONT_XTINY, HORIZON_RED);
+            centered(dc, 188, "KEINE LIVE-DATEN", Graphics.FONT_XTINY, HORIZON_RED);
             return;
         }
 
@@ -106,14 +110,10 @@ class SagaTrailHorizonView extends WatchUi.View {
             charsPerLine(dc)), Graphics.FONT_XTINY, HORIZON_INK);
 
         drawHorizon(dc, 145);
-        drawRouteProgress(dc, 184, state);
+        drawRouteProgress(dc, 179, state);
 
-        drawBottomStat(dc, 196, true, formatTime(value(state, :elapsedS, 0)), "ZEIT");
-        drawBottomStat(dc, 196, false, formatTime(value(state, :remainingSeconds, 0)), "ETA");
-        drawBottomStat(dc, 215, true,
-            value(state, :ascentM, 0).format("%d") + " m", "AUFSTIEG");
-        drawBottomStat(dc, 215, false,
-            value(state, :steps, 0).format("%d"), "SCHRITTE");
+        drawBottomStat(dc, 190, true, formatTime(value(state, :elapsedS, 0)), "ZEIT");
+        drawBottomStat(dc, 190, false, formatTime(value(state, :remainingSeconds, 0)), "ETA");
 
         var offRoute = value(state, :offRoute, null);
         if (offRoute != null) {
@@ -129,21 +129,23 @@ class SagaTrailHorizonView extends WatchUi.View {
             Graphics.FONT_MEDIUM, HORIZON_INK);
         drawRouteProgress(dc, 93, state);
 
-        drawStatusMetricRow(dc, 105, "DISTANZ",
+        drawStatusMetricRow(dc, 102, "DISTANZ",
             formatDistance(value(state, :totalDistanceM, 0)),
             "AUFSTIEG", value(state, :ascentM, 0).format("%d") + " m");
-        drawStatusMetricRow(dc, 137, "SCHRITTE",
+        drawStatusMetricRow(dc, 138, "SCHRITTE",
             value(state, :steps, 0).format("%d"),
             "PULS", heartRateText(state));
-        drawStatusMetricRow(dc, 169, "ZEIT",
+        drawStatusMetricRow(dc, 174, "ZEIT",
             formatTime(value(state, :elapsedS, 0)),
             "ETA", formatTime(value(state, :remainingSeconds, 0)));
 
+    }
+
+    function drawStatusFooter(dc, state) {
         var daylight = value(state, :daylight, null);
         if (daylight != null &&
             value(daylight, :arrivalAfterSunset, false) == true) {
-            centered(dc, 204, "ANKUNFT NACH SONNENUNTERG.",
-                Graphics.FONT_XTINY, HORIZON_RED);
+            footer(dc, "ANKUNFT NACH SONNENUNTERG.", HORIZON_RED);
         } else {
             var terrain = value(state, :terrainSection, null);
             var weather = value(state, :weather, null);
@@ -156,10 +158,10 @@ class SagaTrailHorizonView extends WatchUi.View {
                         value(weather, :temperatureC, 0).format("%d") +
                         " C  WIND " + value(weather, :windKmh, 0).format("%d");
                 }
-                centered(dc, 204, environmentText, Graphics.FONT_XTINY, HORIZON_INK);
+                footer(dc, environmentText, HORIZON_INK);
             } else {
-                centered(dc, 204, gpsFresh(state) ? "GPS FRISCH" : "GPS NICHT FRISCH",
-                    Graphics.FONT_XTINY, gpsFresh(state) ? HORIZON_GREEN : HORIZON_RED);
+                footer(dc, gpsFresh(state) ? "GPS FRISCH" : "GPS NICHT FRISCH",
+                    gpsFresh(state) ? HORIZON_GREEN : HORIZON_RED);
             }
         }
     }
@@ -205,8 +207,6 @@ class SagaTrailHorizonView extends WatchUi.View {
         dc.drawLine(safeInset(dc) + 14, 180, dc.getWidth() - safeInset(dc) - 14, 180);
         centered(dc, 187, confirmSos ? "NOCHMALS SELECT" : "SELECT 2x: SOS",
             Graphics.FONT_XTINY, HORIZON_RED);
-        centered(dc, 205, "MENU: CHECK-IN / PAUSE",
-            Graphics.FONT_XTINY, HORIZON_INK);
     }
 
     function drawStory(dc, state) {
@@ -234,9 +234,9 @@ class SagaTrailHorizonView extends WatchUi.View {
 
         centered(dc, 122, shortText(value(story, :name, "ORT"), charsPerLine(dc)),
             Graphics.FONT_SMALL, HORIZON_RED);
-        drawWrapped(dc, 151, value(story, :text, ""), 3, HORIZON_INK);
+        drawWrapped(dc, 151, value(story, :text, ""), 2, HORIZON_INK);
         if (value(story, :imageUrl, "") != "") {
-            centered(dc, 207, "FOTO AUF DEM TELEFON",
+            centered(dc, 188, "FOTO AUF DEM TELEFON",
                 Graphics.FONT_XTINY, HORIZON_MID);
         }
     }
@@ -353,9 +353,9 @@ class SagaTrailHorizonView extends WatchUi.View {
         dc.drawText(dc.getWidth() - inset, y, Graphics.FONT_XTINY, rightLabel,
             Graphics.TEXT_JUSTIFY_RIGHT);
         dc.setColor(HORIZON_INK, HORIZON_PAPER);
-        dc.drawText(inset, y + 14, Graphics.FONT_XTINY, leftValue,
+        dc.drawText(inset, y + 17, Graphics.FONT_XTINY, leftValue,
             Graphics.TEXT_JUSTIFY_LEFT);
-        dc.drawText(dc.getWidth() - inset, y + 14, Graphics.FONT_XTINY, rightValue,
+        dc.drawText(dc.getWidth() - inset, y + 17, Graphics.FONT_XTINY, rightValue,
             Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
@@ -531,7 +531,7 @@ class SagaTrailHorizonView extends WatchUi.View {
 
     function footer(dc, text, color) {
         dc.setColor(color, HORIZON_PAPER);
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 27,
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() - 48,
             Graphics.FONT_XTINY, shortText(text, charsPerLine(dc)),
             Graphics.TEXT_JUSTIFY_CENTER);
     }
