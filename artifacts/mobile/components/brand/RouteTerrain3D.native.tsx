@@ -1816,6 +1816,8 @@ function Scene({
     () => Array.from(loadedFlightTiles.current.values()),
     [flightTileVersion],
   );
+  const showTerrainFallback =
+    mode !== "flight" || textures.length < tiles.length;
 
   return (
     <>
@@ -1826,13 +1828,15 @@ function Scene({
       />
       <ambientLight intensity={1.35} />
       <directionalLight position={[300, 700, 400]} intensity={2.4} />
-      <mesh geometry={terrain} renderOrder={-10}>
-        <meshBasicMaterial
-          color="#263A31"
-          side={DoubleSide}
-          toneMapped={false}
-        />
-      </mesh>
+      {showTerrainFallback && (
+        <mesh geometry={terrain} renderOrder={-10}>
+          <meshBasicMaterial
+            color="#263A31"
+            side={DoubleSide}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
       {textures.map((texture, index) => (
         <mesh
           key={tiles[index].key}
