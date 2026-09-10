@@ -741,18 +741,6 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
           toneMapped={false}
         />
       </ThreeLine>
-      <ThreeLine geometry={geometry} renderOrder={25}>
-        <lineBasicMaterial
-          color="#FFFFFF"
-          linewidth={2}
-          transparent
-          opacity={0.9}
-          blending={AdditiveBlending}
-          depthTest={false}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </ThreeLine>
     </>
   );
 }
@@ -832,7 +820,13 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
   );
 }
 
-function RouteTransitionLight({ position }: { position: Vector3 }) {
+function RouteTransitionLight({
+  position,
+  color,
+}: {
+  position: Vector3;
+  color: string;
+}) {
   return (
     <mesh
       position={[position.x, position.y + 5, position.z]}
@@ -840,7 +834,7 @@ function RouteTransitionLight({ position }: { position: Vector3 }) {
     >
       <sphereGeometry args={[3.5, 12, 8]} />
       <meshBasicMaterial
-        color="#FFFFFF"
+        color={color}
         transparent
         opacity={0.86}
         blending={AdditiveBlending}
@@ -1477,6 +1471,7 @@ function Scene({
         <RouteTransitionLight
           key={`transition-${index}`}
           position={line.points[0]}
+          color={line.color}
         />
       ))}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
