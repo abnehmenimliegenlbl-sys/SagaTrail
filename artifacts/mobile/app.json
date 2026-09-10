@@ -22,7 +22,7 @@
         ],
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "118",
+      "buildNumber": "119",
       "bundleIdentifier": "com.sagatrail2.app",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
