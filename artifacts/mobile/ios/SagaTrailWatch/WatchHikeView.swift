@@ -252,9 +252,6 @@ struct WatchHikeView: View {
         .tracking(0.9)
         .foregroundStyle(WatchPalette.mutedWhite)
       Spacer(minLength: 0)
-      Rectangle()
-        .fill(WatchPalette.red.opacity(0.35))
-        .frame(width: 24, height: 1)
     }
   }
 
