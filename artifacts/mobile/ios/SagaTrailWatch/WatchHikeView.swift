@@ -417,12 +417,18 @@ struct WatchHikeView: View {
             active || overdue ? copy.t("safeNow") : copy.t("startCheckin"),
             systemImage: active || overdue ? "checkmark" : "timer"
           )
+          .foregroundStyle(WatchPalette.red)
           .lineLimit(1)
           .minimumScaleFactor(0.65)
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.plain)
         .controlSize(.mini)
         .frame(maxWidth: .infinity, minHeight: 28)
+        .background(WatchPalette.white, in: Capsule())
+        .overlay(
+          Capsule()
+            .stroke(WatchPalette.red, lineWidth: 1)
+        )
         Button(role: .destructive, action: hike.requestSOSConfirmation) {
           Text("SOS")
             .font(WatchType.label)
