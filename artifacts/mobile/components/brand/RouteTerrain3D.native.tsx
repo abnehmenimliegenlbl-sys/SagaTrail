@@ -1745,6 +1745,15 @@ function Scene({
         smoothedFlightTarget.current.lerp(cameraPlan.target, targetBlend);
       }
       camera.lookAt(smoothedFlightTarget.current);
+      // lookAt() can preserve a non-zero roll on the native GL camera after
+      // the previous overview orientation. Keep its pitch and heading, but
+      // force a level horizon for the flight view.
+      camera.rotation.set(
+        camera.rotation.x,
+        camera.rotation.y,
+        0,
+        "YXZ",
+      );
       camera.updateMatrixWorld();
     } else if (mode !== "flight") {
       smoothedFlightTarget.current = null;
