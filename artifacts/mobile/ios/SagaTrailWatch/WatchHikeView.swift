@@ -112,9 +112,13 @@ struct WatchHikeView: View {
             } label: {
               Image(systemName: "xmark")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(WatchPalette.white)
-                .frame(width: 22, height: 22)
-                .background(WatchPalette.black.opacity(0.78), in: Circle())
+                .foregroundStyle(WatchPalette.black)
+                .frame(width: 26, height: 26)
+                .background(WatchPalette.white, in: Circle())
+                .overlay(
+                  Circle()
+                    .stroke(WatchPalette.red, lineWidth: 1)
+                )
             }
             .buttonStyle(.plain)
             .padding(10)
