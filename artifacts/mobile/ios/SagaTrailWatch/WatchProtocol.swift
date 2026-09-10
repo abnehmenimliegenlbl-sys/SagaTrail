@@ -82,6 +82,7 @@ enum SagaTrailWatchProtocol {
     let name: String
     let imageURL: URL?
     let text: String
+    let kind: String
   }
 
   struct StoryAudio: Equatable {
@@ -434,7 +435,8 @@ enum SagaTrailWatchProtocol {
           return nil
         }
         let imageURL = (value["imageUrl"] as? String).flatMap(URL.init(string:))
-        return PoiStory(id: id, name: name, imageURL: imageURL, text: text)
+        let kind = value["kind"] as? String == "partner" ? "partner" : "poi"
+        return PoiStory(id: id, name: name, imageURL: imageURL, text: text, kind: kind)
       }()
       let storyAudio: StoryAudio? = {
         guard let value = dictionary["storyAudio"] as? [String: Any],

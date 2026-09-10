@@ -3157,9 +3157,25 @@ export default function LiveHike() {
       if (haversineKm(livePos, { lat: wp.lat, lng: wp.lng }) <= 0.05) {
         waypointAnnouncedRef.current.add(wp.id);
         setReachedWaypointIds((prev) => new Set([...prev, wp.id]));
+        const partner = wp.type === "partner"
+          ? partners.find((candidate) => `partner-${candidate.id}` === wp.id)
+          : null;
+        if (partner) {
+          const partnerText = [partner.beschreibung, partner.angebot]
+            .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+            .join("\n\n");
+          setWatchPoiStory({
+            id: wp.id,
+            name: partner.name,
+            imageUrl: partner.fotoUrl ?? null,
+            text: partnerText || "Partner entlang deiner Route.",
+            kind: "partner",
+          });
+        }
         raiseWatchDiscoveryAlert({
           text: `${wp.type === "partner" ? "Partner" : "Sehenswürdigkeit"} in der Nähe: ${wp.name}`,
           haptic: "notification",
+          action: wp.type === "partner" ? "openPoiStory" : undefined,
         });
         sendeAbbiegeMitteilung(
           wp.type === "partner" ? t.partnerNearby : t.poiNearby,
@@ -3167,7 +3183,7 @@ export default function LiveHike() {
         );
       }
     }
-  }, [livePos, raiseWatchDiscoveryAlert, routeWaypoints, t]);
+  }, [livePos, partners, raiseWatchDiscoveryAlert, routeWaypoints, t]);
 
   // Premium-Partner-Anpreisung: sobald der Wanderer auf 500 m an einen
   // Premium-Partner herankommt, wird einmalig ein KI-generierter Text
@@ -4503,6 +4519,7 @@ export default function LiveHike() {
         name: nearbyPoi.name,
         imageUrl: nearbyPoiWiki?.image ?? null,
         text: text.slice(0, 8_000),
+        kind: "poi",
       });
       speak(text, finishPoiNarration, {
         useOpenAI: true,

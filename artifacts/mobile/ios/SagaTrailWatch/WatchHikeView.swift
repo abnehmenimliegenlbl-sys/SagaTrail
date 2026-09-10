@@ -872,7 +872,10 @@ struct WatchHikeView: View {
     let chunks = poiTextChunks(story.text)
     let page = min(max(0, Int(poiTextPage.rounded())), max(0, chunks.count - 1))
     return VStack(spacing: 6) {
-      pageHeader(copy.t("poiStory"), systemImage: "mappin.and.ellipse")
+      pageHeader(
+        story.kind == "partner" ? "Partner" : copy.t("poiStory"),
+        systemImage: story.kind == "partner" ? "storefront.fill" : "mappin.and.ellipse"
+      )
       card {
         VStack(spacing: 5) {
           AsyncImage(url: story.imageURL) { phase in

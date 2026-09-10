@@ -91,6 +91,7 @@ export interface WatchPoiStory {
   name: string;
   imageUrl: string | null;
   text: string;
+  kind?: "poi" | "partner";
 }
 
 export interface WatchStoryAudio {
@@ -376,6 +377,9 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       typeof state.poiStory.text !== "string" ||
       state.poiStory.text.length === 0 ||
       state.poiStory.text.length > 8_000 ||
+      (state.poiStory.kind !== undefined &&
+        state.poiStory.kind !== "poi" &&
+        state.poiStory.kind !== "partner") ||
       (state.poiStory.imageUrl !== null &&
         (typeof state.poiStory.imageUrl !== "string" ||
           state.poiStory.imageUrl.length > 2_000 ||
