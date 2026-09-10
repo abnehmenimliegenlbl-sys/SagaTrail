@@ -1753,38 +1753,11 @@ function Scene({
         cameraPlan.markerFocus.y - verticalFrameRadius,
         cameraPlan.markerFocus.y + verticalFrameRadius,
       );
-      const viewDirection = smoothedFlightTarget.current
-        .clone()
-        .sub(camera.position)
-        .normalize();
-      const desiredYaw = Math.atan2(-viewDirection.x, -viewDirection.z);
-      const desiredPitch = Math.asin(
-        clampNumber(viewDirection.y, -0.92, 0.92),
-      );
-      if (!smoothedFlightRotation.current) {
-        smoothedFlightRotation.current = {
-          yaw: desiredYaw,
-          pitch: desiredPitch,
-        };
-      } else {
-        smoothedFlightRotation.current.yaw +=
-          shortestAngleDelta(
-            smoothedFlightRotation.current.yaw,
-            desiredYaw,
-          ) * rotationBlend;
-        smoothedFlightRotation.current.pitch +=
-          (desiredPitch - smoothedFlightRotation.current.pitch) *
-          rotationBlend;
-      }
-      // Keep roll fixed at zero. Quaternion slerp between two lookAt
-      // orientations can roll through 180 degrees when the target crosses
-      // vertically during a climb-to-descent transition.
-      camera.rotation.set(
-        smoothedFlightRotation.current.pitch,
-        smoothedFlightRotation.current.yaw,
-        0,
-        "YXZ",
-      );
+      // Let Three.js derive the complete orientation from the camera position
+      // and the terrain target. Manual YXZ Euler angles can invert the view on
+      // iOS when the smoothed flight target crosses a steep slope.
+      camera.lookAt(smoothedFlightTarget.current);
+      camera.updateMatrixWorld();
     } else if (mode !== "flight") {
       smoothedFlightTarget.current = null;
       smoothedFlightRotation.current = null;
@@ -1855,19 +1828,20 @@ function Scene({
           />
         </mesh>
       ))}
-      {visibleFlightTiles.map(({ tile, texture, geometry }) => (
-        <mesh key={tile.key} geometry={geometry} renderOrder={2}>
-          <meshBasicMaterial
-            map={texture}
-            side={DoubleSide}
-            polygonOffset
-            polygonOffsetFactor={-2}
-            polygonOffsetUnits={-2}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
-      {textures.length === tiles.length && reliefTexture && (
+      {mode !== "flight" &&
+        visibleFlightTiles.map(({ tile, texture, geometry }) => (
+          <mesh key={tile.key} geometry={geometry} renderOrder={2}>
+            <meshBasicMaterial
+              map={texture}
+              side={DoubleSide}
+              polygonOffset
+              polygonOffsetFactor={-2}
+              polygonOffsetUnits={-2}
+              toneMapped={false}
+            />
+          </mesh>
+        ))}
+      {mode !== "flight" && textures.length === tiles.length && reliefTexture && (
         <mesh geometry={terrain}>
           <meshBasicMaterial
             map={reliefTexture}
