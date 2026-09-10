@@ -1352,6 +1352,11 @@ export default function LiveHike() {
   const lastSafetyCheckinKeyRef = useRef<string | null>(null);
   const lastWatchPoiStoryIdRef = useRef<string | null>(null);
   const lastWatchStateDebugKeyRef = useRef<string | null>(null);
+  // Ein Resume aus dem Katalog kann direkt nach dem letzten Live-State der
+  // vorherigen Hike-Instanz entstehen. Der erste Wechsel von unavailable/
+  // stale zu fresh muss deshalb auch innerhalb des globalen Publish-Throttles
+  // sicher an die Watch gelangen.
+  const lastPublishedGpsFreshRef = useRef<boolean | null>(null);
   const compassHeadingRef = useRef<number | null>(null);
   const compassGravityRef = useRef<CompassVector | null>(null);
   const compassSamplesRef = useRef<number[]>([]);
@@ -3042,12 +3047,16 @@ export default function LiveHike() {
       ? `${safetyCheckinState.status}:${safetyCheckinState.expiresAtEpochMs ?? 0}:${safetyCheckinState.liveLinkActive}`
       : null;
     const watchPoiStoryId = watchPoiStory?.id ?? null;
+    const gpsFreshnessChanged =
+      lastPublishedGpsFreshRef.current !== hasFreshGps;
     const force =
+      gpsFreshnessChanged ||
       (criticalKey !== null && criticalKey !== lastCriticalWatchAlertRef.current) ||
       (discoveryKey !== null && discoveryKey !== lastWatchDiscoveryAlertRef.current) ||
       safetyCheckinKey !== lastSafetyCheckinKeyRef.current ||
       watchPoiStoryId !== lastWatchPoiStoryIdRef.current ||
       sosAcknowledgement !== lastSosAcknowledgementRef.current;
+    lastPublishedGpsFreshRef.current = hasFreshGps;
     lastCriticalWatchAlertRef.current = criticalKey;
     lastWatchDiscoveryAlertRef.current = discoveryKey;
     lastSafetyCheckinKeyRef.current = safetyCheckinKey;

@@ -130,6 +130,7 @@
 - [Safety share links](sagatrail-safety-share-links.md) — public links expose only route/status/latest fresh GPS; token hashes are stored server-side and expiry/revocation are authoritative.
 - [Watch companion](sagatrail-watch-companion.md) — phone remains authoritative; Watch now receives a simplified MapKit route/current point and fresh HealthKit heart rate, never simulated values.
 - [Watch active-state source](sagatrail-watch-active-state.md) — native bridge derives Watch isHiking from sessionStatus; route changes must not restart story preparation and push the Watch back to waiting.
+- [Catalog resume and Watch GPS](sagatrail-catalog-resume-watch-gps.md) — catalog resumes must carry resume=1 and force the first fresh GPS snapshot past the publish throttle.
 - [Watch property-list payloads](watchconnectivity-property-list.md) — WatchConnectivity and UserDefaults accept only property-list values; strip nulls and omit absent optionals.
 - [Watch wire-number safety](watch-wire-number-safety.md) — validate finite bounds before rendering or Double-to-Int conversion; malformed live data can terminate the Watch app.
 - [Watch build version synchronization](sagatrail-watch-build-version.md) — set the embedded Watch target to the upcoming EAS iOS build number; remote auto-increment does not advance it automatically.
