@@ -809,13 +809,8 @@ export function PeakPanorama({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Gipfel-AR öffnen"
+              accessibilityLabel="AR Kamera öffnen"
             >
-               <Feather
-                 name="layers"
-                 size={17}
-                color={colors.primaryForeground}
-              />
               <Text
                 style={[
                   styles.cameraButtonText,
@@ -824,7 +819,7 @@ export function PeakPanorama({
                   },
                 ]}
               >
-                Gipfel-AR
+                AR Kamera
               </Text>
             </Pressable>
           )}
