@@ -9,6 +9,12 @@ Use Expo GL with Three.js as the shared terrain-rendering foundation for the nor
 
 **How to apply:** Feed both panorama and route-wide views from geographic terrain meshes with real SwissTopo DTM heights and UV coordinates. Change camera and route overlays per view instead of creating separate rendering engines. Use SVG terrain only when native GL is unavailable, never as a texture-loading placeholder.
 
+In flight mode, enforce the minimum trailing distance after camera-position smoothing, not only in the desired camera plan. A hairpin or direction reversal can otherwise make interpolation cut through and pass over the flight target even when every planned position is behind it.
+
+**Why:** The 130 m planned camera distance and 45 m terrain-edge margin did not prevent the smoothed camera from crossing the target during abrupt direction changes.
+
+**How to apply:** Project the smoothed camera-to-target offset onto the current horizontal route direction every frame. If it is less than 45 m behind, move it back to that trailing plane before applying the look-at rotation.
+
 For the full-screen route view, use an axis-aligned rectangular SwissTopo terrain area around the complete route, expanded to the device viewport aspect. A bent route corridor is forbidden because it leaves visible background beside the route instead of filling the screen. Missing elevations stay null, and triangles that touch them must be omitted.
 
 **Why:** The observer-centered radial panorama model cannot cover a long route, while the former parallel route corridor remained a narrow textured band. A strict rectangular grid covers the full portrait view and still preserves SwissTopo gaps.
