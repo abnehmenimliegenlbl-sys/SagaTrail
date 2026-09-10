@@ -69,6 +69,12 @@ Native Three.js `lookAt()` kann beim Wechsel aus der Overview-Kamera einen Rollw
 
 **How to apply:** Nach `camera.lookAt(target)` mit `camera.rotation.set(camera.rotation.x, camera.rotation.y, 0, "YXZ")` den Horizont nivellieren.
 
+Die Kamera muss zusätzlich über der lokalen DTM-Höhe des aktuellen Routenabschnitts bleiben, nicht nur relativ zum Routenprofil positioniert werden.
+
+**Why:** Die Gerätedaten zeigten eine vollständige Mesh-Geometrie, aber Terrain bis Y=9303 bei einer Kamera um Y=5202; dadurch lag die Kamera unter nahen Bergflanken und sah den Himmel durch die Szene.
+
+**How to apply:** Lokale Terrainhöhe in einem Radius um den Marker bestimmen und die Kamera mindestens mit einem kleinen Clearance-Abstand darüber setzen; globale Maximalhöhe nicht als dauerhafte Kamera-Höhe verwenden.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
