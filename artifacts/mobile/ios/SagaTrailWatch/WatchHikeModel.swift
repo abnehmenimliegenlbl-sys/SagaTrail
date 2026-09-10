@@ -33,7 +33,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   var isStale: Bool {
     guard let receivedAt else { return true }
-    return Date().timeIntervalSince(receivedAt) > 45
+    return Date().timeIntervalSince(receivedAt) > 180
   }
 
   func activate() {

@@ -366,6 +366,8 @@ const START_NEARBY_KM = 0.1;
 const OFF_ROUTE_CONFIRM_FIXES = 3;
 /** Eigene Statusfarbe fuer ein gueltiges Live-GPS-Signal — nicht mit dem roten Markenakzent vermischen. */
 const GPS_LIVE_COLOR = "#00E676";
+/** Ein realer GPS-Fix gilt drei Minuten lang als live. */
+const GPS_FRESHNESS_WINDOW_MS = 3 * 60 * 1000;
 /** Valhalla-Fussweg-Routing (FOSSGIS, kein API-Key noetig). */
 const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
 /** Fallback: routing.openstreetmap.de stellt ein direktes Fusswegprofil bereit. */
@@ -1352,7 +1354,7 @@ export default function LiveHike() {
   const hasFreshGps =
     locState === "granted" &&
     livePos !== null &&
-    locationNow - lastLocationAtRef.current <= 45_000;
+    locationNow - lastLocationAtRef.current <= GPS_FRESHNESS_WINDOW_MS;
   const requestLocationAccess = useCallback(async () => {
     if (Platform.OS === "web") return;
     try {
@@ -4705,7 +4707,10 @@ export default function LiveHike() {
   const ROUTE_PROGRESS_MAX_DIST_KM = 1;
   const routeProgress = useMemo(() => {
     if (!hasFreshGps || !livePos || !navigationGeometry || navigationGeometry.length < 2) return null;
-    if (locState === "granted" && locationNow - lastLocationAtRef.current > 45_000) return null;
+    if (
+      locState === "granted" &&
+      locationNow - lastLocationAtRef.current > GPS_FRESHNESS_WINDOW_MS
+    ) return null;
     if (livePosAccuracy != null && livePosAccuracy > ROUTE_PROGRESS_MAX_ACCURACY_M) return null;
     const match = fortschrittAufRoute(livePos, navigationGeometry);
     if (!match || match.distKm > ROUTE_PROGRESS_MAX_DIST_KM) return null;

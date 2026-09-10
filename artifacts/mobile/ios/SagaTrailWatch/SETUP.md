@@ -37,8 +37,9 @@ All messages are dictionaries/JSON objects:
 `navigationDirection`, `isHiking`, `elapsedSeconds`, `distanceMeters`,
 `ascentMeters`, `steps`, `heartRateBpm`, `bearingDegrees`,
 `distanceToTurnMeters`, and required `updatedAt` (Unix milliseconds).
-The phone is authoritative for every route and progress field. The watch
-renders stale after 45 seconds and disconnected when unreachable.
+The phone is authoritative for every route and progress field. A real GPS fix
+stays live for three minutes; the watch renders stale after 180 seconds and
+disconnected when unreachable.
 
 `alert` has only `title` and `body`. `sosConfirmed` travels watch-to-phone only
 after the on-watch confirmation. Coordinates are rejected from live-state and
