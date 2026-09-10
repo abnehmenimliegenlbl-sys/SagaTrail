@@ -1113,6 +1113,19 @@ private struct OfflineRouteSketch: View {
   let language: String
   private var copy: WatchCopy { WatchCopy(language: language) }
 
+  private func gradeColor(_ band: String?) -> Color {
+    switch band {
+    case "yellow":
+      return Color(red: 255 / 255, green: 208 / 255, blue: 0)
+    case "orange":
+      return Color(red: 255 / 255, green: 133 / 255, blue: 0)
+    case "red":
+      return Color(red: 255 / 255, green: 48 / 255, blue: 48 / 255)
+    default:
+      return Color(red: 32 / 255, green: 212 / 255, blue: 102 / 255)
+    }
+  }
+
   var body: some View {
     Canvas { context, size in
       let route = map.route
@@ -1133,13 +1146,17 @@ private struct OfflineRouteSketch: View {
       func dot(at center: CGPoint, radius: CGFloat) -> CGRect {
         CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
       }
-      var path = Path()
-      path.move(to: point(route[0]))
-      for item in route.dropFirst() {
-        path.addLine(to: point(item))
-      }
       context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.surface))
-      context.stroke(path, with: .color(WatchPalette.red), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+      for index in 0..<(route.count - 1) {
+        var segmentPath = Path()
+        segmentPath.move(to: point(route[index]))
+        segmentPath.addLine(to: point(route[index + 1]))
+        context.stroke(
+          segmentPath,
+          with: .color(gradeColor(route[index].gradeBand)),
+          style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+        )
+      }
       let startPoint = point(route[0])
       var startFlag = Path()
       startFlag.move(to: CGPoint(x: startPoint.x, y: startPoint.y - 8))
@@ -1155,7 +1172,40 @@ private struct OfflineRouteSketch: View {
         style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
       )
       context.fill(startFlag, with: .color(WatchPalette.routeStart))
-      context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.black))
+      let finishPoint = point(route[route.count - 1])
+      var finishPole = Path()
+      finishPole.move(to: CGPoint(x: finishPoint.x, y: finishPoint.y - 8))
+      finishPole.addLine(to: CGPoint(x: finishPoint.x, y: finishPoint.y + 7))
+      context.stroke(
+        finishPole,
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+      )
+      let finishFlag = CGRect(
+        x: finishPoint.x,
+        y: finishPoint.y - 8,
+        width: 14,
+        height: 10
+      )
+      context.fill(Path(finishFlag), with: .color(WatchPalette.white))
+      context.stroke(
+        Path(finishFlag),
+        with: .color(WatchPalette.black),
+        style: StrokeStyle(lineWidth: 0.7)
+      )
+      let cellWidth = finishFlag.width / 2
+      let cellHeight = finishFlag.height / 2
+      for row in 0..<2 {
+        for column in 0..<2 where (row + column).isMultiple(of: 2) {
+          let cell = CGRect(
+            x: finishFlag.minX + CGFloat(column) * cellWidth,
+            y: finishFlag.minY + CGFloat(row) * cellHeight,
+            width: cellWidth,
+            height: cellHeight
+          )
+          context.fill(Path(cell), with: .color(WatchPalette.black))
+        }
+      }
       if let current = map.current {
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.ink))
