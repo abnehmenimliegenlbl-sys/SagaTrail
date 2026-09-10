@@ -361,8 +361,11 @@ function flightCameraPlan(
   // that value makes an ascent-to-descent transition look like an overflight.
   const slope =
     (ahead.y - behind.y) / Math.max(1, horizontalDistance);
-  const cameraDistance = 92;
-  const cameraHeight = 38;
+  // The previous very low/close framing could put the camera below a nearby
+  // ridge when the route changes from a climb to a descent. Keep this below
+  // the original flight view, but leave a stable clearance above the route.
+  const cameraDistance = 130;
+  const cameraHeight = 68;
   const desiredCamera = marker
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
@@ -378,7 +381,7 @@ function flightCameraPlan(
   const safeCamera = clampFlightPointToTerrain(
     desiredCamera,
     terrainBounds,
-    32,
+    45,
   );
   const safeTarget = clampFlightPointToTerrain(
     desiredTarget,
@@ -1740,8 +1743,10 @@ function Scene({
             color={line.color}
           />
         ))}
-      {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
-      {route.at(-1) && (
+      {mode !== "flight" && route[0] && (
+        <RouteEndpointFlag position={route[0]} kind="start" />
+      )}
+      {mode !== "flight" && route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
       )}
       {mode === "walk" && marker && <RouteProgressPulse position={marker} />}
