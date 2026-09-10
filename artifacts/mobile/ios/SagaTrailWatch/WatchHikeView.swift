@@ -804,22 +804,29 @@ private struct WatchRouteMap: View {
           } else if offline {
             Label(copy.t("lastRoute"), systemImage: "wifi.slash")
           }
-          HStack(spacing: 8) {
-            Button {
-              routeUp.toggle()
-              recenter()
-            } label: {
-              Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
-            }
-            Text(routeUp ? copy.t("route") : copy.t("north"))
-              .font(.caption2)
-          }
         }
         .foregroundStyle(WatchPalette.white)
         .font(.caption2)
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
         .background(WatchPalette.black.opacity(0.7), in: Capsule())
+        .padding(6)
+      }
+    }
+    .overlay(alignment: .topTrailing) {
+      if showControls {
+        Button {
+          routeUp.toggle()
+          recenter()
+        } label: {
+          Image(systemName: routeUp ? "location.north.line.fill" : "location.north")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(WatchPalette.white)
+            .frame(width: 30, height: 30)
+            .background(WatchPalette.black.opacity(0.72), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(routeUp ? copy.t("route") : copy.t("north"))
         .padding(6)
       }
     }
