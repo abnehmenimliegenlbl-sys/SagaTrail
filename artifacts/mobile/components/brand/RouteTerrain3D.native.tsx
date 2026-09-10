@@ -25,7 +25,6 @@ import {
   NormalBlending,
   SRGBColorSpace,
   Texture,
-  Quaternion,
   Vector3,
   Mesh,
 } from "three";
@@ -267,6 +266,10 @@ function sampleTerrainAreaGeometry(
 
 function clampNumber(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function shortestAngleDelta(from: number, to: number): number {
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
 }
 
 type FlightCameraPlan = {
@@ -1221,7 +1224,10 @@ function Scene({
   const camera = useThree((state) => state.camera);
   const viewport = useThree((state) => state.size);
   const smoothedFlightTarget = useRef<Vector3 | null>(null);
-  const smoothedFlightRotation = useRef<Quaternion | null>(null);
+  const smoothedFlightRotation = useRef<{
+    yaw: number;
+    pitch: number;
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -1659,14 +1665,37 @@ function Scene({
       } else {
         smoothedFlightTarget.current.lerp(cameraPlan.target, 0.05);
       }
-      camera.lookAt(smoothedFlightTarget.current);
-      const desiredRotation = camera.quaternion.clone();
+      const viewDirection = smoothedFlightTarget.current
+        .clone()
+        .sub(camera.position)
+        .normalize();
+      const desiredYaw = Math.atan2(-viewDirection.x, -viewDirection.z);
+      const desiredPitch = Math.asin(
+        clampNumber(viewDirection.y, -0.92, 0.92),
+      );
       if (!smoothedFlightRotation.current) {
-        smoothedFlightRotation.current = desiredRotation;
+        smoothedFlightRotation.current = {
+          yaw: desiredYaw,
+          pitch: desiredPitch,
+        };
       } else {
-        smoothedFlightRotation.current.slerp(desiredRotation, 0.045);
-        camera.quaternion.copy(smoothedFlightRotation.current);
+        smoothedFlightRotation.current.yaw +=
+          shortestAngleDelta(
+            smoothedFlightRotation.current.yaw,
+            desiredYaw,
+          ) * 0.045;
+        smoothedFlightRotation.current.pitch +=
+          (desiredPitch - smoothedFlightRotation.current.pitch) * 0.045;
       }
+      // Keep roll fixed at zero. Quaternion slerp between two lookAt
+      // orientations can roll through 180 degrees when the target crosses
+      // vertically during a climb-to-descent transition.
+      camera.rotation.set(
+        smoothedFlightRotation.current.pitch,
+        smoothedFlightRotation.current.yaw,
+        0,
+        "YXZ",
+      );
     } else if (mode !== "flight") {
       smoothedFlightTarget.current = null;
       smoothedFlightRotation.current = null;
