@@ -86,6 +86,7 @@ const walkSpeedKmPerSecond = 1;
 const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
 const flightSkyColor = "#8EA6AA";
+const maxTerrainAreaGeometryPoints = 500;
 const flightSkyVertexShader = `
   varying vec3 vWorldDirection;
 
@@ -244,6 +245,23 @@ function distanceKm(a: number[], b: number[]): number {
   const deltaLng = (b[1] - a[1]) * radians;
   const longitude = deltaLng * Math.cos(((a[0] + b[0]) / 2) * radians);
   return 6371 * Math.sqrt(deltaLat * deltaLat + longitude * longitude);
+}
+
+function sampleTerrainAreaGeometry(
+  geometry: [number, number][],
+): [number, number][] {
+  if (geometry.length <= maxTerrainAreaGeometryPoints) return geometry;
+
+  return Array.from(
+    { length: maxTerrainAreaGeometryPoints },
+    (_, index) => {
+      const sourceIndex = Math.round(
+        (index * (geometry.length - 1)) /
+          (maxTerrainAreaGeometryPoints - 1),
+      );
+      return geometry[sourceIndex]!;
+    },
+  );
 }
 
 function clampNumber(value: number, minimum: number, maximum: number): number {
@@ -1828,8 +1846,10 @@ export default function RouteTerrain3D({
       () => setLoadProgress((value) => Math.min(65, value + 2)),
       180,
     );
-    const corridorGeometry = geometry.map(
+    const corridorGeometry = sampleTerrainAreaGeometry(
+      geometry.map(
       (point) => [point[0], point[1]] as [number, number],
+      ),
     );
     createTerrainArea({
       geometry: corridorGeometry,
