@@ -51,6 +51,12 @@ In flight mode, hide the fallback terrain entirely once all aerial tiles are loa
 
 **How to apply:** Keep the fallback only during tile loading. After the complete tile set is ready, render imagery/detail/relief without any coplanar gray base underneath.
 
+Der Flugkamera-Orientierung darf nicht über manuelle YXZ-Eulerwinkel aus Zielvektoren zusammengesetzt werden; `camera.lookAt(smoothedTarget)` mit `camera.up = (0,1,0)` ist die robuste Ausrichtung.
+
+**Why:** Auf iOS/Expo GL kann die manuelle Pitch/Yaw-Kombination bei geglätteten Flugzielen die komplette Szene invertieren, sodass Boden oben und Himmel unten erscheinen.
+
+**How to apply:** Position und Ziel weiterhin glätten, danach die Three.js-Kamera direkt auf das Ziel ausrichten und die Weltmatrix aktualisieren.
+
 The panorama camera belongs at the radial mesh origin near eye level and must look horizontally outward. Never reuse the elevated overview camera from the full-route scene or aim the panorama camera back at the origin.
 
 **Why:** A camera outside the mesh looking at its center turns the panorama into a miniature terrain map. The physical-iPhone test confirmed the origin-level outward camera restores the intended panorama.
