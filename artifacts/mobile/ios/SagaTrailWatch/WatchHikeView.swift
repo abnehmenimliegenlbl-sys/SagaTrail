@@ -1090,8 +1090,8 @@ private struct OfflineRouteSketch: View {
       }
       context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(WatchPalette.surface))
       context.stroke(path, with: .color(WatchPalette.red), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-      context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(WatchPalette.white))
-      context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.red))
+      context.fill(Path(ellipseIn: dot(at: point(route[0]), radius: 7)), with: .color(WatchPalette.routeStart))
+      context.fill(Path(ellipseIn: dot(at: point(route[route.count - 1]), radius: 7)), with: .color(WatchPalette.black))
       if let current = map.current {
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 6)), with: .color(WatchPalette.white))
         context.fill(Path(ellipseIn: dot(at: point(current), radius: 4)), with: .color(WatchPalette.ink))
