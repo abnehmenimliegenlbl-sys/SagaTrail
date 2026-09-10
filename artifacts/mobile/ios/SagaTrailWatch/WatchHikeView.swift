@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import Foundation
 
 private enum WatchPalette {
   // Shared SagaTrail light-theme tokens, adapted for watchOS contrast.
@@ -24,6 +25,32 @@ private enum WatchType {
   static let title = Font.system(size: 14, weight: .bold, design: .rounded)
   static let display = Font.system(size: 21, weight: .heavy, design: .rounded)
   static let metric = Font.system(size: 11, weight: .semibold, design: .monospaced)
+}
+
+private struct AudioWaveform: View {
+  let isActive: Bool
+
+  private let barHeights: [CGFloat] = [0.42, 0.72, 1.0, 0.58, 0.86, 0.48, 0.78, 0.36, 0.62]
+
+  var body: some View {
+    TimelineView(.animation(minimumInterval: 0.08, paused: !isActive)) { context in
+      let elapsed = context.date.timeIntervalSinceReferenceDate
+
+      HStack(spacing: 3) {
+        ForEach(barHeights.indices, id: \.self) { index in
+          let pulse = isActive
+            ? 0.5 + 0.5 * sin(elapsed * 5.2 + Double(index) * 0.62)
+            : 0.2
+
+          Capsule()
+            .fill(isActive ? WatchPalette.red : WatchPalette.mutedWhite)
+            .frame(width: 3, height: 5 + barHeights[index] * 20 * pulse)
+        }
+      }
+      .frame(height: 26)
+      .accessibilityHidden(true)
+    }
+  }
 }
 
 struct WatchHikeView: View {
@@ -632,6 +659,7 @@ struct WatchHikeView: View {
           Image(systemName: state.storyAudio?.isPlaying == true ? "speaker.wave.3.fill" : "speaker.slash.fill")
             .font(.system(size: 28, weight: .semibold))
             .foregroundStyle(state.storyAudio?.isPlaying == true ? WatchPalette.red : WatchPalette.mutedWhite)
+          AudioWaveform(isActive: state.storyAudio?.isPlaying == true)
           if let storyAudio = state.storyAudio {
             Text(storyAudio.text)
               .font(WatchType.body)
