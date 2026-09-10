@@ -684,7 +684,7 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
       <ThreeLine geometry={geometry} renderOrder={20}>
         <lineBasicMaterial
           color="#061A0B"
-          linewidth={11}
+          linewidth={15}
           transparent
           opacity={0.94}
           blending={NormalBlending}
@@ -696,9 +696,9 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
       <ThreeLine geometry={geometry} renderOrder={21}>
         <lineBasicMaterial
           color={color}
-          linewidth={10}
+          linewidth={30}
           transparent
-          opacity={0.34}
+          opacity={0.08}
           blending={AdditiveBlending}
           depthTest={false}
           depthWrite={false}
@@ -706,6 +706,30 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
         />
       </ThreeLine>
       <ThreeLine geometry={geometry} renderOrder={22}>
+        <lineBasicMaterial
+          color={color}
+          linewidth={19}
+          transparent
+          opacity={0.16}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
+      <ThreeLine geometry={geometry} renderOrder={23}>
+        <lineBasicMaterial
+          color={color}
+          linewidth={12}
+          transparent
+          opacity={0.38}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </ThreeLine>
+      <ThreeLine geometry={geometry} renderOrder={24}>
         <lineBasicMaterial
           color={color}
           linewidth={6}
@@ -717,7 +741,7 @@ function RouteLine({ color, points }: { color: string; points: Vector3[] }) {
           toneMapped={false}
         />
       </ThreeLine>
-      <ThreeLine geometry={geometry} renderOrder={23}>
+      <ThreeLine geometry={geometry} renderOrder={25}>
         <lineBasicMaterial
           color="#FFFFFF"
           linewidth={2}
@@ -754,6 +778,30 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
       position={[position.x, position.y + 10, position.z]}
       renderOrder={30}
     >
+      <mesh>
+        <sphereGeometry args={[30, 16, 10]} />
+        <meshBasicMaterial
+          color="#B8FF3B"
+          transparent
+          opacity={0.08}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[21, 16, 10]} />
+        <meshBasicMaterial
+          color="#B8FF3B"
+          transparent
+          opacity={0.14}
+          blending={AdditiveBlending}
+          depthTest={false}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
       <mesh>
         <sphereGeometry args={[13, 16, 10]} />
         <meshBasicMaterial
