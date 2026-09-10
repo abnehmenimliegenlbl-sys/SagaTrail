@@ -61,6 +61,8 @@ final class SagaTrailCompanion: RCTEventEmitter {
     // UserDefaults mirrors the in-memory queue. Prefer it when present so a
     // cold-start replay does not emit the same command twice.
     let pending = persisted.isEmpty ? pendingWatchActions : persisted
+    NSLog("[SagaTrail Watch] JS listeners attached; replaying %ld pending actions (persisted: %ld, memory: %ld)",
+          pending.count, persisted.count, pendingWatchActions.count)
     pendingWatchActions.removeAll()
     pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
     UserDefaults.standard.removeObject(forKey: pendingWatchActionsKey)
@@ -68,9 +70,15 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override func stopObserving() {
     hasJavaScriptListeners = false
+    NSLog("[SagaTrail Watch] JS listeners detached")
   }
 
   @objc func activate() {
+    let session = WCSession.isSupported() ? WCSession.default : nil
+    NSLog("[SagaTrail Watch] Native activate requested (listeners: %@, sessionState: %ld, reachable: %@)",
+          String(hasJavaScriptListeners),
+          session?.activationState.rawValue ?? -1,
+          String(session?.isReachable ?? false))
     connection.activate()
     garminConnection.activate()
     emitStatus()
@@ -83,10 +91,13 @@ final class SagaTrailCompanion: RCTEventEmitter {
   /// Accepts a protocol v1 `HikeLiveState` dictionary. Coordinates are
   /// intentionally not protocol fields and are rejected by the validator.
   @objc func updateHikeLiveState(_ state: NSDictionary) {
+    NSLog("[SagaTrail Watch] updateHikeLiveState called (keys: %@)",
+          state.allKeys.compactMap { $0 as? String }.sorted().joined(separator: ","))
     do {
       try connection.sendLiveState(state as? [String: Any] ?? [:])
       emitStatus()
     } catch {
+      NSLog("[SagaTrail Watch] updateHikeLiveState rejected: %@", error.localizedDescription)
       sendEvent(withName: "SagaTrailWatchEvent", body: [
         "v": 1, "type": "protocolError", "payload": ["message": error.localizedDescription]
       ])
@@ -96,10 +107,13 @@ final class SagaTrailCompanion: RCTEventEmitter {
   /// Canonical HikeLiveState entry point used by lib/watchCompanion.ts.
   /// It transforms the JS contract into the deliberately small watch payload.
   @objc func publishLiveState(_ state: NSDictionary) {
+    NSLog("[SagaTrail Watch] publishLiveState called (keys: %@)",
+          state.allKeys.compactMap { $0 as? String }.sorted().joined(separator: ","))
     do {
       try connection.publishCanonicalLiveState(state as? [String: Any] ?? [:])
       emitStatus()
     } catch {
+      NSLog("[SagaTrail Watch] publishLiveState rejected: %@", error.localizedDescription)
       sendEvent(withName: "SagaTrailWatchEvent", body: [
         "v": 1, "type": "protocolError", "payload": ["message": error.localizedDescription]
       ])
@@ -109,9 +123,12 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   /// Sends a display-safe alert. Do not place coordinates in title/body.
   @objc func sendAlert(_ alert: NSDictionary) {
+    NSLog("[SagaTrail Watch] sendAlert called (keys: %@)",
+          alert.allKeys.compactMap { $0 as? String }.sorted().joined(separator: ","))
     do {
       try connection.sendAlert(alert as? [String: Any] ?? [:])
     } catch {
+      NSLog("[SagaTrail Watch] sendAlert rejected: %@", error.localizedDescription)
       sendEvent(withName: "SagaTrailWatchEvent", body: [
         "v": 1, "type": "protocolError", "payload": ["message": error.localizedDescription]
       ])
@@ -146,13 +163,22 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   private func processWatchEnvelope(_ envelope: [String: Any]) {
     let payload = envelope["payload"] as? [String: Any] ?? [:]
-    switch envelope["type"] as? String {
+    let type = envelope["type"] as? String ?? "unknown"
+    NSLog("[SagaTrail Watch] Processing incoming envelope (type: %@, payloadKeys: %@, listeners: %@)",
+          type, payload.keys.sorted().joined(separator: ","), String(hasJavaScriptListeners))
+    switch type {
     case "heartRate":
       // Exact JS event contract; only the watch originates this event.
       let measuredAt = (payload["measuredAt"] as? NSNumber)?.int64Value
         ?? Int64(Date().timeIntervalSince1970 * 1000)
-      guard measuredAt > lastHeartRateMeasuredAt else { return }
+      guard measuredAt > lastHeartRateMeasuredAt else {
+        NSLog("[SagaTrail Watch] Ignored stale heart-rate event (measuredAt: %lld, last: %lld)",
+              measuredAt, lastHeartRateMeasuredAt)
+        return
+      }
       lastHeartRateMeasuredAt = measuredAt
+      NSLog("[SagaTrail Watch] Forwarding heart-rate event to JS (measuredAt: %lld, hasBpm: %@)",
+            measuredAt, String(payload["bpm"] != nil))
       sendEvent(withName: "SagaTrailCompanion.heartRate", body: [
         "bpm": payload["bpm"] ?? 0,
          "measuredAt": measuredAt,
@@ -161,11 +187,14 @@ final class SagaTrailCompanion: RCTEventEmitter {
     case "sosConfirmed":
       // Confirmation is a request to the phone. JS remains responsible for
       // the actual emergency workflow and any location handling.
+      NSLog("[SagaTrail Watch] Forwarding SOS request to JS")
       emitOrQueueWatchAction(name: "SagaTrailCompanion.sosRequest", body: [
         "requestedAt": payload["requestedAt"] ?? Int(Date().timeIntervalSince1970 * 1000)
       ])
     case "hikeCommand":
       if let command = payload["command"] as? String {
+        NSLog("[SagaTrail Watch] Forwarding hike command to JS (command: %@, hasDuration: %@)",
+              command, String(payload["durationMinutes"] != nil))
         var event: [String: Any] = ["command": command]
         if let durationMinutes = payload["durationMinutes"] as? NSNumber,
            [30, 60, 120].contains(durationMinutes.intValue) {
@@ -174,6 +203,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
         emitOrQueueWatchAction(name: "SagaTrailCompanion.hikeCommand", body: event)
       }
     default:
+      NSLog("[SagaTrail Watch] Ignoring unknown incoming envelope type: %@", type)
       break
     }
     sendEvent(withName: "SagaTrailWatchEvent", body: envelope)
@@ -217,6 +247,12 @@ final class SagaTrailCompanion: RCTEventEmitter {
   }
 
   private func emitStatus() {
+    let session = WCSession.isSupported() ? WCSession.default : nil
+    NSLog("[SagaTrail Watch] Emitting status (state: %ld, reachable: %@, paired: %@, installed: %@)",
+          session?.activationState.rawValue ?? -1,
+          String(session?.isReachable ?? false),
+          String(session?.isPaired ?? false),
+          String(session?.isWatchAppInstalled ?? false))
     sendEvent(withName: "SagaTrailWatchStatus", body: connection.statusPayload)
   }
 
@@ -230,8 +266,11 @@ final class SagaTrailCompanion: RCTEventEmitter {
         pendingWatchActions.map { ["name": $0.name, "body": $0.body] },
         forKey: pendingWatchActionsKey
       )
+      NSLog("[SagaTrail Watch] Queued action because JS listeners are absent (name: %@, queueCount: %ld)",
+            name, pendingWatchActions.count)
       return
     }
+    NSLog("[SagaTrail Watch] Emitting action to JS (name: %@)", name)
     sendEvent(withName: name, body: body)
   }
 }
@@ -257,9 +296,14 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   func activate() {
-    guard WCSession.isSupported() else { return }
+    guard WCSession.isSupported() else {
+      NSLog("[SagaTrail Watch] Phone connection activation skipped: unsupported")
+      return
+    }
     let session = WCSession.default
     session.delegate = self
+    NSLog("[SagaTrail Watch] Phone connection activating (state: %ld, reachable: %@)",
+          session.activationState.rawValue, String(session.isReachable))
     session.activate()
   }
 
@@ -270,6 +314,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     pendingActions.removeAll()
     UserDefaults.standard.removeObject(forKey: pendingActionsKey)
     actionLock.unlock()
+    NSLog("[SagaTrail Watch] Action handler attached; replaying %ld native actions", queued.count)
     queued.forEach(handler)
   }
 
@@ -294,12 +339,16 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   func sendLiveState(_ state: [String: Any], durable: Bool = false) throws {
+    NSLog("[SagaTrail Watch] Validating compact live state (keys: %@, durable: %@)",
+          state.keys.sorted().joined(separator: ","), String(durable))
     let payload = try validatedLiveState(state)
     let message = try propertyListSafeEnvelope(envelope(type: "liveState", payload: payload))
     send(message, preferApplicationContext: true, durable: durable)
   }
 
   func publishCanonicalLiveState(_ state: [String: Any]) throws {
+    NSLog("[SagaTrail Watch] Validating canonical live state (keys: %@)",
+          state.keys.sorted().joined(separator: ","))
     guard (state["version"] as? NSNumber)?.intValue == protocolVersion,
           let timestamp = state["timestamp"] as? NSNumber,
           state["sequence"] is NSNumber,
@@ -469,19 +518,28 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   private func send(_ message: [String: Any], preferApplicationContext: Bool, durable: Bool = false) {
-    guard WCSession.isSupported() else { return }
+    guard WCSession.isSupported() else {
+      NSLog("[SagaTrail Watch] Send skipped: WatchConnectivity unsupported")
+      return
+    }
     let session = WCSession.default
+    let type = message["type"] as? String ?? "unknown"
+    NSLog("[SagaTrail Watch] Sending to Watch (type: %@, durable: %@, context: %@, state: %ld, reachable: %@)",
+          type, String(durable), String(preferApplicationContext),
+          session.activationState.rawValue, String(session.isReachable))
     var contextUpdated = false
     if durable {
       // Application context is replaceable state, not an action queue. Safety
       // and SOS transitions must also survive a missed direct delivery.
       session.transferUserInfo(message)
+      NSLog("[SagaTrail Watch] transferUserInfo queued (type: %@)", type)
     }
     if preferApplicationContext {
       if session.activationState == .activated {
         do {
           try session.updateApplicationContext(message)
           contextUpdated = true
+          NSLog("[SagaTrail Watch] application context updated (type: %@)", type)
         } catch {
           NSLog("[SagaTrail Watch] Could not update application context: %@", error.localizedDescription)
         }
@@ -493,15 +551,18 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     if session.isReachable {
       session.sendMessage(message, replyHandler: nil) { error in
-        NSLog("[SagaTrail Watch] Could not send message: %@", error.localizedDescription)
+        NSLog("[SagaTrail Watch] Direct message failed (type: %@); error: %@", type, error.localizedDescription)
         // Reachability is only a point-in-time hint. Retain critical state
         // when the direct channel fails.
         if durable || preferApplicationContext {
           session.transferUserInfo(message)
+          NSLog("[SagaTrail Watch] transferUserInfo fallback queued (type: %@)", type)
         }
       }
+      NSLog("[SagaTrail Watch] Direct message submitted (type: %@)", type)
     } else if !contextUpdated && !durable {
       session.transferUserInfo(message)
+      NSLog("[SagaTrail Watch] transferUserInfo fallback queued (not reachable, type: %@)", type)
     }
   }
 
@@ -678,6 +739,8 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+    NSLog("[SagaTrail Watch] Phone WC activation completed (state: %ld, reachable: %@, error: %@)",
+          activationState.rawValue, String(session.isReachable), error?.localizedDescription ?? "none")
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: envelope(
       type: "connectionStatus",
       payload: statusPayload.merging(["activationState": activationState.rawValue]) { _, new in new }
@@ -686,32 +749,60 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   func sessionDidBecomeInactive(_ session: WCSession) {}
   func sessionDidDeactivate(_ session: WCSession) { session.activate() }
   func sessionReachabilityDidChange(_ session: WCSession) {
+    NSLog("[SagaTrail Watch] Phone reachability changed (reachable: %@, state: %ld)",
+          String(session.isReachable), session.activationState.rawValue)
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: envelope(type: "connectionStatus", payload: statusPayload))
   }
-  func session(_ session: WCSession, didReceiveMessage message: [String: Any]) { receive(message) }
+  func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    NSLog("[SagaTrail Watch] Phone received direct message from Watch (type: %@)",
+          message["type"] as? String ?? "unknown")
+    receive(message)
+  }
   func session(
     _ session: WCSession,
     didReceiveMessage message: [String: Any],
     replyHandler: @escaping ([String: Any]) -> Void
   ) {
+    NSLog("[SagaTrail Watch] Phone received direct message with reply handler (type: %@)",
+          message["type"] as? String ?? "unknown")
     let accepted = receive(message)
     replyHandler(["v": protocolVersion, "accepted": accepted])
   }
-  func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) { receive(userInfo) }
+  func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
+    NSLog("[SagaTrail Watch] Phone received transferred user info (type: %@)",
+          userInfo["type"] as? String ?? "unknown")
+    receive(userInfo)
+  }
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+    NSLog("[SagaTrail Watch] Phone received application context (type: %@)",
+          applicationContext["type"] as? String ?? "unknown")
     receive(applicationContext)
   }
 
   @discardableResult
   private func receive(_ message: [String: Any]) -> Bool {
-    guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
-          let type = message["type"] as? String,
-          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return false }
+    guard (message["v"] as? NSNumber)?.intValue == protocolVersion else {
+      NSLog("[SagaTrail Watch] Rejected incoming message: protocol version mismatch")
+      return false
+    }
+    guard let type = message["type"] as? String,
+          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else {
+      NSLog("[SagaTrail Watch] Rejected incoming message: unsupported type (%@)",
+            message["type"] as? String ?? "missing")
+      return false
+    }
+    NSLog("[SagaTrail Watch] Processing incoming phone action (type: %@)", type)
     if type == "heartRate" {
-      guard cacheHeartRate(from: message) else { return false }
+      guard cacheHeartRate(from: message) else {
+        NSLog("[SagaTrail Watch] Rejected incoming heart-rate payload")
+        return false
+      }
       NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
     } else {
-      guard claimAction(message) else { return true }
+      guard claimAction(message) else {
+        NSLog("[SagaTrail Watch] Ignored duplicate incoming action (type: %@)", type)
+        return true
+      }
       deliverAction(message)
     }
     return true
@@ -727,6 +818,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     actionLock.lock()
     defer { actionLock.unlock() }
     if deliveredActionKeys.contains(key) {
+      NSLog("[SagaTrail Watch] Action already claimed (key: %@)", key)
       return false
     }
     deliveredActionKeys.append(key)
@@ -737,9 +829,11 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   }
 
   private func deliverAction(_ message: [String: Any]) {
+    let type = message["type"] as? String ?? "unknown"
     actionLock.lock()
     if let handler = actionHandler {
       actionLock.unlock()
+      NSLog("[SagaTrail Watch] Delivering action to native handler (type: %@)", type)
       handler(message)
       return
     }
@@ -749,6 +843,8 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     UserDefaults.standard.set(pendingActions, forKey: pendingActionsKey)
     actionLock.unlock()
+    NSLog("[SagaTrail Watch] Queued action until native handler is ready (type: %@, queueCount: %ld)",
+          type, pendingActions.count)
   }
 
   @discardableResult

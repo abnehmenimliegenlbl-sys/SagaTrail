@@ -175,6 +175,47 @@ let statusNotificationId: string | null = null;
 let lastStatusSentAt = 0;
 let lastLiveStateSentAt = 0;
 let lastStatusSnapshot: WatchStatusGateSnapshot | null = null;
+let lastInvalidStateLogKey: string | null = null;
+
+function liveStateDebugSummary(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object") {
+    return { kind: typeof value };
+  }
+  const state = value as Partial<HikeLiveState>;
+  const numeric = {
+    sequence: state.sequence,
+    timestampFinite: Number.isFinite(state.timestamp),
+    elapsedSecFinite: state.elapsedSec == null || Number.isFinite(state.elapsedSec),
+    walkedDistanceFinite: state.walkedDistanceM == null || Number.isFinite(state.walkedDistanceM),
+    ascentFinite: state.ascentM == null || Number.isFinite(state.ascentM),
+    stepsFinite: state.steps == null || Number.isFinite(state.steps),
+    remainingDistanceFinite:
+      state.remainingDistanceM == null || Number.isFinite(state.remainingDistanceM),
+    remainingSecondsFinite:
+      state.remainingSeconds == null || Number.isFinite(state.remainingSeconds),
+    arrivalFinite:
+      state.arrivalAtEpochMs == null || Number.isFinite(state.arrivalAtEpochMs),
+    remainingAscentFinite:
+      state.remainingAscentM == null || Number.isFinite(state.remainingAscentM),
+  };
+  return {
+    version: state.version,
+    sessionStatus: state.sessionStatus,
+    isHiking: state.isHiking,
+    gpsFreshness: state.gpsFreshness,
+    hasNavigation: state.nextNavigation != null,
+    upcomingNavigationCount: state.upcomingNavigations?.length ?? 0,
+    hasSafetyCheckin: state.safetyCheckin != null,
+    safetyStatus: state.safetyCheckin?.status ?? null,
+    hasMap: state.map != null,
+    mapPointCount: state.map?.route?.length ?? 0,
+    hasWeather: state.weather != null,
+    hasPoiStory: state.poiStory != null,
+    hasActiveAlert: state.activeAlert != null,
+    sosAcknowledgement: state.sosAcknowledgement ?? null,
+    numeric,
+  };
+}
 
 function companionModule(): CompanionModule | null {
   if (Platform.OS === "web") return null;
@@ -427,16 +468,40 @@ export async function publishHikeLiveState(
   state: HikeLiveState,
   options?: { force?: boolean; now?: number },
 ): Promise<boolean> {
-  if (!isValidHikeLiveState(state)) {
-    watchCompanionLog("publish rejected: invalid state", {
-      sessionStatus: state && typeof state === "object" ? (state as Partial<HikeLiveState>).sessionStatus : null,
-      isHiking: state && typeof state === "object" ? (state as Partial<HikeLiveState>).isHiking : null,
-    });
+  const valid = isValidHikeLiveState(state);
+  if (!valid) {
+    const summary = liveStateDebugSummary(state);
+    const logKey = JSON.stringify(summary);
+    if (logKey !== lastInvalidStateLogKey) {
+      lastInvalidStateLogKey = logKey;
+      watchCompanionLog("publish rejected: invalid state", summary);
+    }
     return false;
   }
+  lastInvalidStateLogKey = null;
   const now = options?.now ?? Date.now();
-  if (!options?.force && now - lastLiveStateSentAt < LIVE_SNAPSHOT_MIN_INTERVAL_MS) return false;
+  const force = options?.force === true;
+  const age = now - lastLiveStateSentAt;
+  if (!force && age < LIVE_SNAPSHOT_MIN_INTERVAL_MS) {
+    if (state.safetyCheckin?.status === "active" || state.sessionStatus === "sos_requested") {
+      watchCompanionLog("publish throttled for critical state", {
+        sequence: state.sequence,
+        sessionStatus: state.sessionStatus,
+        safetyStatus: state.safetyCheckin?.status ?? null,
+        ageMs: age,
+      });
+    }
+    return false;
+  }
   lastLiveStateSentAt = now;
+  watchCompanionLog("publish attempt", {
+    sequence: state.sequence,
+    sessionStatus: state.sessionStatus,
+    isHiking: state.isHiking,
+    force,
+    safetyStatus: state.safetyCheckin?.status ?? null,
+    sosAcknowledgement: state.sosAcknowledgement ?? null,
+  });
   const module = companionModule();
   if (!module) {
     watchCompanionLog("publish skipped: native module unavailable", {
@@ -457,10 +522,8 @@ export async function publishHikeLiveState(
     });
     return true;
   } catch (error) {
-    watchCompanionLog("publish threw", {
-      sessionStatus: state.sessionStatus,
-      isHiking: state.isHiking,
-      sequence: state.sequence,
+    watchCompanionLog("publish threw in native module", {
+      ...liveStateDebugSummary(state),
       message: error instanceof Error ? error.message : String(error),
     });
     return false;
@@ -476,7 +539,17 @@ export function subscribeToCompanionEvents(handlers: {
   }) => void;
 }): () => void {
   const module = companionModule();
-  if (Platform.OS === "web" || !module) return () => {};
+  if (Platform.OS === "web" || !module) {
+    watchCompanionLog("event subscription skipped", {
+      platform: Platform.OS,
+      nativeModuleAvailable: Boolean(module),
+    });
+    return () => {};
+  }
+  watchCompanionLog("event subscription attaching", {
+    platform: Platform.OS,
+    nativeModuleAvailable: true,
+  });
   let active = true;
   let lastForwardedHeartRateAt = 0;
   const forwardHeartRate = (event: HeartRateEvent | null | undefined) => {
@@ -491,6 +564,13 @@ export function subscribeToCompanionEvents(handlers: {
           ? "garmin"
           : "watch";
       handlers.onHeartRate({ bpm, measuredAt, source });
+      watchCompanionLog("heart-rate event forwarded", { source, measuredAt, bpm });
+    } else {
+      watchCompanionLog("heart-rate event ignored", {
+        hasBpm: bpm !== null,
+        measuredAt,
+        lastForwardedHeartRateAt,
+      });
     }
   };
   const heartRate = DeviceEventEmitter.addListener(
@@ -501,20 +581,40 @@ export function subscribeToCompanionEvents(handlers: {
   // durable latest Watch sample. RCTEventEmitter does not buffer events that
   // arrive while the Hike screen is unmounted or JS is still starting.
   activateNativeCompanion(module);
-  void module.getLatestHeartRate?.().then(forwardHeartRate).catch(() => {});
+  void module.getLatestHeartRate?.()
+    .then((event) => {
+      watchCompanionLog("latest heart-rate replay received", { present: event != null });
+      forwardHeartRate(event);
+    })
+    .catch((error) => watchCompanionLog("latest heart-rate replay failed", {
+      message: error instanceof Error ? error.message : String(error),
+    }));
   const sos = DeviceEventEmitter.addListener("SagaTrailCompanion.sosRequest", (event: SosRequestEvent) => {
-    handlers.onSosRequest({ requestedAt: finiteOrNull(event?.requestedAt) ?? Date.now() });
+    const requestedAt = finiteOrNull(event?.requestedAt) ?? Date.now();
+    watchCompanionLog("SOS event received by JS", { requestedAt });
+    handlers.onSosRequest({ requestedAt });
   });
   const command = DeviceEventEmitter.addListener("SagaTrailCompanion.hikeCommand", (event: HikeCommandEvent) => {
     if (event?.command === "start" || event?.command === "pause" || event?.command === "resume") {
+      watchCompanionLog("hike command received by JS", { command: event.command });
       handlers.onHikeCommand({ command: event.command });
     } else if (event?.command === "safetyConfirm") {
+      watchCompanionLog("safety confirmation received by JS", { command: event.command });
       handlers.onHikeCommand({ command: event.command });
     } else if (
       event?.command === "safetyStart" &&
       (event.durationMinutes === 30 || event.durationMinutes === 60 || event.durationMinutes === 120)
     ) {
+      watchCompanionLog("safety start received by JS", {
+        command: event.command,
+        durationMinutes: event.durationMinutes,
+      });
       handlers.onHikeCommand({ command: event.command, durationMinutes: event.durationMinutes });
+    } else {
+      watchCompanionLog("invalid hike command ignored by JS", {
+        command: event?.command ?? null,
+        hasDuration: event?.durationMinutes != null,
+      });
     }
   });
   const nativeEvent = DeviceEventEmitter.addListener("SagaTrailWatchEvent", (event: {
@@ -540,6 +640,7 @@ export function subscribeToCompanionEvents(handlers: {
   });
   return () => {
     active = false;
+    watchCompanionLog("event subscription detached");
     heartRate.remove();
     sos.remove();
     command.remove();
@@ -549,7 +650,10 @@ export function subscribeToCompanionEvents(handlers: {
 }
 
 export async function prepareWatchCompanion(): Promise<boolean> {
-  if (Platform.OS === "web") return false;
+  if (Platform.OS === "web") {
+    watchCompanionLog("prepare skipped on web");
+    return false;
+  }
   // The native companion is a persistent device connection, not a per-hike
   // opt-in. Activate every installed companion as soon as a hike screen uses
   // the Watch card; notification permission is only needed for the fallback
@@ -557,13 +661,22 @@ export async function prepareWatchCompanion(): Promise<boolean> {
   const module = companionModule();
   if (module) {
     activateNativeCompanion(module);
+    watchCompanionLog("prepare succeeded: native companion available");
     return true;
   }
-  if (permissionGranted != null) return permissionGranted;
+  if (permissionGranted != null) {
+    watchCompanionLog("prepare reused notification permission result", { granted: permissionGranted });
+    return permissionGranted;
+  }
   try {
     const current = await Notifications.getPermissionsAsync();
-    return (permissionGranted = current.granted);
-  } catch {
+    permissionGranted = current.granted;
+    watchCompanionLog("prepare completed with notification fallback", { granted: permissionGranted });
+    return permissionGranted;
+  } catch (error) {
+    watchCompanionLog("prepare failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return (permissionGranted = false);
   }
 }
@@ -606,14 +719,24 @@ export async function sendWatchStatus(snapshot: WatchLiveSnapshot, options?: { f
 
 /** SOS mirrors an instruction only; coordinates never enter notification body or data. */
 export async function sendWatchSos(_position: { lat: number; lng: number } | null): Promise<boolean> {
-  if (Platform.OS === "web" || !(await prepareWatchCompanion())) return false;
+  watchCompanionLog("SOS notification requested", { platform: Platform.OS });
+  if (Platform.OS === "web" || !(await prepareWatchCompanion())) {
+    watchCompanionLog("SOS notification unavailable");
+    return false;
+  }
   try {
     await Notifications.scheduleNotificationAsync({
       content: { title: "SagaTrail · SOS", body: "Notfallansicht auf dem Telefon geöffnet", sound: "default", data: { kind: "watch-sos" } },
       trigger: null,
     });
+    watchCompanionLog("SOS notification scheduled");
     return true;
-  } catch { return false; }
+  } catch (error) {
+    watchCompanionLog("SOS notification failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
 }
 
 export async function clearWatchStatus(): Promise<void> {

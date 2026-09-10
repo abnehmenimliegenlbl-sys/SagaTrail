@@ -38,9 +38,14 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func activate() {
-    guard WCSession.isSupported() else { return }
+    guard WCSession.isSupported() else {
+      NSLog("[SagaTrail Watch] Watch activation skipped: WatchConnectivity unsupported")
+      return
+    }
     let session = WCSession.default
     session.delegate = self
+    NSLog("[SagaTrail Watch] Watch activation requested (state: %ld, reachable: %@)",
+          session.activationState.rawValue, String(session.isReachable))
     session.activate()
     apply(envelope: session.receivedApplicationContext)
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
@@ -52,14 +57,25 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   func setSceneActive(_ active: Bool) {
     isSceneActive = active
+    NSLog("[SagaTrail Watch] Scene activity changed: %@", String(active))
   }
 
-  func requestSOSConfirmation() { showSOSConfirmation = true }
+  func requestSOSConfirmation() {
+    NSLog("[SagaTrail Watch] SOS confirmation opened")
+    showSOSConfirmation = true
+  }
 
-  func requestSafetyCheckin() { showSafetyCheckinOptions = true }
+  func requestSafetyCheckin() {
+    NSLog("[SagaTrail Watch] Safety check-in duration picker opened")
+    showSafetyCheckinOptions = true
+  }
 
   func sendSafetyCheckin(durationMinutes: Int) {
-    guard [30, 60, 120].contains(durationMinutes) else { return }
+    guard [30, 60, 120].contains(durationMinutes) else {
+      NSLog("[SagaTrail Watch] Safety check-in ignored: invalid duration %ld", durationMinutes)
+      return
+    }
+    NSLog("[SagaTrail Watch] Sending safety check-in command (%ld minutes)", durationMinutes)
     showSafetyCheckinOptions = false
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyStart",
@@ -70,6 +86,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func confirmSafetyCheckin() {
+    NSLog("[SagaTrail Watch] Sending safety check-in confirmation")
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyConfirm",
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
@@ -78,6 +95,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func confirmSOS() {
+    NSLog("[SagaTrail Watch] Sending SOS confirmation")
     showSOSConfirmation = false
     let message = SagaTrailWatchProtocol.envelope(type: "sosConfirmed", payload: [
       "source": "watch",
@@ -87,7 +105,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
   }
 
   func sendHikeCommand(_ command: String) {
-    guard ["start", "pause", "resume"].contains(command) else { return }
+    guard ["start", "pause", "resume"].contains(command) else {
+      NSLog("[SagaTrail Watch] Hike command ignored: invalid command %@", command)
+      return
+    }
+    NSLog("[SagaTrail Watch] Sending hike command: %@", command)
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": command,
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
@@ -97,24 +119,36 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   private func sendToPhone(_ message: [String: Any]) {
     let session = WCSession.default
+    let type = message["type"] as? String ?? "unknown"
+    let payload = message["payload"] as? [String: Any] ?? [:]
+    NSLog("[SagaTrail Watch] Sending command to phone (type: %@, payloadKeys: %@, state: %ld, reachable: %@)",
+          type, payload.keys.sorted().joined(separator: ","), session.activationState.rawValue, String(session.isReachable))
     if session.activationState != .activated {
+      NSLog("[SagaTrail Watch] Activating WCSession before command send")
       session.activate()
     }
     // Safety/SOS commands are durable actions: always enqueue a background
     // transfer, then additionally use the low-latency channel when reachable.
     // The phone deduplicates both deliveries by action + requestedAt.
     session.transferUserInfo(message)
+    NSLog("[SagaTrail Watch] Command transferUserInfo queued (type: %@)", type)
     guard session.activationState == .activated, session.isReachable else {
+      NSLog("[SagaTrail Watch] Direct command skipped (state: %ld, reachable: %@)",
+            session.activationState.rawValue, String(session.isReachable))
       return
     }
     session.sendMessage(message, replyHandler: { reply in
       let accepted = reply["accepted"] as? Bool ?? false
+      NSLog("[SagaTrail Watch] Phone command reply received (type: %@, accepted: %@)",
+            type, String(accepted))
       if !accepted {
         NSLog("[SagaTrail Watch] Phone rejected command")
       }
     }) { error in
-      NSLog("[SagaTrail Watch] Direct command failed; durable transfer remains queued: %@", error.localizedDescription)
+      NSLog("[SagaTrail Watch] Direct command failed (type: %@); durable transfer remains queued: %@",
+            type, error.localizedDescription)
     }
+    NSLog("[SagaTrail Watch] Direct command submitted (type: %@)", type)
   }
 
   func startHeartRate() {
@@ -240,6 +274,8 @@ final class WatchHikeModel: NSObject, ObservableObject {
       NSLog("[SagaTrail Watch] Ignored malformed envelope (keys: %@)", Array(envelope.keys).sorted().joined(separator: ","))
       return
     }
+    NSLog("[SagaTrail Watch] Applying envelope (type: %@, payloadKeys: %@)",
+          type, Array(payload.keys).sorted().joined(separator: ","))
     switch type {
     case "liveState":
       guard let decoded = SagaTrailWatchProtocol.LiveState.decode(payload) else {
@@ -281,6 +317,10 @@ final class WatchHikeModel: NSObject, ObservableObject {
       lastSafetyStatus = safetyStatus
       state = decoded
       receivedAt = Date()
+      NSLog("[SagaTrail Watch] Live state committed (safety: %@, alert: %@, gpsFresh: %@)",
+            decoded.safetyCheckin?.status ?? "none",
+            decoded.nextInstruction.isEmpty ? "none" : "present",
+            String(decoded.map?.gpsFresh ?? false))
       syncWorkout(with: decoded.sessionStatus)
       persistComplication(decoded)
       ComplicationController.reload()
@@ -293,14 +333,19 @@ final class WatchHikeModel: NSObject, ObservableObject {
       let alertKey = "\(title)|\(body)|\(haptic ?? "")|\(action ?? "")"
       if alertKey != lastAlertKey {
         lastAlertKey = alertKey
+        NSLog("[SagaTrail Watch] New alert accepted (haptic: %@, sceneActive: %@, hasAction: %@)",
+              haptic ?? "none", String(isSceneActive), String(action != nil))
         playAlertHaptic(haptic)
         if isSceneActive {
           activeAlert = WatchAlert(title: title, body: body, action: action)
         } else {
           scheduleSystemNotification(title: title, body: body)
         }
+      } else {
+        NSLog("[SagaTrail Watch] Duplicate alert ignored")
       }
     default:
+      NSLog("[SagaTrail Watch] Envelope type ignored by Watch model: %@", type)
       break
     }
   }

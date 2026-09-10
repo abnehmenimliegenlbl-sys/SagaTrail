@@ -10,6 +10,9 @@ import { fonts } from "@/constants/typography";
 import { GLAS_3D } from "@/constants/depth";
 import type { LatLng } from "@/types";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import { makeLogger } from "@/lib/debugLog";
+
+const safetyCheckinLog = makeLogger("[SAFETY-CHECKIN]", "safety_checkin");
 
 export interface SafetyCheckinProps {
   routeName: string;
@@ -79,20 +82,41 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
 
   useEffect(() => {
     void AsyncStorage.getItem(storageKey).then((raw) => {
-      if (!raw) return;
+      if (!raw) {
+        safetyCheckinLog("storage hydration: no saved check-in");
+        return;
+      }
       try {
         const parsed = JSON.parse(raw) as { expiresAt?: number; token?: string; path?: string };
         if (Number.isFinite(parsed.expiresAt) && (parsed.expiresAt ?? 0) > Date.now()) {
           setExpiresAt(parsed.expiresAt!);
           if (parsed.token) setShareToken(parsed.token);
           if (parsed.path) setSharePath(parsed.path);
+          safetyCheckinLog("storage hydration: active check-in restored", {
+            hasToken: Boolean(parsed.token),
+            hasPath: Boolean(parsed.path),
+          });
+        } else {
+          safetyCheckinLog("storage hydration: saved check-in expired or invalid");
         }
       } catch {
         // Alte lokale Timer-Versionen enthielten nur die Ablaufzeit.
         const value = Number(raw);
-        if (Number.isFinite(value) && value > Date.now()) setExpiresAt(value);
+        if (Number.isFinite(value) && value > Date.now()) {
+          setExpiresAt(value);
+          safetyCheckinLog("storage hydration: legacy local timer restored");
+        } else {
+          safetyCheckinLog("storage hydration: legacy value invalid or expired");
+        }
       }
-    }).catch(() => {}).finally(() => setStorageHydrated(true));
+    }).catch((error) => {
+      safetyCheckinLog("storage hydration failed", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }).finally(() => {
+      setStorageHydrated(true);
+      safetyCheckinLog("storage hydration complete");
+    });
   }, [storageKey]);
 
   useEffect(() => {
@@ -123,7 +147,11 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     lastLocationSentAt.current = Date.now();
     const base = getApiBaseUrl() ?? "";
     void getAuthToken().then((authToken) => {
-      if (!authToken) return;
+      if (!authToken) {
+        safetyCheckinLog("live-link location skipped: no auth token");
+        return;
+      }
+      safetyCheckinLog("live-link location upload started", { hasFreshGps: true });
       void fetch(`${base}/api/safety-shares/${encodeURIComponent(shareToken)}/location`, {
         method: "POST",
         headers: {
@@ -134,7 +162,20 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
           lat: livePosition.lat,
           lng: livePosition.lng,
         }),
-      }).catch(() => {});
+      }).then((response) => {
+        safetyCheckinLog("live-link location upload completed", {
+          ok: response.ok,
+          status: response.status,
+        });
+      }).catch((error) => {
+        safetyCheckinLog("live-link location upload failed", {
+          message: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }).catch((error) => {
+      safetyCheckinLog("live-link auth lookup failed", {
+        message: error instanceof Error ? error.message : String(error),
+      });
     });
   }, [shareToken, livePosition?.lat, livePosition?.lng, hasFreshGps, getAuthToken]);
 
@@ -153,6 +194,11 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       remainingSec: remaining,
       expiresAtEpochMs: expiresAt,
       liveLinkActive: Boolean(shareToken),
+    });
+    safetyCheckinLog("status published to hike screen", {
+      status: expiresAt == null ? "idle" : overdue ? "overdue" : "active",
+      remainingSec: remaining,
+      hasLiveLink: Boolean(shareToken),
     });
   }, [expiresAt, overdue, onStatusChange, remaining, shareToken, storageHydrated]);
 
@@ -187,14 +233,24 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
 
   const close = () => setOpen(false);
   const cancelTimer = () => {
+    safetyCheckinLog("check-in cancel requested", { hadLiveLink: Boolean(shareToken) });
     if (shareToken) {
       const base = getApiBaseUrl() ?? "";
       void getAuthToken().then((authToken) => {
-        if (!authToken) return;
+        if (!authToken) {
+          safetyCheckinLog("live-link delete skipped: no auth token");
+          return;
+        }
         void fetch(`${base}/api/safety-shares/${encodeURIComponent(shareToken)}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${authToken}` },
-        }).catch(() => {});
+        }).then((response) => {
+          safetyCheckinLog("live-link delete completed", { ok: response.ok, status: response.status });
+        }).catch((error) => {
+          safetyCheckinLog("live-link delete failed", {
+            message: error instanceof Error ? error.message : String(error),
+          });
+        });
       });
     }
     setShareToken(null);
@@ -204,12 +260,22 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   };
 
   const startShare = async (durationOverride?: SafetyCheckinDuration) => {
-    if (shareBusy) return;
+    if (shareBusy) {
+      safetyCheckinLog("check-in start ignored: request already busy");
+      return;
+    }
     const selectedDuration = durationOverride ?? duration;
+    safetyCheckinLog("check-in start requested", {
+      source: durationOverride == null ? "phone" : "watch",
+      durationMinutes: selectedDuration,
+    });
     setShareBusy(true);
     try {
       const authToken = await getAuthToken();
-      if (!authToken) throw new Error("auth");
+      if (!authToken) {
+        safetyCheckinLog("check-in server start unavailable: no auth token");
+        throw new Error("auth");
+      }
       const base = getApiBaseUrl() ?? "";
       const response = await fetch(`${base}/api/safety-shares`, {
         method: "POST",
@@ -219,6 +285,10 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
         },
         body: JSON.stringify({ routeName, durationMinutes: selectedDuration }),
       });
+      safetyCheckinLog("check-in server response received", {
+        ok: response.ok,
+        status: response.status,
+      });
       if (!response.ok) throw new Error("create");
       const data = await response.json() as { token: string; path: string; expiresAt: string };
       const link = `${base}${data.path}`;
@@ -226,12 +296,16 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       setSharePath(link);
       setExpiresAt(Date.parse(data.expiresAt));
       setOpen(true);
+      safetyCheckinLog("check-in started with live link", {
+        hasToken: Boolean(data.token),
+        hasPath: Boolean(data.path),
+      });
       await Share.share({
         title: labels.externalShare ?? "SagaTrail Sicherheitslink",
         message: `${labels.externalShare ?? "SagaTrail Sicherheitslink"}\n${link}`,
         url: link,
       }).catch(() => {});
-    } catch {
+    } catch (error) {
       // Der lokale Check-in bleibt als Sicherheitsnetz verfügbar, auch wenn
       // Authentifizierung oder Netz gerade nicht funktionieren. Er wird
       // sichtbar als lokal markiert und erzeugt keinen falschen Live-Status.
@@ -239,6 +313,11 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       setSharePath(null);
       setExpiresAt(Date.now() + selectedDuration * 60_000);
       setOpen(true);
+      safetyCheckinLog("check-in started with local fallback", {
+        source: durationOverride == null ? "phone" : "watch",
+        durationMinutes: selectedDuration,
+        reason: error instanceof Error ? error.message : String(error),
+      });
       alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
     } finally {
       setShareBusy(false);
@@ -248,11 +327,22 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
   useImperativeHandle(ref, () => ({
     open: () => setOpen(true),
     startFromWatch: (watchDuration) => {
-      if (![30, 60, 120].includes(watchDuration)) return;
+      if (![30, 60, 120].includes(watchDuration)) {
+        safetyCheckinLog("watch check-in ignored: invalid duration", {
+          durationMinutes: watchDuration,
+        });
+        return;
+      }
+      safetyCheckinLog("watch check-in received by component", {
+        durationMinutes: watchDuration,
+      });
       setDuration(watchDuration);
       void startShare(watchDuration);
     },
-    confirmFromWatch: cancelTimer,
+    confirmFromWatch: () => {
+      safetyCheckinLog("watch check-in confirmation received by component");
+      cancelTimer();
+    },
   }), [cancelTimer, startShare]);
 
   const shareExternalLink = async () => {
