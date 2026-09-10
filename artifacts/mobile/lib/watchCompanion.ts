@@ -176,6 +176,7 @@ let lastStatusSentAt = 0;
 let lastLiveStateSentAt = 0;
 let lastStatusSnapshot: WatchStatusGateSnapshot | null = null;
 let lastInvalidStateLogKey: string | null = null;
+let lastOmittedFieldsLogKey: string | null = null;
 
 function liveStateDebugSummary(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object") {
@@ -459,6 +460,65 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
   return true;
 }
 
+const OPTIONAL_LIVE_STATE_FIELDS: ReadonlyArray<keyof HikeLiveState> = [
+  "nextNavigation",
+  "upcomingNavigations",
+  "plannedAscentM",
+  "remainingAscentM",
+  "terrainSection",
+  "upcomingGradeChange",
+  "upcomingSurfaceChange",
+  "upcomingAttraction",
+  "safetyCheckin",
+  "map",
+  "offRoute",
+  "weather",
+  "daylight",
+  "poiStory",
+  "storyAudio",
+  "heartRate",
+  "activeAlert",
+  "remainingDistanceM",
+  "remainingSeconds",
+  "arrivalAtEpochMs",
+  "sosAcknowledgement",
+];
+
+function prepareHikeLiveStateForPublish(
+  state: HikeLiveState,
+): { state: HikeLiveState | null; omittedFields: string[] } {
+  const prepared = {
+    ...state,
+    nextNavigation: null,
+    heartRate: null,
+    activeAlert: null,
+  } as HikeLiveState;
+  const preparedRecord = prepared as unknown as Record<string, unknown>;
+  const originalRecord = state as unknown as Record<string, unknown>;
+
+  for (const field of OPTIONAL_LIVE_STATE_FIELDS) {
+    if (field === "nextNavigation" || field === "heartRate" || field === "activeAlert") continue;
+    delete preparedRecord[field];
+  }
+  if (!isValidHikeLiveState(prepared)) {
+    return { state: null, omittedFields: [] };
+  }
+
+  const omittedFields: string[] = [];
+  for (const field of OPTIONAL_LIVE_STATE_FIELDS) {
+    if (!(field in originalRecord)) continue;
+    const previousValue = preparedRecord[field];
+    const hadPreviousValue = field in preparedRecord;
+    preparedRecord[field] = originalRecord[field];
+    if (!isValidHikeLiveState(prepared)) {
+      if (hadPreviousValue) preparedRecord[field] = previousValue;
+      else delete preparedRecord[field];
+      omittedFields.push(field);
+    }
+  }
+  return { state: prepared, omittedFields };
+}
+
 export function serializeHikeLiveState(state: HikeLiveState): string | null {
   return isValidHikeLiveState(state) ? JSON.stringify(state) : null;
 }
@@ -468,26 +528,40 @@ export async function publishHikeLiveState(
   state: HikeLiveState,
   options?: { force?: boolean; now?: number },
 ): Promise<boolean> {
-  const valid = isValidHikeLiveState(state);
-  if (!valid) {
+  const prepared = prepareHikeLiveStateForPublish(state);
+  if (!prepared.state) {
     const summary = liveStateDebugSummary(state);
     const logKey = JSON.stringify(summary);
     if (logKey !== lastInvalidStateLogKey) {
       lastInvalidStateLogKey = logKey;
-      watchCompanionLog("publish rejected: invalid state", summary);
+      watchCompanionLog("publish rejected: invalid core state", summary);
     }
     return false;
   }
   lastInvalidStateLogKey = null;
+  const publishState = prepared.state;
+  const omittedFieldsLogKey = prepared.omittedFields.join(",");
+  if (omittedFieldsLogKey) {
+    if (omittedFieldsLogKey !== lastOmittedFieldsLogKey) {
+      watchCompanionLog("publish omitted invalid optional fields", {
+        omittedFields: prepared.omittedFields,
+        sessionStatus: publishState.sessionStatus,
+        isHiking: publishState.isHiking,
+      });
+    }
+    lastOmittedFieldsLogKey = omittedFieldsLogKey;
+  } else {
+    lastOmittedFieldsLogKey = null;
+  }
   const now = options?.now ?? Date.now();
   const force = options?.force === true;
   const age = now - lastLiveStateSentAt;
   if (!force && age < LIVE_SNAPSHOT_MIN_INTERVAL_MS) {
-    if (state.safetyCheckin?.status === "active" || state.sessionStatus === "sos_requested") {
+    if (publishState.safetyCheckin?.status === "active" || publishState.sessionStatus === "sos_requested") {
       watchCompanionLog("publish throttled for critical state", {
-        sequence: state.sequence,
-        sessionStatus: state.sessionStatus,
-        safetyStatus: state.safetyCheckin?.status ?? null,
+        sequence: publishState.sequence,
+        sessionStatus: publishState.sessionStatus,
+        safetyStatus: publishState.safetyCheckin?.status ?? null,
         ageMs: age,
       });
     }
@@ -495,35 +569,35 @@ export async function publishHikeLiveState(
   }
   lastLiveStateSentAt = now;
   watchCompanionLog("publish attempt", {
-    sequence: state.sequence,
-    sessionStatus: state.sessionStatus,
-    isHiking: state.isHiking,
+    sequence: publishState.sequence,
+    sessionStatus: publishState.sessionStatus,
+    isHiking: publishState.isHiking,
     force,
-    safetyStatus: state.safetyCheckin?.status ?? null,
-    sosAcknowledgement: state.sosAcknowledgement ?? null,
+    safetyStatus: publishState.safetyCheckin?.status ?? null,
+    sosAcknowledgement: publishState.sosAcknowledgement ?? null,
   });
   const module = companionModule();
   if (!module) {
     watchCompanionLog("publish skipped: native module unavailable", {
-      sessionStatus: state.sessionStatus,
-      isHiking: state.isHiking,
-      sequence: state.sequence,
+      sessionStatus: publishState.sessionStatus,
+      isHiking: publishState.isHiking,
+      sequence: publishState.sequence,
       platform: Platform.OS,
     });
     return false;
   }
   activateNativeCompanion(module);
   try {
-    await module.publishLiveState!(state);
+    await module.publishLiveState!(publishState);
     watchCompanionLog("publish accepted by native module", {
-      sessionStatus: state.sessionStatus,
-      isHiking: state.isHiking,
-      sequence: state.sequence,
+      sessionStatus: publishState.sessionStatus,
+      isHiking: publishState.isHiking,
+      sequence: publishState.sequence,
     });
     return true;
   } catch (error) {
     watchCompanionLog("publish threw in native module", {
-      ...liveStateDebugSummary(state),
+      ...liveStateDebugSummary(publishState),
       message: error instanceof Error ? error.message : String(error),
     });
     return false;

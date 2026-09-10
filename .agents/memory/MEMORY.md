@@ -14,7 +14,6 @@
 - [EAWS avalanche API](sagatrail-eaws-avalanche.md) — EAWS v6 Connect-JSON; empty body in summer = correct no-bulletin; HikingRoute has no .canton; get canton via sagas.find(s=>s.id===route.sagaId)?.canton + kantonSlug().
 - [DB schema dist rebuild](db-schema-dist-rebuild.md) — after adding columns to profiles.ts, run `cd lib/db && npx tsc -p tsconfig.json` to regenerate dist/*.d.ts; without this api-server typecheck sees stale types (property does not exist errors).
 - [Drizzle dev schema push](drizzle-dev-schema-push.md) — new tables and existing constraint conflicts can require a pseudo-TTY; choose create/no-truncate, then restart the API.
-- [Python i18n batch-insert double-comma](sagatrail-python-i18n-insert.md) — inserting after `},` with a string starting with `,` creates `},,`; fix by omitting the leading comma in the insert string.
 - [SagaTrail content model](sagatrail-content-model.md) — curated public-domain sagas only (no AI gen), routes resolve to NEAREST saga; routes are ONLINE-ONLY (no route seed/offline fallback); missing per-lang summary silently falls back to German.
 - [SagaTrail map & live GPS](sagatrail-map-gps.md) — Carto Voyager + Waymarked Trails Leaflet map (not swisstopo) in WebView/iframe + real GPS narration; OSM overlays must be fetched server-side, not from the client.
 - [SagaTrail route fetching](sagatrail-route-fetching.md) — per-canton OSM routes use a bbox pre-scan (lower-bound length) to surface short routes; cap goes AFTER the distance filter, never before.
@@ -63,8 +62,6 @@
 - [SagaTrail premium "already subscribed"](sagatrail-premium-already-subscribed.md) — a StoreKit "already subscribed" purchase error must be treated as success (refetch + sync), not shown as a failure; RC identity-linking also needs retry, not just one-shot at cold start.
 - [SagaTrail native Modal after IAP freeze](sagatrail-iap-modal-freeze.md) — presenting our own native Modal right after StoreKit purchase sheet closes, or after screen unmount, can deadlock iOS UIKit into a full app freeze (no crash log).
 - [SagaTrail progress sync + Zod stripping](sagatrail-progress-sync.md) — hikeHistory preserves full objects; orval Zod strips to {id} despite additionalProperties:true; server uses req.body directly + no SyncMyProgressResponse.parse(); client merges local-first.
-- [Profile schema + purchasedPacks missing](sagatrail-profile-purchasedpacks.md) — GetMyProfileResponse Zod schema lacked purchasedPacks; Zod stripped it before sending to client; fix: add to openapi.yaml Profile schema + re-run codegen.
-- [Profile rebuild wipes optional fields](sagatrail-profile-rebuild-wipes-fields.md) — rebuilding local Profile from a server response without copying purchasedPacks silently wipes pack access; copy ALL fields in every rebuild path.
 - [Stripe Partner-Onboarding](sagatrail-stripe-partner.md) — Vollflow: WP-Formular → Stripe-Checkout → Webhook → DB-Insert + Magic-Link; Produkte by Name suchen, nie hardcoded Price-IDs.
 - [Partner-Öffnungszeiten Datenmodell](sagatrail-partner-oeffnungszeiten.md) — JSON in TEXT-Feld; Wochenplan+Saison+19 Feiertage; API gibt istOffen/schliesstUm/oeffnetAmTag/oeffnetUm zurück.
 - [SagaTrail partner admin](sagatrail-partner-admin.md) — restaurants/shops CRUD lives in `partners` table + `/api/admin/partner*`, reusing existing ADMIN_TOKEN pattern; no public read endpoint yet.
@@ -78,9 +75,7 @@
 - [Start-route choice atomicity](sagatrail-start-route-choice-atomicity.md) — route recalculation must wait until the start mode is set; position and choice can arrive in separate React renders.
 - [Drizzle fire-and-forget needs .execute()](drizzle-execute-required.md) — fire-and-forget DB writes must call .execute().catch(...); plain .catch() on a query builder without .execute() silently does nothing in Drizzle.
 - [EAS build/submit from workspace](eas-build-from-workspace.md) — temp-workflow pattern (bash 120s limit), EXPO_APPLE_TEAM_ID pflicht (TTY-Prompt haengt sonst), ERRORED-Submission ohne Fehlertext = meist doppelte buildNumber in ASC; autoIncrement anlassen.
-- [Panorama-Assets als JPEG](sagatrail-panorama-jpeg.md) — 8 Panorama-PNGs (13MB) zu JPEG Q82 konvertiert (→1.4MB); panorama.ts referenziert jetzt .jpg; .easignore schließt .tsbuildinfo/server/scripts/build.js aus.
 - [WP lead booking action](sagatrail-wp-lead-book.md) — POST /admin/partner-leads/wp-book sendet einzelne PartnerLeads an WP via action=sagatrail_book_lead; WP-Plugin muss diesen Handler implementieren; sagatrail_book_all läuft im Hintergrund (202).
-- [Unenrichable name-search Phase 4](sagatrail-enrich-phase4.md) — enrich-all Phase 4 versucht geometry_version=-1 Routen per Namen in OSM zu finden (searchOsmRouteByName); max 30/Lauf, 3s Pause; auch als POST /admin/routes/enrich-by-name manuell auslösbar.
 - [SagaTrail free-hike gating](sagatrail-free-hike-gating.md) — non-premium gate is `!premium && freeHikeUsed`, NIE `isAnchorPlace`; Regel in kanton-, route- und saga-Screen synchron halten.
 - [CopyPodModuleMaps ist SCHÄDLICH](xcode16-archive-module-map-fix.md) — der frühere Workaround kopierte modulemaps ohne umbrella headers → "umbrella header not found"; entfernt, echte Ursache war UUID-Kollision (siehe clerk-ios-spm-cocoapods.md).
 - [Route canton = start point only](sagatrail-canton-startpoint-only.md) — user rejected multi-canton; one canton per route (start point); cantons TEXT[] column is inert, don't re-add backfill.
@@ -95,7 +90,6 @@
 - [Amtliche SchweizMobil-Werte aus OSM-Tags](sagatrail-official-tag-values.md) — distance/ascent-Tags haben Vorrang; tag-sweep (POST /admin/routes/tag-sweep) füllt distance_tag_km für osm-* mit gv≥1 nach; parseNumericTag-Caps: 5000 km / 100000 m.
 - [Restitch gerade Linien ausschließen](sagatrail-restitch-straight-exclusion.md) — restitch_parents.cjs muss schweizmobil-* aus allEtappen ausschließen (verhindert dass falsch benannte Parents sich selbst stitchen) + wiki-* mit ≤2 Punkten (verhindert Gerade-Linien einfrieren).
 - [Legacy-Routen-IDs ohne OSM-ID](sagatrail-legacy-route-ids.md) — schweizmobil-*/placeholder-* IDs werden per gecachtem Netzwerk-Index (network+ref) auf OSM-Relationen aufgelöst; 54 dauerhaft -1, Liste in docs/unenrichable-routes.md.
-- [SuperDeep Enrich + enrich-super Endpoint](superdeep-enrich.md) — fetchRouteSuperDeep (2-Ebenen) als 3. Fallback in enrichOneRoute; POST /admin/routes/enrich-super; 9 placeholder-Etappen bleiben dauerhaft -1 (Etappen > was OSM/WP haben).
 - [SagaTrail R2 Object Storage](sagatrail-r2-storage.md) — Narrations-Cache auf Cloudflare R2 migriert; GCS-Sidecar in Prod war 401; R2 via @aws-sdk/client-s3, Bucket "sagatrail", Account ae2d32c2f9bc47f08cca887f689853b5.
 - [SagaTrail Route Naming & Sorting](sagatrail-route-naming-sorting.md) — nwn+1-9/rwn+10-99/lwn+100-999 bestimmt Nummer; K-Routen: "K4 AG Name" sequentiell pro Kanton; Sort 4-stellig; Etappen-Labels VOR Sort anwenden.
 - [SagaTrail Referral System](sagatrail-referral-system.md) — profiles.referral_code + pending_pack_rewards; referrals table; reward triggers on first premium purchase in POST /me/premium/sync; claim via /referral-reward screen.
@@ -157,3 +151,4 @@
 - [Garmin iOS SDK imports](sagatrail-garmin-ios-sdk-imports.md) — official SPM repo is connectiq-companion-app-sdk-ios; Swift imports rename selection/app APIs and use UUID/store labels.
 - [Modern Watch app lifecycle](sagatrail-watch-frontmost-timeout.md) — never instantiate WKExtension in a single-target SwiftUI Watch app; use scenePhase for foreground state.
 - [Watch live-state finite values](sagatrail-watch-live-state-finite.md) — one NaN in an active derived field rejects the complete HikeLiveState before WatchConnectivity.
+- [Watch action remote diagnostics](sagatrail-watch-action-diagnostics.md) — safety actions need privacy-safe remote logs at every Watch→phone→JS boundary; JS-only logs cannot locate pre-JS failures.

@@ -12,6 +12,7 @@
   <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
   <key>WKApplication</key><true/>
   <key>WKCompanionAppBundleIdentifier</key><string>com.sagatrail2.app</string>
+  <key>SagaTrailRemoteDebugURL</key><string>https://api.sagatrail.ch/api/debug/log</string>
   <key>WKBackgroundModes</key>
   <array>
     <string>workout-processing</string>

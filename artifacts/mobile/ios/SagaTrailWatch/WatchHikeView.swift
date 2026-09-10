@@ -153,7 +153,7 @@ struct WatchHikeView: View {
   var body: some View {
     ZStack(alignment: .topLeading) {
       VStack(spacing: 5) {
-        if let state = hike.state {
+        if let state = hike.state, state.sessionStatus != "preparing" {
           TabView(selection: $selectedPage) {
             navigationPage(state).tag(0)
             statusPage(state).tag(1)
@@ -966,10 +966,10 @@ struct WatchHikeView: View {
 
   private func hikeControl(_ state: SagaTrailWatchProtocol.LiveState) -> some View {
     return Button {
-      hike.sendHikeCommand(state.isHiking ? "pause" : (state.sessionStatus == "preparing" ? "start" : "resume"))
+      hike.sendHikeCommand(state.isHiking ? "pause" : "resume")
     } label: {
       Label(
-        state.isHiking ? copy.t("pause") : (state.sessionStatus == "preparing" ? copy.t("start") : copy.t("resume")),
+        state.isHiking ? copy.t("pause") : copy.t("resume"),
         systemImage: state.isHiking ? "pause.fill" : "play.fill"
       )
     }

@@ -2,6 +2,30 @@ import Foundation
 import React
 import WatchConnectivity
 
+private enum SagaTrailPhoneRemoteDiagnostics {
+  static func log(_ message: String, data: [String: Any] = [:]) {
+    let endpointString = Bundle.main.object(
+      forInfoDictionaryKey: "SagaTrailRemoteDebugURL"
+    ) as? String
+    let configuredEndpoint = endpointString.flatMap { URL(string: $0) }
+    guard let endpoint = configuredEndpoint
+      ?? URL(string: "https://api.sagatrail.ch/api/debug/log") else { return }
+    var request = URLRequest(url: endpoint)
+    request.httpMethod = "POST"
+    request.timeoutInterval = 8
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    var eventData = data
+    eventData["atEpochMs"] = Int(Date().timeIntervalSince1970 * 1_000)
+    request.httpBody = try? JSONSerialization.data(withJSONObject: [
+      "tag": "watch_phone_native",
+      "message": message,
+      "data": [eventData],
+    ])
+    guard request.httpBody != nil else { return }
+    URLSession.shared.dataTask(with: request).resume()
+  }
+}
+
 /// React Native entry point for the iPhone half of the companion app.
 ///
 /// The phone owns hike state. This bridge only validates and forwards a
@@ -14,6 +38,7 @@ final class SagaTrailCompanion: RCTEventEmitter {
   private var hasJavaScriptListeners = false
   private var pendingWatchActions: [(name: String, body: [String: Any])] = []
   private let pendingWatchActionsKey = "sagatrail.pending.watch.actions"
+  private var lastRemoteLiveStateDiagnosticKey: String?
 
   override init() {
     super.init()
@@ -109,16 +134,44 @@ final class SagaTrailCompanion: RCTEventEmitter {
   @objc func publishLiveState(_ state: NSDictionary) {
     NSLog("[SagaTrail Watch] publishLiveState called (keys: %@)",
           state.allKeys.compactMap { $0 as? String }.sorted().joined(separator: ","))
+    let canonicalState = state as? [String: Any] ?? [:]
+    let status = canonicalState["sessionStatus"] as? String ?? "missing"
+    let isHiking = canonicalState["isHiking"] as? Bool ?? false
     do {
-      try connection.publishCanonicalLiveState(state as? [String: Any] ?? [:])
+      try connection.publishCanonicalLiveState(canonicalState)
+      logLiveStateDiagnosticIfChanged(
+        outcome: "accepted",
+        status: status,
+        isHiking: isHiking
+      )
       emitStatus()
     } catch {
       NSLog("[SagaTrail Watch] publishLiveState rejected: %@", error.localizedDescription)
+      logLiveStateDiagnosticIfChanged(
+        outcome: "rejected:\(String(describing: error))",
+        status: status,
+        isHiking: isHiking
+      )
       sendEvent(withName: "SagaTrailWatchEvent", body: [
         "v": 1, "type": "protocolError", "payload": ["message": error.localizedDescription]
       ])
     }
-    garminConnection.sendLiveState(state as? [String: Any] ?? [:])
+    garminConnection.sendLiveState(canonicalState)
+  }
+
+  private func logLiveStateDiagnosticIfChanged(
+    outcome: String,
+    status: String,
+    isHiking: Bool
+  ) {
+    let key = "\(outcome):\(status):\(isHiking)"
+    guard key != lastRemoteLiveStateDiagnosticKey else { return }
+    lastRemoteLiveStateDiagnosticKey = key
+    SagaTrailPhoneRemoteDiagnostics.log("live state processed by phone native", data: [
+      "outcome": outcome,
+      "sessionStatus": status,
+      "isHiking": isHiking,
+    ])
   }
 
   /// Sends a display-safe alert. Do not place coordinates in title/body.
@@ -195,6 +248,13 @@ final class SagaTrailCompanion: RCTEventEmitter {
       if let command = payload["command"] as? String {
         NSLog("[SagaTrail Watch] Forwarding hike command to JS (command: %@, hasDuration: %@)",
               command, String(payload["durationMinutes"] != nil))
+        if command == "safetyStart" || command == "safetyConfirm" {
+          SagaTrailPhoneRemoteDiagnostics.log("safety command forwarding to JS", data: [
+            "command": command,
+            "hasDuration": payload["durationMinutes"] != nil,
+            "hasJavaScriptListeners": hasJavaScriptListeners,
+          ])
+        }
         var event: [String: Any] = ["command": command]
         if let durationMinutes = payload["durationMinutes"] as? NSNumber,
            [30, 60, 120].contains(durationMinutes.intValue) {
@@ -756,6 +816,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
     NSLog("[SagaTrail Watch] Phone received direct message from Watch (type: %@)",
           message["type"] as? String ?? "unknown")
+    logSafetyReceipt(message, transport: "direct")
     receive(message)
   }
   func session(
@@ -765,12 +826,14 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   ) {
     NSLog("[SagaTrail Watch] Phone received direct message with reply handler (type: %@)",
           message["type"] as? String ?? "unknown")
+    logSafetyReceipt(message, transport: "direct_with_reply")
     let accepted = receive(message)
     replyHandler(["v": protocolVersion, "accepted": accepted])
   }
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
     NSLog("[SagaTrail Watch] Phone received transferred user info (type: %@)",
           userInfo["type"] as? String ?? "unknown")
+    logSafetyReceipt(userInfo, transport: "durable")
     receive(userInfo)
   }
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
@@ -783,12 +846,14 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   private func receive(_ message: [String: Any]) -> Bool {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion else {
       NSLog("[SagaTrail Watch] Rejected incoming message: protocol version mismatch")
+      logSafetyOutcome(message, message: "safety command rejected", outcome: "protocol_version_mismatch")
       return false
     }
     guard let type = message["type"] as? String,
           ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else {
       NSLog("[SagaTrail Watch] Rejected incoming message: unsupported type (%@)",
             message["type"] as? String ?? "missing")
+      logSafetyOutcome(message, message: "safety command rejected", outcome: "unsupported_type")
       return false
     }
     NSLog("[SagaTrail Watch] Processing incoming phone action (type: %@)", type)
@@ -801,8 +866,10 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     } else {
       guard claimAction(message) else {
         NSLog("[SagaTrail Watch] Ignored duplicate incoming action (type: %@)", type)
+        logSafetyOutcome(message, message: "safety duplicate ignored", outcome: "already_claimed")
         return true
       }
+      logSafetyOutcome(message, message: "safety command accepted by phone", outcome: "accepted")
       deliverAction(message)
     }
     return true
@@ -834,6 +901,7 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     if let handler = actionHandler {
       actionLock.unlock()
       NSLog("[SagaTrail Watch] Delivering action to native handler (type: %@)", type)
+      logSafetyOutcome(message, message: "safety command delivered to native handler", outcome: "delivered")
       handler(message)
       return
     }
@@ -845,6 +913,39 @@ final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     actionLock.unlock()
     NSLog("[SagaTrail Watch] Queued action until native handler is ready (type: %@, queueCount: %ld)",
           type, pendingActions.count)
+    logSafetyOutcome(message, message: "safety command queued for native handler", outcome: "queued")
+  }
+
+  private func safetyCommand(in message: [String: Any]) -> String? {
+    guard message["type"] as? String == "hikeCommand",
+          let payload = message["payload"] as? [String: Any],
+          let command = payload["command"] as? String,
+          command == "safetyStart" || command == "safetyConfirm" else {
+      return nil
+    }
+    return command
+  }
+
+  private func logSafetyReceipt(_ message: [String: Any], transport: String) {
+    guard let command = safetyCommand(in: message) else { return }
+    let payload = message["payload"] as? [String: Any] ?? [:]
+    SagaTrailPhoneRemoteDiagnostics.log("safety command received on phone", data: [
+      "command": command,
+      "transport": transport,
+      "hasDuration": payload["durationMinutes"] != nil,
+    ])
+  }
+
+  private func logSafetyOutcome(
+    _ watchMessage: [String: Any],
+    message: String,
+    outcome: String
+  ) {
+    guard let command = safetyCommand(in: watchMessage) else { return }
+    SagaTrailPhoneRemoteDiagnostics.log(message, data: [
+      "command": command,
+      "outcome": outcome,
+    ])
   }
 
   @discardableResult

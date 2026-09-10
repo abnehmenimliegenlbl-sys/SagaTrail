@@ -2717,8 +2717,12 @@ export default function LiveHike() {
     onHikeCommand: ({ command, durationMinutes }) => {
       if (command === "pause") {
         setHikePause(true);
-      } else if (command === "resume" || command === "start") {
+      } else if (command === "resume") {
         setHikePause(false);
+      } else if (command === "start") {
+        watchLiveStateLog("watch start ignored: phone GPS decision required", {
+          startGateConfirmed: startGateConfirmedRef.current,
+        });
       } else if (command === "safetyStart" && durationMinutes) {
         safetyCheckinRef.current?.startFromWatch(durationMinutes);
       } else if (command === "safetyConfirm") {

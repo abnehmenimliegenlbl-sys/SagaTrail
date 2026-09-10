@@ -5,6 +5,30 @@ import WatchKit
 import ClockKit
 import UserNotifications
 
+private enum SagaTrailWatchRemoteDiagnostics {
+  static func log(_ message: String, data: [String: Any] = [:]) {
+    guard
+      let endpointString = Bundle.main.object(forInfoDictionaryKey: "SagaTrailRemoteDebugURL") as? String,
+      let endpoint = URL(string: endpointString)
+    else {
+      return
+    }
+    var request = URLRequest(url: endpoint)
+    request.httpMethod = "POST"
+    request.timeoutInterval = 8
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    var eventData = data
+    eventData["atEpochMs"] = Int(Date().timeIntervalSince1970 * 1_000)
+    request.httpBody = try? JSONSerialization.data(withJSONObject: [
+      "tag": "watch_native",
+      "message": message,
+      "data": [eventData],
+    ])
+    guard request.httpBody != nil else { return }
+    URLSession.shared.dataTask(with: request).resume()
+  }
+}
+
 @MainActor
 final class WatchHikeModel: NSObject, ObservableObject {
   @Published private(set) var state: SagaTrailWatchProtocol.LiveState?
@@ -31,6 +55,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
   private var lastSafetyStatus: String?
   private var lastAppliedUpdatedAt: Date?
   private var isSceneActive = false
+  private var lastRemoteLiveStateDiagnosticKey: String?
 
   var isStale: Bool {
     guard let receivedAt else { return true }
@@ -67,15 +92,22 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   func requestSafetyCheckin() {
     NSLog("[SagaTrail Watch] Safety check-in duration picker opened")
+    SagaTrailWatchRemoteDiagnostics.log("safety picker opened")
     showSafetyCheckinOptions = true
   }
 
   func sendSafetyCheckin(durationMinutes: Int) {
     guard [30, 60, 120].contains(durationMinutes) else {
       NSLog("[SagaTrail Watch] Safety check-in ignored: invalid duration %ld", durationMinutes)
+      SagaTrailWatchRemoteDiagnostics.log("safety selection rejected", data: [
+        "reason": "invalid_duration",
+      ])
       return
     }
     NSLog("[SagaTrail Watch] Sending safety check-in command (%ld minutes)", durationMinutes)
+    SagaTrailWatchRemoteDiagnostics.log("safety duration selected", data: [
+      "durationMinutes": durationMinutes,
+    ])
     showSafetyCheckinOptions = false
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyStart",
@@ -87,6 +119,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
 
   func confirmSafetyCheckin() {
     NSLog("[SagaTrail Watch] Sending safety check-in confirmation")
+    SagaTrailWatchRemoteDiagnostics.log("safety confirmation selected")
     let message = SagaTrailWatchProtocol.envelope(type: "hikeCommand", payload: [
       "command": "safetyConfirm",
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
@@ -121,8 +154,17 @@ final class WatchHikeModel: NSObject, ObservableObject {
     let session = WCSession.default
     let type = message["type"] as? String ?? "unknown"
     let payload = message["payload"] as? [String: Any] ?? [:]
+    let command = payload["command"] as? String
+    let isSafetyCommand = command == "safetyStart" || command == "safetyConfirm"
     NSLog("[SagaTrail Watch] Sending command to phone (type: %@, payloadKeys: %@, state: %ld, reachable: %@)",
           type, payload.keys.sorted().joined(separator: ","), session.activationState.rawValue, String(session.isReachable))
+    if isSafetyCommand {
+      SagaTrailWatchRemoteDiagnostics.log("safety transport starting", data: [
+        "command": command ?? "missing",
+        "activationState": session.activationState.rawValue,
+        "reachable": session.isReachable,
+      ])
+    }
     if session.activationState != .activated {
       NSLog("[SagaTrail Watch] Activating WCSession before command send")
       session.activate()
@@ -132,23 +174,52 @@ final class WatchHikeModel: NSObject, ObservableObject {
     // The phone deduplicates both deliveries by action + requestedAt.
     session.transferUserInfo(message)
     NSLog("[SagaTrail Watch] Command transferUserInfo queued (type: %@)", type)
+    if isSafetyCommand {
+      SagaTrailWatchRemoteDiagnostics.log("safety durable transfer queued", data: [
+        "command": command ?? "missing",
+      ])
+    }
     guard session.activationState == .activated, session.isReachable else {
       NSLog("[SagaTrail Watch] Direct command skipped (state: %ld, reachable: %@)",
             session.activationState.rawValue, String(session.isReachable))
+      if isSafetyCommand {
+        SagaTrailWatchRemoteDiagnostics.log("safety direct transfer skipped", data: [
+          "command": command ?? "missing",
+          "activationState": session.activationState.rawValue,
+          "reachable": session.isReachable,
+        ])
+      }
       return
     }
     session.sendMessage(message, replyHandler: { reply in
       let accepted = reply["accepted"] as? Bool ?? false
       NSLog("[SagaTrail Watch] Phone command reply received (type: %@, accepted: %@)",
             type, String(accepted))
+      if isSafetyCommand {
+        SagaTrailWatchRemoteDiagnostics.log("safety phone reply received", data: [
+          "command": command ?? "missing",
+          "accepted": accepted,
+        ])
+      }
       if !accepted {
         NSLog("[SagaTrail Watch] Phone rejected command")
       }
     }) { error in
       NSLog("[SagaTrail Watch] Direct command failed (type: %@); durable transfer remains queued: %@",
             type, error.localizedDescription)
+      if isSafetyCommand {
+        SagaTrailWatchRemoteDiagnostics.log("safety direct transfer failed", data: [
+          "command": command ?? "missing",
+          "errorCode": (error as NSError).code,
+        ])
+      }
     }
     NSLog("[SagaTrail Watch] Direct command submitted (type: %@)", type)
+    if isSafetyCommand {
+      SagaTrailWatchRemoteDiagnostics.log("safety direct transfer submitted", data: [
+        "command": command ?? "missing",
+      ])
+    }
   }
 
   func startHeartRate() {
@@ -285,6 +356,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
               status,
               hiking.map { String($0) } ?? "<missing>",
               Array(payload.keys).sorted().joined(separator: ","))
+        logLiveStateDiagnosticIfChanged(
+          outcome: "rejected",
+          status: status,
+          isHiking: hiking
+        )
         return
       }
       // The same snapshot may arrive through application context, direct
@@ -301,6 +377,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
             decoded.sessionStatus,
             String(decoded.isHiking),
             String(decoded.updatedAt.timeIntervalSince1970))
+      logLiveStateDiagnosticIfChanged(
+        outcome: "applied",
+        status: decoded.sessionStatus,
+        isHiking: decoded.isHiking
+      )
       playTurnHapticIfNeeded(decoded)
       if decoded.offRoute != nil && state?.offRoute == nil {
         WKInterfaceDevice.current().play(.failure)
@@ -348,6 +429,22 @@ final class WatchHikeModel: NSObject, ObservableObject {
       NSLog("[SagaTrail Watch] Envelope type ignored by Watch model: %@", type)
       break
     }
+  }
+
+  private func logLiveStateDiagnosticIfChanged(
+    outcome: String,
+    status: String,
+    isHiking: Bool?
+  ) {
+    let hikingLabel = isHiking.map { String($0) } ?? "missing"
+    let key = "\(outcome):\(status):\(hikingLabel)"
+    guard key != lastRemoteLiveStateDiagnosticKey else { return }
+    lastRemoteLiveStateDiagnosticKey = key
+    SagaTrailWatchRemoteDiagnostics.log("live state processed by Watch", data: [
+      "outcome": outcome,
+      "sessionStatus": status,
+      "isHiking": hikingLabel,
+    ])
   }
 
   private func playTurnHapticIfNeeded(_ state: SagaTrailWatchProtocol.LiveState) {

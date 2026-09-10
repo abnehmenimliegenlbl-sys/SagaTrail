@@ -10,3 +10,7 @@ The Watch's native bridge computes `isHiking` from the canonical `sessionStatus 
 **How to apply:** Keep story preparation dependencies limited to story inputs. When diagnosing the Watch, inspect the actual `sessionStatus` transition (`preparing` → `active`) before changing native Watch rendering or payload fields.
 
 The Watch UI also uses the same “waiting for hike start” text when no decoded `LiveState` exists. `WCSession.receivedApplicationContext` must therefore be applied again from `activationDidCompleteWith`; reading it immediately after `session.activate()` can see an empty context and leave the Watch state nil.
+
+Optional rich fields such as navigation, map, weather, POI, or audio must be validated independently. One malformed optional block may be omitted and diagnosed, but must never suppress an otherwise valid active core state.
+
+The Watch must not offer a Start button while the phone is awaiting the GPS-based start decision. Starting a new hike remains phone-authoritative; the Watch may only pause or resume an already confirmed hike.
