@@ -526,7 +526,6 @@ struct WatchHikeView: View {
       hikeSummary(state)
     } else {
       VStack(spacing: 6) {
-        pageHeader(copy.t("current"), systemImage: "location.north.line.fill")
         if hasFreshGPS(state) {
           card {
             VStack(spacing: 6) {
