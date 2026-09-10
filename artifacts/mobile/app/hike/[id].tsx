@@ -980,15 +980,39 @@ export default function LiveHike() {
   const [startChoicePending, setStartChoicePending] = useState(false);
   const startChoicePendingRef = useRef(false);
   const startChoiceHandledRef = useRef(false);
-  // Die Sage wird nach dem Story-Load freigegeben. Der erste GPS-Fix und ein
-  // exakter offizieller Startpunkt sind dafür nicht erforderlich.
+  // Neue Wanderungen bleiben bis zur GPS-basierten Startentscheidung komplett
+  // stumm. Ein Resume ist bereits bestätigt und darf direkt fortsetzen.
+  const [startGateConfirmed, setStartGateConfirmed] = useState(isResume);
+  const startGateConfirmedRef = useRef(isResume);
+  const startGateShownRef = useRef(isResume);
+  const startTimeRef = useRef<number>(isResume ? Date.now() : 0);
   const [startAudioReleased, setStartAudioReleased] = useState(isResume);
   const startAudioReleasedRef = useRef(isResume);
+  const autoFollowRecalcStartedRef = useRef(false);
   const releaseStartAudio = useCallback(() => {
     startAudioReleasedRef.current = true;
     setStartAudioReleased(true);
   }, []);
-  const autoFollowRecalcStartedRef = useRef(false);
+  const confirmStartAtTrailhead = useCallback(() => {
+    startTimeRef.current = Date.now();
+    startGateConfirmedRef.current = true;
+    startGateShownRef.current = true;
+    startChoiceHandledRef.current = true;
+    startChoicePendingRef.current = false;
+    setStartGateConfirmed(true);
+    setStartChoicePending(false);
+    setStartRecalcChoice(null);
+    setStartReached(true);
+    setOffRoutePos(null);
+    releaseStartAudio();
+  }, [releaseStartAudio]);
+  const chooseStartRoute = useCallback((mode: "start" | "fastest", position: LatLng) => {
+    startChoicePendingRef.current = true;
+    autoFollowRecalcStartedRef.current = false;
+    setStartChoicePending(true);
+    setStartRecalcChoice(mode);
+    setOffRoutePos(position);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
@@ -1041,18 +1065,12 @@ export default function LiveHike() {
     const needsStartChoice = !startReached && distanceToStartKm > START_NEARBY_KM;
     if (needsStartChoice && !startRecalcChoiceShownRef.current && startRecalcChoice == null) {
       startRecalcChoiceShownRef.current = true;
-      const chooseStartMode = (mode: "start" | "fastest") => {
-        startChoicePendingRef.current = true;
-        autoFollowRecalcStartedRef.current = false;
-        setStartChoicePending(true);
-        setStartRecalcChoice(mode);
-      };
       alert(
         t.offRouteStartChoiceTitle,
         t.offRouteStartChoiceMessage,
         [
-          { text: t.offRouteToStart, onPress: () => chooseStartMode("start") },
-          { text: t.offRouteFastestToRoute, onPress: () => chooseStartMode("fastest") },
+          { text: t.offRouteToStart, onPress: () => chooseStartRoute("start", offRoutePos) },
+          { text: t.offRouteFastestToRoute, onPress: () => chooseStartRoute("fastest", offRoutePos) },
         ],
       );
       return;
@@ -1092,7 +1110,8 @@ export default function LiveHike() {
       }
     })();
     return () => controller.abort();
-  }, [offRoutePos, startRecalcChoice]);
+  }, [chooseStartRoute, offRoutePos, startRecalcChoice, startReached, t]);
+
   const [speaking, setSpeaking] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<NowPlayingNarration | null>(null);
   const nowPlayingRef = useRef<NowPlayingNarration | null>(null);
@@ -1334,7 +1353,6 @@ export default function LiveHike() {
   }, []);
 
   const decisionsRef = useRef<StoryChapter[]>([]);
-  const startTimeRef = useRef<number>(Date.now());
   const hikePausedRef = useRef(false);
   const pauseStartedAtRef = useRef<number | null>(null);
   const pausedDurationMsRef = useRef(0);
@@ -1375,6 +1393,54 @@ export default function LiveHike() {
     locState === "granted" &&
     livePos !== null &&
     locationNow - lastLocationAtRef.current <= GPS_FRESHNESS_WINDOW_MS;
+
+  // Neue Wanderung: erst nach dem ersten frischen GPS-Fix entscheiden, ob der
+  // Nutzer bereits am offiziellen Start steht oder einen Zubringer braucht.
+  // Ein Resume umgeht diesen Dialog bewusst.
+  useEffect(() => {
+    if (
+      isResume ||
+      startGateConfirmedRef.current ||
+      startGateShownRef.current ||
+      !hasFreshGps ||
+      !livePos ||
+      !navigationGeometry ||
+      navigationGeometry.length < 2
+    ) {
+      return;
+    }
+    startGateShownRef.current = true;
+    startRecalcChoiceShownRef.current = true;
+    const distanceToStartKm = haversineKm(
+      livePos,
+      { lat: navigationGeometry[0][0], lng: navigationGeometry[0][1] },
+    );
+    if (distanceToStartKm <= START_NEARBY_KM) {
+      alert(
+        t.startHikeNow,
+        t.startHikeMessage,
+        [{ text: t.startHikeNow, onPress: confirmStartAtTrailhead }],
+      );
+      return;
+    }
+    alert(
+      t.offRouteStartChoiceTitle,
+      t.offRouteStartChoiceMessage,
+      [
+        { text: t.offRouteToStart, onPress: () => chooseStartRoute("start", livePos) },
+        { text: t.offRouteFastestToRoute, onPress: () => chooseStartRoute("fastest", livePos) },
+      ],
+    );
+  }, [
+    chooseStartRoute,
+    confirmStartAtTrailhead,
+    hasFreshGps,
+    isResume,
+    livePos,
+    navigationGeometry,
+    t,
+  ]);
+
   const requestLocationAccess = useCallback(async () => {
     if (Platform.OS === "web") return;
     try {
@@ -1746,11 +1812,10 @@ export default function LiveHike() {
   // signalisiert iOS, dass die App Audio "spielt", und haelt den Thread wach.
   // Wird gestoppt, sobald die Wanderung endet oder die Komponente ausgehaengt.
   useEffect(() => {
-    // Keepalive startet sofort beim Mount — kein preparing-Gate mehr.
-    // Grund: zwischen Screen-Oeffnen und Story-Loading (mehrere Sekunden)
-    // laeuft kein Audio; iOS kann den JS-Thread in dieser Zeit suspendieren
-    // und sperrt den Bildschirm den Benutzer, bevor der Keepalive startet.
-    if (Platform.OS === "web") return;
+    // Bei einer neuen Wanderung bleibt auch der stille Keepalive bis zur
+    // GPS-basierten Startbestätigung aus. Sonst wäre bereits vor der Auswahl
+    // eine aktive Audiosession vorhanden.
+    if (Platform.OS === "web" || !startGateConfirmedRef.current) return;
     let mounted = true;
     let sound: AudioSound | null = null;
     (async () => {
@@ -1784,7 +1849,7 @@ export default function LiveHike() {
       sound?.unloadAsync().catch(() => {});
       keepaliveSoundRef.current = null;
     };
-  }, []);
+  }, [startGateConfirmed]);
 
   // Story vorbereiten: Offline-First (lokal -> Server -> Seed) ueber resolveStory.
   // resolveStory wendet effectiveStoryLanguage intern selbst an — hier wird
@@ -1813,7 +1878,6 @@ export default function LiveHike() {
       storyEligibleChapterRef.current = 0;
       narratedThroughRef.current = resumeAt != null && resumeAt > 0 ? resumeAt - 1 : -1;
       setStoryProgressBaseline(null);
-      releaseStartAudio();
       setFinished(false);
       setPreparing(false);
     })();
@@ -1826,18 +1890,18 @@ export default function LiveHike() {
   // nicht-Premium-Nutzer hier tatsaechlich eine Wanderung startet (Story ist
   // bereit). markFreeHikeUsed ist selbst ein No-op, falls bereits verbraucht.
   useEffect(() => {
-    if (preparing || premium || freeHikeUsed) return;
+    if (!startGateConfirmedRef.current || preparing || premium || freeHikeUsed) return;
     markFreeHikeUsed().catch(() => {
       // Best effort — schlaegt der Serveraufruf fehl, bleibt die Wanderung
       // trotzdem nutzbar; ein erneuter Versuch erfolgt bei der naechsten
       // Wanderung.
     });
-  }, [preparing, premium, freeHikeUsed, markFreeHikeUsed]);
+  }, [preparing, premium, freeHikeUsed, markFreeHikeUsed, startGateConfirmed]);
 
   // Meldet den Wander-Status an eine aktive Gruppensitzung, damit andere
   // Mitglieder live sehen, wenn jemand die gemeinsame Wanderung startet.
   useEffect(() => {
-    if (!groupSession || !saga || preparing) return;
+    if (!startGateConfirmedRef.current || !groupSession || !saga || preparing) return;
     setGroupActivity({
       type: "wandert",
       sagaTitle: saga.title,
@@ -1858,7 +1922,7 @@ export default function LiveHike() {
     return () => {
       setGroupActivity({ type: "idle" });
     };
-  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, setGroupActivity, sendGroupHikeEvent]);
+  }, [groupSession?.code, groupSession?.isLeader, saga, route, preparing, setGroupActivity, sendGroupHikeEvent, startGateConfirmed]);
 
   // Leitung: Kapitelwechsel an die Gruppe senden, damit Mitglieder synchron
   // dieselbe Stelle der Sage hoeren. Aendert sich die Mitgliederliste
@@ -2369,6 +2433,12 @@ export default function LiveHike() {
     setLiveAltitude(
       altitude != null && Number.isFinite(altitude) ? altitude : null,
     );
+    // GPS bleibt für die Startdistanz sichtbar, zählt aber vor der
+    // Nutzerbestätigung weder als Strecke noch als Track-/Off-Route-Fortschritt.
+    if (!startGateConfirmedRef.current) {
+      lastFixRef.current = cur;
+      return;
+    }
     const prev = lastFixRef.current;
     if (hikePausedRef.current) {
       // Keep the reference fresh while paused so resuming does not count the
@@ -2393,7 +2463,7 @@ export default function LiveHike() {
     }
     // Off-Route-Erkennung: Distanz zum naechsten Punkt auf der geplanten Route.
     const geom = routeGeomRef.current;
-    if (geom && geom.length >= 2) {
+    if (startGateConfirmedRef.current && geom && geom.length >= 2) {
       const proj = fortschrittAufRoute(cur, geom);
       const distKm = proj?.distKm ?? 0;
       if (distKm > OFF_ROUTE_THRESHOLD_KM) {
@@ -2520,7 +2590,7 @@ export default function LiveHike() {
   // Automatisch vorbeigelaufene POIs fuer das Wandertagebuch aufzeichnen.
   // Laeuft wenn nearbyPoi erkannt wird und wenn das Wiki nachlaedt.
   useEffect(() => {
-    if (!nearbyPoi) return;
+    if (!startGateConfirmedRef.current || !nearbyPoi) return;
     const existing = visitedPoisRef.current.get(nearbyPoi.id) ?? { id: nearbyPoi.id, name: nearbyPoi.name };
     visitedPoisRef.current.set(nearbyPoi.id, {
       ...existing,
@@ -2622,6 +2692,7 @@ export default function LiveHike() {
   // Abzweigungen wurde sie nie aufgerufen, turnNotifsReady blieb false,
   // und weder Kapitel- noch Interaktions-Mitteilungen kamen je an der Watch an.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     let cancelled = false;
     bereiteAbbiegeMitteilungenVor().then((ok) => {
       if (!cancelled) {
@@ -2632,7 +2703,7 @@ export default function LiveHike() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [startGateConfirmed]);
   useEffect(() => {
     return () => {
       void clearWatchStatus();
@@ -2915,6 +2986,8 @@ export default function LiveHike() {
       : "stale" as const;
     const activeAlert = sosOpen
       ? { kind: "sos" as const, text: "SOS requested on phone", critical: true }
+      : !startGateConfirmed
+        ? null
       : offRoutePos
         ? { kind: "safety" as const, text: "Off route", critical: true }
         : watchDiscoveryAlert
@@ -2977,9 +3050,9 @@ export default function LiveHike() {
           }
         : null,
       poiStory: watchPoiStory,
-      storyAudio: watchStoryAudio,
+      storyAudio: startGateConfirmed ? watchStoryAudio : null,
       language: storyLanguage,
-      elapsedSec: preparing ? null : elapsedSec,
+      elapsedSec: !startGateConfirmed || preparing ? null : elapsedSec,
       walkedDistanceM: distance > 0 ? Math.round(distance * 1000) : null,
       // The route's planned ascent is not passed off as measured ascent.
       ascentM: null,
@@ -2988,7 +3061,7 @@ export default function LiveHike() {
         ? { ...heartRate, freshness: heartRateFreshness }
         : null,
       activeAlert,
-      audioPlaying: speaking,
+      audioPlaying: startGateConfirmed && speaking,
       remainingDistanceM: Number.isFinite(distance)
         ? Math.max(0, totalKm - distance) * 1000
         : null,
@@ -3009,14 +3082,14 @@ export default function LiveHike() {
           ) * 1000
         : null,
       sosAcknowledgement,
-      isHiking: !sosOpen && !finished && !hikePaused && !preparing,
+      isHiking: startGateConfirmed && !sosOpen && !finished && !hikePaused && !preparing,
       sessionStatus: sosOpen
         ? "sos_requested"
         : finished
           ? "finished"
           : hikePaused
             ? "paused"
-            : preparing
+            : preparing || !startGateConfirmed
               ? "preparing"
               : "active",
     };
@@ -3072,9 +3145,10 @@ export default function LiveHike() {
       hasFreshGps,
       position: livePos ? { lat: livePos.lat, lng: livePos.lng } : null,
     }, { force });
-  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather]);
+  }, [ascentM, distance, elapsedSec, finished, hasFreshGps, heartRate, hikePaused, livePos, nextWatchNavigation, nextWatchNavigations, offRoutePos, preparing, safetyCheckinState, sosAcknowledgement, sosOpen, speaking, steps, storyLanguage, totalKm, totalMin, watchDiscoveryAlert, watchMapRouteWithGrades, watchOffRoute, watchPoiStory, watchRouteProgress, watchStoryAudio, watchSunsetAtEpochMs, watchTerrainSection, watchUpcomingAttraction, watchUpcomingGradeChange, watchUpcomingSurfaceChange, watchWeather, startGateConfirmed]);
 
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (!turnNotifsReady || turnCues.length === 0) return;
     if (!hasFreshGps) return;
     const geo = navigationGeometry;
@@ -3121,12 +3195,13 @@ export default function LiveHike() {
          displayTitle: t.turnNotifTitle,
        });
     }
-  }, [livePos, distance, totalKm, navigationGeometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, navigationGeometry, turnCues, turnNotifsReady, t, storyLanguage, locState, hasFreshGps, startGateConfirmed]);
 
   // Erkennt, ob die aktuelle Position (echtes GPS oder entlang des Weges
   // interpoliert) nahe an einem geladenen POI liegt, und zeigt ihn genau
   // einmal je Wanderung als Karte an ("live entlang der Route entdeckt").
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (displayedPois.length === 0) return;
     if (!hasFreshGps) return;
     // Solange ein POI aktiv angezeigt/erzaehlt wird, keinen neuen suchen:
@@ -3187,10 +3262,11 @@ export default function LiveHike() {
       announcedPoiLocsRef.current.push({ lat: hit.lat, lng: hit.lng });
       setNearbyPoi(hit);
     }
-  }, [livePos, distance, totalKm, navigationGeometry, displayedPois, nearbyPoi, nearbyPoiWiki, partners, locState, hasFreshGps]);
+  }, [livePos, distance, totalKm, navigationGeometry, displayedPois, nearbyPoi, nearbyPoiWiki, partners, locState, hasFreshGps, startGateConfirmed]);
 
   // Zwischenziel-Erkennung: 50-m-Radius um den POI/Partner-Standort.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (routeWaypoints.length === 0 || !livePos) return;
     for (const wp of routeWaypoints) {
       if (waypointAnnouncedRef.current.has(wp.id)) continue;
@@ -3223,13 +3299,14 @@ export default function LiveHike() {
         );
       }
     }
-  }, [livePos, partners, raiseWatchDiscoveryAlert, routeWaypoints, t]);
+  }, [livePos, partners, raiseWatchDiscoveryAlert, routeWaypoints, t, startGateConfirmed]);
 
   // Premium-Partner-Anpreisung: sobald der Wanderer auf 500 m an einen
   // Premium-Partner herankommt, wird einmalig ein KI-generierter Text
   // abgespielt, der den Betrieb in den Kontext der laufenden Sage einwebt.
   // Nur aktive Partner, nur einmal pro Hike, nur wenn nicht gerade am Vorbereiten.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (preparing || !saga) return;
     if (!hasFreshGps) return;
     const premiumPartners = partners.filter((p) => p.paket === "premium");
@@ -3304,12 +3381,13 @@ export default function LiveHike() {
           announcingPremiumPartnerIdsRef.current.delete(partnerId);
         });
     }
-  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild]);
+  }, [livePos, distance, totalKm, route?.geometry, partners, saga, storyLanguage, preparing, awaitingDecision, locState, hasFreshGps, karteVollbild, startGateConfirmed]);
 
   // GPS-Foto-Challenge: sobald der Wanderer den Herzort der Sage betritt
   // (150-m-Radius um die Sagen-Koordinate), erscheint einmalig eine
   // Aufforderung, diesen besonderen Ort zu fotografieren.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (!hasFreshGps || !livePos || !saga?.coordinates || photoChallengeShownRef.current) return;
     const dist = haversineKm(livePos, saga.coordinates);
     if (dist <= 0.15) {
@@ -3321,12 +3399,13 @@ export default function LiveHike() {
         displayTitle: t.poiNearby,
       });
     }
-  }, [livePos, saga?.coordinates, storyLanguage, hasFreshGps]);
+  }, [livePos, saga?.coordinates, storyLanguage, hasFreshGps, startGateConfirmed]);
 
   // Sagenmittelpunkt-Ankunft: einmalige kurze Ansage wenn GPS < 10 m entfernt (GPS-bestätigt,
   // daher darf die Phrase "du stehst hier" sagen). Nur für Sagen mit exakten Koordinaten —
   // der saga=heart-POI wurde dort bereits auf koordinatenSicherheit='exakt' beschränkt.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (!hasFreshGps || !livePos || !saga?.coordinates || saga.koordinatenSicherheit !== "exakt") return;
     if (sagaArrivalSpokenRef.current) return;
     const dist = haversineKm(livePos, saga.coordinates);
@@ -3339,11 +3418,12 @@ export default function LiveHike() {
         displayTitle: t.poiNearby,
       });
     }
-  }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage, hasFreshGps]);
+  }, [livePos, saga?.coordinates, saga?.koordinatenSicherheit, storyLanguage, hasFreshGps, startGateConfirmed]);
 
   // Wegoberflaechenansage: sobald der Wanderer einen neuen Oberflaechenabschnitt betritt,
   // wird ein saga-atmosphaerischer Satz gesprochen (und optional als Push-Notif gesendet).
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     // Erst nach dem ersten Meter ansagen — GPS gibt sonst sofort eine Route-Position
     // zurueck (z. B. Fraction 0.15) und loest alle Wechsel davor auf einmal aus.
     if (!hasFreshGps || surfacePoints.length === 0 || preparing || distance === 0) return;
@@ -3382,7 +3462,7 @@ export default function LiveHike() {
         });
       }
     }
-  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, navigationGeometry, hasFreshGps]);
+  }, [livePos, distance, totalKm, surfacePoints, storyLanguage, profile?.navAnnouncementsEnabled, preparing, t, navigationGeometry, hasFreshGps, startGateConfirmed]);
 
   // Verstrichene Zeit: alle 15 Sekunden aktualisieren (fuer ETA-Berechnung).
   useEffect(() => {
@@ -3399,6 +3479,7 @@ export default function LiveHike() {
   // Meilenstein-Ansage bei 25/50/75 % der Wanderung — per KI im Sagen-Stil,
   // Fallback auf atmosphaerische Standardphrase aus STORY_PACKS.
   useEffect(() => {
+    if (!startGateConfirmedRef.current) return;
     if (!hasFreshGps || preparing || totalKm <= 0) return;
     const fraction = Math.min(1, distance / totalKm);
     const milestones = [25, 50, 75] as const;
@@ -3470,7 +3551,7 @@ export default function LiveHike() {
         }
       }
     }
-  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t, hasFreshGps]);
+  }, [distance, totalKm, storyLanguage, saga, profile?.name, profile?.navAnnouncementsEnabled, preparing, t, hasFreshGps, startGateConfirmed]);
 
   const takePhoto = async () => {
     setShowPhotoChallenge(false);
@@ -3896,9 +3977,9 @@ export default function LiveHike() {
   // braucht — die App bleibt nach dem Start durchgehend freihaendig.
   const speak = useCallback(
     async (text: string, onFinished?: () => void, opts?: SpeakOptions) => {
-      // Vor dem Story-Load darf keine Erzaehlung beginnen. Danach ist die Sage
-      // unabhaengig vom offiziellen Startpunkt und vom Off-Route-Zustand.
-      if (!startAudioReleasedRef.current) return;
+       // Vor der Startbestätigung darf kein aktiver Trigger sprechen. Das
+       // zusätzliche Audio-Flag schützt weiterhin den Story-Ladezustand.
+       if (!startGateConfirmedRef.current || !startAudioReleasedRef.current) return;
       const enqueueNarration = () => {
         const entry: NarrationQueueItem = {
           text,
@@ -4255,7 +4336,7 @@ export default function LiveHike() {
   // bleibt dauerhaft im Narrations-Cache. Das stellt sicher, dass bei der
   // Wahl (Kapitel 3/5) sofort OpenAI-Audio ertönt, ohne Netzwerk-Latenz.
   useEffect(() => {
-    if (preparing) return;
+    if (!startGateConfirmedRef.current || preparing) return;
     const lang = profile?.language;
     // Vorab-Laden in der Sprache, die beim Entscheidungspunkt TATSAECHLICH
     // abgespielt wird. Fuer gsw wird der cueLanguage-Pack ("de") verwendet
@@ -4277,28 +4358,7 @@ export default function LiveHike() {
       }
     })();
     return () => { cancelled = true; };
-  }, [preparing, profile?.language]);
-
-  // Die Sage beginnt, sobald die Story geladen ist. Ein fehlender exakter
-   // Startpunkt darf die Erzählung nicht blockieren; die Startpunkt-Auswahl
-   // bleibt davon unabhängig und wartet auf einen echten GPS-Zustand.
-  useEffect(() => {
-    if (
-      isResume ||
-      preparing ||
-      startAudioReleasedRef.current ||
-      startChoicePendingRef.current ||
-      startChoiceHandledRef.current
-    ) {
-      return;
-    }
-    // Bei einer neuen Wanderung darf die Einleitung erst beginnen, wenn
-    // entweder der echte Startpunkt erreicht wurde oder eine vom Nutzer
-    // gewählte Zubringerroute akzeptiert worden ist.
-    if (!startReached) return;
-    startChoiceHandledRef.current = true;
-    releaseStartAudio();
-  }, [isResume, preparing, releaseStartAudio, startReached]);
+  }, [preparing, profile?.language, startGateConfirmed]);
 
   // Kapitel automatisch erzaehlen, sobald es erscheint. Ein Ref verhindert,
   // dass eine Kapitel-Mutation (Entscheidung) dasselbe Kapitel erneut vorliest
@@ -4306,6 +4366,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       preparing ||
+      !startGateConfirmedRef.current ||
       !startAudioReleasedRef.current ||
       chapters.length === 0
     ) return;
@@ -4402,13 +4463,13 @@ export default function LiveHike() {
       lastDecisionTriggeredRef.current = currentIndex;
       setAwaitingDecision(true);
     }
-  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
+  }, [advanceStoryChapter, currentIndex, preparing, startAudioReleased, startGateConfirmed, chapters, speak, turnNotifsReady, t, route?.name, saga?.title, greetingPrefix, storyLanguage]);
 
   // Unterbrochene Wanderung fuer die "Weiter wandern"-Karte auf dem Home-Tab
   // merken: bei jedem Kapitelwechsel wird der Fortschritt persistiert; beim
   // Abschluss (finishHike) wird der Eintrag wieder geloescht.
   useEffect(() => {
-    if (preparing || finished || chapters.length === 0 || !saga) return;
+    if (!startGateConfirmedRef.current || preparing || finished || chapters.length === 0 || !saga) return;
     saveActiveHike({
       routeId: route?.id ?? "",
       sagaId: saga.id,
@@ -4421,7 +4482,7 @@ export default function LiveHike() {
       route: route ?? undefined,
       activeGeometry: acceptedRouteGeometry ?? undefined,
     });
-  }, [currentIndex, preparing, finished, chapters.length, saga, route, acceptedRouteGeometry, saveActiveHike]);
+  }, [currentIndex, preparing, finished, chapters.length, saga, route, acceptedRouteGeometry, saveActiveHike, startGateConfirmed]);
 
   // Refs spiegeln den aktuellen Erzaehlzustand, damit der POI-Effekt unten
   // NICHT bei jeder Kapitel-/Sprechzustandsaenderung neu laeuft (und dabei
@@ -4611,13 +4672,13 @@ export default function LiveHike() {
       cancelled = true;
       if (!poiAudioStarted) releasePoiNarration();
     };
-  }, [beginPoiNarration, claimPoiStory, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t]);
+  }, [beginPoiNarration, claimPoiStory, nearbyPoi, nearbyPoiWiki, raiseWatchDiscoveryAlert, storyLanguage, speak, t, startGateConfirmed]);
 
   // Stufenweise Annaeherung an kulturelle/historische POIs mit spezifischem Namen:
   // 200 m → einmaliger OpenAI-Richtungshinweis
   // 50 m  → volle Geschichte in Erzaehlstimme (identisch zum normalen POI-Flow)
   useEffect(() => {
-    if (!hasFreshGps || !nearbyPoi || !livePos) return;
+    if (!startGateConfirmedRef.current || !hasFreshGps || !nearbyPoi || !livePos) return;
     if (!POI_APPROACH_KINDS.has(nearbyPoi.kind ?? "")) return;
     if (!isPoiNameSpecific(nearbyPoi.name, nearbyPoi.kind)) return;
     // Pruefe ob spezifischer Inhalt vorhanden ist — reine KI-Generierung
@@ -4708,7 +4769,7 @@ export default function LiveHike() {
         if (!poiAudioStarted) releasePoiNarration();
       };
     }
-  }, [beginPoiNarration, claimPoiStory, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps]);
+  }, [beginPoiNarration, claimPoiStory, livePos, nearbyPoi, nearbyPoiWiki, cueLanguage, speak, hasFreshGps, startGateConfirmed]);
 
   useEffect(() => {
     if (
@@ -4758,6 +4819,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       preparing ||
+      !startGateConfirmedRef.current ||
       !hasFreshGps ||
       routeProgress == null ||
       storyProgressBaseline != null
@@ -4765,7 +4827,7 @@ export default function LiveHike() {
       return;
     }
     setStoryProgressBaseline(routeProgress);
-  }, [hasFreshGps, preparing, routeProgress, storyProgressBaseline]);
+  }, [hasFreshGps, preparing, routeProgress, storyProgressBaseline, startGateConfirmed]);
 
   const storyProgress = useMemo(() => {
     const baseline = storyProgressBaseline ?? 0;
@@ -4809,6 +4871,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       preparing ||
+      !startGateConfirmedRef.current ||
       chapters.length === 0 ||
       storyCompleteRef.current ||
       awaitingDecisionRef.current ||
@@ -4826,6 +4889,7 @@ export default function LiveHike() {
     currentIndex,
     decisionFeedbackPending,
     preparing,
+    startGateConfirmed,
     storyEligibleChapter,
   ]);
 
@@ -4859,7 +4923,7 @@ export default function LiveHike() {
     [panoramaPois, hasFreshGps, livePos, compassHeading, liveAltitude],
   );
   useEffect(() => {
-    if (preparing || !hasFreshGps) return;
+    if (!startGateConfirmedRef.current || preparing || !hasFreshGps) return;
     const nearbyPeak = panoramaPeaks.find(
       (peak) =>
         peak.distanceKm <= 0.1 &&
@@ -4871,7 +4935,7 @@ export default function LiveHike() {
       text: `Gipfel in der Nähe: ${nearbyPeak.name}`,
       haptic: "success",
     });
-  }, [hasFreshGps, panoramaPeaks, preparing, raiseWatchDiscoveryAlert]);
+  }, [hasFreshGps, panoramaPeaks, preparing, raiseWatchDiscoveryAlert, startGateConfirmed]);
   const panoramaArCandidates = useMemo(
     () =>
       erkenneGipfel(
@@ -4994,6 +5058,7 @@ export default function LiveHike() {
   useEffect(() => {
     if (
       preparing ||
+      !startGateConfirmedRef.current ||
       finished ||
       terrainSections.length === 0 ||
       profile?.navAnnouncementsEnabled === false
@@ -5117,6 +5182,7 @@ export default function LiveHike() {
     t,
     locState,
     hasFreshGps,
+    startGateConfirmed,
   ]);
 
   // Luftlinien-Hinweis zum Beginn der aktuell aktiven Geometrie. Nach dem
@@ -5139,14 +5205,14 @@ export default function LiveHike() {
   // als "start reached" markieren — damit das Banner nach dem Passieren nicht
   // erneut erscheint, wenn der User sich von geometry[0] entfernt.
   useEffect(() => {
-    if (preparing || startReached) return;
+    if (!startGateConfirmedRef.current || preparing || startReached) return;
     if (!hasFreshGps) return;
     if (walkToStart === null) setStartReached(true);
-  }, [walkToStart, preparing, startReached, hasFreshGps]);
+  }, [walkToStart, preparing, startReached, hasFreshGps, startGateConfirmed]);
 
   const walkToStartAnnouncedRef = useRef(false);
   useEffect(() => {
-    if (!walkToStart) return;
+    if (!startGateConfirmedRef.current || !walkToStart) return;
     if (startReached) return;
     if (walkToStartAnnouncedRef.current) return;
     if (preparing || locState !== "granted" || !hasFreshGps) return;
@@ -5156,12 +5222,12 @@ export default function LiveHike() {
       kind: "walkToStart",
       displayTitle: t.walkToStartTitle,
     });
-  }, [walkToStart, startReached, preparing, locState, speak, t, hasFreshGps]);
+  }, [walkToStart, startReached, preparing, locState, speak, t, hasFreshGps, startGateConfirmed]);
 
   // Die Route gibt Kapitelziele frei, aber Audio bleibt die Reihenfolge:
   // kein Kapitel wird uebersprungen oder vor dem vorherigen gestartet.
   useEffect(() => {
-    if (preparing || !hasFreshGps || !navigationGeometry || navigationGeometry.length < 2) return;
+    if (!startGateConfirmedRef.current || preparing || !hasFreshGps || !navigationGeometry || navigationGeometry.length < 2) return;
     if (routeProgress == null) return;
     if (routeProgress < 0.98) return;
     routeCompletedRef.current = true;
@@ -5171,6 +5237,7 @@ export default function LiveHike() {
     routeProgress,
     navigationGeometry,
     hasFreshGps,
+    startGateConfirmed,
   ]);
 
   // Konsistente Haptik: jedes abgeschlossene Kapitel gibt ein leichtes
@@ -5552,6 +5619,10 @@ export default function LiveHike() {
     setRecalcRejoinFraction(null);
     followingRecalcRef.current = true;
     setFollowingRecalc(true);
+    if (startTimeRef.current === 0) startTimeRef.current = Date.now();
+    startGateConfirmedRef.current = true;
+    startGateShownRef.current = true;
+    setStartGateConfirmed(true);
     setStartReached(true);
     releaseStartAudio();
     startChoicePendingRef.current = false;

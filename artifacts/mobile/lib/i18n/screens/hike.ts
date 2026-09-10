@@ -139,6 +139,8 @@ export interface HikeStrings {
   offRouteToStart: string;
   offRouteFastestToRoute: string;
   offRouteChoiceLater: string;
+  startHikeNow: string;
+  startHikeMessage: string;
   communityConditions: string;
   reportCondition: string;
   conditionReportedAgo: (relTime: string) => string;
@@ -307,6 +309,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Zum Startpunkt",
     offRouteFastestToRoute: "Schnellster Weg zur Route",
     offRouteChoiceLater: "Später entscheiden",
+    startHikeNow: "Wanderung starten",
+    startHikeMessage: "Du bist am offiziellen Startpunkt. Möchtest du die Wanderung jetzt beginnen?",
     communityConditions: "Wegbedingungen der Community",
     reportCondition: "Zustand melden",
     conditionReportedAgo: (t) => `vor ${t}`,
@@ -461,6 +465,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Zum Startpunkt",
     offRouteFastestToRoute: "Schnällschte Wäg zur Route",
     offRouteChoiceLater: "Spöter entscheide",
+    startHikeNow: "Wanderig starte",
+    startHikeMessage: "Du bisch am offizielle Startpunkt. Wotsch d Wanderig jetzt starte?",
     communityConditions: "Wegbedingige vo de Community",
     reportCondition: "Zuestand mälde",
     conditionReportedAgo: (t) => `vor ${t}`,
@@ -615,6 +621,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Go to trailhead",
     offRouteFastestToRoute: "Fastest way to the route",
     offRouteChoiceLater: "Decide later",
+    startHikeNow: "Start hike",
+    startHikeMessage: "You are at the official trailhead. Start the hike now?",
     communityConditions: "Community Trail Reports",
     reportCondition: "Report conditions",
     conditionReportedAgo: (t) => `${t} ago`,
@@ -769,6 +777,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Aller au départ",
     offRouteFastestToRoute: "Chemin le plus rapide vers l’itinéraire",
     offRouteChoiceLater: "Décider plus tard",
+    startHikeNow: "Commencer la randonnée",
+    startHikeMessage: "Vous êtes au départ officiel. Commencer la randonnée maintenant ?",
     communityConditions: "Conditions signalées par la communauté",
     reportCondition: "Signaler l'état",
     conditionReportedAgo: (t) => `il y a ${t}`,
@@ -923,6 +933,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Vai al punto di partenza",
     offRouteFastestToRoute: "Percorso più rapido verso il sentiero",
     offRouteChoiceLater: "Decidi più tardi",
+    startHikeNow: "Inizia escursione",
+    startHikeMessage: "Sei al punto di partenza ufficiale. Vuoi iniziare l’escursione?",
     communityConditions: "Condizioni segnalate dalla community",
     reportCondition: "Segnala condizioni",
     conditionReportedAgo: (t) => `${t} fa`,
@@ -1077,6 +1089,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Ir al punto de inicio",
     offRouteFastestToRoute: "Camino más rápido hasta la ruta",
     offRouteChoiceLater: "Decidir más tarde",
+    startHikeNow: "Iniciar caminata",
+    startHikeMessage: "Estás en el inicio oficial. ¿Quieres comenzar la caminata?",
     communityConditions: "Condiciones reportadas por la comunidad",
     reportCondition: "Reportar estado",
     conditionReportedAgo: (t) => `hace ${t}`,
@@ -1231,6 +1245,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "Ir para o início",
     offRouteFastestToRoute: "Caminho mais rápido até à rota",
     offRouteChoiceLater: "Decidir mais tarde",
+    startHikeNow: "Começar caminhada",
+    startHikeMessage: "Está no início oficial. Quer começar a caminhada?",
     communityConditions: "Condições relatadas pela comunidade",
     reportCondition: "Reportar condições",
     conditionReportedAgo: (t) => `há ${t}`,
@@ -1385,6 +1401,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "前往起点",
     offRouteFastestToRoute: "最快到达路线",
     offRouteChoiceLater: "稍后决定",
+    startHikeNow: "开始徒步",
+    startHikeMessage: "你已到达官方起点。现在开始徒步吗？",
     communityConditions: "社区路况报告",
     reportCondition: "报告路况",
     conditionReportedAgo: (t) => `${t}前`,
@@ -1539,6 +1557,8 @@ const HIKE_STRINGS: StringsDict<HikeStrings> = {
     offRouteToStart: "К точке старта",
     offRouteFastestToRoute: "Самый быстрый путь к маршруту",
     offRouteChoiceLater: "Решить позже",
+    startHikeNow: "Начать поход",
+    startHikeMessage: "Вы у официальной точки старта. Начать поход сейчас?",
     communityConditions: "Состояние троп от сообщества",
     reportCondition: "Сообщить о состоянии",
     conditionReportedAgo: (t) => `${t} назад`,
