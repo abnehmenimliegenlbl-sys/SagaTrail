@@ -21,6 +21,12 @@ Smooth flight yaw and pitch separately and force roll to zero; do not quaternion
 
 **How to apply:** Derive yaw and clamped pitch from the camera-to-target direction, wrap yaw deltas across ±π, interpolate those two scalars, and set a YXZ rotation with roll exactly zero each frame.
 
+The flight marker follows the exact route, but the camera follows a smoothed corridor centerline. Keep the marker inside a target dead zone so small route bends move the marker, not the whole landscape.
+
+**Why:** Following every exact route point transferred geometry noise and tight bends directly into camera shake even after rotation smoothing.
+
+**How to apply:** Average route positions and direction over a broad distance window for the camera plan. Move the view target only when the exact marker reaches conservative horizontal or vertical frame limits.
+
 For the full-screen route view, use an axis-aligned rectangular SwissTopo terrain area around the complete route, expanded to the device viewport aspect. A bent route corridor is forbidden because it leaves visible background beside the route instead of filling the screen. Missing elevations stay null, and triangles that touch them must be omitted.
 
 **Why:** The observer-centered radial panorama model cannot cover a long route, while the former parallel route corridor remained a narrow textured band. A strict rectangular grid covers the full portrait view and still preserves SwissTopo gaps.

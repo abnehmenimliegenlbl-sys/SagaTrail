@@ -275,11 +275,40 @@ function shortestAngleDelta(from: number, to: number): number {
 type FlightCameraPlan = {
   cameraPosition: Vector3;
   target: Vector3;
+  markerFocus: Vector3;
   horizontalDirection: Vector3;
   slope: number;
   cameraOutsideTerrain: boolean;
   targetOutsideTerrain: boolean;
 };
+
+function flightCorridorCenter(
+  route: Vector3[],
+  routeDistanceList: number[],
+  distanceKm: number,
+): Vector3 | null {
+  const routeLengthKm = routeDistanceList.at(-1) ?? 0;
+  const corridorWindowKm = 0.45;
+  const sampleCount = 9;
+  const center = new Vector3();
+  let weightTotal = 0;
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const normalized = index / (sampleCount - 1);
+    const offsetKm = (normalized * 2 - 1) * corridorWindowKm;
+    const sample = pointAtRouteDistance(
+      route,
+      routeDistanceList,
+      clampNumber(distanceKm + offsetKm, 0, routeLengthKm),
+    );
+    if (!sample) continue;
+    const weight = 1 - Math.abs(normalized * 2 - 1) * 0.78;
+    center.addScaledVector(sample, weight);
+    weightTotal += weight;
+  }
+
+  return weightTotal > 0 ? center.multiplyScalar(1 / weightTotal) : null;
+}
 
 function clampFlightPointToTerrain(
   point: Vector3,
@@ -322,26 +351,29 @@ function flightCameraPlan(
     revealedDistanceKm,
   );
   if (!marker) return null;
+  const corridorCenter =
+    flightCorridorCenter(route, routeDistanceList, revealedDistanceKm) ??
+    marker;
 
-  // Use a longer centered tangent so sharp route bends do not throw the
-  // aircraft into a sudden turn. The terrain remains vertically exaggerated,
-  // but the flight camera must not inherit that exaggeration as pitch.
+  // The ball follows the exact route, while the camera follows a broad,
+  // smoothed corridor centerline. Small bends and geometry noise therefore
+  // move the ball inside the frame instead of shaking the whole landscape.
   const directionSampleDistanceKm = 0.32;
   const behind =
-    pointAtRouteDistance(
+    flightCorridorCenter(
       route,
       routeDistanceList,
       Math.max(0, revealedDistanceKm - directionSampleDistanceKm),
-    ) ?? marker;
+    ) ?? corridorCenter;
   const ahead =
-    pointAtRouteDistance(
+    flightCorridorCenter(
       route,
       routeDistanceList,
       Math.min(
         routeDistanceList.at(-1) ?? revealedDistanceKm,
         revealedDistanceKm + directionSampleDistanceKm,
       ),
-    ) ?? marker;
+    ) ?? corridorCenter;
   const horizontalDirection = new Vector3(
     ahead.x - behind.x,
     0,
@@ -349,7 +381,11 @@ function flightCameraPlan(
   );
   const horizontalDistance = horizontalDirection.length();
   if (horizontalDistance < 0.001) {
-    horizontalDirection.set(ahead.x - marker.x, 0, ahead.z - marker.z);
+    horizontalDirection.set(
+      ahead.x - corridorCenter.x,
+      0,
+      ahead.z - corridorCenter.z,
+    );
     if (horizontalDirection.length() < 0.001) {
       horizontalDirection.set(0, 0, -1);
     }
@@ -370,17 +406,15 @@ function flightCameraPlan(
   // the original flight view, but leave a stable clearance above the route.
   const cameraDistance = 130;
   const cameraHeight = 68;
-  const desiredCamera = marker
+  const desiredCamera = corridorCenter
     .clone()
     .addScaledVector(horizontalDirection, -cameraDistance);
-  desiredCamera.y = marker.y + cameraHeight;
+  desiredCamera.y = corridorCenter.y + cameraHeight;
 
-  // Center the aircraft itself. Looking far ahead makes the marker drift to
-  // the lower edge during climbs and can expose the edge of the terrain tile.
-  const desiredTarget = marker.clone();
-  // Keep a stable, slightly downward view toward the route surface without
-  // making the camera pitch follow every elevation spike.
-  desiredTarget.y = marker.y - 8;
+  const desiredTarget = corridorCenter.clone();
+  desiredTarget.y = corridorCenter.y - 8;
+  const markerFocus = marker.clone();
+  markerFocus.y += 8;
 
   const safeCamera = clampFlightPointToTerrain(
     desiredCamera,
@@ -396,6 +430,7 @@ function flightCameraPlan(
   return {
     cameraPosition: safeCamera.point,
     target: safeTarget.point,
+    markerFocus,
     horizontalDirection: horizontalDirection.clone(),
     slope,
     cameraOutsideTerrain: safeCamera.outside,
@@ -1634,15 +1669,16 @@ function Scene({
         : null;
     if (cameraPlan) {
       camera.up.set(0, 1, 0);
-      // Follow horizontal movement gently, but settle the vertical offset
-      // faster so a steep climb-to-descent change cannot leave the camera
-      // below the route surface for several frames.
+      const horizontalBlend = 1 - Math.exp(-delta * 1.7);
+      const verticalBlend = 1 - Math.exp(-delta * 2.1);
+      const targetBlend = 1 - Math.exp(-delta * 1.45);
+      const rotationBlend = 1 - Math.exp(-delta * 2);
       camera.position.x +=
-        (cameraPlan.cameraPosition.x - camera.position.x) * 0.028;
+        (cameraPlan.cameraPosition.x - camera.position.x) * horizontalBlend;
       camera.position.z +=
-        (cameraPlan.cameraPosition.z - camera.position.z) * 0.028;
+        (cameraPlan.cameraPosition.z - camera.position.z) * horizontalBlend;
       camera.position.y +=
-        (cameraPlan.cameraPosition.y - camera.position.y) * 0.08;
+        (cameraPlan.cameraPosition.y - camera.position.y) * verticalBlend;
       // Position smoothing can otherwise cut across a hairpin and carry the
       // camera over or in front of the aircraft. Keep a hard trailing plane:
       // the camera must remain at least 45 m behind the current flight
@@ -1663,8 +1699,34 @@ function Scene({
       if (!smoothedFlightTarget.current) {
         smoothedFlightTarget.current = cameraPlan.target.clone();
       } else {
-        smoothedFlightTarget.current.lerp(cameraPlan.target, 0.05);
+        smoothedFlightTarget.current.lerp(cameraPlan.target, targetBlend);
       }
+      // Let the exact-route ball move freely inside a stable central corridor.
+      // Only move the view target when the ball reaches the corridor boundary,
+      // so it remains visible without transferring every route kink to the
+      // camera.
+      const targetToMarker = cameraPlan.markerFocus
+        .clone()
+        .sub(smoothedFlightTarget.current);
+      const horizontalMarkerOffset = new Vector3(
+        targetToMarker.x,
+        0,
+        targetToMarker.z,
+      );
+      const horizontalMarkerDistance = horizontalMarkerOffset.length();
+      const horizontalFrameRadius = 14;
+      if (horizontalMarkerDistance > horizontalFrameRadius) {
+        smoothedFlightTarget.current.addScaledVector(
+          horizontalMarkerOffset.normalize(),
+          horizontalMarkerDistance - horizontalFrameRadius,
+        );
+      }
+      const verticalFrameRadius = 20;
+      smoothedFlightTarget.current.y = clampNumber(
+        smoothedFlightTarget.current.y,
+        cameraPlan.markerFocus.y - verticalFrameRadius,
+        cameraPlan.markerFocus.y + verticalFrameRadius,
+      );
       const viewDirection = smoothedFlightTarget.current
         .clone()
         .sub(camera.position)
@@ -1683,9 +1745,10 @@ function Scene({
           shortestAngleDelta(
             smoothedFlightRotation.current.yaw,
             desiredYaw,
-          ) * 0.045;
+          ) * rotationBlend;
         smoothedFlightRotation.current.pitch +=
-          (desiredPitch - smoothedFlightRotation.current.pitch) * 0.045;
+          (desiredPitch - smoothedFlightRotation.current.pitch) *
+          rotationBlend;
       }
       // Keep roll fixed at zero. Quaternion slerp between two lookAt
       // orientations can roll through 180 degrees when the target crosses
