@@ -1566,7 +1566,7 @@ export default function RouteTerrain3D({
             </View>
           </View>
         )}
-        {mode === "overview" && model && !error && (
+        {mode === "overview" && (model || error) && (
           <BackButton
             accessibilityLabel="Zurück zur App"
             onPress={onClose}

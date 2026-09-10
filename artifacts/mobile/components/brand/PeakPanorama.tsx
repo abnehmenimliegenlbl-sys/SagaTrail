@@ -1036,9 +1036,7 @@ export function PeakPanorama({
             />
           )}
           <G opacity={0.34}>
-            <Line x1="90" y1="0" x2="90" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
             <Line x1="180" y1="0" x2="180" y2="350" stroke={colors.accent} strokeWidth="1" />
-            <Line x1="270" y1="0" x2="270" y2="350" stroke={colors.glassBorder} strokeWidth="1" />
           </G>
           {compassTicks.map((direction) => (
             <G key={direction.label}>
