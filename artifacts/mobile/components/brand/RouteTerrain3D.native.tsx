@@ -272,6 +272,7 @@ function clampNumber(value: number, minimum: number, maximum: number): number {
 type FlightCameraPlan = {
   cameraPosition: Vector3;
   target: Vector3;
+  horizontalDirection: Vector3;
   slope: number;
   cameraOutsideTerrain: boolean;
   targetOutsideTerrain: boolean;
@@ -392,6 +393,7 @@ function flightCameraPlan(
   return {
     cameraPosition: safeCamera.point,
     target: safeTarget.point,
+    horizontalDirection: horizontalDirection.clone(),
     slope,
     cameraOutsideTerrain: safeCamera.outside,
     targetOutsideTerrain: safeTarget.outside,
@@ -1635,6 +1637,23 @@ function Scene({
         (cameraPlan.cameraPosition.z - camera.position.z) * 0.028;
       camera.position.y +=
         (cameraPlan.cameraPosition.y - camera.position.y) * 0.08;
+      // Position smoothing can otherwise cut across a hairpin and carry the
+      // camera over or in front of the aircraft. Keep a hard trailing plane:
+      // the camera must remain at least 45 m behind the current flight
+      // direction, regardless of how abruptly that direction changes.
+      const cameraOffsetFromTarget = camera.position
+        .clone()
+        .sub(cameraPlan.target);
+      const trailingDistance = -cameraOffsetFromTarget.dot(
+        cameraPlan.horizontalDirection,
+      );
+      const minimumTrailingDistance = 45;
+      if (trailingDistance < minimumTrailingDistance) {
+        camera.position.addScaledVector(
+          cameraPlan.horizontalDirection,
+          -(minimumTrailingDistance - trailingDistance),
+        );
+      }
       if (!smoothedFlightTarget.current) {
         smoothedFlightTarget.current = cameraPlan.target.clone();
       } else {
