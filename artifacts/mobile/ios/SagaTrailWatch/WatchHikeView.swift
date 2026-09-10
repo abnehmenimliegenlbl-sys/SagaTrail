@@ -124,7 +124,7 @@ struct WatchHikeView: View {
           let clockWidth = min(72, max(60, proxy.size.width * 0.38))
           let clockHeight = min(30, max(26, proxy.size.height * 0.07))
           RoundedRectangle(cornerRadius: clockHeight * 0.4)
-            .fill(WatchPalette.black.opacity(0.82))
+            .fill(WatchPalette.red)
             .frame(width: clockWidth, height: clockHeight)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .padding(.top, 1)
