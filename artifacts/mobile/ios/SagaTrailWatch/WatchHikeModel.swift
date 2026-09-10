@@ -59,12 +59,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "durationMinutes": durationMinutes,
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
-    let session = WCSession.default
-    if session.isReachable {
-      session.sendMessage(message, replyHandler: nil)
-    } else {
-      session.transferUserInfo(message)
-    }
+    sendToPhone(message)
   }
 
   func confirmSafetyCheckin() {
@@ -72,12 +67,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "command": "safetyConfirm",
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
-    let session = WCSession.default
-    if session.isReachable {
-      session.sendMessage(message, replyHandler: nil)
-    } else {
-      session.transferUserInfo(message)
-    }
+    sendToPhone(message)
   }
 
   func confirmSOS() {
@@ -86,12 +76,7 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "source": "watch",
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
-    let session = WCSession.default
-    if session.isReachable {
-      session.sendMessage(message, replyHandler: nil)
-    } else {
-      session.transferUserInfo(message)
-    }
+    sendToPhone(message)
   }
 
   func sendHikeCommand(_ command: String) {
@@ -100,11 +85,18 @@ final class WatchHikeModel: NSObject, ObservableObject {
       "command": command,
       "requestedAt": SagaTrailWatchProtocol.unixMilliseconds()
     ])
+    sendToPhone(message)
+  }
+
+  private func sendToPhone(_ message: [String: Any]) {
     let session = WCSession.default
-    if session.isReachable {
-      session.sendMessage(message, replyHandler: nil)
-    } else {
+    guard session.isReachable else {
       session.transferUserInfo(message)
+      return
+    }
+    session.sendMessage(message, replyHandler: nil) { error in
+      NSLog("[SagaTrail Watch] Direct command failed, queued instead: %@", error.localizedDescription)
+      WCSession.default.transferUserInfo(message)
     }
   }
 

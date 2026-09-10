@@ -42,6 +42,7 @@ enum SagaTrailWatchProtocol {
   struct SafetyCheckin {
     let status: String
     let remainingSeconds: Double
+    let expiresAtEpochMs: Double?
     let liveLinkActive: Bool
   }
 
@@ -313,9 +314,14 @@ enum SagaTrailWatchProtocol {
               let liveLinkActive = value["liveLinkActive"] as? Bool else {
           return nil
         }
+        let expiresAtEpochMs: Double? = {
+          guard let raw = value["expiresAtEpochMs"] else { return nil }
+          return validNumber(raw, minimum: 1, maximum: 100_000_000_000_000)
+        }()
         return SafetyCheckin(
           status: status,
           remainingSeconds: remainingSeconds,
+          expiresAtEpochMs: expiresAtEpochMs,
           liveLinkActive: liveLinkActive
         )
       }()

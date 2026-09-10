@@ -51,6 +51,7 @@ export interface WatchUpcomingAttraction {
 export interface WatchSafetyCheckin {
   status: SafetyCheckinStatus;
   remainingSec: number;
+  expiresAtEpochMs?: number | null;
   liveLinkActive: boolean;
 }
 
@@ -304,6 +305,9 @@ export function isValidHikeLiveState(value: unknown): value is HikeLiveState {
       !["idle", "active", "overdue"].includes(checkin.status) ||
       !Number.isFinite(checkin.remainingSec) ||
       checkin.remainingSec < 0 ||
+      (checkin.expiresAtEpochMs !== undefined &&
+        checkin.expiresAtEpochMs !== null &&
+        (!Number.isFinite(checkin.expiresAtEpochMs) || checkin.expiresAtEpochMs <= 0)) ||
       typeof checkin.liveLinkActive !== "boolean"
     ) return false;
   }

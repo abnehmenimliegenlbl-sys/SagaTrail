@@ -497,13 +497,15 @@ struct WatchHikeView: View {
           Text(checkin.liveLinkActive ? copy.t("liveLink") : copy.t("localTimer"))
             .foregroundStyle(overdue ? WatchPalette.red : WatchPalette.ink)
             .lineLimit(1)
-          Text(formatCheckinTime(checkin.remainingSeconds))
-            .font(WatchType.metric)
-            .foregroundStyle(WatchPalette.white)
-            .monospacedDigit()
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
-            .background(WatchPalette.red, in: Capsule())
+          TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            Text(formatCheckinTime(checkinRemaining(checkin, at: timeline.date)))
+              .font(WatchType.metric)
+              .foregroundStyle(WatchPalette.white)
+              .monospacedDigit()
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 4)
+              .background(WatchPalette.red, in: Capsule())
+          }
         }
         .frame(maxWidth: .infinity)
       }
@@ -513,6 +515,15 @@ struct WatchHikeView: View {
   private func formatCheckinTime(_ seconds: Double) -> String {
     let total = max(0, Int(seconds))
     return String(format: "%02d:%02d", total / 60, total % 60)
+  }
+  private func checkinRemaining(
+    _ checkin: SagaTrailWatchProtocol.SafetyCheckin,
+    at date: Date
+  ) -> Double {
+    guard let expiresAtEpochMs = checkin.expiresAtEpochMs else {
+      return checkin.remainingSeconds
+    }
+    return max(0, expiresAtEpochMs / 1000 - date.timeIntervalSince1970)
   }
   private func duration(_ seconds: Double) -> String {
     String(format: "%02d:%02d:%02d", Int(seconds) / 3600, (Int(seconds) / 60) % 60, Int(seconds) % 60)

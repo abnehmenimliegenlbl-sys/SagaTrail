@@ -41,6 +41,7 @@ export interface SafetyCheckinProps {
   onStatusChange?: (status: {
     status: "idle" | "active" | "overdue";
     remainingSec: number;
+    expiresAtEpochMs: number | null;
     liveLinkActive: boolean;
   }) => void;
   hideTrigger?: boolean;
@@ -150,6 +151,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     onStatusChange?.({
       status: expiresAt == null ? "idle" : overdue ? "overdue" : "active",
       remainingSec: remaining,
+      expiresAtEpochMs: expiresAt,
       liveLinkActive: Boolean(shareToken),
     });
   }, [expiresAt, overdue, onStatusChange, remaining, shareToken, storageHydrated]);
@@ -201,8 +203,9 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     setOpen(false);
   };
 
-  const startShare = async () => {
+  const startShare = async (durationOverride?: SafetyCheckinDuration) => {
     if (shareBusy) return;
+    const selectedDuration = durationOverride ?? duration;
     setShareBusy(true);
     try {
       const authToken = await getAuthToken();
@@ -214,7 +217,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ routeName, durationMinutes: duration }),
+        body: JSON.stringify({ routeName, durationMinutes: selectedDuration }),
       });
       if (!response.ok) throw new Error("create");
       const data = await response.json() as { token: string; path: string; expiresAt: string };
@@ -234,7 +237,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
       // sichtbar als lokal markiert und erzeugt keinen falschen Live-Status.
       setShareToken(null);
       setSharePath(null);
-      setExpiresAt(Date.now() + duration * 60_000);
+      setExpiresAt(Date.now() + selectedDuration * 60_000);
       setOpen(true);
       alert(labels.title, labels.shareFailed ?? "Der Sicherheitslink konnte nicht gestartet werden.");
     } finally {
@@ -247,7 +250,7 @@ export const SafetyCheckin = React.forwardRef<SafetyCheckinHandle, SafetyCheckin
     startFromWatch: (watchDuration) => {
       if (![30, 60, 120].includes(watchDuration)) return;
       setDuration(watchDuration);
-      void startShare();
+      void startShare(watchDuration);
     },
     confirmFromWatch: cancelTimer,
   }), [cancelTimer, startShare]);

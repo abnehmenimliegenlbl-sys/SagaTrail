@@ -11,6 +11,8 @@ final class SagaTrailCompanion: RCTEventEmitter {
   private let connection = SagaTrailPhoneWatchConnection.shared
   private let garminConnection = SagaTrailGarminConnection.shared
   private var lastHeartRateMeasuredAt: Int64 = 0
+  private var hasJavaScriptListeners = false
+  private var pendingWatchActions: [(name: String, body: [String: Any])] = []
 
   override init() {
     super.init()
@@ -36,6 +38,17 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override func supportedEvents() -> [String] {
     ["SagaTrailWatchEvent", "SagaTrailWatchStatus", "SagaTrailCompanion.heartRate", "SagaTrailCompanion.sosRequest", "SagaTrailCompanion.hikeCommand"]
+  }
+
+  override func startObserving() {
+    hasJavaScriptListeners = true
+    let pending = pendingWatchActions
+    pendingWatchActions.removeAll()
+    pending.forEach { sendEvent(withName: $0.name, body: $0.body) }
+  }
+
+  override func stopObserving() {
+    hasJavaScriptListeners = false
   }
 
   @objc func activate() {
@@ -125,12 +138,17 @@ final class SagaTrailCompanion: RCTEventEmitter {
     case "sosConfirmed":
       // Confirmation is a request to the phone. JS remains responsible for
       // the actual emergency workflow and any location handling.
-      sendEvent(withName: "SagaTrailCompanion.sosRequest", body: [
+      emitOrQueueWatchAction(name: "SagaTrailCompanion.sosRequest", body: [
         "requestedAt": payload["requestedAt"] ?? Int(Date().timeIntervalSince1970 * 1000)
       ])
     case "hikeCommand":
       if let command = payload["command"] as? String {
-        sendEvent(withName: "SagaTrailCompanion.hikeCommand", body: ["command": command])
+        var event: [String: Any] = ["command": command]
+        if let durationMinutes = payload["durationMinutes"] as? NSNumber,
+           [30, 60, 120].contains(durationMinutes.intValue) {
+          event["durationMinutes"] = durationMinutes.intValue
+        }
+        emitOrQueueWatchAction(name: "SagaTrailCompanion.hikeCommand", body: event)
       }
     default:
       break
@@ -177,6 +195,17 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   private func emitStatus() {
     sendEvent(withName: "SagaTrailWatchStatus", body: connection.statusPayload)
+  }
+
+  private func emitOrQueueWatchAction(name: String, body: [String: Any]) {
+    guard hasJavaScriptListeners else {
+      pendingWatchActions.append((name: name, body: body))
+      if pendingWatchActions.count > 20 {
+        pendingWatchActions.removeFirst(pendingWatchActions.count - 20)
+      }
+      return
+    }
+    sendEvent(withName: name, body: body)
   }
 }
 
