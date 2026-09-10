@@ -18,6 +18,7 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
+  Box3,
   DoubleSide,
   Group,
   NormalBlending,
@@ -82,6 +83,7 @@ const mapTextureSizes: readonly number[] = [1024, 768];
 const walkSpeedKmPerSecond = 1;
 const flightSpeedKmPerSecond = 0.32;
 const flightTileSpacingKm = 1.2;
+const flightSkyColor = "#8EA6AA";
 
 function stableUrlHash(value: string): string {
   let hash = 2166136261;
@@ -195,6 +197,140 @@ function distanceKm(a: number[], b: number[]): number {
   const deltaLng = (b[1] - a[1]) * radians;
   const longitude = deltaLng * Math.cos(((a[0] + b[0]) / 2) * radians);
   return 6371 * Math.sqrt(deltaLat * deltaLat + longitude * longitude);
+}
+
+function clampNumber(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+type FlightCameraPlan = {
+  cameraPosition: Vector3;
+  target: Vector3;
+  slope: number;
+  cameraOutsideTerrain: boolean;
+  targetOutsideTerrain: boolean;
+};
+
+function clampFlightPointToTerrain(
+  point: Vector3,
+  terrainBounds: Box3,
+  marginM: number,
+): { point: Vector3; outside: boolean } {
+  const width = Math.max(0, terrainBounds.max.x - terrainBounds.min.x);
+  const depth = Math.max(0, terrainBounds.max.z - terrainBounds.min.z);
+  const xMargin = Math.min(marginM, width / 2);
+  const zMargin = Math.min(marginM, depth / 2);
+  const minimumX = terrainBounds.min.x + xMargin;
+  const maximumX = terrainBounds.max.x - xMargin;
+  const minimumZ = terrainBounds.min.z + zMargin;
+  const maximumZ = terrainBounds.max.z - zMargin;
+  const outside =
+    point.x < minimumX ||
+    point.x > maximumX ||
+    point.z < minimumZ ||
+    point.z > maximumZ;
+
+  return {
+    point: new Vector3(
+      clampNumber(point.x, minimumX, maximumX),
+      point.y,
+      clampNumber(point.z, minimumZ, maximumZ),
+    ),
+    outside,
+  };
+}
+
+function flightCameraPlan(
+  route: Vector3[],
+  routeDistanceList: number[],
+  revealedDistanceKm: number,
+  terrainBounds: Box3,
+): FlightCameraPlan | null {
+  const marker = pointAtRouteDistance(
+    route,
+    routeDistanceList,
+    revealedDistanceKm,
+  );
+  if (!marker) return null;
+
+  // Sample ahead of the marker so the camera follows the local route direction
+  // instead of using a fixed world-space offset at every bend.
+  const slopeSampleDistanceKm = 0.22;
+  const ahead =
+    pointAtRouteDistance(
+      route,
+      routeDistanceList,
+      Math.min(
+        routeDistanceList.at(-1) ?? revealedDistanceKm,
+        revealedDistanceKm + slopeSampleDistanceKm,
+      ),
+    ) ?? marker;
+  const horizontalDirection = new Vector3(
+    ahead.x - marker.x,
+    0,
+    ahead.z - marker.z,
+  );
+  const horizontalDistance = horizontalDirection.length();
+  if (horizontalDistance < 0.001) {
+    horizontalDirection.set(0, 0, -1);
+  } else {
+    horizontalDirection.normalize();
+  }
+
+  // Elevation is intentionally exaggerated by the terrain renderer. The
+  // resulting world-space slope is therefore the correct value for framing.
+  const slope =
+    (ahead.y - marker.y) / Math.max(1, horizontalDistance);
+  const absoluteSlope = Math.min(1.5, Math.abs(slope));
+  const cameraDistance = clampNumber(
+    170 + absoluteSlope * 90,
+    150,
+    300,
+  );
+  const cameraHeight = clampNumber(
+    100 + absoluteSlope * 90 + Math.max(0, slope) * 25,
+    85,
+    240,
+  );
+  const lookAheadDistance = clampNumber(
+    150 + absoluteSlope * 100,
+    130,
+    300,
+  );
+
+  const desiredCamera = marker
+    .clone()
+    .addScaledVector(horizontalDirection, -cameraDistance);
+  desiredCamera.y =
+    marker.y +
+    cameraHeight +
+    Math.max(0, slope) * cameraDistance * 0.35;
+
+  const desiredTarget = marker
+    .clone()
+    .addScaledVector(horizontalDirection, lookAheadDistance);
+  desiredTarget.y =
+    marker.y +
+    slope * lookAheadDistance * 0.72;
+
+  const safeCamera = clampFlightPointToTerrain(
+    desiredCamera,
+    terrainBounds,
+    90,
+  );
+  const safeTarget = clampFlightPointToTerrain(
+    desiredTarget,
+    terrainBounds,
+    20,
+  );
+
+  return {
+    cameraPosition: safeCamera.point,
+    target: safeTarget.point,
+    slope,
+    cameraOutsideTerrain: safeCamera.outside,
+    targetOutsideTerrain: safeTarget.outside,
+  };
 }
 
 function swissTopoTextureUrl(bounds: MapBounds, size: number): string {
