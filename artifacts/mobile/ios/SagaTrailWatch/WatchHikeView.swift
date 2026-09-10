@@ -183,7 +183,8 @@ struct WatchHikeView: View {
 
       if !isMapPresented {
         GeometryReader { proxy in
-          let clockWidth = min(72, max(60, proxy.size.width * 0.38))
+          // Cover only the watchOS clock, not the GPS label beside it.
+          let clockWidth = min(54, max(48, proxy.size.width * 0.27))
           let clockHeight = min(30, max(26, proxy.size.height * 0.07))
           RoundedRectangle(cornerRadius: clockHeight * 0.4)
             .fill(WatchPalette.red)

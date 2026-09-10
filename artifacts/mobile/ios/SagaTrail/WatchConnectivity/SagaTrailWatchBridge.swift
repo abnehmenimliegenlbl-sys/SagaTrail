@@ -16,6 +16,11 @@ final class SagaTrailCompanion: RCTEventEmitter {
 
   override init() {
     super.init()
+    connection.setActionHandler { [weak self] envelope in
+      DispatchQueue.main.async {
+        self?.processWatchEnvelope(envelope)
+      }
+    }
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleWatchEvent(_:)),
@@ -122,6 +127,10 @@ final class SagaTrailCompanion: RCTEventEmitter {
       return
     }
     guard let envelope = notification.object as? [String: Any] else { return }
+    processWatchEnvelope(envelope)
+  }
+
+  private func processWatchEnvelope(_ envelope: [String: Any]) {
     let payload = envelope["payload"] as? [String: Any] ?? [:]
     switch envelope["type"] as? String {
     case "heartRate":
@@ -213,11 +222,14 @@ extension Notification.Name {
   static let sagaTrailWatchEvent = Notification.Name("SagaTrailWatchEvent")
 }
 
-private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
+final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
   static let shared = SagaTrailPhoneWatchConnection()
   private let protocolVersion = 1
   private let latestHeartRateLock = NSLock()
   private var cachedLatestHeartRate: [String: Any]?
+  private let actionLock = NSLock()
+  private var actionHandler: (([String: Any]) -> Void)?
+  private var pendingActions: [[String: Any]] = []
 
   private override init() {
     super.init()
@@ -228,6 +240,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     let session = WCSession.default
     session.delegate = self
     session.activate()
+  }
+
+  func setActionHandler(_ handler: @escaping ([String: Any]) -> Void) {
+    actionLock.lock()
+    actionHandler = handler
+    let queued = pendingActions
+    pendingActions.removeAll()
+    actionLock.unlock()
+    queued.forEach(handler)
   }
 
   var statusPayload: [String: Any] {
@@ -328,6 +349,15 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     }
     if let terrainSection = state["terrainSection"] as? [String: Any] {
       watchState["terrainSection"] = terrainSection
+    }
+    if let upcomingGradeChange = state["upcomingGradeChange"] as? [String: Any] {
+      watchState["upcomingGradeChange"] = upcomingGradeChange
+    }
+    if let upcomingSurfaceChange = state["upcomingSurfaceChange"] as? [String: Any] {
+      watchState["upcomingSurfaceChange"] = upcomingSurfaceChange
+    }
+    if let upcomingAttraction = state["upcomingAttraction"] as? [String: Any] {
+      watchState["upcomingAttraction"] = upcomingAttraction
     }
     if let safetyCheckin = state["safetyCheckin"] as? [String: Any] {
       watchState["safetyCheckin"] = safetyCheckin
@@ -498,8 +528,9 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
                   "elapsedSeconds", "distanceMeters", "ascentMeters", "steps",
                   "heartRateBpm", "bearingDegrees", "distanceToTurnMeters",
                   "remainingDistanceMeters", "remainingSeconds", "arrivalAtEpochMs",
-                  "upcomingNavigations", "plannedAscentM", "remainingAscentM",
-                    "terrainSection", "map", "language", "storyAudio"]
+                   "upcomingNavigations", "plannedAscentMeters", "remainingAscentMeters",
+                   "terrainSection", "upcomingGradeChange", "upcomingSurfaceChange",
+                   "upcomingAttraction", "safetyCheckin", "map", "language", "storyAudio"]
     let optionalFields = ["offRoute", "weather", "daylight", "poiStory"]
     for field in fields + optionalFields { if let value = input[field] { result[field] = value } }
     return result
@@ -618,20 +649,45 @@ private final class SagaTrailPhoneWatchConnection: NSObject, WCSessionDelegate {
     NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: envelope(type: "connectionStatus", payload: statusPayload))
   }
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) { receive(message) }
+  func session(
+    _ session: WCSession,
+    didReceiveMessage message: [String: Any],
+    replyHandler: @escaping ([String: Any]) -> Void
+  ) {
+    let accepted = receive(message)
+    replyHandler(["v": protocolVersion, "accepted": accepted])
+  }
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) { receive(userInfo) }
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
     receive(applicationContext)
   }
 
-  private func receive(_ message: [String: Any]) {
+  @discardableResult
+  private func receive(_ message: [String: Any]) -> Bool {
     guard (message["v"] as? NSNumber)?.intValue == protocolVersion,
           let type = message["type"] as? String,
-          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return }
+          ["sosConfirmed", "heartRate", "hikeCommand"].contains(type) else { return false }
     if type == "heartRate" {
-      guard cacheHeartRate(from: message) else { return }
+      guard cacheHeartRate(from: message) else { return false }
+      NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
+    } else {
+      deliverAction(message)
     }
-    // JS / the phone owns the actual SOS action and any location sharing.
-    NotificationCenter.default.post(name: .sagaTrailWatchEvent, object: message)
+    return true
+  }
+
+  private func deliverAction(_ message: [String: Any]) {
+    actionLock.lock()
+    if let handler = actionHandler {
+      actionLock.unlock()
+      handler(message)
+      return
+    }
+    pendingActions.append(message)
+    if pendingActions.count > 20 {
+      pendingActions.removeFirst(pendingActions.count - 20)
+    }
+    actionLock.unlock()
   }
 
   @discardableResult

@@ -3,6 +3,7 @@ import HealthKit
 import WatchConnectivity
 import WatchKit
 import ClockKit
+import UserNotifications
 
 @MainActor
 final class WatchHikeModel: NSObject, ObservableObject {
@@ -41,6 +42,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
     session.delegate = self
     session.activate()
     apply(envelope: session.receivedApplicationContext)
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
+      if let error {
+        NSLog("[SagaTrail Watch] Notification permission failed: %@", error.localizedDescription)
+      }
+    }
   }
 
   func setSceneActive(_ active: Bool) {
@@ -94,7 +100,12 @@ final class WatchHikeModel: NSObject, ObservableObject {
       session.transferUserInfo(message)
       return
     }
-    session.sendMessage(message, replyHandler: nil) { error in
+    session.sendMessage(message, replyHandler: { reply in
+      let accepted = reply["accepted"] as? Bool ?? false
+      if !accepted {
+        NSLog("[SagaTrail Watch] Phone rejected command")
+      }
+    }) { error in
       NSLog("[SagaTrail Watch] Direct command failed, queued instead: %@", error.localizedDescription)
       WCSession.default.transferUserInfo(message)
     }
@@ -267,7 +278,11 @@ final class WatchHikeModel: NSObject, ObservableObject {
       if alertKey != lastAlertKey {
         lastAlertKey = alertKey
         playAlertHaptic(haptic)
-        activeAlert = WatchAlert(title: title, body: body, action: action)
+        if isSceneActive {
+          activeAlert = WatchAlert(title: title, body: body, action: action)
+        } else {
+          scheduleSystemNotification(title: title, body: body)
+        }
       }
     default:
       break
@@ -309,6 +324,23 @@ final class WatchHikeModel: NSObject, ObservableObject {
       WKInterfaceDevice.current().play(.success)
     default:
       break
+    }
+  }
+
+  private func scheduleSystemNotification(title: String, body: String) {
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
+    content.sound = .default
+    let request = UNNotificationRequest(
+      identifier: "sagatrail-watch-\(UUID().uuidString)",
+      content: content,
+      trigger: nil
+    )
+    UNUserNotificationCenter.current().add(request) { error in
+      if let error {
+        NSLog("[SagaTrail Watch] Could not schedule notification: %@", error.localizedDescription)
+      }
     }
   }
 

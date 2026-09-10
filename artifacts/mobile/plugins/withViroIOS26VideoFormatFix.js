@@ -117,6 +117,13 @@ module.exports = function withViroIOS26VideoFormatFix(config) {
     );
 
     if (contents.includes("private enum SagaTrailARVideoFormatGuard")) {
+      if (!contents.includes("SagaTrailPhoneWatchConnection.shared.activate()")) {
+        contents = contents.replace(
+          "    SagaTrailARVideoFormatGuard.install()",
+          `    SagaTrailARVideoFormatGuard.install()
+    SagaTrailPhoneWatchConnection.shared.activate()`,
+        );
+      }
       config.modResults.contents = contents;
       return config;
     }
@@ -146,6 +153,7 @@ module.exports = function withViroIOS26VideoFormatFix(config) {
       launchMarker,
       `  ) -> Bool {
     SagaTrailARVideoFormatGuard.install()
+    SagaTrailPhoneWatchConnection.shared.activate()
 
     let delegate = ReactNativeDelegate()`
     );
