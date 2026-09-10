@@ -166,7 +166,8 @@
     "extra": {
       "eas": {
         "projectId": "5df5021d-8b4d-4168-8247-1094f2e4c216"
-      }
+      },
+      "clerkPublishableKey": "pk_test_dmFzdC1zaGluZXItNzEuY2xlcmsuYWNjb3VudHMuZGV2JA"
     },
     "owner": "inster"
   }

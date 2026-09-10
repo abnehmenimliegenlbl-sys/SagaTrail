@@ -21,6 +21,7 @@ import {
 } from "@expo-google-fonts/albert-sans";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkProvider, useAuth } from "@clerk/expo";
+import Constants from "expo-constants";
 import {
   clearKeychainOnFreshInstall,
   clerkTokenCache,
@@ -91,7 +92,10 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY as string;
+const CLERK_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  (Constants.expoConfig?.extra?.clerkPublishableKey as string | undefined) ||
+  "";
 const CLERK_PROXY_URL = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
 function AuthTokenBridge({ children }: { children: React.ReactNode }) {
