@@ -768,7 +768,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
       frustumCulled={false}
     >
       <mesh>
-        <sphereGeometry args={[48, 16, 10]} />
+        <sphereGeometry args={[96, 16, 10]} />
         <meshBasicMaterial
           color="#C8FF00"
           transparent
@@ -780,7 +780,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[34, 16, 10]} />
+        <sphereGeometry args={[68, 16, 10]} />
         <meshBasicMaterial
           color="#C8FF00"
           transparent
@@ -792,7 +792,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[22, 16, 10]} />
+        <sphereGeometry args={[44, 16, 10]} />
         <meshBasicMaterial
           ref={haloMaterial}
           color="#E7FF66"
@@ -805,7 +805,7 @@ function RouteProgressPulse({ position }: { position: Vector3 }) {
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[8, 16, 10]} />
+        <sphereGeometry args={[16, 16, 10]} />
         <meshBasicMaterial
           color="#FFFFFF"
           transparent
@@ -1467,13 +1467,14 @@ function Scene({
       {visibleGradeLines.map((line, index) => (
         <RouteLine key={index} {...line} />
       ))}
-      {visibleGradeLines.slice(1).map((line, index) => (
-        <RouteTransitionLight
-          key={`transition-${index}`}
-          position={line.points[0]}
-          color={line.color}
-        />
-      ))}
+      {mode !== "flight" &&
+        visibleGradeLines.slice(1).map((line, index) => (
+          <RouteTransitionLight
+            key={`transition-${index}`}
+            position={line.points[0]}
+            color={line.color}
+          />
+        ))}
       {route[0] && <RouteEndpointFlag position={route[0]} kind="start" />}
       {route.at(-1) && (
         <RouteEndpointFlag position={route.at(-1)!} kind="finish" />
